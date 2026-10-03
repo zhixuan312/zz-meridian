@@ -105,6 +105,7 @@ export function KeysView({ initial }: { initial: ApiKey[] }) {
           rowKey={(k) => k.id}
           empty={{ title: 'No keys yet', body: `Create a key for each service that calls ${app.name}.`, action: <Button variant="primary" size="sm" icon={<Plus />} onClick={() => setCreating(true)}>Create key</Button> }}
         />
+        <p className="t-caption max-w-[72ch]">Keys never expire. To rotate one, create its replacement, move your services to it, then revoke the old key: requests signed with it fail at once.</p>
       </Stack>
 
       <Sheet open={creating} onOpenChange={setCreating}>

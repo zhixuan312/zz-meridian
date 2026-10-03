@@ -40,7 +40,15 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
   ref,
 ) {
   return (
-    <div className={cn('relative flex w-full min-w-0 items-center', controlFrame, CONTROL_SIZE[size], frameClassName)}>
+    <div
+      // The whole frame is the target: a press on its padding or icons focuses the field, as a press on the text does.
+      onPointerDown={(e) => {
+        if ((e.target as HTMLElement).closest('input, button, a')) return;
+        e.preventDefault();
+        e.currentTarget.querySelector('input')?.focus();
+      }}
+      className={cn('relative flex w-full min-w-0 cursor-text items-center', controlFrame, CONTROL_SIZE[size], frameClassName)}
+    >
       {leading ? <span className="flex shrink-0 items-center text-ink-3">{leading}</span> : null}
       <input
         ref={ref}

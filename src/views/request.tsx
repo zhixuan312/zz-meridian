@@ -10,10 +10,10 @@ import { KeyValue } from '@/components/ui/key-value';
 import { toast } from '@/components/ui/toast';
 import { detailHead } from '@/components/patterns/detail-head';
 import { cn } from '@/lib/cn';
-import { formatDuration } from '@/lib/format';
+import { formatCost, formatDuration } from '@/lib/format';
 import { formatDateTime, formatRelative } from '@/lib/format-date';
 import { DEMO_NOW, type RequestRow } from '@/system/fixtures/sample';
-import { STATUS_TEXT, statusTone, type Span } from '@/system/fixtures/sample-records';
+import { STATUS_TEXT, statusTone, usageOf, type Span } from '@/system/fixtures/sample-records';
 import { formatBytes } from '@/system/sample-cells';
 import { domain } from '@/app.config';
 
@@ -54,8 +54,8 @@ function Waterfall({ spans, total }: { spans: Span[]; total: number }) {
 
 function Code({ body, label }: { body: string; label: string }) {
   return (
-    <div className="relative">
-      <pre className="max-h-96 overflow-auto rounded-md border border-line bg-surface-sunk p-4 font-mono text-xs leading-relaxed text-ink">{body}</pre>
+    <div className="relative flex flex-1 flex-col">
+      <pre className="max-h-96 min-h-0 flex-1 overflow-auto rounded-md border border-line bg-surface-sunk p-4 font-mono text-xs leading-relaxed text-ink">{body}</pre>
       <Button
         size="sm"
         variant="ghost"
@@ -71,6 +71,7 @@ function Code({ body, label }: { body: string; label: string }) {
 
 export function RequestView({ request: r, trace, payloads }: { request: RequestRow; trace: Span[]; payloads: { request: string; response: string } }) {
   const router = useRouter();
+  const usage = usageOf(r);
   const failed = r.status >= 500 || r.status === 429;
   return (
     <PageFrame
@@ -114,6 +115,8 @@ export function RequestView({ request: r, trace, payloads }: { request: RequestR
                   { label: 'Region', value: r.region, mono: true },
                   { label: 'Model', value: r.model, mono: true },
                   { label: 'API key', value: 'Production backend' },
+                  { label: 'Tokens', value: r.status >= 400 ? <span className="text-ink-3">None, refused</span> : <span className="t-num">{usage.input.toLocaleString()} in · {usage.output.toLocaleString()} out</span> },
+                  { label: 'Cost', value: <span className="t-num">{formatCost(usage.cost)}</span> },
                 ]}
               />
             </CardBody>
@@ -134,11 +137,11 @@ export function RequestView({ request: r, trace, payloads }: { request: RequestR
         <Row split="1/2">
           <Card>
             <CardHeader title="Request body" description={`${r.method} ${r.route}`} divided />
-            <CardBody className="pt-5"><Code body={payloads.request} label="Request body" /></CardBody>
+            <CardBody className="flex flex-col pt-5"><Code body={payloads.request} label="Request body" /></CardBody>
           </Card>
           <Card>
             <CardHeader title="Response body" description={`${r.status} ${STATUS_TEXT[r.status] ?? ''}`} divided />
-            <CardBody className="pt-5"><Code body={payloads.response} label="Response body" /></CardBody>
+            <CardBody className="flex flex-col pt-5"><Code body={payloads.response} label="Response body" /></CardBody>
           </Card>
         </Row>
       </Stack>

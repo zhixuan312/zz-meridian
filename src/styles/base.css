@@ -119,11 +119,13 @@
   .edge-hover::after { opacity: 0; }
   .edge-hover:hover::after, .edge-hover:focus-within::after { opacity: 1; }
 
-  /* A touch target: on a coarse pointer a small control answers a 44px square around itself, without growing. */
+  /* A target: a small control answers a square around itself without growing, 24px under a mouse and 44px under a
+     finger. Tagged controls (.hit), and every link laid out as a box (a link inside running text keeps its line). */
+  :is(.hit, a:is(.flex, .inline-flex, .grid, .inline-grid, .block, .inline-block):not([class*="before:"])) { --hit: 24px; }
+  :is(.hit, a:is(.flex, .inline-flex, .grid, .inline-grid, .block, .inline-block):not([class*="before:"])):not(.absolute, .fixed, .sticky) { position: relative; }
+  :is(.hit, a:is(.flex, .inline-flex, .grid, .inline-grid, .block, .inline-block):not([class*="before:"]))::before { content: ""; position: absolute; left: 50%; top: 50%; width: max(100%, var(--hit)); height: max(100%, var(--hit)); transform: translate(-50%, -50%); }
   @media (pointer: coarse) {
-    /* Tagged controls, and every link laid out as a box (a link inside running text keeps its line). */
-    :is(.hit, a:is(.flex, .inline-flex, .grid, .inline-grid, .block, .inline-block):not([class*="before:"])):not(.absolute, .fixed, .sticky) { position: relative; }
-    :is(.hit, a:is(.flex, .inline-flex, .grid, .inline-grid, .block, .inline-block):not([class*="before:"]))::before { content: ""; position: absolute; left: 50%; top: 50%; width: max(100%, 44px); height: max(100%, 44px); transform: translate(-50%, -50%); }
+    :is(.hit, a:is(.flex, .inline-flex, .grid, .inline-grid, .block, .inline-block):not([class*="before:"])) { --hit: 44px; }
     .control-frame { min-height: 44px; }
   }
 

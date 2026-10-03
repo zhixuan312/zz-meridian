@@ -28,8 +28,8 @@ export default function AtlasHome() {
         <p className="t-kicker">ZZ Meridian design system · v{s.version}</p>
         <h1 className="t-display mt-8">
           One dashboard. <span className="max-md:block">Every surface.</span>
-          <br />
-          <span className="text-accent-ink">Both operators.</span>
+          <br className="max-md:hidden" />
+          <span className="block text-accent-ink md:inline">Both operators.</span>
         </h1>
         <div className="mt-10 grid items-end gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
           <div>
@@ -89,8 +89,8 @@ export default function AtlasHome() {
           ))}
         </div>
         <div className="mt-4 flex flex-wrap gap-3">
-          <Link href="/system/start/surfaces" className="link inline-flex text-sm font-medium">Surfaces and inventory →</Link>
-          <Link href="/system/pages/proposal" className="link inline-flex text-sm font-medium">See an agent’s proposal in a host →</Link>
+          <Link href="/system/start/surfaces" className="link inline-flex items-center gap-1.5 text-sm font-medium">Surfaces and inventory <ArrowRight className="size-3.5" /></Link>
+          <Link href="/system/pages/proposal" className="link inline-flex items-center gap-1.5 text-sm font-medium">See an agent’s proposal in a host <ArrowRight className="size-3.5" /></Link>
         </div>
       </section>
 

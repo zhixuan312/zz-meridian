@@ -49,9 +49,22 @@ Meridian held to the bar of award-winning sites (Awwwards, Webby, FWA) and of th
   - **Touch:** every control and box link answers 44px on a coarse pointer, phones are emulated as touch, and the audit fails a smaller target.
   - **Small things:** embed heads keep Freshness whole; hour ticks follow 00/06/12/18; an in-app link uses → and a link out uses ↗.
 
+- **The critic's second round** scored typography 8.5, whitespace 7.5, hierarchy 8.5, colour 8.5, motion 7.5, micro-interaction 7.5, responsiveness 7.5 and originality 7.5. Seven of the eight craft criteria passed; motion and speed failed narrowly, on target sizes. Then fixed:
+  - **Targets:** every small control and box link answers 24px under a mouse and 44px under a finger, and a press on a field's frame focuses the field.
+  - **Request page:** the facts include tokens and cost (its description promised what it cost), and the two payload panels end level.
+  - **Colour:** 3xx no longer wears the accent, and the latency line is neutral, not a one-off magenta.
+  - **Shell tools** keep the canvas edge on narrow pages such as Settings.
+  - **Sign-in:** the panel caps at 28rem on a tablet.
+  - **Atlas home:** the headline's stray line at 360px is gone, and every in-app link uses the icon arrow.
+  - **Motion:** a new period redraws the chart's lines from the left; the Meridian cursor glides from day to day on trends and sparklines.
+  - **Segmented control:** its thumb re-measures when its options change size.
+  - **API keys** ends on how to rotate a key.
+
 ## Open
 
 Taste calls the critic raised that are not taken yet, kept in view on purpose:
 
-- **Data morph:** switching 7D, 30D and 90D swaps the lines instantly. A tween of the path, and an eased cursor line, would carry the eye across the change; juries reward that continuity.
+- **True path morphing:** a new period redraws the line rather than morphing it. Periods have different numbers of points, so a shape tween would need resampling; a redraw is honest about the new data.
+- **Sign-in proof on phones:** the live trend shows from 1024px. On a phone the form comes first, and a chart above it would push it below the fold.
+- **"Know" alone on the first line at 360px:** balancing the display line wraps it as four lines that widen, like a poster. A greedy wrap would leave "your" alone instead.
 - **768px splits:** Analytics keeps its half-width charts stacked at 768px, because a 350px chart reads worse than a full-width one. A container-based split from 700px is the alternative.

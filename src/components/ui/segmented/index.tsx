@@ -29,8 +29,15 @@ export function Segmented<V extends string>({
   const track = useRef<HTMLDivElement>(null);
   const [thumb, setThumb] = useState<{ x: number; w: number } | null>(null);
   useLayoutEffect(() => {
-    const el = track.current?.querySelector<HTMLElement>('[data-state="on"]');
-    if (el) setThumb({ x: el.offsetLeft, w: el.offsetWidth });
+    const measure = () => {
+      const el = track.current?.querySelector<HTMLElement>('[data-state="on"]');
+      if (el) setThumb({ x: el.offsetLeft, w: el.offsetWidth });
+    };
+    measure();
+    // Re-measure when the options change size: a font arriving, a density switch, a label changing.
+    const ro = new ResizeObserver(measure);
+    track.current?.querySelectorAll('button').forEach((b) => ro.observe(b));
+    return () => ro.disconnect();
   }, [value, options.length]);
   return (
     <ToggleGroup.Root

@@ -123,8 +123,9 @@ export function OverviewBody({
                 label="Responses by status class"
                 format={formatCompact}
                 parts={[
-                  { ...mix[0], color: 'neutral' },
-                  { ...mix[1], color: 1 },
+                  // The normal case is the quietest part; only the classes that need a look carry status colour.
+                  { ...mix[0], color: 'neutral-soft' },
+                  { ...mix[1], color: 'neutral' },
                   { ...mix[2], color: 'warning' },
                   { ...mix[3], color: 'critical' },
                 ]}
@@ -136,7 +137,7 @@ export function OverviewBody({
                 height={168}
                 format="duration"
                 dates={dates}
-                series={[{ key: 'p95', label: 'Latency p95', values: series.map((d) => d.p95), kind: 'line', color: 4 }]}
+                series={[{ key: 'p95', label: 'Latency p95', values: series.map((d) => d.p95), kind: 'line', color: 'neutral' }]}
                 />
               </div>
             </CardBody>

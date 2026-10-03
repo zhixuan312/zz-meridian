@@ -30,7 +30,7 @@ export function Standalone({ kicker, sentence, lead, aside, children }: { kicker
           {lead ? <p className="t-lead mt-6 max-w-[46ch]">{lead}</p> : null}
           {children}
         </div>
-        {aside ? <div className="min-w-0">{aside}</div> : null}
+        {aside ? <div className="min-w-0 max-lg:max-w-md">{aside}</div> : null}
       </div>
       <footer className="flex flex-wrap items-center gap-x-6 gap-y-2 border-t border-line px-(--gutter) py-5 text-xs text-ink-3">
         <span>© 2026 {app.name}</span>

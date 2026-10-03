@@ -44,6 +44,13 @@ export function traceOf(r: RequestRow): Span[] {
   ];
 }
 
+/** What a request used and cost: tokens in and out at the sample's list price ($3 in, $15 out per million). A refused request used nothing. */
+export function usageOf(r: RequestRow) {
+  if (r.status >= 400) return { input: 0, output: 0, cost: 0 };
+  const input = 412, output = Math.round(r.bytes / 40);
+  return { input, output, cost: (input * 3 + output * 15) / 1_000_000 };
+}
+
 export function payloadsOf(r: RequestRow) {
   const request = r.route.startsWith('/v1/messages')
     ? { model: r.model, max_tokens: 1024, messages: [{ role: 'user', content: 'Summarise the incident report for the on-call channel.' }] }
@@ -54,7 +61,7 @@ export function payloadsOf(r: RequestRow) {
         : { id: r.id.slice(4) };
   const response = r.status >= 400
     ? { error: { type: STATUS_TEXT[r.status]?.toLowerCase().replace(/ /g, '_') ?? 'error', message: r.status === 429 ? 'Rate limit of 1,200 requests per minute exceeded. Retry after 12 seconds.' : 'The request could not be completed.' } }
-    : { id: `msg_${r.id.slice(4, 12)}`, status: 'completed', usage: { input_tokens: 412, output_tokens: Math.round(r.bytes / 40) } };
+    : { id: `msg_${r.id.slice(4, 12)}`, status: 'completed', usage: { input_tokens: usageOf(r).input, output_tokens: usageOf(r).output } };
   return { request: JSON.stringify(request, null, 2), response: JSON.stringify(response, null, 2) };
 }
 

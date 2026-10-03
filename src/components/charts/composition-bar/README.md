@@ -13,7 +13,7 @@ Status: beta
 
 | Variant | Colours |
 |---|---|
-| Status | Parts that carry a judgement take status colours (`warning`, `critical`) beside a neutral and the accent; the legend names each in words |
+| Status | Parts that carry a judgement take status colours (`warning`, `critical`); the normal case is `neutral-soft` and other classes `neutral`, never the accent; the legend names each in words |
 | Categories | Parts with no judgement take slots 1, 2, 3 in order |
 
 ## Sizes

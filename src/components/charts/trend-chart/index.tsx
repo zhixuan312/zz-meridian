@@ -138,7 +138,8 @@ export function TrendChart({
             </text>
           ))}
           {paths.map(({ s, area, line }) => (
-            <g key={s.key}>
+            // Keyed by the span it shows: a new period redraws the line from the left instead of snapping to new data.
+            <g key={`${s.key}-${dates[0]}-${n}`}>
               {s.kind === 'area' ? <path d={area} fill={`url(#${gid}-${s.key})`} className="reveal-x" /> : null}
               {s.kind === 'area' ? <path d={line} fill="none" stroke={SERIES_VAR(s.color ?? 'accent')} strokeWidth={5} strokeLinecap="round" pathLength={1} className="draw" style={{ opacity: 'var(--chart-glow-a)', filter: 'blur(calc(var(--chart-glow-blur) * 1px))', transform: 'translateY(2px)' }} /> : null}
               <path
@@ -155,12 +156,13 @@ export function TrendChart({
             </g>
           ))}
           {active !== null ? (
-            <g pointerEvents="none">
-              <line x1={cx} x2={cx} y1={pad.t - 6} y2={pad.t + H} stroke="var(--ink-3)" strokeOpacity={0.55} shapeRendering="crispEdges" />
+            // The cursor glides from day to day (transform, so it eases) rather than jumping.
+            <g pointerEvents="none" className="transition-transform duration-(--dur-hover) ease-out" style={{ transform: `translateX(${cx}px)` }}>
+              <line x1={0} x2={0} y1={pad.t - 6} y2={pad.t + H} stroke="var(--ink-3)" strokeOpacity={0.55} />
               {series.map((s) => {
                 const v = s.values[active];
                 return v === null ? null : (
-                  <circle key={s.key} cx={cx} cy={y(v)} r={4} fill={SERIES_VAR(s.color ?? (s.kind === 'dashed' ? 'neutral' : 'accent'))} stroke="var(--surface)" strokeWidth={2} />
+                  <circle key={s.key} cx={0} cy={0} r={4} className="transition-transform duration-(--dur-hover) ease-out" style={{ transform: `translateY(${y(v)}px)` }} fill={SERIES_VAR(s.color ?? (s.kind === 'dashed' ? 'neutral' : 'accent'))} stroke="var(--surface)" strokeWidth={2} />
                 );
               })}
             </g>

@@ -31,12 +31,14 @@ export function Sparkline({ values, color = 'accent', height = 36, className }: 
               <stop offset="1" stopColor={c} stopOpacity="0" />
             </linearGradient>
           </defs>
+          <g key={values.length}>
           <path d={`${line}L${W},${H}L0,${H}Z`} fill={`url(#${id})`} className="reveal-x" />
           <path d={line} fill="none" stroke={c} strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" pathLength={1} className="draw" />
+          </g>
           {at ? (
-            <g>
-              <line x1={at[0]} x2={at[0]} y1={0} y2={H} stroke="var(--ink-3)" strokeOpacity={0.45} />
-              <circle cx={at[0]} cy={at[1]} r={3} fill={c} stroke="var(--surface)" strokeWidth={1.5} />
+            <g className="transition-transform duration-(--dur-hover) ease-out" style={{ transform: `translateX(${at[0]}px)` }}>
+              <line x1={0} x2={0} y1={0} y2={H} stroke="var(--ink-3)" strokeOpacity={0.45} />
+              <circle cx={0} cy={0} r={3} className="transition-transform duration-(--dur-hover) ease-out" style={{ transform: `translateY(${at[1]}px)` }} fill={c} stroke="var(--surface)" strokeWidth={1.5} />
             </g>
           ) : null}
         </svg>
