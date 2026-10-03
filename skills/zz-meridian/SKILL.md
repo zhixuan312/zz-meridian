@@ -72,6 +72,11 @@ the theme sets lightness so contrast holds). The script registers the accent eve
 every theme, and lowers a theme's fill lightness by itself if white text would fail. Keep the Atlas (`/system`) while
 building; it is the live specification. Pass `--no-atlas` only when the person wants it gone.
 
+Status colours own three hues: critical near 22°, warning near 68°, positive near 158°. A brand hue within 20° of one
+(a red, amber or green brand) makes every button and selection read as an alert or as "healthy", and the script prints
+a warning when it happens. Do not ship it silently: tell the person, and offer graphite or the nearest hue 20° or more
+away, with the exact brand colour kept in the logo mark.
+
 ## 5. Build the product
 
 Read `references/customize.md` and follow it. In short:

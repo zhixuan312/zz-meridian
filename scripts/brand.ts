@@ -109,6 +109,15 @@ if (hue !== undefined) {
     if (step === 7) console.log('Contrast still fails for this hue; lower --chroma and run again:\n' + fails.join('\n'));
   }
   done.push(`accent ${id}: hue ${h}, chroma ${c}`);
+
+  // A brand hue close to a status hue makes every accent fill read as a state: a jade brand looks like "healthy".
+  const status = json('tokens/palette.tokens.json').palette.status as Record<string, { $value: { components: number[] } }>;
+  const hues = new Map<string, number>();
+  for (const [name, t] of Object.entries(status)) hues.set(name.split('-')[0], hues.get(name.split('-')[0]) ?? t.$value.components[2]);
+  for (const [role, sh] of hues) {
+    const d = Math.min(Math.abs(h - sh), 360 - Math.abs(h - sh));
+    if (d < 20) done.push(`warning: hue ${h} is ${Math.round(d)}° from the ${role} status hue (${sh}); accent fills will read as ${role}. Consider graphite, or a hue at least 20° away, and keep the brand colour in the logo`);
+  }
 } else {
   const accent = opt('--accent');
   if (accent) defaultAccent(accent);
