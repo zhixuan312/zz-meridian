@@ -1,13 +1,14 @@
 /**
  * Verify a Meridian project against the standard, in one command: the gate, a production build, the built app
- * started on a free port, the browser audit of every page and embed view against it, every control pressed and every
+ * started on a free port twice (without the assistant, then with it pointed at a fake LLM), the assistant walk-through
+ * (scripts/assistant.ts), the browser audit of every page and embed view against it, every control pressed and every
  * link followed (scripts/interactions.ts), and a report.
  *
  *   pnpm verify [--quick] [--extra /requests/req_1,/customers/acme]
  *
  * Exit 0 only when everything passes. The report is written to out/verify.txt.
  */
-import { spawn, spawnSync } from 'node:child_process';
+import { spawn, spawnSync, type ChildProcess } from 'node:child_process';
 import fs from 'node:fs';
 import net from 'node:net';
 import path from 'node:path';
@@ -22,47 +23,83 @@ const finish = (code: number) => {
   process.exit(code);
 };
 
-function step(name: string, cmd: string, args: string[]) {
+const freePort = () => new Promise<number>((res) => { const s = net.createServer(); s.listen(0, () => { const p = (s.address() as net.AddressInfo).port; s.close(() => res(p)); }); });
+
+// The assistant is off unless configured: the build and the first start must not see the caller's own variables.
+const clean: NodeJS.ProcessEnv = { ...process.env };
+for (const k of Object.keys(clean)) if (k.startsWith('ASSISTANT_')) delete clean[k];
+
+function step(name: string, cmd: string, args: string[], env = clean) {
   const t = Date.now();
-  const r = spawnSync(cmd, args, { cwd: ROOT, encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 });
+  const r = spawnSync(cmd, args, { cwd: ROOT, env, encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 });
   const ok = r.status === 0;
   log(`${ok ? 'ok  ' : 'FAIL'} ${name} (${((Date.now() - t) / 1000).toFixed(1)}s)`);
   if (!ok) { log((r.stdout + r.stderr).trim().split('\n').slice(-60).join('\n')); finish(1); }
   return r.stdout;
 }
 
-const freePort = () => new Promise<number>((res) => { const s = net.createServer(); s.listen(0, () => { const p = (s.address() as net.AddressInfo).port; s.close(() => res(p)); }); });
+const children: ChildProcess[] = [];
+const stopAll = () => { for (const c of children) { try { process.kill(-c.pid!, 'SIGTERM'); } catch { /* already gone */ } } };
+process.on('exit', stopAll);
+const stop = (c: ChildProcess) => { try { process.kill(-c.pid!, 'SIGTERM'); } catch { /* already gone */ } };
 
-step('gate: tokens, registry, specifications, contrast, types, tests', 'node', ['scripts/gate.ts']);
-step('production build', 'pnpm', ['exec', 'next', 'build']);
-
-const port = await freePort();
-const server = spawn('pnpm', ['exec', 'next', 'start', '-p', String(port)], { cwd: ROOT, stdio: 'ignore', detached: true });
-const stop = () => { try { process.kill(-server.pid!, 'SIGTERM'); } catch { /* already gone */ } };
-process.on('exit', stop);
-let up = false;
-for (let i = 0; i < 120 && !up; i++) {
-  try { up = (await fetch(`http://127.0.0.1:${port}/`)).status < 500; } catch { await new Promise((r) => setTimeout(r, 500)); }
+/** Start the built app on a free port with the given environment and wait until it answers. */
+async function start(env: NodeJS.ProcessEnv) {
+  const port = await freePort();
+  const server = spawn('pnpm', ['exec', 'next', 'start', '-p', String(port)], { cwd: ROOT, env, stdio: 'ignore', detached: true });
+  children.push(server);
+  for (let i = 0; i < 120; i++) {
+    try { if ((await fetch(`http://127.0.0.1:${port}/`)).status < 500) return { port, server }; } catch { await new Promise((r) => setTimeout(r, 500)); }
+  }
+  log('FAIL the built app did not start'); finish(1);
+  throw new Error('unreachable');
 }
-if (!up) { log('FAIL the built app did not start'); stop(); finish(1); }
-log(`ok   the built app is serving on port ${port}`);
 
-// The audit and the presses each run their own browser, so they run side by side against the one built app.
-const browse = (script: string) => new Promise<{ status: number | null; out: string }>((resolve) => {
-  const child = spawn('node', [script, '--base', `http://127.0.0.1:${port}`, ...pass], { cwd: ROOT, env: { ...process.env, DPR: process.env.DPR ?? '1' } });
+/** Run a node script to completion and keep what it printed. */
+const run = (script: string, extra: string[], env: NodeJS.ProcessEnv = process.env) => new Promise<{ status: number | null; out: string }>((resolve) => {
+  const child = spawn('node', [script, ...extra], { cwd: ROOT, env: { ...env, DPR: process.env.DPR ?? '1' } as NodeJS.ProcessEnv });
   let out = '';
   child.stdout.on('data', (d) => (out += d));
   child.stderr.on('data', (d) => (out += d));
   child.on('close', (status) => resolve({ status, out: out.trim() }));
 });
+
+step('gate: tokens, registry, specifications, contrast, types, tests', 'node', ['scripts/gate.ts']);
+step('production build', 'pnpm', ['exec', 'next', 'build']);
+
+// Start 1: no variables. The assistant must be absent.
+const first = await start(clean);
+const off = await run('scripts/assistant.ts', ['--base', `http://127.0.0.1:${first.port}`, '--expect', 'off'], clean);
+stop(first.server);
+log(off.out);
+if (off.status !== 0) { log('FAIL assistant off'); finish(1); }
+
+// Start 2: pointed at the fake LLM. The audit and the presses then see the launcher.
+const fake = spawn('node', ['scripts/fake-llm.ts', '--port', '0'], { cwd: ROOT, stdio: ['ignore', 'pipe', 'inherit'], detached: true });
+children.push(fake);
+const llmUrl = await new Promise<string>((resolve) => {
+  let buf = '';
+  fake.stdout!.on('data', (d) => { buf += d; const m = /fake-llm listening on (\S+)/.exec(buf); if (m) resolve(m[1]); });
+  fake.on('close', () => resolve(''));
+});
+if (!llmUrl) { log('FAIL the fake LLM did not start'); finish(1); }
+const { port } = await start({ ...clean, ASSISTANT_PROVIDER: 'openai-compatible', ASSISTANT_BASE_URL: llmUrl, ASSISTANT_API_KEY: 'test-key', ASSISTANT_MODEL: 'fake' });
+log(`ok   the built app is serving on port ${port}`);
+
+// The audit and the presses each run their own browser, so they run side by side against the one built app.
 const t = Date.now();
-const [audit, presses] = await Promise.all([browse('scripts/audit.ts'), browse('scripts/interactions.ts')]);
-stop();
+const base = ['--base', `http://127.0.0.1:${port}`, ...pass];
+const [audit, presses] = await Promise.all([run('scripts/audit.ts', base), run('scripts/interactions.ts', base)]);
 log(audit.status === 0 ? 'ok   browser audit' : 'FAIL browser audit');
 log(audit.out.split('\n').slice(-80).join('\n'));
 log(presses.status === 0 ? 'ok   every control and link works' : 'FAIL controls or links that do nothing');
 log(presses.out.split('\n').slice(-40).join('\n'));
 log(`(browser checks ${((Date.now() - t) / 60_000).toFixed(1)} min)`);
-const ok = audit.status === 0 && presses.status === 0;
+
+const on = await run('scripts/assistant.ts', ['--base', `http://127.0.0.1:${port}`, '--expect', 'on', '--llm', llmUrl]);
+log(on.out);
+if (on.status !== 0) log('FAIL assistant on');
+stopAll();
+const ok = audit.status === 0 && presses.status === 0 && on.status === 0;
 log(ok ? '\nverify: the project meets the Meridian standard' : '\nverify: fix the issues above and run pnpm verify again');
 finish(ok ? 0 : 1);
