@@ -1,0 +1,49 @@
+# Members page
+
+Who is in the workspace, what role and team they hold, and when they last used it: invite someone, suspend or reactivate them, or remove them.
+
+Status: beta
+
+## Structure
+
+| Row | Pattern | Console | Mobile |
+|---|---|---|---|
+| Masthead | PageFrame: kicker, "Members", one sentence, Invite member (primary) | One band | Stacked |
+| 1 | Data table: Name (avatar and name, grow), Email (from 1024px), Role (from 768px), Team (from 1280px), Status, Joined (from 1280px), Last active, and a row action menu | Columns | Cards: name and the menu, then status, team and last active |
+| Sheet | Invite a member: Name and Email (required), Role, Team; Cancel and Send invitation | From the right, 440px | From the bottom |
+| Dialog | Remove: "Remove {name}?", the consequence, and the suspend alternative; Cancel and Remove member (danger) | Centred | Bottom sheet |
+
+The row menu holds Suspend (Reactivate on a suspended member) and Remove.
+
+## States
+
+| State | What shows |
+|---|---|
+| Default | Newest members first |
+| Invited | The status Badge in `accent`; Last active reads "Never" in `ink-3` |
+| Suspended | The status Badge in `warning` |
+| Name or email missing | The field's error under it; nothing is sent |
+| Changed | The page refreshes from the collection and a toast confirms: "Member suspended", "Member reactivated", "Member removed", "Invitation sent to {email}" |
+| Rejected | A critical toast with the reason; the table does not change |
+| No members | The first-run empty state with Invite member |
+
+## Data
+
+The `members` collection in `src/data/collections.ts`, read with `members.query({})` at request time. Server actions in `actions.ts` call `members.create` (status `Invited`, joined today by the data's clock, never active), `members.update` (status) and `members.remove`; the view refreshes the page after each and keeps no copy of the rows. Last active is relative to the data's clock.
+
+## Embed view
+
+Not offered. Inviting and removing people are decisions for the console, not a chat.
+
+## Surfaces
+
+- **Console**: as above. **Mobile**: cards, the sheet and the dialog rise from the bottom. **Embed**: not offered.
+
+## Agents
+
+The assistant reads and proposes changes here through Proposals: it adds, changes and removes members only after a person approves, and what it changed shows on this page after a refresh. A change made here is what the assistant reads next.
+
+## Content
+
+- One verb through each flow: "Remove member", "Remove {name}?", "Member removed".
+- Statuses are words ("Invited", "Suspended"), never colour alone.

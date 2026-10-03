@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useTransition } from 'react';
+import { useRouter } from 'next/navigation';
 import { KeyRound, Plus, Trash2 } from 'lucide-react';
 import { app } from '@/app.config';
 import { PageFrame, Stack } from '@/components/base/shell';
@@ -23,8 +24,12 @@ import type { ApiKey } from '@/system/fixtures/sample-records';
 
 const SCOPES = ['messages', 'search', 'embeddings', 'files', 'webhooks'];
 
-export function KeysView({ initial }: { initial: ApiKey[] }) {
-  const [keys, setKeys] = useState(initial);
+type Draft = { name: string; env: 'live' | 'test'; scopes: string[] };
+
+/** The server actions arrive as props: the page owns them, the view only calls them and refreshes the route. */
+export function KeysView({ rows, createKey, revokeKey }: { rows: ApiKey[]; createKey: (draft: Draft) => Promise<ApiKey>; revokeKey: (id: string) => Promise<void> }) {
+  const router = useRouter();
+  const [pending, startTransition] = useTransition();
   const [creating, setCreating] = useState(false);
   const [revoking, setRevoking] = useState<ApiKey | null>(null);
   const [fresh, setFresh] = useState<ApiKey | null>(null);
@@ -33,17 +38,26 @@ export function KeysView({ initial }: { initial: ApiKey[] }) {
   const [scopes, setScopes] = useState<string[]>(['messages']);
   const [error, setError] = useState<string | null>(null);
 
+  /** Runs an action, refreshes the route on success, and shows a critical toast, changing nothing, when it is rejected. */
+  const run = (action: () => Promise<void>, failed: string) =>
+    startTransition(async () => {
+      try {
+        await action();
+        router.refresh();
+      } catch (e) {
+        toast({ tone: 'critical', title: failed, description: e instanceof Error ? e.message : undefined });
+      }
+    });
+
   const create = () => {
     if (!name.trim()) return setError('Name the key after what uses it: "Billing worker".');
-    const k: ApiKey = {
-      id: `key_${keys.length + 10}`, name: name.trim(), env, scopes, owner: 'Maya Chen', created: DEMO_NOW.toISOString(), lastUsed: null,
-      secret: `zzm_${env}_${Array.from({ length: 32 }, (_, i) => '0123456789abcdef'[(i * 7 + name.length * 3) % 16]).join('')}`,
-    };
-    setKeys((ks) => [k, ...ks]);
-    setFresh(k);
-    setCreating(false);
-    setName(''); setScopes(['messages']); setError(null);
-    toast({ tone: 'positive', title: 'Key created', description: `${k.name} can call ${k.scopes.join(', ')}.` });
+    run(async () => {
+      const k = await createKey({ name, env, scopes });
+      setFresh(k);
+      setCreating(false);
+      setName(''); setScopes(['messages']); setError(null);
+      toast({ tone: 'positive', title: 'Key created', description: `${k.name} can call ${k.scopes.join(', ')}.` });
+    }, 'Could not create the key');
   };
 
   const columns: Column<ApiKey>[] = [
@@ -100,7 +114,7 @@ export function KeysView({ initial }: { initial: ApiKey[] }) {
         <DataTable
           caption="API keys"
           noun="keys"
-          rows={keys}
+          rows={rows}
           columns={columns}
           rowKey={(k) => k.id}
           empty={{ title: 'No keys yet', body: `Create a key for each service that calls ${app.name}.`, action: <Button variant="primary" size="sm" icon={<Plus />} onClick={() => setCreating(true)}>Create key</Button> }}
@@ -112,7 +126,7 @@ export function KeysView({ initial }: { initial: ApiKey[] }) {
         <SheetContent
           title="Create a key"
           description="The key is shown once, after you create it."
-          footer={<><SheetClose asChild><Button variant="ghost">Cancel</Button></SheetClose><Button variant="primary" onClick={create}>Create key</Button></>}
+          footer={<><SheetClose asChild><Button variant="ghost">Cancel</Button></SheetClose><Button variant="primary" onClick={create} disabled={pending}>Create key</Button></>}
         >
           <div className="flex flex-col gap-6">
             <Field label="Name" hint="Name it after what uses it." error={error ?? undefined} required>
@@ -141,11 +155,13 @@ export function KeysView({ initial }: { initial: ApiKey[] }) {
           footer={
             <>
               <DialogClose asChild><Button variant="ghost">Cancel</Button></DialogClose>
-              <Button variant="danger" icon={<Trash2 />} onClick={() => {
+              <Button variant="danger" icon={<Trash2 />} disabled={pending} onClick={() => {
                 const k = revoking!;
-                setKeys((ks) => ks.filter((x) => x.id !== k.id));
-                setRevoking(null);
-                toast({ tone: 'neutral', title: 'Key revoked', description: `${k.name} no longer works.` });
+                run(async () => {
+                  await revokeKey(k.id);
+                  setRevoking(null);
+                  toast({ tone: 'neutral', title: 'Key revoked', description: `${k.name} no longer works.` });
+                }, 'Could not revoke the key');
               }}>Revoke key</Button>
             </>
           }

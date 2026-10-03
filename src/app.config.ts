@@ -1,5 +1,5 @@
 import {
-  Activity, BarChart3, Boxes, FileText, Gauge, KeyRound, LayoutGrid, Settings, Users, type LucideIcon,
+  Activity, BarChart3, Boxes, FileText, Gauge, KeyRound, LayoutGrid, Settings, UserRound, Users, type LucideIcon,
 } from 'lucide-react';
 
 /**
@@ -43,6 +43,7 @@ export const nav: NavGroup[] = [
   {
     label: 'Workspace',
     items: [
+      { href: '/members', label: 'Members', icon: UserRound },
       { href: '/settings', label: 'Settings', icon: Settings },
       { href: '/system', label: 'Design system', icon: Boxes },
       { href: '/system/start/start-a-dashboard', label: 'Docs', icon: FileText },

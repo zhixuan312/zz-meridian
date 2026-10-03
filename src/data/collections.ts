@@ -50,6 +50,7 @@ export const keys = arrayCollection<ApiKey, 'id'>({
   rows: API_KEYS,
   allow: ['create', 'remove'],
   pageOnly: ['create'],
+  hidden: ['secret'],
 });
 
 export const requests = arrayCollection<RequestRow, 'id'>({

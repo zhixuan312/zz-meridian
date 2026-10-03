@@ -9,10 +9,6 @@ export const statusClass = (s: number): StatusClass => (s >= 500 ? '5xx' : s >= 
 export const statusTone = (s: number) => (s >= 500 ? 'critical' : s === 429 ? 'warning' : s >= 400 ? 'warning' : 'neutral') as 'critical' | 'warning' | 'neutral';
 export const STATUS_TEXT: Record<number, string> = { 200: 'OK', 201: 'Created', 400: 'Bad request', 404: 'Not found', 429: 'Rate limited', 500: 'Server error', 503: 'Unavailable' };
 
-export function requestById(id: string): RequestRow | undefined {
-  return REQUESTS.find((r) => r.id === id);
-}
-
 /** The ids the detail route builds ahead of time; any other id still renders on demand. */
 export const FEATURED_REQUEST_IDS = REQUESTS.slice(0, 12).map((r) => r.id);
 

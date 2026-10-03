@@ -1,14 +1,15 @@
 import { Suspense } from 'react';
-import { REQUESTS } from '@/system/fixtures/sample';
+import { requests } from '@/data/collections';
 import { RequestsView } from '@/views/requests';
 
 export const metadata = { title: 'Requests' };
 
 /** The request log. Filters, sort and page live in the address (?status=5xx&sort=latency), so every view is a link. */
-export default function RequestsPage() {
+export default async function RequestsPage() {
+  const { rows } = await requests.query({});
   return (
     <Suspense>
-      <RequestsView rows={REQUESTS} />
+      <RequestsView rows={rows} />
     </Suspense>
   );
 }

@@ -27,7 +27,7 @@ afterEach(() => { process.env = { ...saved }; });
 describe('respond', () => {
   test('streams the model answer as a UI message stream', async () => {
     const model = new MockLanguageModelV4({ doStream: async () => say('This is the Members page.') });
-    const res = await respond({ model, secret: 's'.repeat(43), messages: ask('What is this page?'), page: { path: '/members', title: 'Members', text: 'Members\nAlice Moreno' } });
+    const res = await respond({ model, secret: 's'.repeat(43), messages: ask('What is this page?'), page: { path: '/members', title: 'Members', text: 'Members\nAlice Moreno' }, collections: [], now: new Date('2026-10-03T09:00:00Z') });
     expect(res.headers.get('content-type')).toContain('text/event-stream');
     const text = (await events(res)).filter((e) => e.type === 'text-delta').map((e) => e.delta).join('');
     expect(text).toBe('This is the Members page.');
@@ -36,7 +36,7 @@ describe('respond', () => {
   test('gives the model the page as data: path, title, and the visible text cut to 24,000 characters', async () => {
     let prompt: any[] = [];
     const model = new MockLanguageModelV4({ doStream: async (o: any) => { prompt = o.prompt; return say('ok'); } });
-    await (await respond({ model, secret: 's'.repeat(43), messages: ask('Explain'), page: { path: '/health', title: 'Health', text: 'x'.repeat(30_000) } })).text();
+    await (await respond({ model, secret: 's'.repeat(43), messages: ask('Explain'), page: { path: '/health', title: 'Health', text: 'x'.repeat(30_000) }, collections: [], now: new Date('2026-10-03T09:00:00Z') })).text();
     const system = prompt.filter((m) => m.role === 'system').map((m) => m.content).join('\n');
     expect(system).toContain('Page: Health (/health)');
     expect(system).toMatch(/Today: \d{4}-\d{2}-\d{2}/);

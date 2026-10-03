@@ -1,5 +1,6 @@
 import type { UIMessage } from 'ai';
 import { assistantConfig } from '@/lib/assistant/config';
+import { clock, collections } from '@/data/collections';
 import { respond } from '@/lib/assistant/respond';
 
 /** `POST /api/assistant`: answers about the page the person is on. 404 until the `ASSISTANT_*` variables are set. */
@@ -14,6 +15,8 @@ export async function POST(request: Request): Promise<Response> {
 
   return respond({
     ...config,
+    collections,
+    now: clock(),
     messages: messages as UIMessage[],
     page: { path: String(page?.path ?? ''), title: String(page?.title ?? ''), text: String(page?.text ?? '') },
   });

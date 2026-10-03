@@ -18,7 +18,7 @@ Status: beta
 
 | State | What shows |
 |---|---|
-| Default | Keys newest first as listed |
+| Default | The collection's keys, in its order |
 | Just created | The accent Banner with the only full view of the secret; a toast "Key created" |
 | Name missing | The Name field's error: "Name the key after what uses it" |
 | Revoked | The row leaves; a toast "Key revoked" |
@@ -27,7 +27,7 @@ Status: beta
 
 ## Data
 
-`API_KEYS` from `src/system/fixtures/sample-records.ts`. A secret is always masked in the table; Copy copies the real value without revealing it.
+The keys come from `collections.keys` (`src/data/collections.ts`), read on every request. Create and Revoke are server actions (`actions.ts`) that call `keys.create` and `keys.remove`, then the view refreshes the route; a rejected action shows a critical toast and changes nothing. The secret is generated on the server and shown once, in the banner. A secret is always masked in the table; Copy copies the real value without revealing it.
 
 ## Embed view
 
@@ -39,7 +39,7 @@ Not offered. Keys are secrets and revoking is destructive; neither belongs in a 
 
 ## Agents
 
-An agent may say which keys are unused (from the shared context of other views); it never creates or revokes a key. A revocation it recommends is a Proposal that links here.
+An agent may say which keys are unused (from the shared context of other views) and may propose revoking a key; it never creates one. The proposal waits for approval, and its approval removes the key through the same collection.
 
 ## Content
 

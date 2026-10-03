@@ -21,6 +21,8 @@ export type Collection<T extends Record<string, unknown>, K extends keyof T & st
   remove?: (ids: string[]) => Promise<number>;
   /** Operations only a page may perform; the assistant and an MCP server never get them. */
   pageOnly?: Op[];
+  /** Fields only a page may see: left out of every assistant tool's input and result. */
+  hidden?: (keyof T)[];
 };
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -62,6 +64,7 @@ export function arrayCollection<T extends Record<string, unknown>, K extends key
   rows: T[];
   allow: readonly Op[];
   pageOnly?: Op[];
+  hidden?: (keyof T)[];
 }): Collection<T, K> {
   const { name, key, allow } = def;
   if (!stores().has(name)) stores().set(name, structuredClone(def.rows));
@@ -82,6 +85,7 @@ export function arrayCollection<T extends Record<string, unknown>, K extends key
     key,
     title: def.title,
     pageOnly: def.pageOnly,
+    hidden: def.hidden,
     async query({ where = [], sort, limit }) {
       const hits = rows().filter((r) => where.every((w) => matches(r, w)));
       if (sort) {
@@ -120,9 +124,14 @@ export function arrayCollection<T extends Record<string, unknown>, K extends key
   return c;
 }
 
-/** The input schema of the query tool: field names come from the collection, so an unknown field is rejected. */
+/** The collection's fields without its hidden ones. */
+export function visibleFields(c: AnyCollection): z.ZodObject {
+  return c.fields.omit(Object.fromEntries(((c.hidden ?? []) as string[]).map((f) => [f, true])) as Record<string, true>).strict();
+}
+
+/** The input schema of the query tool: field names come from the collection, so an unknown or hidden field is rejected. */
 export function queryInput(c: AnyCollection) {
-  const field = z.enum([c.key, ...Object.keys(c.fields.shape)] as [string, ...string[]]);
+  const field = z.enum([c.key, ...Object.keys(visibleFields(c).shape)] as [string, ...string[]]);
   const scalar = z.union([z.string(), z.number(), z.boolean(), z.null()]);
   return z.object({
     where: z.array(z.object({ field, op: z.enum(['eq', 'ne', 'gt', 'lt', 'contains', 'in']), value: z.union([scalar, z.array(scalar)]) })).optional(),
