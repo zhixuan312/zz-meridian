@@ -13,20 +13,73 @@ import type { AddressInfo } from 'node:net';
 import { pathToFileURL } from 'node:url';
 
 type Message = { role?: string; content?: unknown };
+type Call = { name: string; args: object };
+type Reply = { text: string } | { calls: Call[] };
 
-/** The scripted reply for a request. Later phases add their cases here. */
-function script(body: { messages?: Message[] }): { text: string } {
-  const system = (body.messages ?? []).find((m) => m.role === 'system');
-  const content = typeof system?.content === 'string' ? system.content : '';
-  const title = /Page: (.+?) \(/.exec(content)?.[1];
+const textOf = (content: unknown): string =>
+  typeof content === 'string' ? content : Array.isArray(content) ? content.map((p) => (typeof p?.text === 'string' ? p.text : '')).join('') : '';
+
+/** The rows each tool result in the history returned, newest result first. */
+function rowsIn(messages: Message[]): { id: string; name: string }[][] {
+  const results: { id: string; name: string }[][] = [];
+  for (const m of messages) {
+    if (m.role !== 'tool') continue;
+    try {
+      const out = JSON.parse(textOf(m.content));
+      if (Array.isArray(out?.rows)) results.unshift(out.rows);
+    } catch { /* a denial or an error is plain text */ }
+  }
+  return results;
+}
+
+/** `days` before the YYYY-MM-DD `day`, as YYYY-MM-DD. */
+const daysBefore = (day: string, days: number) => new Date(Date.parse(day) - days * 86_400_000).toISOString().slice(0, 10);
+
+/** The scripted reply for a request, chosen by the last message. Without a scripted case it answers about the page. */
+function script(body: { messages?: Message[] }): Reply {
+  const messages = body.messages ?? [];
+  const system = textOf(messages.find((m) => m.role === 'system')?.content);
+  const last = messages.at(-1);
+
+  if (last?.role === 'tool') {
+    let out: unknown;
+    try { out = JSON.parse(textOf(last.content)); } catch { return { text: 'Nothing changed.' }; }
+    const rows = (out as { rows?: { name?: string }[] } | null)?.rows;
+    if (Array.isArray(rows)) return { text: rows.length ? `${rows.length} found: ${rows.map((r) => r.name).join(', ')}.` : 'None found.' };
+    return { text: 'Done.' };
+  }
+
+  if (last?.role === 'user') {
+    const said = textOf(last.content).trim();
+    const today = /Today: (\d{4}-\d{2}-\d{2})/.exec(system)?.[1];
+    if (today && /support/i.test(said) && /60 days/i.test(said)) {
+      const where = [{ field: 'team', op: 'eq', value: 'Support' }, { field: 'role', op: 'eq', value: 'Viewer' }, { field: 'lastActive', op: 'lt', value: daysBefore(today, 60) }];
+      return { calls: [{ name: 'query_members', args: { where } }] };
+    }
+    if (/^suspend them/i.test(said)) {
+      const ids = (rowsIn(messages)[0] ?? []).map((r) => r.id);
+      if (ids.length) return { calls: [{ name: 'update_members', args: { ids, set: { status: 'Suspended' } } }] };
+    }
+    const remove = /^remove (.+?)\.?$/i.exec(said)?.[1];
+    if (remove) {
+      const row = rowsIn(messages).flat().find((r) => r.name.toLowerCase() === remove.toLowerCase());
+      if (row) return { calls: [{ name: 'remove_members', args: { ids: [row.id] } }] };
+    }
+    if (/who is suspended/i.test(said)) return { calls: [{ name: 'query_members', args: { where: [{ field: 'status', op: 'eq', value: 'Suspended' }] } }] };
+  }
+
+  const title = /Page: (.+?) \(/.exec(system)?.[1];
   return { text: title ? `This is the ${title} page.` : 'Hello.' };
 }
 
-function completion(body: { model?: string }, reply: { text: string }) {
+function completion(body: { model?: string }, reply: Reply) {
   const base = { id: 'chatcmpl-fake', created: Math.floor(Date.now() / 1000), model: body.model ?? 'fake-model' };
   const usage = { prompt_tokens: 1, completion_tokens: 1, total_tokens: 2 };
   return { base, usage, reply };
 }
+
+/** Calls in the chat-completions shape, with the arguments as a JSON string. */
+const toolCalls = (calls: Call[]) => calls.map((c, i) => ({ id: `call_fake_${Date.now()}_${i}`, type: 'function', function: { name: c.name, arguments: JSON.stringify(c.args) } }));
 
 function send(res: http.ServerResponse, status: number, json: unknown) {
   res.writeHead(status, { 'content-type': 'application/json' });
@@ -59,7 +112,7 @@ export async function startFakeLlm({ port }: { port: number }) {
         return send(res, 200, {
           ...base,
           object: 'chat.completion',
-          choices: [{ index: 0, message: { role: 'assistant', content: reply.text }, finish_reason: 'stop' }],
+          choices: [{ index: 0, message: 'calls' in reply ? { role: 'assistant', content: null, tool_calls: toolCalls(reply.calls) } : { role: 'assistant', content: reply.text }, finish_reason: 'calls' in reply ? 'tool_calls' : 'stop' }],
           usage,
         });
       }
@@ -68,8 +121,13 @@ export async function startFakeLlm({ port }: { port: number }) {
       const emit = (delta: object, finish_reason: string | null, extra: object = {}) =>
         res.write(`data: ${JSON.stringify({ ...base, object: 'chat.completion.chunk', choices: [{ index: 0, delta, finish_reason }], ...extra })}\n\n`);
       emit({ role: 'assistant', content: '' }, null);
-      emit({ content: reply.text }, null);
-      emit({}, 'stop', { usage });
+      if ('calls' in reply) {
+        toolCalls(reply.calls).forEach((c, index) => emit({ tool_calls: [{ index, ...c }] }, null));
+        emit({}, 'tool_calls', { usage });
+      } else {
+        emit({ content: reply.text }, null);
+        emit({}, 'stop', { usage });
+      }
       res.write('data: [DONE]\n\n');
       res.end();
     });

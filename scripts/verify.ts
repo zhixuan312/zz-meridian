@@ -1,7 +1,7 @@
 /**
  * Verify a Meridian project against the standard, in one command: the gate, a production build, the built app
  * started on a free port twice (without the assistant, then with it pointed at a fake LLM), the assistant walk-through
- * (scripts/assistant.ts), the browser audit of every page and embed view against it, every control pressed and every
+ * (scripts/assistant.ts, which asks, approves and dismisses on /members), the browser audit of every page and embed view against it, every control pressed and every
  * link followed (scripts/interactions.ts), and a report.
  *
  *   pnpm verify [--quick] [--extra /requests/req_1,/customers/acme]
@@ -86,6 +86,12 @@ if (!llmUrl) { log('FAIL the fake LLM did not start'); finish(1); }
 const { port } = await start({ ...clean, ASSISTANT_PROVIDER: 'openai-compatible', ASSISTANT_BASE_URL: llmUrl, ASSISTANT_API_KEY: 'test-key', ASSISTANT_MODEL: 'fake' });
 log(`ok   the built app is serving on port ${port}`);
 
+// The walk-through changes the sample's data (it suspends members), so it runs first and alone; the audit and the
+// presses then run on what it left, and their presses never change what it reads.
+const on = await run('scripts/assistant.ts', ['--base', `http://127.0.0.1:${port}`, '--expect', 'on', '--llm', llmUrl]);
+log(on.out);
+if (on.status !== 0) log('FAIL assistant on');
+
 // The audit and the presses each run their own browser, so they run side by side against the one built app.
 const t = Date.now();
 const base = ['--base', `http://127.0.0.1:${port}`, ...pass];
@@ -95,10 +101,6 @@ log(audit.out.split('\n').slice(-80).join('\n'));
 log(presses.status === 0 ? 'ok   every control and link works' : 'FAIL controls or links that do nothing');
 log(presses.out.split('\n').slice(-40).join('\n'));
 log(`(browser checks ${((Date.now() - t) / 60_000).toFixed(1)} min)`);
-
-const on = await run('scripts/assistant.ts', ['--base', `http://127.0.0.1:${port}`, '--expect', 'on', '--llm', llmUrl]);
-log(on.out);
-if (on.status !== 0) log('FAIL assistant on');
 stopAll();
 const ok = audit.status === 0 && presses.status === 0 && on.status === 0;
 log(ok ? '\nverify: the project meets the Meridian standard' : '\nverify: fix the issues above and run pnpm verify again');
