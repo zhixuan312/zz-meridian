@@ -99,7 +99,8 @@ export function TrendChart({
   };
 
   const active = index !== null && index < n ? index : null;
-  const cx = active !== null ? x(active) : 0;
+  // On the pixel grid, so the 1px cursor line stays crisp while it glides.
+  const cx = active !== null ? Math.round(x(active)) + 0.5 : 0;
   const tipLeft = active !== null && cx > pad.l + W * 0.62;
 
   return (

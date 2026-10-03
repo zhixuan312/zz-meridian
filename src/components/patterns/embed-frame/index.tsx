@@ -49,7 +49,7 @@ export function EmbedFrame({
         onClick={() => s.openLink(consolePath)}
         className="press hit inline-flex h-7 items-center gap-1 rounded-md px-2 text-xs font-medium whitespace-nowrap text-ink-2 hover:bg-fill-hover hover:text-ink"
       >
-        Open<span className="@max-[440px]/embed:sr-only"> in {app.name}</span> <ArrowUpRight className="size-3.5" />
+        Open<span className="@max-[440px]/embed:sr-only"> in {app.name}</span><ArrowUpRight className="size-3.5" />
       </button>
     </div>
   );

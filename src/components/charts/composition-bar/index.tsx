@@ -1,10 +1,10 @@
 import { cn } from '@/lib/cn';
 import { SERIES_VAR } from '@/components/charts/scale';
 
-export type Part = { label: string; value: number; color?: number | 'accent' | 'neutral' | 'neutral-soft' | 'positive' | 'warning' | 'critical' };
+export type Part = { label: string; value: number; color?: number | 'accent' | 'neutral' | 'neutral-ink' | 'positive' | 'warning' | 'critical' };
 
 const fill = (c: Part['color'], i: number) =>
-  c === 'positive' || c === 'warning' || c === 'critical' ? `var(--${c})` : c === 'neutral-soft' ? 'var(--chart-neutral)' : SERIES_VAR(c ?? i + 1);
+  c === 'positive' || c === 'warning' || c === 'critical' ? `var(--${c})` : c === 'neutral-ink' ? 'var(--ink-2)' : SERIES_VAR(c ?? i + 1);
 
 /** One whole split into its parts: a single bar with a 2px gap between segments, and a legend that carries the numbers. */
 export function CompositionBar({ parts, format = (n) => n.toLocaleString('en-US'), label, className }: { parts: Part[]; format?: (n: number) => string; label: string; className?: string }) {

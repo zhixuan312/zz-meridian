@@ -60,6 +60,8 @@ Meridian held to the bar of award-winning sites (Awwwards, Webby, FWA) and of th
   - **Segmented control:** its thumb re-measures when its options change size.
   - **API keys** ends on how to rotate a key.
 
+- **The critic's final round** verified every item at 360, 768 and 1440px in both themes. It found one regression from the round before: 2xx in the Responses bar had taken the track colour, about 1.4:1. Now 2xx is `chart-neutral-strong` and 3xx is `ink-2`, both gated at 3:1 or more. Two nits were also fixed: the space before "Open ↗" in an embed, and the cursor line snapped to the pixel grid so it stays crisp while it glides. Final scores: typography 9, whitespace 8.5, hierarchy 9, colour 8 (before this fix), motion 8.5, micro-interaction 8.5, responsiveness 8.5, originality 8. All eight craft criteria pass once the 2xx contrast is fixed, and this commit fixes it.
+
 ## Open
 
 Taste calls the critic raised that are not taken yet, kept in view on purpose:

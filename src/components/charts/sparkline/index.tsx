@@ -36,7 +36,7 @@ export function Sparkline({ values, color = 'accent', height = 36, className }: 
           <path d={line} fill="none" stroke={c} strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" pathLength={1} className="draw" />
           </g>
           {at ? (
-            <g className="transition-transform duration-(--dur-hover) ease-out" style={{ transform: `translateX(${at[0]}px)` }}>
+            <g className="transition-transform duration-(--dur-hover) ease-out" style={{ transform: `translateX(${Math.round(at[0]) + 0.5}px)` }}>
               <line x1={0} x2={0} y1={0} y2={H} stroke="var(--ink-3)" strokeOpacity={0.45} />
               <circle cx={0} cy={0} r={3} className="transition-transform duration-(--dur-hover) ease-out" style={{ transform: `translateY(${at[1]}px)` }} fill={c} stroke="var(--surface)" strokeWidth={1.5} />
             </g>

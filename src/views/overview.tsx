@@ -124,8 +124,8 @@ export function OverviewBody({
                 format={formatCompact}
                 parts={[
                   // The normal case is the quietest part; only the classes that need a look carry status colour.
-                  { ...mix[0], color: 'neutral-soft' },
-                  { ...mix[1], color: 'neutral' },
+                  { ...mix[0], color: 'neutral' },
+                  { ...mix[1], color: 'neutral-ink' },
                   { ...mix[2], color: 'warning' },
                   { ...mix[3], color: 'critical' },
                 ]}
