@@ -13,6 +13,15 @@ const thread = [
 
 const noop = () => {};
 
+const change = { title: 'Change 2 members', tone: 'neutral', changes: [{ label: 'Alice Moreno', from: 'Active', to: 'Suspended' }, { label: 'Ravi Patel', from: 'Active', to: 'Suspended' }] };
+const removal = { title: 'Remove Alice Moreno', tone: 'critical', changes: [{ label: 'Alice Moreno', from: 'Members', to: 'Removed' }] };
+
+/** A turn proposing a change, with its tool part in the given state. */
+const proposing = (name: string, preview: object, tool: Record<string, unknown>): UIMessage[] => [
+  say('u', 'user', 'Make that change.'),
+  { id: 'a', role: 'assistant', parts: [{ type: 'text', text: 'Here is the change. Nothing happens until you approve it.' }, { type: 'data-proposal', id: 'c', data: preview }, { type: `tool-${name}`, toolCallId: 'c', input: {}, ...tool }] } as UIMessage,
+];
+
 export default function AssistantPreview() {
   return (
     <>
@@ -21,9 +30,15 @@ export default function AssistantPreview() {
         <State label="Open"><AssistantLauncher open onClick={noop} /></State>
       </Specimen>
       <Specimen label="Panel" note="From 1024px a third column at the assistant width; below it the same panel is a sheet over the page." className="items-start">
-        <State label="Empty"><AssistantPanel inline messages={[]} onSend={noop} onClose={noop} className="h-120 rounded-lg border" /></State>
-        <State label="A short thread"><AssistantPanel inline messages={thread} onSend={noop} onClose={noop} className="h-120 rounded-lg border" /></State>
-        <State label="Waiting for the answer"><AssistantPanel inline busy messages={thread.slice(0, 1)} onSend={noop} onClose={noop} className="h-120 rounded-lg border" /></State>
+        <State label="Empty"><AssistantPanel inline messages={[]} onSend={noop} onClose={noop} onDecide={noop} className="h-120 rounded-lg border" /></State>
+        <State label="A short thread"><AssistantPanel inline messages={thread} onSend={noop} onClose={noop} onDecide={noop} className="h-120 rounded-lg border" /></State>
+        <State label="Waiting for the answer"><AssistantPanel inline busy messages={thread.slice(0, 1)} onSend={noop} onClose={noop} onDecide={noop} className="h-120 rounded-lg border" /></State>
+      </Specimen>
+      <Specimen label="Changes" note="Every mutation arrives as a Proposal from the server's preview; only a waiting one shows buttons. A removal is critical. A change closed without an answer expires, with its reason." className="items-start">
+        <State label="Waiting"><AssistantPanel inline messages={proposing('update_members', change, { state: 'approval-requested', approval: { id: 'x' } })} onSend={noop} onClose={noop} onDecide={noop} className="h-120 rounded-lg border" /></State>
+        <State label="Waiting, a removal"><AssistantPanel inline messages={proposing('remove_members', removal, { state: 'approval-requested', approval: { id: 'x' } })} onSend={noop} onClose={noop} onDecide={noop} className="h-120 rounded-lg border" /></State>
+        <State label="Applied"><AssistantPanel inline messages={proposing('update_members', change, { state: 'output-available', output: [], approval: { id: 'x', approved: true } })} onSend={noop} onClose={noop} onDecide={noop} className="h-120 rounded-lg border" /></State>
+        <State label="Expired"><AssistantPanel inline messages={proposing('remove_members', removal, { state: 'output-denied', approval: { id: 'x', approved: false, reason: 'The page was reloaded before anyone approved it.' } })} onSend={noop} onClose={noop} onDecide={noop} className="h-120 rounded-lg border" /></State>
       </Specimen>
     </>
   );

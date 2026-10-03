@@ -1,14 +1,15 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from 'react';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { useChat } from '@ai-sdk/react';
-import { DefaultChatTransport, type UIMessage } from 'ai';
+import { DefaultChatTransport, lastAssistantMessageIsCompleteWithApprovalResponses, type UIMessage } from 'ai';
 import { ArrowUp, X } from 'lucide-react';
 import { cn } from '@/lib/cn';
 import { AgentMark } from '@/components/ui/agent-mark';
 import { Button } from '@/components/ui/button';
 import { IconButton } from '@/components/ui/icon-button';
+import { Proposal, type ProposalChange, type ProposalState } from '@/components/patterns/proposal';
 import { Textarea } from '@/components/ui/textarea';
 import type { PageContext } from '@/lib/assistant/prompt';
 
@@ -18,7 +19,45 @@ export function readPage(path: string): PageContext {
   return { path, title: region?.querySelector('h1')?.textContent ?? '', text: region?.innerText ?? '' };
 }
 
+type Preview = { title: string; tone: 'neutral' | 'critical'; changes: ProposalChange[] };
+/** The slice of an AI SDK tool part the panel reads. */
+type ToolPart = { type: string; toolCallId: string; state: string; approval?: { id: string; approved?: boolean; reason?: string } };
+
 const textOf = (m: UIMessage) => m.parts.map((p) => (p.type === 'text' ? p.text : '')).join('');
+const isMutation = (p: { type: string }) => p.type.startsWith('tool-') && !p.type.startsWith('tool-query_');
+
+/** The card's state for a tool part's state, and the reason a closed one carries. */
+function stateOf(part: ToolPart): { state: ProposalState; note?: string } | null {
+  switch (part.state) {
+    case 'approval-requested': return { state: 'pending' };
+    case 'approval-responded': return part.approval?.approved ? { state: 'applying' } : { state: 'dismissed' };
+    case 'output-available': return { state: 'applied' };
+    case 'output-error': return { state: 'failed' };
+    case 'output-denied': return part.approval?.reason ? { state: 'expired', note: part.approval.reason } : { state: 'dismissed' };
+    default: return null;
+  }
+}
+
+/** A mutation tool part drawn as a Proposal from the server's preview; nothing when there is no preview or state to draw. */
+function ProposalOf({ message, part, onDecide }: { message: UIMessage; part: ToolPart; onDecide: (approvalId: string, approved: boolean) => void }) {
+  const preview = message.parts.find((p) => p.type === 'data-proposal' && (p as { id?: string }).id === part.toolCallId) as { data: Preview } | undefined;
+  const shown = stateOf(part);
+  if (!preview || !shown) return null;
+  const id = part.approval?.id;
+  return (
+    <Proposal
+      agent="Assistant"
+      title={preview.data.title}
+      tone={preview.data.tone}
+      changes={preview.data.changes}
+      state={shown.state}
+      note={shown.note}
+      onApprove={id ? () => onDecide(id, true) : undefined}
+      onDismiss={id ? () => onDecide(id, false) : undefined}
+      className="w-full"
+    />
+  );
+}
 
 /** The top-bar button that opens and closes the panel. */
 export function AssistantLauncher({ open, onClick }: { open: boolean; onClick: () => void }) {
@@ -46,6 +85,7 @@ export function AssistantPanel({
   busy = false,
   onSend,
   onClose,
+  onDecide,
   inline,
   className,
 }: {
@@ -53,6 +93,8 @@ export function AssistantPanel({
   busy?: boolean;
   onSend: (text: string) => void;
   onClose: () => void;
+  /** Answers a waiting change: approve it or dismiss it, by the approval's id. */
+  onDecide: (approvalId: string, approved: boolean) => void;
   /** Draw in the flow instead of fixed to the viewport edge: for previews. */
   inline?: boolean;
   className?: string;
@@ -101,8 +143,18 @@ export function AssistantPanel({
         ) : (
           messages.map((m) => (
             <div key={m.id} data-role={m.role} className={cn('flex min-w-0 flex-col gap-1', m.role === 'user' && 'items-end')}>
-              {m.role === 'assistant' ? <span className="t-caption">Claude</span> : null}
-              <p className={cn('t-small max-w-full whitespace-pre-wrap [overflow-wrap:anywhere]', m.role === 'user' ? 'rounded-lg bg-fill-hover px-3 py-2 text-ink' : 'text-ink-2')}>{textOf(m)}</p>
+              {m.role === 'assistant' ? <span className="t-caption">Assistant</span> : null}
+              {m.role === 'user' ? (
+                <p className="t-small max-w-full whitespace-pre-wrap rounded-lg bg-fill-hover px-3 py-2 text-ink [overflow-wrap:anywhere]">{textOf(m)}</p>
+              ) : (
+                m.parts.map((p, i) =>
+                  p.type === 'text' ? (
+                    p.text ? <p key={i} className="t-small max-w-full whitespace-pre-wrap text-ink-2 [overflow-wrap:anywhere]">{p.text}</p> : null
+                  ) : isMutation(p) ? (
+                    <ProposalOf key={i} message={m} part={p as unknown as ToolPart} onDecide={onDecide} />
+                  ) : null,
+                )
+              )}
             </div>
           ))
         )}
@@ -141,7 +193,30 @@ export function AssistantColumn({ open, onClose }: { open: boolean; onClose: () 
     () => new DefaultChatTransport({ api: '/api/assistant', body: () => ({ page: readPage(pathRef.current) }) }),
     [],
   );
-  const { messages, sendMessage, status } = useChat({ transport });
+  const router = useRouter();
+  const { messages, sendMessage, addToolApprovalResponse, status } = useChat({
+    transport,
+    sendAutomaticallyWhen: lastAssistantMessageIsCompleteWithApprovalResponses,
+  });
+  // A change that applied is on the page's data now: refresh once per tool part.
+  const refreshed = useRef(new Set<string>());
+  useEffect(() => {
+    for (const m of messages) for (const p of m.parts) {
+      const part = p as unknown as ToolPart;
+      if (isMutation(p) && part.state === 'output-available' && !refreshed.current.has(part.toolCallId)) {
+        refreshed.current.add(part.toolCallId);
+        router.refresh();
+      }
+    }
+  }, [messages, router]);
   if (!open) return null;
-  return <AssistantPanel messages={messages} busy={status === 'submitted' || status === 'streaming'} onSend={(text) => sendMessage({ text })} onClose={onClose} />;
+  return (
+    <AssistantPanel
+      messages={messages}
+      busy={status === 'submitted' || status === 'streaming'}
+      onSend={(text) => sendMessage({ text })}
+      onDecide={(id, approved) => addToolApprovalResponse({ id, approved })}
+      onClose={onClose}
+    />
+  );
 }
