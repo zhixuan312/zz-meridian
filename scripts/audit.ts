@@ -162,5 +162,5 @@ for (const route of ROUTES) for (const w of WIDTHS) for (const t of THEMES) awai
 for (const route of EMBEDS) for (const w of quick ? [720] : [720, 420]) for (const t of THEMES) await run(route, w, t, true);
 page.close();
 console.log('\nDesign metrics at 1440:\n' + metrics.join('\n'));
-console.log(`\naudit: ${failures} issues across ${ROUTES.length + EMBEDS.length} routes`);
+console.log(`\naudit: ${failures} issues across ${ROUTES.length + EMBEDS.length} routes, at ${WIDTHS.join(', ')}px in ${THEMES.join(' and ')}`);
 process.exit(failures ? 1 : 0);
