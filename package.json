@@ -1,0 +1,52 @@
+{
+  "name": "zz-meridian",
+  "version": "0.1.0",
+  "private": true,
+  "license": "MIT",
+  "description": "ZZ Meridian: a dashboard design system and starter. DTCG tokens, five layers of React components and a Design Atlas, in a light and a dark theme.",
+  "type": "module",
+  "packageManager": "pnpm@11.9.0",
+  "engines": {
+    "node": ">=24.0.0"
+  },
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "tokens": "node scripts/tokens.ts",
+    "gate": "node scripts/gate.ts",
+    "audit": "node scripts/audit.ts",
+    "shot": "node scripts/shot.ts",
+    "contrast": "node scripts/contrast.ts",
+    "registry": "node scripts/registry.ts",
+    "check": "node scripts/check.ts",
+    "verify": "node scripts/verify.ts",
+    "brand": "node scripts/brand.ts"
+  },
+  "dependencies": {
+    "clsx": "^2.1.1",
+    "lucide-react": "^1.50.0",
+    "next": "16.3.8",
+    "radix-ui": "^1.6.7",
+    "react": "19.3.0",
+    "react-dom": "19.3.0",
+    "react-markdown": "^10.1.0",
+    "remark-gfm": "^4.0.1",
+    "tailwind-merge": "^3.7.0"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4.3.3",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.3",
+    "@types/node": "^24",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@vitejs/plugin-react": "^6.1.1",
+    "jsdom": "^30.1.1",
+    "tailwindcss": "^4.3.3",
+    "typescript": "5.9.3",
+    "vitest": "^5.0.3"
+  }
+}

@@ -1,0 +1,39 @@
+# Load-bearing: keep the `!*` below. When this repository is cloned inside a parent folder whose .gitignore is `*`,
+# Tailwind v4's scanner (which honours every .gitignore up the tree) would see no files here and emit no utilities: the
+# pages would render unstyled while fonts and colours still look right. Re-including this tree prevents it;
+# app/globals.css also names its sources with @source as a second guard.
+!*
+
+# dependencies
+node_modules
+.pnpm-store
+
+# build output
+.next
+out
+build
+.turbo
+*.tsbuildinfo
+next-env.d.ts
+
+# test + coverage
+coverage
+test-results
+
+# secrets and local overrides — `.env.example` IS committed, real values never are
+.env
+.env*.local
+*.local
+
+# deployment
+.vercel
+
+# logs
+*-debug.log*
+*-error.log*
+
+# editors and OS
+.DS_Store
+.idea
+.vscode
+

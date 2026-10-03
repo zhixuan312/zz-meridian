@@ -1,0 +1,64 @@
+# Ask about
+
+Ask about hands a card to the agent: one press posts a question about exactly what the card shows into the conversation, as the person.
+
+Status: beta
+
+## Anatomy
+
+1. **Button**: 28px, a sparkles icon and the word Ask, `accent-ink` on transparent, `radius-md`.
+2. **Tooltip**: "Ask the assistant about this".
+
+## Composition
+
+Placed in a card's header actions. It reads `useSurface().ask`; when that is absent it renders nothing.
+
+## Data
+
+`question` is the text posted, written for a person to read in the thread, naming the card's facts: "Why did requests fall on 27 September?" When the Meridian points at a day, the question names that day.
+
+## States
+
+| State | What changes |
+|---|---|
+| Rest | `accent-ink` text and icon |
+| Hover | `accent-tint` behind |
+| Pressed | `press` |
+| Focus | 2px `accent` outline |
+| Console, or no agent connected | Not rendered: no dead control |
+
+## Behaviour
+
+- One press sends `ui/message` with the question as the person's message; the host's agent answers in the thread.
+- It never sends silently: the question appears in the conversation, in the person's name.
+
+## Surfaces
+
+- **Console** and **Mobile**: absent.
+- **Embed**: on cards, whenever a host is connected.
+
+## Agents
+
+This is the person-to-agent handoff. The view has already shared its context (`useShareView`), so the agent can answer about "this" without asking what this is.
+
+## Accessibility
+
+- Named by its question ("Ask: Why did requests fall on 27 September?").
+- Contrast (dark, indigo): `accent-ink` on surface 9.6:1.
+
+## Content
+
+- The question is concrete and short; it names the figure, the day or the endpoint.
+
+## Do and do not
+
+- Do put it only on cards whose content a person might reasonably question.
+- Do not use it to send commands; a write goes through a tool and comes back as a Proposal.
+
+## Implementation
+
+```tsx
+import { AskAbout } from '@/components/patterns/ask-about';
+
+<CardHeader title="Requests per day" actions={<AskAbout question="What drove the trend in requests this period?" />} />
+```
