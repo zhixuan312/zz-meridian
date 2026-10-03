@@ -13,9 +13,11 @@ export function Sparkline({ values, color = 'accent', height = 36, className }: 
   const id = useId().replace(/[^a-zA-Z0-9_-]/g, '');
   const [ref, { width: W }] = useSize<HTMLDivElement>();
   const { index } = useMeridianIndex();
-  const H = height, pad = 3;
+  // The lowest point floats a quarter of the height above the floor, so a trough never runs along a card's edge or
+  // into its rounded corner; the area still fills to the floor.
+  const H = height, pad = 3, floor = Math.max(pad, Math.round(H * 0.25));
   const min = Math.min(...values), max = Math.max(...values), span = max - min || 1;
-  const pts = values.map((v, i) => [(i / Math.max(1, values.length - 1)) * W, pad + (1 - (v - min) / span) * (H - pad * 2)] as [number, number]);
+  const pts = values.map((v, i) => [(i / Math.max(1, values.length - 1)) * W, pad + (1 - (v - min) / span) * (H - pad - floor)] as [number, number]);
   const line = W ? monotonePath(pts) : '';
   const c = SERIES_VAR(color);
   const at = index !== null && index < pts.length ? pts[index] : null;

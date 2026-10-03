@@ -17,6 +17,9 @@ const SEVERITY: Record<Incident['severity'], { tone: Tone; word: string }> = {
 
 
 /** An incident: what broke, where, how bad, its state and its updates, newest last. */
+/** Hold hyphenated identifiers such as eu-west-1 on one line; a break after the hyphen reads as two words. */
+const keepHyphenated = (text: string) => text.split(/(\S+-\S+)/).map((part, i) => (i % 2 ? <span key={i} className="whitespace-nowrap">{part}</span> : part));
+
 export type Incident = { id: string; title: string; service: string; severity: 'minor' | 'major'; state: 'investigating' | 'monitoring' | 'resolved'; started: string; resolved?: string; updates: { at: string; text: string }[] };
 /**
  * An incident, told the way a reader needs it: what is affected, how bad, where it stands, and every update since it
@@ -53,7 +56,7 @@ export function IncidentCard({ incident, now, variant = 'card', className }: { i
           <Badge tone={sev.tone}>{sev.word}</Badge>
           <span className="t-caption ml-auto">{incident.id}</span>
         </div>
-        <h3 className="t-card mt-4 text-pretty">{incident.title}</h3>
+        <h3 className="t-card mt-4 text-pretty">{keepHyphenated(incident.title)}</h3>
         <p className="t-caption mt-1.5">
           {incident.service} · started <time dateTime={incident.started} title={formatDateTime(incident.started)}>{formatRelative(incident.started, now)}</time>
           {lasted !== null ? <> · lasted {formatDuration(lasted)}</> : null}
@@ -67,7 +70,7 @@ export function IncidentCard({ incident, now, variant = 'card', className }: { i
               {i === 0 && live ? <StatusDot tone={st.tone} live /> : <span className="size-1.5 rounded-full bg-ink-3" />}
             </span>
             <div className="min-w-0">
-              <time dateTime={u.at} title={formatDateTime(u.at)} className="t-eyebrow">{formatRelative(u.at, now)}</time>
+              <time dateTime={u.at} title={formatDateTime(u.at)} className="t-caption t-num font-medium">{formatRelative(u.at, now)}</time>
               <p className="t-small mt-1 text-ink-2">{u.text}</p>
             </div>
           </li>

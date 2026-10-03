@@ -47,7 +47,7 @@ export function HealthBody({ services, current, past, now }: { services: Service
                 <li key={svc.name} className="flex min-w-0 items-center gap-2.5 bg-surface/80 px-3.5 py-3">
                   <StatusDot tone={TONE[svc.status]} live={svc.status !== 'operational'} />
                   <span className="min-w-0 flex-1 truncate text-sm">{svc.name}</span>
-                  <span className={cn('t-num text-xs', svc.status === 'operational' ? 'text-ink-3 max-sm:hidden' : 'font-medium text-warning-ink')}>{formatDuration(svc.latency)}</span>
+                  <span className={cn('t-num text-xs max-sm:hidden', svc.status === 'operational' ? 'text-ink-3' : 'font-medium text-warning-ink')}>{formatDuration(svc.latency)}</span>
                 </li>
               ))}
             </ul>

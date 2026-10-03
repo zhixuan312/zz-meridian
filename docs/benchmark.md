@@ -27,6 +27,8 @@ Meridian held to the bar of award-winning sites (Awwwards, Webby, FWA) and of th
 - **Keyboard found by the audit.** The audit now presses Tab through every page. The trend chart's focus was a rectangle drawn inside the SVG, inconsistent with every other control; it now takes the system's 2px accent ring.
 - **Accessibility found by the audit.** A heatmap's screen-reader table widened the page (a table ignores `width: 1px`); `table.sr-only` is now a block. The MCP host simulator answered too late for a fast frame; the bridge now retries its handshake.
 
+- **A last look, by eye, at 1440 and 390px in both themes.** Three things the audit cannot see were fixed. A sparkline's troughs ran along the card's bottom edge and into its rounded corner; the lowest point now floats a quarter of the height above the floor while the area still fills to it. An incident title broke after the hyphen in "eu-west-1"; hyphenated identifiers in titles now hold together. The incident timeline set its times as spaced mono capitals ("3 6 M I N"); they are now captions with tabular figures. On phones, the uptime card's service grid cut "Inference API" short to make room for a latency figure; the grid now shows names only there, and latency stays in the service list just below.
+
 ## Open
 
 One limit of the measurement, kept in view on purpose:
