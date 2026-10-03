@@ -3,7 +3,7 @@ import { describe, expect, test } from 'vitest';
 import { z } from 'zod';
 import { readUIMessageStream, type UIMessage, type UIMessageChunk } from 'ai';
 import { MockLanguageModelV4 } from 'ai/test';
-import { arrayCollection } from '@/lib/collection';
+import { arrayCollection, patchOf } from '@/lib/collection';
 import { respond } from '@/lib/assistant/respond';
 import { systemPrompt } from '@/lib/assistant/prompt';
 import { REASONS, loadThread, saveThread } from '@/components/patterns/assistant/thread';
@@ -88,6 +88,12 @@ describe('the collection', () => {
     const c = items();
     await c.update!(['i_1'], { name: 'Uno' });
     expect((await c.query({ where: [{ field: 'id', op: 'eq', value: 'i_1' }] })).rows[0]).toEqual({ id: 'i_1', name: 'Uno', secret: 's1' });
+  });
+
+  test('a change fills no default, however the field wraps it, and keeps its description', () => {
+    const fields = z.object({ name: z.string(), a: z.string().default('d').optional(), b: z.string().prefault('p'), c: z.string().catch('x'), d: z.string().default('d').readonly(), e: z.string().default('d').describe('Kept.') });
+    expect(patchOf(fields).parse({ name: 'U' })).toEqual({ name: 'U' });
+    expect(patchOf(fields).shape.e.description).toBe('Kept.');
   });
 
   test('parses what is created or changed with its fields, and refuses the key', async () => {

@@ -138,7 +138,21 @@ export function arrayCollection<T extends Record<string, unknown>, K extends key
  * does not name a field never resets it.
  */
 export function patchOf(fields: z.ZodObject): z.ZodObject {
-  return z.object(Object.fromEntries(Object.entries(fields.shape).map(([k, f]) => [k, (f instanceof z.ZodDefault ? f.unwrap() : f).optional()]))).strict();
+  const optional = (f: z.ZodType) => {
+    const g = withoutDefault(f).optional();
+    return f.description ? g.describe(f.description) : g;
+  };
+  return z.object(Object.fromEntries(Object.entries(fields.shape).map(([k, f]) => [k, optional(f)]))).strict();
+}
+
+/** `field` with every default, prefault and catch removed, however deep in optional, nullable or readonly. */
+function withoutDefault(field: z.ZodType): z.ZodType {
+  const inner = () => withoutDefault((field.def as unknown as { innerType: z.ZodType }).innerType);
+  return field instanceof z.ZodDefault || field instanceof z.ZodPrefault || field instanceof z.ZodCatch ? inner()
+    : field instanceof z.ZodOptional ? inner().optional()
+    : field instanceof z.ZodNullable ? inner().nullable()
+    : field instanceof z.ZodReadonly ? inner().readonly()
+    : field;
 }
 
 /** The collection's fields without its hidden ones. */
