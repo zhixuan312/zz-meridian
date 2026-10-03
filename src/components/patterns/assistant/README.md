@@ -8,13 +8,13 @@ Status: draft
 
 1. **Launcher**: a round 36px button in the top-bar tools with the Agent mark, named "Assistant".
 2. **Panel**: an `aside` named "Assistant", on the `frame` wash with a `line` edge, same as the rail.
-3. **Head**: 56px; the Agent mark, "Assistant" (`t-section`) and Close assistant (icon button).
-4. **Thread**: the messages in order, scrolling inside the panel, kept at the newest. A change the assistant wants to make is a Proposal card in the message.
+3. **Head**: 56px; the Agent mark, "Assistant" (`t-section`), Clear conversation and Close assistant (ghost icon buttons).
+4. **Thread**: the messages in order, scrolling inside the panel, kept at the newest. Each question carries a quiet "On <page>" caption above its bubble. A change the assistant wants to make is a Proposal card in the message. A failed turn shows a critical Banner with Retry under the thread.
 5. **Composer**: a Textarea (grows to six rows) and Send (primary, icon only), on a `line` top edge.
 
 ## Composition
 
-Agent mark, Icon button, Textarea, Button, Proposal. The conversation and the open state live in the shell, so the thread survives navigation.
+Agent mark, Icon button, Textarea, Button, Banner, Proposal. The conversation and the open state live in the shell, so the thread survives navigation.
 
 ## Variants
 
@@ -31,6 +31,9 @@ Head 56px, composer padding 12px, thread padding 16px, message gap 16px. Launche
 | Closed | Nothing renders; the launcher is `aria-expanded="false"` |
 | Open, empty | One sentence of help, `ink-3`, centred |
 | Open, thread | Messages; the thread follows the newest |
+| Thread, several pages | Each question is captioned with the page it was asked on ("On Members") |
+| Error | A critical alert with what happened and Retry; the thread stays |
+| Cleared | Back to the empty state; Clear conversation is disabled while there is no thread |
 | Waiting | Send is disabled until the answer ends |
 | Change waiting | A Proposal with Approve and Dismiss ("Approve and remove" for a removal) |
 | Change applied, failed, dismissed or expired | The Proposal shows its state with no buttons; expired shows its reason |
@@ -43,6 +46,11 @@ The panel enters with no motion of its own yet; the launcher's states ease `colo
 - The launcher opens and closes the panel; Close assistant and Escape close it. The conversation is kept.
 - Approve and Dismiss answer the waiting change; once the answer arrives the assistant continues on its own, and the page refreshes once after a change applies.
 - Queries never draw a card; a mutation with no preview draws nothing.
+- The thread lasts: it is kept in this browser's local storage under `<slug>.assistant`, the last 100 messages, until Clear conversation removes it. One thread serves the whole console and is sent nowhere but the assistant route.
+- It loads after the page is on screen. A change that was waiting when the page closed or reloaded comes back expired: "The page was reloaded before anyone approved it." Sending a new message while one is waiting expires it: "You moved on before approving it."
+- If storage is full the newer half is kept; if storage is unavailable the thread lasts for the visit only.
+- Each question is sent with the page it was asked on, and keeps that label when asked on another page later.
+- Retry asks for the answer again.
 - Enter sends; Shift+Enter adds a line.
 - On send the browser reads the page: `path`, the masthead title (the `h1` in the scroll region) and the text of the scroll region, and sends them with the messages to `/api/assistant`.
 - When the assistant is off for the request, the shell renders no launcher and no panel, not even hidden markup.
@@ -69,6 +77,8 @@ This is the agent's seat in the product. It reads the page the person is on and 
 
 - Empty: "Ask about this page: what a figure means, or why it moved."
 - Placeholder: "Ask about this page".
+- Page label: "On <page title>", for example "On API keys".
+- Clear: "Clear conversation". Error: what happened and what to do, in one line, with "Retry"; for example "The assistant could not reach its provider. Try again."
 
 ## Do and do not
 

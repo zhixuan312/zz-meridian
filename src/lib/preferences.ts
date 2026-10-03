@@ -8,7 +8,7 @@ export const DENSITIES = ['comfortable', 'compact'] as const;
 export type ThemePref = (typeof THEMES)[number];
 export type Accent = (typeof ACCENTS)[number];
 export type Density = (typeof DENSITIES)[number];
-export type Preferences = { theme: ThemePref; accent: Accent; density: Density };
+export type Preferences = { theme: ThemePref; accent: Accent; density: Density; /** Whether the assistant's launcher and panel show, when the product has one. */ assistant: boolean };
 
 /** Per product, from the name: two Meridian apps on one host keep their own theme and accent. */
 export const STORAGE_KEY = `${slug}.preferences`;

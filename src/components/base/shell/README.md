@@ -14,7 +14,7 @@ Status: beta
    - **Body**: a `Stack` of `Row`s.
 4. **Stack**: rows one `stack-gap` apart (14–20px), arriving in reading order.
 5. **Row**: one card, or cards split `1/2`, `2/3` or `1/3`, or a row of tiles.
-6. **Assistant** (when `assistant` is true): its launcher joins the global tools; its panel is a third column at `assistant-width` from 1024px and a sheet over the page below it. Nothing of it renders while it is closed, or at all when `assistant` is false.
+6. **Assistant** (when `assistant` is true): its launcher joins the global tools; its panel is a third column at `assistant-width` from 1024px and a sheet over the page below it. Nothing of it renders while it is closed, or at all when `assistant` is false. The person's switch (Settings, "Show the assistant", stored as `assistant` in their preferences, on by default) hides the launcher and the panel without touching the conversation, which stays on the device. `useAssistantAvailable()` tells Settings whether the product has an assistant to switch.
 
 ## The four rules
 

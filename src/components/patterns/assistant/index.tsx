@@ -4,14 +4,16 @@ import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from 'react'
 import { usePathname, useRouter } from 'next/navigation';
 import { useChat } from '@ai-sdk/react';
 import { DefaultChatTransport, lastAssistantMessageIsCompleteWithApprovalResponses, type UIMessage } from 'ai';
-import { ArrowUp, X } from 'lucide-react';
+import { ArrowUp, Eraser, X } from 'lucide-react';
 import { cn } from '@/lib/cn';
 import { AgentMark } from '@/components/ui/agent-mark';
+import { Banner } from '@/components/ui/banner';
 import { Button } from '@/components/ui/button';
 import { IconButton } from '@/components/ui/icon-button';
 import { Proposal, type ProposalChange, type ProposalState } from '@/components/patterns/proposal';
 import { Textarea } from '@/components/ui/textarea';
 import type { PageContext } from '@/lib/assistant/prompt';
+import { REASONS, clearThread, closeOpenApprovals, loadThread, saveThread } from './thread';
 
 /** Reads the page from the scroll region: the masthead title and the visible text. */
 export function readPage(path: string): PageContext {
@@ -23,6 +25,8 @@ type Preview = { title: string; tone: 'neutral' | 'critical'; changes: ProposalC
 /** The slice of an AI SDK tool part the panel reads. */
 type ToolPart = { type: string; toolCallId: string; state: string; approval?: { id: string; approved?: boolean; reason?: string } };
 
+/** The page a question was asked on, as the column sends it with the message. */
+const pageOf = (m: UIMessage) => (m.metadata as { page?: { title?: string } } | undefined)?.page?.title;
 const textOf = (m: UIMessage) => m.parts.map((p) => (p.type === 'text' ? p.text : '')).join('');
 const isMutation = (p: { type: string }) => p.type.startsWith('tool-') && !p.type.startsWith('tool-query_');
 
@@ -86,6 +90,9 @@ export function AssistantPanel({
   onSend,
   onClose,
   onDecide,
+  onClear,
+  error,
+  onRetry,
   inline,
   className,
 }: {
@@ -95,6 +102,11 @@ export function AssistantPanel({
   onClose: () => void;
   /** Answers a waiting change: approve it or dismiss it, by the approval's id. */
   onDecide: (approvalId: string, approved: boolean) => void;
+  /** Empties the thread; offered only while there is one. */
+  onClear?: () => void;
+  /** Said in an alert under the thread, with Retry. */
+  error?: string;
+  onRetry?: () => void;
   /** Draw in the flow instead of fixed to the viewport edge: for previews. */
   inline?: boolean;
   className?: string;
@@ -135,6 +147,7 @@ export function AssistantPanel({
       <div className="flex h-14 shrink-0 items-center gap-3 border-b border-line px-4">
         <AgentMark size="md" />
         <h2 className="t-section min-w-0 flex-1 truncate">Assistant</h2>
+        <IconButton label="Clear conversation" icon={<Eraser />} tooltip disabled={messages.length === 0} onClick={onClear} />
         <IconButton label="Close assistant" icon={<X />} onClick={onClose} className="-mr-2" />
       </div>
       <div ref={thread} className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto overscroll-contain px-4 py-4">
@@ -144,6 +157,7 @@ export function AssistantPanel({
           messages.map((m) => (
             <div key={m.id} data-role={m.role} className={cn('flex min-w-0 flex-col gap-1', m.role === 'user' && 'items-end')}>
               {m.role === 'assistant' ? <span className="t-caption">Assistant</span> : null}
+              {m.role === 'user' && pageOf(m) ? <span className="t-caption">On {pageOf(m)}</span> : null}
               {m.role === 'user' ? (
                 <p className="t-small max-w-full whitespace-pre-wrap rounded-lg bg-fill-hover px-3 py-2 text-ink [overflow-wrap:anywhere]">{textOf(m)}</p>
               ) : (
@@ -159,6 +173,11 @@ export function AssistantPanel({
           ))
         )}
       </div>
+      {error ? (
+        <div className="shrink-0 px-3 pb-3">
+          <Banner tone="critical" title={error} action={onRetry ? <Button size="sm" onClick={onRetry}>Retry</Button> : undefined} />
+        </div>
+      ) : null}
       <form
         className="flex shrink-0 items-end gap-2 border-t border-line p-3"
         onSubmit={(e) => {
@@ -194,10 +213,19 @@ export function AssistantColumn({ open, onClose }: { open: boolean; onClose: () 
     [],
   );
   const router = useRouter();
-  const { messages, sendMessage, addToolApprovalResponse, status } = useChat({
+  const { messages, setMessages, sendMessage, regenerate, addToolApprovalResponse, status, error } = useChat({
     transport,
     sendAutomaticallyWhen: lastAssistantMessageIsCompleteWithApprovalResponses,
   });
+  // The thread loads once the page is on screen, never during render, and saves only after that.
+  const [loaded, setLoaded] = useState(false);
+  useEffect(() => {
+    setMessages(loadThread(localStorage));
+    setLoaded(true);
+  }, [setMessages]);
+  useEffect(() => {
+    if (loaded) saveThread(localStorage, messages);
+  }, [loaded, messages]);
   // A change that applied is on the page's data now: refresh once per tool part.
   const refreshed = useRef(new Set<string>());
   useEffect(() => {
@@ -214,9 +242,18 @@ export function AssistantColumn({ open, onClose }: { open: boolean; onClose: () 
     <AssistantPanel
       messages={messages}
       busy={status === 'submitted' || status === 'streaming'}
-      onSend={(text) => sendMessage({ text })}
+      onSend={(text) => {
+        setMessages(closeOpenApprovals(messages, REASONS.movedOn));
+        sendMessage({ text, metadata: { page: { path, title: readPage(path).title } } });
+      }}
       onDecide={(id, approved) => addToolApprovalResponse({ id, approved })}
       onClose={onClose}
+      onClear={() => {
+        setMessages([]);
+        clearThread(localStorage);
+      }}
+      error={error?.message}
+      onRetry={() => regenerate()}
     />
   );
 }

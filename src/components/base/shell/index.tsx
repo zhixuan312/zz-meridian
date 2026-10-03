@@ -5,6 +5,7 @@ import { Dialog } from 'radix-ui';
 import { Menu, X } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/cn';
+import { usePreferences } from '@/components/base/providers';
 import { AssistantColumn, AssistantLauncher } from '@/components/patterns/assistant';
 
 /**
@@ -18,13 +19,18 @@ import { AssistantColumn, AssistantLauncher } from '@/components/patterns/assist
  *         ├─ masthead    kicker, title, one sentence, meta and actions; scrolls away with the content
  *         └─ Stack       rows, one gap apart
  *            └─ Row      one card, or cards split 1/2, 2/3, 1/3, or a row of tiles
- *   └─ assistant         optional: a third column from 1024px, a sheet below; not in the page while closed
+ *   └─ assistant         optional, and the person can switch it off: a third column from 1024px, a sheet below; not in the page while closed
  *
  * Four rules: one scroller; cards are their content's height; four splits; two widths (data, capped at 1560px, and
  * reading, 832px; both centre).
  */
 
-const ShellCtx = createContext<{ openNav: () => void; tools: ReactNode }>({ openNav: () => {}, tools: null });
+const ShellCtx = createContext<{ openNav: () => void; tools: ReactNode; assistant: boolean }>({ openNav: () => {}, tools: null, assistant: false });
+
+/** Whether the product has an assistant: Settings offers the person's switch only then. */
+export function useAssistantAvailable(): boolean {
+  return useContext(ShellCtx).assistant;
+}
 
 export function AppShell({
   rail,
@@ -35,15 +41,20 @@ export function AppShell({
   rail: ReactNode;
   /** Global tools in the top bar: search, alerts. */
   tools?: ReactNode;
-  /** Whether this request has an assistant: adds its launcher to the tools and its panel as the third column. */
+  /** Whether this request has an assistant: adds its launcher to the tools and its panel as the third column, unless the person switched it off. */
   assistant: boolean;
   children: ReactNode;
 }) {
   const [open, setOpen] = useState(false);
   const [assistantOpen, setAssistantOpen] = useState(false);
+  const { prefs } = usePreferences();
+  const shown = assistant && prefs.assistant;
   const path = usePathname();
   useEffect(() => setOpen(false), [path]);
-  const allTools = assistant ? (
+  useEffect(() => {
+    if (!shown) setAssistantOpen(false);
+  }, [shown]);
+  const allTools = shown ? (
     <>
       {tools}
       <AssistantLauncher open={assistantOpen} onClick={() => setAssistantOpen((o) => !o)} />
@@ -52,7 +63,7 @@ export function AppShell({
     tools
   );
   return (
-    <ShellCtx.Provider value={{ openNav: () => setOpen(true), tools: allTools }}>
+    <ShellCtx.Provider value={{ openNav: () => setOpen(true), tools: allTools, assistant }}>
       <div className="fixed inset-0 isolate flex overflow-hidden">
         <aside aria-label="Primary" className="hidden h-full w-(--rail-width) shrink-0 border-r border-line bg-frame backdrop-blur-xl backdrop-saturate-150 lg:flex">
           {rail}
@@ -76,7 +87,7 @@ export function AppShell({
           </Dialog.Portal>
         </Dialog.Root>
         <main className="relative flex min-w-0 flex-1 flex-col">{children}</main>
-        {assistant ? <AssistantColumn open={assistantOpen} onClose={() => setAssistantOpen(false)} /> : null}
+        {shown ? <AssistantColumn open={assistantOpen} onClose={() => setAssistantOpen(false)} /> : null}
       </div>
     </ShellCtx.Provider>
   );

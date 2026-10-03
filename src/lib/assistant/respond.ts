@@ -1,4 +1,4 @@
-import { convertToModelMessages, createUIMessageStream, createUIMessageStreamResponse, isStepCount, streamText, toUIMessageStream, type LanguageModel, type UIMessage } from 'ai';
+import { APICallError, RetryError, convertToModelMessages, createUIMessageStream, createUIMessageStreamResponse, isStepCount, streamText, toUIMessageStream, type LanguageModel, type UIMessage } from 'ai';
 import type { AnyCollection } from '@/lib/collection';
 import { assistantTools } from './tools';
 import { systemPrompt, type PageContext } from './prompt';
@@ -21,9 +21,19 @@ export async function respond({ model, secret, messages, page, collections, now 
         experimental_toolApprovalSecret: secret,
         stopWhen: isStepCount(MAX_STEPS),
       });
-      writer.merge(toUIMessageStream({ stream: result.stream }));
+      writer.merge(toUIMessageStream({ stream: result.stream, onError: plainError }));
     },
-    onError: (error) => (error instanceof Error ? error.message : 'The assistant could not answer.'),
+    onError: plainError,
   });
   return createUIMessageStreamResponse({ stream });
+}
+
+/** Logs the original error on the server and returns one of three plain sentences, never anything from the error itself. */
+function plainError(error: unknown): string {
+  console.error('assistant: model call failed', error);
+  const cause = RetryError.isInstance(error) ? error.lastError : error;
+  const status = APICallError.isInstance(cause) ? cause.statusCode : undefined;
+  if (status === 401 || status === 403) return 'The assistant is not set up correctly: its provider refused the key. Ask whoever runs this console.';
+  if (status === 429) return "The assistant's provider is busy. Try again in a minute.";
+  return 'The assistant could not reach its provider. Try again.';
 }

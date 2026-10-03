@@ -8,6 +8,7 @@ import { cn } from '@/lib/cn';
 import { formatRelative } from '@/lib/format-date';
 import { ACCENTS, type Accent, ACCENT_SWATCH } from '@/lib/preferences';
 import { usePreferences } from '@/components/base/providers';
+import { useAssistantAvailable } from '@/components/base/shell';
 import { FormSection, SettingRow } from '@/components/patterns/form-section';
 import { AgentMark } from '@/components/ui/agent-mark';
 import { Badge } from '@/components/ui/badge';
@@ -32,6 +33,7 @@ export function SettingsBody() {
       <Workspace />
       <Notifications />
       <Appearance />
+      <Assistant />
       <Agents />
       <Danger />
     </div>
@@ -131,6 +133,22 @@ function Appearance() {
   );
 }
 
+function Assistant() {
+  const available = useAssistantAvailable();
+  const { prefs, set } = usePreferences();
+  if (!available) return null;
+  return (
+    <FormSection title="Assistant" description={`The assistant answers questions about ${app.name} and proposes changes for you to approve.`}>
+      <Switch
+        label="Show the assistant"
+        description="The panel and its launcher in the top bar. Your conversation stays on this device, and hiding the assistant keeps it."
+        checked={prefs.assistant}
+        onCheckedChange={(on) => { set({ assistant: on }); toast({ tone: 'neutral', title: on ? 'Assistant shown' : 'Assistant hidden' }); }}
+      />
+    </FormSection>
+  );
+}
+
 function Agents() {
   const [read, setRead] = useState(true);
   const [hosts, setHosts] = useState(CONNECTED_HOSTS);
@@ -149,7 +167,7 @@ function Agents() {
         <Lock className="mt-0.5 size-4 shrink-0 text-ink-3" />
         <div className="min-w-0">
           <p className="text-sm font-medium">Every change an assistant proposes waits for approval</p>
-          <p className="t-caption mt-0.5 text-pretty">This is always on. A proposal shows what changes, before and after, and why; nothing runs until a person approves it. Deleting is never proposed.</p>
+          <p className="t-caption mt-0.5 text-pretty">This is always on. A proposal shows what changes, before and after, and why; nothing runs until a person approves it. A removal is proposed like any other change, marked critical, and runs only when approved.</p>
         </div>
       </div>
       <div>
