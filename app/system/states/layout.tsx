@@ -11,7 +11,7 @@ import { ALERTS } from '@/system/fixtures/sample-ops';
  */
 export default function StatesLayout({ children }: { children: React.ReactNode }) {
   return (
-    <AppShell rail={<Rail />} tools={<ShellTools alerts={ALERTS} now={DEMO_NOW} />}>
+    <AppShell rail={<Rail />} tools={<ShellTools alerts={ALERTS} now={DEMO_NOW} />} assistant={false}>
       {children}
       <CommandPalette />
     </AppShell>

@@ -74,6 +74,7 @@
   --stack-gap:clamp(14px, 1.4vw, 20px);
   /* layout */
   --rail-width:260px;
+  --assistant-width:400px;
   --rail-collapsed:68px;
   --data-width:100%;
   --stage-width:1560px;

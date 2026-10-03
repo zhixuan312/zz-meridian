@@ -50,6 +50,7 @@ export const CARDS: Card[] = [
   { id: 'activity-feed', layer: 3, section: 'patterns', dir: 'src/components/patterns/activity-feed', Preview: dynamic(() => import('@/components/patterns/activity-feed/preview')) },
   { id: 'appearance-menu', layer: 3, section: 'patterns', dir: 'src/components/patterns/appearance-menu', Preview: dynamic(() => import('@/components/patterns/appearance-menu/preview')) },
   { id: 'ask-about', layer: 3, section: 'patterns', dir: 'src/components/patterns/ask-about', Preview: dynamic(() => import('@/components/patterns/ask-about/preview')) },
+  { id: 'assistant', layer: 3, section: 'patterns', dir: 'src/components/patterns/assistant', Preview: dynamic(() => import('@/components/patterns/assistant/preview')) },
   { id: 'command-palette', layer: 3, section: 'patterns', dir: 'src/components/patterns/command-palette', Preview: dynamic(() => import('@/components/patterns/command-palette/preview')) },
   { id: 'data-table', layer: 3, section: 'patterns', dir: 'src/components/patterns/data-table', Preview: dynamic(() => import('@/components/patterns/data-table/preview')) },
   { id: 'detail-head', layer: 3, section: 'patterns', dir: 'src/components/patterns/detail-head', Preview: dynamic(() => import('@/components/patterns/detail-head/preview')) },

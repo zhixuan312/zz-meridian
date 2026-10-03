@@ -5,18 +5,20 @@ import { Dialog } from 'radix-ui';
 import { Menu, X } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/cn';
+import { AssistantColumn, AssistantLauncher } from '@/components/patterns/assistant';
 
 /**
  * The shell and the layout contract, in one file. src/components/base/shell/README.md is the prose for it.
  *
  *   AppShell             fixed to the viewport: the document never scrolls; the ground and its light show through
  *   ├─ rail              a translucent wash with a hairline edge, its own scroll; a drawer below 1024px
- *   └─ main
+ *   ├─ main
  *      └─ PageFrame      the one scroller on the page, vertical only
  *         ├─ top bar     sticky glass: the drawer trigger, the compact title once the masthead leaves, global tools
  *         ├─ masthead    kicker, title, one sentence, meta and actions; scrolls away with the content
  *         └─ Stack       rows, one gap apart
  *            └─ Row      one card, or cards split 1/2, 2/3, 1/3, or a row of tiles
+ *   └─ assistant         optional: a third column from 1024px, a sheet below; not in the page while closed
  *
  * Four rules: one scroller; cards are their content's height; four splits; two widths (data, capped at 1560px, and
  * reading, 832px; both centre).
@@ -24,12 +26,33 @@ import { cn } from '@/lib/cn';
 
 const ShellCtx = createContext<{ openNav: () => void; tools: ReactNode }>({ openNav: () => {}, tools: null });
 
-export function AppShell({ rail, tools, children }: { rail: ReactNode; /** Global tools in the top bar: search, alerts. */ tools?: ReactNode; children: ReactNode }) {
+export function AppShell({
+  rail,
+  tools,
+  assistant,
+  children,
+}: {
+  rail: ReactNode;
+  /** Global tools in the top bar: search, alerts. */
+  tools?: ReactNode;
+  /** Whether this request has an assistant: adds its launcher to the tools and its panel as the third column. */
+  assistant: boolean;
+  children: ReactNode;
+}) {
   const [open, setOpen] = useState(false);
+  const [assistantOpen, setAssistantOpen] = useState(false);
   const path = usePathname();
   useEffect(() => setOpen(false), [path]);
+  const allTools = assistant ? (
+    <>
+      {tools}
+      <AssistantLauncher open={assistantOpen} onClick={() => setAssistantOpen((o) => !o)} />
+    </>
+  ) : (
+    tools
+  );
   return (
-    <ShellCtx.Provider value={{ openNav: () => setOpen(true), tools }}>
+    <ShellCtx.Provider value={{ openNav: () => setOpen(true), tools: allTools }}>
       <div className="fixed inset-0 isolate flex overflow-hidden">
         <aside aria-label="Primary" className="hidden h-full w-(--rail-width) shrink-0 border-r border-line bg-frame backdrop-blur-xl backdrop-saturate-150 lg:flex">
           {rail}
@@ -53,6 +76,7 @@ export function AppShell({ rail, tools, children }: { rail: ReactNode; /** Globa
           </Dialog.Portal>
         </Dialog.Root>
         <main className="relative flex min-w-0 flex-1 flex-col">{children}</main>
+        {assistant ? <AssistantColumn open={assistantOpen} onClose={() => setAssistantOpen(false)} /> : null}
       </div>
     </ShellCtx.Provider>
   );
