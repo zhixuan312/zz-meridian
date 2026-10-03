@@ -110,17 +110,27 @@ for (const f of LAYERS) {
 // ── One implementation: a collection's rows are read through the collection ──────────────────────────
 // The covered fixtures are the names src/data/collections.ts passes as `rows:` (read from the file, so a product's own
 // collection is covered without editing this rule). Other fixture exports it imports, such as DEMO_NOW or ROLES, are not records.
-const FIXTURE_IMPORT = /import\s+(type\s+)?\{([^}]*)\}\s*from\s*['"]([^'"]*fixtures\/[^'"]*)['"]/g;
+const FIXTURE_IMPORT = /(?:import|export)\s+(type\s+)?\{([^}]*)\}\s*from\s*['"]([^'"]*fixtures\/[^'"]*)['"]/g;
+/** A whole fixture module taken at once: `import * as`, `export * from`, or a dynamic `import()`. */
+const FIXTURE_WHOLE = /(?:import\s+\*\s+as\s+\w+\s+from|export\s+\*(?:\s+as\s+\w+)?\s+from|import\()\s*['"]([^'"]*fixtures\/[^'"]*)['"]/g;
 const valueNames = (clause: string) => clause.split(',').map((s) => s.trim()).filter((s) => s && !/^type\s/.test(s)).map((s) => s.split(/\s+as\s+/)[0]);
+const fixtureModule = (spec: string) => spec.slice(spec.indexOf('fixtures/')).replace(/\.tsx?$/, '');
 const COLLECTIONS = 'src/data/collections.ts';
 const collectionsSrc = read(COLLECTIONS);
 const served = new Set([...collectionsSrc.matchAll(/\brows:\s*([A-Za-z_]\w*)/g)].map((m) => m[1]));
-const covered = new Set([...collectionsSrc.matchAll(FIXTURE_IMPORT)].filter((m) => !m[1]).flatMap((m) => valueNames(m[2])).filter((n) => served.has(n)));
+/** Each covered name, and the fixture module it comes from. */
+const covered = new Map([...collectionsSrc.matchAll(FIXTURE_IMPORT)].filter((m) => !m[1]).flatMap((m) => valueNames(m[2]).filter((n) => served.has(n)).map((n) => [n, fixtureModule(m[3])] as const)));
+const coveredModules = new Set(covered.values());
 for (const f of LAYERS) {
   if (f === COLLECTIONS || /^src\/system\/fixtures\//.test(f) || /(^|\/)preview\.tsx$/.test(f)) continue;
-  for (const m of read(f).matchAll(FIXTURE_IMPORT)) {
+  const src = read(f);
+  for (const m of src.matchAll(FIXTURE_IMPORT)) {
     if (m[1]) continue;
     for (const n of valueNames(m[2])) if (covered.has(n)) problems.push(`${f}: imports ${n} from the fixtures; read it through ${COLLECTIONS}`);
+  }
+  for (const m of src.matchAll(FIXTURE_WHOLE)) {
+    const mod = fixtureModule(m[1]);
+    if (coveredModules.has(mod)) problems.push(`${f}: imports all of ${mod}, which holds ${[...covered].filter(([, x]) => x === mod).map(([n]) => n).join(', ')}; read it through ${COLLECTIONS}`);
   }
 }
 

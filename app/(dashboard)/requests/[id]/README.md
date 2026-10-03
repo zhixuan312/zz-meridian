@@ -23,7 +23,7 @@ Status: beta
 
 ## Data
 
-`requestById()`, `traceOf()` and `payloadsOf()` in `src/system/fixtures/sample-records.ts`. Phases add up to the request's latency; the axis shows 0, half and the total.
+The request from the `requests` collection (`src/data/collections.ts`), queried by id; its trace and payloads from `traceOf()` and `payloadsOf()` in `src/system/fixtures/sample-records.ts`. Phases add up to the request's latency; the axis shows 0, half and the total.
 
 ## Embed view
 

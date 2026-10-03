@@ -47,7 +47,7 @@ The panel enters with no motion of its own yet; the launcher's states ease `colo
 - Approve and Dismiss answer the waiting change; once the answer arrives the assistant continues on its own, and the page refreshes once after a change applies.
 - Queries never draw a card; a mutation with no preview draws nothing.
 - The thread lasts: it is kept in this browser's local storage under `<slug>.assistant`, the last 100 messages, until Clear conversation removes it. One thread serves the whole console and is sent nowhere but the assistant route.
-- It loads after the page is on screen. A change that was waiting when the page closed or reloaded comes back expired: "The page was reloaded before anyone approved it." Sending a new message while one is waiting expires it: "You moved on before approving it."
+- It loads after the page is on screen. A change that was waiting when the page closed or reloaded comes back expired: "The page was reloaded before anyone approved it." Sending a new message while one is waiting expires it: "You moved on before approving it." A change approved but reloaded before its result arrived comes back expired too, so it never runs again: "The page was reloaded before the change finished. Check the page to see whether it applied."
 - If storage is full the newer half is kept; if storage is unavailable the thread lasts for the visit only.
 - Each question is sent with the page it was asked on, and keeps that label when asked on another page later.
 - Retry asks for the answer again.

@@ -8,6 +8,24 @@ type Rule = SingleToolApprovalFunction<any, any, any>;
 type Change = { label: string; from: string; to: string };
 
 const text = (v: unknown) => (v === null || v === undefined ? '—' : Array.isArray(v) ? v.join(', ') : String(v));
+/**
+ * The tool calls that have run in this process. An approval is signed, but the same approved call sent again would
+ * run again; each call id runs once.
+ */
+const APPLIED = Symbol.for('zz-meridian.assistant.applied');
+const applied = () => ((globalThis as Record<symbol, unknown>)[APPLIED] ??= new Set<string>()) as Set<string>;
+async function once<R>(toolCallId: string, run: () => Promise<R>): Promise<R> {
+  if (applied().has(toolCallId)) throw new ChangeRefused('This change was already applied.');
+  applied().add(toolCallId);
+  try {
+    return await run();
+  } catch (e) {
+    throw new ChangeRefused(e instanceof z.ZodError ? `The change does not fit: ${e.issues.map((i) => `${i.path.join('.') || 'record'} ${i.message.toLowerCase()}`).join('; ')}.` : e instanceof Error ? e.message : 'The change did not go through.');
+  }
+}
+
+/** A change the collection or the run-once rule refused. Its reason is the person's to read, so it is shown as it is. */
+export class ChangeRefused extends Error {}
 /** "API keys" stays, "Members" becomes "members". */
 const lower = (label: string) => (/^.[A-Z]/.test(label) ? label : label.charAt(0).toLowerCase() + label.slice(1));
 
@@ -26,7 +44,7 @@ export function assistantTools(collections: AnyCollection[], writer: UIMessageSt
     const fields = visibleFields(c);
 
     tools[`query_${c.name}`] = tool({
-      description: `Look up ${c.label.toLowerCase()}: ${c.description}`,
+      description: `Look up ${c.label.toLowerCase()}: ${c.description} A field with no value matches only ne.`,
       inputSchema: queryInput(c),
       execute: async (input) => {
         const { rows, total } = await c.query(input);
@@ -35,7 +53,8 @@ export function assistantTools(collections: AnyCollection[], writer: UIMessageSt
     });
 
     /** The rows for `ids` in the order asked, or the ids the collection does not have. */
-    const find = async (ids: string[]): Promise<{ rows: Row[] } | { missing: string[] }> => {
+    const find = async (asked: string[]): Promise<{ rows: Row[] } | { missing: string[] }> => {
+      const ids = [...new Set(asked)];
       const { rows } = await c.query({ where: [{ field: c.key, op: 'in', value: ids }] });
       const byId = new Map<string, Row>(rows.map((r: Row) => [String(r[c.key]), r]));
       const missing = ids.filter((id) => !byId.has(id));
@@ -51,7 +70,7 @@ export function assistantTools(collections: AnyCollection[], writer: UIMessageSt
       tools[`create_${c.name}`] = tool({
         description: `Add a record to ${c.label.toLowerCase()}.`,
         inputSchema: fields,
-        execute: (input) => c.create!(input),
+        execute: (input, { toolCallId }) => once(toolCallId, async () => strip(await c.create!(input))),
       });
       toolApproval[`create_${c.name}`] = ((input: Row, { toolCallId }) =>
         propose(toolCallId, `Add ${c.title(input)}`, 'neutral', Object.entries(input).map(([label, v]) => ({ label, from: '—', to: text(v) })))) as Rule;
@@ -60,8 +79,8 @@ export function assistantTools(collections: AnyCollection[], writer: UIMessageSt
     if (allowed('update')) {
       tools[`update_${c.name}`] = tool({
         description: `Change fields on one or more ${c.label.toLowerCase()} by id.`,
-        inputSchema: z.object({ ids: z.array(z.string()).min(1), set: fields.partial() }),
-        execute: ({ ids, set }) => c.update!(ids, set),
+        inputSchema: z.object({ ids: z.array(z.string()).min(1), set: fields.partial().refine((set) => Object.keys(set).length > 0, 'Name at least one field to change.') }),
+        execute: ({ ids, set }, { toolCallId }) => once(toolCallId, async () => (await c.update!([...new Set(ids)], set)).map(strip)),
       });
       toolApproval[`update_${c.name}`] = (async ({ ids, set }: { ids: string[]; set: Row }, { toolCallId }) => {
         const found = await find(ids);
@@ -76,7 +95,7 @@ export function assistantTools(collections: AnyCollection[], writer: UIMessageSt
       tools[`remove_${c.name}`] = tool({
         description: `Remove one or more ${c.label.toLowerCase()} by id.`,
         inputSchema: z.object({ ids: z.array(z.string()).min(1) }),
-        execute: ({ ids }) => c.remove!(ids),
+        execute: ({ ids }, { toolCallId }) => once(toolCallId, () => c.remove!([...new Set(ids)])),
       });
       toolApproval[`remove_${c.name}`] = (async ({ ids }: { ids: string[] }, { toolCallId }) => {
         const found = await find(ids);

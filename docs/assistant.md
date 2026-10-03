@@ -51,8 +51,8 @@ ASSISTANT_MODEL=<a local model that supports tools>
 - **The panel.** A launcher in the top bar opens it: a third column from 1024px, a sheet over the page below that. Escape and Close assistant shut it; the conversation stays.
 - **Page labels.** Each question is sent with the page it was asked on and carries a quiet caption, "On Members". Ask on another page later and the earlier question keeps its label.
 - **Proposals.** A change arrives as a Proposal card in the thread: the title, then what changes, from and to. Pending shows Approve and Dismiss ("Approve and remove" for a removal, which is marked critical). Then the card shows its state: applying, applied, dismissed, failed or expired. Once the answer arrives the assistant continues on its own, and the page refreshes once after a change applies.
-- **Expired.** A change still waiting when the page reloads comes back closed: "The page was reloaded before anyone approved it." Sending a new message while one waits closes it too: "You moved on before approving it."
-- **The thread lasts.** It is kept in this browser's local storage under `<slug>.assistant`, the last 100 messages, and sent nowhere but the assistant route. One thread serves the whole console. If storage is full the newer half is kept; if storage is unavailable the thread lasts for the visit.
+- **Expired.** A change still waiting when the page reloads comes back closed: "The page was reloaded before anyone approved it." Sending a new message while one waits closes it too: "You moved on before approving it." A change approved but reloaded before its result arrived comes back closed as well, so it never runs again on the next message: "The page was reloaded before the change finished. Check the page to see whether it applied."
+- **The thread lasts.** It is kept in this browser's local storage under `<slug>.assistant`, the last 100 messages, and sent nowhere but the assistant route, which receives the same last 100. One thread serves the whole console. If storage is full the newer half is kept; if storage is unavailable the thread lasts for the visit.
 - **Clear.** Clear conversation empties the thread and removes what was stored.
 - **The Settings switch.** Under Assistant, "Show the assistant" hides the launcher and the panel on this device. The conversation stays. The section appears only where the product has an assistant to switch.
 - **Failures.** A failed turn shows a critical banner with Retry, in one of three sentences, and the thread stays:
@@ -90,21 +90,21 @@ Two fields on a collection keep the assistant in bounds:
 - `pageOnly`: operations only a page may perform. The assistant never gets a tool for them. In the sample, creating an API key is `pageOnly`, because the secret is shown once, on the page.
 - `hidden`: fields only a page may see. They are left out of every tool's input and of every query result. The sample hides a key's `secret`.
 
-Per collection the assistant gets `query_<name>`, and `create_<name>`, `update_<name>` and `remove_<name>` for what is allowed and not `pageOnly`. A query takes `where` conditions (`eq`, `ne`, `gt`, `lt`, `contains`, `in`), a `sort` and a `limit`. A field the collection does not have, or hides, is rejected.
+Per collection the assistant gets `query_<name>`, and `create_<name>`, `update_<name>` and `remove_<name>` for what is allowed and not `pageOnly`. A query takes `where` conditions (`eq`, `ne`, `gt`, `lt`, `contains`, `in`), a `sort` and a `limit`. A field the collection does not have, or hides, is rejected, and a field with no value matches only `ne`. `arrayCollection` parses what is created or changed with the collection's `fields`, so the schema is where a record's rules live (the sample's members need a name and a valid email).
 
 ## Safety
 
 - **Every change waits.** The server writes a preview of the change to the thread, then asks for approval. Update and remove check the ids first; a missing id is denied with "No such id: ..." and nothing is shown.
-- **Approvals are signed.** Each approval request is signed with a secret derived from `ASSISTANT_API_KEY`, so the server signs each request when it issues it and checks the signature when the approval comes back. A forged or altered approval is rejected before anything runs. The key itself never reaches the browser.
-- **Hidden fields never leave the server.** See `hidden` above.
-- **The page text is data.** The browser sends the page's path, its title and its visible text. The model is told that text is data to read, never instructions, and only the first 24,000 characters are used.
-- **Limits.** A reply takes at most 8 model steps. A query returns at most 100 rows (50 when it does not say).
-- **Sign-in.** Put your sign-in check in two places: the dashboard layout, `app/(dashboard)/layout.tsx`, and the route, `app/api/assistant/route.ts`. The route's check must refuse before the model is reached; the layout's only hides the page.
+- **Approvals are signed, and run once.** Each approval request is signed with a secret derived from `ASSISTANT_API_KEY`, so the server signs each request when it issues it and checks the signature when the approval comes back. A forged or altered approval is rejected before anything runs, and the same approval sent again is refused: "This change was already applied." (The record of applied calls lives in the server's memory, so a product running several servers keeps it in a shared store.) The key itself never reaches the browser.
+- **Hidden fields never leave the server.** See `hidden` above: they are left out of what a query, a create and an update return.
+- **The page text is data.** The browser sends the page's path, its title and its visible text. The model is told that text is data to read, never instructions, and only the first 24,000 characters are used; the page's own page-text tags are dropped so it cannot end the block, and the title and path are one line of at most 200 characters.
+- **Limits.** A reply takes at most 8 model steps. A query returns at most 100 rows (50 when it does not say). The route refuses a thread that is empty, malformed or longer than 100 messages (400) and a body over 2 MB (413).
+- **Sign-in.** Put your sign-in check in three places: the dashboard layout, `app/(dashboard)/layout.tsx`; the route, `app/api/assistant/route.ts`; and every server action (each `actions.ts`). The route's check must refuse before the model is reached; the layout's only hides the page; a server action is a public endpoint the layout does not guard, so each checks for itself.
 - **An accepted risk.** A closed card is closed in the browser's storage. The same person, by editing their own storage, can make an expired card pending again and approve it. The approval is still the server's own, for a change the person was shown, and they could make the same change on the page. The assistant is not an authorisation layer: authorise in your collections, as you do for pages.
 
 ## Costs
 
-Each question can cost up to 8 model calls, and every call carries the system prompt, up to 24,000 characters of page text, the tool descriptions and the whole stored thread (up to 100 messages). Long threads and large pages cost more on every turn. Clear the conversation to start cheap again. Your provider's price list does the arithmetic; Meridian adds nothing on top.
+Each question can cost up to 8 model calls, and every call carries the system prompt, up to 24,000 characters of page text, the tool descriptions and the thread (its last 100 messages). Long threads and large pages cost more on every turn. Clear the conversation to start cheap again. Your provider's price list does the arithmetic; Meridian adds nothing on top.
 
 ## Adding an MCP server later
 

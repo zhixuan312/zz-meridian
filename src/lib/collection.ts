@@ -28,9 +28,13 @@ export type Collection<T extends Record<string, unknown>, K extends keyof T & st
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type AnyCollection = Collection<any, any>;
 
-/** One store per name per process, on globalThis, so a route handler, a server action and a page share it. */
+/**
+ * One store per name per process, on globalThis, so a route handler, a server action and a page share it. `next` is the
+ * next id's number: it only grows, so a removed record's id is never given to a new one.
+ */
+type Store = { rows: Record<string, unknown>[]; next: number };
 const STORES = Symbol.for('zz-meridian.collections');
-const stores = () => ((globalThis as Record<symbol, unknown>)[STORES] ??= new Map<string, Record<string, unknown>[]>()) as Map<string, Record<string, unknown>[]>;
+const stores = () => ((globalThis as Record<symbol, unknown>)[STORES] ??= new Map<string, Store>()) as Map<string, Store>;
 
 /** Code-point order for strings, numeric order for numbers. */
 function compare(a: unknown, b: unknown): number {
@@ -67,8 +71,13 @@ export function arrayCollection<T extends Record<string, unknown>, K extends key
   hidden?: (keyof T)[];
 }): Collection<T, K> {
   const { name, key, allow } = def;
-  if (!stores().has(name)) stores().set(name, structuredClone(def.rows));
-  const rows = () => stores().get(name) as T[];
+  if (key in def.fields.shape) throw new Error(`${name}: fields describe the record without its key, so they cannot name ${key}`);
+  if (!stores().has(name)) {
+    const top = def.rows.reduce((m, r) => Math.max(m, Number(/_(\d+)$/.exec(String(r[key]))?.[1] ?? 0)), 0);
+    stores().set(name, { rows: structuredClone(def.rows), next: top + 1 });
+  }
+  const store = () => stores().get(name)!;
+  const rows = () => store().rows as T[];
   const copy = <R,>(r: R): R => structuredClone(r);
   const missing = (ids: string[]) => ids.filter((id) => !rows().some((r) => r[key] === id));
   const pick = (ids: string[]) => {
@@ -101,23 +110,23 @@ export function arrayCollection<T extends Record<string, unknown>, K extends key
   };
   if (allow.includes('create')) {
     c.create = async (input) => {
-      const top = rows().reduce((m, r) => Math.max(m, Number(/_(\d+)$/.exec(String(r[key]))?.[1] ?? 0)), 0);
-      const row = { ...input, [key]: `${name}_${top + 1}` } as unknown as T;
+      const row = { ...def.fields.parse(input), [key]: `${name}_${store().next++}` } as unknown as T;
       rows().push(row);
       return copy(row);
     };
   }
   if (allow.includes('update')) {
     c.update = async (ids, patch) => {
+      const set = def.fields.partial().strict().parse(patch);
       const hit = pick(ids);
-      for (const r of hit) Object.assign(r, patch);
+      for (const r of hit) Object.assign(r, set);
       return copy(hit);
     };
   }
   if (allow.includes('remove')) {
     c.remove = async (ids) => {
       const hit = new Set(pick(ids));
-      stores().set(name, rows().filter((r) => !hit.has(r)));
+      store().rows = rows().filter((r) => !hit.has(r));
       return hit.size;
     };
   }

@@ -9,33 +9,47 @@ const KEEP = 100;
 export const REASONS = {
   reload: 'The page was reloaded before anyone approved it.',
   movedOn: 'You moved on before approving it.',
+  interrupted: 'The page was reloaded before the change finished. Check the page to see whether it applied.',
 } as const;
 
-/** Every tool part still waiting for an answer becomes denied with the reason; nothing else changes. */
-export function closeOpenApprovals(messages: UIMessage[], reason: string): UIMessage[] {
+/** Every tool part in one of `states` becomes denied with the reason; nothing else changes. */
+function close(messages: UIMessage[], states: string[], reason: string): UIMessage[] {
+  const open = (p: unknown) => states.includes((p as { state?: string }).state ?? '');
   return messages.map((m) =>
-    m.parts.some((p) => (p as { state?: string }).state === 'approval-requested')
+    m.parts.some(open)
       ? {
           ...m,
           parts: m.parts.map((p) => {
-            const part = p as unknown as { state?: string; approval?: { id: string } };
-            return part.state === 'approval-requested'
-              ? ({ ...p, state: 'output-denied', approval: { id: part.approval?.id, approved: false, reason } } as unknown as typeof p)
-              : p;
+            const part = p as unknown as { approval?: { id: string } };
+            return open(p) ? ({ ...p, state: 'output-denied', approval: { id: part.approval?.id, approved: false, reason } } as unknown as typeof p) : p;
           }),
         }
       : m,
   );
 }
 
-/** The stored thread, with waiting changes closed as expired; empty when missing, broken or from another version. */
+/** Every tool part still waiting for an answer becomes denied with the reason; nothing else changes. */
+export function closeOpenApprovals(messages: UIMessage[], reason: string): UIMessage[] {
+  return close(messages, ['approval-requested'], reason);
+}
+
+/** The last 100 messages: what is stored, and what the panel sends. */
+export function recent(messages: UIMessage[]): UIMessage[] {
+  return messages.slice(-KEEP);
+}
+
+/**
+ * The stored thread, with waiting changes closed as expired, and an approved change whose result never arrived closed
+ * too, so it never runs again on the next message; empty when missing, broken or from another version.
+ */
 export function loadThread(storage: Storage): UIMessage[] {
   try {
     const raw = storage.getItem(THREAD_KEY);
     if (!raw) return [];
     const stored = JSON.parse(raw) as { v?: number; messages?: unknown };
     if (stored.v !== 1 || !Array.isArray(stored.messages)) return [];
-    return closeOpenApprovals((stored.messages as UIMessage[]).slice(-KEEP), REASONS.reload);
+    const messages = closeOpenApprovals(recent(stored.messages as UIMessage[]), REASONS.reload);
+    return close(messages, ['approval-responded'], REASONS.interrupted);
   } catch {
     return [];
   }
@@ -45,7 +59,7 @@ export function loadThread(storage: Storage): UIMessage[] {
 export function saveThread(storage: Storage, messages: UIMessage[]): void {
   try {
     if (messages.length === 0) return storage.removeItem(THREAD_KEY);
-    const kept = messages.slice(-KEEP);
+    const kept = recent(messages);
     try {
       storage.setItem(THREAD_KEY, JSON.stringify({ v: 1, messages: kept }));
     } catch {

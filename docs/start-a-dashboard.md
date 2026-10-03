@@ -63,7 +63,7 @@ If a page seems to need a new style, it needs a pattern or a component instead: 
 
 Each route under `app/embed/` is an MCP App view. Register each as a `ui://` resource and a tool on your MCP server (`docs/agents.md`), and the dashboard appears in any MCP Apps host, inline beside the answer, with Expand, Ask and Proposals working.
 
-The console's assistant is off until you set four `ASSISTANT_*` variables (`.env.example`); it uses the same collections, so nothing more is wired. See `docs/assistant.md`, and put your sign-in check in the dashboard layout and in `app/api/assistant/route.ts`.
+The console's assistant is off until you set the `ASSISTANT_*` variables (`.env.example`); it uses the same collections, so nothing more is wired. See `docs/assistant.md`, and put your sign-in check in the dashboard layout, in `app/api/assistant/route.ts` and in every server action (each `actions.ts`).
 
 ## Before you ship
 

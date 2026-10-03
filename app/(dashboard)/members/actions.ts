@@ -1,5 +1,7 @@
 'use server';
 
+// A server action is a public endpoint the dashboard layout does not guard: put your sign-in check in each action, the same
+// check as the layout's and the assistant route's.
 import { clock, members } from '@/data/collections';
 import type { Result } from '@/views/members';
 import { ROLES, TEAMS, STATUSES, type Member } from '@/system/fixtures/sample-members';

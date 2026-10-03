@@ -1,5 +1,7 @@
 'use server';
 
+// A server action is a public endpoint the dashboard layout does not guard: put your sign-in check in each action, the same
+// check as the layout's and the assistant route's.
 import { randomBytes } from 'node:crypto';
 import { z } from 'zod';
 import { clock, keys } from '@/data/collections';

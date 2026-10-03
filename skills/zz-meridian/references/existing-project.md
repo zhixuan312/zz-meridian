@@ -36,7 +36,7 @@ A product that adopts the assistant also brings: `app/api/assistant/route.ts`, `
 `src/lib/collection.ts`, `src/data/collections.ts`, and the panel (`src/components/patterns/assistant/`, mounted by
 `AppShell`, with `assistant` passed from `app/(dashboard)/layout.tsx`); add `ai`, `@ai-sdk/react`, `@ai-sdk/anthropic`,
 `@ai-sdk/openai-compatible` and `zod` to the dependencies. Point `src/data/collections.ts` at their data, put their
-sign-in check in the layout and in the route, and set `ASSISTANT_PROVIDER`, `ASSISTANT_API_KEY` and `ASSISTANT_MODEL`
+sign-in check in the layout, in the route and in every server action, and set `ASSISTANT_PROVIDER`, `ASSISTANT_API_KEY` and `ASSISTANT_MODEL`
 (plus `ASSISTANT_BASE_URL` for `openai-compatible`): it stays off until they are set. The "Show the assistant" switch is
 in `src/views/settings.tsx`.
 

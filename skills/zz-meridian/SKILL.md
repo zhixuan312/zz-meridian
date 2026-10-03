@@ -109,7 +109,7 @@ Read `references/customize.md` and follow it. In short:
   `references/customize.md` has the checklist and the grep that finds what is left.
 - **The assistant** is built in and off until `ASSISTANT_PROVIDER`, `ASSISTANT_API_KEY` and `ASSISTANT_MODEL` are set
   (`ASSISTANT_BASE_URL` is required for `openai-compatible`). Point `src/data/collections.ts` at the person's data, and
-  put their sign-in check in `app/(dashboard)/layout.tsx` and in `app/api/assistant/route.ts`; see `references/customize.md`.
+  put their sign-in check in `app/(dashboard)/layout.tsx`, in `app/api/assistant/route.ts` and in every server action; see `references/customize.md`.
 - **MCP App views** under `app/embed/` only if they asked for the agent surface; see `docs/agents.md` in the template.
 
 Build up, never sideways: use Meridian's components and tokens. A new colour, size or shadow is a token, never a literal;

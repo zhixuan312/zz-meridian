@@ -13,7 +13,7 @@ import { IconButton } from '@/components/ui/icon-button';
 import { Proposal, type ProposalChange, type ProposalState } from '@/components/patterns/proposal';
 import { Textarea } from '@/components/ui/textarea';
 import type { PageContext } from '@/lib/assistant/prompt';
-import { REASONS, clearThread, closeOpenApprovals, loadThread, saveThread } from './thread';
+import { REASONS, clearThread, closeOpenApprovals, loadThread, recent, saveThread } from './thread';
 
 /** Reads the page from the scroll region: the masthead title and the visible text. */
 function readPage(path: string): PageContext {
@@ -23,7 +23,7 @@ function readPage(path: string): PageContext {
 
 type Preview = { title: string; tone: 'neutral' | 'critical'; changes: ProposalChange[] };
 /** The slice of an AI SDK tool part the panel reads. */
-type ToolPart = { type: string; toolCallId: string; state: string; approval?: { id: string; approved?: boolean; reason?: string } };
+type ToolPart = { type: string; toolCallId: string; state: string; errorText?: string; approval?: { id: string; approved?: boolean; reason?: string } };
 
 /** The page a question was asked on, as the column sends it with the message. */
 const pageOf = (m: UIMessage) => (m.metadata as { page?: { title?: string } } | undefined)?.page?.title;
@@ -36,7 +36,7 @@ function stateOf(part: ToolPart): { state: ProposalState; note?: string } | null
     case 'approval-requested': return { state: 'pending' };
     case 'approval-responded': return part.approval?.approved ? { state: 'applying' } : { state: 'dismissed' };
     case 'output-available': return { state: 'applied' };
-    case 'output-error': return { state: 'failed' };
+    case 'output-error': return { state: 'failed', note: part.errorText };
     case 'output-denied': return part.approval?.reason ? { state: 'expired', note: part.approval.reason } : { state: 'dismissed' };
     default: return null;
   }
@@ -214,7 +214,12 @@ export function AssistantColumn({ open, onClose }: { open: boolean; onClose: () 
   const pathRef = useRef(path);
   pathRef.current = path;
   const transport = useMemo(
-    () => new DefaultChatTransport({ api: '/api/assistant', body: () => ({ page: readPage(pathRef.current) }) }),
+    () =>
+      new DefaultChatTransport({
+        api: '/api/assistant',
+        // The route takes the last 100 messages, as the thread keeps them, and the page the person is on now.
+        prepareSendMessagesRequest: ({ messages }) => ({ body: { messages: recent(messages), page: readPage(pathRef.current) } }),
+      }),
     [],
   );
   const router = useRouter();
@@ -224,15 +229,17 @@ export function AssistantColumn({ open, onClose }: { open: boolean; onClose: () 
   });
   // The thread loads once the page is on screen, never during render, and saves only after that.
   const [loaded, setLoaded] = useState(false);
+  // A change that applied is on the page's data now: refresh once per tool part, never for one that applied before a reload.
+  const refreshed = useRef(new Set<string>());
   useEffect(() => {
-    setMessages(loadThread(localStorage));
+    const thread = loadThread(localStorage);
+    for (const m of thread) for (const p of m.parts) if (isMutation(p)) refreshed.current.add((p as unknown as ToolPart).toolCallId);
+    setMessages(thread);
     setLoaded(true);
   }, [setMessages]);
   useEffect(() => {
     if (loaded) saveThread(localStorage, messages);
   }, [loaded, messages]);
-  // A change that applied is on the page's data now: refresh once per tool part.
-  const refreshed = useRef(new Set<string>());
   useEffect(() => {
     for (const m of messages) for (const p of m.parts) {
       const part = p as unknown as ToolPart;

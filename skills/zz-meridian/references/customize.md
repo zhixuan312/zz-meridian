@@ -74,7 +74,7 @@ the variables are set, read per request, so no rebuild is needed: `ASSISTANT_PRO
 - **Collections** live in `src/data/collections.ts`: one `arrayCollection` per kind of record, with `rows`, the `fields`
   schema, `allow` (which of create, update and remove the assistant may propose) and `hidden` fields. Replace each
   `rows` with the person's API and `clock` with `new Date()`; the assistant reads and proposes changes only through them.
-- **Sign-in check** goes in two places, the same check: `app/(dashboard)/layout.tsx` and `app/api/assistant/route.ts`
+- **Sign-in check** goes in three places, the same check: `app/(dashboard)/layout.tsx`, `app/api/assistant/route.ts` and every server action (each `actions.ts`), because a server action is a public endpoint the layout does not guard
   (before the model is reached).
 - **The switch** ("Show the assistant") is in `src/views/settings.tsx`. A product that deletes Settings moves it, or the
   person can no longer hide the panel.

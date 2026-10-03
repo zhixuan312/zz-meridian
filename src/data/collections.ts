@@ -20,8 +20,8 @@ export const members: Collection<Member, 'id'> = arrayCollection({
   key: 'id',
   title: (m) => m.name,
   fields: z.object({
-    name: z.string(),
-    email: z.string(),
+    name: z.string().trim().min(1),
+    email: z.email(),
     role: z.enum(ROLES),
     team: z.enum(TEAMS),
     status: z.enum(STATUSES),

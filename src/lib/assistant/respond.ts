@@ -1,6 +1,6 @@
 import { APICallError, RetryError, convertToModelMessages, createUIMessageStream, createUIMessageStreamResponse, isStepCount, streamText, toUIMessageStream, type LanguageModel, type UIMessage } from 'ai';
 import type { AnyCollection } from '@/lib/collection';
-import { assistantTools } from './tools';
+import { ChangeRefused, assistantTools } from './tools';
 import { systemPrompt, type PageContext } from './prompt';
 
 /** The most model steps one reply may take. */
@@ -28,8 +28,12 @@ export async function respond({ model, secret, messages, page, collections, now 
   return createUIMessageStreamResponse({ stream });
 }
 
-/** Logs the original error on the server and returns one of three plain sentences, never anything from the error itself. */
+/**
+ * A refused change says why. Anything else is logged on the server and becomes one of three plain sentences, never
+ * anything from the error itself.
+ */
 function plainError(error: unknown): string {
+  if (error instanceof ChangeRefused) return error.message;
   console.error('assistant: model call failed', error);
   const cause = RetryError.isInstance(error) ? error.lastError : error;
   const status = APICallError.isInstance(cause) ? cause.statusCode : undefined;
