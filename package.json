@@ -27,6 +27,10 @@
     "interactions": "node scripts/interactions.ts"
   },
   "dependencies": {
+    "@ai-sdk/anthropic": "4.0.71",
+    "@ai-sdk/openai-compatible": "3.0.62",
+    "@ai-sdk/react": "4.0.130",
+    "ai": "7.0.127",
     "clsx": "^2.1.1",
     "lucide-react": "^1.50.0",
     "next": "16.3.8",
@@ -35,7 +39,8 @@
     "react-dom": "19.3.0",
     "react-markdown": "^10.1.0",
     "remark-gfm": "^4.0.1",
-    "tailwind-merge": "^3.7.0"
+    "tailwind-merge": "^3.7.0",
+    "zod": "4.6.5"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.3.3",
