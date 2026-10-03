@@ -1,6 +1,6 @@
 # The assistant
 
-A question-and-answer partner with hands, on every console page: it answers about the page and proposes changes the person approves.
+A question-and-answer partner with hands, in the dashboard shell: it reads the page you are on, answers about it and proposes changes you approve.
 
 A person opens it from the top bar, asks about what they are looking at, and it answers from the page and from the product's own data. When it wants to add, change or remove a record, it shows a Proposal and waits. Nothing changes until the person presses Approve.
 
@@ -63,6 +63,8 @@ ASSISTANT_MODEL=<a local model that supports tools>
   The original error goes to the server log, never to the browser.
 
 ## Point it at your data
+
+A new page needs nothing for the panel. The panel lives in the dashboard shell and, with every message, reads the open page from the shell's scroll region: its path, its first heading and its visible text. Any page under `app/(dashboard)/` is read that way. Only data the assistant should look up or change needs wiring, and that is one collection.
 
 The assistant reads and changes records through collections, the same ones your pages use. `src/data/collections.ts` is the one place both are pointed at your data. It exports the `collections` list, and `clock`, the data's "now" (the sample returns its fixed day; a product returns `new Date()`).
 

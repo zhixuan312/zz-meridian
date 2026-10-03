@@ -8,7 +8,7 @@ Agents reached a Meridian dashboard only through an MCP host (decision 0004): th
 
 ## Decision
 
-- The console has its own operator beside the MCP host: an assistant panel on every console page. It reads the page the person is on and answers; it looks up records and proposes changes. It is on only when `ASSISTANT_PROVIDER`, `ASSISTANT_API_KEY`, `ASSISTANT_MODEL` and, where needed, `ASSISTANT_BASE_URL` are set, read on every request.
+- The console has its own operator beside the MCP host: one assistant panel in the dashboard shell, which no page knows about. It reads the page the person is on and answers; it looks up records and proposes changes. It is on only when `ASSISTANT_PROVIDER`, `ASSISTANT_API_KEY`, `ASSISTANT_MODEL` and, where needed, `ASSISTANT_BASE_URL` are set, read on every request.
 - One data layer. A `Collection` (`src/lib/collection.ts`) describes a set of records once; `src/data/collections.ts` lists them. Pages, server actions and the assistant read and change records through it, and an MCP server can offer the same tools later. `pageOnly` and `hidden` keep what only a page may do or see out of every tool.
 - Approvals are signed. Every add, change and removal shows a Proposal made by the server and waits for the person. The approval is signed with a secret derived from the provider key, so a forged one never runs. A removal is proposed like any other change, marked critical, and runs only when approved. This replaces the earlier rule that destructive changes are never proposed inline.
 - The thread is kept in the person's browser, nowhere else, and the person can switch the assistant off in Settings.

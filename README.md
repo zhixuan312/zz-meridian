@@ -44,7 +44,7 @@ People point, tap and type; agents call tools. Both use the same views, under fi
 
 ## The assistant
 
-The console has its own assistant: a panel on every page that answers questions about what is on screen and proposes changes for the person to approve. It is off until you give it a model with the `ASSISTANT_*` environment variables, and it works on the same collections as your pages (`src/data/collections.ts`). `docs/assistant.md` covers switching it on, pointing it at your data, what keeps it safe, and what it costs.
+The console has its own assistant: one panel in the dashboard shell that reads whichever page is open, answers questions about what is on screen and proposes changes for the person to approve. It is off until you give it a model with the `ASSISTANT_*` environment variables, and it works on the same collections as your pages (`src/data/collections.ts`). `docs/assistant.md` covers switching it on, pointing it at your data, what keeps it safe, and what it costs.
 
 ## The signature
 
