@@ -1,4 +1,5 @@
 /** Appearance preferences: theme, accent and density, stored on the device and applied as attributes on <html>. */
+import { slug } from '@/app.config';
 export const THEMES = ['system', 'dark', 'light'] as const;
 export const ACCENTS = ['indigo', 'cobalt', 'jade', 'graphite'] as const;
 /** A swatch for each accent preset, for pickers. The fill lightness is the dark theme's; graphite is ink itself. */
@@ -9,7 +10,8 @@ export type Accent = (typeof ACCENTS)[number];
 export type Density = (typeof DENSITIES)[number];
 export type Preferences = { theme: ThemePref; accent: Accent; density: Density };
 
-export const STORAGE_KEY = 'zz-meridian.preferences';
+/** Per product, from the name: two Meridian apps on one host keep their own theme and accent. */
+export const STORAGE_KEY = `${slug}.preferences`;
 
 /**
  * Runs before the first paint (inlined in <head>), so a stored choice never flashes the other theme.

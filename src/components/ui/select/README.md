@@ -29,6 +29,8 @@ The list enters with `float-in` (rises 4px and fades over `dur-enter`) and leave
 
 ## Behaviour
 
+- In a native form (a server action), pass `name`: the control posts the chosen value through a hidden native input, so `formData.get(name)` reads it with no extra code.
+
 - Opens on click, Enter, Space or the arrow keys; typing jumps to the first matching option; Escape closes and returns focus.
 - The list flips above the trigger when there is no room below, and scrolls inside itself when it is taller than the window.
 

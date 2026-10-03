@@ -54,7 +54,7 @@ git init -q
 pnpm install
 ```
 
-Requirements: Node 24 or newer and pnpm (`corepack enable` if pnpm is missing). The browser audit uses Google Chrome
+Requirements: Node 22.18 or newer and pnpm 10 or newer (`corepack enable` if pnpm is missing). The browser audit uses Google Chrome
 (`CHROME=/path/to/chrome` if it is not at the macOS default). If any is missing, say so plainly and stop before step 6
 rather than skipping validation.
 
@@ -66,14 +66,20 @@ conversation.
 ```sh
 node scripts/brand.ts --name "<Product>" --workspace "<Workspace>" --timezone "<IANA zone>" \
   [--currency <ISO 4217>] [--user "<Name>" --role "<Role>"] \
-  [--accent indigo|cobalt|jade|graphite | --hex '#RRGGBB' | --hue <0-360> --chroma <0.10-0.18>] [--no-atlas]
+  [--accent indigo|cobalt|jade|graphite | --hex '#RRGGBB' | --hue <0-360> --chroma <0.10-0.18>] --product
 ```
 
 Every product name, sample address and MCP tool name in the template follows `--name`, so nothing of the template's
 own name is left behind. A brand colour goes straight in as `--hex`: the script derives the OKLCH hue and chroma (chroma
 capped at 0.18; the theme sets lightness so contrast holds) and prints them. It registers the accent everywhere, runs the contrast gate across
-every theme, and lowers a theme's fill lightness by itself if white text would fail. Keep the Atlas (`/system`) while
-building; it is the live specification. Pass `--no-atlas` only when the person wants it gone.
+every theme, and lowers a theme's fill lightness by itself if white text would fail.
+
+Pass `--product`: the person gets their dashboard, not a copy of the design system. It removes the Design Atlas, the card
+specifications and previews, the page specifications, `docs/`, `decisions/`, the changelog and this skill, rewrites the
+README and AGENTS.md for their product, and keeps everything the dashboard is built from (components, tokens, styles,
+scripts and the gates). To look a component up while building, read it in the template on GitHub
+(`src/components/<layer>/<card>/README.md`). Leave `--product` out only when the person is extending the design system
+itself.
 
 Status colours own three hues: critical near 22°, warning near 68°, positive near 158°. A brand hue within 20° of one
 (a red, amber or green brand) makes every button and selection read as an alert or as "healthy", and the script prints
@@ -86,8 +92,8 @@ away, with the exact brand colour kept in the logo mark. If they keep it, keep t
 Read `references/customize.md` and follow it. In short:
 
 - **Data first.** Write `src/data/<product>.ts` for the person's domain: real types from their schema or materials, and
-  deterministic sample data until they wire their API. Pages import data from `src/data/` and nowhere else. Leave
-  `src/system/fixtures/` alone: it is the template's sample, which the Atlas and every card preview read. Prove the
+  deterministic sample data until they wire their API. Pages import data from `src/data/` and nowhere else. Delete the
+  sample pages you replace, and `src/system/fixtures/` and `src/system/sample-cells.tsx` once nothing imports them. Prove the
   numbers before building pages: a `tests/data.test.ts` asserting the counts your pages need (vitest resolves `@/`;
   plain `node` does not).
 - **Navigation** in `src/app.config.ts`; one line per page.
@@ -109,7 +115,9 @@ verbs on buttons, units and periods on every number.
 pnpm verify            # the gate, a production build, the built app, and the browser audit of every page
 ```
 
-Stop the dev server first: verify builds and serves the app from the same folder. It must end with
+Stop the dev server first: verify builds and serves the app from the same folder. A full run takes a few minutes for a
+dozen routes (five widths and two themes for the audit, while every control is pressed beside it); `--quick` takes about
+a minute. It must end with
 `verify: the project meets the Meridian standard`. The audit discovers every static route; pass each detail page with
 `--extra /orders/ord_1042`, one per state worth seeing (a normal record, a failed one), with ids taken from your data
 module's featured ids (print them from `tests/data.test.ts`). When something fails, read `references/validation.md`, fix the cause (not the check), and run

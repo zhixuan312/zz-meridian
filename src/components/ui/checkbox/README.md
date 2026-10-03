@@ -27,6 +27,8 @@ Fill and outline change over `dur-hover`.
 
 ## Behaviour
 
+- In a native form (a server action), pass `name`: the control posts "on" when checked through a hidden native input, so `formData.get(name)` reads it with no extra code.
+
 - Space toggles; a click on the label toggles.
 - In a table header, the box selects every row on the page; it shows indeterminate while some are chosen.
 - A checkbox changes nothing until the form is saved. A setting that applies at once is a Switch.

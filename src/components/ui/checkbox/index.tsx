@@ -44,7 +44,7 @@ export const Checkbox = forwardRef<HTMLButtonElement, Props>(function Checkbox({
   return (
     <div className={cn('flex items-start gap-2.5', className)}>
       <span className="flex h-5 items-center">{box}</span>
-      <label htmlFor={cid} className={cn('min-w-0 text-sm leading-5', rest.disabled ? 'cursor-not-allowed text-ink-disabled' : 'cursor-pointer text-ink')}>
+      <label htmlFor={cid} className={cn('min-w-0 text-sm leading-5 pointer-coarse:-my-3 pointer-coarse:py-3', rest.disabled ? 'cursor-not-allowed text-ink-disabled' : 'cursor-pointer text-ink')}>
         {label}
         {description ? <span className="block text-xs leading-snug text-ink-3">{description}</span> : null}
       </label>

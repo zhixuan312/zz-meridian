@@ -29,7 +29,7 @@ export type DetailHeadProps = {
 function Name({ name, mono, status }: Pick<DetailHeadProps, 'name' | 'mono' | 'status'>) {
   return (
     <span className="inline-flex max-w-full flex-wrap items-center gap-x-4 gap-y-2 align-middle">
-      <span className={cn('min-w-0 break-all', mono && 'font-mono font-medium tracking-[-0.02em] [h1_&]:text-[0.6em]')}>{name}</span>
+      <span className={cn('min-w-0', mono ? 'break-all' : 'text-balance break-words', mono && 'font-mono font-medium tracking-[-0.02em] [h1_&]:text-[0.6em]')}>{name}</span>
       {status ? <Badge tone={status.tone} dot className="translate-y-0.5 text-xs font-medium tracking-[0]">{status.label}</Badge> : null}
     </span>
   );

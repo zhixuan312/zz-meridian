@@ -35,6 +35,8 @@ export const PAIRS: Pair[] = [
   ['accent-ink', 'ground', TEXT, 'an inline link on the page'],
   ['accent-ink', ['surface', 'accent-tint'], TEXT, 'the active navigation label'],
   ['ink', ['surface', 'accent-tint'], TEXT, 'a selected row'],
+  ['ink-2', ['surface', 'accent-tint'], TEXT, 'muted text in a selected row or on an accent wash (ink-3 is not enough there)'],
+  ['ink-2', ['surface', 'fill-track'], TEXT, 'a count on an inactive tab'],
   ['positive-ink', 'surface', TEXT, 'an improving delta'],
   ['positive-ink', ['surface', 'positive-tint'], TEXT, 'a positive badge'],
   ['warning-ink', 'surface', TEXT, 'a warning message'],

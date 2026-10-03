@@ -7,7 +7,7 @@ Status: beta
 ## Anatomy
 
 1. **Bars**: one per day, oldest on the left, equal width, 32px tall, `radius-full`, 2px apart.
-2. **Caption**: "90 days ago" (or 30), a hairline, the uptime percentage in `ink-2`, a hairline, "Today".
+2. **Caption**: "90 days ago" (the span shown), a hairline, the uptime percentage in `ink-2`, a hairline, "Today".
 3. **Tooltip**: on hover, the day's state and date, on `surface-inverse`.
 4. **Screen-reader text and table**: a one-line summary and every day's state.
 

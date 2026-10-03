@@ -70,7 +70,7 @@ export function Tab({ className, count, children, ...rest }: ComponentProps<type
     >
       {children}
       {count !== undefined ? (
-        <span className="t-num rounded-full bg-fill-track px-1.5 py-px text-2xs font-semibold text-ink-3 group-data-[state=active]/tab:bg-accent-tint group-data-[state=active]/tab:text-accent-ink">
+        <span className="t-num rounded-full bg-fill-track px-1.5 py-px text-2xs font-semibold text-ink-2 group-data-[state=active]/tab:bg-accent-tint group-data-[state=active]/tab:text-accent-ink">
           {count}
         </span>
       ) : null}
@@ -79,5 +79,5 @@ export function Tab({ className, count, children, ...rest }: ComponentProps<type
 }
 
 export function TabPanel({ className, ...rest }: ComponentProps<typeof T.Content>) {
-  return <T.Content className={cn('pt-5 outline-none focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent', className)} {...rest} />;
+  return <T.Content className={cn('pt-5 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent', className)} {...rest} />;
 }

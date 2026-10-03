@@ -89,12 +89,16 @@ const MEASURE = `(() => {
     if (rad > 0 && rad < 999) out.radii.push(Math.round(rad));
     if (/(auto|scroll)/.test(c.overflowY) && el.scrollHeight > el.clientHeight + 1 && el.clientHeight > 120) out.scrollers.push(label(el));
     if (el.matches('button,a[href],[role="button"],[role="tab"],[role="switch"],[role="checkbox"],[role="radio"],input:not([type=hidden]),select,textarea')) {
-      const name = el.getAttribute('aria-label') || el.getAttribute('aria-labelledby') || el.getAttribute('title') || el.textContent.trim() || el.querySelector('img[alt]')?.getAttribute('alt') || (el.id && document.querySelector('label[for="' + el.id + '"]')) || el.closest('label') || el.getAttribute('placeholder');
+      const name = el.getAttribute('aria-label') || el.getAttribute('aria-labelledby') || el.getAttribute('title') || el.textContent.trim() || el.querySelector('img[alt]')?.getAttribute('alt') || (el.id && document.querySelector('label[for="' + el.id + '"]')?.textContent.trim()) || el.closest('label')?.textContent.trim() || el.getAttribute('placeholder') || '';
       if (!name) out.unnamed.push(label(el));
       // On touch (a phone is emulated as one) every control answers at least 44px: its own box, its field's frame, or
       // the .hit square around it. A link inside running text is exempt, as WCAG exempts it.
       if (matchMedia('(pointer: coarse)').matches && !el.disabled && !(el.matches('a') && getComputedStyle(el).display === 'inline')) {
-        const box = (el.closest('.control-frame') || el).getBoundingClientRect();
+        // A labelled control answers its label too (a press on the label toggles it), so the target is both together.
+        const lab = (el.id && document.querySelector('label[for="' + el.id + '"]')) || el.closest('label');
+        const own = (el.closest('.control-frame') || el).getBoundingClientRect();
+        const lr = lab && !lab.contains(el.closest('.control-frame') || el) ? lab.getBoundingClientRect() : null;
+        const box = lr ? { width: Math.max(own.right, lr.right) - Math.min(own.left, lr.left), height: Math.max(own.bottom, lr.bottom) - Math.min(own.top, lr.top) } : own;
         const b = getComputedStyle(el, '::before');
         const w = b.content !== 'none' && b.position === 'absolute' ? Math.max(box.width, parseFloat(b.width) || 0) : box.width;
         const h = b.content !== 'none' && b.position === 'absolute' ? Math.max(box.height, parseFloat(b.height) || 0) : box.height;
@@ -114,7 +118,7 @@ const MEASURE = `(() => {
 })()`;
 
 /** Pages that legitimately have a second scroller: the rail's own list, an open sidebar, a code block. */
-const ALLOWED_SCROLLERS = /data-scroll-region|^nav|^aside|^pre|overflow-x-auto|max-h-|^div\.min-h-0\.flex-1\.overflow-y-auto/;
+const ALLOWED_SCROLLERS = /data-scroll-region|^nav|^aside|^pre|^textarea|overflow-x-auto|max-h-|^div\.min-h-0\.flex-1\.overflow-y-auto/;
 
 const page = await launch();
 let failures = 0;

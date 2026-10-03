@@ -1,3 +1,4 @@
+import { app } from '@/app.config';
 import { describe, expect, it } from 'vitest';
 import { formatCompact, formatCost, formatDuration, formatPercent } from '@/lib/format';
 
@@ -12,7 +13,9 @@ describe('formatters', () => {
     expect(formatCompact(2_941_000)).toBe('2.9M');
   });
   it('format money, durations and shares', () => {
-    expect(formatCost(298.43)).toBe('$298.43');
+    // The symbol follows app.currency, so a rebranded product (--currency SGD) keeps this test green.
+    const symbol = new Intl.NumberFormat('en', { style: 'currency', currency: app.currency, currencyDisplay: 'narrowSymbol' }).formatToParts(0).find((p) => p.type === 'currency')!.value;
+    expect(formatCost(298.43)).toBe(`${symbol}298.43`);
     expect(formatDuration(294)).toBe('294ms');
     expect(formatDuration(1420)).toBe('1.4s');
     expect(formatPercent(0.0090, 2)).toBe('0.90%');

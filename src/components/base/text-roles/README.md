@@ -57,6 +57,7 @@ Not applicable.
 
 - Do use the role for the job, even when two roles share a size.
 - Do not add a ninth size or a fourth weight; reach for the role that does the job.
+- Do not set `ink-3` (a caption) on an accent wash (`accent-tint`): it falls under 4.5:1 in light. Use `ink-2`, or `accent-ink` for the accent's own words.
 
 ## Implementation
 

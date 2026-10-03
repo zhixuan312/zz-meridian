@@ -2,6 +2,39 @@
 
 Every release of ZZ Meridian, newest first. Versions follow semver: a removed or renamed token, prop or card is major; a new card, token or variant is minor; a corrected value is a patch. Each entry says what breaks and what to do instead.
 
+## [Unreleased]
+
+From two field reports of bringing Meridian into existing projects (issues #1 and #2).
+
+### Added
+
+- **`brand.ts --product`**: the person gets their dashboard, not the design system. It removes the Atlas, card and page specifications, previews, `docs/`, `decisions/`, the changelog and the skill, and rewrites the README and AGENTS.md. The skill uses it by default.
+- **Timeline** (`charts/timeline`): bars from a start to an end day, grouped by workstream, on month hairlines with a today line, an optional monthly heat row and a screen-reader table.
+- `Freshness run` for batch results ("Run 12 Mar 2026", never stale); `formatCostCompact` and the `compact` / `cost-compact` format names.
+- `MetricTile` takes a format name (so a server page can render it) and a word value for a categorical state.
+- `Rail` takes `user` and `signOut`, and shows Workspace settings only when the navigation has `/settings`.
+
+### Fixed
+
+- The audit no longer crashes on a labelled control; it measures a labelled checkbox with its label.
+- `Field` no longer passes `required` to the control, so the browser does not silently block a submit.
+- `--no-atlas` matches `/system` exactly, drops empty nav groups, and removes the footer link, the Atlas modules, their packages, their build tracing and stale route types.
+- `Input` is a client component; Tabs pass the audit (the count pill's contrast, and TabPanel's focus ring).
+- Formatters pin `en-US` and show a currency's narrow symbol (SGD as $).
+- `DetailHead` breaks only mono names anywhere; the rail marks only the longest matching item; the tests follow `app.currency`.
+- The preferences key derives from the product's name; the tab icon's tokens are traced for deployment.
+- `check.ts` walks every source file under `app/` (or `src/app/`) and `src/`, and no longer needs CONTRIBUTING.md; route discovery skips `api/`.
+
+### Changed
+
+- Node 22.18 or newer and pnpm 10 or newer; the `packageManager` pin is gone. `pnpm verify` runs the audit and the presses side by side.
+
+### Breaking
+
+- `NumberFormat` gains `compact` and `cost-compact`; `CompositionBar`'s `neutral-soft` is now `neutral-ink`.
+- `Table` `hideBelow` reads the table's own width (from 0.1.0's later commits).
+- Product pages that relied on Field's native `required` validation should validate in the page, which already shows `error`.
+
 ## [0.1.0] · 2026-10-03
 
 The first release: a dashboard design system and a working template, built on the Zandro pattern and register.

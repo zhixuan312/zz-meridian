@@ -28,7 +28,7 @@ export function ExportButton({
     const data = typeof rows === 'function' ? rows() : rows;
     if (!data.length) return toast({ tone: 'neutral', title: `No ${noun} to export`, description: 'Clear a filter to include more.' });
     downloadFile(filename, toCsv(data));
-    toast({ tone: 'positive', title: `Exported ${data.length.toLocaleString()} ${noun}`, description: filename });
+    toast({ tone: 'positive', title: `Exported ${data.length.toLocaleString('en-US')} ${noun}`, description: filename });
   };
   return (
     <Button icon={<Download />} onClick={save} {...rest}>

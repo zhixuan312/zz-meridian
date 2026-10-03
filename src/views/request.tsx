@@ -115,7 +115,7 @@ export function RequestView({ request: r, trace, payloads }: { request: RequestR
                   { label: 'Region', value: r.region, mono: true },
                   { label: 'Model', value: r.model, mono: true },
                   { label: 'API key', value: 'Production backend' },
-                  { label: 'Tokens', value: r.status >= 400 ? <span className="text-ink-3">None, refused</span> : <span className="t-num">{usage.input.toLocaleString()} in · {usage.output.toLocaleString()} out</span> },
+                  { label: 'Tokens', value: r.status >= 400 ? <span className="text-ink-3">None, refused</span> : <span className="t-num">{usage.input.toLocaleString('en-US')} in · {usage.output.toLocaleString('en-US')} out</span> },
                   { label: 'Cost', value: <span className="t-num">{formatCost(usage.cost)}</span> },
                 ]}
               />

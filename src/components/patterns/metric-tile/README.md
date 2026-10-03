@@ -19,7 +19,8 @@ Card, Delta, Tooltip, Sparkline. Tiles sit in a `Row split="tiles"`, or stacked 
 
 - `value` is the period's figure; `daily` one value per day of the same period; `delta` the change as a fraction (0.057 is +5.7%), or `null` when there is no earlier period. `compare` names what the change is measured against (default "vs previous period"; "vs the half hour before" when the window is not the period). `note` is a short line in that place when no comparison fits, such as who is past due.
 - `intent` says which way is good: `up` (requests), `down` (errors, latency), `neutral` (spend).
-- `format` turns the number into its text; the default split recognises "$298.43" (any currency symbol from `app.currency`), "2.9M", "0.90%" and "294ms".
+- `value` may be a word for a categorical state ("Likely new", "On track"); it is set at `text-2xl` instead of the figure size, and `format` is not used.
+- `format` turns the number into its text: a name (`count`, `compact`, `cost`, `cost-compact`, `duration`, `percent`), which a server page can pass, or a function from a client component; the default split recognises "$298.43" (any currency symbol from `app.currency`), "2.9M", "0.90%" and "294ms".
 
 ## Variants
 

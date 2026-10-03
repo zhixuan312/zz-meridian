@@ -14,10 +14,11 @@ export const metadata: Metadata = {
   description: `${app.name}: traffic, latency, spend and health for every endpoint.`,
 };
 
+/* The browser chrome's colour is a meta tag, which cannot read a CSS variable: these are the two grounds, by hand. */
 export const viewport: Viewport = {
   themeColor: [
-    { media: '(prefers-color-scheme: light)', color: '#EEF0F8' },
-    { media: '(prefers-color-scheme: dark)', color: '#0A0B10' },
+    { media: '(prefers-color-scheme: light)', color: '#EEF0F8' }, // allow-literal-colour: ground, light
+    { media: '(prefers-color-scheme: dark)', color: '#0A0B10' }, // allow-literal-colour: ground, dark
   ],
 };
 

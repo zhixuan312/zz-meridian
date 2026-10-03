@@ -15,13 +15,29 @@ import { AppearanceMenu } from '@/components/patterns/appearance-menu';
  * The navigation rail: a translucent wash on the lit ground. The current page is an accent-tinted pill with a lit
  * edge that springs to the item you choose; groups are named in mono caps; a count is a quiet badge.
  */
-export function Rail({ current }: { /** The active route; defaults to the current pathname. */ current?: string } = {}) {
+export function Rail({
+  current,
+  user = app.user,
+  signOut = '/sign-in',
+}: {
+  /** The active route; defaults to the current pathname. */
+  current?: string;
+  /** The signed-in person; pass your session's. Defaults to the sample user in app.config. */
+  user?: { name: string; role: string };
+  /** Where Sign out goes (a route), what it does (a function, such as your auth's signOut), or null to hide it. */
+  signOut?: string | (() => void) | null;
+} = {}) {
   const pathname = usePathname();
   const router = useRouter();
+  // Menu items only for routes the product has.
+  const hasSettings = nav.some((g) => g.items.some((it) => it.href === '/settings'));
   const path = current ?? pathname;
   const list = useRef<HTMLDivElement>(null);
   const [marker, setMarker] = useState<{ y: number; h: number } | null>(null);
-  const isActive = (href: string) => (href === '/' ? path === '/' : path === href || path.startsWith(href + '/'));
+  // The longest matching href is the current page, so /enhancements and /enhancements/objectives never both light up.
+  const matches = (href: string) => (href === '/' ? path === '/' : path === href || path.startsWith(href + '/'));
+  const here = nav.flatMap((g) => g.items.map((it) => it.href)).filter(matches).sort((a, b) => b.length - a.length)[0];
+  const isActive = (href: string) => href === here;
 
   useLayoutEffect(() => {
     const el = list.current?.querySelector<HTMLElement>('[aria-current="page"]');
@@ -48,9 +64,9 @@ export function Rail({ current }: { /** The active route; defaults to the curren
               <Check className="size-4 text-accent" strokeWidth={2.25} />
               <span className="min-w-0 flex-1 truncate text-ink">{app.name} {app.workspace}</span>
             </MenuItem>
-            <MenuSeparator />
-            <MenuItem onSelect={() => router.push('/settings')}><Settings />Workspace settings</MenuItem>
-            <MenuItem onSelect={() => router.push('/sign-in')}><LogOut />Sign out</MenuItem>
+            {hasSettings || signOut ? <MenuSeparator /> : null}
+            {hasSettings ? <MenuItem onSelect={() => router.push('/settings')}><Settings />Workspace settings</MenuItem> : null}
+            {signOut ? <MenuItem onSelect={() => (typeof signOut === 'function' ? signOut() : router.push(signOut))}><LogOut />Sign out</MenuItem> : null}
           </MenuContent>
         </Menu>
       </div>
@@ -93,10 +109,10 @@ export function Rail({ current }: { /** The active route; defaults to the curren
         ))}
       </nav>
       <div className="m-3 flex items-center gap-3 rounded-lg border border-line bg-surface/50 p-2.5">
-        <Avatar name={app.user.name} size="md" />
+        <Avatar name={user.name} size="md" />
         <div className="min-w-0 flex-1">
-          <p className="truncate text-sm leading-tight font-medium">{app.user.name}</p>
-          <p className="truncate text-xs leading-tight text-ink-3">{app.user.role}</p>
+          <p className="truncate text-sm leading-tight font-medium">{user.name}</p>
+          <p className="truncate text-xs leading-tight text-ink-3">{user.role}</p>
         </div>
         <AppearanceMenu />
       </div>

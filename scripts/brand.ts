@@ -4,13 +4,15 @@
  *   node scripts/brand.ts --name "Atlas Ops" [--workspace "Production"] [--timezone "Europe/London"]
  *                         [--package atlas-ops] [--accent indigo|cobalt|jade|graphite]
  *                         [--currency EUR] [--user "Ada Park" --role Admin]
- *                         [--hex '#E4572E' | --hue 25 --chroma 0.16] [--accent-name brand] [--no-atlas]
+ *                         [--hex '#E4572E' | --hue 25 --chroma 0.16] [--accent-name brand] [--no-atlas | --product]
  *
  * --hex derives the hue and chroma from a brand colour (chroma capped at 0.18; the theme owns lightness).
  * --hue/--chroma add a new accent preset (OKLCH hue in degrees, chroma 0 to 0.2) and make it the default. The contrast
  * gate then runs; where white on the accent fill fails in a theme, the preset gets a lower fill lightness for that
- * theme, a step at a time, until every pair in every theme passes. --no-atlas removes the Design Atlas routes and the
- * rail entries that point at them (the card previews stay: the gate checks them).
+ * theme, a step at a time, until every pair in every theme passes. --no-atlas removes the Design Atlas: its routes, its
+ * modules, its nav and footer links, its build tracing and its markdown packages (the card previews stay: the gate checks them).
+ * --product goes further, for a dashboard that is not the design system: --no-atlas, and the card specs and previews,
+ * page specs, docs, decisions, changelog and skill go too; the components, tokens, scripts and gates stay.
  */
 import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';
@@ -148,13 +150,55 @@ if (hue !== undefined) {
   if (accent) defaultAccent(accent);
 }
 
-if (has('--no-atlas')) {
+if (has('--no-atlas') || has('--product')) {
+  // The routes, and the Atlas-only modules: the card previews keep specimen.tsx, sample-cells.tsx, registry.ts and
+  // fixtures/, which the gate still checks.
   fs.rmSync(file('app/system'), { recursive: true, force: true });
-  const s = read('src/app.config.ts').replace(/\n\s*\{ href: '\/system[^}]*\},/g, '');
-  write('src/app.config.ts', s);
-  done.push('the Design Atlas removed (app/system and its rail entries); src/system stays for the card previews');
+  const atlasOnly = ['content.ts', 'hero.tsx', 'markdown.tsx', 'page-stage.tsx', 'atlas-shell.tsx', 'card-stage.tsx', 'strata.tsx', 'token-view.tsx', 'tokens-data.ts'];
+  for (const f of atlasOnly) fs.rmSync(file(`src/system/${f}`), { force: true });
+  // Nav entries for /system and /system/... exactly (never /systemic), then any group they leave empty.
+  let cfg = read('src/app.config.ts').replace(/\n\s*\{ href: '\/system(?:\/[^']*)?'[^}]*\},/g, '');
+  cfg = cfg.replace(/\n {2}\{\n(?: {4}label: '[^']*',\n)? {4}items: \[\s*\],\n {2}\},/g, '');
+  write('src/app.config.ts', cfg);
+  // The standalone screens' footer link to the Atlas.
+  write('src/views/standalone.tsx', read('src/views/standalone.tsx').replace(/\n\s*<Link href="\/system"[^\n]*<\/Link>/, ''));
+  // Build tracing for the Atlas's markdown; the tab icon still reads tokens/.
+  write('next.config.ts', read('next.config.ts').replace(/\n\s*\/\/ Card specifications[^\n]*\n\s*outputFileTracingIncludes: \{[^\n]*\},/, "\n  // The tab icon reads the tokens at build time.\n  outputFileTracingIncludes: { '/icon': ['./tokens/**/*.json'] },"));
+  // Route types generated for the removed pages would fail the type check until regenerated.
+  for (const d of ['.next/types', '.next/dev/types']) fs.rmSync(file(d), { recursive: true, force: true });
+  // The Atlas's markdown renderer is its only use of these packages.
+  try { execFileSync('pnpm', ['remove', 'react-markdown', 'remark-gfm'], { cwd: ROOT, stdio: 'ignore' }); done.push('react-markdown and remark-gfm removed'); }
+  catch { done.push('remove react-markdown and remark-gfm with pnpm remove when you are online'); }
+  done.push('the Design Atlas removed: app/system, its modules in src/system, its rail and footer links, and its build tracing');
+}
+
+if (has('--product')) {
+  // A product is the dashboard, not the design system: drop what documents and previews the system, keep the parts it
+  // is built from (components, tokens, styles, scripts and the gates).
+  const walkDirs = (dir: string): string[] => fs.existsSync(file(dir)) ? fs.readdirSync(file(dir), { withFileTypes: true }).flatMap((e) => e.isDirectory() ? walkDirs(path.join(dir, e.name)) : [path.join(dir, e.name)]) : [];
+  for (const f of walkDirs('src/components')) if (/\/(README\.md|preview\.tsx)$/.test(f)) fs.rmSync(file(f));
+  for (const f of walkDirs('app')) if (/\/README\.md$/.test(f)) fs.rmSync(file(f));
+  for (const f of ['src/system/specimen.tsx', 'src/system/registry.ts', 'CONTRIBUTING.md', 'CHANGELOG.md']) fs.rmSync(file(f), { force: true });
+  for (const d of ['docs', 'decisions', 'skills']) fs.rmSync(file(d), { recursive: true, force: true });
+  const p = json('package.json');
+  delete p.scripts?.registry;
+  write('package.json', JSON.stringify(p, null, 2) + '\n');
+  const product = read('src/app.config.ts').match(/name: '([^']*)'/)?.[1] ?? 'Dashboard';
+  write('README.md', `# ${product}\n\nA dashboard built on ZZ Meridian (Next.js, React, Tailwind v4, DTCG tokens).\n\n## Run it\n\n\`\`\`sh\npnpm install\npnpm dev        # http://localhost:3000\npnpm verify     # the gate, a production build, the browser audit and every control pressed\n\`\`\`\n\n## Where things are\n\n| Path | What |\n|---|---|\n| \`src/app.config.ts\` | Name, workspace, accent, timezone, currency, the signed-in user and the navigation |\n| \`src/data/\` | The data the pages read |\n| \`src/views/\`, \`app/\` | The pages |\n| \`src/components/\` | Meridian's components and patterns |\n| \`tokens/\` | Colour, type, space and motion (run \`pnpm tokens\` after a change) |\n`);
+  const agents = read('AGENTS.md');
+  const cut = agents.indexOf('# Working in Meridian');
+  if (cut >= 0) write('AGENTS.md', agents.slice(0, cut) + `# Working in this dashboard
+
+Built on ZZ Meridian. Keep it the way it was built:
+
+- **Build up, never sideways.** A page arranges patterns from \`src/components/patterns\`; a pattern composes \`src/components/ui\`; a value is a token. Never write a colour, size or shadow that is not a token; \`node scripts/check.ts\` fails on literal colours and on Tailwind utilities outside Meridian's scales (they render nothing).
+- **Tokens** live in \`tokens/*.tokens.json\`; run \`pnpm tokens\` after a change and never edit \`src/styles/tokens.css\` or \`theme.css\`.
+- **Data** comes from \`src/data/\` and nowhere else.
+- **Before finishing**: \`pnpm verify\` (the gate, a production build, the browser audit at every width and theme, and every control pressed).
+`);
+  done.push('product only: card specs and previews, page specs, docs, decisions, the changelog and the skill removed; README rewritten for the product');
 }
 
 execFileSync('node', ['scripts/tokens.ts'], { cwd: ROOT, stdio: 'ignore' });
-execFileSync('node', ['scripts/registry.ts'], { cwd: ROOT, stdio: 'ignore' });
+if (!has('--product')) execFileSync('node', ['scripts/registry.ts'], { cwd: ROOT, stdio: 'ignore' });
 console.log(done.length ? 'brand:\n  ' + done.join('\n  ') : 'brand: nothing to change (see the usage at the top of scripts/brand.ts)');

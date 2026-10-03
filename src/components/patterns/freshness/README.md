@@ -26,6 +26,7 @@ Status dot and the relative-time formatter. It sits in a masthead's meta slot, b
 | Fresh | `positive`, pulsing (2.4s loop) | `ink-3` |
 | Stale | `warning`, still | `warning-ink`, "Stale · …" |
 | Never | `ink-3` | `ink-3`, "Never updated" |
+| Run (`run`) | `ink-3`, still | `ink-3`, "Run 12 Mar 2026": a batch result is dated, never stale on its own |
 
 The pulse is one of the system's two loops; it stops under reduced motion.
 

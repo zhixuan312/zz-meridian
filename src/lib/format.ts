@@ -9,16 +9,24 @@
  */
 import { app } from '@/app.config';
 
-/** The symbol for `app.currency`: $, €, £, ¥ or the code itself. */
-const CURRENCY = new Intl.NumberFormat('en', { style: 'currency', currency: app.currency }).formatToParts(0).find((p) => p.type === 'currency')?.value ?? app.currency;
+/** The symbol for `app.currency`: $, €, £, ¥; the narrow symbol, so SGD reads $1,234, not SGD1,234. */
+const CURRENCY = new Intl.NumberFormat('en-US', { style: 'currency', currency: app.currency, currencyDisplay: 'narrowSymbol' }).formatToParts(0).find((p) => p.type === 'currency')?.value ?? app.currency;
 
 /** Money in `app.currency`, symbol first: $298.43, €1,204. */
 export function formatCost(amount: number | null): string {
   if (amount === null) return '—';
   if (amount === 0) return `${CURRENCY}0`;
   if (Math.abs(amount) < 0.01) return `${CURRENCY}${amount.toFixed(4)}`;
-  if (Math.abs(amount) >= 1000) return `${CURRENCY}${Math.round(amount).toLocaleString()}`;
+  if (Math.abs(amount) >= 1000) return `${CURRENCY}${Math.round(amount).toLocaleString('en-US')}`;
   return `${CURRENCY}${amount.toFixed(2)}`;
+}
+
+/** Money at a glance, for dense tables and tiles: $1.2M, $340K, $912. The exact amount belongs in the tooltip. */
+export function formatCostCompact(amount: number | null): string {
+  if (amount === null) return '—';
+  const sign = amount < 0 ? '-' : '';
+  const a = Math.abs(amount);
+  return a < 1000 ? `${sign}${CURRENCY}${Math.round(a).toLocaleString('en-US')}` : `${sign}${CURRENCY}${formatCompact(a)}`;
 }
 
 /** 1.2M, 846K, 912: a count at a glance. The exact number belongs in the tooltip and the table. */
@@ -31,7 +39,7 @@ export function formatCompact(n: number | null): string {
     const thousands = Math.round(n / 1_000);
     return thousands >= 1_000 ? `${(n / 1_000_000).toFixed(1)}M` : `${thousands}K`;
   }
-  return n.toLocaleString();
+  return n.toLocaleString('en-US');
 }
 
 export function formatDuration(ms: number | null): string {
@@ -46,7 +54,7 @@ export function formatDuration(ms: number | null): string {
 
 export function formatCount(n: number | null): string {
   if (n === null) return '—';
-  return n.toLocaleString();
+  return n.toLocaleString('en-US');
 }
 
 export function formatPercent(fraction: number | null, digits = 1): string {
@@ -67,11 +75,13 @@ export function formatPercent(fraction: number | null, digits = 1): string {
  * directly — they never cross the boundary. Only `'use client'` components need
  * this.
  */
-export type NumberFormat = 'count' | 'cost' | 'duration' | 'percent';
+export type NumberFormat = 'count' | 'compact' | 'cost' | 'cost-compact' | 'duration' | 'percent';
 
 export const FORMATTERS: Record<NumberFormat, (n: number | null) => string> = {
   count: formatCount,
+  compact: formatCompact,
   cost: formatCost,
+  'cost-compact': formatCostCompact,
   duration: formatDuration,
   percent: (n) => formatPercent(n),
 };
@@ -96,11 +106,13 @@ export function formatBy(kind: NumberFormat | undefined, value: number | null): 
  */
 export const AXIS_FORMATTERS: Record<NumberFormat, (n: number | null) => string> = {
   count: (n) => (n === null ? '—' : formatCompact(n)),
+  compact: (n) => (n === null ? '—' : formatCompact(n)),
+  'cost-compact': formatCostCompact,
   cost: (n) => {
     if (n === null) return '—';
     if (n === 0) return `${CURRENCY}0`;
     if (Math.abs(n) < 1) return `${CURRENCY}${n.toFixed(2)}`;
-    return `${CURRENCY}${Math.round(n).toLocaleString()}`;
+    return `${CURRENCY}${Math.round(n).toLocaleString('en-US')}`;
   },
   duration: formatDuration,
   percent: (n) => formatPercent(n, 0),

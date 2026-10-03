@@ -6,8 +6,8 @@ them; each starts with a comment that explains its job.
 ## Data: `src/data/`
 
 `src/data/` is the product's own seam: pages and views import data from it and nowhere else. It starts empty but for a
-README. Write `src/data/<product>.ts`. The template's sample, ZZ Meridian's own dashboard, lives in `src/system/fixtures/` because
-the Atlas and every card preview read it: leave it in place and do not import it from the product's pages.
+README. Write `src/data/<product>.ts`. The template's sample, ZZ Meridian's own dashboard, lives in `src/system/fixtures/`; your pages
+never import it, and it goes once the sample pages are replaced.
 
 - **Types from the person's world.** Turn their schema, CSV headers or API into TypeScript types (`Order`, `Shipment`,
   `Invoice`). Name fields the way their team says them.
@@ -79,9 +79,10 @@ writes go through `Proposal` (see `app/embed/proposal/`). Read `docs/agents.md` 
 
 ## Clean-up before validation
 
-Delete the sample pages, views and embed views the product does not use (never `src/system/fixtures/` or
-`src/system/sample-cells.tsx`: the Atlas and the previews read them), with their nav lines and, if the Atlas stays,
-their entries in `PAGES` in `src/system/content.ts`. Then fix what still points at the sample:
+Delete the sample pages, views and embed views the product does not use, with their nav lines. In a `--product` build
+nothing else reads `src/system/fixtures/` or `src/system/sample-cells.tsx`, so delete them too once your pages no
+longer import them (with the Atlas kept, the previews read them: leave them, and remove the pages' entries in `PAGES` in
+`src/system/content.ts`). Then fix what still points at the sample:
 
 - `src/views/standalone.tsx`: the footer status line and its link to `/health`, and `app/not-found.tsx`'s "Check service
   health" link.

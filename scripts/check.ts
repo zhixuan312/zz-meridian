@@ -10,6 +10,7 @@
  */
 import fs from 'node:fs';
 import path from 'node:path';
+import { APP_DIR } from './lib/routes.ts';
 import { cards } from './registry.ts';
 
 const ROOT = path.resolve(import.meta.dirname, '..');
@@ -44,7 +45,7 @@ for (const c of cards()) {
 }
 
 // ── Pages ────────────────────────────────────────────────────────────────────────────────────────────
-const PAGE_SPECS = walk('app', /^README\.md$/);
+const PAGE_SPECS = walk(APP_DIR, /^README\.md$/);
 for (const p of PAGE_SPECS) {
   const md = read(p);
   if (!/^# .+\n\n[^#\n].+/.test(md)) problems.push(`${p}: must open with "# Name" and a one-sentence summary`);
@@ -54,7 +55,7 @@ for (const p of PAGE_SPECS) {
 // ── Token names in specifications ────────────────────────────────────────────────────────────────────
 const TOKEN_LIKE = /`((?:ground|frame|surface|line|fill|ink|accent|on-accent|on-critical|positive|warning|critical|series|chart|shadow|highlight|glow|edge|text|weight|leading|tracking|space|radius|control|row-height|card-pad|stack-gap|rail|data-width|reading-width|gutter|layer|dur|stagger|ease|stretch)(?:-[a-z0-9-]+)?)`/g;
 const NOT_TOKENS = new Set(['leading', 'trailing', 'fill', 'text-wrap', 'text-pretty', 'text-balance', 'line-clamp', 'ease-out', 'ease-in-out', 'ease-spring', 'layer-1', 'text-left', 'text-right', 'text-center', 'surface-sunk/60', 'fill-hover', 'glow', 'edge', 'chart', 'series', 'shadow', 'surface', 'line', 'ink', 'accent', 'frame', 'ground']);
-const SPECS = [...cards().map((c) => `${c.dir}/README.md`), ...PAGE_SPECS, ...walk('docs', /\.md$/), 'README.md', 'CONTRIBUTING.md'];
+const SPECS = [...cards().map((c) => `${c.dir}/README.md`), ...PAGE_SPECS, ...walk('docs', /\.md$/), 'README.md', 'CONTRIBUTING.md'].filter((f) => fs.existsSync(path.join(ROOT, f)));
 for (const f of SPECS) {
   const md = read(f).replace(/```[\s\S]*?```/g, '');
   for (const m of new Set([...md.matchAll(TOKEN_LIKE)].map((x) => x[1]))) {
@@ -72,7 +73,8 @@ for (const f of ['src/styles/base.css', 'src/styles/motion.css']) {
 }
 
 // ── Components: variables and colours ────────────────────────────────────────────────────────────────
-const LAYERS = ['src/components', 'src/views', 'src/system', 'app/(dashboard)', 'app/embed', 'app/sign-in', 'app/system', 'app/not-found.tsx'].flatMap((d) => (d.endsWith('.tsx') ? (fs.existsSync(path.join(ROOT, d)) ? [d] : []) : walk(d, /\.tsx?$/)));
+// Every source file of the product and the template, wherever it lives, so a new route is checked without being listed.
+const LAYERS = [...new Set([APP_DIR, 'src'])].flatMap((d) => walk(d, /\.tsx?$/)).filter((f) => !/^src\/styles\//.test(f));
 const PALETTE = /\b(?:bg|text|border|ring|fill|stroke|from|to|via|outline|shadow|decoration)-(?:slate|gray|zinc|neutral|stone|red|orange|amber|yellow|lime|green|emerald|teal|cyan|sky|blue|indigo|violet|purple|fuchsia|pink|rose|white|black)(?:-\d{2,3})?\b/;
 for (const f of LAYERS) {
   const src = read(f);

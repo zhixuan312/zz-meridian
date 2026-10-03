@@ -9,9 +9,12 @@ Migrate in place, page by page, keeping their data layer.
 
 1. Fetch the template into a temporary folder:
    `git clone --depth 1 https://github.com/zhixuan312/zz-meridian.git /tmp/meridian`
-2. Copy the layers into their project (merge, never overwrite their own files of the same name without reading them):
-   `tokens/`, `src/styles/`, `src/components/`, `src/lib/{cn,format,format-date,period,color,host,preferences}.ts`,
-   `src/system/` (previews and the Atlas, optional), `scripts/`, `tests/setup.ts`, `vitest.config.ts`, `postcss.config.mjs`.
+2. Copy the parts a dashboard is built from into their project (merge, never overwrite their own files of the same
+   name without reading them): `tokens/`, `src/styles/`, `src/components/` without the `README.md` and `preview.tsx`
+   files, `src/lib/{cn,format,format-date,period,color,host,preferences,csv}.ts`, `app/icon.ts`, `scripts/`,
+   `tests/setup.ts`, `vitest.config.ts`, `postcss.config.mjs`. Not the design system: no `app/system/`, `src/system/`,
+   `docs/`, `decisions/` or card specifications. They get a dashboard, not a copy of Meridian. Routes may live in
+   `app/` or `src/app/`; the scripts find either.
    If their alias is not `@/* → src/*`, add it to `tsconfig.json`.
 3. Merge dependencies from the template's `package.json` (`next`, `react`, `radix-ui`, `lucide-react`, `clsx`,
    `tailwind-merge`, `react-markdown`, `remark-gfm`; dev: `tailwindcss`, `@tailwindcss/postcss`, `typescript`,
@@ -26,6 +29,12 @@ Migrate in place, page by page, keeping their data layer.
 6. Rebuild each page on `PageFrame`, `Stack` and `Row` with Meridian components, keeping their data fetching and
    business logic untouched. Do the busiest page first, show it to the person, then the rest.
 7. Run `node scripts/brand.ts` for their name and colour, then `pnpm verify` until it passes.
+
+## Route A2: a static HTML page (data fetched as JSON)
+
+The simplest case. Create a new Meridian project (SKILL.md steps 3 and 4, with `--product`) and point a module in
+`src/data/` at the same JSON the page fetched today (read the file at build time, or fetch it in a server component).
+Rebuild each section of the page as a Meridian page or card; the old page can stay where it is until they switch.
 
 ## Route B: another React stack (Vite, Create React App, Remix, Astro islands)
 

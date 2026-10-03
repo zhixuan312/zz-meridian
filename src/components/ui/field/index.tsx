@@ -10,7 +10,6 @@ export type FieldControlProps = {
   'aria-describedby'?: string;
   'aria-invalid'?: boolean;
   'aria-required'?: boolean;
-  required?: boolean;
 };
 
 /**
@@ -55,7 +54,7 @@ export function Field({
         {optional ? <span className="text-xs text-ink-3">Optional</span> : null}
         {action ? <span className="ml-auto text-xs">{action}</span> : null}
       </div>
-      {children({ id, 'aria-describedby': described, 'aria-invalid': error ? true : undefined, 'aria-required': required || undefined, required })}
+      {children({ id, 'aria-describedby': described, 'aria-invalid': error ? true : undefined, 'aria-required': required || undefined })}
       {error ? (
         <p id={errorId} role="alert" className="flex items-start gap-1.5 text-xs leading-snug text-critical-ink">
           <CircleAlert aria-hidden className="mt-px size-3.5 shrink-0" strokeWidth={2} />

@@ -3,6 +3,7 @@
 import type { ReactNode } from 'react';
 import { cn } from '@/lib/cn';
 import { formatDate } from '@/lib/format-date';
+import { formatBy, type NumberFormat } from '@/lib/format';
 import { Card } from '@/components/ui/card';
 import { Delta } from '@/components/ui/delta';
 import { Tooltip } from '@/components/ui/tooltip';
@@ -32,7 +33,8 @@ export function MetricTile({
   label: string;
   /** What the number counts, behind the info button beside the label. */
   hint?: string;
-  value: number;
+  /** The figure: a number, or a word for a categorical state ("Likely new", "On track"), shown as it is. */
+  value: number | string;
   /** Change against the previous period, as a fraction. */
   delta?: number | null;
   /** A short line where the change would sit, for a figure no period comparison fits: who is past due, what is next. */
@@ -42,7 +44,8 @@ export function MetricTile({
   intent?: 'up' | 'down' | 'neutral';
   /** One value per day of the period, for the sparkline and the Meridian readout. */
   daily?: number[];
-  format: (n: number) => string;
+  /** A formatter name (serialisable, so a server page can render the tile) or a function. Ignored for a word value. */
+  format?: NumberFormat | ((n: number) => string);
   /** Split a formatted value into prefix, integer, fraction and unit for the figure; defaults to a sensible split. */
   split?: (s: string) => { pre?: string; int: string; frac?: string; unit?: string };
   emphasis?: boolean;
@@ -51,8 +54,10 @@ export function MetricTile({
 }) {
   const { index, dates } = useMeridianIndex();
   const reading = index !== null && daily && index < daily.length ? daily[index] : null;
-  const text = format(reading ?? value);
-  const parts = (split ?? defaultSplit)(text);
+  const fmt = typeof format === 'function' ? format : (n: number) => formatBy(format ?? 'count', n);
+  const word = typeof value === 'string';
+  const text = word && reading === null ? value : fmt(reading ?? (word ? 0 : value));
+  const parts = word && reading === null ? { int: value } : (split ?? defaultSplit)(text);
   return (
     <Card className={cn('gap-0 overflow-hidden px-(--card-pad) pt-[calc(var(--card-pad)-2px)] pb-0', className)}>
       <div className="flex items-center gap-2">
@@ -69,7 +74,7 @@ export function MetricTile({
       {/* Phones: the sparkline sits beside the figure, so a stack of tiles stays short. */}
       <div className={cn('grid grid-cols-1', daily && 'max-sm:grid-cols-[minmax(0,1fr)_7rem] max-sm:items-end max-sm:gap-4 max-sm:pb-(--card-pad)')}>
         <div className="min-w-0">
-          <p className={cn('t-figure t-num mt-3', emphasis ? 'text-accent-ink' : 'text-ink')} aria-live="off">
+          <p className={cn(word && reading === null ? 'mt-3 truncate text-2xl leading-[1.15] font-semibold tracking-[-0.02em]' : 't-figure t-num mt-3', emphasis ? 'text-accent-ink' : 'text-ink')} aria-live="off">
             {parts.pre ? <span className="unit pre">{parts.pre}</span> : null}
             {parts.int}
             {parts.frac ? <span className="frac">{parts.frac}</span> : null}

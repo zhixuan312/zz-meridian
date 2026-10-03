@@ -12,6 +12,7 @@ export default function FreshnessPreview() {
         <State label="Stale: past the contract"><Freshness updatedAt={new Date(DEMO_NOW.getTime() - 42 * 60_000)} now={DEMO_NOW} /></State>
         <State label="Hours old"><Freshness updatedAt={new Date(DEMO_NOW.getTime() - 5 * 3600_000)} now={DEMO_NOW} staleAfterMs={24 * 3600_000} /></State>
         <State label="Never updated"><Freshness updatedAt={null} now={DEMO_NOW} /></State>
+        <State label="A batch run: dated, never stale"><Freshness updatedAt={new Date(DEMO_NOW.getTime() - 3 * 86_400_000)} now={DEMO_NOW} run /></State>
       </Specimen>
       <Specimen label="In the masthead" note="Beside the actions, quieter than them.">
         <div className="flex flex-wrap items-center gap-2.5">

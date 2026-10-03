@@ -5,9 +5,9 @@
   "license": "MIT",
   "description": "ZZ Meridian: a dashboard design system and starter. DTCG tokens, five layers of React components and a Design Atlas, in a light and a dark theme.",
   "type": "module",
-  "packageManager": "pnpm@11.9.0",
   "engines": {
-    "node": ">=24.0.0"
+    "node": ">=22.18.0",
+    "pnpm": ">=10"
   },
   "scripts": {
     "dev": "next dev",
