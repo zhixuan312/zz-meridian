@@ -59,6 +59,7 @@ describe('an approved change', () => {
     const { run } = await approved(c, 'up1', `update_${c.name}`, { ids: ['i_1'], set: { name: 'Uno' } });
     const out = (await run()).find((e) => e.type === 'tool-output-available' && e.toolCallId === 'up1');
     expect(out.output).toEqual([{ id: 'i_1', name: 'Uno' }]);
+    expect((await c.query({ where: [{ field: 'id', op: 'eq', value: 'i_1' }] })).rows[0].secret).toBe('s1');
     expect(JSON.stringify(out)).not.toContain('s1');
   });
 
@@ -81,6 +82,12 @@ describe('the collection', () => {
     const made = await c.create!({ name: 'Three', secret: 's3' });
     await c.remove!([made.id]);
     expect((await c.create!({ name: 'Four', secret: 's4' })).id).not.toBe(made.id);
+  });
+
+  test('a change that does not name a field keeps it, even when the field has a default', async () => {
+    const c = items();
+    await c.update!(['i_1'], { name: 'Uno' });
+    expect((await c.query({ where: [{ field: 'id', op: 'eq', value: 'i_1' }] })).rows[0]).toEqual({ id: 'i_1', name: 'Uno', secret: 's1' });
   });
 
   test('parses what is created or changed with its fields, and refuses the key', async () => {

@@ -117,7 +117,7 @@ export function arrayCollection<T extends Record<string, unknown>, K extends key
   }
   if (allow.includes('update')) {
     c.update = async (ids, patch) => {
-      const set = def.fields.partial().strict().parse(patch);
+      const set = patchOf(def.fields).parse(patch);
       const hit = pick(ids);
       for (const r of hit) Object.assign(r, set);
       return copy(hit);
@@ -131,6 +131,14 @@ export function arrayCollection<T extends Record<string, unknown>, K extends key
     };
   }
   return c;
+}
+
+/**
+ * What a change may set: any of `fields`, none required, nothing else. A field's default is dropped, so a change that
+ * does not name a field never resets it.
+ */
+export function patchOf(fields: z.ZodObject): z.ZodObject {
+  return z.object(Object.fromEntries(Object.entries(fields.shape).map(([k, f]) => [k, (f instanceof z.ZodDefault ? f.unwrap() : f).optional()]))).strict();
 }
 
 /** The collection's fields without its hidden ones. */

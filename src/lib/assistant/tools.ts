@@ -1,6 +1,6 @@
 import { tool, type SingleToolApprovalFunction, type ToolSet, type UIMessageStreamWriter } from 'ai';
 import { z } from 'zod';
-import { queryInput, visibleFields, type AnyCollection } from '@/lib/collection';
+import { patchOf, queryInput, visibleFields, type AnyCollection } from '@/lib/collection';
 
 type Row = Record<string, unknown>;
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -79,7 +79,7 @@ export function assistantTools(collections: AnyCollection[], writer: UIMessageSt
     if (allowed('update')) {
       tools[`update_${c.name}`] = tool({
         description: `Change fields on one or more ${c.label.toLowerCase()} by id.`,
-        inputSchema: z.object({ ids: z.array(z.string()).min(1), set: fields.partial().refine((set) => Object.keys(set).length > 0, 'Name at least one field to change.') }),
+        inputSchema: z.object({ ids: z.array(z.string()).min(1), set: patchOf(fields).refine((set) => Object.keys(set).length > 0, 'Name at least one field to change.') }),
         execute: ({ ids, set }, { toolCallId }) => once(toolCallId, async () => (await c.update!([...new Set(ids)], set)).map(strip)),
       });
       toolApproval[`update_${c.name}`] = (async ({ ids, set }: { ids: string[]; set: Row }, { toolCallId }) => {
