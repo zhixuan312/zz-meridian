@@ -17,7 +17,7 @@ Card, Delta, Tooltip, Sparkline. Tiles sit in a `Row split="tiles"`, or stacked 
 
 ## Data
 
-- `value` is the period's figure; `daily` one value per day of the same period; `delta` the change as a fraction (0.057 is +5.7%), or `null` when there is no earlier period.
+- `value` is the period's figure; `daily` one value per day of the same period; `delta` the change as a fraction (0.057 is +5.7%), or `null` when there is no earlier period. `note` is a short line in that place when no comparison fits, such as who is past due.
 - `intent` says which way is good: `up` (requests), `down` (errors, latency), `neutral` (spend).
 - `format` turns the number into its text; the default split recognises "$298.43", "2.9M", "0.90%" and "294ms".
 

@@ -66,7 +66,7 @@ export function CustomersView({ rows }: { rows: CustomerRecord[] }) {
         <Row split="tiles">
           <MetricTile label="Customers" value={rows.length} format={(n) => String(n)} hint="Workspaces with at least one live key. The line is their combined requests over the last 14 days." daily={requestsDaily} />
           <MetricTile label="Spend this month" value={spend} format={formatCost} hint="Metered usage across every customer, before credits. The line shows the last 14 days." daily={spendDaily} emphasis />
-          <MetricTile label="Past due" value={pastDue.length} format={(n) => String(n)} hint={pastDue.map((c) => c.name).join(', ') || 'None'} />
+          <MetricTile label="Past due" value={pastDue.length} format={(n) => String(n)} hint="Customers whose latest invoice is overdue." note={pastDue.map((c) => c.name).join(', ') || 'Every invoice is paid'} />
         </Row>
         <DataTable
           caption="Customers"

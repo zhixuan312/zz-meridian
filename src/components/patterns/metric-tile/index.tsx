@@ -19,6 +19,7 @@ export function MetricTile({
   hint,
   value,
   delta,
+  note,
   intent = 'up',
   daily,
   format,
@@ -28,11 +29,13 @@ export function MetricTile({
   className,
 }: {
   label: string;
-  /** One line under the label: what the number counts. Always visible, never only in a tooltip. */
+  /** What the number counts, behind the info button beside the label. */
   hint?: string;
   value: number;
   /** Change against the previous period, as a fraction. */
   delta?: number | null;
+  /** A short line where the change would sit, for a figure no period comparison fits: who is past due, what is next. */
+  note?: ReactNode;
   intent?: 'up' | 'down' | 'neutral';
   /** One value per day of the period, for the sparkline and the Meridian readout. */
   daily?: number[];
@@ -79,6 +82,8 @@ export function MetricTile({
                 <Delta value={delta} intent={intent} />
                 <span className="truncate text-ink-3">vs previous period</span>
               </>
+            ) : note ? (
+              <span className="truncate text-ink-3">{note}</span>
             ) : null}
           </div>
         </div>
