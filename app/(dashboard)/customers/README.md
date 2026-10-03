@@ -23,11 +23,11 @@ Status: beta
 
 ## Data
 
-`CUSTOMERS` from `src/system/fixtures/relay-records.ts` (derived from `CUSTOMER_ROWS`). Spend is metered usage before credits.
+`CUSTOMERS` from `src/system/fixtures/sample-records.ts` (derived from `CUSTOMER_ROWS`). Spend is metered usage before credits.
 
 ## Embed view
 
-None yet: a `relay_customer { name }` view would show one customer's card with their 14-day shape.
+None yet: a `zz_meridian_customer { name }` view would show one customer's card with their 14-day shape.
 
 ## Surfaces
 

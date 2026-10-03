@@ -12,8 +12,8 @@ import { DataTable, useQueryState, type Column } from '@/components/patterns/dat
 import { FilterBar } from '@/components/patterns/filter-bar';
 import { formatCompact, formatDuration, formatPercent } from '@/lib/format';
 import { formatDateTime, formatRelative } from '@/lib/format-date';
-import { DEMO_NOW, DEMO_UPDATED_AT, REGIONS, type RequestRow } from '@/system/fixtures/relay';
-import { STATUS_TEXT, statusClass, statusTone } from '@/system/fixtures/relay-records';
+import { DEMO_NOW, DEMO_UPDATED_AT, REGIONS, type RequestRow } from '@/system/fixtures/sample';
+import { STATUS_TEXT, statusClass, statusTone } from '@/system/fixtures/sample-records';
 
 /** The filters, kept in the address: an agent opens this exact view with the same names as tool arguments. */
 export const REQUEST_FILTERS = { q: '', status: 'all', method: 'all', region: 'all', by: '' };
@@ -117,7 +117,7 @@ export function RequestsView({ rows }: { rows: RequestRow[] }) {
     >
       <Stack>
         <Row split="tiles">
-          <MetricTile label={isFiltered ? 'Matching requests' : 'Requests'} value={matching.length} format={formatCompact} daily={buckets.count} delta={buckets.dCount} intent="neutral" hint="Requests that match the filters below. The line shows them in 5-minute steps; the change compares the last half hour with the one before." emphasis />
+          <MetricTile label={isFiltered ? 'Matching requests' : 'Requests'} value={matching.length} format={formatCompact} daily={buckets.count} delta={buckets.dCount} intent="neutral" hint="Requests that match the filters below. The line shows them in 5-minute steps; the change compares the last half hour with the one before." />
           <MetricTile label="Errors and limits" value={matching.length ? errors / matching.length : 0} format={(n) => formatPercent(n, 1)} daily={buckets.errors} delta={buckets.dErr} intent="down" hint="Share answered with a 5xx or a 429." />
           <MetricTile label="Latency p95" value={p95} format={formatDuration} daily={buckets.p95} delta={buckets.dP95} intent="down" hint="95 of every 100 matching requests finished faster than this." />
         </Row>

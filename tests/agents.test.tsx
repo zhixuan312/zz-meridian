@@ -42,7 +42,7 @@ describe('the host bridge', () => {
       }
     });
     const b = new HostBridge(window);
-    const ctx = await b.initialize('Relay', '1.0.0');
+    const ctx = await b.initialize('ZZ Meridian', '1.0.0');
     expect(sent.map((m) => m.method)).toEqual(['ui/initialize', 'ui/notifications/initialized']);
     expect(ctx.theme).toBe('light');
     expect(ctx.displayMode).toBe('inline');

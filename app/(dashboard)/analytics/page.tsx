@@ -6,8 +6,8 @@ import { Button } from '@/components/ui/button';
 import { Freshness } from '@/components/patterns/freshness';
 import { PeriodSelect } from '@/components/patterns/period-select';
 import { AnalyticsBody } from '@/views/analytics';
-import { DEMO_NOW, DEMO_UPDATED_AT, ENDPOINTS, demoHeatmap, demoSeries } from '@/system/fixtures/relay';
-import { REGION_LATENCY, requestsByHour } from '@/system/fixtures/relay-ops';
+import { DEMO_NOW, DEMO_UPDATED_AT, ENDPOINTS, demoHeatmap, demoSeries } from '@/system/fixtures/sample';
+import { REGION_LATENCY, requestsByHour } from '@/system/fixtures/sample-ops';
 import { parsePeriod } from '@/lib/period';
 
 export const metadata = { title: 'Analytics' };

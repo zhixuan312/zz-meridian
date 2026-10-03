@@ -3,7 +3,7 @@
 import { Specimen, Plane } from '@/system/specimen';
 import { TrendChart } from '@/components/charts/trend-chart';
 import { Sparkline } from '@/components/charts/sparkline';
-import { demoSeries } from '@/system/fixtures/relay';
+import { demoSeries } from '@/system/fixtures/sample';
 import { formatCompact, formatDuration, formatPercent } from '@/lib/format';
 import { formatDate } from '@/lib/format-date';
 import { Meridian, useMeridianIndex } from '.';

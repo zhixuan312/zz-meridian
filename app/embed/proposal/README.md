@@ -12,7 +12,7 @@ An agent may read anything the person may read. It changes nothing on its own. E
 
 | Part | Content |
 |---|---|
-| Head | The embed frame: mark, "Proposal", Open in Relay (no Expand: the card is the whole view) |
+| Head | The embed frame: mark, "Proposal", Open in ZZ Meridian (no Expand: the card is the whole view) |
 | Card | "Claude proposes", the title "Raise Parallax AI's rate limit", the reason (429s rose 14% in 24 hours at the 1,000 rpm limit; contract allows 2,500), the changes (rate limit 1,000 → 2,000 rpm; burst 1,500 → 3,000 rpm), the impact (all 14 API keys, logged in Activity) |
 | Actions | Dismiss (ghost), Approve (primary) |
 

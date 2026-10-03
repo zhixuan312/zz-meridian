@@ -27,7 +27,7 @@ A new card passes two questions before anyone specifies it:
 | 3 Patterns | `src/components/patterns/`, `src/components/charts/` | Components composed for one dashboard job |
 | 4 Pages | `app/(dashboard)/`, `app/embed/`, `src/views/` | Routes (console and embed); a view shared by both lives in `src/views/` |
 
-A product's data comes from `src/data/` and nowhere else; the Relay sample that the Atlas, the previews and the template's sample pages read lives in `src/system/fixtures/`. Formatting comes from `src/lib/format.ts` and `src/lib/format-date.ts`. A component never imports data: it defines the types it renders (`ActivityEvent`, `Incident`, `Service`) and data conforms to them.
+A product's data comes from `src/data/` and nowhere else; the sample (ZZ Meridian's own dashboard) that the Atlas, the previews and the template's sample pages read lives in `src/system/fixtures/`. Formatting comes from `src/lib/format.ts` and `src/lib/format-date.ts`. A component never imports data: it defines the types it renders (`ActivityEvent`, `Incident`, `Service`) and data conforms to them.
 
 ## Card anatomy
 
@@ -51,7 +51,7 @@ Patterns add **Composition** (which components, nesting, spacing) and **Data** (
 
 - `preview.tsx` is a client component with a default export and no props. It imports the card's own `index.tsx` and only the helpers in `src/system/specimen.tsx` (`Specimen`, `State`, `Plane`).
 - Show every variant and state statically, each labelled. Simulate hover, focus and pressed with a `data-preview-state` prop or a class that reproduces the real values; never ask the reader to hover to find a state.
-- Use real content from the demo product (Relay), never lorem ipsum.
+- Use real content from the sample (ZZ Meridian itself), never lorem ipsum.
 - Take every colour from a token. No hex, no `rgb()`, no Tailwind arbitrary colour. The Atlas renders each preview in both themes, every accent and both densities, so a literal colour shows up wrong at once.
 - No network, no timers that never stop, no portals for the states you show (render the open state inline).
 

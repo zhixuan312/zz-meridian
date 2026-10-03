@@ -18,7 +18,7 @@ export default function SelectPreview() {
       <Specimen label="Trigger" note="Looks like an Input; the chevron turns when open." stack>
         <div className="grid w-full max-w-160 gap-x-3 gap-y-4 sm:grid-cols-2">
           <State label="With a value"><Select aria-label="Region" defaultValue="eu-west-1" options={REGIONS} leading={<Globe />} /></State>
-          <State label="Placeholder"><Select aria-label="Model" placeholder="Choose a model" options={[{ value: 'large', label: 'relay-large' }]} /></State>
+          <State label="Placeholder"><Select aria-label="Model" placeholder="Choose a model" options={[{ value: 'large', label: 'meridian-large' }]} /></State>
           <State label="Invalid"><Select aria-label="Retention" invalid placeholder="Choose a retention period" options={[{ value: '30', label: '30 days' }]} /></State>
           <State label="Disabled"><Select aria-label="Plan" disabled defaultValue="scale" options={[{ value: 'scale', label: 'Scale' }]} /></State>
         </div>

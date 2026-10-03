@@ -4,7 +4,7 @@ import { app } from '@/app.config';
 import { AppMark } from '@/components/base/app-mark';
 import { StatusDot } from '@/components/ui/status-dot';
 import { summarise } from '@/components/patterns/status-list/summarise';
-import { SERVICES } from '@/system/fixtures/relay';
+import { SERVICES } from '@/system/fixtures/sample';
 
 /**
  * A screen outside the shell (sign-in, not found): the lit ground, the mark in the corner, and one sentence at poster

@@ -3,6 +3,7 @@
 import { Card } from '@/components/ui/card';
 import { Specimen, State } from '@/system/specimen';
 import { Row } from '@/components/base/shell';
+import { app } from '@/app.config';
 
 const Cell = ({ label, tall }: { label: string; tall?: boolean }) => (
   <Card className={`grid place-items-center ${tall ? 'h-36' : 'h-24'}`}>
@@ -23,7 +24,7 @@ export default function ShellPreview() {
               <span className="size-6 rounded-full border border-line-strong" />
             </div>
             <div className="flex-1 overflow-hidden p-4">
-              <p className="t-kicker">Relay · Production</p>
+              <p className="t-kicker">{app.name} · {app.workspace}</p>
               <p className="mt-2 text-xl font-semibold tracking-[-0.03em]">Overview</p>
               <div className="mt-4 grid grid-cols-3 gap-2">
                 <div className="col-span-2 h-24 rounded-lg border border-accent-line bg-accent-tint" />

@@ -5,9 +5,10 @@ import { Plus } from 'lucide-react';
 import { Specimen } from '@/system/specimen';
 import { Button } from '@/components/ui/button';
 import { FilterBar } from '@/components/patterns/filter-bar';
-import { REQUESTS } from '@/system/fixtures/relay';
+import { REQUESTS } from '@/system/fixtures/sample';
 import { requestColumns } from '@/views/requests';
 import { DataTable, type TableState } from '.';
+import { app } from '@/app.config';
 
 const rows = REQUESTS.slice(0, 26);
 const few = REQUESTS.slice(0, 4);
@@ -41,7 +42,7 @@ export default function DataTablePreview() {
         <DataTable caption="Requests" noun="requests" rows={[]} columns={compact} rowKey={(r) => r.id} loading pageSize={5} />
       </Specimen>
       <Specimen label="Empty" note="First run offers the action that fills it; filtered-out offers Clear filters; an error offers Retry." stack>
-        <DataTable caption="API keys" noun="keys" rows={[]} columns={compact} rowKey={(r) => r.id} empty={{ title: 'No keys yet', body: 'Create a key for each service that calls Relay.', action: <Button size="sm" variant="primary" icon={<Plus />}>Create key</Button> }} />
+        <DataTable caption="API keys" noun="keys" rows={[]} columns={compact} rowKey={(r) => r.id} empty={{ title: 'No keys yet', body: `Create a key for each service that calls ${app.name}.`, action: <Button size="sm" variant="primary" icon={<Plus />}>Create key</Button> }} />
         <DataTable caption="Requests" noun="requests" rows={[]} columns={compact} rowKey={(r) => r.id} filtered onClearFilters={() => {}} />
         <DataTable caption="Requests" noun="requests" rows={[]} columns={compact} rowKey={(r) => r.id} error="The log service did not answer within 10 seconds." onRetry={() => {}} />
       </Specimen>

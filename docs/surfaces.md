@@ -8,7 +8,7 @@ A dashboard built on Meridian is read in three places. This guide says what each
 |---|---|---|---|---|
 | **Console** | A browser window, 1024px and wider | 1024 to 2560px | The frame, the rail and the rounded canvas | The rail, always visible; the command palette |
 | **Mobile** | A phone or a narrow window, under 1024px | 360 to 1023px | The canvas fills the screen, no frame | A drawer opened from the masthead; the command palette |
-| **Embed** | An MCP App: a `ui://` resource a host (an AI chat client) renders in a sandboxed frame beside a tool result | Whatever the host gives: usually 360 to 760px inline, the whole panel in fullscreen | The host's own surface; Meridian draws no frame, rail or masthead | None. One view per tool; "Open in Relay" leaves for the console |
+| **Embed** | An MCP App: a `ui://` resource a host (an AI chat client) renders in a sandboxed frame beside a tool result | Whatever the host gives: usually 360 to 760px inline, the whole panel in fullscreen | The host's own surface; Meridian draws no frame, rail or masthead | None. One view per tool; "Open in ZZ Meridian" leaves for the console |
 
 The surface is a fact about the container, not the device: a console on a 900px window is the mobile surface, and an embed in fullscreen on a 1440px display is still an embed.
 
@@ -41,7 +41,7 @@ Meridian's rules for the embed surface:
 1. **Look like a guest.** The background is transparent; the host's ground shows through. Text and lines take the host's colours through the token bridge below; the accent stays the product's, because it is how a reader recognises whose card this is. Type follows the host's `--font-sans` when given.
 2. **One view, one job.** An embed answers the question the tool was called for: one metric with its trend, one chart, one short list, one record. It never has a rail, a masthead or a page of rows.
 3. **Fit inline.** Inline views fit the host's `maxHeight` (design for 480px): at most one figure row and one chart, or a list of five. Anything longer offers **Expand**, which asks for `fullscreen`; if the host refuses, it opens the console in a new tab (`ui/open-link`).
-4. **Fullscreen is the console without the shell.** The same `Stack` and `Row`s as the page, under an `EmbedFrame` head (title, freshness, Open in Relay), with tabs instead of the rail.
+4. **Fullscreen is the console without the shell.** The same `Stack` and `Row`s as the page, under an `EmbedFrame` head (title, freshness, Open in ZZ Meridian), with tabs instead of the rail.
 5. **Report height, never scroll inline.** The view measures its body and sends `size-changed`; an inline embed has no scrollbar of its own.
 6. **Respect the safe area.** Padding adds `safeAreaInsets` on mobile hosts.
 7. **Act through the host.** A button in an embed calls a tool or sends a message; it never navigates the frame. Destructive actions are not offered inline.

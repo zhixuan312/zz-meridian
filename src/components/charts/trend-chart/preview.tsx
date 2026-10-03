@@ -1,7 +1,7 @@
 'use client';
 
 import { Specimen, Plane } from '@/system/specimen';
-import { demoSeries } from '@/system/fixtures/relay';
+import { demoSeries } from '@/system/fixtures/sample';
 import { TrendChart } from '.';
 
 const { current, previous } = demoSeries('30d');

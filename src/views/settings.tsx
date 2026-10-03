@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { Globe, Lock, Moon, Monitor, Sun, Trash2 } from 'lucide-react';
-import { app } from '@/app.config';
+import { app, domain, workspaceSlug } from '@/app.config';
 import { cn } from '@/lib/cn';
 import { formatRelative } from '@/lib/format-date';
 import { ACCENTS, type Accent, ACCENT_SWATCH } from '@/lib/preferences';
@@ -18,8 +18,8 @@ import { Segmented } from '@/components/ui/segmented';
 import { Select } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { toast } from '@/components/ui/toast';
-import { DEMO_NOW } from '@/system/fixtures/relay';
-import { CONNECTED_HOSTS, TIMEZONES } from '@/system/fixtures/relay-ops';
+import { DEMO_NOW } from '@/system/fixtures/sample';
+import { CONNECTED_HOSTS, TIMEZONES } from '@/system/fixtures/sample-ops';
 
 const SWATCH = ACCENT_SWATCH;
 const wait = (ms: number) => new Promise((r) => setTimeout(r, ms));
@@ -38,7 +38,7 @@ export function SettingsBody() {
 }
 
 function Workspace() {
-  const saved = { name: `${app.name} ${app.workspace}`, slug: 'relay-production', timezone: app.timezone as string };
+  const saved = { name: `${app.name} ${app.workspace}`, slug: workspaceSlug, timezone: app.timezone as string };
   const [v, setV] = useState(saved);
   const [base, setBase] = useState(saved);
   const [saving, setSaving] = useState(false);
@@ -64,7 +64,7 @@ function Workspace() {
         {(p) => <Input {...p} value={v.name} onChange={(e) => setV({ ...v, name: e.target.value })} />}
       </Field>
       <Field label="Address" hint="Used in links you share. Only an owner can change it.">
-        {(p) => <Input {...p} value={`relay.app/${v.slug}`} readOnly leading={<Globe className="size-4" />} className="font-mono text-xs" />}
+        {(p) => <Input {...p} value={`app.${domain}/${v.slug}`} readOnly leading={<Globe className="size-4" />} className="font-mono text-xs" />}
       </Field>
       <Field label="Time zone" hint="Daily totals and charts are cut at midnight in this zone.">
         {(p) => <Select {...p} value={v.timezone} onValueChange={(timezone) => setV({ ...v, timezone })} options={TIMEZONES} />}
@@ -80,7 +80,7 @@ function Notifications() {
     toast({ tone: 'neutral', title: `${label} ${on ? 'on' : 'off'}` });
   };
   return (
-    <FormSection title="Notifications" description="What Relay emails you about. Each switch applies at once." footnote="Sent to maya@relay.dev. Incident alerts also reach the on-call channel.">
+    <FormSection title="Notifications" description={`What ${app.name} emails you about. Each switch applies at once.`} footnote={`Sent to maya@${domain}. Incident alerts also reach the on-call channel.`}>
       <Switch label="Incident alerts" description="When a service is degraded or down, and when it recovers." checked={n.incidents} onCheckedChange={flip('incidents', 'Incident alerts')} />
       <Switch label="Weekly digest" description="Traffic, errors and spend for the week, every Monday." checked={n.digest} onCheckedChange={flip('digest', 'Weekly digest')} />
       <Switch label="Spend over budget" description="When this month's spend passes the budget you set." checked={n.budget} onCheckedChange={flip('budget', 'Spend alerts')} />
@@ -92,7 +92,7 @@ function Notifications() {
 function Appearance() {
   const { prefs, set } = usePreferences();
   return (
-    <FormSection title="Appearance" description="How Relay looks on this device. It applies at once and is kept on this device only.">
+    <FormSection title="Appearance" description={`How ${app.name} looks on this device. It applies at once and is kept on this device only.`}>
       <SettingRow label="Theme" description="System follows your device.">
         <Segmented
           label="Theme"
@@ -136,7 +136,7 @@ function Agents() {
   return (
     <FormSection
       title="Agents and MCP"
-      description="Assistants that open Relay's views inside a chat. They can read what you can read; they change nothing without you."
+      description={`Assistants that open ${app.name}'s views inside a chat. They can read what you can read; they change nothing without you.`}
     >
       <Switch
         label="Let assistants read dashboards"
@@ -177,7 +177,7 @@ function Agents() {
             ))}
           </ul>
         ) : (
-          <p className="rounded-md border border-dashed border-line-strong px-3.5 py-4 text-sm text-ink-3">No assistant is connected. Add Relay&rsquo;s MCP server to an assistant to open these views there.</p>
+          <p className="rounded-md border border-dashed border-line-strong px-3.5 py-4 text-sm text-ink-3">No assistant is connected. Add {app.name}&rsquo;s MCP server to an assistant to open these views there.</p>
         )}
       </div>
     </FormSection>
@@ -186,7 +186,7 @@ function Agents() {
 
 function Danger() {
   const [typed, setTyped] = useState('');
-  const confirm = 'relay-production';
+  const confirm = workspaceSlug;
   const ok = typed.trim() === confirm;
   return (
     <FormSection tone="critical" title="Danger zone" description="Deleting removes every key, log and chart of this workspace. It cannot be undone.">
@@ -197,7 +197,7 @@ function Danger() {
           </DialogTrigger>
           <DialogContent
             size="sm"
-            title="Delete Relay Production?"
+            title={`Delete ${app.name} ${app.workspace}?`}
             description="Every API key stops working at once and the logs are erased. There is no undo."
             footer={
               <>

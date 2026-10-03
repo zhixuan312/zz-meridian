@@ -1,5 +1,6 @@
 /** A headless Chrome over the DevTools protocol, with no dependency: Node's own fetch and WebSocket. */
 import { spawn } from 'node:child_process';
+import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 
@@ -17,11 +18,16 @@ export type Page = {
 };
 
 export async function launch(): Promise<Page> {
-  const port = 9300 + Math.floor(Math.random() * 600);
-  const proc = spawn(CHROME, ['--headless=new', '--disable-gpu', '--hide-scrollbars', '--force-color-profile=srgb', `--remote-debugging-port=${port}`, `--user-data-dir=${path.join(os.tmpdir(), 'meridian-chrome-' + port)}`, 'about:blank'], { stdio: 'ignore' });
+  // Port 0 lets Chrome pick a free port and write it into its own profile, so this never attaches to another
+  // session's browser that happens to hold a guessed port.
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'meridian-chrome-'));
+  const proc = spawn(CHROME, ['--headless=new', '--disable-gpu', '--hide-scrollbars', '--force-color-profile=srgb', '--remote-debugging-port=0', `--user-data-dir=${dir}`, 'about:blank'], { stdio: 'ignore' });
   let list: any[] | undefined;
   for (let i = 0; i < 80 && !list; i++) {
-    try { list = await (await fetch(`http://127.0.0.1:${port}/json/list`)).json(); } catch { await sleep(150); }
+    try {
+      const port = fs.readFileSync(path.join(dir, 'DevToolsActivePort'), 'utf8').split('\n')[0];
+      list = await (await fetch(`http://127.0.0.1:${port}/json/list`)).json();
+    } catch { await sleep(150); }
   }
   if (!list) throw new Error('Chrome did not start');
   const ws = new WebSocket(list.find((t) => t.type === 'page').webSocketDebuggerUrl);
@@ -75,12 +81,11 @@ export async function launch(): Promise<Page> {
         await page.eval("new Promise(r => requestAnimationFrame(() => requestAnimationFrame(() => r(true))))");
       }
       const r = await send('Page.captureScreenshot', { format: 'png', captureBeyondViewport: full, clip: { x: 0, y: 0, width: width ?? m.w, height: h, scale: 1 } });
-      const fs = await import('node:fs');
       fs.mkdirSync(path.dirname(file), { recursive: true });
       fs.writeFileSync(file, Buffer.from(r.result.data, 'base64'));
       return h;
     },
-    close() { ws.close(); proc.kill(); },
+    close() { ws.close(); proc.kill(); setTimeout(() => fs.rmSync(dir, { recursive: true, force: true }), 500).unref(); },
   };
   return page;
 }

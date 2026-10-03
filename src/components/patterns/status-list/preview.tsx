@@ -2,7 +2,7 @@
 
 import { Specimen, Plane } from '@/system/specimen';
 import { Card } from '@/components/ui/card';
-import { DEMO_NOW, SERVICES } from '@/system/fixtures/relay';
+import { DEMO_NOW, SERVICES } from '@/system/fixtures/sample';
 import type { Service } from '@/components/patterns/status-list';
 import { StatusList } from '.';
 

@@ -15,7 +15,7 @@ import { FeaturedMetric } from '@/components/patterns/featured-metric';
 import { formatDate } from '@/lib/format-date';
 import { ActivityFeed } from '@/components/patterns/activity-feed';
 import { formatCompact, formatCost, formatDuration, formatPercent } from '@/lib/format';
-import type { DailyPoint, Endpoint, Totals } from '@/system/fixtures/relay';
+import type { DailyPoint, Endpoint, Totals } from '@/system/fixtures/sample';
 import type { ActivityEvent } from '@/components/patterns/activity-feed';
 
 export function OverviewBody({

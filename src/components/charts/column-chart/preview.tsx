@@ -1,7 +1,7 @@
 'use client';
 
 import { Specimen, Plane } from '@/system/specimen';
-import { demoSeries, ENDPOINTS } from '@/system/fixtures/relay';
+import { demoSeries, ENDPOINTS } from '@/system/fixtures/sample';
 import { formatCompact } from '@/lib/format';
 import { formatDate } from '@/lib/format-date';
 import { Meridian } from '@/components/charts/meridian';

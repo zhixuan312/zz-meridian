@@ -95,7 +95,7 @@ export function PageFrame({
   title: ReactNode;
   /** One sentence under the title: what this page answers. */
   description?: ReactNode;
-  /** Mono caps above the title: where this page sits ("Relay · Production", or the parent record). */
+  /** Mono caps above the title: where this page sits ("ZZ Meridian · Production", or the parent record). */
   kicker?: ReactNode;
   /** Quiet status beside the actions: the freshness stamp. */
   meta?: ReactNode;

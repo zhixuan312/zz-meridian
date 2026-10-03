@@ -23,11 +23,11 @@ Status: beta
 
 ## Data
 
-`requestById()`, `traceOf()` and `payloadsOf()` in `src/system/fixtures/relay-records.ts`. Phases add up to the request's latency; the axis shows 0, half and the total.
+`requestById()`, `traceOf()` and `payloadsOf()` in `src/system/fixtures/sample-records.ts`. Phases add up to the request's latency; the axis shows 0, half and the total.
 
 ## Embed view
 
-None of its own. An agent shows a request through `relay_requests` (inline rows open this page in the console).
+None of its own. An agent shows a request through `zz_meridian_requests` (inline rows open this page in the console).
 
 ## Surfaces
 

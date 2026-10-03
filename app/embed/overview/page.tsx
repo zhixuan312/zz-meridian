@@ -1,10 +1,10 @@
-import { DEMO_NOW, DEMO_UPDATED_AT, demoSeries, demoTotals, ENDPOINTS, STATUS_MIX, ACTIVITY } from '@/system/fixtures/relay';
+import { DEMO_NOW, DEMO_UPDATED_AT, demoSeries, demoTotals, ENDPOINTS, STATUS_MIX, ACTIVITY } from '@/system/fixtures/sample';
 import { parsePeriod } from '@/lib/period';
 import { EmbedOverview } from './view';
 
 export const metadata = { title: 'Overview' };
 
-/** Tool: `relay_overview { period }`. Inline: three figures and the trend. Fullscreen: the console's Overview rows. */
+/** Tool: `zz_meridian_overview { period }`. Inline: three figures and the trend. Fullscreen: the console's Overview rows. */
 export default async function Page({ searchParams }: { searchParams: Promise<{ period?: string }> }) {
   const period = parsePeriod((await searchParams).period);
   return (

@@ -51,7 +51,7 @@ Every control is `control-sm` (32px; 28px compact), 8px apart. The bar sits insi
 
 ## Agents
 
-Filter names match tool arguments (`status`, `method`, `region`, `q`), so an agent that calls `relay_requests { status: "5xx" }` opens the same view a person would build. The view adds `by=Claude` to the address, which shows the provenance line; the person's first change clears it.
+Filter names match tool arguments (`status`, `method`, `region`, `q`), so an agent that calls `zz_meridian_requests { status: "5xx" }` opens the same view a person would build. The view adds `by=Claude` to the address, which shows the provenance line; the person's first change clears it.
 
 ## Accessibility
 

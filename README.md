@@ -61,7 +61,7 @@ Dark is the default, written on `:root`; the light theme follows the operating s
 | `app/(dashboard)/`, `app/embed/`, `app/sign-in/` | Layer 4: the template's routes, each with its page specification |
 | `app/system/` | The Design Atlas |
 | `src/data/` | Your product's data seam: the only place pages read data from |
-| `src/system/fixtures/` | Relay, the sample product the Atlas, the previews and the template's sample pages read |
+| `src/system/fixtures/` | The sample: ZZ Meridian's own dashboard, which the Atlas, the previews and the sample pages read |
 | `src/lib/` | Formatters, dates, periods, colour maths, the host bridge |
 | `docs/` | Guides: surfaces, agents, starting a dashboard, data display, voice, the benchmark |
 | `decisions/` | One record per lasting decision |

@@ -5,6 +5,7 @@ import { useSurface } from '@/components/base/surface';
 import { useShareView } from '@/components/base/use-share-view';
 import { EmbedFrame } from '@/components/patterns/embed-frame';
 import { Proposal, type ProposalState } from '@/components/patterns/proposal';
+import { toolPrefix } from '@/app.config';
 
 const wait = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
@@ -32,7 +33,7 @@ export function EmbedProposal() {
         state={state === 'applied' || state === 'dismissed' ? state : undefined}
         onApprove={async () => {
           // Connected: the product's own tool applies the change, through the host. Standalone: a simulated delay.
-          if (callTool) await callTool('relay_set_rate_limit', { customer: 'parallax-ai', rpm: 2000, burst: 3000 });
+          if (callTool) await callTool(`${toolPrefix}_set_rate_limit`, { customer: 'parallax-ai', rpm: 2000, burst: 3000 });
           else await wait(900);
           setState('applied');
           share("Approved: Parallax AI's rate limit is now 2,000 rpm.", { applied: true });

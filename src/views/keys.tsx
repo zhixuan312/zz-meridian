@@ -18,8 +18,8 @@ import { Sheet, SheetClose, SheetContent } from '@/components/ui/sheet';
 import { toast } from '@/components/ui/toast';
 import { DataTable, type Column } from '@/components/patterns/data-table';
 import { formatDate, formatRelative } from '@/lib/format-date';
-import { DEMO_NOW } from '@/system/fixtures/relay';
-import type { ApiKey } from '@/system/fixtures/relay-records';
+import { DEMO_NOW } from '@/system/fixtures/sample';
+import type { ApiKey } from '@/system/fixtures/sample-records';
 
 const SCOPES = ['messages', 'search', 'embeddings', 'files', 'webhooks'];
 
@@ -87,7 +87,7 @@ export function KeysView({ initial }: { initial: ApiKey[] }) {
     <PageFrame
       kicker={<>{app.name} · {app.workspace}</>}
       title="API keys"
-      description="Keys let your services call Relay. Each one carries only the scopes it needs."
+      description={`Keys let your services call ${app.name}. Each one carries only the scopes it needs.`}
       actions={<Button variant="primary" icon={<Plus />} onClick={() => setCreating(true)}>Create key</Button>}
     >
       <Stack>
@@ -103,7 +103,7 @@ export function KeysView({ initial }: { initial: ApiKey[] }) {
           rows={keys}
           columns={columns}
           rowKey={(k) => k.id}
-          empty={{ title: 'No keys yet', body: 'Create a key for each service that calls Relay.', action: <Button variant="primary" size="sm" icon={<Plus />} onClick={() => setCreating(true)}>Create key</Button> }}
+          empty={{ title: 'No keys yet', body: `Create a key for each service that calls ${app.name}.`, action: <Button variant="primary" size="sm" icon={<Plus />} onClick={() => setCreating(true)}>Create key</Button> }}
         />
       </Stack>
 

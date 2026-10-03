@@ -1,7 +1,7 @@
 'use client';
 
 import { Specimen, Plane } from '@/system/specimen';
-import { demoHeatmap } from '@/system/fixtures/relay';
+import { demoHeatmap } from '@/system/fixtures/sample';
 import { formatCompact } from '@/lib/format';
 import { Heatmap } from '.';
 

@@ -1,7 +1,7 @@
 'use client';
 
 import { Specimen, Plane } from '@/system/specimen';
-import { ENDPOINTS, REGIONS, CUSTOMER_ROWS } from '@/system/fixtures/relay';
+import { ENDPOINTS, REGIONS, CUSTOMER_ROWS } from '@/system/fixtures/sample';
 import { formatCompact, formatCost } from '@/lib/format';
 import { BarList } from '.';
 

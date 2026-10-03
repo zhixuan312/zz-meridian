@@ -8,4 +8,4 @@ Your product's data seam: the only place pages read data from. Put your types an
 - Return `null` for "not measured"; the formatters in `src/lib/format.ts` render it as a dash.
 - Shape records to the types the patterns define (`ActivityEvent` in the activity feed, `Incident` in the incident card, `Service` in the status list), so they render without adapters.
 
-The template's own sample product, Relay, is not here: it lives in `src/system/fixtures/`, because the Design Atlas and every card preview read it. Leave it in place, and point your pages at your own module instead.
+The template's own sample, ZZ Meridian's own dashboard, is not here: it lives in `src/system/fixtures/`, because the Design Atlas and every card preview read it. Leave it in place, and point your pages at your own module instead.

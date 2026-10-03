@@ -1,7 +1,7 @@
 'use client';
 
 import { Specimen, State } from '@/system/specimen';
-import { demoSeries, CUSTOMER_ROWS } from '@/system/fixtures/relay';
+import { demoSeries, CUSTOMER_ROWS } from '@/system/fixtures/sample';
 import { useEffect } from 'react';
 import { Meridian, useMeridian } from '@/components/charts/meridian';
 import { Sparkline } from '.';

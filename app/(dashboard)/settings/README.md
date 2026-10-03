@@ -1,6 +1,6 @@
 # Settings
 
-The Settings page holds the workspace, what a person hears about, how Relay looks on their device, what assistants may do, and the danger zone, each in a section that saves on its own.
+The Settings page holds the workspace, what a person hears about, how ZZ Meridian looks on their device, what assistants may do, and the danger zone, each in a section that saves on its own.
 
 Status: beta
 
@@ -28,7 +28,7 @@ At the reading width (832px), sections 56px apart, each a Form section:
 
 ## Data
 
-Appearance reads and writes `usePreferences()` (stored on the device). Time zones and hosts come from `src/system/fixtures/relay-ops.ts`; the workspace name from `app.config.ts`.
+Appearance reads and writes `usePreferences()` (stored on the device). Time zones and hosts come from `src/system/fixtures/sample-ops.ts`; the workspace name from `app.config.ts`.
 
 ## Surfaces
 

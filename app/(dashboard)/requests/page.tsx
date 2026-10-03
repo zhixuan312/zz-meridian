@@ -1,5 +1,5 @@
 import { Suspense } from 'react';
-import { REQUESTS } from '@/system/fixtures/relay';
+import { REQUESTS } from '@/system/fixtures/sample';
 import { RequestsView } from '@/views/requests';
 
 export const metadata = { title: 'Requests' };

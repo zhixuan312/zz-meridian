@@ -1,13 +1,14 @@
 'use client';
 
 import { Gauge, Zap } from 'lucide-react';
-import { demoSeries, DEMO_NOW, DEMO_UPDATED_AT } from '@/system/fixtures/relay';
+import { demoSeries, DEMO_NOW, DEMO_UPDATED_AT } from '@/system/fixtures/sample';
 import { formatCompact, formatDuration } from '@/lib/format';
 import { SurfaceOverride } from '@/components/base/surface';
 import { EmbedFrame } from '@/components/patterns/embed-frame';
 import { Freshness } from '@/components/patterns/freshness';
 import { MetricTile } from '@/components/patterns/metric-tile';
 import { Specimen } from '@/system/specimen';
+import { app } from '@/app.config';
 
 const s = demoSeries('7d').current;
 
@@ -17,7 +18,7 @@ const METHODS = [
   ['ui/request-display-mode', 'Expand: ask for fullscreen; the host may refuse'],
   ['ui/message', 'Ask: post a question into the conversation, as the person'],
   ['ui/update-model-context', 'Share: tell the model what is on screen'],
-  ['ui/open-link', 'Open in Relay: leave for the console'],
+  ['ui/open-link', `Open in ${app.name}: leave for the console`],
   ['tools/call', 'Act: run a tool; a write arrives as a Proposal first'],
 ];
 const BRIDGE = [

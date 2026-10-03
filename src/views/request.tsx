@@ -13,12 +13,13 @@ import { detailHead } from '@/components/patterns/detail-head';
 import { cn } from '@/lib/cn';
 import { formatDuration } from '@/lib/format';
 import { formatDateTime, formatRelative } from '@/lib/format-date';
-import { DEMO_NOW, type RequestRow } from '@/system/fixtures/relay';
-import { STATUS_TEXT, statusTone, type Span } from '@/system/fixtures/relay-records';
+import { DEMO_NOW, type RequestRow } from '@/system/fixtures/sample';
+import { STATUS_TEXT, statusTone, type Span } from '@/system/fixtures/sample-records';
 import { formatBytes, StatusBadge } from '@/views/requests';
+import { domain } from '@/app.config';
 
 const curlOf = (r: RequestRow, body: string) =>
-  `curl -X ${r.method} https://api.relay.dev${r.route} -H "Authorization: Bearer $RELAY_KEY"` + (r.method === 'GET' ? '' : ` -d '${body.replace(/\s+/g, ' ')}'`);
+  `curl -X ${r.method} https://api.${domain}${r.route} -H "Authorization: Bearer $API_KEY"` + (r.method === 'GET' ? '' : ` -d '${body.replace(/\s+/g, ' ')}'`);
 
 const BAR = { accent: 'bg-accent', neutral: 'bg-chart-neutral-strong', critical: 'bg-critical' } as const;
 

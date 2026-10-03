@@ -2,7 +2,7 @@
 
 import { useEffect } from 'react';
 import { AlertTriangle, CircleDollarSign, Gauge, Zap } from 'lucide-react';
-import { demoSeries } from '@/system/fixtures/relay';
+import { demoSeries } from '@/system/fixtures/sample';
 import { formatCompact, formatCost, formatDuration, formatPercent } from '@/lib/format';
 import { Meridian, useMeridian } from '@/components/charts/meridian';
 import { Specimen, State } from '@/system/specimen';

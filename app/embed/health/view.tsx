@@ -12,6 +12,7 @@ import { HealthBody } from '@/views/health';
 import { formatRelative } from '@/lib/format-date';
 import type { Incident } from '@/components/patterns/incident-card';
 import type { Service } from '@/components/patterns/status-list';
+import { app } from '@/app.config';
 
 type Props = { services: Service[]; current: Incident | null; past: Incident[]; updatedAt: string; now: string };
 
@@ -20,7 +21,7 @@ export function EmbedHealth(p: Props) {
   const sum = summarise(p.services);
   const affected = p.services.filter((x) => x.status !== 'operational');
   useShareView(
-    `Relay health: ${sum.text}${affected.length ? ` (${affected.map((x) => `${x.name} ${x.status}`).join(', ')})` : ''}.${p.current ? ` Open incident: ${p.current.title}, ${p.current.state}.` : ''}`,
+    `${app.name} health: ${sum.text}${affected.length ? ` (${affected.map((x) => `${x.name} ${x.status}`).join(', ')})` : ''}.${p.current ? ` Open incident: ${p.current.title}, ${p.current.state}.` : ''}`,
     { view: 'health', state: sum.status, affected: affected.map((x) => x.name), incident: p.current?.id ?? null },
   );
   return (

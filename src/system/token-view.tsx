@@ -6,6 +6,7 @@ import { over, parse, ratio, type RGBA } from '@/lib/color';
 import type { Accent, Density } from '@/lib/preferences';
 import { Scope, StageBar } from '@/system/card-stage';
 import type { TokenGroup } from '@/system/tokens-data';
+import { app } from '@/app.config';
 
 type Groups = { core: TokenGroup[]; theme: TokenGroup[]; compact: TokenGroup[] };
 
@@ -168,7 +169,7 @@ const ROLES: [string, string, string][] = [
   ['t-body', 'Body', 'Requests that reached the gateway, including those that failed.'],
   ['t-small', 'Small', 'Share of requests answered with a 5xx or a 429.'],
   ['t-caption', 'Caption', 'Updated 4 min ago'],
-  ['t-kicker', 'Kicker', 'Relay · Production'],
+  ['t-kicker', 'Kicker', `${app.name} · ${app.workspace}`],
   ['t-eyebrow', 'Eyebrow', 'Operate'],
   ['t-mono', 'Mono', 'req_6a0x1fq3b2 · POST /v1/messages'],
 ];

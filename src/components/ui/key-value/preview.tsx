@@ -25,7 +25,7 @@ export default function KeyValuePreview() {
           columns={2}
           items={[
             { label: 'Region', value: 'eu-west-1' },
-            { label: 'Model', value: 'relay-large' },
+            { label: 'Model', value: 'meridian-large' },
             { label: 'Input', value: '12,480 tokens' },
             { label: 'Output', value: '1,206 tokens' },
           ]}

@@ -2,7 +2,7 @@
 
 import { Specimen } from '@/system/specimen';
 import { Card } from '@/components/ui/card';
-import { DEMO_NOW, INCIDENTS } from '@/system/fixtures/relay';
+import { DEMO_NOW, INCIDENTS } from '@/system/fixtures/sample';
 import type { Incident } from '@/components/patterns/incident-card';
 import { IncidentCard } from '.';
 

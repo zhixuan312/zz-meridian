@@ -1,7 +1,7 @@
 'use client';
 
 import { Specimen, Plane } from '@/system/specimen';
-import { REGIONS, STATUS_MIX } from '@/system/fixtures/relay';
+import { REGIONS, STATUS_MIX } from '@/system/fixtures/sample';
 import { formatCompact } from '@/lib/format';
 import { CompositionBar } from '.';
 

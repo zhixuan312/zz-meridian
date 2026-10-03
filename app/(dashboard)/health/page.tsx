@@ -4,8 +4,8 @@ import { PageFrame } from '@/components/base/shell';
 import { Button } from '@/components/ui/button';
 import { Freshness } from '@/components/patterns/freshness';
 import { HealthBody } from '@/views/health';
-import { DEMO_NOW, DEMO_UPDATED_AT, INCIDENTS, SERVICES } from '@/system/fixtures/relay';
-import { PAST_INCIDENTS } from '@/system/fixtures/relay-ops';
+import { DEMO_NOW, DEMO_UPDATED_AT, INCIDENTS, SERVICES } from '@/system/fixtures/sample';
+import { PAST_INCIDENTS } from '@/system/fixtures/sample-ops';
 
 export const metadata = { title: 'Health' };
 

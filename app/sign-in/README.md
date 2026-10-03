@@ -1,6 +1,6 @@
 # Sign in
 
-The sign-in screen is the one screen a visitor sees before they are anyone: one sentence at poster size that says what Relay is for, and a panel that signs them in.
+The sign-in screen is the one screen a visitor sees before they are anyone: one sentence at poster size that says what ZZ Meridian is for, and a panel that signs them in.
 
 Status: beta
 
@@ -11,7 +11,7 @@ A standalone screen outside the shell, on the lit ground:
 | Part | Content |
 |---|---|
 | Corner | The app mark and the product name, linking home |
-| Left | Kicker "Relay · API platform"; "Know your API before your customers do" at `text-display`, ending on an accent full stop; one sentence of lead |
+| Left | Kicker "ZZ Meridian · Console"; "Know your API before your customers do" at `text-display`, ending on an accent full stop; one sentence of lead |
 | Right | The sign-in panel: work email (Field, Input `lg`), "Continue with email" (primary, block, `lg`), "or", "Continue with SSO" (secondary, block, `lg`), the legal caption |
 | Foot | Copyright, a link to the design system, and the live service status (derived, linking to Health) |
 
@@ -22,7 +22,7 @@ Two columns from 1024px; one below, the panel under the sentence.
 | State | What shows |
 |---|---|
 | Rest | The form |
-| Invalid email | The field's error: "Enter your work email, like maya@relay.dev." |
+| Invalid email | The field's error: "Enter your work email, like maya@zz-meridian.example." |
 | Sending | The primary button is busy |
 | Sent | The panel says "Check your inbox", names the address, and offers "Use another email" |
 

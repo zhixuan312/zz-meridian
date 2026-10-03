@@ -1,6 +1,6 @@
 # API keys page
 
-The keys that let services call Relay: create one with only the scopes it needs, see when each was last used, and revoke one with a confirmation.
+The keys that let services call ZZ Meridian: create one with only the scopes it needs, see when each was last used, and revoke one with a confirmation.
 
 Status: beta
 
@@ -27,7 +27,7 @@ Status: beta
 
 ## Data
 
-`API_KEYS` from `src/system/fixtures/relay-records.ts`. A secret is always masked in the table; Copy copies the real value without revealing it.
+`API_KEYS` from `src/system/fixtures/sample-records.ts`. A secret is always masked in the table; Copy copies the real value without revealing it.
 
 ## Embed view
 

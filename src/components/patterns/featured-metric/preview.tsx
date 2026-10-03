@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
-import { demoSeries } from '@/system/fixtures/relay';
+import { demoSeries } from '@/system/fixtures/sample';
 import { formatCompact } from '@/lib/format';
 import { Badge } from '@/components/ui/badge';
 import { Meridian, useMeridian } from '@/components/charts/meridian';

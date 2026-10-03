@@ -5,6 +5,7 @@ import { ArrowRight, KeyRound, Mail } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Field } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
+import { app, domain } from '@/app.config';
 
 /** The sign-in panel: one field, one primary action, SSO beside it. A sent link replaces the form, never a toast. */
 export function SignInPanel() {
@@ -13,7 +14,7 @@ export function SignInPanel() {
   const [state, setState] = useState<'idle' | 'sending' | 'sent'>('idle');
   const submit = (e: FormEvent) => {
     e.preventDefault();
-    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return setError('Enter your work email, like maya@relay.dev.');
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return setError(`Enter your work email, like maya@${domain}.`);
     setError(undefined);
     setState('sending');
     setTimeout(() => setState('sent'), 900);
@@ -31,7 +32,7 @@ export function SignInPanel() {
       ) : (
         <form onSubmit={submit} noValidate>
           <h2 id="sign-in" className="t-section">Sign in</h2>
-          <p className="t-small mt-2 text-ink-2">New to Relay? Your first workspace is free.</p>
+          <p className="t-small mt-2 text-ink-2">New to {app.name}? Your first workspace is free.</p>
           <div className="mt-7 flex flex-col gap-4">
             <Field label="Work email" error={error}>
               {(p) => <Input {...p} type="email" size="lg" autoComplete="email" placeholder="you@company.com" value={email} onChange={(e) => setEmail(e.target.value)} leading={<Mail className="size-4" />} />}

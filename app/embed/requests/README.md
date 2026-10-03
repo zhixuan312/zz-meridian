@@ -8,7 +8,7 @@ Status: beta
 
 | Mode | What shows |
 |---|---|
-| Inline | Embed frame head: "Requests · status 5xx" (the arguments in words, or "Latest requests"), Freshness, Expand (only when more match), Open in Relay. One card: the count and "showing the latest 5", Ask (when a host is connected), then five rows: method, route, customer and when, latency, status, and a chevron |
+| Inline | Embed frame head: "Requests · status 5xx" (the arguments in words, or "Latest requests"), Freshness, Expand (only when more match), Open in ZZ Meridian. One card: the count and "showing the latest 5", Ask (when a host is connected), then five rows: method, route, customer and when, latency, status, and a chevron |
 | Fullscreen | The console's Data table with its Filter bar, carrying "Set by Claude" for the tool's filters |
 
 ## States
@@ -21,7 +21,7 @@ Status: beta
 
 ## Data
 
-The tool `relay_requests { status?, method?, region?, q? }`; the arguments are the view's query parameters, the same names as the console's filters.
+The tool `zz_meridian_requests { status?, method?, region?, q? }`; the arguments are the view's query parameters, the same names as the console's filters.
 
 ## Agents
 

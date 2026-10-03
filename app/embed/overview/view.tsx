@@ -14,8 +14,9 @@ import { OverviewBody } from '@/views/overview';
 import { formatCompact, formatDuration, formatPercent } from '@/lib/format';
 import { formatDate } from '@/lib/format-date';
 import { PERIOD_LABEL, type Period } from '@/lib/period';
-import type { DailyPoint, Endpoint, Totals } from '@/system/fixtures/relay';
+import type { DailyPoint, Endpoint, Totals } from '@/system/fixtures/sample';
 import type { ActivityEvent } from '@/components/patterns/activity-feed';
+import { app } from '@/app.config';
 
 type Props = {
   period: Period;
@@ -51,7 +52,7 @@ function Inline({ series, totals, period, dates }: Props & { dates: string[] }) 
   useShareView(
     day
       ? `The person is looking at ${formatDate(day.date)}: ${day.requests.toLocaleString('en-US')} requests, ${formatPercent(day.errors / day.requests, 2)} errors, p95 ${day.p95}ms.`
-      : `Relay overview for ${PERIOD_LABEL[period].toLowerCase()}: ${formatCompact(c.requests)} requests, ${formatPercent(c.errorRate, 2)} errors, p95 ${formatDuration(c.p95)}.`,
+      : `${app.name} overview for ${PERIOD_LABEL[period].toLowerCase()}: ${formatCompact(c.requests)} requests, ${formatPercent(c.errorRate, 2)} errors, p95 ${formatDuration(c.p95)}.`,
     { view: 'overview', period, day: day?.date ?? null },
   );
   const change = (a: number, b: number) => (b ? a / b - 1 : null);

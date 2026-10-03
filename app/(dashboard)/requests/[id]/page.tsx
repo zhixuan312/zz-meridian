@@ -1,5 +1,5 @@
 import { notFound } from 'next/navigation';
-import { FEATURED_REQUEST_IDS, requestById, traceOf, payloadsOf } from '@/system/fixtures/relay-records';
+import { FEATURED_REQUEST_IDS, requestById, traceOf, payloadsOf } from '@/system/fixtures/sample-records';
 import { RequestView } from '@/views/request';
 
 export function generateStaticParams() {

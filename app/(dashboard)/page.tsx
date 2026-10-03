@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Freshness } from '@/components/patterns/freshness';
 import { PeriodSelect } from '@/components/patterns/period-select';
 import { OverviewBody } from '@/views/overview';
-import { DEMO_NOW, DEMO_UPDATED_AT, demoSeries, demoTotals, ENDPOINTS, STATUS_MIX, ACTIVITY } from '@/system/fixtures/relay';
+import { DEMO_NOW, DEMO_UPDATED_AT, demoSeries, demoTotals, ENDPOINTS, STATUS_MIX, ACTIVITY } from '@/system/fixtures/sample';
 import { parsePeriod, PERIOD_LABEL } from '@/lib/period';
 import { app } from '@/app.config';
 

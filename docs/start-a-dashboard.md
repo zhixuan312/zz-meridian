@@ -1,6 +1,6 @@
 # Start a dashboard
 
-A new dashboard starts from this repository running, not from a blank page. Six steps take it from Relay to yours; each is one file or one folder.
+A new dashboard starts from this repository running, not from a blank page. Six steps take it from ZZ Meridian's own dashboard to yours; each is one file or one folder.
 
 The fastest way is to let Claude Code do all six: install the `zz-meridian` skill (`npx degit zhixuan312/zz-meridian/skills/zz-meridian ~/.claude/skills/zz-meridian`) and describe the dashboard you need. The steps below are what it does, for doing it by hand.
 
@@ -39,7 +39,7 @@ If a pair fails, lower the chroma, or give the preset a lightness override for t
 
 ## 4. Connect your data
 
-Your pages read data from `src/data/` and nowhere else. Add `src/data/<product>.ts` with your types and queries and point your pages at it. The template's own sample, Relay, lives in `src/system/fixtures/` because the Atlas and every card preview read it; leave it there. Shape your records to the types the patterns define (`ActivityEvent`, `Incident`, `Service`) and they render without adapters. Two rules carry over:
+Your pages read data from `src/data/` and nowhere else. Add `src/data/<product>.ts` with your types and queries and point your pages at it. The template's own sample, ZZ Meridian's own dashboard, lives in `src/system/fixtures/` because the Atlas and every card preview read it; leave it there. Shape your records to the types the patterns define (`ActivityEvent`, `Incident`, `Service`) and they render without adapters. Two rules carry over:
 
 - Read freshness from when the data arrived (the newest ingest time), never from `now()`.
 - Return `null` for "not measured"; the formatters render it as a dash, never as zero.

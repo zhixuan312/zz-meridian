@@ -48,7 +48,7 @@ Colours change over `dur-hover` 160ms. The marker moves (`transform`, `height`) 
 
 - **Console**: fixed at the left edge, its own scroll when the list outgrows the window.
 - **Mobile**: under 1024px the same node opens as a drawer from the top bar's menu button: 260px (at most 86% of the screen), over a blurred scrim; it closes on Escape, on the scrim and on navigation, and returns focus to the trigger.
-- **Embed**: absent. A view in a host has one job and no navigation; it links out with Open in Relay.
+- **Embed**: absent. A view in a host has one job and no navigation; it links out with Open in ZZ Meridian.
 
 ## Agents
 

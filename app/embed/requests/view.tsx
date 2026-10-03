@@ -13,7 +13,7 @@ import { FilterBar } from '@/components/patterns/filter-bar';
 import { Freshness } from '@/components/patterns/freshness';
 import { formatDuration } from '@/lib/format';
 import { formatRelative } from '@/lib/format-date';
-import { DEMO_NOW, DEMO_UPDATED_AT, REGIONS, type RequestRow } from '@/system/fixtures/relay';
+import { DEMO_NOW, DEMO_UPDATED_AT, REGIONS, type RequestRow } from '@/system/fixtures/sample';
 import { filterRequests, REQUEST_FILTERS, requestColumns, StatusBadge } from '@/views/requests';
 import { MethodChip } from '@/views/requests';
 

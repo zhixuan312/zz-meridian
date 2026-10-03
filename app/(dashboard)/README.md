@@ -8,7 +8,7 @@ Status: beta
 
 | Row | Split | Pattern | Holds |
 |---|---|---|---|
-| Masthead | | Page frame | Kicker `Relay · Production`, title, one sentence; freshness, period select (7D, 30D, 90D, All), Export |
+| Masthead | | Page frame | Kicker `ZZ Meridian · Production`, title, one sentence; freshness, period select (7D, 30D, 90D, All), Export |
 | 1 | 2/3 | Featured metric with a Trend chart (`fill` height) | Requests in the period at hero size, the change against the previous period, a caption with the daily average and the busiest day, requests per day as an area with errors × 20 dashed |
 | 1 | 1/3 | Three Metric tiles, stacked | Error rate, Latency p95 (both: down is good), Spend (neutral) |
 | 2 | 1/2 | Card with a Bar list | The busiest endpoints, the top one in the accent; a footer link to Analytics |
@@ -31,13 +31,13 @@ Below 1024px every row stacks: the featured card first, then the tiles (two acro
 
 ## Data
 
-From `src/system/fixtures/relay.ts`: `demoSeries(period)` (one point per day, and the previous period for the deltas), `demoTotals(period)`, `ENDPOINTS`, `STATUS_MIX`, `ACTIVITY`. Error rate counts 5xx and 429 over all requests; latency is the median of daily p95s; spend is metered usage before credits.
+From `src/system/fixtures/sample.ts`: `demoSeries(period)` (one point per day, and the previous period for the deltas), `demoTotals(period)`, `ENDPOINTS`, `STATUS_MIX`, `ACTIVITY`. Error rate counts 5xx and 429 over all requests; latency is the median of daily p95s; spend is metered usage before credits.
 
 ## Surfaces
 
 - **Console**: as above.
 - **Mobile**: one column; the featured chart is 220px tall; tiles two across or one.
-- **Embed**: `/embed/overview` (tool `relay_overview { period }`). Inline: the three main tiles and the requests trend, with Ask on the chart. Fullscreen: these rows under the embed head.
+- **Embed**: `/embed/overview` (tool `zz_meridian_overview { period }`). Inline: the three main tiles and the requests trend, with Ask on the chart. Fullscreen: these rows under the embed head.
 
 ## Agents
 

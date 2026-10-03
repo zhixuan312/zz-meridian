@@ -6,7 +6,7 @@ them; each starts with a comment that explains its job.
 ## Data: `src/data/`
 
 `src/data/` is the product's own seam: pages and views import data from it and nowhere else. It starts empty but for a
-README. Write `src/data/<product>.ts`. The template's sample product, Relay, lives in `src/system/fixtures/` because
+README. Write `src/data/<product>.ts`. The template's sample, ZZ Meridian's own dashboard, lives in `src/system/fixtures/` because
 the Atlas and every card preview read it: leave it in place and do not import it from the product's pages.
 
 - **Types from the person's world.** Turn their schema, CSV headers or API into TypeScript types (`Order`, `Shipment`,

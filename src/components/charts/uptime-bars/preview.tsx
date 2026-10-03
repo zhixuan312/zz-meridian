@@ -1,7 +1,7 @@
 'use client';
 
 import { Specimen, Plane } from '@/system/specimen';
-import { DEMO_NOW, SERVICES } from '@/system/fixtures/relay';
+import { DEMO_NOW, SERVICES } from '@/system/fixtures/sample';
 import { UptimeBars } from '.';
 
 export default function UptimeBarsPreview() {

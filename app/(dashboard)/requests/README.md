@@ -8,7 +8,7 @@ Status: beta
 
 | Row | Pattern | Console (1024px and wider) | Mobile |
 |---|---|---|---|
-| Masthead | PageFrame: kicker "Relay · Production", title "Requests", one sentence, Freshness, Export CSV | One band | Title, sentence, then Freshness and Export on their own row |
+| Masthead | PageFrame: kicker "ZZ Meridian · Production", title "Requests", one sentence, Freshness, Export CSV | One band | Title, sentence, then Freshness and Export on their own row |
 | 1 | Row `tiles`: three Metric tiles for what the filters let through: requests (emphasis), errors and limits, latency p95, each with its 5-minute shape over the last hour and the last half hour against the one before | Three across | One column |
 | 2 | Data table with a Filter bar in its toolbar: search, Status, Method, Region, the result count | Columns: Request (grow), Status, Latency, Customer (from 768px), Region (from 1024px), Size (from 1280px), Received | Card list: route and status, then latency, customer and when |
 
@@ -25,15 +25,15 @@ Status: beta
 
 ## Data
 
-`REQUESTS` from `src/system/fixtures/relay.ts`, filtered by `filterRequests()` in `src/views/requests.tsx`. Error share counts 5xx and 429 responses. Latency above one second is written in `warning-ink`; no other cell is coloured except the status.
+`REQUESTS` from `src/system/fixtures/sample.ts`, filtered by `filterRequests()` in `src/views/requests.tsx`. Error share counts 5xx and 429 responses. Latency above one second is written in `warning-ink`; no other cell is coloured except the status.
 
 ## Addressable state
 
-`?q=&status=2xx|3xx|4xx|5xx&method=GET|POST|PUT|DELETE&region=&sort=&dir=asc|desc&page=&by=` — one `useQueryState`, so a filter change and the page reset are one write. These are also the arguments of the `relay_requests` tool.
+`?q=&status=2xx|3xx|4xx|5xx&method=GET|POST|PUT|DELETE&region=&sort=&dir=asc|desc&page=&by=` — one `useQueryState`, so a filter change and the page reset are one write. These are also the arguments of the `zz_meridian_requests` tool.
 
 ## Embed view
 
-`/embed/requests`: the tool `relay_requests { status?, method?, region?, q? }`. Inline: the five latest matching requests as a compact list (method, route, customer, when, latency, status), the count, and Ask; Expand when more match. Fullscreen: this page's table and filters, with the provenance line ("Set by Claude"). The view shares the count, the filters and the visible IDs with the model.
+`/embed/requests`: the tool `zz_meridian_requests { status?, method?, region?, q? }`. Inline: the five latest matching requests as a compact list (method, route, customer, when, latency, status), the count, and Ask; Expand when more match. Fullscreen: this page's table and filters, with the provenance line ("Set by Claude"). The view shares the count, the filters and the visible IDs with the model.
 
 ## Surfaces
 
@@ -43,7 +43,7 @@ Status: beta
 
 ## Agents
 
-An agent opens this page's views through `relay_requests`; it reads them through the shared context; it never exports or blocks from here. Its filters are marked until a person changes one.
+An agent opens this page's views through `zz_meridian_requests`; it reads them through the shared context; it never exports or blocks from here. Its filters are marked until a person changes one.
 
 ## Accessibility
 

@@ -18,7 +18,7 @@ Status: beta
 | Body | `t-body` | `text-base` 14px | 400 · 1.55 | Running text; the inherited size |
 | Small | `t-small` | `text-sm` 13px | 400 · 1.5 | Secondary copy, table cells |
 | Caption | `t-caption` | `text-xs` 12px | 400 · `ink-3` · 1.45 | Meta lines, notes under charts |
-| Kicker | `t-kicker` | `text-2xs` 11px Geist Mono | caps · 0.12em · `ink-3`, led by the slash | Where a title sits: "Relay · Production" |
+| Kicker | `t-kicker` | `text-2xs` 11px Geist Mono | caps · 0.12em · `ink-3`, led by the slash | Where a title sits: "ZZ Meridian · Production" |
 | Eyebrow | `t-eyebrow` | `text-2xs` 11px Geist Mono | caps · 0.12em · `ink-3` | Group labels, table heads in caps, axis names |
 | Mono | `t-mono` | `text-xs` 12px Geist Mono | 0 | Identifiers, keys, routes, hashes |
 | Number | `t-num` | inherited | tabular, lining | Any column of numbers |

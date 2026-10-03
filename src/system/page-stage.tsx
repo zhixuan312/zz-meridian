@@ -7,6 +7,7 @@ import type { Accent } from '@/lib/preferences';
 import { useSize } from '@/components/charts/use-size';
 import { Segmented } from '@/components/ui/segmented';
 import { StageBar } from '@/system/card-stage';
+import { app, domain } from '@/app.config';
 
 type Surface = 'console' | 'phone' | 'embed';
 
@@ -53,7 +54,7 @@ function ConsoleFrame({ route, theme, accent }: { route: string; theme: 'dark' |
       <div className="overflow-hidden rounded-lg border border-line-strong shadow-overlay">
         <div className="flex h-8 items-center gap-3 border-b border-line bg-surface-sunk px-3">
           <span className="flex gap-1.5"><span className="size-2.5 rounded-full bg-fill-active" /><span className="size-2.5 rounded-full bg-fill-active" /><span className="size-2.5 rounded-full bg-fill-active" /></span>
-          <span className="mx-auto truncate rounded-sm bg-fill-hover px-3 py-0.5 font-mono text-2xs text-ink-3">relay.app{route}</span>
+          <span className="mx-auto truncate rounded-sm bg-fill-hover px-3 py-0.5 font-mono text-2xs text-ink-3">app.{domain}{route}</span>
         </div>
         <div style={{ height: H * scale }} className="relative overflow-hidden">
           {scale ? (
@@ -159,7 +160,7 @@ export function HostSimulator({ route, theme }: { route: string; theme: 'dark' |
           {mode === 'inline' ? (
             <>
               <Bubble from="person" ink={ink} host={hostTheme}>How is the API doing this month?</Bubble>
-              <p className="max-w-[60ch] text-sm leading-relaxed" style={{ color: ink2 }}>Here is Relay&rsquo;s overview for the last 30 days. Traffic is up; errors rose on two days in late September.</p>
+              <p className="max-w-[60ch] text-sm leading-relaxed" style={{ color: ink2 }}>Here is {app.name}&rsquo;s overview for the last 30 days. Traffic is up; errors rose on two days in late September.</p>
             </>
           ) : null}
           <div className={cn(mode === 'inline' && 'mx-auto w-full')} style={mode === 'inline' ? { maxWidth: Number(width) } : undefined}>

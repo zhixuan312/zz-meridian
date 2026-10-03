@@ -4,7 +4,7 @@ How a Meridian dashboard works with an agent: an AI assistant that reads the das
 
 ## The model
 
-A person asks the agent something in a chat ("how is the API doing this month?"). The agent calls a tool on the product's MCP server (`relay_overview { period: "30d" }`). The tool returns data and names a `ui://` resource; the host renders that resource, which is one of this template's `app/embed/*` routes, in a sandboxed frame beside the answer. From then on there are two operators on one view: the person points, taps and asks; the agent reads what the view shares and proposes what to do.
+A person asks the agent something in a chat ("how is the API doing this month?"). The agent calls a tool on the product's MCP server (`zz_meridian_overview { period: "30d" }`). The tool returns data and names a `ui://` resource; the host renders that resource, which is one of this template's `app/embed/*` routes, in a sandboxed frame beside the answer. From then on there are two operators on one view: the person points, taps and asks; the agent reads what the view shares and proposes what to do.
 
 ```
 person ──asks──▶ agent ──calls tool──▶ MCP server ──returns ui:// view──▶ host frames it
@@ -57,7 +57,7 @@ A person hands any card to the agent with one press. **Ask** posts a question ab
 
 The template ships the views; the server is yours. For each embed route:
 
-1. Register a resource `ui://relay/<view>` with `mimeType: "text/html;profile=mcp-app"`. Its content is the built HTML of the route (or a small HTML document that loads it from your deployment, allowed by the resource's CSP).
+1. Register a resource `ui://zz-meridian/<view>` with `mimeType: "text/html;profile=mcp-app"`. Its content is the built HTML of the route (or a small HTML document that loads it from your deployment, allowed by the resource's CSP).
 2. Register a tool whose `_meta.ui.resourceUri` names that resource and whose input schema uses the view's address parameters (`period`, `status`, `route`).
 3. Return the data the view needs as the tool's result, so the view can render without a second round trip.
 

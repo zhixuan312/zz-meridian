@@ -1,5 +1,5 @@
 /**
- * Relay, the sample product: a fictional API platform, so the template's pages, the Design Atlas and every card preview
+ * The sample product: this template presented as a fictional API platform under the name in app.config, so the template's pages, the Design Atlas and every card preview
  * run with no backend and look like a real product.
  *
  * It is not your data seam. A product built on the template reads its own module in src/data/ and leaves this one in
@@ -12,6 +12,7 @@ import { PERIOD_DAYS, type Period } from '@/lib/period';
 import type { ActivityEvent } from '@/components/patterns/activity-feed';
 import type { Incident } from '@/components/patterns/incident-card';
 import type { Service, ServiceStatus } from '@/components/patterns/status-list';
+import { app } from '@/app.config';
 
 export const DEMO_NOW = new Date('2026-10-03T09:00:00Z');
 /** When the pipeline last delivered. A real app reads the newest ingest time, never now(). */
@@ -148,7 +149,7 @@ export const REQUESTS: RequestRow[] = (() => {
       customer: CUSTOMERS[Math.floor(rand() ** 1.3 * CUSTOMERS.length)],
       region: REGION_IDS[Math.floor(rand() ** 1.5 * REGION_IDS.length)],
       bytes: Math.round(400 + rand() ** 3 * 220_000),
-      model: ['relay-large', 'relay-swift', 'relay-embed'][Math.floor(rand() * 3)],
+      model: ['meridian-large', 'meridian-swift', 'meridian-embed'][Math.floor(rand() * 3)],
     });
   }
   return rows;
@@ -204,8 +205,8 @@ export const INCIDENTS: Incident[] = [
 
 export const ACTIVITY: ActivityEvent[] = [
   { id: 'e1', at: new Date(DEMO_NOW.getTime() - 9 * 60_000).toISOString(), actor: 'Maya Chen', verb: 'rotated', object: 'the production signing key' },
-  { id: 'e2', at: new Date(DEMO_NOW.getTime() - 36 * 60_000).toISOString(), actor: 'Relay', verb: 'shifted traffic', object: 'from eu-west-1 to eu-central-1', tone: 'warning' },
+  { id: 'e2', at: new Date(DEMO_NOW.getTime() - 36 * 60_000).toISOString(), actor: app.name, system: true, verb: 'shifted traffic', object: 'from eu-west-1 to eu-central-1', tone: 'warning' },
   { id: 'e3', at: new Date(DEMO_NOW.getTime() - 2.4 * 3600_000).toISOString(), actor: 'Jonas Weber', via: 'Claude', verb: 'raised the rate limit for', object: 'Parallax AI to 2,000 rpm' },
-  { id: 'e4', at: new Date(DEMO_NOW.getTime() - 5.1 * 3600_000).toISOString(), actor: 'Relay', verb: 'deployed', object: 'gateway v4.18.2', tone: 'positive' },
+  { id: 'e4', at: new Date(DEMO_NOW.getTime() - 5.1 * 3600_000).toISOString(), actor: app.name, system: true, verb: 'deployed', object: 'gateway v4.18.2', tone: 'positive' },
   { id: 'e5', at: new Date(DEMO_NOW.getTime() - 26 * 3600_000).toISOString(), actor: 'Amara Okafor', verb: 'invited', object: 'two people to Workspace' },
 ];

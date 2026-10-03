@@ -1,6 +1,6 @@
 'use client';
 
-import { DEMO_NOW, DEMO_UPDATED_AT } from '@/system/fixtures/relay';
+import { DEMO_NOW, DEMO_UPDATED_AT } from '@/system/fixtures/sample';
 import { Specimen, State } from '@/system/specimen';
 import { Freshness } from '.';
 

@@ -8,7 +8,7 @@ Status: beta
 
 | Row | Split | Content | Pattern |
 |---|---|---|---|
-| Masthead | | Kicker "Relay · Production", title, one sentence; Freshness and "Subscribe to updates" | Page frame |
+| Masthead | | Kicker "ZZ Meridian · Production", title, one sentence; Freshness and "Subscribe to updates" | Page frame |
 | 1 | 2/3 + 1/3 | Uptime over 90 days at hero size, the worst state in words, a "right now" grid of every service, and the worst-state-per-day bars; the live incident beside it | Featured metric, Uptime bars, Incident card |
 | 2 | Full | Services: state, p95 and 90 days of bars per service | Status list in a Card |
 | 3 | Full | Past incidents, newest first | Incident card, `row` |
@@ -31,7 +31,7 @@ Without a live incident row 1 becomes one full-width featured card.
 - Uptime: the mean of each service's uptime over the 90 days shown.
 - The day bars of row 1: the worst state of any service that day.
 - "Right now": each service's state and p95 over the last hour.
-- Incidents: `INCIDENTS` (the live one is the first not resolved) and `PAST_INCIDENTS` from `src/system/fixtures/relay-ops.ts`.
+- Incidents: `INCIDENTS` (the live one is the first not resolved) and `PAST_INCIDENTS` from `src/system/fixtures/sample-ops.ts`.
 
 ## Surfaces
 
@@ -45,7 +45,7 @@ The page itself takes no agent action. Its embed shares the summary and the open
 
 ## Embed view
 
-`/embed/health` (tool `relay_health {}`): inline, a warning banner for the live incident (with Ask) above the status list with its summary; fullscreen, the page's rows. It shares: "Relay health: 1 service degraded (Inference API degraded). Open incident: … monitoring."
+`/embed/health` (tool `zz_meridian_health {}`): inline, a warning banner for the live incident (with Ask) above the status list with its summary; fullscreen, the page's rows. It shares: "ZZ Meridian health: 1 service degraded (Inference API degraded). Open incident: … monitoring."
 
 ## Accessibility
 

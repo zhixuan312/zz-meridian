@@ -1,8 +1,8 @@
 /**
- * Relay's records for the list and detail pages: a request's trace and payloads, the workspace's API keys, and the
- * facts behind each customer. Deterministic, derived from ./relay so the numbers agree.
+ * The sample's records for the list and detail pages: a request's trace and payloads, the workspace's API keys, and the
+ * facts behind each customer. Deterministic, derived from ./sample so the numbers agree.
  */
-import { CUSTOMER_ROWS, DEMO_NOW, REQUESTS, type RequestRow } from '@/system/fixtures/relay';
+import { CUSTOMER_ROWS, DEMO_NOW, REQUESTS, type RequestRow } from '@/system/fixtures/sample';
 
 export type StatusClass = '2xx' | '3xx' | '4xx' | '5xx';
 export const statusClass = (s: number): StatusClass => (s >= 500 ? '5xx' : s >= 400 ? '4xx' : s >= 300 ? '3xx' : '2xx');
@@ -50,7 +50,7 @@ export function payloadsOf(r: RequestRow) {
     : r.route.startsWith('/v1/search')
       ? { query: 'refund policy for annual plans', top_k: 8 }
       : r.route.startsWith('/v1/embeddings')
-        ? { model: 'relay-embed', input: ['Quarterly revenue grew 12%', 'Churn fell to 2.1%'] }
+        ? { model: 'meridian-embed', input: ['Quarterly revenue grew 12%', 'Churn fell to 2.1%'] }
         : { id: r.id.slice(4) };
   const response = r.status >= 400
     ? { error: { type: STATUS_TEXT[r.status]?.toLowerCase().replace(/ /g, '_') ?? 'error', message: r.status === 429 ? 'Rate limit of 1,200 requests per minute exceeded. Retry after 12 seconds.' : 'The request could not be completed.' } }
@@ -61,11 +61,11 @@ export function payloadsOf(r: RequestRow) {
 export type ApiKey = { id: string; name: string; secret: string; owner: string; created: string; lastUsed: string | null; scopes: string[]; env: 'live' | 'test' };
 const ago = (days: number, hours = 0) => new Date(DEMO_NOW.getTime() - days * 86_400_000 - hours * 3_600_000).toISOString();
 export const API_KEYS: ApiKey[] = [
-  { id: 'key_01', name: 'Production backend', secret: 'rly_live_4f9a2c71e8b04d6f93a1c5e2d7b8f601', owner: 'Maya Chen', created: ago(212), lastUsed: ago(0, 0.02), scopes: ['messages', 'search', 'embeddings'], env: 'live' },
-  { id: 'key_02', name: 'Search indexer', secret: 'rly_live_9b3e1d55a7c24f08b6e2a9d1c4f7e830', owner: 'Jonas Weber', created: ago(141), lastUsed: ago(0, 0.4), scopes: ['embeddings', 'files'], env: 'live' },
-  { id: 'key_03', name: 'Support assistant', secret: 'rly_live_2c8d4a96f1e34b7a85d0c3e9b6a2f417', owner: 'Amara Okafor', created: ago(63), lastUsed: ago(0, 3), scopes: ['messages'], env: 'live' },
-  { id: 'key_04', name: 'Staging', secret: 'rly_test_7e1f3b29c5d84a60b2f9e8c1d3a7b552', owner: 'Jonas Weber', created: ago(30), lastUsed: ago(2), scopes: ['messages', 'search', 'embeddings', 'files', 'webhooks'], env: 'test' },
-  { id: 'key_05', name: 'Load test, October', secret: 'rly_test_5a0c9e17b3f24d8e91c6a2b7f4d0e389', owner: 'Maya Chen', created: ago(1), lastUsed: null, scopes: ['messages'], env: 'test' },
+  { id: 'key_01', name: 'Production backend', secret: 'zzm_live_4f9a2c71e8b04d6f93a1c5e2d7b8f601', owner: 'Maya Chen', created: ago(212), lastUsed: ago(0, 0.02), scopes: ['messages', 'search', 'embeddings'], env: 'live' },
+  { id: 'key_02', name: 'Search indexer', secret: 'zzm_live_9b3e1d55a7c24f08b6e2a9d1c4f7e830', owner: 'Jonas Weber', created: ago(141), lastUsed: ago(0, 0.4), scopes: ['embeddings', 'files'], env: 'live' },
+  { id: 'key_03', name: 'Support assistant', secret: 'zzm_live_2c8d4a96f1e34b7a85d0c3e9b6a2f417', owner: 'Amara Okafor', created: ago(63), lastUsed: ago(0, 3), scopes: ['messages'], env: 'live' },
+  { id: 'key_04', name: 'Staging', secret: 'zzm_test_7e1f3b29c5d84a60b2f9e8c1d3a7b552', owner: 'Jonas Weber', created: ago(30), lastUsed: ago(2), scopes: ['messages', 'search', 'embeddings', 'files', 'webhooks'], env: 'test' },
+  { id: 'key_05', name: 'Load test, October', secret: 'zzm_test_5a0c9e17b3f24d8e91c6a2b7f4d0e389', owner: 'Maya Chen', created: ago(1), lastUsed: null, scopes: ['messages'], env: 'test' },
 ];
 
 export type CustomerRecord = (typeof CUSTOMER_ROWS)[number] & { id: string; region: string; since: string; errorRate: number; seats: number };

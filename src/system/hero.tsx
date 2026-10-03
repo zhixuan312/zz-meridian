@@ -10,7 +10,8 @@ import { TrendChart } from '@/components/charts/trend-chart';
 import { Sparkline } from '@/components/charts/sparkline';
 import { AppMark } from '@/components/base/app-mark';
 import { Delta } from '@/components/ui/delta';
-import type { DailyPoint } from '@/system/fixtures/relay';
+import type { DailyPoint } from '@/system/fixtures/sample';
+import { app } from '@/app.config';
 
 /**
  * The front door's demonstration of the system's signature: one Meridian drives a wide chart and three surfaces,
@@ -124,7 +125,7 @@ function PhoneMini({ series }: { series: DailyPoint[] }) {
   return (
     <div className="mx-auto w-full max-w-44 rounded-[22px] border border-line-strong bg-ground p-1.5">
       <div className="rounded-[16px] bg-surface px-3 pt-3 pb-2">
-        <div className="flex items-center gap-1.5"><AppMark size={20} /><span className="text-xs font-semibold">Relay</span></div>
+        <div className="flex items-center gap-1.5"><AppMark size={20} /><span className="text-xs font-semibold">{app.name}</span></div>
         <p className="t-eyebrow mt-3">Requests</p>
         <p className="t-num mt-1 text-2xl font-semibold tracking-[-0.03em]">{formatCompact(day.requests)}</p>
         <Delta value={prev ? day.requests / prev.requests - 1 : null} className="mt-1" />

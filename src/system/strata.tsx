@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { ArrowRight } from 'lucide-react';
+import { app } from '@/app.config';
 
 type Layer = { id: string; num?: string; title: string; line: string; count: number; href: string };
 
@@ -45,7 +46,7 @@ function Mini({ id }: { id: string }) {
     case 'base':
       return (
         <span className="flex items-baseline gap-4">
-          <span className="t-kicker">Relay · Production</span>
+          <span className="t-kicker">{app.name} · {app.workspace}</span>
           <span className="text-2xl font-semibold tracking-[-0.035em]">Overview</span>
         </span>
       );

@@ -1,4 +1,4 @@
-import { API_KEYS } from '@/system/fixtures/relay-records';
+import { API_KEYS } from '@/system/fixtures/sample-records';
 import { KeysView } from '@/views/keys';
 
 export const metadata = { title: 'API keys' };

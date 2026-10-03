@@ -10,7 +10,7 @@ Status: beta
 2. **Title**: inline `text-sm` 600; fullscreen `t-page` under a kicker with the product's name.
 3. **Meta**: the Freshness stamp.
 4. **Expand** (inline, when the view left something out): asks the host for fullscreen.
-5. **Open in Relay**: leaves for the console page this view summarises.
+5. **Open in ZZ Meridian**: leaves for the console page this view summarises.
 6. **Body**: the view's rows.
 
 ## Composition
@@ -32,12 +32,12 @@ The head responds to its own container, not the viewport: under 34rem the meta a
 |---|---|
 | Inline | One job; Expand offered when there is more |
 | Fullscreen | The console page's rows, without the shell |
-| Not connected (opened outside a host) | Expand and Open in Relay open new tabs |
+| Not connected (opened outside a host) | Expand and Open in ZZ Meridian open new tabs |
 
 ## Behaviour
 
 - Expand asks `ui/request-display-mode` for fullscreen; when the host refuses, it opens the console page instead (`ui/open-link`).
-- Open in Relay always uses `ui/open-link` in a host; the frame never navigates itself.
+- Open in ZZ Meridian always uses `ui/open-link` in a host; the frame never navigates itself.
 - The body's height is reported on every change (`ui/notifications/size-changed`); an inline view never scrolls inside the host.
 
 ## Surfaces
@@ -57,7 +57,7 @@ The frame is where an agent's tool result appears. Its view shares what is on sc
 ## Content
 
 - The title names the view and its scope: "Overview · Last 7 days", "Parallax AI · Requests".
-- The way out names the product: "Open in Relay".
+- The way out names the product: "Open in ZZ Meridian".
 
 ## Do and do not
 

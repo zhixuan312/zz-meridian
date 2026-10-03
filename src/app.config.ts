@@ -8,7 +8,7 @@ import {
  */
 export const app = {
   /** The product name: the rail, the document title, the sign-in screen. */
-  name: 'Relay',
+  name: 'ZZ Meridian',
   /** One line under the name in the rail: the workspace or environment. */
   workspace: 'Production',
   /** The accent preset the product ships with; a person can still change it in Settings. */
@@ -45,3 +45,11 @@ export const nav: NavGroup[] = [
     ],
   },
 ];
+
+const toSlug = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+/** The name as identifiers, for the sample's addresses, URLs and MCP tool names. They follow `app.name`. */
+export const slug = toSlug(app.name);
+export const workspaceSlug = `${slug}-${toSlug(app.workspace)}`;
+/** `.example` is reserved for documentation, so sample addresses never point at someone's real domain. */
+export const domain = `${slug}.example`;
+export const toolPrefix = slug.replace(/-/g, '_');

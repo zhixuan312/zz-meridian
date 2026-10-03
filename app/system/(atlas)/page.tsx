@@ -4,9 +4,9 @@ import { SECTIONS, entries, readRepo, stats } from '@/system/content';
 import { Doc } from '@/system/markdown';
 import { Hero } from '@/system/hero';
 import { Strata } from '@/system/strata';
-import { demoSeries } from '@/system/fixtures/relay';
+import { demoSeries } from '@/system/fixtures/sample';
 
-export const metadata = { title: 'ZZ Meridian Design Atlas' };
+export const metadata = { title: { absolute: 'ZZ Meridian Design Atlas' } };
 
 /** The front door: the thesis, the signature working, the layers, the surfaces and operators, the principles. */
 export default function AtlasHome() {

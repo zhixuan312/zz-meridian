@@ -1,8 +1,8 @@
 /**
- * Relay's data for the operational pages (Health, Analytics, Settings), derived from ./relay so the numbers agree
+ * The sample's data for the operational pages (Health, Analytics, Settings), derived from ./sample so the numbers agree
  * across pages.
  */
-import { DEMO_NOW, INCIDENTS, REGIONS, demoHeatmap } from '@/system/fixtures/relay';
+import { DEMO_NOW, INCIDENTS, REGIONS, demoHeatmap } from '@/system/fixtures/sample';
 import type { Incident } from '@/components/patterns/incident-card';
 
 const DAY = 86_400_000;
@@ -41,7 +41,7 @@ export const TIMEZONES = [
   { value: 'Asia/Tokyo', label: 'Tokyo', description: 'UTC+09:00' },
 ];
 
-/** MCP hosts this workspace has connected: where Relay's views appear as apps inside an assistant. */
+/** MCP hosts this workspace has connected: where the product's views appear as apps inside an assistant. */
 export const CONNECTED_HOSTS = [
   { id: 'h1', name: 'Claude', kind: 'Chat client', connectedBy: 'Maya Chen', since: ago(41 * DAY), lastUsed: ago(2.4 * 3600_000), scopes: ['Read dashboards', 'Propose changes'] },
   { id: 'h2', name: 'Ops runbook agent', kind: 'Internal agent', connectedBy: 'Jonas Weber', since: ago(12 * DAY), lastUsed: ago(26 * 3600_000), scopes: ['Read dashboards'] },

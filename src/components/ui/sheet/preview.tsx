@@ -11,7 +11,7 @@ const FACTS: [string, string][] = [
   ['Latency', '612 ms'],
   ['Customer', 'Parallax AI'],
   ['Region', 'us-east-1'],
-  ['Model', 'relay-large'],
+  ['Model', 'meridian-large'],
   ['Size', '4.2 KB'],
 ];
 

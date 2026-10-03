@@ -20,7 +20,7 @@ Status: beta
 | `ui/request-display-mode` | Expand: ask for fullscreen; the host may refuse |
 | `ui/message` | Ask: post a question into the conversation, as the person |
 | `ui/update-model-context` | Share: tell the model what is on screen |
-| `ui/open-link` | Open in Relay, and a refused Expand |
+| `ui/open-link` | Open in ZZ Meridian, and a refused Expand |
 | `tools/call` | Act through a tool; a write returns a Proposal first |
 
 Protocol: MCP Apps 2026-01-26. The bridge (`src/lib/host.ts`) has no dependency; a product that uses `@modelcontextprotocol/ext-apps` can swap it without touching a component.
@@ -73,5 +73,5 @@ import { useSurface } from '@/components/base/surface';
 import { useShareView } from '@/components/base/use-share-view';
 
 const { kind, ask } = useSurface();
-useShareView('Relay overview for the last 7 days: 612K requests, 0.82% errors.', { view: 'overview', period: '7d' });
+useShareView('ZZ Meridian overview for the last 7 days: 612K requests, 0.82% errors.', { view: 'overview', period: '7d' });
 ```

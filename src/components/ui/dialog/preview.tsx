@@ -29,11 +29,11 @@ export default function DialogPreview() {
         <div className="grid w-full place-items-center rounded-lg bg-scrim p-8 max-sm:p-3">
           <Panel
             title="Revoke this key?"
-            description="Requests signed with relay_live_7Hc2…q91 will fail with 401 at once. This cannot be undone."
+            description="Requests signed with zzm_live_7Hc2…q91 will fail with 401 at once. This cannot be undone."
             footer={<><Button variant="ghost">Cancel</Button><Button variant="danger">Revoke key</Button></>}
           >
             <dl className="grid grid-cols-[auto_minmax(0,1fr)] gap-x-6 gap-y-2 rounded-md bg-surface-sunk px-4 py-3 text-sm">
-              <dt className="text-ink-3">Key</dt><dd className="truncate font-mono text-xs leading-5">relay_live_7Hc2…q91</dd>
+              <dt className="text-ink-3">Key</dt><dd className="truncate font-mono text-xs leading-5">zzm_live_7Hc2…q91</dd>
               <dt className="text-ink-3">Last used</dt><dd>4 minutes ago, from 34.201.88.12</dd>
               <dt className="text-ink-3">Requests today</dt><dd className="t-num">18,402</dd>
             </dl>
