@@ -15,6 +15,10 @@ export const app = {
   accent: 'indigo' as const,
   /** Every date is shown in this zone, and every daily bucket is cut on its midnight. */
   timezone: 'UTC',
+  /** ISO 4217 code for every money figure: tiles, tables, chart axes. */
+  currency: 'USD',
+  /** The signed-in person the rail shows until your auth supplies one. */
+  user: { name: 'Maya Chen', role: 'Owner' },
 } as const;
 
 export type NavItem = { href: string; label: string; icon: LucideIcon; badge?: string };

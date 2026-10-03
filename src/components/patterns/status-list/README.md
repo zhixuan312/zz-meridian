@@ -59,6 +59,8 @@ A Card (`overflow-hidden`) holding: the summary line, then one row per service. 
 | `latency` | p95 over the last hour, in milliseconds |
 | `days` | One state per day, oldest first, ending today: the worst state of that day |
 
+The list assumes software services by default. For other things that are up or not (warehouses, branches, sites), pass `noun` (`{ one: 'warehouse', other: 'warehouses' }`) for the summary and the count, `measure` for the word after each row's percentage ("on time"), and `metric` for the figure under the state word (default `p95 <latency>`).
+
 ## Surfaces
 
 - **Console**: wide rows on the Health page, without the summary.

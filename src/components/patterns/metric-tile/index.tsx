@@ -20,6 +20,7 @@ export function MetricTile({
   value,
   delta,
   note,
+  compare = 'vs previous period',
   intent = 'up',
   daily,
   format,
@@ -36,6 +37,8 @@ export function MetricTile({
   delta?: number | null;
   /** A short line where the change would sit, for a figure no period comparison fits: who is past due, what is next. */
   note?: ReactNode;
+  /** What the change is measured against, beside it: "vs previous period", "vs the half hour before". */
+  compare?: string;
   intent?: 'up' | 'down' | 'neutral';
   /** One value per day of the period, for the sparkline and the Meridian readout. */
   daily?: number[];
@@ -80,7 +83,7 @@ export function MetricTile({
             ) : delta !== undefined ? (
               <>
                 <Delta value={delta} intent={intent} />
-                <span className="truncate text-ink-3">vs previous period</span>
+                <span className="truncate text-ink-3">{compare}</span>
               </>
             ) : note ? (
               <span className="truncate text-ink-3">{note}</span>
@@ -101,7 +104,7 @@ export function MetricTile({
 
 /** "$298.43" steps the cents down; "2.9M", "0.90%" and "294ms" keep the number whole and step the unit down. */
 function defaultSplit(s: string) {
-  const m = s.match(/^([$€£]?)([\d,]+)(\.\d+)?\s*([%a-zA-Z]*)$/);
+  const m = s.match(/^([^\d\s.,-]*)([\d,]+)(\.\d+)?\s*([%a-zA-Z]*)$/);
   if (!m) return { int: s };
   const money = Boolean(m[1]);
   return { pre: m[1] || undefined, int: money ? m[2] : m[2] + (m[3] ?? ''), frac: money ? m[3] : undefined, unit: m[4] || undefined };

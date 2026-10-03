@@ -6,7 +6,7 @@ import { Specimen } from '@/system/specimen';
 import { Button } from '@/components/ui/button';
 import { FilterBar } from '@/components/patterns/filter-bar';
 import { REQUESTS } from '@/system/fixtures/sample';
-import { requestColumns } from '@/views/requests';
+import { requestColumns } from '@/system/sample-cells';
 import { DataTable, type TableState } from '.';
 import { app } from '@/app.config';
 

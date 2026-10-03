@@ -9,7 +9,8 @@
 3. **The built app, served**, and the **browser audit** of every static route under `app/` (embeds under `/embed` on a
    simulated host ground) at 1440, 1024, 768 and 390px in both themes (`--quick`: 1440 and 390, dark only).
 
-The report is in `out/verify.txt`. Fix the cause; never weaken a check to make it pass.
+The report is in `out/verify.txt`. Fix the cause; never weaken a check to make it pass. pnpm may first print a lockfile
+and supply-chain check before a script runs; that is pnpm, not an install, and not a failure.
 
 ## Gate failures
 
@@ -22,6 +23,7 @@ The report is in `out/verify.txt`. Fix the cause; never weaken a check to make i
 | `font-bold is outside Meridian's scale` | A Tailwind default utility | Use `font-semibold`, `rounded-xl`, `shadow-card`… |
 | `names \`x\`, which is not a token` | A spec names a token that does not exist | Correct the name or add the token |
 | `FAIL light brand ... on-accent on accent` | The brand accent is too light for white text | Re-run `node scripts/brand.ts --hue … --chroma <lower>` |
+| `warning: hue … from the critical status hue` (brand) | The brand colour reads as a status | Tell the person; offer graphite or a hue 20° away (SKILL.md step 4) |
 
 ## Audit failures
 

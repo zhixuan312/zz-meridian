@@ -10,7 +10,7 @@ import { TrendChart } from '@/components/charts/trend-chart';
 import { BarList } from '@/components/charts/bar-list';
 import { CompositionBar } from '@/components/charts/composition-bar';
 import { MetricTile } from '@/components/patterns/metric-tile';
-import { RouteCell } from '@/views/requests';
+import { RouteCell } from '@/system/sample-cells';
 import { FeaturedMetric } from '@/components/patterns/featured-metric';
 import { formatDate } from '@/lib/format-date';
 import { ActivityFeed } from '@/components/patterns/activity-feed';

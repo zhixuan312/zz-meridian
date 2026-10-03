@@ -28,7 +28,7 @@ Replace the mark in `src/components/base/app-mark/index.tsx` with your logo; kee
 
 ## 3. Brand it, if you need more than an accent
 
-An accent preset is two numbers. `node scripts/brand.ts --hue <0-360> --chroma <0.10-0.18>` adds your brand's hue as a preset, makes it the default and holds contrast in every theme by itself. By hand, copy `tokens/accent.indigo.tokens.json` to `tokens/accent.<name>.tokens.json`, set `accent-h` (OKLCH hue) and `accent-c` (chroma), add it to `tokens/zz-meridian.resolver.json` and to `ACCENTS` in `src/lib/preferences.ts`, then:
+An accent preset is two numbers. `node scripts/brand.ts --hex '#RRGGBB'` (or `--hue <0-360> --chroma <0.10-0.18>`) adds your brand's hue as a preset, makes it the default, holds contrast in every theme by itself, and warns when the hue sits within 20° of a status colour. By hand, copy `tokens/accent.indigo.tokens.json` to `tokens/accent.<name>.tokens.json`, set `accent-h` (OKLCH hue) and `accent-c` (chroma), add it to `tokens/zz-meridian.resolver.json` and to `ACCENTS` in `src/lib/preferences.ts`, then:
 
 ```sh
 pnpm tokens          # regenerate the CSS

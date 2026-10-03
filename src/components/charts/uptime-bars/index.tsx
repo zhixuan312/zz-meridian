@@ -21,6 +21,7 @@ export function UptimeBars({
   uptime,
   end,
   label,
+  measure = 'uptime',
   className,
 }: {
   /** One state per day, oldest first, ending today. */
@@ -30,6 +31,8 @@ export function UptimeBars({
   /** The last day's date (today). */
   end: Date;
   label: string;
+  /** The word after the percentage: "uptime" for services, "on time" for a warehouse's days. */
+  measure?: string;
   className?: string;
 }) {
   const [box, { width }] = useSize<HTMLDivElement>();
@@ -66,7 +69,7 @@ export function UptimeBars({
       <figcaption className="mt-2 flex items-center gap-3 text-2xs text-ink-3">
         <span>{shown.length} days ago</span>
         <span aria-hidden className="h-px flex-1 bg-line" />
-        <span className="t-num font-medium text-ink-2">{pct(uptime)} uptime</span>
+        <span className="t-num font-medium text-ink-2">{pct(uptime)} {measure}</span>
         <span aria-hidden className="h-px flex-1 bg-line" />
         <span>Today</span>
       </figcaption>
@@ -82,7 +85,7 @@ export function UptimeBars({
       ) : null}
       <p className="sr-only" aria-live="polite">{hover !== null ? `${formatDate(dateOf(hover))}: ${WORD[shown[hover]]}` : ''}</p>
       <p className="sr-only">
-        {label}: {pct(uptime)} uptime over {shown.length} days; {bad === 0 ? 'no degraded days' : `${bad} days degraded or down`}.
+        {label}: {pct(uptime)} {measure} over {shown.length} days; {bad === 0 ? 'no degraded days' : `${bad} days degraded or down`}.
       </p>
       <table className="sr-only">
         <caption>{label}, by day</caption>

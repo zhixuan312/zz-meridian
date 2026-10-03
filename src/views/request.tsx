@@ -15,7 +15,7 @@ import { formatDuration } from '@/lib/format';
 import { formatDateTime, formatRelative } from '@/lib/format-date';
 import { DEMO_NOW, type RequestRow } from '@/system/fixtures/sample';
 import { STATUS_TEXT, statusTone, type Span } from '@/system/fixtures/sample-records';
-import { formatBytes, StatusBadge } from '@/views/requests';
+import { formatBytes, StatusBadge } from '@/system/sample-cells';
 import { domain } from '@/app.config';
 
 const curlOf = (r: RequestRow, body: string) =>

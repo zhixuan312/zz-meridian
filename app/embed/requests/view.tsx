@@ -14,8 +14,8 @@ import { Freshness } from '@/components/patterns/freshness';
 import { formatDuration } from '@/lib/format';
 import { formatRelative } from '@/lib/format-date';
 import { DEMO_NOW, DEMO_UPDATED_AT, REGIONS, type RequestRow } from '@/system/fixtures/sample';
-import { filterRequests, REQUEST_FILTERS, requestColumns, StatusBadge } from '@/views/requests';
-import { MethodChip } from '@/views/requests';
+import { filterRequests, REQUEST_FILTERS } from '@/views/requests';
+import { MethodChip, requestColumns, StatusBadge } from '@/system/sample-cells';
 
 const describe = (f: typeof REQUEST_FILTERS) =>
   [f.status !== 'all' && `status ${f.status}`, f.method !== 'all' && f.method, f.region !== 'all' && `in ${f.region}`, f.q && `matching "${f.q}"`].filter(Boolean).join(', ');

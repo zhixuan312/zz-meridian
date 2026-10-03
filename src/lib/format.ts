@@ -7,13 +7,18 @@
  * Add your domain's formatters here rather than inline at the call site, so a
  * quantity reads the same in a metric tile, a table cell and a tooltip.
  */
+import { app } from '@/app.config';
 
-export function formatCost(usd: number | null): string {
-  if (usd === null) return '—';
-  if (usd === 0) return '$0';
-  if (Math.abs(usd) < 0.01) return `$${usd.toFixed(4)}`;
-  if (Math.abs(usd) >= 1000) return `$${Math.round(usd).toLocaleString()}`;
-  return `$${usd.toFixed(2)}`;
+/** The symbol for `app.currency`: $, €, £, ¥ or the code itself. */
+const CURRENCY = new Intl.NumberFormat('en', { style: 'currency', currency: app.currency }).formatToParts(0).find((p) => p.type === 'currency')?.value ?? app.currency;
+
+/** Money in `app.currency`, symbol first: $298.43, €1,204. */
+export function formatCost(amount: number | null): string {
+  if (amount === null) return '—';
+  if (amount === 0) return `${CURRENCY}0`;
+  if (Math.abs(amount) < 0.01) return `${CURRENCY}${amount.toFixed(4)}`;
+  if (Math.abs(amount) >= 1000) return `${CURRENCY}${Math.round(amount).toLocaleString()}`;
+  return `${CURRENCY}${amount.toFixed(2)}`;
 }
 
 /** 1.2M, 846K, 912: a count at a glance. The exact number belongs in the tooltip and the table. */
@@ -93,9 +98,9 @@ export const AXIS_FORMATTERS: Record<NumberFormat, (n: number | null) => string>
   count: (n) => (n === null ? '—' : formatCompact(n)),
   cost: (n) => {
     if (n === null) return '—';
-    if (n === 0) return '$0';
-    if (Math.abs(n) < 1) return `$${n.toFixed(2)}`;
-    return `$${Math.round(n).toLocaleString()}`;
+    if (n === 0) return `${CURRENCY}0`;
+    if (Math.abs(n) < 1) return `${CURRENCY}${n.toFixed(2)}`;
+    return `${CURRENCY}${Math.round(n).toLocaleString()}`;
   },
   duration: formatDuration,
   percent: (n) => formatPercent(n, 0),

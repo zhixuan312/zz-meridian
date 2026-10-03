@@ -77,10 +77,10 @@ export function Rail({ current }: { /** The active route; defaults to the curren
         ))}
       </nav>
       <div className="m-3 flex items-center gap-3 rounded-lg border border-line bg-surface/50 p-2.5">
-        <Avatar name="Maya Chen" size="md" />
+        <Avatar name={app.user.name} size="md" />
         <div className="min-w-0 flex-1">
-          <p className="truncate text-sm leading-tight font-medium">Maya Chen</p>
-          <p className="truncate text-xs leading-tight text-ink-3">Owner</p>
+          <p className="truncate text-sm leading-tight font-medium">{app.user.name}</p>
+          <p className="truncate text-xs leading-tight text-ink-3">{app.user.role}</p>
         </div>
         <AppearanceMenu />
       </div>

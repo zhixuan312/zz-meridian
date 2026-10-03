@@ -20,7 +20,7 @@ Without a live incident row 1 becomes one full-width featured card.
 | State | What shows |
 |---|---|
 | Loading | The shared skeleton, shaped like the Overview rows |
-| All operational | The featured caption says "All systems operational."; row 1 is full width; no warning colour anywhere |
+| All operational | The featured caption says "All services operational."; row 1 is full width; no warning colour anywhere |
 | Degraded | The affected service is named in the caption, its dot pulses in the grid and the list; the incident card sits beside |
 | Outage | As degraded, in critical; the rail's Health badge counts open incidents |
 | No past incidents | An empty state in the card: "No incidents in 90 days" |

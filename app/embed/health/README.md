@@ -15,7 +15,7 @@ Status: beta
 
 | State | Inline |
 |---|---|
-| All operational | No banner; the summary reads "All systems operational" |
+| All operational | No banner; the summary reads "All services operational" |
 | Live incident | The banner names it, its state and when it started |
 | Not connected (opened directly) | The same view; Ask is absent; Expand opens the console |
 

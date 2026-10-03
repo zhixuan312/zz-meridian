@@ -17,11 +17,15 @@ the Atlas and every card preview read it: leave it in place and do not import it
 - **Daily series** for anything a Metric tile or chart shows over time: the Meridian cursor reads one value per day.
 - **Freshness** from when data arrived (`DEMO_UPDATED_AT`), never from now.
 - **null for "not measured"**: the formatters in `src/lib/format.ts` render it as a dash. Add a formatter there when a
-  quantity needs one (weight, distance), never inline.
+  quantity needs one (weight, distance), never inline; a chart names its format by key, so a new quantity a chart
+  shows also gets a key in `NumberFormat`, `FORMATTERS` and `AXIS_FORMATTERS`. Money follows `app.currency`.
+- **Helpers a server page calls** (summaries, derived sentences) go in `src/data/` or `src/lib/`, never in a
+  `'use client'` view file: a server component cannot call a function exported from a client module.
 
 ## Navigation: `src/app.config.ts`
 
-`app` holds the name, workspace, accent and timezone (set by `scripts/brand.ts`). `nav` is the rail and the command
+`app` holds the name, workspace, accent, timezone, currency and the signed-in user the rail shows (all set by
+`scripts/brand.ts`); `slug`, `domain` and `toolPrefix` derive from the name. `nav` is the rail and the command
 palette: groups of `{ href, label, icon }` (icons from `lucide-react`, 1.75 stroke is applied by the rail). A badge is a
 short string, used only for something that needs attention ("1").
 
@@ -35,9 +39,13 @@ short string, used only for something that needs attention ("1").
 | Breakdowns and patterns over time | `app/(dashboard)/analytics/` + `src/views/analytics.tsx` | Heatmap or the main chart |
 | Systems and incidents | `app/(dashboard)/health/` + `src/views/health.tsx` | Status summary |
 | Customers, accounts, people | `app/(dashboard)/customers/` + `src/views/customers.tsx` | Table with sparklines |
-| Keys, tokens, secrets | `app/(dashboard)/keys/` | Table with masked values |
-| Settings | `app/(dashboard)/settings/` + `src/views/settings.tsx` | Form sections |
-| Sign in, not found | `app/sign-in/`, `app/not-found.tsx` | One sentence at display size |
+| Keys, tokens, secrets | `app/(dashboard)/keys/` + `src/views/keys.tsx` | Table with masked values |
+| Settings (a sample: keep only if asked) | `app/(dashboard)/settings/` + `src/views/settings.tsx` | Form sections |
+| Sign in, not found | `app/sign-in/` (`page.tsx` + `panel.tsx`), `app/not-found.tsx` + `src/views/standalone.tsx` | One sentence at display size |
+
+The health preset assumes software services. For other things that are up or not (warehouses, branches, sites), pass
+`StatusList` a `noun`, a `measure` ("on time") and a `metric`, and `UptimeBars` a `measure`. A Metric tile says what
+its change compares with in `compare` ("vs the 3 days before") and takes a `note` where no comparison fits.
 
 Rules that make every page look like it belongs:
 
@@ -59,8 +67,8 @@ Rules that make every page look like it belongs:
 
 Logo: replace the SVG in `src/components/base/app-mark/index.tsx`, keeping the sizes (20, 24, 28, 32) and the empty alt.
 Theme default: dark is on `:root`; to make light the default, set `"default": "light"` for the theme modifier in
-`tokens/zz-meridian.resolver.json` and run `pnpm tokens`. Density: users pick it in Settings; compact suits operators who
-scan many rows.
+`tokens/zz-meridian.resolver.json` and run `pnpm tokens`. Density: users pick it in the rail's appearance menu and the
+command palette; compact suits operators who scan many rows.
 
 ## MCP App views (only if asked)
 
@@ -71,8 +79,26 @@ writes go through `Proposal` (see `app/embed/proposal/`). Read `docs/agents.md` 
 
 ## Clean-up before validation
 
-Delete the sample pages, views and embed views the product does not use (never `src/system/fixtures/`), with their nav lines and, if the
-Atlas stays, their entries in `PAGES` in `src/system/content.ts`. Then `node scripts/registry.ts` and `pnpm verify`.
+Delete the sample pages, views and embed views the product does not use (never `src/system/fixtures/` or
+`src/system/sample-cells.tsx`: the Atlas and the previews read them), with their nav lines and, if the Atlas stays,
+their entries in `PAGES` in `src/system/content.ts`. Then fix what still points at the sample:
+
+- `src/views/standalone.tsx`: the footer status line and its link to `/health`, and `app/not-found.tsx`'s "Check service
+  health" link.
+- `src/components/patterns/shell-tools/index.tsx`: the alerts count ("Alerts · 1 new") is sample copy.
+- `app/sign-in/page.tsx`: the headline and lead describe the sample product.
+- `src/system/content.ts`: `PAGES` names a sample request id route.
+- Each page `README.md`: its States rows must describe what your view renders; `check.ts` only checks that the section
+  exists.
+
+This finds what is left:
+
+```sh
+grep -rn "/health\|/requests\|/customers\|/keys\|/settings\|fixtures/sample\|sample-cells" app src/views src/components \
+  --include=*.tsx | grep -v preview.tsx
+```
+
+Then `node scripts/registry.ts` and `pnpm verify`.
 
 ## Things that render nothing (and fail the gate)
 

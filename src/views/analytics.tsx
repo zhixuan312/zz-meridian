@@ -15,7 +15,7 @@ import { formatCompact, formatDuration, formatPercent } from '@/lib/format';
 import { formatDate } from '@/lib/format-date';
 import { CompositionBar } from '@/components/charts/composition-bar';
 import type { DailyPoint, Endpoint } from '@/system/fixtures/sample';
-import { RouteCell } from '@/views/requests';
+import { RouteCell } from '@/system/sample-cells';
 
 const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 

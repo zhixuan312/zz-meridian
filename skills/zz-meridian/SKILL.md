@@ -42,8 +42,6 @@ your draft as the recommended option so the person can accept it in one click. U
 4. **Brand and surfaces.** A brand colour (a hex, or "no preference" for indigo), light or dark first (dark is the
    default), and whether it should also appear inside AI assistants as an MCP App.
 
-Write the answers into `docs/brief.md` in the new project (in English), so the decisions survive the conversation.
-
 ## 3. Get the template
 
 For a new project (the target folder must not exist):
@@ -60,34 +58,45 @@ Requirements: Node 24 or newer and pnpm (`corepack enable` if pnpm is missing). 
 (`CHROME=/path/to/chrome` if it is not at the macOS default). If any is missing, say so plainly and stop before step 6
 rather than skipping validation.
 
+Now write the step-2 answers into `docs/brief.md` in the project (in English), so the decisions survive the
+conversation.
+
 ## 4. Brand it
 
 ```sh
 node scripts/brand.ts --name "<Product>" --workspace "<Workspace>" --timezone "<IANA zone>" \
-  [--accent indigo|cobalt|jade|graphite | --hue <0-360> --chroma <0.10-0.18>] [--no-atlas]
+  [--currency <ISO 4217>] [--user "<Name>" --role "<Role>"] \
+  [--accent indigo|cobalt|jade|graphite | --hex '#RRGGBB' | --hue <0-360> --chroma <0.10-0.18>] [--no-atlas]
 ```
 
-A brand hex becomes `--hue`/`--chroma`: convert it to OKLCH and pass the hue and chroma (keep chroma at or under 0.18;
-the theme sets lightness so contrast holds). The script registers the accent everywhere, runs the contrast gate across
+Every product name, sample address and MCP tool name in the template follows `--name`, so nothing of the template's
+own name is left behind. A brand colour goes straight in as `--hex`: the script derives the OKLCH hue and chroma (chroma
+capped at 0.18; the theme sets lightness so contrast holds) and prints them. It registers the accent everywhere, runs the contrast gate across
 every theme, and lowers a theme's fill lightness by itself if white text would fail. Keep the Atlas (`/system`) while
 building; it is the live specification. Pass `--no-atlas` only when the person wants it gone.
 
 Status colours own three hues: critical near 22°, warning near 68°, positive near 158°. A brand hue within 20° of one
 (a red, amber or green brand) makes every button and selection read as an alert or as "healthy", and the script prints
 a warning when it happens. Do not ship it silently: tell the person, and offer graphite or the nearest hue 20° or more
-away, with the exact brand colour kept in the logo mark.
+away, with the exact brand colour kept in the logo mark. If they keep it, keep the accent off figures and statuses: no
+`emphasis` on Metric tiles, and accent only on actions and selection.
 
 ## 5. Build the product
 
 Read `references/customize.md` and follow it. In short:
 
 - **Data first.** Write `src/data/<product>.ts` for the person's domain: real types from their schema or materials, and
-  deterministic sample data until they wire their API. Pages import data from `src/data/` and nowhere else.
+  deterministic sample data until they wire their API. Pages import data from `src/data/` and nowhere else. Leave
+  `src/system/fixtures/` alone: it is the template's sample, which the Atlas and every card preview read. Prove the
+  numbers before building pages: a `tests/data.test.ts` asserting the counts your pages need (vitest resolves `@/`;
+  plain `node` does not).
 - **Navigation** in `src/app.config.ts`; one line per page.
 - **Pages from presets.** Start each page from the closest template page and change what it shows, not how it is laid
   out. Every page has one protagonist (a featured metric, a table, a form), a kicker, a title and one sentence.
-- **Remove what they did not ask for**: demo pages, their nav lines, their embed views, their entries in
-  `src/system/content.ts` (if the Atlas stays).
+- **Remove what they did not ask for**: sample pages, their nav lines, their embed views, their entries in
+  `src/system/content.ts` (if the Atlas stays), and the links that point at them. Settings is a sample page too:
+  delete it unless asked (theme, accent and density stay in the rail's appearance menu and the command palette).
+  `references/customize.md` has the checklist and the grep that finds what is left.
 - **MCP App views** under `app/embed/` only if they asked for the agent surface; see `docs/agents.md` in the template.
 
 Build up, never sideways: use Meridian's components and tokens. A new colour, size or shadow is a token, never a literal;
@@ -100,14 +109,16 @@ verbs on buttons, units and periods on every number.
 pnpm verify            # the gate, a production build, the built app, and the browser audit of every page
 ```
 
-It must end with `verify: the project meets the Meridian standard`. Pass detail pages the audit cannot discover with
-`--extra /orders/ord_1042`. When something fails, read `references/validation.md`, fix the cause (not the check), and run
+Stop the dev server first: verify builds and serves the app from the same folder. It must end with
+`verify: the project meets the Meridian standard`. The audit discovers every static route; pass each detail page with
+`--extra /orders/ord_1042`, one per state worth seeing (a normal record, a failed one), with ids taken from your data
+module's featured ids (print them from `tests/data.test.ts`). When something fails, read `references/validation.md`, fix the cause (not the check), and run
 it again. `pnpm verify --quick` is fine while iterating; finish with the full run.
 
 Then look, because a passing audit is not the same as a good page:
 
 ```sh
-pnpm dev &   # then
+pnpm dev &   # restart it for the screenshots, then
 node scripts/shot.ts / <the other main routes> --width 1440,390 --theme dark,light --full
 ```
 
@@ -126,4 +137,6 @@ Validation: pnpm verify passed (<n> routes, both themes, 1440 to 390px; contrast
 Next steps: replace the sample data in src/data/ with <their API>; run pnpm verify after every change.
 ```
 
-Attach or show the screenshots of the main pages in both themes. Say plainly what is sample data and what is not.
+Attach or show the screenshots of the main pages in both themes. Say plainly what is sample data and what is not. If
+the Atlas stays, say that `/system` is the live specification and that `node scripts/brand.ts --no-atlas` removes it
+before the product goes public.
