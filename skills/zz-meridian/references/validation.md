@@ -7,7 +7,7 @@
    passes the colour-vision checks; TypeScript; the tests.
 2. **A production build** (`next build`).
 3. **The built app, served**, and the **browser audit** of every static route under `app/` (embeds under `/embed` on a
-   simulated host ground) at 1440, 1024, 768 and 390px in both themes (`--quick`: 1440 and 390, dark only).
+   simulated host ground) at 2560, 1440, 1024, 768 and 390px in both themes (`--quick`: 1440 and 390, dark only).
 4. **Every control pressed, every link followed** (`scripts/interactions.ts`) on the built app: mouse at 1440px, taps at
    390px. A button that changes nothing, a control something else covers, and a link that answers 4xx all fail.
 

@@ -146,7 +146,7 @@ export function PageFrame({
         </div>
         {toolbar ? <div className="mt-8">{toolbar}</div> : null}
       </header>
-      <div className={cn('mx-auto w-full px-(--gutter) pb-16', WIDTH[width])}>{children}</div>
+      <div data-page-width={width} className={cn('mx-auto w-full px-(--gutter) pb-16', WIDTH[width])}>{children}</div>
     </div>
   );
 }

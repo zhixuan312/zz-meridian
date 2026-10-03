@@ -1,6 +1,6 @@
 # Benchmark
 
-Meridian held to the bar of award-winning sites (Awwwards, Webby, FWA) and of the systems it learned from (Zandro, crypto-zentry, the zz-stack console), criterion by criterion: what we did, the evidence, and what is still open. Measured on 2026-10-03 with `node scripts/audit.ts` (every page and embed view at 1440, 1024, 768 and 390px, both themes) and `node scripts/contrast.ts` (every pair in every theme and accent).
+Meridian held to the bar of award-winning sites (Awwwards, Webby, FWA) and of the systems it learned from (Zandro, crypto-zentry, the zz-stack console), criterion by criterion: what we did, the evidence, and what is still open. Measured on 2026-10-03 with `node scripts/audit.ts` (every page and embed view at 2560, 1440, 1024, 768 and 390px, both themes) and `node scripts/contrast.ts` (every pair in every theme and accent).
 
 ## Scorecard
 
@@ -61,6 +61,8 @@ Meridian held to the bar of award-winning sites (Awwwards, Webby, FWA) and of th
   - **API keys** ends on how to rotate a key.
 
 - **The critic's final round** verified every item at 360, 768 and 1440px in both themes. It found one regression from the round before: 2xx in the Responses bar had taken the track colour, about 1.4:1. Now 2xx is `chart-neutral-strong` and 3xx is `ink-2`, both gated at 3:1 or more. Two nits were also fixed: the space before "Open ↗" in an embed, and the cursor line snapped to the pixel grid so it stays crisp while it glides. Final scores: typography 9, whitespace 8.5, hierarchy 9, colour 8 (before this fix), motion 8.5, micro-interaction 8.5, responsiveness 8.5, originality 8. All eight craft criteria pass once the 2xx contrast is fixed, and this commit fixes it.
+
+- **Big screens.** The owner found that on a large monitor the dashboard was a 1560px strip with empty margins. No review had looked past 1440px. Dashboards now fill the canvas at every width (`data-width` is 100%; the gutter grows to 56px), standalone screens keep a `stage-width` of 1560px, and reading pages stay at 832px. The audit now runs at 2560px too, and fails a data page that does not fill its canvas.
 
 ## Open
 

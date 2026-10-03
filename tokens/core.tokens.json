@@ -494,7 +494,20 @@
         "value": 1560,
         "unit": "px"
       },
-      "$description": "The widest a dashboard grows: past it, the rows centre and the light fills the margins."
+      "$description": "Dashboards fill the canvas at every size: no cap, so a 2560px screen shows more, not a centred strip. The value is the width the layout is designed at; the CSS is 100%.",
+      "$extensions": {
+        "dev.zz.meridian": {
+          "css": "100%"
+        }
+      }
+    },
+    "stage-width": {
+      "$type": "dimension",
+      "$value": {
+        "value": 1560,
+        "unit": "px"
+      },
+      "$description": "A standalone screen (sign in, not found): one sentence and one panel read as a pair, so they stay within this width and centre."
     },
     "reading-width": {
       "$type": "dimension",
@@ -513,7 +526,7 @@
       "$description": "Space between the content and the window or rail.",
       "$extensions": {
         "dev.zz.meridian": {
-          "css": "clamp(16px, 2.4vw, 40px)"
+          "css": "clamp(16px, 2.4vw, 56px)"
         }
       }
     }

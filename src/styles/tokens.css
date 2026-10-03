@@ -75,9 +75,10 @@
   /* layout */
   --rail-width:260px;
   --rail-collapsed:68px;
-  --data-width:1560px;
+  --data-width:100%;
+  --stage-width:1560px;
   --reading-width:832px;
-  --gutter:clamp(16px, 2.4vw, 40px);
+  --gutter:clamp(16px, 2.4vw, 56px);
   /* layer */
   --layer-rail:20;
   --layer-sticky:30;

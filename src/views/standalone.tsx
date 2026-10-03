@@ -20,7 +20,7 @@ export function Standalone({ kicker, sentence, lead, aside, children }: { kicker
           {app.name}
         </Link>
       </header>
-      <div className="mx-auto grid w-full max-w-(--data-width) flex-1 items-center gap-12 px-(--gutter) pt-6 pb-16 lg:grid-cols-[minmax(0,1.25fr)_minmax(22rem,26rem)] lg:gap-20">
+      <div className="mx-auto grid w-full max-w-(--stage-width) flex-1 items-center gap-12 px-(--gutter) pt-6 pb-16 lg:grid-cols-[minmax(0,1.25fr)_minmax(22rem,26rem)] lg:gap-20">
         <div className="min-w-0">
           {kicker ? <p className="t-kicker mb-6">{kicker}</p> : null}
           <h1 className="t-display max-w-[13ch] text-balance">

@@ -23,7 +23,7 @@ const found = discover();
 const extra = opt('--extra', '').split(',').filter(Boolean);
 const ROUTES = EMBEDS_ONLY ? [] : (opt('--routes', '') ? opt('--routes', '').split(',') : [...found.filter((r) => !r.startsWith('/embed')), ...extra]);
 const EMBEDS = found.filter((r) => r.startsWith('/embed/'));
-const WIDTHS = quick ? [1440, 390] : [1440, 1024, 768, 390];
+const WIDTHS = quick ? [1440, 390] : [2560, 1440, 1024, 768, 390];
 const THEMES = quick ? ['dark'] : ['dark', 'light'];
 
 type Report = {
@@ -39,6 +39,9 @@ const MEASURE = `(() => {
   const sr = document.scrollingElement;
   if (sr.scrollWidth > W + 1) out.sideways.push('document ' + sr.scrollWidth + 'px wide at ' + W);
   document.querySelectorAll('[data-scroll-region]').forEach((s) => { if (s.scrollWidth > s.clientWidth + 1) out.sideways.push('scroll region ' + s.scrollWidth + ' > ' + s.clientWidth); });
+  // A dashboard fills its canvas at every size: a data page narrower than the scroll region (less the gutters) is a
+  // centred strip on a wide screen.
+  document.querySelectorAll('[data-page-width="data"]').forEach((p) => { const region = p.closest('[data-scroll-region]'); if (region && p.getBoundingClientRect().width < region.clientWidth - 2) out.sideways.push('data page ' + Math.round(p.getBoundingClientRect().width) + 'px wide in a ' + region.clientWidth + 'px canvas (it should fill it)'); });
   // A table wider than its frame is clipped, not scrolled: its last columns (often the actions) are out of reach.
   document.querySelectorAll('table').forEach((t) => { const f = t.parentElement; if (!t.closest('.sr-only') && f && t.offsetWidth > 0 && !/auto|scroll/.test(getComputedStyle(f).overflowX) && t.scrollWidth > f.clientWidth + 1) out.sideways.push('table ' + (t.querySelector('caption')?.textContent || label(t)) + ' ' + t.scrollWidth + ' > its frame ' + f.clientWidth + ' (hideBelow a column)'); });
   const all = [...document.body.querySelectorAll('*')];
