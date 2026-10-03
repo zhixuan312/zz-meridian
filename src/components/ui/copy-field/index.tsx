@@ -37,7 +37,7 @@ export function CopyField({
           type="button"
           onClick={() => setShown((s) => !s)}
           aria-label={shown ? `Hide ${label}` : `Reveal ${label}`}
-          className="press grid size-8 shrink-0 place-items-center rounded-sm text-ink-3 hover:bg-fill-hover hover:text-ink"
+          className="press hit grid size-8 shrink-0 place-items-center rounded-sm text-ink-3 hover:bg-fill-hover hover:text-ink"
         >
           {shown ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
         </button>
@@ -47,7 +47,7 @@ export function CopyField({
         onClick={() => { void navigator.clipboard?.writeText(value); setCopied(true); }}
         aria-label={copied ? 'Copied' : `Copy ${label}`}
         className={cn(
-          'press mr-0.5 grid size-8 shrink-0 place-items-center rounded-sm transition-colors duration-(--dur-hover)',
+          'press hit mr-0.5 grid size-8 shrink-0 place-items-center rounded-sm transition-[color,background-color,border-color,transform] duration-(--dur-hover)',
           copied ? 'text-positive-ink' : 'text-ink-3 hover:bg-fill-hover hover:text-ink',
         )}
       >

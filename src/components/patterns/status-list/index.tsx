@@ -22,7 +22,7 @@ export type Service = { name: string; description: string; status: ServiceStatus
 /**
  * Every service and how it is right now: a dot and a word for its state, its latency, and ninety days of history as
  * uptime bars. The summary line on top says the worst state in words. On a wide card the bars sit beside each service;
- * on a narrow one (a phone, an embed) they drop underneath and show the last thirty days.
+ * on a narrow one (a phone, an embed) they drop underneath, every day still shown.
  */
 export function StatusList({
   services,

@@ -54,7 +54,7 @@ export function Segmented<V extends string>({
           value={o.value}
           title={o.title}
           className={cn(
-            'relative z-10 inline-flex items-center justify-center gap-1.5 rounded-sm px-2.5 font-medium whitespace-nowrap text-ink-2 transition-colors duration-(--dur-hover)',
+            'hit relative z-10 inline-flex items-center justify-center gap-1.5 rounded-sm px-2.5 font-medium whitespace-nowrap text-ink-2 transition-colors duration-(--dur-hover)',
             'hover:text-ink data-[state=on]:text-ink focus-visible:outline-offset-0',
             size === 'sm' ? 'h-[calc(var(--control-sm)-4px)] text-xs' : 'h-[calc(var(--control-md)-4px)] text-sm',
           )}

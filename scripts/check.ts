@@ -62,6 +62,15 @@ for (const f of SPECS) {
   }
 }
 
+// ── Hand-written styles: motion from tokens ──────────────────────────────────────────────────────────
+for (const f of ['src/styles/base.css', 'src/styles/motion.css']) {
+  read(f).split('\n').forEach((line, i) => {
+    if (!/\b(?:animation|transition)(?:-duration|-delay)?\s*:/.test(line) && !/animation-delay/.test(line)) return;
+    const lit = line.replace(/0\.01ms|\b0m?s\b/g, '').match(/\b\d+(?:\.\d+)?m?s\b/);
+    if (lit) problems.push(`${f}:${i + 1}: literal duration ${lit[0]} (use a --dur-* or --stagger* token)`);
+  });
+}
+
 // ── Components: variables and colours ────────────────────────────────────────────────────────────────
 const LAYERS = ['src/components', 'src/views', 'src/system', 'app/(dashboard)', 'app/embed', 'app/sign-in', 'app/system', 'app/not-found.tsx'].flatMap((d) => (d.endsWith('.tsx') ? (fs.existsSync(path.join(ROOT, d)) ? [d] : []) : walk(d, /\.tsx?$/)));
 const PALETTE = /\b(?:bg|text|border|ring|fill|stroke|from|to|via|outline|shadow|decoration)-(?:slate|gray|zinc|neutral|stone|red|orange|amber|yellow|lime|green|emerald|teal|cyan|sky|blue|indigo|violet|purple|fuchsia|pink|rose|white|black)(?:-\d{2,3})?\b/;
@@ -79,6 +88,12 @@ for (const f of LAYERS) {
     // Blur names its token (blur-sm, blur-md, blur-xl) or an arbitrary value; a bare or other name emits no filter.
     const blur = line.match(/\b(?:backdrop-)?blur(?:-(?!sm\b|md\b|xl\b|\[|\()[a-z0-9]+)?(?![-\w[(])/);
     if (blur && !/glow-blur/.test(blur.input!.slice(Math.max(0, blur.index! - 6), blur.index! + blur[0].length))) problems.push(`${at}: ${blur[0]} is outside Meridian's blur scale and renders nothing (use backdrop-blur-sm, -md or -xl)`);
+    // Motion is tokens: a literal duration or delay drifts from the system and ignores the reduced-motion collapse.
+    const dur = line.match(/\b(?:duration|delay)-(?:\[\d[^\]]*\]|\d+)\b/);
+    if (dur) problems.push(`${at}: ${dur[0]} is a literal duration (use duration-(--dur-hover), --dur-enter, --dur-exit…)`);
+    // A pressed control eases down only if its transition includes transform; a colour-only list makes the press snap.
+    if (/(?:^|[\s'"`])press(?=[\s'"`])/.test(line) && /\btransition(?:-colors|-shadow|-opacity|-\[[^\]]*\])/.test(line) && !/\btransition-\[[^\]]*transform/.test(line))
+      problems.push(`${at}: a press control's transition leaves out transform, so the press snaps (add transform to the list)`);
     const pal = line.match(PALETTE);
     if (pal) problems.push(`${at}: Tailwind palette class ${pal[0]} (use a role)`);
   });

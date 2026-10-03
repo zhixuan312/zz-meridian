@@ -53,8 +53,8 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button
       disabled={disabled || busy}
       aria-busy={busy || undefined}
       className={cn(
-        'group/btn press inline-flex shrink-0 items-center justify-center font-medium whitespace-nowrap select-none',
-        'transition-[background-color,border-color,color,box-shadow,filter] duration-(--dur-hover)',
+        'group/btn press hit inline-flex shrink-0 items-center justify-center font-medium whitespace-nowrap select-none',
+        'transition-[background-color,border-color,color,box-shadow,filter,transform] duration-(--dur-hover)',
         'disabled:pointer-events-none disabled:opacity-45 disabled:shadow-none',
         VARIANT[variant],
         SIZE[size],

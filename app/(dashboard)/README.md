@@ -9,7 +9,7 @@ Status: beta
 | Row | Split | Pattern | Holds |
 |---|---|---|---|
 | Masthead | | Page frame | Kicker `ZZ Meridian · Production`, title, one sentence; freshness, period select (7D, 30D, 90D, All), Export |
-| 1 | 2/3 | Featured metric with a Trend chart (`fill` height) | Requests in the period at hero size, the change against the previous period, a caption with the daily average and the busiest day, requests per day as an area with errors × 20 dashed |
+| 1 | 2/3 | Featured metric with a Trend chart (`fill` height) | Requests in the period at hero size, the change against the previous period, a caption with the daily average and the busiest day, requests per day as an area (errors have their own tile: one chart, one measure) |
 | 1 | 1/3 | Three Metric tiles, stacked | Error rate, Latency p95 (both: down is good), Spend (neutral) |
 | 2 | 1/2 | Card with a Bar list | The busiest endpoints, the top one in the accent; a footer link to Analytics |
 | 2 | 1/2 | Card with a Composition bar and a Trend chart | Responses by status class; latency p95 per day |

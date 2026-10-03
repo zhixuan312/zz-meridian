@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { Dialog } from 'radix-ui';
-import { ArrowUpRight, ChevronRight, Menu, Search, X } from 'lucide-react';
+import { ArrowRight, ChevronRight, Menu, Search, X } from 'lucide-react';
 import { cn } from '@/lib/cn';
 import { AppMark } from '@/components/base/app-mark';
 import { Kbd } from '@/components/ui/kbd';
@@ -25,7 +25,7 @@ export function AtlasShell({ nav, children }: { nav: AtlasNav; children: ReactNo
     <div className="min-h-dvh lg:grid lg:grid-cols-[var(--rail-width)_minmax(0,1fr)]">
       <aside className="sticky top-0 hidden h-dvh border-r border-line bg-frame backdrop-blur-xl lg:block">{shelf}</aside>
       <div className="sticky top-0 z-(--layer-sticky) flex h-14 items-center gap-3 border-b border-line bg-ground/72 px-4 backdrop-blur-xl lg:hidden">
-        <button type="button" aria-label="Open the contents" onClick={() => setOpen(true)} className="press -ml-1 grid size-9 place-items-center rounded-md text-ink-2 hover:bg-fill-hover">
+        <button type="button" aria-label="Open the contents" onClick={() => setOpen(true)} className="press hit -ml-1 grid size-9 place-items-center rounded-md text-ink-2 hover:bg-fill-hover">
           <Menu className="size-[18px]" strokeWidth={1.75} />
         </button>
         <Link href="/system" className="flex items-center gap-2 text-sm font-semibold"><AppMark size={20} />ZZ Meridian</Link>
@@ -121,7 +121,7 @@ function Shelf({ nav }: { nav: AtlasNav }) {
         })}
       </nav>
       <div className="flex items-center gap-2 border-t border-line px-4 py-3">
-        <Link href="/" className="inline-flex flex-1 items-center gap-1 text-xs font-medium text-ink-2 hover:text-ink">Open the template <ArrowUpRight className="size-3.5" /></Link>
+        <Link href="/" className="inline-flex flex-1 items-center gap-1 text-xs font-medium text-ink-2 hover:text-ink">Open the template <ArrowRight className="size-3.5" /></Link>
         <AppearanceMenu />
       </div>
     </div>

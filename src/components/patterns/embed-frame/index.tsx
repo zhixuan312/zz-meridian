@@ -34,22 +34,22 @@ export function EmbedFrame({
   const s = useSurface();
   const inline = s.mode !== 'fullscreen';
   const tools = (
-    <div className="flex shrink-0 items-center gap-0.5">
+    <div className={cn('flex shrink-0 items-center gap-0.5', !meta && '-ml-2 @[34rem]/embed:ml-0')}>
       {inline && expandable ? (
         <button
           type="button"
           onClick={() => s.expand(consolePath)}
-          className="press inline-flex h-7 items-center gap-1.5 rounded-md px-2 text-xs font-medium whitespace-nowrap text-ink-2 hover:bg-fill-hover hover:text-ink"
+          className="press hit inline-flex h-7 items-center gap-1.5 rounded-md px-2 text-xs font-medium whitespace-nowrap text-ink-2 hover:bg-fill-hover hover:text-ink"
         >
-          <Maximize2 className="size-3.5" /> <span className="@max-[24rem]/embed:sr-only">Expand</span>
+          <Maximize2 className="size-3.5" /> <span className="@max-[320px]/embed:sr-only">Expand</span>
         </button>
       ) : null}
       <button
         type="button"
         onClick={() => s.openLink(consolePath)}
-        className="press inline-flex h-7 items-center gap-1 rounded-md px-2 text-xs font-medium whitespace-nowrap text-ink-2 hover:bg-fill-hover hover:text-ink"
+        className="press hit inline-flex h-7 items-center gap-1 rounded-md px-2 text-xs font-medium whitespace-nowrap text-ink-2 hover:bg-fill-hover hover:text-ink"
       >
-        Open in {app.name} <ArrowUpRight className="size-3.5" />
+        Open<span className="@max-[440px]/embed:sr-only"> in {app.name}</span> <ArrowUpRight className="size-3.5" />
       </button>
     </div>
   );
@@ -61,7 +61,7 @@ export function EmbedFrame({
           <h1 className="min-w-0 flex-1 truncate text-sm font-semibold tracking-[-0.01em]">{title}</h1>
           {actions}
           <div className="flex w-full items-center gap-2 pl-7.5 @[34rem]/embed:w-auto @[34rem]/embed:pl-0">
-            {meta ? <div className="mr-auto min-w-0 truncate @[34rem]/embed:mr-1">{meta}</div> : null}
+            {meta ? <div className="mr-auto flex min-w-0 @[34rem]/embed:mr-1">{meta}</div> : null}
             {tools}
           </div>
         </header>

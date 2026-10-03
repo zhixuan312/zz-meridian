@@ -56,7 +56,7 @@ export function IncidentCard({ incident, now, variant = 'card', className }: { i
           <Badge tone={sev.tone}>{sev.word}</Badge>
           <span className="t-caption ml-auto">{incident.id}</span>
         </div>
-        <h3 className="t-card mt-4 text-pretty">{keepHyphenated(incident.title)}</h3>
+        <h2 className="t-card mt-4 text-pretty">{keepHyphenated(incident.title)}</h2>
         <p className="t-caption mt-1.5">
           {incident.service} · started <time dateTime={incident.started} title={formatDateTime(incident.started)}>{formatRelative(incident.started, now)}</time>
           {lasted !== null ? <> · lasted {formatDuration(lasted)}</> : null}

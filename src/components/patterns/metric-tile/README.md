@@ -50,7 +50,7 @@ An embed view shares the tiles' values (and the day, when the Meridian points at
 
 ## Accessibility
 
-- The label is the tile's heading (`h3`). The figure is text; the sparkline is decorative, so the table behind the page's chart carries the series.
+- The label is the tile's heading (`h2`, one level under the page title). The figure is text; the sparkline is decorative, so the table behind the page's chart carries the series.
 - Contrast (dark): label `ink-2` 8.0:1; figure `ink` 17:1; unit `ink-3` 6.4:1.
 
 ## Content

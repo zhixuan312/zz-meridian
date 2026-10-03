@@ -38,7 +38,7 @@ export const IconButton = forwardRef<HTMLButtonElement, IconButtonProps>(functio
       aria-label={label}
       aria-pressed={pressed}
       className={cn(
-        'press inline-grid shrink-0 place-items-center transition-[background-color,color,border-color] duration-(--dur-hover)',
+        'press hit inline-grid shrink-0 place-items-center transition-[background-color,color,border-color,transform] duration-(--dur-hover)',
         'disabled:pointer-events-none disabled:opacity-45 disabled:shadow-none',
         VARIANT[variant],
         SIZE[size],

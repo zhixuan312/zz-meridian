@@ -86,7 +86,7 @@ export function Pagination({
                   aria-label={`Page ${p}`}
                   onClick={() => onPageChange(p)}
                   className={cn(
-                    't-num press grid h-(--control-sm) min-w-(--control-sm) place-items-center rounded-md px-1.5 text-sm transition-colors duration-(--dur-hover)',
+                    't-num press hit grid h-(--control-sm) min-w-(--control-sm) place-items-center rounded-md px-1.5 text-sm transition-[color,background-color,border-color,transform] duration-(--dur-hover)',
                     p === page ? 'bg-surface font-semibold text-ink shadow-control ring-1 ring-line-strong' : 'text-ink-2 hover:bg-fill-hover hover:text-ink',
                   )}
                 >

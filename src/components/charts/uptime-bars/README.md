@@ -19,11 +19,11 @@ Status: beta
 | Degraded | `warning` |
 | Outage | `critical` |
 
-`measure` is the word after the percentage: "uptime" by default, "on time" or "in stock" for other domains.
+`size="lg"` draws 56px bars for a strip that leads its card (the Health page's featured card); the default is 32px. `measure` is the word after the percentage: "uptime" by default, "on time" or "in stock" for other domains.
 
 ## Sizes
 
-The bars share the container's width. Under 420px only the last 30 days show, so each bar stays at least 8px wide.
+The bars share the container's width, every day always shown, so the percentage and the label describe exactly the bars drawn. Under 420px the gap between bars tightens from 2px to 1px.
 
 ## States
 
@@ -39,7 +39,7 @@ Pointer hover only; the table carries every day for keyboard and screen readers.
 ## Surfaces
 
 - **Console**: 90 days.
-- **Mobile** and **Embed**: 30 days.
+- **Mobile** and **Embed**: every day, with 1px gaps.
 
 ## Agents
 

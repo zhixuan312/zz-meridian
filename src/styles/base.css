@@ -119,6 +119,14 @@
   .edge-hover::after { opacity: 0; }
   .edge-hover:hover::after, .edge-hover:focus-within::after { opacity: 1; }
 
+  /* A touch target: on a coarse pointer a small control answers a 44px square around itself, without growing. */
+  @media (pointer: coarse) {
+    /* Tagged controls, and every link laid out as a box (a link inside running text keeps its line). */
+    :is(.hit, a:is(.flex, .inline-flex, .grid, .inline-grid, .block, .inline-block):not([class*="before:"])):not(.absolute, .fixed, .sticky) { position: relative; }
+    :is(.hit, a:is(.flex, .inline-flex, .grid, .inline-grid, .block, .inline-block):not([class*="before:"]))::before { content: ""; position: absolute; left: 50%; top: 50%; width: max(100%, 44px); height: max(100%, 44px); transform: translate(-50%, -50%); }
+    .control-frame { min-height: 44px; }
+  }
+
   /* The one display phrase per screen may carry the accent as light: the accent turning toward violet. */
   .t-gradient {
     background: linear-gradient(100deg, var(--accent-ink) 10%, oklch(var(--accent-l-ink) var(--accent-c) calc(var(--accent-h) + 36)) 90%);

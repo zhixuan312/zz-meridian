@@ -66,7 +66,7 @@ export function NavTrigger({ className }: { className?: string }) {
       type="button"
       onClick={openNav}
       aria-label="Open navigation"
-      className={cn('press -ml-1.5 grid size-9 shrink-0 place-items-center rounded-md text-ink-2 hover:bg-fill-hover hover:text-ink lg:hidden', className)}
+      className={cn('press hit -ml-1.5 grid size-9 shrink-0 place-items-center rounded-md text-ink-2 hover:bg-fill-hover hover:text-ink lg:hidden', className)}
     >
       <Menu className="size-[18px]" strokeWidth={1.75} />
     </button>

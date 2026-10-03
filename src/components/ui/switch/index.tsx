@@ -22,7 +22,7 @@ export const Switch = forwardRef<HTMLButtonElement, Props>(function Switch({ lab
       ref={ref}
       id={sid}
       className={cn(
-        'peer group/sw relative inline-flex shrink-0 items-center rounded-full border border-transparent bg-line-control/70 p-0.5 transition-colors duration-(--dur-hover)',
+        'peer group/sw hit relative inline-flex shrink-0 items-center rounded-full border border-transparent bg-line-control/70 p-0.5 transition-colors duration-(--dur-hover)',
         'hover:bg-line-control data-[state=checked]:bg-accent data-[state=checked]:hover:bg-accent-hover',
         'disabled:cursor-not-allowed disabled:bg-fill-track disabled:data-[state=checked]:bg-ink-disabled',
         size === 'sm' ? 'h-4.5 w-8' : 'h-5.5 w-9.5',

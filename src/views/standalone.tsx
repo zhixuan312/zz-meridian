@@ -15,7 +15,7 @@ export function Standalone({ kicker, sentence, lead, aside, children }: { kicker
   return (
     <main className="relative isolate flex min-h-dvh flex-col overflow-hidden">
       <header className="flex h-20 items-center px-(--gutter)">
-        <Link href="/" className="flex items-center gap-2.5 text-md font-semibold tracking-[-0.015em]">
+        <Link href="/" className="hit flex items-center gap-2.5 text-md font-semibold tracking-[-0.015em]">
           <AppMark size={28} />
           {app.name}
         </Link>
@@ -34,8 +34,8 @@ export function Standalone({ kicker, sentence, lead, aside, children }: { kicker
       </div>
       <footer className="flex flex-wrap items-center gap-x-6 gap-y-2 border-t border-line px-(--gutter) py-5 text-xs text-ink-3">
         <span>© 2026 {app.name}</span>
-        <Link href="/system" className="hover:text-ink-2">Design system</Link>
-        <Link href="/health" className="ml-auto inline-flex items-center gap-2 hover:text-ink-2">
+        <Link href="/system" className="hit inline-flex hover:text-ink-2">Design system</Link>
+        <Link href="/health" className="hit ml-auto inline-flex items-center gap-2 hover:text-ink-2">
           <StatusDot tone={status.status === 'operational' ? 'positive' : status.status === 'degraded' ? 'warning' : 'critical'} />
           {status.text}
         </Link>

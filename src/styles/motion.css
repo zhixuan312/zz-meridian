@@ -34,7 +34,7 @@
 
   /* Data: bars grow from the baseline, lines draw, an area reveals left to right. */
   .grow-x { transform-origin: left center; animation: m-grow-x var(--dur-grow) var(--ease-out) both; animation-delay: calc(var(--i, 0) * var(--stagger)); }
-  .grow-y { transform-origin: center bottom; transform-box: fill-box; animation: m-grow-y var(--dur-grow) var(--ease-out) both; animation-delay: calc(var(--i, 0) * 12ms); }
+  .grow-y { transform-origin: center bottom; transform-box: fill-box; animation: m-grow-y var(--dur-grow) var(--ease-out) both; animation-delay: calc(var(--i, 0) * var(--stagger-bar)); }
   .draw { stroke-dasharray: var(--m-len, 1); animation: m-draw var(--dur-grow) var(--ease-out) both; }
   .reveal-x { animation: m-reveal-x var(--dur-grow) var(--ease-out) both; }
 
@@ -44,25 +44,25 @@
 
   /* Float: overlays enter on [data-state=open] and leave on [data-state=closed]. */
   .float-in[data-state='open'], .float-in:not([data-state]) { animation: m-pop var(--dur-enter) var(--ease-out); }
-  .float-in[data-state='closed'] { animation: m-pop-out 120ms var(--ease-out) forwards; }
+  .float-in[data-state='closed'] { animation: m-pop-out var(--dur-exit) var(--ease-out) forwards; }
   .dialog-in[data-state='open'] { animation: m-dialog var(--dur-enter) var(--ease-out); }
-  .dialog-in[data-state='closed'] { animation: m-pop-out 140ms var(--ease-out) forwards; }
+  .dialog-in[data-state='closed'] { animation: m-pop-out var(--dur-exit) var(--ease-out) forwards; }
   .scrim-in[data-state='open'] { animation: m-fade var(--dur-enter) var(--ease-out); }
-  .scrim-in[data-state='closed'] { animation: m-fade 140ms var(--ease-out) reverse forwards; }
+  .scrim-in[data-state='closed'] { animation: m-fade var(--dur-exit) var(--ease-out) reverse forwards; }
   .sheet-in[data-state='open'] { animation: m-sheet var(--dur-enter) var(--ease-out); }
-  .sheet-in[data-state='closed'] { animation: m-sheet 200ms var(--ease-in-out) reverse forwards; }
+  .sheet-in[data-state='closed'] { animation: m-sheet var(--dur-exit-sheet) var(--ease-in-out) reverse forwards; }
   .sheet-right-in[data-state='open'] { animation: m-sheet-right var(--dur-enter) var(--ease-out); }
-  .sheet-right-in[data-state='closed'] { animation: m-sheet-right 200ms var(--ease-in-out) reverse forwards; }
+  .sheet-right-in[data-state='closed'] { animation: m-sheet-right var(--dur-exit-sheet) var(--ease-in-out) reverse forwards; }
   .sheet-up-in[data-state='open'] { animation: m-sheet-up var(--dur-enter) var(--ease-out); }
-  .sheet-up-in[data-state='closed'] { animation: m-sheet-up 200ms var(--ease-in-out) reverse forwards; }
+  .sheet-up-in[data-state='closed'] { animation: m-sheet-up var(--dur-exit-sheet) var(--ease-in-out) reverse forwards; }
 
   /* The two loops: a skeleton's shimmer and a live dot's pulse. */
   .shimmer {
     background: linear-gradient(90deg, var(--fill-track) 0%, var(--fill-track) 35%, var(--fill-active) 50%, var(--fill-track) 65%, var(--fill-track) 100%) 0 0 / 250% 100%;
-    animation: m-shimmer 1.6s linear infinite;
+    animation: m-shimmer var(--dur-loop-shimmer) linear infinite;
   }
-  .pulse { animation: m-pulse 2.4s var(--ease-out) infinite; }
-  .spin { animation: m-spin 0.8s linear infinite; }
+  .pulse { animation: m-pulse var(--dur-loop-pulse) var(--ease-out) infinite; }
+  .spin { animation: m-spin var(--dur-loop-spin) linear infinite; }
 }
 
 @media (prefers-reduced-motion: reduce) {

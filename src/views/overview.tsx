@@ -1,10 +1,9 @@
 'use client';
 
-import { AlertTriangle, ArrowUpRight, CircleDollarSign, Gauge } from 'lucide-react';
+import { AlertTriangle, ArrowRight, CircleDollarSign, Gauge } from 'lucide-react';
 import Link from 'next/link';
 import { Row, Stack } from '@/components/base/shell';
 import { Card, CardBody, CardFooter, CardHeader } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { Meridian } from '@/components/charts/meridian';
 import { TrendChart } from '@/components/charts/trend-chart';
 import { BarList } from '@/components/charts/bar-list';
@@ -52,7 +51,6 @@ export function OverviewBody({
             format={formatCompact}
             delta={change(c.requests, p.requests)}
             caption={<>About {formatCompact(Math.round(c.requests / series.length))} a day. The busiest day was {formatDate(peak.date).replace(/,? \d{4}$/, '')}, with {formatCompact(peak.requests)}.</>}
-            actions={<Badge tone="accent" dot>Live</Badge>}
           >
             <TrendChart
               height="fill"
@@ -60,7 +58,6 @@ export function OverviewBody({
               dates={dates}
               series={[
                 { key: 'requests', label: 'Requests', values: series.map((d) => d.requests), kind: 'area' },
-                { key: 'errors', label: 'Errors × 20', values: series.map((d) => d.errors * 20), kind: 'dashed' },
               ]}
             />
           </FeaturedMetric>
@@ -115,7 +112,7 @@ export function OverviewBody({
             </CardBody>
             <CardFooter>
               <Link href="/analytics" className="row-link inline-flex items-center gap-1 font-medium text-ink">
-                All endpoints <ArrowUpRight className="size-3.5" />
+                All endpoints <ArrowRight className="size-3.5" />
               </Link>
             </CardFooter>
           </Card>

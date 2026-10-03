@@ -61,7 +61,7 @@ export function Tab({ className, count, children, ...rest }: ComponentProps<type
   return (
     <T.Trigger
       className={cn(
-        'group/tab relative inline-flex h-10 shrink-0 snap-start items-center gap-2 px-2.5 text-sm font-medium whitespace-nowrap text-ink-2 transition-colors duration-(--dur-hover)',
+        'group/tab hit relative inline-flex h-10 shrink-0 snap-start items-center gap-2 px-2.5 text-sm font-medium whitespace-nowrap text-ink-2 transition-colors duration-(--dur-hover)',
         'hover:text-ink data-[state=active]:text-ink data-disabled:pointer-events-none data-disabled:text-ink-disabled',
         'focus-visible:-outline-offset-2 first:-ml-2.5',
         className,

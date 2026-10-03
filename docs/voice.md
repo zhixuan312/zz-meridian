@@ -10,6 +10,7 @@ How a Meridian dashboard speaks: in titles, labels, buttons, empty states, error
 4. **Numbers carry their unit and period.** "2.94M requests in the last 30 days." A figure without a period is a guess.
 5. **Facts over adjectives.** "Errors rose from 0.6% to 2.1%", not "Errors spiked dramatically".
 6. **One idea per line.** A head-note is one sentence. A hint is one sentence. If it needs two, the second is probably a link.
+7. **The arrow says where a link goes.** → stays in the product ("All endpoints →"); ↗ leaves it, a new tab or the host's browser ("Open in ZZ Meridian ↗" from an embed).
 
 ## Patterns
 

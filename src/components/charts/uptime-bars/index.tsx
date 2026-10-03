@@ -14,7 +14,7 @@ const WORD: Record<DayState, string> = { operational: 'Operational', degraded: '
 
 /**
  * A service's recent history: one thin bar per day, oldest on the left. Healthy days are a quiet positive; a bad day
- * stands out in warning or critical, so the eye finds incidents first. Narrow containers show the last 30 days.
+ * stands out in warning or critical, so the eye finds incidents first. A narrow container keeps every day and tightens the gaps.
  */
 export function UptimeBars({
   days,
@@ -22,6 +22,7 @@ export function UptimeBars({
   end,
   label,
   measure = 'uptime',
+  size = 'md',
   className,
 }: {
   /** One state per day, oldest first, ending today. */
@@ -33,11 +34,15 @@ export function UptimeBars({
   label: string;
   /** The word after the percentage: "uptime" for services, "on time" for a warehouse's days. */
   measure?: string;
+  /** `lg` (56px) when the strip is a card's protagonist, as on the Health page's featured card. */
+  size?: 'md' | 'lg';
   className?: string;
 }) {
   const [box, { width }] = useSize<HTMLDivElement>();
   const [hover, setHover] = useState<number | null>(null);
-  const shown = width > 0 && width < 420 ? days.slice(-30) : days;
+  // Every day, always: the figure and the label describe all of them. A narrow strip tightens the gaps instead.
+  const shown = days;
+  const narrow = width > 0 && width < 420;
   const dateOf = (i: number) => new Date(end.getTime() - (shown.length - 1 - i) * 86_400_000);
   const bad = shown.filter((d) => d !== 'operational').length;
   return (
@@ -55,7 +60,7 @@ export function UptimeBars({
           setHover(next);
         }}
         onBlur={() => setHover(null)}
-        className="flex h-8 items-stretch gap-[2px] rounded-xs focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent"
+        className={cn('flex items-stretch rounded-xs', size === 'lg' ? 'h-14' : 'h-8', ' focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent', narrow ? 'gap-px' : 'gap-[2px]')}
       >
         {shown.map((d, i) => (
           <span

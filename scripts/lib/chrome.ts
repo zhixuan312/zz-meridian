@@ -45,7 +45,8 @@ export async function launch(): Promise<Page> {
     new Promise<any>((r, reject) => {
       const i = ++id;
       const t = setTimeout(() => { pending.delete(i); reject(new Error(`${method} timed out`)); }, 30000);
-      pending.set(i, (m) => { clearTimeout(t); r(m); });
+      // A protocol error rejects: a silently refused command (a bad parameter) would leave the page in the wrong state.
+      pending.set(i, (m) => { clearTimeout(t); if (m.error) reject(new Error(`${method}: ${m.error.message}`)); else r(m); });
       ws.send(JSON.stringify({ id: i, method, params }));
     });
   await send('Page.enable');
@@ -64,6 +65,8 @@ export async function launch(): Promise<Page> {
       errors.length = 0;
       await send('Emulation.setEmulatedMedia', { features });
       await send('Emulation.setDeviceMetricsOverride', { width, height, deviceScaleFactor: Number(process.env.DPR ?? 2), mobile: width < 600 });
+      // A phone is touch: pointer: coarse, so touch targets and tap behaviour are what a phone gets.
+      await send('Emulation.setTouchEmulationEnabled', width < 600 ? { enabled: true, maxTouchPoints: 5 } : { enabled: false });
       await send('Page.navigate', { url });
       await sleep(wait);
       await page.eval('Promise.race([document.fonts.ready.then(() => true), new Promise((r) => setTimeout(() => r(false), 4000))])');

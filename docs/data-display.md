@@ -21,7 +21,7 @@ Sometimes the answer is not a chart: one number and a sentence beat a chart with
 
 ## Never two axes
 
-Two measures of different size are two charts on one Meridian, not one chart with a second scale. A dashed comparison series is allowed only when it is the same unit (or explicitly scaled and labelled, "Errors × 20").
+Two measures of different size are two charts on one Meridian, not one chart with a second scale. A dashed comparison series is allowed only when it is the same unit, such as the previous period. Never scale one series to fit another ("Errors × 20"): the tooltip would print a number that is not true.
 
 ## Colour by job
 

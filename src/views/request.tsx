@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { ArrowUpRight, Copy, Link2, RotateCw, ShieldBan, Terminal } from 'lucide-react';
+import { ArrowRight, Copy, Link2, RotateCw, ShieldBan, Terminal } from 'lucide-react';
 import { PageFrame, Row, Stack } from '@/components/base/shell';
 import { Button } from '@/components/ui/button';
 import { Card, CardBody, CardFooter, CardHeader } from '@/components/ui/card';
@@ -123,7 +123,7 @@ export function RequestView({ request: r, trace, payloads }: { request: RequestR
             </CardBody>
             <CardFooter>
               <Link href={`/requests?q=${encodeURIComponent(r.customer)}`} className="row-link inline-flex items-center gap-1 font-medium text-ink">
-                More from {r.customer} <ArrowUpRight className="size-3.5" />
+                More from {r.customer} <ArrowRight className="size-3.5" />
               </Link>
             </CardFooter>
           </Card>

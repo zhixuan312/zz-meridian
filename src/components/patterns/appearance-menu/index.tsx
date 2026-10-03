@@ -34,7 +34,7 @@ export function AppearanceMenu({ className }: { className?: string }) {
                 aria-label={a}
                 title={a[0].toUpperCase() + a.slice(1)}
                 onClick={() => set({ accent: a })}
-                className="press grid size-7 place-items-center rounded-full ring-offset-2 ring-offset-surface-raised transition-shadow aria-checked:ring-2 aria-checked:ring-ink"
+                className="press hit grid size-7 place-items-center rounded-full ring-offset-2 ring-offset-surface-raised transition-[box-shadow,transform] aria-checked:ring-2 aria-checked:ring-ink"
               >
                 <span data-accent={a} className="size-5 rounded-full bg-accent" />
               </button>

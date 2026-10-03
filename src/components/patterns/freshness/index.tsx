@@ -11,10 +11,10 @@ export function Freshness({ updatedAt, now = new Date(), staleAfterMs = 15 * 60_
   if (!updatedAt) return <span className={cn('t-caption inline-flex items-center gap-1.5', className)}><StatusDot tone="neutral" />Never updated</span>;
   const stale = now.getTime() - updatedAt.getTime() > staleAfterMs;
   return (
-    <span title={formatDateTime(updatedAt)} className={cn('inline-flex items-center gap-2 text-xs whitespace-nowrap', stale ? 'text-warning-ink' : 'text-ink-3', className)}>
+    <span title={formatDateTime(updatedAt)} className={cn('inline-flex max-w-full min-w-0 items-center gap-2 text-xs whitespace-nowrap', stale ? 'text-warning-ink' : 'text-ink-3', className)}>
       <StatusDot tone={stale ? 'warning' : 'positive'} live={!stale} />
-      {stale ? 'Stale · ' : 'Updated '}
-      {formatRelative(updatedAt, now)}
+      {/* Squeezed, the words end in an ellipsis; the dot stays. */}
+      <span className="min-w-0 truncate">{stale ? 'Stale · ' : 'Updated '}{formatRelative(updatedAt, now)}</span>
     </span>
   );
 }

@@ -31,7 +31,7 @@ export function StageBar({ theme, setTheme, accent, setAccent, density, setDensi
       <Segmented size="sm" label="Theme" value={theme} onChange={setTheme} options={[{ value: 'dark', label: 'Dark' }, { value: 'light', label: 'Light' }, { value: 'both', label: 'Both' }]} />
       <div role="radiogroup" aria-label="Accent" className="flex items-center gap-1">
         {ACCENTS.map((a) => (
-          <button key={a} role="radio" aria-checked={accent === a} aria-label={a} title={a[0].toUpperCase() + a.slice(1)} onClick={() => setAccent(a)} className="press grid size-7 place-items-center rounded-full ring-offset-2 ring-offset-surface aria-checked:ring-2 aria-checked:ring-ink-2">
+          <button key={a} role="radio" aria-checked={accent === a} aria-label={a} title={a[0].toUpperCase() + a.slice(1)} onClick={() => setAccent(a)} className="press hit grid size-7 place-items-center rounded-full ring-offset-2 ring-offset-surface aria-checked:ring-2 aria-checked:ring-ink-2">
             <span className="size-4 rounded-full ring-1 ring-line" style={{ background: SWATCH[a] }} />
           </button>
         ))}
@@ -59,7 +59,8 @@ export function CardStage({ id }: { id: string }) {
     </Scope>
   );
   return (
-    <section aria-label="Preview" className="overflow-hidden rounded-xl border border-line bg-surface shadow-card">
+    <section aria-labelledby="card-preview" className="overflow-hidden rounded-xl border border-line bg-surface shadow-card">
+      <h2 id="card-preview" className="sr-only">Preview</h2>
       <StageBar
         theme={theme} setTheme={setTheme} accent={accent} setAccent={setAccent} density={density} setDensity={setDensity}
         extra={

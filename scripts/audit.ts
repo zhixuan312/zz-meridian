@@ -27,15 +27,15 @@ const WIDTHS = quick ? [1440, 390] : [1440, 1024, 768, 390];
 const THEMES = quick ? ['dark'] : ['dark', 'light'];
 
 type Report = {
-  sideways: string[]; clipped: string[]; focusless: string[]; unnamed: string[]; scrollers: string[]; contrast: string[];
+  sideways: string[]; clipped: string[]; focusless: string[]; unnamed: string[]; scrollers: string[]; contrast: string[]; targets: string[]; headings: string[];
   sizes: number[]; weights: number[]; radii: number[]; ratio: number;
 };
 
 /** Runs inside the page. Plain JavaScript: it is serialised into the browser. */
 const MEASURE = `(() => {
-  const W = innerWidth, out = { sideways: [], clipped: [], unnamed: [], scrollers: [], contrast: [], sizes: [], weights: [], radii: [], ratio: 0 };
+  const W = innerWidth, out = { sideways: [], clipped: [], unnamed: [], scrollers: [], contrast: [], targets: [], headings: [], sizes: [], weights: [], radii: [], ratio: 0 };
   const label = (el) => (el.tagName.toLowerCase() + (el.id ? '#' + el.id : '') + (el.className && typeof el.className === 'string' ? '.' + el.className.trim().split(/\\s+/).slice(0, 3).join('.') : '')).slice(0, 90);
-  const visible = (el) => { const r = el.getBoundingClientRect(); const c = getComputedStyle(el); return r.width > 0 && r.height > 0 && c.visibility !== 'hidden' && c.display !== 'none' && parseFloat(c.opacity) > 0.05 && !el.closest('.sr-only,[aria-hidden="true"]'); };
+  const visible = (el) => { const r = el.getBoundingClientRect(); const c = getComputedStyle(el); /* visually hidden (sr-only, also under a variant) is for screen readers, not the eye */ return r.width > 0 && r.height > 0 && c.visibility !== 'hidden' && c.display !== 'none' && parseFloat(c.opacity) > 0.05 && !el.closest('.sr-only,[aria-hidden="true"]') && !(c.position === 'absolute' && r.width <= 1 && r.height <= 1); };
   const sr = document.scrollingElement;
   if (sr.scrollWidth > W + 1) out.sideways.push('document ' + sr.scrollWidth + 'px wide at ' + W);
   document.querySelectorAll('[data-scroll-region]').forEach((s) => { if (s.scrollWidth > s.clientWidth + 1) out.sideways.push('scroll region ' + s.scrollWidth + ' > ' + s.clientWidth); });
@@ -88,8 +88,20 @@ const MEASURE = `(() => {
     if (el.matches('button,a[href],[role="button"],[role="tab"],[role="switch"],[role="checkbox"],[role="radio"],input:not([type=hidden]),select,textarea')) {
       const name = el.getAttribute('aria-label') || el.getAttribute('aria-labelledby') || el.getAttribute('title') || el.textContent.trim() || el.querySelector('img[alt]')?.getAttribute('alt') || (el.id && document.querySelector('label[for="' + el.id + '"]')) || el.closest('label') || el.getAttribute('placeholder');
       if (!name) out.unnamed.push(label(el));
+      // On touch (a phone is emulated as one) every control answers at least 44px: its own box, its field's frame, or
+      // the .hit square around it. A link inside running text is exempt, as WCAG exempts it.
+      if (matchMedia('(pointer: coarse)').matches && !el.disabled && !(el.matches('a') && getComputedStyle(el).display === 'inline')) {
+        const box = (el.closest('.control-frame') || el).getBoundingClientRect();
+        const b = getComputedStyle(el, '::before');
+        const w = b.content !== 'none' && b.position === 'absolute' ? Math.max(box.width, parseFloat(b.width) || 0) : box.width;
+        const h = b.content !== 'none' && b.position === 'absolute' ? Math.max(box.height, parseFloat(b.height) || 0) : box.height;
+        if (Math.min(w, h) < 44) out.targets.push((name || label(el)).trim().replace(/\\s+/g, ' ').slice(0, 40) + ' ' + Math.round(w) + '×' + Math.round(h));
+      }
     }
   }
+  // Headings descend one level at a time, so a screen reader's outline has no holes.
+  const levels = [...document.querySelectorAll('h1,h2,h3,h4,h5,h6')].filter((h) => !h.closest('[aria-hidden="true"]')).map((h) => +h.tagName[1]);
+  levels.forEach((l, i) => { if (i && l > levels[i - 1] + 1) out.headings.push('h' + levels[i - 1] + ' then h' + l); });
   out.focusless = [];
   const sorted = texts.sort((a, b) => a - b);
   out.ratio = sorted.length ? +(sorted[sorted.length - 1] / sorted[Math.floor(sorted.length / 2)]).toFixed(1) : 0;
@@ -128,6 +140,8 @@ const run = async (route: string, width: number, theme: string, embed: boolean) 
     ...r.sideways.map((x) => 'sideways: ' + x),
     ...r.clipped.map((x) => 'clipped: ' + x),
     ...r.unnamed.map((x) => 'unnamed: ' + x),
+    ...[...new Set(r.headings)].map((x) => 'heading skips a level: ' + x),
+    ...[...new Set(r.targets)].slice(0, 8).map((x) => 'touch target under 44px: ' + x),
     ...(scrollers.length > 1 ? ['scrollers: ' + scrollers.join(', ')] : []),
     ...r.contrast.map((x) => 'contrast: ' + x),
     ...r.focusless.map((x) => 'no focus ring: ' + x),

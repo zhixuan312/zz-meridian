@@ -28,7 +28,7 @@ export function ShellTools({ alerts = [], now }: { alerts?: Alert[]; /** The dat
       <button
         type="button"
         onClick={openCommand}
-        className="press flex h-9 items-center gap-2.5 rounded-full border border-line-strong bg-surface/60 pr-1.5 pl-3 text-sm text-ink-3 shadow-control backdrop-blur-md transition-colors hover:border-line-control/40 hover:text-ink-2 max-sm:w-9 max-sm:justify-center max-sm:px-0"
+        className="press hit flex h-9 items-center gap-2.5 rounded-full border border-line-strong bg-surface/60 pr-1.5 pl-3 text-sm text-ink-3 shadow-control backdrop-blur-md transition-[color,background-color,border-color,transform] hover:border-line-control/40 hover:text-ink-2 max-sm:w-9 max-sm:justify-center max-sm:px-0"
       >
         <Search className="size-4" strokeWidth={1.75} />
         <span className="w-36 text-left max-md:w-20 max-sm:hidden">Search</span>
@@ -36,7 +36,7 @@ export function ShellTools({ alerts = [], now }: { alerts?: Alert[]; /** The dat
       </button>
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
-          <button type="button" aria-label={name} title={name} className="press relative grid size-9 place-items-center rounded-full border border-line-strong bg-surface/60 text-ink-2 shadow-control backdrop-blur-md hover:text-ink data-[state=open]:text-ink">
+          <button type="button" aria-label={name} title={name} className="press hit relative grid size-9 place-items-center rounded-full border border-line-strong bg-surface/60 text-ink-2 shadow-control backdrop-blur-md hover:text-ink data-[state=open]:text-ink">
             <Bell className="size-4" strokeWidth={1.75} />
             {unread ? <span className="absolute top-2 right-2 size-2 rounded-full bg-accent ring-2 ring-ground" /> : null}
           </button>

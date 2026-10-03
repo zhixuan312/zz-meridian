@@ -77,7 +77,7 @@ export function Rail({ current }: { /** The active route; defaults to the curren
                       href={it.href}
                       aria-current={on ? 'page' : undefined}
                       className={cn(
-                        'group relative flex h-9 items-center gap-3 rounded-md px-3 text-sm transition-colors duration-(--dur-hover)',
+                        'group relative flex h-9 pointer-coarse:h-11 items-center gap-3 rounded-md px-3 text-sm transition-colors duration-(--dur-hover)',
                         on ? 'font-medium text-ink' : 'text-ink-2 hover:bg-fill-hover hover:text-ink',
                       )}
                     >

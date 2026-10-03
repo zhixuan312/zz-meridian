@@ -101,7 +101,7 @@ export function TableHeader({
           type="button"
           onClick={onSort}
           className={cn(
-            'group/sort -mx-1.5 inline-flex h-7 items-center gap-1 rounded-xs px-1.5 transition-colors hover:bg-fill-hover hover:text-ink',
+            'group/sort hit -mx-1.5 inline-flex h-7 items-center gap-1 rounded-xs px-1.5 transition-colors hover:bg-fill-hover hover:text-ink',
             sort && 'text-ink',
             align === 'right' && 'flex-row-reverse',
           )}

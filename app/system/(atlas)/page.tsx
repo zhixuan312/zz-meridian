@@ -1,7 +1,6 @@
 import Link from 'next/link';
-import { ArrowRight, ArrowUpRight } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 import { SECTIONS, entries, readRepo, stats } from '@/system/content';
-import { Doc } from '@/system/markdown';
 import { Hero } from '@/system/hero';
 import { Strata } from '@/system/strata';
 import { demoSeries } from '@/system/fixtures/sample';
@@ -15,6 +14,9 @@ export default function AtlasHome() {
   const principles = [...(readme.split('## Principles')[1]?.split('\n## ')[0] ?? '').matchAll(/\*\*(.+?)\*\*\s*(.+)/g)].map((m) => ({ title: m[1].replace(/\.$/, ''), text: m[2] }));
   const all = entries();
   const latest = readRepo('CHANGELOG.md').split(/\n(?=## \[)/)[1] ?? '';
+  const head = latest.match(/^## \[([^\]]+)\] · (\S+)\n+([^\n#][^\n]*)/);
+  const release = { version: head?.[1] ?? s.version, date: head?.[2] ?? '', summary: head?.[3] ?? '', headlines: [...latest.matchAll(/^- \*\*(.+?)\*\*/gm)].map((m) => m[1].replace(/[.:]$/, '').replace(/`/g, '')) };
+  const changelog = all.find((e) => e.id === 'changelog')?.href;
   const series = demoSeries('30d').current;
   const counts = [
     [s.tokens, 'Tokens'], [s.components, 'Components'], [s.patterns, 'Patterns'], [s.pages, 'Pages'], [2, 'Themes'], [4, 'Accents'], [3, 'Surfaces'],
@@ -39,7 +41,7 @@ export default function AtlasHome() {
                 Start with the tokens <ArrowRight className="size-[18px] transition-transform group-hover:translate-x-0.5" />
               </Link>
               <Link href="/" className="press inline-flex h-(--control-lg) items-center gap-2 rounded-lg border border-line-strong bg-surface/60 px-5 text-base font-medium shadow-control backdrop-blur-md hover:bg-surface">
-                Open the template <ArrowUpRight className="size-[18px]" />
+                Open the template <ArrowRight className="size-[18px]" />
               </Link>
             </div>
           </div>
@@ -87,8 +89,8 @@ export default function AtlasHome() {
           ))}
         </div>
         <div className="mt-4 flex flex-wrap gap-3">
-          <Link href="/system/start/surfaces" className="link text-sm font-medium">Surfaces and inventory →</Link>
-          <Link href="/system/pages/proposal" className="link text-sm font-medium">See an agent’s proposal in a host →</Link>
+          <Link href="/system/start/surfaces" className="link inline-flex text-sm font-medium">Surfaces and inventory →</Link>
+          <Link href="/system/pages/proposal" className="link inline-flex text-sm font-medium">See an agent’s proposal in a host →</Link>
         </div>
       </section>
 
@@ -105,23 +107,38 @@ export default function AtlasHome() {
         </div>
       </section>
 
-      {/* Guides and what changed */}
-      <section className="mt-28 grid gap-12 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
-        <div>
-          <SectionHead kicker="04" title="Guides." line="How the surfaces work, how agents fit, and how to start a dashboard from this one." compact />
-          <div className="grid gap-3 sm:grid-cols-2">
-            {all.filter((e) => e.section === 'start' && e.id !== 'overview').map((e) => (
-              <Link key={e.href} href={e.href} className="group flex flex-col rounded-lg border border-line bg-surface/70 p-5 hover:border-line-strong">
-                <span className="t-card group-hover:text-accent-ink">{e.title}</span>
-                <span className="t-small mt-2 line-clamp-3 text-ink-2">{e.summary}</span>
-                <span className="t-eyebrow mt-5">Read</span>
-              </Link>
-            ))}
-          </div>
+      {/* Guides */}
+      <section className="mt-28">
+        <SectionHead kicker="04" title="Guides." line="How the surfaces work, how agents fit, and how to start a dashboard from this one." />
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+          {all.filter((e) => e.section === 'start' && e.id !== 'overview').map((e) => (
+            <Link key={e.href} href={e.href} className="group flex flex-col rounded-lg border border-line bg-surface/70 p-5 hover:border-line-strong">
+              <span className="t-card group-hover:text-accent-ink">{e.title}</span>
+              <span className="t-small mt-2 line-clamp-3 text-ink-2">{e.summary}</span>
+              <span className="t-eyebrow mt-auto pt-5">Read</span>
+            </Link>
+          ))}
         </div>
-        <div>
-          <SectionHead kicker="05" title="What changed." line="Every release, with what breaks and what to do instead." compact />
-          <div className="rounded-xl border border-line bg-surface p-6"><Doc md={latest.replace(/^## /, '### ')} /></div>
+      </section>
+
+      {/* What changed: the latest release in one line and its headlines; the whole log is one link away. */}
+      <section className="mt-24">
+        <SectionHead kicker="05" title="What changed." line="Every release, with what breaks and what to do instead." />
+        <div className="grid gap-8 rounded-xl border border-line bg-surface p-7 lg:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]">
+          <div>
+            <p className="t-kicker">{release.version} · {release.date}</p>
+            <p className="t-small mt-4 max-w-[48ch] text-ink-2">{release.summary}</p>
+            {changelog ? (
+              <Link href={changelog} className="mt-6 inline-flex items-center gap-1.5 text-sm font-medium text-accent-ink hover:underline">
+                Full changelog <ArrowRight className="size-3.5" />
+              </Link>
+            ) : null}
+          </div>
+          <ul className="grid content-start gap-x-6 gap-y-2.5 sm:grid-cols-2">
+            {release.headlines.map((h) => (
+              <li key={h} className="flex items-center gap-2.5 text-sm text-ink"><span aria-hidden className="size-1.5 shrink-0 rounded-full bg-ink-3" />{h}</li>
+            ))}
+          </ul>
         </div>
       </section>
 

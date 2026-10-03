@@ -8,7 +8,8 @@ export type ControlSize = 'sm' | 'md' | 'lg';
  * Input, Textarea and the Select trigger all take it, so a form reads as one system.
  */
 export const controlFrame = cn(
-  'rounded-md border border-line-strong bg-surface text-ink shadow-control',
+  /* control-frame: on a coarse pointer a field is at least 44px tall (base.css). */
+  'control-frame rounded-md border border-line-strong bg-surface text-ink shadow-control',
   'transition-[border-color,box-shadow,background-color] duration-(--dur-hover)',
   'hover:border-line-control/40',
   'focus-within:border-accent focus-within:ring-3 focus-within:ring-accent/22 focus-within:hover:border-accent',

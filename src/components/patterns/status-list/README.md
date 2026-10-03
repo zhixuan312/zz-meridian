@@ -64,7 +64,7 @@ The list assumes software services by default. For other things that are up or n
 ## Surfaces
 
 - **Console**: wide rows on the Health page, without the summary.
-- **Mobile**: narrow rows; the bars show the last 30 days.
+- **Mobile**: narrow rows; the bars drop under the name and still show every day.
 - **Embed**: the inline Health view shows the list with its summary and without descriptions, under a Banner for any live incident.
 
 ## Agents

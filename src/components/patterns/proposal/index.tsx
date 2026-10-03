@@ -58,7 +58,7 @@ export function Proposal({
         <AgentMark size="lg" />
         <div className="min-w-0 flex-1">
           <p className="t-caption">{agent} proposes</p>
-          <h3 className={cn('t-card mt-0.5', settled && 'text-ink-2')}>{title}</h3>
+          <h2 className={cn('t-card mt-0.5', settled && 'text-ink-2')}>{title}</h2>
         </div>
         <StateTag state={state} />
       </div>

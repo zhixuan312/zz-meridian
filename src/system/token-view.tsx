@@ -79,7 +79,7 @@ function Colour({ groups, theme, accent }: { groups: TokenGroup[]; theme: string
       {shown.map((g) => (
         <section key={g.id}>
           <div className="mb-5 flex flex-wrap items-baseline gap-x-4 gap-y-1">
-            <h3 className="t-section">{g.title}</h3>
+            <h2 className="t-section">{g.title}</h2>
             <p className="t-small max-w-[60ch] text-ink-2">{g.about}</p>
           </div>
           <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
@@ -118,7 +118,7 @@ function DataColour({ theme, accent }: { theme: string; accent: string }) {
   return (
     <div ref={root} className="flex flex-col gap-12">
       <section>
-        <h3 className="t-section">Categorical slots</h3>
+        <h2 className="t-section">Categorical slots</h2>
         <p className="t-small mt-2 max-w-[62ch] text-ink-2">Six hues in a fixed order, validated for colour-vision deficiency in both themes. Assign them in order; a seventh series folds into Other. Text never takes a series colour.</p>
         <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
           {series.map((s, i) => (
@@ -134,7 +134,7 @@ function DataColour({ theme, accent }: { theme: string; accent: string }) {
         </div>
       </section>
       <section>
-        <h3 className="t-section">The neutral population</h3>
+        <h2 className="t-section">The neutral population</h2>
         <p className="t-small mt-2 max-w-[62ch] text-ink-2">When one mark is the point, every other mark is neutral and the one takes the accent. The eye lands where the colour is.</p>
         <div className="mt-6 flex h-40 items-end gap-1.5 rounded-lg border border-line bg-surface p-5">
           {heights.map((h, i) => (
@@ -143,7 +143,7 @@ function DataColour({ theme, accent }: { theme: string; accent: string }) {
         </div>
       </section>
       <section>
-        <h3 className="t-section">Status</h3>
+        <h2 className="t-section">Status</h2>
         <p className="t-small mt-2 max-w-[62ch] text-ink-2">Positive, warning and critical mean good, attention and bad, and nothing else. They always come with a word or an icon.</p>
         <div className="mt-6 grid gap-3 sm:grid-cols-3">
           {(['positive', 'warning', 'critical'] as const).map((s) => (
@@ -210,7 +210,7 @@ function Space({ groups, density }: { groups: Groups; density: Density }) {
   return (
     <div className="grid gap-12 lg:grid-cols-2">
       <section>
-        <h3 className="t-section">The 4px scale</h3>
+        <h2 className="t-section">The 4px scale</h2>
         <div className="mt-5 flex flex-col gap-2.5">
           {space.tokens.map((t) => (
             <div key={t.name} className="flex items-center gap-4">
@@ -222,7 +222,7 @@ function Space({ groups, density }: { groups: Groups; density: Density }) {
         </div>
       </section>
       <section>
-        <h3 className="t-section">Radius</h3>
+        <h2 className="t-section">Radius</h2>
         <div className="mt-5 grid grid-cols-3 gap-3">
           {radius.tokens.map((t) => (
             <div key={t.name} className="flex flex-col items-start gap-2">
@@ -231,7 +231,7 @@ function Space({ groups, density }: { groups: Groups; density: Density }) {
             </div>
           ))}
         </div>
-        <h3 className="t-section mt-12">Controls · {density}</h3>
+        <h2 className="t-section mt-12">Controls · {density}</h2>
         <div className="mt-5 flex flex-col gap-3">
           {control.tokens.filter((t) => t.name.startsWith('control')).map((t) => (
             <div key={t.name} className="flex items-center gap-4">
@@ -255,7 +255,7 @@ function Elevation() {
   return (
     <div className="flex flex-col gap-12">
       <section>
-        <h3 className="t-section">Three planes</h3>
+        <h2 className="t-section">Three planes</h2>
         <p className="t-small mt-2 max-w-[62ch] text-ink-2">The ground carries the light; a card sits one step toward the reader; what floats sits above everything. Depth comes from the planes, hairlines and light, not from stacked borders.</p>
         <div className="mt-6 rounded-xl border border-line bg-ground p-6">
           <div className="rounded-lg border border-line bg-surface p-6 shadow-card">

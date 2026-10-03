@@ -46,7 +46,7 @@ export function HealthBody({ services, current, past, now }: { services: Service
             </>
           }
         >
-          <div className="flex flex-1 flex-col justify-between gap-6 px-2 pb-3">
+          <div className="flex flex-1 flex-col justify-end gap-7 px-2 pb-3">
             <ul aria-label="Right now" className="grid grid-cols-2 gap-px overflow-hidden rounded-md border border-line bg-line sm:grid-cols-3">
               {services.map((svc) => (
                 <li key={svc.name} className="flex min-w-0 items-center gap-2.5 bg-surface/80 px-3.5 py-3">
@@ -56,7 +56,7 @@ export function HealthBody({ services, current, past, now }: { services: Service
                 </li>
               ))}
             </ul>
-            <UptimeBars days={days} uptime={uptime} end={end} label="All services, worst state per day, last 90 days" />
+            <UptimeBars days={days} uptime={uptime} end={end} size="lg" label="All services, worst state per day, last 90 days" />
           </div>
         </FeaturedMetric>
         {current ? <IncidentCard incident={current} now={end} /> : null}

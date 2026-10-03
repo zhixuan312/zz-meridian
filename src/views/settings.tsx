@@ -117,7 +117,7 @@ function Appearance() {
               aria-label={a[0].toUpperCase() + a.slice(1)}
               title={a[0].toUpperCase() + a.slice(1)}
               onClick={() => set({ accent: a })}
-              className="press grid size-8 place-items-center rounded-full ring-offset-2 ring-offset-surface aria-checked:ring-2 aria-checked:ring-ink-2"
+              className="press hit grid size-8 place-items-center rounded-full ring-offset-2 ring-offset-surface aria-checked:ring-2 aria-checked:ring-ink-2"
             >
               <span className="size-5.5 rounded-full ring-1 ring-line" style={{ background: SWATCH[a] }} />
             </button>
