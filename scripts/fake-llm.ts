@@ -7,6 +7,9 @@
  *
  * POST <url>/chat/completions answers in the chat-completions format (streamed as server-sent events when the body has
  * `stream: true`). GET <url>/requests returns every recorded request body as JSON.
+ *
+ * A request whose last message is the user's and contains "fail" is answered 401, with an error body that repeats the
+ * bearer token it was sent: the way a provider that refuses a key can leak it.
  */
 import http from 'node:http';
 import type { AddressInfo } from 'node:net';
@@ -106,6 +109,12 @@ export async function startFakeLlm({ port }: { port: number }) {
         return send(res, 400, { error: { message: 'the request body is not valid JSON' } });
       }
       requests.push(body);
+
+      const last = (body.messages as Message[] | undefined)?.at(-1);
+      if (last?.role === 'user' && /fail/i.test(textOf(last.content))) {
+        const token = String(req.headers.authorization ?? '').replace(/^Bearer /i, '');
+        return send(res, 401, { error: { message: `Incorrect API key provided: ${token}`, type: 'invalid_request_error' } });
+      }
 
       const { base, usage, reply } = completion(body, script(body));
       if (body.stream !== true) {
