@@ -101,6 +101,9 @@
   --radius-lg: var(--radius-lg);
   --radius-xl: var(--radius-xl);
   --radius-full: var(--radius-full);
+  --blur-sm: var(--blur-sm);
+  --blur-md: var(--blur-md);
+  --blur-xl: var(--blur-xl);
   --shadow-halo: var(--shadow-halo);
   --shadow-card: var(--shadow-card);
   --shadow-raise: var(--shadow-raise);

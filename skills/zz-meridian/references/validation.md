@@ -8,6 +8,8 @@
 2. **A production build** (`next build`).
 3. **The built app, served**, and the **browser audit** of every static route under `app/` (embeds under `/embed` on a
    simulated host ground) at 1440, 1024, 768 and 390px in both themes (`--quick`: 1440 and 390, dark only).
+4. **Every control pressed, every link followed** (`scripts/interactions.ts`) on the built app: mouse at 1440px, taps at
+   390px. A button that changes nothing, a control something else covers, and a link that answers 4xx all fail.
 
 The report is in `out/verify.txt`. Fix the cause; never weaken a check to make it pass. pnpm may first print a lockfile
 and supply-chain check before a script runs; that is pnpm, not an install, and not a failure.
@@ -35,6 +37,8 @@ and supply-chain check before a script runs; that is pnpm, not an install, and n
 | `scrollers: …` | A card scrolls on its own | Page the list (`DataTable` pages at 20) or cap it ("top 5"); only the page scrolls |
 | `contrast: 3.1:1 … "text"` | Text below 4.5:1 | Use `ink`, `ink-2` or `ink-3` on surfaces; status text uses `*-ink`, never the fill colour |
 | `no focus ring: …` | A control with `outline-none` and no ring | Remove `outline-none`, or add `focus-visible:outline-2 focus-visible:outline-accent` |
+| `"Export" does nothing when pressed` | A control with no action, or one that only works on hover | Wire it, or remove it; an info button uses `Tooltip toggle` so a tap opens it |
+| `table … > its frame` | A table wider than its card, its last columns clipped | `hideBelow` one more column, or `truncate` the lead column |
 | `exception:` / `console.error:` | A runtime error or a hydration mismatch | Hydration: no `Date.now()`, `Math.random()` or locale-dependent formatting in render; use the demo clock and `src/lib/format*` |
 
 ## After it passes

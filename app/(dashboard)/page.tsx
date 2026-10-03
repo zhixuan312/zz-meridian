@@ -1,7 +1,6 @@
 import { Suspense } from 'react';
-import { Download } from 'lucide-react';
 import { PageFrame } from '@/components/base/shell';
-import { Button } from '@/components/ui/button';
+import { ExportButton } from '@/components/patterns/export-button';
 import { Freshness } from '@/components/patterns/freshness';
 import { PeriodSelect } from '@/components/patterns/period-select';
 import { OverviewBody } from '@/views/overview';
@@ -24,7 +23,7 @@ export default async function OverviewPage({ searchParams }: { searchParams: Pro
       actions={
         <>
           <Suspense><PeriodSelect value={period} /></Suspense>
-          <Button icon={<Download />} className="max-sm:hidden">Export</Button>
+          <ExportButton rows={current} filename={`overview-${period}.csv`} noun="days" className="max-sm:hidden" />
         </>
       }
     >

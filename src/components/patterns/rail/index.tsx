@@ -1,13 +1,14 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { useLayoutEffect, useRef, useState } from 'react';
-import { ChevronsUpDown } from 'lucide-react';
+import { Check, ChevronsUpDown, LogOut, Settings } from 'lucide-react';
 import { app, nav } from '@/app.config';
 import { cn } from '@/lib/cn';
 import { AppMark } from '@/components/base/app-mark';
 import { Avatar } from '@/components/ui/avatar';
+import { Menu, MenuContent, MenuItem, MenuLabel, MenuSeparator, MenuTrigger } from '@/components/ui/menu';
 import { AppearanceMenu } from '@/components/patterns/appearance-menu';
 
 /**
@@ -16,6 +17,7 @@ import { AppearanceMenu } from '@/components/patterns/appearance-menu';
  */
 export function Rail({ current }: { /** The active route; defaults to the current pathname. */ current?: string } = {}) {
   const pathname = usePathname();
+  const router = useRouter();
   const path = current ?? pathname;
   const list = useRef<HTMLDivElement>(null);
   const [marker, setMarker] = useState<{ y: number; h: number } | null>(null);
@@ -29,14 +31,28 @@ export function Rail({ current }: { /** The active route; defaults to the curren
   return (
     <div className="flex h-full w-full flex-col">
       <div className="flex h-16 items-center px-4">
-        <button type="button" className="group -mx-1.5 flex min-w-0 flex-1 items-center gap-2.5 rounded-md px-1.5 py-1.5 text-left hover:bg-fill-hover">
-          <AppMark size={28} />
-          <span className="min-w-0 flex-1">
-            <span className="block truncate text-md leading-tight font-semibold tracking-[-0.015em]">{app.name}</span>
-            <span className="t-eyebrow mt-0.5 block truncate">{app.workspace}</span>
-          </span>
-          <ChevronsUpDown className="size-3.5 text-ink-3 group-hover:text-ink-2" />
-        </button>
+        <Menu>
+          <MenuTrigger asChild>
+            <button type="button" aria-label={`${app.name}, ${app.workspace}: workspace menu`} className="group -mx-1.5 flex min-w-0 flex-1 items-center gap-2.5 rounded-md px-1.5 py-1.5 text-left hover:bg-fill-hover data-[state=open]:bg-fill-hover">
+              <AppMark size={28} />
+              <span className="min-w-0 flex-1">
+                <span className="block truncate text-md leading-tight font-semibold tracking-[-0.015em]">{app.name}</span>
+                <span className="t-eyebrow mt-0.5 block truncate">{app.workspace}</span>
+              </span>
+              <ChevronsUpDown className="size-3.5 text-ink-3 group-hover:text-ink-2" />
+            </button>
+          </MenuTrigger>
+          <MenuContent className="w-60">
+            <MenuLabel>Workspace</MenuLabel>
+            <MenuItem disabled className="opacity-100">
+              <Check className="size-4 text-accent" strokeWidth={2.25} />
+              <span className="min-w-0 flex-1 truncate text-ink">{app.name} {app.workspace}</span>
+            </MenuItem>
+            <MenuSeparator />
+            <MenuItem onSelect={() => router.push('/settings')}><Settings />Workspace settings</MenuItem>
+            <MenuItem onSelect={() => router.push('/sign-in')}><LogOut />Sign out</MenuItem>
+          </MenuContent>
+        </Menu>
       </div>
       <nav ref={list} aria-label="Main" className="relative flex-1 overflow-y-auto px-3 pt-3 pb-4">
         {marker ? (

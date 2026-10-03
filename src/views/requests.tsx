@@ -1,12 +1,11 @@
 'use client';
 
 import { useMemo } from 'react';
-import { Download } from 'lucide-react';
 import { app } from '@/app.config';
 import { PageFrame, Row, Stack } from '@/components/base/shell';
-import { Button } from '@/components/ui/button';
 import { Freshness } from '@/components/patterns/freshness';
 import { MetricTile } from '@/components/patterns/metric-tile';
+import { ExportButton } from '@/components/patterns/export-button';
 import { DataTable, useQueryState } from '@/components/patterns/data-table';
 import { FilterBar } from '@/components/patterns/filter-bar';
 import { formatCompact, formatDuration, formatPercent } from '@/lib/format';
@@ -68,7 +67,14 @@ export function RequestsView({ rows }: { rows: RequestRow[] }) {
       title="Requests"
       description="Every call that reached the gateway, newest first. Open one to see where its time went."
       meta={<Freshness updatedAt={DEMO_UPDATED_AT} now={DEMO_NOW} />}
-      actions={<Button icon={<Download />}>Export CSV</Button>}
+      actions={
+        <ExportButton
+          label="Export CSV"
+          noun="requests"
+          filename={`requests${f.status !== 'all' ? `-${f.status}` : ''}${f.method !== 'all' ? `-${f.method.toLowerCase()}` : ''}${f.region !== 'all' ? `-${f.region}` : ''}.csv`}
+          rows={() => matching.map((r) => ({ id: r.id, received: r.at, method: r.method, route: r.route, status: r.status, latency_ms: r.latency, customer: r.customer, region: r.region, bytes: r.bytes, model: r.model }))}
+        />
+      }
     >
       <Stack>
         <Row split="tiles">

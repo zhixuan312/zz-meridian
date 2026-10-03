@@ -74,7 +74,7 @@ export function FeaturedMetric({
           {reading !== null ? (
             <span className="t-num inline-flex h-7 items-center rounded-full bg-surface-inverse px-3 text-xs font-medium text-ink-inverse">{formatDate(dates[index!])}</span>
           ) : delta !== undefined ? (
-            <span className="inline-flex h-7 items-center gap-1.5 rounded-full border border-line-strong bg-surface/60 px-3 text-xs text-ink-2 backdrop-blur">
+            <span className="inline-flex h-7 items-center gap-1.5 rounded-full border border-line-strong bg-surface/60 px-3 text-xs text-ink-2 backdrop-blur-md">
               <Delta value={delta} intent={intent} /> vs previous period
             </span>
           ) : null}

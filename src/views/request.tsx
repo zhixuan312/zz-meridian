@@ -1,7 +1,8 @@
 'use client';
 
 import Link from 'next/link';
-import { ArrowUpRight, Copy, ExternalLink, RotateCw, ShieldBan, Terminal } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { ArrowUpRight, Copy, Link2, RotateCw, ShieldBan, Terminal } from 'lucide-react';
 import { PageFrame, Row, Stack } from '@/components/base/shell';
 import { Button } from '@/components/ui/button';
 import { Card, CardBody, CardFooter, CardHeader } from '@/components/ui/card';
@@ -61,7 +62,7 @@ function Code({ body, label }: { body: string; label: string }) {
         size="sm"
         variant="ghost"
         icon={<Copy />}
-        className="absolute top-2 right-2 bg-surface/80 backdrop-blur"
+        className="absolute top-2 right-2 bg-surface/80 backdrop-blur-md"
         onClick={() => { void navigator.clipboard?.writeText(body); toast({ tone: 'positive', title: `${label} copied` }); }}
       >
         Copy
@@ -71,6 +72,7 @@ function Code({ body, label }: { body: string; label: string }) {
 }
 
 export function RequestView({ request: r, trace, payloads }: { request: RequestRow; trace: Span[]; payloads: { request: string; response: string } }) {
+  const router = useRouter();
   const failed = r.status >= 500 || r.status === 429;
   return (
     <PageFrame
@@ -93,8 +95,8 @@ export function RequestView({ request: r, trace, payloads }: { request: RequestR
         ),
         more: [
           { label: 'Copy request ID', icon: <Copy />, onSelect: () => { void navigator.clipboard?.writeText(r.id); toast({ tone: 'positive', title: 'Request ID copied' }); } },
-          { label: 'Open in logs', icon: <ExternalLink />, onSelect: () => toast({ tone: 'neutral', title: 'Logs open in a new tab' }) },
-          { label: 'Block this key', icon: <ShieldBan />, tone: 'critical', onSelect: () => toast({ tone: 'neutral', title: 'Blocking a key opens API keys', description: 'Keys are revoked from their own page, with a confirmation.' }) },
+          { label: 'Copy link', icon: <Link2 />, onSelect: () => { void navigator.clipboard?.writeText(location.href); toast({ tone: 'positive', title: 'Link copied' }); } },
+          { label: 'Revoke the key…', icon: <ShieldBan />, tone: 'critical', onSelect: () => router.push('/keys') },
         ],
       })}
     >

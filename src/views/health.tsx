@@ -1,6 +1,11 @@
 'use client';
 
+import { useState } from 'react';
+import { BellOff, BellRing } from 'lucide-react';
+import { domain } from '@/app.config';
 import { Row, Stack } from '@/components/base/shell';
+import { Button } from '@/components/ui/button';
+import { toast } from '@/components/ui/toast';
 import { Card, CardHeader } from '@/components/ui/card';
 import { FeaturedMetric } from '@/components/patterns/featured-metric';
 import { StatusList, summarise } from '@/components/patterns/status-list';
@@ -74,4 +79,16 @@ export function HealthBody({ services, current, past, now }: { services: Service
       </Row>
     </Stack>
   );
+}
+
+/** Subscribe to incident updates: a toggle that says what it did, and where the updates go. */
+export function SubscribeButton() {
+  const [on, setOn] = useState(false);
+  const toggle = () => {
+    setOn(!on);
+    toast(on
+      ? { tone: 'neutral', title: 'Unsubscribed from incident updates' }
+      : { tone: 'positive', title: 'Subscribed to incident updates', description: `New incidents and every update go to maya@${domain}.` });
+  };
+  return <Button icon={on ? <BellOff /> : <BellRing />} aria-pressed={on} onClick={toggle}>{on ? 'Subscribed' : 'Subscribe to updates'}</Button>;
 }

@@ -54,6 +54,7 @@ export const CARDS: Card[] = [
   { id: 'data-table', layer: 3, section: 'patterns', dir: 'src/components/patterns/data-table', Preview: dynamic(() => import('@/components/patterns/data-table/preview')) },
   { id: 'detail-head', layer: 3, section: 'patterns', dir: 'src/components/patterns/detail-head', Preview: dynamic(() => import('@/components/patterns/detail-head/preview')) },
   { id: 'embed-frame', layer: 3, section: 'patterns', dir: 'src/components/patterns/embed-frame', Preview: dynamic(() => import('@/components/patterns/embed-frame/preview')) },
+  { id: 'export-button', layer: 3, section: 'patterns', dir: 'src/components/patterns/export-button', Preview: dynamic(() => import('@/components/patterns/export-button/preview')) },
   { id: 'featured-metric', layer: 3, section: 'patterns', dir: 'src/components/patterns/featured-metric', Preview: dynamic(() => import('@/components/patterns/featured-metric/preview')) },
   { id: 'filter-bar', layer: 3, section: 'patterns', dir: 'src/components/patterns/filter-bar', Preview: dynamic(() => import('@/components/patterns/filter-bar/preview')) },
   { id: 'form-section', layer: 3, section: 'patterns', dir: 'src/components/patterns/form-section', Preview: dynamic(() => import('@/components/patterns/form-section/preview')) },

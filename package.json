@@ -23,7 +23,8 @@
     "registry": "node scripts/registry.ts",
     "check": "node scripts/check.ts",
     "verify": "node scripts/verify.ts",
-    "brand": "node scripts/brand.ts"
+    "brand": "node scripts/brand.ts",
+    "interactions": "node scripts/interactions.ts"
   },
   "dependencies": {
     "clsx": "^2.1.1",

@@ -4,6 +4,7 @@
  */
 import { DEMO_NOW, INCIDENTS, REGIONS, demoHeatmap } from '@/system/fixtures/sample';
 import type { Incident } from '@/components/patterns/incident-card';
+import type { Alert } from '@/components/patterns/shell-tools';
 
 const DAY = 86_400_000;
 const ago = (ms: number) => new Date(DEMO_NOW.getTime() - ms).toISOString();
@@ -45,4 +46,12 @@ export const TIMEZONES = [
 export const CONNECTED_HOSTS = [
   { id: 'h1', name: 'Claude', kind: 'Chat client', connectedBy: 'Maya Chen', since: ago(41 * DAY), lastUsed: ago(2.4 * 3600_000), scopes: ['Read dashboards', 'Propose changes'] },
   { id: 'h2', name: 'Ops runbook agent', kind: 'Internal agent', connectedBy: 'Jonas Weber', since: ago(12 * DAY), lastUsed: ago(26 * 3600_000), scopes: ['Read dashboards'] },
+];
+
+/** What the bell holds: the live incident first (new), then what happened recently that someone may act on. */
+export const ALERTS: Alert[] = [
+  { id: 'a1', tone: 'warning', unread: true, title: INCIDENTS[0].title, detail: 'Monitoring · p95 back under 650ms', at: INCIDENTS[0].updates.at(-1)!.at, href: '/health' },
+  { id: 'a2', tone: 'warning', title: 'Lumen Studio is past due', detail: 'Their latest invoice is overdue', at: ago(0.3 * DAY), href: '/customers' },
+  { id: 'a3', tone: 'neutral', title: 'Claude raised the rate limit for Parallax AI', detail: 'For Jonas Weber · 2,000 requests a minute', at: ago(2.4 * 3600_000), href: '/customers' },
+  { id: 'a4', tone: 'positive', title: 'Gateway v4.18.2 deployed', detail: 'Every region, no errors during rollout', at: ago(5.1 * 3600_000), href: '/' },
 ];

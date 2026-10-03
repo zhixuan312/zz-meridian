@@ -59,7 +59,7 @@ export function MetricTile({
         {icon ? <span className="text-ink-3 [&_svg]:size-3.5">{icon}</span> : null}
         <h3 className="t-small min-w-0 flex-1 truncate font-medium text-ink-2">{label}</h3>
         {hint ? (
-          <Tooltip content={hint}>
+          <Tooltip content={hint} toggle>
             <button type="button" aria-label={`About ${label}`} className="grid size-5 place-items-center rounded-full text-ink-3 hover:bg-fill-hover hover:text-ink-2">
               <svg viewBox="0 0 16 16" className="size-3.5" aria-hidden><circle cx="8" cy="8" r="6.25" fill="none" stroke="currentColor" strokeWidth="1.3" /><path d="M8 7.2v3.8M8 5h.01" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" /></svg>
             </button>

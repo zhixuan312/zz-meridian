@@ -22,7 +22,7 @@ Status: beta
 
 ## Sizes
 
-Column widths follow content. One column, the record's name, is `grow` on its head: it takes the remaining width, and its cells `truncate` (the full text in their title or the opened record). Other text columns stay on one line. `hideBelow` drops a column under `sm` 640, `md` 768, `lg` 1024 or `xl` 1280px, on its head and its cells alike.
+Column widths follow content. One column, the record's name, is `grow` on its head: it takes the remaining width, and its cells `truncate` (the full text in their title or the opened record). Other text columns stay on one line. The `grow` column is at least 160px, 256px once the table is 672px wide. `hideBelow` drops a column when the table itself is narrower than `sm` 512, `md` 672, `lg` 896 or `xl` 1152px, on its head and its cells alike.
 
 ## States
 
@@ -45,6 +45,7 @@ Column widths follow content. One column, the record's name, is `grow` on its he
 
 - **Console**: columns.
 - **Mobile**: drop columns with `hideBelow`; a DataTable becomes a list of cards under 640px.
+- `hideBelow` reads the table's own width (a container query), not the window's, because the rail and split rows narrow a table without narrowing the window: `sm` drops a column under 512px, `md` under 672px, `lg` under 896px, `xl` under 1152px. A table never clips: if the columns still do not fit, hide one more; the audit fails a table wider than its frame.
 - **Embed**: five rows, then Expand.
 
 ## Agents

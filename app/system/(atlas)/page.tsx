@@ -38,7 +38,7 @@ export default function AtlasHome() {
               <Link href="/system/tokens/colour" className="press group inline-flex h-(--control-lg) items-center gap-2 rounded-lg bg-accent bg-(image:--accent-fill) px-5 text-base font-medium text-on-accent shadow-accent hover:brightness-[0.94]">
                 Start with the tokens <ArrowRight className="size-[18px] transition-transform group-hover:translate-x-0.5" />
               </Link>
-              <Link href="/" className="press inline-flex h-(--control-lg) items-center gap-2 rounded-lg border border-line-strong bg-surface/60 px-5 text-base font-medium shadow-control backdrop-blur hover:bg-surface">
+              <Link href="/" className="press inline-flex h-(--control-lg) items-center gap-2 rounded-lg border border-line-strong bg-surface/60 px-5 text-base font-medium shadow-control backdrop-blur-md hover:bg-surface">
                 Open the template <ArrowUpRight className="size-[18px]" />
               </Link>
             </div>

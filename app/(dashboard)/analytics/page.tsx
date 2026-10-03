@@ -1,8 +1,7 @@
 import { Suspense } from 'react';
-import { Download } from 'lucide-react';
 import { app } from '@/app.config';
 import { PageFrame } from '@/components/base/shell';
-import { Button } from '@/components/ui/button';
+import { ExportButton } from '@/components/patterns/export-button';
 import { Freshness } from '@/components/patterns/freshness';
 import { PeriodSelect } from '@/components/patterns/period-select';
 import { AnalyticsBody } from '@/views/analytics';
@@ -23,7 +22,7 @@ export default async function AnalyticsPage({ searchParams }: { searchParams: Pr
       actions={
         <>
           <Suspense><PeriodSelect value={period} /></Suspense>
-          <Button icon={<Download />} className="max-sm:hidden">Export</Button>
+          <ExportButton rows={demoSeries(period).current} filename={`analytics-${period}.csv`} noun="days" className="max-sm:hidden" />
         </>
       }
     >

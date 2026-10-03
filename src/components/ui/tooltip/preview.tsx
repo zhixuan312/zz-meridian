@@ -17,8 +17,8 @@ export default function TooltipPreview() {
         <State label="One line"><Open>Copy request ID</Open></State>
         <State label="Explanation"><Open>95 of every 100 requests finished faster than this.</Open></State>
       </Specimen>
-      <Specimen label="Live" note="Opens after 300ms on hover, at once on keyboard focus; Escape closes it.">
-        <Tooltip content="Share of requests answered with a 5xx or a 429.">
+      <Specimen label="Live" note="Opens after 300ms on hover, at once on keyboard focus; Escape closes it. The info button also opens on a press or a tap (toggle).">
+        <Tooltip content="Share of requests answered with a 5xx or a 429." toggle>
           <button type="button" aria-label="About error rate" className="grid size-7 place-items-center rounded-full text-ink-3 hover:bg-fill-hover hover:text-ink-2">
             <Info className="size-4" />
           </button>

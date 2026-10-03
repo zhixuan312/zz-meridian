@@ -6,17 +6,20 @@ import { cn } from '@/lib/cn';
 
 /**
  * Rows of records compared across a few columns. It fills its card edge to edge and never scrolls sideways: when it is
- * too wide, the least important columns drop below a width (`hideBelow` on the head and the cells alike), and on
- * phones a DataTable shows a list of cards instead. Numbers align right in tabular figures.
+ * too narrow, the least important columns drop (`hideBelow` on the head and the cells alike), and on phones a
+ * DataTable shows a list of cards instead. Numbers align right in tabular figures.
+ *
+ * `hideBelow` reads the table's own width, not the window's: the rail, a split row or an embed all narrow the table
+ * without narrowing the window. sm under 512px, md under 672px, lg under 896px, xl under 1152px.
  */
 export type Breakpoint = 'sm' | 'md' | 'lg' | 'xl';
 /* Literal strings: Tailwind finds classes by reading the source. */
-const HIDE: Record<Breakpoint, string> = { sm: 'max-sm:hidden', md: 'max-md:hidden', lg: 'max-lg:hidden', xl: 'max-xl:hidden' };
+const HIDE: Record<Breakpoint, string> = { sm: '@max-[512px]:hidden', md: '@max-[672px]:hidden', lg: '@max-[896px]:hidden', xl: '@max-[1152px]:hidden' };
 const ALIGN = { left: 'text-left', right: 'text-right', center: 'text-center' } as const;
 
 export function Table({ className, caption, children, ...rest }: HTMLAttributes<HTMLTableElement> & { caption?: string }) {
   return (
-    <div className="w-full min-w-0 overflow-x-clip">
+    <div className="@container w-full min-w-0 overflow-x-clip">
       <table
         className={cn(
           'w-full border-separate border-spacing-0 text-sm',
@@ -88,7 +91,7 @@ export function TableHeader({
         ALIGN[align],
         hideBelow && HIDE[hideBelow],
         /* The lead column takes about a third; auto layout spreads the rest across the others by their content. */
-        grow && 'w-[30%] min-w-64',
+        grow && 'w-[30%] min-w-40 @min-[672px]:min-w-64',
         className,
       )}
       {...rest}

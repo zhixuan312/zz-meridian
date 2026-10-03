@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { UserPlus } from 'lucide-react';
 import { app } from '@/app.config';
 import { PageFrame, Row, Stack } from '@/components/base/shell';
@@ -8,6 +8,10 @@ import { Avatar } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Segmented } from '@/components/ui/segmented';
+import { Field } from '@/components/ui/field';
+import { Input } from '@/components/ui/input';
+import { Sheet, SheetClose, SheetContent } from '@/components/ui/sheet';
+import { toast } from '@/components/ui/toast';
 import { Sparkline } from '@/components/charts/sparkline';
 import { MetricTile } from '@/components/patterns/metric-tile';
 import { DataTable, useQueryState, type Column } from '@/components/patterns/data-table';
@@ -55,12 +59,27 @@ export function CustomersView({ rows }: { rows: CustomerRecord[] }) {
   const spendDaily = rows[0].trend.map((_, d) => rows.reduce((a, c) => a + c.trend[d] * 0.000104, 0));
   const requestsDaily = rows[0].trend.map((_, d) => rows.reduce((a, c) => a + c.trend[d], 0));
 
+  const [inviting, setInviting] = useState(false);
+  const [invite, setInvite] = useState({ company: '', email: '', plan: 'Scale' });
+  const [inviteError, setInviteError] = useState<{ company?: string; email?: string }>({});
+  const send = () => {
+    const e = {
+      company: invite.company.trim() ? undefined : 'Name the company you are inviting.',
+      email: /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(invite.email) ? undefined : 'Enter their work email, like ana@northwind.example.',
+    };
+    setInviteError(e);
+    if (e.company || e.email) return;
+    setInviting(false);
+    setInvite({ company: '', email: '', plan: 'Scale' });
+    toast({ tone: 'positive', title: `Invitation sent to ${invite.email}`, description: `${invite.company} joins on the ${invite.plan} plan when they accept.` });
+  };
+
   return (
     <PageFrame
       kicker={<>{app.name} · {app.workspace}</>}
       title="Customers"
       description="Who is calling the API, on which plan, and what it costs them this month."
-      actions={<Button variant="primary" icon={<UserPlus />}>Invite customer</Button>}
+      actions={<Button variant="primary" icon={<UserPlus />} onClick={() => setInviting(true)}>Invite customer</Button>}
     >
       <Stack>
         <Row split="tiles">
@@ -96,6 +115,26 @@ export function CustomersView({ rows }: { rows: CustomerRecord[] }) {
           }
         />
       </Stack>
+      <Sheet open={inviting} onOpenChange={setInviting}>
+        <SheetContent
+          title="Invite a customer"
+          description="They get an email to create their workspace and their first key."
+          footer={<><SheetClose asChild><Button variant="ghost">Cancel</Button></SheetClose><Button variant="primary" onClick={send}>Send invitation</Button></>}
+        >
+          <div className="flex flex-col gap-6">
+            <Field label="Company" error={inviteError.company} required>
+              {(p) => <Input {...p} value={invite.company} onChange={(e) => { setInvite({ ...invite, company: e.target.value }); setInviteError({ ...inviteError, company: undefined }); }} placeholder="Northwind Labs" />}
+            </Field>
+            <Field label="Admin email" hint="The person who will own their workspace." error={inviteError.email} required>
+              {(p) => <Input {...p} type="email" value={invite.email} onChange={(e) => { setInvite({ ...invite, email: e.target.value }); setInviteError({ ...inviteError, email: undefined }); }} placeholder="ana@northwind.example" />}
+            </Field>
+            <div className="flex flex-col gap-2">
+              <p className="text-sm font-medium">Plan</p>
+              <Segmented label="Plan" value={invite.plan} onChange={(plan) => setInvite({ ...invite, plan })} options={[{ value: 'Starter', label: 'Starter' }, { value: 'Scale', label: 'Scale' }, { value: 'Enterprise', label: 'Enterprise' }]} />
+            </div>
+          </div>
+        </SheetContent>
+      </Sheet>
     </PageFrame>
   );
 }

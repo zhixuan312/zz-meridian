@@ -27,7 +27,7 @@ export function StageBar({ theme, setTheme, accent, setAccent, density, setDensi
   theme: ThemeView; setTheme: (t: ThemeView) => void; accent: Accent; setAccent: (a: Accent) => void; density?: Density; setDensity?: (d: Density) => void; extra?: ReactNode;
 }) {
   return (
-    <div className="flex flex-wrap items-center gap-x-4 gap-y-2.5 border-b border-line bg-surface/70 px-4 py-3 backdrop-blur">
+    <div className="flex flex-wrap items-center gap-x-4 gap-y-2.5 border-b border-line bg-surface/70 px-4 py-3 backdrop-blur-md">
       <Segmented size="sm" label="Theme" value={theme} onChange={setTheme} options={[{ value: 'dark', label: 'Dark' }, { value: 'light', label: 'Light' }, { value: 'both', label: 'Both' }]} />
       <div role="radiogroup" aria-label="Accent" className="flex items-center gap-1">
         {ACCENTS.map((a) => (

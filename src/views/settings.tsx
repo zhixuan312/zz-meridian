@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { Globe, Lock, Moon, Monitor, Sun, Trash2 } from 'lucide-react';
 import { app, domain, workspaceSlug } from '@/app.config';
 import { cn } from '@/lib/cn';
@@ -185,6 +186,7 @@ function Agents() {
 }
 
 function Danger() {
+  const router = useRouter();
   const [typed, setTyped] = useState('');
   const confirm = workspaceSlug;
   const ok = typed.trim() === confirm;
@@ -203,7 +205,7 @@ function Danger() {
               <>
                 <DialogClose asChild><Button variant="ghost">Cancel</Button></DialogClose>
                 <DialogClose asChild>
-                  <Button variant="danger" disabled={!ok} onClick={() => toast({ tone: 'critical', title: 'This is a demo: nothing was deleted' })}>Delete workspace</Button>
+                  <Button variant="danger" disabled={!ok} onClick={() => { toast({ tone: 'neutral', title: `${app.name} ${app.workspace} deleted`, description: 'Its keys stopped working. Sign in to another workspace.' }); router.push('/sign-in'); }}>Delete workspace</Button>
                 </DialogClose>
               </>
             }

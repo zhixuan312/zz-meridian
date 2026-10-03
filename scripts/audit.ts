@@ -10,11 +10,8 @@
  * sizes, weights and radii, and the hierarchy ratio (largest text over the median), which should be 3 or more on
  * an analytical page.
  */
-import fs from 'node:fs';
-import path from 'node:path';
 import { launch } from './lib/chrome.ts';
-
-const ROOT = path.resolve(import.meta.dirname, '..');
+import { discover } from './lib/routes.ts';
 
 const args = process.argv.slice(2);
 const opt = (k: string, d: string) => { const i = args.indexOf(k); return i >= 0 ? args[i + 1] : d; };
@@ -22,23 +19,6 @@ const base = opt('--base', process.env.BASE ?? 'http://localhost:3100');
 const quick = args.includes('--quick');
 const EMBEDS_ONLY = args.includes('--embeds-only');
 
-/** Every static page under app/, as a route: route groups dropped, dynamic segments skipped (pass them with --extra). */
-function discover(): string[] {
-  const out: string[] = [];
-  const walk = (dir: string, route: string[]) => {
-    for (const n of fs.readdirSync(dir)) {
-      const p = path.join(dir, n);
-      if (fs.statSync(p).isDirectory()) {
-        if (n.startsWith('[') || n.startsWith('_') || (route[0] === 'system' && n === 'preview')) continue;
-        walk(p, /^\(.*\)$/.test(n) ? route : [...route, n]);
-      } else if (n === 'page.tsx') out.push('/' + route.join('/'));
-    }
-  };
-  walk(path.join(ROOT, 'app'), []);
-  if (out.includes('/system') && fs.existsSync(path.join(ROOT, 'src/components/ui/button/README.md'))) out.push('/system/components/button');
-  out.push('/this-page-does-not-exist');
-  return [...new Set(out)].sort();
-}
 const found = discover();
 const extra = opt('--extra', '').split(',').filter(Boolean);
 const ROUTES = EMBEDS_ONLY ? [] : (opt('--routes', '') ? opt('--routes', '').split(',') : [...found.filter((r) => !r.startsWith('/embed')), ...extra]);
@@ -59,6 +39,8 @@ const MEASURE = `(() => {
   const sr = document.scrollingElement;
   if (sr.scrollWidth > W + 1) out.sideways.push('document ' + sr.scrollWidth + 'px wide at ' + W);
   document.querySelectorAll('[data-scroll-region]').forEach((s) => { if (s.scrollWidth > s.clientWidth + 1) out.sideways.push('scroll region ' + s.scrollWidth + ' > ' + s.clientWidth); });
+  // A table wider than its frame is clipped, not scrolled: its last columns (often the actions) are out of reach.
+  document.querySelectorAll('table').forEach((t) => { const f = t.parentElement; if (!t.closest('.sr-only') && f && t.offsetWidth > 0 && !/auto|scroll/.test(getComputedStyle(f).overflowX) && t.scrollWidth > f.clientWidth + 1) out.sideways.push('table ' + (t.querySelector('caption')?.textContent || label(t)) + ' ' + t.scrollWidth + ' > its frame ' + f.clientWidth + ' (hideBelow a column)'); });
   const all = [...document.body.querySelectorAll('*')];
   // Pixel colours, whatever the colour space.
   const cv = document.createElement('canvas'); cv.width = cv.height = 1; const cx = cv.getContext('2d', { willReadFrequently: true });

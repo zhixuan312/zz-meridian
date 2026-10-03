@@ -207,6 +207,7 @@ export function buildTheme(): string {
     ...by('type').filter((t) => t.name.startsWith('leading-')).map((t) => `  --${t.name}: var(--${t.name});`),
     ...by('type').filter((t) => t.name.startsWith('tracking-')).map((t) => `  --${t.name}: var(--${t.name});`),
     ...by('radius').map((t) => `  --${t.name}: var(--${t.name});`),
+    ...by('blur').map((t) => `  --${t.name}: var(--${t.name});`),
     ...light.filter((t) => t.type === 'shadow').map((t) => `  --${t.name}: var(--${t.name});`),
     ...by('motion').filter((t) => t.type === 'cubicBezier').map((t) => `  --${t.name}: var(--${t.name});`),
     '}',

@@ -83,7 +83,7 @@ function Readout({ series }: { series: DailyPoint[] }) {
 
 function SurfaceCard({ label, className, children }: { label: string; className?: string; children: React.ReactNode }) {
   return (
-    <div className={cn('flex min-w-0 flex-col rounded-xl border border-line bg-surface/70 p-4 backdrop-blur', className)}>
+    <div className={cn('flex min-w-0 flex-col rounded-xl border border-line bg-surface/70 p-4 backdrop-blur-md', className)}>
       <p className="t-eyebrow mb-3">{label}</p>
       <div className="min-w-0 flex-1">{children}</div>
     </div>

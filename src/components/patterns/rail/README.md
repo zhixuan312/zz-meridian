@@ -6,7 +6,7 @@ Status: beta
 
 ## Anatomy
 
-1. **Brand**: the App mark at 28px, the product name (`text-md`, 600) and the workspace as an eyebrow; the whole row is the workspace switcher.
+1. **Brand**: the App mark at 28px, the product name (`text-md`, 600) and the workspace as an eyebrow; the whole row opens the workspace menu: the current workspace (checked), Workspace settings, and Sign out. A product with several workspaces lists them there as radio items.
 2. **Groups**: an optional mono eyebrow (`t-eyebrow`, `ink-3`) over a list of items; groups sit `space-6` 24px apart.
 3. **Item**: a 16px icon at a 1.75 stroke, the label, and an optional count badge.
 4. **Marker**: one pill behind the current item, `accent-tint` with an inset `accent-line` ring and a 2px `accent` edge on the left that carries a soft glow.

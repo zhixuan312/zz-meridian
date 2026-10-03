@@ -15,6 +15,6 @@ Meridian is a dashboard design system and template: read `README.md` (what it is
 - **Build up, never sideways.** A page arranges patterns; a pattern composes components; a value is a token. Never write a colour, size or shadow that is not a token; `node scripts/check.ts` fails on literal colours and on Tailwind utilities outside Meridian's reset scales (they render nothing).
 - **Tokens** live in `tokens/*.tokens.json` (DTCG 2025.10). `src/styles/tokens.css` and `src/styles/theme.css` are generated: run `pnpm tokens`, never edit them.
 - **A card** is a folder with `index.tsx`, `preview.tsx` (every state, static, labelled) and `README.md` (the anatomy in CONTRIBUTING). After adding one, run `pnpm registry`.
-- **Before finishing**: `pnpm gate` (tokens, registry, specs, contrast in every theme and accent, types, tests), then with `pnpm dev` running, `node scripts/audit.ts`, and look at `node scripts/shot.ts <route> --width 1440,390 --theme dark,light`.
+- **Before finishing**: `pnpm gate` (tokens, registry, specs, contrast in every theme and accent, types, tests), then with `pnpm dev` running, `node scripts/audit.ts` and `node scripts/interactions.ts` (every control pressed, every link followed), and look at `node scripts/shot.ts <route> --width 1440,390 --theme dark,light`.
 - **Agents in the product** read freely and write only through a Proposal; mark agent work with the Agent mark and "via". See `docs/agents.md`.
 - Everything written to the repository is in English.

@@ -31,7 +31,8 @@ One size; it wraps at 256px. Offset 6px from its trigger; it flips side and stay
 
 ## Behaviour
 
-- Hover and focus open it; Escape closes it. Touch shows it on long press only; on touch, put the explanation where it can be read (a Metric tile's hint is also its accessible name).
+- Hover and focus open it; Escape or a press outside closes it.
+- `toggle` is for a trigger whose only job is the explanation, such as a Metric tile's info button: a press or a tap opens and closes it, so it works on touch. Never set it on a trigger that does something else (a button, a link): the press would open the tooltip instead.
 - It is never interactive: no links, no buttons inside.
 
 ## Surfaces

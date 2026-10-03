@@ -37,7 +37,7 @@ export function KeysView({ initial }: { initial: ApiKey[] }) {
     if (!name.trim()) return setError('Name the key after what uses it: "Billing worker".');
     const k: ApiKey = {
       id: `key_${keys.length + 10}`, name: name.trim(), env, scopes, owner: 'Maya Chen', created: DEMO_NOW.toISOString(), lastUsed: null,
-      secret: `rk_${env}_${Array.from({ length: 32 }, (_, i) => '0123456789abcdef'[(i * 7 + name.length * 3) % 16]).join('')}`,
+      secret: `zzm_${env}_${Array.from({ length: 32 }, (_, i) => '0123456789abcdef'[(i * 7 + name.length * 3) % 16]).join('')}`,
     };
     setKeys((ks) => [k, ...ks]);
     setFresh(k);
@@ -48,7 +48,7 @@ export function KeysView({ initial }: { initial: ApiKey[] }) {
 
   const columns: Column<ApiKey>[] = [
     {
-      key: 'name', header: 'Name', mobile: 'title', sortValue: (k) => k.name,
+      key: 'name', header: 'Name', grow: true, truncate: true, mobile: 'title', sortValue: (k) => k.name,
       cell: (k) => (
         <span className="flex min-w-0 items-center gap-2.5">
           <span className="truncate font-medium">{k.name}</span>
@@ -56,7 +56,7 @@ export function KeysView({ initial }: { initial: ApiKey[] }) {
         </span>
       ),
     },
-    { key: 'secret', header: 'Key', grow: true, hideBelow: 'md', cell: (k) => <CopyField value={k.secret} label={`${k.name} key`} secret className="max-w-80" /> },
+    { key: 'secret', header: 'Key', hideBelow: 'md', cell: (k) => <CopyField value={k.secret} label={`${k.name} key`} secret className="w-60" /> },
     {
       key: 'scopes', header: 'Scopes', hideBelow: 'xl',
       cell: (k) => (
@@ -71,7 +71,7 @@ export function KeysView({ initial }: { initial: ApiKey[] }) {
       ),
     },
     { key: 'owner', header: 'Created by', muted: true, hideBelow: 'lg', cell: (k) => <span className="whitespace-nowrap">{k.owner}</span> },
-    { key: 'created', header: 'Created', numeric: true, muted: true, mobile: 'fact', sortValue: (k) => k.created, cell: (k) => formatDate(k.created), mobileCell: (k) => `Created ${formatDate(k.created)}` },
+    { key: 'created', header: 'Created', numeric: true, muted: true, hideBelow: 'lg', mobile: 'fact', sortValue: (k) => k.created, cell: (k) => formatDate(k.created), mobileCell: (k) => `Created ${formatDate(k.created)}` },
     {
       key: 'used', header: 'Last used', numeric: true, mobile: 'fact', sortValue: (k) => k.lastUsed ?? '',
       cell: (k) => (k.lastUsed ? formatRelative(k.lastUsed, DEMO_NOW) : <span className="text-ink-3">Never</span>),

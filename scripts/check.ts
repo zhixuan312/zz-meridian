@@ -76,6 +76,9 @@ for (const f of LAYERS) {
     // Meridian resets Tailwind's scales; a utility outside them emits no CSS and fails silently.
     const dead = line.match(/\b(?:font-(?:normal|light|bold|extrabold|black|thin)|rounded-(?:2xl|3xl)|shadow-(?:sm|md|lg|xl|2xl)|text-(?:3xl|4xl|5xl))\b/);
     if (dead) problems.push(`${at}: ${dead[0]} is outside Meridian's scale and renders nothing (use font-regular, rounded-xl, shadow-card…)`);
+    // Blur names its token (blur-sm, blur-md, blur-xl) or an arbitrary value; a bare or other name emits no filter.
+    const blur = line.match(/\b(?:backdrop-)?blur(?:-(?!sm\b|md\b|xl\b|\[|\()[a-z0-9]+)?(?![-\w[(])/);
+    if (blur && !/glow-blur/.test(blur.input!.slice(Math.max(0, blur.index! - 6), blur.index! + blur[0].length))) problems.push(`${at}: ${blur[0]} is outside Meridian's blur scale and renders nothing (use backdrop-blur-sm, -md or -xl)`);
     const pal = line.match(PALETTE);
     if (pal) problems.push(`${at}: Tailwind palette class ${pal[0]} (use a role)`);
   });
