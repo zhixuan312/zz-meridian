@@ -132,6 +132,9 @@ export function AssistantPanel({
   };
 
   return (
+    <>
+    {/* Below 1024px the panel is a sheet over the page: a scrim dims the page and closes the panel when pressed. */}
+    {inline ? null : <div aria-hidden onClick={onClose} className="scrim-in fixed inset-0 z-(--layer-overlay) bg-scrim lg:hidden" />}
     <aside
       data-assistant
       aria-label="Assistant"
@@ -146,7 +149,7 @@ export function AssistantPanel({
     >
       <div className="flex h-14 shrink-0 items-center gap-3 border-b border-line px-4">
         <AgentMark size="md" />
-        <h2 className="t-section min-w-0 flex-1 truncate">Assistant</h2>
+        <h2 className="t-card min-w-0 flex-1 truncate">Assistant</h2>
         <IconButton label="Clear conversation" icon={<Eraser />} tooltip disabled={messages.length === 0} onClick={onClear} />
         <IconButton label="Close assistant" icon={<X />} onClick={onClose} className="-mr-2" />
       </div>
@@ -193,10 +196,12 @@ export function AssistantPanel({
           value={draft}
           onChange={(e) => setDraft(e.target.value)}
           onKeyDown={onKey}
+          className="resize-none"
         />
         <Button type="submit" variant="primary" icon={<ArrowUp />} aria-label="Send" disabled={!text || busy} className="w-(--control-md) px-0" />
       </form>
     </aside>
+    </>
   );
 }
 
