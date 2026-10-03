@@ -73,9 +73,9 @@ export function MembersView({ rows, now, actions }: { rows: Member[]; now: strin
         </span>
       ),
     },
-    { key: 'email', header: 'Email', muted: true, truncate: true, hideBelow: 'lg', sortValue: (m) => m.email, cell: (m) => m.email },
+    { key: 'email', header: 'Email', grow: true, muted: true, truncate: true, hideBelow: 'lg', sortValue: (m) => m.email, cell: (m) => m.email },
     { key: 'role', header: 'Role', hideBelow: 'md', sortValue: (m) => m.role, cell: (m) => m.role },
-    { key: 'team', header: 'Team', muted: true, hideBelow: 'xl', mobile: 'fact', sortValue: (m) => m.team, cell: (m) => m.team },
+    { key: 'team', header: 'Team', muted: true, hideBelow: 'lg', mobile: 'fact', sortValue: (m) => m.team, cell: (m) => m.team },
     { key: 'status', header: 'Status', mobile: 'fact', sortValue: (m) => m.status, cell: (m) => <Badge tone={STATUS_TONE[m.status]} dot>{m.status}</Badge> },
     { key: 'joined', header: 'Joined', numeric: true, muted: true, hideBelow: 'xl', sortValue: (m) => m.joined, cell: (m) => formatDate(m.joined) },
     {
