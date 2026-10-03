@@ -18,7 +18,7 @@ Meridian held to the bar of award-winning sites (Awwwards, Webby, FWA) and of th
 ## What changed because of the benchmark
 
 - **The register** (decision 0002). The first render, a neutral light canvas with 28px titles and four equal tiles, was rejected as dated. Meridian adopted Zandro's register: dark first, a lit ground, a dramatic type scale, one featured card.
-- **Quiet light** (decision 0006). Learning from crypto-zentry, the glow moved from the data to the frame: translucent surfaces, a lit edge and a faint halo on the featured card, a whisper of light under the line (14% on light, 24% on dark, set 2px below it), a primary action turning toward violet, gradient text on one phrase per screen. The louder feature shadow, the solid accent borders and the grain were removed.
+- **Quiet light** (decision 0006). Learning from crypto-zentry, the glow moved from the data to the frame: translucent surfaces, a lit edge and a faint halo on the featured card, a whisper of light under the line (14% on light, 24% on dark, set 2px below it), a primary action turning toward violet, one solid accent phrase per screen. The louder feature shadow, the solid accent borders and the grain were removed.
 - **Tables.** The lead column no longer takes all the slack (about a third, the rest spread by content); columns sit 32px apart; a text column after a number gets 16px more; a fixed-width method chip lines up every route.
 - **Performance found by the audit.** A repeated grain texture under translucent cards stalled rasterisation at device scale (a 2× capture timed out past 30 seconds; without it, under a second), and a blend mode on a full-screen layer left charts painted stale. Both are gone.
 - **Motion, evaluated with motion on.** The light under the featured line now draws with the line instead of fading in ahead of it; line, light and area arrive together over 820ms (93% drawn by 250ms, settled by 550ms). The Atlas hero's cursor sweeps the month once and rests, instead of looping.
@@ -34,8 +34,24 @@ Meridian held to the bar of award-winning sites (Awwwards, Webby, FWA) and of th
 - **Tables that clipped their last column.** Columns dropped by the window's width, which ignores the rail, so between 768 and 1440px the API keys table (and Customers and Requests at 1024 to 1280px) ran wider than its card and the card cut the actions off; on a phone the Analytics endpoints table cut off p95. Columns now drop by the table's own width (a container query), a lead column needs 160px on a narrow table, and the audit fails any table wider than its frame.
 - **A tab icon.** `app/icon.ts` draws the App mark in the default accent, read from the tokens at build, so a new brand repaints it.
 
+- **An independent critic, against the juries' criteria.** A reviewer that had not built Meridian rendered all 15 routes at 360, 768 and 1440px in both themes and scored them against the Awwwards, Webby, CSSDA and FWA criteria and Zandro's eight craft criteria. Scores: typography 8, whitespace 6, hierarchy 8, colour 7, motion 7, micro-interaction 7, responsiveness 6, originality 7. It failed three criteria: colour keeps its job, one type scale, and motion and speed. Fixed from its list:
+  - **Honesty:** uptime on a phone showed 30 bars beside the 90-day figure, so every day now shows. The trend's "Errors × 20" put a scaled number in a tooltip, so it is gone.
+  - **Composition:**
+    - the Atlas home's empty column and its raw changelog;
+    - the Health hero's dead band;
+    - the Request page's tabs around three lines of JSON (the payloads now sit side by side, and the ID and status are no longer repeated);
+    - By region showing its data twice;
+    - Overview tiles stacked at 768px;
+    - a sign-in page with no proof (it now carries a live Meridian trend).
+  - **Colour:** success rows are quiet and only 4xx, 5xx, past due and trial are coloured; the accent is off 35 "beta" marks and every customer sparkline; one freshness claim per view; one solid accent phrase instead of gradient text.
+  - **Type:** headings descend one level at a time, and the audit fails a skip.
+  - **Motion:** every press control animates its press. Motion literals are tokens, and the gate fails a literal duration or a press transition without transform.
+  - **Touch:** every control and box link answers 44px on a coarse pointer, phones are emulated as touch, and the audit fails a smaller target.
+  - **Small things:** embed heads keep Freshness whole; hour ticks follow 00/06/12/18; an in-app link uses → and a link out uses ↗.
+
 ## Open
 
-One limit of the measurement, kept in view on purpose:
+Taste calls the critic raised that are not taken yet, kept in view on purpose:
 
-- **Gradient text** is checked by the gate at its ends' lightness, not as rendered; the audit skips it by rule.
+- **Data morph:** switching 7D, 30D and 90D swaps the lines instantly. A tween of the path, and an eased cursor line, would carry the eye across the change; juries reward that continuity.
+- **768px splits:** Analytics keeps its half-width charts stacked at 768px, because a 350px chart reads worse than a full-width one. A container-based split from 700px is the alternative.

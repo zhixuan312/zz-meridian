@@ -127,11 +127,6 @@
     .control-frame { min-height: 44px; }
   }
 
-  /* The one display phrase per screen may carry the accent as light: the accent turning toward violet. */
-  .t-gradient {
-    background: linear-gradient(100deg, var(--accent-ink) 10%, oklch(var(--accent-l-ink) var(--accent-c) calc(var(--accent-h) + 36)) 90%);
-    -webkit-background-clip: text; background-clip: text; color: transparent;
-  }
 
   /* A table ignores width and overflow and grows to its content, so a wide hidden table (a heatmap's) would widen the
      page. As a block it is clipped like anything else, and screen readers still read it as a table. */

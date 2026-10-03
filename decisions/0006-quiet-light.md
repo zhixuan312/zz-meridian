@@ -12,7 +12,7 @@ After 0002, the owner asked for the overall feeling to be more refined and less 
 - **Surfaces are a wash of light**: `surface` is 4% white on dark and 74% white on light, so the ground's light shows through every card. No backdrop blur on cards; the ground is smooth.
 - **A third, quieter light** below the page, a few degrees toward violet.
 - **The primary action** is the accent turning 16 degrees toward violet, top to bottom (`accent-fill`); its hover darkens, so white text keeps its contrast.
-- **Gradient text** only on the one display phrase of a screen (`.t-gradient`).
+- **One accent phrase** per screen, in solid `accent-ink`. (Amended 2026-10-03: gradient text was dropped. An independent review read it as dated, it spent the accent on decoration, and its contrast could not be measured as rendered.)
 - **No grain.** A repeated texture under translucent cards stalled rasterisation on high-density screens (measured: a 2x capture timed out past 30s; without the grain it took under 1s), and a blend mode on a full-screen layer left charts painted stale. The light alone carries the depth.
 
 ## Consequences

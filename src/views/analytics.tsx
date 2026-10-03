@@ -13,7 +13,6 @@ import { BarList } from '@/components/charts/bar-list';
 import { cn } from '@/lib/cn';
 import { formatCompact, formatDuration, formatPercent } from '@/lib/format';
 import { formatDate } from '@/lib/format-date';
-import { CompositionBar } from '@/components/charts/composition-bar';
 import type { DailyPoint, Endpoint } from '@/system/fixtures/sample';
 import { RouteCell } from '@/system/sample-cells';
 
@@ -61,22 +60,20 @@ export function AnalyticsBody({
         <Card>
           <CardHeader title="By hour of day" description={`Every weekday summed. The busiest hour is ${peakHour.label} UTC.`} />
           <CardBody>
-            <ColumnChart columns={hours} highlight={peakHour.key} format={formatCompact} axisFormat={formatCompact} label="Requests by hour of day" height={220} />
+            <ColumnChart columns={hours} highlight={peakHour.key} format={formatCompact} axisFormat={formatCompact} label="Requests by hour of day" labelEvery={6} height={220} />
           </CardBody>
         </Card>
         <Card>
           <CardHeader title="By region" description="Requests in the period, with median latency" />
-          <CardBody className="flex flex-col gap-8">
+          <CardBody className="flex flex-col">
+            {/* Four rows spread over the card's height, so it ends level with the chart beside it. */}
             <BarList
+              className="flex-1 justify-around"
               label="Requests by region"
               highlight={regions[0].label}
               format={formatCompact}
               items={regions.map((r) => ({ key: r.label, label: <span className="font-mono text-xs">{r.label}</span>, value: r.value, meta: `p50 ${formatDuration(r.p50)}` }))}
             />
-            <div className="mt-auto border-t border-line pt-5">
-              <p className="t-eyebrow mb-3">Share of requests</p>
-              <CompositionBar label="Share of requests by region" format={formatCompact} parts={regions.map((r, i) => ({ label: r.label, value: r.value, color: i + 1 }))} />
-            </div>
           </CardBody>
         </Card>
       </Row>

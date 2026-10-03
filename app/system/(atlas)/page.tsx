@@ -29,7 +29,7 @@ export default function AtlasHome() {
         <h1 className="t-display mt-8">
           One dashboard. <span className="max-md:block">Every surface.</span>
           <br />
-          <span className="t-gradient">Both operators.</span>
+          <span className="text-accent-ink">Both operators.</span>
         </h1>
         <div className="mt-10 grid items-end gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
           <div>

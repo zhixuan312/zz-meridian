@@ -21,7 +21,8 @@ import { formatDate } from '@/lib/format-date';
 import type { CustomerRecord } from '@/system/fixtures/sample-records';
 
 const PLAN_TONE = { Enterprise: 'accent', Scale: 'neutral', Starter: 'neutral' } as const;
-const STATUS_TONE = { active: 'positive', trial: 'accent', 'past due': 'critical' } as const;
+/** Colour only where a row needs a look: past due and trial. Active is the normal case, so it stays quiet. */
+const STATUS_TONE = { active: 'neutral', trial: 'accent', 'past due': 'critical' } as const;
 const STATUS_LABEL = { active: 'Active', trial: 'Trial', 'past due': 'Past due' } as const;
 
 const columns: Column<CustomerRecord>[] = [
@@ -39,7 +40,7 @@ const columns: Column<CustomerRecord>[] = [
   { key: 'requests', header: 'Requests', numeric: true, mobile: 'fact', sortValue: (c) => c.requests, cell: (c) => formatCompact(c.requests), mobileCell: (c) => `${formatCompact(c.requests)} requests` },
   {
     key: 'trend', header: 'Last 14 days', hideBelow: 'lg',
-    cell: (c) => <span className="block w-28"><Sparkline values={c.trend} color={c.status === 'past due' ? 'neutral' : 'accent'} height={24} /></span>,
+    cell: (c) => <span className="block w-28"><Sparkline values={c.trend} color="neutral" height={24} /></span>,
   },
   { key: 'errors', header: 'Error rate', numeric: true, muted: true, hideBelow: 'xl', sortValue: (c) => c.errorRate, cell: (c) => <span className={c.errorRate > 0.01 ? 'font-medium text-warning-ink' : undefined}>{formatPercent(c.errorRate, 2)}</span> },
   { key: 'spend', header: 'Spend', numeric: true, mobile: 'fact', sortValue: (c) => c.spend, cell: (c) => formatCost(c.spend) },

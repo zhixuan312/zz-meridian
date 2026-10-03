@@ -37,7 +37,7 @@ export default async function EntryPage({ params }: { params: Promise<{ section:
         <p className="t-kicker">{sec.num ? `Layer ${sec.num} · ${sec.title}` : sec.title}</p>
         <div className="mt-5 flex flex-wrap items-center gap-x-4 gap-y-2">
           <h1 className="t-page">{e.title}</h1>
-          {e.status ? <Badge tone={e.status === 'stable' ? 'positive' : e.status === 'beta' ? 'accent' : 'warning'} dot className="mt-2">{e.status}</Badge> : null}
+          {e.status ? <Badge tone={e.status === 'draft' ? 'warning' : 'neutral'} dot className="mt-2">{e.status}</Badge> : null}
         </div>
         {(spec?.lead || e.summary) ? <p className="t-lead mt-4 max-w-[62ch] text-pretty">{spec?.lead || e.summary}</p> : null}
         <p className="t-mono mt-4 text-ink-3">{e.source}</p>

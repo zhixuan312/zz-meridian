@@ -61,7 +61,7 @@ export function OverviewBody({
               ]}
             />
           </FeaturedMetric>
-          <div className="flex min-w-0 flex-col gap-(--stack-gap)">
+          <div className="grid min-w-0 gap-(--stack-gap) md:grid-cols-3 lg:flex lg:flex-col">
             <MetricTile
               label="Error rate"
               hint="Share of requests answered with a 5xx or a 429."

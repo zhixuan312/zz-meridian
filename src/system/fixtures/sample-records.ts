@@ -6,7 +6,7 @@ import { CUSTOMER_ROWS, DEMO_NOW, REQUESTS, type RequestRow } from '@/system/fix
 
 export type StatusClass = '2xx' | '3xx' | '4xx' | '5xx';
 export const statusClass = (s: number): StatusClass => (s >= 500 ? '5xx' : s >= 400 ? '4xx' : s >= 300 ? '3xx' : '2xx');
-export const statusTone = (s: number) => (s >= 500 ? 'critical' : s === 429 ? 'warning' : s >= 400 ? 'warning' : 'positive') as 'critical' | 'warning' | 'positive';
+export const statusTone = (s: number) => (s >= 500 ? 'critical' : s === 429 ? 'warning' : s >= 400 ? 'warning' : 'neutral') as 'critical' | 'warning' | 'neutral';
 export const STATUS_TEXT: Record<number, string> = { 200: 'OK', 201: 'Created', 400: 'Bad request', 404: 'Not found', 429: 'Rate limited', 500: 'Server error', 503: 'Unavailable' };
 
 export function requestById(id: string): RequestRow | undefined {

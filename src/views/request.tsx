@@ -6,9 +6,7 @@ import { ArrowRight, Copy, Link2, RotateCw, ShieldBan, Terminal } from 'lucide-r
 import { PageFrame, Row, Stack } from '@/components/base/shell';
 import { Button } from '@/components/ui/button';
 import { Card, CardBody, CardFooter, CardHeader } from '@/components/ui/card';
-import { CopyField } from '@/components/ui/copy-field';
 import { KeyValue } from '@/components/ui/key-value';
-import { Tabs, Tab, TabList, TabPanel } from '@/components/ui/tabs';
 import { toast } from '@/components/ui/toast';
 import { detailHead } from '@/components/patterns/detail-head';
 import { cn } from '@/lib/cn';
@@ -16,7 +14,7 @@ import { formatDuration } from '@/lib/format';
 import { formatDateTime, formatRelative } from '@/lib/format-date';
 import { DEMO_NOW, type RequestRow } from '@/system/fixtures/sample';
 import { STATUS_TEXT, statusTone, type Span } from '@/system/fixtures/sample-records';
-import { formatBytes, StatusBadge } from '@/system/sample-cells';
+import { formatBytes } from '@/system/sample-cells';
 import { domain } from '@/app.config';
 
 const curlOf = (r: RequestRow, body: string) =>
@@ -108,10 +106,8 @@ export function RequestView({ request: r, trace, payloads }: { request: RequestR
               <KeyValue
                 columns={2}
                 items={[
-                  { label: 'Request ID', value: <CopyField value={r.id} label="Request ID" className="w-full" /> },
                   { label: 'Received', value: <time dateTime={r.at}>{formatDateTime(r.at)}</time> },
                   { label: 'Endpoint', value: <span className="font-mono text-xs" title={`${r.method} ${r.route}`}><span className="text-ink-3">{r.method}</span> {r.route}</span> },
-                  { label: 'Status', value: <StatusBadge status={r.status} /> },
                   { label: 'Latency', value: <span className={r.latency > 1000 ? 'font-medium text-warning-ink' : undefined}>{formatDuration(r.latency)}</span> },
                   { label: 'Response size', value: formatBytes(r.bytes) },
                   { label: 'Customer', value: <Link href={`/requests?q=${encodeURIComponent(r.customer)}`} className="link">{r.customer}</Link> },
@@ -134,18 +130,17 @@ export function RequestView({ request: r, trace, payloads }: { request: RequestR
             </CardBody>
           </Card>
         </Row>
-        <Card>
-          <Tabs defaultValue="request">
-            <div className="flex items-center gap-4 px-(--card-pad) pt-3">
-              <TabList aria-label="Payload">
-                <Tab value="request">Request body</Tab>
-                <Tab value="response">Response body</Tab>
-              </TabList>
-            </div>
-            <TabPanel value="request" className="px-(--card-pad) pt-4 pb-(--card-pad)"><Code body={payloads.request} label="Request body" /></TabPanel>
-            <TabPanel value="response" className="px-(--card-pad) pt-4 pb-(--card-pad)"><Code body={payloads.response} label="Response body" /></TabPanel>
-          </Tabs>
-        </Card>
+        {/* The two payloads side by side: read together, and neither stretched across the whole page. */}
+        <Row split="1/2">
+          <Card>
+            <CardHeader title="Request body" description={`${r.method} ${r.route}`} divided />
+            <CardBody className="pt-5"><Code body={payloads.request} label="Request body" /></CardBody>
+          </Card>
+          <Card>
+            <CardHeader title="Response body" description={`${r.status} ${STATUS_TEXT[r.status] ?? ''}`} divided />
+            <CardBody className="pt-5"><Code body={payloads.response} label="Response body" /></CardBody>
+          </Card>
+        </Row>
       </Stack>
     </PageFrame>
   );

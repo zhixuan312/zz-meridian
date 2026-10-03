@@ -9,8 +9,8 @@ Status: beta
 | Row | Pattern | Console | Mobile |
 |---|---|---|---|
 | Masthead | Detail head: "← Requests", the ID in mono with its status Badge, facts (method and route, latency, customer, when), More actions, Copy as cURL, and Replay as the primary when the request failed (5xx or 429) | One band | Facts wrap; actions on their own row |
-| 1 | Row `2/3`: Request facts (Key value, two columns, with the ID as a Copy field and the customer linking to their requests) · Trace (one bar per phase on a shared scale) | Side by side | Stacked |
-| 2 | One card with Tabs: Request body, Response body, each a code block with Copy | Full width | Full width |
+| 1 | Row `2/3`: Request facts (Key value, two columns, the customer linking to their requests; the ID and status are in the head, not repeated) · Trace (one bar per phase on a shared scale) | Side by side | Stacked |
+| 2 | Request body and Response body side by side, each a card with a code block and Copy | 1/2 + 1/2 | Stacked |
 
 ## States
 
@@ -42,7 +42,7 @@ Replay and blocking a key are a person's actions here. An agent that wants eithe
 ## Accessibility
 
 - The trace carries a hidden table of phases and durations.
-- The ID's Copy field is named "Request ID".
+- The ID is the page title; "Copy request ID" in the menu copies it.
 
 ## Content
 
