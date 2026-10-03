@@ -1,6 +1,8 @@
 # Agents
 
-How a Meridian dashboard works with an agent: an AI assistant that reads the dashboard and acts on it through tools. Agents work in two places: an MCP host, a chat where the dashboard appears as an MCP App, and the console's own assistant, a panel on every console page (`docs/assistant.md`). The agent gets no separate interface. It uses the same views a person does, under five rules, and every rule has a part in the system that enforces it.
+How a Meridian dashboard works with an agent: an AI assistant that reads the dashboard and acts on it through tools, under five rules, each enforced by a part of the system.
+
+Agents work in two places: an MCP host, a chat where the dashboard appears as an MCP App, and the console's own assistant, a panel on every console page (`docs/assistant.md`). The agent gets no separate interface. It uses the same views a person does.
 
 ## The model
 
