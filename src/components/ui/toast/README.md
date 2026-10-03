@@ -23,7 +23,7 @@ Status: beta
 
 ## Sizes
 
-Width 380px (the viewport less 32px on phones); stack of at most three, 8px apart, newest at the bottom.
+Width 380px (the viewport less 32px on phones); stack of at most three, 8px apart, newest last.
 
 ## States
 
@@ -42,7 +42,7 @@ Width 380px (the viewport less 32px on phones); stack of at most three, 8px apar
 ## Surfaces
 
 - **Console**: bottom right, 16px from the edges.
-- **Mobile**: bottom, full width less 16px each side, above the safe area.
+- **Mobile** (below 640px): top, full width less 16px each side, below the safe area, so a bottom sheet's actions are never under a toast.
 - **Embed**: not used; the host owns notifications. A completed action in an embed changes the view itself.
 
 ## Agents
