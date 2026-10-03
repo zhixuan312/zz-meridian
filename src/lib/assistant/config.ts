@@ -3,7 +3,7 @@ import { createAnthropic } from '@ai-sdk/anthropic';
 import { createOpenAICompatible } from '@ai-sdk/openai-compatible';
 import type { LanguageModel } from 'ai';
 
-export type AssistantConfig = { model: LanguageModel; secret: string };
+type AssistantConfig = { model: LanguageModel; secret: string };
 
 const SECRET_TEXT = 'meridian.assistant.approvals';
 

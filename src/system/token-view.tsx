@@ -3,8 +3,8 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { cn } from '@/lib/cn';
 import { over, parse, ratio, type RGBA } from '@/lib/color';
-import type { Accent, Density } from '@/lib/preferences';
-import { Scope, StageBar } from '@/system/card-stage';
+import type { Accent } from '@/lib/preferences';
+import { Scope, StageBar, type Density } from '@/system/card-stage';
 import type { TokenGroup } from '@/system/tokens-data';
 import { app } from '@/app.config';
 

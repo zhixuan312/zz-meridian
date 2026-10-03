@@ -8,6 +8,7 @@
  * - Every token a specification names in backticks, and every var(--x) or (--x) a component uses, exists.
  * - No literal colour (hex, rgb, hsl) and no Tailwind default palette in the layers: colours come from roles.
  * - One implementation: the fixtures a collection serves are read through src/data/collections.ts, not imported again.
+ * - No dormant code: every export of src/lib and src/data is imported by a file a product keeps.
  */
 import fs from 'node:fs';
 import path from 'node:path';
@@ -121,6 +122,53 @@ for (const f of LAYERS) {
     if (m[1]) continue;
     for (const n of valueNames(m[2])) if (covered.has(n)) problems.push(`${f}: imports ${n} from the fixtures; read it through ${COLLECTIONS}`);
   }
+}
+
+// ── No dormant code: an export nothing a product keeps imports ───────────────────────────────────────
+// A product keeps everything except tests, previews, the Atlas pages and the Atlas-only modules scripts/brand.ts removes
+// (read from its list, so the two never disagree). A type the docs tell a product to use stays exported by the sample using it.
+const atlasOnly = [...read('scripts/brand.ts').matchAll(/const atlasOnly = \[([^\]]*)\]/g)].flatMap((m) => [...m[1].matchAll(/'([^']+)'/g)].map((x) => `src/system/${x[1]}`));
+if (!atlasOnly.length) problems.push('scripts/brand.ts: no atlasOnly list found, so the dormant-code rule cannot tell what a product keeps');
+const SWEPT = /^src\/(lib|data)\//;
+const kept = ['src', 'app', 'scripts'].flatMap((d) => walk(d, /\.tsx?$/)).filter((f) => !/(^|\/)preview\.tsx$/.test(f) && !f.startsWith('app/system/') && !atlasOnly.includes(f));
+const resolveSpec = (from: string, spec: string) => {
+  const base = spec.startsWith('@/') ? path.join('src', spec.slice(2)) : spec.startsWith('.') ? path.join(path.dirname(from), spec) : null;
+  if (!base) return null;
+  return [base, `${base}.ts`, `${base}.tsx`, `${base}/index.ts`, `${base}/index.tsx`].find((c) => /\.tsx?$/.test(c) && fs.existsSync(path.join(ROOT, c)) && fs.statSync(path.join(ROOT, c)).isFile()) ?? null;
+};
+/** For every module: the names a kept importer uses, or '*' when one takes them all. */
+const used = new Map<string, Set<string>>();
+const use = (f: string | null, name: string) => { if (f) used.set(f, (used.get(f) ?? new Set()).add(name)); };
+const useNames = (f: string | null, clause: string) => {
+  for (const part of clause.split(',').map((s) => s.trim()).filter(Boolean)) use(f, part.replace(/^type\s+/, '').split(/\s+as\s+/)[0]);
+};
+for (const f of kept) {
+  const src = read(f).replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
+  for (const m of src.matchAll(/\b(?:import|export)\s+(?:type\s+)?([^'";]*?)\s*from\s*['"]([^'"]+)['"]/g)) {
+    const to = resolveSpec(f, m[2]);
+    if (to === f) continue;
+    const clause = m[1].trim();
+    if (/^\*/.test(clause) || clause === '') use(to, '*');
+    else {
+      const def = clause.match(/^([A-Za-z_$][\w$]*)\s*(?:,|$)/);
+      if (def) use(to, 'default');
+      const named = clause.match(/\{([^}]*)\}/);
+      if (named) useNames(to, named[1]);
+      if (/,\s*\*\s+as\b/.test(clause)) use(to, '*');
+    }
+  }
+  for (const m of src.matchAll(/\bimport\s*['"]([^'"]+)['"]/g)) use(resolveSpec(f, m[1]), '*');
+  for (const m of src.matchAll(/\bimport\(\s*['"]([^'"]+)['"]\s*\)/g)) use(resolveSpec(f, m[1]), '*');
+}
+const EXPORT_DECL = /^export\s+(?:declare\s+)?(?:async\s+)?(?:const|let|var|function\*?|class|abstract\s+class|type|interface|enum)\s+([A-Za-z_$][\w$]*)/gm;
+for (const f of walk('src', /\.tsx?$/).filter((x) => SWEPT.test(x) && !/(^|\/)preview\.tsx$/.test(x))) {
+  const src = read(f);
+  const names = new Set([...src.matchAll(EXPORT_DECL)].map((m) => m[1]));
+  if (/^export\s+default\b/m.test(src)) names.add('default');
+  for (const m of src.matchAll(/^export\s+(?:type\s+)?\{([^}]*)\}/gm)) for (const part of m[1].split(',').map((s) => s.trim()).filter(Boolean)) names.add(part.replace(/^type\s+/, '').split(/\s+as\s+/).pop()!);
+  const u = used.get(f);
+  if (u?.has('*')) continue;
+  for (const n of names) if (!u?.has(n)) problems.push(`${f}: exports ${n}, which nothing a product keeps imports`);
 }
 
 console.log(problems.join('\n') || 'check: ok');

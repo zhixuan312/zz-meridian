@@ -16,7 +16,7 @@ import type { PageContext } from '@/lib/assistant/prompt';
 import { REASONS, clearThread, closeOpenApprovals, loadThread, saveThread } from './thread';
 
 /** Reads the page from the scroll region: the masthead title and the visible text. */
-export function readPage(path: string): PageContext {
+function readPage(path: string): PageContext {
   const region = document.querySelector<HTMLElement>('[data-scroll-region]');
   return { path, title: region?.querySelector('h1')?.textContent ?? '', text: region?.innerText ?? '' };
 }

@@ -9,7 +9,7 @@
 export const PERIODS = ['7d', '30d', '90d', 'all'] as const;
 export type Period = (typeof PERIODS)[number];
 
-export const DEFAULT_PERIOD: Period = '30d';
+const DEFAULT_PERIOD: Period = '30d';
 
 export const PERIOD_LABEL: Record<Period, string> = {
   '7d': 'Last 7 days',
@@ -29,16 +29,4 @@ export const PERIOD_DAYS: Record<Period, number | null> = {
 /** Narrow an untrusted query param. Never casts a raw string through. */
 export function parsePeriod(raw: string | null | undefined): Period {
   return (PERIODS as readonly string[]).includes(raw ?? '') ? (raw as Period) : DEFAULT_PERIOD;
-}
-
-/**
- * The cutoff instant for a period, or `null` for `all`.
- *
- * Pass this into a bound query parameter (`received_at >= $1`) — never
- * interpolate a period into SQL as a string.
- */
-export function periodCutoff(period: Period, now: Date = new Date()): Date | null {
-  const days = PERIOD_DAYS[period];
-  if (days === null) return null;
-  return new Date(now.getTime() - days * 24 * 60 * 60 * 1000);
 }

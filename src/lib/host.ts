@@ -5,7 +5,7 @@
  * Dependency-free on purpose. A product that already uses @modelcontextprotocol/ext-apps can replace this module with
  * its `App` and keep every component unchanged: components only see `useSurface()`.
  */
-export const PROTOCOL = '2026-01-26';
+const PROTOCOL = '2026-01-26';
 
 export type DisplayMode = 'inline' | 'fullscreen' | 'pip';
 export type HostContext = {

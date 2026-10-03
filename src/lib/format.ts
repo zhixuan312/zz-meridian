@@ -22,7 +22,7 @@ export function formatCost(amount: number | null): string {
 }
 
 /** Money at a glance, for dense tables and tiles: $1.2M, $340K, $912. The exact amount belongs in the tooltip. */
-export function formatCostCompact(amount: number | null): string {
+function formatCostCompact(amount: number | null): string {
   if (amount === null) return '—';
   const sign = amount < 0 ? '-' : '';
   const a = Math.abs(amount);
@@ -52,7 +52,7 @@ export function formatDuration(ms: number | null): string {
   return `${(totalMinutes / 60).toFixed(1)}h`;
 }
 
-export function formatCount(n: number | null): string {
+function formatCount(n: number | null): string {
   if (n === null) return '—';
   return n.toLocaleString('en-US');
 }

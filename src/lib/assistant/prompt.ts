@@ -4,7 +4,7 @@ import { app } from '@/app.config';
 export type PageContext = { path: string; title: string; text: string };
 
 /** The most page text the model is given, in characters. */
-export const PAGE_TEXT_LIMIT = 24_000;
+const PAGE_TEXT_LIMIT = 24_000;
 
 /** `now` in the product's timezone, as YYYY-MM-DD. */
 const today = (now: Date) => new Intl.DateTimeFormat('en-CA', { timeZone: app.timezone, year: 'numeric', month: '2-digit', day: '2-digit' }).format(now);

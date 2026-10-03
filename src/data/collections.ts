@@ -3,7 +3,7 @@
  * its fixtures; a product replaces `rows` with its API and `clock` with `new Date()`.
  */
 import { z } from 'zod';
-import { arrayCollection, type AnyCollection } from '@/lib/collection';
+import { arrayCollection, type AnyCollection, type Collection } from '@/lib/collection';
 import { API_KEYS, type ApiKey } from '@/system/fixtures/sample-records';
 import { MEMBERS, ROLES, STATUSES, TEAMS, type Member } from '@/system/fixtures/sample-members';
 import { DEMO_NOW, REQUESTS, type RequestRow } from '@/system/fixtures/sample';
@@ -13,7 +13,7 @@ export const clock = (): Date => DEMO_NOW;
 
 const date = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
 
-export const members = arrayCollection<Member, 'id'>({
+export const members: Collection<Member, 'id'> = arrayCollection({
   name: 'members',
   label: 'Members',
   description: 'The people in the workspace, with their role, team, status and when they last used it.',
@@ -32,7 +32,7 @@ export const members = arrayCollection<Member, 'id'>({
   allow: ['create', 'update', 'remove'],
 });
 
-export const keys = arrayCollection<ApiKey, 'id'>({
+export const keys: Collection<ApiKey, 'id'> = arrayCollection({
   name: 'keys',
   label: 'API keys',
   description: 'The workspace\'s API keys: who owns each, what it can reach, and when it was last used.',
@@ -53,7 +53,7 @@ export const keys = arrayCollection<ApiKey, 'id'>({
   hidden: ['secret'],
 });
 
-export const requests = arrayCollection<RequestRow, 'id'>({
+export const requests: Collection<RequestRow, 'id'> = arrayCollection({
   name: 'requests',
   label: 'Requests',
   description: 'The API requests the workspace received, newest first, with status, latency and customer.',

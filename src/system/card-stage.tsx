@@ -3,7 +3,7 @@
 import { Suspense, useState, type ReactNode } from 'react';
 import { ExternalLink } from 'lucide-react';
 import { cn } from '@/lib/cn';
-import { ACCENTS, type Accent, type Density, ACCENT_SWATCH } from '@/lib/preferences';
+import { ACCENTS, type Accent, type Preferences, ACCENT_SWATCH } from '@/lib/preferences';
 import { CARDS } from '@/system/registry';
 import { Segmented } from '@/components/ui/segmented';
 
@@ -13,6 +13,8 @@ type Width = 'fluid' | 'phone';
 const SWATCH = ACCENT_SWATCH;
 
 /** Tokens re-scoped on a subtree: the stage shows a card in any theme, accent and density without leaving the page. */
+export type Density = Preferences['density'];
+
 export function Scope({ theme, accent, density, children, className }: { theme: 'dark' | 'light'; accent: Accent; density: Density; children: ReactNode; className?: string }) {
   return (
     <div data-theme={theme} data-accent={accent} data-density={density} className={cn('relative isolate overflow-hidden bg-ground text-ink', className)}>

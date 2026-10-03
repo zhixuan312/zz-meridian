@@ -12,7 +12,7 @@ import { app } from '@/app.config';
  * boundary server-side, or the chart and the totals will disagree by a day at
  * the edges and nothing in the UI will explain why.
  */
-export const DISPLAY_TIMEZONE = app.timezone;
+const DISPLAY_TIMEZONE = app.timezone;
 
 type DateInput = Date | string | number;
 
@@ -29,7 +29,6 @@ function parts(d: Date): Record<string, string> {
     day: '2-digit',
     hour: '2-digit',
     minute: '2-digit',
-    second: '2-digit',
     hour12: false,
   });
   return Object.fromEntries(fmt.formatToParts(d).map((p) => [p.type, p.value]));
@@ -49,27 +48,6 @@ export function formatDateTime(input: DateInput): string {
   if (!d) return String(input);
   const p = parts(d);
   return `${p.day} ${p.month} ${p.year}, ${p.hour}:${p.minute}`;
-}
-
-/** `08:04:31` */
-export function formatTime(input: DateInput): string {
-  const d = toDate(input);
-  if (!d) return String(input);
-  const p = parts(d);
-  return `${p.hour}:${p.minute}:${p.second}`;
-}
-
-/** `2026-06-09` — the key format for daily buckets. */
-export function formatIsoDate(input: DateInput): string {
-  const d = toDate(input);
-  if (!d) return String(input);
-  const fmt = new Intl.DateTimeFormat('en-CA', {
-    timeZone: DISPLAY_TIMEZONE,
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-  });
-  return fmt.format(d);
 }
 
 /** `just now` · `5 min ago` · `3 h ago` · `7 d ago` · then an absolute date. */
