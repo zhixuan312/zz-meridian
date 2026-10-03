@@ -44,7 +44,7 @@ Meridian's rules for the embed surface:
 4. **Fullscreen is the console without the shell.** The same `Stack` and `Row`s as the page, under an `EmbedFrame` head (title, freshness, Open in ZZ Meridian), with tabs instead of the rail.
 5. **Report height, never scroll inline.** The view measures its body and sends `size-changed`; an inline embed has no scrollbar of its own.
 6. **Respect the safe area.** Padding adds `safeAreaInsets` on mobile hosts.
-7. **Act through the host.** A button in an embed calls a tool or sends a message; it never navigates the frame. Destructive actions are not offered inline.
+7. **Act through the host.** A button in an embed calls a tool or sends a message; it never navigates the frame. A destructive action is never a bare button: it is a Proposal marked critical, and it runs only when the person approves.
 
 The token bridge, applied by `EmbedFrame` (`data-surface="embed"`), maps the host's variables onto Meridian's roles and falls back to Meridian's own value when the host sends nothing:
 
@@ -65,13 +65,13 @@ What does not bridge: the accent, the status colours and the chart slots (they c
 
 ## Two operators: people and agents
 
-A dashboard used to have one operator: a person pointing, tapping and typing. A Meridian dashboard has two. The second is an agent, an AI assistant that reads the dashboard and acts on it through tools, usually from a chat where the dashboard appears as an MCP App. The agent does not get a different interface. It gets the same views, with five rules that make them safe and useful to share:
+A dashboard used to have one operator: a person pointing, tapping and typing. A Meridian dashboard has two. The second is an agent, an AI assistant that reads the dashboard and acts on it through tools. It works in two places: from a chat where the dashboard appears as an MCP App, and in the console's own assistant panel (`docs/assistant.md`). The agent does not get a different interface. It gets the same views, with five rules that make them safe and useful to share:
 
 | Rule | What it means | Where it lives |
 |---|---|---|
 | **Addressable** | Every view's state is in its address: the period, filters, the selected record, the sort, the page. An agent opens exactly the view it means by calling a tool with those arguments; a person shares a link that opens the same view. | Query parameters on console routes; the same names as tool arguments on embed routes |
 | **Legible** | Every embed view tells the model what is on screen, as a sentence and as structured facts, and tells it again when that changes (a filter, the period, the day the Meridian points at). "Why did this spike?" then has a referent. | `useShareView` (`ui/update-model-context`) |
-| **Consent** | An agent may read anything the person may read. It changes nothing without a person: every write it wants arrives as a Proposal (what changes, before and after, why, what else it touches) with Approve and Dismiss. Destructive changes are never proposed inline; the proposal links to the console. | Proposal |
+| **Consent** | An agent may read anything the person may read. It changes nothing without a person: every write it wants arrives as a Proposal (what changes, before and after, why, what else it touches) with Approve and Dismiss. A removal is proposed like any other change, marked critical, and runs only when approved. | Proposal |
 | **Provenance** | Whatever an agent did stays marked: an activity line names the agent and the person it acted for ("Claude raised the rate limit · for Jonas Weber"); a filter or a view an agent set says so until a person changes it. | Agent mark, Activity feed, Filter bar |
 | **Handoff** | A person can hand any card to the agent in one press: Ask posts a question about exactly what the card shows into the conversation. It appears only where an agent is listening, so the console never shows a dead control. | Ask about |
 
@@ -81,9 +81,9 @@ These rules cost the console almost nothing (addressable state is good practice 
 
 | | Console | Mobile | Embed inline | Embed fullscreen |
 |---|---|---|---|---|
-| Reads | Activity and audit only | Same | The view's shared context | The view's shared context |
-| Asks (person to agent) | Not offered | Not offered | Ask on cards | Ask on cards |
-| Proposes (agent to person) | Proposals inbox (Activity) | Same | One Proposal card per tool result | Proposals in the page |
+| Reads | The assistant panel reads the page and the product's data; Activity shows its audit | Same | The view's shared context | The view's shared context |
+| Asks (person to agent) | The assistant panel (a third column from 1024px) | The assistant panel as a sheet | Ask on cards | Ask on cards |
+| Proposes (agent to person) | A Proposal in the assistant's thread; the inbox in Activity | Same | One Proposal card per tool result | Proposals in the page |
 | Marks | Agent mark and "via" | Same | Same | Same |
 
 ## Inventory

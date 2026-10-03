@@ -4,13 +4,18 @@ Every release of ZZ Meridian, newest first. Versions follow semver: a removed or
 
 ## [Unreleased]
 
-From two field reports of bringing Meridian into existing projects (issues #1 and #2).
+From two field reports of bringing Meridian into existing projects (issues #1 and #2), and the console's own assistant.
 
 ### Added
 
+- **The assistant** (`docs/assistant.md`, decision 0008): a panel on every console page that answers about the page and finds, adds, changes and removes records through Proposals the person approves. Off until `ASSISTANT_PROVIDER`, `ASSISTANT_API_KEY` and `ASSISTANT_MODEL` are set (and `ASSISTANT_BASE_URL` for `openai-compatible`), read on every request; Anthropic or any OpenAI-compatible provider through the AI SDK. Approvals are signed, a removal is proposed with the critical tone, the thread is kept in the browser (the last 100 messages), and Settings has "Show the assistant". `.env.example` lists the variables.
+- **Collections** (`src/lib/collection.ts`, `src/data/collections.ts`): one description of each set of records, read by the pages, changed by their server actions and offered to the assistant as tools; `pageOnly` and `hidden` keep what only a page may do or see out of every tool. A **Members** page (invite, suspend, reactivate, remove) shows it; API keys and Requests read and change through it.
+- `check.ts` rules: a fixture a collection serves is read only through `src/data/collections.ts`, and every export of `src/lib` and `src/data` is imported by a file a product keeps.
+- `scripts/fake-llm.ts` and `scripts/assistant.ts`: `pnpm verify` runs the assistant off, then on against a fake OpenAI-compatible model, and checks that the key reaches no page, payload, script or response.
+- `brand.ts --product` writes an Assistant section (the variables, `src/data/collections.ts`, the sign-in check in the dashboard layout and in `app/api/assistant/route.ts`) into the product README and AGENTS.md. The skill covers the assistant.
 - **`brand.ts --product`**: the person gets their dashboard, not the design system. It removes the Atlas, card and page specifications, previews, `docs/`, `decisions/`, the changelog and the skill, and rewrites the README and AGENTS.md. The skill uses it by default.
 - **Timeline** (`charts/timeline`): bars from a start to an end day, grouped by workstream, on month hairlines with a today line, an optional monthly heat row and a screen-reader table.
-- `Freshness run` for batch results ("Run 12 Mar 2026", never stale); `formatCostCompact` and the `compact` / `cost-compact` format names.
+- `Freshness run` for batch results ("Run 12 Mar 2026", never stale); the `compact` / `cost-compact` format names.
 - `MetricTile` takes a format name (so a server page can render it) and a word value for a categorical state.
 - `Rail` takes `user` and `signOut`, and shows Workspace settings only when the navigation has `/settings`.
 
@@ -31,6 +36,9 @@ From two field reports of bringing Meridian into existing projects (issues #1 an
 
 ### Breaking
 
+- Agents may now propose a removal: `docs/agents.md`, `docs/surfaces.md` and the Proposal, Settings and Keys specifications no longer say a destructive change is never proposed. Keep an operation away from every agent with `pageOnly`.
+- `formatTime`, `formatIsoDate` and `periodCutoff` are removed (use `formatDateTime`, `Intl.DateTimeFormat` or `PERIOD_DAYS`); `readPage`, `AssistantConfig`, `PAGE_TEXT_LIMIT`, `luminance`, `DISPLAY_TIMEZONE`, `formatCostCompact`, `formatCount`, `PROTOCOL`, `DEFAULT_PERIOD`, `THEMES`, `DENSITIES` and `ThemePref` are no longer exported, and `Density` is `Preferences['density']`.
+- The Keys view no longer keeps its own rows: it takes them and its actions from the page.
 - `NumberFormat` gains `compact` and `cost-compact`; `CompositionBar`'s `neutral-soft` is now `neutral-ink`.
 - `Table` `hideBelow` reads the table's own width (from 0.1.0's later commits).
 - Product pages that relied on Field's native `required` validation should validate in the page, which already shows `error`.

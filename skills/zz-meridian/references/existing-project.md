@@ -30,6 +30,16 @@ Migrate in place, page by page, keeping their data layer.
    business logic untouched. Do the busiest page first, show it to the person, then the rest.
 7. Run `node scripts/brand.ts` for their name and colour, then `pnpm verify` until it passes.
 
+## Adding the assistant
+
+A product that adopts the assistant also brings: `app/api/assistant/route.ts`, `src/lib/assistant/`,
+`src/lib/collection.ts`, `src/data/collections.ts`, and the panel (`src/components/patterns/assistant/`, mounted by
+`AppShell`, with `assistant` passed from `app/(dashboard)/layout.tsx`); add `ai`, `@ai-sdk/react`, `@ai-sdk/anthropic`,
+`@ai-sdk/openai-compatible` and `zod` to the dependencies. Point `src/data/collections.ts` at their data, put their
+sign-in check in the layout and in the route, and set `ASSISTANT_PROVIDER`, `ASSISTANT_API_KEY` and `ASSISTANT_MODEL`
+(plus `ASSISTANT_BASE_URL` for `openai-compatible`): it stays off until they are set. The "Show the assistant" switch is
+in `src/views/settings.tsx`.
+
 ## Route A2: a static HTML page (data fetched as JSON)
 
 The simplest case. Create a new Meridian project (SKILL.md steps 3 and 4, with `--product`) and point a module in

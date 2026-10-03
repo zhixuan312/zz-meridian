@@ -39,7 +39,7 @@ If a pair fails, lower the chroma, or give the preset a lightness override for t
 
 ## 4. Connect your data
 
-Your pages read data from `src/data/` and nowhere else. Add `src/data/<product>.ts` with your types and queries and point your pages at it. The template's own sample, ZZ Meridian's own dashboard, lives in `src/system/fixtures/` because the Atlas and every card preview read it; leave it there. Shape your records to the types the patterns define (`ActivityEvent`, `Incident`, `Service`) and they render without adapters. Two rules carry over:
+Your pages, your server actions and the assistant read and change records through `src/data/collections.ts`, and read nothing else. Replace its collections with yours (rows from your API, or `arrayCollection` while you build), add `src/data/<product>.ts` for any other types and queries, and point your pages at them. The template's own sample, ZZ Meridian's own dashboard, lives in `src/system/fixtures/` because the Atlas and every card preview read it; leave it there. Shape your records to the types the patterns define (`ActivityEvent`, `Incident`, `Service`) and they render without adapters. Two rules carry over:
 
 - Read freshness from when the data arrived (the newest ingest time), never from `now()`.
 - Return `null` for "not measured"; the formatters render it as a dash, never as zero.
@@ -62,6 +62,8 @@ If a page seems to need a new style, it needs a pattern or a component instead: 
 ## 6. Put it in front of an agent
 
 Each route under `app/embed/` is an MCP App view. Register each as a `ui://` resource and a tool on your MCP server (`docs/agents.md`), and the dashboard appears in any MCP Apps host, inline beside the answer, with Expand, Ask and Proposals working.
+
+The console's assistant is off until you set four `ASSISTANT_*` variables (`.env.example`); it uses the same collections, so nothing more is wired. See `docs/assistant.md`, and put your sign-in check in the dashboard layout and in `app/api/assistant/route.ts`.
 
 ## Before you ship
 

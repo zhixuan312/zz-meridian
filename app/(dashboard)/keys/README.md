@@ -31,7 +31,7 @@ The keys come from `collections.keys` (`src/data/collections.ts`), read on every
 
 ## Embed view
 
-Not offered. Keys are secrets and revoking is destructive; neither belongs in a chat.
+Not offered. Keys are secrets, and creating one is a page-only operation. In the console the assistant may propose revoking a key; the secret is hidden from it.
 
 ## Surfaces
 
@@ -39,7 +39,7 @@ Not offered. Keys are secrets and revoking is destructive; neither belongs in a 
 
 ## Agents
 
-An agent may say which keys are unused (from the shared context of other views) and may propose revoking a key; it never creates one. The proposal waits for approval, and its approval removes the key through the same collection.
+An agent may say which keys are unused (from the shared context of other views) and may propose revoking a key (a critical Proposal); it never creates one. The proposal waits for approval, and its approval removes the key through the same collection.
 
 ## Content
 

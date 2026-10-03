@@ -38,7 +38,7 @@ Appearance reads and writes `usePreferences()` (stored on the device). Time zone
 
 ## Agents
 
-This is where people govern agents: whether assistants may read, which are connected, and the rule (locked on) that nothing an agent proposes runs without approval. Deleting is never proposed.
+This is where people govern agents: whether assistants may read, which are connected, and the rule (locked on) that nothing an agent proposes runs without approval, a removal included. The assistant section, shown only where the product has an assistant, holds the person's switch for its panel.
 
 ## Accessibility
 

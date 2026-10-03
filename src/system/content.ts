@@ -63,6 +63,7 @@ export const DOCS: { id: string; section: SectionId; file: string; title?: strin
   { id: 'overview', section: 'start', file: 'README.md', title: 'Overview' },
   { id: 'surfaces', section: 'start', file: 'docs/surfaces.md' },
   { id: 'agents', section: 'start', file: 'docs/agents.md' },
+  { id: 'assistant', section: 'start', file: 'docs/assistant.md' },
   { id: 'start-a-dashboard', section: 'start', file: 'docs/start-a-dashboard.md' },
   { id: 'data-display', section: 'start', file: 'docs/data-display.md' },
   { id: 'voice', section: 'start', file: 'docs/voice.md' },

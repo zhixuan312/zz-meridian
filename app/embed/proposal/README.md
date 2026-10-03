@@ -6,7 +6,7 @@ Status: beta
 
 ## The consent rule
 
-An agent may read anything the person may read. It changes nothing on its own. Every write it wants becomes a Proposal: what changes (before and after), why, with the evidence it used, and what else it touches. Approve runs the change once; Dismiss closes it; neither can be undone by the agent. Destructive changes (deleting, revoking) are never proposed inline: the agent links to the console instead. Settings shows this rule, locked on.
+An agent may read anything the person may read. It changes nothing on its own. Every write it wants becomes a Proposal: what changes (before and after), why, with the evidence it used, and what else it touches. Approve runs the change once; Dismiss closes it; neither can be undone by the agent. A removal (deleting, revoking) is proposed like any other change, marked critical, and runs only when approved. Settings shows this rule, locked on.
 
 ## Structure
 

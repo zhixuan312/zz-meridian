@@ -62,7 +62,7 @@ The frame is where an agent's tool result appears. Its view shares what is on sc
 ## Do and do not
 
 - Do give an inline view one job and fit it in about 480px.
-- Do not put a rail, a masthead or a destructive action in an embed.
+- Do not put a rail, a masthead or a bare destructive button in an embed: a removal arrives as a critical Proposal and runs only when approved.
 
 ## Implementation
 

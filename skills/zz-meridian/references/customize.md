@@ -5,9 +5,9 @@ them; each starts with a comment that explains its job.
 
 ## Data: `src/data/`
 
-`src/data/` is the product's own seam: pages and views import data from it and nowhere else. It starts empty but for a
-README. Write `src/data/<product>.ts`. The template's sample, ZZ Meridian's own dashboard, lives in `src/system/fixtures/`; your pages
-never import it, and it goes once the sample pages are replaced.
+`src/data/` is the product's own seam: pages and views import data from it and nowhere else. Write `src/data/<product>.ts`. The template's
+sample, ZZ Meridian's own dashboard, lives in `src/system/fixtures/`; your pages never import it, but
+`src/data/collections.ts` does, so it stays until each collection's `rows` come from your data (see "The assistant").
 
 - **Types from the person's world.** Turn their schema, CSV headers or API into TypeScript types (`Order`, `Shipment`,
   `Invoice`). Name fields the way their team says them.
@@ -40,7 +40,8 @@ short string, used only for something that needs attention ("1").
 | Systems and incidents | `app/(dashboard)/health/` + `src/views/health.tsx` | Status summary |
 | Customers, accounts, people | `app/(dashboard)/customers/` + `src/views/customers.tsx` | Table with sparklines |
 | Keys, tokens, secrets | `app/(dashboard)/keys/` + `src/views/keys.tsx` | Table with masked values |
-| Settings (a sample: keep only if asked) | `app/(dashboard)/settings/` + `src/views/settings.tsx` | Form sections |
+| Records people add, edit and remove (also what the assistant reads) | `app/(dashboard)/members/`, `app/(dashboard)/keys/` + `src/views/members.tsx`, `src/views/keys.tsx` | Data table over a collection |
+| Settings (a sample: keep only if asked; its Assistant section holds the assistant's switch) | `app/(dashboard)/settings/` + `src/views/settings.tsx` | Form sections |
 | Sign in, not found | `app/sign-in/` (`page.tsx` + `panel.tsx`), `app/not-found.tsx` + `src/views/standalone.tsx` | One sentence at display size |
 
 The health preset assumes software services. For other things that are up or not (warehouses, branches, sites), pass
@@ -63,6 +64,21 @@ Rules that make every page look like it belongs:
 - **A page spec** next to each route (`README.md`: summary, Structure, States, Surfaces, Agents), so the next person, or
   agent, knows what the page is for. `node scripts/check.ts` requires Structure and States.
 
+## The assistant
+
+The dashboard carries an assistant panel (`src/components/patterns/assistant/`, mounted by `AppShell`). It is off until
+the variables are set, read per request, so no rebuild is needed: `ASSISTANT_PROVIDER` (`anthropic` or
+`openai-compatible`), `ASSISTANT_API_KEY` and `ASSISTANT_MODEL` are required, and `ASSISTANT_BASE_URL` is required for
+`openai-compatible`. `docs/assistant.md` in the template has the full guide.
+
+- **Collections** live in `src/data/collections.ts`: one `arrayCollection` per kind of record, with `rows`, the `fields`
+  schema, `allow` (which of create, update and remove the assistant may propose) and `hidden` fields. Replace each
+  `rows` with the person's API and `clock` with `new Date()`; the assistant reads and proposes changes only through them.
+- **Sign-in check** goes in two places, the same check: `app/(dashboard)/layout.tsx` and `app/api/assistant/route.ts`
+  (before the model is reached).
+- **The switch** ("Show the assistant") is in `src/views/settings.tsx`. A product that deletes Settings moves it, or the
+  person can no longer hide the panel.
+
 ## Brand beyond the accent
 
 Logo: replace the SVG in `src/components/base/app-mark/index.tsx`, keeping the sizes (20, 24, 28, 32) and the empty alt.
@@ -79,10 +95,13 @@ writes go through `Proposal` (see `app/embed/proposal/`). Read `docs/agents.md` 
 
 ## Clean-up before validation
 
-Delete the sample pages, views and embed views the product does not use, with their nav lines. In a `--product` build
-nothing else reads `src/system/fixtures/` or `src/system/sample-cells.tsx`, so delete them too once your pages no
-longer import them (with the Atlas kept, the previews read them: leave them, and remove the pages' entries in `PAGES` in
-`src/system/content.ts`). Then fix what still points at the sample:
+Delete the sample pages, views and embed views the product does not use, with their nav lines. Do not delete
+`src/system/fixtures/` or `src/system/sample-cells.tsx` yet: `src/data/collections.ts` and `app/(dashboard)/layout.tsx`
+import the fixtures. Once your collections' `rows`, `clock` and the layout's `DEMO_NOW` and `ALERTS` come from your own
+data and nothing imports them, delete them (with the Atlas kept, the previews read them: leave them, and remove the
+pages' entries in `PAGES` in `src/system/content.ts`). Keep `src/data/collections.ts`, `src/lib/collection.ts`,
+`src/lib/assistant/`, `app/api/assistant/` and the assistant panel, unless the person does not want the assistant (it
+then stays off without them). Then fix what still points at the sample:
 
 - `src/views/standalone.tsx`: the footer status line and its link to `/health`, and `app/not-found.tsx`'s "Check service
   health" link.

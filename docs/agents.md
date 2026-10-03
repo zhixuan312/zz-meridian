@@ -1,6 +1,6 @@
 # Agents
 
-How a Meridian dashboard works with an agent: an AI assistant that reads the dashboard and acts on it through tools, usually from a chat where the dashboard appears as an MCP App. The agent gets no separate interface. It uses the same views a person does, under five rules, and every rule has a part in the system that enforces it.
+How a Meridian dashboard works with an agent: an AI assistant that reads the dashboard and acts on it through tools. Agents work in two places: an MCP host, a chat where the dashboard appears as an MCP App, and the console's own assistant, a panel on every console page (`docs/assistant.md`). The agent gets no separate interface. It uses the same views a person does, under five rules, and every rule has a part in the system that enforces it.
 
 ## The model
 
@@ -30,9 +30,9 @@ Every embed view tells the model what is on screen, as one plain sentence and as
 
 An agent may read anything the person may read. It changes nothing without the person. Every write the agent wants arrives as a **Proposal**: what will change, from what to what, why (with the evidence it used), and what else it touches. Approve runs it once; Dismiss closes it. The person can always see the before and the after before agreeing.
 
-Destructive changes (revoke, delete, disable) are never proposed inline. The Proposal links to the console page where the person does it themselves.
+A removal (revoke, delete) is proposed like any other change: the Proposal is marked critical, says what will be removed, and runs only when the person approves it. In the console's assistant the approval is signed by the server, so a forged one never runs. What only a page may do stays off every agent's reach (`pageOnly` in `docs/assistant.md`).
 
-**In the system:** `Proposal` (pending, applying, applied, dismissed, failed); `app/embed/proposal` shows one end to end.
+**In the system:** `Proposal` (pending, applying, applied, dismissed, failed, expired); `app/embed/proposal` shows one end to end in a host; the assistant panel draws the same card in its thread.
 
 ### 4. Provenance
 
@@ -52,6 +52,10 @@ A person hands any card to the agent with one press. **Ask** posts a question ab
 - Prefer facts to adjectives: "errors rose from 0.6% to 2.1% on 21 and 22 September", not "errors spiked".
 - Share what the person can see, nothing more: a hidden column is not context.
 - Keep the structured part flat and stable: `{ view, period, day, filters }`. The model will compare it across turns.
+
+## The console's own assistant
+
+The second place is inside the product. The assistant panel reads the page the person is on, looks records up through the product's collections (`src/data/collections.ts`) and proposes changes as Proposals in its thread. It follows the same rules: it reads what the person may read, changes nothing without approval, and leaves its mark (the Agent mark and the "Assistant" caption). It is off until a model is configured. `docs/assistant.md` says how to switch it on and point it at your data, and how the same tools can later be offered from an MCP server.
 
 ## Building an MCP server for the template
 

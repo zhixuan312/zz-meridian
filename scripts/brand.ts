@@ -12,7 +12,7 @@
  * theme, a step at a time, until every pair in every theme passes. --no-atlas removes the Design Atlas: its routes, its
  * modules, its nav and footer links, its build tracing and its markdown packages (the card previews stay: the gate checks them).
  * --product goes further, for a dashboard that is not the design system: --no-atlas, and the card specs and previews,
- * page specs, docs, decisions, changelog and skill go too; the components, tokens, scripts and gates stay.
+ * page specs, docs, decisions, changelog and skill go too (the assistant, its collections and its fake model stay); the components, tokens, scripts and gates stay.
  */
 import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';
@@ -184,7 +184,23 @@ if (has('--product')) {
   delete p.scripts?.registry;
   write('package.json', JSON.stringify(p, null, 2) + '\n');
   const product = read('src/app.config.ts').match(/name: '([^']*)'/)?.[1] ?? 'Dashboard';
-  write('README.md', `# ${product}\n\nA dashboard built on ZZ Meridian (Next.js, React, Tailwind v4, DTCG tokens).\n\n## Run it\n\n\`\`\`sh\npnpm install\npnpm dev        # http://localhost:3000\npnpm verify     # the gate, a production build, the browser audit and every control pressed\n\`\`\`\n\n## Where things are\n\n| Path | What |\n|---|---|\n| \`src/app.config.ts\` | Name, workspace, accent, timezone, currency, the signed-in user and the navigation |\n| \`src/data/\` | The data the pages read |\n| \`src/views/\`, \`app/\` | The pages |\n| \`src/components/\` | Meridian's components and patterns |\n| \`tokens/\` | Colour, type, space and motion (run \`pnpm tokens\` after a change) |\n`);
+  write('README.md', `# ${product}\n\nA dashboard built on ZZ Meridian (Next.js, React, Tailwind v4, DTCG tokens).\n\n## Run it\n\n\`\`\`sh\npnpm install\npnpm dev        # http://localhost:3000\npnpm verify     # the gate, a production build, the browser audit and every control pressed\n\`\`\`\n\n## Where things are\n\n| Path | What |\n|---|---|\n| \`src/app.config.ts\` | Name, workspace, accent, timezone, currency, the signed-in user and the navigation |\n| \`src/data/collections.ts\` | Where pages, actions and the assistant read and change records |\n| \`src/views/\`, \`app/\` | The pages |\n| \`src/components/\` | Meridian's components and patterns |\n| \`tokens/\` | Colour, type, space and motion (run \`pnpm tokens\` after a change) |
+
+## Assistant
+
+The dashboard carries an assistant panel. It is off until \`ASSISTANT_PROVIDER\`, \`ASSISTANT_API_KEY\` and \`ASSISTANT_MODEL\` are set, and \`ASSISTANT_BASE_URL\` too for \`openai-compatible\` (copy \`.env.example\` to \`.env.local\`):
+
+| Variable | What |
+|---|---|
+| \`ASSISTANT_PROVIDER\` | \`anthropic\` or \`openai-compatible\` |
+| \`ASSISTANT_API_KEY\` | The provider's API key; the approval secret is derived from it |
+| \`ASSISTANT_MODEL\` | The model id |
+| \`ASSISTANT_BASE_URL\` | The endpoint; required for \`openai-compatible\`, optional for \`anthropic\` |
+
+- Collections live in \`src/data/collections.ts\`: replace each \`rows\` with your API and \`clock\` with \`new Date()\`. The assistant reads and proposes changes only through them.
+- Add your sign-in check in the dashboard layout (\`app/(dashboard)/layout.tsx\`) and in \`app/api/assistant/route.ts\`, before the model is reached.
+- \`pnpm verify\` runs the assistant off, then on against a fake model (\`scripts/fake-llm.ts\`).
+`);
   const agents = read('AGENTS.md');
   const cut = agents.indexOf('# Working in Meridian');
   if (cut >= 0) write('AGENTS.md', agents.slice(0, cut) + `# Working in this dashboard
@@ -193,7 +209,8 @@ Built on ZZ Meridian. Keep it the way it was built:
 
 - **Build up, never sideways.** A page arranges patterns from \`src/components/patterns\`; a pattern composes \`src/components/ui\`; a value is a token. Never write a colour, size or shadow that is not a token; \`node scripts/check.ts\` fails on literal colours and on Tailwind utilities outside Meridian's scales (they render nothing).
 - **Tokens** live in \`tokens/*.tokens.json\`; run \`pnpm tokens\` after a change and never edit \`src/styles/tokens.css\` or \`theme.css\`.
-- **Data** comes from \`src/data/\` and nowhere else.
+- **Data** comes from \`src/data/collections.ts\` and nowhere else; the assistant reads the same collections.
+- **Agents in the product** read freely and write only through a Proposal; mark agent work with the Agent mark and "via".
 - **Before finishing**: \`pnpm verify\` (the gate, a production build, the browser audit at every width and theme, and every control pressed).
 `);
   done.push('product only: card specs and previews, page specs, docs, decisions, the changelog and the skill removed; README rewritten for the product');

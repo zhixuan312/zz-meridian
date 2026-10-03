@@ -93,7 +93,9 @@ Read `references/customize.md` and follow it. In short:
 
 - **Data first.** Write `src/data/<product>.ts` for the person's domain: real types from their schema or materials, and
   deterministic sample data until they wire their API. Pages import data from `src/data/` and nowhere else. Delete the
-  sample pages you replace, and `src/system/fixtures/` and `src/system/sample-cells.tsx` once nothing imports them. Prove the
+  sample pages you replace. `src/data/collections.ts` imports `src/system/fixtures/` (and the dashboard layout imports
+  `DEMO_NOW` and `ALERTS` from it), so the fixtures and `src/system/sample-cells.tsx` stay until nothing imports them:
+  replace each collection's `rows` with the person's data first, then delete them. Prove the
   numbers before building pages: a `tests/data.test.ts` asserting the counts your pages need (vitest resolves `@/`;
   plain `node` does not).
 - **Navigation** in `src/app.config.ts`; one line per page.
@@ -101,8 +103,13 @@ Read `references/customize.md` and follow it. In short:
   out. Every page has one protagonist (a featured metric, a table, a form), a kicker, a title and one sentence.
 - **Remove what they did not ask for**: sample pages, their nav lines, their embed views, their entries in
   `src/system/content.ts` (if the Atlas stays), and the links that point at them. Settings is a sample page too:
-  delete it unless asked (theme, accent and density stay in the rail's appearance menu and the command palette).
+  delete it unless asked (theme, accent and density stay in the rail's appearance menu and the command palette), but the
+  assistant's on/off switch ("Show the assistant") lives in Settings: keep the page, or tell the person the switch goes
+  with it.
   `references/customize.md` has the checklist and the grep that finds what is left.
+- **The assistant** is built in and off until `ASSISTANT_PROVIDER`, `ASSISTANT_API_KEY` and `ASSISTANT_MODEL` are set
+  (`ASSISTANT_BASE_URL` is required for `openai-compatible`). Point `src/data/collections.ts` at the person's data, and
+  put their sign-in check in `app/(dashboard)/layout.tsx` and in `app/api/assistant/route.ts`; see `references/customize.md`.
 - **MCP App views** under `app/embed/` only if they asked for the agent surface; see `docs/agents.md` in the template.
 
 Build up, never sideways: use Meridian's components and tokens. A new colour, size or shadow is a token, never a literal;

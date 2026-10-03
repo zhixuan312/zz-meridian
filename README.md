@@ -42,6 +42,10 @@ A change at the bottom moves everything above it, and nothing above may invent a
 
 People point, tap and type; agents call tools. Both use the same views, under five rules: addressable, legible, consent, provenance and handoff. `docs/surfaces.md` and `docs/agents.md` say how.
 
+## The assistant
+
+The console has its own assistant: a panel on every page that answers questions about what is on screen and proposes changes for the person to approve. It is off until you give it a model with four environment variables, and it works on the same collections as your pages (`src/data/collections.ts`). `docs/assistant.md` covers switching it on, pointing it at your data, what keeps it safe, and what it costs.
+
 ## The signature
 
 **The Meridian** is one time cursor shared by every chart and tile on a page. Point at a day in any chart, or move through it with the arrow keys, and every chart draws the same line and every figure reads that day. In an MCP host the same day is told to the model, so "why did this happen?" has a referent.
@@ -60,10 +64,10 @@ Dark is the default, written on `:root`; the light theme follows the operating s
 | `src/components/{base,ui,patterns,charts}/` | Layers 1 to 3: one folder per card, holding the component, its `README.md` specification and its `preview.tsx` |
 | `app/(dashboard)/`, `app/embed/`, `app/sign-in/` | Layer 4: the template's routes, each with its page specification |
 | `app/system/` | The Design Atlas |
-| `src/data/` | Your product's data seam: the only place pages read data from |
+| `src/data/` | Your product's data seam: `collections.ts` is where pages, actions and the assistant read and change records |
 | `src/system/fixtures/` | The sample: ZZ Meridian's own dashboard, which the Atlas, the previews and the sample pages read |
 | `src/lib/` | Formatters, dates, periods, colour maths, the host bridge |
-| `docs/` | Guides: surfaces, agents, starting a dashboard, data display, voice, the benchmark |
+| `docs/` | Guides: surfaces, agents, the assistant, starting a dashboard, data display, voice, the benchmark |
 | `decisions/` | One record per lasting decision |
 | `scripts/` | Generators, gates, `brand.ts` and `verify.ts` (see `CONTRIBUTING.md`) |
 | `skills/zz-meridian/` | The Claude Code skill that builds new dashboards on this template |
