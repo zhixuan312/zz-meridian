@@ -9,17 +9,18 @@ Status: beta
 | Row | Pattern | Console | Mobile |
 |---|---|---|---|
 | Masthead | Detail head: "← Requests", the ID in mono with its status Badge, facts (method and route, latency, customer, when), More actions, Copy as cURL, and Replay as the primary when the request failed (5xx or 429) | One band | Facts wrap; actions on their own row |
-| 1 | Row `2/3`: Request facts (Key value, two columns, the customer linking to their requests; the ID and status are in the head, not repeated) · Trace (one bar per phase on a shared scale) | Side by side | Stacked |
-| 2 | Request body and Response body side by side, each a card with a code block and Copy | 1/2 + 1/2 | Stacked |
+| 1 | Row `2/3`: Request facts (Key value, two columns: received, endpoint, latency, response size, customer linking to their requests, region, API key, cost, and model and tokens only on the routes that call a model; the ID and status are in the head, not repeated) · Trace (one bar per phase on a shared scale: gateway, auth, queue, the route's own work, the response) | Side by side | Stacked |
+| 2 | Request body and Response body side by side, each a card with a code block (wrapping, never scrolling sideways) and Copy | 1/2 + 1/2 | Stacked |
 
 ## States
 
 | State | What shows |
 |---|---|
-| Success | Status `positive`; the model phase in the accent; no primary action |
-| Rate limited, rejected | Status `warning`; the trace ends at the limit or the validation phase, in `critical` |
-| Failed | Status `critical`; the model and error phases in `critical`; Replay is the primary |
-| Unknown ID | The console's Not found page |
+| Success | Status `neutral`; the route's own phase (Model, Search, Storage or Parse) in the accent; no primary action |
+| Rate limited, rejected, not found | Status `warning`; the trace ends at the limit, the validation or the lookup phase, in `critical`; tokens and cost read "None, refused"; the response is a short error body |
+| No request body (GET, DELETE) | The Request body card says "No body: a GET carries everything it needs in its address." in a dashed frame; Copy as cURL sends no `-d`; Replay says it runs again without "with the same body" |
+| Failed | Status `critical`; the route's own phase and the error phase in `critical`; Replay is the primary |
+| Unknown ID | The page renders the console's Not found screen itself (`MissingPage`, see `app/not-found/README.md`), with `noindex`, rather than throwing `notFound()`, so the screen is in the first HTML |
 
 ## Data
 
