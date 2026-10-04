@@ -30,11 +30,11 @@ export function MethodChip({ method }: { method: string }) {
 
 /**
  * A method and its route. In a list whose rows are all different routes the route truncates; where the route is the
- * row's whole identity and the column is narrow (Analytics on a phone), `wrap` lets it break after a slash instead.
+ * row's whole identity and the column is narrow (Analytics on a phone), `wrap` stacks the method over the route below 640px and lets the route break after a slash instead.
  */
 export function RouteCell({ method, route, wrap }: { method: string; route: string; wrap?: boolean }) {
   return (
-    <span className={cn('flex min-w-0 gap-2.5', wrap ? 'items-start' : 'items-center')}>
+    <span className={cn('flex min-w-0', wrap ? 'flex-col items-start gap-1 sm:flex-row sm:gap-2.5' : 'items-center gap-2.5')}>
       <MethodChip method={method} />
       {wrap ? (
         <span className="min-w-0 font-mono text-xs leading-5 text-ink">
