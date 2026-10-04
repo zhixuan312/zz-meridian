@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any -- token JSON files have no types; this file runs in Node, never in a page. */
 /**
  * Brand a copy of Meridian for a product, in place.
  *
@@ -167,6 +168,12 @@ if (has('--no-atlas') || has('--product')) {
   // Nav entries for /system and /system/... exactly (never /systemic), then any group they leave empty.
   let cfg = read('src/app.config.ts').replace(/\n\s*\{ href: '\/system(?:\/[^']*)?'[^}]*\},/g, '');
   cfg = cfg.replace(/\n {2}\{\n(?: {4}label: '[^']*',\n)? {4}items: \[\s*\],\n {2}\},/g, '');
+  // The icons only those entries used: an import left behind fails the lint gate.
+  cfg = cfg.replace(/import \{([^}]*)\} from 'lucide-react';/, (_m, names: string) => {
+    const body = cfg.slice(cfg.indexOf("from 'lucide-react';") + 20);
+    const kept = names.split(',').map((n) => n.trim()).filter((n) => n && (n.startsWith('type ') || new RegExp(`\\b${n}\\b`).test(body)));
+    return `import {\n  ${kept.join(', ')},\n} from 'lucide-react';`;
+  });
   write('src/app.config.ts', cfg);
   // The standalone screens' footer link to the Atlas (the sample's footer, src/views/sample-footer.tsx).
   write('src/views/sample-footer.tsx', read('src/views/sample-footer.tsx').replace(/\n\s*<Link href="\/system"[^\n]*<\/Link>/, ''));
