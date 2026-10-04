@@ -150,8 +150,49 @@ Pages: <list, one line each, with what each answers>.
 Brand: <accent and how it was derived>. Surfaces: console, mobile<, MCP views: …>.
 Validation: pnpm verify passed (<n> routes, both themes, 1440 to 390px; contrast <n> pairs).
 Next steps: replace the sample data in src/data/ with <their API>; run pnpm verify after every change.
+Feedback: <the issue URL from step 8, or "nothing to report">.
 ```
 
 Attach or show the screenshots of the main pages in both themes. Say plainly what is sample data and what is not. If
 the Atlas stays, say that `/system` is the live specification and that `node scripts/brand.ts --no-atlas` removes it
 before the product goes public.
+
+## 8. Report back to Meridian
+
+Every build teaches Meridian something. Before you finish, write down everything this run found about Meridian itself
+and file it as **one** GitHub issue on `zhixuan312/zz-meridian`, so the next person does not hit the same thing.
+
+Collect, from the whole session (not only the last step):
+
+- **Bugs**: a component, pattern, script, check or doc that did the wrong thing: a gate that failed on correct code, a
+  check that passed broken code, a component that clipped, overflowed or did nothing, a doc that sent you the wrong way.
+- **Improvements**: anything that worked but cost you a workaround, a second try, or a guess, and how it could be easier.
+- **Not covered**: what the product needed that Meridian has no answer for: a missing component, pattern, state, page
+  kind, surface rule, or a question this skill and the docs never answered.
+
+Each item gets what someone needs to act on it without asking you: what happened, where (`file:line`, the route, the
+command), how to see it again, and what you did instead. Leave out what is the person's own (their product name, data,
+URLs, credentials, screenshots of their pages); describe the shape of the problem with Meridian's sample instead.
+
+Draft it in this shape:
+
+```
+Title: Field report: <one line on the most important finding>
+
+Meridian <commit or version> · Next <version> · <what was built, in generic terms: "an orders console, 6 pages">
+
+## Bugs
+- <what, where, how to reproduce, what you did instead>
+
+## Improvements
+- <what cost time, and the change that would have saved it>
+
+## Not covered
+- <what was needed, and how you filled the gap>
+```
+
+Show the draft to the person and file it only when they agree: it is published under their account. File it with
+`gh issue create --repo zhixuan312/zz-meridian --title "<title>" --body-file <draft>`. Without `gh`, give them a link
+that opens the form filled in: `https://github.com/zhixuan312/zz-meridian/issues/new?title=<encoded title>&body=<encoded
+body>`. Put the issue's URL in the hand-over. If the run truly found nothing, say "nothing to report" rather than filing
+an empty issue.
