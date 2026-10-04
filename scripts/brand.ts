@@ -4,7 +4,7 @@
  *   node scripts/brand.ts --name "Atlas Ops" [--workspace "Production"] [--timezone "Europe/London"]
  *                         [--package atlas-ops] [--accent indigo|cobalt|jade|graphite]
  *                         [--currency EUR] [--user "Ada Park" --role Admin]
- *                         [--hex '#E4572E' | --hue 25 --chroma 0.16] [--accent-name brand] [--no-atlas | --product]
+ *                         [--hex '#E4572E' | --hue 25 --chroma 0.16] [--accent-name brand] [--no-atlas | --product | --existing]
  *
  * --hex derives the hue and chroma from a brand colour (chroma capped at 0.18; the theme owns lightness).
  * --hue/--chroma add a new accent preset (OKLCH hue in degrees, chroma 0 to 0.2) and make it the default. The contrast
@@ -13,6 +13,8 @@
  * modules, its nav and footer links, its build tracing and its markdown packages (the card previews stay: the gate checks them).
  * --product goes further, for a dashboard that is not the design system: --no-atlas, and the card specs and previews,
  * page specs, docs, decisions, changelog and skill go too (the assistant, its collections and its fake model stay); the components, tokens, scripts and gates stay.
+ * --existing is for an existing project that brought Meridian in (route A in the skill): it sets the name, accent and the
+ * rest, never renames package.json unless --package is given, and has no Atlas or product branch to run.
  */
 import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';
@@ -28,6 +30,10 @@ const read = (p: string) => fs.readFileSync(file(p), 'utf8');
 const write = (p: string, s: string) => fs.writeFileSync(file(p), s);
 const json = (p: string) => JSON.parse(read(p));
 const done: string[] = [];
+const existing = has('--existing');
+if (existing && (has('--no-atlas') || has('--product'))) {
+  throw new Error('--existing brands a project that brought Meridian in: it has no Atlas to remove, and --product would delete that project\'s own docs, README and decisions');
+}
 
 function setConfig(key: string, value: string) {
   const s = read('src/app.config.ts');
@@ -58,7 +64,8 @@ if (user || role) {
   done.push(`user = ${user ?? m[1]}, ${role ?? m[2]}`);
 }
 
-const pkg = opt('--package') ?? (name ? name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') : undefined);
+// An existing project keeps its own package name unless one is asked for.
+const pkg = opt('--package') ?? (name && !existing ? name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') : undefined);
 if (pkg) {
   const p = json('package.json');
   p.name = pkg;
@@ -217,5 +224,6 @@ Built on ZZ Meridian. Keep it the way it was built:
 }
 
 execFileSync('node', ['scripts/tokens.ts'], { cwd: ROOT, stdio: 'ignore' });
-if (!has('--product')) execFileSync('node', ['scripts/registry.ts'], { cwd: ROOT, stdio: 'ignore' });
+// The card registry exists only where the Atlas's previews do: never after --product, never in an existing project.
+if (fs.existsSync(file('src/system/registry.ts'))) execFileSync('node', ['scripts/registry.ts'], { cwd: ROOT, stdio: 'ignore' });
 console.log(done.length ? 'brand:\n  ' + done.join('\n  ') : 'brand: nothing to change (see the usage at the top of scripts/brand.ts)');

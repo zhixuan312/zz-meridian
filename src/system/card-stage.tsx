@@ -3,7 +3,7 @@
 import { Suspense, useState, type ReactNode } from 'react';
 import { ExternalLink } from 'lucide-react';
 import { cn } from '@/lib/cn';
-import { ACCENTS, type Preferences, ACCENT_SWATCH } from '@/lib/preferences';
+import { ACCENTS, type Preferences } from '@/lib/preferences';
 import { CARDS } from '@/system/registry';
 import { Segmented } from '@/components/ui/segmented';
 
@@ -12,7 +12,6 @@ type Accent = (typeof ACCENTS)[number];
 type ThemeView = 'dark' | 'light' | 'both';
 type Width = 'fluid' | 'phone';
 
-const SWATCH = ACCENT_SWATCH;
 
 /** Tokens re-scoped on a subtree: the stage shows a card in any theme, accent and density without leaving the page. */
 export type Density = Preferences['density'];
@@ -36,7 +35,7 @@ export function StageBar({ theme, setTheme, accent, setAccent, density, setDensi
       <div role="radiogroup" aria-label="Accent" className="flex items-center gap-1">
         {ACCENTS.map((a) => (
           <button key={a} role="radio" aria-checked={accent === a} aria-label={a} title={a[0].toUpperCase() + a.slice(1)} onClick={() => setAccent(a)} className="press hit grid size-7 place-items-center rounded-full ring-offset-2 ring-offset-surface aria-checked:ring-2 aria-checked:ring-ink-2">
-            <span className="size-4 rounded-full ring-1 ring-line" style={{ background: SWATCH[a] }} />
+            <span data-accent={a} className="size-4 rounded-full bg-accent ring-1 ring-line" />
           </button>
         ))}
       </div>

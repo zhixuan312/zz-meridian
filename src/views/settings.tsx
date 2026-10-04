@@ -6,7 +6,7 @@ import { Globe, Lock, Moon, Monitor, Sun, Trash2 } from 'lucide-react';
 import { app, domain, workspaceSlug } from '@/app.config';
 import { cn } from '@/lib/cn';
 import { formatRelative } from '@/lib/format-date';
-import { ACCENTS, ACCENT_SWATCH } from '@/lib/preferences';
+import { ACCENTS } from '@/lib/preferences';
 import { usePreferences } from '@/components/base/providers';
 import { useAssistantAvailable } from '@/components/base/shell';
 import { FormSection, SettingRow } from '@/components/patterns/form-section';
@@ -23,7 +23,6 @@ import { toast } from '@/components/ui/toast';
 import { DEMO_NOW } from '@/system/fixtures/sample';
 import { CONNECTED_HOSTS, TIMEZONES } from '@/system/fixtures/sample-ops';
 
-const SWATCH = ACCENT_SWATCH;
 const wait = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 /** Settings, in sections that save on their own. */
@@ -121,7 +120,7 @@ function Appearance() {
               onClick={() => set({ accent: a })}
               className="press hit grid size-8 place-items-center rounded-full ring-offset-2 ring-offset-surface aria-checked:ring-2 aria-checked:ring-ink-2"
             >
-              <span className="size-5.5 rounded-full ring-1 ring-line" style={{ background: SWATCH[a] }} />
+              <span data-accent={a} className="size-5.5 rounded-full bg-accent ring-1 ring-line" />
             </button>
           ))}
         </div>
