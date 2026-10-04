@@ -30,10 +30,16 @@ export function payloadFiles(dir = ''): string[] {
 
 export const readPayload = (rel: string) => fs.readFileSync(path.join(PAYLOAD, rel), 'utf8');
 
-/** A path inside `root`; anything that would resolve outside it (`..`, an absolute path) is refused. */
+/**
+ * A path inside `root`; anything that would resolve outside it is refused: `..`, an absolute path, or a symbolic link
+ * on the way (a linked folder or file could carry a write somewhere else).
+ */
 export function inside(root: string, rel: string): string {
   const abs = path.resolve(root, rel);
   if (abs !== root && !abs.startsWith(root + path.sep)) throw new Error(`refusing to touch ${rel}: it is outside ${root}`);
+  for (let p = abs; p !== root && p.startsWith(root + path.sep); p = path.dirname(p)) {
+    if (fs.lstatSync(p, { throwIfNoEntry: false })?.isSymbolicLink()) throw new Error(`refusing to touch ${rel}: ${path.relative(root, p)} is a symbolic link`);
+  }
   return abs;
 }
 
@@ -61,6 +67,11 @@ export function packageManager(root: string): 'pnpm' | 'yarn' | 'bun' | 'npm' {
   if (fs.existsSync(path.join(root, 'yarn.lock'))) return 'yarn';
   if (fs.existsSync(path.join(root, 'bun.lock')) || fs.existsSync(path.join(root, 'bun.lockb'))) return 'bun';
   return 'npm';
+}
+
+/** A tool in the project's node_modules, run as `node <its script>`: no shell and no .cmd shim on any platform. */
+export function runTool(root: string, entry: string, args: string[], quiet = true): SpawnSyncReturns<string> {
+  return spawnSync(process.execPath, [path.join(root, 'node_modules', entry), ...args], { cwd: root, encoding: 'utf8', stdio: quiet ? 'pipe' : 'inherit' });
 }
 
 export const hasCommand = (cmd: string) => spawnSync(cmd, ['--version'], { stdio: 'ignore', shell: process.platform === 'win32' }).status === 0;

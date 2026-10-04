@@ -41,7 +41,9 @@ Migrate in place, page by page, keeping their data layer.
    reads its API address from in `scripts/verify.config.ts` (`fakeApi: { script, env }`): verify starts it first and
    builds and serves the app against it. Point the build at it, not only the server: an address read in
    `next.config` rewrites is baked in at build time. If they cannot fake the API yet, do not run `pnpm verify`; run the
-   audit alone (`node scripts/audit.ts --base <url>`), which reads and never presses.
+   audit alone (`node scripts/audit.ts --base <url>`), which reads and never presses. In an adopted project verify
+   refuses to start until `verify.config.ts` names a `fakeApi`, or says `noLiveApi: true` because the pages read and
+   write nothing outside the repository.
 6. List their detail pages worth seeing (a normal record, a failed one, a missing one) in `detailRoutes` in
    `scripts/verify.config.ts`, with ids from the fake API's fixtures, then run `pnpm verify` until it passes.
 

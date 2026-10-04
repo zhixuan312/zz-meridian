@@ -24,9 +24,14 @@ export function create(o: CreateOptions): number {
     return fail('scripts/brand.ts failed (above); the template is copied, so fix the cause and run it again with the same flags');
   }
 
-  // pnpm is the template's own manager; without it the project installs with npm and drops pnpm's files.
-  const pm = hasCommand('pnpm') ? 'pnpm' : 'npm';
-  if (pm === 'npm') for (const f of ['pnpm-lock.yaml', 'pnpm-workspace.yaml']) fs.rmSync(path.join(root, f), { force: true });
+  // pnpm installs from the template's lockfile, with install scripts off (pnpm-workspace.yaml). Without pnpm, corepack
+  // (bundled with Node 22) runs it; only without both does npm install, from the version ranges, with scripts off too.
+  const install: [string, string[]] = hasCommand('pnpm') ? ['pnpm', ['install']] : hasCommand('corepack') ? ['corepack', ['pnpm', 'install']] : ['npm', ['install', '--ignore-scripts']];
+  const pm = install[0] === 'npm' ? 'npm' : 'pnpm';
+  if (pm === 'npm') {
+    for (const f of ['pnpm-lock.yaml', 'pnpm-workspace.yaml']) fs.rmSync(path.join(root, f), { force: true });
+    console.log('pnpm is not available: installing with npm from the version ranges, without a lockfile.');
+  }
 
   const files: Record<string, string> = {};
   const walk = (rel: string) => {
@@ -42,7 +47,7 @@ export function create(o: CreateOptions): number {
   writeManifest(root, { version: VERSION, route: 'create', brand, files });
 
   if (hasCommand('git')) run('git', ['init', '-q'], root);
-  if (o.install && run(pm, ['install'], root).status !== 0) return fail(`${pm} install failed (above); run it again in ${root}`);
+  if (o.install && run(install[0], install[1], root).status !== 0) return fail(`${install.join(' ')} failed (above); run it again in ${root}`);
 
   console.log(`
 ${name} is a new Meridian ${VERSION} dashboard in ${root}.

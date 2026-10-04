@@ -55,6 +55,10 @@ const gate = sh('npm', ['run', 'gate'], app);
 check(gate.status === 0, 'after the restyle, npm run gate passes in the adopted project', gate.stdout + gate.stderr);
 const build = sh('npx', ['next', 'build'], app);
 check(build.status === 0, 'next build passes in the adopted project', build.stdout + build.stderr);
+const refused = sh('npm', ['run', 'verify'], app);
+check(refused.status !== 0 && /presses every control/.test(refused.stdout + refused.stderr), 'verify refuses an adopted project that has not said where its presses go', refused.stdout + refused.stderr);
+const bad = sh('npx', ['--yes', '--package', tarball, 'zz-meridian', 'adopt', '--allow-dirty', '--name', 'a\\b'], app);
+check(bad.status !== 0 && /backslash/.test(bad.stderr), 'a brand value with a backslash is refused before anything is copied', bad.stderr);
 const again = sh('npx', ['--yes', '--package', tarball, 'zz-meridian', 'adopt'], app);
 check(again.status !== 0 && /uncommitted changes/.test(again.stderr), 'a second adopt on the dirty tree refuses', again.stderr);
 

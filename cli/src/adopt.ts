@@ -10,7 +10,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import {
   PAYLOAD, VERSION, brandArgs, inside, installSkill, packageManager, payloadFiles, readJsonc, readPayload, relativeImports,
-  run, sha256, writeIn, writeManifest,
+  run, runTool, sha256, writeIn, writeManifest,
 } from './files.js';
 
 export type AdoptOptions = { root: string; brand: Record<string, string>; allowDirty: boolean; install: boolean };
@@ -70,14 +70,15 @@ function routes(root: string, dir: string): string[] {
     }
   };
   walk(path.join(root, dir), []);
-  return [...new Set(out)].sort((a, b) => (a === '/' ? -1 : b === '/' ? 1 : a.localeCompare(b)));
+  // Only a plain path goes into generated code; anything else is left for the agent to add by hand.
+  return [...new Set(out)].filter((r) => /^\/[\w/.-]*$/.test(r)).sort((a, b) => (a === '/' ? -1 : b === '/' ? 1 : a.localeCompare(b)));
 }
 
 const label = (route: string) => (route === '/' ? 'Home' : route.split('/').pop()!.replace(/[-_]+/g, ' ').replace(/^./, (c) => c.toUpperCase()));
 
 function appConfig(pages: string[]): string {
   const template = readPayload('src/app.config.ts');
-  const items = pages.map((r) => `      { href: '${r}', label: '${label(r).replace(/'/g, "\\'")}', icon: LayoutGrid },`).join('\n');
+  const items = pages.map((r) => `      { href: ${JSON.stringify(r)}, label: ${JSON.stringify(label(r))}, icon: LayoutGrid },`).join('\n');
   return template
     .replace(/^import \{[\s\S]*?\} from 'lucide-react';/m, "import { LayoutGrid, type LucideIcon } from 'lucide-react';")
     .replace(/export const nav: NavGroup\[\] = \[[\s\S]*?\n\];/, `/** Written by zz-meridian adopt from the project's pages: give each its own icon and group them. */\nexport const nav: NavGroup[] = [\n  {\n    items: [\n${items}\n    ],\n  },\n];`);
@@ -101,7 +102,7 @@ function globals(cssRel: string, dir: string): string {
 }
 
 function vitestConfig(alias: string | null): string {
-  const aliases = [`'@meridian': path.resolve(import.meta.dirname, 'src')`, ...(alias !== null ? [`'@': path.resolve(import.meta.dirname, '${alias}')`] : [])];
+  const aliases = [`'@meridian': path.resolve(import.meta.dirname, 'src')`, ...(alias !== null ? [`'@': path.resolve(import.meta.dirname, ${JSON.stringify(alias)})`] : [])];
   return `import { defineConfig } from 'vitest/config';
 import react from '@vitejs/plugin-react';
 import path from 'node:path';
@@ -248,7 +249,8 @@ Rename or move them, then run adopt again.`);
   const ignored = fs.existsSync(ignore) ? fs.readFileSync(ignore, 'utf8') : '';
   if (!/^\/?out\/?$/m.test(ignored)) writes.set('.gitignore', `${ignored.trimEnd()}\n\n# zz-meridian: verify's report and the screenshots\n/out/\n`);
 
-  // ── Write ─────────────────────────────────────────────────────────────────────────────────────────────
+  // ── Write: every target checked first, so a bad one stops it before anything changes ─────────────────
+  try { for (const rel of writes.keys()) inside(root, rel); } catch (e) { return fail((e as Error).message); }
   for (const [rel, content] of writes) writeIn(root, rel, content);
 
   const name = o.brand.name ?? String(pkg.name ?? path.basename(root)).replace(/^@[^/]+\//, '').replace(/[-_]+/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
@@ -267,10 +269,9 @@ Rename or move them, then run adopt again.`);
   if (o.install) {
     say(`\nInstalling with ${pm}…`);
     if (run(pm, ['install'], root).status !== 0) return fail(`${pm} install failed (above). Fix it, then run ${pm} install and ${pm} run typecheck.`);
-    const tool = (n: string) => path.join(root, 'node_modules', '.bin', process.platform === 'win32' ? `${n}.cmd` : n);
     // Route types first (LayoutProps, PageProps), as the gate does.
-    run(tool('next'), ['typegen'], root, true);
-    const tsc = run(tool('tsc'), ['--noEmit'], root, true);
+    runTool(root, 'next/dist/bin/next', ['typegen']);
+    const tsc = runTool(root, 'typescript/bin/tsc', ['--noEmit']);
     typed = tsc.status === 0 ? 'passes' : `fails:\n${(tsc.stdout + tsc.stderr).trim().split('\n').slice(0, 30).join('\n')}`;
   }
 

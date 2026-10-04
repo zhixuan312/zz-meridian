@@ -1,9 +1,11 @@
 # Release the zz-meridian package (decision 0009, docs/distribution.md): gates, pack, the consumer path end to end,
 # then publish with provenance, then tag LAST. Modelled on multi-model-agent's release pipeline.
 #
-# WHY TWO JOBS. `gates` installs the template's dependencies and runs their code (the build, the tests, Chrome); it
-# never holds a publishing credential. `publish` installs nothing: it takes the one tarball `gates` tested, checks its
-# hash, and is the only job with id-token: write. A compromised dependency can fail a release; it cannot publish one.
+# WHY FOUR JOBS. `build` makes the tarball with nothing but Node, git and a pinned TypeScript installed without its
+# scripts, and records its hash. `gates` installs the template's dependencies and runs their code (the gate, the build,
+# the tests, Chrome) against that tarball; it cannot change it and holds no credential. `publish` installs nothing,
+# checks the hash, and is the only job with id-token: write, inside the `npm` environment, which only master may use.
+# `release` runs the package as a consumer would, then tags and writes the Release, without the publishing token.
 #
 # WHY THE TAG IS LAST. The tag proves a finished release. Nothing is tagged until the package is on the registry and a
 # consumer has run it, so "tagged but not on npm" cannot happen.
@@ -12,7 +14,8 @@
 # variable and checked against semver before any shell sees it.
 #
 # SETUP, ONCE (npmjs.com → zz-meridian → Settings → Trusted publisher → GitHub Actions):
-#   owner: zhixuan312   repository: zz-meridian   workflow: release.yml   environment: (none)
+#   owner: zhixuan312   repository: zz-meridian   workflow: release.yml   environment: npm
+# and in this repository, Settings → Environments → npm, deployment branches: master only.
 # That pins THIS FILENAME: renaming it breaks publishing until the setting is updated.
 
 name: release
@@ -25,7 +28,7 @@ on:
         required: true
         type: string
       dry_run:
-        description: 'Gates, pack and the consumer smoke only: publish nothing'
+        description: 'Build, gates and the consumer smoke only: publish nothing'
         required: false
         default: false
         type: boolean
@@ -38,20 +41,20 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  gates:
+  build:
     runs-on: ubuntu-24.04
-    timeout-minutes: 45
+    timeout-minutes: 10
     outputs:
       sha256: ${{ steps.pack.outputs.sha256 }}
-      tarball: ${{ steps.pack.outputs.tarball }}
     env:
       VERSION: ${{ inputs.version }}
-      DRY_RUN: ${{ inputs.dry_run }}
-      CHROME: /usr/bin/google-chrome
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 22
 
       - name: The version is semver and matches every version location
         run: |
@@ -72,25 +75,13 @@ jobs:
             echo "::error::tag v$VERSION exists: bump to a new version"; exit 1
           fi
 
-      - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
-        with:
-          version: 11.9.0   # the template has no packageManager pin (0.2.0); CI names the pnpm it tests with
-      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
-        with:
-          node-version: 22
-          cache: pnpm
-
-      - run: pnpm install --frozen-lockfile
-      - name: The template's gate
-        run: pnpm gate
-      - name: The template builds
-        run: pnpm exec next build
-
+      # Only a pinned compiler, without install scripts: nothing else runs before the hash is taken.
       - name: Build the package from the committed tree
         run: |
           set -euo pipefail
+          npm install --prefix /tmp/tooling --no-save --no-package-lock --ignore-scripts typescript@5.9.3 @types/node@24.19.1
           node cli/scripts/build-payload.ts
-          pnpm exec tsc -p cli/tsconfig.json
+          /tmp/tooling/node_modules/.bin/tsc -p cli/tsconfig.json --typeRoots /tmp/tooling/node_modules/@types
           OUT="$(node cli/dist/cli.js --version)"
           [ "$OUT" = "$VERSION" ] || { echo "::error::the CLI reports '$OUT', expected $VERSION"; exit 1; }
 
@@ -99,7 +90,7 @@ jobs:
         run: |
           set -euo pipefail
           cd cli
-          npm pack --pack-destination /tmp/pack >/dev/null
+          npm pack --ignore-scripts --pack-destination /tmp/pack >/dev/null
           T="/tmp/pack/zz-meridian-$VERSION.tgz"
           test -f "$T" || { echo "::error::no tarball at $T"; exit 1; }
           tar -tzf "$T" > /tmp/list
@@ -114,13 +105,9 @@ jobs:
             echo "::error::the tarball holds a path that must never ship (above)"; exit 1
           fi
           tar -xzOf "$T" package/package.json > /tmp/pkg.json
-          node -e 'const p=require("/tmp/pkg.json"); if (p.scripts && Object.keys(p.scripts).some(k=>/install|prepare|prepack|postpack/.test(k))) { console.error("::error::the package declares an install script"); process.exit(1) }'
+          node -e 'const p=require("/tmp/pkg.json"); if (p.dependencies||p.optionalDependencies||p.peerDependencies) { console.error("::error::the package declares dependencies"); process.exit(1) } if (p.scripts && Object.keys(p.scripts).length) { console.error("::error::the package declares scripts"); process.exit(1) }'
           echo "sha256=$(sha256sum "$T" | cut -d' ' -f1)" >> "$GITHUB_OUTPUT"
-          echo "tarball=zz-meridian-$VERSION.tgz" >> "$GITHUB_OUTPUT"
           echo "tarball OK: $CARDS components, $(wc -l < /tmp/list) files"
-
-      - name: The consumer path, from the tarball
-        run: node cli/scripts/smoke.ts --tarball "/tmp/pack/zz-meridian-$VERSION.tgz" --create --verify
 
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
@@ -129,40 +116,71 @@ jobs:
           if-no-files-found: error
           retention-days: 7
 
-  publish:
-    needs: gates
-    if: ${{ inputs.dry_run == false }}
+  gates:
+    needs: build
     runs-on: ubuntu-24.04
-    timeout-minutes: 15
-    permissions:
-      contents: write   # the tag and the Release, both last
-      id-token: write   # npm trusted publishing, and the provenance signature
+    timeout-minutes: 45
     env:
       VERSION: ${{ inputs.version }}
-      SHA256: ${{ needs.gates.outputs.sha256 }}
+      SHA256: ${{ needs.build.outputs.sha256 }}
+      CHROME: /usr/bin/google-chrome
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
+      - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+        with:
+          version: 11.9.0   # the template has no packageManager pin (0.2.0); CI names the pnpm it tests with
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: 22
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+      - name: The template's gate
+        run: pnpm gate
+      - name: The template builds
+        run: pnpm exec next build
+
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: tarball
+          path: /tmp/pack
+      - name: The consumer path, from the built tarball
+        run: |
+          set -euo pipefail
+          T="/tmp/pack/zz-meridian-$VERSION.tgz"
+          [ "$(sha256sum "$T" | cut -d' ' -f1)" = "$SHA256" ] || { echo "::error::the tarball is not the one build made"; exit 1; }
+          node cli/scripts/smoke.ts --tarball "$T" --create --verify
+
+  publish:
+    needs: [build, gates]
+    if: ${{ inputs.dry_run == false }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    environment: npm   # deployment branches: master only; named in npm's trusted-publisher setting
+    permissions:
+      contents: read
+      id-token: write   # npm trusted publishing, and the provenance signature
+    env:
+      VERSION: ${{ inputs.version }}
+      SHA256: ${{ needs.build.outputs.sha256 }}
+    steps:
+      # Node 24's own npm does the OIDC exchange: nothing is installed in the job that can publish.
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24
           registry-url: https://registry.npmjs.org
       - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
           name: tarball
           path: /tmp/pack
 
-      - name: The tarball is the one the gates tested
+      - name: The tarball is the one build made and gates tested; npm can do trusted publishing
         run: |
           set -euo pipefail
           GOT="$(sha256sum "/tmp/pack/zz-meridian-$VERSION.tgz" | cut -d' ' -f1)"
-          [ "$GOT" = "$SHA256" ] || { echo "::error::tarball hash $GOT is not the tested $SHA256"; exit 1; }
-
-      - name: An npm new enough for trusted publishing, and an OIDC token
-        run: |
-          set -euo pipefail
-          npm install -g npm@latest
+          [ "$GOT" = "$SHA256" ] || { echo "::error::tarball hash $GOT is not $SHA256"; exit 1; }
           V="$(npm --version)"
           node -e 'const v=process.argv[1].split(".").map(Number); if (!(v[0]>11||(v[0]===11&&(v[1]>5||(v[1]===5&&v[2]>=1))))) { console.error("::error::npm "+process.argv[1]+" predates trusted publishing (need 11.5.1)"); process.exit(1) }' "$V"
           [ -n "${ACTIONS_ID_TOKEN_REQUEST_URL:-}" ] || { echo '::error::no OIDC token: permissions id-token: write'; exit 1; }
@@ -175,7 +193,7 @@ jobs:
           if [ "$LIVE" = "$VERSION" ]; then
             echo "::notice::zz-meridian $VERSION is already on the registry: skipping the publish"
           else
-            npm publish "/tmp/pack/zz-meridian-$VERSION.tgz" --access public --provenance
+            npm publish "/tmp/pack/zz-meridian-$VERSION.tgz" --access public --provenance --ignore-scripts
           fi
 
       - name: Wait until the registry serves it
@@ -187,12 +205,32 @@ jobs:
           done
           echo "::error::zz-meridian $VERSION never became visible"; exit 1
 
-      - name: A consumer runs it from the registry
+  release:
+    needs: [build, publish]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: write   # the tag and the Release, both last
+    env:
+      VERSION: ${{ inputs.version }}
+      SHA256: ${{ needs.build.outputs.sha256 }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 22
+
+      - name: A consumer runs it from the registry, and it is the tested tarball
         run: |
           set -euo pipefail
           cd "$(mktemp -d)"
           OUT="$(npx --yes "zz-meridian@$VERSION" --version)"
           [ "$OUT" = "$VERSION" ] || { echo "::error::npx zz-meridian@$VERSION reported '$OUT'"; exit 1; }
+          npm pack "zz-meridian@$VERSION" --ignore-scripts >/dev/null
+          GOT="$(sha256sum "zz-meridian-$VERSION.tgz" | cut -d' ' -f1)"
+          [ "$GOT" = "$SHA256" ] && echo "the registry serves the tested tarball" || echo "::warning::the registry's tarball hash $GOT differs from the tested $SHA256"
           npm view "zz-meridian@$VERSION" dist.attestations >/dev/null 2>&1 && echo "provenance attached" || echo "::warning::no provenance attestation reported"
 
       - name: Tag, last

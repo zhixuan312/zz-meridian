@@ -31,6 +31,10 @@ const file = (p: string) => path.join(ROOT, p);
 const read = (p: string) => fs.readFileSync(file(p), 'utf8');
 const write = (p: string, s: string) => fs.writeFileSync(file(p), s);
 const json = (p: string) => JSON.parse(read(p));
+// A brand value is written into TypeScript and JSON: a backslash or a line break could end the string it sits in.
+for (const [i, a] of argv.entries()) {
+  if (a.startsWith('--') && argv[i + 1] !== undefined && /[\\\r\n\u2028\u2029]/.test(argv[i + 1])) throw new Error(`${a} may not contain a backslash or a line break`);
+}
 const done: string[] = [];
 const existing = has('--existing');
 if (existing && (has('--no-atlas') || has('--product'))) {
@@ -241,7 +245,7 @@ The interface is built on ZZ Meridian (https://github.com/zhixuan312/zz-meridian
 - **Build up, never sideways.** A page arranges patterns from \`src/components/patterns\`; a pattern composes \`src/components/ui\`; a value is a token. Never write a colour, size or shadow that is not a token; \`node scripts/check.ts\` fails on literal colours and on Tailwind utilities outside Meridian's scales (they render nothing).
 - **Tokens** live in \`tokens/*.tokens.json\`; run \`pnpm tokens\` after a change and never edit \`src/styles/tokens.css\` or \`theme.css\`.
 - **A component Meridian lacks** is built the same way, in \`src/components/<layer>/<name>/\`, from tokens and the components already there. The specification of every existing one is in the template on GitHub (\`src/components/<layer>/<name>/README.md\`).
-- **Before finishing**: \`pnpm verify\` (the gate, a production build, the browser audit at every width and theme, every control pressed, the keyboard path and Web Vitals). It presses Delete too, so it runs against the fake API named in \`scripts/verify.config.ts\` whenever the pages call a live one.
+- **Before finishing**: \`pnpm verify\` (the gate, a production build, the browser audit at every width and theme, every control pressed, the keyboard path and Web Vitals). It presses Delete too, so it refuses to start until \`scripts/verify.config.ts\` names a \`fakeApi\` for the pages' API, or says \`noLiveApi: true\` because they call none; never point it at a live backend.
 `);
     done.push('AGENTS.md: the Meridian rules appended, so the next agent session keeps the dashboard on Meridian');
   }

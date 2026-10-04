@@ -45,6 +45,9 @@ const [command, arg] = positionals;
 
 function main(): number {
   if (values.version) { console.log(VERSION); return 0; }
+  // A brand value is written into TypeScript and JSON; refuse what could end its string before anything is copied.
+  const unsafe = Object.entries(brand).find(([, v]) => /[\\\r\n\u2028\u2029]/.test(v));
+  if (unsafe) { console.error(`zz-meridian: --${unsafe[0]} may not contain a backslash or a line break`); return 1; }
   if (values.help || !command) { console.log(HELP); return command || values.help ? 0 : 1; }
   if (command === 'adopt') return adopt({ root: process.cwd(), brand, allowDirty: Boolean(values['allow-dirty']), install });
   if (command === 'create') {

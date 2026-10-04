@@ -28,6 +28,17 @@ import config from './verify.config.ts';
 
 const ROOT = path.resolve(import.meta.dirname, '..');
 
+// An adopted project kept its own data layer, which may be a live backend; verify presses Delete. It runs only once the
+// project names a fake API or says its pages call none.
+const manifest = path.join(ROOT, '.meridian/manifest.json');
+if (fs.existsSync(manifest) && JSON.parse(fs.readFileSync(manifest, 'utf8')).route === 'adopt' && !config.fakeApi && !config.noLiveApi) {
+  console.error(`verify presses every control, Delete included, and this project kept its own data layer.
+Before it runs, say in scripts/verify.config.ts where its presses go: a fakeApi that answers every route the pages
+call (see .agents/skills/zz-meridian/references/existing-project.md, step 5), or noLiveApi: true when the pages read
+and write nothing outside this repository.`);
+  process.exit(1);
+}
+
 const noVitals = process.argv.includes('--no-vitals');
 const argv = process.argv.slice(2).filter((a) => a !== '--no-vitals');
 // The detail pages in scripts/verify.config.ts are checked by default; --extra replaces them for one run.

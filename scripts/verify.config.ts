@@ -16,6 +16,12 @@ export type VerifyConfig = {
    */
   fakeApi?: { script: string; env: string };
   /**
+   * In a project that adopted Meridian (zz-meridian adopt), verify refuses to run until it knows its presses cannot
+   * reach a live backend: name a `fakeApi`, or set this to true when the pages read and write nothing outside this
+   * repository (local files, fixtures). Never set it to make verify run against an API.
+   */
+  noLiveApi?: true;
+  /**
    * The product's own browser checks, beside Meridian's audit, presses and keyboard walk: scripts verify runs with
    * `--base <url>` against the built app, failing when one exits non-zero.
    */
