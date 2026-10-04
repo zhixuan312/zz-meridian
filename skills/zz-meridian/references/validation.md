@@ -1,10 +1,12 @@
 # Validation: what `pnpm verify` checks, and how to fix what it finds
 
-`pnpm verify` runs, in order, and stops at the first failing step:
+`pnpm verify` runs these in order. A failing gate, build, start or assistant-off pass stops it there; from the audit on, every
+check runs and the report lists each failure:
 
 1. **The gate** (`node scripts/gate.ts`): tokens regenerate to the same CSS; the card registry is fresh; every card and
-   page specification follows the anatomy; contrast holds for every pair in every theme and accent, and the chart palette
-   passes the colour-vision checks; eslint-config-next; TypeScript; the tests.
+   page specification follows the anatomy; the product's own rules in `scripts/check.local.ts`, when the file exists;
+   contrast holds for every pair in every theme and accent, and the chart palette passes the colour-vision checks;
+   eslint-config-next; TypeScript; the tests.
 2. **A production build** (`next build`), against the fake API when `scripts/verify.config.ts` names one.
 3. **The assistant walk-through**, only when the project has `app/api/assistant/route.ts`: off, then on against a fake
    model.
@@ -15,7 +17,12 @@
    390px. A button that changes nothing, a control something else covers, and a link that answers 4xx all fail.
    **This presses Approve, Revoke and Delete too.** Pages that call a live API must be built against a fake one
    (`fakeApi` in `scripts/verify.config.ts`; see `references/existing-project.md`, step 8), or verify changes real data.
-6. **Web Vitals on a mid-range phone** (`scripts/vitals.ts`): Lighthouse's mobile profile (CPU slowed four times, Slow 4G,
+6. **The whole keyboard path** (`scripts/keyboard.ts`), beside the audit and the presses: Tab through each page until
+   focus comes back round. The first stop in the shell is "Skip to content", every stop shows a focus ring and is not
+   hidden under something such as the sticky top bar, and every visible control is reached. With them run the
+   product's own browser checks (`browserChecks` in `scripts/verify.config.ts`), each given `--base` and the served
+   app's address.
+7. **Web Vitals on a mid-range phone** (`scripts/vitals.ts`): Lighthouse's mobile profile (CPU slowed four times, Slow 4G,
    390px touch). Every product page must hold LCP under 2.5 s, INP under 200 ms and CLS under 0.1; INP is the slowest
    tap on a control that changes the screen. It runs alone, after the others, since throttling measures the machine
    too: on a busy machine, run it again before believing a near miss.

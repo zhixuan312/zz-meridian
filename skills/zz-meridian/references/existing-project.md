@@ -7,17 +7,20 @@ Tell them which route you chose and why, in one sentence, before starting.
 
 Migrate in place, page by page, keeping their data layer.
 
-1. Fetch the template into a temporary folder:
+1. Fetch the template into a temporary folder, unless you are already reading this from a clone of it:
    `git clone --depth 1 https://github.com/zhixuan312/zz-meridian.git /tmp/meridian`
 2. Copy the parts a dashboard is built from into their project (merge, never overwrite their own files of the same
    name without reading them): `tokens/`, `src/styles/`, `src/components/` without the `README.md` and `preview.tsx`
-   files, `src/lib/{cn,format,format-date,period,color,host,preferences,csv,safe-markdown}.ts`, `app/icon.ts`, `scripts/`,
-   `tests/setup.ts`, `vitest.config.ts`, `postcss.config.mjs`, `eslint.config.ts`. Not the design system: no `app/system/`, `src/system/`,
+   files, `src/app.config.ts`, `src/views/console-chrome.tsx`,
+   `src/lib/{cn,format,format-date,period,color,host,preferences,csv,safe-markdown}.ts`, `src/lib/assistant/prompt.ts`,
+   `app/icon.ts`, `scripts/`, `tests/setup.ts`, `vitest.config.ts`, `postcss.config.mjs`, `eslint.config.ts`. The
+   components read the product's name and nav from `src/app.config.ts`, and `AppShell` loads the assistant panel on
+   demand, so the panel's prompt types come along even when the assistant stays off. Not the design system: no `app/system/`, `src/system/`,
    `docs/`, `decisions/` or card specifications. They get a dashboard, not a copy of Meridian. Routes may live in
    `app/` or `src/app/`; the scripts find either.
    If their alias is not `@/* → src/*`, add it to `tsconfig.json`.
 3. Merge dependencies from the template's `package.json` (`next`, `react`, `radix-ui`, `lucide-react`, `clsx`,
-   `tailwind-merge`, `react-markdown`, `remark-gfm`; dev: `tailwindcss`, `@tailwindcss/postcss`, `typescript`,
+   `tailwind-merge`, `react-markdown`, `remark-gfm`, and `ai` and `@ai-sdk/react` for the panel `AppShell` loads; dev: `tailwindcss`, `@tailwindcss/postcss`, `typescript`,
    `vitest`, testing libraries, `eslint`, `eslint-config-next`) and the scripts (`tokens`, `check`, `contrast`, `lint`,
    `gate`, `audit`, `verify`, `brand`, `shot`; not `registry`, which belongs to the Atlas). Keep their versions where
    theirs are newer and compatible.
@@ -26,14 +29,17 @@ Migrate in place, page by page, keeping their data layer.
    step 6 replaces them.
 5. Wrap their root layout like the template's `app/layout.tsx` (fonts, the pre-paint script, `Providers`) and their
    console routes in `AppShell` with the rail, `ShellTools` and the command palette (see `app/(dashboard)/layout.tsx`).
+   The template's layout passes `ShellTools` the sample `ALERTS` and `DEMO_NOW` from `src/system/fixtures/`, which
+   is not copied: pass their own alerts (an empty list until they have some) and their own clock.
    Write their routes into `nav` in `src/app.config.ts`. The Rail and the palette take `nav` as a prop, rendered from a
    client module (`src/views/console-chrome.tsx`), since each destination carries its icon component; if what a person
    may see depends on their role or scope, filter `nav` there from their session, and pass `workspace` and `scopes`
    to the Rail for a scope switcher.
 6. Rebuild each page on `PageFrame`, `Stack` and `Row` with Meridian components, keeping their data fetching and
-   business logic untouched. Do the busiest page first, show it to the person, then the rest.
+   business logic untouched. Do the busiest page first; when the person is there to look, show it to them before the rest.
 7. Run `node scripts/brand.ts --existing` for their name and colour (`--existing` keeps their package name and has no
-   Atlas to remove; never `--product`, which deletes their docs, README and decisions).
+   Atlas to remove; never `--product`, which deletes their docs, README and decisions). It also appends Meridian's
+   rules to their `AGENTS.md` once, so the team's next agent session keeps the dashboard on Meridian.
 8. **Before the first `pnpm verify`, give it a fake API.** verify presses every control it finds on the built app,
    Approve, Revoke, Archive and Delete included. If their pages call a live backend, those presses change it. Write
    `scripts/fake-api.ts`: a server on `--port 0` that answers every route the pages call with typed fixtures (writes
@@ -50,10 +56,10 @@ exists).
 
 ## Adding the assistant
 
-A product that adopts the assistant also brings: `app/api/assistant/route.ts`, `src/lib/assistant/`,
-`src/lib/collection.ts`, `src/data/collections.ts`, and the panel (`src/components/patterns/assistant/`, mounted by
-`AppShell`, with `assistant` passed from `app/(dashboard)/layout.tsx`); add `ai`, `@ai-sdk/react`, `@ai-sdk/anthropic`,
-`@ai-sdk/openai-compatible` and `zod` to the dependencies. Point `src/data/collections.ts` at their data, put their
+The panel (`src/components/patterns/assistant/`) already came with `src/components/`, and `AppShell` mounts it when
+`app/(dashboard)/layout.tsx` passes `assistant`. A product that adopts the assistant also brings
+`app/api/assistant/route.ts`, the rest of `src/lib/assistant/`, `src/lib/collection.ts` and `src/data/collections.ts`;
+add `@ai-sdk/anthropic`, `@ai-sdk/openai-compatible` and `zod` to the dependencies. Point `src/data/collections.ts` at their data, put their
 sign-in check in the layout, in the route and in every server action, and set `ASSISTANT_PROVIDER`, `ASSISTANT_API_KEY` and `ASSISTANT_MODEL`
 (plus `ASSISTANT_BASE_URL` for `openai-compatible`): it stays off until they are set. The "Show the assistant" switch is
 in `src/views/settings.tsx`.
