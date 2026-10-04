@@ -49,8 +49,10 @@ async function ask(text: string) {
   await until('Send to enable', () => page.eval<boolean>(`!document.querySelector('${SEND}').disabled`), Boolean);
   await page.eval(`document.querySelector('${SEND}').click()`);
 }
-/** What the assistant's latest text says (a Proposal card's own text is not the assistant speaking). */
-const said = () => page.eval<string>(`[...document.querySelectorAll('aside[data-assistant] [data-role=assistant] > p')].at(-1)?.textContent.trim() ?? ''`);
+/** What the assistant's latest text says (a Proposal card's own text is not the assistant speaking).
+ *  `data-assistant-text` is the reply block's own handle: a reply is markdown, so its text may be in a paragraph, a
+ *  list item or a table cell, and a selector that assumed a paragraph would break the day a model answers with a list. */
+const said = () => page.eval<string>(`[...document.querySelectorAll('aside[data-assistant] [data-assistant-text]')].at(-1)?.textContent.trim() ?? ''`);
 /** The titles of the Proposal cards in the panel. */
 const proposals = () => page.eval<string[]>(`[...document.querySelectorAll('${PROPOSALS}')].map((a) => a.getAttribute('aria-label'))`);
 /** A table row's text: the member's name, role, team, status and activity. */
@@ -96,12 +98,24 @@ try {
     await page.send('Input.insertText', { text: 'What is this page?' });
     await until('Send to enable', () => page.eval<boolean>(`!document.querySelector('aside[data-assistant] button[aria-label="Send"]').disabled`), Boolean);
     await page.eval(`document.querySelector('aside[data-assistant] button[aria-label="Send"]').click()`);
-    const reply = await until('the reply', () => page.eval<string>(`[...document.querySelectorAll('aside[data-assistant] [data-role=assistant] p')].map((e) => e.textContent.trim()).join('|')`), (t) => t === 'This is the Overview page.');
+    const reply = await until('the reply', said, (t) => t === 'This is the Overview page.');
     ok(`the streamed reply reads "${reply}"`);
 
     const requests = (await (await fetch(`${llm}/requests`)).json()) as unknown[];
     if (!JSON.stringify(requests).includes('Page: Overview (/)')) fail('no request to the model carried "Page: Overview (/)"');
     ok('the model request carried "Page: Overview (/)"');
+
+    // A reply is rendered as markdown, never as the model's own markup: the list, the bold and the table are
+    // ELEMENTS, and the characters that made them are gone from the panel's text.
+    await ask('Show me a markdown summary');
+    const md = await until('the markdown reply', () => page.eval<{ list: number; bold: number; table: number; text: string }>(
+      `(() => { const b = [...document.querySelectorAll('aside[data-assistant] [data-assistant-text]')].at(-1);
+                return b ? { list: b.querySelectorAll('li').length, bold: b.querySelectorAll('strong').length,
+                             table: b.querySelectorAll('table').length, text: b.textContent } : { list: 0, bold: 0, table: 0, text: '' }; })()`),
+      (v) => v.table > 0);
+    if (!md.list || !md.bold) fail(`the markdown reply rendered ${md.list} list items and ${md.bold} bold runs`);
+    if (md.text.includes('**') || md.text.includes('|---') || md.text.includes('| ---')) fail(`the markdown reply still shows its markup: "${md.text}"`);
+    ok(`the reply is rendered markdown: ${md.list} list items, ${md.bold} bold runs and a table, with no markup characters left`);
 
     // The collections: ask, approve, dismiss, and a change made on the page.
     await page.open(`${base}/members`, { width: 1440 });

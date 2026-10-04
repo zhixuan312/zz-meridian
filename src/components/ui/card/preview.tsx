@@ -5,6 +5,7 @@ import { Specimen, Plane } from '@/system/specimen';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardBody, CardFooter, CardHeader } from '.';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 
 const ROWS = [
   ['POST /v1/messages', '612ms'],
@@ -42,6 +43,30 @@ export default function CardPreview() {
                   </li>
                 ))}
               </ul>
+            </CardBody>
+          </Card>
+        </Plane>
+      </Specimen>
+      <Specimen label="Flush, a table first" note="A flush body clips a table that is its first child, and drops the header row's top border: the card's edge is the table's edge, with no second line under it and no square corner over the card's round one." stack>
+        <Plane>
+          <Card className="max-w-md">
+            <CardBody flush>
+              <Table>
+                <TableHead>
+                  <TableRow>
+                    <TableHeader>Endpoint</TableHeader>
+                    <TableHeader align="right">p95</TableHeader>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {ROWS.map(([r, v]) => (
+                    <TableRow key={r}>
+                      <TableCell><span className="font-mono text-xs">{r}</span></TableCell>
+                      <TableCell align="right" numeric>{v}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
             </CardBody>
           </Card>
         </Plane>

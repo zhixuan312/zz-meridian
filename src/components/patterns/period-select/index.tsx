@@ -1,14 +1,15 @@
 'use client';
 
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
-import { PERIODS, PERIOD_LABEL, type Period } from '@/lib/period';
+import { PERIODS, PERIOD_LABEL, PERIOD_SHORT, type Period } from '@/lib/period';
 import { Segmented } from '@/components/ui/segmented';
 
 /** One period the control offers: its value, the short label it shows ("30D") and the full name in its title. */
 export type PeriodOption<P extends string = Period> = { value: P; short: string; label: string };
 
-const SHORT: Record<Period, string> = { '7d': '7D', '30d': '30D', '90d': '90D', all: 'All' };
-const DEFAULT_OPTIONS: PeriodOption[] = PERIODS.map((p) => ({ value: p, short: SHORT[p], label: PERIOD_LABEL[p] }));
+// Both labels come from `@/lib/period`, beside `PERIODS`: a product that adds a period there (a 24-hour one) must not
+// have to patch this component to make the types line up.
+const DEFAULT_OPTIONS: PeriodOption[] = PERIODS.map((p) => ({ value: p, short: PERIOD_SHORT[p], label: PERIOD_LABEL[p] }));
 
 /**
  * The reporting period for a whole page. Given `onChange`, it is controlled: the page holds the period (in state, in

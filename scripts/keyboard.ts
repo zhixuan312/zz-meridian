@@ -7,6 +7,16 @@
  * ring drawn as a box shadow, on the control or the frame around it), when a focused control is hidden under
  * something else such as the sticky top bar (WCAG 2.4.11), or when a visible control is never reached at all.
  * The audit (scripts/audit.ts) checks the first eighteen stops of every page at every width; this walks all of them.
+ *
+ * KNOWN GAP: this proves every control is REACHABLE and ringed; it never ACTIVATES one with the keyboard. A control
+ * that answers a click but not Enter or Space passes both this and scripts/interactions.ts (which presses with the
+ * mouse and with touch). The gap is deliberate until a check can be trusted not to cry wolf: what a key should do
+ * depends on the role — Enter activates a button and a menu item, Space toggles a checkbox and a switch, and an arrow
+ * key moves within a radio group — so a blanket "something must change on Enter" fails honest controls and teaches
+ * people to ignore the check. Two things a future check needs: send the key as
+ * `Input.dispatchKeyEvent({ type: 'keyDown', key: 'Enter', code: 'Enter', windowsVirtualKeyCode: 13, text: '\r' })`
+ * — a CDP keyDown WITHOUT `text` does not activate a button at all, which reads as a dead control — and press by role,
+ * not one key for everything.
  */
 import { launch } from './lib/chrome.ts';
 import { discover } from './lib/routes.ts';

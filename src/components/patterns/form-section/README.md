@@ -21,6 +21,8 @@ Status: beta
 | Saves on its own | `onSave`, `onDiscard`, `dirty` | Text fields, selects: anything that should not apply on each keystroke |
 | Applies at once | no `onSave` | Switches and segmented controls; add a footnote that says so |
 | Danger zone | `tone="critical"` | Irreversible actions; the title and border take the critical tone |
+| Layout only | `as="div"` | The same head and card with no `<form>` around them: a card holding a table that runs edge to edge (tokens, people, members), or a form of its own, since forms cannot nest. Nothing submits, so there is no save bar — its children save themselves |
+| Layout only, flush | `as="div" flush` | The table runs to the card's edges; the card clips it and drops its header row's top border, so the card's edge is the table's edge |
 
 ## Sizes
 
@@ -50,7 +52,9 @@ Status: beta
 
 ## Composition
 
-A form element holding a fieldset; Field, Input, Select, Switch and Segmented from Layer 2; Banner for errors; Button for the save bar; Toast for confirmation. Settings pages stack sections 56px apart at the data width, on the same left edge as every other page.
+A form element holding a fieldset, or — with `as="div"` — a plain element holding a div; Field, Input, Select, Switch and Segmented from Layer 2; Table when the section holds one; Banner for errors; Button for the save bar; Toast for confirmation. Settings pages stack sections 56px apart at the data width, on the same left edge as every other page.
+
+`SettingRow` is a section's own child and needs nothing from `FormSection`: with `as="div"` and no `onSave`, a switch that applies the moment it is flipped sits in the same layout, saving itself.
 
 ## Data
 

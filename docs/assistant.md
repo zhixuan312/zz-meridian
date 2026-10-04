@@ -14,7 +14,7 @@ Four variables, read from the environment on every request, so one build serves 
 |---|---|
 | `ASSISTANT_PROVIDER` | `anthropic`, or `openai-compatible` for any service that speaks the OpenAI chat-completions format |
 | `ASSISTANT_API_KEY` | The provider's key. Required: the approval secret is derived from it. |
-| `ASSISTANT_MODEL` | The model's id, as the provider names it |
+| `ASSISTANT_MODEL` | The model's id, as the provider names it. A gateway such as LiteLLM names models `<provider>.<model>` — copy the id exactly as its `GET /models` lists it, and take it as it comes. |
 | `ASSISTANT_BASE_URL` | The provider's address. Required for `openai-compatible`; optional for `anthropic`. |
 
 If the key or the model is missing, or the provider is anything else, or `openai-compatible` has no address, the assistant is off. `.env.example` lists the four, commented, with no values.

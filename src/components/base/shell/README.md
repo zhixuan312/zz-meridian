@@ -59,6 +59,7 @@ Every console page keeps its state in its address (period, filters, the selected
 ## Do and do not
 
 - Do build every page from PageFrame, Stack and Row; a page has no layout of its own.
+- Do put `*:min-w-0` on any grid you write yourself, and start it from one column. A grid item's default is `min-width: auto`, so a child that truncates never gets a width to truncate at: the column grows to its longest word and the page scrolls sideways — on a 390px phone, while `Row` beside it looks right. `Row` carries `*:min-w-0` for exactly this.
 - Do not nest a scroller in a card; page the list instead.
 
 ## Implementation

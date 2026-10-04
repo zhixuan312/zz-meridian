@@ -9,6 +9,8 @@
 export const PERIODS = ['7d', '30d', '90d', 'all'] as const;
 export type Period = (typeof PERIODS)[number];
 
+/** The picker's own default. Read it with `parsePeriod(undefined)`, which returns this for anything it does not know —
+ *  a product's own period context does not need a second constant to start from. */
 const DEFAULT_PERIOD: Period = '30d';
 
 export const PERIOD_LABEL: Record<Period, string> = {
@@ -16,6 +18,15 @@ export const PERIOD_LABEL: Record<Period, string> = {
   '30d': 'Last 30 days',
   '90d': 'Last 90 days',
   all: 'All time',
+};
+
+/** The picker's short label per period ("30D"), here beside the full name so one file holds the vocabulary: a product
+ *  that adds its own period edits this file and the picker follows, with nothing to patch in the component. */
+export const PERIOD_SHORT: Record<Period, string> = {
+  '7d': '7D',
+  '30d': '30D',
+  '90d': '90D',
+  all: 'All',
 };
 
 /** Days in a period, or `null` for `all`. */

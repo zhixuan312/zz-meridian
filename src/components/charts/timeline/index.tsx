@@ -102,7 +102,15 @@ export function Timeline({
             ) : null}
             {items.filter((it) => (it.group ?? '') === g).map((it) => {
               const a = day(it.start), b = day(it.end) + DAY;
-              const bar = <span className={cn('absolute top-1/2 h-2.5 -translate-y-1/2 rounded-full', TONE[it.tone ?? 'neutral'])} style={{ left: pct(a), width: `calc(${pct(lo + (Math.min(b, hi) - Math.max(a, lo)))} - 2px)`, minWidth: 6 }} />;
+              // A bar that reaches past a fixed window keeps its rounded end only where the work really ends. Squaring
+              // the side that continues is what says "this started before, or runs past" — without it the plan reads as
+              // if nothing was under way before the window opened, which is the opposite of what a roadmap is for.
+              const bar = (
+                <span
+                  className={cn('absolute top-1/2 h-2.5 -translate-y-1/2 rounded-full', TONE[it.tone ?? 'neutral'], a < lo && 'rounded-l-none', b > hi && 'rounded-r-none')}
+                  style={{ left: pct(a), width: `calc(${pct(lo + (Math.min(b, hi) - Math.max(a, lo)))} - 2px)`, minWidth: 6 }}
+                />
+              );
               return (
                 <Fragment key={it.id}>
                   {/* The label is the item's one link: visible, focusable, and read with the table's dates. */}

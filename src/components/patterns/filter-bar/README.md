@@ -6,10 +6,10 @@ Status: beta
 
 ## Anatomy
 
-1. **Search**: a small Search input, up to 288px wide from 768px, full width below; `/` focuses it from anywhere.
+1. **Search**: a small Search input, up to 288px wide once the bar is 832px, full width below; `/` focuses it from anywhere.
 2. **Filters**: one small Select per dimension, its name inside the trigger in `ink-3` ("Status All"). A filter that is on takes `accent-tint` with an `accent-line` outline, so the reader sees at once what narrows the list.
 3. **Clear**: a ghost button, shown only while something is filtered.
-4. **Result**: a quiet count of what passes ("5 of 240"), `text-xs` `ink-3`, from 1024px.
+4. **Result**: a quiet count of what passes ("5 of 240"), `text-xs` `ink-3`, once the bar is 960px.
 5. **View controls** (optional): a Segmented control or a menu on the right.
 6. **Filters button** (phones): with a count of active filters on an `accent` disc; it opens a Sheet holding each filter as a Field, the view controls, Clear filters and Show results.
 7. **Provenance line** (when `setBy`): the Agent mark (small), "Set by Claude · these filters came from the assistant", and Clear.
@@ -46,7 +46,7 @@ Every control is `control-sm` (32px; 28px compact), 8px apart. The bar sits insi
 ## Surfaces
 
 - **Console**: one row.
-- **Mobile**: under 768px, search plus the Filters button; the Sheet rises from the bottom with Show results as its primary action.
+- **Mobile**: once the bar is narrower than 832px, search plus the Filters button; the Sheet rises from the bottom with Show results as its primary action. The bar reads its OWN width (a container query), not the window's, because the rail, a split row, the assistant's column and an embed all narrow the bar without narrowing the window: 832px keeps the search and the filters on one row, 960px also shows the result count.
 - **Embed**: inline views show no bar (the tool's arguments are the filters, named in the title); fullscreen shows the full bar with the provenance line.
 
 ## Agents

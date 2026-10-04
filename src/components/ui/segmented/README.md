@@ -37,7 +37,7 @@ The thumb slides and resizes over `dur-enter` with `ease-out`; labels change col
 ## Surfaces
 
 - **Console**: in the masthead (the period) or a card head (a view switch).
-- **Mobile**: it never wraps; shorten labels ("30D") or move it to its own row.
+- **Mobile**: it never wraps. When the labels are wider than the room the track has, the track scrolls sideways with the edge fade (`scroll-fade-x`), in a card head with counts in the labels ("All 37 · Idea 3 · Scored 25") as much as anywhere else; shorten labels ("30D") where you can, and prefer five options or fewer.
 - **Embed**: the period control in the embed head, `sm`.
 
 ## Agents

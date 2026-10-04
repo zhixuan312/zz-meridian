@@ -17,6 +17,10 @@ check runs and the report lists each failure:
    390px. A button that changes nothing, a control something else covers, and a link that answers 4xx all fail.
    **This presses Approve, Revoke and Delete too.** Pages that call a live API must be built against a fake one
    (`fakeApi` in `scripts/verify.config.ts`; see `references/existing-project.md`, step 5), or verify changes real data.
+   The same hazard through another door: pages that read a database directly. verify reads `DATABASE_URL` — and any
+   name in `dataUrls` — from the environment and from the `.env` files Next would load, and refuses to start when one
+   resolves to a host that is not this machine. Point it at a local copy for the run, and restore the data afterwards:
+   the walk-through flags rows and a press can delete.
 6. **The whole keyboard path** (`scripts/keyboard.ts`), beside the audit and the presses: Tab through each page until
    focus comes back round. The first stop in the shell is "Skip to content", every stop shows a focus ring and is not
    hidden under something such as the sticky top bar, and every visible control is reached. With them run the

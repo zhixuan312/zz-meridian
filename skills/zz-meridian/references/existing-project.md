@@ -30,6 +30,11 @@ Migrate in place, page by page, keeping their data layer.
    client module (`src/views/console-chrome.tsx`), since each destination carries its icon component; if what a person
    may see depends on their role or scope, filter `nav` there from their session, and pass `workspace` and `scopes`
    to the Rail for a scope switcher.
+   **Catch the shell's own data in the layout.** A page's error boundary only catches what the page throws: if the
+   layout awaits something the shell needs — the alert list, the signed-in person — one failed query takes the whole
+   layout down, and the framework's bare error page shows instead of the designed one inside the shell. Read those
+   defensively (`const alerts = await recentAlerts().catch(() => [])`), so the shell stands and the page's own
+   `error.tsx` shows "This view did not load" with Retry.
 4. Rebuild each page on `PageFrame`, `Stack` and `Row` with Meridian components (imported as
    `@meridian/components/…`), keeping their data fetching and business logic untouched. Their old Tailwind utilities
    render nothing under Meridian's scales, and the gate names each one. Do the busiest page first; when the person is
@@ -44,6 +49,12 @@ Migrate in place, page by page, keeping their data layer.
    audit alone (`node scripts/audit.ts --base <url>`), which reads and never presses. In an adopted project verify
    refuses to start until `verify.config.ts` names a `fakeApi`, or says `noLiveApi: true` because the pages read and
    write nothing outside the repository.
+   **A direct database connection is the same hazard through another door.** If their pages read `DATABASE_URL` from
+   `.env` (or any other data URL: name it in `dataUrls`), a `next build` and `next start` in their folder carry it, so
+   Approve and Delete land on whatever it names. verify refuses to start when a data URL resolves to a host that is not
+   this machine; point it at a local copy for the run, and set `allowRemoteData: true` only when you know what the
+   presses reach. Restore the data afterwards — the walk-through flags rows and a press can delete, even on a run where
+   every check passes.
 6. List their detail pages worth seeing (a normal record, a failed one, a missing one) in `detailRoutes` in
    `scripts/verify.config.ts`, with ids from the fake API's fixtures, then run `pnpm verify` until it passes.
 

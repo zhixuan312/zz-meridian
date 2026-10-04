@@ -14,11 +14,11 @@ Status: draft
 
 ## Composition
 
-Agent mark, Icon button, Textarea, Button, Banner, Proposal. The conversation and the open state live in the shell, so the thread survives navigation.
+Agent mark, Icon button, Textarea, Button, Banner, Proposal, Prose. The conversation and the open state live in the shell, so the thread survives navigation.
 
 ## Variants
 
-One. Width `assistant-width` (400px). Messages: a person's in a `fill-hover` bubble, `ink`, right-aligned; the assistant's plain, `ink-2`, under an "Assistant" caption (`t-caption`). All type is `t-small`.
+One. Width `assistant-width` (400px). Messages: a person's in a `fill-hover` bubble, `ink`, right-aligned; the assistant's is markdown read by `Prose` at `sm`, `ink-2`, under an "Assistant" caption (`t-caption`), in a block marked `data-assistant-text` — a reply may be a paragraph, a list, a table or a code block, so a check reads that handle rather than guessing which element the text landed in. The person's own message is plain text, as typed. All type is `t-small`.
 
 ## Sizes
 

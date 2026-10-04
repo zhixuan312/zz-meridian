@@ -6,6 +6,7 @@ import { useChat } from '@ai-sdk/react';
 import { DefaultChatTransport, lastAssistantMessageIsCompleteWithApprovalResponses, type UIMessage } from 'ai';
 import { ArrowUp, Eraser, X } from 'lucide-react';
 import { cn } from '@/lib/cn';
+import { app } from '@/app.config';
 import { AgentMark } from '@/components/ui/agent-mark';
 import { Banner } from '@/components/ui/banner';
 import { Button } from '@/components/ui/button';
@@ -13,12 +14,27 @@ import { IconButton } from '@/components/ui/icon-button';
 import { Proposal, type ProposalChange, type ProposalState } from '@/components/patterns/proposal';
 import { Textarea } from '@/components/ui/textarea';
 import type { PageContext } from '@/lib/assistant/prompt';
+import { AssistantText } from './text';
 import { REASONS, clearThread, closeOpenApprovals, loadThread, recent, saveThread } from './thread';
 
-/** Reads the page from the scroll region: the masthead title and the visible text. */
+/** The suffix the root layout's title template puts after every route's own title. */
+const TITLE_SUFFIX = ` · ${app.name}`;
+
+/**
+ * Reads the page from the scroll region: the page's own title and its visible text.
+ *
+ * The title comes from `document.title`, never the masthead `h1`. On a detail page that `h1` is the Detail head — the
+ * record's name with its status badge run into it — so a question asked there was labelled "REC-1042high risk · 0.64".
+ * The route's declared title is the clean one ("Record REC-1042"). The masthead is the fallback for a route that
+ * declares none, where `document.title` is only the product name.
+ */
 function readPage(path: string): PageContext {
   const region = document.querySelector<HTMLElement>('[data-scroll-region]');
-  return { path, title: region?.querySelector('h1')?.textContent ?? '', text: region?.innerText ?? '' };
+  const h1 = region?.querySelector('h1')?.textContent?.trim() ?? '';
+  const declared = document.title.endsWith(TITLE_SUFFIX)
+    ? document.title.slice(0, -TITLE_SUFFIX.length).trim()
+    : document.title.trim();
+  return { path, title: declared && declared !== app.name ? declared : h1, text: region?.innerText ?? '' };
 }
 
 type Preview = { title: string; tone: 'neutral' | 'critical'; changes: ProposalChange[] };
@@ -166,7 +182,11 @@ export function AssistantPanel({
               ) : (
                 m.parts.map((p, i) =>
                   p.type === 'text' ? (
-                    p.text ? <p key={i} className="t-small max-w-full whitespace-pre-wrap text-ink-2 [overflow-wrap:anywhere]">{p.text}</p> : null
+                    // Markdown, not the model's text with its characters showing: every model this template has been
+                    // pointed at answers in markdown, and a plain paragraph renders `**bold**`, `- ` bullets and
+                    // `|---|` table rules literally. See `AssistantText`. The person's OWN message stays plain text,
+                    // above: what they typed is what they meant to type.
+                    p.text ? <AssistantText key={i} text={p.text} /> : null
                   ) : isMutation(p) ? (
                     <ProposalOf key={i} message={m} part={p as unknown as ToolPart} onDecide={onDecide} />
                   ) : null,

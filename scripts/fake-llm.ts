@@ -55,6 +55,21 @@ function script(body: { messages?: Message[] }): Reply {
 
   if (last?.role === 'user') {
     const said = textOf(last.content).trim();
+    // One reply in markdown, for the walk-through that proves the panel RENDERS it rather than printing the model's
+    // own `**`, `- ` and `|---|`. Every model this template has been pointed at answers this way, and a fake model
+    // that only ever answers one plain sentence cannot tell the two apart.
+    if (/markdown/i.test(said)) {
+      return { text: [
+        '**Traffic** this week, in short:',
+        '',
+        '- requests are up **12%**',
+        '- errors are flat',
+        '',
+        '| Metric | Value |',
+        '| --- | --- |',
+        '| Requests | `1204` |',
+      ].join('\n') };
+    }
     const today = /Today: (\d{4}-\d{2}-\d{2})/.exec(system)?.[1];
     if (today && /support/i.test(said) && /60 days/i.test(said)) {
       const where = [{ field: 'team', op: 'eq', value: 'Support' }, { field: 'role', op: 'eq', value: 'Viewer' }, { field: 'lastActive', op: 'lt', value: daysBefore(today, 60) }];

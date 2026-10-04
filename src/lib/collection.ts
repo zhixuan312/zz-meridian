@@ -11,13 +11,26 @@ export type Collection<T extends Record<string, unknown>, K extends keyof T & st
   name: string;
   label: string;
   description: string;
-  /** The record without its key. */
+  /** The record without its key, as a write takes it. */
   fields: z.ZodObject;
+  /**
+   * Fields the data layer works out and no write ever takes: a score, a band, a stage, a value joined in from another
+   * table. They live on the record, so a page reads them and the assistant may filter on them, and they are never in
+   * `fields` — a change cannot set one, because `patchOf` builds its shape from `fields` alone.
+   */
+  derived?: (keyof T & string)[];
   key: K;
   title: (row: T) => string;
   query: (q: Query) => Promise<{ rows: T[]; total: number }>;
-  create?: (input: Omit<T, K>) => Promise<T>;
-  update?: (ids: string[], patch: Partial<Omit<T, K>>) => Promise<T[]>;
+  /**
+   * A plain record, validated by `fields`, and never `Omit<T, K>`.
+   *
+   * A record type carries fields a write does not take — the worked-out ones above, and data joined in from elsewhere —
+   * and a form hands over strings, so `Omit<T, K>` demands things the caller cannot supply and every real data layer
+   * ends up casting around it. The write shape is `fields`; this says so, and `fields.parse` is what holds it.
+   */
+  create?: (input: Record<string, unknown>) => Promise<T>;
+  update?: (ids: string[], patch: Record<string, unknown>) => Promise<T[]>;
   remove?: (ids: string[]) => Promise<number>;
   /** Operations only a page may perform; the assistant and an MCP server never get them. */
   pageOnly?: Op[];
@@ -63,6 +76,7 @@ export function arrayCollection<T extends Record<string, unknown>, K extends key
   label: string;
   description: string;
   fields: z.ZodObject;
+  derived?: (keyof T & string)[];
   key: K;
   title: (row: T) => string;
   rows: T[];
@@ -82,6 +96,9 @@ export function arrayCollection<T extends Record<string, unknown>, K extends key
   const missing = (ids: string[]) => ids.filter((id) => !rows().some((r) => r[key] === id));
   const pick = (ids: string[]) => {
     const gone = missing(ids);
+    // The sentence is the whole diagnosis, and the same one reaches the form's banner, the assistant's tool result and
+    // a REST route of your own: `src/lib/assistant/tools.ts` wraps a thrown message, and the sample's server actions
+    // return it, so nothing has to be translated between them. A REST surface maps it to a status where it lives.
     if (gone.length) throw new Error(`No ${name} with id ${gone.join(', ')}`);
     return rows().filter((r) => ids.includes(r[key] as string));
   };
@@ -91,6 +108,7 @@ export function arrayCollection<T extends Record<string, unknown>, K extends key
     label: def.label,
     description: def.description,
     fields: def.fields,
+    derived: def.derived,
     key,
     title: def.title,
     pageOnly: def.pageOnly,
@@ -160,9 +178,15 @@ export function visibleFields(c: AnyCollection): z.ZodObject {
   return c.fields.omit(Object.fromEntries(((c.hidden ?? []) as string[]).map((f) => [f, true])) as Record<string, true>).strict();
 }
 
-/** The input schema of the query tool: field names come from the collection, so an unknown or hidden field is rejected. */
+/** The input schema of the query tool: field names come from the collection, so an unknown or hidden field is rejected.
+ *
+ * `derived` fields are named here and nowhere else: they are readable and queryable, and no write can set one, because
+ * `fields` is what a write takes. `visibleFields` has already dropped the hidden ones from `fields`, so only a hidden
+ * derived field needs dropping here. */
 export function queryInput(c: AnyCollection) {
-  const field = z.enum([c.key, ...Object.keys(visibleFields(c).shape)] as [string, ...string[]]);
+  const hidden = new Set((c.hidden ?? []) as string[]);
+  const derived = ((c.derived ?? []) as string[]).filter((f) => !hidden.has(f));
+  const field = z.enum([c.key, ...Object.keys(visibleFields(c).shape), ...derived] as [string, ...string[]]);
   const scalar = z.union([z.string(), z.number(), z.boolean(), z.null()]);
   return z.object({
     where: z.array(z.object({ field, op: z.enum(['eq', 'ne', 'gt', 'lt', 'contains', 'in']), value: z.union([scalar, z.array(scalar)]) })).optional(),

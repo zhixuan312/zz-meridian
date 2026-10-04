@@ -24,6 +24,10 @@ export type Filter = {
  * Search, filters and view controls for one list, in one row. On phones the search takes the row and the filters move
  * behind one Filters button that opens a sheet. When an agent set the filters, the bar says so ("Set by Claude")
  * until a person changes them, and Clear returns every filter to its off state.
+ *
+ * The bar reads its OWN width, not the window's: it is a container, and the row collapses on `@max-[52rem]` rather
+ * than on a viewport breakpoint. A bar in a split row, beside the assistant's column or inside an embed is narrow
+ * while the window is wide, and a viewport breakpoint would keep every filter in a row that has no room for them.
  */
 export function FilterBar({
   search,
@@ -69,7 +73,7 @@ export function FilterBar({
     });
 
   return (
-    <div className={cn('flex min-w-0 flex-col gap-3', className)}>
+    <div className={cn('@container flex min-w-0 flex-col gap-3', className)}>
       <div className="flex min-w-0 items-center gap-2">
         {search ? (
           <SearchInput
@@ -78,14 +82,14 @@ export function FilterBar({
             onValueChange={search.onChange}
             placeholder={search.placeholder ?? 'Search'}
             shortcut="/"
-            className="min-w-0 flex-1 md:max-w-72"
+            className="min-w-0 flex-1 @min-[52rem]:max-w-72"
           />
         ) : null}
-        <div className="flex min-w-0 items-center gap-2 max-md:hidden">{selects('sm')}</div>
+        <div className="flex min-w-0 items-center gap-2 @max-[52rem]:hidden">{selects('sm')}</div>
         {filters.length ? (
           <Sheet open={open} onOpenChange={setOpen}>
             <SheetTrigger asChild>
-              <Button size="sm" icon={<SlidersHorizontal />} className="md:hidden">
+              <Button size="sm" icon={<SlidersHorizontal />} className="@min-[52rem]:hidden">
                 Filters{active ? <span className="t-num -mr-0.5 grid h-4.5 min-w-4.5 place-items-center rounded-full bg-accent px-1 text-2xs font-semibold text-on-accent">{active}</span> : null}
               </Button>
             </SheetTrigger>
@@ -107,11 +111,11 @@ export function FilterBar({
           </Sheet>
         ) : null}
         {onClear && active ? (
-          <Button size="sm" variant="ghost" icon={<X />} onClick={onClear} className="max-md:hidden">Clear</Button>
+          <Button size="sm" variant="ghost" icon={<X />} onClick={onClear} className="@max-[52rem]:hidden">Clear</Button>
         ) : null}
         <div className="ml-auto flex shrink-0 items-center gap-3">
-          {result ? <span className="t-num text-xs whitespace-nowrap text-ink-3 max-lg:hidden">{result}</span> : null}
-          {view ? <div className="max-md:hidden">{view}</div> : null}
+          {result ? <span className="t-num text-xs whitespace-nowrap text-ink-3 @max-[60rem]:hidden">{result}</span> : null}
+          {view ? <div className="@max-[52rem]:hidden">{view}</div> : null}
         </div>
       </div>
       {setBy && active ? (

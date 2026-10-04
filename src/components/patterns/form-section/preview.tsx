@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Field } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { FormSection, SettingRow } from '.';
 import { app, domain } from '@/app.config';
 
@@ -26,6 +27,22 @@ export default function FormSectionPreview() {
       <Specimen label="Read-only" note="Says who can change it, instead of disabling silently." stack>
         <FormSection title="Billing contact" readOnly="Only an owner can change billing. Ask Maya Chen.">
           <Field label="Email">{(p) => <Input {...p} defaultValue={`finance@${domain}`} />}</Field>
+        </FormSection>
+      </Specimen>
+      <Specimen label="Layout only" note="No form around the card, so it can hold a table that runs edge to edge — or a form of its own, since forms cannot nest. Nothing submits, so a setting that applies at once simply sits in the same layout." stack>
+        <FormSection as="div" flush title="Access tokens" description="Tokens this workspace has issued. A token is shown once, when it is created.">
+          <Table>
+            <TableHead>
+              <TableRow>
+                <TableHeader>Name</TableHeader>
+                <TableHeader>Last used</TableHeader>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              <TableRow><TableCell>ci-deploy</TableCell><TableCell muted>2 days ago</TableCell></TableRow>
+              <TableRow><TableCell>grafana-read</TableCell><TableCell muted>Never</TableCell></TableRow>
+            </TableBody>
+          </Table>
         </FormSection>
       </Specimen>
       <Specimen label="Applies at once" note="No onSave: switches take effect immediately and the footnote says so." stack>

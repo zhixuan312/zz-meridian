@@ -8,9 +8,10 @@ const say = (id: string, role: 'user' | 'assistant', text: string): UIMessage =>
 
 const asked = (id: string, text: string, title: string): UIMessage => ({ ...say(id, 'user', text), metadata: { page: { path: '/', title } } });
 
+/** A reply in the shape a real model sends: markdown, not a plain sentence. */
 const thread = [
   asked('1', 'Why did p95 latency rise on Tuesday?', 'Overview'),
-  say('2', 'assistant', 'Latency rose from 212 ms to 340 ms between 08:00 and 09:30 UTC, while Parallax AI ran its batch job. Error rate stayed at 0.2%.'),
+  say('2', 'assistant', 'Latency rose from **212 ms to 340 ms** between 08:00 and 09:30 UTC:\n\n- Parallax AI ran its batch job\n- error rate stayed at `0.2%`'),
 ];
 
 const noop = () => {};

@@ -11,6 +11,10 @@
  *   walk-through (scripts/assistant.ts: asks, approves and dismisses on /members, then the thread, the switch, the
  *   layout, a refused key and the key's absence from the browser).
  *
+ * It refuses to start when a data URL (`DATABASE_URL`, or any `verify.config.ts` names) resolves to a host that is not
+ * this machine: the presses and the walk-through change data, and an adopted app's `.env` usually points at production.
+ * Restore the data after a run: the walk-through flags rows and a press can delete.
+ *
  *   pnpm verify [--quick] [--no-vitals] [--extra /requests/req_1,/customers/acme]
  *
  * The detail pages in scripts/verify.config.ts are checked by default; --extra replaces them for one run. --no-vitals
@@ -53,6 +57,63 @@ const finish = (code: number) => {
   process.exit(code);
 };
 
+/** Can this hostname only be this machine — or a name that can only resolve inside it? */
+function isLocalHost(host: string): boolean {
+  const h = host.toLowerCase().replace(/^\[|\]$/g, '');
+  if (h === 'localhost' || h === '::1' || h === '0.0.0.0') return true;
+  if (/^127\./.test(h)) return true;
+  // A name with no dot cannot be a public address: a compose service (`postgres`), a container name, a bare hostname.
+  return !h.includes('.');
+}
+
+/** The `.env` files Next loads into the build and the server, in its own order: a later file wins over an earlier one. */
+function envFiles(): Record<string, string> {
+  const out: Record<string, string> = {};
+  for (const f of ['.env', '.env.production', '.env.local', '.env.production.local']) {
+    const p = path.join(ROOT, f);
+    if (!fs.existsSync(p)) continue;
+    for (const raw of fs.readFileSync(p, 'utf8').split('\n')) {
+      const line = raw.trim();
+      if (!line || line.startsWith('#')) continue;
+      const m = /^([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(.*)$/.exec(line);
+      if (!m) continue;
+      const v = m[2].trim();
+      out[m[1]] = (v.startsWith('"') && v.endsWith('"')) || (v.startsWith("'") && v.endsWith("'")) ? v.slice(1, -1) : v;
+    }
+  }
+  return out;
+}
+
+// The presses reach whatever database the app is pointed at. `noLiveApi`/`fakeApi` cover an HTTP backend; a direct
+// database connection is the same hazard through a different door, and it is the one an adopted app has: its
+// DATABASE_URL comes from .env, and verify builds and starts it in this folder. Refused before anything runs, because
+// by the time the presses land the damage is done — and they leave changes behind even when everything passes.
+{
+  const fromFiles = envFiles();
+  const offenders = ['DATABASE_URL', ...(config.dataUrls ?? [])].flatMap((name) => {
+    const value = process.env[name] ?? fromFiles[name];
+    if (!value) return [];
+    let host: string;
+    // Not a URL is not something this can judge; the app will fail on it long before a press.
+    try { host = new URL(value).hostname; } catch { return []; }
+    return isLocalHost(host) ? [] : [`${name} → ${host}`];
+  });
+  if (offenders.length && !config.allowRemoteData) {
+    console.error(`verify presses every control, Delete included, and this project's data URL is not on this machine:
+
+  ${offenders.join('\n  ')}
+
+Point it at a local copy for the run, or set \`allowRemoteData: true\` in scripts/verify.config.ts when you know what
+those presses reach. The walk-through and the presses leave changes behind: restore the data afterwards.`);
+    process.exit(1);
+  }
+}
+
+log(`verify: gate, build, then the browser checks on every page at 1440 and 390px`
+  + `${hasAssistant ? ', the assistant walk-through' : ''}${noVitals ? '' : ', and Web Vitals on a mid-range phone'}`
+  + '.\n  A full run takes roughly fifteen to twenty minutes, and the presses are the long part.'
+  + ' `--quick` presses at the desktop width only; `--no-vitals` leaves Web Vitals out.');
+
 const freePort = () => new Promise<number>((res) => { const s = net.createServer(); s.listen(0, () => { const p = (s.address() as net.AddressInfo).port; s.close(() => res(p)); }); });
 
 // The assistant is off unless configured: the build and the first start must not see the caller's own variables.
@@ -60,6 +121,8 @@ const clean: NodeJS.ProcessEnv = { ...process.env };
 for (const k of Object.keys(clean)) if (k.startsWith('ASSISTANT_')) delete clean[k];
 
 function step(name: string, cmd: string, args: string[], env = clean) {
+  // Announced before it runs, not only after: a run people wait on should say which phase it is in.
+  log(`… ${name}`);
   const t = Date.now();
   const r = spawnSync(cmd, args, { cwd: ROOT, env, encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 });
   const ok = r.status === 0;
@@ -151,6 +214,7 @@ if (hasAssistant) {
 const t = Date.now();
 const base = ['--base', `http://127.0.0.1:${port}`, ...pass];
 const own = config.browserChecks ?? [];
+log(`… the browser checks, side by side: the audit, every control and link, the whole keyboard path${own.length ? `, and the project's own` : ''}`);
 const [audit, presses, keys, ...extras] = await Promise.all([
   run('scripts/audit.ts', base),
   run('scripts/interactions.ts', base),
@@ -170,6 +234,7 @@ extras.forEach((r, i) => {
 log(`(browser checks ${((Date.now() - t) / 60_000).toFixed(1)} min)`);
 
 // Web Vitals on a mid-range phone, alone: CPU throttling measures the machine too, so nothing else runs beside it.
+if (!noVitals) log('… Web Vitals on a mid-range phone, alone');
 const vitals = noVitals ? { status: 0, out: '' } : await run('scripts/vitals.ts', base);
 log(noVitals ? 'skip Web Vitals (--no-vitals)' : vitals.status === 0 ? 'ok   LCP, INP and CLS on a mid-range phone' : 'FAIL Web Vitals on a mid-range phone');
 log(vitals.out.split('\n').slice(-30).join('\n'));

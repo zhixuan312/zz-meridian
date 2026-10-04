@@ -97,4 +97,23 @@ describe('queryInput', () => {
     expect(schema.safeParse({ where: [{ field: 'salary', op: 'gt', value: 1 }] }).success).toBe(false);
     expect(schema.safeParse({ where: [{ field: 'id', op: 'eq', value: 'p_1' }, { field: 'lastActive', op: 'lt', value: '2026-08-05' }] }).success).toBe(true);
   });
+
+  test('a derived field can be filtered on and can never be set', async () => {
+    type Banded = Person & { band: string };
+    const c = arrayCollection<Banded, 'id'>({
+      name: `banded${++n}`, label: 'People', description: 'd',
+      fields: z.object({ name: z.string(), team: z.enum(['Support', 'Sales']), seats: z.number(), lastActive: z.string().nullable() }),
+      derived: ['band'],
+      key: 'id', title: (r) => r.name,
+      rows: structuredClone(ROWS).map((r) => ({ ...r, band: r.seats > 5 ? 'large' : 'small' })),
+      allow: ['create', 'update'],
+    });
+    // Readable: the query tool may name it, the same as any field.
+    expect(queryInput(c).safeParse({ where: [{ field: 'band', op: 'eq', value: 'large' }] }).success).toBe(true);
+    // Never writable. `patchOf` builds its shape from `fields` and is strict, so a change that names a derived field
+    // is refused; a create is parsed by `fields` too, which drops what the write fields do not describe rather than
+    // storing it. Either way the value on the row is the data layer's, never the caller's.
+    await expect(c.update!(['p_1'], { band: 'large' })).rejects.toThrow();
+    expect(await c.create!({ name: 'A', team: 'Sales', seats: 1, lastActive: null, band: 'large' })).not.toHaveProperty('band');
+  });
 });

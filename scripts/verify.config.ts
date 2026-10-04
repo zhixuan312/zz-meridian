@@ -22,6 +22,19 @@ export type VerifyConfig = {
    */
   noLiveApi?: true;
   /**
+   * Environment variables naming a data store, besides `DATABASE_URL`, which verify always reads.
+   *
+   * verify refuses to start when one of them — from the environment, or from an `.env` file Next would load — resolves
+   * to a host that is not this machine. It presses every control it finds, Delete included, and a `next build` and
+   * `next start` in this folder read the project's own `.env`: an adopted app whose `DATABASE_URL` points at
+   * production would otherwise have those presses land on production.
+   */
+  dataUrls?: string[];
+  /**
+   * Run verify against a remote data URL anyway. Set it only when you know what the presses reach.
+   */
+  allowRemoteData?: true;
+  /**
    * The product's own browser checks, beside Meridian's audit, presses and keyboard walk: scripts verify runs with
    * `--base <url>` against the built app, failing when one exits non-zero.
    */

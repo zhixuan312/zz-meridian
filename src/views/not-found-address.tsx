@@ -7,7 +7,7 @@ import { app } from '@/app.config';
 import { Button } from '@/components/ui/button';
 import { openCommand } from '@/components/patterns/command-palette';
 import { cn } from '@/lib/cn';
-import { nearestOf, readable } from '@/views/not-found';
+import { nearestOf, readable, homeLabel } from '@/views/not-found';
 
 /**
  * The address that led nowhere, walked back to the deepest page that exists: that part is a link, the part after it is
@@ -43,7 +43,7 @@ export function MissingAddress({ size = 'display' }: { size?: 'display' | 'quiet
 }
 
 /**
- * The ways back: the nearest page that exists first, then the Overview when that is somewhere else. Inside the shell,
+ * The ways back: the nearest page that exists first, then the home page when that is somewhere else. Inside the shell,
  * where the command palette lives, a miss at the root offers search instead. The caller lays them out.
  */
 export function WayBack({ size = 'lg', search = false }: { size?: 'md' | 'lg'; search?: boolean }) {
@@ -52,10 +52,10 @@ export function WayBack({ size = 'lg', search = false }: { size?: 'md' | 'lg'; s
   return (
     <>
       <Button asChild variant="primary" size={size}>
-        <Link href={n.href}><ArrowLeft />{atRoot ? 'Go to Overview' : `Back to ${n.label}`}</Link>
+        <Link href={n.href}><ArrowLeft />{atRoot ? `Go to ${homeLabel}` : `Back to ${n.label}`}</Link>
       </Button>
       {!atRoot ? (
-        <Button asChild size={size}><Link href="/">Go to Overview</Link></Button>
+        <Button asChild size={size}><Link href="/">Go to {homeLabel}</Link></Button>
       ) : search ? (
         <Button size={size} icon={<Search />} onClick={openCommand}>Search pages</Button>
       ) : null}

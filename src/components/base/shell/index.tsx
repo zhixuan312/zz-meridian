@@ -167,7 +167,10 @@ export function PageFrame({
     return () => io.disconnect();
   }, []);
   return (
-    <div data-scroll-region className="min-h-0 flex-1 overflow-x-hidden overflow-y-auto overscroll-contain [scrollbar-gutter:stable]">
+    <div data-scroll-region className="min-h-0 flex-1 overflow-x-hidden overflow-y-auto overscroll-contain [scrollbar-gutter:stable] scroll-pt-16">
+      {/* `scroll-pt-16` (64px) is for the keyboard: a control focused far down the page scrolls into view, and without
+          it the browser aligns it to the very top — under the 56px stuck masthead. Focus must land where it can be
+          seen, or a person tabbing cannot tell what they are on. */}
       <div
         data-stuck={stuck || undefined}
         className="sticky top-0 z-(--layer-sticky) border-b border-transparent transition-[background-color,border-color,backdrop-filter] duration-(--dur-enter) data-stuck:border-line data-stuck:bg-ground/72 data-stuck:backdrop-blur-xl data-stuck:backdrop-saturate-150"

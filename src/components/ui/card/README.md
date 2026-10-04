@@ -9,7 +9,7 @@ Status: beta
 1. **Container**: `surface`, 1px `line` border, `radius-lg` 12px, `shadow-card`.
 2. **Top edge**: a 1px `highlight-top` line inset 12px from each side. Transparent on light, where the shadow lifts the card; a faint lit edge on dark, where shadows do not read.
 3. **Header** (`CardHeader`, optional): title, an optional description under it, actions on the right.
-4. **Body** (`CardBody`): the content; `flush` removes the padding for a list or table that runs edge to edge.
+4. **Body** (`CardBody`): the content; `flush` removes the padding for a list or table that runs edge to edge, and a `Table` as its first child is then clipped by the body with its header row's top border dropped — the card's edge is the table's edge, with no second line under it and no square corner over the card's rounded one. A second table in the same body keeps its top border.
 5. **Footer** (`CardFooter`, optional): a quiet band with a hairline above: a link to the full view, a caption.
 
 ## Variants
@@ -86,4 +86,4 @@ import { Card, CardBody, CardFooter, CardHeader } from '@/components/ui/card';
 </Card>
 ```
 
-`Card`: `interactive` and div attributes. `CardHeader`: `title`, `description`, `actions`, `divided`. `CardBody`: `flush`. `CardFooter`: div attributes.
+`Card`: `interactive` and div attributes. `CardHeader`: `title`, `description`, `actions`, `divided`, `wrap` (let the title wrap to as many lines as it needs, for a title that is the point of the card rather than a label in a list). `CardBody`: `flush` (no padding, and a first-child `Table` is clipped with its top border dropped). `CardFooter`: div attributes.

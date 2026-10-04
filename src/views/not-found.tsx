@@ -10,9 +10,17 @@ export const NOT_FOUND = {
 export type Nearest = { href: string; label: string; rest: string };
 
 /**
+ * What the home page is called, read from `nav` rather than written here.
+ *
+ * A product whose front page is a ranked list, not "Overview", should not have to edit this file — and the two
+ * "Go to Overview" buttons beside it — to say so. `nav` is where the product already names its own pages.
+ */
+export const homeLabel = nav.flatMap((g) => g.items).find((it) => it.href === '/')?.label ?? 'Home';
+
+/**
  * Walk an address back to the deepest page that exists: the longest navigation entry it starts with, on a segment
  * boundary (`/requests` claims `/requests/req_1`, never `/requestsx`). What is left over is the part that leads nowhere.
- * With no match the nearest place is the Overview and the whole address is left over.
+ * With no match the nearest place is the home page and the whole address is left over.
  */
 export function nearestOf(path: string): Nearest {
   const clean = path.length > 1 ? path.replace(/\/+$/, '') : path;
@@ -21,7 +29,7 @@ export function nearestOf(path: string): Nearest {
     .filter((it) => clean === it.href || clean.startsWith(it.href + '/'))
     .sort((a, b) => b.href.length - a.href.length)[0];
   if (hit) return { href: hit.href, label: hit.label, rest: clean.slice(hit.href.length) };
-  return { href: '/', label: 'Overview', rest: clean === '/' ? '' : clean };
+  return { href: '/', label: homeLabel, rest: clean === '/' ? '' : clean };
 }
 
 /** The address as a person typed it: percent-escapes decoded where they decode, kept as they are where they do not. */

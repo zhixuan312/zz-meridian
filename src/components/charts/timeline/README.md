@@ -26,13 +26,15 @@ Status: beta
 
 The plot is in percent of the span from `from` to `to`, so it fits its container at any width and never scrolls sideways. The label column is 7rem under 512px of its own width and 11rem from there.
 
+Leave `from` and `to` out and the span is the items' own extent. A roadmap usually wants the other thing: a fixed planning window — this half-year and the next — so the same rows sit in the same place from week to week, and an item that starts before the window or runs past it is clipped and squared off (see Outside the span, below).
+
 ## States
 
 | State | Spec |
 |---|---|
 | Rest | as above |
 | Linked | an item with `href` makes its label a link (`row-link`: an underline draws in on hover) |
-| Outside the span | a bar is clipped to the span; Today is drawn only when it falls inside |
+| Outside the span | a bar is clipped to the span and the side that continues is squared off (`rounded-l-none` when it started before `from`, `rounded-r-none` when it ends after `to`), so work that runs past the window does not read as work that began at its edge; Today is drawn only when it falls inside |
 
 ## Behaviour
 
