@@ -24,7 +24,7 @@ export type Incident = { id: string; title: string; service: string; severity: '
 /**
  * An incident, told the way a reader needs it: what is affected, how bad, where it stands, and every update since it
  * started, newest first. A live incident leads with its state; a resolved one with how long it lasted. `row` is the
- * one-line form for a list of past incidents.
+ * compact form for a list of past incidents: the title wraps rather than losing its end.
  */
 export function IncidentCard({ incident, now, variant = 'card', className }: { incident: Incident; now: Date; variant?: 'card' | 'row'; className?: string }) {
   const st = STATE[incident.state];
@@ -34,10 +34,10 @@ export function IncidentCard({ incident, now, variant = 'card', className }: { i
 
   if (variant === 'row') {
     return (
-      <div className={cn('grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 gap-y-1 px-(--card-pad) py-3.5', className)}>
-        <p className="min-w-0 truncate text-sm font-medium">{incident.title}</p>
+      <div className={cn('grid grid-cols-[minmax(0,1fr)_auto] items-start gap-x-4 gap-y-1 px-(--card-pad) py-3.5', className)}>
+        <p className="min-w-0 text-sm font-medium text-pretty">{keepHyphenated(incident.title)}</p>
         <Badge tone={sev.tone}>{sev.word}</Badge>
-        <p className="t-caption min-w-0 truncate">
+        <p className="t-caption min-w-0 text-pretty">
           {incident.service} · <time dateTime={incident.started}>{formatDate(incident.started)}</time>
           {lasted !== null ? <> · lasted {formatDuration(lasted)}</> : null}
         </p>

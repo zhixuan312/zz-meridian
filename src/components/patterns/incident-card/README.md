@@ -19,7 +19,7 @@ Status: beta
 | Variant | Use |
 |---|---|
 | `card` (default) | The current incident beside the status on Health; an incident's own page |
-| `row` | One line in a list of past incidents: title, severity, service, date, how long it lasted, state word |
+| `row` | A compact entry in a list of past incidents: title (wraps, never truncated), severity, service, date, how long it lasted, state word |
 
 ## Sizes
 

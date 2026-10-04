@@ -4,8 +4,10 @@
  * The sample's request cells and columns, shared by the Requests page, the Overview, Analytics, the Requests embed and
  * the Data table preview. They live here, not in a page view, so removing a sample page never breaks a preview.
  */
+import { Fragment } from 'react';
 import { Badge } from '@/components/ui/badge';
 import type { Column } from '@/components/patterns/data-table';
+import { cn } from '@/lib/cn';
 import { formatDuration } from '@/lib/format';
 import { formatDateTime, formatRelative } from '@/lib/format-date';
 import { DEMO_NOW, type RequestRow } from '@/system/fixtures/sample';
@@ -26,11 +28,23 @@ export function MethodChip({ method }: { method: string }) {
   return <span className="inline-flex h-5 w-13 shrink-0 items-center justify-center rounded-xs bg-fill-track font-mono text-2xs tracking-[0.04em] text-ink-2">{method}</span>;
 }
 
-export function RouteCell({ method, route }: { method: string; route: string }) {
+/**
+ * A method and its route. In a list whose rows are all different routes the route truncates; where the route is the
+ * row's whole identity and the column is narrow (Analytics on a phone), `wrap` lets it break after a slash instead.
+ */
+export function RouteCell({ method, route, wrap }: { method: string; route: string; wrap?: boolean }) {
   return (
-    <span className="flex min-w-0 items-center gap-2.5">
+    <span className={cn('flex min-w-0 gap-2.5', wrap ? 'items-start' : 'items-center')}>
       <MethodChip method={method} />
-      <span className="truncate font-mono text-xs text-ink">{route}</span>
+      {wrap ? (
+        <span className="min-w-0 font-mono text-xs leading-5 text-ink">
+          {route.split('/').map((part, i) => (
+            <Fragment key={i}>{i > 0 ? <>/<wbr /></> : null}{part}</Fragment>
+          ))}
+        </span>
+      ) : (
+        <span className="truncate font-mono text-xs text-ink">{route}</span>
+      )}
     </span>
   );
 }

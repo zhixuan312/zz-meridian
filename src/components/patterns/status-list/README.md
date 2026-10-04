@@ -9,7 +9,7 @@ Status: beta
 1. **Summary line** (optional): a status dot and the worst state among the services, in words: "All systems operational", "1 service degraded", "1 service is down". The count of services on the right from 28rem of card width.
 2. **Service row**, one per service:
    1. **Dot and name**: a 8px status dot and the service name, `text-sm` medium.
-   2. **Description** (optional): one line in `t-caption`, truncated with an ellipsis.
+   2. **Description** (optional): in `t-caption`, wrapping to a second line rather than losing its end.
    3. **Uptime bars**: the service's days, oldest on the left (the Uptime bars card).
    4. **State and latency**: the state word in its tone's ink, and `p95` latency in `t-caption`, right-aligned.
 

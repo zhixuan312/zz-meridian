@@ -73,7 +73,7 @@ export function StatusList({
                   <StatusDot tone={st.tone} live={svc.status !== 'operational'} />
                   <span className="truncate text-sm font-medium">{svc.name}</span>
                 </p>
-                {descriptions ? <p className="t-caption mt-1 truncate pl-[18px]">{svc.description}</p> : null}
+                {descriptions ? <p className="t-caption mt-1 pl-[18px] text-pretty">{svc.description}</p> : null}
               </div>
               <div className="col-span-2 row-start-2 min-w-0 @2xl:col-span-1 @2xl:row-start-auto">
                 <UptimeBars days={svc.days} uptime={svc.uptime} end={end} label={`${svc.name}, last 90 days`} measure={measure} />

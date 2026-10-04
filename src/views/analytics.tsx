@@ -117,8 +117,8 @@ export function AnalyticsBody({
             <TableBody>
               {rows.map((e) => (
                 <TableRow key={e.route}>
-                  <TableCell truncate>
-                    <RouteCell method={e.method} route={e.route} />
+                  <TableCell>
+                    <RouteCell method={e.method} route={e.route} wrap />
                   </TableCell>
                   <TableCell align="right" numeric>{formatCompact(e.requests)}</TableCell>
                   <TableCell align="right" numeric hideBelow="sm" className={cn(e.errorRate > 0.01 && 'text-critical-ink')}>{formatPercent(e.errorRate, 2)}</TableCell>
