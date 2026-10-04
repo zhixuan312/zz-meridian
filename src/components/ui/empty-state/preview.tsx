@@ -3,7 +3,8 @@
 import { KeyRound, Plus, RotateCw } from 'lucide-react';
 import { Plane, Specimen } from '@/system/specimen';
 import { Button } from '@/components/ui/button';
-import { EmptyState } from '.';
+import { AppMark } from '@/components/base/app-mark';
+import { EmptyState, EmptyStateArt } from '.';
 
 export default function EmptyStatePreview() {
   return (
@@ -27,6 +28,13 @@ export default function EmptyStatePreview() {
           <EmptyState kind="error" title="Requests did not load" action={<Button icon={<RotateCw />}>Retry</Button>}>
             The log service timed out after 10 seconds. Your data is safe.
           </EmptyState>
+        </Plane>
+      </Specimen>
+      <Specimen label="The product's own art" note="EmptyStateArt, provided once near the root, replaces the disc on every centred empty state, a Data table's included. Here, the product's mark.">
+        <Plane on="surface" className="p-0">
+          <EmptyStateArt value={{ 'first-run': <AppMark size={32} /> }}>
+            <EmptyState kind="first-run" title="No API keys yet">Keys let your services call the API. Create one per service, with only the scopes it needs.</EmptyState>
+          </EmptyStateArt>
         </Plane>
       </Specimen>
       <Specimen label="Inline" note="Inside a list or a card body, where a row would be." stack>

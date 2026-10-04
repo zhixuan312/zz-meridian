@@ -34,6 +34,7 @@ The empty state is itself a state of a list, a table or a chart. It replaces the
 
 - Filtered names the filters in the sentence and clears them all with one action.
 - Error says what failed (the service, the timeout), keeps the reader's filters, and retries the same request.
+- A product's own art (a mascot, an illustration) replaces the disc on every centred empty state, the ones a Data table draws inside itself included: wrap the app once in `<EmptyStateArt value={{ 'first-run': …, filtered: …, error: … }}>`. An `icon` passed to one empty state still wins; inline empty states keep the disc, since art at 36px is a smudge.
 
 ## Surfaces
 
