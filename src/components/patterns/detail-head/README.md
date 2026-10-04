@@ -9,7 +9,7 @@ Status: beta
 1. **Kicker**: an arrow and the parent list ("← Requests"), a link, in the mono kicker style.
 2. **Name**: the record's name at page-title size, or its ID in mono at 60% of it (`mono`).
 3. **State**: a Badge with a dot beside the name ("503 Unavailable", "Active").
-4. **Facts**: three to five identifying facts under the name, in the lead size, separated by dots: the endpoint, the latency, the customer, when.
+4. **Facts**: three to five identifying facts under the name, in the lead size, separated by dots: the endpoint, the latency, the customer, when. A wrapped line never starts or ends on a dot.
 5. **Actions**: a secondary "More actions" icon button (a menu, destructive items last after a separator), then the page's main actions, the primary last.
 
 ## Variants
