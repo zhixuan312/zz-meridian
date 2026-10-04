@@ -89,6 +89,7 @@ jobs:
         id: pack
         run: |
           set -euo pipefail
+          mkdir -p /tmp/pack
           cd cli
           npm pack --ignore-scripts --pack-destination /tmp/pack >/dev/null
           T="/tmp/pack/zz-meridian-$VERSION.tgz"
