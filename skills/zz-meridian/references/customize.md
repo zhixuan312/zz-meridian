@@ -21,6 +21,12 @@ sample, ZZ Meridian's own dashboard, lives in `src/system/fixtures/`; your pages
   shows also gets a key in `NumberFormat`, `FORMATTERS` and `AXIS_FORMATTERS`. Money follows `app.currency`.
 - **Helpers a server page calls** (summaries, derived sentences) go in `src/data/` or `src/lib/`, never in a
   `'use client'` view file: a server component cannot call a function exported from a client module.
+- **Read on the server when you can**: a server component that awaits its data sends a page with the numbers in it.
+  If a page must fetch in the browser (a client hook against an existing API), its reads start only after the
+  JavaScript has loaded and run, about 2.5 s on a mid-range phone, which puts LCP past the limit. Call
+  `preload(url, { as: 'fetch', crossOrigin: 'anonymous' })` from `react-dom` inside the read hook: the server render
+  writes a preload into the HTML, and the read starts with the page (ZZ Console measured about 170 ms instead).
+  `pnpm verify` measures LCP on that phone profile (`scripts/vitals.ts`).
 
 ## Navigation: `src/app.config.ts`
 
