@@ -34,7 +34,8 @@ Column widths follow content. One column, the record's name, is `grow` on its he
 | Hover (interactive) | `fill-hover` over `dur-hover` |
 | Selected | `accent-tint`, `aria-selected` |
 | Focus | 2px `accent` outline on the focused control in the row |
-| Disabled or archived | text `ink-disabled` |
+| Archived | text `ink-3`: quieter than a live row and still read at 4.5:1, since an archived record is content, not an inactive control |
+| Disabled (a row that cannot be chosen) | `aria-disabled="true"` on the row, text `ink-disabled`; only an inactive control may drop below 4.5:1 |
 | Loading | Skeleton rows of the same height (DataTable) |
 | Empty | An Empty state in place of the body (DataTable) |
 

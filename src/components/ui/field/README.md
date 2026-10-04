@@ -8,7 +8,7 @@ Status: beta
 
 1. **Label**: `text-sm` 13px, `weight-medium`, `ink`. A required field adds a `critical-ink` asterisk.
 2. **Optional tag** (optional): "Optional" in `text-xs` `ink-3`, when the form marks optional fields instead.
-3. **Action** (optional): a small link on the label's line, right-aligned: "Generate", "Use default".
+3. **Action** (optional): a small link on the label's line, right-aligned: "Generate", "Use default". It carries `hit`, so it answers 44px to a finger though it reads as a word.
 4. **Control**: an Input, Textarea, Select or any control that takes the handed props.
 5. **Hint**: one line in `text-xs` `ink-3`: the format, the limit, what happens next.
 6. **Error**: replaces the hint: `text-xs` `critical-ink` with a 14px alert icon.

@@ -44,7 +44,7 @@ export default function FieldPreview() {
           <Field label="Rate limit" error="Enter a whole number between 10 and 10,000." hint="Requests per minute.">
             {(p) => <Input {...p} defaultValue="2,000.5" trailing={<span className="text-xs">rpm</span>} />}
           </Field>
-          <Field label="Signing secret" action={<button type="button" className="link font-medium">Generate</button>} hint="At least 32 characters.">
+          <Field label="Signing secret" action={<button type="button" className="hit link inline-flex font-medium">Generate</button>} hint="At least 32 characters.">
             {(p) => <Input {...p} type="password" defaultValue="zzm-signing-secret-0042" />}
           </Field>
         </div>

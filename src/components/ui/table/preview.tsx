@@ -24,13 +24,13 @@ export default function TablePreview() {
   const toggle = (key: 'latency' | 'status') => setSort((s) => ({ key, dir: s.key === key && s.dir === 'desc' ? 'asc' : 'desc' }));
   return (
     <>
-      <Specimen label="Sortable" note="Sorted by latency; hover a head to see it can sort. Region drops under 1024px, customer under 768px." stack>
+      <Specimen label="Sortable" note="Sorted by latency; hover a head to see it can sort. Region drops under 1024px, customer under 768px, status under 640px." stack>
         <Plane on="surface" className="overflow-hidden p-0">
           <Table caption="Recent requests">
             <TableHead>
               <tr>
                 <TableHeader grow>Request</TableHeader>
-                <TableHeader sort={sort.key === 'status' ? sort.dir : false} onSort={() => toggle('status')}>Status</TableHeader>
+                <TableHeader hideBelow="sm" sort={sort.key === 'status' ? sort.dir : false} onSort={() => toggle('status')}>Status</TableHeader>
                 <TableHeader hideBelow="md">Customer</TableHeader>
                 <TableHeader hideBelow="lg">Region</TableHeader>
                 <TableHeader align="right" sort={sort.key === 'latency' ? sort.dir : false} onSort={() => toggle('latency')}>Latency</TableHeader>
@@ -45,7 +45,7 @@ export default function TablePreview() {
                       <span className="truncate font-mono text-xs">{r.route}</span>
                     </span>
                   </TableCell>
-                  <TableCell><Status code={r.status} /></TableCell>
+                  <TableCell hideBelow="sm"><Status code={r.status} /></TableCell>
                   <TableCell hideBelow="md" muted className="whitespace-nowrap">{r.customer}</TableCell>
                   <TableCell hideBelow="lg" muted>{r.region}</TableCell>
                   <TableCell numeric className={r.latency > 1000 ? 'font-medium text-critical-ink' : undefined}>{r.latency.toLocaleString('en-US')} ms</TableCell>
@@ -55,17 +55,17 @@ export default function TablePreview() {
           </Table>
         </Plane>
       </Specimen>
-      <Specimen label="Row states" stack>
+      <Specimen label="Row states" note="Rest, hover, selected and archived. Requests drops under 640px, where the name column keeps its 160px." stack>
         <Plane on="surface" className="overflow-hidden p-0">
           <Table caption="Row states">
             <TableHead>
-              <tr><TableHeader grow>Customer</TableHeader><TableHeader>State</TableHeader><TableHeader align="right">Requests</TableHeader></tr>
+              <tr><TableHeader grow>Customer</TableHeader><TableHeader>State</TableHeader><TableHeader align="right" hideBelow="sm">Requests</TableHeader></tr>
             </TableHead>
             <TableBody>
-              <TableRow><TableCell>Parallax AI</TableCell><TableCell muted>Rest</TableCell><TableCell numeric>642,860</TableCell></TableRow>
-              <TableRow className="bg-fill-hover"><TableCell>Northwind Labs</TableCell><TableCell muted>Hover</TableCell><TableCell numeric>375,000</TableCell></TableRow>
-              <TableRow selected><TableCell>Halcyon Health</TableCell><TableCell muted>Selected</TableCell><TableCell numeric>264,700</TableCell></TableRow>
-              <TableRow><TableCell className="text-ink-disabled">Brightline</TableCell><TableCell className="text-ink-disabled">Archived</TableCell><TableCell numeric className="text-ink-disabled">—</TableCell></TableRow>
+              <TableRow><TableCell truncate>Parallax AI</TableCell><TableCell muted>Rest</TableCell><TableCell numeric hideBelow="sm">642,860</TableCell></TableRow>
+              <TableRow className="bg-fill-hover"><TableCell truncate>Northwind Labs</TableCell><TableCell muted>Hover</TableCell><TableCell numeric hideBelow="sm">375,000</TableCell></TableRow>
+              <TableRow selected><TableCell truncate>Halcyon Health</TableCell><TableCell muted>Selected</TableCell><TableCell numeric hideBelow="sm">264,700</TableCell></TableRow>
+              <TableRow><TableCell truncate className="text-ink-3">Brightline</TableCell><TableCell className="text-ink-3">Archived</TableCell><TableCell numeric hideBelow="sm" className="text-ink-3">—</TableCell></TableRow>
             </TableBody>
           </Table>
         </Plane>
