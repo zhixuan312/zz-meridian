@@ -18,6 +18,7 @@ Status: beta
 |---|---|
 | Default | Views of one record or one page |
 | With counts | Views that filter one list: each says how many it holds |
+| Links (`LinkTabs`) | Views that are routes of their own (`/knowledge`, `/knowledge/ask`, or `?view=log`): each tab is a link, the current one has `aria-current="page"` and the accent line, and the page renders the view itself; no panels |
 
 ## Sizes
 
@@ -51,7 +52,8 @@ An agent selects a tab by opening the view's address (for example `?tab=failed`)
 
 ## Accessibility
 
-- `role="tablist"`, `tab` with `aria-selected`, `tabpanel` labelled by its tab.
+- `role="tablist"`, `tab` with `aria-selected`, `tabpanel` labelled by its tab; the arrow keys move between tabs.
+- `LinkTabs` is a `nav` landmark named by `label`, its links in the Tab order, the current one `aria-current="page"`.
 - Current label `ink` on `surface` 18.5:1; rest `ink-2` 7.1:1; the indicator `accent` holds 3:1 on every surface (light, cobalt).
 
 ## Content

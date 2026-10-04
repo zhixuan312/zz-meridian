@@ -44,7 +44,7 @@ export default function MenuPreview() {
       </Specimen>
       <Specimen label="Live" note="Click to open; arrow keys move, Enter runs, Escape closes.">
         <Menu>
-          <MenuTrigger className="press inline-flex h-(--control-md) items-center gap-2 rounded-md border border-line-strong bg-surface px-3 text-sm font-medium shadow-control hover:bg-surface-sunk">
+          <MenuTrigger className="press hit inline-flex h-(--control-md) items-center gap-2 rounded-md border border-line-strong bg-surface px-3 text-sm font-medium shadow-control hover:bg-surface-sunk">
             Actions <ChevronDown className="size-3.5 text-ink-3" />
           </MenuTrigger>
           <MenuContent>
@@ -54,7 +54,7 @@ export default function MenuPreview() {
           </MenuContent>
         </Menu>
         <Menu>
-          <MenuTrigger aria-label="More actions" className="press grid size-(--control-md) place-items-center rounded-md text-ink-3 hover:bg-fill-hover hover:text-ink">
+          <MenuTrigger aria-label="More actions" className="press hit grid size-(--control-md) place-items-center rounded-md text-ink-3 hover:bg-fill-hover hover:text-ink">
             <MoreHorizontal className="size-4" />
           </MenuTrigger>
           <MenuContent align="end">

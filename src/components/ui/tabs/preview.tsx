@@ -1,7 +1,7 @@
 'use client';
 
 import { Specimen } from '@/system/specimen';
-import { Tab, TabList, TabPanel, Tabs } from '.';
+import { LinkTabs, Tab, TabList, TabPanel, Tabs } from '.';
 
 export default function TabsPreview() {
   return (
@@ -43,6 +43,17 @@ export default function TabsPreview() {
             </TabList>
           </Tabs>
         </div>
+      </Specimen>
+      <Specimen label="Links" note="Views that are routes: each tab is a link and the page renders the view. Here, three of the console's pages." stack>
+        <LinkTabs
+          label="Traffic views"
+          active="requests"
+          tabs={[
+            { key: 'requests', label: 'Requests', href: '/requests', count: 240 },
+            { key: 'analytics', label: 'Analytics', href: '/analytics' },
+            { key: 'health', label: 'Health', href: '/health', count: 1 },
+          ]}
+        />
       </Specimen>
     </>
   );
