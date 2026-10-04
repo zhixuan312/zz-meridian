@@ -1,11 +1,12 @@
 'use client';
 
 import { Specimen, Plane } from '@/system/specimen';
-import { demoSeries } from '@/system/fixtures/sample';
+import { demoSeries, REGIONS } from '@/system/fixtures/sample';
 import { TrendChart } from '.';
 
 const { current, previous } = demoSeries('30d');
 const dates = current.map((d) => d.date);
+const REGION_TOTAL = REGIONS.reduce((a, r) => a + r.value, 0);
 
 export default function TrendChartPreview() {
   return (
@@ -39,6 +40,16 @@ export default function TrendChartPreview() {
               { key: 'p75', label: 'p75', values: current.map((d) => Math.round(d.p95 * 0.62)), kind: 'line', color: 2 },
               { key: 'p50', label: 'p50', values: current.map((d) => Math.round(d.p95 * 0.38)), kind: 'line', color: 3 },
             ]}
+          />
+        </Plane>
+      </Specimen>
+      <Specimen label="Stacked" note="Parts of one whole: each day's requests by region. The top edge is the total; the readout names each part, top to bottom, and the total. Parts with no meaning of their own take categorical slots, never status colours.">
+        <Plane on="surface">
+          <TrendChart
+            label="Requests per day, by region"
+            stacked
+            dates={dates}
+            series={REGIONS.map((r) => ({ key: r.label, label: r.label, values: current.map((d) => Math.round((d.requests * r.value) / REGION_TOTAL)) }))}
           />
         </Plane>
       </Specimen>
