@@ -31,9 +31,10 @@ describe('the person\'s switch', () => {
     settings(true);
     const toggle = screen.getByRole('switch', { name: /Show the assistant/ });
     expect(toggle).toBeChecked();
-    expect(launcher()).not.toBeNull();
+    // The assistant's code loads on demand (next/dynamic), so the launcher and the panel arrive a moment later.
+    await waitFor(() => expect(launcher()).not.toBeNull());
     fireEvent.click(launcher()!);
-    expect(document.querySelector('[data-assistant]')).not.toBeNull();
+    await waitFor(() => expect(document.querySelector('[data-assistant]')).not.toBeNull());
     fireEvent.click(toggle);
     await waitFor(() => expect(launcher()).toBeNull());
     expect(document.querySelector('[data-assistant]')).toBeNull();

@@ -21,7 +21,7 @@ Status: beta
 | `area` | The series the chart is about. At most one per chart. | 2px line, an area fading from 30% to 0 of its colour, and a 6px blurred glow at 40% under the line |
 | `line` | A peer series of equal standing | 2px line |
 | `dashed` | A reference: the previous period, a target, a budget | 1.5px dashed line in `chart-neutral-strong` |
-| `stacked` (chart prop) | The series are the parts of one whole, such as requests by region, or calls split into attributed, unattributed and refused: the top edge is the total. Parts of similar size; a part under a few percent is invisible as a band, so give it a chart or a tile of its own | Bands one on another, the first at the bottom, each in its categorical slot at 78%, a 1.5px `surface` hairline between them; the readout lists the bands top to bottom and the total; the y-axis is scaled to the total |
+| `stacked` (chart prop) | The series are the parts of one whole, such as requests by region, or calls split into attributed, unattributed and refused: the top edge is the total. Parts of similar size; a part under a few percent is invisible as a band, so give it a chart or a tile of its own | Bands one on another, the first at the bottom, in one hue: the accent, deepest at the bottom (72%) and paler upward (to 36%), a 1px `surface` hairline between them, the whole stack fading toward zero; the total is the 2px accent line with its glow, as on an `area`. A series given its own `color` keeps it. The readout lists the bands top to bottom and the total; the y-axis is scaled to the total |
 
 Colour: `accent` for the series the page is about; categorical slots 1 to 6 in order for peers; never a status colour unless the series means a status.
 

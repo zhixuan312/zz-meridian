@@ -73,7 +73,7 @@ Not applicable: navigation is how a person moves. An agent opens a view by its a
 
 ## Session
 
-- `user` is the signed-in person (`{ name, role }`); pass your session's. It defaults to the sample user in `app.config`.
+- `user` is the signed-in person (`{ name, role }`); pass your session's. `null` while the session is still being found out draws a skeleton in its place, never a name that is not theirs. It defaults to the sample user in `app.config`.
 - `signOut` is a route (`'/sign-in'`, the default), a function (your auth's sign-out; from a server layout, wrap the rail in a small client component to pass one), or `null` to hide it.
 - The workspace menu shows Workspace settings only when the navigation has `/settings`.
 

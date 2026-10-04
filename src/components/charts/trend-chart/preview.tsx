@@ -43,7 +43,7 @@ export default function TrendChartPreview() {
           />
         </Plane>
       </Specimen>
-      <Specimen label="Stacked" note="Parts of one whole: each day's requests by region. The top edge is the total; the readout names each part, top to bottom, and the total. Parts with no meaning of their own take categorical slots, never status colours.">
+      <Specimen label="Stacked" note="Parts of one whole: each day's requests by region. The top edge is the total; the readout names each part, top to bottom, and the total. The parts share the accent's hue, deepest at the bottom; the total is the lit line, as on the single-series area.">
         <Plane on="surface">
           <TrendChart
             label="Requests per day, by region"

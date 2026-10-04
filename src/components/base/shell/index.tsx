@@ -6,7 +6,11 @@ import { Menu, X } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/cn';
 import { usePreferences } from '@/components/base/providers';
-import { AssistantColumn, AssistantLauncher } from '@/components/patterns/assistant';
+import dynamic from 'next/dynamic';
+
+// The assistant loads only where it is shown: a product without it, or a person who switched it off, never downloads it.
+const AssistantColumn = dynamic(() => import('@/components/patterns/assistant').then((m) => m.AssistantColumn));
+const AssistantLauncher = dynamic(() => import('@/components/patterns/assistant').then((m) => m.AssistantLauncher));
 
 /**
  * The shell and the layout contract, in one file. src/components/base/shell/README.md is the prose for it.

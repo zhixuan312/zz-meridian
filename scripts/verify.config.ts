@@ -15,6 +15,11 @@ export type VerifyConfig = {
    * when the pages read nothing but local data, as this sample does.
    */
   fakeApi?: { script: string; env: string };
+  /**
+   * The product's own browser checks, beside Meridian's audit, presses and keyboard walk: scripts verify runs with
+   * `--base <url>` against the built app, failing when one exits non-zero.
+   */
+  browserChecks?: string[];
 };
 
 const config: VerifyConfig = {

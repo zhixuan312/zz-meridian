@@ -4,10 +4,10 @@ import { nav } from '@/app.config';
 import { Specimen } from '@/system/specimen';
 import { Rail } from '.';
 
-const Column = ({ current, label }: { current: string; label: string }) => (
+const Column = ({ current, label, user }: { current: string; label: string; user?: null }) => (
   <figure className="flex flex-col gap-2">
     <div className="relative h-150 w-(--rail-width) overflow-hidden rounded-lg border border-line bg-frame backdrop-blur-xl">
-      <Rail nav={nav} current={current} />
+      <Rail nav={nav} current={current} user={user} />
     </div>
     <figcaption className="text-2xs text-ink-3">{label}</figcaption>
   </figure>
@@ -20,6 +20,7 @@ export default function RailPreview() {
         <div className="flex flex-wrap gap-6">
           <Column current="/" label="Overview is current" />
           <Column current="/health" label="Health is current; its badge counts one open incident" />
+          <Column current="/" user={null} label="The session is still being found out: a skeleton, not a name" />
         </div>
       </Specimen>
       <Specimen label="Item states" stack>

@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, within } from '@testing-library/react';
+import { fireEvent, waitFor, render, screen, within } from '@testing-library/react';
 import { describe, expect, test, vi } from 'vitest';
 import { Tooltip } from 'radix-ui';
 
@@ -24,12 +24,13 @@ describe('the assistant in the shell', () => {
     expect(document.querySelector('[data-assistant]')).toBeNull();
   });
 
-  test('with it on, the panel starts closed, the launcher opens it, and send waits for text', () => {
+  test('with it on, the panel starts closed, the launcher opens it, and send waits for text', async () => {
     page(true);
     expect(document.querySelector('[data-assistant]')).toBeNull();
-    fireEvent.click(screen.getByRole('button', { name: 'Assistant' }));
+    // The assistant's code loads on demand (next/dynamic), so the launcher arrives a moment after the shell.
+    fireEvent.click(await screen.findByRole('button', { name: 'Assistant' }));
+    await waitFor(() => expect(document.querySelector('[data-assistant]')).not.toBeNull());
     const panel = document.querySelector('[data-assistant]') as HTMLElement;
-    expect(panel).not.toBeNull();
     const send = within(panel).getByRole('button', { name: /send/i });
     expect(send).toBeDisabled();
     fireEvent.change(within(panel).getByRole('textbox'), { target: { value: 'What is this page?' } });

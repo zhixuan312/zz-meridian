@@ -25,6 +25,13 @@ export function AtlasShell({ nav, children }: { nav: AtlasNav; children: ReactNo
   const shelf = <Shelf nav={nav} />;
   return (
     <div className="min-h-dvh lg:grid lg:grid-cols-[var(--rail-width)_minmax(0,1fr)]">
+      {/* The first stop for a keyboard: past the shelf's sixty entries, straight to what is being read. */}
+      <a
+        href="#content"
+        className="pointer-events-none fixed top-3 left-3 z-(--layer-tooltip) -translate-y-16 rounded-md bg-surface-raised px-3 py-2 text-sm font-medium text-ink opacity-0 shadow-overlay focus-visible:pointer-events-auto focus-visible:translate-y-0 focus-visible:opacity-100"
+      >
+        Skip to content
+      </a>
       <aside className="sticky top-0 hidden h-dvh border-r border-line bg-frame backdrop-blur-xl lg:block">{shelf}</aside>
       <div className="sticky top-0 z-(--layer-sticky) flex h-14 items-center gap-3 border-b border-line bg-ground/72 px-4 backdrop-blur-xl lg:hidden">
         <button type="button" aria-label="Open the contents" onClick={() => setOpen(true)} className="press hit -ml-1 grid size-9 place-items-center rounded-md text-ink-2 hover:bg-fill-hover">
@@ -44,7 +51,7 @@ export function AtlasShell({ nav, children }: { nav: AtlasNav; children: ReactNo
           </Dialog.Content>
         </Dialog.Portal>
       </Dialog.Root>
-      <div className="min-w-0">{children}</div>
+      <div id="content" tabIndex={-1} className="min-w-0 outline-none">{children}</div>
     </div>
   );
 }

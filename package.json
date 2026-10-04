@@ -26,7 +26,8 @@
     "verify": "node scripts/verify.ts",
     "brand": "node scripts/brand.ts",
     "interactions": "node scripts/interactions.ts",
-    "vitals": "node scripts/vitals.ts"
+    "vitals": "node scripts/vitals.ts",
+    "keyboard": "node scripts/keyboard.ts"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "4.0.71",
