@@ -16,7 +16,7 @@ Status: beta
 | Variant | Use |
 |---|---|
 | Value | Public identifiers: a request ID, an endpoint URL |
-| Secret | API keys, signing secrets: the first 7 and last 4 characters show, the rest are dots |
+| Secret | API keys, signing secrets: the prefix up to the last underscore (`zzm_live_`) and the last 4 characters show, with eight dots between whatever the length |
 
 ## Sizes
 
