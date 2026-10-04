@@ -44,6 +44,8 @@ Colour: `accent` for the series the page is about; categorical slots 1 to 6 in o
 
 ## Behaviour
 
+Points are days by default: the axis reads "03 Oct" and the readout the full date. For points that are not days, pass `tick` (`(date) => string`), used by both: hours for a 24-hour period ("14:00"), weeks for a long one ("Week of 3 Mar").
+
 Pointer, touch and keys as in Meridian. The chart redraws in real pixels when its container resizes, so strokes are never stretched.
 
 ## Surfaces

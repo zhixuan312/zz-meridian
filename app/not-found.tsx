@@ -1,4 +1,5 @@
 import { connection } from 'next/server';
+import { SampleFooter } from '@/views/sample-footer';
 import { Standalone } from '@/views/standalone';
 import { MissingAddress, WayBack } from '@/views/not-found-address';
 import { NOT_FOUND } from '@/views/not-found';
@@ -10,7 +11,7 @@ export default async function NotFound() {
   // Rendered per request, never prerendered: a prerendered screen would name /_not-found instead of the address asked for.
   await connection();
   return (
-    <Standalone kicker={NOT_FOUND.kicker} sentence={NOT_FOUND.sentence} lead={NOT_FOUND.lead}>
+    <Standalone kicker={NOT_FOUND.kicker} sentence={NOT_FOUND.sentence} lead={NOT_FOUND.lead} footer={<SampleFooter />}>
       <div className="mt-8 max-w-[46ch] rounded-md border border-line bg-surface-sunk px-4 py-3.5"><MissingAddress size="quiet" /></div>
       <div className="mt-9 flex flex-wrap gap-3 max-sm:[&>*]:w-full"><WayBack /></div>
     </Standalone>

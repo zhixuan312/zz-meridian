@@ -4,7 +4,7 @@ import { Dialog as D } from 'radix-ui';
 import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { ArrowRight, CornerDownLeft, Monitor, Moon, Search, Sun } from 'lucide-react';
-import { nav } from '@/app.config';
+import type { NavGroup } from '@/app.config';
 import { cn } from '@/lib/cn';
 import { usePreferences } from '@/components/base/providers';
 import { Kbd } from '@/components/ui/kbd';
@@ -21,7 +21,7 @@ export function openCommand() {
  * Every destination and every global action behind one keystroke (⌘K or Ctrl K). Type to filter; the arrow keys
  * move, Enter runs, Escape closes. Matches are ranked by where the query starts, then by order.
  */
-export function CommandPalette() {
+export function CommandPalette({ nav }: { /** Every destination the rail offers, one "Go to" each: pass the same groups as the Rail. */ nav: NavGroup[] }) {
   const [open, setOpen] = useState(false);
   const [q, setQ] = useState('');
   // The cursor belongs to one query: typing, or opening afresh, starts it at the top again without an effect.
@@ -60,7 +60,7 @@ export function CommandPalette() {
       { id: 'theme-dark', group: 'Appearance', label: 'Use the dark theme', icon: <Moon />, run: () => set({ theme: 'dark' }) },
       { id: 'theme-system', group: 'Appearance', label: 'Follow the system theme', icon: <Monitor />, run: () => set({ theme: 'system' }) },
     ],
-    [router, set],
+    [nav, router, set],
   );
 
   const shown = useMemo(() => {

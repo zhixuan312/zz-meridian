@@ -16,7 +16,7 @@ A Dialog (`surface-raised`, `radius-xl` 24px, `shadow-overlay`, 600px wide, 14% 
 
 ## Data
 
-Commands are built from `nav` (one "Go to" per destination, its group as the hint) and the appearance actions. A match ranks by where the query starts in the label, then by the original order; the group hint also matches ("operate" finds Health, Customers, API keys).
+Commands are built from the `nav` prop, the same groups the Rail gets (one "Go to" per destination, its group as the hint) and the appearance actions. A match ranks by where the query starts in the label, then by the original order; the group hint also matches ("operate" finds Health, Customers, API keys).
 
 ## States
 

@@ -6,7 +6,7 @@ Status: beta
 
 ## Anatomy
 
-1. **Brand**: the App mark at 28px, the product name (`text-md`, 600) and the workspace as an eyebrow; the whole row opens the workspace menu: the current workspace (checked), Workspace settings, and Sign out. A product with several workspaces lists them there as radio items.
+1. **Brand**: the App mark at 28px, the product name (`text-md`, 600) and the workspace as an eyebrow; the whole row opens the workspace menu: the current workspace (checked), Workspace settings, and Sign out. A product with several workspaces or scopes (one team, the whole platform) passes them as `scopes` (`{ id, label, active, onSelect }`); the menu lists them as radio items under "Show", and `workspace` sets the eyebrow to the one in view.
 2. **Groups**: an optional mono eyebrow (`t-eyebrow`, `ink-3`) over a list of items; groups sit `space-6` 24px apart.
 3. **Item**: a 16px icon at a 1.75 stroke, the label, and an optional count badge.
 4. **Marker**: one pill behind the current item, `accent-tint` with an inset `accent-line` ring and a 2px `accent` edge on the left that carries a soft glow.
@@ -14,7 +14,7 @@ Status: beta
 
 ## Composition
 
-App mark, Avatar and Appearance menu, on `frame` (a translucent wash with `backdrop-blur-xl`) and a `line` hairline on its right edge. The navigation comes from `nav` in `src/app.config.ts`; the rail holds no route knowledge of its own.
+App mark, Avatar and Appearance menu, on `frame` (a translucent wash with `backdrop-blur-xl`) and a `line` hairline on its right edge. The navigation is the `nav` prop: the template passes `nav` from `src/app.config.ts`, and a product whose destinations depend on the person (admin or member, platform or team) passes the groups that person may see; the rail holds no route knowledge of its own. Pass the same groups to the Command palette.
 
 ## Sizes
 

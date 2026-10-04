@@ -1,7 +1,6 @@
 import { connection } from 'next/server';
 import { AppShell } from '@/components/base/shell';
-import { Rail } from '@/components/patterns/rail';
-import { CommandPalette } from '@/components/patterns/command-palette';
+import { ConsolePalette, ConsoleRail } from '@/views/console-chrome';
 import { ShellTools } from '@/components/patterns/shell-tools';
 import { assistantConfig } from '@/lib/assistant/config';
 import { DEMO_NOW } from '@/system/fixtures/sample';
@@ -13,9 +12,9 @@ export default async function DashboardLayout({ children }: { children: React.Re
   await connection();
   const assistant = assistantConfig(process.env) !== null;
   return (
-    <AppShell rail={<Rail />} tools={<ShellTools alerts={ALERTS} now={DEMO_NOW} />} assistant={assistant}>
+    <AppShell rail={<ConsoleRail />} tools={<ShellTools alerts={ALERTS} now={DEMO_NOW} />} assistant={assistant}>
       {children}
-      <CommandPalette />
+      <ConsolePalette />
     </AppShell>
   );
 }

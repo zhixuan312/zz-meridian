@@ -1,7 +1,6 @@
 import { AppShell } from '@/components/base/shell';
-import { Rail } from '@/components/patterns/rail';
 import { ShellTools } from '@/components/patterns/shell-tools';
-import { CommandPalette } from '@/components/patterns/command-palette';
+import { ConsolePalette, ConsoleRail } from '@/views/console-chrome';
 import { DEMO_NOW } from '@/system/fixtures/sample';
 import { ALERTS } from '@/system/fixtures/sample-ops';
 
@@ -11,9 +10,9 @@ import { ALERTS } from '@/system/fixtures/sample-ops';
  */
 export default function StatesLayout({ children }: { children: React.ReactNode }) {
   return (
-    <AppShell rail={<Rail />} tools={<ShellTools alerts={ALERTS} now={DEMO_NOW} />} assistant={false}>
+    <AppShell rail={<ConsoleRail />} tools={<ShellTools alerts={ALERTS} now={DEMO_NOW} />} assistant={false}>
       {children}
-      <CommandPalette />
+      <ConsolePalette />
     </AppShell>
   );
 }

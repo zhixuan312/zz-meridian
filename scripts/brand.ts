@@ -167,8 +167,8 @@ if (has('--no-atlas') || has('--product')) {
   let cfg = read('src/app.config.ts').replace(/\n\s*\{ href: '\/system(?:\/[^']*)?'[^}]*\},/g, '');
   cfg = cfg.replace(/\n {2}\{\n(?: {4}label: '[^']*',\n)? {4}items: \[\s*\],\n {2}\},/g, '');
   write('src/app.config.ts', cfg);
-  // The standalone screens' footer link to the Atlas.
-  write('src/views/standalone.tsx', read('src/views/standalone.tsx').replace(/\n\s*<Link href="\/system"[^\n]*<\/Link>/, ''));
+  // The standalone screens' footer link to the Atlas (the sample's footer, src/views/sample-footer.tsx).
+  write('src/views/sample-footer.tsx', read('src/views/sample-footer.tsx').replace(/\n\s*<Link href="\/system"[^\n]*<\/Link>/, ''));
   // Build tracing for the Atlas's markdown; the tab icon still reads tokens/.
   write('next.config.ts', read('next.config.ts').replace(/\n\s*\/\/ Card specifications[^\n]*\n\s*outputFileTracingIncludes: \{[^\n]*\},/, "\n  // The tab icon reads the tokens at build time.\n  outputFileTracingIncludes: { '/icon': ['./tokens/**/*.json'] },"));
   // Route types generated for the removed pages would fail the type check until regenerated.

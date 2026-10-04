@@ -1,4 +1,5 @@
 import { SignInPanel } from './panel';
+import { SampleFooter } from '@/views/sample-footer';
 import { Standalone } from '@/views/standalone';
 import { Meridian } from '@/components/charts/meridian';
 import { TrendChart } from '@/components/charts/trend-chart';
@@ -13,6 +14,7 @@ export default function SignInPage() {
   const days = demoSeries('30d').current;
   return (
     <Standalone
+      footer={<SampleFooter />}
       kicker={`${app.name} · Console`}
       sentence="Know your API before your customers do."
       lead="Traffic, latency, spend and health for every endpoint, on your desk, on your phone, and inside the assistant you already use."

@@ -2,16 +2,27 @@ import Link from 'next/link';
 import type { ReactNode } from 'react';
 import { app } from '@/app.config';
 import { AppMark } from '@/components/base/app-mark';
-import { StatusDot } from '@/components/ui/status-dot';
-import { summarise } from '@/components/patterns/status-list/summarise';
-import { SERVICES } from '@/system/fixtures/sample';
 
 /**
  * A screen outside the shell (sign-in, not found): the lit ground, the mark in the corner, and one sentence at poster
  * size that ends on an accent full stop: the one place the accent is punctuation.
  */
-export function Standalone({ kicker, sentence, lead, aside, children }: { kicker?: ReactNode; sentence: string; lead?: ReactNode; aside?: ReactNode; children?: ReactNode }) {
-  const status = summarise(SERVICES);
+export function Standalone({
+  kicker,
+  sentence,
+  lead,
+  aside,
+  footer,
+  children,
+}: {
+  kicker?: ReactNode;
+  sentence: string;
+  lead?: ReactNode;
+  aside?: ReactNode;
+  /** The band along the bottom: the copyright, a status link, legal links. Left out, there is none. */
+  footer?: ReactNode;
+  children?: ReactNode;
+}) {
   return (
     <main className="relative isolate flex min-h-dvh flex-col overflow-hidden">
       <header className="flex h-20 items-center px-(--gutter)">
@@ -32,14 +43,9 @@ export function Standalone({ kicker, sentence, lead, aside, children }: { kicker
         </div>
         {aside ? <div className="min-w-0 max-lg:max-w-md">{aside}</div> : null}
       </div>
-      <footer className="flex flex-wrap items-center gap-x-6 gap-y-2 border-t border-line px-(--gutter) py-5 text-xs text-ink-3">
-        <span>© 2026 {app.name}</span>
-        <Link href="/system" className="hit inline-flex hover:text-ink-2">Design system</Link>
-        <Link href="/health" className="hit ml-auto inline-flex items-center gap-2 hover:text-ink-2">
-          <StatusDot tone={status.status === 'operational' ? 'positive' : status.status === 'degraded' ? 'warning' : 'critical'} />
-          {status.text}
-        </Link>
-      </footer>
+      {footer ? (
+        <footer className="flex flex-wrap items-center gap-x-6 gap-y-2 border-t border-line px-(--gutter) py-5 text-xs text-ink-3">{footer}</footer>
+      ) : null}
     </main>
   );
 }

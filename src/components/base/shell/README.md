@@ -10,7 +10,7 @@ Status: beta
 2. **Rail**: on the left from 1024px, its own scroll; below 1024px, a drawer.
 3. **PageFrame**: the one scroll region of a page, holding:
    - **Top bar**: 56px, sticky. The drawer trigger (under 1024px), the compact title (once the masthead leaves), and the global tools. Clear at rest; glass (`ground` at 72%, `backdrop-blur-xl`, a `line` hairline) once scrolled.
-   - **Masthead**: the kicker, the page title (`t-page`), one sentence (`t-lead`), and the meta and actions, aligned to the title's last line. It scrolls away with the content.
+   - **Masthead**: the kicker, the page title (`t-page`), one sentence (`t-lead`), and the meta and actions, aligned to the title's last line. It scrolls away with the content. A record more than one level deep puts its trail in the kicker: `kicker={<Breadcrumb items={[{ label: 'Teams', href: '/teams' }, { label: 'Atlas', href: '/teams/atlas' }, { label: 'Q3 review' }]} />}`. Breadcrumb's links carry `hit`, as any link laid out as a box must, or they fail the 44px touch rule at 390px.
    - **Body**: a `Stack` of `Row`s.
 4. **Stack**: rows one `stack-gap` apart (14–20px), arriving in reading order.
 5. **Row**: one card, or cards split `1/2`, `2/3` or `1/3`, or a row of tiles.

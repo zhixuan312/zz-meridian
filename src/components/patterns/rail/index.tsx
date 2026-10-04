@@ -4,29 +4,41 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useLayoutEffect, useRef, useState } from 'react';
 import { Check, ChevronsUpDown, LogOut, Settings } from 'lucide-react';
-import { app, nav } from '@/app.config';
+import { app, type NavGroup } from '@/app.config';
 import { cn } from '@/lib/cn';
 import { AppMark } from '@/components/base/app-mark';
 import { Avatar } from '@/components/ui/avatar';
 import { Menu, MenuContent, MenuItem, MenuLabel, MenuSeparator, MenuTrigger } from '@/components/ui/menu';
 import { AppearanceMenu } from '@/components/patterns/appearance-menu';
 
+/** One scope the workspace menu offers: the console reads the whole platform or one team. */
+export type Scope = { id: string; label: string; active: boolean; onSelect: () => void };
+
 /**
  * The navigation rail: a translucent wash on the lit ground. The current page is an accent-tinted pill with a lit
  * edge that springs to the item you choose; groups are named in mono caps; a count is a quiet badge.
  */
 export function Rail({
+  nav,
   current,
+  workspace = app.workspace,
+  scopes = [],
   user = app.user,
   signOut = '/sign-in',
 }: {
+  /** The groups and destinations, as the signed-in person may see them. */
+  nav: NavGroup[];
   /** The active route; defaults to the current pathname. */
   current?: string;
+  /** The line under the product name: the scope in view. */
+  workspace?: string;
+  /** The scopes the workspace menu switches between; the active one carries the check. */
+  scopes?: Scope[];
   /** The signed-in person; pass your session's. Defaults to the sample user in app.config. */
   user?: { name: string; role: string };
   /** Where Sign out goes (a route), what it does (a function, such as your auth's signOut), or null to hide it. */
   signOut?: string | (() => void) | null;
-} = {}) {
+}) {
   const pathname = usePathname();
   const router = useRouter();
   // Menu items only for routes the product has.
@@ -49,21 +61,28 @@ export function Rail({
       <div className="flex h-16 items-center px-4">
         <Menu>
           <MenuTrigger asChild>
-            <button type="button" aria-label={`${app.name}, ${app.workspace}: workspace menu`} className="group -mx-1.5 flex min-w-0 flex-1 items-center gap-2.5 rounded-md px-1.5 py-1.5 text-left hover:bg-fill-hover data-[state=open]:bg-fill-hover">
+            <button type="button" aria-label={`${app.name}, ${workspace}: workspace menu`} className="group -mx-1.5 flex min-w-0 flex-1 items-center gap-2.5 rounded-md px-1.5 py-1.5 text-left hover:bg-fill-hover data-[state=open]:bg-fill-hover">
               <AppMark size={28} />
               <span className="min-w-0 flex-1">
                 <span className="block truncate text-md leading-tight font-semibold tracking-[-0.015em]">{app.name}</span>
-                <span className="t-eyebrow mt-0.5 block truncate">{app.workspace}</span>
+                <span className="t-eyebrow mt-0.5 block truncate">{workspace}</span>
               </span>
               <ChevronsUpDown className="size-3.5 text-ink-3 group-hover:text-ink-2" />
             </button>
           </MenuTrigger>
           <MenuContent className="w-60">
-            <MenuLabel>Workspace</MenuLabel>
-            <MenuItem disabled className="opacity-100">
-              <Check className="size-4 text-accent" strokeWidth={2.25} />
-              <span className="min-w-0 flex-1 truncate text-ink">{app.name} {app.workspace}</span>
-            </MenuItem>
+            <MenuLabel>{scopes.length > 1 ? 'Show' : 'Workspace'}</MenuLabel>
+            {scopes.length ? scopes.map((s) => (
+              <MenuItem key={s.id} onSelect={s.onSelect} aria-checked={s.active} role="menuitemradio">
+                <Check className={cn('size-4 text-accent', !s.active && 'invisible')} strokeWidth={2.25} />
+                <span className="min-w-0 flex-1 truncate text-ink">{s.label}</span>
+              </MenuItem>
+            )) : (
+              <MenuItem disabled className="opacity-100">
+                <Check className="size-4 text-accent" strokeWidth={2.25} />
+                <span className="min-w-0 flex-1 truncate text-ink">{app.name} {workspace}</span>
+              </MenuItem>
+            )}
             {hasSettings || signOut ? <MenuSeparator /> : null}
             {hasSettings ? <MenuItem onSelect={() => router.push('/settings')}><Settings />Workspace settings</MenuItem> : null}
             {signOut ? <MenuItem onSelect={() => (typeof signOut === 'function' ? signOut() : router.push(signOut))}><LogOut />Sign out</MenuItem> : null}

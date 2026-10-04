@@ -25,8 +25,11 @@ Migrate in place, page by page, keeping their data layer.
    motion). Their own utility classes that used Tailwind's default palette will stop rendering; that is expected, and
    step 6 replaces them.
 5. Wrap their root layout like the template's `app/layout.tsx` (fonts, the pre-paint script, `Providers`) and their
-   console routes in `AppShell` with `Rail`, `ShellTools` and `CommandPalette` (see `app/(dashboard)/layout.tsx`).
-   Write their routes into `nav` in `src/app.config.ts`.
+   console routes in `AppShell` with the rail, `ShellTools` and the command palette (see `app/(dashboard)/layout.tsx`).
+   Write their routes into `nav` in `src/app.config.ts`. The Rail and the palette take `nav` as a prop, rendered from a
+   client module (`src/views/console-chrome.tsx`), since each destination carries its icon component; if what a person
+   may see depends on their role or scope, filter `nav` there from their session, and pass `workspace` and `scopes`
+   to the Rail for a scope switcher.
 6. Rebuild each page on `PageFrame`, `Stack` and `Row` with Meridian components, keeping their data fetching and
    business logic untouched. Do the busiest page first, show it to the person, then the rest.
 7. Run `node scripts/brand.ts --existing` for their name and colour (`--existing` keeps their package name and has no

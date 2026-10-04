@@ -1,12 +1,13 @@
 'use client';
 
+import { nav } from '@/app.config';
 import { Specimen } from '@/system/specimen';
 import { Rail } from '.';
 
 const Column = ({ current, label }: { current: string; label: string }) => (
   <figure className="flex flex-col gap-2">
     <div className="relative h-150 w-(--rail-width) overflow-hidden rounded-lg border border-line bg-frame backdrop-blur-xl">
-      <Rail current={current} />
+      <Rail nav={nav} current={current} />
     </div>
     <figcaption className="text-2xs text-ink-3">{label}</figcaption>
   </figure>
