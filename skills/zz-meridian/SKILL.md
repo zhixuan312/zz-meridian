@@ -125,9 +125,10 @@ pnpm verify            # the gate, a production build, the built app, and the br
 Stop the dev server first: verify builds and serves the app from the same folder. A full run takes a few minutes for a
 dozen routes (five widths and two themes for the audit, while every control is pressed beside it); `--quick` takes about
 a minute. It must end with
-`verify: the project meets the Meridian standard`. The audit discovers every static route; pass each detail page with
-`--extra /orders/ord_1042`, one per state worth seeing (a normal record, a failed one), with ids taken from your data
-module's featured ids (print them from `tests/data.test.ts`). When something fails, read `references/validation.md`, fix the cause (not the check), and run
+`verify: the project meets the Meridian standard`. The audit discovers every static route; list each detail page worth
+seeing (a normal record, a failed one, a missing one) in `detailRoutes` in `scripts/verify.config.ts`, with ids from
+your data (`--extra` replaces them for one run). If the pages call a live API, give verify a fake one first
+(`references/existing-project.md`, step 8): it presses every control, Delete included. When something fails, read `references/validation.md`, fix the cause (not the check), and run
 it again. `pnpm verify --quick` is fine while iterating; finish with the full run.
 
 Then look, because a passing audit is not the same as a good page:

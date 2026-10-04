@@ -12,14 +12,15 @@ Migrate in place, page by page, keeping their data layer.
 2. Copy the parts a dashboard is built from into their project (merge, never overwrite their own files of the same
    name without reading them): `tokens/`, `src/styles/`, `src/components/` without the `README.md` and `preview.tsx`
    files, `src/lib/{cn,format,format-date,period,color,host,preferences,csv}.ts`, `app/icon.ts`, `scripts/`,
-   `tests/setup.ts`, `vitest.config.ts`, `postcss.config.mjs`. Not the design system: no `app/system/`, `src/system/`,
+   `tests/setup.ts`, `vitest.config.ts`, `postcss.config.mjs`, `eslint.config.ts`. Not the design system: no `app/system/`, `src/system/`,
    `docs/`, `decisions/` or card specifications. They get a dashboard, not a copy of Meridian. Routes may live in
    `app/` or `src/app/`; the scripts find either.
    If their alias is not `@/* → src/*`, add it to `tsconfig.json`.
 3. Merge dependencies from the template's `package.json` (`next`, `react`, `radix-ui`, `lucide-react`, `clsx`,
    `tailwind-merge`, `react-markdown`, `remark-gfm`; dev: `tailwindcss`, `@tailwindcss/postcss`, `typescript`,
-   `vitest`, testing libraries) and the scripts (`tokens`, `registry`, `check`, `contrast`, `gate`, `audit`, `verify`,
-   `brand`, `shot`). Keep their versions where theirs are newer and compatible.
+   `vitest`, testing libraries, `eslint`, `eslint-config-next`) and the scripts (`tokens`, `check`, `contrast`, `lint`,
+   `gate`, `audit`, `verify`, `brand`, `shot`; not `registry`, which belongs to the Atlas). Keep their versions where
+   theirs are newer and compatible.
 4. Replace their global stylesheet with the template's `app/globals.css` (it imports Tailwind, the tokens, base and
    motion). Their own utility classes that used Tailwind's default palette will stop rendering; that is expected, and
    step 6 replaces them.
@@ -28,7 +29,21 @@ Migrate in place, page by page, keeping their data layer.
    Write their routes into `nav` in `src/app.config.ts`.
 6. Rebuild each page on `PageFrame`, `Stack` and `Row` with Meridian components, keeping their data fetching and
    business logic untouched. Do the busiest page first, show it to the person, then the rest.
-7. Run `node scripts/brand.ts` for their name and colour, then `pnpm verify` until it passes.
+7. Run `node scripts/brand.ts --existing` for their name and colour (`--existing` keeps their package name and has no
+   Atlas to remove; never `--product`, which deletes their docs, README and decisions).
+8. **Before the first `pnpm verify`, give it a fake API.** verify presses every control it finds on the built app,
+   Approve, Revoke, Archive and Delete included. If their pages call a live backend, those presses change it. Write
+   `scripts/fake-api.ts`: a server on `--port 0` that answers every route the pages call with typed fixtures (writes
+   answer success and are forgotten) and prints `listening on <url>`. Name it and the environment variable their app
+   reads its API address from in `scripts/verify.config.ts` (`fakeApi: { script, env }`): verify starts it first and
+   builds and serves the app against it. Point the build at it, not only the server: an address read in
+   `next.config` rewrites is baked in at build time. If they cannot fake the API yet, do not run `pnpm verify`; run the
+   audit alone (`node scripts/audit.ts --base <url>`), which reads and never presses.
+9. List their detail pages worth seeing (a normal record, a failed one, a missing one) in `detailRoutes` in
+   `scripts/verify.config.ts`, with ids from the fake API's fixtures, then run `pnpm verify` until it passes.
+
+Without the assistant, verify skips its walk-through on its own (it runs only when `app/api/assistant/route.ts`
+exists).
 
 ## Adding the assistant
 

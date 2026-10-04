@@ -1,11 +1,18 @@
 /**
- * Verify a Meridian project against the standard, in one command: the gate, a production build, the built app
- * started on a free port twice (without the assistant, then with it pointed at a fake LLM), the assistant walk-through
- * (scripts/assistant.ts, which asks, approves and dismisses on /members, then walks the thread, the switch, the layout, a refused key and the key's absence from the browser), the browser audit of every page and embed view against it, every control pressed and every
- * link followed (scripts/interactions.ts), and a report.
+ * Verify a Meridian project against the standard, in one command: the gate, a production build, the built app started
+ * on a free port, the browser audit of every page and embed view against it, every control pressed and every link
+ * followed (scripts/interactions.ts), and a report.
+ *
+ * Two steps depend on the project, read from scripts/verify.config.ts and app/:
+ * - With a fake API configured, it starts first and the app is built and served against it, so the presses (Approve,
+ *   Revoke and Delete included) never reach a live backend.
+ * - With the assistant (app/api/assistant/route.ts), the app starts twice: without it, then pointed at a fake LLM for the
+ *   walk-through (scripts/assistant.ts: asks, approves and dismisses on /members, then the thread, the switch, the
+ *   layout, a refused key and the key's absence from the browser).
  *
  *   pnpm verify [--quick] [--extra /requests/req_1,/customers/acme]
  *
+ * The detail pages in scripts/verify.config.ts are checked by default; --extra replaces them for one run.
  * Exit 0 only when everything passes. The report is written to out/verify.txt.
  */
 import { spawn, spawnSync, type ChildProcess } from 'node:child_process';
@@ -14,8 +21,15 @@ import fs from 'node:fs';
 import net from 'node:net';
 import path from 'node:path';
 
+import config from './verify.config.ts';
+
 const ROOT = path.resolve(import.meta.dirname, '..');
-const pass = process.argv.slice(2);
+
+const argv = process.argv.slice(2);
+// The detail pages in scripts/verify.config.ts are checked by default; --extra replaces them for one run.
+const pass = argv.includes('--extra') || !config.detailRoutes.length ? argv : [...argv, '--extra', config.detailRoutes.join(',')];
+// A project that has not adopted the assistant has no walk-through to run, only the pages.
+const hasAssistant = fs.existsSync(path.join(ROOT, 'app/api/assistant/route.ts'));
 const lines: string[] = [];
 const log = (s: string) => { console.log(s); lines.push(s); };
 const finish = (code: number) => {
@@ -65,35 +79,58 @@ const run = (script: string, extra: string[], env: NodeJS.ProcessEnv = process.e
   child.on('close', (status) => resolve({ status, out: out.trim() }));
 });
 
-step('gate: tokens, registry, specifications, contrast, types, tests', 'node', ['scripts/gate.ts']);
-step('production build', 'pnpm', ['exec', 'next', 'build']);
+step('gate: tokens, registry, specifications, contrast, lint, types, tests', 'node', ['scripts/gate.ts']);
 
-// Start 1: no variables. The assistant must be absent.
-const first = await start(clean);
-const off = await run('scripts/assistant.ts', ['--base', `http://127.0.0.1:${first.port}`, '--expect', 'off'], clean);
-stop(first.server);
-log(off.out);
-if (off.status !== 0) { log('FAIL assistant off'); finish(1); }
+// A product whose pages call a live API is checked against its fake (scripts/verify.config.ts): the presses below
+// approve, revoke and delete whatever a page offers. The fake starts first, because its address goes into the build.
+let app = clean;
+if (config.fakeApi) {
+  const api = spawn('node', [config.fakeApi.script, '--port', '0'], { cwd: ROOT, stdio: ['ignore', 'pipe', 'inherit'], detached: true });
+  children.push(api);
+  const apiUrl = await new Promise<string>((resolve) => {
+    let buf = '';
+    api.stdout!.on('data', (d) => { buf += d; const m = /listening on (\S+)/.exec(buf); if (m) resolve(m[1]); });
+    api.on('close', () => resolve(''));
+  });
+  if (!apiUrl) { log(`FAIL the fake API (${config.fakeApi.script}) did not start`); finish(1); }
+  app = { ...clean, [config.fakeApi.env]: apiUrl };
+  log(`ok   the fake API is serving at ${apiUrl} (${config.fakeApi.env})`);
+}
+step('production build', 'pnpm', ['exec', 'next', 'build'], app);
 
-// Start 2: pointed at the fake LLM. The audit and the presses then see the launcher.
-const fake = spawn('node', ['scripts/fake-llm.ts', '--port', '0'], { cwd: ROOT, stdio: ['ignore', 'pipe', 'inherit'], detached: true });
-children.push(fake);
-const llmUrl = await new Promise<string>((resolve) => {
-  let buf = '';
-  fake.stdout!.on('data', (d) => { buf += d; const m = /fake-llm listening on (\S+)/.exec(buf); if (m) resolve(m[1]); });
-  fake.on('close', () => resolve(''));
-});
-if (!llmUrl) { log('FAIL the fake LLM did not start'); finish(1); }
-// A distinctive key per run: the walk-through searches everything the browser can get for it.
-const key = `verify-${randomBytes(16).toString('hex')}`;
-const { port } = await start({ ...clean, ASSISTANT_PROVIDER: 'openai-compatible', ASSISTANT_BASE_URL: llmUrl, ASSISTANT_API_KEY: key, ASSISTANT_MODEL: 'fake' });
-log(`ok   the built app is serving on port ${port}`);
+let on: { status: number | null; out: string } = { status: 0, out: '' };
+let port: number;
+if (hasAssistant) {
+  // Start 1: no assistant variables. The assistant must be absent.
+  const first = await start(app);
+  const off = await run('scripts/assistant.ts', ['--base', `http://127.0.0.1:${first.port}`, '--expect', 'off'], app);
+  stop(first.server);
+  log(off.out);
+  if (off.status !== 0) { log('FAIL assistant off'); finish(1); }
 
-// The walk-through changes the sample's data (it suspends members), so it runs first and alone; the audit and the
-// presses then run on what it left, and their presses never change what it reads.
-const on = await run('scripts/assistant.ts', ['--base', `http://127.0.0.1:${port}`, '--expect', 'on', '--llm', llmUrl, '--key', key]);
-log(on.out);
-if (on.status !== 0) log('FAIL assistant on');
+  // Start 2: pointed at the fake LLM. The audit and the presses then see the launcher.
+  const fake = spawn('node', ['scripts/fake-llm.ts', '--port', '0'], { cwd: ROOT, stdio: ['ignore', 'pipe', 'inherit'], detached: true });
+  children.push(fake);
+  const llmUrl = await new Promise<string>((resolve) => {
+    let buf = '';
+    fake.stdout!.on('data', (d) => { buf += d; const m = /fake-llm listening on (\S+)/.exec(buf); if (m) resolve(m[1]); });
+    fake.on('close', () => resolve(''));
+  });
+  if (!llmUrl) { log('FAIL the fake LLM did not start'); finish(1); }
+  // A distinctive key per run: the walk-through searches everything the browser can get for it.
+  const key = `verify-${randomBytes(16).toString('hex')}`;
+  ({ port } = await start({ ...app, ASSISTANT_PROVIDER: 'openai-compatible', ASSISTANT_BASE_URL: llmUrl, ASSISTANT_API_KEY: key, ASSISTANT_MODEL: 'fake' }));
+  log(`ok   the built app is serving on port ${port}`);
+
+  // The walk-through changes the sample's data (it suspends members), so it runs first and alone; the audit and the
+  // presses then run on what it left, and their presses never change what it reads.
+  on = await run('scripts/assistant.ts', ['--base', `http://127.0.0.1:${port}`, '--expect', 'on', '--llm', llmUrl, '--key', key]);
+  log(on.out);
+  if (on.status !== 0) log('FAIL assistant on');
+} else {
+  ({ port } = await start(app));
+  log(`ok   the built app is serving on port ${port} (no assistant in this project, so no walk-through)`);
+}
 
 // The audit and the presses each run their own browser, so they run side by side against the one built app.
 const t = Date.now();
