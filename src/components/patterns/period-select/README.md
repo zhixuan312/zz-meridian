@@ -1,16 +1,19 @@
 # Period select
 
-The period select chooses the reporting period for a whole page (7 days, 30 days, 90 days, all) and keeps it in the address, so a view is a link.
+The period select chooses the reporting period for a whole page (7 days, 30 days, 90 days, all, or the product's own) and, unless the page holds the period itself, keeps it in the address, so a view is a link.
 
 Status: beta
 
 ## Anatomy
 
-1. **Segmented control**: four options: 7D, 30D, 90D, All; the full name ("Last 30 days") is each option's title.
+1. **Segmented control**: four options: 7D, 30D, 90D, All; the full name ("Last 30 days") is each option's title. `periods` replaces them with the product's own (`{ value, short, label }`), such as a 24-hour period.
 
 ## Composition
 
-Segmented, writing `?period=` with `router.replace` (no history entry, no scroll). The page reads it on the server with `parsePeriod`, which never passes an untrusted value through.
+Segmented. Two ways to hold the period:
+
+- **In the address** (no `onChange`): the control writes `?period=` with `router.replace` (no history entry, no scroll), and the page reads it on the server with `parsePeriod`, which never passes an untrusted value through. It reads the search params, so it sits inside `<Suspense>`.
+- **In the page** (`value` and `onChange`): the page keeps the period in state or a context and mirrors it into the address as it likes. The control touches no router, so nothing has to suspend.
 
 ## Data
 

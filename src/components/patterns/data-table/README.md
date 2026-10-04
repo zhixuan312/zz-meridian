@@ -7,12 +7,13 @@ Status: beta
 ## Anatomy
 
 1. **Card**: `surface`, `line` hairline, `radius-lg` 16px, `shadow-card`; the table runs edge to edge inside it.
-2. **Toolbar** (optional): a band above the table, `card-pad` horizontal and 14px vertical padding, a `line` divider under it from 768px. It holds a Filter bar.
-3. **Head**: Table header cells, `surface-sunk`, 36px, `text-xs` 500 `ink-3`. A sortable head is a button with the sort arrow in `accent-ink`.
-4. **Rows**: `row-height` 52px (38px compact), a `line` divider between rows. The title column (`mobile: 'title'`, or the first) is a `.row-link` when the row opens a record.
-5. **Selection column** (optional): 40px with a Checkbox; the head's checkbox selects the page and shows indeterminate when part of it is chosen.
-6. **Footer**: Pagination, under a `line` divider, shown only when the rows do not fit on one page.
-7. **Phone list**: under 768px, one card per row: the title and the status on one line, two or three facts under it in `text-xs` `ink-3`, separated by dots.
+2. **Title** (optional): `title`, `description` and `actions` as a Card header, when the table is one card among others on a page; a hairline under it when no toolbar follows.
+3. **Toolbar** (optional): a band above the table, `card-pad` horizontal and 14px vertical padding, a `line` divider under it from 768px. It holds a Filter bar.
+4. **Header row**: Table header cells, `surface-sunk`, 36px, `text-xs` 500 `ink-3`. A sortable head is a button with the sort arrow in `accent-ink`.
+5. **Rows**: `row-height` 52px (38px compact), a `line` divider between rows. The title column (`mobile: 'title'`, or the first) is a `.row-link` when the row opens a record.
+6. **Selection column** (optional): 40px with a Checkbox; the head's checkbox selects the page and shows indeterminate when part of it is chosen.
+7. **Footer**: Pagination, under a `line` divider, shown only when the rows do not fit on one page.
+8. **Phone list**: under 768px, one card per row: the title and the status on one line, two or three facts under it in `text-xs` `ink-3`, separated by dots.
 
 ## Variants
 

@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useState } from 'react';
 import { Plus } from 'lucide-react';
 import { Specimen } from '@/system/specimen';
@@ -34,6 +35,9 @@ export default function DataTablePreview() {
           onClearFilters={() => setQ('')}
           toolbar={<FilterBar search={{ value: q, onChange: setQ, placeholder: 'Search requests' }} result={<>{rows.length} requests</>} />}
         />
+      </Specimen>
+      <Specimen label="With a title" note="One card among others on a page: the title, a line on what the rows are, and an action beside them." stack>
+        <DataTable caption="Slowest requests" title="Slowest requests" description="The five slowest in the last hour." actions={<Button asChild size="sm" variant="ghost"><Link href="/requests">View all</Link></Button>} noun="requests" rows={few} columns={compact} rowKey={(r) => r.id} />
       </Specimen>
       <Specimen label="Selectable" note="A checkbox column; the head selects the page. Selected rows take the accent wash." stack>
         <DataTable caption="Requests" noun="requests" rows={few} columns={compact} rowKey={(r) => r.id} selectable selected={selected} onSelectedChange={setSelected} />

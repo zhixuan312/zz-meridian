@@ -36,7 +36,8 @@ Controls at `control-sm` 30px; page buttons at least 30px wide with 6px padding,
 
 - Changing page keeps the scroll position of the page's header and moves focus to the first row of the list.
 - Changing rows per page returns to page 1.
-- The page and the size live in the URL (`?page=2&size=20`), so a page of results is linkable.
+- In a Data table, the page and the size live in the URL (`?page=2&size=20`), so a page of results is linkable.
+- A list that is not a data table (a roster in a settings card, a short list inside a card) pages with `usePaged(rows, { pageSize, resetKey })`. `resetKey` is whatever narrows the rows (the search, a filter): narrowing lands on page 1 without an effect, and the page is clamped when read, so a refetch with fewer rows never leaves an empty page. The pager shows only when `paged` is true.
 
 ## Surfaces
 
@@ -71,3 +72,9 @@ import { Pagination } from '@/components/ui/pagination';
 ```
 
 `pageList(page, count)` returns the numbers and gaps, for a custom layout.
+
+```tsx
+const { rows: page, paged, pagination } = usePaged(members, { pageSize: 10, resetKey: query });
+<ul>{page.map((m) => <li key={m.id}>{m.name}</li>)}</ul>
+{paged ? <Pagination {...pagination} noun="members" pageSizes={[10, 20, 50]} /> : null}
+```
