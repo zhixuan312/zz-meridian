@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any -- a fake model answers whatever JSON a client sends; this file runs in Node, never in a page. */
 /**
  * An OpenAI-compatible fake LLM for tests and local runs. It never touches the network.
  *

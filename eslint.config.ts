@@ -20,9 +20,9 @@ const eslintConfig = defineConfig([
     },
   },
   {
-    // The tooling speaks Chrome's DevTools protocol and reads JSON token files, neither of which has types; `any`
-    // there is the protocol's honest shape, and nothing in scripts/ ships to a browser.
-    files: ['scripts/**/*.ts', 'cli/**/*.ts'],
+    // The package reads untyped JSON (tsconfig, package.json, the manifest). Meridian's scripts carry their own
+    // exception in the files that need one, so the rule holds wherever a project copies them.
+    files: ['cli/**/*.ts'],
     rules: { '@typescript-eslint/no-explicit-any': 'off' },
   },
   {
