@@ -1,8 +1,12 @@
 import '@testing-library/jest-dom/vitest';
-import { cleanup } from '@testing-library/react';
+import { cleanup, configure } from '@testing-library/react';
 import { afterEach, vi } from 'vitest';
 
 afterEach(cleanup);
+
+// The assistant loads on demand (next/dynamic); its first import can take over a second while the gate also runs the
+// type check and lint, so every waitFor and findBy allows five.
+configure({ asyncUtilTimeout: 5000 });
 
 // jsdom has no ResizeObserver; Radix controls, the Segmented thumb and the charts observe their size.
 globalThis.ResizeObserver ??= class { observe() {} unobserve() {} disconnect() {} } as unknown as typeof ResizeObserver;
