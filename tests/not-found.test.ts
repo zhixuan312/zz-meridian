@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest';
+import { nav } from '@/app.config';
 import { nearestOf, readable } from '@/views/not-found';
+
+// The Atlas's nested entries exist only while the Atlas does; brand.ts --product removes them with it.
+const hasAtlas = nav.some((g) => g.items.some((i) => i.href === '/system'));
 
 describe('nearestOf', () => {
   it('walks a missing record back to its list', () => {
@@ -8,7 +12,7 @@ describe('nearestOf', () => {
   it('matches on a segment boundary only', () => {
     expect(nearestOf('/requestsx')).toEqual({ href: '/', label: 'Overview', rest: '/requestsx' });
   });
-  it('prefers the longest entry: Docs over Design system', () => {
+  it.runIf(hasAtlas)('prefers the longest entry: Docs over Design system', () => {
     expect(nearestOf('/system/start/start-a-dashboard/gone').label).toBe('Docs');
     expect(nearestOf('/system/gone').label).toBe('Design system');
   });
