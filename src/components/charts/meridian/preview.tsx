@@ -37,13 +37,13 @@ export default function MeridianPreview() {
           <Plane on="surface" className="flex flex-col gap-6">
             <Readout />
             <TrendChart label="Requests per day" dates={dates} height={200} series={[{ key: 'r', label: 'Requests', values: current.map((d) => d.requests), kind: 'area' }]} />
-            <TrendChart label="Latency p95 per day" dates={dates} height={150} format="duration" series={[{ key: 'p', label: 'Latency p95', values: current.map((d) => d.p95), kind: 'line', color: 4 }]} />
+            <TrendChart label="Latency p95 per day" dates={dates} height={150} format="duration" series={[{ key: 'p', label: 'Latency p95', values: current.map((d) => d.p95), kind: 'line', color: 'neutral' }]} />
           </Plane>
         </Meridian>
       </Specimen>
       <Specimen label="Alone" note="Outside a Meridian, a chart keeps its own cursor and nothing else follows.">
         <Plane on="surface">
-          <TrendChart label="Spend per day" dates={dates} height={150} format="cost" series={[{ key: 's', label: 'Spend', values: current.map((d) => d.spend), kind: 'line', color: 3 }]} />
+          <TrendChart label="Spend per day" dates={dates} height={150} format="cost" series={[{ key: 's', label: 'Spend', values: current.map((d) => d.spend), kind: 'line' }]} />
         </Plane>
       </Specimen>
     </>

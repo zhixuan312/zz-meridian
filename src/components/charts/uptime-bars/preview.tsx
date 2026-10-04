@@ -15,9 +15,9 @@ export default function UptimeBarsPreview() {
           </Plane>
         ))}
       </Specimen>
-      <Specimen label="Narrow" note="Under 420px the last 30 days show, so each bar stays at least 8px wide.">
+      <Specimen label="Narrow" note="Under 420px every day still shows: the gaps tighten to 1px, so the figure and the label describe exactly the bars drawn.">
         <Plane on="surface" className="max-w-sm">
-          <UptimeBars label="Inference API, last 30 days" days={SERVICES[1].days} uptime={SERVICES[1].uptime} end={DEMO_NOW} />
+          <UptimeBars label="Inference API over 90 days" days={SERVICES[1].days} uptime={SERVICES[1].uptime} end={DEMO_NOW} />
         </Plane>
       </Specimen>
     </>

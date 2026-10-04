@@ -11,10 +11,10 @@ const { current } = demoSeries('30d');
 export default function SparklinePreview() {
   return (
     <>
-      <Specimen label="Colours" note="Accent for the figure that carries the finding; neutral for every other.">
+      <Specimen label="Colours" note="Accent for the figure that carries the finding; neutral for every other; a categorical slot only when the line stands for a series drawn elsewhere in that colour.">
         <State label="Accent" className="w-56"><div className="w-full"><Sparkline values={current.map((d) => d.requests)} /></div></State>
         <State label="Neutral" className="w-56"><div className="w-full"><Sparkline values={current.map((d) => d.p95)} color="neutral" /></div></State>
-        <State label="Slot 3" className="w-56"><div className="w-full"><Sparkline values={current.map((d) => d.spend)} color={3} /></div></State>
+        <State label="Slot 3, as in its chart" className="w-56"><div className="w-full"><Sparkline values={current.map((d) => d.spend)} color={3} /></div></State>
       </Specimen>
       <Specimen label="On the Meridian" note="When the page points at a day, a hairline and a dot mark it. Here the cursor is fixed on day 20.">
         <Meridian dates={current.map((d) => d.date)}>
