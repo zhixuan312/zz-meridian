@@ -53,6 +53,7 @@ Every console page keeps its state in its address (period, filters, the selected
 ## Accessibility
 
 - `aside` named "Primary" for the rail; `main` for the content; one `h1` per page.
+- The first Tab stop is "Skip to content", shown only while focused: it moves past the rail and the top bar to the masthead (`#content`), so the next Tab is the page's own first control.
 - The compact title is `aria-hidden`: the page title is the heading.
 
 ## Do and do not

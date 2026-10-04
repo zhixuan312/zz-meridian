@@ -65,6 +65,13 @@ export function AppShell({
   return (
     <ShellCtx.Provider value={{ openNav: () => setOpen(true), tools: allTools, assistant }}>
       <div className="fixed inset-0 isolate flex overflow-hidden">
+        {/* The first stop for a keyboard: past the rail and the top bar, straight to the page's masthead (PageFrame). */}
+        <a
+          href="#content"
+          className="pointer-events-none fixed top-3 left-3 z-(--layer-tooltip) -translate-y-16 rounded-md bg-surface-raised px-3 py-2 text-sm font-medium text-ink opacity-0 shadow-overlay focus-visible:pointer-events-auto focus-visible:translate-y-0 focus-visible:opacity-100"
+        >
+          Skip to content
+        </a>
         <aside aria-label="Primary" className="hidden h-full w-(--rail-width) shrink-0 border-r border-line bg-frame backdrop-blur-xl backdrop-saturate-150 lg:flex">
           {rail}
         </aside>
@@ -165,7 +172,7 @@ export function PageFrame({
           <div className="ml-auto flex items-center gap-1.5">{tools}</div>
         </div>
       </div>
-      <header className={cn('mx-auto w-full px-(--gutter) pt-4 pb-8 lg:pt-6 lg:pb-10', WIDTH[width])}>
+      <header id="content" tabIndex={-1} className={cn('mx-auto w-full px-(--gutter) pt-4 pb-8 outline-none lg:pt-6 lg:pb-10', WIDTH[width])}>
         <div className="flex flex-wrap items-end gap-x-8 gap-y-5">
           <div className="min-w-0 flex-1 basis-[28rem]">
             {kicker ? <p className="t-kicker mb-4">{kicker}</p> : null}
