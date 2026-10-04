@@ -26,7 +26,7 @@ Status: beta
 | Off, hover | track `line-control` |
 | On | track `accent`; hover `accent-hover` |
 | Focus (keyboard) | 2px `accent` outline, 2px offset |
-| Disabled | track `fill-track` (on: `ink-disabled`), `not-allowed` cursor |
+| Disabled | track `fill-track` with an `ink-disabled` thumb (on: an `ink-disabled` track, the thumb flat), the label `ink-disabled` as on a Checkbox, the description still `ink-3` so the reason reads; `not-allowed` cursor |
 
 The thumb slides over `dur-enter` with `ease-spring`, the one place the switch feels physical; the track colour changes over `dur-hover`. Under reduced motion the thumb jumps.
 

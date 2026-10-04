@@ -16,7 +16,7 @@ Status: beta
 | Variant | Use |
 |---|---|
 | Avatar | One person beside their name, in a list, in the rail's account row |
-| Avatar group | Who is involved: reviewers, members of a team. Up to `max` (4) discs overlapping by a third, then "+N" |
+| Avatar group | Who is involved: reviewers, members of a team. Up to `max` (4) discs tucked under each other by 2, 4 or 6px (sm, md, lg), so the ring draws the seam and never cuts an initial, then "+N" |
 
 The tint is derived, never chosen: the name's character codes pick one of the six chart slots. Ground: the slot at 22% over `surface`; initials: the slot at 52% toward `ink`. Soft ground, strong glyph, so it reads in both themes without a contrast exception.
 

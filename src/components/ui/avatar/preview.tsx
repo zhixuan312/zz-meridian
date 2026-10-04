@@ -1,6 +1,6 @@
 'use client';
 
-import { Specimen, State } from '@/system/specimen';
+import { Plane, Specimen, State } from '@/system/specimen';
 import { Avatar, AvatarGroup } from '.';
 
 const PEOPLE = ['Maya Chen', 'Jonas Weber', 'Amara Okafor', 'Lucas Moreau', 'Priya Natarajan', 'Tomás Rivera', 'Hana Sato'];
@@ -16,9 +16,11 @@ export default function AvatarPreview() {
       <Specimen label="Derived colour" note="One chart hue per name, the same every time; initials stay readable in both themes.">
         {PEOPLE.map((n) => <Avatar key={n} name={n} size="lg" />)}
       </Specimen>
-      <Specimen label="Group" note="Overlapping by a third, then +N.">
-        <State label="Three"><AvatarGroup names={PEOPLE.slice(0, 3)} /></State>
-        <State label="Seven, max 4"><AvatarGroup names={PEOPLE} size="md" /></State>
+      <Specimen label="Group" note="Tucked under each other by a sliver, then +N. Each avatar is ringed in surface, so on a card the overlap cuts cleanly between faces.">
+        <Plane on="surface" className="flex flex-wrap items-start gap-10">
+          <State label="Three"><AvatarGroup names={PEOPLE.slice(0, 3)} /></State>
+          <State label="Seven, max 4"><AvatarGroup names={PEOPLE} size="md" /></State>
+        </Plane>
       </Specimen>
       <Specimen label="With a name">
         <span className="flex items-center gap-2.5">
