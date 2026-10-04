@@ -42,7 +42,7 @@ Card, Delta, Tooltip, Sparkline. Tiles sit in a `Row split="tiles"`, or stacked 
 ## Surfaces
 
 - **Console**: four across, or stacked three high beside a Featured metric.
-- **Mobile**: two across from 34rem of row width, one below.
+- **Mobile**: two across from 34rem of row width, one below. Under 640px a tile with a sparkline sets it beside the figure; a tile without one becomes a single row, the label and its line on the left and the figure on the right at `text-xl`, so four stacked tiles take half a screen, not a whole one.
 - **Embed**: one to three across in an inline view; the same tile.
 
 ## Agents
