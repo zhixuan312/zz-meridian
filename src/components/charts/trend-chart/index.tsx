@@ -76,8 +76,12 @@ export function TrendChart({
   }, [stacked, series, dates]);
   const totals = bases ? bases[bases.length - 1]?.upper ?? [] : null;
   // Stacked parts are one whole, so they share one hue: the accent, deepest at the bottom and paler toward the surface
-  // with each part above, as the accent area is in the single-series chart. A series given its own colour keeps it.
-  const tone = (k: number) => `color-mix(in oklab, var(--accent) ${Math.round(72 - k * (36 / Math.max(1, series.length - 1)))}%, var(--surface))`;
+  // with each part above. How deep and how pale is the theme's (chart-stack-hi, -lo): dark needs a wider span for the
+  // bands to read apart. A series given its own colour keeps it.
+  const tone = (k: number) => {
+    const t = (k / Math.max(1, series.length - 1)).toFixed(3);
+    return `color-mix(in oklab, var(--accent) calc((var(--chart-stack-hi) - (var(--chart-stack-hi) - var(--chart-stack-lo)) * ${t}) * 100%), var(--surface))`;
+  };
   const colorOf = (s: TrendSeries, k: number) => (stacked && !s.color ? tone(k) : SERIES_VAR(s.color ?? (s.kind === 'dashed' ? 'neutral' : 'accent')));
   const max = Math.max(1, ...(totals ?? series.flatMap((s) => s.values.filter((v): v is number => v !== null))));
   const ticks = niceTicks(max, h < 200 ? 3 : 4);
@@ -161,7 +165,7 @@ export function TrendChart({
               // The stack fades toward the baseline, as the single-series area does: lit at the total, quiet at zero.
               <linearGradient id={`${gid}-fade`} x1="0" x2="0" y1="0" y2="1">
                 <stop offset="0" stopColor="white" stopOpacity={1} />
-                <stop offset="1" stopColor="white" stopOpacity={0.45} />
+                <stop offset="1" stopColor="white" style={{ stopOpacity: 'var(--chart-stack-fade)' }} />
               </linearGradient>
             ) : null}
             {stacked ? (
