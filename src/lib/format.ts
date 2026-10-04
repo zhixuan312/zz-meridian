@@ -105,8 +105,9 @@ export function formatBy(kind: NumberFormat | undefined, value: number | null): 
  * value and the axis do the right thing.
  */
 export const AXIS_FORMATTERS: Record<NumberFormat, (n: number | null) => string> = {
-  count: (n) => (n === null ? '—' : formatCompact(n)),
-  compact: (n) => (n === null ? '—' : formatCompact(n)),
+  // Not formatCompact: it rounds to whole thousands, so a 0–2,000 scale in steps of 500 read "1K · 2K · 2K".
+  count: (n) => (n === null ? '—' : formatAxisCount(n)),
+  compact: (n) => (n === null ? '—' : formatAxisCount(n)),
   'cost-compact': formatCostCompact,
   cost: (n) => {
     if (n === null) return '—';
@@ -117,3 +118,13 @@ export const AXIS_FORMATTERS: Record<NumberFormat, (n: number | null) => string>
   duration: formatDuration,
   percent: (n) => formatPercent(n, 0),
 };
+
+/** A count on an axis tick: 0, 250, 1.5K, 2M; as short as the scale allows, never two ticks reading the same. */
+function formatAxisCount(n: number): string {
+  if (n === 0) return '0';
+  const trim = (v: number): string => (Number.isInteger(v) ? String(v) : v.toFixed(1));
+  const abs = Math.abs(n);
+  if (abs >= 1_000_000) return `${trim(n / 1_000_000)}M`;
+  if (abs >= 1_000) return `${trim(n / 1_000)}K`;
+  return n.toLocaleString('en-US');
+}

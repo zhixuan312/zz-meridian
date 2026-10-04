@@ -9,7 +9,7 @@ Status: beta
 1. **Row**: label on the left (`text-sm`, `ink-2`; the highlighted row `ink` at `weight-medium`), an optional meta line, the value on the right (`ink`, tabular, `weight-medium`).
 2. **Track**: 6px tall, `fill-track`, `radius-full`.
 3. **Bar**: the value's share of the largest, `chart-neutral`; the one highlighted row in `accent`.
-4. **Others**: past `limit`, the remaining rows fold into "N others", summed, in `ink-3`.
+4. **Others**: past `limit`, the remaining rows fold into "N others", summed, in `ink-3`; a single extra row shows as itself, since "1 others" would hide a name to save no space.
 
 ## Variants
 
@@ -34,6 +34,8 @@ Rows are 14px apart; label to bar 6px. The list takes its container's width.
 ## Behaviour
 
 Rows are not interactive by default; a row that leads somewhere wraps its label in a link styled with `row-link`.
+
+Bars are drawn against the largest row. Pass `total` when the rows are a share of a stated whole (the top 8 tools out of every call, or rows hidden by `limit`): each bar is then its value over `total`, and hovering a row shows its share ("12.4% of 3.1M").
 
 ## Surfaces
 

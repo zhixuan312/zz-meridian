@@ -74,7 +74,7 @@ export function MetricTile({
       {/* Phones: the sparkline sits beside the figure, so a stack of tiles stays short. */}
       <div className={cn('grid grid-cols-1', daily && 'max-sm:grid-cols-[minmax(0,1fr)_7rem] max-sm:items-end max-sm:gap-4 max-sm:pb-(--card-pad)')}>
         <div className="min-w-0">
-          <p className={cn(word && reading === null ? 'mt-3 truncate text-2xl leading-[1.15] font-semibold tracking-[-0.02em]' : 't-figure t-num mt-3', emphasis ? 'text-accent-ink' : 'text-ink')} aria-live="off">
+          <p className={cn(word && reading === null ? 'mt-3 text-2xl leading-[1.15] font-semibold tracking-[-0.02em] text-balance' : 't-figure t-num mt-3', emphasis ? 'text-accent-ink' : 'text-ink')} aria-live="off">
             {parts.pre ? <span className="unit pre">{parts.pre}</span> : null}
             {parts.int}
             {parts.frac ? <span className="frac">{parts.frac}</span> : null}

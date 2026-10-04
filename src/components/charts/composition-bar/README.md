@@ -30,7 +30,7 @@ The bar takes its container's width; the legend wraps.
 
 ## Behaviour
 
-Not interactive.
+Not interactive. `legend={false}` drops the key under the bar where the bar is a mark inside a tile: hovering a segment names it, and the key stays in the page for screen readers (`sr-only`).
 
 ## Surfaces
 

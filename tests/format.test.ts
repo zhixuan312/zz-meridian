@@ -1,6 +1,7 @@
 import { app } from '@/app.config';
 import { describe, expect, it } from 'vitest';
-import { formatCompact, formatCost, formatDuration, formatPercent } from '@/lib/format';
+import { niceTicks } from '@/components/charts/scale';
+import { AXIS_FORMATTERS, formatCompact, formatCost, formatDuration, formatPercent } from '@/lib/format';
 
 describe('formatters', () => {
   it('render a missing value as a dash, never as zero', () => {
@@ -19,5 +20,28 @@ describe('formatters', () => {
     expect(formatDuration(294)).toBe('294ms');
     expect(formatDuration(1420)).toBe('1.4s');
     expect(formatPercent(0.0090, 2)).toBe('0.90%');
+  });
+});
+
+describe('the count axis', () => {
+  // Swept rather than chosen: round maxima happen to land on steps that format distinctly, so a hand-picked set passes
+  // against the very rounding this is written to catch.
+  it('never gives two ticks on one scale the same label', () => {
+    const bad: string[] = [];
+    for (let raw = 1; raw <= 6000; raw += 1) {
+      for (const n of [3, 4]) {
+        const labels = niceTicks(raw, n).map((t) => AXIS_FORMATTERS.count(t));
+        if (new Set(labels).size !== labels.length) bad.push(`${raw}/${n} -> ${labels.join(' · ')}`);
+      }
+    }
+    expect(bad.slice(0, 3)).toEqual([]);
+  });
+
+  it('keeps a decimal only where the number needs one', () => {
+    expect(AXIS_FORMATTERS.count(1500)).toBe('1.5K');
+    expect(AXIS_FORMATTERS.count(2000)).toBe('2K');
+    expect(AXIS_FORMATTERS.count(2_500_000)).toBe('2.5M');
+    expect(AXIS_FORMATTERS.count(0)).toBe('0');
+    expect(AXIS_FORMATTERS.count(500)).toBe('500');
   });
 });
