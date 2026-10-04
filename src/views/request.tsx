@@ -17,8 +17,8 @@ import { STATUS_TEXT, statusTone, usageOf, type Span } from '@/system/fixtures/s
 import { formatBytes } from '@/system/sample-cells';
 import { domain } from '@/app.config';
 
-const curlOf = (r: RequestRow, body: string) =>
-  `curl -X ${r.method} https://api.${domain}${r.route} -H "Authorization: Bearer $API_KEY"` + (r.method === 'GET' ? '' : ` -d '${body.replace(/\s+/g, ' ')}'`);
+const curlOf = (r: RequestRow, body: string | null) =>
+  `curl -X ${r.method} https://api.${domain}${r.route} -H "Authorization: Bearer $API_KEY"` + (body ? ` -d '${body.replace(/\s+/g, ' ')}'` : '');
 
 const BAR = { accent: 'bg-accent', neutral: 'bg-chart-neutral-strong', critical: 'bg-critical' } as const;
 
@@ -55,7 +55,7 @@ function Waterfall({ spans, total }: { spans: Span[]; total: number }) {
 function Code({ body, label }: { body: string; label: string }) {
   return (
     <div className="relative flex flex-1 flex-col">
-      <pre className="max-h-96 min-h-0 flex-1 overflow-auto rounded-md border border-line bg-surface-sunk p-4 font-mono text-xs leading-relaxed text-ink">{body}</pre>
+      <pre className="max-h-96 min-h-0 flex-1 overflow-auto rounded-md border border-line bg-surface-sunk p-4 pr-24 font-mono text-xs leading-relaxed break-words whitespace-pre-wrap text-ink">{body}</pre>
       <Button
         size="sm"
         variant="ghost"
@@ -69,7 +69,7 @@ function Code({ body, label }: { body: string; label: string }) {
   );
 }
 
-export function RequestView({ request: r, trace, payloads }: { request: RequestRow; trace: Span[]; payloads: { request: string; response: string } }) {
+export function RequestView({ request: r, trace, payloads }: { request: RequestRow; trace: Span[]; payloads: { request: string | null; response: string } }) {
   const router = useRouter();
   const usage = usageOf(r);
   const failed = r.status >= 500 || r.status === 429;
@@ -89,7 +89,7 @@ export function RequestView({ request: r, trace, payloads }: { request: RequestR
         primary: (
           <>
             <Button icon={<Terminal />} onClick={() => { void navigator.clipboard?.writeText(curlOf(r, payloads.request)); toast({ tone: 'positive', title: 'cURL command copied' }); }}>Copy as cURL</Button>
-            {failed ? <Button variant="primary" icon={<RotateCw />} onClick={() => toast({ tone: 'positive', title: 'Replay queued', description: `${r.method} ${r.route} will run again with the same body.` })}>Replay</Button> : null}
+            {failed ? <Button variant="primary" icon={<RotateCw />} onClick={() => toast({ tone: 'positive', title: 'Replay queued', description: `${r.method} ${r.route} will run again${payloads.request ? ' with the same body' : ''}.` })}>Replay</Button> : null}
           </>
         ),
         more: [
@@ -113,10 +113,14 @@ export function RequestView({ request: r, trace, payloads }: { request: RequestR
                   { label: 'Response size', value: formatBytes(r.bytes) },
                   { label: 'Customer', value: <Link href={`/requests?q=${encodeURIComponent(r.customer)}`} className="link">{r.customer}</Link> },
                   { label: 'Region', value: r.region, mono: true },
-                  { label: 'Model', value: r.model, mono: true },
                   { label: 'API key', value: 'Production backend' },
-                  { label: 'Tokens', value: r.status >= 400 ? <span className="text-ink-3">None, refused</span> : <span className="t-num">{usage.input.toLocaleString('en-US')} in · {usage.output.toLocaleString('en-US')} out</span> },
-                  { label: 'Cost', value: <span className="t-num">{formatCost(usage.cost)}</span> },
+                  ...(r.model
+                    ? [
+                        { label: 'Model', value: r.model, mono: true },
+                        { label: 'Tokens', value: usage.tokens ? <span className="t-num">{usage.tokens.input.toLocaleString('en-US')} in · {usage.tokens.output.toLocaleString('en-US')} out</span> : <span className="text-ink-3">None, refused</span> },
+                      ]
+                    : []),
+                  { label: 'Cost', value: usage.cost ? <span className="t-num">{formatCost(usage.cost)}</span> : <span className="text-ink-3">None, refused</span> },
                 ]}
               />
             </CardBody>
@@ -137,7 +141,15 @@ export function RequestView({ request: r, trace, payloads }: { request: RequestR
         <Row split="1/2">
           <Card>
             <CardHeader title="Request body" description={`${r.method} ${r.route}`} divided />
-            <CardBody className="flex flex-col pt-5"><Code body={payloads.request} label="Request body" /></CardBody>
+            <CardBody className="flex flex-col pt-5">
+              {payloads.request ? (
+                <Code body={payloads.request} label="Request body" />
+              ) : (
+                <p className="t-small flex flex-1 items-center justify-center rounded-md border border-dashed border-line px-4 py-10 text-center text-pretty text-ink-3">
+                  No body: a {r.method} carries everything it needs in its address.
+                </p>
+              )}
+            </CardBody>
           </Card>
           <Card>
             <CardHeader title="Response body" description={`${r.status} ${STATUS_TEXT[r.status] ?? ''}`} divided />

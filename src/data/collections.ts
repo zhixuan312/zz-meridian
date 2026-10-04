@@ -68,7 +68,7 @@ export const requests: Collection<RequestRow, 'id'> = arrayCollection({
     customer: z.string(),
     region: z.string(),
     bytes: z.number(),
-    model: z.string(),
+    model: z.string().nullable(),
   }),
   rows: REQUESTS,
   allow: [],

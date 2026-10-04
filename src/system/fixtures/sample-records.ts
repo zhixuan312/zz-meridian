@@ -14,6 +14,17 @@ export const FEATURED_REQUEST_IDS = REQUESTS.slice(0, 12).map((r) => r.id);
 
 export type Span = { name: string; detail: string; start: number; duration: number; tone?: 'accent' | 'neutral' | 'critical' };
 
+/** What each route does between auth and the response: the phase the request's time mostly goes to. */
+const WORK: Record<string, { name: string; detail: (r: RequestRow) => string; last: string }> = {
+  '/v1/messages': { name: 'Model', detail: (r) => r.model ?? '', last: 'Response streamed' },
+  '/v1/embeddings': { name: 'Model', detail: () => 'meridian-embed', last: 'Vectors returned' },
+  '/v1/search': { name: 'Search', detail: () => 'Top 8 across the index', last: 'Results returned' },
+  '/v1/documents/:id': { name: 'Storage', detail: () => 'Read from the document store', last: 'Document returned' },
+  '/v1/files': { name: 'Parse', detail: () => 'Scanned, parsed and stored', last: 'File record returned' },
+  '/v1/sessions/:id': { name: 'Storage', detail: () => 'Session revoked', last: 'Confirmation returned' },
+  '/v1/webhooks/:id': { name: 'Storage', detail: () => 'Endpoint updated', last: 'Endpoint returned' },
+};
+
 /** A request's phases, in milliseconds from arrival: the waterfall on the detail page. */
 export function traceOf(r: RequestRow): Span[] {
   const L = r.latency;
@@ -25,40 +36,63 @@ export function traceOf(r: RequestRow): Span[] {
     return [
       { name: 'Gateway', detail: `TLS and routing in ${r.region}`, start: 0, duration: gateway, tone: 'neutral' },
       { name: 'Auth', detail: 'Key and scope check', start: gateway, duration: auth, tone: 'neutral' },
-      { name: limited ? 'Rate limit' : 'Validation', detail: limited ? 'Over 1,200 requests a minute' : 'Rejected before the model', start: gateway + auth, duration: Math.max(1, L - gateway - auth), tone: 'critical' },
+      {
+        name: limited ? 'Rate limit' : r.status === 404 ? 'Lookup' : 'Validation',
+        detail: limited ? 'Over 1,200 requests a minute' : r.status === 404 ? 'No record with that ID' : 'Rejected before any work',
+        start: gateway + auth, duration: Math.max(1, L - gateway - auth), tone: 'critical',
+      },
     ];
   }
+  const work = WORK[r.route];
   const queue = Math.round(L * 0.08);
-  const model = Math.round(L * (failed ? 0.7 : 0.55));
-  const stream = Math.max(1, L - gateway - auth - queue - model);
+  const main = Math.round(L * (failed ? 0.7 : 0.55));
+  const last = Math.max(1, L - gateway - auth - queue - main);
   return [
     { name: 'Gateway', detail: `TLS and routing in ${r.region}`, start: 0, duration: gateway, tone: 'neutral' },
     { name: 'Auth', detail: 'Key and scope check', start: gateway, duration: auth, tone: 'neutral' },
     { name: 'Queue', detail: 'Waiting for capacity', start: gateway + auth, duration: queue, tone: 'neutral' },
-    { name: 'Model', detail: r.model, start: gateway + auth + queue, duration: model, tone: failed ? 'critical' : 'accent' },
-    { name: failed ? 'Error' : 'Stream', detail: failed ? 'Upstream timed out' : 'Response streamed', start: gateway + auth + queue + model, duration: stream, tone: failed ? 'critical' : 'neutral' },
+    { name: work.name, detail: work.detail(r), start: gateway + auth + queue, duration: main, tone: failed ? 'critical' : 'accent' },
+    { name: failed ? 'Error' : 'Respond', detail: failed ? 'Upstream timed out' : work.last, start: gateway + auth + queue + main, duration: last, tone: failed ? 'critical' : 'neutral' },
   ];
 }
 
-/** What a request used and cost: tokens in and out at the sample's list price ($3 in, $15 out per million). A refused request used nothing. */
+/**
+ * What a request used and cost at the sample's list price: tokens at $3 in and $15 out per million on the model routes,
+ * and $0.10 per thousand calls on the rest. A refused request used nothing; `tokens` is null where no model ran.
+ */
 export function usageOf(r: RequestRow) {
-  if (r.status >= 400) return { input: 0, output: 0, cost: 0 };
-  const input = 412, output = Math.round(r.bytes / 40);
-  return { input, output, cost: (input * 3 + output * 15) / 1_000_000 };
+  if (r.status >= 400) return { tokens: null, cost: 0 };
+  if (r.route === '/v1/messages') {
+    const input = 412, output = Math.round(r.bytes / 40);
+    return { tokens: { input, output }, cost: (input * 3 + output * 15) / 1_000_000 };
+  }
+  if (r.route === '/v1/embeddings') return { tokens: { input: 18, output: 0 }, cost: (18 * 3) / 1_000_000 };
+  return { tokens: null, cost: 0.0001 };
 }
 
-export function payloadsOf(r: RequestRow) {
-  const request = r.route.startsWith('/v1/messages')
-    ? { model: r.model, max_tokens: 1024, messages: [{ role: 'user', content: 'Summarise the incident report for the on-call channel.' }] }
-    : r.route.startsWith('/v1/search')
-      ? { query: 'refund policy for annual plans', top_k: 8 }
-      : r.route.startsWith('/v1/embeddings')
-        ? { model: 'meridian-embed', input: ['Quarterly revenue grew 12%', 'Churn fell to 2.1%'] }
-        : { id: r.id.slice(4) };
+const tail = (r: RequestRow, n = 8) => r.id.slice(4, 4 + n);
+
+/** The bodies, as the API would have seen them. GET and DELETE carry none: `request` is null. */
+export function payloadsOf(r: RequestRow): { request: string | null; response: string } {
+  const request =
+    r.route === '/v1/messages' ? { model: r.model, max_tokens: 1024, messages: [{ role: 'user', content: 'Summarise the incident report for the on-call channel.' }] }
+    : r.route === '/v1/embeddings' ? { model: 'meridian-embed', input: ['Quarterly revenue grew 12%', 'Churn fell to 2.1%'] }
+    : r.route === '/v1/files' ? { purpose: 'retrieval', filename: 'q3-board-pack.pdf' }
+    : r.route === '/v1/webhooks/:id' ? { url: 'https://hooks.northwind.example/meridian', events: ['request.failed', 'key.revoked'] }
+    : null;
+  const usage = usageOf(r);
+  const ok =
+    r.route === '/v1/messages' ? { id: `msg_${tail(r)}`, status: 'completed', usage: { input_tokens: usage.tokens?.input, output_tokens: usage.tokens?.output } }
+    : r.route === '/v1/embeddings' ? { object: 'list', dimensions: 1024, data: [{ index: 0, embedding: [0.0123, -0.0841, 0.0377, 0.0062] }, { index: 1, embedding: [-0.0219, 0.0652, 0.0094, -0.0418] }], usage: { input_tokens: 18 } }
+    : r.route === '/v1/search' ? { results: [{ id: 'doc_7f2a91', title: 'Refunds on annual plans', score: 0.92 }, { id: 'doc_3c81e0', title: 'Billing FAQ', score: 0.81 }], total: 8 }
+    : r.route === '/v1/documents/:id' ? { id: `doc_${tail(r, 6)}`, title: 'Q3 incident review', updated_at: '2026-10-02T16:41:00Z', size_bytes: r.bytes }
+    : r.route === '/v1/files' ? { id: `file_${tail(r)}`, filename: 'q3-board-pack.pdf', bytes: r.bytes, status: 'processed' }
+    : r.route === '/v1/sessions/:id' ? { id: `ses_${tail(r)}`, deleted: true }
+    : { id: `wh_${tail(r, 6)}`, url: 'https://hooks.northwind.example/meridian', events: ['request.failed', 'key.revoked'], enabled: true };
   const response = r.status >= 400
-    ? { error: { type: STATUS_TEXT[r.status]?.toLowerCase().replace(/ /g, '_') ?? 'error', message: r.status === 429 ? 'Rate limit of 1,200 requests per minute exceeded. Retry after 12 seconds.' : 'The request could not be completed.' } }
-    : { id: `msg_${r.id.slice(4, 12)}`, status: 'completed', usage: { input_tokens: usageOf(r).input, output_tokens: usageOf(r).output } };
-  return { request: JSON.stringify(request, null, 2), response: JSON.stringify(response, null, 2) };
+    ? { error: { type: STATUS_TEXT[r.status]?.toLowerCase().replace(/ /g, '_') ?? 'error', message: r.status === 429 ? 'Rate limit of 1,200 requests per minute exceeded. Retry after 12 seconds.' : r.status === 404 ? 'No record with that ID.' : 'The request could not be completed.' } }
+    : ok;
+  return { request: request ? JSON.stringify(request, null, 2) : null, response: JSON.stringify(response, null, 2) };
 }
 
 export type ApiKey = { id: string; name: string; secret: string; owner: string; created: string; lastUsed: string | null; scopes: string[]; env: 'live' | 'test' };

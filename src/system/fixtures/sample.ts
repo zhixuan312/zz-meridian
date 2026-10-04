@@ -128,8 +128,13 @@ const REGION_IDS = REGIONS.map((r) => r.label);
 
 export type RequestRow = {
   id: string; at: string; method: string; route: string; status: number; latency: number;
-  customer: string; region: string; bytes: number; model: string;
+  customer: string; region: string; bytes: number;
+  /** The model that served it: only /v1/messages and /v1/embeddings call one. */
+  model: string | null;
 };
+
+const modelFor = (route: string, r: number) =>
+  route === '/v1/messages' ? (r < 0.6 ? 'meridian-large' : 'meridian-swift') : route === '/v1/embeddings' ? 'meridian-embed' : null;
 
 export const REQUESTS: RequestRow[] = (() => {
   const rand = seeded(0xc0ffee);
@@ -139,7 +144,7 @@ export const REQUESTS: RequestRow[] = (() => {
     t -= Math.round(4_000 + rand() * 40_000);
     const [method, route] = ROUTES[Math.floor(rand() ** 1.6 * ROUTES.length)];
     const r = rand();
-    const status = r > 0.985 ? 503 : r > 0.97 ? 500 : r > 0.93 ? 429 : r > 0.9 ? 404 : r > 0.88 ? 400 : method === 'POST' ? 201 : 200;
+    const status = r > 0.985 ? 503 : r > 0.97 ? 500 : r > 0.93 ? 429 : r > 0.9 ? (route.endsWith(':id') ? 404 : 400) : r > 0.88 ? 400 : method === 'POST' ? 201 : 200;
     const base = ENDPOINTS.find((e) => e.route === route)!.p95;
     rows.push({
       id: 'req_' + Math.floor(rand() * 36 ** 8).toString(36).padStart(8, '0') + Math.floor(rand() * 36 ** 4).toString(36),
@@ -148,26 +153,34 @@ export const REQUESTS: RequestRow[] = (() => {
       latency: Math.round(base * (0.25 + rand() ** 2 * 1.1) * (status >= 500 ? 3 : 1)),
       customer: CUSTOMERS[Math.floor(rand() ** 1.3 * CUSTOMERS.length)],
       region: REGION_IDS[Math.floor(rand() ** 1.5 * REGION_IDS.length)],
-      bytes: Math.round(400 + rand() ** 3 * 220_000),
-      model: ['meridian-large', 'meridian-swift', 'meridian-embed'][Math.floor(rand() * 3)],
+      // An error answers with a short JSON body; a success with whatever the route returns.
+      bytes: ((b) => (status >= 400 ? Math.round(160 + b * 240) : Math.round(400 + b ** 3 * 220_000)))(rand()),
+      model: modelFor(route, rand()),
     });
   }
   return rows;
 })();
 
 export type Customer = { name: string; plan: 'Enterprise' | 'Scale' | 'Starter'; requests: number; spend: number; trend: number[]; status: 'active' | 'trial' | 'past due' };
+/** Each customer's share of the last 30 days, so the customers add up to exactly what the Overview shows for 30D. */
+const SHARES = CUSTOMERS.map((_, i) => 1 / (i + 1.4));
+const MONTH = demoTotals('30d').current;
 export const CUSTOMER_ROWS: Customer[] = CUSTOMERS.map((name, i) => {
   const rand = seeded(i + 7);
-  const scale = Math.round(900_000 / (i + 1.4));
+  const share = SHARES[i] / sum(SHARES);
+  const requests = Math.round(MONTH.requests * share);
   return {
     name,
     plan: i < 3 ? 'Enterprise' : i < 8 ? 'Scale' : 'Starter',
-    requests: scale,
-    spend: Math.round(scale * 0.000104 * 100) / 100,
-    trend: Array.from({ length: 14 }, (_, d) => Math.round(scale / 30 * (0.8 + rand() * 0.4) * (1 + d / 40))),
+    requests,
+    spend: Math.round(MONTH.spend * share * 100) / 100,
+    trend: Array.from({ length: 14 }, (_, d) => Math.round(requests / 30 * (0.8 + rand() * 0.4) * (1 + d / 40))),
     status: i === 9 ? 'past due' : i === 11 ? 'trial' : 'active',
   };
 });
+// Rounding each share to the cent leaves a few cents over or under; the largest customer carries them.
+CUSTOMER_ROWS[0].spend = Math.round((MONTH.spend - sum(CUSTOMER_ROWS.slice(1).map((c) => c.spend))) * 100) / 100;
+CUSTOMER_ROWS[0].requests = MONTH.requests - sum(CUSTOMER_ROWS.slice(1).map((c) => c.requests));
 
 export const SERVICES: Service[] = [
   ['Edge gateway', 'TLS termination, routing and rate limits', 'operational', 0.99994, 38],

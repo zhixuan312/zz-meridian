@@ -79,13 +79,13 @@ export function CustomersView({ rows }: { rows: CustomerRecord[] }) {
     <PageFrame
       kicker={<>{app.name} · {app.workspace}</>}
       title="Customers"
-      description="Who is calling the API, on which plan, and what it costs them this month."
+      description="Who is calling the API, on which plan, and what they spent in the last 30 days."
       actions={<Button variant="primary" icon={<UserPlus />} onClick={() => setInviting(true)}>Invite customer</Button>}
     >
       <Stack>
         <Row split="tiles">
           <MetricTile label="Customers" value={rows.length} format={(n) => String(n)} hint="Workspaces with at least one live key. The line is their combined requests over the last 14 days." daily={requestsDaily} />
-          <MetricTile label="Spend this month" value={spend} format={formatCost} hint="Metered usage across every customer, before credits. The line shows the last 14 days." daily={spendDaily} emphasis />
+          <MetricTile label="Spend, last 30 days" value={spend} format={formatCost} hint="Metered usage across every customer, before credits. The line shows the last 14 days." daily={spendDaily} emphasis />
           <MetricTile label="Past due" value={pastDue.length} format={(n) => String(n)} hint="Customers whose latest invoice is overdue." note={pastDue.map((c) => c.name).join(', ') || 'Every invoice is paid'} />
         </Row>
         <DataTable
