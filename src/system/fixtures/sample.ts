@@ -42,7 +42,7 @@ function daily(days: number): DailyPoint[] {
   for (let i = total - 1; i >= 0; i--) {
     const d = new Date(DEMO_NOW.getTime() - i * DAY);
     const wd = d.getUTCDay();
-    const weekly = wd === 0 ? 0.46 : wd === 6 ? 0.52 : wd === 1 ? 0.94 : 1;
+    const weekly = wd === 0 ? 0.46 : wd === 6 ? 0.64 : wd === 1 ? 0.9 : 1;
     const growth = 1 + (total - i) / 520;
     const wave = 1 + 0.08 * Math.sin((total - i) / 9);
     const requests = Math.round(68_000 * weekly * growth * wave * (0.9 + rand() * 0.2));
