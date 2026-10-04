@@ -11,7 +11,7 @@ Migrate in place, page by page, keeping their data layer.
    `git clone --depth 1 https://github.com/zhixuan312/zz-meridian.git /tmp/meridian`
 2. Copy the parts a dashboard is built from into their project (merge, never overwrite their own files of the same
    name without reading them): `tokens/`, `src/styles/`, `src/components/` without the `README.md` and `preview.tsx`
-   files, `src/lib/{cn,format,format-date,period,color,host,preferences,csv}.ts`, `app/icon.ts`, `scripts/`,
+   files, `src/lib/{cn,format,format-date,period,color,host,preferences,csv,safe-markdown}.ts`, `app/icon.ts`, `scripts/`,
    `tests/setup.ts`, `vitest.config.ts`, `postcss.config.mjs`, `eslint.config.ts`. Not the design system: no `app/system/`, `src/system/`,
    `docs/`, `decisions/` or card specifications. They get a dashboard, not a copy of Meridian. Routes may live in
    `app/` or `src/app/`; the scripts find either.

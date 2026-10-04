@@ -64,6 +64,7 @@ export const CARDS: Card[] = [
   { id: 'metric-tile', layer: 3, section: 'patterns', dir: 'src/components/patterns/metric-tile', Preview: dynamic(() => import('@/components/patterns/metric-tile/preview')) },
   { id: 'period-select', layer: 3, section: 'patterns', dir: 'src/components/patterns/period-select', Preview: dynamic(() => import('@/components/patterns/period-select/preview')) },
   { id: 'proposal', layer: 3, section: 'patterns', dir: 'src/components/patterns/proposal', Preview: dynamic(() => import('@/components/patterns/proposal/preview')) },
+  { id: 'prose', layer: 3, section: 'patterns', dir: 'src/components/patterns/prose', Preview: dynamic(() => import('@/components/patterns/prose/preview')) },
   { id: 'rail', layer: 3, section: 'patterns', dir: 'src/components/patterns/rail', Preview: dynamic(() => import('@/components/patterns/rail/preview')) },
   { id: 'shell-tools', layer: 3, section: 'patterns', dir: 'src/components/patterns/shell-tools', Preview: dynamic(() => import('@/components/patterns/shell-tools/preview')) },
   { id: 'status-list', layer: 3, section: 'patterns', dir: 'src/components/patterns/status-list', Preview: dynamic(() => import('@/components/patterns/status-list/preview')) },

@@ -9,6 +9,7 @@
  * - No literal colour (hex, rgb, hsl) and no Tailwind default palette in the layers: colours come from roles.
  * - One implementation: the fixtures a collection serves are read through src/data/collections.ts, not imported again.
  * - No dormant code: every export of src/lib and src/data is imported by a file a product keeps.
+ * - Markdown stays inert: no raw-HTML plugin in the dependencies or the source.
  */
 import fs from 'node:fs';
 import path from 'node:path';
@@ -135,6 +136,19 @@ if (fs.existsSync(path.join(ROOT, COLLECTIONS))) {
       if (coveredModules.has(mod)) problems.push(`${f}: imports all of ${mod}, which holds ${[...covered].filter(([, x]) => x === mod).map(([n]) => n).join(', ')}; read it through ${COLLECTIONS}`);
     }
   }
+}
+
+// ── Markdown stays inert ───────────────────────────────────────────────────────────────────────────────
+// Prose renders what people and models wrote, and is safe for one reason: react-markdown with no raw-HTML plugin, so
+// HTML in the text stays text. The whole defence is the absence of a package, so its arrival fails here.
+{
+  const pkg = JSON.parse(read('package.json'));
+  for (const d of Object.keys({ ...pkg.dependencies, ...pkg.devDependencies })) {
+    if (/^(rehype-raw|rehype-dangerous-html|remark-html)$/.test(d)) problems.push(`package.json depends on ${d}: raw HTML in rendered markdown would stop being inert`);
+  }
+  // Code only: a comment that names the plugin to explain why it is absent is not a use.
+  const code = (src: string) => src.replace(/\/\*[\s\S]*?\*\//g, ' ').replace(/(^|[^:])\/\/[^\n]*/g, '$1 ');
+  for (const f of LAYERS) if (/\brehype-?raw\b/i.test(code(read(f)))) problems.push(`${f}: reaches for rehype-raw; render markdown with Prose, where raw HTML stays text`);
 }
 
 // ── No dormant code: an export nothing a product keeps imports ───────────────────────────────────────

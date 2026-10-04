@@ -10,7 +10,7 @@
  * --hue/--chroma add a new accent preset (OKLCH hue in degrees, chroma 0 to 0.2) and make it the default. The contrast
  * gate then runs; where white on the accent fill fails in a theme, the preset gets a lower fill lightness for that
  * theme, a step at a time, until every pair in every theme passes. --no-atlas removes the Design Atlas: its routes, its
- * modules, its nav and footer links, its build tracing and its markdown packages (the card previews stay: the gate checks them).
+ * modules, its nav and footer links and its build tracing (the card previews stay: the gate checks them; the markdown packages stay for Prose).
  * --product goes further, for a dashboard that is not the design system: --no-atlas, and the card specs and previews,
  * page specs, docs, decisions, changelog and skill go too (the assistant, its collections and its fake model stay); the components, tokens, scripts and gates stay.
  * --existing is for an existing project that brought Meridian in (route A in the skill): it sets the name, accent and the
@@ -173,9 +173,6 @@ if (has('--no-atlas') || has('--product')) {
   write('next.config.ts', read('next.config.ts').replace(/\n\s*\/\/ Card specifications[^\n]*\n\s*outputFileTracingIncludes: \{[^\n]*\},/, "\n  // The tab icon reads the tokens at build time.\n  outputFileTracingIncludes: { '/icon': ['./tokens/**/*.json'] },"));
   // Route types generated for the removed pages would fail the type check until regenerated.
   for (const d of ['.next/types', '.next/dev/types']) fs.rmSync(file(d), { recursive: true, force: true });
-  // The Atlas's markdown renderer is its only use of these packages.
-  try { execFileSync('pnpm', ['remove', 'react-markdown', 'remark-gfm'], { cwd: ROOT, stdio: 'ignore' }); done.push('react-markdown and remark-gfm removed'); }
-  catch { done.push('remove react-markdown and remark-gfm with pnpm remove when you are online'); }
   done.push('the Design Atlas removed: app/system, its modules in src/system, its rail and footer links, and its build tracing');
 }
 

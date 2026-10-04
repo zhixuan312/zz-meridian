@@ -121,11 +121,11 @@ All components are surface-agnostic by construction: they size from control toke
 | Rail | Navigation, workspace, account, appearance | Fixed on the frame | In the drawer | None |
 | Command palette | Every destination and global action behind ⌘K | Centred, 600px | Full width, top | None |
 | Appearance menu | Theme, accent, density | In the rail's foot | In the drawer's foot | None: the host decides the theme |
-| Period select | The reporting period, held in the URL | Masthead actions | Masthead actions row | Embed head, compact |
+| Period select | The reporting period, in the URL or held by the page | Masthead actions | Masthead actions row | Embed head, compact |
 | Freshness | When the data last arrived; stale after a contract | Masthead meta | Under the title | Embed head |
 | Metric tile | One number, its change, its shape | Four across | Two or one across | One to three across; the inline view's figure row |
 | Meridian | One time cursor for every chart and tile on a page | Pointer and arrow keys | Finger: press and drag | Same, inside the view |
-| Trend chart | A time series on one axis | 248px tall | 180px | 160px inline, 248px fullscreen |
+| Trend chart | A time series on one axis; or parts of one whole, stacked | 248px tall | 180px | 160px inline, 248px fullscreen |
 | Sparkline | Shape beside a figure | Same | Same | Same |
 | Bar list | A ranked list with bars | Same | Same | Top five, then Expand |
 | Composition bar | One whole split into parts | Legend four across | Legend two across | Same as mobile |
@@ -140,6 +140,7 @@ All components are surface-agnostic by construction: they size from control toke
 | Embed frame | The head and token bridge of an MCP App view | Not used | Not used | Always |
 | Ask about | Hands a card to the agent as a question | Absent | Absent | On cards, when a host is connected |
 | Proposal | An agent's write, waiting for a person's Approve | Inbox in Activity | Same | The tool result's card |
+| Prose | Markdown a person or a model wrote, rendered safely | Reading width, `base` | One column; tables wrap | `sm`, host font |
 
 ### Layer 4 · Pages
 
