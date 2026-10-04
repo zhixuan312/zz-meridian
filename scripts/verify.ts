@@ -1,7 +1,7 @@
 /**
  * Verify a Meridian project against the standard, in one command: the gate, a production build, the built app started
  * on a free port, the browser audit of every page and embed view against it, every control pressed and every link
- * followed (scripts/interactions.ts), and a report.
+ * followed (scripts/interactions.ts), LCP, INP and CLS on a mid-range phone (scripts/vitals.ts), and a report.
  *
  * Two steps depend on the project, read from scripts/verify.config.ts and app/:
  * - With a fake API configured, it starts first and the app is built and served against it, so the presses (Approve,
@@ -141,7 +141,12 @@ log(audit.out.split('\n').slice(-80).join('\n'));
 log(presses.status === 0 ? 'ok   every control and link works' : 'FAIL controls or links that do nothing');
 log(presses.out.split('\n').slice(-40).join('\n'));
 log(`(browser checks ${((Date.now() - t) / 60_000).toFixed(1)} min)`);
+
+// Web Vitals on a mid-range phone, alone: CPU throttling measures the machine too, so nothing else runs beside it.
+const vitals = await run('scripts/vitals.ts', base);
+log(vitals.status === 0 ? 'ok   LCP, INP and CLS on a mid-range phone' : 'FAIL Web Vitals on a mid-range phone');
+log(vitals.out.split('\n').slice(-30).join('\n'));
 stopAll();
-const ok = audit.status === 0 && presses.status === 0 && on.status === 0;
+const ok = audit.status === 0 && presses.status === 0 && on.status === 0 && vitals.status === 0;
 log(ok ? '\nverify: the project meets the Meridian standard' : '\nverify: fix the issues above and run pnpm verify again');
 finish(ok ? 0 : 1);

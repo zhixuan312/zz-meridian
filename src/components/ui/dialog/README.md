@@ -6,7 +6,7 @@ Status: beta
 
 ## Anatomy
 
-1. **Scrim**: `scrim` over the page with a 2px blur.
+1. **Scrim**: `scrim` over the page, dimming it; no blur, which cost a phone more than 100 ms on every open.
 2. **Panel**: `surface-raised`, `radius-xl` 16px, `shadow-overlay`.
 3. **Head**: title (`t-section`, 20px), optional description (`t-small`, `ink-2`), close (32px ghost icon button).
 4. **Body**: the task; scrolls inside the panel when it is taller than the viewport.

@@ -34,7 +34,7 @@ export function AtlasShell({ nav, children }: { nav: AtlasNav; children: ReactNo
       </div>
       <Dialog.Root open={open} onOpenChange={setOpen}>
         <Dialog.Portal>
-          <Dialog.Overlay className="scrim-in fixed inset-0 z-(--layer-rail) bg-scrim backdrop-blur-sm lg:hidden" />
+          <Dialog.Overlay className="scrim-in fixed inset-0 z-(--layer-rail) bg-scrim lg:hidden" />
           <Dialog.Content aria-describedby={undefined} className="sheet-in fixed inset-y-0 left-0 z-(--layer-rail) w-(--rail-width) max-w-[86vw] border-r border-line bg-ground shadow-overlay lg:hidden">
             <Dialog.Title className="sr-only">Contents</Dialog.Title>
             {shelf}

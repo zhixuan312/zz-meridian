@@ -15,6 +15,10 @@
    390px. A button that changes nothing, a control something else covers, and a link that answers 4xx all fail.
    **This presses Approve, Revoke and Delete too.** Pages that call a live API must be built against a fake one
    (`fakeApi` in `scripts/verify.config.ts`; see `references/existing-project.md`, step 8), or verify changes real data.
+6. **Web Vitals on a mid-range phone** (`scripts/vitals.ts`): Lighthouse's mobile profile (CPU slowed four times, Slow 4G,
+   390px touch). Every product page must hold LCP under 2.5 s, INP under 200 ms and CLS under 0.1; INP is the slowest
+   tap on a control that changes the screen. It runs alone, after the others, since throttling measures the machine
+   too: on a busy machine, run it again before believing a near miss.
 
 The report is in `out/verify.txt`. Fix the cause; never weaken a check to make it pass. pnpm may first print a lockfile
 and supply-chain check before a script runs; that is pnpm, not an install, and not a failure.

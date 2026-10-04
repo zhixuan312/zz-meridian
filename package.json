@@ -25,7 +25,8 @@
     "check": "node scripts/check.ts",
     "verify": "node scripts/verify.ts",
     "brand": "node scripts/brand.ts",
-    "interactions": "node scripts/interactions.ts"
+    "interactions": "node scripts/interactions.ts",
+    "vitals": "node scripts/vitals.ts"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "4.0.71",

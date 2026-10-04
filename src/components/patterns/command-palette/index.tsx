@@ -87,7 +87,7 @@ export function CommandPalette({ nav }: { /** Every destination the rail offers,
   return (
     <D.Root open={open} onOpenChange={(o) => { setOpen(o); if (!o) setQ(''); }}>
       <D.Portal>
-        <D.Overlay className="scrim-in fixed inset-0 z-(--layer-overlay) bg-scrim backdrop-blur-[2px]" />
+        <D.Overlay className="scrim-in fixed inset-0 z-(--layer-overlay) bg-scrim" />
         <D.Content
           aria-describedby={undefined}
           className="dialog-in fixed top-[14vh] left-1/2 z-(--layer-overlay) w-[min(600px,calc(100vw-24px))] -translate-x-1/2 overflow-hidden rounded-xl bg-surface-raised shadow-overlay"
