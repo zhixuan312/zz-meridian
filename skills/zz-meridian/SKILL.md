@@ -17,7 +17,9 @@ should not need to learn Meridian: they describe what they need, you do the home
 build it, and prove it meets the standard with one command.
 
 The template lives at `https://github.com/zhixuan312/zz-meridian`. Its own `README.md`, `CONTRIBUTING.md`
-and `docs/` are the full specification; this skill is the route through them.
+and `docs/` are the full specification; this skill is the route through them. If you are reading this file inside a
+clone of the template (for example `/tmp/meridian/skills/zz-meridian/SKILL.md`), that clone is the template: use it
+wherever a step fetches the template, and read the references next to this file.
 
 ## 1. Do the homework first
 
@@ -42,6 +44,11 @@ your draft as the recommended option so the person can accept it in one click. U
 4. **Brand and surfaces.** A brand colour (a hex, or "no preference" for indigo), light or dark first (dark is the
    default), and whether it should also appear inside AI assistants as an MCP App.
 
+Skip what the request already answers ("this project, keep our data and routes" answers the first). When the request
+hands you the whole job in one sentence, or you have no way to ask, do not stop to ask: take your drafts (the product
+name from their app, the brand colour from their existing styles or logo, dark first, no MCP views), write them into
+`docs/brief.md`, and list them in the hand-over so the person can change any of them in one line.
+
 ## 3. Get the template
 
 For a new project (the target folder must not exist):
@@ -56,7 +63,8 @@ pnpm install
 
 Requirements: Node 22.18 or newer and pnpm 10 or newer (`corepack enable` if pnpm is missing). The browser audit uses Google Chrome
 (`CHROME=/path/to/chrome` if it is not at the macOS default). If any is missing, say so plainly and stop before step 6
-rather than skipping validation.
+rather than skipping validation. In a sandbox without network or a browser, ask for the access these steps need
+(cloning, `pnpm install`, starting Chrome and a local server for verify) instead of working around it.
 
 Now write the step-2 answers into `docs/brief.md` in the project (in English), so the decisions survive the
 conversation.
