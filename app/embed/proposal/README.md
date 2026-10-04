@@ -13,7 +13,7 @@ An agent may read anything the person may read. It changes nothing on its own. E
 | Part | Content |
 |---|---|
 | Head | The embed frame: mark, "Proposal", Open in ZZ Meridian (no Expand: the card is the whole view) |
-| Card | "Claude proposes", the title "Raise Parallax AI's rate limit", the reason (429s rose 14% in 24 hours at the 1,000 rpm limit; contract allows 2,500), the changes (rate limit 1,000 → 2,000 rpm; burst 1,500 → 3,000 rpm), the impact (all 14 API keys, logged in Activity) |
+| Card | "Claude proposes", the title "Raise Northwind Labs' rate limit", the reason (429s rose 14% in 24 hours at the 1,200 rpm limit, the limit the sample's rate-limited requests name; contract allows 3,000), the changes (rate limit 1,200 → 2,400 rpm; burst 1,800 → 3,600 rpm), the impact (all 9 API keys, logged in Activity) |
 | Actions | Dismiss (ghost), Approve (primary) |
 
 ## States
@@ -36,8 +36,8 @@ Embed only. On the console the same Proposal card appears in Activity as an inbo
 
 ## Agents
 
-Shares its state with the model on every change, so the assistant can say what happened: "The person approved the proposal: Parallax AI's rate limit is now 2,000 requests per minute." with `{ view, proposal, customer, from, to, state }`. In a product, Approve calls the apply tool through the host (`tools/call`) and the card shows the tool's result.
+Shares its state with the model on every change, so the assistant can say what happened: "The person approved the proposal: Northwind Labs' rate limit is now 2,400 requests per minute." with `{ view, proposal, customer, from, to, state }`. In a product, Approve calls the apply tool through the host (`tools/call`) and the card shows the tool's result.
 
 ## Accessibility
 
-The card is an `article` labelled "Proposal from Claude: Raise Parallax AI's rate limit"; a failure is announced with `role="alert"`.
+The card is an `article` labelled "Proposal from Claude: Raise Northwind Labs' rate limit"; a failure is announced with `role="alert"`.
