@@ -141,7 +141,7 @@ export function stats() {
   const all = entries();
   const tokens = ['core', 'theme.light', 'accent.cobalt']
     .map((f) => JSON.parse(read(`tokens/${f}.tokens.json`)))
-    .reduce((n, j) => n + Object.entries(j).filter(([k]) => !k.startsWith('$')).reduce((m, [, g]: [string, any]) => m + Object.keys(g).filter((k) => !k.startsWith('$')).length, 0), 0);
+    .reduce((n, j) => n + Object.entries(j).filter(([k]) => !k.startsWith('$')).reduce((m, [, g]) => m + Object.keys(g as object).filter((k) => !k.startsWith('$')).length, 0), 0);
   return {
     tokens,
     base: all.filter((e) => e.section === 'base').length,

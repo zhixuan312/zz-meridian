@@ -211,14 +211,13 @@ export function AssistantPanel({
  */
 export function AssistantColumn({ open, onClose }: { open: boolean; onClose: () => void }) {
   const path = usePathname();
-  const pathRef = useRef(path);
-  pathRef.current = path;
   const transport = useMemo(
     () =>
       new DefaultChatTransport({
         api: '/api/assistant',
         // The route takes the last 100 messages, as the thread keeps them, and the page the person is on now.
-        prepareSendMessagesRequest: ({ messages }) => ({ body: { messages: recent(messages), page: readPage(pathRef.current) } }),
+        // The page is read when the message is sent, from the address, so it is always the one on screen.
+        prepareSendMessagesRequest: ({ messages }) => ({ body: { messages: recent(messages), page: readPage(location.pathname) } }),
       }),
     [],
   );
@@ -235,6 +234,7 @@ export function AssistantColumn({ open, onClose }: { open: boolean; onClose: () 
     const thread = loadThread(localStorage);
     for (const m of thread) for (const p of m.parts) if (isMutation(p)) refreshed.current.add((p as unknown as ToolPart).toolCallId);
     setMessages(thread);
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- the thread is an external store read once on mount; the server render never sees localStorage.
     setLoaded(true);
   }, [setMessages]);
   useEffect(() => {

@@ -26,7 +26,7 @@ Status: beta
 
 ## Sizes
 
-Row height and card padding come from the density: comfortable 52px and 24px, compact 38px and 16px. The table never sets its own width; the grow column (`grow`) takes what remains and its cells truncate with a `title`, every other column keeps its content width.
+Row height and card padding come from the density: comfortable 52px and 24px, compact 38px and 16px. The table never sets its own width; the grow column (`grow`) takes what remains and its cells truncate with a `title`, every other column keeps its content width. A column whose content is short and fixed (an ID, a key, a date) can take `width` (`w-28`), so a two-column table does not hand the short column most of the row.
 
 ## States
 

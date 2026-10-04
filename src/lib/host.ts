@@ -21,13 +21,13 @@ export type HostContext = {
   styles?: { variables?: Record<string, string> };
 };
 
-type Pending = { resolve: (v: any) => void; reject: (e: Error) => void };
+type Pending = { resolve: (v: unknown) => void; reject: (e: Error) => void };
 
 export class HostBridge {
   private seq = 0;
   private pending = new Map<number, Pending>();
   private listeners = new Set<(ctx: HostContext) => void>();
-  private toolListeners = new Set<(kind: 'input' | 'result', params: any) => void>();
+  private toolListeners = new Set<(kind: 'input' | 'result', params: unknown) => void>();
   context: HostContext = {};
 
   constructor(private target: Window = window.parent) {
@@ -64,7 +64,7 @@ export class HostBridge {
     const id = ++this.seq;
     this.target.postMessage({ jsonrpc: '2.0', id, method, params }, '*');
     return new Promise<T>((resolve, reject) => {
-      this.pending.set(id, { resolve, reject });
+      this.pending.set(id, { resolve: resolve as (v: unknown) => void, reject });
       setTimeout(() => this.pending.has(id) && (this.pending.delete(id), reject(new Error(`${method} timed out`))), timeout);
     });
   }
@@ -87,7 +87,7 @@ export class HostBridge {
   }
 
   onContext(l: (ctx: HostContext) => void) { this.listeners.add(l); return () => void this.listeners.delete(l); }
-  onTool(l: (kind: 'input' | 'result', params: any) => void) { this.toolListeners.add(l); return () => void this.toolListeners.delete(l); }
+  onTool(l: (kind: 'input' | 'result', params: unknown) => void) { this.toolListeners.add(l); return () => void this.toolListeners.delete(l); }
 
   sizeChanged(width: number, height: number) { this.notify('ui/notifications/size-changed', { width, height }); }
   requestDisplayMode(mode: DisplayMode) { return this.request<{ mode: DisplayMode }>('ui/request-display-mode', { mode }); }

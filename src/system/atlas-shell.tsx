@@ -17,9 +17,11 @@ export type AtlasNav = { id: string; num?: string; title: string; line: string; 
  * layer, numbered 0 to 4 from tokens to pages; "/" filters it; the current section opens on its own.
  */
 export function AtlasShell({ nav, children }: { nav: AtlasNav; children: ReactNode }) {
-  const [open, setOpen] = useState(false);
   const path = usePathname();
-  useEffect(() => setOpen(false), [path]);
+  // The drawer remembers the page it opened on, so navigating closes it without an effect.
+  const [openOn, setOpenOn] = useState<string | null>(null);
+  const open = openOn === path;
+  const setOpen = (o: boolean) => setOpenOn(o ? path : null);
   const shelf = <Shelf nav={nav} />;
   return (
     <div className="min-h-dvh lg:grid lg:grid-cols-[var(--rail-width)_minmax(0,1fr)]">
@@ -53,7 +55,12 @@ function Shelf({ nav }: { nav: AtlasNav }) {
   const input = useRef<HTMLInputElement>(null);
   const current = nav.find((s) => s.items.some((i) => path === i.href))?.id ?? (path === '/system' ? 'start' : undefined);
   const [openIds, setOpenIds] = useState<Set<string>>(() => new Set(current ? [current] : ['start']));
-  useEffect(() => { if (current) setOpenIds((s) => new Set(s).add(current)); }, [current]);
+  // The section of the page being read opens when the reader arrives in it.
+  const [opened, setOpened] = useState(current);
+  if (current !== opened) {
+    setOpened(current);
+    if (current) setOpenIds((s) => new Set(s).add(current));
+  }
   useEffect(() => {
     const on = (e: KeyboardEvent) => {
       if (e.key === '/' && !(e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement)) { e.preventDefault(); input.current?.focus(); }
@@ -90,7 +97,7 @@ function Shelf({ nav }: { nav: AtlasNav }) {
               <button
                 type="button"
                 aria-expanded={isOpen}
-                onClick={() => setOpenIds((s) => { const n = new Set(s); n.has(sec.id) ? n.delete(sec.id) : n.add(sec.id); return n; })}
+                onClick={() => setOpenIds((s) => { const n = new Set(s); if (n.has(sec.id)) n.delete(sec.id); else n.add(sec.id); return n; })}
                 className={cn('group flex h-9 w-full items-center gap-2.5 rounded-md px-2 text-left hover:bg-fill-hover', current === sec.id ? 'text-ink' : 'text-ink-2')}
               >
                 <span className={cn('grid size-5 place-items-center rounded-xs font-mono text-2xs', sec.num ? (current === sec.id ? 'bg-accent text-on-accent' : 'bg-fill-track text-ink-2') : 'text-ink-3')}>

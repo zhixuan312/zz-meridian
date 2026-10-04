@@ -89,20 +89,25 @@ export function EmbedSurface({ children }: { children: ReactNode }) {
   }, [connected]);
 
   const value = useMemo<Surface>(() => {
-    const b = bridge.current;
+    // The bridge is read when a call happens, never during render: `connected` only turns true once it exists.
+    const bridgeOf = () => (connected ? bridge.current : null);
     return {
       kind: 'embed',
       connected,
       mode,
       host,
       expand: (p) => {
-        if (!b || !connected) return void window.open(p, '_blank', 'noopener');
+        const b = bridgeOf();
+        if (!b) return void window.open(p, '_blank', 'noopener');
         b.requestDisplayMode('fullscreen').then((r) => r.mode === 'fullscreen' ? setMode('fullscreen') : b.openLink(new URL(p, location.origin).href)).catch(() => b.openLink(new URL(p, location.origin).href));
       },
-      ask: connected && b ? (text) => void b.message(text).catch(() => {}) : undefined,
-      callTool: connected && b ? (name, args) => b.callTool(name, args) : undefined,
-      share: (text, structured) => void (connected && b?.modelContext(text, structured).catch(() => {})),
-      openLink: (u) => (b && connected ? void b.openLink(new URL(u, location.origin).href) : void window.open(u, '_blank', 'noopener')),
+      ask: connected ? (text) => void bridgeOf()?.message(text).catch(() => {}) : undefined,
+      callTool: connected ? (name, args) => bridgeOf()!.callTool(name, args) : undefined,
+      share: (text, structured) => void bridgeOf()?.modelContext(text, structured).catch(() => {}),
+      openLink: (u) => {
+        const b = bridgeOf();
+        return b ? void b.openLink(new URL(u, location.origin).href) : void window.open(u, '_blank', 'noopener');
+      },
     };
   }, [connected, mode, host]);
 

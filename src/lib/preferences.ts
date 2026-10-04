@@ -1,13 +1,11 @@
 /** Appearance preferences: theme, accent and density, stored on the device and applied as attributes on <html>. */
 import { slug } from '@/app.config';
-const THEMES = ['system', 'dark', 'light'] as const;
 export const ACCENTS = ['indigo', 'cobalt', 'jade', 'graphite'] as const;
 /** A swatch for each accent preset, for pickers. The fill lightness is the dark theme's; graphite is ink itself. */
 export const ACCENT_SWATCH: Record<(typeof ACCENTS)[number], string> = { indigo: 'oklch(0.56 0.2 277)', cobalt: 'oklch(0.56 0.17 255)', jade: 'oklch(0.56 0.12 168)', graphite: 'var(--ink)' };
-const DENSITIES = ['comfortable', 'compact'] as const;
-type ThemePref = (typeof THEMES)[number];
-export type Accent = (typeof ACCENTS)[number];
-type Density = (typeof DENSITIES)[number];
+type ThemePref = 'system' | 'dark' | 'light';
+type Accent = (typeof ACCENTS)[number];
+type Density = 'comfortable' | 'compact';
 export type Preferences = { theme: ThemePref; accent: Accent; density: Density; /** Whether the assistant's launcher and panel show, when the product has one. */ assistant: boolean };
 
 /** Per product, from the name: two Meridian apps on one host keep their own theme and accent. */

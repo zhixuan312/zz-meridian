@@ -17,6 +17,8 @@ const STEPS: [string, string[]][] = [
   // Route types first: a page added since the last build would otherwise fail against stale generated routes.
   ['route types are generated', ['pnpm', 'exec', 'next', 'typegen']],
   ['types check', ['pnpm', 'exec', 'tsc', '--noEmit']],
+  // eslint-config-next is what every Next project runs; a template that fails it hands its users errors on day one.
+  ['lint passes', ['pnpm', 'exec', 'eslint', '.']],
   ['tests pass', ['pnpm', 'exec', 'vitest', 'run']],
 ];
 

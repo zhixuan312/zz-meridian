@@ -6,7 +6,7 @@ import { Globe, Lock, Moon, Monitor, Sun, Trash2 } from 'lucide-react';
 import { app, domain, workspaceSlug } from '@/app.config';
 import { cn } from '@/lib/cn';
 import { formatRelative } from '@/lib/format-date';
-import { ACCENTS, type Accent, ACCENT_SWATCH } from '@/lib/preferences';
+import { ACCENTS, ACCENT_SWATCH } from '@/lib/preferences';
 import { usePreferences } from '@/components/base/providers';
 import { useAssistantAvailable } from '@/components/base/shell';
 import { FormSection, SettingRow } from '@/components/patterns/form-section';

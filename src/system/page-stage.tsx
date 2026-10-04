@@ -3,11 +3,13 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { Sparkles } from 'lucide-react';
 import { cn } from '@/lib/cn';
-import type { Accent } from '@/lib/preferences';
+import type { ACCENTS } from '@/lib/preferences';
 import { useSize } from '@/components/charts/use-size';
 import { Segmented } from '@/components/ui/segmented';
 import { StageBar } from '@/system/card-stage';
 import { app, domain } from '@/app.config';
+
+type Accent = (typeof ACCENTS)[number];
 
 type Surface = 'console' | 'phone' | 'embed';
 

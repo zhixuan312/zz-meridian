@@ -45,15 +45,20 @@ export function AppShell({
   assistant: boolean;
   children: ReactNode;
 }) {
-  const [open, setOpen] = useState(false);
+  const path = usePathname();
+  // The drawer remembers the page it opened on, so navigating closes it without an effect.
+  const [openOn, setOpenOn] = useState<string | null>(null);
+  const open = openOn === path;
+  const setOpen = (o: boolean) => setOpenOn(o ? path : null);
   const [assistantOpen, setAssistantOpen] = useState(false);
   const { prefs } = usePreferences();
   const shown = assistant && prefs.assistant;
-  const path = usePathname();
-  useEffect(() => setOpen(false), [path]);
-  useEffect(() => {
+  // Switching the assistant off closes its panel, so switching it back on does not reopen it.
+  const [wasShown, setWasShown] = useState(shown);
+  if (shown !== wasShown) {
+    setWasShown(shown);
     if (!shown) setAssistantOpen(false);
-  }, [shown]);
+  }
   const allTools = shown ? (
     <>
       {tools}

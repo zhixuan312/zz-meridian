@@ -12,20 +12,26 @@ export type TokenGroup = { id: string; title: string; about: string; source: str
 const T = path.join(process.cwd(), 'tokens');
 const NS = 'dev.zz.meridian';
 
+/** The parts of a DTCG 2025.10 file the Atlas reads: a group's description, and each token's type, value and CSS name. */
+type DtcgToken = { $type: string; $description?: string; $value: unknown; $extensions?: Record<string, { css?: string }> };
+type DtcgGroup = { $description?: string } & Record<string, DtcgToken>;
+
 function groups(file: string): TokenGroup[] {
   const j = JSON.parse(fs.readFileSync(path.join(/*turbopackIgnore: true*/ T, file), 'utf8'));
-  return Object.entries(j)
-    .filter(([k, v]) => !k.startsWith('$') && typeof v === 'object')
-    .map(([id, g]: [string, any]) => {
+  return (Object.entries(j).filter(([k, v]) => !k.startsWith('$') && typeof v === 'object') as [string, DtcgGroup][])
+    .map(([id, g]) => {
       const [title, ...rest] = String(g.$description ?? id).split(': ');
       return {
         id,
         title,
         about: rest.join(': '),
         source: `tokens/${file}`,
-        tokens: Object.entries(g)
-          .filter(([k]) => !k.startsWith('$'))
-          .map(([name, t]: [string, any]) => ({ name, type: t.$type, description: t.$description ?? '', css: t.$extensions?.[NS]?.css, value: t.$value && typeof t.$value === 'object' && 'value' in t.$value ? `${t.$value.value}${t.$value.unit}` : JSON.stringify(t.$value) })),
+        tokens: (Object.entries(g).filter(([k]) => !k.startsWith('$')) as [string, DtcgToken][])
+          .map(([name, t]) => {
+            // A dimension is { value, unit }; everything else prints as its JSON.
+            const v = t.$value as { value?: unknown; unit?: unknown } | null;
+            return { name, type: t.$type, description: t.$description ?? '', css: t.$extensions?.[NS]?.css, value: v && typeof v === 'object' && 'value' in v ? `${v.value}${v.unit}` : JSON.stringify(t.$value) };
+          }),
       };
     });
 }

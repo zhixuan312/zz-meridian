@@ -6,6 +6,8 @@ Status: beta
 
 ## Anatomy
 
+The names follow the HTML elements: `TableHead` is the `thead`, `TableHeader` is a `th`. Kits such as shadcn use the reverse (`TableHeader` for the `thead`, `TableHead` for a cell), so check them when porting a table.
+
 1. **Head band**: `surface-sunk`, a `line` rule above and below, 36px tall; head text `text-xs` medium `ink-3`, sentence case.
 2. **Sort control** (optional, per column): the head text as a button with a 12px arrow; the arrow shows on hover, and stays in `accent-ink` on the sorted column.
 3. **Row**: height `row-height` (48px, 36 compact); a `line` rule under each but the last.

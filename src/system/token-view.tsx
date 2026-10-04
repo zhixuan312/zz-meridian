@@ -2,11 +2,14 @@
 
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { cn } from '@/lib/cn';
-import { over, parse, ratio, type RGBA } from '@/lib/color';
-import type { Accent } from '@/lib/preferences';
+import { over, parse, ratio } from '@/lib/color';
+import type { ACCENTS } from '@/lib/preferences';
 import { Scope, StageBar, type Density } from '@/system/card-stage';
 import type { TokenGroup } from '@/system/tokens-data';
 import { app } from '@/app.config';
+
+type RGBA = ReturnType<typeof parse>;
+type Accent = (typeof ACCENTS)[number];
 
 type Groups = { core: TokenGroup[]; theme: TokenGroup[]; compact: TokenGroup[] };
 
@@ -183,6 +186,7 @@ function Type({ groups }: { groups: TokenGroup[] }) {
       const c = getComputedStyle(el);
       out[el.dataset.role!] = `${Math.round(parseFloat(c.fontSize))}px · ${c.fontWeight} · ${c.fontFamily.includes('Mono') ? 'mono' : 'sans'}${c.letterSpacing !== 'normal' ? ` · ${(parseFloat(c.letterSpacing) / parseFloat(c.fontSize)).toFixed(3)}em` : ''}`;
     });
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- the spec is measured from the rendered type, which exists only after the first paint.
     setSpec(out);
   }, []);
   const type = groups.find((g) => g.id === 'type');

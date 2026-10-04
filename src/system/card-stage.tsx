@@ -3,9 +3,11 @@
 import { Suspense, useState, type ReactNode } from 'react';
 import { ExternalLink } from 'lucide-react';
 import { cn } from '@/lib/cn';
-import { ACCENTS, type Accent, type Preferences, ACCENT_SWATCH } from '@/lib/preferences';
+import { ACCENTS, type Preferences, ACCENT_SWATCH } from '@/lib/preferences';
 import { CARDS } from '@/system/registry';
 import { Segmented } from '@/components/ui/segmented';
+
+type Accent = (typeof ACCENTS)[number];
 
 type ThemeView = 'dark' | 'light' | 'both';
 type Width = 'fluid' | 'phone';
