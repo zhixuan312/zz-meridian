@@ -49,45 +49,40 @@ hands you the whole job in one sentence, or you have no way to ask, do not stop 
 name from their app, the brand colour from their existing styles or logo, dark first, no MCP views), write them into
 `docs/brief.md`, and list them in the hand-over so the person can change any of them in one line.
 
-## 3. Get the template
+## 3. Get the template, branded
 
-For a new project (the target folder must not exist):
+For an existing frontend, follow `references/existing-project.md` instead: its first step is
+`npx zz-meridian@latest adopt`.
+
+For a new project (the folder must not exist yet), with the step-2 answers as flags:
 
 ```sh
-git clone --depth 1 https://github.com/zhixuan312/zz-meridian.git <target>
+npx zz-meridian@latest create <target> --name "<Product>" --workspace "<Workspace>" --timezone "<IANA zone>" \
+  [--currency <ISO 4217>] [--user "<Name>" --role "<Role>"] \
+  [--accent indigo|cobalt|jade|graphite | --hex '#RRGGBB' | --hue <0-360> --chroma <0.10-0.18>]
 cd <target>
-rm -rf .git skills
-git init -q
-pnpm install
 ```
 
-Requirements: Node 22.18 or newer and pnpm 10 or newer (`corepack enable` if pnpm is missing). The browser audit uses Google Chrome
-(`CHROME=/path/to/chrome` if it is not at the macOS default). If any is missing, say so plainly and stop before step 6
-rather than skipping validation. In a sandbox without network or a browser, ask for the access these steps need
-(cloning, `pnpm install`, starting Chrome and a local server for verify) instead of working around it.
+It copies the template, brands it, installs the dependencies, initialises git, installs this skill into the project
+(`.agents/skills/`, `.claude/skills/`) and records every file in `.meridian/manifest.json`. The person gets their
+dashboard, not a copy of the design system: the Design Atlas, the card and page specifications, `docs/`, `decisions/`
+and the changelog are left out, and the README and AGENTS.md are written for their product. To look a component up
+while building, read it in the template on GitHub (`src/components/<layer>/<card>/README.md`).
+
+Every product name, sample address and MCP tool name follows `--name`, so nothing of the template's own name is left
+behind. A brand colour goes straight in as `--hex`: the OKLCH hue and chroma are derived (chroma capped at 0.18; the
+theme sets lightness so contrast holds), registered everywhere, and checked by the contrast gate in every theme. To
+change the brand later, run `node scripts/brand.ts` in the project with the new flags.
+
+Requirements: Node 22.18 or newer; pnpm is used when installed, npm otherwise. The browser checks use Google Chrome
+(`CHROME=/path/to/chrome` if it is not where the platform keeps it). If any is missing, say so plainly and stop before
+step 6 rather than skipping validation. In a sandbox without network or a browser, ask for the access these steps need
+(the package install, starting Chrome and a local server for verify) instead of working around it.
 
 Now write the step-2 answers into `docs/brief.md` in the project (in English), so the decisions survive the
 conversation.
 
-## 4. Brand it
-
-```sh
-node scripts/brand.ts --name "<Product>" --workspace "<Workspace>" --timezone "<IANA zone>" \
-  [--currency <ISO 4217>] [--user "<Name>" --role "<Role>"] \
-  [--accent indigo|cobalt|jade|graphite | --hex '#RRGGBB' | --hue <0-360> --chroma <0.10-0.18>] --product
-```
-
-Every product name, sample address and MCP tool name in the template follows `--name`, so nothing of the template's
-own name is left behind. A brand colour goes straight in as `--hex`: the script derives the OKLCH hue and chroma (chroma
-capped at 0.18; the theme sets lightness so contrast holds) and prints them. It registers the accent everywhere, runs the contrast gate across
-every theme, and lowers a theme's fill lightness by itself if white text would fail.
-
-Pass `--product`: the person gets their dashboard, not a copy of the design system. It removes the Design Atlas, the card
-specifications and previews, the page specifications, `docs/`, `decisions/`, the changelog and this skill, rewrites the
-README and AGENTS.md for their product, and keeps everything the dashboard is built from (components, tokens, styles,
-scripts and the gates). To look a component up while building, read it in the template on GitHub
-(`src/components/<layer>/<card>/README.md`). Leave `--product` out only when the person is extending the design system
-itself.
+## 4. Check the brand colour
 
 Status colours own three hues: critical near 22°, warning near 68°, positive near 158°. A brand hue within 20° of one
 (a red, amber or green brand) makes every button and selection read as an alert or as "healthy", and the script prints
@@ -136,7 +131,7 @@ a minute. It must end with
 `verify: the project meets the Meridian standard`. The audit discovers every static route; list each detail page worth
 seeing (a normal record, a failed one, a missing one) in `detailRoutes` in `scripts/verify.config.ts`, with ids from
 your data (`--extra` replaces them for one run). If the pages call a live API, give verify a fake one first
-(`references/existing-project.md`, step 8): it presses every control, Delete included. When something fails, read `references/validation.md`, fix the cause (not the check), and run
+(`references/existing-project.md`, step 5): it presses every control, Delete included. When something fails, read `references/validation.md`, fix the cause (not the check), and run
 it again. `pnpm verify --quick` is fine while iterating; finish with the full run.
 
 Then look, because a passing audit is not the same as a good page:

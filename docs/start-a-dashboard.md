@@ -2,16 +2,17 @@
 
 A new dashboard starts from this repository running, not from a blank page. Six steps take it from ZZ Meridian's own dashboard to yours; each is one file or one folder.
 
-The fastest way is to let Claude Code do all six: install the `zz-meridian` skill (`npx degit zhixuan312/zz-meridian/skills/zz-meridian ~/.claude/skills/zz-meridian`) and describe the dashboard you need. The steps below are what it does, for doing it by hand.
+The fastest way is to let your coding agent do all six: `npx zz-meridian@latest create my-dashboard --name "Acme Ops"` copies and brands the template and installs the `zz-meridian` skill into it; then describe the dashboard you need to Codex or Claude Code. The steps below are what they do, for doing it by hand.
 
 ## 1. Copy it
 
 ```sh
-git clone <this repository> my-dashboard
+npx zz-meridian@latest create my-dashboard   # the template, branded, with the Atlas left out
 cd my-dashboard
-pnpm install
-pnpm dev   # the template at http://localhost:3000, the Atlas at /system
+pnpm dev   # the template at http://localhost:3000
 ```
+
+To keep the Atlas while you build, clone this repository instead (`git clone https://github.com/zhixuan312/zz-meridian.git my-dashboard`, then `pnpm install`): it serves the Atlas at `/system`.
 
 Keep the Atlas while you build: it is the specification of every part you are about to use. To ship without it, delete `app/system/` and remove the two rail entries that point at `/system` (Design system and Docs) from `nav` in `src/app.config.ts`. Keep `src/system/`: every card's preview imports its specimen helpers, and the gate regenerates its registry.
 

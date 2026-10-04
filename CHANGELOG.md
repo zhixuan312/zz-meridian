@@ -2,11 +2,18 @@
 
 Every release of ZZ Meridian, newest first. Versions follow semver: a removed or renamed token, prop or card is major; a new card, token or variant is minor; a corrected value is a patch. Each entry says what breaks and what to do instead.
 
-## [Unreleased]
+## [0.2.0] · 2026-10-04
 
-From two field reports of bringing Meridian into existing projects (issues #1 and #2), and the console's own assistant.
+The first release on npm. A team brings Meridian into its own dashboard with one sentence to its coding agent:
+`npx zz-meridian@latest adopt`, then the skill it installs. Also: two field reports of bringing Meridian into existing
+projects (issues #1 and #2), and the console's own assistant.
 
 ### Added
+
+- **The `zz-meridian` package** (`cli/`, decision 0009, `docs/distribution.md`). `adopt` brings Meridian into a Next.js App Router project in place: it copies the tokens, styles, components, gates and scripts, merges the dependencies, replaces the global stylesheet (keeping the old one beside it), brands it, appends Meridian's rules to the project's `AGENTS.md`, installs the skill for Codex (`.agents/skills`) and Claude Code (`.claude/skills`), records every copied file in `.meridian/manifest.json`, installs and type checks. It refuses a dirty tree, a project that is not the App Router and a file it would overwrite. Meridian's files import each other by relative path, so a team's own `components/ui/button` never stands in for Meridian's; the team imports Meridian as `@meridian/…`. `create` starts a new dashboard, branded, without the Atlas. `skill --global` installs only the skill. No dependencies, no install scripts.
+- **The release pipeline** (`.github/workflows/release.yml`, `.claude/commands/release-meridian.md`): the gate, the template build, the package from the committed tree, assertions on the tarball, then the consumer path from that tarball (adopt into a create-next-app fixture with its own button and data layer, which must type check, pass the gate and build with the team's files unchanged; create, gate and verify), then npm with provenance through trusted publishing, then the tag. The job that publishes installs nothing.
+- `verify --no-vitals`, for a CI runner, where throttling measures a shared machine.
+- The skill, run from one sentence: it skips the questions the request answers, takes its own drafts when nobody can be asked (and lists them in the hand-over), and asks for sandbox access instead of skipping validation.
 
 - **The assistant** (`docs/assistant.md`, decision 0008): one panel in the dashboard shell that reads the page the person is on, answers about it, and finds, adds, changes and removes records through Proposals the person approves. Off until `ASSISTANT_PROVIDER`, `ASSISTANT_API_KEY` and `ASSISTANT_MODEL` are set (and `ASSISTANT_BASE_URL` for `openai-compatible`), read on every request; Anthropic or any OpenAI-compatible provider through the AI SDK. Approvals are signed and each runs once, a removal is proposed with the critical tone, the route refuses a malformed or oversized thread, the thread is kept in the browser (the last 100 messages), and Settings has "Show the assistant". `.env.example` lists the variables.
 - **Collections** (`src/lib/collection.ts`, `src/data/collections.ts`): one description of each set of records, read by the pages, changed by their server actions and offered to the assistant as tools; `pageOnly` and `hidden` keep what only a page may do or see out of every tool. A **Members** page (invite, suspend, reactivate, remove) shows it; API keys and Requests read and change through it.
@@ -21,6 +28,9 @@ From two field reports of bringing Meridian into existing projects (issues #1 an
 
 ### Fixed
 
+- `brand.ts --product` left the Atlas's nav icons imported, so a new dashboard failed the lint gate.
+- A disabled Switch kept a bright thumb and an ink-2 label; it reads disabled, as a Checkbox does.
+- A record's wrapped facts no longer end a line on a dangling dot.
 - The audit no longer crashes on a labelled control; it measures a labelled checkbox with its label.
 - `Field` no longer passes `required` to the control, so the browser does not silently block a submit.
 - `--no-atlas` matches `/system` exactly, drops empty nav groups, and removes the footer link, the Atlas modules, their packages, their build tracing and stale route types.
@@ -32,10 +42,16 @@ From two field reports of bringing Meridian into existing projects (issues #1 an
 
 ### Changed
 
-- Node 22.18 or newer and pnpm 10 or newer; the `packageManager` pin is gone. `pnpm verify` runs the audit and the presses side by side.
+- Node 22.18 or newer; the `packageManager` pin is gone. The gates run the tools from `node_modules/.bin`, so a project on pnpm, npm, yarn or bun passes them alike. `pnpm verify` runs the audit and the presses side by side.
+- Every console page uses the data width, Settings, the error and the missing page included, so every title sits on one left edge; a Form section's card stops at 64rem. The reading width is for a page that is one long document.
+- Meridian's scripts carry their own lint exception where they need one, so they pass a project's own eslint config.
+- An avatar group tucks each disc under the next by 2, 4 or 6px, so the ring never cuts an initial.
+- A scrolling strip (the rail's navigation, a narrow tab strip) fades at the edge with more behind it.
+- The pager and Health's service grid read their own width, not the screen's.
 
 ### Breaking
 
+- The root package is `zz-meridian-template` (private); `zz-meridian` is the published package.
 - Agents may now propose a removal: `docs/agents.md`, `docs/surfaces.md` and the Proposal, Settings and Keys specifications no longer say a destructive change is never proposed. Keep an operation away from every agent with `pageOnly`.
 - `formatTime`, `formatIsoDate` and `periodCutoff` are removed (use `formatDateTime`, `Intl.DateTimeFormat` or `PERIOD_DAYS`); `readPage`, `AssistantConfig`, `PAGE_TEXT_LIMIT`, `luminance`, `DISPLAY_TIMEZONE`, `formatCostCompact`, `formatCount`, `PROTOCOL`, `DEFAULT_PERIOD`, `THEMES`, `DENSITIES` and `ThemePref` are no longer exported, and `Density` is `Preferences['density']`.
 - The Keys view no longer keeps its own rows: it takes them and its actions from the page.

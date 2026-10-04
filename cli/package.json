@@ -1,0 +1,34 @@
+{
+  "name": "zz-meridian",
+  "version": "0.2.0",
+  "description": "Bring ZZ Meridian, a dashboard design system, into a Next.js project, or start a new dashboard on it. Copies the files in; nothing depends on this package at runtime.",
+  "license": "MIT",
+  "type": "module",
+  "bin": {
+    "zz-meridian": "dist/cli.js"
+  },
+  "files": [
+    "dist",
+    "payload"
+  ],
+  "engines": {
+    "node": ">=22.18.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/zhixuan312/zz-meridian.git",
+    "directory": "cli"
+  },
+  "homepage": "https://github.com/zhixuan312/zz-meridian#readme",
+  "bugs": "https://github.com/zhixuan312/zz-meridian/issues",
+  "keywords": [
+    "dashboard",
+    "design-system",
+    "nextjs",
+    "react",
+    "tailwindcss",
+    "agent-skills",
+    "codex",
+    "claude-code"
+  ]
+}

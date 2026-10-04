@@ -1,7 +1,6 @@
 # Distribution: the `zz-meridian` package
 
-Status: design (decision 0009, proposed). Nothing here is built yet; until v1 is on npm, the clone-based sentence in
-the README stays the way in.
+Status: v1 shipped in 0.2.0 (decision 0009). `update` is v2. Releasing: `.claude/commands/release-meridian.md`.
 
 ## The one sentence
 
@@ -20,12 +19,14 @@ rebuilding each page on Meridian's components, the fake API, and reading what `p
 
 - **Name** `zz-meridian`, unscoped (free on npm, and the shortest sentence). The command is `zz-meridian`
   (`bin: { "zz-meridian": "dist/cli.js" }`); a different bin name breaks `npx zz-meridian`.
-- **Where it lives**: `cli/` in this repository, its own `package.json`, built with `tsc` to `cli/dist/`. The
-  repository root stays the template app, `private`, renamed `zz-meridian-template` so the two names do not clash in
-  the pnpm workspace.
-- **Payload**: a snapshot of the template, built at pack time into `cli/payload/` from `git ls-files` at the release
-  commit, never from the working tree, so a stray build output or local edit cannot ship. The package carries
-  `dist/`, `payload/` and nothing else.
+- **Where it lives**: `cli/` in this repository, its own `package.json`, built with `tsc` to `cli/dist/`; not a
+  workspace member, and outside the root's type check and lint. The repository root stays the template app, `private`,
+  renamed `zz-meridian-template`.
+- **Payload**: a snapshot of the template, built by `cli/scripts/build-payload.ts` into `cli/payload/` with `git archive
+  HEAD`, never from a walk of the folder, so a build output, a local `.env` or an uncommitted edit cannot ship
+  (`--worktree` exists for trying a change before committing). The package itself, CI, agent settings and `.env` files
+  are left out. The package carries `dist/`, `payload/`, its README and nothing else: no dependencies, no install
+  scripts.
 - **No runtime dependency**: nothing in a dashboard imports `zz-meridian`. It needs Node 22.18 or newer.
 
 ## Commands (v1)
@@ -59,8 +60,15 @@ Then, in this order:
 4. Runs `scripts/brand.ts --existing` with the brand arguments given (or the name from their `package.json`): the name,
    the accent, the contrast gate, and the Meridian rules appended to their `AGENTS.md`.
 5. Installs the skill and writes the manifest.
-6. Runs their package manager's install, then `tsc --noEmit`, and prints the result and the next step: the skill's Route
-   A from step 5 (wrapping the layout), with the steps `adopt` did marked done.
+6. Runs their package manager's install, `next typegen` and `tsc --noEmit`, and prints the result and the next step:
+   the skill's Route A from step 2, with the template to read from at the same version.
+
+Three things make the copy safe in someone else's project. Meridian's own files import each other by relative path,
+pinned to the exact module (`…/button/index`), so a team's `components/ui/button.tsx` can never be resolved in place
+of Meridian's whatever their `@/` alias says; the team imports Meridian as `@meridian/…`, which `adopt` adds to
+`tsconfig.json`. Meridian's scripts carry their own lint exceptions, so they pass the team's eslint config. And
+`scripts/package.json` declares the scripts ES modules when the project's own `package.json` does not, without
+changing how the rest of the project is read.
 
 ### `skill [--global]`
 
@@ -100,9 +108,9 @@ adopter can `update` later:
 
 ## Package managers
 
-The gates call `pnpm exec` (`scripts/gate.ts`, `scripts/verify.ts`), so a team on npm or yarn fails at the first gate.
-v1 makes the scripts run `node_modules/.bin/<tool>` directly, which works under any package manager, and `adopt` uses
-whichever lockfile the project has. The requirement becomes Node 22.18 and nothing else.
+The gates run `node_modules/.bin/<tool>` directly (`scripts/lib/bin.ts`), which works under any package manager, and
+`adopt` installs with whichever lockfile the project has. The requirement is Node 22.18, and Chrome for the browser
+checks.
 
 ## Release pipeline
 
@@ -129,23 +137,18 @@ writes the version into `cli/package.json` and checks the root agrees.
 
 ## One-time setup (the maintainer, once)
 
-Trusted publishing is configured on a package that exists, so version one is published from a laptop under the
-maintainer's npm account, with 2FA: `npm publish` of the dry-run tarball. Then, on npmjs.com → `zz-meridian` →
-Settings → Trusted publisher: GitHub Actions, `zhixuan312` / `zz-meridian` / `release.yml`. From version two, CI owns
-publishing. (Confirm at implementation whether npm allows configuring a publisher before the first publish.)
+npm configures a trusted publisher only on a package that exists, so 0.2.0 was published from a laptop under the
+maintainer's npm account, with 2FA: the exact tarball the dry run tested, downloaded from its run. Then npmjs.com →
+`zz-meridian` → Settings → Trusted publisher: GitHub Actions, `zhixuan312` / `zz-meridian` / `release.yml`, and
+Publishing access set to require 2FA and disallow tokens. The real dispatch of 0.2.0 then found the version on the
+registry, skipped the publish, and finished the consumer check, the tag and the Release. From 0.2.1 on, CI publishes
+with provenance.
 
 ## Versioning
 
 The design system and the package share one version, under the rules at the top of `CHANGELOG.md`: a removed or renamed
 token, prop or card is major; a new card, token or variant is minor; a corrected value is a patch. The current
 `[Unreleased]` section becomes the first release, `0.2.0`.
-
-## What changes when v1 ships
-
-- README: the one-sentence section uses `npx zz-meridian@latest adopt`; the clone form goes.
-- SKILL.md step 3 and `references/existing-project.md` Route A: steps the package does are replaced by the command, so
-  the skill documents one route, not two.
-- Decision 0009 becomes accepted.
 
 ## Phases
 

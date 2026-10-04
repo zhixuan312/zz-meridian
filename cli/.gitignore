@@ -1,0 +1,4 @@
+payload/
+dist/
+.payload-stage/
+*.tgz

@@ -1,6 +1,6 @@
 # 0009 · Distributed by a package that copies, never one that is depended on
 
-Date: 2026-10-04 · Status: proposed
+Date: 2026-10-04 · Status: accepted (shipped in 0.2.0)
 
 ## Context
 

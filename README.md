@@ -71,29 +71,30 @@ Dark is the default, written on `:root`; the light theme follows the operating s
 | `decisions/` | One record per lasting decision |
 | `scripts/` | Generators, gates, `brand.ts` and `verify.ts` (see `CONTRIBUTING.md`) |
 | `skills/zz-meridian/` | The agent skill (Claude Code, Codex) that builds dashboards on this template or brings it into yours |
+| `cli/` | The `zz-meridian` npm package: `create`, `adopt` and `skill`, its build, its smoke test and the fixture app (`docs/distribution.md`) |
+| `.github/workflows/release.yml` | The release: gates, the consumer path from the tarball, then npm with provenance, then the tag (`.claude/commands/release-meridian.md`) |
 
 ## Bring Meridian into your dashboard, in one sentence
 
 Give your coding agent (Codex, Claude Code, or any agent that can run a shell) this, from your frontend's folder:
 
-> Clone https://github.com/zhixuan312/zz-meridian to /tmp/meridian and follow /tmp/meridian/skills/zz-meridian/SKILL.md to bring Meridian into this project: keep our data layer and routes, restyle every page with Meridian's components and tokens, and run pnpm verify until it passes.
+> Run `npx zz-meridian@latest adopt` here, then follow the zz-meridian skill it installs: keep our data layer and routes, restyle every page with Meridian's components and tokens, and run pnpm verify until it passes.
 
-Nothing to install first. The agent reads your app, picks the route for your stack, copies the components, tokens and
-gates in, rebuilds each page on them, brands it from your existing colours, appends Meridian's rules to your
-`AGENTS.md` so later sessions keep to them, and runs `pnpm verify` until the project meets the standard. It needs
-network access (to clone and install), Node 22.18+, pnpm 10+ and Google Chrome (for the browser checks). If your pages
-call a live API, say so in the sentence: verify presses every control, Delete included, so the agent builds a fake API
-first.
+`adopt` does the settled part, the same way every time, and proves it type checks: it copies the components, tokens
+and gates in, merges the dependencies, brands it, appends Meridian's rules to your `AGENTS.md` so later sessions keep
+to them, and installs the skill. The agent does the judgement: rebuilding each page on Meridian, and running
+`pnpm verify` until the project meets the standard. It needs Node 22.18+ and Google Chrome (for the browser checks).
+If your pages call a live API, say so in the sentence: verify presses every control, Delete included, so the agent
+builds a fake API first. For a new dashboard: `npx zz-meridian@latest create <dir>`. The package (`cli/`, decision
+0009) copies files and nothing depends on it afterwards.
 
-## Build a dashboard with Claude
-
-The `zz-meridian` skill lets anyone build on Meridian without learning it. Install it once, for all your projects:
+## Install the skill once, for every project
 
 ```sh
-npx degit zhixuan312/zz-meridian/skills/zz-meridian ~/.claude/skills/zz-meridian
+npx zz-meridian@latest skill --global
 ```
 
-(for Codex, `~/.agents/skills/zz-meridian`; or copy the `skills/zz-meridian/` folder into a project's `.claude/skills/` or `.agents/skills/`). Then tell Claude Code what you need, in your own words: "build an ops dashboard for our shipments", "make this admin panel look professional", "turn this schema into a dashboard". The skill reads what you already have, asks only what it cannot find out, creates the project from this template (or brings Meridian into yours), brands it, builds the pages, and runs `pnpm verify` until the project meets the standard.
+That puts the skill in `~/.agents/skills/zz-meridian` (Codex) and `~/.claude/skills/zz-meridian` (Claude Code). Then tell your agent what you need, in your own words: "build an ops dashboard for our shipments", "make this admin panel look professional", "turn this schema into a dashboard". The skill reads what you already have, asks only what it cannot find out, creates the project (or brings Meridian into yours) with the package, builds the pages, and runs `pnpm verify` until the project meets the standard.
 
 ## Commands
 

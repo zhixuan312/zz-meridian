@@ -16,7 +16,7 @@ check runs and the report lists each failure:
 5. **Every control pressed, every link followed** (`scripts/interactions.ts`) on the built app: mouse at 1440px, taps at
    390px. A button that changes nothing, a control something else covers, and a link that answers 4xx all fail.
    **This presses Approve, Revoke and Delete too.** Pages that call a live API must be built against a fake one
-   (`fakeApi` in `scripts/verify.config.ts`; see `references/existing-project.md`, step 8), or verify changes real data.
+   (`fakeApi` in `scripts/verify.config.ts`; see `references/existing-project.md`, step 5), or verify changes real data.
 6. **The whole keyboard path** (`scripts/keyboard.ts`), beside the audit and the presses: Tab through each page until
    focus comes back round. The first stop in the shell is "Skip to content", every stop shows a focus ring and is not
    hidden under something such as the sticky top bar, and every visible control is reached. With them run the

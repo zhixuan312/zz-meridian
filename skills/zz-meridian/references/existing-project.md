@@ -7,40 +7,34 @@ Tell them which route you chose and why, in one sentence, before starting.
 
 Migrate in place, page by page, keeping their data layer.
 
-1. Fetch the template into a temporary folder, unless you are already reading this from a clone of it:
-   `git clone --depth 1 https://github.com/zhixuan312/zz-meridian.git /tmp/meridian`
-2. Copy the parts a dashboard is built from into their project (merge, never overwrite their own files of the same
-   name without reading them): `tokens/`, `src/styles/`, `src/components/` without the `README.md` and `preview.tsx`
-   files, `src/app.config.ts`, `src/views/console-chrome.tsx`,
-   `src/lib/{cn,format,format-date,period,color,host,preferences,csv,safe-markdown}.ts`, `src/lib/assistant/prompt.ts`,
-   `app/icon.ts`, `scripts/`, `tests/setup.ts`, `vitest.config.ts`, `postcss.config.mjs`, `eslint.config.ts`. The
-   components read the product's name and nav from `src/app.config.ts`, and `AppShell` loads the assistant panel on
-   demand, so the panel's prompt types come along even when the assistant stays off. Not the design system: no `app/system/`, `src/system/`,
-   `docs/`, `decisions/` or card specifications. They get a dashboard, not a copy of Meridian. Routes may live in
-   `app/` or `src/app/`; the scripts find either.
-   If their alias is not `@/* → src/*`, add it to `tsconfig.json`.
-3. Merge dependencies from the template's `package.json` (`next`, `react`, `radix-ui`, `lucide-react`, `clsx`,
-   `tailwind-merge`, `react-markdown`, `remark-gfm`, and `ai` and `@ai-sdk/react` for the panel `AppShell` loads; dev: `tailwindcss`, `@tailwindcss/postcss`, `typescript`,
-   `vitest`, testing libraries, `eslint`, `eslint-config-next`) and the scripts (`tokens`, `check`, `contrast`, `lint`,
-   `gate`, `audit`, `verify`, `brand`, `shot`; not `registry`, which belongs to the Atlas). Keep their versions where
-   theirs are newer and compatible.
-4. Replace their global stylesheet with the template's `app/globals.css` (it imports Tailwind, the tokens, base and
-   motion). Their own utility classes that used Tailwind's default palette will stop rendering; that is expected, and
-   step 6 replaces them.
-5. Wrap their root layout like the template's `app/layout.tsx` (fonts, the pre-paint script, `Providers`) and their
+1. **Run `npx zz-meridian@latest adopt`** in their project, with the brand flags from step 2 of SKILL.md (`--name`,
+   `--hex` or `--accent`, `--workspace`, `--timezone`, `--currency`). It copies Meridian's tokens, styles, components,
+   gates and scripts in; merges the dependencies and scripts it needs into their `package.json`; adds `@meridian/*`
+   (`src/*`) to `tsconfig.json`; replaces their global stylesheet, keeping theirs beside it as `*.before.css` to port
+   from as tokens; writes a first `nav` from their routes into `src/app.config.ts`; brands it; appends Meridian's rules
+   to their `AGENTS.md`; installs this skill into `.agents/skills/` and `.claude/skills/`; records every copied file in
+   `.meridian/manifest.json`; installs and type checks. It refuses, writing nothing, when the git tree has uncommitted
+   changes (commit first, so its change is one diff to review), when the project is not Next.js with the App Router,
+   or when a file it would copy already exists with other content (it lists them: move theirs, then run it again).
+   Meridian's own files import each other by relative path, so their `components/ui/button` is never confused with
+   Meridian's.
+2. **The template to read from** is the version in `.meridian/manifest.json`, at
+   `https://github.com/zhixuan312/zz-meridian/tree/v<version>`: the layouts, the presets in `src/views/` and the pages
+   in `app/(dashboard)/`. Without network access to GitHub, `npx zz-meridian@<version> create /tmp/meridian-ref
+   --no-install` writes the same files to a scratch folder.
+3. Wrap their root layout like the template's `app/layout.tsx` (fonts, the pre-paint script, `Providers`) and their
    console routes in `AppShell` with the rail, `ShellTools` and the command palette (see `app/(dashboard)/layout.tsx`).
    The template's layout passes `ShellTools` the sample `ALERTS` and `DEMO_NOW` from `src/system/fixtures/`, which
-   is not copied: pass their own alerts (an empty list until they have some) and their own clock.
-   Write their routes into `nav` in `src/app.config.ts`. The Rail and the palette take `nav` as a prop, rendered from a
+   is not copied: pass their own alerts (an empty list until they have some) and their own clock. Give each `nav`
+   entry in `src/app.config.ts` its icon and group. The Rail and the palette take `nav` as a prop, rendered from a
    client module (`src/views/console-chrome.tsx`), since each destination carries its icon component; if what a person
    may see depends on their role or scope, filter `nav` there from their session, and pass `workspace` and `scopes`
    to the Rail for a scope switcher.
-6. Rebuild each page on `PageFrame`, `Stack` and `Row` with Meridian components, keeping their data fetching and
-   business logic untouched. Do the busiest page first; when the person is there to look, show it to them before the rest.
-7. Run `node scripts/brand.ts --existing` for their name and colour (`--existing` keeps their package name and has no
-   Atlas to remove; never `--product`, which deletes their docs, README and decisions). It also appends Meridian's
-   rules to their `AGENTS.md` once, so the team's next agent session keeps the dashboard on Meridian.
-8. **Before the first `pnpm verify`, give it a fake API.** verify presses every control it finds on the built app,
+4. Rebuild each page on `PageFrame`, `Stack` and `Row` with Meridian components (imported as
+   `@meridian/components/…`), keeping their data fetching and business logic untouched. Their old Tailwind utilities
+   render nothing under Meridian's scales, and the gate names each one. Do the busiest page first; when the person is
+   there to look, show it to them before the rest.
+5. **Before the first `pnpm verify`, give it a fake API.** verify presses every control it finds on the built app,
    Approve, Revoke, Archive and Delete included. If their pages call a live backend, those presses change it. Write
    `scripts/fake-api.ts`: a server on `--port 0` that answers every route the pages call with typed fixtures (writes
    answer success and are forgotten) and prints `listening on <url>`. Name it and the environment variable their app
@@ -48,7 +42,7 @@ Migrate in place, page by page, keeping their data layer.
    builds and serves the app against it. Point the build at it, not only the server: an address read in
    `next.config` rewrites is baked in at build time. If they cannot fake the API yet, do not run `pnpm verify`; run the
    audit alone (`node scripts/audit.ts --base <url>`), which reads and never presses.
-9. List their detail pages worth seeing (a normal record, a failed one, a missing one) in `detailRoutes` in
+6. List their detail pages worth seeing (a normal record, a failed one, a missing one) in `detailRoutes` in
    `scripts/verify.config.ts`, with ids from the fake API's fixtures, then run `pnpm verify` until it passes.
 
 Without the assistant, verify skips its walk-through on its own (it runs only when `app/api/assistant/route.ts`
