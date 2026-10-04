@@ -6,7 +6,7 @@ Status: beta
 
 ## Structure
 
-At the reading width (832px), sections 56px apart, each a Form section:
+At the data width like every console page, sections 56px apart, each a Form section (its card stops at 64rem):
 
 | Section | Saves | Controls |
 |---|---|---|

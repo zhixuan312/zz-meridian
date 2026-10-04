@@ -32,7 +32,7 @@ Label to control and control to hint: `space-1-5` 6px. Fields in a form stack `s
 
 ## Surfaces
 
-- **Console**: as specified; forms sit in the 832px reading width, two fields per row where they are short and related.
+- **Console**: as specified; forms sit in a Form section, whose card stops at 64rem, two fields per row where they are short and related.
 - **Mobile**: one field per row.
 - **Embed**: only search and filter fields, usually without a visible label (they take `aria-label`).
 

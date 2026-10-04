@@ -25,8 +25,8 @@ const AssistantLauncher = dynamic(() => import('@/components/patterns/assistant'
  *            └─ Row      one card, or cards split 1/2, 2/3, 1/3, or a row of tiles
  *   └─ assistant         optional, and the person can switch it off: a third column from 1024px, a sheet below; not in the page while closed
  *
- * Four rules: one scroller; cards are their content's height; four splits; two widths (data, capped at 1560px, and
- * reading, 832px; both centre).
+ * Four rules: one scroller; cards are their content's height; four splits; two widths (data, the whole canvas, for every
+ * console page; reading, 832px and centred, for one long document).
  */
 
 const ShellCtx = createContext<{ openNav: () => void; tools: ReactNode; assistant: boolean }>({ openNav: () => {}, tools: null, assistant: false });

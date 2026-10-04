@@ -21,7 +21,7 @@ Status: beta
 1. **One scroller.** PageFrame is the only element on a page that scrolls, and only vertically. No card, table or list scrolls on its own.
 2. **Cards are their content's height.** A list that can pass ten rows pages; a "top N" list stays at N.
 3. **Four splits.** Full, `1/2`, `2/3`, `1/3`; and `tiles`, whose columns follow how many tiles it holds and its own width (four are four or two, three are three or one, never a hole). Cards in a row are the same height; every card is a direct child.
-4. **Two widths.** `data` (dashboards, lists, detail pages) fills the canvas at every size (`data-width` is 100%), so a wider screen shows more, not a centred strip; `reading` (forms, documents, settings) is `reading-width` 832px and centres. The top bar always takes the canvas width, so the tools never move; past the reading width the light fills the margins.
+4. **Two widths.** `data` fills the canvas at every size (`data-width` is 100%), so a wider screen shows more, not a centred strip. Every console page uses it, settings and forms included, so every page's title sits on the same left edge; a form keeps its own measure inside (a Form section's card stops at 64rem). `reading` (`reading-width` 832px, centred) is for a page that is one long document, such as an article rendered with Prose. The top bar always takes the canvas width, so the tools never move; past the reading width the light fills the margins.
 
 ## Sizes
 

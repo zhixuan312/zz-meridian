@@ -13,7 +13,7 @@ import { EmptyState } from '@/components/ui/empty-state';
  */
 export default function DashboardError({ error, reset }: { error: Error & { digest?: string }; reset: () => void }) {
   return (
-    <PageFrame kicker="Something failed" title="This view did not load" description="The data behind it did not arrive. Nothing was changed." width="reading">
+    <PageFrame kicker="Something failed" title="This view did not load" description="The data behind it did not arrive. Nothing was changed.">
       <Card className="arrive">
         <EmptyState
           kind="error"

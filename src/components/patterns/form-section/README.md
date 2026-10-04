@@ -26,7 +26,7 @@ Status: beta
 
 | Part | Spec |
 |---|---|
-| Layout | Two columns from 48rem of section width: 15rem head, the card fills; one column below |
+| Layout | Two columns from 48rem of section width: 15rem head, the card fills up to 64rem; one column below |
 | Gap | 40px between the columns, 20px between head and card when stacked |
 | Card | `radius-lg` 16px, `card-pad` padding, `shadow-card` |
 | Save bar | `surface-raised` at 90% with a backdrop blur, `line` top border, small buttons |
@@ -50,7 +50,7 @@ Status: beta
 
 ## Composition
 
-A form element holding a fieldset; Field, Input, Select, Switch and Segmented from Layer 2; Banner for errors; Button for the save bar; Toast for confirmation. Settings pages stack sections 56px apart at the reading width.
+A form element holding a fieldset; Field, Input, Select, Switch and Segmented from Layer 2; Banner for errors; Button for the save bar; Toast for confirmation. Settings pages stack sections 56px apart at the data width, on the same left edge as every other page.
 
 ## Data
 
@@ -58,7 +58,7 @@ The section holds no values: the page owns them, compares them with what is save
 
 ## Surfaces
 
-- **Console**: two columns at the reading width (832px).
+- **Console**: two columns at the data width; the card stops at 64rem, so a field never stretches across a wide screen.
 - **Mobile**: one column; the save bar spans the width above the safe area.
 - **Embed**: not offered. Settings belong to the console; an agent proposes a setting change as a Proposal instead.
 

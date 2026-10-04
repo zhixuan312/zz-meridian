@@ -13,7 +13,7 @@ import { NOT_FOUND } from '@/views/not-found';
  */
 export function MissingPage() {
   return (
-    <PageFrame kicker={NOT_FOUND.kicker} title={NOT_FOUND.sentence.replace(/\.$/, '')} description={NOT_FOUND.lead} width="reading">
+    <PageFrame kicker={NOT_FOUND.kicker} title={NOT_FOUND.sentence.replace(/\.$/, '')} description={NOT_FOUND.lead}>
       <Card className="arrive gap-8 p-(--card-pad)">
         <MissingAddress />
         <div className="flex flex-wrap gap-2.5 max-sm:[&>*]:w-full"><WayBack size="md" search /></div>

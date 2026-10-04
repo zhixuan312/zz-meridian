@@ -7,7 +7,7 @@ Meridian held to the bar of award-winning sites (Awwwards, Webby, FWA) and of th
 | Criterion | Verdict | Evidence |
 |---|---|---|
 | Typography | Strong | One family (Geist) with a mono for kickers and identifiers; 52px page titles, 76px hero figures, 40px metric figures set at −0.035em with the unit and fraction stepped down to half size in `ink-3`. Eleven sizes in the scale; a page uses 5 to 8 of them; three weights everywhere on the product |
-| Whitespace | Strong | A 4px scale; 20px between cards, 24–28px inside them; 32px between table columns with the card's padding on the outer edges; a reading width of 832px for forms |
+| Whitespace | Strong | A 4px scale; 20px between cards, 24–28px inside them; 32px between table columns with the card's padding on the outer edges; every console page on one left edge, forms included, with a reading width of 832px for long documents |
 | Visual hierarchy | Strong | One protagonist per page. Hierarchy ratio (largest text over median) on analytical pages: Overview 6×, Health 6.5×, Requests 4.6×, Analytics 4.6×; standalone screens 7.2–7.8× |
 | Colour | Strong | A night-sky neutral leaning indigo; one accent that is two numbers (hue, chroma), four presets; status trio reserved; six categorical chart slots validated for colour-vision deficiency (worst adjacent ΔE 10.2 light, 8.7 dark). 328 contrast pairs pass in every theme and accent |
 | Motion | Good | Three jobs (arrive, answer, float), four durations, three curves; data arrives once (a line draws, an area reveals, bars grow); nothing loops but a live dot and a skeleton; reduced motion shows the final state at once |
