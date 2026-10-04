@@ -1,31 +1,42 @@
 # Not found
 
-The not-found screen meets any address that leads nowhere: it says so plainly, says why that usually happens, and offers the two ways back.
+The not-found screen meets any address that leads nowhere: it says so plainly, shows the address walked back to the deepest page that still exists, and offers that page as the way back.
 
 Status: beta
 
 ## Structure
 
-A standalone screen outside the shell, on the lit ground, from `src/views/standalone.tsx` (shared with Sign in):
+For an address outside the console, a standalone screen on the lit ground, from `src/views/standalone.tsx` (shared with Sign in). It renders per request (`connection()`), never prerendered, so it always names the address that was asked for:
 
 | Part | Content |
 |---|---|
 | Corner | The app mark and the product name, linking home |
 | Kicker | "404 · Not found" |
-| Sentence | "This page isn't here." at `text-display` |
-| Lead | "The address may be old, or the record may have been deleted. Everything that exists is one search away from the Overview." |
-| Actions | Go to Overview (primary, `lg`), Check service health (secondary, `lg`) |
+| Sentence | "This page isn't here." at `text-display`: the protagonist |
+| Lead | "The link may be mistyped or out of date, or what it pointed to has been removed." |
+| Address | A sunk field, body-size mono: the part that exists as a link to that page, the part that does not under a dashed critical rule, and one line saying which is which |
+| Actions | Back to the nearest page (primary, `lg`), then Go to Overview when that is somewhere else |
+
+Inside the console (`app/(dashboard)/not-found.tsx`, reached from a route's `notFound()`, such as a deleted request) the rail stays; the sentence becomes the page title over the same lead at the reading width, and one card holds the address at `text-xl` as the protagonist and the same actions (`md`). A miss at the root there offers Search pages (the command palette) as the second action.
+
+The words come from `src/views/not-found.tsx`; the address and the actions from `src/views/not-found-address.tsx`, once.
 
 ## States
 
 | State | What shows |
 |---|---|
-| Unknown route | As above |
-| A record that no longer exists (`/requests/<id>`) | The same screen, from the route's `notFound()` |
+| A missing record (`/requests/req_9x7k`) | `/requests` links to Requests; `/req_9x7k` is marked; "Requests is still here. Nothing in it answers to req_9x7k."; Back to Requests, Go to Overview |
+| A deeper miss (`/settings/billing/invoices/2026`) | `/settings` links to Settings; the rest is marked; "Settings is still here; the rest of the address leads nowhere." |
+| No part exists (`/this-page-does-not-exist`) | `/` links home; the rest is marked; "No page in ZZ Meridian lives at this address."; Go to Overview (and, in the console, Search pages) |
+| A long ID (60 characters or more) | The address breaks anywhere rather than overflowing; the sentence says "the address above" instead of repeating an ID over 32 characters |
+| Percent-escapes (`/requests/a%20b`) | Decoded for reading where they decode, shown as typed where they do not |
+| A trailing slash | Ignored: `/requests/` is Requests itself, not a miss |
+
+Matching is on segment boundaries and the longest navigation entry wins: `/requests` claims `/requests/req_1` but not `/requestsx`, and Docs (`/system/start/...`) wins over Design system (`/system`).
 
 ## Surfaces
 
-- **Console** and **Mobile**: as above; actions stack under the sentence below 640px.
+- **Console** and **Mobile**: as above; actions stack full width below 640px.
 - **Embed**: not offered. An embed view that cannot find its record says so inside its own frame.
 
 ## Agents
