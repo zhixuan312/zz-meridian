@@ -137,12 +137,14 @@ writes the version into `cli/package.json` and checks the root agrees.
 
 ## One-time setup (the maintainer, once)
 
-npm configures a trusted publisher only on a package that exists, so 0.2.0 was published from a laptop under the
-maintainer's npm account, with 2FA: the exact tarball the dry run tested, downloaded from its run. Then npmjs.com →
-`zz-meridian` → Settings → Trusted publisher: GitHub Actions, `zhixuan312` / `zz-meridian` / `release.yml`, and
-Publishing access set to require 2FA and disallow tokens. The real dispatch of 0.2.0 then found the version on the
-registry, skipped the publish, and finished the consumer check, the tag and the Release. From 0.2.1 on, CI publishes
-with provenance.
+npm configures a trusted publisher only on a package that exists. The maintainer created `zz-meridian` with a
+`0.0.0-stage` placeholder, then on npmjs.com → `zz-meridian` → Settings set the trusted publisher (GitHub Actions,
+`zhixuan312` / `zz-meridian` / `release.yml`, environment `npm`, "Allow npm publish" on) and Publishing access to
+require 2FA and disallow tokens. 0.2.0 itself was published from the maintainer's laptop, with 2FA, before the
+publisher was set: the exact tarball the dry run had tested (its sha512 matches), so it carries no provenance. The
+release run then found it on the registry, skipped the publish, and finished the consumer check, the tag and the
+Release. From 0.2.1 on, only the workflow, from `master` through the `npm` environment, can publish, and every
+version carries provenance. The placeholder can be deprecated.
 
 ## Versioning
 

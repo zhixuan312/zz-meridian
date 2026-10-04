@@ -80,8 +80,8 @@ Say: the version, the run URL, the local proof (gate, verify with vitals, smoke)
 
 ## Rules
 
-- Stop on any failure. Never `--force`, never re-run around a red job, never publish from a laptop (the one exception
-  was 0.2.0, the package's first version, which trusted publishing cannot create).
+- Stop on any failure. Never `--force`, never re-run around a red job, never publish from a laptop: npm accepts
+  only the workflow, and that is the point.
 - npm versions are immutable: never reuse one. A tag is never moved or deleted; supersede it with the next version.
 - Do not rename `.github/workflows/release.yml`: npm's trusted-publisher setting names that file.
 - Every action in the workflow is pinned to a commit. To update one, resolve the new release tag to its commit with
@@ -89,6 +89,7 @@ Say: the version, the run URL, the local proof (gate, verify with vitals, smoke)
 
 ## One-time setup (done for 0.2.0)
 
-npmjs.com → `zz-meridian` → Settings → Trusted publisher → GitHub Actions: owner `zhixuan312`, repository
-`zz-meridian`, workflow `release.yml`, no environment. Then, under Publishing access, require two-factor
-authentication and disallow tokens, so only the workflow can publish.
+The package was created with a `0.0.0-stage` placeholder, since npm sets a trusted publisher only on a package that
+exists. npmjs.com → `zz-meridian` → Settings → Trusted publisher → GitHub Actions: owner `zhixuan312`, repository
+`zz-meridian`, workflow `release.yml`, environment `npm`, "Allow npm publish" on. Publishing access: require 2FA and
+disallow bypass tokens. In this repository, Settings → Environments → `npm` allows only `master`.

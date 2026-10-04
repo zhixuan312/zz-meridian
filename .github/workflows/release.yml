@@ -232,7 +232,10 @@ jobs:
           npm pack "zz-meridian@$VERSION" --ignore-scripts >/dev/null
           GOT="$(sha256sum "zz-meridian-$VERSION.tgz" | cut -d' ' -f1)"
           [ "$GOT" = "$SHA256" ] && echo "the registry serves the tested tarball" || echo "::warning::the registry's tarball hash $GOT differs from the tested $SHA256"
-          npm view "zz-meridian@$VERSION" dist.attestations >/dev/null 2>&1 && echo "provenance attached" || echo "::warning::no provenance attestation reported"
+          # npm view prints nothing and exits 0 for a field that is not there, so the check reads the output.
+          ATT="$(npm view "zz-meridian@$VERSION" dist.attestations.provenance --json 2>/dev/null || true)"
+          [ -n "$ATT" ] || { echo "::error::zz-meridian $VERSION carries no provenance attestation"; exit 1; }
+          echo "provenance attached"
 
       - name: Tag, last
         env:
