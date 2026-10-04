@@ -46,8 +46,8 @@ export function HealthBody({ services, current, past, now }: { services: Service
             </>
           }
         >
-          <div className="flex flex-1 flex-col justify-end gap-7 px-2 pb-3">
-            <ul aria-label="Right now" className="grid grid-cols-2 gap-px overflow-hidden rounded-md border border-line bg-line sm:grid-cols-3">
+          <div className="@container flex flex-1 flex-col justify-end gap-7 px-2 pb-3">
+            <ul aria-label="Right now" className="grid grid-cols-2 gap-px overflow-hidden rounded-md border border-line bg-line @[40rem]:grid-cols-3">
               {services.map((svc) => (
                 <li key={svc.name} className="flex min-w-0 items-center gap-2.5 bg-surface/80 px-3.5 py-3">
                   <StatusDot tone={TONE[svc.status]} live={svc.status !== 'operational'} />

@@ -42,7 +42,7 @@ Controls at `control-sm` 30px; page buttons at least 30px wide with 6px padding,
 ## Surfaces
 
 - **Console**: as specified.
-- **Mobile**: under 640px only "Page 2 of 12" and the two arrows; under 768px the size menu hides.
+- **Mobile**: the pager reads its own width, not the screen's: under 32rem (a phone, or a card in a narrow column) only "Page 2 of 12" and the two arrows; under 44rem the size menu hides.
 - **Embed**: inline embeds show five rows and Expand instead of pagination.
 
 ## Agents
