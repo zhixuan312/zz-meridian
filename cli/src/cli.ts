@@ -9,6 +9,7 @@ import { parseArgs } from 'node:util';
 import { adopt } from './adopt.js';
 import { create } from './create.js';
 import { BRAND_FLAGS, VERSION, installSkill } from './files.js';
+import { update } from './update.js';
 
 const HELP = `zz-meridian ${VERSION}
 
@@ -17,6 +18,9 @@ const HELP = `zz-meridian ${VERSION}
 
   npx zz-meridian@latest create <dir> [brand flags] [--no-install]
       Start a new dashboard on Meridian in <dir>.
+
+  npx zz-meridian@latest update --dry-run [--verbose]
+      Show what updating this project to the running version would change, and what needs your decision. Writes nothing.
 
   npx zz-meridian@latest skill [--global]
       Install only the agent skill: into this project, or for every project (~/.agents/skills, ~/.claude/skills).
@@ -32,6 +36,8 @@ const { values, positionals } = parseArgs({
     ...Object.fromEntries(BRAND_FLAGS.map((f) => [f, { type: 'string' as const }])),
     'allow-dirty': { type: 'boolean' },
     'no-install': { type: 'boolean' },
+    'dry-run': { type: 'boolean' },
+    verbose: { type: 'boolean' },
     global: { type: 'boolean' },
     help: { type: 'boolean', short: 'h' },
     version: { type: 'boolean', short: 'v' },
@@ -54,6 +60,7 @@ function main(): number {
     if (!arg) { console.error('zz-meridian create: name the folder for the new dashboard'); return 1; }
     return create({ dir: arg, brand, install });
   }
+  if (command === 'update') return update({ root: process.cwd(), dryRun: Boolean(values['dry-run']), verbose: Boolean(values.verbose) });
   if (command === 'skill') {
     const roots = values.global ? [os.homedir()] : [process.cwd()];
     for (const r of roots) installSkill(r);
