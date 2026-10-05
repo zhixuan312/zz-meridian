@@ -9,8 +9,11 @@ import { usePreferences } from '@/components/base/providers';
 import dynamic from 'next/dynamic';
 
 // The assistant loads only where it is shown: a product without it, or a person who switched it off, never downloads it.
+// The launcher and the panel are two chunks, and that is the point: the launcher is the only part a page draws while the
+// panel is closed, so importing both from the barrel put `useChat`, the AI SDK and a markdown renderer — 448 KB in one
+// adopter's build, issue #7 — into every page that carries a button nobody had pressed.
 const AssistantColumn = dynamic(() => import('@/components/patterns/assistant').then((m) => m.AssistantColumn));
-const AssistantLauncher = dynamic(() => import('@/components/patterns/assistant').then((m) => m.AssistantLauncher));
+const AssistantLauncher = dynamic(() => import('@/components/patterns/assistant/launcher').then((m) => m.AssistantLauncher));
 
 /**
  * The shell and the layout contract, in one file. src/components/base/shell/README.md is the prose for it.
@@ -55,6 +58,10 @@ export function AppShell({
   const open = openOn === path;
   const setOpen = (o: boolean) => setOpenOn(o ? path : null);
   const [assistantOpen, setAssistantOpen] = useState(false);
+  // The panel's chunk is a third of a megabyte, so it is NOT in a page's first load: the column mounts the first time
+  // somebody opens it, and stays mounted from then on, so closing it and reopening keeps the thread. Before this, a
+  // page nobody had asked the assistant on paid for `useChat`, the AI SDK and a markdown renderer anyway (issue #7).
+  const [assistantUsed, setAssistantUsed] = useState(false);
   const { prefs } = usePreferences();
   const shown = assistant && prefs.assistant;
   // Switching the assistant off closes its panel, so switching it back on does not reopen it.
@@ -66,7 +73,7 @@ export function AppShell({
   const allTools = shown ? (
     <>
       {tools}
-      <AssistantLauncher open={assistantOpen} onClick={() => setAssistantOpen((o) => !o)} />
+      <AssistantLauncher open={assistantOpen} onClick={() => { setAssistantUsed(true); setAssistantOpen((o) => !o); }} />
     </>
   ) : (
     tools
@@ -103,7 +110,7 @@ export function AppShell({
           </Dialog.Portal>
         </Dialog.Root>
         <main className="relative flex min-w-0 flex-1 flex-col">{children}</main>
-        {shown ? <AssistantColumn open={assistantOpen} onClose={() => setAssistantOpen(false)} /> : null}
+        {shown && (assistantOpen || assistantUsed) ? <AssistantColumn open={assistantOpen} onClose={() => setAssistantOpen(false)} /> : null}
       </div>
     </ShellCtx.Provider>
   );

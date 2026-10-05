@@ -90,8 +90,17 @@ try {
     if (!(await page.eval<boolean>(`!!document.querySelector('${LAUNCHER}')`))) fail('no launcher on /');
     ok('the launcher is on /');
 
+    // The panel is a SEPARATE CHUNK, and this is what says so. The page is measured with the panel closed, then again
+    // with it open: the scripts that appear in between are the panel's. If the launcher's own chunk carried the panel
+    // — which it did until issue #7 — opening it fetches nothing new, because every page already had all of it.
+    const loadedScripts = () => page.eval<string[]>(`performance.getEntriesByType('resource').filter((e) => e.name.endsWith('.js')).map((e) => e.name)`);
+    const beforeOpen = await loadedScripts();
+
     await page.eval(`document.querySelector('${LAUNCHER}').click()`);
     await until('the panel to open', () => page.eval<boolean>(`!!document.querySelector('aside[data-assistant]')`), Boolean);
+    const panelChunks = (await loadedScripts()).filter((u) => !beforeOpen.includes(u));
+    if (!panelChunks.length) fail('opening the panel downloaded no script a page with it closed had not already fetched, so the panel is in every page\'s first load');
+    ok(`the panel is its own chunk: opening it fetched ${panelChunks.length} script(s) that a page with it closed never downloads`);
     ok('pressing the launcher opens the panel');
 
     await page.eval(`document.querySelector('aside[data-assistant] textarea[aria-label="Message"]').focus()`);

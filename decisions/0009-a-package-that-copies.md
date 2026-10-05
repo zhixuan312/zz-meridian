@@ -24,8 +24,8 @@ so a team that adopted Meridian never receives a fix.
 - Every copy is recorded in `.meridian/manifest.json` in the project (the version, each file's hash, the brand
   arguments), so a later `npx zz-meridian@latest update` can tell an untouched file from one the team changed.
 - The design system and the package share one version, under the semver rules in `CHANGELOG.md`.
-- The package is published by CI (npm trusted publishing with provenance), following the release pipeline of
-  multi-model-agent, with the tag created last.
+- The package is published by CI (npm trusted publishing with provenance), following the release pipeline of the
+  owner's earlier packages, with the tag created last.
 
 ## Consequences
 

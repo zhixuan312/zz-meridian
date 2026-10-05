@@ -114,7 +114,7 @@ checks.
 
 ## Release pipeline
 
-Modelled on multi-model-agent's (`.github/workflows/release.yml` there), one package instead of two:
+Modelled on the release pipeline of the owner's earlier packages, one package instead of two:
 
 1. **Dispatch**: `gh workflow run release.yml -f version=<v> [-f dry_run=true]`, from `master`. The version must equal
    `cli/package.json`'s and the tag must be unused.
@@ -128,7 +128,7 @@ Modelled on multi-model-agent's (`.github/workflows/release.yml` there), one pac
    - `create` into a clean folder, then `pnpm verify --quick --no-vitals`. Chrome is on ubuntu runners; Web Vitals
      measure the machine, so CI leaves them to the local run (`--no-vitals` is new in v1).
 5. **Publish** the tarball with `npm` 11.5.1 or newer through trusted publishing (OIDC), with `--provenance`. `pnpm
-   publish` does not perform the OIDC exchange; multi-model-agent learned this at 5.16.1.
+   publish` does not perform the OIDC exchange.
 6. **Tag `v<version>` last**, then the GitHub Release with the version's `CHANGELOG.md` section as its body.
 
 `dry_run` stops after step 4. A `/release` runbook (`.claude/commands/release.md`) holds the judgement before dispatch:

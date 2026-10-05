@@ -1,6 +1,6 @@
 # Benchmark
 
-Meridian held to the bar of award-winning sites (Awwwards, Webby, FWA) and of the systems it learned from (Zandro, crypto-zentry, the zz-stack console), criterion by criterion: what we did, the evidence, and what is still open. Measured on 2026-10-03 with `node scripts/audit.ts` (every page and embed view at 2560, 1440, 1024, 768 and 390px, both themes) and `node scripts/contrast.ts` (every pair in every theme and accent).
+Meridian held to the bar of award-winning sites (Awwwards, Webby, FWA) and of the systems it learned from, criterion by criterion: what we did, the evidence, and what is still open. Measured on 2026-10-03 with `node scripts/audit.ts` (every page and embed view at 2560, 1440, 1024, 768 and 390px, both themes) and `node scripts/contrast.ts` (every pair in every theme and accent).
 
 ## Scorecard
 
@@ -17,8 +17,8 @@ Meridian held to the bar of award-winning sites (Awwwards, Webby, FWA) and of th
 
 ## What changed because of the benchmark
 
-- **The register** (decision 0002). The first render, a neutral light canvas with 28px titles and four equal tiles, was rejected as dated. Meridian adopted Zandro's register: dark first, a lit ground, a dramatic type scale, one featured card.
-- **Quiet light** (decision 0006). Learning from crypto-zentry, the glow moved from the data to the frame: translucent surfaces, a lit edge and a faint halo on the featured card, a whisper of light under the line (14% on light, 24% on dark, set 2px below it), a primary action turning toward violet, one solid accent phrase per screen. The louder feature shadow, the solid accent borders and the grain were removed.
+- **The register** (decision 0002). The first render, a neutral light canvas with 28px titles and four equal tiles, was rejected as dated. Meridian adopted that register: dark first, a lit ground, a dramatic type scale, one featured card.
+- **Quiet light** (decision 0006). Learning from that calm, the glow moved from the data to the frame: translucent surfaces, a lit edge and a faint halo on the featured card, a whisper of light under the line (14% on light, 24% on dark, set 2px below it), a primary action turning toward violet, one solid accent phrase per screen. The louder feature shadow, the solid accent borders and the grain were removed.
 - **Tables.** The lead column no longer takes all the slack (about a third, the rest spread by content); columns sit 32px apart; a text column after a number gets 16px more; a fixed-width method chip lines up every route.
 - **Performance found by the audit.** A repeated grain texture under translucent cards stalled rasterisation at device scale (a 2× capture timed out past 30 seconds; without it, under a second), and a blend mode on a full-screen layer left charts painted stale. Both are gone.
 - **Motion, evaluated with motion on.** The light under the featured line now draws with the line instead of fading in ahead of it; line, light and area arrive together over 820ms (93% drawn by 250ms, settled by 550ms). The Atlas hero's cursor sweeps the month once and rests, instead of looping.
@@ -34,7 +34,7 @@ Meridian held to the bar of award-winning sites (Awwwards, Webby, FWA) and of th
 - **Tables that clipped their last column.** Columns dropped by the window's width, which ignores the rail, so between 768 and 1440px the API keys table (and Customers and Requests at 1024 to 1280px) ran wider than its card and the card cut the actions off; on a phone the Analytics endpoints table cut off p95. Columns now drop by the table's own width (a container query), a lead column needs 160px on a narrow table, and the audit fails any table wider than its frame.
 - **A tab icon.** `app/icon.ts` draws the App mark in the default accent, read from the tokens at build, so a new brand repaints it.
 
-- **An independent critic, against the juries' criteria.** A reviewer that had not built Meridian rendered all 15 routes at 360, 768 and 1440px in both themes and scored them against the Awwwards, Webby, CSSDA and FWA criteria and Zandro's eight craft criteria. Scores: typography 8, whitespace 6, hierarchy 8, colour 7, motion 7, micro-interaction 7, responsiveness 6, originality 7. It failed three criteria: colour keeps its job, one type scale, and motion and speed. Fixed from its list:
+- **An independent critic, against the juries' criteria.** A reviewer that had not built Meridian rendered all 15 routes at 360, 768 and 1440px in both themes and scored them against the Awwwards, Webby, CSSDA and FWA criteria and the earlier system's eight craft criteria. Scores: typography 8, whitespace 6, hierarchy 8, colour 7, motion 7, micro-interaction 7, responsiveness 6, originality 7. It failed three criteria: colour keeps its job, one type scale, and motion and speed. Fixed from its list:
   - **Honesty:** uptime on a phone showed 30 bars beside the 90-day figure, so every day now shows. The trend's "Errors × 20" put a scaled number in a tooltip, so it is gone.
   - **Composition:**
     - the Atlas home's empty column and its raw changelog;

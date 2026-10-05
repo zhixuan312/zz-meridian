@@ -1,6 +1,17 @@
 /**
  * The product's collections: the one place the console and the assistant are pointed at its data. The sample serves
  * its fixtures; a product replaces `rows` with its API and `clock` with `new Date()`.
+ *
+ * TWO THINGS TO DO THE DAY `rows` BECOMES A REAL DATABASE (issue #7, from a product running Postgres across a network):
+ *
+ * 1. Read each table ONCE per request. A console page asks for the same records from several places — the layout's
+ *    shell tools, a page-level strip, the page itself and its freshness stamp — so the same query runs up to five times
+ *    over. With the fixtures that is free; across a network it is a round trip each. Wrap the read in `cache()` from
+ *    `react` (request-scoped, which is what the Next.js docs recommend around an ORM) and leave the write path reading
+ *    directly, so a validation never sees an earlier answer. That product's three heaviest pages answered 44-46% sooner.
+ * 2. Raise the connection pool's idle timeout. `pg` drops an idle connection after 10 seconds, and against a remote
+ *    Postgres with TLS a new one cost that product 330 ms to 1.5 s — paid again on the next click by anybody who reads
+ *    a page for a moment. `idleTimeoutMillis: 300_000` is what they settled on.
  */
 import { z } from 'zod';
 import { arrayCollection, type AnyCollection, type Collection } from '@/lib/collection';

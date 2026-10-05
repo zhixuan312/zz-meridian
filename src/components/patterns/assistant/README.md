@@ -93,3 +93,10 @@ This is the agent's seat in the product. It reads the page the person is on and 
 ```
 
 The layout calls `await connection()` first so the choice is made per request, and passes only the boolean.
+
+**The launcher is its own module** (`launcher.tsx`), and the shell imports it and the panel as two dynamic chunks. That
+is not tidiness: this file pulls in `useChat`, the AI SDK's client and zod schemas, `react-markdown`, `remark-gfm` and
+`micromark` — 448 KB in one adopter's build (issue #7) — and the launcher is the only part of the assistant a page
+draws while the panel is closed. The shell therefore mounts `AssistantColumn` the first time somebody opens the panel,
+and keeps it mounted after that so the thread survives closing and reopening. `scripts/assistant.ts` measures the split:
+it lists the page's scripts with the panel closed, opens it, and fails when opening it fetched nothing new.

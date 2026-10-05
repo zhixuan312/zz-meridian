@@ -79,23 +79,6 @@ function ProposalOf({ message, part, onDecide }: { message: UIMessage; part: Too
   );
 }
 
-/** The top-bar button that opens and closes the panel. */
-export function AssistantLauncher({ open, onClick }: { open: boolean; onClick: () => void }) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      aria-label="Assistant"
-      aria-expanded={open}
-      title="Assistant"
-      className="press hit grid size-9 place-items-center rounded-full border border-line-strong bg-surface/60 shadow-control backdrop-blur-md hover:border-line-control/40 data-[open=true]:bg-surface-sunk"
-      data-open={open}
-    >
-      <AgentMark size="sm" />
-    </button>
-  );
-}
-
 /**
  * The panel, drawn from its messages alone: a third column of the shell from 1024px, a sheet over the page below it.
  * Both come from CSS; nothing here measures the window.

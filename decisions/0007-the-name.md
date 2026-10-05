@@ -4,7 +4,7 @@ Date: 2026-10-03 · Status: accepted
 
 ## Context
 
-The system was first named Meridian on its own, after its signature: one time cursor, a meridian line, shared by every chart and tile on a page. The owner's products form one family (zz-stack, the zz-stack console, this repository), and a standalone brand made the system read as someone else's.
+The system was first named Meridian on its own, after its signature: one time cursor, a meridian line, shared by every chart and tile on a page. The owner's products form one family, and a standalone brand made the system read as someone else's.
 
 ## Decision
 

@@ -120,8 +120,12 @@ log(`verify: gate, build, then the browser checks on every page at 1440 and 390p
 const freePort = () => new Promise<number>((res) => { const s = net.createServer(); s.listen(0, () => { const p = (s.address() as net.AddressInfo).port; s.close(() => res(p)); }); });
 
 // The assistant is off unless configured: the build and the first start must not see the caller's own variables.
+// BLANKED, not deleted: `next start` loads `.env.local` itself, where a person keeps their own model, and Next does not
+// overwrite a variable that is already set — so a deleted `ASSISTANT_*` came straight back from that file and the
+// "assistant off" start failed with "the page has 1 assistant element(s)" while nothing was wrong (`assistantConfig`
+// treats a blank value as unset). Reported in issue #7 against `e4a6225`.
 const clean: NodeJS.ProcessEnv = { ...process.env };
-for (const k of Object.keys(clean)) if (k.startsWith('ASSISTANT_')) delete clean[k];
+for (const k of Object.keys(clean)) if (k.startsWith('ASSISTANT_')) clean[k] = '';
 
 function step(name: string, cmd: string, args: string[], env = clean) {
   // Announced before it runs, not only after: a run people wait on should say which phase it is in.

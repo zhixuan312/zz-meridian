@@ -2,7 +2,8 @@
 
 import type { UIMessage } from 'ai';
 import { Specimen, State } from '@/system/specimen';
-import { AssistantLauncher, AssistantPanel } from '.';
+import { AssistantLauncher } from './launcher';
+import { AssistantPanel } from '.';
 
 const say = (id: string, role: 'user' | 'assistant', text: string): UIMessage => ({ id, role, parts: [{ type: 'text', text }] });
 

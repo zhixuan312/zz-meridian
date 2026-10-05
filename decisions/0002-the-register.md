@@ -1,10 +1,10 @@
-# 0002 · Zandro's register: dark first, lit, one protagonist
+# 0002 · The register: dark first, lit, one protagonist
 
 Date: 2026-10-03 · Status: accepted
 
 ## Context
 
-The first rendering of Meridian used a neutral light canvas, a 28px page title and four equal tiles: tidy, correct, and indistinguishable from any dashboard of the last decade. The owner rejected it as dated and asked for the language of the Zandro design system, which reads at a glance as a current, premium product.
+The first rendering of Meridian used a neutral light canvas, a 28px page title and four equal tiles: tidy, correct, and indistinguishable from any dashboard of the last decade. The owner rejected it as dated and asked for the register of the earlier design system (0001), which reads at a glance as a current, premium product.
 
 ## Decision
 
@@ -16,5 +16,5 @@ The first rendering of Meridian used a neutral light canvas, a 28px page title a
 
 ## Consequences
 
-- The system shares a family resemblance with Zandro; its own identity is the Meridian cursor, the three surfaces and the agentic layer.
+- The system shares that family resemblance; its own identity is the Meridian cursor, the three surfaces and the agentic layer.
 - Every component is checked in both themes, as before; the dark theme is the one quoted in specifications.

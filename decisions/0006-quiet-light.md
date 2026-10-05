@@ -4,7 +4,7 @@ Date: 2026-10-03 · Status: accepted · Amends 0002
 
 ## Context
 
-After 0002, the owner asked for the overall feeling to be more refined and less loud: premium, modern and elegant without showing off. They pointed to crypto-zentry, whose calm comes from soft, diffuse light everywhere and nothing loud anywhere: low-alpha orbs on the ground, translucent glass cards that let the light through, a faint halo around a card and a gradient border that appears only under the pointer, plain 2px chart lines, a gentle two-stop gradient on the one primary action, and gradient text only on the hero phrase. The first Meridian line glow read as a smudge on white.
+After 0002, the owner asked for the overall feeling to be more refined and less loud: premium, modern and elegant without showing off. They pointed to the calm of the earlier system — soft, diffuse light everywhere and nothing loud anywhere: low-alpha orbs on the ground, translucent glass cards that let the light through, a faint halo around a card and a gradient border that appears only under the pointer, plain 2px chart lines, a gentle two-stop gradient on the one primary action, and gradient text only on the hero phrase. The first Meridian line glow read as a smudge on white.
 
 ## Decision
 

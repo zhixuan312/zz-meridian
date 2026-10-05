@@ -1,5 +1,5 @@
 # Release the zz-meridian package (decision 0009, docs/distribution.md): gates, pack, the consumer path end to end,
-# then publish with provenance, then tag LAST. Modelled on multi-model-agent's release pipeline.
+# then publish with provenance, then tag LAST.
 #
 # WHY FOUR JOBS. `build` makes the tarball with nothing but Node, git and a pinned TypeScript installed without its
 # scripts, and records its hash. `gates` installs the template's dependencies and runs their code (the gate, the build,
@@ -186,7 +186,7 @@ jobs:
           node -e 'const v=process.argv[1].split(".").map(Number); if (!(v[0]>11||(v[0]===11&&(v[1]>5||(v[1]===5&&v[2]>=1))))) { console.error("::error::npm "+process.argv[1]+" predates trusted publishing (need 11.5.1)"); process.exit(1) }' "$V"
           [ -n "${ACTIONS_ID_TOKEN_REQUEST_URL:-}" ] || { echo '::error::no OIDC token: permissions id-token: write'; exit 1; }
 
-      # npm, not pnpm: pnpm publish does not perform the OIDC exchange (multi-model-agent 5.16.1).
+      # npm, not pnpm: pnpm publish does not perform the OIDC exchange.
       - name: Publish
         run: |
           set -euo pipefail

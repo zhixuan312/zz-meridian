@@ -12,7 +12,7 @@ export default function InputPreview() {
       </Specimen>
       <Specimen label="Slots" note="A leading icon; a trailing unit or action." stack>
         <div className="grid w-full max-w-160 gap-3 sm:grid-cols-2">
-          <Input aria-label="Webhook URL" leading={<Link2 />} placeholder="https://hooks.northwind.dev/zz-meridian" />
+          <Input aria-label="Webhook URL" leading={<Link2 />} placeholder="https://hooks.northwind.example/zz-meridian" />
           <Input aria-label="Monthly budget" leading={<DollarSign />} defaultValue="2,400" trailing={<span className="text-xs">per month</span>} />
           <Input aria-label="Key name" leading={<KeyRound />} defaultValue="production-signing" />
           <Input aria-label="Rate limit" type="number" defaultValue={2000} trailing={<span className="text-xs">rpm</span>} />

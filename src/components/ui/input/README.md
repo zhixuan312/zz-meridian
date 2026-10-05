@@ -58,7 +58,7 @@ An agent never types into an input on a person's behalf. When it suggests a valu
 
 ## Content
 
-- Placeholders show the format: "https://hooks.northwind.dev/zz-meridian", "/v1/messages". Never "Enter a value".
+- Placeholders show the format: "https://hooks.northwind.example/zz-meridian", "/v1/messages". Never "Enter a value". (`.example` is reserved for documentation, so a sample address never points at someone's real domain — `src/app.config.ts` says the same for the product's own.)
 - Units are trailing text, not part of the value: "2000" with "rpm".
 
 ## Do and do not

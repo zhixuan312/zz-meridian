@@ -4,7 +4,7 @@ Date: 2026-10-03 · Status: accepted
 
 ## Context
 
-Meridian follows the Zandro design system's pattern: layered cards, each specified before it is built, tokens in DTCG, gates that compute what can be computed. Zandro ships framework-agnostic CSS with HTML previews, because it is rebuilt on several platforms. Every dashboard Meridian serves is built with Next.js, React and Tailwind, so a CSS-only system would be ported by hand into every new dashboard.
+Meridian follows the pattern of the design system that came before it: layered cards, each specified before it is built, tokens in DTCG, gates that compute what can be computed. That system ships framework-agnostic CSS with HTML previews, because it is built for several platforms. Every dashboard Meridian serves is built with Next.js, React and Tailwind, so a CSS-only system would be ported by hand into every new dashboard.
 
 ## Decision
 
