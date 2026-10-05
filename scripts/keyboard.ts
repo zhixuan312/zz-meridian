@@ -34,7 +34,10 @@ const ROUTES = opt('--routes', '') ? opt('--routes', '').split(',') : [...discov
 /** Tag every visible control the keyboard should reach; return how many. */
 const TAG = `(() => {
   const vis = (el) => { const r = el.getBoundingClientRect(); const s = getComputedStyle(el); return r.width > 0 && r.height > 0 && s.visibility !== 'hidden' && !el.closest('[aria-hidden="true"],[inert],.sr-only'); };
-  const all = [...document.querySelectorAll('a[href], button:not([disabled]), input:not([type=hidden]):not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])')]
+  // :disabled, not [disabled]: the attribute is only the control's own, and a fieldset with disabled disables every
+  // control inside it without touching their attributes. A FormSection in its read-only or saving state is exactly
+  // that, so the attribute form expected a correctly-disabled input to be reachable, and failed on a page that was right.
+  const all = [...document.querySelectorAll('a[href], button:not(:disabled), input:not([type=hidden]):not(:disabled), select:not(:disabled), textarea:not(:disabled), [tabindex]:not([tabindex="-1"])')]
     .filter((el) => vis(el) && el.tabIndex >= 0);
   all.forEach((el, i) => el.setAttribute('data-kb', i));
   return all.length;
