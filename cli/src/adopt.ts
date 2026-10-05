@@ -12,26 +12,9 @@ import {
   PAYLOAD, VERSION, brandArgs, inside, installSkill, packageManager, payloadFiles, readJsonc, readPayload, relativeImports,
   run, runTool, sha256, writeIn, writeManifest,
 } from './files.js';
+import { FIXED, adoptSetOf } from './ownership.js';
 
 export type AdoptOptions = { root: string; brand: Record<string, string>; allowDirty: boolean; install: boolean };
-
-/** The library modules Meridian's components and gates import; the rest of src/lib belongs to the template's pages. */
-const LIB = ['cn', 'format', 'format-date', 'period', 'color', 'host', 'preferences', 'csv', 'safe-markdown'].map((n) => `src/lib/${n}.ts`);
-
-/** What adopt copies from the template, as payload paths. The fixture build in CI is what keeps this list complete. */
-function adoptSet(): string[] {
-  const own = (f: string) => !/(^|\/)(README\.md|preview\.tsx)$/.test(f);
-  return [
-    ...payloadFiles('tokens'),
-    ...payloadFiles('src/styles'),
-    ...payloadFiles('src/components').filter(own),
-    ...payloadFiles('scripts').filter((f) => f !== 'scripts/verify.config.ts'),
-    ...LIB,
-    'src/lib/assistant/prompt.ts',
-    'src/views/console-chrome.tsx',
-    'tests/setup.ts',
-  ];
-}
 
 /** The template's dependencies a dashboard built from these files needs. */
 const DEPS = ['next', 'react', 'react-dom', 'radix-ui', 'lucide-react', 'clsx', 'tailwind-merge', 'react-markdown', 'remark-gfm', 'ai', '@ai-sdk/react'];
@@ -137,7 +120,10 @@ https://github.com/zhixuan312/zz-meridian/blob/master/skills/zz-meridian/referen
     if (git.stdout.trim()) return fail('the git tree has uncommitted changes. Commit or stash them first, so adopt\'s change is one reviewable diff (or pass --allow-dirty).');
   }
 
-  const set = adoptSet();
+  const all = payloadFiles();
+  const missing = FIXED.filter((f) => !all.includes(f));
+  if (missing.length) return fail(`this package's template is missing files adopt needs, so nothing was written:\n${missing.map((m) => `  ${m}`).join('\n')}\nReinstall zz-meridian, or report this if it persists.`);
+  const set = adoptSetOf(all);
   const known = new Set(set);
   const writes = new Map<string, string | Buffer>();
   const owned: string[] = [];
