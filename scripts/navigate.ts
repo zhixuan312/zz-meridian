@@ -4,7 +4,7 @@
  *
  *   node scripts/navigate.ts --base http://127.0.0.1:3000 [--routes /,/requests,/settings] [--mode default|full] [--samples 1]
  *
- * Each journey starts from another rail route, waits for what a visitor would wait for (the prefetch of the destination
+ * Each journey starts from another rail route, waits for what a visitor would wait for (every router prefetch to finish
  * when it was visible, the drawer on a phone), presses the destination in the rail and times three things from that press:
  * the shell (the path and the heading), the data (the mapping's `readySelector` and `readyText`) and the interaction (its
  * `probe` on `controlSelector`, observed on `resultSelector`). The phone is 390 wide, 4x CPU throttled, 150 ms and 1.6 Mbps,
@@ -63,7 +63,7 @@ class Fail extends Error {
   constructor(kind: Kind, message: string) { super(message); this.kind = kind; }
 }
 type Measured = { ms: number } | { fail: Fail };
-type Sample = { shell: Measured; data: Measured | null; interactive: Measured | null; drawerMs?: number };
+type Sample = { shell: Measured; data: Measured | null; interactive: Measured | null; drawerMs?: number; prefetchCapped: boolean };
 
 // ---- in the page ----
 
@@ -85,7 +85,8 @@ const INSTRUMENT = `(() => {
     const url = new URL(typeof input === 'string' ? input : input instanceof URL ? input.href : input.url, location.href);
     const seen = { url: url.href, path: url.pathname, done: false, headers: { 'next-router-prefetch': String(headerOf(input, init, 'next-router-prefetch')) } };
     nav.prefetches.push(seen);
-    return nativeFetch(input, init).finally(() => { seen.done = true; });
+    // Done is the whole body read, not the headers: a response still streaming is still on the link.
+    return nativeFetch(input, init).then((r) => { r.clone().arrayBuffer().then(() => { seen.done = true; }, () => { seen.done = true; }); return r; }, (e) => { seen.done = true; throw e; });
   };
 })()`;
 
@@ -160,9 +161,12 @@ async function openStart(page: Page, device: Device, start: string) {
   if (!ready) throw new Fail('never-ready', `the starting page ${start} did not load in ${PATIENCE[device]} ms`);
 }
 
-/** Waits, up to `cap` ms, for the router's prefetch of `dest` to answer; a page that never prefetches is not a failure. */
-async function awaitPrefetch(page: Page, dest: string, cap: number) {
-  await poll(() => page.eval<boolean>(`window.__nav.prefetches.some((p) => p.path === ${JSON.stringify(dest)} && p.done)`), Date.now() + cap);
+/** How long a warm press waits for the router's prefetches: all of them, so none still shares the link with the navigation. */
+const PREFETCH_WAIT = 6000;
+
+/** Waits until every prefetch issued so far has its whole body; false when the cap passed first. A page that never prefetches is idle at once. */
+async function awaitPrefetch(page: Page): Promise<boolean> {
+  return (await poll(() => page.eval<boolean>(`window.__nav.prefetches.every((p) => p.done)`), Date.now() + PREFETCH_WAIT)) !== null;
 }
 
 async function journey(page: Page, device: Device, start: string, route: string, check: NavigationCheck | undefined): Promise<Sample> {
@@ -170,17 +174,19 @@ async function journey(page: Page, device: Device, start: string, route: string,
   const link = `nav a[href=${JSON.stringify(route)}]`;
   const cap = PATIENCE[device];
   let drawerMs: number | undefined;
+  let idle = true;
   if (device === 'phone') {
     const opened = await poll(() => point(page, 'button[aria-label="Open navigation"]'), Date.now() + cap);
     if (!opened) throw new Fail('never-ready', 'the Open navigation button is not pressable on the phone');
     const t = await press(page, opened);
     if (!(await poll(() => point(page, link), t + cap))) throw new Fail('never-ready', `the drawer did not show a link to ${route}`);
     drawerMs = Date.now() - t;
-    await awaitPrefetch(page, route, 3000);
+    idle = await awaitPrefetch(page);
   } else {
     if (!(await poll(() => point(page, link), Date.now() + cap))) throw new Fail('never-ready', `the rail has no pressable link to ${route}`);
-    await awaitPrefetch(page, route, 3000);
+    idle = await awaitPrefetch(page);
   }
+  const prefetchCapped = !idle;
   const at = await poll(() => point(page, link), Date.now() + cap);
   if (!at) throw new Fail('never-ready', `the link to ${route} is covered or gone`);
   const t0 = await press(page, at);
@@ -197,15 +203,16 @@ async function journey(page: Page, device: Device, start: string, route: string,
       data: check ? { fail: new Fail('never-ready', 'the shell was never reached') } : null,
       interactive: check ? { fail: new Fail('never-ready', 'the shell was never reached') } : null,
       drawerMs,
+      prefetchCapped,
     };
   }
   const shell = { ms: shellOk };
-  if (!check) return { shell, data: null, interactive: null, drawerMs };
+  if (!check) return { shell, data: null, interactive: null, drawerMs, prefetchCapped };
 
   // Data and interaction run side by side: a control that is there at once does not wait for a body that is not.
   const [data, interactive] = await Promise.all([measureData(page, route, check, t0, cap), measureInteraction(page, route, check, t0, cap, RESULT_WAIT[device])]);
   if (check.probe === 'dialog') await page.send('Input.dispatchKeyEvent', { type: 'keyDown', key: 'Escape', code: 'Escape', windowsVirtualKeyCode: 27 });
-  return { shell, data, interactive, drawerMs };
+  return { shell, data, interactive, drawerMs, prefetchCapped };
 }
 
 async function measureData(page: Page, route: string, check: NavigationCheck, t0: number, cap: number): Promise<Measured> {
@@ -241,6 +248,7 @@ type Line = {
   data: Reported;
   interactive: Reported;
   drawerMs?: number;
+  prefetchCapped: boolean;
   noisy: boolean;
   problems: string[];
 };
@@ -248,7 +256,7 @@ type Line = {
 const value = (m: Measured | null): number | null => (m && 'ms' in m ? m.ms : null);
 
 async function measure(page: Page, device: Device, start: string, route: string, check: NavigationCheck | undefined, limits: Record<Metric, number>): Promise<Line> {
-  const line: Line = { route, device, status: 'ok', shell: { ms: null, verdict: 'pass' }, data: { ms: null, verdict: 'not-configured' }, interactive: { ms: null, verdict: 'not-configured' }, noisy: false, problems: [] };
+  const line: Line = { route, device, status: 'ok', shell: { ms: null, verdict: 'pass' }, data: { ms: null, verdict: 'not-configured' }, interactive: { ms: null, verdict: 'not-configured' }, noisy: false, prefetchCapped: false, problems: [] };
   const fill = (name: Metric, m: Measured | null) => {
     if (m === null) return;
     if ('fail' in m) {
@@ -258,6 +266,7 @@ async function measure(page: Page, device: Device, start: string, route: string,
   };
   const first = await journey(page, device, start, route, check);
   line.drawerMs = first.drawerMs;
+  line.prefetchCapped = first.prefetchCapped;
   for (const name of METRICS) fill(name, first[name]);
   // A wrong result, a never-ready page or a dead control is the answer: no retake can replace it.
   if (line.problems.length) return finish(line);
@@ -291,6 +300,7 @@ const cell = (r: Reported): string => (r.verdict === 'not-configured' ? 'not-con
 const text = (l: Line): string =>
   `${l.status.padEnd(7)} ${l.route} ${l.device} shell ${cell(l.shell)} · data ${cell(l.data)} · interactive ${cell(l.interactive)}`
   + (l.noisy ? ' · noisy' : '')
+  + (l.prefetchCapped ? ` · prefetch not idle after ${PREFETCH_WAIT / 1000} s` : '')
   + (l.drawerMs !== undefined ? ` · drawer ${l.drawerMs} ms` : '')
   + (l.problems.length ? ` · ${l.problems.join('; ')}` : '');
 
@@ -396,7 +406,7 @@ async function main(): Promise<number> {
         } catch (e) {
           // The starting page never loading is a failure of this route and device, not of the run.
           const reason = e instanceof Fail ? `${e.kind}: ${e.message}` : (e as Error).message;
-          line = finish({ route, device, status: 'FAIL', shell: { ms: null, verdict: 'fail', reason }, data: { ms: null, verdict: 'not-run' }, interactive: { ms: null, verdict: 'not-run' }, noisy: false, problems: [reason] });
+          line = finish({ route, device, status: 'FAIL', shell: { ms: null, verdict: 'fail', reason }, data: { ms: null, verdict: 'not-run' }, interactive: { ms: null, verdict: 'not-run' }, noisy: false, prefetchCapped: false, problems: [reason] });
         }
         if (!check) {
           line.data = { ms: null, verdict: 'not-configured' };
@@ -425,7 +435,7 @@ async function main(): Promise<number> {
     status,
     routes,
     warnings: coverage.warnings,
-    lines: lines.map(({ route, device, status: s, shell, data, interactive, drawerMs, noisy, problems: p }) => ({ route, device, status: s, shell, data, interactive, drawerMs, noisy, problems: p })),
+    lines: lines.map(({ route, device, status: s, shell, data, interactive, drawerMs, prefetchCapped, noisy, problems: p }) => ({ route, device, status: s, shell, data, interactive, drawerMs, prefetchCapped, noisy, problems: p })),
     prefetch: prefetch && { ...prefetch, problems },
   });
   return failed ? 1 : 0;
