@@ -6,6 +6,12 @@ Every release of ZZ Meridian, newest first. Versions follow semver: a removed or
 
 ### Added
 
+- **`pnpm verify` checks live data end to end.** After the browser checks, `scripts/live.ts` drives two tabs on `/members` against the built app:
+  - an invitation in one tab shows in the other within 2 s;
+  - with change hints dropped (a second server with `LIVE_DROP_HINTS=1`), after a server restart, a hidden tab shown again and a tab back online, the other tab still converges within the safety poll plus 2 s;
+  - a burst of 20 invitations in 2 s arrives with at most one refresh in flight.
+
+  It prints each measured time and removes the members it invited. A project without a live `/members` page sees each case as `not run`, with the reason.
 - **An update to 0.5.0 reports this release's migrations.** It names the team-owned files that still have the old shape:
   - `shell-assistant-promise`, `assistant-available-promise`, `clock-now-required` and `cache-components-config`;
   - `connection-boundaries`, `authorized-read`, `scoped-invalidation`, `live-provider` and `authorized-endpoints`.

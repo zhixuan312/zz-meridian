@@ -3,7 +3,8 @@
  * non-API route static or partial, scripts/route-policy.ts), the built app started
  * on a free port, the browser audit of every page and embed view against it, every control pressed and every link
  * followed (scripts/interactions.ts), the whole keyboard path (scripts/keyboard.ts), the product's own browser checks
- * (`browserChecks` in scripts/verify.config.ts), LCP, INP and CLS on a mid-range phone (scripts/vitals.ts), and a report.
+ * (`browserChecks` in scripts/verify.config.ts), the live-data checks (scripts/live.ts: two tabs, a silent stream, a restart, a
+ * hidden and an offline tab, a burst), LCP, INP and CLS on a mid-range phone (scripts/vitals.ts), and a report.
  *
  * Two steps depend on the project, read from scripts/verify.config.ts and app/:
  * - With a fake API configured, it starts first and the app is built and served against it, so the presses (Approve,
@@ -243,12 +244,22 @@ extras.forEach((r, i) => {
 });
 log(`(browser checks ${((Date.now() - t) / 60_000).toFixed(1)} min)`);
 
+// Live data: two tabs, a quiet or restarted stream, a hidden or offline tab and a burst (scripts/live.ts). It times what a
+// second tab sees, so it runs alone and after the presses, which change members. The server with LIVE_DROP_HINTS=1 is the
+// same build with its change hints dropped; the restart case starts and restarts a server of its own.
+log('… live data, alone: two tabs, a silent stream, a restart, a hidden and an offline tab, a burst');
+const dropped = await start({ ...app, LIVE_DROP_HINTS: '1' });
+const live = await run('scripts/live.ts', ['--base', `http://127.0.0.1:${port}`, '--drop-base', `http://127.0.0.1:${dropped.port}`], app);
+stop(dropped.server);
+log(live.status === 0 ? 'ok   live data' : 'FAIL live data');
+log(live.out);
+
 // Web Vitals on a mid-range phone, alone: CPU throttling measures the machine too, so nothing else runs beside it.
 if (!noVitals) log('… Web Vitals on a mid-range phone, alone');
 const vitals = noVitals ? { status: 0, out: '' } : await run('scripts/vitals.ts', base);
 log(noVitals ? 'skip Web Vitals (--no-vitals)' : vitals.status === 0 ? 'ok   LCP, INP and CLS on a mid-range phone' : 'FAIL Web Vitals on a mid-range phone');
 log(vitals.out.split('\n').slice(-30).join('\n'));
 stopAll();
-const ok = audit.status === 0 && presses.status === 0 && keys.status === 0 && extras.every((r) => r.status === 0) && on.status === 0 && vitals.status === 0;
+const ok = audit.status === 0 && presses.status === 0 && keys.status === 0 && extras.every((r) => r.status === 0) && on.status === 0 && live.status === 0 && vitals.status === 0;
 log(ok ? '\nverify: the project meets the Meridian standard' : '\nverify: fix the issues above and run pnpm verify again');
 finish(ok ? 0 : 1);

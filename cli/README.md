@@ -48,6 +48,9 @@ writes nothing; run it first.
   for you to merge.
 - It adds the dependencies and scripts this release needs to `package.json` and updates Meridian's managed block in
   `AGENTS.md`; a version or script you chose yourself becomes a migration to resolve, never a silent change.
+- It reports a migration for each interface the release changed where one of your own files still has the old shape;
+  moving to 0.5.0 can report nine, such as `cache-components-config`. Resolve them as the skill's
+  `references/update.md` says; `docs/distribution.md` lists them.
 - Everything it did and everything left to do is in `.meridian/update/<version>/MERGE.md`. Resolve the items, then run
   the pinned `npx zz-meridian@<version> update --finalize`; `--resume` continues an interrupted run and `--abort` restores
   what it changed. Only finalize records the new version.
