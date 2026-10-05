@@ -1,5 +1,7 @@
 # ZZ Meridian
 
+[![npm: zz-meridian](https://img.shields.io/npm/v/zz-meridian?label=zz-meridian)](https://www.npmjs.com/package/zz-meridian)
+
 ZZ Meridian (Meridian, for short) is the ZZ family's design system for dashboards, and a working template built on it: one set of tokens, five layers of React components and a set of pages that hold at a desk, on a phone, and inside a conversation where an agent reads the dashboard with you.
 
 It is written so a new dashboard starts from a running product, not a blank page: clone it, rename it in one command, add one data module, and the rails, charts, tables, states, themes and the agent surface are already there and already consistent. The Design Atlas at `/system` is the specification, read from this repository; the template at `/` is the proof.
