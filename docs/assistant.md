@@ -46,6 +46,10 @@ ASSISTANT_API_KEY=ollama
 ASSISTANT_MODEL=<a local model that supports tools>
 ```
 
+## What it knows about the product
+
+The assistant reads the product brief, `docs/brief.md`, on every reply. Of its sections it takes three, Product, Users and Glossary, labelled, at most 2000 characters together; Data and Decisions are for the people building the dashboard and are left out. A section still holding only the template's guidance line is skipped, and a brief with nothing written yet adds nothing to the prompt. The brief reaches the model as context, never as instructions. It is sent to the provider with every question, so it must hold no secrets: no keys, no credentials, nothing the person asking must never be shown.
+
 ## What a person sees
 
 - **The panel.** A launcher in the top bar opens it: a third column from 1024px, a sheet over the page below that. Escape and Close assistant shut it; the conversation stays.

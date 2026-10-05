@@ -5,6 +5,7 @@
  */
 import fs from 'node:fs';
 import path from 'node:path';
+import { BRIEF_TEMPLATE, managedBlock, upsertManagedBlock } from './context.js';
 import { PAYLOAD, VERSION, brandArgs, hasCommand, inside, installSkill, payloadFiles, run, sha256, writeIn, writeManifest } from './files.js';
 
 export type CreateOptions = { dir: string; brand: Record<string, string>; install: boolean };
@@ -32,6 +33,13 @@ export function create(o: CreateOptions): number {
     for (const f of ['pnpm-lock.yaml', 'pnpm-workspace.yaml']) fs.rmSync(path.join(root, f), { force: true });
     console.log('pnpm is not available: installing with npm from the version ranges, without a lockfile.');
   }
+
+  // The managed block goes in only now that the installer is known, so its commands match; the template's own lines
+  // above `# Working in Meridian` stay. The brief is the template. The manifest walk below records both.
+  try {
+    writeIn(root, 'AGENTS.md', upsertManagedBlock(fs.readFileSync(path.join(root, 'AGENTS.md'), 'utf8'), managedBlock(VERSION, pm)));
+  } catch (e) { return fail(`AGENTS.md: ${(e as Error).message}`); }
+  writeIn(root, 'docs/brief.md', BRIEF_TEMPLATE);
 
   const files: Record<string, string> = {};
   const walk = (rel: string) => {

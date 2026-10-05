@@ -9,6 +9,8 @@
  * the team's own eslint config, and next build must succeed.
  * --create: a new dashboard from the tarball, gated and built. --verify adds pnpm verify --quick --no-vitals on it
  * (Chrome required).
+ * Both sections also check the agent context: adopt keeps AGENTS.md's bytes and adds one managed block and the brief;
+ * create writes the block and the brief and keeps the assistant's tracing of docs/brief.md.
  * --update: needs registry access for zz-meridian@0.3.0. A fixture project adopted with the published 0.3.0 package, one
  * committed team edit to src/components/ui/card/index.tsx (which Meridian also changed since 0.3.0), then `update --dry-run`
  * from the local tarball: the only conflict is that card, --verbose also lists the untouched and the added paths, a plain
@@ -20,7 +22,11 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 
+import { BEGIN, BRIEF_TEMPLATE, END, managedBlock } from '../src/context.ts';
+
 const ROOT = path.resolve(import.meta.dirname, '../..');
+const VERSION: string = JSON.parse(fs.readFileSync(path.join(ROOT, 'cli/package.json'), 'utf8')).version;
+const HEADINGS = ['## Product', '## Users', '## Data', '## Decisions', '## Glossary'];
 const args = process.argv.slice(2);
 const opt = (k: string) => { const i = args.indexOf(k); return i >= 0 ? args[i + 1] : undefined; };
 const tarball = path.resolve(opt('--tarball') ?? fs.readdirSync(path.join(ROOT, 'cli')).filter((f) => f.endsWith('.tgz')).map((f) => path.join(ROOT, 'cli', f)).at(-1) ?? '');
@@ -31,6 +37,7 @@ let failures = 0;
 const check = (ok: boolean, what: string, detail = '') => { console.log(`${ok ? 'ok  ' : 'FAIL'} ${what}`); if (!ok) { failures++; if (detail) console.log(detail.trim().split('\n').slice(-40).join('\n')); } };
 const sh = (cmd: string, a: string[], cwd: string, env: NodeJS.ProcessEnv = process.env) => spawnSync(cmd, a, { cwd, encoding: 'utf8', env, maxBuffer: 64 * 1024 * 1024 });
 const hash = (f: string) => createHash('sha256').update(fs.readFileSync(f)).digest('hex');
+const count = (text: string, needle: string) => text.split(needle).length - 1;
 const git = (cwd: string, ...a: string[]) => execFileSync('git', a, { cwd, stdio: 'ignore' });
 
 // ── adopt ──────────────────────────────────────────────────────────────────────────────────────────────
@@ -42,13 +49,20 @@ if (args.includes('--adopt') || !args.includes('--update')) {
   git(app, '-c', 'user.email=smoke@example.com', '-c', 'user.name=smoke', 'commit', '-qm', 'the team project');
   const TEAM = ['lib/orders.ts', 'lib/utils.ts', 'components/ui/button.tsx', 'app/orders/page.tsx', 'next.config.ts', 'eslint.config.mjs'];
   const before = Object.fromEntries(TEAM.map((f) => [f, hash(path.join(app, f))]));
+  const agentsBefore = fs.readFileSync(path.join(app, 'AGENTS.md'), 'utf8');
 
   const adopt = sh('npx', ['--yes', '--package', tarball, 'zz-meridian', 'adopt', '--name', 'Acme Ops', '--hex', '#2E6BE4'], app);
   check(adopt.status === 0, 'adopt exits 0', adopt.stdout + adopt.stderr);
   check(/types: passes/.test(adopt.stdout), 'adopt reports that the project type checks', adopt.stdout);
   check(TEAM.every((f) => hash(path.join(app, f)) === before[f]), "the team's own files are unchanged");
   check(fs.existsSync(path.join(app, '.meridian/manifest.json')), 'the manifest is written');
-  check(fs.readFileSync(path.join(app, 'AGENTS.md'), 'utf8').includes('# Built on ZZ Meridian'), "Meridian's rules are appended to AGENTS.md");
+  const agentsAfter = fs.readFileSync(path.join(app, 'AGENTS.md'), 'utf8');
+  check(count(agentsAfter, BEGIN) === 1 && count(agentsAfter, END) === 1, "Meridian's managed block is in AGENTS.md, once");
+  check(agentsAfter.startsWith(agentsBefore), "the team's original AGENTS.md bytes are a prefix of the result");
+  const brief = fs.existsSync(path.join(app, 'docs/brief.md')) ? fs.readFileSync(path.join(app, 'docs/brief.md'), 'utf8') : '';
+  check(HEADINGS.every((h) => brief.includes(`\n${h}\n`)), 'docs/brief.md has the five headings');
+  const adoptManifest = fs.readFileSync(path.join(app, '.meridian/manifest.json'), 'utf8');
+  check(!adoptManifest.includes('"AGENTS.md"') && !adoptManifest.includes('"docs/brief.md"'), 'AGENTS.md and docs/brief.md are not recorded as Meridian files');
   check(fs.existsSync(path.join(app, '.agents/skills/zz-meridian/SKILL.md')) && fs.existsSync(path.join(app, '.claude/skills/zz-meridian/SKILL.md')), 'the skill is in .agents and .claude');
   // Before the agent restyles, the only problems are the team's own Tailwind defaults, which Meridian's scales do not
   // render; Meridian's own files are clean. Then the restyle, at its smallest, and the gate passes.
@@ -129,6 +143,10 @@ if (args.includes('--create')) {
   check(create.status === 0, 'create exits 0', create.stdout + create.stderr);
   check(!fs.existsSync(path.join(dir, 'app/system')) && !fs.existsSync(path.join(dir, 'skills')), 'create leaves out the Atlas and the skill source');
   const pm = fs.existsSync(path.join(dir, 'pnpm-lock.yaml')) ? 'pnpm' : 'npm';
+  const read = (f: string) => (fs.existsSync(path.join(dir, f)) ? fs.readFileSync(path.join(dir, f), 'utf8') : '');
+  check(read('AGENTS.md').includes(managedBlock(VERSION, pm)) && read('AGENTS.md').includes('# Built on ZZ Meridian'), `AGENTS.md holds the managed block, written for ${pm}`);
+  check(read('docs/brief.md') === BRIEF_TEMPLATE, 'docs/brief.md is the template');
+  check(read('next.config.ts').includes("'/api/assistant': ['./docs/brief.md']"), "next.config.ts still traces docs/brief.md for /api/assistant");
   const g = sh(pm, ['run', 'gate'], dir);
   check(g.status === 0, `${pm} run gate passes in the new dashboard`, g.stdout + g.stderr);
   if (args.includes('--verify')) {

@@ -83,8 +83,8 @@ Give your coding agent (Codex, Claude Code, or any agent that can run a shell) t
 > Run `npx zz-meridian@latest adopt` here, then follow the zz-meridian skill it installs: keep our data layer and routes, restyle every page with Meridian's components and tokens, and run pnpm verify until it passes.
 
 `adopt` does the settled part, the same way every time, and proves it type checks: it copies the components, tokens
-and gates in, merges the dependencies, brands it, appends Meridian's rules to your `AGENTS.md` so later sessions keep
-to them, and installs the skill. The agent does the judgement: rebuilding each page on Meridian, and running
+and gates in, merges the dependencies, brands it, adds Meridian's managed block to your `AGENTS.md` (your own text there is kept byte
+for byte) and an empty `docs/brief.md` for your product's own context, and installs the skill. The agent does the judgement: rebuilding each page on Meridian, and running
 `pnpm verify` until the project meets the standard. It needs Node 22.18+ and Google Chrome (for the browser checks).
 If your pages call a live API, say so in the sentence: verify presses every control, Delete included, so the agent
 builds a fake API first. For a new dashboard: `npx zz-meridian@latest create <dir>`. The package (`cli/`, decision

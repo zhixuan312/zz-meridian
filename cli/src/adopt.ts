@@ -12,6 +12,7 @@ import {
   PAYLOAD, VERSION, brandArgs, inside, installSkill, packageManager, payloadFiles, readJsonc, readPayload, relativeImports,
   run, runTool, sha256, writeIn, writeManifest,
 } from './files.js';
+import { BRIEF_TEMPLATE, managedBlock, upsertManagedBlock } from './context.js';
 import { FIXED, adoptSetOf } from './ownership.js';
 
 export type AdoptOptions = { root: string; brand: Record<string, string>; allowDirty: boolean; install: boolean };
@@ -244,13 +245,23 @@ Rename or move them, then run adopt again.`);
   const b = run(process.execPath, ['scripts/brand.ts', ...brandArgs(brand), '--existing'], root);
   if (b.status !== 0) return fail('scripts/brand.ts failed (above); the files are copied, so fix the cause and run it again with the same flags');
 
+  // The project's own AGENTS.md keeps every byte and gains the managed block; the brief is the team's, written only when absent.
+  // Neither is a Meridian file, so neither is recorded in the manifest.
+  const pm = packageManager(root);
+  const agentsAbs = path.join(root, 'AGENTS.md');
+  try {
+    const text = fs.existsSync(agentsAbs) ? fs.readFileSync(agentsAbs, 'utf8') : '';
+    writeIn(root, 'AGENTS.md', upsertManagedBlock(text, managedBlock(VERSION, pm)));
+  } catch (e) { return fail(`AGENTS.md: ${(e as Error).message} The files are copied; fix AGENTS.md by hand, then add the managed block.`); }
+  const briefWritten = !fs.existsSync(path.join(root, 'docs/brief.md'));
+  if (briefWritten) writeIn(root, 'docs/brief.md', BRIEF_TEMPLATE);
+
   const files: Record<string, string> = {};
   for (const rel of owned) files[rel] = sha256(fs.readFileSync(inside(root, rel)));
   installSkill(root, files);
   writeManifest(root, { version: VERSION, route: 'adopt', brand, files });
 
   // ── Install and prove it compiles ─────────────────────────────────────────────────────────────────────
-  const pm = packageManager(root);
   let typed = 'not run (--no-install)';
   if (o.install) {
     say(`\nInstalling with ${pm}…`);
@@ -265,6 +276,7 @@ Rename or move them, then run adopt again.`);
 Meridian ${VERSION} is in ${root}.
   copied: ${owned.length} files (recorded in .meridian/manifest.json)
   skill: .agents/skills/zz-meridian (Codex) and .claude/skills/zz-meridian (Claude Code)
+  agent context: AGENTS.md has the managed block; docs/brief.md ${briefWritten ? 'is the empty brief to fill in' : 'was kept as it is'}
   types: ${typed}${notes.length ? `\n  notes:\n${notes.map((n) => `    - ${n}`).join('\n')}` : ''}
 
 Next: follow .agents/skills/zz-meridian/references/existing-project.md, Route A, from step 2 (step 1 was this). The

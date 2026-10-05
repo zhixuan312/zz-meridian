@@ -14,6 +14,13 @@ Every release of ZZ Meridian, newest first. Versions follow semver: a removed or
 
 ### Changed
 
+- **`AGENTS.md` gets a managed block, not an appended section.**
+  - `adopt` and `create` write Meridian's rules between `<!-- BEGIN:zz-meridian-agent-rules -->` and `<!-- END:zz-meridian-agent-rules -->`. The rules name your package manager's commands, and every byte of your own text around them is kept.
+  - Breaking: `scripts/brand.ts --existing` no longer appends `# Built on ZZ Meridian`, and `--product` no longer writes `# Working in this dashboard`. The CLI writes the block instead. Run `adopt` or `create`, or, once it is out, `update`, rather than `brand.ts`, to get it.
+- **`docs/brief.md`: the team's own context.**
+  - `adopt` and `create` write a five-section brief (Product, Users, Data, Decisions, Glossary) when there is none, and never overwrite one.
+  - The template's assistant reads its Product, Users and Glossary sections, at most 2000 characters, as context and never as instructions.
+- **`brand.ts --product` keeps the assistant's build tracing.** It removes only the Atlas's `/system/**` entry from `outputFileTracingIncludes`.
 - **`adopt` refuses an incomplete package before it writes anything.** Its copy rule now lives in `cli/src/ownership.ts`, shared with `update`. A package whose template lacks a file adopt needs is refused first; before, that failure surfaced as a crash halfway through.
 
 ## [0.4.0] · 2026-10-05

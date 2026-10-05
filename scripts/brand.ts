@@ -15,8 +15,8 @@
  * --product goes further, for a dashboard that is not the design system: --no-atlas, and the card specs and previews,
  * page specs, docs, decisions, changelog and skill go too (the assistant, its collections and its fake model stay); the components, tokens, scripts and gates stay.
  * --existing is for an existing project that brought Meridian in (route A in the skill): it sets the name, accent and the
- * rest, never renames package.json unless --package is given, has no Atlas or product branch to run, and appends Meridian's
- * rules to the project's AGENTS.md once, so its next agent session keeps the dashboard on Meridian.
+ * rest, never renames package.json unless --package is given, and has no Atlas or product branch to run. It never
+ * touches AGENTS.md: the CLI writes the managed block there.
  */
 import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';
@@ -180,8 +180,8 @@ if (has('--no-atlas') || has('--product')) {
   write('src/app.config.ts', cfg);
   // The standalone screens' footer link to the Atlas (the sample's footer, src/views/sample-footer.tsx).
   write('src/views/sample-footer.tsx', read('src/views/sample-footer.tsx').replace(/\n\s*<Link href="\/system"[^\n]*<\/Link>/, ''));
-  // Build tracing for the Atlas's markdown; the tab icon still reads tokens/.
-  write('next.config.ts', read('next.config.ts').replace(/\n\s*\/\/ Card specifications[^\n]*\n\s*outputFileTracingIncludes: \{[^\n]*\},/, "\n  // The tab icon reads the tokens at build time.\n  outputFileTracingIncludes: { '/icon': ['./tokens/**/*.json'] },"));
+  // Build tracing: only the Atlas's `/system/**` entry goes; the tab icon's and the assistant's brief stay.
+  write('next.config.ts', read('next.config.ts').replace(/\/\/ Card specifications[^\n]*/, '// The tab icon reads the tokens, and the assistant reads the brief, at build time.').replace(/'\/system\/\*\*':\s*\[[^\]]*\],\s*/, ''));
   // Route types generated for the removed pages would fail the type check until regenerated.
   for (const d of ['.next/types', '.next/dev/types']) fs.rmSync(file(d), { recursive: true, force: true });
   done.push('the Design Atlas removed: app/system, its modules in src/system, its rail and footer links, and its build tracing');
@@ -218,36 +218,8 @@ The dashboard carries an assistant panel. It is off until \`ASSISTANT_PROVIDER\`
 `);
   const agents = read('AGENTS.md');
   const cut = agents.indexOf('# Working in Meridian');
-  if (cut >= 0) write('AGENTS.md', agents.slice(0, cut) + `# Working in this dashboard
-
-Built on ZZ Meridian. Keep it the way it was built:
-
-- **Build up, never sideways.** A page arranges patterns from \`src/components/patterns\`; a pattern composes \`src/components/ui\`; a value is a token. Never write a colour, size or shadow that is not a token; \`node scripts/check.ts\` fails on literal colours and on Tailwind utilities outside Meridian's scales (they render nothing).
-- **Tokens** live in \`tokens/*.tokens.json\`; run \`pnpm tokens\` after a change and never edit \`src/styles/tokens.css\` or \`theme.css\`.
-- **Data** comes from \`src/data/collections.ts\` and nowhere else; the assistant reads the same collections.
-- **Agents in the product** read freely and write only through a Proposal; mark agent work with the Agent mark and "via".
-- **Before finishing**: \`pnpm verify\` (the gate, a production build, the browser audit at every width and theme, and every control pressed).
-`);
-  done.push('product only: card specs and previews, page specs, docs, decisions, the changelog and the skill removed; README rewritten for the product');
-}
-
-// An existing project keeps its own AGENTS.md and gains the rules its next agent session needs to stay on Meridian.
-// Appended once: a second run finds the heading and leaves the file alone.
-if (existing) {
-  const heading = '# Built on ZZ Meridian';
-  const agents = fs.existsSync(file('AGENTS.md')) ? read('AGENTS.md') : '';
-  if (!agents.includes(heading)) {
-    write('AGENTS.md', `${agents.trim() ? `${agents.trimEnd()}\n\n` : ''}${heading}
-
-The interface is built on ZZ Meridian (https://github.com/zhixuan312/zz-meridian). Keep it that way:
-
-- **Build up, never sideways.** A page arranges patterns from \`src/components/patterns\`; a pattern composes \`src/components/ui\`; a value is a token. Never write a colour, size or shadow that is not a token; \`node scripts/check.ts\` fails on literal colours and on Tailwind utilities outside Meridian's scales (they render nothing).
-- **Tokens** live in \`tokens/*.tokens.json\`; run \`pnpm tokens\` after a change and never edit \`src/styles/tokens.css\` or \`theme.css\`.
-- **A component Meridian lacks** is built the same way, in \`src/components/<layer>/<name>/\`, from tokens and the components already there. The specification of every existing one is in the template on GitHub (\`src/components/<layer>/<name>/README.md\`).
-- **Before finishing**: \`pnpm verify\` (the gate, a production build, the browser audit at every width and theme, every control pressed, the keyboard path and Web Vitals). It presses Delete too, so it refuses to start until \`scripts/verify.config.ts\` names a \`fakeApi\` for the pages' API, or says \`noLiveApi: true\` because they call none; never point it at a live backend.
-`);
-    done.push('AGENTS.md: the Meridian rules appended, so the next agent session keeps the dashboard on Meridian');
-  }
+  if (cut >= 0) write('AGENTS.md', agents.slice(0, cut));
+  done.push('product only: card specs and previews, page specs, docs, decisions, the changelog and the skill removed; README rewritten for the product, AGENTS.md cut at the template\'s own rules');
 }
 
 execFileSync('node', ['scripts/tokens.ts'], { cwd: ROOT, stdio: 'ignore' });

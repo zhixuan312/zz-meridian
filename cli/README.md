@@ -25,7 +25,8 @@ Brand flags: `--name "Acme Ops"`, `--hex '#2E6BE4'` (or `--accent indigo|cobalt|
 
 **adopt** copies Meridian's tokens, styles, components, gates and scripts into `src/`, `tokens/` and `scripts/`;
 merges the dependencies and scripts it needs into your `package.json`; replaces your global stylesheet (yours is kept
-beside it as `*.before.css`); brands it; appends Meridian's rules to your `AGENTS.md`; installs the skill into
+beside it as `*.before.css`); brands it; adds Meridian's managed block to your `AGENTS.md` between two markers, keeping your own text there byte
+for byte; writes an empty `docs/brief.md` (your product, users, data, decisions and glossary) if you have none; installs the skill into
 `.agents/skills/` (Codex) and `.claude/skills/` (Claude Code); records every copied file in `.meridian/manifest.json`;
 installs and type checks. Your routes, your data layer and your own components are not touched. Meridian's files
 import each other by relative path, so a `components/ui/button` of your own is never confused with Meridian's; your

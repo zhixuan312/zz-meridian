@@ -1,7 +1,8 @@
 import { APICallError, RetryError, convertToModelMessages, createUIMessageStream, createUIMessageStreamResponse, isStepCount, streamText, toUIMessageStream, type LanguageModel, type UIMessage } from 'ai';
 import type { AnyCollection } from '@/lib/collection';
 import { ChangeRefused, assistantTools } from './tools';
-import { systemPrompt, type PageContext } from './prompt';
+import { readBrief } from './brief';
+import { briefExcerpt, systemPrompt, type PageContext } from './prompt';
 
 /** The most model steps one reply may take. */
 const MAX_STEPS = 8;
@@ -14,7 +15,7 @@ export async function respond({ model, secret, messages, page, collections, now 
       const { tools, toolApproval } = assistantTools(collections, writer);
       const result = streamText({
         model,
-        system: systemPrompt(page, now),
+        system: systemPrompt(page, now, briefExcerpt(readBrief())),
         tools,
         toolApproval,
         messages: modelMessages,
