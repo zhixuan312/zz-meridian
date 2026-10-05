@@ -11,6 +11,11 @@ Every release of ZZ Meridian, newest first. Versions follow semver: a removed or
   - It refuses if any recorded file disagrees with the replay.
   - It lists only the files that need the team's decision; `--verbose` lists every file.
   - Applying an update follows in this release cycle.
+- **`.meridian/keep.json`, the update session and `app.logo` are checked by the gate.**
+  - `keep.json` is a list of `{ path, reason }` entries: Meridian files the team deliberately keeps as they are. `node scripts/check.ts` fails on an entry for a file Meridian never managed, a duplicate, a blank reason, or a kept file that is missing.
+  - While an update session is open under `.meridian/update/`, the gate fails until every staged file and migration has a current resolution. Once it does, the gate checks against the files the update will own.
+  - `app.logo`, when set, must be a root-relative SVG under `public/`, such as `/logo.svg`.
+  - The gate's lint step leaves `.meridian/` alone, since a session keeps copies of files there for reading.
 
 ### Changed
 

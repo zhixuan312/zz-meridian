@@ -49,3 +49,27 @@ outcome: dry-run (nothing was written)
 3. Do not edit `optional:.meridian/manifest.json` to make a line go away: the manifest is how the next update knows
    what was copied.
 4. Stop there until a release that applies updates is available. Then update from the person's decision on each line.
+
+## Keeping a file on purpose: the keep register
+
+A team that wants to keep its own version of a managed file lists it in `optional:.meridian/keep.json`. The file is a
+JSON array of exactly `{ "path", "reason" }` entries. Paths are unique, project-relative and posix (no leading `/`, no
+`..`), and every reason says why in a sentence.
+
+```json
+[{ "path": "src/components/ui/card/index.tsx", "reason": "Our card has a different header by design." }]
+```
+
+- A kept path must be a file Meridian manages, or one a completed update retired and left in place. Any other path
+  fails the gate.
+- A kept file that is missing fails the gate. An update never recreates it: restore the file or remove the entry.
+- Do not add an entry to make a conflict disappear without reading it. The reason is the record of the decision.
+
+## An unresolved session fails the gate
+
+While an update session exists under `optional:.meridian/update/`, `node scripts/check.ts` (and so `pnpm gate`) refuses
+it until every open item is resolved: an interrupted apply (run `update --resume`), an edited plan, a write that was
+never applied, a staged file or a migration without exactly one current resolution, and any unknown or duplicate
+resolution. More than one session fails too. When the session is ready, the gate reads its candidate manifest in place
+of the recorded one for the keep register, retirements and the dormant-export sweep. Resolve as `MERGE.md` says, then
+run `npx zz-meridian@<version> update --finalize`.

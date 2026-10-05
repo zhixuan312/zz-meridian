@@ -12,16 +12,24 @@
  * - Markdown stays inert: no raw-HTML plugin in the dependencies or the source.
  * - The agent context holds: docs/brief.md has its five sections, and every path and package script the managed block in
  *   AGENTS.md, the skill and the brief name exists.
+ * - An update session is resolved, `.meridian/keep.json` names files that are managed and present, and `app.logo` is an
+ *   SVG under public/.
  */
+import { createHash } from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
 import { checkBrief, scanReferences } from './lib/context-check.ts';
 import { APP_DIR } from './lib/routes.ts';
+import { keepProblems, unresolved, parseJournal, parseKeep, parseResolutions, verifiedRetirements, type Hash, type Retirement } from './lib/update-session.ts';
 import { cards } from './registry.ts';
+import { app } from '../src/app.config.ts';
+import { logoSource } from '../src/lib/logo.ts';
 
 const ROOT = path.resolve(import.meta.dirname, '..');
 const read = (p: string) => fs.readFileSync(path.join(ROOT, p), 'utf8');
 const problems: string[] = [];
+
+const sha256 = (p: string): Hash | null => (fs.existsSync(path.join(ROOT, p)) ? `sha256-${createHash('sha256').update(fs.readFileSync(path.join(ROOT, p))).digest('hex')}` : null);
 
 function walk(dir: string, ext: RegExp, out: string[] = []) {
   const abs = path.join(ROOT, dir);
@@ -215,6 +223,59 @@ if (fs.existsSync(path.join(ROOT, COLLECTIONS))) {
   for (const f of LAYERS) if (/\brehype-?raw\b/i.test(code(read(f)))) problems.push(`${f}: reaches for rehype-raw; render markdown with Prose, where raw HTML stays text`);
 }
 
+// ── The update session, the keep register and the logo ────────────────────────────────────────────────
+// A session under .meridian/update/ must be resolved before the gate passes. With one ready, its candidate manifest
+// stands in for the original: the files it will own are what keep, retirements and the dormant-code sweep read.
+const manifestFile = path.join(ROOT, '.meridian/manifest.json');
+let effective: { route?: string; files: Record<string, string> } | null = fs.existsSync(manifestFile) ? JSON.parse(fs.readFileSync(manifestFile, 'utf8')) : null;
+const retirements: Retirement[] = [];
+{
+  const dirsOf = (d: string) => (fs.existsSync(path.join(ROOT, d)) ? fs.readdirSync(path.join(ROOT, d), { withFileTypes: true }).filter((e) => e.isDirectory()).map((e) => e.name) : []);
+  for (const v of dirsOf('.meridian/history')) {
+    for (const id of dirsOf(`.meridian/history/${v}`)) {
+      const file = `.meridian/history/${v}/${id}/state.json`;
+      if (!fs.existsSync(path.join(ROOT, file))) continue;
+      try {
+        const j = parseJournal(read(file));
+        if (j.phase === 'complete') retirements.push(...verifiedRetirements(j));
+      } catch (e) {
+        problems.push(`${file}: ${(e as Error).message}`);
+      }
+    }
+  }
+  const sessions = dirsOf('.meridian/update').filter((n) => fs.existsSync(path.join(ROOT, '.meridian/update', n, 'state.json')));
+  if (sessions.length > 1) problems.push(`.meridian/update: ${sessions.length} update sessions (${sessions.join(', ')}); finish or abort all but one`);
+  else if (sessions.length === 1) {
+    const dir = `.meridian/update/${sessions[0]}`;
+    const HINT = `resolve them as MERGE.md says, then run npx zz-meridian@${sessions[0]} update --finalize`;
+    try {
+      const j = parseJournal(read(`${dir}/state.json`));
+      const resFile = `${dir}/resolutions.json`;
+      const open = unresolved(j, fs.existsSync(path.join(ROOT, resFile)) ? parseResolutions(read(resFile)) : [], sha256);
+      if (open.length) problems.push(...open.map((o) => `${dir}: ${o}`), `${dir}: ${HINT}`);
+      else {
+        effective = j.targetManifest;
+        retirements.push(...verifiedRetirements(j));
+      }
+    } catch (e) {
+      problems.push(`${dir}/state.json: ${(e as Error).message}`, `${dir}: ${HINT}`);
+    }
+  }
+  if (fs.existsSync(path.join(ROOT, '.meridian/keep.json'))) {
+    try {
+      problems.push(...keepProblems(parseKeep(read('.meridian/keep.json')), { managed: new Set(Object.keys(effective?.files ?? {})), retired: retirements, exists: (p) => fs.existsSync(path.join(ROOT, p)) }).map((m) => `.meridian/keep.json: ${m}`));
+    } catch (e) {
+      problems.push(`.meridian/keep.json: ${(e as Error).message}`);
+    }
+  }
+  const logo = (app as { logo?: unknown }).logo;
+  if (logo !== undefined) {
+    const source = logoSource(logo);
+    if (!source) problems.push(`src/app.config.ts: app.logo ${JSON.stringify(logo)} is not a root-relative SVG path such as "/logo.svg"`);
+    else if (!fs.existsSync(path.join(ROOT, 'public', source))) problems.push(`src/app.config.ts: app.logo is ${source}, but public${source} does not exist`);
+  }
+}
+
 // ── No dormant code: an export nothing a product keeps imports ───────────────────────────────────────
 // A product keeps everything except tests, previews, the Atlas pages and the Atlas-only modules scripts/brand.ts removes
 // (read from its list, so the two never disagree). A type the docs tell a product to use stays exported by the sample using it.
@@ -234,8 +295,7 @@ const SWEPT = /^src\/(lib|data)\//;
 const TOOLKIT = /^src\/lib\/(format|color)\.ts$/;
 // In a project that adopted Meridian (zz-meridian adopt), Meridian's own modules are a library it uses in part; only
 // the project's own src/lib and src/data are swept. A created dashboard is swept whole, as the template is.
-const manifestPath = path.join(ROOT, '.meridian/manifest.json');
-const adopted = fs.existsSync(manifestPath) && JSON.parse(fs.readFileSync(manifestPath, 'utf8')).route === 'adopt' ? new Set(Object.keys(JSON.parse(fs.readFileSync(manifestPath, 'utf8')).files)) : new Set<string>();
+const adopted = effective?.route === 'adopt' ? new Set(Object.keys(effective.files)) : new Set<string>();
 const kept = ['src', 'app', 'scripts'].flatMap((d) => walk(d, /\.tsx?$/)).filter((f) => !/(^|\/)preview\.tsx$/.test(f) && !f.startsWith('app/system/') && !atlasOnly.includes(f));
 const resolveSpec = (from: string, spec: string) => {
   const base = spec.startsWith('@/') ? path.join('src', spec.slice(2)) : spec.startsWith('.') ? path.join(path.dirname(from), spec) : null;

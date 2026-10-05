@@ -21,7 +21,8 @@ const STEPS: [string, string[]][] = [
   ['route types are generated', [bin('next'), 'typegen']],
   ['types check', [bin('tsc'), '--noEmit']],
   // eslint-config-next is what every Next project runs; a template that fails it hands its users errors on day one.
-  ['lint passes', [bin('eslint'), '.']],
+  // The staged copies of an update session are for reading, never linted as source.
+  ['lint passes', [bin('eslint'), '.', '--ignore-pattern', '.meridian/']],
   ['tests pass', [bin('vitest'), 'run']],
 ];
 
