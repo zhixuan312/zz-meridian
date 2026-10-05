@@ -6,6 +6,17 @@ Every release of ZZ Meridian, newest first. Versions follow semver: a removed or
 
 ### Added
 
+- **`/requests` pages, sorts and filters on the server, and exports from an authorized route.**
+  - The page sends 20 rows, the total and a server-computed summary for the address, and an invalid filter falls back to its default.
+  - `GET /api/export/requests?<filters>` streams the whole authorized filtered set as CSV, in batches of at most 100 rows, and stops when the download is cancelled. It answers 401 without a session.
+  - `src/lib/csv.ts` writes a text value that starts with `=`, `+`, `-`, `@`, a tab or a carriage return so a spreadsheet reads it as text, and gains `csvHeader` and `csvRow`.
+  - `ExportButton` gains `href`, a download link to a server export.
+  - Breaking: `filterRequests` is removed, and `RequestsView` takes `{ rows, total, summary, state, pageSize, now }`.
+- **Each uptime strip is one SVG.** It draws a baseline and a mark per degraded, outage or no-data day. Its accessible summary names the period and only the days that were not fully up, instead of a table of every day. `DayState` gains `'none'`, which reads "No data". The per-day elements and the hidden table are gone.
+- **The verification measurement library** (`scripts/lib/timing.ts`, `sizes.ts`, `coverage.ts` and `budgets.ts`) holds:
+  - the median retake rule and nearest-rank p95;
+  - the first-load, HTML and prefetch caps, and the default budgets;
+  - smoke route selection and coverage resolution.
 - **`pnpm verify` checks live data end to end.** After the browser checks, `scripts/live.ts` drives two tabs on `/members` against the built app:
   - an invitation in one tab shows in the other within 2 s;
   - with change hints dropped (a second server with `LIVE_DROP_HINTS=1`), after a server restart, a hidden tab shown again and a tab back online, the other tab still converges within the safety poll plus 2 s;
@@ -46,6 +57,8 @@ Every release of ZZ Meridian, newest first. Versions follow semver: a removed or
 
 ### Changed
 
+- **`refreshCollections` reports a missing session as a value.** It resolves `{ ok: true }`, or `{ ok: false, status: 401 }` when there is no session, because a thrown error loses its status in a production build. `ConsoleLive` turns the refusal into the 401 the live client pauses on. Breaking: a caller reads the result instead of catching.
+- **The Atlas preview route loads only the card it shows.** Its first-load JS fell from 1441 KiB to 591 KiB. `scripts/registry.ts` also writes `src/system/preview-loaders.ts` and the preview route's key list, and `brand.ts --no-atlas` removes both.
 - **The template builds under Cache Components, and every non-API route is static or partial.**
   - `next.config.ts` turns on `cacheComponents` and `partialPrefetching`. The console layout no longer waits for the request: it hands the shell a promise of whether the assistant is configured.
   - Breaking: `AppShell`'s `assistant` is a `Promise<boolean>`, and `useAssistantAvailable()` returns that promise. Read it with `use()` inside a `Suspense` boundary. The launcher keeps its place, inert and hidden from assistive technology, until the promise resolves `true`.

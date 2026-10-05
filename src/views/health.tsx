@@ -19,8 +19,8 @@ import { formatDuration } from '@/lib/format';
 import type { Incident } from '@/components/patterns/incident-card';
 import type { Service } from '@/components/patterns/status-list';
 
-const RANK: Record<DayState, number> = { operational: 0, degraded: 1, outage: 2 };
-const TONE: Record<DayState, Tone> = { operational: 'positive', degraded: 'warning', outage: 'critical' };
+const RANK: Record<DayState, number> = { operational: 0, none: 0, degraded: 1, outage: 2 };
+const TONE: Record<DayState, Tone> = { operational: 'positive', none: 'neutral', degraded: 'warning', outage: 'critical' };
 
 /** The Health page's body: shared by the console route; the embed view uses its parts. */
 export function HealthBody({ services, current, past, now }: { services: Service[]; current: Incident | null; past: Incident[]; now: string }) {

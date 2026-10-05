@@ -174,7 +174,7 @@ if (has('--no-atlas') || has('--product')) {
   // The routes, and the Atlas-only modules: the card previews keep specimen.tsx, sample-cells.tsx, registry.ts and
   // fixtures/, which the gate still checks.
   fs.rmSync(file('app/system'), { recursive: true, force: true });
-  const atlasOnly = ['content.ts', 'hero.tsx', 'markdown.tsx', 'page-stage.tsx', 'atlas-shell.tsx', 'card-stage.tsx', 'strata.tsx', 'token-view.tsx', 'tokens-data.ts'];
+  const atlasOnly = ['content.ts', 'hero.tsx', 'markdown.tsx', 'page-stage.tsx', 'atlas-shell.tsx', 'card-stage.tsx', 'preview-loaders.ts', 'strata.tsx', 'token-view.tsx', 'tokens-data.ts'];
   for (const f of atlasOnly) fs.rmSync(file(`src/system/${f}`), { force: true });
   // Nav entries for /system and /system/... exactly (never /systemic), then any group they leave empty.
   let cfg = read('src/app.config.ts').replace(/\n\s*\{ href: '\/system(?:\/[^']*)?'[^}]*\},/g, '');

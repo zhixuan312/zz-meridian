@@ -14,52 +14,59 @@ import { Freshness } from '@/components/patterns/freshness';
 import { formatDuration } from '@/lib/format';
 import { formatRelative } from '@/lib/format-date';
 import { DEMO_UPDATED_AT, REGIONS, type RequestRow } from '@/data/sample';
-import { filterRequests, REQUEST_FILTERS } from '@/views/requests';
+import type { requestsQuery } from '@/data/requests';
+import { activeFilters, options, REQUEST_FILTERS, REQUEST_METHODS, useSearchDraft } from '@/views/requests';
 import { MethodChip, requestColumns, StatusBadge } from '@/system/sample-cells';
 
-const describe = (f: typeof REQUEST_FILTERS) =>
+const describe = (f: State) =>
   [f.status !== 'all' && `status ${f.status}`, f.method !== 'all' && f.method, f.region !== 'all' && `in ${f.region}`, f.q && `matching "${f.q}"`].filter(Boolean).join(', ');
 
-export function EmbedRequests({ rows, now }: { rows: RequestRow[]; now: string }) {
+type State = ReturnType<typeof requestsQuery>['state'];
+
+/** The server filtered, sorted and paged: `rows` is one page of the matching set, `total` how many match. */
+export function EmbedRequests({ rows, total, state, pageSize, now }: { rows: RequestRow[]; total: number; state: State; pageSize: number; now: string }) {
   const asOf = useMemo(() => new Date(now), [now]);
   const s = useSurface();
   const [f, set] = useQueryState({ ...REQUEST_FILTERS, by: 'Claude', sort: 'at', dir: 'desc', page: '1' });
-  const matching = useMemo(() => filterRequests(rows, f), [rows, f]);
-  const scope = describe(f);
-  const latest = matching.slice(0, 5);
-  const query = new URLSearchParams(Object.entries(f).filter(([k, v]) => ['status', 'method', 'region', 'q'].includes(k) && v && v !== 'all')).toString();
+  const [draft, setDraft] = useSearchDraft(state.q, (q) => set({ q, by: '', page: '1' }));
+  const isFiltered = state.q !== '' || state.status !== 'all' || state.method !== 'all' || state.region !== 'all';
+  const scope = describe(state);
+  const latest = rows.slice(0, 5);
+  const query = new URLSearchParams(activeFilters(state)).toString();
   const consolePath = `/requests${query ? `?${query}` : ''}`;
 
   useShareView(
-    `${matching.length} requests${scope ? ` with ${scope}` : ''}. Latest: ${latest.map((r) => `${r.method} ${r.route} ${r.status} in ${r.latency}ms (${r.id})`).join('; ') || 'none'}.`,
-    { view: 'requests', filters: { status: f.status, method: f.method, region: f.region, q: f.q }, total: matching.length, latest: latest.map((r) => r.id) },
+    `${total} requests${scope ? ` with ${scope}` : ''}. Latest: ${latest.map((r) => `${r.method} ${r.route} ${r.status} in ${r.latency}ms (${r.id})`).join('; ') || 'none'}.`,
+    { view: 'requests', filters: { status: state.status, method: state.method, region: state.region, q: state.q }, total, latest: latest.map((r) => r.id) },
   );
 
   if (s.mode === 'fullscreen') {
-    const clear = () => set({ ...REQUEST_FILTERS, by: '', page: '1' });
+    const clear = () => { setDraft(''); set({ ...REQUEST_FILTERS, by: '', page: '1' }); };
     const change = (patch: Partial<typeof REQUEST_FILTERS>) => set({ ...patch, by: '', page: '1' });
-    const opts = (vals: string[]) => [{ value: 'all', label: 'All' }, ...vals.map((v) => ({ value: v, label: v }))];
     return (
       <EmbedFrame title="Requests" meta={<Freshness updatedAt={DEMO_UPDATED_AT} now={asOf} />} consolePath={consolePath}>
         <DataTable
           caption="Requests"
           noun="requests"
-          rows={matching}
+          rows={rows}
           columns={requestColumns}
           rowKey={(r) => r.id}
-          state={{ sort: f.sort, dir: f.dir, page: f.page }}
+          manual
+          total={total}
+          pageSizes={[pageSize]}
+          state={{ sort: state.sort, dir: state.dir, page: String(state.page) }}
           onStateChange={set}
-          filtered={matching.length < rows.length}
+          filtered={isFiltered}
           onClearFilters={clear}
           toolbar={
             <FilterBar
-              search={{ value: f.q, onChange: (q) => change({ q }), placeholder: 'Search requests' }}
+              search={{ value: draft, onChange: setDraft, placeholder: 'Search requests' }}
               filters={[
-                { key: 'status', label: 'Status', value: f.status, onChange: (status) => change({ status }), options: opts(['2xx', '3xx', '4xx', '5xx']) },
-                { key: 'method', label: 'Method', value: f.method, onChange: (method) => change({ method }), options: opts(['GET', 'POST', 'PUT', 'DELETE']) },
-                { key: 'region', label: 'Region', value: f.region, onChange: (region) => change({ region }), options: opts(REGIONS.map((r) => r.label)) },
+                { key: 'status', label: 'Status', value: state.status, onChange: (status) => change({ status }), options: options('All', ['2xx', '3xx', '4xx', '5xx']) },
+                { key: 'method', label: 'Method', value: state.method, onChange: (method) => change({ method }), options: options('All', REQUEST_METHODS) },
+                { key: 'region', label: 'Region', value: state.region, onChange: (region) => change({ region }), options: options('All', REGIONS.map((r) => r.label)) },
               ]}
-              result={<>{matching.length} of {rows.length}</>}
+              result={<>{total.toLocaleString('en-US')} {isFiltered ? 'matching' : 'requests'}</>}
               setBy={f.by || undefined}
               onClear={clear}
             />
@@ -74,12 +81,12 @@ export function EmbedRequests({ rows, now }: { rows: RequestRow[]; now: string }
       title={scope ? `Requests · ${scope}` : 'Latest requests'}
       meta={<Freshness updatedAt={DEMO_UPDATED_AT} now={asOf} />}
       consolePath={consolePath}
-      expandable={matching.length > latest.length}
+      expandable={total > latest.length}
     >
       <Card className="overflow-hidden">
         <div className="flex items-center gap-3 border-b border-line px-4 py-2.5">
           <p className="t-num min-w-0 flex-1 text-xs text-ink-3">
-            <span className="font-medium text-ink">{matching.length}</span> matching · showing the latest {latest.length}
+            <span className="font-medium text-ink">{total}</span> matching · showing the latest {latest.length}
           </p>
           {latest.length ? <AskAbout question={`Why are these ${scope ? scope + ' ' : ''}requests failing, and what do they have in common?`} /> : null}
         </div>

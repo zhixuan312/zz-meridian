@@ -18,12 +18,13 @@ function ResolveScope({ scope, onReady }: { scope: Promise<string>; onReady: (re
   return null;
 }
 
-/** Every console page's live data: one stream per tab, opened once the scope has resolved. A refresh reauthorizes the names, then reads the route again. */
+/** Every console page's live data: one stream per tab, opened once the scope has resolved. A refresh reauthorizes the names, then reads the route again; a refusal throws a 401 the provider pauses on. */
 export function ConsoleLive({ scope, children }: { scope: Promise<string>; children: React.ReactNode }) {
   const router = useRouter();
   const [ready, setReady] = useState<Ready>({ scopeKey: '' });
   const refresh = async (names: string[]) => {
-    await refreshCollections(names);
+    const result = await refreshCollections(names);
+    if (!result.ok) throw Object.assign(new Error('Sign in to see live data.'), { status: result.status });
     router.refresh();
   };
   return (

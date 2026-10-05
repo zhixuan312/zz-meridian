@@ -25,11 +25,15 @@ Status: beta
 
 ## Data
 
-`REQUESTS` from `src/system/fixtures/sample.ts`, filtered by `filterRequests()` in `src/views/requests.tsx`. Error share counts 5xx and 429 responses. Latency above one second is written in `warning-ink`; no other cell is coloured except the status.
+The server reads one page of the `requests` collection (20 rows and the total) for the filters in the address, through `readRequests()` in `src/data/requests.ts`, and works the three tiles out of the same filtered set (the newest 500 of it, which the tiles say when the set is larger). The page never sends the full set. Error share counts 5xx and 429 responses. Latency above one second is written in `warning-ink`; no other cell is coloured except the status.
 
 ## Addressable state
 
-`?q=&status=2xx|3xx|4xx|5xx&method=GET|POST|PUT|DELETE&region=&sort=&dir=asc|desc&page=&by=` — one `useQueryState`, so a filter change and the page reset are one write. These are also the arguments of the `zz_meridian_requests` tool.
+`?q=&status=2xx|3xx|4xx|5xx&method=GET|POST|PUT|DELETE&region=&sort=&dir=asc|desc&page=&by=` — one `useQueryState`, so a filter change and the page reset are one write, and the server renders the next page. A value the table does not offer falls back to its default. These are also the arguments of the `zz_meridian_requests` tool.
+
+## Export
+
+Export CSV is a link to `/api/export/requests` with the same filters and sort: the route checks the session (401) and the read permission (403), then streams the whole filtered set in batches of at most 100 rows, and a text value that starts like a formula is written as text.
 
 ## Embed view
 

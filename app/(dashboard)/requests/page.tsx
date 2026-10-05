@@ -1,16 +1,21 @@
 import { Suspense } from 'react';
-import { read } from '@/data/read';
-import type { RequestRow } from '@/data/sample';
+import { readRequests, REQUEST_PAGE } from '@/data/requests';
 import { RequestsView } from '@/views/requests';
 
 export const metadata = { title: 'Requests' };
 
-/** The request log. Filters, sort and page live in the address (?status=5xx&sort=latency), so every view is a link. */
-export default async function RequestsPage() {
-  const { rows, observedAt } = await read('requests');
+type SearchParams = Promise<Record<string, string | string[] | undefined>>;
+
+/** The request log. Filters, sort and page live in the address (?status=5xx&sort=latency): the server reads one page of the filtered set, so every view is a link. */
+export default function RequestsPage({ searchParams }: { searchParams: SearchParams }) {
   return (
     <Suspense>
-      <RequestsView rows={rows as RequestRow[]} now={observedAt} />
+      <Requests searchParams={searchParams} />
     </Suspense>
   );
+}
+
+async function Requests({ searchParams }: { searchParams: SearchParams }) {
+  const { rows, total, summary, state, observedAt } = await readRequests(await searchParams);
+  return <RequestsView rows={rows} total={total} summary={summary} state={state} pageSize={REQUEST_PAGE} now={observedAt} />;
 }

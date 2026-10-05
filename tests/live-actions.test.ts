@@ -16,12 +16,12 @@ beforeEach(() => { cache.updated.length = 0; session.signedIn = true; });
 
 describe('refreshCollections', () => {
   it('invalidates only the collections the caller may read, once each', async () => {
-    await refreshCollections(['members', 'secrets', 'members', 'keys']);
+    expect(await refreshCollections(['members', 'secrets', 'members', 'keys'])).toEqual({ ok: true });
     expect(cache.updated.sort()).toEqual([collectionTag('demo', 'keys'), collectionTag('demo', 'members')].sort());
   });
-  it('refuses an unauthenticated caller and invalidates nothing', async () => {
+  it('answers an unauthenticated caller with a refusal value, which survives a production build, and invalidates nothing', async () => {
     session.signedIn = false;
-    await expect(refreshCollections(['members'])).rejects.toThrow();
+    expect(await refreshCollections(['members'])).toEqual({ ok: false, status: 401 });
     expect(cache.updated).toEqual([]);
   });
 });

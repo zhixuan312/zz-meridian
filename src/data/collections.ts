@@ -18,6 +18,7 @@ import { arrayCollection, type AnyCollection, type Collection } from '@/lib/coll
 import { API_KEYS, type ApiKey } from '@/system/fixtures/sample-records';
 import { MEMBERS, ROLES, STATUSES, TEAMS, type Member } from '@/system/fixtures/sample-members';
 import { DEMO_NOW, REQUESTS, type RequestRow } from '@/system/fixtures/sample';
+import { statusClass } from '@/data/sample';
 
 /** The data's "now": the sample's fixed clock. A product returns `new Date()`. */
 export const clock = (): Date => DEMO_NOW;
@@ -64,7 +65,10 @@ export const keys: Collection<ApiKey, 'id'> = arrayCollection({
   hidden: ['secret'],
 });
 
-export const requests: Collection<RequestRow, 'id'> = arrayCollection({
+/** A request as the collection holds it: the record plus two values worked out for filtering, never written. `search` is the lower-cased id, route and customer; a page does not carry it (`publicRows`). */
+type RequestRecord = RequestRow & { statusClass: ReturnType<typeof statusClass>; search: string };
+
+export const requests: Collection<RequestRecord, 'id'> = arrayCollection({
   name: 'requests',
   label: 'Requests',
   description: 'The API requests the workspace received, newest first, with status, latency and customer.',
@@ -81,7 +85,8 @@ export const requests: Collection<RequestRow, 'id'> = arrayCollection({
     bytes: z.number(),
     model: z.string().nullable(),
   }),
-  rows: REQUESTS,
+  derived: ['statusClass', 'search'],
+  rows: REQUESTS.map((r) => ({ ...r, statusClass: statusClass(r.status), search: `${r.id} ${r.route} ${r.customer}`.toLowerCase() })),
   allow: [],
 });
 

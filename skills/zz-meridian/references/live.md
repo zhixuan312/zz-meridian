@@ -187,13 +187,15 @@ export function liveStream({ names, collections, signal, heartbeatMs = 15000, au
 
 `optional:src/data/live-actions.ts` exports `refreshCollections(names)`, a Server Action. The names come from the
 browser, so each is authorized against the caller's current access, and one the caller may not read is skipped without a
-trace. It drops only those collections' cached reads, and the router refresh that follows reads them again.
+trace. It drops only those collections' cached reads, and the router refresh that follows reads them again. With no
+session it resolves `{ ok: false, status: 401 }` instead of throwing, because a thrown error loses its `status` in a
+production build; the client turns that value into a 401 error, which pauses the live provider.
 
 ```ts
 'use server';
 
 import { updateTag } from 'next/cache';
-import { can, resolveAccess } from '@/data/access';
+import { Unauthenticated, can, resolveAccess } from '@/data/access';
 import { collectionTag } from '@/data/read';
 
 const MAX_NAMES = 50;
@@ -201,13 +203,16 @@ const MAX_NAMES = 50;
 /**
  * Drops the cached reads of the collections the caller may read, so the router refresh that follows reads them again.
  * The names come from the browser, so each is authorized here; one the caller may not read is skipped without a trace.
+ * A caller without a session gets a refusal value, not a throw: a thrown error loses its status in a production build.
  */
-export async function refreshCollections(names: string[]): Promise<void> {
-  const scope = await resolveAccess();
+export async function refreshCollections(names: string[]): Promise<{ ok: true } | { ok: false; status: 401 }> {
+  const scope = await resolveAccess().catch((e: unknown) => { if (e instanceof Unauthenticated) return null; throw e; });
+  if (!scope) return { ok: false, status: 401 };
   const asked = [...new Set(Array.isArray(names) ? names.filter((n): n is string => typeof n === 'string') : [])].slice(0, MAX_NAMES);
   for (const name of asked) {
     if (await can(scope, name, 'read')) updateTag(collectionTag(scope.tenantId, name));
   }
+  return { ok: true };
 }
 ```
 
@@ -236,12 +241,13 @@ function ResolveScope({ scope, onReady }: { scope: Promise<string>; onReady: (re
   return null;
 }
 
-/** Every console page's live data: one stream per tab, opened once the scope has resolved. A refresh reauthorizes the names, then reads the route again. */
+/** Every console page's live data: one stream per tab, opened once the scope has resolved. A refresh reauthorizes the names, then reads the route again; a refusal throws a 401 the provider pauses on. */
 export function ConsoleLive({ scope, children }: { scope: Promise<string>; children: React.ReactNode }) {
   const router = useRouter();
   const [ready, setReady] = useState<Ready>({ scopeKey: '' });
   const refresh = async (names: string[]) => {
-    await refreshCollections(names);
+    const result = await refreshCollections(names);
+    if (!result.ok) throw Object.assign(new Error('Sign in to see live data.'), { status: result.status });
     router.refresh();
   };
   return (

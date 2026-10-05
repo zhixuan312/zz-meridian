@@ -1,45 +1,46 @@
 # Uptime bars
 
-Uptime bars show a service's recent days, one thin bar per day, so an incident stands out from a run of healthy days.
+Uptime bars show a service's recent days as one SVG, so an incident stands out from a run of healthy days.
 
 Status: beta
 
 ## Anatomy
 
-1. **Bars**: one per day, oldest on the left, equal width, 32px tall, `radius-full`, 2px apart.
+1. **SVG**: one `<svg role="img">` per strip, labelled by the summary. One baseline `<rect>` spans the whole period in the operational fill; one `<rect data-day data-state>` is drawn per non-operational day. A focus rect appears only while a day is focused.
 2. **Caption**: "90 days ago" (the span shown), a hairline, the uptime percentage in `ink-2`, a hairline, "Today".
-3. **Tooltip**: on hover, the day's state and date, on `surface-inverse`.
-4. **Screen-reader text and table**: a one-line summary and every day's state.
+3. **Tooltip**: on hover or keyboard focus, the day's state and date, on `surface-inverse`.
+4. **Screen-reader text**: one paragraph with the period and its uptime, then one sentence per degraded, outage or no-data day ("12 Sep 2026: Outage."), or "No incidents." There is no table of every day.
 
 ## Variants
 
-| State of a day | Fill |
+| State of a day | Drawn as |
 |---|---|
-| Operational | `positive` at 40%: it recedes |
-| Degraded | `warning` |
-| Outage | `critical` |
+| Operational | The baseline: `positive` at 22%, so it recedes |
+| Degraded | A `warning` mark |
+| Outage | A `critical` mark |
+| None | A `line-strong` mark, opaque so the baseline never shows through; read as "No data" and never counted as up |
 
-`size="lg"` draws 56px bars for a strip that leads its card (the Health page's featured card); the default is 32px. `measure` is the word after the percentage: "uptime" by default, "on time" or "in stock" for other domains.
+`size="lg"` draws a 56px strip for one that leads its card (the Health page's featured card); the default is 32px. `measure` is the word after the percentage: "uptime" by default, "on time" or "in stock" for other domains.
 
 ## Sizes
 
-The bars share the container's width, every day always shown, so the percentage and the label describe exactly the bars drawn. Under 420px the gap between bars tightens from 2px to 1px.
+The viewBox is one unit per day, so the strip fills the container's width and every day is always drawn; a narrow container scales the drawing rather than dropping days or tightening gaps.
 
 ## States
 
 | State | Spec |
 |---|---|
-| Hover | The other bars fade to 55%; the hovered bar grows 10% taller; the tooltip shows. |
-| Short history | Fewer days than the window: the bars widen to fill it; the caption's count says how many days there are. |
+| Hover or focus | A focus rect marks the day; the tooltip shows. |
+| Short history | Fewer days than the window: the days widen to fill it; the caption's count says how many days there are. |
 
 ## Behaviour
 
-Pointer hover only; the table carries every day for keyboard and screen readers.
+The strip is a focusable group: Arrow Left and Right, Home and End move the focused day, Escape clears it, and a polite live region announces its date and state.
 
 ## Surfaces
 
 - **Console**: 90 days.
-- **Mobile** and **Embed**: every day, with 1px gaps.
+- **Mobile** and **Embed**: every day, scaled to the width.
 
 ## Agents
 
@@ -47,7 +48,7 @@ The Health view shares each service's state and uptime as structured context; an
 
 ## Accessibility
 
-Every state has a word in the tooltip and the table; colour is never the only signal. Status fills hold 3:1 on `surface` (positive 8.63:1 dark at full strength; warning 3.48:1 light).
+Every state has a word in the tooltip, the live region and the summary; colour is never the only signal. Status fills hold 3:1 on `surface` (positive 8.63:1 dark at full strength; warning 3.48:1 light).
 
 ## Content
 
