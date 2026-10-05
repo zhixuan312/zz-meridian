@@ -9,7 +9,7 @@ import { parseArgs } from 'node:util';
 import { adopt } from './adopt.js';
 import { create } from './create.js';
 import { BRAND_FLAGS, VERSION, installSkill } from './files.js';
-import { update } from './update.js';
+import { update, type Mode } from './update.js';
 
 const HELP = `zz-meridian ${VERSION}
 
@@ -21,6 +21,12 @@ const HELP = `zz-meridian ${VERSION}
 
   npx zz-meridian@latest update --dry-run [--verbose]
       Show what updating this project to the running version would change, and what needs your decision. Writes nothing.
+
+  npx zz-meridian@latest update [--allow-dirty] [--no-install] [--verbose]
+      Apply the safe changes, stage everything you changed with base/ours/new copies, and write .meridian/update/<version>/MERGE.md.
+
+  npx zz-meridian@<version> update --resume [--no-install] | --finalize [--verify] | --abort
+      Continue, complete or roll back the update in progress. Use the version named in MERGE.md.
 
   npx zz-meridian@latest skill [--global]
       Install only the agent skill: into this project, or for every project (~/.agents/skills, ~/.claude/skills).
@@ -37,6 +43,10 @@ const { values, positionals } = parseArgs({
     'allow-dirty': { type: 'boolean' },
     'no-install': { type: 'boolean' },
     'dry-run': { type: 'boolean' },
+    resume: { type: 'boolean' },
+    finalize: { type: 'boolean' },
+    abort: { type: 'boolean' },
+    verify: { type: 'boolean' },
     verbose: { type: 'boolean' },
     global: { type: 'boolean' },
     help: { type: 'boolean', short: 'h' },
@@ -60,7 +70,13 @@ function main(): number {
     if (!arg) { console.error('zz-meridian create: name the folder for the new dashboard'); return 1; }
     return create({ dir: arg, brand, install });
   }
-  if (command === 'update') return update({ root: process.cwd(), dryRun: Boolean(values['dry-run']), verbose: Boolean(values.verbose) });
+  if (command === 'update') {
+    const modes = (['dry-run', 'resume', 'finalize', 'abort'] as const).filter((m) => values[m]);
+    if (modes.length > 1) { console.error(`zz-meridian update: ${modes.map((m) => `--${m}`).join(' and ')} cannot be combined`); return 1; }
+    if (values.verify && !values.finalize) { console.error('zz-meridian update: --verify belongs to --finalize'); return 1; }
+    const mode: Mode = modes[0] ?? 'update';
+    return update({ root: process.cwd(), mode, flags: { verbose: Boolean(values.verbose), allowDirty: Boolean(values['allow-dirty']), install, verify: Boolean(values.verify) } });
+  }
   if (command === 'skill') {
     const roots = values.global ? [os.homedir()] : [process.cwd()];
     for (const r of roots) installSkill(r);

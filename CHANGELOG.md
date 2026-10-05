@@ -6,11 +6,14 @@ Every release of ZZ Meridian, newest first. Versions follow semver: a removed or
 
 ### Added
 
-- **`zz-meridian update --dry-run`.** It shows what updating a project adopted or created with 0.3.0 or later would change, and writes nothing.
-  - It replays the recorded release in a scratch folder, after checking it against the registry's integrity record.
-  - It refuses if any recorded file disagrees with the replay.
-  - It lists only the files that need the team's decision; `--verbose` lists every file.
-  - Applying an update follows in this release cycle.
+- **`zz-meridian update`: a real, reviewable update.** For a project adopted or created with 0.3.0 or later.
+  - `--dry-run` replays the recorded release in a scratch folder, after checking it against the registry's integrity record, and prints the plan. It writes nothing, and refuses if any recorded file disagrees with the replay.
+  - A plain `update` replaces every Meridian file the team has not touched, adds the new ones and removes retired ones. Files the team edited, deleted or kept are staged as base/ours/new copies, never overwritten.
+  - It adds the dependencies and scripts the release needs to `package.json`. An entry still exactly as the earlier release wrote it follows the new release; one the team chose becomes a migration. It updates Meridian's managed block in `AGENTS.md`.
+  - Every run writes `.meridian/update/<version>/` with a journal, `MERGE.md` and `resolutions.json`, even when nothing is staged.
+  - It refuses, writing nothing, on a dirty tree (unless `--allow-dirty`), an open session or a left-behind lock, a bad manifest or keep entry, or an unsafe path.
+  - The default output lists only what needs a decision; `--verbose` lists every file.
+  - The package version is now 0.5.0.
 - **`.meridian/keep.json`, the update session and `app.logo` are checked by the gate.**
   - `keep.json` is a list of `{ path, reason }` entries: Meridian files the team deliberately keeps as they are. `node scripts/check.ts` fails on an entry for a file Meridian never managed, a duplicate, a blank reason, or a kept file that is missing.
   - While an update session is open under `.meridian/update/`, the gate fails until every staged file and migration has a current resolution. Once it does, the gate checks against the files the update will own.

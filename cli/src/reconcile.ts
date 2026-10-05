@@ -22,8 +22,12 @@ const compare = (a: number[], b: number[]) => a[0]! - b[0]! || a[1]! - b[1]! || 
 
 const file = (id: string, summary: string, instructions: string, path: string): Migration => ({ id, summary, paths: [path], instructions, checks: [] });
 
-/** Add or reconcile the declared dependencies and scripts of a team's package.json at the target template's specification. */
-export function reconcilePackage(teamText: string, template: Template, need: Need): { text: string | null; changes: string[]; migrations: Migration[] } {
+/**
+ * Add or reconcile the declared dependencies and scripts of a team's package.json at the target template's specification.
+ * `base` is the template of the release the project came from: an entry still exactly as that release wrote it is
+ * Meridian's own, so it follows the target even across a major; one the team changed stays theirs.
+ */
+export function reconcilePackage(teamText: string, template: Template, need: Need, base?: Template): { text: string | null; changes: string[]; migrations: Migration[] } {
   const unreadable = (why: string) => ({
     text: null,
     changes: [],
@@ -39,6 +43,7 @@ export function reconcilePackage(teamText: string, template: Template, need: Nee
 
   const changes: string[] = [];
   const migrations: Migration[] = [];
+  const written = (name: string, have: unknown) => base !== undefined && (base.dependencies?.[name] === have || base.devDependencies?.[name] === have);
   const section = (key: string): Obj | null => {
     if (pkg[key] === undefined) return null;
     return isObj(pkg[key]) ? (pkg[key] as Obj) : null;
@@ -74,10 +79,11 @@ export function reconcilePackage(teamText: string, template: Template, need: Nee
     if (order === 0) continue;
     if (order > 0) {
       dep(`${name} ${have} is newer than the tested ${spec}`, `Meridian is tested against ${name} ${spec}; your ${have} is newer and was left as it is. Run the project's gate and build with it, and read the ${name} release notes for breaking changes before relying on it.`);
-    } else if (haveMin[0] !== wantMin[0]) {
+    } else if (haveMin[0] !== wantMin[0] && !written(name, have)) {
       dep(`${name} ${have} is an older major than the tested ${spec}`, `Meridian is tested against ${name} ${spec}; your ${have} is a lower major and is incompatible. Follow the ${name} upgrade guide to reach ${spec}, then run the project's gate.`);
     } else {
-      // An older entry of the same major is compatible: raised where it is. A lower major is the team's to upgrade, above.
+      // An older entry of the same major is compatible, and an entry Meridian wrote is Meridian's: raised where it is.
+      // A lower major the team chose is theirs to upgrade, above.
       holder[name] = spec;
       changes.push(`raised ${name} from ${have} to ${spec}`);
     }
@@ -106,6 +112,9 @@ export function reconcilePackage(teamText: string, template: Template, need: Nee
     if (have === undefined) {
       addedScripts[name] = want;
       changes.push(`added script ${name}`);
+    } else if (have !== want && base?.scripts?.[name] === have) {
+      scripts![name] = want;
+      changes.push(`updated script ${name}`);
     } else if (have !== want) {
       migrations.push(file(`script:${name}`, `script "${name}" differs from Meridian's`, `Your "${name}" script is ${JSON.stringify(have)} and was kept; Meridian's is ${JSON.stringify(want)}. Merge the two so the project's gate can call it, or leave yours if it already does the same work.`, 'package.json'));
     }
@@ -122,6 +131,22 @@ export function reconcilePackage(teamText: string, template: Template, need: Nee
   const eol = teamText.includes('\r\n') ? '\r\n' : '\n';
   const out = JSON.stringify(pkg, null, indent).replace(/\n/g, eol) + eol;
   return { text: out, changes, migrations };
+}
+
+/** The framework the template is tested on: needed whether or not a distributed module imports it. */
+const FRAMEWORK = ['next', 'react', 'react-dom'];
+
+/**
+ * What a target release needs in a team's package.json: the packages its distributed modules import plus the framework,
+ * Meridian's toolchain and its scripts, each only where the template declares it.
+ */
+export function needOf(template: Template, sources: ReadonlyMap<string, string>): Need {
+  const declared = (n: string) => template.dependencies?.[n] !== undefined;
+  return {
+    runtime: [...new Set([...externalPackages(sources), ...FRAMEWORK])].filter(declared).sort(),
+    dev: TOOLCHAIN.filter((n) => template.devDependencies?.[n] !== undefined),
+    scripts: MERIDIAN_SCRIPTS.filter((n) => template.scripts?.[n] !== undefined),
+  };
 }
 
 const BUILTINS = new Set(builtinModules);

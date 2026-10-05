@@ -1,14 +1,16 @@
 /**
- * `update --dry-run`: replays the release the project was copied from and the running one, classifies every managed path
- * against the project, and prints what needs the team's decision. It writes nothing, and proves that it wrote nothing.
+ * `update`: wires the command line to the engine in `session.ts`. It builds the context (the recorded release and the
+ * running one, replayed with the project's brand and shape), runs a dry-run or a real update, and proves that a dry-run
+ * wrote nothing.
  */
 import { createHash } from 'node:crypto';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { VERSION, inside, run, sha256, type Manifest } from './files.js';
-import { classify, managedPaths, parseManifest, type Action, type Disposition, type Hash } from './ownership.js';
-import { fetchRelease, replay, runningRelease } from './replay.js';
+import { VERSION, run, sha256 } from './files.js';
+import type { Action, Disposition } from './ownership.js';
+import { fetchRelease, localRelease, replayRelease, runningRelease } from './replay.js';
+import { start, type Context } from './session.js';
 
 export type Row = { path: string; disposition: Disposition; action: Action };
 
@@ -24,42 +26,26 @@ export function isNewer(target: string, source: string): boolean {
 /** True when a project on `version` has a manifest `update` can start from: 0.3.0 and later. */
 export const supportsSource = (version: string) => !isNewer('0.3.0', version);
 
-/** The report: the staged rows (every row with `verbose`), then the migrations, summary and outcome lines. */
+/** The staged rows (every row with `verbose`), then the summary line. */
 export function formatReport(rows: Row[], { verbose }: { verbose: boolean }): string {
   const lines: string[] = [];
-  const count = { untouched: 0, added: 0, removed: 0, 'team-preserved': 0 };
+  const count = { untouched: 0, added: 0, removed: 0, 'team-preserved': 0, kept: 0 };
   let conflicts = 0;
   for (const r of rows) {
     const staged = r.action === 'stage';
     if (staged) conflicts++;
     else if (r.disposition === 'untouched' || r.disposition === 'edited') count.untouched++;
+    else if (r.disposition === 'kept' || r.disposition === 'retired-kept') count.kept++;
     else if (r.disposition === 'added' || r.disposition === 'removed' || r.disposition === 'team-preserved') count[r.disposition]++;
     if (verbose) lines.push(`${r.disposition.padEnd(15)}  ${r.path}  ${r.action}`);
     else if (staged) lines.push(`${r.disposition.padEnd(15)}  ${r.path}  ${r.disposition === 'local-deletion' ? 'decide: delete or restore' : 'merge required'}`);
   }
-  lines.push('migrations: none declared');
-  lines.push(`summary: ${conflicts} ${conflicts === 1 ? 'conflict' : 'conflicts'} · aggregated: untouched ${count.untouched}, added ${count.added}, removed ${count.removed}, team-preserved ${count['team-preserved']}`);
-  lines.push('outcome: dry-run (nothing was written)');
+  lines.push(`summary: ${conflicts} ${conflicts === 1 ? 'conflict' : 'conflicts'} · aggregated: untouched ${count.untouched}, added ${count.added}, removed ${count.removed}, team-preserved ${count['team-preserved']}, kept ${count.kept}`);
   return lines.join('\n');
 }
 
 /** The line a dry-run prints above the report when the work tree has uncommitted changes. */
 export const dirtyNote = (n: number) => `note: the git tree has uncommitted changes (${n} ${n === 1 ? 'path' : 'paths'}); a real update will refuse until they are committed (or pass --allow-dirty)`;
-
-/** Every regular file under `<release>/payload` as posix paths, symbolic links never followed. */
-function payloadList(release: string): string[] {
-  const base = path.join(release, 'payload');
-  const out: string[] = [];
-  const walk = (rel: string) => {
-    for (const e of fs.readdirSync(path.join(base, rel), { withFileTypes: true })) {
-      const p = rel ? `${rel}/${e.name}` : e.name;
-      if (e.isDirectory()) walk(p);
-      else if (e.isFile()) out.push(p);
-    }
-  };
-  if (fs.existsSync(base)) walk('');
-  return out.sort();
-}
 
 const SKIPPED = new Set(['.git', 'node_modules', '.next']);
 
@@ -93,63 +79,87 @@ function gitState(root: string): { status: string; head: string } | null {
 /** The three views the no-change guard compares, recorded in this order: git status, HEAD, tree digest. */
 const snapshot = (root: string) => ({ git: gitState(root), tree: treeDigest(root) });
 
-/** The project file's hash, or null when it is absent. */
-function diskHash(root: string, rel: string): Hash {
-  const abs = inside(root, rel);
-  const st = fs.lstatSync(abs, { throwIfNoEntry: false });
-  return st?.isFile() ? (sha256(fs.readFileSync(abs)) as Hash) : null;
+/**
+ * The identity of a package as it runs: a SHA-512 over every regular file under `dist/` and `payload/`, one
+ * `<path>\0<sha256 hex>\n` line each in sorted order. `package.json` is left out because npm may rewrite it on install.
+ */
+export function packageDigest(dir: string): string {
+  const files: string[] = [];
+  const walk = (rel: string) => {
+    for (const e of fs.readdirSync(path.join(dir, rel), { withFileTypes: true })) {
+      const p = `${rel}/${e.name}`;
+      if (e.isDirectory()) walk(p);
+      else if (e.isFile()) files.push(p);
+    }
+  };
+  for (const top of ['dist', 'payload']) if (fs.existsSync(path.join(dir, top))) walk(top);
+  const h = createHash('sha512');
+  for (const f of files.sort()) h.update(`${f}\0${sha256(fs.readFileSync(path.join(dir, f))).slice('sha256-'.length)}\n`);
+  return `sha512-${h.digest('base64')}`;
 }
+
+export type Mode = 'dry-run' | 'update' | 'resume' | 'finalize' | 'abort';
+export type Flags = { verbose: boolean; allowDirty: boolean; install: boolean; verify: boolean };
 
 /** Prints one refusal and returns the exit code. */
 const refuse = (cause: string) => { console.error(`zz-meridian update: ${cause}`); return 1; };
 
-/** Computes the plan between the recorded release and the running one, prints it, and leaves the project exactly as found. */
-export function update({ root, dryRun, verbose }: { root: string; dryRun: boolean; verbose: boolean }): number {
-  if (!dryRun) return refuse('only --dry-run is available in this release of the update command');
-  const manifestFile = path.join(root, '.meridian', 'manifest.json');
-  if (!fs.existsSync(manifestFile)) return refuse('no .meridian/manifest.json here; run it in a project that adopted or created Meridian');
-  let manifest: Manifest;
-  try { manifest = parseManifest(fs.readFileSync(manifestFile, 'utf8')); } catch (e) { return refuse((e as Error).message); }
-  if (!supportsSource(manifest.version)) return refuse(`updates start from 0.3.0; this project is on ${manifest.version}`);
-  if (manifest.version === VERSION) return refuse(`already at ${VERSION}`);
-  if (isNewer(manifest.version, VERSION)) return refuse(`this project is on ${manifest.version}, newer than this package (${VERSION}); run npx zz-meridian@latest update`);
+/**
+ * A published version must be exactly what the registry serves: its tarball's file digest equals this package's. An
+ * unpublished version is local by definition and is told apart from an unreachable registry by npm's own E404.
+ */
+function checkPublished(version: string, digest: string, scratch: string, log: (l: string) => void) {
+  const view = run('npm', ['view', `zz-meridian@${version}`, 'dist.integrity'], scratch, true);
+  if (view.status === 0 && view.stdout.trim()) {
+    fs.mkdirSync(path.join(scratch, 'published'));
+    const { pkgRoot } = fetchRelease(version, path.join(scratch, 'published'));
+    if (packageDigest(pkgRoot) !== digest) throw new Error(`the running package differs from zz-meridian@${version} on the registry; run npx zz-meridian@${version} update, or update with a version that is not published`);
+  } else if (/E404|404 Not Found/.test(`${view.stdout}${view.stderr}`)) {
+    log(`note: zz-meridian@${version} is not published; this package is treated as a local build (${digest.slice(0, 19)}…)`);
+  } else {
+    throw new Error(`could not check zz-meridian@${version} against the registry: ${`${view.stdout ?? ''}${view.stderr ?? ''}`.trim() || 'npm view failed'}`);
+  }
+}
 
+/** Runs one `update` mode in the project at `root` and returns the exit code. */
+export function update({ root, mode, flags }: { root: string; mode: Mode; flags: Flags }): number {
   const scratch = fs.mkdtempSync(path.join(os.tmpdir(), 'zz-meridian-update-'));
+  const log = (line: string) => (line.startsWith('zz-meridian update:') ? console.error(line) : console.log(line));
+  let n = 0;
+  const sub = () => { const d = path.join(scratch, `r${n++}`); fs.mkdirSync(d); return d; };
   try {
-    const before = snapshot(root);
-    const sub = (name: string) => { const d = path.join(scratch, name); fs.mkdirSync(d); return d; };
-    const { pkgRoot } = fetchRelease(manifest.version, sub('fetch'));
-    const baseHashes = replay(pkgRoot, manifest.route, manifest.brand, sub('base'));
-    const targetRoot = runningRelease();
-    const targetHashes = replay(targetRoot, manifest.route, manifest.brand, sub('target'));
-    const managedOf = (release: string, hashes: Map<string, string>) => {
-      const set = managedPaths(payloadList(release), manifest.route);
-      if (hashes.has('scripts/package.json')) set.add('scripts/package.json');
-      return set;
+    if (mode !== 'dry-run' && mode !== 'update') return refuse(`--${mode} arrives with the session commands of this release`);
+    const digest = packageDigest(runningRelease());
+    if (mode === 'update') checkPublished(VERSION, digest, scratch, log);
+    const local = process.env.ZZ_MERIDIAN_LOCAL_RELEASES;
+    const interrupt = process.env.ZZ_MERIDIAN_TEST_INTERRUPT_AFTER;
+    if (interrupt) log('note: ZZ_MERIDIAN_TEST_INTERRUPT_AFTER is set; the update will stop after that many applied operations');
+    const ctx: Context = {
+      root,
+      version: VERSION,
+      targetIntegrity: digest,
+      source: (m) => {
+        const dir = sub();
+        if (local) {
+          log(`note: reading release ${m.version} from ${local} (ZZ_MERIDIAN_LOCAL_RELEASES), not from the registry`);
+          return replayRelease(localRelease(local, m.version, dir).pkgRoot, m, sub());
+        }
+        return replayRelease(fetchRelease(m.version, dir).pkgRoot, m, sub());
+      },
+      target: (m) => replayRelease(runningRelease(), m, sub()),
+      run: (cmd, args, cwd) => {
+        const r = run(cmd, args, cwd, true);
+        return { status: r.status ?? 1, output: `${r.stdout ?? ''}${r.stderr ?? ''}${r.error ? `\n${r.error.message}` : ''}` };
+      },
+      log,
+      interruptAfter: interrupt ? Number(interrupt) : undefined,
     };
-    const baseManaged = managedOf(pkgRoot, baseHashes);
-    const targetManaged = managedOf(targetRoot, targetHashes);
+    if (mode === 'update') return start(ctx, { dryRun: false, allowDirty: flags.allowDirty, install: flags.install, verbose: flags.verbose });
 
-    const drift = Object.entries(manifest.files).filter(([p, h]) => baseManaged.has(p) && baseHashes.get(p) !== h).map(([p]) => p).sort();
-    if (drift.length) return refuse(`the recorded files do not match a replay of ${manifest.version}, so nothing can be trusted; nothing was written:\n${drift.map((p) => `  ${p}`).join('\n')}`);
-
-    const paths = [...new Set([...Object.keys(manifest.files), ...targetManaged])].sort();
-    const rows: Row[] = paths.map((p) => ({
-      path: p,
-      ...classify({
-        recorded: (manifest.files[p] ?? null) as Hash,
-        target: (targetHashes.get(p) ?? null) as Hash,
-        disk: diskHash(root, p),
-        managed: baseManaged.has(p) || targetManaged.has(p),
-      }),
-    }));
-
-    const after = snapshot(root);
-    if (JSON.stringify(before) !== JSON.stringify(after)) return refuse('dry-run changed the project');
-    const dirty = before.git ? before.git.status.split('\n').filter(Boolean).length : 0;
-    if (dirty) console.log(`${dirtyNote(dirty)}\n`);
-    console.log(formatReport(rows, { verbose }));
-    return 0;
+    const before = snapshot(root);
+    const code = start(ctx, { dryRun: true, allowDirty: true, install: false, verbose: flags.verbose });
+    if (JSON.stringify(before) !== JSON.stringify(snapshot(root))) return refuse('dry-run changed the project');
+    return code;
   } catch (e) {
     return refuse((e as Error).message);
   } finally {
