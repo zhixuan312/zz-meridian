@@ -12,7 +12,7 @@ Status: beta
 
 ## Sizes
 
-One size. It starts at `rows` lines (3 by default) and grows with its text (`field-sizing: content`) to `maxRows` (10), then scrolls inside. Radius `radius-md` 8px.
+One size. It starts at `rows` lines (3 by default) and grows with its text (`field-sizing: content`) to `maxRows` (10), then scrolls inside. Radius `radius-md` 10px.
 
 ## States
 

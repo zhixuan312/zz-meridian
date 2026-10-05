@@ -21,9 +21,9 @@ Status: beta
 
 | Size | Box | Icon | Radius |
 |---|---|---|---|
-| sm | `control-sm` 30px (26 compact) | 14px | `radius-md` 8px |
-| md (default) | `control-md` 36px (30 compact) | 16px | `radius-md` 8px |
-| lg | `control-lg` 44px (36 compact) | 18px | `radius-lg` 12px |
+| sm | `control-sm` 32px (28 compact) | 14px | `radius-md` 10px |
+| md (default) | `control-md` 38px (32 compact) | 16px | `radius-md` 10px |
+| lg | `control-lg` 46px (38 compact) | 18px | `radius-lg` 16px |
 
 ## States
 

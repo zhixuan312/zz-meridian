@@ -30,7 +30,7 @@ Below 1024px the rail becomes a drawer (the same node, so nothing is defined twi
 | Menus and selects | Popover | Popover, at least 44px rows on touch | Menu, Select |
 | Charts | Full height, 6 to 8 date labels | Shorter (180px), 3 to 4 date labels; the Meridian follows the finger and the tooltip pins to the top edge | TrendChart |
 | Toolbar | Search, filters and view controls in one row | Search full width; filters behind one Filters button that opens a sheet | FilterBar |
-| Touch targets | 36px default control | Every control at least 44px tall where it is the main interaction (`control-lg`) | Button, Field |
+| Touch targets | 38px default control | Every control at least 44px tall where it is the main interaction (`control-lg`) | Button, Field |
 
 ### Embed (MCP Apps)
 

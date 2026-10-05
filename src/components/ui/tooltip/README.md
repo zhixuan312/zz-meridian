@@ -6,7 +6,7 @@ Status: beta
 
 ## Anatomy
 
-1. **Body**: `surface-inverse`, `radius-sm` 6px, padding 6px by 8px, `shadow-overlay`, at most 256px wide.
+1. **Body**: `surface-inverse`, `radius-sm` 8px, padding 6px by 8px, `shadow-overlay`, at most 256px wide.
 2. **Text**: `text-xs` 12px, `ink-inverse`, line height 1.375.
 
 ## Variants

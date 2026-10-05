@@ -24,9 +24,9 @@ Status: beta
 
 | Size | Height | Padding | Label | Icon | Radius |
 |---|---|---|---|---|---|
-| sm | `control-sm` 30px (26 compact) | 10px | `text-sm` 13px | 14px | `radius-md` 8px |
-| md (default) | `control-md` 36px (30 compact) | 14px | `text-sm` 13px | 16px | `radius-md` 8px |
-| lg | `control-lg` 44px (36 compact) | 20px | `text-base` 14px | 18px | `radius-lg` 12px |
+| sm | `control-sm` 32px (28 compact) | 10px | `text-sm` 13px | 14px | `radius-md` 10px |
+| md (default) | `control-md` 38px (32 compact) | 14px | `text-sm` 13px | 16px | `radius-md` 10px |
+| lg | `control-lg` 46px (38 compact) | 20px | `text-base` 14px | 18px | `radius-lg` 16px |
 
 Label weight `weight-medium` 500 at every size; icon to label `space-1-5` 6px (sm) or `space-2` 8px. Labels never wrap and never truncate; a label that does not fit is shortened in the copy.
 
@@ -62,7 +62,7 @@ Not applicable: a button is how a person acts. When an agent proposes an action,
 ## Accessibility
 
 - Contrast (light, cobalt): `on-accent` on `accent` 5.6:1, on `accent-hover` 6.6:1; `on-critical` on `critical-fill` 6.4:1; secondary label 18.1:1. Every accent preset holds 4.5:1 in both themes (`pnpm contrast`).
-- The default 36px meets the 24px minimum target; `lg` meets the 44px touch target.
+- The default 38px meets the 24px minimum target; `lg` is 46px, over the 44px touch target.
 - An icon-only action uses an Icon button with an `aria-label`, not Button.
 
 ## Content

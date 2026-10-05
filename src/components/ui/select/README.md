@@ -8,7 +8,7 @@ Status: beta
 
 1. **Trigger**: the shared control frame with the current value (or a placeholder in `ink-3`) and a chevron.
 2. **Leading icon** (optional).
-3. **List**: `surface-raised`, `radius-lg` 12px, `shadow-overlay`, 4px inset; at least as wide as the trigger.
+3. **List**: `surface-raised`, `radius-lg` 16px, `shadow-overlay`, 4px inset; at least as wide as the trigger.
 4. **Option**: 32px minimum, `text-sm`, an optional description line in `text-xs` `ink-3`, and a 16px `accent` check on the current choice.
 
 ## Sizes

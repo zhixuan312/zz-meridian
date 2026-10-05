@@ -7,7 +7,7 @@ Status: beta
 ## Anatomy
 
 1. **Trigger**: any button; it shows the open state (`data-state="open"`).
-2. **Surface**: `surface-raised`, `radius-lg` 12px, 4px inner padding, `shadow-overlay` (the hairline is part of the shadow).
+2. **Surface**: `surface-raised`, `radius-lg` 16px, 4px inner padding, `shadow-overlay` (the hairline is part of the shadow).
 3. **Item**: icon (16px, `ink-3`), label, optional shortcut (`text-xs`, `ink-3`) at the end.
 4. **Label** (optional): a group's name in eyebrow style.
 5. **Separator**: a 1px `line` rule across the full width.
@@ -22,7 +22,7 @@ Status: beta
 
 ## Sizes
 
-Minimum width 208px. Item height 32px (44px on a coarse pointer), padding 8px, radius `radius-sm` 6px, gap icon to label 10px, label `text-sm` 13px.
+Minimum width 208px. Item height 32px (44px on a coarse pointer), padding 8px, radius `radius-sm` 8px, gap icon to label 10px, label `text-sm` 13px.
 
 ## States
 

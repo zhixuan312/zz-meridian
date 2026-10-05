@@ -7,7 +7,7 @@ Status: beta
 ## Anatomy
 
 1. **Trigger**: a button; it shows the open state.
-2. **Surface**: `surface-raised`, `radius-lg` 12px, 16px padding, `shadow-overlay`, 288px wide by default.
+2. **Surface**: `surface-raised`, `radius-lg` 16px, 16px padding, `shadow-overlay`, 288px wide by default.
 3. **Content**: a small form or an explanation; a form ends with its actions on a hairline-topped row.
 
 ## Variants

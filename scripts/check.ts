@@ -66,6 +66,32 @@ for (const f of SPECS) {
   }
 }
 
+// ── A specification that annotates a token with its value gets the value right ───────────────────────
+// The specs write sizes as `` `radius-lg` 16px `` and `` `control-md` 38px ``, which is a claim about the token. When
+// the radius scale was retuned (4/6/8/12/16 to 5/8/10/16/24) and the control heights with it (30/36/44 to 32/38/46),
+// nineteen of those annotations were left behind — so a product sizing a control, a corner or a row from the specs was
+// a few pixels out, and nothing said so. A token whose FIRST definition is not a plain px (a clamp, a var, a calc) has
+// no single number to compare and is skipped; where a later definition is a plain px it joins the accepted set, so a
+// density variant may be written as either.
+const LITERAL = new Map<string, Set<number>>();
+{
+  const first = new Map<string, string>();
+  for (const m of read('src/styles/tokens.css').matchAll(/--([a-z0-9-]+)\s*:\s*([^;]+)/g)) {
+    if (!first.has(m[1])) first.set(m[1], m[2].trim());
+    if (/^[0-9.]+px$/.test(m[2].trim())) {
+      if (!LITERAL.has(m[1])) LITERAL.set(m[1], new Set());
+      LITERAL.get(m[1])!.add(Number(m[2].trim().replace('px', '')));
+    }
+  }
+  for (const [name, def] of first) if (!/^[0-9.]+px$/.test(def)) LITERAL.delete(name);
+}
+for (const f of SPECS) {
+  for (const m of read(f).matchAll(/`([a-z][a-z0-9-]*)`[  ]*\(?[  ]*([0-9.]+)px/g)) {
+    const values = LITERAL.get(m[1]);
+    if (values && !values.has(Number(m[2]))) problems.push(`${f}: \`${m[1]}\` is written as ${m[2]}px; the token is ${[...values].join(' or ')}px`);
+  }
+}
+
 // ── An embed view a document names exists ────────────────────────────────────────────────────────────
 // Two shapes name an embed view, and both have drifted from the routes:
 //

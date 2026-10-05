@@ -15,9 +15,9 @@ Status: beta
 
 | Size | Height | Padding | Text | Icon | Radius |
 |---|---|---|---|---|---|
-| sm | `control-sm` 30px (26 compact) | 10px | `text-sm` 13px | 14px | `radius-md` 8px |
-| md (default) | `control-md` 36px (30 compact) | 12px | `text-sm` 13px | 16px | `radius-md` 8px |
-| lg | `control-lg` 44px (36 compact) | 14px | `text-base` 14px | 18px | `radius-md` 8px |
+| sm | `control-sm` 32px (28 compact) | 10px | `text-sm` 13px | 14px | `radius-md` 10px |
+| md (default) | `control-md` 38px (32 compact) | 12px | `text-sm` 13px | 16px | `radius-md` 10px |
+| lg | `control-lg` 46px (38 compact) | 14px | `text-base` 14px | 18px | `radius-md` 10px |
 
 Fill `surface`; border 1px `line-strong`; `shadow-control`. Slot to text: 6px (sm), 8px (md), 10px (lg).
 

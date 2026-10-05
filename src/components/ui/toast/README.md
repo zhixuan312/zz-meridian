@@ -6,7 +6,7 @@ Status: beta
 
 ## Anatomy
 
-1. **Surface**: `surface-raised`, `radius-lg` 12px, 14px padding, `shadow-overlay`.
+1. **Surface**: `surface-raised`, `radius-lg` 16px, 14px padding, `shadow-overlay`.
 2. **Icon**: 16px; `positive` check, `critical` cross, or `ink-3` info.
 3. **Title**: `text-sm` medium, `ink`; the past tense of the action.
 4. **Description** (optional): `text-xs`, `ink-2`; what it means.

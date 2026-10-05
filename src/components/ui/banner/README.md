@@ -6,7 +6,7 @@ Status: beta
 
 ## Anatomy
 
-1. **Container**: a tinted ground and a 1px border of the tone, `radius-lg` 12px, padding 14px 16px.
+1. **Container**: a tinted ground and a 1px border of the tone, `radius-lg` 16px, padding 14px 16px.
 2. **Icon**: 16px, the tone's ink.
 3. **Title**: `text-sm` medium, the tone's ink: what is happening.
 4. **Body** (optional): `t-small`, `ink-2`: what it means and what to do.

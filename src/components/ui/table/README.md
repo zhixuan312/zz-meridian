@@ -10,7 +10,7 @@ The names follow the HTML elements: `TableHead` is the `thead`, `TableHeader` is
 
 1. **Head band**: `surface-sunk`, a `line` rule above and below, 36px tall; head text `text-xs` medium `ink-3`, sentence case.
 2. **Sort control** (optional, per column): the head text as a button with a 12px arrow; the arrow shows on hover, and stays in `accent-ink` on the sorted column.
-3. **Row**: height `row-height` (48px, 36 compact); a `line` rule under each but the last.
+3. **Row**: height `row-height` (52px, 38 compact); a `line` rule under each but the last.
 4. **Cell**: `text-sm`; 12px horizontal padding, the card padding on the first and last column, so text aligns with the card's head.
 5. **Numeric cell**: right-aligned, tabular figures.
 

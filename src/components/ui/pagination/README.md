@@ -20,7 +20,7 @@ Status: beta
 
 ## Sizes
 
-Controls at `control-sm` 30px; page buttons at least 30px wide with 6px padding, 2px apart. Pages shown: the first, the last, and one either side of the current one (seven or fewer pages are all shown).
+Controls at `control-sm` 32px; page buttons at least 30px wide with 6px padding, 2px apart. Pages shown: the first, the last, and one either side of the current one (seven or fewer pages are all shown).
 
 ## States
 

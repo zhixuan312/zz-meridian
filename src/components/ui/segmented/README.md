@@ -14,8 +14,8 @@ Status: beta
 
 | Size | Height | Label |
 |---|---|---|
-| sm | `control-sm` 30px (26 compact) | `text-xs` 12px |
-| md (default) | `control-md` 36px (30 compact) | `text-sm` 13px |
+| sm | `control-sm` 32px (28 compact) | `text-xs` 12px |
+| md (default) | `control-md` 38px (32 compact) | `text-sm` 13px |
 
 ## States
 

@@ -6,7 +6,7 @@ Status: beta
 
 ## Anatomy
 
-1. **Container**: `surface`, 1px `line` border, `radius-lg` 12px, `shadow-card`.
+1. **Container**: `surface`, 1px `line` border, `radius-lg` 16px, `shadow-card`.
 2. **Top edge**: a 1px `highlight-top` line inset 12px from each side. Transparent on light, where the shadow lifts the card; a faint lit edge on dark, where shadows do not read.
 3. **Header** (`CardHeader`, optional): title, an optional description under it, actions on the right.
 4. **Body** (`CardBody`): the content; `flush` removes the padding for a list or table that runs edge to edge, and a `Table` as its first child is then clipped by the body with its header row's top border dropped — the card's edge is the table's edge, with no second line under it and no square corner over the card's rounded one. A second table in the same body keeps its top border.
@@ -28,7 +28,7 @@ Status: beta
 | Header | top `card-pad` minus 4px; title `t-card` 14px/600; description `t-caption` 12px `ink-3`, 4px under the title |
 | Body | 12px under the header |
 | Footer | 12px vertical, `card-pad` horizontal, `text-sm` 13px `ink-2` |
-| Radius | `radius-lg` 12px; anything nested inside steps down to `radius-md` 8px |
+| Radius | `radius-lg` 16px; anything nested inside steps down to `radius-md` 10px |
 
 A card never sets its own outer margin: the row's gap places it. Cards in one row are the same height (the grid stretches them); a card is its content's height otherwise.
 

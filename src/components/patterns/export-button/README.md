@@ -28,7 +28,7 @@ Button and Toast, with `toCsv` and `downloadFile` from `src/lib/csv.ts`. It sits
 
 ## Sizes
 
-As Button: `md` is 36px high (`control-md`), `sm` 28px (`control-sm`).
+As Button: `md` is 38px high (`control-md`), `sm` 32px (`control-sm`).
 
 ## States
 

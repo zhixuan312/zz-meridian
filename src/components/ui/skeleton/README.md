@@ -6,7 +6,7 @@ Status: beta
 
 ## Anatomy
 
-1. **Block**: a rounded shape (`radius-xs` 4px by default) painted with the shimmer: `fill-track` with a band of `fill-active` sweeping left every 1.6s.
+1. **Block**: a rounded shape (`radius-xs` 5px by default) painted with the shimmer: `fill-track` with a band of `fill-active` sweeping left every 1.6s.
 
 ## Variants
 
