@@ -92,9 +92,13 @@ the variables are set, read per request, so no rebuild is needed: `ASSISTANT_PRO
 
 ## Brand beyond the accent
 
-Logo: replace the SVG in `src/components/base/app-mark/index.tsx`, keeping the sizes (20, 24, 28, 32) and the empty alt.
-Theme default: dark is on `:root`; to make light the default, set `"default": "light"` for the theme modifier in
-`tokens/zz-meridian.resolver.json` and run `pnpm tokens`. Density: users pick it in the rail's appearance menu and the
+Branding is configuration, not source patching: `scripts/brand.ts` edits `src/app.config.ts` and the token files, and
+never `src/lib/preferences.ts`, which reads the accent and theme defaults from the app configuration.
+Logo: set `logo: '/logo.svg'` in `src/app.config.ts`, a root-relative local SVG served from `public/`. `AppMark` renders it
+at 20, 24, 28 and 32 pixels with an empty alt beside the app name, and with the app name as alt when given a `label`.
+Any other value renders the default mark.
+Theme default: `node scripts/brand.ts --theme dark|light` sets `theme` in `src/app.config.ts`; it applies before paint and
+in `Providers` until a person chooses another in Settings. With no `theme`, the system theme applies. Density: users pick it in the rail's appearance menu and the
 command palette; compact suits operators who scan many rows.
 
 ## MCP App views (only if asked)

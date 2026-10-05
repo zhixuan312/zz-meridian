@@ -1,12 +1,24 @@
+import { app } from '@/app.config';
 import { cn } from '@/lib/cn';
+import { logoSource } from '@/lib/logo';
+
+const cfg: { name: string; logo?: string } = app;
 
 /**
- * The product's mark. The template ships a neutral one: an accent tile holding a meridian, a trend crossed by the
- * line that reads it. Replace the SVG with your logo; keep the size steps (20, 24, 28, 32) and the decorative alt.
+ * The product's mark: `app.logo` when it is a root-relative local SVG path, otherwise the template's neutral mark, an
+ * accent tile holding a meridian, a trend crossed by the line that reads it. Beside the app name it is decorative (no
+ * `label`); on its own, pass the app name as `label`. Sizes are 20, 24, 28 and 32.
  */
-export function AppMark({ size = 24, className }: { size?: 20 | 24 | 28 | 32; className?: string }) {
+export function AppMark({ size = 24, className, label }: { size?: 20 | 24 | 28 | 32; className?: string; label?: string }) {
+  const logo = logoSource(cfg.logo);
+  if (logo) {
+    return (
+      // eslint-disable-next-line @next/next/no-img-element -- a local SVG from public/ at four fixed sizes; next/image adds nothing for it.
+      <img src={logo} width={size} height={size} alt={label ?? ''} className={cn('shrink-0', className)} />
+    );
+  }
   return (
-    <svg width={size} height={size} viewBox="0 0 24 24" aria-hidden className={cn('shrink-0', className)}>
+    <svg width={size} height={size} viewBox="0 0 24 24" {...(label ? { role: 'img', 'aria-label': label } : { 'aria-hidden': true })} className={cn('shrink-0', className)}>
       <rect width="24" height="24" rx="6.5" fill="var(--accent)" />
       <rect width="24" height="24" rx="6.5" fill="url(#am-sheen)" />
       <path d="M4.5 15.5 8.2 11.6l3.1 2.4 4.2-5.6 4 3.6" fill="none" stroke="var(--on-accent)" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />

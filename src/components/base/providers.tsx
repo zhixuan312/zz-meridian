@@ -6,7 +6,8 @@ import { app } from '@/app.config';
 import { STORAGE_KEY, type Preferences } from '@/lib/preferences';
 import { Toaster } from '@/components/ui/toast';
 
-const DEFAULTS: Preferences = { theme: 'system', accent: app.accent, density: 'comfortable', assistant: true };
+const cfg: { name: string; theme?: 'dark' | 'light' } = app;
+const DEFAULTS: Preferences = { theme: cfg.theme ?? 'system', accent: app.accent, density: 'comfortable', assistant: true };
 const Ctx = createContext<{ prefs: Preferences; set: (p: Partial<Preferences>) => void }>({ prefs: DEFAULTS, set: () => {} });
 
 /** The person's appearance choices. Read with usePreferences(); the pre-paint script applies them before hydration. */

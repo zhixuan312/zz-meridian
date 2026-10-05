@@ -5,8 +5,9 @@
  */
 import fs from 'node:fs';
 import path from 'node:path';
+import { managedPaths } from './ownership.js';
 import { BRIEF_TEMPLATE, managedBlock, upsertManagedBlock } from './context.js';
-import { PAYLOAD, VERSION, brandArgs, hasCommand, inside, installSkill, payloadFiles, run, sha256, writeIn, writeManifest } from './files.js';
+import { PAYLOAD, VERSION, brandArgs, effectiveBrand, hasCommand, inside, installSkill, payloadFiles, run, sha256, writeIn, writeManifest } from './files.js';
 
 export type CreateOptions = { dir: string; brand: Record<string, string>; install: boolean };
 
@@ -14,13 +15,16 @@ export function create(o: CreateOptions): number {
   const root = path.resolve(o.dir);
   if (fs.existsSync(root) && fs.readdirSync(root).length) return fail(`${root} exists and is not empty: name a new folder`);
 
+  let brand: Record<string, string>;
+  try { brand = effectiveBrand(o.brand); } catch (e) { return fail((e as Error).message); }
+
   for (const rel of payloadFiles()) {
     if (rel.startsWith('skills/')) continue;
     writeIn(root, rel, fs.readFileSync(path.join(PAYLOAD, rel)));
   }
 
-  const name = o.brand.name ?? path.basename(root).replace(/[-_]+/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
-  const brand = { ...o.brand, name };
+  const name = brand.name ?? path.basename(root).replace(/[-_]+/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+  brand = effectiveBrand({ ...brand, name });
   if (run(process.execPath, ['scripts/brand.ts', ...brandArgs(brand), '--product'], root).status !== 0) {
     return fail('scripts/brand.ts failed (above); the template is copied, so fix the cause and run it again with the same flags');
   }
@@ -51,6 +55,10 @@ export function create(o: CreateOptions): number {
     }
   };
   walk('');
+  // The managed set over what is on disk after branding: the payload rule for the files still there, plus the brand outputs.
+  const onDisk = Object.keys(files);
+  const managed = managedPaths([...payloadFiles().filter((f) => f.startsWith('skills/') || onDisk.includes(f))], 'create', onDisk);
+  for (const rel of onDisk) if (!managed.has(rel)) delete files[rel];
   installSkill(root, files);
   writeManifest(root, { version: VERSION, route: 'create', brand, files });
 

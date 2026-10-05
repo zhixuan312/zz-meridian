@@ -131,5 +131,12 @@ export function installSkill(root: string, record?: Record<string, string>) {
 }
 
 /** Brand flags passed through to scripts/brand.ts, in the order it reads them. */
-export const BRAND_FLAGS = ['name', 'workspace', 'timezone', 'currency', 'user', 'role', 'accent', 'hex', 'hue', 'chroma'] as const;
+export const BRAND_FLAGS = ['name', 'workspace', 'timezone', 'currency', 'user', 'role', 'theme', 'accent', 'hex', 'hue', 'chroma'] as const;
 export const brandArgs = (brand: Record<string, string>) => BRAND_FLAGS.flatMap((k) => (brand[k] ? [`--${k}`, brand[k]] : []));
+
+/** The brand a run effectively applied: one accent choice (hex over hue over a preset), flags in order, empty ones dropped. */
+export function effectiveBrand(flags: Record<string, string | undefined>): Record<string, string> {
+  if (flags.theme && flags.theme !== 'dark' && flags.theme !== 'light') throw new Error(`--theme must be dark or light, got ${JSON.stringify(flags.theme)}`);
+  const drop = flags.hex ? ['hue', 'chroma', 'accent'] : flags.hue ? ['accent'] : [];
+  return Object.fromEntries(BRAND_FLAGS.flatMap((k) => (flags[k] && !drop.includes(k) ? [[k, flags[k]!]] : [])));
+}

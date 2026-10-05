@@ -3,10 +3,12 @@
  * Brand a copy of Meridian for a product, in place.
  *
  *   node scripts/brand.ts --name "Atlas Ops" [--workspace "Production"] [--timezone "Europe/London"]
- *                         [--package atlas-ops] [--accent indigo|cobalt|jade|graphite]
+ *                         [--package atlas-ops] [--accent indigo|cobalt|jade|graphite] [--theme dark|light]
  *                         [--currency EUR] [--user "Ada Park" --role Admin]
  *                         [--hex '#E4572E' | --hue 25 --chroma 0.16] [--accent-name brand] [--no-atlas | --product | --existing]
  *
+ * --theme records the default theme in the app config; a person can still choose another in Settings.
+ * A brand accent is recognized from the app config (`accent`), so this script never edits src/lib/preferences.ts.
  * --hex derives the hue and chroma from a brand colour (chroma capped at 0.18; the theme owns lightness).
  * --hue/--chroma add a new accent preset (OKLCH hue in degrees, chroma 0 to 0.2) and make it the default. The contrast
  * gate then runs; where white on the accent fill fails in a theme, the preset gets a lower fill lightness for that
@@ -48,6 +50,9 @@ function setConfig(key: string, value: string) {
   write('src/app.config.ts', s.replace(re, `$1'${value.replace(/'/g, "\\'")}'`));
   done.push(`${key} = ${value}`);
 }
+
+const theme = opt('--theme');
+if (has('--theme') && theme !== 'dark' && theme !== 'light') throw new Error('--theme is dark or light');
 
 const name = opt('--name');
 if (name) setConfig('name', name);
@@ -121,11 +126,6 @@ if (hue !== undefined) {
   const r = json('tokens/zz-meridian.resolver.json');
   r.modifiers.accent.contexts[id] = [{ $ref: `accent.${id}.tokens.json` }];
   write('tokens/zz-meridian.resolver.json', JSON.stringify(r, null, 2) + '\n');
-  let prefs = read('src/lib/preferences.ts');
-  if (!prefs.includes(`'${id}'`)) {
-    prefs = prefs.replace(/export const ACCENTS = \[([^\]]*)\] as const;/, (_, list) => `export const ACCENTS = [${list}, '${id}'] as const;`);
-    write('src/lib/preferences.ts', prefs);
-  }
   defaultAccent(id);
 
   // Hold contrast: lower a theme's fill lightness where white text on it fails, a step at a time.
@@ -160,6 +160,14 @@ if (hue !== undefined) {
 } else {
   const accent = opt('--accent');
   if (accent) defaultAccent(accent);
+}
+
+if (theme) {
+  const s = read('src/app.config.ts');
+  if (/\n {2}theme: '/.test(s)) write('src/app.config.ts', s.replace(/(\n {2}theme: )'[^']*'/, `$1'${theme}'`));
+  else if (/\n {2}accent: [^\n]*\n/.test(s)) write('src/app.config.ts', s.replace(/(\n {2}accent: [^\n]*\n)/, `$1  theme: '${theme}',\n`));
+  else throw new Error('src/app.config.ts has no "accent" line to put --theme after');
+  done.push(`theme = ${theme}`);
 }
 
 if (has('--no-atlas') || has('--product')) {

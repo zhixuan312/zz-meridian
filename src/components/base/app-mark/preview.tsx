@@ -18,6 +18,7 @@ export default function AppMarkPreview() {
             {SIZES.map((s) => (
               <State key={s} label={`${s}px`}><AppMark size={s} /></State>
             ))}
+            <State label="Standalone, with a label"><AppMark size={32} label={app.name} /></State>
             <State label="With the name, in the rail">
               <span className="flex items-center gap-2.5">
                 <AppMark size={28} />

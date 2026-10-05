@@ -22,6 +22,7 @@ Status: beta
 ## Behaviour
 
 - The tile is the accent, so the mark follows a preset (graphite gives an ink tile with a dark trend on dark).
+- `app.logo` in `src/app.config.ts` replaces the tile with the product's logo: a root-relative local SVG path such as `/logo.svg`, served from `public/`. It renders as an `<img>` at 20, 24, 28 or 32 pixels. A value that is not such a path (a URL, a relative path, another file type) renders the default mark.
 
 ## Surfaces
 
@@ -34,11 +35,12 @@ Not applicable.
 
 ## Accessibility
 
-- Decorative (`aria-hidden`): the product name beside it is the accessible name. Never announce the mark and the name twice.
+- Beside the visible product name it is decorative: the logo has an empty `alt`, the default mark is `aria-hidden`. Never announce the mark and the name twice.
+- Standing alone, pass the product name as `label`: the logo takes it as `alt`, the default mark as `role="img"` with `aria-label`.
 
 ## Do and do not
 
-- Do replace the SVG with your logo and keep the four size steps.
+- Do set `app.logo` for your logo and keep the four size steps.
 - Do not stretch it, outline it, or set it on a fill that is the accent.
 
 ## Implementation
@@ -46,5 +48,6 @@ Not applicable.
 ```tsx
 import { AppMark } from '@/components/base/app-mark';
 
-<AppMark size={28} />
+<AppMark size={28} />                  {/* beside the name */}
+<AppMark size={32} label="Acme Ops" /> {/* on its own */}
 ```

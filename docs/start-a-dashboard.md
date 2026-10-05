@@ -25,11 +25,11 @@ Keep the Atlas while you build: it is the specification of every part you are ab
 - `app.timezone`: every date and every daily bucket is cut on it.
 - `nav`: the rail. Adding a page is a route file plus a line here.
 
-Replace the mark in `src/components/base/app-mark/index.tsx` with your logo; keep the sizes (20, 24, 28, 32) and the empty `alt`.
+Put your logo in `public/` as an SVG and set `logo: '/logo.svg'` in `app`: the mark shows it at 20, 24, 28 and 32 pixels, with an empty `alt` beside the product name. `theme: 'dark'` or `'light'` sets the default theme before anyone picks one.
 
 ## 3. Brand it, if you need more than an accent
 
-An accent preset is two numbers. `node scripts/brand.ts --hex '#RRGGBB'` (or `--hue <0-360> --chroma <0.10-0.18>`) adds your brand's hue as a preset, makes it the default, holds contrast in every theme by itself, and warns when the hue sits within 20° of a status colour. By hand, copy `tokens/accent.indigo.tokens.json` to `tokens/accent.<name>.tokens.json`, set `accent-h` (OKLCH hue) and `accent-c` (chroma), add it to `tokens/zz-meridian.resolver.json` and to `ACCENTS` in `src/lib/preferences.ts`, then:
+An accent preset is two numbers. `node scripts/brand.ts --hex '#RRGGBB'` (or `--hue <0-360> --chroma <0.10-0.18>`) adds your brand's hue as a preset, makes it the default, holds contrast in every theme by itself, and warns when the hue sits within 20° of a status colour. By hand, copy `tokens/accent.indigo.tokens.json` to `tokens/accent.<name>.tokens.json`, set `accent-h` (OKLCH hue) and `accent-c` (chroma), add it to `tokens/zz-meridian.resolver.json` and set `accent` to its name in `src/app.config.ts` (the appearance menu lists it from there), then:
 
 ```sh
 pnpm tokens          # regenerate the CSS

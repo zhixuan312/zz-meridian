@@ -16,9 +16,18 @@ Every release of ZZ Meridian, newest first. Versions follow semver: a removed or
   - While an update session is open under `.meridian/update/`, the gate fails until every staged file and migration has a current resolution. Once it does, the gate checks against the files the update will own.
   - `app.logo`, when set, must be a root-relative SVG under `public/`, such as `/logo.svg`.
   - The gate's lint step leaves `.meridian/` alone, since a session keeps copies of files there for reading.
+- **`--theme dark|light` and `app.logo`.**
+  - `brand.ts --theme` sets the default theme in `src/app.config.ts`, applied before the first paint until a person picks one.
+  - `app.logo: '/logo.svg'` shows your SVG from `public/` in the mark at 20, 24, 28 and 32 pixels. Beside the product name its `alt` is empty, and on its own `AppMark` takes a `label`.
 
 ### Changed
 
+- **One rule says which files are Meridian's.**
+  - `cli/src/ownership.ts` decides it for `adopt`, `create` and `update`; `references/ownership.md` in the skill is the same rule, rendered.
+  - Meridian's files are its tokens, styles, components, scripts (except `scripts/verify.config.ts` and a `scripts/check.local.ts`), its library helpers, `src/views/console-chrome.tsx`, `tests/setup.ts`, the brand outputs and both skill copies. Everything else is the team's, including a file the team adds inside one of Meridian's folders.
+  - Breaking: a new `.meridian/manifest.json` records only those files. `src/app.config.ts`, `scripts/verify.config.ts`, pages, views, data and docs are no longer in it, and a created project's manifest no longer lists every file. An update treats such entries in an older manifest as the team's and never deletes them.
+  - The manifest records one accent choice: `--hex` wins over `--hue`/`--chroma`, which win over `--accent`.
+- **Branding no longer edits `src/lib/preferences.ts`.** Breaking: `ACCENTS` is the four presets plus `app.accent` when it names another, so a custom accent is set in `src/app.config.ts` alone; `brand.ts --hex` or `--hue` does that for you.
 - **The gate checks the agent context.**
   - `node scripts/check.ts` fails when `docs/brief.md` lacks one of its five sections, and warns while a section still holds only its template line.
   - It scans the managed block in `AGENTS.md`, the installed skill and the brief. It fails on any path or package script they name that does not exist; `optional:` and `example:` references are allowed to be absent.

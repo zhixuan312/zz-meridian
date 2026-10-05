@@ -9,11 +9,11 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import {
-  PAYLOAD, VERSION, brandArgs, inside, installSkill, packageManager, payloadFiles, readJsonc, readPayload, relativeImports,
+  PAYLOAD, VERSION, brandArgs, effectiveBrand, inside, installSkill, packageManager, payloadFiles, readJsonc, readPayload, relativeImports,
   run, runTool, sha256, writeIn, writeManifest,
 } from './files.js';
 import { BRIEF_TEMPLATE, managedBlock, upsertManagedBlock } from './context.js';
-import { FIXED, adoptSetOf } from './ownership.js';
+import { FIXED, adoptSetOf, managedPaths } from './ownership.js';
 
 export type AdoptOptions = { root: string; brand: Record<string, string>; allowDirty: boolean; install: boolean };
 
@@ -35,6 +35,20 @@ function exactImports(rel: string, source: string, known: Set<string>): string {
     return spec;
   };
   return relativeImports(rel, source).replace(/(\bfrom\s*|\bimport\s*\(\s*|\bimport\s+)(['"])([\w@./()[\]-]+)\2/g, (_m, lead: string, q: string, spec: string) => `${lead}${q}${pin(spec)}${q}`);
+}
+
+/** Every file under one folder of the project, as posix paths; none when the folder is absent. */
+function listFiles(root: string, dir: string): string[] {
+  const out: string[] = [];
+  const walk = (rel: string) => {
+    if (!fs.existsSync(path.join(root, rel))) return;
+    for (const e of fs.readdirSync(path.join(root, rel), { withFileTypes: true })) {
+      if (e.isDirectory()) walk(`${rel}/${e.name}`);
+      else if (e.isFile()) out.push(`${rel}/${e.name}`);
+    }
+  };
+  walk(dir);
+  return out;
 }
 
 function appDir(root: string): string | null {
@@ -120,6 +134,9 @@ https://github.com/zhixuan312/zz-meridian/blob/master/skills/zz-meridian/referen
     if (git.status !== 0) return fail('this folder is not a git repository, so the change could not be reviewed or undone as one diff. Commit it to git first, or pass --allow-dirty.');
     if (git.stdout.trim()) return fail('the git tree has uncommitted changes. Commit or stash them first, so adopt\'s change is one reviewable diff (or pass --allow-dirty).');
   }
+
+  let brand: Record<string, string>;
+  try { brand = effectiveBrand(o.brand); } catch (e) { return fail((e as Error).message); }
 
   const all = payloadFiles();
   const missing = FIXED.filter((f) => !all.includes(f));
@@ -240,8 +257,11 @@ Rename or move them, then run adopt again.`);
   try { for (const rel of writes.keys()) inside(root, rel); } catch (e) { return fail((e as Error).message); }
   for (const [rel, content] of writes) writeIn(root, rel, content);
 
-  const name = o.brand.name ?? String(pkg.name ?? path.basename(root)).replace(/^@[^/]+\//, '').replace(/[-_]+/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
-  const brand = { ...o.brand, name };
+  const name = brand.name ?? String(pkg.name ?? path.basename(root)).replace(/^@[^/]+\//, '').replace(/[-_]+/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+  brand = effectiveBrand({ ...brand, name });
+  // The brand outputs this run creates under tokens/ and src/styles/ (absent before it) are Meridian's, so the manifest records them.
+  const brandDirs = () => ['tokens', 'src/styles'].flatMap((d) => listFiles(root, d));
+  const existed = new Set(brandDirs());
   const b = run(process.execPath, ['scripts/brand.ts', ...brandArgs(brand), '--existing'], root);
   if (b.status !== 0) return fail('scripts/brand.ts failed (above); the files are copied, so fix the cause and run it again with the same flags');
 
@@ -256,8 +276,11 @@ Rename or move them, then run adopt again.`);
   const briefWritten = !fs.existsSync(path.join(root, 'docs/brief.md'));
   if (briefWritten) writeIn(root, 'docs/brief.md', BRIEF_TEMPLATE);
 
+  const generated = brandDirs().filter((f) => !existed.has(f));
+  if (owned.includes('scripts/package.json')) generated.push('scripts/package.json');
+  const managed = managedPaths(all, 'adopt', generated);
   const files: Record<string, string> = {};
-  for (const rel of owned) files[rel] = sha256(fs.readFileSync(inside(root, rel)));
+  for (const rel of [...owned, ...generated]) if (managed.has(rel)) files[rel] = sha256(fs.readFileSync(inside(root, rel)));
   installSkill(root, files);
   writeManifest(root, { version: VERSION, route: 'adopt', brand, files });
 

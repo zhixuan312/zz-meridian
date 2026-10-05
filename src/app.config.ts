@@ -13,6 +13,9 @@ export const app = {
   workspace: 'Production',
   /** The accent preset the product ships with; a person can still change it in Settings. */
   accent: 'indigo' as const,
+  // Optional keys, left unset so the template stays on the system theme with the default mark:
+  //   theme: 'dark' | 'light'  the theme a person gets until they choose one (`node scripts/brand.ts --theme dark|light`)
+  //   logo: '/logo.svg'        a root-relative local SVG served from public/; the rail, sign-in and embed frame show it
   /** Every date is shown in this zone, and every daily bucket is cut on its midnight. */
   timezone: 'UTC',
   /** ISO 4217 code for every money figure: tiles, tables, chart axes. */
