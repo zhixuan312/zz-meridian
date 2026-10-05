@@ -10,7 +10,7 @@ import path from 'node:path';
 import { VERSION, run, sha256 } from './files.js';
 import type { Action, Disposition } from './ownership.js';
 import { fetchRelease, localRelease, replayRelease, runningRelease } from './replay.js';
-import { start, type Context } from './session.js';
+import { abort, finalize, resume, start, type Context } from './session.js';
 
 export type Row = { path: string; disposition: Disposition; action: Action };
 
@@ -128,12 +128,11 @@ export function update({ root, mode, flags }: { root: string; mode: Mode; flags:
   let n = 0;
   const sub = () => { const d = path.join(scratch, `r${n++}`); fs.mkdirSync(d); return d; };
   try {
-    if (mode !== 'dry-run' && mode !== 'update') return refuse(`--${mode} arrives with the session commands of this release`);
     const digest = packageDigest(runningRelease());
     if (mode === 'update') checkPublished(VERSION, digest, scratch, log);
     const local = process.env.ZZ_MERIDIAN_LOCAL_RELEASES;
     const interrupt = process.env.ZZ_MERIDIAN_TEST_INTERRUPT_AFTER;
-    if (interrupt) log('note: ZZ_MERIDIAN_TEST_INTERRUPT_AFTER is set; the update will stop after that many applied operations');
+    if (interrupt && (mode === 'update' || mode === 'dry-run')) log('note: ZZ_MERIDIAN_TEST_INTERRUPT_AFTER is set; the update will stop after that many applied operations');
     const ctx: Context = {
       root,
       version: VERSION,
@@ -154,6 +153,14 @@ export function update({ root, mode, flags }: { root: string; mode: Mode; flags:
       log,
       interruptAfter: interrupt ? Number(interrupt) : undefined,
     };
+    // The session commands read the journal and its own copies: they replay nothing and never ask the registry.
+    const replayed = (what: string) => () => { throw new Error(`${what} is not needed by --${mode}`); };
+    if (mode === 'resume' || mode === 'finalize' || mode === 'abort') {
+      const own: Context = { ...ctx, source: replayed('the recorded release'), target: replayed('the running release'), interruptAfter: undefined };
+      if (mode === 'resume') return resume(own, { install: flags.install, verbose: flags.verbose });
+      if (mode === 'finalize') return finalize(own, { verify: flags.verify });
+      return abort(own);
+    }
     if (mode === 'update') return start(ctx, { dryRun: false, allowDirty: flags.allowDirty, install: flags.install, verbose: flags.verbose });
 
     const before = snapshot(root);

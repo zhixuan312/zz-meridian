@@ -8,14 +8,15 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { managedBlock } from './context.js';
 import { inside, packageManager, run as spawn, sha256 } from './files.js';
+import { changedPaths, takeInventory } from './inventory.js';
 import { renderMergeReport } from './merge-report.js';
 import { releaseMigrations } from './migrations.js';
 import { classify, managedPaths, parseManifest } from './ownership.js';
 import { legacySection, needOf, planAgents, reconcilePackage } from './reconcile.js';
 import { dirtyNote, formatReport, isNewer, supportsSource } from './update.js';
 import {
-  isSafePath, keepProblems, parseJournal, parseKeep, planHash, verifiedRetirements,
-  type FileOperation, type FileSide, type Hash, type KeepEntry, type Manifest, type Migration, type Retirement, type UpdateJournal,
+  isSafePath, keepProblems, parseJournal, parseKeep, parseResolutions, planHash, unresolved, verifiedRetirements,
+  type FileOperation, type FileSide, type Hash, type KeepEntry, type Manifest, type Migration, type Retirement, type UpdateJournal, type ValidationResult,
 } from './update-session.js';
 
 export type Release = {
@@ -234,6 +235,56 @@ function persistCopies(ctx: Context, session: string, p: Plan) {
 }
 
 type Outcome = 'dry-run' | 'migration-required' | 'install-pending' | 'ready-to-finalize' | 'failed';
+export type ResumeOptions = { install: boolean; verbose: boolean };
+export type FinalizeOptions = { verify: boolean };
+
+const pin = (version: string, flag: string) => `npx zz-meridian@${version} update ${flag}`;
+
+/** The conflict list, the migrations, the timings and, unless `next` is null, the outcome and the next command. */
+function report(ctx: Context, j: UpdateJournal, o: { verbose: boolean; keepWarnings: string[] }, outcome: string, times: string, next: string | null) {
+  const { log } = ctx;
+  for (const line of formatReport(j.operations.map((x) => ({ path: x.path, disposition: x.disposition, action: x.action })), { verbose: o.verbose }).split('\n')) {
+    if (line.startsWith('summary:')) {
+      for (const w of o.keepWarnings) log(`kept             ${w}`);
+      for (const x of j.operations.filter((y) => y.disposition === 'retired-kept')) log(`retired-kept     ${x.path}  left in place; the new release removed it`);
+      for (const m of j.migrations) log(`migration  ${m.id}  pending`);
+    }
+    log(line);
+  }
+  log(`time: ${times}`);
+  if (next === null) return;
+  log(`outcome: ${outcome}${outcome === 'dry-run' ? ' (nothing was written)' : ''}`);
+  log(`Next: ${next}`);
+}
+
+/** Runs the project's install, records it as the first validation result, and journals the lockfile change it makes. */
+function install(ctx: Context, session: string, j: UpdateJournal, pm: keyof typeof LOCKFILES): { ms: number; failure: string | null } {
+  const { root } = ctx;
+  const lock = lockfileFor(root, pm);
+  const prior = j.operations.find((o) => o.path === lock && o.disposition === 'team-preserved' && o.applied);
+  const before = prior ? prior.base : probe(root, lock).side;
+  const backup = path.join(session, 'backup', lock);
+  if (before.exists && !fs.existsSync(backup)) writeAtomic(backup, fs.readFileSync(inside(root, lock)));
+  const t0 = performance.now();
+  const r = ctx.run(pm, ['install'], root);
+  const ms = performance.now() - t0;
+  writeAtomic(path.join(session, 'evidence', '0-install.log'), r.output);
+  j.validation = [{ command: `${pm} install`, exitCode: r.status, evidenceFile: 'evidence/0-install.log' }, ...j.validation.filter((v) => !isInstall(v))];
+  const after = probe(root, lock).side;
+  if (after.exists && !sameSide(before, after)) {
+    if (prior) {
+      prior.target = after;
+      prior.appliedHash = after.hash;
+    } else {
+      j.operations.push({ path: lock, disposition: 'team-preserved', action: 'write', base: before, ours: before, target: after, applied: true, appliedHash: after.hash });
+      j.operations.sort((a, b) => compact(a.path, b.path));
+    }
+    j.planHash = planHash(j);
+  }
+  return { ms, failure: r.status === 0 ? null : `${pm} install exited with ${r.status}; see evidence/0-install.log` };
+}
+
+const isInstall = (v: ValidationResult) => v.command.endsWith(' install');
 
 export function start(ctx: Context, o: StartOptions): number {
   const { root, log } = ctx;
@@ -282,20 +333,8 @@ export function start(ctx: Context, o: StartOptions): number {
     const sessionRel = `.meridian/update/${j.targetVersion}`;
     const keepWarnings = p.missingKept.map((k) => `${k}: kept file is missing; update never recreates it. Restore it or remove it from .meridian/keep.json.`);
 
-    const print = (outcome: Outcome, times: string, next: string) => {
-      for (const line of formatReport(j.operations.map((x) => ({ path: x.path, disposition: x.disposition, action: x.action })), { verbose: o.verbose }).split('\n')) {
-        if (line.startsWith('summary:')) {
-          for (const w of keepWarnings) log(`kept             ${w}`);
-          for (const x of j.operations.filter((y) => y.disposition === 'retired-kept')) log(`retired-kept     ${x.path}  left in place; the new release removed it`);
-          for (const m of j.migrations) log(`migration  ${m.id}  pending`);
-        }
-        log(line);
-      }
-      log(`time: ${times}`);
-      log(`outcome: ${outcome}${outcome === 'dry-run' ? ' (nothing was written)' : ''}`);
-      log(`Next: ${next}`);
-    };
-    const pinned = (flag: string) => `npx zz-meridian@${j.targetVersion} update ${flag}`;
+    const print = (outcome: Outcome, times: string, next: string) => report(ctx, j, { verbose: o.verbose, keepWarnings }, outcome, times, next);
+    const pinned = (flag: string) => pin(j.targetVersion, flag);
 
     if (o.dryRun) {
       print('dry-run', `plan ${secs(planned)}`, `${pinned('').trimEnd()} (from a clean git tree)`);
@@ -351,23 +390,10 @@ export function start(ctx: Context, o: StartOptions): number {
     let installMs = 0;
     let installNote = 'install skipped';
     if (o.install) {
-      const lock = lockfileFor(root, pm);
-      const before = probe(root, lock);
-      const backup = path.join(session, 'backup', lock);
-      if (before.side.exists) writeAtomic(backup, fs.readFileSync(inside(root, lock)));
-      const tInstall = performance.now();
-      const r = ctx.run(pm, ['install'], root);
-      installMs = performance.now() - tInstall;
+      const r = install(ctx, session, j, pm);
+      installMs = r.ms;
       installNote = `install ${secs(installMs)}`;
-      writeAtomic(path.join(session, 'evidence', '0-install.log'), r.output);
-      j.validation.push({ command: `${pm} install`, exitCode: r.status, evidenceFile: 'evidence/0-install.log' });
-      const after = probe(root, lock);
-      if (after.side.exists && !sameSide(before.side, after.side)) {
-        j.operations.push({ path: lock, disposition: 'team-preserved', action: 'write', base: before.side, ours: before.side, target: after.side, applied: true, appliedHash: after.side.hash });
-        j.operations.sort((a, b) => compact(a.path, b.path));
-        j.planHash = planHash(j);
-      }
-      if (r.status !== 0) return failed(`${pm} install exited with ${r.status}; see evidence/0-install.log`, `plan ${secs(planned)} · apply ${secs(applyMs)} · ${installNote}`);
+      if (r.failure) return failed(r.failure, `plan ${secs(planned)} · apply ${secs(applyMs)} · ${installNote}`);
     }
 
     j.phase = pending ? 'needs-resolution' : 'ready';
@@ -375,9 +401,15 @@ export function start(ctx: Context, o: StartOptions): number {
     const outcome: Outcome = pending ? 'migration-required' : o.install ? 'ready-to-finalize' : 'install-pending';
     write(outcome);
     const times = `plan ${secs(planned)} · apply ${secs(applyMs)} · ${installNote}`;
+    if (!pending && o.install) {
+      // Nothing is left to decide and the install ran: finalize in this same command.
+      report(ctx, j, { verbose: o.verbose, keepWarnings }, outcome, times, null);
+      const loaded = loadSession(ctx);
+      return typeof loaded === 'string' ? refuse(loaded) : finalizeLoaded(ctx, loaded);
+    }
     const next = pending
       ? `resolve the items in ${sessionRel}/MERGE.md, then ${pinned('--finalize')} (or ${pinned('--abort')})`
-      : o.install ? `${pinned('--finalize')} (or ${pinned('--abort')})` : `${pinned('--resume')} to install, then ${pinned('--finalize')} (or ${pinned('--abort')})`;
+      : `${pinned('--resume')} to install, then ${pinned('--finalize')} (or ${pinned('--abort')})`;
     print(outcome, times, next);
     return 2;
 
@@ -395,4 +427,406 @@ export function start(ctx: Context, o: StartOptions): number {
   } finally {
     if (locked) fs.rmSync(lockFile, { force: true });
   }
+}
+
+// ── Resume, finalize and abort ───────────────────────────────────────────────────────────────────────
+
+type Loaded = { dir: string; rel: string; journal: UpdateJournal };
+
+const FRAMEWORK = ['next', 'react', 'react-dom'];
+const persistJournal = (l: Loaded) => writeAtomic(path.join(l.dir, 'state.json'), `${JSON.stringify(l.journal, null, 2)}\n`);
+
+/** The manifest file as it is written: sorted files, two-space indent, a final newline. */
+function serializeManifest(m: Manifest): string {
+  const files = Object.fromEntries(Object.entries(m.files).sort(([a], [b]) => a.localeCompare(b)));
+  return `${JSON.stringify({ ...m, files }, null, 2)}\n`;
+}
+
+/**
+ * The one session of this project, when it belongs to the running version and package. This is the only check resume,
+ * finalize and abort share; a string is the reason to refuse.
+ */
+function loadSession(ctx: Context): Loaded | string {
+  const base = path.join(ctx.root, '.meridian', 'update');
+  const names = fs.existsSync(base) ? fs.readdirSync(base).filter((n) => fs.lstatSync(path.join(base, n)).isDirectory()).sort() : [];
+  if (names.length === 0) return 'there is no update session in .meridian/update/; start one with npx zz-meridian@latest update';
+  if (names.length > 1) return `.meridian/update/ holds ${names.length} sessions (${names.join(', ')}); finish or abort all but one by hand`;
+  const rel = `.meridian/update/${names[0]}`;
+  let journal: UpdateJournal;
+  try { journal = parseJournal(fs.readFileSync(path.join(base, names[0]!, 'state.json'), 'utf8')); } catch (e) { return `${rel}/state.json cannot be used: ${(e as Error).message}`; }
+  if (journal.targetVersion !== names[0]) return `${rel}/state.json names target ${journal.targetVersion}, not ${names[0]}`;
+  if (journal.targetVersion !== ctx.version || journal.targetIntegrity !== ctx.targetIntegrity) {
+    return `this session belongs to zz-meridian@${journal.targetVersion} (package ${journal.targetIntegrity.slice(0, 19)}…), not to the running ${ctx.version} (${ctx.targetIntegrity.slice(0, 19)}…); run it as npx zz-meridian@${journal.targetVersion} update --resume, --finalize or --abort`;
+  }
+  return { dir: path.join(base, names[0]!), rel, journal };
+}
+
+/** Takes `.meridian/update.lock`; a string is the reason it could not. Only resume takes over a lock that is stale. */
+function acquire(root: string, takeover: boolean, version: string): string | null {
+  const file = path.join(root, '.meridian', 'update.lock');
+  if (fs.existsSync(file)) {
+    let pid: unknown = null;
+    try { pid = JSON.parse(fs.readFileSync(file, 'utf8')).pid; } catch { /* an unreadable lock is stale */ }
+    if (typeof pid === 'number' && pidAlive(pid)) return `.meridian/update.lock is held by pid ${pid}, which is running; another update is in progress`;
+    if (!takeover) return `.meridian/update.lock was left by an update that is not running (pid ${pid ?? 'unreadable'}); run ${pin(version, '--resume')}, which takes it over after checking the session`;
+    fs.rmSync(file, { force: true });
+  }
+  try {
+    fs.mkdirSync(path.dirname(file), { recursive: true });
+    fs.writeFileSync(file, `${JSON.stringify({ pid: process.pid, startedAt: new Date().toISOString() })}\n`, { flag: 'wx' });
+  } catch { return '.meridian/update.lock was created by another update meanwhile; nothing was changed'; }
+  return null;
+}
+
+function command(ctx: Context, takeover: boolean, body: (l: Loaded) => number): number {
+  let locked = false;
+  try {
+    const l = loadSession(ctx);
+    if (typeof l === 'string') { ctx.log(`zz-meridian update: ${l}`); return 1; }
+    const why = acquire(ctx.root, takeover, l.journal.targetVersion);
+    if (why) { ctx.log(`zz-meridian update: ${why}`); return 1; }
+    locked = true;
+    return body(l);
+  } catch (e) {
+    ctx.log(`zz-meridian update: ${(e as Error).message}`);
+    return 1;
+  } finally {
+    if (locked) fs.rmSync(path.join(ctx.root, '.meridian', 'update.lock'), { force: true });
+  }
+}
+
+/** Updates the phase, outcome and failure lines of `MERGE.md` in place; the rest of the report is left as written. */
+function patchReport(l: Loaded, outcome: string) {
+  const file = path.join(l.dir, 'MERGE.md');
+  if (!fs.existsSync(file)) return;
+  const j = l.journal;
+  let text = fs.readFileSync(file, 'utf8')
+    .replace(/^- Phase: .*$/m, `- Phase: ${j.phase}`)
+    .replace(/^- Outcome: .*$/m, `- Outcome: ${outcome}`)
+    .replace(/^## Failure\n\n[\s\S]*?\n\n(?=## )/m, '');
+  if (j.failure) text = text.replace(/^## What needs you$/m, `## Failure\n\n${j.failure}\n\n## What needs you`);
+  writeAtomic(file, text);
+}
+
+/** Drops the temporary copies and moves the session to `.meridian/history/<version>/<id>/`. */
+function archive(root: string, l: Loaded): string {
+  for (const d of ['base', 'ours', 'new', 'backup']) fs.rmSync(path.join(l.dir, d), { recursive: true, force: true });
+  const folder = path.join(root, '.meridian', 'history', l.journal.targetVersion);
+  fs.mkdirSync(folder, { recursive: true });
+  let dest = path.join(folder, l.journal.id);
+  for (let n = 1; fs.existsSync(dest); n++) dest = path.join(folder, `${l.journal.id}-${n}`);
+  fs.renameSync(l.dir, dest);
+  try { fs.rmdirSync(path.join(root, '.meridian', 'update')); } catch { /* other content stays */ }
+  return path.relative(root, dest).split(path.sep).join('/');
+}
+
+/** The minimum of `x.y.z`, `^x.y.z`, `~x.y.z` or `>=x.y.z`, with the prefix it had. */
+const parseSpec = (spec: string) => {
+  const m = /^(\^|~|>=)?(\d+)\.(\d+)\.(\d+)(?:-[\w.]+)?$/.exec(spec.trim());
+  return m ? { op: m[1] ?? '', v: [Number(m[2]), Number(m[3]), Number(m[4])] as [number, number, number] } : null;
+};
+const cmp = (a: number[], b: number[]) => a[0]! - b[0]! || a[1]! - b[1]! || a[2]! - b[2]!;
+
+/** Whether `version` satisfies a standard specification. A specification this cannot read is not judged. */
+function satisfies(spec: string, version: string): boolean {
+  const want = parseSpec(spec);
+  const have = /^(\d+)\.(\d+)\.(\d+)/.exec(version);
+  if (!want || !have) return true;
+  const v: [number, number, number] = [Number(have[1]), Number(have[2]), Number(have[3])];
+  const [M, m, p] = want.v;
+  if (want.op === '') return cmp(v, want.v) === 0;
+  if (cmp(v, want.v) < 0) return false;
+  if (want.op === '>=') return true;
+  if (want.op === '~') return cmp(v, [M, m + 1, 0]) < 0;
+  return cmp(v, M > 0 ? [M + 1, 0, 0] : m > 0 ? [0, m + 1, 0] : [0, 0, p + 1]) < 0;
+}
+
+/** The entries the plan added or raised, and the framework, checked against what the install put in `node_modules`. */
+function dependencyProblems(root: string, session: string, pm: string): string[] {
+  const read = (file: string): Record<string, any> | null => { try { return JSON.parse(fs.readFileSync(file, 'utf8')); } catch { return null; } };
+  const staged = path.join(session, 'new', 'package.json');
+  const saved = path.join(session, 'backup', 'package.json');
+  const planned = read(fs.existsSync(staged) ? staged : path.join(root, 'package.json'));
+  if (!planned) return [];
+  const original = read(fs.existsSync(saved) ? saved : path.join(root, 'package.json'));
+  const specs = (p: Record<string, any> | null): Record<string, string> => ({ ...p?.devDependencies, ...p?.dependencies });
+  const want = specs(planned);
+  const had = specs(original);
+  const names = Object.keys(want).filter((n) => FRAMEWORK.includes(n) || had[n] !== want[n]).sort();
+  const out: string[] = [];
+  for (const name of names) {
+    const spec = want[name]!;
+    const installed = read(path.join(root, 'node_modules', ...name.split('/'), 'package.json'))?.version;
+    if (typeof installed !== 'string') { out.push(`${name}: planned ${spec} but it is not installed; run ${pm} install`); continue; }
+    const exact = FRAMEWORK.includes(name) && parseSpec(spec) !== null;
+    const ok = exact ? installed === spec.replace(/^[\^~]|^>=/, '') : satisfies(spec, installed);
+    if (!ok) out.push(`${name}: the install resolved ${installed}, which is not the planned ${spec}`);
+  }
+  return out;
+}
+
+const SMALL = (ms: number) => secs(ms);
+
+/** Validates the session in place and, when every check passes on unchanged inputs, completes it. */
+function finalizeLoaded(ctx: Context, l: Loaded): number {
+  const { root, log } = ctx;
+  const j = l.journal;
+  const pm = packageManager(root);
+  const finalizeCmd = pin(j.targetVersion, '--finalize');
+  const stop = (why: string) => { log(`zz-meridian update: ${why}`); return 1; };
+
+  const manifestFile = path.join(root, '.meridian', 'manifest.json');
+  const targetText = serializeManifest(j.targetManifest);
+  if (fs.existsSync(manifestFile) && sha(fs.readFileSync(manifestFile)) === sha(targetText)) {
+    // An interrupted rename: the baseline is already the target's, so only the archival remains.
+    j.phase = 'complete';
+    j.failure = null;
+    persistJournal(l);
+    patchReport(l, 'complete');
+    log(`note: the target manifest was already in place; archived the session to ${archive(root, l)}`);
+    log('outcome: complete');
+    return 0;
+  }
+  if (j.phase === 'prepared' || j.phase === 'applying') return stop(`the update was interrupted before every file was applied; run ${pin(j.targetVersion, '--resume')}`);
+  if (j.phase === 'complete' || j.phase === 'aborted') return stop(`the session is ${j.phase}; it does not belong in .meridian/update/`);
+  const installed = j.validation.find(isInstall);
+  if (!installed) return stop(`the install has not run; run ${pin(j.targetVersion, '--resume')} to install, then ${finalizeCmd}`);
+  if (installed.exitCode !== 0) return stop(`the install failed (see ${l.rel}/${installed.evidenceFile}); fix the cause, then run ${pin(j.targetVersion, '--resume')}`);
+
+  // Readiness.
+  let resolutions: ReturnType<typeof parseResolutions> = [];
+  try { resolutions = parseResolutions(fs.readFileSync(path.join(l.dir, 'resolutions.json'), 'utf8')); } catch (e) {
+    log(`pending: ${(e as Error).message}`);
+    log(`outcome: needs-resolution`);
+    log(`Next: fix ${l.rel}/resolutions.json, then ${finalizeCmd}`);
+    return 2;
+  }
+  const open = unresolved(j, resolutions, (p) => probe(root, p).side.hash);
+  if (open.length) {
+    for (const line of open) log(`pending: ${line}`);
+    log('outcome: needs-resolution');
+    log(`Next: resolve the items in ${l.rel}/MERGE.md${open.some((x) => x.includes('never applied')) ? ` (or run ${pin(j.targetVersion, '--resume')})` : ''}, then ${finalizeCmd}`);
+    return 2;
+  }
+
+  const fail = (why: string, changed: string[] = []) => {
+    j.phase = 'failed';
+    j.failure = changed.length ? `${why}\nChanged paths:\n${changed.map((p) => `- ${p}`).join('\n')}` : why;
+    j.validation = j.validation.filter(isInstall);
+    persistJournal(l);
+    patchReport(l, 'failed');
+    log(`zz-meridian update: ${why}`);
+    for (const p of changed) log(`  ${p}`);
+    log('outcome: failed');
+    log(`Next: fix the cause, then ${finalizeCmd} again (or ${pin(j.targetVersion, '--abort')})`);
+    return 1;
+  };
+
+  const dependencies = dependencyProblems(root, l.dir, pm);
+  if (dependencies.length) return fail(`the installed dependencies do not match the plan:\n${dependencies.map((d) => `  ${d}`).join('\n')}`);
+
+  // Validation, in place: the checks run on the live project and may touch only their permitted outputs.
+  j.phase = 'validating';
+  j.failure = null;
+  j.validation = j.validation.filter(isInstall);
+  persistJournal(l);
+  const paths = j.operations.map((o) => o.path);
+  let seen = takeInventory(root, paths);
+  if (seen.conflicts.length) return fail('an output path cannot be exempted:', seen.conflicts);
+  const steps: Array<{ name: string; args: string[]; shown: string }> = [
+    { name: 'gate', args: ['scripts/gate.ts'], shown: 'node scripts/gate.ts' },
+    { name: 'build', args: ['node_modules/next/dist/bin/next', 'build'], shown: 'node node_modules/next/dist/bin/next build' },
+  ];
+  const took: string[] = [];
+  let n = 1;
+  for (const step of steps) {
+    const t0 = performance.now();
+    const r = ctx.run(process.execPath, step.args, root);
+    took.push(`${step.name} ${SMALL(performance.now() - t0)}`);
+    const evidence = `evidence/${n++}-${step.name}.log`;
+    writeAtomic(path.join(l.dir, evidence), r.output);
+    j.validation.push({ command: step.shown, exitCode: r.status, evidenceFile: evidence });
+    const after = takeInventory(root, paths);
+    if (after.conflicts.length) return fail(`an output path cannot be exempted after ${step.name}:`, after.conflicts);
+    const changed = changedPaths(seen, after);
+    if (changed.length) {
+      return fail(`${step.name} changed protected inputs, so nothing was validated and the current bytes were kept. Review the change and commit it, then finalize again${r.status === 0 ? '' : ` (it also exited with ${r.status}; see ${l.rel}/${evidence})`}`, changed);
+    }
+    if (r.status !== 0) return fail(`${step.name} exited with ${r.status}; see ${l.rel}/${evidence}`);
+    seen = after;
+  }
+
+  // The live candidate must still be what was validated before the baseline moves.
+  const last = takeInventory(root, paths);
+  const drift = changedPaths(seen, last);
+  if (last.conflicts.length || drift.length) return fail('the project changed after it was validated; the current bytes were kept', [...last.conflicts, ...drift]);
+
+  writeAtomic(manifestFile, targetText);
+  j.phase = 'complete';
+  persistJournal(l);
+  patchReport(l, 'complete');
+  const where = archive(root, l);
+  log(`time: ${took.join(' · ')}`);
+  log(`browser: not run (run ${pm} run verify for the browser checks)`);
+  log(`archived: ${where}`);
+  log('outcome: complete');
+  return 0;
+}
+
+/** Finalizes the session of this project: validates it and, when every check passes, makes the target the baseline. */
+export function finalize(ctx: Context, o: FinalizeOptions): number {
+  if (o.verify) {
+    ctx.log(`zz-meridian update: update --finalize --verify arrives with the bounded default smoke in this release's verify; run ${packageManager(ctx.root)} run verify after finalizing`);
+    return 1;
+  }
+  return command(ctx, false, (l) => finalizeLoaded(ctx, l));
+}
+
+/** Continues an interrupted update: applies what is unapplied without touching a later edit, then installs. */
+export function resume(ctx: Context, o: ResumeOptions): number {
+  return command(ctx, true, (l) => {
+    const { root, log } = ctx;
+    const j = l.journal;
+    if (j.phase === 'complete' || j.phase === 'aborted') return (log(`zz-meridian update: the session is ${j.phase}; ${j.phase === 'complete' ? `run ${pin(j.targetVersion, '--finalize')} to finish archiving it` : 'nothing to resume'}`), 1);
+    if (planHash(j) !== j.planHash) return (log('zz-meridian update: the plan was edited (its hash no longer matches state.json); nothing was applied'), 1);
+
+    // Decide every unapplied operation before writing any, so one edited path stops the lot.
+    const todo: FileOperation[] = [];
+    const stopped: string[] = [];
+    for (const op of j.operations) {
+      if ((op.action !== 'write' && op.action !== 'delete') || op.applied) continue;
+      const now = probe(root, op.path);
+      if (now.unsafe) stopped.push(`${op.path}: a symbolic link or not a regular file is in the way`);
+      else if (sameSide(now.side, op.ours)) {
+        const staged = path.join(l.dir, 'new', op.path);
+        if (op.action === 'write' && !(fs.existsSync(staged) && sha(fs.readFileSync(staged)) === op.target.hash)) stopped.push(`${op.path}: the staged new/ copy is missing or does not match the plan`);
+        else todo.push(op);
+      } else if (sameSide(now.side, op.target)) {
+        op.applied = true;
+        op.appliedHash = op.target.hash;
+      } else stopped.push(`${op.path}: it is neither the recorded original nor the planned result, so it was edited since; nothing was written for it`);
+    }
+    if (stopped.length) {
+      j.phase = 'failed';
+      j.failure = `resume stopped; these paths changed since the plan was made:\n${stopped.map((s) => `- ${s}`).join('\n')}`;
+      persistJournal(l);
+      patchReport(l, 'failed');
+      log('zz-meridian update: resume stopped; these paths changed since the plan was made, and nothing was written for them:');
+      for (const s of stopped) log(`  ${s}`);
+      log(`Next: reconcile them by hand, then ${pin(j.targetVersion, '--resume')} (or ${pin(j.targetVersion, '--abort')})`);
+      return 1;
+    }
+
+    const t0 = performance.now();
+    j.phase = 'applying';
+    persistJournal(l);
+    for (const op of todo) {
+      const abs = inside(root, op.path);
+      if (op.action === 'delete') {
+        fs.unlinkSync(abs);
+        op.appliedHash = null;
+      } else {
+        writeAtomic(abs, fs.readFileSync(path.join(l.dir, 'new', op.path)), op.ours.exists ? fs.statSync(abs).mode : undefined);
+        op.appliedHash = op.target.hash;
+      }
+      op.applied = true;
+      persistJournal(l);
+    }
+    const applyMs = performance.now() - t0;
+
+    const pm = packageManager(root);
+    const done = j.validation.find(isInstall);
+    let installNote = done?.exitCode === 0 ? 'install already ran' : 'install skipped';
+    if (o.install && done?.exitCode !== 0) {
+      const r = install(ctx, l.dir, j, pm);
+      installNote = `install ${secs(r.ms)}`;
+      if (r.failure) {
+        j.phase = 'failed';
+        j.failure = r.failure;
+        persistJournal(l);
+        patchReport(l, 'failed');
+        log(`zz-meridian update: ${r.failure}`);
+        report(ctx, j, { verbose: o.verbose, keepWarnings: [] }, 'failed', `apply ${secs(applyMs)} · ${installNote}`, `fix the cause, then ${pin(j.targetVersion, '--resume')} (or ${pin(j.targetVersion, '--abort')})`);
+        return 1;
+      }
+    }
+    const installed = j.validation.find(isInstall)?.exitCode === 0;
+    const pending = j.operations.some((x) => x.action === 'stage') || j.migrations.length > 0;
+    j.phase = pending ? 'needs-resolution' : 'ready';
+    j.failure = null;
+    persistJournal(l);
+    const outcome = pending ? 'migration-required' : installed ? 'ready-to-finalize' : 'install-pending';
+    patchReport(l, outcome);
+    const times = `apply ${secs(applyMs)} · ${installNote}`;
+    if (!pending && installed) {
+      report(ctx, j, { verbose: o.verbose, keepWarnings: [] }, outcome, times, null);
+      return finalizeLoaded(ctx, l);
+    }
+    const next = pending
+      ? `resolve the items in ${l.rel}/MERGE.md, then ${pin(j.targetVersion, '--finalize')} (or ${pin(j.targetVersion, '--abort')})`
+      : `${pin(j.targetVersion, '--resume')} to install, then ${pin(j.targetVersion, '--finalize')} (or ${pin(j.targetVersion, '--abort')})`;
+    report(ctx, j, { verbose: o.verbose, keepWarnings: [] }, outcome, times, next);
+    return 2;
+  });
+}
+
+/** Rolls the update back: only updater preimages and only when no later edit exists on any updater-touched path. */
+export function abort(ctx: Context): number {
+  return command(ctx, false, (l) => {
+    const { root, log } = ctx;
+    const j = l.journal;
+    if (j.phase === 'complete' || j.phase === 'aborted') return (log(`zz-meridian update: the session is ${j.phase}; there is nothing to abort`), 1);
+    const manifestFile = path.join(root, '.meridian', 'manifest.json');
+    if (fs.existsSync(manifestFile) && sha(fs.readFileSync(manifestFile)) === sha(serializeManifest(j.targetManifest))) {
+      log(`zz-meridian update: the target manifest is already in place, so the update is complete; run ${pin(j.targetVersion, '--finalize')} to archive it`);
+      return 1;
+    }
+
+    const restore: FileOperation[] = [];
+    const later: string[] = [];
+    for (const op of j.operations) {
+      if (op.action !== 'write' && op.action !== 'delete') continue;
+      const now = probe(root, op.path);
+      if (now.unsafe) later.push(op.path);
+      else if (sameSide(now.side, op.ours)) continue;
+      else if (sameSide(now.side, op.applied ? sideOf(op.appliedHash) : op.target)) restore.push(op);
+      else later.push(op.path);
+    }
+    const unusable = restore.filter((op) => {
+      if (!op.ours.exists) return false;
+      const b = path.join(l.dir, 'backup', op.path);
+      return !(fs.existsSync(b) && sha(fs.readFileSync(b)) === op.ours.hash);
+    }).map((op) => op.path);
+    if (later.length || unusable.length) {
+      log('zz-meridian update: refusing to roll back; nothing was changed and every backup was kept.');
+      for (const p of later) log(`  ${p}  edited after the update; backup: ${l.rel}/backup/${p}`);
+      for (const p of unusable) log(`  ${p}  its backup is missing or altered, so it cannot be restored`);
+      log(`Next: reconcile these paths by hand (the backups are in ${l.rel}/backup/), then ${pin(j.targetVersion, '--abort')} again`);
+      return 1;
+    }
+
+    const restored = new Set<string>();
+    for (const op of restore) {
+      const abs = inside(root, op.path);
+      if (op.ours.exists) {
+        writeAtomic(abs, fs.readFileSync(path.join(l.dir, 'backup', op.path)), fs.existsSync(abs) ? fs.statSync(abs).mode : undefined);
+      } else {
+        fs.rmSync(abs, { force: true });
+        for (let d = path.dirname(abs); d !== root && d.startsWith(root + path.sep); d = path.dirname(d)) {
+          try { fs.rmdirSync(d); } catch { break; }
+        }
+      }
+      restored.add(op.path);
+    }
+    j.phase = 'aborted';
+    persistJournal(l);
+    patchReport(l, 'aborted');
+    const where = archive(root, l);
+    const pm = packageManager(root);
+    log(`restored ${restore.length} ${restore.length === 1 ? 'path' : 'paths'}; the original manifest was never changed`);
+    if ([...restored].some((p) => Object.values(LOCKFILES).includes(p as never) || p === 'bun.lockb')) log(`The lockfile was restored; node_modules was not. Run ${pm} install.`);
+    log(`archived: ${where}`);
+    log('outcome: aborted');
+    return 0;
+  });
 }

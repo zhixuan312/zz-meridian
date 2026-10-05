@@ -92,6 +92,14 @@ the variables are set, read per request, so no rebuild is needed: `ASSISTANT_PRO
 
 ## Brand beyond the accent
 
+To change the brand of an adopted or created project, run `npx zz-meridian@<installed version> brand [brand flags]` (the
+flags are the ones `adopt` takes, for example `--hex '#2E6BE4'` or `--name "Acme Ops"`). It rewrites the brand outputs
+under `tokens/` and `src/styles/` and `src/app.config.ts`, and records the new brand and the new baseline hashes in
+`optional:.meridian/manifest.json` together, so a later `update` replays the brand you chose. It needs a clean git tree, and it
+changes nothing and says why when an update is in progress, the version differs from the manifest's, a brand output was
+edited by hand, or `src/app.config.ts` is not in the shape `scripts/brand.ts` reads. The product's own `pnpm brand`
+stays a local edit: it is not recorded, so a later `update` would replay the old brand over it.
+
 Branding is configuration, not source patching: `scripts/brand.ts` edits `src/app.config.ts` and the token files, and
 never `src/lib/preferences.ts`, which reads the accent and theme defaults from the app configuration.
 Logo: set `logo: '/logo.svg'` in `src/app.config.ts`, a root-relative local SVG served from `public/`. `AppMark` renders it

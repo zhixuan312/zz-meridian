@@ -89,9 +89,67 @@ Proposed team changes in `MERGE.md` are advice. Make them yourself, in the proje
 ## The pinned commands
 
 `MERGE.md` and the `Next:` line name the release that started the session, for example
-`npx zz-meridian@0.5.0 update --finalize`. Run exactly that command: `--resume` (continue an interrupted apply or run a
-skipped install), `--finalize` (validate and complete) and `--abort` (restore what the update changed) belong to the
-version and package that created the session.
+`npx zz-meridian@0.5.0 update --finalize`. Run exactly that command: `--resume`, `--finalize` and `--abort` belong to
+the version and package that created the session, and refuse anything else (the message names the right command).
+They read the session's own copies and never ask the registry.
+
+### `--resume`: continue an interrupted update
+
+Use it after a killed run, a failed apply, or an update started with `--no-install`. It checks the session's plan, then
+looks at every operation that was not recorded as applied. A path that is still its recorded original is applied from
+`new/` (or deleted); one that already is the planned result is recorded as applied; anything else was edited since,
+so resume stops, names it and writes nothing for it. A later edit is never overwritten. It then runs the install if
+that is missing or failed (skip it with `--no-install`) and ends as a plain update does: exit `2` with the items to
+resolve, or finalize at once when nothing is left. It is also the only command that takes over a `optional:.meridian/update.lock`
+left by a process that is no longer running, after it has read the journal.
+
+### `--finalize`: validate and complete
+
+1. It refuses an interrupted session (use `--resume`), a session whose install did not run or failed, and `--verify`
+   (the bounded browser smoke arrives later; run `<pm> run verify` after finalizing).
+2. Every item must be resolved and every resolution current (exit `2` otherwise, naming each open item).
+3. The installed dependencies must match the plan: each entry the update added or raised, and `next`, `react` and
+   `react-dom`, must be installed at a version that satisfies the planned specification; the framework must be
+   exactly the planned version.
+4. It runs the project gate (which already type checks) and then one `next build`, in place, with no separate `tsc`.
+   Their output goes to `evidence/`. Before and after each command it compares the protected inputs.
+5. When both pass and the inputs still match, it writes the target manifest atomically, marks the session complete and
+   moves it to `.meridian/history/<version>/<id>/`, keeping `state.json`, `MERGE.md`, `resolutions.json` and
+   `evidence/` and dropping the temporary `base/`, `ours/`, `new/` and `backup/`. A rename that was interrupted is
+   recognized by the manifest already being the target's, and only the archival is finished.
+
+A failing check, a failed dependency check or a protected input that changed keeps the session and the project's
+current bytes, records the reason in `state.json` and `MERGE.md`, and exits `1`; fix the cause and finalize again.
+
+**Protected and permitted.** Every path in the project is a protected input, except `.git`, dependency contents,
+`optional:.meridian/update/`, `optional:.meridian/history/`, `optional:.meridian/update.lock` and the permitted outputs: the Next build folder
+(`distDir` when `next.config` sets it as a string, else `.next`), `next-env.d.ts` as Next writes it, `out/`,
+`coverage/`, and the TypeScript build-info file (`tsBuildInfoFile`, or `tsconfig.tsbuildinfo` for an incremental
+build). A protected path is fingerprinted by existence and SHA-256, in memory; `.env*` files are fingerprinted the same
+way, and neither the fingerprints nor any secret is ever written. An output that is a symbolic link, leaves the
+project, overlaps a managed or kept file or is a folder holding tracked files is not exempt: finalize stops with that
+conflict. A protected file a check rewrites, such as a `tsconfig.json` that Next updates, also fails: review and
+commit the change, then finalize again.
+
+**What "complete" means.** The gate and one production build passed on the live project, the files are the target
+release's (plus the team's resolutions), and `optional:.meridian/manifest.json` now records the target as the baseline for the
+next update. It does not mean the browser checks ran: the output says `browser: not run`, and `<pm> run verify` runs
+them.
+
+A zero-conflict update finalizes in the same command: `update` prints the conflict summary and then the finalize
+output, exit `0`.
+
+### `--abort`: roll back
+
+It works on an interrupted session, one without an install and one whose install failed. Before restoring anything it
+checks that every path the update wrote (the lockfile included) is still the image the update wrote, or already its
+original. If a later edit exists, abort refuses, keeps every backup and lists the paths; reconcile them by hand and run
+it again. Otherwise it restores only the originals from `backup/`, deletes only what the update created, leaves the
+manifest as it was and archives the session as `aborted`. When the lockfile was restored it says so: run `<pm> install`,
+because `node_modules` is not restored. No git reset or clean is ever run.
+
+Exit codes of `--finalize`: `0` complete, `2` still pending, `1` failure or refusal. `--resume` ends like a plain
+update (`2` pending, `0` finalized, `1` failure). `--abort`: `0` aborted, `1` refused.
 
 ## What to do with it
 
