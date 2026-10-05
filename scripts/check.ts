@@ -283,9 +283,7 @@ const retirements: Retirement[] = [];
 // the address in. A `connection()` anywhere else makes the page behind it wait for the request, and a template whose
 // pages all prerender has none. In a product those pages are the team's, so the rule is the template's alone.
 if (!fs.existsSync(manifestFile)) {
-  // The members and keys pages still read their mutable rows per request; they leave this list once they read through
-  // src/data's cached, tagged read().
-  const BOUNDARIES = [`${APP_DIR}/(dashboard)/layout.tsx`, `${APP_DIR}/not-found.tsx`, `${APP_DIR}/(dashboard)/members/page.tsx`, `${APP_DIR}/(dashboard)/keys/page.tsx`];
+  const BOUNDARIES = [`${APP_DIR}/(dashboard)/layout.tsx`, `${APP_DIR}/not-found.tsx`];
   for (const f of [APP_DIR, 'src'].flatMap((d) => walk(d, /\.tsx?$/))) {
     if (BOUNDARIES.includes(f.split(path.sep).join('/'))) continue;
     // Comments blanked, not removed, so a line number is the file's.
@@ -312,7 +310,7 @@ const SWEPT = /^src\/(lib|data)\//;
  * Meridian gave it. Naming them here is the fix: "this module is a library a product may use in part" is a decision
  * about the module, so it is declared rather than inferred, and the list is short on purpose.
  */
-const TOOLKIT = /^src\/lib\/(format|color)\.ts$/;
+const TOOLKIT = /^src\/lib\/(format|color|collection|live)\.ts$/;
 // In a project built on Meridian (adopted or created), Meridian's own modules are a library it uses in part: a newer
 // release may add an export the team's code does not use yet. Only the project's own src/lib and src/data are swept.
 // The template, with no manifest, is swept whole.

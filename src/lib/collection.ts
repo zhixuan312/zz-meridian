@@ -5,7 +5,10 @@ type Op = 'create' | 'update' | 'remove';
 type Scalar = string | number | boolean | null;
 type Value = Scalar | Scalar[];
 type Condition = { field: string; op: 'eq' | 'ne' | 'gt' | 'lt' | 'contains' | 'in'; value: Value };
-type Query = { where?: Condition[]; sort?: { field: string; dir: 'asc' | 'desc' }; limit?: number };
+export type Query = { where?: Condition[]; sort?: { field: string; dir: 'asc' | 'desc' }; limit?: number; offset?: number };
+
+/** What a browser may be told about a change: which collection, and nothing about the rows, the tenant or the cache. */
+export type LiveEvent = { collection: string };
 
 export type Collection<T extends Record<string, unknown>, K extends keyof T & string> = {
   name: string;
@@ -22,6 +25,8 @@ export type Collection<T extends Record<string, unknown>, K extends keyof T & st
   key: K;
   title: (row: T) => string;
   query: (q: Query) => Promise<{ rows: T[]; total: number }>;
+  /** Present on a collection already bound to an authorized scope: calls `listener` after each committed write. */
+  subscribe?: (listener: (event: LiveEvent) => void) => () => void;
   /**
    * A plain record, validated by `fields`, and never `Omit<T, K>`.
    *
@@ -42,12 +47,54 @@ export type Collection<T extends Record<string, unknown>, K extends keyof T & st
 export type AnyCollection = Collection<any, any>;
 
 /**
- * One store per name per process, on globalThis, so a route handler, a server action and a page share it. `next` is the
- * next id's number: it only grows, so a removed record's id is never given to a new one.
+ * One store per tenant and name per process, on globalThis, so a route handler, a server action and a page share it.
+ * `next` is the next id's number: it only grows, so a removed record's id is never given to a new one.
  */
 type Store = { rows: Record<string, unknown>[]; next: number };
 const STORES = Symbol.for('zz-meridian.collections');
 const stores = () => ((globalThis as Record<symbol, unknown>)[STORES] ??= new Map<string, Store>()) as Map<string, Store>;
+const storeKey = (tenantId: string, name: string) => JSON.stringify([tenantId, name]);
+
+/** The listeners of each tenant's collection, on globalThis for the same reason as the stores. */
+const LIVE = Symbol.for('zz-meridian.live');
+const listeners = () => ((globalThis as Record<symbol, unknown>)[LIVE] ??= new Map<string, Set<(e: LiveEvent) => void>>()) as Map<string, Set<(e: LiveEvent) => void>>;
+
+/** How many listeners a tenant's collection has: for tests and diagnostics. */
+export const liveListeners = (tenantId: string, name: string): number => listeners().get(storeKey(tenantId, name))?.size ?? 0;
+
+/** Forget every store and listener: for tests. */
+export function resetCollections(): void {
+  stores().clear();
+  listeners().clear();
+}
+
+const OPS = ['eq', 'ne', 'gt', 'lt', 'contains', 'in'];
+const DEFAULT_LIMIT = 100;
+const MAX_LIMIT = 500;
+const MAX_OFFSET = 100_000;
+
+/**
+ * A query with every default applied and every limit held: `limit` (default 100, at most 500), `offset` (a whole number
+ * from 0 to 100000) and `sort` (the key ascending when none is asked). Only the collection's `fields`, its key and its
+ * `derived` fields may be named, and only the six operators; anything else throws an Error naming it.
+ */
+export function normalizeQuery(c: AnyCollection, q: Query = {}): Required<Pick<Query, 'limit' | 'offset' | 'sort'>> & Pick<Query, 'where'> {
+  const allowed = new Set<string>([c.key, ...Object.keys(c.fields.shape), ...((c.derived ?? []) as string[])]);
+  const field = (f: string) => {
+    if (!allowed.has(f)) throw new Error(`${c.name} has no field ${JSON.stringify(f)}`);
+    return f;
+  };
+  const where = (q.where ?? []).map((w) => {
+    if (!OPS.includes(w.op)) throw new Error(`Unsupported operator ${JSON.stringify(w.op)}`);
+    return { field: field(w.field), op: w.op, value: w.value };
+  });
+  const sort = q.sort ? { field: field(q.sort.field), dir: q.sort.dir === 'desc' ? 'desc' as const : 'asc' as const } : { field: c.key as string, dir: 'asc' as const };
+  const limit = q.limit ?? DEFAULT_LIMIT;
+  if (!Number.isInteger(limit) || limit < 1) throw new Error('limit must be a whole number of at least 1');
+  const offset = q.offset ?? 0;
+  if (!Number.isInteger(offset) || offset < 0 || offset > MAX_OFFSET) throw new Error(`offset must be a whole number from 0 to ${MAX_OFFSET}`);
+  return { where, sort, limit: Math.min(limit, MAX_LIMIT), offset };
+}
 
 /** Code-point order for strings, numeric order for numbers. */
 function compare(a: unknown, b: unknown): number {
@@ -83,14 +130,23 @@ export function arrayCollection<T extends Record<string, unknown>, K extends key
   allow: readonly Op[];
   pageOnly?: Op[];
   hidden?: (keyof T)[];
+  /** The tenant whose store and listeners this collection binds; the sample has one. */
+  tenantId?: string;
 }): Collection<T, K> {
   const { name, key, allow } = def;
+  const tenantId = def.tenantId ?? 'demo';
+  const sk = storeKey(tenantId, name);
   if (key in def.fields.shape) throw new Error(`${name}: fields describe the record without its key, so they cannot name ${key}`);
-  if (!stores().has(name)) {
+  if (!stores().has(sk)) {
     const top = def.rows.reduce((m, r) => Math.max(m, Number(/_(\d+)$/.exec(String(r[key]))?.[1] ?? 0)), 0);
-    stores().set(name, { rows: structuredClone(def.rows), next: top + 1 });
+    stores().set(sk, { rows: structuredClone(def.rows), next: top + 1 });
   }
-  const store = () => stores().get(name)!;
+  const store = () => stores().get(sk)!;
+  const emit = () => {
+    for (const l of [...(listeners().get(sk) ?? [])]) {
+      try { l({ collection: name }); } catch { /* a listener's failure is never the write's */ }
+    }
+  };
   const rows = () => store().rows as T[];
   const copy = <R,>(r: R): R => structuredClone(r);
   const missing = (ids: string[]) => ids.filter((id) => !rows().some((r) => r[key] === id));
@@ -113,23 +169,36 @@ export function arrayCollection<T extends Record<string, unknown>, K extends key
     title: def.title,
     pageOnly: def.pageOnly,
     hidden: def.hidden,
-    async query({ where = [], sort, limit }) {
+    async query({ where = [], sort, limit, offset = 0 }) {
       const hits = rows().filter((r) => where.every((w) => matches(r, w)));
       if (sort) {
         const s = sort.dir === 'desc' ? -1 : 1;
         hits.sort((a, b) => {
           const x = a[sort.field], y = b[sort.field];
-          if (x == null || y == null) return x == null ? (y == null ? 0 : 1) : -1;
-          return s * compare(x, y);
+          if (x != null && y != null) {
+            const d = s * compare(x, y);
+            if (d) return d;
+          } else if (x != null || y != null) return x == null ? 1 : -1;
+          return compare(a[key], b[key]);
         });
       }
-      return { rows: copy(limit === undefined ? hits : hits.slice(0, limit)), total: hits.length };
+      return { rows: copy(limit === undefined ? hits.slice(offset) : hits.slice(offset, offset + limit)), total: hits.length };
+    },
+    subscribe(listener) {
+      const set = listeners().get(sk) ?? new Set();
+      listeners().set(sk, set);
+      set.add(listener);
+      return () => {
+        set.delete(listener);
+        if (!set.size && listeners().get(sk) === set) listeners().delete(sk);
+      };
     },
   };
   if (allow.includes('create')) {
     c.create = async (input) => {
       const row = { ...def.fields.parse(input), [key]: `${name}_${store().next++}` } as unknown as T;
       rows().push(row);
+      emit();
       return copy(row);
     };
   }
@@ -138,6 +207,7 @@ export function arrayCollection<T extends Record<string, unknown>, K extends key
       const set = patchOf(def.fields).parse(patch);
       const hit = pick(ids);
       for (const r of hit) Object.assign(r, set);
+      emit();
       return copy(hit);
     };
   }
@@ -145,6 +215,7 @@ export function arrayCollection<T extends Record<string, unknown>, K extends key
     c.remove = async (ids) => {
       const hit = new Set(pick(ids));
       store().rows = rows().filter((r) => !hit.has(r));
+      emit();
       return hit.size;
     };
   }

@@ -8,4 +8,8 @@ Your product's data seam: the only place pages, actions and the assistant read d
 - Return `null` for "not measured"; the formatters in `src/lib/format.ts` render it as a dash.
 - Shape records to the types the patterns define (`ActivityEvent` in the activity feed, `Incident` in the incident card, `Service` in the status list), so they render without adapters.
 
+Two more files carry the access seam. `access.ts` says who the current request is and what they may do: `resolveAccess()` returns a scope (tenant, subject and an authorization key), `collectionFor(scope, name)` returns that scope's own collection, and `can(scope, name, op, ids?)` answers whether an operation, and every record it touches, is allowed. `read.ts` is how a page reads: `read(name, query)` resolves access first, refuses what the caller may not read, and caches the result under a tag for that tenant's collection. A server action authorizes with `can`, writes through `collectionFor`, and after the commit calls `updateTag(collectionTag(tenantId, name))`, so the next read is fresh.
+
+The sample's policy is one owner of one tenant, and its collections live in one process's memory, so a second server process would not see a write. A product replaces the policy with its session and binds each collection's database predicate to the scope: a cache key alone is not a permission check, and a read it cannot key on what the caller may see must stay uncached.
+
 The template's own sample, ZZ Meridian's own dashboard, lives in `src/system/fixtures/`, because the Design Atlas and every card preview read it; `collections.ts` serves it as each collection's `rows`. Leave it in place, and replace each `rows` with your API and `clock` with `new Date()`.

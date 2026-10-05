@@ -117,3 +117,16 @@ describe('queryInput', () => {
     expect(await c.create!({ name: 'A', team: 'Sales', seats: 1, lastActive: null, band: 'large' })).not.toHaveProperty('band');
   });
 });
+
+describe('offset and ties', () => {
+  test('offset skips before the limit applies, and total still counts every hit', async () => {
+    const r = await people().query({ sort: { field: 'seats', dir: 'asc' }, offset: 1, limit: 1 });
+    expect(names(r)).toEqual(['Amara Okafor']);
+    expect(r.total).toBe(3);
+  });
+
+  test('equal sort values fall back to the key', async () => {
+    const rows = [{ ...ROWS[1], id: 'p_9' }, { ...ROWS[1], id: 'p_8' }];
+    expect((await people(rows).query({ sort: { field: 'team', dir: 'desc' } })).rows.map((p) => p.id)).toEqual(['p_8', 'p_9']);
+  });
+});

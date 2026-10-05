@@ -105,7 +105,7 @@ That puts the skill in `~/.agents/skills/zz-meridian` (Codex) and `~/.claude/ski
 pnpm install
 pnpm dev                 # the template at /, the Design Atlas at /system
 pnpm gate                # tokens fresh, registry fresh, specs consistent, contrast in every theme and accent, types, tests
-pnpm verify              # the gate, a production build, and the browser audit of every page against the built app
+pnpm verify              # the gate, a production build and its route policy, and the browser audit of every page against the built app
 pnpm brand --name "Acme" --hue 25 --chroma 0.16   # rename and rebrand in place
 ```
 

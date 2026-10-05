@@ -69,5 +69,5 @@ The console's assistant is off until you set the `ASSISTANT_*` variables (`.env.
 ## Before you ship
 
 ```sh
-pnpm verify    # the gate, a production build, and the browser audit of every page against the built app
+pnpm verify    # the gate, a production build and its route policy, and the browser audit of every page against the built app
 ```

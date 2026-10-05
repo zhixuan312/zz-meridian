@@ -1,12 +1,11 @@
-import { connection } from 'next/server';
-import { clock, members } from '@/data/collections';
+import { read } from '@/data/read';
 import { inviteMember, removeMember, setMemberStatus } from './actions';
 import { MembersView } from '@/views/members';
+import type { Member } from '@/system/fixtures/sample-members';
 
 export const metadata = { title: 'Members' };
 
 export default async function MembersPage() {
-  await connection();
-  const { rows } = await members.query({ sort: { field: 'joined', dir: 'desc' } });
-  return <MembersView rows={rows} now={clock().toISOString()} actions={{ invite: inviteMember, setStatus: setMemberStatus, remove: removeMember }} />;
+  const { rows, observedAt } = await read('members', { sort: { field: 'joined', dir: 'desc' } });
+  return <MembersView rows={rows as Member[]} now={observedAt} actions={{ invite: inviteMember, setStatus: setMemberStatus, remove: removeMember }} />;
 }

@@ -34,7 +34,7 @@ const payload = [
 
 describe('adoptSetOf', () => {
   it("applies adopt's copy rule to the files the payload has", () => {
-    expect(adoptSetOf(payload)).toEqual(['scripts/check.ts', 'src/components/ui/button/index.tsx', 'src/lib/assistant/prompt.ts', 'src/lib/cn.ts', 'src/styles/tokens.css', 'src/views/console-chrome.tsx', 'tests/setup.ts', 'tokens/zz-meridian.resolver.json']);
+    expect(adoptSetOf(payload)).toEqual(['scripts/check.ts', 'src/components/ui/button/index.tsx', 'src/lib/assistant/prompt.ts', 'src/lib/cn.ts', 'src/lib/collection.ts', 'src/styles/tokens.css', 'src/views/console-chrome.tsx', 'tests/setup.ts', 'tokens/zz-meridian.resolver.json']);
   });
 });
 
@@ -42,7 +42,7 @@ describe('managedPaths', () => {
   for (const route of ['adopt', 'create'] as const) {
     it(`gives the canonical managed set for ${route}`, () => {
       const s = managedPaths(payload, route);
-      for (const p of ['tokens/zz-meridian.resolver.json', 'src/styles/tokens.css', 'src/components/ui/button/index.tsx', 'scripts/check.ts', 'src/lib/cn.ts', 'src/lib/assistant/prompt.ts', 'src/views/console-chrome.tsx', 'tests/setup.ts', '.agents/skills/zz-meridian/SKILL.md', '.claude/skills/zz-meridian/SKILL.md']) expect(s.has(p), p).toBe(true);
+      for (const p of ['tokens/zz-meridian.resolver.json', 'src/styles/tokens.css', 'src/components/ui/button/index.tsx', 'scripts/check.ts', 'src/lib/cn.ts', 'src/lib/collection.ts', 'src/lib/assistant/prompt.ts', 'src/views/console-chrome.tsx', 'tests/setup.ts', '.agents/skills/zz-meridian/SKILL.md', '.claude/skills/zz-meridian/SKILL.md']) expect(s.has(p), p).toBe(true);
       for (const p of ['src/components/ui/button/README.md', 'src/components/ui/button/preview.tsx', 'scripts/verify.config.ts', 'src/views/members.tsx', 'app/(dashboard)/page.tsx', 'src/app.config.ts', 'skills/zz-meridian/SKILL.md', 'docs/brief.md']) expect(s.has(p), p).toBe(false);
     });
   }

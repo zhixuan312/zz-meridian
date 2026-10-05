@@ -36,6 +36,11 @@ Every release of ZZ Meridian, newest first. Versions follow semver: a removed or
   - Every console route has its own route-shaped `loading.tsx`. The Overview page moved to `app/(dashboard)/(overview)/` (same URL), and the shared `app/(dashboard)/loading.tsx` is gone.
   - `pnpm verify` runs `node scripts/route-policy.ts` after its production build. It fails any non-API route that is neither static nor partial, unless `scripts/verify.config.ts` declares it in `requestDependentRoutes` with a reason.
   - In the template, `node scripts/check.ts` fails on a `connection()` call outside the console layout and the not-found page. A product's own pages are its own, so the rule is silent once `.meridian/manifest.json` exists.
+- **Pages read through an authorized, scoped and cached `read()`, and writes invalidate exactly their tenant's collection.**
+  - `src/data/access.ts` (`resolveAccess`, `collectionFor`, `can`) says who the request is and what it may do. The sample binds one tenant and one owner; a product replaces the policy with its session and database predicates.
+  - `src/data/read.ts` exports `read(name, query)`, which refuses a collection the caller may not read before any cached code runs. It caches per scope and query with the profile `{ stale: 30, revalidate: 60, expire: 3600 }`, tags the tenant's collection as `collection:<sha256>`, and returns the time the read ran as `observedAt`.
+  - The members and keys pages read through `read()` and no longer call `connection()`. Their actions authorize the operation and every record they touch, write through the caller's own collection, and call `updateTag` only after the commit.
+  - Breaking: `src/lib/collection.ts` is now Meridian's, and `adopt` adds `zod`. `Query` gains `offset`, and `normalizeQuery` defaults and caps it, rejects unknown fields and operators, and sorts by the key last. A `Collection` may `subscribe`; `arrayCollection` takes a `tenantId`, with a store and listeners of its own.
 - **Breaking: the clock is always the caller's.** `formatRelative`, `Freshness`, `ShellTools` and `AlertsPanel` take a required `now`, the data's clock; none of them reads the browser's clock any more.
 - **One rule says which files are Meridian's.**
   - `cli/src/ownership.ts` decides it for `adopt`, `create` and `update`; `references/ownership.md` in the skill is the same rule, rendered.
