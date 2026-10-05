@@ -46,12 +46,13 @@ Meridian's rules for the embed surface:
 6. **Respect the safe area.** Padding adds `safeAreaInsets` on mobile hosts.
 7. **Act through the host.** A button in an embed calls a tool or sends a message; it never navigates the frame. A destructive action is never a bare button: it is a Proposal marked critical, and it runs only when the person approves.
 
-The token bridge, applied by `EmbedFrame` (`data-surface="embed"`), maps the host's variables onto Meridian's roles and falls back to Meridian's own value when the host sends nothing:
+The token bridge, applied by `EmbedSurface` on every embed route (`app/embed/layout.tsx`, `data-surface="embed"`), maps the host's variables onto Meridian's roles and falls back to Meridian's own value when the host sends nothing:
 
 | Meridian role | Host variable |
 |---|---|
 | `ground` | transparent |
 | `surface` | `--color-background-primary` |
+| `surface-raised` | `--color-background-primary` |
 | `surface-sunk` | `--color-background-secondary` |
 | `ink` | `--color-text-primary` |
 | `ink-2` | `--color-text-secondary` |
@@ -59,6 +60,7 @@ The token bridge, applied by `EmbedFrame` (`data-surface="embed"`), maps the hos
 | `line` | `--color-border-primary` |
 | `line-strong` | `--color-border-secondary` |
 | `font-sans` | `--font-sans` |
+| `radius-md` | `--border-radius-md` |
 | `radius-lg` | `--border-radius-lg` |
 
 What does not bridge: the accent, the status colours and the chart slots (they carry meaning, and the host has no equivalent), and figures (always Meridian's semi-condensed setting, so a number reads the same in the console and in a chat).
@@ -105,7 +107,7 @@ What exists, by layer, and how it changes per surface. "Same" means the card nee
 
 | Group | Cards |
 |---|---|
-| Actions | Button, Icon button, Menu, Link |
+| Actions | Button, Icon button, Menu |
 | Input | Field, Input, Textarea, Select, Checkbox, Radio group, Switch, Segmented, Search input |
 | Display | Card, Badge, Status dot, Delta, Avatar, Tooltip, Progress, Key value, Copy field, Kbd |
 | Navigation | Tabs, Breadcrumb, Pagination |
@@ -148,12 +150,15 @@ All components are surface-agnostic by construction: they size from control toke
 |---|---|---|---|---|
 | Overview | Dashboard: tiles, a trend, breakdowns | Tiles · trend 2/3 + ranked list 1/3 · composition 1/2 + activity 1/2 | One column | `overview` inline: three tiles and the trend; fullscreen: the page |
 | Requests | List: filter bar, data table, detail on select | Table | Card list | `requests` inline: the five latest that match the tool's query |
-| Request | Detail: head, facts, timeline | Facts 2/3 + context 1/3 | One column | `request` inline: the record card |
+| Request | Detail: head, facts, timeline | Facts 2/3 + context 1/3 | One column | Not offered; the inline list links here |
 | Analytics | Two-chart: heatmap, breakdowns | Heatmap full width · 1/2 breakdowns | Grouped heatmap | Fullscreen only |
 | Health | Operational: status list, incidents | Status 2/3 + incident 1/3 | One column | `health` inline: the status list |
-| Customers | List with sparklines | Table | Card list | `customer` inline: one customer's card |
+| Customers | List with sparklines | Table | Card list | Not offered |
+| API keys | List with destructive actions | Table | Card list | Not offered |
+| Members | List with destructive actions | Table | Card list | Not offered |
 | Settings | Reader: form sections | 832px column | One column | Not offered |
 | Sign in, Not found, Error | Standalone: one sentence at poster size | Centred | Same | Not offered |
+| Agent proposal | Showcase: a Proposal end to end | The embed view itself | One column | `proposal`: one Proposal card with its states and Approve (no Expand — the card is the whole view) |
 
 ## Adding to the inventory
 

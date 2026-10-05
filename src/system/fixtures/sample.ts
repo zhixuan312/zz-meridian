@@ -17,7 +17,6 @@ import { app } from '@/app.config';
 export const DEMO_NOW = new Date('2026-10-03T09:00:00Z');
 /** When the pipeline last delivered. A real app reads the newest ingest time, never now(). */
 export const DEMO_UPDATED_AT = new Date(DEMO_NOW.getTime() - 4 * 60_000);
-export const DEMO_STALE_AFTER_MS = 15 * 60_000;
 
 function seeded(seed: number) {
   let a = seed >>> 0;
@@ -161,7 +160,7 @@ export const REQUESTS: RequestRow[] = (() => {
   return rows;
 })();
 
-export type Customer = { name: string; plan: 'Enterprise' | 'Scale' | 'Starter'; requests: number; spend: number; trend: number[]; status: 'active' | 'trial' | 'past due' };
+type Customer = { name: string; plan: 'Enterprise' | 'Scale' | 'Starter'; requests: number; spend: number; trend: number[]; status: 'active' | 'trial' | 'past due' };
 /** Each customer's share of the last 30 days, so the customers add up to exactly what the Overview shows for 30D. */
 const SHARES = CUSTOMERS.map((_, i) => 1 / (i + 1.4));
 const MONTH = demoTotals('30d').current;

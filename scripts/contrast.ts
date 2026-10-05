@@ -13,7 +13,7 @@ import { parse, over, ratio, simulate, deltaE, oklchOf, hex } from '../src/lib/c
 const TEXT = 4.5, UI = 3;
 type Pair = [fg: string, bg: string | string[], min: number, what: string];
 
-export const PAIRS: Pair[] = [
+const PAIRS: Pair[] = [
   ['ink', 'ground', TEXT, 'body text on the page'],
   ['ink', 'surface', TEXT, 'body text in a card'],
   ['ink', 'surface-raised', TEXT, 'text in a menu or dialog'],
@@ -60,7 +60,7 @@ export const PAIRS: Pair[] = [
 ];
 
 /** Every custom property of one context, as raw CSS strings. */
-export function context(theme: string, accent: string): Record<string, string> {
+function context(theme: string, accent: string): Record<string, string> {
   const { sets, mods } = resolver();
   const env: Record<string, string> = {};
   for (const f of sets) if (!f.startsWith('palette')) for (const t of tokensOf(load(f))) env[t.name] = cssValue(t);
@@ -71,7 +71,7 @@ export function context(theme: string, accent: string): Record<string, string> {
   return env;
 }
 
-export function resolve(env: Record<string, string>, name: string, depth = 0): string {
+function resolve(env: Record<string, string>, name: string, depth = 0): string {
   if (depth > 8) throw new Error(`cycle at --${name}`);
   let v = env[name];
   if (v === undefined) throw new Error(`--${name} is not defined`);
@@ -79,7 +79,7 @@ export function resolve(env: Record<string, string>, name: string, depth = 0): s
   return v.replace(/calc\(([\d.]+)\s*\*\s*([\d.]+)\)/g, (_, x, y) => String(Number(x) * Number(y)));
 }
 
-export const colorOf = (env: Record<string, string>, name: string) => parse(resolve(env, name));
+const colorOf = (env: Record<string, string>, name: string) => parse(resolve(env, name));
 
 function measure(env: Record<string, string>, fg: string, bg: string | string[]) {
   let back = colorOf(env, 'ground');

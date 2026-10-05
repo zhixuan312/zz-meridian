@@ -1,7 +1,7 @@
 /**
  * What `pnpm verify` needs to know about this project that it cannot discover from `app/`. Edit it; verify reads it.
  */
-export type VerifyConfig = {
+type VerifyConfig = {
   /**
    * Detail pages checked beside every static route, one per state worth seeing (a normal record, a failed one, a missing
    * one). `pnpm verify --extra a,b` replaces them for one run.

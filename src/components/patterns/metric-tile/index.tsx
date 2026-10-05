@@ -3,7 +3,7 @@
 import type { ReactNode } from 'react';
 import { cn } from '@/lib/cn';
 import { formatDate } from '@/lib/format-date';
-import { formatBy, type NumberFormat } from '@/lib/format';
+import { formatBy, splitFigure, type NumberFormat } from '@/lib/format';
 import { Card } from '@/components/ui/card';
 import { Delta } from '@/components/ui/delta';
 import { Tooltip } from '@/components/ui/tooltip';
@@ -57,7 +57,7 @@ export function MetricTile({
   const fmt = typeof format === 'function' ? format : (n: number) => formatBy(format ?? 'count', n);
   const word = typeof value === 'string';
   const text = word && reading === null ? value : fmt(reading ?? (word ? 0 : value));
-  const parts = word && reading === null ? { int: value } : (split ?? defaultSplit)(text);
+  const parts = word && reading === null ? { int: value } : (split ?? splitFigure)(text);
   // Phones, without a sparkline: one row, the label and its line on the left and the figure on the right, so a stack
   // of four tiles is half a screen rather than a whole one. Designed for the width, not shrunk to it.
   const row = !daily;
@@ -110,10 +110,3 @@ export function MetricTile({
   );
 }
 
-/** "$298.43" steps the cents down; "2.9M", "0.90%" and "294ms" keep the number whole and step the unit down. */
-function defaultSplit(s: string) {
-  const m = s.match(/^([^\d\s.,-]*)([\d,]+)(\.\d+)?\s*([%a-zA-Z]*)$/);
-  if (!m) return { int: s };
-  const money = Boolean(m[1]);
-  return { pre: m[1] || undefined, int: money ? m[2] : m[2] + (m[3] ?? ''), frac: money ? m[3] : undefined, unit: m[4] || undefined };
-}

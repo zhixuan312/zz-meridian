@@ -299,7 +299,7 @@ function Motion({ groups }: { groups: TokenGroup[] }) {
                 <path d={`M0 1 C${a} ${1 - b} ${c} ${1 - d} 1 0`} stroke="var(--accent)" strokeWidth="0.025" fill="none" strokeLinecap="round" />
               </svg>
               <div className="mt-3 h-1 overflow-hidden rounded-full bg-fill-track">
-                <span key={go} className="block h-full w-full origin-left rounded-full bg-accent" style={{ animation: `m-grow-x 900ms cubic-bezier(${a},${b},${c},${d}) both` }} />
+                <span key={go} className="block h-full w-full origin-left rounded-full bg-accent" style={{ animation: `m-grow-x var(--dur-grow) cubic-bezier(${a},${b},${c},${d}) both` }} />
               </div>
               <p className="mt-4 font-mono text-xs">{t.name}</p>
               <p className="t-caption mt-1">{t.description}</p>

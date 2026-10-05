@@ -4,6 +4,7 @@
 // check as the layout's and the assistant route's.
 import { randomBytes } from 'node:crypto';
 import { z } from 'zod';
+import { app } from '@/app.config';
 import { clock, keys } from '@/data/collections';
 import type { ApiKey } from '@/system/fixtures/sample-records';
 
@@ -16,7 +17,7 @@ const draft = z.object({
 /** Creates a key and returns it: the only moment its full secret leaves the server for a banner. */
 export async function createKey(input: z.input<typeof draft>): Promise<ApiKey> {
   const { name, env, scopes } = draft.parse(input);
-  return keys.create!({ name, env, scopes, owner: 'Maya Chen', created: clock().toISOString(), lastUsed: null, secret: `zzm_${env}_${randomBytes(16).toString('hex')}` });
+  return keys.create!({ name, env, scopes, owner: app.user.name, created: clock().toISOString(), lastUsed: null, secret: `zzm_${env}_${randomBytes(16).toString('hex')}` });
 }
 
 export async function revokeKey(id: string): Promise<void> {

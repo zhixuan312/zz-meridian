@@ -1,6 +1,6 @@
 # Distribution: the `zz-meridian` package
 
-Status: v1 shipped in 0.2.0 (decision 0009). `update` is v2. Releasing: `.claude/commands/release-meridian.md`.
+Status: v1 shipped in 0.2.0 (decision 0009). `update` is v2. Releasing: the `/release` command (`.claude/commands/release.md`).
 
 ## The one sentence
 
@@ -20,7 +20,7 @@ rebuilding each page on Meridian's components, the fake API, and reading what `p
 - **Name** `zz-meridian`, unscoped (free on npm, and the shortest sentence). The command is `zz-meridian`
   (`bin: { "zz-meridian": "dist/cli.js" }`); a different bin name breaks `npx zz-meridian`.
 - **Where it lives**: `cli/` in this repository, its own `package.json`, built with `tsc` to `cli/dist/`; not a
-  workspace member, and outside the root's type check and lint. The repository root stays the template app, `private`,
+  workspace member, and outside the root's type check (the root lint does cover `cli/**`). The repository root stays the template app, `private`,
   renamed `zz-meridian-template`.
 - **Payload**: a snapshot of the template, built by `cli/scripts/build-payload.ts` into `cli/payload/` with `git archive
   HEAD`, never from a walk of the folder, so a build output, a local `.env` or an uncommitted edit cannot ship
@@ -43,7 +43,7 @@ clone-then-delete.
 Brings Meridian into the project in the current folder. It refuses, and copies nothing, when:
 
 - the git tree is dirty (`--allow-dirty` overrides): every change it makes must be reviewable as one diff, and revertable;
-- the project is not Next.js with the App Router and React 18 or newer: it exits with the Route B or C guidance from
+- the project is not Next.js with the App Router: it exits with the Route B or C guidance from
   `references/existing-project.md` instead.
 
 Then, in this order:
@@ -54,7 +54,7 @@ Then, in this order:
    fixture test (below) is what keeps it complete. A file of the same name that differs is never overwritten: `adopt`
    lists the conflicts and stops before writing anything.
 2. Merges dependencies and scripts into their `package.json`, keeping their versions where newer and compatible; adds
-   the `@/* → src/*` alias to `tsconfig.json` when theirs differs.
+   the `@meridian/* → ./src/*` alias to `tsconfig.json` when theirs differs (their own `@/*` is left as it is).
 3. Replaces their global stylesheet with the template's `app/globals.css`, keeping theirs as `app/globals.before.css`
    for the agent to port from.
 4. Runs `scripts/brand.ts --existing` with the brand arguments given (or the name from their `package.json`): the name,
@@ -118,7 +118,7 @@ Modelled on multi-model-agent's (`.github/workflows/release.yml` there), one pac
 
 1. **Dispatch**: `gh workflow run release.yml -f version=<v> [-f dry_run=true]`, from `master`. The version must equal
    `cli/package.json`'s and the tag must be unused.
-2. **Gates** (ubuntu): `pnpm gate`, `next build`, and the CLI's own tests.
+2. **Gates** (ubuntu): `pnpm gate`, `next build`, and the consumer smoke from the built tarball (step 4).
 3. **Pack and assert, before anything is irreversible**: `pnpm pack` in `cli/`, then on the tarball: the bin has its
    `#!/usr/bin/env node` line; `payload/skills/zz-meridian/SKILL.md` and its references are there; the component count
    matches the repository; no `node_modules/`, `tests/` of the CLI, `out/` or `.next/`.
@@ -131,8 +131,8 @@ Modelled on multi-model-agent's (`.github/workflows/release.yml` there), one pac
    publish` does not perform the OIDC exchange; multi-model-agent learned this at 5.16.1.
 6. **Tag `v<version>` last**, then the GitHub Release with the version's `CHANGELOG.md` section as its body.
 
-`dry_run` stops after step 4. A `/release-meridian` runbook (`.claude/commands/`) holds the judgement before dispatch:
-the version, the changelog section, the docs sweep, and the local `pnpm verify` with Web Vitals. A `scripts/set-version.ts`
+`dry_run` stops after step 4. A `/release` runbook (`.claude/commands/release.md`) holds the judgement before dispatch:
+the version, the changelog section, the docs sweep, and the local `pnpm verify` with Web Vitals. A `cli/scripts/set-version.ts`
 writes the version into `cli/package.json` and checks the root agrees.
 
 ## One-time setup (the maintainer, once)
@@ -150,7 +150,7 @@ version carries provenance. The placeholder can be deprecated.
 
 The design system and the package share one version, under the rules at the top of `CHANGELOG.md`: a removed or renamed
 token, prop or card is major; a new card, token or variant is minor; a corrected value is a patch. The current
-`[Unreleased]` section becomes the first release, `0.2.0`.
+`[Unreleased]` section becomes the next release.
 
 ## Phases
 

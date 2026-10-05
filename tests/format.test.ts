@@ -1,7 +1,7 @@
 import { app } from '@/app.config';
 import { describe, expect, it } from 'vitest';
 import { niceTicks } from '@/components/charts/scale';
-import { AXIS_FORMATTERS, formatCompact, formatCost, formatDuration, formatPercent } from '@/lib/format';
+import { AXIS_FORMATTERS, formatCompact, formatCost, formatDuration, formatPercent, splitFigure } from '@/lib/format';
 
 describe('formatters', () => {
   it('render a missing value as a dash, never as zero', () => {
@@ -12,6 +12,24 @@ describe('formatters', () => {
     expect(formatCompact(846_300)).toBe('846K');
     expect(formatCompact(999_999)).toBe('1.0M');
     expect(formatCompact(2_941_000)).toBe('2.9M');
+  });
+  it('read a negative compact count like the positive it mirrors', () => {
+    // A net or a delta: the tile used to fall through to "-1,500,000" while the axis rendered "-1.5M".
+    expect(formatCompact(-1_500_000)).toBe('-1.5M');
+    expect(formatCompact(-846_300)).toBe('-846K');
+    expect(formatCompact(-912)).toBe('-912');
+  });
+  it('split a figure once, for the two cards that step a unit down', () => {
+    // Money steps its cents down; anything else keeps the number whole and steps the unit.
+    expect(splitFigure('$298.43')).toEqual({ pre: '$', int: '298', frac: '.43', unit: undefined });
+    expect(splitFigure('2.9M')).toEqual({ pre: undefined, int: '2.9', frac: undefined, unit: 'M' });
+    expect(splitFigure('0.90%')).toEqual({ pre: undefined, int: '0.90', frac: undefined, unit: '%' });
+    // Total: a string it cannot split comes back whole, so no formatter a product passes can crash the figure.
+    expect(splitFigure('—')).toEqual({ int: '—' });
+    expect(splitFigure('-1,234')).toEqual({ int: '-1,234' });
+    expect(splitFigure('CHF1,234.50')).toEqual({ pre: 'CHF', int: '1,234', frac: '.50', unit: undefined });
+    // A formatter that writes something else — a word, a space in the symbol — is never split, and never crashes.
+    expect(splitFigure('CHF 1,234.50')).toEqual({ int: 'CHF 1,234.50' });
   });
   it('format money, durations and shares', () => {
     // The symbol follows app.currency, so a rebranded product (--currency SGD) keeps this test green.

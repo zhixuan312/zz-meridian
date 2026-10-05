@@ -19,7 +19,7 @@ export type AdoptOptions = { root: string; brand: Record<string, string>; allowD
 const LIB = ['cn', 'format', 'format-date', 'period', 'color', 'host', 'preferences', 'csv', 'safe-markdown'].map((n) => `src/lib/${n}.ts`);
 
 /** What adopt copies from the template, as payload paths. The fixture build in CI is what keeps this list complete. */
-export function adoptSet(): string[] {
+function adoptSet(): string[] {
   const own = (f: string) => !/(^|\/)(README\.md|preview\.tsx)$/.test(f);
   return [
     ...payloadFiles('tokens'),

@@ -76,7 +76,7 @@ export function EmbedSurface({ children }: { children: ReactNode }) {
     };
     const off = b.onContext(apply);
     b.initialize(app.name, '1.0.0').then(() => setConnected(true)).catch(() => setConnected(false));
-    return () => { off(); d.removeAttribute('data-surface'); };
+    return () => { off(); b.dispose(); bridge.current = null; d.removeAttribute('data-surface'); };
   }, []);
 
   /* Report the body's height whenever it changes: an inline view never scrolls inside the host. */

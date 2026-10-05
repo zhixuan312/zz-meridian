@@ -1,6 +1,6 @@
 # Data table
 
-A list of records in one card: a toolbar, the table, and pagination, with its loading, empty and error states built in. On phones the same rows become a list of cards, so nothing ever scrolls sideways.
+A list of records in one card: a toolbar, the table, and pagination, with its loading, empty and error states built in. On phones the same rows become cards, in CSS, so nothing ever scrolls sideways.
 
 Status: beta
 
@@ -13,7 +13,7 @@ Status: beta
 5. **Rows**: `row-height` 52px (38px compact), a `line` divider between rows. The title column (`mobile: 'title'`, or the first) is a `.row-link` when the row opens a record.
 6. **Selection column** (optional): 40px with a Checkbox; the head's checkbox selects the page and shows indeterminate when part of it is chosen.
 7. **Footer**: Pagination, under a `line` divider, shown only when the rows do not fit on one page.
-8. **Phone list**: under 768px, one card per row: the title and the status on one line, two or three facts under it in `text-xs` `ink-3`, separated by dots.
+8. **Cards, not a second list** (under 768px): the same table's rows lay out as cards — the title and the status on one line, two or three facts under it in `text-xs` `ink-3`, separated by dots. It is the SAME tree: the row becomes a six-column grid and each cell says which part of the card it is (`data-mobile`), so nothing is built twice and no device downloads a tree it cannot show.
 
 ## Variants
 
@@ -37,7 +37,7 @@ Row height and card padding come from the density: comfortable 52px and 24px, co
 | Hover (a linked row) | Row fill `fill-hover` over `dur-hover`; the title's underline draws in |
 | Selected | Row fill `accent-tint`; the checkbox in `accent` |
 | Focus | The link or the checkbox shows the 2px `accent` ring |
-| Loading | `aria-busy`; up to eight skeleton rows shaped like real ones (a wide bar in the grow column, short bars elsewhere, right-aligned bars in numeric columns); five skeleton cards on phones |
+| Loading | `aria-busy`; up to eight skeleton rows shaped like real ones (a wide bar in the grow column, short bars elsewhere, right-aligned bars in numeric columns) — the same eight rows on a phone, laid out as cards |
 | Empty, first run | Empty state `first-run`: what is missing and the one action that fills it |
 | Empty, filtered out | Empty state `filtered`: "No requests match these filters" with Clear filters |
 | Error | Empty state `error`: "The requests did not load", the reason in one sentence, Retry |
@@ -48,13 +48,14 @@ Arrival: rows rise with the page (`arrive`); under reduced motion they are simpl
 
 - Pressing a sortable head sorts by it: text ascending first, numbers descending first; pressing again reverses. Sorting returns to page 1.
 - A click anywhere on a linked row opens it, except on a link, a button, a checkbox or a menu, and except when text is being selected.
+- A card's facts are the first three columns marked `mobile: 'fact'`, whatever the table's own width dropped: `hideBelow` is a rule about the table, and a card has room for three short facts. The title stays the row's link at both widths.
 - Rows per page: 20, 50 or 100; changing it returns to page 1.
 - Addressable state: `useTableQuery({ sort, dir })` keeps `?sort=latency&dir=desc&page=2` in the address. When the page also keeps filters in the URL, hold everything in one `useQueryState`: two setters called in one handler would each write over the other.
 
 ## Surfaces
 
 - **Console**: as specified; low-value columns drop with `hideBelow` as the window narrows.
-- **Mobile**: under 768px the phone list replaces the table. Facts that need their header to make sense use `mobileCell` ("Used 1 min ago", not "1 min ago").
+- **Mobile**: under 768px each row becomes a card, and the columns not wanted there are hidden. Facts that need their header to make sense use `mobileCell` ("Used 1 min ago", not "1 min ago"); the phone reads a smaller size in `ink-3`.
 - **Embed**: inline views show at most five rows as a compact list and offer Expand; fullscreen shows the full table.
 
 ## Agents
@@ -71,7 +72,7 @@ Rows arrive whole for client-side sorting and paging (a few hundred at most), or
 
 ## Accessibility
 
-- A real `<table>` with a caption; sortable heads carry `aria-sort`; the phone list is a labelled `<ul>`.
+- A real `<table>` with a caption, at every width; sortable heads carry `aria-sort`. On a phone the header row is hidden, so a cell that needs its header to make sense carries it in its own words (`mobileCell`).
 - Selection checkboxes are named ("Select req_jqwm3le188pi", "Select every request on this page").
 - `aria-busy` while loading; the error state is announced (`role="alert"`).
 

@@ -3,7 +3,7 @@ description: Release the zz-meridian npm package — version, changelog, local p
 argument-hint: [version, e.g. 0.3.0]
 ---
 
-# /release-meridian — release the `zz-meridian` package
+# /release — release the `zz-meridian` package
 
 Repository: `~/Documents/code/zz-meridian` (GitHub `zhixuan312/zz-meridian`), released from `master`. The package is
 `cli/`; what it ships is the template at the release commit (decision 0009, `docs/distribution.md`). Your part is the

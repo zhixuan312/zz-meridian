@@ -99,7 +99,7 @@ type Turn = { from: 'person' | 'assistant'; text: string };
  * on size-changed, honours request-display-mode, turns ui/message into a chat turn, and shows the model context the
  * view shares. Enough to see a Meridian view behave as a guest, without leaving the Atlas.
  */
-export function HostSimulator({ route, theme }: { route: string; theme: 'dark' | 'light' }) {
+function HostSimulator({ route, theme }: { route: string; theme: 'dark' | 'light' }) {
   const frame = useRef<HTMLIFrameElement>(null);
   const [mode, setMode] = useState<'inline' | 'fullscreen'>('inline');
   const [width, setWidth] = useState<'720' | '420'>('720');

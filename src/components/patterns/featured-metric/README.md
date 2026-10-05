@@ -8,7 +8,7 @@ Status: beta
 
 1. **Kicker**: `t-kicker` in `accent-ink`: the measure and the period ("Requests · last 30 days").
 2. **Actions** (optional): a menu or a small filter. Not a "Live" badge: Freshness in the masthead already says how fresh the data is.
-3. **Hero figure**: `t-hero` (52–80px, 600, −0.035em), its unit and cents stepped down.
+3. **Hero figure**: `t-hero` (52–80px, 600, −0.035em), its unit stepped down — and the cents of a money figure, the same rule the Metric tile's figure follows (`splitFigure` in `src/lib/format.ts`).
 4. **Change pill**: a 28px glass pill holding the Delta and "vs previous period"; while the Meridian reads a day, an inverse pill naming the day.
 5. **Caption** (optional): one sentence that makes the number concrete.
 6. **Chart**: a Trend chart at `fill` height.

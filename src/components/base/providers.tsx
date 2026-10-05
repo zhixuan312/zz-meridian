@@ -26,13 +26,25 @@ export function Providers({ children }: { children: ReactNode }) {
   const [prefs, setPrefs] = useState<Preferences>(DEFAULTS);
 
   useEffect(() => {
-    try {
-      const stored = JSON.parse(localStorage.getItem(STORAGE_KEY) ?? '{}');
-      // eslint-disable-next-line react-hooks/set-state-in-effect -- the stored choice is an external store read once on mount; the server render never sees localStorage, so there is no render-time value to derive it from.
-      setPrefs((p) => ({ ...p, ...stored }));
-    } catch {
-      /* storage unavailable: the defaults stand */
-    }
+    const read = () => {
+      try {
+        const stored = JSON.parse(localStorage.getItem(STORAGE_KEY) ?? '{}');
+        // The stored choice is an external store: read on mount, and again when another tab writes. The server render
+        // never sees localStorage, so there is no render-time value to derive it from.
+        setPrefs((p) => {
+          const next = { ...p, ...stored };
+          apply(next);
+          return next;
+        });
+      } catch {
+        /* storage unavailable: the defaults stand */
+      }
+    };
+    read();
+    // Another tab's choice. `storage` fires only in the tabs that did NOT write, which is exactly the ones that need
+    // it: without this, two tabs of the same dashboard disagree about the theme until one of them reloads.
+    window.addEventListener('storage', read);
+    return () => window.removeEventListener('storage', read);
   }, []);
 
   const set = useCallback((patch: Partial<Preferences>) => {

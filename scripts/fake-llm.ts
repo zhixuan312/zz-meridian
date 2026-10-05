@@ -14,7 +14,6 @@
  */
 import http from 'node:http';
 import type { AddressInfo } from 'node:net';
-import { pathToFileURL } from 'node:url';
 
 type Message = { role?: string; content?: unknown };
 type Call = { name: string; args: object };
@@ -171,7 +170,7 @@ export async function startFakeLlm({ port }: { port: number }) {
   };
 }
 
-if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+if (import.meta.main) {
   const i = process.argv.indexOf('--port');
   const port = i >= 0 ? Number(process.argv[i + 1]) : 0;
   if (!Number.isInteger(port) || port < 0) { console.error('usage: node scripts/fake-llm.ts --port <n>'); process.exit(1); }

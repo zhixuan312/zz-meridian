@@ -34,6 +34,16 @@ export class HostBridge {
     window.addEventListener('message', this.onMessage);
   }
 
+  /** Stop listening. The embed surface calls this when it unmounts: the handler is on `window`, which outlives the
+   *  component, so a bridge that is never disposed keeps a listener — and everything it closes over — alive for the
+   *  life of the page. React runs an effect twice in development, so this is not only a production concern. */
+  dispose() {
+    window.removeEventListener('message', this.onMessage);
+    this.pending.clear();
+    this.listeners.clear();
+    this.toolListeners.clear();
+  }
+
   /** True when this document is framed by someone who might be a host. Standalone pages never start the bridge. */
   static framed() {
     try { return typeof window !== 'undefined' && window.parent !== window; } catch { return true; }

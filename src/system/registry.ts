@@ -2,7 +2,7 @@
 import dynamic from 'next/dynamic';
 import type { ComponentType } from 'react';
 
-export type Card = { id: string; layer: number; section: string; dir: string; Preview: ComponentType | null };
+type Card = { id: string; layer: number; section: string; dir: string; Preview: ComponentType | null };
 
 export const CARDS: Card[] = [
   { id: 'app-mark', layer: 1, section: 'base', dir: 'src/components/base/app-mark', Preview: dynamic(() => import('@/components/base/app-mark/preview')) },

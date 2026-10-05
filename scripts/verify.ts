@@ -28,6 +28,7 @@ import net from 'node:net';
 import path from 'node:path';
 
 import { bin } from './lib/bin.ts';
+import { APP_DIR } from './lib/routes.ts';
 import config from './verify.config.ts';
 
 const ROOT = path.resolve(import.meta.dirname, '..');
@@ -47,8 +48,10 @@ const noVitals = process.argv.includes('--no-vitals');
 const argv = process.argv.slice(2).filter((a) => a !== '--no-vitals');
 // The detail pages in scripts/verify.config.ts are checked by default; --extra replaces them for one run.
 const pass = argv.includes('--extra') || !config.detailRoutes.length ? argv : [...argv, '--extra', config.detailRoutes.join(',')];
-// A project that has not adopted the assistant has no walk-through to run, only the pages.
-const hasAssistant = fs.existsSync(path.join(ROOT, 'app/api/assistant/route.ts'));
+// A project that has not adopted the assistant has no walk-through to run, only the pages. Through APP_DIR, like the
+// route discovery and check.ts: a project that keeps its routes under `src/app` has the assistant there, and asking for
+// `app/api/...` alone would skip the walk-through without saying so.
+const hasAssistant = fs.existsSync(path.join(ROOT, APP_DIR, 'api/assistant/route.ts'));
 const lines: string[] = [];
 const log = (s: string) => { console.log(s); lines.push(s); };
 const finish = (code: number) => {

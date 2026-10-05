@@ -35,7 +35,7 @@ Label weight `weight-medium` 500 at every size; icon to label `space-1-5` 6px (s
 | State | Primary | Secondary | Ghost | Danger |
 |---|---|---|---|---|
 | Rest | as above | as above | as above | as above |
-| Hover | fill `accent-hover` | fill `surface-sunk`, border `line-control` at 40% | fill `fill-hover`, label `ink` | 5% darker |
+| Hover | 5% darker (`brightness-[0.94]`) over `dur-hover`; the fill is a gradient image, so a colour change would not show through it | fill `surface-sunk`, border `line-control` at 40% | fill `fill-hover`, label `ink` | 5% darker |
 | Pressed | scale 0.985, 0.5px down, over `dur-press` | same | same | same |
 | Focus (keyboard) | 2px `accent` outline, 2px offset | same | same | same |
 | Busy | a 14px spinner replaces the icon; the width holds; `aria-busy` | same | same | same |

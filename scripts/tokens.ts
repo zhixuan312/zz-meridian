@@ -15,12 +15,12 @@
 import fs from 'node:fs';
 import path from 'node:path';
 
-export const ROOT = path.resolve(import.meta.dirname, '..');
+const ROOT = path.resolve(import.meta.dirname, '..');
 const T = path.join(ROOT, 'tokens');
 export const NS = 'dev.zz.meridian';
 
 type Json = Record<string, any>;
-export type Token = { name: string; group: string; type: string; value: any; description: string; css?: string; raw: Json };
+type Token = { name: string; group: string; type: string; value: any; description: string; css?: string; raw: Json };
 
 export function load(file: string): Json {
   return JSON.parse(fs.readFileSync(path.join(T, file), 'utf8'));
@@ -99,7 +99,7 @@ const block = (sel: string, body: string[], scheme?: string) => [`${sel}{`, ...(
  * The embed bridge: on the MCP Apps surface, Meridian's neutral roles take the host's standard style variables, with
  * Meridian's own value for the theme as the fallback. Accent, status and chart colours never bridge: they carry meaning.
  */
-export const BRIDGE: Record<string, string> = {
+const BRIDGE: Record<string, string> = {
   surface: '--color-background-primary',
   'surface-sunk': '--color-background-secondary',
   'surface-raised': '--color-background-primary',
@@ -132,7 +132,7 @@ const HEADER = `/* ZZ Meridian · Layer 0 · Tokens
  */
 `;
 
-export function buildCss(): string {
+function buildCss(): string {
   const { sets, mods } = resolver();
   const core = sets.flatMap((f) => (f.startsWith('palette') ? [] : tokensOf(load(f))));
   const theme = (n: string) => tokensOf(load(mods.theme.contexts[n]!));
@@ -180,7 +180,7 @@ export function buildCss(): string {
 }
 
 /** Tailwind v4 bridge: reset Tailwind's scales, then expose only Meridian's names as utilities. */
-export function buildTheme(): string {
+function buildTheme(): string {
   const { sets, mods } = resolver();
   const core = sets.flatMap((f) => (f.startsWith('palette') ? [] : tokensOf(load(f))));
   const light = tokensOf(load(mods.theme.contexts.light!));

@@ -6,7 +6,7 @@ import 'server-only';
 import fs from 'node:fs';
 import path from 'node:path';
 
-export type TokenMeta = { name: string; type: string; description: string; css?: string; value: string };
+type TokenMeta = { name: string; type: string; description: string; css?: string; value: string };
 export type TokenGroup = { id: string; title: string; about: string; source: string; tokens: TokenMeta[] };
 
 const T = path.join(process.cwd(), 'tokens');

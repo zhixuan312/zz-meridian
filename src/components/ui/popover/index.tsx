@@ -10,7 +10,6 @@ import { cn } from '@/lib/cn';
  */
 export const Popover = P.Root;
 export const PopoverTrigger = P.Trigger;
-export const PopoverAnchor = P.Anchor;
 export const PopoverClose = P.Close;
 
 /** The surface, exported so a preview draws exactly what the popover draws. */

@@ -11,6 +11,17 @@ describe('safeMarkdownUrl', () => {
   it('drops a link to any other scheme', () => {
     for (const u of ['javascript:alert(1)', 'JavaScript:alert(1)', 'data:text/html,hi', 'vbscript:x', 'file:///etc/passwd']) expect(safeMarkdownUrl(u, 'href')).toBe('');
   });
+  it('reads the scheme the way a browser does, with the controls taken out', () => {
+    // A browser removes tab, newline and the other controls from a URL before it reads the scheme, so each of these IS
+    // `javascript:` to it. A check that reads the raw string lets them through, which is the whole bypass.
+    for (const u of ['java\tscript:alert(1)', 'jav\nascript:alert(1)', 'java\rscript:alert(1)', 'java\u0000script:alert(1)']) {
+      expect(safeMarkdownUrl(u, 'href')).toBe('');
+      expect(safeMarkdownUrl(u, 'src')).toBe('');
+    }
+    // A path that merely contains one is still a path, and is returned as it was written.
+    expect(safeMarkdownUrl('notes/my page', 'href')).toBe('notes/my page');
+    expect(safeMarkdownUrl('https://zz-meridian.example/a b', 'href')).toBe('https://zz-meridian.example/a b');
+  });
   it('fetches an image only from this origin', () => {
     expect(safeMarkdownUrl('/images/chart.png', 'src')).toBe('/images/chart.png');
     for (const u of ['https://elsewhere.example/p.png', '//elsewhere.example/p.png', 'data:image/png;base64,AAAA']) expect(safeMarkdownUrl(u, 'src')).toBe('');

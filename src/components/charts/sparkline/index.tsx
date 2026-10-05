@@ -13,6 +13,9 @@ export function Sparkline({ values, color = 'accent', height = 36, className }: 
   const id = useId().replace(/[^a-zA-Z0-9_-]/g, '');
   const [ref, { width: W }] = useSize<HTMLDivElement>();
   const { index } = useMeridianIndex();
+  // Under two values there is no shape to draw, and `Math.min()`/`Math.max()` over fewer than two give ±Infinity, so
+  // the area path closed into a stray filled triangle. The figure stands alone instead — the README's promise.
+  if (values.length < 2) return null;
   // The lowest point floats a quarter of the height above the floor, so a trough never runs along a card's edge or
   // into its rounded corner; the area still fills to the floor.
   const H = height, pad = 3, floor = Math.max(pad, Math.round(H * 0.25));

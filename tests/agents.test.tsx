@@ -48,4 +48,33 @@ describe('the host bridge', () => {
     expect(ctx.displayMode).toBe('inline');
     vi.restoreAllMocks();
   });
+
+  it('stops delivering to its listeners once disposed', () => {
+    const b = new HostBridge(window);
+    const seen: string[] = [];
+    b.onContext((ctx) => seen.push(ctx.theme ?? '?'));
+    const host = (data: unknown) => window.dispatchEvent(new MessageEvent('message', { data, source: window }));
+
+    host({ jsonrpc: '2.0', method: 'ui/notifications/host-context-changed', params: { theme: 'dark' } });
+    expect(seen).toEqual(['dark']);
+
+    b.dispose();
+    host({ jsonrpc: '2.0', method: 'ui/notifications/host-context-changed', params: { theme: 'light' } });
+    expect(seen).toEqual(['dark']);
+  });
+
+  it('takes its handler off window when disposed, so an unmounted view leaks no listener', () => {
+    // The behavioural test above passes on `listeners.clear()` alone, which says nothing about the leak: the handler
+    // itself is on `window`, which outlives the component, and it closes over the bridge. Removing it is the fix.
+    const add = vi.spyOn(window, 'addEventListener');
+    const remove = vi.spyOn(window, 'removeEventListener');
+
+    const b = new HostBridge(window);
+    const handler = add.mock.calls.find(([type]) => type === 'message')?.[1];
+    expect(handler).toBeTypeOf('function');
+
+    b.dispose();
+    expect(remove).toHaveBeenCalledWith('message', handler);
+    vi.restoreAllMocks();
+  });
 });

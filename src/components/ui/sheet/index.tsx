@@ -24,7 +24,7 @@ export const SHEET_FOOT = 'flex flex-col-reverse gap-2 border-t border-line bg-s
 const MOTION = [
   'transition-transform duration-(--dur-enter) ease-out starting:translate-x-full max-sm:starting:translate-x-0',
   'max-sm:data-[state=open]:[animation:m-sheet-up_var(--dur-enter)_var(--ease-out)]',
-  'data-[state=closed]:[animation:m-fade_160ms_var(--ease-out)_reverse_forwards]',
+  'data-[state=closed]:[animation:m-fade_var(--dur-exit)_var(--ease-out)_reverse_forwards]',
 ].join(' ');
 
 export function SheetContent({

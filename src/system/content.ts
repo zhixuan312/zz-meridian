@@ -9,7 +9,7 @@ import path from 'node:path';
 const ROOT = process.cwd();
 const read = (p: string) => (fs.existsSync(path.join(/*turbopackIgnore: true*/ ROOT, p)) ? fs.readFileSync(path.join(/*turbopackIgnore: true*/ ROOT, p), 'utf8') : '');
 
-export type Entry = {
+type Entry = {
   /** The Atlas path: /system/<section>/<id> */
   href: string;
   section: SectionId;
@@ -20,7 +20,7 @@ export type Entry = {
   source: string;
   kind: 'card' | 'doc' | 'tokens' | 'page';
 };
-export type SectionId = 'start' | 'tokens' | 'base' | 'components' | 'patterns' | 'pages' | 'system';
+type SectionId = 'start' | 'tokens' | 'base' | 'components' | 'patterns' | 'pages' | 'system';
 
 export const SECTIONS: { id: SectionId; num?: string; title: string; line: string }[] = [
   { id: 'start', title: 'Start here', line: 'What Meridian is, the surfaces it serves, and how to build with it' },
@@ -33,7 +33,7 @@ export const SECTIONS: { id: SectionId; num?: string; title: string; line: strin
 ];
 
 /** Split a card README into its title, its first sentence (the lead), its status and the rest. */
-export function parseSpec(md: string) {
+function parseSpec(md: string) {
   const title = md.match(/^#\s+(.+)$/m)?.[1].trim() ?? '';
   let body = md.replace(/^#\s+.+\n+/, '');
   const lead = body.split(/\n\n/, 1)[0].replace(/\n/g, ' ').trim();
@@ -50,16 +50,16 @@ const COMPONENT_DIRS: [string, SectionId][] = [
   ['src/components/charts', 'patterns'],
 ];
 
-export const TOKEN_VIEWS = [
+const TOKEN_VIEWS = [
   { id: 'colour', title: 'Colour', summary: 'Every colour role in both themes and every accent, with contrast computed live' },
-  { id: 'type', title: 'Type', summary: 'One family with a width axis, nine sizes, three weights and the text roles' },
+  { id: 'type', title: 'Type', summary: 'One family with a mono, eleven sizes, three weights and the text roles' },
   { id: 'space', title: 'Space and radius', summary: 'The 4px scale, control heights, densities and six corners' },
   { id: 'elevation', title: 'Elevation', summary: 'Three planes, hairlines, and shadows only where something floats' },
   { id: 'motion', title: 'Motion', summary: 'Arrive, answer, float: four durations and three curves' },
   { id: 'data', title: 'Data colour', summary: 'Six categorical slots, the neutral population, and the status trio' },
 ];
 
-export const DOCS: { id: string; section: SectionId; file: string; title?: string; summary?: string }[] = [
+const DOCS: { id: string; section: SectionId; file: string; title?: string; summary?: string }[] = [
   { id: 'overview', section: 'start', file: 'README.md', title: 'Overview' },
   { id: 'surfaces', section: 'start', file: 'docs/surfaces.md' },
   { id: 'agents', section: 'start', file: 'docs/agents.md' },
@@ -81,6 +81,7 @@ export const PAGES: { id: string; title: string; route: string; embed?: string; 
   { id: 'health', title: 'Health', route: '/health', embed: '/embed/health', spec: 'app/(dashboard)/health/README.md' },
   { id: 'customers', title: 'Customers', route: '/customers', spec: 'app/(dashboard)/customers/README.md' },
   { id: 'keys', title: 'API keys', route: '/keys', spec: 'app/(dashboard)/keys/README.md' },
+  { id: 'members', title: 'Members', route: '/members', spec: 'app/(dashboard)/members/README.md' },
   { id: 'settings', title: 'Settings', route: '/settings', spec: 'app/(dashboard)/settings/README.md' },
   { id: 'sign-in', title: 'Sign in', route: '/sign-in', spec: 'app/sign-in/README.md' },
   { id: 'not-found', title: 'Not found', route: '/does-not-exist', spec: 'app/not-found/README.md' },

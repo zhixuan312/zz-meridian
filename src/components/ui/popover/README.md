@@ -68,4 +68,4 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 </Popover>
 ```
 
-`POPOVER_CONTENT` is the surface's class list, for static mocks.
+`PopoverClose` is also exported, for a panel that carries its own close control (the preview draws one, visually hidden). `POPOVER_CONTENT` is the surface's class list, for static mocks.

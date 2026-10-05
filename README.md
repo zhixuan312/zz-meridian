@@ -72,7 +72,7 @@ Dark is the default, written on `:root`; the light theme follows the operating s
 | `scripts/` | Generators, gates, `brand.ts` and `verify.ts` (see `CONTRIBUTING.md`) |
 | `skills/zz-meridian/` | The agent skill (Claude Code, Codex) that builds dashboards on this template or brings it into yours |
 | `cli/` | The `zz-meridian` npm package: `create`, `adopt` and `skill`, its build, its smoke test and the fixture app (`docs/distribution.md`) |
-| `.github/workflows/release.yml` | The release: gates, the consumer path from the tarball, then npm with provenance, then the tag (`.claude/commands/release-meridian.md`) |
+| `.github/workflows/release.yml` | The release: gates, the consumer path from the tarball, then npm with provenance, then the tag (`.claude/commands/release.md`) |
 
 ## Bring Meridian into your dashboard, in one sentence
 

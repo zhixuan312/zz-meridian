@@ -29,15 +29,33 @@ function formatCostCompact(amount: number | null): string {
   return a < 1000 ? `${sign}${CURRENCY}${Math.round(a).toLocaleString('en-US')}` : `${sign}${CURRENCY}${formatCompact(a)}`;
 }
 
+/** "$298.43" steps the cents down; "2.9M", "0.90%" and "294ms" keep the number whole and step the unit down.
+ *
+ * ONE parser for the two figures that do this (the Featured metric and the Metric tile). It is total: a string it
+ * cannot split comes back whole as `int`, so a caller never tests for a match — and never dereferences one that is
+ * not there. The symbol is whatever abuts the number, not a list of currencies: `$`, `S$`, `CHF` — this
+ *  repository's own `formatCost` concatenates the narrow symbol with no space, so it always abuts.
+ */
+export function splitFigure(s: string): { pre?: string; int: string; frac?: string; unit?: string } {
+  const m = s.match(/^([^\d\s.,-]*)([\d,]+)(\.\d+)?\s*([%a-zA-Z]*)$/);
+  if (!m) return { int: s };
+  const money = Boolean(m[1]);
+  return { pre: m[1] || undefined, int: money ? m[2] : m[2] + (m[3] ?? ''), frac: money ? m[3] : undefined, unit: m[4] || undefined };
+}
+
 /** 1.2M, 846K, 912: a count at a glance. The exact number belongs in the tooltip and the table. */
 export function formatCompact(n: number | null): string {
   if (n === null) return '—';
-  if (n >= 1_000_000_000) return `${(n / 1_000_000_000).toFixed(1)}B`;
-  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
-  if (n >= 1_000) {
+  // Every branch turns on the MAGNITUDE, so a negative reads like the positive it mirrors — "-1.5M", which is what an
+  // axis already renders through `formatAxisCount`. Branching on the signed value dropped a negative all the way to
+  // "-1,500,000", which is not a count at a glance.
+  const abs = Math.abs(n);
+  if (abs >= 1_000_000_000) return `${(n / 1_000_000_000).toFixed(1)}B`;
+  if (abs >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
+  if (abs >= 1_000) {
     // Rounding to whole thousands can reach 1000K (999_999 does); that reads as 1.0M.
     const thousands = Math.round(n / 1_000);
-    return thousands >= 1_000 ? `${(n / 1_000_000).toFixed(1)}M` : `${thousands}K`;
+    return Math.abs(thousands) >= 1_000 ? `${(n / 1_000_000).toFixed(1)}M` : `${thousands}K`;
   }
   return n.toLocaleString('en-US');
 }

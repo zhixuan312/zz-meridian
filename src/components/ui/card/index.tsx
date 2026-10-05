@@ -15,7 +15,7 @@ export function Card({ className, interactive, ...rest }: HTMLAttributes<HTMLDiv
         // `surface-sunk` fill would otherwise stand over this card's rounded one. The body clips what is inside it;
         // only clipping HERE makes the corner round. Narrow on purpose: it is exactly the card-with-a-table case.
         'has-[>[data-flush]:first-child]:overflow-hidden',
-        interactive && 'edge-lit edge-hover transition-[box-shadow,border-color,transform] duration-(--dur-enter) hover:border-line-strong hover:shadow-halo',
+        interactive && 'edge-lit edge-hover transition-[box-shadow,border-color,transform] duration-(--dur-enter) hover:border-line-strong hover:shadow-raise',
         className,
       )}
       {...rest}

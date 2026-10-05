@@ -3,7 +3,7 @@ import remarkGfm from 'remark-gfm';
 import type { ReactNode } from 'react';
 import { cn } from '@/lib/cn';
 
-export const slug = (s: string) => s.toLowerCase().replace(/<[^>]+>/g, '').replace(/[`*_]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+const slug = (s: string) => s.toLowerCase().replace(/<[^>]+>/g, '').replace(/[`*_]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
 const text = (n: ReactNode): string => (typeof n === 'string' ? n : Array.isArray(n) ? n.map(text).join('') : n && typeof n === 'object' && 'props' in n ? text((n as { props: { children?: ReactNode } }).props.children) : '');
 
 /** The h2 headings of a document, for "On this page". */

@@ -9,14 +9,14 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 const ROOT = path.resolve(import.meta.dirname, '..');
-export const LAYERS = [
+const LAYERS = [
   { dir: 'src/components/base', layer: 1, section: 'base' },
   { dir: 'src/components/ui', layer: 2, section: 'components' },
   { dir: 'src/components/patterns', layer: 3, section: 'patterns' },
   { dir: 'src/components/charts', layer: 3, section: 'patterns' },
 ] as const;
 
-export type CardEntry = { id: string; layer: number; section: string; dir: string; hasPreview: boolean };
+type CardEntry = { id: string; layer: number; section: string; dir: string; hasPreview: boolean };
 
 export function cards(): CardEntry[] {
   const out: CardEntry[] = [];
@@ -38,7 +38,7 @@ function build() {
     "import dynamic from 'next/dynamic';",
     "import type { ComponentType } from 'react';",
     '',
-    'export type Card = { id: string; layer: number; section: string; dir: string; Preview: ComponentType | null };',
+    'type Card = { id: string; layer: number; section: string; dir: string; Preview: ComponentType | null };',
     '',
     'export const CARDS: Card[] = [',
     ...list.map((c) => `  { id: '${c.id}', layer: ${c.layer}, section: '${c.section}', dir: '${c.dir}', Preview: ${c.hasPreview ? `dynamic(() => import('@/${c.dir.replace(/^src\//, '')}/preview'))` : 'null'} },`),

@@ -64,4 +64,4 @@ import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 </Sheet>
 ```
 
-The enter motion from the right uses a starting style and a transform transition, because `src/styles/motion.css` has no right-edge keyframe.
+The enter motion from the right is a starting style and a transform transition, not a keyframe, because the leave is a fade: `motion.css`'s `.sheet-in` runs both directions and would fight it. The phone's rise from the bottom does use the `m-sheet-up` keyframe, inline, for the same reason — the class beside it animates the close too.

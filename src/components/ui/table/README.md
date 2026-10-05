@@ -47,7 +47,7 @@ Column widths follow content. One column, the record's name, is `grow` on its he
 ## Surfaces
 
 - **Console**: columns.
-- **Mobile**: drop columns with `hideBelow`; a DataTable becomes a list of cards under 640px.
+- **Mobile**: drop columns with `hideBelow`; a DataTable's rows become cards under 768px (the same `<table>`, restyled — see its README).
 - `hideBelow` reads the table's own width (a container query), not the window's, because the rail and split rows narrow a table without narrowing the window: `sm` drops a column under 512px, `md` under 672px, `lg` under 896px, `xl` under 1152px. A table never clips: if the columns still do not fit, hide one more; the audit fails a table wider than its frame.
 - **Embed**: five rows, then Expand.
 
