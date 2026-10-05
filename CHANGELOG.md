@@ -13,6 +13,12 @@ Every release of ZZ Meridian, newest first. Versions follow semver: a removed or
   - `ExportButton` gains `href`, a download link to a server export.
   - Breaking: `filterRequests` is removed, and `RequestsView` takes `{ rows, total, summary, state, pageSize, now }`.
 - **Each uptime strip is one SVG.** It draws a baseline and a mark per degraded, outage or no-data day. Its accessible summary names the period and only the days that were not fully up, instead of a table of every day. `DayState` gains `'none'`, which reads "No data". The per-day elements and the hidden table are gone.
+- **`scripts/navigate.ts`: the navigation smoke.** For each selected route, on desktop and through the real 390 drawer at 4× CPU, 150 ms latency and 1.6 Mbps, it measures:
+  - the shell;
+  - the data, from the route's `readySelector`;
+  - the interaction, from its harmless probe.
+
+  It applies the median retake rule and checks prefetch bytes against the desktop and closed-drawer caps. A route without a mapping reports its data and interaction as `not-configured`. `scripts/verify.config.ts` gains `budgets`, `navigationChecks` and `smokeRoutes`, and the template maps every rail route.
 - **The verification measurement library** (`scripts/lib/timing.ts`, `sizes.ts`, `coverage.ts` and `budgets.ts`) holds:
   - the median retake rule and nearest-rank p95;
   - the first-load, HTML and prefetch caps, and the default budgets;
@@ -58,6 +64,11 @@ Every release of ZZ Meridian, newest first. Versions follow semver: a removed or
 ### Changed
 
 - **`refreshCollections` reports a missing session as a value.** It resolves `{ ok: true }`, or `{ ok: false, status: 401 }` when there is no session, because a thrown error loses its status in a production build. `ConsoleLive` turns the refusal into the 401 the live client pauses on. Breaking: a caller reads the result instead of catching.
+- **Lighter pages, rendered the same.**
+  - Tables state their cell classes once, at the table, instead of on every cell.
+  - The Health page sends each service's 90 days as one character a day.
+  - The rail keys its link styles on `aria-current`.
+  - `/requests` is 126 KiB and `/health` 99.6 KiB, from 155 and 119. Screenshots at 1440 and 390, in dark and light, are identical.
 - **The Atlas preview route loads only the card it shows.** Its first-load JS fell from 1441 KiB to 591 KiB. `scripts/registry.ts` also writes `src/system/preview-loaders.ts` and the preview route's key list, and `brand.ts --no-atlas` removes both.
 - **The template builds under Cache Components, and every non-API route is static or partial.**
   - `next.config.ts` turns on `cacheComponents` and `partialPrefetching`. The console layout no longer waits for the request: it hands the shell a promise of whether the assistant is configured.

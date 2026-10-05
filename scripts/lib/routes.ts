@@ -1,6 +1,7 @@
 /** The routes a browser check visits: every static page under app/, so a new page is checked without being listed. */
 import fs from 'node:fs';
 import path from 'node:path';
+import { pathToFileURL } from 'node:url';
 
 const ROOT = path.resolve(import.meta.dirname, '../..');
 
@@ -24,4 +25,24 @@ export function discover(): string[] {
   if (out.includes('/system') && fs.existsSync(path.join(ROOT, 'src/components/ui/button/README.md'))) out.push('/system/components/button');
   out.push('/this-page-does-not-exist');
   return [...new Set(out)].sort();
+}
+
+/**
+ * The rail's routes, from `nav` in `src/app.config.ts`, read through its own type: same-origin hrefs in navigation order,
+ * each once. `landing` is `/` when the rail has it, else the first rail route. A `nav` that cannot be read throws, with
+ * the reason, so a caller can fail or report `not run`.
+ */
+export async function railRoutes(): Promise<{ routes: string[]; landing: string }> {
+  type Nav = { items?: { href?: unknown }[] }[];
+  let nav: unknown;
+  try {
+    nav = ((await import(pathToFileURL(path.join(ROOT, 'src/app.config.ts')).href)) as { nav?: unknown }).nav;
+  } catch (e) {
+    throw new Error(`src/app.config.ts could not be read: ${(e as Error).message.split('\n')[0]}`);
+  }
+  if (!Array.isArray(nav)) throw new Error('src/app.config.ts has no `nav` array of groups');
+  const hrefs = (nav as Nav).flatMap((g) => (Array.isArray(g?.items) ? g.items.map((i) => i?.href) : []));
+  const routes = [...new Set(hrefs.filter((h): h is string => typeof h === 'string' && h.startsWith('/') && !h.startsWith('//')))];
+  if (!routes.length) throw new Error('`nav` in src/app.config.ts has no same-origin route');
+  return { routes, landing: routes.includes('/') ? '/' : routes[0] };
 }

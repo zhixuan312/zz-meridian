@@ -1,6 +1,25 @@
 /**
  * What `pnpm verify` needs to know about this project that it cannot discover from `app/`. Edit it; verify reads it.
  */
+type DeviceBudget = { desktop: number; phone: number };
+type ReadinessBudget = { shellMs: DeviceBudget; dataMs: DeviceBudget; interactiveMs: DeviceBudget };
+/** What "this route is ready" means, and one harmless control to press on it. */
+type NavigationCheck = {
+  /** The rail route this describes. */
+  path: string;
+  /** Text the page's heading shows as soon as the shell has arrived. */
+  title: string;
+  /** The element that appears only when the page's data has, and (optionally) the text it must hold. */
+  readySelector: string;
+  readyText?: string;
+  /** What pressing the control does: open a dialog, filter or sort the data, flip a toggle, or follow a link. */
+  probe: 'dialog' | 'filter' | 'sort' | 'toggle' | 'link';
+  /** A control that opens, sorts, filters, toggles or follows and never writes. Name it by role or aria, not by class. */
+  controlSelector: string;
+  /** What changes when the control works. */
+  resultSelector: string;
+};
+
 type VerifyConfig = {
   /**
    * Detail pages checked beside every static route, one per state worth seeing (a normal record, a failed one, a missing
@@ -46,6 +65,25 @@ type VerifyConfig = {
    * the page can prerender.
    */
   requestDependentRoutes?: { path: string; reason: string }[];
+  /**
+   * Limits verify enforces. Leave a key out for Meridian's default: first-load JS 820 KiB per route and 5% growth over
+   * `scripts/verify.baseline.json`, the warm, cold and after-live navigation times, and no prefetch on a closed phone drawer.
+   * `htmlKb` caps a route's uncompressed HTML, through the end of the streamed response; it has no default.
+   */
+  budgets?: {
+    navigation?: { warm?: ReadinessBudget; cold?: ReadinessBudget; afterLive?: ReadinessBudget };
+    firstLoadKb?: number;
+    firstLoadGrowthPct?: number;
+    htmlKb?: Record<string, number>;
+    prefetchKb?: { desktop: number; phoneClosed: number };
+  };
+  /**
+   * One check for every route in the rail (`nav` in src/app.config.ts). `--full` and `--perf` fail on a rail route that has
+   * none; the default smoke reports its data and interaction as not configured. Probes never write.
+   */
+  navigationChecks?: NavigationCheck[];
+  /** The up to three rail routes the default smoke visits. Without it: the landing route and the next two rail routes. */
+  smokeRoutes?: string[];
 };
 
 const config: VerifyConfig = {
@@ -55,6 +93,20 @@ const config: VerifyConfig = {
     '/requests/req_jqwm3le188pi', // POST /v1/messages, 201: model, tokens and a streamed response
     '/requests/req_p2r91aiimd17', // 404: the refused state
     '/requests/req_missing', // no such request: the not-found screen in the shell
+  ],
+  smokeRoutes: ['/', '/requests', '/settings'],
+  budgets: { htmlKb: { '/health': 100, '/requests': 80 } },
+  navigationChecks: [
+    { path: '/', title: 'Overview', readySelector: 'main table tbody tr', probe: 'toggle', controlSelector: 'main [role="radio"][aria-checked="false"]', resultSelector: 'main [role="radio"]' },
+    { path: '/requests', title: 'Requests', readySelector: 'main table tbody tr', probe: 'filter', controlSelector: 'main input[type="search"]', resultSelector: 'main table tbody tr' },
+    { path: '/analytics', title: 'Analytics', readySelector: 'main table tbody tr', probe: 'toggle', controlSelector: 'main [role="radio"][aria-checked="false"]', resultSelector: 'main [role="radio"]' },
+    { path: '/health', title: 'Health', readySelector: 'main', readyText: 'Uptime', probe: 'toggle', controlSelector: 'main button[aria-pressed]', resultSelector: 'main button[aria-pressed]' },
+    { path: '/customers', title: 'Customers', readySelector: 'main table tbody tr', probe: 'filter', controlSelector: 'main input[type="search"]', resultSelector: 'main table tbody tr' },
+    { path: '/keys', title: 'API keys', readySelector: 'main table tbody tr', probe: 'dialog', controlSelector: 'main button[aria-haspopup="dialog"]', resultSelector: '[role="dialog"]' },
+    { path: '/members', title: 'Members', readySelector: 'main table tbody tr', probe: 'toggle', controlSelector: 'main button[aria-haspopup="menu"]', resultSelector: '[role="menu"]' },
+    { path: '/settings', title: 'Settings', readySelector: 'main [role="switch"]', probe: 'toggle', controlSelector: 'main [role="switch"]', resultSelector: 'main [role="switch"]' },
+    { path: '/system', title: 'One dashboard', readySelector: 'section[aria-label="The system in numbers"]', probe: 'link', controlSelector: 'section a[href^="/system/"]', resultSelector: 'h1' },
+    { path: '/system/start/start-a-dashboard', title: 'Start a dashboard', readySelector: 'article h2', probe: 'link', controlSelector: 'nav[aria-label="Next and previous"] a', resultSelector: 'h1' },
   ],
 };
 

@@ -9,6 +9,7 @@ import { toast } from '@/components/ui/toast';
 import { Card, CardHeader } from '@/components/ui/card';
 import { FeaturedMetric } from '@/components/patterns/featured-metric';
 import { StatusList, summarise } from '@/components/patterns/status-list';
+import { unpackServices, type PackedService } from '@/components/patterns/status-list/summarise';
 import { IncidentCard } from '@/components/patterns/incident-card';
 import { UptimeBars, type DayState } from '@/components/charts/uptime-bars';
 import { EmptyState } from '@/components/ui/empty-state';
@@ -47,9 +48,9 @@ export function HealthBody({ services, current, past, now }: { services: Service
           }
         >
           <div className="@container flex flex-1 flex-col justify-end gap-7 px-2 pb-3">
-            <ul aria-label="Right now" className="grid grid-cols-2 gap-px overflow-hidden rounded-md border border-line bg-line @[40rem]:grid-cols-3">
+            <ul aria-label="Right now" className="grid grid-cols-2 gap-px overflow-hidden rounded-md border border-line bg-line @[40rem]:grid-cols-3 [&>li]:flex [&>li]:min-w-0 [&>li]:items-center [&>li]:gap-2.5 [&>li]:bg-surface/80 [&>li]:px-3.5 [&>li]:py-3">
               {services.map((svc) => (
-                <li key={svc.name} className="flex min-w-0 items-center gap-2.5 bg-surface/80 px-3.5 py-3">
+                <li key={svc.name}>
                   <StatusDot tone={TONE[svc.status]} live={svc.status !== 'operational'} />
                   <span className="min-w-0 flex-1 truncate text-sm">{svc.name}</span>
                   <span className={cn('t-num text-xs max-sm:hidden', svc.status === 'operational' ? 'text-ink-3' : 'font-medium text-warning-ink')}>{formatDuration(svc.latency)}</span>
@@ -79,6 +80,11 @@ export function HealthBody({ services, current, past, now }: { services: Service
       </Row>
     </Stack>
   );
+}
+
+/** The console route's body: the histories arrive packed, one character a day, and are unpacked here where the strips are drawn. */
+export function PackedHealthBody({ services, ...rest }: Omit<Parameters<typeof HealthBody>[0], 'services'> & { services: PackedService[] }) {
+  return <HealthBody services={unpackServices(services)} {...rest} />;
 }
 
 /** Subscribe to incident updates: a toggle that says what it did, and where the updates go. */

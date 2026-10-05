@@ -16,6 +16,16 @@ import { AppearanceMenu } from '@/components/patterns/appearance-menu';
 export type Scope = { id: string; label: string; active: boolean; onSelect: () => void };
 
 /**
+ * What every destination repeats, written once on the nav and keyed on `aria-current`: the pill's size and ink, and the
+ * icon's. A link carries only its own href. Literal strings, so Tailwind finds them.
+ */
+const LINKS = [
+  '[&_a]:relative [&_a]:flex [&_a]:h-9 pointer-coarse:[&_a]:h-11 [&_a]:items-center [&_a]:gap-3 [&_a]:rounded-md [&_a]:px-3 [&_a]:text-sm [&_a]:text-ink-2 [&_a]:transition-colors [&_a]:duration-(--dur-hover)',
+  '[&_a:not([aria-current]):hover]:bg-fill-hover [&_a:not([aria-current]):hover]:text-ink [&_a[aria-current=page]]:font-medium [&_a[aria-current=page]]:text-ink',
+  '[&_a_svg]:size-4 [&_a_svg]:shrink-0 [&_a_svg]:text-ink-3 [&_a_svg]:transition-colors [&_a:not([aria-current]):hover_svg]:text-ink-2 [&_a[aria-current=page]_svg]:text-accent-ink',
+].join(' ');
+
+/**
  * The navigation rail: a translucent wash on the lit ground. The current page is an accent-tinted pill with a lit
  * edge that springs to the item you choose; groups are named in mono caps; a count is a quiet badge.
  */
@@ -90,7 +100,7 @@ export function Rail({
           </MenuContent>
         </Menu>
       </div>
-      <nav ref={list} aria-label="Main" className="scroll-fade-y relative flex-1 overflow-y-auto px-3 pt-3 pb-4">
+      <nav ref={list} aria-label="Main" className={cn('scroll-fade-y relative flex-1 overflow-y-auto px-3 pt-3 pb-4', LINKS)}>
         {marker ? (
           <span
             aria-hidden
@@ -112,12 +122,8 @@ export function Rail({
                     <Link
                       href={it.href}
                       aria-current={on ? 'page' : undefined}
-                      className={cn(
-                        'group relative flex h-9 pointer-coarse:h-11 items-center gap-3 rounded-md px-3 text-sm transition-colors duration-(--dur-hover)',
-                        on ? 'font-medium text-ink' : 'text-ink-2 hover:bg-fill-hover hover:text-ink',
-                      )}
                     >
-                      <Icon className={cn('size-4 shrink-0 transition-colors', on ? 'text-accent-ink' : 'text-ink-3 group-hover:text-ink-2')} strokeWidth={1.75} />
+                      <Icon strokeWidth={1.75} />
                       <span className="flex-1 truncate">{it.label}</span>
                       {it.badge ? <span className="t-num grid h-5 min-w-5 place-items-center rounded-full bg-warning-tint px-1.5 text-2xs font-semibold text-warning-ink">{it.badge}</span> : null}
                     </Link>

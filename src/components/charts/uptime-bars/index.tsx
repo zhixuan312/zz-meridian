@@ -77,7 +77,7 @@ export function UptimeBars({
         >
           <rect x={0} y={0} width={shown.length} height={H} className="fill-positive/22" />
           {marked.map(({ d, i }) => (
-            <rect key={i} data-day={i} data-state={d} x={i} y={0} width={1} height={H} className={MARK[d as Exclude<DayState, 'operational'>]} />
+            <rect key={i} data-day={i} data-state={d} x={i} width={1} height={H} className={MARK[d as Exclude<DayState, 'operational'>]} />
           ))}
           {hover !== null ? <rect data-focus x={hover} y={0} width={1} height={H} className="fill-ink/25" /> : null}
         </svg>
@@ -101,7 +101,7 @@ export function UptimeBars({
       ) : null}
       <p className="sr-only" aria-live="polite">{hover !== null ? `${formatDate(dateOf(hover))}: ${WORD[shown[hover]]}` : ''}</p>
       <p id={summaryId} className="sr-only">
-        {label}: {pct(uptime)} {measure} over {shown.length} days, {formatDate(dateOf(0))} to {formatDate(dateOf(shown.length - 1))}.
+        {`${label}: ${pct(uptime)} ${measure} over ${shown.length} days, ${formatDate(dateOf(0))} to ${formatDate(dateOf(shown.length - 1))}.`}
         {marked.length === 0 ? ' No incidents.' : marked.map(({ d, i }) => ` ${formatDate(dateOf(i))}: ${WORD[d]}.`).join('')}
       </p>
     </figure>

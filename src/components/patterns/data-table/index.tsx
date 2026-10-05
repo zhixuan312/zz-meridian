@@ -11,7 +11,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { EmptyState } from '@/components/ui/empty-state';
 import { Pagination } from '@/components/ui/pagination';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, type Breakpoint, type SortDirection } from '@/components/ui/table';
+import { Table, TableBody, TableHead, TableHeader, type Breakpoint, type SortDirection } from '@/components/ui/table';
 import { useQueryState } from './use-query-state';
 
 export { useQueryState } from './use-query-state';
@@ -58,24 +58,51 @@ export type TableState = { sort: string; dir: string; page: string };
  */
 type Mobile = 'check' | 'title' | 'status' | 'fact' | 'hidden';
 
+/**
+ * The rules every cell and row repeats, written once on the table and keyed on the attributes the cells already carry
+ * (`data-mobile`, `data-num`, `data-sep`), so a row carries only what differs from its column: a width, a muted ink, a
+ * breakpoint. Twenty rows of seven cells used to repeat these class lists 160 times. Literal strings, so Tailwind finds them.
+ *
+ * `data-num` is `num` for a numeric column (never wrapped; its cells add `t-num` themselves, a plain class a variant cannot apply) and `true` for one that is only right-aligned.
+ */
+const CELLS = [
+  'text-ink',
+  '[&_td]:h-(--row-height) [&_td]:px-4 [&_td]:align-middle [&_td]:text-left',
+  '[&_td[data-num]]:text-right [&_td[data-num=num]]:whitespace-nowrap',
+  '[&_[data-sep]]:hidden',
+  '[&_tbody_tr]:transition-colors [&_tbody_tr]:duration-(--dur-hover) [&_tbody_td]:border-b [&_tbody_td]:border-line [&_tbody_tr:last-child_td]:border-0',
+].join(' ');
+
 /** What a row becomes below 768px: a six-column grid, a card's padding, a hairline between cards. */
-const PHONE_ROW = 'max-md:grid max-md:grid-cols-6 max-md:items-center max-md:gap-x-3 max-md:gap-y-1 max-md:px-(--card-pad) max-md:py-3.5 max-md:[&>td]:border-0 max-md:border-b max-md:border-line max-md:last:border-b-0';
+const PHONE_ROWS = [
+  'max-md:[&_tbody_tr]:grid max-md:[&_tbody_tr]:grid-cols-6 max-md:[&_tbody_tr]:items-center max-md:[&_tbody_tr]:gap-x-3 max-md:[&_tbody_tr]:gap-y-1',
+  'max-md:[&_tbody_tr]:px-(--card-pad) max-md:[&_tbody_tr]:py-3.5 max-md:[&_tbody_td]:border-0 max-md:[&_tbody_tr]:border-b max-md:[&_tbody_tr]:border-line max-md:[&_tbody_tr:last-child]:border-b-0',
+].join(' ');
 
 /** The resets a cell needs once the row is a grid: not a row height, not a padding box, free to shrink and to clip. */
-const PHONE_CELL = 'max-md:!h-auto max-md:!max-w-none max-md:!p-0 max-md:min-w-0';
+const PHONE_CELLS = 'max-md:[&_td:not([data-mobile=hidden])]:!h-auto max-md:[&_td:not([data-mobile=hidden])]:!max-w-none max-md:[&_td:not([data-mobile=hidden])]:!p-0 max-md:[&_td:not([data-mobile=hidden])]:min-w-0 max-md:[&_td:not([data-mobile=hidden])]:!block max-md:[&_[data-sep]]:inline';
 
 /** Where a role sits in the card, and how it reads there.
  *
- * `!block` is load-bearing: `hideBelow` drops a column when the TABLE is narrow, and on a phone the table is always
+ * `!block` (above) is load-bearing: `hideBelow` drops a column when the TABLE is narrow, and on a phone the table is always
  * narrow — but a card has room for three small facts, so a column the table dropped for width comes back here. The
- * card's own rule is the role, not the width. */
-const PHONE_ROLE: Record<Mobile, string> = {
-  check: 'max-md:!block max-md:col-span-1 max-md:row-start-1',
-  title: 'max-md:!block max-md:row-start-1 max-md:font-medium',
-  status: 'max-md:!block max-md:row-start-1 max-md:justify-self-end',
-  fact: 'max-md:!block max-md:row-start-2 max-md:col-span-2 max-md:text-xs max-md:text-ink-3',
-  hidden: 'max-md:hidden',
-};
+ * card's own rule is the role, not the width. The title takes one column fewer when a checkbox leads the row: six
+ * columns, and the status keeps the last two. */
+const PHONE_ROLES = [
+  'max-md:[&_td[data-mobile=check]]:col-span-1 max-md:[&_td[data-mobile=check]]:row-start-1',
+  'max-md:[&_td[data-mobile=title]]:row-start-1 max-md:[&_td[data-mobile=title]]:font-medium',
+  'max-md:[&_td[data-mobile=status]]:row-start-1 max-md:[&_td[data-mobile=status]]:justify-self-end',
+  'max-md:[&_td[data-mobile=fact]]:row-start-2 max-md:[&_td[data-mobile=fact]]:col-span-2 max-md:[&_td[data-mobile=fact]]:text-xs max-md:[&_td[data-mobile=fact]]:text-ink-3',
+  'max-md:[&_td[data-mobile=hidden]]:hidden',
+].join(' ');
+const PHONE_TITLE_SPAN = { plain: 'max-md:[&_td[data-mobile=title]]:col-span-4', selectable: 'max-md:[&_td[data-mobile=title]]:col-span-3' };
+
+/* Literal strings, as in the Table: Tailwind finds classes by reading the source. */
+const HIDE: Record<Breakpoint, string> = { sm: '@max-[512px]:hidden', md: '@max-[672px]:hidden', lg: '@max-[896px]:hidden', xl: '@max-[1152px]:hidden' };
+
+/** A cell's few own classes: what its column adds to the table's rules. */
+const cellClass = (c: { align?: 'left' | 'right' | 'center'; numeric?: boolean; muted?: boolean; truncate?: boolean; hideBelow?: Breakpoint }) =>
+  cn(c.numeric && 't-num', c.align === 'center' && '!text-center', c.muted && 'text-ink-2', c.truncate && 'max-w-0 truncate', c.hideBelow && HIDE[c.hideBelow]);
 
 /** The table's sort and page, kept in the URL: `?sort=latency&dir=desc&page=2`. Wrap the page in <Suspense>. */
 export function useTableQuery(defaults: Partial<TableState> = {}) {
@@ -225,10 +252,8 @@ export function DataTable<R>({
     );
   } else {
     const roleOf = (c: Column<R>): Mobile => (c === titleColumn ? 'title' : c === status ? 'status' : facts.includes(c) ? 'fact' : 'hidden');
-    // The title takes one column fewer when a checkbox leads the row: six columns, and the status keeps the last two.
-    const phoneCell = (role: Mobile) => (role === 'hidden' ? PHONE_ROLE.hidden : cn(PHONE_CELL, PHONE_ROLE[role], role === 'title' && (selectable ? 'max-md:col-span-3' : 'max-md:col-span-4')));
     body = (
-      <Table caption={caption} aria-busy={loading || undefined} className="max-md:block max-md:[&>thead]:hidden max-md:[&>tbody]:block">
+      <Table caption={caption} aria-busy={loading || undefined} className={cn('max-md:block max-md:[&>thead]:hidden max-md:[&>tbody]:block', CELLS, PHONE_ROWS, PHONE_CELLS, PHONE_ROLES, PHONE_TITLE_SPAN[selectable ? 'selectable' : 'plain'])}>
         <TableHead>
           <tr>
             {selectable ? (
@@ -246,24 +271,24 @@ export function DataTable<R>({
         <TableBody>
           {loading
             ? Array.from({ length: Math.min(size, 8) }, (_, i) => (
-                <TableRow key={i} className={PHONE_ROW}>
-                  {selectable ? <TableCell data-mobile="check" className={phoneCell('check')}><Skeleton className="size-4" /></TableCell> : null}
+                <tr key={i} className="group/row">
+                  {selectable ? <td data-mobile="check"><Skeleton className="size-4" /></td> : null}
                   {columns.map((c, j) => (
-                    <TableCell key={c.key} data-mobile={roleOf(c)} hideBelow={c.hideBelow} numeric={c.numeric} className={phoneCell(roleOf(c))}>
+                    <td key={c.key} data-mobile={roleOf(c)} data-num={c.numeric ? 'num' : undefined} className={cellClass({ numeric: c.numeric, hideBelow: c.hideBelow })}>
                       <Skeleton className={cn('h-3', c.numeric ? 'ml-auto w-12' : c.grow ? ['w-48', 'w-40', 'w-56'][i % 3] : ['w-20', 'w-16', 'w-24'][(i + j) % 3])} />
-                    </TableCell>
+                    </td>
                   ))}
-                </TableRow>
+                </tr>
               ))
             : shown.map((r) => {
                 const k = rowKey(r);
                 const href = rowHref?.(r);
                 return (
-                  <TableRow key={k} interactive={Boolean(href)} selected={sel.has(k)} onClick={(e) => open(e, href)} className={PHONE_ROW}>
+                  <tr key={k} aria-selected={sel.has(k) || undefined} onClick={(e) => open(e, href)} className={cn('group/row', href && 'cursor-pointer hover:bg-fill-hover', sel.has(k) && 'bg-accent-tint hover:bg-accent-tint')}>
                     {selectable ? (
-                      <TableCell data-mobile="check" className={cn('!pr-0', phoneCell('check'))}>
+                      <td data-mobile="check" className="!pr-0">
                         <Checkbox aria-label={`Select ${k}`} checked={sel.has(k)} onCheckedChange={() => toggle(k)} />
-                      </TableCell>
+                      </td>
                     ) : null}
                     {columns.map((c) => {
                       const role = roleOf(c);
@@ -271,7 +296,7 @@ export function DataTable<R>({
                       // pointer too (the row's own click), but the link is what a keyboard and a screen reader follow.
                       const content = c === titleColumn && href ? <Link href={href} className="row-link">{c.cell(r)}</Link> : c.cell(r);
                       return (
-                        <TableCell key={c.key} data-mobile={role} align={c.align} numeric={c.numeric} muted={c.muted} truncate={c.truncate} hideBelow={c.hideBelow} className={phoneCell(role)}>
+                        <td key={c.key} data-mobile={role} data-num={c.numeric ? 'num' : c.align === 'right' ? 'true' : undefined} className={cellClass(c) || undefined}>
                           {/* A phone may want other words for the same cell — "Used 1 min ago", not "1 min ago" — so
                               both are rendered and one is hidden: a few words each, never a second copy of the row. */}
                           {c.mobileCell ? (
@@ -283,11 +308,11 @@ export function DataTable<R>({
                           {/* The dot that separates two facts, on a phone only — the table has a column for each of
                               them, where a dot would be noise. It trails the fact it follows, so the line reads
                               "391ms · Orbit Retail · 6 min ago" rather than starting every fact with a bullet. */}
-                          {role === 'fact' && facts.indexOf(c) < facts.length - 1 ? <span aria-hidden className="hidden max-md:inline"> ·</span> : null}
-                        </TableCell>
+                          {role === 'fact' && facts.indexOf(c) < facts.length - 1 ? <span aria-hidden data-sep> ·</span> : null}
+                        </td>
                       );
                     })}
-                  </TableRow>
+                  </tr>
                 );
               })}
         </TableBody>
