@@ -7,7 +7,8 @@
  * Each journey starts from another rail route, waits for what a visitor would wait for (every router prefetch to finish
  * when it was visible, the drawer on a phone), presses the destination in the rail and times three things from that press:
  * the shell (the path and the heading), the data (the mapping's `readySelector` and `readyText`) and the interaction (its
- * `probe` on `controlSelector`, observed on `resultSelector`). The phone is 390 wide, 4x CPU throttled, 150 ms and 1.6 Mbps,
+ * `probe` on `controlSelector`, observed on `resultSelector`). Times are the page's own clock, from the press event to the first
+ * frame that shows the condition, never round trips over the debugging protocol. The phone is 390 wide, 4x CPU throttled, 150 ms and 1.6 Mbps,
  * and the drawer-open-to-navigation time is reported apart.
  *
  * A timing over its budget is retaken twice and gated on the median of three (scripts/lib/timing.ts). A wrong result, a
@@ -67,9 +68,47 @@ type Sample = { shell: Measured; data: Measured | null; interactive: Measured | 
 
 // ---- in the page ----
 
-/** Before the app runs: remembers every router prefetch, so the bytes can be summed and the destination's awaited. */
+/** What a probe's result looks like: the address, how many elements, their text and their state attributes. Runs in the page. */
+const SNAP = `(selector) => location.href + '|' + [...document.querySelectorAll(selector)].slice(0, 40)
+  .map((el) => (el.textContent ?? '').trim().slice(0, 80) + ['aria-sort', 'aria-expanded', 'aria-pressed', 'aria-checked', 'aria-selected', 'data-state', 'open'].map((a) => el.getAttribute(a)).join(','))
+  .join(';')`;
+/**
+ * Before the app runs: remembers every router prefetch, so the bytes can be summed and awaited, and keeps the clock for the
+ * journey. The times are the page's own: the press is the `pointerdown` event's time and a condition holds at the first frame
+ * that finds it true, so no round trip over the debugging protocol is in any of them. The press and the spec are kept in
+ * sessionStorage, so a page that loads anew (not a client navigation) is timed from the same press.
+ */
 const INSTRUMENT = `(() => {
-  const nav = window.__nav = { prefetches: [] };
+  const nav = window.__nav = { prefetches: [], spec: null, t0: undefined, res: {}, expect: null, snap: ${SNAP} };
+  const KEY = '__nav_journey';
+  try { const kept = JSON.parse(sessionStorage.getItem(KEY) ?? 'null'); if (kept) { nav.spec = kept.spec; nav.t0 = kept.t0; } } catch { /* a fresh journey */ }
+  nav.arm = (spec) => { nav.before = document.querySelector('h1')?.textContent.trim(); nav.spec = spec; nav.t0 = undefined; nav.res = {}; nav.expect = null; try { sessionStorage.setItem(KEY, JSON.stringify({ spec, t0: null })); } catch { /* kept in memory */ } };
+  document.addEventListener('pointerdown', (e) => {
+    if (!nav.spec || nav.t0 != null) return;
+    nav.t0 = performance.timeOrigin + e.timeStamp;
+    try { sessionStorage.setItem(KEY, JSON.stringify({ spec: nav.spec, t0: nav.t0 })); } catch { /* kept in memory */ }
+  }, true);
+  const frame = (ts) => {
+    const s = nav.spec;
+    if (s && nav.t0 != null) {
+      const at = Math.max(0, Math.round(performance.timeOrigin + ts - nav.t0));
+      const r = nav.res;
+      if (r.shell === undefined && location.pathname === s.route) {
+        const h = document.querySelector('h1');
+        const text = h ? h.textContent.trim() : '';
+        // Without a title, a heading that differs from the one on screen at the press is the target's.
+        if (text !== '' && (s.title ? text.includes(s.title) : text !== nav.before)) r.shell = at;
+      }
+      // Until the heading is the target's, the page on screen is the old one, whose table would answer for the new one.
+      if (r.shell !== undefined) {
+        if (s.ready && r.data === undefined && location.pathname === s.route && [...document.querySelectorAll(s.ready)].some((el) => el.textContent.toLowerCase().includes(s.text))) r.data = at;
+        // A link probe leaves the route: its result is the address changing.
+        if (nav.expect && r.interactive === undefined && nav.snap(nav.expect.selector) !== nav.expect.before) r.interactive = at;
+      }
+    }
+    requestAnimationFrame(frame);
+  };
+  requestAnimationFrame(frame);
   try { performance.setResourceTimingBufferSize(2000); } catch { /* keep the default */ }
   const headerOf = (input, init, name) => {
     const h = (init && init.headers) || (input instanceof Request ? input.headers : null);
@@ -101,11 +140,6 @@ const pickable = (selector: string) => `(() => {
     return r.width > 0 && r.height > 0 && getComputedStyle(el).visibility !== 'hidden' && hydrated(el);
   }) ?? null;
 })()`;
-
-/** What a probe's result looks like now: the address, how many elements, their text and their state attributes. */
-const snapshot = (selector: string) => `(() => location.href + '|' + [...document.querySelectorAll(${JSON.stringify(selector)})].slice(0, 40)
-  .map((el) => (el.textContent ?? '').trim().slice(0, 80) + ['aria-sort', 'aria-expanded', 'aria-pressed', 'aria-checked', 'aria-selected', 'data-state', 'open'].map((a) => el.getAttribute(a)).join(','))
-  .join(';'))()`;
 
 /** Where the centre of the first pressable element of `selector` is, or null while none is or something covers it. */
 async function point(page: Page, selector: string): Promise<{ x: number; y: number } | null> {
@@ -189,13 +223,13 @@ async function journey(page: Page, device: Device, start: string, route: string,
   const prefetchCapped = !idle;
   const at = await poll(() => point(page, link), Date.now() + cap);
   if (!at) throw new Fail('never-ready', `the link to ${route} is covered or gone`);
+  const spec = { route, title: check?.title ?? '', ready: check?.readySelector ?? '', text: (check?.readyText ?? '').toLowerCase() };
+  await page.eval(`window.__nav.arm(${JSON.stringify(spec)})`);
   const t0 = await press(page, at);
-  const since = () => Date.now() - t0;
-  const heading = JSON.stringify(check?.title ?? '');
 
   // The shell: the path and the target heading.
-  const shellOk = await poll(() => page.eval<boolean>(`location.pathname === ${JSON.stringify(route)} && (() => { const h = document.querySelector('h1'); return !!h && h.textContent.trim() !== '' && h.textContent.includes(${heading}); })()`).then((v) => v && since()), t0 + cap);
-  if (shellOk === null) {
+  const shellMs = await result(page, 'shell', t0 + cap);
+  if (shellMs === null) {
     const now = await page.eval<{ p: string; h: string }>(`({ p: location.pathname, h: document.querySelector('h1')?.textContent.trim() ?? '' })`);
     const wrong = now.p === route;
     return {
@@ -206,7 +240,7 @@ async function journey(page: Page, device: Device, start: string, route: string,
       prefetchCapped,
     };
   }
-  const shell = { ms: shellOk };
+  const shell = { ms: shellMs };
   if (!check) return { shell, data: null, interactive: null, drawerMs, prefetchCapped };
 
   // Data and interaction run side by side: a control that is there at once does not wait for a body that is not.
@@ -215,9 +249,12 @@ async function journey(page: Page, device: Device, start: string, route: string,
   return { shell, data, interactive, drawerMs, prefetchCapped };
 }
 
+/** The page's own time for `name`, in ms since the press, once it has one; null when `until` (a clock time) passes first. */
+const result = (page: Page, name: 'shell' | 'data' | 'interactive', until: number) =>
+  poll(() => page.eval<number | undefined>(`window.__nav.res.${name}`).then((v) => (typeof v === 'number' ? v : null), () => null), until);
+
 async function measureData(page: Page, route: string, check: NavigationCheck, t0: number, cap: number): Promise<Measured> {
-  const text = JSON.stringify((check.readyText ?? '').toLowerCase());
-  const ms = await poll(() => page.eval<boolean>(`location.pathname === ${JSON.stringify(route)} && [...document.querySelectorAll(${JSON.stringify(check.readySelector)})].some((el) => el.textContent.toLowerCase().includes(${text}))`).then((v) => v && Date.now() - t0), t0 + cap);
+  const ms = await result(page, 'data', t0 + cap);
   if (ms !== null) return { ms };
   const there = await page.eval<boolean>(`!!document.querySelector(${JSON.stringify(check.readySelector)})`);
   return { fail: new Fail(there ? 'wrong-result' : 'never-ready', there ? `${check.readySelector} is there but never shows "${check.readyText}"` : `${check.readySelector} did not appear in ${cap} ms`) };
@@ -226,14 +263,14 @@ async function measureData(page: Page, route: string, check: NavigationCheck, t0
 async function measureInteraction(page: Page, route: string, check: NavigationCheck, t0: number, cap: number, wait: number): Promise<Measured> {
   const where = await poll(async () => (await page.eval<boolean>(`location.pathname === ${JSON.stringify(route)}`)) && point(page, check.controlSelector), t0 + cap);
   if (!where) return { fail: new Fail('never-ready', `the control ${check.controlSelector} was not pressable in ${cap} ms`) };
-  const before = await page.eval<string>(snapshot(check.resultSelector));
   const isInput = await page.eval<boolean>(`(() => { const el = ${pickable(check.controlSelector)}; return !!el && el.tagName === 'INPUT' && ['text', 'search'].includes(el.type); })()`);
+  // The page compares this result with what it shows from now on, and times the first frame that differs.
+  await page.eval(`(() => { const n = window.__nav; n.expect = { selector: ${JSON.stringify(check.resultSelector)}, before: n.snap(${JSON.stringify(check.resultSelector)}) }; })()`);
   await press(page, where);
   if (isInput) await page.send('Input.insertText', { text: 'a' });
-  const pressed = Date.now();
-  const changed = await poll(async () => (await page.eval<string>(snapshot(check.resultSelector))) !== before, pressed + wait);
-  if (!changed) return { fail: new Fail('control-dead', `pressing ${check.controlSelector} (${check.probe}) changed nothing on ${check.resultSelector} in ${wait} ms`) };
-  return { ms: Date.now() - t0 };
+  const ms = await result(page, 'interactive', Date.now() + wait);
+  if (ms === null) return { fail: new Fail('control-dead', `pressing ${check.controlSelector} (${check.probe}) changed nothing on ${check.resultSelector} in ${wait} ms`) };
+  return { ms };
 }
 
 // ---- the retake rule, per route and device ----

@@ -1,9 +1,10 @@
 /**
  * The browser audit: every page and embed view, at every width, in both themes, measured.
  *
- *   node scripts/audit.ts [--base http://localhost:3100] [--routes /,/requests] [--extra /requests/req_1] [--quick] [--embeds-only]
+ *   node scripts/audit.ts [--base http://localhost:3100] [--routes /,/requests] [--embeds-only]
  *
- * Routes are discovered from app/ (every static page; embeds under /embed); --extra adds dynamic ones.
+ * Routes are discovered from app/ (every static page; embeds under /embed), with the detail pages in
+ * scripts/verify.config.ts beside them; --routes replaces the pages for one run.
  *
  * Fails (exit 1) on: sideways scroll, text clipped without an ellipsis, a control with no accessible name, more than
  * one page scroller, and rendered text under its WCAG minimum. Prints the design metrics per page: distinct type
@@ -12,19 +13,20 @@
  */
 import { launch } from './lib/chrome.ts';
 import { discover } from './lib/routes.ts';
+import config from './verify.config.ts';
 
 const args = process.argv.slice(2);
 const opt = (k: string, d: string) => { const i = args.indexOf(k); return i >= 0 ? args[i + 1] : d; };
 const base = opt('--base', process.env.BASE ?? 'http://localhost:3100');
-const quick = args.includes('--quick');
 const EMBEDS_ONLY = args.includes('--embeds-only');
 
 const found = discover();
-const extra = opt('--extra', '').split(',').filter(Boolean);
-const ROUTES = EMBEDS_ONLY ? [] : (opt('--routes', '') ? opt('--routes', '').split(',') : [...found.filter((r) => !r.startsWith('/embed')), ...extra]);
+// verify.config.ts is the team's, so read the one field this needs through its own type.
+const detailRoutes = (config as { detailRoutes?: string[] }).detailRoutes ?? [];
+const ROUTES = EMBEDS_ONLY ? [] : (opt('--routes', '') ? opt('--routes', '').split(',') : [...found.filter((r) => !r.startsWith('/embed')), ...detailRoutes]);
 const EMBEDS = found.filter((r) => r.startsWith('/embed/'));
-const WIDTHS = quick ? [1440, 390] : [2560, 1440, 1024, 768, 390];
-const THEMES = quick ? ['dark'] : ['dark', 'light'];
+const WIDTHS = [2560, 1440, 1024, 768, 390];
+const THEMES = ['dark', 'light'];
 
 type Report = {
   sideways: string[]; clipped: string[]; focusless: string[]; unnamed: string[]; scrollers: string[]; contrast: string[]; targets: string[]; headings: string[];
@@ -159,7 +161,7 @@ const run = async (route: string, width: number, theme: string, embed: boolean) 
   if (width === 1440 && theme === THEMES[0]) metrics.push(`${route.padEnd(34)} sizes ${String(r.sizes.length).padStart(2)} [${r.sizes.join(' ')}] · weights ${r.weights.join('/')} · radii ${r.radii.length} [${r.radii.join(' ')}] · hierarchy ${r.ratio}×`);
 };
 for (const route of ROUTES) for (const w of WIDTHS) for (const t of THEMES) await run(route, w, t, false);
-for (const route of EMBEDS) for (const w of quick ? [720] : [720, 420]) for (const t of THEMES) await run(route, w, t, true);
+for (const route of EMBEDS) for (const w of [720, 420]) for (const t of THEMES) await run(route, w, t, true);
 page.close();
 console.log('\nDesign metrics at 1440:\n' + metrics.join('\n'));
 console.log(`\naudit: ${failures} issues across ${ROUTES.length + EMBEDS.length} routes, at ${WIDTHS.join(', ')}px in ${THEMES.join(' and ')}`);

@@ -1,17 +1,21 @@
 import { Suspense } from 'react';
 import { app } from '@/app.config';
-import { PageFrame } from '@/components/base/shell';
+import { PageFrame, Stack } from '@/components/base/shell';
 import { ExportButton } from '@/components/patterns/export-button';
 import { Freshness } from '@/components/patterns/freshness';
 import { PeriodSelect } from '@/components/patterns/period-select';
+import { Skeleton } from '@/components/ui/skeleton';
 import { AnalyticsBody } from '@/views/analytics';
 import { DEMO_NOW, DEMO_UPDATED_AT, ENDPOINTS, demoHeatmap, demoSeries, REGION_LATENCY, requestsByHour } from '@/data/sample';
 import { parsePeriod } from '@/lib/period';
+import { AnalyticsSkeleton } from './loading';
 
 export const metadata = { title: 'Analytics' };
 
-export default async function AnalyticsPage({ searchParams }: { searchParams: Promise<{ period?: string }> }) {
-  const period = parsePeriod((await searchParams).period);
+type SearchParams = Promise<{ period?: string }>;
+
+/** The masthead renders at once; the period select, the export and the body read the address inside their own boundaries. */
+export default function AnalyticsPage({ searchParams }: { searchParams: SearchParams }) {
   return (
     <PageFrame
       kicker={<>{app.name} · {app.workspace}</>}
@@ -19,13 +23,29 @@ export default async function AnalyticsPage({ searchParams }: { searchParams: Pr
       description="When traffic comes, where it comes from, and which endpoints are slow."
       meta={<Freshness updatedAt={DEMO_UPDATED_AT} now={DEMO_NOW} />}
       actions={
-        <>
-          <Suspense><PeriodSelect value={period} /></Suspense>
-          <ExportButton rows={demoSeries(period).current} filename={`analytics-${period}.csv`} noun="days" className="max-sm:hidden" />
-        </>
+        <Suspense fallback={<Skeleton className="h-9 w-48 rounded-md" />}>
+          <Actions searchParams={searchParams} />
+        </Suspense>
       }
     >
-      <AnalyticsBody series={demoSeries(period).current} heat={demoHeatmap()} hours={requestsByHour()} regions={REGION_LATENCY} endpoints={ENDPOINTS} />
+      <Suspense fallback={<Stack><AnalyticsSkeleton /></Stack>}>
+        <Body searchParams={searchParams} />
+      </Suspense>
     </PageFrame>
   );
+}
+
+async function Actions({ searchParams }: { searchParams: SearchParams }) {
+  const period = parsePeriod((await searchParams).period);
+  return (
+    <>
+      <Suspense><PeriodSelect value={period} /></Suspense>
+      <ExportButton rows={demoSeries(period).current} filename={`analytics-${period}.csv`} noun="days" className="max-sm:hidden" />
+    </>
+  );
+}
+
+async function Body({ searchParams }: { searchParams: SearchParams }) {
+  const period = parsePeriod((await searchParams).period);
+  return <AnalyticsBody series={demoSeries(period).current} heat={demoHeatmap()} hours={requestsByHour()} regions={REGION_LATENCY} endpoints={ENDPOINTS} />;
 }

@@ -20,12 +20,16 @@ Status: beta
 | Filtered | The tiles describe the matching set ("Matching requests"); the active filters take the accent wash; Clear appears |
 | Set by an agent | `?by=Claude` adds the provenance line under the filters until a person changes them |
 | Nothing matches | The table's filtered-out empty state with Clear filters; the tiles read zero |
-| Loading | `loading.tsx`: three tiles over the filter bar and skeleton table rows |
+| Loading | `loading.tsx`: the masthead skeleton, three tiles over a few skeleton table rows. On a navigation the real masthead (title, sentence) shows at once, with skeletons for the freshness stamp, the export and the body |
 | Error | The table's error state with Retry; the filters stay |
 
 ## Data
 
 The server reads one page of the `requests` collection (20 rows and the total) for the filters in the address, through `readRequests()` in `src/data/requests.ts`, and works the three tiles out of the same filtered set (the newest 500 of it, which the tiles say when the set is larger). The page never sends the full set. Error share counts 5xx and 429 responses. Latency above one second is written in `warning-ink`; no other cell is coloured except the status.
+
+## Streaming
+
+The page renders `PageFrame` itself, so the static title and sentence commit with the navigation. The freshness stamp, the Export link and the body (tiles and table) each read the address inside their own Suspense boundary, over one shared read.
 
 ## Addressable state
 

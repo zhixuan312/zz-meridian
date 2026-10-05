@@ -6,12 +6,24 @@ Every release of ZZ Meridian, newest first. Versions follow semver: a removed or
 
 ### Added
 
+- **`pnpm verify` has three modes, and the default is bounded.** The default runs:
+  - the gate and one production build;
+  - the route policy, and first-load JS against 820 KiB and the per-route baseline;
+  - complete HTML against `budgets.htmlKb`;
+  - the navigation smoke of at most three routes on desktop and the phone.
+
+  The template's default takes about 70 to 80 seconds on an Apple M5. It ends with one coverage line, `coverage: <mode>; browser <ran|not run (<reason>)>; <n> routes; data configured <a>/<n>; interaction configured <b>/<n>; not run: <suites>`, and writes the detail, including how many times the gate and the build ran, to `out/verify.txt`.
+  - `pnpm verify --full` adds every mapped rail route and the exhaustive suites: the audit, every control and link, the keyboard walk, the assistant, live data, Web Vitals and the configured `browserChecks`.
+  - The default never refuses for a missing safe backend or Chrome. It runs the static checks and reports the browser as `not run`, while `--full` requires both.
+  - `scripts/verify.baseline.json` is the team's first-load baseline. `node scripts/sizes.ts --write-baseline` records it, and `adopt` does not copy it, so an adopted project reports growth as not configured until it records its own.
+  - Breaking: `--quick`, `--no-vitals` and `--extra` are gone from `verify` and its scripts.
+- **The console shows a page's title at once on navigation.** `/`, `/analytics` and `/requests` render their masthead outside the boundary of their address-dependent data, so a warm navigation shows the heading in about 30 ms instead of 230 to 430 ms. `/requests`' HTML cap is 150 KiB for this; it is 143 KiB, and 22 KiB compressed.
 - **`/requests` pages, sorts and filters on the server, and exports from an authorized route.**
   - The page sends 20 rows, the total and a server-computed summary for the address, and an invalid filter falls back to its default.
   - `GET /api/export/requests?<filters>` streams the whole authorized filtered set as CSV, in batches of at most 100 rows, and stops when the download is cancelled. It answers 401 without a session.
   - `src/lib/csv.ts` writes a text value that starts with `=`, `+`, `-`, `@`, a tab or a carriage return so a spreadsheet reads it as text, and gains `csvHeader` and `csvRow`.
   - `ExportButton` gains `href`, a download link to a server export.
-  - Breaking: `filterRequests` is removed, and `RequestsView` takes `{ rows, total, summary, state, pageSize, now }`.
+  - Breaking: `filterRequests` is removed. `RequestsView` takes `{ rows, total, summary, state, pageSize }` and renders the tiles and the table only. The page renders the masthead, with freshness and export in boundaries of their own.
 - **Each uptime strip is one SVG.** It draws a baseline and a mark per degraded, outage or no-data day. Its accessible summary names the period and only the days that were not fully up, instead of a table of every day. `DayState` gains `'none'`, which reads "No data". The per-day elements and the hidden table are gone.
 - **`scripts/navigate.ts`: the navigation smoke.** For each selected route, on desktop and through the real 390 drawer at 4× CPU, 150 ms latency and 1.6 Mbps, it measures:
   - the shell;

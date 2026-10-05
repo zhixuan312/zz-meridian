@@ -1,0 +1,25 @@
+{
+  "method": "route-bundle-stats firstLoadChunkPaths, deduplicated, uncompressed bytes",
+  "routes": {
+    "/": 743300,
+    "/_not-found": 593721,
+    "/analytics": 740980,
+    "/customers": 776615,
+    "/embed/health": 647261,
+    "/embed/overview": 672233,
+    "/embed/proposal": 611320,
+    "/embed/requests": 753808,
+    "/health": 717850,
+    "/keys": 744972,
+    "/members": 771263,
+    "/requests": 783007,
+    "/requests/[id]": 727464,
+    "/settings": 761655,
+    "/sign-in": 624243,
+    "/system": 670818,
+    "/system/[section]/[id]": 703450,
+    "/system/preview/[section]/[card]": 605314,
+    "/system/states/error": 683704,
+    "/system/states/loading": 676053
+  }
+}

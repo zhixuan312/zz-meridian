@@ -1,7 +1,7 @@
 /**
  * Press every control on every page and fail on the ones that do nothing, and on links that lead nowhere.
  *
- *   node scripts/interactions.ts [--base http://localhost:3100] [--routes /,/requests] [--extra /requests/req_1] [--quick]
+ *   node scripts/interactions.ts [--base http://localhost:3100] [--routes /,/requests]
  *
  * A control works when pressing it changes something: the address, the page (a dialog, a menu, a sort, a toast, a
  * file download), or opens a tab. Desktop presses with a mouse at 1440px; phones tap at 390px, where there is no hover,
@@ -12,13 +12,15 @@
  */
 import { launch, type Page } from './lib/chrome.ts';
 import { discover } from './lib/routes.ts';
+import config from './verify.config.ts';
 
 const args = process.argv.slice(2);
 const opt = (k: string, d: string) => { const i = args.indexOf(k); return i >= 0 ? args[i + 1] : d; };
 const base = opt('--base', process.env.BASE ?? 'http://localhost:3100');
-const extra = opt('--extra', '').split(',').filter(Boolean);
-const ROUTES = opt('--routes', '') ? opt('--routes', '').split(',') : [...discover().filter((r) => !r.startsWith('/system/components')), ...extra];
-const WIDTHS = args.includes('--quick') ? [1440] : [1440, 390];
+// verify.config.ts is the team's, so read the one field this needs through its own type.
+const detailRoutes = (config as { detailRoutes?: string[] }).detailRoutes ?? [];
+const ROUTES = opt('--routes', '') ? opt('--routes', '').split(',') : [...discover().filter((r) => !r.startsWith('/system/components')), ...detailRoutes];
+const WIDTHS = [1440, 390];
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 /** Tag every visible, enabled, not-yet-chosen control with its index; return their names and the page's links. */

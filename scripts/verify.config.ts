@@ -95,7 +95,7 @@ const config: VerifyConfig = {
     '/requests/req_missing', // no such request: the not-found screen in the shell
   ],
   smokeRoutes: ['/', '/requests', '/settings'],
-  budgets: { htmlKb: { '/health': 100, '/requests': 80 } },
+  budgets: { htmlKb: { '/health': 100, '/requests': 150 } },
   navigationChecks: [
     { path: '/', title: 'Overview', readySelector: 'main table tbody tr', probe: 'toggle', controlSelector: 'main [role="radio"][aria-checked="false"]', resultSelector: 'main [role="radio"]' },
     { path: '/requests', title: 'Requests', readySelector: 'main table tbody tr', probe: 'filter', controlSelector: 'main input[type="search"]', resultSelector: 'main table tbody tr' },

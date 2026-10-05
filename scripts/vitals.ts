@@ -1,7 +1,7 @@
 /**
  * Core Web Vitals on a mid-range phone, per page: LCP, CLS and INP, and the frames dropped while a person used it.
  *
- *   node scripts/vitals.ts [--base http://localhost:3100] [--routes /,/requests] [--extra /requests/req_1]
+ *   node scripts/vitals.ts [--base http://localhost:3100] [--routes /,/requests]
  *
  * The phone is Lighthouse's mobile profile: CPU slowed four times, Slow 4G (150 ms round trip, 1.6 Mbps down,
  * 750 kbps up), a 390px touch screen, motion not reduced. LCP and CLS come from PerformanceObservers installed before
@@ -22,10 +22,11 @@ import config from './verify.config.ts';
 const args = process.argv.slice(2);
 const opt = (k: string, d: string) => { const i = args.indexOf(k); return i >= 0 ? args[i + 1] : d; };
 const base = opt('--base', process.env.BASE ?? 'http://localhost:3100');
-const extra = opt('--extra', '').split(',').filter(Boolean);
+// verify.config.ts is the team's, so read the one field this needs through its own type.
+const detailRoutes = (config as { detailRoutes?: string[] }).detailRoutes ?? [];
 const ROUTES = opt('--routes', '')
   ? opt('--routes', '').split(',')
-  : [...discover().filter((r) => !r.startsWith('/system')), ...(extra.length ? extra : config.detailRoutes)];
+  : [...discover().filter((r) => !r.startsWith('/system')), ...detailRoutes];
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 /** Installed before any page script: every vital the page produces lands on window.__v. */

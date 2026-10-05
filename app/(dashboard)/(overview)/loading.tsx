@@ -3,10 +3,10 @@ import { Row } from '@/components/base/shell';
 import { Skeleton } from '@/components/ui/skeleton';
 import { LoadingPage } from '../_loading';
 
-/** Overview on its way: the featured figure beside three tiles, two cards of rows, and the activity feed. */
-export default function OverviewLoading() {
+/** The rows of the Overview body, in its shape: the page streams them in behind its masthead, and a cold load shows them under the masthead skeleton. */
+export function OverviewSkeleton() {
   return (
-    <LoadingPage name="overview">
+    <>
       <Row split="2/3">
         <Card className="min-h-[29rem] gap-4 p-(--card-pad)">
           <Skeleton className="h-2.5 w-40" />
@@ -38,6 +38,15 @@ export default function OverviewLoading() {
           {[0, 1, 2, 3, 4].map((j) => <Skeleton key={j} className="h-3" />)}
         </Card>
       </Row>
+    </>
+  );
+}
+
+/** Overview on its way: the featured figure beside three tiles, two cards of rows, and the activity feed. */
+export default function OverviewLoading() {
+  return (
+    <LoadingPage name="overview">
+      <OverviewSkeleton />
     </LoadingPage>
   );
 }

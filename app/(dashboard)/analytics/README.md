@@ -18,7 +18,7 @@ Status: beta
 
 | State | What shows |
 |---|---|
-| Loading | `loading.tsx`: the heatmap, two breakdowns, two trends and the endpoint table, as skeletons in their rows |
+| Loading | `loading.tsx`: the heatmap, two breakdowns, two trends and the endpoint table, as skeletons in their rows. The masthead (kicker, title, sentence, freshness) renders at once on a navigation; the period select, the export and the charts read `?period=` inside their own boundaries and stream in behind it, and their fallbacks hold their space |
 | A short period (7 days) | Row 3 shows seven columns; the heatmap still sums every weekday over the period |
 | No traffic | Each card shows an empty state ("No requests in this period") and the period select stays usable |
 | Error | The dashboard error screen with Retry |
