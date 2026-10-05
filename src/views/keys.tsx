@@ -20,6 +20,7 @@ import { Sheet, SheetClose, SheetContent } from '@/components/ui/sheet';
 import { toast } from '@/components/ui/toast';
 import { DataTable, type Column } from '@/components/patterns/data-table';
 import { formatDate, formatRelative } from '@/lib/format-date';
+import { useLive } from '@/lib/live';
 import type { ApiKey } from '@/data/sample';
 
 const SCOPES = ['messages', 'search', 'embeddings', 'files', 'webhooks'];
@@ -30,6 +31,7 @@ type Draft = { name: string; env: 'live' | 'test'; scopes: string[] };
 /** `now` is the read's observation time, so "last used" is never fresher than the data. */
 export function KeysView({ rows, now, createKey, revokeKey }: { rows: ApiKey[]; now: string; createKey: (draft: Draft) => Promise<ApiKey>; revokeKey: (id: string) => Promise<void> }) {
   const router = useRouter();
+  useLive(['keys']);
   const asOf = new Date(now);
   const [shown, removeShown] = useOptimistic(rows, (xs: ApiKey[], id: string) => xs.filter((k) => k.id !== id));
   const revokingIds = useRef(new Set<string>());

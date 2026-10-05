@@ -18,6 +18,7 @@ import { Sheet, SheetClose, SheetContent } from '@/components/ui/sheet';
 import { toast } from '@/components/ui/toast';
 import { DataTable, type Column } from '@/components/patterns/data-table';
 import { formatDate, formatRelative } from '@/lib/format-date';
+import { useLive } from '@/lib/live';
 import { ROLES, TEAMS, type Member } from '@/data/sample';
 
 /** Colour only where a row needs a look: an open invitation and a suspension. Active is the normal case, so it stays quiet. */
@@ -46,6 +47,7 @@ const BLANK = { name: '', email: '', role: 'Member' as Member['role'], team: 'En
 export function MembersView({ rows, now, actions }: { rows: Member[]; now: string; actions: MemberActions }) {
   const asOf = new Date(now);
   const router = useRouter();
+  useLive(['members']);
   const [pending, start] = useTransition();
   const [shown, change] = useOptimistic<Shown[], Change>(rows, apply);
   const inFlight = useRef(new Set<string>());

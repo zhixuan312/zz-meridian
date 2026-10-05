@@ -6,6 +6,11 @@ Every release of ZZ Meridian, newest first. Versions follow semver: a removed or
 
 ### Added
 
+- **Live data in the console: one stream per tab, and a refresh that reauthorizes.**
+  - `src/lib/live.ts`, now managed, holds `createLiveClient` (the framework-free scheduler) and `LiveProvider` and `useLive`, which put it in a React tree. Every hook in a tab shares one `EventSource` for the union of the collections they show.
+  - Hints wait at most 500 ms, one refresh runs at a time, and what arrives meanwhile runs next. A safety refresh runs every `pollMs` (30 s) even on a healthy stream, and a refresh slower than 10 s counts as failed.
+  - A failed connection is retried after a second. After the third failure the tab polls, and tries the stream again on every fifth poll. An authorization failure pauses it, and any other failure leaves it `stale` without advancing the data's observation time. A hidden tab closes its stream, and showing it again resyncs.
+  - The team-owned `src/data/live-actions.ts` exports `refreshCollections(names)`, a Server Action that invalidates only the collections the caller may read. `src/views/console-live.tsx` injects it into the provider, followed by a router refresh. The dashboard layout wraps every console page in it without waiting for the request, and Members and Keys call `useLive`.
 - **`GET /api/live?collections=members,keys`: change hints over Server-Sent Events.** The team-owned starters `app/api/live/route.ts` and `src/data/live-stream.ts` open with `retry: 3000` and a `resync`, send a `change` naming only the collection, and beat every 15 seconds. Each hint is sent only after the caller's scope is checked again, and a scope that may no longer read ends the stream. A malformed, empty or oversized request (more than 50 names) gets 400, no session 401, and an unknown or forbidden name 403 without saying which. No record, tenant or cache tag reaches the browser.
 - **`zz-meridian update`: a real, reviewable update.** For a project adopted or created with 0.3.0 or later.
   - `--dry-run` replays the recorded release in a scratch folder, after checking it against the registry's integrity record, and prints the plan. It writes nothing, and refuses if any recorded file disagrees with the replay.
