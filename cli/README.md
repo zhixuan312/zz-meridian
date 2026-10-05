@@ -16,6 +16,7 @@ Give your coding agent (Codex, Claude Code, or any agent that can run a shell) t
 ```sh
 npx zz-meridian@latest adopt [brand flags]        # bring Meridian into this Next.js App Router project
 npx zz-meridian@latest create <dir> [brand flags] # start a new dashboard
+npx zz-meridian@latest update --dry-run [--verbose] # show what updating this project would change
 npx zz-meridian@latest skill [--global]           # install only the agent skill
 ```
 
@@ -35,6 +36,15 @@ the project is not Next.js with the App Router, or when a file it would copy alr
 
 **create** copies the template into a new folder, branded as your product, with the Design Atlas and the design
 system's own documents left out.
+
+**update --dry-run** works out what updating a project adopted or created with 0.3.0 or later would change, and
+writes nothing.
+- It fetches the release the project was copied from, checks it against the registry's integrity record, and replays
+  that release in a scratch folder. If a file the manifest recorded does not match the replay, it stops.
+- It compares every file Meridian manages with the version this package ships, then lists only the files that need
+  your decision: one you edited that Meridian also changed, or one you deleted.
+- It counts everything else: untouched, added and removed files, and your own files, which it never touches.
+- `--verbose` lists every file. Applying an update arrives in a later release; without `--dry-run` the command refuses.
 
 Requires Node 22.18 or newer. The checks (`pnpm verify`) also need Google Chrome.
 

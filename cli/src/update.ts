@@ -43,6 +43,9 @@ export function formatReport(rows: Row[], { verbose }: { verbose: boolean }): st
   return lines.join('\n');
 }
 
+/** The line a dry-run prints above the report when the work tree has uncommitted changes. */
+export const dirtyNote = (n: number) => `note: the git tree has uncommitted changes (${n} ${n === 1 ? 'path' : 'paths'}); a real update will refuse until they are committed (or pass --allow-dirty)`;
+
 /** Every regular file under `<release>/payload` as posix paths, symbolic links never followed. */
 function payloadList(release: string): string[] {
   const base = path.join(release, 'payload');
@@ -144,7 +147,7 @@ export function update({ root, dryRun, verbose }: { root: string; dryRun: boolea
     const after = snapshot(root);
     if (JSON.stringify(before) !== JSON.stringify(after)) return refuse('dry-run changed the project');
     const dirty = before.git ? before.git.status.split('\n').filter(Boolean).length : 0;
-    if (dirty) console.log(`note: the git tree has uncommitted changes (${dirty} paths); a real update will refuse until they are committed (or pass --allow-dirty)\n`);
+    if (dirty) console.log(`${dirtyNote(dirty)}\n`);
     console.log(formatReport(rows, { verbose }));
     return 0;
   } catch (e) {

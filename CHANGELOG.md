@@ -2,6 +2,20 @@
 
 Every release of ZZ Meridian, newest first. Versions follow semver: a removed or renamed token, prop or card is major; a new card, token or variant is minor; a corrected value is a patch. Each entry says what breaks and what to do instead.
 
+## [Unreleased]
+
+### Added
+
+- **`zz-meridian update --dry-run`.** It shows what updating a project adopted or created with 0.3.0 or later would change, and writes nothing.
+  - It replays the recorded release in a scratch folder, after checking it against the registry's integrity record.
+  - It refuses if any recorded file disagrees with the replay.
+  - It lists only the files that need the team's decision; `--verbose` lists every file.
+  - Applying an update follows in this release cycle.
+
+### Changed
+
+- **`adopt` refuses an incomplete package before it writes anything.** Its copy rule now lives in `cli/src/ownership.ts`, shared with `update`. A package whose template lacks a file adopt needs is refused first; before, that failure surfaced as a crash halfway through.
+
 ## [0.4.0] · 2026-10-05
 
 A quality pass over the whole repository, and a manual pass through the running product — every page, embed, Atlas
