@@ -17,7 +17,7 @@ should not need to learn Meridian: they describe what they need, you do the home
 build it, and prove it meets the standard with one command.
 
 The template lives at `https://github.com/zhixuan312/zz-meridian`. Its own `README.md`, `CONTRIBUTING.md`
-and `docs/` are the full specification; this skill is the route through them. If you are reading this file inside a
+and `optional:docs/` are the full specification; this skill is the route through them. If you are reading this file inside a
 clone of the template (for example `/tmp/meridian/skills/zz-meridian/SKILL.md`), that clone is the template: use it
 wherever a step fetches the template, and read the references next to this file.
 
@@ -93,7 +93,7 @@ cd <target>
 
 It copies the template, brands it, installs the dependencies, initialises git, installs this skill into the project
 (`optional:.agents/skills/`, `optional:.claude/skills/`) and records every file in `optional:.meridian/manifest.json`. The person gets their
-dashboard, not a copy of the design system: the Design Atlas, the card and page specifications, `docs/`, `decisions/`
+dashboard, not a copy of the design system: the Design Atlas, the card and page specifications, `optional:docs/`, `decisions/`
 and the changelog are left out, and the README and AGENTS.md are written for their product. To look a component up
 while building, read it in the template on GitHub (`src/components/<layer>/<card>/README.md`).
 
