@@ -2,9 +2,11 @@
 
 Every release of ZZ Meridian, newest first. Versions follow semver: a removed or renamed token, prop or card is major; a new card, token or variant is minor; a corrected value is a patch. Each entry says what breaks and what to do instead.
 
-## [Unreleased]
+## [0.4.0] · 2026-10-05
 
-A quality pass over the whole repository, and a manual pass through the running product.
+A quality pass over the whole repository, and a manual pass through the running product — every page, embed, Atlas
+view, CLI command and API route, at both widths and both themes. Twenty-two defects fixed, six of them found only by
+auditing the Atlas, which nothing had done before. Both field reports on #6 and #7 are in.
 
 ### Security
 
@@ -50,6 +52,24 @@ A quality pass over the whole repository, and a manual pass through the running 
 - **Dormant exports**: `ROOT`/`Token`/`BRIDGE`/`buildCss`/`buildTheme` in `scripts/tokens.ts`, `PAIRS`/`context`/`resolve`/`colorOf` in `scripts/contrast.ts`, `LAYERS`/`CardEntry` in `scripts/registry.ts`, `VerifyConfig` in `scripts/verify.config.ts`, `adoptSet` in `cli/src/adopt.ts`, and the Atlas's internal types (`TOKEN_VIEWS`, `DOCS`, `parseSpec`, `SectionId`, `Entry`, `slug`, `HostSimulator`, `Card`, `TokenMeta`).
 - **The `rail-collapsed` token**: declared since the first commit, referenced by no component, spec, bridge or script.
 - **`DEMO_STALE_AFTER_MS`** (and the unused `Customer`/`StatusClass` type exports): nothing imported them.
+
+### Breaking
+
+- **The `rail-collapsed` token is gone** (`tokens/core.tokens.json`, and `src/styles/tokens.css` with it). Nothing a
+  product keeps referenced it — no component, specification, bridge or script — so a stylesheet of your own that reads
+  `var(--rail-collapsed)` was already falling back to nothing. The rail's width is `rail-width`; below 1024px it is a
+  drawer, which is not a collapsed rail.
+- **Dormant exports removed from Meridian's own scripts**: `ROOT`, `Token`, `BRIDGE`, `buildCss` and `buildTheme` in
+  `scripts/tokens.ts`; `PAIRS`, `context`, `resolve` and `colorOf` in `scripts/contrast.ts`; `LAYERS` and `CardEntry` in
+  `scripts/registry.ts`; `VerifyConfig` in `scripts/verify.config.ts`; `adoptSet` in `cli/src/adopt.ts`; and the Atlas's
+  internal types. A product that imported one of these was reaching into a generator; nothing that ships depends on
+  them.
+- **`PopoverAnchor` is gone**, and `.sheet-right-in`/`.sheet-up-in` with the `m-sheet-right` keyframe. The first was
+  exported and named nowhere; the others were referenced by nothing, and the Sheet animates inline.
+- **`DEMO_STALE_AFTER_MS`** and the unused `Customer`/`StatusClass` type exports are gone from the sample fixtures.
+
+Nothing a product renders changes shape because of any of this: `pnpm gate` proves that every export of `src/lib` and
+`src/data` is imported by a file a product keeps, and it passes.
 
 ## [0.3.0] · 2026-10-04
 
