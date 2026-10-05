@@ -32,11 +32,19 @@ export const SECTIONS: { id: SectionId; num?: string; title: string; line: strin
   { id: 'system', title: 'The system', line: 'How to change it, what changed, and what was decided' },
 ];
 
-/** Split a card README into its title, its first sentence (the lead), its status and the rest. */
+/**
+ * Split a card README into its title, its first sentence (the lead), its status and the rest.
+ *
+ * The lead is the first paragraph that SAYS something. A document may open with badges — this repository's own README
+ * carries the npm badge under its title, as the rest of the family's do — and a strip of images is not a sentence about
+ * the page. Taken as the lead it was shown raw, `[![npm: zz-meridian](https://img.shields.io/…)`, in the Atlas, because
+ * that is where the summary comes from.
+ */
 function parseSpec(md: string) {
   const title = md.match(/^#\s+(.+)$/m)?.[1].trim() ?? '';
   let body = md.replace(/^#\s+.+\n+/, '');
-  const lead = body.split(/\n\n/, 1)[0].replace(/\n/g, ' ').trim();
+  const banner = (p: string) => /^\s*(\[!\[|!\[|<img)/.test(p);
+  const lead = (body.split(/\n{2,}/).find((p) => !banner(p)) ?? '').replace(/\n/g, ' ').trim();
   body = body.slice(body.indexOf(lead) + lead.length).trimStart();
   const status = body.match(/^Status:\s*(\w+)\s*\n/)?.[1];
   if (status) body = body.replace(/^Status:\s*\w+\s*\n+/, '');
