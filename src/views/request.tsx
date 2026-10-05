@@ -12,8 +12,7 @@ import { detailHead } from '@/components/patterns/detail-head';
 import { cn } from '@/lib/cn';
 import { formatCost, formatDuration } from '@/lib/format';
 import { formatDateTime, formatRelative } from '@/lib/format-date';
-import { DEMO_NOW, type RequestRow } from '@/system/fixtures/sample';
-import { STATUS_TEXT, statusTone, usageOf, type Span } from '@/system/fixtures/sample-records';
+import { type RequestRow, STATUS_TEXT, statusTone, usageOf, type Span } from '@/data/sample';
 import { formatBytes } from '@/system/sample-cells';
 import { domain } from '@/app.config';
 
@@ -69,7 +68,7 @@ function Code({ body, label }: { body: string; label: string }) {
   );
 }
 
-export function RequestView({ request: r, trace, payloads }: { request: RequestRow; trace: Span[]; payloads: { request: string | null; response: string } }) {
+export function RequestView({ request: r, trace, payloads, now }: { request: RequestRow; trace: Span[]; payloads: { request: string | null; response: string }; now: string }) {
   const router = useRouter();
   const usage = usageOf(r);
   const failed = r.status >= 500 || r.status === 429;
@@ -84,7 +83,7 @@ export function RequestView({ request: r, trace, payloads }: { request: RequestR
           <span key="r" className="font-mono text-[0.9em] text-ink">{r.method} {r.route}</span>,
           formatDuration(r.latency),
           r.customer,
-          formatRelative(r.at, DEMO_NOW),
+          formatRelative(r.at, new Date(now)),
         ],
         primary: (
           <>

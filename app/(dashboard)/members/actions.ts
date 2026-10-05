@@ -6,7 +6,7 @@ import { can, collectionFor, resolveAccess, Unauthenticated } from '@/data/acces
 import { collectionTag } from '@/data/read';
 import type { AnyCollection } from '@/lib/collection';
 import type { Result } from '@/views/members';
-import { ROLES, TEAMS, STATUSES, type Member } from '@/system/fixtures/sample-members';
+import { ROLES, TEAMS, STATUSES, type Member } from '@/data/sample';
 
 const fail = (e: unknown): Result => ({
   ok: false,

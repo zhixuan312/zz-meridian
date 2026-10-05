@@ -105,7 +105,7 @@ Per collection the assistant gets `query_<name>`, and `create_<name>`, `update_<
 - **Hidden fields never leave the server.** See `hidden` above: they are left out of what a query, a create and an update return.
 - **The page text is data.** The browser sends the page's path, its title and its visible text. The model is told that text is data to read, never instructions, and only the first 24,000 characters are used; the page's own page-text tags are dropped so it cannot end the block, and the title and path are one line of at most 200 characters.
 - **Limits.** A reply takes at most 8 model steps. A query returns at most 100 rows (50 when it does not say). The route refuses a thread that is empty, malformed or longer than 100 messages (400) and a body over 2 MB (413).
-- **Sign-in.** Put your sign-in check in three places: the dashboard layout, `app/(dashboard)/layout.tsx`; the route, `app/api/assistant/route.ts`; and every server action (each `actions.ts`). The route's check must refuse before the model is reached; the layout's only hides the page; a server action is a public endpoint the layout does not guard, so each checks for itself.
+- **Sign-in and permissions.** `src/data/access.ts` says who the request is (`resolveAccess()`) and what they may do (`can(scope, name, op, ids)`); replace its policy with your session and your database's predicates. The route resolves access before the model is reached (401 without a session) and hands the assistant only the caller's own collections that they may read. An approval is only the person's consent: each approved change asks `can` again at the moment it runs, with the records it touches, so a permission revoked since the approval refuses it with "You no longer have permission to make this change.", and a change that commits drops its tenant's cached reads with `revalidateTag(tag, { expire: 0 })`. Server actions are public endpoints the layout does not guard, so each resolves access and calls `can` itself, as the members and keys actions do.
 - **An accepted risk.** A closed card is closed in the browser's storage. The same person, by editing their own storage, can make an expired card pending again and approve it. The approval is still the server's own, for a change the person was shown, and they could make the same change on the page. The assistant is not an authorisation layer: authorise in your collections, as you do for pages.
 
 ## Costs
@@ -114,17 +114,20 @@ Each question can cost up to 8 model calls, and every call carries the system pr
 
 ## Adding an MCP server later
 
-The assistant's tools are plain AI SDK tools made from your collections, so an MCP server can offer the same ones and the data layer stays single. `assistantTools(collections, writer)` returns `{ tools, toolApproval }`. The `writer` is where the console's previews are written; an MCP host has no thread to draw them in, so pass a writer that discards what it is given.
+The assistant's tools are plain AI SDK tools made from your collections, so an MCP server can offer the same ones and the data layer stays single. `assistantTools(collections, writer, guard)` returns `{ tools, toolApproval }`. The `writer` is where the console's previews are written; an MCP host has no thread to draw them in, so pass a writer that discards what it is given. The `guard` is asked before each change runs (`authorize(name, op, ids)`) and told after it commits (`invalidate(name)`): build it from the MCP caller's own scope, as `app/api/assistant/route.ts` does.
 
 Convert each tool's input schema with `asSchema(tool.inputSchema).jsonSchema`, register it, and run `execute`:
 
 ```ts
 import { asSchema, type UIMessageStreamWriter } from 'ai';
+import { can, collectionFor, type AccessScope } from '@/data/access';
 import { collections } from '@/data/collections';
 import { assistantTools } from '@/lib/assistant/tools';
 
+declare const scope: AccessScope; // the MCP caller's, resolved from their session
 const writer = { write() {}, merge() {}, onError: undefined } as unknown as UIMessageStreamWriter;
-const { tools } = assistantTools(collections, writer);
+const guard = { authorize: (name: string, op: 'create' | 'update' | 'remove', ids?: string[]) => can(scope, name, op, ids), invalidate: () => {} };
+const { tools } = assistantTools(collections.map((c) => collectionFor(scope, c.name)), writer, guard);
 
 for (const [name, t] of Object.entries(tools)) {
   server.registerTool(name, { description: t.description, inputSchema: asSchema(t.inputSchema).jsonSchema }, async (input) => ({

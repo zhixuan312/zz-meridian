@@ -5,8 +5,7 @@ import { ExportButton } from '@/components/patterns/export-button';
 import { Freshness } from '@/components/patterns/freshness';
 import { PeriodSelect } from '@/components/patterns/period-select';
 import { AnalyticsBody } from '@/views/analytics';
-import { DEMO_NOW, DEMO_UPDATED_AT, ENDPOINTS, demoHeatmap, demoSeries } from '@/system/fixtures/sample';
-import { REGION_LATENCY, requestsByHour } from '@/system/fixtures/sample-ops';
+import { DEMO_NOW, DEMO_UPDATED_AT, ENDPOINTS, demoHeatmap, demoSeries, REGION_LATENCY, requestsByHour } from '@/data/sample';
 import { parsePeriod } from '@/lib/period';
 
 export const metadata = { title: 'Analytics' };

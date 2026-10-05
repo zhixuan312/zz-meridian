@@ -2,8 +2,7 @@ import { app } from '@/app.config';
 import { PageFrame } from '@/components/base/shell';
 import { Freshness } from '@/components/patterns/freshness';
 import { HealthBody, SubscribeButton } from '@/views/health';
-import { DEMO_NOW, DEMO_UPDATED_AT, INCIDENTS, SERVICES } from '@/system/fixtures/sample';
-import { PAST_INCIDENTS } from '@/system/fixtures/sample-ops';
+import { DEMO_NOW, DEMO_UPDATED_AT, INCIDENTS, SERVICES, PAST_INCIDENTS } from '@/data/sample';
 
 export const metadata = { title: 'Health' };
 

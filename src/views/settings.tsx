@@ -21,8 +21,7 @@ import { Select } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Switch } from '@/components/ui/switch';
 import { toast } from '@/components/ui/toast';
-import { DEMO_NOW } from '@/system/fixtures/sample';
-import { CONNECTED_HOSTS, TIMEZONES } from '@/system/fixtures/sample-ops';
+import { DEMO_NOW, CONNECTED_HOSTS, TIMEZONES } from '@/data/sample';
 
 const wait = (ms: number) => new Promise((r) => setTimeout(r, ms));
 

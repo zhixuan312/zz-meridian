@@ -3,8 +3,7 @@ import { AppShell } from '@/components/base/shell';
 import { ConsolePalette, ConsoleRail } from '@/views/console-chrome';
 import { ShellTools } from '@/components/patterns/shell-tools';
 import { assistantConfig } from '@/lib/assistant/config';
-import { DEMO_NOW } from '@/system/fixtures/sample';
-import { ALERTS } from '@/system/fixtures/sample-ops';
+import { DEMO_NOW, ALERTS } from '@/data/sample';
 
 /** Every console page: the rail on the frame, the page on the canvas. Put your sign-in gate here. */
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {

@@ -1,6 +1,6 @@
 import { read } from '@/data/read';
 import { KeysView } from '@/views/keys';
-import type { ApiKey } from '@/system/fixtures/sample-records';
+import type { ApiKey } from '@/data/sample';
 import { createKey, revokeKey } from './actions';
 
 export const metadata = { title: 'API keys' };

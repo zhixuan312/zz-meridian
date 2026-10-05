@@ -4,7 +4,7 @@ import { Standalone } from '@/views/standalone';
 import { Meridian } from '@/components/charts/meridian';
 import { TrendChart } from '@/components/charts/trend-chart';
 import { formatCompact } from '@/lib/format';
-import { demoSeries } from '@/system/fixtures/sample';
+import { demoSeries } from '@/data/sample';
 import { app } from '@/app.config';
 
 export const metadata = { title: 'Sign in' };

@@ -4,6 +4,9 @@ import { APICallError, RetryError, type UIMessage } from 'ai';
 import { MockLanguageModelV4 } from 'ai/test';
 import { respond } from '@/lib/assistant/respond';
 
+/** Permits everything: this file is about the stream, the guard has its own tests. */
+const guard = { authorize: async () => true, invalidate: () => {} };
+
 const KEY = 'sk-ant-very-secret-value';
 const ask: UIMessage[] = [{ id: 'u1', role: 'user', parts: [{ type: 'text', text: 'hello' }] }];
 const failing = (error: unknown) => new MockLanguageModelV4({ doStream: async () => { throw error; } });
@@ -12,7 +15,7 @@ const apiError = (statusCode: number) => new APICallError({ message: `Provider s
 /** What the SDK raises after retrying a retryable error until it gives up. */
 const gaveUp = (statusCode: number) => new RetryError({ message: `Failed after 3 attempts: ${KEY}`, reason: 'maxRetriesExceeded', errors: [apiError(statusCode)] });
 async function errorText(error: unknown): Promise<string> {
-  const res = await respond({ model: failing(error), secret: 's'.repeat(43), messages: ask, page: { path: '/', title: 'Overview', text: '' }, collections: [], now: new Date('2026-10-03T09:00:00Z') });
+  const res = await respond({ model: failing(error), secret: 's'.repeat(43), messages: ask, page: { path: '/', title: 'Overview', text: '' }, collections: [], guard, now: new Date('2026-10-03T09:00:00Z') });
   const body = await res.text();
   expect(body).not.toContain(KEY);
   const events = body.split('\n').filter((l) => l.startsWith('data: ') && l !== 'data: [DONE]').map((l) => JSON.parse(l.slice(6)));

@@ -1,5 +1,5 @@
 import { Suspense } from 'react';
-import { DEMO_NOW, DEMO_UPDATED_AT, demoSeries, demoTotals, ENDPOINTS, STATUS_MIX, ACTIVITY } from '@/system/fixtures/sample';
+import { DEMO_NOW, DEMO_UPDATED_AT, demoSeries, demoTotals, ENDPOINTS, STATUS_MIX, ACTIVITY } from '@/data/sample';
 import { parsePeriod } from '@/lib/period';
 import { EmbedOverview } from './view';
 

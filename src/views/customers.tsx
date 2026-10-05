@@ -18,7 +18,7 @@ import { DataTable, useQueryState, type Column } from '@/components/patterns/dat
 import { FilterBar } from '@/components/patterns/filter-bar';
 import { formatCompact, formatCost, formatPercent } from '@/lib/format';
 import { formatDate } from '@/lib/format-date';
-import type { CustomerRecord } from '@/system/fixtures/sample-records';
+import type { CustomerRecord } from '@/data/sample';
 
 const PLAN_TONE = { Enterprise: 'accent', Scale: 'neutral', Starter: 'neutral' } as const;
 /** Colour only where a row needs a look: past due and trial. Active is the normal case, so it stays quiet. */

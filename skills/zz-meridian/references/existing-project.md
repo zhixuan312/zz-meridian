@@ -27,7 +27,7 @@ Migrate in place, page by page, keeping their data layer.
    --no-install` writes the same files to a scratch folder.
 3. Wrap their root layout like the template's `app/layout.tsx` (fonts, the pre-paint script, `Providers`) and their
    console routes in `AppShell` with the rail, `ShellTools` and the command palette (see `optional:app/(dashboard)/layout.tsx`).
-   The template's layout passes `ShellTools` the sample `ALERTS` and `DEMO_NOW` from `optional:src/system/fixtures/`, which
+   The template's layout passes `ShellTools` the sample `ALERTS` and `DEMO_NOW` from `optional:src/data/sample.ts`, which
    is not copied: pass their own alerts (an empty list until they have some) and their own clock. Give each `nav`
    entry in `src/app.config.ts` its icon and group. The Rail and the palette take `nav` as a prop, rendered from a
    client module (`src/views/console-chrome.tsx`), since each destination carries its icon component; if what a person
@@ -69,8 +69,7 @@ exists).
 The panel (`src/components/patterns/assistant/`) already came with `src/components/`, and `AppShell` mounts it when
 `optional:app/(dashboard)/layout.tsx` passes `assistant`, a promise it does not await: `assistant={connection().then(() => assistantConfig(process.env) !== null)}`. A product that adopts the assistant also brings
 `optional:app/api/assistant/route.ts`, the rest of `src/lib/assistant/`, `optional:src/lib/collection.ts` and `optional:src/data/collections.ts`;
-add `@ai-sdk/anthropic`, `@ai-sdk/openai-compatible` and `zod` to the dependencies. Point `optional:src/data/collections.ts` at their data, put their
-sign-in check in the layout, in the route and in every server action, and set `ASSISTANT_PROVIDER`, `ASSISTANT_API_KEY` and `ASSISTANT_MODEL`
+add `@ai-sdk/anthropic`, `@ai-sdk/openai-compatible` and `zod` to the dependencies. Point `optional:src/data/collections.ts` at their data, bring `optional:src/data/access.ts` with their own session and permissions in its policy (the route and every server action ask it), and set `ASSISTANT_PROVIDER`, `ASSISTANT_API_KEY` and `ASSISTANT_MODEL`
 (plus `ASSISTANT_BASE_URL` for `openai-compatible`): it stays off until they are set. The "Show the assistant" switch is
 in `optional:src/views/settings.tsx`.
 

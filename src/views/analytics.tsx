@@ -13,7 +13,7 @@ import { BarList } from '@/components/charts/bar-list';
 import { cn } from '@/lib/cn';
 import { formatCompact, formatDuration, formatPercent } from '@/lib/format';
 import { formatDate } from '@/lib/format-date';
-import type { DailyPoint, Endpoint } from '@/system/fixtures/sample';
+import type { DailyPoint, Endpoint } from '@/data/sample';
 import { RouteCell } from '@/system/sample-cells';
 
 const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];

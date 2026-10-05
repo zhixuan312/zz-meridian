@@ -9,8 +9,7 @@ import { ExportButton } from '@/components/patterns/export-button';
 import { DataTable, useQueryState } from '@/components/patterns/data-table';
 import { FilterBar } from '@/components/patterns/filter-bar';
 import { formatCompact, formatDuration, formatPercent } from '@/lib/format';
-import { DEMO_NOW, DEMO_UPDATED_AT, REGIONS, type RequestRow } from '@/system/fixtures/sample';
-import { statusClass } from '@/system/fixtures/sample-records';
+import { DEMO_UPDATED_AT, REGIONS, type RequestRow, statusClass } from '@/data/sample';
 import { requestColumns } from '@/system/sample-cells';
 
 /** The filters, kept in the address: an agent opens this exact view with the same names as tool arguments. */
@@ -29,7 +28,9 @@ export function filterRequests(rows: RequestRow[], f: typeof REQUEST_FILTERS) {
 
 const options = (all: string, values: string[]) => [{ value: 'all', label: all }, ...values.map((v) => ({ value: v, label: v }))];
 
-export function RequestsView({ rows }: { rows: RequestRow[] }) {
+/** `now` is when the rows were read, the data's clock: the buckets and the freshness stamp count from it. */
+export function RequestsView({ rows, now }: { rows: RequestRow[]; now: string }) {
+  const asOf = useMemo(() => new Date(now), [now]);
   /* One state for filters, sort and page: two setters in one handler would each write over the other. */
   const [f, setF] = useQueryState({ ...REQUEST_FILTERS, sort: 'at', dir: 'desc', page: '1' });
   const matching = useMemo(() => filterRequests(rows, f), [rows, f]);
@@ -40,7 +41,7 @@ export function RequestsView({ rows }: { rows: RequestRow[] }) {
   }, [matching]);
   /* Twelve 5-minute buckets, oldest first: the shape behind each tile, and the last half hour against the one before. */
   const buckets = useMemo(() => {
-    const B = 12, W = 5 * 60_000, end = DEMO_NOW.getTime();
+    const B = 12, W = 5 * 60_000, end = asOf.getTime();
     const out = Array.from({ length: B }, () => [] as RequestRow[]);
     for (const r of matching) {
       const i = B - 1 - Math.floor((end - new Date(r.at).getTime()) / W);
@@ -56,7 +57,7 @@ export function RequestsView({ rows }: { rows: RequestRow[] }) {
       dErr: ch(half(errOf, 6, 12), half(errOf, 0, 6)),
       dP95: ch(half(p95of, 6, 12), half(p95of, 0, 6)),
     };
-  }, [matching]);
+  }, [matching, asOf]);
   const isFiltered = f.q !== '' || f.status !== 'all' || f.method !== 'all' || f.region !== 'all';
   const change = (patch: Partial<typeof REQUEST_FILTERS>) => setF({ ...patch, by: '', page: '1' });
   const clear = () => setF({ ...REQUEST_FILTERS, page: '1' });
@@ -66,7 +67,7 @@ export function RequestsView({ rows }: { rows: RequestRow[] }) {
       kicker={<>{app.name} · {app.workspace}</>}
       title="Requests"
       description="Every call that reached the gateway, newest first. Open one to see where its time went."
-      meta={<Freshness updatedAt={DEMO_UPDATED_AT} now={DEMO_NOW} />}
+      meta={<Freshness updatedAt={DEMO_UPDATED_AT} now={asOf} />}
       actions={
         <ExportButton
           label="Export CSV"

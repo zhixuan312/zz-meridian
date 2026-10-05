@@ -14,7 +14,7 @@ import { OverviewBody } from '@/views/overview';
 import { formatCompact, formatDuration, formatPercent } from '@/lib/format';
 import { formatDate } from '@/lib/format-date';
 import { PERIOD_LABEL, type Period } from '@/lib/period';
-import type { DailyPoint, Endpoint, Totals } from '@/system/fixtures/sample';
+import type { DailyPoint, Endpoint, Totals } from '@/data/sample';
 import type { ActivityEvent } from '@/components/patterns/activity-feed';
 import { app } from '@/app.config';
 

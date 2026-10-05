@@ -121,7 +121,7 @@ writes go through `Proposal` (see `optional:app/embed/proposal/`). Read `agents.
 ## Clean-up before validation
 
 Delete the sample pages, views and embed views the product does not use, with their nav lines. Do not delete
-`optional:src/system/fixtures/` or `optional:src/system/sample-cells.tsx` yet: `optional:src/data/collections.ts` and `optional:app/(dashboard)/layout.tsx`
+`optional:src/system/fixtures/` or `optional:src/system/sample-cells.tsx` yet: `optional:src/data/collections.ts` and `optional:src/data/sample.ts`
 import the fixtures. Once your collections' `rows`, `clock` and the layout's `DEMO_NOW` and `ALERTS` come from your own
 data and nothing imports them, delete them (with the Atlas kept, the previews read them: leave them, and remove the
 pages' entries in `PAGES` in `example:src/system/content.ts`). Keep `optional:src/data/collections.ts`, `optional:src/lib/collection.ts`,

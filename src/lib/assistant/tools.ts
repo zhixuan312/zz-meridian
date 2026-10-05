@@ -24,6 +24,15 @@ async function once<R>(toolCallId: string, run: () => Promise<R>): Promise<R> {
   }
 }
 
+/**
+ * What an approved change must ask again at the moment it runs: whether the caller still may make it, with the records
+ * it touches, and a way to drop the collection's cached reads once it has committed.
+ */
+export type Guard = {
+  authorize: (name: string, op: 'create' | 'update' | 'remove', ids?: string[]) => Promise<boolean>;
+  invalidate: (name: string) => void;
+};
+
 /** A change the collection or the run-once rule refused. Its reason is the person's to read, so it is shown as it is. */
 export class ChangeRefused extends Error {}
 /** "API keys" stays, "Members" becomes "members". */
@@ -31,9 +40,11 @@ const lower = (label: string) => (/^.[A-Z]/.test(label) ? label : label.charAt(0
 
 /**
  * The assistant's tools for `collections`, and the rule that holds every change for the person's approval.
- * A rule writes the server's preview of the change to `writer` before the approval request goes out.
+ * A rule writes the server's preview of the change to `writer` before the approval request goes out. An approval is
+ * only the person's consent: each execution asks `guard` again before it mutates, so a permission revoked since the
+ * approval refuses the change, and invalidates the collection after it commits.
  */
-export function assistantTools(collections: AnyCollection[], writer: UIMessageStreamWriter): { tools: ToolSet; toolApproval: Record<string, Rule> } {
+export function assistantTools(collections: AnyCollection[], writer: UIMessageStreamWriter, guard: Guard): { tools: ToolSet; toolApproval: Record<string, Rule> } {
   const tools: ToolSet = {};
   const toolApproval: Record<string, Rule> = {};
 
@@ -64,13 +75,20 @@ export function assistantTools(collections: AnyCollection[], writer: UIMessageSt
       writer.write({ type: 'data-proposal', id, data: { title, tone, changes } });
       return 'user-approval' as const;
     };
+    /** Runs `change` only while the caller may still make it; a refusal writes nothing, emits nothing and invalidates nothing. */
+    const guarded = async <R>(op: 'create' | 'update' | 'remove', ids: string[] | undefined, change: () => Promise<R>): Promise<R> => {
+      if (!(await guard.authorize(c.name, op, ids))) throw new ChangeRefused('You no longer have permission to make this change.');
+      const result = await change();
+      guard.invalidate(c.name);
+      return result;
+    };
     const what = (rows: Row[]) => (rows.length === 1 ? c.title(rows[0]) : `${rows.length} ${lower(c.label)}`);
 
     if (allowed('create')) {
       tools[`create_${c.name}`] = tool({
         description: `Add a record to ${c.label.toLowerCase()}.`,
         inputSchema: fields,
-        execute: (input, { toolCallId }) => once(toolCallId, async () => strip(await c.create!(input))),
+        execute: (input, { toolCallId }) => once(toolCallId, () => guarded('create', undefined, async () => strip(await c.create!(input)))),
       });
       toolApproval[`create_${c.name}`] = ((input: Row, { toolCallId }) =>
         propose(toolCallId, `Add ${c.title(input)}`, 'neutral', Object.entries(input).map(([label, v]) => ({ label, from: '—', to: text(v) })))) as Rule;
@@ -80,7 +98,7 @@ export function assistantTools(collections: AnyCollection[], writer: UIMessageSt
       tools[`update_${c.name}`] = tool({
         description: `Change fields on one or more ${c.label.toLowerCase()} by id.`,
         inputSchema: z.object({ ids: z.array(z.string()).min(1), set: patchOf(fields).refine((set) => Object.keys(set).length > 0, 'Name at least one field to change.') }),
-        execute: ({ ids, set }, { toolCallId }) => once(toolCallId, async () => (await c.update!([...new Set(ids)], set)).map(strip)),
+        execute: ({ ids, set }, { toolCallId }) => once(toolCallId, () => guarded('update', [...new Set(ids)], async () => (await c.update!([...new Set(ids)], set)).map(strip))),
       });
       toolApproval[`update_${c.name}`] = (async ({ ids, set }: { ids: string[]; set: Row }, { toolCallId }) => {
         const found = await find(ids);
@@ -95,7 +113,7 @@ export function assistantTools(collections: AnyCollection[], writer: UIMessageSt
       tools[`remove_${c.name}`] = tool({
         description: `Remove one or more ${c.label.toLowerCase()} by id.`,
         inputSchema: z.object({ ids: z.array(z.string()).min(1) }),
-        execute: ({ ids }, { toolCallId }) => once(toolCallId, () => c.remove!([...new Set(ids)])),
+        execute: ({ ids }, { toolCallId }) => once(toolCallId, () => guarded('remove', [...new Set(ids)], () => c.remove!([...new Set(ids)]))),
       });
       toolApproval[`remove_${c.name}`] = (async ({ ids }: { ids: string[] }, { toolCallId }) => {
         const found = await find(ids);

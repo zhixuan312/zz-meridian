@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { app } from '@/app.config';
 import { StatusDot } from '@/components/ui/status-dot';
 import { summarise } from '@/components/patterns/status-list/summarise';
-import { SERVICES } from '@/system/fixtures/sample';
+import { SERVICES } from '@/data/sample';
 
 /**
  * The sample's footer for the standalone screens: the copyright, the Design Atlas, and the services' state, linking to

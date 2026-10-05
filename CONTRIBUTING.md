@@ -27,7 +27,7 @@ A new card passes two questions before anyone specifies it:
 | 3 Patterns | `src/components/patterns/`, `src/components/charts/` | Components composed for one dashboard job |
 | 4 Pages | `app/(dashboard)/`, `app/embed/`, `src/views/` | Routes (console and embed); a view shared by both lives in `src/views/` |
 
-A product's data comes from `src/data/collections.ts` (where pages, actions and the assistant read and change records) and the modules beside it, and nowhere else; the sample (ZZ Meridian's own dashboard) that the Atlas, the previews and the template's sample pages read lives in `src/system/fixtures/`. Formatting comes from `src/lib/format.ts` and `src/lib/format-date.ts`. A component never imports data: it defines the types it renders (`ActivityEvent`, `Incident`, `Service`) and data conforms to them.
+A product's data comes from `src/data/` (`collections.ts`, where actions and the assistant change records; `read.ts`, the pages' authorized cached read; `access.ts`, who may do what) and the modules beside it, and nowhere else; the sample (ZZ Meridian's own dashboard) that the Atlas, the previews and the template's sample pages read lives in `src/system/fixtures/`. Formatting comes from `src/lib/format.ts` and `src/lib/format-date.ts`. A component never imports data: it defines the types it renders (`ActivityEvent`, `Incident`, `Service`) and data conforms to them.
 
 ## Card anatomy
 

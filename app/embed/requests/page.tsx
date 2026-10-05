@@ -1,5 +1,6 @@
 import { Suspense } from 'react';
-import { requests } from '@/data/collections';
+import { read } from '@/data/read';
+import type { RequestRow } from '@/data/sample';
 import { EmbedRequests } from './view';
 
 export const metadata = { title: 'Requests' };
@@ -9,10 +10,10 @@ export const metadata = { title: 'Requests' };
  * tool's view and the console's view are the same address. Inline: the five latest that match. Fullscreen: the table.
  */
 export default async function Page() {
-  const { rows } = await requests.query({});
+  const { rows, observedAt } = await read('requests');
   return (
     <Suspense>
-      <EmbedRequests rows={rows} />
+      <EmbedRequests rows={rows as RequestRow[]} now={observedAt} />
     </Suspense>
   );
 }

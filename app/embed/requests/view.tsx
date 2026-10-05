@@ -13,14 +13,15 @@ import { FilterBar } from '@/components/patterns/filter-bar';
 import { Freshness } from '@/components/patterns/freshness';
 import { formatDuration } from '@/lib/format';
 import { formatRelative } from '@/lib/format-date';
-import { DEMO_NOW, DEMO_UPDATED_AT, REGIONS, type RequestRow } from '@/system/fixtures/sample';
+import { DEMO_UPDATED_AT, REGIONS, type RequestRow } from '@/data/sample';
 import { filterRequests, REQUEST_FILTERS } from '@/views/requests';
 import { MethodChip, requestColumns, StatusBadge } from '@/system/sample-cells';
 
 const describe = (f: typeof REQUEST_FILTERS) =>
   [f.status !== 'all' && `status ${f.status}`, f.method !== 'all' && f.method, f.region !== 'all' && `in ${f.region}`, f.q && `matching "${f.q}"`].filter(Boolean).join(', ');
 
-export function EmbedRequests({ rows }: { rows: RequestRow[] }) {
+export function EmbedRequests({ rows, now }: { rows: RequestRow[]; now: string }) {
+  const asOf = useMemo(() => new Date(now), [now]);
   const s = useSurface();
   const [f, set] = useQueryState({ ...REQUEST_FILTERS, by: 'Claude', sort: 'at', dir: 'desc', page: '1' });
   const matching = useMemo(() => filterRequests(rows, f), [rows, f]);
@@ -39,7 +40,7 @@ export function EmbedRequests({ rows }: { rows: RequestRow[] }) {
     const change = (patch: Partial<typeof REQUEST_FILTERS>) => set({ ...patch, by: '', page: '1' });
     const opts = (vals: string[]) => [{ value: 'all', label: 'All' }, ...vals.map((v) => ({ value: v, label: v }))];
     return (
-      <EmbedFrame title="Requests" meta={<Freshness updatedAt={DEMO_UPDATED_AT} now={DEMO_NOW} />} consolePath={consolePath}>
+      <EmbedFrame title="Requests" meta={<Freshness updatedAt={DEMO_UPDATED_AT} now={asOf} />} consolePath={consolePath}>
         <DataTable
           caption="Requests"
           noun="requests"
@@ -71,7 +72,7 @@ export function EmbedRequests({ rows }: { rows: RequestRow[] }) {
   return (
     <EmbedFrame
       title={scope ? `Requests · ${scope}` : 'Latest requests'}
-      meta={<Freshness updatedAt={DEMO_UPDATED_AT} now={DEMO_NOW} />}
+      meta={<Freshness updatedAt={DEMO_UPDATED_AT} now={asOf} />}
       consolePath={consolePath}
       expandable={matching.length > latest.length}
     >
@@ -96,7 +97,7 @@ export function EmbedRequests({ rows }: { rows: RequestRow[] }) {
                   <MethodChip method={r.method} />
                   <span className="min-w-0 flex-1">
                     <span className="block truncate font-mono text-xs text-ink">{r.route}</span>
-                    <span className="t-num mt-0.5 block truncate text-xs text-ink-3">{r.customer} · {formatRelative(r.at, DEMO_NOW)}</span>
+                    <span className="t-num mt-0.5 block truncate text-xs text-ink-3">{r.customer} · {formatRelative(r.at, asOf)}</span>
                   </span>
                   <span className={`t-num shrink-0 text-xs ${r.latency > 1000 ? 'font-medium text-warning-ink' : 'text-ink-2'}`}>{formatDuration(r.latency)}</span>
                   <StatusBadge status={r.status} />

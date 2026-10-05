@@ -7,7 +7,7 @@ import { app } from '@/app.config';
 import { clock } from '@/data/collections';
 import { AccessDenied, can, collectionFor, resolveAccess } from '@/data/access';
 import { collectionTag } from '@/data/read';
-import type { ApiKey } from '@/system/fixtures/sample-records';
+import type { ApiKey } from '@/data/sample';
 
 const draft = z.object({
   name: z.string().trim().min(1, 'Name the key.'),

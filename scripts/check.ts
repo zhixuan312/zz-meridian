@@ -9,7 +9,9 @@
  * - No literal colour (hex, rgb, hsl) and no Tailwind default palette in the layers: colours come from roles.
  * - One implementation: the fixtures a collection serves are read through src/data/collections.ts, not imported again.
  * - In the template, `connection()` is called only where the request is meant to be read: the console layout and the
- *   not-found page. A product's own pages are its own, so the rule is silent once `.meridian/manifest.json` exists.
+ *   not-found page; pages and views reach the sample through src/data, never src/system/fixtures; and a writer path
+ *   never revalidates with 'max'. A product's own pages are its own, so these rules are silent once
+ *   `.meridian/manifest.json` exists.
  * - No dormant code: every export of src/lib and src/data is imported by a file a product keeps.
  * - Markdown stays inert: no raw-HTML plugin in the dependencies or the source.
  * - The agent context holds: docs/brief.md has its five sections, and every path and package script the managed block in
@@ -284,13 +286,35 @@ const retirements: Retirement[] = [];
 // pages all prerender has none. In a product those pages are the team's, so the rule is the template's alone.
 if (!fs.existsSync(manifestFile)) {
   const BOUNDARIES = [`${APP_DIR}/(dashboard)/layout.tsx`, `${APP_DIR}/not-found.tsx`];
-  for (const f of [APP_DIR, 'src'].flatMap((d) => walk(d, /\.tsx?$/))) {
-    if (BOUNDARIES.includes(f.split(path.sep).join('/'))) continue;
-    // Comments blanked, not removed, so a line number is the file's.
-    const src = read(f).replace(/\/\*[\s\S]*?\*\//g, (c) => c.replace(/[^\n]/g, ' ')).replace(/(^|[^:])\/\/[^\n]*/g, '$1');
-    src.split('\n').forEach((line, i) => {
+  /** Comments blanked, not removed, so a line number is the file's. */
+  const blanked = (f: string) => read(f).replace(/\/\*[\s\S]*?\*\//g, (c) => c.replace(/[^\n]/g, ' ')).replace(/(^|[^:])\/\/[^\n]*/g, '$1');
+  const lineOf = (src: string, at: number) => src.slice(0, at).split('\n').length;
+  const sources = [APP_DIR, 'src'].flatMap((d) => walk(d, /\.tsx?$/)).map((f) => f.split(path.sep).join('/'));
+  for (const f of sources) {
+    if (BOUNDARIES.includes(f)) continue;
+    blanked(f).split('\n').forEach((line, i) => {
       if (/\bconnection\s*\(/.test(line)) problems.push(`${f}:${i + 1}: connection() outside the template's two request boundaries`);
     });
+  }
+  // A page and a view read the sample through src/data, so the day it becomes an API is one file's change. Every
+  // import specifier counts, a type-only one too; the Atlas, a preview and src/data itself are the sample's own.
+  const FIXTURES = 'src/system/fixtures';
+  for (const f of sources.filter((x) => (x.startsWith(`${APP_DIR}/`) || x.startsWith('src/views/')) && !x.startsWith(`${APP_DIR}/system/`) && !/(^|\/)preview\.tsx$/.test(x))) {
+    const src = blanked(f);
+    for (const m of src.matchAll(/(?:\bfrom|\bimport\s*\(?)\s*['"]([^'"]+)['"]/g)) {
+      const spec = m[1];
+      const target = spec.startsWith('@/') ? path.posix.join('src', spec.slice(2)) : spec.startsWith('.') ? path.posix.join(path.posix.dirname(f), spec) : '';
+      if (target === FIXTURES || target.startsWith(`${FIXTURES}/`)) problems.push(`${f}:${lineOf(src, m.index + m[0].lastIndexOf(spec))}: reads src/system/fixtures directly; go through src/data`);
+    }
+  }
+  // The code that writes revalidates at once. 'max' keeps serving stale content, so the caller's own next read would
+  // still show what it just changed.
+  const WRITER = new RegExp(`^(?:${APP_DIR}/.*/actions\\.ts|${APP_DIR}/api/.*|src/lib/assistant/.*|src/data/live-actions\\.ts)$`);
+  for (const f of sources.filter((x) => WRITER.test(x))) {
+    const src = blanked(f);
+    for (const m of src.matchAll(/\b(?:revalidateTag|cacheLife)\s*\(((?:[^()]|\([^()]*\))*)\)/g)) {
+      if (/['"]max['"]/.test(m[1])) problems.push(`${f}:${lineOf(src, m.index)}: revalidates with 'max' on a writer path; use updateTag or { expire: 0 }`);
+    }
   }
 }
 

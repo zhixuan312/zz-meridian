@@ -1,7 +1,7 @@
 import { read } from '@/data/read';
 import { inviteMember, removeMember, setMemberStatus } from './actions';
 import { MembersView } from '@/views/members';
-import type { Member } from '@/system/fixtures/sample-members';
+import type { Member } from '@/data/sample';
 
 export const metadata = { title: 'Members' };
 

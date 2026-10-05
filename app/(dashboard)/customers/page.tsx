@@ -1,5 +1,5 @@
 import { Suspense } from 'react';
-import { CUSTOMERS } from '@/system/fixtures/sample-records';
+import { CUSTOMERS } from '@/data/sample';
 import { CustomersView } from '@/views/customers';
 
 export const metadata = { title: 'Customers' };

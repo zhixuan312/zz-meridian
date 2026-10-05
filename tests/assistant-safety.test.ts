@@ -8,6 +8,9 @@ import { respond } from '@/lib/assistant/respond';
 import { systemPrompt } from '@/lib/assistant/prompt';
 import { REASONS, loadThread, saveThread } from '@/components/patterns/assistant/thread';
 
+/** Permits everything: this file is about the stream, the guard has its own tests. */
+const guard = { authorize: async () => true, invalidate: () => {} };
+
 type Item = { id: string; name: string; secret: string };
 let n = 0;
 const items = () =>
@@ -37,10 +40,10 @@ async function message(evs: any[]): Promise<UIMessage> {
 }
 /** Asks for `toolName(input)`, approves it, and returns the approved history and the second response's events. */
 async function approved(c: ReturnType<typeof items>, id: string, toolName: string, input: unknown) {
-  const first = await message(await events(await respond({ model: model(call(id, toolName, input)), secret: SECRET, now: NOW, messages: ask, page, collections: [c] })));
+  const first = await message(await events(await respond({ model: model(call(id, toolName, input)), secret: SECRET, now: NOW, messages: ask, page, collections: [c], guard })));
   for (const p of first.parts as any[]) if (p.toolCallId === id) { p.state = 'approval-responded'; p.approval = { ...p.approval, approved: true }; }
   const history = [...ask, first];
-  const run = async () => events(await respond({ model: model(say), secret: SECRET, now: NOW, messages: structuredClone(history), page, collections: [c] }));
+  const run = async () => events(await respond({ model: model(say), secret: SECRET, now: NOW, messages: structuredClone(history), page, collections: [c], guard }));
   return { run };
 }
 
@@ -65,13 +68,13 @@ describe('an approved change', () => {
 
   test('an update that changes nothing is refused before it is proposed', async () => {
     const c = items();
-    const evs = await events(await respond({ model: model(call('e1', `update_${c.name}`, { ids: ['i_1'], set: {} })), secret: SECRET, now: NOW, messages: ask, page, collections: [c] }));
+    const evs = await events(await respond({ model: model(call('e1', `update_${c.name}`, { ids: ['i_1'], set: {} })), secret: SECRET, now: NOW, messages: ask, page, collections: [c], guard }));
     expect(evs.some((e) => e.type === 'data-proposal')).toBe(false);
   });
 
   test('duplicate ids count once in the preview', async () => {
     const c = items();
-    const evs = await events(await respond({ model: model(call('d1', `remove_${c.name}`, { ids: ['i_1', 'i_1'] })), secret: SECRET, now: NOW, messages: ask, page, collections: [c] }));
+    const evs = await events(await respond({ model: model(call('d1', `remove_${c.name}`, { ids: ['i_1', 'i_1'] })), secret: SECRET, now: NOW, messages: ask, page, collections: [c], guard }));
     expect(evs.find((e) => e.type === 'data-proposal').data.title).toBe('Remove One');
   });
 });

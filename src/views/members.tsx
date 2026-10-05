@@ -18,7 +18,7 @@ import { Sheet, SheetClose, SheetContent } from '@/components/ui/sheet';
 import { toast } from '@/components/ui/toast';
 import { DataTable, type Column } from '@/components/patterns/data-table';
 import { formatDate, formatRelative } from '@/lib/format-date';
-import { ROLES, TEAMS, type Member } from '@/system/fixtures/sample-members';
+import { ROLES, TEAMS, type Member } from '@/data/sample';
 
 /** Colour only where a row needs a look: an open invitation and a suspension. Active is the normal case, so it stays quiet. */
 const STATUS_TONE = { Active: 'neutral', Invited: 'accent', Suspended: 'warning' } as const;

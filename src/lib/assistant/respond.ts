@@ -1,18 +1,18 @@
 import { APICallError, RetryError, convertToModelMessages, createUIMessageStream, createUIMessageStreamResponse, isStepCount, streamText, toUIMessageStream, type LanguageModel, type UIMessage } from 'ai';
 import type { AnyCollection } from '@/lib/collection';
-import { ChangeRefused, assistantTools } from './tools';
+import { ChangeRefused, assistantTools, type Guard } from './tools';
 import { readBrief } from './brief';
 import { briefExcerpt, systemPrompt, type PageContext } from './prompt';
 
 /** The most model steps one reply may take. */
 const MAX_STEPS = 8;
 
-/** Streams the model's answer to `messages`, about `page`, as a UI message stream response. */
-export async function respond({ model, secret, messages, page, collections, now }: { model: LanguageModel; secret: string; messages: UIMessage[]; page: PageContext; collections: AnyCollection[]; now: Date }): Promise<Response> {
+/** Streams the model's answer to `messages`, about `page`, as a UI message stream response. `guard` is asked again as each approved change runs. */
+export async function respond({ model, secret, messages, page, collections, guard, now }: { model: LanguageModel; secret: string; messages: UIMessage[]; page: PageContext; collections: AnyCollection[]; guard: Guard; now: Date }): Promise<Response> {
   const modelMessages = await convertToModelMessages(messages);
   const stream = createUIMessageStream({
     execute: ({ writer }) => {
-      const { tools, toolApproval } = assistantTools(collections, writer);
+      const { tools, toolApproval } = assistantTools(collections, writer, guard);
       const result = streamText({
         model,
         system: systemPrompt(page, now, briefExcerpt(readBrief())),
