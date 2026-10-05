@@ -66,6 +66,41 @@ for (const f of SPECS) {
   }
 }
 
+// ── An embed view a document names exists ────────────────────────────────────────────────────────────
+// Two shapes name an embed view, and both have drifted from the routes:
+//
+//   - the literal route, in prose: `/embed/orders`. A name followed by a dot is a FILE in that folder
+//     (`app/embed/layout.tsx`), not a route, so it is left alone.
+//   - the surfaces inventory's own column (`docs/surfaces.md`, Layer 4), which names the view: `` `overview` ``. It
+//     offered a `request` and a `customer` view that had never been built and left out the `proposal` one that had, and
+//     nothing noticed: a reader following the guide went looking for a view that is not there.
+const isEmbed = (name: string) => fs.existsSync(path.join(ROOT, APP_DIR, 'embed', name, 'page.tsx'));
+for (const f of [...SPECS, ...walk('skills', /\.md$/)]) {
+  for (const m of new Set([...read(f).matchAll(/\/embed\/([a-z0-9-]+)(?![\w.-])/g)].map((x) => x[1]))) {
+    if (!isEmbed(m)) problems.push(`${f}: names the embed /embed/${m}, which is not a route`);
+  }
+}
+{
+  // A product built by `brand.ts --product` has no `docs/` at all, so the file is read only when it is there.
+  const file = 'docs/surfaces.md';
+  if (fs.existsSync(path.join(ROOT, file))) {
+    const lines = read(file).split('\n');
+    const after = lines.slice(lines.findIndex((l) => l.startsWith('### Layer 4')) + 1);
+    const rows: string[] = [];
+    for (const l of after) {
+      if (l.startsWith('|')) rows.push(l);
+      else if (rows.length) break;
+    }
+    for (const row of rows.slice(2)) {
+      const cell = row.split('|').slice(-2)[0]?.trim() ?? '';
+      if (!cell || /Not offered|Fullscreen only/.test(cell)) continue;
+      for (const m of new Set([...cell.matchAll(/`([a-z0-9-]+)`/g)].map((x) => x[1]))) {
+        if (!isEmbed(m)) problems.push(`${file}: the inventory offers a \`${m}\` embed view, which is not a route`);
+      }
+    }
+  }
+}
+
 // ── Hand-written styles: motion from tokens ──────────────────────────────────────────────────────────
 for (const f of ['src/styles/base.css', 'src/styles/motion.css']) {
   read(f).split('\n').forEach((line, i) => {
