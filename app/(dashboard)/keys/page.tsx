@@ -6,6 +6,6 @@ import { createKey, revokeKey } from './actions';
 export const metadata = { title: 'API keys' };
 
 export default async function KeysPage() {
-  const { rows } = await read('keys');
-  return <KeysView rows={rows as ApiKey[]} createKey={createKey} revokeKey={revokeKey} />;
+  const { rows, observedAt } = await read('keys');
+  return <KeysView rows={rows as ApiKey[]} now={observedAt} createKey={createKey} revokeKey={revokeKey} />;
 }

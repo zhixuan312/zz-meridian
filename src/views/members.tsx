@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useTransition } from 'react';
+import { useOptimistic, useRef, useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { MoreHorizontal, Trash2, UserCheck, UserPlus, UserX } from 'lucide-react';
 import { app } from '@/app.config';
@@ -31,6 +31,15 @@ export type MemberActions = {
   setStatus: (id: string, status: Member['status']) => Promise<Result>;
   remove: (id: string) => Promise<Result>;
 };
+/** A row the table shows before the server has agreed: `pending` marks it until the authoritative rows replace it. */
+type Shown = Member & { pending?: boolean };
+type Change = { type: 'add'; row: Shown } | { type: 'status'; id: string; status: Member['status'] } | { type: 'remove'; id: string };
+/** An invitation, a status change and a removal all take this one path, so the table never has a second way to be optimistic. */
+function apply(rows: Shown[], change: Change): Shown[] {
+  if (change.type === 'add') return [change.row, ...rows];
+  if (change.type === 'remove') return rows.filter((m) => m.id !== change.id);
+  return rows.map((m) => (m.id === change.id ? { ...m, status: change.status, pending: true } : m));
+}
 const BLANK = { name: '', email: '', role: 'Member' as Member['role'], team: 'Engineering' as Member['team'] };
 
 /** `now` is the data's clock, so "last active" reads the same on the server and in the browser. */
@@ -38,20 +47,37 @@ export function MembersView({ rows, now, actions }: { rows: Member[]; now: strin
   const asOf = new Date(now);
   const router = useRouter();
   const [pending, start] = useTransition();
+  const [shown, change] = useOptimistic<Shown[], Change>(rows, apply);
+  const inFlight = useRef(new Set<string>());
+  const tempId = useRef(0);
   const [inviting, setInviting] = useState(false);
   const [removing, setRemoving] = useState<Member | null>(null);
   const [invite, setInvite] = useState(BLANK);
   const [errors, setErrors] = useState<{ name?: string; email?: string }>({});
 
-  /** Run an action; on success refresh the rows and toast, on rejection toast the reason and change nothing. */
-  const act = (action: () => Promise<Result>, done: { title: string; description?: string }, then?: () => void) =>
+  /**
+   * Show `optimistic` at once, then run the action for the row `id`. The change stays until the transition ends, which waits for
+   * the refreshed rows; a rejection toasts the reason and the table goes back to the rows it was given. A row with an action
+   * in flight takes no second one.
+   */
+  const act = (id: string, optimistic: Change, action: () => Promise<Result>, done: { title: string; description?: string }, failed?: () => void) => {
+    if (inFlight.current.has(id)) return;
+    inFlight.current.add(id);
     start(async () => {
-      const r = await action();
-      if (!r.ok) return toast({ tone: 'critical', title: 'Change not made', description: r.error });
-      then?.();
-      router.refresh();
-      toast({ tone: 'positive', ...done });
+      change(optimistic);
+      try {
+        const r = await action();
+        if (!r.ok) {
+          failed?.();
+          return toast({ tone: 'critical', title: 'Change not made', description: r.error });
+        }
+        router.refresh();
+        toast({ tone: 'positive', ...done });
+      } finally {
+        inFlight.current.delete(id);
+      }
     });
+  };
 
   const send = () => {
     const e = {
@@ -60,16 +86,21 @@ export function MembersView({ rows, now, actions }: { rows: Member[]; now: strin
     };
     setErrors(e);
     if (e.name || e.email) return;
-    act(() => actions.invite(invite), { title: `Invitation sent to ${invite.email.trim()}`, description: `${invite.name.trim()} joins as ${invite.role} on ${invite.team} when they accept.` }, () => { setInviting(false); setInvite(BLANK); });
+    const draft = invite;
+    const row: Shown = { id: `pending-${tempId.current++}`, name: draft.name.trim(), email: draft.email.trim(), role: draft.role, team: draft.team, status: 'Invited', joined: now.slice(0, 10), lastActive: null, pending: true };
+    setInviting(false);
+    setInvite(BLANK);
+    act(row.id, { type: 'add', row }, () => actions.invite(draft), { title: `Invitation sent to ${row.email}`, description: `${row.name} joins as ${draft.role} on ${draft.team} when they accept.` }, () => { setInvite(draft); setInviting(true); });
   };
 
-  const columns: Column<Member>[] = [
+  const columns: Column<Shown>[] = [
     {
       key: 'name', header: 'Name', grow: true, truncate: true, mobile: 'title', sortValue: (m) => m.name,
       cell: (m) => (
         <span className="flex min-w-0 items-center gap-3">
           <Avatar name={m.name} size="sm" />
           <span className="truncate font-medium">{m.name}</span>
+          {m.pending ? <span className="t-caption shrink-0 text-ink-3" aria-busy="true">Saving…</span> : null}
         </span>
       ),
     },
@@ -90,10 +121,10 @@ export function MembersView({ rows, now, actions }: { rows: Member[]; now: strin
         return (
           <Menu>
             <MenuTrigger asChild>
-              <IconButton size="sm" variant="ghost" label={`Actions for ${m.name}`} icon={<MoreHorizontal />} disabled={pending} />
+              <IconButton size="sm" variant="ghost" label={`Actions for ${m.name}`} icon={<MoreHorizontal />} disabled={m.pending} />
             </MenuTrigger>
             <MenuContent align="end">
-              <MenuItem onSelect={() => act(() => actions.setStatus(m.id, suspended ? 'Active' : 'Suspended'), suspended
+              <MenuItem onSelect={() => act(m.id, { type: 'status', id: m.id, status: suspended ? 'Active' : 'Suspended' }, () => actions.setStatus(m.id, suspended ? 'Active' : 'Suspended'), suspended
                 ? { title: 'Member reactivated', description: `${m.name} can sign in again.` }
                 : { title: 'Member suspended', description: `${m.name} can no longer sign in.` })}>
                 {suspended ? <UserCheck /> : <UserX />}{suspended ? 'Reactivate' : 'Suspend'}
@@ -118,7 +149,7 @@ export function MembersView({ rows, now, actions }: { rows: Member[]; now: strin
         <DataTable
           caption="Members"
           noun="members"
-          rows={rows}
+          rows={shown}
           columns={columns}
           rowKey={(m) => m.id}
           empty={{ title: 'No members yet', body: `Invite the people who work in ${app.name}.`, action: <Button variant="primary" size="sm" icon={<UserPlus />} onClick={() => setInviting(true)}>Invite member</Button> }}
@@ -158,7 +189,8 @@ export function MembersView({ rows, now, actions }: { rows: Member[]; now: strin
               <DialogClose asChild><Button variant="ghost">Cancel</Button></DialogClose>
               <Button variant="danger" icon={<Trash2 />} busy={pending} onClick={() => {
                 const m = removing!;
-                act(() => actions.remove(m.id), { title: 'Member removed', description: `${m.name} no longer has access.` }, () => setRemoving(null));
+                setRemoving(null);
+                act(m.id, { type: 'remove', id: m.id }, () => actions.remove(m.id), { title: 'Member removed', description: `${m.name} no longer has access.` });
               }}>Remove member</Button>
             </>
           }

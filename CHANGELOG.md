@@ -6,6 +6,7 @@ Every release of ZZ Meridian, newest first. Versions follow semver: a removed or
 
 ### Added
 
+- **`GET /api/live?collections=members,keys`: change hints over Server-Sent Events.** The team-owned starters `app/api/live/route.ts` and `src/data/live-stream.ts` open with `retry: 3000` and a `resync`, send a `change` naming only the collection, and beat every 15 seconds. Each hint is sent only after the caller's scope is checked again, and a scope that may no longer read ends the stream. A malformed, empty or oversized request (more than 50 names) gets 400, no session 401, and an unknown or forbidden name 403 without saying which. No record, tenant or cache tag reaches the browser.
 - **`zz-meridian update`: a real, reviewable update.** For a project adopted or created with 0.3.0 or later.
   - `--dry-run` replays the recorded release in a scratch folder, after checking it against the registry's integrity record, and prints the plan. It writes nothing, and refuses if any recorded file disagrees with the replay.
   - A plain `update` replaces every Meridian file the team has not touched, adds the new ones and removes retired ones. Files the team edited, deleted or kept are staged as base/ours/new copies, never overwritten.
@@ -46,6 +47,7 @@ Every release of ZZ Meridian, newest first. Versions follow semver: a removed or
   - Each approved create, update or remove asks the route's guard with the records it touches, at the moment it runs. A permission revoked since the approval refuses it with "You no longer have permission to make this change." and changes, emits and invalidates nothing. A committed change drops its tenant's cached reads with `revalidateTag(tag, { expire: 0 })`.
   - Breaking: `assistantTools(collections, writer, guard)` and `respond({ …, guard })` take the guard.
 - **Pages and views read only through `src/data`.** The requests pages read the `requests` collection with `read()` and format against its `observedAt`. Everything else the sample pages draw comes from `src/data/sample.ts`. In the template, `node scripts/check.ts` fails on a page or view that imports `src/system/fixtures` directly, by alias or relative path, and on `'max'` as the revalidation profile on a writer path (actions, API routes, the assistant, `src/data/live-actions.ts`). Both rules are silent once `.meridian/manifest.json` exists.
+- **Members and keys update optimistically.** An invitation shows first in the table at once, marked "Saving…"; a status change, a removal or a revoke shows at once too. A refused change puts the table back and toasts "Change not made" with the reason, and a row with a change in flight takes no second one. The freshness the views show stays the read's observation time. Breaking: `KeysView` takes `now`, the read's `observedAt`.
 - **Breaking: the clock is always the caller's.** `formatRelative`, `Freshness`, `ShellTools` and `AlertsPanel` take a required `now`, the data's clock; none of them reads the browser's clock any more.
 - **One rule says which files are Meridian's.**
   - `cli/src/ownership.ts` decides it for `adopt`, `create` and `update`; `references/ownership.md` in the skill is the same rule, rendered.

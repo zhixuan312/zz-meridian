@@ -1,7 +1,8 @@
 'use client';
 
-import { useState, useTransition } from 'react';
+import { useOptimistic, useRef, useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
+import { Tooltip } from 'radix-ui';
 import { KeyRound, Plus, Trash2 } from 'lucide-react';
 import { app } from '@/app.config';
 import { PageFrame, Stack } from '@/components/base/shell';
@@ -19,15 +20,19 @@ import { Sheet, SheetClose, SheetContent } from '@/components/ui/sheet';
 import { toast } from '@/components/ui/toast';
 import { DataTable, type Column } from '@/components/patterns/data-table';
 import { formatDate, formatRelative } from '@/lib/format-date';
-import { DEMO_NOW, type ApiKey } from '@/data/sample';
+import type { ApiKey } from '@/data/sample';
 
 const SCOPES = ['messages', 'search', 'embeddings', 'files', 'webhooks'];
 
 type Draft = { name: string; env: 'live' | 'test'; scopes: string[] };
 
 /** The server actions arrive as props: the page owns them, the view only calls them and refreshes the route. */
-export function KeysView({ rows, createKey, revokeKey }: { rows: ApiKey[]; createKey: (draft: Draft) => Promise<ApiKey>; revokeKey: (id: string) => Promise<void> }) {
+/** `now` is the read's observation time, so "last used" is never fresher than the data. */
+export function KeysView({ rows, now, createKey, revokeKey }: { rows: ApiKey[]; now: string; createKey: (draft: Draft) => Promise<ApiKey>; revokeKey: (id: string) => Promise<void> }) {
   const router = useRouter();
+  const asOf = new Date(now);
+  const [shown, removeShown] = useOptimistic(rows, (xs: ApiKey[], id: string) => xs.filter((k) => k.id !== id));
+  const revokingIds = useRef(new Set<string>());
   const [pending, startTransition] = useTransition();
   const [creating, setCreating] = useState(false);
   const [revoking, setRevoking] = useState<ApiKey | null>(null);
@@ -87,8 +92,8 @@ export function KeysView({ rows, createKey, revokeKey }: { rows: ApiKey[]; creat
     { key: 'created', header: 'Created', numeric: true, muted: true, hideBelow: 'lg', mobile: 'fact', sortValue: (k) => k.created, cell: (k) => formatDate(k.created), mobileCell: (k) => `Created ${formatDate(k.created)}` },
     {
       key: 'used', header: 'Last used', numeric: true, mobile: 'fact', sortValue: (k) => k.lastUsed ?? '',
-      cell: (k) => (k.lastUsed ? formatRelative(k.lastUsed, DEMO_NOW) : <span className="text-ink-3">Never</span>),
-      mobileCell: (k) => (k.lastUsed ? `Used ${formatRelative(k.lastUsed, DEMO_NOW)}` : 'Never used'),
+      cell: (k) => (k.lastUsed ? formatRelative(k.lastUsed, asOf) : <span className="text-ink-3">Never</span>),
+      mobileCell: (k) => (k.lastUsed ? `Used ${formatRelative(k.lastUsed, asOf)}` : 'Never used'),
     },
     {
       key: 'revoke', header: <span className="sr-only">Actions</span>, align: 'right', mobile: 'status',
@@ -110,14 +115,17 @@ export function KeysView({ rows, createKey, revokeKey }: { rows: ApiKey[]; creat
             This is the only time the full key is shown. Store it in your secret manager.
           </Banner>
         ) : null}
-        <DataTable
-          caption="API keys"
-          noun="keys"
-          rows={rows}
-          columns={columns}
-          rowKey={(k) => k.id}
-          empty={{ title: 'No keys yet', body: `Create a key for each service that calls ${app.name}.`, action: <Button variant="primary" size="sm" icon={<Plus />} onClick={() => setCreating(true)}>Create key</Button> }}
-        />
+        {/* The row's revoke button carries a tooltip; the view brings its provider so it also stands alone, as in a test. */}
+        <Tooltip.Provider delayDuration={300} skipDelayDuration={120}>
+          <DataTable
+            caption="API keys"
+            noun="keys"
+            rows={shown}
+            columns={columns}
+            rowKey={(k) => k.id}
+            empty={{ title: 'No keys yet', body: `Create a key for each service that calls ${app.name}.`, action: <Button variant="primary" size="sm" icon={<Plus />} onClick={() => setCreating(true)}>Create key</Button> }}
+          />
+        </Tooltip.Provider>
         <p className="t-caption max-w-[72ch]">Keys never expire. To rotate one, create its replacement, move your services to it, then revoke the old key: requests signed with it fail at once.</p>
       </Stack>
 
@@ -156,16 +164,23 @@ export function KeysView({ rows, createKey, revokeKey }: { rows: ApiKey[]; creat
               <DialogClose asChild><Button variant="ghost">Cancel</Button></DialogClose>
               <Button variant="danger" icon={<Trash2 />} disabled={pending} onClick={() => {
                 const k = revoking!;
+                if (revokingIds.current.has(k.id)) return;
+                revokingIds.current.add(k.id);
+                setRevoking(null);
                 run(async () => {
-                  await revokeKey(k.id);
-                  setRevoking(null);
+                  removeShown(k.id);
+                  try {
+                    await revokeKey(k.id);
+                  } finally {
+                    revokingIds.current.delete(k.id);
+                  }
                   toast({ tone: 'neutral', title: 'Key revoked', description: `${k.name} no longer works.` });
                 }, 'Could not revoke the key');
               }}>Revoke key</Button>
             </>
           }
         >
-          {revoking ? <p className="t-small text-ink-2">Last used {revoking.lastUsed ? formatRelative(revoking.lastUsed, DEMO_NOW) : 'never'} by {revoking.owner}&rsquo;s services.</p> : null}
+          {revoking ? <p className="t-small text-ink-2">Last used {revoking.lastUsed ? formatRelative(revoking.lastUsed, asOf) : 'never'} by {revoking.owner}&rsquo;s services.</p> : null}
         </DialogContent>
       </Dialog>
     </PageFrame>
