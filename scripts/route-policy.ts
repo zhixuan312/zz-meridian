@@ -49,7 +49,8 @@ if (import.meta.main) {
   let bad: string[];
   const routes = routesOf(dist);
   try {
-    bad = offenders(routes, config.requestDependentRoutes ?? []);
+    // verify.config.ts is the team's, so a product set up by an earlier release has a config type without the field.
+    bad = offenders(routes, (config as { requestDependentRoutes?: Declared[] }).requestDependentRoutes ?? []);
   } catch (e) {
     console.error(`route-policy: ${(e as Error).message}`);
     process.exit(1);

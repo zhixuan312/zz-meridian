@@ -126,6 +126,34 @@ Two environment variables exist for the updater's own tests and are used only wh
 `ZZ_MERIDIAN_LOCAL_RELEASES=<dir>` reads `zz-meridian-<version>.tgz` from a folder instead of the registry, and
 `ZZ_MERIDIAN_TEST_INTERRUPT_AFTER=<n>` stops an update after `n` applied operations. Neither weakens a check.
 
+### This release's migrations
+
+`cli/src/migrations.ts` holds `RELEASE_MIGRATIONS`: the changes a release makes in the team's own files, which `update`
+reports as `migration:<id>` because it cannot make them. An entry applies when the project's recorded version is older
+than its `since` and the target is not, and its `applies(root)` returns the paths that still have the old shape, or
+null. It only reads, and only team-owned files (the ownership rule's managed paths are skipped); a file it cannot read is
+absent. A project already on the new shape gets no line. Every entry carries `gate` and `build` as its checks, and its
+instructions name the section of `references/cache.md` or `references/live.md` to follow.
+
+For 0.5.0 they are:
+
+| Id | Reported when a team-owned file still has |
+|----|-------------------------------------------|
+| `shell-assistant-promise` | `<AppShell` with an `assistant=` prop and no promise (`.then(`, `Promise`, `use(`) |
+| `assistant-available-promise` | `useAssistantAvailable()` used as a boolean |
+| `clock-now-required` | `<Freshness`, `<ShellTools` or `<AlertsPanel` without `now=`, or `formatRelative(` with one argument |
+| `cache-components-config` | a `next.config.*` without `cacheComponents: true` and `partialPrefetching: true` |
+| `connection-boundaries` | `await connection()` in a `page.tsx` or `layout.tsx` under `app/` |
+| `authorized-read` | a `page.tsx` calling `.query(` |
+| `scoped-invalidation` | a `'use server'` file that writes a collection and calls neither `updateTag` nor `revalidateTag` |
+| `live-provider` | `src/data/collections.ts` without `src/data/live-actions.ts`, or a dashboard layout with neither `LiveProvider` nor `ConsoleLive` |
+| `authorized-endpoints` | `app/api/assistant/route.ts`, or an `actions.ts` Server Action file, without a `resolveAccess` call |
+
+The consumer smoke resolves them on both published-0.3.0 origins as `references/update.md` tells an agent: the created
+origin, whose files are the template's, takes the release's versions of the affected team-owned files and the files that
+arrived with them; the adopted origin, whose pages are the team's own, makes the minimal edit the instruction names.
+It then records the resolutions and finalizes, so the gate and the build run on the result.
+
 ### The keep register
 
 `.meridian/keep.json` is a JSON array of exactly `{ "path", "reason" }` entries, for a managed file the team keeps

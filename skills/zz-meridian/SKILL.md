@@ -46,6 +46,9 @@ follow steps 1 to 8: the project is already built.
   update, the resolutions it asks for, and the pinned `--finalize` command it prints (with `--resume` and `--abort` for
   an interruption or a change of mind). Read `references/ownership.md` for which files are Meridian's and which are the
   team's; an update changes only the first, and a team keeps one of its own on purpose through `optional:.meridian/keep.json`.
+  Moving to 0.5.0 reports migrations for the interfaces that release changed (the assistant promise, the required clock,
+  Cache Components, authorized reads, scoped invalidation, the live stream); `references/update.md` says how to resolve
+  them, and `references/cache.md` and `references/live.md` hold the starters and the shapes they move to.
 - **Rebrand.** `npx zz-meridian@<the manifest's version> brand [brand flags]`, from a clean git tree. Never hand-edit the
   brand outputs; an edited one makes it refuse.
 
@@ -150,6 +153,9 @@ away, with the exact brand colour kept in the logo mark. If they keep it, keep t
 
 Read `references/customize.md` and follow it. In short:
 
+- **Reads, writes and live data go through the access seam.** Pages read with `read()` and writes invalidate their tenant
+  (`references/cache.md`); the console keeps its tables fresh over one stream per tab (`references/live.md`, which also
+  says plainly why the sample is a single process and holds the Postgres and Redis adapters).
 - **Data first.** Write `src/data/<product>.ts` for the person's domain: real types from their schema or materials, and
   deterministic sample data until they wire their API. Pages import data from `optional:src/data/` and nowhere else. Delete the
   sample pages you replace. `optional:src/data/collections.ts` and `optional:src/data/sample.ts` import `optional:src/system/fixtures/` (and the dashboard layout imports

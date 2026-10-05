@@ -151,6 +151,44 @@ because `node_modules` is not restored. No git reset or clean is ever run.
 Exit codes of `--finalize`: `0` complete, `2` still pending, `1` failure or refusal. `--resume` ends like a plain
 update (`2` pending, `0` finalized, `1` failure). `--abort`: `0` aborted, `1` refused.
 
+## Resolving this release's migrations
+
+Moving a project to 0.5.0 can report these `migration:<id>` items. Each is a change in the team's own files, so the
+update only reports it: `MERGE.md` lists the files it found, and its instructions name the section to follow. Resolve
+each one in the project, then record it as above, with the hashes of the files as they are after your change.
+
+| Id | The old shape it found | The change |
+|----|------------------------|------------|
+| `shell-assistant-promise` | `<AppShell assistant=...>` with a boolean | pass a `Promise<boolean>`: `cache.md`, "The shell's assistant promise" |
+| `assistant-available-promise` | `useAssistantAvailable()` read as a boolean | `use(useAssistantAvailable())` inside a `Suspense` boundary: same section |
+| `clock-now-required` | `Freshness`, `ShellTools` or `AlertsPanel` without `now`, `formatRelative` with one argument | pass the data's clock: "The clock is the data's" |
+| `cache-components-config` | a Next config without `cacheComponents` and `partialPrefetching` | add both flags: "Turn Cache Components on" |
+| `connection-boundaries` | a page or layout that awaits `connection()` | remove it and read behind a boundary: same section |
+| `authorized-read` | a page calling `.query(` on a collection | `read()` from `optional:src/data/read.ts`: "Authorized, scoped reads" |
+| `scoped-invalidation` | a Server Action that writes and invalidates nothing | `updateTag` after the commit: "Writes authorize, then invalidate" |
+| `live-provider` | collections without `optional:src/data/live-actions.ts`, or a console layout without the provider | add the live files: `live.md`, "The live starters" and "Refreshing" |
+| `authorized-endpoints` | the assistant route or an actions file that never calls `resolveAccess` | resolve the caller first: "The assistant route" |
+
+How to make the change depends on whose file it is:
+
+- **A project created from Meridian that never changed the template's pages** (a file as the earlier release wrote it):
+  bring the release's version of each affected file over. Take it from the installed package's template or from
+  `https://github.com/zhixuan312/zz-meridian` at the version `MERGE.md` names, never from memory. The release's
+  versions need the files that arrived with them: the starters `optional:src/data/access.ts`,
+  `optional:src/data/read.ts`, `optional:src/data/live-stream.ts`, `optional:src/data/live-actions.ts` and
+  `optional:app/api/live/route.ts`, the client `optional:src/views/console-live.tsx`, each console route's
+  `loading.tsx`, and the assistant's route-side code (`optional:src/lib/assistant/tools.ts` and
+  `optional:src/lib/assistant/respond.ts`, which take the guard). Remove a file the release moved (the Overview page is now under `optional:app/(dashboard)/(overview)/`),
+  and carry over your own changes to a file you had edited; do not overwrite them.
+- **A project adopted into an existing app**, whose pages are its own: make the smallest edit the instruction names. A
+  Next config that lacks the two flags gets them, and then each route must still be static or partial; the pages Meridian
+  never wrote stay as they are. Do not copy Meridian's pages into an app that did not have them.
+- **A change that does not apply** (a page that awaits `connection()` on purpose, a `.query(` that is not a collection):
+  record the migration as `not-applicable` with the reason, in one sentence.
+
+Then run `<pm> run gate` and one `next build` yourself before the pinned `--finalize`, which runs both again and refuses
+anything that still fails.
+
 ## What to do with it
 
 1. Run it from a clean git tree, so the report describes the project and not unfinished work.

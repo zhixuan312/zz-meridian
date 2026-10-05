@@ -17,7 +17,9 @@
  * published 0.3.0 package, then given what a team's project carries (a card edit, a kept skill file and token file, a
  * brief, an extra doc, a team page fix) and committed. The running tarball is then its update target.
  * --update: the dry-run, then a real update, the gate refusing the open session, a resolution written as
- * references/update.md tells an agent, finalize, and everything the team owns unchanged.
+ * references/update.md tells an agent, finalize, and everything the team owns unchanged. This release's migrations are
+ * resolved the way that guide says: an adopted project's own files get the smallest edit, a created project's get the
+ * release's versions of what changed.
  * --update-all: the remaining controlled cases, each on its own copy of that fixture: a created project, an
  * interruption and its resume, a failed install, a type error, a check that writes source, abort, a dirty tree, a
  * removal and an addition, and a rebrand followed by an update on both origins. The variant package and the 0.5.1
@@ -125,14 +127,53 @@ function zz(pkg: string, cwd: string, a: string[], label: string, env: Record<st
   return { status: r.status, out: r.stdout, err: r.stderr, wall };
 }
 
+/** The migrations 0.5.0 declares in `cli/src/migrations.ts`: changes in the team's own files, resolved by editing them. */
+const RELEASE_IDS = ['shell-assistant-promise', 'assistant-available-promise', 'clock-now-required', 'cache-components-config', 'connection-boundaries', 'authorized-read', 'scoped-invalidation', 'live-provider', 'authorized-endpoints'];
+
+const filesUnder = (dir: string, rel = ''): string[] => {
+  if (!fs.existsSync(path.join(dir, rel))) return [];
+  return fs.readdirSync(path.join(dir, rel), { withFileTypes: true }).flatMap((e) => {
+    const p = rel ? `${rel}/${e.name}` : e.name;
+    return e.isDirectory() ? filesUnder(dir, p) : [p];
+  });
+};
+
+/**
+ * What `references/update.md` tells an agent to do for this release's migrations, on a project whose files are the
+ * earlier release's.
+ * A created project never changed the template's pages, so each affected file comes over from the release (the package's
+ * template), with the files that arrived with it, and a file the release moved goes. An adopted project's pages are the
+ * team's own: the smallest edit the instruction names, here the two flags in its Next config.
+ */
+function bringReleaseOver(proj: string, route: string) {
+  if (route === 'adopt') {
+    edit(proj, 'next.config.ts', (t) => t.replace(/\/\* config options here \*\//, 'cacheComponents: true,\n  partialPrefetching: true,'));
+    return;
+  }
+  const payload = path.join(unpack(), 'payload');
+  // The template's console, its data seam and the assistant's route-side code (which takes the guard). The Atlas
+  // (app/system) is not in a created project, and a test is replaced only where the project already has it.
+  const owned = (f: string) => (f.startsWith('app/') && !f.startsWith('app/system/')) || f.startsWith('src/views/') || f.startsWith('src/data/') || f.startsWith('src/system/fixtures/') || f === 'src/system/sample-cells.tsx' || (f.startsWith('src/lib/assistant/') && f !== 'src/lib/assistant/prompt.ts');
+  const release = new Set(filesUnder(payload).filter(owned));
+  for (const f of filesUnder(proj).filter(owned)) if (!release.has(f)) fs.rmSync(path.join(proj, f));
+  for (const f of release) write(proj, f, fs.readFileSync(path.join(payload, f), 'utf8'));
+  for (const f of filesUnder(path.join(proj, 'tests'))) {
+    const rel = `tests/${f}`;
+    if (rel !== 'tests/setup.ts' && fs.existsSync(path.join(payload, rel))) write(proj, rel, fs.readFileSync(path.join(payload, rel), 'utf8'));
+  }
+  edit(proj, 'next.config.ts', (t) => t.replace('reactStrictMode: true,', 'reactStrictMode: true,\n  cacheComponents: true,\n  partialPrefetching: true,'));
+}
+
 /** `references/update.md`: resolve in the project's own file, then one object per item with its reason and the files' current hashes. */
 function resolveAll(proj: string, version: string, reason: string) {
   const dir = path.join(proj, '.meridian/update', version);
   const stubs = [...read(dir, 'MERGE.md').matchAll(/```json\n([\s\S]*?)\n```/g)].map((m) => JSON.parse(m[1]!)).filter((s) => typeof s.id === 'string' && /^(file|migration):/.test(s.id));
+  const reported = RELEASE_IDS.filter((id) => stubs.some((s) => s.id === `migration:${id}`));
+  if (reported.length > 0) bringReleaseOver(proj, finalManifest(proj).route);
   const resolutions = stubs.map((s) => ({
     id: s.id,
-    status: s.id.startsWith('migration:') ? 'not-applicable' : 'resolved',
-    reason,
+    status: s.id.startsWith('migration:') && !reported.includes(s.id.slice('migration:'.length)) ? 'not-applicable' : 'resolved',
+    reason: reported.includes(s.id.slice('migration:'.length)) ? 'Made the change this release describes, in the project.' : reason,
     files: Object.fromEntries(Object.keys(s.files).map((f) => [f, sha(path.join(proj, f))])),
   }));
   fs.writeFileSync(path.join(dir, 'resolutions.json'), `${JSON.stringify(resolutions, null, 2)}\n`);
@@ -254,6 +295,7 @@ function mainUpgrade(): Upgraded {
   check(real.status === 2, 'a real update exits 2: applied, with work pending', real.out + real.err);
   check(fs.existsSync(path.join(proj, session, 'MERGE.md')) && /^migration\s+dependency:/m.test(real.out), 'it writes MERGE.md and reports the migrations', real.out + real.err);
   check(['base', 'ours', 'new'].every((d) => fs.existsSync(path.join(proj, session, d, CARD))), `it stages ${CARD} with base, ours and new copies`);
+  check(/^migration\s+cache-components-config\b/m.test(real.out), "it reports cache-components-config, the one release migration an adopted project's own files still need", real.out);
   check(/^outcome: migration-required/m.test(real.out) && /^Next: .*update --finalize/m.test(real.out), 'it prints the outcome and the pinned next command', real.out);
   const installSecs = Number(/install (\d+(?:\.\d+)?)s/.exec(real.out)?.[1] ?? 0);
   const initial = real.wall / 1000 - installSecs;
@@ -281,7 +323,9 @@ function mainUpgrade(): Upgraded {
   check(fs.existsSync(path.join(proj, '.meridian/history', VERSION)) && !fs.existsSync(path.join(proj, session)), 'the session is archived under .meridian/history');
 
   // The team's bytes.
-  const changed = OWNED.filter((f) => sha(path.join(proj, f)) !== owned[f]);
+  // The one team file the release's migration edits is next.config.ts: the two flags, and nothing else.
+  check(/cacheComponents: true/.test(read(proj, 'next.config.ts')) && /partialPrefetching: true/.test(read(proj, 'next.config.ts')), "the cache-components-config migration's edit is in the adopted project's next.config.ts");
+  const changed = OWNED.filter((f) => f !== 'next.config.ts' && sha(path.join(proj, f)) !== owned[f]);
   check(changed.length === 0, "the brief, the extra doc, README, app config, verify config, the team's files and the kept files are unchanged", changed.join('\n'));
   const agentsAfter = read(proj, 'AGENTS.md');
   const begin = agentsAfter.indexOf(BEGIN);
@@ -331,6 +375,9 @@ if (args.includes('--update-all')) {
     const files = Object.keys(finalManifest(dir).files);
     const up = zz(tarball, dir, ['update'], 'update');
     check(up.status === 0 || up.status === 2, 'update on the created project applies', up.out + up.err);
+    // 0.3.0's template already passed `now` everywhere, so only the clock migration has nothing to report.
+    const missed = RELEASE_IDS.filter((id) => id !== 'clock-now-required' && !new RegExp(`^migration\\s+${id}\\b`, 'm').test(up.out));
+    check(missed.length === 0 && !/^migration\s+clock-now-required\b/m.test(up.out), "the created project's report names every release migration its template still has the old shape for", `missing: ${missed.join(', ')}\n${up.out}`);
     // The assertions below describe the applied update; without one they would only repeat this failure.
     if (up.status === 0 || up.status === 2) {
       if (up.status === 2) finish(dir, 'created project');

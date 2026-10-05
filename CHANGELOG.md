@@ -6,6 +6,11 @@ Every release of ZZ Meridian, newest first. Versions follow semver: a removed or
 
 ### Added
 
+- **An update to 0.5.0 reports this release's migrations.** It names the team-owned files that still have the old shape:
+  - `shell-assistant-promise`, `assistant-available-promise`, `clock-now-required` and `cache-components-config`;
+  - `connection-boundaries`, `authorized-read`, `scoped-invalidation`, `live-provider` and `authorized-endpoints`.
+
+  Each says which section to follow, and is checked by the gate and a build. A product already on the new shape gets no line. The skill gains `references/cache.md` and `references/live.md`. They carry every team-owned starter verbatim: `access.ts`, `read.ts`, `live-stream.ts`, `live-actions.ts` and `/api/live`. They also hold working-shape Postgres LISTEN/NOTIFY and Redis pub/sub adapters, and say plainly that the sample is a single process, and that polling cannot reconcile stores that diverged.
 - **Live data in the console: one stream per tab, and a refresh that reauthorizes.**
   - `src/lib/live.ts`, now managed, holds `createLiveClient` (the framework-free scheduler) and `LiveProvider` and `useLive`, which put it in a React tree. Every hook in a tab shares one `EventSource` for the union of the collections they show.
   - Hints wait at most 500 ms, one refresh runs at a time, and what arrives meanwhile runs next. A safety refresh runs every `pollMs` (30 s) even on a healthy stream, and a refresh slower than 10 s counts as failed.
