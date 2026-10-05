@@ -10,9 +10,12 @@
  * - One implementation: the fixtures a collection serves are read through src/data/collections.ts, not imported again.
  * - No dormant code: every export of src/lib and src/data is imported by a file a product keeps.
  * - Markdown stays inert: no raw-HTML plugin in the dependencies or the source.
+ * - The agent context holds: docs/brief.md has its five sections, and every path and package script the managed block in
+ *   AGENTS.md, the skill and the brief name exists.
  */
 import fs from 'node:fs';
 import path from 'node:path';
+import { checkBrief, scanReferences } from './lib/context-check.ts';
 import { APP_DIR } from './lib/routes.ts';
 import { cards } from './registry.ts';
 
@@ -272,6 +275,35 @@ for (const f of walk('src', /\.tsx?$/).filter((x) => SWEPT.test(x) && !TOOLKIT.t
   const u = used.get(f);
   if (u?.has('*')) continue;
   for (const n of names) if (!u?.has(n)) problems.push(`${f}: exports ${n}, which nothing a product keeps imports`);
+}
+
+// ── The agent context: the brief, and what the instruction documents point at ──────────────────────────
+// The managed block markers are the ones `zz-meridian adopt` writes (cli/src/context.ts); the CLI is not in a project.
+{
+  const BEGIN = '<!-- BEGIN:zz-meridian-agent-rules -->';
+  const END = '<!-- END:zz-meridian-agent-rules -->';
+  const has = (p: string) => fs.existsSync(path.join(ROOT, p));
+  if (has('docs/brief.md')) {
+    const { errors, warnings } = checkBrief(read('docs/brief.md'));
+    for (const w of warnings) console.log(`docs/brief.md: warning: ${w}`);
+    for (const e of errors) problems.push(`docs/brief.md: ${e}`);
+  } else if (has('.meridian/manifest.json')) {
+    console.log("docs/brief.md is missing: write it with the skill's brief template from the person's own answers");
+  }
+
+  const docs: { file: string; text: string; firstLine?: number }[] = [];
+  if (has('AGENTS.md')) {
+    const text = read('AGENTS.md');
+    const begin = text.indexOf(BEGIN);
+    const end = text.indexOf(END);
+    if (begin !== -1 && end > begin) docs.push({ file: 'AGENTS.md', text: text.slice(begin, end + END.length), firstLine: text.slice(0, begin).split('\n').length });
+  }
+  for (const dir of ['skills/zz-meridian', '.agents/skills/zz-meridian', '.claude/skills/zz-meridian']) {
+    for (const file of walk(dir, /\.md$/)) docs.push({ file: file.split(path.sep).join('/'), text: read(file) });
+  }
+  if (has('docs/brief.md')) docs.push({ file: 'docs/brief.md', text: read('docs/brief.md') });
+  const scripts = new Set(Object.keys(JSON.parse(read('package.json')).scripts ?? {}));
+  problems.push(...scanReferences(docs, has, scripts));
 }
 
 console.log(problems.join('\n') || 'check: ok');

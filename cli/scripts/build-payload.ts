@@ -16,7 +16,8 @@ const OUT = path.join(ROOT, 'cli/payload');
 const worktree = process.argv.includes('--worktree');
 
 /** Never shipped: the package itself, CI, agent settings, and anything that could hold a secret. */
-const EXCLUDE = /^(cli\/|\.github\/|\.claude\/|\.agents\/|\.mma\/|out\/|node_modules\/|\.env(?!\.example$)|.*\.tsbuildinfo$)/;
+// The CLI's own tests import cli/src, which a project never has: shipped, they would fail its type check.
+const EXCLUDE = /^(cli\/|\.github\/|\.claude\/|\.agents\/|\.mma\/|out\/|node_modules\/|tests\/(cli-[^/]*|context-guidance)\.test\.ts$|\.env(?!\.example$)|.*\.tsbuildinfo$)/;
 
 fs.rmSync(OUT, { recursive: true, force: true });
 fs.mkdirSync(OUT, { recursive: true });

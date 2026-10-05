@@ -11,20 +11,23 @@ Migrate in place, page by page, keeping their data layer.
    `--hex` or `--accent`, `--workspace`, `--timezone`, `--currency`). It copies Meridian's tokens, styles, components,
    gates and scripts in; merges the dependencies and scripts it needs into their `package.json`; adds `@meridian/*`
    (`src/*`) to `tsconfig.json`; replaces their global stylesheet, keeping theirs beside it as `*.before.css` to port
-   from as tokens; writes a first `nav` from their routes into `src/app.config.ts`; brands it; appends Meridian's rules
-   to their `AGENTS.md`; installs this skill into `.agents/skills/` and `.claude/skills/`; records every copied file in
-   `.meridian/manifest.json`; installs and type checks. It refuses, writing nothing, when the git tree has uncommitted
+   from as tokens; writes a first `nav` from their routes into `src/app.config.ts`; brands it; writes a managed block
+   into their `AGENTS.md`, between two marker comments, and keeps every byte outside it (a later run replaces only that
+   block; a duplicate or unterminated marker is refused, with the files already copied); writes the five-section brief
+   `optional:docs/brief.md` when they have none (SKILL.md, step 3: fill it from their answers); installs this skill into
+   `optional:.agents/skills/` and `optional:.claude/skills/`; records every copied file in `optional:.meridian/manifest.json`; installs and type
+   checks. It refuses, writing nothing, when the git tree has uncommitted
    changes (commit first, so its change is one diff to review), when the project is not Next.js with the App Router,
    or when a file it would copy already exists with other content (it lists them: move theirs, then run it again).
    Meridian's own files import each other by relative path, so their `components/ui/button` is never confused with
    Meridian's.
-2. **The template to read from** is the version in `.meridian/manifest.json`, at
+2. **The template to read from** is the version in `optional:.meridian/manifest.json`, at
    `https://github.com/zhixuan312/zz-meridian/tree/v<version>`: the layouts, the presets in `src/views/` and the pages
-   in `app/(dashboard)/`. Without network access to GitHub, `npx zz-meridian@<version> create /tmp/meridian-ref
+   in `optional:app/(dashboard)/`. Without network access to GitHub, `npx zz-meridian@<version> create /tmp/meridian-ref
    --no-install` writes the same files to a scratch folder.
 3. Wrap their root layout like the template's `app/layout.tsx` (fonts, the pre-paint script, `Providers`) and their
-   console routes in `AppShell` with the rail, `ShellTools` and the command palette (see `app/(dashboard)/layout.tsx`).
-   The template's layout passes `ShellTools` the sample `ALERTS` and `DEMO_NOW` from `src/system/fixtures/`, which
+   console routes in `AppShell` with the rail, `ShellTools` and the command palette (see `optional:app/(dashboard)/layout.tsx`).
+   The template's layout passes `ShellTools` the sample `ALERTS` and `DEMO_NOW` from `optional:src/system/fixtures/`, which
    is not copied: pass their own alerts (an empty list until they have some) and their own clock. Give each `nav`
    entry in `src/app.config.ts` its icon and group. The Rail and the palette take `nav` as a prop, rendered from a
    client module (`src/views/console-chrome.tsx`), since each destination carries its icon component; if what a person
@@ -41,7 +44,7 @@ Migrate in place, page by page, keeping their data layer.
    there to look, show it to them before the rest.
 5. **Before the first `pnpm verify`, give it a fake API.** verify presses every control it finds on the built app,
    Approve, Revoke, Archive and Delete included. If their pages call a live backend, those presses change it. Write
-   `scripts/fake-api.ts`: a server on `--port 0` that answers every route the pages call with typed fixtures (writes
+   `example:scripts/fake-api.ts`: a server on `--port 0` that answers every route the pages call with typed fixtures (writes
    answer success and are forgotten) and prints `listening on <url>`. Name it and the environment variable their app
    reads its API address from in `scripts/verify.config.ts` (`fakeApi: { script, env }`): verify starts it first and
    builds and serves the app against it. Point the build at it, not only the server: an address read in
@@ -58,18 +61,18 @@ Migrate in place, page by page, keeping their data layer.
 6. List their detail pages worth seeing (a normal record, a failed one, a missing one) in `detailRoutes` in
    `scripts/verify.config.ts`, with ids from the fake API's fixtures, then run `pnpm verify` until it passes.
 
-Without the assistant, verify skips its walk-through on its own (it runs only when `app/api/assistant/route.ts`
+Without the assistant, verify skips its walk-through on its own (it runs only when `optional:app/api/assistant/route.ts`
 exists).
 
 ## Adding the assistant
 
 The panel (`src/components/patterns/assistant/`) already came with `src/components/`, and `AppShell` mounts it when
-`app/(dashboard)/layout.tsx` passes `assistant`. A product that adopts the assistant also brings
-`app/api/assistant/route.ts`, the rest of `src/lib/assistant/`, `src/lib/collection.ts` and `src/data/collections.ts`;
-add `@ai-sdk/anthropic`, `@ai-sdk/openai-compatible` and `zod` to the dependencies. Point `src/data/collections.ts` at their data, put their
+`optional:app/(dashboard)/layout.tsx` passes `assistant`. A product that adopts the assistant also brings
+`optional:app/api/assistant/route.ts`, the rest of `src/lib/assistant/`, `optional:src/lib/collection.ts` and `optional:src/data/collections.ts`;
+add `@ai-sdk/anthropic`, `@ai-sdk/openai-compatible` and `zod` to the dependencies. Point `optional:src/data/collections.ts` at their data, put their
 sign-in check in the layout, in the route and in every server action, and set `ASSISTANT_PROVIDER`, `ASSISTANT_API_KEY` and `ASSISTANT_MODEL`
 (plus `ASSISTANT_BASE_URL` for `openai-compatible`): it stays off until they are set. The "Show the assistant" switch is
-in `src/views/settings.tsx`.
+in `optional:src/views/settings.tsx`.
 
 Two things to do when their `rows` becomes a real database — a page asks for the same records from several places, so
 the same query runs several times per request, which is free over fixtures and a round trip each over a network. Wrap
@@ -80,13 +83,13 @@ numbers.
 ## Route A2: a static HTML page (data fetched as JSON)
 
 The simplest case. Create a new Meridian project (SKILL.md steps 3 and 4, with `--product`) and point a module in
-`src/data/` at the same JSON the page fetched today (read the file at build time, or fetch it in a server component).
+`optional:src/data/` at the same JSON the page fetched today (read the file at build time, or fetch it in a server component).
 Rebuild each section of the page as a Meridian page or card; the old page can stay where it is until they switch.
 
 ## Route B: another React stack (Vite, Create React App, Remix, Astro islands)
 
 Create a new Meridian project next to theirs (SKILL.md steps 3 and 4), then port into it: their routes become pages,
-their data hooks or fetch calls move into `src/data/` (as server functions or client hooks), their domain types come
+their data hooks or fetch calls move into `optional:src/data/` (as server functions or client hooks), their domain types come
 along unchanged. Keep their old app running until the new one passes `pnpm verify` and they have looked at it.
 
 ## Route C: not React (Vue, Svelte, Angular, server templates)

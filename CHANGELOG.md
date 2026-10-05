@@ -14,6 +14,12 @@ Every release of ZZ Meridian, newest first. Versions follow semver: a removed or
 
 ### Changed
 
+- **The gate checks the agent context.**
+  - `node scripts/check.ts` fails when `docs/brief.md` lacks one of its five sections, and warns while a section still holds only its template line.
+  - It scans the managed block in `AGENTS.md`, the installed skill and the brief. It fails on any path or package script they name that does not exist; `optional:` and `example:` references are allowed to be absent.
+  - The skill's references are labelled to match: they hold in the template, in an adopted project and in a created one.
+  - The skill carries its own `references/voice.md`, `references/agents.md` and `references/update.md`, so a created project, which has no `docs/`, no longer points at files it lacks.
+- **The package no longer ships the CLI's own tests into a new dashboard.** They import `cli/src`, which a project never has, so the created project failed its own type check.
 - **`AGENTS.md` gets a managed block, not an appended section.**
   - `adopt` and `create` write Meridian's rules between `<!-- BEGIN:zz-meridian-agent-rules -->` and `<!-- END:zz-meridian-agent-rules -->`. The rules name your package manager's commands, and every byte of your own text around them is kept.
   - Breaking: `scripts/brand.ts --existing` no longer appends `# Built on ZZ Meridian`, and `--product` no longer writes `# Working in this dashboard`. The CLI writes the block instead. Run `adopt` or `create`, or, once it is out, `update`, rather than `brand.ts`, to get it.

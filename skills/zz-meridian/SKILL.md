@@ -21,6 +21,22 @@ and `docs/` are the full specification; this skill is the route through them. If
 clone of the template (for example `/tmp/meridian/skills/zz-meridian/SKILL.md`), that clone is the template: use it
 wherever a step fetches the template, and read the references next to this file.
 
+## The rules that always hold
+
+These hold in every project, however it started, and nothing below overrides them.
+
+- **Build up, never sideways.** A page arranges patterns, a pattern composes components, a component is built from
+  tokens. A value you need is a token, never a literal.
+- **Never a literal colour, and never a Tailwind utility outside Meridian's scales.** `node scripts/check.ts` fails on
+  both; the utilities render nothing (see "Things that render nothing" in `references/customize.md`).
+- **Tokens are generated.** After a change in `tokens/`, run `pnpm tokens`. Never edit `src/styles/tokens.css` or
+  `src/styles/theme.css`.
+- **Agents read freely and write only through a Proposal.** Mark agent work with the Agent mark and "via"
+  (`references/agents.md`).
+- **Before finishing, run `pnpm verify`, and never against a live backend.** It presses every control, Delete
+  included, so a project whose pages call a live API or read a database names a `fakeApi` (or says `noLiveApi`) in
+  `scripts/verify.config.ts` first (`references/existing-project.md`, step 5).
+
 ## 1. Do the homework first
 
 Before asking anything, look at what you already have:
@@ -47,7 +63,7 @@ your draft as the recommended option so the person can accept it in one click. U
 Skip what the request already answers ("this project, keep our data and routes" answers the first). When the request
 hands you the whole job in one sentence, or you have no way to ask, do not stop to ask: take your drafts (the product
 name from their app, the brand colour from their existing styles or logo, dark first, no MCP views), write them into
-`docs/brief.md`, and list them in the hand-over so the person can change any of them in one line.
+the brief (step 3), and list them in the hand-over so the person can change any of them in one line.
 
 ## 3. Get the template, branded
 
@@ -64,7 +80,7 @@ cd <target>
 ```
 
 It copies the template, brands it, installs the dependencies, initialises git, installs this skill into the project
-(`.agents/skills/`, `.claude/skills/`) and records every file in `.meridian/manifest.json`. The person gets their
+(`optional:.agents/skills/`, `optional:.claude/skills/`) and records every file in `optional:.meridian/manifest.json`. The person gets their
 dashboard, not a copy of the design system: the Design Atlas, the card and page specifications, `docs/`, `decisions/`
 and the changelog are left out, and the README and AGENTS.md are written for their product. To look a component up
 while building, read it in the template on GitHub (`src/components/<layer>/<card>/README.md`).
@@ -79,8 +95,36 @@ Requirements: Node 22.18 or newer; pnpm is used when installed, npm otherwise. T
 step 6 rather than skipping validation. In a sandbox without network or a browser, ask for the access these steps need
 (the package install, starting Chrome and a local server for verify) instead of working around it.
 
-Now write the step-2 answers into `docs/brief.md` in the project (in English), so the decisions survive the
-conversation.
+Now fill the brief, so the decisions survive the conversation.
+
+`adopt` and `create` have already written `optional:docs/brief.md` as a template with five sections: Product, Users,
+Data, Decisions and Glossary, each holding one guidance line. If the file is missing (an older project), write it
+from this template:
+
+```md
+# Product name
+
+## Product
+What this dashboard is for, in two or three sentences: who opens it, what decision it helps them make.
+
+## Users
+Who uses it and how often; what they know already; what they must never be shown.
+
+## Data
+Where the numbers come from (systems, tables, APIs), how fresh they are, and what now means for this product.
+
+## Decisions
+Brand, layout and behaviour choices already made, one line each with its reason, so no session re-decides them.
+
+## Glossary
+The team's own words for things, one per line: term and what it means here.
+```
+
+Replace each guidance line with the person's own answers from step 2, in English. Never invent a product fact: a
+section they have not answered keeps its guidance line, and `node scripts/check.ts` warns about it until it is written.
+No secrets go into the brief (no keys, tokens, passwords or connection strings): the assistant and every later session
+read it. The template's assistant reads Product, Users and Glossary, so those three say what a stranger needs to
+answer a question about this product.
 
 ## 4. Check the brand colour
 
@@ -95,28 +139,28 @@ away, with the exact brand colour kept in the logo mark. If they keep it, keep t
 Read `references/customize.md` and follow it. In short:
 
 - **Data first.** Write `src/data/<product>.ts` for the person's domain: real types from their schema or materials, and
-  deterministic sample data until they wire their API. Pages import data from `src/data/` and nowhere else. Delete the
-  sample pages you replace. `src/data/collections.ts` imports `src/system/fixtures/` (and the dashboard layout imports
-  `DEMO_NOW` and `ALERTS` from it), so the fixtures and `src/system/sample-cells.tsx` stay until nothing imports them:
+  deterministic sample data until they wire their API. Pages import data from `optional:src/data/` and nowhere else. Delete the
+  sample pages you replace. `optional:src/data/collections.ts` imports `optional:src/system/fixtures/` (and the dashboard layout imports
+  `DEMO_NOW` and `ALERTS` from it), so the fixtures and `optional:src/system/sample-cells.tsx` stay until nothing imports them:
   replace each collection's `rows` with the person's data first, then delete them. Prove the
-  numbers before building pages: a `tests/data.test.ts` asserting the counts your pages need (vitest resolves `@/`;
+  numbers before building pages: a `example:tests/data.test.ts` asserting the counts your pages need (vitest resolves `@/`;
   plain `node` does not).
 - **Navigation** in `src/app.config.ts`; one line per page.
 - **Pages from presets.** Start each page from the closest template page and change what it shows, not how it is laid
   out. Every page has one protagonist (a featured metric, a table, a form), a kicker, a title and one sentence.
 - **Remove what they did not ask for**: sample pages, their nav lines, their embed views, their entries in
-  `src/system/content.ts` (if the Atlas stays), and the links that point at them. Settings is a sample page too:
+  `example:src/system/content.ts` (if the Atlas stays), and the links that point at them. Settings is a sample page too:
   delete it unless asked (theme, accent and density stay in the rail's appearance menu and the command palette), but the
   assistant's on/off switch ("Show the assistant") lives in Settings: keep the page, or tell the person the switch goes
   with it.
   `references/customize.md` has the checklist and the grep that finds what is left.
 - **The assistant** is built in and off until `ASSISTANT_PROVIDER`, `ASSISTANT_API_KEY` and `ASSISTANT_MODEL` are set
-  (`ASSISTANT_BASE_URL` is required for `openai-compatible`). Point `src/data/collections.ts` at the person's data, and
-  put their sign-in check in `app/(dashboard)/layout.tsx`, in `app/api/assistant/route.ts` and in every server action; see `references/customize.md`.
-- **MCP App views** under `app/embed/` only if they asked for the agent surface; see `docs/agents.md` in the template.
+  (`ASSISTANT_BASE_URL` is required for `openai-compatible`). Point `optional:src/data/collections.ts` at the person's data, and
+  put their sign-in check in `optional:app/(dashboard)/layout.tsx`, in `optional:app/api/assistant/route.ts` and in every server action; see `references/customize.md`.
+- **MCP App views** under `optional:app/embed/` only if they asked for the agent surface; see `references/agents.md`.
 
 Build up, never sideways: use Meridian's components and tokens. A new colour, size or shadow is a token, never a literal;
-a missing component is specified as a card per `CONTRIBUTING.md`. Interface copy follows `docs/voice.md`: sentence case,
+a missing component is specified as a card per `CONTRIBUTING.md`. Interface copy follows `references/voice.md`: sentence case,
 verbs on buttons, units and periods on every number.
 
 ## 6. Validate until it passes

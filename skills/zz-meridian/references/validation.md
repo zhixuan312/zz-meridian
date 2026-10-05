@@ -4,11 +4,11 @@
 check runs and the report lists each failure:
 
 1. **The gate** (`node scripts/gate.ts`): tokens regenerate to the same CSS; the card registry is fresh; every card and
-   page specification follows the anatomy; the product's own rules in `scripts/check.local.ts`, when the file exists;
+   page specification follows the anatomy; the product's own rules in `optional:scripts/check.local.ts`, when the file exists;
    contrast holds for every pair in every theme and accent, and the chart palette passes the colour-vision checks;
    eslint-config-next; TypeScript; the tests.
 2. **A production build** (`next build`), against the fake API when `scripts/verify.config.ts` names one.
-3. **The assistant walk-through**, only when the project has `app/api/assistant/route.ts`: off, then on against a fake
+3. **The assistant walk-through**, only when the project has `optional:app/api/assistant/route.ts`: off, then on against a fake
    model.
 4. **The built app, served**, and the **browser audit** of every static route under `app/` and the `detailRoutes` in
    `scripts/verify.config.ts` (embeds under `/embed` on a simulated host ground) at 2560, 1440, 1024, 768 and 390px in
@@ -16,7 +16,7 @@ check runs and the report lists each failure:
 5. **Every control pressed, every link followed** (`scripts/interactions.ts`) on the built app: mouse at 1440px, taps at
    390px. A button that changes nothing, a control something else covers, and a link that answers 4xx all fail.
    **This presses Approve, Revoke and Delete too.** Pages that call a live API must be built against a fake one
-   (`fakeApi` in `scripts/verify.config.ts`; see `references/existing-project.md`, step 5), or verify changes real data.
+   (`fakeApi` in `scripts/verify.config.ts`; see `existing-project.md`, step 5), or verify changes real data.
    The same hazard through another door: pages that read a database directly. verify reads `DATABASE_URL` — and any
    name in `dataUrls` — from the environment and from the `.env` files Next would load, and refuses to start when one
    resolves to a host that is not this machine. Point it at a local copy for the run, and restore the data afterwards:
