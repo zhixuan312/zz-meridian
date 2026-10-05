@@ -71,8 +71,18 @@ for (const route of ROUTES) {
     await page.send('Input.dispatchKeyEvent', { type: 'keyUp', key: 'Tab', code: 'Tab', windowsVirtualKeyCode: 9 });
     // Two frames: the focus styles (the skip link sliding in) paint after the key event, not with it.
     await page.eval('new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(() => r(true))))');
-    const s = await page.eval<{ kb: string | null; name: string; ring: boolean; onTop: boolean; covered: string } | null>(STOP);
+    const measure = () => page.eval<{ kb: string | null; name: string; ring: boolean; onTop: boolean; covered: string } | null>(STOP);
+    let s = await measure();
     if (!s) continue;
+    // Ask again before calling a control covered. A control that has just taken focus may not yet be painted where it
+    // will sit — the skip link is drawn off the top edge until `:focus-visible` moves it in — and a measurement taken
+    // in between finds the sticky bar over it. On a loaded runner that cost the release its gates job: `/keys` failed
+    // with "hidden under div.flex.h-16: Skip to content" while the same page passed here and in the dry run. A control
+    // that is genuinely under something stays under it, so the second look costs a page nothing and a false failure.
+    if (!s.onTop) {
+      await page.eval('new Promise((r) => setTimeout(r, 150))');
+      s = (await measure()) ?? s;
+    }
     if (i === 0 || (!first && s)) first = first || s.name;
     if (s.kb !== null && reached.has(s.kb)) break;
     if (s.kb !== null) reached.add(s.kb);
