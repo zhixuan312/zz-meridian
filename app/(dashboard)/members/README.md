@@ -19,6 +19,7 @@ The row menu holds Suspend (Reactivate on a suspended member) and Remove.
 
 | State | What shows |
 |---|---|
+| Loading | `loading.tsx`: skeleton table rows; the members are read per request, so the prerendered shell holds none |
 | Default | Newest members first |
 | Invited | The status Badge in `accent`; Last active reads "Never" in `ink-3` |
 | Suspended | The status Badge in `warning` |

@@ -39,6 +39,13 @@ type VerifyConfig = {
    * `--base <url>` against the built app, failing when one exits non-zero.
    */
   browserChecks?: string[];
+  /**
+   * Routes that cannot be prerendered, each with the reason. `node scripts/route-policy.ts`, which verify runs after its
+   * production build, fails any non-API route that is neither static nor partial unless it is named here. A route that
+   * reads the signed-in user on every request is the usual one; move that read behind a boundary first, so the rest of
+   * the page can prerender.
+   */
+  requestDependentRoutes?: { path: string; reason: string }[];
 };
 
 const config: VerifyConfig = {

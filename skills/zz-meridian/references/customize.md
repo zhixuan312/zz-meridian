@@ -39,7 +39,7 @@ short string, used only for something that needs attention ("1").
 
 | They need | Copy and adapt | Its protagonist |
 |---|---|---|
-| A summary with one leading figure | `optional:app/(dashboard)/page.tsx` + `optional:src/views/overview.tsx` | Featured metric with its trend |
+| A summary with one leading figure | `optional:app/(dashboard)/(overview)/page.tsx` + `optional:src/views/overview.tsx` | Featured metric with its trend |
 | A list of records with filters | `optional:app/(dashboard)/requests/` + `optional:src/views/requests.tsx` | Data table with filter bar |
 | One record | `optional:app/(dashboard)/requests/[id]/` + `optional:src/views/request.tsx` | Detail head and key facts |
 | Breakdowns and patterns over time | `optional:app/(dashboard)/analytics/` + `optional:src/views/analytics.tsx` | Heatmap or the main chart |
@@ -76,6 +76,8 @@ The dashboard carries an assistant panel (`src/components/patterns/assistant/`, 
 the variables are set, read per request, so no rebuild is needed: `ASSISTANT_PROVIDER` (`anthropic` or
 `openai-compatible`), `ASSISTANT_API_KEY` and `ASSISTANT_MODEL` are required, and `ASSISTANT_BASE_URL` is required for
 `openai-compatible`. `example:docs/assistant.md` in the template has the full guide.
+
+The layout hands the shell whether it is on as a promise it does not await, `assistant={connection().then(() => assistantConfig(process.env) !== null)}`, so the request never blocks the frame; `AppShell` resolves it behind its own boundaries, and `useAssistantAvailable()` returns the same promise.
 
 - **Collections** live in `optional:src/data/collections.ts`: one `arrayCollection` per kind of record, with `rows`, the `fields`
   schema, `allow` (which of create, update and remove the assistant may propose) and `hidden` fields. Replace each

@@ -8,6 +8,8 @@
  * - Every token a specification names in backticks, and every var(--x) or (--x) a component uses, exists.
  * - No literal colour (hex, rgb, hsl) and no Tailwind default palette in the layers: colours come from roles.
  * - One implementation: the fixtures a collection serves are read through src/data/collections.ts, not imported again.
+ * - In the template, `connection()` is called only where the request is meant to be read: the console layout and the
+ *   not-found page. A product's own pages are its own, so the rule is silent once `.meridian/manifest.json` exists.
  * - No dormant code: every export of src/lib and src/data is imported by a file a product keeps.
  * - Markdown stays inert: no raw-HTML plugin in the dependencies or the source.
  * - The agent context holds: docs/brief.md has its five sections, and every path and package script the managed block in
@@ -273,6 +275,24 @@ const retirements: Retirement[] = [];
     const source = logoSource(logo);
     if (!source) problems.push(`src/app.config.ts: app.logo ${JSON.stringify(logo)} is not a root-relative SVG path such as "/logo.svg"`);
     else if (!fs.existsSync(path.join(ROOT, 'public', source))) problems.push(`src/app.config.ts: app.logo is ${source}, but public${source} does not exist`);
+  }
+}
+
+// ── The template's request boundaries ────────────────────────────────────────────────────────────────
+// Two places read the request: the console layout, which hands the shell a promise, and the not-found page, which streams
+// the address in. A `connection()` anywhere else makes the page behind it wait for the request, and a template whose
+// pages all prerender has none. In a product those pages are the team's, so the rule is the template's alone.
+if (!fs.existsSync(manifestFile)) {
+  // The members and keys pages still read their mutable rows per request; they leave this list once they read through
+  // src/data's cached, tagged read().
+  const BOUNDARIES = [`${APP_DIR}/(dashboard)/layout.tsx`, `${APP_DIR}/not-found.tsx`, `${APP_DIR}/(dashboard)/members/page.tsx`, `${APP_DIR}/(dashboard)/keys/page.tsx`];
+  for (const f of [APP_DIR, 'src'].flatMap((d) => walk(d, /\.tsx?$/))) {
+    if (BOUNDARIES.includes(f.split(path.sep).join('/'))) continue;
+    // Comments blanked, not removed, so a line number is the file's.
+    const src = read(f).replace(/\/\*[\s\S]*?\*\//g, (c) => c.replace(/[^\n]/g, ' ')).replace(/(^|[^:])\/\/[^\n]*/g, '$1');
+    src.split('\n').forEach((line, i) => {
+      if (/\bconnection\s*\(/.test(line)) problems.push(`${f}:${i + 1}: connection() outside the template's two request boundaries`);
+    });
   }
 }
 

@@ -20,7 +20,7 @@ Status: beta
 | Filtered | The tiles describe the matching set ("Matching requests"); the active filters take the accent wash; Clear appears |
 | Set by an agent | `?by=Claude` adds the provenance line under the filters until a person changes them |
 | Nothing matches | The table's filtered-out empty state with Clear filters; the tiles read zero |
-| Loading | The table's skeleton rows; the tiles keep their last values |
+| Loading | `loading.tsx`: three tiles over the filter bar and skeleton table rows |
 | Error | The table's error state with Retry; the filters stay |
 
 ## Data

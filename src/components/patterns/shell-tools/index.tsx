@@ -17,7 +17,7 @@ export type Alert = { id: string; title: string; detail?: string; at: string; hr
  * The global tools in the top bar of every console page: search and commands (⌘K), and alerts. They stay put while
  * the page scrolls, so they are always one press away. Alerts open a panel; each alert links to where it is handled.
  */
-export function ShellTools({ alerts = [], now }: { alerts?: Alert[]; /** The data's clock, for "36 min ago". */ now?: Date }) {
+export function ShellTools({ alerts = [], now }: { alerts?: Alert[]; /** The data's clock, for "36 min ago". */ now: Date }) {
   const [read, setRead] = useState<Set<string>>(new Set());
   const [open, setOpen] = useState(false);
   const unread = alerts.filter((a) => a.unread && !read.has(a.id)).length;
@@ -50,7 +50,7 @@ export function ShellTools({ alerts = [], now }: { alerts?: Alert[]; /** The dat
 }
 
 /** The alerts panel's body, as drawn in the popover; exported so a preview draws exactly what the bell opens. */
-export function AlertsPanel({ alerts, now, read = new Set(), onOpen, onMarkAll }: { alerts: Alert[]; now?: Date; read?: Set<string>; onOpen?: (id: string) => void; onMarkAll?: () => void }) {
+export function AlertsPanel({ alerts, now, read = new Set(), onOpen, onMarkAll }: { alerts: Alert[]; now: Date; read?: Set<string>; onOpen?: (id: string) => void; onMarkAll?: () => void }) {
   const unread = alerts.filter((a) => a.unread && !read.has(a.id)).length;
   return (
     <>

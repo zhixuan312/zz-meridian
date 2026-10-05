@@ -17,7 +17,7 @@ Status dot and the relative-time formatter. It sits in a masthead's meta slot, b
 
 - `updatedAt` is when the data arrived: the newest ingest time from the store. Never `now()`: a clock read at render time cannot expose a pipeline that stopped.
 - `staleAfterMs` is the data's contract (15 minutes by default). A daily rollup passes a day.
-- `now` is passed on a page with a fixed clock, so the server and the browser print the same words.
+- `now` is required: the data's clock, never the browser's, so the server and the browser print the same words.
 
 ## States
 

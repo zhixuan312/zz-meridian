@@ -18,7 +18,7 @@ Status: beta
 
 | State | What shows |
 |---|---|
-| Loading | The shared skeleton |
+| Loading | `loading.tsx`: the heatmap, two breakdowns, two trends and the endpoint table, as skeletons in their rows |
 | A short period (7 days) | Row 3 shows seven columns; the heatmap still sums every weekday over the period |
 | No traffic | Each card shows an empty state ("No requests in this period") and the period select stays usable |
 | Error | The dashboard error screen with Retry |

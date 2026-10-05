@@ -16,6 +16,7 @@ Status: beta
 
 | State | What shows |
 |---|---|
+| Loading | `loading.tsx`: three tiles over the filter bar and skeleton table rows |
 | Default | Sorted by spend, descending |
 | Past due | The status Badge in `critical`; the sparkline in neutral |
 | Error rate over 1% | Written in `warning-ink` |

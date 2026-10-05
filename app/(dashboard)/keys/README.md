@@ -18,6 +18,7 @@ Status: beta
 
 | State | What shows |
 |---|---|
+| Loading | `loading.tsx`: skeleton table rows and the line about rotating keys; the keys are read per request, so the prerendered shell holds none |
 | Default | The collection's keys, in its order |
 | Just created | The accent Banner with the only full view of the secret; a toast "Key created" |
 | Name missing | The Name field's error: "Name the key after what uses it" |

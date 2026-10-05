@@ -16,6 +16,7 @@ Status: beta
 
 | State | What shows |
 |---|---|
+| Loading | `loading.tsx`: the facts beside the trace, then two body cards, as skeletons. The id is read inside that boundary |
 | Success | Status `neutral`; the route's own phase (Model, Search, Storage or Parse) in the accent; no primary action |
 | Rate limited, rejected, not found | Status `warning`; the trace ends at the limit, the validation or the lookup phase, in `critical`; tokens and cost read "None, refused"; the response is a short error body |
 | No request body (GET, DELETE) | The Request body card says "No body: a GET carries everything it needs in its address." in a dashed frame; Copy as cURL sends no `-d`; Replay says it runs again without "with the same body" |

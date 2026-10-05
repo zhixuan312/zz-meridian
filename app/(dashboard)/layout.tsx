@@ -7,10 +7,11 @@ import { DEMO_NOW } from '@/system/fixtures/sample';
 import { ALERTS } from '@/system/fixtures/sample-ops';
 
 /** Every console page: the rail on the frame, the page on the canvas. Put your sign-in gate here. */
-export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
-  // The assistant is on or off per request, from the environment at request time, never baked into the build.
-  await connection();
-  const assistant = assistantConfig(process.env) !== null;
+export default function DashboardLayout({ children }: { children: React.ReactNode }) {
+  // The assistant is on or off per request, from the environment at request time, never baked into the build. The layout
+  // hands the shell a promise instead of awaiting it, so the request never blocks the frame: the shell streams in the
+  // static chrome and the launcher resolves behind its own boundary.
+  const assistant = connection().then(() => assistantConfig(process.env) !== null);
   return (
     <AppShell rail={<ConsoleRail />} tools={<ShellTools alerts={ALERTS} now={DEMO_NOW} />} assistant={assistant}>
       {children}

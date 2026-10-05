@@ -1,6 +1,6 @@
 'use client';
 
-import { Children, createContext, useContext, useEffect, useRef, useState, type HTMLAttributes, type ReactNode } from 'react';
+import { Children, Suspense, createContext, use, useContext, useEffect, useRef, useState, type HTMLAttributes, type ReactNode } from 'react';
 import { Dialog } from 'radix-ui';
 import { Menu, X } from 'lucide-react';
 import { usePathname } from 'next/navigation';
@@ -27,16 +27,41 @@ const AssistantLauncher = dynamic(() => import('@/components/patterns/assistant/
  *         └─ Stack       rows, one gap apart
  *            └─ Row      one card, or cards split 1/2, 2/3, 1/3, or a row of tiles
  *   └─ assistant         optional, and the person can switch it off: a third column from 1024px, a sheet below; not in the page while closed
+ *                        whether it exists arrives as a promise: the layout never waits for it, and its launcher and column resolve it behind their own boundaries
  *
  * Four rules: one scroller; cards are their content's height; four splits; two widths (data, the whole canvas, for every
  * console page; reading, 832px and centred, for one long document).
  */
 
-const ShellCtx = createContext<{ openNav: () => void; tools: ReactNode; assistant: boolean }>({ openNav: () => {}, tools: null, assistant: false });
+const ShellCtx = createContext<{ openNav: () => void; tools: ReactNode; assistant: Promise<boolean> }>({ openNav: () => {}, tools: null, assistant: Promise.resolve(false) });
 
-/** Whether the product has an assistant: Settings offers the person's switch only then. */
-export function useAssistantAvailable(): boolean {
+/** The promise of whether the product has an assistant: Settings offers the person's switch only when it resolves true. */
+export function useAssistantAvailable(): Promise<boolean> {
   return useContext(ShellCtx).assistant;
+}
+
+/**
+ * Where the launcher goes, and the room it takes, whether or not there is one. It is in the page from the first byte, the
+ * launcher's size and without a control, so the row of tools never shifts when the answer arrives; only `true` puts the
+ * launcher in it, and until then, and for `false`, it is hidden from assistive technology and holds nothing focusable.
+ */
+function AssistantSlot({ children }: { children?: ReactNode }) {
+  return (
+    <span data-assistant-slot aria-hidden={children ? undefined : true} className="inline-grid size-9 shrink-0 place-items-center">
+      {children}
+    </span>
+  );
+}
+
+function ResolvedLauncher({ assistant, open, onClick }: { assistant: Promise<boolean>; open: boolean; onClick: () => void }) {
+  const { prefs } = usePreferences();
+  return <AssistantSlot>{use(assistant) && prefs.assistant ? <AssistantLauncher open={open} onClick={onClick} /> : null}</AssistantSlot>;
+}
+
+/** The panel, once there is an assistant, the person wants it, and it has been asked for. Nothing occupies its place before that. */
+function ResolvedColumn({ assistant, open, used, onClose }: { assistant: Promise<boolean>; open: boolean; used: boolean; onClose: () => void }) {
+  const { prefs } = usePreferences();
+  return use(assistant) && prefs.assistant && (open || used) ? <AssistantColumn open={open} onClose={onClose} /> : null;
 }
 
 export function AppShell({
@@ -48,8 +73,8 @@ export function AppShell({
   rail: ReactNode;
   /** Global tools in the top bar: search, alerts. */
   tools?: ReactNode;
-  /** Whether this request has an assistant: adds its launcher to the tools and its panel as the third column, unless the person switched it off. */
-  assistant: boolean;
+  /** Whether this request has an assistant, as a promise the request resolves: adds its launcher to the tools and its panel as the third column, unless the person switched it off. */
+  assistant: Promise<boolean>;
   children: ReactNode;
 }) {
   const path = usePathname();
@@ -63,20 +88,19 @@ export function AppShell({
   // page nobody had asked the assistant on paid for `useChat`, the AI SDK and a markdown renderer anyway (issue #7).
   const [assistantUsed, setAssistantUsed] = useState(false);
   const { prefs } = usePreferences();
-  const shown = assistant && prefs.assistant;
   // Switching the assistant off closes its panel, so switching it back on does not reopen it.
-  const [wasShown, setWasShown] = useState(shown);
-  if (shown !== wasShown) {
-    setWasShown(shown);
-    if (!shown) setAssistantOpen(false);
+  const [wasOn, setWasOn] = useState(prefs.assistant);
+  if (prefs.assistant !== wasOn) {
+    setWasOn(prefs.assistant);
+    if (!prefs.assistant) setAssistantOpen(false);
   }
-  const allTools = shown ? (
+  const allTools = (
     <>
       {tools}
-      <AssistantLauncher open={assistantOpen} onClick={() => { setAssistantUsed(true); setAssistantOpen((o) => !o); }} />
+      <Suspense fallback={<AssistantSlot />}>
+        <ResolvedLauncher assistant={assistant} open={assistantOpen} onClick={() => { setAssistantUsed(true); setAssistantOpen((o) => !o); }} />
+      </Suspense>
     </>
-  ) : (
-    tools
   );
   return (
     <ShellCtx.Provider value={{ openNav: () => setOpen(true), tools: allTools, assistant }}>
@@ -110,7 +134,9 @@ export function AppShell({
           </Dialog.Portal>
         </Dialog.Root>
         <main className="relative flex min-w-0 flex-1 flex-col">{children}</main>
-        {shown && (assistantOpen || assistantUsed) ? <AssistantColumn open={assistantOpen} onClose={() => setAssistantOpen(false)} /> : null}
+        <Suspense fallback={null}>
+          <ResolvedColumn assistant={assistant} open={assistantOpen} used={assistantUsed} onClose={() => setAssistantOpen(false)} />
+        </Suspense>
       </div>
     </ShellCtx.Provider>
   );

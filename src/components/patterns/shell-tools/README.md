@@ -31,7 +31,7 @@ The top bar itself is clear at rest and turns to glass (`ground` at 72%, `backdr
 ## Data
 
 - `alerts`: `{ id, title, detail?, at, href, tone, unread? }[]`, newest first: what needs a person, where they act on it. The live incident leads.
-- `now`: the data's clock, so "36 min ago" reads the same on the server and in the browser.
+- `now`: required, the data's clock and never the browser's, so "36 min ago" reads the same on the server and in the browser.
 - Read state is kept for the session; wire it to your store to keep it across visits.
 
 ## Surfaces

@@ -51,7 +51,7 @@ export function formatDateTime(input: DateInput): string {
 }
 
 /** `just now` · `5 min ago` · `3 h ago` · `7 d ago` · then an absolute date. */
-export function formatRelative(input: DateInput, now: Date = new Date()): string {
+export function formatRelative(input: DateInput, now: Date): string {
   const d = toDate(input);
   if (!d) return String(input);
   const deltaMs = now.getTime() - d.getTime();

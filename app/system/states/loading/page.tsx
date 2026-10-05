@@ -1,7 +1,7 @@
-import DashboardLoading from '@/../app/(dashboard)/loading';
+import OverviewLoading from '../../../(dashboard)/(overview)/loading';
 
 export const metadata = { title: 'Loading state' };
 
 export default function LoadingState() {
-  return <DashboardLoading />;
+  return <OverviewLoading />;
 }

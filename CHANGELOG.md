@@ -29,6 +29,14 @@ Every release of ZZ Meridian, newest first. Versions follow semver: a removed or
 
 ### Changed
 
+- **The template builds under Cache Components, and every non-API route is static or partial.**
+  - `next.config.ts` turns on `cacheComponents` and `partialPrefetching`. The console layout no longer waits for the request: it hands the shell a promise of whether the assistant is configured.
+  - Breaking: `AppShell`'s `assistant` is a `Promise<boolean>`, and `useAssistantAvailable()` returns that promise. Read it with `use()` inside a `Suspense` boundary. The launcher keeps its place, inert and hidden from assistive technology, until the promise resolves `true`.
+  - The not-found page prerenders its sentence and links. The address that was asked for streams in behind its own boundary, at the size of its placeholder.
+  - Every console route has its own route-shaped `loading.tsx`. The Overview page moved to `app/(dashboard)/(overview)/` (same URL), and the shared `app/(dashboard)/loading.tsx` is gone.
+  - `pnpm verify` runs `node scripts/route-policy.ts` after its production build. It fails any non-API route that is neither static nor partial, unless `scripts/verify.config.ts` declares it in `requestDependentRoutes` with a reason.
+  - In the template, `node scripts/check.ts` fails on a `connection()` call outside the console layout and the not-found page. A product's own pages are its own, so the rule is silent once `.meridian/manifest.json` exists.
+- **Breaking: the clock is always the caller's.** `formatRelative`, `Freshness`, `ShellTools` and `AlertsPanel` take a required `now`, the data's clock; none of them reads the browser's clock any more.
 - **One rule says which files are Meridian's.**
   - `cli/src/ownership.ts` decides it for `adopt`, `create` and `update`; `references/ownership.md` in the skill is the same rule, rendered.
   - Meridian's files are its tokens, styles, components, scripts (except `scripts/verify.config.ts` and a `scripts/check.local.ts`), its library helpers, `src/views/console-chrome.tsx`, `tests/setup.ts`, the brand outputs and both skill copies. Everything else is the team's, including a file the team adds inside one of Meridian's folders.

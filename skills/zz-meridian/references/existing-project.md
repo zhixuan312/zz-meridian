@@ -67,7 +67,7 @@ exists).
 ## Adding the assistant
 
 The panel (`src/components/patterns/assistant/`) already came with `src/components/`, and `AppShell` mounts it when
-`optional:app/(dashboard)/layout.tsx` passes `assistant`. A product that adopts the assistant also brings
+`optional:app/(dashboard)/layout.tsx` passes `assistant`, a promise it does not await: `assistant={connection().then(() => assistantConfig(process.env) !== null)}`. A product that adopts the assistant also brings
 `optional:app/api/assistant/route.ts`, the rest of `src/lib/assistant/`, `optional:src/lib/collection.ts` and `optional:src/data/collections.ts`;
 add `@ai-sdk/anthropic`, `@ai-sdk/openai-compatible` and `zod` to the dependencies. Point `optional:src/data/collections.ts` at their data, put their
 sign-in check in the layout, in the route and in every server action, and set `ASSISTANT_PROVIDER`, `ASSISTANT_API_KEY` and `ASSISTANT_MODEL`

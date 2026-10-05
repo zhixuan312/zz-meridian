@@ -6,7 +6,7 @@ Status: beta
 
 ## Structure
 
-For an address outside the console, a standalone screen on the lit ground, from `src/views/standalone.tsx` (shared with Sign in). It renders per request (`connection()`), never prerendered, so it always names the address that was asked for:
+For an address outside the console, a standalone screen on the lit ground, from `src/views/standalone.tsx` (shared with Sign in). The sentence, the lead and the footer are prerendered. The address and the ways back depend on the path that was asked for, so they stream in behind a `<Suspense>` whose fallback holds their size, after `connection()`: a prerendered address would name `/_not-found` instead of the one asked for.
 
 | Part | Content |
 |---|---|

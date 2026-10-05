@@ -19,7 +19,7 @@ Without a live incident row 1 becomes one full-width featured card.
 
 | State | What shows |
 |---|---|
-| Loading | The shared skeleton, shaped like the Overview rows |
+| Loading | `loading.tsx`: the uptime figure with its service grid, the service list and the past incidents, as skeletons in their rows |
 | All operational | The featured caption says "All services operational."; row 1 is full width; no warning colour anywhere |
 | Degraded | The affected service is named in the caption, its dot pulses in the grid and the list; the incident card sits beside |
 | Outage | As degraded, in critical; the rail's Health badge counts open incidents |

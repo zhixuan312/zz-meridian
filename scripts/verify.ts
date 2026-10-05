@@ -1,5 +1,6 @@
 /**
- * Verify a Meridian project against the standard, in one command: the gate, a production build, the built app started
+ * Verify a Meridian project against the standard, in one command: the gate, a production build, the route policy (every
+ * non-API route static or partial, scripts/route-policy.ts), the built app started
  * on a free port, the browser audit of every page and embed view against it, every control pressed and every link
  * followed (scripts/interactions.ts), the whole keyboard path (scripts/keyboard.ts), the product's own browser checks
  * (`browserChecks` in scripts/verify.config.ts), LCP, INP and CLS on a mid-range phone (scripts/vitals.ts), and a report.
@@ -182,6 +183,8 @@ if (config.fakeApi) {
   log(`ok   the fake API is serving at ${apiUrl} (${config.fakeApi.env})`);
 }
 step('production build', bin('next'), ['build'], app);
+// Every non-API route must come out of the build static or partial, unless verify.config.ts declares why it cannot.
+step('route policy: every non-API route is static or partial', 'node', ['scripts/route-policy.ts'], app);
 
 let on: { status: number | null; out: string } = { status: 0, out: '' };
 let port: number;

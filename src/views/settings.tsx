@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { Suspense, use, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Globe, Lock, Moon, Monitor, Sun, Trash2 } from 'lucide-react';
 import { app, domain, workspaceSlug } from '@/app.config';
@@ -18,6 +18,7 @@ import { Field } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
 import { Segmented } from '@/components/ui/segmented';
 import { Select } from '@/components/ui/select';
+import { Skeleton } from '@/components/ui/skeleton';
 import { Switch } from '@/components/ui/switch';
 import { toast } from '@/components/ui/toast';
 import { DEMO_NOW } from '@/system/fixtures/sample';
@@ -132,10 +133,29 @@ function Appearance() {
   );
 }
 
+/** The Assistant section's place while the request says whether there is an assistant: the section's own height, nothing to read or press. */
+function AssistantPlace() {
+  return (
+    <div aria-hidden className="flex flex-col gap-4">
+      <Skeleton className="h-4 w-40" />
+      <Skeleton className="h-3 w-96 max-w-full" />
+      <Skeleton className="h-9 w-full max-w-lg rounded-md" />
+    </div>
+  );
+}
+
 function Assistant() {
   const available = useAssistantAvailable();
+  return (
+    <Suspense fallback={<AssistantPlace />}>
+      <AssistantSection available={available} />
+    </Suspense>
+  );
+}
+
+function AssistantSection({ available }: { available: Promise<boolean> }) {
   const { prefs, set } = usePreferences();
-  if (!available) return null;
+  if (!use(available)) return null;
   return (
     <FormSection title="Assistant" description={`The assistant answers questions about ${app.name} and proposes changes for you to approve.`}>
       <Switch

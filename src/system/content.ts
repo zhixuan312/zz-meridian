@@ -82,7 +82,7 @@ const DOCS: { id: string; section: SectionId; file: string; title?: string; summ
 ];
 
 export const PAGES: { id: string; title: string; route: string; embed?: string; spec: string }[] = [
-  { id: 'overview', title: 'Overview', route: '/', embed: '/embed/overview', spec: 'app/(dashboard)/README.md' },
+  { id: 'overview', title: 'Overview', route: '/', embed: '/embed/overview', spec: 'app/(dashboard)/(overview)/README.md' },
   { id: 'requests', title: 'Requests', route: '/requests', embed: '/embed/requests', spec: 'app/(dashboard)/requests/README.md' },
   { id: 'request', title: 'Request', route: '/requests/req_qmi1vbyi3uqt', spec: 'app/(dashboard)/requests/[id]/README.md' },
   { id: 'analytics', title: 'Analytics', route: '/analytics', spec: 'app/(dashboard)/analytics/README.md' },

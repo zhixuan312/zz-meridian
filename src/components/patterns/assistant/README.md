@@ -53,7 +53,7 @@ The panel enters with no motion of its own yet; the launcher's states ease `colo
 - Retry asks for the answer again.
 - Enter sends; Shift+Enter adds a line.
 - On send the browser reads the page: `path`, the masthead title (the `h1` in the scroll region) and the text of the scroll region, and sends them with the messages to `/api/assistant`.
-- When the assistant is off for the request, the shell renders no launcher and no panel, not even hidden markup.
+- When the assistant is off for the request, the shell renders no launcher and no panel, not even hidden markup: the launcher's place in the top bar is an empty, inert `data-assistant-slot`, and the panel's place is empty, because the column mounts only for an assistant that is on and has been opened.
 
 ## Surfaces
 
@@ -89,10 +89,10 @@ This is the agent's seat in the product. It reads the page the person is on and 
 ## Implementation
 
 ```tsx
-<AppShell rail={<Rail />} assistant={assistantConfig(process.env) !== null}>…</AppShell>
+<AppShell rail={<Rail />} assistant={connection().then(() => assistantConfig(process.env) !== null)}>…</AppShell>
 ```
 
-The layout calls `await connection()` first so the choice is made per request, and passes only the boolean.
+The layout does not await it: `connection()` makes the choice per request, and the shell resolves the promise with `use()` inside two small `<Suspense>` boundaries, one for the launcher's place and one for the column, so the request never blocks the frame and the page around them prerenders. Only the boolean reaches the browser.
 
 **The launcher is its own module** (`launcher.tsx`), and the shell imports it and the panel as two dynamic chunks. That
 is not tidiness: this file pulls in `useChat`, the AI SDK's client and zod schemas, `react-markdown`, `remark-gfm` and

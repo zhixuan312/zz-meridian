@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, test, vi } from 'vitest';
 
 vi.mock('next/navigation', () => ({ usePathname: () => '/settings', useRouter: () => ({ refresh() {}, push() {}, replace() {} }) }));
@@ -11,14 +11,17 @@ import { SettingsBody } from '@/views/settings';
 // jsdom has no IntersectionObserver; PageFrame observes its masthead.
 vi.stubGlobal('IntersectionObserver', class { observe() {} unobserve() {} disconnect() {} });
 
+// The shell and the Assistant section resolve the assistant promise behind Suspense, so the render is awaited inside act.
 const settings = (assistant: boolean) =>
-  render(
-    <Providers>
-      <AppShell rail={null} assistant={assistant}>
-        <PageFrame title="Settings"><SettingsBody /></PageFrame>
-      </AppShell>
-    </Providers>,
-  );
+  act(async () => {
+    render(
+      <Providers>
+        <AppShell rail={null} assistant={Promise.resolve(assistant)}>
+          <PageFrame title="Settings"><SettingsBody /></PageFrame>
+        </AppShell>
+      </Providers>,
+    );
+  });
 /** The thread's storage key (spec FR-13): the product slug and `.assistant`. */
 const THREAD_KEY = `${slug}.assistant`;
 const launcher = () => screen.queryByRole('button', { name: 'Assistant' });
@@ -28,7 +31,7 @@ describe('the person\'s switch', () => {
   test('on by default; off hides the launcher and keeps the thread; on brings both back', async () => {
     localStorage.setItem(THREAD_KEY, JSON.stringify({ v: 1, messages: [{ id: 'u1', role: 'user', parts: [{ type: 'text', text: 'hello' }] }] }));
     const saved = localStorage.getItem(THREAD_KEY);
-    settings(true);
+    await settings(true);
     const toggle = screen.getByRole('switch', { name: /Show the assistant/ });
     expect(toggle).toBeChecked();
     // The assistant's code loads on demand (next/dynamic), so the launcher and the panel arrive a moment later.
@@ -47,13 +50,13 @@ describe('the person\'s switch', () => {
 
   test('a stored "off" is honoured on the next visit', async () => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify({ assistant: false }));
-    settings(true);
+    await settings(true);
     await waitFor(() => expect(launcher()).toBeNull());
     expect(screen.getByRole('switch', { name: /Show the assistant/ })).not.toBeChecked();
   });
 
-  test('without the product\'s assistant there is no Assistant section and no switch', () => {
-    settings(false);
+  test('without the product\'s assistant there is no Assistant section and no switch', async () => {
+    await settings(false);
     expect(screen.queryByRole('switch', { name: /Show the assistant/ })).toBeNull();
     expect(screen.queryByRole('heading', { name: 'Assistant' })).toBeNull();
     expect(launcher()).toBeNull();

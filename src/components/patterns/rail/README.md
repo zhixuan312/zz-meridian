@@ -84,7 +84,7 @@ Not applicable: navigation is how a person moves. An agent opens a view by its a
 ```tsx
 import { Rail } from '@/components/patterns/rail';
 
-<AppShell rail={<Rail />} tools={<ShellTools />}>{children}</AppShell>
+<AppShell rail={<Rail />} tools={<ShellTools />} assistant={assistant}>{children}</AppShell>
 ```
 
 Edit `nav` in `src/app.config.ts` to change the destinations: `{ label?, items: [{ href, label, icon, badge? }] }`.

@@ -23,7 +23,7 @@ Below 1024px every row stacks: the featured card first, then the tiles (two acro
 
 | State | What shows |
 |---|---|
-| Loading | `loading.tsx`: skeletons in the shape of these rows, so nothing jumps on arrival |
+| Loading | `loading.tsx` beside the page, in the route group `app/(dashboard)/(overview)/` so that it is the Overview's own and not every console route's: skeletons in the shape of these rows, so nothing jumps on arrival. The page reads `?period=` inside that boundary, so the prerendered shell is the skeleton and the figures stream in |
 | Empty (no traffic yet) | The featured card says "No requests yet" with a link to API keys; tiles show dashes, never zeros |
 | Partial (a series missing) | That tile shows a dash and "Not measured"; the chart breaks its line over missing days |
 | Stale | Freshness turns to warning: "Stale · updated 47 min ago" |

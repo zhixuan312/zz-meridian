@@ -20,6 +20,8 @@ At the data width like every console page, sections 56px apart, each a Form sect
 
 | State | What shows |
 |---|---|
+| Loading | `loading.tsx`: a stack of skeleton sections |
+| Assistant not resolved yet | The Assistant section keeps its place as a skeleton; once the request says the assistant is configured it becomes the section, and when it is not the place closes |
 | Editing Workspace | The save bar; Save confirms with a toast "Workspace saved" |
 | Empty name | The field's error; Save does nothing until it is fixed |
 | A switch flipped | It applies at once; a toast names the setting and its new state |
