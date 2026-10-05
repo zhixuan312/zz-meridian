@@ -11,7 +11,10 @@ export default function AppMarkPreview() {
     <>
       {(['dark', 'light'] as const).map((t) => (
         <Specimen key={t} label={t === 'dark' ? 'On the dark ground' : 'On the light ground'}>
-          <div data-theme={t} className="flex w-full flex-wrap items-end gap-8 rounded-xl border border-line bg-ground p-6">
+          {/* `text-ink` is load-bearing: `data-theme` redefines the variables in THIS scope, but `color` was resolved
+              on `body` from the page's own theme, so without it the light specimen draws light text on a light ground
+              (1.05:1 — a contrast the audit fails). The Planes preview carries it for the same reason. */}
+          <div data-theme={t} className="flex w-full flex-wrap items-end gap-8 rounded-xl border border-line bg-ground text-ink p-6">
             {SIZES.map((s) => (
               <State key={s} label={`${s}px`}><AppMark size={s} /></State>
             ))}

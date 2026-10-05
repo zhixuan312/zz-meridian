@@ -124,7 +124,7 @@ export function FilterBar({
           <span>
             <span className="font-medium text-ink">Set by {setBy}</span> · these filters came from the assistant
           </span>
-          {onClear ? <button type="button" onClick={onClear} className="font-medium text-accent-ink hover:underline">Clear</button> : null}
+          {onClear ? <button type="button" onClick={onClear} className="hit font-medium text-accent-ink hover:underline">Clear</button> : null}
         </p>
       ) : null}
     </div>

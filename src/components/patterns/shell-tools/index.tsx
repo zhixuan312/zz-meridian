@@ -58,7 +58,7 @@ export function AlertsPanel({ alerts, now, read = new Set(), onOpen, onMarkAll }
         <p className="text-sm font-semibold">Alerts</p>
         {unread ? <span className="t-caption">{unread} new</span> : null}
         {unread && onMarkAll ? (
-          <button type="button" onClick={onMarkAll} className="ml-auto rounded-xs text-xs font-medium text-accent-ink hover:underline">
+          <button type="button" onClick={onMarkAll} className="hit ml-auto rounded-xs text-xs font-medium text-accent-ink hover:underline">
             Mark all read
           </button>
         ) : null}

@@ -19,7 +19,7 @@ export function AskAbout({ question, className }: { question: string; className?
         type="button"
         onClick={() => ask(question)}
         aria-label={`Ask: ${question}`}
-        className={cn('press inline-flex h-7 items-center gap-1.5 rounded-md px-2 text-xs font-medium text-accent-ink hover:bg-accent-tint', className)}
+        className={cn('press hit inline-flex h-7 items-center gap-1.5 rounded-md px-2 text-xs font-medium text-accent-ink hover:bg-accent-tint', className)}
       >
         <Sparkles className="size-3.5" /> Ask
       </button>
