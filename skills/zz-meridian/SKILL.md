@@ -37,6 +37,18 @@ These hold in every project, however it started, and nothing below overrides the
   included, so a project whose pages call a live API or read a database names a `fakeApi` (or says `noLiveApi`) in
   `scripts/verify.config.ts` first (`references/existing-project.md`, step 5).
 
+## Updating or rebranding a project that already has Meridian
+
+When `optional:.meridian/manifest.json` exists and the person asks to update Meridian, or to change the brand, do not
+follow steps 1 to 8: the project is already built.
+
+- **Update.** Read `references/update.md` and follow it: `npx zz-meridian@latest update --dry-run` first, then the real
+  update, the resolutions it asks for, and the pinned `--finalize` command it prints (with `--resume` and `--abort` for
+  an interruption or a change of mind). Read `references/ownership.md` for which files are Meridian's and which are the
+  team's; an update changes only the first, and a team keeps one of its own on purpose through `optional:.meridian/keep.json`.
+- **Rebrand.** `npx zz-meridian@<the manifest's version> brand [brand flags]`, from a clean git tree. Never hand-edit the
+  brand outputs; an edited one makes it refuse.
+
 ## 1. Do the homework first
 
 Before asking anything, look at what you already have:

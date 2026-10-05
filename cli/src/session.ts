@@ -49,8 +49,8 @@ const sha = (content: string | Buffer) => sha256(content) as Hash;
 const secs = (ms: number) => `${(ms / 1000).toFixed(1)}s`;
 const compact = (a: string, b: string) => (a < b ? -1 : a > b ? 1 : 0);
 
-/** Anything that must never be copied into a session or planned as an update target. */
-const FORBIDDEN = /(^|\/)(\.git|node_modules)(\/|$)|(^|\/)\.env/;
+/** Anything that must never be copied into a session or planned as an update target. `.env.example` holds no secret: 0.3.0 create recorded it. */
+const FORBIDDEN = /(^|\/)(\.git|node_modules)(\/|$)|(^|\/)\.env(?!\.example$)/;
 
 /** Writes through a sibling temporary file and a rename, so a reader never sees half a file. */
 export function writeAtomic(abs: string, data: string | Buffer, mode?: number) {

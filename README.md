@@ -73,7 +73,7 @@ Dark is the default, written on `:root`; the light theme follows the operating s
 | `decisions/` | One record per lasting decision |
 | `scripts/` | Generators, gates, `brand.ts` and `verify.ts` (see `CONTRIBUTING.md`) |
 | `skills/zz-meridian/` | The agent skill (Claude Code, Codex) that builds dashboards on this template or brings it into yours |
-| `cli/` | The `zz-meridian` npm package: `create`, `adopt` and `skill`, its build, its smoke test and the fixture app (`docs/distribution.md`) |
+| `cli/` | The `zz-meridian` npm package: `create`, `adopt`, `update`, `brand` and `skill`, its build, its smoke test and the fixture app (`docs/distribution.md`) |
 | `.github/workflows/release.yml` | The release: gates, the consumer path from the tarball, then npm with provenance, then the tag (`.claude/commands/release.md`) |
 
 ## Bring Meridian into your dashboard, in one sentence
@@ -87,8 +87,9 @@ and gates in, merges the dependencies, brands it, adds Meridian's managed block 
 for byte) and an empty `docs/brief.md` for your product's own context, and installs the skill. The agent does the judgement: rebuilding each page on Meridian, and running
 `pnpm verify` until the project meets the standard. It needs Node 22.18+ and Google Chrome (for the browser checks).
 If your pages call a live API, say so in the sentence: verify presses every control, Delete included, so the agent
-builds a fake API first. For a new dashboard: `npx zz-meridian@latest create <dir>`. The package (`cli/`, decision
-0009) copies files and nothing depends on it afterwards.
+builds a fake API first. For a new dashboard: `npx zz-meridian@latest create <dir>`. To move a project to a newer
+Meridian, run `npx zz-meridian@latest update --dry-run`, then follow the skill's `references/update.md`. The package
+(`cli/`, decision 0009) copies files and nothing depends on it afterwards.
 
 ## Install the skill once, for every project
 

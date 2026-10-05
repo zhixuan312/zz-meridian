@@ -293,9 +293,10 @@ const SWEPT = /^src\/(lib|data)\//;
  * about the module, so it is declared rather than inferred, and the list is short on purpose.
  */
 const TOOLKIT = /^src\/lib\/(format|color)\.ts$/;
-// In a project that adopted Meridian (zz-meridian adopt), Meridian's own modules are a library it uses in part; only
-// the project's own src/lib and src/data are swept. A created dashboard is swept whole, as the template is.
-const adopted = effective?.route === 'adopt' ? new Set(Object.keys(effective.files)) : new Set<string>();
+// In a project built on Meridian (adopted or created), Meridian's own modules are a library it uses in part: a newer
+// release may add an export the team's code does not use yet. Only the project's own src/lib and src/data are swept.
+// The template, with no manifest, is swept whole.
+const meridians = new Set(Object.keys(effective?.files ?? {}));
 const kept = ['src', 'app', 'scripts'].flatMap((d) => walk(d, /\.tsx?$/)).filter((f) => !/(^|\/)preview\.tsx$/.test(f) && !f.startsWith('app/system/') && !atlasOnly.includes(f));
 const resolveSpec = (from: string, spec: string) => {
   const base = spec.startsWith('@/') ? path.join('src', spec.slice(2)) : spec.startsWith('.') ? path.join(path.dirname(from), spec) : null;
@@ -327,7 +328,7 @@ for (const f of kept) {
   for (const m of src.matchAll(/\bimport\(\s*['"]([^'"]+)['"]\s*\)/g)) record(resolveSpec(f, m[1]), '*');
 }
 const EXPORT_DECL = /^export\s+(?:declare\s+)?(?:async\s+)?(?:const|let|var|function\*?|class|abstract\s+class|type|interface|enum)\s+([A-Za-z_$][\w$]*)/gm;
-for (const f of walk('src', /\.tsx?$/).filter((x) => SWEPT.test(x) && !TOOLKIT.test(x) && !/(^|\/)preview\.tsx$/.test(x) && !adopted.has(x))) {
+for (const f of walk('src', /\.tsx?$/).filter((x) => SWEPT.test(x) && !TOOLKIT.test(x) && !/(^|\/)preview\.tsx$/.test(x) && !meridians.has(x))) {
   const src = read(f);
   const names = new Set([...src.matchAll(EXPORT_DECL)].map((m) => m[1]));
   if (/^export\s+default\b/m.test(src)) names.add('default');

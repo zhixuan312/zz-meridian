@@ -9,6 +9,7 @@ import { parseArgs } from 'node:util';
 import { adopt } from './adopt.js';
 import { create } from './create.js';
 import { BRAND_FLAGS, VERSION, installSkill } from './files.js';
+import { brandCommand } from './rebrand.js';
 import { update, type Mode } from './update.js';
 
 const HELP = `zz-meridian ${VERSION}
@@ -27,6 +28,10 @@ const HELP = `zz-meridian ${VERSION}
 
   npx zz-meridian@<version> update --resume [--no-install] | --finalize [--verify] | --abort
       Continue, complete or roll back the update in progress. Use the version named in MERGE.md.
+
+  npx zz-meridian@<installed version> brand [brand flags] [--allow-dirty]
+      Change this project's brand with no hand edits: the brand outputs, src/app.config.ts and the manifest move together, or nothing changes.
+      Use the version in .meridian/manifest.json; a project on an older release runs update first.
 
   npx zz-meridian@latest skill [--global]
       Install only the agent skill: into this project, or for every project (~/.agents/skills, ~/.claude/skills).
@@ -77,6 +82,7 @@ function main(): number {
     const mode: Mode = modes[0] ?? 'update';
     return update({ root: process.cwd(), mode, flags: { verbose: Boolean(values.verbose), allowDirty: Boolean(values['allow-dirty']), install, verify: Boolean(values.verify) } });
   }
+  if (command === 'brand') return brandCommand({ root: process.cwd(), flags: brand, allowDirty: Boolean(values['allow-dirty']) });
   if (command === 'skill') {
     const roots = values.global ? [os.homedir()] : [process.cwd()];
     for (const r of roots) installSkill(r);

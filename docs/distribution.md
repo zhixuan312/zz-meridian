@@ -1,6 +1,6 @@
 # Distribution: the `zz-meridian` package
 
-Status: v1 shipped in 0.2.0 (decision 0009). `update` is v2. Releasing: the `/release` command (`.claude/commands/release.md`).
+Status: v1 (`create`, `adopt`, `skill`) shipped in 0.2.0 (decision 0009). v2 (`update`, `brand`, the keep register) is complete for projects from 0.3.0 on; its zones are in `skills/zz-meridian/references/ownership.md` and its agent workflow in `references/update.md`. Releasing: the `/release` command (`.claude/commands/release.md`).
 
 ## The one sentence
 
@@ -29,7 +29,7 @@ rebuilding each page on Meridian's components, the fake API, and reading what `p
   scripts.
 - **No runtime dependency**: nothing in a dashboard imports `zz-meridian`. It needs Node 22.18 or newer.
 
-## Commands (v1)
+## Commands
 
 ### `create <dir>`
 
@@ -78,24 +78,77 @@ Installs only the skill: into the project, or with `--global` into `~/.agents/sk
 team's later sessions have it too. Codex may need a restart to see a new skill; the printed next step names the file to
 read, so the current session does not depend on discovery.
 
-### `update` (v2)
+### `update`
 
-Reads `.meridian/manifest.json`, then for every file in the new payload:
+Moves a project from the release in its manifest to the running one. The rule for what it may touch is one list,
+`cli/src/ownership.ts`: Meridian's managed files change; the team's files and the kept files never do, except the
+three edits named below. It needs a project that adopted or created Meridian 0.3.0 or later.
 
-| The file in the project | What `update` does |
-|---|---|
-| Unchanged since it was copied (hash matches the manifest) | Overwrites it |
-| Changed by the team | Writes the new version to `.meridian/incoming/<path>` and lists it for the agent to merge |
-| In the manifest but deleted by the team | Leaves it deleted |
-| New in this version | Adds it |
+1. **Dry-run.** `npx zz-meridian@latest update --dry-run [--verbose]` rebuilds the recorded release and the running one
+   in a scratch folder (with the project's recorded brand and shape, so no file differs for a reason of the replay),
+   compares every managed file in three places (what was recorded, what the running release has, what is on disk), and
+   prints only what needs a decision, then `summary:`, `time:`, `outcome:` and `Next:` lines. It writes nothing, and the
+   command proves it by comparing the project before and after.
+2. **Update.** `npx zz-meridian@latest update` from a clean git tree (or with `--allow-dirty`). It writes the plan first
+   (`.meridian/update/<version>/state.json`, the journal, `MERGE.md`, an empty `resolutions.json`, the `base/`, `ours/`
+   and `new/` copies of every staged file, and a `backup/` preimage of every path it changes), then applies the safe
+   changes, then runs the install. Applied: untouched replacements, additions and untouched removals. Staged: every
+   managed file the team changed or deleted, or collided with. The only team files it edits are `package.json` (missing
+   dependencies and scripts, older ones of the same major, and entries still exactly as the earlier release wrote them;
+   the framework `next`, `react` and `react-dom` always follows the target), the managed block in `AGENTS.md`, and the
+   lockfile the install rewrites. Everything else in `MERGE.md` is advice.
+3. **The report.** `MERGE.md` lists every staged item as `file:<path>` and every change beyond copying files as
+   `migration:<id>` (a dependency the team pinned itself, a script, a release's own migration), with the paths of the
+   copies and a resolution stub. Exit codes: `0` finalized in the same command (nothing was pending), `2` applied with
+   work pending, `1` a refusal, failure or interruption.
+4. **Resolutions.** The team (or its agent) makes each decision in the project's own file, then records it in
+   `resolutions.json`: one object per item, with the item id, `resolved` (or `not-applicable` for a migration), a
+   reason, and the SHA-256 each named file has now. While the session is open, `node scripts/check.ts` (and so the gate)
+   fails and names it.
+5. **Finalize.** `npx zz-meridian@<version> update --finalize` (the version named in `MERGE.md`) checks that every
+   item has one current resolution and that the installed dependencies match the plan, then runs the project's gate and
+   one `next build` in place. It compares every protected input before and after each, so a check that rewrites source
+   fails it. Only when both pass and nothing changed does it write the target manifest, atomically, and archive the
+   session under `.meridian/history/<version>/<id>/`. It prints the stage times and says the browser checks did not run.
+6. **Resume.** `update --resume` continues an update that was interrupted, failed to apply or install, or was started
+   with `--no-install`. It applies only what is still the recorded original, never overwrites a later edit, and ends as
+   a plain update does.
+7. **Abort.** `update --abort` restores only the preimages in `backup/`, deletes only what the update created, leaves
+   the manifest as it was and archives the session as `aborted`. It refuses, and keeps every backup, when any path the
+   update wrote has been edited since.
 
-Then re-applies the brand from the manifest's stored arguments, runs install and `tsc`, and prints the changelog
-sections between the two versions, each of which says what breaks and what to do instead.
+`.meridian/update.lock` exists while a run is in progress; a stale one is taken over only by `--resume`, after it has read
+the journal. `--resume`, `--finalize` and `--abort` belong to the version and package that began the session and refuse
+anything else; they read the session's own copies and never ask the registry. A published version is compared with the
+registry's tarball before an update starts, so a modified copy of a release is refused.
+
+Two environment variables exist for the updater's own tests and are used only when set, each printing a `note:` line:
+`ZZ_MERIDIAN_LOCAL_RELEASES=<dir>` reads `zz-meridian-<version>.tgz` from a folder instead of the registry, and
+`ZZ_MERIDIAN_TEST_INTERRUPT_AFTER=<n>` stops an update after `n` applied operations. Neither weakens a check.
+
+### The keep register
+
+`.meridian/keep.json` is a JSON array of exactly `{ "path", "reason" }` entries, for a managed file the team keeps
+its own version of on purpose. An update leaves a kept file as it is; when the new release removes it, it stays and is
+recorded as retired. The gate refuses an entry for a path Meridian never managed (or retired and left in place), and a
+kept file that is missing; an update never recreates one.
+
+### `brand`
+
+`npx zz-meridian@<installed version> brand [brand flags] [--allow-dirty]` changes the brand of a project with no hand
+edits. It rebuilds the old and the new brand from the running release (never from the working copy), refuses when any
+brand output differs from what the release generated (so it cannot overwrite the team's work), and then writes the brand
+outputs, `src/app.config.ts` and the manifest together or changes nothing. It refuses during an update session, and when
+the project's manifest version is not the running one (run `update` first). It is distinct from `update`, which replays
+the recorded brand; the product's own `pnpm brand` stays a local edit that the next update would stage.
 
 ## The manifest
 
-`.meridian/manifest.json`, committed in the project, written by `create` and `adopt` from v1 so that every early
-adopter can `update` later:
+`.meridian/manifest.json`, committed in the project, written by `create` and `adopt` so that every project can `update`
+later. It records the release the project was copied from, its brand, and a hash of every file Meridian manages, and of
+no other: not `src/app.config.ts`, `scripts/verify.config.ts`, `app/`, `docs/` or `src/views/` (apart from
+`src/views/console-chrome.tsx`). Projects from 0.3.0 also recorded those; their first update removes them from the
+manifest and leaves the files on disk. The manifest moves only when an update is finalized or a rebrand completes:
 
 ```json
 {
@@ -156,4 +209,5 @@ token, prop or card is major; a new card, token or variant is minor; a corrected
 
 - **v1**: `create`, `adopt`, `skill`, the manifest, package-manager-agnostic scripts, `--no-vitals`, the pipeline, the
   fixture test.
-- **v2**: `update`.
+- **v2**: `update` (dry-run, update, report, resolutions, finalize, resume, abort), the keep register, `brand`, the session
+  checks in the gate.

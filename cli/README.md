@@ -17,11 +17,12 @@ Give your coding agent (Codex, Claude Code, or any agent that can run a shell) t
 npx zz-meridian@latest adopt [brand flags]        # bring Meridian into this Next.js App Router project
 npx zz-meridian@latest create <dir> [brand flags] # start a new dashboard
 npx zz-meridian@latest update [--dry-run] [--verbose] # update this project (the dry-run writes nothing)
+npx zz-meridian@<version> brand [brand flags]     # rebrand this project, with the version in .meridian/manifest.json
 npx zz-meridian@latest skill [--global]           # install only the agent skill
 ```
 
-Brand flags: `--name "Acme Ops"`, `--hex '#2E6BE4'` (or `--accent indigo|cobalt|jade|graphite`), `--workspace`,
-`--timezone`, `--currency`, `--user`, `--role`.
+Brand flags: `--name "Acme Ops"`, `--hex '#2E6BE4'` (or `--accent indigo|cobalt|jade|graphite`), `--theme dark|light`,
+`--workspace`, `--timezone`, `--currency`, `--user`, `--role`.
 
 **adopt** copies Meridian's tokens, styles, components, gates and scripts into `src/`, `tokens/` and `scripts/`;
 merges the dependencies and scripts it needs into your `package.json`; replaces your global stylesheet (yours is kept
@@ -52,6 +53,11 @@ writes nothing; run it first.
   what it changed. Only finalize records the new version.
 - It refuses, writing nothing, on a dirty git tree (unless `--allow-dirty`) or while another update is open. `--verbose`
   lists every file.
+
+**brand** changes the brand of a project built on Meridian with no hand edits: it rebuilds the brand outputs (tokens and
+styles) and `src/app.config.ts` for the new flags and records them in the manifest together, or changes nothing. It
+refuses when one of those outputs was edited, while an update is open, or on a dirty tree (unless `--allow-dirty`). Run
+it with the version the manifest records. The project's own `pnpm brand` still works, but its changes count as your edits.
 
 Requires Node 22.18 or newer. The checks (`pnpm verify`) also need Google Chrome.
 
