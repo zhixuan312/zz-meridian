@@ -1,13 +1,14 @@
 /**
  * The consumer's path, end to end, from the packed tarball: what CI runs before publishing.
  *
- *   node cli/scripts/smoke.ts [--tarball cli/zz-meridian-0.5.0.tgz] [--adopt] [--create] [--update] [--update-all] [--verify]
+ *   node cli/scripts/smoke.ts [--tarball cli/zz-meridian-0.5.0.tgz] [--adopt] [--create] [--update] [--update-all] [--verify] [--keep]
  *
  * With no section flag the adopt section runs. --adopt names it explicitly, so it can run beside the others.
  * adopt: into a copy of cli/test/fixture-next-app (a create-next-app project with its own button, utils and data
  * layer), committed to git as a team's would be. The team's files must come out unchanged, the gate must pass under
  * the team's own eslint config, and next build must succeed.
  * --create: a new dashboard from the tarball, gated and built. --verify adds pnpm verify --full on it (Chrome required).
+ * --keep leaves the fixture projects in the temporary folder for inspection; without it they are removed, pass or fail.
  * --verify also runs the default verify twice in scratch copies of the adopted project: once with `noLiveApi: true` as a
  * team edit and no mappings, and once with no safe backend. Each case prints its coverage line.
  * Both sections also check the agent context: adopt keeps AGENTS.md's bytes and adds one managed block and the brief;
@@ -634,6 +635,9 @@ if (args.includes('--create')) {
   }
 }
 
-console.log(failures ? `\nsmoke: ${failures} failed (work left in ${work})` : '\nsmoke: the consumer path works');
-if (!failures) fs.rmSync(work, { recursive: true, force: true });
+// The fixtures are whole installed projects, gigabytes each: they go whether the run passed or not, unless --keep asks to
+// look inside them. The log above is the record of what failed.
+const keep = process.argv.includes('--keep');
+console.log(failures ? `\nsmoke: ${failures} failed${keep ? ` (work kept in ${work})` : ''}` : '\nsmoke: the consumer path works');
+if (!keep) fs.rmSync(work, { recursive: true, force: true });
 process.exit(failures ? 1 : 0);

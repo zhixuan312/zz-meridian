@@ -4,8 +4,9 @@
  *
  *   node scripts/navigate.ts --base http://127.0.0.1:3000 [--routes /,/requests,/settings] [--mode default|full] [--samples 1]
  *
- * Each journey starts from another rail route, waits for what a visitor would wait for (every router prefetch to finish
- * when it was visible, the drawer on a phone), presses the destination in the rail and times three things from that press:
+ * Each journey starts from the rail route before the destination (the one after it for the first), waits for what a visitor
+ * would wait for (the destination's router prefetch and every chunk it brought in, once its link is shown; the drawer on a
+ * phone), presses the destination in the rail and times three things from that press:
  * the shell (the path and the heading), the data (the mapping's `readySelector` and `readyText`) and the interaction (its
  * `probe` on `controlSelector`, observed on `resultSelector`). Times are the page's own clock, from the press event to the first
  * frame that shows the condition, never round trips over the debugging protocol. The phone is 390 wide, 4x CPU throttled, 150 ms and 1.6 Mbps,
@@ -114,6 +115,17 @@ const INSTRUMENT = `(() => {
   };
   requestAnimationFrame(frame);
   try { performance.setResourceTimingBufferSize(2000); } catch { /* keep the default */ }
+  // The chunks a prefetch brings in are scripts and styles the page adds to itself. Each is on the link until the browser has
+  // a timing entry for it, which it writes when the response has ended. A script for browsers without modules is never fetched.
+  nav.wanted = new Set();
+  nav.loading = () => [...nav.wanted].filter((u) => performance.getEntriesByName(u).length === 0).length;
+  const want = (el) => {
+    const url = el instanceof HTMLScriptElement ? (el.noModule ? '' : el.src) : el instanceof HTMLLinkElement && /preload|modulepreload|stylesheet/.test(el.rel) ? el.href : '';
+    if (url) nav.wanted.add(url);
+  };
+  new MutationObserver((records) => {
+    for (const r of records) for (const n of r.addedNodes) { want(n); if (n instanceof Element) n.querySelectorAll('script[src],link').forEach(want); }
+  }).observe(document, { childList: true, subtree: true });
   const headerOf = (input, init, name) => {
     const h = (init && init.headers) || (input instanceof Request ? input.headers : null);
     if (!h) return null;
@@ -155,7 +167,7 @@ const INSTRUMENT = `(() => {
     }
     const url = new URL(typeof input === 'string' ? input : input instanceof URL ? input.href : input.url, location.href);
     if (window.__navBlock && url.pathname === window.__navBlock) { nav.blocked.push(url.href); return Promise.reject(new TypeError('prefetch refused by the cold sample')); }
-    const seen = { url: url.href, path: url.pathname, done: false, headers: { 'next-router-prefetch': String(prefetch) } };
+    const seen = { url: url.href, path: url.pathname, done: false, headers: { 'next-router-prefetch': String(prefetch), 'next-router-segment-prefetch': String(headerOf(input, init, 'next-router-segment-prefetch')) } };
     nav.prefetches.push(seen);
     // Done is the whole body read, not the headers: a response still streaming is still on the link.
     return nativeFetch(input, init).then((r) => { r.clone().arrayBuffer().then(() => { seen.done = true; }, () => { seen.done = true; }); return r; }, (e) => { seen.done = true; throw e; });
@@ -235,12 +247,30 @@ async function openStart(page: Page, device: Device, start: string, origin: stri
   if (!ready) throw new Fail('never-ready', `the starting page ${start} did not load in ${PATIENCE[device]} ms`);
 }
 
-/** How long a warm press waits for the router's prefetches: all of them, so none still shares the link with the navigation. */
+/** How long a warm press waits for the prefetches and the chunks they bring in, from the link being shown. */
 const PREFETCH_WAIT = 6000;
+/** How long the router has, once a link is shown, to start prefetching its destination before the page is taken as one that does not. */
+const PREFETCH_START_WAIT = 2500;
+/** How long the prefetches and the chunks must stay done for the page to be called idle. */
+const PREFETCH_SETTLE = 120;
 
-/** Waits until every prefetch issued so far has its whole body; false when the cap passed first. A page that never prefetches is idle at once. */
-async function awaitPrefetch(page: Page): Promise<boolean> {
-  return (await poll(() => page.eval<boolean>(`window.__nav.prefetches.every((p) => p.done)`), Date.now() + PREFETCH_WAIT)) !== null;
+/**
+ * Waits until the router has prefetched `route` and everything it brought in is there: every prefetch has its whole body and
+ * every script and style a prefetch added has loaded, twice in a row. A prefetch begins a moment after its link is shown, its
+ * content (not only the route tree that comes first) after that, and its chunks when its body has arrived, so "not yet" holds
+ * until the destination's content has been asked for or `PREFETCH_START_WAIT` has passed: a page that never prefetches its
+ * destination is then idle. False when the cap passed first.
+ */
+async function awaitPrefetch(page: Page, route: string): Promise<boolean> {
+  const from = Date.now();
+  let quiet = 0;
+  const idle = await poll(async () => {
+    const state = await page.eval<{ started: boolean; done: boolean }>(`({ started: window.__nav.blocked.length > 0 || window.__nav.prefetches.some((p) => p.path === ${JSON.stringify(route)} && p.headers['next-router-segment-prefetch'] !== '/_tree'), done: window.__nav.prefetches.every((p) => p.done) && window.__nav.loading() === 0 })`);
+    if (!state.done || (!state.started && Date.now() - from < PREFETCH_START_WAIT)) { quiet = 0; return false; }
+    quiet = quiet || Date.now();
+    return Date.now() - quiet >= PREFETCH_SETTLE;
+  }, from + PREFETCH_WAIT);
+  return idle !== null;
 }
 
 /** How long a verified refresh may take: the Server Action, then the router's read of the page. */
@@ -282,6 +312,29 @@ export async function liveRefresh(page: Page, wait = REFRESH_WAIT): Promise<void
   await page.eval(`new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(() => r(true))))`);
 }
 
+/**
+ * Where a journey to `route` starts: the rail route before it in rail order, so the sequence a person browses in is the one
+ * measured, or the one after it for the first. `pool` is the routes that may start one; undefined when it has none but `route`.
+ */
+export function startFor(order: string[], route: string, pool: string[] = order): string | undefined {
+  const at = order.indexOf(route);
+  return [...order.slice(0, Math.max(at, 0)).reverse(), ...order.slice(at + 1)].find((r) => pool.includes(r) && r !== route);
+}
+
+/**
+ * The rail routes whose phone page has the console's drawer: a journey can only start from one. A route with a frame of its own
+ * (the Atlas) is a destination, never a start, so the start is the nearest console route before it.
+ */
+export async function drawerRoutes(page: Page, origin: string, routes: string[]): Promise<string[]> {
+  const have: string[] = [];
+  for (const route of routes) {
+    await page.open(origin + route, { ...PHONE, theme: 'dark', wait: 200 });
+    const shown = await poll(() => page.eval<boolean>(`document.readyState === 'complete' && !!document.querySelector('h1')`), Date.now() + PATIENCE.phone);
+    if (shown && (await page.eval<boolean>(`!!document.querySelector('button[aria-label="Open navigation"]')`))) have.push(route);
+  }
+  return have;
+}
+
 export async function journey(page: Page, device: Device, start: string, route: string, check: NavigationCheck | undefined, run: { origin: string; condition: Condition }): Promise<Sample> {
   await openStart(page, device, start, run.origin);
   const link = `nav a[href=${JSON.stringify(route)}]`;
@@ -294,10 +347,10 @@ export async function journey(page: Page, device: Device, start: string, route: 
     const t = await press(page, opened);
     if (!(await poll(() => point(page, link), t + cap))) throw new Fail('never-ready', `the drawer did not show a link to ${route}`);
     drawerMs = Date.now() - t;
-    idle = await awaitPrefetch(page);
+    idle = await awaitPrefetch(page, route);
   } else {
     if (!(await poll(() => point(page, link), Date.now() + cap))) throw new Fail('never-ready', `the rail has no pressable link to ${route}`);
-    idle = await awaitPrefetch(page);
+    idle = await awaitPrefetch(page, route);
   }
   const prefetchCapped = !idle;
   // After-live presses at once after the refresh, which dropped the router's cache: nothing warms the destination again first.
@@ -520,10 +573,11 @@ async function main(): Promise<number> {
   let problems: string[] = [];
   try {
     await prepare(page);
+    const starts = await drawerRoutes(page, base, rail.routes);
     for (const route of routes) {
       const check = checks.find((c) => c.path === route);
-      // Each journey comes from another rail route, so the destination is a navigation and not the page already shown.
-      const start = rail.routes.find((r) => r !== route) ?? route;
+      // Each journey comes from the rail route before the destination, so it is a navigation and not the page already shown.
+      const start = startFor(rail.routes, route, starts) ?? route;
       for (const device of DEVICES) {
         const limits = Object.fromEntries(METRICS.map((m) => [m, budgets.navigation.warm[BUDGET_KEY[m]][device]])) as Record<Metric, number>;
         let line: Line;

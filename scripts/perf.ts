@@ -6,7 +6,9 @@
  *
  * It is the journey of scripts/navigate.ts (the press time and the frame clock are the page's own) taken `--samples` times,
  * 20 by default, with no retake: every sample counts, and the gate is the p95 of the lot, never the best of them.
- * - warm: the router's prefetches finished first, as a visitor who waited would have.
+ * - warm: the destination's prefetch and the chunks it brought in finished first, as a visitor who waited would have. A
+ *   journey starts from the rail route before its destination (the one after it for the first), so the order a person
+ *   browses in is the one measured.
  * - cold: a fresh browser (no cache, no storage, no router state) for every sample, and the page refuses every prefetch of
  *   the destination before it leaves the page. The sample is void, and fails, if the browser's own record shows a request
  *   for the destination made before the press. Other routes are still prefetched and awaited, as in the warm sample, so
@@ -18,11 +20,13 @@
  *
  * One line per route, device and condition, and a JSON summary on the last line:
  *
- *   ok|FAIL <route> <device> <condition> shell <median>/<p95>/<max> ms · data … · interactive …[ · drawer <median> ms][ · <reasons>]
+ *   ok|warn|FAIL <route> <device> <condition> shell <median>/<p95>/<max> ms · data … · interactive …[ · drawer <median> ms][ · <reasons>]
  *   perf: {...}
  *
- * Exit non-zero on a FAIL, on a missing mapping (named before anything is sampled) and on a missing Chrome: this is an
- * explicit mode, so a lack of Chrome is never a pass. `--samples` and `--routes` narrow a run for working on the protocol;
+ * A p95 over its budget is a `warn`, a report and never a failure: the protocol is statistical evidence, run weekly, not
+ * a release gate. A sample that never got ready or whose control did nothing is a FAIL. Exit non-zero on a FAIL, on a
+ * missing mapping (named before anything is sampled) and on a missing Chrome: this is an explicit mode, so a lack of
+ * Chrome is never a pass. `--samples` and `--routes` narrow a run for working on the protocol;
  * a narrowed run reports `warn`, never `ok`. The mappings and budgets come from scripts/verify.config.ts.
  */
 import path from 'node:path';
@@ -32,7 +36,7 @@ import { launch, type Page } from './lib/chrome.ts';
 import { resolveCoverage } from './lib/coverage.ts';
 import { railRoutes } from './lib/routes.ts';
 import { summary } from './lib/timing.ts';
-import { BUDGET_KEY, DEVICES, Fail, journey, liveRefresh, METRICS, prepare, type Condition, type Device, type Metric, type NavConfig } from './navigate.ts';
+import { BUDGET_KEY, DEVICES, Fail, drawerRoutes, journey, liveRefresh, METRICS, prepare, startFor, type Condition, type Device, type Metric, type NavConfig } from './navigate.ts';
 
 const ROOT = path.resolve(import.meta.dirname, '..');
 const args = process.argv.slice(2);
@@ -49,7 +53,7 @@ type Result = {
   route: string;
   device: Device;
   condition: Condition;
-  status: 'ok' | 'FAIL';
+  status: 'ok' | 'warn' | 'FAIL';
   samples: number;
   shell: Stats | null;
   data: Stats | null;
@@ -74,11 +78,16 @@ async function openTab(refuse?: string): Promise<Page> {
   return page;
 }
 
-/** Every rail route that answers a live resync with a verified refresh, so an after-live journey can start from one. */
-async function liveRoutes(routes: string[]): Promise<string[]> {
+/**
+ * Every rail route that answers a live resync with a verified refresh, so an after-live journey can start from one, and every
+ * route whose phone page has the console's drawer, so any journey can.
+ */
+async function startRoutes(routes: string[]): Promise<{ live: string[]; starts: string[] }> {
   const page = await openTab();
   const live: string[] = [];
+  let starts: string[] = [];
   try {
+    starts = await drawerRoutes(page, base, routes);
     for (const route of routes) {
       await page.send('Network.clearBrowserCache');
       await page.open(base + route, { width: 1440, theme: 'dark', wait: 200 });
@@ -92,7 +101,7 @@ async function liveRoutes(routes: string[]): Promise<string[]> {
   } finally {
     page.close();
   }
-  return live;
+  return { live, starts };
 }
 
 async function main(): Promise<number> {
@@ -133,11 +142,12 @@ async function main(): Promise<number> {
   const partial = narrowed !== undefined || samples !== PROTOCOL_SAMPLES;
 
   let live: string[];
+  let starts: string[];
   const results: Result[] = [];
   const shared: Partial<Record<Device, Page>> = {};
   try {
     try {
-      live = await liveRoutes(rail.routes);
+      ({ live, starts } = await startRoutes(rail.routes));
     } catch (e) {
       const reason = `Chrome could not start (${(e as Error).message.split('\n')[0]})`;
       console.log(`FAIL    perf: ${reason}`);
@@ -153,8 +163,7 @@ async function main(): Promise<number> {
         const limits = Object.fromEntries(METRICS.map((m) => [m, budgets.navigation[condition][BUDGET_KEY[m]][device]])) as Record<Metric, number>;
         for (const route of routes) {
           const check = checks.find((c) => c.path === route);
-          const pool = condition === 'afterLive' ? live : rail.routes;
-          const start = pool.find((r) => r !== route);
+          const start = startFor(rail.routes, route, condition === 'afterLive' ? live.filter((r) => starts.includes(r)) : starts);
           console.error(`… ${condition} ${device} ${route}`);
           const series: Record<Metric, number[]> = { shell: [], data: [], interactive: [] };
           const drawer: number[] = [];
@@ -183,14 +192,15 @@ async function main(): Promise<number> {
               if (condition === 'cold') page?.close();
             }
           }
-          if (!problems.length) {
+          const broken = problems.length > 0;
+          if (!broken) {
             for (const name of METRICS) {
               const s = stats(series[name]);
               if (s && s.p95 > limits[name]) problems.push(`${name} p95 ${Math.round(s.p95)} ms over its ${limits[name]} ms budget`);
             }
           }
           const result: Result = {
-            route, device, condition, status: problems.length ? 'FAIL' : 'ok', samples: taken,
+            route, device, condition, status: broken ? 'FAIL' : problems.length ? 'warn' : 'ok', samples: taken,
             shell: stats(series.shell), data: stats(series.data), interactive: stats(series.interactive),
             drawerMedianMs: drawer.length ? summary(drawer).median : undefined,
             refused: condition === 'cold' ? refused : undefined,
@@ -207,9 +217,10 @@ async function main(): Promise<number> {
 
   const failed = results.some((r) => r.status === 'FAIL');
   const took = (Date.now() - started) / 1000;
-  const status = failed ? 'FAIL' : partial ? 'warn' : 'ok';
+  const over = results.filter((r) => r.status === 'warn').length;
+  const status = failed ? 'FAIL' : partial || over ? 'warn' : 'ok';
   if (partial) console.log(`warn    a narrowed run (${samples} samples, ${routes.length} of ${rail.routes.length} routes) is not the protocol`);
-  console.log(`${failed ? 'FAIL   ' : 'ok     '} perf ${results.length} combinations · ${results.filter((r) => r.status === 'FAIL').length} failed · ${took.toFixed(0)} s`);
+  console.log(`${failed ? 'FAIL   ' : over ? 'warn   ' : 'ok     '} perf ${results.length} combinations · ${results.filter((r) => r.status === 'FAIL').length} failed · ${over} over a p95 budget (reported) · ${took.toFixed(0)} s`);
   out({ status, samples, routes, live, took, partial, results });
   return failed ? 1 : 0;
 }

@@ -400,7 +400,7 @@ if (perf && !browser.ran) {
   const result = summaryOf<{ status: 'ok' | 'warn' | 'FAIL' }>(timed.out, 'perf');
   ranSuites.add('perf');
   const status: Status = timed.status !== 0 || !result || result.status === 'FAIL' ? 'FAIL' : result.status;
-  phase(status, 'performance: 20 samples per route, device and condition, p95 against the budgets', timed.took);
+  phase(status, 'performance: 20 samples per route, device and condition, p95 reported against the budgets', timed.took);
   beneath(timed.out.split('\n').filter((l) => !l.startsWith('perf: ') && !l.startsWith('… ')));
   if (status === 'FAIL') ok = false;
 }
