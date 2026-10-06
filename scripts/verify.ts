@@ -282,9 +282,14 @@ function step(name: string, cmd: string, args: string[], env = clean, last = fal
 }
 
 function stop(c: ChildProcess) { try { process.kill(-c.pid!, 'SIGTERM'); } catch { /* already gone */ } }
-function stopAll() { for (const c of children) stop(c); }
+/** The suites running now: each ends its own Chrome on SIGTERM (scripts/lib/chrome.ts), so it is asked, not killed. */
+const suites = new Set<ChildProcess>();
+function stopAll() {
+  for (const c of children) stop(c);
+  for (const c of suites) c.kill('SIGTERM');
+}
 process.on('exit', stopAll);
-// An interrupted run does not emit 'exit' by itself, and the detached servers would outlive it.
+// An interrupted run does not emit 'exit' by itself, and the detached servers and running suites would outlive it.
 for (const sig of ['SIGINT', 'SIGTERM'] as const) process.on(sig, () => process.exit(sig === 'SIGINT' ? 130 : 143));
 
 /** Start the built app on a free port with the given environment and wait until it answers. */
@@ -303,10 +308,11 @@ async function start(env: NodeJS.ProcessEnv) {
 const run = (script: string, extra: string[], env: NodeJS.ProcessEnv = process.env, echo = false) => new Promise<{ status: number | null; out: string; took: number }>((resolve) => {
   const t = Date.now();
   const child = spawn('node', [script, ...extra], { cwd: ROOT, env: { ...env, DPR: process.env.DPR ?? '1' } as NodeJS.ProcessEnv });
+  suites.add(child);
   let out = '';
   child.stdout.on('data', (d) => (out += d));
   child.stderr.on('data', (d) => { out += d; if (echo) process.stderr.write(d); });
-  child.on('close', (status) => resolve({ status, out: out.trim(), took: secs(t) }));
+  child.on('close', (status) => { suites.delete(child); resolve({ status, out: out.trim(), took: secs(t) }); });
 });
 
 /** The JSON a script prints on its last line after `<tag>: `, or null when it printed none. */
@@ -316,7 +322,6 @@ function summaryOf<T>(out: string, tag: string): T | null {
   try { return JSON.parse(last.slice(tag.length + 2)) as T; } catch { return null; }
 }
 
-/** The tail of a suite's output when it failed, and its closing line when it passed. */
 /** A suite's line. One that left a case unrun is `not run`, stays in the coverage line's not-run list, and fails nothing. */
 function reportSuite(name: string, label: string, r: { status: number | null; out: string; took: number }) {
   const outcome = suiteOutcome(r.status);

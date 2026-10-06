@@ -347,6 +347,7 @@ async function visibility(t: Tabs) {
     await show().catch(() => {});
   }
 }
+
 async function offline(t: Tabs) {
   const conditions = (offline: boolean) => t.b.send('Network.emulateNetworkConditions', { offline, latency: 0, downloadThroughput: -1, uploadThroughput: -1 });
   await conditions(true);
