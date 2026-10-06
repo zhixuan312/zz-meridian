@@ -2,6 +2,14 @@
 
 Every release of ZZ Meridian, newest first. Versions follow semver: a removed or renamed token, prop or card is major; a new card, token or variant is minor; a corrected value is a patch. Each entry says what breaks and what to do instead.
 
+## [0.6.1] · 2026-10-06
+
+### Fixed
+
+- **A created project has its `.gitignore`.** npm renames a `.gitignore` inside an installed package to `.npmignore`, so every project made with `create` since 0.3.0 had a `.npmignore` and no `.gitignore`, and `git add` took in `node_modules`, `.next` and `.env.local`. The package now carries the template's as `payload/gitignore`, and `create` writes it as `.gitignore`. In a project created before 0.6.1, run `git mv .npmignore .gitignore`, then `git rm -r --cached node_modules .next` for whatever was committed; `update` leaves the file alone, since it is the team's.
+- **`update` runs from the registry.** It compares the running package with the published one, and npm's rename made the two differ, so `npx zz-meridian@<version> update` refused itself with "the running package differs from zz-meridian@<version> on the registry" since 0.5.0. 0.6.0 is on npm with this defect and has no tag or GitHub Release: update with 0.6.1.
+- **A gate step whose tool is not installed says so.** `scripts/gate.ts` printed a `TypeError` in place of the missing command.
+
 ## [0.6.0] · 2026-10-06
 
 ### Changed
