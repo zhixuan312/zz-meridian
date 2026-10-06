@@ -47,9 +47,10 @@ follow steps 1 to 8: the project is already built.
   update, the resolutions it asks for, and the pinned `--finalize` command it prints (with `--resume` and `--abort` for
   an interruption or a change of mind). Read `references/ownership.md` for which files are Meridian's and which are the
   team's; an update changes only the first, and a team keeps one of its own on purpose through `optional:.meridian/keep.json`.
-  Moving to 0.5.0 reports migrations for the interfaces that release changed (the assistant promise, the required clock,
-  Cache Components, authorized reads, scoped invalidation, the live stream); `references/update.md` says how to resolve
-  them, and `references/cache.md` and `references/live.md` hold the starters and the shapes they move to.
+  Moving to 0.5.0 reports up to ten migrations for the interfaces that release changed (the removed verify flags, the
+  assistant promise, the required clock, Cache Components, authorized reads, scoped invalidation, the live stream, the
+  authorized endpoints); `references/update.md` says how to resolve them, and `references/cache.md` and
+  `references/live.md` hold the starters and the shapes they move to.
 - **Rebrand.** `npx zz-meridian@<the manifest's version> brand [brand flags]`, from a clean git tree. Never hand-edit the
   brand outputs; an edited one makes it refuse.
 

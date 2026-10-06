@@ -12,7 +12,7 @@ Every release of ZZ Meridian, newest first. Versions follow semver: a removed or
   - complete HTML against `budgets.htmlKb`;
   - the navigation smoke of at most three routes on desktop and the phone.
 
-  The template's default takes about 70 to 80 seconds on an Apple M5. It ends with one coverage line, `coverage: <mode>; browser <ran|not run (<reason>)>; <n> routes; data configured <a>/<n>; interaction configured <b>/<n>; not run: <suites>`, and writes the detail, including how many times the gate and the build ran, to `out/verify.txt`.
+  The template's default takes about 70 to 100 seconds on an Apple M5. It ends with one coverage line, `coverage: <mode>; browser <ran|not run (<reason>)>; <n> routes; data configured <a>/<n>; interaction configured <b>/<n>; not run: <suites>`, and writes the detail, including how many times the gate and the build ran, to `out/verify.txt`.
   - `pnpm verify --full` adds every mapped rail route and the exhaustive suites: the audit, every control and link, the keyboard walk, the assistant, live data, Web Vitals and the configured `browserChecks`.
   - The default never refuses for a missing safe backend or Chrome. It runs the static checks and reports the browser as `not run`, while `--full` requires both.
   - `scripts/verify.baseline.json` is the team's first-load baseline. `node scripts/sizes.ts --write-baseline` records it, and `adopt` does not copy it, so an adopted project reports growth as not configured until it records its own.
@@ -46,9 +46,10 @@ Every release of ZZ Meridian, newest first. Versions follow semver: a removed or
   It prints each measured time and removes the members it invited. A project without a live `/members` page sees each case as `not run`, with the reason.
 - **An update to 0.5.0 reports this release's migrations.** It names the team-owned files that still have the old shape:
   - `shell-assistant-promise`, `assistant-available-promise`, `clock-now-required` and `cache-components-config`;
-  - `connection-boundaries`, `authorized-read`, `scoped-invalidation`, `live-provider` and `authorized-endpoints`.
+  - `connection-boundaries`, `authorized-read`, `scoped-invalidation`, `live-provider` and `authorized-endpoints`;
+  - `verify-modes`, for a script, workflow or shell file that still passes a removed `verify` flag.
 
-  Each says which section to follow, and is checked by the gate and a build. A product already on the new shape gets no line. The skill gains `references/cache.md` and `references/live.md`. They carry every team-owned starter verbatim: `access.ts`, `read.ts`, `live-stream.ts`, `live-actions.ts` and `/api/live`. They also hold working-shape Postgres LISTEN/NOTIFY and Redis pub/sub adapters, and say plainly that the sample is a single process, and that polling cannot reconcile stores that diverged.
+  Each says which section to follow, and is checked by the gate and a build (`verify-modes` by the gate). A product already on the new shape gets no line. The skill gains `references/cache.md` and `references/live.md`. They carry every team-owned starter verbatim: `access.ts`, `read.ts`, `live-stream.ts`, `live-actions.ts` and `/api/live`. They also hold working-shape Postgres LISTEN/NOTIFY and Redis pub/sub adapters, and say plainly that the sample is a single process, and that polling cannot reconcile stores that diverged.
 - **Live data in the console: one stream per tab, and a refresh that reauthorizes.**
   - `src/lib/live.ts`, now managed, holds `createLiveClient` (the framework-free scheduler) and `LiveProvider` and `useLive`, which put it in a React tree. Every hook in a tab shares one `EventSource` for the union of the collections they show.
   - Hints wait at most 500 ms, one refresh runs at a time, and what arrives meanwhile runs next. A safety refresh runs every `pollMs` (30 s) even on a healthy stream, and a refresh slower than 10 s counts as failed.
@@ -84,7 +85,7 @@ Every release of ZZ Meridian, newest first. Versions follow semver: a removed or
   - Tables state their cell classes once, at the table, instead of on every cell.
   - The Health page sends each service's 90 days as one character a day.
   - The rail keys its link styles on `aria-current`.
-  - `/requests` is 126 KiB and `/health` 99.6 KiB, from 155 and 119. Screenshots at 1440 and 390, in dark and light, are identical.
+  - `/requests` is 143 KiB and `/health` 99.6 KiB, from 155 and 119. Screenshots at 1440 and 390, in dark and light, are identical.
 - **`brand.ts --no-atlas` and `--product` also remove the Atlas's routes from `scripts/verify.config.ts`.** A created project's `verify --full` no longer fails on navigation checks for pages it does not have.
 - **The Atlas preview route loads only the card it shows.** Its first-load JS fell from 1441 KiB to 591 KiB. `scripts/registry.ts` also writes `src/system/preview-loaders.ts` and the preview route's key list, and `brand.ts --no-atlas` removes both.
 - **The template builds under Cache Components, and every non-API route is static or partial.**

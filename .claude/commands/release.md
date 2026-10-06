@@ -22,6 +22,7 @@ node -p "require('./cli/package.json').version + ' / ' + require('./package.json
 npm view zz-meridian version          # what consumers get today
 git tag -l 'v*' | tail -3
 gh run list --workflow=release.yml -L 3
+gh run list --workflow=weekly.yml -L 1   # the full, perf and recovery suites, weekly
 ```
 
 - Versions equal npm's, no tag for the next one: a new release (steps 2 to 5).
@@ -30,6 +31,8 @@ gh run list --workflow=release.yml -L 3
   (`npm view zz-meridian@<v> version`), the release is fine but unfinished: fix the step and dispatch the same version
   again; the publish step skips a version already there. Otherwise fix forward and dispatch again.
 - Tag and Release exist: released.
+- The latest weekly run is red: read which job and why before releasing. It does not block a release (decision 0010),
+  but a broken full walkthrough or recovery case is usually a reason to fix first.
 
 ## 2. The changelog and the docs
 
@@ -44,12 +47,13 @@ gh run list --workflow=release.yml -L 3
 
 ## 3. Prove it locally
 
+What CI gates, once, on this machine:
+
 ```bash
-pnpm gate
-pnpm verify                     # with Web Vitals: CI runs verify without them
+node cli/scripts/release-check.ts --runs 1        # the default verify from a clean build: the gate, one build, the smoke
 node cli/scripts/build-payload.ts --worktree && pnpm exec tsc -p cli/tsconfig.json
 (cd cli && rm -f *.tgz && npm pack)
-node cli/scripts/smoke.ts --create --verify
+node cli/scripts/smoke.ts --adopt --create --update   # adopt, create, and every published origin updated to finalize
 ```
 
 Everything green, or stop and fix the cause. Commit (`release: <v>`, after the change commits), push to `master`.
@@ -63,10 +67,12 @@ gh workflow run release.yml -f version=<v>
 gh run watch "$(gh run list --workflow=release.yml -L1 --json databaseId -q '.[0].databaseId')"
 ```
 
-`gates` installs and runs the template's code and never holds a credential; it uploads the one tarball it tested.
-`publish` installs nothing, checks that tarball's hash, publishes it with `npm` (pnpm does not do the OIDC exchange)
-and `--provenance`, waits for the registry, runs `npx zz-meridian@<v> --version` as a consumer, then creates the tag
-and the Release.
+`gates` installs and runs the template's code and never holds a credential: the default verify three times from a
+clean build, each within 120 s on the 4-CPU runner, then the consumer smoke from the tarball. `publish` installs
+nothing, checks that tarball's hash, publishes it with `npm` (pnpm does not do the OIDC exchange) and `--provenance`,
+and waits for the registry. `release` runs `npx zz-meridian@<v> --version`, checks the registry serves the tested
+tarball with provenance, runs the consumer smoke's create and update sections on the registry's package, then creates
+the tag and the Release.
 
 ## 5. Report
 
@@ -75,7 +81,7 @@ npm view zz-meridian@<v> version dist.attestations.provenance
 gh release view v<v>
 ```
 
-Say: the version, the run URL, the local proof (gate, verify with vitals, smoke), and whether provenance is attached
+Say: the version, the run URL, the three verify times from the `gates` log, the local proof, and whether provenance is attached
 (https://www.npmjs.com/package/zz-meridian/v/<v>).
 
 ## Rules

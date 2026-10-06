@@ -7,7 +7,8 @@
  * adopt: into a copy of cli/test/fixture-next-app (a create-next-app project with its own button, utils and data
  * layer), committed to git as a team's would be. The team's files must come out unchanged, the gate must pass under
  * the team's own eslint config, and next build must succeed.
- * --create: a new dashboard from the tarball, gated and built. --verify adds pnpm verify --full on it (Chrome required).
+ * --create: a new dashboard from the tarball, then its default pnpm verify (the gate, one build, the bounded smoke).
+ * --verify runs pnpm verify --full on it instead (Chrome required).
  * --keep leaves the fixture projects in the temporary folder for inspection; without it they are removed, pass or fail.
  * --verify also runs the default verify twice in scratch copies of the adopted project: once with `noLiveApi: true` as a
  * team edit and no mappings, and once with no safe backend. Each case prints its coverage line.
@@ -680,13 +681,18 @@ if (args.includes('--create')) {
   check(text('next.config.ts').includes("'/api/assistant': ['./docs/brief.md']"), "next.config.ts still traces docs/brief.md for /api/assistant");
   const createOffenders = unmanaged(JSON.parse(text('.meridian/manifest.json')));
   check(JSON.parse(text('.meridian/manifest.json')).version === VERSION && createOffenders.length === 0, 'the create manifest is the running version and holds only managed paths', createOffenders.join('\n'));
-  const g = sh(pm, ['run', 'gate'], dir);
-  check(g.status === 0, `${pm} run gate passes in the new dashboard`, g.stdout + g.stderr);
+  // The default verify (the gate, one build, the bounded smoke) is what the team runs every day; --verify asks for --full.
   if (args.includes('--verify')) {
     const v = sh(pm, pm === 'npm' ? ['run', 'verify', '--', '--full'] : ['run', 'verify', '--full'], dir);
     const line = coverageOf(v.stdout);
     console.log(`     coverage (created, --full): ${line}`);
     check(v.status === 0 && /^coverage: full; browser ran; /.test(line) && /not run: none$/.test(line), `${pm} run verify --full passes in the new dashboard with nothing left unrun`, v.stdout + v.stderr);
+  } else {
+    const t0 = performance.now();
+    const v = sh(pm, ['run', 'verify'], dir);
+    const line = coverageOf(v.stdout);
+    console.log(`     coverage (created, default, ${secs(performance.now() - t0)}s): ${line}`);
+    check(v.status === 0 && /^coverage: default; /.test(line), `${pm} run verify passes in the new dashboard`, v.stdout + v.stderr);
   }
 }
 

@@ -109,7 +109,7 @@ three edits named below. It needs a project that adopted or created Meridian 0.3
    item has one current resolution and that the installed dependencies match the plan, then runs the project's gate and
    one `next build` in place. It compares every protected input before and after each, so a check that rewrites source
    fails it. Only when both pass and nothing changed does it write the target manifest, atomically, and archive the
-   session under `.meridian/history/<version>/<id>/`. It prints the stage times and says the browser checks did not run. `update --finalize --verify` runs the project's default `verify` once in place of the gate and the build, and prints and records its coverage line instead; in the consumer smoke it adds 3.3 s to the adopted origin's finalize.
+   session under `.meridian/history/<version>/<id>/`. It prints the stage times and says the browser checks did not run. `update --finalize --verify` runs the project's default `verify` once in place of the gate and the build, and prints and records its coverage line instead; the consumer smoke holds it to at most 30 s more than the adopted origin's plain finalize.
 6. **Resume.** `update --resume` continues an update that was interrupted, failed to apply or install, or was started
    with `--no-install`. It applies only what is still the recorded original, never overwrites a later edit, and ends as
    a plain update does.
@@ -132,24 +132,25 @@ Two environment variables exist for the updater's own tests and are used only wh
 reports as `migration:<id>` because it cannot make them. An entry applies when the project's recorded version is older
 than its `since` and the target is not, and its `applies(root)` returns the paths that still have the old shape, or
 null. It only reads, and only team-owned files (the ownership rule's managed paths are skipped); a file it cannot read is
-absent. A project already on the new shape gets no line. Every entry carries `gate` and `build` as its checks, and its
-instructions name the section of `references/cache.md` or `references/live.md` to follow.
+absent. A project already on the new shape gets no line. Every entry carries `gate` and `build` as its checks (`verify-modes`, `gate` alone), and its
+instructions name the section of `references/cache.md`, `references/live.md` or `references/validation.md` to follow.
 
 For 0.5.0 they are:
 
-| Id | Reported when a team-owned file still has |
-|----|-------------------------------------------|
-| `shell-assistant-promise` | `<AppShell` with an `assistant=` prop and no promise (`.then(`, `Promise`, `use(`) |
-| `assistant-available-promise` | `useAssistantAvailable()` used as a boolean |
-| `clock-now-required` | `<Freshness`, `<ShellTools` or `<AlertsPanel` without `now=`, or `formatRelative(` with one argument |
-| `cache-components-config` | a `next.config.*` without `cacheComponents: true` and `partialPrefetching: true` |
-| `connection-boundaries` | `await connection()` in a `page.tsx` or `layout.tsx` under `app/` |
-| `authorized-read` | a `page.tsx` calling `.query(` |
-| `scoped-invalidation` | a `'use server'` file that writes a collection and calls neither `updateTag` nor `revalidateTag` |
-| `live-provider` | `src/data/collections.ts` without `src/data/live-actions.ts`, or a dashboard layout with neither `LiveProvider` nor `ConsoleLive` |
-| `authorized-endpoints` | `app/api/assistant/route.ts`, or an `actions.ts` Server Action file, without a `resolveAccess` call |
+| Id | Reported when a team-owned file still has | Completion step |
+|----|-------------------------------------------|-----------------|
+| `verify-modes` | a `package.json` script, workflow or shell file passing `--quick`, `--no-vitals` or `--extra` to `verify` | `validation.md`: replace each with `pnpm verify`, `--full` or `--perf` in the script, workflow or shell file |
+| `shell-assistant-promise` | `<AppShell` with an `assistant=` prop and no promise (`.then(`, `Promise`, `use(`) | `cache.md`, "The shell's assistant promise": pass a promise and do not await it |
+| `assistant-available-promise` | `useAssistantAvailable()` used as a boolean | same section: `use(useAssistantAvailable())` inside `Suspense` |
+| `clock-now-required` | `<Freshness`, `<ShellTools` or `<AlertsPanel` without `now=`, or `formatRelative(` with one argument | `cache.md`, "The clock is the data's": pass the data's clock |
+| `cache-components-config` | a `next.config.*` without `cacheComponents: true` and `partialPrefetching: true` | `cache.md`, "Turn Cache Components on": add both, then make every route static or partial |
+| `connection-boundaries` | `await connection()` in a `page.tsx` or `layout.tsx` under `app/` | same section: remove it and read behind a boundary |
+| `authorized-read` | a `page.tsx` calling `.query(` | `cache.md`, "Authorized, scoped reads": add `access.ts` and `read.ts` |
+| `scoped-invalidation` | a `'use server'` file that writes a collection and calls neither `updateTag` nor `revalidateTag` | `cache.md`, "Writes authorize, then invalidate": `updateTag` after the commit |
+| `live-provider` | `src/data/collections.ts` without `src/data/live-actions.ts`, or a dashboard layout with neither `LiveProvider` nor `ConsoleLive` | `live.md`, "The live starters" and "Refreshing": add the five files and the provider |
+| `authorized-endpoints` | `app/api/assistant/route.ts`, or an `actions.ts` Server Action file, without a `resolveAccess` call | `cache.md`, "The assistant route": call `resolveAccess()` first and bring `tools.ts` and `respond.ts` over |
 
-The consumer smoke (`--update`) resolves them on all four published origins, a project adopted and a project created
+The consumer smoke (`--update`) resolves the nine that touch source on all four published origins, a project adopted and a project created
 with 0.3.0 and with 0.4.0, as `references/update.md` tells an agent: a created origin, whose files are the template's,
 takes the release's versions of the affected team-owned files and the files that arrived with them; an adopted origin,
 whose pages are the team's own, makes the minimal edit the instruction names. It then records the resolutions and
@@ -201,23 +202,32 @@ Modelled on the release pipeline of the owner's earlier packages, one package in
 
 1. **Dispatch**: `gh workflow run release.yml -f version=<v> [-f dry_run=true]`, from `master`. The version must equal
    `cli/package.json`'s and the tag must be unused.
-2. **Gates** (ubuntu): `pnpm gate`, `next build`, and the consumer smoke from the built tarball (step 4).
+2. **Gates** (ubuntu-24.04, 4 CPUs, the reference profile): the template's default `verify` three times from a clean
+   `.next` through `cli/scripts/release-check.ts`, each within 120 s (the gate and its unit tests run inside each), and
+   the consumer smoke from the built tarball (step 4). The full, perf and recovery suites are not release gates: they
+   run weekly (below).
 3. **Pack and assert, before anything is irreversible**: `pnpm pack` in `cli/`, then on the tarball: the bin has its
    `#!/usr/bin/env node` line; `payload/skills/zz-meridian/SKILL.md` and its references are there; the component count
    matches the repository; no `node_modules/`, `tests/` of the CLI, `out/` or `.next/`.
-4. **Consumer smoke, from the tarball**:
+4. **Consumer smoke, from the tarball** (`smoke.ts --adopt --create --update`):
    - `adopt` into `cli/test/fixture-next-app` (a minimal App Router app with one page and its own stylesheet), then
      install, `tsc --noEmit` and `next build`, all green. This is the test that keeps the Route A list complete.
-   - `create` into a clean folder, then `pnpm verify --full`, which the created project can run because it is the template
-     and has every navigation mapping. Chrome is on ubuntu runners. The smoke quotes the coverage line.
-   - The adopted project, in two scratch copies, runs the default `pnpm verify`: once with `noLiveApi: true` and no
-     mappings (exit 0, data and interaction not configured), and once with no safe backend (exit 0, browser not run).
-     `--full` on the unconfigured adopted project must refuse.
+   - `create` into a clean folder, then its default `pnpm verify`. The smoke quotes the coverage line.
+   - `update` from all four published origins (0.3.0 and 0.4.0, adopted and created) through finalize, as above.
 5. **Publish** the tarball with `npm` 11.5.1 or newer through trusted publishing (OIDC), with `--provenance`. `pnpm
    publish` does not perform the OIDC exchange.
-6. **Tag `v<version>` last**, then the GitHub Release with the version's `CHANGELOG.md` section as its body.
+6. **The registry's package, end to end**: it is the tested tarball and carries provenance, and the consumer smoke's
+   `--create --update` runs on it. A failure here is an unsuccessful release, not a rollback: the version stays
+   published and untagged until a fix is released.
+7. **Tag `v<version>` last**, then the GitHub Release with the version's `CHANGELOG.md` section as its body.
 
-`dry_run` stops after step 4. A `/release` runbook (`.claude/commands/release.md`) holds the judgement before dispatch:
+`dry_run` stops after step 4.
+
+**Weekly** (`.github/workflows/weekly.yml`, Mondays and on demand, master's current commit): the template's
+`verify --full` and `verify --perf` (a report: a p95 over budget is a warning, a broken sample a failure), and the
+consumer smoke's `--adopt --create --update-all --verify` from a tarball packed from that commit: the adopted
+project's default verify cases, the created project's `verify --full`, and every recovery and failure case of the
+update. Each job keeps its log as an artifact. A failure notifies; nothing waits on it. A `/release` runbook (`.claude/commands/release.md`) holds the judgement before dispatch:
 the version, the changelog section, the docs sweep, and the local `pnpm verify --full`. A `cli/scripts/set-version.ts`
 writes the version into `cli/package.json` and checks the root agrees.
 

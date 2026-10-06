@@ -1,0 +1,125 @@
+# The weekly suites (decision 0010, docs/distribution.md): what is too slow or too statistical to gate a release, run
+# on master's current commit. A failure fails this run and GitHub notifies; nothing waits on it.
+#
+# - `full`: the template's `pnpm verify --full`, every rail route with the audit, every control and link, the keyboard
+#   walk, the assistant, the live data and the vitals.
+# - `perf`: the template's `pnpm verify --perf`, 20 samples per route, device and condition. A p95 over its budget is a
+#   `warn` in the report; only a broken sample fails.
+# - `consumer`: the consumer smoke from a tarball packed from this commit: the adopted project's default verify cases,
+#   the created project's `verify --full`, and every recovery and failure case of the update.
+#
+# Each job keeps its log as an artifact. This workflow holds no publishing permission and no credential.
+
+name: weekly
+
+on:
+  schedule:
+    - cron: '17 3 * * 1'   # Mondays, 03:17 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: weekly
+  cancel-in-progress: false
+
+jobs:
+  full:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    env:
+      CHROME: /usr/bin/google-chrome
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+        with:
+          version: 11.9.0
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: verify --full
+        run: |
+          set -euo pipefail
+          mkdir -p out
+          pnpm verify --full 2>&1 | tee out/weekly-full.txt
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        if: always()
+        with:
+          name: full
+          path: out/
+          if-no-files-found: ignore
+          retention-days: 30
+
+  perf:
+    runs-on: ubuntu-24.04
+    # About 54 minutes on an Apple M5; the 4-CPU runner is slower.
+    timeout-minutes: 180
+    env:
+      CHROME: /usr/bin/google-chrome
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+        with:
+          version: 11.9.0
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: verify --perf (a report)
+        run: |
+          set -euo pipefail
+          mkdir -p out
+          pnpm verify --perf 2>&1 | tee out/weekly-perf.txt
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        if: always()
+        with:
+          name: perf
+          path: out/
+          if-no-files-found: ignore
+          retention-days: 30
+
+  consumer:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 120
+    env:
+      CHROME: /usr/bin/google-chrome
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+        with:
+          version: 11.9.0
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 22
+      # The same build and pack as release.yml's `build` job, without its release checks.
+      - name: Pack this commit
+        run: |
+          set -euo pipefail
+          npm install --prefix /tmp/tooling --no-save --no-package-lock --ignore-scripts typescript@5.9.3 @types/node@24.19.1
+          node cli/scripts/build-payload.ts
+          /tmp/tooling/node_modules/.bin/tsc -p cli/tsconfig.json --typeRoots /tmp/tooling/node_modules/@types
+          mkdir -p /tmp/pack
+          (cd cli && npm pack --ignore-scripts --pack-destination /tmp/pack >/dev/null)
+          ls /tmp/pack/zz-meridian-*.tgz
+      - name: The consumer smoke's recovery and failure cases, and the full verifies
+        run: |
+          set -euo pipefail
+          mkdir -p out
+          node cli/scripts/smoke.ts --tarball "$(ls /tmp/pack/zz-meridian-*.tgz)" --adopt --create --update-all --verify 2>&1 | tee out/weekly-consumer.txt
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        if: always()
+        with:
+          name: consumer
+          path: out/
+          if-no-files-found: ignore
+          retention-days: 30

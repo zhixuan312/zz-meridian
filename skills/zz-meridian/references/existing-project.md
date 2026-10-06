@@ -77,11 +77,11 @@ add `@ai-sdk/anthropic`, `@ai-sdk/openai-compatible` and `zod` to the dependenci
 (plus `ASSISTANT_BASE_URL` for `openai-compatible`): it stays off until they are set. The "Show the assistant" switch is
 in `optional:src/views/settings.tsx`.
 
-Two things to do when their `rows` becomes a real database — a page asks for the same records from several places, so
-the same query runs several times per request, which is free over fixtures and a round trip each over a network. Wrap
-the read in `cache()` from `react` (request-scoped; the Next.js docs recommend it around an ORM) and leave the write
-path reading directly, and raise the connection pool's idle timeout past `pg`'s 10-second default. Issue #7 has the
-numbers.
+When their `rows` becomes a real database, two things matter. Pages read through `read()` (`optional:src/data/read.ts`),
+which caches per caller's scope and refreshes exactly the tenant a write touched, so do not wrap the read in a second
+cache; writes call `updateTag` after the commit (`cache.md`, "Authorized, scoped reads" and "Writes authorize, then
+invalidate"). And raise the connection pool's idle timeout past `pg`'s 10-second default, since a cache miss is a round
+trip each. Issue #7 has the numbers.
 
 ## Route A2: a static HTML page (data fetched as JSON)
 

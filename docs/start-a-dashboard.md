@@ -45,6 +45,8 @@ Your pages, your server actions and the assistant read and change records throug
 - Read freshness from when the data arrived (the newest ingest time), never from `now()`.
 - Return `null` for "not measured"; the formatters render it as a dash, never as zero.
 
+The console keeps Members and Keys fresh without a reload: one stream per tab carries a hint that names only a collection, and the page refreshes through the same authorized `read()`. The sample stream is a single process; across processes, `skills/zz-meridian/references/live.md` holds the Postgres and Redis adapters a product writes for itself.
+
 ## 5. Arrange your pages
 
 Every page is a `PageFrame` holding a `Stack` of `Row`s. Start from the closest preset and change what it shows, not how it is laid out:
@@ -73,4 +75,4 @@ pnpm verify          # the gate once, one production build, the size checks and 
 pnpm verify --full   # every route, every control pressed and link followed, the keyboard walk, the assistant and the live data
 ```
 
-`pnpm verify` is the check to run before you finish. Run `--full` after a change to shared components, the shell or data. Every run ends with a coverage line, such as `coverage: default; browser ran; 3 routes; data configured 3/3; interaction configured 3/3; not run: audit, presses, keyboard, assistant, live, vitals`, which says what ran and what did not. Nothing that did not run is reported as passed. `pnpm verify --perf` adds the 20-sample navigation protocol.
+`pnpm verify` is the check to run before you finish. Run `--full` after a change to shared components, the shell or data. Every run ends with a coverage line, such as `coverage: default; browser ran; 3 routes; data configured 3/3; interaction configured 3/3; not run: audit, presses, keyboard, assistant, live, vitals`, which says what ran and what did not. Nothing that did not run is reported as passed. `pnpm verify --perf` adds the 20-sample navigation protocol and reports it; a p95 over its budget is a `warn`, never a failure. The default is built to finish within two minutes; `--full` and `--perf` are what a team schedules, weekly for instance.
