@@ -12,7 +12,7 @@ Status: beta
 4. **Code**: inline on `surface-sunk` with a `line` border; a fenced block on `surface-sunk`, `radius-lg`, wrapping instead of scrolling.
 5. **Tables**: inside a `line`-bordered frame, a `surface-sunk` header row, `text-sm` cells.
 6. **Quote**: a 2px `accent` rule on the left, `ink` text.
-7. **Links**: `.link`, in `accent-ink`, underlined on hover; a link out of the product sends no referrer.
+7. **Links**: `.link`, in `accent-ink`, turning `ink` on hover, never underlined; a link out of the product sends no referrer.
 
 ## Composition
 

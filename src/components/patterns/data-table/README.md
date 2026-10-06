@@ -10,7 +10,7 @@ Status: beta
 2. **Title** (optional): `title`, `description` and `actions` as a Card header, when the table is one card among others on a page; a hairline under it when no toolbar follows.
 3. **Toolbar** (optional): a band above the table, `card-pad` horizontal and 14px vertical padding, a `line` divider under it from 768px. It holds a Filter bar.
 4. **Header row**: Table header cells, `surface-sunk`, 36px, `text-xs` 500 `ink-3`. A sortable head is a button with the sort arrow in `accent-ink`.
-5. **Rows**: `row-height` 52px (38px compact), a `line` divider between rows. The title column (`mobile: 'title'`, or the first) is a `.row-link` when the row opens a record.
+5. **Rows**: `row-height` 52px (38px compact), a `line` divider between rows. The title column (`mobile: 'title'`, or the first) is the row's link when the row opens a record. The whole row takes the `fill-hover` tint on hover; the title keeps its colour and is never underlined.
 6. **Selection column** (optional): 40px with a Checkbox; the head's checkbox selects the page and shows indeterminate when part of it is chosen.
 7. **Footer**: Pagination, under a `line` divider, shown only when the rows do not fit on one page.
 8. **Cards, not a second list** (under 768px): the same table's rows lay out as cards — the title and the status on one line, two or three facts under it in `text-xs` `ink-3`, separated by dots. It is the SAME tree: the row becomes a six-column grid and each cell says which part of the card it is (`data-mobile`), so nothing is built twice and no device downloads a tree it cannot show.
@@ -34,7 +34,7 @@ Row height and card padding come from the density: comfortable 52px and 24px, co
 | State | What shows |
 |---|---|
 | Rest | Rows; numeric columns right-aligned in tabular figures |
-| Hover (a linked row) | Row fill `fill-hover` over `dur-hover`; the title's underline draws in |
+| Hover (a linked row) | Row fill `fill-hover` over `dur-hover`; nothing else changes |
 | Selected | Row fill `accent-tint`; the checkbox in `accent` |
 | Focus | The link or the checkbox shows the 2px `accent` ring |
 | Loading | `aria-busy`; up to eight skeleton rows shaped like real ones (a wide bar in the grow column, short bars elsewhere, right-aligned bars in numeric columns) — the same eight rows on a phone, laid out as cards |

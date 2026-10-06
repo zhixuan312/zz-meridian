@@ -6,7 +6,7 @@ Status: beta
 
 ## Anatomy
 
-1. **Ancestor**: a link, `ink-2`; its underline draws in on hover and it turns `ink`.
+1. **Ancestor**: a link, `ink-2`; it turns `ink` on hover, with no underline.
 2. **Separator**: a 12px chevron in `ink-3`, decorative.
 3. **Current page**: `ink`, medium, `aria-current="page"`.
 4. **Fold** (more than four levels): a 24px ellipsis button that opens a Menu of the hidden levels.
@@ -27,7 +27,7 @@ Status: beta
 | State | Ancestor |
 |---|---|
 | Rest | `ink-2` |
-| Hover | `ink`, underline draws over `dur-hover` |
+| Hover | `ink` over `dur-hover` |
 | Focus | 2px `accent` outline |
 
 ## Behaviour

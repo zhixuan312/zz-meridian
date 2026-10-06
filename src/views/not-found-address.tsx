@@ -26,7 +26,7 @@ export function MissingAddress({ size = 'display' }: { size?: 'display' | 'quiet
   return (
     <div className="min-w-0">
       <p className={cn('font-mono break-all', size === 'display' ? 'text-xl leading-snug tracking-[-0.01em]' : 'text-sm leading-relaxed')}>
-        <Link href={found} aria-label={`${found}, ${n.label}`} className="row-link text-ink-2">{found}</Link>
+        <Link href={found} aria-label={`${found}, ${n.label}`} className="row-link text-ink-2 hover:text-accent-ink">{found}</Link>
         <span className="border-b-2 border-dashed border-critical pb-px text-ink">{missing}</span>
       </p>
       <p className={cn('text-pretty text-ink-2', size === 'display' ? 't-small mt-4' : 't-caption mt-2.5')}>

@@ -40,7 +40,7 @@ export function OverviewBody({
   if (series.length === 0) {
     return (
       <Card>
-        <EmptyState title="No requests yet" action={<Link href="/keys" className="row-link inline-flex items-center gap-1 font-medium text-ink">API keys <ArrowRight className="size-3.5" /></Link>} className="py-16">
+        <EmptyState title="No requests yet" action={<Link href="/keys" className="row-link inline-flex items-center gap-1 font-medium text-ink hover:text-accent-ink">API keys <ArrowRight className="size-3.5" /></Link>} className="py-16">
           Traffic, reliability and spend appear here once a key makes its first call.
         </EmptyState>
       </Card>
@@ -121,7 +121,7 @@ export function OverviewBody({
               />
             </CardBody>
             <CardFooter>
-              <Link href="/analytics" className="row-link inline-flex items-center gap-1 font-medium text-ink">
+              <Link href="/analytics" className="row-link inline-flex items-center gap-1 font-medium text-ink hover:text-accent-ink">
                 All endpoints <ArrowRight className="size-3.5" />
               </Link>
             </CardFooter>

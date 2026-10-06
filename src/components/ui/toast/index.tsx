@@ -54,7 +54,7 @@ export function ToastView({
         {description ? <p className="mt-0.5 text-xs text-ink-2">{description}</p> : null}
       </div>
       {action ? (
-        <button type="button" className="press hit shrink-0 rounded-xs text-sm font-medium text-accent-ink hover:underline" onClick={action.onClick}>
+        <button type="button" className="press hit shrink-0 rounded-xs text-sm font-medium text-accent-ink hover:text-ink" onClick={action.onClick}>
           {action.label}
         </button>
       ) : null}

@@ -115,7 +115,7 @@ export function Timeline({
                 <Fragment key={it.id}>
                   {/* The label is the item's one link: visible, focusable, and read with the table's dates. */}
                   {it.href ? (
-                    <Link href={it.href} title={it.label} className="row-link self-center truncate py-2 pr-3 text-ink-2">{it.label}</Link>
+                    <Link href={it.href} title={it.label} className="row-link self-center truncate py-2 pr-3 text-ink-2 hover:text-accent-ink">{it.label}</Link>
                   ) : (
                     <span aria-hidden className="self-center truncate py-2 pr-3 text-ink-2" title={it.label}>{it.label}</span>
                   )}

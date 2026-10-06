@@ -1,5 +1,7 @@
 import { render, screen } from '@testing-library/react';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
+
+vi.mock('next/navigation', () => ({ useRouter: () => ({ push() {}, refresh() {}, replace() {} }), usePathname: () => '/' }));
 import { DataTable, type Column } from '@/components/patterns/data-table';
 
 type Row = { id: string; name: string; status: string; calls: number };
@@ -44,5 +46,11 @@ describe('DataTable', () => {
     table();
     expect(screen.getByText('643,000')).toBeInTheDocument();
     expect(screen.getByText('643000 requests')).toBeInTheDocument();
+  });
+  it('makes the title of a row that opens a record its link; the row is the hover target and the title has no hover style of its own', () => {
+    render(<DataTable caption="Customers" noun="customers" rows={rows} columns={columns} rowKey={(r) => r.id} rowHref={(r) => `/customers/${r.id}`} />);
+    const link = screen.getAllByRole('link', { name: 'Northwind Labs' })[0];
+    expect(link.getAttribute('href')).toBe('/customers/a');
+    expect(link.className).not.toMatch(/row-link|link|underline/);
   });
 });

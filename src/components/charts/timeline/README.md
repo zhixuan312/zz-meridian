@@ -33,7 +33,7 @@ Leave `from` and `to` out and the span is the items' own extent. A roadmap usual
 | State | Spec |
 |---|---|
 | Rest | as above |
-| Linked | an item with `href` makes its label a link (`row-link`: an underline draws in on hover) |
+| Linked | an item with `href` makes its label a link (`row-link`: it takes the accent on hover, with no underline) |
 | Outside the span | a bar is clipped to the span and the side that continues is squared off (`rounded-l-none` when it started before `from`, `rounded-r-none` when it ends after `to`), so work that runs past the window does not read as work that began at its edge; Today is drawn only when it falls inside |
 
 ## Behaviour

@@ -133,7 +133,7 @@ export function RequestView({ request: r, trace, payloads, now, replay }: { requ
               />
             </CardBody>
             <CardFooter>
-              <Link href={`/requests?q=${encodeURIComponent(r.customer)}`} className="row-link inline-flex items-center gap-1 font-medium text-ink">
+              <Link href={`/requests?q=${encodeURIComponent(r.customer)}`} className="row-link inline-flex items-center gap-1 font-medium text-ink hover:text-accent-ink">
                 More from {r.customer} <ArrowRight className="size-3.5" />
               </Link>
             </CardFooter>

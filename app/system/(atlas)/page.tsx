@@ -129,7 +129,7 @@ export default function AtlasHome() {
             <p className="t-kicker">{release.version} · {release.date}</p>
             <p className="t-small mt-4 max-w-[48ch] text-ink-2">{release.summary}</p>
             {changelog ? (
-              <Link href={changelog} className="mt-6 inline-flex items-center gap-1.5 text-sm font-medium text-accent-ink hover:underline">
+              <Link href={changelog} className="mt-6 inline-flex items-center gap-1.5 text-sm font-medium text-accent-ink hover:text-ink">
                 Full changelog <ArrowRight className="size-3.5" />
               </Link>
             ) : null}

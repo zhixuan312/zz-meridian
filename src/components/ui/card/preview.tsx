@@ -25,7 +25,7 @@ export default function CardPreview() {
               <p className="t-caption mt-2">Resets on 1 November</p>
             </CardBody>
             <CardFooter>
-              <a className="row-link inline-flex items-center gap-1 font-medium text-ink" href="#">Billing <ArrowUpRight className="size-3.5" /></a>
+              <a className="row-link inline-flex items-center gap-1 font-medium text-ink hover:text-accent-ink" href="#">Billing <ArrowUpRight className="size-3.5" /></a>
             </CardFooter>
           </Card>
         </Plane>

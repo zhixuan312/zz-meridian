@@ -294,7 +294,7 @@ export function DataTable<R>({
                       const role = roleOf(c);
                       // The title is the row's link wherever it is shown, phone included: the whole card takes the
                       // pointer too (the row's own click), but the link is what a keyboard and a screen reader follow.
-                      const content = c === titleColumn && href ? <Link href={href} className="row-link">{c.cell(r)}</Link> : c.cell(r);
+                      const content = c === titleColumn && href ? <Link href={href}>{c.cell(r)}</Link> : c.cell(r);
                       return (
                         <td key={c.key} data-mobile={role} data-num={c.numeric ? 'num' : c.align === 'right' ? 'true' : undefined} className={cellClass(c) || undefined}>
                           {/* A phone may want other words for the same cell — "Used 1 min ago", not "1 min ago" — so
