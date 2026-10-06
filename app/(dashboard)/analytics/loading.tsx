@@ -16,7 +16,7 @@ export function AnalyticsSkeleton() {
 /** Analytics on its way: the heatmap, two breakdowns, two trends and the endpoint table. */
 export default function AnalyticsLoading() {
   return (
-    <LoadingPage name="analytics">
+    <LoadingPage name="analytics" title="Analytics">
       <AnalyticsSkeleton />
     </LoadingPage>
   );

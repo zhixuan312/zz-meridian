@@ -45,7 +45,7 @@ export function OverviewSkeleton() {
 /** Overview on its way: the featured figure beside three tiles, two cards of rows, and the activity feed. */
 export default function OverviewLoading() {
   return (
-    <LoadingPage name="overview">
+    <LoadingPage name="overview" title="Overview">
       <OverviewSkeleton />
     </LoadingPage>
   );

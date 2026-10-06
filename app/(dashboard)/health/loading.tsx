@@ -6,7 +6,7 @@ import { LoadingPage } from '../_loading';
 /** Health on its way: the uptime figure with its service grid, the service list and the past incidents. */
 export default function HealthLoading() {
   return (
-    <LoadingPage name="health">
+    <LoadingPage name="health" title="Health">
       <Row split="2/3">
         <Card className="min-h-[29rem] gap-4 p-(--card-pad)">
           <Skeleton className="h-2.5 w-48" />

@@ -19,7 +19,9 @@
     "/system": 670818,
     "/system/[section]/[id]": 703450,
     "/system/preview/[section]/[card]": 605314,
+    "/system/start/[id]": 648438,
     "/system/states/error": 683704,
-    "/system/states/loading": 676053
+    "/system/states/loading": 676053,
+    "/system/system/[id]": 648438
   }
 }
