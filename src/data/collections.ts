@@ -85,10 +85,14 @@ export const requests: Collection<RequestRecord, 'id'> = arrayCollection({
     region: z.string(),
     bytes: z.number(),
     model: z.string().nullable(),
+    replayOf: z.string().nullable().default(null),
   }),
   derived: ['statusClass', 'search'],
+  derive: (r) => ({ statusClass: statusClass(Number(r.status)), search: `${r.id} ${r.route} ${r.customer}`.toLowerCase() }),
   rows: REQUESTS.map((r) => ({ ...r, statusClass: statusClass(r.status), search: `${r.id} ${r.route} ${r.customer}`.toLowerCase() })),
-  allow: [],
+  // A replay is the one write: a person sending a failed request again from its page, never the assistant.
+  allow: ['create'],
+  pageOnly: ['create'],
 });
 
 export const collections: AnyCollection[] = [members, keys, requests];

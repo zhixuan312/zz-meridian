@@ -124,6 +124,8 @@ export function arrayCollection<T extends Record<string, unknown>, K extends key
   description: string;
   fields: z.ZodObject;
   derived?: (keyof T & string)[];
+  /** Works out the `derived` fields of a row from the rest; run on every created and changed row, never written by a caller. */
+  derive?: (row: Record<string, unknown>) => Partial<T>;
   key: K;
   title: (row: T) => string;
   rows: T[];
@@ -197,6 +199,7 @@ export function arrayCollection<T extends Record<string, unknown>, K extends key
   if (allow.includes('create')) {
     c.create = async (input) => {
       const row = { ...def.fields.parse(input), [key]: `${name}_${store().next++}` } as unknown as T;
+      Object.assign(row, def.derive?.(row));
       rows().push(row);
       emit();
       return copy(row);
@@ -206,7 +209,7 @@ export function arrayCollection<T extends Record<string, unknown>, K extends key
     c.update = async (ids, patch) => {
       const set = patchOf(def.fields).parse(patch);
       const hit = pick(ids);
-      for (const r of hit) Object.assign(r, set);
+      for (const r of hit) Object.assign(r, set, def.derive?.({ ...r, ...set }));
       emit();
       return copy(hit);
     };

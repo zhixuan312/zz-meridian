@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { ArrowRight, Copy, Link2, RotateCw, ShieldBan, Terminal } from 'lucide-react';
 import { PageFrame, Row, Stack } from '@/components/base/shell';
@@ -68,10 +69,18 @@ function Code({ body, label }: { body: string; label: string }) {
   );
 }
 
-export function RequestView({ request: r, trace, payloads, now }: { request: RequestRow; trace: Span[]; payloads: { request: string | null; response: string }; now: string }) {
+/** `replay` is the page's Server Action: it sends the request again and answers with the new request, or why not. */
+export function RequestView({ request: r, trace, payloads, now, replay }: { request: RequestRow; trace: Span[]; payloads: { request: string | null; response: string }; now: string; replay: (id: string) => Promise<{ ok: true; id: string; status: number } | { ok: false; error: string }> }) {
   const router = useRouter();
   const usage = usageOf(r);
   const failed = r.status >= 500 || r.status === 429;
+  const [replaying, startReplay] = useTransition();
+  const sendAgain = () => startReplay(async () => {
+    const result = await replay(r.id);
+    if (!result.ok) return toast({ tone: 'critical', title: 'Not replayed', description: result.error });
+    router.refresh();
+    toast({ tone: 'positive', title: `Replayed: ${result.status} ${STATUS_TEXT[result.status] ?? ''}`.trim(), description: `${r.method} ${r.route} ran again as ${result.id}.`, action: { label: 'Open', onClick: () => router.push(`/requests/${result.id}`) } });
+  });
   return (
     <PageFrame
       {...detailHead({
@@ -88,7 +97,7 @@ export function RequestView({ request: r, trace, payloads, now }: { request: Req
         primary: (
           <>
             <Button icon={<Terminal />} onClick={() => { void navigator.clipboard?.writeText(curlOf(r, payloads.request)); toast({ tone: 'positive', title: 'cURL command copied' }); }}>Copy as cURL</Button>
-            {failed ? <Button variant="primary" icon={<RotateCw />} onClick={() => toast({ tone: 'positive', title: 'Replay queued', description: `${r.method} ${r.route} will run again${payloads.request ? ' with the same body' : ''}.` })}>Replay</Button> : null}
+            {failed ? <Button variant="primary" icon={<RotateCw />} busy={replaying} onClick={sendAgain}>Replay</Button> : null}
           </>
         ),
         more: [
@@ -112,7 +121,7 @@ export function RequestView({ request: r, trace, payloads, now }: { request: Req
                   { label: 'Response size', value: formatBytes(r.bytes) },
                   { label: 'Customer', value: <Link href={`/requests?q=${encodeURIComponent(r.customer)}`} className="link">{r.customer}</Link> },
                   { label: 'Region', value: r.region, mono: true },
-                  { label: 'API key', value: 'Production backend' },
+                  ...(r.replayOf ? [{ label: 'Replay of', value: <Link href={`/requests/${r.replayOf}`} className="link font-mono text-xs">{r.replayOf}</Link> }] : []),
                   ...(r.model
                     ? [
                         { label: 'Model', value: r.model, mono: true },

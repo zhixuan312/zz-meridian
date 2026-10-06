@@ -128,6 +128,8 @@ const REGION_IDS = REGIONS.map((r) => r.label);
 export type RequestRow = {
   id: string; at: string; method: string; route: string; status: number; latency: number;
   customer: string; region: string; bytes: number;
+  /** The request this one replays, when a person sent a failed request again from its page. */
+  replayOf?: string | null;
   /** The model that served it: only /v1/messages and /v1/embeddings call one. */
   model: string | null;
 };

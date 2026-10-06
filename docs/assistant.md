@@ -93,7 +93,7 @@ Add it to `collections`. For a real store, write the same `Collection` yourself:
 
 Two fields on a collection keep the assistant in bounds:
 
-- `pageOnly`: operations only a page may perform. The assistant never gets a tool for them. In the sample, creating an API key is `pageOnly`, because the secret is shown once, on the page.
+- `pageOnly`: operations only a page may perform. The assistant never gets a tool for them. In the sample, creating an API key is `pageOnly`, because the secret is shown once, on the page, and so is replaying a request, a person's action on its page.
 - `hidden`: fields only a page may see. They are left out of every tool's input and of every query result. The sample hides a key's `secret`.
 
 Per collection the assistant gets `query_<name>`, and `create_<name>`, `update_<name>` and `remove_<name>` for what is allowed and not `pageOnly`. A query takes `where` conditions (`eq`, `ne`, `gt`, `lt`, `contains`, `in`), a `sort` and a `limit`. A field the collection does not have, or hides, is rejected, and a field with no value matches only `ne`. `arrayCollection` parses what is created or changed with the collection's `fields`, so the schema is where a record's rules live (the sample's members need a name and a valid email).

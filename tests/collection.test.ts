@@ -62,6 +62,18 @@ describe('changes', () => {
     expect((await c.query({})).total).toBe(4);
   });
 
+  test('a created row carries the fields the collection derives from it', async () => {
+    const c = arrayCollection({
+      name: `derived${++n}`, label: 'People', description: 'd', key: 'id', title: (r: Person & { initial: string }) => r.name,
+      fields: z.object({ name: z.string(), team: z.enum(['Support', 'Sales']), seats: z.number(), lastActive: z.string().nullable() }),
+      derived: ['initial'], derive: (r) => ({ initial: String(r.name).slice(0, 1) }),
+      rows: [], allow: ['create'],
+    });
+    const row = await c.create!({ name: 'Jin Park', team: 'Sales', seats: 1, lastActive: null });
+    expect(row.initial).toBe('J');
+    expect((await c.query({ where: [{ field: 'initial', op: 'eq', value: 'J' }] })).total).toBe(1);
+  });
+
   test('update and remove are all-or-nothing', async () => {
     const c = people();
     await expect(c.update!(['p_1', 'nope'], { team: 'Sales' })).rejects.toThrow(/nope/);

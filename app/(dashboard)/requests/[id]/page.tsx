@@ -2,6 +2,7 @@ import { read } from '@/data/read';
 import { FEATURED_REQUEST_IDS, traceOf, payloadsOf, type RequestRow } from '@/data/sample';
 import { MissingPage } from '@/views/missing-page';
 import { RequestView } from '@/views/request';
+import { replayRequest } from './actions';
 
 export function generateStaticParams() {
   return FEATURED_REQUEST_IDS.map((id) => ({ id }));
@@ -22,5 +23,5 @@ export default async function RequestPage({ params }: { params: Promise<{ id: st
   const { request: r, observedAt } = await byId(id);
   // Rendered here rather than thrown, so the screen is in the first HTML (see MissingPage).
   if (!r) return <MissingPage />;
-  return <RequestView request={r} trace={traceOf(r)} payloads={payloadsOf(r)} now={observedAt} />;
+  return <RequestView request={r} trace={traceOf(r)} payloads={payloadsOf(r)} now={observedAt} replay={replayRequest} />;
 }

@@ -63,7 +63,7 @@ const DEMO: AccessScope = { tenantId: 'demo', subjectId: 'owner', authorizationK
 const DEMO_COLLECTIONS: Record<string, { collection: AnyCollection; ops: readonly Operation[] }> = {
   members: { collection: members, ops: ['read', 'create', 'update', 'remove'] },
   keys: { collection: keys, ops: ['read', 'create', 'remove'] },
-  requests: { collection: requests, ops: ['read'] },
+  requests: { collection: requests, ops: ['read', 'create'] },
 };
 
 export const { resolveAccess, collectionFor, can } = accessFrom({
