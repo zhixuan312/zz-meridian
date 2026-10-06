@@ -61,7 +61,7 @@ gh run watch "$(gh run list --workflow=release.yml -L1 --json databaseId -q '.[0
 One run: `gates` fails before anything is published, so a dry run first would only repeat it. `-f dry_run=true` stays
 for changing the workflow itself.
 
-`gates` installs and runs the template's code and never holds a credential: the default verify once from a clean
+`gates` installs and runs the template's code and never holds a credential: the package's own tests (`tests/cli-*`), then the default verify once from a clean
 build, within 120 s on the 4-CPU runner, then the consumer smoke from the tarball. `publish` installs nothing, checks
 that tarball's hash, publishes it with `npm` (pnpm does not do the OIDC exchange) and `--provenance`, and waits for
 the registry. `release` runs `npx zz-meridian@<v> --version`, checks the registry serves the tested tarball (equal

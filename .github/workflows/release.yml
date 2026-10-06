@@ -148,6 +148,10 @@ jobs:
           cache: pnpm
 
       - run: pnpm install --frozen-lockfile
+      # The zz-meridian package's own tests (tests/cli-*): no adopted or created project has them, so the timed default
+      # verify below leaves them out, and they run here, once.
+      - name: The package's own tests
+        run: pnpm exec vitest run tests/cli-
       # This runner is the reference profile for AC-4.8; its log, with the machine line, is the release's evidence.
       - name: The default verify, from a clean build, within 120 s
         run: node cli/scripts/release-check.ts --limit 120

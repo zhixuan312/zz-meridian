@@ -340,7 +340,8 @@ let ok = true;
 
 // 1. The gate, once.
 gates++;
-step('gate', 'node', ['scripts/gate.ts']);
+// The zz-meridian package's own tests (tests/cli-*) are not the project's: no adopted or created project has them.
+step('gate', 'node', ['scripts/gate.ts', '--without-cli-tests']);
 
 // A product whose pages call a live API is checked against its fake (scripts/verify.config.ts): the presses approve,
 // revoke and delete whatever a page offers. The fake starts first, because its address goes into the build.

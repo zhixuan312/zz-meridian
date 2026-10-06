@@ -5,6 +5,8 @@ vi.mock('next/navigation', () => ({ usePathname: () => '/members', useRouter: ()
 const toasts = vi.hoisted(() => [] as { tone: string; title: string; description?: string }[]);
 vi.mock('@/components/ui/toast', () => ({ toast: (t: { tone: string; title: string; description?: string }) => { toasts.push(t); } }));
 vi.stubGlobal('IntersectionObserver', class { observe() {} unobserve() {} disconnect() {} });
+// Each case renders a whole view and drives its sheet: on a loaded 4-CPU runner one can pass the 5 s default.
+vi.setConfig({ testTimeout: 15_000 });
 
 import { KeysView } from '@/views/keys';
 import { MembersView, type Result } from '@/views/members';

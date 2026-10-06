@@ -98,7 +98,7 @@ Write the status on the line under the title: `Status: beta`.
 
 1. Add an entry to `CHANGELOG.md` under a new version. Semver: a removed or renamed token, prop or card is major; a new card, token or variant is minor; a corrected value is a patch. Say in one line what breaks and what to do instead.
 2. `node cli/scripts/set-version.ts <v>`, then `pnpm gate` until it passes. Nothing else runs locally: the release workflow's gates are the proof.
-3. Commit and push to `master`, then dispatch once: `gh workflow run release.yml -f version=<v>`. The workflow gates on one timed default `verify` and the consumer smoke from the tarball, publishes with provenance, checks the registry's tarball is the tested one, and tags last. `verify --full --perf` runs weekly (`.github/workflows/weekly.yml`), not here.
+3. Commit and push to `master`, then dispatch once: `gh workflow run release.yml -f version=<v>`. The workflow gates on the package's own tests (`tests/cli-*`), one timed default `verify` (whose gate leaves those tests out) and the consumer smoke from the tarball, publishes with provenance, checks the registry's tarball is the tested one, and tags last. `verify --full --perf` runs weekly (`.github/workflows/weekly.yml`), not here.
 
 The `/release` command (`.claude/commands/release.md`) is this procedure as a runbook.
 

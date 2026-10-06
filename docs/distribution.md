@@ -202,9 +202,10 @@ Modelled on the release pipeline of the owner's earlier packages, one package in
 
 1. **Dispatch**: `gh workflow run release.yml -f version=<v> [-f dry_run=true]`, from `master`. The version must equal
    `cli/package.json`'s and the tag must be unused.
-2. **Gates** (ubuntu-24.04, 4 CPUs, the reference profile), each run once: the template's default `verify` from a clean
-   `.next` through `cli/scripts/release-check.ts`, within 120 s and with its browser smoke (the gate and its unit tests
-   run inside it), and the consumer smoke from the built tarball (step 4). The full, perf and recovery suites are never
+2. **Gates** (ubuntu-24.04, 4 CPUs, the reference profile), each run once: the package's own tests (`tests/cli-*`, which
+   no adopted or created project has); the template's default `verify` from a clean `.next` through
+   `cli/scripts/release-check.ts`, within 120 s and with its browser smoke (the gate and the template's unit tests run
+   inside it); and the consumer smoke from the built tarball (step 4). The full, perf and recovery suites are never
    run here: they run weekly (below).
 3. **Pack and assert, before anything is irreversible**: `npm pack` in `cli/`, then on the tarball: the bin has its
    `#!/usr/bin/env node` line; `payload/skills/zz-meridian/SKILL.md` and its references are there; the component count
