@@ -13,7 +13,18 @@ export const PAYLOAD = path.resolve(path.dirname(fileURLToPath(import.meta.url))
 
 export const VERSION: string = JSON.parse(fs.readFileSync(path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', 'package.json'), 'utf8')).version;
 
-/** Every file under a payload folder, as posix paths relative to the payload. Symbolic links are never followed. */
+/**
+ * npm renames a `.gitignore` inside an installed package to `.npmignore`, so the payload carries the template's as
+ * `gitignore`. `shippedPath` is the name a project path ships under; `projectPath` reads one back, and also reads a
+ * `.gitignore` as itself, which is how releases before 0.6.1 carry it.
+ */
+export const shippedPath = (rel: string) => (rel === '.gitignore' ? 'gitignore' : rel);
+export const projectPath = (rel: string) => (rel === 'gitignore' ? '.gitignore' : rel);
+
+/** A payload file's bytes, by its project path. */
+export const payloadBytes = (rel: string) => fs.readFileSync(path.join(PAYLOAD, shippedPath(rel)));
+
+/** Every file under a payload folder, as project paths. Symbolic links are never followed. */
 export function payloadFiles(dir = ''): string[] {
   const out: string[] = [];
   const walk = (rel: string) => {
@@ -21,14 +32,14 @@ export function payloadFiles(dir = ''): string[] {
       const p = rel ? `${rel}/${e.name}` : e.name;
       if (e.isSymbolicLink()) continue;
       if (e.isDirectory()) walk(p);
-      else if (e.isFile()) out.push(p);
+      else if (e.isFile()) out.push(projectPath(p));
     }
   };
   if (fs.existsSync(path.join(PAYLOAD, dir))) walk(dir);
   return out.sort();
 }
 
-export const readPayload = (rel: string) => fs.readFileSync(path.join(PAYLOAD, rel), 'utf8');
+export const readPayload = (rel: string) => payloadBytes(rel).toString('utf8');
 
 /**
  * A path inside `root`; anything that would resolve outside it is refused: `..`, an absolute path, or a symbolic link
@@ -123,7 +134,7 @@ export function installSkill(root: string, record?: Record<string, string>) {
   for (const base of ['.agents/skills/zz-meridian', '.claude/skills/zz-meridian']) {
     for (const f of files) {
       const rel = `${base}/${f.slice('skills/zz-meridian/'.length)}`;
-      const content = fs.readFileSync(path.join(PAYLOAD, f));
+      const content = payloadBytes(f);
       writeIn(root, rel, content);
       if (record) record[rel] = sha256(content);
     }

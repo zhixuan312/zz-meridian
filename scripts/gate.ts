@@ -36,7 +36,8 @@ for (const [name, [cmd, ...args]] of STEPS) {
   const ok = r.status === 0;
   console.log(`${ok ? 'ok  ' : 'FAIL'} ${name} (${((Date.now() - t) / 1000).toFixed(1)}s)`);
   if (!ok) {
-    console.log((r.stdout + r.stderr).trim().split('\n').slice(-40).join('\n'));
+    // A tool that could not start (not installed) has no output, only the error.
+    console.log(`${r.stdout ?? ''}${r.stderr ?? ''}${r.error ? `${cmd}: ${r.error.message}` : ''}`.trim().split('\n').slice(-40).join('\n'));
     process.exit(1);
   }
 }

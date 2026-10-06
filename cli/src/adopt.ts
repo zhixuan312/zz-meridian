@@ -9,7 +9,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import {
-  PAYLOAD, VERSION, brandArgs, effectiveBrand, inside, installSkill, packageManager, payloadFiles, readJsonc, readPayload, relativeImports,
+  VERSION, brandArgs, effectiveBrand, inside, installSkill, packageManager, payloadBytes, payloadFiles, readJsonc, readPayload, relativeImports,
   run, runTool, sha256, writeIn, writeManifest,
 } from './files.js';
 import { BRIEF_TEMPLATE, managedBlock, upsertManagedBlock } from './context.js';
@@ -159,7 +159,7 @@ https://github.com/zhixuan312/zz-meridian/blob/master/skills/zz-meridian/referen
   };
 
   for (const rel of set) {
-    const raw = fs.readFileSync(path.join(PAYLOAD, rel));
+    const raw = payloadBytes(rel);
     own(rel, TS.test(rel) ? exactImports(rel, raw.toString('utf8'), known) : raw);
   }
   own('src/app.config.ts', exactImports('src/app.config.ts', appConfig(routes(root, dir)), known));

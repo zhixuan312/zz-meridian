@@ -10,6 +10,7 @@
 import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
+import { shippedPath } from '../src/files.ts';
 
 const ROOT = path.resolve(import.meta.dirname, '../..');
 const OUT = path.join(ROOT, 'cli/payload');
@@ -47,7 +48,7 @@ if (import.meta.main) {
     const st = fs.lstatSync(src, { throwIfNoEntry: false });
     // A deleted file still in the index, a symbolic link or anything but a plain file is not shipped.
     if (!st?.isFile()) continue;
-    const dst = path.join(OUT, f);
+    const dst = path.join(OUT, shippedPath(f));
     fs.mkdirSync(path.dirname(dst), { recursive: true });
     fs.copyFileSync(src, dst);
     n++;

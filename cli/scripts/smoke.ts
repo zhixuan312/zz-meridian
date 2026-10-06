@@ -704,6 +704,8 @@ if (args.includes('--create')) {
   const text = (f: string) => read(dir, f);
   check(text('AGENTS.md').includes(managedBlock(VERSION, pm)) && text('AGENTS.md').includes('# Built on ZZ Meridian'), `AGENTS.md holds the managed block, written for ${pm}`);
   check(text('docs/brief.md') === BRIEF_TEMPLATE, 'docs/brief.md is the template');
+  // npm renames a .gitignore inside an installed package to .npmignore: the payload ships it as gitignore.
+  check(text('.gitignore') === read(ROOT, '.gitignore') && !fs.existsSync(path.join(dir, '.npmignore')), "the new dashboard has the template's .gitignore, and no .npmignore");
   check(text('next.config.ts').includes("'/api/assistant': ['./docs/brief.md']"), "next.config.ts still traces docs/brief.md for /api/assistant");
   const createOffenders = unmanaged(JSON.parse(text('.meridian/manifest.json')));
   check(JSON.parse(text('.meridian/manifest.json')).version === VERSION && createOffenders.length === 0, 'the create manifest is the running version and holds only managed paths', createOffenders.join('\n'));

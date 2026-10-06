@@ -7,7 +7,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { managedPaths } from './ownership.js';
 import { BRIEF_TEMPLATE, managedBlock, upsertManagedBlock } from './context.js';
-import { PAYLOAD, VERSION, brandArgs, effectiveBrand, hasCommand, inside, installSkill, payloadFiles, run, sha256, writeIn, writeManifest } from './files.js';
+import { VERSION, brandArgs, effectiveBrand, hasCommand, inside, installSkill, payloadBytes, payloadFiles, run, sha256, writeIn, writeManifest } from './files.js';
 
 export type CreateOptions = { dir: string; brand: Record<string, string>; install: boolean };
 
@@ -20,7 +20,7 @@ export function create(o: CreateOptions): number {
 
   for (const rel of payloadFiles()) {
     if (rel.startsWith('skills/')) continue;
-    writeIn(root, rel, fs.readFileSync(path.join(PAYLOAD, rel)));
+    writeIn(root, rel, payloadBytes(rel));
   }
 
   const name = brand.name ?? path.basename(root).replace(/[-_]+/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());

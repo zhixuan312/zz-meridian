@@ -111,7 +111,8 @@ jobs:
           done
           CARDS=$(grep -cE '^package/payload/src/components/[a-z]+/[a-z0-9-]+/index\.tsx$' /tmp/list || true)
           [ "$CARDS" -ge 60 ] || { echo "::error::only $CARDS component folders in the payload"; exit 1; }
-          if grep -P '^package/(node_modules|test|scripts|src)/|^package/payload/(cli|\.github|\.claude|\.agents|node_modules|out|\.next)/|/\.env($|\.(?!example$))' /tmp/list; then
+          # A payload .gitignore is renamed .npmignore when npm installs the package: it ships as payload/gitignore.
+          if grep -P '^package/(node_modules|test|scripts|src)/|^package/payload/(cli|\.github|\.claude|\.agents|node_modules|out|\.next)/|/\.env($|\.(?!example$))|^package/payload/(.*/)?\.gitignore$' /tmp/list; then
             echo "::error::the tarball holds a path that must never ship (above)"; exit 1
           fi
           tar -xzOf "$T" package/package.json > /tmp/pkg.json

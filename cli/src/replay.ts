@@ -7,7 +7,7 @@ import { createHash } from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { brandArgs, inside, run, sha256, type Manifest } from './files.js';
+import { brandArgs, inside, projectPath, run, sha256, type Manifest } from './files.js';
 import type { Release } from './session.js';
 
 /** The package folder of the running CLI: the parent of its `dist/`. */
@@ -160,7 +160,7 @@ export function replay(pkgRoot: string, route: 'adopt' | 'create', brand: Record
   return replayTree(pkgRoot, route, brand, scratch, moduleType).hashes;
 }
 
-/** Every regular file under `<release>/payload` as posix paths, symbolic links never followed. */
+/** Every regular file under `<release>/payload` as posix project paths, symbolic links never followed. */
 export function payloadList(release: string): string[] {
   const base = path.join(release, 'payload');
   const out: string[] = [];
@@ -168,7 +168,7 @@ export function payloadList(release: string): string[] {
     for (const e of fs.readdirSync(path.join(base, rel), { withFileTypes: true })) {
       const p = rel ? `${rel}/${e.name}` : e.name;
       if (e.isDirectory()) walk(p);
-      else if (e.isFile()) out.push(p);
+      else if (e.isFile()) out.push(projectPath(p));
     }
   };
   if (fs.existsSync(base)) walk('');
