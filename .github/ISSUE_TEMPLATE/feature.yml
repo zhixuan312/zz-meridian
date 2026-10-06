@@ -1,0 +1,35 @@
+name: Feature request
+description: Something Meridian should do, or do more easily.
+labels: [enhancement]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        **This issue is public. Leave out anything that identifies you, your organisation or your product:** names,
+        email addresses, URLs and hostnames, your data, schemas and field names, screenshots of your pages, and file
+        paths outside Meridian's own files. Describe what you need in general terms ("a list page that groups rows by
+        day"), not your product. Meridian collects nothing else from you; this form is the only way anything reaches us.
+  - type: input
+    id: versions
+    attributes:
+      label: Versions
+      description: Meridian (in `.meridian/manifest.json`) and Next.js.
+      placeholder: Meridian 0.6.1 · Next 16.3.8
+  - type: textarea
+    id: need
+    attributes:
+      label: What you needed
+      description: The job you were doing, and where Meridian had no answer or cost you a workaround.
+    validations:
+      required: true
+  - type: textarea
+    id: change
+    attributes:
+      label: The change you would make
+      description: A component, pattern, token, check, command or doc, and what it would do.
+    validations:
+      required: true
+  - type: textarea
+    id: instead
+    attributes:
+      label: What you did instead

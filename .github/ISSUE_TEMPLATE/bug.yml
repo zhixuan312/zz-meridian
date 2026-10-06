@@ -1,0 +1,50 @@
+name: Bug
+description: Something in Meridian did the wrong thing.
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        **This issue is public. Leave out anything that identifies you, your organisation or your product:** names,
+        email addresses, URLs and hostnames, your data, schemas and field names, screenshots of your pages, and file
+        paths outside Meridian's own files. Describe the problem with Meridian's own template or sample data instead
+        ("a Data table with 40 columns", not your table). Meridian collects nothing else from you; this form is the only
+        way anything reaches us.
+  - type: input
+    id: versions
+    attributes:
+      label: Versions
+      description: Meridian (in `.meridian/manifest.json`), Next.js and Node.
+      placeholder: Meridian 0.6.1 · Next 16.3.8 · Node 22.18
+    validations:
+      required: true
+  - type: dropdown
+    id: route
+    attributes:
+      label: How Meridian got into the project
+      options: [create, adopt, the template itself, not sure]
+    validations:
+      required: true
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened
+      description: Where in Meridian (the file, the command, the component or the route), and what it did.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What you expected
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: How to see it again
+      description: Steps in Meridian's own template or sample data, or a command and the output it printed.
+  - type: textarea
+    id: instead
+    attributes:
+      label: What you did instead
+      description: The workaround, if you found one.

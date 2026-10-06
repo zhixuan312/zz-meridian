@@ -4,12 +4,16 @@ Status: v1 (`create`, `adopt`, `skill`) shipped in 0.2.0 (decision 0009). v2 (`u
 
 ## The one sentence
 
-A team gives its coding agent this, from its frontend's folder:
+A team gives its coding agent this, with what it wants in its own words at the end:
 
-> Run `npx zz-meridian@latest adopt` here, then follow the zz-meridian skill it installs: keep our data layer and
-> routes, restyle every page with Meridian's components and tokens, and run pnpm verify until it passes.
+> Run `npx zz-meridian@latest skill --global`, then follow the zz-meridian skill it installs to: <what you want>.
 
-For a new dashboard: `npx zz-meridian@latest create <dir>`, then the same skill.
+The sentence names no command, because people do not: "change this product into our dashboard", "a new one based on
+this folder, in another folder" and "build an orders console" all ask for a dashboard on Meridian and differ only in
+which folder holds it. The skill's "Choose the route" table maps what was said, and what is in the folder, to `adopt`
+(this Next.js App Router project, in place), `create` (a new folder; a folder named as the source is read, never
+written) or `update` and `brand` (a project that already has Meridian), and says the route before the first command.
+An earlier sentence named `adopt`, the wrong command for every request for a new dashboard.
 
 The split follows what each part is good at. The package does the settled work, the same way every time, and proves it
 built: what to copy, which dependencies to merge, the alias, the stylesheet, the brand. The agent does the judgement:

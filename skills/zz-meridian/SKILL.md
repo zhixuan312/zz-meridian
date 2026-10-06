@@ -38,6 +38,35 @@ These hold in every project, however it started, and nothing below overrides the
   API or read a database names a `fakeApi` (or says `noLiveApi`) in `scripts/verify.config.ts` first
   (`references/existing-project.md`, step 5).
 
+## Choose the route before anything else
+
+Whatever the words, the person wants one thing: a dashboard on Meridian. What you decide is **where its code lives**
+and **which folder you may write to**, and that picks one of four commands. People rarely name the command, so read
+the intent, not the verb: "change this product into our new dashboard", "redo this with Meridian", "make a new one
+based on this folder in another folder" and "build me an orders console" are all requests for a dashboard; they
+differ only in which folder ends up holding it.
+
+| What is true | The route | The command |
+|---|---|---|
+| `optional:.meridian/manifest.json` exists in the folder they point at | Already on Meridian: update, rebrand or keep building | `update` or `brand` (the next section), or straight to step 5 |
+| They want **this** project changed in place ("restyle this", "change this product into our dashboard", "make our admin look professional"), and it is Next.js with the App Router | Adopt, here | `npx zz-meridian@latest adopt` (`references/existing-project.md`, Route A) |
+| They want this project changed, and it is another stack (Vite, CRA, Remix, Vue, a static page) | A new project next to it, ported from it | `create <sibling folder>` (`references/existing-project.md`, Routes A2, B, C) |
+| They want a **new** dashboard: in another folder, "based on" or "from" this folder, a schema, a CSV, a spec or nothing | Create, elsewhere; what they pointed at is input you read, never a folder you write | `npx zz-meridian@latest create <new folder>` |
+
+Rules that settle the hard cases:
+
+- **The folder they name to read from is not the folder you write to unless they said "this", "here" or "in place".**
+  "Based on this folder", "use this as the source", "copy what this does" mean: read it, create next to it, leave it
+  untouched.
+- **`create` writes only into a folder that does not exist or is empty**, and **`adopt` changes the project it runs in**.
+  Never run `adopt` in a folder they asked you to leave alone, and never `create` inside an existing project.
+- **Two routes fit and nothing decides between them** (an existing Next.js app here and "build me a dashboard for
+  this"): ask once, with in place (`adopt`) as the recommended option when they said "this" or "our", and a new folder
+  (`create`) when they said "new" or "another". With no way to ask, take that recommendation and say so in the
+  hand-over.
+- **Say the route in one sentence before the first command**: "This is a Next.js App Router project you want changed
+  in place, so I am running `adopt` here." A wrong route is cheap to stop before the command and costly after it.
+
 ## Updating or rebranding a project that already has Meridian
 
 When `optional:.meridian/manifest.json` exists and the person asks to update Meridian, or to change the brand, do not
@@ -70,8 +99,8 @@ Before asking anything, look at what you already have:
 Ask in a single round (AskUserQuestion when available), only the questions your homework could not answer, and offer
 your draft as the recommended option so the person can accept it in one click. Usually that is:
 
-1. **New project or this one?** Only when a frontend already exists here: create a new Meridian project next to it, or
-   bring Meridian into the existing one (`references/existing-project.md`).
+1. **New project or this one?** Only when "Choose the route" above left two routes open: create a new Meridian project
+   in another folder, or bring Meridian into the existing one (`references/existing-project.md`).
 2. **What it is and for whom.** The product name, who uses it, and the one question the home page must answer.
 3. **Pages.** Your drafted list, mapped to Meridian presets (Overview, list, detail, analytics, health, settings, sign-in).
 4. **Brand and surfaces.** A brand colour (a hex, or "no preference" for indigo), light or dark first (dark is the
@@ -230,49 +259,57 @@ Pages: <list, one line each, with what each answers>.
 Brand: <accent and how it was derived>. Surfaces: console, mobile<, MCP views: …>.
 Validation: pnpm verify passed; coverage line: <the line verify printed>.
 Next steps: replace the sample data in src/data/ with <their API>; run pnpm verify after every change.
-Feedback: <the issue URL from step 8, or "nothing to report">.
+Feedback: <the issue URL from step 8, "nothing to report", or "declined">.
 ```
 
 Attach or show the screenshots of the main pages in both themes. Say plainly what is sample data and what is not. If
 the Atlas stays, say that `/system` is the live specification and that `node scripts/brand.ts --no-atlas` removes it
 before the product goes public.
 
-## 8. Report back to Meridian
+## 8. Offer feedback to Meridian
 
-Every build teaches Meridian something. Before you finish, write down everything this run found about Meridian itself
-and file it as **one** GitHub issue on `zhixuan312/zz-meridian`, so the next person does not hit the same thing.
+Meridian collects nothing from the people who use it: no telemetry, no analytics, no account. A GitHub issue the person
+chooses to open is the only way anything reaches Meridian, so this step is an offer, never a requirement, and it
+happens only when the run found something about Meridian itself.
 
-Collect, from the whole session (not only the last step):
+Collect, from the whole session (not only the last step), and sort each finding into one of two kinds:
 
-- **Bugs**: a component, pattern, script, check or doc that did the wrong thing: a gate that failed on correct code, a
+- **Bug**: a component, pattern, script, check or doc that did the wrong thing: a gate that failed on correct code, a
   check that passed broken code, a component that clipped, overflowed or did nothing, a doc that sent you the wrong way.
-- **Improvements**: anything that worked but cost you a workaround, a second try, or a guess, and how it could be easier.
-- **Not covered**: what the product needed that Meridian has no answer for: a missing component, pattern, state, page
-  kind, surface rule, or a question this skill and the docs never answered.
+- **Feature request**: anything that worked but cost a workaround, a second try or a guess, and the change that would
+  have saved it; and what the product needed that Meridian has no answer for (a component, pattern, state, page kind,
+  surface rule, or a question this skill and the docs never answered).
 
-Each item gets what someone needs to act on it without asking you: what happened, where (`file:line`, the route, the
-command), how to see it again, and what you did instead. Leave out what is the person's own (their product name, data,
-URLs, credentials, screenshots of their pages); describe the shape of the problem with Meridian's sample instead.
+Each finding gets what someone needs to act on it without asking: what happened, where in Meridian (its `file:line`,
+the Meridian command, the Meridian route), how to see it again in Meridian's own template or sample data, and what you
+did instead.
 
-Draft it in this shape:
+**Nothing in it may identify the person, their organisation or their product.** Before showing a draft, remove:
+
+- the product's, company's, team's and people's names, email addresses and accounts;
+- their URLs, hostnames, IP addresses, API routes and environment variable values;
+- their data, records, schemas, field names and screenshots of their pages;
+- file paths outside Meridian's own files, and anything from `optional:docs/brief.md`.
+
+Describe the shape of the problem with Meridian's sample instead ("a Data table with 40 columns", not their table). If
+a finding cannot be told without one of these, leave it out.
+
+Draft one issue per kind, in the shape of Meridian's two issue forms, Bug and Feature request:
 
 ```
-Title: Field report: <one line on the most important finding>
+Title: <one line on the most important finding>
 
-Meridian <commit or version> · Next <version> · <what was built, in generic terms: "an orders console, 6 pages">
+Meridian <version from .meridian/manifest.json> · Next <version> · Route <adopt | create>
 
-## Bugs
-- <what, where, how to reproduce, what you did instead>
+## What happened
+- <finding: what, where in Meridian, how to see it again, what you did instead>
 
-## Improvements
-- <what cost time, and the change that would have saved it>
-
-## Not covered
-- <what was needed, and how you filled the gap>
+## What would fix it
+- <the change you would make to Meridian>
 ```
 
-Show the draft to the person and file it only when they agree: it is published under their account. File it with
-`gh issue create --repo zhixuan312/zz-meridian --title "<title>" --body-file <draft>`. Without `gh`, give them a link
-that opens the form filled in: `https://github.com/zhixuan312/zz-meridian/issues/new?title=<encoded title>&body=<encoded
-body>`. Put the issue's URL in the hand-over. If the run truly found nothing, say "nothing to report" rather than filing
-an empty issue.
+Show the draft to the person and ask whether to open it: it is published under their account, in public. Only on a
+yes, file it with `gh issue create --repo zhixuan312/zz-meridian --label bug|enhancement --title "<title>" --body-file
+<draft>`, or, without `gh`, give them `https://github.com/zhixuan312/zz-meridian/issues/new/choose` and the draft to
+paste. Put the issue's URL in the hand-over. When the run found nothing about Meridian, or they decline, say so in one
+line and file nothing.

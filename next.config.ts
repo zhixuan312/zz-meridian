@@ -1,5 +1,8 @@
 import type { NextConfig } from 'next';
 
+// Next.js's anonymous usage telemetry is off for `next dev` and `next build`; delete this line to send it.
+process.env.NEXT_TELEMETRY_DISABLED ??= '1';
+
 const config: NextConfig = {
   reactStrictMode: true,
   cacheComponents: true,

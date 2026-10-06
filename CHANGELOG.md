@@ -2,6 +2,14 @@
 
 Every release of ZZ Meridian, newest first. Versions follow semver: a removed or renamed token, prop or card is major; a new card, token or variant is minor; a corrected value is a patch. Each entry says what breaks and what to do instead.
 
+## [Unreleased]
+
+### Changed
+
+- **One sentence for every route, and the skill chooses the command.** The README's sentence is `Run npx zz-meridian@latest skill --global, then follow the zz-meridian skill it installs to: <what you want>`. The skill opens with "Choose the route": a table from what the person said and what is in the folder to `adopt` (this Next.js App Router project, in place), `create` (a new folder, reading any folder named as the source and never writing it) or `update` and `brand`, and it says the route before the first command. The old sentence named `adopt`, which is wrong for a new dashboard.
+- **Next.js telemetry is off.** The template's `next.config.ts` sets `NEXT_TELEMETRY_DISABLED` for `next dev` and `next build`, and Meridian's scripts set it for every `next` they run, an adopted project's included. Delete the line in `next.config.ts` to send it.
+- **Feedback is an offer, and it identifies no one.** The skill's last step drafts a Bug or a Feature request issue only when the run found something about Meridian, removes every name, address, URL, record, schema and path of the person's own, shows the draft, and files nothing without a yes. The repository has Bug and Feature request issue forms that say the same, and no blank issues. The README and the npm page say what reaches the network (npm, the font download at build, what the team configures) and that an issue is the only way anything reaches Meridian.
+
 ## [0.6.1] · 2026-10-06
 
 ### Fixed

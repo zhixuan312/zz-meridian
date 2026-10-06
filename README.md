@@ -77,28 +77,46 @@ Dark is the default, written on `:root`; the light theme follows the operating s
 | `.github/workflows/release.yml` | The release, each check once: a timed default verify and the consumer path from the tarball (every published origin updated), then npm with provenance, the registry's bytes and provenance checked, then the tag (`.claude/commands/release.md`) |
 | `.github/workflows/weekly.yml` | Weekly, never at release: `verify --full --perf` (perf a report) and the consumer smoke's recovery and failure cases; nothing waits on it |
 
-## Bring Meridian into your dashboard, in one sentence
+## Get a dashboard on Meridian, in one sentence
 
-Give your coding agent (Codex, Claude Code, or any agent that can run a shell) this, from your frontend's folder:
+Give your coding agent (Codex, Claude Code, or any agent that can run a shell) this, with what you want in your own
+words at the end:
 
-> Run `npx zz-meridian@latest adopt` here, then follow the zz-meridian skill it installs: keep our data layer and routes, restyle every page with Meridian's components and tokens, and run pnpm verify until it passes.
+> Run `npx zz-meridian@latest skill --global`, then follow the zz-meridian skill it installs to: <what you want>.
 
-`adopt` does the settled part, the same way every time, and proves it type checks: it copies the components, tokens
-and gates in, merges the dependencies, brands it, adds Meridian's managed block to your `AGENTS.md` (your own text there is kept byte
-for byte) and an empty `docs/brief.md` for your product's own context, and installs the skill. The agent does the judgement: rebuilding each page on Meridian, and running
-`pnpm verify` until the project meets the standard (and `pnpm verify --full` after a change to shared components, the shell or
-data). It needs Node 22.18+, and Google Chrome for the browser checks. If your pages call a live API, say so in the sentence:
-`verify --full` presses every control, Delete included, so the agent builds a fake API first. For a new dashboard: `npx zz-meridian@latest create <dir>`. To move a project to a newer
-Meridian, run `npx zz-meridian@latest update --dry-run`, then follow the skill's `references/update.md`. The package
-(`cli/`, decision 0009) copies files and nothing depends on it afterwards.
+You do not choose between the package's commands; the skill does, from what you said and what is in the folder, and
+names the route before it runs anything:
 
-## Install the skill once, for every project
+| You say | The skill |
+|---|---|
+| "Make this admin panel look professional", "change this product into our new dashboard" | `adopt` here, keeping your data layer and routes, when it is Next.js with the App Router; otherwise `create` next to it and port your pages |
+| "Build an ops dashboard for our shipments", "turn this schema into a dashboard" | `create` in a new folder |
+| "Based on this folder, make a new dashboard in another folder" | `create` in that folder, reading this one and leaving it untouched |
+| "Update Meridian", "change our brand colour" | `update` or `brand`, in a project that already has Meridian |
 
-```sh
-npx zz-meridian@latest skill --global
-```
+`adopt` copies the components, tokens and gates in, merges the dependencies, brands it, adds Meridian's managed block to
+your `AGENTS.md` (your own text there is kept byte for byte) and an empty `docs/brief.md` for your product's own
+context, and installs the skill into the project. `create` writes a new, branded project with the same skill. The
+agent then does the judgement: building each page on Meridian, and running `pnpm verify` until the project meets the
+standard (`pnpm verify --full` after a change to shared components, the shell or data). It needs Node 22.18+, and
+Google Chrome for the browser checks. If your pages call a live API, say so in the sentence: `verify --full` presses
+every control, Delete included, so the agent builds a fake API first. The package (`cli/`, decision 0009) copies files
+and nothing depends on it afterwards; its commands are in `cli/README.md`.
 
-That puts the skill in `~/.agents/skills/zz-meridian` (Codex) and `~/.claude/skills/zz-meridian` (Claude Code). Then tell your agent what you need, in your own words: "build an ops dashboard for our shipments", "make this admin panel look professional", "turn this schema into a dashboard". The skill reads what you already have, asks only what it cannot find out, creates the project (or brings Meridian into yours) with the package, builds the pages, and runs `pnpm verify` until the project meets the standard.
+## Privacy and feedback
+
+Meridian takes nothing from you. The package, the template and the skill have no telemetry, no analytics and no
+account, and the template turns off Next.js's own anonymous telemetry (`next.config.ts`; Meridian's scripts turn it off
+for every `next` they run). What reaches the network is what you would expect: npm, when you run `npx` and when `update`
+reads releases from it; Google Fonts, which `next/font` downloads the typefaces from at build time; and whatever you
+configure yourself, such as the assistant's model provider.
+
+The one way to tell us anything is a [GitHub issue](https://github.com/zhixuan312/zz-meridian/issues/new/choose): a
+**Bug** (something in Meridian did the wrong thing) or a **Feature request** (something it should do, or do more
+easily). Issues are public, so leave out anything that identifies you, your organisation or your product: names,
+email addresses, URLs, your data and schemas, screenshots of your pages. Describe the problem with Meridian's own
+template or sample data instead. At the end of a build the skill may offer to draft one with all of that removed; it
+files nothing unless you say yes.
 
 ## Commands
 

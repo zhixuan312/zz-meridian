@@ -6,10 +6,15 @@ dashboard depends on it afterwards.
 
 ## The one sentence
 
-Give your coding agent (Codex, Claude Code, or any agent that can run a shell) this, from your frontend's folder:
+Give your coding agent (Codex, Claude Code, or any agent that can run a shell) this, with what you want in your own
+words at the end:
 
-> Run `npx zz-meridian@latest adopt` here, then follow the zz-meridian skill it installs: keep our data layer and
-> routes, restyle every page with Meridian's components and tokens, and run pnpm verify until it passes.
+> Run `npx zz-meridian@latest skill --global`, then follow the zz-meridian skill it installs to: <what you want>.
+
+The skill picks the command from what you said and what is in the folder, and names it before running anything:
+`adopt` to change this Next.js App Router project in place ("make this admin panel look professional"), `create` for a
+new dashboard in a new folder ("build an ops dashboard", "a new one based on this folder, in another folder"), and
+`update` or `brand` for a project that already has Meridian.
 
 ## Commands
 
@@ -71,6 +76,14 @@ It has no dependencies and no install scripts: running it executes only its own 
 sends nothing anywhere; the only network access is your package manager's install, which you can skip with
 `--no-install`. Every release is built and published by GitHub Actions with npm provenance, so the registry shows the
 commit and workflow each version came from.
+
+## Privacy and feedback
+
+The package collects nothing: no telemetry, no analytics, no account, and the template turns off Next.js's anonymous
+telemetry. It talks to npm only, when `npx` fetches it and when `update` reads releases. Feedback reaches us only as a
+[GitHub issue](https://github.com/zhixuan312/zz-meridian/issues/new/choose), a Bug or a Feature request; issues are
+public, so leave out anything that identifies you, your organisation or your product, and describe the problem with
+Meridian's own template or sample data.
 
 ## License
 
