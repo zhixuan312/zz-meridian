@@ -1,7 +1,7 @@
 /**
  * The consumer's path, end to end, from the packed tarball: what CI runs before publishing.
  *
- *   node cli/scripts/smoke.ts [--tarball cli/zz-meridian-0.5.0.tgz] [--adopt] [--create] [--update] [--update-all] [--verify] [--keep]
+ *   node cli/scripts/smoke.ts [--tarball cli/zz-meridian-0.5.0.tgz] [--adopt] [--create] [--update [--origins N]] [--update-all] [--verify] [--keep]
  *
  * With no section flag the adopt section runs. --adopt names it explicitly, so it can run beside the others.
  * adopt: into a copy of cli/test/fixture-next-app (a create-next-app project with its own button, utils and data
@@ -16,17 +16,17 @@
  * create writes the block and the brief and keeps the assistant's tracing of docs/brief.md. Both fresh manifests hold
  * only the files Meridian manages.
  *
- * --update and --update-all need registry access for the published zz-meridian@0.3.0, @0.4.0 and @0.5.0. The adopted fixture is
- * a project adopted with a published package, then given what a team's project carries (a card edit, a kept skill file
- * and token file, a brief, an extra doc, a team page fix) and committed. The running tarball is then its update target.
- * --update: every published origin a team can update from, adopted and created, from 0.3.0, 0.4.0 and 0.5.0. The 0.3.0
- * adopted project walks every stage: the dry-run, then a real update, the gate refusing the open session, a resolution
- * written as references/update.md tells an agent, finalize, and everything the team owns unchanged. The others commit
- * their team's work, update, resolve every reported migration, finalize with the gate and the build, and keep the
- * team's bytes; a 0.5.0 origin already has 0.5.0's shapes, so it reports no migration, and a created one with nothing
- * to resolve completes in the update itself. This release's migrations are resolved the way that guide says: an adopted project's own files get
- * the smallest edit, a created project's get the release's versions of what changed.
- * --update-all: the remaining controlled cases, each on its own copy of the 0.3.0 adopted fixture: finalize with and
+ * --update and --update-all need registry access. The adopted fixture is a project adopted with a published package,
+ * then given what a team's project carries (a card edit, a kept skill file and token file, a brief, an extra doc, a team
+ * page fix) and committed. The running tarball is then its update target.
+ * --update [--origins N]: the N newest releases before this one (default 1, the release's case; weekly passes 3), read
+ * from the registry, each adopted and created. Each commits its team's work, dry-runs (which must write nothing),
+ * updates, resolves what is reported, finalizes with the gate and the build, and keeps the team's bytes. The window
+ * moves with every release and never grows; an origin older than it is updated in steps (references/update.md).
+ * --update-all: the updater's own stages on the 0.3.0 adopted fixture, the one origin that always has both a conflict
+ * and a migration: the dry-run, a real update with staged base, ours and new, the gate refusing the open session, a
+ * resolution written as references/update.md tells an agent, finalize, the keep and logo gates, and the team's bytes.
+ * Then the remaining controlled cases, each on its own copy of that fixture: finalize with and
  * without --verify, an interruption and its resume, a failed install, a type error, a check that writes source, abort,
  * a dirty tree, a removal and an addition, and a rebrand followed by an update on both routes. The variant package and
  * the 0.5.1 package exist only in this script's scratch folder; they test the updater and are never releases.
@@ -320,27 +320,11 @@ function mainUpgrade(): Upgraded {
   if (upgraded) return upgraded;
   console.log('\n── update: a published-0.3.0 adopted project');
   const proj = clone(adoptedBase()!, 'update-main');
-  const digest = () => {
-    const h = createHash('sha256');
-    const walk = (rel: string) => {
-      for (const e of fs.readdirSync(path.join(proj, rel), { withFileTypes: true }).sort((x, y) => (x.name < y.name ? -1 : 1))) {
-        if (!rel && e.name === '.git') continue;
-        const p = rel ? `${rel}/${e.name}` : e.name;
-        if (e.isDirectory()) { h.update(`d ${p}\n`); walk(p); }
-        else if (e.isSymbolicLink()) h.update(`l ${p} ${fs.readlinkSync(path.join(proj, p))}\n`);
-        else h.update(`f ${p} ${hash(path.join(proj, p))}\n`);
-      }
-    };
-    walk('');
-    return h.digest('hex');
-  };
-  const state = () => ({ status: sh('git', ['status', '--porcelain'], proj).stdout, head: sh('git', ['rev-parse', 'HEAD'], proj).stdout.trim(), tree: digest() });
-
   // The Phase 0 dry-run assertions that still hold, on the fixture as the team left it.
-  const before = state();
+  const before = projectState(proj);
   const dry = zz(tarball, proj, ['update', '--dry-run'], 'dry-run');
   const verbose = zz(tarball, proj, ['update', '--dry-run', '--verbose'], 'dry-run --verbose');
-  const after = state();
+  const after = projectState(proj);
   const rows = dry.out.split('\n').filter((l) => l.trim() && !/^(migration\s|summary:|outcome:|note:|time:|Next:)/.test(l));
   check(dry.status === 0, 'update --dry-run exits 0', dry.out + dry.err);
   check(rows.length === 1 && rows[0]!.includes(CARD) && /merge required\s*$/.test(rows[0]!), `the only listed path is ${CARD}, merge required`, dry.out + dry.err);
@@ -348,7 +332,7 @@ function mainUpgrade(): Upgraded {
   check(/^outcome: dry-run/m.test(dry.out), 'the dry-run says nothing was written', dry.out);
   check(verbose.status === 0 && /untouched\s+src\/lib\/cn\.ts/.test(verbose.out), '--verbose lists the untouched src/lib/cn.ts', verbose.out + verbose.err);
   check(/added\s+src\/components\/patterns\/assistant\/launcher\.tsx/.test(verbose.out), '--verbose lists the added src/components/patterns/assistant/launcher.tsx', verbose.out);
-  check(JSON.stringify(before) === JSON.stringify(after), "a dry-run leaves the project's bytes, HEAD and git status unchanged", `${JSON.stringify(before)}\n${JSON.stringify(after)}`);
+  check(before === after, "a dry-run leaves the project's bytes, HEAD and git status unchanged", `${before}\n${after}`);
   console.log(`\n${dry.out.trim()}\n`);
 
   // The real update.
@@ -415,9 +399,39 @@ function mainUpgrade(): Upgraded {
 }
 
 /**
+ * The releases an update is tested from: the `--origins` newest published before this one (1 at release, 3 weekly),
+ * read from the registry, so the window moves with every release and never grows.
+ */
+function origins(n: number): string[] {
+  const r = sh('npm', ['view', 'zz-meridian', 'versions', '--json', '--prefer-online'], work);
+  const all = r.status === 0 ? (JSON.parse(r.stdout) as string[]).filter((v) => /^\d+\.\d+\.\d+$/.test(v) && semverLess(v, VERSION)) : [];
+  const picked = all.sort((x, y) => (semverLess(x, y) ? 1 : -1)).slice(0, n);
+  check(picked.length > 0, `the registry lists the releases to update from (${picked.join(', ')})`, r.stdout + r.stderr);
+  return picked;
+}
+
+/** A project's bytes, HEAD and git status: what a dry-run must leave as it found them. */
+function projectState(proj: string) {
+  const h = createHash('sha256');
+  const walk = (rel: string) => {
+    for (const e of fs.readdirSync(path.join(proj, rel), { withFileTypes: true }).sort((x, y) => (x.name < y.name ? -1 : 1))) {
+      if (!rel && e.name === '.git') continue;
+      const p = rel ? `${rel}/${e.name}` : e.name;
+      if (e.isDirectory()) { h.update(`d ${p}\n`); walk(p); }
+      else if (e.isSymbolicLink()) h.update(`l ${p} ${fs.readlinkSync(path.join(proj, p))}\n`);
+      else h.update(`f ${p} ${hash(path.join(proj, p))}\n`);
+    }
+  };
+  walk('');
+  return JSON.stringify({ status: sh('git', ['status', '--porcelain'], proj).stdout, head: sh('git', ['rev-parse', 'HEAD'], proj).stdout.trim(), tree: h.digest('hex') });
+}
+
+/**
  * A published origin brought to this release as an agent following references/update.md would: the team's work
- * committed, the update, every reported migration resolved, finalize with the gate and the build, and the team's bytes
- * unchanged. The 0.3.0 adopted origin is mainUpgrade, which asserts each stage on the way.
+ * committed, a dry-run that writes nothing, the update, every reported item resolved, finalize with the gate and the
+ * build, and the team's bytes unchanged. Every assertion holds whatever the origin; what a release's migrations change
+ * is tested in tests/cli-migrations.test.ts. resolveAll knows RELEASE_IDS: a release that adds a migration adds it
+ * there and to bringReleaseOver, or the origins before it fail at finalize.
  */
 function originUpgrade(version: string, route: 'adopt' | 'create') {
   const label = `${version} ${route === 'adopt' ? 'adopted' : 'created'}`;
@@ -447,32 +461,25 @@ function originUpgrade(version: string, route: 'adopt' | 'create') {
   const files = Object.keys(finalManifest(proj).files);
   const historical = ['src/app.config.ts', 'app/page.tsx'].filter((p) => p in finalManifest(proj).files);
 
-  const up = zz(tarball, proj, ['update'], `${label} update`);
-  const reported = RELEASE_IDS.filter((id) => new RegExp(`^migration\\s+${id}\\b`, 'm').test(up.out));
-  // The release's migrations are 0.5.0's: a project from 0.5.0 on already has those shapes and reports none.
-  if (semverLess(version, '0.5.0')) {
-    check(up.status === 2 && /^outcome: migration-required/m.test(up.out) && reported.length > 0, `${label}: the update applies and stops on its pending migrations (${reported.join(', ')})`, up.out + up.err);
-  } else if (route === 'adopt') {
-    check(up.status === 2 && reported.length === 0 && new RegExp(`merge required`).test(up.out), `${label}: the update applies, reports no release migration, and stops on the team's card edit`, up.out + up.err);
-  } else {
-    check(up.status === 0 && /^outcome: complete/m.test(up.out) && reported.length === 0, `${label}: with nothing to resolve, the update completes in one command`, up.out + up.err);
-  }
-  if (route === 'create' && version === '0.3.0') {
-    // 0.3.0's template already passed `now` everywhere, so only the clock migration has nothing to report.
-    const missed = RELEASE_IDS.filter((id) => id !== 'clock-now-required' && !reported.includes(id));
-    check(missed.length === 0 && !reported.includes('clock-now-required'), `${label}: the report names every release migration its template still has the old shape for`, `missing: ${missed.join(', ')}\n${up.out}`);
-  }
-  if (version === '0.4.0' && route === 'create') check(/^summary: 0 conflicts\b/m.test(up.out), `${label}: with no conflict, the migrations alone keep the update from complete`, up.out);
-  if (up.status !== 2 && up.status !== 0) { done(proj); return; }
+  const before = projectState(proj);
+  const dry = zz(tarball, proj, ['update', '--dry-run'], `${label} dry-run`);
+  check(dry.status === 0 && /^outcome: dry-run/m.test(dry.out) && projectState(proj) === before, `${label}: the dry-run exits 0 and leaves the project's bytes, HEAD and git status unchanged`, dry.out + dry.err);
 
+  const up = zz(tarball, proj, ['update'], `${label} update`);
+  const merge = read(proj, `.meridian/update/${VERSION}/MERGE.md`);
+  check(!/ is declared as "[^"]*", a specification Meridian cannot compare/.test(merge), `${label}: the update reads every dependency range the project holds`, merge);
   if (up.status === 2) {
+    check(/^outcome: migration-required/m.test(up.out) && /^Next: .*update --finalize/m.test(up.out), `${label}: the update applies and stops on what it lists, with the pinned next command`, up.out + up.err);
     resolveAll(proj, VERSION, 'Kept ours; the project works as it is.');
     const fin = zz(tarball, proj, ['update', '--finalize'], `${label} finalize`);
     check(fin.status === 0 && /^outcome: complete/m.test(fin.out), `${label}: finalize passes the gate and the build and completes in ${secs(fin.wall)}s`, fin.out + fin.err);
+  } else {
+    check(up.status === 0 && /^outcome: complete/m.test(up.out), `${label}: with nothing to resolve, the update completes in one command`, up.out + up.err);
+    if (up.status !== 0) { done(proj); return; }
   }
   const manifest = finalManifest(proj);
   check(manifest.version === VERSION && manifest.route === route && unmanaged(manifest).length === 0, `${label}: the manifest is ${VERSION}, route ${route}, and holds only managed paths`, unmanaged(manifest).join('\n'));
-  if (route === 'create' && (version === '0.3.0' || historical.length > 0)) {
+  if (route === 'create' && historical.length > 0) {
     check(historical.every((p) => fs.existsSync(path.join(proj, p)) && !(p in manifest.files)) && files.length > Object.keys(manifest.files).length, `${label}: its historical page and config entries stay on disk and leave the manifest`, historical.join('\n'));
   }
   const changed = teamOwned.filter((f) => sha(path.join(proj, f)) !== owned[f]);
@@ -480,17 +487,16 @@ function originUpgrade(version: string, route: 'adopt' | 'create') {
   done(proj);
 }
 
-if (args.includes('--update') && adoptedBase()) {
-  mainUpgrade();
-  originUpgrade('0.3.0', 'create');
-  originUpgrade('0.4.0', 'adopt');
-  originUpgrade('0.4.0', 'create');
-  originUpgrade('0.5.0', 'adopt');
-  originUpgrade('0.5.0', 'create');
+if (args.includes('--update')) {
+  for (const version of origins(Number(opt('--origins') ?? 1))) {
+    originUpgrade(version, 'adopt');
+    originUpgrade(version, 'create');
+  }
 }
 
 // ── update-all ─────────────────────────────────────────────────────────────────────────────────────────
 if (args.includes('--update-all') && adoptedBase()) {
+  mainUpgrade();
   const session = `.meridian/update/${VERSION}`;
   /** An update that stops with items pending, resolved by keeping ours and finalized. */
   const finish = (proj: string, label: string, pkg = tarball, env: Record<string, string> = {}, version = VERSION) => {

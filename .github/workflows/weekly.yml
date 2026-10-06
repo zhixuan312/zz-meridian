@@ -5,8 +5,9 @@
 # - `template`: the template's `pnpm verify --full --perf`, one gate and one build for both: every rail route with the
 #   audit, every control and link, the keyboard walk, the assistant, the live data and the vitals, then 20 samples per
 #   route, device and condition. A p95 over its budget is a `warn` in the report; only a broken sample fails.
-# - `consumer`: the consumer smoke from a tarball packed from this commit: the adopted project's default verify cases and
-#   every recovery and failure case of the update.
+# - `consumer`: the consumer smoke from a tarball packed from this commit: the adopted project's default verify cases,
+#   the update from each of the last three releases (adopted and created), and every recovery and failure case of the
+#   update.
 #
 # Each job keeps its log as an artifact. This workflow holds no publishing permission and no credential.
 
@@ -78,14 +79,18 @@ jobs:
           npm install --prefix /tmp/tooling --no-save --no-package-lock --ignore-scripts typescript@5.9.3 @types/node@24.19.1
           node cli/scripts/build-payload.ts
           /tmp/tooling/node_modules/.bin/tsc -p cli/tsconfig.json --typeRoots /tmp/tooling/node_modules/@types
+          # master usually carries a version already on npm, and `update` refuses a running package whose bytes differ
+          # from the published one. Labelled as the next patch, which is not published yet, it updates as the release's
+          # own tarball does in `gates`.
+          node -e 'const f="cli/package.json",p=JSON.parse(require("fs").readFileSync(f,"utf8")),[a,b,c]=p.version.split(".").map(Number);p.version=`${a}.${b}.${c+1}`;require("fs").writeFileSync(f,JSON.stringify(p,null,2)+"\n");console.log(`packed as ${p.version}`)'
           mkdir -p /tmp/pack
           (cd cli && npm pack --ignore-scripts --pack-destination /tmp/pack >/dev/null)
           ls /tmp/pack/zz-meridian-*.tgz
-      - name: The adopted project's default verify cases, and the update's recovery and failure cases
+      - name: The adopted project's default verify cases, the update from the last three releases, and its recovery and failure cases
         run: |
           set -euo pipefail
           mkdir -p out
-          node cli/scripts/smoke.ts --tarball "$(ls /tmp/pack/zz-meridian-*.tgz)" --adopt --update-all --verify 2>&1 | tee out/weekly-consumer.txt
+          node cli/scripts/smoke.ts --tarball "$(ls /tmp/pack/zz-meridian-*.tgz)" --adopt --update --origins 3 --update-all --verify 2>&1 | tee out/weekly-consumer.txt
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         if: always()
         with:

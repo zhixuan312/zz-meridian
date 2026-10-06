@@ -5,6 +5,10 @@ Meridian would change, and which of those changes need the team's decision. It w
 `npx zz-meridian@latest update` then applies the safe changes and stages the rest. Do not copy files by hand to make up
 for either.
 
+An update is tested from the last three releases. When the manifest's version is older than that (`npm view
+zz-meridian versions` lists them), update in steps: first with the release three after it,
+`npx zz-meridian@<that version> update`, through finalize, then again with `latest`.
+
 ## What it does
 
 It works from `optional:.meridian/manifest.json`, which records the release the project was copied from and a hash of

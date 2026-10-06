@@ -4,7 +4,8 @@
 # WHAT GATES A RELEASE. The checks that decide whether this tarball works, each run once: the template's default verify
 # from a clean build, within 180 s on the shared 4-CPU runner (the gate with its unit tests runs inside it), and the
 # consumer smoke from the tarball,
-# which adopts, creates, and updates every published origin to finalize. The full walkthroughs, the 20-sample perf report
+# which adopts, creates, and updates a project of the release before (adopted and created) to finalize. The update from
+# the last three releases runs weekly; the window moves with each release and never grows. The full walkthroughs, the 20-sample perf report
 # and the recovery and failure matrices run weekly (weekly.yml) and never here: weekly is weekly, release is release.
 # After publishing, the registry's tarball is compared byte for byte with the tested one; identical bytes are not tested
 # twice. Two short steps run against the registry, since they behave differently once the version is published:
@@ -131,8 +132,7 @@ jobs:
   gates:
     needs: build
     runs-on: ubuntu-24.04
-    # Measured on an Apple M5: about 1.5 minutes for the verify and 6.5 for the smoke. The 4-CPU runner is slower, so this
-    # leaves room; tighten it from the first release run's log.
+    # About 2.5 minutes for the verify and 11 for a smoke of every origin on the 4-CPU runner (0.6.1); one origin is less.
     timeout-minutes: 30
     env:
       VERSION: ${{ inputs.version }}
@@ -172,7 +172,7 @@ jobs:
         with:
           name: tarball
           path: /tmp/pack
-      - name: The consumer path, from the built tarball, with every published origin updated to finalize
+      - name: The consumer path, from the built tarball, with the release before updated to finalize
         run: |
           set -euo pipefail
           T="/tmp/pack/zz-meridian-$VERSION.tgz"

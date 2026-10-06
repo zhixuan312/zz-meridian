@@ -74,7 +74,7 @@ Dark is the default, written on `:root`; the light theme follows the operating s
 | `scripts/` | Generators, gates, `brand.ts` and `verify.ts` (see `CONTRIBUTING.md`) |
 | `skills/zz-meridian/` | The agent skill (Claude Code, Codex) that builds dashboards on this template or brings it into yours |
 | `cli/` | The `zz-meridian` npm package: `create`, `adopt`, `update`, `brand` and `skill`, its build, its smoke test and the fixture app (`docs/distribution.md`) |
-| `.github/workflows/release.yml` | The release, each check once: a timed default verify and the consumer path from the tarball (every published origin updated), then npm with provenance, the registry's bytes and provenance checked, then the tag (`.claude/commands/release.md`) |
+| `.github/workflows/release.yml` | The release, each check once: a timed default verify and the consumer path from the tarball (the release before updated; the last three weekly), then npm with provenance, the registry's bytes and provenance checked, then the tag (`.claude/commands/release.md`) |
 | `.github/workflows/weekly.yml` | Weekly, never at release: `verify --full --perf` (perf a report) and the consumer smoke's recovery and failure cases; nothing waits on it |
 
 ## Get a dashboard on Meridian, in one sentence
@@ -82,7 +82,7 @@ Dark is the default, written on `:root`; the light theme follows the operating s
 Give your coding agent (Codex, Claude Code, or any agent that can run a shell) this, with what you want in your own
 words at the end:
 
-> Run `npx zz-meridian@latest skill --global`, then follow the zz-meridian skill it installs to: <what you want>.
+> Run `npx zz-meridian@latest skill --global`, then follow the zz-meridian skill it installs to: [what you want, in your own words].
 
 You do not choose between the package's commands; the skill does, from what you said and what is in the folder, and
 names the route before it runs anything:

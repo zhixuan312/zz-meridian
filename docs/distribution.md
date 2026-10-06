@@ -6,7 +6,7 @@ Status: v1 (`create`, `adopt`, `skill`) shipped in 0.2.0 (decision 0009). v2 (`u
 
 A team gives its coding agent this, with what it wants in its own words at the end:
 
-> Run `npx zz-meridian@latest skill --global`, then follow the zz-meridian skill it installs to: <what you want>.
+> Run `npx zz-meridian@latest skill --global`, then follow the zz-meridian skill it installs to: [what you want, in your own words].
 
 The sentence names no command, because people do not: "change this product into our dashboard", "a new one based on
 this folder, in another folder" and "build an orders console" all ask for a dashboard on Meridian and differ only in
@@ -218,8 +218,10 @@ Modelled on the release pipeline of the owner's earlier packages, one package in
    - `adopt` into `cli/test/fixture-next-app` (a minimal App Router app with one page and its own stylesheet), then
      install, `tsc --noEmit` and `next build`, all green. This is the test that keeps the Route A list complete.
    - `create` into a clean folder, then its default `pnpm verify`. The smoke quotes the coverage line.
-   - `update` from every published origin since 0.3.0 (adopted and created) through finalize, as above. A 0.5.0 origin
-     reports no migration; a created one with nothing to resolve completes in the update itself.
+   - `update` from the release before (adopted and created, read from the registry): a dry-run that writes nothing, the
+     update, what it reports resolved, finalize with the gate and the build, and the team's bytes unchanged. One origin
+     at release and the last three weekly, so the time stays the same however many releases there are; the updater's
+     own stages and each migration have their tests (`--update-all`, `tests/cli-*`).
 5. **Publish** the tarball with `npm` 11.5.1 or newer through trusted publishing (OIDC), with `--provenance`. `pnpm
    publish` does not perform the OIDC exchange.
 6. **The registry's package**: `npx zz-meridian@<version> --version` answers the version, the registry's tarball has the
@@ -234,8 +236,10 @@ Modelled on the release pipeline of the owner's earlier packages, one package in
 
 **Weekly** (`.github/workflows/weekly.yml`, Mondays and on demand, master's current commit): the template's
 `verify --full --perf`, one gate and one build for both (the perf part a report: a p95 over budget is a warning, a
-broken sample a failure), and the consumer smoke's `--adopt --update-all --verify` from a tarball packed from that
-commit: the adopted project's default verify cases and every recovery and failure case of the update. Weekly is weekly
+broken sample a failure), and the consumer smoke's `--adopt --update --origins 3 --update-all --verify` from a tarball packed from that
+commit, labelled as the next patch so `update` treats it as unpublished: the adopted project's default verify cases,
+the update from each of the last three releases, the updater's stages on the 0.3.0 fixture, and every recovery and
+failure case of the update. Weekly is weekly
 and release is release: neither runs what the other does. Each job keeps its log as an artifact. A failure notifies;
 nothing waits on it.
 

@@ -54,8 +54,10 @@ this is the reason they agree.
   refuses, keeping every backup, when a path it wrote was edited since.
 - `--resume`, `--finalize` and `--abort` belong to the package version that began the session. They read the session's
   own copies and never ask the registry.
-- Updates start from 0.3.0. The four published origins, a project adopted and a project created with 0.3.0 and with
-  0.4.0, are the supported starting points, and the release smoke runs every one of them through update and finalize.
+- Updates start from 0.3.0. An update is tested from the last three releases, adopted and created: the release smoke
+  runs the release before through update and finalize, and the weekly smoke the last three. The window moves with each
+  release and never grows; from an older project, update in steps (`references/update.md`). Every published origin was
+  tested at release until 0.7.0, when the smoke took 11 of the release's 18 minutes and grew with each release.
 
 ### The access seam, scoped caching and live data
 
@@ -96,9 +98,9 @@ this is the reason they agree.
 - Weekly is weekly, release is release, and nothing runs twice. The release gates, each once, on the default verify
   from a clean `.next` on the GitHub-hosted ubuntu-24.04 4-CPU runner (at most 120 s, raised to 180 s in 0.6.0 because the runner's CPU varies, with its browser smoke; the gate
   and its unit tests run inside it) and on the consumer smoke from the tarball: adopt, create with its default verify,
-  and all four published origins updated through finalize. After publishing it checks the registry serves the tested
+  and the release before updated through finalize (the last three weekly). After publishing it checks the registry serves the tested
   tarball (equal sha256) with provenance, and tags last. A weekly workflow runs `verify --full --perf` (the perf part a
-  report) and the consumer smoke's adopted default-verify cases and recovery and failure cases; a failure notifies and
+  report) and the consumer smoke's adopted default-verify cases, the update from the last three releases, and its recovery and failure cases; a failure notifies and
   nothing waits on it.
 
 ### Every breaking interface, with its migration

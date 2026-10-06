@@ -9,7 +9,7 @@ dashboard depends on it afterwards.
 Give your coding agent (Codex, Claude Code, or any agent that can run a shell) this, with what you want in your own
 words at the end:
 
-> Run `npx zz-meridian@latest skill --global`, then follow the zz-meridian skill it installs to: <what you want>.
+> Run `npx zz-meridian@latest skill --global`, then follow the zz-meridian skill it installs to: [what you want, in your own words].
 
 The skill picks the command from what you said and what is in the folder, and names it before running anything:
 `adopt` to change this Next.js App Router project in place ("make this admin panel look professional"), `create` for a

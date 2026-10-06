@@ -2,6 +2,16 @@
 
 Every release of ZZ Meridian, newest first. Versions follow semver: a removed or renamed token, prop or card is major; a new card, token or variant is minor; a corrected value is a patch. Each entry says what breaks and what to do instead.
 
+## [Unreleased]
+
+### Changed
+
+- **`update` is tested from the last three releases.** The release updates a project of the release before, adopted and created, through finalize; the weekly run the last three. Every published origin used to run at each release, which took 11 of its 18 minutes and grew with every release. From an older project, update in steps (`references/update.md`).
+
+### Fixed
+
+- **The one sentence shows its blank.** It ended in `<what you want>`, which GitHub and npm read as an HTML tag and dropped, so it read "installs to: .". It ends in `[what you want, in your own words]`.
+
 ## [0.7.0] · 2026-10-06
 
 ### Changed
