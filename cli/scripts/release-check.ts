@@ -2,7 +2,7 @@
  * The template's default verify, timed from a clean build, the way the release gates it (AC-4.8): one run, started
  * with no `.next`, that must pass within the limit and run its browser smoke. `--runs` repeats it, for studying the spread.
  *
- *   node cli/scripts/release-check.ts [--limit 120] [--runs 1]
+ *   node cli/scripts/release-check.ts [--limit 120] [--runs 1]     (the release workflow passes --limit 180)
  *
  * It runs `node scripts/verify.ts` in the template (this repository) `--runs` times, writing each run's output to
  * out/release-check-<n>.txt, and prints the machine it ran on, then one line per run and the verdict:

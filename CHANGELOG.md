@@ -11,6 +11,10 @@ Every release of ZZ Meridian, newest first. Versions follow semver: a removed or
 - **Replay sends a failed request again.** On a 5xx or 429 request's page, Replay calls `replayRequest` (`app/(dashboard)/requests/[id]/actions.ts`): it authorizes the write, creates a new request with the same method, route, customer, region and model and a `replayOf` naming the original, and refreshes the request reads. A toast names the new request with Open, and its page links back. It used to toast "Replay queued" and send nothing. The requests collection allows `create` as a page-only operation, so the assistant cannot replay. `arrayCollection` takes `derive`, which works out a row's `derived` fields on every create and change. The request page no longer shows a fixed "API key" it did not know. Breaking: `RequestView` takes `replay`.
 - **A form in an open sheet says why it failed inside the sheet.** A refused invitation reopens the Members sheet with what was typed and a critical Banner, "Invitation not sent", with the reason. A refused key reads "Key not created" at the top of the Create a key sheet. Neither sends a toast over the sheet's own buttons. Refused changes made from a table row still toast.
 
+### Release
+
+- **The release's timed default verify allows 180 s on the shared GitHub 4-CPU runner.** The same commit measured 111 s on one runner CPU and 152 s on another, so 120 s stopped a release on the draw of the machine. The default verify must still pass in full; 120 s remains the target on an adopter's own machine. The stakeholder's decision.
+
 ## [0.5.0] · 2026-10-06
 
 ### Added

@@ -94,7 +94,7 @@ this is the reason they agree.
 - HTML caps are `/requests` 150 KiB and `/health` 100 KiB. The stakeholder set them after measurement showed no variant
   kept the page title instant within 130 KiB.
 - Weekly is weekly, release is release, and nothing runs twice. The release gates, each once, on the default verify
-  from a clean `.next` on the GitHub-hosted ubuntu-24.04 4-CPU runner (at most 120 s, with its browser smoke; the gate
+  from a clean `.next` on the GitHub-hosted ubuntu-24.04 4-CPU runner (at most 120 s, raised to 180 s in 0.6.0 because the runner's CPU varies, with its browser smoke; the gate
   and its unit tests run inside it) and on the consumer smoke from the tarball: adopt, create with its default verify,
   and all four published origins updated through finalize. After publishing it checks the registry serves the tested
   tarball (equal sha256) with provenance, and tags last. A weekly workflow runs `verify --full --perf` (the perf part a
