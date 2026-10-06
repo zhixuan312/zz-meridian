@@ -105,14 +105,15 @@ left by a process that is no longer running, after it has read the journal.
 
 ### `--finalize`: validate and complete
 
-1. It refuses an interrupted session (use `--resume`), a session whose install did not run or failed, and `--verify`
-   (the bounded browser smoke arrives later; run `<pm> run verify` after finalizing).
+1. It refuses an interrupted session (use `--resume`) and a session whose install did not run or failed.
 2. Every item must be resolved and every resolution current (exit `2` otherwise, naming each open item).
 3. The installed dependencies must match the plan: each entry the update added or raised, and `next`, `react` and
    `react-dom`, must be installed at a version that satisfies the planned specification; the framework must be
    exactly the planned version.
 4. It runs the project gate (which already type checks) and then one `next build`, in place, with no separate `tsc`.
-   Their output goes to `evidence/`. Before and after each command it compares the protected inputs.
+   With `--verify` it runs the project's default verify (`node scripts/verify.ts`) once instead, which is the gate, the build and the
+   bounded smoke, so nothing runs twice. The output goes to `evidence/`. Before and after each command it compares the
+   protected inputs.
 5. When both pass and the inputs still match, it writes the target manifest atomically, marks the session complete and
    moves it to `.meridian/history/<version>/<id>/`, keeping `state.json`, `MERGE.md`, `resolutions.json` and
    `evidence/` and dropping the temporary `base/`, `ours/`, `new/` and `backup/`. A rename that was interrupted is
@@ -133,8 +134,10 @@ commit the change, then finalize again.
 
 **What "complete" means.** The gate and one production build passed on the live project, the files are the target
 release's (plus the team's resolutions), and `optional:.meridian/manifest.json` now records the target as the baseline for the
-next update. It does not mean the browser checks ran: the output says `browser: not run`, and `<pm> run verify` runs
-the bounded smoke (`<pm> run verify -- --full` the exhaustive suites). Read the coverage line it ends with.
+next update. Without `--verify` it does not mean the browser checks ran: the output says `browser: not run`, and `<pm> run verify`
+runs the bounded smoke (`<pm> run verify -- --full` the exhaustive suites). With `--verify` the output, `MERGE.md` and
+the archived evidence carry verify's coverage line, which says what ran and what did not. A failing verify fails the
+session as a failing gate does.
 
 A zero-conflict update finalizes in the same command: `update` prints the conflict summary and then the finalize
 output, exit `0`.

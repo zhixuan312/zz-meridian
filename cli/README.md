@@ -53,7 +53,8 @@ writes nothing; run it first.
   `references/update.md` says; `docs/distribution.md` lists them.
 - Everything it did and everything left to do is in `.meridian/update/<version>/MERGE.md`. Resolve the items, then run
   the pinned `npx zz-meridian@<version> update --finalize`; `--resume` continues an interrupted run and `--abort` restores
-  what it changed. Only finalize records the new version.
+  what it changed. Only finalize records the new version. `--finalize --verify` validates with the project's default
+  `verify` instead of the gate and the build, and reports its coverage line.
 - It refuses, writing nothing, on a dirty git tree (unless `--allow-dirty`) or while another update is open. `--verbose`
   lists every file.
 

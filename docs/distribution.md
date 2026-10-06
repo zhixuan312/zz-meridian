@@ -109,7 +109,7 @@ three edits named below. It needs a project that adopted or created Meridian 0.3
    item has one current resolution and that the installed dependencies match the plan, then runs the project's gate and
    one `next build` in place. It compares every protected input before and after each, so a check that rewrites source
    fails it. Only when both pass and nothing changed does it write the target manifest, atomically, and archive the
-   session under `.meridian/history/<version>/<id>/`. It prints the stage times and says the browser checks did not run.
+   session under `.meridian/history/<version>/<id>/`. It prints the stage times and says the browser checks did not run. `update --finalize --verify` runs the project's default `verify` once in place of the gate and the build, and prints and records its coverage line instead; in the consumer smoke it adds 3.3 s to the adopted origin's finalize.
 6. **Resume.** `update --resume` continues an update that was interrupted, failed to apply or install, or was started
    with `--no-install`. It applies only what is still the recorded original, never overwrites a later edit, and ends as
    a plain update does.

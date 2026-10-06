@@ -62,6 +62,7 @@ Every release of ZZ Meridian, newest first. Versions follow semver: a removed or
   - It refuses, writing nothing, on a dirty tree (unless `--allow-dirty`), an open session or a left-behind lock, a bad manifest or keep entry, or an unsafe path.
   - The default output lists only what needs a decision; `--verbose` lists every file.
   - `update --finalize` checks every resolution against the current files, confirms the installed framework versions, then runs the gate and one production build in place. Only then does it record the new version and archive the report to `.meridian/history/`. A check that changes a source file fails the session and leaves the bytes alone. The browser checks stay a separate `verify`.
+  - `update --finalize --verify` runs the project's default `verify` once, in place of the gate and the build, so nothing runs twice. It prints and records verify's coverage line (`MERGE.md` gains a `Coverage:` line), and a failing verify fails the session as a failing gate does.
   - `update --resume` continues an interrupted or failed run without overwriting a later edit. `update --abort` restores only what the update changed, and refuses when a file it wrote was edited since.
   - An update with nothing to resolve finalizes in the same command.
 - **`zz-meridian brand [brand flags]`: rebrand with no hand edits.** The brand outputs, `src/app.config.ts` and the manifest change together, or nothing changes. It refuses when a brand output was edited or an update is open.

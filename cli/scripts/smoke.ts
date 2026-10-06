@@ -426,6 +426,27 @@ if (args.includes('--update-all')) {
     }
   }
 
+  // Finalize both ways.
+  {
+    console.log('\n── update-all: finalize and finalize --verify on the adopted origin');
+    const timed = (flag: string[], name: string) => {
+      const proj = clone(adoptedBase(), name);
+      const up = zz(tarball, proj, ['update'], `${name} update`);
+      check(up.status === 2, `${name}: the update stops with work pending`, up.out + up.err);
+      resolveAll(proj, VERSION, 'Kept ours; the project works as it is.');
+      const fin = zz(tarball, proj, ['update', '--finalize', ...flag], `${name} finalize`);
+      check(fin.status === 0 && /^outcome: complete/m.test(fin.out), `${name}: finalize completes`, fin.out + fin.err);
+      return fin;
+    };
+    const plain = timed([], 'finalize-plain');
+    const verified = timed(['--verify'], 'finalize-verify');
+    const line = coverageOf(verified.out);
+    check(line !== '' && !/browser: not run/.test(verified.out), 'update --finalize --verify prints the coverage line instead of `browser: not run`', verified.out);
+    const extra = (verified.wall - plain.wall) / 1000;
+    console.log(`     finalize ${secs(plain.wall)}s, finalize --verify ${secs(verified.wall)}s, difference ${extra.toFixed(1)}s`);
+    check(extra <= 30, `--verify took ${extra.toFixed(1)}s more than plain finalize (limit 30s)`);
+  }
+
   // Interruption.
   {
     console.log('\n── update-all: interruption');

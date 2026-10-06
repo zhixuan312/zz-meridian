@@ -496,14 +496,16 @@ function command(ctx: Context, takeover: boolean, body: (l: Loaded) => number): 
 }
 
 /** Updates the phase, outcome and failure lines of `MERGE.md` in place; the rest of the report is left as written. */
-function patchReport(l: Loaded, outcome: string) {
+function patchReport(l: Loaded, outcome: string, coverage: string | null = null) {
   const file = path.join(l.dir, 'MERGE.md');
   if (!fs.existsSync(file)) return;
   const j = l.journal;
   let text = fs.readFileSync(file, 'utf8')
     .replace(/^- Phase: .*$/m, `- Phase: ${j.phase}`)
     .replace(/^- Outcome: .*$/m, `- Outcome: ${outcome}`)
+    .replace(/^- Coverage: .*\n/m, '')
     .replace(/^## Failure\n\n[\s\S]*?\n\n(?=## )/m, '');
+  if (coverage) text = text.replace(/^(- Outcome: .*)$/m, `$1\n- Coverage: ${coverage.replace(/^coverage: /, '')}`);
   if (j.failure) text = text.replace(/^## What needs you$/m, `## Failure\n\n${j.failure}\n\n## What needs you`);
   writeAtomic(file, text);
 }
@@ -568,7 +570,7 @@ function dependencyProblems(root: string, session: string, pm: string): string[]
 const SMALL = (ms: number) => secs(ms);
 
 /** Validates the session in place and, when every check passes on unchanged inputs, completes it. */
-function finalizeLoaded(ctx: Context, l: Loaded): number {
+function finalizeLoaded(ctx: Context, l: Loaded, o: FinalizeOptions = { verify: false }): number {
   const { root, log } = ctx;
   const j = l.journal;
   const pm = packageManager(root);
@@ -633,11 +635,14 @@ function finalizeLoaded(ctx: Context, l: Loaded): number {
   const paths = j.operations.map((o) => o.path);
   let seen = takeInventory(root, paths);
   if (seen.conflicts.length) return fail('an output path cannot be exempted:', seen.conflicts);
-  const steps: Array<{ name: string; args: string[]; shown: string }> = [
+  const steps: Array<{ name: string; args: string[]; shown: string }> = o.verify ? [
+    { name: 'verify', args: ['scripts/verify.ts'], shown: 'node scripts/verify.ts' },
+  ] : [
     { name: 'gate', args: ['scripts/gate.ts'], shown: 'node scripts/gate.ts' },
     { name: 'build', args: ['node_modules/next/dist/bin/next', 'build'], shown: 'node node_modules/next/dist/bin/next build' },
   ];
   const took: string[] = [];
+  let coverage: string | null = null;
   let n = 1;
   for (const step of steps) {
     const t0 = performance.now();
@@ -653,6 +658,7 @@ function finalizeLoaded(ctx: Context, l: Loaded): number {
       return fail(`${step.name} changed protected inputs, so nothing was validated and the current bytes were kept. Review the change and commit it, then finalize again${r.status === 0 ? '' : ` (it also exited with ${r.status}; see ${l.rel}/${evidence})`}`, changed);
     }
     if (r.status !== 0) return fail(`${step.name} exited with ${r.status}; see ${l.rel}/${evidence}`);
+    if (step.name === 'verify') coverage = r.output.split('\n').reverse().find((line) => line.startsWith('coverage: ')) ?? null;
     seen = after;
   }
 
@@ -664,10 +670,11 @@ function finalizeLoaded(ctx: Context, l: Loaded): number {
   writeAtomic(manifestFile, targetText);
   j.phase = 'complete';
   persistJournal(l);
-  patchReport(l, 'complete');
+  patchReport(l, 'complete', coverage);
   const where = archive(root, l);
   log(`time: ${took.join(' · ')}`);
-  log(`browser: not run (run ${pm} run verify for the browser checks)`);
+  if (o.verify) log(coverage ?? 'coverage: not reported by verify');
+  else log(`browser: not run (run ${pm} run verify for the browser checks)`);
   log(`archived: ${where}`);
   log('outcome: complete');
   return 0;
@@ -675,11 +682,7 @@ function finalizeLoaded(ctx: Context, l: Loaded): number {
 
 /** Finalizes the session of this project: validates it and, when every check passes, makes the target the baseline. */
 export function finalize(ctx: Context, o: FinalizeOptions): number {
-  if (o.verify) {
-    ctx.log(`zz-meridian update: update --finalize --verify arrives with the bounded default smoke in this release's verify; run ${packageManager(ctx.root)} run verify after finalizing`);
-    return 1;
-  }
-  return command(ctx, false, (l) => finalizeLoaded(ctx, l));
+  return command(ctx, false, (l) => finalizeLoaded(ctx, l, o));
 }
 
 /** Continues an interrupted update: applies what is unapplied without touching a later edit, then installs. */
