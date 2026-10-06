@@ -52,7 +52,8 @@ A person hands any card to the agent with one press. **Ask** posts a question ab
 
 - Name the period and the unit every time: "2.94M requests in the last 30 days", not "2.94M".
 - Prefer facts to adjectives: "errors rose from 0.6% to 2.1% on 21 and 22 September", not "errors spiked".
-- Share what the person can see, nothing more: a hidden column is not context.
+- Share what the person may read, and what code derives from it, nothing more. A baseline, a deviation, a ranking or a share computed from data in the view's scope is context: it is how the agent points at what is in front of the person but not obvious. A `hidden` field, another tenant's data, what only a page may show, and a count that would disclose any of them are never context. A derived figure names its method and window and is never finer-grained than what the person may read. A column the layout dropped for width is still the person's to read (decision 0011).
+- Code computes, the model interprets: every figure the agent quotes arrives computed in the context; the model explains what it might mean.
 - Keep the structured part flat and stable: `{ view, period, day, filters }`. The model will compare it across turns.
 
 ## The console's own assistant

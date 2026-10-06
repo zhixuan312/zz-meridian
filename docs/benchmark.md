@@ -15,6 +15,22 @@ Meridian held to the bar of award-winning sites (Awwwards, Webby, FWA) and of th
 | Responsive | Strong | Zero sideways scroll, zero clipped text and no table wider than its card at 390–1440px on every page (the last was missed until 2026-10-03: see below); tables become card lists under 768px; phone tiles put the sparkline beside the figure; dialogs become bottom sheets |
 | Originality | Strong | The Meridian (one time cursor shared by every chart, tile and the model); three surfaces including MCP Apps with a working host simulator; two operators with consent, provenance and handoff built into components |
 
+## Agent scorecard
+
+The same bar, held for the second operator. An agent judges a view by what it is told, so every verdict rests on the payload a model actually receives: in an MCP host, what `ui/update-model-context` carries, as the Atlas host simulator shows it; in the console, the system prompt the assistant sends, as `scripts/fake-llm.ts` records it. Two consumers, two verdicts (decision 0011).
+
+| Criterion | MCP App | Console assistant | Evidence |
+|---|---|---|---|
+| Legibility | Weak | Weak | MCP: one hand-written sentence; Overview names its totals but not their change against the previous period, their definitions or how fresh they are (`app/embed/overview/view.tsx:54-55`); the structured part is `{ view, period, day }`, an address with no figures. Console: the page's `innerText`, with the tiles' values and changes ("Error rate 0.90% up 12.4% vs previous period") and no definitions (the tiles' `hint`s are not in the text) |
+| Signal-to-noise | Good | Weak | MCP: 100 to 350 characters an update, debounced, only to a connected host (`src/components/base/use-share-view.ts:14-15`). Console: 1,193 to 3,779 characters on the eight console pages, much of it layout: axis ticks, "Search ⌘K", 30-row screen-reader tables; on `/requests?status=5xx` a "p95 up 850.0%" computed from 5 requests with nothing saying the sample is tiny |
+| Insight | Missing | Missing | Neither is told a baseline, a deviation, a share or what nobody has explained. The Overview's error rate ran 2.6–2.7× its median on 21 and 22 Sept; neither agent receives the daily error rate at all |
+| Addressability | Good | Weak | MCP: the period and the filters are the tool's arguments (`app/embed/requests/page.tsx:11-12`); the day the Meridian points at is not. Console: the assistant cannot open a view, and the path it is given drops the query (`src/components/patterns/assistant/index.tsx:223`): "Page: Requests (/requests)" for `/requests?status=5xx` |
+| Situational awareness | Weak | Weak | MCP: the pointed day is shared inline, but the Overview in fullscreen shares nothing (`app/embed/overview/view.tsx:42,52`). Console: the filters are invisible ("Filters 1"), and the pointed day reaches it only as page text |
+| Boundary clarity | Weak | Good | MCP: the Overview and Health views read the sample with no scope (`app/embed/overview/page.tsx:2`), and nothing tells the model what it may not see or do. Console: `hidden` and `pageOnly` keep fields and operations out of every tool, and `can` is asked again at run time (`src/lib/assistant/tools.ts:52-54,80`) |
+| Consent and provenance | Weak | Good | MCP: the Proposal view's apply tool is not marked view-only (`app/embed/proposal/view.tsx:36`), and "Logged in Activity" is a sentence, not an entry. Console: every change is a server-signed Proposal that runs once (`docs/assistant.md:104`); the record of it lives in the person's thread |
+| Handoff | Good | Missing | MCP: Ask, one press, only where an agent listens (`src/components/patterns/ask-about/index.tsx:14-15`). Console: Ask renders nothing; a person cannot hand a card to the assistant |
+| Graceful failure | Weak | Good | MCP: a refused fullscreen opens the console (`src/components/base/surface/index.tsx:102`), but stale data reads as current, and a refused share or Ask is swallowed (`:104,106`). Console: a provider's refusal, a busy provider and an unreachable one each have a sentence (`src/lib/assistant/respond.ts:41-43`), a revoked permission refuses the change with a reason, and "Updated 4 min ago" is in the page text |
+
 ## What changed because of the benchmark
 
 - **The register** (decision 0002). The first render, a neutral light canvas with 28px titles and four equal tiles, was rejected as dated. Meridian adopted that register: dark first, a lit ground, a dramatic type scale, one featured card.
