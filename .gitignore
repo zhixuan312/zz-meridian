@@ -28,6 +28,16 @@ test-results
 # deployment
 .vercel
 
+# zz-meridian: an update in progress (its staged copies, backups and lock). .meridian/manifest.json, keep.json and
+# history/ are committed: the next update reads them.
+/.meridian/update/
+/.meridian/update.lock
+
+# agents: each person's own settings and runtime files. The skills under .claude/skills and .agents/skills are
+# committed: they are the version of the skill that matches this project's Meridian, and update keeps them so.
+/.claude/settings.local.json
+/.claude/*.lock
+
 # logs
 *-debug.log*
 *-error.log*

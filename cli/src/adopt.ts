@@ -251,7 +251,11 @@ Rename or move them, then run adopt again.`);
 
   const ignore = path.join(root, '.gitignore');
   const ignored = fs.existsSync(ignore) ? fs.readFileSync(ignore, 'utf8') : '';
-  if (!/^\/?out\/?$/m.test(ignored)) writes.set('.gitignore', `${ignored.trimEnd()}\n\n# zz-meridian: verify's report and the screenshots\n/out/\n`);
+  // verify's report and screenshots, and an update in progress: Meridian's own, never the team's to commit. The manifest,
+  // keep.json and history/ are committed, since the next update reads them.
+  const bare = (l: string) => l.trim().replace(/^\//, '').replace(/\/$/, '');
+  const unignored = ['/out/', '/.meridian/update/', '/.meridian/update.lock'].filter((l) => !ignored.split('\n').some((x) => bare(x) === bare(l)));
+  if (unignored.length) writes.set('.gitignore', `${ignored.trimEnd()}\n\n# zz-meridian: verify's report and an update in progress\n${unignored.join('\n')}\n`);
 
   // ── Write: every target checked first, so a bad one stops it before anything changes ─────────────────
   try { for (const rel of writes.keys()) inside(root, rel); } catch (e) { return fail((e as Error).message); }

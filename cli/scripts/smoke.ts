@@ -64,6 +64,16 @@ const commit = (cwd: string, m: string) => {
   // Nothing to commit is not an error: the case that follows reports what it finds.
   try { git(cwd, '-c', 'user.email=smoke@example.com', '-c', 'user.name=smoke', 'commit', '-qm', m); } catch { /* nothing changed */ }
 };
+/**
+ * What git leaves out of a project: verify's report and an update in progress, never the manifest, the keep register,
+ * the update history or the skills, which the next update and the team's agents read.
+ */
+function checkIgnored(dir: string, label: string) {
+  const temporary = ['out/report.txt', '.meridian/update/9.9.9/MERGE.md', '.meridian/update.lock'];
+  const kept = ['.meridian/manifest.json', '.meridian/keep.json', '.meridian/history/9.9.9/x/state.json', '.claude/skills/zz-meridian/SKILL.md', '.agents/skills/zz-meridian/SKILL.md'];
+  const ignored = sh('git', ['check-ignore', '--no-index', ...temporary, ...kept], dir).stdout.split('\n').filter(Boolean);
+  check(temporary.every((f) => ignored.includes(f)) && !kept.some((f) => ignored.includes(f)), `${label}: git ignores verify's report and an update in progress, and keeps the manifest, keep.json, the history and the skills`, ignored.join('\n'));
+}
 const read = (dir: string, rel: string) => (fs.existsSync(path.join(dir, rel)) ? fs.readFileSync(path.join(dir, rel), 'utf8') : '');
 const write = (dir: string, rel: string, text: string) => { fs.mkdirSync(path.dirname(path.join(dir, rel)), { recursive: true }); fs.writeFileSync(path.join(dir, rel), text); };
 /** The coverage line verify ends with, which every case quotes: the depth that ran, and what did not. */
@@ -90,6 +100,7 @@ if (args.includes('--adopt') || !sections.some((s) => args.includes(s))) {
   check(/types: passes/.test(adopt.stdout), 'adopt reports that the project type checks', adopt.stdout);
   check(TEAM.every((f) => hash(path.join(app, f)) === before[f]), "the team's own files are unchanged");
   check(fs.existsSync(path.join(app, '.meridian/manifest.json')), 'the manifest is written');
+  checkIgnored(app, 'adopt');
   const agentsAfter = fs.readFileSync(path.join(app, 'AGENTS.md'), 'utf8');
   check(count(agentsAfter, BEGIN) === 1 && count(agentsAfter, END) === 1, "Meridian's managed block is in AGENTS.md, once");
   check(agentsAfter.startsWith(agentsBefore), "the team's original AGENTS.md bytes are a prefix of the result");
@@ -712,6 +723,7 @@ if (args.includes('--create')) {
   check(text('docs/brief.md') === BRIEF_TEMPLATE, 'docs/brief.md is the template');
   // npm renames a .gitignore inside an installed package to .npmignore: the payload ships it as gitignore.
   check(text('.gitignore') === read(ROOT, '.gitignore') && !fs.existsSync(path.join(dir, '.npmignore')), "the new dashboard has the template's .gitignore, and no .npmignore");
+  checkIgnored(dir, 'create');
   check(text('next.config.ts').includes("'/api/assistant': ['./docs/brief.md']"), "next.config.ts still traces docs/brief.md for /api/assistant");
   const createOffenders = unmanaged(JSON.parse(text('.meridian/manifest.json')));
   check(JSON.parse(text('.meridian/manifest.json')).version === VERSION && createOffenders.length === 0, 'the create manifest is the running version and holds only managed paths', createOffenders.join('\n'));
