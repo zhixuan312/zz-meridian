@@ -1,4 +1,6 @@
-import { SignInPanel } from './panel';
+import { Suspense } from 'react';
+import { GatedPanel } from './gated-panel';
+import { PanelFrame } from './panel';
 import { SampleFooter } from '@/views/sample-footer';
 import { Standalone } from '@/views/standalone';
 import { Meridian } from '@/components/charts/meridian';
@@ -18,7 +20,7 @@ export default function SignInPage() {
       kicker={`${app.name} · Console`}
       sentence="Know your API before your customers do."
       lead="Traffic, latency, spend and health for every endpoint, on your desk, on your phone, and inside the assistant you already use."
-      aside={<SignInPanel />}
+      aside={<Suspense fallback={<PanelFrame />}><GatedPanel /></Suspense>}
     >
       {/* The proof is the signature itself: point at a day and the line reads it, as every chart in the console does. */}
       <figure className="mt-12 max-w-xl rounded-xl border border-line bg-surface/60 p-5 backdrop-blur-md max-lg:hidden">

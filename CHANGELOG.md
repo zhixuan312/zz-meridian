@@ -4,6 +4,10 @@ Every release of ZZ Meridian, newest first. Versions follow semver: a removed or
 
 ## [Unreleased]
 
+### Added
+
+- **A demo password in front of the whole product.** With `DEMO_PASSWORD` set at run time, `proxy.ts` sends every route to the sign-in page (an API answers 401), whose panel becomes "Open the demo": one password field, a 30-day signed session (`src/lib/demo-gate.ts`, keyed by `DEMO_SECRET` when set), and opening the page again signs out. Without it nothing changes: the panel is the product's sign-in and nothing is gated. The sign-in panel now streams in behind a Suspense boundary, so the rest of the page still prerenders. Meridian's own demo deploys to CapRover from this repository (`Dockerfile`, `captain-definition`, neither in the package).
+
 ### Changed
 
 - **`update` is tested from the last three releases.** The release updates a project of the release before, adopted and created, through finalize; the weekly run the last three. Every published origin used to run at each release, which took 11 of its 18 minutes and grew with every release. From an older project, update in steps (`references/update.md`).

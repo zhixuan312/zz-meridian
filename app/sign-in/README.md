@@ -25,6 +25,16 @@ Two columns from 1024px; one below, the panel under the sentence.
 | Invalid email | The field's error: "Enter your work email, like maya@zz-meridian.example." |
 | Sending | The primary button is busy |
 | Sent | The panel says "Check your inbox", names the address, and offers "Use another email" |
+| Demo | With `DEMO_PASSWORD` set at run time, the panel is "Open the demo": one password field (Field, Input `lg`) and "Open the demo" (primary, block, `lg`); a wrong password reads "That is not the demo password." in the field after 600 ms. A match sets a 30-day session and opens the console |
+| Loading | While the panel streams in, its surface holds its place, empty |
+
+## The demo gate
+
+`proxy.ts` and `src/lib/demo-gate.ts` put a password in front of the whole product when `DEMO_PASSWORD` is set: every
+route but this one redirects here (303), and an API answers 401. Opening this page signs the demo out, which is the
+rail's Sign out. `DEMO_SECRET`, when set, keys the session instead of the password. Without `DEMO_PASSWORD` nothing is
+gated and the panel is the product's sign-in. The panel is the only part of the page that reads the request; the rest
+prerenders (`gated-panel.tsx`, behind a Suspense boundary).
 
 ## Data
 

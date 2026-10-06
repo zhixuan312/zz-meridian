@@ -16,10 +16,10 @@ const ROOT = path.resolve(import.meta.dirname, '../..');
 const OUT = path.join(ROOT, 'cli/payload');
 const worktree = process.argv.includes('--worktree');
 
-/** Never shipped: the package itself, CI, agent settings, and anything that could hold a secret. */
+/** Never shipped: the package itself, CI, agent settings, Meridian's own demo deployment, and anything that could hold a secret. */
 // The CLI's own tests import cli/src, which a project never has: shipped, they would fail its type check. The fixtures
 // under scripts/fixtures/ serve those tests alone and import the template's own team-owned starters.
-export const PAYLOAD_EXCLUDE = /^(cli\/|\.github\/|\.claude\/|\.agents\/|\.mma\/|out\/|node_modules\/|scripts\/fixtures\/|tests\/(cli-[^/]*|context-guidance)\.test\.ts$|\.env(?!\.example$)|.*\.tsbuildinfo$)/;
+export const PAYLOAD_EXCLUDE = /^(cli\/|\.github\/|\.claude\/|\.agents\/|\.mma\/|out\/|node_modules\/|scripts\/fixtures\/|tests\/(cli-[^/]*|context-guidance)\.test\.ts$|\.env(?!\.example$)|.*\.tsbuildinfo$|(Dockerfile|captain-definition|\.dockerignore)$)/;
 
 if (import.meta.main) {
   fs.rmSync(OUT, { recursive: true, force: true });

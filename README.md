@@ -76,6 +76,7 @@ Dark is the default, written on `:root`; the light theme follows the operating s
 | `cli/` | The `zz-meridian` npm package: `create`, `adopt`, `update`, `brand` and `skill`, its build, its smoke test and the fixture app (`docs/distribution.md`) |
 | `.github/workflows/release.yml` | The release, each check once: a timed default verify and the consumer path from the tarball (the release before updated; the last three weekly), then npm with provenance, the registry's bytes and provenance checked, then the tag (`.claude/commands/release.md`) |
 | `.github/workflows/weekly.yml` | Weekly, never at release: `verify --full --perf` (perf a report) and the consumer smoke's recovery and failure cases; nothing waits on it |
+| `Dockerfile`, `captain-definition` | The demo deployment: the template and the Atlas behind `DEMO_PASSWORD` (`proxy.ts`, `app/sign-in/README.md`), deployed to CapRover from this repository; never in the package |
 
 ## Get a dashboard on Meridian, in one sentence
 

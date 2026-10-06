@@ -1,11 +1,43 @@
 'use client';
 
-import { useState, type FormEvent } from 'react';
-import { ArrowRight, KeyRound, Mail } from 'lucide-react';
+import { useActionState, useState, type FormEvent, type ReactNode } from 'react';
+import { ArrowRight, KeyRound, LockKeyhole, Mail } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Field } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
 import { app, domain } from '@/app.config';
+import { demoSignIn } from './actions';
+
+/** The panel's surface, shared by both panels and the placeholder that holds their place while one streams in. */
+export function PanelFrame({ children }: { children?: ReactNode }) {
+  return (
+    <section aria-labelledby={children ? 'sign-in' : undefined} aria-hidden={children ? undefined : true} className="relative overflow-hidden rounded-xl border border-line bg-surface/80 p-7 shadow-overlay backdrop-blur-xl sm:p-8">
+      <span aria-hidden className="absolute inset-x-8 top-0 h-px bg-linear-to-r from-transparent via-accent-ink/60 to-transparent" />
+      {children ?? <div className="min-h-[22rem]" />}
+    </section>
+  );
+}
+
+/** The demo's panel, when `DEMO_PASSWORD` is set: one password field and one primary action. */
+export function PasswordPanel() {
+  const [state, action, pending] = useActionState(demoSignIn, { error: false });
+  return (
+    <PanelFrame>
+      <form action={action}>
+        <span className="grid size-11 place-items-center rounded-full bg-accent-tint text-accent-ink"><LockKeyhole className="size-5" /></span>
+        <h2 id="sign-in" className="t-section mt-5">Open the demo</h2>
+        <p className="t-small mt-2 text-ink-2">{app.name} on sample data. Enter the password you were given.</p>
+        <input type="text" name="username" value="demo" autoComplete="username" readOnly hidden />
+        <div className="mt-7 flex flex-col gap-4">
+          <Field label="Demo password" error={state.error ? 'That is not the demo password.' : undefined}>
+            {(p) => <Input {...p} name="password" type="password" size="lg" autoComplete="current-password" required autoFocus leading={<KeyRound className="size-4" />} />}
+          </Field>
+          <Button type="submit" variant="primary" size="lg" block busy={pending} trailing={<ArrowRight />}>Open the demo</Button>
+        </div>
+      </form>
+    </PanelFrame>
+  );
+}
 
 /** The sign-in panel: one field, one primary action, SSO beside it. A sent link replaces the form, never a toast. */
 export function SignInPanel() {
@@ -27,8 +59,7 @@ export function SignInPanel() {
     setState('sso');
   };
   return (
-    <section aria-labelledby="sign-in" className="relative overflow-hidden rounded-xl border border-line bg-surface/80 p-7 shadow-overlay backdrop-blur-xl sm:p-8">
-      <span aria-hidden className="absolute inset-x-8 top-0 h-px bg-linear-to-r from-transparent via-accent-ink/60 to-transparent" />
+    <PanelFrame>
       {state === 'sent' ? (
         <div role="status">
           <span className="grid size-11 place-items-center rounded-full bg-accent-tint text-accent-ink"><Mail className="size-5" /></span>
@@ -60,6 +91,6 @@ export function SignInPanel() {
           <p className="t-caption mt-6 text-pretty">By continuing you agree to the Terms and the Privacy notice. We never post anything for you.</p>
         </form>
       )}
-    </section>
+    </PanelFrame>
   );
 }

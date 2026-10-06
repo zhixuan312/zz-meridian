@@ -281,11 +281,12 @@ const retirements: Retirement[] = [];
 }
 
 // ── The template's request boundaries ────────────────────────────────────────────────────────────────
-// Two places read the request: the console layout, which hands the shell a promise, and the not-found page, which streams
-// the address in. A `connection()` anywhere else makes the page behind it wait for the request, and a template whose
+// Three places read the request: the console layout, which hands the shell a promise, the not-found page, which streams
+// the address in, and the sign-in page's panel, which streams in as the demo's password or the product's sign-in, set by
+// DEMO_PASSWORD at run time. A `connection()` anywhere else makes the page behind it wait for the request, and a template whose
 // pages all prerender has none. In a product those pages are the team's, so the rule is the template's alone.
 if (!fs.existsSync(manifestFile)) {
-  const BOUNDARIES = [`${APP_DIR}/(dashboard)/layout.tsx`, `${APP_DIR}/not-found.tsx`];
+  const BOUNDARIES = [`${APP_DIR}/(dashboard)/layout.tsx`, `${APP_DIR}/not-found.tsx`, `${APP_DIR}/sign-in/gated-panel.tsx`];
   /** Comments blanked, not removed, so a line number is the file's. */
   const blanked = (f: string) => read(f).replace(/\/\*[\s\S]*?\*\//g, (c) => c.replace(/[^\n]/g, ' ')).replace(/(^|[^:])\/\/[^\n]*/g, '$1');
   const lineOf = (src: string, at: number) => src.slice(0, at).split('\n').length;
@@ -293,7 +294,7 @@ if (!fs.existsSync(manifestFile)) {
   for (const f of sources) {
     if (BOUNDARIES.includes(f)) continue;
     blanked(f).split('\n').forEach((line, i) => {
-      if (/\bconnection\s*\(/.test(line)) problems.push(`${f}:${i + 1}: connection() outside the template's two request boundaries`);
+      if (/\bconnection\s*\(/.test(line)) problems.push(`${f}:${i + 1}: connection() outside the template's three request boundaries`);
     });
   }
   // A page and a view read the sample through src/data, so the day it becomes an API is one file's change. Every
@@ -339,7 +340,8 @@ const TOOLKIT = /^src\/lib\/(format|color|collection|live)\.ts$/;
 // release may add an export the team's code does not use yet. Only the project's own src/lib and src/data are swept.
 // The template, with no manifest, is swept whole.
 const meridians = new Set(Object.keys(effective?.files ?? {}));
-const kept = ['src', 'app', 'scripts'].flatMap((d) => walk(d, /\.tsx?$/)).filter((f) => !/(^|\/)preview\.tsx$/.test(f) && !f.startsWith('app/system/') && !atlasOnly.includes(f));
+// A root proxy.ts is the product's own code too: Next runs it before every request.
+const kept = [...['src', 'app', 'scripts'].flatMap((d) => walk(d, /\.tsx?$/)), ...(fs.existsSync(path.join(ROOT, 'proxy.ts')) ? ['proxy.ts'] : [])].filter((f) => !/(^|\/)preview\.tsx$/.test(f) && !f.startsWith('app/system/') && !atlasOnly.includes(f));
 const resolveSpec = (from: string, spec: string) => {
   const base = spec.startsWith('@/') ? path.join('src', spec.slice(2)) : spec.startsWith('.') ? path.join(path.dirname(from), spec) : null;
   if (!base) return null;
