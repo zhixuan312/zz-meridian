@@ -221,9 +221,10 @@ jobs:
           fi
 
       - name: Wait until the registry serves it
+        # npm says a new version "may take a few minutes to become available": 0.6.0 took longer than 3 minutes.
         run: |
           set -euo pipefail
-          for i in $(seq 1 18); do
+          for i in $(seq 1 60); do
             [ "$(npm view "zz-meridian@$VERSION" version 2>/dev/null || true)" = "$VERSION" ] && { echo "live"; exit 0; }
             echo "attempt $i: not visible yet"; sleep 10
           done
