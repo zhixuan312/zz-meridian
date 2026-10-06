@@ -2,7 +2,7 @@
 
 Every release of ZZ Meridian, newest first. Versions follow semver: a removed or renamed token, prop or card is major; a new card, token or variant is minor; a corrected value is a patch. Each entry says what breaks and what to do instead.
 
-## [Unreleased]
+## [0.5.0] · 2026-10-06
 
 ### Added
 
@@ -128,6 +128,19 @@ Every release of ZZ Meridian, newest first. Versions follow semver: a removed or
   - The template's assistant reads its Product, Users and Glossary sections, at most 2000 characters, as context and never as instructions.
 - **`brand.ts --product` keeps the assistant's build tracing.** It removes only the Atlas's `/system/**` entry from `outputFileTracingIncludes`.
 - **`adopt` refuses an incomplete package before it writes anything.** Its copy rule now lives in `cli/src/ownership.ts`, shared with `update`. A package whose template lacks a file adopt needs is refused first; before, that failure surfaced as a crash halfway through.
+
+### Fixed
+
+- **`pnpm verify --full` no longer counts a suite that ran nothing as run.** The live-data check exits 2 when a case did not run, for example in a product without the template's live `/members`. `verify` then reports `not run` for it, keeps `live` in the coverage line's not-run list, and ends with `every check that ran passed; not run: live`, not "the project meets the Meridian standard". Breaking: a script that matched the old closing line reads the coverage line instead.
+- **The size and route checks work with any Next config file.** `scripts/route-policy.ts` and `scripts/sizes.ts` read the build folder from `next.config.js`, `.mjs`, `.ts` or `.mts`, as Next does. Before, an adopted project whose config was not `next.config.ts` failed both with a missing-module error.
+- **Pages with no data show an empty state, not an error.** Overview, Analytics, Health and Customers render their empty card when their series are empty. `/customers` renders its title in the first HTML, and the page skeletons announce themselves as loading to assistive technology.
+- **A failed invitation is told, even when the request never reached the server.** The members page rolls the row back and toasts "Change not made" for a dropped connection too.
+- **Creating an API key requires at least one declared scope.** The server refuses an empty set or an unknown scope, and Create stays disabled until a scope is ticked.
+- **Undo after Disconnect puts the host back where it was**, once.
+- **The embed's "Set by Claude" can be cleared.** Breaking: a person's change writes `by=you` in the address, where it used to remove `by`.
+- **`brand.ts` writes brand values literally**, so a name containing `$&` stays as typed. With `--existing`, `--package` renames the package and keeps its version and description.
+- **Interrupted checks clean up after themselves.** `verify`, the live check and the consumer smoke stop the servers, suites and headless Chrome they started, and remove their scratch folders, when they are interrupted or fail.
+- **The documented Postgres live adapter opens one listening connection**, however many collections subscribe at once.
 
 ## [0.4.0] · 2026-10-05
 
