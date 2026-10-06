@@ -9,7 +9,7 @@ import { API_KEYS } from '@/system/fixtures/sample-records';
 
 describe('the Create key sheet', () => {
   it('will not create a key with no scope ticked', async () => {
-    render(<KeysView rows={API_KEYS} now="2026-10-05T09:00:00.000Z" createKey={async () => API_KEYS[0]} revokeKey={async () => {}} />);
+    render(<KeysView rows={API_KEYS} now="2026-10-05T09:00:00.000Z" createKey={async () => ({ ...API_KEYS[0], secret: 'zzm_live_' + '0'.repeat(32) })} revokeKey={async () => {}} />);
     fireEvent.click(screen.getAllByRole('button', { name: 'Create key' })[0]);
     fireEvent.click(await screen.findByRole('checkbox', { name: 'Messages' }));
     const create = screen.getAllByRole('button', { name: 'Create key' }).at(-1) as HTMLButtonElement;

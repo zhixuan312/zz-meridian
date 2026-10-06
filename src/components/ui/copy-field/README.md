@@ -58,6 +58,7 @@ Label the field with what it is: "API key", "Webhook signing secret".
 ## Do and do not
 
 - Do mask every secret by default.
+- Do not list a stored secret at all. An API key is shown in full once, when it is created; afterwards the page shows its hint (the prefix and the last four characters) as plain text, and the server never sends the secret again.
 - Do not offer Copy for something that is not meant to be pasted elsewhere.
 
 ## Implementation

@@ -25,7 +25,7 @@ The row menu holds Suspend (Reactivate on a suspended member) and Remove.
 | Suspended | The status Badge in `warning` |
 | Name or email missing | The field's error under it; nothing is sent |
 | Changed | The page refreshes from the collection and a toast confirms: "Member suspended", "Member reactivated", "Member removed", "Invitation sent to {email}" |
-| Rejected | A critical toast with the reason; the table does not change |
+| Rejected | The table goes back to what it was. A refused invitation reopens the sheet with what was typed and a critical Banner, "Invitation not sent", with the reason; a refused status change or removal shows a critical toast with the reason |
 | No members | The first-run empty state with Invite member |
 
 ## Data

@@ -2,6 +2,13 @@
 
 Every release of ZZ Meridian, newest first. Versions follow semver: a removed or renamed token, prop or card is major; a new card, token or variant is minor; a corrected value is a patch. Each entry says what breaks and what to do instead.
 
+## [Unreleased]
+
+### Changed
+
+- **An API key is shown in full once, when it is created.** The keys collection stores each key's `hint` (its prefix and last four characters, `zzm_live_…f601`) and `secretHash` (the secret's SHA-256), never the secret. `createKey` returns the new key with its `secret` for the creation banner, and the table lists every key by its hint, with no Reveal or Copy. Breaking: `ApiKey` has `hint` and `secretHash` in place of `secret`, and `KeysView`'s `createKey` returns `ApiKey & { secret: string }`. A created project's own keys page and fixtures keep the old shape until the team takes the release's versions.
+- **A form in an open sheet says why it failed inside the sheet.** A refused invitation reopens the Members sheet with what was typed and a critical Banner, "Invitation not sent", with the reason. A refused key reads "Key not created" at the top of the Create a key sheet. Neither sends a toast over the sheet's own buttons. Refused changes made from a table row still toast.
+
 ## [0.5.0] · 2026-10-06
 
 ### Added

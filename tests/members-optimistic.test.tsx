@@ -23,14 +23,19 @@ async function invite(name: string) {
 }
 
 describe('members, optimistically', () => {
-  it('shows an invitation at once and rolls it back with the reason when it fails', async () => {
+  it('shows an invitation at once, and on a refusal rolls it back and says why inside the reopened sheet, not in a toast', async () => {
     const d = deferred();
     render(<MembersView rows={MEMBERS} now="2026-10-05T09:00:00.000Z" actions={{ invite: () => d.promise, setStatus: async () => ({ ok: true }), remove: async () => ({ ok: true }) }} />);
     await invite('Ana Ruiz');
     expect(await screen.findByText('Ana Ruiz')).toBeTruthy();
+    const before = toasts.length;
     await act(async () => { d.resolve({ ok: false, error: 'There is no seat left on this plan.' }); });
     await waitFor(() => expect(screen.queryByText('Ana Ruiz')).toBeNull());
-    expect(toasts.at(-1)).toMatchObject({ tone: 'critical', title: 'Change not made', description: 'There is no seat left on this plan.' });
+    const alert = within(await screen.findByRole('dialog')).getByRole('alert');
+    expect(alert.textContent).toContain('Invitation not sent');
+    expect(alert.textContent).toContain('There is no seat left on this plan.');
+    expect((screen.getByLabelText(/^Name/) as HTMLInputElement).value).toBe('Ana Ruiz');
+    expect(toasts.length).toBe(before);
   });
   it('rolls back and says so when the action itself fails, as a dropped connection does', async () => {
     let fail!: (e: Error) => void;
@@ -40,7 +45,7 @@ describe('members, optimistically', () => {
     expect(await screen.findByText('Rae Okafor')).toBeTruthy();
     await act(async () => { fail(new Error('Failed to fetch')); });
     await waitFor(() => expect(screen.queryByText('Rae Okafor')).toBeNull());
-    expect(toasts.at(-1)).toMatchObject({ tone: 'critical', title: 'Change not made', description: 'The change did not reach the server. Try again.' });
+    expect(within(await screen.findByRole('dialog')).getByRole('alert').textContent).toContain('The change did not reach the server. Try again.');
     expect((screen.getByLabelText(/^Name/) as HTMLInputElement).value).toBe('Rae Okafor');
   });
   it('keeps a successful invitation once the authoritative rows include it', async () => {
@@ -111,7 +116,7 @@ describe('keys, optimistically', () => {
     let fail!: (e: Error) => void;
     const revokeKey = () => new Promise<void>((_, reject) => { fail = reject; });
     const key = API_KEYS[0];
-    render(<KeysView rows={API_KEYS} now="2026-10-05T09:00:00.000Z" createKey={async () => key} revokeKey={revokeKey} />);
+    render(<KeysView rows={API_KEYS} now="2026-10-05T09:00:00.000Z" createKey={async () => ({ ...key, secret: 'zzm_live_' + '0'.repeat(32) })} revokeKey={revokeKey} />);
     fireEvent.click(screen.getByRole('button', { name: `Revoke ${key.name}` }));
     fireEvent.click(await screen.findByRole('button', { name: 'Revoke key' }));
     await waitFor(() => expect(screen.queryByRole('button', { name: `Revoke ${key.name}` })).toBeNull());

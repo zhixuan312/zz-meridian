@@ -52,7 +52,8 @@ export const keys: Collection<ApiKey, 'id'> = arrayCollection({
   title: (k) => k.name,
   fields: z.object({
     name: z.string(),
-    secret: z.string(),
+    hint: z.string(),
+    secretHash: z.string(),
     owner: z.string(),
     created: z.string(),
     lastUsed: z.string().nullable(),
@@ -62,7 +63,7 @@ export const keys: Collection<ApiKey, 'id'> = arrayCollection({
   rows: API_KEYS,
   allow: ['create', 'remove'],
   pageOnly: ['create'],
-  hidden: ['secret'],
+  hidden: ['secretHash'],
 });
 
 /** A request as the collection holds it: the record plus two values worked out for filtering, never written. `search` is the lower-cased id, route and customer; a page does not carry it (`publicRows`). */

@@ -7,6 +7,7 @@ import { app } from '@/app.config';
 import { PageFrame, Stack } from '@/components/base/shell';
 import { Avatar } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
+import { Banner } from '@/components/ui/banner';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogClose, DialogContent } from '@/components/ui/dialog';
 import { Field } from '@/components/ui/field';
@@ -56,13 +57,16 @@ export function MembersView({ rows, now, actions }: { rows: Member[]; now: strin
   const [removing, setRemoving] = useState<Member | null>(null);
   const [invite, setInvite] = useState(BLANK);
   const [errors, setErrors] = useState<{ name?: string; email?: string }>({});
+  /** Why the server did not send the last invitation: said inside the sheet it was sent from, never in a toast over it. */
+  const [inviteError, setInviteError] = useState<string | null>(null);
 
   /**
    * Show `optimistic` at once, then run the action for the row `id`. The change stays until the transition ends, which waits for
-   * the refreshed rows; a refusal or a failed request toasts the reason and the table goes back to the rows it was given. A row with an action
-   * in flight takes no second one.
+   * the refreshed rows; on a refusal or a failed request the table goes back to the rows it was given, and the reason is
+   * toasted, or handed to `failed` when the change came from a form that shows its own errors. A row with an action in
+   * flight takes no second one.
    */
-  const act = (id: string, optimistic: Change, action: () => Promise<Result>, done: { title: string; description?: string }, failed?: () => void) => {
+  const act = (id: string, optimistic: Change, action: () => Promise<Result>, done: { title: string; description?: string }, failed?: (reason: string) => void) => {
     if (inFlight.current.has(id)) return;
     inFlight.current.add(id);
     start(async () => {
@@ -71,7 +75,7 @@ export function MembersView({ rows, now, actions }: { rows: Member[]; now: strin
         // A refusal comes back as a reason; an action that never answered (a dropped connection) throws, and is told the same way.
         const r = await action().catch((): Result => ({ ok: false, error: 'The change did not reach the server. Try again.' }));
         if (!r.ok) {
-          failed?.();
+          if (failed) return failed(r.error);
           return toast({ tone: 'critical', title: 'Change not made', description: r.error });
         }
         router.refresh();
@@ -93,7 +97,8 @@ export function MembersView({ rows, now, actions }: { rows: Member[]; now: strin
     const row: Shown = { id: `pending-${tempId.current++}`, name: draft.name.trim(), email: draft.email.trim(), role: draft.role, team: draft.team, status: 'Invited', joined: now.slice(0, 10), lastActive: null, pending: true };
     setInviting(false);
     setInvite(BLANK);
-    act(row.id, { type: 'add', row }, () => actions.invite(draft), { title: `Invitation sent to ${row.email}`, description: `${row.name} joins as ${draft.role} on ${draft.team} when they accept.` }, () => { setInvite(draft); setInviting(true); });
+    setInviteError(null);
+    act(row.id, { type: 'add', row }, () => actions.invite(draft), { title: `Invitation sent to ${row.email}`, description: `${row.name} joins as ${draft.role} on ${draft.team} when they accept.` }, (reason) => { setInvite(draft); setInviteError(reason); setInviting(true); });
   };
 
   const columns: Column<Shown>[] = [
@@ -146,7 +151,7 @@ export function MembersView({ rows, now, actions }: { rows: Member[]; now: strin
       kicker={<>{app.name} · {app.workspace}</>}
       title="Members"
       description="Who is in the workspace, what they can do, and when they last used it."
-      actions={<Button variant="primary" icon={<UserPlus />} onClick={() => setInviting(true)}>Invite member</Button>}
+      actions={<Button variant="primary" icon={<UserPlus />} onClick={() => { setInviteError(null); setInviting(true); }}>Invite member</Button>}
     >
       <Stack>
         <DataTable
@@ -155,7 +160,7 @@ export function MembersView({ rows, now, actions }: { rows: Member[]; now: strin
           rows={shown}
           columns={columns}
           rowKey={(m) => m.id}
-          empty={{ title: 'No members yet', body: `Invite the people who work in ${app.name}.`, action: <Button variant="primary" size="sm" icon={<UserPlus />} onClick={() => setInviting(true)}>Invite member</Button> }}
+          empty={{ title: 'No members yet', body: `Invite the people who work in ${app.name}.`, action: <Button variant="primary" size="sm" icon={<UserPlus />} onClick={() => { setInviteError(null); setInviting(true); }}>Invite member</Button> }}
         />
       </Stack>
 
@@ -166,6 +171,7 @@ export function MembersView({ rows, now, actions }: { rows: Member[]; now: strin
           footer={<><SheetClose asChild><Button variant="ghost">Cancel</Button></SheetClose><Button variant="primary" busy={pending} onClick={send}>Send invitation</Button></>}
         >
           <div className="flex flex-col gap-6">
+            {inviteError ? <Banner tone="critical" title="Invitation not sent">{inviteError}</Banner> : null}
             <Field label="Name" error={errors.name} required>
               {(p) => <Input {...p} value={invite.name} onChange={(e) => { setInvite({ ...invite, name: e.target.value }); setErrors({ ...errors, name: undefined }); }} placeholder="Ana Costa" />}
             </Field>

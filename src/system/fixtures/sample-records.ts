@@ -95,14 +95,19 @@ export function payloadsOf(r: RequestRow): { request: string | null; response: s
   return { request: request ? JSON.stringify(request, null, 2) : null, response: JSON.stringify(response, null, 2) };
 }
 
-export type ApiKey = { id: string; name: string; secret: string; owner: string; created: string; lastUsed: string | null; scopes: string[]; env: 'live' | 'test' };
+/**
+ * An API key as it is stored: never the secret itself. `hint` is the non-secret part a person recognises the key by (its
+ * prefix and last four characters), and `secretHash` is what a request's key is checked against. The full secret exists
+ * once, in what `createKey` returns.
+ */
+export type ApiKey = { id: string; name: string; hint: string; secretHash: string; owner: string; created: string; lastUsed: string | null; scopes: string[]; env: 'live' | 'test' };
 const ago = (days: number, hours = 0) => new Date(DEMO_NOW.getTime() - days * 86_400_000 - hours * 3_600_000).toISOString();
 export const API_KEYS: ApiKey[] = [
-  { id: 'key_01', name: 'Production backend', secret: 'zzm_live_4f9a2c71e8b04d6f93a1c5e2d7b8f601', owner: 'Maya Chen', created: ago(212), lastUsed: ago(0, 0.02), scopes: ['messages', 'search', 'embeddings'], env: 'live' },
-  { id: 'key_02', name: 'Search indexer', secret: 'zzm_live_9b3e1d55a7c24f08b6e2a9d1c4f7e830', owner: 'Jonas Weber', created: ago(141), lastUsed: ago(0, 0.4), scopes: ['embeddings', 'files'], env: 'live' },
-  { id: 'key_03', name: 'Support assistant', secret: 'zzm_live_2c8d4a96f1e34b7a85d0c3e9b6a2f417', owner: 'Amara Okafor', created: ago(63), lastUsed: ago(0, 3), scopes: ['messages'], env: 'live' },
-  { id: 'key_04', name: 'Staging', secret: 'zzm_test_7e1f3b29c5d84a60b2f9e8c1d3a7b552', owner: 'Jonas Weber', created: ago(30), lastUsed: ago(2), scopes: ['messages', 'search', 'embeddings', 'files', 'webhooks'], env: 'test' },
-  { id: 'key_05', name: 'Load test, October', secret: 'zzm_test_5a0c9e17b3f24d8e91c6a2b7f4d0e389', owner: 'Maya Chen', created: ago(1), lastUsed: null, scopes: ['messages'], env: 'test' },
+  { id: 'key_01', name: 'Production backend', hint: 'zzm_live_…f601', secretHash: 'a70b9eb5972206dad7965842f9c1a020b6fbd671f95ff4d90e04f31440a0767c', owner: 'Maya Chen', created: ago(212), lastUsed: ago(0, 0.02), scopes: ['messages', 'search', 'embeddings'], env: 'live' },
+  { id: 'key_02', name: 'Search indexer', hint: 'zzm_live_…e830', secretHash: 'c5e3a95789cd465edf1a812638689aec44e22c712ddf8aebd143f92db44ec2c9', owner: 'Jonas Weber', created: ago(141), lastUsed: ago(0, 0.4), scopes: ['embeddings', 'files'], env: 'live' },
+  { id: 'key_03', name: 'Support assistant', hint: 'zzm_live_…f417', secretHash: '645516307926d8cf8f1a4ffc7706ff525379e0bd50f143b672b537a1b84a605e', owner: 'Amara Okafor', created: ago(63), lastUsed: ago(0, 3), scopes: ['messages'], env: 'live' },
+  { id: 'key_04', name: 'Staging', hint: 'zzm_test_…b552', secretHash: 'b7caa2d349c1e2bc72d6d1c80e09c7f20a99e1d86580f5b9c058cdc9aaeb784c', owner: 'Jonas Weber', created: ago(30), lastUsed: ago(2), scopes: ['messages', 'search', 'embeddings', 'files', 'webhooks'], env: 'test' },
+  { id: 'key_05', name: 'Load test, October', hint: 'zzm_test_…e389', secretHash: 'cb3e8f7c3409619a25c56b233f885082c1ddfda97d99aa4a60eba6ddca281440', owner: 'Maya Chen', created: ago(1), lastUsed: null, scopes: ['messages'], env: 'test' },
 ];
 
 export type CustomerRecord = (typeof CUSTOMER_ROWS)[number] & { id: string; region: string; since: string; errorRate: number; seats: number };

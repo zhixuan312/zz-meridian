@@ -63,7 +63,7 @@ When an agent's approved proposal applies, the toast names the agent: "Rate limi
 ## Do and do not
 
 - Do offer Undo instead of a confirmation dialog when an action can be reversed.
-- Do not use a toast for an error the person must act on; use a Banner or the field's error.
+- Do not use a toast for an error the person must act on; use a Banner or the field's error. A form in an open sheet or dialog that fails shows its error inside the form, at the top, and keeps what was typed: a toast would land on the form's own actions.
 
 ## Implementation
 

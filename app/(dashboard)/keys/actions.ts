@@ -1,6 +1,6 @@
 'use server';
 
-import { randomBytes } from 'node:crypto';
+import { createHash, randomBytes } from 'node:crypto';
 import { updateTag } from 'next/cache';
 import { z } from 'zod';
 import { app } from '@/app.config';
@@ -16,14 +16,20 @@ const draft = z.object({
   scopes: z.array(z.enum(SCOPES), { error: 'Choose only the scopes a key can carry.' }).min(1, 'Give the key at least one scope.'),
 });
 
-/** Creates a key and returns it: the only moment its full secret leaves the server for a banner. */
-export async function createKey(input: z.input<typeof draft>): Promise<ApiKey> {
+/**
+ * Creates a key and returns it with its full secret: the only moment the secret exists outside the caller's own copy.
+ * What is stored is the key's hint (its prefix and last four characters) and the secret's SHA-256, never the secret.
+ */
+export async function createKey(input: z.input<typeof draft>): Promise<ApiKey & { secret: string }> {
   const { name, env, scopes } = draft.parse(input);
   const scope = await resolveAccess();
   if (!(await can(scope, 'keys', 'create'))) throw new AccessDenied();
-  const key = await collectionFor(scope, 'keys').create!({ name, env, scopes, owner: app.user.name, created: clock().toISOString(), lastUsed: null, secret: `zzm_${env}_${randomBytes(16).toString('hex')}` });
+  const secret = `zzm_${env}_${randomBytes(16).toString('hex')}`;
+  const hint = `zzm_${env}_…${secret.slice(-4)}`;
+  const secretHash = createHash('sha256').update(secret).digest('hex');
+  const key = await collectionFor(scope, 'keys').create!({ name, env, scopes, owner: app.user.name, created: clock().toISOString(), lastUsed: null, hint, secretHash });
   updateTag(collectionTag(scope.tenantId, 'keys'));
-  return key;
+  return { ...(key as ApiKey), secret };
 }
 
 export async function revokeKey(id: string): Promise<void> {

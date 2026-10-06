@@ -29,7 +29,7 @@ type Draft = { name: string; env: 'live' | 'test'; scopes: Scope[] };
 
 /** The server actions arrive as props: the page owns them, the view only calls them and refreshes the route. */
 /** `now` is the read's observation time, so "last used" is never fresher than the data. */
-export function KeysView({ rows, now, createKey, revokeKey }: { rows: ApiKey[]; now: string; createKey: (draft: Draft) => Promise<ApiKey>; revokeKey: (id: string) => Promise<void> }) {
+export function KeysView({ rows, now, createKey, revokeKey }: { rows: ApiKey[]; now: string; createKey: (draft: Draft) => Promise<ApiKey & { secret: string }>; revokeKey: (id: string) => Promise<void> }) {
   const router = useRouter();
   useLive(['keys']);
   const asOf = new Date(now);
@@ -38,11 +38,13 @@ export function KeysView({ rows, now, createKey, revokeKey }: { rows: ApiKey[]; 
   const [pending, startTransition] = useTransition();
   const [creating, setCreating] = useState(false);
   const [revoking, setRevoking] = useState<ApiKey | null>(null);
-  const [fresh, setFresh] = useState<ApiKey | null>(null);
+  const [fresh, setFresh] = useState<(ApiKey & { secret: string }) | null>(null);
   const [name, setName] = useState('');
   const [env, setEnv] = useState<'live' | 'test'>('live');
   const [scopes, setScopes] = useState<Scope[]>(['messages']);
   const [error, setError] = useState<string | null>(null);
+  /** Why the server did not create the key: said inside the open sheet, never in a toast over its button. */
+  const [createError, setCreateError] = useState<string | null>(null);
 
   /** Runs an action, refreshes the route on success, and shows a critical toast, changing nothing, when it is rejected. */
   const run = (action: () => Promise<void>, failed: string) =>
@@ -57,13 +59,19 @@ export function KeysView({ rows, now, createKey, revokeKey }: { rows: ApiKey[]; 
 
   const create = () => {
     if (!name.trim()) return setError('Name the key after what uses it: "Billing worker".');
-    run(async () => {
-      const k = await createKey({ name, env, scopes });
-      setFresh(k);
-      setCreating(false);
-      setName(''); setScopes(['messages']); setError(null);
-      toast({ tone: 'positive', title: 'Key created', description: `${k.name} can call ${k.scopes.join(', ')}.` });
-    }, 'Could not create the key');
+    setCreateError(null);
+    startTransition(async () => {
+      try {
+        const k = await createKey({ name, env, scopes });
+        setFresh(k);
+        setCreating(false);
+        setName(''); setScopes(['messages']); setError(null);
+        toast({ tone: 'positive', title: 'Key created', description: `${k.name} can call ${k.scopes.join(', ')}.` });
+        router.refresh();
+      } catch (e) {
+        setCreateError(e instanceof Error ? e.message : 'The key could not be created. Try again.');
+      }
+    });
   };
 
   const columns: Column<ApiKey>[] = [
@@ -76,7 +84,8 @@ export function KeysView({ rows, now, createKey, revokeKey }: { rows: ApiKey[]; 
         </span>
       ),
     },
-    { key: 'secret', header: 'Key', hideBelow: 'md', cell: (k) => <CopyField value={k.secret} label={`${k.name} key`} secret className="w-60" /> },
+    // The full key is shown once, when it is created; a listed key is known by its hint, which is not a secret.
+    { key: 'hint', header: 'Key', hideBelow: 'md', cell: (k) => <code className="font-mono text-xs text-ink-2">{k.hint}</code> },
     {
       key: 'scopes', header: 'Scopes', hideBelow: 'xl',
       cell: (k) => (
@@ -108,7 +117,7 @@ export function KeysView({ rows, now, createKey, revokeKey }: { rows: ApiKey[]; 
       kicker={<>{app.name} · {app.workspace}</>}
       title="API keys"
       description={`Keys let your services call ${app.name}. Each one carries only the scopes it needs.`}
-      actions={<Button variant="primary" icon={<Plus />} onClick={() => setCreating(true)}>Create key</Button>}
+      actions={<Button variant="primary" icon={<Plus />} onClick={() => { setCreateError(null); setCreating(true); }}>Create key</Button>}
     >
       <Stack>
         {fresh ? (
@@ -125,7 +134,7 @@ export function KeysView({ rows, now, createKey, revokeKey }: { rows: ApiKey[]; 
             rows={shown}
             columns={columns}
             rowKey={(k) => k.id}
-            empty={{ title: 'No keys yet', body: `Create a key for each service that calls ${app.name}.`, action: <Button variant="primary" size="sm" icon={<Plus />} onClick={() => setCreating(true)}>Create key</Button> }}
+            empty={{ title: 'No keys yet', body: `Create a key for each service that calls ${app.name}.`, action: <Button variant="primary" size="sm" icon={<Plus />} onClick={() => { setCreateError(null); setCreating(true); }}>Create key</Button> }}
           />
         </Tooltip.Provider>
         <p className="t-caption max-w-[72ch]">Keys never expire. To rotate one, create its replacement, move your services to it, then revoke the old key: requests signed with it fail at once.</p>
@@ -138,6 +147,7 @@ export function KeysView({ rows, now, createKey, revokeKey }: { rows: ApiKey[]; 
           footer={<><SheetClose asChild><Button variant="ghost">Cancel</Button></SheetClose><Button variant="primary" onClick={create} disabled={pending || scopes.length === 0}>Create key</Button></>}
         >
           <div className="flex flex-col gap-6">
+            {createError ? <Banner tone="critical" title="Key not created">{createError}</Banner> : null}
             <Field label="Name" hint="Name it after what uses it." error={error ?? undefined} required>
               {(p) => <Input {...p} value={name} onChange={(e) => { setName(e.target.value); setError(null); }} placeholder="Billing worker" />}
             </Field>
