@@ -8,7 +8,7 @@ vi.mock('@/data/live-actions', () => ({ refreshCollections: async () => action.r
 const seen = vi.hoisted(() => ({ refresh: null as null | ((names: string[]) => Promise<void>) }));
 vi.mock('@/lib/live', () => ({ LiveProvider: (p: { refresh: (names: string[]) => Promise<void>; children: unknown }) => { seen.refresh = p.refresh; return p.children; } }));
 
-import { ConsoleLive } from '@/views/console-live';
+import { ConsoleLive, pollFromAddress } from '@/views/console-live';
 
 describe('the console live refresh', () => {
   it('reads the route again after a successful refresh', async () => {
@@ -23,5 +23,11 @@ describe('the console live refresh', () => {
     action.result = { ok: false, status: 401 };
     await expect(seen.refresh!(['members'])).rejects.toMatchObject({ status: 401 });
     expect(router.refresh).not.toHaveBeenCalled();
+  });
+  it('takes a shorter safety poll from the address, never under a second', () => {
+    expect(pollFromAddress('?livePollMs=3000')).toBe(3000);
+    expect(pollFromAddress('?livePollMs=10')).toBe(1000);
+    expect(pollFromAddress('?livePollMs=nope')).toBeUndefined();
+    expect(pollFromAddress('')).toBeUndefined();
   });
 });

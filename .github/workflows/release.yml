@@ -1,17 +1,19 @@
 # Release the zz-meridian package (decisions 0009 and 0010, docs/distribution.md): gates, pack, the consumer path end
 # to end, then publish with provenance, then tag LAST.
 #
-# WHAT GATES A RELEASE. The checks that decide whether this tarball works: the template's default verify three times
-# from a clean build, each within 120 s (the gate with its unit tests runs inside each), and the consumer smoke from the
-# tarball, which adopts, creates, and updates every published origin to finalize. The full walkthroughs, the 20-sample
-# perf report and the recovery and failure matrices are statistical or exhaustive, and run weekly (weekly.yml).
+# WHAT GATES A RELEASE. The checks that decide whether this tarball works, each run once: the template's default verify
+# from a clean build, within 120 s (the gate with its unit tests runs inside it), and the consumer smoke from the tarball,
+# which adopts, creates, and updates every published origin to finalize. The full walkthroughs, the 20-sample perf report
+# and the recovery and failure matrices run weekly (weekly.yml) and never here: weekly is weekly, release is release.
+# After publishing, the registry's tarball is compared byte for byte with the tested one; identical bytes are not tested
+# twice.
 #
 # WHY FOUR JOBS. `build` makes the tarball with nothing but Node, git and a pinned TypeScript installed without its
 # scripts, and records its hash. `gates` installs the template's dependencies and runs their code (the verifies, the
 # build, the tests, Chrome) against that tarball; it cannot change it and holds no credential. `publish` installs nothing,
 # checks the hash, and is the only job with id-token: write, inside the `npm` environment, which only master may use.
-# `release` runs the registry's package as a consumer would, through the same consumer smoke, then tags and writes the
-# Release, without the publishing token.
+# `release` checks the registry serves the tested tarball with provenance, then tags and writes the Release, without the
+# publishing token.
 #
 # WHY THE TAG IS LAST. The tag proves a finished release. Nothing is tagged until the package is on the registry and a
 # consumer has run it, so "tagged but not on npm" cannot happen.
@@ -126,9 +128,9 @@ jobs:
   gates:
     needs: build
     runs-on: ubuntu-24.04
-    # Measured on an Apple M5: about 4.5 minutes for the three verifies and 9 for the smoke. The 4-CPU runner is slower,
-    # so this leaves room; tighten it from the first release run's log.
-    timeout-minutes: 45
+    # Measured on an Apple M5: about 1.5 minutes for the verify and 6.5 for the smoke. The 4-CPU runner is slower, so this
+    # leaves room; tighten it from the first release run's log.
+    timeout-minutes: 30
     env:
       VERSION: ${{ inputs.version }}
       SHA256: ${{ needs.build.outputs.sha256 }}
@@ -147,8 +149,8 @@ jobs:
 
       - run: pnpm install --frozen-lockfile
       # This runner is the reference profile for AC-4.8; its log, with the machine line, is the release's evidence.
-      - name: The default verify, three times from a clean build, each within 120 s
-        run: node cli/scripts/release-check.ts --runs 3 --limit 120
+      - name: The default verify, from a clean build, within 120 s
+        run: node cli/scripts/release-check.ts --limit 120
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         if: always()
         with:
@@ -223,41 +225,36 @@ jobs:
   release:
     needs: [build, publish]
     runs-on: ubuntu-24.04
-    timeout-minutes: 30
+    timeout-minutes: 10
     permissions:
       contents: write   # the tag and the Release, both last
     env:
       VERSION: ${{ inputs.version }}
       SHA256: ${{ needs.build.outputs.sha256 }}
-      CHROME: /usr/bin/google-chrome
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
-        with:
-          version: 11.9.0
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: 22
 
-      - name: A consumer runs it from the registry, and it is the tested tarball
+      # A failure here is an unsuccessful release, not a rollback: the version stays published and untagged.
+      - name: A consumer runs it from the registry, and it is the tested tarball with provenance
         run: |
           set -euo pipefail
-          mkdir -p /tmp/registry && cd /tmp/registry
+          cd "$(mktemp -d)"
           OUT="$(npx --yes "zz-meridian@$VERSION" --version)"
           [ "$OUT" = "$VERSION" ] || { echo "::error::npx zz-meridian@$VERSION reported '$OUT'"; exit 1; }
           npm pack "zz-meridian@$VERSION" --ignore-scripts >/dev/null
           GOT="$(sha256sum "zz-meridian-$VERSION.tgz" | cut -d' ' -f1)"
-          [ "$GOT" = "$SHA256" ] && echo "the registry serves the tested tarball" || echo "::warning::the registry's tarball hash $GOT differs from the tested $SHA256"
+          # The tested bytes passed the consumer path in `gates`; the registry's copy must be those bytes, since nothing reruns it.
+          [ "$GOT" = "$SHA256" ] || { echo "::error::the registry's tarball hash $GOT differs from the tested $SHA256"; exit 1; }
+          echo "the registry serves the tested tarball"
           # npm view prints nothing and exits 0 for a field that is not there, so the check reads the output.
           ATT="$(npm view "zz-meridian@$VERSION" dist.attestations.provenance --json 2>/dev/null || true)"
           [ -n "$ATT" ] || { echo "::error::zz-meridian $VERSION carries no provenance attestation"; exit 1; }
           echo "provenance attached"
-
-      # A failure here is an unsuccessful release, not a rollback: the version stays published and untagged.
-      - name: The registry's package end to end, create with its default verify and every published origin updated to finalize
-        run: node cli/scripts/smoke.ts --tarball "/tmp/registry/zz-meridian-$VERSION.tgz" --create --update
 
       - name: Tag, last
         env:

@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { Row, Stack } from '@/components/base/shell';
 import { Card, CardBody, CardHeader } from '@/components/ui/card';
+import { EmptyState } from '@/components/ui/empty-state';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, type SortDirection } from '@/components/ui/table';
 import { Meridian } from '@/components/charts/meridian';
@@ -32,10 +33,17 @@ export function AnalyticsBody({
   regions: { label: string; value: number; p50: number }[];
   endpoints: Endpoint[];
 }) {
+  const [sort, setSort] = useState<{ key: 'requests' | 'errorRate' | 'p95'; dir: Exclude<SortDirection, false> }>({ key: 'p95', dir: 'desc' });
+  if (!series.length || !heat.length || !hours.length || !regions.length || !endpoints.length) {
+    return (
+      <Card>
+        <EmptyState title="No requests in this period" className="py-16">Pick a longer period, or come back once traffic arrives.</EmptyState>
+      </Card>
+    );
+  }
   const dates = series.map((d) => d.date);
   const peak = heat.flatMap((row, d) => row.map((v, h) => ({ v, d, h }))).reduce((m, c) => (c.v > m.v ? c : m));
   const peakHour = hours.reduce((m, c) => (c.value > m.value ? c : m));
-  const [sort, setSort] = useState<{ key: 'requests' | 'errorRate' | 'p95'; dir: Exclude<SortDirection, false> }>({ key: 'p95', dir: 'desc' });
   const rows = [...endpoints].sort((a, b) => (sort.dir === 'asc' ? 1 : -1) * (a[sort.key] - b[sort.key]));
   const maxP95 = Math.max(...endpoints.map((e) => e.p95));
   const by = (key: typeof sort.key) => ({

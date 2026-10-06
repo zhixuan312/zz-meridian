@@ -7,12 +7,13 @@ import { app } from '@/app.config';
 import { clock } from '@/data/collections';
 import { AccessDenied, can, collectionFor, resolveAccess } from '@/data/access';
 import { collectionTag } from '@/data/read';
+import { SCOPES } from '@/views/key-scopes';
 import type { ApiKey } from '@/data/sample';
 
 const draft = z.object({
   name: z.string().trim().min(1, 'Name the key.'),
   env: z.enum(['live', 'test']),
-  scopes: z.array(z.string()),
+  scopes: z.array(z.enum(SCOPES), { error: 'Choose only the scopes a key can carry.' }).min(1, 'Give the key at least one scope.'),
 });
 
 /** Creates a key and returns it: the only moment its full secret leaves the server for a banner. */

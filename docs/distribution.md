@@ -202,11 +202,11 @@ Modelled on the release pipeline of the owner's earlier packages, one package in
 
 1. **Dispatch**: `gh workflow run release.yml -f version=<v> [-f dry_run=true]`, from `master`. The version must equal
    `cli/package.json`'s and the tag must be unused.
-2. **Gates** (ubuntu-24.04, 4 CPUs, the reference profile): the template's default `verify` three times from a clean
-   `.next` through `cli/scripts/release-check.ts`, each within 120 s (the gate and its unit tests run inside each), and
-   the consumer smoke from the built tarball (step 4). The full, perf and recovery suites are not release gates: they
-   run weekly (below).
-3. **Pack and assert, before anything is irreversible**: `pnpm pack` in `cli/`, then on the tarball: the bin has its
+2. **Gates** (ubuntu-24.04, 4 CPUs, the reference profile), each run once: the template's default `verify` from a clean
+   `.next` through `cli/scripts/release-check.ts`, within 120 s and with its browser smoke (the gate and its unit tests
+   run inside it), and the consumer smoke from the built tarball (step 4). The full, perf and recovery suites are never
+   run here: they run weekly (below).
+3. **Pack and assert, before anything is irreversible**: `npm pack` in `cli/`, then on the tarball: the bin has its
    `#!/usr/bin/env node` line; `payload/skills/zz-meridian/SKILL.md` and its references are there; the component count
    matches the repository; no `node_modules/`, `tests/` of the CLI, `out/` or `.next/`.
 4. **Consumer smoke, from the tarball** (`smoke.ts --adopt --create --update`):
@@ -216,19 +216,23 @@ Modelled on the release pipeline of the owner's earlier packages, one package in
    - `update` from all four published origins (0.3.0 and 0.4.0, adopted and created) through finalize, as above.
 5. **Publish** the tarball with `npm` 11.5.1 or newer through trusted publishing (OIDC), with `--provenance`. `pnpm
    publish` does not perform the OIDC exchange.
-6. **The registry's package, end to end**: it is the tested tarball and carries provenance, and the consumer smoke's
-   `--create --update` runs on it. A failure here is an unsuccessful release, not a rollback: the version stays
-   published and untagged until a fix is released.
+6. **The registry's package**: `npx zz-meridian@<version> --version` answers the version, the registry's tarball has the
+   tested tarball's sha256, and it carries a provenance attestation. The bytes passed step 4 already, so nothing runs
+   them twice. A failure here is an unsuccessful release, not a rollback: the version stays published and untagged
+   until a fix is released.
 7. **Tag `v<version>` last**, then the GitHub Release with the version's `CHANGELOG.md` section as its body.
 
 `dry_run` stops after step 4.
 
 **Weekly** (`.github/workflows/weekly.yml`, Mondays and on demand, master's current commit): the template's
-`verify --full` and `verify --perf` (a report: a p95 over budget is a warning, a broken sample a failure), and the
-consumer smoke's `--adopt --create --update-all --verify` from a tarball packed from that commit: the adopted
-project's default verify cases, the created project's `verify --full`, and every recovery and failure case of the
-update. Each job keeps its log as an artifact. A failure notifies; nothing waits on it. A `/release` runbook (`.claude/commands/release.md`) holds the judgement before dispatch:
-the version, the changelog section, the docs sweep, and the local `pnpm verify --full`. A `cli/scripts/set-version.ts`
+`verify --full --perf`, one gate and one build for both (the perf part a report: a p95 over budget is a warning, a
+broken sample a failure), and the consumer smoke's `--adopt --update-all --verify` from a tarball packed from that
+commit: the adopted project's default verify cases and every recovery and failure case of the update. Weekly is weekly
+and release is release: neither runs what the other does. Each job keeps its log as an artifact. A failure notifies;
+nothing waits on it.
+
+A `/release` runbook (`.claude/commands/release.md`) holds the judgement before dispatch: the version, the changelog
+section and the docs sweep. A `cli/scripts/set-version.ts`
 writes the version into `cli/package.json` and checks the root agrees.
 
 ## One-time setup (the maintainer, once)

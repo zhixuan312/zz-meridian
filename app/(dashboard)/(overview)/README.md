@@ -24,7 +24,7 @@ Below 1024px every row stacks: the featured card first, then the tiles (two acro
 | State | What shows |
 |---|---|
 | Loading | `loading.tsx` beside the page, in the route group `app/(dashboard)/(overview)/` so that it is the Overview's own and not every console route's: skeletons in the shape of these rows, so nothing jumps on arrival. The masthead (kicker, title, sentence, freshness) renders at once on a navigation; the page reads `?period=` inside its own boundaries, so the period select, the export and the figures stream in behind it, and their fallbacks hold their space |
-| Empty (no traffic yet) | The featured card says "No requests yet" with a link to API keys; tiles show dashes, never zeros |
+| Empty (no traffic yet) | The body is one card that says "No requests yet" with a link to API keys; no tile or chart is drawn |
 | Partial (a series missing) | That tile shows a dash and "Not measured"; the chart breaks its line over missing days |
 | Stale | Freshness turns to warning: "Stale · updated 47 min ago" |
 | Error | `error.tsx`, inside the shell at the data width, like every page: the title says the view did not load and nothing was changed; one card says retrying usually works, with Retry (primary), a second way out read from `nav` (Check Health where the product has one, the home page where it does not), and the reference |

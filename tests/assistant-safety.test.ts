@@ -70,6 +70,9 @@ describe('an approved change', () => {
     const c = items();
     const evs = await events(await respond({ model: model(call('e1', `update_${c.name}`, { ids: ['i_1'], set: {} })), secret: SECRET, now: NOW, messages: ask, page, collections: [c], guard }));
     expect(evs.some((e) => e.type === 'data-proposal')).toBe(false);
+    expect(evs.some((e) => e.type === 'tool-approval-request')).toBe(false);
+    expect(evs.some((e) => e.type === 'tool-input-error' || e.type === 'tool-output-denied' || (e.type === 'tool-output-error' && e.toolCallId === 'e1'))).toBe(true);
+    expect((await c.query({ where: [{ field: 'id', op: 'eq', value: 'i_1' }] })).rows[0].name).toBe('One');
   });
 
   test('duplicate ids count once in the preview', async () => {

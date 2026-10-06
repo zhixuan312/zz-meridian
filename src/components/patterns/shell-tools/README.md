@@ -51,7 +51,7 @@ Not applicable.
 
 ## Content
 
-- The tooltip names the control and the count: "Alerts · 1 new".
+- The tooltip names the control and the count: "Alerts, 1 new".
 
 ## Do and do not
 

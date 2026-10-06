@@ -204,8 +204,10 @@ function Agents() {
                   variant="ghost"
                   size="sm"
                   onClick={() => {
+                    const at = hosts.indexOf(h);
                     setHosts((list) => list.filter((x) => x.id !== h.id));
-                    toast({ tone: 'neutral', title: `${h.name} disconnected`, action: { label: 'Undo', onClick: () => setHosts((list) => [...list, h]) } });
+                    // Undo puts the host back where it was, and pressing it again changes nothing.
+                    toast({ tone: 'neutral', title: `${h.name} disconnected`, action: { label: 'Undo', onClick: () => setHosts((list) => (list.some((x) => x.id === h.id) ? list : list.toSpliced(at, 0, h))) } });
                   }}
                 >
                   Disconnect

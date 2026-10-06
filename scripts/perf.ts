@@ -5,7 +5,7 @@
  *   node scripts/perf.ts --base http://127.0.0.1:3000 [--config scripts/verify.config.ts] [--rail /,/a,/b]
  *
  * It is the journey of scripts/navigate.ts (the press time and the frame clock are the page's own) taken `--samples` times,
- * 20 by default, with no retake: every sample counts, and the gate is the p95 of the lot, never the best of them.
+ * 20 by default, with no retake: every sample counts, and what is reported is the p95 of the lot, never the best of them.
  * - warm: the destination's prefetch and the chunks it brought in finished first, as a visitor who waited would have. A
  *   journey starts from the rail route before its destination (the one after it for the first), so the order a person
  *   browses in is the one measured.
@@ -72,9 +72,18 @@ const text = (r: Result): string =>
 
 const out = (o: Record<string, unknown>) => console.log(`perf: ${JSON.stringify(o)}`);
 
+/** Chrome itself did not start, as opposed to a page or the app failing once it had. */
+class ChromeStartError extends Error {}
+
 async function openTab(refuse?: string): Promise<Page> {
-  const page = await launch();
-  await prepare(page, refuse);
+  let page: Page;
+  try { page = await launch(); } catch (e) { throw new ChromeStartError((e as Error).message); }
+  try {
+    await prepare(page, refuse);
+  } catch (e) {
+    page.close();
+    throw e;
+  }
   return page;
 }
 
@@ -149,7 +158,8 @@ async function main(): Promise<number> {
     try {
       ({ live, starts } = await startRoutes(rail.routes));
     } catch (e) {
-      const reason = `Chrome could not start (${(e as Error).message.split('\n')[0]})`;
+      const first = (e as Error).message.split('\n')[0];
+      const reason = e instanceof ChromeStartError ? `Chrome could not start (${first})` : `the rail's routes could not be probed (${first})`;
       console.log(`FAIL    perf: ${reason}`);
       out({ status: 'FAIL', errors: [reason] });
       return 1;

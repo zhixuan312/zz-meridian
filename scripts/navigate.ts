@@ -577,11 +577,13 @@ async function main(): Promise<number> {
     for (const route of routes) {
       const check = checks.find((c) => c.path === route);
       // Each journey comes from the rail route before the destination, so it is a navigation and not the page already shown.
-      const start = startFor(rail.routes, route, starts) ?? route;
+      const start = startFor(rail.routes, route, starts);
       for (const device of DEVICES) {
         const limits = Object.fromEntries(METRICS.map((m) => [m, budgets.navigation.warm[BUDGET_KEY[m]][device]])) as Record<Metric, number>;
         let line: Line;
         try {
+          // A route with no other route to start from has no navigation to time: it is a problem, never a 0 ms pass.
+          if (start === undefined) throw new Fail('never-ready', 'the rail has no other route to start from');
           line = await measure(page, device, start, route, check, limits);
         } catch (e) {
           // The starting page never loading is a failure of this route and device, not of the run.

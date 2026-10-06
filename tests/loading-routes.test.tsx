@@ -20,14 +20,21 @@ describe('every console route has its own loading state', () => {
   });
   it('announces each as busy, under its own name', () => {
     const shapes = new Set<string>();
+    const labels = new Set<string>();
     for (const [name, Loading] of Object.entries(ROUTES)) {
       render(<Loading />);
       const status = screen.getByRole('status');
       expect(status.getAttribute('aria-busy'), name).toBe('true');
-      expect(status.getAttribute('aria-label') ?? status.textContent ?? '', name).toMatch(/^Loading/);
+      const label = status.getAttribute('aria-label') ?? '';
+      expect(label, name).toMatch(/^Loading \S/);
+      expect(label.toLowerCase(), name).toContain(name === 'RequestDetail' ? 'request' : name.toLowerCase());
+      labels.add(label);
+      expect(screen.getAllByRole('status'), `${name}: one busy region`).toHaveLength(1);
+      expect(screen.queryAllByRole('heading', { level: 1 }).length, `${name}: the masthead is not drawn twice`).toBeLessThanOrEqual(1);
       shapes.add(status.innerHTML);
       cleanup();
     }
+    expect(labels.size, 'each route names itself').toBe(Object.keys(ROUTES).length);
     expect(shapes.size, 'route-shaped, not one skeleton for all').toBeGreaterThanOrEqual(5);
   });
 });

@@ -21,6 +21,9 @@ import { MethodChip, requestColumns, StatusBadge } from '@/system/sample-cells';
 const describe = (f: State) =>
   [f.status !== 'all' && `status ${f.status}`, f.method !== 'all' && f.method, f.region !== 'all' && `in ${f.region}`, f.q && `matching "${f.q}"`].filter(Boolean).join(', ');
 
+/** A person's change replaces the tool's `by`: the default must be a value a write can differ from, because a key at its default is dropped from the address. */
+const PERSON = 'you';
+
 type State = ReturnType<typeof requestsQuery>['state'];
 
 /** The server filtered, sorted and paged: `rows` is one page of the matching set, `total` how many match. */
@@ -28,7 +31,7 @@ export function EmbedRequests({ rows, total, state, pageSize, now }: { rows: Req
   const asOf = useMemo(() => new Date(now), [now]);
   const s = useSurface();
   const [f, set] = useQueryState({ ...REQUEST_FILTERS, by: 'Claude', sort: 'at', dir: 'desc', page: '1' });
-  const [draft, setDraft] = useSearchDraft(state.q, (q) => set({ q, by: '', page: '1' }));
+  const [draft, setDraft] = useSearchDraft(state.q, (q) => set({ q, by: PERSON, page: '1' }));
   const isFiltered = state.q !== '' || state.status !== 'all' || state.method !== 'all' || state.region !== 'all';
   const scope = describe(state);
   const latest = rows.slice(0, 5);
@@ -41,8 +44,8 @@ export function EmbedRequests({ rows, total, state, pageSize, now }: { rows: Req
   );
 
   if (s.mode === 'fullscreen') {
-    const clear = () => { setDraft(''); set({ ...REQUEST_FILTERS, by: '', page: '1' }); };
-    const change = (patch: Partial<typeof REQUEST_FILTERS>) => set({ ...patch, by: '', page: '1' });
+    const clear = () => { setDraft(''); set({ ...REQUEST_FILTERS, by: PERSON, page: '1' }); };
+    const change = (patch: Partial<typeof REQUEST_FILTERS>) => set({ ...patch, by: PERSON, page: '1' });
     return (
       <EmbedFrame title="Requests" meta={<Freshness updatedAt={DEMO_UPDATED_AT} now={asOf} />} consolePath={consolePath}>
         <DataTable
@@ -53,6 +56,7 @@ export function EmbedRequests({ rows, total, state, pageSize, now }: { rows: Req
           rowKey={(r) => r.id}
           manual
           total={total}
+          pageSize={pageSize}
           pageSizes={[pageSize]}
           state={{ sort: state.sort, dir: state.dir, page: String(state.page) }}
           onStateChange={set}
@@ -67,7 +71,7 @@ export function EmbedRequests({ rows, total, state, pageSize, now }: { rows: Req
                 { key: 'region', label: 'Region', value: state.region, onChange: (region) => change({ region }), options: options('All', REGIONS.map((r) => r.label)) },
               ]}
               result={<>{total.toLocaleString('en-US')} {isFiltered ? 'matching' : 'requests'}</>}
-              setBy={f.by || undefined}
+              setBy={f.by === 'Claude' ? 'Claude' : undefined}
               onClear={clear}
             />
           }
@@ -91,7 +95,7 @@ export function EmbedRequests({ rows, total, state, pageSize, now }: { rows: Req
           {latest.length ? <AskAbout question={`Why are these ${scope ? scope + ' ' : ''}requests failing, and what do they have in common?`} /> : null}
         </div>
         {latest.length === 0 ? (
-          <EmptyState kind="filtered" layout="inline" title="No requests match" className="px-4 py-4">The tool asked for {scope || 'everything'}; nothing arrived in the last hour.</EmptyState>
+          <EmptyState kind="filtered" layout="inline" title="No requests match" className="px-4 py-4">The tool asked for {scope || 'everything'}; nothing matched.</EmptyState>
         ) : (
           <ul className="divide-y divide-line">
             {latest.map((r) => (

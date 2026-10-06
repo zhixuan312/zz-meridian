@@ -57,6 +57,7 @@ describe('classify', () => {
     [{ recorded: A, target: B, disk: C, managed: true }, 'edited', 'stage'],
     [{ recorded: A, target: A, disk: C, managed: true }, 'edited', 'stage'],
     [{ recorded: A, target: B, disk: null, managed: true }, 'local-deletion', 'stage'],
+    [{ recorded: A, target: A, disk: null, managed: true }, 'local-deletion', 'stage'],
     [{ recorded: A, target: null, disk: A, managed: true }, 'removed', 'delete'],
     [{ recorded: A, target: null, disk: C, managed: true }, 'removed', 'stage'],
     [{ recorded: A, target: null, disk: null, managed: true }, 'removed', 'leave'],

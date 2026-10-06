@@ -1,5 +1,5 @@
 // @vitest-environment node
-// Named cli-* so the payload leaves it out: it reads the template's own git history and index.
+// Named cli-* so the payload leaves it out: it reads the template's own git index.
 import { execFileSync, spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import os from 'node:os';
@@ -21,7 +21,8 @@ describe('the scripts Meridian ships, in a product set up by an earlier release'
       fs.copyFileSync(path.join(ROOT, f), path.join(dir, f));
     }
     for (const d of ['src', 'app', 'tokens', 'next-env.d.ts']) if (fs.existsSync(path.join(ROOT, d))) fs.cpSync(path.join(ROOT, d), path.join(dir, d), { recursive: true, force: false, errorOnExist: false });
-    fs.writeFileSync(path.join(dir, 'scripts/verify.config.ts'), execFileSync('git', ['show', 'v0.3.0:scripts/verify.config.ts'], { cwd: ROOT, encoding: 'utf8' }));
+    // The bytes published 0.3.0 wrote, kept beside the test: a CI checkout has no tags to read them from.
+    fs.copyFileSync(path.join(ROOT, 'cli/test/verify.config.0.3.0.ts.txt'), path.join(dir, 'scripts/verify.config.ts'));
     fs.symlinkSync(path.join(ROOT, 'node_modules'), path.join(dir, 'node_modules'));
     const options = { strict: true, noEmit: true, skipLibCheck: true, target: 'ES2022', module: 'esnext', moduleResolution: 'bundler', allowImportingTsExtensions: true, resolveJsonModule: true, types: ['node'], paths: { '@/*': ['./src/*'] }, jsx: 'react-jsx', lib: ['dom', 'dom.iterable', 'esnext'] };
     fs.writeFileSync(path.join(dir, 'tsconfig.scripts.json'), JSON.stringify({ compilerOptions: options, files: shipped }));

@@ -8,7 +8,7 @@ Status: beta
 
 1. **Tile**: a 24-unit square with a 6.5-unit radius, filled with `accent` and a soft sheen from the top.
 2. **Trend**: a 1.7-unit `on-accent` polyline.
-3. **Meridian**: a vertical line at 55% and a dot where it meets the trend.
+3. **Meridian**: a vertical line about 64% of the way across and a dot where it meets the trend.
 
 ## Sizes
 

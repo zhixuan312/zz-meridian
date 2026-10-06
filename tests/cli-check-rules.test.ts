@@ -17,14 +17,17 @@ for (const f of execFileSync('git', ['ls-files', '-z', '--cached', '--others', '
 }
 fs.symlinkSync(path.join(ROOT, 'node_modules'), path.join(dir, 'node_modules'));
 const put = (f: string, text: string) => { fs.mkdirSync(path.dirname(path.join(dir, f)), { recursive: true }); fs.writeFileSync(path.join(dir, f), text); };
+const rogue = () => {
+  put('src/views/rogue.tsx', "import { DEMO_NOW } from '@/system/fixtures/sample';\nimport { ALERTS } from '../system/fixtures/sample-ops';\nexport const rogue = [DEMO_NOW, ALERTS];\n");
+  put('app/(dashboard)/rogue/page.tsx', "import { connection } from 'next/server';\nexport default async function Rogue() { await connection(); return null; }\n");
+  put('app/(dashboard)/rogue/actions.ts', "'use server';\nimport { revalidateTag } from 'next/cache';\nexport async function stale() { revalidateTag('collection:x', 'max'); }\n");
+};
 const check = () => spawnSync(process.execPath, ['scripts/check.ts'], { cwd: dir, encoding: 'utf8' }).stdout;
 
 describe("the template's own rules", () => {
   it('pass on the template as it is', () => expect(check()).toMatch(/^0 problems/m), 60_000);
   it('catch a direct fixture import, by alias and by relative path, a stray connection() and a stale writer', () => {
-    put('src/views/rogue.tsx', "import { DEMO_NOW } from '@/system/fixtures/sample';\nimport { ALERTS } from '../system/fixtures/sample-ops';\nexport const rogue = [DEMO_NOW, ALERTS];\n");
-    put('app/(dashboard)/rogue/page.tsx', "import { connection } from 'next/server';\nexport default async function Rogue() { await connection(); return null; }\n");
-    put('app/(dashboard)/rogue/actions.ts', "'use server';\nimport { revalidateTag } from 'next/cache';\nexport async function stale() { revalidateTag('collection:x', 'max'); }\n");
+    rogue();
     const out = check();
     expect(out).toMatch(/src\/views\/rogue\.tsx:1: .*src\/system\/fixtures/);
     expect(out).toMatch(/src\/views\/rogue\.tsx:2: .*src\/system\/fixtures/);
@@ -32,6 +35,8 @@ describe("the template's own rules", () => {
     expect(out).toMatch(/app\/\(dashboard\)\/rogue\/actions\.ts:\d+: revalidates with 'max' on a writer path/);
   }, 60_000);
   it('stay out of a product, whose pages are its own', () => {
+    rogue();
+    expect(check()).toMatch(/reads src\/system\/fixtures directly/);
     put('.meridian/manifest.json', JSON.stringify({ version: '0.5.0', route: 'create', brand: { name: 'Acme' }, files: {} }));
     const out = check();
     expect(out).toMatch(/problems ·/);

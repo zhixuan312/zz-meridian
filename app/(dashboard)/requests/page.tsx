@@ -1,12 +1,12 @@
 import { Suspense, cache } from 'react';
 import { app } from '@/app.config';
-import { PageFrame, Stack } from '@/components/base/shell';
+import { PageFrame } from '@/components/base/shell';
 import { ExportButton } from '@/components/patterns/export-button';
 import { Freshness } from '@/components/patterns/freshness';
 import { readRequests, requestsQuery, REQUEST_PAGE } from '@/data/requests';
 import { DEMO_UPDATED_AT } from '@/data/sample';
 import { RequestsView } from '@/views/requests';
-import { TableSkeleton, TilesSkeleton } from '../_loading';
+import { Busy, TableSkeleton, TilesSkeleton } from '../_loading';
 
 export const metadata = { title: 'Requests' };
 
@@ -27,10 +27,10 @@ export default function RequestsPage({ searchParams }: { searchParams: SearchPar
     >
       <Suspense
         fallback={
-          <Stack>
+          <Busy name="requests">
             <TilesSkeleton />
             <TableSkeleton rows={3} filters={false} />
-          </Stack>
+          </Busy>
         }
       >
         <Requests searchParams={searchParams} />

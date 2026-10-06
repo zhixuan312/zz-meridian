@@ -30,6 +30,12 @@ describe('scripts/brand.ts', () => {
     expect(read('src/app.config.ts')).toMatch(/\n {2}theme: 'dark'/);
   }, 120_000);
   it('refuses any other theme', () => {
-    expect(() => brand('--existing', '--theme', 'blue')).toThrow();
+    const before = read('src/app.config.ts');
+    const tokens = fs.readdirSync(path.join(dir, 'tokens')).sort();
+    let stderr = '';
+    try { brand('--existing', '--theme', 'blue'); } catch (e) { stderr = String((e as { stderr?: unknown }).stderr ?? ''); }
+    expect(stderr).toMatch(/theme/i);
+    expect(read('src/app.config.ts')).toBe(before);
+    expect(fs.readdirSync(path.join(dir, 'tokens')).sort()).toEqual(tokens);
   });
 });

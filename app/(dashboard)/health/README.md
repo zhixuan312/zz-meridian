@@ -22,7 +22,8 @@ Without a live incident row 1 becomes one full-width featured card.
 | Loading | `loading.tsx`: the uptime figure with its service grid, the service list and the past incidents, as skeletons in their rows |
 | All operational | The featured caption says "All services operational."; row 1 is full width; no warning colour anywhere |
 | Degraded | The affected service is named in the caption, its dot pulses in the grid and the list; the incident card sits beside |
-| Outage | As degraded, in critical; the rail's Health badge counts open incidents |
+| Outage | As degraded, in critical; the rail's Health badge is set in `src/app.config.ts` (the sample's is a fixed `1`; a product computes it) |
+| No services | One card: "No services yet" |
 | No past incidents | An empty state in the card: "No incidents in 90 days" |
 | Error | The dashboard error screen with Retry |
 
@@ -36,7 +37,7 @@ Without a live incident row 1 becomes one full-width featured card.
 ## Surfaces
 
 - **Console**: as above at the data width.
-- **Mobile**: rows stack; the grid shows two services across; the bars show the last 30 days.
+- **Mobile**: rows stack; the grid shows two services across; the bars still draw every day.
 - **Embed**: see Embed view.
 
 ## Agents

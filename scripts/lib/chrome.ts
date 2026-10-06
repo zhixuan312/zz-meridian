@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any -- Chrome's DevTools protocol has no types here; this file runs in Node, never in a page. */
 /** A headless Chrome over the DevTools protocol, with no dependency: Node's own fetch and WebSocket. */
-import { spawn } from 'node:child_process';
+import { spawn, type ChildProcess } from 'node:child_process';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
@@ -20,11 +20,32 @@ export type Page = {
   close: () => void;
 };
 
+/** Every Chrome this process launched and has not closed: each is killed, and its profile removed, whichever way the process ends. */
+const launched = new Set<{ proc: ChildProcess; dir: string }>();
+function reap(c: { proc: ChildProcess; dir: string }) {
+  launched.delete(c);
+  c.proc.kill('SIGKILL');
+  fs.rmSync(c.dir, { recursive: true, force: true, maxRetries: 3 });
+}
+process.on('exit', () => { for (const c of [...launched]) reap(c); });
+for (const sig of ['SIGINT', 'SIGTERM'] as const) process.on(sig, () => process.exit(sig === 'SIGINT' ? 130 : 143));
+
 export async function launch(): Promise<Page> {
   // Port 0 lets Chrome pick a free port and write it into its own profile, so this never attaches to another
   // session's browser that happens to hold a guessed port.
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'meridian-chrome-'));
   const proc = spawn(CHROME, [...SANDBOX, '--headless=new', '--disable-gpu', '--hide-scrollbars', '--force-color-profile=srgb', '--remote-debugging-port=0', `--user-data-dir=${dir}`, 'about:blank'], { stdio: 'ignore' });
+  const handle = { proc, dir };
+  launched.add(handle);
+  try {
+    return await attach(proc, dir, handle);
+  } catch (e) {
+    reap(handle);
+    throw e;
+  }
+}
+
+async function attach(proc: ChildProcess, dir: string, handle: { proc: ChildProcess; dir: string }): Promise<Page> {
   let list: any[] | undefined;
   for (let i = 0; i < 80 && !list; i++) {
     try {
@@ -91,7 +112,7 @@ export async function launch(): Promise<Page> {
       fs.writeFileSync(file, Buffer.from(r.result.data, 'base64'));
       return h;
     },
-    close() { ws.close(); proc.kill(); setTimeout(() => fs.rmSync(dir, { recursive: true, force: true }), 500).unref(); },
+    close() { ws.close(); launched.delete(handle); proc.kill(); setTimeout(() => fs.rmSync(dir, { recursive: true, force: true }), 500).unref(); },
   };
   return page;
 }

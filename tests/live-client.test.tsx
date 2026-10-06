@@ -152,8 +152,56 @@ describe('the live client', () => {
   });
 });
 
+describe('the observation time', () => {
+  it('moves only when a refresh succeeds: a failed refresh and a quiet stream leave it where it was', async () => {
+    let observed = 'T0';
+    let fail = false;
+    const refresh = vi.fn(async () => { if (fail) throw new Error('network'); observed = `T${refresh.mock.calls.length}`; });
+    const { c, states } = client(refresh, 1_000_000);
+    c.setNames(['members']);
+    live()[0].open();
+    await flush(600);
+    expect(states.at(-1)).toBe('live');
+    const settled = observed;
+    expect(settled).not.toBe('T0');
+    await flush(60_000);
+    expect(refresh).toHaveBeenCalledTimes(1);
+    expect(observed).toBe(settled);
+    fail = true;
+    live()[0].send('change', { collection: 'members' });
+    await flush(600);
+    expect(states.at(-1)).toBe('stale');
+    expect(refresh).toHaveBeenCalledTimes(2);
+    expect(observed).toBe(settled);
+    c.dispose();
+  });
+});
+
 describe('LiveProvider', () => {
   function Uses({ names }: { names: string[] }) { useLive(names); return null; }
+  const setHidden = (hidden: boolean) => {
+    Object.defineProperty(document, 'visibilityState', { configurable: true, get: () => (hidden ? 'hidden' : 'visible') });
+    document.dispatchEvent(new Event('visibilitychange'));
+  };
+  afterEach(() => { Reflect.deleteProperty(document, 'visibilityState'); });
+  it('closes the stream when the document is hidden and resyncs when it returns', async () => {
+    const refresh = vi.fn(async () => {});
+    render(<LiveProvider refresh={refresh} scopeKey="demo/owner"><Uses names={['members']} /></LiveProvider>);
+    await flush(0);
+    const first = live()[0];
+    first.open();
+    await flush(600);
+    expect(refresh).toHaveBeenCalledTimes(1);
+    setHidden(true);
+    expect(first.closed).toBe(true);
+    expect(live()).toHaveLength(0);
+    refresh.mockClear();
+    setHidden(false);
+    expect(live()).toHaveLength(1);
+    live()[0].open();
+    await flush(600);
+    expect(refresh).toHaveBeenCalledWith(['members']);
+  });
   it('shares one stream across hooks, for the union of their names', async () => {
     render(<LiveProvider refresh={async () => {}} scopeKey="demo/owner"><Uses names={['members']} /><Uses names={['keys']} /></LiveProvider>);
     await flush(0);

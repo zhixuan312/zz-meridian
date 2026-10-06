@@ -10,7 +10,7 @@
  * --theme records the default theme in the app config; a person can still choose another in Settings.
  * A brand accent is recognized from the app config (`accent`), so this script never edits src/lib/preferences.ts.
  * --hex derives the hue and chroma from a brand colour (chroma capped at 0.18; the theme owns lightness).
- * --hue/--chroma add a new accent preset (OKLCH hue in degrees, chroma 0 to 0.2) and make it the default. The contrast
+ * --hue/--chroma add a new accent preset (OKLCH hue in degrees, chroma 0 to 0.24, 0.12 to 0.18 is typical) and make it the default. The contrast
  * gate then runs; where white on the accent fill fails in a theme, the preset gets a lower fill lightness for that
  * theme, a step at a time, until every pair in every theme passes. --no-atlas removes the Design Atlas: its routes, its
  * modules, its nav and footer links and its build tracing (the card previews stay: the gate checks them; the markdown packages stay for Prose).
@@ -47,7 +47,7 @@ function setConfig(key: string, value: string) {
   const s = read('src/app.config.ts');
   const re = new RegExp(`(\\n  ${key}: )'[^']*'`);
   if (!re.test(s)) throw new Error(`src/app.config.ts has no "${key}"`);
-  write('src/app.config.ts', s.replace(re, `$1'${value.replace(/'/g, "\\'")}'`));
+  write('src/app.config.ts', s.replace(re, (_m, head: string) => `${head}'${value.replace(/'/g, "\\'")}'`));
   done.push(`${key} = ${value}`);
 }
 
@@ -71,7 +71,7 @@ if (user || role) {
   const m = s.match(/user: \{ name: '([^']*)', role: '([^']*)' \}/);
   if (!m) throw new Error('src/app.config.ts has no "user"');
   const esc = (v: string) => v.replace(/'/g, "\\'");
-  write('src/app.config.ts', s.replace(m[0], `user: { name: '${esc(user ?? m[1])}', role: '${esc(role ?? m[2])}' }`));
+  write('src/app.config.ts', s.replace(m[0], () => `user: { name: '${esc(user ?? m[1])}', role: '${esc(role ?? m[2])}' }`));
   done.push(`user = ${user ?? m[1]}, ${role ?? m[2]}`);
 }
 
@@ -80,8 +80,11 @@ const pkg = opt('--package') ?? (name && !existing ? name.toLowerCase().replace(
 if (pkg) {
   const p = json('package.json');
   p.name = pkg;
-  p.version = '0.1.0';
-  p.description = `${name ?? pkg}: a dashboard built on Meridian.`;
+  // An existing project keeps its own version and description; only a new product starts at 0.1.0.
+  if (!existing) {
+    p.version = '0.1.0';
+    p.description = `${name ?? pkg}: a dashboard built on Meridian.`;
+  }
   write('package.json', JSON.stringify(p, null, 2) + '\n');
   done.push(`package = ${pkg}`);
 }
@@ -209,7 +212,7 @@ if (has('--product')) {
   delete p.scripts?.registry;
   write('package.json', JSON.stringify(p, null, 2) + '\n');
   const product = read('src/app.config.ts').match(/name: '([^']*)'/)?.[1] ?? 'Dashboard';
-  write('README.md', `# ${product}\n\nA dashboard built on ZZ Meridian (Next.js, React, Tailwind v4, DTCG tokens).\n\n## Run it\n\n\`\`\`sh\npnpm install\npnpm dev        # http://localhost:3000\npnpm verify     # the gate, a production build, the browser audit and every control pressed\n\`\`\`\n\n## Where things are\n\n| Path | What |\n|---|---|\n| \`src/app.config.ts\` | Name, workspace, accent, timezone, currency, the signed-in user and the navigation |\n| \`src/data/collections.ts\` | Where pages, actions and the assistant read and change records |\n| \`src/views/\`, \`app/\` | The pages |\n| \`src/components/\` | Meridian's components and patterns |\n| \`tokens/\` | Colour, type, space and motion (run \`pnpm tokens\` after a change) |
+  write('README.md', `# ${product}\n\nA dashboard built on ZZ Meridian (Next.js, React, Tailwind v4, DTCG tokens).\n\n## Run it\n\n\`\`\`sh\npnpm install\npnpm dev        # http://localhost:3000\npnpm verify     # the gate once, one build, the size checks and a smoke of up to three routes; --full runs the rest\n\`\`\`\n\n## Where things are\n\n| Path | What |\n|---|---|\n| \`src/app.config.ts\` | Name, workspace, accent, timezone, currency, the signed-in user and the navigation |\n| \`src/data/collections.ts\` | Where pages, actions and the assistant read and change records |\n| \`src/views/\`, \`app/\` | The pages |\n| \`src/components/\` | Meridian's components and patterns |\n| \`tokens/\` | Colour, type, space and motion (run \`pnpm tokens\` after a change) |
 
 ## Assistant
 
@@ -224,7 +227,7 @@ The dashboard carries an assistant panel. It is off until \`ASSISTANT_PROVIDER\`
 
 - Collections live in \`src/data/collections.ts\`: replace each \`rows\` with your API and \`clock\` with \`new Date()\`. The assistant reads and proposes changes only through them.
 - Add your sign-in check in the dashboard layout (\`app/(dashboard)/layout.tsx\`), in \`app/api/assistant/route.ts\` before the model is reached, and in every server action (each \`actions.ts\`): an action is a public endpoint the layout does not guard.
-- \`pnpm verify\` runs the assistant off, then on against a fake model (\`scripts/fake-llm.ts\`).
+- \`pnpm verify --full\` runs the assistant off, then on against a fake model (\`scripts/fake-llm.ts\`); the default \`pnpm verify\` does not.
 `);
   const agents = read('AGENTS.md');
   const cut = agents.indexOf('# Working in Meridian');

@@ -11,7 +11,8 @@
  *
  * Every write goes through the template's own invitation sheet and Remove dialog, with real mouse and key input, and the
  * check removes the members it invited. One line per case, `ok`, `FAIL` or `not run` with the reason and measured
- * milliseconds; the exit code is non-zero on any FAIL. A case that did not run is never reported as passed.
+ * milliseconds. The exit code is 1 on any FAIL, 2 when nothing failed but a case did not run, and 0 only when every case
+ * ran and passed: a case that did not run is never reported as passed.
  */
 import { spawn, type ChildProcess } from 'node:child_process';
 import fs from 'node:fs';
@@ -19,6 +20,7 @@ import http from 'node:http';
 import net from 'node:net';
 import path from 'node:path';
 import { bin } from './lib/bin.ts';
+import { NOT_RUN_EXIT } from './lib/coverage.ts';
 import { launch, type Page } from './lib/chrome.ts';
 
 const ROOT = path.resolve(import.meta.dirname, '..');
@@ -48,6 +50,8 @@ const report = (status: Outcome['status'], name: string, text: string) => {
 const started: ChildProcess[] = [];
 const stopGroup = (c: ChildProcess) => { try { process.kill(-c.pid!, 'SIGTERM'); } catch { /* already gone */ } };
 process.on('exit', () => started.forEach(stopGroup));
+// An interrupted run does not emit 'exit' by itself, and the detached servers would outlive it.
+for (const sig of ['SIGINT', 'SIGTERM'] as const) process.on(sig, () => process.exit(sig === 'SIGINT' ? 130 : 143));
 const freePort = () => new Promise<number>((res) => { const s = net.createServer(); s.listen(0, () => { const p = (s.address() as net.AddressInfo).port; s.close(() => res(p)); }); });
 
 /** The status the server on `port` answers with, or null when nothing does; a fresh connection each time, so a server that was just stopped is never reached through a stale one. */
@@ -323,21 +327,26 @@ async function twoTabs(t: Tabs) {
 }
 
 async function visibility(t: Tabs) {
+  const show = () => t.b.eval(`(() => { delete document.visibilityState; delete document.hidden; document.dispatchEvent(new Event('visibilitychange')); })()`);
   await t.b.eval(`(() => { Object.defineProperty(document, 'visibilityState', { configurable: true, get: () => 'hidden' }); Object.defineProperty(document, 'hidden', { configurable: true, get: () => true }); document.dispatchEvent(new Event('visibilitychange')); })()`);
-  const n = track(name('visibility'));
-  const pressed = await invite(t.a, n);
-  // While hidden the tab holds no stream and runs no poll: the change must not arrive on its own.
-  await sleep(Math.max(0, pressed + pollMs + 1000 - Date.now()));
-  if (await t.b.eval<boolean>(`document.body.innerText.includes(${JSON.stringify(n)})`)) throw new Error('B showed the change while hidden; it should hold no stream and no poll');
-  const shown = showing(t.b, [n], true, POLL_BOUND_MS + 500);
-  const visibleAt = Date.now();
-  await t.b.eval(`(() => { delete document.visibilityState; delete document.hidden; document.dispatchEvent(new Event('visibilitychange')); })()`);
-  const at = await shown;
-  const ms = at === null ? Infinity : at - visibleAt;
-  if (ms > POLL_BOUND_MS) throw new Error(`B did not show the change within ${POLL_BOUND_MS} ms of becoming visible (${await tally(t.b)}; A ${await tally(t.a)}; A shows it: ${await t.a.eval(`document.body.innerText.includes(${JSON.stringify(n)})`)}; A's table rows ${await t.a.eval(`document.querySelectorAll('tbody tr').length`)}, B's ${await t.b.eval(`document.querySelectorAll('tbody tr').length`)}; A's messages: ${await t.a.eval(`document.body.innerText.split('\\n').filter((l) => /Invitation|Change not made|Sign in|permission|Enter their|Name the/.test(l)).join(' / ')`)}; this run's rows: A [${await t.a.eval(`[...document.querySelectorAll('tbody tr')].map((tr) => tr.innerText.replace(/\\s+/g, ' ').slice(0, 60)).filter((x) => x.includes(${JSON.stringify(run)})).join(' / ')`)}] B [${await t.b.eval(`[...document.querySelectorAll('tbody tr')].map((tr) => tr.innerText.replace(/\\s+/g, ' ').slice(0, 60)).filter((x) => x.includes(${JSON.stringify(run)})).join(' / ')`)}])`);
-  report('ok', 'visibility', `B, hidden while A invited (still not showing it ${pollMs + 1000} ms after A's invitation), showed it ${ms} ms after becoming visible (bound ${POLL_BOUND_MS} ms; visibility emulated by overriding document.visibilityState)`);
+  try {
+    const n = track(name('visibility'));
+    const pressed = await invite(t.a, n);
+    // While hidden the tab holds no stream and runs no poll: the change must not arrive on its own.
+    await sleep(Math.max(0, pressed + pollMs + 1000 - Date.now()));
+    if (await t.b.eval<boolean>(`document.body.innerText.includes(${JSON.stringify(n)})`)) throw new Error('B showed the change while hidden; it should hold no stream and no poll');
+    const shown = showing(t.b, [n], true, POLL_BOUND_MS + 500);
+    const visibleAt = Date.now();
+    await show();
+    const at = await shown;
+    const ms = at === null ? Infinity : at - visibleAt;
+    if (ms > POLL_BOUND_MS) throw new Error(`B did not show the change within ${POLL_BOUND_MS} ms of becoming visible (${await tally(t.b)}; A ${await tally(t.a)}; A shows it: ${await t.a.eval(`document.body.innerText.includes(${JSON.stringify(n)})`)}; A's table rows ${await t.a.eval(`document.querySelectorAll('tbody tr').length`)}, B's ${await t.b.eval(`document.querySelectorAll('tbody tr').length`)}; A's messages: ${await t.a.eval(`document.body.innerText.split('\\n').filter((l) => /Invitation|Change not made|Sign in|permission|Enter their|Name the/.test(l)).join(' / ')`)}; this run's rows: A [${await t.a.eval(`[...document.querySelectorAll('tbody tr')].map((tr) => tr.innerText.replace(/\\s+/g, ' ').slice(0, 60)).filter((x) => x.includes(${JSON.stringify(run)})).join(' / ')`)}] B [${await t.b.eval(`[...document.querySelectorAll('tbody tr')].map((tr) => tr.innerText.replace(/\\s+/g, ' ').slice(0, 60)).filter((x) => x.includes(${JSON.stringify(run)})).join(' / ')`)}])`);
+    report('ok', 'visibility', `B, hidden while A invited (still not showing it ${pollMs + 1000} ms after A's invitation), showed it ${ms} ms after becoming visible (bound ${POLL_BOUND_MS} ms; visibility emulated by overriding document.visibilityState)`);
+  } finally {
+    // Whatever happened above, B must not stay hidden for the cases that follow.
+    await show().catch(() => {});
+  }
 }
-
 async function offline(t: Tabs) {
   const conditions = (offline: boolean) => t.b.send('Network.emulateNetworkConditions', { offline, latency: 0, downloadThroughput: -1, uploadThroughput: -1 });
   await conditions(true);
@@ -505,4 +514,4 @@ if (why) {
 const failed = outcomes.filter((o) => o.status === 'FAIL').length;
 const skipped = outcomes.filter((o) => o.status === 'not run').length;
 console.log(`\nlive: ${outcomes.filter((o) => o.status === 'ok').length} ok, ${failed} FAIL, ${skipped} not run (poll ${pollMs} ms)`);
-process.exit(failed ? 1 : 0);
+process.exit(failed ? 1 : skipped ? NOT_RUN_EXIT : 0);

@@ -87,7 +87,7 @@ Write the status on the line under the title: `Status: beta`.
 | `node scripts/check.ts` | Every card has its README and preview, every README follows the anatomy, no literal colour in components, every token a spec names exists and is written with its own value, and every embed view a document offers is a route | Gate |
 | `pnpm typecheck`, `pnpm test` | TypeScript and the behaviour tests | Gate |
 | `node scripts/audit.ts` | With the app running: every page and embed view at 2560, 1440, 1024, 768 and 390px in both themes (embeds at 720 and 420 on a simulated host ground). Fails on sideways scroll, text clipped without an ellipsis, a control with no accessible name, more than one page scroller, rendered text under its WCAG minimum, a Tab stop with no visible focus ring (it presses Tab through the page), and any uncaught exception or console error. Prints the design metrics: type sizes, weights, radii and the hierarchy ratio | Before release |
-| `node scripts/interactions.ts` | With the app running: presses every control on every page (mouse at 1440px, taps at 390px) and follows every link. Fails on a control that changes nothing, one something covers, and a link that answers 4xx. |
+| `node scripts/interactions.ts` | With the app running: presses every control on every page (mouse at 1440px, taps at 390px) and follows every link. Fails on a control that changes nothing, one something covers, and a link that answers 4xx | Before release |
 | `pnpm verify` | The gate once, one production build, the route policy, the size checks and a smoke of up to three routes on desktop and the phone drawer; ends with a coverage line, and the report is in `out/verify.txt` | Before finishing any change |
 | `pnpm verify --full` | The navigation of every rail route, then every exhaustive suite: the audit, every control pressed and link followed, the keyboard walk, the assistant, the live data and Web Vitals | After a change to shared components, the shell or data, and before release |
 | `pnpm verify --perf` | The 20-sample navigation protocol; combine with `--full` to run both without repeating the gate or the build | When timing is what changed |
@@ -96,9 +96,11 @@ Write the status on the line under the title: `Status: beta`.
 
 ## Releasing
 
-1. `pnpm gate` until it passes, then `pnpm verify --full`.
-2. Add an entry to `CHANGELOG.md` under a new version. Semver: a removed or renamed token, prop or card is major; a new card, token or variant is minor; a corrected value is a patch. Say in one line what breaks and what to do instead.
-3. Commit.
+1. Add an entry to `CHANGELOG.md` under a new version. Semver: a removed or renamed token, prop or card is major; a new card, token or variant is minor; a corrected value is a patch. Say in one line what breaks and what to do instead.
+2. `node cli/scripts/set-version.ts <v>`, then `pnpm gate` until it passes. Nothing else runs locally: the release workflow's gates are the proof.
+3. Commit and push to `master`, then dispatch once: `gh workflow run release.yml -f version=<v>`. The workflow gates on one timed default `verify` and the consumer smoke from the tarball, publishes with provenance, checks the registry's tarball is the tested one, and tags last. `verify --full --perf` runs weekly (`.github/workflows/weekly.yml`), not here.
+
+The `/release` command (`.claude/commands/release.md`) is this procedure as a runbook.
 
 ## Decisions
 

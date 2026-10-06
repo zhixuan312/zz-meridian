@@ -22,10 +22,10 @@ import { DataTable, type Column } from '@/components/patterns/data-table';
 import { formatDate, formatRelative } from '@/lib/format-date';
 import { useLive } from '@/lib/live';
 import type { ApiKey } from '@/data/sample';
+import { SCOPES, type Scope } from '@/views/key-scopes';
 
-const SCOPES = ['messages', 'search', 'embeddings', 'files', 'webhooks'];
 
-type Draft = { name: string; env: 'live' | 'test'; scopes: string[] };
+type Draft = { name: string; env: 'live' | 'test'; scopes: Scope[] };
 
 /** The server actions arrive as props: the page owns them, the view only calls them and refreshes the route. */
 /** `now` is the read's observation time, so "last used" is never fresher than the data. */
@@ -41,7 +41,7 @@ export function KeysView({ rows, now, createKey, revokeKey }: { rows: ApiKey[]; 
   const [fresh, setFresh] = useState<ApiKey | null>(null);
   const [name, setName] = useState('');
   const [env, setEnv] = useState<'live' | 'test'>('live');
-  const [scopes, setScopes] = useState<string[]>(['messages']);
+  const [scopes, setScopes] = useState<Scope[]>(['messages']);
   const [error, setError] = useState<string | null>(null);
 
   /** Runs an action, refreshes the route on success, and shows a critical toast, changing nothing, when it is rejected. */
@@ -135,7 +135,7 @@ export function KeysView({ rows, now, createKey, revokeKey }: { rows: ApiKey[]; 
         <SheetContent
           title="Create a key"
           description="The key is shown once, after you create it."
-          footer={<><SheetClose asChild><Button variant="ghost">Cancel</Button></SheetClose><Button variant="primary" onClick={create} disabled={pending}>Create key</Button></>}
+          footer={<><SheetClose asChild><Button variant="ghost">Cancel</Button></SheetClose><Button variant="primary" onClick={create} disabled={pending || scopes.length === 0}>Create key</Button></>}
         >
           <div className="flex flex-col gap-6">
             <Field label="Name" hint="Name it after what uses it." error={error ?? undefined} required>
@@ -151,6 +151,7 @@ export function KeysView({ rows, now, createKey, revokeKey }: { rows: ApiKey[]; 
               {SCOPES.map((s) => (
                 <Checkbox key={s} label={s[0].toUpperCase() + s.slice(1)} checked={scopes.includes(s)} onCheckedChange={(on) => setScopes((xs) => (on ? [...xs, s] : xs.filter((x) => x !== s)))} />
               ))}
+              {scopes.length === 0 ? <p className="t-caption">Choose at least one scope.</p> : null}
             </fieldset>
           </div>
         </SheetContent>

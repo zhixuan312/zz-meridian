@@ -75,4 +75,4 @@ import { PageFrame, Row, Stack } from '@/components/base/shell';
 </PageFrame>
 ```
 
-`src/components/base/shell.tsx` exports `AppShell`, `NavTrigger`, `PageFrame`, `Stack`, `Row` and `WIDTH`.
+`src/components/base/shell/index.tsx` exports `AppShell`, `NavTrigger`, `PageFrame`, `Stack`, `Row` and `WIDTH`.

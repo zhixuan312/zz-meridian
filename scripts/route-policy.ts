@@ -12,7 +12,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 
-import nextConfig from '../next.config.ts';
+import { distDirOf } from './lib/next-config.ts';
 import config from './verify.config.ts';
 
 const ROOT = path.resolve(import.meta.dirname, '..');
@@ -41,7 +41,7 @@ function routesOf(dist: string): { path: string; kind: RouteKind }[] {
 }
 
 if (import.meta.main) {
-  const dist = path.join(ROOT, (nextConfig as { distDir?: string }).distDir ?? '.next');
+  const dist = path.join(ROOT, await distDirOf(ROOT));
   if (!fs.existsSync(path.join(dist, 'prerender-manifest.json'))) {
     console.error(`route-policy: no production build in ${path.relative(ROOT, dist)}; run next build first`);
     process.exit(1);

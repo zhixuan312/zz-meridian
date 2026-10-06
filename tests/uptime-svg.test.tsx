@@ -1,5 +1,6 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
+import { formatDate } from '@/lib/format-date';
 import { UptimeBars, type DayState } from '@/components/charts/uptime-bars';
 
 vi.stubGlobal('ResizeObserver', class { observe() {} unobserve() {} disconnect() {} });
@@ -30,12 +31,30 @@ describe('an uptime strip', () => {
     expect(container.textContent).toMatch(/No incidents/);
     expect(container.querySelectorAll('svg [data-day]')).toHaveLength(0);
   });
-  it('still moves a focused day from the keyboard and announces it', () => {
+  it('still moves a focused day from the keyboard and announces exactly that day', () => {
     render(<UptimeBars days={days} uptime={0.9981} end={end} label="Gateway, last 90 days" />);
     const strip = screen.getByRole('group');
+    const live = () => document.querySelector('[aria-live]')?.textContent;
+    const dayAgo = (n: number) => formatDate(new Date(end.getTime() - n * 86_400_000));
     strip.focus();
     fireEvent.keyDown(strip, { key: 'End' });
+    expect(live()).toBe(`${dayAgo(0)}: Operational`);
     fireEvent.keyDown(strip, { key: 'ArrowLeft' });
-    expect(document.querySelector('[aria-live]')?.textContent).toMatch(/Operational|Degraded|Outage|No data/);
+    expect(live()).toBe(`${dayAgo(1)}: Operational`);
+    for (let i = 0; i < 8; i++) fireEvent.keyDown(strip, { key: 'ArrowLeft' });
+    expect(live()).toBe(`${dayAgo(9)}: Outage`);
+    fireEvent.keyDown(strip, { key: 'Escape' });
+    expect(live()).toBe('');
+  });
+  it('shows a tip for the incident day under the pointer and drops it when the pointer leaves', () => {
+    const { container } = render(<UptimeBars days={days} uptime={0.9981} end={end} label="Gateway, last 90 days" />);
+    const svg = container.querySelector('svg')!;
+    svg.getBoundingClientRect = () => ({ left: 0, top: 0, right: 90, bottom: 10, width: 90, height: 10, x: 0, y: 0, toJSON() {} });
+    fireEvent.pointerMove(svg, { clientX: 84.5 });
+    const tip = container.querySelector('[aria-hidden].absolute');
+    expect(tip?.textContent).toBe(`Degraded · ${formatDate(new Date(end.getTime() - 5 * 86_400_000))}`);
+    expect(container.querySelector('svg [data-focus]')?.getAttribute('x')).toBe('84');
+    fireEvent.pointerLeave(container.querySelector('figure')!);
+    expect(container.querySelector('[aria-hidden].absolute')).toBeNull();
   });
 });

@@ -167,8 +167,12 @@ describe('finalize', () => {
 
   it('never copies a secret, a dependency or the repository into the session or the history', () => {
     const root = project();
-    start(ctx(root).c, opts);
+    const logs: string[] = [];
+    const logged = (o: Parameters<typeof ctx>[1] = {}) => { const x = ctx(root, o); return { ...x, c: { ...x.c, log: (l: string) => { logs.push(l); x.lines.push(l); } } }; };
+    start(logged().c, opts);
     const check = () => {
+      expect(logs.length).toBeGreaterThan(0);
+      for (const l of logs) { expect(l).not.toContain('hunter2-secret'); expect(l).not.toContain(sha256(SECRET).slice('sha256-'.length)); }
       for (const f of walk(path.join(root, '.meridian'))) {
         expect(fs.readFileSync(f, 'utf8'), f).not.toContain('hunter2-secret');
         expect(fs.readFileSync(f, 'utf8'), f).not.toContain(sha256(SECRET).slice('sha256-'.length));
@@ -177,8 +181,21 @@ describe('finalize', () => {
     };
     check();
     resolveAll(root);
-    expect(finalize(ctx(root).c, { verify: false })).toBe(0);
+    expect(finalize(logged().c, { verify: false })).toBe(0);
     check();
+  });
+
+  it('reports a failed install, records its exit code and keeps the secret out of the session', () => {
+    const root = project();
+    const failing: Run = (cmd, args) => (args[0] === 'install' ? { status: 1, output: `${cmd} install failed: registry unreachable` } : { status: 0, output: '' });
+    const { c, lines } = ctx(root, { run: failing });
+    const code = start(c, opts);
+    expect(code).not.toBe(0);
+    expect(lines.join('\n')).toMatch(/install exited with 1/);
+    expect(state(root).validation[0]).toMatchObject({ exitCode: 1, evidenceFile: 'evidence/0-install.log' });
+    expect(read(session(root), 'evidence/0-install.log')).toContain('registry unreachable');
+    expect(manifest(root).version).toBe('0.3.0');
+    expect(lines.join('\n')).not.toContain('hunter2-secret');
   });
 
   it('belongs to the version and package that started the session', () => {

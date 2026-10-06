@@ -2,8 +2,7 @@
 
 import { useMemo, useState } from 'react';
 import { UserPlus } from 'lucide-react';
-import { app } from '@/app.config';
-import { PageFrame, Row, Stack } from '@/components/base/shell';
+import { Row, Stack } from '@/components/base/shell';
 import { Avatar } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -47,6 +46,7 @@ const columns: Column<CustomerRecord>[] = [
   { key: 'since', header: 'Customer since', numeric: true, muted: true, hideBelow: 'xl', sortValue: (c) => c.since, cell: (c) => formatDate(c.since) },
 ];
 
+/** The table and the tiles over it: the page renders the masthead, so this is the only part that waits for the address. */
 export function CustomersView({ rows }: { rows: CustomerRecord[] }) {
   const [f, set] = useQueryState({ q: '', plan: 'all', status: 'all', by: '', sort: 'spend', dir: 'desc', page: '1' });
   const matching = useMemo(() => {
@@ -57,9 +57,50 @@ export function CustomersView({ rows }: { rows: CustomerRecord[] }) {
   const clear = () => set({ q: '', plan: 'all', status: 'all', by: '', page: '1' });
   const spend = rows.reduce((a, c) => a + c.spend, 0);
   const pastDue = rows.filter((c) => c.status === 'past due');
-  const spendDaily = rows[0].trend.map((_, d) => rows.reduce((a, c) => a + c.trend[d] * 0.000104, 0));
-  const requestsDaily = rows[0].trend.map((_, d) => rows.reduce((a, c) => a + c.trend[d], 0));
+  const spendDaily = (rows[0]?.trend ?? []).map((_, d) => rows.reduce((a, c) => a + c.trend[d] * 0.000104, 0));
+  const requestsDaily = (rows[0]?.trend ?? []).map((_, d) => rows.reduce((a, c) => a + c.trend[d], 0));
 
+  return (
+    <Stack>
+      <Row split="tiles">
+        <MetricTile label="Customers" value={rows.length} format={(n) => String(n)} hint="Workspaces with at least one live key. The line is their combined requests over the last 14 days." daily={requestsDaily} />
+        <MetricTile label="Spend, last 30 days" value={spend} format={formatCost} hint="Metered usage across every customer, before credits. The line shows the last 14 days." daily={spendDaily} emphasis />
+        <MetricTile label="Past due" value={pastDue.length} format={(n) => String(n)} hint="Customers whose latest invoice is overdue." note={pastDue.map((c) => c.name).join(', ') || 'Every invoice is paid'} />
+      </Row>
+      <DataTable
+        caption="Customers"
+        noun="customers"
+        rows={matching}
+        columns={columns}
+        rowKey={(c) => c.id}
+        empty={{ title: 'No customers yet', body: 'Invite the first one and they appear here with their plan and usage.' }}
+        rowHref={(c) => `/requests?q=${encodeURIComponent(c.name)}`}
+        state={{ sort: f.sort, dir: f.dir, page: f.page }}
+        onStateChange={set}
+        filtered={isFiltered}
+        onClearFilters={clear}
+        toolbar={
+          <FilterBar
+            search={{ value: f.q, onChange: (q) => set({ q, by: '', page: '1' }), placeholder: 'Search customers' }}
+            filters={[
+              { key: 'status', label: 'Status', value: f.status, onChange: (status) => set({ status, by: '', page: '1' }), options: [{ value: 'all', label: 'All' }, { value: 'active', label: 'Active' }, { value: 'trial', label: 'Trial' }, { value: 'past due', label: 'Past due' }] },
+            ]}
+            view={
+              <Segmented size="sm" label="Plan" value={f.plan} onChange={(plan) => set({ plan, by: '', page: '1' })}
+                options={[{ value: 'all', label: 'All plans' }, { value: 'Enterprise', label: 'Enterprise' }, { value: 'Scale', label: 'Scale' }, { value: 'Starter', label: 'Starter' }]} />
+            }
+            result={<>{matching.length} of {rows.length}</>}
+            setBy={f.by || undefined}
+            onClear={clear}
+          />
+        }
+      />
+    </Stack>
+  );
+}
+
+/** The masthead's action: the invitation sheet keeps its own state, so the page can render it outside the boundary that reads the address. */
+export function InviteCustomer() {
   const [inviting, setInviting] = useState(false);
   const [invite, setInvite] = useState({ company: '', email: '', plan: 'Scale' });
   const [inviteError, setInviteError] = useState<{ company?: string; email?: string }>({});
@@ -74,48 +115,9 @@ export function CustomersView({ rows }: { rows: CustomerRecord[] }) {
     setInvite({ company: '', email: '', plan: 'Scale' });
     toast({ tone: 'positive', title: `Invitation sent to ${invite.email}`, description: `${invite.company} joins on the ${invite.plan} plan when they accept.` });
   };
-
   return (
-    <PageFrame
-      kicker={<>{app.name} · {app.workspace}</>}
-      title="Customers"
-      description="Who is calling the API, on which plan, and what they spent in the last 30 days."
-      actions={<Button variant="primary" icon={<UserPlus />} onClick={() => setInviting(true)}>Invite customer</Button>}
-    >
-      <Stack>
-        <Row split="tiles">
-          <MetricTile label="Customers" value={rows.length} format={(n) => String(n)} hint="Workspaces with at least one live key. The line is their combined requests over the last 14 days." daily={requestsDaily} />
-          <MetricTile label="Spend, last 30 days" value={spend} format={formatCost} hint="Metered usage across every customer, before credits. The line shows the last 14 days." daily={spendDaily} emphasis />
-          <MetricTile label="Past due" value={pastDue.length} format={(n) => String(n)} hint="Customers whose latest invoice is overdue." note={pastDue.map((c) => c.name).join(', ') || 'Every invoice is paid'} />
-        </Row>
-        <DataTable
-          caption="Customers"
-          noun="customers"
-          rows={matching}
-          columns={columns}
-          rowKey={(c) => c.id}
-          rowHref={(c) => `/requests?q=${encodeURIComponent(c.name)}`}
-          state={{ sort: f.sort, dir: f.dir, page: f.page }}
-          onStateChange={set}
-          filtered={isFiltered}
-          onClearFilters={clear}
-          toolbar={
-            <FilterBar
-              search={{ value: f.q, onChange: (q) => set({ q, by: '', page: '1' }), placeholder: 'Search customers' }}
-              filters={[
-                { key: 'status', label: 'Status', value: f.status, onChange: (status) => set({ status, by: '', page: '1' }), options: [{ value: 'all', label: 'All' }, { value: 'active', label: 'Active' }, { value: 'trial', label: 'Trial' }, { value: 'past due', label: 'Past due' }] },
-              ]}
-              view={
-                <Segmented size="sm" label="Plan" value={f.plan} onChange={(plan) => set({ plan, by: '', page: '1' })}
-                  options={[{ value: 'all', label: 'All plans' }, { value: 'Enterprise', label: 'Enterprise' }, { value: 'Scale', label: 'Scale' }, { value: 'Starter', label: 'Starter' }]} />
-              }
-              result={<>{matching.length} of {rows.length}</>}
-              setBy={f.by || undefined}
-              onClear={clear}
-            />
-          }
-        />
-      </Stack>
+    <>
+      <Button variant="primary" icon={<UserPlus />} onClick={() => setInviting(true)}>Invite customer</Button>
       <Sheet open={inviting} onOpenChange={setInviting}>
         <SheetContent
           title="Invite a customer"
@@ -136,6 +138,6 @@ export function CustomersView({ rows }: { rows: CustomerRecord[] }) {
           </div>
         </SheetContent>
       </Sheet>
-    </PageFrame>
+    </>
   );
 }

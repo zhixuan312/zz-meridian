@@ -26,6 +26,13 @@ const TONE: Record<DayState, Tone> = { operational: 'positive', none: 'neutral',
 /** The Health page's body: shared by the console route; the embed view uses its parts. */
 export function HealthBody({ services, current, past, now }: { services: Service[]; current: Incident | null; past: Incident[]; now: string }) {
   const end = new Date(now);
+  if (services.length === 0) {
+    return (
+      <Card>
+        <EmptyState title="No services yet" className="py-16">Every service you monitor appears here with its state now and its last 90 days.</EmptyState>
+      </Card>
+    );
+  }
   const days = services[0].days.map((_, i) => services.reduce<DayState>((w, s) => (RANK[s.days[i]] > RANK[w] ? s.days[i] : w), 'operational'));
   const daily = services[0].days.map((_, i) => services.filter((s) => s.days[i] === 'operational').length / services.length);
   const uptime = services.reduce((a, s) => a + s.uptime, 0) / services.length;

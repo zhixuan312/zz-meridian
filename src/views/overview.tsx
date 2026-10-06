@@ -3,6 +3,7 @@
 import { AlertTriangle, ArrowRight, CircleDollarSign, Gauge } from 'lucide-react';
 import Link from 'next/link';
 import { Row, Stack } from '@/components/base/shell';
+import { EmptyState } from '@/components/ui/empty-state';
 import { Card, CardBody, CardFooter, CardHeader } from '@/components/ui/card';
 import { Meridian } from '@/components/charts/meridian';
 import { TrendChart } from '@/components/charts/trend-chart';
@@ -36,6 +37,15 @@ export function OverviewBody({
   /** The data's clock, as an ISO string: relative times read against it, never against render time. */
   now: string;
 }) {
+  if (series.length === 0) {
+    return (
+      <Card>
+        <EmptyState title="No requests yet" action={<Link href="/keys" className="row-link inline-flex items-center gap-1 font-medium text-ink">API keys <ArrowRight className="size-3.5" /></Link>} className="py-16">
+          Traffic, reliability and spend appear here once a key makes its first call.
+        </EmptyState>
+      </Card>
+    );
+  }
   const { current: c, previous: p } = totals;
   const dates = series.map((d) => d.date);
   const change = (a: number, b: number) => (b ? a / b - 1 : null);

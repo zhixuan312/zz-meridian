@@ -23,8 +23,8 @@
 import fs from 'node:fs';
 import path from 'node:path';
 
-import nextConfig from '../next.config.ts';
 import { budgetsOf, type BudgetsConfig } from './lib/budgets.ts';
+import { distDirOf } from './lib/next-config.ts';
 import { firstLoad, firstLoadProblems, htmlProblems } from './lib/sizes.ts';
 import verifyConfig from './verify.config.ts';
 
@@ -43,8 +43,7 @@ const summary = (o: Record<string, unknown>) => console.log(`sizes: ${JSON.strin
 const fail = (message: string): never => { console.log(`FAIL    ${message}`); summary({ status: 'FAIL', error: message }); process.exit(1); };
 
 /** Every non-API route's first-load bytes, from the build's route stats and the chunks on disk. */
-function measured(): { route: string; bytes: number }[] {
-  const dist = path.join(ROOT, (nextConfig as { distDir?: string }).distDir ?? '.next');
+function measured(dist: string): { route: string; bytes: number }[] {
   const file = path.join(dist, 'diagnostics/route-bundle-stats.json');
   if (!fs.existsSync(file)) return fail(`no ${path.relative(ROOT, file)}; run next build first`);
   let stats: { route: string; firstLoadChunkPaths: string[] }[];
@@ -86,7 +85,7 @@ async function htmlSizes(routes: string[]): Promise<{ sizes: Record<string, numb
 }
 
 async function main(): Promise<number> {
-  const routes = measured();
+  const routes = measured(path.join(ROOT, await distDirOf(ROOT)));
   if (args.includes('--write-baseline')) {
     const written = { method: METHOD, routes: Object.fromEntries(routes.map((r) => [r.route, r.bytes])) };
     fs.writeFileSync(BASELINE, JSON.stringify(written, null, 2) + '\n');

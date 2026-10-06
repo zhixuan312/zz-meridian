@@ -9,7 +9,7 @@
  * the team's own eslint config, and next build must succeed.
  * --create: a new dashboard from the tarball, then its default pnpm verify (the gate, one build, the bounded smoke).
  * --verify runs pnpm verify --full on it instead (Chrome required).
- * --keep leaves the fixture projects in the temporary folder for inspection; without it they are removed, pass or fail.
+ * --keep leaves the fixture projects in the temporary folder for inspection; without it they are removed, pass, fail, error or interrupt.
  * --verify also runs the default verify twice in scratch copies of the adopted project: once with `noLiveApi: true` as a
  * team edit and no mappings, and once with no safe backend. Each case prints its coverage line.
  * Both sections also check the agent context: adopt keeps AGENTS.md's bytes and adds one managed block and the brief;
@@ -48,6 +48,10 @@ if (!fs.existsSync(tarball)) throw new Error('no tarball: run npm pack in cli/ f
 
 const work = fs.mkdtempSync(path.join(os.tmpdir(), 'zz-meridian-smoke-'));
 const keep = args.includes('--keep');
+// The fixtures are whole installed projects, gigabytes each: they go on every way out, a thrown error and an interrupt
+// included, unless --keep asks to look inside them. The log is the record of what failed.
+process.on('exit', () => { if (!keep) fs.rmSync(work, { recursive: true, force: true }); });
+for (const sig of ['SIGINT', 'SIGTERM'] as const) process.on(sig, () => process.exit(sig === 'SIGINT' ? 130 : 143));
 let failures = 0;
 const check = (ok: boolean, what: string, detail = '') => { console.log(`${ok ? 'ok  ' : 'FAIL'} ${what}`); if (!ok) { failures++; if (detail) console.log(detail.trim().split('\n').slice(-40).join('\n')); } };
 const sh = (cmd: string, a: string[], cwd: string, env: NodeJS.ProcessEnv = process.env) => spawnSync(cmd, a, { cwd, encoding: 'utf8', env, maxBuffer: 64 * 1024 * 1024 });
@@ -493,6 +497,7 @@ if (args.includes('--update-all') && adoptedBase()) {
       resolveAll(proj, VERSION, 'Kept ours; the project works as it is.');
       const fin = zz(tarball, proj, ['update', '--finalize', ...flag], `${name} finalize`);
       check(fin.status === 0 && /^outcome: complete/m.test(fin.out), `${name}: finalize completes`, fin.out + fin.err);
+      done(proj);
       return fin;
     };
     const plain = timed([], 'finalize-plain');
@@ -516,6 +521,7 @@ if (args.includes('--update-all') && adoptedBase()) {
     finish(proj, 'interrupted');
     const expected = mainUpgrade();
     check(read(proj, '.meridian/manifest.json') === expected.manifest && read(proj, 'package.json') === expected.packageJson && read(proj, 'AGENTS.md') === expected.agents, 'the resumed update reaches the same manifest, package.json and AGENTS.md as the uninterrupted one');
+    done(proj);
   }
 
   // Install failure.
@@ -531,6 +537,7 @@ if (args.includes('--update-all') && adoptedBase()) {
     const resumed = zz(tarball, proj, ['update', '--resume'], 'resume');
     check(resumed.status === 2 && /install \d/.test(resumed.out), 'with it fixed, --resume installs and succeeds', resumed.out + resumed.err);
     finish(proj, 'install failure');
+    done(proj);
   }
 
   // Typecheck failure.
@@ -548,6 +555,7 @@ if (args.includes('--update-all') && adoptedBase()) {
     write(proj, 'lib/broken.ts', 'export const total: number = 1;\n');
     const fin = zz(tarball, proj, ['update', '--finalize'], 'finalize (fixed)');
     check(fin.status === 0 && /^outcome: complete/m.test(fin.out), 'with it fixed, finalize succeeds', fin.out + fin.err);
+    done(proj);
   }
 
   // A check that writes source.
@@ -563,6 +571,7 @@ if (args.includes('--update-all') && adoptedBase()) {
     check(bad.status === 1 && (bad.out + bad.err).includes('src/app.config.ts'), 'a check that writes src/app.config.ts fails finalize, naming that path', bad.out + bad.err);
     check(read(proj, 'src/app.config.ts').endsWith('// written by a check\n'), 'the written bytes stay');
     check(finalManifest(proj).version === '0.3.0' && fs.existsSync(path.join(proj, session)), 'the manifest is not advanced and the session is kept');
+    done(proj);
   }
 
   // Abort.
@@ -581,6 +590,7 @@ if (args.includes('--update-all') && adoptedBase()) {
     const status = sh('git', ['status', '--porcelain'], proj).stdout.split('\n').filter((l) => l.trim() && !l.includes('.meridian/history/'));
     check(aborted.status === 0 && /^outcome: aborted/m.test(aborted.out), 'abort exits 0', aborted.out + aborted.err);
     check(diff === '' && status.length === 0, 'git diff HEAD is empty and nothing else changed outside .meridian/history/', `${diff}\n${status.join('\n')}`);
+    done(proj);
   }
 
   // Dirty tree.
@@ -592,6 +602,7 @@ if (args.includes('--update-all') && adoptedBase()) {
     check(refused.status === 1 && /uncommitted/.test(refused.err) && !fs.existsSync(path.join(proj, '.meridian/update')), 'a dirty tree refuses and writes nothing', refused.out + refused.err);
     const allowed = zz(tarball, proj, ['update', '--allow-dirty', '--no-install'], 'update --allow-dirty');
     check(allowed.status === 2 && fs.existsSync(path.join(proj, session, 'state.json')) && read(proj, 'notes.txt') === 'unfinished work\n', '--allow-dirty proceeds and leaves the unfinished work alone', allowed.out + allowed.err);
+    done(proj);
   }
 
   // Removal and addition, with a variant of the package built in scratch.
@@ -607,6 +618,7 @@ if (args.includes('--update-all') && adoptedBase()) {
     check(up.status === 2, 'the update from the variant applies', up.out + up.err);
     check(/removed\s+scripts\/vitals\.ts/.test(up.out) && !fs.existsSync(path.join(proj, REMOVED)), `the untouched ${REMOVED} is deleted`, up.out + up.err);
     check(/added\s+src\/components\/ui\/smoke-added\/index\.tsx/.test(up.out) && read(proj, ADDED) === added, `the added ${ADDED} is written`, up.out + up.err);
+    done(proj);
   }
 
   // Rebrand, then update, on both origins.
@@ -664,6 +676,7 @@ if (args.includes('--update-all') && adoptedBase()) {
       finish(proj, label, test051, env, NEXT);
       const manifest = finalManifest(proj);
       check(manifest.version === NEXT && manifest.brand.hex === NEW_HEX && unmanaged(manifest).length === 0, `${label}: the manifest is ${NEXT}, keeps the rebranded brand and holds only managed paths`, JSON.stringify(manifest.brand));
+      done(proj);
     }
   }
 }
@@ -696,8 +709,5 @@ if (args.includes('--create')) {
   }
 }
 
-// The fixtures are whole installed projects, gigabytes each: they go whether the run passed or not, unless --keep asks to
-// look inside them. The log above is the record of what failed.
 console.log(failures ? `\nsmoke: ${failures} failed${keep ? ` (work kept in ${work})` : ''}` : '\nsmoke: the consumer path works');
-if (!keep) fs.rmSync(work, { recursive: true, force: true });
 process.exit(failures ? 1 : 0);

@@ -11,15 +11,20 @@ coverage: <default|full|perf|full+perf>; browser <ran|not run (<reason>)>; <n> r
   through the phone drawer. It never refuses for a missing Chrome or safe backend: it runs the static checks and reports
   the browser as `not run (<reason>)`. A route without a mapping in `navigationChecks` counts as `not configured` for
   data and interaction, which is a warning, not a failure.
-- **`pnpm verify --full`** adds the navigation of every rail route and steps 3 to 7. It needs a mapping for every rail
+- **`pnpm verify --full`** adds the navigation of every rail route and steps 3 to 8. It needs a mapping for every rail
   route, Chrome, a safe backend and `optional:scripts/verify.baseline.json`, and fails with every missing piece listed before it
   builds anything.
 - **`pnpm verify --perf`** runs the 20-sample navigation protocol. It does not imply that the `--full` checks ran;
   `--full --perf` unions the two and runs the gate and the build once.
 
-A failing gate, build or start stops the run there; from the audit on, every check runs and the report lists each
-failure. Steps in order:
+A failing gate, build or start stops the run there, and so does a failing assistant-absent check (step 3); from the
+audit on, every check runs and the report lists each failure. In `--full`, a suite that left a case unrun (no Chrome, no
+second server for the live-data restart case) prints `not run`, never `ok`, and the run ends with `every check that ran
+passed; not run: <suites>`; only a run with nothing left unrun ends with `the project meets the Meridian standard`.
+Steps in order:
 
+0. **Rail navigation** (`--full` only): every rail route is navigated, with its data and interaction mappings from
+   `navigationChecks`.
 1. **The gate** (`node scripts/gate.ts`): tokens regenerate to the same CSS; the card registry is fresh; every card and
    page specification follows the anatomy; the product's own rules in `optional:scripts/check.local.ts`, when the file exists;
    contrast holds for every pair in every theme and accent, and the chart palette passes the colour-vision checks;
@@ -44,7 +49,10 @@ failure. Steps in order:
    hidden under something such as the sticky top bar, and every visible control is reached. With them run the
    product's own browser checks (`browserChecks` in `scripts/verify.config.ts`), each given `--base` and the served
    app's address.
-7. **Web Vitals on a mid-range phone** (`scripts/vitals.ts`): Lighthouse's mobile profile (CPU slowed four times, Slow 4G,
+7. **Live data** (`scripts/live.ts`), alone after the presses, which change members: two tabs, a quiet or restarted
+   stream, a hidden or offline tab and a burst, against a second server that drops its change hints. A case that cannot
+   run is `not run` and the suite exits 2.
+8. **Web Vitals on a mid-range phone** (`scripts/vitals.ts`): Lighthouse's mobile profile (CPU slowed four times, Slow 4G,
    390px touch). Every product page must hold LCP under 2.5 s, INP under 200 ms and CLS under 0.1; INP is the slowest
    tap on a control that changes the screen. It runs alone, after the others, since throttling measures the machine
    too: on a busy machine, run it again before believing a near miss.

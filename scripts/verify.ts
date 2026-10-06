@@ -9,7 +9,7 @@
  *                         browser checks (`browserChecks` in scripts/verify.config.ts), the assistant walk-through
  *                         (scripts/assistant.ts), the live-data checks (scripts/live.ts) and Web Vitals (scripts/vitals.ts)
  *   pnpm verify --perf    the default, then the 20-sample navigation protocol (scripts/perf.ts): every rail route, on a desktop
- *                         and through the phone drawer, warm, cold and right after a live refresh, gated on the p95
+ *                         and through the phone drawer, warm, cold and right after a live refresh, the p95 reported
  *   pnpm verify --full --perf   both deep suites; the gate and the build are shared, so each runs once
  *
  * It prints one line per phase (`ok`, `warn`, `FAIL` or `not run`, and the seconds), then one coverage line saying what
@@ -38,7 +38,7 @@ import path from 'node:path';
 
 import { bin } from './lib/bin.ts';
 import type { BudgetsConfig, NavigationCheck } from './lib/budgets.ts';
-import { resolveCoverage, selectSmokeRoutes } from './lib/coverage.ts';
+import { finalOutcome, resolveCoverage, selectSmokeRoutes, suiteOutcome } from './lib/coverage.ts';
 import { APP_DIR, railRoutes } from './lib/routes.ts';
 import verifyConfig from './verify.config.ts';
 
@@ -284,6 +284,8 @@ function step(name: string, cmd: string, args: string[], env = clean, last = fal
 function stop(c: ChildProcess) { try { process.kill(-c.pid!, 'SIGTERM'); } catch { /* already gone */ } }
 function stopAll() { for (const c of children) stop(c); }
 process.on('exit', stopAll);
+// An interrupted run does not emit 'exit' by itself, and the detached servers would outlive it.
+for (const sig of ['SIGINT', 'SIGTERM'] as const) process.on(sig, () => process.exit(sig === 'SIGINT' ? 130 : 143));
 
 /** Start the built app on a free port with the given environment and wait until it answers. */
 async function start(env: NodeJS.ProcessEnv) {
@@ -315,10 +317,16 @@ function summaryOf<T>(out: string, tag: string): T | null {
 }
 
 /** The tail of a suite's output when it failed, and its closing line when it passed. */
+/** A suite's line. One that left a case unrun is `not run`, stays in the coverage line's not-run list, and fails nothing. */
 function reportSuite(name: string, label: string, r: { status: number | null; out: string; took: number }) {
-  ranSuites.add(name);
-  phase(r.status === 0 ? 'ok' : 'FAIL', label, r.took);
-  beneath(r.status === 0 ? (r.out.split('\n').pop() ?? '') : r.out.split('\n').slice(-60));
+  const outcome = suiteOutcome(r.status);
+  if (outcome === 'ok') ranSuites.add(name);
+  phase(outcome, label, r.took);
+  const out = r.out.trim().split('\n');
+  if (outcome === 'FAIL') beneath(out.slice(-60));
+  else if (outcome === 'not run') beneath([...out.filter((l) => l.startsWith('not run')), out.at(-1) ?? '']);
+  else beneath(out.at(-1) ?? '');
+  return outcome !== 'FAIL';
 }
 
 // ---- the sequence ----
@@ -418,7 +426,7 @@ if (full && browser.ran && baseUrl) {
     const off = await run('scripts/assistant.ts', ['--base', baseUrl, '--expect', 'off'], app);
     stop(server!.server);
     reportSuite('assistant', 'assistant absent without its variables', off);
-    if (off.status !== 0) { ok = false; finish(1, FIX); }
+    if (suiteOutcome(off.status) === 'FAIL') { ok = false; finish(1, FIX); }
 
     // Pointed at the fake LLM, the audit and the presses then see the launcher.
     const fake = spawn('node', ['scripts/fake-llm.ts', '--port', '0'], { cwd: ROOT, stdio: ['ignore', 'pipe', 'inherit'], detached: true });
@@ -440,7 +448,7 @@ if (full && browser.ran && baseUrl) {
     announce('the assistant walk-through');
     on = await run('scripts/assistant.ts', ['--base', `http://127.0.0.1:${port}`, '--expect', 'on', '--llm', llmUrl, '--key', key]);
     reportSuite('assistant', 'assistant walk-through', on);
-    if (on.status !== 0) ok = false;
+    if (suiteOutcome(on.status) === 'FAIL') ok = false;
   }
 
   // The audit, the presses and the keyboard walk each run their own browser, so they run side by side against the one built app.
@@ -457,7 +465,7 @@ if (full && browser.ran && baseUrl) {
   reportSuite('presses', 'every control pressed and every link followed', presses);
   reportSuite('keyboard', 'the whole keyboard path', keys);
   extras.forEach((r, i) => reportSuite('browserChecks', own[i], r));
-  if ([audit, presses, keys, ...extras].some((r) => r.status !== 0)) ok = false;
+  if ([audit, presses, keys, ...extras].some((r) => suiteOutcome(r.status) === 'FAIL')) ok = false;
 
   // Live data: two tabs, a quiet or restarted stream, a hidden or offline tab and a burst (scripts/live.ts). It times what a
   // second tab sees, so it runs alone and after the presses, which change members. The server with LIVE_DROP_HINTS=1 is the
@@ -468,17 +476,17 @@ if (full && browser.ran && baseUrl) {
   const live = await run('scripts/live.ts', ['--base', here, '--drop-base', `http://127.0.0.1:${dropped.port}`], app);
   stop(dropped.server);
   reportSuite('live', 'live data: two tabs, a silent stream, a restart, a hidden and an offline tab, a burst', live);
-  if (live.status !== 0) { ok = false; beneath(live.out.split('\n').slice(-40)); }
+  if (suiteOutcome(live.status) === 'FAIL') { ok = false; beneath(live.out.split('\n').slice(-40)); }
 
   // Web Vitals on a mid-range phone, alone: CPU throttling measures the machine too, so nothing else runs beside it.
   current = 'web vitals';
   announce('Web Vitals on a mid-range phone, alone');
   const vitals = await run('scripts/vitals.ts', ['--base', here]);
   reportSuite('vitals', 'LCP, INP and CLS on a mid-range phone', vitals);
-  if (vitals.status !== 0) ok = false;
+  if (suiteOutcome(vitals.status) === 'FAIL') ok = false;
 }
 
 stopAll();
 current = 'the end';
 if (!ok) finish(1, FIX);
-finish(0, full ? 'the project meets the Meridian standard' : 'every check that ran passed; pnpm verify --full runs the rest');
+finish(0, finalOutcome(full, SUITES.filter((s) => !ranSuites.has(s))));

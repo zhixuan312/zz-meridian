@@ -14,7 +14,7 @@ At the data width like every console page, sections 56px apart, each a Form sect
 | Notifications | At once | Four switches: incident alerts, weekly digest, spend over budget, agent proposals |
 | Appearance | At once, on this device | Theme (System, Dark, Light), accent (four swatches), density (Comfortable, Compact) |
 | Agents and MCP | At once | "Let assistants read dashboards" switch; the locked rule that every proposal waits for approval; connected hosts with Disconnect (and Undo) |
-| Danger zone | Confirmed in a dialog | Delete workspace: typing the workspace's address enables the destructive button |
+| Danger zone | Confirmed in a dialog | Delete workspace: typing the workspace's slug (shown in the dialog) enables the destructive button |
 
 ## States
 
@@ -26,7 +26,7 @@ At the data width like every console page, sections 56px apart, each a Form sect
 | Empty name | The field's error; Save does nothing until it is fixed |
 | A switch flipped | It applies at once; a toast names the setting and its new state |
 | No hosts connected | A dashed placeholder says how to connect one |
-| Delete dialog | The destructive button stays disabled until the address is typed exactly |
+| Delete dialog | The destructive button stays disabled until the slug is typed exactly |
 
 ## Data
 

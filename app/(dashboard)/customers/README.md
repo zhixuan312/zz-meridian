@@ -20,11 +20,14 @@ Status: beta
 | Default | Sorted by spend, descending |
 | Past due | The status Badge in `critical`; the sparkline in neutral |
 | Error rate over 1% | Written in `warning-ink` |
+| No customers | The first-run empty state: "No customers yet" |
 | Filtered, nothing matches | The filtered-out empty state |
 
 ## Data
 
-`CUSTOMERS` from `src/system/fixtures/sample-records.ts` (derived from `CUSTOMER_ROWS`). Spend is metered usage before credits.
+`CUSTOMERS`, imported from `src/data/sample.ts` (derived from `CUSTOMER_ROWS` in `src/system/fixtures/sample-records.ts`). Spend is metered usage before credits. This is a module constant, not a collection: it has no tenant and no access check, so a product serves customers through `read()` with a tenant-scoped collection before it has a second tenant.
+
+The page renders the masthead (title, sentence, Invite customer) itself, outside the boundary that reads the address, so a cold load has them in the first HTML. The tiles and the table wait inside their own boundary.
 
 ## Embed view
 

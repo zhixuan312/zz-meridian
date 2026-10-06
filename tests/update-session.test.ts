@@ -33,11 +33,11 @@ function journal(over: Partial<UpdateJournal> = {}): UpdateJournal {
   } as UpdateJournal;
   return { ...j, planHash: over.planHash ?? planHash(j) };
 }
-const disk: Record<string, string> = { 'src/a.ts': h('1'), 'src/b.ts': h('e'), 'src/gone.ts': h('f'), 'package.json': h('p') };
+const disk: Record<string, string> = { 'src/a.ts': h('1'), 'src/b.ts': h('e'), 'src/gone.ts': h('f'), 'package.json': h('c') };
 const hashOf = (p: string) => (disk[p] ?? null) as ReturnType<Parameters<typeof unresolved>[2]>;
 const resolved: Resolution[] = [
   { id: 'file:src/b.ts', status: 'resolved', reason: 'Ours is deliberate.', files: { 'src/b.ts': h('e') } },
-  { id: 'migration:script:gate', status: 'resolved', reason: 'Renamed ours to gate:team.', files: { 'package.json': h('p') } },
+  { id: 'migration:script:gate', status: 'resolved', reason: 'Renamed ours to gate:team.', files: { 'package.json': h('c') } },
 ];
 
 describe('parseJournal', () => {
@@ -63,7 +63,7 @@ describe('unresolved', () => {
   });
   it('is empty once every item has a valid, current resolution', () => expect(unresolved(journal(), resolved, hashOf)).toEqual([]));
   it('accepts a not-applicable migration with a reason and the inspected hashes', () => {
-    expect(unresolved(journal(), [resolved[0], { id: 'migration:script:gate', status: 'not-applicable', reason: 'We have no gate script.', files: { 'package.json': h('p') } }], hashOf)).toEqual([]);
+    expect(unresolved(journal(), [resolved[0], { id: 'migration:script:gate', status: 'not-applicable', reason: 'We have no gate script.', files: { 'package.json': h('c') } }], hashOf)).toEqual([]);
   });
   it('reports a resolution whose file changed since it was recorded', () => {
     expect(unresolved(journal(), [{ ...resolved[0], files: { 'src/b.ts': h('9') } }, resolved[1]], hashOf).join('\n')).toMatch(/file:src\/b\.ts/);
@@ -88,7 +88,7 @@ describe('unresolved', () => {
 describe('retirements and the keep register', () => {
   it('trusts a retirement only when the original manifest recorded that baseline', () => {
     expect(verifiedRetirements(journal())).toEqual([{ path: 'src/gone.ts', baselineHash: h('d'), reason: 'kept by the team' }]);
-    expect(verifiedRetirements(journal({ retired: [{ path: 'src/gone.ts', baselineHash: h('x'), reason: 'forged' }] }))).toEqual([]);
+    expect(verifiedRetirements(journal({ retired: [{ path: 'src/gone.ts', baselineHash: h('3'), reason: 'forged' }] }))).toEqual([]);
   });
   it('parses exactly path and reason, unique and safe', () => {
     expect(parseKeep('[{"path":"src/a.ts","reason":"Deliberate."}]')).toEqual([{ path: 'src/a.ts', reason: 'Deliberate.' }]);
@@ -107,6 +107,12 @@ describe('retirements and the keep register', () => {
     expect(() => parseResolutions('{}')).toThrow();
     expect(() => parseResolutions('[{"id":"file:a","status":"done","reason":"x","files":{}}]')).toThrow();
     expect(parseResolutions(JSON.stringify(resolved))).toEqual(resolved);
+  });
+  it('accepts only a lowercase hex sha256 hash, as the manifest does', () => {
+    const at = (hash: string) => JSON.stringify([{ id: 'file:a.ts', status: 'resolved', reason: 'Kept ours.', files: { 'a.ts': hash } }]);
+    expect(() => parseResolutions(at(`sha256-${'z'.repeat(64)}`))).toThrow(/hash/);
+    expect(() => parseResolutions(at(`sha256-${'A'.repeat(64)}`))).toThrow(/hash/);
+    expect(parseResolutions(at(`sha256-${'a'.repeat(64)}`))).toHaveLength(1);
   });
 });
 

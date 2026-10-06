@@ -105,7 +105,7 @@ while building, read it in the template on GitHub (`src/components/<layer>/<card
 Every product name, sample address and MCP tool name follows `--name`, so nothing of the template's own name is left
 behind. A brand colour goes straight in as `--hex`: the OKLCH hue and chroma are derived (chroma capped at 0.18; the
 theme sets lightness so contrast holds), registered everywhere, and checked by the contrast gate in every theme. To
-change the brand later, run `node scripts/brand.ts` in the project with the new flags.
+change the brand later, run `npx zz-meridian@<the manifest's version> brand` with the new flags; never `node scripts/brand.ts`, which the manifest does not record.
 
 Requirements: Node 22.18 or newer; pnpm is used when installed, npm otherwise. The browser checks use Google Chrome
 (`CHROME=/path/to/chrome` if it is not where the platform keeps it). If any is missing, say so plainly and stop before

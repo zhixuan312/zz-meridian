@@ -74,8 +74,8 @@ Dark is the default, written on `:root`; the light theme follows the operating s
 | `scripts/` | Generators, gates, `brand.ts` and `verify.ts` (see `CONTRIBUTING.md`) |
 | `skills/zz-meridian/` | The agent skill (Claude Code, Codex) that builds dashboards on this template or brings it into yours |
 | `cli/` | The `zz-meridian` npm package: `create`, `adopt`, `update`, `brand` and `skill`, its build, its smoke test and the fixture app (`docs/distribution.md`) |
-| `.github/workflows/release.yml` | The release: three timed default verifies and the consumer path from the tarball (every published origin updated), then npm with provenance, the registry package end to end, then the tag (`.claude/commands/release.md`) |
-| `.github/workflows/weekly.yml` | Weekly: `verify --full`, `verify --perf` (a report) and the consumer smoke's recovery and failure cases; nothing waits on it |
+| `.github/workflows/release.yml` | The release, each check once: a timed default verify and the consumer path from the tarball (every published origin updated), then npm with provenance, the registry's bytes and provenance checked, then the tag (`.claude/commands/release.md`) |
+| `.github/workflows/weekly.yml` | Weekly, never at release: `verify --full --perf` (perf a report) and the consumer smoke's recovery and failure cases; nothing waits on it |
 
 ## Bring Meridian into your dashboard, in one sentence
 

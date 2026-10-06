@@ -39,7 +39,7 @@ const PHASES: Phase[] = ['prepared', 'applying', 'needs-resolution', 'ready', 'v
 type Obj = Record<string, unknown>;
 const isObj = (v: unknown): v is Obj => typeof v === 'object' && v !== null && !Array.isArray(v);
 const nonBlank = (v: unknown): v is string => typeof v === 'string' && v.trim() !== '';
-const isHash = (v: unknown): v is Hash => typeof v === 'string' && /^sha256-[0-9a-z]{64}$/.test(v);
+const isHash = (v: unknown): v is Hash => typeof v === 'string' && /^sha256-[0-9a-f]{64}$/.test(v);
 
 /** A project-relative path that stays inside the project: posix separators, no absolute form, no `.` or `..` segment. */
 export function isSafePath(p: unknown): p is string {

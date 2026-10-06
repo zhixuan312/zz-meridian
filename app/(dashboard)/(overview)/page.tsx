@@ -1,5 +1,5 @@
 import { Suspense } from 'react';
-import { PageFrame, Stack } from '@/components/base/shell';
+import { PageFrame } from '@/components/base/shell';
 import { ExportButton } from '@/components/patterns/export-button';
 import { Freshness } from '@/components/patterns/freshness';
 import { PeriodSelect } from '@/components/patterns/period-select';
@@ -8,6 +8,7 @@ import { OverviewBody } from '@/views/overview';
 import { DEMO_NOW, DEMO_UPDATED_AT, demoSeries, demoTotals, ENDPOINTS, STATUS_MIX, ACTIVITY } from '@/data/sample';
 import { parsePeriod, PERIOD_LABEL } from '@/lib/period';
 import { app } from '@/app.config';
+import { Busy } from '../_loading';
 import { OverviewSkeleton } from './loading';
 
 export const metadata = { title: 'Overview' };
@@ -28,7 +29,7 @@ export default function OverviewPage({ searchParams }: { searchParams: SearchPar
         </Suspense>
       }
     >
-      <Suspense fallback={<Stack><OverviewSkeleton /></Stack>}>
+      <Suspense fallback={<Busy name="overview"><OverviewSkeleton /></Busy>}>
         <Body searchParams={searchParams} />
       </Suspense>
     </PageFrame>

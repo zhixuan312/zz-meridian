@@ -82,11 +82,11 @@ The layout hands the shell whether it is on as a promise it does not await, `ass
 - **Collections** live in `optional:src/data/collections.ts`: one `arrayCollection` per kind of record, with `rows`, the `fields`
   schema, `allow` (which of create, update and remove the assistant may propose) and `hidden` fields. Replace each
   `rows` with the person's API and `clock` with `new Date()`; the assistant reads and proposes changes only through them.
-  **When `rows` becomes a real database, read each table once per request**: a page asks for the same records from
-  several places (the layout's shell tools, a page strip, the page and its freshness stamp), so wrap the read in
-  `cache()` from `react` — request-scoped, which is what the Next.js docs recommend — and keep the write path reading
-  directly. Raise the pool's idle timeout too: `pg` drops an idle connection after 10s, and a remote Postgres with TLS
-  costs hundreds of milliseconds to reconnect. Issue #7 measured 44-46% on three pages from the first.
+  **When `rows` becomes a real database, read through `read()`** (`optional:src/data/read.ts`): a page asks for the same
+  records from several places (the layout's shell tools, a page strip, the page and its freshness stamp), and `read()`
+  caches per caller's scope and refreshes exactly the tenant a write touched, so do not wrap the read in a second cache;
+  writes call `updateTag` after the commit (`cache.md`). Raise the pool's idle timeout too: `pg` drops an idle connection after 10s, and a remote Postgres with TLS
+  costs hundreds of milliseconds to reconnect. Issue #7 has the numbers.
 - **Sign-in check** goes in three places, the same check: `optional:app/(dashboard)/layout.tsx`, `optional:app/api/assistant/route.ts` and every server action (each `actions.ts`), because a server action is a public endpoint the layout does not guard
   (before the model is reached).
 - **The switch** ("Show the assistant") is in `optional:src/views/settings.tsx`. A product that deletes Settings moves it, or the

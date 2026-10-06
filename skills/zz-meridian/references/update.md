@@ -64,7 +64,8 @@ Next: resolve the items in .meridian/update/0.5.0/MERGE.md, then npx zz-meridian
 - **`kept` and `retired-kept`**: a kept file that is missing, or one the new release removed and the update left in place.
 - **`summary`**: the conflicts, then the counts of the files that need nothing. `kept` counts files left as the team has them.
 - **`outcome`**: `dry-run`, `migration-required` (items to resolve), `install-pending` (the install was skipped with
-  `--no-install`), `ready-to-finalize`, or `failed`.
+  `--no-install`), `ready-to-finalize`, `complete` (finalize passed), `needs-resolution` (resolve what `MERGE.md` lists, then finalize
+  again), `aborted` (the update was undone) or `failed`.
 - **`--verbose`** lists every operation with its kind and action, not only the conflicts.
 
 Exit codes: `0` for a dry-run (or an update that finalized itself because nothing was pending), `2` when the update is

@@ -10,8 +10,15 @@ vi.mock('next/cache', () => ({
   revalidateTag: () => {},
 }));
 
+const session = vi.hoisted(() => ({ scope: null as null | { tenantId: string; subjectId: string; authorizationKey: string } }));
+vi.mock('@/data/access', async (importOriginal) => {
+  const real = await importOriginal<typeof import('@/data/access')>();
+  return { ...real, resolveAccess: async () => session.scope ?? real.resolveAccess() };
+});
+
 import { arrayCollection, liveListeners, normalizeQuery } from '@/lib/collection';
 import { resolveAccess } from '@/data/access';
+import { AccessDenied } from '@/data/access';
 import { clock, members } from '@/data/collections';
 import { collectionTag, read } from '@/data/read';
 
@@ -20,7 +27,7 @@ const people = (tenantId: string) => arrayCollection({
   fields: z.object({ name: z.string().min(1) }), rows: [{ id: 'p1', name: 'Ada' }, { id: 'p0', name: 'Ada' }], allow: ['create'], tenantId,
 });
 
-beforeEach(() => { cache.tags.length = 0; cache.lives.length = 0; });
+beforeEach(() => { cache.tags.length = 0; cache.lives.length = 0; session.scope = null; });
 
 describe('read', () => {
   it('reads through the scope, tags the tenant collection and keeps the observation time', async () => {
@@ -32,7 +39,13 @@ describe('read', () => {
     expect(cache.lives).toContainEqual({ stale: 30, revalidate: 60, expire: 3600 });
   });
   it('refuses an unknown collection the same way as a forbidden one, before any cached code runs', async () => {
-    await expect(read('secrets')).rejects.toThrow();
+    const unknown = await read('secrets').catch((e: unknown) => e);
+    expect(unknown).toBeInstanceOf(AccessDenied);
+    expect(cache.tags).toEqual([]);
+    session.scope = { tenantId: 'other-tenant', subjectId: 'intruder', authorizationKey: 'other:1' };
+    const forbidden = await read('members').catch((e: unknown) => e);
+    expect(forbidden).toBeInstanceOf(AccessDenied);
+    expect((forbidden as Error).message).toBe((unknown as Error).message);
     expect(cache.tags).toEqual([]);
   });
   it('resolves a scope with the three frozen fields', async () => {

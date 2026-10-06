@@ -78,6 +78,25 @@ describe('liveStream', () => {
     ac.abort();
     await t.cancel();
   });
+  it('beats every 15 s by default, with a comment that carries no event and no data', async () => {
+    vi.useFakeTimers();
+    try {
+      const ac = new AbortController();
+      const t = tap(liveStream({ names: ['members'], collections: [members], signal: ac.signal, authorize: async () => true }));
+      await vi.advanceTimersByTimeAsync(0);
+      expect(t.state.text).toContain('event: resync');
+      expect(t.state.text).not.toMatch(/: beat/);
+      await vi.advanceTimersByTimeAsync(14_999);
+      expect(t.state.text).not.toMatch(/: beat/);
+      await vi.advanceTimersByTimeAsync(1);
+      expect(t.state.text.match(/: beat \d+\n\n/g)).toHaveLength(1);
+      const afterResync = t.state.text.slice(t.state.text.indexOf('event: resync'));
+      expect(afterResync.match(/^event:/gm)).toHaveLength(1);
+      expect(afterResync.match(/^data:/gm)).toHaveLength(1);
+      ac.abort();
+      await t.cancel();
+    } finally { vi.useRealTimers(); }
+  });
   it('never delivers a change from another tenant’s collection of the same name', async () => {
     const a = people('tenant-a');
     const b = people('tenant-b');

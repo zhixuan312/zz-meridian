@@ -47,32 +47,25 @@ gh run list --workflow=weekly.yml -L 1   # the full, perf and recovery suites, w
 
 ## 3. Prove it locally
 
-What CI gates, once, on this machine:
-
-```bash
-node cli/scripts/release-check.ts --runs 1        # the default verify from a clean build: the gate, one build, the smoke
-node cli/scripts/build-payload.ts --worktree && pnpm exec tsc -p cli/tsconfig.json
-(cd cli && rm -f *.tgz && npm pack)
-node cli/scripts/smoke.ts --adopt --create --update   # adopt, create, and every published origin updated to finalize
-```
-
-Everything green, or stop and fix the cause. Commit (`release: <v>`, after the change commits), push to `master`.
+Nothing is run twice: the release workflow's `gates` job is the proof, so there is no local copy of it to run first.
+Locally, only `pnpm gate` (the fast loop) after the version and changelog edits. Commit (`release: <v>`, after the change
+commits), push to `master`.
 
 ## 4. Dispatch
 
 ```bash
-gh workflow run release.yml -f version=<v> -f dry_run=true     # gates, pack, consumer path; publishes nothing
-gh run watch "$(gh run list --workflow=release.yml -L1 --json databaseId -q '.[0].databaseId')"
 gh workflow run release.yml -f version=<v>
 gh run watch "$(gh run list --workflow=release.yml -L1 --json databaseId -q '.[0].databaseId')"
 ```
 
-`gates` installs and runs the template's code and never holds a credential: the default verify three times from a
-clean build, each within 120 s on the 4-CPU runner, then the consumer smoke from the tarball. `publish` installs
-nothing, checks that tarball's hash, publishes it with `npm` (pnpm does not do the OIDC exchange) and `--provenance`,
-and waits for the registry. `release` runs `npx zz-meridian@<v> --version`, checks the registry serves the tested
-tarball with provenance, runs the consumer smoke's create and update sections on the registry's package, then creates
-the tag and the Release.
+One run: `gates` fails before anything is published, so a dry run first would only repeat it. `-f dry_run=true` stays
+for changing the workflow itself.
+
+`gates` installs and runs the template's code and never holds a credential: the default verify once from a clean
+build, within 120 s on the 4-CPU runner, then the consumer smoke from the tarball. `publish` installs nothing, checks
+that tarball's hash, publishes it with `npm` (pnpm does not do the OIDC exchange) and `--provenance`, and waits for
+the registry. `release` runs `npx zz-meridian@<v> --version`, checks the registry serves the tested tarball (equal
+sha256) with provenance, then creates the tag and the Release.
 
 ## 5. Report
 
@@ -81,7 +74,7 @@ npm view zz-meridian@<v> version dist.attestations.provenance
 gh release view v<v>
 ```
 
-Say: the version, the run URL, the three verify times from the `gates` log, the local proof, and whether provenance is attached
+Say: the version, the run URL, the verify time from the `gates` log, and whether provenance is attached
 (https://www.npmjs.com/package/zz-meridian/v/<v>).
 
 ## Rules

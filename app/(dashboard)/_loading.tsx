@@ -12,10 +12,20 @@ import { Skeleton } from '@/components/ui/skeleton';
 export function LoadingPage({ name, title, children }: { name: string; title?: string; children: ReactNode }) {
   return (
     <PageFrame kicker={<Skeleton className="h-2.5 w-32" />} title={title ?? <Skeleton className="mt-3 h-10 w-64 rounded-md" />} description={<Skeleton className="mt-2 h-3.5 w-96 max-w-full" />}>
-      <div role="status" aria-busy="true" aria-label={`Loading ${name}`} className="contents">
-        <Stack>{children}</Stack>
-      </div>
+      <Busy name={name}>{children}</Busy>
     </PageFrame>
+  );
+}
+
+/**
+ * A page's body while it streams, announced once as busy under the page's name. `loading.tsx` shows it under the
+ * masthead skeleton; a page whose masthead is already real uses it as its own Suspense fallback.
+ */
+export function Busy({ name, children }: { name: string; children: ReactNode }) {
+  return (
+    <div role="status" aria-busy="true" aria-label={`Loading ${name}`} className="contents">
+      <Stack>{children}</Stack>
+    </div>
   );
 }
 

@@ -147,6 +147,7 @@ describe('update applies what is safe and stages the rest', () => {
     expect(start(c, { ...opts, dryRun: true })).toBe(0);
     unchanged(root);
     expect(lines.join('\n')).toMatch(/edited\s+src\/components\/ui\/b\/index\.tsx\s+merge required/);
+    for (const harmless of [ui('a'), ui('c'), ui('e')]) expect(lines.join('\n')).not.toContain(harmless);
   });
 });
 

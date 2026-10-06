@@ -312,7 +312,8 @@ not files to paste unread, and the template's checks do not compile them.
 
 ## Postgres: LISTEN and NOTIFY
 
-One dedicated connection per server process does `LISTEN`, shared by every subscriber. A writer calls `pg_notify` in the
+One dedicated connection per server process does `LISTEN`, shared by every subscriber, including those that subscribe while
+it is still connecting (`opening` is the one in-flight connection; a second `Client` would leak and duplicate hints). A writer calls `pg_notify` in the
 same transaction as its write, so Postgres delivers the NOTIFY only when that transaction commits, and a rollback sends
 nothing. The payload is a tenant and a collection name (a payload may not exceed 8000 bytes, and carries no row).
 
@@ -332,6 +333,7 @@ export async function notifyChange(tx: PoolClient, tenantId: string, name: strin
 export function postgresLive(connectionString: string) {
   const subscribers = new Set<Subscriber>();
   let client: Client | undefined;
+  let opening: Promise<void> | undefined; // the connection in flight: every subscriber that arrives meanwhile shares it
   let retry: ReturnType<typeof setTimeout> | undefined;
   let attempt = 0;
 
@@ -353,11 +355,15 @@ export function postgresLive(connectionString: string) {
   function schedule() {
     if (retry || client || subscribers.size === 0) return;
     // Bounded backoff: half a second, doubling, never more than 30 seconds.
-    retry = setTimeout(() => { retry = undefined; void connect(); }, Math.min(30_000, 500 * 2 ** attempt++));
+    retry = setTimeout(() => { retry = undefined; connect(); }, Math.min(30_000, 500 * 2 ** attempt++));
   }
 
-  async function connect() {
-    if (client || subscribers.size === 0) return;
+  function connect() {
+    if (client || opening || subscribers.size === 0) return;
+    opening = open().finally(() => { opening = undefined; });
+  }
+
+  async function open() {
     const c = new Client({ connectionString });
     c.on('error', () => lost(c));
     c.on('end', () => lost(c));
@@ -392,7 +398,7 @@ export function postgresLive(connectionString: string) {
   return (tenantId: string, name: string) => (deliver: (event: LiveEvent) => void) => {
     const s: Subscriber = { tenantId, name, deliver };
     subscribers.add(s);
-    void connect();
+    connect();
     return () => {
       subscribers.delete(s);
       if (subscribers.size === 0) stop();

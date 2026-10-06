@@ -58,5 +58,5 @@ An embed view includes the freshness in the context it shares with the model, so
 ```tsx
 import { Freshness } from '@/components/patterns/freshness';
 
-<Freshness updatedAt={lastIngest} staleAfterMs={15 * 60_000} />
+<Freshness updatedAt={lastIngest} now={dataClock} staleAfterMs={15 * 60_000} />
 ```

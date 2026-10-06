@@ -59,7 +59,7 @@ export function MembersView({ rows, now, actions }: { rows: Member[]; now: strin
 
   /**
    * Show `optimistic` at once, then run the action for the row `id`. The change stays until the transition ends, which waits for
-   * the refreshed rows; a rejection toasts the reason and the table goes back to the rows it was given. A row with an action
+   * the refreshed rows; a refusal or a failed request toasts the reason and the table goes back to the rows it was given. A row with an action
    * in flight takes no second one.
    */
   const act = (id: string, optimistic: Change, action: () => Promise<Result>, done: { title: string; description?: string }, failed?: () => void) => {
@@ -68,7 +68,8 @@ export function MembersView({ rows, now, actions }: { rows: Member[]; now: strin
     start(async () => {
       change(optimistic);
       try {
-        const r = await action();
+        // A refusal comes back as a reason; an action that never answered (a dropped connection) throws, and is told the same way.
+        const r = await action().catch((): Result => ({ ok: false, error: 'The change did not reach the server. Try again.' }));
         if (!r.ok) {
           failed?.();
           return toast({ tone: 'critical', title: 'Change not made', description: r.error });

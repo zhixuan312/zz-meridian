@@ -20,7 +20,7 @@ this is the reason they agree.
 
 - One rule says which files are Meridian's: `cli/src/ownership.ts`. `adopt`, `create` and `update` all use it, and
   `references/ownership.md` in the skill is the same rule, rendered. Meridian's files are its tokens, styles, components,
-  scripts (except `scripts/verify.config.ts` and a `scripts/check.local.ts`), library helpers, `src/views/console-chrome.tsx`,
+  scripts (except `scripts/verify.config.ts`, `scripts/verify.baseline.json` and a `scripts/check.local.ts`), library helpers, `src/views/console-chrome.tsx`,
   `tests/setup.ts`, the brand outputs and both skill copies. Everything else is the team's, including a file the team adds
   inside one of Meridian's folders.
 - The manifest records only Meridian's files. A 0.3.0 or 0.4.0 manifest also lists pages, views, data, docs and
@@ -93,12 +93,13 @@ this is the reason they agree.
   run is reported as passed.
 - HTML caps are `/requests` 150 KiB and `/health` 100 KiB. The stakeholder set them after measurement showed no variant
   kept the page title instant within 130 KiB.
-- The release gates on the default verify three times from a clean `.next` on the GitHub-hosted ubuntu-24.04 4-CPU
-  runner (each at most 120 s; the gate and its unit tests run inside each) and on the consumer smoke from the tarball:
-  adopt, create with its default verify, and all four published origins updated through finalize. After publishing it
-  checks the registry serves the tested tarball with provenance, runs the same create and update sections on it, and
-  tags last. A weekly workflow runs `verify --full`, `verify --perf` as a report, and the consumer smoke's recovery and
-  failure cases with the created project's `verify --full`; a failure notifies and nothing waits on it.
+- Weekly is weekly, release is release, and nothing runs twice. The release gates, each once, on the default verify
+  from a clean `.next` on the GitHub-hosted ubuntu-24.04 4-CPU runner (at most 120 s, with its browser smoke; the gate
+  and its unit tests run inside it) and on the consumer smoke from the tarball: adopt, create with its default verify,
+  and all four published origins updated through finalize. After publishing it checks the registry serves the tested
+  tarball (equal sha256) with provenance, and tags last. A weekly workflow runs `verify --full --perf` (the perf part a
+  report) and the consumer smoke's adopted default-verify cases and recovery and failure cases; a failure notifies and
+  nothing waits on it.
 
 ### Every breaking interface, with its migration
 

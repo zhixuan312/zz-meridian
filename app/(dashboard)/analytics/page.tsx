@@ -1,6 +1,6 @@
 import { Suspense } from 'react';
 import { app } from '@/app.config';
-import { PageFrame, Stack } from '@/components/base/shell';
+import { PageFrame } from '@/components/base/shell';
 import { ExportButton } from '@/components/patterns/export-button';
 import { Freshness } from '@/components/patterns/freshness';
 import { PeriodSelect } from '@/components/patterns/period-select';
@@ -8,6 +8,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { AnalyticsBody } from '@/views/analytics';
 import { DEMO_NOW, DEMO_UPDATED_AT, ENDPOINTS, demoHeatmap, demoSeries, REGION_LATENCY, requestsByHour } from '@/data/sample';
 import { parsePeriod } from '@/lib/period';
+import { Busy } from '../_loading';
 import { AnalyticsSkeleton } from './loading';
 
 export const metadata = { title: 'Analytics' };
@@ -28,7 +29,7 @@ export default function AnalyticsPage({ searchParams }: { searchParams: SearchPa
         </Suspense>
       }
     >
-      <Suspense fallback={<Stack><AnalyticsSkeleton /></Stack>}>
+      <Suspense fallback={<Busy name="analytics"><AnalyticsSkeleton /></Busy>}>
         <Body searchParams={searchParams} />
       </Suspense>
     </PageFrame>

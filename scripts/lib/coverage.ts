@@ -2,6 +2,20 @@
 import type { NavigationCheck } from './budgets.ts';
 
 const PROBES = ['dialog', 'filter', 'sort', 'toggle', 'link'];
+
+/** The exit code of a suite that failed nothing but left a case unrun: neither a pass nor a failure. */
+export const NOT_RUN_EXIT = 2;
+
+/** What a suite's exit code means to verify: only 0 is a pass, and a suite that left a case unrun did not run. */
+export function suiteOutcome(status: number | null): 'ok' | 'not run' | 'FAIL' {
+  return status === 0 ? 'ok' : status === NOT_RUN_EXIT ? 'not run' : 'FAIL';
+}
+
+/** The last line of a passing verify: the full standard is met only when every suite of the depth ran. */
+export function finalOutcome(full: boolean, notRun: string[]): string {
+  if (!full) return 'every check that ran passed; pnpm verify --full runs the rest';
+  return notRun.length ? `every check that ran passed; not run: ${notRun.join(', ')}` : 'the project meets the Meridian standard';
+}
 const MAX_SMOKE = 3;
 
 /** The explicit list when given, else the landing route and the first two other unique rail paths. */
