@@ -53,6 +53,13 @@ describe('reconcilePackage', () => {
       expect(ids(o), spec).toContain('dependency:zod');
     }
   });
+  it('reads a partial version, such as ^24, as its minimum, and leaves an entry equal to the template alone', () => {
+    const t = { ...template, devDependencies: { ...template.devDependencies, '@types/node': '^24' } };
+    const run = (have: string) => reconcilePackage(pkg({ dependencies: exact, devDependencies: { typescript: '6.0.3', '@types/node': have }, scripts: template.scripts }), t, { ...need, dev: [...need.dev, '@types/node'] });
+    expect(run('^24').migrations.map((m) => m.id)).not.toContain('dependency:@types/node');
+    expect(run('^24').changes.some((c) => c.includes('@types/node'))).toBe(false);
+    expect(run('^23').migrations.map((m) => m.id)).toContain('dependency:@types/node');
+  });
   it('reports an override of a needed package', () => {
     expect(ids({ dependencies: exact, devDependencies: { typescript: '6.0.3' }, scripts: template.scripts, pnpm: { overrides: { react: '19.2.0' } } })).toContain('dependency-override:react');
   });

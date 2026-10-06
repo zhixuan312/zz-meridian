@@ -13,10 +13,13 @@ export type Need = { runtime: string[]; dev: string[]; scripts: string[] };
 type Obj = Record<string, unknown>;
 const isObj = (v: unknown): v is Obj => typeof v === 'object' && v !== null && !Array.isArray(v);
 
-/** The minimum version of `x.y.z`, `^x.y.z`, `~x.y.z` or `>=x.y.z`; null for anything else. */
+/**
+ * The minimum version of `x.y.z`, `^x.y.z`, `~x.y.z` or `>=x.y.z`, where a missing minor or patch is 0 (`^24` is
+ * 24.0.0, `~5.9` is 5.9.0); null for anything else.
+ */
 function minimum(spec: unknown): [number, number, number] | null {
-  const m = typeof spec === 'string' ? /^(?:\^|~|>=)?(\d+)\.(\d+)\.(\d+)$/.exec(spec.trim()) : null;
-  return m ? [Number(m[1]), Number(m[2]), Number(m[3])] : null;
+  const m = typeof spec === 'string' ? /^(?:\^|~|>=)?(\d+)(?:\.(\d+)(?:\.(\d+))?)?$/.exec(spec.trim()) : null;
+  return m ? [Number(m[1]), Number(m[2] ?? 0), Number(m[3] ?? 0)] : null;
 }
 const compare = (a: number[], b: number[]) => a[0]! - b[0]! || a[1]! - b[1]! || a[2]! - b[2]!;
 
