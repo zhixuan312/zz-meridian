@@ -150,8 +150,7 @@ For 0.5.0 they are:
 | `live-provider` | `src/data/collections.ts` without `src/data/live-actions.ts`, or a dashboard layout with neither `LiveProvider` nor `ConsoleLive` | `live.md`, "The live starters" and "Refreshing": add the five files and the provider |
 | `authorized-endpoints` | `app/api/assistant/route.ts`, or an `actions.ts` Server Action file, without a `resolveAccess` call | `cache.md`, "The assistant route": call `resolveAccess()` first and bring `tools.ts` and `respond.ts` over |
 
-The consumer smoke (`--update`) resolves the nine that touch source on all four published origins, a project adopted and a project created
-with 0.3.0 and with 0.4.0, as `references/update.md` tells an agent: a created origin, whose files are the template's,
+The consumer smoke (`--update`) updates a project adopted and a project created with each published release from 0.3.0 on. It resolves the nine migrations that touch source on the 0.3.0 and 0.4.0 origins, as `references/update.md` tells an agent: a created origin, whose files are the template's,
 takes the release's versions of the affected team-owned files and the files that arrived with them; an adopted origin,
 whose pages are the team's own, makes the minimal edit the instruction names. It then records the resolutions and
 finalizes, so the gate and the build run on the result, and checks the team's own files kept their bytes. A 0.4.0
@@ -214,7 +213,8 @@ Modelled on the release pipeline of the owner's earlier packages, one package in
    - `adopt` into `cli/test/fixture-next-app` (a minimal App Router app with one page and its own stylesheet), then
      install, `tsc --noEmit` and `next build`, all green. This is the test that keeps the Route A list complete.
    - `create` into a clean folder, then its default `pnpm verify`. The smoke quotes the coverage line.
-   - `update` from all four published origins (0.3.0 and 0.4.0, adopted and created) through finalize, as above.
+   - `update` from every published origin since 0.3.0 (adopted and created) through finalize, as above. A 0.5.0 origin
+     reports no migration; a created one with nothing to resolve completes in the update itself.
 5. **Publish** the tarball with `npm` 11.5.1 or newer through trusted publishing (OIDC), with `--provenance`. `pnpm
    publish` does not perform the OIDC exchange.
 6. **The registry's package**: `npx zz-meridian@<version> --version` answers the version, the registry's tarball has the

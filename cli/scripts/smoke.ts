@@ -16,14 +16,15 @@
  * create writes the block and the brief and keeps the assistant's tracing of docs/brief.md. Both fresh manifests hold
  * only the files Meridian manages.
  *
- * --update and --update-all need registry access for the published zz-meridian@0.3.0 and @0.4.0. The adopted fixture is
+ * --update and --update-all need registry access for the published zz-meridian@0.3.0, @0.4.0 and @0.5.0. The adopted fixture is
  * a project adopted with a published package, then given what a team's project carries (a card edit, a kept skill file
  * and token file, a brief, an extra doc, a team page fix) and committed. The running tarball is then its update target.
- * --update: every published origin a team can update from, adopted and created, from 0.3.0 and from 0.4.0. The 0.3.0
+ * --update: every published origin a team can update from, adopted and created, from 0.3.0, 0.4.0 and 0.5.0. The 0.3.0
  * adopted project walks every stage: the dry-run, then a real update, the gate refusing the open session, a resolution
- * written as references/update.md tells an agent, finalize, and everything the team owns unchanged. The other three
- * commit their team's work, update, resolve every reported migration, finalize with the gate and the build, and keep
- * the team's bytes. This release's migrations are resolved the way that guide says: an adopted project's own files get
+ * written as references/update.md tells an agent, finalize, and everything the team owns unchanged. The others commit
+ * their team's work, update, resolve every reported migration, finalize with the gate and the build, and keep the
+ * team's bytes; a 0.5.0 origin already has 0.5.0's shapes, so it reports no migration, and a created one with nothing
+ * to resolve completes in the update itself. This release's migrations are resolved the way that guide says: an adopted project's own files get
  * the smallest edit, a created project's get the release's versions of what changed.
  * --update-all: the remaining controlled cases, each on its own copy of the 0.3.0 adopted fixture: finalize with and
  * without --verify, an interruption and its resume, a failed install, a type error, a check that writes source, abort,
@@ -158,6 +159,7 @@ const CARD = 'src/components/ui/card/index.tsx';
 const KEPT_SKILL = '.agents/skills/zz-meridian/SKILL.md';
 const KEPT_TOKEN = 'tokens/density.compact.tokens.json';
 const TEAM_PAGES = ['app/page.tsx', 'app/orders/page.tsx'];
+const semverLess = (a: string, b: string) => { const [x, y] = [a, b].map((v) => v.split('.').map(Number)); return (x[0] - y[0] || x[1] - y[1] || x[2] - y[2]) < 0; };
 const sha = (f: string) => (fs.existsSync(f) ? `sha256-${hash(f)}` : null);
 const secs = (ms: number) => (ms / 1000).toFixed(1);
 
@@ -447,18 +449,27 @@ function originUpgrade(version: string, route: 'adopt' | 'create') {
 
   const up = zz(tarball, proj, ['update'], `${label} update`);
   const reported = RELEASE_IDS.filter((id) => new RegExp(`^migration\\s+${id}\\b`, 'm').test(up.out));
-  check(up.status === 2 && /^outcome: migration-required/m.test(up.out) && reported.length > 0, `${label}: the update applies and stops on its pending migrations (${reported.join(', ')})`, up.out + up.err);
+  // The release's migrations are 0.5.0's: a project from 0.5.0 on already has those shapes and reports none.
+  if (semverLess(version, '0.5.0')) {
+    check(up.status === 2 && /^outcome: migration-required/m.test(up.out) && reported.length > 0, `${label}: the update applies and stops on its pending migrations (${reported.join(', ')})`, up.out + up.err);
+  } else if (route === 'adopt') {
+    check(up.status === 2 && reported.length === 0 && new RegExp(`merge required`).test(up.out), `${label}: the update applies, reports no release migration, and stops on the team's card edit`, up.out + up.err);
+  } else {
+    check(up.status === 0 && /^outcome: complete/m.test(up.out) && reported.length === 0, `${label}: with nothing to resolve, the update completes in one command`, up.out + up.err);
+  }
   if (route === 'create' && version === '0.3.0') {
     // 0.3.0's template already passed `now` everywhere, so only the clock migration has nothing to report.
     const missed = RELEASE_IDS.filter((id) => id !== 'clock-now-required' && !reported.includes(id));
     check(missed.length === 0 && !reported.includes('clock-now-required'), `${label}: the report names every release migration its template still has the old shape for`, `missing: ${missed.join(', ')}\n${up.out}`);
   }
   if (version === '0.4.0' && route === 'create') check(/^summary: 0 conflicts\b/m.test(up.out), `${label}: with no conflict, the migrations alone keep the update from complete`, up.out);
-  if (up.status !== 2) { done(proj); return; }
+  if (up.status !== 2 && up.status !== 0) { done(proj); return; }
 
-  resolveAll(proj, VERSION, 'Kept ours; the project works as it is.');
-  const fin = zz(tarball, proj, ['update', '--finalize'], `${label} finalize`);
-  check(fin.status === 0 && /^outcome: complete/m.test(fin.out), `${label}: finalize passes the gate and the build and completes in ${secs(fin.wall)}s`, fin.out + fin.err);
+  if (up.status === 2) {
+    resolveAll(proj, VERSION, 'Kept ours; the project works as it is.');
+    const fin = zz(tarball, proj, ['update', '--finalize'], `${label} finalize`);
+    check(fin.status === 0 && /^outcome: complete/m.test(fin.out), `${label}: finalize passes the gate and the build and completes in ${secs(fin.wall)}s`, fin.out + fin.err);
+  }
   const manifest = finalManifest(proj);
   check(manifest.version === VERSION && manifest.route === route && unmanaged(manifest).length === 0, `${label}: the manifest is ${VERSION}, route ${route}, and holds only managed paths`, unmanaged(manifest).join('\n'));
   if (route === 'create' && (version === '0.3.0' || historical.length > 0)) {
@@ -474,6 +485,8 @@ if (args.includes('--update') && adoptedBase()) {
   originUpgrade('0.3.0', 'create');
   originUpgrade('0.4.0', 'adopt');
   originUpgrade('0.4.0', 'create');
+  originUpgrade('0.5.0', 'adopt');
+  originUpgrade('0.5.0', 'create');
 }
 
 // ── update-all ─────────────────────────────────────────────────────────────────────────────────────────
