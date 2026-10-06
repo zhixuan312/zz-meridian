@@ -149,10 +149,12 @@ For 0.5.0 they are:
 | `live-provider` | `src/data/collections.ts` without `src/data/live-actions.ts`, or a dashboard layout with neither `LiveProvider` nor `ConsoleLive` |
 | `authorized-endpoints` | `app/api/assistant/route.ts`, or an `actions.ts` Server Action file, without a `resolveAccess` call |
 
-The consumer smoke resolves them on both published-0.3.0 origins as `references/update.md` tells an agent: the created
-origin, whose files are the template's, takes the release's versions of the affected team-owned files and the files that
-arrived with them; the adopted origin, whose pages are the team's own, makes the minimal edit the instruction names.
-It then records the resolutions and finalizes, so the gate and the build run on the result.
+The consumer smoke (`--update`) resolves them on all four published origins, a project adopted and a project created
+with 0.3.0 and with 0.4.0, as `references/update.md` tells an agent: a created origin, whose files are the template's,
+takes the release's versions of the affected team-owned files and the files that arrived with them; an adopted origin,
+whose pages are the team's own, makes the minimal edit the instruction names. It then records the resolutions and
+finalizes, so the gate and the build run on the result, and checks the team's own files kept their bytes. A 0.4.0
+created project has no conflict at all, and its pending migrations alone keep the update from complete.
 
 ### The keep register
 
