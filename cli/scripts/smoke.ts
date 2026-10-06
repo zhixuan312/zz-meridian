@@ -357,7 +357,7 @@ function mainUpgrade(): Upgraded {
   const real = zz(tarball, proj, ['update'], 'update');
   const session = `.meridian/update/${VERSION}`;
   check(real.status === 2, 'a real update exits 2: applied, with work pending', real.out + real.err);
-  check(fs.existsSync(path.join(proj, session, 'MERGE.md')) && /^migration\s+dependency:/m.test(real.out), 'it writes MERGE.md and reports the migrations', real.out + real.err);
+  check(fs.existsSync(path.join(proj, session, 'MERGE.md')) && /^migration\s+\S+\s+pending$/m.test(real.out) && !/cannot compare/.test(read(proj, `${session}/MERGE.md`)), 'it writes MERGE.md and reports the migrations, and reads every dependency range it holds', real.out + real.err);
   check(['base', 'ours', 'new'].every((d) => fs.existsSync(path.join(proj, session, d, CARD))), `it stages ${CARD} with base, ours and new copies`);
   check(/^migration\s+cache-components-config\b/m.test(real.out), "it reports cache-components-config, the one release migration an adopted project's own files still need", real.out);
   check(/^outcome: migration-required/m.test(real.out) && /^Next: .*update --finalize/m.test(real.out), 'it prints the outcome and the pinned next command', real.out);
