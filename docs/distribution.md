@@ -219,8 +219,10 @@ Modelled on the release pipeline of the owner's earlier packages, one package in
 5. **Publish** the tarball with `npm` 11.5.1 or newer through trusted publishing (OIDC), with `--provenance`. `pnpm
    publish` does not perform the OIDC exchange.
 6. **The registry's package**: `npx zz-meridian@<version> --version` answers the version, the registry's tarball has the
-   tested tarball's sha256, and it carries a provenance attestation. The bytes passed step 4 already, so nothing runs
-   them twice. A failure here is an unsuccessful release, not a rollback: the version stays published and untagged
+   tested tarball's sha256, and it carries a provenance attestation. The bytes passed step 4 already; two paths still
+   change once the version is published, and run here, in about 10 seconds: `create` from the registry (npm renames a
+   packed `.gitignore` on install, so the project must have one), and `update` to the version in a project created
+   with the release before (it compares the running package with the registry's only once that one exists). A failure here is an unsuccessful release, not a rollback: the version stays published and untagged
    until a fix is released.
 7. **Tag `v<version>` last**, then the GitHub Release with the version's `CHANGELOG.md` section as its body.
 

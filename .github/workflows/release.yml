@@ -7,7 +7,8 @@
 # which adopts, creates, and updates every published origin to finalize. The full walkthroughs, the 20-sample perf report
 # and the recovery and failure matrices run weekly (weekly.yml) and never here: weekly is weekly, release is release.
 # After publishing, the registry's tarball is compared byte for byte with the tested one; identical bytes are not tested
-# twice.
+# twice. Two short steps run against the registry, since they behave differently once the version is published:
+# create from it, and update to it from the release before.
 #
 # WHY FOUR JOBS. `build` makes the tarball with nothing but Node, git and a pinned TypeScript installed without its
 # scripts, and records its hash. `gates` installs the template's dependencies and runs their code (the verifies, the
@@ -264,6 +265,24 @@ jobs:
           ATT="$(npm view "zz-meridian@$VERSION" dist.attestations.provenance --json 2>/dev/null || true)"
           [ -n "$ATT" ] || { echo "::error::zz-meridian $VERSION carries no provenance attestation"; exit 1; }
           echo "provenance attached"
+
+      # What `gates` cannot reach: the version published. `update` compares the running package with the registry's only
+      # then, and a project is created from the installed package, which npm has renamed files in. About 10 seconds.
+      - name: A consumer creates from the registry, and updates to it from the release before
+        run: |
+          set -euo pipefail
+          cd "$(mktemp -d)"
+          npx --yes --prefer-online "zz-meridian@$VERSION" create fresh --no-install >/dev/null
+          [ -f fresh/.gitignore ] && [ ! -e fresh/.npmignore ] || { echo "::error::a project created from the registry has no .gitignore"; exit 1; }
+          PREV="$(npm view zz-meridian versions --json | node -e 'const v=JSON.parse(require("fs").readFileSync(0,"utf8")).filter((x)=>/^\d+\.\d+\.\d+$/.test(x)); const n=(x)=>x.split(".").map(Number); const lt=(a,b)=>{const p=n(a),q=n(b);for(let i=0;i<3;i++)if(p[i]!==q[i])return p[i]<q[i];return false}; console.log(v.filter((x)=>lt(x,process.env.VERSION)).sort((a,b)=>lt(a,b)?-1:1).at(-1)??"")')"
+          [ -n "$PREV" ] || { echo "::error::no release before $VERSION on the registry"; exit 1; }
+          npx --yes "zz-meridian@$PREV" create older --no-install >/dev/null
+          cd older && git init -q && git add -A && git -c user.name=release -c user.email=release@localhost commit -qm "created with $PREV"
+          set +e; OUT="$(npx --yes --prefer-online "zz-meridian@$VERSION" update --no-install 2>&1)"; CODE=$?; set -e
+          echo "$OUT" | tail -4
+          # 0 is complete and 2 is applied with work pending; anything else, or a refusal, is a broken update.
+          { [ "$CODE" -eq 0 ] || [ "$CODE" -eq 2 ]; } && ! grep -q '^zz-meridian update:' <<<"$OUT" && grep -q '^outcome: ' <<<"$OUT" || { echo "::error::npx zz-meridian@$VERSION update from a $PREV project exited $CODE"; exit 1; }
+          echo "created from the registry with a .gitignore; updated from $PREV"
 
       - name: Tag, last
         env:

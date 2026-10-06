@@ -65,7 +65,9 @@ for changing the workflow itself.
 build, within 180 s on the 4-CPU runner (its CPU varies between runs), then the consumer smoke from the tarball. `publish` installs nothing, checks
 that tarball's hash, publishes it with `npm` (pnpm does not do the OIDC exchange) and `--provenance`, and waits for
 the registry. `release` runs `npx zz-meridian@<v> --version`, checks the registry serves the tested tarball (equal
-sha256) with provenance, then creates the tag and the Release.
+sha256) with provenance, creates a project from the registry (it must have a `.gitignore`) and updates a project created
+with the release before to `<v>` (exit 0 or 2, no refusal): the two paths that behave differently once the version is
+published. Then it creates the tag and the Release.
 
 ## 5. Report
 
