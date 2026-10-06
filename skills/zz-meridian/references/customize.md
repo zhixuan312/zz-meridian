@@ -26,7 +26,7 @@ sample, ZZ Meridian's own dashboard, lives in `optional:src/system/fixtures/`; y
   JavaScript has loaded and run, about 2.5 s on a mid-range phone, which puts LCP past the limit. Call
   `preload(url, { as: 'fetch', crossOrigin: 'anonymous' })` from `react-dom` inside the read hook: the server render
   writes a preload into the HTML, and the read starts with the page (ZZ Console measured about 170 ms instead).
-  `pnpm verify` measures LCP on that phone profile (`scripts/vitals.ts`).
+  `pnpm verify --full` measures LCP on that phone profile (`scripts/vitals.ts`).
 
 ## Navigation: `src/app.config.ts`
 
@@ -143,15 +143,15 @@ grep -rn "/health\|/requests\|/customers\|/keys\|/settings\|fixtures/sample\|sam
   --include=*.tsx | grep -v preview.tsx
 ```
 
-Then `node scripts/registry.ts` and `pnpm verify`.
+Then `node scripts/registry.ts` and `pnpm verify --full`.
 
 ## Renaming a thing
 
 Routes, API paths, tool names (`query_enhancements` → `query_initiatives`), seeds and tables are yours to rename. One
 thing is scripted against them: the walk-through in `scripts/assistant.ts` types the questions and matches the replies
 its route and page titles produce, and `scripts/fake-llm.ts` decides what to answer from the same text ("Page: Members
-(/members)"). Rename a page or a route and both must move with it, or `pnpm verify` fails in the assistant walk-through
-with a reply it did not expect. `scripts/verify.config.ts`'s `detailRoutes` name ids from the sample, so they move too.
+(/members)"). Rename a page or a route and both must move with it, or `pnpm verify --full` fails in the assistant walk-through
+with a reply it did not expect. `scripts/verify.config.ts`'s `detailRoutes` name ids from the sample, and its `navigationChecks` and `smokeRoutes` name routes and titles, so they move too.
 
 ## Things that render nothing (and fail the gate)
 

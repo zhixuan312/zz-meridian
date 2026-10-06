@@ -62,7 +62,7 @@ styles) and `src/app.config.ts` for the new flags and records them in the manife
 refuses when one of those outputs was edited, while an update is open, or on a dirty tree (unless `--allow-dirty`). Run
 it with the version the manifest records. The project's own `pnpm brand` still works, but its changes count as your edits.
 
-Requires Node 22.18 or newer. The checks (`pnpm verify`) also need Google Chrome.
+Requires Node 22.18 or newer. The default `pnpm verify` runs without Google Chrome and reports the browser checks as not run; `--full` and `--perf` need it.
 
 ## What this package does not do
 

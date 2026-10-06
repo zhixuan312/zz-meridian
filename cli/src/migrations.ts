@@ -38,7 +38,7 @@ const text = (root: string, rel: string): string | null => {
   }
 };
 
-const walk = (root: string, rel: string, out: string[]) => {
+const walk = (root: string, rel: string, out: string[], want: RegExp = SOURCE) => {
   let entries: fs.Dirent[];
   try {
     entries = fs.readdirSync(path.join(root, rel), { withFileTypes: true });
@@ -48,8 +48,8 @@ const walk = (root: string, rel: string, out: string[]) => {
   for (const e of entries.sort((a, b) => (a.name < b.name ? -1 : 1))) {
     if (SKIP.has(e.name)) continue;
     const p = rel ? `${rel}/${e.name}` : e.name;
-    if (e.isDirectory()) walk(root, p, out);
-    else if (e.isFile() && SOURCE.test(e.name) && isTeamOwned(p)) out.push(p);
+    if (e.isDirectory()) walk(root, p, out, want);
+    else if (e.isFile() && want.test(e.name) && isTeamOwned(p)) out.push(p);
   }
 };
 
@@ -68,6 +68,16 @@ const matching = (root: string, test: (rel: string, src: string) => boolean): st
   const hits = teamSources(root).filter((f) => test(f.rel, f.src)).map((f) => f.rel);
   return hits.length > 0 ? hits : null;
 };
+
+/** The team's files outside the managed folders where `verify` is followed on one line by a flag the modes replaced. */
+function removedVerifyFlags(root: string): string[] | null {
+  const files: string[] = ['package.json'];
+  walk(root, '.github/workflows', files, /\.ya?ml$/);
+  walk(root, '', files, /\.sh$/);
+  const removed = /\bverify\b[^\n]*?--(?:quick|no-vitals|extra)\b/;
+  const hits = [...new Set(files)].filter((rel) => removed.test(text(root, rel) ?? ''));
+  return hits.length > 0 ? hits : null;
+}
 
 const base = (rel: string) => rel.slice(rel.lastIndexOf('/') + 1);
 const isPageOrLayout = (rel: string) => rel.startsWith('app/') && /^(?:page|layout)\.tsx?$/.test(base(rel));
@@ -108,6 +118,14 @@ function callArity(src: string, fn: string): number[] {
 const GATE_AND_BUILD = ['gate', 'build'];
 
 export const RELEASE_MIGRATIONS: ReleaseMigration[] = [
+  {
+    id: 'verify-modes',
+    since: '0.5.0',
+    applies: removedVerifyFlags,
+    summary: 'verify has three modes, and --quick, --no-vitals and --extra are gone.',
+    instructions: 'Read "Validation" in references/validation.md. Run `pnpm verify` for the bounded default (the gate once, one build, the size checks and a smoke of up to three routes), `pnpm verify --full` for every exhaustive suite and `pnpm verify --perf` for the 20-sample navigation protocol, and replace the removed flags in the script, workflow or shell file. Read the coverage line each run ends with: it says what ran and what did not.',
+    checks: ['gate'],
+  },
   {
     id: 'shell-assistant-promise',
     since: '0.5.0',

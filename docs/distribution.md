@@ -206,14 +206,17 @@ Modelled on the release pipeline of the owner's earlier packages, one package in
 4. **Consumer smoke, from the tarball**:
    - `adopt` into `cli/test/fixture-next-app` (a minimal App Router app with one page and its own stylesheet), then
      install, `tsc --noEmit` and `next build`, all green. This is the test that keeps the Route A list complete.
-   - `create` into a clean folder, then `pnpm verify --quick --no-vitals`. Chrome is on ubuntu runners; Web Vitals
-     measure the machine, so CI leaves them to the local run (`--no-vitals` is new in v1).
+   - `create` into a clean folder, then `pnpm verify --full`, which the created project can run because it is the template
+     and has every navigation mapping. Chrome is on ubuntu runners. The smoke quotes the coverage line.
+   - The adopted project, in two scratch copies, runs the default `pnpm verify`: once with `noLiveApi: true` and no
+     mappings (exit 0, data and interaction not configured), and once with no safe backend (exit 0, browser not run).
+     `--full` on the unconfigured adopted project must refuse.
 5. **Publish** the tarball with `npm` 11.5.1 or newer through trusted publishing (OIDC), with `--provenance`. `pnpm
    publish` does not perform the OIDC exchange.
 6. **Tag `v<version>` last**, then the GitHub Release with the version's `CHANGELOG.md` section as its body.
 
 `dry_run` stops after step 4. A `/release` runbook (`.claude/commands/release.md`) holds the judgement before dispatch:
-the version, the changelog section, the docs sweep, and the local `pnpm verify` with Web Vitals. A `cli/scripts/set-version.ts`
+the version, the changelog section, the docs sweep, and the local `pnpm verify --full`. A `cli/scripts/set-version.ts`
 writes the version into `cli/package.json` and checks the root agrees.
 
 ## One-time setup (the maintainer, once)
@@ -235,7 +238,7 @@ token, prop or card is major; a new card, token or variant is minor; a corrected
 
 ## Phases
 
-- **v1**: `create`, `adopt`, `skill`, the manifest, package-manager-agnostic scripts, `--no-vitals`, the pipeline, the
+- **v1**: `create`, `adopt`, `skill`, the manifest, package-manager-agnostic scripts, the pipeline, the
   fixture test.
 - **v2**: `update` (dry-run, update, report, resolutions, finalize, resume, abort), the keep register, `brand`, the session
   checks in the gate.

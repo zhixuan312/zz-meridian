@@ -120,7 +120,10 @@ jobs:
   gates:
     needs: build
     runs-on: ubuntu-24.04
-    timeout-minutes: 45
+    # The consumer path runs `verify --full` in the created project. Measured on an Apple M5 (other work running): 903 s for
+    # that run, 1543 s for the whole smoke. The reference 4-CPU runner is slower, so this leaves room; tighten it from the
+    # first release run's log.
+    timeout-minutes: 90
     env:
       VERSION: ${{ inputs.version }}
       SHA256: ${{ needs.build.outputs.sha256 }}

@@ -33,9 +33,10 @@ These hold in every project, however it started, and nothing below overrides the
   `src/styles/theme.css`.
 - **Agents read freely and write only through a Proposal.** Mark agent work with the Agent mark and "via"
   (`references/agents.md`).
-- **Before finishing, run `pnpm verify`, and never against a live backend.** It presses every control, Delete
-  included, so a project whose pages call a live API or read a database names a `fakeApi` (or says `noLiveApi`) in
-  `scripts/verify.config.ts` first (`references/existing-project.md`, step 5).
+- **Before finishing, run `pnpm verify`; after a change to shared components, the shell or data, run `pnpm verify --full`.
+  Never against a live backend.** `--full` presses every control, Delete included, so a project whose pages call a live
+  API or read a database names a `fakeApi` (or says `noLiveApi`) in `scripts/verify.config.ts` first
+  (`references/existing-project.md`, step 5).
 
 ## Updating or rebranding a project that already has Meridian
 
@@ -184,17 +185,29 @@ verbs on buttons, units and periods on every number.
 ## 6. Validate until it passes
 
 ```sh
-pnpm verify            # the gate, a production build, the built app, and the browser audit of every page
+pnpm verify            # the gate once, one build, the size checks and a smoke of up to three routes
+pnpm verify --full     # every route, every control pressed, every link followed, the keyboard walk, the assistant, the live data
+pnpm verify --perf     # the 20-sample navigation protocol
 ```
 
-Stop the dev server first: verify builds and serves the app from the same folder. A full run takes a few minutes for a
-dozen routes (five widths and two themes for the audit, while every control is pressed beside it); `--quick` takes about
-a minute. It must end with
-`verify: the project meets the Meridian standard`. The audit discovers every static route; list each detail page worth
-seeing (a normal record, a failed one, a missing one) in `detailRoutes` in `scripts/verify.config.ts`, with ids from
-your data (`--extra` replaces them for one run). If the pages call a live API, give verify a fake one first
-(`references/existing-project.md`, step 5): it presses every control, Delete included. When something fails, read `references/validation.md`, fix the cause (not the check), and run
-it again. `pnpm verify --quick` is fine while iterating; finish with the full run.
+Stop the dev server first: verify builds and serves the app from the same folder. The default is bounded and takes about
+two minutes; `--full` takes a quarter of an hour for a dozen routes (five widths and two themes for the audit, while every
+control is pressed beside it); `--full --perf` runs both without repeating the gate or the build. Every run ends with a
+coverage line:
+
+```text
+coverage: default; browser ran; 3 routes; data configured 3/3; interaction configured 3/3; not run: audit, presses, keyboard, assistant, live, vitals
+```
+
+It says the depth that ran, whether the browser ran (and why not), how many routes, how many have a readiness mapping
+and a control mapping (`navigationChecks` in `scripts/verify.config.ts`), and which suites did not run. Nothing that did
+not run is reported as passed: a project with no mappings gets a default that exits 0 for the checks it ran, with data and
+interaction `configured 0/n`. `--full` and `--perf` fail on a missing mapping, a missing Chrome or an unsafe backend, and
+list every gap. Finish with the default; run `--full` when the change touches shared components, the shell or data. The
+audit discovers every static route; list each detail page worth seeing (a normal record, a failed one, a missing one) in
+`detailRoutes` in `scripts/verify.config.ts`, with ids from your data. If the pages call a live API, give verify a fake
+one first (`references/existing-project.md`, step 5): `--full` presses every control, Delete included. When something
+fails, read `references/validation.md`, fix the cause (not the check), and run it again.
 
 Then look, because a passing audit is not the same as a good page:
 
@@ -214,7 +227,7 @@ Report in this shape, in the person's language:
 Built <Product> on Meridian at <path>.
 Pages: <list, one line each, with what each answers>.
 Brand: <accent and how it was derived>. Surfaces: console, mobile<, MCP views: …>.
-Validation: pnpm verify passed (<n> routes, both themes, 1440 to 390px; contrast <n> pairs).
+Validation: pnpm verify passed; coverage line: <the line verify printed>.
 Next steps: replace the sample data in src/data/ with <their API>; run pnpm verify after every change.
 Feedback: <the issue URL from step 8, or "nothing to report">.
 ```

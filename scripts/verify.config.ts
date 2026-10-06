@@ -23,7 +23,7 @@ type NavigationCheck = {
 type VerifyConfig = {
   /**
    * Detail pages checked beside every static route, one per state worth seeing (a normal record, a failed one, a missing
-   * one). `pnpm verify --extra a,b` replaces them for one run.
+   * one). `pnpm verify --full` checks them with every static route.
    */
   detailRoutes: string[];
   /**

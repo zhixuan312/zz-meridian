@@ -69,5 +69,8 @@ The console's assistant is off until you set the `ASSISTANT_*` variables (`.env.
 ## Before you ship
 
 ```sh
-pnpm verify    # the gate, a production build and its route policy, and the browser audit of every page against the built app
+pnpm verify          # the gate once, one production build, the size checks and a smoke of up to three routes
+pnpm verify --full   # every route, every control pressed and link followed, the keyboard walk, the assistant and the live data
 ```
+
+`pnpm verify` is the check to run before you finish. Run `--full` after a change to shared components, the shell or data. Every run ends with a coverage line, such as `coverage: default; browser ran; 3 routes; data configured 3/3; interaction configured 3/3; not run: audit, presses, keyboard, assistant, live, vitals`, which says what ran and what did not. Nothing that did not run is reported as passed. `pnpm verify --perf` adds the 20-sample navigation protocol.

@@ -1,18 +1,36 @@
 # Validation: what `pnpm verify` checks, and how to fix what it finds
 
-`pnpm verify` runs these in order. A failing gate, build, start or assistant-off pass stops it there; from the audit on, every
-check runs and the report lists each failure:
+`pnpm verify` has three modes. Each ends with one coverage line before its outcome, which says what ran and what did not:
+
+```text
+coverage: <default|full|perf|full+perf>; browser <ran|not run (<reason>)>; <n> routes; data configured <a>/<n>; interaction configured <b>/<n>; not run: <suites>
+```
+
+- **`pnpm verify`** is bounded: steps 1 and 2 below once each, the route policy, the first-load and HTML size checks, and
+  a smoke of up to three routes (`smokeRoutes`, else the landing route and the next two rail routes) on desktop and
+  through the phone drawer. It never refuses for a missing Chrome or safe backend: it runs the static checks and reports
+  the browser as `not run (<reason>)`. A route without a mapping in `navigationChecks` counts as `not configured` for
+  data and interaction, which is a warning, not a failure.
+- **`pnpm verify --full`** adds the navigation of every rail route and steps 3 to 7. It needs a mapping for every rail
+  route, Chrome, a safe backend and `optional:scripts/verify.baseline.json`, and fails with every missing piece listed before it
+  builds anything.
+- **`pnpm verify --perf`** runs the 20-sample navigation protocol. It does not imply that the `--full` checks ran;
+  `--full --perf` unions the two and runs the gate and the build once.
+
+A failing gate, build or start stops the run there; from the audit on, every check runs and the report lists each
+failure. Steps in order:
 
 1. **The gate** (`node scripts/gate.ts`): tokens regenerate to the same CSS; the card registry is fresh; every card and
    page specification follows the anatomy; the product's own rules in `optional:scripts/check.local.ts`, when the file exists;
    contrast holds for every pair in every theme and accent, and the chart palette passes the colour-vision checks;
    eslint-config-next; TypeScript; the tests.
 2. **A production build** (`next build`), against the fake API when `scripts/verify.config.ts` names one.
+   Then the route policy and the size checks: first-load JS per route, and the HTML caps in `budgets.htmlKb`.
 3. **The assistant walk-through**, only when the project has `optional:app/api/assistant/route.ts`: off, then on against a fake
    model.
 4. **The built app, served**, and the **browser audit** of every static route under `app/` and the `detailRoutes` in
    `scripts/verify.config.ts` (embeds under `/embed` on a simulated host ground) at 2560, 1440, 1024, 768 and 390px in
-   both themes (`--quick`: 1440 and 390, dark only).
+   both themes.
 5. **Every control pressed, every link followed** (`scripts/interactions.ts`) on the built app: mouse at 1440px, taps at
    390px. A button that changes nothing, a control something else covers, and a link that answers 4xx all fail.
    **This presses Approve, Revoke and Delete too.** Pages that call a live API must be built against a fake one

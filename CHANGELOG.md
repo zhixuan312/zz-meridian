@@ -16,7 +16,9 @@ Every release of ZZ Meridian, newest first. Versions follow semver: a removed or
   - `pnpm verify --full` adds every mapped rail route and the exhaustive suites: the audit, every control and link, the keyboard walk, the assistant, live data, Web Vitals and the configured `browserChecks`.
   - The default never refuses for a missing safe backend or Chrome. It runs the static checks and reports the browser as `not run`, while `--full` requires both.
   - `scripts/verify.baseline.json` is the team's first-load baseline. `node scripts/sizes.ts --write-baseline` records it, and `adopt` does not copy it, so an adopted project reports growth as not configured until it records its own.
-  - Breaking: `--quick`, `--no-vitals` and `--extra` are gone from `verify` and its scripts.
+  - Breaking: `--quick`, `--no-vitals` and `--extra` are gone from `verify` and its scripts. An update reports the `verify-modes` migration for a team `package.json`, workflow or shell script that still passes them.
+  - `pnpm verify --perf` runs every mapped rail route on desktop and the phone, warm, cold (a fresh browser, with no destination prefetch) and right after a live refresh. It takes 20 samples each, gates the nearest-rank p95 against the budgets, and reports median, p95 and max. `--full --perf` runs the gate and the build once for both.
+  - The live check's burst case reports the second tab's requests by kind: refresh actions, router refreshes and prefetches.
 - **The console shows a page's title at once on navigation.** `/`, `/analytics` and `/requests` render their masthead outside the boundary of their address-dependent data, so a warm navigation shows the heading in about 30 ms instead of 230 to 430 ms. `/requests`' HTML cap is 150 KiB for this; it is 143 KiB, and 22 KiB compressed.
 - **`/requests` pages, sorts and filters on the server, and exports from an authorized route.**
   - The page sends 20 rows, the total and a server-computed summary for the address, and an invalid filter falls back to its default.
@@ -81,6 +83,7 @@ Every release of ZZ Meridian, newest first. Versions follow semver: a removed or
   - The Health page sends each service's 90 days as one character a day.
   - The rail keys its link styles on `aria-current`.
   - `/requests` is 126 KiB and `/health` 99.6 KiB, from 155 and 119. Screenshots at 1440 and 390, in dark and light, are identical.
+- **`brand.ts --no-atlas` and `--product` also remove the Atlas's routes from `scripts/verify.config.ts`.** A created project's `verify --full` no longer fails on navigation checks for pages it does not have.
 - **The Atlas preview route loads only the card it shows.** Its first-load JS fell from 1441 KiB to 591 KiB. `scripts/registry.ts` also writes `src/system/preview-loaders.ts` and the preview route's key list, and `brand.ts --no-atlas` removes both.
 - **The template builds under Cache Components, and every non-API route is static or partial.**
   - `next.config.ts` turns on `cacheComponents` and `partialPrefetching`. The console layout no longer waits for the request: it hands the shell a promise of whether the assistant is configured.

@@ -21,12 +21,14 @@
  *   ok|FAIL|warn|not run <route> <device> shell <ms> · data <ms|not-configured> · interactive <ms|not-configured>[ · noisy][ · <reasons>]
  *   navigate: {...}
  *
+ * scripts/perf.ts drives the same journey 20 times per route, device and condition (warm, cold and after a live refresh).
+ *
  * The exit code is non-zero on a FAIL and on a configuration error. Missing Chrome makes every line `not run`: exit 0 in
  * the default mode, non-zero in `full`. The mappings and budgets come from scripts/verify.config.ts, which `--config` can
  * replace and `--rail` can name the rail routes for (the readiness fixtures, which have no src/app.config.ts).
  */
 import path from 'node:path';
-import { pathToFileURL } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import { budgetsOf, type BudgetsConfig, type NavigationCheck } from './lib/budgets.ts';
 import { launch, type Page } from './lib/chrome.ts';
 import { resolveCoverage, selectSmokeRoutes } from './lib/coverage.ts';
@@ -41,11 +43,13 @@ const base = (opt('--base') ?? process.env.BASE ?? 'http://localhost:3000').repl
 const mode = (opt('--mode') ?? 'default') as 'default' | 'full';
 const sleep = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
 
-type Device = 'desktop' | 'phone';
-type Metric = 'shell' | 'data' | 'interactive';
-const DEVICES: Device[] = ['desktop', 'phone'];
-const METRICS: Metric[] = ['shell', 'data', 'interactive'];
-const BUDGET_KEY = { shell: 'shellMs', data: 'dataMs', interactive: 'interactiveMs' } as const;
+export type Device = 'desktop' | 'phone';
+export type Metric = 'shell' | 'data' | 'interactive';
+/** What the visitor's tab has done before the press: `warm` waited for prefetch, `cold` had none for the destination, `afterLive` just refreshed. */
+export type Condition = 'warm' | 'cold' | 'afterLive';
+export const DEVICES: Device[] = ['desktop', 'phone'];
+export const METRICS: Metric[] = ['shell', 'data', 'interactive'];
+export const BUDGET_KEY = { shell: 'shellMs', data: 'dataMs', interactive: 'interactiveMs' } as const;
 /** The phone is slow by design: its waits are longer, never its budgets. */
 const PATIENCE: Record<Device, number> = { desktop: 10_000, phone: 30_000 };
 /** How long a press may take to show its result before the control is called dead: past every cold interactive budget. */
@@ -53,18 +57,18 @@ const RESULT_WAIT: Record<Device, number> = { desktop: 5000, phone: 12_000 };
 const KIB = 1024;
 
 /** The fields of the team's config that navigate reads, each optional: an older product's config has none of them. */
-type NavConfig = BudgetsConfig & { navigationChecks?: NavigationCheck[]; smokeRoutes?: string[] };
+export type NavConfig = BudgetsConfig & { navigationChecks?: NavigationCheck[]; smokeRoutes?: string[] };
 
 // ---- what a journey can end in ----
 
-type Kind = 'never-ready' | 'wrong-result' | 'control-dead';
+type Kind = 'never-ready' | 'wrong-result' | 'control-dead' | 'prefetched';
 /** A failure that is the answer, not a measurement to repeat. */
-class Fail extends Error {
+export class Fail extends Error {
   kind: Kind;
   constructor(kind: Kind, message: string) { super(message); this.kind = kind; }
 }
-type Measured = { ms: number } | { fail: Fail };
-type Sample = { shell: Measured; data: Measured | null; interactive: Measured | null; drawerMs?: number; prefetchCapped: boolean };
+export type Measured = { ms: number } | { fail: Fail };
+export type Sample = { shell: Measured; data: Measured | null; interactive: Measured | null; drawerMs?: number; prefetchCapped: boolean; refused?: number };
 
 // ---- in the page ----
 
@@ -118,11 +122,40 @@ const INSTRUMENT = `(() => {
     const key = Object.keys(h).find((k) => k.toLowerCase() === name);
     return key ? h[key] : null;
   };
+  // What perf needs of a live refresh: the Server Actions that answered { ok: true }, and the router's own (not prefetch) RSC reads.
+  const act = nav.act = { started: 0, inFlight: 0, results: [], arrivedAt: [] };
+  const rsc = nav.rsc = { reads: [] };
+  // A cold sample refuses the destination's prefetches: they are counted here and never reach the network.
+  nav.blocked = [];
+  nav.track = false;
   const nativeFetch = window.fetch.bind(window);
   window.fetch = (input, init) => {
-    if (headerOf(input, init, 'next-router-prefetch') === null) return nativeFetch(input, init);
+    const prefetch = headerOf(input, init, 'next-router-prefetch');
+    const action = headerOf(input, init, 'next-action') !== null;
+    // The router's own reads are watched only while a refresh is awaited, so a timed navigation's response is never tapped.
+    const read = nav.track && !action && prefetch === null && headerOf(input, init, 'rsc') !== null;
+    if (prefetch === null && !action && !read) return nativeFetch(input, init);
+    if (action) {
+      const at = act.started++;
+      act.inFlight++;
+      act.results[at] = null;
+      return nativeFetch(input, init).then((r) => {
+        // The router refresh begins once the page has this answer, so the answer's arrival is what its read is placed after.
+        act.arrivedAt[at] = performance.now();
+        const finish = (ok) => { act.results[at] = ok; act.inFlight--; };
+        r.clone().text().then((t) => finish(r.ok && /"ok":true/.test(t)), () => finish(false));
+        return r;
+      }, (e) => { act.results[at] = false; act.inFlight--; throw e; });
+    }
+    if (read) {
+      const mine = { start: performance.now(), done: false };
+      rsc.reads.push(mine);
+      const settle = () => { mine.done = true; };
+      return nativeFetch(input, init).then((r) => { r.clone().arrayBuffer().then(settle, settle); return r; }, (e) => { settle(); throw e; });
+    }
     const url = new URL(typeof input === 'string' ? input : input instanceof URL ? input.href : input.url, location.href);
-    const seen = { url: url.href, path: url.pathname, done: false, headers: { 'next-router-prefetch': String(headerOf(input, init, 'next-router-prefetch')) } };
+    if (window.__navBlock && url.pathname === window.__navBlock) { nav.blocked.push(url.href); return Promise.reject(new TypeError('prefetch refused by the cold sample')); }
+    const seen = { url: url.href, path: url.pathname, done: false, headers: { 'next-router-prefetch': String(prefetch) } };
     nav.prefetches.push(seen);
     // Done is the whole body read, not the headers: a response still streaming is still on the link.
     return nativeFetch(input, init).then((r) => { r.clone().arrayBuffer().then(() => { seen.done = true; }, () => { seen.done = true; }); return r; }, (e) => { seen.done = true; throw e; });
@@ -175,6 +208,13 @@ async function poll<T>(read: () => Promise<T | null | false>, until: number): Pr
 
 // ---- the journey ----
 
+/** Instruments every page this tab opens from now on; `refuse` is a path whose router prefetches the page must never send. */
+export async function prepare(page: Page, refuse?: string): Promise<void> {
+  await page.send('Network.enable');
+  if (refuse !== undefined) await page.send('Page.addScriptToEvaluateOnNewDocument', { source: `window.__navBlock = ${JSON.stringify(refuse)};` });
+  await page.send('Page.addScriptToEvaluateOnNewDocument', { source: INSTRUMENT });
+}
+
 const DESKTOP = { width: 1440, height: 900 };
 const PHONE = { width: 390, height: 844 };
 
@@ -188,9 +228,9 @@ async function throttle(page: Page, device: Device) {
   await page.send('Emulation.setCPUThrottlingRate', { rate: device === 'phone' ? 4 : 1 });
 }
 
-async function openStart(page: Page, device: Device, start: string) {
+async function openStart(page: Page, device: Device, start: string, origin: string) {
   await throttle(page, device);
-  await page.open(base + start, { ...(device === 'phone' ? PHONE : DESKTOP), theme: 'dark', wait: 200 });
+  await page.open(origin + start, { ...(device === 'phone' ? PHONE : DESKTOP), theme: 'dark', wait: 200 });
   const ready = await poll(() => page.eval<boolean>(`document.readyState === 'complete' && !!document.querySelector('h1')`), Date.now() + PATIENCE[device]);
   if (!ready) throw new Fail('never-ready', `the starting page ${start} did not load in ${PATIENCE[device]} ms`);
 }
@@ -203,8 +243,47 @@ async function awaitPrefetch(page: Page): Promise<boolean> {
   return (await poll(() => page.eval<boolean>(`window.__nav.prefetches.every((p) => p.done)`), Date.now() + PREFETCH_WAIT)) !== null;
 }
 
-async function journey(page: Page, device: Device, start: string, route: string, check: NavigationCheck | undefined): Promise<Sample> {
-  await openStart(page, device, start);
+/** How long a verified refresh may take: the Server Action, then the router's read of the page. */
+const REFRESH_WAIT = 15_000;
+/** How long the router's read may take to start once the action has answered. */
+const REFRESH_START_WAIT = 3000;
+
+/**
+ * Resyncs the tab's live provider without writing anything: the provider listens for `online`, reads the collections again
+ * through `refreshCollections` and then refreshes the router. Resolves only when an action started after the event answered
+ * `{ ok: true }` and the router read that followed it has its whole body, and throws never-ready otherwise.
+ */
+export async function liveRefresh(page: Page, wait = REFRESH_WAIT): Promise<void> {
+  const state = `(() => { const n = window.__nav; return { started: n.act.started, results: n.act.results, arrivedAt: n.act.arrivedAt, inFlight: n.act.inFlight, reads: n.rsc.reads }; })()`;
+  type State = { started: number; results: (boolean | null)[]; arrivedAt: number[]; inFlight: number; reads: { start: number; done: boolean }[] };
+  // The provider's own opening resync may still be running; the refresh that counts starts after it.
+  const quiet = await poll(() => page.eval<State>(state).then((v) => v.inFlight === 0), Date.now() + REFRESH_WAIT);
+  if (quiet === null) throw new Fail('never-ready', `a live refresh was still running ${REFRESH_WAIT} ms after the page loaded`);
+  await page.eval(`window.__nav.track = true`);
+  const from = (await page.eval<State>(state)).started;
+  await page.eval(`window.dispatchEvent(new Event('online'))`);
+  const verified = await poll(async () => {
+    const v = await page.eval<State>(state);
+    const at = v.results.findIndex((r, i) => i >= from && r === true);
+    return at >= 0 && v.inFlight === 0 ? { arrivedAt: v.arrivedAt[at] } : false;
+  }, Date.now() + wait);
+  if (!verified) {
+    await page.eval(`window.__nav.track = false`);
+    throw new Fail('never-ready', `no refresh action answered { ok: true } within ${wait} ms of the page's online event (is the starting page live?)`);
+  }
+  // The router's read is the first one to begin after the answer; it is finished when its whole body is in.
+  const refreshed = await poll(async () => {
+    const v = await page.eval<State>(state);
+    return v.reads.find((r) => r.start >= verified.arrivedAt)?.done === true;
+  }, Date.now() + REFRESH_START_WAIT + REFRESH_WAIT);
+  await page.eval(`window.__nav.track = false`);
+  if (!refreshed) throw new Fail('never-ready', 'the router refresh after the verified live refresh did not finish');
+  // Committed to the screen, not only received.
+  await page.eval(`new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(() => r(true))))`);
+}
+
+export async function journey(page: Page, device: Device, start: string, route: string, check: NavigationCheck | undefined, run: { origin: string; condition: Condition }): Promise<Sample> {
+  await openStart(page, device, start, run.origin);
   const link = `nav a[href=${JSON.stringify(route)}]`;
   const cap = PATIENCE[device];
   let drawerMs: number | undefined;
@@ -221,8 +300,17 @@ async function journey(page: Page, device: Device, start: string, route: string,
     idle = await awaitPrefetch(page);
   }
   const prefetchCapped = !idle;
+  // After-live presses at once after the refresh, which dropped the router's cache: nothing warms the destination again first.
+  if (run.condition === 'afterLive') await liveRefresh(page);
   const at = await poll(() => point(page, link), Date.now() + cap);
   if (!at) throw new Fail('never-ready', `the link to ${route} is covered or gone`);
+  // A cold sample is cold only if no prefetch of the destination got through: the page refused them, and the browser's own
+  // record of requests has none for the destination either.
+  const refused = await page.eval<number>(`window.__nav.blocked.length`);
+  if (run.condition === 'cold') {
+    const reached = await page.eval<string[]>(`performance.getEntriesByType('resource').filter((e) => new URL(e.name).pathname === ${JSON.stringify(route)}).map((e) => e.name)`);
+    if (reached.length) throw new Fail('prefetched', `${reached.length} request(s) for ${route} had already been made before the press (${reached[0]})`);
+  }
   const spec = { route, title: check?.title ?? '', ready: check?.readySelector ?? '', text: (check?.readyText ?? '').toLowerCase() };
   await page.eval(`window.__nav.arm(${JSON.stringify(spec)})`);
   const t0 = await press(page, at);
@@ -238,15 +326,16 @@ async function journey(page: Page, device: Device, start: string, route: string,
       interactive: check ? { fail: new Fail('never-ready', 'the shell was never reached') } : null,
       drawerMs,
       prefetchCapped,
+      refused,
     };
   }
   const shell = { ms: shellMs };
-  if (!check) return { shell, data: null, interactive: null, drawerMs, prefetchCapped };
+  if (!check) return { shell, data: null, interactive: null, drawerMs, prefetchCapped, refused };
 
   // Data and interaction run side by side: a control that is there at once does not wait for a body that is not.
   const [data, interactive] = await Promise.all([measureData(page, route, check, t0, cap), measureInteraction(page, route, check, t0, cap, RESULT_WAIT[device])]);
   if (check.probe === 'dialog') await page.send('Input.dispatchKeyEvent', { type: 'keyDown', key: 'Escape', code: 'Escape', windowsVirtualKeyCode: 27 });
-  return { shell, data, interactive, drawerMs, prefetchCapped };
+  return { shell, data, interactive, drawerMs, prefetchCapped, refused };
 }
 
 /** The page's own time for `name`, in ms since the press, once it has one; null when `until` (a clock time) passes first. */
@@ -301,7 +390,7 @@ async function measure(page: Page, device: Device, start: string, route: string,
       line.problems.push(`${name} ${m.fail.kind}: ${m.fail.message}`);
     } else line[name] = { ms: m.ms, limit: limits[name], verdict: 'pass' };
   };
-  const first = await journey(page, device, start, route, check);
+  const first = await journey(page, device, start, route, check, { origin: base, condition: 'warm' });
   line.drawerMs = first.drawerMs;
   line.prefetchCapped = first.prefetchCapped;
   for (const name of METRICS) fill(name, first[name]);
@@ -309,7 +398,8 @@ async function measure(page: Page, device: Device, start: string, route: string,
   if (line.problems.length) return finish(line);
   const over = METRICS.filter((name) => { const v = value(first[name]); return v !== null && judge([v], limits[name]).verdict === 'retake'; });
   if (over.length) {
-    const retakes = [await journey(page, device, start, route, check), await journey(page, device, start, route, check)];
+    const run = { origin: base, condition: 'warm' as const };
+    const retakes = [await journey(page, device, start, route, check, run), await journey(page, device, start, route, check, run)];
     const all = [first, ...retakes];
     for (const retake of retakes) for (const name of METRICS) {
       const m = retake[name];
@@ -345,7 +435,7 @@ const text = (l: Line): string =>
 
 /** The compressed bytes of every router prefetch the landing route makes by the time it is idle. */
 async function prefetchKiB(page: Page, device: Device, landing: string): Promise<number> {
-  await openStart(page, device, landing);
+  await openStart(page, device, landing, base);
   // Idle: two looks, 700 ms apart, that find the same prefetches and all of them answered.
   for (let i = 0, last = -1; i < 10; i++) {
     const now = await page.eval<{ n: number; done: boolean }>(`({ n: window.__nav.prefetches.length, done: window.__nav.prefetches.every((p) => p.done) })`);
@@ -364,7 +454,7 @@ const summary = (o: Record<string, unknown>) => console.log(`navigate: ${JSON.st
 
 async function main(): Promise<number> {
   if (mode !== 'default' && mode !== 'full') { console.error(`--mode must be default or full, got ${mode}`); return 1; }
-  if ((opt('--samples') ?? '1') !== '1') { console.error('--samples: one sample and two retakes is the only protocol here; --perf takes the 20-sample one'); return 1; }
+  if ((opt('--samples') ?? '1') !== '1') { console.error('--samples: one sample and two retakes is the only protocol here; scripts/perf.ts takes the 20-sample one'); return 1; }
 
   const config = ((await import(pathToFileURL(path.resolve(ROOT, opt('--config') ?? 'scripts/verify.config.ts')).href)) as { default?: NavConfig }).default ?? {};
   const budgets = budgetsOf(config);
@@ -429,8 +519,7 @@ async function main(): Promise<number> {
   let prefetch: { desktopKiB: number; phoneClosedKiB: number } | undefined;
   let problems: string[] = [];
   try {
-    await page.send('Network.enable');
-    await page.send('Page.addScriptToEvaluateOnNewDocument', { source: INSTRUMENT });
+    await prepare(page);
     for (const route of routes) {
       const check = checks.find((c) => c.path === route);
       // Each journey comes from another rail route, so the destination is a navigation and not the page already shown.
@@ -478,4 +567,5 @@ async function main(): Promise<number> {
   return failed ? 1 : 0;
 }
 
-process.exit(await main());
+// perf.ts imports the journey and must not run this main.
+if (process.argv[1] === fileURLToPath(import.meta.url)) process.exit(await main());

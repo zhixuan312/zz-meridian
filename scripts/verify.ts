@@ -8,7 +8,9 @@
  *                         (scripts/interactions.ts), the whole keyboard path (scripts/keyboard.ts), the product's own
  *                         browser checks (`browserChecks` in scripts/verify.config.ts), the assistant walk-through
  *                         (scripts/assistant.ts), the live-data checks (scripts/live.ts) and Web Vitals (scripts/vitals.ts)
- *   pnpm verify --perf    the 20-sample navigation protocol; it arrives with the performance protocol
+ *   pnpm verify --perf    the default, then the 20-sample navigation protocol (scripts/perf.ts): every rail route, on a desktop
+ *                         and through the phone drawer, warm, cold and right after a live refresh, gated on the p95
+ *   pnpm verify --full --perf   both deep suites; the gate and the build are shared, so each runs once
  *
  * It prints one line per phase (`ok`, `warn`, `FAIL` or `not run`, and the seconds), then one coverage line saying what
  * ran and what did not, then the outcome. Nothing that did not run is reported as passed. The trace, with the commit, the
@@ -21,7 +23,7 @@
  * - A data URL (`DATABASE_URL`, or any `dataUrls` names) that resolves to a host that is not this machine is not safe
  *   either: the walk-throughs change data, and an adopted app's `.env` usually points at production.
  * Without either, the default runs the static checks and reports the browser as `not run`, with the reason, and exits 0
- * when they pass. `--full` fails on the same lack, listing every missing piece before it builds anything. Restore the
+ * when they pass. `--full` and `--perf` fail on the same lack, listing every missing piece before they build anything. Restore the
  * data after a `--full` run: the walk-through flags rows and a press can delete.
  *
  * The routes, the readiness mappings and the budgets come from scripts/verify.config.ts, which the team owns: it is read
@@ -62,19 +64,18 @@ if (unknown) {
   console.error(`verify: ${unknown} is not an option. pnpm verify takes ${OPTIONS.join(' and ')}.`);
   process.exit(1);
 }
-if (argv.includes('--perf')) {
-  console.error('verify: --perf arrives with the performance protocol');
-  process.exit(1);
-}
 const full = argv.includes('--full');
-const depth = full ? 'full' : 'default';
+const perf = argv.includes('--perf');
+const depth = full && perf ? 'full+perf' : full ? 'full' : perf ? 'perf' : 'default';
+/** The flags of the deep modes that were given, for the messages that name them. */
+const flags = argv.join(' ');
 
 // A project that has not adopted the assistant has no walk-through to run, only the pages. Through APP_DIR, like the
 // route discovery and check.ts: a project that keeps its routes under `src/app` has the assistant there, and asking for
 // `app/api/...` alone would skip the walk-through without saying so.
 const hasAssistant = fs.existsSync(path.join(ROOT, APP_DIR, 'api/assistant/route.ts'));
 const own = config.browserChecks ?? [];
-const SUITES = ['audit', 'presses', 'keyboard', ...(hasAssistant ? ['assistant'] : []), 'live', 'vitals', ...(own.length ? ['browserChecks'] : [])];
+const SUITES = ['audit', 'presses', 'keyboard', ...(hasAssistant ? ['assistant'] : []), 'live', 'vitals', ...(own.length ? ['browserChecks'] : []), ...(perf ? ['perf'] : [])];
 const ranSuites = new Set<string>();
 
 // ---- the report ----
@@ -96,7 +97,10 @@ let gates = 0;
 let builds = 0;
 let current = 'the start';
 let browser: { ran: boolean; reason: string | null } = { ran: false, reason: null };
+/** The routes the depth measures: the smoke's up to three, or every rail route in a deep mode. */
 let selected: string[] = [];
+/** The routes the navigation step presses: `selected`, except that `--perf` alone adds the 20-sample protocol to the smoke. */
+let smoke: string[] = [];
 let covered = { data: 0, interaction: 0 };
 let htmlMissing = false;
 
@@ -214,10 +218,13 @@ try { rail = await railRoutes(); } catch (e) { railReason = (e as Error).message
 
 const invalid: string[] = [];
 if (rail) {
-  try { selected = full ? rail.routes : selectSmokeRoutes({ smokeRoutes: config.smokeRoutes, nav: rail.routes, landing: rail.landing }); } catch (e) { invalid.push((e as Error).message); }
+  try {
+    smoke = full ? rail.routes : selectSmokeRoutes({ smokeRoutes: config.smokeRoutes, nav: rail.routes, landing: rail.landing });
+    selected = full || perf ? rail.routes : smoke;
+  } catch (e) { invalid.push((e as Error).message); }
 }
 const checks = Array.isArray(config.navigationChecks) ? config.navigationChecks : [];
-const coverage = rail ? resolveCoverage(depth, selected, checks, rail.routes) : { routes: [], errors: [], warnings: [] };
+const coverage = rail ? resolveCoverage(full ? 'full' : perf ? 'perf' : 'default', selected, checks, rail.routes) : { routes: [], errors: [], warnings: [] };
 invalid.push(...coverage.errors);
 covered = { data: coverage.routes.filter((r) => r.data === 'configured').length, interaction: coverage.routes.filter((r) => r.interaction === 'configured').length };
 
@@ -225,19 +232,19 @@ const unsafe = unsafeBackend();
 const chromeMissing = fs.existsSync(chromePath) ? null : `Chrome not found at ${chromePath} (set CHROME)`;
 const baselinePath = 'scripts/verify.baseline.json';
 
-if (full) {
-  // The deep mode needs all of it, and says every piece that is missing at once, before it spends a build.
+if (full || perf) {
+  // A deep mode needs all of it, and says every piece that is missing at once, before it spends a build.
   const missing = [
     ...invalid,
     ...(railReason ? [railReason] : []),
     ...(unsafe ? [unsafe.fix] : []),
     ...(chromeMissing ? [chromeMissing] : []),
-    ...(fs.existsSync(path.join(ROOT, baselinePath)) ? [] : [`${baselinePath} is missing: record it with node scripts/sizes.ts --write-baseline from a build whose sizes you reviewed`]),
+    ...(!full || fs.existsSync(path.join(ROOT, baselinePath)) ? [] : [`${baselinePath} is missing: record it with node scripts/sizes.ts --write-baseline from a build whose sizes you reviewed`]),
   ];
   if (missing.length) {
     for (const m of missing) log(`FAIL    ${m}`);
     browser.reason = unsafe?.reason ?? chromeMissing ?? railReason ?? 'the configuration is incomplete';
-    finish(1, `--full needs ${missing.length} more ${missing.length === 1 ? 'thing' : 'things'}; nothing was built`);
+    finish(1, `${flags} needs ${missing.length} more ${missing.length === 1 ? 'thing' : 'things'}; nothing was built`);
   }
 } else if (invalid.length) {
   for (const m of invalid) log(`FAIL    ${m}`);
@@ -290,13 +297,13 @@ async function start(env: NodeJS.ProcessEnv) {
   return finish(1, FIX);
 }
 
-/** Run a node script to completion and keep what it printed. */
-const run = (script: string, extra: string[], env: NodeJS.ProcessEnv = process.env) => new Promise<{ status: number | null; out: string; took: number }>((resolve) => {
+/** Run a node script to completion and keep what it printed; `echo` also shows its progress (stderr) as it goes, for a run measured in minutes. */
+const run = (script: string, extra: string[], env: NodeJS.ProcessEnv = process.env, echo = false) => new Promise<{ status: number | null; out: string; took: number }>((resolve) => {
   const t = Date.now();
   const child = spawn('node', [script, ...extra], { cwd: ROOT, env: { ...env, DPR: process.env.DPR ?? '1' } as NodeJS.ProcessEnv });
   let out = '';
   child.stdout.on('data', (d) => (out += d));
-  child.stderr.on('data', (d) => (out += d));
+  child.stderr.on('data', (d) => { out += d; if (echo) process.stderr.write(d); });
   child.on('close', (status) => resolve({ status, out: out.trim(), took: secs(t) }));
 });
 
@@ -371,7 +378,7 @@ if (browserReason) {
 } else {
   current = 'navigation';
   announce('navigation');
-  const nav = await run('scripts/navigate.ts', ['--base', baseUrl!, '--mode', depth, '--routes', selected.join(',')], app);
+  const nav = await run('scripts/navigate.ts', ['--base', baseUrl!, '--mode', full ? 'full' : 'default', '--routes', smoke.join(',')], app);
   const result = summaryOf<{ status: 'ok' | 'warn' | 'FAIL' | 'not-run'; reason?: string }>(nav.out, 'navigate');
   const status: Status = nav.status !== 0 || !result || result.status === 'FAIL' ? 'FAIL' : result.status === 'not-run' ? 'not run' : result.status;
   phase(status, 'navigation', nav.took, status === 'not run' ? `(${result?.reason ?? 'no reason given'})` : '');
@@ -382,7 +389,23 @@ if (browserReason) {
   if (!result) beneath(nav.out.split('\n').slice(-20));
 }
 
-// 6. --full: every exhaustive suite.
+// 6. --perf: the 20-sample protocol, alone and before the suites that change data, so nothing else loads the machine.
+if (perf && !browser.ran) {
+  ok = false;
+  phase('FAIL', 'performance', null, `(--perf needs the browser: ${browser.reason ?? 'navigation did not run'})`);
+} else if (perf && baseUrl) {
+  current = 'performance';
+  announce('performance: 20 samples per route, device and condition (many minutes)');
+  const timed = await run('scripts/perf.ts', ['--base', baseUrl], app, true);
+  const result = summaryOf<{ status: 'ok' | 'warn' | 'FAIL' }>(timed.out, 'perf');
+  ranSuites.add('perf');
+  const status: Status = timed.status !== 0 || !result || result.status === 'FAIL' ? 'FAIL' : result.status;
+  phase(status, 'performance: 20 samples per route, device and condition, p95 against the budgets', timed.took);
+  beneath(timed.out.split('\n').filter((l) => !l.startsWith('perf: ') && !l.startsWith('… ')));
+  if (status === 'FAIL') ok = false;
+}
+
+// 7. --full: every exhaustive suite.
 if (full && browser.ran && baseUrl) {
   let port = server!.port;
   let on: { status: number | null; out: string; took: number } = { status: 0, out: '', took: 0 };

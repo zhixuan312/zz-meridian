@@ -88,13 +88,15 @@ Write the status on the line under the title: `Status: beta`.
 | `pnpm typecheck`, `pnpm test` | TypeScript and the behaviour tests | Gate |
 | `node scripts/audit.ts` | With the app running: every page and embed view at 2560, 1440, 1024, 768 and 390px in both themes (embeds at 720 and 420 on a simulated host ground). Fails on sideways scroll, text clipped without an ellipsis, a control with no accessible name, more than one page scroller, rendered text under its WCAG minimum, a Tab stop with no visible focus ring (it presses Tab through the page), and any uncaught exception or console error. Prints the design metrics: type sizes, weights, radii and the hierarchy ratio | Before release |
 | `node scripts/interactions.ts` | With the app running: presses every control on every page (mouse at 1440px, taps at 390px) and follows every link. Fails on a control that changes nothing, one something covers, and a link that answers 4xx. |
-| `pnpm verify [--quick] [--extra /orders/1]` | The gate, a production build, the built app served on a free port, and the full browser audit against it; the report in `out/verify.txt` | Before release, and after every change in a project built from Meridian |
+| `pnpm verify` | The gate once, one production build, the route policy, the size checks and a smoke of up to three routes on desktop and the phone drawer; ends with a coverage line, and the report is in `out/verify.txt` | Before finishing any change |
+| `pnpm verify --full` | The navigation of every rail route, then every exhaustive suite: the audit, every control pressed and link followed, the keyboard walk, the assistant, the live data and Web Vitals | After a change to shared components, the shell or data, and before release |
+| `pnpm verify --perf` | The 20-sample navigation protocol; combine with `--full` to run both without repeating the gate or the build | When timing is what changed |
 | `node scripts/brand.ts --name … [--hue … --chroma …]` | Renames and rebrands a copy in place; a brand hue becomes an accent preset that holds contrast in every theme | Starting a project |
 | `node scripts/shot.ts <routes> --width 1440,390 --theme light,dark [--full]` | Screenshots into `out/shots/` | While designing |
 
 ## Releasing
 
-1. `pnpm gate` until it passes, then `node scripts/audit.ts` and `node scripts/interactions.ts` against a running build.
+1. `pnpm gate` until it passes, then `pnpm verify --full`.
 2. Add an entry to `CHANGELOG.md` under a new version. Semver: a removed or renamed token, prop or card is major; a new card, token or variant is minor; a corrected value is a patch. Say in one line what breaks and what to do instead.
 3. Commit.
 

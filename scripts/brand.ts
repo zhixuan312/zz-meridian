@@ -188,11 +188,13 @@ if (has('--no-atlas') || has('--product')) {
   write('src/app.config.ts', cfg);
   // The standalone screens' footer link to the Atlas (the sample's footer, src/views/sample-footer.tsx).
   write('src/views/sample-footer.tsx', read('src/views/sample-footer.tsx').replace(/\n\s*<Link href="\/system"[^\n]*<\/Link>/, ''));
+  // The verification config's mappings and smoke routes for the Atlas, which verify --full would report as no route.
+  write('scripts/verify.config.ts', read('scripts/verify.config.ts').replace(/\n\s*\{ path: '\/system(?:\/[^']*)?'[^\n]*\},/g, '').replace(/,\s*'\/system(?:\/[^']*)?'/g, ''));
   // Build tracing: only the Atlas's `/system/**` entry goes; the tab icon's and the assistant's brief stay.
   write('next.config.ts', read('next.config.ts').replace(/\/\/ Card specifications[^\n]*/, '// The tab icon reads the tokens, and the assistant reads the brief, at build time.').replace(/'\/system\/\*\*':\s*\[[^\]]*\],\s*/, ''));
   // Route types generated for the removed pages would fail the type check until regenerated.
   for (const d of ['.next/types', '.next/dev/types']) fs.rmSync(file(d), { recursive: true, force: true });
-  done.push('the Design Atlas removed: app/system, its modules in src/system, its rail and footer links, and its build tracing');
+  done.push('the Design Atlas removed: app/system, its modules in src/system, its rail and footer links, its verification mappings and its build tracing');
 }
 
 if (has('--product')) {

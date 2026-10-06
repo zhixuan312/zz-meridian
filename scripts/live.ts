@@ -83,7 +83,7 @@ async function stopServer(server: ChildProcess, port: number) {
 /** Wraps EventSource and fetch before the app runs, so a tab can say which hints it heard and how many refreshes it made. */
 const INSTRUMENT = `(() => {
   const w = window;
-  const live = w.__live = { born: Date.now(), opens: 0, errors: 0, events: [], actions: [], inFlight: 0, maxInFlight: 0, rsc: 0, rscInFlight: 0, maxRsc: 0 };
+  const live = w.__live = { born: Date.now(), opens: 0, errors: 0, events: [], actions: [], inFlight: 0, maxInFlight: 0, reads: { count: 0, inFlight: 0, max: 0 }, prefetches: { count: 0, inFlight: 0, max: 0 } };
   const Native = w.EventSource;
   if (Native) w.EventSource = class extends Native {
     constructor(url, init) {
@@ -103,23 +103,28 @@ const INSTRUMENT = `(() => {
   };
   const nativeFetch = w.fetch.bind(w);
   w.fetch = (input, init) => {
-    const action = headerOf(input, init, 'next-action');
-    const rsc = !action && headerOf(input, init, 'rsc');
-    if (!action && !rsc) return nativeFetch(input, init);
+    // Three kinds of request, told apart by their headers: a refresh action, a prefetch and the router's own read of a page.
+    const action = headerOf(input, init, 'next-action') !== null;
+    const prefetch = !action && headerOf(input, init, 'next-router-prefetch') === '1';
+    const read = !action && !prefetch && headerOf(input, init, 'rsc') !== null;
+    if (!action && !prefetch && !read) return nativeFetch(input, init);
     // The invitation action's own call, kept so the burst can send it again with other names.
     if (action && init && typeof init.body === 'string' && init.body.includes('@live-check.example')) {
       const h = init.headers;
       live.invite = { headers: h instanceof Headers ? [...h.entries()] : Array.isArray(h) ? h : Object.entries(h || {}), body: init.body };
     }
     if (action) { live.actions.push(Date.now()); live.inFlight++; live.maxInFlight = Math.max(live.maxInFlight, live.inFlight); }
-    else { live.rsc++; live.rscInFlight++; live.maxRsc = Math.max(live.maxRsc, live.rscInFlight); }
-    const done = () => { if (action) live.inFlight--; else live.rscInFlight--; };
+    const kind = prefetch ? live.prefetches : live.reads;
+    if (!action) { kind.count++; kind.inFlight++; kind.max = Math.max(kind.max, kind.inFlight); }
+    const done = () => { if (action) live.inFlight--; else kind.inFlight--; };
     return nativeFetch(input, init).finally(done);
   };
-  live.reset = () => { live.events.length = 0; live.actions.length = 0; live.rsc = 0; live.maxInFlight = live.inFlight; live.maxRsc = live.rscInFlight; };
+  live.reset = () => { live.events.length = 0; live.actions.length = 0; for (const k of [live.reads, live.prefetches]) { k.count = 0; k.max = k.inFlight; } live.maxInFlight = live.inFlight; };
 })()`;
 
-type Seen = { born: number; opens: number; errors: number; events: string[]; actions: number[]; inFlight: number; maxInFlight: number; rsc: number; maxRsc: number };
+type Seen = { born: number; opens: number; errors: number; events: string[]; actions: number[]; inFlight: number; maxInFlight: number; reads: Requests; prefetches: Requests };
+/** One kind of request a tab made: how many, and the most at once. */
+type Requests = { count: number; inFlight: number; max: number };
 const seen = (page: Page) => page.eval<Seen>('window.__live');
 /** What a tab's stream and refreshes had done, for a failure to say. */
 const tally = async (page: Page) => { const s = await seen(page); return `age ${Date.now() - s.born} ms, opens ${s.opens}, errors ${s.errors}, hints heard [${s.events.join(',')}], refreshes ${s.actions.length}, ${s.inFlight} in flight`; };
@@ -353,6 +358,17 @@ async function offline(t: Tabs) {
   }
 }
 
+/**
+ * B's requests by kind, each with its count and the most in flight at once, and which kind made the route fetches: refresh
+ * actions (`next-action`), the router's own reads that follow them (`rsc` without the prefetch header) and prefetches
+ * (`next-router-prefetch: 1`).
+ */
+function kinds(s: Seen): string {
+  const { reads, prefetches } = s;
+  const route = reads.count && prefetches.count ? `both router refreshes (${reads.count}) and prefetches (${prefetches.count})` : prefetches.count ? 'prefetches' : reads.count ? 'router refreshes' : 'none';
+  return `refresh actions ${s.actions.length} (at most ${s.maxInFlight} in flight), router refreshes ${reads.count} (at most ${reads.max} in flight), prefetches ${prefetches.count} (at most ${prefetches.max} in flight); the route fetches came from ${route}`;
+}
+
 async function burst(t: Tabs) {
   const COUNT = 20;
   const names = Array.from({ length: COUNT }, (_, i) => track(name('burst', i)));
@@ -371,7 +387,7 @@ async function burst(t: Tabs) {
   const span = (at ?? Date.now()) - started;
   const per = (s.actions.length / (span / 1000)).toFixed(1);
   const peak = Math.max(0, ...s.actions.map((ts) => s.actions.filter((x) => x >= ts && x < ts + 1000).length));
-  const detail = `${COUNT} invitations sent in ${sendMs} ms (the first through the sheet, ${COUNT - 1} through its Server Action, ${accepted} accepted); B showed all ${at === null ? 0 : COUNT} ${at === null ? 'never' : `${settled} ms after the last`}; B made ${s.actions.length} refreshes in ${span} ms = ${per}/s (peak ${peak} in one second), at most ${s.maxInFlight} in flight (refreshed route fetches: ${s.rsc}, at most ${s.maxRsc} in flight)`;
+  const detail = `${COUNT} invitations sent in ${sendMs} ms (the first through the sheet, ${COUNT - 1} through its Server Action, ${accepted} accepted); B showed all ${at === null ? 0 : COUNT} ${at === null ? 'never' : `${settled} ms after the last`}; B made ${s.actions.length} refreshes in ${span} ms = ${per}/s (peak ${peak} in one second), at most ${s.maxInFlight} in flight; B's requests by kind: ${kinds(s)}`;
   if (sendMs > 2000) throw new Error(`${detail}; the burst took longer than 2000 ms to send`);
   if (at === null || settled > HINT_BOUND_MS) throw new Error(`${detail}; B did not show all ${COUNT} within ${HINT_BOUND_MS} ms of the last`);
   if (s.maxInFlight > 1) throw new Error(`${detail}; more than one refresh was in flight`);

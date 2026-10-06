@@ -7,8 +7,9 @@
  * adopt: into a copy of cli/test/fixture-next-app (a create-next-app project with its own button, utils and data
  * layer), committed to git as a team's would be. The team's files must come out unchanged, the gate must pass under
  * the team's own eslint config, and next build must succeed.
- * --create: a new dashboard from the tarball, gated and built. --verify adds pnpm verify --quick --no-vitals on it
- * (Chrome required).
+ * --create: a new dashboard from the tarball, gated and built. --verify adds pnpm verify --full on it (Chrome required).
+ * --verify also runs the default verify twice in scratch copies of the adopted project: once with `noLiveApi: true` as a
+ * team edit and no mappings, and once with no safe backend. Each case prints its coverage line.
  * Both sections also check the agent context: adopt keeps AGENTS.md's bytes and adds one managed block and the brief;
  * create writes the block and the brief and keeps the assistant's tracing of docs/brief.md. Both fresh manifests hold
  * only the files Meridian manages.
@@ -55,6 +56,8 @@ const commit = (cwd: string, m: string) => {
 };
 const read = (dir: string, rel: string) => (fs.existsSync(path.join(dir, rel)) ? fs.readFileSync(path.join(dir, rel), 'utf8') : '');
 const write = (dir: string, rel: string, text: string) => { fs.mkdirSync(path.dirname(path.join(dir, rel)), { recursive: true }); fs.writeFileSync(path.join(dir, rel), text); };
+/** The coverage line verify ends with, which every case quotes: the depth that ran, and what did not. */
+const coverageOf = (out: string) => /^coverage: .*$/m.exec(out)?.[0] ?? '';
 const sections = ['--adopt', '--create', '--update', '--update-all'];
 
 /** Files a fresh 0.5.0 manifest may hold: the managed folders, plus Meridian's own two loose files. */
@@ -98,8 +101,42 @@ if (args.includes('--adopt') || !sections.some((s) => args.includes(s))) {
   check(gate.status === 0, 'after the restyle, npm run gate passes in the adopted project', gate.stdout + gate.stderr);
   const build = sh('npx', ['next', 'build'], app);
   check(build.status === 0, 'next build passes in the adopted project', build.stdout + build.stderr);
-  const refused = sh('npm', ['run', 'verify'], app);
-  check(refused.status !== 0 && /presses every control/.test(refused.stdout + refused.stderr), 'verify refuses an adopted project that has not said where its presses go', refused.stdout + refused.stderr);
+  const refused = sh('npm', ['run', 'verify', '--', '--full'], app);
+  check(refused.status !== 0 && /kept its own data layer/.test(refused.stdout + refused.stderr), 'verify --full refuses an adopted project that has not said where its presses go', refused.stdout + refused.stderr);
+  if (args.includes('--verify')) {
+    // The default is the partial-coverage experience: it exits 0 for the checks it ran and says what it could not.
+    const scratch = (name: string) => {
+      const copy = path.join(work, name);
+      const cp = sh('cp', ['-R', app, copy], work);
+      check(cp.status === 0, `${name}: a scratch copy of the adopted project`, cp.stderr);
+      fs.rmSync(path.join(copy, '.next'), { recursive: true, force: true });
+      // The team's own work that makes a project ready for verify, as the skill's steps ask: the pages on the shell (the
+      // rail, and the page frame that carries the phone's navigation button) with no link in the content, so a closed drawer
+      // prefetches nothing, and the cache-components-config migration's edit, since the route policy fails a route that
+      // renders per request.
+      write(copy, 'app/layout.tsx', read(copy, 'app/layout.tsx')
+        .replace('import "./globals.css";', 'import "./globals.css";\nimport { Providers } from "../src/components/base/providers";\nimport { AppShell } from "../src/components/base/shell";\nimport { ConsoleRail } from "../src/views/console-chrome";')
+        .replace('{children}</body>', '<Providers>\n          <AppShell rail={<ConsoleRail />} assistant={Promise.resolve(false)}>{children}</AppShell>\n        </Providers></body>'));
+      write(copy, 'app/page.tsx', `import { PageFrame } from '../src/components/base/shell';\n\nexport default function Home() {\n  return (\n    <PageFrame title="Acme console">\n      <p>Orders are in the rail.</p>\n    </PageFrame>\n  );\n}\n`);
+      write(copy, 'app/orders/page.tsx', `import { Button } from '@/components/ui/button';\nimport { listOrders } from '@/lib/orders';\nimport { PageFrame } from '../../src/components/base/shell';\n\nexport default async function OrdersPage() {\n  const orders = await listOrders();\n  return (\n    <PageFrame title="Orders">\n      <ul>{orders.map((o) => <li key={o.id}>{o.customer}: {o.total}</li>)}</ul>\n      <Button>Export</Button>\n    </PageFrame>\n  );\n}\n`);
+      write(copy, 'next.config.ts', read(copy, 'next.config.ts').replace('/* config options here */', 'cacheComponents: true,\n  partialPrefetching: true,'));
+      return copy;
+    };
+    const unsafe = scratch('adopted-unsafe');
+    const v1 = sh('npm', ['run', 'verify'], unsafe);
+    const line1 = coverageOf(v1.stdout);
+    console.log(`     coverage (adopted, no safe backend): ${line1}`);
+    check(v1.status === 0 && /^coverage: default; browser not run \(no fakeApi or noLiveApi\); /.test(line1), 'the default verify on an adopted project without a safe backend exits 0 and reports the browser as not run', v1.stdout + v1.stderr);
+
+    const safe = scratch('adopted-nolive');
+    const config = read(safe, 'scripts/verify.config.ts');
+    write(safe, 'scripts/verify.config.ts', config.replace('detailRoutes: [],', 'noLiveApi: true,\n  detailRoutes: [],'));
+    check(/noLiveApi: true/.test(read(safe, 'scripts/verify.config.ts')), 'noLiveApi: true is written into the adopted verify.config.ts as a team edit');
+    const v2 = sh('npm', ['run', 'verify'], safe);
+    const line2 = coverageOf(v2.stdout);
+    console.log(`     coverage (adopted, noLiveApi): ${line2}`);
+    check(v2.status === 0 && /^coverage: default; browser ran; (\d+) routes; data configured 0\/\1; interaction configured 0\/\1; /.test(line2), 'the default verify on an adopted project with noLiveApi and no mappings exits 0 with data and interaction not configured', v2.stdout + v2.stderr);
+  }
   const bad = sh('npx', ['--yes', '--package', tarball, 'zz-meridian', 'adopt', '--allow-dirty', '--name', 'a\\b'], app);
   check(bad.status !== 0 && /backslash/.test(bad.stderr), 'a brand value with a backslash is refused before anything is copied', bad.stderr);
   const again = sh('npx', ['--yes', '--package', tarball, 'zz-meridian', 'adopt'], app);
@@ -569,8 +606,10 @@ if (args.includes('--create')) {
   const g = sh(pm, ['run', 'gate'], dir);
   check(g.status === 0, `${pm} run gate passes in the new dashboard`, g.stdout + g.stderr);
   if (args.includes('--verify')) {
-    const v = sh(pm, ['run', 'verify', '--', '--quick', '--no-vitals'], dir);
-    check(v.status === 0, `${pm} run verify --quick --no-vitals passes in the new dashboard`, v.stdout + v.stderr);
+    const v = sh(pm, pm === 'npm' ? ['run', 'verify', '--', '--full'] : ['run', 'verify', '--full'], dir);
+    const line = coverageOf(v.stdout);
+    console.log(`     coverage (created, --full): ${line}`);
+    check(v.status === 0 && /^coverage: full; browser ran; /.test(line) && /not run: none$/.test(line), `${pm} run verify --full passes in the new dashboard with nothing left unrun`, v.stdout + v.stderr);
   }
 }
 

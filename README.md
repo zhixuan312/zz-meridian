@@ -85,9 +85,9 @@ Give your coding agent (Codex, Claude Code, or any agent that can run a shell) t
 `adopt` does the settled part, the same way every time, and proves it type checks: it copies the components, tokens
 and gates in, merges the dependencies, brands it, adds Meridian's managed block to your `AGENTS.md` (your own text there is kept byte
 for byte) and an empty `docs/brief.md` for your product's own context, and installs the skill. The agent does the judgement: rebuilding each page on Meridian, and running
-`pnpm verify` until the project meets the standard. It needs Node 22.18+ and Google Chrome (for the browser checks).
-If your pages call a live API, say so in the sentence: verify presses every control, Delete included, so the agent
-builds a fake API first. For a new dashboard: `npx zz-meridian@latest create <dir>`. To move a project to a newer
+`pnpm verify` until the project meets the standard (and `pnpm verify --full` after a change to shared components, the shell or
+data). It needs Node 22.18+, and Google Chrome for the browser checks. If your pages call a live API, say so in the sentence:
+`verify --full` presses every control, Delete included, so the agent builds a fake API first. For a new dashboard: `npx zz-meridian@latest create <dir>`. To move a project to a newer
 Meridian, run `npx zz-meridian@latest update --dry-run`, then follow the skill's `references/update.md`. The package
 (`cli/`, decision 0009) copies files and nothing depends on it afterwards.
 
@@ -105,7 +105,8 @@ That puts the skill in `~/.agents/skills/zz-meridian` (Codex) and `~/.claude/ski
 pnpm install
 pnpm dev                 # the template at /, the Design Atlas at /system
 pnpm gate                # tokens fresh, registry fresh, specs consistent, contrast in every theme and accent, types, tests
-pnpm verify              # the gate, a production build and its route policy, and the browser audit of every page against the built app
+pnpm verify              # the gate once, one production build, the size checks and a smoke of up to three routes
+pnpm verify --full       # every route, every control and link, the keyboard walk, the assistant and the live data
 pnpm brand --name "Acme" --hue 25 --chroma 0.16   # rename and rebrand in place
 ```
 

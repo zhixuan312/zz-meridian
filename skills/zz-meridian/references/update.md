@@ -134,7 +134,7 @@ commit the change, then finalize again.
 **What "complete" means.** The gate and one production build passed on the live project, the files are the target
 release's (plus the team's resolutions), and `optional:.meridian/manifest.json` now records the target as the baseline for the
 next update. It does not mean the browser checks ran: the output says `browser: not run`, and `<pm> run verify` runs
-them.
+the bounded smoke (`<pm> run verify -- --full` the exhaustive suites). Read the coverage line it ends with.
 
 A zero-conflict update finalizes in the same command: `update` prints the conflict summary and then the finalize
 output, exit `0`.
