@@ -1,6 +1,6 @@
 {
   "name": "zz-meridian",
-  "version": "0.7.0",
+  "version": "0.8.0",
   "description": "Bring ZZ Meridian, a dashboard design system, into a Next.js project, or start a new dashboard on it. Copies the files in; nothing depends on this package at runtime.",
   "license": "MIT",
   "type": "module",

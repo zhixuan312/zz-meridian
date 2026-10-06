@@ -2,7 +2,7 @@
 
 Every release of ZZ Meridian, newest first. Versions follow semver: a removed or renamed token, prop or card is major; a new card, token or variant is minor; a corrected value is a patch. Each entry says what breaks and what to do instead.
 
-## [Unreleased]
+## [0.8.0] · 2026-10-06
 
 ### Added
 
@@ -14,6 +14,7 @@ Every release of ZZ Meridian, newest first. Versions follow semver: a removed or
 
 ### Fixed
 
+- **A project leaves an update in progress and each person's agent settings out of git.** Its `.gitignore` (the template's, for a created project; three lines `adopt` adds, for an adopted one) ignores `.meridian/update/` and `.meridian/update.lock`, the staged copies, backups and lock of an unfinished update, which a commit mid-session used to take in; a created project also ignores `.claude/settings.local.json` and `.claude/*.lock`. The manifest, `keep.json`, `.meridian/history/` and both copies of the skill stay committed: the next update and the team's agents read them. In a project made before 0.8.0, add those lines to `.gitignore`.
 - **The one sentence shows its blank.** It ended in `<what you want>`, which GitHub and npm read as an HTML tag and dropped, so it read "installs to: .". It ends in `[what you want, in your own words]`.
 
 ## [0.7.0] · 2026-10-06
