@@ -187,7 +187,7 @@ function zz(pkg: string, cwd: string, a: string[], label: string, env: Record<st
 }
 
 /** The migrations 0.5.0 declares in `cli/src/migrations.ts`: changes in the team's own files, resolved by editing them. */
-const RELEASE_IDS = ['shell-assistant-promise', 'assistant-available-promise', 'clock-now-required', 'cache-components-config', 'connection-boundaries', 'authorized-read', 'scoped-invalidation', 'live-provider', 'authorized-endpoints'];
+const RELEASE_IDS = ['shell-assistant-promise', 'assistant-available-promise', 'clock-now-required', 'cache-components-config', 'connection-boundaries', 'authorized-read', 'scoped-invalidation', 'live-provider', 'authorized-endpoints', 'share-view-context', 'agent-reads-section'];
 
 const filesUnder = (dir: string, rel = ''): string[] => {
   if (!fs.existsSync(path.join(dir, rel))) return [];
@@ -220,7 +220,8 @@ function bringReleaseOver(proj: string, route: string) {
     const rel = `tests/${f}`;
     if (rel !== 'tests/setup.ts' && fs.existsSync(path.join(payload, rel))) write(proj, rel, fs.readFileSync(path.join(payload, rel), 'utf8'));
   }
-  edit(proj, 'next.config.ts', (t) => t.replace('reactStrictMode: true,', 'reactStrictMode: true,\n  cacheComponents: true,\n  partialPrefetching: true,'));
+  // The 0.5.0 flags, added only to a config that lacks them: a project created since already has them.
+  edit(proj, 'next.config.ts', (t) => (/\bcacheComponents\s*:/.test(t) ? t : t.replace('reactStrictMode: true,', 'reactStrictMode: true,\n  cacheComponents: true,\n  partialPrefetching: true,')));
 }
 
 /** `references/update.md`: resolve in the project's own file, then one object per item with its reason and the files' current hashes. */

@@ -69,7 +69,7 @@ Rules that make every page look like it belongs:
   error (`error.tsx`, what failed and Retry).
 - **A page spec** next to each route (`README.md`: summary, Structure, States, Surfaces, Agents), so the next person, or
   agent, knows what the page is for. `node scripts/check.ts` requires Structure and States, and under `## Agents` a
-  `### What the agent reads` part for every page in `app/(dashboard)/` and `app/embed/`.
+  `### What the agent reads` part for every page in `optional:app/(dashboard)/` and `optional:app/embed/`.
 - **A shared context** for each page (decision 0011): a pure function beside the view builds it from the page's data
   (copy `optional:src/views/overview-context.ts`: scope, freshness, each figure with its unit, change and definition,
   what `optional:src/lib/insight.ts` finds, what the data cannot say), and the view passes it to `useShareView`. Both

@@ -63,3 +63,20 @@ describe("this release's migrations", () => {
     for (const id of IDS.filter((i) => i !== 'cache-components-config')) expect(byId(id).applies(root), id).toBeNull();
   });
 });
+
+describe('the 0.9.0 migrations', () => {
+  it('find a view that shares a sentence and an object, and a page README with no "What the agent reads"', () => {
+    const old = project({
+      'app/embed/overview/view.tsx': "useShareView(`Overview: ${n} requests`, { view: 'overview', period });\n",
+      'app/(dashboard)/orders/README.md': '# Orders\n\nThe orders.\n\n## Agents\n\nNot applicable.\n',
+    });
+    expect(byId('share-view-context').applies(old)).toEqual(['app/embed/overview/view.tsx']);
+    expect(byId('agent-reads-section').applies(old)).toEqual(['app/(dashboard)/orders/README.md']);
+    const current = project({
+      'app/embed/overview/view.tsx': 'useShareView(overviewContext(data, index));\n',
+      'app/(dashboard)/orders/README.md': '# Orders\n\nThe orders.\n\n## Agents\n\nThe page shares its context.\n\n### What the agent reads\n\nEvery order.\n',
+    });
+    expect(byId('share-view-context').applies(current)).toBeNull();
+    expect(byId('agent-reads-section').applies(current)).toBeNull();
+  });
+});

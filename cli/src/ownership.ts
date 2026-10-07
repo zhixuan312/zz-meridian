@@ -14,7 +14,7 @@ const HASH = /^sha256-[0-9a-f]{64}$/;
 const SEMVER = /^\d+\.\d+\.\d+$/;
 
 /** The library modules Meridian's components and gates import; the rest of src/lib belongs to the template's pages. */
-export const LIB = ['cn', 'format', 'format-date', 'period', 'color', 'host', 'preferences', 'csv', 'safe-markdown', 'logo', 'collection', 'live'].map((n) => `src/lib/${n}.ts`);
+export const LIB = ['cn', 'format', 'format-date', 'period', 'color', 'host', 'preferences', 'csv', 'safe-markdown', 'logo', 'collection', 'live', 'shared-context', 'agent-guidance', 'insight'].map((n) => `src/lib/${n}.ts`);
 
 /** The single files adopt copies besides the folders and the library: all of them must be in a payload that is whole. */
 export const FIXED = [...LIB, 'src/lib/assistant/prompt.ts', 'src/views/console-chrome.tsx', 'tests/setup.ts'];
@@ -23,7 +23,7 @@ export const FIXED = [...LIB, 'src/lib/assistant/prompt.ts', 'src/views/console-
 export const OWNERSHIP: readonly string[] = [
   'Managed: the payload files under `tokens/`, `src/styles/` and `src/components/`, except each component\'s `README.md` and `preview.tsx`.',
   'Managed: the distributed scripts under `scripts/`, except `scripts/verify.config.ts`, the first-load baseline `optional:scripts/verify.baseline.json` and a team-local `optional:scripts/check.local.ts`.',
-  'Managed: the library helpers `src/lib/cn.ts`, `src/lib/format.ts`, `src/lib/format-date.ts`, `src/lib/period.ts`, `src/lib/color.ts`, `src/lib/host.ts`, `src/lib/preferences.ts`, `src/lib/csv.ts`, `src/lib/safe-markdown.ts`, `src/lib/logo.ts`, `src/lib/collection.ts` and `src/lib/live.ts`, and the assistant prompt `src/lib/assistant/prompt.ts`.',
+  'Managed: the library helpers `src/lib/cn.ts`, `src/lib/format.ts`, `src/lib/format-date.ts`, `src/lib/period.ts`, `src/lib/color.ts`, `src/lib/host.ts`, `src/lib/preferences.ts`, `src/lib/csv.ts`, `src/lib/safe-markdown.ts`, `src/lib/logo.ts`, `src/lib/collection.ts`, `src/lib/live.ts`, `src/lib/shared-context.ts`, `src/lib/agent-guidance.ts` and `src/lib/insight.ts`, and the assistant prompt `src/lib/assistant/prompt.ts`.',
   'Managed: `src/views/console-chrome.tsx` and `tests/setup.ts`.',
   'Managed: `optional:scripts/package.json`, only when the adopt or create that set the project up generated it for this project shape.',
   'Managed: both installed skill trees, `optional:.agents/skills/zz-meridian/` and `optional:.claude/skills/zz-meridian/`, taken from the release\'s skill payload.',

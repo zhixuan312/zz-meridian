@@ -217,7 +217,31 @@ export const RELEASE_MIGRATIONS: ReleaseMigration[] = [
     instructions: 'Read "Writes authorize, then invalidate" and "The assistant route" in references/cache.md. Call `resolveAccess()` first in the route and in each Server Action, answer 401 or an error result when there is no session, and hand the assistant only the collections the caller may read. The route passes a guard that authorizes each approved change again when it runs, so `src/lib/assistant/tools.ts` and `src/lib/assistant/respond.ts` take that guard too: bring them over from the release with the route.',
     checks: GATE_AND_BUILD,
   },
+  {
+    id: 'share-view-context',
+    since: '0.9.0',
+    applies: (root) => matching(root, (_, src) => callArity(src, 'useShareView').some((n) => n === 2)),
+    summary: 'useShareView takes one shared context, not a sentence and an object.',
+    instructions: 'Read "Legible" in references/agents.md and "A shared context" in references/customize.md. Build the view\'s context with the fields of `SharedContext` from `src/lib/shared-context.ts` (scope, freshness, each figure with its unit, change and definition, what code finds, what the data cannot say) in a pure function beside the view, and pass it alone: `useShareView(context)`. Both agents read it: an MCP host and the console\'s assistant.',
+    checks: GATE_AND_BUILD,
+  },
+  {
+    id: 'agent-reads-section',
+    since: '0.9.0',
+    applies: pagesWithoutAgentReads,
+    summary: 'A page under app/(dashboard)/ or app/embed/ says what the agent reads.',
+    instructions: 'Read "A page spec" in references/customize.md. Under `## Agents` in the page\'s README.md, add `### What the agent reads`: what the page\'s shared context tells each agent, with a real line of it, and what the MCP App and the console\'s assistant each receive. `scripts/check.ts` requires it.',
+    checks: ['gate'],
+  },
 ];
+
+/** The page specifications under the console and embed folders that lack the part the 0.9.0 check requires. */
+function pagesWithoutAgentReads(root: string): string[] | null {
+  const files: string[] = [];
+  for (const d of ['app/(dashboard)', 'app/embed']) walk(root, d, files, /^README\.md$/);
+  const hits = files.filter((rel) => !/^## Agents\n[\s\S]*?^### What the agent reads$/m.test(text(root, rel) ?? ''));
+  return hits.length > 0 ? hits : null;
+}
 
 /** The registry entries that apply to a project moving from `source` to `target`, as journal migrations. */
 export function releaseMigrations(root: string, source: string, target: string): Migration[] {

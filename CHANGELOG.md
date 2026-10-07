@@ -2,7 +2,7 @@
 
 Every release of ZZ Meridian, newest first. Versions follow semver: a removed or renamed token, prop or card is major; a new card, token or variant is minor; a corrected value is a patch. Each entry says what breaks and what to do instead.
 
-## [Unreleased]
+## [0.9.0] · 2026-10-07
 
 ### Added
 
@@ -17,6 +17,8 @@ Every release of ZZ Meridian, newest first. Versions follow semver: a removed or
 - **An address can name a day.** `?day=2026-09-22` opens the Overview pointed at it (`Meridian day`).
 
 ### Breaking
+
+`update` reports the two that touch the team's own files as migrations, `share-view-context` and `agent-reads-section`, with what to change (`references/update.md`, "Resolving 0.9.0's migrations"); `src/lib/shared-context.ts`, `src/lib/agent-guidance.ts` and `src/lib/insight.ts` are Meridian's now and arrive with the update.
 
 - `useShareView(text, structured)` is `useShareView(context)`. Build a context with the fields in `SharedContext`; `contextText` writes the text both agents read.
 - `scripts/check.ts` requires `### What the agent reads` under `## Agents` in the README of every page under `app/(dashboard)/` and `app/embed/`. Add it to a product's own pages, saying what the page's context tells each agent.

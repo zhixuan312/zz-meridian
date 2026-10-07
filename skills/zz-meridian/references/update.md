@@ -159,6 +159,21 @@ because `node_modules` is not restored. No git reset or clean is ever run.
 Exit codes of `--finalize`: `0` complete, `2` still pending, `1` failure or refusal. `--resume` ends like a plain
 update (`2` pending, `0` finalized, `1` failure). `--abort`: `0` aborted, `1` refused.
 
+## Resolving 0.9.0's migrations
+
+Moving a project to 0.9.0 can report two more `migration:<id>` items, resolved the same way as those below:
+
+| Id | The old shape it found | The change |
+|----|------------------------|------------|
+| `share-view-context` | `useShareView(text, structured)`, a sentence and an object | one shared context per view, `useShareView(context)`: `agents.md`, "Legible", and `customize.md`, "A shared context" |
+| `agent-reads-section` | a page README under `optional:app/(dashboard)/` or `optional:app/embed/` with no `### What the agent reads` | add the part under `## Agents`: `customize.md`, "A page spec"; checked by the gate |
+
+A created project that never changed the template's pages brings the release's version of each affected file over, with
+the files that arrived with them: the view contexts `optional:src/views/overview-context.ts` and its siblings, the view
+tools `optional:src/views/tools.ts`, the reads `optional:src/data/metrics.ts` and the collections in
+`optional:src/data/collections.ts`. `src/lib/shared-context.ts`, `src/lib/agent-guidance.ts` and `src/lib/insight.ts`
+are Meridian's and arrive with the update. An adopted project builds a context for each view it shares.
+
 ## Resolving this release's migrations
 
 Moving a project to 0.5.0 can report these ten `migration:<id>` items. Each is a change in the team's own files, so the
