@@ -114,6 +114,18 @@ try {
     if (!JSON.stringify(requests).includes('Page: Overview (/)')) fail('no request to the model carried "Page: Overview (/)"');
     ok('the model request carried "Page: Overview (/)"');
 
+    // The view's shared context (decision 0011): the Overview's own account, with its definitions and what code found.
+    const overviewSystem = String((requests as { messages?: { role: string; content: unknown }[] }[]).filter((r) => JSON.stringify(r.messages?.[0]).includes('Page: Overview (/)')).at(-1)?.messages?.find((m) => m.role === 'system')?.content ?? '');
+    const viewContext = /<view-context>\n([\s\S]*?)\n<\/view-context>/.exec(overviewSystem)?.[1] ?? '';
+    for (const line of ['(Share of requests answered with a 5xx or a 429.)', "the period's median of", 'Nothing is recorded between']) if (!viewContext.includes(line)) fail(`the Overview's view context does not carry "${line}"`);
+    ok(`the model was given the Overview's view context: ${viewContext.length} characters, with the error rate's definition, the spike against its median and what nothing recorded explains`);
+
+    // A view tool: another period, read without navigating, quoted from that view's own context.
+    await ask('Open the overview for the last 90 days');
+    const viewReply = await until('the view tool\'s reply', said, (t) => t.startsWith('From /?period=90d'));
+    if (!viewReply.includes('Upload failures for files over 50 MB')) fail(`the 90-day Overview's finding did not name the incident beside its spike: "${viewReply}"`);
+    ok(`view_overview read the last 90 days without leaving the page: "${viewReply.slice(0, 120)}…"`);
+
     // A reply is rendered as markdown, never as the model's own markup: the list, the bold and the table are
     // ELEMENTS, and the characters that made them are gone from the panel's text.
     await ask('Show me a markdown summary');

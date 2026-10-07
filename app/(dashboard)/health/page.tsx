@@ -17,7 +17,7 @@ export default function HealthPage() {
       meta={<Freshness updatedAt={DEMO_UPDATED_AT} now={DEMO_NOW} />}
       actions={<SubscribeButton />}
     >
-      <PackedHealthBody services={packServices(SERVICES)} current={current} past={PAST_INCIDENTS} now={DEMO_NOW.toISOString()} />
+      <PackedHealthBody services={packServices(SERVICES)} current={current} past={PAST_INCIDENTS} updatedAt={DEMO_UPDATED_AT.toISOString()} now={DEMO_NOW.toISOString()} />
     </PageFrame>
   );
 }

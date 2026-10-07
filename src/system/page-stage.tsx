@@ -21,7 +21,10 @@ function dress(frame: HTMLIFrameElement | null, theme: 'dark' | 'light', accent:
   d.setAttribute('data-accent', accent);
 }
 
-export function PageStage({ route, embed, title }: { route: string; embed?: string; title: string }) {
+/** The result an MCP server returns for the view's tool, as the Atlas shows it: the model's text, the resource and the data's keys. */
+export type ToolResultShown = { name: string; text: string; resourceUri?: string; structured: string[] };
+
+export function PageStage({ route, embed, title, toolResult }: { route: string; embed?: string; title: string; toolResult?: ToolResultShown }) {
   const [surface, setSurface] = useState<Surface>(route.startsWith('/embed') ? 'embed' : 'console');
   const [theme, setTheme] = useState<'dark' | 'light' | 'both'>('dark');
   const [accent, setAccent] = useState<Accent>('indigo');
@@ -40,7 +43,7 @@ export function PageStage({ route, embed, title }: { route: string; embed?: stri
         <div aria-hidden className="pointer-events-none absolute inset-0 -z-10 bg-(image:--glow-ground)" />
         {surface === 'console' ? <ConsoleFrame route={route} theme={t} accent={accent} /> : null}
         {surface === 'phone' ? <PhoneFrame route={route} theme={t} accent={accent} /> : null}
-        {surface === 'embed' && embed ? <HostSimulator route={embed} theme={t} /> : null}
+        {surface === 'embed' && embed ? <HostSimulator route={embed} theme={t} toolResult={toolResult} /> : null}
       </div>
     </section>
   );
@@ -99,12 +102,12 @@ type Turn = { from: 'person' | 'assistant'; text: string };
  * on size-changed, honours request-display-mode, turns ui/message into a chat turn, and shows the model context the
  * view shares. Enough to see a Meridian view behave as a guest, without leaving the Atlas.
  */
-function HostSimulator({ route, theme }: { route: string; theme: 'dark' | 'light' }) {
+function HostSimulator({ route, theme, toolResult }: { route: string; theme: 'dark' | 'light'; toolResult?: ToolResultShown }) {
   const frame = useRef<HTMLIFrameElement>(null);
   const [mode, setMode] = useState<'inline' | 'fullscreen'>('inline');
   const [width, setWidth] = useState<'720' | '420'>('720');
   const [height, setHeight] = useState(420);
-  const [context, setContext] = useState<string>('Nothing shared yet.');
+  const [context, setContext] = useState<{ text: string; structured?: unknown }>({ text: 'Nothing shared yet.' });
   const [turns, setTurns] = useState<Turn[]>([]);
   const hostTheme = theme;
 
@@ -131,7 +134,7 @@ function HostSimulator({ route, theme }: { route: string; theme: 'dark' | 'light
         case 'ui/notifications/size-changed': return setHeight(Math.min(1400, Math.max(120, Math.ceil(m.params.height))));
         case 'ui/request-display-mode': setMode(m.params.mode === 'fullscreen' ? 'fullscreen' : 'inline'); return reply({ mode: m.params.mode });
         case 'ui/message': setTurns((t) => [...t, { from: 'person', text: m.params?.content?.text ?? '' }, { from: 'assistant', text: 'Looking into it: the assistant would answer here, with the view as its context.' }]); return reply({});
-        case 'ui/update-model-context': setContext(m.params?.content?.[0]?.text ?? JSON.stringify(m.params?.structuredContent)); return reply({});
+        case 'ui/update-model-context': setContext({ text: m.params?.content?.[0]?.text ?? '', structured: m.params?.structuredContent }); return reply({});
         case 'ui/open-link': window.open(m.params.url, '_blank', 'noopener'); return reply({});
         case 'tools/call': setTimeout(() => reply({ content: [{ type: 'text', text: `${m.params?.name} applied` }] }), 700); return;
         default: if (m.id !== undefined) reply({});
@@ -178,10 +181,23 @@ function HostSimulator({ route, theme }: { route: string; theme: 'dark' | 'light
           {mode === 'inline' ? turns.map((t, i) => <Bubble key={i} from={t.from} ink={ink} host={hostTheme}>{t.text}</Bubble>) : null}
         </div>
       </div>
-      <aside className="flex flex-col gap-3 self-start rounded-lg border border-line bg-surface p-4">
+      <aside aria-label="Model context" className="flex max-h-[46rem] flex-col gap-3 self-start overflow-y-auto overscroll-contain rounded-lg border border-line bg-surface p-4">
         <p className="t-kicker">Model context</p>
-        <p className="text-sm leading-relaxed text-ink-2">{context}</p>
-        <p className="t-caption border-t border-line pt-3">What the view tells the model with <code className="font-mono">ui/update-model-context</code>. Point at a day in the chart and watch it change; press Ask on a card to post a question.</p>
+        <p data-model-context className="t-small whitespace-pre-wrap text-ink-2 [overflow-wrap:anywhere]">{context.text}</p>
+        {context.structured ? (
+          <details className="border-t border-line pt-3">
+            <summary className="t-caption cursor-pointer">Structured</summary>
+            <pre data-model-structured className="mt-2 font-mono text-xs whitespace-pre-wrap text-ink-3 [overflow-wrap:anywhere]">{JSON.stringify(context.structured, null, 2)}</pre>
+          </details>
+        ) : null}
+        {toolResult ? (
+          <details className="border-t border-line pt-3">
+            <summary className="t-caption cursor-pointer">Tool result</summary>
+            <p className="t-caption mt-2">What an MCP server returns for <code className="font-mono">{toolResult.name}</code>: the text below as <code className="font-mono">content</code>, the view&rsquo;s data as <code className="font-mono">structuredContent</code> ({toolResult.structured.join(', ')}){toolResult.resourceUri ? <>, and <code className="font-mono">{toolResult.resourceUri}</code> to render</> : null}.</p>
+            <pre data-tool-result className="mt-2 font-mono text-xs whitespace-pre-wrap text-ink-3 [overflow-wrap:anywhere]">{toolResult.text}</pre>
+          </details>
+        ) : null}
+        <p className="t-caption border-t border-line pt-3">What the view tells the model with <code className="font-mono">ui/update-model-context</code>: the whole state every time, because a host keeps only the latest. Point at a day in the chart and watch it change; press Ask on a card to post a question.</p>
       </aside>
     </div>
   );

@@ -47,7 +47,7 @@ Card, Delta, Tooltip, Sparkline. Tiles sit in a `Row split="tiles"`, or stacked 
 
 ## Agents
 
-An embed view shares the tiles' values (and the day, when the Meridian points at one) with the model.
+A view's shared context carries each tile's value, its change with what it is measured against, and its `hint` as the figure's definition, so both agents read the words the info button shows (decision 0011). When the Meridian points at a day, the context says that day's figures.
 
 ## Accessibility
 

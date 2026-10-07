@@ -39,7 +39,18 @@ Status: beta
 
 ## Agents
 
-Not applicable: an agent answers analytical questions from the Overview and Requests views' shared context and the API, not by driving this page.
+An agent drives nothing here; it reads the page through its shared context (decision 0011), built by `analyticsContext` in `src/views/analytics-context.ts`.
+
+### What the agent reads
+
+The period, freshness, the busiest hour of the week and of the day, each region's share with its p50, every endpoint in the table's current order, the day the Meridian points at, and what code found: the same error spike as the Overview (by the same code), the slowest and the most failing endpoint against the median, the slowest region, and the weekend's share of a weekday. It says that the weekday-and-hour pattern, the regions and the endpoints are sums over the period, not a day.
+
+```text
+- POST /v1/files fails most: 1.88% of its requests, 5.0× the 0.37% across endpoints. Evidence: /requests?q=%2Fv1%2Ffiles
+```
+
+- **Console assistant:** this text in its prompt's `<view-context>` block, with the page's address and query, and the page text after it for anything the context does not cover.
+- **MCP App:** no embed view yet; an MCP server can return this context as a tool's text (`docs/agents.md`).
 
 ## Accessibility
 

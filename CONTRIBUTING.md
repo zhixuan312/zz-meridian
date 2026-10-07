@@ -39,7 +39,7 @@ Every card's README follows the same order, so a reader always knows where to lo
 4. **States**: rest, hover, pressed, focus, selected, disabled, loading, empty, error, each with its transition (property, duration token, curve).
 5. **Behaviour**: interaction, keyboard, timing.
 6. **Surfaces**: console, mobile (under 1024px) and embed (an MCP App): what changes on each, or "same", and why.
-7. **Agents**: what an agent may read here, what it may do (and through which proposal), and how its work is marked. Write "Not applicable" for purely presentational parts.
+7. **Agents**: what an agent may read here, what it may do (and through which proposal), and how its work is marked. Write "Not applicable" for purely presentational parts. A page or a view that shares a context (`useShareView`, decision 0011) adds **What the agent reads** under it: what its context says, with a real line of it, and what each consumer receives (the MCP App through `ui/update-model-context`, the console's assistant in its prompt).
 8. **Accessibility**: roles, names, keyboard, and contrast quoted from `node scripts/contrast.ts --all` (the dark theme and the indigo accent, the defaults; add light where it differs in kind).
 9. **Content**: copy rules with real strings.
 10. **Do and do not.**
@@ -75,6 +75,7 @@ Write the status on the line under the title: `Status: beta`.
 - Under reduced motion it shows its final state with nothing moving.
 - Keyboard: every control reachable, operable and visibly focused; focus order follows reading order.
 - An agent's work in it is marked (Agent mark, "via" attribution, or a Proposal); no agent write happens without one.
+- A page shares a context both agents read: its scope and freshness, every figure with its unit, change and definition, what code derived from them, and what the data cannot say, within 2,400 characters. A figure an agent would otherwise recompute is computed in the context.
 
 ## Tools
 

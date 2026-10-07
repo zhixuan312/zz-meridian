@@ -20,10 +20,15 @@ export type Surface = {
   ask?: (text: string) => void;
   /** Call one of the product's tools through the host (an approved proposal's apply). Absent when not connected. */
   callTool?: (name: string, args: Record<string, unknown>) => Promise<unknown>;
-  /** Tell the model what is on screen. A no-op on the console. */
-  share: (text: string, structured?: Record<string, unknown>) => void;
+  /** Tell the agent what is on screen: the host's model in an embed, the console's assistant on the console. */
+  share: (text: string, structured?: object) => void;
   openLink: (url: string) => void;
 };
+
+/** The context the console's view on screen last shared, and the path it was shared on (decision 0011). */
+let published: { path: string; text: string } | null = null;
+/** What the console's assistant reads with a question: the shared context of the view on `path`, or `null` when that page shares none. */
+export const sharedContextOn = (path: string): string | null => (published?.path === path ? published.text : null);
 
 const CONSOLE: Surface = {
   kind: 'console',
@@ -31,7 +36,7 @@ const CONSOLE: Surface = {
   mode: 'fullscreen',
   host: {},
   expand: (p) => { window.location.href = p; },
-  share: () => {},
+  share: (text) => { published = { path: window.location.pathname, text }; },
   openLink: (u) => { window.open(u, '_blank', 'noopener'); },
 };
 
@@ -40,11 +45,12 @@ export const useSurface = () => useContext(Ctx);
 
 /**
  * Put a subtree on a given surface without a host: the Atlas's previews and the tests use it to show an embed in
- * inline or fullscreen mode, connected or not. Products never need it.
+ * inline or fullscreen mode, connected or not. Products never need it. A preview shares with nobody unless `share` is
+ * given: an Atlas page full of specimens must not tell the assistant it is looking at one of them.
  */
 export function SurfaceOverride({ surface, children }: { surface: Partial<Surface>; children: ReactNode }) {
   const base = useContext(Ctx);
-  return <Ctx.Provider value={{ ...base, ...surface }}>{children}</Ctx.Provider>;
+  return <Ctx.Provider value={{ ...base, share: () => {}, ...surface }}>{children}</Ctx.Provider>;
 }
 
 /** The embed surface: starts the host bridge, applies the host's theme and style variables, and reports its height. */

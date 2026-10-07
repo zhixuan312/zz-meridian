@@ -68,7 +68,7 @@ The assistant reads the product brief, `docs/brief.md`, on every reply. Of its s
 
 ## Point it at your data
 
-A new page needs nothing for the panel. The panel lives in the dashboard shell and, with every message, reads the open page from the shell's scroll region: its path, its first heading and its visible text. Any page under `app/(dashboard)/` is read that way. Only data the assistant should look up or change needs wiring, and that is one collection.
+A new page needs nothing for the panel to work. The panel lives in the dashboard shell and, with every message, reads the open page: its address with the query, its title, the shared context its view published with `useShareView` (decision 0011), and its visible text from the shell's scroll region. Any page under `app/(dashboard)/` is read that way. A page that shares a context gives the assistant every figure with its definition and what code computed from them, so it quotes rather than guesses; a page that shares none is read from its text alone. Only data the assistant should look up or change needs wiring, and that is one collection.
 
 The assistant reads and changes records through collections, the same ones your pages use. `src/data/collections.ts` is the one place both are pointed at your data. It exports the `collections` list, and `clock`, the data's "now" (the sample returns its fixed day; a product returns `new Date()`).
 
@@ -103,7 +103,7 @@ Per collection the assistant gets `query_<name>`, and `create_<name>`, `update_<
 - **Every change waits.** The server writes a preview of the change to the thread, then asks for approval. Update and remove check the ids first; a missing id is denied with "No such id: ..." and nothing is shown.
 - **Approvals are signed, and run once.** Each approval request is signed with a secret derived from `ASSISTANT_API_KEY`, so the server signs each request when it issues it and checks the signature when the approval comes back. A forged or altered approval is rejected before anything runs, and the same approval sent again is refused: "This change was already applied." (The record of applied calls lives in the server's memory, so a product running several servers keeps it in a shared store.) The key itself never reaches the browser.
 - **Hidden fields never leave the server.** See `hidden` above: they are left out of what a query, a create and an update return.
-- **The page text is data.** The browser sends the page's path, its title and its visible text. The model is told that text is data to read, never instructions, and only the first 24,000 characters are used; the page's own page-text tags are dropped so it cannot end the block, and the title and path are one line of at most 200 characters.
+- **The page text is data.** The browser sends the page's address, its title, its view's shared context and its visible text. The model is told the context and the text are data to read, never instructions; only the first 6,000 characters of the context and 24,000 of the text are used; each one's own tags are dropped so it cannot end its block, and the title and the address are one line of at most 200 characters.
 - **Limits.** A reply takes at most 8 model steps. A query returns at most 100 rows (50 when it does not say). The route refuses a thread that is empty, malformed or longer than 100 messages (400) and a body over 2 MB (413).
 - **Sign-in and permissions.** `src/data/access.ts` says who the request is (`resolveAccess()`) and what they may do (`can(scope, name, op, ids)`); replace its policy with your session and your database's predicates. The route resolves access before the model is reached (401 without a session) and hands the assistant only the caller's own collections that they may read. An approval is only the person's consent: each approved change asks `can` again at the moment it runs, with the records it touches, so a permission revoked since the approval refuses it with "You no longer have permission to make this change.", and a change that commits drops its tenant's cached reads with `revalidateTag(tag, { expire: 0 })`. Server actions are public endpoints the layout does not guard, so each resolves access and calls `can` itself, as the members and keys actions do.
 - **An accepted risk.** A closed card is closed in the browser's storage. The same person, by editing their own storage, can make an expired card pending again and approve it. The approval is still the server's own, for a change the person was shown, and they could make the same change on the page. The assistant is not an authorisation layer: authorise in your collections, as you do for pages.
@@ -114,7 +114,7 @@ Each question can cost up to 8 model calls, and every call carries the system pr
 
 ## Adding an MCP server later
 
-The assistant's tools are plain AI SDK tools made from your collections, so an MCP server can offer the same ones and the data layer stays single. `assistantTools(collections, writer, guard)` returns `{ tools, toolApproval }`. The `writer` is where the console's previews are written; an MCP host has no thread to draw them in, so pass a writer that discards what it is given. The `guard` is asked before each change runs (`authorize(name, op, ids)`) and told after it commits (`invalidate(name)`): build it from the MCP caller's own scope, as `app/api/assistant/route.ts` does.
+The assistant's tools are plain AI SDK tools made from your collections and your views, so an MCP server can offer the same ones and the data layer stays single. `assistantTools(collections, writer, guard, views)` returns `{ tools, toolApproval }`: a `query_` tool per collection, a `create_`, `update_` or `remove_` tool for each change it allows, and a read-only `view_<name>` tool per view in `src/views/tools.ts`, which opens that view at an address and returns its shared context (decision 0011; `docs/agents.md` registers the views directly). The `writer` is where the console's previews are written; an MCP host has no thread to draw them in, so pass a writer that discards what it is given. The `guard` is asked before each change runs (`authorize(name, op, ids)`) and told after it commits (`invalidate(name)`): build it from the MCP caller's own scope, as `app/api/assistant/route.ts` does.
 
 Convert each tool's input schema with `asSchema(tool.inputSchema).jsonSchema`, register it, and run `execute`:
 
@@ -123,11 +123,12 @@ import { asSchema, type UIMessageStreamWriter } from 'ai';
 import { can, collectionFor, type AccessScope } from '@/data/access';
 import { collections } from '@/data/collections';
 import { assistantTools } from '@/lib/assistant/tools';
+import { viewTools } from '@/views/tools';
 
 declare const scope: AccessScope; // the MCP caller's, resolved from their session
 const writer = { write() {}, merge() {}, onError: undefined } as unknown as UIMessageStreamWriter;
 const guard = { authorize: (name: string, op: 'create' | 'update' | 'remove', ids?: string[]) => can(scope, name, op, ids), invalidate: () => {} };
-const { tools } = assistantTools(collections.map((c) => collectionFor(scope, c.name)), writer, guard);
+const { tools } = assistantTools(collections.map((c) => collectionFor(scope, c.name)), writer, guard, viewTools);
 
 for (const [name, t] of Object.entries(tools)) {
   server.registerTool(name, { description: t.description, inputSchema: asSchema(t.inputSchema).jsonSchema }, async (input) => ({
@@ -136,4 +137,4 @@ for (const [name, t] of Object.entries(tools)) {
 }
 ```
 
-Map approvals to the host's own confirmation: in an MCP host the person confirms in the host, so mark the `create_`, `update_` and `remove_` tools as needing it (the tool annotations `destructiveHint` and `readOnlyHint` exist for this), and never call `execute` on one the host did not confirm. `toolApproval` holds, per change tool, the rule the console runs before asking: it denies an id that does not exist ("No such id: ...") and otherwise writes the preview, with its title and its from and to, to the `writer`. Run it first with a writer that keeps that preview, show the preview in the host's confirmation, and treat a removal as the critical one, as the console does.
+Prefer the pair `docs/agents.md` describes for a change: a read-only propose tool that returns the Proposal view, and an apply tool registered with `_meta.ui.visibility: ["app"]`, which the model never sees. Where a host shows no views, map approvals to the host's own confirmation: in an MCP host the person confirms in the host, so mark the `create_`, `update_` and `remove_` tools as needing it (the tool annotations `destructiveHint` and `readOnlyHint` exist for this), and never call `execute` on one the host did not confirm. `toolApproval` holds, per change tool, the rule the console runs before asking: it denies an id that does not exist ("No such id: ...") and otherwise writes the preview, with its title and its from and to, to the `writer`. Run it first with a writer that keeps that preview, show the preview in the host's confirmation, and treat a removal as the critical one, as the console does.

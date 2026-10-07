@@ -36,7 +36,14 @@ Embed only. On the console the same Proposal card appears in Activity as an inbo
 
 ## Agents
 
-Shares its state with the model on every change, so the assistant can say what happened: "The person approved the proposal: Northwind Labs' rate limit is now 2,400 requests per minute." with `{ view, proposal, customer, from, to, state }`. In a product, Approve calls the apply tool through the host (`tools/call`) and the card shows the tool's result.
+In a product, Approve calls the apply tool through the host (`tools/call`) and the card shows the tool's result. The server registers that apply tool with `_meta.ui.visibility: ["app"]`: a host must leave it out of the model's tool list, so the model can propose but never apply (`docs/agents.md`).
+
+### What the agent reads
+
+The whole proposal, every time its state changes, because a host keeps only the latest context: what it changes, from and to (or, once applied, the new values and what they were), why it was proposed, what else it touches, and where it stands ("this proposal, which waits for them to approve or dismiss it"). An outcome never travels alone, so the model never loses what was approved.
+
+- **MCP App:** `ui/update-model-context`, on load and on Approve or Dismiss.
+- **Console assistant:** not shown on the console; the console's assistant draws its own Proposals in its thread.
 
 ## Accessibility
 

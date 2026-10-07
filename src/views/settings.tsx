@@ -1,6 +1,9 @@
 'use client';
 
-import { Suspense, use, useState } from 'react';
+
+import { Suspense, createContext, use, useCallback, useContext, useEffect, useState } from 'react';
+import { useShareView } from '@/components/base/use-share-view';
+import type { SharedContext } from '@/lib/shared-context';
 import { useRouter } from 'next/navigation';
 import { Globe, Lock, Moon, Monitor, Sun, Trash2 } from 'lucide-react';
 import { app, domain, workspaceSlug } from '@/app.config';
@@ -26,8 +29,34 @@ import { DEMO_NOW, CONNECTED_HOSTS, TIMEZONES } from '@/data/sample';
 const wait = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 /** Settings, in sections that save on their own. */
+/** Each section reports where it stands now, in a line, so the page's shared context holds what inputs and switches show (decision 0011). */
+const Report = createContext<(section: string, line: string) => void>(() => {});
+function useReport(section: string, line: string) {
+  const report = useContext(Report);
+  useEffect(() => report(section, line), [report, section, line]);
+}
+
+const SECTIONS = ['Workspace', 'Notifications', 'Appearance', 'Assistant', 'Agents and MCP', 'Danger zone'];
+
+/** Settings as both agents read it: every section's current values, which an input's or a switch's text does not carry. */
+function settingsContext(lines: Record<string, string>): SharedContext {
+  return {
+    view: 'settings',
+    title: 'Settings',
+    address: '/settings',
+    scope: 'this workspace\'s settings, and this device\'s appearance',
+    facts: SECTIONS.filter((k) => lines[k]).map((k) => ({ label: k, value: lines[k] })),
+    insights: [],
+    unknowns: ['A setting an agent wants changed is the person\'s to change here: none of these is offered to an agent as a change.'],
+  };
+}
+
 export function SettingsBody() {
+  const [lines, setLines] = useState<Record<string, string>>({});
+  const report = useCallback((section: string, line: string) => setLines((l) => (l[section] === line ? l : { ...l, [section]: line })), []);
+  useShareView(settingsContext(lines));
   return (
+    <Report value={report}>
     <div className="flex flex-col gap-14">
       <Workspace />
       <Notifications />
@@ -36,6 +65,7 @@ export function SettingsBody() {
       <Agents />
       <Danger />
     </div>
+    </Report>
   );
 }
 
@@ -46,6 +76,7 @@ function Workspace() {
   const [saving, setSaving] = useState(false);
   const dirty = JSON.stringify(v) !== JSON.stringify(base);
   const nameError = v.name.trim() === '' ? 'Give the workspace a name: it appears in the rail and on invitations.' : undefined;
+  useReport('Workspace', `name "${base.name}", address app.${domain}/${base.slug}, time zone ${base.timezone}${dirty ? `; unsaved edits: name "${v.name}", time zone ${v.timezone}` : ''}`);
   return (
     <FormSection
       title="Workspace"
@@ -77,6 +108,8 @@ function Workspace() {
 
 function Notifications() {
   const [n, setN] = useState({ incidents: true, digest: true, budget: false, proposals: true });
+  const on = (b: boolean) => (b ? 'on' : 'off');
+  useReport('Notifications', `incident alerts ${on(n.incidents)}, weekly digest ${on(n.digest)}, spend over budget ${on(n.budget)}, agent proposals ${on(n.proposals)}; sent to maya@${domain}`);
   const flip = (k: keyof typeof n, label: string) => (on: boolean) => {
     setN({ ...n, [k]: on });
     toast({ tone: 'neutral', title: `${label} ${on ? 'on' : 'off'}` });
@@ -93,6 +126,7 @@ function Notifications() {
 
 function Appearance() {
   const { prefs, set } = usePreferences();
+  useReport('Appearance', `on this device: theme ${prefs.theme}, accent ${prefs.accent}, density ${prefs.density}`);
   return (
     <FormSection title="Appearance" description={`How ${app.name} looks on this device. It applies at once and is kept on this device only.`}>
       <SettingRow label="Theme" description="System follows your device.">
@@ -154,7 +188,9 @@ function Assistant() {
 
 function AssistantSection({ available }: { available: Promise<boolean> }) {
   const { prefs, set } = usePreferences();
-  if (!use(available)) return null;
+  const has = use(available);
+  useReport('Assistant', has ? `the assistant is ${prefs.assistant ? 'shown' : 'hidden'} on this device` : 'this product has no assistant');
+  if (!has) return null;
   return (
     <FormSection title="Assistant" description={`The assistant answers questions about ${app.name} and proposes changes for you to approve.`}>
       <Switch
@@ -170,6 +206,7 @@ function AssistantSection({ available }: { available: Promise<boolean> }) {
 function Agents() {
   const [read, setRead] = useState(true);
   const [hosts, setHosts] = useState(CONNECTED_HOSTS);
+  useReport('Agents and MCP', `assistants ${read ? 'may' : 'may not'} read dashboards; every proposed change waits for approval (always on); connected: ${hosts.map((h) => `${h.name} (${h.kind}, by ${h.connectedBy}, ${h.scopes.join(' and ').toLowerCase()})`).join(', ') || 'none'}`);
   return (
     <FormSection
       title="Agents and MCP"
@@ -224,6 +261,7 @@ function Agents() {
 }
 
 function Danger() {
+  useReport('Danger zone', 'deleting this workspace needs its name typed to confirm; it is never proposed by an agent');
   const router = useRouter();
   const [typed, setTyped] = useState('');
   const confirm = workspaceSlug;

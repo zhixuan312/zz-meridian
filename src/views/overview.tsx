@@ -5,7 +5,8 @@ import Link from 'next/link';
 import { Row, Stack } from '@/components/base/shell';
 import { EmptyState } from '@/components/ui/empty-state';
 import { Card, CardBody, CardFooter, CardHeader } from '@/components/ui/card';
-import { Meridian } from '@/components/charts/meridian';
+import { Meridian, useMeridianIndex } from '@/components/charts/meridian';
+import { useShareView } from '@/components/base/use-share-view';
 import { TrendChart } from '@/components/charts/trend-chart';
 import { BarList } from '@/components/charts/bar-list';
 import { CompositionBar } from '@/components/charts/composition-bar';
@@ -15,31 +16,27 @@ import { FeaturedMetric } from '@/components/patterns/featured-metric';
 import { formatDate } from '@/lib/format-date';
 import { ActivityFeed } from '@/components/patterns/activity-feed';
 import { formatCompact, formatCost, formatDuration, formatPercent } from '@/lib/format';
-import type { DailyPoint, Endpoint, Totals } from '@/data/sample';
-import type { ActivityEvent } from '@/components/patterns/activity-feed';
+import { PERIOD_LABEL } from '@/lib/period';
+import { OVERVIEW_METRICS, overviewContext, type OverviewData } from './overview-context';
 
-export function OverviewBody({
-  period = 'last 30 days',
-  series,
-  totals,
-  endpoints,
-  mix,
-  activity,
-  now,
-}: {
-  /** The period, in words, for the featured kicker. */
-  period?: string;
-  series: DailyPoint[];
-  totals: { current: Totals; previous: Totals };
-  endpoints: Endpoint[];
-  mix: { label: string; value: number }[];
-  activity: ActivityEvent[];
-  /** The data's clock, as an ISO string: relative times read against it, never against render time. */
-  now: string;
-}) {
+/** Tells both agents what the Overview shows, and which day the Meridian points at (decision 0011). Inside `Meridian`. */
+export function ShareOverview({ data }: { data: OverviewData }) {
+  const { index } = useMeridianIndex();
+  useShareView(overviewContext(data, index));
+  return null;
+}
+
+/**
+ * The Overview's rows: the console page and the MCP view in fullscreen. `now` is the data's clock, as an ISO string:
+ * relative times read against it, never against render time.
+ */
+export function OverviewBody(data: OverviewData) {
+  const { series, totals, endpoints, mix, activity, now } = data;
+  const period = PERIOD_LABEL[data.period].toLowerCase();
   if (series.length === 0) {
     return (
       <Card>
+        <ShareOverview data={data} />
         <EmptyState title="No requests yet" action={<Link href="/keys" className="row-link inline-flex items-center gap-1 font-medium text-ink hover:text-accent-ink">API keys <ArrowRight className="size-3.5" /></Link>} className="py-16">
           Traffic, reliability and spend appear here once a key makes its first call.
         </EmptyState>
@@ -51,7 +48,8 @@ export function OverviewBody({
   const change = (a: number, b: number) => (b ? a / b - 1 : null);
   const peak = series.reduce((m, d) => (d.requests > m.requests ? d : m), series[0]);
   return (
-    <Meridian dates={dates}>
+    <Meridian dates={dates} day={data.day}>
+      <ShareOverview data={data} />
       <Stack>
         <Row split="2/3">
           <FeaturedMetric
@@ -73,8 +71,8 @@ export function OverviewBody({
           </FeaturedMetric>
           <div className="grid min-w-0 gap-(--stack-gap) md:grid-cols-3 lg:flex lg:flex-col">
             <MetricTile
-              label="Error rate"
-              hint="Share of requests answered with a 5xx or a 429."
+              label={OVERVIEW_METRICS.errorRate.label}
+              hint={OVERVIEW_METRICS.errorRate.hint}
               icon={<AlertTriangle />}
               value={c.errorRate}
               delta={change(c.errorRate, p.errorRate)}
@@ -83,8 +81,8 @@ export function OverviewBody({
               format={(n) => formatPercent(n, 2)}
             />
             <MetricTile
-              label="Latency p95"
-              hint="95 of every 100 requests finished faster than this."
+              label={OVERVIEW_METRICS.p95.label}
+              hint={OVERVIEW_METRICS.p95.hint}
               icon={<Gauge />}
               value={c.p95}
               delta={change(c.p95, p.p95)}
@@ -93,8 +91,8 @@ export function OverviewBody({
               format={(n) => formatDuration(n)}
             />
             <MetricTile
-              label="Spend"
-              hint="Metered usage in US dollars, before credits."
+              label={OVERVIEW_METRICS.spend.label}
+              hint={OVERVIEW_METRICS.spend.hint}
               icon={<CircleDollarSign />}
               value={c.spend}
               delta={change(c.spend, p.spend)}

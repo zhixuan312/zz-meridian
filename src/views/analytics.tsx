@@ -6,37 +6,35 @@ import { Card, CardBody, CardHeader } from '@/components/ui/card';
 import { EmptyState } from '@/components/ui/empty-state';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, type SortDirection } from '@/components/ui/table';
-import { Meridian } from '@/components/charts/meridian';
+import { Meridian, useMeridianIndex } from '@/components/charts/meridian';
+import { useShareView } from '@/components/base/use-share-view';
+import { analyticsContext, type AnalyticsData } from './analytics-context';
 import { TrendChart } from '@/components/charts/trend-chart';
-import { ColumnChart, type Column } from '@/components/charts/column-chart';
+import { ColumnChart } from '@/components/charts/column-chart';
 import { Heatmap } from '@/components/charts/heatmap';
 import { BarList } from '@/components/charts/bar-list';
 import { cn } from '@/lib/cn';
 import { formatCompact, formatDuration, formatPercent } from '@/lib/format';
 import { formatDate } from '@/lib/format-date';
-import type { DailyPoint, Endpoint } from '@/data/sample';
 import { RouteCell } from '@/system/sample-cells';
 
 const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
+/** Tells both agents what Analytics shows, the endpoints' order and the day the Meridian points at (decision 0011). */
+function ShareAnalytics({ data, sort }: { data: AnalyticsData; sort: string }) {
+  const { index } = useMeridianIndex();
+  useShareView(analyticsContext(data, { sort, index }));
+  return null;
+}
+
 /** The Analytics page's body: when traffic comes, where from, and what is slow. */
-export function AnalyticsBody({
-  series,
-  heat,
-  hours,
-  regions,
-  endpoints,
-}: {
-  series: DailyPoint[];
-  heat: number[][];
-  hours: Column[];
-  regions: { label: string; value: number; p50: number }[];
-  endpoints: Endpoint[];
-}) {
+export function AnalyticsBody(data: AnalyticsData) {
+  const { series, heat, hours, regions, endpoints } = data;
   const [sort, setSort] = useState<{ key: 'requests' | 'errorRate' | 'p95'; dir: Exclude<SortDirection, false> }>({ key: 'p95', dir: 'desc' });
   if (!series.length || !heat.length || !hours.length || !regions.length || !endpoints.length) {
     return (
       <Card>
+        <ShareAnalytics data={data} sort="p95 descending" />
         <EmptyState title="No requests in this period" className="py-16">Pick a longer period, or come back once traffic arrives.</EmptyState>
       </Card>
     );
@@ -86,6 +84,7 @@ export function AnalyticsBody({
         </Card>
       </Row>
       <Meridian dates={dates}>
+        <ShareAnalytics data={data} sort={`${{ requests: 'requests', errorRate: 'error rate', p95: 'p95' }[sort.key]} ${sort.dir === 'desc' ? 'descending' : 'ascending'}`} />
         <Row split="1/2">
           <Card>
             <CardHeader title="Requests per day" description="Point at a day: the errors beside it follow." />

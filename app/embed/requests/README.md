@@ -25,7 +25,12 @@ The tool `zz_meridian_requests { status?, method?, region?, q? }`; the arguments
 
 ## Agents
 
-The view shares the count, the filters and the latest IDs (`ui/update-model-context`), so a follow-up question about "these" has a referent. Ask posts "Why are these status 5xx requests failing, and what do they have in common?". Pressing a row opens that request in the console through the host (`ui/open-link`).
+The Requests page's context (`app/(dashboard)/requests/README.md` lists it), read through the same `readRequests`, with the rows the view draws: the five latest inline, the page in fullscreen. Ask posts "Why are these status 5xx requests failing, and what do they have in common?", and the context answers the second half with figures. Pressing a row opens that request in the console through the host (`ui/open-link`).
+
+### What the agent reads
+
+- **MCP App:** the text above as `ui/update-model-context`, with the same context as its structured part, from the inline view and from fullscreen alike, on load and on every change.
+- **Console assistant:** the same text in its prompt's `<view-context>` block, with the page's address and query, and the page text after it for anything the context does not cover.
 
 ## Surfaces
 

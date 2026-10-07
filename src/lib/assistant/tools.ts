@@ -1,6 +1,7 @@
 import { tool, type SingleToolApprovalFunction, type ToolSet, type UIMessageStreamWriter } from 'ai';
 import { z } from 'zod';
 import { patchOf, queryInput, visibleFields, type AnyCollection } from '@/lib/collection';
+import { contextText, type ViewTool } from '@/lib/shared-context';
 
 type Row = Record<string, unknown>;
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -43,10 +44,25 @@ const lower = (label: string) => (/^.[A-Z]/.test(label) ? label : label.charAt(0
  * A rule writes the server's preview of the change to `writer` before the approval request goes out. An approval is
  * only the person's consent: each execution asks `guard` again before it mutates, so a permission revoked since the
  * approval refuses the change, and invalidates the collection after it commits.
+ *
+ * `views` adds one read-only `view_<name>` tool per view (decision 0011): it opens the view at an address and returns
+ * its shared context, the same text the page tells the assistant, so the assistant can look at another period, filter
+ * or record without the person navigating. A view tool changes nothing and needs no approval.
  */
-export function assistantTools(collections: AnyCollection[], writer: UIMessageStreamWriter, guard: Guard): { tools: ToolSet; toolApproval: Record<string, Rule> } {
+export function assistantTools(collections: AnyCollection[], writer: UIMessageStreamWriter, guard: Guard, views: ViewTool[] = []): { tools: ToolSet; toolApproval: Record<string, Rule> } {
   const tools: ToolSet = {};
   const toolApproval: Record<string, Rule> = {};
+
+  for (const v of views) {
+    tools[`view_${v.name}`] = tool({
+      description: `Open the ${v.title} view at an address and read what it shows: ${v.description} Returns its shared context: figures with units and definitions, what the product computed from them, what is unknown, and the console address that shows it to the person.`,
+      inputSchema: v.input,
+      execute: async (input) => {
+        const { context } = await v.read(input);
+        return { address: context.address, context: contextText(context) };
+      },
+    });
+  }
 
   for (const c of collections) {
     const hidden = (c.hidden ?? []) as string[];

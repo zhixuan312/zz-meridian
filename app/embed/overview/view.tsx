@@ -2,7 +2,6 @@
 
 import { Row, Stack } from '@/components/base/shell';
 import { useSurface } from '@/components/base/surface';
-import { useShareView } from '@/components/base/use-share-view';
 import { Card, CardBody, CardHeader } from '@/components/ui/card';
 import { Meridian, useMeridianIndex } from '@/components/charts/meridian';
 import { TrendChart } from '@/components/charts/trend-chart';
@@ -10,58 +9,43 @@ import { EmbedFrame } from '@/components/patterns/embed-frame';
 import { Freshness } from '@/components/patterns/freshness';
 import { MetricTile } from '@/components/patterns/metric-tile';
 import { AskAbout } from '@/components/patterns/ask-about';
-import { OverviewBody } from '@/views/overview';
+import { OverviewBody, ShareOverview } from '@/views/overview';
+import { OVERVIEW_METRICS, type OverviewData } from '@/views/overview-context';
 import { formatCompact, formatDuration, formatPercent } from '@/lib/format';
 import { formatDate } from '@/lib/format-date';
-import { PERIOD_LABEL, type Period } from '@/lib/period';
-import type { DailyPoint, Endpoint, Totals } from '@/data/sample';
-import type { ActivityEvent } from '@/components/patterns/activity-feed';
-import { app } from '@/app.config';
+import { PERIOD_LABEL } from '@/lib/period';
 
-type Props = {
-  period: Period;
-  series: DailyPoint[];
-  totals: { current: Totals; previous: Totals };
-  endpoints: Endpoint[];
-  mix: { label: string; value: number }[];
-  activity: ActivityEvent[];
-  updatedAt: string;
-  now: string;
-};
-
-export function EmbedOverview(p: Props) {
+/** Inline: three figures and the trend. Fullscreen: the console's Overview rows. Both share the same context. */
+export function EmbedOverview(p: OverviewData) {
   const s = useSurface();
   const dates = p.series.map((d) => d.date);
   return (
-    <Meridian dates={dates}>
+    <Meridian dates={dates} day={p.day}>
       <EmbedFrame
         title={`Overview · ${PERIOD_LABEL[p.period]}`}
         meta={<Freshness updatedAt={new Date(p.updatedAt)} now={new Date(p.now)} />}
         consolePath={`/?period=${p.period}`}
       >
-        {s.mode === "fullscreen" ? <OverviewBody {...p} period={PERIOD_LABEL[p.period].toLowerCase()} /> : <Inline {...p} dates={dates} />}
+        {s.mode === 'fullscreen' ? <OverviewBody {...p} /> : <Inline {...p} dates={dates} />}
       </EmbedFrame>
     </Meridian>
   );
 }
 
-function Inline({ series, totals, period, dates }: Props & { dates: string[] }) {
+function Inline(p: OverviewData & { dates: string[] }) {
+  const { series, totals, dates } = p;
   const { current: c, previous: v } = totals;
   const { index } = useMeridianIndex();
   const day = index !== null ? series[index] : null;
-  useShareView(
-    day
-      ? `The person is looking at ${formatDate(day.date)}: ${day.requests.toLocaleString('en-US')} requests, ${formatPercent(day.errors / day.requests, 2)} errors, p95 ${day.p95}ms.`
-      : `${app.name} overview for ${PERIOD_LABEL[period].toLowerCase()}: ${formatCompact(c.requests)} requests, ${formatPercent(c.errorRate, 2)} errors, p95 ${formatDuration(c.p95)}.`,
-    { view: 'overview', period, day: day?.date ?? null },
-  );
   const change = (a: number, b: number) => (b ? a / b - 1 : null);
+  const M = OVERVIEW_METRICS;
   return (
     <Stack className="gap-3">
+      <ShareOverview data={p} />
       <Row split="tiles" className="gap-3">
-        <MetricTile label="Requests" value={c.requests} delta={change(c.requests, v.requests)} daily={series.map((d) => d.requests)} format={formatCompact} emphasis />
-        <MetricTile label="Error rate" value={c.errorRate} delta={change(c.errorRate, v.errorRate)} intent="down" daily={series.map((d) => d.errors / d.requests)} format={(n) => formatPercent(n, 2)} />
-        <MetricTile label="Latency p95" value={c.p95} delta={change(c.p95, v.p95)} intent="down" daily={series.map((d) => d.p95)} format={formatDuration} />
+        <MetricTile label={M.requests.label} hint={M.requests.hint} value={c.requests} delta={change(c.requests, v.requests)} daily={series.map((d) => d.requests)} format={formatCompact} emphasis />
+        <MetricTile label={M.errorRate.label} hint={M.errorRate.hint} value={c.errorRate} delta={change(c.errorRate, v.errorRate)} intent="down" daily={series.map((d) => d.errors / d.requests)} format={(n) => formatPercent(n, 2)} />
+        <MetricTile label={M.p95.label} hint={M.p95.hint} value={c.p95} delta={change(c.p95, v.p95)} intent="down" daily={series.map((d) => d.p95)} format={formatDuration} />
       </Row>
       <Card>
         <CardHeader title="Requests per day" actions={<AskAbout question={day ? `Why did requests change on ${formatDate(day.date)}?` : 'What drove the trend in requests this period?'} />} />

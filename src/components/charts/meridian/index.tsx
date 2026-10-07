@@ -10,8 +10,12 @@ import { createContext, useContext, useMemo, useState, type ReactNode } from 're
 type Ctx = { dates: string[]; index: number | null; setIndex: (i: number | null) => void; shared: boolean };
 const MeridianCtx = createContext<Ctx | null>(null);
 
-export function Meridian({ dates, children }: { dates: string[]; children: ReactNode }) {
-  const [index, setIndex] = useState<number | null>(null);
+/**
+ * `day` (YYYY-MM-DD) opens the page pointed at that day, so an address can name it (`?day=2026-09-22`) and a link
+ * reproduces what an agent or a person was looking at. The person's own pointer takes over from there.
+ */
+export function Meridian({ dates, day, children }: { dates: string[]; day?: string | null; children: ReactNode }) {
+  const [index, setIndex] = useState<number | null>(() => (day && dates.includes(day) ? dates.indexOf(day) : null));
   const value = useMemo(() => ({ dates, index, setIndex, shared: true }), [dates, index]);
   return <MeridianCtx.Provider value={value}>{children}</MeridianCtx.Provider>;
 }

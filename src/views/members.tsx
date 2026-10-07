@@ -1,5 +1,7 @@
 'use client';
 
+import { useShareView } from '@/components/base/use-share-view';
+import { membersContext } from './members-context';
 import { useOptimistic, useRef, useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { MoreHorizontal, Trash2, UserCheck, UserPlus, UserX } from 'lucide-react';
@@ -45,7 +47,9 @@ function apply(rows: Shown[], change: Change): Shown[] {
 const BLANK = { name: '', email: '', role: 'Member' as Member['role'], team: 'Engineering' as Member['team'] };
 
 /** `now` is the data's clock, so "last active" reads the same on the server and in the browser. */
+
 export function MembersView({ rows, now, actions }: { rows: Member[]; now: string; actions: MemberActions }) {
+  useShareView(membersContext(rows, now));
   const asOf = new Date(now);
   const router = useRouter();
   useLive(['members']);

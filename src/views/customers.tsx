@@ -18,6 +18,8 @@ import { FilterBar } from '@/components/patterns/filter-bar';
 import { formatCompact, formatCost, formatPercent } from '@/lib/format';
 import { formatDate } from '@/lib/format-date';
 import type { CustomerRecord } from '@/data/sample';
+import { useShareView } from '@/components/base/use-share-view';
+import { CUSTOMER_METRICS, customersContext } from './customers-context';
 
 const PLAN_TONE = { Enterprise: 'accent', Scale: 'neutral', Starter: 'neutral' } as const;
 /** Colour only where a row needs a look: past due and trial. Active is the normal case, so it stays quiet. */
@@ -54,6 +56,7 @@ export function CustomersView({ rows }: { rows: CustomerRecord[] }) {
     return rows.filter((c) => (f.plan === 'all' || c.plan === f.plan) && (f.status === 'all' || c.status === f.status) && (!q || c.name.toLowerCase().includes(q)));
   }, [rows, f.q, f.plan, f.status]);
   const isFiltered = f.q !== '' || f.plan !== 'all' || f.status !== 'all';
+  useShareView(customersContext(rows, matching, f));
   const clear = () => set({ q: '', plan: 'all', status: 'all', by: '', page: '1' });
   const spend = rows.reduce((a, c) => a + c.spend, 0);
   const pastDue = rows.filter((c) => c.status === 'past due');
@@ -63,9 +66,9 @@ export function CustomersView({ rows }: { rows: CustomerRecord[] }) {
   return (
     <Stack>
       <Row split="tiles">
-        <MetricTile label="Customers" value={rows.length} format={(n) => String(n)} hint="Workspaces with at least one live key. The line is their combined requests over the last 14 days." daily={requestsDaily} />
-        <MetricTile label="Spend, last 30 days" value={spend} format={formatCost} hint="Metered usage across every customer, before credits. The line shows the last 14 days." daily={spendDaily} emphasis />
-        <MetricTile label="Past due" value={pastDue.length} format={(n) => String(n)} hint="Customers whose latest invoice is overdue." note={pastDue.map((c) => c.name).join(', ') || 'Every invoice is paid'} />
+        <MetricTile label={CUSTOMER_METRICS.customers.label} value={rows.length} format={(n) => String(n)} hint={CUSTOMER_METRICS.customers.hint} daily={requestsDaily} />
+        <MetricTile label={CUSTOMER_METRICS.spend.label} value={spend} format={formatCost} hint={CUSTOMER_METRICS.spend.hint} daily={spendDaily} emphasis />
+        <MetricTile label={CUSTOMER_METRICS.pastDue.label} value={pastDue.length} format={(n) => String(n)} hint={CUSTOMER_METRICS.pastDue.hint} note={pastDue.map((c) => c.name).join(', ') || 'Every invoice is paid'} />
       </Row>
       <DataTable
         caption="Customers"

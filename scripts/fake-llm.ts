@@ -49,6 +49,13 @@ function script(body: { messages?: Message[] }): Reply {
     try { out = JSON.parse(textOf(last.content)); } catch { return { text: 'Nothing changed.' }; }
     const rows = (out as { rows?: { name?: string }[] } | null)?.rows;
     if (Array.isArray(rows)) return { text: rows.length ? `${rows.length} found: ${rows.map((r) => r.name).join(', ')}.` : 'None found.' };
+    // A view tool's result: quote the view's own finding, as a model told to quote rather than recompute would.
+    const view = out as { address?: string; context?: string } | null;
+    if (typeof view?.context === 'string') {
+      const lines = view.context.split('\n');
+      const finding = lines.find((l) => l.startsWith('- Recorded around')) ?? lines[lines.findIndex((l) => l.startsWith('Insights')) + 1] ?? lines[0];
+      return { text: `From ${view.address}: ${finding.replace(/^- /, '')}` };
+    }
     return { text: 'Done.' };
   }
 
@@ -83,6 +90,8 @@ function script(body: { messages?: Message[] }): Reply {
       const row = rowsIn(messages).flat().find((r) => r.name.toLowerCase() === remove.toLowerCase());
       if (row) return { calls: [{ name: 'remove_members', args: { ids: [row.id] } }] };
     }
+    const period = /^open the overview for the last (\d+) days/i.exec(said)?.[1];
+    if (period) return { calls: [{ name: 'view_overview', args: { period: `${period}d` } }] };
     if (/who is suspended/i.test(said)) return { calls: [{ name: 'query_members', args: { where: [{ field: 'status', op: 'eq', value: 'Suspended' }] } }] };
   }
 

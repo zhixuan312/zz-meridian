@@ -2,6 +2,21 @@
 
 Every release of ZZ Meridian, newest first. Versions follow semver: a removed or renamed token, prop or card is major; a new card, token or variant is minor; a corrected value is a patch. Each entry says what breaks and what to do instead.
 
+## [Unreleased]
+
+### Added
+
+- **Every page tells both agents the same thing (decision 0011).** A view builds one shared context (`src/lib/shared-context.ts`, one producer per page in `src/views/*-context.ts`): its scope and freshness, what the person points at, every figure with its unit, its change and its definition, what code computed from them (`src/lib/insight.ts`: a day against its median, a share, a ranking, a run of days, what nothing recorded explains), and what the data cannot say. An MCP host receives it through `ui/update-model-context`, inline and in fullscreen; the console's assistant receives it in its prompt, with the page's address and query. All nine console pages and the four embed views share one.
+- **Every view has a tool.** `src/views/tools.ts` holds each view's contract: its name, its address as input, its `ui://` resource, and one read that returns what it renders and what the agents are told. The console's assistant offers each as a read-only `view_<name>`; `docs/agents.md` registers the same list on an MCP server, with the apply tool of a change registered view-only. The embed routes render from their tool's read.
+- **The assistant is told its limits.** Its prompt lists what it cannot do or see, from each collection's `pageOnly`, `hidden` and missing operations, so it can say why.
+- **An address can name a day.** `?day=2026-09-22` opens the Overview pointed at it (`Meridian day`).
+
+### Breaking
+
+- `useShareView(text, structured)` is `useShareView(context)`. Build a context with the fields in `SharedContext`; `contextText` writes the text both agents read.
+- `scripts/check.ts` requires `### What the agent reads` under `## Agents` in the README of every page under `app/(dashboard)/` and `app/embed/`. Add it to a product's own pages, saying what the page's context tells each agent.
+- `OverviewBody`, `HealthBody` and `AnalyticsBody` take the period key, `updatedAt` and, for the first and last, the incidents and activity beside the figures; `RequestsView` takes `updatedAt` and `now`.
+
 ## [0.8.0] · 2026-10-06
 
 ### Added

@@ -41,7 +41,18 @@ None of its own. An agent shows a request through `zz_meridian_requests` (inline
 
 ## Agents
 
-Replay and blocking a key are a person's actions here. An agent that wants either sends a Proposal.
+Replay is a person's action here: it is `pageOnly`, so no agent can run or propose it. The page shares its context through `requestContext` in `src/views/request-context.ts`.
+
+### What the agent reads
+
+The request, its status, latency (with its definition), customer and region, every phase with its start and duration, the payloads' sizes (their text is in the page text), and what code found: where most of the time went, the latency against the route's p95, and, for a failed request, that it counts in the error rate. It says that one request is one sample, and that replaying it is the person's.
+
+```text
+- Most of its time went to Rate limit (Over 1,200 requests a minute): 159ms, 93% of 171ms.
+```
+
+- **Console assistant:** this text in its prompt's `<view-context>` block, with the page's address and query, and the page text after it for anything the context does not cover.
+- **MCP App:** no embed view yet; an MCP server can return this context as a tool's text (`docs/agents.md`).
 
 ## Accessibility
 

@@ -14,6 +14,7 @@ import { IconButton } from '@/components/ui/icon-button';
 import { Proposal, type ProposalChange, type ProposalState } from '@/components/patterns/proposal';
 import { Textarea } from '@/components/ui/textarea';
 import type { PageContext } from '@/lib/assistant/prompt';
+import { sharedContextOn } from '@/components/base/surface';
 import { AssistantText } from './text';
 import { REASONS, clearThread, closeOpenApprovals, loadThread, recent, saveThread } from './thread';
 
@@ -21,7 +22,8 @@ import { REASONS, clearThread, closeOpenApprovals, loadThread, recent, saveThrea
 const TITLE_SUFFIX = ` · ${app.name}`;
 
 /**
- * Reads the page from the scroll region: the page's own title and its visible text.
+ * Reads the page from the scroll region: the page's own title, its address with the query that sets its filters, the
+ * shared context its view published (decision 0011), and its visible text.
  *
  * The title comes from `document.title`, never the masthead `h1`. On a detail page that `h1` is the Detail head — the
  * record's name with its status badge run into it — so a question asked there was labelled "REC-1042high risk · 0.64".
@@ -29,12 +31,13 @@ const TITLE_SUFFIX = ` · ${app.name}`;
  * declares none, where `document.title` is only the product name.
  */
 function readPage(path: string): PageContext {
+  const context = sharedContextOn(path) ?? '';
   const region = document.querySelector<HTMLElement>('[data-scroll-region]');
   const h1 = region?.querySelector('h1')?.textContent?.trim() ?? '';
   const declared = document.title.endsWith(TITLE_SUFFIX)
     ? document.title.slice(0, -TITLE_SUFFIX.length).trim()
     : document.title.trim();
-  return { path, title: declared && declared !== app.name ? declared : h1, text: region?.innerText ?? '' };
+  return { path: `${path}${location.search}`, title: declared && declared !== app.name ? declared : h1, context, text: region?.innerText ?? '' };
 }
 
 type Preview = { title: string; tone: 'neutral' | 'critical'; changes: ProposalChange[] };

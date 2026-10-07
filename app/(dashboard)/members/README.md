@@ -42,7 +42,18 @@ Not offered. Inviting and removing people are decisions for the console, not a c
 
 ## Agents
 
-The assistant reads and proposes changes here through Proposals: it adds, changes and removes members only after a person approves, and what it changed shows on this page after a refresh. A change made here is what the assistant reads next.
+The assistant reads and proposes changes here through Proposals: it adds, changes and removes members only after a person approves, and what it changed shows on this page after a refresh. A change made here is what the assistant reads next. The page shares its context through `membersContext` in `src/views/members-context.ts`.
+
+### What the agent reads
+
+Counts by status, role (with what each role may do) and team, everyone with their role, team, status and when they were last seen (25 at most; `query_members` finds the rest), and what code found: active members unseen for 60 days or more, unanswered invitations, and who can change the workspace. It says that "last active" is a console sign-in, not use of the API.
+
+```text
+- 3 active members have not been seen for 60 days or more: Alice Moreno (Viewer, Support, 94 days), Felix Andersson (Viewer, Engineering, 75 days), Ravi Patel (Viewer, Support, 71 days).
+```
+
+- **Console assistant:** this text in its prompt's `<view-context>` block, with the page's address and query, and the page text after it for anything the context does not cover.
+- **MCP App:** no embed view yet; an MCP server can return this context as a tool's text (`docs/agents.md`).
 
 ## Content
 

@@ -8,6 +8,8 @@ import { FilterBar } from '@/components/patterns/filter-bar';
 import { formatCompact, formatDuration, formatPercent } from '@/lib/format';
 import { ENDPOINTS, REGIONS, type RequestRow } from '@/data/sample';
 import type { readRequests } from '@/data/requests';
+import { useShareView } from '@/components/base/use-share-view';
+import { REQUEST_METRICS, requestsContext } from './requests-context';
 import { requestColumns } from '@/system/sample-cells';
 
 type Page = Awaited<ReturnType<typeof readRequests>>;
@@ -42,7 +44,8 @@ export function useSearchDraft(applied: string, write: (q: string) => void): [st
 }
 
 /** The page's body under its masthead: the tiles and the table. The server filtered, sorted and paged, `pageSize` rows at a time. */
-export function RequestsView({ rows, total, summary, state, pageSize }: { rows: RequestRow[]; total: number; summary: Page['summary']; state: Page['state']; pageSize: number }) {
+export function RequestsView({ rows, total, summary, state, pageSize, updatedAt, now }: { rows: RequestRow[]; total: number; summary: Page['summary']; state: Page['state']; pageSize: number; updatedAt: string; now: string }) {
+  useShareView(requestsContext({ rows, total, summary, state, pageSize, updatedAt, now }));
   /* One writer for filters, sort and page: two setters in one handler would each write over the other. */
   const [f, setF] = useQueryState({ ...REQUEST_FILTERS, sort: 'at', dir: 'desc', page: '1' });
   const isFiltered = state.q !== '' || state.status !== 'all' || state.method !== 'all' || state.region !== 'all';
@@ -55,9 +58,9 @@ export function RequestsView({ rows, total, summary, state, pageSize }: { rows: 
   return (
     <Stack>
       <Row split="tiles">
-        <MetricTile label={isFiltered ? 'Matching requests' : 'Requests'} value={summary.count} format={formatCompact} daily={buckets.count} delta={deltas.count} compare="vs the half hour before" intent="neutral" hint={`Requests that match the filters below. The line shows them in 5-minute steps; the change compares the last half hour with the one before.${note}`} />
-        <MetricTile label="Errors and limits" value={summary.errorShare} format={(n) => formatPercent(n, 1)} daily={buckets.errors} delta={deltas.errors} compare="vs the half hour before" intent="down" hint={`Share answered with a 5xx or a 429.${note}`} />
-        <MetricTile label="Latency p95" value={summary.p95} format={formatDuration} daily={buckets.p95} delta={deltas.p95} compare="vs the half hour before" intent="down" hint={`95 of every 100 matching requests finished faster than this.${note}`} />
+        <MetricTile label={isFiltered ? REQUEST_METRICS.count.filtered : REQUEST_METRICS.count.label} value={summary.count} format={formatCompact} daily={buckets.count} delta={deltas.count} compare="vs the half hour before" intent="neutral" hint={`${REQUEST_METRICS.count.hint}${note}`} />
+        <MetricTile label={REQUEST_METRICS.errors.label} value={summary.errorShare} format={(n) => formatPercent(n, 1)} daily={buckets.errors} delta={deltas.errors} compare="vs the half hour before" intent="down" hint={`${REQUEST_METRICS.errors.hint}${note}`} />
+        <MetricTile label={REQUEST_METRICS.p95.label} value={summary.p95} format={formatDuration} daily={buckets.p95} delta={deltas.p95} compare="vs the half hour before" intent="down" hint={`${REQUEST_METRICS.p95.hint}${note}`} />
       </Row>
       <DataTable
         caption="Requests"

@@ -51,7 +51,20 @@ Export CSV is a link to `/api/export/requests` with the same filters and sort: t
 
 ## Agents
 
-An agent opens this page's views through `zz_meridian_requests`; it reads them through the shared context; it never exports or blocks from here. Its filters are marked until a person changes one.
+An agent opens this page's views through `zz_meridian_requests`; it never exports or blocks from here. Its filters are marked until a person changes one. The page shares one context with both agents (decision 0011), built by `requestsContext` in `src/views/requests-context.ts` from the page's read: the rows on screen and the summary of the whole filtered set.
+
+### What the agent reads
+
+The filters in words and the span of time the log covers; freshness; the three figures with their change against the half hour before and their definitions (the tiles' `hint`s come from `REQUEST_METRICS`); the page, the sort and the rows on screen by id; and what the matching requests and their errors have in common:
+
+```text
+- 5 of the 9 errors and limits are in eu-west-1 (56%). Evidence: /requests?region=eu-west-1
+```
+
+When a half hour holds fewer than 30 requests it says the change is too few to read as a trend, and when the summary reads only the newest 500 it says so.
+
+- **MCP App:** the text above as `ui/update-model-context`, with the same context as its structured part, from the inline view and from fullscreen alike, on load and on every change.
+- **Console assistant:** the same text in its prompt's `<view-context>` block, with the page's address and query, and the page text after it for anything the context does not cover.
 
 ## Accessibility
 

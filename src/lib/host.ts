@@ -104,7 +104,7 @@ export class HostBridge {
   /** Say something in the conversation as the person: "Why did errors rise on 21 September?" */
   message(text: string) { return this.request('ui/message', { role: 'user', content: { type: 'text', text } }); }
   /** Tell the model what the person is looking at, so a question about "this" has a referent. */
-  modelContext(text: string, structured?: Record<string, unknown>) {
+  modelContext(text: string, structured?: object) {
     return this.request('ui/update-model-context', { content: [{ type: 'text', text }], structuredContent: structured });
   }
   openLink(url: string) { return this.request('ui/open-link', { url }); }

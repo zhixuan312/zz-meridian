@@ -68,6 +68,8 @@ for (const p of PAGE_SPECS) {
   const md = read(p);
   if (!/^# .+\n\n[^#\n].+/.test(md)) problems.push(`${p}: must open with "# Name" and a one-sentence summary`);
   for (const s of ['## Structure', '## States']) if (!md.includes(s)) problems.push(`${p}: missing ${s}`);
+  // Every console page and embed view shares a context with both agents (decision 0011), and its spec says what it says.
+  if (/^app\/(\(dashboard\)|embed)\//.test(p) && !/^## Agents\n[\s\S]*?^### What the agent reads$/m.test(md)) problems.push(`${p}: no "### What the agent reads" under ## Agents`);
 }
 
 // ── Token names in specifications ────────────────────────────────────────────────────────────────────

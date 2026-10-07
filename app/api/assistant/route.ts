@@ -5,6 +5,7 @@ import { clock, collections } from '@/data/collections';
 import { Unauthenticated, can, collectionFor, resolveAccess } from '@/data/access';
 import { collectionTag } from '@/data/read';
 import { respond } from '@/lib/assistant/respond';
+import { viewTools } from '@/views/tools';
 
 /** The panel sends at most the last 100 messages; a larger body than 2 MB is refused before it is parsed. */
 const MAX_MESSAGES = 100;
@@ -20,7 +21,7 @@ export async function POST(request: Request): Promise<Response> {
   const raw = await request.text();
   if (raw.length > MAX_BODY) return new Response(null, { status: 413 });
   const body: unknown = (() => { try { return JSON.parse(raw); } catch { return null; } })();
-  const { messages, page } = (body ?? {}) as { messages?: unknown; page?: { path?: unknown; title?: unknown; text?: unknown } };
+  const { messages, page } = (body ?? {}) as { messages?: unknown; page?: { path?: unknown; title?: unknown; context?: unknown; text?: unknown } };
   if (!Array.isArray(messages) || messages.length === 0 || messages.length > MAX_MESSAGES) return new Response(null, { status: 400 });
   const valid = await safeValidateUIMessages({ messages });
   if (!valid.success) return new Response(null, { status: 400 });
@@ -40,9 +41,11 @@ export async function POST(request: Request): Promise<Response> {
   return respond({
     ...config,
     collections: readable,
+    // Every view's read-only tool; each reads through `read()`, so it sees only what this caller may read.
+    views: viewTools,
     guard,
     now: clock(),
     messages: valid.data,
-    page: { path: String(page?.path ?? ''), title: String(page?.title ?? ''), text: String(page?.text ?? '') },
+    page: { path: String(page?.path ?? ''), title: String(page?.title ?? ''), context: String(page?.context ?? ''), text: String(page?.text ?? '') },
   });
 }

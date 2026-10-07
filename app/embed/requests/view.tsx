@@ -13,41 +13,35 @@ import { FilterBar } from '@/components/patterns/filter-bar';
 import { Freshness } from '@/components/patterns/freshness';
 import { formatDuration } from '@/lib/format';
 import { formatRelative } from '@/lib/format-date';
-import { DEMO_UPDATED_AT, REGIONS, type RequestRow } from '@/data/sample';
-import type { requestsQuery } from '@/data/requests';
+import { REGIONS } from '@/data/sample';
+import { describeFilters, requestsContext, type RequestsData } from '@/views/requests-context';
 import { activeFilters, options, REQUEST_FILTERS, REQUEST_METHODS, useSearchDraft } from '@/views/requests';
 import { MethodChip, requestColumns, StatusBadge } from '@/system/sample-cells';
-
-const describe = (f: State) =>
-  [f.status !== 'all' && `status ${f.status}`, f.method !== 'all' && f.method, f.region !== 'all' && `in ${f.region}`, f.q && `matching "${f.q}"`].filter(Boolean).join(', ');
 
 /** A person's change replaces the tool's `by`: the default must be a value a write can differ from, because a key at its default is dropped from the address. */
 const PERSON = 'you';
 
-type State = ReturnType<typeof requestsQuery>['state'];
-
 /** The server filtered, sorted and paged: `rows` is one page of the matching set, `total` how many match. */
-export function EmbedRequests({ rows, total, state, pageSize, now }: { rows: RequestRow[]; total: number; state: State; pageSize: number; now: string }) {
+export function EmbedRequests(data: RequestsData) {
+  const { rows, total, state, pageSize, now } = data;
   const asOf = useMemo(() => new Date(now), [now]);
+  const updatedAt = useMemo(() => new Date(data.updatedAt), [data.updatedAt]);
   const s = useSurface();
   const [f, set] = useQueryState({ ...REQUEST_FILTERS, by: 'Claude', sort: 'at', dir: 'desc', page: '1' });
   const [draft, setDraft] = useSearchDraft(state.q, (q) => set({ q, by: PERSON, page: '1' }));
   const isFiltered = state.q !== '' || state.status !== 'all' || state.method !== 'all' || state.region !== 'all';
-  const scope = describe(state);
+  const scope = describeFilters(state);
   const latest = rows.slice(0, 5);
   const query = new URLSearchParams(activeFilters(state)).toString();
   const consolePath = `/requests${query ? `?${query}` : ''}`;
 
-  useShareView(
-    `${total} requests${scope ? ` with ${scope}` : ''}. Latest: ${latest.map((r) => `${r.method} ${r.route} ${r.status} in ${r.latency}ms (${r.id})`).join('; ') || 'none'}.`,
-    { view: 'requests', filters: { status: state.status, method: state.method, region: state.region, q: state.q }, total, latest: latest.map((r) => r.id) },
-  );
+  useShareView(requestsContext(data, s.mode === 'fullscreen' ? rows.length : latest.length));
 
   if (s.mode === 'fullscreen') {
     const clear = () => { setDraft(''); set({ ...REQUEST_FILTERS, by: PERSON, page: '1' }); };
     const change = (patch: Partial<typeof REQUEST_FILTERS>) => set({ ...patch, by: PERSON, page: '1' });
     return (
-      <EmbedFrame title="Requests" meta={<Freshness updatedAt={DEMO_UPDATED_AT} now={asOf} />} consolePath={consolePath}>
+      <EmbedFrame title="Requests" meta={<Freshness updatedAt={updatedAt} now={asOf} />} consolePath={consolePath}>
         <DataTable
           caption="Requests"
           noun="requests"
@@ -83,7 +77,7 @@ export function EmbedRequests({ rows, total, state, pageSize, now }: { rows: Req
   return (
     <EmbedFrame
       title={scope ? `Requests · ${scope}` : 'Latest requests'}
-      meta={<Freshness updatedAt={DEMO_UPDATED_AT} now={asOf} />}
+      meta={<Freshness updatedAt={updatedAt} now={asOf} />}
       consolePath={consolePath}
       expandable={total > latest.length}
     >

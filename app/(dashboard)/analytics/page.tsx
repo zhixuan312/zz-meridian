@@ -6,7 +6,7 @@ import { Freshness } from '@/components/patterns/freshness';
 import { PeriodSelect } from '@/components/patterns/period-select';
 import { Skeleton } from '@/components/ui/skeleton';
 import { AnalyticsBody } from '@/views/analytics';
-import { DEMO_NOW, DEMO_UPDATED_AT, ENDPOINTS, demoHeatmap, demoSeries, REGION_LATENCY, requestsByHour } from '@/data/sample';
+import { ACTIVITY, DEMO_NOW, DEMO_UPDATED_AT, ENDPOINTS, INCIDENTS, PAST_INCIDENTS, demoHeatmap, demoSeries, REGION_LATENCY, requestsByHour } from '@/data/sample';
 import { parsePeriod } from '@/lib/period';
 import { Busy } from '../_loading';
 import { AnalyticsSkeleton } from './loading';
@@ -48,5 +48,5 @@ async function Actions({ searchParams }: { searchParams: SearchParams }) {
 
 async function Body({ searchParams }: { searchParams: SearchParams }) {
   const period = parsePeriod((await searchParams).period);
-  return <AnalyticsBody series={demoSeries(period).current} heat={demoHeatmap()} hours={requestsByHour()} regions={REGION_LATENCY} endpoints={ENDPOINTS} />;
+  return <AnalyticsBody period={period} series={demoSeries(period).current} heat={demoHeatmap()} hours={requestsByHour()} regions={REGION_LATENCY} endpoints={ENDPOINTS} activity={ACTIVITY} incidents={[...INCIDENTS, ...PAST_INCIDENTS]} updatedAt={DEMO_UPDATED_AT.toISOString()} now={DEMO_NOW.toISOString()} />;
 }

@@ -83,7 +83,7 @@ These rules cost the console almost nothing (addressable state is good practice 
 
 | | Console | Mobile | Embed inline | Embed fullscreen |
 |---|---|---|---|---|
-| Reads | The assistant panel reads the page and the product's data; Activity shows its audit | Same | The view's shared context | The view's shared context |
+| Reads | The assistant panel reads the view's shared context, the page and the product's data; Activity shows its audit | Same | The view's shared context | The view's shared context, the same one |
 | Asks (person to agent) | The assistant panel (a third column from 1024px) | The assistant panel as a sheet | Ask on cards | Ask on cards |
 | Proposes (agent to person) | A Proposal in the assistant's thread; the inbox in Activity | Same | One Proposal card per tool result | Proposals in the page |
 | Marks | Agent mark and "via" | Same | Same | Same |

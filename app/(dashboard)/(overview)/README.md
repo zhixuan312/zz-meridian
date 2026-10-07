@@ -41,7 +41,23 @@ From `src/system/fixtures/sample.ts`: `demoSeries(period)` (one point per day, a
 
 ## Agents
 
-The embed view shares the period and its totals, or the day the Meridian points at, with the model. Ask on the trend posts "Why did requests change on <day>?". The Activity feed marks the agent's own changes ("Claude … · for Jonas Weber").
+The page shares one context with both agents (decision 0011), built by `overviewContext` in `src/views/overview-context.ts` from the figures the page draws. The Activity feed marks the agent's own changes ("Claude … · for Jonas Weber").
+
+### What the agent reads
+
+The period with its dates, freshness, the four figures, each with its change against the previous period and its definition (the tiles' `hint`s come from the same `OVERVIEW_METRICS`), the day the Meridian points at against the same weekday and the period's median, and what code computed:
+
+```text
+- Error rate was 2.6× to 2.7× the period's median of 0.81% on 21 and 22 Sept (2.13%, 2.18%); no other day passed 1.2×.
+- Latency p95 rose on the same days: 525ms and 505ms against a median of 296ms.
+Unknown:
+- Nothing is recorded between 20 Sept and 23 Sept: no incident and no activity event, so nothing on this page explains the rise on 21 and 22 Sept.
+```
+
+It also says which endpoint contributes most errors, that requests follow the week, what the status classes mean against the error rate's definition, which incident sits beside a spike when one does (in 90 days: "Upload failures for files over 50 MB"), and that today is partial.
+
+- **MCP App:** the text above as `ui/update-model-context`, with the same context as its structured part, from the inline view and from fullscreen alike, on load and on every change.
+- **Console assistant:** the same text in its prompt's `<view-context>` block, with the page's address and query, and the page text after it for anything the context does not cover.
 
 ## Embed view
 

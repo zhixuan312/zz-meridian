@@ -26,9 +26,9 @@ Every view's state lives in its address: the period, the filters, the sort, the 
 
 ### 2. Legible
 
-Every embed view tells the model what is on screen, as one plain sentence and as structured facts, and tells it again when that changes: a filter, the period, the day the Meridian points at. "Why did this spike?" then has a referent, and the agent answers about the day the person is looking at, not the one it guessed.
+Every view tells both agents what is on screen in one shared context (decision 0011), and tells them again when that changes: a filter, the period, the day the Meridian points at. "Why did this spike?" then has a referent, and the agent answers about the day the person is looking at, not the one it guessed. The context is the whole state every time: its address and scope, how fresh the data is, what the person points at, each figure with its unit, its change and its definition, what code computed from them (a baseline, a deviation, a share, with the address of its evidence), and what the data cannot say.
 
-**In the system:** `useShareView(text, structured)` sends `ui/update-model-context`, debounced, only when a host is connected. The sentence is written for a model: figures with units, the period named, nothing implied by layout.
+**In the system:** a view's context is built by a pure function beside it (`example:src/views/overview-context.ts`) and passed to `useShareView(context)`. In an MCP host that sends `ui/update-model-context`, debounced, once a host is connected; on the console the assistant reads the same context with the person's next question. `contextText` writes it as labelled lines for a model; the structured part mirrors them, but the text stands alone, because a host need not give the model the structured part.
 
 ### 3. Consent
 
@@ -54,19 +54,42 @@ A person hands any card to the agent with one press. **Ask** posts a question ab
 
 - Name the period and the unit every time: "2.94M requests in the last 30 days", not "2.94M".
 - Prefer facts to adjectives: "errors rose from 0.6% to 2.1% on 21 and 22 September", not "errors spiked".
-- Share what the person can see, nothing more: a hidden column is not context.
-- Keep the structured part flat and stable: `{ view, period, day, filters }`. The model will compare it across turns.
+- Share what the person may read, and what code derives from it, nothing more. A baseline, a deviation, a ranking or a share computed from data in the view's scope is context: it is how the agent points at what is in front of the person but not obvious. A `hidden` field, another tenant's data, what only a page may show, and a count that would disclose any of them are never context. A derived figure names its method and window and is never finer-grained than what the person may read. A column the layout dropped for width is still the person's to read (decision 0011).
+- Code computes, the model interprets: every figure the agent quotes arrives computed in the context; the model explains what it might mean.
+- Keep the context's shape stable: the same lines in the same order every turn, so a model compares one turn with the next. Send the whole state, never only what changed: a host keeps only the latest update.
+- Say what the data cannot say: a partial day, a tiny sample, a spike nothing recorded explains. A gap left unsaid is filled with a guess.
 
 ## The console's own assistant
 
-The second place is inside the product. The assistant panel reads the page the person is on, looks records up through the product's collections (`optional:src/data/collections.ts`) and proposes changes as Proposals in its thread. It follows the same rules: it reads what the person may read, changes nothing without approval, and leaves its mark (the Agent mark and the "Assistant" caption). It is off until a model is configured. `example:docs/assistant.md` says how to switch it on and point it at your data, and how the same tools can later be offered from an MCP server.
+The second place is inside the product. The assistant panel reads the page the person is on (its address with the query, the view's shared context, then the visible text), looks records up through the product's collections (`optional:src/data/collections.ts`) and proposes changes as Proposals in its thread. It follows the same rules: it reads what the person may read, changes nothing without approval, and leaves its mark (the Agent mark and the "Assistant" caption). It is off until a model is configured. `example:docs/assistant.md` says how to switch it on and point it at your data, and how the same tools can later be offered from an MCP server.
 
 ## Building an MCP server for the template
 
-The template ships the views; the server is yours. For each embed route:
+The template ships the views and their tool contracts; the server is yours. Every view's contract is in `example:src/views/tools.ts`: its `name`, the question it answers (`description`), its address as a zod `input`, its `resourceUri` when it has an embed route, and one `read` that returns what the view renders (`data`) and what both agents are told (`context`). The console's assistant already offers each one as `view_<name>`; register the same list:
 
-1. Register a resource `ui://zz-meridian/<view>` with `mimeType: "text/html;profile=mcp-app"`. Its content is the built HTML of the route (or a small HTML document that loads it from your deployment, allowed by the resource's CSP).
-2. Register a tool whose `_meta.ui.resourceUri` names that resource and whose input schema uses the view's address parameters (`period`, `status`, `route`).
-3. Return the data the view needs as the tool's result, so the view can render without a second round trip.
+```ts
+import { z } from 'zod';
+import { toolPrefix } from '@/app.config';
+import { contextText } from '@/lib/shared-context';
+import { viewTools } from '@/views/tools';
 
-The view's side is already done: `EmbedSurface` performs `ui/initialize`, applies the host's theme and style variables, reports its height, and exposes `expand`, `ask`, `share` and `openLink` through `useSurface()`. To use the official SDK instead of the built-in bridge, replace `src/lib/host.ts` with `@modelcontextprotocol/ext-apps`; no component changes. `src/lib/host.ts` is a managed file, so list it in `optional:.meridian/keep.json` (see `update.md`, "Keeping a file on purpose") or every update stages it as a conflict.
+for (const v of viewTools) {
+  server.registerTool(`${toolPrefix}_${v.name}`, {
+    description: v.description,
+    inputSchema: z.toJSONSchema(v.input),
+    annotations: { readOnlyHint: true },
+    ...(v.resourceUri ? { _meta: { ui: { resourceUri: v.resourceUri } } } : {}),
+  }, async (input) => {
+    const { context, data } = await v.read(v.input.parse(input));
+    // `content` is what the model reads; `structuredContent` is the view's data, which the specification keeps out of
+    // the model's context. The text therefore carries everything.
+    return { content: [{ type: 'text', text: contextText(context) }], structuredContent: data };
+  });
+}
+```
+
+1. For each `resourceUri`, register a resource with `mimeType: "text/html;profile=mcp-app"`. Its content is the built HTML of the embed route (or a small HTML document that loads it from your deployment, allowed by the resource's CSP). The route renders from the tool's own `read`, so the model and the view start from one read.
+2. Run every `read` with the MCP caller's scope, as the assistant route runs it with the console's: `read()` asks `resolveAccess()` and `can()`, so a caller sees only what they may read, and a `hidden` field is never in a context.
+3. **A write is a pair of tools, and only one is the model's.** The model calls a read-only `propose_…` tool that returns the Proposal view; the person's Approve in that view calls the apply tool through the host (`tools/call`). Register the apply tool with `_meta.ui.visibility: ["app"]`: the specification requires a host to leave such a tool out of the model's list, so the model cannot run a change by itself. Sign what the propose tool returns and check the signature, the run-once rule and `can` again in the apply tool, as the console's assistant does (`example:docs/assistant.md`).
+
+The view's side is already done: `EmbedSurface` performs `ui/initialize`, applies the host's theme and style variables, reports its height, and exposes `expand`, `ask`, `share` and `openLink` through `useSurface()`; every view shares its context with `useShareView`. To use the official SDK instead of the built-in bridge, replace `src/lib/host.ts` with `@modelcontextprotocol/ext-apps`; no component changes.

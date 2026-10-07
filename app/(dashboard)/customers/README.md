@@ -39,7 +39,18 @@ None yet: a `zz_meridian_customer { name }` view would show one customer's card 
 
 ## Agents
 
-An agent reads customers through their requests view; it never changes a plan or invites from here.
+An agent reads customers through this page's shared context and their requests view; it never changes a plan or invites from here. The context is built by `customersContext` in `src/views/customers-context.ts`, and the tiles' `hint`s come from its `CUSTOMER_METRICS`.
+
+### What the agent reads
+
+The three tiles with their definitions, every customer in the table's filter and order (with the columns a narrow screen drops: the error rate and the trend are still the person's to read), and what code found: how concentrated spend is, how combined requests moved over the last 7 days against the 7 before and who departs from that by 10 points or more, and which customers fail at twice the median rate. Lists stop at 25 and say how many more there are.
+
+```text
+- Combined requests are up 15% over the last 7 days against the 7 before. Apart from that: Fernway Bank up 36%.
+```
+
+- **Console assistant:** this text in its prompt's `<view-context>` block, with the page's address and query, and the page text after it for anything the context does not cover.
+- **MCP App:** no embed view yet; an MCP server can return this context as a tool's text (`docs/agents.md`).
 
 ## Content
 

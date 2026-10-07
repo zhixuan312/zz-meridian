@@ -23,6 +23,8 @@ import { formatDate, formatRelative } from '@/lib/format-date';
 import { useLive } from '@/lib/live';
 import type { ApiKey } from '@/data/sample';
 import { SCOPES, type Scope } from '@/views/key-scopes';
+import { useShareView } from '@/components/base/use-share-view';
+import { keysContext } from './keys-context';
 
 
 type Draft = { name: string; env: 'live' | 'test'; scopes: Scope[] };
@@ -30,6 +32,7 @@ type Draft = { name: string; env: 'live' | 'test'; scopes: Scope[] };
 /** The server actions arrive as props: the page owns them, the view only calls them and refreshes the route. */
 /** `now` is the read's observation time, so "last used" is never fresher than the data. */
 export function KeysView({ rows, now, createKey, revokeKey }: { rows: ApiKey[]; now: string; createKey: (draft: Draft) => Promise<ApiKey & { secret: string }>; revokeKey: (id: string) => Promise<void> }) {
+  useShareView(keysContext(rows, now, SCOPES));
   const router = useRouter();
   useLive(['keys']);
   const asOf = new Date(now);

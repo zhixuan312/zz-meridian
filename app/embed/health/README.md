@@ -29,7 +29,12 @@ Embed only, at 360 to 760px inline and the host's full panel in fullscreen. The 
 
 ## Agents
 
-Shared with the model on load and on every change: "ZZ Meridian health: 1 service degraded (Inference API degraded). Open incident: Elevated latency on Inference API in eu-west-1, monitoring." with `{ view, state, affected, incident }`. Ask on the banner posts "What is the impact of … on my traffic?".
+The Health page's context (`app/(dashboard)/health/README.md` lists it), inline and in fullscreen. Ask on the banner posts "What is the impact of … on my traffic?".
+
+### What the agent reads
+
+- **MCP App:** the text above as `ui/update-model-context`, with the same context as its structured part, from the inline view and from fullscreen alike, on load and on every change.
+- **Console assistant:** the same text in its prompt's `<view-context>` block, with the page's address and query, and the page text after it for anything the context does not cover.
 
 ## Accessibility
 

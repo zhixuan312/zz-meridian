@@ -5,8 +5,8 @@ import { Freshness } from '@/components/patterns/freshness';
 import { PeriodSelect } from '@/components/patterns/period-select';
 import { Skeleton } from '@/components/ui/skeleton';
 import { OverviewBody } from '@/views/overview';
-import { DEMO_NOW, DEMO_UPDATED_AT, demoSeries, demoTotals, ENDPOINTS, STATUS_MIX, ACTIVITY } from '@/data/sample';
-import { parsePeriod, PERIOD_LABEL } from '@/lib/period';
+import { DEMO_NOW, DEMO_UPDATED_AT, demoSeries, demoTotals, ENDPOINTS, STATUS_MIX, ACTIVITY, INCIDENTS, PAST_INCIDENTS } from '@/data/sample';
+import { parsePeriod } from '@/lib/period';
 import { app } from '@/app.config';
 import { Busy } from '../_loading';
 import { OverviewSkeleton } from './loading';
@@ -48,5 +48,5 @@ async function Actions({ searchParams }: { searchParams: SearchParams }) {
 
 async function Body({ searchParams }: { searchParams: SearchParams }) {
   const period = parsePeriod((await searchParams).period);
-  return <OverviewBody period={PERIOD_LABEL[period].toLowerCase()} series={demoSeries(period).current} totals={demoTotals(period)} endpoints={ENDPOINTS} mix={STATUS_MIX} activity={ACTIVITY} now={DEMO_NOW.toISOString()} />;
+  return <OverviewBody period={period} series={demoSeries(period).current} totals={demoTotals(period)} endpoints={ENDPOINTS} mix={STATUS_MIX} activity={ACTIVITY} incidents={[...INCIDENTS, ...PAST_INCIDENTS]} updatedAt={DEMO_UPDATED_AT.toISOString()} now={DEMO_NOW.toISOString()} />;
 }

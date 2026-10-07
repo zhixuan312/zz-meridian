@@ -23,4 +23,9 @@ Status: beta
 
 ## Agents
 
-Shares "ZZ Meridian overview for the last 30 days: 2.9M requests, 0.90% errors, p95 294ms." and, when a day is pointed at, "The person is looking at 22 Sept 2026: 128,402 requests, 2.31% errors, p95 486ms.", with `{ view, period, day }` as structured content.
+The Overview page's context, unchanged (`app/(dashboard)/(overview)/README.md` lists it): the view renders the console's figures and shares the console's context, so an MCP host and the console's assistant are told the same thing. Ask on the trend posts "Why did requests change on <day>?" or "What drove the trend in requests this period?".
+
+### What the agent reads
+
+- **MCP App:** the text above as `ui/update-model-context`, with the same context as its structured part, from the inline view and from fullscreen alike, on load and on every change.
+- **Console assistant:** the same text in its prompt's `<view-context>` block, with the page's address and query, and the page text after it for anything the context does not cover.

@@ -42,6 +42,13 @@ Appearance reads and writes `usePreferences()` (stored on the device). Time zone
 
 This is where people govern agents: whether assistants may read, which are connected, and the rule (locked on) that nothing an agent proposes runs without approval, a removal included. The assistant section, shown only where the product has an assistant, holds the person's switch for its panel.
 
+### What the agent reads
+
+Every section's current values, which neither an input's nor a switch's text carries: the workspace's name, address and time zone (and an unsaved edit, when there is one), each notification switch, this device's theme, accent and density, whether the assistant is shown, whether assistants may read dashboards and which are connected with what they may do, and that deleting the workspace is typed, never proposed. Each section reports its own line; `SettingsBody` shares them as one context. None is offered to an agent as a change, and the context says so.
+
+- **Console assistant:** this text in its prompt's `<view-context>` block, with the page's address and query, and the page text after it for anything the context does not cover.
+- **MCP App:** no embed view yet; an MCP server can return this context as a tool's text (`docs/agents.md`).
+
 ## Accessibility
 
 - Each section is a form with its own submit; switches carry their label and description.

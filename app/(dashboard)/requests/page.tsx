@@ -65,6 +65,6 @@ async function RequestsExport({ searchParams }: { searchParams: SearchParams }) 
 }
 
 async function Requests({ searchParams }: { searchParams: SearchParams }) {
-  const { rows, total, summary, state } = await readPage(await searchParams);
-  return <RequestsView rows={rows} total={total} summary={summary} state={state} pageSize={REQUEST_PAGE} />;
+  const { rows, total, summary, state, observedAt } = await readPage(await searchParams);
+  return <RequestsView rows={rows} total={total} summary={summary} state={state} pageSize={REQUEST_PAGE} updatedAt={DEMO_UPDATED_AT.toISOString()} now={observedAt} />;
 }

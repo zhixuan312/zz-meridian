@@ -42,7 +42,14 @@ Without a live incident row 1 becomes one full-width featured card.
 
 ## Agents
 
-The page itself takes no agent action. Its embed shares the summary and the open incident with the model; an agent can be asked about the incident from the inline banner.
+The page itself takes no agent action. It shares one context with both agents (decision 0011), built by `healthContext` in `src/views/health-context.ts`.
+
+### What the agent reads
+
+Every service's state, latency now and uptime; the average uptime with its definition; which services carry the days below operational ("Inference API accounts for 3 of them"); the open incident with its latest update by time, not by position; the longest incident resolved in the period. Unknowns: that a monitoring incident is not yet confirmed fixed, and that latency is one reading with no history to call it unusual.
+
+- **MCP App:** the text above as `ui/update-model-context`, with the same context as its structured part, from the inline view and from fullscreen alike, on load and on every change.
+- **Console assistant:** the same text in its prompt's `<view-context>` block, with the page's address and query, and the page text after it for anything the context does not cover.
 
 ## Embed view
 

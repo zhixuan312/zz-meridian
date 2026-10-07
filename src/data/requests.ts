@@ -50,7 +50,7 @@ export function requestsQuery(params: Params) {
 }
 
 /** A collection row as a page may carry it: the record, without the values the data layer worked out. */
-export const publicRows = (rows: Record<string, unknown>[]): RequestRow[] =>
+const publicRows = (rows: Record<string, unknown>[]): RequestRow[] =>
   rows.map(({ id, at, method, route, status, latency, customer, region, bytes, model }) => ({ id, at, method, route, status, latency, customer, region, bytes, model }) as RequestRow);
 
 const isError = (r: RequestRow) => r.status >= 500 || r.status === 429;
@@ -60,6 +60,17 @@ const p95Of = (rs: RequestRow[]) => {
 };
 const errorShare = (rs: RequestRow[]) => (rs.length ? rs.filter(isError).length / rs.length : 0);
 const change = (now: number, before: number) => (before ? now / before - 1 : null);
+
+/** The commonest route, customer and region in `rows`, each with its share of them. */
+function commonest(rows: RequestRow[]) {
+  const top = (key: (r: RequestRow) => string) => {
+    const counts = new Map<string, number>();
+    for (const r of rows) counts.set(key(r), (counts.get(key(r)) ?? 0) + 1);
+    const [value, n] = [...counts].reduce((m, e) => (e[1] > m[1] ? e : m), ['', 0]);
+    return rows.length ? { value, share: n / rows.length } : null;
+  };
+  return { count: rows.length, route: top((r) => `${r.method} ${r.route}`), customer: top((r) => r.customer), region: top((r) => r.region) };
+}
 
 /** What the tiles draw, worked out on the server: twelve 5-minute buckets, oldest first, and the last half hour against the one before. */
 function summarize(rows: RequestRow[], total: number, observedAt: string) {
@@ -77,6 +88,13 @@ function summarize(rows: RequestRow[], total: number, observedAt: string) {
     p95: p95Of(rows),
     buckets: { count: out.map((b) => b.length), errors: out.map(errorShare), p95: out.map(p95Of) },
     deltas: { count: delta((rs) => rs.length), errors: delta(errorShare), p95: delta(p95Of) },
+    /** How many requests each half hour holds: a change between two handfuls is not a trend. */
+    halves: { before: half((rs) => rs.length, 0, 6), after: half((rs) => rs.length, 6, 12) },
+    /** The oldest and newest request summarized. */
+    span: rows.length ? { from: rows.reduce((m, r) => (r.at < m ? r.at : m), rows[0].at), to: rows.reduce((m, r) => (r.at > m ? r.at : m), rows[0].at) } : null,
+    /** What the summarized requests, and their errors, most have in common: the commonest value of each field and its share. */
+    common: { all: commonest(rows), errors: commonest(rows.filter(isError)) },
+    rows: rows.length,
     partial: total > SUMMARY_ROWS,
   };
 }
