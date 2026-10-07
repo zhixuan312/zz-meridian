@@ -84,7 +84,7 @@ A production adapter binds the predicate and the subscription filter; prepending
  * database predicate already applied, and `allows` says what the scope may do with each collection. `authorizationKey`
  * must change whenever what the scope may see changes, because the cached read keys on it.
  */
-import { keys, members, requests } from '@/data/collections';
+import { activity, days, endpoints, incidents, keys, members, requests, responses, services } from '@/data/collections';
 import type { AnyCollection } from '@/lib/collection';
 
 export type AccessScope = Readonly<{
@@ -142,6 +142,12 @@ const DEMO_COLLECTIONS: Record<string, { collection: AnyCollection; ops: readonl
   members: { collection: members, ops: ['read', 'create', 'update', 'remove'] },
   keys: { collection: keys, ops: ['read', 'create', 'remove'] },
   requests: { collection: requests, ops: ['read', 'create'] },
+  days: { collection: days, ops: ['read'] },
+  endpoints: { collection: endpoints, ops: ['read'] },
+  responses: { collection: responses, ops: ['read'] },
+  services: { collection: services, ops: ['read'] },
+  incidents: { collection: incidents, ops: ['read'] },
+  activity: { collection: activity, ops: ['read', 'create'] },
 };
 
 export const { resolveAccess, collectionFor, can } = accessFrom({

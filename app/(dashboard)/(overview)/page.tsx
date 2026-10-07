@@ -5,7 +5,9 @@ import { Freshness } from '@/components/patterns/freshness';
 import { PeriodSelect } from '@/components/patterns/period-select';
 import { Skeleton } from '@/components/ui/skeleton';
 import { OverviewBody } from '@/views/overview';
-import { DEMO_NOW, DEMO_UPDATED_AT, demoSeries, demoTotals, ENDPOINTS, STATUS_MIX, ACTIVITY, INCIDENTS, PAST_INCIDENTS } from '@/data/sample';
+import { DEMO_NOW, DEMO_UPDATED_AT } from '@/data/sample';
+import { overviewTool } from '@/views/tools';
+import { cache } from 'react';
 import { parsePeriod } from '@/lib/period';
 import { app } from '@/app.config';
 import { Busy } from '../_loading';
@@ -13,7 +15,10 @@ import { OverviewSkeleton } from './loading';
 
 export const metadata = { title: 'Overview' };
 
-type SearchParams = Promise<{ period?: string }>;
+type SearchParams = Promise<{ period?: string; day?: string }>;
+
+/** The page's one read, through the Overview tool (`src/views/tools.ts`), shared by the export and the body. */
+const readPeriod = cache((period: ReturnType<typeof parsePeriod>, day?: string) => overviewTool.read({ period, day: /^\d{4}-\d{2}-\d{2}$/.test(day ?? '') ? day : undefined }));
 
 /** The masthead renders at once; the period select, the export and the body read the address inside their own boundaries. */
 export default function OverviewPage({ searchParams }: { searchParams: SearchParams }) {
@@ -38,15 +43,17 @@ export default function OverviewPage({ searchParams }: { searchParams: SearchPar
 
 async function Actions({ searchParams }: { searchParams: SearchParams }) {
   const period = parsePeriod((await searchParams).period);
+  const { data } = await readPeriod(period);
   return (
     <>
       <Suspense><PeriodSelect value={period} /></Suspense>
-      <ExportButton rows={demoSeries(period).current} filename={`overview-${period}.csv`} noun="days" className="max-sm:hidden" />
+      <ExportButton rows={data.series} filename={`overview-${period}.csv`} noun="days" className="max-sm:hidden" />
     </>
   );
 }
 
 async function Body({ searchParams }: { searchParams: SearchParams }) {
-  const period = parsePeriod((await searchParams).period);
-  return <OverviewBody period={period} series={demoSeries(period).current} totals={demoTotals(period)} endpoints={ENDPOINTS} mix={STATUS_MIX} activity={ACTIVITY} incidents={[...INCIDENTS, ...PAST_INCIDENTS]} updatedAt={DEMO_UPDATED_AT.toISOString()} now={DEMO_NOW.toISOString()} />;
+  const { period, day } = await searchParams;
+  const { data } = await readPeriod(parsePeriod(period), day);
+  return <OverviewBody {...data} />;
 }

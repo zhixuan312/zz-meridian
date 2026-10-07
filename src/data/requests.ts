@@ -5,7 +5,8 @@
  */
 import type { Query } from '@/lib/collection';
 import { read } from '@/data/read';
-import { ENDPOINTS, REGIONS, type RequestRow } from '@/data/sample';
+import { REQUEST_METHODS } from '@/data/request-methods';
+import { REGIONS, type RequestRow } from '@/data/sample';
 
 /** Rows a page sends, and the size the table pages by. */
 export const REQUEST_PAGE = 20;
@@ -15,7 +16,6 @@ const MAX_PAGE = 5000;
 const MAX_Q = 100;
 
 const STATUSES = ['2xx', '3xx', '4xx', '5xx'];
-const METHODS = [...new Set(ENDPOINTS.map((e) => e.method))];
 const REGION_IDS = REGIONS.map((r) => r.label);
 /** The table's sortable columns, and the field each one orders by. */
 const SORT_FIELD: Record<string, string> = { request: 'route', status: 'status', latency: 'latency', customer: 'customer', size: 'bytes', at: 'at' };
@@ -33,7 +33,7 @@ const oneOf = (v: string | string[] | undefined, allowed: string[]) => (allowed.
 export function requestsQuery(params: Params) {
   const q = one(params.q).trim().slice(0, MAX_Q);
   const status = oneOf(params.status, STATUSES);
-  const method = oneOf(params.method, METHODS);
+  const method = oneOf(params.method, REQUEST_METHODS);
   const region = oneOf(params.region, REGION_IDS);
   const sort = one(params.sort) in SORT_FIELD ? one(params.sort) : 'at';
   const dir = one(params.dir) === 'asc' ? 'asc' : 'desc';

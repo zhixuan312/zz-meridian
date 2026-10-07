@@ -15,7 +15,7 @@ import { detailHead } from '@/components/patterns/detail-head';
 import { cn } from '@/lib/cn';
 import { formatCost, formatDuration } from '@/lib/format';
 import { formatDateTime, formatRelative } from '@/lib/format-date';
-import { ENDPOINTS, type RequestRow, STATUS_TEXT, statusTone, usageOf, type Span } from '@/data/sample';
+import { type RequestRow, STATUS_TEXT, statusTone, usageOf, type Span } from '@/data/sample';
 import { formatBytes } from '@/system/sample-cells';
 import { domain } from '@/app.config';
 
@@ -72,8 +72,8 @@ function Code({ body, label }: { body: string; label: string }) {
 }
 
 /** `replay` is the page's Server Action: it sends the request again and answers with the new request, or why not. */
-export function RequestView({ request: r, trace, payloads, now, replay }: { request: RequestRow; trace: Span[]; payloads: { request: string | null; response: string }; now: string; replay: (id: string) => Promise<{ ok: true; id: string; status: number } | { ok: false; error: string }> }) {
-  useShareView(requestContext({ request: r, trace, routeP95: ENDPOINTS.find((e) => e.method === r.method && e.route === r.route)?.p95 ?? null, statusText: STATUS_TEXT[r.status] ?? '', payloadBytes: { request: payloads.request?.length ?? null, response: payloads.response.length }, now }));
+export function RequestView({ request: r, trace, payloads, routeP95, now, replay }: { request: RequestRow; trace: Span[]; payloads: { request: string | null; response: string }; /** The route's p95 over the period, for "is this slow?". */ routeP95: number | null; now: string; replay: (id: string) => Promise<{ ok: true; id: string; status: number } | { ok: false; error: string }> }) {
+  useShareView(requestContext({ request: r, trace, routeP95, statusText: STATUS_TEXT[r.status] ?? '', payloadBytes: { request: payloads.request?.length ?? null, response: payloads.response.length }, now }));
   const router = useRouter();
   const usage = usageOf(r);
   const failed = r.status >= 500 || r.status === 429;

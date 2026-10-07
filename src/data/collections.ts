@@ -17,7 +17,11 @@ import { z } from 'zod';
 import { arrayCollection, type AnyCollection, type Collection } from '@/lib/collection';
 import { API_KEYS, type ApiKey } from '@/system/fixtures/sample-records';
 import { MEMBERS, ROLES, STATUSES, TEAMS, type Member } from '@/system/fixtures/sample-members';
-import { DEMO_NOW, REQUESTS, type RequestRow } from '@/system/fixtures/sample';
+import { ACTIVITY, DEMO_NOW, ENDPOINTS, INCIDENTS, REQUESTS, SERVICES, STATUS_MIX, demoSeries, type DailyPoint, type Endpoint, type RequestRow } from '@/system/fixtures/sample';
+import { PAST_INCIDENTS } from '@/system/fixtures/sample-ops';
+import type { ActivityEvent } from '@/components/patterns/activity-feed';
+import type { Incident } from '@/components/patterns/incident-card';
+import type { Service } from '@/components/patterns/status-list';
 import { statusClass } from '@/data/sample';
 
 /** The data's "now": the sample's fixed clock. A product returns `new Date()`. */
@@ -95,4 +99,83 @@ export const requests: Collection<RequestRecord, 'id'> = arrayCollection({
   pageOnly: ['create'],
 });
 
-export const collections: AnyCollection[] = [members, keys, requests];
+/** One row per day: what the Overview's and Analytics' figures, trends and baselines are computed from. Read-only. */
+export const days: Collection<DailyPoint, 'date'> = arrayCollection({
+  name: 'days',
+  label: 'Daily totals',
+  description: 'One row per day (UTC): requests answered, errors (5xx and 429), latency p95 in ms and spend in US dollars.',
+  key: 'date',
+  title: (d) => d.date,
+  fields: z.object({ requests: z.number(), errors: z.number(), p95: z.number(), spend: z.number() }),
+  // Every day the sample holds: the current period and the one before it, for the longest period it offers.
+  rows: [...demoSeries('all').previous, ...demoSeries('all').current],
+  allow: [],
+});
+
+/** Each endpoint over the period: requests, error rate and latency p95. Read-only. */
+export const endpoints: Collection<Endpoint & { id: string }, 'id'> = arrayCollection({
+  name: 'endpoints',
+  label: 'Endpoints',
+  description: 'Each API endpoint over the period: requests, error rate (5xx and 429, a fraction) and latency p95 in ms. The id is the method and route.',
+  key: 'id',
+  title: (e) => e.id,
+  fields: z.object({ method: z.string(), route: z.string(), requests: z.number(), errorRate: z.number(), p95: z.number() }),
+  rows: ENDPOINTS.map((e) => ({ ...e, id: `${e.method} ${e.route}` })),
+  allow: [],
+});
+
+/** Responses by status class over the period. Read-only. */
+export const responses: Collection<{ label: string; value: number }, 'label'> = arrayCollection({
+  name: 'responses',
+  label: 'Responses by class',
+  description: 'How many responses each status class (2xx, 3xx, 4xx, 5xx) had over the period.',
+  key: 'label',
+  title: (r) => r.label,
+  fields: z.object({ value: z.number() }),
+  rows: STATUS_MIX,
+  allow: [],
+});
+
+/** The monitored services: state now, uptime, latency and 90 days of history. Read-only. */
+export const services: Collection<Service & { order: number }, 'name'> = arrayCollection({
+  name: 'services',
+  label: 'Services',
+  description: 'Each monitored service: its state now, uptime over 90 days (a fraction), latency now in ms, and its state on each of the last 90 days.',
+  key: 'name',
+  title: (s) => s.name,
+  fields: z.object({ description: z.string(), status: z.enum(['operational', 'degraded', 'outage']), uptime: z.number(), latency: z.number(), days: z.array(z.enum(['operational', 'degraded', 'outage'])), order: z.number() }),
+  // `order` is where a service sits in every list: the gateway first, the way the team reads its stack.
+  rows: SERVICES.map((s, order) => ({ ...s, order })),
+  allow: [],
+});
+
+/** Incidents, live and resolved, with their updates. Read-only. */
+export const incidents: Collection<Incident, 'id'> = arrayCollection({
+  name: 'incidents',
+  label: 'Incidents',
+  description: 'Incidents, live and resolved: the service, the severity, the state, when it started and was resolved, and its updates.',
+  key: 'id',
+  title: (i) => i.title,
+  fields: z.object({ title: z.string(), service: z.string(), severity: z.enum(['minor', 'major']), state: z.enum(['investigating', 'monitoring', 'resolved']), started: z.string(), resolved: z.string().optional(), updates: z.array(z.object({ at: z.string(), text: z.string() })) }),
+  rows: [...new Map([...INCIDENTS, ...PAST_INCIDENTS].map((i) => [i.id, i])).values()],
+  allow: [],
+});
+
+/**
+ * What happened in the workspace, newest first: people's changes, the system's, and an agent's, marked with `via`.
+ * Only the server writes here: `pageOnly` keeps it off every agent's tools, and the assistant's approved changes are
+ * recorded by the route's `record` (decision 0011), never by a tool an agent could call.
+ */
+export const activity: Collection<ActivityEvent, 'id'> = arrayCollection({
+  name: 'activity',
+  label: 'Activity',
+  description: 'What happened in the workspace, with who did it and, for an agent\'s change, which agent and for whom.',
+  key: 'id',
+  title: (e) => `${e.actor} ${e.verb} ${e.object}`,
+  fields: z.object({ at: z.string(), actor: z.string(), system: z.boolean().optional(), via: z.string().optional(), verb: z.string(), object: z.string(), tone: z.enum(['positive', 'warning', 'critical']).optional() }),
+  rows: ACTIVITY,
+  allow: ['create'],
+  pageOnly: ['create'],
+});
+
+export const collections: AnyCollection[] = [members, keys, requests, days, endpoints, responses, services, incidents, activity];

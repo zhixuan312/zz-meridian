@@ -1,4 +1,5 @@
 import { read } from '@/data/read';
+import { readEndpoints } from '@/data/metrics';
 import { FEATURED_REQUEST_IDS, traceOf, payloadsOf, type RequestRow } from '@/data/sample';
 import { MissingPage } from '@/views/missing-page';
 import { RequestView } from '@/views/request';
@@ -23,5 +24,6 @@ export default async function RequestPage({ params }: { params: Promise<{ id: st
   const { request: r, observedAt } = await byId(id);
   // Rendered here rather than thrown, so the screen is in the first HTML (see MissingPage).
   if (!r) return <MissingPage />;
-  return <RequestView request={r} trace={traceOf(r)} payloads={payloadsOf(r)} now={observedAt} replay={replayRequest} />;
+  const route = (await readEndpoints()).find((e) => e.method === r.method && e.route === r.route);
+  return <RequestView request={r} trace={traceOf(r)} payloads={payloadsOf(r)} routeP95={route?.p95 ?? null} now={observedAt} replay={replayRequest} />;
 }

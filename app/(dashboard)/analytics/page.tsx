@@ -6,7 +6,9 @@ import { Freshness } from '@/components/patterns/freshness';
 import { PeriodSelect } from '@/components/patterns/period-select';
 import { Skeleton } from '@/components/ui/skeleton';
 import { AnalyticsBody } from '@/views/analytics';
-import { ACTIVITY, DEMO_NOW, DEMO_UPDATED_AT, ENDPOINTS, INCIDENTS, PAST_INCIDENTS, demoHeatmap, demoSeries, REGION_LATENCY, requestsByHour } from '@/data/sample';
+import { DEMO_NOW, DEMO_UPDATED_AT } from '@/data/sample';
+import { analyticsTool } from '@/views/tools';
+import { cache } from 'react';
 import { parsePeriod } from '@/lib/period';
 import { Busy } from '../_loading';
 import { AnalyticsSkeleton } from './loading';
@@ -36,17 +38,21 @@ export default function AnalyticsPage({ searchParams }: { searchParams: SearchPa
   );
 }
 
+/** The page's one read, through the Analytics tool (`src/views/tools.ts`), shared by the export and the body. */
+const readPeriod = cache((period: ReturnType<typeof parsePeriod>) => analyticsTool.read({ period }));
+
 async function Actions({ searchParams }: { searchParams: SearchParams }) {
   const period = parsePeriod((await searchParams).period);
+  const { data } = await readPeriod(period);
   return (
     <>
       <Suspense><PeriodSelect value={period} /></Suspense>
-      <ExportButton rows={demoSeries(period).current} filename={`analytics-${period}.csv`} noun="days" className="max-sm:hidden" />
+      <ExportButton rows={data.series} filename={`analytics-${period}.csv`} noun="days" className="max-sm:hidden" />
     </>
   );
 }
 
 async function Body({ searchParams }: { searchParams: SearchParams }) {
-  const period = parsePeriod((await searchParams).period);
-  return <AnalyticsBody period={period} series={demoSeries(period).current} heat={demoHeatmap()} hours={requestsByHour()} regions={REGION_LATENCY} endpoints={ENDPOINTS} activity={ACTIVITY} incidents={[...INCIDENTS, ...PAST_INCIDENTS]} updatedAt={DEMO_UPDATED_AT.toISOString()} now={DEMO_NOW.toISOString()} />;
+  const { data } = await readPeriod(parsePeriod((await searchParams).period));
+  return <AnalyticsBody {...data} />;
 }

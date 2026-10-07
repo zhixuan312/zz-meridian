@@ -12,7 +12,7 @@ import { payloadsOf, traceOf } from '@/data/sample';
 
 const failed = REQUESTS.find((r) => r.status >= 500)!;
 const view = (replay: (id: string) => Promise<{ ok: true; id: string; status: number } | { ok: false; error: string }>) =>
-  render(<RequestView request={failed} trace={traceOf(failed)} payloads={payloadsOf(failed)} now="2026-10-05T09:00:00.000Z" replay={replay} />);
+  render(<RequestView routeP95={612} request={failed} trace={traceOf(failed)} payloads={payloadsOf(failed)} now="2026-10-05T09:00:00.000Z" replay={replay} />);
 
 describe('Replay on a failed request', () => {
   it('sends it again and offers the new request', async () => {

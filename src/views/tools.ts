@@ -7,11 +7,12 @@
  */
 import { z } from 'zod';
 import { slug } from '@/app.config';
+import { clock } from '@/data/collections';
 import { read } from '@/data/read';
 import { readRequests, REQUEST_PAGE } from '@/data/requests';
+import { readActivity, readDays, readEndpoints, readIncidents, readResponses, readServices } from '@/data/metrics';
 import {
-  ACTIVITY, CUSTOMERS, DEMO_NOW, DEMO_UPDATED_AT, ENDPOINTS, INCIDENTS, PAST_INCIDENTS, REGION_LATENCY, SERVICES, STATUS_MIX, STATUS_TEXT,
-  demoHeatmap, demoSeries, demoTotals, payloadsOf, requestsByHour, traceOf,
+  CUSTOMERS, DEMO_UPDATED_AT, REGION_LATENCY, STATUS_TEXT, demoHeatmap, payloadsOf, requestsByHour, traceOf,
   type ApiKey, type Member, type RequestRow,
 } from '@/data/sample';
 import { PERIODS } from '@/lib/period';
@@ -29,7 +30,6 @@ import { requestsContext } from './requests-context';
 const day = z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional().describe('A day of the period, YYYY-MM-DD: the view opens pointed at it.');
 const period = z.enum(PERIODS).optional().describe('The reporting period; 30d when not given.');
 const updatedAt = () => DEMO_UPDATED_AT.toISOString();
-const incidents = () => [...INCIDENTS, ...PAST_INCIDENTS];
 
 export const overviewTool = defineViewTool({
   name: 'overview',
@@ -38,7 +38,8 @@ export const overviewTool = defineViewTool({
   input: z.object({ period, day }),
   resourceUri: `ui://${slug}/overview`,
   async read({ period: p = '30d', day: d }) {
-    const data: OverviewData = { period: p, series: demoSeries(p).current, totals: demoTotals(p), endpoints: ENDPOINTS, mix: STATUS_MIX, activity: ACTIVITY, incidents: incidents(), updatedAt: updatedAt(), now: DEMO_NOW.toISOString(), day: d ?? null };
+    const [{ series, totals, observedAt }, endpoints, mix, activity, { all: incidents }] = await Promise.all([readDays(p), readEndpoints(), readResponses(), readActivity(), readIncidents()]);
+    const data: OverviewData = { period: p, series, totals, endpoints, mix, activity, incidents, updatedAt: updatedAt(), now: observedAt, day: d ?? null };
     const index = d ? data.series.findIndex((x) => x.date === d) : -1;
     return { context: overviewContext(data, index >= 0 ? index : null), data };
   },
@@ -72,7 +73,8 @@ export const requestTool = defineViewTool({
     const r = rows[0] as RequestRow | undefined;
     if (!r) throw new Error(`No request with the id ${id}.`);
     const payloads = payloadsOf(r);
-    const context = requestContext({ request: r, trace: traceOf(r), routeP95: ENDPOINTS.find((e) => e.method === r.method && e.route === r.route)?.p95 ?? null, statusText: STATUS_TEXT[r.status] ?? '', payloadBytes: { request: payloads.request?.length ?? null, response: payloads.response.length }, now: observedAt });
+    const endpoints = await readEndpoints();
+    const context = requestContext({ request: r, trace: traceOf(r), routeP95: endpoints.find((e) => e.method === r.method && e.route === r.route)?.p95 ?? null, statusText: STATUS_TEXT[r.status] ?? '', payloadBytes: { request: payloads.request?.length ?? null, response: payloads.response.length }, now: observedAt });
     return { context, data: {} };
   },
 });
@@ -84,7 +86,8 @@ export const healthTool = defineViewTool({
   input: z.object({}),
   resourceUri: `ui://${slug}/health`,
   async read() {
-    const data = { services: SERVICES, current: INCIDENTS.find((i) => i.state !== 'resolved') ?? null, past: PAST_INCIDENTS, updatedAt: updatedAt(), now: DEMO_NOW.toISOString() };
+    const [services, { current, past }] = await Promise.all([readServices(), readIncidents()]);
+    const data = { services, current, past, updatedAt: updatedAt(), now: clock().toISOString() };
     return { context: healthContext(data), data };
   },
 });
@@ -95,8 +98,9 @@ export const analyticsTool = defineViewTool({
   description: 'When traffic comes and from where over a period: the busiest hours, regions with their latency, every endpoint, and the days that stand out.',
   input: z.object({ period }),
   async read({ period: p = '30d' }) {
-    const data = { period: p, series: demoSeries(p).current, heat: demoHeatmap(), hours: requestsByHour(), regions: REGION_LATENCY, endpoints: ENDPOINTS, activity: ACTIVITY, incidents: incidents(), updatedAt: updatedAt(), now: DEMO_NOW.toISOString() };
-    return { context: analyticsContext(data), data: {} };
+    const [{ series, observedAt }, endpoints, activity, { all: incidents }] = await Promise.all([readDays(p), readEndpoints(), readActivity(), readIncidents()]);
+    const data = { period: p, series, heat: demoHeatmap(), hours: requestsByHour(), regions: REGION_LATENCY, endpoints, activity, incidents, updatedAt: updatedAt(), now: observedAt };
+    return { context: analyticsContext(data), data };
   },
 });
 

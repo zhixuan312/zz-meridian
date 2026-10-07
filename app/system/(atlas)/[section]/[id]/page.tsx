@@ -1,3 +1,4 @@
+import { Suspense } from 'react';
 import { notFound } from 'next/navigation';
 import { entries, entry, PAGES } from '@/system/content';
 import { CardStage } from '@/system/card-stage';
@@ -42,8 +43,13 @@ export default async function EntryPage({ params }: { params: Promise<{ section:
   const page = PAGES.find((p) => p.id === e.id);
   const stage =
     e.kind === 'card' ? <CardStage id={`${e.section}/${e.id}`} />
-    : e.kind === 'page' && page ? <PageStage route={page.route} embed={page.embed} title={page.title} toolResult={await toolResultOf(page.embed)} />
+    // The tool result is read at request time, like the view it describes; the stage shows at once without it.
+    : e.kind === 'page' && page ? <Suspense fallback={<PageStage route={page.route} embed={page.embed} title={page.title} />}><StageWithTool page={page} /></Suspense>
     : e.kind === 'tokens' ? <TokenView view={e.id} groups={tokenGroups()} />
     : null;
   return <Article e={e} stage={stage} />;
+}
+
+async function StageWithTool({ page }: { page: (typeof PAGES)[number] }) {
+  return <PageStage route={page.route} embed={page.embed} title={page.title} toolResult={await toolResultOf(page.embed)} />;
 }

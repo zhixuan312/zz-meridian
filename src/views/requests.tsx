@@ -6,7 +6,8 @@ import { MetricTile } from '@/components/patterns/metric-tile';
 import { DataTable, useQueryState } from '@/components/patterns/data-table';
 import { FilterBar } from '@/components/patterns/filter-bar';
 import { formatCompact, formatDuration, formatPercent } from '@/lib/format';
-import { ENDPOINTS, REGIONS, type RequestRow } from '@/data/sample';
+import { REGIONS, type RequestRow } from '@/data/sample';
+import { REQUEST_METHODS } from '@/data/request-methods';
 import type { readRequests } from '@/data/requests';
 import { useShareView } from '@/components/base/use-share-view';
 import { AskAbout } from '@/components/patterns/ask-about';
@@ -21,7 +22,7 @@ export const REQUEST_FILTERS = { q: '', status: 'all', method: 'all', region: 'a
 export const options = (all: string, values: string[]) => [{ value: 'all', label: all }, ...values.map((v) => ({ value: v, label: v }))];
 /** The methods the log holds, as the filter offers them. */
 const STATUS_CLASSES = ['2xx', '3xx', '4xx', '5xx'];
-export const REQUEST_METHODS = [...new Set(ENDPOINTS.map((e) => e.method))];
+export { REQUEST_METHODS };
 
 /** The filters that are set, as address parameters: what the export and "Open in the console" carry. */
 export const activeFilters = (f: Pick<Page['state'], 'q' | 'status' | 'method' | 'region'>): Record<string, string> =>
