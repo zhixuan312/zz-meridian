@@ -72,7 +72,7 @@ function recorded(from: string, to: string, data: Pick<OverviewData, 'incidents'
  * when it rose with them, and what was recorded beside them (an incident, an activity event) or that nothing was.
  * The Overview and Analytics both read the same run of days.
  */
-export function errorSpikes(data: Pick<OverviewData, 'series' | 'incidents' | 'activity'>): { insights: Insight[]; unknowns: string[] } {
+export function errorSpikes(data: Pick<OverviewData, 'series' | 'incidents' | 'activity' | 'period'>): { insights: Insight[]; unknowns: string[] } {
   const { series } = data;
   const dates = series.map((d) => d.date);
   const errorRate = series.map((d) => (d.requests ? d.errors / d.requests : 0));
@@ -89,7 +89,7 @@ export function errorSpikes(data: Pick<OverviewData, 'series' | 'incidents' | 'a
     const ratios = run.map((i) => errorRate[i] / errMedian);
     const lo = Math.min(...ratios), hi = Math.max(...ratios);
     const when = days(run.map((i) => dates[i]));
-    insights.push({ text: `Error rate was ${lo === hi ? times(hi) : `${times(lo)} to ${times(hi)}`} the period's median of ${pct(errMedian)} on ${when} (${run.map((i) => pct(errorRate[i])).join(', ')}); no other day passed ${times(quietMax)}.` });
+    insights.push({ text: `Error rate was ${lo === hi ? times(hi) : `${times(lo)} to ${times(hi)}`} the period's median of ${pct(errMedian)} on ${when} (${run.map((i) => pct(errorRate[i])).join(', ')}); no other day passed ${times(quietMax)}.`, evidence: `/?period=${data.period}&day=${dates[run.reduce((m, i) => (errorRate[i] > errorRate[m] ? i : m))]}` });
     const p95Run = run.filter((i) => p95[i] / median(p95) >= 1.4);
     if (p95Run.length) insights.push({ text: `Latency p95 rose on the same ${p95Run.length === 1 ? 'day' : 'days'}: ${p95Run.map((i) => formatDuration(p95[i])).join(' and ')} against a median of ${formatDuration(median(p95))}.` });
     const found = recorded(dates[run[0]], dates[run.at(-1)!], data);

@@ -10,6 +10,7 @@ Every release of ZZ Meridian, newest first. Versions follow semver: a removed or
 - **Every view has a tool.** `src/views/tools.ts` holds each view's contract: its name, its address as input, its `ui://` resource, and one read that returns what it renders and what the agents are told. The console's assistant offers each as a read-only `view_<name>`; `docs/agents.md` registers the same list on an MCP server, with the apply tool of a change registered view-only. The embed routes render from their tool's read.
 - **The assistant is told its limits.** Its prompt lists what it cannot do or see, from each collection's `pageOnly`, `hidden` and missing operations, so it can say why.
 - **Ask hands a card to the console's assistant.** With the assistant on, Ask appears on the featured card of Overview, Requests, Health and Analytics; a press opens the panel and sends the card's question with the page's context (`ConsoleSurface`). Ask renders only after hydration.
+- **An MCP view says when the host refuses.** A refused context is sent once more, and Ask then carries the view's address; a refused Ask tells the person in a toast with the question's words.
 - **An address can name a day.** `?day=2026-09-22` opens the Overview pointed at it (`Meridian day`).
 
 ### Breaking

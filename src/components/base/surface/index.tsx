@@ -3,6 +3,7 @@
 import { createContext, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { app } from '@/app.config';
 import { HostBridge, type DisplayMode, type HostContext } from '@/lib/host';
+import { toast } from '@/components/ui/toast';
 
 /**
  * Which surface a view is on, and what it may ask of its host. Components read `useSurface()` and never touch the
@@ -70,6 +71,9 @@ export function EmbedSurface({ children }: { children: ReactNode }) {
   const [host, setHost] = useState<HostContext>({});
   const [connected, setConnected] = useState(false);
   const [mode, setMode] = useState<DisplayMode>('inline');
+  // The first line of the context last shared (the view, its scope and its address), and whether the host refused it:
+  // then Ask carries that line, so the question keeps its referent even though the model was never told the view.
+  const shared = useRef<{ head: string; refused: boolean }>({ head: '', refused: false });
 
   useEffect(() => {
     const d = document.documentElement;
@@ -117,9 +121,22 @@ export function EmbedSurface({ children }: { children: ReactNode }) {
         if (!b) return void window.open(p, '_blank', 'noopener');
         b.requestDisplayMode('fullscreen').then((r) => r.mode === 'fullscreen' ? setMode('fullscreen') : b.openLink(new URL(p, location.origin).href)).catch(() => b.openLink(new URL(p, location.origin).href));
       },
-      ask: connected ? (text) => void bridgeOf()?.message(text).catch(() => {}) : undefined,
+      ask: connected
+        ? (text) => {
+            const q = shared.current.refused && shared.current.head ? `${text} (${shared.current.head})` : text;
+            void bridgeOf()?.message(q).catch(() => toast({ tone: 'neutral', title: 'The chat did not take the question', description: `Ask it there: "${text}"` }));
+          }
+        : undefined,
       callTool: connected ? (name, args) => bridgeOf()!.callTool(name, args) : undefined,
-      share: (text, structured) => void bridgeOf()?.modelContext(text, structured).catch(() => {}),
+      share: (text, structured) => {
+        const b = bridgeOf();
+        if (!b) return;
+        const entry = { head: text.split('\n')[0], refused: false };
+        shared.current = entry;
+        // A refused update is tried once more; if the host refuses again, Ask carries the view's first line instead.
+        const send = () => b.modelContext(text, structured);
+        void send().catch(() => new Promise((r) => setTimeout(r, 1000)).then(send)).catch(() => { entry.refused = true; });
+      },
       openLink: (u) => {
         const b = bridgeOf();
         return b ? void b.openLink(new URL(u, location.origin).href) : void window.open(u, '_blank', 'noopener');
