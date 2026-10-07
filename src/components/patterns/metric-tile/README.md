@@ -8,8 +8,9 @@ Status: beta
 
 1. **Head**: a 14px icon, the label (`text-sm` 500, `ink-2`) and an optional info button whose tooltip says what the number counts.
 2. **Figure**: `t-figure` (32–42px, 600, −0.03em); the unit and the cents step down to half size in `ink-3`.
-3. **Change**: a Delta and "vs previous period", or the day the Meridian points at.
-4. **Sparkline**: the period's shape, edge to edge at the foot, 40px tall.
+3. **Change**: a Delta and "vs previous period", or the day the Meridian points at, followed by how it compares with what is usual ("2.7× usual", `ink-3`) when the tile has a `baseline`.
+4. **Finding** (optional): one line under the change, `text-xs` `ink-2` beside a `warning` status dot: what the period's figures say that the number does not ("2.7× usual on 21 and 22 Sept"). Computed by code, the same line both agents read. With a `day` it is a button (24px target, 44px on touch) that points the page's Meridian at that day; hover takes `ink` over `dur-hover`.
+5. **Sparkline**: the period's shape, edge to edge at the foot, 40px tall.
 
 ## Composition
 
@@ -29,6 +30,7 @@ Card, Delta, Tooltip, Sparkline. Tiles sit in a `Row split="tiles"`, or stacked 
 | Default | Every tile |
 | Emphasis | The one tile that carries the finding when there is no Featured metric: its figure in `accent-ink`, its sparkline in `accent` |
 | No sparkline | A count with no useful shape (active keys) |
+| With a finding | A figure whose period holds something unusual worth one line; at most one tile in a row, the one the finding is about |
 
 ## States
 

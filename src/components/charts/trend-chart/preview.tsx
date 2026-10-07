@@ -28,6 +28,18 @@ export default function TrendChartPreview() {
           />
         </Plane>
       </Specimen>
+      <Specimen label="Against what is usual" note="baseline: the period's median as a dashed hairline under the data, its label at the end on a halo of the card. A spike reads against it at a glance.">
+        <Plane on="surface">
+          <TrendChart
+            label="Latency p95 per day"
+            height={168}
+            format="duration"
+            dates={dates}
+            series={[{ key: 'p95', label: 'Latency p95', values: current.map((d) => d.p95), kind: 'line', color: 'neutral' }]}
+            baseline={{ value: 296, label: 'Median 296ms' }}
+          />
+        </Plane>
+      </Specimen>
       <Specimen label="Peers" note="Lines of equal standing take categorical slots in order: 1, 2, 3. Never a second y-axis.">
         <Plane on="surface">
           <TrendChart

@@ -42,6 +42,18 @@ export default function MetricTilePreview() {
           </div>
         </Meridian>
       </Specimen>
+      <Specimen label="A finding, and what is usual" note="finding: one line computed by code that the number does not say, the same one both agents read; with a day it points the Meridian there. baseline: the daily median, so a day being read says how it compares.">
+        <Meridian dates={dates}>
+          <div className="grid w-full gap-4 sm:grid-cols-2">
+            <State label="At rest"><MetricTile label="Error rate" icon={<AlertTriangle />} value={0.009} delta={0.124} intent="down" daily={s.map((d) => d.errors / d.requests)} baseline={0.0081} finding={{ text: '2.7× usual on 21 and 22 Sept', day: dates[18] }} format={(n) => formatPercent(n, 2)} /></State>
+            <State label="No day: a plain line"><MetricTile label="Error rate" icon={<AlertTriangle />} value={0.009} delta={0.124} intent="down" daily={s.map((d) => d.errors / d.requests)} baseline={0.0081} finding={{ text: '2.7× usual on 21 and 22 Sept' }} format={(n) => formatPercent(n, 2)} /></State>
+          </div>
+        </Meridian>
+        <Meridian dates={dates}>
+          <PointAt i={18} />
+          <State label="Reading a day against usual" className="w-full sm:w-80"><MetricTile label="Latency p95" icon={<Gauge />} value={294} delta={0.014} intent="down" daily={s.map((d) => d.p95)} baseline={296} format={formatDuration} /></State>
+        </Meridian>
+      </Specimen>
       <Specimen label="A word, not a number" note="A categorical state is a word set smaller than a figure; a named format (compact, cost-compact) lets a server page render the tile.">
         <div className="grid w-full gap-4 sm:grid-cols-2">
           <State label="Categorical value"><MetricTile label="Forecast" hint="Whether the trend points to a new customer segment." value="Likely new" note="Based on the last 14 days" /></State>

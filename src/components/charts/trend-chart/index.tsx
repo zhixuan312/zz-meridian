@@ -35,6 +35,7 @@ export function TrendChart({
   legend,
   tick,
   stacked = false,
+  baseline,
   className,
 }: {
   dates: string[];
@@ -50,6 +51,8 @@ export function TrendChart({
   tick?: (date: string) => string;
   /** The series are parts of one whole: bands stacked in order, the first at the bottom, each in its categorical slot. */
   stacked?: boolean;
+  /** What is usual, drawn as a quiet dashed line across the plot with its label at the end: `{ value: 296, label: 'Median 296ms' }`. */
+  baseline?: { value: number; label: string };
   className?: string;
 }) {
   const [box, size] = useSize<HTMLDivElement>();
@@ -83,7 +86,7 @@ export function TrendChart({
     return `color-mix(in oklab, var(--accent) calc((var(--chart-stack-hi) - (var(--chart-stack-hi) - var(--chart-stack-lo)) * ${t}) * 100%), var(--surface))`;
   };
   const colorOf = (s: TrendSeries, k: number) => (stacked && !s.color ? tone(k) : SERIES_VAR(s.color ?? (s.kind === 'dashed' ? 'neutral' : 'accent')));
-  const max = Math.max(1, ...(totals ?? series.flatMap((s) => s.values.filter((v): v is number => v !== null))));
+  const max = Math.max(1, baseline?.value ?? 0, ...(totals ?? series.flatMap((s) => s.values.filter((v): v is number => v !== null))));
   const ticks = niceTicks(max, h < 200 ? 3 : 4);
   const top = ticks[ticks.length - 1];
   const left = Math.max(...ticks.map((t) => axis(t).length)) * 6.4 + 12;
@@ -186,6 +189,13 @@ export function TrendChart({
               <text x={pad.l - 10} y={y(t)} dy="0.32em" textAnchor="end" className="fill-ink-3 text-2xs tabular-nums">{axis(t)}</text>
             </g>
           ))}
+          {baseline ? (
+            // What is usual: a dashed hairline under the data, its label lifted off the line by a halo of the card.
+            <g className="fade-in" pointerEvents="none">
+              <line x1={pad.l} x2={pad.l + W} y1={y(baseline.value)} y2={y(baseline.value)} stroke="var(--ink-3)" strokeOpacity={0.6} strokeDasharray="3 4" shapeRendering="crispEdges" />
+              <text x={pad.l + W} y={y(baseline.value) - 6} textAnchor="end" stroke="var(--surface)" strokeWidth={4} strokeLinejoin="round" paintOrder="stroke" className="fill-ink-3 text-2xs tabular-nums">{baseline.label}</text>
+            </g>
+          ) : null}
           {xLabels.map(({ d, i }) => (
             <text key={d} x={x(i)} y={h - 6} textAnchor={i === 0 ? 'start' : i === n - 1 ? 'end' : 'middle'} className="fill-ink-3 text-2xs">
               {tick ? tick(d) : formatDate(d).replace(/,? \d{4}$/, '')}
@@ -279,7 +289,7 @@ export function TrendChart({
         </div>
       ) : null}
       <table className="sr-only">
-        <caption>{label}</caption>
+        <caption>{label}{baseline ? `. ${baseline.label}` : ''}</caption>
         <thead><tr><th>Date</th>{series.map((s) => <th key={s.key}>{s.label}</th>)}{totals ? <th>Total</th> : null}</tr></thead>
         <tbody>{dates.map((d, i) => <tr key={d}><td>{d}</td>{series.map((s) => <td key={s.key}>{fmt(s.values[i])}</td>)}{totals ? <td>{fmt(totals[i])}</td> : null}</tr>)}</tbody>
       </table>

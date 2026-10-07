@@ -75,12 +75,19 @@ async function press(find: string) {
 const decide = (label: string) => press(`[...document.querySelectorAll('${PROPOSALS} button')].find((b) => b.textContent.trim() === ${JSON.stringify(label)})`);
 try {
   if (expect === 'off') {
-    for (const route of ['/', '/settings']) {
+    // Without an assistant, and outside any host, no agent control appears anywhere: no launcher, no panel, no Ask.
+    const ROUTES = ['/', '/requests', '/health', '/analytics', '/settings', '/embed/overview', '/embed/requests', '/embed/health'];
+    for (const route of ROUTES) {
       await page.open(`${base}${route}`, { width: 1440 });
-      const found = await page.eval<number>(`document.querySelectorAll('[data-assistant], button[aria-label="Assistant"]').length`);
-      if (found) fail(`${route} has ${found} assistant element(s)`);
+      await sleep(400);
+      const found = await page.eval<number>(`document.querySelectorAll('[data-assistant], button[aria-label="Assistant"], button[aria-label^="Ask: "]').length`);
+      if (found) fail(`${route} has ${found} agent control(s) with no assistant and no host`);
     }
-    ok('/ and /settings have no panel and no launcher');
+    ok(`${ROUTES.length} pages and views have no panel, no launcher and no Ask`);
+    // The person's own findings do not depend on any agent.
+    await page.open(`${base}/`, { width: 1440 });
+    await until('the Overview finding', () => page.eval<boolean>(`[...document.querySelectorAll('[data-scroll-region] button')].some((b) => /usual on/.test(b.textContent))`), Boolean);
+    ok('the Overview shows its finding with no assistant');
     const status = (await fetch(`${base}/api/assistant`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: '{"messages":[]}' })).status;
     if (status !== 404) fail(`POST /api/assistant answered ${status}, expected 404`);
     ok('POST /api/assistant answers 404');
@@ -269,13 +276,18 @@ try {
     await page.open(`${base}/members`, { width: 1440 });
     if (!(await absent())) fail('/members still shows the assistant with the switch off');
     if (!(await stored())?.includes('What is this page?')) fail('switching the assistant off removed the stored thread');
+    // Switched off, the pages work as they would without any agent: no Ask anywhere, and the person's findings still there.
+    await page.open(`${base}/`, { width: 1440 });
+    await until('the Overview to render its finding', () => page.eval<boolean>(`[...document.querySelectorAll('[data-scroll-region] button')].some((b) => /usual on/.test(b.textContent))`), Boolean);
+    if (await page.eval<boolean>(`!!document.querySelector('button[aria-label^="Ask: "]')`)) fail('the Overview shows Ask with the assistant switched off');
+    if (!(await absent())) fail('/ still shows the assistant with the switch off');
     await page.open(`${base}/settings`, { width: 1440 });
     if (!(await absent())) fail('/settings still shows the assistant with the switch off');
     await press(SWITCH);
     await until('the launcher to return', () => page.eval<boolean>(`!!document.querySelector('${LAUNCHER}')`), Boolean);
     await openPanel();
     await until('the thread to return', () => page.eval<boolean>(`document.querySelector('aside[data-assistant]').textContent.includes('What is this page?')`), Boolean);
-    ok('Show the assistant off hides the launcher on /settings and /members and keeps the thread; on brings the launcher and the thread back');
+    ok('Show the assistant off hides the launcher on /settings, /members and / and every Ask, keeps the Overview\'s finding and the thread; on brings the launcher and the thread back');
 
     // 7. Layout: a column beside the page at 1440px, over it at 390px; Escape closes it.
     const geometry = () => page.eval<{ position: string; main: number; panel: number; width: number }>(`(() => { const a = document.querySelector('aside[data-assistant]'); return { position: getComputedStyle(a).position, main: Math.round(document.querySelector('main').getBoundingClientRect().right), panel: Math.round(a.getBoundingClientRect().left), width: innerWidth }; })()`);

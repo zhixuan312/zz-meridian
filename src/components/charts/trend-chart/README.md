@@ -23,6 +23,8 @@ Status: beta
 | `dashed` | A reference: the previous period, a target, a budget | 1.5px dashed line in `chart-neutral-strong` |
 | `stacked` (chart prop) | The series are the parts of one whole, such as requests by region, or calls split into attributed, unattributed and refused: the top edge is the total. Parts of similar size; a part under a few percent is invisible as a band, so give it a chart or a tile of its own | Bands one on another, the first at the bottom, in one hue: the accent, deepest at the bottom and paler upward, between the theme's `chart-stack-hi` and `chart-stack-lo` (dark 92% to 20%, light 72% to 36%), a 1px `surface` hairline between them; on light the stack fades toward zero (`chart-stack-fade`); the total is the 2px accent line with its glow, as on an `area`. A series given its own `color` keeps it. The readout lists the bands top to bottom and the total; the y-axis is scaled to the total |
 
+**Baseline** (`baseline: { value, label }`): what is usual, such as the period's median, drawn as a dashed hairline (`ink-3` at 60%, dash 3 4) under the data, with its label (`text-2xs` `ink-3`) at the right end on a 4px halo of `surface`, so it reads over the line. It fades in with the data and is named in the screen-reader table's caption ("Latency p95 per day. Median 296ms"). One per chart; the y-axis always reaches it.
+
 Colour: `accent` for the series the page is about; categorical slots 1 to 6 in order for peers; never a status colour unless the series means a status.
 
 ## Sizes

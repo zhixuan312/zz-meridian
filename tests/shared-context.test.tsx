@@ -143,3 +143,25 @@ describe('every page shares a context within its budget, and nothing hidden', ()
     expect(text).toMatch(/Combined requests are up \d+% over the last 7 days against the 7 before\./);
   });
 });
+
+describe('the person sees the same findings', () => {
+  it('the Error rate tile names the spike and points the Meridian at its peak', async () => {
+    const { fireEvent, screen } = await import('@testing-library/react');
+    const { overviewFindings } = await import('@/views/overview-context');
+    const { Meridian } = await import('@/components/charts/meridian');
+    const { MetricTile } = await import('@/components/patterns/metric-tile');
+    const series = demoSeries('30d').current;
+    const found = overviewFindings(series);
+    expect(found.errorSpike).toEqual({ text: '2.7× usual on 21 and 22 Sept', day: '2026-09-22' });
+    render(
+      <Tooltip.Provider>
+        <Meridian dates={series.map((d) => d.date)}>
+          <MetricTile label="Error rate" value={0.009} delta={0.12} daily={series.map((d) => d.errors / d.requests)} baseline={found.usual.errorRate} finding={found.errorSpike} format={(n) => n.toFixed(4)} />
+        </Meridian>
+      </Tooltip.Provider>,
+    );
+    fireEvent.click(screen.getByRole('button', { name: /2\.7× usual on 21 and 22 Sept\. Point at 22 Sept 2026/ }));
+    expect(screen.getByText('22 Sept 2026')).toBeTruthy();
+    expect(screen.getByText('2.7× usual')).toBeTruthy();
+  });
+});

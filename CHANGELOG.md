@@ -11,12 +11,16 @@ Every release of ZZ Meridian, newest first. Versions follow semver: a removed or
 - **The assistant is told its limits.** Its prompt lists what it cannot do or see, from each collection's `pageOnly`, `hidden` and missing operations, so it can say why.
 - **Ask hands a card to the console's assistant.** With the assistant on, Ask appears on the featured card of Overview, Requests, Health and Analytics; a press opens the panel and sends the card's question with the page's context (`ConsoleSurface`). Ask renders only after hydration.
 - **An MCP view says when the host refuses.** A refused context is sent once more, and Ask then carries the view's address; a refused Ask tells the person in a toast with the question's words.
+- **The person sees the findings.** `MetricTile` takes `finding` (a line, with a day it points the Meridian there) and `baseline` ("2.7× usual" beside a day being read); `TrendChart` takes `baseline`, a dashed median line. The Overview uses all three.
+- **An agent's change leaves an Activity line.** The assistant's guard takes an optional `record`; the template writes to a new `activity` collection, and the Overview's Activity is live.
+- **The Overview, Analytics and Health read through `read()`.** Daily totals, endpoints, responses, services, incidents and activity are read-only collections (`src/data/metrics.ts`).
 - **An address can name a day.** `?day=2026-09-22` opens the Overview pointed at it (`Meridian day`).
 
 ### Breaking
 
 - `useShareView(text, structured)` is `useShareView(context)`. Build a context with the fields in `SharedContext`; `contextText` writes the text both agents read.
 - `scripts/check.ts` requires `### What the agent reads` under `## Agents` in the README of every page under `app/(dashboard)/` and `app/embed/`. Add it to a product's own pages, saying what the page's context tells each agent.
+- `src/data/sample.ts` no longer exports `ENDPOINTS`, `STATUS_MIX`, `ACTIVITY`, `INCIDENTS`, `PAST_INCIDENTS`, `SERVICES` or `demoTotals`: read them through `src/data/metrics.ts`. `RequestView` takes `routeP95`.
 - `OverviewBody`, `HealthBody` and `AnalyticsBody` take the period key, `updatedAt` and, for the first and last, the incidents and activity beside the figures; `RequestsView` takes `updatedAt` and `now`.
 
 ## [0.8.0] · 2026-10-06

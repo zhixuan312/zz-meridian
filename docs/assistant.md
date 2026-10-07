@@ -111,7 +111,7 @@ Per collection the assistant gets `query_<name>`, and `create_<name>`, `update_<
 
 ## Costs
 
-Each question can cost up to 8 model calls, and every call carries the system prompt, up to 24,000 characters of page text, the tool descriptions and the thread (its last 100 messages). Long threads and large pages cost more on every turn. Clear the conversation to start cheap again. Your provider's price list does the arithmetic; Meridian adds nothing on top.
+Each question can cost up to 8 model calls, and every call carries the system prompt, up to 24,000 characters of page text, the tool descriptions and the thread (its last 100 messages). Long threads and large pages cost more on every turn. A page that shares a view context sends it beside the page text, not instead of it: on the sample's pages the two together are 3,000 to 7,000 characters, and the text still carries what a context leaves out, such as each day's value in a chart's screen-reader table. Clear the conversation to start cheap again. Your provider's price list does the arithmetic; Meridian adds nothing on top.
 
 ## Adding an MCP server later
 

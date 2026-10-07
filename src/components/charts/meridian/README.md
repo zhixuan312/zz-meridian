@@ -36,6 +36,7 @@ The Meridian has no size of its own. The line is 1px; the dots 8px across (4px r
 
 - **Pointer**: the nearest day to the pointer's x. **Touch**: press and drag along the chart; vertical drags still scroll the page (`touch-action: pan-y`).
 - **Keyboard** on a focused chart: Left and Right move one day, Home and End jump to the first and last, Escape clears.
+- **From an address or a finding**: `Meridian day="2026-09-22"` opens the page pointed at a day (`?day=`), and `usePointMeridian()` points it from outside a chart, as a tile's finding does. The person's next pointer takes over.
 - One index per page: the latest pointer wins. A chart, a column chart with `dates`, a tile and a sparkline all read it through `useMeridian` or `useMeridianIndex`.
 
 ## Surfaces

@@ -19,7 +19,7 @@ import { ActivityFeed } from '@/components/patterns/activity-feed';
 import { AskAbout } from '@/components/patterns/ask-about';
 import { formatCompact, formatCost, formatDuration, formatPercent } from '@/lib/format';
 import { PERIOD_LABEL } from '@/lib/period';
-import { OVERVIEW_METRICS, overviewContext, type OverviewData } from './overview-context';
+import { OVERVIEW_METRICS, overviewContext, overviewFindings, type OverviewData } from './overview-context';
 
 /** Tells both agents what the Overview shows, and which day the Meridian points at (decision 0011). Inside `Meridian`. */
 export function ShareOverview({ data }: { data: OverviewData }) {
@@ -58,6 +58,7 @@ export function OverviewBody(data: OverviewData) {
   const dates = series.map((d) => d.date);
   const change = (a: number, b: number) => (b ? a / b - 1 : null);
   const peak = series.reduce((m, d) => (d.requests > m.requests ? d : m), series[0]);
+  const found = overviewFindings(series);
   return (
     <Meridian dates={dates} day={data.day}>
       <ShareOverview data={data} />
@@ -90,6 +91,8 @@ export function OverviewBody(data: OverviewData) {
               delta={change(c.errorRate, p.errorRate)}
               intent="down"
               daily={series.map((d) => d.errors / d.requests)}
+              baseline={found.usual.errorRate}
+              finding={found.errorSpike}
               format={(n) => formatPercent(n, 2)}
             />
             <MetricTile
@@ -100,6 +103,7 @@ export function OverviewBody(data: OverviewData) {
               delta={change(c.p95, p.p95)}
               intent="down"
               daily={series.map((d) => d.p95)}
+              baseline={found.usual.p95}
               format={(n) => formatDuration(n)}
             />
             <MetricTile
@@ -156,6 +160,7 @@ export function OverviewBody(data: OverviewData) {
                 label="Latency p95 per day"
                 height={168}
                 format="duration"
+                baseline={{ value: found.usual.p95, label: `Median ${formatDuration(found.usual.p95)}` }}
                 dates={dates}
                 series={[{ key: 'p95', label: 'Latency p95', values: series.map((d) => d.p95), kind: 'line', color: 'neutral' }]}
                 />

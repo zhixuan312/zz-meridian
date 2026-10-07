@@ -32,3 +32,9 @@ export function useMeridianIndex(): { index: number | null; dates: string[] } {
   const c = useContext(MeridianCtx);
   return { index: c?.index ?? null, dates: c?.dates ?? [] };
 }
+
+/** Points the page's Meridian at a day (YYYY-MM-DD), from outside a chart: a finding that names a day shows it. No-op without a Meridian. */
+export function usePointMeridian(): (date: string) => void {
+  const c = useContext(MeridianCtx);
+  return (date) => { const i = c?.dates.indexOf(date) ?? -1; if (c && i >= 0) c.setIndex(i); };
+}
