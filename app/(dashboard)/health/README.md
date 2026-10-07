@@ -50,6 +50,7 @@ Every service's state, latency now and uptime; the average uptime with its defin
 
 - **MCP App:** the text above as `ui/update-model-context`, with the same context as its structured part, from the inline view and from fullscreen alike, on load and on every change.
 - **Console assistant:** the same text in its prompt's `<view-context>` block, with the page's address and query, and the page text after it for anything the context does not cover.
+- **Handoff:** Ask on the uptime card hands the open incident to the assistant: "Which service is hurting uptime, and is … over?"
 
 ## Embed view
 

@@ -1,11 +1,12 @@
 'use client';
 
-import { Children, Suspense, createContext, use, useContext, useEffect, useRef, useState, type HTMLAttributes, type ReactNode } from 'react';
+import { Children, Suspense, createContext, use, useContext, useEffect, useMemo, useRef, useState, type HTMLAttributes, type ReactNode } from 'react';
 import { Dialog } from 'radix-ui';
 import { Menu, X } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/cn';
 import { usePreferences } from '@/components/base/providers';
+import { ConsoleSurface } from '@/components/base/surface';
 import dynamic from 'next/dynamic';
 
 // The assistant loads only where it is shown: a product without it, or a person who switched it off, never downloads it.
@@ -58,10 +59,13 @@ function ResolvedLauncher({ assistant, open, onClick }: { assistant: Promise<boo
   return <AssistantSlot>{use(assistant) && prefs.assistant ? <AssistantLauncher open={open} onClick={onClick} /> : null}</AssistantSlot>;
 }
 
+/** A question a card handed to the assistant, waiting for the panel to send it. */
+type Ask = { id: number; text: string };
+
 /** The panel, once there is an assistant, the person wants it, and it has been asked for. Nothing occupies its place before that. */
-function ResolvedColumn({ assistant, open, used, onClose }: { assistant: Promise<boolean>; open: boolean; used: boolean; onClose: () => void }) {
+function ResolvedColumn({ assistant, open, used, onClose, ask, onAsked }: { assistant: Promise<boolean>; open: boolean; used: boolean; onClose: () => void; ask: Ask | null; onAsked: () => void }) {
   const { prefs } = usePreferences();
-  return use(assistant) && prefs.assistant && (open || used) ? <AssistantColumn open={open} onClose={onClose} /> : null;
+  return use(assistant) && prefs.assistant && (open || used) ? <AssistantColumn open={open} onClose={onClose} ask={ask} onAsked={onAsked} /> : null;
 }
 
 export function AppShell({
@@ -94,6 +98,18 @@ export function AppShell({
     setWasOn(prefs.assistant);
     if (!prefs.assistant) setAssistantOpen(false);
   }
+  // Whether Ask on a card can reach an assistant: known once the promise resolves, so the first render shows no Ask.
+  const [available, setAvailable] = useState(false);
+  useEffect(() => {
+    let live = true;
+    void assistant.then((on) => { if (live) setAvailable(on); });
+    return () => { live = false; };
+  }, [assistant]);
+  const [pendingAsk, setPendingAsk] = useState<Ask | null>(null);
+  const ask = useMemo(
+    () => (available && prefs.assistant ? (text: string) => { setAssistantUsed(true); setAssistantOpen(true); setPendingAsk({ id: Date.now(), text }); } : undefined),
+    [available, prefs.assistant],
+  );
   const allTools = (
     <>
       {tools}
@@ -133,9 +149,9 @@ export function AppShell({
             </Dialog.Content>
           </Dialog.Portal>
         </Dialog.Root>
-        <main className="relative flex min-w-0 flex-1 flex-col">{children}</main>
+        <main className="relative flex min-w-0 flex-1 flex-col"><ConsoleSurface ask={ask}>{children}</ConsoleSurface></main>
         <Suspense fallback={null}>
-          <ResolvedColumn assistant={assistant} open={assistantOpen} used={assistantUsed} onClose={() => setAssistantOpen(false)} />
+          <ResolvedColumn assistant={assistant} open={assistantOpen} used={assistantUsed} onClose={() => setAssistantOpen(false)} ask={pendingAsk} onAsked={() => setPendingAsk(null)} />
         </Suspense>
       </div>
     </ShellCtx.Provider>

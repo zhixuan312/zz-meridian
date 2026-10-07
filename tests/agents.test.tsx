@@ -78,3 +78,15 @@ describe('the host bridge', () => {
     vi.restoreAllMocks();
   });
 });
+
+describe('Ask on the console', () => {
+  it('hands the card to the assistant when the shell has one, and renders nothing without it', async () => {
+    const { ConsoleSurface } = await import('@/components/base/surface');
+    const ask = vi.fn();
+    render(<Tooltip.Provider><ConsoleSurface ask={ask}><AskAbout question="Why did errors rise on 21 Sept?" /></ConsoleSurface></Tooltip.Provider>);
+    fireEvent.click(await screen.findByRole('button', { name: 'Ask: Why did errors rise on 21 Sept?' }));
+    expect(ask).toHaveBeenCalledWith('Why did errors rise on 21 Sept?');
+    const { container } = render(<Tooltip.Provider><ConsoleSurface><AskAbout question="q" /></ConsoleSurface></Tooltip.Provider>);
+    expect(container.textContent).toBe('');
+  });
+});

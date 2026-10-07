@@ -51,6 +51,7 @@ The period, freshness, the busiest hour of the week and of the day, each region'
 
 - **Console assistant:** this text in its prompt's `<view-context>` block, with the page's address and query, and the page text after it for anything the context does not cover.
 - **MCP App:** no embed view yet; an MCP server can return this context as a tool's text (`docs/agents.md`).
+- **Handoff:** Ask on Errors per day hands the pointed day, or the period, to the assistant: "Why did errors change on 22 Sept 2026?"
 
 ## Accessibility
 

@@ -84,7 +84,7 @@ These rules cost the console almost nothing (addressable state is good practice 
 | | Console | Mobile | Embed inline | Embed fullscreen |
 |---|---|---|---|---|
 | Reads | The assistant panel reads the view's shared context, the page and the product's data; Activity shows its audit | Same | The view's shared context | The view's shared context, the same one |
-| Asks (person to agent) | The assistant panel (a third column from 1024px) | The assistant panel as a sheet | Ask on cards | Ask on cards |
+| Asks (person to agent) | The assistant panel (a third column from 1024px), and Ask on cards | The assistant panel as a sheet, and Ask on cards | Ask on cards | Ask on cards |
 | Proposes (agent to person) | A Proposal in the assistant's thread; the inbox in Activity | Same | One Proposal card per tool result | Proposals in the page |
 | Marks | Agent mark and "via" | Same | Same | Same |
 
@@ -140,7 +140,7 @@ All components are surface-agnostic by construction: they size from control toke
 | Detail head | A record's identity, state and actions | Masthead | Masthead, actions in a menu | Embed head |
 | Form section | A titled group of settings with its own save | Two columns: description, fields | One column | Not offered |
 | Embed frame | The head and token bridge of an MCP App view | Not used | Not used | Always |
-| Ask about | Hands a card to the agent as a question | Absent | Absent | On cards, when a host is connected |
+| Ask about | Hands a card to the agent as a question | On the featured card, when the assistant is on: opens the panel | Same, the panel as a sheet | On cards, when a host is connected |
 | Proposal | An agent's write, waiting for a person's Approve | Inbox in Activity | Same | The tool result's card |
 | Prose | Markdown a person or a model wrote, rendered safely | Reading width, `base` | One column; tables wrap | `sm`, host font |
 

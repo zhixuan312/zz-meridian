@@ -44,6 +44,16 @@ const Ctx = createContext<Surface>(CONSOLE);
 export const useSurface = () => useContext(Ctx);
 
 /**
+ * The console, with `ask` when the shell has an assistant to hand a card to: Ask on a card opens the panel and posts
+ * the question as the person, and the view's shared context goes with it. Without an assistant, `ask` is absent and
+ * every Ask renders nothing (decision 0004: no dead control).
+ */
+export function ConsoleSurface({ ask, children }: { ask?: (text: string) => void; children: ReactNode }) {
+  const value = useMemo<Surface>(() => ({ ...CONSOLE, ask }), [ask]);
+  return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
+}
+
+/**
  * Put a subtree on a given surface without a host: the Atlas's previews and the tests use it to show an embed in
  * inline or fullscreen mode, connected or not. Products never need it. A preview shares with nobody unless `share` is
  * given: an Atlas page full of specimens must not tell the assistant it is looking at one of them.

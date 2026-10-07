@@ -65,6 +65,7 @@ When a half hour holds fewer than 30 requests it says the change is too few to r
 
 - **MCP App:** the text above as `ui/update-model-context`, with the same context as its structured part, from the inline view and from fullscreen alike, on load and on every change.
 - **Console assistant:** the same text in its prompt's `<view-context>` block, with the page's address and query, and the page text after it for anything the context does not cover.
+- **Handoff:** Ask in the filter bar hands the filtered set to the assistant: "What do these requests with status 5xx have in common, and why?"
 
 ## Accessibility
 

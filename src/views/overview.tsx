@@ -15,6 +15,7 @@ import { RouteCell } from '@/system/sample-cells';
 import { FeaturedMetric } from '@/components/patterns/featured-metric';
 import { formatDate } from '@/lib/format-date';
 import { ActivityFeed } from '@/components/patterns/activity-feed';
+import { AskAbout } from '@/components/patterns/ask-about';
 import { formatCompact, formatCost, formatDuration, formatPercent } from '@/lib/format';
 import { PERIOD_LABEL } from '@/lib/period';
 import { OVERVIEW_METRICS, overviewContext, type OverviewData } from './overview-context';
@@ -24,6 +25,13 @@ export function ShareOverview({ data }: { data: OverviewData }) {
   const { index } = useMeridianIndex();
   useShareView(overviewContext(data, index));
   return null;
+}
+
+/** Ask on the featured card: about the day the Meridian points at, or about the period. */
+function AskOverview({ period }: { period: string }) {
+  const { index, dates } = useMeridianIndex();
+  const day = index !== null ? dates[index] : null;
+  return <AskAbout question={day ? `Why do requests, errors and latency on ${formatDate(day)} look the way they do?` : `What stands out in requests, errors and latency over the ${period}, and why?`} />;
 }
 
 /**
@@ -54,6 +62,7 @@ export function OverviewBody(data: OverviewData) {
         <Row split="2/3">
           <FeaturedMetric
             kicker={<>Requests · {period}</>}
+            actions={<AskOverview period={period} />}
             value={c.requests}
             daily={series.map((d) => d.requests)}
             format={formatCompact}

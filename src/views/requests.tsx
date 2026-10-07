@@ -9,7 +9,8 @@ import { formatCompact, formatDuration, formatPercent } from '@/lib/format';
 import { ENDPOINTS, REGIONS, type RequestRow } from '@/data/sample';
 import type { readRequests } from '@/data/requests';
 import { useShareView } from '@/components/base/use-share-view';
-import { REQUEST_METRICS, requestsContext } from './requests-context';
+import { AskAbout } from '@/components/patterns/ask-about';
+import { REQUEST_METRICS, describeFilters, requestsContext } from './requests-context';
 import { requestColumns } from '@/system/sample-cells';
 
 type Page = Awaited<ReturnType<typeof readRequests>>;
@@ -78,6 +79,7 @@ export function RequestsView({ rows, total, summary, state, pageSize, updatedAt,
         onClearFilters={clear}
         toolbar={
           <FilterBar
+            view={<AskAbout question={isFiltered ? `What do these requests with ${describeFilters(state)} have in common, and why?` : 'What stands out in the latest requests, and why?'} />}
             search={{ value: draft, onChange: setDraft, placeholder: 'Search requests' }}
             filters={[
               { key: 'status', label: 'Status', value: state.status, onChange: (status) => change({ status }), options: options('All', STATUS_CLASSES) },

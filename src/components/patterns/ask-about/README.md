@@ -25,7 +25,8 @@ Placed in a card's header actions. It reads `useSurface().ask`; when that is abs
 | Hover | `accent-tint` behind |
 | Pressed | `press` |
 | Focus | 2px `accent` outline |
-| Console, or no agent connected | Not rendered: no dead control |
+| Console with the assistant on | Rendered after hydration; a press opens the assistant panel and posts the question as the person's, with the page's view context |
+| Console without an assistant, or no agent connected | Not rendered: no dead control |
 
 ## Behaviour
 
@@ -34,7 +35,7 @@ Placed in a card's header actions. It reads `useSurface().ask`; when that is abs
 
 ## Surfaces
 
-- **Console** and **Mobile**: absent.
+- **Console** and **Mobile**: present when the product has an assistant and the person has not switched it off (`ConsoleSurface`, in the shell); a press opens the panel (the column from 1024px, the sheet below) and sends the question. Absent otherwise.
 - **Embed**: on cards, whenever a host is connected.
 
 ## Agents

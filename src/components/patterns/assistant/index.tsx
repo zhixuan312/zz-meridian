@@ -215,7 +215,7 @@ export function AssistantPanel({
  * The assistant's state: the conversation and whether the panel is open. It lives in the shell, so it survives
  * navigation. The panel itself is not in the page while closed.
  */
-export function AssistantColumn({ open, onClose }: { open: boolean; onClose: () => void }) {
+export function AssistantColumn({ open, onClose, ask, onAsked }: { open: boolean; onClose: () => void; ask?: { id: number; text: string } | null; onAsked?: () => void }) {
   const path = usePathname();
   const transport = useMemo(
     () =>
@@ -255,6 +255,17 @@ export function AssistantColumn({ open, onClose }: { open: boolean; onClose: () 
       }
     }
   }, [messages, router]);
+  // A question a card handed over (Ask): sent as the person's own, once the thread is loaded and no reply is streaming,
+  // so it carries the page and its view context like a typed one.
+  const sentAsk = useRef<number | null>(null);
+  useEffect(() => {
+    if (!ask || !loaded || sentAsk.current === ask.id || status === 'submitted' || status === 'streaming') return;
+    sentAsk.current = ask.id;
+    setMessages(closeOpenApprovals(messages, REASONS.movedOn));
+    void sendMessage({ text: ask.text, metadata: { page: { path, title: readPage(path).title } } });
+    onAsked?.();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- runs when a question arrives or the panel becomes able to send it.
+  }, [ask, loaded, status]);
   if (!open) return null;
   return (
     <AssistantPanel

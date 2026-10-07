@@ -11,6 +11,7 @@ import { FeaturedMetric } from '@/components/patterns/featured-metric';
 import { StatusList, summarise } from '@/components/patterns/status-list';
 import { unpackServices, type PackedService } from '@/components/patterns/status-list/summarise';
 import { IncidentCard } from '@/components/patterns/incident-card';
+import { AskAbout } from '@/components/patterns/ask-about';
 import { UptimeBars, type DayState } from '@/components/charts/uptime-bars';
 import { EmptyState } from '@/components/ui/empty-state';
 import { StatusDot } from '@/components/ui/status-dot';
@@ -53,6 +54,7 @@ export function HealthBody(data: HealthData) {
       <Row split={current ? '2/3' : 'full'}>
         <FeaturedMetric
           kicker="Uptime · all services · 90 days"
+          actions={<AskAbout question={current ? `Which service is hurting uptime, and is "${current.title}" over?` : 'Which service is hurting uptime, and when?'} />}
           value={uptime}
           daily={daily}
           format={(n) => `${(n * 100).toFixed(n >= 0.9999 ? 3 : 2)}%`}

@@ -120,6 +120,18 @@ try {
     for (const line of ['(Share of requests answered with a 5xx or a 429.)', "the period's median of", 'Nothing is recorded between']) if (!viewContext.includes(line)) fail(`the Overview's view context does not carry "${line}"`);
     ok(`the model was given the Overview's view context: ${viewContext.length} characters, with the error rate's definition, the spike against its median and what nothing recorded explains`);
 
+    // Handoff: Ask on a card posts its question into the panel as the person's, with the page's view context.
+    const askLabel = await page.eval<string>(`document.querySelector('[data-scroll-region] button[aria-label^="Ask: "]')?.getAttribute('aria-label') ?? ''`);
+    if (!askLabel) fail('the Overview has no Ask on its featured card while the assistant is on');
+    const question = askLabel.replace(/^Ask: /, '');
+    const beforeAsk = (await (await fetch(`${llm}/requests`)).json()).length;
+    await press(`document.querySelector('[data-scroll-region] button[aria-label^="Ask: "]')`);
+    await until('the asked question in the thread', () => page.eval<string[]>(`[...document.querySelectorAll('aside[data-assistant] [data-role="user"]')].map((m) => m.textContent)`), (ms) => ms.some((m) => m.includes(question)));
+    const asked = await until('the request carrying the question', async () => ((await (await fetch(`${llm}/requests`)).json()) as { messages?: { role: string; content: unknown }[] }[]).slice(beforeAsk), (rs) => rs.some((r) => JSON.stringify(r.messages?.at(-1)).includes(question.slice(0, 40))));
+    const askedSystem = String(asked.find((r) => JSON.stringify(r.messages?.at(-1)).includes(question.slice(0, 40)))?.messages?.find((m) => m.role === 'system')?.content ?? '');
+    if (!askedSystem.includes('<view-context>')) fail('the question Ask posted reached the model without the view context');
+    ok(`Ask on the featured card posted "${question}" into the panel, and the model received it with the Overview's view context`);
+
     // A view tool: another period, read without navigating, quoted from that view's own context.
     await ask('Open the overview for the last 90 days');
     const viewReply = await until('the view tool\'s reply', said, (t) => t.startsWith('From /?period=90d'));

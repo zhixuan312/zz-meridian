@@ -17,6 +17,7 @@ import { cn } from '@/lib/cn';
 import { formatCompact, formatDuration, formatPercent } from '@/lib/format';
 import { formatDate } from '@/lib/format-date';
 import { RouteCell } from '@/system/sample-cells';
+import { AskAbout } from '@/components/patterns/ask-about';
 
 const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
@@ -25,6 +26,12 @@ function ShareAnalytics({ data, sort }: { data: AnalyticsData; sort: string }) {
   const { index } = useMeridianIndex();
   useShareView(analyticsContext(data, { sort, index }));
   return null;
+}
+
+/** Ask on the errors card: about the day the Meridian points at, or about the period's days. */
+function AskErrors() {
+  const { index, dates } = useMeridianIndex();
+  return <AskAbout question={index !== null ? `Why did errors change on ${formatDate(dates[index])}?` : 'Which days stand out in errors this period, and why?'} />;
 }
 
 /** The Analytics page's body: when traffic comes, where from, and what is slow. */
@@ -93,7 +100,7 @@ export function AnalyticsBody(data: AnalyticsData) {
             </CardBody>
           </Card>
           <Card>
-            <CardHeader title="Errors per day" description="5xx and 429 responses" />
+            <CardHeader title="Errors per day" description="5xx and 429 responses" actions={<AskErrors />} />
             <CardBody>
               <ColumnChart
                 label="Errors per day"
