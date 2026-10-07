@@ -13,6 +13,8 @@ const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 export type Page = {
   /** Uncaught exceptions and console errors since the last open(). */
   errors: string[];
+  /** How many native file choosers the page has opened: intercepted, so none is shown, and counted, since opening one changes nothing in the DOM. */
+  fileChoosers: () => number;
   send: (method: string, params?: Record<string, unknown>) => Promise<any>;
   eval: <T = unknown>(expression: string) => Promise<T>;
   open: (url: string, opts: { width: number; height?: number; theme?: 'light' | 'dark'; reduced?: boolean; wait?: number }) => Promise<void>;
@@ -59,8 +61,10 @@ async function attach(proc: ChildProcess, dir: string, handle: { proc: ChildProc
   let id = 0;
   const pending = new Map<number, (m: any) => void>();
   const errors: string[] = [];
+  let choosers = 0;
   ws.addEventListener('message', (e) => {
     const m = JSON.parse(String(e.data));
+    if (m.method === 'Page.fileChooserOpened') choosers++;
     if (m.id && pending.has(m.id)) { pending.get(m.id)!(m); pending.delete(m.id); return; }
     if (m.method === 'Runtime.exceptionThrown') errors.push('exception: ' + (m.params.exceptionDetails?.exception?.description ?? m.params.exceptionDetails?.text ?? '').split('\n')[0]);
     if (m.method === 'Runtime.consoleAPICalled' && m.params.type === 'error') errors.push('console.error: ' + m.params.args.map((a: any) => a.value ?? a.description ?? '').join(' ').slice(0, 200));
@@ -75,8 +79,10 @@ async function attach(proc: ChildProcess, dir: string, handle: { proc: ChildProc
     });
   await send('Page.enable');
   await send('Runtime.enable');
+  await send('Page.setInterceptFileChooserDialog', { enabled: true });
   const page: Page = {
     errors,
+    fileChoosers: () => choosers,
     send,
     async eval(expression) {
       const r = await send('Runtime.evaluate', { expression, returnByValue: true, awaitPromise: true });

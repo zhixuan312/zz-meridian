@@ -83,6 +83,27 @@ cache; writes call `updateTag` after the commit (`cache.md`, "Authorized, scoped
 invalidate"). And raise the connection pool's idle timeout past `pg`'s 10-second default, since a cache miss is a round
 trip each. Issue #7 has the numbers.
 
+## The database behind the collections
+
+Meridian's sample serves fixtures; a product's collections read a database. What adopters met, and what held (issues #16 and #17):
+
+- **The pool survives a dropped connection.** Keep idle connections for minutes (`idleTimeoutMillis`, `customize.md`), and
+  listen for their loss: `pool.on('error', (e) => console.error('db: an idle connection closed', e))`. Without the
+  listener, the database or its pooler closing an idle connection is an uncaught error and the server exits. Set
+  `connectionTimeoutMillis` so a database that does not answer fails a read rather than hanging it.
+- **Behind a transaction pooler** (PgBouncer, Neon's pooled endpoint, Supabase's): pass no session setting to the pool. A
+  `statement_timeout` or any startup option is refused at connect ("unsupported startup parameter") and every connection
+  fails; set limits with `SET LOCAL` inside each transaction instead. A session advisory lock does not hold across
+  transaction pooling: take a start-up lock with `pg_try_advisory_lock`, try it once, and carry on without it. Connect
+  migrations, and anything that needs a session, to the direct endpoint.
+- **Schema changes run on start, never in the build.** Apply the product's own migrations from `instrumentation.ts`
+  (`register`, on the Node.js runtime) under that non-blocking lock, so one instance migrates and the rest serve; keep the
+  migrator's bookkeeping in a schema the role may write (`public`); never stop the server on a failure, and report the
+  outcome at a health route so a deploy can read it. A build has no database to migrate and must not need one.
+- **A role that may read and write but not create.** Deployed roles often lack `CREATE`, and a migrator that starts with
+  `CREATE SCHEMA` is refused even where tables may be created. Ship the schema as a one-off SQL file a person with the
+  owner's role runs once, and let the application role only migrate within what it may do.
+
 ## Route A2: a static HTML page (data fetched as JSON)
 
 The simplest case. Create a new Meridian project (SKILL.md steps 3 and 4, with `--product`) and point a module in

@@ -7,7 +7,9 @@ import { EmbedFrame } from '@/components/patterns/embed-frame';
 import { Freshness } from '@/components/patterns/freshness';
 import { AskAbout } from '@/components/patterns/ask-about';
 import { StatusList } from '@/components/patterns/status-list';
-import { HealthBody, ShareHealth } from '@/views/health';
+import { ShareContext } from '@/components/base/use-share-view';
+import { HealthBody } from '@/views/health';
+import { healthContext } from '@/views/health-context';
 import { formatRelative } from '@/lib/format-date';
 import type { Incident } from '@/components/patterns/incident-card';
 import type { Service } from '@/components/patterns/status-list';
@@ -22,7 +24,7 @@ export function EmbedHealth(p: Props) {
         <HealthBody {...p} />
       ) : (
         <div className="flex flex-col gap-3">
-          <ShareHealth data={p} />
+          <ShareContext context={healthContext(p)} />
           {p.current ? (
             <Banner
               tone="warning"

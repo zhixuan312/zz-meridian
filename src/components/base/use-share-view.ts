@@ -21,3 +21,12 @@ export function useShareView(context: SharedContext) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [key, kind, connected, share]);
 }
+
+/**
+ * The same, as a component that renders nothing: a server page that awaits its record and renders cards has no client
+ * view to call the hook from, so it places `<ShareContext context={…} />` among them (issue #17).
+ */
+export function ShareContext({ context }: { context: SharedContext }) {
+  useShareView(context);
+  return null;
+}

@@ -88,9 +88,12 @@ for (const width of WIDTHS) {
       if (!armed) continue;
       if (armed.covered) { failures.push(`${route} @${width}: "${controls[i]}" is covered by ${armed.covered}`); continue; }
       await sleep(100);
+      const choosers = page.fileChoosers();
       await press(page, armed.x, armed.y, touch);
       await sleep(600);
       pressed++;
+      // A file picker answers by opening the system's file chooser, which changes nothing on the page (issue #16).
+      if (page.fileChoosers() > choosers) continue;
       const tip = touch || /^About /.test(controls[i]);
       const r = await page.eval<{ changes: number; moved: boolean }>(`({ changes: window.__changes + (${tip} ? document.querySelectorAll('[role=tooltip]').length : 0), moved: location.href !== window.__href })`);
       if (!r.changes && !r.moved) failures.push(`${route} @${width}: "${controls[i]}" does nothing when ${touch ? 'tapped' : 'pressed'}`);

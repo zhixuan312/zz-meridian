@@ -18,14 +18,8 @@ import { StatusDot } from '@/components/ui/status-dot';
 import type { Tone } from '@/components/ui/badge';
 import { cn } from '@/lib/cn';
 import { formatDuration } from '@/lib/format';
-import { useShareView } from '@/components/base/use-share-view';
+import { ShareContext } from '@/components/base/use-share-view';
 import { healthContext, type HealthData } from './health-context';
-
-/** Tells both agents what Health shows (decision 0011). */
-export function ShareHealth({ data }: { data: HealthData }) {
-  useShareView(healthContext(data));
-  return null;
-}
 
 const RANK: Record<DayState, number> = { operational: 0, none: 0, degraded: 1, outage: 2 };
 const TONE: Record<DayState, Tone> = { operational: 'positive', none: 'neutral', degraded: 'warning', outage: 'critical' };
@@ -37,7 +31,7 @@ export function HealthBody(data: HealthData) {
   if (services.length === 0) {
     return (
       <Card>
-        <ShareHealth data={data} />
+        <ShareContext context={healthContext(data)} />
         <EmptyState title="No services yet" className="py-16">Every service you monitor appears here with its state now and its last 90 days.</EmptyState>
       </Card>
     );
@@ -50,7 +44,7 @@ export function HealthBody(data: HealthData) {
   const affected = services.filter((x) => x.status !== 'operational').map((x) => x.name);
   return (
     <Stack>
-      <ShareHealth data={data} />
+      <ShareContext context={healthContext(data)} />
       <Row split={current ? '2/3' : 'full'}>
         <FeaturedMetric
           kicker="Uptime · all services · 90 days"

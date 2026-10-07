@@ -266,9 +266,10 @@ const freePort = () => new Promise<number>((res) => { const s = net.createServer
 // BLANKED, not deleted: `next start` loads `.env.local` itself, where a person keeps their own model, and Next does not
 // overwrite a variable that is already set — so a deleted `ASSISTANT_*` came straight back from that file and the
 // "assistant off" start failed with "the page has 1 assistant element(s)" while nothing was wrong (`assistantConfig`
-// treats a blank value as unset). Reported in issue #7 against `e4a6225`.
+// treats a blank value as unset). Reported in issue #7 against `e4a6225`. Every name the assistant reads is blanked,
+// set in the shell or not: a variable kept only in `.env.local` is absent here and would come back from it (issue #16).
 const clean: NodeJS.ProcessEnv = { ...process.env };
-for (const k of Object.keys(clean)) if (k.startsWith('ASSISTANT_')) clean[k] = '';
+for (const k of ['ASSISTANT_PROVIDER', 'ASSISTANT_API_KEY', 'ASSISTANT_MODEL', 'ASSISTANT_BASE_URL', ...Object.keys(clean).filter((k) => k.startsWith('ASSISTANT_'))]) clean[k] = '';
 
 function step(name: string, cmd: string, args: string[], env = clean, last = false) {
   current = name;

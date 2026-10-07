@@ -161,12 +161,13 @@ update (`2` pending, `0` finalized, `1` failure). `--abort`: `0` aborted, `1` re
 
 ## Resolving 0.9.0's migrations
 
-Moving a project to 0.9.0 can report two more `migration:<id>` items, resolved the same way as those below:
+Moving a project to 0.9.0 can report two more `migration:<id>` items, and to 0.10.0 a third for an assistant kept from before, resolved the same way as those below:
 
 | Id | The old shape it found | The change |
 |----|------------------------|------------|
 | `share-view-context` | `useShareView(text, structured)`, a sentence and an object | one shared context per view, `useShareView(context)`: `agents.md`, "Legible", and `customize.md`, "A shared context" |
 | `agent-reads-section` | a page README under `optional:app/(dashboard)/` or `optional:app/embed/` with no `### What the agent reads` | add the part under `## Agents`: `customize.md`, "A page spec"; checked by the gate |
+| `assistant-view-tools` (0.10.0) | an assistant route, `optional:src/lib/assistant/tools.ts` or `optional:src/lib/assistant/respond.ts` kept from before view tools | bring the two files over from the release and pass `views` to `respond` (the template's `viewTools`, your own, or none): `example:docs/assistant.md`, "Adding an MCP server later" |
 
 A created project that never changed the template's pages brings the release's version of each affected file over, with
 the files that arrived with them: the view contexts `optional:src/views/overview-context.ts` and its siblings, the view

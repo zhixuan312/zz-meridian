@@ -11,7 +11,9 @@
  *    directly, so a validation never sees an earlier answer. That product's three heaviest pages answered 44-46% sooner.
  * 2. Raise the connection pool's idle timeout. `pg` drops an idle connection after 10 seconds, and against a remote
  *    Postgres with TLS a new one cost that product 330 ms to 1.5 s — paid again on the next click by anybody who reads
- *    a page for a moment. `idleTimeoutMillis: 300_000` is what they settled on.
+ *    a page for a moment. `idleTimeoutMillis: 300_000` is what they settled on. A pool that keeps connections idle must
+ *    also listen for their loss, `pool.on('error', (e) => console.error('db: an idle connection closed', e))`, or the
+ *    database closing one is an uncaught error and the server exits (issue #16); add `connectionTimeoutMillis` too.
  */
 import { z } from 'zod';
 import { arrayCollection, type AnyCollection, type Collection } from '@/lib/collection';

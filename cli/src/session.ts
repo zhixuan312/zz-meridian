@@ -8,6 +8,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { managedBlock } from './context.js';
 import { inside, packageManager, run as spawn, sha256 } from './files.js';
+import { aliasesOf, canonicalImports } from './imports.js';
 import { changedPaths, takeInventory } from './inventory.js';
 import { renderMergeReport } from './merge-report.js';
 import { releaseMigrations } from './migrations.js';
@@ -156,6 +157,7 @@ function plan(ctx: Context, manifest: Manifest, startedAt: Date): Plan {
   const paths = [...new Set([...Object.keys(manifest.files), ...targetManaged, ...keep.map((k) => k.path)])].sort(compact);
   for (const p of paths) if (!isSafePath(p) || FORBIDDEN.test(p)) throw new Refusal(`unsafe path ${JSON.stringify(p)}; nothing was written`);
   const sourcePayload = new Set(source.payload);
+  const aliases = aliasesOf(readText(root, 'tsconfig.json'));
 
   const operations: FileOperation[] = [];
   const retired: Retirement[] = [];
@@ -169,7 +171,15 @@ function plan(ctx: Context, manifest: Manifest, startedAt: Date): Plan {
     if (targetHash) targetFiles[p] = targetHash;
     const disk = probe(root, p);
     if (disk.unsafe && (managed || keptReason.has(p))) throw new Refusal(`${p} is a symbolic link or not a regular file; nothing was written`);
-    const { disposition, action } = classify({ recorded: recorded as Hash | null, target: targetHash as Hash | null, disk: disk.side.hash, managed, kept: keptReason.has(p) });
+    // A managed module the team only re-styled (its imports named another way, nothing else changed) is untouched: the
+    // release's copy replaces it instead of staging a merge nobody needs (issue #16).
+    let diskHash = disk.side.hash;
+    if (managed && recorded && diskHash && diskHash !== recorded && /\.(?:tsx?|jsx?|mjs)$/.test(p) && fs.existsSync(inside(source.tree, p))) {
+      const ours = readText(root, p);
+      const base = fs.readFileSync(inside(source.tree, p), 'utf8');
+      if (ours !== null && canonicalImports(p, ours, aliases) === canonicalImports(p, base, aliases)) diskHash = recorded as Hash;
+    }
+    const { disposition, action } = classify({ recorded: recorded as Hash | null, target: targetHash as Hash | null, disk: diskHash, managed, kept: keptReason.has(p) });
     operations.push({ path: p, disposition, action, base: sideOf(recorded), ours: disk.side, target: sideOf(targetHash), applied: false, appliedHash: null });
     if (disposition === 'retired-kept') retired.push({ path: p, baselineHash: recorded as Hash, reason: keptReason.get(p)! });
   }

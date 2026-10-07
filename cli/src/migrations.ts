@@ -226,6 +226,22 @@ export const RELEASE_MIGRATIONS: ReleaseMigration[] = [
     checks: GATE_AND_BUILD,
   },
   {
+    id: 'assistant-view-tools',
+    since: '0.10.0',
+    applies: (root) => {
+      const route = text(root, 'app/api/assistant/route.ts');
+      const tools = text(root, 'src/lib/assistant/tools.ts');
+      const respond = text(root, 'src/lib/assistant/respond.ts');
+      if (route === null || tools === null || respond === null) return null;
+      // The 0.9.0 assistant takes the views and tells the model its limits; one kept from before does neither.
+      const stale = [...(/\bViewTool\b/.test(tools) ? [] : ['src/lib/assistant/tools.ts']), ...(/\blimitsOf\b/.test(respond) ? [] : ['src/lib/assistant/respond.ts']), ...(/\bviews\s*:/.test(route) ? [] : ['app/api/assistant/route.ts'])];
+      return stale.length > 0 ? stale : null;
+    },
+    summary: "The assistant's route-side code predates view tools and its limits.",
+    instructions: 'Read "Adding an MCP server later" in example:docs/assistant.md. Bring `src/lib/assistant/tools.ts` and `src/lib/assistant/respond.ts` over from the release: `assistantTools(collections, writer, guard, views)` offers every view in `src/views/tools.ts` as a read-only `view_<name>` tool, `respond` lists what the assistant cannot do or see (`limitsOf`) and passes the views on, and the guard may take a `record`. Then pass `views` from the assistant route to `respond`: the template\'s `viewTools`, an adopted project\'s own view tools (`ViewTool` in `src/lib/shared-context.ts`), or none.',
+    checks: GATE_AND_BUILD,
+  },
+  {
     id: 'agent-reads-section',
     since: '0.9.0',
     applies: pagesWithoutAgentReads,

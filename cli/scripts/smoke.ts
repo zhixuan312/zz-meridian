@@ -187,7 +187,7 @@ function zz(pkg: string, cwd: string, a: string[], label: string, env: Record<st
 }
 
 /** The migrations 0.5.0 declares in `cli/src/migrations.ts`: changes in the team's own files, resolved by editing them. */
-const RELEASE_IDS = ['shell-assistant-promise', 'assistant-available-promise', 'clock-now-required', 'cache-components-config', 'connection-boundaries', 'authorized-read', 'scoped-invalidation', 'live-provider', 'authorized-endpoints', 'share-view-context', 'agent-reads-section'];
+const RELEASE_IDS = ['shell-assistant-promise', 'assistant-available-promise', 'clock-now-required', 'cache-components-config', 'connection-boundaries', 'authorized-read', 'scoped-invalidation', 'live-provider', 'authorized-endpoints', 'share-view-context', 'agent-reads-section', 'assistant-view-tools'];
 
 const filesUnder = (dir: string, rel = ''): string[] => {
   if (!fs.existsSync(path.join(dir, rel))) return [];

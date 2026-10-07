@@ -67,12 +67,16 @@ Rules that make every page look like it belongs:
   open their record. Below 768px a data table becomes a card list by itself.
 - **Every state**: loading (`loading.tsx` with skeletons shaped like the page), empty (Empty state with the one action),
   error (`error.tsx`, what failed and Retry).
+- **A file picker** is a visible `Button` that calls `input.click()` on an `<input type="file">` with `tabIndex={-1}`
+  and `aria-hidden`, so the keyboard reaches the button and never the hidden input; give the press a state of its own
+  ("Choosing the files…") until the change event arrives. The presses count a file chooser that opens as an answer.
 - **A page spec** next to each route (`README.md`: summary, Structure, States, Surfaces, Agents), so the next person, or
   agent, knows what the page is for. `node scripts/check.ts` requires Structure and States, and under `## Agents` a
   `### What the agent reads` part for every page in `optional:app/(dashboard)/` and `optional:app/embed/`.
 - **A shared context** for each page (decision 0011): a pure function beside the view builds it from the page's data
   (copy `optional:src/views/overview-context.ts`: scope, freshness, each figure with its unit, change and definition,
-  what `optional:src/lib/insight.ts` finds, what the data cannot say), and the view passes it to `useShareView`. Both
+  what `optional:src/lib/insight.ts` finds, what the data cannot say), and the view passes it to `useShareView`; a
+  server page with no client view places `<ShareContext context={…} />` among its cards instead. Both
   agents read it: an MCP host and the console's assistant. Add the page's tool to `optional:src/views/tools.ts` so the
   assistant can open it at an address.
 
@@ -92,7 +96,11 @@ The layout hands the shell whether it is on as a promise it does not await, `ass
   records from several places (the layout's shell tools, a page strip, the page and its freshness stamp), and `read()`
   caches per caller's scope and refreshes exactly the tenant a write touched, so do not wrap the read in a second cache;
   writes call `updateTag` after the commit (`cache.md`). Raise the pool's idle timeout too: `pg` drops an idle connection after 10s, and a remote Postgres with TLS
-  costs hundreds of milliseconds to reconnect. Issue #7 has the numbers.
+  costs hundreds of milliseconds to reconnect. Issue #7 has the numbers. A pool that keeps connections idle must also
+  listen for their loss: `pool.on('error', (e) => console.error('db: an idle connection closed', e))`. Without it, the
+  database or its pooler closing an idle connection is an uncaught `error` event and the server exits (issue #16); the
+  pool has already dropped the broken client, so logging is enough. Set `connectionTimeoutMillis` too, so a database
+  that does not answer fails a read instead of hanging it.
 - **Sign-in check** goes in three places, the same check: `optional:app/(dashboard)/layout.tsx`, `optional:app/api/assistant/route.ts` and every server action (each `actions.ts`), because a server action is a public endpoint the layout does not guard
   (before the model is reached).
 - **The switch** ("Show the assistant") is in `optional:src/views/settings.tsx`. A product that deletes Settings moves it, or the

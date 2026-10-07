@@ -80,3 +80,13 @@ describe('the 0.9.0 migrations', () => {
     expect(byId('agent-reads-section').applies(current)).toBeNull();
   });
 });
+
+describe('the 0.10.0 migration', () => {
+  it('finds an assistant whose route-side code predates view tools, and leaves a current one alone', () => {
+    const old = project({ 'app/api/assistant/route.ts': 'respond({ collections });\n', 'src/lib/assistant/tools.ts': 'export function assistantTools(collections, writer, guard) {}\n', 'src/lib/assistant/respond.ts': 'export async function respond() {}\n' });
+    expect(byId('assistant-view-tools').applies(old)).toEqual(['src/lib/assistant/tools.ts', 'src/lib/assistant/respond.ts', 'app/api/assistant/route.ts']);
+    const current = project({ 'app/api/assistant/route.ts': 'respond({ collections, views: viewTools });\n', 'src/lib/assistant/tools.ts': "import type { ViewTool } from '@/lib/shared-context';\n", 'src/lib/assistant/respond.ts': 'function limitsOf() {}\n' });
+    expect(byId('assistant-view-tools').applies(current)).toBeNull();
+    expect(byId('assistant-view-tools').applies(project({ 'app/page.tsx': 'x' }))).toBeNull();
+  });
+});
