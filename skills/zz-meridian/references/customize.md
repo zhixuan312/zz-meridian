@@ -68,7 +68,13 @@ Rules that make every page look like it belongs:
 - **Every state**: loading (`loading.tsx` with skeletons shaped like the page), empty (Empty state with the one action),
   error (`error.tsx`, what failed and Retry).
 - **A page spec** next to each route (`README.md`: summary, Structure, States, Surfaces, Agents), so the next person, or
-  agent, knows what the page is for. `node scripts/check.ts` requires Structure and States.
+  agent, knows what the page is for. `node scripts/check.ts` requires Structure and States, and under `## Agents` a
+  `### What the agent reads` part for every page in `app/(dashboard)/` and `app/embed/`.
+- **A shared context** for each page (decision 0011): a pure function beside the view builds it from the page's data
+  (copy `optional:src/views/overview-context.ts`: scope, freshness, each figure with its unit, change and definition,
+  what `optional:src/lib/insight.ts` finds, what the data cannot say), and the view passes it to `useShareView`. Both
+  agents read it: an MCP host and the console's assistant. Add the page's tool to `optional:src/views/tools.ts` so the
+  assistant can open it at an address.
 
 ## The assistant
 
@@ -115,7 +121,7 @@ command palette; compact suits operators who scan many rows.
 
 Each `app/embed/<view>/` route is an MCP App: a `ui://` resource an MCP server returns beside a tool result. Copy
 `optional:app/embed/overview/` for a summary or `optional:app/embed/requests/` for a list; wrap the content in `EmbedFrame`; call
-`useShareView(sentence, facts)` so the model knows what is on screen; put `AskAbout` on cards worth asking about; agent
+`useShareView(context)` with the page's context (copy `optional:src/views/overview-context.ts`) so the model knows what is on screen; put `AskAbout` on cards worth asking about; agent
 writes go through `Proposal` (see `optional:app/embed/proposal/`). Read `agents.md` next to this file for the server side.
 
 ## Clean-up before validation

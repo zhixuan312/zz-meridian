@@ -79,7 +79,7 @@ export function RequestsView({ rows, total, summary, state, pageSize, updatedAt,
         onClearFilters={clear}
         toolbar={
           <FilterBar
-            view={<AskAbout question={isFiltered ? `What do these requests with ${describeFilters(state)} have in common, and why?` : 'What stands out in the latest requests, and why?'} />}
+            ask={<AskAbout question={isFiltered ? `What do these requests with ${describeFilters(state)} have in common, and why?` : 'What stands out in the latest requests, and why?'} />}
             search={{ value: draft, onChange: setDraft, placeholder: 'Search requests' }}
             filters={[
               { key: 'status', label: 'Status', value: state.status, onChange: (status) => change({ status }), options: options('All', STATUS_CLASSES) },

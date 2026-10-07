@@ -34,6 +34,7 @@ export function FilterBar({
   filters = [],
   view,
   result,
+  ask,
   setBy,
   onClear,
   className,
@@ -44,6 +45,8 @@ export function FilterBar({
   view?: ReactNode;
   /** A quiet count of what the filters let through: "214 requests". */
   result?: ReactNode;
+  /** Ask about the filtered list (`AskAbout`): it stays in the row at every width, because handing the list to an agent is not a filter. */
+  ask?: ReactNode;
   /** The agent that set the current filters. */
   setBy?: string;
   /** Return every filter (and the search) to its off state. Shown only while something is filtered. */
@@ -116,6 +119,7 @@ export function FilterBar({
         <div className="ml-auto flex shrink-0 items-center gap-3">
           {result ? <span className="t-num text-xs whitespace-nowrap text-ink-3 @max-[60rem]:hidden">{result}</span> : null}
           {view ? <div className="@max-[52rem]:hidden">{view}</div> : null}
+          {ask}
         </div>
       </div>
       {setBy && active ? (

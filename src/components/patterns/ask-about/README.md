@@ -63,3 +63,5 @@ import { AskAbout } from '@/components/patterns/ask-about';
 
 <CardHeader title="Requests per day" actions={<AskAbout question="What drove the trend in requests this period?" />} />
 ```
+
+`iconBelowSm` keeps only the mark below 640px, the full question still its accessible name: for a card head whose kicker would otherwise wrap beside it (Health's uptime card). In a list's toolbar, pass it to `FilterBar`'s `ask`, which keeps it in the row on a phone.

@@ -32,4 +32,4 @@ An error says what happened, why if known, and what to do, in the interface's vo
 
 ## Writing for the model
 
-The sentence a view shares with a model (`useShareView`) is not a caption. It is a complete statement of what the person sees: the view, the period, the figures with units, the selected day or record. It is written so that a question asked next ("why?", "what about yesterday?") can be answered from it alone.
+The context a view shares with both agents (`useShareView`, decision 0011) is not a caption. It is a complete statement of what the person sees: the view, the period with its dates, how fresh the data is, the figures with units, changes and definitions, the selected day or record, what code found and what the data cannot say. It is written so that a question asked next ("why?", "what about yesterday?") can be answered from it alone, and it is the whole state every time, never only what changed.
