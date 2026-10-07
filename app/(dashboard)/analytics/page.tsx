@@ -47,7 +47,7 @@ async function Actions({ searchParams }: { searchParams: SearchParams }) {
   return (
     <>
       <Suspense><PeriodSelect value={period} /></Suspense>
-      <ExportButton rows={data.series} filename={`analytics-${period}.csv`} noun="days" className="max-sm:hidden" />
+      <ExportButton rows={data.series} filename={`analytics-${period}.csv`} noun="days" />
     </>
   );
 }

@@ -1,6 +1,6 @@
 # Data table
 
-A list of records in one card: a toolbar, the table, and pagination, with its loading, empty and error states built in. On phones the same rows become cards, in CSS, so nothing ever scrolls sideways.
+A list of records in one card: a toolbar, the table, and pagination, with its loading, empty and error states built in. On phones, and in any frame too narrow for its columns, the same rows become cards, in CSS, so nothing ever scrolls sideways.
 
 Status: beta
 
@@ -13,7 +13,7 @@ Status: beta
 5. **Rows**: `row-height` 52px (38px compact), a `line` divider between rows. The title column (`mobile: 'title'`, or the first) is the row's link when the row opens a record. The whole row takes the `fill-hover` tint on hover; the title keeps its colour and is never underlined.
 6. **Selection column** (optional): 40px with a Checkbox; the head's checkbox selects the page and shows indeterminate when part of it is chosen.
 7. **Footer**: Pagination, under a `line` divider, shown only when the rows do not fit on one page.
-8. **Cards, not a second list** (under 768px): the same table's rows lay out as cards — the title and the status on one line, two or three facts under it in `text-xs` `ink-3`, separated by dots. It is the SAME tree: the row becomes a six-column grid and each cell says which part of the card it is (`data-mobile`), so nothing is built twice and no device downloads a tree it cannot show.
+8. **Cards, not a second list** (when the table is under 640px wide, a phone or a half-width row on a wide screen): the same table's rows lay out as cards — the title and the status on one line, two or three facts under it in `text-xs` `ink-3`, separated by dots. It is the SAME tree: the row becomes a six-column grid and each cell says which part of the card it is (`data-mobile`), so nothing is built twice and no device downloads a tree it cannot show.
 
 ## Variants
 
@@ -55,7 +55,7 @@ Arrival: rows rise with the page (`arrive`); under reduced motion they are simpl
 ## Surfaces
 
 - **Console**: as specified; low-value columns drop with `hideBelow` as the window narrows.
-- **Mobile**: under 768px each row becomes a card, and the columns not wanted there are hidden. Facts that need their header to make sense use `mobileCell` ("Used 1 min ago", not "1 min ago"); the phone reads a smaller size in `ink-3`.
+- **Mobile, and any narrow frame**: once the table itself is under 640px wide each row becomes a card (a container query, as `hideBelow` reads the table's width, so a table in a split row or beside the assistant's column never runs past its frame), and the columns not wanted there are hidden. Facts that need their header to make sense use `mobileCell` ("Used 1 min ago", not "1 min ago"); the phone reads a smaller size in `ink-3`.
 - **Embed**: inline views show at most five rows as a compact list and offer Expand; fullscreen shows the full table.
 
 ## Agents

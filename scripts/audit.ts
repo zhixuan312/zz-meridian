@@ -1,16 +1,22 @@
 /**
  * The browser audit: every page and embed view, at every width, in both themes, measured.
  *
- *   node scripts/audit.ts [--base http://localhost:3100] [--routes /,/requests] [--embeds-only]
+ *   node scripts/audit.ts [--base http://localhost:3100] [--routes /,/requests] [--embeds-only] [--atlas]
  *
  * Routes are discovered from app/ (every static page; embeds under /embed), with the detail pages in
  * scripts/verify.config.ts beside them; --routes replaces the pages for one run.
+ *
+ * --atlas audits the Design Atlas instead: every card's page and its bare preview, at 1440 and 390px in both themes.
+ * A card's preview is the one place it is drawn alone, so a defect in its own box shows there and nowhere else. It is
+ * not part of `pnpm verify` (the default stays fast); run it when the question is the component surface. It takes
+ * about ten minutes, and a project without the Atlas has nothing for it to read.
  *
  * Fails (exit 1) on: sideways scroll, text clipped without an ellipsis, a control with no accessible name, more than
  * one page scroller, and rendered text under its WCAG minimum. Prints the design metrics per page: distinct type
  * sizes, weights and radii, and the hierarchy ratio (largest text over the median), which should be 3 or more on
  * an analytical page.
  */
+import fs from 'node:fs';
 import { launch } from './lib/chrome.ts';
 import { discover } from './lib/routes.ts';
 import config from './verify.config.ts';
@@ -19,13 +25,22 @@ const args = process.argv.slice(2);
 const opt = (k: string, d: string) => { const i = args.indexOf(k); return i >= 0 ? args[i + 1] : d; };
 const base = opt('--base', process.env.BASE ?? 'http://localhost:3100');
 const EMBEDS_ONLY = args.includes('--embeds-only');
+const ATLAS = args.includes('--atlas');
+
+/** Every card's Atlas page and bare preview, from the keys scripts/registry.ts generates; only the template has them. */
+function atlasRoutes(): string[] {
+  const file = 'app/system/preview/[section]/[card]/keys.ts';
+  if (!fs.existsSync(file)) { console.error('audit --atlas: this project has no Design Atlas to audit'); process.exit(1); }
+  const keys = [...fs.readFileSync(file, 'utf8').matchAll(/'([a-z]+\/[a-z0-9-]+)'/g)].map((m) => m[1]);
+  return keys.flatMap((k) => [`/system/${k}`, `/system/preview/${k}`]);
+}
 
 const found = discover();
 // verify.config.ts is the team's, so read the one field this needs through its own type.
 const detailRoutes = (config as { detailRoutes?: string[] }).detailRoutes ?? [];
-const ROUTES = EMBEDS_ONLY ? [] : (opt('--routes', '') ? opt('--routes', '').split(',') : [...found.filter((r) => !r.startsWith('/embed')), ...detailRoutes]);
-const EMBEDS = found.filter((r) => r.startsWith('/embed/'));
-const WIDTHS = [2560, 1440, 1024, 768, 390];
+const ROUTES = EMBEDS_ONLY ? [] : ATLAS ? atlasRoutes() : (opt('--routes', '') ? opt('--routes', '').split(',') : [...found.filter((r) => !r.startsWith('/embed')), ...detailRoutes]);
+const EMBEDS = ATLAS ? [] : found.filter((r) => r.startsWith('/embed/'));
+const WIDTHS = ATLAS ? [1440, 390] : [2560, 1440, 1024, 768, 390];
 const THEMES = ['dark', 'light'];
 
 type Report = {
@@ -89,7 +104,8 @@ const MEASURE = `(() => {
     }
     const rad = parseFloat(c.borderTopLeftRadius);
     if (rad > 0 && rad < 999) out.radii.push(Math.round(rad));
-    if (/(auto|scroll)/.test(c.overflowY) && el.scrollHeight > el.clientHeight + 1 && el.clientHeight > 120) out.scrollers.push(label(el));
+    // A card drawn as a specimen in the Atlas keeps its own scroll regions; only the page's count against the one scroller.
+    if (/(auto|scroll)/.test(c.overflowY) && el.scrollHeight > el.clientHeight + 1 && el.clientHeight > 120 && !el.closest('[data-specimen]')) out.scrollers.push(label(el));
     if (el.matches('button,a[href],[role="button"],[role="tab"],[role="switch"],[role="checkbox"],[role="radio"],input:not([type=hidden]),select,textarea')) {
       const name = el.getAttribute('aria-label') || el.getAttribute('aria-labelledby') || el.getAttribute('title') || el.textContent.trim() || el.querySelector('img[alt]')?.getAttribute('alt') || (el.id && document.querySelector('label[for="' + el.id + '"]')?.textContent.trim()) || el.closest('label')?.textContent.trim() || el.getAttribute('placeholder') || '';
       if (!name) out.unnamed.push(label(el));
@@ -109,7 +125,8 @@ const MEASURE = `(() => {
     }
   }
   // Headings descend one level at a time, so a screen reader's outline has no holes.
-  const levels = [...document.querySelectorAll('h1,h2,h3,h4,h5,h6')].filter((h) => !h.closest('[aria-hidden="true"]')).map((h) => +h.tagName[1]);
+  // A specimen's headings are the card's own, at the level the card uses where it is placed, not the documentation page's.
+  const levels = [...document.querySelectorAll('h1,h2,h3,h4,h5,h6')].filter((h) => !h.closest('[aria-hidden="true"]') && !h.closest('[data-specimen]')).map((h) => +h.tagName[1]);
   levels.forEach((l, i) => { if (i && l > levels[i - 1] + 1) out.headings.push('h' + levels[i - 1] + ' then h' + l); });
   out.focusless = [];
   const sorted = texts.sort((a, b) => a - b);

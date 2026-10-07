@@ -66,7 +66,7 @@ export function FilterBar({
           value={f.value}
           onValueChange={f.onChange}
           options={f.options}
-          leading={<span className="text-xs text-ink-3">{f.label}</span>}
+          leading={<span className={cn('text-xs', on ? 'text-ink-2' : 'text-ink-3')}>{f.label}</span>}
           className={cn(!block && 'w-auto min-w-0', on && !block && 'border-accent-line bg-accent-tint text-ink')}
         />
       );

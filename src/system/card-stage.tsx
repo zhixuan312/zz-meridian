@@ -58,7 +58,8 @@ export function CardStage({ id }: { id: string }) {
   const pane = (t: 'dark' | 'light') => (
     <Scope key={t} theme={t} accent={accent} density={density} className="px-5 py-8 sm:px-10">
       {theme === 'both' ? <p className="t-kicker mb-6">{t}</p> : null}
-      <div className={cn('mx-auto', width === 'phone' ? 'max-w-[390px]' : 'max-w-none')}><Suspense><P /></Suspense></div>
+      {/* A specimen, not the page: its own headings and scroll regions are the card's (a Detail head is an h1 where it is used), so the audit keeps them out of the page's outline and its one scroller (issue #8). */}
+      <div data-specimen className={cn('mx-auto', width === 'phone' ? 'max-w-[390px]' : 'max-w-none')}><Suspense><P /></Suspense></div>
     </Scope>
   );
   return (

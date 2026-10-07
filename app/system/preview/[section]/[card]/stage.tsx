@@ -17,7 +17,7 @@ function Inner({ id }: { id: string }) {
       data-density={q.get('density') ?? undefined}
       className="min-h-dvh bg-ground p-8 text-ink max-sm:p-4"
     >
-      <div className="mx-auto max-w-5xl"><Suspense><P /></Suspense></div>
+      <div data-specimen className="mx-auto max-w-5xl"><Suspense><P /></Suspense></div>
     </div>
   );
 }

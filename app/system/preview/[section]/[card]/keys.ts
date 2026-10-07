@@ -70,7 +70,6 @@ export const PREVIEW_KEYS: string[] = [
   'patterns/heatmap',
   'patterns/meridian',
   'patterns/sparkline',
-  'patterns/timeline',
   'patterns/trend-chart',
   'patterns/uptime-bars',
 ];

@@ -229,6 +229,24 @@ if (fs.existsSync(path.join(ROOT, COLLECTIONS))) {
   for (const f of LAYERS) if (/\brehype-?raw\b/i.test(code(read(f)))) problems.push(`${f}: reaches for rehype-raw; render markdown with Prose, where raw HTML stays text`);
 }
 
+// ── A control a keyboard can use ─────────────────────────────────────────────────────────────────────
+// A native button, link or field answers Enter and Space by itself, and Radix's primitives carry their own keys. An
+// element that only claims a control's role does not: it needs its own key handler, or a keyboard user can reach it,
+// see its ring and still not use it, past every browser check (issue #11). An option is left out: its listbox's owner,
+// the combobox that holds focus, moves through the options and picks one (aria-activedescendant).
+{
+  const ROLES = /\brole=["'](button|link|menuitem|menuitemcheckbox|menuitemradio|tab|checkbox|switch|radio)["']/;
+  const NATIVE = new Set(['button', 'a', 'input', 'select', 'textarea', 'summary']);
+  for (const f of [APP_DIR, 'src'].flatMap((d) => walk(d, /\.tsx$/))) {
+    const src = read(f);
+    for (const m of src.matchAll(/<([a-z][a-z0-9]*)\b((?:=>|[^>])*)>/g)) {
+      const [, tag, attrs] = m;
+      const role = ROLES.exec(attrs)?.[1];
+      if (role && !NATIVE.has(tag) && !/\bonKeyDown\s*=/.test(attrs)) problems.push(`${f}: <${tag} role="${role}"> has no onKeyDown; use a <button>, or handle Enter and Space`);
+    }
+  }
+}
+
 // ── The update session, the keep register and the logo ────────────────────────────────────────────────
 // A session under .meridian/update/ must be resolved before the gate passes. With one ready, its candidate manifest
 // stands in for the original: the files it will own are what keep, retirements and the dormant-code sweep read.

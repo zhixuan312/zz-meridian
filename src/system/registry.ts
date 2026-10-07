@@ -74,7 +74,6 @@ export const CARDS: Card[] = [
   { id: 'heatmap', layer: 3, section: 'patterns', dir: 'src/components/charts/heatmap', Preview: dynamic(() => import('@/components/charts/heatmap/preview')) },
   { id: 'meridian', layer: 3, section: 'patterns', dir: 'src/components/charts/meridian', Preview: dynamic(() => import('@/components/charts/meridian/preview')) },
   { id: 'sparkline', layer: 3, section: 'patterns', dir: 'src/components/charts/sparkline', Preview: dynamic(() => import('@/components/charts/sparkline/preview')) },
-  { id: 'timeline', layer: 3, section: 'patterns', dir: 'src/components/charts/timeline', Preview: dynamic(() => import('@/components/charts/timeline/preview')) },
   { id: 'trend-chart', layer: 3, section: 'patterns', dir: 'src/components/charts/trend-chart', Preview: dynamic(() => import('@/components/charts/trend-chart/preview')) },
   { id: 'uptime-bars', layer: 3, section: 'patterns', dir: 'src/components/charts/uptime-bars', Preview: dynamic(() => import('@/components/charts/uptime-bars/preview')) },
 ];

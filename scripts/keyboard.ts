@@ -8,9 +8,11 @@
  * something else such as the sticky top bar (WCAG 2.4.11), or when a visible control is never reached at all.
  * The audit (scripts/audit.ts) checks the first eighteen stops of every page at every width; this walks all of them.
  *
- * KNOWN GAP: this proves every control is REACHABLE and ringed; it never ACTIVATES one with the keyboard. A control
- * that answers a click but not Enter or Space passes both this and scripts/interactions.ts (which presses with the
- * mouse and with touch). The gap is deliberate until a check can be trusted not to cry wolf: what a key should do
+ * This proves every control is REACHABLE and ringed; it never ACTIVATES one with the keyboard. The activation is held
+ * where it can be held without guessing: a native button, link or field answers Enter and Space by itself, Radix's
+ * primitives carry their own keys, and scripts/check.ts fails any element that only claims a control's role
+ * (role="button", "tab", "switch" and the rest) with no onKeyDown (issue #11). A pass that presses keys here is left
+ * out on purpose, so it cannot cry wolf: what a key should do
  * depends on the role — Enter activates a button and a menu item, Space toggles a checkbox and a switch, and an arrow
  * key moves within a radio group — so a blanket "something must change on Enter" fails honest controls and teaches
  * people to ignore the check. Two things a future check needs: send the key as

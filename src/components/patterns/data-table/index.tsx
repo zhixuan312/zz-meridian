@@ -73,14 +73,18 @@ const CELLS = [
   '[&_tbody_tr]:transition-colors [&_tbody_tr]:duration-(--dur-hover) [&_tbody_td]:border-b [&_tbody_td]:border-line [&_tbody_tr:last-child_td]:border-0',
 ].join(' ');
 
-/** What a row becomes below 768px: a six-column grid, a card's padding, a hairline between cards. */
+/**
+ * What a row becomes when the TABLE is under 640px wide: a six-column grid, a card's padding, a hairline between cards.
+ * The table's own width, not the window's, as `hideBelow` reads it: a table in a half-width row on a wide screen, or
+ * beside the assistant's column, becomes cards instead of running past its frame (issue #9's Atlas audit).
+ */
 const PHONE_ROWS = [
-  'max-md:[&_tbody_tr]:grid max-md:[&_tbody_tr]:grid-cols-6 max-md:[&_tbody_tr]:items-center max-md:[&_tbody_tr]:gap-x-3 max-md:[&_tbody_tr]:gap-y-1',
-  'max-md:[&_tbody_tr]:px-(--card-pad) max-md:[&_tbody_tr]:py-3.5 max-md:[&_tbody_td]:border-0 max-md:[&_tbody_tr]:border-b max-md:[&_tbody_tr]:border-line max-md:[&_tbody_tr:last-child]:border-b-0',
+  '@max-[640px]:[&_tbody_tr]:grid @max-[640px]:[&_tbody_tr]:grid-cols-6 @max-[640px]:[&_tbody_tr]:items-center @max-[640px]:[&_tbody_tr]:gap-x-3 @max-[640px]:[&_tbody_tr]:gap-y-1',
+  '@max-[640px]:[&_tbody_tr]:px-(--card-pad) @max-[640px]:[&_tbody_tr]:py-3.5 @max-[640px]:[&_tbody_td]:border-0 @max-[640px]:[&_tbody_tr]:border-b @max-[640px]:[&_tbody_tr]:border-line @max-[640px]:[&_tbody_tr:last-child]:border-b-0',
 ].join(' ');
 
 /** The resets a cell needs once the row is a grid: not a row height, not a padding box, free to shrink and to clip. */
-const PHONE_CELLS = 'max-md:[&_td:not([data-mobile=hidden])]:!h-auto max-md:[&_td:not([data-mobile=hidden])]:!max-w-none max-md:[&_td:not([data-mobile=hidden])]:!p-0 max-md:[&_td:not([data-mobile=hidden])]:min-w-0 max-md:[&_td:not([data-mobile=hidden])]:!block max-md:[&_[data-sep]]:inline';
+const PHONE_CELLS = '@max-[640px]:[&_td:not([data-mobile=hidden])]:!h-auto @max-[640px]:[&_td:not([data-mobile=hidden])]:!max-w-none @max-[640px]:[&_td:not([data-mobile=hidden])]:!p-0 @max-[640px]:[&_td:not([data-mobile=hidden])]:min-w-0 @max-[640px]:[&_td:not([data-mobile=hidden])]:!block @max-[640px]:[&_[data-sep]]:inline';
 
 /** Where a role sits in the card, and how it reads there.
  *
@@ -89,13 +93,15 @@ const PHONE_CELLS = 'max-md:[&_td:not([data-mobile=hidden])]:!h-auto max-md:[&_t
  * card's own rule is the role, not the width. The title takes one column fewer when a checkbox leads the row: six
  * columns, and the status keeps the last two. */
 const PHONE_ROLES = [
-  'max-md:[&_td[data-mobile=check]]:col-span-1 max-md:[&_td[data-mobile=check]]:row-start-1',
-  'max-md:[&_td[data-mobile=title]]:row-start-1 max-md:[&_td[data-mobile=title]]:font-medium',
-  'max-md:[&_td[data-mobile=status]]:row-start-1 max-md:[&_td[data-mobile=status]]:justify-self-end',
-  'max-md:[&_td[data-mobile=fact]]:row-start-2 max-md:[&_td[data-mobile=fact]]:col-span-2 max-md:[&_td[data-mobile=fact]]:text-xs max-md:[&_td[data-mobile=fact]]:text-ink-3',
-  'max-md:[&_td[data-mobile=hidden]]:hidden',
+  '@max-[640px]:[&_td[data-mobile=check]]:col-span-1 @max-[640px]:[&_td[data-mobile=check]]:row-start-1',
+  '@max-[640px]:[&_td[data-mobile=title]]:row-start-1 @max-[640px]:[&_td[data-mobile=title]]:font-medium',
+  '@max-[640px]:[&_td[data-mobile=status]]:row-start-1 @max-[640px]:[&_td[data-mobile=status]]:justify-self-end',
+  '@max-[640px]:[&_td[data-mobile=fact]]:row-start-2 @max-[640px]:[&_td[data-mobile=fact]]:col-span-2 @max-[640px]:[&_td[data-mobile=fact]]:text-xs @max-[640px]:[&_td[data-mobile=fact]]:text-ink-3',
+  '@max-[640px]:[&_td[data-mobile=hidden]]:hidden',
+  // On the accent wash of a selected row, a fact steps up to ink-2: ink-3 on it falls under 4.5:1 in light.
+  '@max-[640px]:[&_tr[aria-selected]_td[data-mobile=fact]]:text-ink-2',
 ].join(' ');
-const PHONE_TITLE_SPAN = { plain: 'max-md:[&_td[data-mobile=title]]:col-span-4', selectable: 'max-md:[&_td[data-mobile=title]]:col-span-3' };
+const PHONE_TITLE_SPAN = { plain: '@max-[640px]:[&_td[data-mobile=title]]:col-span-4', selectable: '@max-[640px]:[&_td[data-mobile=title]]:col-span-3' };
 
 /* Literal strings, as in the Table: Tailwind finds classes by reading the source. */
 const HIDE: Record<Breakpoint, string> = { sm: '@max-[512px]:hidden', md: '@max-[672px]:hidden', lg: '@max-[896px]:hidden', xl: '@max-[1152px]:hidden' };
@@ -253,7 +259,7 @@ export function DataTable<R>({
   } else {
     const roleOf = (c: Column<R>): Mobile => (c === titleColumn ? 'title' : c === status ? 'status' : facts.includes(c) ? 'fact' : 'hidden');
     body = (
-      <Table caption={caption} aria-busy={loading || undefined} className={cn('max-md:block max-md:[&>thead]:hidden max-md:[&>tbody]:block', CELLS, PHONE_ROWS, PHONE_CELLS, PHONE_ROLES, PHONE_TITLE_SPAN[selectable ? 'selectable' : 'plain'])}>
+      <Table caption={caption} aria-busy={loading || undefined} className={cn('@max-[640px]:block @max-[640px]:[&>thead]:hidden @max-[640px]:[&>tbody]:block', CELLS, PHONE_ROWS, PHONE_CELLS, PHONE_ROLES, PHONE_TITLE_SPAN[selectable ? 'selectable' : 'plain'])}>
         <TableHead>
           <tr>
             {selectable ? (
@@ -301,8 +307,8 @@ export function DataTable<R>({
                               both are rendered and one is hidden: a few words each, never a second copy of the row. */}
                           {c.mobileCell ? (
                             <>
-                              <span className="max-md:hidden">{content}</span>
-                              <span className="hidden max-md:contents">{c.mobileCell(r)}</span>
+                              <span className="@max-[640px]:hidden">{content}</span>
+                              <span className="hidden @max-[640px]:contents">{c.mobileCell(r)}</span>
                             </>
                           ) : content}
                           {/* The dot that separates two facts, on a phone only — the table has a column for each of

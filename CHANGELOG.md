@@ -2,6 +2,34 @@
 
 Every release of ZZ Meridian, newest first. Versions follow semver: a removed or renamed token, prop or card is major; a new card, token or variant is minor; a corrected value is a patch. Each entry says what breaks and what to do instead.
 
+## [Unreleased]
+
+### Added
+
+- **`audit --atlas`.** The browser audit over the Design Atlas: every card's page and its bare preview, at 1440 and 390px in both themes, about ten minutes. Not part of `pnpm verify`, which stays fast (issue #9).
+- **`ShareContext`.** `useShareView` as a component that renders nothing, for a server page with no client view (issue #17).
+- **A database guide.** `references/existing-project.md` covers a pool that survives a dropped connection, a transaction pooler, schema changes on start, and a role that cannot create (issues #16, #17).
+- **`assistant-view-tools` migration.** `update` reports an assistant whose route-side code predates view tools and its limits (issue #17).
+
+### Changed
+
+- **Export is offered on a phone.** The Overview's and Analytics' Export were hidden below 640px; a page's actions are offered on every width (issue #13).
+- **`update` sees past import style.** A managed module whose only difference from its release copy is how its imports are written (`@/…` for `../../…`) is untouched, not a merge (issue #16).
+- **A specimen is not the page.** The audit keeps a card preview's own headings and scroll regions out of the page's outline and its one scroller (issue #8).
+- **A control's role needs its keys.** `scripts/check.ts` fails an element that claims a control's role (`button`, `tab`, `switch` and the rest) with no `onKeyDown` (issue #11).
+
+### Fixed
+
+- **A narrow table becomes cards on any screen.** `DataTable`'s card list follows the table's own width (under 640px), as `hideBelow` does, so a table in a half-width row or beside the assistant's column no longer runs past its frame. Found by the first `audit --atlas`, with the two below.
+- **An active filter's label reads.** A filter that is on keeps its name in `ink-2` on the accent tint; `ink-3` fell to 4.04:1 in light.
+- **A selected row's facts read on a phone.** On the accent wash, a card's facts step up to `ink-2`; `ink-3` fell to 4.43:1 in light.
+- **The presses count a file chooser.** A file picker's button opens the system's chooser, which changes nothing in the DOM; the presses now intercept it and count it as an answer (issue #16).
+- **verify's assistant-off run ignores `.env.local`.** It blanks every name the assistant reads, set in the shell or not (issue #16).
+
+### Breaking
+
+- **`Timeline` is removed.** No page used it, and a card exists because a page needs it (`CONTRIBUTING.md`). Import nothing from `src/components/charts/timeline`.
+
 ## [0.9.0] · 2026-10-07
 
 ### Added

@@ -2,6 +2,10 @@
  * The sample product: this template presented as a fictional API platform under the name in app.config, so the template's pages, the Design Atlas and every card preview
  * run with no backend and look like a real product.
  *
+ * Every customer, person, region and incident in it is invented: Northwind Labs, Parallax AI, Maya Chen and the rest
+ * name nobody this work came from, and a name that matches a real company does so by chance. Plausible names keep the
+ * examples readable, as a placeholder like "Customer 1" would not (issue #14).
+ *
  * It is not your data seam. A product built on the template reads its own module in src/data/ and leaves this one in
  * place for the Atlas and the previews.
  *

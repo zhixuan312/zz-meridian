@@ -17,7 +17,7 @@ Status: beta
 
 Everything in rows 1 and 2 shares one Meridian: point at a day in either chart and the featured figure, the tiles and both charts read that day.
 
-Below 1024px every row stacks: the featured card first, then the tiles (two across from 34rem, one below), then the cards. At 390px the masthead's actions wrap under the title and the period select stays visible; Export is not offered on a phone (`max-sm:hidden`), and the command palette carries destinations and appearance, not the page's actions.
+Below 1024px every row stacks: the featured card first, then the tiles (two across from 34rem, one below), then the cards. At 390px the masthead's actions wrap under the title: the period select, then Export. A page's actions are offered on every width, as the request log's export is: a person on a phone may want the CSV too (issue #13).
 
 ## States
 

@@ -25,7 +25,7 @@ Below 1024px the rail becomes a drawer (the same node, so nothing is defined twi
 | Navigation | Rail | Drawer from the masthead's menu button; closes on Escape, on the scrim and on navigation | AppShell |
 | Masthead | Title, head-note, actions on one band | Title row with the menu button; head-note under it; actions wrap to their own row, the primary last | PageFrame |
 | Metric tiles | Four across | Two across from 34rem of row width, one below | Row `tiles` |
-| Tables | Columns, sortable heads | A list of cards, one per row: the primary column as the title, two or three facts under it, the status at the end; low-value columns drop first (`hideBelow`) | DataTable |
+| Tables | Columns, sortable heads | A list of cards, one per row: the primary column as the title, two or three facts under it, the status at the end; low-value columns drop first (`hideBelow`). Both read the table's own width, so a table in a narrow frame on a wide screen becomes cards too | DataTable |
 | Dialogs | Centred, 520px | A bottom sheet, full width, safe-area padding | Dialog |
 | Menus and selects | Popover | Popover, at least 44px rows on touch | Menu, Select |
 | Charts | Full height, 6 to 8 date labels | Shorter (180px), 3 to 4 date labels; the Meridian follows the finger and the tooltip pins to the top edge | TrendChart |
