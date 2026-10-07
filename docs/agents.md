@@ -40,7 +40,7 @@ A removal (revoke, delete) is proposed like any other change: the Proposal is ma
 
 Whatever an agent did stays marked. An activity line names the agent and the person it acted for ("Claude raised the rate limit for Parallax AI · for Jonas Weber"). A filter or a view an agent set says so ("Set by Claude") until a person changes it. Agents are drawn as a square mark, never as a round avatar: a reader tells a person from an agent at a glance.
 
-**In the system:** `AgentMark`, `ActivityFeed`'s `via`, `FilterBar`'s `setBy`.
+**In the system:** `AgentMark`, `ActivityFeed`'s `via`, `FilterBar`'s `setBy`, and the assistant's `record`, which writes the Activity line once an approved change commits (decision 0011).
 
 ### 5. Handoff
 

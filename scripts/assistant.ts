@@ -169,11 +169,20 @@ try {
 
     await ask('Suspend them');
     await until('a Proposal to change two members', proposals, (t) => t.some((l) => l?.startsWith('Proposal from Assistant: Change 2 members')));
+    // A second tab holds the Overview open, as a teammate would: the Activity line must reach it without a reload.
+    const watcher = await launch();
+    await watcher.open(`${base}/`, { width: 1440 });
     await decide('Approve');
     const suspended = await until('both rows to read Suspended', async () => [await row('Alice Moreno'), await row('Ravi Patel')], (r) => r.every((t) => t?.includes('Suspended')));
     if (!(await page.eval<boolean>(`window.__walk === true`))) fail('the page reloaded instead of refreshing');
     ok(`the approved suspension shows Alice Moreno and Ravi Patel as Suspended without a reload (${suspended.length} rows)`);
     await until('the assistant to say Done.', said, (t) => t === 'Done.');
+    // Provenance: the approved change left an Activity line naming the agent and the person it acted for.
+    const object = 'status to Suspended for Alice Moreno and Ravi Patel';
+    const line = await until('the Activity line on the open Overview', () => watcher.eval<string>(`[...document.querySelectorAll('[data-scroll-region] li')].map((l) => l.textContent).find((t) => t.includes(${JSON.stringify(object)})) ?? ''`), Boolean);
+    watcher.close();
+    if (!/^Assistant ?changed/.test(line.trim()) || !line.includes('for Maya Chen')) fail(`the Activity line does not name the Assistant and the person it acted for: "${line}"`);
+    ok(`the open Overview's Activity showed "${line.replace(/\s+/g, ' ').trim()}" without a reload`);
 
     await ask('Remove Alice Moreno');
     await until('a removal Proposal', proposals, (t) => t.some((l) => l?.startsWith('Proposal from Assistant: Remove')));

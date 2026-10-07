@@ -34,4 +34,16 @@ describe('an approved assistant write', () => {
     expect(asked).toEqual([['members', 'update', [id]]]);
     expect(invalidated).toEqual(['members']);
   });
+  it('is recorded once it commits, by the records\' titles, and a failed record leaves the change in place', async () => {
+    const recorded: unknown[] = [];
+    const { rows } = await members.query({});
+    const [a, b] = [rows[1], rows[2]];
+    const { tools } = assistantTools([members], writer, { authorize: async () => true, invalidate: () => {}, record: (c) => { recorded.push(c); } });
+    await (tools.update_members as unknown as Exec).execute({ ids: [String(a.id), String(b.id)], set: { status: 'Suspended' } }, { toolCallId: 'recorded', messages: [] });
+    expect(recorded).toEqual([{ name: 'members', label: 'Members', op: 'update', titles: [a.name, b.name], set: { status: 'Suspended' } }]);
+    const failing = assistantTools([members], writer, { authorize: async () => true, invalidate: () => {}, record: () => { throw new Error('audit store down'); } });
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    await (failing.tools.update_members as unknown as Exec).execute({ ids: [String(a.id)], set: { team: 'Sales' } }, { toolCallId: 'recorded-failing', messages: [] });
+    expect((await members.query({ where: [{ field: 'id', op: 'eq', value: String(a.id) }] })).rows[0].team).toBe('Sales');
+  });
 });

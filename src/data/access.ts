@@ -24,6 +24,8 @@ type Policy = {
   bind: (scope: AccessScope, name: string) => AnyCollection | undefined;
   /** What the scope may do with a collection; `ids` are the records an update or a removal touches. */
   allows: (scope: AccessScope, name: string, op: Operation, ids?: string[]) => Promise<boolean>;
+  /** The person's name as Activity shows it ("Assistant … · for Maya Chen"); optional, and kept out of the scope, which keys the cache. */
+  name?: (scope: AccessScope) => Promise<string | null>;
 };
 
 export class Unauthenticated extends Error {
@@ -55,7 +57,11 @@ function accessFrom(policy: Policy) {
   async function can(scope: AccessScope, name: string, op: Operation, ids?: string[]): Promise<boolean> {
     return policy.bind(scope, name) !== undefined && policy.allows(scope, name, op, ids);
   }
-  return { resolveAccess, collectionFor, can };
+  /** The person's name for a record of what an agent did for them, or null when the policy does not say. */
+  async function nameOf(scope: AccessScope): Promise<string | null> {
+    return (await policy.name?.(scope)) ?? null;
+  }
+  return { resolveAccess, collectionFor, can, nameOf };
 }
 
 const DEMO: AccessScope = { tenantId: 'demo', subjectId: 'owner', authorizationKey: 'demo:1' };
@@ -72,8 +78,9 @@ const DEMO_COLLECTIONS: Record<string, { collection: AnyCollection; ops: readonl
   activity: { collection: activity, ops: ['read', 'create'] },
 };
 
-export const { resolveAccess, collectionFor, can } = accessFrom({
+export const { resolveAccess, collectionFor, can, nameOf } = accessFrom({
   current: async () => DEMO,
   bind: (scope, name) => (scope.tenantId === DEMO.tenantId ? DEMO_COLLECTIONS[name]?.collection : undefined),
   allows: async (_scope, name, op) => DEMO_COLLECTIONS[name]?.ops.includes(op) ?? false,
+  name: async (scope) => (scope.subjectId === DEMO.subjectId ? 'Maya Chen' : null),
 });

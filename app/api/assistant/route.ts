@@ -2,9 +2,10 @@ import { safeValidateUIMessages } from 'ai';
 import { revalidateTag } from 'next/cache';
 import { assistantConfig } from '@/lib/assistant/config';
 import { clock, collections } from '@/data/collections';
-import { Unauthenticated, can, collectionFor, resolveAccess } from '@/data/access';
+import { Unauthenticated, can, collectionFor, nameOf, resolveAccess } from '@/data/access';
 import { collectionTag } from '@/data/read';
 import { respond } from '@/lib/assistant/respond';
+import type { AgentChange } from '@/lib/assistant/tools';
 import { viewTools } from '@/views/tools';
 
 /** The panel sends at most the last 100 messages; a larger body than 2 MB is refused before it is parsed. */
@@ -36,6 +37,13 @@ export async function POST(request: Request): Promise<Response> {
       return now !== null && now.tenantId === scope.tenantId && now.subjectId === scope.subjectId && can(now, name, op, ids);
     },
     invalidate: (name: string) => revalidateTag(collectionTag(scope.tenantId, name), { expire: 0 }),
+    // Provenance (decision 0011): an approved change leaves an Activity line naming the agent and the person it acted
+    // for. Only where the product keeps activity and the person may add to it; the change stands either way.
+    record: async (change: AgentChange) => {
+      if (!(await can(scope, 'activity', 'create'))) return;
+      await collectionFor(scope, 'activity').create!({ at: clock().toISOString(), actor: (await nameOf(scope)) ?? 'You', via: 'Assistant', ...activityLine(change) });
+      revalidateTag(collectionTag(scope.tenantId, 'activity'), { expire: 0 });
+    },
   };
 
   return respond({
@@ -48,4 +56,13 @@ export async function POST(request: Request): Promise<Response> {
     messages: valid.data,
     page: { path: String(page?.path ?? ''), title: String(page?.title ?? ''), context: String(page?.context ?? ''), text: String(page?.text ?? '') },
   });
+}
+
+/** An agent's change as an Activity line: "changed status to Suspended for Alice Moreno and Ravi Patel". */
+function activityLine({ label, op, titles, set }: AgentChange): { verb: string; object: string } {
+  const names = titles.length <= 3 ? titles.join(titles.length === 2 ? ' and ' : ', ') : `${titles.length} ${label.toLowerCase()}`;
+  if (op === 'create') return { verb: 'added', object: `${names} to ${label.toLowerCase()}` };
+  if (op === 'remove') return { verb: 'removed', object: `${names} from ${label.toLowerCase()}` };
+  const fields = Object.entries(set ?? {}).map(([k, v]) => `${k} to ${Array.isArray(v) ? v.join(', ') : String(v)}`).join(', ');
+  return { verb: 'changed', object: `${fields} for ${names}` };
 }

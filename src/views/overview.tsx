@@ -7,6 +7,7 @@ import { EmptyState } from '@/components/ui/empty-state';
 import { Card, CardBody, CardFooter, CardHeader } from '@/components/ui/card';
 import { Meridian, useMeridianIndex } from '@/components/charts/meridian';
 import { useShareView } from '@/components/base/use-share-view';
+import { useLive } from '@/lib/live';
 import { TrendChart } from '@/components/charts/trend-chart';
 import { BarList } from '@/components/charts/bar-list';
 import { CompositionBar } from '@/components/charts/composition-bar';
@@ -40,6 +41,8 @@ function AskOverview({ period }: { period: string }) {
  */
 export function OverviewBody(data: OverviewData) {
   const { series, totals, endpoints, mix, activity, now } = data;
+  // A change anyone makes, an agent's included, reaches an open Overview's Activity without a reload.
+  useLive(['activity']);
   const period = PERIOD_LABEL[data.period].toLowerCase();
   if (series.length === 0) {
     return (
