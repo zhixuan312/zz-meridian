@@ -18,7 +18,8 @@ the homework, build it, judge it from every side and keep improving it until it 
 finished product and a short, honest account of it.
 
 You work unattended from the sentence to the hand-over. `references/standard.md` is the bar and the way to reach it: the
-register, the scoreboard of floors and craft you keep for every view, the loop you run until it holds, and which
+register (the look it answers to: `optional:docs/register.md` when present, otherwise `references/register.md`, Meridian's
+own; it never changes a floor, a required state, accessibility or the loop), the scoreboard of floors and craft you keep for every view, the loop you run until it holds, and which
 decisions are yours and which wait for the person. Read it before you build, whatever the request: a new dashboard, a
 redesign, one new page or a restyle all end at the same standard.
 
@@ -125,9 +126,9 @@ The sentence is the whole brief you will get, so turn the homework into decision
    it does), who uses it, and the one question the home page must answer.
 2. **Pages.** Your drafted list, each mapped to the closest Meridian preset (Overview, list, detail, analytics, health,
    settings, sign-in), each with the question it answers.
-3. **Brand and surfaces.** The brand colour from their existing styles or logo, else indigo (what `create` and `adopt`
-   give with no brand flag); dark first; MCP views only
-   when they asked for the agent surface.
+3. **Brand and surfaces.** Under Meridian's register: the brand colour from their existing styles or logo, else indigo
+   (what `create` and `adopt` give with no brand flag); dark first; MCP views only when they asked for the agent surface.
+   A project register that names its own brand route and theme default is followed instead.
 4. **Place and units.** The timezone and currency from their materials, addresses or language, else this machine's
    zone and its currency: "today", "late" and every money figure depend on them. A currency is evidence of a place
    (a pound sign, a UK zone), stronger than the machine the run happens on. The person the rail shows signed in
@@ -212,6 +213,8 @@ answer a question about this product.
 
 ## 4. Check the brand colour
 
+This step applies under Meridian's register; a project register that names its own brand route is followed instead.
+
 Status colours own three hues: critical near 22°, warning near 68°, positive near 158°. A brand hue within 20° of one
 (a red, amber or green brand) makes every button and selection read as an alert or as "healthy", and the script prints
 a warning when it happens. Run `brand` again with `--hue <the nearest hue 20° or more away> --chroma <the same
@@ -255,7 +258,7 @@ verbs on buttons, units and periods on every number.
 
 ## 6. Score it, and improve it until it meets the standard
 
-Run the loop in `references/standard.md` until its stop condition holds: list every view into the scoreboard, measure
+Run the loop in `references/standard.md`, scoring looks against the register in force (`optional:docs/register.md` when present, otherwise `references/register.md`), until its stop condition holds: list every view into the scoreboard, measure
 the floors, render and score the craft, fix every Weak and every failure, commit, and go round again. The commands:
 
 ```sh

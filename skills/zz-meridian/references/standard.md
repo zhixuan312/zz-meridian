@@ -12,16 +12,15 @@ the Apple Design Awards' criteria (interaction, visuals, inclusivity, delight), 
 its category, side by side. In this register spectacle that slows a repeated task is a defect: a figure that animates
 in on every visit, a hero banner above the data, a transition someone waits through.
 
-Meridian's own choices are deliberate and stay: dark first, the night-sky neutral, one accent with a job, a mono face for
-kickers and identifiers, one protagonist per page, the shared time cursor. When a request asks for a marketing or launch
+When a request asks for a marketing or launch
 page beside the console, that page answers to Awwwards, FWA and CSSDA instead (design, usability, creativity, content),
 built from the same tokens.
 
-Defaults that make a page read as generated rather than designed, and which you do not add: cream or off-white
-backgrounds, italic accent words in headlines, numbered 01/02/03 section labels, pill-shaped buttons, gradient text, a
-row of equal cards standing in for a protagonist, emoji or decorative illustration in place of data, blur or glass over
-figures. After the first render, name any other default you notice yourself falling back on, add it to the scoreboard's
-"Defaults noticed" line, and revise it out.
+The register is the look a product answers to. It is `optional:docs/register.md` when present, otherwise `register.md`
+(Meridian's own). It sets theme default, signature elements, anti-defaults, brand taste and look-dependent values in
+Colour, Typography, Hierarchy and Originality. It never changes a floor, required states, Copy, Responsive or Navigation
+quality, accessibility, the loop or the existing budget-governance policy. Read the register in force before you build,
+and name it on the scoreboard's "Register:" line.
 
 ## The scoreboard
 
@@ -42,7 +41,7 @@ the standard as a whole, and a defect you meet on another page is fixed too.
 ```md
 # Scoreboard · <Product> · round <n>
 Request: <what the person asked for, verbatim>
-Route: <adopt | create | update | brand> · Register: product UI · Defaults noticed: <none, or each one and what replaced it>
+Route: <adopt | create | update | brand> · Register: product UI, <Meridian's own | docs/register.md> · Defaults noticed: <none, or each one and what replaced it>
 
 ## Floors
 | Floor | Result | Evidence |
@@ -105,17 +104,17 @@ evidence.
 | Criterion | What Strong looks like here |
 |---|---|
 | Fit | The page answers its question from the brief with the person's own data shape, and does what the request asked of it. What they asked for is there; what they did not ask for is gone |
-| Hierarchy | One protagonist the eye lands on first (a featured metric, the table, the form; `node scripts/check.ts` fails a second featured metric); on analytical pages a hierarchy ratio near the template's 4.6× to 6.5×, while a detail page or a form is judged by its protagonist alone; everything else steps back |
-| Typography | Sizes from the scale, five to eight per page; three weights; figures with their unit and fraction stepped down; nothing set smaller to make it fit |
+| Hierarchy | One protagonist the eye lands on first (a featured metric, the table, the form; `node scripts/check.ts` fails a second featured metric); on analytical pages a hierarchy ratio as the register sets it, while a detail page or a form is judged by its protagonist alone; everything else steps back |
+| Typography | Sizes from the scale, as many per page and weights as the register sets; figures with their unit and fraction stepped down; nothing set smaller to make it fit |
 | Whitespace | The 4px scale; cards in a row share a height; gaps even between cards and inside them; one left edge down the page |
-| Colour | Every colour has a job: accent on actions and selection only, the status trio on status only, charts from the palette; nothing coloured for decoration |
+| Colour | Every colour has a job, as the register sets them; nothing coloured for decoration |
 | Motion and response | Every press answers at once (a state, a toast, a sheet); motion from the tokens, quick and interruptible; data arrives once, nothing loops but a live dot or a skeleton |
 | Responsive | Designed at each width, not shrunk: at 390px the protagonist leads, tables become card lists, actions stay reachable, dialogs become sheets |
 | Navigation | The next step is obvious: rows open their record, a link's arrow says where it goes, the rail shows where you are, a dead end offers the way back |
 | Copy | `voice.md`: sentence case, verbs on buttons, a unit and a period on every number; realistic data in the person's domain, never lorem ipsum or "Item 1" |
 | States | Empty (first run and filtered, each with its one action), loading (a skeleton shaped like the page), error (what failed, and Retry), long text and extreme values (a 60-character name, a zero, a figure in the billions) all designed, and each one seen: a filter that matches nothing, a missing id, sample rows with the long and extreme values so the audit sees them at every width, and the page's `loading.tsx` and `error.tsx` rendered: against the fake API made slow or failing, or, with none, by making the page's read wait or throw for one dev render and reverting it |
 | Agents | Only when the assistant or MCP views are on: the view shares a context that answers "why?" on its own (`agents.md`), and an agent's write goes through a Proposal with the Agent mark |
-| Originality | One idea the view is remembered by, named in the evidence. Meridian's own is the time cursor every chart shares; a product view earns Strong with one of its own that serves its question. It comes from how the asked-for content is shown, never from adding content nobody asked for |
+| Originality | One idea the view is remembered by, named in the evidence. The register names its own; a product view earns Strong with one of its own that serves its question. It comes from how the asked-for content is shown, never from adding content nobody asked for |
 
 Consistency has no row: the gate fails any value that is not a token, so it is a floor.
 
@@ -133,7 +132,7 @@ Run rounds until the stop condition holds. Order matters here, because each step
    to the shell, a shared component, the tokens or the data touches every view. `pnpm verify --full` runs once more at
    the end, over everything, because only it can show the stop condition. Fix the cause of every failure, never the
    check (`validation.md`).
-4. **Look and score.** Render, open every PNG, and score every view with its evidence.
+4. **Look and score.** Render, open every PNG, and score every view with its evidence, looks judged against the register in force.
 5. **Commit** each verified change on its own, staging the paths you changed by name, with a message that says what a
    person will notice. Commit locally only; pushing, releasing and deploying are the person's call.
 6. **Next round** on every Weak and every failed floor. An approach that has failed three times is the wrong approach:

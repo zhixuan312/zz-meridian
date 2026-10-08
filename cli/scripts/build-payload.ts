@@ -18,8 +18,9 @@ const worktree = process.argv.includes('--worktree');
 
 /** Never shipped: the package itself, CI, agent settings, Meridian's own demo deployment, and anything that could hold a secret. */
 // The CLI's own tests import cli/src, which a project never has: shipped, they would fail its type check. The fixtures
-// under scripts/fixtures/ serve those tests alone and import the template's own team-owned starters.
-export const PAYLOAD_EXCLUDE = /^(cli\/|\.github\/|\.claude\/|\.agents\/|\.mma\/|out\/|node_modules\/|scripts\/fixtures\/|tests\/(cli-[^/]*|context-guidance)\.test\.ts$|\.env(?!\.example$)|.*\.tsbuildinfo$|(Dockerfile|captain-definition|\.dockerignore)$)/;
+// under scripts/fixtures/ serve those tests alone and import the template's own team-owned starters. The deep-* tests drive
+// those fixtures in headless Chrome.
+export const PAYLOAD_EXCLUDE = /^(cli\/|\.github\/|\.claude\/|\.agents\/|\.mma\/|out\/|node_modules\/|scripts\/fixtures\/|tests\/(cli-[^/]*|deep-[^/]*|context-guidance)\.test\.ts$|\.env(?!\.example$)|.*\.tsbuildinfo$|(Dockerfile|captain-definition|\.dockerignore)$)/;
 
 if (import.meta.main) {
   fs.rmSync(OUT, { recursive: true, force: true });

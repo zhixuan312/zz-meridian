@@ -1,0 +1,192 @@
+[
+  {
+    "page": "/deep-clipped",
+    "suite": "audit",
+    "outcome": "fail",
+    "line": "clipped:"
+  },
+  {
+    "page": "/deep-clipped-fixed",
+    "suite": "audit",
+    "outcome": "pass"
+  },
+  {
+    "page": "/deep-unnamed",
+    "suite": "audit",
+    "outcome": "fail",
+    "line": "unnamed:"
+  },
+  {
+    "page": "/deep-unnamed-fixed",
+    "suite": "audit",
+    "outcome": "pass"
+  },
+  {
+    "page": "/deep-target",
+    "suite": "audit",
+    "outcome": "fail",
+    "line": "touch target under 44px:"
+  },
+  {
+    "page": "/deep-target-fixed",
+    "suite": "audit",
+    "outcome": "pass"
+  },
+  {
+    "page": "/deep-contrast",
+    "suite": "audit",
+    "outcome": "fail",
+    "line": "contrast:"
+  },
+  {
+    "page": "/deep-contrast-fixed",
+    "suite": "audit",
+    "outcome": "pass"
+  },
+  {
+    "page": "/deep-alpha",
+    "suite": "audit",
+    "outcome": "fail",
+    "line": "contrast:"
+  },
+  {
+    "page": "/deep-alpha-fixed",
+    "suite": "audit",
+    "outcome": "pass"
+  },
+  {
+    "page": "/deep-ringless",
+    "suite": "audit",
+    "outcome": "fail",
+    "line": "no focus ring:"
+  },
+  {
+    "page": "/deep-ringless-fixed",
+    "suite": "audit",
+    "outcome": "pass"
+  },
+  {
+    "page": "/deep-ring-ancestor",
+    "suite": "audit",
+    "outcome": "pass"
+  },
+  {
+    "page": "/deep-decorative-border",
+    "suite": "audit",
+    "outcome": "fail",
+    "line": "no focus ring:"
+  },
+  {
+    "page": "/deep-decorative-border-fixed",
+    "suite": "audit",
+    "outcome": "pass"
+  },
+  {
+    "page": "/deep-closed",
+    "suite": "audit",
+    "outcome": "fail",
+    "line": "unmeasured: x-sealed (no open shadow root)"
+  },
+  {
+    "page": "/deep-closed-fixed",
+    "suite": "audit",
+    "outcome": "pass"
+  },
+  {
+    "page": "/deep-undefined",
+    "suite": "audit",
+    "outcome": "fail",
+    "line": "unmeasured: x-ghost (not defined)"
+  },
+  {
+    "page": "/deep-undefined-fixed",
+    "suite": "audit",
+    "outcome": "pass"
+  },
+  {
+    "page": "/clean",
+    "suite": "audit",
+    "outcome": "pass"
+  },
+  {
+    "page": "/deep-ringless",
+    "suite": "keyboard",
+    "outcome": "fail",
+    "line": "no focus ring:"
+  },
+  {
+    "page": "/deep-ringless-fixed",
+    "suite": "keyboard",
+    "outcome": "pass"
+  },
+  {
+    "page": "/deep-ring-ancestor",
+    "suite": "keyboard",
+    "outcome": "pass"
+  },
+  {
+    "page": "/deep-decorative-border",
+    "suite": "keyboard",
+    "outcome": "fail",
+    "line": "no focus ring:"
+  },
+  {
+    "page": "/deep-decorative-border-fixed",
+    "suite": "keyboard",
+    "outcome": "pass"
+  },
+  {
+    "page": "/deep-shift-tab",
+    "suite": "keyboard",
+    "outcome": "fail",
+    "line": "never reached:"
+  },
+  {
+    "page": "/deep-shift-tab-fixed",
+    "suite": "keyboard",
+    "outcome": "pass"
+  },
+  {
+    "page": "/clean",
+    "suite": "keyboard",
+    "outcome": "pass"
+  },
+  {
+    "page": "/deep-dead-control",
+    "suite": "presses",
+    "outcome": "fail",
+    "line": "does nothing when"
+  },
+  {
+    "page": "/deep-dead-control-fixed",
+    "suite": "presses",
+    "outcome": "pass"
+  },
+  {
+    "page": "/clean",
+    "suite": "presses",
+    "outcome": "pass"
+  },
+  {
+    "page": "/nav-home",
+    "suite": "navigate",
+    "outcome": "pass"
+  },
+  {
+    "page": "/nav-root-target",
+    "suite": "navigate",
+    "outcome": "pass"
+  },
+  {
+    "page": "/nav-missing-target",
+    "suite": "navigate",
+    "outcome": "fail",
+    "line": "button.not-there"
+  },
+  {
+    "page": "/nav-multi",
+    "suite": "navigate",
+    "outcome": "note",
+    "line": "note: button.pick matches 2 elements; the first visible one was used"
+  }
+]

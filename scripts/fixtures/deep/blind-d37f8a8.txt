@@ -1,0 +1,235 @@
+What the unchanged suites said about the deep-DOM fixtures
+
+Commit: d37f8a8 (HEAD when recorded; no suite script was changed by the task that wrote this file)
+Fixtures: node scripts/fixtures/deep/server.ts, one page per run
+Manifest: scripts/fixtures/deep/expected.json (what each suite must say once it reads inside open roots)
+
+Commands (page = the route of the entry):
+  audit    node scripts/audit.ts --base <url> --routes <page>
+  presses  node scripts/interactions.ts --base <url> --routes <page>
+  keyboard node scripts/keyboard.ts --base <url> --routes <page>
+  navigate node scripts/navigate.ts --base <url> --config scripts/fixtures/deep/config.ts --rail /nav-home,/nav-root-target,/nav-missing-target,/nav-multi --routes <page>
+
+Each entry: the manifest outcome, the unchanged suite's exit code, its summary line, the first failure it printed (none when it passed), and the verdict.
+Verdicts: BLIND = exit 0 on a page the manifest says must fail (or no note printed); WRONG = non-zero on a page the manifest says is correct;
+same exit = the exit code agrees with the manifest (the 'manifest line printed' row says whether it printed the manifest's line).
+
+== audit
+/deep-clipped
+  manifest: fail ("clipped:")
+  d37f8a8:  exit 0; audit: 0 issues across 5 routes, at 2560, 1440, 1024, 768, 390px in dark and light
+  first failure: none
+  manifest line printed: no
+  verdict: BLIND
+/deep-clipped-fixed
+  manifest: pass
+  d37f8a8:  exit 0; audit: 0 issues across 5 routes, at 2560, 1440, 1024, 768, 390px in dark and light
+  first failure: none
+  manifest line printed: n/a
+  verdict: same exit
+/deep-unnamed
+  manifest: fail ("unnamed:")
+  d37f8a8:  exit 0; audit: 0 issues across 5 routes, at 2560, 1440, 1024, 768, 390px in dark and light
+  first failure: none
+  manifest line printed: no
+  verdict: BLIND
+/deep-unnamed-fixed
+  manifest: pass
+  d37f8a8:  exit 0; audit: 0 issues across 5 routes, at 2560, 1440, 1024, 768, 390px in dark and light
+  first failure: none
+  manifest line printed: n/a
+  verdict: same exit
+/deep-target
+  manifest: fail ("touch target under 44px:")
+  d37f8a8:  exit 0; audit: 0 issues across 5 routes, at 2560, 1440, 1024, 768, 390px in dark and light
+  first failure: none
+  manifest line printed: no
+  verdict: BLIND
+/deep-target-fixed
+  manifest: pass
+  d37f8a8:  exit 0; audit: 0 issues across 5 routes, at 2560, 1440, 1024, 768, 390px in dark and light
+  first failure: none
+  manifest line printed: n/a
+  verdict: same exit
+/deep-contrast
+  manifest: fail ("contrast:")
+  d37f8a8:  exit 0; audit: 0 issues across 5 routes, at 2560, 1440, 1024, 768, 390px in dark and light
+  first failure: none
+  manifest line printed: no
+  verdict: BLIND
+/deep-contrast-fixed
+  manifest: pass
+  d37f8a8:  exit 0; audit: 0 issues across 5 routes, at 2560, 1440, 1024, 768, 390px in dark and light
+  first failure: none
+  manifest line printed: n/a
+  verdict: same exit
+/deep-alpha
+  manifest: fail ("contrast:")
+  d37f8a8:  exit 0; audit: 0 issues across 5 routes, at 2560, 1440, 1024, 768, 390px in dark and light
+  first failure: none
+  manifest line printed: no
+  verdict: BLIND
+/deep-alpha-fixed
+  manifest: pass
+  d37f8a8:  exit 0; audit: 0 issues across 5 routes, at 2560, 1440, 1024, 768, 390px in dark and light
+  first failure: none
+  manifest line printed: n/a
+  verdict: same exit
+/deep-ringless
+  manifest: fail ("no focus ring:")
+  d37f8a8:  exit 1; audit: 10 issues across 5 routes, at 2560, 1440, 1024, 768, 390px in dark and light
+  first failure: no focus ring: x-ring.
+  manifest line printed: yes
+  verdict: same exit
+/deep-ringless-fixed
+  manifest: pass
+  d37f8a8:  exit 1; audit: 10 issues across 5 routes, at 2560, 1440, 1024, 768, 390px in dark and light
+  first failure: no focus ring: x-ring.
+  manifest line printed: n/a
+  verdict: WRONG
+/deep-ring-ancestor
+  manifest: pass
+  d37f8a8:  exit 1; audit: 10 issues across 5 routes, at 2560, 1440, 1024, 768, 390px in dark and light
+  first failure: no focus ring: x-ring.
+  manifest line printed: n/a
+  verdict: WRONG
+/deep-decorative-border
+  manifest: fail ("no focus ring:")
+  d37f8a8:  exit 0; audit: 0 issues across 5 routes, at 2560, 1440, 1024, 768, 390px in dark and light
+  first failure: none
+  manifest line printed: no
+  verdict: BLIND
+/deep-decorative-border-fixed
+  manifest: pass
+  d37f8a8:  exit 0; audit: 0 issues across 5 routes, at 2560, 1440, 1024, 768, 390px in dark and light
+  first failure: none
+  manifest line printed: n/a
+  verdict: same exit
+/deep-closed
+  manifest: fail ("unmeasured: x-sealed (no open shadow root)")
+  d37f8a8:  exit 0; audit: 0 issues across 5 routes, at 2560, 1440, 1024, 768, 390px in dark and light
+  first failure: none
+  manifest line printed: no
+  verdict: BLIND
+/deep-closed-fixed
+  manifest: pass
+  d37f8a8:  exit 0; audit: 0 issues across 5 routes, at 2560, 1440, 1024, 768, 390px in dark and light
+  first failure: none
+  manifest line printed: n/a
+  verdict: same exit
+/deep-undefined
+  manifest: fail ("unmeasured: x-ghost (not defined)")
+  d37f8a8:  exit 0; audit: 0 issues across 5 routes, at 2560, 1440, 1024, 768, 390px in dark and light
+  first failure: none
+  manifest line printed: no
+  verdict: BLIND
+/deep-undefined-fixed
+  manifest: pass
+  d37f8a8:  exit 0; audit: 0 issues across 5 routes, at 2560, 1440, 1024, 768, 390px in dark and light
+  first failure: none
+  manifest line printed: n/a
+  verdict: same exit
+/clean
+  manifest: pass
+  d37f8a8:  exit 0; audit: 0 issues across 5 routes, at 2560, 1440, 1024, 768, 390px in dark and light
+  first failure: none
+  manifest line printed: n/a
+  verdict: same exit
+
+== presses
+/deep-dead-control
+  manifest: fail ("does nothing when")
+  d37f8a8:  exit 0; interactions: 0 controls pressed and 0 links followed across 1 routes at 1440 and 390px; 0 issues
+  first failure: none
+  manifest line printed: no
+  verdict: BLIND
+/deep-dead-control-fixed
+  manifest: pass
+  d37f8a8:  exit 0; interactions: 0 controls pressed and 0 links followed across 1 routes at 1440 and 390px; 0 issues
+  first failure: none
+  manifest line printed: n/a
+  verdict: same exit
+/clean
+  manifest: pass
+  d37f8a8:  exit 0; interactions: 0 controls pressed and 0 links followed across 1 routes at 1440 and 390px; 0 issues
+  first failure: none
+  manifest line printed: n/a
+  verdict: same exit
+
+== keyboard
+/deep-ringless
+  manifest: fail ("no focus ring:")
+  d37f8a8:  exit 1; keyboard: 1 issues across 1 routes
+  first failure: no focus ring: X-RING
+  manifest line printed: yes
+  verdict: same exit
+/deep-ringless-fixed
+  manifest: pass
+  d37f8a8:  exit 1; keyboard: 1 issues across 1 routes
+  first failure: no focus ring: X-RING
+  manifest line printed: n/a
+  verdict: WRONG
+/deep-ring-ancestor
+  manifest: pass
+  d37f8a8:  exit 1; keyboard: 1 issues across 1 routes
+  first failure: no focus ring: X-RING
+  manifest line printed: n/a
+  verdict: WRONG
+/deep-decorative-border
+  manifest: fail ("no focus ring:")
+  d37f8a8:  exit 0; keyboard: 0 issues across 1 routes
+  first failure: none
+  manifest line printed: no
+  verdict: BLIND
+/deep-decorative-border-fixed
+  manifest: pass
+  d37f8a8:  exit 0; keyboard: 0 issues across 1 routes
+  first failure: none
+  manifest line printed: n/a
+  verdict: same exit
+/deep-shift-tab
+  manifest: fail ("never reached:")
+  d37f8a8:  exit 0; keyboard: 0 issues across 1 routes
+  first failure: none
+  manifest line printed: no
+  verdict: BLIND
+/deep-shift-tab-fixed
+  manifest: pass
+  d37f8a8:  exit 0; keyboard: 0 issues across 1 routes
+  first failure: none
+  manifest line printed: n/a
+  verdict: same exit
+/clean
+  manifest: pass
+  d37f8a8:  exit 0; keyboard: 0 issues across 1 routes
+  first failure: none
+  manifest line printed: n/a
+  verdict: same exit
+
+== navigate
+/nav-home
+  manifest: pass
+  d37f8a8:  exit 0; ok /nav-home desktop shell 11 ms · data 11 ms · interactive 61 ms // ok /nav-home phone shell 164 ms · data 164 ms · interactive 214 ms · drawer 2 ms // navigate: {"mode":"default","status":"ok"}
+  first failure: none
+  manifest line printed: n/a
+  verdict: same exit
+/nav-root-target
+  manifest: pass
+  d37f8a8:  exit 1; FAIL /nav-root-target desktop shell 1 ms · data 1 ms · interactive failed · interactive never-ready: the control button.root-toggle was not pressable in 10000 ms // FAIL /nav-root-target phone shell 161 ms · data 177 ms · interactive failed · drawer 2 ms · interactive never-ready: the control button.root-toggle was not pressable in 30000 ms // navigate: {"mode":"default","status":"FAIL"}
+  first failure: FAIL /nav-root-target desktop shell 1 ms · data 1 ms · interactive failed · interactive never-ready: the control button.root-toggle was not pressable in 10000 ms
+  manifest line printed: n/a
+  verdict: WRONG
+/nav-missing-target
+  manifest: fail ("button.not-there")
+  d37f8a8:  exit 1; FAIL /nav-missing-target desktop shell 1 ms · data 1 ms · interactive failed · interactive never-ready: the control button.not-there was not pressable in 10000 ms // FAIL /nav-missing-target phone shell 159 ms · data 159 ms · interactive failed · drawer 2 ms · interactive never-ready: the control button.not-there was not pressable in 30000 ms // navigate: {"mode":"default","status":"FAIL"}
+  first failure: FAIL /nav-missing-target desktop shell 1 ms · data 1 ms · interactive failed · interactive never-ready: the control button.not-there was not pressable in 10000 ms
+  manifest line printed: yes
+  verdict: same exit
+/nav-multi
+  manifest: note ("note: button.pick matches 2 elements; the first visible one was used")
+  d37f8a8:  exit 0; ok /nav-multi desktop shell 10 ms · data 10 ms · interactive 60 ms // ok /nav-multi phone shell 165 ms · data 165 ms · interactive 215 ms · drawer 2 ms // navigate: {"mode":"default","status":"ok"}
+  first failure: none
+  manifest line printed: no
+  verdict: BLIND (no note)
+
+Totals: BLIND 11, same exit 18, WRONG 5, BLIND (no note) 1
