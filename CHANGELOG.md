@@ -8,6 +8,7 @@ Every release of ZZ Meridian, newest first. Versions follow semver: a removed or
 
 - **A project can bring its own look.** Meridian's register (dark first, the night-sky neutral, one accent with a job, the defaults that read as generated, and the look-dependent parts of Colour, Typography, Hierarchy and Originality) now lives in its own file, the skill's `references/register.md`. A project with its own design language writes `docs/register.md`, and the skill scores looks and takes brand guidance from it instead. A project register never changes a floor, a required state, accessibility, the loop or the budget policy. `docs/skill-evals.md` gains the scenario that probes it.
 - **One way into open shadow roots for the browser checks.** `scripts/lib/deep.ts` walks the document and every open shadow root, finds the focused element through them, matches selectors inside them and steps from a slotted element or a root back to its host. Its fixtures live in `scripts/fixtures/deep/` and, with their tests, are not shipped.
+- **The audit sees inside open shadow roots.** A product that uses web components had their text, names, targets, contrast and focus rings skipped without a word; the audit now measures them, composites a background through the host, and counts a focus ring only where focus changed the style, so an always-present border is no longer taken for one. A custom element it cannot measure (one with no open root, or one never defined) is reported as `unmeasured:` instead of passing.
 
 ## [0.11.0] · 2026-10-08
 
