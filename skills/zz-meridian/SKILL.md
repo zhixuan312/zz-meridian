@@ -121,14 +121,16 @@ Before deciding anything, look at what you already have:
 
 The sentence is the whole brief you will get, so turn the homework into decisions rather than questions:
 
-1. **What it is and for whom.** The product name (from their app, repository or materials), who uses it, and the one
-   question the home page must answer.
+1. **What it is and for whom.** The product name (from their app, repository or materials, else a plain name for what
+   it does), who uses it, and the one question the home page must answer.
 2. **Pages.** Your drafted list, each mapped to the closest Meridian preset (Overview, list, detail, analytics, health,
    settings, sign-in), each with the question it answers.
-3. **Brand and surfaces.** The brand colour from their existing styles or logo, else indigo; dark first; MCP views only
+3. **Brand and surfaces.** The brand colour from their existing styles or logo, else indigo (what `create` and `adopt`
+   give with no brand flag); dark first; MCP views only
    when they asked for the agent surface.
 4. **Place and units.** The timezone and currency from their materials, addresses or language, else this machine's
-   zone and its currency: "today", "late" and every money figure depend on them. The person the rail shows signed in
+   zone and its currency: "today", "late" and every money figure depend on them. A currency is evidence of a place
+   (a pound sign, a UK zone), stronger than the machine the run happens on. The person the rail shows signed in
    (`--user`, `--role`) is theirs when the product has one, else the team's name and a role; never the sample's.
 5. **What their words mean.** A term the request uses but does not define ("late", "best seller", "active") gets a
    definition you choose, written in the Glossary and as a question with your recommendation.
@@ -143,7 +145,7 @@ once, with your recommendation first. Anything else you are unsure of is a decis
 
 ## 3. Get the template, branded
 
-For an existing frontend, follow `references/existing-project.md` instead: its first step is
+For an existing frontend, follow `references/existing-project.md` instead: "Before you change anything" first, then
 `npx zz-meridian@latest adopt`.
 
 For a new project (a folder that does not exist yet, or an empty one: `create .` works in an empty working directory),
@@ -169,7 +171,8 @@ the hue; when it warns that the hue is near a status hue, step 4 says what to ru
 change the brand later, run `npx zz-meridian@<the manifest's version> brand` with the new flags; never `node scripts/brand.ts`, which the manifest does not record.
 
 Requirements: Node 22.18 or newer. A new project uses pnpm when it is installed, npm otherwise; an existing one keeps the
-package manager its lockfile names, and one with no lockfile gets npm, as `adopt` chooses. The commands here say `pnpm`: in an npm project `pnpm verify` is `npm run verify`. The browser checks use Google Chrome
+package manager its lockfile names, and one with no lockfile gets npm, as `adopt` chooses. The commands here say `pnpm`: in an npm project `pnpm verify` is `npm run verify`, and a flag goes after `--`
+(`npm run verify -- --full`). The browser checks use Google Chrome
 (`CHROME=/path/to/chrome` if it is not where the platform keeps it; a Chromium build works too). When one is missing,
 install it or point at what is there; in a sandbox without network or a browser, ask for the access these steps need
 (the package install, starting Chrome and a local server for verify). What still cannot run here does not stop the
@@ -202,7 +205,7 @@ The team's own words for things, one per line: term and what it means here.
 ```
 
 Replace each guidance line with what the request, their materials and step 2 settled, in English. Never invent a product
-fact: a section nothing settled keeps its guidance line, and `node scripts/check.ts` warns about it until it is written.
+fact: a section nothing settled keeps its guidance line, and `node scripts/check.ts` warns about it until it is written (a warning, never a failure).
 No secrets go into the brief (no keys, tokens, passwords or connection strings): the assistant and every later session
 read it. The template's assistant reads Product, Users and Glossary, so those three say what a stranger needs to
 answer a question about this product.
@@ -258,7 +261,7 @@ the floors, render and score the craft, fix every Weak and every failure, commit
 ```sh
 pnpm verify            # the gate once, one build, the size checks and a smoke of up to three routes: the inner loop
 pnpm verify --full     # every view at five widths in both themes, every control pressed, the keyboard walk, live data, vitals
-node_modules/.bin/next dev --port 3100 & # then, for the renders (stop it with kill $!):
+node_modules/.bin/next dev --port 3100 & # then, for the renders (stop it with kill $!; with a fake API, set its address first: API_URL=<fake> node_modules/.bin/next dev …):
 node scripts/shot.ts / <every other view> --width 1440,390 --theme dark,light --full
 ```
 

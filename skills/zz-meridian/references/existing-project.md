@@ -21,8 +21,12 @@ An existing product has users who rely on what it does today, so learn it before
    overrides the `.env` file Next loads, and `fakeApi.env` in `scripts/verify.config.ts` does the same for verify. An
    API address is not a `dataUrls` entry; that list is for databases.
 3. **Keep a "before"**: run their app against the fake API, from a copy outside the repository (install there, so their
-   folder stays clean), and render their main routes at 1440 and 390px with Chrome itself (`"<chrome>" --headless --screenshot=out/standard/before/<name>.png --window-size=1440,900 <url>`, and
-   `390,844`), since Meridian's scripts are not there yet. The hand-over shows each page before and after, and the
+   folder stays clean), and render their main routes at 1440 and 390px with Chrome itself (`"<chrome>" --headless
+   --virtual-time-budget=5000 --screenshot=out/standard/before/<name>.png --window-size=1440,900 <url>`, and `390,844`;
+   the time budget lets an app that fetches in the browser draw its data before the shot), since Meridian's scripts are
+   not there yet. An app that fetches from the browser reaches the fake API from another origin, so the fake answers
+   with `Access-Control-Allow-Origin: *`. For a new project beside theirs (Routes A2, B) the order is: `create`, the
+   fake API in the new project, then the "before" against it. The hand-over shows each page before and after, and the
    renders record how each page worked. An app that does not run as it stands gets no "before": say so in the
    hand-over, and keep the list in step 4 from its code.
 4. **List what must survive** in the scoreboard's floors: every route at its URL, every action and the request it sends
@@ -38,8 +42,9 @@ own and list them in the hand-over, so the project keeps only what earns its pla
 
 Migrate in place, page by page, keeping their data layer.
 
-1. **Run `npx zz-meridian@latest adopt`** in their project, with the brand flags from step 2 of SKILL.md (`--name`,
-   `--hex` or `--accent`, `--workspace`, `--timezone`, `--currency`). It copies Meridian's tokens, styles, components,
+1. **Run `npx zz-meridian@latest adopt`** in their project, after "Before you change anything", with the brand flags
+   from step 2 of SKILL.md (`--name`, `--hex` or `--accent`, `--workspace`, `--timezone`, `--currency`), and commit what
+   it changed as one commit before building on it: that is the diff a reviewer reads to see what Meridian brought. It copies Meridian's tokens, styles, components,
    gates and scripts in; merges the dependencies and scripts it needs into their `package.json`; adds `@meridian/*`
    (`src/*`) to `tsconfig.json`; replaces their global stylesheet, keeping theirs beside it as `*.before.css` to port
    from as tokens; writes a first `nav` from their routes into `src/app.config.ts`; brands it; writes a managed block
@@ -67,8 +72,8 @@ Migrate in place, page by page, keeping their data layer.
    `scopes` a scope switcher. A console with no sign-in passes the team's name as `user` and `signOut={null}`, so the
    rail never shows a sample person or a Sign out that goes nowhere.
    **Turn on Cache Components.** Meridian's pages prerender a shell and stream what each request reads, and the route
-   policy `pnpm verify` runs fails a page that is neither static nor partial. Set `cacheComponents: true` in their
-   `next.config`, and put each per-request read (their API, cookies, headers) behind a `<Suspense>` boundary, as the
+   policy `pnpm verify` runs fails a page that is neither static nor partial. Set `cacheComponents: true` and
+   `partialPrefetching: true` in their `next.config` (`cache.md`, "Turn Cache Components on"), and put each per-request read (their API, cookies, headers) behind a `<Suspense>` boundary, as the
    template's pages do. A detail route whose ids come from their API at request time has no `generateStaticParams` to
    list them, and the shell reads the address: wrap the shell in the layout in `<Suspense>` too, or the build stops
    with "usePathname outside Suspense". A route that must stay fully per-request goes in `requestDependentRoutes` in
@@ -158,7 +163,10 @@ their data hooks or fetch calls move into `optional:src/data/` (as server functi
 along unchanged. A read that ran in the browser carried the person's cookies and was allowed by the API's CORS; moved
 to the server it carries neither, so forward the session it needs explicitly, or keep it a client read with a
 `preload` (`customize.md`). Their old app stays exactly as it is: the new one is finished when it meets the standard (`standard.md`) with every
-route and action of the old one accounted for in the scoreboard, and switching over is the person's call.
+route and action of the old one accounted for in the scoreboard, and switching over is the person's call. Route A's
+steps 5 and 6 hold for the new project: a `fakeApi` that answers what the old app asked for, and `scripts/verify.config.ts`
+describing the new project's routes. Its `.env` is not copied: the new project reads the same variable name, set by
+whoever deploys it.
 
 ## Route C: not React (Vue, Svelte, Angular, server templates)
 

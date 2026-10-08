@@ -71,14 +71,15 @@ Each floor is measured by a command, and its evidence is the line the command pr
 | LCP under 2.5 s, INP under 200 ms, CLS under 0.1 on a mid-range phone | `pnpm verify --full` (the vitals) |
 | Reduced motion shows the final state at once | motion only through `src/styles/motion.css`, whose reduced-motion rule covers it; nothing animates outside it |
 | All of the above together | `pnpm verify --full` ending with the line `the project meets the Meridian standard` |
-| In an existing product, what it did still works: every route at its URL, every action sending the request it sent, its own tests and scripts | the list from `existing-project.md` ("Before you change anything"), each item checked against the fake API's log and the project's own commands |
+| In an existing product, what it did still works: every route at its URL, every action sending the request it sent, its own tests and scripts (a project with no tests of its own has its `lint` and `build`) | the list from `existing-project.md` ("Before you change anything"), each item checked against the fake API's log and the project's own commands |
 
 `--full` checks what the project tells it about, so keep `scripts/verify.config.ts` true to the product as you change it
 (its comments describe every field, and the template's own entries show the shape): a `navigationChecks` entry for every
 rail route (a ready selector and one harmless probe that works at 390px too, where a table is a card list with no
 column headers to sort: a filter, a link or a dialog), `detailRoutes` with ids from your data for each state worth
 seeing, `smokeRoutes` among the rail routes, `budgets.htmlKb` naming only routes that exist, a `fakeApi` as soon as a
-page calls an API, and in an adopted project a `fakeApi` or `noLiveApi`. After the pages change, look at the sizes `pnpm
+page calls an API, and in an adopted project a `fakeApi` or `noLiveApi` (a created project whose pages read only its own
+sample needs neither). After the pages change, look at the sizes `pnpm
 verify` prints and record them with `node scripts/sizes.ts --write-baseline` once you have judged them. `--full`
 refuses, listing every gap, until these hold.
 
@@ -88,7 +89,9 @@ Look at every view rendered, not at the code. With `node_modules/.bin/next dev -
 scripts read; stop it again before `pnpm verify`, which builds in the same folder), run
 `node scripts/shot.ts <routes> --width 1440,390 --theme dark,light --full`, plus 768 and 2560 where the layout depends on
 width (tables, grids, side panels), and open every PNG in `out/shots/`. A dialog, sheet, menu or popover is shot open:
-`--press "<the name of the control that opens it>"`, repeated for a menu item inside it. `node scripts/audit.ts --routes <routes>` against
+`--press "<the name of the control that opens it>"` (the first visible control with that name; give row actions names
+of their own, "Delete order CR-10425"), repeated for a menu item inside it. With a fake API, every server a render or
+a check reads from is started with its address (`API_URL=<fake> node_modules/.bin/next dev …`), never the `.env` one. `node scripts/audit.ts --routes <routes>` against
 the same server ends with "Design metrics at 1440" for each route: the type sizes and weights in use, the radii, and the
 hierarchy ratio (the largest text over the median).
 
