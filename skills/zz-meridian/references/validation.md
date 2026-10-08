@@ -71,7 +71,7 @@ and supply-chain check before a script runs; that is pnpm, not an install, and n
 | `font-bold is outside Meridian's scale` | A Tailwind default utility | Use `font-semibold`, `rounded-xl`, `shadow-card`… |
 | `names \`x\`, which is not a token` | A spec names a token that does not exist | Correct the name or add the token |
 | `FAIL light brand ... on-accent on accent` | The brand accent is too light for white text | Re-run `node scripts/brand.ts --hue … --chroma <lower>` |
-| `warning: hue … from the critical status hue` (brand) | The brand colour reads as a status | Tell the person; offer graphite or a hue 20° away (SKILL.md step 4) |
+| `warning: hue … from the critical status hue` (brand) | The brand colour reads as a status | Take the nearest hue 20° away, keep the brand colour in the logo mark, and record it (SKILL.md step 4) |
 
 ## Audit failures
 

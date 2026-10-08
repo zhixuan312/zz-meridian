@@ -40,8 +40,8 @@ Migrate in place, page by page, keeping their data layer.
    `error.tsx` shows "This view did not load" with Retry.
 4. Rebuild each page on `PageFrame`, `Stack` and `Row` with Meridian components (imported as
    `@meridian/components/…`), keeping their data fetching and business logic untouched. Their old Tailwind utilities
-   render nothing under Meridian's scales, and the gate names each one. Do the busiest page first; when the person is
-   there to look, show it to them before the rest.
+   render nothing under Meridian's scales, and the gate names each one. Do the busiest page first, and render and score it
+   (`standard.md`) before the rest: what it teaches you about their data carries to every other page.
 5. **Before `pnpm verify --full`, give it a fake API.** The default `pnpm verify` reads and never presses: the gate,
    one build, the size checks and a navigation smoke of at most three routes, with only the harmless probes your
    `navigationChecks` declare. In an adopted project it reports the browser as `not run` until `verify.config.ts` names
@@ -126,4 +126,5 @@ Meridian's components are React, so the honest options are:
   them `pnpm verify` cannot validate a non-React app; run the contrast gate on the tokens and audit their pages with
   `node scripts/audit.ts --base <their dev server URL> --routes <their routes>` from a Meridian checkout.
 
-Ask which they prefer when it is not obvious; recommend the new project.
+When the request does not say which, take the new project and record it in the brief's Decisions: it keeps their app
+untouched and is the one `pnpm verify` can hold to the standard.

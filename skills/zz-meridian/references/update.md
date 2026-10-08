@@ -61,8 +61,9 @@ Next: resolve the items in .meridian/update/0.5.0/MERGE.md, then npx zz-meridian
 - **`merge required`**: the team changed a managed file and Meridian changed it too (or the team has a file where
   Meridian now wants one). Combine `ours/` and `new/` with `base/` as the common ancestor.
 - **`decide: delete or restore`**: the team deleted a managed file that the running release still ships. Either the
-  deletion is deliberate, and the file stays out, or it is not, and the file should come back. Ask the person when you
-  cannot tell from the project.
+  deletion is deliberate, and the file stays out, or it is not, and the file should come back. When the project cannot
+  tell you (the commit that deleted it, whether anything still imports it), keep their deletion, write it in
+  `out/standard/questions.md` with your recommendation (`standard.md`), and carry on.
 - **`migration`**: a change beyond copying files that the team must make (a dependency, a script, a release's own
   migration). `MERGE.md` holds the instructions and the checks.
 - **`kept` and `retired-kept`**: a kept file that is missing, or one the new release removed and the update left in place.

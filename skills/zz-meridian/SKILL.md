@@ -12,9 +12,15 @@ description: >
 
 # Build a dashboard on ZZ Meridian
 
-Meridian turns a description of a product into a running, branded, validated dashboard. The person you are helping
-should not need to learn Meridian: they describe what they need, you do the homework, ask only what you cannot find out,
-build it, and prove it meets the standard with one command.
+Meridian turns a description of a product into a running, branded dashboard that meets Meridian's standard. The person
+you are helping should not need to learn Meridian, or say how good it has to be: they give you one sentence, and you do
+the homework, build it, judge it from every side and keep improving it until it meets the standard, then hand over a
+finished product and a short, honest account of it.
+
+You work unattended from the sentence to the hand-over. `references/standard.md` is the bar and the way to reach it: the
+register, the scoreboard of floors and craft you keep for every view, the loop you run until it holds, and which
+decisions are yours and which wait for the person. Read it before you build, whatever the request: a new dashboard, a
+redesign, one new page or a restyle all end at the same standard.
 
 The template lives at `https://github.com/zhixuan312/zz-meridian`. Its own `README.md`, `CONTRIBUTING.md`
 and `optional:docs/` are the full specification; this skill is the route through them. If you are reading this file inside a
@@ -33,10 +39,13 @@ These hold in every project, however it started, and nothing below overrides the
   `src/styles/theme.css`.
 - **Agents read freely and write only through a Proposal.** Mark agent work with the Agent mark and "via"
   (`references/agents.md`).
-- **Before finishing, run `pnpm verify`; after a change to shared components, the shell or data, run `pnpm verify --full`.
-  Never against a live backend.** `--full` presses every control, Delete included, so a project whose pages call a live
-  API or read a database names a `fakeApi` (or says `noLiveApi`) in `scripts/verify.config.ts` first
-  (`references/existing-project.md`, step 5).
+- **Done is when the scoreboard says so.** `pnpm verify` is the loop while you work; the work is finished only when
+  `pnpm verify --full` ends with `the project meets the Meridian standard` and every view is rendered, scored and none
+  is Weak (`references/standard.md`). Never against a live backend: `--full` presses every control, Delete included, so
+  a project whose pages call a live API or read a database names a `fakeApi` (or says `noLiveApi`) in
+  `scripts/verify.config.ts` first (`references/existing-project.md`, step 5).
+- **Commit locally, never publish.** Commit each verified change on its own with the paths named. Pushing, a release, a
+  deploy, production data and the feedback issue wait for the person's yes.
 
 ## Choose the route before anything else
 
@@ -76,47 +85,49 @@ follow steps 1 to 8: the project is already built.
   update, the resolutions it asks for, and the pinned `--finalize` command it prints (with `--resume` and `--abort` for
   an interruption or a change of mind). Read `references/ownership.md` for which files are Meridian's and which are the
   team's; an update changes only the first, and a team keeps one of its own on purpose through `optional:.meridian/keep.json`.
-  Moving to 0.5.0 reports up to ten migrations for the interfaces that release changed (the removed verify flags, the
-  assistant promise, the required clock, Cache Components, authorized reads, scoped invalidation, the live stream, the
-  authorized endpoints); `references/update.md` says how to resolve them, and `references/cache.md` and
-  `references/live.md` hold the starters and the shapes they move to.
+  An update across a release that changed an interface reports a migration for each; `references/update.md` says how
+  to resolve every one, and `references/cache.md` and `references/live.md` hold the starters and the shapes they move to.
+  The update is finished when the project meets the standard again (`references/standard.md`): run the loop on what it
+  changed.
 - **Rebrand.** `npx zz-meridian@<the manifest's version> brand [brand flags]`, from a clean git tree. Never hand-edit the
   brand outputs; an edited one makes it refuse.
 
 ## 1. Do the homework first
 
-Before asking anything, look at what you already have:
+Before deciding anything, look at what you already have:
 
 - **The working directory.** Is there a frontend? Read `package.json` (framework, React version, Tailwind), the routes,
-  and how data is fetched. Note what exists so you can offer "restyle this" as a real option.
+  and how data is fetched. Note what exists, so the route and the pages build on it.
 - **What the person gave you.** A spec, a schema, a CSV, an API description, screenshots, a brand guide. Extract the
   entities, the metrics that matter, the lists people browse, the actions they take, and any brand colour.
 - **What you can infer.** A product that tracks orders needs an orders list and an order page; a monitoring tool needs
   health; anything with money needs period selection and deltas. Draft the page list yourself.
 
-## 2. Ask once, briefly
+## 2. Decide from your drafts, and say what you decided
 
-Ask in a single round (AskUserQuestion when available), only the questions your homework could not answer, and offer
-your draft as the recommended option so the person can accept it in one click. Usually that is:
+The sentence is the whole brief you will get, so turn the homework into decisions rather than questions:
 
-1. **New project or this one?** Only when "Choose the route" above left two routes open: create a new Meridian project
-   in another folder, or bring Meridian into the existing one (`references/existing-project.md`).
-2. **What it is and for whom.** The product name, who uses it, and the one question the home page must answer.
-3. **Pages.** Your drafted list, mapped to Meridian presets (Overview, list, detail, analytics, health, settings, sign-in).
-4. **Brand and surfaces.** A brand colour (a hex, or "no preference" for indigo), light or dark first (dark is the
-   default), and whether it should also appear inside AI assistants as an MCP App.
+1. **What it is and for whom.** The product name (from their app, repository or materials), who uses it, and the one
+   question the home page must answer.
+2. **Pages.** Your drafted list, each mapped to the closest Meridian preset (Overview, list, detail, analytics, health,
+   settings, sign-in), each with the question it answers.
+3. **Brand and surfaces.** The brand colour from their existing styles or logo, else indigo; dark first; MCP views only
+   when they asked for the agent surface.
 
-Skip what the request already answers ("this project, keep our data and routes" answers the first). When the request
-hands you the whole job in one sentence, or you have no way to ask, do not stop to ask: take your drafts (the product
-name from their app, the brand colour from their existing styles or logo, dark first, no MCP views), write them into
-the brief (step 3), and list them in the hand-over so the person can change any of them in one line.
+Write them into the brief (step 3), each decision in its Decisions section with its reason, and list them in the
+hand-over, where the person can change any of them in one line. Before the first command, tell them in two or three
+sentences what you are building, by which route, and that you will come back with it finished.
+
+The one question worth asking is the route, when "Choose the route" leaves two open and you have a way to ask: ask it
+once, with your recommendation first. Anything else you are unsure of is a decision you make and record
+(`references/standard.md`, "Deciding without stopping").
 
 ## 3. Get the template, branded
 
 For an existing frontend, follow `references/existing-project.md` instead: its first step is
 `npx zz-meridian@latest adopt`.
 
-For a new project (the folder must not exist yet), with the step-2 answers as flags:
+For a new project (the folder must not exist yet), with the step-2 decisions as flags:
 
 ```sh
 npx zz-meridian@latest create <target> --name "<Product>" --workspace "<Workspace>" --timezone "<IANA zone>" \
@@ -137,9 +148,11 @@ theme sets lightness so contrast holds), registered everywhere, and checked by t
 change the brand later, run `npx zz-meridian@<the manifest's version> brand` with the new flags; never `node scripts/brand.ts`, which the manifest does not record.
 
 Requirements: Node 22.18 or newer; pnpm is used when installed, npm otherwise. The browser checks use Google Chrome
-(`CHROME=/path/to/chrome` if it is not where the platform keeps it). If any is missing, say so plainly and stop before
-step 6 rather than skipping validation. In a sandbox without network or a browser, ask for the access these steps need
-(the package install, starting Chrome and a local server for verify) instead of working around it.
+(`CHROME=/path/to/chrome` if it is not where the platform keeps it; a Chromium build works too). When one is missing,
+install it or point at what is there; in a sandbox without network or a browser, ask for the access these steps need
+(the package install, starting Chrome and a local server for verify). What still cannot run here does not stop the
+build: the floors it measures are `not run` with the reason, and the hand-over says the standard is not yet proven and
+what would prove it.
 
 Now fill the brief, so the decisions survive the conversation.
 
@@ -166,8 +179,8 @@ Brand, layout and behaviour choices already made, one line each with its reason,
 The team's own words for things, one per line: term and what it means here.
 ```
 
-Replace each guidance line with the person's own answers from step 2, in English. Never invent a product fact: a
-section they have not answered keeps its guidance line, and `node scripts/check.ts` warns about it until it is written.
+Replace each guidance line with what the request, their materials and step 2 settled, in English. Never invent a product
+fact: a section nothing settled keeps its guidance line, and `node scripts/check.ts` warns about it until it is written.
 No secrets go into the brief (no keys, tokens, passwords or connection strings): the assistant and every later session
 read it. The template's assistant reads Product, Users and Glossary, so those three say what a stranger needs to
 answer a question about this product.
@@ -176,8 +189,9 @@ answer a question about this product.
 
 Status colours own three hues: critical near 22°, warning near 68°, positive near 158°. A brand hue within 20° of one
 (a red, amber or green brand) makes every button and selection read as an alert or as "healthy", and the script prints
-a warning when it happens. Do not ship it silently: tell the person, and offer graphite or the nearest hue 20° or more
-away, with the exact brand colour kept in the logo mark. If they keep it, keep the accent off figures and statuses: no
+a warning when it happens. Take the nearest hue 20° or more away as the accent (graphite when no nearby hue suits the
+brand), keep the exact brand colour in the logo mark, and record it in the brief's Decisions and the hand-over: it is
+one `brand` command to reverse. If the person later keeps the original, keep the accent off figures and statuses: no
 `emphasis` on Metric tiles, and accent only on actions and selection.
 
 ## 5. Build the product
@@ -212,58 +226,53 @@ Build up, never sideways: use Meridian's components and tokens. A new colour, si
 a missing component is specified as a card per `CONTRIBUTING.md`. Interface copy follows `references/voice.md`: sentence case,
 verbs on buttons, units and periods on every number.
 
-## 6. Validate until it passes
+## 6. Score it, and improve it until it meets the standard
+
+Run the loop in `references/standard.md` until its stop condition holds: list every view into the scoreboard, measure
+the floors, render and score the craft, fix every Weak and every failure, commit, and go round again. The commands:
 
 ```sh
-pnpm verify            # the gate once, one build, the size checks and a smoke of up to three routes
-pnpm verify --full     # every route, every control pressed, every link followed, the keyboard walk, the assistant, the live data
-pnpm verify --perf     # the 20-sample navigation protocol
+pnpm verify            # the gate once, one build, the size checks and a smoke of up to three routes: the inner loop
+pnpm verify --full     # every view at five widths in both themes, every control pressed, the keyboard walk, live data, vitals
+pnpm dev --port 3100 & # then, for the renders:
+node scripts/shot.ts / <every other view> --width 1440,390 --theme dark,light --full
 ```
 
-Stop the dev server first: verify builds and serves the app from the same folder. The default is bounded and takes about
-two minutes; `--full` takes a quarter of an hour for a dozen routes (five widths and two themes for the audit, while every
-control is pressed beside it); `--full --perf` runs both without repeating the gate or the build. Every run ends with a
-coverage line:
+Stop the dev server before verify, which builds and serves the app from the same folder. The default takes about two
+minutes; `--full` takes about a quarter of an hour for a dozen routes. Every run ends with a coverage line, which says
+the depth that ran, whether the browser ran (and why not), how many routes have a readiness and a control mapping
+(`navigationChecks` in `scripts/verify.config.ts`), and which suites did not run:
 
 ```text
-coverage: default; browser ran; 3 routes; data configured 3/3; interaction configured 3/3; not run: audit, presses, keyboard, assistant, live, vitals
+coverage: full; browser ran; 9 routes; data configured 9/9; interaction configured 9/9; not run: none
 ```
 
-It says the depth that ran, whether the browser ran (and why not), how many routes, how many have a readiness mapping
-and a control mapping (`navigationChecks` in `scripts/verify.config.ts`), and which suites did not run. Nothing that did
-not run is reported as passed: a project with no mappings gets a default that exits 0 for the checks it ran, with data and
-interaction `configured 0/n`. `--full` and `--perf` fail on a missing mapping, a missing Chrome or an unsafe backend, and
-list every gap. Finish with the default; run `--full` when the change touches shared components, the shell or data. The
-audit discovers every static route; list each detail page worth seeing (a normal record, a failed one, a missing one) in
-`detailRoutes` in `scripts/verify.config.ts`, with ids from your data. If the pages call a live API, give verify a fake
-one first (`references/existing-project.md`, step 5): `--full` presses every control, Delete included. When something
-fails, read `references/validation.md`, fix the cause (not the check), and run it again.
-
-Then look, because a passing audit is not the same as a good page:
-
-```sh
-pnpm dev &   # restart it for the screenshots, then
-node scripts/shot.ts / <the other main routes> --width 1440,390 --theme dark,light --full
-```
-
-Open the PNGs in `out/shots/`. Check that each page has a clear protagonist, that tables are balanced, that nothing
-reads empty or cramped on a phone, and that the brand colour is used only where it means something. Fix and re-shoot.
+Nothing that did not run is reported as passed, and only a `--full` run with nothing left unrun ends with `the project
+meets the Meridian standard`. `--full` refuses, listing every gap, until `scripts/verify.config.ts` describes the product
+you built (`references/standard.md`, "The floors"). When something fails, read `references/validation.md`, fix the
+cause, never the check, and run it again. A passing run is half the evidence: the other half is the renders, judged and
+scored, because the audit measures what can be measured and the eye judges the rest.
 
 ## 7. Hand over
 
-Report in this shape, in the person's language:
+The hand-over is what the person reads, and what an agent checking the work reads too, so it quotes evidence rather than
+describing it. Write it in the person's language, in this shape:
 
 ```
-Built <Product> on Meridian at <path>.
-Pages: <list, one line each, with what each answers>.
-Brand: <accent and how it was derived>. Surfaces: console, mobile<, MCP views: …>.
-Validation: pnpm verify passed; coverage line: <the line verify printed>.
-Next steps: replace the sample data in src/data/ with <their API>; run pnpm verify after every change.
-Feedback: <the issue URL from step 8, "nothing to report", or "declined">.
+Built <Product> on Meridian at <path>. <One sentence on what it lets them do.>
+Standard: <"met" or "not yet proven">. verify --full: <its last line, verbatim>.
+Coverage: <the coverage line, verbatim>. Scoreboard: <n> views, <s> Strong, <g> Good, 0 Weak, after <r> rounds (out/standard/scoreboard.md).
+Pages: <one line each: the page and the question it answers>.
+Decided for you: <each decision from the brief's Decisions, one line each, with how to change it>.
+Not run: <each floor that could not run here, why, and what would run it; or "nothing">.
+Waiting for you: <each judgment question from out/standard/questions.md with your recommendation; or "nothing">.
+Commits: <the range, and one line per commit>.
+Next: <wiring their API in src/data/, and anything that waits on them>.
+Feedback: <the draft from step 8 and the question whether to open it, or "nothing about Meridian to report">.
 ```
 
-Attach or show the screenshots of the main pages in both themes. Say plainly what is sample data and what is not. If
-the Atlas stays, say that `/system` is the live specification and that `node scripts/brand.ts --no-atlas` removes it
+Show the renders of the main pages at 1440 and 390px in both themes. Say plainly what is sample data and what is not.
+If the Atlas stays, say that `/system` is the live specification and that `node scripts/brand.ts --no-atlas` removes it
 before the product goes public.
 
 ## 8. Offer feedback to Meridian
@@ -308,8 +317,8 @@ Meridian <version from .meridian/manifest.json> · Next <version> · Route <adop
 - <the change you would make to Meridian>
 ```
 
-Show the draft to the person and ask whether to open it: it is published under their account, in public. Only on a
-yes, file it with `gh issue create --repo zhixuan312/zz-meridian --label bug|enhancement --title "<title>" --body-file
+Put the draft in `out/standard/feedback.md` and in the hand-over, and ask whether to open it: it is published under
+their account, in public. Only on a yes, file it with `gh issue create --repo zhixuan312/zz-meridian --label bug|enhancement --title "<title>" --body-file
 <draft>`, or, without `gh`, give them `https://github.com/zhixuan312/zz-meridian/issues/new/choose` and the draft to
 paste. Put the issue's URL in the hand-over. When the run found nothing about Meridian, or they decline, say so in one
 line and file nothing.

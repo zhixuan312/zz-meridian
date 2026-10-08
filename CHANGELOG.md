@@ -2,6 +2,22 @@
 
 Every release of ZZ Meridian, newest first. Versions follow semver: a removed or renamed token, prop or card is major; a new card, token or variant is minor; a corrected value is a patch. Each entry says what breaks and what to do instead.
 
+## [Unreleased]
+
+### Added
+
+- **The standard the sentence never states.** The skill's `references/standard.md` holds what one sentence leaves out: the register a product UI answers to, the defaults that read as generated, and a scoreboard kept in `out/standard/` for every view. The scoreboard has floors measured by `pnpm verify --full`, and craft judged on renders at 1440 and 390px in both themes (fit, hierarchy, typography, whitespace, colour, motion, responsive, navigation, copy, states, agents, originality). The agent runs the loop until `--full` ends with `the project meets the Meridian standard` and no view is Weak. Mechanical questions it settles itself; judgment calls it records with a recommendation, proceeding when cheap to reverse. Push, release, deploy, production data and the feedback issue wait for a yes.
+
+### Changed
+
+- **The sentence ends with its condition, and is meant for `/goal`.** `… to: [what you want]. Done when its hand-over says the Meridian standard is met, or names what only I can decide or provide.` The model a goal uses to check the work reads the sentence and the transcript, never the skill, so the hand-over quotes verify's last line, the coverage line, the scoreboard count, the decisions made, what did not run, and the commits.
+- **The skill decides from its drafts instead of asking.** Step 2 turns the homework into recorded decisions; the one question left is the route, when two fit. A brand hue too near a status hue moves to the nearest safe hue, with the brand kept in the logo mark. A missing tool no longer stops the build: what cannot run is reported as not run, and the standard as not yet proven.
+- **`skill` prints the path to read.** After installing, it names the `SKILL.md` to read now, since a running agent may not list a skill installed mid-session.
+
+### Fixed
+
+- **The skill's screenshots reach the dev server.** Step 6 started `pnpm dev`, on port 3000, then ran `scripts/shot.ts`, which reads port 3100. It now starts `pnpm dev --port 3100`.
+
 ## [0.10.0] · 2026-10-07
 
 ### Added

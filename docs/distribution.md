@@ -6,7 +6,7 @@ Status: v1 (`create`, `adopt`, `skill`) shipped in 0.2.0 (decision 0009). v2 (`u
 
 A team gives its coding agent this, with what it wants in its own words at the end:
 
-> Run `npx zz-meridian@latest skill --global`, then follow the zz-meridian skill it installs to: [what you want, in your own words].
+> Run `npx zz-meridian@latest skill --global`, then follow the zz-meridian skill it installs to: [what you want, in your own words]. Done when its hand-over says the Meridian standard is met, or names what only I can decide or provide.
 
 The sentence names no command, because people do not: "change this product into our dashboard", "a new one based on
 this folder, in another folder" and "build an orders console" all ask for a dashboard on Meridian and differ only in
@@ -14,6 +14,14 @@ which folder holds it. The skill's "Choose the route" table maps what was said, 
 (this Next.js App Router project, in place), `create` (a new folder; a folder named as the source is read, never
 written) or `update` and `brand` (a project that already has Meridian), and says the route before the first command.
 An earlier sentence named `adopt`, the wrong command for every request for a new dashboard.
+
+The sentence is written to be sent as a goal (`/goal` in Claude Code and Codex), which keeps the agent working until a
+separate model, reading the conversation after every turn, finds the condition met. That model sees the sentence, not
+the skill, so the sentence ends with a condition the transcript can show: the hand-over (SKILL.md, step 7) quotes
+`pnpm verify --full`'s last line and the scoreboard's count, or names what only the person can decide or provide. The
+degree lives in the skill, never in the sentence: `skills/zz-meridian/references/standard.md` holds the register, the
+scoreboard of floors and craft kept for every view, the loop run until nothing is weak, and which decisions the agent
+makes and records and which wait for the person. People do not say how good it has to be, so the skill does not ask.
 
 The split follows what each part is good at. The package does the settled work, the same way every time, and proves it
 built: what to copy, which dependencies to merge, the alias, the stylesheet, the brand. The agent does the judgement:

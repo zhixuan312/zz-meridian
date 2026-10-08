@@ -86,7 +86,9 @@ function main(): number {
   if (command === 'skill') {
     const roots = values.global ? [os.homedir()] : [process.cwd()];
     for (const r of roots) installSkill(r);
+    const skill = path.join(roots[0], '.claude/skills/zz-meridian/SKILL.md');
     console.log(`The zz-meridian skill is in ${values.global ? path.join(os.homedir(), '.agents/skills') + ' and ' + path.join(os.homedir(), '.claude/skills') : '.agents/skills and .claude/skills'}. Codex may need a restart to list it.`);
+    console.log(`To follow it now, read ${skill} and the references beside it: it says how to build what was asked and when it is done.`);
     return 0;
   }
   console.error(`zz-meridian: unknown command "${command}"\n\n${HELP}`);

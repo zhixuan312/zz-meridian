@@ -83,7 +83,15 @@ Dark is the default, written on `:root`; the light theme follows the operating s
 Give your coding agent (Codex, Claude Code, or any agent that can run a shell) this, with what you want in your own
 words at the end:
 
-> Run `npx zz-meridian@latest skill --global`, then follow the zz-meridian skill it installs to: [what you want, in your own words].
+> Run `npx zz-meridian@latest skill --global`, then follow the zz-meridian skill it installs to: [what you want, in your own words]. Done when its hand-over says the Meridian standard is met, or names what only I can decide or provide.
+
+In Claude Code or Codex, send it as a goal (`/goal Run npx zz-meridian@latest skill --global, then …`): the agent keeps
+working until the condition holds, and a separate model checks it after every turn against the hand-over, which quotes
+its evidence. The sentence says what you want; the skill carries how good it has to be. It builds, renders every view
+at phone and desktop width in both themes, scores each one on a scoreboard of floors (measured by `pnpm verify --full`)
+and craft (judged on the renders), and improves it round by round until nothing is weak, deciding what it can find out
+and recording each decision it made for you. You get the finished product, the renders, and the few questions only you
+can answer.
 
 You do not choose between the package's commands; the skill does, from what you said and what is in the folder, and
 names the route before it runs anything:
