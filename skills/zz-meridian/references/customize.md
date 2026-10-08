@@ -1,7 +1,8 @@
 # Customising a Meridian project
 
 The order that keeps a build calm: data, navigation, pages, extras, clean-up. Read the files named here before changing
-them; each starts with a comment that explains its job.
+them; each starts with a comment that explains its job. In an adopted project `@/` is the team's own alias, so the
+presets' `@/components/…` and `@/lib/…` imports become `@meridian/components/…` and `@meridian/lib/…` when you copy them.
 
 ## Data: `optional:src/data/`
 
@@ -161,11 +162,11 @@ Then `node scripts/registry.ts` and `pnpm verify --full`.
 
 ## Renaming a thing
 
-Routes, API paths, tool names (`query_enhancements` → `query_initiatives`), seeds and tables are yours to rename. One
-thing is scripted against them: the walk-through in `scripts/assistant.ts` types the questions and matches the replies
-its route and page titles produce, and `scripts/fake-llm.ts` decides what to answer from the same text ("Page: Members
-(/members)"). Rename a page or a route and both must move with it, or `pnpm verify --full` fails in the assistant walk-through
-with a reply it did not expect. `scripts/verify.config.ts`'s `detailRoutes` name ids from the sample, and its `navigationChecks` and `smokeRoutes` name routes and titles, so they move too.
+Routes, API paths, tool names (`query_enhancements` → `query_initiatives`), seeds and tables are yours to rename. The
+assistant walk-through (`scripts/assistant.ts`) checks what every product shares on your own rail, and drives the
+template's sample Overview, Members, API keys and Settings only while their files are there: replace one and its steps
+print `n/a` with the reason, never a failure, so you never edit Meridian's scripts to rename your pages. The live checks
+(`scripts/live.ts`) work the same way with the sample Members page. `scripts/verify.config.ts`'s `detailRoutes` name ids from the sample, and its `navigationChecks` and `smokeRoutes` name routes and titles, so they move too.
 
 ## Things that render nothing (and fail the gate)
 

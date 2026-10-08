@@ -1,9 +1,14 @@
 # Updating a project built on Meridian
 
 Run `npx zz-meridian@latest update --dry-run` first: it shows what moving this project to the running version of
-Meridian would change, and which of those changes need the team's decision. It writes nothing. A plain
+Meridian would change, and which of those changes need the team's decision. It writes nothing in the project (it asks
+the registry which versions exist, and works in a temporary folder). A plain
 `npx zz-meridian@latest update` then applies the safe changes and stages the rest. Do not copy files by hand to make up
 for either.
+
+When the project is already on the running version there is nothing to update: say so in the hand-over and stop
+there; the standard is not re-proven for a change that did not happen. After an update that changed files, run the
+loop in `standard.md` on what it changed, and close with `pnpm verify --full`.
 
 An update is tested from the last three releases. When the manifest's version is older than that (`npm view
 zz-meridian versions` lists them), update in steps: first with the release three after it,

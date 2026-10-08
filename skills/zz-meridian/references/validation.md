@@ -32,7 +32,10 @@ Steps in order:
 2. **A production build** (`next build`), against the fake API when `scripts/verify.config.ts` names one.
    Then the route policy and the size checks: first-load JS per route, and the HTML caps in `budgets.htmlKb`.
 3. **The assistant walk-through**, only when the project has `optional:app/api/assistant/route.ts`: off, then on against a fake
-   model.
+   model. What every product shares runs on its own rail (no agent control while off, the panel, a reply, the page the
+   model was told, markdown, the thread across navigation, Clear, the layout, a refused key, the key never reaching the
+   browser); the steps that drive the template's sample Overview, Members, API keys and Settings run while those pages
+   exist and print `n/a` with the reason once the product has replaced them.
 4. **The built app, served**, and the **browser audit** of every static route under `app/` and the `detailRoutes` in
    `scripts/verify.config.ts` (embeds under `/embed` on a simulated host ground) at 2560, 1440, 1024, 768 and 390px in
    both themes.
@@ -51,7 +54,8 @@ Steps in order:
    app's address.
 7. **Live data** (`scripts/live.ts`), alone after the presses, which change members: two tabs, a quiet or restarted
    stream, a hidden or offline tab and a burst, against a second server that drops its change hints. A case that cannot
-   run is `not run` and the suite exits 2.
+   run is `not run` and the suite exits 2. It drives the sample Members page; a product without it prints `n/a live
+   data`, which does not count against the outcome, and proves its own live pages through `browserChecks`.
 8. **Web Vitals on a mid-range phone** (`scripts/vitals.ts`): Lighthouse's mobile profile (CPU slowed four times, Slow 4G,
    390px touch). Every product page must hold LCP under 2.5 s, INP under 200 ms and CLS under 0.1; INP is the slowest
    tap on a control that changes the screen. It runs alone, after the others, since throttling measures the machine

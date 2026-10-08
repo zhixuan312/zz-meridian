@@ -3,6 +3,28 @@
 When the person already has a frontend and wants it to look and behave like Meridian, choose the route by what is there.
 Tell them which route you chose and why, in one sentence, before starting.
 
+## Before you change anything
+
+An existing product has users who rely on what it does today, so learn it before changing it, and keep what it does.
+
+1. **Learn it as a new teammate would**: its README, `AGENTS.md` or `CLAUDE.md`, package scripts, routes, data layer and
+   tests. Their conventions govern their code; Meridian's govern Meridian's files.
+2. **Find every place it reads or writes**: API base URLs and database URLs in the code and in every `.env` file. An
+   address that is not this machine, or a container you started, is production: never run their app against it, not
+   even `pnpm dev`. Write the fake API first (Route A, step 5), from the requests their code actually sends, with sample
+   records in their own shapes, and commit it on its own, so `adopt` finds a clean tree.
+3. **Keep a "before"**: run their app against the fake API and render their main routes at 1440 and 390px with Chrome
+   itself (`"<chrome>" --headless --screenshot=out/standard/before/<name>.png --window-size=1440,900 <url>`, and
+   `390,844`), since Meridian's scripts are not there yet. The hand-over shows each page before and after, and the
+   renders record how each page worked.
+4. **List what must survive** in the scoreboard's floors: every route at its URL, every action and the request it sends
+   (the fake API can log them), and their own tests and scripts. A rebuilt page that drops one of these is a regression,
+   however good it looks.
+
+When the last page is rebuilt, trace what nothing imports any more (their old UI components, `*.before.css` once
+ported, helpers only the old pages used): check dynamic imports and config too, then delete them in a commit of their
+own and list them in the hand-over, so the project keeps only what earns its place.
+
 ## Route A: Next.js (App Router) with React 18+ (the common case)
 
 Migrate in place, page by page, keeping their data layer.
@@ -49,7 +71,8 @@ Migrate in place, page by page, keeping their data layer.
    `pnpm verify --full` presses every control it finds on the built app, Approve, Revoke, Archive and Delete included,
    and refuses without one of the two. If their pages call a live backend, those presses change it. Write
    `example:scripts/fake-api.ts`: a server on `--port 0` that answers every route the pages call with typed fixtures (writes
-   answer success and are forgotten) and prints `listening on <url>`. Name it and the environment variable their app
+   answer success and are forgotten), prints `listening on <url>`, and logs each request it answers (method, path and
+   body), which is how the scoreboard shows every action still sends what it sent. Name it and the environment variable their app
    reads its API address from in `scripts/verify.config.ts` (`fakeApi: { script, env }`): verify starts it first and
    builds and serves the app against it. Point the build at it, not only the server: an address read in
    `next.config` rewrites is baked in at build time.
@@ -114,7 +137,10 @@ Rebuild each section of the page as a Meridian page or card; the old page can st
 
 Create a new Meridian project next to theirs (SKILL.md steps 3 and 4), then port into it: their routes become pages,
 their data hooks or fetch calls move into `optional:src/data/` (as server functions or client hooks), their domain types come
-along unchanged. Keep their old app running until the new one passes `pnpm verify` and they have looked at it.
+along unchanged. A read that ran in the browser carried the person's cookies and was allowed by the API's CORS; moved
+to the server it carries neither, so forward the session it needs explicitly, or keep it a client read with a
+`preload` (`customize.md`). Their old app stays exactly as it is: the new one is finished when it meets the standard (`standard.md`) with every
+route and action of the old one accounted for in the scoreboard, and switching over is the person's call.
 
 ## Route C: not React (Vue, Svelte, Angular, server templates)
 

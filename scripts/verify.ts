@@ -40,6 +40,7 @@ import { bin } from './lib/bin.ts';
 import type { BudgetsConfig, NavigationCheck } from './lib/budgets.ts';
 import { finalOutcome, resolveCoverage, selectSmokeRoutes, suiteOutcome } from './lib/coverage.ts';
 import { APP_DIR, railRoutes } from './lib/routes.ts';
+import { sampleSurfaces } from './lib/sample.ts';
 import verifyConfig from './verify.config.ts';
 
 /** The fields of the team's config that verify reads, each optional: an older product's config has only some of them. */
@@ -74,13 +75,18 @@ const flags = argv.join(' ');
 // route discovery and check.ts: a project that keeps its routes under `src/app` has the assistant there, and asking for
 // `app/api/...` alone would skip the walk-through without saying so.
 const hasAssistant = fs.existsSync(path.join(ROOT, APP_DIR, 'api/assistant/route.ts'));
+// The live checks drive the template's own Members page (its invitation sheet and Remove dialog) across two tabs. A
+// product that removed it has nothing for them to drive: the suite is not applicable, said so, rather than not run.
+// The stream itself is Meridian's, proven on the sample in Meridian's own runs; a product's own live pages prove
+// themselves through `browserChecks`.
+const hasLiveSample = sampleSurfaces(ROOT, APP_DIR).members;
 const own = config.browserChecks ?? [];
-const SUITES = ['audit', 'presses', 'keyboard', ...(hasAssistant ? ['assistant'] : []), 'live', 'vitals', ...(own.length ? ['browserChecks'] : []), ...(perf ? ['perf'] : [])];
+const SUITES = ['audit', 'presses', 'keyboard', ...(hasAssistant ? ['assistant'] : []), ...(hasLiveSample ? ['live'] : []), 'vitals', ...(own.length ? ['browserChecks'] : []), ...(perf ? ['perf'] : [])];
 const ranSuites = new Set<string>();
 
 // ---- the report ----
 
-type Status = 'ok' | 'warn' | 'FAIL' | 'not run';
+type Status = 'ok' | 'warn' | 'FAIL' | 'not run' | 'n/a';
 const started = Date.now();
 const lines: string[] = [];
 const log = (s: string) => { console.log(s); lines.push(s); };
@@ -331,7 +337,7 @@ function reportSuite(name: string, label: string, r: { status: number | null; ou
   const out = r.out.trim().split('\n');
   if (outcome === 'FAIL') beneath(out.slice(-60));
   else if (outcome === 'not run') beneath([...out.filter((l) => l.startsWith('not run')), out.at(-1) ?? '']);
-  else beneath(out.at(-1) ?? '');
+  else beneath([...out.filter((l) => l.startsWith('n/a')), out.at(-1) ?? '']);
   return outcome !== 'FAIL';
 }
 
@@ -477,13 +483,17 @@ if (full && browser.ran && baseUrl) {
   // Live data: two tabs, a quiet or restarted stream, a hidden or offline tab and a burst (scripts/live.ts). It times what a
   // second tab sees, so it runs alone and after the presses, which change members. The server with LIVE_DROP_HINTS=1 is the
   // same build with its change hints dropped; the restart case starts and restarts a server of its own.
-  current = 'live data';
-  announce('live data, alone');
-  const dropped = await start({ ...app, LIVE_DROP_HINTS: '1' });
-  const live = await run('scripts/live.ts', ['--base', here, '--drop-base', `http://127.0.0.1:${dropped.port}`], app);
-  stop(dropped.server);
-  reportSuite('live', 'live data: two tabs, a silent stream, a restart, a hidden and an offline tab, a burst', live);
-  if (suiteOutcome(live.status) === 'FAIL') { ok = false; beneath(live.out.split('\n').slice(-40)); }
+  if (hasLiveSample) {
+    current = 'live data';
+    announce('live data, alone');
+    const dropped = await start({ ...app, LIVE_DROP_HINTS: '1' });
+    const live = await run('scripts/live.ts', ['--base', here, '--drop-base', `http://127.0.0.1:${dropped.port}`], app);
+    stop(dropped.server);
+    reportSuite('live', 'live data: two tabs, a silent stream, a restart, a hidden and an offline tab, a burst', live);
+    if (suiteOutcome(live.status) === 'FAIL') { ok = false; beneath(live.out.split('\n').slice(-40)); }
+  } else {
+    phase('n/a', 'live data', null, '(the sample Members page the live checks drive is not in this product; its own live pages prove themselves through browserChecks)');
+  }
 
   // Web Vitals on a mid-range phone, alone: CPU throttling measures the machine too, so nothing else runs beside it.
   current = 'web vitals';

@@ -306,7 +306,8 @@ Meridian ${VERSION} is in ${root}.
   agent context: AGENTS.md has the managed block; docs/brief.md ${briefWritten ? 'is the empty brief to fill in' : 'was kept as it is'}
   types: ${typed}${notes.length ? `\n  notes:\n${notes.map((n) => `    - ${n}`).join('\n')}` : ''}
 
-Next: follow .agents/skills/zz-meridian/references/existing-project.md, Route A, from step 2 (step 1 was this). The
+Next: follow .agents/skills/zz-meridian/references/existing-project.md, Route A, from step 2 (step 1 was this), to the
+standard in references/standard.md. The
 template to read from is https://github.com/zhixuan312/zz-meridian/tree/v${VERSION}. Import Meridian's components as
 '@meridian/components/…'. Before the first ${pm} run verify, read step 5: verify presses every control, Delete included.`);
   return 0;

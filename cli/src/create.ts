@@ -70,7 +70,8 @@ ${name} is a new Meridian ${VERSION} dashboard in ${root}.
   skill: .agents/skills/zz-meridian (Codex) and .claude/skills/zz-meridian (Claude Code)
 
 Next: follow .agents/skills/zz-meridian/SKILL.md from step 5 (the template is fetched and branded): data first, then
-the pages, then ${pm} run verify until it passes.`);
+the pages, then the loop in references/standard.md until ${pm} run verify --full ends with "the project meets the
+Meridian standard" and no view on the scoreboard is Weak.`);
   return 0;
 }
 

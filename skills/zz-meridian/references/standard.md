@@ -39,7 +39,7 @@ defect you meet on another page is fixed too.
 ```md
 # Scoreboard · <Product> · round <n>
 Request: <the person's words, verbatim>
-Route: <adopt | create | update> · Register: product UI · Defaults noticed: <none, or each one and what replaced it>
+Route: <adopt | create | update | brand> · Register: product UI · Defaults noticed: <none, or each one and what replaced it>
 
 ## Floors
 | Floor | Result | Evidence |
@@ -64,15 +64,16 @@ Each floor is measured by a command, and its evidence is the line the command pr
 | Every view at 2560, 1440, 1024, 768 and 390px in both themes: no sideways scroll, clipped text, table wider than its card, unnamed control, text under 4.5:1, control without a focus ring, touch target under 44px, runtime error | `pnpm verify --full` (the audit) |
 | Every control pressed and every link followed, mouse at 1440px and taps at 390px; nothing does nothing | `pnpm verify --full` (the presses) |
 | The whole keyboard path, a visible focus ring at every stop | `pnpm verify --full` (the keyboard walk) |
-| Live data across tabs, restarts and offline; the assistant off and on, when the project has it | `pnpm verify --full` |
+| The assistant off and on, when the project has it; live data across tabs, restarts and offline, while the sample Members page it drives is there (a product's own live pages add a `browserChecks` script) | `pnpm verify --full`; a step it prints as `n/a`, with its reason, is not applicable and does not count against the outcome |
 | LCP under 2.5 s, INP under 200 ms, CLS under 0.1 on a mid-range phone | `pnpm verify --full` (the vitals) |
 | Reduced motion shows the final state at once | motion only through `src/styles/motion.css`, whose reduced-motion rule covers it; nothing animates outside it |
 | All of the above together | `pnpm verify --full` ending with the line `the project meets the Meridian standard` |
+| In an existing product, what it did still works: every route at its URL, every action sending the request it sent, its own tests and scripts | the list from `existing-project.md` ("Before you change anything"), each item checked against the fake API's log and the project's own commands |
 
 `--full` checks what the project tells it about, so keep `scripts/verify.config.ts` true to the product as you change
 it: a `navigationChecks` entry for every rail route (a ready selector and one harmless probe), `detailRoutes` with ids
 from your data for each state worth seeing, `smokeRoutes` among the rail routes, `budgets.htmlKb` naming only routes that
-exist, and a `fakeApi` or `noLiveApi` in an adopted project. After the pages change, look at the sizes `pnpm verify`
+exist, a `fakeApi` as soon as a page calls an API, and in an adopted project a `fakeApi` or `noLiveApi`. After the pages change, look at the sizes `pnpm verify`
 prints and record them with `node scripts/sizes.ts --write-baseline` once you have judged them. `--full` refuses, listing
 every gap, until these hold.
 
@@ -86,7 +87,8 @@ the same server ends with "Design metrics at 1440" for each route: the type size
 hierarchy ratio (the largest text over the median).
 
 Score each criterion **Strong** (it would stand beside the category's best; say what makes it so), **Good** (no defect,
-and what is left is taste), or **Weak** (a defect a person would notice or hit; it gets fixed). Evidence is specific: a
+and what is left is taste), or **Weak** (a defect a person would notice or hit; it gets fixed). A view's verdict is its
+lowest criterion's, and a criterion that does not apply (Agents with the assistant off) is `n/a` with the reason. Evidence is specific: a
 measured value, a width and theme where you saw it, a file and line. "Looks clean" is not evidence.
 
 | Criterion | What Strong looks like here |
@@ -100,7 +102,7 @@ measured value, a width and theme where you saw it, a file and line. "Looks clea
 | Responsive | Designed at each width, not shrunk: at 390px the protagonist leads, tables become card lists, actions stay reachable, dialogs become sheets |
 | Navigation | The next step is obvious: rows open their record, a link's arrow says where it goes, the rail shows where you are, a dead end offers the way back |
 | Copy | `voice.md`: sentence case, verbs on buttons, a unit and a period on every number; realistic data in the person's domain, never lorem ipsum or "Item 1" |
-| States | Empty (first run and filtered, each with its one action), loading (a skeleton shaped like the page), error (what failed, and Retry), long text and extreme values (a 60-character name, a zero, a figure in the billions) all designed, and each one seen: a filter that matches nothing, a missing id, sample rows with the long and extreme values so the audit sees them at every width, the page's `loading.tsx` and `error.tsx` read and, against the fake API, shot |
+| States | Empty (first run and filtered, each with its one action), loading (a skeleton shaped like the page), error (what failed, and Retry), long text and extreme values (a 60-character name, a zero, a figure in the billions) all designed, and each one seen: a filter that matches nothing, a missing id, sample rows with the long and extreme values so the audit sees them at every width, and the page's `loading.tsx` and `error.tsx` rendered: against the fake API made slow or failing, or, with none, by making the page's read wait or throw for one dev render and reverting it |
 | Agents | Only when the assistant or MCP views are on: the view shares a context that answers "why?" on its own (`agents.md`), and an agent's write goes through a Proposal with the Agent mark |
 | Originality | One idea the view is remembered by, named in the evidence. Meridian's own is the time cursor every chart shares; a product view earns Strong with one of its own that serves its question |
 
@@ -114,8 +116,12 @@ Run rounds until the stop condition holds. Order matters here, because each step
 2. **Build or fix.** Change working code only for a problem you can name, as simply as it allows, from Meridian's tokens
    and components. When a defect is one a test can catch (a wrong total, a missing state, a formatter), write the failing
    test at the lowest layer first, then fix it. Update the page's `README.md` and any doc that describes what you changed.
-3. **Measure.** `pnpm verify` while you iterate; `pnpm verify --full` to close a round. Fix the cause of every failure,
-   never the check (`validation.md`).
+3. **Measure what changed.** `pnpm verify` while you iterate. A round that touched only some views checks only those:
+   build once (`pnpm build`), serve it (`pnpm start --port 3100`), and run `node scripts/audit.ts`,
+   `node scripts/interactions.ts` and `node scripts/keyboard.ts`, each with `--routes <the views you changed>`; a change
+   to the shell, a shared component, the tokens or the data touches every view. `pnpm verify --full` runs once more at
+   the end, over everything, because only it can show the stop condition. Fix the cause of every failure, never the
+   check (`validation.md`).
 4. **Look and score.** Render, open every PNG, and score every view with its evidence.
 5. **Commit** each verified change on its own, staging the paths you changed by name, with a message that says what a
    person will notice. Commit locally only; pushing, releasing and deploying are the person's call.

@@ -25,7 +25,12 @@ redesign, one new page or a restyle all end at the same standard.
 The template lives at `https://github.com/zhixuan312/zz-meridian`. Its own `README.md`, `CONTRIBUTING.md`
 and `optional:docs/` are the full specification; this skill is the route through them. If you are reading this file inside a
 clone of the template (for example `/tmp/meridian/skills/zz-meridian/SKILL.md`), that clone is the template: use it
-wherever a step fetches the template, and read the references next to this file.
+wherever a step fetches the template, and read the references next to this file. Once a project has its own copy of
+the skill (`optional:.agents/skills/zz-meridian/` or `optional:.claude/skills/zz-meridian/`, which `create`, `adopt` and `update`
+keep at the project's Meridian version), follow that copy in it.
+
+A path written `optional:<path>` may not exist in every project (a page the product deleted, a file only some projects
+have); `example:<path>` names a file you write. Every other path the skill names exists.
 
 ## The rules that always hold
 
@@ -57,7 +62,7 @@ differ only in which folder ends up holding it.
 
 | What is true | The route | The command |
 |---|---|---|
-| `optional:.meridian/manifest.json` exists in the folder they point at | Already on Meridian: update, rebrand or keep building | `update` or `brand` (the next section), or straight to step 5 |
+| `optional:.meridian/manifest.json` exists in the folder they want changed | Already on Meridian: update, rebrand or keep building | `update` or `brand` (the next section), or straight to step 5 |
 | They want **this** project changed in place ("restyle this", "change this product into our dashboard", "make our admin look professional"), and it is Next.js with the App Router | Adopt, here | `npx zz-meridian@latest adopt` (`references/existing-project.md`, Route A) |
 | They want this project changed, and it is another stack (Vite, CRA, Remix, Vue, a static page) | A new project next to it, ported from it | `create <sibling folder>` (`references/existing-project.md`, Routes A2, B, C) |
 | They want a **new** dashboard: in another folder, "based on" or "from" this folder, a schema, a CSV, a spec or nothing | Create, elsewhere; what they pointed at is input you read, never a folder you write | `npx zz-meridian@latest create <new folder>` |
@@ -73,6 +78,10 @@ Rules that settle the hard cases:
   this"): ask once, with in place (`adopt`) as the recommended option when they said "this" or "our", and a new folder
   (`create`) when they said "new" or "another". With no way to ask, take that recommendation and say so in the
   hand-over.
+- **A run that stopped part-way is resumed, not restarted.** When `out/standard/` exists, an earlier run left its
+  scoreboard, log and questions there: read them, treat its uncommitted work as yours to verify (build it, check it, keep
+  what holds), and carry on from where the log stops. A folder on Meridian named only as a source ("based on this") is
+  still read, never written: `create` next to it, and port its data seam, fake API and tests along with its pages.
 - **Say the route in one sentence before the first command**: "This is a Next.js App Router project you want changed
   in place, so I am running `adopt` here." A wrong route is cheap to stop before the command and costly after it.
 
@@ -90,7 +99,10 @@ follow steps 1 to 8: the project is already built.
   The update is finished when the project meets the standard again (`references/standard.md`): run the loop on what it
   changed.
 - **Rebrand.** `npx zz-meridian@<the manifest's version> brand [brand flags]`, from a clean git tree. Never hand-edit the
-  brand outputs; an edited one makes it refuse.
+  brand outputs; an edited one makes it refuse. Step 4's check applies to the new colour. The exact brand colour lives
+  in the product's own logo (an SVG in `public/`, named by `logo` in `src/app.config.ts`), never in a token. The rebrand
+  is finished when the project meets the standard again, scored above all on Colour.
+- **The hand-over** for an update or a rebrand follows step 7, with what changed in place of "Pages".
 
 ## 1. Do the homework first
 
@@ -113,6 +125,10 @@ The sentence is the whole brief you will get, so turn the homework into decision
    settings, sign-in), each with the question it answers.
 3. **Brand and surfaces.** The brand colour from their existing styles or logo, else indigo; dark first; MCP views only
    when they asked for the agent surface.
+4. **Place and units.** The timezone and currency from their materials, addresses or language, else this machine's
+   zone and its currency: "today", "late" and every money figure depend on them.
+5. **What their words mean.** A term the request uses but does not define ("late", "best seller", "active") gets a
+   definition you choose, written in the Glossary and as a question with your recommendation.
 
 Write them into the brief (step 3), each decision in its Decisions section with its reason, and list them in the
 hand-over, where the person can change any of them in one line. Before the first command, tell them in two or three
@@ -127,7 +143,8 @@ once, with your recommendation first. Anything else you are unsure of is a decis
 For an existing frontend, follow `references/existing-project.md` instead: its first step is
 `npx zz-meridian@latest adopt`.
 
-For a new project (the folder must not exist yet), with the step-2 decisions as flags:
+For a new project (a folder that does not exist yet, or an empty one: `create .` works in an empty working directory),
+with the step-2 decisions as flags:
 
 ```sh
 npx zz-meridian@latest create <target> --name "<Product>" --workspace "<Workspace>" --timezone "<IANA zone>" \
@@ -147,7 +164,8 @@ behind. A brand colour goes straight in as `--hex`: the OKLCH hue and chroma are
 theme sets lightness so contrast holds), registered everywhere, and checked by the contrast gate in every theme. To
 change the brand later, run `npx zz-meridian@<the manifest's version> brand` with the new flags; never `node scripts/brand.ts`, which the manifest does not record.
 
-Requirements: Node 22.18 or newer; pnpm is used when installed, npm otherwise. The browser checks use Google Chrome
+Requirements: Node 22.18 or newer. A new project uses pnpm when it is installed, npm otherwise; an existing one keeps the
+package manager its lockfile names. The commands here say `pnpm`: in an npm project `pnpm verify` is `npm run verify`. The browser checks use Google Chrome
 (`CHROME=/path/to/chrome` if it is not where the platform keeps it; a Chromium build works too). When one is missing,
 install it or point at what is there; in a sandbox without network or a browser, ask for the access these steps need
 (the package install, starting Chrome and a local server for verify). What still cannot run here does not stop the
@@ -198,7 +216,8 @@ one `brand` command to reverse. If the person later keeps the original, keep the
 
 Read `references/customize.md` and follow it. In short:
 
-- **Reads, writes and live data go through the access seam.** Pages read with `read()` and writes invalidate their tenant
+- **Reads, writes and live data go through the access seam** in a created project (an adopted one keeps its own data
+  layer). Pages read with `read()` and writes invalidate their tenant
   (`references/cache.md`); the console keeps its tables fresh over one stream per tab (`references/live.md`, which also
   says plainly why the sample is a single process and holds the Postgres and Redis adapters).
 - **Data first.** Write `src/data/<product>.ts` for the person's domain: real types from their schema or materials, and
@@ -260,18 +279,21 @@ describing it. Write it in the person's language, in this shape:
 
 ```
 Built <Product> on Meridian at <path>. <One sentence on what it lets them do.>
-Standard: <"met" or "not yet proven">. verify --full: <its last line, verbatim>.
+Open it: <the commands, the fake API's included when there is one, and the address>.
+Standard: <"met", or "not yet proven: needs <what only the person can provide>">. verify --full: <its last line, verbatim>.
 Coverage: <the coverage line, verbatim>. Scoreboard: <n> views, <s> Strong, <g> Good, 0 Weak, after <r> rounds (out/standard/scoreboard.md).
 Pages: <one line each: the page and the question it answers>.
 Decided for you: <each decision from the brief's Decisions, one line each, with how to change it>.
 Not run: <each floor that could not run here, why, and what would run it; or "nothing">.
 Waiting for you: <each judgment question from out/standard/questions.md with your recommendation; or "nothing">.
+Kept and removed: <for an existing product: what still works as before, and each file deleted because nothing used it>.
 Commits: <the range, and one line per commit>.
 Next: <wiring their API in src/data/, and anything that waits on them>.
 Feedback: <the draft from step 8 and the question whether to open it, or "nothing about Meridian to report">.
 ```
 
-Show the renders of the main pages at 1440 and 390px in both themes. Say plainly what is sample data and what is not.
+Show the renders of the main pages at 1440 and 390px in both themes, and for an existing product each page's "before"
+beside its "after" (`references/existing-project.md`). Say plainly what is sample data and what is not.
 If the Atlas stays, say that `/system` is the live specification and that `node scripts/brand.ts --no-atlas` removes it
 before the product goes public.
 
