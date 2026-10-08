@@ -50,6 +50,16 @@ definition of done that cannot be reached. A finding that comes from the probe's
 machine it ran on) is not the skill's. Fix each counted finding in the skill or in Meridian's code, and run the
 scenarios it touched again.
 
-The first L1 round found that the definition of done could not be reached: the assistant walk-through and the live
-checks drove the template's own sample pages, so any product that replaced them failed or ended `not run`. That is
-the kind of defect these levels exist to find, and only reading the skill against the code could find it cheaply.
+## What each level finds
+
+Each level finds what the ones below it cannot, which is why none replaces another:
+
+- **L1** finds what reading the skill against the code shows: a definition of done the scripts make unreachable (the
+  first round found that the walk-throughs drove the template's own sample pages, so no product could pass), a step
+  that would stop an unattended run, a contradiction between two files, a case no route covers.
+- **L2** finds where judging by eye is not enough. Of six planted defects an agent found five; the one it missed, a
+  second featured metric, became a rule in `scripts/check.ts`. A rule the code can check is checked there, not left to
+  the scoreboard.
+- **L3** finds what only building shows: the gate misreading an adopted project's imports, a phone card's badge over
+  a long name, a verify that crashed on its own early exit. Each became a fix with a test, so the weekly run that
+  found it does not have to find it again.
