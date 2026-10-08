@@ -22,4 +22,11 @@ describe('a product keeps no test of a module it removes', () => {
       expect(brand).toContain(`'tests/${t}'`);
     });
   }
+  // A product has no docs/, decisions/ or skills/ folder and no CONTRIBUTING.md or CHANGELOG.md (brand --product removes
+  // them), so a shipped test that reads one fails in every new dashboard; a test of those belongs with tests/cli-*.
+  it('no shipped test reads a file a product removes', () => {
+    const reads = /(?:read|readFileSync)\(\s*['"`](?:skills|docs|decisions)\/|(?:read|readFileSync)\(\s*['"`](?:CONTRIBUTING|CHANGELOG)\.md/;
+    const shipped = fs.readdirSync(path.join(ROOT, 'tests')).filter((f) => /\.test\.tsx?$/.test(f) && !f.startsWith('cli-') && !f.startsWith('deep-'));
+    expect(shipped.filter((t) => reads.test(fs.readFileSync(path.join(ROOT, 'tests', t), 'utf8')))).toEqual([]);
+  });
 });
