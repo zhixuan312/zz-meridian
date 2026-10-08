@@ -84,7 +84,7 @@ refuses, listing every gap, until these hold.
 
 ### The craft: judged on the renders, with evidence
 
-Look at every view rendered, not at the code. With `pnpm dev --port 3100` running (the port the screenshot and audit
+Look at every view rendered, not at the code. With `node_modules/.bin/next dev --port 3100` running (the port the screenshot and audit
 scripts read; stop it again before `pnpm verify`, which builds in the same folder), run
 `node scripts/shot.ts <routes> --width 1440,390 --theme dark,light --full`, plus 768 and 2560 where the layout depends on
 width (tables, grids, side panels), and open every PNG in `out/shots/`. A dialog, sheet, menu or popover is shot open:
@@ -125,7 +125,7 @@ Run rounds until the stop condition holds. Order matters here, because each step
    and components. When a defect is one a test can catch (a wrong total, a missing state, a formatter), write the failing
    test at the lowest layer first, then fix it. Update the page's `README.md` and any doc that describes what you changed.
 3. **Measure what changed.** `pnpm verify` while you iterate. A round that touched only some views checks only those:
-   build once (`pnpm build`), serve it (`pnpm start --port 3100`), and run `node scripts/audit.ts`,
+   build once (`pnpm build`), serve it (`node_modules/.bin/next start --port 3100`, stopped by its own id), and run `node scripts/audit.ts`,
    `node scripts/interactions.ts` and `node scripts/keyboard.ts`, each with `--routes <the views you changed>`; a change
    to the shell, a shared component, the tokens or the data touches every view. `pnpm verify --full` runs once more at
    the end, over everything, because only it can show the stop condition. Fix the cause of every failure, never the

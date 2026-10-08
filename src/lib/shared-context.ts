@@ -6,6 +6,7 @@
  * Every context is the WHOLE state of the view, never a delta: a host keeps only the latest update. The text carries
  * everything, because a host is not required to give the model the structured part.
  */
+import { app } from '@/app.config';
 import type { z } from 'zod';
 import { formatDateTime, formatRelative } from '@/lib/format-date';
 
@@ -59,7 +60,8 @@ export function freshnessOf(updatedAt: Date | string | null, now: Date | string,
   const at = new Date(updatedAt), clock = new Date(now);
   const stale = clock.getTime() - at.getTime() > staleAfterMs;
   const age = formatRelative(at, clock);
-  return `Data as of ${formatDateTime(at)} UTC (${age === 'just now' ? 'just now' : age.replace(/ ago$/, ' before now')}): ${stale ? 'STALE, so figures may have moved since; say so before using them' : 'fresh'}.`;
+  // formatDateTime writes the time in the product's reporting zone, so the label is that zone, never a fixed UTC.
+  return `Data as of ${formatDateTime(at)} ${app.timezone} (${age === 'just now' ? 'just now' : age.replace(/ ago$/, ' before now')}): ${stale ? 'STALE, so figures may have moved since; say so before using them' : 'fresh'}.`;
 }
 
 /** The context as the model reads it: short labelled lines, the same order every time so turns compare. */

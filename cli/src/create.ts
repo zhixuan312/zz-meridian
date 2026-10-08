@@ -69,8 +69,8 @@ export function create(o: CreateOptions): number {
 ${name} is a new Meridian ${VERSION} dashboard in ${root}.
   skill: .agents/skills/zz-meridian (Codex) and .claude/skills/zz-meridian (Claude Code)
 
-Next: follow .agents/skills/zz-meridian/SKILL.md from step 5 (the template is fetched and branded): data first, then
-the pages, then the loop in references/standard.md until ${pm} run verify --full ends with "the project meets the
+Next: follow .agents/skills/zz-meridian/SKILL.md from step 3's brief (the template is fetched and branded): the brief,
+step 4's colour check, then data and the pages, then the loop in references/standard.md until ${pm} run verify --full ends with "the project meets the
 Meridian standard" and no view on the scoreboard is Weak.`);
   return 0;
 }

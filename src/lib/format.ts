@@ -17,8 +17,8 @@ export function formatCost(amount: number | null): string {
   if (amount === null) return '—';
   if (amount === 0) return `${CURRENCY}0`;
   if (Math.abs(amount) < 0.01) return `${CURRENCY}${amount.toFixed(4)}`;
-  if (Math.abs(amount) >= 1000) return `${CURRENCY}${Math.round(amount).toLocaleString('en-US')}`;
-  return `${CURRENCY}${amount.toFixed(2)}`;
+  // Two decimals at every size, so a column of amounts keeps one precision and its decimals line up.
+  return `${CURRENCY}${amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
 
 /** Money at a glance, for dense tables and tiles: $1.2M, $340K, $912. The exact amount belongs in the tooltip. */

@@ -165,3 +165,14 @@ describe('the person sees the same findings', () => {
     expect(screen.getByText('2.7× usual')).toBeTruthy();
   });
 });
+
+describe('freshness in the reporting timezone', () => {
+  it('names the zone the time is written in, not UTC when the product reports in another', async () => {
+    vi.resetModules();
+    vi.doMock('@/app.config', async (load) => ({ ...(await load<typeof import('@/app.config')>()), app: { ...(await load<typeof import('@/app.config')>()).app, timezone: 'Asia/Singapore' } }));
+    const { freshnessOf: inSingapore } = await import('@/lib/shared-context');
+    expect(inSingapore('2026-10-08T09:30:00Z', '2026-10-08T09:40:00Z')).toMatch(/^Data as of 08 Oct 2026, 17:30 Asia\/Singapore \(/);
+    vi.doUnmock('@/app.config');
+    vi.resetModules();
+  });
+});

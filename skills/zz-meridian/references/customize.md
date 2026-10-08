@@ -75,10 +75,32 @@ Rules that make every page look like it belongs:
   ("Choosing the files…") until the change event arrives. The presses count a file chooser that opens as an answer.
 - **A page spec** next to each route (`README.md`: summary, Structure, States, Surfaces, Agents), so the next person, or
   agent, knows what the page is for. `node scripts/check.ts` requires Structure and States, and under `## Agents` a
-  `### What the agent reads` part for every page in `optional:app/(dashboard)/` and `optional:app/embed/`.
+  `### What the agent reads` part for every page in `optional:app/(dashboard)/` and `optional:app/embed/`. A created project
+  carries none of the template's to copy, so start from this shape:
+
+  ```md
+  # Late pickups
+
+  The orders still waiting after their pickup time, longest wait first, so a shop calls the right customer next.
+
+  ## Structure
+  PageFrame (kicker, title, one sentence, Freshness), then the late list as the protagonist, one row per order.
+
+  ## States
+  Loading: a skeleton shaped like the list. Empty: "No late pickups" with the time it was checked. Error: what did not
+  load, and Retry. Long names truncate with the full name in a tooltip.
+
+  ## Surfaces
+  Console; at 390px the list is a card list.
+
+  ## Agents
+  ### What the agent reads
+  The shared context: the period, how many are late, the longest wait, and the five longest with their shops.
+  ```
 - **A shared context** for each page (decision 0011): a pure function beside the view builds it from the page's data
   (copy `optional:src/views/overview-context.ts`: scope, freshness, each figure with its unit, change and definition,
-  what `optional:src/lib/insight.ts` finds, what the data cannot say), and the view passes it to `useShareView`; a
+  what `optional:src/lib/insight.ts` finds, what the data cannot say), within 2,400 characters, lists cut at 25 with a
+  count of the rest (`listed`), and the view passes it to `useShareView`; a
   server page with no client view places `<ShareContext context={…} />` among its cards instead. Both
   agents read it: an MCP host and the console's assistant. Add the page's tool to `optional:src/views/tools.ts` so the
   assistant can open it at an address.

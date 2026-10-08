@@ -35,6 +35,9 @@ describe('formatters', () => {
     // The symbol follows app.currency, so a rebranded product (--currency SGD) keeps this test green.
     const symbol = new Intl.NumberFormat('en', { style: 'currency', currency: app.currency, currencyDisplay: 'narrowSymbol' }).formatToParts(0).find((p) => p.type === 'currency')!.value;
     expect(formatCost(298.43)).toBe(`${symbol}298.43`);
+    // One precision in a column: $997.00 above $1,269.40, never above $1,269, so the decimals line up.
+    expect(formatCost(1269.4)).toBe(`${symbol}1,269.40`);
+    expect(formatCost(997)).toBe(`${symbol}997.00`);
     expect(formatDuration(294)).toBe('294ms');
     expect(formatDuration(1420)).toBe('1.4s');
     expect(formatPercent(0.0090, 2)).toBe('0.90%');

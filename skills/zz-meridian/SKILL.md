@@ -258,12 +258,13 @@ the floors, render and score the craft, fix every Weak and every failure, commit
 ```sh
 pnpm verify            # the gate once, one build, the size checks and a smoke of up to three routes: the inner loop
 pnpm verify --full     # every view at five widths in both themes, every control pressed, the keyboard walk, live data, vitals
-pnpm dev --port 3100 & # then, for the renders:
+node_modules/.bin/next dev --port 3100 & # then, for the renders (stop it with kill $!):
 node scripts/shot.ts / <every other view> --width 1440,390 --theme dark,light --full
 ```
 
 Stop the dev server before verify, which builds and serves the app from the same folder: stop the process you started,
-by its id, never by a name or a pattern, since other servers on the machine may be someone else's. The default takes about two
+by its id, never by a name or a pattern, since other servers on the machine may be someone else's. Start Next itself,
+not through `pnpm dev`, whose id is the package manager's and leaves the server running when it is stopped. The default takes about two
 minutes; `--full` takes about a quarter of an hour for a dozen routes. Every run ends with a coverage line, which says
 the depth that ran, whether the browser ran (and why not), how many routes have a readiness and a control mapping
 (`navigationChecks` in `scripts/verify.config.ts`), and which suites did not run:
