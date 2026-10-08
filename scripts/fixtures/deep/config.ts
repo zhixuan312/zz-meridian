@@ -1,5 +1,9 @@
 /** The mappings for the navigation fixtures, in the shape of the template's `navigationChecks`. */
+// These cases are about which element a selector resolves to, never about speed, so their budgets are wide enough that
+// a loaded machine's timings cannot decide them (a phone shell at 488 ms once failed /nav-multi on a busy runner).
+const LOOSE = { desktop: 30_000, phone: 30_000 };
 const config = {
+  budgets: { navigation: { warm: { shellMs: LOOSE, dataMs: LOOSE, interactiveMs: LOOSE }, cold: { shellMs: LOOSE, dataMs: LOOSE, interactiveMs: LOOSE } } },
   navigationChecks: [
     { path: '/nav-home', title: 'Home', readySelector: 'main table tbody tr', probe: 'toggle', controlSelector: 'main button#toggle', resultSelector: 'main button#toggle' },
     // The control and its result are inside an open shadow root.
