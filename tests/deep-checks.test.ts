@@ -60,3 +60,13 @@ describe('audit', () => {
   // Five widths in two themes per page, with Chrome started once per run.
   casesFor('audit', (page, base) => ['scripts/audit.ts', '--base', base, '--routes', page], 180_000);
 });
+
+describe('presses', () => {
+  // Every control pressed at 1440px with a mouse and at 390px by touch, with Chrome started once per run.
+  casesFor('presses', (page, base) => ['scripts/interactions.ts', '--base', base, '--routes', page], 120_000);
+});
+
+describe('keyboard', () => {
+  // Real Tab presses forward through every stop, then Shift+Tab back through them.
+  casesFor('keyboard', (page, base) => ['scripts/keyboard.ts', '--base', base, '--routes', page], 120_000);
+});
