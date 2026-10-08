@@ -21,6 +21,19 @@ Colour, Typography, Hierarchy and Originality. It never changes a floor, require
 quality, accessibility, the loop or the existing budget-governance policy. Read the register in force before you build,
 and name it on the scoreboard's "Register:" line.
 
+How a project register is applied:
+- A line that would change a floor, or anything else the register never changes, is not followed. The floor holds. Record
+  the line in `out/standard/questions.md` and name it, with the reason, in the hand-over.
+- Meridian's `register.md` holds for any value the project register does not set (a hierarchy ratio, a size count, a face
+  for a kicker).
+- A project register that lists its own anti-defaults, or permits one Meridian refuses (pill buttons), replaces
+  Meridian's list.
+- A project register that names its own brand route (a command the project owns, and its rules) is followed instead of
+  `npx zz-meridian brand` and the status-hue rule. That route is a local edit and is not recorded in the manifest.
+- Its face, radii and colours reach the product through the project's token files (`tokens/*.tokens.json`, then
+  `pnpm tokens`), never as literals. A managed token or style file the project changes for its register is listed in
+  the keep register (`optional:.meridian/keep.json`, `update.md`, "Keeping a file on purpose").
+
 ## The scoreboard
 
 Keep it as a file, `out/standard/scoreboard.md` (`out/` is git-ignored in every Meridian project, so it is never

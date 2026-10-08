@@ -1,7 +1,8 @@
 # Meridian's register
 
 The register is the look a product answers to. This file is Meridian's own, and it is in force unless the project has
-`optional:docs/register.md`, which then replaces it (`standard.md`, "The register"). It sets the theme default, the
+`optional:docs/register.md`, which then replaces it, for the values that file sets (`standard.md`, "The register", says how
+a project register is applied). It sets the theme default, the
 signature elements, the anti-defaults, the brand taste and the look-dependent values in Colour, Typography, Hierarchy
 and Originality. It never changes a floor, the required states, Copy, Responsive or Navigation quality, accessibility,
 the loop or the existing budget-governance policy.

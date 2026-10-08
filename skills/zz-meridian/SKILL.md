@@ -128,7 +128,7 @@ The sentence is the whole brief you will get, so turn the homework into decision
    settings, sign-in), each with the question it answers.
 3. **Brand and surfaces.** Under Meridian's register: the brand colour from their existing styles or logo, else indigo
    (what `create` and `adopt` give with no brand flag); dark first; MCP views only when they asked for the agent surface.
-   A project register that names its own brand route and theme default is followed instead.
+   A project register that names its own brand route or theme default is followed instead (`references/standard.md`, "The register").
 4. **Place and units.** The timezone and currency from their materials, addresses or language, else this machine's
    zone and its currency: "today", "late" and every money figure depend on them. A currency is evidence of a place
    (a pound sign, a UK zone), stronger than the machine the run happens on. The person the rail shows signed in
@@ -213,7 +213,7 @@ answer a question about this product.
 
 ## 4. Check the brand colour
 
-This step applies under Meridian's register; a project register that names its own brand route is followed instead.
+This step applies under Meridian's register; a project register that names its own brand route is followed instead (`references/standard.md`, "The register").
 
 Status colours own three hues: critical near 22°, warning near 68°, positive near 158°. A brand hue within 20° of one
 (a red, amber or green brand) makes every button and selection read as an alert or as "healthy", and the script prints

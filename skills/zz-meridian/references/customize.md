@@ -139,7 +139,8 @@ under `tokens/` and `src/styles/` and `src/app.config.ts`, and records the new b
 `optional:.meridian/manifest.json` together, so a later `update` replays the brand you chose. It needs a clean git tree, and it
 changes nothing and says why when an update is in progress, the version differs from the manifest's, a brand output was
 edited by hand, or `src/app.config.ts` is not in the shape `scripts/brand.ts` reads. The product's own `pnpm brand`
-stays a local edit: it is not recorded, so a later `update` would replay the old brand over it.
+stays a local edit: it is not recorded, so a later `update` would replay the old brand over it. A project register that
+names its own brand route follows it instead of `brand` (`standard.md`, "The register").
 
 Branding is configuration, not source patching: `scripts/brand.ts` edits `src/app.config.ts` and the token files, and
 never `src/lib/preferences.ts`, which reads the accent and theme defaults from the app configuration.
