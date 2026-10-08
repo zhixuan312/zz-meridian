@@ -350,7 +350,7 @@ let ok = true;
 
 // 1. The gate, once.
 gates++;
-// The zz-meridian package's own tests (tests/cli-*) are not the project's: no adopted or created project has them.
+// The tests only this repository has (tests/cli-*, the package's own, and tests/deep-*, the browser-fixture tests of the checks) are not the project's: no adopted or created project has them.
 step('gate', 'node', ['scripts/gate.ts', '--without-cli-tests']);
 
 // A product whose pages call a live API is checked against its fake (scripts/verify.config.ts): the presses approve,

@@ -151,10 +151,11 @@ jobs:
           cache: pnpm
 
       - run: pnpm install --frozen-lockfile
-      # The zz-meridian package's own tests (tests/cli-*): no adopted or created project has them, so the timed default
-      # verify below leaves them out, and they run here, once.
+      # The tests only this repository has: tests/cli-* (the package's own) and tests/deep-* (the browser-fixture tests of
+      # the checks, about 230 s). No adopted or created project has them, so the timed default verify below leaves them
+      # out, and they run here, once.
       - name: The package's own tests
-        run: pnpm exec vitest run tests/cli-
+        run: pnpm exec vitest run tests/cli- tests/deep-
       # This runner is the reference profile for AC-4.8; its log, with the machine line, is the release's evidence.
       # 180 s, not the 120 s an adopter's own machine is held to: the same commit measured 111 s on one runner CPU and
       # 152 s on another, so the gate leaves room for the slower draw and still stops a default verify gone slow.
