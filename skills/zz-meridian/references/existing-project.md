@@ -12,13 +12,22 @@ An existing product has users who rely on what it does today, so learn it before
 2. **Find every place it reads or writes**: API base URLs and database URLs in the code and in every `.env` file. An
    address that is not this machine, or a container you started, is production: never run their app against it, not
    even `pnpm dev`. Write the fake API first (Route A, step 5), from the requests their code actually sends, with sample
-   records in their own shapes, and commit it on its own, so `adopt` finds a clean tree.
-3. **Keep a "before"**: run their app against the fake API and render their main routes at 1440 and 390px with Chrome
-   itself (`"<chrome>" --headless --screenshot=out/standard/before/<name>.png --window-size=1440,900 <url>`, and
+   records in their own shapes. In place (Route A) it goes in their `scripts/` and is committed on its own, so `adopt`
+   finds a clean tree (`adopt` copies Meridian's `scripts/` beside it and leaves a file of another name alone, and an update never changes
+   a team file inside a managed folder: `ownership.md`); for a
+   new project beside theirs (Routes A2, B) it goes in the new project. Records whose meaning depends on the time
+   ("late", "due soon") are placed relative to when the fake API starts, so the same cases exist on every run. Their
+   app reads the fake's address from the environment variable they already use: a variable set for the command
+   overrides the `.env` file Next loads, and `fakeApi.env` in `scripts/verify.config.ts` does the same for verify. An
+   API address is not a `dataUrls` entry; that list is for databases.
+3. **Keep a "before"**: run their app against the fake API, from a copy outside the repository (install there, so their
+   folder stays clean), and render their main routes at 1440 and 390px with Chrome itself (`"<chrome>" --headless --screenshot=out/standard/before/<name>.png --window-size=1440,900 <url>`, and
    `390,844`), since Meridian's scripts are not there yet. The hand-over shows each page before and after, and the
-   renders record how each page worked.
+   renders record how each page worked. An app that does not run as it stands gets no "before": say so in the
+   hand-over, and keep the list in step 4 from its code.
 4. **List what must survive** in the scoreboard's floors: every route at its URL, every action and the request it sends
-   (the fake API can log them), and their own tests and scripts. A rebuilt page that drops one of these is a regression,
+   (the fake API logs them), and their own tests and scripts. When the request itself changes one of these (a filter
+   that now needs every order), record the change under "Kept and removed" in the hand-over. A rebuilt page that drops one of these is a regression,
    however good it looks.
 
 When the last page is rebuilt, trace what nothing imports any more (their old UI components, `*.before.css` once
@@ -129,7 +138,7 @@ Meridian's sample serves fixtures; a product's collections read a database. What
 
 ## Route A2: a static HTML page (data fetched as JSON)
 
-The simplest case. Create a new Meridian project (SKILL.md steps 3 and 4, with `--product`) and point a module in
+The simplest case. Create a new Meridian project (SKILL.md steps 3 and 4) and point a module in
 `optional:src/data/` at the same JSON the page fetched today (read the file at build time, or fetch it in a server component).
 Rebuild each section of the page as a Meridian page or card; the old page can stay where it is until they switch.
 

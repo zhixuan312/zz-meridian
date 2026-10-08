@@ -287,3 +287,15 @@ describe('abort', () => {
     expect(read(session(root), `backup/${ui('a')}`)).toBe('a1');
   });
 });
+
+describe('a project already on the running version', () => {
+  it('has nothing to update: it says so, writes nothing and exits 0, in a dry run and a real one', () => {
+    for (const dryRun of [true, false]) {
+      const root = project();
+      const { c, lines } = ctx(root, { version: '0.3.0' });
+      expect(start(c, { ...opts, dryRun })).toBe(0);
+      expect(lines.join('\n')).toContain('already at 0.3.0; nothing to update');
+      expect(has(root, '.meridian/update')).toBe(false);
+    }
+  });
+});

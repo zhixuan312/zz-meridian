@@ -96,8 +96,9 @@ follow steps 1 to 8: the project is already built.
   team's; an update changes only the first, and a team keeps one of its own on purpose through `optional:.meridian/keep.json`.
   An update across a release that changed an interface reports a migration for each; `references/update.md` says how
   to resolve every one, and `references/cache.md` and `references/live.md` hold the starters and the shapes they move to.
-  The update is finished when the project meets the standard again (`references/standard.md`): run the loop on what it
-  changed.
+  When the project is already on the running version, `update` prints `already at <version>; nothing to update`:
+  say so in a one-line hand-over and stop. After an update that changed files, it is finished when the project meets
+  the standard again (`references/standard.md`): run the loop on what it changed.
 - **Rebrand.** `npx zz-meridian@<the manifest's version> brand [brand flags]`, from a clean git tree. Never hand-edit the
   brand outputs; an edited one makes it refuse. Step 4's check applies to the new colour. The exact brand colour lives
   in the product's own logo (an SVG in `public/`, named by `logo` in `src/app.config.ts`), never in a token. The rebrand
@@ -126,13 +127,14 @@ The sentence is the whole brief you will get, so turn the homework into decision
 3. **Brand and surfaces.** The brand colour from their existing styles or logo, else indigo; dark first; MCP views only
    when they asked for the agent surface.
 4. **Place and units.** The timezone and currency from their materials, addresses or language, else this machine's
-   zone and its currency: "today", "late" and every money figure depend on them.
+   zone and its currency: "today", "late" and every money figure depend on them. The person the rail shows signed in
+   (`--user`, `--role`) is theirs when the product has one, else the team's name and a role; never the sample's.
 5. **What their words mean.** A term the request uses but does not define ("late", "best seller", "active") gets a
    definition you choose, written in the Glossary and as a question with your recommendation.
 
 Write them into the brief (step 3), each decision in its Decisions section with its reason, and list them in the
-hand-over, where the person can change any of them in one line. Before the first command, tell them in two or three
-sentences what you are building, by which route, and that you will come back with it finished.
+hand-over, where the person can change any of them in one line. Before the first command that writes anything, tell them in two
+or three sentences what you are building, by which route, and that you will come back with it finished.
 
 The one question worth asking is the route, when "Choose the route" leaves two open and you have a way to ask: ask it
 once, with your recommendation first. Anything else you are unsure of is a decision you make and record
@@ -160,12 +162,13 @@ and the changelog are left out, and the README and AGENTS.md are written for the
 while building, read it in the template on GitHub (`src/components/<layer>/<card>/README.md`).
 
 Every product name, sample address and MCP tool name follows `--name`, so nothing of the template's own name is left
-behind. A brand colour goes straight in as `--hex`: the OKLCH hue and chroma are derived (chroma capped at 0.18; the
-theme sets lightness so contrast holds), registered everywhere, and checked by the contrast gate in every theme. To
+behind. A brand colour goes in as `--hex`: the OKLCH hue and chroma are derived (chroma capped at 0.18; the theme sets
+lightness so contrast holds), registered everywhere, and checked by the contrast gate in every theme. Its output names
+the hue; when it warns that the hue is near a status hue, step 4 says what to run next. To
 change the brand later, run `npx zz-meridian@<the manifest's version> brand` with the new flags; never `node scripts/brand.ts`, which the manifest does not record.
 
 Requirements: Node 22.18 or newer. A new project uses pnpm when it is installed, npm otherwise; an existing one keeps the
-package manager its lockfile names. The commands here say `pnpm`: in an npm project `pnpm verify` is `npm run verify`. The browser checks use Google Chrome
+package manager its lockfile names, and one with no lockfile gets pnpm when it is installed. The commands here say `pnpm`: in an npm project `pnpm verify` is `npm run verify`. The browser checks use Google Chrome
 (`CHROME=/path/to/chrome` if it is not where the platform keeps it; a Chromium build works too). When one is missing,
 install it or point at what is there; in a sandbox without network or a browser, ask for the access these steps need
 (the package install, starting Chrome and a local server for verify). What still cannot run here does not stop the
@@ -207,9 +210,10 @@ answer a question about this product.
 
 Status colours own three hues: critical near 22°, warning near 68°, positive near 158°. A brand hue within 20° of one
 (a red, amber or green brand) makes every button and selection read as an alert or as "healthy", and the script prints
-a warning when it happens. Take the nearest hue 20° or more away as the accent (graphite when no nearby hue suits the
-brand), keep the exact brand colour in the logo mark, and record it in the brief's Decisions and the hand-over: it is
-one `brand` command to reverse. If the person later keeps the original, keep the accent off figures and statuses: no
+a warning when it happens. Run `brand` again with `--hue <the nearest hue 20° or more away> --chroma <the same
+chroma>` (or `--accent graphite` when no nearby hue suits the brand), and record it in the brief's Decisions and the
+hand-over: it is one `brand` command to reverse. The exact colour stays in their logo when they have one; Meridian does
+not draw a logo for them. If the person later keeps the original, keep the accent off figures and statuses: no
 `emphasis` on Metric tiles, and accent only on actions and selection.
 
 ## 5. Build the product
@@ -257,7 +261,8 @@ pnpm dev --port 3100 & # then, for the renders:
 node scripts/shot.ts / <every other view> --width 1440,390 --theme dark,light --full
 ```
 
-Stop the dev server before verify, which builds and serves the app from the same folder. The default takes about two
+Stop the dev server before verify, which builds and serves the app from the same folder: stop the process you started,
+by its id, never by a name or a pattern, since other servers on the machine may be someone else's. The default takes about two
 minutes; `--full` takes about a quarter of an hour for a dozen routes. Every run ends with a coverage line, which says
 the depth that ran, whether the browser ran (and why not), how many routes have a readiness and a control mapping
 (`navigationChecks` in `scripts/verify.config.ts`), and which suites did not run:
@@ -275,7 +280,7 @@ scored, because the audit measures what can be measured and the eye judges the r
 ## 7. Hand over
 
 The hand-over is what the person reads, and what an agent checking the work reads too, so it quotes evidence rather than
-describing it. Write it in the person's language, in this shape:
+describing it. Draft step 8's feedback first, since the hand-over carries it. Write it in the person's language, in this shape:
 
 ```
 Built <Product> on Meridian at <path>. <One sentence on what it lets them do.>
@@ -294,7 +299,8 @@ Feedback: <the draft from step 8 and the question whether to open it, or "nothin
 
 Show the renders of the main pages at 1440 and 390px in both themes, and for an existing product each page's "before"
 beside its "after" (`references/existing-project.md`). Say plainly what is sample data and what is not.
-If the Atlas stays, say that `/system` is the live specification and that `node scripts/brand.ts --no-atlas` removes it
+A created or adopted project has no Design Atlas. In a clone of the template it is there: it is Meridian's documentation,
+not a view to score; say that `/system` is the live specification and that `node scripts/brand.ts --no-atlas` removes it
 before the product goes public.
 
 ## 8. Offer feedback to Meridian

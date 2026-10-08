@@ -309,9 +309,9 @@ export function start(ctx: Context, o: StartOptions): number {
     for (const p of Object.keys(manifest.files)) if (!isSafePath(p)) return refuse(`manifest path ${JSON.stringify(p)} is not a safe project-relative path`);
     if (!supportsSource(manifest.version)) return refuse(`updates start from 0.3.0; this project is on ${manifest.version}`);
     if (!/^\d+\.\d+\.\d+$/.test(ctx.version)) return refuse(`the running version ${JSON.stringify(ctx.version)} must look like 1.2.3`);
-    if (!isNewer(ctx.version, manifest.version)) {
-      return refuse(manifest.version === ctx.version ? `already at ${ctx.version}` : `this project is on ${manifest.version}, newer than this package (${ctx.version}); run npx zz-meridian@latest update`);
-    }
+    // Already current is not a refusal: there is nothing to do, and the run that asked has its answer.
+    if (manifest.version === ctx.version) { log(`zz-meridian update: already at ${ctx.version}; nothing to update`); return 0; }
+    if (!isNewer(ctx.version, manifest.version)) return refuse(`this project is on ${manifest.version}, newer than this package (${ctx.version}); run npx zz-meridian@latest update`);
 
     const git = spawn('git', ['status', '--porcelain'], root, true);
     const dirty = git.status === 0 ? (git.stdout ?? '').split('\n').filter(Boolean).length : 0;

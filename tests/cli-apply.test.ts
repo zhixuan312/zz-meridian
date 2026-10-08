@@ -179,9 +179,14 @@ describe('update refuses before writing anything', () => {
     expect(start(ctx(root).c, opts)).toBe(1);
     unchanged(root);
   });
-  it('on a target that is not newer', () => {
-    const root = project();
+  it('on a project newer than the running package', () => {
+    const root = project({ version: '0.4.0' });
     expect(start(ctx(root, { target: release('0.3.0', TARGET) }).c, opts)).toBe(1);
+    unchanged(root);
+  });
+  it('and on a project already on the running version, which has nothing to update and is not an error', () => {
+    const root = project();
+    expect(start(ctx(root, { target: release('0.3.0', TARGET) }).c, opts)).toBe(0);
     unchanged(root);
   });
   it('on a stale lock, which it names and never deletes', () => {

@@ -14,7 +14,8 @@ sample, ZZ Meridian's own dashboard, lives in `optional:src/system/fixtures/`; y
   `Invoice`). Name fields the way their team says them.
 - **Deterministic sample data** until their API is wired: a seeded generator and a fixed clock (`DEMO_NOW`), never
   `Math.random()` or `new Date()` in render, or the server and the client disagree and React reports a hydration error
-  (the audit fails on it).
+  (the audit fails on it). With a real API, "now" is read once on the server, where the data is read, and passed down;
+  a client component never reads its own clock in render.
 - **Daily series** for anything a Metric tile or chart shows over time: the Meridian cursor reads one value per day.
 - **Freshness** from when data arrived (`DEMO_UPDATED_AT`), never from now.
 - **null for "not measured"**: the formatters in `src/lib/format.ts` render it as a dash. Add a formatter there when a

@@ -72,8 +72,8 @@ Dark is the default, written on `:root`; the light theme follows the operating s
 | `docs/` | Guides: surfaces, agents, the assistant, starting a dashboard, data display, voice, the benchmark |
 | `decisions/` | One record per lasting decision |
 | `scripts/` | Generators, gates, `brand.ts` and `verify.ts` (see `CONTRIBUTING.md`) |
-| `skills/zz-meridian/` | The agent skill (Claude Code, Codex) that builds dashboards on this template or brings it into yours |
-| `cli/` | The `zz-meridian` npm package: `create`, `adopt`, `update`, `brand` and `skill`, its build, its smoke test and the fixture app (`docs/distribution.md`) |
+| `skills/zz-meridian/` | The agent skill (Claude Code, Codex) that builds dashboards on this template or brings it into yours, to the standard in `references/standard.md`; how it is evaluated is `docs/skill-evals.md` |
+| `cli/` | The `zz-meridian` npm package: `create`, `adopt`, `update`, `brand` and `skill`, its build, its smoke test and the fixture apps (`docs/distribution.md`) |
 | `.github/workflows/release.yml` | The release, each check once: a timed default verify and the consumer path from the tarball (the release before updated; the last three weekly), then npm with provenance, the registry's bytes and provenance checked, then the tag (`.claude/commands/release.md`) |
 | `.github/workflows/weekly.yml` | Weekly, never at release: `verify --full --perf` (perf a report) and the consumer smoke's recovery and failure cases; nothing waits on it |
 | `Dockerfile`, `captain-definition` | The demo deployment: the template and the Atlas behind `DEMO_PASSWORD` (`proxy.ts`, `app/sign-in/README.md`), deployed to CapRover from this repository; never in the package |

@@ -6,8 +6,9 @@ the registry which versions exist, and works in a temporary folder). A plain
 `npx zz-meridian@latest update` then applies the safe changes and stages the rest. Do not copy files by hand to make up
 for either.
 
-When the project is already on the running version there is nothing to update: say so in the hand-over and stop
-there; the standard is not re-proven for a change that did not happen. After an update that changed files, run the
+When the project is already on the running version, `update` (and its dry run) prints `already at <version>; nothing
+to update` and exits 0: say so in the hand-over and stop there; the standard is not re-proven for a change that did
+not happen. After an update that changed files, run the
 loop in `standard.md` on what it changed, and close with `pnpm verify --full`.
 
 An update is tested from the last three releases. When the manifest's version is older than that (`npm view
@@ -29,8 +30,7 @@ recorded, what the running release has, what is on disk now), and acts on the re
   that the install rewrites. Everything else in `MERGE.md` is advice.
 
 A real update refuses, writing nothing, when the git tree is dirty (unless `--allow-dirty`), when another session or lock
-exists, when the manifest is missing or malformed, when the project is older than 0.3.0 or already on the running
-version, when a keep entry is invalid, when a path is unsafe, or when the recorded files do not match a rebuild of their
+exists, when the manifest is missing or malformed, when the project is older than 0.3.0 or newer than the running version, when a keep entry is invalid, when a path is unsafe, or when the recorded files do not match a rebuild of their
 own release (the message lists them). A dry-run prints a note instead of refusing for a dirty tree.
 
 ## The session

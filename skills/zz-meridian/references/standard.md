@@ -32,13 +32,15 @@ and `optional:docs/brief.md`, after any context compaction or at the start of a 
 
 It has one row per view, and a view is anything a person can reach: every rail route, each detail page in each state
 worth seeing (a normal record, a failed one, a missing one), every dialog, drawer and sheet, sign-in, not-found, and each
-MCP view under `optional:app/embed/`. Build the list from `app/`, `src/app.config.ts` and the running product, not from
-memory. A narrow request ("add a refunds page") still scores every view: the product meets the standard as a whole, and a
+MCP view under `optional:app/embed/`. A state of a view (empty, loading, error, long text) is scored under that view's
+States row; a different address (a detail record, a missing one) or a dialog is a row of its own. The shell (rail,
+command palette, appearance menu, phone drawer) is one row. Build the list from `app/`, `src/app.config.ts` and the
+running product, not from memory. A narrow request ("add a refunds page") still scores every view: the product meets the standard as a whole, and a
 defect you meet on another page is fixed too.
 
 ```md
 # Scoreboard · <Product> · round <n>
-Request: <the person's words, verbatim>
+Request: <what the person asked for, verbatim>
 Route: <adopt | create | update | brand> · Register: product UI · Defaults noticed: <none, or each one and what replaced it>
 
 ## Floors
@@ -71,7 +73,7 @@ Each floor is measured by a command, and its evidence is the line the command pr
 | In an existing product, what it did still works: every route at its URL, every action sending the request it sent, its own tests and scripts | the list from `existing-project.md` ("Before you change anything"), each item checked against the fake API's log and the project's own commands |
 
 `--full` checks what the project tells it about, so keep `scripts/verify.config.ts` true to the product as you change
-it: a `navigationChecks` entry for every rail route (a ready selector and one harmless probe), `detailRoutes` with ids
+it (its comments describe every field, and the template's own entries show the shape): a `navigationChecks` entry for every rail route (a ready selector and one harmless probe), `detailRoutes` with ids
 from your data for each state worth seeing, `smokeRoutes` among the rail routes, `budgets.htmlKb` naming only routes that
 exist, a `fakeApi` as soon as a page calls an API, and in an adopted project a `fakeApi` or `noLiveApi`. After the pages change, look at the sizes `pnpm verify`
 prints and record them with `node scripts/sizes.ts --write-baseline` once you have judged them. `--full` refuses, listing
@@ -104,7 +106,7 @@ measured value, a width and theme where you saw it, a file and line. "Looks clea
 | Copy | `voice.md`: sentence case, verbs on buttons, a unit and a period on every number; realistic data in the person's domain, never lorem ipsum or "Item 1" |
 | States | Empty (first run and filtered, each with its one action), loading (a skeleton shaped like the page), error (what failed, and Retry), long text and extreme values (a 60-character name, a zero, a figure in the billions) all designed, and each one seen: a filter that matches nothing, a missing id, sample rows with the long and extreme values so the audit sees them at every width, and the page's `loading.tsx` and `error.tsx` rendered: against the fake API made slow or failing, or, with none, by making the page's read wait or throw for one dev render and reverting it |
 | Agents | Only when the assistant or MCP views are on: the view shares a context that answers "why?" on its own (`agents.md`), and an agent's write goes through a Proposal with the Agent mark |
-| Originality | One idea the view is remembered by, named in the evidence. Meridian's own is the time cursor every chart shares; a product view earns Strong with one of its own that serves its question |
+| Originality | One idea the view is remembered by, named in the evidence. Meridian's own is the time cursor every chart shares; a product view earns Strong with one of its own that serves its question. It comes from how the asked-for content is shown, never from adding content nobody asked for |
 
 Consistency has no row: the gate fails any value that is not a token, so it is a floor.
 
@@ -129,8 +131,9 @@ Run rounds until the stop condition holds. Order matters here, because each step
    change it rather than repeat it.
 
 **The stop condition**: a round, run after your last change, in which `pnpm verify --full` ends with `the project meets
-the Meridian standard`, every view has been rendered and scored, nothing is Weak, and the round found nothing new. Then
-hand over (SKILL.md, step 7). If a floor cannot run here (no Chrome, no network, a missing credential only the person
+the Meridian standard`, every view has been rendered and scored, nothing is Weak, and the round found nothing new:
+no failure, no Weak and no default that the round before it had not already fixed. That round is the last one; it
+needs no round after it to confirm it. Then hand over (SKILL.md, step 7). If a floor cannot run here (no Chrome, no network, a missing credential only the person
 has), install or substitute what you can first; what is left is `not run` with its reason, and the hand-over says
 plainly that the standard is not yet proven and what would prove it.
 
