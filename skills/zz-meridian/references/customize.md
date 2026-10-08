@@ -18,9 +18,10 @@ sample, ZZ Meridian's own dashboard, lives in `optional:src/system/fixtures/`; y
   a client component never reads its own clock in render.
 - **Daily series** for anything a Metric tile or chart shows over time: the Meridian cursor reads one value per day.
 - **Freshness** from when data arrived (`DEMO_UPDATED_AT`), never from now.
-- **null for "not measured"**: the formatters in `src/lib/format.ts` render it as a dash. Add a formatter there when a
-  quantity needs one (weight, distance), never inline; a chart names its format by key, so a new quantity a chart
-  shows also gets a key in `NumberFormat`, `FORMATTERS` and `AXIS_FORMATTERS`. Money follows `app.currency`.
+- **null for "not measured"**: the formatters in `src/lib/format.ts` render it as a dash. A quantity Meridian has no
+  formatter for (weight, distance) gets one in a file of the product's own (`example:src/data/format.ts`), passed as a
+  tile's or table's `format`, never written inline; `src/lib/format.ts` is Meridian's, and an edit there becomes a
+  merge at the next update. Money follows `app.currency`.
 - **Helpers a server page calls** (summaries, derived sentences) go in `optional:src/data/` or `src/lib/`, never in a
   `'use client'` view file: a server component cannot call a function exported from a client module.
 - **Read on the server when you can**: a server component that awaits its data sends a page with the numbers in it.
@@ -123,7 +124,7 @@ never `src/lib/preferences.ts`, which reads the accent and theme defaults from t
 Logo: set `logo: '/logo.svg'` in `src/app.config.ts`, a root-relative local SVG served from `public/`. `AppMark` renders it
 at 20, 24, 28 and 32 pixels with an empty alt beside the app name, and with the app name as alt when given a `label`.
 Any other value renders the default mark.
-Theme default: `node scripts/brand.ts --theme dark|light` sets `theme` in `src/app.config.ts`; it applies before paint and
+Theme default: `npx zz-meridian@<the manifest's version> brand --theme dark|light` sets `theme` in `src/app.config.ts`; it applies before paint and
 in `Providers` until a person chooses another in Settings. With no `theme`, the system theme applies. Density: users pick it in the rail's appearance menu and the
 command palette; compact suits operators who scan many rows.
 

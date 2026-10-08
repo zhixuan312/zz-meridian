@@ -34,6 +34,12 @@ describe("the template's own rules", () => {
     expect(out).toMatch(/app\/\(dashboard\)\/rogue\/page\.tsx:\d+: connection\(\)/);
     expect(out).toMatch(/app\/\(dashboard\)\/rogue\/actions\.ts:\d+: revalidates with 'max' on a writer path/);
   }, 60_000);
+  it('allow one protagonist a page, in the template and in a product', () => {
+    const featured = "<FeaturedMetric kicker=\"A\" value={1} />";
+    put('src/views/two.tsx', `import { FeaturedMetric } from '@/components/patterns/featured-metric';\nexport const Two = () => (\n  <>\n    ${featured}\n    ${featured}\n  </>\n);\n`);
+    expect(check()).toMatch(/src\/views\/two\.tsx:5: a second FeaturedMetric \(the first is at line 4\)/);
+    fs.rmSync(path.join(dir, 'src/views/two.tsx'));
+  }, 60_000);
   it('stay out of a product, whose pages are its own', () => {
     rogue();
     expect(check()).toMatch(/reads src\/system\/fixtures directly/);

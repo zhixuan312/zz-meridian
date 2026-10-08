@@ -66,6 +66,7 @@ differ only in which folder ends up holding it.
 | They want **this** project changed in place ("restyle this", "change this product into our dashboard", "make our admin look professional"), and it is Next.js with the App Router | Adopt, here | `npx zz-meridian@latest adopt` (`references/existing-project.md`, Route A) |
 | They want this project changed, and it is another stack (Vite, CRA, Remix, Vue, a static page) | A new project next to it, ported from it | `create <sibling folder>` (`references/existing-project.md`, Routes A2, B, C) |
 | They want a **new** dashboard: in another folder, "based on" or "from" this folder, a schema, a CSV, a spec or nothing | Create, elsewhere; what they pointed at is input you read, never a folder you write | `npx zz-meridian@latest create <new folder>` |
+| They ask whether it meets the standard, or what is wrong with it, and to change nothing yet | Evaluate: the loop's steps 1, 3 and 4 only (`references/standard.md`), and a hand-over that is the scoreboard and what keeps it from the standard | none; nothing is written outside `out/` |
 
 Rules that settle the hard cases:
 
@@ -168,7 +169,7 @@ the hue; when it warns that the hue is near a status hue, step 4 says what to ru
 change the brand later, run `npx zz-meridian@<the manifest's version> brand` with the new flags; never `node scripts/brand.ts`, which the manifest does not record.
 
 Requirements: Node 22.18 or newer. A new project uses pnpm when it is installed, npm otherwise; an existing one keeps the
-package manager its lockfile names, and one with no lockfile gets pnpm when it is installed. The commands here say `pnpm`: in an npm project `pnpm verify` is `npm run verify`. The browser checks use Google Chrome
+package manager its lockfile names, and one with no lockfile gets npm, as `adopt` chooses. The commands here say `pnpm`: in an npm project `pnpm verify` is `npm run verify`. The browser checks use Google Chrome
 (`CHROME=/path/to/chrome` if it is not where the platform keeps it; a Chromium build works too). When one is missing,
 install it or point at what is there; in a sandbox without network or a browser, ask for the access these steps need
 (the package install, starting Chrome and a local server for verify). What still cannot run here does not stop the

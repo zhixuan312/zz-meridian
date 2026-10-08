@@ -60,7 +60,7 @@ export const requestColumns: Column<RequestRow>[] = [
     key: 'latency', header: 'Latency', numeric: true, mobile: 'fact', sortValue: (r) => r.latency,
     cell: (r) => <span className={r.latency > 1000 ? 'font-medium text-warning-ink' : undefined}>{formatDuration(r.latency)}</span>,
   },
-  { key: 'customer', header: 'Customer', muted: true, mobile: 'fact', hideBelow: 'lg', cell: (r) => <span className="whitespace-nowrap">{r.customer}</span>, sortValue: (r) => r.customer },
+  { key: 'customer', header: 'Customer', muted: true, mobile: 'fact', hideBelow: 'lg', cell: (r) => <span className="block max-w-48 truncate" title={r.customer}>{r.customer}</span>, sortValue: (r) => r.customer },
   { key: 'region', header: 'Region', muted: true, hideBelow: 'lg', cell: (r) => <span className="font-mono text-xs whitespace-nowrap">{r.region}</span> },
   { key: 'size', header: 'Size', numeric: true, muted: true, hideBelow: 'xl', cell: (r) => formatBytes(r.bytes), sortValue: (r) => r.bytes },
   {

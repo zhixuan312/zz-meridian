@@ -95,8 +95,10 @@ const PHONE_CELLS = '@max-[640px]:[&_td:not([data-mobile=hidden])]:!h-auto @max-
 const PHONE_ROLES = [
   '@max-[640px]:[&_td[data-mobile=check]]:col-span-1 @max-[640px]:[&_td[data-mobile=check]]:row-start-1',
   '@max-[640px]:[&_td[data-mobile=title]]:row-start-1 @max-[640px]:[&_td[data-mobile=title]]:font-medium',
-  '@max-[640px]:[&_td[data-mobile=status]]:row-start-1 @max-[640px]:[&_td[data-mobile=status]]:justify-self-end',
-  '@max-[640px]:[&_td[data-mobile=fact]]:row-start-2 @max-[640px]:[&_td[data-mobile=fact]]:col-span-2 @max-[640px]:[&_td[data-mobile=fact]]:text-xs @max-[640px]:[&_td[data-mobile=fact]]:text-ink-3',
+  // Two of the six tracks: a badge is wider than one at 390px, and in one it ran left over a long title.
+  '@max-[640px]:[&_td[data-mobile=status]]:row-start-1 @max-[640px]:[&_td[data-mobile=status]]:col-span-2 @max-[640px]:[&_td[data-mobile=status]]:justify-self-end',
+  // A fact is a third of the card: a long one ends in an ellipsis rather than running over the fact beside it.
+  '@max-[640px]:[&_td[data-mobile=fact]]:row-start-2 @max-[640px]:[&_td[data-mobile=fact]]:col-span-2 @max-[640px]:[&_td[data-mobile=fact]]:truncate @max-[640px]:[&_td[data-mobile=fact]]:text-xs @max-[640px]:[&_td[data-mobile=fact]]:text-ink-3',
   '@max-[640px]:[&_td[data-mobile=hidden]]:hidden',
   // On the accent wash of a selected row, a fact steps up to ink-2: ink-3 on it falls under 4.5:1 in light.
   '@max-[640px]:[&_tr[aria-selected]_td[data-mobile=fact]]:text-ink-2',

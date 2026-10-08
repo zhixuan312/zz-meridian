@@ -62,8 +62,16 @@ Migrate in place, page by page, keeping their data layer.
    is not copied: pass their own alerts (an empty list until they have some) and their own clock. Give each `nav`
    entry in `src/app.config.ts` its icon and group. The Rail and the palette take `nav` as a prop, rendered from a
    client module (`src/views/console-chrome.tsx`), since each destination carries its icon component; if what a person
-   may see depends on their role or scope, filter `nav` there from their session, and pass `workspace` and `scopes`
-   to the Rail for a scope switcher.
+   may see depends on their role or scope, filter `nav` there from their session (that file is Meridian's, so list it
+   in `optional:.meridian/keep.json` with the reason, and an update leaves it as you made it), and pass `workspace` and
+   `scopes` to the Rail for a scope switcher.
+   **Turn on Cache Components.** Meridian's pages prerender a shell and stream what each request reads, and the route
+   policy `pnpm verify` runs fails a page that is neither static nor partial. Set `cacheComponents: true` in their
+   `next.config`, and put each per-request read (their API, cookies, headers) behind a `<Suspense>` boundary, as the
+   template's pages do. A detail route whose ids come from their API at request time has no `generateStaticParams` to
+   list them, and the shell reads the address: wrap the shell in the layout in `<Suspense>` too, or the build stops
+   with "usePathname outside Suspense". A route that must stay fully per-request goes in `requestDependentRoutes` in
+   `scripts/verify.config.ts`, with its reason.
    **Catch the shell's own data in the layout.** A page's error boundary only catches what the page throws: if the
    layout awaits something the shell needs — the alert list, the signed-in person — one failed query takes the whole
    layout down, and the framework's bare error page shows instead of the designed one inside the shell. Read those

@@ -22,6 +22,7 @@
 import { createHash } from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
+import { importTarget, projectAliases } from './lib/aliases.ts';
 import { checkBrief, scanReferences } from './lib/context-check.ts';
 import { APP_DIR } from './lib/routes.ts';
 import { keepProblems, unresolved, parseJournal, parseKeep, parseResolutions, verifiedRetirements, type Hash, type Retirement } from './lib/update-session.ts';
@@ -30,6 +31,8 @@ import { app } from '../src/app.config.ts';
 import { logoSource } from '../src/lib/logo.ts';
 
 const ROOT = path.resolve(import.meta.dirname, '..');
+/** The project's import aliases, from its tsconfig: `@/` is `src/` in the template and the team's root in an adopted project. */
+const ALIASES = projectAliases(ROOT);
 const read = (p: string) => fs.readFileSync(path.join(ROOT, p), 'utf8');
 const problems: string[] = [];
 
@@ -247,6 +250,16 @@ if (fs.existsSync(path.join(ROOT, COLLECTIONS))) {
   }
 }
 
+// ── One protagonist ───────────────────────────────────────────────────────────────────────────────────
+// A page has one figure the eye lands on first. Two featured metrics on one page split it, and both read at the same
+// size, so a person judging the render may not name it as the defect it is (a planted one went unscored in a skill
+// evaluation, docs/skill-evals.md): settled rules are checked here, not left to the eye. Previews show every variant.
+for (const f of [APP_DIR, 'src', 'components'].flatMap((d) => walk(d, /\.tsx$/)).filter((x) => !/(^|\/)preview\.tsx$/.test(x) && !x.startsWith(`${APP_DIR}/system/`))) {
+  const src = read(f);
+  const at = [...src.matchAll(/<FeaturedMetric\b/g)].map((m) => src.slice(0, m.index).split('\n').length);
+  if (at.length > 1) problems.push(`${f}:${at[1]}: a second FeaturedMetric (the first is at line ${at[0]}); a page has one protagonist, so make the others Metric tiles or Cards`);
+}
+
 // ── The update session, the keep register and the logo ────────────────────────────────────────────────
 // A session under .meridian/update/ must be resolved before the gate passes. With one ready, its candidate manifest
 // stands in for the original: the files it will own are what keep, retirements and the dormant-code sweep read.
@@ -324,7 +337,7 @@ if (!fs.existsSync(manifestFile)) {
     const src = blanked(f);
     for (const m of src.matchAll(/(?:\bfrom|\bimport\s*\(?)\s*['"]([^'"]+)['"]/g)) {
       const spec = m[1];
-      const target = spec.startsWith('@/') ? path.posix.join('src', spec.slice(2)) : spec.startsWith('.') ? path.posix.join(path.posix.dirname(f), spec) : '';
+      const target = importTarget(f, spec, ALIASES) ?? '';
       if (target === FIXTURES || target.startsWith(`${FIXTURES}/`)) problems.push(`${f}:${lineOf(src, m.index + m[0].lastIndexOf(spec))}: reads src/system/fixtures directly; go through src/data`);
     }
   }
@@ -363,7 +376,7 @@ const meridians = new Set(Object.keys(effective?.files ?? {}));
 // A root proxy.ts is the product's own code too: Next runs it before every request.
 const kept = [...['src', 'app', 'scripts'].flatMap((d) => walk(d, /\.tsx?$/)), ...(fs.existsSync(path.join(ROOT, 'proxy.ts')) ? ['proxy.ts'] : [])].filter((f) => !/(^|\/)preview\.tsx$/.test(f) && !f.startsWith('app/system/') && !atlasOnly.includes(f));
 const resolveSpec = (from: string, spec: string) => {
-  const base = spec.startsWith('@/') ? path.join('src', spec.slice(2)) : spec.startsWith('.') ? path.join(path.dirname(from), spec) : null;
+  const base = importTarget(from, spec, ALIASES);
   if (!base) return null;
   return [base, `${base}.ts`, `${base}.tsx`, `${base}/index.ts`, `${base}/index.tsx`].find((c) => /\.tsx?$/.test(c) && fs.existsSync(path.join(ROOT, c)) && fs.statSync(path.join(ROOT, c)).isFile()) ?? null;
 };

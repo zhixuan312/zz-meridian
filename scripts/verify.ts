@@ -38,7 +38,7 @@ import path from 'node:path';
 
 import { bin } from './lib/bin.ts';
 import type { BudgetsConfig, NavigationCheck } from './lib/budgets.ts';
-import { finalOutcome, resolveCoverage, selectSmokeRoutes, suiteOutcome } from './lib/coverage.ts';
+import { finalOutcome, resolveCoverage, selectSmokeRoutes, suiteCoverage, suiteOutcome } from './lib/coverage.ts';
 import { APP_DIR, railRoutes } from './lib/routes.ts';
 import { sampleSurfaces } from './lib/sample.ts';
 import verifyConfig from './verify.config.ts';
@@ -83,6 +83,7 @@ const hasLiveSample = sampleSurfaces(ROOT, APP_DIR).members;
 const own = config.browserChecks ?? [];
 const SUITES = ['audit', 'presses', 'keyboard', ...(hasAssistant ? ['assistant'] : []), ...(hasLiveSample ? ['live'] : []), 'vitals', ...(own.length ? ['browserChecks'] : []), ...(perf ? ['perf'] : [])];
 const ranSuites = new Set<string>();
+const failedSuites = new Set<string>();
 
 // ---- the report ----
 
@@ -99,6 +100,9 @@ const beneath = (text: string | string[]) => (Array.isArray(text) ? text : text.
 const announce = (name: string) => console.error(`… ${name}`);
 
 const children: ChildProcess[] = [];
+// Declared before anything can call finish(): an early exit (a config naming a route that is gone) stops them too.
+/** The suites running now: each ends its own Chrome on SIGTERM (scripts/lib/chrome.ts), so it is asked, not killed. */
+const suites = new Set<ChildProcess>();
 let gates = 0;
 let builds = 0;
 let current = 'the start';
@@ -136,11 +140,11 @@ function traceHeader(code: number): string[] {
 
 /** The coverage line: the last line before the outcome, and the one line a caller reads to know what the depth was. */
 function coverageLine(): string {
-  const notRun = SUITES.filter((s) => !ranSuites.has(s));
+  const { notRun, failed } = suiteCoverage(SUITES, ranSuites, failedSuites);
   if (htmlMissing) notRun.unshift('html');
   const n = selected.length;
   const where = browser.ran ? 'ran' : `not run (${browser.reason ?? `stopped at ${current}`})`;
-  return `coverage: ${depth}; browser ${where}; ${n} routes; data configured ${covered.data}/${n}; interaction configured ${covered.interaction}/${n}; not run: ${notRun.length ? notRun.join(', ') : 'none'}`;
+  return `coverage: ${depth}; browser ${where}; ${n} routes; data configured ${covered.data}/${n}; interaction configured ${covered.interaction}/${n}; not run: ${notRun.length ? notRun.join(', ') : 'none'}${failed.length ? `; failed: ${failed.join(', ')}` : ''}`;
 }
 
 function finish(code: number, outcome: string): never {
@@ -289,8 +293,6 @@ function step(name: string, cmd: string, args: string[], env = clean, last = fal
 }
 
 function stop(c: ChildProcess) { try { process.kill(-c.pid!, 'SIGTERM'); } catch { /* already gone */ } }
-/** The suites running now: each ends its own Chrome on SIGTERM (scripts/lib/chrome.ts), so it is asked, not killed. */
-const suites = new Set<ChildProcess>();
 function stopAll() {
   for (const c of children) stop(c);
   for (const c of suites) c.kill('SIGTERM');
@@ -333,6 +335,7 @@ function summaryOf<T>(out: string, tag: string): T | null {
 function reportSuite(name: string, label: string, r: { status: number | null; out: string; took: number }) {
   const outcome = suiteOutcome(r.status);
   if (outcome === 'ok') ranSuites.add(name);
+  if (outcome === 'FAIL') failedSuites.add(name);
   phase(outcome, label, r.took);
   const out = r.out.trim().split('\n');
   if (outcome === 'FAIL') beneath(out.slice(-60));

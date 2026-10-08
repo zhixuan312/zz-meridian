@@ -3,7 +3,7 @@
 `pnpm verify` has three modes. Each ends with one coverage line before its outcome, which says what ran and what did not:
 
 ```text
-coverage: <default|full|perf|full+perf>; browser <ran|not run (<reason>)>; <n> routes; data configured <a>/<n>; interaction configured <b>/<n>; not run: <suites>
+coverage: <default|full|perf|full+perf>; browser <ran|not run (<reason>)>; <n> routes; data configured <a>/<n>; interaction configured <b>/<n>; not run: <suites>[; failed: <suites>]
 ```
 
 - **`pnpm verify`** is bounded: steps 1 and 2 below once each, the route policy, the first-load and HTML size checks, and

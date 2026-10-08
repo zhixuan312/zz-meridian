@@ -11,6 +11,14 @@ export function suiteOutcome(status: number | null): 'ok' | 'not run' | 'FAIL' {
   return status === 0 ? 'ok' : status === NOT_RUN_EXIT ? 'not run' : 'FAIL';
 }
 
+/**
+ * The suites the coverage line names: those that did not run, and apart from them those that ran and failed. A suite
+ * that failed ran; listing it as not run told the reader it had been skipped.
+ */
+export function suiteCoverage(suites: string[], passed: ReadonlySet<string>, failed: ReadonlySet<string>): { notRun: string[]; failed: string[] } {
+  return { notRun: suites.filter((s) => !passed.has(s) && !failed.has(s)), failed: suites.filter((s) => failed.has(s)) };
+}
+
 /** The last line of a passing verify: the full standard is met only when every suite of the depth ran. */
 export function finalOutcome(full: boolean, notRun: string[]): string {
   if (!full) return 'every check that ran passed; pnpm verify --full runs the rest';

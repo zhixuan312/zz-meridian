@@ -27,16 +27,17 @@ figures. After the first render, name any other default you notice yourself fall
 
 Keep it as a file, `out/standard/scoreboard.md` (`out/` is git-ignored in every Meridian project, so it is never
 committed), beside `out/standard/log.md` (each round: what ran, what you changed, the commit) and
-`out/standard/questions.md` (the judgment calls, below). Write them as you go, and re-read them, with this file, SKILL.md
-and `optional:docs/brief.md`, after any context compaction or at the start of a new session: they say where the work stands.
+`out/standard/questions.md` (the judgment calls, below). Write them as you go, and re-read them, with this file,
+SKILL.md and `optional:docs/brief.md`, after any context compaction or at the start of a new session: they say where the
+work stands.
 
 It has one row per view, and a view is anything a person can reach: every rail route, each detail page in each state
-worth seeing (a normal record, a failed one, a missing one), every dialog, drawer and sheet, sign-in, not-found, and each
-MCP view under `optional:app/embed/`. A state of a view (empty, loading, error, long text) is scored under that view's
-States row; a different address (a detail record, a missing one) or a dialog is a row of its own. The shell (rail,
-command palette, appearance menu, phone drawer) is one row. Build the list from `app/`, `src/app.config.ts` and the
-running product, not from memory. A narrow request ("add a refunds page") still scores every view: the product meets the standard as a whole, and a
-defect you meet on another page is fixed too.
+worth seeing (a normal record, a failed one, a missing one), every dialog, drawer and sheet, sign-in, not-found, and
+each MCP view under `optional:app/embed/`. A state of a view (empty, loading, error, long text) is scored under that
+view's States row; a different address (a detail record, a missing one) or a dialog is a row of its own. The shell
+(rail, command palette, appearance menu, phone drawer) is one row. Build the list from `app/`, `src/app.config.ts` and
+the running product, not from memory. A narrow request ("add a refunds page") still scores every view: the product meets
+the standard as a whole, and a defect you meet on another page is fixed too.
 
 ```md
 # Scoreboard · <Product> · round <n>
@@ -72,31 +73,36 @@ Each floor is measured by a command, and its evidence is the line the command pr
 | All of the above together | `pnpm verify --full` ending with the line `the project meets the Meridian standard` |
 | In an existing product, what it did still works: every route at its URL, every action sending the request it sent, its own tests and scripts | the list from `existing-project.md` ("Before you change anything"), each item checked against the fake API's log and the project's own commands |
 
-`--full` checks what the project tells it about, so keep `scripts/verify.config.ts` true to the product as you change
-it (its comments describe every field, and the template's own entries show the shape): a `navigationChecks` entry for every rail route (a ready selector and one harmless probe), `detailRoutes` with ids
-from your data for each state worth seeing, `smokeRoutes` among the rail routes, `budgets.htmlKb` naming only routes that
-exist, a `fakeApi` as soon as a page calls an API, and in an adopted project a `fakeApi` or `noLiveApi`. After the pages change, look at the sizes `pnpm verify`
-prints and record them with `node scripts/sizes.ts --write-baseline` once you have judged them. `--full` refuses, listing
-every gap, until these hold.
+`--full` checks what the project tells it about, so keep `scripts/verify.config.ts` true to the product as you change it
+(its comments describe every field, and the template's own entries show the shape): a `navigationChecks` entry for every
+rail route (a ready selector and one harmless probe that works at 390px too, where a table is a card list with no
+column headers to sort: a filter, a link or a dialog), `detailRoutes` with ids from your data for each state worth
+seeing, `smokeRoutes` among the rail routes, `budgets.htmlKb` naming only routes that exist, a `fakeApi` as soon as a
+page calls an API, and in an adopted project a `fakeApi` or `noLiveApi`. After the pages change, look at the sizes `pnpm
+verify` prints and record them with `node scripts/sizes.ts --write-baseline` once you have judged them. `--full`
+refuses, listing every gap, until these hold.
 
 ### The craft: judged on the renders, with evidence
 
 Look at every view rendered, not at the code. With `pnpm dev --port 3100` running (the port the screenshot and audit
 scripts read; stop it again before `pnpm verify`, which builds in the same folder), run
 `node scripts/shot.ts <routes> --width 1440,390 --theme dark,light --full`, plus 768 and 2560 where the layout depends on
-width (tables, grids, side panels), and open every PNG in `out/shots/`. `node scripts/audit.ts --routes <routes>` against
+width (tables, grids, side panels), and open every PNG in `out/shots/`. A dialog, sheet, menu or popover is shot open:
+`--press "<the name of the control that opens it>"`, repeated for a menu item inside it. `node scripts/audit.ts --routes <routes>` against
 the same server ends with "Design metrics at 1440" for each route: the type sizes and weights in use, the radii, and the
 hierarchy ratio (the largest text over the median).
 
 Score each criterion **Strong** (it would stand beside the category's best; say what makes it so), **Good** (no defect,
 and what is left is taste), or **Weak** (a defect a person would notice or hit; it gets fixed). A view's verdict is its
-lowest criterion's, and a criterion that does not apply (Agents with the assistant off) is `n/a` with the reason. Evidence is specific: a
-measured value, a width and theme where you saw it, a file and line. "Looks clean" is not evidence.
+lowest criterion's, and a criterion that does not apply (Agents with the assistant off) is `n/a` with the reason. A
+criterion not yet judged is not a pass: a view with one is unscored, and the round is not finished.
+Evidence is specific: a measured value, a width and theme where you saw it, a file and line. "Looks clean" is not
+evidence.
 
 | Criterion | What Strong looks like here |
 |---|---|
 | Fit | The page answers its question from the brief with the person's own data shape, and does what the request asked of it. What they asked for is there; what they did not ask for is gone |
-| Hierarchy | One protagonist the eye lands on first (a featured metric, the table, the form); on analytical pages a hierarchy ratio near the template's 4.6× to 6.5×; everything else steps back |
+| Hierarchy | One protagonist the eye lands on first (a featured metric, the table, the form; `node scripts/check.ts` fails a second featured metric); on analytical pages a hierarchy ratio near the template's 4.6× to 6.5×, while a detail page or a form is judged by its protagonist alone; everything else steps back |
 | Typography | Sizes from the scale, five to eight per page; three weights; figures with their unit and fraction stepped down; nothing set smaller to make it fit |
 | Whitespace | The 4px scale; cards in a row share a height; gaps even between cards and inside them; one left edge down the page |
 | Colour | Every colour has a job: accent on actions and selection only, the status trio on status only, charts from the palette; nothing coloured for decoration |
@@ -131,11 +137,11 @@ Run rounds until the stop condition holds. Order matters here, because each step
    change it rather than repeat it.
 
 **The stop condition**: a round, run after your last change, in which `pnpm verify --full` ends with `the project meets
-the Meridian standard`, every view has been rendered and scored, nothing is Weak, and the round found nothing new:
-no failure, no Weak and no default that the round before it had not already fixed. That round is the last one; it
-needs no round after it to confirm it. Then hand over (SKILL.md, step 7). If a floor cannot run here (no Chrome, no network, a missing credential only the person
-has), install or substitute what you can first; what is left is `not run` with its reason, and the hand-over says
-plainly that the standard is not yet proven and what would prove it.
+the Meridian standard`, every view has been rendered and scored, nothing is Weak, and the round found nothing new: no
+failure, no Weak and no default that the round before it had not already fixed. That round is the last one; it needs no
+round after it to confirm it. Then hand over (SKILL.md, step 7). If a floor cannot run here (no Chrome, no network, a
+missing credential only the person has), install or substitute what you can first; what is left is `not run` with its
+reason, and the hand-over says plainly that the standard is not yet proven and what would prove it.
 
 ## Deciding without stopping
 
@@ -149,5 +155,5 @@ reach, a cost or security trade-off. Never stop for one. Write it in `out/standa
 recommendation and what waits on it; when it is local and cheap to reverse, proceed on your recommendation in its own
 commit and list it in the hand-over; otherwise leave only what depends on it, and carry on with the rest.
 
-Some actions reach past their machine, and those always wait for the person's yes: pushing, a release, a deploy, writing to
-production data, and filing the feedback issue (SKILL.md, step 8), because each is public or permanent.
+Some actions reach past their machine, and those always wait for the person's yes: pushing, a release, a deploy, writing
+to production data, and filing the feedback issue (SKILL.md, step 8), because each is public or permanent.

@@ -2,7 +2,7 @@
 import { spawnSync } from 'node:child_process';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { finalOutcome, NOT_RUN_EXIT, suiteOutcome } from '../scripts/lib/coverage.ts';
+import { finalOutcome, NOT_RUN_EXIT, suiteCoverage, suiteOutcome } from '../scripts/lib/coverage.ts';
 
 const ROOT = path.resolve(import.meta.dirname, '..');
 
@@ -22,5 +22,15 @@ describe('a suite that ran nothing', () => {
     expect(finalOutcome(true, [])).toBe('the project meets the Meridian standard');
     expect(finalOutcome(true, ['live'])).toBe('every check that ran passed; not run: live');
     expect(finalOutcome(false, ['audit'])).toBe('every check that ran passed; pnpm verify --full runs the rest');
+  });
+});
+
+describe('the suites the coverage line names', () => {
+  it('lists a suite that failed as failed, not as not run', () => {
+    const suites = ['audit', 'presses', 'keyboard', 'live', 'vitals'];
+    expect(suiteCoverage(suites, new Set(['presses', 'keyboard', 'vitals']), new Set(['audit']))).toEqual({ notRun: ['live'], failed: ['audit'] });
+  });
+  it('counts a suite that passed one run and failed another as failed only', () => {
+    expect(suiteCoverage(['assistant'], new Set(['assistant']), new Set(['assistant']))).toEqual({ notRun: [], failed: ['assistant'] });
   });
 });
