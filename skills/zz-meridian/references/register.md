@@ -16,8 +16,8 @@ kickers and identifiers, one protagonist per page, the shared time cursor.
 Defaults that make a page read as generated rather than designed, and which you do not add:
 cream or off-white backgrounds, italic accent words in headlines, numbered 01/02/03 section labels, pill-shaped buttons,
 gradient text, a row of equal cards standing in for a protagonist, emoji or decorative illustration in place of data,
-blur or glass over figures. After the first render, name any other default you notice yourself falling back on, add it to the scoreboard's
-"Defaults noticed" line, and revise it out.
+blur or glass over figures. After the first render, name any other default you notice yourself falling back on, add it
+to the scoreboard's "Defaults noticed" line, and revise it out.
 
 ## Look-dependent values
 

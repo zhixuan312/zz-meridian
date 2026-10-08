@@ -9,7 +9,9 @@ for either.
 When the project is already on the running version, `update` (and its dry run) prints `already at <version>; nothing
 to update` and exits 0: say so in the hand-over and stop there; the standard is not re-proven for a change that did
 not happen. After an update that changed files, run the
-loop in `standard.md` on what it changed, and close with `pnpm verify --full`.
+loop in `standard.md` on what it changed, and close with `pnpm verify --full`. A release can make a suite look further
+than the last one did (the browser checks now look inside open shadow roots), so a finding that is new after an update may be
+a page that was never measured before; `validation.md` says what each line means.
 
 An update is tested from the last three releases. When the manifest's version is older than that (`npm view
 zz-meridian versions` lists them), update in steps: first with the release three after it,

@@ -33,6 +33,8 @@ The same bar, held for the second operator. An agent judges a view by what it is
 
 With no assistant configured, or switched off, and outside any host, no agent control appears: on a build with no `ASSISTANT_*` variables the audit found 0 issues on 22 routes, 327 controls and 56 links pressed with 0 issues, the keyboard walk 0, and none of 8 pages and views showed a launcher, a panel or an Ask.
 
+Those figures were measured before the suites looked inside open shadow roots. A product that uses web components is now measured there too, and a custom element the audit cannot look inside is reported as `unmeasured:` rather than passed (`skills/zz-meridian/references/validation.md`).
+
 ## What changed because of the benchmark
 
 - **The register** (decision 0002). The first render, a neutral light canvas with 28px titles and four equal tiles, was rejected as dated. Meridian adopted that register: dark first, a lit ground, a dramatic type scale, one featured card.

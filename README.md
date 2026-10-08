@@ -135,6 +135,7 @@ pnpm dev                 # the template at /, the Design Atlas at /system
 pnpm gate                # tokens fresh, registry fresh, specs consistent, contrast in every theme and accent, types, tests
 pnpm verify              # the gate once, one production build, the size checks and a smoke of up to three routes
 pnpm verify --full       # every route, every control and link, the keyboard walk, the assistant and the live data
+                         # (the browser suites look inside open shadow roots; validation.md says what each line means)
 pnpm brand --name "Acme" --hue 25 --chroma 0.16   # rename and rebrand in place
 ```
 

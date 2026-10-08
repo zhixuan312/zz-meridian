@@ -38,9 +38,12 @@ Steps in order:
    exist and print `n/a` with the reason once the product has replaced them.
 4. **The built app, served**, and the **browser audit** of every static route under `app/` and the `detailRoutes` in
    `scripts/verify.config.ts` (embeds under `/embed` on a simulated host ground) at 2560, 1440, 1024, 768 and 390px in
-   both themes.
+   both themes. It measures inside open shadow roots as well as the light DOM, so a web component's text, names, targets,
+   contrast and focus rings count; a custom element it cannot look inside is `unmeasured:` (see "Lines that are not
+   about the page" below).
 5. **Every control pressed, every link followed** (`scripts/interactions.ts`) on the built app: mouse at 1440px, taps at
-   390px. A button that changes nothing, a control something else covers, and a link that answers 4xx all fail.
+   390px. A button that changes nothing, a control something else covers, and a link that answers 4xx all fail. A control
+   inside an open shadow root is pressed too, and named with its host: `Save (in x-card)`.
    **This presses Approve, Revoke and Delete too.** Pages that call a live API must be built against a fake one
    (`fakeApi` in `scripts/verify.config.ts`; see `existing-project.md`, step 5), or verify changes real data.
    The same hazard through another door: pages that read a database directly. verify reads `DATABASE_URL` — and any
@@ -48,8 +51,11 @@ Steps in order:
    resolves to a host that is not this machine. Point it at a local copy for the run, and restore the data afterwards:
    the walk-through flags rows and a press can delete.
 6. **The whole keyboard path** (`scripts/keyboard.ts`), beside the audit and the presses: Tab through each page until
-   focus comes back round. The first stop in the shell is "Skip to content", every stop shows a focus ring and is not
-   hidden under something such as the sticky top bar, and every visible control is reached. With them run the
+   focus comes back round, then Shift+Tab back through the stops. The first stop in the shell is "Skip to content", every
+   stop shows a focus ring and is not hidden under something such as the sticky top bar, every visible control is reached,
+   and the way back visits the stops in the reverse order. A focus ring is a change: the control's outline, shadow or
+   border (or the frame around it, or any ancestor up to its host inside a shadow root) differs when it has focus. A ring
+   that is always there does not count. With them run the
    product's own browser checks (`browserChecks` in `scripts/verify.config.ts`), each given `--base` and the served
    app's address.
 7. **Live data** (`scripts/live.ts`), alone after the presses, which change members: two tabs, a quiet or restarted
@@ -86,10 +92,37 @@ and supply-chain check before a script runs; that is pnpm, not an install, and n
 | `unnamed: button…` | An icon-only control | `aria-label` on it (Icon button requires one) |
 | `scrollers: …` | A card scrolls on its own | Page the list (`DataTable` pages at 20) or cap it ("top 5"); only the page scrolls |
 | `contrast: 3.1:1 … "text"` | Text below 4.5:1 | Use `ink`, `ink-2` or `ink-3` on surfaces; status text uses `*-ink`, never the fill colour |
-| `no focus ring: …` | A control with `outline-none` and no ring | Remove `outline-none`, or add `focus-visible:outline-2 focus-visible:outline-accent` |
+| `no focus ring: …` | A control with `outline-none` and no ring, or one whose outline, shadow or border is the same with and without focus | Remove `outline-none`, or add `focus-visible:outline-2 focus-visible:outline-accent`. A ring painted permanently is not a focus ring; a specimen that depicts the focus state is drawn inert (`State` with `still`) |
+| `unmeasured: x-card (no open shadow root)` | A custom element shows a box but exposes no open root and no content in the page, so nothing inside it was measured | Attach its root open (`attachShadow({ mode: 'open' })`), or render its content as light DOM in a slot; the audit fails until it can look |
+| `unmeasured: x-card (not defined)` | A custom element was still not registered after the settle wait | Register it (`customElements.define`) before the page settles, or remove the tag from the page |
 | `"Export" does nothing when pressed` | A control with no action, or one that only works on hover | Wire it, or remove it; an info button uses `Tooltip toggle` so a tap opens it |
 | `table … > its frame` | A table wider than its card, its last columns clipped | `hideBelow` one more column, or `truncate` the lead column. When the lead (`grow`) column holds a long name and another column is wide too, hiding columns may not help: move `grow` to the shorter text column |
 | `exception:` / `console.error:` | A runtime error or a hydration mismatch | Hydration: no `Date.now()`, `Math.random()` or locale-dependent formatting in render; use the demo clock and `src/lib/format*` |
+
+## Keyboard walk failures
+
+| Message | Cause | Fix |
+|---|---|---|
+| `no focus ring: …` | Focus changed nothing the walk can see | As in the audit table above |
+| `hidden under …: …` | A focused control sits under another element, such as the sticky top bar | Give the scroll container a `scroll-padding` for the bar, or lift the control above it |
+| `never reached: Run` | A visible control no Tab press focuses | Make it focusable, or take a negative `tabindex` off it |
+| `never reached: Run (Tab skips it; only Shift+Tab reaches it)` | Tab never lands on it, but Shift+Tab does: the order differs by direction, usually a `tabindex` above 0 | Take the positive `tabindex` off and let the order follow the document |
+| `reverse order differs: Shift+Tab visits …, Tab visited … (reversed)` | The stops are not the same list in both directions | Look for a focus trap, a script that moves focus, or a positive `tabindex` |
+| `could not be found again: …` | A control was listed and then left the page | It is rendering unstably; make it stay put or stop listing it |
+
+## Lines that are not about the page
+
+Two lines say something about what the suites could see, not about a defect in a page's own styles.
+
+- **`unmeasured: <element> (no open shadow root|not defined)`** is the audit saying it did not measure that element, and
+  it fails like any other finding so that a custom element is never passed unseen. The fix is in the element, as in the
+  audit table above; the audit does not skip it and a check is never loosened to let it by. A closed shadow root cannot
+  be entered by any script, so a component that must be checked ships with its root open.
+- **`note: <selector> matches <n> elements; the first visible one was used`** comes from a `navigationChecks` entry
+  (`readySelector`, `controlSelector` or `resultSelector`) that matches more than one element. It is printed once per
+  selector and is information, never a failure: the first visible match was pressed, as before. If that is not the
+  control you meant, write a more specific selector. A descendant combinator does not cross a shadow boundary, so name an
+  element inside a root with a selector written for that root.
 
 ## After it passes
 

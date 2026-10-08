@@ -12,6 +12,7 @@ Every release of ZZ Meridian, newest first. Versions follow semver: a removed or
 - **The presses and the keyboard walk reach controls inside open shadow roots** and name them with their host (`Save (in x-card)`). The walk also presses Shift+Tab back through the stops and reports a reverse order that differs, or a control only Shift+Tab reaches.
 - **A project's navigation selectors resolve inside open shadow roots.** `navigationChecks` ready, control and result selectors match elements inside open roots (a descendant combinator still does not cross a boundary), and a control selector that matches several elements prints a one-time `note:` naming the count; the first visible match is pressed, as before.
 - **`State` in the Atlas takes `still`.** A specimen that depicts a state (the Focus specimens of Button, Checkbox, IconButton, Input, Switch and AskAbout) is drawn inert, so it is no longer an extra tab stop that never shows focus.
+- **The browser checks are documented for web components.** `validation.md` explains `unmeasured:` (a custom element the audit cannot look inside: give it an open shadow root or light-DOM content, or define it) and `note:` (a `navigationChecks` selector that matched several elements: information, never a failure), and lists the keyboard walk's failures, including `reverse order differs` and `never reached … (Tab skips it; only Shift+Tab reaches it)`.
 
 ### Changed
 

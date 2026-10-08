@@ -12,9 +12,8 @@ the Apple Design Awards' criteria (interaction, visuals, inclusivity, delight), 
 its category, side by side. In this register spectacle that slows a repeated task is a defect: a figure that animates
 in on every visit, a hero banner above the data, a transition someone waits through.
 
-When a request asks for a marketing or launch
-page beside the console, that page answers to Awwwards, FWA and CSSDA instead (design, usability, creativity, content),
-built from the same tokens.
+When a request asks for a marketing or launch page beside the console, that page answers to Awwwards, FWA and CSSDA
+instead (design, usability, creativity, content), built from the same tokens.
 
 The register is the look a product answers to. It is `optional:docs/register.md` when present, otherwise `register.md`
 (Meridian's own). It sets theme default, signature elements, anti-defaults, brand taste and look-dependent values in
@@ -63,9 +62,9 @@ Each floor is measured by a command, and its evidence is the line the command pr
 | Gate: tokens fresh, specifications complete, no literal value, contrast in every theme and accent, lint, types, tests | `pnpm gate` (inside every `pnpm verify`) |
 | The numbers the pages show are the data's | `example:tests/data.test.ts` asserting the counts and totals the pages show (SKILL.md, step 5) |
 | Build, route policy, first-load and HTML sizes | `pnpm verify` |
-| Every view at 2560, 1440, 1024, 768 and 390px in both themes: no sideways scroll, clipped text, table wider than its card, unnamed control, text under 4.5:1, control without a focus ring, touch target under 44px, runtime error | `pnpm verify --full` (the audit) |
-| Every control pressed and every link followed, mouse at 1440px and taps at 390px; nothing does nothing | `pnpm verify --full` (the presses) |
-| The whole keyboard path, a visible focus ring at every stop | `pnpm verify --full` (the keyboard walk) |
+| Every view at 2560, 1440, 1024, 768 and 390px in both themes: no sideways scroll, clipped text, table wider than its card, unnamed control, text under 4.5:1, control without a focus ring, touch target under 44px, runtime error; inside open shadow roots too, and a custom element it cannot look inside is `unmeasured:` (`validation.md`) | `pnpm verify --full` (the audit) |
+| Every control pressed and every link followed, mouse at 1440px and taps at 390px, controls inside open shadow roots included; nothing does nothing | `pnpm verify --full` (the presses) |
+| The whole keyboard path, a visible focus ring (a change on focus) at every stop, and the same stops in reverse with Shift+Tab | `pnpm verify --full` (the keyboard walk) |
 | The assistant off and on, when the project has it; live data across tabs, restarts and offline, while the sample Members page it drives is there (a product's own live pages add a `browserChecks` script) | `pnpm verify --full`; a step it prints as `n/a`, with its reason, is not applicable and does not count against the outcome |
 | LCP under 2.5 s, INP under 200 ms, CLS under 0.1 on a mid-range phone | `pnpm verify --full` (the vitals) |
 | Reduced motion shows the final state at once | motion only through `src/styles/motion.css`, whose reduced-motion rule covers it; nothing animates outside it |
@@ -105,7 +104,7 @@ evidence.
 |---|---|
 | Fit | The page answers its question from the brief with the person's own data shape, and does what the request asked of it. What they asked for is there; what they did not ask for is gone |
 | Hierarchy | One protagonist the eye lands on first (a featured metric, the table, the form; `node scripts/check.ts` fails a second featured metric); on analytical pages a hierarchy ratio as the register sets it, while a detail page or a form is judged by its protagonist alone; everything else steps back |
-| Typography | Sizes from the scale, as many per page and weights as the register sets; figures with their unit and fraction stepped down; nothing set smaller to make it fit |
+| Typography | Sizes from the scale, with as many sizes per page and weights as the register sets; figures with their unit and fraction stepped down; nothing set smaller to make it fit |
 | Whitespace | The 4px scale; cards in a row share a height; gaps even between cards and inside them; one left edge down the page |
 | Colour | Every colour has a job, as the register sets them; nothing coloured for decoration |
 | Motion and response | Every press answers at once (a state, a toast, a sheet); motion from the tokens, quick and interruptible; data arrives once, nothing loops but a live dot or a skeleton |
