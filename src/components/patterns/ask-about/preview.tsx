@@ -20,7 +20,7 @@ export default function AskAboutPreview() {
         <SurfaceOverride surface={{ kind: 'embed', connected: true, ask: () => {} }}>
           <State label="Rest"><AskAbout question="What drove the trend in requests?" /></State>
           <State label="Hover"><AskAbout question="What drove the trend in requests?" className="bg-accent-tint" /></State>
-          <State label="Focus"><AskAbout question="What drove the trend in requests?" className="outline-2 outline-offset-2 outline-accent" /></State>
+          <State label="Focus" still><AskAbout question="What drove the trend in requests?" className="outline-2 outline-offset-2 outline-accent" /></State>
         </SurfaceOverride>
         <State label="Console: nothing is drawn">
           <span className="t-caption inline-flex h-7 items-center rounded-md border border-dashed border-line-strong px-2">(no control)</span>

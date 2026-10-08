@@ -70,3 +70,8 @@ describe('keyboard', () => {
   // Real Tab presses forward through every stop, then Shift+Tab back through them.
   casesFor('keyboard', (page, base) => ['scripts/keyboard.ts', '--base', base, '--routes', page], 120_000);
 });
+
+describe('navigate', () => {
+  // The readiness journey on desktop and phone, with the fixture's own mappings and rail. A note passes and prints its line.
+  casesFor('navigate', (page, base) => ['scripts/navigate.ts', '--base', base, '--config', 'scripts/fixtures/deep/config.ts', '--rail', '/nav-home,/nav-root-target,/nav-missing-target,/nav-multi', '--routes', page], 180_000);
+});

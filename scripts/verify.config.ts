@@ -80,6 +80,10 @@ type VerifyConfig = {
   /**
    * One check for every route in the rail (`nav` in src/app.config.ts). `--full` and `--perf` fail on a rail route that has
    * none; the default smoke reports its data and interaction as not configured. Probes never write.
+   * Selectors resolve inside open shadow roots as well as the light DOM; a descendant combinator does not cross a shadow
+   * boundary, so name an element inside a root with a selector written for that root. When `controlSelector` matches more than
+   * one element the first visible one is pressed and a `note: <selector> matches <n> elements; the first visible one was used`
+   * line is printed once. It is information, never a failure.
    */
   navigationChecks?: NavigationCheck[];
   /** The up to three rail routes the default smoke visits. Without it: the landing route and the next two rail routes. */

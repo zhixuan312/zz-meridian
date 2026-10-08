@@ -29,7 +29,7 @@ export default function InputPreview() {
         <div className="grid w-full max-w-160 gap-x-3 gap-y-4 sm:grid-cols-2">
           <State label="Rest"><Input aria-label="Rest" placeholder="Name this key" /></State>
           <State label="Hover"><Input aria-label="Hover" placeholder="Name this key" frameClassName="border-line-control/40" /></State>
-          <State label="Focus"><Input aria-label="Focus" defaultValue="staging-readonly" frameClassName="border-accent ring-3 ring-accent/22" /></State>
+          <State label="Focus" still><Input aria-label="Focus" defaultValue="staging-readonly" frameClassName="border-accent ring-3 ring-accent/22" /></State>
           <State label="Invalid"><Input aria-label="Invalid" invalid defaultValue="prod key!" /></State>
           <State label="Disabled"><Input aria-label="Disabled" disabled defaultValue="zzm_live_••••••••4f2a" /></State>
           <State label="Read only"><Input aria-label="Read only" readOnly defaultValue="us-east-1" frameClassName="bg-surface-sunk" /></State>

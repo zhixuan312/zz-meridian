@@ -17,11 +17,15 @@ export function Specimen({ label, note, children, className, stack }: { label: s
   );
 }
 
-/** One item with a caption under it: "Hover", "Disabled", "Compact". */
-export function State({ label, children, className }: { label: string; children: ReactNode; className?: string }) {
+/**
+ * One item with a caption under it: "Hover", "Disabled", "Compact". A `still` state depicts a moment a live control
+ * cannot hold, such as keyboard focus: its children sit in an `inert` container, so the picture is not a tab stop, not
+ * a press target and not read twice by a screen reader, while the caption still names it.
+ */
+export function State({ label, children, className, still }: { label: string; children: ReactNode; className?: string; still?: boolean }) {
   return (
     <figure className={cn('flex min-w-0 flex-col items-start gap-2', className)}>
-      {children}
+      {still ? <div inert className="contents">{children}</div> : children}
       <figcaption className="text-2xs text-ink-3">{label}</figcaption>
     </figure>
   );

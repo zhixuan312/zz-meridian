@@ -16,7 +16,7 @@ export default function CheckboxPreview() {
         <State label="Hover"><Checkbox aria-label="Hover" className="border-ink-3" /></State>
         <State label="On"><Checkbox aria-label="On" defaultChecked /></State>
         <State label="Some"><Checkbox aria-label="Some" checked="indeterminate" /></State>
-        <State label="Focus"><Checkbox aria-label="Focus" defaultChecked className="outline-2 outline-offset-2 outline-accent" /></State>
+        <State label="Focus" still><Checkbox aria-label="Focus" defaultChecked className="outline-2 outline-offset-2 outline-accent" /></State>
         <State label="Invalid"><Checkbox aria-label="Invalid" aria-invalid /></State>
         <State label="Disabled"><Checkbox aria-label="Disabled" disabled /></State>
         <State label="Disabled on"><Checkbox aria-label="Disabled on" disabled defaultChecked /></State>

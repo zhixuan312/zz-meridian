@@ -14,7 +14,9 @@
  *
  * A timing over its budget is retaken twice and gated on the median of three (scripts/lib/timing.ts). A wrong result, a
  * page that never gets ready and a control that does nothing are failures and are never retaken. A route with no mapping
- * is measured for its shell only; its data and interaction are `not-configured`, never passed. Nothing here writes:
+ * is measured for its shell only; its data and interaction are `not-configured`, never passed. A mapping's selectors resolve inside
+ * open shadow roots (scripts/lib/deep.ts); when the control's selector matches several elements the first visible one is pressed and
+ * `note: <selector> matches <n> elements; the first visible one was used` is printed once, never a failure. Nothing here writes:
  * probes only open, sort, filter, toggle or follow.
  *
  * One line per route and device, one per device for the prefetch bytes, and a JSON summary on the last line:
@@ -30,6 +32,7 @@
  */
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+import { DEEP_SOURCE } from './lib/deep.ts';
 import { budgetsOf, type BudgetsConfig, type NavigationCheck } from './lib/budgets.ts';
 import { launch, type Page } from './lib/chrome.ts';
 import { resolveCoverage, selectSmokeRoutes } from './lib/coverage.ts';
@@ -73,8 +76,15 @@ export type Sample = { shell: Measured; data: Measured | null; interactive: Meas
 
 // ---- in the page ----
 
+/**
+ * Every element of the page that matches a project-given selector, inside open shadow roots too (deepAll, scripts/lib/deep.ts).
+ * A combinator does not cross a shadow boundary: `x-host .inner` finds nothing inside `x-host`'s root. Page code, defined after
+ * the deep-DOM helper in every document this tab opens.
+ */
+const DEEP_MATCHES = `function deepMatches(selector) { return deepAll(document).filter((el) => el.matches(selector)); }`;
+
 /** What a probe's result looks like: the address, how many elements, their text and their state attributes. Runs in the page. */
-const SNAP = `(selector) => location.href + '|' + [...document.querySelectorAll(selector)].slice(0, 40)
+const SNAP = `(selector) => location.href + '|' + deepMatches(selector).slice(0, 40)
   .map((el) => (el.textContent ?? '').trim().slice(0, 80) + ['aria-sort', 'aria-expanded', 'aria-pressed', 'aria-checked', 'aria-selected', 'data-state', 'open'].map((a) => el.getAttribute(a)).join(','))
   .join(';')`;
 /**
@@ -83,7 +93,7 @@ const SNAP = `(selector) => location.href + '|' + [...document.querySelectorAll(
  * that finds it true, so no round trip over the debugging protocol is in any of them. The press and the spec are kept in
  * sessionStorage, so a page that loads anew (not a client navigation) is timed from the same press.
  */
-const INSTRUMENT = `(() => {
+const INSTRUMENT = `${DEEP_SOURCE}\n${DEEP_MATCHES}\n(() => {
   const nav = window.__nav = { prefetches: [], spec: null, t0: undefined, res: {}, expect: null, snap: ${SNAP} };
   const KEY = '__nav_journey';
   try { const kept = JSON.parse(sessionStorage.getItem(KEY) ?? 'null'); if (kept) { nav.spec = kept.spec; nav.t0 = kept.t0; } } catch { /* a fresh journey */ }
@@ -106,7 +116,7 @@ const INSTRUMENT = `(() => {
       }
       // Until the heading is the target's, the page on screen is the old one, whose table would answer for the new one.
       if (r.shell !== undefined) {
-        if (s.ready && r.data === undefined && location.pathname === s.route && [...document.querySelectorAll(s.ready)].some((el) => el.textContent.toLowerCase().includes(s.text))) r.data = at;
+        if (s.ready && r.data === undefined && location.pathname === s.route && deepMatches(s.ready).some((el) => el.textContent.toLowerCase().includes(s.text))) r.data = at;
         // A link probe leaves the route: its result is the address changing.
         if (nav.expect && r.interactive === undefined && nav.snap(nav.expect.selector) !== nav.expect.before) r.interactive = at;
       }
@@ -180,7 +190,7 @@ const INSTRUMENT = `(() => {
  */
 const pickable = (selector: string) => `(() => {
   const hydrated = typeof self.__next_f === 'undefined' ? () => true : (el) => Object.keys(el).some((k) => k.startsWith('__reactProps$'));
-  return [...document.querySelectorAll(${JSON.stringify(selector)})].find((el) => {
+  return deepMatches(${JSON.stringify(selector)}).find((el) => {
     const r = el.getBoundingClientRect();
     return r.width > 0 && r.height > 0 && getComputedStyle(el).visibility !== 'hidden' && hydrated(el);
   }) ?? null;
@@ -194,8 +204,11 @@ async function point(page: Page, selector: string): Promise<{ x: number; y: numb
     el.scrollIntoView({ block: 'center' });
     const r = el.getBoundingClientRect();
     const x = r.left + r.width / 2, y = r.top + r.height / 2;
-    const hit = document.elementFromPoint(x, y);
-    return hit && (hit === el || el.contains(hit)) ? { x, y } : null;
+    // The topmost element at the point, through open roots: document.elementFromPoint stops at the outermost host.
+    let hit = document.elementFromPoint(x, y);
+    for (let inner = hit && hit.shadowRoot && hit.shadowRoot.elementFromPoint(x, y); inner && inner !== hit; inner = hit.shadowRoot && hit.shadowRoot.elementFromPoint(x, y)) hit = inner;
+    for (let n = hit; n; n = deepParent(n)) if (n === el) return { x, y };
+    return null;
   })()`);
 }
 
@@ -398,13 +411,24 @@ const result = (page: Page, name: 'shell' | 'data' | 'interactive', until: numbe
 async function measureData(page: Page, route: string, check: NavigationCheck, t0: number, cap: number): Promise<Measured> {
   const ms = await result(page, 'data', t0 + cap);
   if (ms !== null) return { ms };
-  const there = await page.eval<boolean>(`!!document.querySelector(${JSON.stringify(check.readySelector)})`);
+  const there = await page.eval<boolean>(`!!deepQuery(${JSON.stringify(check.readySelector)})`);
   return { fail: new Fail(there ? 'wrong-result' : 'never-ready', there ? `${check.readySelector} is there but never shows "${check.readyText}"` : `${check.readySelector} did not appear in ${cap} ms`) };
+}
+
+/** Selectors already reported, so a note appears once per run, not once per sample. */
+const noted = new Set<string>();
+
+/** A lookup that chooses one element says so when several match; it never fails the check. */
+async function noteIfSeveral(page: Page, selector: string): Promise<void> {
+  if (noted.has(selector)) return;
+  const n = await page.eval<number>(`deepMatches(${JSON.stringify(selector)}).length`);
+  if (n > 1) { noted.add(selector); console.log(`note: ${selector} matches ${n} elements; the first visible one was used`); }
 }
 
 async function measureInteraction(page: Page, route: string, check: NavigationCheck, t0: number, cap: number, wait: number): Promise<Measured> {
   const where = await poll(async () => (await page.eval<boolean>(`location.pathname === ${JSON.stringify(route)}`)) && point(page, check.controlSelector), t0 + cap);
   if (!where) return { fail: new Fail('never-ready', `the control ${check.controlSelector} was not pressable in ${cap} ms`) };
+  await noteIfSeveral(page, check.controlSelector);
   const isInput = await page.eval<boolean>(`(() => { const el = ${pickable(check.controlSelector)}; return !!el && el.tagName === 'INPUT' && ['text', 'search'].includes(el.type); })()`);
   // The page compares this result with what it shows from now on, and times the first frame that differs.
   await page.eval(`(() => { const n = window.__nav; n.expect = { selector: ${JSON.stringify(check.resultSelector)}, before: n.snap(${JSON.stringify(check.resultSelector)}) }; })()`);

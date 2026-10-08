@@ -16,7 +16,7 @@ export default function SwitchPreview() {
       <Specimen label="States">
         <State label="Off"><Switch aria-label="Off" /></State>
         <State label="On"><Switch aria-label="On" defaultChecked /></State>
-        <State label="Focus"><Switch aria-label="Focus" defaultChecked className="outline-2 outline-offset-2 outline-accent" /></State>
+        <State label="Focus" still><Switch aria-label="Focus" defaultChecked className="outline-2 outline-offset-2 outline-accent" /></State>
         <State label="Disabled"><Switch aria-label="Disabled" disabled /></State>
         <State label="Disabled on"><Switch aria-label="Disabled on" disabled defaultChecked /></State>
       </Specimen>

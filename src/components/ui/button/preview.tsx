@@ -21,7 +21,7 @@ export default function ButtonPreview() {
       <Specimen label="States">
         <State label="Rest"><Button variant="primary">Save changes</Button></State>
         <State label="Hover"><Button variant="primary" className="brightness-[0.94]">Save changes</Button></State>
-        <State label="Focus"><Button variant="primary" className="outline-2 outline-offset-2 outline-accent">Save changes</Button></State>
+        <State label="Focus" still><Button variant="primary" className="outline-2 outline-offset-2 outline-accent">Save changes</Button></State>
         <State label="Busy"><Button variant="primary" busy>Saving</Button></State>
         <State label="Disabled"><Button variant="primary" disabled>Save changes</Button></State>
       </Specimen>
