@@ -60,11 +60,12 @@ Migrate in place, page by page, keeping their data layer.
    console routes in `AppShell` with the rail, `ShellTools` and the command palette (see `optional:app/(dashboard)/layout.tsx`).
    The template's layout passes `ShellTools` the sample `ALERTS` and `DEMO_NOW` from `optional:src/data/sample.ts`, which
    is not copied: pass their own alerts (an empty list until they have some) and their own clock. Give each `nav`
-   entry in `src/app.config.ts` its icon and group. The Rail and the palette take `nav` as a prop, rendered from a
-   client module (`src/views/console-chrome.tsx`), since each destination carries its icon component; if what a person
-   may see depends on their role or scope, filter `nav` there from their session (that file is Meridian's, so list it
-   in `optional:.meridian/keep.json` with the reason, and an update leaves it as you made it), and pass `workspace` and
-   `scopes` to the Rail for a scope switcher.
+   entry in `src/app.config.ts` its icon and group. The Rail and the palette are rendered from a client module
+   (`src/views/console-chrome.tsx`), since each destination carries its icon component, and take what depends on the
+   request from the layout as props: `<ConsoleRail user={…} signOut={…} only={…} />` and `<ConsolePalette only={…} />`,
+   where `user` is the signed-in person from their session, `only` the hrefs this person may see, and `workspace` and
+   `scopes` a scope switcher. A console with no sign-in passes the team's name as `user` and `signOut={null}`, so the
+   rail never shows a sample person or a Sign out that goes nowhere.
    **Turn on Cache Components.** Meridian's pages prerender a shell and stream what each request reads, and the route
    policy `pnpm verify` runs fails a page that is neither static nor partial. Set `cacheComponents: true` in their
    `next.config`, and put each per-request read (their API, cookies, headers) behind a `<Suspense>` boundary, as the
