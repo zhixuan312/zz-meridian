@@ -9,7 +9,7 @@ Status: beta
 1. **Gridlines and y labels**: three "nice" ticks from zero, `chart-grid` lines, `text-2xs` `ink-3` labels in a gutter sized to the longest.
 2. **Columns**: equal width, 2px apart, rounded 4px at the top, growing from the baseline; the population in `chart-neutral`, the highlighted column in `accent`.
 3. **Value label**: on hover, the value above the column on `surface-inverse`.
-4. **X labels**: `text-2xs` `ink-3`, as many as fit without colliding, counted back from the last column; the hovered column's label always shows.
+4. **X labels**: `text-2xs` `ink-3`. Dates show as many as fit without colliding, counted back from the last column. Categories each keep their label, cut with an ellipsis to their column, while a column is at least 36px wide (an unlabelled category cannot be told apart); narrower, they thin like dates. The hovered column's label always shows whole.
 5. **Screen-reader table**: every column's label and value.
 
 ## Variants
@@ -38,7 +38,7 @@ Pointer hover or a tap selects a column; leaving clears it. With `dates`, the se
 
 ## Surfaces
 
-Same on every surface; labels thin out as the width shrinks.
+Same on every surface; date labels thin out as the width shrinks, and category labels cut shorter.
 
 ## Agents
 
