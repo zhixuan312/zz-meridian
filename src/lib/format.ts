@@ -12,13 +12,17 @@ import { app } from '@/app.config';
 /** The symbol for `app.currency`: $, €, £, ¥; the narrow symbol, so SGD reads $1,234, not SGD1,234. */
 const CURRENCY = new Intl.NumberFormat('en-US', { style: 'currency', currency: app.currency, currencyDisplay: 'narrowSymbol' }).formatToParts(0).find((p) => p.type === 'currency')?.value ?? app.currency;
 
+/** Built once: an Intl formatter costs far more to construct than to use, and a table formats a figure per cell. */
+const INT = new Intl.NumberFormat('en-US');
+const CENTS = new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
 /** Money in `app.currency`, symbol first: $298.43, €1,204. */
 export function formatCost(amount: number | null): string {
   if (amount === null) return '—';
   if (amount === 0) return `${CURRENCY}0`;
   if (Math.abs(amount) < 0.01) return `${CURRENCY}${amount.toFixed(4)}`;
   // Two decimals at every size, so a column of amounts keeps one precision and its decimals line up.
-  return `${CURRENCY}${amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  return `${CURRENCY}${CENTS.format(amount)}`;
 }
 
 /** Money at a glance, for dense tables and tiles: $1.2M, $340K, $912. The exact amount belongs in the tooltip. */
@@ -26,7 +30,7 @@ function formatCostCompact(amount: number | null): string {
   if (amount === null) return '—';
   const sign = amount < 0 ? '-' : '';
   const a = Math.abs(amount);
-  return a < 1000 ? `${sign}${CURRENCY}${Math.round(a).toLocaleString('en-US')}` : `${sign}${CURRENCY}${formatCompact(a)}`;
+  return a < 1000 ? `${sign}${CURRENCY}${INT.format(Math.round(a))}` : `${sign}${CURRENCY}${formatCompact(a)}`;
 }
 
 /** "$298.43" steps the cents down; "2.9M", "0.90%" and "294ms" keep the number whole and step the unit down.
@@ -74,7 +78,7 @@ export function formatCompact(n: number | null): string {
     const thousands = Math.round(n / 1_000);
     return Math.abs(thousands) >= 1_000 ? `${(n / 1_000_000).toFixed(1)}M` : `${thousands}K`;
   }
-  return n.toLocaleString('en-US');
+  return INT.format(n);
 }
 
 export function formatDuration(ms: number | null): string {
@@ -89,7 +93,7 @@ export function formatDuration(ms: number | null): string {
 
 function formatCount(n: number | null): string {
   if (n === null) return '—';
-  return n.toLocaleString('en-US');
+  return INT.format(n);
 }
 
 export function formatPercent(fraction: number | null, digits = 1): string {
@@ -148,7 +152,7 @@ export const AXIS_FORMATTERS: Record<NumberFormat, (n: number | null) => string>
     if (n === null) return '—';
     if (n === 0) return `${CURRENCY}0`;
     if (Math.abs(n) < 1) return `${CURRENCY}${n.toFixed(2)}`;
-    return `${CURRENCY}${Math.round(n).toLocaleString('en-US')}`;
+    return `${CURRENCY}${INT.format(Math.round(n))}`;
   },
   duration: formatDuration,
   percent: (n) => formatPercent(n, 0),
@@ -161,5 +165,5 @@ function formatAxisCount(n: number): string {
   const abs = Math.abs(n);
   if (abs >= 1_000_000) return `${trim(n / 1_000_000)}M`;
   if (abs >= 1_000) return `${trim(n / 1_000)}K`;
-  return n.toLocaleString('en-US');
+  return INT.format(n);
 }

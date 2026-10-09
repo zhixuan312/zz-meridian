@@ -21,8 +21,11 @@ function toDate(input: DateInput): Date | null {
   return Number.isNaN(d.getTime()) ? null : d;
 }
 
+/** Built once: an Intl formatter costs far more to construct than to use, and a table formats a date per row. */
+let FMT: Intl.DateTimeFormat | null = null;
+
 function parts(d: Date): Record<string, string> {
-  const fmt = new Intl.DateTimeFormat('en-GB', {
+  FMT ??= new Intl.DateTimeFormat('en-GB', {
     timeZone: DISPLAY_TIMEZONE,
     year: 'numeric',
     month: 'short',
@@ -31,7 +34,7 @@ function parts(d: Date): Record<string, string> {
     minute: '2-digit',
     hour12: false,
   });
-  return Object.fromEntries(fmt.formatToParts(d).map((p) => [p.type, p.value]));
+  return Object.fromEntries(FMT.formatToParts(d).map((p) => [p.type, p.value]));
 }
 
 /** `09 Jun 2026` */
