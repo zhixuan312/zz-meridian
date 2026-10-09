@@ -19,7 +19,7 @@ Any route that is not a page below answers a clean page (light DOM, no control),
 | `audit` | `node scripts/audit.ts --base <url> --routes <page>` |
 | `presses` | `node scripts/interactions.ts --base <url> --routes <page>` |
 | `keyboard` | `node scripts/keyboard.ts --base <url> --routes <page>` |
-| `navigate` | `node scripts/navigate.ts --base <url> --config scripts/fixtures/deep/config.ts --rail /nav-home,/nav-root-target,/nav-missing-target,/nav-multi --routes <page>` |
+| `navigate` | `node scripts/navigate.ts --base <url> --config scripts/fixtures/deep/config.ts --rail /nav-home,/nav-root-target,/nav-missing-target,/nav-multi,/nav-root-hydrated --routes <page>` |
 
 ## Pages
 
@@ -43,6 +43,7 @@ Every page has an `h1`, `lang="en"`, a `main`, an opaque ground and controls of 
 | `/deep-undefined` | A custom element that is never defined. `-fixed` defines it |
 | `/nav-home` | Navigation: the working baseline (rail, drawer, table, toggle) |
 | `/nav-root-target` | Navigation: the mapping's control and result are inside an open root |
+| `/nav-root-hydrated` | The same on a page marked as a hydrated Next page: the control inside the root is ready once its host is |
 | `/nav-missing-target` | Navigation: the mapping names a control the page does not have |
 | `/nav-multi` | Navigation: the control selector matches two elements, the first hidden |
 | `/helper` | Not a case: nested roots, a slot and a closed root, for `tests/deep-dom.test.ts` |

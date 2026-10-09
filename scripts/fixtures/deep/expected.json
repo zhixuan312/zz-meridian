@@ -189,6 +189,11 @@
     "outcome": "pass"
   },
   {
+    "page": "/nav-root-hydrated",
+    "suite": "navigate",
+    "outcome": "pass"
+  },
+  {
     "page": "/nav-missing-target",
     "suite": "navigate",
     "outcome": "fail",

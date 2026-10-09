@@ -2,6 +2,12 @@
 
 Every release of ZZ Meridian, newest first. Versions follow semver: a removed or renamed token, prop or card is major; a new card, token or variant is minor; a corrected value is a patch. Each entry says what breaks and what to do instead.
 
+## [0.12.2] · 2026-10-09
+
+### Fixed
+
+- **A `navigationChecks` control inside a web component is pressable once its page has hydrated.** On a Next page the navigation check counted a control as ready only when the control itself carried React's marker; React never renders into a shadow root, so a control inside one (a design system's input or button) was never ready and the check failed `never-ready`. Readiness is now its rendering host's.
+
 ## [0.12.1] · 2026-10-09
 
 ### Fixed

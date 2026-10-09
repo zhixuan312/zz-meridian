@@ -189,7 +189,10 @@ const INSTRUMENT = `${DEEP_SOURCE}\n${DEEP_MATCHES}\n(() => {
  * press before hydration does nothing. Null when there is none.
  */
 const pickable = (selector: string) => `(() => {
-  const hydrated = typeof self.__next_f === 'undefined' ? () => true : (el) => Object.keys(el).some((k) => k.startsWith('__reactProps$'));
+  // React marks what it rendered once it hydrates; it never renders into a shadow root, so a control inside one is ready
+  // when the host React rendered is.
+  const rendered = (el) => { let n = el; while (n.getRootNode() instanceof ShadowRoot) n = n.getRootNode().host; return n; };
+  const hydrated = typeof self.__next_f === 'undefined' ? () => true : (el) => Object.keys(rendered(el)).some((k) => k.startsWith('__reactProps$'));
   return deepMatches(${JSON.stringify(selector)}).find((el) => {
     const r = el.getBoundingClientRect();
     return r.width > 0 && r.height > 0 && getComputedStyle(el).visibility !== 'hidden' && hydrated(el);

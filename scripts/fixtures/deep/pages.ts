@@ -169,7 +169,7 @@ export const CLEAN = `<!doctype html>
 // ---- navigation pages for scripts/navigate.ts, on the readiness fixtures' skeleton ----
 
 /** The rail routes, in rail order. */
-export const NAV: [string, string][] = [['/nav-home', 'Home'], ['/nav-root-target', 'Root target'], ['/nav-missing-target', 'Missing target'], ['/nav-multi', 'Several matches']];
+export const NAV: [string, string][] = [['/nav-home', 'Home'], ['/nav-root-target', 'Root target'], ['/nav-missing-target', 'Missing target'], ['/nav-multi', 'Several matches'], ['/nav-root-hydrated', 'Hydrated root']];
 const links = NAV.map(([href, label]) => `<li><a href="${href}">${label}</a></li>`).join('');
 const TABLE = '<table><thead><tr><th>Name</th></tr></thead><tbody><tr><td>Rows</td></tr></tbody></table>';
 
@@ -215,5 +215,8 @@ export const NAV_PAGES: Record<string, string> = {
   // The mapping names a control the page does not have.
   '/nav-missing-target': nav('Missing target', `${TOGGLE}${TABLE}`, WIRE),
   // Two elements match the mapping's control: the first is hidden, the second works.
+  // As a Next page: React marks the elements it rendered once it hydrates (light DOM only), and the control lives in an
+  // open root React never renders into, so readiness is its host's.
+  '/nav-root-hydrated': nav('Hydrated root', `<x-toggle></x-toggle>${TABLE}`, `${ROOT_TOGGLE}\n  self.__next_f = [];\n  for (const el of document.querySelectorAll('*')) el.__reactProps$fixture = {};`),
   '/nav-multi': nav('Several matches', `<button class="pick" aria-pressed="false" hidden>Hidden</button><button class="pick" aria-pressed="false">Toggle</button>${TABLE}`, PICK),
 };

@@ -10,6 +10,8 @@ const config = {
     { path: '/nav-root-target', title: 'Root target', readySelector: 'main table tbody tr', probe: 'toggle', controlSelector: 'button.root-toggle', resultSelector: 'button.root-toggle' },
     // The page has no such control.
     { path: '/nav-missing-target', title: 'Missing target', readySelector: 'main table tbody tr', probe: 'toggle', controlSelector: 'button.not-there', resultSelector: 'button.not-there' },
+    // The control is inside an open root of a hydrated page; React never marks the inside of a root.
+    { path: '/nav-root-hydrated', title: 'Hydrated root', readySelector: 'main table tbody tr', probe: 'toggle', controlSelector: 'button.root-toggle', resultSelector: 'button.root-toggle' },
     // Two elements match: the first is hidden.
     { path: '/nav-multi', title: 'Several matches', readySelector: 'main table tbody tr', probe: 'toggle', controlSelector: 'button.pick', resultSelector: 'button.pick' },
   ],

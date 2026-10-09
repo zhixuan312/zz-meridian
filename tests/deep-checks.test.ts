@@ -73,5 +73,5 @@ describe('keyboard', () => {
 
 describe('navigate', () => {
   // The readiness journey on desktop and phone, with the fixture's own mappings and rail. A note passes and prints its line.
-  casesFor('navigate', (page, base) => ['scripts/navigate.ts', '--base', base, '--config', 'scripts/fixtures/deep/config.ts', '--rail', '/nav-home,/nav-root-target,/nav-missing-target,/nav-multi', '--routes', page], 180_000);
+  casesFor('navigate', (page, base) => ['scripts/navigate.ts', '--base', base, '--config', 'scripts/fixtures/deep/config.ts', '--rail', '/nav-home,/nav-root-target,/nav-missing-target,/nav-multi,/nav-root-hydrated', '--routes', page], 180_000);
 });
