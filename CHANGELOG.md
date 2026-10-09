@@ -2,6 +2,13 @@
 
 Every release of ZZ Meridian, newest first. Versions follow semver: a removed or renamed token, prop or card is major; a new card, token or variant is minor; a corrected value is a patch. Each entry says what breaks and what to do instead.
 
+## [Unreleased]
+
+### Fixed
+
+- **A preset whose values differ by theme holds in a nested scope.** Graphite (and jade in dark) set their lightness with ancestor selectors, which cannot say which theme scope is nearest, so a dark scope inside a light page drew graphite's light values: a dark tile on a dark ground. `tokens.css` now picks them with `@scope`, whose proximity rule makes the nearest theme win; the unscoped rules stay, at one attribute's specificity, for a browser without `@scope`. Regenerate with `pnpm tokens`; nothing to change in a product. `tests/deep-accent-scope.test.ts` renders the fourteen nestings in Chrome.
+- **The colour parser reads `lab()`.** A production build may ship an authored `oklch()` as `lab()`, which `src/lib/color.ts` could not parse; the contrast pairs the gate checks now live in `scripts/lib/contrast-pairs.ts`, so the Atlas measures the same ones.
+
 ## [0.12.2] · 2026-10-09
 
 ### Fixed

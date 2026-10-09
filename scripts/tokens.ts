@@ -157,11 +157,27 @@ function buildCss(): string {
     L.push(...block(`[data-accent="${a.n}"]`, decls(tokensOf(a.file), '  ')));
     const ov = a.file.$extensions?.[NS]?.overrides;
     if (ov) {
-      const o = (m: Json) => Object.entries(m).map(([k, v]) => `  --${k}:${v};`);
-      const s = `[data-accent="${a.n}"]`;
-      L.push(...block(`${s},${s} [data-theme="${first}"]`, o(ov[first] ?? {})));
-      L.push(`@media (prefers-color-scheme:${second}){`, ...block(`:root:not([data-theme="${first}"])${s},:root:not([data-theme="${first}"]) ${s}`, o(ov[second] ?? {})).map((l) => '  ' + l), '}');
-      L.push(...block(`[data-theme="${second}"]${s},[data-theme="${second}"] ${s},${s} [data-theme="${second}"]`, o(ov[second] ?? {})));
+      // Every rule declares every key either theme overrides, a missing one at that theme's own value: the cascade is
+      // per property, so a key set for one theme only would otherwise leak into a nested scope of the other.
+      const keys = [...new Set([first, second].flatMap((t) => Object.keys(ov[t] ?? {})))];
+      const base = (t: string, k: string) => cssValue((t === first ? main : other).find((x) => x.name === k)!);
+      const vals = (t: string) => Object.fromEntries(keys.map((k) => [k, (ov[t] as Json | undefined)?.[k] ?? base(t, k)]));
+      const o = (t: string) => Object.entries(vals(t)).map(([k, v]) => `  --${k}:${v};`);
+      const s = `[data-accent="${a.n}"]`, sys = `:root:not([data-theme="${first}"])`;
+      const at = (sel: string, t: string) => block(sel, o(t)).map((l) => '  ' + l);
+      // A preset's values differ by theme, and both are set on any subtree, so the nearest theme scope must decide.
+      // Ancestor selectors cannot say "nearest"; @scope can, by proximity. The unscoped rules first, all at the
+      // specificity of one attribute so proximity outranks them, are what a browser without @scope gets.
+      L.push(...block(s, o(first)));
+      // The root itself keeps the full selector: it must outrank the system theme's own `${sys}` block, and can
+      // match nothing nested.
+      L.push(`@media (prefers-color-scheme:${second}){`, ...at(`${sys}${s},:where(${sys}) ${s}`, second), '}');
+      L.push(...block(`:where([data-theme="${second}"])${s},:where([data-theme="${second}"]) ${s}`, o(second)));
+      // A scoped selector matches the scope's root only through :scope; :where() keeps it at one attribute.
+      const self = (sel: string) => `:where(:scope)${sel},${sel}`;
+      for (const t of [first, second]) L.push(`@scope ([data-theme="${t}"]){`, ...at(self(s), t), '}');
+      L.push(`@media (prefers-color-scheme:${second}){`, `  @scope (${sys}){`, ...at(self(s), second).map((l) => '  ' + l), '  }', '}');
+      L.push(`@scope (${s}) to ([data-accent]:not(${s})){`, ...at(self(`[data-theme="${first}"]`), first), ...at(self(`[data-theme="${second}"]`), second), '}');
     }
   }
   L.push(...block('[data-theme],[data-accent]', decls(roles, '  ')), '');
