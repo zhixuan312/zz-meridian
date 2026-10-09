@@ -53,8 +53,8 @@ export type TableState = { sort: string; dir: string; page: string };
  * a tree it could never show.
  *
  * `check` is the select-all column; `title`, `status` and `fact` are the roles a column declares (`Column.mobile`) and
- * anything else is hidden on a phone. Six columns hold the card: the title and its status on the first line, the facts
- * on the second, two columns each so three of them fit exactly.
+ * anything else is hidden on a phone. The card is the title and its status on the first line and up to three facts,
+ * in column order, flowing on the second.
  */
 type Mobile = 'check' | 'title' | 'status' | 'fact' | 'hidden';
 

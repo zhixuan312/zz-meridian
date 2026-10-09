@@ -9,7 +9,7 @@ Status: beta
 | Row | Pattern | Console | Mobile |
 |---|---|---|---|
 | Masthead | PageFrame: kicker, "Members", one sentence, Invite member (primary) | One band | Stacked |
-| 1 | Data table: Name (avatar and name, grow), Email (from 1024px), Role (from 1024px), Team (from 1440px), Status, Joined (from 768px, so the order the table opens in is on screen wherever it has columns), Last active, and a row action menu | Columns | Cards: name and the menu, then status, team and last active |
+| 1 | Data table: Name (avatar and name, grow), Email (from 1024px), Role (from 1024px), Team (from 1440px), Status, Joined (from 768px, so the order the table opens in is on screen wherever it has columns), Last active, and a row action menu | Columns | Cards: name and the menu, then status, when they joined (the order the list follows) and last active; a card holds three facts, so team is left to the record |
 | Sheet | Invite a member: Name and Email (required), Role, Team; Cancel and Send invitation | From the right, 440px | From the bottom |
 | Dialog | Remove: "Remove {name}?", the consequence, and the suspend alternative; Cancel and Remove member (danger) | Centred | Bottom sheet |
 
