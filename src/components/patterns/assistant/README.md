@@ -34,7 +34,7 @@ Head 56px, composer padding 12px, thread padding 16px, message gap 16px. Launche
 | Thread, several pages | Each question is captioned with the page it was asked on ("On Members") |
 | Error | A critical alert with what happened and Retry; the thread stays |
 | Cleared | Back to the empty state; Clear conversation is disabled while there is no thread |
-| Waiting | Send is disabled until the answer ends |
+| Waiting | Until the first words arrive, the thread ends with a Spinner and "Working on an answer" in `ink-3` (the Spinner is the status, so it is announced once); Send is disabled until the answer ends |
 | Change waiting | A Proposal with Approve and Dismiss ("Approve and remove" for a removal) |
 | Change applied, failed, dismissed or expired | The Proposal shows its state with no buttons; expired shows its reason |
 | Send disabled | 45% opacity, while the text is empty |

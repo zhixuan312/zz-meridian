@@ -112,6 +112,14 @@ describe('the panel', () => {
     expect(onClear).toHaveBeenCalledTimes(1);
   });
 
+  test('while it waits for the first words the thread says it is working, and stops once they arrive', () => {
+    const { unmount } = panel({ busy: true, messages: [ask('u1', 'Why did latency rise?')] });
+    expect(screen.getByRole('status', { name: 'Working on an answer' })).toBeInTheDocument();
+    unmount();
+    panel({ busy: true, messages: [ask('u1', 'Why did latency rise?'), say('a1', 'Latency rose')] });
+    expect(screen.queryByRole('status', { name: 'Working on an answer' })).toBeNull();
+  });
+
   test('an error is said in plain words with Retry', () => {
     const onRetry = vi.fn();
     panel({ messages: [ask('u1', 'hello')], error: 'The assistant could not reach its provider. Try again.', onRetry });

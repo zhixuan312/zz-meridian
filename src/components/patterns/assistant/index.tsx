@@ -12,6 +12,7 @@ import { Banner } from '@/components/ui/banner';
 import { Button } from '@/components/ui/button';
 import { IconButton } from '@/components/ui/icon-button';
 import { Proposal, type ProposalChange, type ProposalState } from '@/components/patterns/proposal';
+import { Spinner } from '@/components/ui/spinner';
 import { Textarea } from '@/components/ui/textarea';
 import type { PageContext } from '@/lib/assistant/prompt';
 import { sharedContextOn } from '@/components/base/surface';
@@ -133,6 +134,8 @@ export function AssistantPanel({
     }
   };
 
+  const last = messages[messages.length - 1];
+  const answering = last?.role === 'assistant' && last.parts.some((p) => p.type === 'text' && p.text);
   return (
     <>
     {/* Below 1024px the panel is a sheet over the page: a scrim dims the page and closes the panel when pressed. */}
@@ -181,6 +184,13 @@ export function AssistantPanel({
             </div>
           ))
         )}
+        {/* Between Send and the first words a model can take seconds; the thread says it is working, so the press is answered. */}
+        {busy && !answering ? (
+          <p className="t-small flex items-center gap-2 text-ink-3">
+            <Spinner size="sm" label="Working on an answer" />
+            Working on an answer
+          </p>
+        ) : null}
       </div>
       {error ? (
         <div className="shrink-0 px-3 pb-3">
