@@ -12,6 +12,11 @@ Every release of ZZ Meridian, newest first. Versions follow semver: a removed or
 - **A narrow table's lead column takes the space it is given.** Under 512px of table the `grow` column takes the slack instead of a third, so a phone no longer cuts a route beside empty space.
 - **A disabled Select option is disabled on both lines.** Its description takes `ink-disabled` with its label.
 - **The request timeline's first tick reads `0ms`**, through `formatDuration`, like the ticks after it.
+- **Every category in a column chart keeps its label**, cut to its column while a column is at least 36px wide; dates still thin out.
+- **The assistant says it is working before its first words**: a spinner and "Working on an answer" until text arrives.
+- **A narrow metric tile drops its comparison whole** instead of "vs previou…", and its finding wraps instead of being cut.
+- **The search pill folds by the top bar's own width** (under 40rem), so a canvas narrowed by the assistant folds it too. The top bar is now a container.
+- **A read-only form section keeps its values legible** in `ink-2` instead of `ink-disabled`.
 - **The colour parser reads `lab()`.** A production build may ship an authored `oklch()` as `lab()`, which `src/lib/color.ts` could not parse; the contrast pairs the gate checks now live in `scripts/lib/contrast-pairs.ts`, so the Atlas measures the same ones.
 
 ## [0.12.2] · 2026-10-09
