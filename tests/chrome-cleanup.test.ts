@@ -23,4 +23,13 @@ describe('scripts/lib/chrome.ts launch', () => {
     expect(alive()).toBe(false);
     expect(fs.existsSync(fs.readFileSync(path.join(work, 'dir'), 'utf8').trim())).toBe(false);
   }, 60_000);
+
+  it('says at once that a browser which exited never started, without waiting out the start-up deadline', () => {
+    const fake = path.join(work, 'chrome-exits');
+    fs.writeFileSync(fake, '#!/bin/sh\nexit 3\n', { mode: 0o755 });
+    const started = Date.now();
+    const run = spawnSync(process.execPath, ['--input-type=module', '-e', `import { launch } from './scripts/lib/chrome.ts'; try { await launch(); } catch (e) { console.log(e.message); }`], { cwd: ROOT, env: { ...process.env, CHROME: fake }, encoding: 'utf8' });
+    expect(run.stdout).toContain('Chrome exited before it started (3)');
+    expect(Date.now() - started).toBeLessThan(15_000);
+  }, 60_000);
 });

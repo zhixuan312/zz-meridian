@@ -49,13 +49,16 @@ export async function launch(): Promise<Page> {
 
 async function attach(proc: ChildProcess, dir: string, handle: { proc: ChildProcess; dir: string }): Promise<Page> {
   let list: any[] | undefined;
-  for (let i = 0; i < 80 && !list; i++) {
+  // A cold Chrome on a busy machine or runner can take well over ten seconds to open its debugging port; wait up to 30 s,
+  // and stop at once if it exited instead.
+  const deadline = Date.now() + 30_000;
+  while (!list && Date.now() < deadline && proc.exitCode === null && proc.signalCode === null) {
     try {
       const port = fs.readFileSync(path.join(dir, 'DevToolsActivePort'), 'utf8').split('\n')[0];
       list = await (await fetch(`http://127.0.0.1:${port}/json/list`)).json();
     } catch { await sleep(150); }
   }
-  if (!list) throw new Error('Chrome did not start');
+  if (!list) throw new Error(proc.exitCode !== null || proc.signalCode !== null ? `Chrome exited before it started (${proc.exitCode ?? proc.signalCode})` : 'Chrome did not start within 30 s');
   const ws = new WebSocket(list.find((t) => t.type === 'page').webSocketDebuggerUrl);
   await new Promise((r) => ws.addEventListener('open', r));
   let id = 0;
