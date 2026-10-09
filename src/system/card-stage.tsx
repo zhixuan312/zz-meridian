@@ -59,14 +59,12 @@ export function useStageLook() {
 }
 
 /** A stage toolbar: the controls that re-scope what is shown below them. */
-export function StageBar({ theme, setTheme, accent, setAccent, density, setDensity, extra, both = true }: {
+export function StageBar({ theme, setTheme, accent, setAccent, density, setDensity, extra }: {
   theme: ThemeView; setTheme: (t: ThemeView) => void; accent: Accent; setAccent: (a: Accent) => void; density?: Density; setDensity?: (d: Density) => void; extra?: ReactNode;
-  /** Whether the stage can show both themes at once; a framed page shows one. */
-  both?: boolean;
 }) {
   return (
     <div className="flex flex-wrap items-center gap-x-4 gap-y-2.5 border-b border-line bg-surface/70 px-4 py-3 backdrop-blur-md">
-      <Segmented size="sm" label="Theme" value={theme} onChange={setTheme} options={[{ value: 'dark', label: 'Dark' }, { value: 'light', label: 'Light' }, ...(both ? [{ value: 'both' as const, label: 'Both' }] : [])]} />
+      <Segmented size="sm" label="Theme" value={theme} onChange={setTheme} options={[{ value: 'dark', label: 'Dark' }, { value: 'light', label: 'Light' }, { value: 'both', label: 'Both' }]} />
       <div role="radiogroup" aria-label="Accent" className="flex items-center gap-1">
         {ACCENTS.map((a) => (
           <button key={a} role="radio" aria-checked={accent === a} aria-label={a} title={a[0].toUpperCase() + a.slice(1)} onClick={() => setAccent(a)} className="press hit grid size-7 place-items-center rounded-full ring-offset-2 ring-offset-surface aria-checked:ring-2 aria-checked:ring-ink-2">

@@ -1,7 +1,8 @@
 'use client';
 
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
-import { Sparkles } from 'lucide-react';
+import Link from 'next/link';
+import { ArrowRight, Sparkles } from 'lucide-react';
 import { cn } from '@/lib/cn';
 import type { ACCENTS } from '@/lib/preferences';
 import { useSize } from '@/components/charts/use-size';
@@ -27,7 +28,8 @@ export type ToolResultShown = { name: string; text: string; resourceUri?: string
 export function PageStage({ route, embed, title, toolResult }: { route: string; embed?: string; title: string; toolResult?: ToolResultShown }) {
   const [surface, setSurface] = useState<Surface>(route.startsWith('/embed') ? 'embed' : 'console');
   const { theme, setTheme, accent, setAccent } = useStageLook();
-  const t = theme === 'both' ? 'dark' : theme;
+  // Both draws every frame twice, dark then light, so a page is judged in each theme side by side.
+  const themes = theme === 'both' ? (['dark', 'light'] as const) : ([theme] as const);
   const options = [
     ...(route.startsWith('/embed') ? [] : [{ value: 'console' as const, label: 'Console' }, { value: 'phone' as const, label: 'Phone' }]),
     ...(embed ? [{ value: 'embed' as const, label: 'MCP host' }] : []),
@@ -35,14 +37,29 @@ export function PageStage({ route, embed, title, toolResult }: { route: string; 
   return (
     <section aria-label={`${title} on every surface`} className="overflow-hidden rounded-xl border border-line bg-surface shadow-card">
       <StageBar
-        theme={theme} setTheme={setTheme} accent={accent} setAccent={setAccent} both={false}
-        extra={options.length > 1 ? <Segmented size="sm" label="Surface" value={surface} onChange={setSurface} options={options} /> : null}
+        theme={theme} setTheme={setTheme} accent={accent} setAccent={setAccent}
+        extra={
+          <>
+            {options.length > 1 ? <Segmented size="sm" label="Surface" value={surface} onChange={setSurface} options={options} /> : null}
+            {/* The frames are pictures, out of the Tab order; the page itself is one press away, where a keyboard can use it. */}
+            <Link href={surface === 'embed' && embed ? embed : route} className="press hit inline-flex items-center gap-1 rounded-sm text-xs font-medium text-ink-2 hover:text-accent-ink">
+              Open the page <ArrowRight className="size-3.5" />
+            </Link>
+          </>
+        }
       />
       <div className="relative isolate overflow-hidden bg-ground px-4 py-8 sm:px-8">
         <div aria-hidden className="pointer-events-none absolute inset-0 -z-10 bg-(image:--glow-ground)" />
-        {surface === 'console' ? <ConsoleFrame route={route} theme={t} accent={accent} /> : null}
-        {surface === 'phone' ? <PhoneFrame route={route} theme={t} accent={accent} /> : null}
-        {surface === 'embed' && embed ? <HostSimulator route={embed} theme={t} toolResult={toolResult} /> : null}
+        <div className={cn('flex gap-8', surface === 'phone' ? 'flex-wrap justify-center' : 'flex-col')}>
+          {themes.map((t) => (
+            <div key={t} className={cn('flex min-w-0 flex-col gap-3', surface !== 'phone' && 'w-full')}>
+              {themes.length > 1 ? <p className="t-kicker">{t}</p> : null}
+              {surface === 'console' ? <ConsoleFrame route={route} theme={t} accent={accent} /> : null}
+              {surface === 'phone' ? <PhoneFrame route={route} theme={t} accent={accent} /> : null}
+              {surface === 'embed' && embed ? <HostSimulator route={embed} theme={t} toolResult={toolResult} /> : null}
+            </div>
+          ))}
+        </div>
       </div>
     </section>
   );
@@ -62,7 +79,7 @@ function ConsoleFrame({ route, theme, accent }: { route: string; theme: 'dark' |
         </div>
         <div style={{ height: H * scale }} className="relative overflow-hidden">
           {scale ? (
-            <iframe ref={frame} title="Console" src={route} onLoad={() => dress(frame.current, theme, accent)} style={{ width: W, height: H, transform: `scale(${scale})`, transformOrigin: '0 0' }} className="absolute top-0 left-0 border-0" />
+            <iframe ref={frame} title="Console" tabIndex={-1} src={route} onLoad={() => dress(frame.current, theme, accent)} style={{ width: W, height: H, transform: `scale(${scale})`, transformOrigin: '0 0' }} className="absolute top-0 left-0 border-0" />
           ) : null}
         </div>
       </div>
@@ -78,7 +95,7 @@ function PhoneFrame({ route, theme, accent }: { route: string; theme: 'dark' | '
     <div className="flex flex-col items-center">
       <div className="rounded-[46px] border border-line-strong bg-surface-sunk p-2.5 shadow-overlay">
         <div className="relative overflow-hidden rounded-[38px]">
-          <iframe ref={frame} title="Phone" src={route} onLoad={() => dress(frame.current, theme, accent)} className="block h-[760px] w-[390px] max-w-[calc(100vw-80px)] border-0" />
+          <iframe ref={frame} title="Phone" tabIndex={-1} src={route} onLoad={() => dress(frame.current, theme, accent)} className="block h-[760px] w-[390px] max-w-[calc(100vw-80px)] border-0" />
         </div>
       </div>
       <p className="t-caption mt-3">390 × 760: the drawer replaces the rail, rows stack.</p>
@@ -171,6 +188,7 @@ function HostSimulator({ route, theme, toolResult }: { route: string; theme: 'da
             <iframe
               ref={frame}
               title="MCP App view"
+              tabIndex={-1}
               src={route}
               style={{ height: mode === 'fullscreen' ? 760 : height }}
               className="block w-full border-0 bg-transparent transition-[height] duration-(--dur-enter)"
