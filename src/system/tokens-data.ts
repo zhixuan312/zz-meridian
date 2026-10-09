@@ -24,7 +24,7 @@ function groups(file: string): TokenGroup[] {
       return {
         id,
         title,
-        about: rest.join(': '),
+        about: rest.join(': ').replace(/^./, (c) => c.toUpperCase()),
         source: `tokens/${file}`,
         tokens: (Object.entries(g).filter(([k]) => !k.startsWith('$')) as [string, DtcgToken][])
           .map(([name, t]) => {

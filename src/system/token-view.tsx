@@ -7,6 +7,7 @@ import type { ACCENTS } from '@/lib/preferences';
 import { Scope, StageBar, type Density } from '@/system/card-stage';
 import type { TokenGroup } from '@/system/tokens-data';
 import { app } from '@/app.config';
+import { PAIRS } from '../../scripts/lib/contrast-pairs';
 
 type RGBA = ReturnType<typeof parse>;
 type Accent = (typeof ACCENTS)[number];
@@ -39,7 +40,15 @@ function useResolved(names: string[], deps: unknown[]) {
 const safe = (v?: string): RGBA | null => {
   try { return v ? parse(v) : null; } catch { return null; }
 };
-const short = (v = '') => v.replace(/oklch\(([\d.]+) ([\d.]+) ([\d.]+)( \/ ([\d.]+))?\)/, (_, l, c, h, __, a) => `oklch ${(+l).toFixed(2)} ${(+c).toFixed(3)} ${Math.round(+h)}${a ? ` / ${(+a).toFixed(2)}` : ''}`).replace(/^rgba?\((.+)\)$/, 'rgb $1');
+const short = (v = '') => v.replace(/oklch\(([\d.]+) ([\d.]+) ([\d.]+)( \/ ([\d.]+))?\)/, (_, l, c, h, __, a) => `oklch ${(+l).toFixed(2)} ${(+c).toFixed(3)} ${Math.round(+h)}${a ? ` / ${(+a).toFixed(2)}` : ''}`).replace(/^rgba?\((.+)\)$/, 'rgb $1')
+  .replace(/^lab\(.+\)$/, (lab) => {
+    // A minifier ships some oklch() tints as lab(); show them as rgb, the form every other literal takes here.
+    const c = safe(lab);
+    return c ? `rgb ${c.slice(0, 3).map((x) => Math.round(x * 255)).join(', ')}${c[3] < 1 ? `, ${+c[3].toFixed(3)}` : ''}` : lab;
+  });
+
+/** The pair the contrast gate measures a role on first: where that role is used most. */
+const pairOf = (name: string) => PAIRS.find(([fg]) => fg === name);
 
 export function TokenView({ view, groups }: { view: string; groups: Groups }) {
   const [theme, setTheme] = useState<'dark' | 'light' | 'both'>('dark');
@@ -74,9 +83,15 @@ export function TokenView({ view, groups }: { view: string; groups: Groups }) {
 
 function Colour({ groups, theme, accent }: { groups: TokenGroup[]; theme: string; accent: string }) {
   const shown = groups.filter((g) => !['chart', 'elevation'].includes(g.id));
-  const names = shown.flatMap((g) => g.tokens.filter((t) => t.type === 'color').map((t) => t.name)).concat(['ground', 'surface']);
+  const names = [...new Set(shown.flatMap((g) => g.tokens.filter((t) => t.type === 'color').map((t) => t.name)).concat(PAIRS.flatMap(([, bg]) => [bg].flat()), ['ground']))];
   const [root, v] = useResolved(names, [theme, accent]);
-  const ground = safe(v.ground), surface = safe(v.surface);
+  /** The role's contrast on the background its pair names, composited over the ground as it renders. */
+  const measure = (fg: string, bg: string | string[]) => {
+    let back = safe(v.ground);
+    for (const layer of [bg].flat()) { const c = safe(v[layer]); back = c && back ? over(c, back) : null; }
+    const c = safe(v[fg]);
+    return c && back ? ratio(over(c, back), back) : null;
+  };
   return (
     <div ref={root} className="flex flex-col gap-12">
       {shown.map((g) => (
@@ -87,8 +102,8 @@ function Colour({ groups, theme, accent }: { groups: TokenGroup[]; theme: string
           </div>
           <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
             {g.tokens.filter((t) => t.type === 'color').map((t) => {
-              const c = safe(v[t.name]);
-              const onSurface = c && ground && surface ? ratio(over(c, over(surface, ground)), over(surface, ground)) : null;
+              const pair = pairOf(t.name);
+              const r = pair ? measure(pair[0], pair[1]) : null;
               return (
                 <div key={t.name} className="flex gap-3.5 rounded-lg border border-line bg-surface p-3">
                   <span className="relative size-14 shrink-0 overflow-hidden rounded-md border border-line bg-[conic-gradient(var(--fill-track)_25%,transparent_0_50%,var(--fill-track)_0_75%,transparent_0)] bg-size-[10px_10px]">
@@ -97,11 +112,12 @@ function Colour({ groups, theme, accent }: { groups: TokenGroup[]; theme: string
                   <div className="min-w-0 flex-1">
                     <p className="font-mono text-xs font-medium text-ink">{t.name}</p>
                     <p className="mt-0.5 truncate font-mono text-2xs text-ink-3" title={v[t.name]}>{short(v[t.name])}</p>
-                    <p className="mt-1.5 line-clamp-2 text-xs leading-snug text-ink-2">{t.description}</p>
+                    <p className="mt-1.5 text-xs leading-snug text-ink-2">{t.description}</p>
+                    {pair && r !== null ? <p className="t-caption mt-1">On {[pair[1]].flat().join(' + ')}, needs {pair[2]}:1</p> : null}
                   </div>
-                  {onSurface && /^(ink|accent-ink|positive-ink|warning-ink|critical-ink|accent|positive|warning|critical|line-control)/.test(t.name) ? (
-                    <span className={cn('t-num self-start rounded-sm px-1.5 py-0.5 font-mono text-2xs', onSurface >= 4.5 ? 'bg-positive-tint text-positive-ink' : onSurface >= 3 ? 'bg-fill-track text-ink-2' : 'bg-critical-tint text-critical-ink')} title="Contrast on surface">
-                      {onSurface.toFixed(1)}
+                  {pair && r !== null ? (
+                    <span className={cn('t-num self-start rounded-sm px-1.5 py-0.5 font-mono text-2xs', r >= pair[2] ? 'bg-positive-tint text-positive-ink' : 'bg-critical-tint text-critical-ink')}>
+                      {r.toFixed(1)}
                     </span>
                   ) : null}
                 </div>
@@ -179,12 +195,14 @@ const ROLES: [string, string, string][] = [
 
 function Type({ groups }: { groups: TokenGroup[] }) {
   const root = useRef<HTMLDivElement>(null);
-  const [spec, setSpec] = useState<Record<string, string>>({});
+  const [spec, setSpec] = useState<Record<string, [string, string]>>({});
   useEffect(() => {
-    const out: Record<string, string> = {};
+    const out: Record<string, [string, string]> = {};
     root.current?.querySelectorAll<HTMLElement>('[data-role]').forEach((el) => {
       const c = getComputedStyle(el);
-      out[el.dataset.role!] = `${Math.round(parseFloat(c.fontSize))}px · ${c.fontWeight} · ${c.fontFamily.includes('Mono') ? 'mono' : 'sans'}${c.letterSpacing !== 'normal' ? ` · ${(parseFloat(c.letterSpacing) / parseFloat(c.fontSize)).toFixed(3)}em` : ''}`;
+      const tracking = c.letterSpacing !== 'normal' ? (parseFloat(c.letterSpacing) / parseFloat(c.fontSize)).toFixed(3).replace('-', '−') : null;
+      // Size, weight and family on one line, tracking on its own, so neither line breaks beside a separator.
+      out[el.dataset.role!] = [`${Math.round(parseFloat(c.fontSize))}px · ${c.fontWeight} · ${c.fontFamily.includes('Mono') ? 'mono' : 'sans'}`, tracking ? `tracking ${tracking}em` : ''];
     });
     // eslint-disable-next-line react-hooks/set-state-in-effect -- the spec is measured from the rendered type, which exists only after the first paint.
     setSpec(out);
@@ -197,7 +215,8 @@ function Type({ groups }: { groups: TokenGroup[] }) {
           <div>
             <p className="font-mono text-xs text-ink">.{cls}</p>
             <p className="t-caption mt-1">{name}</p>
-            <p className="mt-1 font-mono text-2xs text-ink-3">{spec[cls]}</p>
+            <p className="mt-1 font-mono text-2xs text-ink-3">{spec[cls]?.[0]}</p>
+            {spec[cls]?.[1] ? <p className="font-mono text-2xs text-ink-3">{spec[cls][1]}</p> : null}
           </div>
           <p data-role={cls} className={cn(cls, 'min-w-0 truncate', cls === 't-display' && 'text-[clamp(40px,6vw,88px)]')}>{sample}</p>
         </div>
@@ -219,8 +238,8 @@ function Space({ groups, density }: { groups: Groups; density: Density }) {
           {space.tokens.map((t) => (
             <div key={t.name} className="flex items-center gap-4">
               <span className="w-20 shrink-0 font-mono text-xs text-ink-2">{t.name}</span>
-              <span className="h-3 rounded-xs bg-accent" style={{ width: `var(--${t.name})` }} />
-              <span className="t-caption truncate">{t.description}</span>
+              <span className="w-24 shrink-0"><span className="block h-3 rounded-xs bg-accent" style={{ width: `var(--${t.name})` }} /></span>
+              <span className="t-caption min-w-0">{t.description}</span>
             </div>
           ))}
         </div>
