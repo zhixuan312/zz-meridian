@@ -66,13 +66,13 @@ export default function AtlasHome() {
 
       {/* Layers */}
       <section className="mt-28">
-        <SectionHead kicker="01" title={<>Five layers,<br />built from the bottom.</>} line="Each layer uses only the ones beneath it, so a change at the bottom moves everything above, and nothing above invents a value of its own." />
+        <SectionHead title={<>Five layers,<br />built from the bottom.</>} line="Each layer uses only the ones beneath it, so a change at the bottom moves everything above, and nothing above invents a value of its own." />
         <Strata sections={SECTIONS.filter((x) => x.num).map((x) => ({ ...x, count: all.filter((e) => e.section === x.id).length, href: all.find((e) => e.section === x.id)?.href ?? '/system' }))} />
       </section>
 
       {/* Surfaces and operators */}
       <section className="mt-28">
-        <SectionHead kicker="02" title={<>Three surfaces.<br />Two operators.</>} line="People point, tap and type; agents call tools. Both use the same views, on the console, on a phone and in an MCP host, under five rules." />
+        <SectionHead title={<>Three surfaces.<br />Two operators.</>} line="People point, tap and type; agents call tools. Both use the same views, on the console, on a phone and in an MCP host, under five rules." />
         <div className="grid gap-px overflow-hidden rounded-xl border border-line bg-line sm:grid-cols-2 lg:grid-cols-5">
           {[
             ['Addressable', 'Every view’s state is in its address: an agent opens exactly the view it means.'],
@@ -96,7 +96,7 @@ export default function AtlasHome() {
 
       {/* Principles */}
       <section className="mt-28">
-        <SectionHead kicker="03" title={<>The principles<br />every layer answers to.</>} line="When two choices both fit the specification, pick the one that serves these better." />
+        <SectionHead title={<>The principles<br />every layer answers to.</>} line="When two choices both fit the specification, pick the one that serves these better." />
         <div className="grid border-t border-line md:grid-cols-2">
           {principles.map((p, i) => (
             <div key={p.title} className={'border-b border-line py-7 md:pr-10 ' + (i % 2 ? 'md:border-l md:pl-10' : '')}>
@@ -109,7 +109,7 @@ export default function AtlasHome() {
 
       {/* Guides */}
       <section className="mt-28">
-        <SectionHead kicker="04" title="Guides." line="How the surfaces work, how agents fit, and how to start a dashboard from this one." />
+        <SectionHead title="Guides." line="How the surfaces work, how agents fit, and how to start a dashboard from this one." />
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
           {all.filter((e) => e.section === 'start' && e.id !== 'overview').map((e) => (
             <Link key={e.href} href={e.href} className="group flex flex-col rounded-lg border border-line bg-surface/70 p-5 hover:border-line-strong">
@@ -123,7 +123,7 @@ export default function AtlasHome() {
 
       {/* What changed: the latest release in one line and its headlines; the whole log is one link away. */}
       <section className="mt-24">
-        <SectionHead kicker="05" title="What changed." line="Every release, with what breaks and what to do instead." />
+        <SectionHead title="What changed." line="Every release, with what breaks and what to do instead." />
         <div className="grid gap-8 rounded-xl border border-line bg-surface p-7 lg:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]">
           <div>
             <p className="t-kicker">{release.version} · {release.date}</p>
@@ -150,11 +150,11 @@ export default function AtlasHome() {
   );
 }
 
-function SectionHead({ kicker, title, line, compact }: { kicker: string; title: React.ReactNode; line: string; compact?: boolean }) {
+function SectionHead({ title, line, compact }: { title: React.ReactNode; line: string; compact?: boolean }) {
   return (
     <div className={compact ? 'mb-6' : 'mb-10 grid items-end gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]'}>
       <div>
-        <p className="t-kicker mb-5">{kicker}</p>
+        {/* No number above it: the headline names the section, and a counter would only be decoration. */}
         <h2 className="text-[clamp(32px,3.6vw,48px)] leading-[1.02] font-semibold tracking-[-0.03em]">{title}</h2>
       </div>
       <p className={'t-small max-w-[52ch] text-ink-2 ' + (compact ? 'mt-3' : 'lg:pb-1.5')}>{line}</p>
