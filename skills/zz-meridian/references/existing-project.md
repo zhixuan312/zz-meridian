@@ -99,8 +99,9 @@ Migrate in place, page by page, keeping their data layer.
    reads its API address from in `scripts/verify.config.ts` (`fakeApi: { script, env }`): verify starts it first and
    builds and serves the app against it. Point the build at it, not only the server: an address read in
    `next.config` rewrites is baked in at build time.
-   If their pages use web components, the audit, the presses and the keyboard walk look inside open shadow roots, and an
-   element they cannot look inside is reported as `unmeasured:`; `validation.md` says what to do about it.
+   If their pages use web components, every browser suite (the audit, the presses, the keyboard walk, the assistant and
+   live-data walk-throughs and the vitals' taps) looks inside open shadow roots, and an element the audit cannot look
+   inside is reported as `unmeasured:`; `validation.md` says what to do about it.
    **A direct database connection is the same hazard through another door.** If their pages read `DATABASE_URL` from
    `.env` (or any other data URL: name it in `dataUrls`), a `next build` and `next start` in their folder carry it, so
    Approve and Delete land on whatever it names. verify reports the browser as `not run` in the default, and `--full`

@@ -11,13 +11,15 @@
  *   deep-dead-control                                                    a press that changes nothing
  *   deep-shift-tab                                                       a control only Shift+Tab reaches
  *   deep-closed, deep-undefined                                          content the suites cannot enter
+ *   deep-tap                                                             a phone tap on a control inside a root (vitals)
+ *   slow-load                                                            a page whose load event comes late (chrome.ts)
  *   nav-*                                                                pages for scripts/navigate.ts
  */
 
 const BASE_CSS = `
   html, body { margin: 0; background: #ffffff; color: #1a1a1a; font: 16px/1.5 system-ui, sans-serif; }
   main { padding: 16px; }
-  x-outer, x-inner, x-box, x-card, x-ring, x-sealed, x-ghost, x-mid { display: block; }
+  x-outer, x-inner, x-box, x-card, x-ring, x-sealed, x-ghost, x-mid, x-bar { display: block; }
   button { min-width: 44px; min-height: 44px; font: inherit; }
 `;
 
@@ -142,6 +144,15 @@ document.getElementById('first').addEventListener('keydown', (e) => { if (e.key 
   '/deep-closed-fixed': deep('Closed root, corrected', { body: '<x-sealed></x-sealed>', script: define('x-sealed', SEALED_HTML) }),
   '/deep-undefined': deep('Undefined element', { body: '<x-ghost>Loading the ledger</x-ghost>' }),
   '/deep-undefined-fixed': deep('Undefined element, corrected', { body: '<x-ghost></x-ghost>', script: define('x-ghost', '<p>The ledger is loaded.</p>') }),
+
+  // ---- a tap the vitals measure: the Alerts button sits inside an open root, and pressing it opens a panel there ----
+  '/deep-tap': deep('Tap inside a root', {
+    body: '<x-bar></x-bar>',
+    script: define('x-bar', '<button type="button" aria-label="Alerts">!</button><p class="panel" hidden>No new alerts</p>', HOST_RING, 'open', `this.shadowRoot.querySelector('button').addEventListener('click', () => { this.shadowRoot.querySelector('.panel').hidden = false; });`),
+  }),
+
+  // ---- a page whose load event waits for an image the server answers late (see server.ts) ----
+  '/slow-load': deep('Slow load', { body: '<img src="/slow-asset" alt="" width="1" height="1">' }),
 
   // ---- the helper's own page: nested roots, a slot, a closed root ----
   '/helper': `<!doctype html>

@@ -16,6 +16,8 @@ const ALL: Record<string, string> = { ...PAGES, ...NAV_PAGES };
 
 const i = process.argv.indexOf('--port');
 const server = http.createServer((req, res) => {
+  // The image /slow-load waits for: answered after 6 s, past the 4 s open() gives fonts, so the page's load event comes well after its HTML.
+  if (req.url === '/slow-asset') { setTimeout(() => res.writeHead(200, { 'content-type': 'image/gif' }).end(Buffer.from('R0lGODlhAQABAAAAACw=', 'base64')), 6000); return; }
   const html = ALL[(req.url ?? '/').split('?')[0]] ?? CLEAN;
   res.writeHead(200, { 'content-type': 'text/html; charset=utf-8' }).end(html);
 });

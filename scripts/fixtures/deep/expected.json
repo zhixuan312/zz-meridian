@@ -204,5 +204,11 @@
     "suite": "navigate",
     "outcome": "note",
     "line": "note: button.pick matches 2 elements; the first visible one was used"
+  },
+  {
+    "page": "/deep-tap",
+    "suite": "vitals",
+    "outcome": "pass",
+    "line": "taps: 1"
   }
 ]

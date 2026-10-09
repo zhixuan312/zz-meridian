@@ -9,13 +9,15 @@
  * slowest of real taps on controls that change the screen (a period, the alerts, the workspace menu, the drawer), from
  * Event Timing, counting only the tap's own pointer, touch and click events: the Escape that closes what a tap opened
  * is not a person's interaction, and a headless browser can hold a no-op key event open until something else paints.
- * A dropped frame is a gap over 50 ms between animation frames while those taps play out.
+ * A dropped frame is a gap over 50 ms between animation frames while those taps play out. Each line says how many controls
+ * it tapped, found through open shadow roots (scripts/lib/deep.ts), so a page whose INP rests on no tap says so.
  *
  * Every static page and the detail pages in scripts/verify.config.ts are measured; the Atlas is not a product page.
  * Run it against a production build (`next start`), never `next dev`. Fails (exit 1) when a page's LCP is 2.5 s or more,
  * INP 200 ms or more, or CLS 0.1 or more.
  */
 import { launch } from './lib/chrome.ts';
+import { DEEP_SOURCE } from './lib/deep.ts';
 import { discover } from './lib/routes.ts';
 import config from './verify.config.ts';
 
@@ -56,6 +58,7 @@ const TAPS = [
 
 const page = await launch();
 await page.send('Page.addScriptToEvaluateOnNewDocument', { source: OBSERVE });
+await page.send('Page.addScriptToEvaluateOnNewDocument', { source: DEEP_SOURCE });
 await page.send('Network.enable');
 let failures = 0;
 for (const route of ROUTES) {
@@ -64,10 +67,11 @@ for (const route of ROUTES) {
   await page.send('Emulation.setCPUThrottlingRate', { rate: 4 });
   await page.open(base + route, { width: 390, height: 844, theme: 'dark', reduced: false, wait: 7000 });
   await page.eval('window.__v.recording = true');
-  let inp = 0, slowest = '';
+  let inp = 0, slowest = '', tapped = 0;
   for (const sel of TAPS) {
-    const at = await page.eval<{ x: number; y: number } | null>(`(() => { const el = document.querySelector(${JSON.stringify(sel)}); if (!el) return null; const r = el.getBoundingClientRect(); if (!r.width || !r.height) return null; return { x: r.left + r.width / 2, y: r.top + r.height / 2 }; })()`);
+    const at = await page.eval<{ x: number; y: number } | null>(`(() => { const el = deepQuery(${JSON.stringify(sel)}); if (!el) return null; const r = el.getBoundingClientRect(); if (!r.width || !r.height) return null; return { x: r.left + r.width / 2, y: r.top + r.height / 2 }; })()`);
     if (!at) continue;
+    tapped++;
     await page.eval('(window.__v.taps = [], window.__v.since = performance.now(), true)');
     await page.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [at] });
     await page.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
@@ -83,7 +87,7 @@ for (const route of ROUTES) {
   const dropped = v.frames.filter((f) => f > 50).length;
   const bad = v.lcp >= 2500 || inp >= 200 || v.cls >= 0.1;
   if (bad) failures++;
-  console.log(`${bad ? 'FAIL' : 'ok  '} ${route.padEnd(36)} LCP ${(v.lcp / 1000).toFixed(2)} s · INP ${Math.round(inp)} ms · CLS ${v.cls.toFixed(3)} · frames over 50 ms: ${dropped} of ${v.frames.length}${inp >= 100 ? ` · slowest tap: ${slowest}` : ''}`);
+  console.log(`${bad ? 'FAIL' : 'ok  '} ${route.padEnd(36)} LCP ${(v.lcp / 1000).toFixed(2)} s · INP ${Math.round(inp)} ms · CLS ${v.cls.toFixed(3)} · frames over 50 ms: ${dropped} of ${v.frames.length} · taps: ${tapped}${inp >= 100 ? ` · slowest tap: ${slowest}` : ''}`);
 }
 await page.send('Emulation.setCPUThrottlingRate', { rate: 1 });
 page.close();

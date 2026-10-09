@@ -13,6 +13,9 @@
  * check removes the members it invited. One line per case, `ok`, `FAIL` or `not run` with the reason and measured
  * milliseconds. The exit code is 1 on any FAIL, 2 when nothing failed but a case did not run, and 0 only when every case
  * ran and passed: a case that did not run is never reported as passed.
+ *
+ * Controls are found and hit-tested through open shadow roots (scripts/lib/deep.ts), so a design system whose buttons,
+ * menus and sheets are web components is driven the same way.
  */
 import { spawn, type ChildProcess } from 'node:child_process';
 import fs from 'node:fs';
@@ -22,6 +25,7 @@ import path from 'node:path';
 import { bin } from './lib/bin.ts';
 import { NOT_RUN_EXIT } from './lib/coverage.ts';
 import { launch, type Page } from './lib/chrome.ts';
+import { DEEP_SOURCE } from './lib/deep.ts';
 
 const ROOT = path.resolve(import.meta.dirname, '..');
 const args = process.argv.slice(2);
@@ -136,6 +140,7 @@ const tally = async (page: Page) => { const s = await seen(page); return `age ${
 async function tab(): Promise<Page> {
   const page = await launch();
   await page.send('Page.addScriptToEvaluateOnNewDocument', { source: INSTRUMENT });
+  await page.send('Page.addScriptToEvaluateOnNewDocument', { source: DEEP_SOURCE });
   await page.send('Network.enable');
   return page;
 }
@@ -162,13 +167,20 @@ async function openMembers(page: Page, origin: string) {
 
 // ---- input, through the template's own controls ----
 
-const find = (selector: string, text?: string) => text === undefined
-  ? `document.querySelector(${JSON.stringify(selector)})`
-  : `[...document.querySelectorAll(${JSON.stringify(selector)})].find((el) => el.textContent.trim() === ${JSON.stringify(text)} && !el.disabled)`;
+/** A page expression for the first element matching `selector` under `scope` (another page expression), named `text` if given. */
+const find = (selector: string, text?: string, scope = 'document') => text === undefined
+  ? `deepQuery(${JSON.stringify(selector)}, ${scope})`
+  : `deepQueryAll(${JSON.stringify(selector)}, ${scope}).find((el) => deepText(el).trim() === ${JSON.stringify(text)} && !el.disabled)`;
+/** The dialog on screen. A closed one may stay in the page, drawn nowhere. */
+const DIALOG = `deepQueryAll('[role="dialog"]').find((d) => d.getBoundingClientRect().width > 0)`;
+/** What the dialog on screen holds: from its host when it is drawn inside a root, since its fields are slotted into that host. */
+const IN_DIALOG = `(() => { const d = ${DIALOG}; const r = d?.getRootNode(); return r instanceof ShadowRoot ? r.host : d ?? null; })()`;
 
+/** Where to press `element`: its centre, once nothing covers it. The topmost element is found through open roots, and a host
+ *  whose own slotted text is at the point (the element's host or one around it) does not cover what is inside it. */
 async function point(page: Page, element: string, { stable = false, within = 5000 } = {}): Promise<{ x: number; y: number }> {
   const t = Date.now();
-  const where = () => page.eval<{ x: number; y: number } | null>(`(() => { const el = ${element}; if (!el) return null; el.scrollIntoView({ block: 'center' }); const r = el.getBoundingClientRect(); if (!(r.width > 0 && r.height > 0)) return null; const x = r.left + r.width / 2, y = r.top + r.height / 2; const hit = document.elementFromPoint(x, y); return hit && (hit === el || el.contains(hit)) ? { x, y } : null; })()`);
+  const where = () => page.eval<{ x: number; y: number } | null>(`(() => { const el = ${element}; if (!el) return null; el.scrollIntoView({ block: 'center' }); const r = el.getBoundingClientRect(); if (!(r.width > 0 && r.height > 0)) return null; const x = r.left + r.width / 2, y = r.top + r.height / 2; let hit = document.elementFromPoint(x, y); for (let inner = hit && hit.shadowRoot && hit.shadowRoot.elementFromPoint(x, y); inner && inner !== hit; inner = hit.shadowRoot && hit.shadowRoot.elementFromPoint(x, y)) hit = inner; for (let n = hit; n; n = deepParent(n)) if (n === el) return { x, y }; for (let n = el; n; n = deepParent(n)) if (n === hit && n.shadowRoot) return { x, y }; return null; })()`);
   for (;;) {
     const at = await where();
     // A menu or dialog still animating in moves under the pointer; stable means the same place twice, 60 ms apart.
@@ -178,7 +190,7 @@ async function point(page: Page, element: string, { stable = false, within = 500
       if (again && again.x === at.x && again.y === at.y) return at;
     } else if (at) return at;
     if (Date.now() - t > within) {
-      const buttons = await page.eval<string>(`[...document.querySelectorAll('button')].map((b) => b.textContent.trim() + (b.disabled ? ' (disabled)' : '')).filter(Boolean).slice(-6).join(' | ')`);
+      const buttons = await page.eval<string>(`deepQueryAll('button').map((b) => deepText(b).trim() + (b.disabled ? ' (disabled)' : '')).filter(Boolean).slice(-6).join(' | ')`);
       throw new Error(`no such control: ${element.slice(0, 120)}; the page's last buttons: ${buttons}`);
     }
     await sleep(15);
@@ -216,21 +228,21 @@ async function waitFor(page: Page, what: string, expression: string, within = 50
 
 /** Invites one member through the sheet; resolves with the time of the Send press. */
 async function invite(page: Page, name: string, confirm = true): Promise<number> {
-  await waitFor(page, 'the previous sheet closing', `!document.querySelector('[role="dialog"]')`);
+  await waitFor(page, 'the previous sheet closing', `!${DIALOG}`);
   // The sheet slides in from the right; a press aimed at it mid-slide lands outside it and closes it. A press on the
   // button that a closing menu or toast swallowed is pressed again.
   for (let attempt = 1; ; attempt++) {
     await click(page, find('button', 'Invite member'));
     try {
-      await waitFor(page, 'the sheet settling', `(() => { const d = document.querySelector('[role="dialog"]'); const r = d?.getBoundingClientRect(); return r && r.width > 0 && r.right <= innerWidth + 1; })()`, 1500);
+      await waitFor(page, 'the sheet settling', `(() => { const d = ${DIALOG}; const r = d?.getBoundingClientRect(); return r && r.width > 0 && r.right <= innerWidth + 1; })()`, 1500);
       break;
     } catch (e) {
       if (attempt === 3) throw e;
     }
   }
-  await click(page, find('[role="dialog"] input[placeholder="Ana Costa"]'));
+  await click(page, find('input[placeholder="Ana Costa"]', undefined, IN_DIALOG));
   await page.send('Input.insertText', { text: name });
-  await click(page, find('[role="dialog"] input[type="email"]'));
+  await click(page, find('input[type="email"]', undefined, IN_DIALOG));
   const email = `${name.replace(/\s+/g, '.')}@live-check.example`;
   await page.send('Input.insertText', { text: email });
   const pressed = await press(page, find('button', 'Send invitation'));
@@ -247,7 +259,7 @@ async function refused(page: Page, within: number, confirmation: string) {
     const no = /Change not made\n([^\n]*)/.exec(text);
     if (no) throw new Error(`the server refused an invitation: ${no[1]}`);
     if (text.includes(confirmation)) return;
-    if (Date.now() - t > within) throw new Error(`A's invitation was not confirmed by its toast in ${within} ms; saving rows ${await page.eval<number>(`(document.body.innerText.match(/Saving…/g) ?? []).length`)}, toasts [${await page.eval<string>(`[...document.querySelectorAll('[role=status],[role=alert],[data-toast],ol li')].map((e) => e.innerText.replace(/\\s+/g, ' ').slice(0, 80)).slice(0, 5).join(' / ')`)}], errors [${page.errors.join(' / ')}]; the sheet now: ${await page.eval<string>(`(document.querySelector('[role="dialog"]')?.innerText ?? 'closed').replace(/\\s+/g, ' ')`)}`);
+    if (Date.now() - t > within) throw new Error(`A's invitation was not confirmed by its toast in ${within} ms; saving rows ${await page.eval<number>(`(document.body.innerText.match(/Saving…/g) ?? []).length`)}, toasts [${await page.eval<string>(`deepQueryAll('[role=status],[role=alert],[data-toast],ol li').map((e) => e.innerText.replace(/\\s+/g, ' ').slice(0, 80)).slice(0, 5).join(' / ')`)}], errors [${page.errors.join(' / ')}]; the sheet now: ${await page.eval<string>(`(${IN_DIALOG}?.innerText ?? 'closed').replace(/\\s+/g, ' ')`)}`);
     await sleep(25);
   }
 }
@@ -276,21 +288,28 @@ const replayInvites = (page: Page, names: string[], everyMs: number) => page.eva
 /** Removes a member through the row's menu and the confirmation; a name that is not on the page is already gone. */
 async function remove(page: Page, name: string) {
   const row = `button[aria-label="Actions for ${name}"]`;
-  if (!(await page.eval<boolean>(`!!document.querySelector(${JSON.stringify(row)})`))) return;
-  await waitFor(page, 'no dialog open', `!document.querySelector('[role="dialog"]')`);
+  if (!(await page.eval<boolean>(`!!${find(row)}`))) return;
+  await waitFor(page, 'no dialog open', `!${DIALOG}`);
   await click(page, find(row));
   await click(page, find('[role="menuitem"]', 'Remove'), true);
-  await click(page, find('[role="dialog"] button', 'Remove member'), true);
+  await click(page, find('button', 'Remove member', IN_DIALOG), true);
   await waitFor(page, `${name} leaving the table`, `!document.body.innerText.includes(${JSON.stringify(name)})`, 8000);
 }
 
-/** Resolves with the page's clock the moment the names are all shown (or all gone), or null at the deadline. */
+/**
+ * Resolves with the page's clock the moment the names are all shown (or all gone), or null at the deadline. A mutation
+ * of the page is the prompt to look, and so is every 50 ms: a row a web component draws shows its text only once the
+ * component has rendered inside its root, which no observer of the page's own tree hears.
+ */
 const showing = (page: Page, names: string[], present: boolean, within: number) => page.eval<number | null>(`new Promise((resolve) => {
   const names = ${JSON.stringify(names)};
   const ok = () => names.every((n) => document.body.innerText.includes(n) === ${present});
   if (ok()) return resolve(Date.now());
-  const timer = setTimeout(() => { observer.disconnect(); resolve(null); }, ${within});
-  const observer = new MutationObserver(() => { if (ok()) { clearTimeout(timer); observer.disconnect(); resolve(Date.now()); } });
+  const done = (at) => { clearTimeout(timer); clearInterval(tick); observer.disconnect(); resolve(at); };
+  const look = () => { if (ok()) done(Date.now()); };
+  const timer = setTimeout(() => done(null), ${within});
+  const tick = setInterval(look, 50);
+  const observer = new MutationObserver(look);
   observer.observe(document.body, { subtree: true, childList: true, characterData: true });
 })`);
 
@@ -340,7 +359,7 @@ async function visibility(t: Tabs) {
     await show();
     const at = await shown;
     const ms = at === null ? Infinity : at - visibleAt;
-    if (ms > POLL_BOUND_MS) throw new Error(`B did not show the change within ${POLL_BOUND_MS} ms of becoming visible (${await tally(t.b)}; A ${await tally(t.a)}; A shows it: ${await t.a.eval(`document.body.innerText.includes(${JSON.stringify(n)})`)}; A's table rows ${await t.a.eval(`document.querySelectorAll('tbody tr').length`)}, B's ${await t.b.eval(`document.querySelectorAll('tbody tr').length`)}; A's messages: ${await t.a.eval(`document.body.innerText.split('\\n').filter((l) => /Invitation|Change not made|Sign in|permission|Enter their|Name the/.test(l)).join(' / ')`)}; this run's rows: A [${await t.a.eval(`[...document.querySelectorAll('tbody tr')].map((tr) => tr.innerText.replace(/\\s+/g, ' ').slice(0, 60)).filter((x) => x.includes(${JSON.stringify(run)})).join(' / ')`)}] B [${await t.b.eval(`[...document.querySelectorAll('tbody tr')].map((tr) => tr.innerText.replace(/\\s+/g, ' ').slice(0, 60)).filter((x) => x.includes(${JSON.stringify(run)})).join(' / ')`)}])`);
+    if (ms > POLL_BOUND_MS) throw new Error(`B did not show the change within ${POLL_BOUND_MS} ms of becoming visible (${await tally(t.b)}; A ${await tally(t.a)}; A shows it: ${await t.a.eval(`document.body.innerText.includes(${JSON.stringify(n)})`)}; A's table rows ${await t.a.eval(`deepQueryAll('tr').length`)}, B's ${await t.b.eval(`deepQueryAll('tr').length`)}; A's messages: ${await t.a.eval(`document.body.innerText.split('\\n').filter((l) => /Invitation|Change not made|Sign in|permission|Enter their|Name the/.test(l)).join(' / ')`)}; this run's rows: A [${await t.a.eval(`deepQueryAll('tr').map((tr) => deepText(tr).replace(/\\s+/g, ' ').slice(0, 60)).filter((x) => x.includes(${JSON.stringify(run)})).join(' / ')`)}] B [${await t.b.eval(`deepQueryAll('tr').map((tr) => deepText(tr).replace(/\\s+/g, ' ').slice(0, 60)).filter((x) => x.includes(${JSON.stringify(run)})).join(' / ')`)}])`);
     report('ok', 'visibility', `B, hidden while A invited (still not showing it ${pollMs + 1000} ms after A's invitation), showed it ${ms} ms after becoming visible (bound ${POLL_BOUND_MS} ms; visibility emulated by overriding document.visibilityState)`);
   } finally {
     // Whatever happened above, B must not stay hidden for the cases that follow.

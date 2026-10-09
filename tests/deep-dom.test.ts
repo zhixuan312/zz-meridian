@@ -98,6 +98,20 @@ describe('deepQuery', () => {
   });
 });
 
+describe('deepQueryAll', () => {
+  it('returns every match inside the roots under the scope, in deepAll order', async () => {
+    expect(await ids(`deepQueryAll('.dup')`)).toEqual(['i-span', 'o-btn']);
+    expect(await ids(`deepQueryAll('button', document.getElementById('outer'))`)).toEqual(['i-btn', 'o-btn']);
+    expect(await ids(`deepQueryAll('button', ${INNER})`)).toEqual(['i-btn']);
+    expect(await run<number>(`deepQueryAll('#no-such-id').length`)).toBe(0);
+  });
+
+  it('finds nothing under a scope that was not found, rather than searching the whole page', async () => {
+    expect(await run<number>(`deepQueryAll('button', document.querySelector('#no-such-scope')).length`)).toBe(0);
+    expect(await ids(`deepQuery('button', document.querySelector('#no-such-scope'))`)).toBeNull();
+  });
+});
+
 describe('deepParent', () => {
   it('steps from a slotted element to its slot, then through the root to the host', async () => {
     expect(await run<string>(`deepParent(document.getElementById('slotted')).localName`)).toBe('slot');
@@ -111,6 +125,16 @@ describe('deepParent', () => {
     expect(await ids(`deepParent(document.getElementById('s1'))`)).toBe('plain');
     expect(await run<string>(`deepParent(document.documentElement)`)).toBeNull();
   });
+});
+
+describe('open', () => {
+  it('waits for the page to finish loading, not only for a fixed time', async () => {
+    const base = await run<string>('location.origin');
+    await page.open(`${base}/slow-load`, { width: 1000, wait: 300 });
+    expect(await run<string>('document.readyState')).toBe('complete');
+    await page.open(`${base}/helper`, { width: 1000, wait: 300 });
+    await page.eval(DEEP_SOURCE);
+  }, 60_000);
 });
 
 describe('deepText', () => {

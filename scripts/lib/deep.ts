@@ -2,10 +2,10 @@
  * The deep-DOM helper: one implementation of "every element of the page", for the browser suites.
  *
  * `document.querySelectorAll('*')` stops at a shadow root, so a suite built on it never sees a custom element's own
- * content. These five functions walk through open shadow roots and slots instead. Every suite injects `DEEP_SOURCE`
+ * content. These six functions walk through open shadow roots and slots instead. Every suite injects `DEEP_SOURCE`
  * (the same code as a string) into the page, so there is one implementation, not a copy per suite:
  *
- *   await page.eval(DEEP_SOURCE);                       // once per page load, defines the five functions as globals
+ *   await page.eval(DEEP_SOURCE);                       // once per page load, defines the six functions as globals
  *   await page.eval(`deepAll().length`);                // then call them in any later expression
  *
  * Supported boundary:
@@ -21,7 +21,8 @@
  * one is valid page code. The file has no dependency.
  */
 
-export type DeepRoot = Document | ShadowRoot | Element;
+/** Where a search starts. `null` is a scope that was looked up and not found: nothing is under it. */
+export type DeepRoot = Document | ShadowRoot | Element | null;
 
 /**
  * Deterministic host-first traversal of the chosen root and reachable open roots.
@@ -37,6 +38,7 @@ export function deepAll(root: DeepRoot = document): Element[] {
     if (el.shadowRoot) for (const child of Array.from(el.shadowRoot.children)) visit(child);
     for (const child of Array.from(el.children)) visit(child);
   };
+  if (!root) return out;
   if (root instanceof Element) visit(root);
   else if (root instanceof Document) { if (root.documentElement) visit(root.documentElement); }
   else for (const child of Array.from(root.children)) visit(child);
@@ -60,6 +62,15 @@ export function deepActive(): Element | null {
 export function deepQuery(selector: string, root: DeepRoot = document): Element | null {
   for (const el of deepAll(root)) if (el.matches(selector)) return el;
   return null;
+}
+
+/**
+ * Every native selector match in deepAll order, restricted to the chosen scope: `querySelectorAll` through open roots.
+ * A control inside a web component is found under a light-DOM container by searching from it, `deepQueryAll('button',
+ * deepQuery('aside'))`, since `aside button` cannot cross the component's root.
+ */
+export function deepQueryAll(selector: string, root: DeepRoot = document): Element[] {
+  return deepAll(root).filter((el) => el.matches(selector));
 }
 
 /** Prefer assignedSlot; otherwise parentElement; otherwise the enclosing open root's host. */
@@ -88,5 +99,5 @@ export function deepText(el: Element): string {
   return out;
 }
 
-/** The five functions as page code, for `page.eval`: function declarations, so they become globals of the page. */
-export const DEEP_SOURCE: string = [deepAll, deepActive, deepQuery, deepParent, deepText].map((f) => f.toString()).join('\n');
+/** The six functions as page code, for `page.eval`: function declarations, so they become globals of the page. */
+export const DEEP_SOURCE: string = [deepAll, deepActive, deepQuery, deepQueryAll, deepParent, deepText].map((f) => f.toString()).join('\n');

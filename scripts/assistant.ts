@@ -15,10 +15,15 @@
  * on (from /keys); and the Settings switch. A product that removed one of those pages has no such flow to walk: each
  * step says `n/a` with the reason, and the rest still runs. Whether a sample surface is there is decided from its files,
  * so Meridian's own repository, which has every one, always walks all of them.
+ *
+ * Controls are found through open shadow roots (scripts/lib/deep.ts), so a design system whose buttons, rows and menus are
+ * web components is walked the same way: a control is searched for under the light-DOM container that holds it (the panel,
+ * the page's scroll region, the rail's `nav`) and named by its rendered text.
  */
 import path from 'node:path';
 import { slug } from '../src/app.config.ts';
 import { launch } from './lib/chrome.ts';
+import { DEEP_SOURCE } from './lib/deep.ts';
 import { APP_DIR, discover, railRoutes } from './lib/routes.ts';
 import { sampleSurfaces } from './lib/sample.ts';
 
@@ -47,26 +52,31 @@ const until = async <T>(what: string, read: () => Promise<T>, done: (v: T) => bo
   return done(v) ? v : fail(`timed out waiting for ${what} (last: ${JSON.stringify(v)})`);
 };
 
-const page = await launch();
-const MESSAGE = 'aside[data-assistant] textarea[aria-label="Message"]';
-const SEND = 'aside[data-assistant] button[aria-label="Send"]';
-const PROPOSALS = 'aside[data-assistant] article[aria-label^="Proposal from Assistant"]';
+/** A browser whose every page defines the deep-DOM helpers. */
+const browser = async () => { const p = await launch(); await p.send('Page.addScriptToEvaluateOnNewDocument', { source: DEEP_SOURCE }); return p; };
+const page = await browser();
+/** Page expressions: the panel, the page's own content, and the controls in the panel. */
+const PANEL = `deepQuery('aside[data-assistant]')`;
+const CONTENT = `deepQuery('[data-scroll-region]')`;
+const MESSAGE = `deepQuery('textarea[aria-label="Message"]', ${PANEL})`;
+const SEND = `deepQuery('button[aria-label="Send"]', ${PANEL})`;
+const PROPOSALS = `deepQueryAll('article[aria-label^="Proposal from Assistant"]', ${PANEL})`;
 
 /** Type `text` into the panel and press Send. */
 async function ask(text: string) {
-  await page.eval(`document.querySelector('${MESSAGE}').focus()`);
+  await page.eval(`${MESSAGE}.focus()`);
   await page.send('Input.insertText', { text });
-  await until('Send to enable', () => page.eval<boolean>(`!document.querySelector('${SEND}').disabled`), Boolean);
-  await page.eval(`document.querySelector('${SEND}').click()`);
+  await until('Send to enable', () => page.eval<boolean>(`!${SEND}.disabled`), Boolean);
+  await page.eval(`${SEND}.click()`);
 }
 /** What the assistant's latest text says (a Proposal card's own text is not the assistant speaking).
  *  `data-assistant-text` is the reply block's own handle: a reply is markdown, so its text may be in a paragraph, a
  *  list item or a table cell, and a selector that assumed a paragraph would break the day a model answers with a list. */
-const said = () => page.eval<string>(`[...document.querySelectorAll('aside[data-assistant] [data-assistant-text]')].at(-1)?.textContent.trim() ?? ''`);
+const said = () => page.eval<string>(`deepQueryAll('[data-assistant-text]', ${PANEL}).at(-1)?.textContent.trim() ?? ''`);
 /** The titles of the Proposal cards in the panel. */
-const proposals = () => page.eval<string[]>(`[...document.querySelectorAll('${PROPOSALS}')].map((a) => a.getAttribute('aria-label'))`);
+const proposals = () => page.eval<string[]>(`${PROPOSALS}.map((a) => a.getAttribute('aria-label'))`);
 /** A table row's text: the member's name, role, team, status and activity. */
-const row = (name: string) => page.eval<string | null>(`[...document.querySelectorAll('tbody tr')].find((r) => r.textContent.includes(${JSON.stringify(name)}))?.textContent ?? null`);
+const row = (name: string) => page.eval<string | null>(`deepQueryAll('tr').map((r) => deepText(r)).find((t) => t.includes(${JSON.stringify(name)})) ?? null`);
 /** Press with the mouse, as a person does: menus open on the pointer, not on a synthetic click. */
 async function press(find: string) {
   const where = `(() => { const el = ${find}; if (!el) return null; el.scrollIntoView({ block: 'center' }); const r = el.getBoundingClientRect(); return { x: Math.round(r.x + r.width / 2), y: Math.round(r.y + r.height / 2) }; })()`;
@@ -82,7 +92,7 @@ async function press(find: string) {
   for (const type of ['mouseMoved', 'mousePressed', 'mouseReleased'] as const) await page.send('Input.dispatchMouseEvent', { type, x: at.x, y: at.y, button: 'left', clickCount: 1 });
 }
 /** Press the button named `label` in the open Proposal card. */
-const decide = (label: string) => press(`[...document.querySelectorAll('${PROPOSALS} button')].find((b) => b.textContent.trim() === ${JSON.stringify(label)})`);
+const decide = (label: string) => press(`${PROPOSALS}.flatMap((a) => deepQueryAll('button', a)).find((b) => deepText(b).trim() === ${JSON.stringify(label)})`);
 try {
   if (expect === 'off') {
     // Without an assistant, and outside any host, no agent control appears anywhere: no launcher, no panel, no Ask.
@@ -91,34 +101,35 @@ try {
     for (const route of ROUTES) {
       await page.open(`${base}${route}`, { width: 1440 });
       await sleep(400);
-      const found = await page.eval<number>(`document.querySelectorAll('[data-assistant], button[aria-label="Assistant"], button[aria-label^="Ask: "]').length`);
+      const found = await page.eval<number>(`deepQueryAll('[data-assistant], button[aria-label="Assistant"], button[aria-label^="Ask: "]').length`);
       if (found) fail(`${route} has ${found} agent control(s) with no assistant and no host`);
     }
     ok(`${ROUTES.length} pages and views have no panel, no launcher and no Ask`);
     // The person's own findings do not depend on any agent.
     if (SAMPLE.overview) {
       await page.open(`${base}/`, { width: 1440 });
-      await until('the Overview finding', () => page.eval<boolean>(`[...document.querySelectorAll('[data-scroll-region] button')].some((b) => /usual on/.test(b.textContent))`), Boolean);
+      await until('the Overview finding', () => page.eval<boolean>(`deepQueryAll('button', ${CONTENT}).some((b) => /usual on/.test(deepText(b)))`), Boolean);
       ok('the Overview shows its finding with no assistant');
     } else na('the Overview shows its finding with no assistant', 'the sample Overview is not in this product');
     const status = (await fetch(`${base}/api/assistant`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: '{"messages":[]}' })).status;
     if (status !== 404) fail(`POST /api/assistant answered ${status}, expected 404`);
     ok('POST /api/assistant answers 404');
   } else {
-    const LAUNCHER = 'button[aria-label="Assistant"]';
-    const LAUNCH = `document.querySelector('${LAUNCHER}').click()`;
-    const panelOpen = () => page.eval<boolean>(`!!document.querySelector('aside[data-assistant]')`);
+    const LAUNCHER = `deepQuery('button[aria-label="Assistant"]')`;
+    const LAUNCH = `${LAUNCHER}.click()`;
+    const panelOpen = () => page.eval<boolean>(`!!${PANEL}`);
     const openPanel = async () => { await page.eval(LAUNCH); await until('the panel to open', panelOpen, Boolean); };
     const stored = () => page.eval<string | null>(`localStorage.getItem(${JSON.stringify(`${slug}.assistant`)})`);
     const here = () => page.eval<string>(`location.pathname`);
-    const cards = () => page.eval<{ text: string; buttons: string[] }[]>(`[...document.querySelectorAll('${PROPOSALS}')].map((a) => ({ text: a.textContent, buttons: [...a.querySelectorAll('button')].map((b) => b.textContent.trim()) }))`);
-    const follow = async (href: string) => { await press(`document.querySelector('aside[aria-label="Primary"] a[href="${href}"]')`); await until(`the address to be ${href}`, here, (p) => p === href); };
+    const cards = () => page.eval<{ text: string; buttons: string[] }[]>(`${PROPOSALS}.map((a) => ({ text: a.textContent, buttons: deepQueryAll('button', a).map((b) => deepText(b).trim()) }))`);
+    // The rail's link, as navigate.ts finds it: a link inside a nav, the one on screen.
+    const follow = async (href: string) => { await press(`deepQueryAll('nav a[href="${href}"]').find((a) => a.getBoundingClientRect().width > 0)`); await until(`the address to be ${href}`, here, (p) => p === href); };
     const recorded = async () => (await (await fetch(`${llm}/requests`)).json()) as { messages?: { role: string; content: unknown }[] }[];
     const LOCAL = `${slug}.assistant`;
     const ABOUT_PAGE = /^This is the .+ page\.$/;
 
     await page.open(`${base}${landing}`, { width: 1440 });
-    if (!(await page.eval<boolean>(`!!document.querySelector('${LAUNCHER}')`))) fail(`no launcher on ${landing}`);
+    if (!(await page.eval<boolean>(`!!${LAUNCHER}`))) fail(`no launcher on ${landing}`);
     ok(`the launcher is on ${landing}`);
 
     // The panel is a SEPARATE CHUNK, and this is what says so. The page is measured with the panel closed, then again
@@ -155,12 +166,13 @@ try {
       ok(`the model was given the Overview's view context: ${viewContext.length} characters, with the error rate's definition, the spike against its median and what nothing recorded explains`);
 
       // Handoff: Ask on a card posts its question into the panel as the person's, with the page's view context.
-      const askLabel = await page.eval<string>(`document.querySelector('[data-scroll-region] button[aria-label^="Ask: "]')?.getAttribute('aria-label') ?? ''`);
+      const ASK = `deepQuery('button[aria-label^="Ask: "]', ${CONTENT})`;
+      const askLabel = await page.eval<string>(`${ASK}?.getAttribute('aria-label') ?? ''`);
       if (!askLabel) fail('the Overview has no Ask on its featured card while the assistant is on');
       const question = askLabel.replace(/^Ask: /, '');
       const beforeAsk = (await recorded()).length;
-      await press(`document.querySelector('[data-scroll-region] button[aria-label^="Ask: "]')`);
-      await until('the asked question in the thread', () => page.eval<string[]>(`[...document.querySelectorAll('aside[data-assistant] [data-role="user"]')].map((m) => m.textContent)`), (ms) => ms.some((m) => m.includes(question)));
+      await press(ASK);
+      await until('the asked question in the thread', () => page.eval<string[]>(`deepQueryAll('[data-role="user"]', ${PANEL}).map((m) => m.textContent)`), (ms) => ms.some((m) => m.includes(question)));
       const asked = await until('the request carrying the question', async () => (await recorded()).slice(beforeAsk), (rs) => rs.some((r) => JSON.stringify(r.messages?.at(-1)).includes(question.slice(0, 40))));
       const askedSystem = String(asked.find((r) => JSON.stringify(r.messages?.at(-1)).includes(question.slice(0, 40)))?.messages?.find((m) => m.role === 'system')?.content ?? '');
       if (!askedSystem.includes('<view-context>')) fail('the question Ask posted reached the model without the view context');
@@ -177,9 +189,9 @@ try {
     // ELEMENTS, and the characters that made them are gone from the panel's text.
     await ask('Show me a markdown summary');
     const md = await until('the markdown reply', () => page.eval<{ list: number; bold: number; table: number; text: string }>(
-      `(() => { const b = [...document.querySelectorAll('aside[data-assistant] [data-assistant-text]')].at(-1);
-                return b ? { list: b.querySelectorAll('li').length, bold: b.querySelectorAll('strong').length,
-                             table: b.querySelectorAll('table').length, text: b.textContent } : { list: 0, bold: 0, table: 0, text: '' }; })()`),
+      `(() => { const b = deepQueryAll('[data-assistant-text]', ${PANEL}).at(-1);
+                return b ? { list: deepQueryAll('li', b).length, bold: deepQueryAll('strong', b).length,
+                             table: deepQueryAll('table', b).length, text: b.textContent } : { list: 0, bold: 0, table: 0, text: '' }; })()`),
       (v) => v.table > 0);
     if (!md.list || !md.bold) fail(`the markdown reply rendered ${md.list} list items and ${md.bold} bold runs`);
     if (md.text.includes('**') || md.text.includes('|---') || md.text.includes('| ---')) fail(`the markdown reply still shows its markup: "${md.text}"`);
@@ -192,8 +204,8 @@ try {
       await openPanel();
 
       // The table is newest-joined first at 20 a page, so the long-tenured members are on page 2: show 50 to read them all.
-      await press(`[...document.querySelectorAll('nav[aria-label="Pagination"] button')].find((b) => b.textContent.includes('per page'))`);
-      await press(`[...document.querySelectorAll('[role="menuitem"]')].find((i) => i.textContent.includes('50 per page'))`);
+      await press(`deepQueryAll('button', deepQuery('nav[aria-label="Pagination"]')).find((b) => deepText(b).includes('per page'))`);
+      await press(`deepQueryAll('[role="menuitem"]').find((i) => deepText(i).includes('50 per page'))`);
       await until('every member to show', () => row('Alice Moreno'), Boolean);
 
       await ask('Which Support viewers have been inactive for more than 60 days?');
@@ -205,7 +217,7 @@ try {
       await ask('Suspend them');
       await until('a Proposal to change two members', proposals, (t) => t.some((l) => l?.startsWith('Proposal from Assistant: Change 2 members')));
       // A second tab holds the Overview open, as a teammate would: the Activity line must reach it without a reload.
-      const watcher = SAMPLE.overview ? await launch() : null;
+      const watcher = SAMPLE.overview ? await browser() : null;
       await watcher?.open(`${base}/`, { width: 1440 });
       await decide('Approve');
       const suspended = await until('both rows to read Suspended', async () => [await row('Alice Moreno'), await row('Ravi Patel')], (r) => r.every((t) => t?.includes('Suspended')));
@@ -215,7 +227,7 @@ try {
       if (watcher) {
         // Provenance: the approved change left an Activity line naming the agent and the person it acted for.
         const object = 'status to Suspended for Alice Moreno and Ravi Patel';
-        const line = await until('the Activity line on the open Overview', () => watcher.eval<string>(`[...document.querySelectorAll('[data-scroll-region] li')].map((l) => l.textContent).find((t) => t.includes(${JSON.stringify(object)})) ?? ''`), Boolean);
+        const line = await until('the Activity line on the open Overview', () => watcher.eval<string>(`deepQueryAll('li', ${CONTENT}).map((l) => l.textContent).find((t) => t.includes(${JSON.stringify(object)})) ?? ''`), Boolean);
         watcher.close();
         if (!/^Assistant ?changed/.test(line.trim()) || !line.includes('for Maya Chen')) fail(`the Activity line does not name the Assistant and the person it acted for: "${line}"`);
         ok(`the open Overview's Activity showed "${line.replace(/\s+/g, ' ').trim()}" without a reload`);
@@ -229,9 +241,9 @@ try {
       if (!kept) fail('the dismissed removal took Alice Moreno out of the table');
       ok('the dismissed removal left Alice Moreno in the table');
 
-      await press(`document.querySelector('button[aria-label="Actions for Amara Okafor"]')`);
-      await until('the row menu', () => page.eval<boolean>(`!!document.querySelector('[role="menu"]')`), Boolean);
-      await press(`[...document.querySelectorAll('[role="menuitem"]')].find((i) => i.textContent.trim() === 'Suspend')`);
+      await press(`deepQuery('button[aria-label="Actions for Amara Okafor"]')`);
+      await until('the row menu', () => page.eval<boolean>(`!!deepQuery('[role="menu"]')`), Boolean);
+      await press(`deepQueryAll('[role="menuitem"]').find((i) => deepText(i).trim() === 'Suspend')`);
       await until('Amara Okafor to read Suspended', () => row('Amara Okafor'), (t) => !!t?.includes('Suspended'));
       await ask('Who is suspended?');
       const found = await until('the answer to name Amara Okafor', said, (t) => t.includes('Amara Okafor'));
@@ -254,10 +266,10 @@ try {
     if (to) {
       await follow(to);
       if (!(await panelOpen())) fail(`following the rail to ${to} closed the panel`);
-      const labels = () => page.eval<string[]>(`[...document.querySelectorAll('aside[data-assistant] span')].map((s) => s.textContent.trim()).filter((t) => t.startsWith('On '))`);
+      const labels = () => page.eval<string[]>(`deepQueryAll('span', ${PANEL}).map((s) => s.textContent.trim()).filter((t) => t.startsWith('On '))`);
       const tagged = await labels();
       if (!tagged.includes(`On ${fromTitle}`)) fail(`${to} shows the labels ${JSON.stringify(tagged)}, none "On ${fromTitle}"`);
-      if (!(await page.eval<boolean>(`document.querySelector('aside[data-assistant]').textContent.includes('Show me a markdown summary')`))) fail(`${to} lost the earlier messages`);
+      if (!(await page.eval<boolean>(`${PANEL}.textContent.includes('Show me a markdown summary')`))) fail(`${to} lost the earlier messages`);
       ok(`following the rail to ${to} kept the panel open with the earlier messages and their "On ${fromTitle}" labels (${tagged.length} labels)`);
     } else na('the thread across navigation', 'the rail has one route');
 
@@ -286,8 +298,8 @@ try {
     } else na('a waiting Proposal expiring on reload and on moving on', 'the sample Members and API keys pages are not both in this product');
 
     // Clear: the panel and the stored thread are both emptied.
-    await press(`document.querySelector('aside[data-assistant] button[aria-label="Clear conversation"]')`);
-    await until('the panel to empty', () => page.eval<number>(`document.querySelectorAll('aside[data-assistant] [data-role]').length`), (n) => n === 0);
+    await press(`deepQuery('button[aria-label="Clear conversation"]', ${PANEL})`);
+    await until('the panel to empty', () => page.eval<number>(`deepQueryAll('[data-role]', ${PANEL}).length`), (n) => n === 0);
     await until('the stored thread to go', stored, (v) => v === null);
     ok(`Clear conversation empties the panel and removes ${LOCAL} from local storage`);
 
@@ -297,8 +309,8 @@ try {
       await until('the reply', said, (t) => ABOUT_PAGE.test(t));
       await until('the thread to be stored', stored, (v) => !!v?.includes('What is this page?'));
       await follow('/settings');
-      const SWITCH = `(() => { const l = [...document.querySelectorAll('label')].find((x) => x.textContent.includes('Show the assistant')); return l && document.getElementById(l.htmlFor); })()`;
-      const absent = () => page.eval<boolean>(`!document.querySelector('${LAUNCHER}') && !document.querySelector('aside[data-assistant]')`);
+      const SWITCH = `deepQueryAll('label').find((x) => deepText(x).includes('Show the assistant'))?.control`;
+      const absent = () => page.eval<boolean>(`!${LAUNCHER} && !${PANEL}`);
       await press(SWITCH);
       await until('the launcher and panel to go from /settings', absent, Boolean);
       const elsewhere = SAMPLE.members ? '/members' : rail.find((r) => r !== '/settings' && r !== '/' && !r.startsWith('/system')) ?? landing;
@@ -308,16 +320,16 @@ try {
       // Switched off, the pages work as they would without any agent: no Ask anywhere, and the person's findings still there.
       if (SAMPLE.overview) {
         await page.open(`${base}/`, { width: 1440 });
-        await until('the Overview to render its finding', () => page.eval<boolean>(`[...document.querySelectorAll('[data-scroll-region] button')].some((b) => /usual on/.test(b.textContent))`), Boolean);
-        if (await page.eval<boolean>(`!!document.querySelector('button[aria-label^="Ask: "]')`)) fail('the Overview shows Ask with the assistant switched off');
+        await until('the Overview to render its finding', () => page.eval<boolean>(`deepQueryAll('button', ${CONTENT}).some((b) => /usual on/.test(deepText(b)))`), Boolean);
+        if (await page.eval<boolean>(`!!deepQuery('button[aria-label^="Ask: "]')`)) fail('the Overview shows Ask with the assistant switched off');
         if (!(await absent())) fail('/ still shows the assistant with the switch off');
       }
       await page.open(`${base}/settings`, { width: 1440 });
       if (!(await absent())) fail('/settings still shows the assistant with the switch off');
       await press(SWITCH);
-      await until('the launcher to return', () => page.eval<boolean>(`!!document.querySelector('${LAUNCHER}')`), Boolean);
+      await until('the launcher to return', () => page.eval<boolean>(`!!${LAUNCHER}`), Boolean);
       await openPanel();
-      await until('the thread to return', () => page.eval<boolean>(`document.querySelector('aside[data-assistant]').textContent.includes('What is this page?')`), Boolean);
+      await until('the thread to return', () => page.eval<boolean>(`${PANEL}.textContent.includes('What is this page?')`), Boolean);
       ok(`Show the assistant off hides the launcher on /settings and ${elsewhere}${SAMPLE.overview ? ' and / and every Ask, keeps the Overview\'s finding' : ''} and the thread; on brings the launcher and the thread back`);
     } else {
       na('the Settings switch', 'the sample Settings page, which holds "Show the assistant", is not in this product');
@@ -325,14 +337,14 @@ try {
 
     // Layout: a column beside the page at 1440px, over it at 390px; Escape closes it.
     if (!(await panelOpen())) await openPanel();
-    const geometry = () => page.eval<{ position: string; main: number; panel: number; width: number }>(`(() => { const a = document.querySelector('aside[data-assistant]'); return { position: getComputedStyle(a).position, main: Math.round(document.querySelector('main').getBoundingClientRect().right), panel: Math.round(a.getBoundingClientRect().left), width: innerWidth }; })()`);
+    const geometry = () => page.eval<{ position: string; main: number; panel: number; width: number }>(`(() => { const a = ${PANEL}; return { position: getComputedStyle(a).position, main: Math.round(document.querySelector('main').getBoundingClientRect().right), panel: Math.round(a.getBoundingClientRect().left), width: innerWidth }; })()`);
     const wide = await geometry();
     if (wide.position === 'fixed' || Math.abs(wide.main - wide.panel) > 1) fail(`at 1440px the panel is ${wide.position} with the page ending at ${wide.main}px and the panel starting at ${wide.panel}px`);
     await page.open(`${base}${landing}`, { width: 390 });
     await openPanel();
     const narrow = await geometry();
     if (narrow.position !== 'fixed' || narrow.main !== narrow.width || narrow.panel >= narrow.main) fail(`at 390px the panel is ${narrow.position}, the page ends at ${narrow.main}px and the panel starts at ${narrow.panel}px`);
-    await page.eval(`document.querySelector('${MESSAGE}').focus()`);
+    await page.eval(`${MESSAGE}.focus()`);
     for (const type of ['keyDown', 'keyUp'] as const) await page.send('Input.dispatchKeyEvent', { type, key: 'Escape', code: 'Escape', windowsVirtualKeyCode: 27 });
     await until('Escape to close the panel', panelOpen, (v) => !v);
     ok(`at 1440px the panel is a column (page ends at ${wide.main}px, panel starts at ${wide.panel}px); at 390px it is fixed over the page; Escape closes it`);
@@ -342,9 +354,9 @@ try {
     await page.eval(`(() => { window.__api = []; const f = window.fetch; window.fetch = async (...a) => { const r = await f(...a); if (String(a[0]).includes('/api/assistant')) r.clone().text().then((t) => window.__api.push(t)); return r; }; })()`);
     await openPanel();
     await ask('Please fail now');
-    const panelText = () => page.eval<string>(`document.querySelector('aside[data-assistant]').textContent`);
+    const panelText = () => page.eval<string>(`${PANEL}.textContent`);
     await until('the failure to show', panelText, (t) => t.includes('The assistant is not set up correctly'));
-    if (!(await page.eval<boolean>(`[...document.querySelectorAll('aside[data-assistant] button')].some((b) => b.textContent.trim() === 'Retry')`))) fail('the failure offers no Retry');
+    if (!(await page.eval<boolean>(`deepQueryAll('button', ${PANEL}).some((b) => deepText(b).trim() === 'Retry')`))) fail('the failure offers no Retry');
     if ((await panelText()).includes(key!)) fail('the panel shows the key');
     ok('a refused key shows "The assistant is not set up correctly" with Retry');
     const seen = await page.eval<string[]>(`window.__api`);

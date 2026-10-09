@@ -102,6 +102,9 @@ async function attach(proc: ChildProcess, dir: string, handle: { proc: ChildProc
       await send('Emulation.setTouchEmulationEnabled', width < 600 ? { enabled: true, maxTouchPoints: 5 } : { enabled: false });
       await send('Page.navigate', { url });
       await sleep(wait);
+      // Then its load event: on a busy machine a page can still be loading after any fixed wait, and a suite reading it then
+      // reads a page that is not all there. Bounded, so a page whose load never ends still opens.
+      await page.eval('new Promise((r) => { if (document.readyState === "complete") return r(true); addEventListener("load", () => r(true), { once: true }); setTimeout(() => r(false), 25000); })');
       await page.eval('Promise.race([document.fonts.ready.then(() => true), new Promise((r) => setTimeout(() => r(false), 4000))])');
     },
     async shot(file, { full = false, width, height } = {}) {

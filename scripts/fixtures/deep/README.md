@@ -4,7 +4,7 @@ Pages whose one defect sits inside an open shadow root, a server for them, and t
 
 ## Supported boundary
 
-The helper in `scripts/lib/deep.ts` (`deepAll`, `deepActive`, `deepQuery`, `deepParent`, `deepText`, and `DEEP_SOURCE` for injection into a page) enters open shadow roots, nested ones included, and follows slots. It does not enter closed roots, iframes or `<template>` content, and an undefined custom element has no root to enter. A suite that meets a defined custom element with no open root, or one that is never defined, reports it as unmeasured instead of passing over it. `deepAll` is a deterministic traversal (a host, then its root, then its light children), not tab order.
+The helper in `scripts/lib/deep.ts` (`deepAll`, `deepActive`, `deepQuery`, `deepQueryAll`, `deepParent`, `deepText`, and `DEEP_SOURCE` for injection into a page) enters open shadow roots, nested ones included, and follows slots. It does not enter closed roots, iframes or `<template>` content, and an undefined custom element has no root to enter. A suite that meets a defined custom element with no open root, or one that is never defined, reports it as unmeasured instead of passing over it. `deepAll` is a deterministic traversal (a host, then its root, then its light children), not tab order.
 
 ## Running
 
@@ -19,6 +19,7 @@ Any route that is not a page below answers a clean page (light DOM, no control),
 | `audit` | `node scripts/audit.ts --base <url> --routes <page>` |
 | `presses` | `node scripts/interactions.ts --base <url> --routes <page>` |
 | `keyboard` | `node scripts/keyboard.ts --base <url> --routes <page>` |
+| `vitals` | `node scripts/vitals.ts --base <url> --routes <page>` |
 | `navigate` | `node scripts/navigate.ts --base <url> --config scripts/fixtures/deep/config.ts --rail /nav-home,/nav-root-target,/nav-missing-target,/nav-multi,/nav-root-hydrated --routes <page>` |
 
 ## Pages
@@ -46,6 +47,8 @@ Every page has an `h1`, `lang="en"`, a `main`, an opaque ground and controls of 
 | `/nav-root-hydrated` | The same on a page marked as a hydrated Next page: the control inside the root is ready once its host is |
 | `/nav-missing-target` | Navigation: the mapping names a control the page does not have |
 | `/nav-multi` | Navigation: the control selector matches two elements, the first hidden |
+| `/deep-tap` | Vitals: the Alerts button a phone taps is inside an open root (passes, `taps: 1`) |
+| `/slow-load` | Not a suite case: its image answers after 6 s, so `open()` must wait for the load event (`tests/deep-dom.test.ts`) |
 | `/helper` | Not a case: nested roots, a slot and a closed root, for `tests/deep-dom.test.ts` |
 
 The decorative border is a light-DOM control on purpose: the audit's existing ring test counts any coloured box shadow as a ring, so the case is only unambiguous where nothing else can fail it. Ring presence must be judged by a change on focus.
