@@ -13,6 +13,7 @@ export default function FilterBarPreview() {
   const [method, setMethod] = useState('all');
   const [view, setView] = useState('table');
   const [agent, setAgent] = useState({ status: '5xx', region: 'eu-west-1', by: 'Claude' });
+  const [narrow, setNarrow] = useState({ q: '', status: '5xx', method: 'all' });
   return (
     <>
       <Specimen label="At rest" note="Search, filters and the view in one row. A filter's name stays in its control." stack>
@@ -39,8 +40,18 @@ export default function FilterBarPreview() {
           onClear={() => setAgent({ status: 'all', region: 'all', by: '' })}
         />
       </Specimen>
-      <Specimen label="Phones" note="Under 768px the search takes the row and the filters move behind one Filters button with a count, opening a sheet.">
-        <p className="t-small text-ink-2">Narrow the window below 768px to see the phone form; it follows the viewport, not this frame.</p>
+      <Specimen label="Narrow" note="Under 52rem of its own width the search takes the row and the filters move behind one Filters button with a count, opening a sheet. Here, at a phone's 360px." stack>
+        <div className="w-full max-w-[360px]">
+          <FilterBar
+            search={{ value: narrow.q, onChange: (q2) => setNarrow((n) => ({ ...n, q: q2 })), placeholder: 'Search requests' }}
+            filters={[
+              { key: 'status', label: 'Status', value: narrow.status, onChange: (v) => setNarrow((n) => ({ ...n, status: v })), options: opts(['2xx', '4xx', '5xx']) },
+              { key: 'method', label: 'Method', value: narrow.method, onChange: (v) => setNarrow((n) => ({ ...n, method: v })), options: opts(['GET', 'POST', 'PUT', 'DELETE']) },
+            ]}
+            result="12 requests"
+            onClear={() => setNarrow({ q: '', status: 'all', method: 'all' })}
+          />
+        </div>
       </Specimen>
     </>
   );

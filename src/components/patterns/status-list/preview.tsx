@@ -6,7 +6,8 @@ import { DEMO_NOW, SERVICES } from '@/system/fixtures/sample';
 import type { Service } from '@/components/patterns/status-list';
 import { StatusList } from '.';
 
-const healthy: Service[] = SERVICES.map((s) => ({ ...s, status: 'operational', days: s.days.map(() => 'operational') }));
+// Every day operational, so every figure says so: a strip with nothing on it cannot read 99.81%.
+const healthy: Service[] = SERVICES.map((s) => ({ ...s, status: 'operational', uptime: 1, days: s.days.map(() => 'operational') }));
 const outage: Service[] = SERVICES.map((s, i) => (i === 3 ? { ...s, status: 'outage', days: [...s.days.slice(0, -1), 'outage'] } : s));
 
 export default function StatusListPreview() {

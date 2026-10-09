@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useState } from 'react';
-import { Plus } from 'lucide-react';
+import { ArrowRight, Plus } from 'lucide-react';
 import { Specimen } from '@/system/specimen';
 import { Button } from '@/components/ui/button';
 import { FilterBar } from '@/components/patterns/filter-bar';
@@ -13,6 +13,8 @@ import { app } from '@/app.config';
 
 const rows = REQUESTS.slice(0, 26);
 const few = REQUESTS.slice(0, 4);
+/** The titled card says what its rows are, so they are: the five slowest of the sample, slowest first. */
+const slowest = [...REQUESTS].sort((a, b) => b.latency - a.latency).slice(0, 5);
 const compact = requestColumns.filter((c) => ['request', 'status', 'latency', 'at'].includes(c.key));
 
 export default function DataTablePreview() {
@@ -37,7 +39,7 @@ export default function DataTablePreview() {
         />
       </Specimen>
       <Specimen label="With a title" note="One card among others on a page: the title, a line on what the rows are, and an action beside them." stack>
-        <DataTable caption="Slowest requests" title="Slowest requests" description="The five slowest in the last hour." actions={<Button asChild size="sm" variant="ghost"><Link href="/requests">View all</Link></Button>} noun="requests" rows={few} columns={compact} rowKey={(r) => r.id} />
+        <DataTable caption="Slowest requests" title="Slowest requests" description="The five slowest in the sample." actions={<Button asChild size="sm" variant="ghost"><Link href="/requests?sort=latency&dir=desc">All requests <ArrowRight /></Link></Button>} noun="requests" rows={slowest} columns={compact} rowKey={(r) => r.id} />
       </Specimen>
       <Specimen label="Selectable" note="A checkbox column; the head selects the page. Selected rows take the accent wash." stack>
         <DataTable caption="Requests" noun="requests" rows={few} columns={compact} rowKey={(r) => r.id} selectable selected={selected} onSelectedChange={setSelected} />
