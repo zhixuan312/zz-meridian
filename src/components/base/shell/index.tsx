@@ -224,8 +224,9 @@ export function PageFrame({
         data-stuck={stuck || undefined}
         className="sticky top-0 z-(--layer-sticky) border-b border-transparent transition-[background-color,border-color,backdrop-filter] duration-(--dur-enter) data-stuck:border-line data-stuck:bg-ground/72 data-stuck:backdrop-blur-xl data-stuck:backdrop-saturate-150"
       >
-        {/* The top bar keeps the canvas width on every page, so the tools never move; only the content narrows. */}
-        <div className={cn('mx-auto flex h-14 w-full items-center gap-3 px-(--gutter)', WIDTH.data)}>
+        {/* The top bar keeps the canvas width on every page, so the tools never move; only the content narrows. It is a
+            container: the tools fold by the bar's own width, which the assistant's column narrows as much as a phone does. */}
+        <div className={cn('@container mx-auto flex h-14 w-full items-center gap-3 px-(--gutter)', WIDTH.data)}>
           <NavTrigger />
           <p aria-hidden className={cn('min-w-0 truncate text-sm font-semibold transition-[opacity,transform] duration-(--dur-enter) ease-out', stuck ? 'translate-y-0 opacity-100' : 'translate-y-1 opacity-0')}>
             {title}

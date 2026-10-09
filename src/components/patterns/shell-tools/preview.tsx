@@ -8,7 +8,7 @@ import { ALERTS } from '@/system/fixtures/sample-ops';
 import { AlertsPanel, ShellTools } from '.';
 
 const Bar = ({ stuck, title }: { stuck?: boolean; title?: string }) => (
-  <div className={`flex h-14 w-full items-center gap-3 rounded-lg border px-4 ${stuck ? 'border-line bg-ground/72 backdrop-blur-xl' : 'border-transparent'}`}>
+  <div className={`@container flex h-14 w-full items-center gap-3 rounded-lg border px-4 ${stuck ? 'border-line bg-ground/72 backdrop-blur-xl' : 'border-transparent'}`}>
     <p className={`min-w-0 truncate text-sm font-semibold transition-opacity ${stuck ? 'opacity-100' : 'opacity-0'}`}>{title ?? 'Overview'}</p>
     <div className="ml-auto flex items-center gap-1.5"><ShellTools alerts={ALERTS} now={DEMO_NOW} /></div>
   </div>
@@ -25,7 +25,7 @@ export default function ShellToolsPreview() {
         <State label="One new"><div className={cn(POPOVER_CONTENT, 'w-88 p-0')}><AlertsPanel alerts={ALERTS} now={DEMO_NOW} onMarkAll={() => {}} /></div></State>
         <State label="Nothing new"><div className={cn(POPOVER_CONTENT, 'w-88 p-0')}><AlertsPanel alerts={[]} now={DEMO_NOW} /></div></State>
       </Specimen>
-      <Specimen label="Phone" note="Under 640px the search pill folds to its icon; the keyboard hint goes.">
+      <Specimen label="Narrow" note="In a bar under 40rem, a phone's or a canvas the assistant has narrowed, the search pill folds to its icon and the keyboard hint goes.">
         <div className="w-90 max-w-full rounded-lg border border-line"><Bar stuck title="Requests" /></div>
       </Specimen>
     </>

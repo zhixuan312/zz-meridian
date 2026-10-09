@@ -37,7 +37,7 @@ The top bar itself is clear at rest and turns to glass (`ground` at 72%, `backdr
 ## Surfaces
 
 - **Console**: the pill shows "Search" and ⌘K.
-- **Mobile**: under 640px the pill folds to its 36px icon; the key hint goes.
+- **Mobile**: when the top bar itself is under 40rem (a phone, or a canvas the assistant column has narrowed), the pill folds to its 36px icon and the key hint goes; the bar is a container, so the window width does not decide it.
 - **Embed**: absent.
 
 ## Agents
