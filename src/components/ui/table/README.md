@@ -24,7 +24,7 @@ The names follow the HTML elements: `TableHead` is the `thead`, `TableHeader` is
 
 ## Sizes
 
-Column widths follow content. One column, the record's name, is `grow` on its head: it takes the remaining width, and its cells `truncate` (the full text in their title or the opened record). Other text columns stay on one line. The `grow` column is at least 160px, 256px once the table is 672px wide. `hideBelow` drops a column when the table itself is narrower than `sm` 512, `md` 672, `lg` 896 or `xl` 1152px, on its head and its cells alike.
+Column widths follow content. One column, the record's name, is `grow` on its head: about a third of the table, the rest spread across the other columns by their content, and all the remaining width once the table is under 512px and most columns have dropped; its cells `truncate` (the full text in their title or the opened record). Other text columns stay on one line. The `grow` column is at least 160px, 256px once the table is 672px wide. `hideBelow` drops a column when the table itself is narrower than `sm` 512, `md` 672, `lg` 896 or `xl` 1152px, on its head and its cells alike.
 
 ## States
 

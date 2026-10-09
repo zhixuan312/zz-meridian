@@ -90,8 +90,9 @@ export function TableHeader({
         'h-9 border-y border-line bg-surface-sunk px-4 text-xs font-medium whitespace-nowrap text-ink-3 first:border-l-0',
         ALIGN[align],
         hideBelow && HIDE[hideBelow],
-        /* The lead column takes about a third; auto layout spreads the rest across the others by their content. */
-        grow && 'w-[30%] min-w-40 @min-[672px]:min-w-64',
+        /* The lead column takes about a third; auto layout spreads the rest across the others by their content. Under
+           512px of table, where most columns have dropped, it takes the slack, so its text is not cut beside empty space. */
+        grow && 'w-[30%] min-w-40 @max-[512px]:w-full @min-[672px]:min-w-64',
         className,
       )}
       {...rest}
