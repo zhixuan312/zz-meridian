@@ -84,6 +84,13 @@ Those figures were measured before the suites looked inside open shadow roots. A
 
 - **Big screens.** The owner found that on a large monitor the dashboard was a 1560px strip with empty margins. No review had looked past 1440px. Dashboards now fill the canvas at every width (`data-width` is 100%; the gutter grows to 56px), standalone screens keep a `stage-width` of 1560px, and reading pages stay at 832px. The audit now runs at 2560px too, and fails a data page that does not fill its canvas.
 
+- **A layer-by-layer pass, 2026-10-09.** Every token page and every card preview was rendered at 1440 and 390px in both themes and read from the bottom up, before the pages. What the audits could not see:
+  - **Tokens:** the colour page measured every role on a card surface, so tooltip text and the accent wash showed failing ratios they never have in use; each chip now measures the pair the gate checks. Graphite in a dark scope inside a light page drew its light values (ancestor selectors cannot say which theme is nearest); the presets now use `@scope`, held by a browser test of fourteen nestings.
+  - **Components:** "eu-central-1" broke at its hyphen in a banner; durations were spelled three ways; a phone table cut "/v1/messa…" beside empty space; a disabled option's second line stayed lit.
+  - **Patterns:** a column chart left every other category unnamed; the assistant showed nothing between Send and its first words; narrow tiles read "vs previou…"; a read-only form drew its values at 1.5:1; three specimens contradicted their own captions.
+  - **Pages:** a phone's record card left separator dots alone on a line and cut dates; Members looked unsorted because the column that explains its order was hidden; the Atlas home numbered its sections 01 to 05, which Meridian's own register rules out.
+  - **Measured:** the full audit, presses and keyboard walk pass after the fixes. Web Vitals were taken while other work held the machine at a load of 11 to 38 on ten cores: 17 of 18 pages passed, and the eighteenth read 120, 208 and 104 ms of INP on three re-runs. An A/B of the one shell change (the top bar as a container) showed INP tracking the load, not the build.
+
 ## Open
 
 Taste calls the critic raised that are not taken yet, kept in view on purpose:
