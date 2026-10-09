@@ -48,10 +48,10 @@ export default function ShellPreview() {
         </div>
       </Specimen>
       <Specimen label="Two widths">
-        <State label="data · capped at 1560px, centred" className="w-full">
+        <State label="data · fills the canvas at every width" className="w-full">
           <div className="h-8 w-full rounded-md border border-dashed border-line-strong bg-fill-hover" />
         </State>
-        <State label="reading · 832px, centred: forms, documents, settings" className="w-full">
+        <State label="reading · 832px, centred: one long document, such as an article" className="w-full">
           <div className="mx-auto h-8 w-[53%] rounded-md border border-dashed border-line-strong bg-fill-hover" />
         </State>
       </Specimen>
