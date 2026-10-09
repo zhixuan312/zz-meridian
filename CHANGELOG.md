@@ -18,7 +18,7 @@ Every release of ZZ Meridian, newest first. Versions follow semver: a removed or
 - **The search pill folds by the top bar's own width** (under 40rem), so a canvas narrowed by the assistant folds it too. The top bar is now a container.
 - **A read-only form section keeps its values legible** in `ink-2` instead of `ink-disabled`.
 - **A phone's record card reads its facts as one sentence**: the DataTable card is a wrapping row instead of a six-column grid, so a separator dot never lands alone on a line and a fact is never cut to fit a third.
-- **Members shows the date its order follows**: Joined appears from 768px of table (Role now drops below 1024px and Team below 1152px), so the newest-first order is explained wherever the table has columns.
+- **Members shows the date its order follows**: Joined appears from 768px of table (Role now drops below 1024px and Team below 1152px), so the newest-first order is explained wherever the table has columns; on a phone the card reads "Joined 1 Oct".
 - **The Atlas home drops its numbered section labels** (01 to 05), a default Meridian's own register rules out.
 - **A figure is never cut.** In a Metric tile or a Featured metric a number longer than nine characters is set at a glance with `fitFigure` ("9.9B", "$1.2M") instead of being clipped by its card; `splitFigure` keeps a compact amount's decimal in the number ("$1.2M", not "$1" and ".2M").
 - **A day inside a sentence reads "1 Oct"**: `formatDay` in `src/lib/format-date.ts`; tables and axes keep `formatDate`'s "01 Oct".
