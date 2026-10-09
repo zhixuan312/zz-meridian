@@ -2,7 +2,7 @@
 
 import { useEffect } from 'react';
 import { demoSeries } from '@/system/fixtures/sample';
-import { formatCompact } from '@/lib/format';
+import { formatCompact, formatCost } from '@/lib/format';
 import { Badge } from '@/components/ui/badge';
 import { Meridian, useMeridian } from '@/components/charts/meridian';
 import { TrendChart } from '@/components/charts/trend-chart';
@@ -48,6 +48,12 @@ export default function FeaturedMetricPreview() {
             <PointAt i={21} />
             <FeaturedMetric className="w-full" kicker="Requests · last 30 days" value={total} daily={s.map((d) => d.requests)} format={formatCompact} delta={0.057} />
           </Meridian>
+        </State>
+        <State label="Extreme: billions" className="w-full max-w-110">
+          <FeaturedMetric className="w-full" kicker="Requests · last 30 days" value={9_876_543_210} format={formatCompact} delta={4.37} />
+        </State>
+        <State label="Extreme: an enterprise month of spend" className="w-full max-w-110">
+          <FeaturedMetric className="w-full" kicker="Spend · this month" value={1_234_567.89} format={formatCost} delta={-0.081} intent="down" />
         </State>
         <State label="Without a chart; a fall that is good" className="w-full max-w-110">
           <FeaturedMetric className="w-full" kicker="Spend · this month" value={298.43} format={(n) => `$${n.toFixed(2)}`} delta={-0.081} intent="down" caption="Credits cover the rest until 1 Nov." />

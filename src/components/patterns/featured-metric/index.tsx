@@ -3,7 +3,7 @@
 import type { ReactNode } from 'react';
 import { cn } from '@/lib/cn';
 import { formatDate } from '@/lib/format-date';
-import { splitFigure } from '@/lib/format';
+import { fitFigure, splitFigure } from '@/lib/format';
 import { Delta } from '@/components/ui/delta';
 import { useMeridianIndex } from '@/components/charts/meridian';
 
@@ -40,7 +40,7 @@ export function FeaturedMetric({
 }) {
   const { index, dates } = useMeridianIndex();
   const reading = index !== null && daily && index < daily.length ? daily[index] : null;
-  const text = format(reading ?? value);
+  const text = fitFigure(format(reading ?? value), reading ?? value);
   // One parser, shared with the Metric tile: it never fails to match, so no formatter a product passes can
   // crash the figure — and the symbol may be any currency's, not a list of three.
   const parts = splitFigure(text);

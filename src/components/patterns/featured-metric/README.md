@@ -21,6 +21,8 @@ A section on `surface` with `radius-xl` 24px and a `line` hairline, the `glow-fe
 
 As Metric tile: `value`, `daily`, `delta`, `intent`, `format`. The caption is computed from the same data ("About 98K a day. The busiest day was 1 Oct, with 128K."), never typed in.
 
+- A figure is never cut. Past nine characters of number (`FIGURE_MAX`), `fitFigure` sets it at a glance with its unit kept: "9,876,543,210" reads "9.9B", "$1,234,567.89" reads "$1.2M". The exact amount is in the table behind the figure. The Extreme values specimen holds the largest figures the formatters print.
+
 ## States
 
 | State | What changes |

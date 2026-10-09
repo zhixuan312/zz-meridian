@@ -3,7 +3,7 @@
 import type { ReactNode } from 'react';
 import { cn } from '@/lib/cn';
 import { formatDate } from '@/lib/format-date';
-import { formatBy, splitFigure, type NumberFormat } from '@/lib/format';
+import { fitFigure, formatBy, splitFigure, type NumberFormat } from '@/lib/format';
 import { Card } from '@/components/ui/card';
 import { Delta } from '@/components/ui/delta';
 import { Tooltip } from '@/components/ui/tooltip';
@@ -67,7 +67,7 @@ export function MetricTile({
   const reading = index !== null && daily && index < daily.length ? daily[index] : null;
   const fmt = typeof format === 'function' ? format : (n: number) => formatBy(format ?? 'count', n);
   const word = typeof value === 'string';
-  const text = word && reading === null ? value : fmt(reading ?? (word ? 0 : value));
+  const text = word && reading === null ? value : fitFigure(fmt(reading ?? (word ? 0 : value)), reading ?? (word ? 0 : (value as number)));
   const parts = word && reading === null ? { int: value } : (split ?? splitFigure)(text);
   // Phones, without a sparkline: one row, the label and its line on the left and the figure on the right, so a stack
   // of four tiles is half a screen rather than a whole one. Designed for the width, not shrunk to it.

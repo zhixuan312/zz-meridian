@@ -23,6 +23,8 @@ Card, Delta, Tooltip, Sparkline. Tiles sit in a `Row split="tiles"`, or stacked 
 - `value` may be a word for a categorical state ("Likely new", "On track"); it is set at `text-2xl` instead of the figure size and wraps to a second line rather than losing its end ("03 Oct 2026" in a narrow tile), and `format` is not used.
 - `format` turns the number into its text: a name (`count`, `compact`, `cost`, `cost-compact`, `duration`, `percent`), which a server page can pass, or a function from a client component; the default split recognises "$298.43" (any currency symbol from `app.currency`), "2.9M", "0.90%" and "294ms".
 
+- A figure is never cut. Past nine characters of number (`FIGURE_MAX`), `fitFigure` sets it at a glance with its unit kept: "9,876,543,210" reads "9.9B", "$1,234,567.89" reads "$1.2M". The exact amount is in the table behind the figure. The Extreme values specimen holds the largest figures the formatters print.
+
 ## Variants
 
 | Variant | Use |

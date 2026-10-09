@@ -39,8 +39,25 @@ function formatCostCompact(amount: number | null): string {
 export function splitFigure(s: string): { pre?: string; int: string; frac?: string; unit?: string } {
   const m = s.match(/^([^\d\s.,-]*)([\d,]+)(\.\d+)?\s*([%a-zA-Z]*)$/);
   if (!m) return { int: s };
-  const money = Boolean(m[1]);
-  return { pre: m[1] || undefined, int: money ? m[2] : m[2] + (m[3] ?? ''), frac: money ? m[3] : undefined, unit: m[4] || undefined };
+  // Cents step down; the decimal of a compact amount ("$1.2M") is part of the number, not cents.
+  const cents = Boolean(m[1]) && !m[4];
+  return { pre: m[1] || undefined, int: cents ? m[2] : m[2] + (m[3] ?? ''), frac: cents ? m[3] : undefined, unit: m[4] || undefined };
+}
+
+/** The most characters a figure's number (integer and fraction, not its symbol or unit) is set whole in a tile or a
+ * featured metric. Four tiles across a 1440px row hold about nine; past it the number was cut off by its own card. */
+export const FIGURE_MAX = 9;
+
+/**
+ * A figure that fits its tile: as formatted while its number is nine characters or fewer, otherwise at a glance
+ * ("9,876,543,210" reads "9.9B", "$1,234,567.89" reads "$1.2M"), keeping its unit. A cut figure says a different
+ * number; a compact one says the same number less precisely, and the exact amount is in the table behind it.
+ */
+export function fitFigure(text: string, value: number): string {
+  const { pre, int, frac, unit } = splitFigure(text);
+  if ((int + (frac ?? '')).length <= FIGURE_MAX || !Number.isFinite(value)) return text;
+  // The unit keeps the space it had: "12.5M tokens", "12.5Mms" never arises (durations step up to hours first).
+  return pre ? formatCostCompact(value) : `${formatCompact(value)}${unit ? (/\s[%a-zA-Z]+$/.test(text) ? ' ' : '') + unit : ''}`;
 }
 
 /** 1.2M, 846K, 912: a count at a glance. The exact number belongs in the tooltip and the table. */

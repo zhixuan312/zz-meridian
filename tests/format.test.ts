@@ -1,7 +1,7 @@
 import { app } from '@/app.config';
 import { describe, expect, it } from 'vitest';
 import { niceTicks } from '@/components/charts/scale';
-import { AXIS_FORMATTERS, formatCompact, formatCost, formatDuration, formatPercent, splitFigure } from '@/lib/format';
+import { AXIS_FORMATTERS, fitFigure, formatCompact, formatCost, formatDuration, formatPercent, splitFigure } from '@/lib/format';
 
 describe('formatters', () => {
   it('render a missing value as a dash, never as zero', () => {
@@ -23,6 +23,7 @@ describe('formatters', () => {
     // Money steps its cents down; anything else keeps the number whole and steps the unit.
     expect(splitFigure('$298.43')).toEqual({ pre: '$', int: '298', frac: '.43', unit: undefined });
     expect(splitFigure('2.9M')).toEqual({ pre: undefined, int: '2.9', frac: undefined, unit: 'M' });
+    expect(splitFigure('$1.2M')).toEqual({ pre: '$', int: '1.2', frac: undefined, unit: 'M' });
     expect(splitFigure('0.90%')).toEqual({ pre: undefined, int: '0.90', frac: undefined, unit: '%' });
     // Total: a string it cannot split comes back whole, so no formatter a product passes can crash the figure.
     expect(splitFigure('—')).toEqual({ int: '—' });
@@ -64,5 +65,17 @@ describe('the count axis', () => {
     expect(AXIS_FORMATTERS.count(2_500_000)).toBe('2.5M');
     expect(AXIS_FORMATTERS.count(0)).toBe('0');
     expect(AXIS_FORMATTERS.count(500)).toBe('500');
+  });
+});
+
+describe('fitFigure', () => {
+  it('keeps a figure whole while its number fits a tile, and reads it at a glance past that', () => {
+    expect(fitFigure('$298.43', 298.43)).toBe('$298.43');
+    expect(fitFigure('2,943,120', 2_943_120)).toBe('2,943,120');
+    expect(fitFigure('9,876,543,210', 9_876_543_210)).toBe('9.9B');
+    expect(fitFigure('$1,234,567.89', 1_234_567.89)).toBe('$1.2M');
+    expect(fitFigure('0.90%', 0.009)).toBe('0.90%');
+    expect(fitFigure('12,480,000 tokens', 12_480_000)).toBe('12.5M tokens');
+    expect(fitFigure('Likely new', NaN)).toBe('Likely new');
   });
 });

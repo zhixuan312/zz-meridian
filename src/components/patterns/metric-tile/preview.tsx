@@ -29,6 +29,14 @@ export default function MetricTilePreview() {
           <MetricTile label="Spend" icon={<CircleDollarSign />} value={298.43} delta={0.062} intent="neutral" daily={s.map((d) => d.spend)} format={formatCost} />
         </div>
       </Specimen>
+      <Specimen label="Extreme values" note="The largest figures the formatters print, in the same row: an exact count in the billions, an enterprise month of spend, a slow p95 and a change of several hundred per cent.">
+        <div className="grid w-full gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          <MetricTile label="Requests" icon={<Zap />} value={9_876_543_210} delta={4.37} daily={s.map((d) => d.requests)} format="count" />
+          <MetricTile label="Error rate" icon={<AlertTriangle />} value={1} delta={-0.999} intent="down" daily={s.map((d) => d.errors / d.requests)} format={(n) => formatPercent(n, 2)} />
+          <MetricTile label="Latency p95" icon={<Gauge />} value={3_725_000} delta={12.5} intent="down" daily={s.map((d) => d.p95)} format={formatDuration} />
+          <MetricTile label="Spend" icon={<CircleDollarSign />} value={1_234_567.89} delta={0.062} intent="neutral" daily={s.map((d) => d.spend)} format={formatCost} />
+        </div>
+      </Specimen>
       <Specimen label="Variants">
         <State label="No sparkline" className="w-64"><MetricTile label="Active keys" value={14} delta={0} format={(n) => String(n)} /></State>
         <State label="Nothing to compare" className="w-64"><MetricTile label="Webhooks delivered" value={21_070} delta={null} format={formatCompact} /></State>
