@@ -4,7 +4,7 @@ Pages whose one defect sits inside an open shadow root, a server for them, and t
 
 ## Supported boundary
 
-The helper in `scripts/lib/deep.ts` (`deepAll`, `deepActive`, `deepQuery`, `deepParent`, and `DEEP_SOURCE` for injection into a page) enters open shadow roots, nested ones included, and follows slots. It does not enter closed roots, iframes or `<template>` content, and an undefined custom element has no root to enter. A suite that meets a defined custom element with no open root, or one that is never defined, reports it as unmeasured instead of passing over it. `deepAll` is a deterministic traversal (a host, then its root, then its light children), not tab order.
+The helper in `scripts/lib/deep.ts` (`deepAll`, `deepActive`, `deepQuery`, `deepParent`, `deepText`, and `DEEP_SOURCE` for injection into a page) enters open shadow roots, nested ones included, and follows slots. It does not enter closed roots, iframes or `<template>` content, and an undefined custom element has no root to enter. A suite that meets a defined custom element with no open root, or one that is never defined, reports it as unmeasured instead of passing over it. `deepAll` is a deterministic traversal (a host, then its root, then its light children), not tab order.
 
 ## Running
 
@@ -29,6 +29,8 @@ Every page has an `h1`, `lang="en"`, a `main`, an opaque ground and controls of 
 |---|---|
 | `/deep-clipped` | A label clipped without an ellipsis, two open roots deep |
 | `/deep-unnamed` | An icon-only button with no accessible name, two roots deep |
+| `/deep-slotted-name` | A button in an open root named by the text slotted into its host (passes) |
+| `/deep-slotted-name-empty` | The same button with nothing slotted and only an icon (fails) |
 | `/deep-target` | A 24px button, two roots deep (measured on a coarse pointer) |
 | `/deep-contrast` | `#9a9a9a` text on white, two roots deep |
 | `/deep-alpha` | Text on a transparent layer over a host with a dark alpha ground; only a measurement that steps from the root to its host sees the ground |

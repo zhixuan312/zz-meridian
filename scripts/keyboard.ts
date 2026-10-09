@@ -48,7 +48,7 @@ const TAG = `(() => {
   const all = every.filter((el) => el.matches('a[href], button:not(:disabled), input:not([type=hidden]):not(:disabled), select:not(:disabled), textarea:not(:disabled), [tabindex]:not([tabindex="-1"])'))
     .filter((el) => vis(el) && el.tabIndex >= 0);
   const hosts = (el) => { const out = []; for (let r = el.getRootNode(); r instanceof ShadowRoot; r = r.host.getRootNode()) out.unshift(r.host.localName); return out; };
-  window.__kbName = (el) => { const h = hosts(el); return (el.getAttribute('aria-label') || el.textContent || el.getAttribute('placeholder') || el.tagName).trim().replace(/\\s+/g, ' ').slice(0, 40) + (h.length ? ' (in ' + h.join(' > ') + ')' : ''); };
+  window.__kbName = (el) => { const h = hosts(el); return (el.getAttribute('aria-label') || deepText(el).trim() || el.getAttribute('placeholder') || el.tagName).trim().replace(/\\s+/g, ' ').slice(0, 40) + (h.length ? ' (in ' + h.join(' > ') + ')' : ''); };
   // A stop's identity: its tag, or, for a control the tagging did not list (a roving group hands the tab stop to a member that was
   // not tabbable when the page was tagged), a mark of its own, so a stop is the same stop forward and back.
   window.__kbN = 0; window.__kbId = (el) => el.getAttribute('data-kb') ?? (el.__kbU ??= 'u' + (++window.__kbN));
@@ -117,7 +117,7 @@ for (const route of ROUTES) {
   await page.open(base + route, { width: 1440, height: 900, theme: 'dark', wait: 2500 });
   // One implementation of the walk: the helper is injected, never copied. A page it cannot be injected into fails the suite.
   try {
-    if (!(await page.eval<boolean>(`${DEEP_SOURCE}\n;typeof deepAll === 'function' && typeof deepActive === 'function' && typeof deepParent === 'function'`))) throw new Error('the helper is not defined after injection');
+    if (!(await page.eval<boolean>(`${DEEP_SOURCE}\n;typeof deepAll === 'function' && typeof deepActive === 'function' && typeof deepParent === 'function' && typeof deepText === 'function'`))) throw new Error('the helper is not defined after injection');
   } catch (e) {
     console.error(`keyboard: cannot inject the deep-DOM helper into ${route}: ${(e as Error).message}`);
     page.close();

@@ -2,10 +2,10 @@
  * The deep-DOM helper: one implementation of "every element of the page", for the browser suites.
  *
  * `document.querySelectorAll('*')` stops at a shadow root, so a suite built on it never sees a custom element's own
- * content. These four functions walk through open shadow roots and slots instead. Every suite injects `DEEP_SOURCE`
+ * content. These five functions walk through open shadow roots and slots instead. Every suite injects `DEEP_SOURCE`
  * (the same code as a string) into the page, so there is one implementation, not a copy per suite:
  *
- *   await page.eval(DEEP_SOURCE);                       // once per page load, defines the four functions as globals
+ *   await page.eval(DEEP_SOURCE);                       // once per page load, defines the five functions as globals
  *   await page.eval(`deepAll().length`);                // then call them in any later expression
  *
  * Supported boundary:
@@ -70,5 +70,23 @@ export function deepParent(el: Element): Element | null {
   return top instanceof ShadowRoot ? top.host : null;
 }
 
-/** The four functions as page code, for `page.eval`: function declarations, so they become globals of the page. */
-export const DEEP_SOURCE: string = [deepAll, deepActive, deepQuery, deepParent].map((f) => f.toString()).join('\n');
+/**
+ * An element's text as rendered: a slot contributes the text of what is assigned to it, or its fallback content when
+ * nothing is. A web component's button is usually named by the text slotted into its host, which `textContent` of the
+ * button inside the root does not include.
+ */
+export function deepText(el: Element): string {
+  let out = '';
+  for (const n of el.childNodes) {
+    if (n.nodeType === 3) out += n.textContent ?? '';
+    else if (n instanceof HTMLSlotElement) {
+      const assigned = n.assignedNodes({ flatten: true });
+      if (!assigned.length) out += deepText(n);
+      else for (const a of assigned) out += a.nodeType === 3 ? (a.textContent ?? '') : a instanceof Element ? deepText(a) : '';
+    } else if (n instanceof Element) out += deepText(n);
+  }
+  return out;
+}
+
+/** The five functions as page code, for `page.eval`: function declarations, so they become globals of the page. */
+export const DEEP_SOURCE: string = [deepAll, deepActive, deepQuery, deepParent, deepText].map((f) => f.toString()).join('\n');

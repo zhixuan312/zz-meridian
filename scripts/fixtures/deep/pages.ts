@@ -99,6 +99,11 @@ export const PAGES: Record<string, string> = {
   '/deep-unnamed': deep('Unnamed control', { body: '<x-outer></x-outer>', script: nested(`<button type="button" class="icon">${ICON}</button>`, UNNAMED) }),
   '/deep-unnamed-fixed': deep('Unnamed control, corrected', { body: '<x-outer></x-outer>', script: nested(`<button type="button" class="icon" aria-label="Close">${ICON}</button>`, UNNAMED) }),
 
+  // A web component's button named by the text slotted into it, as most design-system buttons are: the name lives in
+  // the light DOM, the button in the root, so a name read from the button's own text alone finds nothing.
+  '/deep-slotted-name': deep('Slotted name', { body: '<x-act>Export</x-act>', script: define('x-act', '<button type="button"><slot></slot></button>', HOST_RING) }),
+  '/deep-slotted-name-empty': deep('Slotted name, empty', { body: '<x-act></x-act>', script: define('x-act', `<button type="button" class="icon"><slot></slot>${ICON}</button>`, `${HOST_RING} ${UNNAMED}`) }),
+
   '/deep-target': deep('Small target', { body: '<x-outer></x-outer>', script: nested('<button type="button" class="tiny">OK</button>', SMALL) }),
   '/deep-target-fixed': deep('Small target, corrected', { body: '<x-outer></x-outer>', script: nested('<button type="button" class="tiny">OK</button>', BIG) }),
 

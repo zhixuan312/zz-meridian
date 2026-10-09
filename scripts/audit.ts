@@ -122,7 +122,7 @@ const MEASURE = `(() => {
     // A card drawn as a specimen in the Atlas keeps its own scroll regions; only the page's count against the one scroller.
     if (/(auto|scroll)/.test(c.overflowY) && el.scrollHeight > el.clientHeight + 1 && el.clientHeight > 120 && !deepClosest(el, '[data-specimen]')) out.scrollers.push(label(el));
     if (el.matches('button,a[href],[role="button"],[role="tab"],[role="switch"],[role="checkbox"],[role="radio"],input:not([type=hidden]),select,textarea')) {
-      const name = el.getAttribute('aria-label') || el.getAttribute('aria-labelledby') || el.getAttribute('title') || el.textContent.trim() || el.querySelector('img[alt]')?.getAttribute('alt') || (el.id && el.getRootNode().querySelector('label[for="' + el.id + '"]')?.textContent.trim()) || el.closest('label')?.textContent.trim() || el.getAttribute('placeholder') || '';
+      const name = el.getAttribute('aria-label') || el.getAttribute('aria-labelledby') || el.getAttribute('title') || deepText(el).trim() || el.querySelector('img[alt]')?.getAttribute('alt') || (el.id && el.getRootNode().querySelector('label[for="' + el.id + '"]')?.textContent.trim()) || el.closest('label')?.textContent.trim() || el.getAttribute('placeholder') || '';
       if (!name) out.unnamed.push(label(el));
       // On touch (a phone is emulated as one) every control answers at least 44px: its own box, its field's frame, or
       // the .hit square around it. A link inside running text is exempt, as WCAG exempts it.
@@ -165,7 +165,7 @@ const run = async (route: string, width: number, theme: string, embed: boolean) 
   if (embed) await page.eval(`(() => { const d = document.documentElement; d.setAttribute('data-theme','${theme}'); window.__hostGround = '${theme}' === 'dark' ? '#1C1C20' : '#FFFFFF'; return true; })()`);
   // One implementation of the walk: the helper is injected, never copied. A page it cannot be injected into fails the audit.
   try {
-    if (!(await page.eval<boolean>(`${DEEP_SOURCE}\n;typeof deepAll === 'function' && typeof deepActive === 'function' && typeof deepParent === 'function'`))) throw new Error('the helper is not defined after injection');
+    if (!(await page.eval<boolean>(`${DEEP_SOURCE}\n;typeof deepAll === 'function' && typeof deepActive === 'function' && typeof deepParent === 'function' && typeof deepText === 'function'`))) throw new Error('the helper is not defined after injection');
   } catch (e) {
     console.error(`audit: cannot inject the deep-DOM helper into ${route}: ${(e as Error).message}`);
     page.close();

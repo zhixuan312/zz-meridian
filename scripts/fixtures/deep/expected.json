@@ -22,6 +22,17 @@
     "outcome": "pass"
   },
   {
+    "page": "/deep-slotted-name",
+    "suite": "audit",
+    "outcome": "pass"
+  },
+  {
+    "page": "/deep-slotted-name-empty",
+    "suite": "audit",
+    "outcome": "fail",
+    "line": "unnamed:"
+  },
+  {
     "page": "/deep-target",
     "suite": "audit",
     "outcome": "fail",

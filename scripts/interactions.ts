@@ -38,7 +38,7 @@ const LIST = `(() => {
   const all = every.filter((b) => b.matches('button, [role="button"], [role="tab"], [role="switch"], [role="checkbox"], [role="radio"], [role="menuitem"]'))
     .filter((b) => !b.disabled && b.getAttribute('aria-disabled') !== 'true' && vis(b) && !chosen(b));
   return {
-    controls: all.map((b, i) => { b.setAttribute('data-press', i); const h = hosts(b); return (b.getAttribute('aria-label') || b.textContent || b.title || '').trim().replace(/\\s+/g, ' ').slice(0, 60) + (h.length ? ' (in ' + h.join(' > ') + ')' : ''); }),
+    controls: all.map((b, i) => { b.setAttribute('data-press', i); const h = hosts(b); return (b.getAttribute('aria-label') || deepText(b) || b.title || '').trim().replace(/\\s+/g, ' ').slice(0, 60) + (h.length ? ' (in ' + h.join(' > ') + ')' : ''); }),
     links: every.filter((a) => a.matches('a[href]') && vis(a)).map((a) => a.getAttribute('href')),
   };
 })()`;
@@ -82,7 +82,7 @@ const page = await launch();
 /** One implementation of the walk: the helper is injected, never copied. A page it cannot be injected into fails the suite. */
 async function inject(route: string) {
   try {
-    if (!(await page.eval<boolean>(`${DEEP_SOURCE}\n;typeof deepAll === 'function' && typeof deepParent === 'function' && typeof deepQuery === 'function'`))) throw new Error('the helper is not defined after injection');
+    if (!(await page.eval<boolean>(`${DEEP_SOURCE}\n;typeof deepAll === 'function' && typeof deepParent === 'function' && typeof deepQuery === 'function' && typeof deepText === 'function'`))) throw new Error('the helper is not defined after injection');
   } catch (e) {
     console.error(`interactions: cannot inject the deep-DOM helper into ${route}: ${(e as Error).message}`);
     page.close();

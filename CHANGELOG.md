@@ -2,6 +2,13 @@
 
 Every release of ZZ Meridian, newest first. Versions follow semver: a removed or renamed token, prop or card is major; a new card, token or variant is minor; a corrected value is a patch. Each entry says what breaks and what to do instead.
 
+## [Unreleased]
+
+### Fixed
+
+- **A web component's button named by its slotted text is no longer reported `unnamed:`.** The audit read a control's name from its own text, which for the native button inside a web component's shadow root leaves out the text slotted into its host, so a labelled design-system button was reported as unnamed. Names now count slotted text (`deepText` in `scripts/lib/deep.ts`), and the presses and the keyboard walk name such controls by it too.
+- **A test may take 30 s.** On a loaded machine or a slow runner a correct jsdom case could pass vitest's default 5 s in the gate's parallel files; `vitest.config.ts` now allows 30 s. A project made before this keeps its own `vitest.config.ts`: add `testTimeout: 30_000` to its `test` block if its gate times out on correct cases.
+
 ## [0.12.0] · 2026-10-09
 
 ### Added

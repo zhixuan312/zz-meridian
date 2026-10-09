@@ -112,3 +112,22 @@ describe('deepParent', () => {
     expect(await run<string>(`deepParent(document.documentElement)`)).toBeNull();
   });
 });
+
+describe('deepText', () => {
+  /** A host whose open root holds `<button><slot>fallback</slot> more</button>`, with `light` as its light content. */
+  const text = (light: string, fallback = '') => run<string>(`(() => {
+    const h = document.createElement('div');
+    h.attachShadow({ mode: 'open' }).innerHTML = '<button><slot>${fallback}</slot> more</button>';
+    h.innerHTML = '${light}';
+    document.body.append(h);
+    const t = deepText(h.shadowRoot.querySelector('button')).replace(/\\s+/g, ' ').trim();
+    h.remove();
+    return t;
+  })()`);
+
+  it("reads a control's text as rendered: what is slotted counts, and an empty slot shows its fallback", async () => {
+    expect(await text('Export')).toBe('Export more');
+    expect(await text('<b>Save</b> all')).toBe('Save all more');
+    expect(await text('', 'Close')).toBe('Close more');
+  });
+});
