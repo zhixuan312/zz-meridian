@@ -31,8 +31,9 @@ describe('the assistant in the shell', () => {
     await page(true);
     expect(document.querySelector('[data-assistant]')).toBeNull();
     // The assistant's code loads on demand (next/dynamic), so the launcher arrives a moment after the shell.
-    fireEvent.click(await screen.findByRole('button', { name: 'Assistant' }));
-    await waitFor(() => expect(document.querySelector('[data-assistant]')).not.toBeNull());
+    // On a loaded machine the import can take longer than waitFor's default second; the test is about the panel, not the clock.
+    fireEvent.click(await screen.findByRole('button', { name: 'Assistant' }, { timeout: 10_000 }));
+    await waitFor(() => expect(document.querySelector('[data-assistant]')).not.toBeNull(), { timeout: 10_000 });
     const panel = document.querySelector('[data-assistant]') as HTMLElement;
     const send = within(panel).getByRole('button', { name: /send/i });
     expect(send).toBeDisabled();
