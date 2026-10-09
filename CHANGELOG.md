@@ -20,6 +20,7 @@ Every release of ZZ Meridian, newest first. Versions follow semver: a removed or
 - **A phone's record card reads its facts as one sentence**: the DataTable card is a wrapping row instead of a six-column grid, so a separator dot never lands alone on a line and a fact is never cut to fit a third.
 - **Members shows the date its order follows**: Joined appears from 1024px of table (Team now drops first, below 1152px), so the newest-first order is explained on screen.
 - **The Atlas home drops its numbered section labels** (01 to 05), a default Meridian's own register rules out.
+- **A figure is never cut.** In a Metric tile or a Featured metric a number longer than nine characters is set at a glance with `fitFigure` ("9.9B", "$1.2M") instead of being clipped by its card; `splitFigure` keeps a compact amount's decimal in the number ("$1.2M", not "$1" and ".2M").
 - **The colour parser reads `lab()`.** A production build may ship an authored `oklch()` as `lab()`, which `src/lib/color.ts` could not parse; the contrast pairs the gate checks now live in `scripts/lib/contrast-pairs.ts`, so the Atlas measures the same ones.
 
 ## [0.12.2] · 2026-10-09
