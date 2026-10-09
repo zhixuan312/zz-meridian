@@ -4,6 +4,8 @@ Every release of ZZ Meridian, newest first. Versions follow semver: a removed or
 
 ## [Unreleased]
 
+## [0.12.3] · 2026-10-10
+
 ### Fixed
 
 - **The assistant and live-data walk-throughs, and the vitals' taps, reach controls inside web components.** `scripts/assistant.ts`, `scripts/live.ts` and `scripts/vitals.ts` looked for buttons, rows, menus and dialogs in the light DOM only, so on a product whose controls are web components the walk-throughs failed at their first press and vitals measured INP over no tap at all. They now search through open shadow roots with `scripts/lib/deep.ts`, which gains `deepQueryAll`; the live check also looks for a change every 50 ms, since a row a web component draws shows its text without a mutation the page's observer hears, so its timings are now the time to show rather than to the next mutation. Each vitals line ends with `taps: N`. `/deep-tap` pins the tap.
