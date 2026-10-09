@@ -14,7 +14,7 @@ import { CompositionBar } from '@/components/charts/composition-bar';
 import { MetricTile } from '@/components/patterns/metric-tile';
 import { RouteCell } from '@/system/sample-cells';
 import { FeaturedMetric } from '@/components/patterns/featured-metric';
-import { formatDate } from '@/lib/format-date';
+import { formatDate, formatDay } from '@/lib/format-date';
 import { ActivityFeed } from '@/components/patterns/activity-feed';
 import { AskAbout } from '@/components/patterns/ask-about';
 import { formatCompact, formatCost, formatDuration, formatPercent } from '@/lib/format';
@@ -71,7 +71,7 @@ export function OverviewBody(data: OverviewData) {
             daily={series.map((d) => d.requests)}
             format={formatCompact}
             delta={change(c.requests, p.requests)}
-            caption={<>About {formatCompact(Math.round(c.requests / series.length))} a day. The busiest day was {formatDate(peak.date).replace(/,? \d{4}$/, '')}, with {formatCompact(peak.requests)}.</>}
+            caption={<>About {formatCompact(Math.round(c.requests / series.length))} a day. The busiest day was {formatDay(peak.date)}, with {formatCompact(peak.requests)}.</>}
           >
             <TrendChart
               height="fill"

@@ -1,4 +1,5 @@
 import { app } from '@/app.config';
+import { formatDay } from '@/lib/format-date';
 import { describe, expect, it } from 'vitest';
 import { niceTicks } from '@/components/charts/scale';
 import { AXIS_FORMATTERS, fitFigure, formatCompact, formatCost, formatDuration, formatPercent, splitFigure } from '@/lib/format';
@@ -77,5 +78,12 @@ describe('fitFigure', () => {
     expect(fitFigure('0.90%', 0.009)).toBe('0.90%');
     expect(fitFigure('12,480,000 tokens', 12_480_000)).toBe('12.5M tokens');
     expect(fitFigure('Likely new', NaN)).toBe('Likely new');
+  });
+});
+
+describe('formatDay', () => {
+  it('writes a day inside a sentence without the table padding', () => {
+    expect(formatDay('2026-10-01T12:00:00Z')).toBe('1 Oct');
+    expect(formatDay('2026-09-22T12:00:00Z')).toBe('22 Sept');
   });
 });
