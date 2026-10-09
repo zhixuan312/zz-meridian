@@ -2,7 +2,8 @@
 
 import { Specimen } from '@/system/specimen';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
+import { Copy } from 'lucide-react';
+import { IconButton } from '@/components/ui/icon-button';
 import { KeyValue } from '.';
 
 export default function KeyValuePreview() {
@@ -12,11 +13,11 @@ export default function KeyValuePreview() {
         <KeyValue
           className="max-w-md"
           items={[
-            { label: 'Request ID', value: 'req_8f2k1x9a3m4c', mono: true },
+            { label: 'Request ID', value: 'req_8f2k1x9a3m4c', mono: true, action: <IconButton label="Copy request ID" tooltip size="sm" icon={<Copy />} onClick={() => void navigator.clipboard?.writeText('req_8f2k1x9a3m4c')} /> },
             { label: 'Endpoint', value: 'POST /v1/messages', mono: true },
             { label: 'Status', value: <Badge tone="critical">503 Unavailable</Badge> },
-            { label: 'Latency', value: '1,842ms' },
-            { label: 'Customer', value: 'Parallax AI', action: <Button variant="ghost" size="sm">View</Button> },
+            { label: 'Latency', value: '1.8s' },
+            { label: 'Customer', value: <a href="/customers" className="link">Parallax AI</a> },
           ]}
         />
       </Specimen>

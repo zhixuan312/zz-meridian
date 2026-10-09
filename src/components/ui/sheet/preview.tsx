@@ -8,7 +8,7 @@ import { SHEET_BODY, SHEET_FOOT, SHEET_HEAD, SHEET_PANEL, Sheet, SheetContent, S
 
 const FACTS: [string, string][] = [
   ['Status', '201 Created'],
-  ['Latency', '612 ms'],
+  ['Latency', '612ms'],
   ['Customer', 'Parallax AI'],
   ['Region', 'us-east-1'],
   ['Model', 'meridian-large'],

@@ -44,7 +44,7 @@ function Waterfall({ spans, total }: { spans: Span[]; total: number }) {
         </div>
       ))}
       <figcaption className="t-num flex justify-between border-t border-line pt-2.5 text-2xs text-ink-3">
-        <span>0 ms</span><span>{formatDuration(total / 2)}</span><span>{formatDuration(total)}</span>
+        <span>{formatDuration(0)}</span><span>{formatDuration(total / 2)}</span><span>{formatDuration(total)}</span>
       </figcaption>
       <table className="sr-only">
         <caption>Request phases</caption>

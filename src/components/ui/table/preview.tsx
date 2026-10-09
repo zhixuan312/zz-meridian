@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { Plane, Specimen } from '@/system/specimen';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, type SortDirection } from '.';
+import { formatDuration } from '@/lib/format';
 
 const ROWS = [
   { id: 'req_8f3k2m1x', method: 'POST', route: '/v1/messages', status: 201, latency: 612, customer: 'Parallax AI', region: 'us-east-1' },
@@ -48,7 +49,7 @@ export default function TablePreview() {
                   <TableCell hideBelow="sm"><Status code={r.status} /></TableCell>
                   <TableCell hideBelow="md" muted className="whitespace-nowrap">{r.customer}</TableCell>
                   <TableCell hideBelow="lg" muted>{r.region}</TableCell>
-                  <TableCell numeric className={r.latency > 1000 ? 'font-medium text-critical-ink' : undefined}>{r.latency.toLocaleString('en-US')} ms</TableCell>
+                  <TableCell numeric className={r.latency > 1000 ? 'font-medium text-critical-ink' : undefined}>{formatDuration(r.latency)}</TableCell>
                 </TableRow>
               ))}
             </TableBody>
