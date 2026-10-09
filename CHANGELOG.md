@@ -7,6 +7,11 @@ Every release of ZZ Meridian, newest first. Versions follow semver: a removed or
 ### Fixed
 
 - **A preset whose values differ by theme holds in a nested scope.** Graphite (and jade in dark) set their lightness with ancestor selectors, which cannot say which theme scope is nearest, so a dark scope inside a light page drew graphite's light values: a dark tile on a dark ground. `tokens.css` now picks them with `@scope`, whose proximity rule makes the nearest theme win; the unscoped rules stay, at one attribute's specificity, for a browser without `@scope`. Regenerate with `pnpm tokens`; nothing to change in a product. `tests/deep-accent-scope.test.ts` renders the fourteen nestings in Chrome.
+- **The command palette's field shows that it has focus.** The search band's hairline takes `accent` and its icon `accent-ink` while focus is inside; the audit failed the card without it.
+- **A region or key name never breaks at its hyphen.** `keepHyphenated` moved from the Incident card into `@/components/base/text-roles`; the Banner and the Toast use it too, so "eu-central-1" no longer splits after "eu-central-". Tokens over 24 characters still wrap.
+- **A narrow table's lead column takes the space it is given.** Under 512px of table the `grow` column takes the slack instead of a third, so a phone no longer cuts a route beside empty space.
+- **A disabled Select option is disabled on both lines.** Its description takes `ink-disabled` with its label.
+- **The request timeline's first tick reads `0ms`**, through `formatDuration`, like the ticks after it.
 - **The colour parser reads `lab()`.** A production build may ship an authored `oklch()` as `lab()`, which `src/lib/color.ts` could not parse; the contrast pairs the gate checks now live in `scripts/lib/contrast-pairs.ts`, so the Atlas measures the same ones.
 
 ## [0.12.2] · 2026-10-09
