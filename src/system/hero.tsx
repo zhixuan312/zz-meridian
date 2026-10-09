@@ -110,7 +110,7 @@ function ConsoleMini({ series }: { series: DailyPoint[] }) {
       <div className="col-span-3 mt-1 flex flex-col gap-2 rounded-md border border-line bg-surface p-2.5">
         {routes.map(([r, share], i) => (
           <div key={r}>
-            <div className="flex justify-between text-2xs"><span className="font-mono text-ink-2">{r}</span><span className="t-num text-ink">{formatCompact(Math.round(day.requests * share))}</span></div>
+            <div className="flex justify-between gap-2 text-2xs"><span className="min-w-0 truncate font-mono text-ink-2">{r}</span><span className="t-num shrink-0 text-ink">{formatCompact(Math.round(day.requests * share))}</span></div>
             <div className="mt-1 h-1 rounded-full bg-fill-track"><div className={cn('h-full rounded-full', i === 0 ? 'bg-accent' : 'bg-chart-neutral')} style={{ width: `${share * 200}%` }} /></div>
           </div>
         ))}
