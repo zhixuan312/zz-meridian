@@ -120,7 +120,7 @@ export function MembersView({ rows, now, actions }: { rows: Member[]; now: strin
     { key: 'role', header: 'Role', hideBelow: 'md', sortValue: (m) => m.role, cell: (m) => m.role },
     { key: 'team', header: 'Team', muted: true, hideBelow: 'lg', mobile: 'fact', sortValue: (m) => m.team, cell: (m) => m.team },
     { key: 'status', header: 'Status', mobile: 'fact', sortValue: (m) => m.status, cell: (m) => <Badge tone={STATUS_TONE[m.status]} dot>{m.status}</Badge> },
-    { key: 'joined', header: 'Joined', numeric: true, muted: true, hideBelow: 'xl', sortValue: (m) => m.joined, cell: (m) => formatDate(m.joined) },
+    { key: 'joined', header: 'Joined', numeric: true, muted: true, hideBelow: 'lg', sortValue: (m) => m.joined, cell: (m) => formatDate(m.joined) },
     {
       key: 'active', header: 'Last active', numeric: true, mobile: 'fact', sortValue: (m) => m.lastActive ?? '',
       cell: (m) => (m.lastActive ? formatRelative(m.lastActive, asOf) : <span className="text-ink-3">Never</span>),

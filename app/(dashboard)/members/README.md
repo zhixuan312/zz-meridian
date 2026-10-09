@@ -9,7 +9,7 @@ Status: beta
 | Row | Pattern | Console | Mobile |
 |---|---|---|---|
 | Masthead | PageFrame: kicker, "Members", one sentence, Invite member (primary) | One band | Stacked |
-| 1 | Data table: Name (avatar and name, grow), Email (from 1024px), Role (from 768px), Team (from 1280px), Status, Joined (from 1280px), Last active, and a row action menu | Columns | Cards: name and the menu, then status, team and last active |
+| 1 | Data table: Name (avatar and name, grow), Email (from 1024px), Role (from 768px), Team (from 1280px), Status, Joined (from 1024px, so the order the table opens in is on screen), Last active, and a row action menu | Columns | Cards: name and the menu, then status, team and last active |
 | Sheet | Invite a member: Name and Email (required), Role, Team; Cancel and Send invitation | From the right, 440px | From the bottom |
 | Dialog | Remove: "Remove {name}?", the consequence, and the suspend alternative; Cancel and Remove member (danger) | Centred | Bottom sheet |
 
@@ -20,7 +20,7 @@ The row menu holds Suspend (Reactivate on a suspended member) and Remove.
 | State | What shows |
 |---|---|
 | Loading | `loading.tsx`: skeleton table rows; the members are read per request, so the prerendered shell holds none |
-| Default | Newest members first |
+| Default | Newest members first, as the Joined column beside them shows |
 | Invited | The status Badge in `accent`; Last active reads "Never" in `ink-3` |
 | Suspended | The status Badge in `warning` |
 | Name or email missing | The field's error under it; nothing is sent |
