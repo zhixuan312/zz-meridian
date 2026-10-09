@@ -94,18 +94,20 @@ export function MetricTile({
             {parts.frac ? <span className="frac">{parts.frac}</span> : null}
             {parts.unit ? <span className="unit">{parts.unit}</span> : null}
           </p>
-          <div className={cn('mt-2 flex h-5 items-center gap-2 text-xs', row && 'max-sm:col-start-1 max-sm:row-start-2 max-sm:mt-0.5 max-sm:min-w-0')}>
+          {/* One line, high enough for one line: a part that does not fit wraps out of sight whole, rather than ending
+              "vs previou…". A screen reader still hears it, and the page's head says the period. */}
+          <div className={cn('mt-2 flex h-5 flex-wrap content-start items-center gap-x-2 overflow-hidden text-xs', row && 'max-sm:col-start-1 max-sm:row-start-2 max-sm:mt-0.5 max-sm:min-w-0')}>
             {reading !== null ? (
               <>
                 <span className="t-num font-medium text-ink-2">{formatDate(dates[index!])}</span>
-                {baseline ? <span className="t-num truncate text-ink-3">{(reading / baseline).toFixed(1)}× usual</span> : null}
+                {baseline ? <span className="t-num leading-5 whitespace-nowrap text-ink-3">{(reading / baseline).toFixed(1)}× usual</span> : null}
               </>
             ) : delta === null ? (
               <span className="truncate text-ink-3">No earlier period to compare</span>
             ) : delta !== undefined ? (
               <>
                 <Delta value={delta} intent={intent} />
-                <span className="truncate text-ink-3">{compare}</span>
+                <span className="leading-5 whitespace-nowrap text-ink-3">{compare}</span>
               </>
             ) : note ? (
               <span className="truncate text-ink-3">{note}</span>
@@ -117,15 +119,16 @@ export function MetricTile({
                 type="button"
                 onClick={() => point(finding.day!)}
                 aria-label={`${finding.text}. Point at ${formatDate(finding.day)}`}
-                className={cn('hit -mx-1 mt-1 flex max-w-full min-w-0 items-center gap-1.5 rounded-sm px-1 text-xs text-ink-2 transition-colors duration-(--dur-hover) hover:text-ink', row && 'max-sm:col-start-1 max-sm:row-start-3')}
+                className={cn('hit -mx-1 mt-1 flex max-w-full min-w-0 items-start gap-1.5 rounded-sm px-1 text-left text-xs text-ink-2 transition-colors duration-(--dur-hover) hover:text-ink', row && 'max-sm:col-start-1 max-sm:row-start-3')}
               >
-                <StatusDot tone="warning" />
-                <span className="truncate">{finding.text}</span>
+                {/* A finding is short and its words are the point: it wraps rather than losing its end. */}
+                <StatusDot tone="warning" className="mt-[0.3em]" />
+                <span className="min-w-0 text-pretty">{finding.text}</span>
               </button>
             ) : (
-              <p className={cn('mt-1 flex min-w-0 items-center gap-1.5 text-xs text-ink-2', row && 'max-sm:col-start-1 max-sm:row-start-3')}>
-                <StatusDot tone="warning" />
-                <span className="truncate">{finding.text}</span>
+              <p className={cn('mt-1 flex min-w-0 items-start gap-1.5 text-xs text-ink-2', row && 'max-sm:col-start-1 max-sm:row-start-3')}>
+                <StatusDot tone="warning" className="mt-[0.3em]" />
+                <span className="min-w-0 text-pretty">{finding.text}</span>
               </p>
             )
           ) : null}
