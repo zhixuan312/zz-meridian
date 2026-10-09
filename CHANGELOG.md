@@ -17,6 +17,7 @@ Every release of ZZ Meridian, newest first. Versions follow semver: a removed or
 - **A narrow metric tile drops its comparison whole** instead of "vs previou…", and its finding wraps instead of being cut.
 - **The search pill folds by the top bar's own width** (under 40rem), so a canvas narrowed by the assistant folds it too. The top bar is now a container.
 - **A read-only form section keeps its values legible** in `ink-2` instead of `ink-disabled`.
+- **A phone's record card reads its facts as one sentence**: the DataTable card is a wrapping row instead of a six-column grid, so a separator dot never lands alone on a line and a fact is never cut to fit a third.
 - **The colour parser reads `lab()`.** A production build may ship an authored `oklch()` as `lab()`, which `src/lib/color.ts` could not parse; the contrast pairs the gate checks now live in `scripts/lib/contrast-pairs.ts`, so the Atlas measures the same ones.
 
 ## [0.12.2] · 2026-10-09
