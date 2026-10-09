@@ -13,7 +13,7 @@ Status: beta
 5. **Rows**: `row-height` 52px (38px compact), a `line` divider between rows. The title column (`mobile: 'title'`, or the first) is the row's link when the row opens a record. The whole row takes the `fill-hover` tint on hover; the title keeps its colour and is never underlined.
 6. **Selection column** (optional): 40px with a Checkbox; the head's checkbox selects the page and shows indeterminate when part of it is chosen.
 7. **Footer**: Pagination, under a `line` divider, shown only when the rows do not fit on one page.
-8. **Cards, not a second list** (when the table is under 640px wide, a phone or a half-width row on a wide screen): the same table's rows lay out as cards — the title and the status on one line, two or three facts under it in `text-xs` `ink-3`, separated by dots. It is the SAME tree: the row becomes a six-column grid and each cell says which part of the card it is (`data-mobile`), so nothing is built twice and no device downloads a tree it cannot show.
+8. **Cards, not a second list** (when the table is under 640px wide, a phone or a half-width row on a wide screen): the same table's rows lay out as cards — the title and the status on one line, two or three facts under it in `text-xs` `ink-3`, separated by dots. It is the SAME tree: the row becomes a wrapping line, with a full-width break after the title and the status so the facts flow as one sentence ("391ms · Orbit Retail · 6 min ago", each fact whole), and each cell says which part of the card it is (`data-mobile`), so nothing is built twice and no device downloads a tree it cannot show.
 
 ## Variants
 

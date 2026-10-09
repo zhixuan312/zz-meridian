@@ -74,36 +74,39 @@ const CELLS = [
 ].join(' ');
 
 /**
- * What a row becomes when the TABLE is under 640px wide: a six-column grid, a card's padding, a hairline between cards.
+ * What a row becomes when the TABLE is under 640px wide: a card. It is a wrapping row, not a grid: the title and the
+ * status share the first line, and a full-width break (the row's `::after`) sends the facts to a second line where they
+ * flow as one sentence, "391ms · Orbit Retail · 6 min ago", each whole. A grid of thirds put each dot at the edge of a
+ * third, or alone on a line of its own, and cut a date to fit its third.
  * The table's own width, not the window's, as `hideBelow` reads it: a table in a half-width row on a wide screen, or
  * beside the assistant's column, becomes cards instead of running past its frame (issue #9's Atlas audit).
  */
 const PHONE_ROWS = [
-  '@max-[640px]:[&_tbody_tr]:grid @max-[640px]:[&_tbody_tr]:grid-cols-6 @max-[640px]:[&_tbody_tr]:items-center @max-[640px]:[&_tbody_tr]:gap-x-3 @max-[640px]:[&_tbody_tr]:gap-y-1',
+  '@max-[640px]:[&_tbody_tr]:flex @max-[640px]:[&_tbody_tr]:flex-wrap @max-[640px]:[&_tbody_tr]:items-center @max-[640px]:[&_tbody_tr]:gap-x-1.5 @max-[640px]:[&_tbody_tr]:gap-y-1',
+  '@max-[640px]:[&_tbody_tr]:after:order-2 @max-[640px]:[&_tbody_tr]:after:basis-full',
   '@max-[640px]:[&_tbody_tr]:px-(--card-pad) @max-[640px]:[&_tbody_tr]:py-3.5 @max-[640px]:[&_tbody_td]:border-0 @max-[640px]:[&_tbody_tr]:border-b @max-[640px]:[&_tbody_tr]:border-line @max-[640px]:[&_tbody_tr:last-child]:border-b-0',
 ].join(' ');
 
-/** The resets a cell needs once the row is a grid: not a row height, not a padding box, free to shrink and to clip. */
-const PHONE_CELLS = '@max-[640px]:[&_td:not([data-mobile=hidden])]:!h-auto @max-[640px]:[&_td:not([data-mobile=hidden])]:!max-w-none @max-[640px]:[&_td:not([data-mobile=hidden])]:!p-0 @max-[640px]:[&_td:not([data-mobile=hidden])]:min-w-0 @max-[640px]:[&_td:not([data-mobile=hidden])]:!block @max-[640px]:[&_[data-sep]]:inline';
+/** The resets a cell needs once the row is a card: not a row height, not a padding box, free to shrink and to clip. */
+const PHONE_CELLS = '@max-[640px]:[&_td:not([data-mobile=hidden])]:!h-auto @max-[640px]:[&_td:not([data-mobile=hidden])]:!max-w-none @max-[640px]:[&_td:not([data-mobile=hidden])]:!p-0 @max-[640px]:[&_td:not([data-mobile=hidden])]:min-w-0 @max-[640px]:[&_td:not([data-mobile=hidden]):not([data-mobile=fact])]:!block @max-[640px]:[&_[data-sep]]:inline';
 
 /** Where a role sits in the card, and how it reads there.
  *
  * `!block` (above) is load-bearing: `hideBelow` drops a column when the TABLE is narrow, and on a phone the table is always
  * narrow — but a card has room for three small facts, so a column the table dropped for width comes back here. The
- * card's own rule is the role, not the width. The title takes one column fewer when a checkbox leads the row: six
- * columns, and the status keeps the last two. */
+ * card's own rule is the role, not the width. */
 const PHONE_ROLES = [
-  '@max-[640px]:[&_td[data-mobile=check]]:col-span-1 @max-[640px]:[&_td[data-mobile=check]]:row-start-1',
-  '@max-[640px]:[&_td[data-mobile=title]]:row-start-1 @max-[640px]:[&_td[data-mobile=title]]:font-medium',
-  // Two of the six tracks: a badge is wider than one at 390px, and in one it ran left over a long title.
-  '@max-[640px]:[&_td[data-mobile=status]]:row-start-1 @max-[640px]:[&_td[data-mobile=status]]:col-span-2 @max-[640px]:[&_td[data-mobile=status]]:justify-self-end',
-  // A fact is a third of the card: a long one ends in an ellipsis rather than running over the fact beside it.
-  '@max-[640px]:[&_td[data-mobile=fact]]:row-start-2 @max-[640px]:[&_td[data-mobile=fact]]:col-span-2 @max-[640px]:[&_td[data-mobile=fact]]:truncate @max-[640px]:[&_td[data-mobile=fact]]:text-xs @max-[640px]:[&_td[data-mobile=fact]]:text-ink-3',
+  '@max-[640px]:[&_td[data-mobile=check]]:order-0 @max-[640px]:[&_td[data-mobile=check]]:mr-1.5',
+  '@max-[640px]:[&_td[data-mobile=title]]:order-1 @max-[640px]:[&_td[data-mobile=title]]:flex-1 @max-[640px]:[&_td[data-mobile=title]]:font-medium',
+  '@max-[640px]:[&_td[data-mobile=status]]:order-1 @max-[640px]:[&_td[data-mobile=status]]:ml-auto @max-[640px]:[&_td[data-mobile=status]]:shrink-0',
+  // Facts flow on the second line, left to right whatever their column's alignment, each whole; one longer than the
+  // card ends in an ellipsis.
+  // A fact is a flex row of its content and its dot, so the dot stays beside it whatever element the cell renders.
+  '@max-[640px]:[&_td[data-mobile=fact]]:order-3 @max-[640px]:[&_td[data-mobile=fact]]:!flex @max-[640px]:[&_td[data-mobile=fact]]:items-center @max-[640px]:[&_td[data-mobile=fact]]:gap-1 @max-[640px]:[&_td[data-mobile=fact]]:max-w-full @max-[640px]:[&_td[data-mobile=fact]]:overflow-hidden @max-[640px]:[&_td[data-mobile=fact]]:whitespace-nowrap @max-[640px]:[&_td[data-mobile=fact]]:!text-left @max-[640px]:[&_td[data-mobile=fact]]:text-xs @max-[640px]:[&_td[data-mobile=fact]]:text-ink-3',
   '@max-[640px]:[&_td[data-mobile=hidden]]:hidden',
   // On the accent wash of a selected row, a fact steps up to ink-2: ink-3 on it falls under 4.5:1 in light.
   '@max-[640px]:[&_tr[aria-selected]_td[data-mobile=fact]]:text-ink-2',
 ].join(' ');
-const PHONE_TITLE_SPAN = { plain: '@max-[640px]:[&_td[data-mobile=title]]:col-span-4', selectable: '@max-[640px]:[&_td[data-mobile=title]]:col-span-3' };
 
 /* Literal strings, as in the Table: Tailwind finds classes by reading the source. */
 const HIDE: Record<Breakpoint, string> = { sm: '@max-[512px]:hidden', md: '@max-[672px]:hidden', lg: '@max-[896px]:hidden', xl: '@max-[1152px]:hidden' };
@@ -261,7 +264,7 @@ export function DataTable<R>({
   } else {
     const roleOf = (c: Column<R>): Mobile => (c === titleColumn ? 'title' : c === status ? 'status' : facts.includes(c) ? 'fact' : 'hidden');
     body = (
-      <Table caption={caption} aria-busy={loading || undefined} className={cn('@max-[640px]:block @max-[640px]:[&>thead]:hidden @max-[640px]:[&>tbody]:block', CELLS, PHONE_ROWS, PHONE_CELLS, PHONE_ROLES, PHONE_TITLE_SPAN[selectable ? 'selectable' : 'plain'])}>
+      <Table caption={caption} aria-busy={loading || undefined} className={cn('@max-[640px]:block @max-[640px]:[&>thead]:hidden @max-[640px]:[&>tbody]:block', CELLS, PHONE_ROWS, PHONE_CELLS, PHONE_ROLES)}>
         <TableHead>
           <tr>
             {selectable ? (
@@ -316,7 +319,7 @@ export function DataTable<R>({
                           {/* The dot that separates two facts, on a phone only — the table has a column for each of
                               them, where a dot would be noise. It trails the fact it follows, so the line reads
                               "391ms · Orbit Retail · 6 min ago" rather than starting every fact with a bullet. */}
-                          {role === 'fact' && facts.indexOf(c) < facts.length - 1 ? <span aria-hidden data-sep> ·</span> : null}
+                          {role === 'fact' && facts.indexOf(c) < facts.length - 1 ? <span aria-hidden data-sep>·</span> : null}
                         </td>
                       );
                     })}
