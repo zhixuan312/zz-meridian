@@ -3,14 +3,12 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { cn } from '@/lib/cn';
 import { over, parse, ratio } from '@/lib/color';
-import type { ACCENTS } from '@/lib/preferences';
-import { Scope, StageBar, type Density } from '@/system/card-stage';
+import { Scope, StageBar, useStageLook, type Density } from '@/system/card-stage';
 import type { TokenGroup } from '@/system/tokens-data';
 import { app } from '@/app.config';
 import { PAIRS } from '../../scripts/lib/contrast-pairs';
 
 type RGBA = ReturnType<typeof parse>;
-type Accent = (typeof ACCENTS)[number];
 
 type Groups = { core: TokenGroup[]; theme: TokenGroup[]; compact: TokenGroup[] };
 
@@ -47,12 +45,9 @@ const short = (v = '') => v.replace(/oklch\(([\d.]+) ([\d.]+) ([\d.]+)( \/ ([\d.
     return c ? `rgb ${c.slice(0, 3).map((x) => Math.round(x * 255)).join(', ')}${c[3] < 1 ? `, ${+c[3].toFixed(3)}` : ''}` : lab;
   });
 
-/** The pair the contrast gate measures a role on first: where that role is used most. */
-const pairOf = (name: string) => PAIRS.find(([fg]) => fg === name);
 
 export function TokenView({ view, groups }: { view: string; groups: Groups }) {
-  const [theme, setTheme] = useState<'dark' | 'light' | 'both'>('dark');
-  const [accent, setAccent] = useState<Accent>('indigo');
+  const { theme, setTheme, accent, setAccent, scoped } = useStageLook();
   const [density, setDensity] = useState<Density>('comfortable');
   const panes = theme === 'both' ? (['dark', 'light'] as const) : ([theme] as const);
   const body = (t: 'dark' | 'light') => {
@@ -71,7 +66,7 @@ export function TokenView({ view, groups }: { view: string; groups: Groups }) {
       <StageBar theme={theme} setTheme={setTheme} accent={accent} setAccent={setAccent} density={view === 'space' ? density : undefined} setDensity={view === 'space' ? setDensity : undefined} />
       <div className={cn(theme === 'both' && 'divide-y divide-line')}>
         {panes.map((t) => (
-          <Scope key={t} theme={t} accent={accent} density={density} className="px-5 py-8 sm:px-10">
+          <Scope key={t} theme={theme === 'both' ? t : scoped.theme} accent={scoped.accent} density={density} className="px-5 py-8 sm:px-10">
             {theme === 'both' ? <p className="t-kicker mb-6">{t}</p> : null}
             {body(t)}
           </Scope>
@@ -102,8 +97,10 @@ function Colour({ groups, theme, accent }: { groups: TokenGroup[]; theme: string
           </div>
           <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
             {g.tokens.filter((t) => t.type === 'color').map((t) => {
-              const pair = pairOf(t.name);
-              const r = pair ? measure(pair[0], pair[1]) : null;
+              // Of every pair the contrast gate holds this role to, the one with least to spare: the binding constraint.
+              const [pair, r] = PAIRS.filter(([fg]) => fg === t.name)
+                .map((p) => [p, measure(p[0], p[1])] as const)
+                .reduce<readonly [(typeof PAIRS)[number] | null, number | null]>((worst, cur) => (cur[1] !== null && (worst[1] === null || cur[1] / cur[0][2] < worst[1] / worst[0]![2]) ? cur : worst), [null, null]);
               return (
                 <div key={t.name} className="flex gap-3.5 rounded-lg border border-line bg-surface p-3">
                   <span className="relative size-14 shrink-0 overflow-hidden rounded-md border border-line bg-[conic-gradient(var(--fill-track)_25%,transparent_0_50%,var(--fill-track)_0_75%,transparent_0)] bg-size-[10px_10px]">

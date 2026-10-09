@@ -6,7 +6,7 @@ import { cn } from '@/lib/cn';
 import type { ACCENTS } from '@/lib/preferences';
 import { useSize } from '@/components/charts/use-size';
 import { Segmented } from '@/components/ui/segmented';
-import { StageBar } from '@/system/card-stage';
+import { StageBar, useStageLook } from '@/system/card-stage';
 import { app, domain } from '@/app.config';
 
 type Accent = (typeof ACCENTS)[number];
@@ -26,8 +26,7 @@ export type ToolResultShown = { name: string; text: string; resourceUri?: string
 
 export function PageStage({ route, embed, title, toolResult }: { route: string; embed?: string; title: string; toolResult?: ToolResultShown }) {
   const [surface, setSurface] = useState<Surface>(route.startsWith('/embed') ? 'embed' : 'console');
-  const [theme, setTheme] = useState<'dark' | 'light' | 'both'>('dark');
-  const [accent, setAccent] = useState<Accent>('indigo');
+  const { theme, setTheme, accent, setAccent } = useStageLook();
   const t = theme === 'both' ? 'dark' : theme;
   const options = [
     ...(route.startsWith('/embed') ? [] : [{ value: 'console' as const, label: 'Console' }, { value: 'phone' as const, label: 'Phone' }]),
@@ -36,7 +35,7 @@ export function PageStage({ route, embed, title, toolResult }: { route: string; 
   return (
     <section aria-label={`${title} on every surface`} className="overflow-hidden rounded-xl border border-line bg-surface shadow-card">
       <StageBar
-        theme={theme} setTheme={setTheme} accent={accent} setAccent={setAccent}
+        theme={theme} setTheme={setTheme} accent={accent} setAccent={setAccent} both={false}
         extra={options.length > 1 ? <Segmented size="sm" label="Surface" value={surface} onChange={setSurface} options={options} /> : null}
       />
       <div className="relative isolate overflow-hidden bg-ground px-4 py-8 sm:px-8">
