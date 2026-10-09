@@ -3,6 +3,7 @@
 import { CheckCircle2, Info, X, XCircle } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { cn } from '@/lib/cn';
+import { keepHyphenated } from '@/components/base/text-roles';
 
 export type ToastTone = 'positive' | 'critical' | 'neutral';
 type ToastItem = { id: number; tone: ToastTone; title: string; description?: string; action?: { label: string; onClick: () => void } };
@@ -50,8 +51,8 @@ export function ToastView({
     >
       <Icon className={cn('mt-px size-4 shrink-0', TONE[tone])} strokeWidth={2} />
       <div className="min-w-0 flex-1">
-        <p className="text-sm font-medium text-ink">{title}</p>
-        {description ? <p className="mt-0.5 text-xs text-ink-2">{description}</p> : null}
+        <p className="text-sm font-medium text-ink">{keepHyphenated(title)}</p>
+        {description ? <p className="mt-0.5 text-xs text-ink-2">{keepHyphenated(description)}</p> : null}
       </div>
       {action ? (
         <button type="button" className="press hit shrink-0 rounded-xs text-sm font-medium text-accent-ink hover:text-ink" onClick={action.onClick}>

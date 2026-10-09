@@ -62,3 +62,11 @@ Not applicable.
 ## Implementation
 
 `src/styles/base.css`. Sizes are also Tailwind utilities (`text-page`, `text-hero`, `text-2xs` …) for the rare case a role class does not fit.
+
+`keepHyphenated` (`@/components/base/text-roles`) holds a hyphenated identifier on one line wherever a sentence names a region, a key or a route, since a break after its hyphen reads as two words. The Banner, the Toast and the Incident card pass their text through it.
+
+```tsx
+import { keepHyphenated } from '@/components/base/text-roles';
+
+<p>{keepHyphenated('Traffic is shifting to eu-central-1.')}</p>
+```
