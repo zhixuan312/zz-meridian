@@ -93,7 +93,8 @@ export function FormSection({
     <div className="min-w-0">
       <div className={cn('relative rounded-lg border bg-surface shadow-card', tone === 'critical' ? 'border-critical/30' : 'border-line', flush && 'has-[>[data-flush]:first-child]:overflow-hidden')}>
         {as === 'form' ? (
-          <fieldset data-flush={flush ? '' : undefined} disabled={Boolean(readOnly) || saving} className={body}>{inner}</fieldset>
+          // Read-only is not unavailable: its values are what the reader came for, so they stay legible in ink-2.
+          <fieldset data-flush={flush ? '' : undefined} disabled={Boolean(readOnly) || saving} className={cn(body, readOnly && '[&_button:disabled]:text-ink-2 [&_input:disabled]:text-ink-2 [&_textarea:disabled]:text-ink-2')}>{inner}</fieldset>
         ) : (
           <div data-flush={flush ? '' : undefined} className={body}>{inner}</div>
         )}

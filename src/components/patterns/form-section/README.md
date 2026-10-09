@@ -42,7 +42,7 @@ Status: beta
 | Saving | Fields disabled; Save shows its busy spinner; Discard disabled |
 | Saved | The bar closes; a toast confirms ("Workspace saved") |
 | Error | The bar stays; a critical Banner above the fields says why and what to do |
-| Read-only | Fields disabled; the notice says who can change them |
+| Read-only | Fields disabled, their values kept legible in `ink-2` (the reader came to read them); the notice says who can change them |
 
 ## Behaviour
 
