@@ -2,7 +2,7 @@
 
 Every release of ZZ Meridian, newest first. Versions follow semver: a removed or renamed token, prop or card is major; a new card, token or variant is minor; a corrected value is a patch. Each entry says what breaks and what to do instead.
 
-## [0.13.0] · 2026-10-10
+## [0.13.0] · 2026-10-11
 
 ### Added
 

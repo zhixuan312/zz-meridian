@@ -1,7 +1,7 @@
 import { act, render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import { nav } from '@/app.config';
-import type { ChromeAccess } from '@/data/access';
+import type { ChromeAccess } from '@/lib/collection';
 import { ConsoleRail, visible } from '@/views/console-chrome';
 
 describe("the console's rail, configured from the product's layout", () => {

@@ -5,7 +5,7 @@ import { nav, type NavGroup } from '@/app.config';
 import { CommandPalette } from '@/components/patterns/command-palette';
 import { Rail } from '@/components/patterns/rail';
 import { Skeleton } from '@/components/ui/skeleton';
-import type { ChromeAccess } from '@/data/access';
+import type { ChromeAccess } from '@/lib/collection';
 
 /**
  * The console's rail and command palette, with the destinations from app.config. They are chosen here, on the client,

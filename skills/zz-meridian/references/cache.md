@@ -115,7 +115,7 @@ import { membersFor } from '@/data/member-mutations';
 import { chooseViewAs } from '@/data/view-as';
 import { NoAccess } from '@/views/no-access';
 import type { Member } from '@/data/sample';
-import type { AnyCollection, Grant, Need } from '@/lib/collection';
+import type { AnyCollection, ChromeAccess, Grant, Need } from '@/lib/collection';
 
 export type AccessScope = Readonly<{
   tenantId: string;
@@ -295,19 +295,7 @@ export async function gate(feature: FeatureId): Promise<JSX.Element | null> {
   return null;
 }
 
-/** What the console's chrome shows about the current request: the destinations, the person, and who the demo may be viewed as. */
-export type ChromeAccess = {
-  /** The destinations this person may satisfy the need of, as hrefs — what the rail and the palette both draw. */
-  only: string[];
-  /** The signed-in person, as the rail's account card reads them: their name and `roleLabel`. */
-  user: { name: string; role: string };
-  /** The View as group: the persona in view, the five personas in order, and the action that signs the demo in as one. */
-  viewAs: {
-    current: string;
-    options: { id: string; label: string; disabled?: boolean }[];
-    choose: (id: string) => Promise<void>;
-  };
-};
+/** The console's chrome reads `ChromeAccess` from `@/lib/collection`, where the access vocabulary lives. */
 
 /**
  * Who the console is being read by, for the rail and the command palette, resolved behind the frame the layout streams.

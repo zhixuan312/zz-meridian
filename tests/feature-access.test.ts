@@ -11,9 +11,18 @@ vi.mock('next/cache', () => ({ cacheTag: () => {}, cacheLife: () => {}, updateTa
 import { ACTIONS, FEATURES, type ActionId, type FeatureId } from '@/data/features';
 import { nav } from '@/app.config';
 import { chromeAccess, may } from '@/data/access';
+import fs from 'node:fs';
+import path from 'node:path';
 
 const items = nav.flatMap((g) => g.items);
 const hrefsOf = (only: string[]) => items.filter((i) => only.includes(i.href)).map((i) => i.href).sort();
+
+/**
+ * The template's own repository: the Atlas is still here. A project brought in with `adopt` or `create` has it removed
+ * (`scripts/brand.ts` deletes `app/system`), so the eight routes below are the template's and not that project's: its rail
+ * is its own. Asserting the template's list in a product failed that product's gate for a project that was right.
+ */
+const TEMPLATE = fs.existsSync(path.resolve(import.meta.dirname, '../app/system'));
 
 beforeEach(() => { jar.value = undefined; });
 
@@ -62,7 +71,8 @@ describe('the feature table', () => {
 });
 
 describe('the rail asks the table', () => {
-  it('gives a Viewer the eight routes and everyone else all ten', async () => {
+  it('gives a Viewer the eight routes and everyone else all ten', async (ctx) => {
+    if (!TEMPLATE) ctx.skip('this project replaced the template’s pages: its rail is its own, and these eight routes are the template’s');
     const all = items.map((i) => i.href).sort();
     jar.value = 'members_12';
     expect(hrefsOf((await chromeAccess()).only)).toEqual(['/', '/analytics', '/customers', '/health', '/requests', '/settings', '/system', '/system/start/start-a-dashboard']);

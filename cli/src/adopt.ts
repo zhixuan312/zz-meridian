@@ -76,9 +76,13 @@ const label = (route: string) => (route === '/' ? 'Home' : route.split('/').pop(
 
 function appConfig(pages: string[]): string {
   const template = readPayload('src/app.config.ts');
-  const items = pages.map((r) => `      { href: ${JSON.stringify(r)}, label: ${JSON.stringify(label(r))}, icon: LayoutGrid },`).join('\n');
+  const items = pages.map((r) => `      { href: ${JSON.stringify(r)}, label: ${JSON.stringify(label(r))}, icon: LayoutGrid, needs: 'public' },`).join('\n');
   return template
     .replace(/^import \{[\s\S]*?\} from 'lucide-react';/m, "import { LayoutGrid, type LucideIcon } from 'lucide-react';")
+    // The project's pages have no feature entry yet, so every item is `public` — the honest default — and step 4 of the
+    // Start guide points each at its own feature once it has one. The template's own `FEATURES` import would name a file
+    // this project's `src/data/` need not have, and a nav item without a `needs` is a type error since 0.13.0.
+    .replace(/^import \{ FEATURES \} from '\.\/data\/features\.ts';\n/m, '')
     .replace(/export const nav: NavGroup\[\] = \[[\s\S]*?\n\];/, `/** Written by zz-meridian adopt from the project's pages: give each its own icon and group them. */\nexport const nav: NavGroup[] = [\n  {\n    items: [\n${items}\n    ],\n  },\n];`);
 }
 

@@ -1,14 +1,24 @@
 // @vitest-environment node
 import { describe, expect, it } from 'vitest';
 import { spawnSync } from 'node:child_process';
+import fs from 'node:fs';
 import path from 'node:path';
 import config from '../scripts/verify.config';
 
 const ROOT = path.resolve(import.meta.dirname, '..');
 const run = (...args: string[]) => spawnSync(process.execPath, ['scripts/verify.ts', ...args], { cwd: ROOT, encoding: 'utf8', timeout: 60_000 });
 
+/**
+ * The template's own repository: the Atlas is still here. A project brought in with `adopt` or `create` has it removed
+ * (`scripts/brand.ts` deletes `app/system`), so the ten rail routes below are not that project's — its rail is its own, and
+ * its personas carry its own routes. Asserting the template's list in a product failed that product's gate for a project
+ * that was right: `pnpm run verify` in a created dashboard failed here, and the release's consumer path caught it.
+ */
+const TEMPLATE = fs.existsSync(path.join(ROOT, 'app/system'));
+
 describe('the personas', () => {
-  it('declares the five the spec freezes, with literal expected routes', () => {
+  it('declares the five the spec freezes, with literal expected routes', (ctx) => {
+    if (!TEMPLATE) ctx.skip('this project replaced the template’s pages: its rail is its own, and its personas name its own routes');
     const personas = config.personas ?? {};
     expect(Object.keys(personas).sort()).toEqual(['admin', 'key-manager', 'member', 'owner', 'viewer']);
     const viewer = personas.viewer;

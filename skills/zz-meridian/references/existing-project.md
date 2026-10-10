@@ -69,7 +69,7 @@ Migrate in place, page by page, keeping their data layer.
    (`src/views/console-chrome.tsx`), since each destination carries its icon component, and take what depends on the
    request from the layout as props: `<ConsoleRail access={…} signOut={…} />` and `<ConsolePalette access={…} />`,
    where `access` is a promise of `{ only, user, viewAs }` — the hrefs this person may see, the signed-in person from
-   their session, and a View as group if they have one (`ChromeAccess` in the template's `src/data/access.ts`, built by
+   their session, and a View as group if they have one (`ChromeAccess` from `@/lib/collection`, built by your own
    `chromeAccess()`). Both pieces of chrome wait for that promise in their own `<Suspense>` boundary, so the frame is in
    the static shell and the person's own rail streams in the same response; pass the promise without awaiting it, and
    never draw the sample person while it is pending. `workspace` and `scopes` still arrive as plain props. A console

@@ -17,6 +17,24 @@ export type Need = ProtectedNeed | 'public';
 /** What a browser may be told about a change: which collection, and nothing about the rows, the tenant or the cache. */
 export type LiveEvent = { collection: string };
 
+/**
+ * What the console's chrome shows about the current request: the destinations, the person and who the demo may be viewed
+ * as. It lives here, beside the need vocabulary, and not in the project's own `src/data/access.ts`, because Meridian ships
+ * the chrome that takes it: a file we manage may only import what we manage.
+ */
+export type ChromeAccess = {
+  /** The destinations this person may satisfy the need of, as hrefs — what the rail and the palette both draw. */
+  only: string[];
+  /** The signed-in person, as the rail's account card reads them: their name and `roleLabel`. */
+  user: { name: string; role: string };
+  /** The View as group: the persona in view, the five personas in order, and the action that signs the demo in as one. */
+  viewAs: {
+    current: string;
+    options: { id: string; label: string; disabled?: boolean }[];
+    choose: (id: string) => Promise<void>;
+  };
+};
+
 export type Collection<T extends Record<string, unknown>, K extends keyof T & string> = {
   name: string;
   label: string;
