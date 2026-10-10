@@ -54,7 +54,8 @@ describe('a page write from another tenant', () => {
 describe('a write that throws', () => {
   it('does not invalidate the tenant collection and reports a reason', async () => {
     const spy = vi.spyOn(members, 'update').mockRejectedValueOnce(new Error('The database is unavailable.'));
-    const id = String((await members.query({})).rows[0].id);
+    // The caller is the Owner, so the write that throws targets a plain Member: neither itself nor an Owner.
+    const id = String((await members.query({})).rows.find((m) => m.role === 'Member' && m.status === 'Active')!.id);
     const r = await setMemberStatus(id, 'Suspended');
     spy.mockRestore();
     expect(r).toEqual({ ok: false, error: 'The database is unavailable.' });

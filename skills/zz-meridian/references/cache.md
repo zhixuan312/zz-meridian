@@ -108,9 +108,10 @@ import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import type { JSX } from 'react';
 import { nav } from '@/app.config';
-import { activity, days, endpoints, incidents, keys, members, requests, responses, services } from '@/data/collections';
+import { activity, customers, days, endpoints, incidents, keys, members, requests, responses, services, workspace } from '@/data/collections';
 import { FEATURES, type FeatureId } from '@/data/features';
 import { effective, roleLabel, type AddOn, type MainRole } from '@/data/roles';
+import { membersFor } from '@/data/member-mutations';
 import { chooseViewAs } from '@/data/view-as';
 import { NoAccess } from '@/views/no-access';
 import type { Member } from '@/data/sample';
@@ -210,6 +211,8 @@ const DEMO_COLLECTIONS: Record<string, { collection: AnyCollection; ops: readonl
   services: { collection: services, ops: ['read'] },
   incidents: { collection: incidents, ops: ['read'] },
   activity: { collection: activity, ops: ['read', 'create'] },
+  customers: { collection: customers, ops: ['read'] },
+  workspace: { collection: workspace, ops: ['read', 'update', 'remove'] },
 };
 
 export const { resolveAccess, collectionFor, can, nameOf } = accessFrom({
@@ -217,7 +220,8 @@ export const { resolveAccess, collectionFor, can, nameOf } = accessFrom({
     const member = await currentMember();
     return member ? { tenantId: TENANT, subjectId: member.id, authorizationKey: authorizationKeyOf(member) } : null;
   },
-  bind: (scope, name) => (scope.tenantId === TENANT ? DEMO_COLLECTIONS[name]?.collection : undefined),
+  // Members are bound through the boundary (`member-mutations.ts`), so no write reaches the raw collection.
+  bind: (scope, name) => (scope.tenantId === TENANT ? (name === 'members' ? membersFor(scope) : DEMO_COLLECTIONS[name]?.collection) : undefined),
   allows: async (scope, name, op, ids) => {
     const member = await memberById(scope.subjectId);
     if (!member || member.status !== 'Active') return false;

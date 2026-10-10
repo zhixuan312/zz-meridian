@@ -42,7 +42,8 @@ describe('a page write', () => {
   });
   it('is refused for a record the caller may not touch, and allowed for one it may', async () => {
     const { rows } = await members.query({});
-    const mine = String(rows[0].id);
+    // The caller is the Owner (`members_1`), so the row it may change is a plain Member: neither itself nor an Owner.
+    const mine = String(rows.find((m) => m.role === 'Member' && m.status === 'Active')!.id);
     const theirs = String(rows[1].id);
     gate.deniedIds = [theirs];
     const l = listen();
@@ -51,6 +52,18 @@ describe('a page write', () => {
     expect(l.seen).toEqual([]);
     expect((await setMemberStatus(mine, 'Suspended')).ok).toBe(true);
     expect(cache.updated).toEqual([collectionTag('demo', 'members')]);
+    l.off();
+  });
+  it('refuses suspending the caller, who is the last active Owner, and changes nothing', async () => {
+    const { rows } = await members.query({});
+    const caller = String(rows[0].id);
+    const before = await members.query({});
+    expect(before.rows.some((m) => m.role === 'Owner' && m.status === 'Active')).toBe(true);
+    const l = listen();
+    expect(await setMemberStatus(caller, 'Suspended')).toEqual({ ok: false, error: 'You cannot suspend or remove yourself.' });
+    expect(await members.query({})).toEqual(before);
+    expect(cache.updated).toEqual([]);
+    expect(l.seen).toEqual([]);
     l.off();
   });
 });

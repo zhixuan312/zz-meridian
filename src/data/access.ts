@@ -21,6 +21,7 @@ import { nav } from '@/app.config';
 import { activity, customers, days, endpoints, incidents, keys, members, requests, responses, services, workspace } from '@/data/collections';
 import { FEATURES, type FeatureId } from '@/data/features';
 import { effective, roleLabel, type AddOn, type MainRole } from '@/data/roles';
+import { membersFor } from '@/data/member-mutations';
 import { chooseViewAs } from '@/data/view-as';
 import { NoAccess } from '@/views/no-access';
 import type { Member } from '@/data/sample';
@@ -129,7 +130,8 @@ export const { resolveAccess, collectionFor, can, nameOf } = accessFrom({
     const member = await currentMember();
     return member ? { tenantId: TENANT, subjectId: member.id, authorizationKey: authorizationKeyOf(member) } : null;
   },
-  bind: (scope, name) => (scope.tenantId === TENANT ? DEMO_COLLECTIONS[name]?.collection : undefined),
+  // Members are bound through the boundary (`member-mutations.ts`), so no write reaches the raw collection.
+  bind: (scope, name) => (scope.tenantId === TENANT ? (name === 'members' ? membersFor(scope) : DEMO_COLLECTIONS[name]?.collection) : undefined),
   allows: async (scope, name, op, ids) => {
     const member = await memberById(scope.subjectId);
     if (!member || member.status !== 'Active') return false;
