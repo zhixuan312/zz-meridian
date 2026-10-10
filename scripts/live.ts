@@ -9,7 +9,7 @@
  * it. The restart case starts, stops and restarts a `next start` of this folder on its own port. The short safety poll
  * comes from `?livePollMs=` in the page address, never from a production default.
  *
- * Every write goes through the template's own invitation sheet and Remove dialog, with real mouse and key input, and the
+ * Every write goes through the template's own invitation sheet and row menu, with real mouse and key input, and the
  * check removes the members it invited. One line per case, `ok`, `FAIL` or `not run` with the reason and measured
  * milliseconds. The exit code is 1 on any FAIL, 2 when nothing failed but a case did not run, and 0 only when every case
  * ran and passed: a case that did not run is never reported as passed.
@@ -285,15 +285,29 @@ const replayInvites = (page: Page, names: string[], everyMs: number) => page.eva
   return { sent, accepted: (await Promise.all(results)).filter(Boolean).length };
 })()`);
 
-/** Removes a member through the row's menu and the confirmation; a name that is not on the page is already gone. */
+/**
+ * Removes a member through the row's menu; a name that is not on the page is already gone. Remove takes the row away at
+ * once and holds the removal for its Undo; the page sends a held removal the moment it is hidden, so the check hides it
+ * (as switching tabs does) rather than waiting out the Undo, then reads the page from the server until the name is gone.
+ */
 async function remove(page: Page, name: string) {
   const row = `button[aria-label="Actions for ${name}"]`;
   if (!(await page.eval<boolean>(`!!${find(row)}`))) return;
   await waitFor(page, 'no dialog open', `!${DIALOG}`);
   await click(page, find(row));
   await click(page, find('[role="menuitem"]', 'Remove'), true);
-  await click(page, find('button', 'Remove member', IN_DIALOG), true);
-  await waitFor(page, `${name} leaving the table`, `!document.body.innerText.includes(${JSON.stringify(name)})`, 8000);
+  await waitFor(page, `${name} leaving the table`, `!document.querySelector('main table, main [role="table"]')?.textContent.includes(${JSON.stringify(name)})`, 8000);
+  await page.eval(`(() => {
+    Object.defineProperty(document, 'visibilityState', { configurable: true, get: () => 'hidden' });
+    document.dispatchEvent(new Event('visibilitychange'));
+    delete document.visibilityState;
+    document.dispatchEvent(new Event('visibilitychange'));
+  })()`);
+  const t = Date.now();
+  while (await page.eval<boolean>(`fetch(location.pathname, { cache: 'no-store' }).then((r) => r.text()).then((h) => h.includes(${JSON.stringify(name)}))`)) {
+    if (Date.now() - t > 8000) throw new Error(`${name} was still on the server 8000 ms after the page sent the removal`);
+    await sleep(200);
+  }
 }
 
 /**
