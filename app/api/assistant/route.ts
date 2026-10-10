@@ -37,8 +37,6 @@ export async function POST(request: Request): Promise<Response> {
   const readable = (await Promise.all(collections.map(async (c) => {
     if (!(await can(scope, c.name, 'read'))) return null;
     // A collection bound to this scope: for members, `membersFor(scope)`, so every write passes Task I-14's boundary
-    // and the Owner, self and last-active-Owner rules apply to an agent exactly as they do to the page.
-    // A collection bound to this scope: for members, `membersFor(scope)`, so every write passes Task I-14's boundary
     // and the Owner, self and last-active-Owner rules apply to an agent exactly as they do to the page. `handedTo` is
     // where the order lives — the query re-check, the agent's member create, then FR-17's narrowing.
     return await handedTo(scope, collectionFor(scope, c.name), c.name);
