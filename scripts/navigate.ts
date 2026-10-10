@@ -7,7 +7,7 @@
  * Each journey starts from the rail route before the destination (the one after it for the first), waits for what a visitor
  * would wait for (the destination's router prefetch and every chunk it brought in, once its link is shown; the drawer on a
  * phone), presses the destination in the rail and times three things from that press:
- * the shell (the path and the heading), the data (the mapping's `readySelector` and `readyText`) and the interaction (its
+ * the shell (the path and the heading), the data (the mapping's `readySelector` and `readyText`, never a skeleton's rows) and the interaction (its
  * `probe` on `controlSelector`, observed on `resultSelector`). Times are the page's own clock, from the press event to the first
  * frame that shows the condition, never round trips over the debugging protocol. The phone is 390 wide, 4x CPU throttled, 150 ms and 1.6 Mbps,
  * and the drawer-open-to-navigation time is reported apart.
@@ -116,7 +116,10 @@ const INSTRUMENT = `${DEEP_SOURCE}\n${DEEP_MATCHES}\n(() => {
       }
       // Until the heading is the target's, the page on screen is the old one, whose table would answer for the new one.
       if (r.shell !== undefined) {
-        if (s.ready && r.data === undefined && location.pathname === s.route && deepMatches(s.ready).some((el) => el.textContent.toLowerCase().includes(s.text))) r.data = at;
+        // Only what is on screen and real counts as the data. The router keeps routes it has shown mounted and hidden
+        // (Cache Components: display none), so the previous page's rows are still in the document; and a loading.tsx
+        // draws rows shaped like the real ones, which would hide the time React holds a shown fallback (300 ms or more).
+        if (s.ready && r.data === undefined && location.pathname === s.route && deepMatches(s.ready).some((el) => el.getClientRects().length > 0 && el.textContent.toLowerCase().includes(s.text) && !el.querySelector('.shimmer') && !el.closest('.shimmer, [aria-busy="true"]'))) r.data = at;
         // A link probe leaves the route: its result is the address changing.
         if (nav.expect && r.interactive === undefined && nav.snap(nav.expect.selector) !== nav.expect.before) r.interactive = at;
       }
