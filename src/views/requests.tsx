@@ -49,7 +49,7 @@ export function useSearchDraft(applied: string, write: (q: string) => void): [st
 export function RequestsView({ rows, total, summary, state, pageSize, updatedAt, now }: { rows: RequestRow[]; total: number; summary: Page['summary']; state: Page['state']; pageSize: number; updatedAt: string; now: string }) {
   useShareView(requestsContext({ rows, total, summary, state, pageSize, updatedAt, now }));
   /* One writer for filters, sort and page: two setters in one handler would each write over the other. */
-  const [f, setF] = useQueryState({ ...REQUEST_FILTERS, sort: 'at', dir: 'desc', page: '1' });
+  const [f, setF, pending] = useQueryState({ ...REQUEST_FILTERS, sort: 'at', dir: 'desc', page: '1' });
   const isFiltered = state.q !== '' || state.status !== 'all' || state.method !== 'all' || state.region !== 'all';
   const change = (patch: Partial<typeof REQUEST_FILTERS>) => setF({ ...patch, by: '', page: '1' });
   const [draft, setDraft] = useSearchDraft(state.q, (q) => change({ q }));
@@ -74,8 +74,9 @@ export function RequestsView({ rows, total, summary, state, pageSize, updatedAt,
         manual
         total={total}
         pageSizes={[pageSize]}
-        state={{ sort: state.sort, dir: state.dir, page: String(state.page) }}
+        state={{ sort: f.sort, dir: f.dir, page: f.page }}
         onStateChange={setF}
+        busy={pending}
         filtered={isFiltered}
         onClearFilters={clear}
         toolbar={

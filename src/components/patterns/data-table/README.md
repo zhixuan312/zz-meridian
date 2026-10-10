@@ -37,6 +37,7 @@ Row height and card padding come from the density: comfortable 52px and 24px, co
 | Hover (a linked row) | Row fill `fill-hover` over `dur-hover`; nothing else changes |
 | Selected | Row fill `accent-tint`; the checkbox in `accent` |
 | Focus | The link or the checkbox shows the 2px `accent` ring |
+| Busy | A sort or a page the server is still fetching: the header's arrow and the page number move at once (`useQueryState` shows the asked-for state optimistically), the rows stay at 60% opacity over `dur-hover` with `aria-busy` until the new rows land, so every press is answered |
 | Loading | `aria-busy`; up to eight skeleton rows shaped like real ones (a wide bar in the grow column, short bars elsewhere, right-aligned bars in numeric columns) — the same eight rows on a phone, laid out as cards |
 | Empty, first run | Empty state `first-run`: what is missing and the one action that fills it |
 | Empty, filtered out | Empty state `filtered`: "No requests match these filters" with Clear filters |

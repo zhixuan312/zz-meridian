@@ -150,6 +150,7 @@ export function DataTable<R>({
   manual,
   total: manualTotal,
   loading,
+  busy,
   error,
   onRetry,
   filtered,
@@ -186,6 +187,8 @@ export function DataTable<R>({
   manual?: boolean;
   total?: number;
   loading?: boolean;
+  /** New rows are on their way for a sort or a page already shown as chosen: the rows stay, quieter, until they land. */
+  busy?: boolean;
   /** What went wrong, in one sentence. Shows the error state with Retry. */
   error?: ReactNode;
   onRetry?: () => void;
@@ -264,7 +267,7 @@ export function DataTable<R>({
   } else {
     const roleOf = (c: Column<R>): Mobile => (c === titleColumn ? 'title' : c === status ? 'status' : facts.includes(c) ? 'fact' : 'hidden');
     body = (
-      <Table caption={caption} aria-busy={loading || undefined} className={cn('@max-[640px]:block @max-[640px]:[&>thead]:hidden @max-[640px]:[&>tbody]:block', CELLS, PHONE_ROWS, PHONE_CELLS, PHONE_ROLES)}>
+      <Table caption={caption} aria-busy={loading || busy || undefined} className={cn('@max-[640px]:block @max-[640px]:[&>thead]:hidden @max-[640px]:[&>tbody]:block', CELLS, PHONE_ROWS, PHONE_CELLS, PHONE_ROLES, '[&>tbody]:transition-opacity [&>tbody]:duration-(--dur-hover)', busy && '[&>tbody]:opacity-60')}>
         <TableHead>
           <tr>
             {selectable ? (
