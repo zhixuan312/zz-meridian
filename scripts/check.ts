@@ -18,6 +18,8 @@
  *   AGENTS.md, the skill and the brief name exists.
  * - An update session is resolved, `.meridian/keep.json` names files that are managed and present, and `app.logo` is an
  *   SVG under public/.
+ * - Every nav item's `needs` has the shape the rail can read: 'public', a grant `object:read|create|update|remove`, or an
+ *   `{ allOf: [...] }` of them.
  */
 import { createHash } from 'node:crypto';
 import fs from 'node:fs';
@@ -27,7 +29,7 @@ import { checkBrief, scanReferences } from './lib/context-check.ts';
 import { APP_DIR } from './lib/routes.ts';
 import { keepProblems, unresolved, parseJournal, parseKeep, parseResolutions, verifiedRetirements, type Hash, type Retirement } from './lib/update-session.ts';
 import { cards } from './registry.ts';
-import { app } from '../src/app.config.ts';
+import { app, nav } from '../src/app.config.ts';
 import { logoSource } from '../src/lib/logo.ts';
 
 const ROOT = path.resolve(import.meta.dirname, '..');
@@ -258,6 +260,36 @@ for (const f of [APP_DIR, 'src', 'components'].flatMap((d) => walk(d, /\.tsx$/))
   const src = read(f);
   const at = [...src.matchAll(/<FeaturedMetric\b/g)].map((m) => src.slice(0, m.index).split('\n').length);
   if (at.length > 1) problems.push(`${f}:${at[1]}: a second FeaturedMetric (the first is at line ${at[0]}); a page has one protagonist, so make the others Metric tiles or Cards`);
+}
+
+// ── A nav item asks its own need, and that need has a shape ───────────────────────────────────────────
+// The rail asks each destination's need of the person, and the code that answers it reads two shapes only: the string
+// 'public', a grant `object:operation`, or an object whose one key is a non-empty `allOf` of grants. A nav item that
+// forgets `needs`, misspells an operation (`keys:manage`, which no collection carries) or nests another `allOf` reaches
+// the rail as a need nothing can satisfy, and the page behind it is then reachable by nobody — silently. This is the
+// shape of a need, which every project declares in its own grants: the role table is not read, so whatever a project
+// grants passes. `src/app.config.ts` is every project's file, so this rule holds in a product too.
+const GRANT = /^[a-z][a-z0-9-]*:(read|create|update|remove)$/;
+
+/** Why a nav item's `needs` has no shape the rail can read, as the clause after the item's href, or null when it has one. */
+const needProblem = (need: unknown): string | null => {
+  if (need === undefined || need === null) return "has no needs; name 'public', a grant such as 'keys:read', or { allOf: [...] }";
+  if (need === 'public') return null;
+  if (typeof need === 'string') return GRANT.test(need) ? null : `names ${JSON.stringify(need)}, which is not a grant (object:read|create|update|remove)`;
+  if (typeof need === 'object' && !Array.isArray(need)) {
+    const allOf = (need as { allOf?: unknown }).allOf;
+    if (Object.keys(need).length === 1 && Array.isArray(allOf)) {
+      if (!allOf.length) return 'has an empty allOf; a need names at least one grant';
+      const bad = (allOf as unknown[]).find((g) => typeof g !== 'string' || !GRANT.test(g));
+      return bad === undefined ? null : `names ${JSON.stringify(bad)} in its allOf, which is not a grant`;
+    }
+  }
+  return "must be 'public', a grant such as 'keys:read', or { allOf: [...] }";
+};
+
+for (const item of nav.flatMap((g) => g.items)) {
+  const why = needProblem(item.needs);
+  if (why) problems.push(`src/app.config.ts: nav item ${item.href} ${why}`);
 }
 
 // ── The update session, the keep register and the logo ────────────────────────────────────────────────

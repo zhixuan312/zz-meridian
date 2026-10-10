@@ -24,7 +24,13 @@ const base = opt('--base', process.env.BASE ?? 'http://localhost:3100');
 // verify.config.ts is the team's, so read the one field this needs through its own type.
 const detailRoutes = (config as { detailRoutes?: string[] }).detailRoutes ?? [];
 const ROUTES = opt('--routes', '') ? opt('--routes', '').split(',') : [...discover().filter((r) => !r.startsWith('/system/components')), ...detailRoutes];
-const WIDTHS = [1440, 390];
+// `--as` signs every open in as one persona (scripts/verify.config.ts), through the cookie scripts/lib/chrome.ts sets
+// before the first request; without it nothing changes. `--width` narrows the walk to the widths given (default: both).
+const personas = (config as { personas?: Record<string, { cookie: { name: string; value: string } }> }).personas ?? {};
+const as = opt('--as', '');
+const cookie = as ? personas[as]?.cookie : undefined;
+if (as && !cookie) { console.error(`interactions: --as ${as} is not a declared persona. Declared personas: ${Object.keys(personas).join(', ')}.`); process.exit(1); }
+const WIDTHS = opt('--width', '1440,390').split(',').map(Number);
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 /** Tag every visible, enabled, not-yet-chosen control with its index; return their names (with the hosts they sit in) and the page's links. */
@@ -96,7 +102,7 @@ let pressed = 0;
 for (const width of WIDTHS) {
   const touch = width < 600;
   for (const route of ROUTES) {
-    const fresh = async () => { await page.open(base + route, { width, theme: 'dark' }); await inject(route); return page.eval<{ controls: string[]; links: string[] }>(LIST); };
+    const fresh = async () => { await page.open(base + route, { width, theme: 'dark', cookie }); await inject(route); return page.eval<{ controls: string[]; links: string[] }>(LIST); };
     const { controls, links } = await fresh();
     for (const href of new Set(links)) {
       if (!href.startsWith('/') || checkedLinks.has(href)) continue;

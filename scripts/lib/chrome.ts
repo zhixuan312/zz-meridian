@@ -17,7 +17,7 @@ export type Page = {
   fileChoosers: () => number;
   send: (method: string, params?: Record<string, unknown>) => Promise<any>;
   eval: <T = unknown>(expression: string) => Promise<T>;
-  open: (url: string, opts: { width: number; height?: number; theme?: 'light' | 'dark'; reduced?: boolean; wait?: number }) => Promise<void>;
+  open: (url: string, opts: { width: number; height?: number; theme?: 'light' | 'dark'; reduced?: boolean; wait?: number; cookie?: { name: string; value: string } }) => Promise<void>;
   shot: (file: string, opts?: { full?: boolean; width?: number; height?: number }) => Promise<number>;
   close: () => void;
 };
@@ -92,7 +92,7 @@ async function attach(proc: ChildProcess, dir: string, handle: { proc: ChildProc
       if (r.result?.exceptionDetails) throw new Error(r.result.exceptionDetails.exception?.description ?? 'evaluation failed');
       return r.result?.result?.value;
     },
-    async open(url, { width, height = 900, theme, reduced = true, wait = 2600 }) {
+    async open(url, { width, height = 900, theme, reduced = true, wait = 2600, cookie }) {
       const features = [{ name: 'prefers-reduced-motion', value: reduced ? 'reduce' : 'no-preference' }];
       if (theme) features.push({ name: 'prefers-color-scheme', value: theme });
       errors.length = 0;
@@ -100,6 +100,12 @@ async function attach(proc: ChildProcess, dir: string, handle: { proc: ChildProc
       await send('Emulation.setDeviceMetricsOverride', { width, height, deviceScaleFactor: Number(process.env.DPR ?? 2), mobile: width < 600 });
       // A phone is touch: pointer: coarse, so touch targets and tap behaviour are what a phone gets.
       await send('Emulation.setTouchEmulationEnabled', width < 600 ? { enabled: true, maxTouchPoints: 5 } : { enabled: false });
+      // A cookie is set through the network domain, BEFORE the navigation, so the very first request already carries it
+      // (a persona suite signed in this way sees that person's pages, never the signed-out or default one).
+      if (cookie) {
+        await send('Network.enable');
+        await send('Network.setCookie', { name: cookie.name, value: cookie.value, url });
+      }
       await send('Page.navigate', { url });
       await sleep(wait);
       // Then its load event: on a busy machine a page can still be loading after any fixed wait, and a suite reading it then

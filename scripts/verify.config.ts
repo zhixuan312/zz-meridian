@@ -20,6 +20,16 @@ type NavigationCheck = {
   resultSelector: string;
 };
 
+/** One way `pnpm verify --as` signs the browser in: the cookie that names the person, and what that person is expected to see. */
+type Persona = {
+  /** The cookie every browser suite carries, set before the first request; its value is the sample member's id. */
+  cookie: { name: string; value: string };
+  /** The rail routes this person may open, written by hand and never derived from the rail or the policy under test. */
+  expectedRoutes: readonly string[];
+  /** For each route this person may NOT open: one protected string that must not appear on the NoAccess answer. */
+  deniedProbe?: Record<string, string>;
+};
+
 type VerifyConfig = {
   /**
    * Detail pages checked beside every static route, one per state worth seeing (a normal record, a failed one, a missing
@@ -88,7 +98,17 @@ type VerifyConfig = {
   navigationChecks?: NavigationCheck[];
   /** The up to three rail routes the default smoke visits. Without it: the landing route and the next two rail routes. */
   smokeRoutes?: string[];
+  /**
+   * The people `pnpm verify --as <persona>` can sign the browser in as, by name. Each carries the cookie a suite sets
+   * before its first request, the routes that person is expected to see (written by hand), and, for the routes that
+   * person may not open, one protected string that must not appear on the page. Leave it out in a product whose sign-in
+   * is not Meridian's demo policy: `--as` then names no persona and is refused.
+   */
+  personas?: Record<string, Persona>;
 };
+
+/** Every rail route, in the rail's own order: what a persona who may open all of them is expected to see. */
+const ALL_TEN_ROUTES = ['/', '/requests', '/analytics', '/health', '/customers', '/keys', '/members', '/settings', '/system', '/system/start/start-a-dashboard'] as const;
 
 const config: VerifyConfig = {
   // Ids from the sample (src/system/fixtures/sample.ts); tests/sample.test.ts fails if one stops being what it says.
@@ -112,6 +132,20 @@ const config: VerifyConfig = {
     { path: '/system', title: 'One dashboard', readySelector: 'section[aria-label="The system in numbers"]', probe: 'link', controlSelector: 'section a[href^="/system/"]', resultSelector: 'h1' },
     { path: '/system/start/start-a-dashboard', title: 'Start a dashboard', readySelector: 'article h2', probe: 'link', controlSelector: 'nav[aria-label="Next and previous"] a', resultSelector: 'h1' },
   ],
+  // The sample's five frozen personas, the member ids of src/system/fixtures/sample-members.ts. The four with a full
+  // role differ in what they may DO, not in what they may see; the Viewer is the one denied a route, so it is the one
+  // that carries deniedProbe: a key name on Keys and a member's address on Members must not reach a Viewer's page.
+  personas: {
+    owner: { cookie: { name: 'zz_meridian_view_as', value: 'members_1' }, expectedRoutes: ALL_TEN_ROUTES },
+    admin: { cookie: { name: 'zz_meridian_view_as', value: 'members_2' }, expectedRoutes: ALL_TEN_ROUTES },
+    member: { cookie: { name: 'zz_meridian_view_as', value: 'members_4' }, expectedRoutes: ALL_TEN_ROUTES },
+    'key-manager': { cookie: { name: 'zz_meridian_view_as', value: 'members_5' }, expectedRoutes: ALL_TEN_ROUTES },
+    viewer: {
+      cookie: { name: 'zz_meridian_view_as', value: 'members_12' },
+      expectedRoutes: ['/', '/requests', '/analytics', '/health', '/customers', '/settings', '/system', '/system/start/start-a-dashboard'],
+      deniedProbe: { '/keys': 'Load test, October', '/members': 'maya.chen@' },
+    },
+  },
 };
 
 export default config;

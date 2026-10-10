@@ -23,6 +23,13 @@ const rogue = () => {
   put('app/(dashboard)/rogue/actions.ts', "'use server';\nimport { revalidateTag } from 'next/cache';\nexport async function stale() { revalidateTag('collection:x', 'max'); }\n");
 };
 const check = () => spawnSync(process.execPath, ['scripts/check.ts'], { cwd: dir, encoding: 'utf8' }).stdout;
+/** The template's own `src/app.config.ts`, with the Overview item's need replaced (or dropped) to plant a nav case. */
+const plantNav = (needs: string | null) => {
+  const base = fs.readFileSync(path.join(ROOT, 'src/app.config.ts'), 'utf8');
+  const at = 'needs: FEATURES.overview.needs';
+  put('src/app.config.ts', needs === null ? base.replace(`, ${at}`, '') : base.replace(at, `needs: ${needs}`));
+};
+const restoreAppConfig = () => put('src/app.config.ts', fs.readFileSync(path.join(ROOT, 'src/app.config.ts'), 'utf8'));
 
 describe("the template's own rules", () => {
   it('pass on the template as it is', () => expect(check()).toMatch(/^0 problems/m), 60_000);
@@ -39,6 +46,22 @@ describe("the template's own rules", () => {
     put('src/views/two.tsx', `import { FeaturedMetric } from '@/components/patterns/featured-metric';\nexport const Two = () => (\n  <>\n    ${featured}\n    ${featured}\n  </>\n);\n`);
     expect(check()).toMatch(/src\/views\/two\.tsx:5: a second FeaturedMetric \(the first is at line 4\)/);
     fs.rmSync(path.join(dir, 'src/views/two.tsx'));
+  }, 60_000);
+  it('send a nav item with no need, a bad grant or an allOf the shape it cannot read to the gate, naming its href', () => {
+    plantNav(null);
+    expect(check()).toMatch(/src\/app\.config\.ts: nav item \/ has no needs/);
+    plantNav("'keys:manage'");
+    expect(check()).toMatch(/src\/app\.config\.ts: nav item \/ names "keys:manage", which is not a grant/);
+    plantNav('{ allOf: [] }');
+    expect(check()).toMatch(/src\/app\.config\.ts: nav item \/ has an empty allOf/);
+    plantNav("{ allOf: [{ allOf: ['keys:read'] }] }");
+    expect(check()).toMatch(/src\/app\.config\.ts: nav item \/ names \{"allOf":\["keys:read"\]\} in its allOf, which is not a grant/);
+    // Not one of the template's alone: a product's own src/app.config.ts is checked too.
+    put('.meridian/manifest.json', JSON.stringify({ version: '0.5.0', route: 'create', brand: { name: 'Acme' }, files: {} }));
+    expect(check()).toMatch(/src\/app\.config\.ts: nav item \/ names \{"allOf":\["keys:read"\]\} in its allOf/);
+    fs.rmSync(path.join(dir, '.meridian/manifest.json'));
+    restoreAppConfig();
+    expect(check()).not.toMatch(/src\/app\.config\.ts: nav item/);
   }, 60_000);
   it('stay out of a product, whose pages are its own', () => {
     rogue();

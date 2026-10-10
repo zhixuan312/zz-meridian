@@ -36,6 +36,12 @@ const base = opt('--base', process.env.BASE ?? 'http://localhost:3100');
 // verify.config.ts is the team's, so read the one field this needs through its own type.
 const detailRoutes = (config as { detailRoutes?: string[] }).detailRoutes ?? [];
 const ROUTES = opt('--routes', '') ? opt('--routes', '').split(',') : [...discover().filter((r) => r !== '/this-page-does-not-exist'), ...detailRoutes];
+// `--as` signs every open in as one persona (scripts/verify.config.ts), through the cookie scripts/lib/chrome.ts sets
+// before the first request. Without it nothing changes: no cookie is passed and the walk runs exactly as before.
+const personas = (config as { personas?: Record<string, { cookie: { name: string; value: string } }> }).personas ?? {};
+const as = opt('--as', '');
+const cookie = as ? personas[as]?.cookie : undefined;
+if (as && !cookie) { console.error(`keyboard: --as ${as} is not a declared persona. Declared personas: ${Object.keys(personas).join(', ')}.`); process.exit(1); }
 
 /** Tag every visible control the keyboard should reach; return how many. Also records how everything looks unfocused. */
 const TAG = `(() => {
@@ -114,7 +120,7 @@ const press = async (modifiers: number) => {
 const page = await launch();
 let failures = 0;
 for (const route of ROUTES) {
-  await page.open(base + route, { width: 1440, height: 900, theme: 'dark', wait: 2500 });
+  await page.open(base + route, { width: 1440, height: 900, theme: 'dark', wait: 2500, cookie });
   // One implementation of the walk: the helper is injected, never copied. A page it cannot be injected into fails the suite.
   try {
     if (!(await page.eval<boolean>(`${DEEP_SOURCE}\n;typeof deepAll === 'function' && typeof deepActive === 'function' && typeof deepParent === 'function' && typeof deepText === 'function'`))) throw new Error('the helper is not defined after injection');

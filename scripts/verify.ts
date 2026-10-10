@@ -37,6 +37,7 @@ import os from 'node:os';
 import path from 'node:path';
 
 import { bin } from './lib/bin.ts';
+import { launch } from './lib/chrome.ts';
 import type { BudgetsConfig, NavigationCheck } from './lib/budgets.ts';
 import { finalOutcome, resolveCoverage, selectSmokeRoutes, suiteCoverage, suiteOutcome } from './lib/coverage.ts';
 import { APP_DIR, railRoutes } from './lib/routes.ts';
@@ -53,16 +54,25 @@ type VerifyConfig = BudgetsConfig & {
   browserChecks?: string[];
   navigationChecks?: NavigationCheck[];
   smokeRoutes?: string[];
+  personas?: Record<string, { cookie: { name: string; value: string }; expectedRoutes: readonly string[]; deniedProbe?: Record<string, string> }>;
 };
 const config = verifyConfig as VerifyConfig;
 
 const ROOT = path.resolve(import.meta.dirname, '..');
-const OPTIONS = ['--full', '--perf'];
+const OPTIONS = ['--full', '--perf', '--as'];
 
+// `--as` is the one option that consumes the argument after it: a comma-separated persona list is its value, not a stray
+// argument. Every other argument must be a known option. An unknown option is refused here, before anything runs.
 const argv = process.argv.slice(2);
-const unknown = argv.find((a) => !OPTIONS.includes(a));
-if (unknown) {
-  console.error(`verify: ${unknown} is not an option. pnpm verify takes ${OPTIONS.join(' and ')}.`);
+const unknown: string[] = [];
+let asList = '';
+for (let i = 0; i < argv.length; i++) {
+  const a = argv[i];
+  if (a === '--as') { asList = argv[++i] ?? ''; continue; }
+  if (!OPTIONS.includes(a)) unknown.push(a);
+}
+if (unknown.length) {
+  console.error(`verify: ${unknown.join(', ')} ${unknown.length === 1 ? 'is not an option' : 'are not options'}. pnpm verify takes ${OPTIONS.join(', ')}.`);
   process.exit(1);
 }
 const full = argv.includes('--full');
@@ -70,6 +80,23 @@ const perf = argv.includes('--perf');
 const depth = full && perf ? 'full+perf' : full ? 'full' : perf ? 'perf' : 'default';
 /** The flags of the deep modes that were given, for the messages that name them. */
 const flags = argv.join(' ');
+
+// The personas a run may sign the browser in as, from the team's config. `--as` is validated HERE, at argv parsing:
+// the gate is the first thing this script runs and takes around forty seconds, so a refusal after it is one a test that
+// spawns this script and reads its output never sees. An unknown persona, or `--as` beside `--perf`, stops the run
+// before the gate, the build or any server.
+const personaConfig = config.personas ?? {};
+const declaredPersonas = Object.keys(personaConfig);
+const asPersonas = asList ? asList.split(',').map((s) => s.trim()).filter(Boolean) : [];
+const undeclared = asPersonas.filter((n) => !declaredPersonas.includes(n));
+if (undeclared.length) {
+  console.error(`verify: --as names ${undeclared.join(', ')}, which ${undeclared.length === 1 ? 'is not a declared persona' : 'are not declared personas'}. Declared personas: ${declaredPersonas.join(', ')}.`);
+  process.exit(1);
+}
+if (asPersonas.length && perf) {
+  console.error('verify: --as cannot be combined with --perf. Run pnpm verify --as <persona> on its own.');
+  process.exit(1);
+}
 
 // A project that has not adopted the assistant has no walk-through to run, only the pages. Through APP_DIR, like the
 // route discovery and check.ts: a project that keeps its routes under `src/app` has the assistant there, and asking for
@@ -144,7 +171,8 @@ function coverageLine(): string {
   if (htmlMissing) notRun.unshift('html');
   const n = selected.length;
   const where = browser.ran ? 'ran' : `not run (${browser.reason ?? `stopped at ${current}`})`;
-  return `coverage: ${depth}; browser ${where}; ${n} routes; data configured ${covered.data}/${n}; interaction configured ${covered.interaction}/${n}; not run: ${notRun.length ? notRun.join(', ') : 'none'}${failed.length ? `; failed: ${failed.join(', ')}` : ''}`;
+  const personae = asPersonas.length ? `; personas ${asPersonas.join(', ')}` : '';
+  return `coverage: ${depth}; browser ${where}; ${n} routes; data configured ${covered.data}/${n}; interaction configured ${covered.interaction}/${n}${personae}; not run: ${notRun.length ? notRun.join(', ') : 'none'}${failed.length ? `; failed: ${failed.join(', ')}` : ''}`;
 }
 
 function finish(code: number, outcome: string): never {
@@ -260,6 +288,17 @@ if (full || perf) {
   for (const m of invalid) log(`FAIL    ${m}`);
   browser.reason = 'the configuration is invalid';
   finish(1, 'fix the configuration above and run pnpm verify again; nothing was built');
+}
+
+// `--as` drives the browser as each persona, so it needs the same three things the deep modes do — a readable rail, a
+// backend its presses cannot hurt, and Chrome — and it names every missing piece at once before spending a build.
+if (asPersonas.length && !full && !perf) {
+  const missing = [...(railReason ? [railReason] : []), ...(unsafe ? [unsafe.fix] : []), ...(chromeMissing ? [chromeMissing] : [])];
+  if (missing.length) {
+    for (const m of missing) log(`FAIL    ${m}`);
+    browser.reason = unsafe?.reason ?? chromeMissing ?? railReason ?? 'the configuration is incomplete';
+    finish(1, `--as needs ${missing.length} more ${missing.length === 1 ? 'thing' : 'things'}; nothing was built`);
+  }
 }
 
 // The default never refuses for a missing backend or Chrome: it runs the static checks and says what it could not.
@@ -411,6 +450,71 @@ if (browserReason) {
   if (status === 'not run') browser = { ran: false, reason: result?.reason ?? 'navigation did not run' };
   else browser = { ran: true, reason: null };
   if (!result) beneath(nav.out.split('\n').slice(-20));
+}
+
+// 5b. --as: the persona work, once per persona. The gate and the build above ran ONCE for the whole list. Each persona
+// gets a FRESH server, because a persona's presses can change the sample's state (they suspend members) and the next
+// persona must start from the sample as it was written. Every server this starts is stopped by its own PID.
+if (asPersonas.length) {
+  current = 'the personas';
+  announce(`the personas: ${asPersonas.join(', ')}`);
+  if (!browser.ran) {
+    ok = false;
+    phase('FAIL', 'the personas', null, `(--as needs the browser: ${browser.reason ?? 'the browser did not run'})`);
+  } else {
+    const personaPage = await launch();
+    try {
+      for (const name of asPersonas) {
+        const persona = config.personas![name];
+        const fresh = await start(app);
+        const here = `http://127.0.0.1:${fresh.port}`;
+        const problems: string[] = [];
+        try {
+          // (a) The rail's links, as the browser drew them, against this persona's hand-written routes.
+          const railRun = await run('scripts/rail.ts', ['--base', here, '--as', name], app);
+          const links = summaryOf<string[]>(railRun.out, 'rail');
+          if (!links) problems.push(`${name}: the rail suite printed no links (${railRun.out.split('\n').filter(Boolean).slice(-1)[0] ?? 'no output'})`);
+          else {
+            const want = [...persona.expectedRoutes];
+            const missing = want.filter((r) => !links.includes(r));
+            const extra = links.filter((r) => !want.includes(r));
+            if (missing.length) problems.push(`${name}: the rail is missing ${missing.join(', ')}`);
+            if (extra.length) problems.push(`${name}: the rail shows ${extra.join(', ')}, which this persona is not expected to see`);
+          }
+          // (b) The role-dependent routes this persona expects, every control pressed at 1440px as that person.
+          const roleRoutes = ['/keys', '/members', '/settings'].filter((r) => persona.expectedRoutes.includes(r));
+          if (roleRoutes.length) {
+            const presses = await run('scripts/interactions.ts', ['--base', here, '--as', name, '--width', '1440', '--routes', roleRoutes.join(',')], app);
+            if (presses.status !== 0) problems.push(`${name}: the presses failed on ${roleRoutes.join(', ')} — ${presses.out.split('\n').filter(Boolean).slice(-1)[0] ?? 'no output'}`);
+          }
+          // (c) Follow every expected route, and open every other rail route expecting NoAccess and no protected record.
+          for (const route of persona.expectedRoutes) {
+            await personaPage.open(here + route, { width: 1440, height: 900, theme: 'dark', cookie: persona.cookie });
+            const denied = await personaPage.eval<boolean>('(async () => { await new Promise((r) => setTimeout(r, 400)); return !!document.querySelector("[data-no-access]"); })()');
+            if (denied) problems.push(`${name}: ${route} is expected of this persona, but the page shows NoAccess`);
+          }
+          const deniedProbe = persona.deniedProbe ?? {};
+          const others = rail!.routes.filter((r) => !persona.expectedRoutes.includes(r));
+          for (const route of others) {
+            await personaPage.open(here + route, { width: 1440, height: 900, theme: 'dark', cookie: persona.cookie });
+            const denied = await personaPage.eval<boolean>('(async () => { const end = Date.now() + 5000; while (Date.now() < end) { if (document.querySelector("[data-no-access]")) return true; await new Promise((r) => setTimeout(r, 100)); } return false; })()');
+            if (!denied) problems.push(`${name}: ${route} should show NoAccess for this persona, and does not`);
+            const probe = deniedProbe[route];
+            if (probe) {
+              const text = await personaPage.eval<string>('document.body.innerText');
+              if (text.includes(probe)) problems.push(`${name}: ${route} leaked "${probe}"`);
+            }
+          }
+        } finally {
+          stop(fresh.server);
+        }
+        if (problems.length) { ok = false; phase('FAIL', `persona ${name}`, null, problems.join('; ')); }
+        else phase('ok', `persona ${name}`, null, `the rail matches its ${persona.expectedRoutes.length} routes`);
+      }
+    } finally {
+      personaPage.close();
+    }
+  }
 }
 
 // 6. --perf: the 20-sample protocol, alone and before the suites that change data, so nothing else loads the machine.

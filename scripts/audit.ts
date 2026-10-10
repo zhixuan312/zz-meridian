@@ -29,6 +29,12 @@ import config from './verify.config.ts';
 const args = process.argv.slice(2);
 const opt = (k: string, d: string) => { const i = args.indexOf(k); return i >= 0 ? args[i + 1] : d; };
 const base = opt('--base', process.env.BASE ?? 'http://localhost:3100');
+// `--as` signs every open in as one persona (scripts/verify.config.ts), through the cookie scripts/lib/chrome.ts sets
+// before the first request. Without it nothing changes: no cookie is passed and the suite runs exactly as before.
+const personas = (config as { personas?: Record<string, { cookie: { name: string; value: string } }> }).personas ?? {};
+const as = opt('--as', '');
+const cookie = as ? personas[as]?.cookie : undefined;
+if (as && !cookie) { console.error(`audit: --as ${as} is not a declared persona. Declared personas: ${Object.keys(personas).join(', ')}.`); process.exit(1); }
 const EMBEDS_ONLY = args.includes('--embeds-only');
 const ATLAS = args.includes('--atlas');
 
@@ -160,7 +166,7 @@ const page = await launch();
 let failures = 0;
 const metrics: string[] = [];
 const run = async (route: string, width: number, theme: string, embed: boolean) => {
-  await page.open(base + route, { width, height: width < 600 ? 844 : 900, theme: theme as 'dark' | 'light', wait: 1500 });
+  await page.open(base + route, { width, height: width < 600 ? 844 : 900, theme: theme as 'dark' | 'light', wait: 1500, cookie });
   // An embed is a guest with a transparent ground: paint the host's ground behind it, as a host does.
   if (embed) await page.eval(`(() => { const d = document.documentElement; d.setAttribute('data-theme','${theme}'); window.__hostGround = '${theme}' === 'dark' ? '#1C1C20' : '#FFFFFF'; return true; })()`);
   // One implementation of the walk: the helper is injected, never copied. A page it cannot be injected into fails the audit.
