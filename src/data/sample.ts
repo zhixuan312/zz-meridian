@@ -8,5 +8,5 @@ export type { DailyPoint, Endpoint, Totals, RequestRow } from '@/system/fixtures
 export { STATUSES, TEAMS } from '@/system/fixtures/sample-members';
 export type { Member } from '@/system/fixtures/sample-members';
 export { ALERTS, CONNECTED_HOSTS, REGION_LATENCY, TIMEZONES, requestsByHour } from '@/system/fixtures/sample-ops';
-export { CUSTOMERS, FEATURED_REQUEST_IDS, STATUS_TEXT, payloadsOf, statusClass, statusTone, traceOf, usageOf } from '@/system/fixtures/sample-records';
+export { FEATURED_REQUEST_IDS, STATUS_TEXT, payloadsOf, statusClass, statusTone, traceOf, usageOf } from '@/system/fixtures/sample-records';
 export type { ApiKey, CustomerRecord, Span } from '@/system/fixtures/sample-records';

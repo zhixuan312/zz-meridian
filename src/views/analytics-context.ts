@@ -5,7 +5,8 @@
 import type { ActivityEvent } from '@/components/patterns/activity-feed';
 import type { Column } from '@/components/charts/column-chart';
 import type { Incident } from '@/components/patterns/incident-card';
-import type { DailyPoint, Endpoint } from '@/data/sample';
+import { AccessDenied, can, resolveAccess, type AccessScope } from '@/data/access';
+import { REGION_LATENCY, demoHeatmap, requestsByHour, type DailyPoint, type Endpoint } from '@/data/sample';
 import { formatCompact, formatDuration, formatPercent } from '@/lib/format';
 import { formatDate } from '@/lib/format-date';
 import { median } from '@/lib/insight';
@@ -25,6 +26,26 @@ export type AnalyticsData = {
   updatedAt: string;
   now: string;
 };
+
+/** The three Analytics figures that are not a collection: the weekday-and-hour heatmap, the hour-of-day columns and the regions with their p50. */
+export type AnalyticsFigures = Pick<AnalyticsData, 'heat' | 'hours' | 'regions'>;
+
+/**
+ * A scope `analyticsFigures` may be handed: the whole one, or only the part the caller has. `resolveAccess` answers the
+ * request's own scope when none is given, and a caller that hands in one is trusted to hold it — the case that matters is
+ * a check proving the refusal with a scope the roster does not have — so a field left out is simply absent, and `can`
+ * refuses the scope rather than filling anything in.
+ */
+/**
+ * The heatmap, the hours and the regions, read here and nowhere else, so the one thing they share is the grant:
+ * `requests:read`, asked on the scope in hand (or the request's own when none is given). A scope that does not hold it
+ * gets the single `AccessDenied` message, so a page and a tool cannot draw what the request log would refuse them.
+ */
+export async function analyticsFigures(scope?: AccessScope): Promise<AnalyticsFigures> {
+  const held = scope ?? (await resolveAccess());
+  if (!(await can(held, 'requests', 'read'))) throw new AccessDenied();
+  return { heat: demoHeatmap(), hours: requestsByHour(), regions: REGION_LATENCY };
+}
 
 const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 const times = (r: number) => `${r.toFixed(1)}×`;

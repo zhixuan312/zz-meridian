@@ -116,7 +116,8 @@ describe('every page shares a context within its budget, and nothing hidden', ()
     const { membersContext } = await import('@/views/members-context');
     const { keysContext } = await import('@/views/keys-context');
     const { requestContext } = await import('@/views/request-context');
-    const { CUSTOMERS, REGION_LATENCY, demoHeatmap, requestsByHour, traceOf } = await import('@/data/sample');
+    const { REGION_LATENCY, demoHeatmap, requestsByHour, traceOf } = await import('@/data/sample');
+    const { CUSTOMERS } = await import('@/system/fixtures/sample-records');
     const { MEMBERS } = await import('@/system/fixtures/sample-members');
     const { API_KEYS, REQUESTS } = await import('@/system/fixtures/sample-records').then(async (m) => ({ ...m, REQUESTS: (await import('@/system/fixtures/sample')).REQUESTS }));
     const { SCOPES } = await import('@/views/key-scopes');
@@ -138,7 +139,7 @@ describe('every page shares a context within its budget, and nothing hidden', ()
   });
   it('Customers compares each customer with everyone, not with nothing', async () => {
     const { customersContext } = await import('@/views/customers-context');
-    const { CUSTOMERS } = await import('@/data/sample');
+    const { CUSTOMERS } = await import('@/system/fixtures/sample-records');
     const text = contextText(customersContext(CUSTOMERS, CUSTOMERS, { q: '', plan: 'all', status: 'all', sort: 'spend', dir: 'desc', page: '1' }));
     expect(text).toMatch(/Combined requests are up \d+% over the last 7 days against the 7 before\./);
   });

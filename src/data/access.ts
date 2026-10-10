@@ -18,7 +18,7 @@ import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import type { JSX } from 'react';
 import { nav } from '@/app.config';
-import { activity, days, endpoints, incidents, keys, members, requests, responses, services } from '@/data/collections';
+import { activity, customers, days, endpoints, incidents, keys, members, requests, responses, services, workspace } from '@/data/collections';
 import { FEATURES, type FeatureId } from '@/data/features';
 import { effective, roleLabel, type AddOn, type MainRole } from '@/data/roles';
 import { chooseViewAs } from '@/data/view-as';
@@ -120,6 +120,8 @@ const DEMO_COLLECTIONS: Record<string, { collection: AnyCollection; ops: readonl
   services: { collection: services, ops: ['read'] },
   incidents: { collection: incidents, ops: ['read'] },
   activity: { collection: activity, ops: ['read', 'create'] },
+  customers: { collection: customers, ops: ['read'] },
+  workspace: { collection: workspace, ops: ['read', 'update', 'remove'] },
 };
 
 export const { resolveAccess, collectionFor, can, nameOf } = accessFrom({

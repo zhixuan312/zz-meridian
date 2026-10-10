@@ -2,7 +2,9 @@ import { app } from '@/app.config';
 import { PageFrame } from '@/components/base/shell';
 import { may, Unauthenticated } from '@/data/access';
 import { ACTIONS } from '@/data/features';
-import { SettingsBody, type SettingsMay } from '@/views/settings';
+import { read } from '@/data/read';
+import { SettingsBody, type SettingsMay, type WorkspaceValues } from '@/views/settings';
+import { saveWorkspace } from './actions';
 
 export const metadata = { title: 'Settings' };
 
@@ -24,17 +26,33 @@ async function workspaceMay(): Promise<SettingsMay> {
   }
 }
 
+/**
+ * The workspace record, through `read()` like every other collection, so the `workspace:*` grants the role table freezes
+ * are asked on the one path. It is read only for someone who may read it, and a policy that does not bind the collection
+ * leaves the form on its own defaults rather than failing the page: Settings renders for everyone.
+ */
+async function workspaceRecord(): Promise<WorkspaceValues | null> {
+  try {
+    const { rows } = await read('workspace');
+    const row = rows[0];
+    return row ? { name: String(row.name), slug: String(row.slug), timezone: String(row.timezone) } : null;
+  } catch {
+    return null;
+  }
+}
+
 export default async function SettingsPage() {
-  // Task I-13 adds the workspace record read and the save action beside this call; the flags are computed here, on the
-  // server, because the view is a client module and never asks the policy itself.
+  // The flags are computed here, on the server, because the view is a client module and never asks the policy itself;
+  // the workspace record and the action that saves it are handed over together, so the section edits what the page read.
   const permissions = await workspaceMay();
+  const workspace = permissions.workspaceRead ? await workspaceRecord() : null;
   return (
     <PageFrame
       kicker={<>{app.name} · {app.workspace}</>}
       title="Settings"
       description={`The workspace, what you hear about, how ${app.name} looks, and what assistants may do.`}
     >
-      <SettingsBody may={permissions} />
+      <SettingsBody may={permissions} workspace={workspace} save={saveWorkspace} />
     </PageFrame>
   );
 }

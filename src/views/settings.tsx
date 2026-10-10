@@ -25,8 +25,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Switch } from '@/components/ui/switch';
 import { toast } from '@/components/ui/toast';
 import { DEMO_NOW, CONNECTED_HOSTS, TIMEZONES } from '@/data/sample';
-
-const wait = (ms: number) => new Promise((r) => setTimeout(r, ms));
+import type { Result } from './members';
 
 /** Settings, in sections that save on their own. */
 /** Each section reports where it stands now, in a line, so the page's shared context holds what inputs and switches show (decision 0011). */
@@ -58,19 +57,32 @@ export type SettingsMay = {
   workspaceRemove: boolean;
 };
 
+/** The workspace as the page read it through the collection: the three values the section edits. */
+export type WorkspaceValues = { name: string; slug: string; timezone: string };
+
+/** The server action the section saves through: the shared `Result`, and never a thrown error at the person. */
+export type SaveWorkspace = (input: { name: string; timezone: string }) => Promise<Result>;
+
+/**
+ * What the form shows when the page hands it no record: the identity the sample has always shown. The page reads the
+ * `workspace` collection and passes it; this is the fallback for a policy that does not bind the collection, and for the
+ * checks that render this view on its own.
+ */
+const WORKSPACE_DEFAULTS: WorkspaceValues = { name: `${app.name} ${app.workspace}`, slug: workspaceSlug, timezone: app.timezone as string };
+
 /**
  * Settings, split by need: Notifications, Appearance, Assistant and Agents and MCP are for everyone; the Workspace and
  * the Danger zone follow `may`. A person who may not change the workspace sees its fields read-only with the line saying
  * who can, and never a control that would refuse — no save bar and no Danger zone.
  */
-export function SettingsBody({ may }: { may: SettingsMay }) {
+export function SettingsBody({ may, workspace, save }: { may: SettingsMay; workspace?: WorkspaceValues | null; save?: SaveWorkspace }) {
   const [lines, setLines] = useState<Record<string, string>>({});
   const report = useCallback((section: string, line: string) => setLines((l) => (l[section] === line ? l : { ...l, [section]: line })), []);
   useShareView(settingsContext(lines));
   return (
     <Report value={report}>
     <div className="flex flex-col gap-14">
-      {may.workspaceRead ? <Workspace may={may} /> : null}
+      {may.workspaceRead ? <Workspace may={may} record={workspace ?? WORKSPACE_DEFAULTS} save={save} /> : null}
       <Notifications />
       <Appearance />
       <Assistant />
@@ -81,11 +93,11 @@ export function SettingsBody({ may }: { may: SettingsMay }) {
   );
 }
 
-function Workspace({ may }: { may: SettingsMay }) {
-  const saved = { name: `${app.name} ${app.workspace}`, slug: workspaceSlug, timezone: app.timezone as string };
-  const [v, setV] = useState(saved);
-  const [base, setBase] = useState(saved);
+function Workspace({ may, record, save }: { may: SettingsMay; record: WorkspaceValues; save?: SaveWorkspace }) {
+  const [v, setV] = useState(record);
+  const [base, setBase] = useState(record);
   const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | undefined>();
   // Only a person who may change the workspace has anything to save or discard; everyone else reads the values as they are.
   const editable = may.workspaceUpdate;
   const dirty = editable && JSON.stringify(v) !== JSON.stringify(base);
@@ -97,13 +109,17 @@ function Workspace({ may }: { may: SettingsMay }) {
       description="How this workspace is named, and the time zone every date and daily total is cut on."
       dirty={dirty}
       saving={saving}
-      onDiscard={() => setV(base)}
+      error={error}
+      onDiscard={() => { setV(base); setError(undefined); }}
       onSave={editable ? async () => {
         if (nameError) return;
         setSaving(true);
-        await wait(700);
-        setBase(v);
+        setError(undefined);
+        // The values, not the promise, decide: a refusal is a sentence beside the fields, and the form keeps the edits.
+        const result = save ? await save({ name: v.name.trim(), timezone: v.timezone }) : { ok: true } as Result;
         setSaving(false);
+        if (!result.ok) { setError(result.error); return; }
+        setBase(v);
         toast({ tone: 'positive', title: 'Workspace saved' });
       } : undefined}
       footnote={editable ? undefined : 'Only an Owner can change the workspace.'}

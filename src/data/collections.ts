@@ -16,8 +16,9 @@
  *    database closing one is an uncaught error and the server exits (issue #16); add `connectionTimeoutMillis` too.
  */
 import { z } from 'zod';
+import { app, workspaceSlug } from '@/app.config';
 import { arrayCollection, type AnyCollection, type Collection } from '@/lib/collection';
-import { API_KEYS, type ApiKey } from '@/system/fixtures/sample-records';
+import { API_KEYS, CUSTOMERS, type ApiKey, type CustomerRecord } from '@/system/fixtures/sample-records';
 import { MEMBERS, STATUSES, TEAMS, type Member } from '@/system/fixtures/sample-members';
 import { ADD_ONS, MAIN_ROLES } from '@/data/roles';
 import { ACTIVITY, DEMO_NOW, ENDPOINTS, INCIDENTS, REQUESTS, SERVICES, STATUS_MIX, demoSeries, type DailyPoint, type Endpoint, type RequestRow } from '@/system/fixtures/sample';
@@ -182,4 +183,52 @@ export const activity: Collection<ActivityEvent, 'id'> = arrayCollection({
   pageOnly: ['create'],
 });
 
-export const collections: AnyCollection[] = [members, keys, requests, days, endpoints, responses, services, incidents, activity];
+/**
+ * The customers, from the sample's records: plan, requests, spend, the 14-day trend, status and where they are. Read-only
+ * — nobody in the console changes a customer — so a page and a tool read them the same authorized way as every other
+ * collection (`read()`), and the `customers:read` grant is asked on that one path.
+ */
+export const customers: Collection<CustomerRecord, 'id'> = arrayCollection({
+  name: 'customers',
+  label: 'Customers',
+  description: 'The workspaces calling the API: their plan, status, requests, spend over 30 days, 14-day trend, error rate and seats.',
+  key: 'id',
+  title: (c) => c.name,
+  fields: z.object({
+    name: z.string(),
+    plan: z.enum(['Enterprise', 'Scale', 'Starter']),
+    requests: z.number(),
+    spend: z.number(),
+    trend: z.array(z.number()),
+    status: z.enum(['active', 'trial', 'past due']),
+    region: z.string(),
+    since: z.string(),
+    errorRate: z.number(),
+    seats: z.number(),
+  }),
+  rows: CUSTOMERS,
+  allow: [],
+});
+
+/** What the workspace record is: its key is the one row's id, so a page changes it by that id. */
+type WorkspaceRow = { id: string; name: string; slug: string; timezone: string };
+
+/**
+ * This workspace itself: the name the rail and invitations show, its address, and the time zone its daily totals are cut
+ * on. One record, seeded from the identity the Settings form has always shown, and the only collection a Settings save
+ * changes. `remove` exists so `workspace:remove` can be granted and asked (the Danger zone's control asks its action's
+ * need), and the demo's Delete never calls it; both writes are `pageOnly`, so no agent tool carries them.
+ */
+export const workspace: Collection<WorkspaceRow, 'id'> = arrayCollection({
+  name: 'workspace',
+  label: 'Workspace',
+  description: 'This workspace: the name the rail and invitations show, its address, and the time zone its daily totals are cut on.',
+  key: 'id',
+  title: (w) => w.name,
+  fields: z.object({ name: z.string().trim().min(1), slug: z.string(), timezone: z.string() }),
+  rows: [{ id: 'workspace', name: `${app.name} ${app.workspace}`, slug: workspaceSlug, timezone: app.timezone as string }],
+  allow: ['update', 'remove'],
+  pageOnly: ['update', 'remove'],
+});
+
+export const collections: AnyCollection[] = [members, keys, requests, days, endpoints, responses, services, incidents, activity, customers, workspace];

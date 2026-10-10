@@ -14,12 +14,12 @@ import { read } from '@/data/read';
 import { readRequests, REQUEST_PAGE } from '@/data/requests';
 import { readActivity, readDays, readEndpoints, readIncidents, readResponses, readServices } from '@/data/metrics';
 import {
-  CUSTOMERS, DEMO_UPDATED_AT, REGION_LATENCY, STATUS_TEXT, demoHeatmap, payloadsOf, requestsByHour, traceOf,
-  type ApiKey, type Member, type RequestRow,
+  DEMO_UPDATED_AT, STATUS_TEXT, payloadsOf, traceOf,
+  type ApiKey, type CustomerRecord, type Member, type RequestRow,
 } from '@/data/sample';
 import { PERIODS } from '@/lib/period';
 import { defineViewTool, type ViewTool } from '@/lib/shared-context';
-import { analyticsContext } from './analytics-context';
+import { analyticsContext, analyticsFigures } from './analytics-context';
 import { customersContext } from './customers-context';
 import { healthContext } from './health-context';
 import { SCOPES } from './key-scopes';
@@ -110,8 +110,8 @@ export const analyticsTool = defineViewTool({
   input: z.object({ period }),
   async read({ period: p = '30d' }) {
     await requireNeed(FEATURES.analytics.needs);
-    const [{ series, observedAt }, endpoints, activity, { all: incidents }] = await Promise.all([readDays(p), readEndpoints(), readActivity(), readIncidents()]);
-    const data = { period: p, series, heat: demoHeatmap(), hours: requestsByHour(), regions: REGION_LATENCY, endpoints, activity, incidents, updatedAt: updatedAt(), now: observedAt };
+    const [{ series, observedAt }, endpoints, activity, { all: incidents }, figures] = await Promise.all([readDays(p), readEndpoints(), readActivity(), readIncidents(), analyticsFigures()]);
+    const data = { period: p, series, ...figures, endpoints, activity, incidents, updatedAt: updatedAt(), now: observedAt };
     return { context: analyticsContext(data), data };
   },
 });
@@ -124,9 +124,13 @@ export const customersTool = defineViewTool({
   input: z.object({ q: z.string().max(100).optional(), plan: z.enum(['all', 'Enterprise', 'Scale', 'Starter']).optional(), status: z.enum(['all', 'active', 'trial', 'past due']).optional() }),
   async read({ q = '', plan = 'all', status = 'all' }) {
     await requireNeed(FEATURES.customers.needs);
+    // The one way the tool sees customers: through the collection, so `customers:read` is asked on the same path as every
+    // other tool's read, and a policy that does not bind the collection refuses here as it does everywhere else.
+    const { rows } = await read('customers');
+    const all = rows as CustomerRecord[];
     const f = { q, plan, status, sort: 'spend', dir: 'desc', page: '1' };
-    const matching = CUSTOMERS.filter((c) => (plan === 'all' || c.plan === plan) && (status === 'all' || c.status === status) && (!q || c.name.toLowerCase().includes(q.toLowerCase())));
-    return { context: customersContext(CUSTOMERS, matching, f), data: {} };
+    const matching = all.filter((c) => (plan === 'all' || c.plan === plan) && (status === 'all' || c.status === status) && (!q || c.name.toLowerCase().includes(q.toLowerCase())));
+    return { context: customersContext(all, matching, f), data: {} };
   },
 });
 
