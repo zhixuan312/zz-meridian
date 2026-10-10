@@ -249,7 +249,28 @@ export const RELEASE_MIGRATIONS: ReleaseMigration[] = [
     instructions: 'Read "A page spec" in references/customize.md. Under `## Agents` in the page\'s README.md, add `### What the agent reads`: what the page\'s shared context tells each agent, with a real line of it, and what the MCP App and the console\'s assistant each receive. `scripts/check.ts` requires it.',
     checks: ['gate'],
   },
+  {
+    id: 'nav-needs',
+    since: '0.13.0',
+    applies: navItemsWithoutNeeds,
+    summary: 'Every item in the project\'s `nav` carries a `needs`, so the rail shows only the destinations a person may reach.',
+    instructions: 'Read "Roles and access" in the Start guide (docs/start-a-dashboard.md). For each item in `src/app.config.ts`\'s `nav`, add `needs: \'public\'` when everyone may open that page, or point it at its feature (`needs: FEATURES.<id>.needs`); step 4 of that guide has the four steps, and `scripts/check.ts` fails the project\'s gate, naming the href, on an item without one. `adopt` writes `needs: \'public\'` for a project it sets up from now on.',
+    checks: ['gate'],
+  },
 ];
+
+/** The project's own nav, with any item still missing the `needs` that 0.13.0 requires of it. */
+function navItemsWithoutNeeds(root: string): string[] | null {
+  const rel = 'src/app.config.ts';
+  const body = text(root, rel);
+  if (body === null) return null;
+  const nav = /export const nav\b[^=]*=\s*\[([\s\S]*?)\n\];/.exec(body)?.[1];
+  if (nav === undefined) return null;
+  // One item per line, as `adopt` writes them and as a hand-kept nav keeps them: a line that opens an object and names no
+  // `needs` is one the gate refuses. Anything the file does beyond that is the team's own shape, and none of it is read.
+  const items = nav.split('\n').filter((l) => /^\s*\{/.test(l));
+  return items.some((l) => !/\bneeds\s*:/.test(l)) ? [rel] : null;
+}
 
 /** The page specifications under the console and embed folders that lack the part the 0.9.0 check requires. */
 function pagesWithoutAgentReads(root: string): string[] | null {

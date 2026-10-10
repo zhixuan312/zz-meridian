@@ -187,7 +187,7 @@ function zz(pkg: string, cwd: string, a: string[], label: string, env: Record<st
 }
 
 /** The migrations 0.5.0 declares in `cli/src/migrations.ts`: changes in the team's own files, resolved by editing them. */
-const RELEASE_IDS = ['shell-assistant-promise', 'assistant-available-promise', 'clock-now-required', 'cache-components-config', 'connection-boundaries', 'authorized-read', 'scoped-invalidation', 'live-provider', 'authorized-endpoints', 'share-view-context', 'agent-reads-section', 'assistant-view-tools'];
+const RELEASE_IDS = ['shell-assistant-promise', 'assistant-available-promise', 'clock-now-required', 'cache-components-config', 'connection-boundaries', 'authorized-read', 'scoped-invalidation', 'live-provider', 'authorized-endpoints', 'share-view-context', 'agent-reads-section', 'assistant-view-tools', 'nav-needs'];
 
 const filesUnder = (dir: string, rel = ''): string[] => {
   if (!fs.existsSync(path.join(dir, rel))) return [];
@@ -204,7 +204,13 @@ const filesUnder = (dir: string, rel = ''): string[] => {
  * template), with the files that arrived with it, and a file the release moved goes. An adopted project's pages are the
  * team's own: the smallest edit the instruction names, here the two flags in its Next config.
  */
-function bringReleaseOver(proj: string, route: string) {
+function bringReleaseOver(proj: string, route: string, reported: string[] = []) {
+  // The smallest edit each reported migration's instruction names, in the team's own file. `nav-needs` is 0.13.0's: an item
+  // whose line names no `needs` gets `needs: 'public'`, the default that instruction gives. The capture ends at the
+  // space before the `}`, so the line's own trailing space is allowed for and the property is appended after the text.
+  if (reported.includes('nav-needs')) {
+    edit(proj, 'src/app.config.ts', (t) => t.replace(/^(\s*\{[^\n]*\bhref\s*:[^\n]*?)\s*\},$/gm, (m, head) => (/\bneeds\s*:/.test(head) ? m : `${head}, needs: 'public' },`)));
+  }
   if (route === 'adopt') {
     edit(proj, 'next.config.ts', (t) => t.replace(/\/\* config options here \*\//, 'cacheComponents: true,\n  partialPrefetching: true,'));
     return;
@@ -229,7 +235,7 @@ function resolveAll(proj: string, version: string, reason: string) {
   const dir = path.join(proj, '.meridian/update', version);
   const stubs = [...read(dir, 'MERGE.md').matchAll(/```json\n([\s\S]*?)\n```/g)].map((m) => JSON.parse(m[1]!)).filter((s) => typeof s.id === 'string' && /^(file|migration):/.test(s.id));
   const reported = RELEASE_IDS.filter((id) => stubs.some((s) => s.id === `migration:${id}`));
-  if (reported.length > 0) bringReleaseOver(proj, finalManifest(proj).route);
+  if (reported.length > 0) bringReleaseOver(proj, finalManifest(proj).route, reported);
   const resolutions = stubs.map((s) => ({
     id: s.id,
     status: s.id.startsWith('migration:') && !reported.includes(s.id.slice('migration:'.length)) ? 'not-applicable' : 'resolved',
