@@ -106,6 +106,20 @@
   :is(.t-figure, .t-hero) .unit { margin-left: 0.14em; }
   :is(.t-figure, .t-hero) .unit.pre { margin-left: 0; margin-right: 0.04em; font-size: 0.56em; vertical-align: 0.36em; }
 
+  /* A card: one step above the canvas on `surface`, a hairline and a whisper of shadow; on dark a lit top edge does the
+     shadow's work. One class rather than a dozen utilities, because every card on every page writes it into the HTML
+     and the page payload; a utility on the card still overrides it (utilities come after components). A flush body as
+     the first child (a table's header row) fills the corner, so only then does the card clip, to keep it round. */
+  .card {
+    position: relative; display: flex; flex-direction: column; min-width: 0;
+    border: 1px solid var(--line); border-radius: var(--radius-lg); background: var(--surface); box-shadow: var(--shadow-card);
+  }
+  .card::before {
+    content: ""; position: absolute; left: var(--space-3); right: var(--space-3); top: 0; height: 1px;
+    background: var(--highlight-top); pointer-events: none;
+  }
+  .card:has(> [data-flush]:first-child) { overflow: hidden; }
+
   /* A lit edge: a hairline drawn by a masked gradient, brightest where the ground's light comes from. On the featured
      card it is always on; on an interactive card it fades in under the pointer. It never loops. */
   .edge-lit { position: relative; isolation: isolate; }

@@ -9,12 +9,9 @@ export function Card({ className, interactive, ...rest }: HTMLAttributes<HTMLDiv
   return (
     <div
       className={cn(
-        'relative flex min-w-0 flex-col rounded-lg border border-line bg-surface shadow-card',
-        'before:pointer-events-none before:absolute before:inset-x-3 before:top-0 before:h-px before:bg-highlight-top',
-        // A flush body as the first child means its content fills the corner — a table's header row, whose square
-        // `surface-sunk` fill would otherwise stand over this card's rounded one. The body clips what is inside it;
-        // only clipping HERE makes the corner round. Narrow on purpose: it is exactly the card-with-a-table case.
-        'has-[>[data-flush]:first-child]:overflow-hidden',
+        // The look is one class in base.css (`.card`): border, fill, radius, shadow, the lit top edge, and the clip a
+        // flush first child needs. Written out as utilities it cost every card about 250 bytes of HTML and payload.
+        'card',
         interactive && 'edge-lit edge-hover transition-[box-shadow,border-color,transform] duration-(--dur-enter) hover:border-line-strong hover:shadow-raise',
         className,
       )}

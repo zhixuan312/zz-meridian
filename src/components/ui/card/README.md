@@ -76,6 +76,8 @@ A card is the unit an agent is asked about: on the embed surface a card's header
 
 ## Implementation
 
+The look is one class, `.card`, in `src/styles/base.css` (border, `surface`, `radius-lg`, `shadow-card`, the lit top edge, and the clip a flush first child needs), so a card costs a short class in the HTML and the page payload instead of a dozen utilities. The Data table's own wrapper uses it too. A utility on the card still overrides it.
+
 ```tsx
 import { Card, CardBody, CardFooter, CardHeader } from '@/components/ui/card';
 

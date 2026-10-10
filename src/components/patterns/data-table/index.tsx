@@ -335,7 +335,7 @@ export function DataTable<R>({
   }
 
   return (
-    <section aria-label={caption} className={cn('relative flex min-w-0 flex-col overflow-hidden rounded-lg border border-line bg-surface shadow-card', className)}>
+    <section aria-label={caption} className={cn('card overflow-hidden', className)}>
       {title ? <CardHeader title={title} description={description} actions={actions} divided={!toolbar} /> : null}
       {toolbar ? <div className="px-(--card-pad) py-3.5 md:border-b md:border-line">{toolbar}</div> : null}
       {body}
