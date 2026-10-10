@@ -6,7 +6,7 @@ import { MockLanguageModelV4 } from 'ai/test';
 import { arrayCollection } from '@/lib/collection';
 import { respond } from '@/lib/assistant/respond';
 import { assistantTools } from '@/lib/assistant/tools';
-import { collections } from '@/data/collections';
+import { collections, members } from '@/data/collections';
 
 type Person = { id: string; name: string; team: 'Support' | 'Sales' };
 let n = 0;
@@ -140,6 +140,23 @@ describe('hidden fields', () => {
     const bad = await chunks(await respond({ model: scripted(call('q2', `query_${k.name}`, { where: [{ field: 'secret', op: 'eq', value: 'sk-live-123' }] }), say('ok')), secret: SECRET, now: NOW, messages: ask('Keys?'), page, guard, collections: [k] }));
     expect(bad.some((e) => e.type === 'tool-output-available' && e.toolCallId === 'q2')).toBe(false);
     expect((await k.query({})).rows[0].secret).toBe('sk-live-123');
+  });
+});
+
+describe('page-only fields', () => {
+  test('a field only a page may set is absent from the write schemas, and refused when sent anyway', () => {
+    const { tools } = assistantTools([members], { write() {}, merge() {}, onError: undefined } as never, guard);
+    const create = tools.create_members as unknown as { inputSchema: { safeParse: (v: unknown) => { success: boolean } } };
+    const update = tools.update_members as unknown as { inputSchema: { safeParse: (v: unknown) => { success: boolean } } };
+    const ada = { name: 'Ada Lovelace', email: 'ada.lovelace@example.com', team: 'Design', status: 'Active', joined: '2026-10-01', lastActive: null };
+    // The fields stay readable and writable where a page sets them, so an ordinary create and change still pass.
+    expect(create.inputSchema.safeParse(ada).success).toBe(true);
+    expect(update.inputSchema.safeParse({ ids: ['members_4'], set: { team: 'Sales' } }).success).toBe(true);
+    // A role or an add-on cannot be set by an agent: the schema is strict, so naming one is refused and nothing runs.
+    expect(create.inputSchema.safeParse({ ...ada, role: 'Admin' }).success).toBe(false);
+    expect(create.inputSchema.safeParse({ ...ada, addOns: ['Key manager'] }).success).toBe(false);
+    expect(update.inputSchema.safeParse({ ids: ['members_4'], set: { role: 'Admin' } }).success).toBe(false);
+    expect(update.inputSchema.safeParse({ ids: ['members_4'], set: { addOns: ['Key manager'] } }).success).toBe(false);
   });
 });
 

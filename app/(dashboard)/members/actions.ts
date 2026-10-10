@@ -2,7 +2,7 @@
 
 import { clock } from '@/data/collections';
 import { can, collectionFor, resolveAccess, Unauthenticated } from '@/data/access';
-import { assignMemberRole, invitableRoles, memberAccess, REFUSALS, type MemberRowAccess } from '@/data/member-mutations';
+import { assignMemberRole, REFUSALS } from '@/data/member-mutations';
 import type { AnyCollection } from '@/lib/collection';
 import type { Result } from '@/views/members';
 import { STATUSES, TEAMS, type Member } from '@/data/sample';
@@ -36,11 +36,9 @@ export async function inviteMember(input: { name: string; email: string; role: M
   if (!name) return { ok: false, error: 'Name the person you are inviting.' };
   if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return { ok: false, error: 'Enter their work email, like ana@northwind.example.' };
   if (!MAIN_ROLES.includes(input.role) || !TEAMS.includes(input.team)) return { ok: false, error: 'Choose a role and a team from the lists.' };
-  return run('create', undefined, async (c) => {
-    // The role choices are the caller's own: an Admin may not invite an Owner, the frozen rule's message and all.
-    if (!(await invitableRoles()).includes(input.role)) throw new Error(input.role === 'Owner' ? REFUSALS.giveOwner : REFUSALS.values);
-    return c.create!({ name, email, role: input.role, team: input.team, status: 'Invited', joined: clock().toISOString().slice(0, 10), lastActive: null });
-  });
+  // The boundary decides the role the caller may give — an Admin inviting an Owner is refused there with the frozen
+  // rule's message — so this path only shapes the invitation.
+  return run('create', undefined, (c) => c.create!({ name, email, role: input.role, team: input.team, status: 'Invited', joined: clock().toISOString().slice(0, 10), lastActive: null }));
 }
 
 export async function setMemberStatus(id: string, status: Member['status']): Promise<Result> {
@@ -55,8 +53,8 @@ export async function removeMember(id: string): Promise<Result> {
 /** A member's role and add-ons change only here: the boundary decides, and a row the caller may not change is refused. */
 export async function assignRole(input: { id: string; role: MainRole; addOns: AddOn[] }): Promise<Result> {
   try {
-    const access: MemberRowAccess = await memberAccess(input.id);
-    if (!access.changeRole) return { ok: false, error: access.reason ?? REFUSALS.noGrant };
+    // The boundary re-reads the caller and the target and refuses with the frozen message, so this path does not
+    // decide it a second time.
     await assignMemberRole(input);
     return { ok: true };
   } catch (e) {

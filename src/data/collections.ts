@@ -51,6 +51,10 @@ export const members: Collection<Member, 'id'> = arrayCollection({
   }),
   rows: MEMBERS,
   allow: ['create', 'update', 'remove'],
+  // The spec freezes this line: an agent reads a member's role and add-ons and never writes them. They change only
+  // through the Members page's `assignRole`, which the member boundary checks — so they are out of every agent write
+  // schema and refused at execution if sent anyway.
+  pageOnlyFields: ['role', 'addOns'],
 });
 
 export const keys: Collection<ApiKey, 'id'> = arrayCollection({

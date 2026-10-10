@@ -46,6 +46,12 @@ export type Collection<T extends Record<string, unknown>, K extends keyof T & st
   remove?: (ids: string[]) => Promise<number>;
   /** Operations only a page may perform; the assistant and an MCP server never get them. */
   pageOnly?: Op[];
+  /**
+   * Fields an agent may read and never write: left out of the create and update **schemas** the assistant builds
+   * (`writableFields`) and refused at execution if sent anyway. A query still names them, and a page still sets them
+   * through its own action — the roles and add-ons on the Members page, for one, which only `assignRole` may change.
+   */
+  pageOnlyFields?: (keyof T & string)[];
   /** Fields only a page may see: left out of every assistant tool's input and result. */
   hidden?: (keyof T)[];
 };
@@ -138,6 +144,7 @@ export function arrayCollection<T extends Record<string, unknown>, K extends key
   rows: T[];
   allow: readonly Op[];
   pageOnly?: Op[];
+  pageOnlyFields?: (keyof T & string)[];
   hidden?: (keyof T)[];
   /** The tenant whose store and listeners this collection binds; the sample has one. */
   tenantId?: string;
@@ -177,6 +184,7 @@ export function arrayCollection<T extends Record<string, unknown>, K extends key
     key,
     title: def.title,
     pageOnly: def.pageOnly,
+    pageOnlyFields: def.pageOnlyFields,
     hidden: def.hidden,
     async query({ where = [], sort, limit, offset = 0 }) {
       const hits = rows().filter((r) => where.every((w) => matches(r, w)));
@@ -257,6 +265,20 @@ function withoutDefault(field: z.ZodType): z.ZodType {
 /** The collection's fields without its hidden ones. */
 export function visibleFields(c: AnyCollection): z.ZodObject {
   return c.fields.omit(Object.fromEntries(((c.hidden ?? []) as string[]).map((f) => [f, true])) as Record<string, true>).strict();
+}
+
+/**
+ * The collection's fields an agent's tool may WRITE: its visible fields without the fields only a page may set
+ * (`pageOnlyFields`). The create tool is built from this and the update tool's `set` from `patchOf` of it, so a field
+ * a page owns is absent from the schema and, because the schema is strict, refused at execution if sent anyway.
+ *
+ * It says nothing about reading: `queryInput` still names every visible field, so an agent filters on a role or an
+ * add-on the same as on any other field. Reading a field and changing it are different rules, and this is the second.
+ */
+export function writableFields(c: AnyCollection): z.ZodObject {
+  const base = visibleFields(c);
+  const pageOnly = (c.pageOnlyFields ?? []) as string[];
+  return pageOnly.length ? base.omit(Object.fromEntries(pageOnly.map((f) => [f, true])) as Record<string, true>).strict() : base;
 }
 
 /** The input schema of the query tool: field names come from the collection, so an unknown or hidden field is rejected.

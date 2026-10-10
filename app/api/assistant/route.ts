@@ -2,10 +2,13 @@ import { safeValidateUIMessages } from 'ai';
 import { revalidateTag } from 'next/cache';
 import { assistantConfig } from '@/lib/assistant/config';
 import { clock, collections } from '@/data/collections';
-import { Unauthenticated, can, collectionFor, nameOf, resolveAccess } from '@/data/access';
+import { Unauthenticated, can, collectionFor, may, nameOf, resolveAccess } from '@/data/access';
 import { collectionTag } from '@/data/read';
 import { respond } from '@/lib/assistant/respond';
+import { scopedQuery } from '@/lib/assistant/scoped';
 import type { AgentChange } from '@/lib/assistant/tools';
+import type { AnyCollection } from '@/lib/collection';
+import type { ViewTool } from '@/lib/shared-context';
 import { viewTools } from '@/views/tools';
 
 /** The panel sends at most the last 100 messages; a larger body than 2 MB is refused before it is parsed. */
@@ -27,9 +30,27 @@ export async function POST(request: Request): Promise<Response> {
   const valid = await safeValidateUIMessages({ messages });
   if (!valid.success) return new Response(null, { status: 400 });
 
-  // The assistant is handed this caller's own collections, only those they may read. A change it proposes is checked
-  // again when it runs, against whoever is signed in then, and drops the tenant's cached reads once it has committed.
-  const readable = (await Promise.all(collections.map(async (c) => ((await can(scope, c.name, 'read')) ? collectionFor(scope, c.name) : null)))).filter((c) => c !== null);
+  // The assistant is handed this caller's own collections, only those they may read, each through `scopedQuery` so its
+  // `query` re-checks the person it was handed to at the moment it runs — the same tenant and subject, still permitted
+  // to read. Listing a tool is not enforcement: the check that stops a read is the one that runs at execution.
+  const readable = (await Promise.all(collections.map(async (c) => {
+    if (!(await can(scope, c.name, 'read'))) return null;
+    // A collection bound to this scope: for members, `membersFor(scope)`, so every write passes Task I-14's boundary
+    // and the Owner, self and last-active-Owner rules apply to an agent exactly as they do to the page.
+    const bound = collectionFor(scope, c.name);
+    const handed = scopedQuery(bound, scope, c.name);
+    // FR-12: an agent's create always gets role Member and no add-ons, whatever the input held. The schema has already
+    // left those fields out; this forces the values on top, because the page's invite sets an initial role and the
+    // boundary deliberately honours a validated one.
+    const create = bound.create;
+    if (c.name === 'members' && create) handed.create = (input: Record<string, unknown>) => create({ ...input, role: 'Member', addOns: [] });
+    return handed;
+  }))).filter((c): c is AnyCollection => c !== null);
+
+  // A view tool is registered only where the person satisfies its feature's need. A view's `read` asks the need again,
+  // so filtering the list is presentation, not the gate; both stay.
+  const views = (await Promise.all(viewTools.map(async (v) => ((await may(v.needs)) ? v : null)))).filter((v): v is ViewTool => v !== null);
+
   const guard = {
     authorize: async (name: string, op: 'create' | 'update' | 'remove', ids?: string[]) => {
       const now = await resolveAccess().catch(() => null);
@@ -49,8 +70,8 @@ export async function POST(request: Request): Promise<Response> {
   return respond({
     ...config,
     collections: readable,
-    // Every view's read-only tool; each reads through `read()`, so it sees only what this caller may read.
-    views: viewTools,
+    // Every view tool this caller may use; each reads through `read()`, so it sees only what this caller may read.
+    views,
     guard,
     now: clock(),
     messages: valid.data,

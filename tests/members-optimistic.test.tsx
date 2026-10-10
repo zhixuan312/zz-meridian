@@ -7,11 +7,20 @@ vi.mock('@/components/ui/toast', () => ({ UNDO_MS: 8000, toast: (t: { tone: stri
 vi.stubGlobal('IntersectionObserver', class { observe() {} unobserve() {} disconnect() {} });
 
 import { KeysView } from '@/views/keys';
-import { MembersView, type Result } from '@/views/members';
+import { MembersView, type MemberActions, type Result } from '@/views/members';
+import type { MemberRowAccess } from '@/data/member-mutations';
+import { ADD_ONS, MAIN_ROLES } from '@/data/roles';
 import { API_KEYS } from '@/system/fixtures/sample-records';
 import { MEMBERS } from '@/system/fixtures/sample-members';
 
 const deferred = () => { let resolve!: (r: Result) => void; const promise = new Promise<Result>((r) => { resolve = r; }); return { promise, resolve }; };
+
+const noop = async (): Promise<Result> => ({ ok: true });
+/** The boundary's answer for every row, as the page would pass it: the view is mounted on its own here. */
+const ACCESS: Record<string, MemberRowAccess> = Object.fromEntries(MEMBERS.map((m) => [m.id, { changeRole: true, suspend: m.status === 'Active', reactivate: m.status === 'Suspended', remove: true, roles: MAIN_ROLES, addOns: ADD_ONS }]));
+const view = (actions: MemberActions, rows = MEMBERS, now = '2026-10-05T09:00:00.000Z') => <MembersView rows={rows} now={now} actions={actions} access={ACCESS} roles={MAIN_ROLES} />;
+/** The four actions a page passes, with whichever fakes a test is about replaced. */
+const withActions = (over: Partial<MemberActions>): MemberActions => ({ invite: noop, setStatus: noop, remove: noop, assignRole: noop, ...over });
 
 async function invite(name: string) {
   fireEvent.click(screen.getAllByRole('button', { name: 'Invite member' })[0]);
@@ -23,7 +32,7 @@ async function invite(name: string) {
 describe('members, optimistically', () => {
   it('shows an invitation at once, and on a refusal rolls it back and says why inside the reopened sheet, not in a toast', async () => {
     const d = deferred();
-    render(<MembersView rows={MEMBERS} now="2026-10-05T09:00:00.000Z" actions={{ invite: () => d.promise, setStatus: async () => ({ ok: true }), remove: async () => ({ ok: true }) }} />);
+    render(view(withActions({ invite: () => d.promise })));
     await invite('Ana Ruiz');
     expect(await screen.findByText('Ana Ruiz')).toBeTruthy();
     const before = toasts.length;
@@ -38,7 +47,7 @@ describe('members, optimistically', () => {
   it('rolls back and says so when the action itself fails, as a dropped connection does', async () => {
     let fail!: (e: Error) => void;
     const rejecting = () => new Promise<Result>((_, reject) => { fail = reject; });
-    render(<MembersView rows={MEMBERS} now="2026-10-05T09:00:00.000Z" actions={{ invite: rejecting, setStatus: async () => ({ ok: true }), remove: async () => ({ ok: true }) }} />);
+    render(view(withActions({ invite: rejecting })));
     await invite('Rae Okafor');
     expect(await screen.findByText('Rae Okafor')).toBeTruthy();
     await act(async () => { fail(new Error('Failed to fetch')); });
@@ -48,13 +57,13 @@ describe('members, optimistically', () => {
   });
   it('keeps a successful invitation once the authoritative rows include it', async () => {
     const d = deferred();
-    const actions = { invite: () => d.promise, setStatus: async () => ({ ok: true }) as Result, remove: async () => ({ ok: true }) as Result };
-    const { rerender } = render(<MembersView rows={MEMBERS} now="2026-10-05T09:00:00.000Z" actions={actions} />);
+    const actions = withActions({ invite: () => d.promise });
+    const { rerender } = render(view(actions));
     await invite('Ana Ruiz');
     expect(await screen.findByText('Ana Ruiz')).toBeTruthy();
     await act(async () => { d.resolve({ ok: true }); });
     const added = { ...MEMBERS[0], id: 'mem_new', name: 'Ana Ruiz', email: 'ana@northwind.example', status: 'Invited' as const };
-    rerender(<MembersView rows={[added, ...MEMBERS]} now="2026-10-05T09:01:00.000Z" actions={actions} />);
+    rerender(view(actions, [added, ...MEMBERS], '2026-10-05T09:01:00.000Z'));
     await waitFor(() => expect(screen.getAllByText('Ana Ruiz')).toHaveLength(1));
   });
 });
@@ -65,13 +74,12 @@ async function openMenu(name: string) {
   return trigger;
 }
 const rowOf = (name: string) => screen.getByText(name).closest('tr, [role="row"], li, article') as HTMLElement;
-const noop = async (): Promise<Result> => ({ ok: true });
 
 describe('members, status and removal', () => {
   const m = MEMBERS.find((x) => x.status === 'Active')!;
   it('shows a status change at once and puts the old status back with the reason when it is refused', async () => {
     const d = deferred();
-    render(<MembersView rows={MEMBERS} now="2026-10-05T09:00:00.000Z" actions={{ invite: noop, setStatus: () => d.promise, remove: noop }} />);
+    render(view(withActions({ setStatus: () => d.promise })));
     await openMenu(m.name);
     fireEvent.click(await screen.findByRole('menuitem', { name: 'Suspend' }));
     await waitFor(() => expect(within(rowOf(m.name)).getByText('Suspended')).toBeTruthy());
@@ -85,7 +93,7 @@ describe('members, status and removal', () => {
     try {
       const d = deferred();
       const remove = vi.fn(() => d.promise);
-      render(<MembersView rows={MEMBERS} now="2026-10-05T09:00:00.000Z" actions={{ invite: noop, setStatus: noop, remove }} />);
+      render(view(withActions({ remove })));
       await openMenu(m.name);
       fireEvent.click(await screen.findByRole('menuitem', { name: 'Remove' }));
       await waitFor(() => expect(screen.queryByText(m.name)).toBeNull());
@@ -105,7 +113,7 @@ describe('members, status and removal', () => {
     vi.useFakeTimers({ shouldAdvanceTime: true });
     try {
       const remove = vi.fn(noop);
-      render(<MembersView rows={MEMBERS} now="2026-10-05T09:00:00.000Z" actions={{ invite: noop, setStatus: noop, remove }} />);
+      render(view(withActions({ remove })));
       await openMenu(m.name);
       fireEvent.click(await screen.findByRole('menuitem', { name: 'Remove' }));
       await waitFor(() => expect(screen.queryByText(m.name)).toBeNull());
@@ -117,14 +125,32 @@ describe('members, status and removal', () => {
       vi.useRealTimers();
     }
   });
+  it('changes a role through the sheet, showing it at once, and reopens the sheet with the reason when it is refused', async () => {
+    const d = deferred();
+    const assignRole = vi.fn(() => d.promise);
+    render(view(withActions({ assignRole })));
+    await openMenu(m.name);
+    fireEvent.click(await screen.findByRole('menuitem', { name: 'Change role' }));
+    fireEvent.click(await screen.findByRole('checkbox', { name: 'Key manager' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Save role' }));
+    // The boundary is handed the row, the role the sheet holds and the add-on just ticked, and the row shows it at once.
+    await waitFor(() => expect(assignRole).toHaveBeenCalledWith({ id: m.id, role: m.role, addOns: ['Key manager'] }));
+    await waitFor(() => expect(within(rowOf(m.name)).getAllByText(`${m.role} + Key manager`).length).toBeGreaterThan(0));
+    await act(async () => { d.resolve({ ok: false, error: 'Only an Owner can give or take away the Owner role.' }); });
+    // A refusal puts the row back and says why inside the sheet it was sent from, as a refused invitation does.
+    const alert = within(await screen.findByRole('dialog')).getByRole('alert');
+    expect(alert.textContent).toContain('Role not changed');
+    expect(alert.textContent).toContain('Only an Owner can give or take away the Owner role.');
+    await waitFor(() => expect(within(rowOf(m.name)).queryByText(`${m.role} + Key manager`)).toBeNull());
+  });
   it('does not overwrite newer authoritative rows that arrive while a change is pending, and rolls back only its own', async () => {
     const d = deferred();
-    const actions = { invite: () => d.promise, setStatus: noop, remove: noop };
-    const { rerender } = render(<MembersView rows={MEMBERS} now="2026-10-05T09:00:00.000Z" actions={actions} />);
+    const actions = withActions({ invite: () => d.promise });
+    const { rerender } = render(view(actions));
     await invite('Ana Ruiz');
     expect(await screen.findByText('Ana Ruiz')).toBeTruthy();
     const newer = { ...MEMBERS[0], id: 'mem_live', name: 'Zed Newcomer', email: 'zed@northwind.example', status: 'Active' as const };
-    rerender(<MembersView rows={[newer, ...MEMBERS.slice(1)]} now="2026-10-05T09:00:30.000Z" actions={actions} />);
+    rerender(view(actions, [newer, ...MEMBERS.slice(1)], '2026-10-05T09:00:30.000Z'));
     expect(await screen.findByText('Zed Newcomer')).toBeTruthy();
     expect(screen.getByText('Ana Ruiz')).toBeTruthy();
     expect(screen.queryByText(MEMBERS[0].name)).toBeNull();

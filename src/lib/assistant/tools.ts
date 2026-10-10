@@ -1,6 +1,6 @@
 import { tool, type SingleToolApprovalFunction, type ToolSet, type UIMessageStreamWriter } from 'ai';
 import { z } from 'zod';
-import { patchOf, queryInput, visibleFields, type AnyCollection } from '@/lib/collection';
+import { patchOf, queryInput, writableFields, type AnyCollection } from '@/lib/collection';
 import { contextText, type ViewTool } from '@/lib/shared-context';
 
 type Row = Record<string, unknown>;
@@ -76,7 +76,10 @@ export function assistantTools(collections: AnyCollection[], writer: UIMessageSt
     const hidden = (c.hidden ?? []) as string[];
     const strip = (r: Row) => Object.fromEntries(Object.entries(r).filter(([k]) => !hidden.includes(k)));
     const allowed = (op: 'create' | 'update' | 'remove') => c[op] && !c.pageOnly?.includes(op);
-    const fields = visibleFields(c);
+    // What an agent may write: the visible fields minus the fields only a page may set (`pageOnlyFields`). Both the
+    // create schema and the update tool's `set` come from this, so a page-only field is absent from the schema and —
+    // because the schema is strict — refused at execution if a call names it anyway.
+    const fields = writableFields(c);
 
     tools[`query_${c.name}`] = tool({
       description: `Look up ${c.label.toLowerCase()}: ${c.description} A field with no value matches only ne.`,
