@@ -12,12 +12,15 @@ import { SettingsBody } from '@/views/settings';
 vi.stubGlobal('IntersectionObserver', class { observe() {} unobserve() {} disconnect() {} });
 
 // The shell and the Assistant section resolve the assistant promise behind Suspense, so the render is awaited inside act.
+// This check is about the Assistant section, which every person keeps, so the page is rendered for someone who may do
+// everything: the workspace and danger sections are the ones tests/settings-access.test.tsx settles.
+const may = { workspaceRead: true, workspaceUpdate: true, workspaceRemove: true };
 const settings = (assistant: boolean) =>
   act(async () => {
     render(
       <Providers>
         <AppShell rail={null} assistant={Promise.resolve(assistant)}>
-          <PageFrame title="Settings"><SettingsBody /></PageFrame>
+          <PageFrame title="Settings"><SettingsBody may={may} /></PageFrame>
         </AppShell>
       </Providers>,
     );

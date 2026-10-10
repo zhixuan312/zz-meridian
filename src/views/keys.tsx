@@ -31,7 +31,9 @@ type Draft = { name: string; env: 'live' | 'test'; scopes: Scope[] };
 
 /** The server actions arrive as props: the page owns them, the view only calls them and refreshes the route. */
 /** `now` is the read's observation time, so "last used" is never fresher than the data. */
-export function KeysView({ rows, now, createKey, revokeKey }: { rows: ApiKey[]; now: string; createKey: (draft: Draft) => Promise<ApiKey & { secret: string }>; revokeKey: (id: string) => Promise<void> }) {
+/** `may` is what the page asked of the action table, so a control the person may not use is not drawn at all; `line` is */
+/** who can, rendered once when a control is withheld. Defaults allow both, for a view mounted on its own. */
+export function KeysView({ rows, now, createKey, revokeKey, may = { create: true, revoke: true }, line }: { rows: ApiKey[]; now: string; createKey: (draft: Draft) => Promise<ApiKey & { secret: string }>; revokeKey: (id: string) => Promise<void>; may?: { create: boolean; revoke: boolean }; line?: string }) {
   useShareView(keysContext(rows, now, SCOPES));
   const router = useRouter();
   useLive(['keys']);
@@ -77,6 +79,11 @@ export function KeysView({ rows, now, createKey, revokeKey }: { rows: ApiKey[]; 
     });
   };
 
+  /** The revoke control is drawn only for a person who may use it: hidden, never a button that only fails on submit. */
+  const revokeColumn: Column<ApiKey> = {
+    key: 'revoke', header: <span className="sr-only">Actions</span>, align: 'right', mobile: 'status',
+    cell: (k) => <IconButton size="sm" variant="ghost" label={`Revoke ${k.name}`} tooltip icon={<Trash2 />} onClick={() => setRevoking(k)} className="hover:text-critical-ink" />,
+  };
   const columns: Column<ApiKey>[] = [
     {
       key: 'name', header: 'Name', grow: true, truncate: true, mobile: 'title', sortValue: (k) => k.name,
@@ -109,10 +116,7 @@ export function KeysView({ rows, now, createKey, revokeKey }: { rows: ApiKey[]; 
       cell: (k) => (k.lastUsed ? formatRelative(k.lastUsed, asOf) : <span className="text-ink-3">Never</span>),
       mobileCell: (k) => (k.lastUsed ? `Used ${formatRelative(k.lastUsed, asOf)}` : 'Never used'),
     },
-    {
-      key: 'revoke', header: <span className="sr-only">Actions</span>, align: 'right', mobile: 'status',
-      cell: (k) => <IconButton size="sm" variant="ghost" label={`Revoke ${k.name}`} tooltip icon={<Trash2 />} onClick={() => setRevoking(k)} className="hover:text-critical-ink" />,
-    },
+    ...(may.revoke ? [revokeColumn] : []),
   ];
 
   return (
@@ -120,9 +124,11 @@ export function KeysView({ rows, now, createKey, revokeKey }: { rows: ApiKey[]; 
       kicker={<>{app.name} · {app.workspace}</>}
       title="API keys"
       description={`Keys let your services call ${app.name}. Each one carries only the scopes it needs.`}
-      actions={<Button variant="primary" icon={<Plus />} onClick={() => { setCreateError(null); setCreating(true); }}>Create key</Button>}
+      actions={may.create ? <Button variant="primary" icon={<Plus />} onClick={() => { setCreateError(null); setCreating(true); }}>Create key</Button> : undefined}
     >
       <Stack>
+        {/* One line for the whole page, not one per control: who can create and revoke, when the page withholds either. */}
+        {line && (!may.create || !may.revoke) ? <p className="t-caption max-w-[72ch]">{line}</p> : null}
         {fresh ? (
           <Banner tone="accent" icon={<KeyRound />} title={`Copy ${fresh.name} now`} onDismiss={() => setFresh(null)}
             action={<CopyField value={fresh.secret} label="New key" className="w-[min(26rem,70vw)]" />}>
@@ -137,7 +143,7 @@ export function KeysView({ rows, now, createKey, revokeKey }: { rows: ApiKey[]; 
             rows={shown}
             columns={columns}
             rowKey={(k) => k.id}
-            empty={{ title: 'No keys yet', body: `Create a key for each service that calls ${app.name}.`, action: <Button variant="primary" size="sm" icon={<Plus />} onClick={() => { setCreateError(null); setCreating(true); }}>Create key</Button> }}
+            empty={{ title: 'No keys yet', body: `Create a key for each service that calls ${app.name}.`, action: may.create ? <Button variant="primary" size="sm" icon={<Plus />} onClick={() => { setCreateError(null); setCreating(true); }}>Create key</Button> : undefined }}
           />
         </Tooltip.Provider>
         <p className="t-caption max-w-[72ch]">Keys never expire. To rotate one, create its replacement, move your services to it, then revoke the old key: requests signed with it fail at once.</p>
@@ -147,7 +153,7 @@ export function KeysView({ rows, now, createKey, revokeKey }: { rows: ApiKey[]; 
         <SheetContent
           title="Create a key"
           description="The key is shown once, after you create it."
-          footer={<><SheetClose asChild><Button variant="ghost">Cancel</Button></SheetClose><Button variant="primary" onClick={create} disabled={pending || scopes.length === 0}>Create key</Button></>}
+          footer={<><SheetClose asChild><Button variant="ghost">Cancel</Button></SheetClose>{may.create ? <Button variant="primary" onClick={create} disabled={pending || scopes.length === 0}>Create key</Button> : null}</>}
         >
           <div className="flex flex-col gap-6">
             {createError ? <Banner tone="critical" title="Key not created">{createError}</Banner> : null}

@@ -1,6 +1,9 @@
 import {
   Activity, BarChart3, Boxes, FileText, Gauge, KeyRound, LayoutGrid, Settings, UserRound, Users, type LucideIcon,
 } from 'lucide-react';
+// Relative with its extension, and a type-only need below: `scripts/check.ts` imports this file under plain node.
+import { FEATURES } from './data/features.ts';
+import type { Need } from './lib/collection.ts';
 
 /**
  * Everything that makes this dashboard yours, in one file. Rename the product, rewrite the navigation, pick an accent.
@@ -24,32 +27,33 @@ export const app = {
   user: { name: 'Maya Chen', role: 'Owner' },
 } as const;
 
-export type NavItem = { href: string; label: string; icon: LucideIcon; badge?: string };
+/** `needs` is the feature's own need from `src/data/features.ts`, by reference: the rail asks it of the person. */
+export type NavItem = { href: string; label: string; icon: LucideIcon; badge?: string; needs: Need };
 export type NavGroup = { label?: string; items: NavItem[] };
 
 export const nav: NavGroup[] = [
   {
     items: [
-      { href: '/', label: 'Overview', icon: LayoutGrid },
-      { href: '/requests', label: 'Requests', icon: Activity },
-      { href: '/analytics', label: 'Analytics', icon: BarChart3 },
+      { href: '/', label: 'Overview', icon: LayoutGrid, needs: FEATURES.overview.needs },
+      { href: '/requests', label: 'Requests', icon: Activity, needs: FEATURES.requests.needs },
+      { href: '/analytics', label: 'Analytics', icon: BarChart3, needs: FEATURES.analytics.needs },
     ],
   },
   {
     label: 'Operate',
     items: [
-      { href: '/health', label: 'Health', icon: Gauge, badge: '1' },
-      { href: '/customers', label: 'Customers', icon: Users },
-      { href: '/keys', label: 'API keys', icon: KeyRound },
+      { href: '/health', label: 'Health', icon: Gauge, badge: '1', needs: FEATURES.health.needs },
+      { href: '/customers', label: 'Customers', icon: Users, needs: FEATURES.customers.needs },
+      { href: '/keys', label: 'API keys', icon: KeyRound, needs: FEATURES.keys.needs },
     ],
   },
   {
     label: 'Workspace',
     items: [
-      { href: '/members', label: 'Members', icon: UserRound },
-      { href: '/settings', label: 'Settings', icon: Settings },
-      { href: '/system', label: 'Design system', icon: Boxes },
-      { href: '/system/start/start-a-dashboard', label: 'Docs', icon: FileText },
+      { href: '/members', label: 'Members', icon: UserRound, needs: FEATURES.members.needs },
+      { href: '/settings', label: 'Settings', icon: Settings, needs: FEATURES.settings.needs },
+      { href: '/system', label: 'Design system', icon: Boxes, needs: FEATURES.system.needs },
+      { href: '/system/start/start-a-dashboard', label: 'Docs', icon: FileText, needs: FEATURES.docs.needs },
     ],
   },
 ];

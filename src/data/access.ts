@@ -15,12 +15,16 @@
  * keys on it.
  */
 import { cookies } from 'next/headers';
+import { redirect } from 'next/navigation';
+import type { JSX } from 'react';
 import { nav } from '@/app.config';
 import { activity, days, endpoints, incidents, keys, members, requests, responses, services } from '@/data/collections';
+import { FEATURES, type FeatureId } from '@/data/features';
 import { effective, roleLabel, type AddOn, type MainRole } from '@/data/roles';
 import { chooseViewAs } from '@/data/view-as';
+import { NoAccess } from '@/views/no-access';
 import type { Member } from '@/data/sample';
-import type { AnyCollection, Grant } from '@/lib/collection';
+import type { AnyCollection, Grant, Need } from '@/lib/collection';
 
 export type AccessScope = Readonly<{
   tenantId: string;
@@ -141,9 +145,65 @@ export const { resolveAccess, collectionFor, can, nameOf } = accessFrom({
   name: async (scope) => (await memberById(scope.subjectId))?.name ?? null,
 });
 
+/**
+ * Whether a member satisfies a need: `public` is any signed-in Active person, which `resolveAccess` has already
+ * proved; a grant is asked of the role table (`effective`, main role and add-ons unioned), an `allOf` of every grant.
+ *
+ * The question is the role's, not the collection's. A grant a role carries is what that person may do, and whether a
+ * collection of that name is bound — `can` — is a question about the data behind it. `customers:read` is every viewer's
+ * grant and the Customers page reads a fixture rather than a collection, so the rail asks `effective` for it.
+ */
+function satisfies(member: Member, need: Need): boolean {
+  if (member.status !== 'Active') return false;
+  if (need === 'public') return true;
+  const grants = effective(member.role, member.addOns);
+  return typeof need === 'string' ? grants.has(need) : need.allOf.every((grant) => grants.has(grant));
+}
+
+/**
+ * What the current request may do, asked the one way a page, a control or the rail asks it: `public` is satisfied by
+ * any signed-in Active person, a grant by the role table, and an `allOf` by every grant of it.
+ *
+ * Rejects `Unauthenticated` when there is no session, which is the caller's to catch: this answers about a person, not
+ * for one. A page does not catch it — it opens with `gate`, which sends the request to sign-in or renders NoAccess
+ * before the page's own read.
+ */
+export async function may(need: Need): Promise<boolean> {
+  const scope = await resolveAccess();
+  const member = await memberById(scope.subjectId);
+  if (!member) throw new Unauthenticated();
+  return satisfies(member, need);
+}
+
+/** What a page or a view tool calls before it reads: `may` asked one way, refused as the one `AccessDenied` message. */
+export async function requireNeed(need: Need): Promise<void> {
+  if (!(await may(need))) throw new AccessDenied();
+}
+
+/**
+ * The one page gate, called as every dashboard page's first statement so the check is what stops the read, never the
+ * rail: `chromeAccess().only` hides a destination but forbids nothing, so a page that leaned on it would show a person
+ * the records the rail merely left unlinked.
+ *
+ * It asks the same `requireNeed` a view tool asks, so a page and a tool refuse alike. A request with no session is sent
+ * to sign-in. A person who may not use the feature gets the NoAccess view as a normal 200 answer — awaited, because the
+ * view is an async server component and a page hands a renderer an element, not a promise. `null` means the feature is
+ * held and the page may render and read.
+ */
+export async function gate(feature: FeatureId): Promise<JSX.Element | null> {
+  try {
+    await requireNeed(FEATURES[feature].needs);
+  } catch (error) {
+    if (error instanceof Unauthenticated) redirect('/sign-in');
+    if (error instanceof AccessDenied) return await NoAccess({ feature });
+    throw error;
+  }
+  return null;
+}
+
 /** What the console's chrome shows about the current request: the destinations, the person, and who the demo may be viewed as. */
 export type ChromeAccess = {
-  /** Every destination, as hrefs. Phase 1 narrows it to the ones this person may see. */
+  /** The destinations this person may satisfy the need of, as hrefs — what the rail and the palette both draw. */
   only: string[];
   /** The signed-in person, as the rail's account card reads them: their name and `roleLabel`. */
   user: { name: string; role: string };
@@ -162,6 +222,9 @@ export type ChromeAccess = {
  * sign-in. The personas are read again on every call, so a suspension takes effect at the next request, and a persona
  * whose record is not Active is listed but not selectable — never dropped, so the list never shifts under the pointer.
  * With no session this rejects `Unauthenticated`, and the chrome keeps its placeholder rather than naming anyone.
+ *
+ * `only` is the nav's own destinations whose `needs` this person satisfies. It is what the rail and the palette draw,
+ * and it is presentation only: hiding a destination is not the gate, which a later task puts on every page itself.
  */
 export async function chromeAccess(): Promise<ChromeAccess> {
   const scope = await resolveAccess();
@@ -170,8 +233,9 @@ export async function chromeAccess(): Promise<ChromeAccess> {
   const personas = new Map(
     (await members.query({ where: [{ field: 'id', op: 'in', value: [...PERSONAS] }] })).rows.map((m) => [m.id, m]),
   );
+  const items = nav.flatMap((g) => g.items);
   return {
-    only: nav.flatMap((g) => g.items.map((i) => i.href)),
+    only: items.filter((i) => satisfies(member, i.needs)).map((i) => i.href),
     user: { name: member.name, role: roleLabel(member) },
     viewAs: {
       current: member.id,

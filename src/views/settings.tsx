@@ -51,32 +51,46 @@ function settingsContext(lines: Record<string, string>): SharedContext {
   };
 }
 
-export function SettingsBody() {
+/** What this person may do with the workspace, computed on the server with `may` and passed in: the view is a client module, so it never asks the policy itself. */
+export type SettingsMay = {
+  workspaceRead: boolean;
+  workspaceUpdate: boolean;
+  workspaceRemove: boolean;
+};
+
+/**
+ * Settings, split by need: Notifications, Appearance, Assistant and Agents and MCP are for everyone; the Workspace and
+ * the Danger zone follow `may`. A person who may not change the workspace sees its fields read-only with the line saying
+ * who can, and never a control that would refuse — no save bar and no Danger zone.
+ */
+export function SettingsBody({ may }: { may: SettingsMay }) {
   const [lines, setLines] = useState<Record<string, string>>({});
   const report = useCallback((section: string, line: string) => setLines((l) => (l[section] === line ? l : { ...l, [section]: line })), []);
   useShareView(settingsContext(lines));
   return (
     <Report value={report}>
     <div className="flex flex-col gap-14">
-      <Workspace />
+      {may.workspaceRead ? <Workspace may={may} /> : null}
       <Notifications />
       <Appearance />
       <Assistant />
       <Agents />
-      <Danger />
+      {may.workspaceRemove ? <Danger /> : null}
     </div>
     </Report>
   );
 }
 
-function Workspace() {
+function Workspace({ may }: { may: SettingsMay }) {
   const saved = { name: `${app.name} ${app.workspace}`, slug: workspaceSlug, timezone: app.timezone as string };
   const [v, setV] = useState(saved);
   const [base, setBase] = useState(saved);
   const [saving, setSaving] = useState(false);
-  const dirty = JSON.stringify(v) !== JSON.stringify(base);
+  // Only a person who may change the workspace has anything to save or discard; everyone else reads the values as they are.
+  const editable = may.workspaceUpdate;
+  const dirty = editable && JSON.stringify(v) !== JSON.stringify(base);
   const nameError = v.name.trim() === '' ? 'Give the workspace a name: it appears in the rail and on invitations.' : undefined;
-  useReport('Workspace', `name "${base.name}", address app.${domain}/${base.slug}, time zone ${base.timezone}${dirty ? `; unsaved edits: name "${v.name}", time zone ${v.timezone}` : ''}`);
+  useReport('Workspace', `name "${base.name}", address app.${domain}/${base.slug}, time zone ${base.timezone}${dirty ? `; unsaved edits: name "${v.name}", time zone ${v.timezone}"` : ''}`);
   return (
     <FormSection
       title="Workspace"
@@ -84,23 +98,24 @@ function Workspace() {
       dirty={dirty}
       saving={saving}
       onDiscard={() => setV(base)}
-      onSave={async () => {
+      onSave={editable ? async () => {
         if (nameError) return;
         setSaving(true);
         await wait(700);
         setBase(v);
         setSaving(false);
         toast({ tone: 'positive', title: 'Workspace saved' });
-      }}
+      } : undefined}
+      footnote={editable ? undefined : 'Only an Owner can change the workspace.'}
     >
       <Field label="Name" error={nameError}>
-        {(p) => <Input {...p} value={v.name} onChange={(e) => setV({ ...v, name: e.target.value })} />}
+        {(p) => <Input {...p} value={v.name} readOnly={!editable} onChange={(e) => setV({ ...v, name: e.target.value })} />}
       </Field>
       <Field label="Address" hint="Used in links you share. Only an owner can change it.">
         {(p) => <Input {...p} value={`app.${domain}/${v.slug}`} readOnly leading={<Globe className="size-4" />} className="font-mono text-xs" />}
       </Field>
       <Field label="Time zone" hint="Daily totals and charts are cut at midnight in this zone.">
-        {(p) => <Select {...p} value={v.timezone} onValueChange={(timezone) => setV({ ...v, timezone })} options={TIMEZONES} />}
+        {(p) => <Select {...p} value={v.timezone} disabled={!editable} onValueChange={(timezone) => setV({ ...v, timezone })} options={TIMEZONES} />}
       </Field>
     </FormSection>
   );

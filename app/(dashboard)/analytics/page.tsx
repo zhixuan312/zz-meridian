@@ -6,6 +6,7 @@ import { Freshness } from '@/components/patterns/freshness';
 import { PeriodSelect } from '@/components/patterns/period-select';
 import { Skeleton } from '@/components/ui/skeleton';
 import { AnalyticsBody } from '@/views/analytics';
+import { gate } from '@/data/access';
 import { DEMO_NOW, DEMO_UPDATED_AT } from '@/data/sample';
 import { analyticsTool } from '@/views/tools';
 import { cache } from 'react';
@@ -17,8 +18,10 @@ export const metadata = { title: 'Analytics' };
 
 type SearchParams = Promise<{ period?: string }>;
 
-/** The masthead renders at once; the period select, the export and the body read the address inside their own boundaries. */
-export default function AnalyticsPage({ searchParams }: { searchParams: SearchParams }) {
+/** The page asks its feature before it renders — the rail hiding `/analytics` is presentation, not this gate — then the masthead renders and the period select, the export and the body read the address inside their own boundaries. Next always passes the address; the default keeps the component callable with none, which a check that renders it bare relies on. */
+export default async function AnalyticsPage({ searchParams }: { searchParams: SearchParams } = { searchParams: Promise.resolve({}) }) {
+  const denied = await gate('analytics');
+  if (denied) return denied;
   return (
     <PageFrame
       kicker={<>{app.name} · {app.workspace}</>}

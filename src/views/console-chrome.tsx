@@ -79,7 +79,13 @@ function ResolvedPalette({ access }: { access: Promise<ChromeAccess | null> }) {
   return <CommandPalette nav={chrome ? visible(chrome.only) : NOTHING} />;
 }
 
-/** `nav` narrowed to the hrefs given, with a group left empty dropped; every destination without them. */
+/**
+ * `nav` narrowed to the hrefs given, with a group left empty dropped; every destination without them.
+ *
+ * The hrefs come from `chromeAccess().only`, the destinations this person satisfies the need of. This is presentation
+ * only and never the gate: a destination kept out of the rail is still reachable by its address, so each page carries
+ * its own gate (a later task puts one on every page). The palette takes the same list, so the two always agree.
+ */
 export function visible(only?: string[]): NavGroup[] {
   if (!only) return nav;
   return nav.map((g) => ({ ...g, items: g.items.filter((i) => only.includes(i.href)) })).filter((g) => g.items.length);

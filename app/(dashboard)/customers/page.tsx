@@ -1,14 +1,17 @@
 import { Suspense } from 'react';
 import { app } from '@/app.config';
 import { PageFrame } from '@/components/base/shell';
+import { gate } from '@/data/access';
 import { CUSTOMERS } from '@/data/sample';
 import { CustomersView, InviteCustomer } from '@/views/customers';
 import { Busy, TableSkeleton, TilesSkeleton } from '../_loading';
 
 export const metadata = { title: 'Customers' };
 
-/** The masthead sits outside the boundary that reads the address (the table's filters), so a cold load has its title in the first HTML. */
-export default function CustomersPage() {
+/** The page asks its feature before it renders; the rail hiding `/customers` is presentation, never this gate. The masthead then sits outside the boundary that reads the address (the table's filters). */
+export default async function CustomersPage() {
+  const denied = await gate('customers');
+  if (denied) return denied;
   return (
     <PageFrame
       kicker={<>{app.name} · {app.workspace}</>}

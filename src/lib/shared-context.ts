@@ -9,6 +9,7 @@
 import { app } from '@/app.config';
 import type { z } from 'zod';
 import { formatDateTime, formatRelative } from '@/lib/format-date';
+import type { Need } from '@/lib/collection';
 
 /** One figure as the screen shows it, with what it counts. */
 export type Fact = {
@@ -85,16 +86,19 @@ export function contextText(c: SharedContext): string {
 }
 
 /**
- * A view's tool: its name, the question it answers, its address as input, and one read that returns what the view
- * renders (`data`) and what both agents are told (`context`). The console's assistant offers it as `view_<name>`;
- * an MCP server registers the same contract under its own prefix, with `resourceUri` when the view has an embed
- * (decision 0011). The embed route renders from the same read, so the model's figures and the screen's are one.
+ * A view's tool: its name, the feature table entry that permits it, the question it answers, its address as input, and
+ * one read that returns what the view renders (`data`) and what both agents are told (`context`). The console's
+ * assistant offers it as `view_<name>`; an MCP server registers the same contract under its own prefix, with
+ * `resourceUri` when the view has an embed (decision 0011). The embed route renders from the same read, so the model's
+ * figures and the screen's are one.
  */
 export type ViewTool<I extends z.ZodObject = z.ZodObject, D extends object = object> = {
   name: string;
   title: string;
   /** The question the view answers, for the model choosing a tool. */
   description: string;
+  /** What a person must be able to do to use the view, taken from its feature entry by reference (`FEATURES.<id>.needs`). */
+  needs: Need;
   /** The view's address parameters: the same names as its query string. */
   input: I;
   /** The MCP App to render beside the result, when the view has one: `ui://<slug>/<view>`. */

@@ -5,6 +5,7 @@ import { Freshness } from '@/components/patterns/freshness';
 import { PeriodSelect } from '@/components/patterns/period-select';
 import { Skeleton } from '@/components/ui/skeleton';
 import { OverviewBody } from '@/views/overview';
+import { gate } from '@/data/access';
 import { DEMO_NOW, DEMO_UPDATED_AT } from '@/data/sample';
 import { overviewTool } from '@/views/tools';
 import { cache } from 'react';
@@ -20,8 +21,10 @@ type SearchParams = Promise<{ period?: string; day?: string }>;
 /** The page's one read, through the Overview tool (`src/views/tools.ts`), shared by the export and the body. */
 const readPeriod = cache((period: ReturnType<typeof parsePeriod>, day?: string) => overviewTool.read({ period, day: /^\d{4}-\d{2}-\d{2}$/.test(day ?? '') ? day : undefined }));
 
-/** The masthead renders at once; the period select, the export and the body read the address inside their own boundaries. */
-export default function OverviewPage({ searchParams }: { searchParams: SearchParams }) {
+/** The page asks its feature before it renders — the rail hiding `/` is presentation, not this gate — then the masthead renders and the period select, the export and the body read the address inside their own boundaries. Next always passes the address; the default keeps the component callable with none, which a check that renders it bare relies on. */
+export default async function OverviewPage({ searchParams }: { searchParams: SearchParams } = { searchParams: Promise.resolve({}) }) {
+  const denied = await gate('overview');
+  if (denied) return denied;
   return (
     <PageFrame
       kicker={<>{app.name} · {app.workspace}</>}

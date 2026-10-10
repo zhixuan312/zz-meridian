@@ -72,7 +72,9 @@ function Code({ body, label }: { body: string; label: string }) {
 }
 
 /** `replay` is the page's Server Action: it sends the request again and answers with the new request, or why not. */
-export function RequestView({ request: r, trace, payloads, routeP95, now, replay }: { request: RequestRow; trace: Span[]; payloads: { request: string | null; response: string }; /** The route's p95 over the period, for "is this slow?". */ routeP95: number | null; now: string; replay: (id: string) => Promise<{ ok: true; id: string; status: number } | { ok: false; error: string }> }) {
+/** `mayReplay` is what the page asked of the action table, so the control is drawn only for a failed request the person */
+/** may replay, and `replayLine` is who can, shown once in its place. Both default to the control being available. */
+export function RequestView({ request: r, trace, payloads, routeP95, now, replay, mayReplay = true, replayLine }: { request: RequestRow; trace: Span[]; payloads: { request: string | null; response: string }; /** The route's p95 over the period, for "is this slow?". */ routeP95: number | null; now: string; replay: (id: string) => Promise<{ ok: true; id: string; status: number } | { ok: false; error: string }>; mayReplay?: boolean; replayLine?: string }) {
   useShareView(requestContext({ request: r, trace, routeP95, statusText: STATUS_TEXT[r.status] ?? '', payloadBytes: { request: payloads.request?.length ?? null, response: payloads.response.length }, now }));
   const router = useRouter();
   const usage = usageOf(r);
@@ -100,7 +102,9 @@ export function RequestView({ request: r, trace, payloads, routeP95, now, replay
         primary: (
           <>
             <Button icon={<Terminal />} onClick={() => { void navigator.clipboard?.writeText(curlOf(r, payloads.request)); toast({ tone: 'positive', title: 'cURL command copied' }); }}>Copy as cURL</Button>
-            {failed ? <Button variant="primary" icon={<RotateCw />} busy={replaying} onClick={sendAgain}>Replay</Button> : null}
+            {failed && mayReplay ? <Button variant="primary" icon={<RotateCw />} busy={replaying} onClick={sendAgain}>Replay</Button> : null}
+            {/* A failed request the person may not replay says who can, once, where the control would have been. */}
+            {failed && !mayReplay && replayLine ? <p className="t-caption max-w-[36ch] text-pretty">{replayLine}</p> : null}
           </>
         ),
         more: [

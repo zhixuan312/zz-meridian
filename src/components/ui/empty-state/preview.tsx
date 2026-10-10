@@ -30,6 +30,13 @@ export default function EmptyStatePreview() {
           </EmptyState>
         </Plane>
       </Specimen>
+      <Specimen label="No access" note="The person's role may not open this page: name the feature, and who can open it, read off the role table. Nothing failed, so this is not an alert.">
+        <Plane on="surface" className="p-0">
+          <EmptyState kind="no-access" title="You don't have access to API keys">
+            Owners, Admins, Members and Key managers can open it. Ask an Owner or Admin for access.
+          </EmptyState>
+        </Plane>
+      </Specimen>
       <Specimen label="The product's own art" note="EmptyStateArt, provided once near the root, replaces the disc on every centred empty state, a Data table's included. Here, the product's mark.">
         <Plane on="surface" className="p-0">
           <EmptyStateArt value={{ 'first-run': <AppMark size={32} /> }}>

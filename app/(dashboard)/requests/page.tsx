@@ -3,6 +3,7 @@ import { app } from '@/app.config';
 import { PageFrame } from '@/components/base/shell';
 import { ExportButton } from '@/components/patterns/export-button';
 import { Freshness } from '@/components/patterns/freshness';
+import { gate } from '@/data/access';
 import { readRequests, requestsQuery, REQUEST_PAGE } from '@/data/requests';
 import { DEMO_UPDATED_AT } from '@/data/sample';
 import { RequestsView } from '@/views/requests';
@@ -14,9 +15,11 @@ type SearchParams = Promise<Record<string, string | string[] | undefined>>;
 
 /**
  * The request log. Filters, sort and page live in the address (?status=5xx&sort=latency): the server reads one page of the filtered set, so every view is a link.
- * The masthead's title is static and sits outside every boundary that reads the address, so a navigation shows it at once; the freshness stamp, the export and the body each read the address inside their own.
+ * The page asks its feature first — the rail hiding `/requests` is presentation, not this gate. The masthead's title is static and sits outside every boundary that reads the address, so a navigation shows it at once; the freshness stamp, the export and the body each read the address inside their own.
  */
-export default function RequestsPage({ searchParams }: { searchParams: SearchParams }) {
+export default async function RequestsPage({ searchParams }: { searchParams: SearchParams }) {
+  const denied = await gate('requests');
+  if (denied) return denied;
   return (
     <PageFrame
       kicker={<>{app.name} · {app.workspace}</>}
