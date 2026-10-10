@@ -4,6 +4,11 @@ Every release of ZZ Meridian, newest first. Versions follow semver: a removed or
 
 ## [Unreleased]
 
+### Fixed
+
+- **A sort or a page press is answered before the server is.** `useQueryState` returns a third value, `pending`, and shows the asked-for state at once (`useOptimistic` inside the navigation's transition); the DataTable takes `busy` (rows at 60% opacity, `aria-busy`) until the new rows land. A caller that destructures two values is unaffected.
+- **Dates and figures reuse their Intl formatters**: `formatDate` and the money and count formatters build their `Intl` formatter once instead of on every call (200 dates: 209 ms to 2.5 ms), which shortens the first tap on Alerts or the drawer on a phone.
+
 ## [0.12.3] · 2026-10-10
 
 ### Fixed
