@@ -75,6 +75,18 @@ export default function TrendChartPreview() {
           <TrendChart label="Requests with two days missing" dates={dates} height={170} series={[{ key: 'r', label: 'Requests', values: current.map((d, i) => (i === 12 || i === 13 ? null : d.requests)), kind: 'line' }]} />
         </Plane>
       </Specimen>
+      <Specimen label="Readout · long labels and extreme values" note="The readout stays inside a narrow chart. Labels wrap and exact values remain readable; a phone pins the readout to the plot's leading edge.">
+        <Plane on="surface" className="max-w-md">
+          <TrendChart
+            label="Metered inference spend after automatic retries"
+            dates={dates}
+            height={200}
+            format="cost"
+            data-preview-index={17}
+            series={[{ key: 'spend', label: 'Metered inference spend after automatic retries', values: current.map((d) => d.spend * 1_000_000_000), kind: 'line' }]}
+          />
+        </Plane>
+      </Specimen>
     </>
   );
 }

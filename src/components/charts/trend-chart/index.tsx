@@ -1,6 +1,6 @@
 'use client';
 
-import { useId, useMemo, useState, type KeyboardEvent, type PointerEvent } from 'react';
+import { useId, useMemo, useState, type CSSProperties, type KeyboardEvent, type PointerEvent, type ReactNode } from 'react';
 import { cn } from '@/lib/cn';
 import { AXIS_FORMATTERS, FORMATTERS, type NumberFormat } from '@/lib/format';
 import { formatDate } from '@/lib/format-date';
@@ -36,6 +36,7 @@ export function TrendChart({
   tick,
   stacked = false,
   baseline,
+  'data-preview-index': previewIndex,
   className,
 }: {
   dates: string[];
@@ -53,6 +54,8 @@ export function TrendChart({
   stacked?: boolean;
   /** What is usual, drawn as a quiet dashed line across the plot with its label at the end: `{ value: 296, label: 'Median 296ms' }`. */
   baseline?: { value: number; label: string };
+  /** A static readout in the Atlas; real charts take their day from the Meridian. */
+  'data-preview-index'?: number;
   className?: string;
 }) {
   const [box, size] = useSize<HTMLDivElement>();
@@ -142,10 +145,10 @@ export function TrendChart({
     setLocal(true);
   };
 
-  const active = index !== null && index < n ? index : null;
+  const selected = previewIndex ?? index;
+  const active = selected !== null && Number.isInteger(selected) && selected >= 0 && selected < n ? selected : null;
   // On the pixel grid, so the 1px cursor line stays crisp while it glides.
   const cx = active !== null ? Math.round(x(active)) + 0.5 : 0;
-  const tipLeft = active !== null && cx > pad.l + W * 0.62;
 
   return (
     <div ref={box} className={cn('relative w-full select-none', fill && 'min-h-55 flex-1', className)} style={fill ? undefined : { height }}>
@@ -262,22 +265,14 @@ export function TrendChart({
         </ul>
       ) : null}
       {active !== null && width > 0 ? (
-        <div
-          aria-hidden
-          className={cn(
-            'pointer-events-none absolute z-10 min-w-36 rounded-md bg-surface-raised px-3 py-2 shadow-overlay',
-            local ? 'opacity-100' : 'opacity-0',
-            'transition-opacity duration-(--dur-hover)',
-          )}
-          style={{ top: pad.t - 4, left: tipLeft ? undefined : cx + 12, right: tipLeft ? width - cx + 12 : undefined }}
-        >
-          <p className="t-eyebrow mb-1.5">{tick ? tick(dates[active]) : formatDate(dates[active])}</p>
+        <Readout cursor={cx} width={width} top={pad.t - 4} visible={local || previewIndex !== undefined}>
+          <p className="t-eyebrow mb-1.5 break-words">{tick ? tick(dates[active]) : formatDate(dates[active])}</p>
           {/* Stacked, the readout lists the bands top to bottom, as they sit on the chart, then the total. */}
           {(stacked ? series.map((s, k) => ({ s, k })).reverse() : series.map((s, k) => ({ s, k }))).map(({ s, k }) => (
-            <p key={s.key} className="flex items-center gap-2 text-xs leading-6">
-              <span className={cn('w-2.5 rounded-full', stacked ? 'h-1' : 'h-0.5')} style={{ background: colorOf(s, k) }} />
-              <span className="text-ink-2">{s.label}</span>
-              <span className="t-num ml-auto pl-4 font-medium text-ink">{fmt(s.values[active])}</span>
+            <p key={s.key} className="flex flex-wrap items-start gap-x-2 text-xs leading-6">
+              <span className={cn('mt-3 w-2.5 shrink-0 rounded-full', stacked ? 'h-1' : 'h-0.5')} style={{ background: colorOf(s, k) }} />
+              <span className="min-w-0 flex-1 break-words text-ink-2">{s.label}</span>
+              <span className="t-num ml-auto min-w-0 break-words font-medium text-ink">{fmt(s.values[active])}</span>
             </p>
           ))}
           {totals ? (
@@ -286,13 +281,42 @@ export function TrendChart({
               <span className="t-num ml-auto pl-4 font-semibold text-ink">{fmt(totals[active])}</span>
             </p>
           ) : null}
-        </div>
+        </Readout>
       ) : null}
       <table className="sr-only">
         <caption>{label}{baseline ? `. ${baseline.label}` : ''}</caption>
         <thead><tr><th>Date</th>{series.map((s) => <th key={s.key}>{s.label}</th>)}{totals ? <th>Total</th> : null}</tr></thead>
         <tbody>{dates.map((d, i) => <tr key={d}><td>{d}</td>{series.map((s) => <td key={s.key}>{fmt(s.values[i])}</td>)}{totals ? <td>{fmt(totals[i])}</td> : null}</tr>)}</tbody>
       </table>
+    </div>
+  );
+}
+
+/** Measure the readout itself: a fixed side-switch cannot keep long labels inside a narrow chart. */
+function Readout({ cursor, width, top, visible, children }: { cursor: number; width: number; top: number; visible: boolean; children: ReactNode }) {
+  const [box, size] = useSize<HTMLDivElement>();
+  const preferred = cursor > width / 2
+    ? 'calc(var(--readout-cursor) - var(--readout-width) - var(--space-3))'
+    : 'calc(var(--readout-cursor) + var(--space-3))';
+  return (
+    <div
+      ref={box}
+      aria-hidden
+      className={cn(
+        'pointer-events-none absolute z-10 w-max max-w-full min-w-0 rounded-md bg-surface-raised px-3 py-2 shadow-overlay max-sm:!left-0',
+        visible ? 'opacity-100' : 'opacity-0',
+        'transition-opacity duration-(--dur-hover)',
+      )}
+      style={{
+        top,
+        minWidth: 'min(100%, calc(var(--space-1) * 36))',
+        '--readout-cursor': `${cursor}px`,
+        // ResizeObserver gives the content box; the readout also has space-3 on each side.
+        '--readout-width': `calc(${size.width}px + var(--space-3) * 2)`,
+        left: size.width ? `clamp(0px, ${preferred}, calc(100% - var(--readout-width)))` : 0,
+      } as CSSProperties}
+    >
+      {children}
     </div>
   );
 }

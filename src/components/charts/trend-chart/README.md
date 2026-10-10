@@ -7,11 +7,11 @@ Status: beta
 ## Anatomy
 
 1. **Plot**: horizontal gridlines in `chart-grid`, the baseline in `chart-axis`, 1px, crisp.
-2. **Y axis**: 3 or 4 "nice" ticks from zero, labels `text-2xs` `ink-3`, tabular, right-aligned in a gutter sized to the longest label. Axis labels drop cents and exact digits (`$12`, `1.2M`); the tooltip and table carry them.
+2. **Y axis**: 3 or 4 "nice" ticks from zero, labels `text-2xs` `ink-3`, tabular, right-aligned in a gutter sized to the longest label. Axis labels drop cents and exact digits (`$12`, `1.2M`), and money from $10,000 reads at a glance (`$25K`, `$5.0B`) so a large scale does not widen the gutter; the tooltip and table carry the exact amounts.
 3. **X axis**: dates, `text-2xs` `ink-3`, one label per 92px, counted back from today so the last day is always labelled.
 4. **Series**: monotone curves that never overshoot their data.
 5. **Legend**: above the plot when there are two or more series: a 12px line swatch (dashed for `dashed`) and the label in `ink-2`.
-6. **Cursor, dots and tooltip**: from the Meridian.
+6. **Cursor, dots and tooltip**: from the Meridian. The readout measures its own width and stays inside the chart; long labels wrap and values remain readable.
 7. **Screen-reader table**: every day and series, formatted.
 
 ## Variants
@@ -40,7 +40,8 @@ Colour: `accent` for the series the page is about; categorical slots 1 to 6 in o
 | State | Spec |
 |---|---|
 | Arriving | The line draws left to right and the area reveals over `dur-grow` 820ms `ease-out`; the glow and dashed lines fade in. |
-| Rest, pointing, keyboard | See Meridian. |
+| Rest, pointing, keyboard | See Meridian. The readout is bounded by the chart at every selected day, including the first and last. |
+| Long text, extreme values | Labels wrap inside the readout. It is no wider than its chart, with `space-3` 12px side padding; the static specimen shows a long inference label and spend in billions. |
 | Gap | A `null` value breaks the line: each run of measured days is its own segment. A gap is never drawn as zero. |
 | Empty | No series: render the card's Empty state instead of an empty plot. |
 | Loading | A Skeleton the chart's height. |
@@ -54,7 +55,7 @@ Pointer, touch and keys as in Meridian. The chart redraws in real pixels when it
 ## Surfaces
 
 - **Console**: 248px or `fill`; date labels every 92px (six to eight across).
-- **Mobile**: 160 to 200px; three or four date labels; the tooltip flips sides past 62% of the plot.
+- **Mobile**: 160 to 200px; three or four date labels; the readout pins to the leading edge at the top of the plot, so it stays still while the finger moves between days.
 - **Embed**: 160 to 168px inline; the console height in fullscreen.
 
 ## Agents
@@ -97,3 +98,5 @@ import { TrendChart } from '@/components/charts/trend-chart';
 ```
 
 Props: `dates`, `series` (`key`, `label`, `values`, `color`, `kind`), `format` (`count` | `cost` | `duration` | `percent`), `height` (number or `fill`), `label`, `legend` (defaults to two or more series).
+
+The Atlas uses `data-preview-index` to show a selected day's readout statically. Product charts use the Meridian's cursor instead.

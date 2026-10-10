@@ -42,7 +42,7 @@ The Meridian has no size of its own. The line is 1px; the dots 8px across (4px r
 ## Surfaces
 
 - **Console**: pointer and keyboard as above.
-- **Mobile**: the finger drags the cursor; the tooltip flips to the left of the line past 62% of the plot so it never leaves the screen.
+- **Mobile**: the finger drags the cursor; a Trend chart's readout stays at the leading edge above the plot, bounded by its width. On wider charts the readout follows the cursor and measures its own width to stay inside the plot.
 - **Embed**: the same. The view shares the day the person is looking at with the model (below), so "why did it dip here?" has a referent.
 
 ## Agents
