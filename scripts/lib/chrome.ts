@@ -124,7 +124,9 @@ async function attach(proc: ChildProcess, dir: string, handle: { proc: ChildProc
       fs.writeFileSync(file, Buffer.from(r.result.data, 'base64'));
       return h;
     },
-    close() { ws.close(); launched.delete(handle); proc.kill(); setTimeout(() => fs.rmSync(dir, { recursive: true, force: true }), 500).unref(); },
+    // Synchronous, like every other way out: a timer to remove the profile later never fired when the script exited
+    // straight after close(), and each run left a 30 MB profile in the temp folder.
+    close() { ws.close(); reap(handle); },
   };
   return page;
 }
