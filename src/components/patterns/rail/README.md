@@ -6,7 +6,7 @@ Status: beta
 
 ## Anatomy
 
-1. **Brand**: the App mark at 28px, the product name (`text-md`, 600) and the workspace as an eyebrow; the whole row opens the workspace menu: the current workspace (checked), Workspace settings, Sign out, and — where the product may be read as someone else — the View as group. A product with several workspaces or scopes (one team, the whole platform) passes them as `scopes` (`{ id, label, active, onSelect }`); the menu lists them as radio items under "Show", and `workspace` sets the eyebrow to the one in view.
+1. **Brand**: the App mark at 28px, the product name (`text-md`, 600) and the workspace as an eyebrow; the whole row opens the account menu: Workspace settings, Sign out, and — where the product may be read as someone else — the View as group. A product with several workspaces or scopes (one team, the whole platform) passes them as `scopes` (`{ id, label, active, onSelect }`); the menu then lists them as radio items under "Show", the row's glyph is the switcher's `ChevronsUpDown`, and `workspace` sets the eyebrow to the one in view. With one scope or none there is nothing to switch between, so there is no `Show` group and no checked row of its own: the row is the account menu, its glyph is a plain `ChevronDown`, and its label says so.
 2. **Groups**: an optional mono eyebrow (`t-eyebrow`, `ink-3`) over a list of items; groups sit `space-6` 24px apart.
 3. **Item**: a 16px icon at a 1.75 stroke, the label, and an optional count badge.
 4. **Marker**: one pill behind the current item, `accent-tint` with an inset `accent-line` ring and a 2px `accent` edge on the left that carries a soft glow.
@@ -81,7 +81,7 @@ Not applicable: navigation is how a person moves. An agent opens a view by its a
 - `user` is the signed-in person (`{ name, role }`); pass your session's. `null` while the session is still being found out draws a skeleton in its place, never a name that is not theirs. It defaults to the sample user in `app.config`. The console's own `ConsoleRail` takes the promise instead and passes this for you.
 - `signOut` is a route (`'/sign-in'`, the default), a function (your auth's sign-out; from a server layout, wrap the rail in a small client component to pass one), or `null` to hide it.
 - `viewAs` is the personas the console may be read as: `{ current, options: { id, label, disabled? }[], choose }`. The menu lists them as radio items under "View as", with `current` checked. A product with one session leaves it unset and the menu has no such group. The options mount with the menu, so no persona's name is in a page's first HTML.
-- The workspace menu shows Workspace settings only when the navigation has `/settings`.
+- The account menu shows Workspace settings only when the navigation has `/settings`; with more than one scope it is the workspace menu, and it is named that way for anyone reading the row with a screen reader.
 
 ## Implementation
 

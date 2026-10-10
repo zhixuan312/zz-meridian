@@ -1,7 +1,7 @@
 'use client';
 
 import { Check, LogOut, Settings } from 'lucide-react';
-import { app, nav } from '@/app.config';
+import { nav } from '@/app.config';
 import { Specimen } from '@/system/specimen';
 import { Rail } from '.';
 
@@ -22,14 +22,20 @@ const PERSONAS = ['Maya Chen', 'Jonas Weber', 'Priya Nair', 'Lucas Meyer', 'Grac
 
 /**
  * The workspace menu's surface, drawn inline: a Radix menu mounts only while it is open, so a preview that wants the
- * View as group looked at has to draw the panel itself.
+ * View as group looked at has to draw the panel itself. `scopes` draws the group a product with more than one workspace
+ * or scope gets; without it the panel is the account menu the template itself has, with nothing to switch between.
  */
-function MenuPanel({ suspended = false }: { suspended?: boolean }) {
+function MenuPanel({ suspended = false, scopes = false }: { suspended?: boolean; scopes?: boolean }) {
   return (
     <div className={PANEL}>
-      <p className="t-eyebrow px-2 pt-2 pb-1.5">Workspace</p>
-      <div className={ROW}><Check className="!text-accent" strokeWidth={2.25} /><span className="min-w-0 flex-1 truncate">{app.name} {app.workspace}</span></div>
-      <div className="-mx-1 my-1 h-px bg-line" />
+      {scopes ? (
+        <>
+          <p className="t-eyebrow px-2 pt-2 pb-1.5">Show</p>
+          <div className={ROW}><Check className="!text-accent" strokeWidth={2.25} /><span className="min-w-0 flex-1 truncate">Northwind</span></div>
+          <div className={`${ROW} pr-8 text-ink-2`}>Contoso</div>
+          <div className="-mx-1 my-1 h-px bg-line" />
+        </>
+      ) : null}
       <div className={ROW}><Settings />Workspace settings</div>
       <div className={ROW}><LogOut />Sign out</div>
       <div className="-mx-1 my-1 h-px bg-line" />
@@ -63,6 +69,14 @@ export default function RailPreview() {
           <figure className="flex flex-col gap-2">
             <MenuPanel suspended />
             <figcaption className="text-2xs text-ink-3">A persona who is not Active: listed, out of reach</figcaption>
+          </figure>
+        </div>
+      </Specimen>
+      <Specimen label="Several workspaces" note="A product that passes more than one workspace or scope gets the Show group — radio items with the one in view checked — and its row is a switcher (ChevronsUpDown). One workspace or none is nothing to switch between: the row is the account menu, with a plain chevron, and the menu holds no Show group and no checked row of its own.">
+        <div className="flex flex-wrap gap-6">
+          <figure className="flex flex-col gap-2">
+            <MenuPanel scopes />
+            <figcaption className="text-2xs text-ink-3">Two scopes: Northwind is in view</figcaption>
           </figure>
         </div>
       </Specimen>

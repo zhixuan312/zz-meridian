@@ -2,6 +2,12 @@
 
 Every release of ZZ Meridian, newest first. Versions follow semver: a removed or renamed token, prop or card is major; a new card, token or variant is minor; a corrected value is a patch. Each entry says what breaks and what to do instead.
 
+## [Unreleased]
+
+### Changed
+
+- **With one workspace or none, the rail's row is the account menu, not a switcher.** A product that passes no `scopes` still opened a menu headed `Workspace` holding a single disabled, checked row — a chevron that promises a choice, opening a list with no choice in it (#20). The row now says `account menu` to a screen reader and carries a plain `ChevronDown` unless more than one scope is passed, and the menu renders no `Show` group and no checked row of its own unless there is something to switch between. A product passing several scopes is unchanged: the `Show` group, the radio items and the switcher glyph are as they were. The card's preview draws both states, and `README.md` states the rule.
+
 ## [0.13.0] · 2026-10-11
 
 ### Added
