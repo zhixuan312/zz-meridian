@@ -26,7 +26,7 @@ const LINKS = [
   '[&_a_svg]:size-4 [&_a_svg]:shrink-0 [&_a_svg]:text-ink-3 [&_a_svg]:transition-colors [&_a:not([aria-current]):hover_svg]:text-ink-2 [&_a[aria-current=page]_svg]:text-accent-ink',
 ].join(' ');
 
-/** The current link's own pill, the marker's twin, drawn until the marker has measured where it goes. */
+/** The current link's own pill, drawn until the marker has measured where it goes; the marker brings the lit edge a frame later. */
 const UNMEASURED = '[&_a[aria-current=page]]:bg-accent-tint [&_a[aria-current=page]]:ring-1 [&_a[aria-current=page]]:ring-accent-line [&_a[aria-current=page]]:ring-inset';
 
 /**
@@ -130,7 +130,6 @@ export function Rail({
                       href={it.href}
                       aria-current={on ? 'page' : undefined}
                     >
-                      {on && !marker ? <span aria-hidden className="absolute top-2 bottom-2 left-0 w-0.5 rounded-r-full bg-accent shadow-[0_0_12px_var(--accent)]" /> : null}
                       <LinkIcon icon={<Icon strokeWidth={1.75} />} label={it.label} />
                       <span className="flex-1 truncate">{it.label}</span>
                       {it.badge ? <span className="t-num grid h-5 min-w-5 place-items-center rounded-full bg-warning-tint px-1.5 text-2xs font-semibold text-warning-ink">{it.badge}</span> : null}
@@ -166,13 +165,10 @@ export function Rail({
 /**
  * A destination's icon, which turns into a spinner while its page is on the way. A route whose page renders on request
  * and has no `loading.tsx` would otherwise give no answer to the click until the server does; a prefetched route is
- * never pending, so it never shows. The slot is always 16px, so nothing shifts.
+ * never pending, so it never shows. The spinner sits in the icon's 16px, so nothing shifts.
  */
 function LinkIcon({ icon, label }: { icon: React.ReactNode; label: string }) {
   const { pending } = useLinkStatus();
-  return (
-    <span className="grid size-4 shrink-0 place-items-center">
-      {pending ? <Spinner size="sm" label={`Opening ${label}`} /> : icon}
-    </span>
-  );
+  // The spinner takes the icon's own 16px, so the link carries no wrapper of its own and nothing shifts.
+  return pending ? <Spinner size="sm" label={`Opening ${label}`} className="size-4 items-center justify-center" /> : icon;
 }

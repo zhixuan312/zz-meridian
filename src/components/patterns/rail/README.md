@@ -38,7 +38,7 @@ App mark, Avatar and Appearance menu, on `frame` (a translucent wash with `backd
 | Current | the marker behind, label `ink` 500 | `accent-ink` |
 | Focus (keyboard) | 2px `accent` outline | as rest |
 
-Colours change over `dur-hover` 160ms. The marker moves (`transform`, `height`) over `dur-enter` 320ms on `ease-spring`, so it lands with a small settle. Under reduced motion it jumps. The marker measures the current item after the first paint, not before it, so a rail mounting inside a tap (the phone drawer opening) costs one render and no forced layout; until it has measured, the current item draws the same pill and edge itself, so nothing moves when the marker takes over.
+Colours change over `dur-hover` 160ms. The marker moves (`transform`, `height`) over `dur-enter` 320ms on `ease-spring`, so it lands with a small settle. Under reduced motion it jumps. The marker measures the current item after the first paint, not before it, so a rail mounting inside a tap (the phone drawer opening) costs one render and no forced layout; until it has measured, the current item draws the same pill itself, so nothing moves when the marker takes over, and the marker brings the lit edge a frame later.
 
 ## Behaviour
 
