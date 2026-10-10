@@ -90,3 +90,31 @@ describe('the 0.10.0 migration', () => {
     expect(byId('assistant-view-tools').applies(project({ 'app/page.tsx': 'x' }))).toBeNull();
   });
 });
+
+describe('the 0.13.0 migration', () => {
+  it('finds a nav item with no need, and leaves a nav whose every item has one alone', () => {
+    const old = project({
+      'src/app.config.ts': "import { LayoutGrid } from 'lucide-react';\n\nexport const nav: NavItem[] = [\n  { href: '/', label: 'Overview', icon: LayoutGrid },\n  { href: '/requests', label: 'Requests', icon: LayoutGrid, needs: 'requests:read' },\n];\n",
+    });
+    expect(byId('nav-needs').applies(old)).toEqual(['src/app.config.ts']);
+    // One item without one is the whole change: the rail asks each destination's need, and a missing one is a type error.
+    const current = project({
+      'src/app.config.ts': "import { LayoutGrid } from 'lucide-react';\n\nexport const nav: NavItem[] = [\n  { href: '/', label: 'Overview', icon: LayoutGrid, needs: 'public' },\n  { href: '/requests', label: 'Requests', icon: LayoutGrid, needs: FEATURES.requests.needs },\n];\n",
+    });
+    expect(byId('nav-needs').applies(current)).toBeNull();
+    // The shape every project's `src/app.config.ts` actually has: groups, each opening on a line of its own. A group is
+    // not a destination and has no `needs` to carry, so a nav whose every *item* has one is not this migration's.
+    const grouped = project({
+      'src/app.config.ts': "export const nav: NavGroup[] = [\n  {\n    items: [\n      { href: '/', label: 'Overview', icon: LayoutGrid, needs: 'public' },\n      { href: '/keys', label: 'API keys', icon: KeyRound, needs: 'keys:read' },\n    ],\n  },\n  {\n    label: 'Workspace',\n    items: [\n      { href: '/settings', label: 'Settings', icon: Settings, needs: 'public' },\n    ],\n  },\n];\n",
+    });
+    expect(byId('nav-needs').applies(grouped)).toBeNull();
+    // ...and one item without a need inside a group is still the change: the group's own line is not what is read.
+    const groupedOld = project({
+      'src/app.config.ts': "export const nav: NavGroup[] = [\n  {\n    items: [\n      { href: '/', label: 'Overview', icon: LayoutGrid },\n    ],\n  },\n];\n",
+    });
+    expect(byId('nav-needs').applies(groupedOld)).toEqual(['src/app.config.ts']);
+    // No nav at all, and no app.config.ts at all: nothing of the team's to change.
+    expect(byId('nav-needs').applies(project({ 'src/app.config.ts': "export const brand = {};\n" }))).toBeNull();
+    expect(byId('nav-needs').applies(project({ 'package.json': '{}' }))).toBeNull();
+  });
+});

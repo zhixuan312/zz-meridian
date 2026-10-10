@@ -62,6 +62,8 @@ Ten changes need a line from anyone updating a project. Each says what to do ins
 - **`CUSTOMERS` is no longer re-exported by `src/data/sample.ts`.** Take the twelve rows from `@/system/fixtures/sample-records`, or read the `customers` collection through `read()`.
 - **A person may no longer suspend or remove themselves, and the workspace always keeps one active Owner.** The member boundary refuses both — including a status change through `update`, which is new — with its frozen messages. A UI that offered either gets the refusal, and `memberAccess(id).reason` answers the row's own reason.
 
+**An update to 0.13.0 reports one migration.** `nav-needs`: every item in a project's `nav` needs a `needs`, which the rail asks before it draws a destination. `update` names the change and the file it is in, and `--finalize` runs the project's gate, which fails, naming the href, until the change is made — `needs: 'public'` for a page everyone may open, or the page's own feature (`needs: FEATURES.<id>.needs`), as step 4 of the Start guide has it. A project whose `NavItem` type predates this release has to carry the property too. `adopt` writes `needs: 'public'` into the projects it sets up from now on, so only a project that predates this release makes the change by hand.
+
 ## [0.12.3] · 2026-10-10
 
 ### Fixed

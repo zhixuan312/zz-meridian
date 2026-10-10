@@ -266,10 +266,16 @@ function navItemsWithoutNeeds(root: string): string[] | null {
   if (body === null) return null;
   const nav = /export const nav\b[^=]*=\s*\[([\s\S]*?)\n\];/.exec(body)?.[1];
   if (nav === undefined) return null;
-  // One item per line, as `adopt` writes them and as a hand-kept nav keeps them: a line that opens an object and names no
-  // `needs` is one the gate refuses. Anything the file does beyond that is the team's own shape, and none of it is read.
-  const items = nav.split('\n').filter((l) => /^\s*\{/.test(l));
-  return items.some((l) => !/\bneeds\s*:/.test(l)) ? [rel] : null;
+  // One item per line, as `adopt` writes them and as a hand-kept nav keeps them, so the item is the line naming its
+  // `href`: a group's opening line — every project groups its nav — names no `href` and carries no `needs` of its own,
+  // so counting it as an item would report a change no edit can settle. Anything the file does beyond that is the
+  // team's own shape, and none of it is read.
+  const items = nav.split('\n').filter((l) => /\bhref\s*:/.test(l));
+  // A project of 0.12.3's vintage also declares `NavItem` itself, without the property: an item that names a `needs` its
+  // own type does not have is the type error the gate prints next, so the change is not done until the type carries it.
+  const declaredType = /export type NavItem[^;]*\};/.test(body);
+  const typeHasNeeds = /export type NavItem[^;]*\bneeds\s*:/.test(body);
+  return items.some((l) => !/\bneeds\s*:/.test(l)) || (declaredType && !typeHasNeeds) ? [rel] : null;
 }
 
 /** The page specifications under the console and embed folders that lack the part the 0.9.0 check requires. */

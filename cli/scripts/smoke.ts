@@ -206,10 +206,18 @@ const filesUnder = (dir: string, rel = ''): string[] => {
  */
 function bringReleaseOver(proj: string, route: string, reported: string[] = []) {
   // The smallest edit each reported migration's instruction names, in the team's own file. `nav-needs` is 0.13.0's: an item
-  // whose line names no `needs` gets `needs: 'public'`, the default that instruction gives. The capture ends at the
-  // space before the `}`, so the line's own trailing space is allowed for and the property is appended after the text.
+  // whose line names no `needs` gets `needs: 'public'`, the default that instruction gives, and the project's own
+  // `NavItem` type — 0.12.3's declares none — gains the property with the `Need` import that names it. The capture ends at
+  // the space before the `}`, so a line's own trailing space is allowed for and the property is appended after the text.
   if (reported.includes('nav-needs')) {
-    edit(proj, 'src/app.config.ts', (t) => t.replace(/^(\s*\{[^\n]*\bhref\s*:[^\n]*?)\s*\},$/gm, (m, head) => (/\bneeds\s*:/.test(head) ? m : `${head}, needs: 'public' },`)));
+    edit(proj, 'src/app.config.ts', (t) => {
+      const typed = t.replace(/^(export type NavItem = \{[^\n]*?)\s*\};$/m, (m, head) => (/\bneeds\s*:/.test(head) ? m : `${head}; needs: Need };`));
+      const added = typed.replace(/^(\s*\{[^\n]*\bhref\s*:[^\n]*?)\s*\},$/gm, (m, head) => (/\bneeds\s*:/.test(head) ? m : `${head}, needs: 'public' },`));
+      if (!/\bneeds\s*:\s*Need\b/.test(added) || /^import[^\n]*lib\/collection/m.test(added)) return added;
+      // At the top, not after the first import: a project's first import is often a multi-line one, and a line inserted
+      // inside it is a syntax error the gate reports instead of the change this migration is about.
+      return `import type { Need } from './lib/collection.ts';\n${added}`;
+    });
   }
   if (route === 'adopt') {
     edit(proj, 'next.config.ts', (t) => t.replace(/\/\* config options here \*\//, 'cacheComponents: true,\n  partialPrefetching: true,'));
@@ -500,7 +508,10 @@ function originUpgrade(version: string, route: 'adopt' | 'create') {
   if (route === 'create' && historical.length > 0) {
     check(historical.every((p) => fs.existsSync(path.join(proj, p)) && !(p in manifest.files)) && files.length > Object.keys(manifest.files).length, `${label}: its historical page and config entries stay on disk and leave the manifest`, historical.join('\n'));
   }
-  const changed = teamOwned.filter((f) => sha(path.join(proj, f)) !== owned[f]);
+  // `src/app.config.ts` is the team's, and 0.13.0's migration is theirs to make in it: `bringReleaseOver` makes that edit
+  // when the update reports the migration, exactly as it makes 0.5.0's edit to `next.config.ts`, which `mainUpgrade`'s own
+  // list above excludes for the same reason. Every other team file must be byte-identical.
+  const changed = teamOwned.filter((f) => f !== 'src/app.config.ts' && sha(path.join(proj, f)) !== owned[f]);
   check(changed.length === 0, `${label}: the team's own files are unchanged`, changed.join('\n'));
   done(proj);
 }
