@@ -6,6 +6,12 @@ Every release of ZZ Meridian, newest first. Versions follow semver: a removed or
 
 ### Fixed
 
+- **Removing a member is undone, not confirmed.** Remove takes the person off the table at once with a toast offering Undo; the removal is sent when the toast closes (`UNDO_MS`, 8 s, now exported by the Toast) or at once if the page goes away first, and a refusal brings them back with its reason. Revoking an API key keeps its confirmation.
+- **A page reached by a click no longer replays its arrival** (#19). On a client navigation, or when the router shows a page it kept, the shell marks its main area `data-still`: arrivals end at once in their final state, and the mark lifts after `dur-grow` + `dur-enter`, so a later change on the page (a new period) still animates. The first load of a visit arrives as before.
+- **`navigate.ts` times real content** (#18): its `data` time no longer counts a skeleton's rows or the rows of a page the router keeps hidden, so a `loading.tsx` that holds a click for 300 ms or more now shows in `data`, where it read as the skeleton's 30 ms before.
+- **A rail link answers a click before its page arrives** (#18): its icon becomes a Spinner while a page that is not prefetched is on the way (`useLinkStatus`). `cache.md`, `customize.md` and `standard.md` now say what a request-time read costs a navigation (React holds a shown fallback 300 ms or more) and to read through `read()` wherever the data allows.
+- **The rail's marker measures after paint**, so opening the phone drawer costs one render and no forced layout; the current link draws the same pill until it has.
+- **A trend chart's readout stays inside its chart**: it measures its own width, wraps a long label and keeps an extreme value whole; on a phone it pins to the plot's leading edge. Money axis ticks from $10,000 read at a glance (`$25K`, `$5.0B`). `scripts/shot.ts --point "<chart>" --at 0.6` captures a readout.
 - **A sort or a page press is answered before the server is.** `useQueryState` returns a third value, `pending`, and shows the asked-for state at once (`useOptimistic` inside the navigation's transition); the DataTable takes `busy` (rows at 60% opacity, `aria-busy`) until the new rows land. A caller that destructures two values is unaffected.
 - **Dates and figures reuse their Intl formatters**: `formatDate` and the money and count formatters build their `Intl` formatter once instead of on every call (200 dates: 209 ms to 2.5 ms), which shortens the first tap on Alerts or the drawer on a phone.
 
