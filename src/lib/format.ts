@@ -152,6 +152,8 @@ export const AXIS_FORMATTERS: Record<NumberFormat, (n: number | null) => string>
     if (n === null) return '—';
     if (n === 0) return `${CURRENCY}0`;
     if (Math.abs(n) < 1) return `${CURRENCY}${n.toFixed(2)}`;
+    // Past ten thousand a money tick reads at a glance ($25K, $1.2B), as a count does: the exact amount is in the readout.
+    if (Math.abs(n) >= 10_000) return formatCostCompact(n);
     return `${CURRENCY}${INT.format(Math.round(n))}`;
   },
   duration: formatDuration,

@@ -87,3 +87,12 @@ describe('formatDay', () => {
     expect(formatDay('2026-09-22T12:00:00Z')).toBe('22 Sept');
   });
 });
+
+describe('a money axis', () => {
+  it('reads large ticks at a glance and small ones exactly', () => {
+    expect(AXIS_FORMATTERS.cost(12)).toBe('$12');
+    expect(AXIS_FORMATTERS.cost(5_000)).toBe('$5,000');
+    expect(AXIS_FORMATTERS.cost(25_000)).toBe('$25K');
+    expect(AXIS_FORMATTERS.cost(5_000_000_000)).toBe('$5.0B');
+  });
+});
