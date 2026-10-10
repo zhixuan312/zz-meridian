@@ -30,13 +30,36 @@ sample, ZZ Meridian's own dashboard, lives in `optional:src/system/fixtures/`; y
   `preload(url, { as: 'fetch', crossOrigin: 'anonymous' })` from `react-dom` inside the read hook: the server render
   writes a preload into the HTML, and the read starts with the page (ZZ Console measured about 170 ms instead).
   `pnpm verify --full` measures LCP on that phone profile (`scripts/vitals.ts`).
+- **The access seam**: who may do what lives in `optional:src/data/`, and a page never answers it on its own. Three files
+  hold the rules and one holds the member boundary.
+  - `optional:src/data/roles.ts` is the role table. `MAIN_ROLES`, `ADD_ONS` and `GRANTS`; `effective(role, addOns)` unions a
+    member's main role with their add-ons (no wildcard, no deny), `whoCan(need)` names the roles that satisfy a need alone,
+    and `roleLabel(member)` is how a member reads ("Member + Key manager"). Edit the table, not a page: every sentence the
+    NoAccess view writes is read off it.
+  - `optional:src/data/features.ts` is one table of what each page needs (`FEATURES`) and what each control needs
+    (`ACTIONS`), keyed by `FeatureId` and `ActionId`. A nav item, a page, a view tool and an action name their need here **by
+    reference** (`needs: FEATURES.<id>.needs`); a need is never written twice, and a test fails a surface that restates one.
+  - `optional:src/data/access.ts` is the policy. `current` says who the request is, `allows` says what the scope may do,
+    `gate(feature)` is what a page opens with before it reads (`requireNeed(need)` is the view tool's), and `chromeAccess()`
+    is what the rail draws. Replace the demo's `current` with your session and delete the demo's View as —
+    `optional:src/data/view-as.ts` and its `zz_meridian_view_as` cookie — so nothing signs in as a sample person.
+  - `optional:src/data/member-mutations.ts` is the member boundary. `membersFor(scope)` binds the collection so every create,
+    update and remove passes it, and `assignMemberRole({ id, role, addOns })` is the one role change; the Owner, self and
+    last-active-Owner rules hold for a page, the assistant and an MCP server alike. The demo runs one write at a time per
+    workspace in a promise queue: put yours in a database transaction, so two concurrent changes cannot both pass on a stale
+    count.
 
 ## Navigation: `src/app.config.ts`
 
 `app` holds the name, workspace, accent, timezone, currency and the signed-in user the rail shows (all set by
 `scripts/brand.ts`); `slug`, `domain` and `toolPrefix` derive from the name. `nav` is the rail and the command
-palette: groups of `{ href, label, icon }` (icons from `lucide-react`, 1.75 stroke is applied by the rail). A badge is a
-short string, used only for something that needs attention ("1").
+palette: groups of `{ href, label, icon, needs }` (icons from `lucide-react`, 1.75 stroke is applied by the rail). A badge
+is a short string, used only for something that needs attention ("1").
+
+`needs` is required, and it is a feature's own need **by reference** — `needs: FEATURES.overview.needs`, from
+`optional:src/data/features.ts` — never a grant written a second time: the rail and the palette draw only the destinations
+the signed-in person satisfies, and a test fails an item that restates a need. That filtering is presentation, not the
+gate: every page refuses on its own (see "Data" below).
 
 ## Pages: presets to start from
 

@@ -1,6 +1,6 @@
 # Start a dashboard
 
-A new dashboard starts from this repository running, not from a blank page. Six steps take it from ZZ Meridian's own dashboard to yours; each is one file or one folder.
+A new dashboard starts from this repository running, not from a blank page. Seven steps take it from ZZ Meridian's own dashboard to yours; each is one file or one folder.
 
 The fastest way is to let your coding agent do all six: `npx zz-meridian@latest create my-dashboard --name "Acme Ops"` copies and brands the template and installs the `zz-meridian` skill into it; then describe the dashboard you need to Codex or Claude Code. The steps below are what they do, for doing it by hand.
 
@@ -45,7 +45,23 @@ Your pages, your server actions and the assistant read and change records throug
 
 The console keeps Members and Keys fresh without a reload: one stream per tab carries a hint that names only a collection, and the page refreshes through the same authorized `read()`. The sample stream is a single process; across processes, `skills/zz-meridian/references/live.md` holds the Postgres and Redis adapters a product writes for itself.
 
-## 5. Arrange your pages
+## 5. Decide who may do what
+
+The access layer is one folder, `src/data/`, and four edits take the sample's demo policy to yours:
+
+1. **Sign in your own way.** `current()` in `src/data/access.ts` returns your `AccessScope` — the tenant, the person and an `authorizationKey` that changes whenever what they may see changes — or `null` when there is no session. Delete the demo's View as action and its cookie (`zz_meridian_view_as`, `src/data/view-as.ts`), which sign the request in as a sample person.
+2. **Write your role table.** `src/data/roles.ts` holds `MAIN_ROLES`, `ADD_ONS` and `GRANTS`; `effective(role, addOns)` is what a member may do — their main role's grants plus every add-on's, a union with no deny — `whoCan(need)` is the roles that satisfy a need on their own, and `roleLabel(member)` is how a member reads ("Member + Key manager").
+3. **Keep member writes behind the boundary, in your own transaction.** Store `role` and `addOns` on your people and let every create, update and remove pass `src/data/member-mutations.ts`: `membersFor(scope)` binds the members collection through the boundary, and `assignMemberRole({ id, role, addOns })` is the one role change. The demo serialises one write at a time per workspace with a promise queue; that is enough for a demo and not for a product — put the read, the check and the write in a database transaction your database provides, so two concurrent changes cannot both pass on a stale count.
+4. **Name a feature, never a restated need.** Every nav item, page, view tool and action points at its feature's need by reference from `src/data/features.ts` (`needs: FEATURES.<id>.needs`); a page opens with `gate(feature)` from `src/data/access.ts` before it reads, and a view tool calls `requireNeed(...)` before it does.
+
+```sh
+pnpm gate   # the gate, which fails a nav item whose needs is not a need
+pnpm test   # a test fails a surface that restates a need instead of naming the table
+```
+
+The rail and the command palette draw only the destinations the signed-in person satisfies, but that is presentation, not the gate: every page refuses on its own — a person who may not open it gets the NoAccess view as a normal 200, and a request with no session goes to `/sign-in`. `skills/zz-meridian/references/customize.md` has the reference for the whole access layer.
+
+## 6. Arrange your pages
 
 Every page is a `PageFrame` holding a `Stack` of `Row`s. Start from the closest preset and change what it shows, not how it is laid out:
 
@@ -60,7 +76,7 @@ Every page is a `PageFrame` holding a `Stack` of `Row`s. Start from the closest 
 
 If a page seems to need a new style, it needs a pattern or a component instead: specify it in its layer (see `CONTRIBUTING.md`).
 
-## 6. Put it in front of an agent
+## 7. Put it in front of an agent
 
 Each route under `app/embed/` is an MCP App view. Register each as a `ui://` resource and a tool on your MCP server (`docs/agents.md`), and the dashboard appears in any MCP Apps host, inline beside the answer, with Expand, Ask and Proposals working.
 
