@@ -22,6 +22,7 @@ import { toast, UNDO_MS } from '@/components/ui/toast';
 import { DataTable, type Column } from '@/components/patterns/data-table';
 import { formatDate, formatRelative } from '@/lib/format-date';
 import { useLive } from '@/lib/live';
+import { RolesMatrix } from './roles-matrix';
 import { ACTIONS } from '@/data/features';
 import type { MemberRowAccess } from '@/data/member-mutations';
 import { roleLabel, whoCan, type AddOn, type MainRole } from '@/data/roles';
@@ -212,7 +213,9 @@ export function MembersView({ rows, now, actions, access, roles }: { rows: Membe
     { key: 'role', header: 'Role', hideBelow: 'lg', mobile: 'fact', sortValue: (m) => m.role, cell: (m) => roleLabel(m), mobileCell: (m) => roleLabel(m) },
     { key: 'team', header: 'Team', muted: true, hideBelow: 'xl', sortValue: (m) => m.team, cell: (m) => m.team },
     { key: 'status', header: 'Status', mobile: 'fact', sortValue: (m) => m.status, cell: (m) => <Badge tone={STATUS_TONE[m.status]} dot>{m.status}</Badge> },
-    { key: 'joined', header: 'Joined', numeric: true, muted: true, hideBelow: 'md', mobile: 'fact', sortValue: (m) => m.joined, cell: (m) => formatDate(m.joined), mobileCell: (m) => `Joined ${formatDate(m.joined)}` },
+    // A card holds three facts, and adding the role spent one, so Joined leaves the phone card and stays in the table
+    // at every width that has columns: Last active is the fact the page's own headline and the shared context answer for.
+    { key: 'joined', header: 'Joined', numeric: true, muted: true, hideBelow: 'md', mobile: 'hidden', sortValue: (m) => m.joined, cell: (m) => formatDate(m.joined) },
     {
       key: 'active', header: 'Last active', numeric: true, mobile: 'fact', sortValue: (m) => m.lastActive ?? '',
       cell: (m) => (m.lastActive ? formatRelative(m.lastActive, asOf) : <span className="text-ink-3">Never</span>),
@@ -265,6 +268,9 @@ export function MembersView({ rows, now, actions, access, roles }: { rows: Membe
           rowKey={(m) => m.id}
           empty={{ title: 'No members yet', body: `Invite the people who work in ${app.name}.`, action: mayInvite ? <Button variant="primary" size="sm" icon={<UserPlus />} onClick={() => { setInviteError(null); setInviting(true); }}>Invite member</Button> : undefined }}
         />
+        {/* What the table's roles and the page's own actions mean, generated from the same tables: the page's gate is
+            this section's gate, so a person reading it has already been allowed to. */}
+        <RolesMatrix />
       </Stack>
 
       <Sheet open={inviting} onOpenChange={setInviting}>
