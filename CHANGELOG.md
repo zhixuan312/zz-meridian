@@ -6,6 +6,7 @@ Every release of ZZ Meridian, newest first. Versions follow semver: a removed or
 
 ### Fixed
 
+- **A closed browser check leaves no Chrome profile behind**: `scripts/lib/chrome.ts` removed a closed browser's 30 MB profile from a timer that never ran when the script exited at once, so every `verify`, audit or shot left one in the temp folder. It now removes it at once. A project brought in with `adopt` gets the fix with `update`.
 - **A card is one class**: Card's look moved from a dozen utilities to `.card` in `base.css`, and the Data table's wrapper uses it too, so every page carries less HTML (`/health` from 102,225 to 98,154 bytes, `/requests` from 148,614 to 141,568). A utility on a card still overrides it.
 - **Removing a member is undone, not confirmed.** Remove takes the person off the table at once with a toast offering Undo; the removal is sent when the toast closes (`UNDO_MS`, 8 s, now exported by the Toast) or at once if the page goes away first, and a refusal brings them back with its reason. Revoking an API key keeps its confirmation.
 - **A page reached by a click no longer replays its arrival** (#19). On a client navigation, or when the router shows a page it kept, the shell marks its main area `data-still`: arrivals end at once in their final state, and the mark lifts after `dur-grow` + `dur-enter`, so a later change on the page (a new period) still animates. The first load of a visit arrives as before.
