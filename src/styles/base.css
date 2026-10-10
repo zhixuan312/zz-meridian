@@ -99,6 +99,12 @@
   }
   .t-mono { font-family: var(--font-mono); font-size: var(--text-xs); letter-spacing: 0; }
   .t-num { font-variant-numeric: tabular-nums lining-nums; }
+  /* The inline code chip. It is one class because a reading page renders hundreds of them: spelled as ten utilities
+     each, the class string alone was about 90 bytes an instance, in the markup and again in the flight payload. */
+  .t-code {
+    border: 1px solid var(--line); border-radius: var(--radius-xs); background: var(--surface-sunk); color: var(--ink);
+    padding: var(--space-0-5) var(--space-1-5); font-family: var(--font-mono); font-size: 0.84em;
+  }
 
   /* A figure's fraction and unit step down, so the integer carries the reading. */
   :is(.t-figure, .t-hero) :is(.unit, .frac) { font-size: 0.5em; letter-spacing: -0.01em; color: var(--ink-3); font-weight: var(--weight-medium); }

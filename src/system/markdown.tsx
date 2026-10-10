@@ -33,7 +33,7 @@ export function Doc({ md, className }: { md: string; className?: string }) {
           strong: ({ children }) => <strong className="font-semibold text-ink">{children}</strong>,
           a: ({ href, children }) => <a href={href} className="link">{children}</a>,
           code: ({ children, className: c }) =>
-            c ? <code className={c}>{children}</code> : <code className="rounded-xs border border-line bg-surface-sunk px-1.5 py-0.5 font-mono text-[0.84em] text-ink">{children}</code>,
+            c ? <code className={c}>{children}</code> : <code className="t-code">{children}</code>,
           pre: ({ children }) => <pre className="my-5 overflow-x-auto rounded-lg border border-line bg-surface-sunk p-5 font-mono text-sm leading-relaxed text-ink [&_code]:border-0 [&_code]:bg-transparent [&_code]:p-0">{children}</pre>,
           table: ({ children }) => (
             <div className="my-6 overflow-x-auto rounded-lg border border-line bg-surface/60">
