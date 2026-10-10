@@ -30,7 +30,11 @@ Steps in order:
    contrast holds for every pair in every theme and accent, and the chart palette passes the colour-vision checks;
    eslint-config-next; TypeScript; the tests.
 2. **A production build** (`next build`), against the fake API when `scripts/verify.config.ts` names one.
-   Then the route policy and the size checks: first-load JS per route, and the HTML caps in `budgets.htmlKb`.
+   Then the route policy and the size checks: first-load JS per route, and the HTML caps in `budgets.htmlKb`. Navigation
+   readiness (`scripts/navigate.ts`) times each rail route's shell, data and interaction from a press — on a desktop and
+   through the phone drawer, against `budgets.navigation`. One entry in `navigationChecks` may carry its own `budget` for
+   one of those figures on one device, which is how a route whose own page is heavy is held to what it measures instead
+   of lowering the bar for every other route.
 3. **The assistant walk-through**, only when the project has `optional:app/api/assistant/route.ts`: off, then on against a fake
    model. What every product shares runs on its own rail (no agent control while off, the panel, a reply, the page the
    model was told, markdown, the thread across navigation, Clear, the layout, a refused key, the key never reaching the

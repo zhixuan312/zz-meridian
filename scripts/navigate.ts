@@ -609,7 +609,11 @@ async function main(): Promise<number> {
       // Each journey comes from the rail route before the destination, so it is a navigation and not the page already shown.
       const start = startFor(rail.routes, route, starts);
       for (const device of DEVICES) {
-        const limits = Object.fromEntries(METRICS.map((m) => [m, budgets.navigation.warm[BUDGET_KEY[m]][device]])) as Record<Metric, number>;
+        const limits = Object.fromEntries(METRICS.map((m) => {
+          // A route's own figure, where the config gives one, stands in for the shared one on that metric and device.
+          const shared = budgets.navigation.warm[BUDGET_KEY[m]][device];
+          return [m, check?.budget?.[BUDGET_KEY[m]]?.[device] ?? shared];
+        })) as Record<Metric, number>;
         let line: Line;
         try {
           // A route with no other route to start from has no navigation to time: it is a problem, never a 0 ms pass.

@@ -14,6 +14,12 @@ export type NavigationCheck = {
   probe: 'dialog' | 'filter' | 'sort' | 'toggle' | 'link';
   controlSelector: string;
   resultSelector: string;
+  /**
+   * A route whose own reading is over the shared budget may carry its own, beside the measurement that earned it in the
+   * config: one heavy reading page is not the rail, and lowering every route's bar to hold one of them is not the trade.
+   * Omitted, the route is held to the shared `budgets.navigation` figure like every other.
+   */
+  budget?: Partial<{ [K in keyof ReadinessBudget]: Partial<DeviceBudget> }>;
 };
 export type Budgets = {
   navigation: { warm: ReadinessBudget; cold: ReadinessBudget; afterLive: ReadinessBudget };
