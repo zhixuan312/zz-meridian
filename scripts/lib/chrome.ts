@@ -27,7 +27,15 @@ const launched = new Set<{ proc: ChildProcess; dir: string }>();
 function reap(c: { proc: ChildProcess; dir: string }) {
   launched.delete(c);
   c.proc.kill('SIGKILL');
-  fs.rmSync(c.dir, { recursive: true, force: true, maxRetries: 3 });
+  // Chrome writes into its profile as it dies, so the directory can be non-empty again between retries. The retries are
+  // bounded and the last word is kept, because a check's exit code is about what it checked: this threw
+  // `ENOTEMPTY: directory not empty, rmdir '/tmp/meridian-chrome-…/Default'` out of close() on a GitHub runner and failed
+  // the browser-fixture step that way. A profile left in the temp folder is cheaper than that.
+  try {
+    fs.rmSync(c.dir, { recursive: true, force: true, maxRetries: 20, retryDelay: 50 });
+  } catch {
+    /* tidying up after itself never decides whether a run passed */
+  }
 }
 process.on('exit', () => { for (const c of [...launched]) reap(c); });
 for (const sig of ['SIGINT', 'SIGTERM'] as const) process.on(sig, () => process.exit(sig === 'SIGINT' ? 130 : 143));

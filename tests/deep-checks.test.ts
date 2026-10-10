@@ -4,6 +4,7 @@
 // silently drop a case. Each suite adds its own `describe` below by calling `casesFor(suite, command, timeout)`.
 import { spawn, type ChildProcess } from 'node:child_process';
 import fs from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
@@ -79,4 +80,20 @@ describe('navigate', () => {
 describe('vitals', () => {
   // The phone profile, one page: the taps it measures must reach a control inside an open root.
   casesFor('vitals', (page, base) => ['scripts/vitals.ts', '--base', base, '--routes', page], 120_000);
+});
+
+describe('the browser a suite starts', () => {
+  // A suite's own tidying up must never be why it failed. Killing Chrome and removing its profile used to throw
+  // `ENOTEMPTY: directory not empty, rmdir '/tmp/meridian-chrome-…/Default'` from close() while Chrome was still writing
+  // into it, which made the run exit 1 and reddened the release's browser-fixture step. This asks both things of one real
+  // suite: it leaves no profile behind in the temp folder, and its exit code is about what it checked.
+  it('is removed with its profile, and a profile that will not go does not fail the run', async () => {
+    const prefix = 'meridian-chrome-';
+    const before = new Set(fs.readdirSync(os.tmpdir()).filter((n) => n.startsWith(prefix)));
+    const r = await runSuite(['scripts/shot.ts', MANIFEST[0].page, '--base', url, '--out', path.join(os.tmpdir(), 'meridian-deep-shots')], 120_000);
+    expect(r.timedOut, r.out).toBe(false);
+    expect(r.code, r.out).toBe(0);
+    const left = fs.readdirSync(os.tmpdir()).filter((n) => n.startsWith(prefix) && !before.has(n));
+    expect(left, `profiles left behind: ${left.join(', ')}`).toEqual([]);
+  }, 150_000);
 });
