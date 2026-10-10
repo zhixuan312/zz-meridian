@@ -18,7 +18,8 @@
 import { z } from 'zod';
 import { arrayCollection, type AnyCollection, type Collection } from '@/lib/collection';
 import { API_KEYS, type ApiKey } from '@/system/fixtures/sample-records';
-import { MEMBERS, ROLES, STATUSES, TEAMS, type Member } from '@/system/fixtures/sample-members';
+import { MEMBERS, STATUSES, TEAMS, type Member } from '@/system/fixtures/sample-members';
+import { ADD_ONS, MAIN_ROLES } from '@/data/roles';
 import { ACTIVITY, DEMO_NOW, ENDPOINTS, INCIDENTS, REQUESTS, SERVICES, STATUS_MIX, demoSeries, type DailyPoint, type Endpoint, type RequestRow } from '@/system/fixtures/sample';
 import { PAST_INCIDENTS } from '@/system/fixtures/sample-ops';
 import type { ActivityEvent } from '@/components/patterns/activity-feed';
@@ -40,7 +41,8 @@ export const members: Collection<Member, 'id'> = arrayCollection({
   fields: z.object({
     name: z.string().trim().min(1),
     email: z.email(),
-    role: z.enum(ROLES),
+    role: z.enum(MAIN_ROLES).default('Member'),
+    addOns: z.array(z.enum(ADD_ONS)).transform((xs) => [...new Set(xs)]).default([]),
     team: z.enum(TEAMS),
     status: z.enum(STATUSES),
     joined: date,

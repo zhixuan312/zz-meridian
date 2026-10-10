@@ -7,6 +7,13 @@ type Value = Scalar | Scalar[];
 type Condition = { field: string; op: 'eq' | 'ne' | 'gt' | 'lt' | 'contains' | 'in'; value: Value };
 export type Query = { where?: Condition[]; sort?: { field: string; dir: 'asc' | 'desc' }; limit?: number; offset?: number };
 
+/** What a grant permits: an object and one of the four operations, e.g. `keys:create`. */
+export type Grant = `${string}:${'read' | 'create' | 'update' | 'remove'}`;
+/** A need one grant satisfies on its own, or several that must all hold. */
+export type ProtectedNeed = Grant | { readonly allOf: readonly [Grant, ...Grant[]] };
+/** A need with no grant behind it: any signed-in active person satisfies it. */
+export type Need = ProtectedNeed | 'public';
+
 /** What a browser may be told about a change: which collection, and nothing about the rows, the tenant or the cache. */
 export type LiveEvent = { collection: string };
 

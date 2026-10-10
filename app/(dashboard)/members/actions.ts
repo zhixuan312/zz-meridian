@@ -6,7 +6,8 @@ import { can, collectionFor, resolveAccess, Unauthenticated } from '@/data/acces
 import { collectionTag } from '@/data/read';
 import type { AnyCollection } from '@/lib/collection';
 import type { Result } from '@/views/members';
-import { ROLES, TEAMS, STATUSES, type Member } from '@/data/sample';
+import { STATUSES, TEAMS, type Member } from '@/data/sample';
+import { MAIN_ROLES } from '@/data/roles';
 
 const fail = (e: unknown): Result => ({
   ok: false,
@@ -35,7 +36,7 @@ export async function inviteMember(input: { name: string; email: string; role: M
   const email = String(input.email ?? '').trim();
   if (!name) return { ok: false, error: 'Name the person you are inviting.' };
   if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return { ok: false, error: 'Enter their work email, like ana@northwind.example.' };
-  if (!ROLES.includes(input.role) || !TEAMS.includes(input.team)) return { ok: false, error: 'Choose a role and a team from the lists.' };
+  if (!MAIN_ROLES.includes(input.role) || !TEAMS.includes(input.team)) return { ok: false, error: 'Choose a role and a team from the lists.' };
   return run('create', undefined, (c) => c.create!({ name, email, role: input.role, team: input.team, status: 'Invited', joined: clock().toISOString().slice(0, 10), lastActive: null }));
 }
 

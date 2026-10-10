@@ -67,10 +67,14 @@ Migrate in place, page by page, keeping their data layer.
    is not copied: pass their own alerts (an empty list until they have some) and their own clock. Give each `nav`
    entry in `src/app.config.ts` its icon and group. The Rail and the palette are rendered from a client module
    (`src/views/console-chrome.tsx`), since each destination carries its icon component, and take what depends on the
-   request from the layout as props: `<ConsoleRail user={…} signOut={…} only={…} />` and `<ConsolePalette only={…} />`,
-   where `user` is the signed-in person from their session, `only` the hrefs this person may see, and `workspace` and
-   `scopes` a scope switcher. A console with no sign-in passes the team's name as `user` and `signOut={null}`, so the
-   rail never shows a sample person or a Sign out that goes nowhere.
+   request from the layout as props: `<ConsoleRail access={…} signOut={…} />` and `<ConsolePalette access={…} />`,
+   where `access` is a promise of `{ only, user, viewAs }` — the hrefs this person may see, the signed-in person from
+   their session, and a View as group if they have one (`ChromeAccess` in the template's `src/data/access.ts`, built by
+   `chromeAccess()`). Both pieces of chrome wait for that promise in their own `<Suspense>` boundary, so the frame is in
+   the static shell and the person's own rail streams in the same response; pass the promise without awaiting it, and
+   never draw the sample person while it is pending. `workspace` and `scopes` still arrive as plain props. A console
+   with no sign-in passes no `access` at all, and the chrome then shows the full `nav` and the `app.user` it was given,
+   so the rail never shows a sample person or a Sign out that goes nowhere.
    **Turn on Cache Components.** Meridian's pages prerender a shell and stream what each request reads, and the route
    policy `pnpm verify` runs fails a page that is neither static nor partial. Set `cacheComponents: true` and
    `partialPrefetching: true` in their `next.config` (`cache.md`, "Turn Cache Components on"), and put each per-request read (their API, cookies, headers) behind a `<Suspense>` boundary, as the

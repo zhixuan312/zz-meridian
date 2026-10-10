@@ -84,7 +84,7 @@ describe('an approved assistant write, asked through the real access seam', () =
     const removed: string[][] = [];
     const readOnly = { ...requests, remove: async (ids: string[]) => { removed.push(ids); return ids.length; } } as typeof requests;
     const invalidated: string[] = [];
-    const demo = { tenantId: 'demo', subjectId: 'owner', authorizationKey: 'demo:1' };
+    const demo = { tenantId: 'demo', subjectId: 'members_1', authorizationKey: 'demo:members_1:Owner:' };
     const { tools } = assistantTools([readOnly], writer, guardFor(demo, invalidated));
     await expect((tools.remove_requests as unknown as Exec).execute({ ids: ['req_1'] }, { toolCallId: 'same-tenant-remove', messages: [] })).rejects.toThrow(/no longer have permission/);
     expect(removed).toEqual([]);

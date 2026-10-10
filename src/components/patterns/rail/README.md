@@ -6,7 +6,7 @@ Status: beta
 
 ## Anatomy
 
-1. **Brand**: the App mark at 28px, the product name (`text-md`, 600) and the workspace as an eyebrow; the whole row opens the workspace menu: the current workspace (checked), Workspace settings, and Sign out. A product with several workspaces or scopes (one team, the whole platform) passes them as `scopes` (`{ id, label, active, onSelect }`); the menu lists them as radio items under "Show", and `workspace` sets the eyebrow to the one in view.
+1. **Brand**: the App mark at 28px, the product name (`text-md`, 600) and the workspace as an eyebrow; the whole row opens the workspace menu: the current workspace (checked), Workspace settings, Sign out, and — where the product may be read as someone else — the View as group. A product with several workspaces or scopes (one team, the whole platform) passes them as `scopes` (`{ id, label, active, onSelect }`); the menu lists them as radio items under "Show", and `workspace` sets the eyebrow to the one in view.
 2. **Groups**: an optional mono eyebrow (`t-eyebrow`, `ink-3`) over a list of items; groups sit `space-6` 24px apart.
 3. **Item**: a 16px icon at a 1.75 stroke, the label, and an optional count badge.
 4. **Marker**: one pill behind the current item, `accent-tint` with an inset `accent-line` ring and a 2px `accent` edge on the left that carries a soft glow.
@@ -16,7 +16,7 @@ Status: beta
 
 App mark, Avatar and Appearance menu, on `frame` (a translucent wash with `backdrop-blur-xl`) and a `line` hairline on its right edge. The navigation is the `nav` prop: the template passes `nav` from `src/app.config.ts`, and a product whose destinations depend on the person (admin or member, platform or team) passes the groups that person may see; the rail holds no route knowledge of its own. Pass the same groups to the Command palette.
 
-**`nav` cannot be built in a server component.** Each entry carries its Lucide icon as a component, and a function cannot cross from a server component to a client one — React refuses at runtime with "Functions cannot be passed directly to Client Components", so every page answers 500 while types, lint and tests stay green. Build the groups in a client module (`src/views/console-chrome.tsx` is the template's: `'use client'`, importing `nav`) and render that from the layout, passing it what depends on the request as plain data: `only`, the hrefs this person may see, and the `user` and `signOut` of the session (`signOut={null}` where there is no sign-in). `pnpm verify` catches it: it builds and serves the app and audits every page, so a 500 fails there.
+**`nav` cannot be built in a server component.** Each entry carries its Lucide icon as a component, and a function cannot cross from a server component to a client one — React refuses at runtime with "Functions cannot be passed directly to Client Components", so every page answers 500 while types, lint and tests stay green. Build the groups in a client module (`src/views/console-chrome.tsx` is the template's: `'use client'`, importing `nav`) and render that from the layout, passing it what depends on the request as a promise it does not await: `access` (`chromeAccess()` in the template), which resolves to the hrefs this person may see, their name and role, and the personas the console may be read as — plus `signOut` (`signOut={null}` where there is no sign-in). `pnpm verify` catches it: it builds and serves the app and audits every page, so a 500 fails there.
 
 ## Sizes
 
@@ -46,6 +46,7 @@ Colours change over `dur-hover` 160ms. The marker moves (`transform`, `height`) 
 - While a destination's page is on the way (a page that renders on request and is not prefetched), its icon turns into a 14px Spinner in the same 16px slot (`useLinkStatus`), named "Opening Members", so the click is answered at once and nothing shifts. A prefetched page is never pending, so it never shows.
 - An item is current when the path equals its route or sits beneath it (`/requests/req_…` keeps Requests current); Overview (`/`) only matches itself.
 - `current` overrides the pathname (previews and tests); products leave it unset.
+- View as: the personas are radio items, so the arrows move through them and Enter switches. The one in view carries the check; a persona who is not Active is listed but disabled. A `choose` that rejects shows its message in a critical toast and changes nothing — the check stays on the person who is still signed in.
 
 ## Surfaces
 
@@ -67,6 +68,7 @@ Not applicable: navigation is how a person moves. An agent opens a view by its a
 
 - Labels are nouns for places, one or two words, sentence case: "Overview", "API keys", "Design system".
 - Group names are short nouns for what a person does there: "Operate", "Workspace".
+- A persona is the person's name as the roster spells it ("Lucas Meyer"), never an id or an address; "View as" stays sentence case, like every other menu label here.
 
 ## Do and do not
 
@@ -76,8 +78,9 @@ Not applicable: navigation is how a person moves. An agent opens a view by its a
 
 ## Session
 
-- `user` is the signed-in person (`{ name, role }`); pass your session's. `null` while the session is still being found out draws a skeleton in its place, never a name that is not theirs. It defaults to the sample user in `app.config`.
+- `user` is the signed-in person (`{ name, role }`); pass your session's. `null` while the session is still being found out draws a skeleton in its place, never a name that is not theirs. It defaults to the sample user in `app.config`. The console's own `ConsoleRail` takes the promise instead and passes this for you.
 - `signOut` is a route (`'/sign-in'`, the default), a function (your auth's sign-out; from a server layout, wrap the rail in a small client component to pass one), or `null` to hide it.
+- `viewAs` is the personas the console may be read as: `{ current, options: { id, label, disabled? }[], choose }`. The menu lists them as radio items under "View as", with `current` checked. A product with one session leaves it unset and the menu has no such group. The options mount with the menu, so no persona's name is in a page's first HTML.
 - The workspace menu shows Workspace settings only when the navigation has `/settings`.
 
 ## Implementation

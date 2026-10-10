@@ -25,6 +25,14 @@ if (typeof Element !== 'undefined') {
   }
 }
 
+// The request's cookies, for the demo policy's `current()` and the View as action. The jar is empty by default, so a
+// sign-in resolved outside a request falls to the sample's own person; a test that cares about the cookie replaces this
+// mock with its own, which wins.
+vi.mock('next/headers', () => ({
+  cookies: async () => ({ get: () => undefined, set: () => {}, delete: () => {} }),
+  headers: async () => new Headers(),
+}));
+
 // The App Router's hooks, for layers rendered outside a Next request: PageFrame, DataTable and FilterBar read the path,
 // the search params and the router. A test that cares about navigation mocks the module itself, which wins.
 vi.mock('next/navigation', () => ({

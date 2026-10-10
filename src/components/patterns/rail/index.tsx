@@ -10,11 +10,22 @@ import { AppMark } from '@/components/base/app-mark';
 import { Avatar } from '@/components/ui/avatar';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Spinner } from '@/components/ui/spinner';
-import { Menu, MenuContent, MenuItem, MenuLabel, MenuSeparator, MenuTrigger } from '@/components/ui/menu';
+import { Menu, MenuContent, MenuItem, MenuLabel, MenuRadioGroup, MenuRadioItem, MenuSeparator, MenuTrigger } from '@/components/ui/menu';
+import { toast } from '@/components/ui/toast';
 import { AppearanceMenu } from '@/components/patterns/appearance-menu';
 
 /** One scope the workspace menu offers: the console reads the whole platform or one team. */
 export type Scope = { id: string; label: string; active: boolean; onSelect: () => void };
+
+/** Who the console is being read as: the persona in view, the ones it may be switched to, and the action that does it. */
+export type ViewAs = {
+  /** The id of the persona in view; its option carries the check. */
+  current: string;
+  /** Every persona, in order. A persona who cannot be chosen now stays in the list, disabled. */
+  options: { id: string; label: string; disabled?: boolean }[];
+  /** Sign in as one: resolves once the route is refreshed, and rejects with a message for the person. */
+  choose: (id: string) => Promise<void>;
+};
 
 /**
  * What every destination repeats, written once on the nav and keyed on `aria-current`: the pill's size and ink, and the
@@ -40,6 +51,7 @@ export function Rail({
   scopes = [],
   user = app.user,
   signOut = '/sign-in',
+  viewAs,
 }: {
   /** The groups and destinations, as the signed-in person may see them. */
   nav: NavGroup[];
@@ -53,6 +65,8 @@ export function Rail({
   user?: { name: string; role: string } | null;
   /** Where Sign out goes (a route), what it does (a function, such as your auth's signOut), or null to hide it. */
   signOut?: string | (() => void) | null;
+  /** Who the console may be read as, shown as a "View as" group at the foot of the workspace menu. A product that has one session passes nothing. */
+  viewAs?: ViewAs;
 }) {
   const pathname = usePathname();
   const router = useRouter();
@@ -65,6 +79,13 @@ export function Rail({
   const matches = (href: string) => (href === '/' ? path === '/' : path === href || path.startsWith(href + '/'));
   const here = nav.flatMap((g) => g.items.map((it) => it.href)).filter(matches).sort((a, b) => b.length - a.length)[0];
   const isActive = (href: string) => href === here;
+
+  // View as signs the console in as someone else and re-reads the route. A choice that fails says why in a toast and
+  // changes nothing: the check stays on the person in view, which is still who is signed in.
+  const choosePersona = (id: string) => {
+    if (!viewAs || id === viewAs.current) return;
+    void viewAs.choose(id).catch((e) => toast({ tone: 'critical', title: 'Person not changed', description: e instanceof Error ? e.message : undefined }));
+  };
 
   // Measured after paint, not before it: a rail mounts inside the tap that opens the phone drawer, and a measurement
   // there forces a layout of the whole page and a second render before the drawer can show. Until the marker has a
@@ -104,6 +125,18 @@ export function Rail({
             {hasSettings || signOut ? <MenuSeparator /> : null}
             {hasSettings ? <MenuItem onSelect={() => router.push('/settings')}><Settings />Workspace settings</MenuItem> : null}
             {signOut ? <MenuItem onSelect={() => (typeof signOut === 'function' ? signOut() : router.push(signOut))}><LogOut />Sign out</MenuItem> : null}
+            {viewAs ? (
+              <>
+                <MenuSeparator />
+                <MenuLabel>View as</MenuLabel>
+                {/* Radio items, so arrow keys move through the personas and the one in view reads as checked. */}
+                <MenuRadioGroup value={viewAs.current} onValueChange={choosePersona} aria-label="View as">
+                  {viewAs.options.map((o) => (
+                    <MenuRadioItem key={o.id} value={o.id} disabled={o.disabled}>{o.label}</MenuRadioItem>
+                  ))}
+                </MenuRadioGroup>
+              </>
+            ) : null}
           </MenuContent>
         </Menu>
       </div>

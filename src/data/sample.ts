@@ -5,7 +5,7 @@
  */
 export { DEMO_NOW, DEMO_UPDATED_AT, REGIONS, demoSeries, demoHeatmap } from '@/system/fixtures/sample';
 export type { DailyPoint, Endpoint, Totals, RequestRow } from '@/system/fixtures/sample';
-export { ROLES, STATUSES, TEAMS } from '@/system/fixtures/sample-members';
+export { STATUSES, TEAMS } from '@/system/fixtures/sample-members';
 export type { Member } from '@/system/fixtures/sample-members';
 export { ALERTS, CONNECTED_HOSTS, REGION_LATENCY, TIMEZONES, requestsByHour } from '@/system/fixtures/sample-ops';
 export { CUSTOMERS, FEATURED_REQUEST_IDS, STATUS_TEXT, payloadsOf, statusClass, statusTone, traceOf, usageOf } from '@/system/fixtures/sample-records';

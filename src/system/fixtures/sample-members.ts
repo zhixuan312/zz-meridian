@@ -1,14 +1,14 @@
 /** The sample's workspace members: deterministic, dated relative to DEMO_NOW so the walk-through never drifts. */
 import { domain } from '@/app.config';
+import type { AddOn, MainRole } from '@/data/roles';
 import { DEMO_NOW } from '@/system/fixtures/sample';
 
-export const ROLES = ['Owner', 'Admin', 'Member', 'Viewer'] as const;
 export const TEAMS = ['Engineering', 'Support', 'Sales', 'Design'] as const;
 export const STATUSES = ['Active', 'Invited', 'Suspended'] as const;
 
 export type Member = {
   id: string; name: string; email: string;
-  role: (typeof ROLES)[number]; team: (typeof TEAMS)[number]; status: (typeof STATUSES)[number];
+  role: MainRole; addOns: AddOn[]; team: (typeof TEAMS)[number]; status: (typeof STATUSES)[number];
   joined: string; lastActive: string | null;
 };
 
@@ -42,11 +42,16 @@ const SEED: [string, Member['role'], Member['team'], Member['status'], number, n
   ['Ben Carter', 'Member', 'Engineering', 'Active', 40, 0],
 ];
 
+/** Add-ons, by member id: nobody carries one but Lucas Meyer, who manages the workspace's API keys. */
+const ADD_ONS_BY_MEMBER: Record<string, AddOn[]> = { members_5: ['Key manager'] };
+
 export const MEMBERS: Member[] = SEED.map(([name, role, team, status, joined, active], i) => ({
   id: `members_${i + 1}`,
   name,
   email: `${name.toLowerCase().replace(/ /g, '.')}@${domain}`,
-  role, team, status,
+  role,
+  addOns: ADD_ONS_BY_MEMBER[`members_${i + 1}`] ?? [],
+  team, status,
   joined: ago(joined),
   lastActive: active === null ? null : ago(active),
 }));

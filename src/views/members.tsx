@@ -21,8 +21,8 @@ import { toast, UNDO_MS } from '@/components/ui/toast';
 import { DataTable, type Column } from '@/components/patterns/data-table';
 import { formatDate, formatRelative } from '@/lib/format-date';
 import { useLive } from '@/lib/live';
-import { ROLES, TEAMS, type Member } from '@/data/sample';
-
+import { TEAMS, type Member } from '@/data/sample';
+import { MAIN_ROLES } from '@/data/roles';
 /** Colour only where a row needs a look: an open invitation and a suspension. Active is the normal case, so it stays quiet. */
 const STATUS_TONE = { Active: 'neutral', Invited: 'accent', Suspended: 'warning' } as const;
 const options = (xs: readonly string[]) => xs.map((x) => ({ value: x, label: x }));
@@ -136,7 +136,7 @@ export function MembersView({ rows, now, actions }: { rows: Member[]; now: strin
     setErrors(e);
     if (e.name || e.email) return;
     const draft = invite;
-    const row: Shown = { id: `pending-${tempId.current++}`, name: draft.name.trim(), email: draft.email.trim(), role: draft.role, team: draft.team, status: 'Invited', joined: now.slice(0, 10), lastActive: null, pending: true };
+    const row: Shown = { id: `pending-${tempId.current++}`, name: draft.name.trim(), email: draft.email.trim(), role: draft.role, addOns: [], team: draft.team, status: 'Invited', joined: now.slice(0, 10), lastActive: null, pending: true };
     setInviting(false);
     setInvite(BLANK);
     setInviteError(null);
@@ -221,7 +221,7 @@ export function MembersView({ rows, now, actions }: { rows: Member[]; now: strin
               {(p) => <Input {...p} type="email" value={invite.email} onChange={(e) => { setInvite({ ...invite, email: e.target.value }); setErrors({ ...errors, email: undefined }); }} placeholder={`ana@${app.name.toLowerCase().replace(/\s+/g, '')}.example`} />}
             </Field>
             <Field label="Role" hint="What they can change in the workspace.">
-              {(p) => <Select {...p} value={invite.role} onValueChange={(role) => setInvite({ ...invite, role: role as Member['role'] })} options={options(ROLES)} />}
+              {(p) => <Select {...p} value={invite.role} onValueChange={(role) => setInvite({ ...invite, role: role as Member['role'] })} options={options(MAIN_ROLES)} />}
             </Field>
             <Field label="Team">
               {(p) => <Select {...p} value={invite.team} onValueChange={(team) => setInvite({ ...invite, team: team as Member['team'] })} options={options(TEAMS)} />}
