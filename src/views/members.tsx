@@ -210,7 +210,7 @@ export function MembersView({ rows, now, actions, access, roles }: { rows: Membe
     },
     { key: 'email', header: 'Email', grow: true, muted: true, truncate: true, hideBelow: 'lg', sortValue: (m) => m.email, cell: (m) => m.email },
     // The role as a person reads it, add-ons and all, as a column and as a fact on the phone card (AC-3.2).
-    { key: 'role', header: 'Role', hideBelow: 'lg', mobile: 'fact', sortValue: (m) => m.role, cell: (m) => roleLabel(m), mobileCell: (m) => roleLabel(m) },
+    { key: 'role', header: 'Role', hideBelow: 'md', mobile: 'fact', sortValue: (m) => m.role, cell: (m) => roleLabel(m), mobileCell: (m) => roleLabel(m) },
     { key: 'team', header: 'Team', muted: true, hideBelow: 'xl', sortValue: (m) => m.team, cell: (m) => m.team },
     { key: 'status', header: 'Status', mobile: 'fact', sortValue: (m) => m.status, cell: (m) => <Badge tone={STATUS_TONE[m.status]} dot>{m.status}</Badge> },
     // A card holds three facts, and adding the role spent one, so Joined leaves the phone card and stays in the table

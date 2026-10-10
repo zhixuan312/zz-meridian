@@ -26,3 +26,16 @@ export function scopedQuery(collection: AnyCollection, scope: AccessScope, name:
     },
   };
 }
+
+/**
+ * `collection` with the operations this person may not perform left off, so the tool builder never builds a write tool
+ * for one (FR-17). It returns a copy, so the collection a page and the assistant share is untouched, and it is beside
+ * `scopedQuery` for the same reason: a route handler file may export only its handlers, and this needs driving.
+ */
+export async function scopedOps(collection: AnyCollection, scope: AccessScope, name: string): Promise<AnyCollection> {
+  const handed: AnyCollection = { ...collection };
+  for (const op of ['create', 'update', 'remove'] as const) {
+    if (handed[op] && !(await can(scope, name, op))) delete (handed as Record<string, unknown>)[op];
+  }
+  return handed;
+}

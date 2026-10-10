@@ -12,7 +12,7 @@ import { may, resolveAccess } from '@/data/access';
 import { ACTIONS, FEATURES } from '@/data/features';
 import { members } from '@/data/collections';
 import { membersFor } from '@/data/member-mutations';
-import { scopedQuery } from '@/lib/assistant/scoped';
+import { scopedOps, scopedQuery } from '@/lib/assistant/scoped';
 import { assistantTools } from '@/lib/assistant/tools';
 import { viewTools } from '@/views/tools';
 
@@ -51,6 +51,20 @@ describe('what the assistant may reach, by the person it acts for', () => {
     expect(await may(ACTIONS['remove-member'].needs)).toBe(false);
     // An add-on can only widen what a person holds: a Member reads members, so the Key manager does too.
     expect(await may(FEATURES.members.needs)).toBe(true);
+  });
+
+  it('hands the assistant only the operations the person may perform', async () => {
+    // A Member reads members and writes none: no write tool is built for one, which is FR-17's registration filter.
+    jar.value = 'members_4';
+    const member = await scopedOps({ ...members }, await resolveAccess(), 'members');
+    expect([member.create, member.update, member.remove]).toEqual([undefined, undefined, undefined]);
+    expect(Object.keys(assistantTools([member], writer, guard).tools)).toEqual(['query_members']);
+    // The Owner keeps them all, and a Key manager keeps only the key operations it has.
+    jar.value = 'members_1';
+    expect(Object.keys(assistantTools([await scopedOps({ ...members }, await resolveAccess(), 'members')], writer, guard).tools)).toContain('update_members');
+    jar.value = 'members_5';
+    const keyManager = await scopedOps({ ...members }, await resolveAccess(), 'members');
+    expect(keyManager.update).toBeUndefined();
   });
 
   it('keeps role and addOns out of the agent write schemas', async () => {
