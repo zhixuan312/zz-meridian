@@ -37,6 +37,12 @@
   .draw { stroke-dasharray: var(--m-len, 1); animation: m-draw var(--dur-grow) var(--ease-out) both; }
   .reveal-x { animation: m-reveal-x var(--dur-grow) var(--ease-out) both; }
 
+  /* Data arrives once: on a page that was already there (reached by a click in the app, or shown again by the router),
+     every arrival takes no time and ends where it would have ended. `data-still` is set on the shell's main area when the
+     path changes and lifts once the longest arrival would be over, so a change made on the page afterwards still
+     animates. A duration changed on a running animation applies at once, so one already started ends there too. */
+  [data-still] :is(.arrive > *, .rise, .fade-in, .grow-x, .grow-y, .draw, .reveal-x) { animation-duration: 0s; animation-delay: 0s; }
+
   /* Answer: a control gives 1px under the pointer. */
   .press { transition: transform var(--dur-press) var(--ease-out); }
   .press:active:not(:disabled) { transform: translateY(0.5px) scale(0.985); }

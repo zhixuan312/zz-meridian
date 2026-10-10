@@ -1,6 +1,6 @@
 'use client';
 
-import { Children, Suspense, createContext, use, useContext, useEffect, useMemo, useRef, useState, type HTMLAttributes, type ReactNode } from 'react';
+import { Children, Suspense, createContext, use, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState, type HTMLAttributes, type ReactNode } from 'react';
 import { Dialog } from 'radix-ui';
 import { Menu, X } from 'lucide-react';
 import { usePathname } from 'next/navigation';
@@ -68,6 +68,30 @@ function ResolvedColumn({ assistant, open, used, onClose, ask, onAsked }: { assi
   return use(assistant) && prefs.assistant && (open || used) ? <AssistantColumn open={open} onClose={onClose} ask={ask} onAsked={onAsked} /> : null;
 }
 
+/**
+ * Data arrives once. The first page of a visit rises and grows into place; a page reached by a click in the app, or one
+ * the router kept and shows again (Cache Components keeps visited routes mounted and hidden, and showing an element
+ * again restarts its animations), is already there and must not replay, or a ready page reads as still loading
+ * (issue #19). A change of path marks the main area still before paint; the mark lifts once the longest arrival would
+ * have ended, so a change made on the page afterwards, such as a new period, still animates. A change of query alone
+ * keeps the path, so it is not a navigation here.
+ */
+function useStillOnNavigation(path: string) {
+  const [still, setStill] = useState(false);
+  const shown = useRef(path);
+  useLayoutEffect(() => {
+    if (shown.current === path) return;
+    shown.current = path;
+    setStill(true);
+    const css = getComputedStyle(document.documentElement);
+    // A build may write 820ms as .82s, so read the unit, not only the number.
+    const ms = (name: string) => { const v = css.getPropertyValue(name).trim(); return parseFloat(v) * (v.endsWith('ms') ? 1 : 1000); };
+    const t = setTimeout(() => setStill(false), ms('--dur-grow') + ms('--dur-enter'));
+    return () => clearTimeout(t);
+  }, [path]);
+  return still;
+}
+
 export function AppShell({
   rail,
   tools,
@@ -82,6 +106,7 @@ export function AppShell({
   children: ReactNode;
 }) {
   const path = usePathname();
+  const still = useStillOnNavigation(path);
   // The drawer remembers the page it opened on, so navigating closes it without an effect.
   const [openOn, setOpenOn] = useState<string | null>(null);
   const open = openOn === path;
@@ -149,7 +174,7 @@ export function AppShell({
             </Dialog.Content>
           </Dialog.Portal>
         </Dialog.Root>
-        <main className="relative flex min-w-0 flex-1 flex-col"><ConsoleSurface ask={ask}>{children}</ConsoleSurface></main>
+        <main data-still={still || undefined} className="relative flex min-w-0 flex-1 flex-col"><ConsoleSurface ask={ask}>{children}</ConsoleSurface></main>
         <Suspense fallback={null}>
           <ResolvedColumn assistant={assistant} open={assistantOpen} used={assistantUsed} onClose={() => setAssistantOpen(false)} ask={pendingAsk} onAsked={() => setPendingAsk(null)} />
         </Suspense>
@@ -177,6 +202,7 @@ export const WIDTH = { data: 'max-w-(--data-width)', reading: 'max-w-(--reading-
 export type PageWidth = keyof typeof WIDTH;
 
 /**
+ * A page: one scroll region holding a glass top bar/**
  * A page: one scroll region holding a glass top bar, the masthead and the rows. The masthead (kicker, title, one
  * sentence, actions) scrolls away with the content; once the title leaves view, a compact title fades into the top
  * bar, which also carries the global tools. Every band shares the gutter and the width, so the title starts exactly

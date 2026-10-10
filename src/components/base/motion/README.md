@@ -29,6 +29,7 @@ Status: beta
 ## Behaviour
 
 - An animation plays when its data lands, once. Nothing moves while it is being read.
+- A page arrives with motion only on the first load of a visit. A page reached by a click in the app, or one the router kept and shows again, is already there: the shell marks its main area `data-still` when the path changes, every arrival inside takes no time and ends in its final state, and the mark lifts after `dur-grow` + `dur-enter` so a change made on the page afterwards (a new period) still animates. A change of query alone is not a navigation.
 - Two loops exist, and only two: a Skeleton's shimmer and a fresh Freshness dot's pulse.
 - Every keyframe lives in `src/styles/motion.css`.
 
