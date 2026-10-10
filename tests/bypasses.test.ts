@@ -13,7 +13,7 @@ import path from 'node:path';
 import { AccessDenied } from '@/data/access';
 import { collections } from '@/data/collections';
 import { read } from '@/data/read';
-import { analyticsFigures } from '@/views/analytics-context';
+import { analyticsFigures } from '@/data/analytics';
 import { viewTools } from '@/views/tools';
 
 const byName = Object.fromEntries(viewTools.map((t) => [t.name, t]));

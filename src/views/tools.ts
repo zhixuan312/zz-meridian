@@ -19,7 +19,8 @@ import {
 } from '@/data/sample';
 import { PERIODS } from '@/lib/period';
 import { defineViewTool, type ViewTool } from '@/lib/shared-context';
-import { analyticsContext, analyticsFigures } from './analytics-context';
+import { analyticsContext } from './analytics-context';
+import { analyticsFigures } from '@/data/analytics';
 import { customersContext } from './customers-context';
 import { healthContext } from './health-context';
 import { SCOPES } from './key-scopes';
