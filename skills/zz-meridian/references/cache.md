@@ -26,7 +26,19 @@ remove that and read the request-dependent data behind a boundary. A promise bui
 `connection().then(() => ...)`, that a component resolves behind a boundary is how the shell reads the environment
 without blocking the frame. `node scripts/route-policy.ts` classifies every route of a production build and fails a
 route that is neither static nor partial, unless `optional:scripts/verify.config.ts` lists it in `requestDependentRoutes` with a
-reason. Give each console route its own `loading.tsx`, shaped like the page, so a navigation shows its own skeleton.
+reason.
+
+A navigation is as fast as where its data comes from. Data read through `read()` (cached and tagged, so a write
+refreshes it) is in the prerendered shell; prefetching brings it, and the page is whole in about 30 ms. A request-time
+read has to sit behind a Suspense boundary (a route's `loading.tsx`, or one inside the page), and React keeps a fallback
+it has shown on screen for at least 300 ms (`FALLBACK_THROTTLE_MS`): measured on the template with Members read per
+request, the content arrived at 325 to 329 ms on a desktop and about 490 ms on the phone profile, against 29 ms
+through `read()`. So read through `read()` wherever the data allows, and keep request-time reads for what must be per
+request. Where one stays, put its boundary as low as it can go, so the masthead and everything cached show at once and
+only the request-time part waits. Without Cache Components, a route with no `loading.tsx` simply waits for its page,
+and the rail answers the click at once: a link's icon turns into a spinner while its page is on the way
+(`useLinkStatus`). `scripts/navigate.ts` times this honestly: its `data` time is when the mapping's `readySelector`
+shows real, visible content, never a skeleton's rows or a page the router keeps hidden.
 
 ## The shell's assistant promise
 

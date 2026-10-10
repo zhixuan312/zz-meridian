@@ -68,8 +68,9 @@ Rules that make every page look like it belongs:
   everywhere. Two measures of a different size are two charts, never one chart with two axes.
 - **Tables**: mark one column `grow` (the lead), numbers `numeric`, low-value columns `hideBelow`; give `rowHref` so rows
   open their record. Below 768px a data table becomes a card list by itself.
-- **Every state**: loading (`loading.tsx` with skeletons shaped like the page), empty (Empty state with the one action),
-  error (`error.tsx`, what failed and Retry).
+- **Every state**: loading (`loading.tsx` with skeletons shaped like the page; read through `read()` so the page is
+  in its prerendered shell and the skeleton is rarely seen, since a request-time read waits at least 300 ms behind it:
+  `cache.md`), empty (Empty state with the one action), error (`error.tsx`, what failed and Retry).
 - **A file picker** is a visible `Button` that calls `input.click()` on an `<input type="file">` with `tabIndex={-1}`
   and `aria-hidden`, so the keyboard reaches the button and never the hidden input; give the press a state of its own
   ("Choosing the files…") until the change event arrives. The presses count a file chooser that opens as an answer.
