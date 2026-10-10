@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from 'vitest';
 
 vi.mock('next/navigation', () => ({ usePathname: () => '/members', useRouter: () => ({ refresh() {}, push() {}, replace() {} }) }));
 const toasts = vi.hoisted(() => [] as { tone: string; title: string; description?: string }[]);
-vi.mock('@/components/ui/toast', () => ({ toast: (t: { tone: string; title: string; description?: string }) => { toasts.push(t); } }));
+vi.mock('@/components/ui/toast', () => ({ UNDO_MS: 8000, toast: (t: { tone: string; title: string; description?: string }) => { toasts.push(t); } }));
 vi.stubGlobal('IntersectionObserver', class { observe() {} unobserve() {} disconnect() {} });
 
 import { KeysView } from '@/views/keys';
@@ -80,16 +80,42 @@ describe('members, status and removal', () => {
     expect(within(rowOf(m.name)).getByText('Active')).toBeTruthy();
     expect(toasts.at(-1)).toMatchObject({ tone: 'critical', title: 'Change not made', description: 'Owners cannot be suspended.' });
   });
-  it('takes a removed member away at once and brings them back with the reason when it is refused', async () => {
-    const d = deferred();
-    render(<MembersView rows={MEMBERS} now="2026-10-05T09:00:00.000Z" actions={{ invite: noop, setStatus: noop, remove: () => d.promise }} />);
-    await openMenu(m.name);
-    fireEvent.click(await screen.findByRole('menuitem', { name: 'Remove' }));
-    fireEvent.click(await screen.findByRole('button', { name: 'Remove member' }));
-    await waitFor(() => expect(screen.queryByText(m.name)).toBeNull());
-    await act(async () => { d.resolve({ ok: false, error: 'The last owner cannot be removed.' }); });
-    expect(await screen.findByText(m.name)).toBeTruthy();
-    expect(toasts.at(-1)).toMatchObject({ tone: 'critical', title: 'Change not made', description: 'The last owner cannot be removed.' });
+  it('takes a removed member away at once, sends the removal when its Undo closes, and brings them back with the reason when it is refused', async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    try {
+      const d = deferred();
+      const remove = vi.fn(() => d.promise);
+      render(<MembersView rows={MEMBERS} now="2026-10-05T09:00:00.000Z" actions={{ invite: noop, setStatus: noop, remove }} />);
+      await openMenu(m.name);
+      fireEvent.click(await screen.findByRole('menuitem', { name: 'Remove' }));
+      await waitFor(() => expect(screen.queryByText(m.name)).toBeNull());
+      expect(toasts.at(-1)).toMatchObject({ tone: 'neutral', title: `${m.name} removed`, action: { label: 'Undo' } });
+      expect(remove).not.toHaveBeenCalled();
+      await act(async () => { vi.advanceTimersByTime(8000); });
+      expect(remove).toHaveBeenCalledWith(m.id);
+      expect(screen.queryByText(m.name)).toBeNull();
+      await act(async () => { d.resolve({ ok: false, error: 'The last owner cannot be removed.' }); });
+      expect(await screen.findByText(m.name)).toBeTruthy();
+      expect(toasts.at(-1)).toMatchObject({ tone: 'critical', title: 'Change not made', description: 'The last owner cannot be removed.' });
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+  it('brings a removed member back on Undo and sends nothing', async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    try {
+      const remove = vi.fn(noop);
+      render(<MembersView rows={MEMBERS} now="2026-10-05T09:00:00.000Z" actions={{ invite: noop, setStatus: noop, remove }} />);
+      await openMenu(m.name);
+      fireEvent.click(await screen.findByRole('menuitem', { name: 'Remove' }));
+      await waitFor(() => expect(screen.queryByText(m.name)).toBeNull());
+      await act(async () => { (toasts.at(-1) as unknown as { action: { onClick: () => void } }).action.onClick(); });
+      expect(await screen.findByText(m.name)).toBeTruthy();
+      await act(async () => { vi.advanceTimersByTime(8000); });
+      expect(remove).not.toHaveBeenCalled();
+    } finally {
+      vi.useRealTimers();
+    }
   });
   it('does not overwrite newer authoritative rows that arrive while a change is pending, and rolls back only its own', async () => {
     const d = deferred();

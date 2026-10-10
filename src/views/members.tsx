@@ -2,7 +2,7 @@
 
 import { useShareView } from '@/components/base/use-share-view';
 import { membersContext } from './members-context';
-import { useOptimistic, useRef, useState, useTransition } from 'react';
+import { useEffect, useOptimistic, useRef, useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { MoreHorizontal, Trash2, UserCheck, UserPlus, UserX } from 'lucide-react';
 import { app } from '@/app.config';
@@ -11,14 +11,13 @@ import { Avatar } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Banner } from '@/components/ui/banner';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogClose, DialogContent } from '@/components/ui/dialog';
 import { Field } from '@/components/ui/field';
 import { IconButton } from '@/components/ui/icon-button';
 import { Input } from '@/components/ui/input';
 import { Menu, MenuContent, MenuItem, MenuSeparator, MenuTrigger } from '@/components/ui/menu';
 import { Select } from '@/components/ui/select';
 import { Sheet, SheetClose, SheetContent } from '@/components/ui/sheet';
-import { toast } from '@/components/ui/toast';
+import { toast, UNDO_MS } from '@/components/ui/toast';
 import { DataTable, type Column } from '@/components/patterns/data-table';
 import { formatDate, formatDay, formatRelative } from '@/lib/format-date';
 import { useLive } from '@/lib/live';
@@ -58,7 +57,9 @@ export function MembersView({ rows, now, actions }: { rows: Member[]; now: strin
   const inFlight = useRef(new Set<string>());
   const tempId = useRef(0);
   const [inviting, setInviting] = useState(false);
-  const [removing, setRemoving] = useState<Member | null>(null);
+  /** Removals waiting out their Undo: hidden at once, sent when the Undo window closes. */
+  const [held, setHeld] = useState<ReadonlySet<string>>(new Set());
+  const holds = useRef(new Map<string, ReturnType<typeof setTimeout>>());
   const [invite, setInvite] = useState(BLANK);
   const [errors, setErrors] = useState<{ name?: string; email?: string }>({});
   /** Why the server did not send the last invitation: said inside the sheet it was sent from, never in a toast over it. */
@@ -70,7 +71,7 @@ export function MembersView({ rows, now, actions }: { rows: Member[]; now: strin
    * toasted, or handed to `failed` when the change came from a form that shows its own errors. A row with an action in
    * flight takes no second one.
    */
-  const act = (id: string, optimistic: Change, action: () => Promise<Result>, done: { title: string; description?: string }, failed?: (reason: string) => void) => {
+  const act = (id: string, optimistic: Change, action: () => Promise<Result>, done: { title: string; description?: string } | null, failed?: (reason: string) => void) => {
     if (inFlight.current.has(id)) return;
     inFlight.current.add(id);
     start(async () => {
@@ -80,15 +81,52 @@ export function MembersView({ rows, now, actions }: { rows: Member[]; now: strin
         const r = await action().catch((): Result => ({ ok: false, error: 'The change did not reach the server. Try again.' }));
         if (!r.ok) {
           if (failed) return failed(r.error);
-          return toast({ tone: 'critical', title: 'Change not made', description: r.error });
+          toast({ tone: 'critical', title: 'Change not made', description: r.error });
+          return;
         }
         router.refresh();
-        toast({ tone: 'positive', ...done });
+        if (done) toast({ tone: 'positive', ...done });
       } finally {
         inFlight.current.delete(id);
       }
     });
   };
+
+  const release = (id: string) => setHeld((h) => { const next = new Set(h); next.delete(id); return next; });
+  /** Send a held removal now: when its Undo window closes, or when the page goes away first. */
+  const commit = (m: Shown) => {
+    clearTimeout(holds.current.get(m.id));
+    holds.current.delete(m.id);
+    act(m.id, { type: 'remove', id: m.id }, () => actions.remove(m.id), null);
+    release(m.id);
+  };
+  /**
+   * Remove takes the person away at once and offers Undo, as a deleted row in a list does, instead of asking first: a
+   * removal is the kind of change a person makes on purpose and regrets by accident. It is sent when the Undo window
+   * closes; a refusal brings them back with the reason, like any other change here.
+   */
+  const remove = (m: Shown) => {
+    if (holds.current.has(m.id) || inFlight.current.has(m.id)) return;
+    setHeld((h) => new Set(h).add(m.id));
+    holds.current.set(m.id, setTimeout(() => commit(m), UNDO_MS));
+    toast({
+      tone: 'neutral',
+      title: `${m.name} removed`,
+      description: 'They lose access when this closes.',
+      action: { label: 'Undo', onClick: () => { clearTimeout(holds.current.get(m.id)); holds.current.delete(m.id); release(m.id); } },
+    });
+  };
+  // A removal waiting for its Undo is sent the moment the page goes away, never dropped: when the router hides the page
+  // (its effects clean up), and when the tab is hidden or closed, which unmounts nothing.
+  useEffect(() => {
+    const live = holds.current;
+    const flush = () => { for (const id of [...live.keys()]) { clearTimeout(live.get(id)); live.delete(id); void actions.remove(id); } };
+    const hidden = () => { if (document.visibilityState === 'hidden') flush(); };
+    document.addEventListener('visibilitychange', hidden);
+    window.addEventListener('pagehide', flush);
+    return () => { document.removeEventListener('visibilitychange', hidden); window.removeEventListener('pagehide', flush); flush(); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const send = () => {
     const e = {
@@ -142,7 +180,7 @@ export function MembersView({ rows, now, actions }: { rows: Member[]; now: strin
                 {suspended ? <UserCheck /> : <UserX />}{suspended ? 'Reactivate' : 'Suspend'}
               </MenuItem>
               <MenuSeparator />
-              <MenuItem tone="critical" onSelect={() => setRemoving(m)}><Trash2 />Remove</MenuItem>
+              <MenuItem tone="critical" onSelect={() => remove(m)}><Trash2 />Remove</MenuItem>
             </MenuContent>
           </Menu>
         );
@@ -161,7 +199,7 @@ export function MembersView({ rows, now, actions }: { rows: Member[]; now: strin
         <DataTable
           caption="Members"
           noun="members"
-          rows={shown}
+          rows={held.size ? shown.filter((m) => !held.has(m.id)) : shown}
           columns={columns}
           rowKey={(m) => m.id}
           empty={{ title: 'No members yet', body: `Invite the people who work in ${app.name}.`, action: <Button variant="primary" size="sm" icon={<UserPlus />} onClick={() => { setInviteError(null); setInviting(true); }}>Invite member</Button> }}
@@ -192,25 +230,6 @@ export function MembersView({ rows, now, actions }: { rows: Member[]; now: strin
         </SheetContent>
       </Sheet>
 
-      <Dialog open={removing !== null} onOpenChange={(o) => !o && setRemoving(null)}>
-        <DialogContent
-          size="sm"
-          title={`Remove ${removing?.name ?? 'this member'}?`}
-          description="They lose access to the workspace at once. This cannot be undone."
-          footer={
-            <>
-              <DialogClose asChild><Button variant="ghost">Cancel</Button></DialogClose>
-              <Button variant="danger" icon={<Trash2 />} busy={pending} onClick={() => {
-                const m = removing!;
-                setRemoving(null);
-                act(m.id, { type: 'remove', id: m.id }, () => actions.remove(m.id), { title: 'Member removed', description: `${m.name} no longer has access.` });
-              }}>Remove member</Button>
-            </>
-          }
-        >
-          {removing ? <p className="t-small text-ink-2">{removing.role} on {removing.team}, {removing.lastActive ? `last active ${formatRelative(removing.lastActive, asOf)}` : 'never active'}. To keep their history and block sign-in, suspend them instead.</p> : null}
-        </DialogContent>
-      </Dialog>
     </PageFrame>
   );
 }

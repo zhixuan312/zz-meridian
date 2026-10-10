@@ -11,7 +11,7 @@ Status: beta
 | Masthead | PageFrame: kicker, "Members", one sentence, Invite member (primary) | One band | Stacked |
 | 1 | Data table: Name (avatar and name, grow), Email (from 1024px), Role (from 1024px), Team (from 1440px), Status, Joined (from 768px, so the order the table opens in is on screen wherever it has columns), Last active, and a row action menu | Columns | Cards: name and the menu, then status, when they joined (the order the list follows) and last active; a card holds three facts, so team is left to the record |
 | Sheet | Invite a member: Name and Email (required), Role, Team; Cancel and Send invitation | From the right, 440px | From the bottom |
-| Dialog | Remove: "Remove {name}?", the consequence, and the suspend alternative; Cancel and Remove member (danger) | Centred | Bottom sheet |
+| Toast | Remove: the person leaves the table at once and a toast says "{name} removed · They lose access when this closes" with Undo. The removal is sent when the toast closes (8 s, `UNDO_MS`), or at once if the page goes away first; Undo brings them back and sends nothing; a refusal brings them back with its reason | Bottom right | Top, full width |
 
 The row menu holds Suspend (Reactivate on a suspended member) and Remove.
 
@@ -24,7 +24,7 @@ The row menu holds Suspend (Reactivate on a suspended member) and Remove.
 | Invited | The status Badge in `accent`; Last active reads "Never" in `ink-3` |
 | Suspended | The status Badge in `warning` |
 | Name or email missing | The field's error under it; nothing is sent |
-| Changed | The page refreshes from the collection and a toast confirms: "Member suspended", "Member reactivated", "Member removed", "Invitation sent to {email}" |
+| Changed | The page refreshes from the collection and a toast confirms: "Member suspended", "Member reactivated", "Invitation sent to {email}"; a removal's toast is its Undo, "{name} removed" |
 | Rejected | The table goes back to what it was. A refused invitation reopens the sheet with what was typed and a critical Banner, "Invitation not sent", with the reason; a refused status change or removal shows a critical toast with the reason |
 | No members | The first-run empty state with Invite member |
 
@@ -57,5 +57,5 @@ Counts by status, role (with what each role may do) and team, everyone with thei
 
 ## Content
 
-- One verb through each flow: "Remove member", "Remove {name}?", "Member removed".
+- One verb through each flow: "Remove", then "{name} removed" with Undo. A removal is undone, not confirmed: it is the change a person makes on purpose and regrets by accident. Revoking an API key stays a confirmation, because requests using the key fail the moment it is sent.
 - Statuses are words ("Invited", "Suspended"), never colour alone.

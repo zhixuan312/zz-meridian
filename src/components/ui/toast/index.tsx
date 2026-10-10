@@ -12,12 +12,15 @@ let items: ToastItem[] = [];
 let seq = 0;
 const emit = () => listeners.forEach((l) => l(items));
 
+/** How long a toast with an action stays: the window an Undo has. A change held for an Undo commits when it ends. */
+export const UNDO_MS = 8000;
+
 /** Confirm, in one line, something that just happened. It leaves on its own after five seconds; an Undo keeps it eight. */
 export function toast(t: Omit<ToastItem, 'id'>) {
   const id = ++seq;
   items = [...items, { ...t, id }].slice(-3);
   emit();
-  setTimeout(() => dismiss(id), t.action ? 8000 : 5000);
+  setTimeout(() => dismiss(id), t.action ? UNDO_MS : 5000);
 }
 function dismiss(id: number) {
   items = items.filter((x) => x.id !== id);
