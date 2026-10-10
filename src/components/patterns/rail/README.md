@@ -38,11 +38,12 @@ App mark, Avatar and Appearance menu, on `frame` (a translucent wash with `backd
 | Current | the marker behind, label `ink` 500 | `accent-ink` |
 | Focus (keyboard) | 2px `accent` outline | as rest |
 
-Colours change over `dur-hover` 160ms. The marker moves (`transform`, `height`) over `dur-enter` 320ms on `ease-spring`, so it lands with a small settle. Under reduced motion it jumps.
+Colours change over `dur-hover` 160ms. The marker moves (`transform`, `height`) over `dur-enter` 320ms on `ease-spring`, so it lands with a small settle. Under reduced motion it jumps. The marker measures the current item after the first paint, not before it, so a rail mounting inside a tap (the phone drawer opening) costs one render and no forced layout; until it has measured, the current item draws the same pill and edge itself, so nothing moves when the marker takes over.
 
 ## Behaviour
 
 - An item is a link: Enter or a click navigates; the marker follows the new page.
+- While a destination's page is on the way (a page that renders on request and is not prefetched), its icon turns into a 14px Spinner in the same 16px slot (`useLinkStatus`), named "Opening Members", so the click is answered at once and nothing shifts. A prefetched page is never pending, so it never shows.
 - An item is current when the path equals its route or sits beneath it (`/requests/req_…` keeps Requests current); Overview (`/`) only matches itself.
 - `current` overrides the pathname (previews and tests); products leave it unset.
 

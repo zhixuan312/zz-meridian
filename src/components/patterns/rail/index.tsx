@@ -1,14 +1,15 @@
 'use client';
 
-import Link from 'next/link';
+import Link, { useLinkStatus } from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { useLayoutEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Check, ChevronsUpDown, LogOut, Settings } from 'lucide-react';
 import { app, type NavGroup } from '@/app.config';
 import { cn } from '@/lib/cn';
 import { AppMark } from '@/components/base/app-mark';
 import { Avatar } from '@/components/ui/avatar';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Spinner } from '@/components/ui/spinner';
 import { Menu, MenuContent, MenuItem, MenuLabel, MenuSeparator, MenuTrigger } from '@/components/ui/menu';
 import { AppearanceMenu } from '@/components/patterns/appearance-menu';
 
@@ -24,6 +25,9 @@ const LINKS = [
   '[&_a:not([aria-current]):hover]:bg-fill-hover [&_a:not([aria-current]):hover]:text-ink [&_a[aria-current=page]]:font-medium [&_a[aria-current=page]]:text-ink',
   '[&_a_svg]:size-4 [&_a_svg]:shrink-0 [&_a_svg]:text-ink-3 [&_a_svg]:transition-colors [&_a:not([aria-current]):hover_svg]:text-ink-2 [&_a[aria-current=page]_svg]:text-accent-ink',
 ].join(' ');
+
+/** The current link's own pill, the marker's twin, drawn until the marker has measured where it goes. */
+const UNMEASURED = '[&_a[aria-current=page]]:bg-accent-tint [&_a[aria-current=page]]:ring-1 [&_a[aria-current=page]]:ring-accent-line [&_a[aria-current=page]]:ring-inset';
 
 /**
  * The navigation rail: a translucent wash on the lit ground. The current page is an accent-tinted pill with a lit
@@ -62,7 +66,10 @@ export function Rail({
   const here = nav.flatMap((g) => g.items.map((it) => it.href)).filter(matches).sort((a, b) => b.length - a.length)[0];
   const isActive = (href: string) => href === here;
 
-  useLayoutEffect(() => {
+  // Measured after paint, not before it: a rail mounts inside the tap that opens the phone drawer, and a measurement
+  // there forces a layout of the whole page and a second render before the drawer can show. Until the marker has a
+  // position the current link draws the same pill itself, so nothing moves when the marker takes over.
+  useEffect(() => {
     const el = list.current?.querySelector<HTMLElement>('[aria-current="page"]');
     setMarker(el ? { y: el.offsetTop, h: el.offsetHeight } : null);
   }, [path]);
@@ -100,7 +107,7 @@ export function Rail({
           </MenuContent>
         </Menu>
       </div>
-      <nav ref={list} aria-label="Main" className={cn('scroll-fade-y relative flex-1 overflow-y-auto px-3 pt-3 pb-4', LINKS)}>
+      <nav ref={list} aria-label="Main" className={cn('scroll-fade-y relative flex-1 overflow-y-auto px-3 pt-3 pb-4', LINKS, !marker && UNMEASURED)}>
         {marker ? (
           <span
             aria-hidden
@@ -123,7 +130,8 @@ export function Rail({
                       href={it.href}
                       aria-current={on ? 'page' : undefined}
                     >
-                      <Icon strokeWidth={1.75} />
+                      {on && !marker ? <span aria-hidden className="absolute top-2 bottom-2 left-0 w-0.5 rounded-r-full bg-accent shadow-[0_0_12px_var(--accent)]" /> : null}
+                      <LinkIcon icon={<Icon strokeWidth={1.75} />} label={it.label} />
                       <span className="flex-1 truncate">{it.label}</span>
                       {it.badge ? <span className="t-num grid h-5 min-w-5 place-items-center rounded-full bg-warning-tint px-1.5 text-2xs font-semibold text-warning-ink">{it.badge}</span> : null}
                     </Link>
@@ -152,5 +160,19 @@ export function Rail({
         <AppearanceMenu />
       </div>
     </div>
+  );
+}
+
+/**
+ * A destination's icon, which turns into a spinner while its page is on the way. A route whose page renders on request
+ * and has no `loading.tsx` would otherwise give no answer to the click until the server does; a prefetched route is
+ * never pending, so it never shows. The slot is always 16px, so nothing shifts.
+ */
+function LinkIcon({ icon, label }: { icon: React.ReactNode; label: string }) {
+  const { pending } = useLinkStatus();
+  return (
+    <span className="grid size-4 shrink-0 place-items-center">
+      {pending ? <Spinner size="sm" label={`Opening ${label}`} /> : icon}
+    </span>
   );
 }
