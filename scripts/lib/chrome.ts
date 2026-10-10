@@ -24,20 +24,24 @@ export type Page = {
 
 /** Every Chrome this process launched and has not closed: each is killed, and its profile removed, whichever way the process ends. */
 const launched = new Set<{ proc: ChildProcess; dir: string }>();
-function reap(c: { proc: ChildProcess; dir: string }) {
+/**
+ * Kill a browser and remove its profile. The removal is never the caller's work: a suite closes its browser inside a hook
+ * and a hook has a ten-second ceiling, while a profile that has loaded many pages runs to tens of megabytes — removing one
+ * that way timed a hook out on a runner (`Hook timed out in 10000ms`, tests/deep-dom.test.ts's afterAll), and before that
+ * it threw `ENOTEMPTY: directory not empty` when Chrome was still writing into the directory. So it starts at once, in the
+ * background; at exit, where nothing is timed, it is one last synchronous attempt for a browser nobody closed.
+ */
+function reap(c: { proc: ChildProcess; dir: string }, sync = false) {
   launched.delete(c);
   c.proc.kill('SIGKILL');
-  // Chrome writes into its profile as it dies, so the directory can be non-empty again between retries. The retries are
-  // bounded and the last word is kept, because a check's exit code is about what it checked: this threw
-  // `ENOTEMPTY: directory not empty, rmdir '/tmp/meridian-chrome-…/Default'` out of close() on a GitHub runner and failed
-  // the browser-fixture step that way. A profile left in the temp folder is cheaper than that.
+  if (!sync) { fs.rm(c.dir, { recursive: true, force: true }, () => {}); return; }
   try {
     fs.rmSync(c.dir, { recursive: true, force: true, maxRetries: 20, retryDelay: 50 });
   } catch {
-    /* tidying up after itself never decides whether a run passed */
+    /* a profile left in the temp folder is cheaper than a run that failed tidying up after itself */
   }
 }
-process.on('exit', () => { for (const c of [...launched]) reap(c); });
+process.on('exit', () => { for (const c of [...launched]) reap(c, true); });
 for (const sig of ['SIGINT', 'SIGTERM'] as const) process.on(sig, () => process.exit(sig === 'SIGINT' ? 130 : 143));
 
 export async function launch(): Promise<Page> {

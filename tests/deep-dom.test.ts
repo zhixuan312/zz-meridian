@@ -22,7 +22,13 @@ beforeAll(async () => {
 }, 60_000);
 
 afterAll(() => {
+  const started = Date.now();
   page?.close();
+  // A hook has ten seconds and a profile that has loaded many pages runs to tens of megabytes: close() kills the browser
+  // and starts removing the profile in the background, never on this path (scripts/lib/chrome.ts). The bar is loose — a
+  // background removal returns in about a millisecond and a synchronous one of a large profile is seconds — so it holds
+  // on a slow runner and still fails if the removal comes back here.
+  expect(Date.now() - started, 'close() must not remove the profile on the caller’s path').toBeLessThan(2000);
   server?.kill();
 });
 
