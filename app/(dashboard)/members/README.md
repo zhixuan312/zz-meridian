@@ -9,7 +9,7 @@ Status: beta
 | Row | Pattern | Console | Mobile |
 |---|---|---|---|
 | Masthead | PageFrame: kicker, "Members", one sentence, Invite member (primary), shown only to a person who may invite (`invitableRoles()` is not empty) | One band | Stacked |
-| 1 | Data table: Name (avatar and name, grow), Email (from 1024px), Role as a person reads it, add-ons and all (from 1024px), Team (from 1440px), Status, Joined (from 768px), Last active, and a row action menu | Columns | Cards: name and the menu, then the role with its add-ons, status and last active |
+| 1 | Data table: Name (avatar and name, grow), Email (from 896px), Role as a person reads it, add-ons and all (as a column from 512px, and on the card at every width below), Team (from 1440px), Status, Joined (from 768px), Last active, and a row action menu | Columns | Cards: name and the menu, then the role with its add-ons, status and last active |
 | 2 | Roles & access matrix: a card whose table ticks each role, main roles first and add-ons after, against every non-public feature and then every action; a legend under it says that an add-on adds to a main role and that the member rules still apply. Generated from `GRANTS`, `FEATURES` and `ACTIONS`, never written by hand; at a phone's width the table scrolls inside its own frame | Columns, scrolling inside the card | The same table, scrolling inside the card |
 | Sheet | Invite a member: Name and Email (required), Role, Team; Cancel and Send invitation | From the right, 440px | From the bottom |
 | Sheet | Change {name}'s role: Role and Add-ons, offering only the choices the row's boundary allowed; a refusal reopens it with the reason in a critical Banner; Cancel and Save role | From the right, 440px | From the bottom |

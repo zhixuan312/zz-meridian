@@ -5,7 +5,7 @@ import { clock, collections } from '@/data/collections';
 import { Unauthenticated, can, collectionFor, may, nameOf, resolveAccess } from '@/data/access';
 import { collectionTag } from '@/data/read';
 import { respond } from '@/lib/assistant/respond';
-import { scopedOps, scopedQuery } from '@/lib/assistant/scoped';
+import { handedTo } from '@/lib/assistant/scoped';
 import type { AgentChange } from '@/lib/assistant/tools';
 import type { AnyCollection } from '@/lib/collection';
 import type { ViewTool } from '@/lib/shared-context';
@@ -38,16 +38,10 @@ export async function POST(request: Request): Promise<Response> {
     if (!(await can(scope, c.name, 'read'))) return null;
     // A collection bound to this scope: for members, `membersFor(scope)`, so every write passes Task I-14's boundary
     // and the Owner, self and last-active-Owner rules apply to an agent exactly as they do to the page.
-    const bound = collectionFor(scope, c.name);
-    // FR-17: only the operations this person may perform are handed on, so the tool builder builds no write tool the
-    // model could only be refused. Execution re-checks as well (`guard.authorize`, then the boundary), and both stay.
-    const handed = await scopedOps(scopedQuery(bound, scope, c.name), scope, c.name);
-    // FR-12: an agent's create always gets role Member and no add-ons, whatever the input held. The schema has already
-    // left those fields out; this forces the values on top, because the page's invite sets an initial role and the
-    // boundary deliberately honours a validated one.
-    const create = bound.create;
-    if (c.name === 'members' && create) handed.create = (input: Record<string, unknown>) => create({ ...input, role: 'Member', addOns: [] });
-    return handed;
+    // A collection bound to this scope: for members, `membersFor(scope)`, so every write passes Task I-14's boundary
+    // and the Owner, self and last-active-Owner rules apply to an agent exactly as they do to the page. `handedTo` is
+    // where the order lives — the query re-check, the agent's member create, then FR-17's narrowing.
+    return await handedTo(scope, collectionFor(scope, c.name), c.name);
   }))).filter((c): c is AnyCollection => c !== null);
 
   // A view tool is registered only where the person satisfies its feature's need. A view's `read` asks the need again,

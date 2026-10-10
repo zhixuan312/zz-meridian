@@ -12,7 +12,7 @@ import { may, resolveAccess } from '@/data/access';
 import { ACTIONS, FEATURES } from '@/data/features';
 import { members } from '@/data/collections';
 import { membersFor } from '@/data/member-mutations';
-import { scopedOps, scopedQuery } from '@/lib/assistant/scoped';
+import { handedTo } from '@/lib/assistant/scoped';
 import { assistantTools } from '@/lib/assistant/tools';
 import { viewTools } from '@/views/tools';
 
@@ -53,17 +53,36 @@ describe('what the assistant may reach, by the person it acts for', () => {
     expect(await may(FEATURES.members.needs)).toBe(true);
   });
 
+  it('hands a Member the members collection without a create tool, through the route\'s own mapping', async () => {
+    // This drives the mapping the route runs, in its order: the create override comes before the narrowing, and a
+    // Member must still end with no write tool at all.
+    jar.value = 'members_4';
+    const scope = await resolveAccess();
+    const handed = await handedTo(scope, membersFor(scope), 'members');
+    expect(Object.keys(assistantTools([handed], writer, guard).tools)).toEqual(['query_members']);
+    // And the Owner, whose create is allowed, keeps it — forced to Member with no add-ons.
+    jar.value = 'members_1';
+    const ownerScope = await resolveAccess();
+    const ownerHanded = await handedTo(ownerScope, membersFor(ownerScope), 'members');
+    const made = (await (ownerHanded.create as (i: Record<string, unknown>) => Promise<Record<string, unknown>>)({ name: 'Agent Made', email: 'agent.made@example.com', team: 'Support', status: 'Invited', joined: '2026-10-10', lastActive: null, role: 'Owner', addOns: ['Key manager'] })) as { id: string; role: string; addOns: string[] };
+    try {
+      expect([made.role, made.addOns]).toEqual(['Member', []]);
+    } finally {
+      await members.remove!([made.id]);
+    }
+  });
+
   it('hands the assistant only the operations the person may perform', async () => {
     // A Member reads members and writes none: no write tool is built for one, which is FR-17's registration filter.
     jar.value = 'members_4';
-    const member = await scopedOps({ ...members }, await resolveAccess(), 'members');
+    const member = await handedTo(await resolveAccess(), { ...members }, 'members');
     expect([member.create, member.update, member.remove]).toEqual([undefined, undefined, undefined]);
     expect(Object.keys(assistantTools([member], writer, guard).tools)).toEqual(['query_members']);
     // The Owner keeps them all, and a Key manager keeps only the key operations it has.
     jar.value = 'members_1';
-    expect(Object.keys(assistantTools([await scopedOps({ ...members }, await resolveAccess(), 'members')], writer, guard).tools)).toContain('update_members');
+    expect(Object.keys(assistantTools([await handedTo(await resolveAccess(), { ...members }, 'members')], writer, guard).tools)).toContain('update_members');
     jar.value = 'members_5';
-    const keyManager = await scopedOps({ ...members }, await resolveAccess(), 'members');
+    const keyManager = await handedTo(await resolveAccess(), { ...members }, 'members');
     expect(keyManager.update).toBeUndefined();
   });
 
@@ -82,7 +101,7 @@ describe('what the assistant may reach, by the person it acts for', () => {
   it('refuses an already-registered query tool once the person has been demoted', async () => {
     jar.value = 'members_4';
     const scope = await resolveAccess();
-    const { tools } = assistantTools([scopedQuery(members, scope, 'members')], writer, guard);
+    const { tools } = assistantTools([await handedTo(scope, members, 'members')], writer, guard);
     expect((await run(tools as Record<string, unknown>, 'query_members', {})) as unknown).toBeTruthy();
     // The demotion lands between registration and execution: the tool that was listed must refuse at the moment it runs.
     await members.update!(['members_4'], { role: 'Viewer' });

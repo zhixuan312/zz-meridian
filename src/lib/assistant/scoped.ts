@@ -7,14 +7,14 @@
  * request still resolves to the same person of the same tenant and that they may still read the collection — refusing
  * with the one `AccessDenied` message otherwise, and reading through the collection it was given.
  *
- * It is its own module, not a helper in the route: a Next route handler file may export only its handlers, so the
- * re-check lives here where a test can drive it directly.
+ * It is its own module, not a helper in the route: a Next route handler file may export only its handlers, and only
+ * `handedTo` leaves this module, so the re-check has one caller and a test can drive it directly.
  */
 import { AccessDenied, can, resolveAccess, type AccessScope } from '@/data/access';
 import type { AnyCollection, Query } from '@/lib/collection';
 
 /** `collection` with its `query` re-checked against `scope` whenever it runs; `name` is the collection the read asks. */
-export function scopedQuery(collection: AnyCollection, scope: AccessScope, name: string): AnyCollection {
+function scopedQuery(collection: AnyCollection, scope: AccessScope, name: string): AnyCollection {
   return {
     ...collection,
     query: async (q: Query) => {
@@ -32,10 +32,24 @@ export function scopedQuery(collection: AnyCollection, scope: AccessScope, name:
  * for one (FR-17). It returns a copy, so the collection a page and the assistant share is untouched, and it is beside
  * `scopedQuery` for the same reason: a route handler file may export only its handlers, and this needs driving.
  */
-export async function scopedOps(collection: AnyCollection, scope: AccessScope, name: string): Promise<AnyCollection> {
+async function scopedOps(collection: AnyCollection, scope: AccessScope, name: string): Promise<AnyCollection> {
   const handed: AnyCollection = { ...collection };
   for (const op of ['create', 'update', 'remove'] as const) {
     if (handed[op] && !(await can(scope, name, op))) delete (handed as Record<string, unknown>)[op];
   }
   return handed;
+}
+
+/**
+ * The collection the assistant is handed for one of the caller's collections, in the one order that is correct: its
+ * `query` re-checked (`scopedQuery`), an agent's member create forced to role Member with no add-ons (FR-12), and then
+ * the operations this person may not perform left off (`scopedOps`). The order matters and was wrong once: narrowing
+ * before the members create override put `create` back for a caller who may not create at all, so a Member was offered
+ * `create_members` — hence this naming, which a check can drive.
+ */
+export async function handedTo(scope: AccessScope, collection: AnyCollection, name: string): Promise<AnyCollection> {
+  const handed = scopedQuery(collection, scope, name);
+  const create = handed.create;
+  if (name === 'members' && create) handed.create = (input: Record<string, unknown>) => create({ ...input, role: 'Member', addOns: [] });
+  return scopedOps(handed, scope, name);
 }
