@@ -40,12 +40,17 @@ function MenuPanel({ suspended = false, scopes = false }: { suspended?: boolean;
       <div className={ROW}><LogOut />Sign out</div>
       <div className="-mx-1 my-1 h-px bg-line" />
       <p className="t-eyebrow px-2 pt-2 pb-1.5">View as</p>
-      {PERSONAS.map((name, i) => (
-        <div key={name} className={`${ROW} pr-8 ${suspended && i === PERSONAS.length - 1 ? 'text-ink-disabled' : ''}`}>
-          {name}
-          {i === 0 ? <Check className="absolute right-2 !text-accent" strokeWidth={2.25} /> : null}
-        </div>
-      ))}
+      {PERSONAS.map((name, i) => {
+        // Listed and out of reach: the product draws this one as a disabled menu item (the sign-in panel adds "· Not active"),
+        // and `ink-disabled` is the token for exactly that — exempt from the contrast rule, and never the only signal.
+        const off = suspended && i === PERSONAS.length - 1;
+        return (
+          <div key={name} className={`${ROW} pr-8 ${off ? 'text-ink-disabled' : ''}`} aria-disabled={off || undefined}>
+            {name}
+            {i === 0 ? <Check className="absolute right-2 !text-accent" strokeWidth={2.25} /> : null}
+          </div>
+        );
+      })}
     </div>
   );
 }
