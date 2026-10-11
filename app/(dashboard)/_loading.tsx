@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { PageFrame, Row, Stack } from '@/components/base/shell';
+import { PageFrame, Row, Stack, type PageWidth } from '@/components/base/shell';
 import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 
@@ -7,11 +7,12 @@ import { Skeleton } from '@/components/ui/skeleton';
  * The frame every console route's loading state shares: one masthead skeleton, then the page's own body, announced once
  * as busy under the page's name. Each route's `loading.tsx` composes its body from these rows, in the shape of its page.
  * The title is the page's own heading, so the shell is acknowledged the moment this state commits; a detail page whose
- * title depends on the record leaves it out and keeps a skeleton.
+ * title depends on the record leaves it out and keeps a skeleton. `width` follows the page it stands in for: a
+ * skeleton at another width would move the content when the page arrives.
  */
-export function LoadingPage({ name, title, children }: { name: string; title?: string; children: ReactNode }) {
+export function LoadingPage({ name, title, width, children }: { name: string; title?: string; width?: PageWidth; children: ReactNode }) {
   return (
-    <PageFrame kicker={<Skeleton className="h-2.5 w-32" />} title={title ?? <Skeleton className="mt-3 h-10 w-64 rounded-md" />} description={<Skeleton className="mt-2 h-3.5 w-96 max-w-full" />}>
+    <PageFrame width={width} kicker={<Skeleton className="h-2.5 w-32" />} title={title ?? <Skeleton className="mt-3 h-10 w-64 rounded-md" />} description={<Skeleton className="mt-2 h-3.5 w-96 max-w-full" />}>
       <Busy name={name}>{children}</Busy>
     </PageFrame>
   );

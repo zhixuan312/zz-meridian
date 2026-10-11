@@ -4,7 +4,7 @@ import { LoadingPage } from '../_loading';
 /** Settings on its way: a stack of sections, each a title, a sentence and its controls. */
 export default function SettingsLoading() {
   return (
-    <LoadingPage name="settings" title="Settings">
+    <LoadingPage name="settings" title="Settings" width="form">
       <div className="flex flex-col gap-14">
         {[3, 4, 3, 2].map((n, i) => (
           <div key={i} className="flex flex-col gap-4">
