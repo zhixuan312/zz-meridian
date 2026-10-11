@@ -366,7 +366,7 @@ function Elevation({ groups }: { groups: TokenGroup[] }) {
                 <div className="flex flex-col gap-1.5">
                   {Array.from({ length: 5 }, (_, i) => <span key={i} className="t-caption whitespace-nowrap text-ink-3">Requests · 12 Sept · 128,402 · 294 ms · eu-central-1</span>)}
                 </div>
-                <span className={cn('absolute inset-x-3 top-3 h-14 rounded-md border border-line-strong bg-surface/70', t.name === 'blur-xl' ? 'backdrop-blur-xl' : 'backdrop-blur-md')} />
+                <span className="absolute inset-x-3 top-3 h-14 rounded-md border border-line-strong bg-surface/70" style={{ backdropFilter: `blur(var(--${t.name}))` }} />
               </div>
               <p className="mt-3 font-mono text-xs">{t.name} <span className="text-ink-3">{t.value}</span></p>
               <p className="t-caption mt-1 text-ink-2">{t.description}</p>
