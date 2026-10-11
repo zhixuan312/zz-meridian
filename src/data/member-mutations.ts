@@ -13,12 +13,28 @@
  * `src/data/read` would close a cycle, because the demo policy binds `members` through this module. A product replaces
  * the queue with a database transaction; the adopter guide says so.
  */
-import { updateTag } from 'next/cache';
+import { revalidateTag, updateTag } from 'next/cache';
 import { activity, clock, members } from '@/data/collections';
 import { ADD_ONS, effective, MAIN_ROLES, roleLabel, type AddOn, type MainRole } from '@/data/roles';
 import type { AnyCollection, Grant } from '@/lib/collection';
 import type { Member } from '@/data/sample';
 import type { AccessScope } from '@/data/access';
+
+/**
+ * Invalidate a tag after a write, from wherever the write came. `updateTag` is the right call from a Server Action —
+ * it gives the person their own change on the next read — but Next allows it only there, and it throws everywhere
+ * else, which is exactly where this boundary's other callers live: the assistant's route handler and an adopter's
+ * MCP server. `revalidateTag` is the call that works in both, so a write from an agent invalidates the same tag
+ * instead of failing the change. Found by the assistant walk-through in a built app: suspending a member through an
+ * approved Proposal answered "updateTag can only be called from within a Server Action" and the rows never moved.
+ */
+function invalidate(t: string) {
+  try {
+    updateTag(t);
+  } catch {
+    revalidateTag(t, { expire: 0 });
+  }
+}
 
 /** Every refusal the boundary produces, in the frozen order the spec checks. */
 export const REFUSALS = {
@@ -117,7 +133,7 @@ async function createStep(scope: AccessScope, input: Record<string, unknown>): P
   if (input.addOns !== undefined && (!Array.isArray(input.addOns) || input.addOns.some((addOn) => !(ADD_ONS as readonly unknown[]).includes(addOn)))) throw new MemberRefusal(REFUSALS.values);
   if (input.role === 'Owner' && !grants.has('workspace:update')) throw new MemberRefusal(REFUSALS.giveOwner);
   const row = await members.create!(input);
-  updateTag(await tag(scope.tenantId, 'members'));
+  invalidate(await tag(scope.tenantId, 'members'));
   return row;
 }
 
@@ -137,7 +153,7 @@ async function updateStep(scope: AccessScope, ids: string[], patch: Record<strin
   const after = patch.status === undefined ? rows : rows.map((m) => (ids.includes(m.id) ? { ...m, status: patch.status as Member['status'] } : m));
   if (!after.some((m) => m.role === 'Owner' && m.status === 'Active')) throw new MemberRefusal(REFUSALS.lastOwner);
   const out = await members.update!(ids, patch);
-  updateTag(await tag(scope.tenantId, 'members'));
+  invalidate(await tag(scope.tenantId, 'members'));
   return out;
 }
 
@@ -151,7 +167,7 @@ async function removeStep(scope: AccessScope, ids: string[]): Promise<number> {
   const after = rows.filter((m) => !ids.includes(m.id));
   if (!after.some((m) => m.role === 'Owner' && m.status === 'Active')) throw new MemberRefusal(REFUSALS.lastOwner);
   const removed = await members.remove!(ids);
-  updateTag(await tag(scope.tenantId, 'members'));
+  invalidate(await tag(scope.tenantId, 'members'));
   return removed;
 }
 
@@ -236,7 +252,7 @@ export async function assignMemberRole(input: { id: string; role: MainRole; addO
       verb: 'changed',
       object: `${target.name}'s role to ${roleLabel({ role: input.role, addOns })}`,
     });
-    updateTag(await tag(scope.tenantId, 'members'));
-    updateTag(await tag(scope.tenantId, 'activity'));
+    invalidate(await tag(scope.tenantId, 'members'));
+    invalidate(await tag(scope.tenantId, 'activity'));
   });
 }
