@@ -97,7 +97,7 @@ const PHONE_CELLS = '@max-[640px]:[&_td:not([data-mobile=hidden])]:!h-auto @max-
  * card's own rule is the role, not the width. */
 const PHONE_ROLES = [
   '@max-[640px]:[&_td[data-mobile=check]]:order-0 @max-[640px]:[&_td[data-mobile=check]]:mr-1.5',
-  '@max-[640px]:[&_td[data-mobile=title]]:order-1 @max-[640px]:[&_td[data-mobile=title]]:flex-1 @max-[640px]:[&_td[data-mobile=title]]:font-medium',
+  '@max-[640px]:[&_td[data-mobile=title]]:order-1 @max-[640px]:[&_td[data-mobile=title]]:flex-1 @max-[640px]:[&_td[data-mobile=title]]:font-medium @max-[640px]:[&_td[data-mobile=title]]:!text-left',
   '@max-[640px]:[&_td[data-mobile=status]]:order-1 @max-[640px]:[&_td[data-mobile=status]]:ml-auto @max-[640px]:[&_td[data-mobile=status]]:shrink-0',
   // Facts flow on the second line, left to right whatever their column's alignment, each whole; one longer than the
   // card ends in an ellipsis.
