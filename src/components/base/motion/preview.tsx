@@ -12,7 +12,9 @@ const CURVES = [
 ];
 const DURS = [
   { name: 'dur-press', ms: 110, use: 'A control giving under the pointer' },
+  { name: 'dur-exit', ms: 140, use: 'A menu, a dialog or a scrim leaving' },
   { name: 'dur-hover', ms: 160, use: 'Colour and outline changes' },
+  { name: 'dur-exit-sheet', ms: 200, use: 'The phone drawer leaving' },
   { name: 'dur-enter', ms: 320, use: 'Overlays, rows, sliding indicators' },
   { name: 'dur-grow', ms: 820, use: 'Bars growing, lines drawing' },
 ];
@@ -71,7 +73,12 @@ export default function MotionPreview() {
           <State key={c.name} label={`${c.name} · ${c.use}`}><Curve v={c.v} /></State>
         ))}
       </Specimen>
-      <Specimen label="Reduced motion" note="Every duration and delay collapses; arrivals show their final state outright. Two loops exist (a skeleton's shimmer, a live dot's pulse) and both stop.">
+      <Specimen label="Loops" note="Three things loop, and only three, each while something waits: a spinner's ring, a skeleton's shimmer and a live dot's pulse.">
+        <State label="spin · a ring while it waits"><span className="spin block size-4 rounded-full border-2 border-current border-r-transparent" /></State>
+        <State label="shimmer · a skeleton"><span className="shimmer block h-3 w-32 rounded-sm" /></State>
+        <State label="pulse · a fresh dot"><span className="pulse block size-2 rounded-full bg-positive" /></State>
+      </Specimen>
+      <Specimen label="Reduced motion" note="Every duration and delay collapses; arrivals show their final state outright; all three loops stop.">
         <p className="t-small max-w-[60ch] text-ink-2">Nothing in Meridian moves to decorate. If motion does not explain a change, it is cut.</p>
       </Specimen>
     </>

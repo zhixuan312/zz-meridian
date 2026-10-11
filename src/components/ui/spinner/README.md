@@ -13,13 +13,17 @@ Status: beta
 
 One variant; it takes the colour of its context (`ink-2` in a caption, `accent-ink` beside an accent label, `on-accent` inside a primary Button).
 
+`label={null}` makes it **decorative**: the ring is drawn and nothing is announced, for a spinner inside a control that already says it is busy — `Button`'s `busy` passes it, because `aria-busy` on the button is the announcement and a second one is noise.
+
 ## Sizes
+
+The three steps are the icon scale's (14, 16 and 18px), so a spinner stands in for an icon at the same box and nothing moves.
 
 | Size | Ring | Border | Use |
 |---|---|---|---|
 | sm | 14px | 1.5px | Inside a small control or a caption line |
 | md (default) | 16px | 2px | Beside body text |
-| lg | 20px | 2px | Centred in an empty panel that waits on one action |
+| lg | 18px | 2px | Centred in an empty panel that waits on one action |
 
 ## States
 

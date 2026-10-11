@@ -6,12 +6,12 @@ import { Spinner } from '.';
 export default function SpinnerPreview() {
   return (
     <>
-      <Specimen label="Sizes" note="14, 16 and 20px, in the current text colour.">
+      <Specimen label="Sizes" note="14, 16 and 18px — the icon scale's three steps — in the current text colour.">
         <State label="sm"><Spinner size="sm" /></State>
         <State label="md"><Spinner /></State>
         <State label="lg"><Spinner size="lg" /></State>
       </Specimen>
-      <Specimen label="In context" note="For an action in progress. Content that is loading gets a Skeleton.">
+      <Specimen label="In context" note="For an action in progress. Content that is loading gets a Skeleton. `label={null}` makes it decorative, for a control that says it is busy itself (Button).">
         <span className="flex items-center gap-2 text-sm text-ink-2"><Spinner size="sm" />Rotating key…</span>
         <span className="flex items-center gap-2 text-sm text-accent-ink"><Spinner size="sm" />Syncing</span>
       </Specimen>

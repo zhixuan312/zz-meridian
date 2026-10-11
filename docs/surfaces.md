@@ -14,7 +14,7 @@ The surface is a fact about the container, not the device: a console on a 900px 
 
 ### Console
 
-The default. The rail sits on the `frame`; each page is a `PageFrame` on the canvas: the masthead (title, one-sentence head-note, freshness, actions) above the one scroll region. Rows of cards follow the four splits.
+The default. The rail sits on the `frame`; each page is a `PageFrame` on the canvas: the masthead (title, one-sentence head-note, freshness, actions) above the one scroll region. Rows of cards follow the four splits. A page names its own width: `data` fills the canvas (an analytical page), `form` is a form page's measure, which fills the canvas until the canvas is wider than a form needs and then centres, and `reading` is one long document. Settings is the page that takes `form`.
 
 ### Mobile
 
