@@ -25,7 +25,7 @@ The trigger takes Input's sizes: sm 30, md 36, lg 44px (compact 26, 30, 36). Opt
 | Option | Selected | the check |
 | Option | Disabled | `ink-disabled`, skipped by the keyboard, still visible so the reader knows it exists |
 
-The list enters with `float-in` (rises 4px and fades over `dur-enter`) and leaves in 120ms.
+The list enters with `float-in` (rises 4px and fades over `dur-enter`) and leaves over `dur-exit` 140ms.
 
 ## Behaviour
 

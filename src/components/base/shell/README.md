@@ -1,6 +1,6 @@
 # Shell
 
-The shell is the layout contract every console page shares: a fixed frame where only one region scrolls, a rail, a top bar, a masthead that scrolls away, and rows of cards in four splits and two widths.
+The shell is the layout contract every console page shares: a fixed frame where only one region scrolls, a rail, a top bar, a masthead that scrolls away, and rows of cards in four splits and a width per kind of page.
 
 Status: beta
 
@@ -21,7 +21,7 @@ Status: beta
 1. **One scroller.** PageFrame is the only element on a page that scrolls, and only vertically. No card, table or list scrolls on its own.
 2. **Cards are their content's height.** A list that can pass ten rows pages; a "top N" list stays at N.
 3. **Four splits.** Full, `1/2`, `2/3`, `1/3`; and `tiles`, whose columns follow how many tiles it holds and its own width (four are four or two, three are three or one, never a hole). Cards in a row are the same height; every card is a direct child.
-4. **Two widths.** `data` fills the canvas at every size (`data-width` is 100%), so a wider screen shows more, not a centred strip. Every console page uses it, settings and forms included, so every page's title sits on the same left edge; a form keeps its own measure inside (a Form section's card stops at 64rem). `reading` (`reading-width` 832px, centred) is for a page that is one long document, such as an article rendered with Prose. The top bar always takes the canvas width, so the tools never move; past the reading width the light fills the margins.
+4. **Three widths, one per kind of page.** `data` fills the canvas at every size (`data-width` is 100%), so a wider screen shows more, not a centred strip: every analytical page uses it, and their titles sit on the same left edge. `form` is a form page's own measure (`form-width`: a 15rem head column, the column gap, a `field-width` card and the page's gutter). It fills the canvas until the canvas is wider than a form needs, then centres — the remainder splits evenly instead of leaving a strip at one side. Settings is the page that uses it. `reading` (`reading-width` 832px, centred) is for a page that is one long document, such as an article rendered with Prose. The top bar always takes the canvas width, so the tools never move; past a page's own width the light fills the margins.
 
 ## Sizes
 
@@ -29,6 +29,10 @@ Status: beta
 |---|---|
 | Rail | `rail-width` 260px |
 | Assistant | `assistant-width` 400px (from 1024px) |
+| Data width | `data-width` 100%: the canvas, for every analytical page |
+| Form width | `form-width` 1253px at the template's own root: a `field-width` card and its head column; a form page centres on it past that |
+| Reading width | `reading-width` 832px: one long document |
+| Stage width | `stage-width` 1560px: a standalone screen (sign in, not found) |
 | Gutter | `gutter`: 16px on phones to 40px on wide screens (fluid) |
 | Top bar | 56px |
 | Masthead | 16px under the top bar (24px from 1024px), 32px (40px) under the title block |

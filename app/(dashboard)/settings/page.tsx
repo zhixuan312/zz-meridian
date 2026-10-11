@@ -52,6 +52,7 @@ export default async function SettingsPage() {
   const workspace = permissions.workspaceRead ? await workspaceRecord() : null;
   return (
     <PageFrame
+      width="form"
       kicker={<>{app.name} · {app.workspace}</>}
       title="Settings"
       description={`The workspace, what you hear about, how ${app.name} looks, and what assistants may do.`}

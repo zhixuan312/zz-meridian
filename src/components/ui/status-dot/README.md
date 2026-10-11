@@ -28,7 +28,7 @@ Status: beta
 | State | Spec |
 |---|---|
 | Static | the dot |
-| Live | the pulse loops (`m-pulse`, 2.4s, `ease-out`). One of the two loops the system allows. Under reduced motion the dot is still |
+| Live | the pulse loops (`m-pulse`, 2.4s, `ease-out`). One of the three loops the system allows. Under reduced motion the dot is still |
 
 ## Behaviour
 

@@ -47,9 +47,12 @@ export default function ShellPreview() {
           <Row split="tiles"><Cell label="Tile" /><Cell label="Tile" /><Cell label="Tile" /><Cell label="Tile" /></Row>
         </div>
       </Specimen>
-      <Specimen label="Two widths">
+      <Specimen label="Three widths" note="A page names one. `data` is the canvas; `form` and `reading` are narrower measures that fill it until the canvas is wider than the page needs, then centre. The bar is each width against the 1560px the layout is designed at.">
         <State label="data · fills the canvas at every width" className="w-full">
           <div className="h-8 w-full rounded-md border border-dashed border-line-strong bg-fill-hover" />
+        </State>
+        <State label="form · a form page's measure: its head column, a `field-width` card and the gutter" className="w-full">
+          <div className="mx-auto h-8 w-[80%] rounded-md border border-dashed border-line-strong bg-fill-hover" />
         </State>
         <State label="reading · 832px, centred: one long document, such as an article" className="w-full">
           <div className="mx-auto h-8 w-[53%] rounded-md border border-dashed border-line-strong bg-fill-hover" />

@@ -99,10 +99,10 @@ What exists, by layer, and how it changes per surface. "Same" means the card nee
 |---|---|---|---|
 | Planes | Frame, canvas and surface: three planes of depth instead of borders | Frame hidden; canvas full-bleed | Frame and canvas transparent |
 | Text roles | Display, page, section and card titles; figure; lead, body, small, caption, eyebrow, mono | Page title 28px holds; display steps down by clamp | Same; host font when given |
-| Shell | AppShell, PageFrame, Stack, Row, the two widths | Drawer, stacked rows | Replaced by EmbedFrame |
+| Shell | AppShell, PageFrame, Stack, Row, the three page widths | Drawer, stacked rows | Replaced by EmbedFrame |
 | Icons | Lucide at 1.75 stroke: 14, 16 and 18px | Same | Same |
 | Motion | Arrive, answer, float; reduced motion collapses all | Same | Arrive only on first render, so a re-render in the thread never replays |
-| App mark | The product mark at 20, 24 and 32px | Same | 20px in the embed head |
+| App mark | The product mark at 20, 24, 28 and 32px | Same | 20px in the embed head |
 
 ### Layer 2 · Components
 

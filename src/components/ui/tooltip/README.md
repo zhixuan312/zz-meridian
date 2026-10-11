@@ -27,7 +27,7 @@ One size; it wraps at 256px. Offset 6px from its trigger; it flips side and stay
 | Closed | not rendered |
 | Opening | after 300ms of hover, at once on keyboard focus; then 120ms between neighbouring triggers. Enters with `m-pop` over `dur-enter` |
 | Open | as above |
-| Closing | on pointer leave, blur, Escape or a press; fades over 120ms |
+| Closing | on pointer leave, blur, Escape or a press; fades over `dur-exit` 140ms |
 
 ## Behaviour
 

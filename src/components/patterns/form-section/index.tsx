@@ -7,7 +7,7 @@ import { Banner } from '@/components/ui/banner';
 import { Button } from '@/components/ui/button';
 
 /** The title column and the card column, shared by the form and the layout-only variant. */
-const GRID = 'grid gap-x-10 gap-y-5 @3xl:grid-cols-[15rem_minmax(0,64rem)]';
+const GRID = 'grid gap-x-10 gap-y-5 @3xl:grid-cols-[15rem_minmax(0,var(--field-width))]';
 
 /**
  * A titled group of settings that saves on its own. Its title and one sentence sit on the left, the fields in a card on

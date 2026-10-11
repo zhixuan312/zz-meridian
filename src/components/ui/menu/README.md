@@ -33,7 +33,7 @@ Minimum width 208px. Item height 32px (44px on a coarse pointer), padding 8px, r
 | Disabled | label `ink-disabled`; skipped by the arrow keys |
 | Checked | the accent check at the end |
 
-The surface enters with `float-in`: 4px down to place and 97% to full scale over `dur-enter` 320ms `ease-out`; it leaves over 120ms.
+The surface enters with `float-in`: 4px down to place and 97% to full scale over `dur-enter` 320ms `ease-out`; it leaves over `dur-exit` 140ms.
 
 ## Behaviour
 

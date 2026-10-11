@@ -16,7 +16,7 @@ These govern every layer. When two choices both fit the specs, pick the one that
 
 **Numbers are exact and honest.** A missing value reads as a dash, never as zero. Every figure says its period and its unit; every chart has a table behind it; a stale feed says it is stale. Large figures are set tight, with the unit and the fraction stepped down so the number reads first.
 
-**Calm, then precise.** The ground is quiet and lit; motion explains a change and stops. Data arrives once, in reading order; nothing loops but a live dot and a skeleton; reduced motion shows the final state.
+**Calm, then precise.** The ground is quiet and lit; motion explains a change and stops. Data arrives once, in reading order; nothing loops but a spinner, a skeleton and a live dot; reduced motion shows the final state.
 
 **Every surface, every operator.** A view holds on the console, on a phone and as an MCP App in a host. It is addressable, legible to a model, and safe to share with an agent: the agent reads anything, changes nothing without a person, and leaves its name on what it did.
 

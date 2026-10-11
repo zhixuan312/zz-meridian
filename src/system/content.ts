@@ -62,8 +62,9 @@ const TOKEN_VIEWS = [
   { id: 'colour', title: 'Colour', summary: 'Every colour role in both themes and every accent, with contrast computed live' },
   { id: 'type', title: 'Type', summary: 'One family with a mono, eleven sizes, three weights and the text roles' },
   { id: 'space', title: 'Space and radius', summary: 'The 4px scale, control heights, densities and six corners' },
-  { id: 'elevation', title: 'Elevation', summary: 'Three planes, hairlines, and shadows only where something floats' },
-  { id: 'motion', title: 'Motion', summary: 'Arrive, answer, float: four durations and three curves' },
+  { id: 'layout', title: 'Layout', summary: 'The shell, the width each kind of page is read at, and the gutter' },
+  { id: 'elevation', title: 'Elevation', summary: 'The planes and their hairlines, what floats and how high, and the glass in front of it' },
+  { id: 'motion', title: 'Motion', summary: 'Arrive, answer, float: a duration for each job, three curves and three loops' },
   { id: 'data', title: 'Data colour', summary: 'Six categorical slots, the neutral population, and the status trio' },
 ];
 

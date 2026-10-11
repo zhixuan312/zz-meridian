@@ -28,7 +28,7 @@ Status: beta
 
 | Part | Spec |
 |---|---|
-| Layout | Two columns from 48rem of section width: 15rem head, the card fills up to 64rem; one column below |
+| Layout | Two columns from 48rem of section width: 15rem head, the card fills up to `field-width`; one column below |
 | Gap | 40px between the columns, 20px between head and card when stacked |
 | Card | `radius-lg` 16px, `card-pad` padding, `shadow-card` |
 | Save bar | `surface-raised` at 90% with a backdrop blur, `line` top border, small buttons |
@@ -52,7 +52,7 @@ Status: beta
 
 ## Composition
 
-A form element holding a fieldset, or — with `as="div"` — a plain element holding a div; Field, Input, Select, Switch and Segmented from Layer 2; Table when the section holds one; Banner for errors; Button for the save bar; Toast for confirmation. Settings pages stack sections 56px apart at the data width, on the same left edge as every other page.
+A form element holding a fieldset, or — with `as="div"` — a plain element holding a div; Field, Input, Select, Switch and Segmented from Layer 2; Table when the section holds one; Banner for errors; Button for the save bar; Toast for confirmation. Settings pages stack sections 56px apart on a form page (`form-width`), which fills the canvas until it is wider than a form needs and then centres.
 
 `SettingRow` is a section's own child and needs nothing from `FormSection`: with `as="div"` and no `onSave`, a switch that applies the moment it is flipped sits in the same layout, saving itself.
 
@@ -62,7 +62,7 @@ The section holds no values: the page owns them, compares them with what is save
 
 ## Surfaces
 
-- **Console**: two columns at the data width; the card stops at 64rem, so a field never stretches across a wide screen.
+- **Console**: two columns on a form page; the card stops at `field-width`, so a field never stretches across a wide screen.
 - **Mobile**: one column; the save bar spans the width above the safe area.
 - **Embed**: not offered. Settings belong to the console; an agent proposes a setting change as a Proposal instead.
 

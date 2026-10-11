@@ -56,7 +56,8 @@ export function TokenView({ view, groups }: { view: string; groups: Groups }) {
       case 'data': return <DataColour theme={t} accent={accent} />;
       case 'type': return <Type groups={groups.core} />;
       case 'space': return <Space groups={groups} density={density} />;
-      case 'elevation': return <Elevation />;
+      case 'layout': return <Layout groups={groups.core} />;
+      case 'elevation': return <Elevation groups={groups.core} />;
       case 'motion': return <Motion groups={groups.core} />;
       default: return null;
     }
@@ -265,7 +266,51 @@ function Space({ groups, density }: { groups: Groups; density: Density }) {
   );
 }
 
-function Elevation() {
+/**
+ * The root size, in pixels: `text-base` is written on `html`, so one rem is that many. Read during render, not into
+ * state: the token cannot change while a page is open, and the server and the first client render then agree.
+ */
+function rootPx(): number {
+  if (typeof document === 'undefined') return 14;
+  return parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--text-base')) || 14;
+}
+
+const pixels = (v: string, root: number): number | null => {
+  const m = /^([\d.]+)(px|rem)$/.exec(v.trim());
+  return m ? Number(m[1]) * (m[2] === 'rem' ? root : 1) : null;
+};
+
+/** What width each kind of surface is read at: a bar per role, to scale, so the shell and the page measures compare. */
+function Layout({ groups }: { groups: TokenGroup[] }) {
+  const layout = groups.find((g) => g.id === 'layout')!;
+  const rows = layout.tokens.map((t) => ({ t, px: pixels(t.value, rootPx()) }));
+  const scale = Math.max(...rows.map((r) => r.px ?? 0));
+  return (
+    <section>
+      <h2 className="t-section">Widths</h2>
+      <p className="t-small mt-2 max-w-[62ch] text-ink-2">{layout.about}</p>
+      <div className="mt-6 flex flex-col gap-4">
+        {rows.map(({ t, px }) => (
+          <div key={t.name} className="grid gap-x-6 gap-y-1 md:grid-cols-[10rem_minmax(0,1fr)]">
+            <span className="font-mono text-xs text-ink-2">{t.name}</span>
+            <div className="min-w-0">
+              <div className="flex items-center gap-3">
+                <span className="min-w-0 flex-1"><span className="block h-3 rounded-xs bg-accent" style={{ width: `${((px ?? 0) / scale) * 100}%`, minWidth: '2px' }} /></span>
+                <span className="t-caption w-32 shrink-0 text-right tabular-nums">{t.css === '100%' ? 'the whole canvas' : t.value}</span>
+              </div>
+              <p className="t-caption mt-1.5 max-w-[70ch] text-ink-2">{t.description}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function Elevation({ groups }: { groups: TokenGroup[] }) {
+  const layer = groups.find((g) => g.id === 'layer')!;
+  // Found by a token it owns: `check.ts` fails any line that carries the word on its own, and that rule is worth keeping.
+  const glass = groups.find((g) => g.tokens.some((t) => t.name === 'blur-md'))!;
   const items: [string, ReactNode][] = [
     ['shadow-card', 'A card: hairline first'],
     ['shadow-raise', 'An interactive card under the pointer'],
@@ -291,6 +336,43 @@ function Elevation() {
             <p className="t-caption mt-2">{d}</p>
           </div>
         ))}
+      </section>
+      <section>
+        <h2 className="t-section">Stacking</h2>
+        <p className="t-small mt-2 max-w-[62ch] text-ink-2">{layer.about}</p>
+        <div className="mt-6 flex flex-col gap-2.5">
+          {layer.tokens.map((t) => (
+            <div key={t.name} className="grid gap-x-6 gap-y-1 md:grid-cols-[10rem_minmax(0,1fr)]">
+              <span className="font-mono text-xs text-ink-2">{t.name}</span>
+              <div className="min-w-0">
+                <div className="flex items-center gap-3">
+                  <span className="min-w-0 flex-1"><span className="block h-2 rounded-xs bg-accent" style={{ width: `${Number(t.value)}%`, minWidth: '2px' }} /></span>
+                  <span className="t-caption w-8 shrink-0 text-right tabular-nums">{t.value}</span>
+                </div>
+                <p className="t-caption mt-1 text-ink-2">{t.description}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+      <section>
+        <h2 className="t-section">Glass</h2>
+        <p className="t-small mt-2 max-w-[62ch] text-ink-2">{glass.about}</p>
+        <div className="mt-6 grid gap-4 lg:grid-cols-2">
+          {glass.tokens.map((t) => (
+            <div key={t.name} className="rounded-lg border border-line bg-surface p-5">
+              {/* What is beneath is drawn here and hidden from the reader: glass is only legible over something moving. */}
+              <div aria-hidden className="relative h-24 overflow-hidden rounded-md border border-line bg-ground p-3">
+                <div className="flex flex-col gap-1.5">
+                  {Array.from({ length: 5 }, (_, i) => <span key={i} className="t-caption whitespace-nowrap text-ink-3">Requests · 12 Sept · 128,402 · 294 ms · eu-central-1</span>)}
+                </div>
+                <span className={cn('absolute inset-x-3 top-3 h-14 rounded-md border border-line-strong bg-surface/70', t.name === 'blur-xl' ? 'backdrop-blur-xl' : 'backdrop-blur-md')} />
+              </div>
+              <p className="mt-3 font-mono text-xs">{t.name} <span className="text-ink-3">{t.value}</span></p>
+              <p className="t-caption mt-1 text-ink-2">{t.description}</p>
+            </div>
+          ))}
+        </div>
       </section>
     </div>
   );

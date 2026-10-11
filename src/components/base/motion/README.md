@@ -1,6 +1,7 @@
 # Motion
 
-Motion has three jobs and no others: data arriving, a control answering the pointer, and things floating above the page, with four durations, three curves, and nothing at all under reduced motion.
+Motion has three jobs and no others: data arriving, a control answering the pointer, and things floating above the page, with a duration for each job, three curves, three things that loop while they wait, and nothing at all
+under reduced motion.
 
 Status: beta
 
@@ -14,9 +15,9 @@ Status: beta
 | Answer | A control gives 0.5px and 98.5% | `press` | `dur-press` 110ms · `ease-out` |
 | Answer | Colour and outline change | transitions | `dur-hover` 160ms |
 | Answer | An indicator slides (the rail marker, a segmented thumb) | transitions | `dur-enter` · `ease-spring` |
-| Float | Menus and popovers rise 4px from 97% | `float-in` | `dur-enter` in, 120ms out |
-| Float | Dialogs rise 10px from 98% | `dialog-in` | `dur-enter` in, 140ms out |
-| Float | The drawer slides in from the left | `sheet-in` | `dur-enter` in, 200ms out |
+| Float | Menus and popovers rise 4px from 97% | `float-in` | `dur-enter` in, `dur-exit` out |
+| Float | Dialogs rise 10px from 98% | `dialog-in` | `dur-enter` in, `dur-exit` out |
+| Float | The drawer slides in from the left | `sheet-in` | `dur-enter` in, `dur-exit-sheet` out |
 
 ## Curves
 
@@ -30,12 +31,12 @@ Status: beta
 
 - An animation plays when its data lands, once. Nothing moves while it is being read.
 - A page arrives with motion only on the first load of a visit. A page reached by a click in the app, or one the router kept and shows again, is already there: the shell marks its main area `data-still` when the path changes, every arrival inside takes no time and ends in its final state, and the mark lifts after `dur-grow` + `dur-enter` so a change made on the page afterwards (a new period) still animates. A change of query alone is not a navigation.
-- Two loops exist, and only two: a Skeleton's shimmer and a fresh Freshness dot's pulse.
+- Three things loop, and only three, each while something waits: a Spinner's ring, a Skeleton's shimmer, and a fresh Freshness dot's pulse.
 - Every keyframe lives in `src/styles/motion.css`.
 
 ## States
 
-Under `prefers-reduced-motion: reduce` every duration and delay collapses, and arrivals (`arrive`, `rise`, `grow-*`, `draw`, `reveal-x`) show their final state outright; both loops stop.
+Under `prefers-reduced-motion: reduce` every duration and delay collapses, and arrivals (`arrive`, `rise`, `grow-*`, `draw`, `reveal-x`) show their final state outright; all three loops stop.
 
 ## Surfaces
 

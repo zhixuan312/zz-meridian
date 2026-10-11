@@ -10,7 +10,7 @@ Status: beta
 2. **`EmbedSurface`**: wraps every route under `app/embed/`. It starts the host bridge, applies the host's theme (`data-theme`), style variables and safe-area insets, marks the root `data-surface="embed"`, and reports the body's height.
 3. **When the host refuses.** A refused `ui/update-model-context` is sent once more a second later; refused again, every Ask from the view carries the context's first line (the view, its scope and its address), so the question keeps its referent. A refused `ui/message` tells the person in a toast, with the question to ask in the chat themselves. A refused fullscreen opens the console page.
 4. **`useShareView(context)`**: keeps both agents told what is on screen, with one shared context (decision 0011). In an MCP host it is re-sent as `ui/update-model-context` 250ms after it settles; on the console `share` publishes it for the assistant, which reads it with the next question (`sharedContextOn`). `SurfaceOverride` shares with nobody unless given a `share`, so an Atlas specimen never speaks for the page. `<ShareContext context={…} />` is the same hook as a component, for a server page with no client view to call it from.
-4. **`SurfaceOverride`**: puts a subtree on a given surface without a host, for the Atlas and tests.
+5. **`SurfaceOverride`**: puts a subtree on a given surface without a host, for the Atlas and tests.
 
 ## The host bridge
 

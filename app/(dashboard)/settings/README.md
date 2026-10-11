@@ -6,7 +6,7 @@ Status: beta
 
 ## Structure
 
-At the data width like every console page, sections 56px apart, each a Form section (its card stops at 64rem):
+On a form page's own measure (`form-width`), which fills the canvas until it is wider than the form needs and then centres, sections 56px apart, each a Form section (its card stops at `field-width`):
 
 | Section | Saves | Controls |
 |---|---|---|

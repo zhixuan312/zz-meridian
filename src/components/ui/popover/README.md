@@ -26,7 +26,7 @@ Width 288px by default (the viewport less 16px at most); 8px from the trigger.
 | State | Spec |
 |---|---|
 | Opening | `float-in`: 4px down to place and 97% to full scale over `dur-enter` 320ms |
-| Closing | Fades over 120ms |
+| Closing | Fades over `dur-exit` 140ms |
 
 ## Behaviour
 
