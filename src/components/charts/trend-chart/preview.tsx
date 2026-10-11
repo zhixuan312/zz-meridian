@@ -65,7 +65,7 @@ export default function TrendChartPreview() {
           />
         </Plane>
       </Specimen>
-      <Specimen label="Short" note="180px or less: three gridlines. On phones the chart drops to 180px and to three or four date labels.">
+      <Specimen label="Short" note="Under 200px the chart draws three gridlines instead of four, and three or four date labels; drawn here at 150px. A chart told to `fill` takes the height its card gives it, never under 220px.">
         <Plane on="surface" className="max-w-md">
           <TrendChart label="Spend per day" dates={dates} height={150} format="cost" series={[{ key: 's', label: 'Spend', values: current.map((d) => d.spend), kind: 'line', color: 'accent' }]} />
         </Plane>

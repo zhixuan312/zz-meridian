@@ -18,7 +18,7 @@ export default function InputPreview() {
           <Input aria-label="Rate limit" type="number" defaultValue={2000} trailing={<span className="text-xs">rpm</span>} />
         </div>
       </Specimen>
-      <Specimen label="Sizes" note="sm 30 · md 36 · lg 44px." stack>
+      <Specimen label="Sizes" note="sm 32 · md 38 · lg 46px." stack>
         <div className="grid w-full max-w-160 items-end gap-3 sm:grid-cols-3">
           <State label="Small"><Input size="sm" aria-label="Small" defaultValue="meridian-swift" /></State>
           <State label="Medium"><Input aria-label="Medium" defaultValue="meridian-swift" /></State>

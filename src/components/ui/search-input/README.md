@@ -14,7 +14,7 @@ Status: beta
 
 ## Sizes
 
-Input's sizes: sm 30, md 36, lg 44px.
+Input's sizes: sm 32, md 38, lg 46px.
 
 ## States
 

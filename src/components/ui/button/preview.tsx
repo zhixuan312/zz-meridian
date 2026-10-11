@@ -13,7 +13,7 @@ export default function ButtonPreview() {
         <Button variant="ghost">Cancel</Button>
         <Button variant="danger" icon={<Trash2 />}>Revoke key</Button>
       </Specimen>
-      <Specimen label="Sizes" note="sm 30 · md 36 · lg 44px; compact density 26 · 30 · 36.">
+      <Specimen label="Sizes" note="sm 32 · md 38 · lg 46px; compact density 28 · 32 · 38.">
         <Button size="sm">Small</Button>
         <Button size="md">Medium</Button>
         <Button size="lg" variant="primary" trailing={<ArrowRight />}>Large</Button>

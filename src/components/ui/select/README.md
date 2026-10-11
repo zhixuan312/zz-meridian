@@ -13,7 +13,7 @@ Status: beta
 
 ## Sizes
 
-The trigger takes Input's sizes: sm 30, md 36, lg 44px (compact 26, 30, 36). Options are 32px tall (taller with a description).
+The trigger takes Input's sizes: sm 32, md 38, lg 46px (compact 28, 32, 38). Options are 32px tall (taller with a description).
 
 ## States
 
