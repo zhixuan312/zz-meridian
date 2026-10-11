@@ -311,9 +311,13 @@ export function DataTable<R>({
                       const role = roleOf(c);
                       // The title is the row's link wherever it is shown, phone included: the whole card takes the
                       // pointer too (the row's own click), but the link is what a keyboard and a screen reader follow.
-                      const content = c === titleColumn && href ? <Link href={href}>{c.cell(r)}</Link> : c.cell(r);
+                      // The value is called once: it is both what we draw and what the title carries when the column
+                      // truncates. A cut value is cut everywhere on the page — a slug's tail is the part that identifies
+                      // it — and this card's own spec has said so since before the component did it.
+                      const value = c.cell(r);
+                      const content = c === titleColumn && href ? <Link href={href}>{value}</Link> : value;
                       return (
-                        <td key={c.key} data-mobile={role} data-num={c.numeric ? 'num' : c.align === 'right' ? 'true' : undefined} className={cellClass(c) || undefined}>
+                        <td key={c.key} data-mobile={role} data-num={c.numeric ? 'num' : c.align === 'right' ? 'true' : undefined} title={c.truncate && (typeof value === 'string' || typeof value === 'number') ? String(value) : undefined} className={cellClass(c) || undefined}>
                           {/* A phone may want other words for the same cell — "Used 1 min ago", not "1 min ago" — so
                               both are rendered and one is hidden: a few words each, never a second copy of the row. */}
                           {c.mobileCell ? (
