@@ -2,6 +2,22 @@
 
 Every release of ZZ Meridian, newest first. Versions follow semver: a removed or renamed token, prop or card is major; a new card, token or variant is minor; a corrected value is a patch. Each entry says what breaks and what to do instead.
 
+## [0.14.1] · 2026-10-12
+
+### Fixed
+
+- **A truncated cell keeps the whole value.** `DataTable`'s `truncate` adds `max-w-0 truncate` and nothing else, and this card's own spec has always said the cell carries the full text in its title — so a cut value was cut everywhere on the page and the whole one was kept nowhere. `TableCell` and `DataTable`'s cells now set that title themselves when the cell is a **value**; a column whose cell draws *more* than its value (an avatar beside a name, a method chip beside a route) passes the new `title: (row) => string`, because a component cannot keep what it cannot see. Measured on the template's own tables: 77 truncating cells across `/members`, `/keys`, `/customers` and `/requests`, every one now carrying its value. Additive: a column without `truncate` is unchanged, and a `title` you pass yourself still wins.
+- **The audit proves it measured the page it asked for.** `MEASURE` never reported the path it was on, and every check it runs — sideways scroll, clipped text, an unnamed control, a heading skip, contrast, target size — is vacuously true of an empty page. A route that never rendered therefore passed, and the run ended with the standard's line over a page nobody had measured. It now reports the path and how many characters the page's own content region holds, and fails a route where either is wrong, **before** any other issue.
+- **The keyboard check waits for the shell's chrome rather than for a duration.** The assistant's launcher enters the tab order when its streamed boundary resolves, so on a loaded machine the forward pass could measure 39 stops against a reverse pass of 40 and report the difference as a page defect. The wait is now anchored to the page's own signal — `[data-assistant-slot]`, in the page from the first byte and `aria-hidden` until the answer is known — bounded, then a few frames of the tab order holding still. With no assistant configured there is nothing to wait for and the check still returns in ~155 ms.
+- **A phone card's title and its badge no longer depend on the column's order.** `title` and `status` shared one `order`, so a table that listed its status column first put the badge on the card's left edge and wrapped the title into the width left over; and a title cell kept its column's centre alignment on a phone. Both are fixed — the title leads, the badge follows, and a fact sits under them.
+- **A count and its word come from one place.** `lib/format.ts` has a new `plural(n, one, other?)`, and the places that wrote their own `=== 1 ?` call it: a strip of one day's data read "over 1 days", a bar list read "1 others", and five more sites were doing the same arithmetic by hand. Additive: a new export, nothing else changed.
+- **A stacked trend's legend keeps its ordering and becomes visible.** A stacked part is the accent faded toward `--surface`, so the palest of four is a whisper — fine as a band beside its neighbours, invisible as a 4px swatch alone on the light card. Every stacked swatch is now drawn on a 6px `ink-3` hairline: 4.66:1 in light, 6.86:1 in dark.
+
+### Changed
+
+- **The craft recipe serves a built app.** `skills/zz-meridian/references/standard.md` prescribed `next dev` for the screenshot pass while line 142 of the same file prescribed `next start` for the audit. Under `next dev` a page's browser-side reads can fail to fire — one adopter produced **194 pictures of the loading state** and every check passed over them, because a skeleton has nothing to clip, nothing unnamed and nothing to contrast. The recipe now builds and serves, and says why.
+- **The chart card states the rule a mark and a fill obey.** `chart-neutral` is a fill (a track, a band behind a mark) and `chart-neutral-strong` is what a mark takes when it is the quiet one; a stacked part's ramp is a rule about *areas that touch each other*, while a legend swatch has to differ from the **ground** behind it. Written with the measurements that produced it.
+
 ## [0.14.0] · 2026-10-11
 
 ### Added
