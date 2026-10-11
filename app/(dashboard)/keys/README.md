@@ -10,7 +10,7 @@ Status: beta
 |---|---|---|---|
 | Masthead | PageFrame: kicker, "API keys", one sentence, Create key (primary) | One band | Stacked |
 | 1 | Banner (accent), only right after a key is created: "Copy {name} now", the full key in a Copy field, dismissable | Full width | Full width |
-| 2 | Data table: Name with its environment, Key (its hint, `zzm_live_…f601`, in mono, from 768px), Scopes (two and "+N", from 1280px), Created by (from 1024px), Created, Last used, and Revoke | Columns | Cards: name and environment, "Created …" and "Used …", Revoke |
+| 2 | Data table: Name with its environment, Key (its hint, `zzm_live_…f601`, in mono, from 672px), Scopes (two and "+N", from 1152px), Created by (from 896px), Created, Last used, and Revoke | Columns | Cards: name and environment, "Created …" and "Used …", Revoke |
 | Sheet | Create a key: Name (required), Environment (Live or Test), Scopes (checkboxes); Cancel and Create key | From the right, 440px | From the bottom |
 | Dialog | Revoke: "Revoke {name}?", what fails and that it cannot be undone, when it was last used; Cancel and Revoke key (danger) | Centred | Bottom sheet |
 

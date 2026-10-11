@@ -55,7 +55,7 @@ Arrival: rows rise with the page (`arrive`); under reduced motion they are simpl
 
 ## Surfaces
 
-- **Console**: as specified; low-value columns drop with `hideBelow` as the window narrows.
+- **Console**: as specified; low-value columns drop with `hideBelow` as the table narrows. The four steps are the table's own width, never the window's: `sm` 512px, `md` 672px, `lg` 896px, `xl` 1152px (`HIDE` in `index.tsx`). A page's spec quotes these numbers.
 - **Mobile, and any narrow frame**: once the table itself is under 640px wide each row becomes a card (a container query, as `hideBelow` reads the table's width, so a table in a split row or beside the assistant's column never runs past its frame), and the columns not wanted there are hidden. Facts that need their header to make sense use `mobileCell` ("Used 1 min ago", not "1 min ago"); the phone reads a smaller size in `ink-3`.
 - **Embed**: inline views show at most five rows as a compact list and offer Expand; fullscreen shows the full table.
 
