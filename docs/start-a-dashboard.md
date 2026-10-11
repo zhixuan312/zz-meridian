@@ -63,7 +63,7 @@ The rail and the command palette draw only the destinations the signed-in person
 
 ## 6. Arrange your pages
 
-Every page is a `PageFrame` holding a `Stack` of `Row`s. Start from the closest preset and change what it shows, not how it is laid out:
+Every page is a `PageFrame` holding a `Stack` of `Row`s. Start from the closest preset and change what it shows, not how it is laid out. A dashboard page leaves its width alone — `data` fills the canvas; a page that is mostly a form takes `width="form"`, whose band centres once the canvas is wider than a form needs; a page that is one long document takes `width="reading"`:
 
 | You need | Start from |
 |---|---|
