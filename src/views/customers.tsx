@@ -28,7 +28,7 @@ const STATUS_LABEL = { active: 'Active', trial: 'Trial', 'past due': 'Past due' 
 
 const columns: Column<CustomerRecord>[] = [
   {
-    key: 'name', header: 'Customer', grow: true, truncate: true, mobile: 'title', sortValue: (c) => c.name,
+    key: 'name', header: 'Customer', grow: true, truncate: true, mobile: 'title', sortValue: (c) => c.name, title: (c) => c.name,
     cell: (c) => (
       <span className="flex min-w-0 items-center gap-3">
         <Avatar name={c.name} size="sm" />

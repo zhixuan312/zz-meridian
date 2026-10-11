@@ -86,7 +86,7 @@ export function KeysView({ rows, now, createKey, revokeKey, may = { create: true
   };
   const columns: Column<ApiKey>[] = [
     {
-      key: 'name', header: 'Name', grow: true, truncate: true, mobile: 'title', sortValue: (k) => k.name,
+      key: 'name', header: 'Name', grow: true, truncate: true, mobile: 'title', sortValue: (k) => k.name, title: (k) => k.name,
       cell: (k) => (
         <span className="flex min-w-0 items-center gap-2.5">
           <span className="truncate font-medium">{k.name}</span>

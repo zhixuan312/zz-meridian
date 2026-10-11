@@ -199,7 +199,7 @@ export function MembersView({ rows, now, actions, access, roles }: { rows: Membe
 
   const columns: Column<Shown>[] = [
     {
-      key: 'name', header: 'Name', grow: true, truncate: true, mobile: 'title', sortValue: (m) => m.name,
+      key: 'name', header: 'Name', grow: true, truncate: true, mobile: 'title', sortValue: (m) => m.name, title: (m) => m.name,
       cell: (m) => (
         <span className="flex min-w-0 items-center gap-3">
           <Avatar name={m.name} size="sm" />

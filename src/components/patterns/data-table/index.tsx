@@ -26,6 +26,12 @@ export type Column<R> = {
   numeric?: boolean;
   muted?: boolean;
   truncate?: boolean;
+  /**
+   * The whole value, for a cell that draws *more* than it: an avatar beside a name, a method chip beside a route. A cell
+   * that is a plain value needs none — the component titles it from the value itself, because a value it can see is a
+   * value it can keep. A cell it cannot see (a node) it cannot keep, which is what this is for.
+   */
+  title?: (row: R) => string;
   /** Drop the column below this width (the least important columns go first). */
   hideBelow?: Breakpoint;
   /** The one column that takes the remaining width: the record's name. */
@@ -317,7 +323,7 @@ export function DataTable<R>({
                       const value = c.cell(r);
                       const content = c === titleColumn && href ? <Link href={href}>{value}</Link> : value;
                       return (
-                        <td key={c.key} data-mobile={role} data-num={c.numeric ? 'num' : c.align === 'right' ? 'true' : undefined} title={c.truncate && (typeof value === 'string' || typeof value === 'number') ? String(value) : undefined} className={cellClass(c) || undefined}>
+                        <td key={c.key} data-mobile={role} data-num={c.numeric ? 'num' : c.align === 'right' ? 'true' : undefined} title={c.title ? c.title(r) : c.truncate && (typeof value === 'string' || typeof value === 'number') ? String(value) : undefined} className={cellClass(c) || undefined}>
                           {/* A phone may want other words for the same cell — "Used 1 min ago", not "1 min ago" — so
                               both are rendered and one is hidden: a few words each, never a second copy of the row. */}
                           {c.mobileCell ? (

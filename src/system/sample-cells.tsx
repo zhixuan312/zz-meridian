@@ -53,6 +53,9 @@ export const requestColumns: Column<RequestRow>[] = [
   {
     key: 'request', header: 'Request', grow: true, truncate: true, mobile: 'title',
     cell: (r) => <RouteCell method={r.method} route={r.route} />,
+    // The chip and the route are a node, so the cell cannot title itself: without this the one column this table
+    // truncates cut the value and kept it nowhere. The two columns beside it had remembered; this one had not.
+    title: (r) => `${r.method} ${r.route}`,
     sortValue: (r) => r.route,
   },
   { key: 'status', header: 'Status', mobile: 'status', cell: (r) => <StatusBadge status={r.status} />, sortValue: (r) => r.status },
