@@ -3,6 +3,7 @@
  * agents read it.
  */
 import type { Member } from '@/data/sample';
+import { plural } from '@/lib/format';
 import { ADD_ONS, GRANTS, MAIN_ROLES, roleLabel, whoCan } from '@/data/roles';
 import type { Grant } from '@/lib/collection';
 import { formatDate } from '@/lib/format-date';
@@ -37,8 +38,8 @@ export function membersContext(rows: Member[], now: string): SharedContext {
   const mayChange = whoCan('members:update');
   const admins = active.filter((m) => mayChange.includes(m.role));
   const insights: Insight[] = [];
-  if (quiet.length) insights.push({ text: `${quiet.length} active ${quiet.length === 1 ? 'member has' : 'members have'} not been seen for ${QUIET_DAYS} days or more: ${listed(quiet, (m) => `${m.name} (${m.role}, ${m.team}, ${idle(m)} days)`, 'query_members finds them', 10)}.` });
-  if (invited.length) insights.push({ text: `${invited.length} ${invited.length === 1 ? 'invitation is' : 'invitations are'} unanswered: ${listed(invited, (m) => `${m.name}, invited ${formatDate(m.joined)}`, 'query_members finds them', 10)}.` });
+  if (quiet.length) insights.push({ text: `${quiet.length} active ${plural(quiet.length, 'member has', 'members have')} not been seen for ${QUIET_DAYS} days or more: ${listed(quiet, (m) => `${m.name} (${m.role}, ${m.team}, ${idle(m)} days)`, 'query_members finds them', 10)}.` });
+  if (invited.length) insights.push({ text: `${invited.length} ${plural(invited.length, 'invitation is', 'invitations are')} unanswered: ${listed(invited, (m) => `${m.name}, invited ${formatDate(m.joined)}`, 'query_members finds them', 10)}.` });
   insights.push({ text: `${admins.length} of ${active.length} active members can change the workspace (${mayChange.join(' or ')}): ${listed(admins, (m) => m.name, 'query_members finds them', 10)}.` });
   return {
     view: 'members',

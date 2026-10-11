@@ -3,6 +3,7 @@
  * unused. A key's secret, and its hash, are never in it: the secret is shown once, on this page, and nowhere else.
  */
 import type { ApiKey } from '@/data/sample';
+import { plural } from '@/lib/format';
 import { formatDate } from '@/lib/format-date';
 import { listed, type Insight, type SharedContext } from '@/lib/shared-context';
 
@@ -16,7 +17,7 @@ export function keysContext(rows: ApiKey[], now: string, scopes: readonly string
   const live = rows.filter((k) => k.env === 'live');
   const insights: Insight[] = [];
   const idle = live.filter((k) => (unused(k) ?? Infinity) >= UNUSED_DAYS);
-  if (idle.length) insights.push({ text: `${idle.length} live ${idle.length === 1 ? 'key has' : 'keys have'} not been used for ${UNUSED_DAYS} days or more: ${idle.map((k) => `${k.name} (${k.lastUsed ? `${unused(k)} days` : 'never used'}, owner ${k.owner})`).join(', ')}.` });
+  if (idle.length) insights.push({ text: `${idle.length} live ${plural(idle.length, 'key has', 'keys have')} not been used for ${UNUSED_DAYS} days or more: ${idle.map((k) => `${k.name} (${k.lastUsed ? `${unused(k)} days` : 'never used'}, owner ${k.owner})`).join(', ')}.` });
   const broad = live.filter((k) => scopes.every((s) => k.scopes.includes(s)));
   if (broad.length) insights.push({ text: `${broad.map((k) => k.name).join(', ')} ${broad.length === 1 ? 'is a live key' : 'are live keys'} with every scope; a narrower key limits what a leak can reach.` });
   const owners = new Map<string, number>();
