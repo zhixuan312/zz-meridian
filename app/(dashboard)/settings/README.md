@@ -20,7 +20,7 @@ On a form page's own measure (`form-width`), which fills the canvas until it is 
 
 | State | What shows |
 |---|---|
-| Loading | `loading.tsx`: a stack of skeleton sections |
+| Loading | `loading.tsx`: a stack of skeleton sections, at the page's own width (`form`), so nothing moves when the page arrives |
 | Assistant not resolved yet | The Assistant section keeps its place as a skeleton; once the request says the assistant is configured it becomes the section, and when it is not the place closes |
 | Editing Workspace | The save bar; Save confirms with a toast "Workspace saved" |
 | Empty name | The field's error; Save does nothing until it is fixed |
