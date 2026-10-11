@@ -89,6 +89,10 @@ async function press(find: string) {
     at = next;
   }
   if (!at) return fail(`nothing to press: ${find}`);
+  // A control the layout has hidden at this width still answers a rect of 0x0, so the click below would land at the
+  // page's top-left corner and the step would fail somewhere else entirely (another session lost twenty minutes to
+  // exactly that on a pager hidden by a container query). Say which it is.
+  if (at.x === 0 && at.y === 0) return fail(`the control is in the DOM but has no box at 0x0 — hidden at this width?: ${find}`);
   for (const type of ['mouseMoved', 'mousePressed', 'mouseReleased'] as const) await page.send('Input.dispatchMouseEvent', { type, x: at.x, y: at.y, button: 'left', clickCount: 1 });
 }
 /** Press the button named `label` in the open Proposal card. */

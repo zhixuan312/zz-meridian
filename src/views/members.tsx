@@ -215,7 +215,7 @@ export function MembersView({ rows, now, actions, access, roles }: { rows: Membe
     { key: 'status', header: 'Status', mobile: 'fact', sortValue: (m) => m.status, cell: (m) => <Badge tone={STATUS_TONE[m.status]} dot>{m.status}</Badge> },
     // A card holds three facts, and adding the role spent one, so Joined leaves the phone card and stays in the table
     // at every width that has columns: Last active is the fact the page's own headline and the shared context answer for.
-    { key: 'joined', header: 'Joined', numeric: true, muted: true, hideBelow: 'md', mobile: 'hidden', sortValue: (m) => m.joined, cell: (m) => formatDate(m.joined) },
+    { key: 'joined', header: 'Joined', numeric: true, muted: true, hideBelow: 'lg', mobile: 'hidden', sortValue: (m) => m.joined, cell: (m) => formatDate(m.joined) },
     {
       key: 'active', header: 'Last active', numeric: true, mobile: 'fact', sortValue: (m) => m.lastActive ?? '',
       cell: (m) => (m.lastActive ? formatRelative(m.lastActive, asOf) : <span className="text-ink-3">Never</span>),
