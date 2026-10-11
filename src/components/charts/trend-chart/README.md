@@ -27,6 +27,8 @@ Status: beta
 
 Colour: `accent` for the series the page is about; categorical slots 1 to 6 in order for peers; never a status colour unless the series means a status.
 
+**A mark takes the strong quiet; a swatch needs a floor, not just a neighbour.** `chart-neutral` (#D5D7E0 in light) is a *fill* — a track, a band behind a mark — and `chart-neutral-strong` is what a *mark* takes when it is the quiet one, because a mark's job is to be seen against the ground: measured in light, the strong variant is 3.19:1 while the fill is under 3:1 on any light ground, which is how seven bars in a share column came to render blank. A stacked part is the accent faded toward `--surface`, and *that* is a rule about areas that touch each other, where each step only has to differ from its neighbour — a legend swatch has to differ from the ground behind it, and nothing in the ramp's parameters knows that. So every stacked swatch is drawn on a 6px `ink-3` hairline (measured 4.66:1 light, 6.86:1 dark), which keeps the ramp's ordering readable instead of flattening it.
+
 ## Sizes
 
 | Height | Gridlines | Use |
