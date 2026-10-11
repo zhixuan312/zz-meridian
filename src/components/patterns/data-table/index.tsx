@@ -98,7 +98,10 @@ const PHONE_CELLS = '@max-[640px]:[&_td:not([data-mobile=hidden])]:!h-auto @max-
 const PHONE_ROLES = [
   '@max-[640px]:[&_td[data-mobile=check]]:order-0 @max-[640px]:[&_td[data-mobile=check]]:mr-1.5',
   '@max-[640px]:[&_td[data-mobile=title]]:order-1 @max-[640px]:[&_td[data-mobile=title]]:flex-1 @max-[640px]:[&_td[data-mobile=title]]:font-medium @max-[640px]:[&_td[data-mobile=title]]:!text-left',
-  '@max-[640px]:[&_td[data-mobile=status]]:order-1 @max-[640px]:[&_td[data-mobile=status]]:ml-auto @max-[640px]:[&_td[data-mobile=status]]:shrink-0',
+  // The badge sits beside the title, never before it: with the same `order` the column order decided which of the two took
+  // the card's left edge, so a table that listed a status column before its title wrapped the title into the width the
+  // badge left it. `check` stays ahead of both, and a fact follows them.
+  '@max-[640px]:[&_td[data-mobile=status]]:order-2 @max-[640px]:[&_td[data-mobile=status]]:ml-auto @max-[640px]:[&_td[data-mobile=status]]:shrink-0',
   // Facts flow on the second line, left to right whatever their column's alignment, each whole; one longer than the
   // card ends in an ellipsis.
   // A fact is a flex row of its content and its dot, so the dot stays beside it whatever element the cell renders.
