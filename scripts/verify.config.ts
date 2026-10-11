@@ -125,7 +125,12 @@ const config: VerifyConfig = {
     '/requests/req_missing', // no such request: the not-found screen in the shell
   ],
   smokeRoutes: ['/', '/requests', '/settings'],
-  budgets: { htmlKb: { '/health': 100, '/requests': 150 } },
+  // Sizes to hold. /health is the longest streamed document of the analytical pages: ninety days of bars, six
+  // services each with their own strip, an incident timeline, and a screen-reader table behind every chart. It
+  // measured 99-100 KiB when this cap was set, so the cap sat exactly on the measurement and the next legitimate
+  // byte failed: the access work that gave every page a gate added 0.6% (101 KiB, 103,025 bytes), which is markup
+  // the page needs rather than fat to trim. Held at 104 — above the measurement, so the next few KiB still fail.
+  budgets: { htmlKb: { '/health': 104, '/requests': 150 } },
   navigationChecks: [
     { path: '/', title: 'Overview', readySelector: 'main table tbody tr', probe: 'toggle', controlSelector: 'main [role="radio"][aria-checked="false"]', resultSelector: 'main [role="radio"]' },
     { path: '/requests', title: 'Requests', readySelector: 'main table tbody tr', probe: 'filter', controlSelector: 'main input[type="search"]', resultSelector: 'main table tbody tr' },
