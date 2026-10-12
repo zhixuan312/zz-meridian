@@ -77,7 +77,7 @@ const label = (route: string) => (route === '/' ? 'Home' : route.split('/').pop(
 /**
  * The configuration `adopt` writes: the template's own file with the project's pages as its navigation. Everything that
  * belongs to the sample is left out, because the project does not have it: the feature table (so every item is `public`,
- * the honest default, until step 4 of the Start guide points each at a feature of its own), every icon but the one the
+ * the honest default, until the fourth step of "Decide who may do what" in the Start guide points each at a feature of its own), every icon but the one the
  * items use, and the sample's workspaces with the field that names one. It throws when the template has no navigation
  * block to replace, since a configuration that still listed the sample's pages would be wrong without saying so.
  */

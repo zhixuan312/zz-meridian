@@ -30,7 +30,7 @@ These govern every layer. When two choices both fit the specs, pick the one that
 | 1 Base | The ground and its light, element defaults, text roles, motion, the shell, the surfaces | Uses only tokens | `src/styles/`, `src/components/base/` |
 | 2 Components | Single-purpose parts: button, field, table, dialog, badge, tabs… | Never knows which page it is on | `src/components/ui/` |
 | 3 Patterns | Components composed for one dashboard job: rail, featured metric, Meridian charts, data table, proposal | Uses only the layers below | `src/components/patterns/`, `src/components/charts/` |
-| 4 Pages | Routes on the console and views in an MCP host | Adds no styling of its own | `app/(dashboard)/`, `app/embed/`, `src/views/` |
+| 4 Pages | Routes on the console and views in an MCP host, and the templates pages share | Adds no styling of its own | `app/(dashboard)/`, `app/embed/`, `src/views/`, `src/components/templates/` |
 | 5 Product workspaces | How a product is assembled from its pages, declared in the configuration and written down in the product's guide: the one layer that is not a folder of components | A workspace is where a person looks, never what they may do | `src/app.config.ts`, `src/views/workspaces.ts`, `src/views/workspace-chrome.tsx`, `docs/product-workspaces.md` |
 
 A change at the bottom moves everything above it, and nothing above may invent a value of its own.
@@ -65,6 +65,7 @@ Dark is the default, written on `:root`; the light theme follows the operating s
 | `tokens/` | Layer 0: palette, core, the two themes, four accents, the compact density, and the resolver |
 | `src/styles/` | `tokens.css` and `theme.css` (generated), `base.css`, `motion.css` |
 | `src/components/{base,ui,patterns,charts}/` | Layers 1 to 3: one folder per card, holding the component, its `README.md` specification and its `preview.tsx` |
+| `src/components/templates/` | Layer 4: the arrangements pages share (the Records template), one folder per template with its `README.md` and `preview.tsx` |
 | `app/(dashboard)/`, `app/embed/`, `app/sign-in/` | Layer 4: the template's routes, each with its page specification |
 | `src/app.config.ts`, `src/views/workspaces.ts`, `src/views/workspace-chrome.tsx`, `docs/product-workspaces.md` | Layer 5: how a product is assembled from its pages, declared in the configuration and written down in the product's guide |
 | `app/system/` | The Design Atlas |

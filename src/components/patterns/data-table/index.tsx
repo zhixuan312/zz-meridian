@@ -54,8 +54,8 @@ export type TableState = { sort: string; dir: string; page: string };
 /**
  * The phone presentation of a row, per column role.
  *
- * Below 768px the table's rows lay out as cards — the SAME cells, placed here, rather than a second copy of every
- * record. The component used to render the table and a `<ul>` of the same rows and let CSS hide one: both trees were
+ * When the table is under 640px wide its rows lay out as cards — the SAME cells, placed here, rather than a second copy of
+ * every record. The component used to render the table and a `<ul>` of the same rows and let CSS hide one: both trees were
  * built on every render and both reached the DOM at every viewport, so every cell ran twice and each device downloaded
  * a tree it could never show.
  *

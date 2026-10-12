@@ -1,5 +1,5 @@
 import { connection } from 'next/server';
-import { PasswordPanel, PersonaPanel, SignInPanel, type Persona } from './panel';
+import { PasswordPanel, PersonaPanel, type Persona } from './panel';
 import { gated } from '@/lib/demo-gate';
 import { PERSONAS } from '@/data/access';
 import { members } from '@/data/collections';
@@ -16,17 +16,12 @@ async function personaList(): Promise<Persona[]> {
 }
 
 /**
- * The demo's password when `DEMO_PASSWORD` is set at run time, otherwise the personas it can be opened as beside the
- * product's sign-in; the page around it prerenders.
+ * The password panel when `DEMO_PASSWORD` is set at run time, otherwise the people the console can be opened as; the page
+ * around it prerenders. The sample has no other way in: no link is emailed and no identity provider is asked, so the
+ * page offers neither.
  */
 export async function GatedPanel() {
   await connection();
   const personas = await personaList();
-  if (gated()) return <PasswordPanel personas={personas} />;
-  return (
-    <div className="flex flex-col gap-6">
-      <PersonaPanel personas={personas} />
-      <SignInPanel />
-    </div>
-  );
+  return gated() ? <PasswordPanel personas={personas} /> : <PersonaPanel personas={personas} />;
 }

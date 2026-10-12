@@ -69,8 +69,8 @@ resolving never moves the row. An unavailable assistant is never a clickable dea
 
 `formatRelative(input, now)`, `Freshness`, `ShellTools` and `AlertsPanel` take a required `now`: the data's clock, which is
 the `observedAt` a `read()` returned, or `clock()` from `optional:src/data/collections.ts`. None of them reads the
-browser's clock, so a prerendered page and its hydration agree. Pass `now={observedAt}` to `<Freshness>` and
-`formatRelative(at, observedAt)` in a view; a view that formats times takes `now` as a prop from its page.
+browser's clock, so a prerendered page and its hydration agree. Pass `now={new Date(observedAt)}` to `<Freshness>` (`observedAt` is an ISO string, `Freshness` takes a `Date`) and
+`formatRelative(at, new Date(observedAt))` in a view; a view that formats times takes `now` as a prop from its page.
 
 ## Authorized, scoped reads
 

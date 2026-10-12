@@ -138,7 +138,7 @@ Two environment variables exist for the updater's own tests and are used only wh
 `ZZ_MERIDIAN_LOCAL_RELEASES=<dir>` reads `zz-meridian-<version>.tgz` from a folder instead of the registry, and
 `ZZ_MERIDIAN_TEST_INTERRUPT_AFTER=<n>` stops an update after `n` applied operations. Neither weakens a check.
 
-### This release's migrations
+### The migrations
 
 `cli/src/migrations.ts` holds `RELEASE_MIGRATIONS`: the changes a release makes in the team's own files, which `update`
 reports as `migration:<id>` because it cannot make them. An entry applies when the project's recorded version is older
@@ -147,7 +147,7 @@ null. It only reads, and only team-owned files (the ownership rule's managed pat
 absent. A project already on the new shape gets no line. Every entry carries `gate` and `build` as its checks (`verify-modes`, `gate` alone), and its
 instructions name the section of `references/cache.md`, `references/live.md` or `references/validation.md` to follow.
 
-For 0.5.0 they are:
+Four arrived after 0.5.0 and are resolved as the skill's `references/update.md` says: `share-view-context` and `agent-reads-section` (0.9.0), `assistant-view-tools` (0.10.0) and `nav-needs` (0.13.0). The ten of 0.5.0 are:
 
 | Id | Reported when a team-owned file still has | Completion step |
 |----|-------------------------------------------|-----------------|

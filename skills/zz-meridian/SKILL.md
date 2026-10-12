@@ -159,6 +159,9 @@ npx zz-meridian@latest create <target> --name "<Product>" --workspace "<Workspac
 cd <target>
 ```
 
+`--workspace` sets `app.workspace`, the environment line in a page's kicker ("Production"); it is not one of the navigation
+workspaces in `src/app.config.ts` (`references/customize.md`, "Navigation").
+
 It copies the template, brands it, installs the dependencies, initialises git, installs this skill into the project
 (`optional:.agents/skills/`, `optional:.claude/skills/`) and records every file in `optional:.meridian/manifest.json`. The person gets their
 dashboard, not a copy of the design system: the Design Atlas, the card and page specifications, `optional:docs/`, `decisions/`
@@ -238,8 +241,9 @@ Read `references/customize.md` and follow it. In short:
   replace each collection's `rows` with the person's data first, then delete them. Prove the
   numbers before building pages: a `example:tests/data.test.ts` asserting the counts your pages need (vitest resolves `@/`;
   plain `node` does not).
-- **Navigation** in `src/app.config.ts`; one line per page. A product with one navigation needs nothing more; one whose
-  destinations fall into a few places to look declares `workspaces` too (`references/customize.md`, "Navigation").
+- **Navigation** in `src/app.config.ts`; one line per page. A created project starts with the sample's three workspaces:
+  keep them (every new entry names a `workspace`) or take them out when the product has one navigation
+  (`references/customize.md`, "Navigation" says how). An adopted project has none.
 - **Pages from presets.** Start each page from the closest template page and change what it shows, not how it is laid
   out. Every page has one protagonist (a featured metric, a table, a form), a kicker, a title and one sentence.
 - **Remove what they did not ask for**: sample pages, their nav lines, their embed views, their entries in

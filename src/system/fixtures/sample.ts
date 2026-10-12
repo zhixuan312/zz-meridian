@@ -226,5 +226,5 @@ export const ACTIVITY: ActivityEvent[] = [
   { id: 'e2', at: new Date(DEMO_NOW.getTime() - 36 * 60_000).toISOString(), actor: app.name, system: true, verb: 'shifted traffic', object: 'from eu-west-1 to eu-central-1', tone: 'warning' },
   { id: 'e3', at: new Date(DEMO_NOW.getTime() - 2.4 * 3600_000).toISOString(), actor: 'Jonas Weber', via: 'Claude', verb: 'raised the rate limit for', object: 'Parallax AI to 2,000 rpm' },
   { id: 'e4', at: new Date(DEMO_NOW.getTime() - 5.1 * 3600_000).toISOString(), actor: app.name, system: true, verb: 'deployed', object: 'gateway v4.18.2', tone: 'positive' },
-  { id: 'e5', at: new Date(DEMO_NOW.getTime() - 26 * 3600_000).toISOString(), actor: 'Amara Okafor', verb: 'invited', object: 'two people to Workspace' },
+  { id: 'e5', at: new Date(DEMO_NOW.getTime() - 26 * 3600_000).toISOString(), actor: 'Amara Okafor', verb: 'invited', object: 'two people' },
 ];

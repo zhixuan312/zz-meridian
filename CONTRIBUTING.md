@@ -17,6 +17,8 @@ A new card passes two questions before anyone specifies it:
 4. **Build the card**: a folder in its layer holding `index.tsx` (the component), `preview.tsx` (every state) and `README.md` (the specification).
 5. **Check it** against "Done means" and run `pnpm gate`.
 
+A new page is also added to `PAGES` in `src/system/content.ts`, which the Atlas reads: its `id`, `title`, `route` (an address that opens, so a detail page names a real record), `spec` (the page's `README.md`), and `embed` or `template` when it has one.
+
 ## Where things live
 
 | Layer | Folder | Holds |
@@ -76,7 +78,7 @@ Write the status on the line under the title: `Status: beta`.
 - Under reduced motion it shows its final state with nothing moving.
 - Keyboard: every control reachable, operable and visibly focused; focus order follows reading order.
 - An agent's work in it is marked (Agent mark, "via" attribution, or a Proposal); no agent write happens without one.
-- A page shares a context both agents read: its scope and freshness, every figure with its unit, change and definition, what code derived from them, and what the data cannot say, within 2,400 characters. A figure an agent would otherwise recompute is computed in the context.
+- A page shares a context both agents read: its scope and freshness, every figure with its unit, change and definition, what code derived from them, and what the data cannot say, within 2,600 characters. A figure an agent would otherwise recompute is computed in the context.
 
 ## Tools
 

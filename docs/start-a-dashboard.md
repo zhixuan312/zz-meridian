@@ -12,7 +12,7 @@ cd my-dashboard
 pnpm dev   # the template at http://localhost:3000
 ```
 
-To keep the Atlas while you build, clone this repository instead (`git clone https://github.com/zhixuan312/zz-meridian.git my-dashboard`, then `pnpm install`): it serves the Atlas at `/system`, the specification of every part you are about to use. A project made with `create` has no Atlas and nothing to remove. In a clone, to ship without it, delete `app/system/` and remove the two rail entries that point at `/system` (Design system and Docs) from `nav` in `src/app.config.ts`. Keep `src/system/`: every card's preview imports its specimen helpers, and the gate regenerates its registry.
+To keep the Atlas while you build, clone this repository instead (`git clone https://github.com/zhixuan312/zz-meridian.git my-dashboard`, then `pnpm install`): it serves the Atlas at `/system`, the specification of every part you are about to use. A project made with `create` has no Atlas and nothing to remove. In a clone, to ship without it, run `node scripts/brand.ts --no-atlas`: it deletes `app/system/` and the Atlas-only modules in `src/system/`, removes the two rail entries that point at `/system`, the footer link, the `/system` entries in `scripts/verify.config.ts` and the `/system/**` build tracing in `next.config.ts`. It keeps the rest of `src/system/`: every card's preview imports its specimen helpers, and the gate regenerates its registry.
 
 ## 2. Name it
 

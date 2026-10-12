@@ -254,7 +254,7 @@ export const RELEASE_MIGRATIONS: ReleaseMigration[] = [
     since: '0.13.0',
     applies: navItemsWithoutNeeds,
     summary: 'Every item in the project\'s `nav` carries a `needs`, so the rail shows only the destinations a person may reach.',
-    instructions: 'Read "Roles and access" in the Start guide (docs/start-a-dashboard.md). For each item in `src/app.config.ts`\'s `nav`, add `needs: \'public\'` when everyone may open that page, or point it at its feature (`needs: FEATURES.<id>.needs`); step 4 of that guide has the four steps, and `scripts/check.ts` fails the project\'s gate, naming the href, on an item without one. `adopt` writes `needs: \'public\'` for a project it sets up from now on.',
+    instructions: 'Read "5. Decide who may do what" in the Start guide (docs/start-a-dashboard.md). For each item in `src/app.config.ts`\'s `nav`, add `needs: \'public\'` when everyone may open that page, or point it at its feature (`needs: FEATURES.<id>.needs`); the fourth of its four steps covers it, and `scripts/check.ts` fails the project\'s gate, naming the href, on an item without one. `adopt` writes `needs: \'public\'` for a project it sets up from now on.',
     checks: ['gate'],
   },
 ];

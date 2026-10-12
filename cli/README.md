@@ -35,7 +35,8 @@ npx zz-meridian@latest skill [--global]           # install only the agent skill
 ```
 
 Brand flags: `--name "Acme Ops"`, `--hex '#2E6BE4'` (or `--accent indigo|cobalt|jade|graphite`), `--theme dark|light`,
-`--workspace`, `--timezone`, `--currency`, `--user`, `--role`.
+`--workspace`, `--timezone`, `--currency`, `--user`, `--role`. `--workspace` sets `app.workspace`, the environment named
+in a page's kicker ("Production"); it does not touch the navigation workspaces.
 
 **adopt** copies Meridian's tokens, styles, components, gates and scripts into `src/`, `tokens/` and `scripts/`;
 merges the dependencies and scripts it needs into your `package.json`; replaces your global stylesheet (yours is kept
@@ -61,9 +62,9 @@ writes nothing; run it first.
   for you to merge.
 - It adds the dependencies and scripts this release needs to `package.json` and updates Meridian's managed block in
   `AGENTS.md`; a version or script you chose yourself becomes a migration to resolve, never a silent change.
-- It reports a migration for each interface the release changed where one of your own files still has the old shape;
-  moving to 0.5.0 can report ten, such as `cache-components-config`. Resolve them as the skill's
-  `references/update.md` says; `docs/distribution.md` lists them.
+- It reports a migration for each interface the release changed where one of your own files still has the old shape,
+  such as `cache-components-config` or `nav-needs`. `cli/src/migrations.ts` holds every one; resolve them as the skill's
+  `references/update.md` says.
 - Everything it did and everything left to do is in `.meridian/update/<version>/MERGE.md`. Resolve the items, then run
   the pinned `npx zz-meridian@<version> update --finalize`; `--resume` continues an interrupted run and `--abort` restores
   what it changed. Only finalize records the new version. `--finalize --verify` validates with the project's default

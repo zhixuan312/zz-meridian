@@ -53,23 +53,51 @@ sample, ZZ Meridian's own dashboard, lives in `optional:src/system/fixtures/`; y
 
 `app` holds the name, workspace, accent, timezone, currency and the signed-in user the rail shows (all set by
 `scripts/brand.ts`); `slug`, `domain` and `toolPrefix` derive from the name. `nav` is the rail and the command
-palette: groups of `{ href, label, icon, needs }` (icons from `lucide-react`, 1.75 stroke is applied by the rail). A badge
+palette: groups of `{ href, label, icon, needs }`, plus a `workspace` while the workspaces stay (icons from `lucide-react`, 1.75 stroke is applied by the rail). A badge
 is a short string, used only for something that needs attention ("1").
 
-`needs` is required, and it is a feature's own need **by reference** — `needs: FEATURES.overview.needs`, from
-`optional:src/data/features.ts` — never a grant written a second time: the rail and the palette draw only the destinations
-the signed-in person satisfies, and a test fails an item that restates a need. That filtering is presentation, not the
-gate: every page refuses on its own (see "Data" below).
+`needs` is required, and in a created project it is a feature's own need **by reference** — `needs: FEATURES.overview.needs`,
+from `optional:src/data/features.ts` — never a grant written a second time: the rail and the palette draw only the
+destinations the signed-in person satisfies, and a test fails an item that restates a need. That filtering is
+presentation, not the gate: every page refuses on its own (see "Data" below). An adopted project has no `features.ts`: `adopt` writes
+`needs: 'public'` on every item. `'public'` is the need any signed-in, Active person satisfies (`satisfies` in
+`src/data/access.ts`), so the item is drawn for everyone who is signed in and no role decides it; it is right for a
+destination every member may open, and an item moves to a feature of its own once the project has a role table.
 
-A product with one navigation draws `ConsoleRail` and `ConsolePalette` from `src/views/console-chrome.tsx` in its layout,
-with the `nav` above, and declares no workspaces; `adopt` writes a configuration that way. A product whose destinations
-fall into a few places to look declares `workspaces` once in `src/app.config.ts`, each with a `label`, an `audience`
-sentence and a `homeHref`, and gives every `nav` entry a `workspace` naming one. It keeps `optional:src/views/workspaces.ts`
-(`navOf` derives a workspace's navigation, `workspaceOf` says which workspace an address belongs to) and
-`optional:src/views/workspace-chrome.tsx` (`WorkspaceRail` and `WorkspacePalette`, which the layout draws in place of the
-plain pair). The address alone decides the workspace; nothing is stored, and a workspace chooses what the rail lists,
-never what a person may open. Keep a workspace with the key `main`: the adapter falls back to it for an address no entry
-owns. `optional:docs/product-workspaces.md` is the sample's own guide to all of this.
+A project made by `create` (or a clone) starts with the sample's three workspaces: `workspaces` in `src/app.config.ts` (Main,
+Business, Engineering), a `workspace` on every `nav` entry, and a layout that draws `WorkspaceRail` and `WorkspacePalette`.
+`navOf` keeps only the entries whose `workspace` matches, so an entry added without one is drawn by no rail and no palette.
+`adopt` writes no `workspaces`. Choose one way before adding pages.
+
+**Keep the workspaces** when the destinations fall into a few places to look. Each has a `label`, an `audience` sentence
+and a `homeHref`; give every `nav` entry a `workspace` naming one. Rewrite each `audience` sentence (the Overview,
+Operations and Analytics pages print `workspaces.<id>.audience` in their description) and move the homes to your own pages. Keep `optional:src/views/workspaces.ts` (`navOf` derives a workspace's
+navigation, `workspaceOf` says which workspace an address belongs to) and `optional:src/views/workspace-chrome.tsx`
+(`WorkspaceRail` and `WorkspacePalette`). The address alone decides the workspace; nothing is stored, and a workspace
+chooses what the rail lists, never what a person may open. Keep a workspace with the key `main`: the adapter and the
+refusal page fall back to it for an address no entry owns. `optional:docs/product-workspaces.md` is the sample's own guide
+to all of this.
+
+**Take them out** when the product has one navigation. In `src/app.config.ts` delete `workspaces`, `WorkspaceId` and the
+`workspace` field of `NavItem` and of every entry. Then, so the gate stays green:
+
+- In `optional:app/(dashboard)/layout.tsx` draw `ConsoleRail` and `ConsolePalette` from `src/views/console-chrome.tsx` in
+  place of `WorkspaceRail` and `WorkspacePalette`, with the same `access`.
+- Delete `optional:src/views/workspace-chrome.tsx`, `optional:src/views/workspaces.ts` and `optional:journeys/workspaces.ts`
+  (its entry in `browserChecks` in `scripts/verify.config.ts` goes with it).
+- In `optional:src/views/no-access.tsx` the refusal page's way out reads `navOf` and `workspaces.main`: make it the first
+  destination of `nav` the person may open, or `/`, and rewrite the two cases of `optional:tests/no-access.test.tsx` that
+  expect a workspace's first destination and Main's home.
+- Take `${workspaces.<id>.audience}` out of the descriptions of the Overview, Operations and Analytics pages, or delete
+  the pages.
+- Delete `optional:tests/workspaces.test.ts`, `optional:tests/workspace-access.test.ts` and
+  `optional:tests/workspace-chrome.test.tsx`. In `optional:tests/shell-alerts.test.ts` drop the `workspaceOf` check, and in
+  `optional:tests/workspace-overview.test.tsx` the test that reads `workspaces.main.audience`, with the two imports only
+  it uses.
+- A clone that keeps the Atlas also changes `src/system/atlas-shell.tsx`, which lists the workspaces; a created project
+  has no Atlas.
+
+`grep -rn "workspaces\.\|WorkspaceId\|views/workspaces\|workspace-chrome" app src tests journeys` finds what is left.
 
 ## Pages: presets to start from
 
@@ -117,7 +145,7 @@ Rules that make every page look like it belongs:
   `RecordsSkeleton` (`tiles`, `rows`, `filters`), goes inside the page's `LoadingPage`, so the page and its skeleton are
   spaced the same way.
 - **Tables**: mark one column `grow` (the lead), numbers `numeric`, low-value columns `hideBelow`; give `rowHref` so rows
-  open their record. Below 768px a `DataTable` becomes a card list by itself — a markdown table inside `Prose` does not: it keeps its columns and scrolls sideways, so a document meant to be read on a phone wants a list, not a table.
+  open their record. A `DataTable` under 640px wide (a phone, or a half-width row on a wide screen) becomes a card list by itself — a markdown table inside `Prose` does not: it keeps its columns and scrolls sideways, so a document meant to be read on a phone wants a list, not a table.
 - **Every state**: loading (`loading.tsx` is a `LoadingPage` from `src/components/patterns/page-loading`, with `name`,
   `title` and the page's `width`, around skeletons shaped like the page: `TilesSkeleton`, `ChartSkeleton`,
   `TableSkeleton` or `RecordsSkeleton`; read through `read()` so the page is
@@ -232,6 +260,8 @@ then stays off without them). Then fix what still points at the sample:
   runs and tickets. Write your own exceptions the same way, each from a read the caller may make and linked to the page
   that handles it; the layout hands the read's promise to `ShellAlerts` (`optional:src/views/shell-alerts.tsx`) without
   awaiting it.
+- `optional:src/app.config.ts`: each `audience` sentence in `workspaces` describes the sample and prints on a home's
+  masthead; rewrite it, or take the workspaces out ("Navigation").
 - `optional:app/sign-in/page.tsx`: the headline and lead describe the sample product.
 - `example:src/system/content.ts`: `PAGES` names a sample request id route.
 - Each page `README.md`: its States rows must describe what your view renders; `check.ts` only checks that the section

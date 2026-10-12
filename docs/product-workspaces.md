@@ -32,7 +32,7 @@ The rows follow the navigation's order. The last column names who the rail leave
 | Engineering | Tests and verification | `/tests` | The verification runs, newest first, and which are failing now | Nobody |
 | Engineering | Releases | `/releases` | Each release, what it still waits for, and which version is live | Nobody |
 
-Seven of these pages are lists of records, and share one arrangement, summary tiles over a table, which is the [Records template](/system/pages/template-records): Members, Customers, Requests, API keys, Operations tickets, Tests and verification and Releases.
+Seven of these pages are lists of records, and share one arrangement, an optional row of summary tiles over a table (Members and API keys have no tiles), which is the [Records template](/system/pages/template-records): Members, Customers, Requests, API keys, Operations tickets, Tests and verification and Releases.
 
 ## How a page finds its workspace
 

@@ -136,6 +136,7 @@ All components are surface-agnostic by construction: they size from control toke
 | Uptime bars | 90 days of a service's state | 90 bars | 30 bars, the last month | 30 bars |
 | Filter bar | Search, filters and view controls for one list | One row | Search, then a Filters sheet | Search only |
 | Data table | A list of records: sort, select, page, empty and loading states | Columns | Card list | Five rows, Expand |
+| Page loading | The masthead and body shapes a route shows while its page streams in | The page's own width | Same | None |
 | Activity feed | What happened, who did it, when | Timeline | Same | Five events |
 | Status list | Services and their state | Rows with uptime bars | Rows, bars under | Same as mobile |
 | Detail head | A record's identity, state and actions | Masthead | Masthead, actions in a menu | Embed head |
@@ -149,10 +150,10 @@ All components are surface-agnostic by construction: they size from control toke
 
 | Page | Preset | Console | Mobile | Embed view |
 |---|---|---|---|---|
-| Overview | Dashboard: tiles, a trend, breakdowns | Tiles · trend 2/3 + ranked list 1/3 · composition 1/2 + activity 1/2 | One column | `overview` inline: three tiles and the trend; fullscreen: the page |
-| Requests | List: filter bar, data table, detail on select | Table | Card list | `requests` inline: the five latest that match the tool's query |
+| Overview | Dashboard: featured metric, tiles, breakdowns, three regions | Featured metric with trend 2/3 + three tiles 1/3 · ranked list 1/2 + composition and trend 1/2 · Business, Operation and Delivery regions · activity full | One column | `overview` inline: three tiles and the trend; fullscreen: the page |
+| Requests | List: three tiles, filter bar, data table, detail on select | Tiles over the table | Tiles in one column, card list | `requests` inline: the five latest that match the tool's query |
 | Request | Detail: head, facts, timeline | Facts 2/3 + context 1/3 | One column | Not offered; the inline list links here |
-| Analytics | Two-chart: heatmap, breakdowns | Heatmap full width · 1/2 breakdowns | Grouped heatmap | Fullscreen only |
+| Analytics | Four figures, heatmap, breakdowns, endpoints | Four tiles · heatmap full width · hour of day 1/2 + regions 1/2 · requests and errors per day 1/2 + 1/2 · endpoints table full | Grouped heatmap | Fullscreen only |
 | Operations | Operational: status list, incidents | Status 2/3 + incident 1/3 | One column | `health` inline: the status list |
 | Customers | List with sparklines | Table | Card list | Not offered |
 | API keys | List with destructive actions | Table | Card list | Not offered |
@@ -160,7 +161,7 @@ All components are surface-agnostic by construction: they size from control toke
 | Operations tickets | List: summary tiles, filter bar, data table, a create dialog and a row menu to move a ticket | Tiles over the table; New ticket in the masthead | Tiles in one column, card list | Not offered |
 | Tests and verification | List: summary tiles, filter bar, data table; read-only | Tiles over the table; a run links to its release and its requests | Tiles in one column, card list | Not offered |
 | Releases | List: summary tiles, filter bar, data table; read-only | Tiles over the table; a release links to its runs | Tiles in one column, card list | Not offered |
-| Settings | Reader: form sections | 832px column | One column | Not offered |
+| Settings | Reader: form sections | `form` width, centred on a wide canvas | One column | Not offered |
 | Sign in, Not found, Error | Standalone: one sentence at poster size | Centred | Same | Not offered |
 | Agent proposal | Showcase: a Proposal end to end | The embed view itself | One column | `proposal`: one Proposal card with its states and Approve (no Expand — the card is the whole view) |
 | Records | Template: optional summary tiles over a data table with its filter bar. Members, Customers, Requests, API keys, Operations tickets, Tests and verification and Releases are arranged by it | Tiles in one row over the table | Tiles in one column, table as a card list | Not offered |
