@@ -198,6 +198,7 @@ This lists every path that differs from the plan's base, by file, or by folder f
 | `src/system/content.ts` | changed | the Atlas: six layers, templates as their own kind of entry, and the product entry |
 | `src/system/fixtures/sample-engineering.ts` | added | `src/data/collections.ts`, `src/data/sample.ts`, `src/data/ticket-mutations.ts` |
 | `src/system/fixtures/sample-ops.ts` | changed | `app/system/states/layout.tsx`, `src/components/patterns/shell-tools`, `src/data/collections.ts`; and its tests |
+| `src/system/fixtures/sample.ts` | changed | `app/system/(atlas)/page.tsx`, `app/system/states/layout.tsx`, `src/components/base/surface`, `src/components/charts/bar-list`, `src/components/charts/column-chart` and 25 more; and its tests |
 | `src/system/preview-loaders.ts` | changed | `app/system/preview/[section]/[card]/stage.tsx` |
 | `src/system/registry.ts` | changed | `src/system/card-stage.tsx`; and its tests |
 | `src/system/strata.tsx` | changed | `app/system/(atlas)/page.tsx` |
@@ -221,6 +222,8 @@ This lists every path that differs from the plan's base, by file, or by folder f
 | `app/embed/health/view.tsx` | changed | the embed view it belongs to |
 | `app/embed/overview/README.md` | changed | the embed view it belongs to |
 | `app/sign-in/README.md` | changed | the sign-in page's specification and its Atlas entry |
+| `app/sign-in/gated-panel.tsx` | changed | the sign-in page, which draws one panel or the other |
+| `app/sign-in/panel.tsx` | changed | the sign-in page: the two panels that sign somebody in |
 | `app/system/(atlas)/[section]/[id]/page.tsx` | changed | the Atlas |
 | `app/system/(atlas)/_article.tsx` | changed | the Atlas |
 | `app/system/(atlas)/layout.tsx` | changed | the Atlas |
@@ -238,10 +241,12 @@ This lists every path that differs from the plan's base, by file, or by folder f
 | `scripts/rail.ts` | changed | named by `scripts/verify.ts` |
 | `scripts/registry.ts` | changed | imported by `scripts/check.ts`; and its tests; named by `CONTRIBUTING.md`, `app/system/preview/[section]/[card]/keys.ts`, `package.json`, `scripts/audit.ts`, `scripts/brand.ts` |
 | `scripts/tokens.ts` | changed | imported by `scripts/contrast.ts`; named by `CONTRIBUTING.md`, `package.json`, `scripts/brand.ts`, `scripts/gate.ts` |
+| `scripts/verify.baseline.json` | changed | named by `scripts/sizes.ts`, `scripts/verify.config.ts`, `scripts/verify.ts` |
 | `scripts/verify.config.ts` | changed | `pnpm verify`; it names the workspace journeys, finds Settings ready by its theme choice and presses Operations' strip of days |
 | `scripts/verify.ts` | changed | named by `package.json` |
 | `docs/atlas-scenario-coverage.md` | added | `tests/cli-atlas-inventory.test.ts` and `tests/cli-atlas-review.test.ts` |
 | `docs/benchmark.md` | changed | read by `src/system/content.ts` |
+| `docs/distribution.md` | changed | readers of the repository; no code reads it |
 | `docs/product-workspaces.md` | added | the Atlas's layer 5 entry; `tests/cli-product-workspaces-doc.test.ts` |
 | `docs/start-a-dashboard.md` | changed | read by `src/system/content.ts` |
 | `docs/surfaces.md` | changed | the Atlas's surfaces guide; it gains layer 5 and the rows layer 4 lacked |
@@ -265,8 +270,10 @@ This lists every path that differs from the plan's base, by file, or by folder f
 | `tests/cli-adopt-config.test.ts` | added | the gate in this repository; the package leaves it out of a project |
 | `tests/cli-atlas-inventory.test.ts` | added | the gate in this repository; the package leaves it out of a project |
 | `tests/cli-atlas-layers.test.ts` | added | the gate in this repository; the package leaves it out of a project |
+| `tests/cli-atlas-prune.test.ts` | added | the gate in this repository; the package leaves it out of a project |
 | `tests/cli-atlas-review.test.ts` | added | the gate in this repository; the package leaves it out of a project |
 | `tests/cli-atlas-templates.test.ts` | added | the gate in this repository; the package leaves it out of a project |
+| `tests/cli-guides-delivered.test.ts` | added | the gate in this repository; the package leaves it out of a project |
 | `tests/cli-layer-statements.test.ts` | added | the gate in this repository; the package leaves it out of a project |
 | `tests/cli-product-previews.test.ts` | added | the gate in this repository; the package leaves it out of a project |
 | `tests/cli-product-workspaces-doc.test.ts` | added | the gate in this repository; the package leaves it out of a project |
@@ -296,6 +303,7 @@ This lists every path that differs from the plan's base, by file, or by folder f
 | `tests/settings-save.test.tsx` | added | the gate, here and in a project that keeps the file |
 | `tests/shared-context.test.tsx` | changed | the gate, here and in a project that keeps the file |
 | `tests/shell-alerts.test.ts` | added | the gate; it holds the bell's alerts |
+| `tests/sign-in-honest.test.tsx` | added | the gate, here and in a project that keeps the file |
 | `tests/template-consumers.test.tsx` | added | the gate, here and in a project that keeps the file |
 | `tests/ticket-mutations.test.ts` | added | the gate, here and in a project that keeps the file |
 | `tests/tickets-view.test.tsx` | added | the gate, here and in a project that keeps the file |
