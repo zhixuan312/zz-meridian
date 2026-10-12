@@ -13,8 +13,8 @@ vi.stubGlobal('IntersectionObserver', class { observe() {} unobserve() {} discon
 
 // The shell and the Assistant section resolve the assistant promise behind Suspense, so the render is awaited inside act.
 // This check is about the Assistant section, which every person keeps, so the page is rendered for someone who may do
-// everything: the workspace and danger sections are the ones tests/settings-access.test.tsx settles.
-const may = { workspaceRead: true, workspaceUpdate: true, workspaceRemove: true };
+// everything: the workspace section is the one tests/settings-access.test.tsx settles.
+const may = { workspaceRead: true, workspaceUpdate: true };
 const settings = (assistant: boolean) =>
   act(async () => {
     render(

@@ -55,7 +55,7 @@ describe('the feature table', () => {
       'invite-member': ['members', 'members:create'], 'change-role': ['members', 'members:update'],
       'suspend-member': ['members', 'members:update'], 'reactivate-member': ['members', 'members:update'],
       'remove-member': ['members', 'members:remove'], 'replay-request': ['request', 'requests:create'],
-      'save-workspace': ['settings', { allOf: ['workspace:read', 'workspace:update'] }], 'delete-workspace': ['settings', 'workspace:remove'],
+      'save-workspace': ['settings', { allOf: ['workspace:read', 'workspace:update'] }],
       'create-ticket': ['tickets', 'tickets:create'], 'update-ticket': ['tickets', 'tickets:update'],
     };
     expect(Object.keys(ACTIONS).sort()).toEqual(Object.keys(A).sort());

@@ -136,7 +136,7 @@ const config: VerifyConfig = {
   navigationChecks: [
     { path: '/', title: 'Overview', readySelector: 'main table tbody tr', probe: 'toggle', controlSelector: 'main [role="radio"][aria-checked="false"]', resultSelector: 'main [role="radio"]' },
     { path: '/members', title: 'Members', readySelector: 'main table tbody tr', probe: 'toggle', controlSelector: 'main button[aria-haspopup="menu"]', resultSelector: '[role="menu"]' },
-    { path: '/settings', title: 'Settings', readySelector: 'main [role="switch"]', probe: 'toggle', controlSelector: 'main [role="switch"]', resultSelector: 'main [role="switch"]' },
+    { path: '/settings', title: 'Settings', readySelector: 'main [role="radio"]', probe: 'toggle', controlSelector: 'main [role="radio"][aria-checked="false"]', resultSelector: 'main [role="radio"]' },
     { path: '/system', title: 'One dashboard', readySelector: 'section[aria-label="The system in numbers"]', probe: 'link', controlSelector: 'section a[href^="/system/"]', resultSelector: 'h1' },
     // The reading pages are the Atlas, and this one is the longest document in the repository: on the 4x-throttled phone
     // its heading has measured 243-282 ms since `0b18355`, while every console route stays inside the shared 250. The cost

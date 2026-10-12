@@ -291,8 +291,7 @@ type WorkspaceRow = { id: string; name: string; slug: string; timezone: string }
 /**
  * This workspace itself: the name the rail and invitations show, its address, and the time zone its daily totals are cut
  * on. One record, seeded from the identity the Settings form has always shown, and the only collection a Settings save
- * changes. `remove` exists so `workspace:remove` can be granted and asked (the Danger zone's control asks its action's
- * need), and the demo's Delete never calls it; both writes are `pageOnly`, so no agent tool carries them.
+ * changes. Its one write is `pageOnly`, so no agent tool carries it, and it cannot be removed.
  */
 export const workspace: Collection<WorkspaceRow, 'id'> = arrayCollection({
   name: 'workspace',
@@ -302,8 +301,8 @@ export const workspace: Collection<WorkspaceRow, 'id'> = arrayCollection({
   title: (w) => w.name,
   fields: z.object({ name: z.string().trim().min(1), slug: z.string(), timezone: z.string() }),
   rows: [{ id: 'workspace', name: `${app.name} ${app.workspace}`, slug: workspaceSlug, timezone: app.timezone as string }],
-  allow: ['update', 'remove'],
-  pageOnly: ['update', 'remove'],
+  allow: ['update'],
+  pageOnly: ['update'],
 });
 
 export const collections: AnyCollection[] = [members, keys, requests, days, endpoints, responses, services, incidents, activity, customers, tickets, tests, releases, workspace];

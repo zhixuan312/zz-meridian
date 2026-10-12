@@ -42,12 +42,6 @@ export const TIMEZONES = [
   { value: 'Asia/Tokyo', label: 'Tokyo', description: 'UTC+09:00' },
 ];
 
-/** MCP hosts this workspace has connected: where the product's views appear as apps inside an assistant. */
-export const CONNECTED_HOSTS = [
-  { id: 'h1', name: 'Claude', kind: 'Chat client', connectedBy: 'Maya Chen', since: ago(41 * DAY), lastUsed: ago(2.4 * 3600_000), scopes: ['Read dashboards', 'Propose changes'] },
-  { id: 'h2', name: 'Ops runbook agent', kind: 'Internal agent', connectedBy: 'Jonas Weber', since: ago(12 * DAY), lastUsed: ago(26 * 3600_000), scopes: ['Read dashboards'] },
-];
-
 /** What the bell holds: the live incident first (new), then what happened recently that someone may act on. */
 export const ALERTS: Alert[] = [
   { id: 'a1', tone: 'warning', unread: true, title: INCIDENTS[0].title, detail: 'Monitoring · p95 back under 650ms', at: INCIDENTS[0].updates.at(-1)!.at, href: '/health' },

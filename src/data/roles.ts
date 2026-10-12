@@ -22,7 +22,7 @@ const DASHBOARDS: readonly Grant[] = ['requests:read', 'days:read', 'endpoints:r
 /** Each role's own grants, and only its own: a member's add-ons are unioned in by `effective`, never written here. */
 export const GRANTS: Record<MainRole | AddOn, readonly Grant[]> = {
   Owner: [
-    ...DASHBOARDS, 'requests:create', 'keys:read', 'keys:create', 'keys:remove', 'members:read', 'members:create', 'members:update', 'members:remove', 'activity:create', 'tickets:create', 'tickets:update', 'workspace:read', 'workspace:update', 'workspace:remove',
+    ...DASHBOARDS, 'requests:create', 'keys:read', 'keys:create', 'keys:remove', 'members:read', 'members:create', 'members:update', 'members:remove', 'activity:create', 'tickets:create', 'tickets:update', 'workspace:read', 'workspace:update',
   ],
   Admin: [
     ...DASHBOARDS, 'requests:create', 'keys:read', 'keys:create', 'keys:remove', 'members:read', 'members:create', 'members:update', 'members:remove', 'activity:create', 'tickets:create', 'tickets:update', 'workspace:read',

@@ -157,9 +157,23 @@ All components are surface-agnostic by construction: they size from control toke
 | Customers | List with sparklines | Table | Card list | Not offered |
 | API keys | List with destructive actions | Table | Card list | Not offered |
 | Members | List with destructive actions | Table | Card list | Not offered |
+| Operations tickets | List: summary tiles, filter bar, data table, a create dialog and a row menu to move a ticket | Tiles over the table; New ticket in the masthead | Tiles in one column, card list | Not offered |
+| Tests and verification | List: summary tiles, filter bar, data table; read-only | Tiles over the table; a run links to its release and its requests | Tiles in one column, card list | Not offered |
+| Releases | List: summary tiles, filter bar, data table; read-only | Tiles over the table; a release links to its runs | Tiles in one column, card list | Not offered |
 | Settings | Reader: form sections | 832px column | One column | Not offered |
 | Sign in, Not found, Error | Standalone: one sentence at poster size | Centred | Same | Not offered |
 | Agent proposal | Showcase: a Proposal end to end | The embed view itself | One column | `proposal`: one Proposal card with its states and Approve (no Expand — the card is the whole view) |
+| Records | Template: optional summary tiles over a data table with its filter bar. Members, Customers, Requests, API keys, Operations tickets, Tests and verification and Releases are arranged by it | Tiles in one row over the table | Tiles in one column, table as a card list | Not offered |
+
+### Layer 5 · Product workspaces
+
+Not a component: a product's own grouping of its pages. The sample declares three workspaces, Main, Business and Engineering, in `src/app.config.ts`, and each of its thirteen destinations belongs to one. The address decides which workspace a page is in, and a workspace decides only which destinations the rail and the command palette list; access stays with each page. `docs/product-workspaces.md` is its guide: the workspaces and their audiences, where each destination lives, how a page finds its workspace, who can do what, tasks to try, how a product makes its own, and what the sample does not do.
+
+| Surface | What a workspace changes |
+|---|---|
+| Console | The rail and the command palette list the destinations of the workspace in view; the rail's menu switches between workspaces |
+| Mobile | The drawer is the same rail, so it lists the same destinations |
+| Embed | Nothing: an embed view has no rail |
 
 ## Adding to the inventory
 

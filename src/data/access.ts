@@ -126,7 +126,7 @@ const DEMO_COLLECTIONS: Record<string, { collection: AnyCollection; ops: readonl
   tickets: { collection: tickets, ops: ['read', 'create', 'update'] },
   tests: { collection: tests, ops: ['read'] },
   releases: { collection: releases, ops: ['read'] },
-  workspace: { collection: workspace, ops: ['read', 'update', 'remove'] },
+  workspace: { collection: workspace, ops: ['read', 'update'] },
 };
 
 export const { resolveAccess, collectionFor, can, nameOf } = accessFrom({

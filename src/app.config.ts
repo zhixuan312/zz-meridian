@@ -12,7 +12,7 @@ import type { Need } from './lib/collection.ts';
 export const app = {
   /** The product name: the rail, the document title, the sign-in screen. */
   name: 'ZZ Meridian',
-  /** One line under the name in the rail: the workspace or environment. */
+  /** The environment this product runs as: every page's kicker, and the line under the name in a rail that has one navigation. */
   workspace: 'Production',
   /** The accent preset the product ships with; a person can still change it in Settings. */
   accent: 'indigo' as const,

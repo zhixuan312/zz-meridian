@@ -3,7 +3,7 @@ import { ADD_ONS, GRANTS, MAIN_ROLES, effective, whoCan } from '@/data/roles';
 
 const DASHBOARDS = ['requests:read', 'days:read', 'endpoints:read', 'responses:read', 'services:read', 'incidents:read', 'customers:read', 'activity:read', 'tickets:read', 'tests:read', 'releases:read'];
 const TABLE: Record<string, string[]> = {
-  Owner: [...DASHBOARDS, 'requests:create', 'keys:read', 'keys:create', 'keys:remove', 'members:read', 'members:create', 'members:update', 'members:remove', 'activity:create', 'tickets:create', 'tickets:update', 'workspace:read', 'workspace:update', 'workspace:remove'],
+  Owner: [...DASHBOARDS, 'requests:create', 'keys:read', 'keys:create', 'keys:remove', 'members:read', 'members:create', 'members:update', 'members:remove', 'activity:create', 'tickets:create', 'tickets:update', 'workspace:read', 'workspace:update'],
   Admin: [...DASHBOARDS, 'requests:create', 'keys:read', 'keys:create', 'keys:remove', 'members:read', 'members:create', 'members:update', 'members:remove', 'activity:create', 'tickets:create', 'tickets:update', 'workspace:read'],
   Member: [...DASHBOARDS, 'requests:create', 'keys:read', 'members:read', 'activity:create', 'tickets:create', 'tickets:update'],
   Viewer: [...DASHBOARDS],
