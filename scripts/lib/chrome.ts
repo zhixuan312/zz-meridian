@@ -116,6 +116,11 @@ async function attach(proc: ChildProcess, dir: string, handle: Launched): Promis
   ws.addEventListener('message', (e) => {
     const m = JSON.parse(String(e.data));
     if (m.method === 'Page.fileChooserOpened') choosers++;
+    // A page that holds unsaved changes asks the browser to warn before it unloads, and the warning waits for an answer: with
+    // nobody to give one, the next open() timed out (30 s, measured on a form with a typed-in value). A check that opens
+    // another address has chosen to leave, so it says so. Only this question is answered: an alert or a confirm the page
+    // raises itself is the page's behaviour, and a check should meet it as it is.
+    if (m.method === 'Page.javascriptDialogOpening' && m.params.type === 'beforeunload') ws.send(JSON.stringify({ id: ++id, method: 'Page.handleJavaScriptDialog', params: { accept: true } }));
     if (m.id && pending.has(m.id)) { pending.get(m.id)!(m); pending.delete(m.id); return; }
     if (m.method === 'Runtime.exceptionThrown') errors.push('exception: ' + (m.params.exceptionDetails?.exception?.description ?? m.params.exceptionDetails?.text ?? '').split('\n')[0]);
     if (m.method === 'Runtime.consoleAPICalled' && m.params.type === 'error') errors.push('console.error: ' + m.params.args.map((a: any) => a.value ?? a.description ?? '').join(' ').slice(0, 200));
