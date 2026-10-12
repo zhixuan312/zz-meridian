@@ -13,7 +13,8 @@ function limitsOf(collections: AnyCollection[]): string[] {
   return collections.flatMap((c) => {
     const label = c.label.toLowerCase();
     const pageOnly = (c.pageOnly ?? []) as string[];
-    const missing = (['create', 'update', 'remove'] as const).filter((op) => !c[op]);
+    // A page that writes through its own call implements nothing here; `pageOnly` still says the change is made there.
+    const missing = (['create', 'update', 'remove'] as const).filter((op) => !c[op] && !pageOnly.includes(op));
     return [
       ...(pageOnly.length ? [`${c.label}: ${pageOnly.join(' and ')} only on its page, by the person; you cannot propose it.`] : []),
       ...((c.hidden ?? []).length ? [`${c.label}: ${(c.hidden as string[]).join(', ')} is never shown to you or to any tool.`] : []),

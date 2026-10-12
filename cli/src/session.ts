@@ -296,6 +296,26 @@ function install(ctx: Context, session: string, j: UpdateJournal, pm: keyof type
 
 const isInstall = (v: ValidationResult) => v.command.endsWith(' install');
 
+/**
+ * The managed files that are not the release's bytes and that no keep entry explains, as lines to print; none when
+ * there are none. Nothing else reports them between releases, and the next update would meet each as an edit nobody
+ * recorded a reason for. A keep register that cannot be read explains nothing, and the gate already says why.
+ */
+function unrecordedEdits(root: string, manifest: Manifest): string[] {
+  let kept = new Set<string>();
+  try { kept = new Set(parseKeep(fs.readFileSync(path.join(root, '.meridian', 'keep.json'), 'utf8')).map((k) => k.path)); } catch { /* no register, or one the gate reports */ }
+  const edited = Object.entries(manifest.files)
+    .filter(([p, hash]) => !kept.has(p) && (!fs.existsSync(path.join(root, p)) || sha256(fs.readFileSync(path.join(root, p))) !== hash))
+    .map(([p]) => p)
+    .sort();
+  if (edited.length === 0) return [];
+  return [
+    `${edited.length} managed ${edited.length === 1 ? 'file differs' : 'files differ'} from the release and ${edited.length === 1 ? 'is' : 'are'} not in .meridian/keep.json:`,
+    ...edited.map((p) => `  ${p}${fs.existsSync(path.join(root, p)) ? '' : ' (missing)'}`),
+    'The next update will ask about each. Restore a file to the release, or name it in .meridian/keep.json with the reason it differs.',
+  ];
+}
+
 export function start(ctx: Context, o: StartOptions): number {
   const { root, log } = ctx;
   const refuse = (cause: string) => { log(`zz-meridian update: ${cause}`); return 1; };
@@ -310,7 +330,11 @@ export function start(ctx: Context, o: StartOptions): number {
     if (!supportsSource(manifest.version)) return refuse(`updates start from 0.3.0; this project is on ${manifest.version}`);
     if (!/^\d+\.\d+\.\d+$/.test(ctx.version)) return refuse(`the running version ${JSON.stringify(ctx.version)} must look like 1.2.3`);
     // Already current is not a refusal: there is nothing to do, and the run that asked has its answer.
-    if (manifest.version === ctx.version) { log(`zz-meridian update: already at ${ctx.version}; nothing to update`); return 0; }
+    if (manifest.version === ctx.version) {
+      log(`zz-meridian update: already at ${ctx.version}; nothing to update`);
+      for (const line of unrecordedEdits(root, manifest)) log(line);
+      return 0;
+    }
     if (!isNewer(ctx.version, manifest.version)) return refuse(`this project is on ${manifest.version}, newer than this package (${ctx.version}); run npx zz-meridian@latest update`);
 
     const git = spawn('git', ['status', '--porcelain'], root, true);

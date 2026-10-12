@@ -71,7 +71,10 @@ export function ToastView({
   );
 }
 
-/** Mounted once, in the providers: the stack in the bottom-right corner (bottom, full width, on phones). */
+/**
+ * Mounted once, in the providers: the stack in the bottom-right corner (bottom, full width, on phones). The stack is no
+ * live region: each toast's own role announces it, once.
+ */
 export function Toaster() {
   const [list, setList] = useState<ToastItem[]>([]);
   useEffect(() => {
@@ -79,7 +82,7 @@ export function Toaster() {
     return () => void (listeners = listeners.filter((l) => l !== setList));
   }, []);
   return (
-    <div aria-live="polite" className="pointer-events-none fixed inset-x-4 top-[max(16px,env(safe-area-inset-top))] z-(--layer-toast) flex flex-col gap-2 sm:inset-x-auto sm:top-auto sm:right-4 sm:bottom-[max(16px,env(safe-area-inset-bottom))] sm:w-[min(380px,calc(100vw-32px))]">
+    <div className="pointer-events-none fixed inset-x-4 top-[max(16px,env(safe-area-inset-top))] z-(--layer-toast) flex flex-col gap-2 sm:inset-x-auto sm:top-auto sm:right-4 sm:bottom-[max(16px,env(safe-area-inset-bottom))] sm:w-[min(380px,calc(100vw-32px))]">
       {list.map((t) => (
         <ToastView
           key={t.id}

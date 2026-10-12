@@ -7,7 +7,7 @@ import { useShareView } from '@/components/base/use-share-view';
 import { Card } from '@/components/ui/card';
 import { EmptyState } from '@/components/ui/empty-state';
 import { AskAbout } from '@/components/patterns/ask-about';
-import { DataTable, useQueryState } from '@/components/patterns/data-table';
+import { DataTable, useQueryState, useSearchDraft } from '@/components/patterns/data-table';
 import { EmbedFrame } from '@/components/patterns/embed-frame';
 import { FilterBar } from '@/components/patterns/filter-bar';
 import { Freshness } from '@/components/patterns/freshness';
@@ -15,7 +15,7 @@ import { formatDuration } from '@/lib/format';
 import { formatRelative } from '@/lib/format-date';
 import { REGIONS } from '@/data/sample';
 import { describeFilters, requestsContext, type RequestsData } from '@/views/requests-context';
-import { activeFilters, options, REQUEST_FILTERS, REQUEST_METHODS, useSearchDraft } from '@/views/requests';
+import { activeFilters, options, REQUEST_FILTERS, REQUEST_METHODS } from '@/views/requests';
 import { MethodChip, requestColumns, StatusBadge } from '@/system/sample-cells';
 
 /** A person's change replaces the tool's `by`: the default must be a value a write can differ from, because a key at its default is dropped from the address. */

@@ -144,6 +144,28 @@ function matches(row: Record<string, unknown>, { field, op, value }: Condition):
   }
 }
 
+/**
+ * A list of rows filtered, ordered and paged as a `Query` means: every condition must hold, rows with no value in the
+ * sorted field come last whichever way it runs, ties fall back to the key, and `total` counts before the page is cut.
+ * A collection over a real store that answers with a list calls this, so its `query` means what the sample's does. The
+ * rows returned are the ones passed in, not copies.
+ */
+export function queryRows<T extends Record<string, unknown>>(rows: T[], key: keyof T & string, { where = [], sort, limit, offset = 0 }: Query): { rows: T[]; total: number } {
+  const hits = rows.filter((r) => where.every((w) => matches(r, w)));
+  if (sort) {
+    const s = sort.dir === 'desc' ? -1 : 1;
+    hits.sort((a, b) => {
+      const x = a[sort.field], y = b[sort.field];
+      if (x != null && y != null) {
+        const d = s * compare(x, y);
+        if (d) return d;
+      } else if (x != null || y != null) return x == null ? 1 : -1;
+      return compare(a[key], b[key]);
+    });
+  }
+  return { rows: limit === undefined ? hits.slice(offset) : hits.slice(offset, offset + limit), total: hits.length };
+}
+
 export function arrayCollection<T extends Record<string, unknown>, K extends keyof T & string>(def: {
   name: string;
   label: string;
@@ -199,20 +221,9 @@ export function arrayCollection<T extends Record<string, unknown>, K extends key
     pageOnly: def.pageOnly,
     pageOnlyFields: def.pageOnlyFields,
     hidden: def.hidden,
-    async query({ where = [], sort, limit, offset = 0 }) {
-      const hits = rows().filter((r) => where.every((w) => matches(r, w)));
-      if (sort) {
-        const s = sort.dir === 'desc' ? -1 : 1;
-        hits.sort((a, b) => {
-          const x = a[sort.field], y = b[sort.field];
-          if (x != null && y != null) {
-            const d = s * compare(x, y);
-            if (d) return d;
-          } else if (x != null || y != null) return x == null ? 1 : -1;
-          return compare(a[key], b[key]);
-        });
-      }
-      return { rows: copy(limit === undefined ? hits.slice(offset) : hits.slice(offset, offset + limit)), total: hits.length };
+    async query(q) {
+      const { rows: hits, total } = queryRows(rows(), key, q);
+      return { rows: copy(hits), total };
     },
     subscribe(listener) {
       const set = listeners().get(sk) ?? new Set();

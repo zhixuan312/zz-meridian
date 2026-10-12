@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Segmented } from '@/components/ui/segmented';
 import { Sparkline } from '@/components/charts/sparkline';
 import { MetricTile } from '@/components/patterns/metric-tile';
-import { DataTable, useQueryState, type Column } from '@/components/patterns/data-table';
+import { DataTable, useQueryState, useSearchDraft, type Column } from '@/components/patterns/data-table';
 import { FilterBar } from '@/components/patterns/filter-bar';
 import { Records } from '@/components/templates/records';
 import { formatCompact, formatCost, formatPercent } from '@/lib/format';
@@ -45,6 +45,8 @@ const columns: Column<CustomerRecord>[] = [
 /** The table and the tiles over it: the page renders the masthead, so this is the only part that waits for the address. */
 export function CustomersView({ rows }: { rows: CustomerRecord[] }) {
   const [f, set] = useQueryState({ q: '', plan: 'all', status: 'all', by: '', sort: 'spend', dir: 'desc', page: '1' });
+  // The box shows each key; the address, and so the list, follows when the typing stops.
+  const [draft, setDraft] = useSearchDraft(f.q, (q) => set({ q, by: '', page: '1' }));
   const matching = useMemo(() => {
     const q = f.q.trim().toLowerCase();
     return rows.filter((c) => (f.plan === 'all' || c.plan === f.plan) && (f.status === 'all' || c.status === f.status) && (!q || c.name.toLowerCase().includes(q)));
@@ -76,7 +78,7 @@ export function CustomersView({ rows }: { rows: CustomerRecord[] }) {
         onClearFilters={clear}
         toolbar={
           <FilterBar
-            search={{ value: f.q, onChange: (q) => set({ q, by: '', page: '1' }), placeholder: 'Search customers' }}
+            search={{ value: draft, onChange: setDraft, placeholder: 'Search customers' }}
             filters={[
               { key: 'status', label: 'Status', value: f.status, onChange: (status) => set({ status, by: '', page: '1' }), options: [{ value: 'all', label: 'All' }, { value: 'active', label: 'Active' }, { value: 'trial', label: 'Trial' }, { value: 'past due', label: 'Past due' }] },
             ]}

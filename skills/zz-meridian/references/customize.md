@@ -67,7 +67,9 @@ destination every member may open, and an item moves to a feature of its own onc
 A project made by `create` (or a clone) starts with the sample's three workspaces: `workspaces` in `src/app.config.ts` (Main,
 Business, Engineering), a `workspace` on every `nav` entry, and a layout that draws `WorkspaceRail` and `WorkspacePalette`.
 `navOf` keeps only the entries whose `workspace` matches, so an entry added without one is drawn by no rail and no palette.
-`adopt` writes no `workspaces`. Choose one way before adding pages.
+`adopt` writes no `workspaces`. Decide before adding pages, by what the person asked for: when they asked for several
+places to look (by audience, by team, by job), keep the workspaces; when they did not say, take them out, since one
+navigation is what a product has until somebody asks for more.
 
 **Keep the workspaces** when the destinations fall into a few places to look. Each has a `label`, an `audience` sentence
 and a `homeHref`; give every `nav` entry a `workspace` naming one. Rewrite each `audience` sentence (the Overview,
@@ -237,7 +239,7 @@ names its own brand route follows it instead of `brand` (`standard.md`, "The reg
 
 Branding is configuration, not source patching: `scripts/brand.ts` edits `src/app.config.ts` and the token files, and
 never `src/lib/preferences.ts`, which reads the accent and theme defaults from the app configuration.
-Logo: set `logo: '/logo.svg'` in `src/app.config.ts`, a root-relative local SVG served from `public/`. `AppMark` renders it
+Logo: set `logo: '/logo.svg'` in `src/app.config.ts`, a root-relative local SVG, PNG or WebP served from `public/`. `AppMark` renders it
 at 20, 24, 28 and 32 pixels with an empty alt beside the app name, and with the app name as alt when given a `label`.
 Any other value renders the default mark.
 Theme default: `npx zz-meridian@<the manifest's version> brand --theme dark|light` sets `theme` in `src/app.config.ts`; it applies before paint and

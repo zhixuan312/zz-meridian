@@ -1,8 +1,7 @@
 'use client';
 
-import { useEffect, useState } from 'react';
 import { MetricTile } from '@/components/patterns/metric-tile';
-import { DataTable, useQueryState } from '@/components/patterns/data-table';
+import { DataTable, useQueryState, useSearchDraft } from '@/components/patterns/data-table';
 import { FilterBar } from '@/components/patterns/filter-bar';
 import { formatCompact, formatDuration, formatPercent } from '@/lib/format';
 import { REGIONS, type RequestRow } from '@/data/sample';
@@ -27,23 +26,6 @@ export { REQUEST_METHODS };
 /** The filters that are set, as address parameters: what the export and "Open in the console" carry. */
 export const activeFilters = (f: Pick<Page['state'], 'q' | 'status' | 'method' | 'region'>): Record<string, string> =>
   Object.fromEntries(Object.entries({ q: f.q, status: f.status, method: f.method, region: f.region }).filter(([, v]) => v && v !== 'all'));
-
-/** What the search box shows while a person types, and when it writes the address: not on every key, so the server is asked once. */
-export function useSearchDraft(applied: string, write: (q: string) => void): [string, (q: string) => void] {
-  const [draft, setDraft] = useState(applied);
-  const [seen, setSeen] = useState(applied);
-  if (seen !== applied) {
-    setSeen(applied);
-    setDraft(applied);
-  }
-  useEffect(() => {
-    if (draft === applied) return;
-    const t = setTimeout(() => write(draft), 250);
-    return () => clearTimeout(t);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [draft]);
-  return [draft, setDraft];
-}
 
 /** The page's body under its masthead: the tiles and the table. The server filtered, sorted and paged, `pageSize` rows at a time. */
 export function RequestsView({ rows, total, summary, state, pageSize, updatedAt, now }: { rows: RequestRow[]; total: number; summary: Page['summary']; state: Page['state']; pageSize: number; updatedAt: string; now: string }) {

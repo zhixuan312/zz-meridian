@@ -22,7 +22,7 @@ Status: beta
 ## Behaviour
 
 - The tile is the accent, so the mark follows a preset (graphite gives an ink tile with a dark trend on dark).
-- `app.logo` in `src/app.config.ts` replaces the tile with the product's logo: a root-relative local SVG path such as `/logo.svg`, served from `public/`. It renders as an `<img>` at 20, 24, 28 or 32 pixels. A value that is not such a path (a URL, a relative path, another file type) renders the default mark.
+- `app.logo` in `src/app.config.ts` replaces the tile with the product's logo: a root-relative local path to an SVG, a PNG or a WebP, such as `/logo.svg`, served from `public/` (a bitmap is for a mark its owner does not let anybody redraw; give it at least 64 pixels a side, twice the largest size). It renders as an `<img>` at 20, 24, 28 or 32 pixels. A value that is not such a path (a URL, a relative path, another file type) renders the default mark.
 
 ## Surfaces
 

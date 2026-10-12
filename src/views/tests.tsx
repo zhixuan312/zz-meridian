@@ -7,7 +7,7 @@ import { useShareView } from '@/components/base/use-share-view';
 import { Records } from '@/components/templates/records';
 import { Badge, type Tone } from '@/components/ui/badge';
 import { MetricTile } from '@/components/patterns/metric-tile';
-import { DataTable, useQueryState, type Column } from '@/components/patterns/data-table';
+import { DataTable, useQueryState, useSearchDraft, type Column } from '@/components/patterns/data-table';
 import { FilterBar } from '@/components/patterns/filter-bar';
 import type { RunRow } from '@/data/engineering';
 import { formatDuration } from '@/lib/format';
@@ -28,6 +28,8 @@ export function TestsView({ rows, now }: { rows: RunRow[]; now: string }) {
   useLive(['tests', 'releases']);
   const asOf = new Date(now);
   const [f, set] = useQueryState({ q: '', state: 'all', release: '', runs: 'all', sort: 'started', dir: 'desc', page: '1' });
+  // The box shows each key; the address, and so the list, follows when the typing stops.
+  const [draft, setDraft] = useSearchDraft(f.q, (q) => set({ q, page: '1' }));
   const matching = useMemo(() => matchingRuns(rows, { q: f.q, state: f.state, release: f.release, runs: f.runs }), [rows, f.q, f.state, f.release, f.runs]);
   const isFiltered = f.q !== '' || f.state !== 'all' || f.release !== '' || f.runs !== 'all';
   useShareView(testsContext(rows, now, f));
@@ -96,7 +98,7 @@ export function TestsView({ rows, now }: { rows: RunRow[]; now: string }) {
           onClearFilters={clear}
           toolbar={
             <FilterBar
-              search={{ value: f.q, onChange: (q) => set({ q, page: '1' }), placeholder: 'Search runs' }}
+              search={{ value: draft, onChange: setDraft, placeholder: 'Search runs' }}
               filters={[
                 { key: 'state', label: 'Verdict', value: f.state, onChange: (state) => set({ state, page: '1' }), options: [{ value: 'all', label: 'All' }, ...['passed', 'failed', 'skipped'].map((w) => ({ value: w, label: LABEL(w) }))] },
                 // What the tiles count: the latest run of each verification, without the runs it replaced.

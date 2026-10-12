@@ -22,15 +22,24 @@ import type { ChromeAccess } from '@/lib/collection';
  *
  * A product that has its own destinations passes them as `nav`: they are drawn in place of the configured ones, in their
  * own groups and order, and filtered by `access` the same way. A supplied empty navigation stays empty.
+ *
+ * A product that learns who is signed in in the browser has no promise for a layout to hand over: it passes `access` as
+ * the value once it has it (`null` for nobody), which is drawn at once, and holds `RailPending` in the rail's place
+ * until then.
  */
-export function ConsoleRail({ access, nav: given, ...props }: RailProps & { access?: Promise<ChromeAccess | null> }) {
-  if (!access) return <Rail nav={given ?? nav} {...props} />;
+export function ConsoleRail({ access, nav: given, ...props }: RailProps & { access?: Access }) {
+  if (access === undefined) return <Rail nav={given ?? nav} {...props} />;
+  if (!pending(access)) return <ResolvedRail access={access} nav={given} {...props} />;
   return (
     <Suspense fallback={<RailPending />}>
       <ResolvedRail access={access} nav={given} {...props} />
     </Suspense>
   );
 }
+
+/** Who is signed in and what they may open: on its way from the request, or already known (`null` for nobody). */
+type Access = Promise<ChromeAccess | null> | ChromeAccess | null;
+const pending = (access: Access): access is Promise<ChromeAccess | null> => access !== null && typeof (access as { then?: unknown }).then === 'function';
 
 /** What the layout hands the rail: the Rail's own props, less the three the request decides, with the navigation optional. */
 type RailProps = Omit<ComponentProps<typeof Rail>, 'nav' | 'user' | 'viewAs'> & { nav?: NavGroup[] };
@@ -41,7 +50,7 @@ type RailProps = Omit<ComponentProps<typeof Rail>, 'nav' | 'user' | 'viewAs'> & 
  * a fallback that drew the real rail would put a second copy of it in every page's HTML, which is what the HTML budget
  * in `pnpm verify` refuses.
  */
-function RailPending() {
+export function RailPending() {
   return (
     <div aria-hidden className="flex h-full w-full flex-col">
       <div className="flex h-16 items-center px-4">
@@ -61,8 +70,9 @@ function RailPending() {
   );
 }
 
-export function ConsolePalette({ access, nav: given }: { access?: Promise<ChromeAccess | null>; nav?: NavGroup[] }) {
-  if (!access) return <CommandPalette nav={given ?? nav} />;
+export function ConsolePalette({ access, nav: given }: { access?: Access; nav?: NavGroup[] }) {
+  if (access === undefined) return <CommandPalette nav={given ?? nav} />;
+  if (!pending(access)) return <ResolvedPalette access={access} nav={given} />;
   return (
     <Suspense fallback={null}>
       <ResolvedPalette access={access} nav={given} />
@@ -73,15 +83,15 @@ export function ConsolePalette({ access, nav: given }: { access?: Promise<Chrome
 /** The rail with nobody signed in yet: its frame, the placeholder person, and no destination to click. */
 const NOTHING: NavGroup[] = [];
 
-function ResolvedRail({ access, nav: given, ...props }: RailProps & { access: Promise<ChromeAccess | null> }) {
-  const chrome = use(access);
+function ResolvedRail({ access, nav: given, ...props }: RailProps & { access: Access }) {
+  const chrome = pending(access) ? use(access) : access;
   // A promise that settled on nothing is an identity nobody could resolve: keep the placeholder, never the sample person.
   if (!chrome) return <Rail nav={NOTHING} user={null} {...props} />;
   return <Rail nav={visible(chrome.only, given)} user={chrome.user} viewAs={chrome.viewAs} {...props} />;
 }
 
-function ResolvedPalette({ access, nav: given }: { access: Promise<ChromeAccess | null>; nav?: NavGroup[] }) {
-  const chrome = use(access);
+function ResolvedPalette({ access, nav: given }: { access: Access; nav?: NavGroup[] }) {
+  const chrome = pending(access) ? use(access) : access;
   return <CommandPalette nav={chrome ? visible(chrome.only, given) : NOTHING} />;
 }
 

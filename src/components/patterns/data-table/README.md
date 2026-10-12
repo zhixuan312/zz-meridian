@@ -51,7 +51,7 @@ Arrival: rows rise with the page (`arrive`); under reduced motion they are simpl
 - A click anywhere on a linked row opens it, except on a link, a button, a checkbox or a menu, and except when text is being selected. It asks "Leave without saving?" first while a form on the page has unsaved changes (the shell's `useLeave`).
 - A card's facts are the first three columns marked `mobile: 'fact'`, whatever the table's own width dropped: `hideBelow` is a rule about the table, and a card has room for three short facts. The title stays the row's link at both widths.
 - Rows per page: 20, 50 or 100; changing it returns to page 1.
-- Addressable state: `useTableQuery({ sort, dir })` keeps `?sort=latency&dir=desc&page=2` in the address. When the page also keeps filters in the URL, hold everything in one `useQueryState`: two setters called in one handler would each write over the other.
+- Addressable state: `useTableQuery({ sort, dir })` keeps `?sort=latency&dir=desc&page=2` in the address. When the page also keeps filters in the URL, hold everything in one `useQueryState`: two setters called in one handler would each write over the other. A search box over such a view keeps its text with `useSearchDraft(applied, write)`: the box follows every key and the address is written once the typing has stopped for 250ms (at once when cleared), so a word is one navigation.
 
 ## Surfaces
 
@@ -104,4 +104,4 @@ const columns: Column<RequestRow>[] = [
 <DataTable caption="Requests" noun="requests" rows={rows} columns={columns} rowKey={(r) => r.id} rowHref={(r) => `/requests/${r.id}`} toolbar={<FilterBar … />} />
 ```
 
-Exports: `DataTable`, `Column`, `TableState`, `useTableQuery`, `useQueryState`, `sortRows`.
+Exports: `DataTable`, `Column`, `TableState`, `useTableQuery`, `useQueryState`, `useSearchDraft`, `sortRows`.

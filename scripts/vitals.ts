@@ -45,12 +45,14 @@ const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 /** Installed before any page script: every vital the page produces lands on window.__v. */
 const OBSERVE = `(() => {
-  const v = window.__v = { lcp: 0, cls: 0, session: 0, last: 0, taps: [], frames: [], recording: false, since: 0 };
+  const v = window.__v = { lcp: 0, cls: 0, session: 0, last: 0, taps: [], frames: [], recording: false, since: 0, moved: {} };
+  const named = (n) => !n || n.nodeType !== 1 ? 'an element since removed' : n.tagName.toLowerCase() + (n.id ? '#' + n.id : '') + (typeof n.className === 'string' && n.className.trim() ? '.' + n.className.trim().split(/\\s+/).slice(0, 2).join('.') : '');
   new PerformanceObserver((l) => { for (const e of l.getEntries()) v.lcp = e.startTime; }).observe({ type: 'largest-contentful-paint', buffered: true });
   new PerformanceObserver((l) => { for (const e of l.getEntries()) {
     if (e.hadRecentInput) continue;
     v.session = e.startTime - v.last < 1000 && v.session ? v.session + e.value : e.value;
     v.last = e.startTime; v.cls = Math.max(v.cls, v.session);
+    for (const s of e.sources || []) { const k = named(s.node); v.moved[k] = (v.moved[k] || 0) + e.value; }
   } }).observe({ type: 'layout-shift', buffered: true });
   const TAP = /^(pointer|touch|mouse|click|gesture)/;
   new PerformanceObserver((l) => { for (const e of l.getEntries()) if (e.interactionId && TAP.test(e.name) && e.startTime >= v.since) v.taps.push(e.duration); }).observe({ type: 'event', buffered: true, durationThreshold: 16 });
@@ -95,11 +97,13 @@ for (const route of ROUTES) {
     await page.send('Input.dispatchKeyEvent', { type: 'keyUp', key: 'Escape', code: 'Escape', windowsVirtualKeyCode: 27 });
     await sleep(500);
   }
-  const v = await page.eval<{ lcp: number; cls: number; frames: number[] }>('window.__v');
+  const v = await page.eval<{ lcp: number; cls: number; frames: number[]; moved: Record<string, number> }>('window.__v');
+  // A page over the CLS floor says what moved: the three elements whose shifts sum highest (a shift counts for each element it moved).
+  const moved = v.cls >= 0.1 ? Object.entries(v.moved).sort((a, b) => b[1] - a[1]).slice(0, 3).map(([k, n]) => `${k} ${n.toFixed(3)}`).join(', ') : '';
   const dropped = v.frames.filter((f) => f > 50).length;
   const bad = v.lcp >= 2500 || inp >= 200 || v.cls >= 0.1;
   if (bad) failures++;
-  console.log(`${bad ? 'FAIL' : 'ok  '} ${route.padEnd(36)} LCP ${(v.lcp / 1000).toFixed(2)} s · INP ${Math.round(inp)} ms · CLS ${v.cls.toFixed(3)} · frames over 50 ms: ${dropped} of ${v.frames.length} · taps: ${tapped}${inp >= 100 ? ` · slowest tap: ${slowest}` : ''}`);
+  console.log(`${bad ? 'FAIL' : 'ok  '} ${route.padEnd(36)} LCP ${(v.lcp / 1000).toFixed(2)} s · INP ${Math.round(inp)} ms · CLS ${v.cls.toFixed(3)} · frames over 50 ms: ${dropped} of ${v.frames.length} · taps: ${tapped}${inp >= 100 ? ` · slowest tap: ${slowest}` : ''}${moved ? ` · moved most: ${moved}` : ''}`);
 }
 await page.send('Emulation.setCPUThrottlingRate', { rate: 1 });
 page.close();

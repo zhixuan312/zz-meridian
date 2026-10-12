@@ -152,7 +152,9 @@ function ResolvedColumn({ assistant, open, used, onClose, ask, onAsked }: { assi
 }
 
 /**
- * Data arrives once. The first page of a visit rises and grows into place; a page reached by a click in the app, or one
+ * Data arrives once. The first page of a visit rises and grows into place, unless the reader has already waited longer
+ * than that arrival lasts: motion after a long wait is no feedback, only a later page, and on a slow phone it held the
+ * page's own text back (issue #21). A page reached by a click in the app, or one
  * the router kept and shows again (Cache Components keeps visited routes mounted and hidden, and showing an element
  * again restarts its animations), is already there and must not replay, or a ready page reads as still loading
  * (issue #19). A change of path marks the main area still before paint; the mark lifts once the longest arrival would
@@ -163,16 +165,20 @@ function ResolvedColumn({ assistant, open, used, onClose, ask, onAsked }: { assi
  */
 function StillOnNavigation({ main }: { main: RefObject<HTMLElement | null> }) {
   const path = usePathname();
-  const shown = useRef(path);
+  const shown = useRef<string | null>(null);
   useLayoutEffect(() => {
     const el = main.current;
     if (shown.current === path || !el) return;
+    const first = shown.current === null;
     shown.current = path;
-    el.setAttribute('data-still', '');
     const css = getComputedStyle(document.documentElement);
     // A build may write 820ms as .82s, so read the unit, not only the number.
     const ms = (name: string) => { const v = css.getPropertyValue(name).trim(); return parseFloat(v) * (v.endsWith('ms') ? 1 : 1000); };
-    const t = setTimeout(() => el.removeAttribute('data-still'), ms('--dur-grow') + ms('--dur-enter'));
+    const arrival = ms('--dur-grow') + ms('--dur-enter');
+    // `performance.now()` counts from the start of the page load, so on the first page it is how long the reader waited.
+    if (first && !(performance.now() > arrival)) return;
+    el.setAttribute('data-still', '');
+    const t = setTimeout(() => el.removeAttribute('data-still'), arrival);
     return () => { clearTimeout(t); el.removeAttribute('data-still'); };
   }, [path, main]);
   return null;
@@ -282,9 +288,12 @@ export function AppShell({
         </aside>
         <Suspense fallback={null}>
           <Drawer ref={drawer} rail={rail} />
-          <StillOnNavigation main={main} />
         </Suspense>
         <main ref={main} className="relative flex min-w-0 flex-1 flex-col"><ConsoleSurface ask={ask}>{children}</ConsoleSurface></main>
+        {/* After the main area, so the main area is there to mark when this first runs. */}
+        <Suspense fallback={null}>
+          <StillOnNavigation main={main} />
+        </Suspense>
         <Suspense fallback={null}>
           <ResolvedColumn assistant={assistant} open={assistantOpen} used={assistantUsed} onClose={() => setAssistantOpen(false)} ask={pendingAsk} onAsked={() => setPendingAsk(null)} />
         </Suspense>

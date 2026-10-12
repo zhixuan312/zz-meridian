@@ -23,7 +23,7 @@ To keep the Atlas while you build, clone this repository instead (`git clone htt
 - `app.timezone`: every date and every daily bucket is cut on it.
 - `nav`: the rail. Adding a page is a route file plus a line here, with the `needs` of its feature. ZZ Meridian's own dashboard also declares `workspaces` and gives each entry a `workspace`; a product with one navigation needs neither, but while `workspaces` is declared, as it is in a new project, an entry without a `workspace` is drawn by no rail and no palette (`skills/zz-meridian/references/customize.md`, "Navigation", has both ways forward).
 
-Put your logo in `public/` as an SVG and set `logo: '/logo.svg'` in `app`: the mark shows it at 20, 24, 28 and 32 pixels, with an empty `alt` beside the product name. `theme: 'dark'` or `'light'` sets the default theme before anyone picks one.
+Put your logo in `public/` as an SVG (or a PNG or a WebP, when the mark may not be redrawn) and set `logo: '/logo.svg'` in `app`: the mark shows it at 20, 24, 28 and 32 pixels, with an empty `alt` beside the product name. `theme: 'dark'` or `'light'` sets the default theme before anyone picks one.
 
 ## 3. Brand it, if you need more than an accent
 

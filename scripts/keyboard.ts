@@ -114,8 +114,21 @@ const SHIFT_TAB = 8;
 const press = async (modifiers: number) => {
   await page.send('Input.dispatchKeyEvent', { type: 'keyDown', key: 'Tab', code: 'Tab', windowsVirtualKeyCode: 9, modifiers });
   await page.send('Input.dispatchKeyEvent', { type: 'keyUp', key: 'Tab', code: 'Tab', windowsVirtualKeyCode: 9, modifiers });
-  // Two frames: the focus styles (the skip link sliding in) paint after the key event, not with it.
-  await page.eval('new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(() => r(true))))');
+  // The focus styles (the skip link sliding in) paint after the key event, and on a loaded machine later than any fixed
+  // number of frames: a stop is judged once its box has held still for three frames, or after twelve. A stop that is
+  // really covered stays covered however long the wait.
+  await page.eval(`new Promise((resolve) => {
+    let last = '', held = 0, frames = 0;
+    const tick = () => {
+      const r = document.activeElement ? document.activeElement.getBoundingClientRect() : null;
+      const now = r ? [r.x, r.y, r.width, r.height].join(',') : '';
+      held = now === last ? held + 1 : 0;
+      last = now;
+      if (held >= 3 || ++frames >= 12) resolve(true);
+      else requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+  })`);
 };
 
 const page = await launch();

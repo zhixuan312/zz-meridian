@@ -32,7 +32,9 @@ export function useQueryState<T extends Record<string, string>>(defaults: T): [T
   });
   const set = useCallback(
     (patch: Partial<T>) => {
-      const next = new URLSearchParams(params);
+      // From the address itself, not the router's copy of it: a key another part of the page wrote without the router
+      // (history.replaceState) is in the first and not the second, and it is not this hook's to drop.
+      const next = new URLSearchParams(window.location.search);
       for (const [k, v] of Object.entries(patch)) {
         if (v === undefined || v === '' || v === defaults[k]) next.delete(k);
         else next.set(k, v as string);
@@ -44,7 +46,7 @@ export function useQueryState<T extends Record<string, string>>(defaults: T): [T
       });
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [params, path, router, key],
+    [path, router, key],
   );
   return [shown, set, pending];
 }

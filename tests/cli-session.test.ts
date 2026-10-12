@@ -298,4 +298,23 @@ describe('a project already on the running version', () => {
       expect(has(root, '.meridian/update')).toBe(false);
     }
   });
+
+  // Between releases nothing else looks: the gate checks that a kept path is managed, not that an edited managed file
+  // is kept, so a product drifted silently and the next update met edits nobody had a reason for (issue #23).
+  it('names the managed files that differ from the release and are in no keep register', () => {
+    const root = project();
+    const { c, lines } = ctx(root, { version: '0.3.0' });
+    expect(start(c, { ...opts, dryRun: true })).toBe(0);
+    const out = lines.join('\n');
+    expect(out).toContain('2 managed files differ from the release and are not in .meridian/keep.json');
+    for (const edited of [ui('b'), ui('d')]) expect(out).toContain(edited);
+    for (const fine of [ui('a'), ui('c'), ui('k'), ui('f')]) expect(out).not.toContain(fine);
+  });
+
+  it('adds nothing when every managed file is as released or kept', () => {
+    const root = project({ disk: { [ui('b')]: 'b1', [ui('d')]: 'd1' } });
+    const { c, lines } = ctx(root, { version: '0.3.0' });
+    expect(start(c, { ...opts, dryRun: true })).toBe(0);
+    expect(lines.join('\n')).not.toContain('differ from the release');
+  });
 });

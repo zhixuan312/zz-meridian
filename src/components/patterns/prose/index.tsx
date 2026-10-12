@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import ReactMarkdown, { type Components } from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { cn } from '@/lib/cn';
@@ -51,7 +52,7 @@ const COMPONENTS: Components = {
     rest.type === 'checkbox' ? <input {...rest} aria-label={rest.checked ? 'Done' : 'Not done'} className="mr-2 size-3.5 align-[-2px] accent-(--accent)" /> : <input {...rest} />),
 };
 
-export function Prose({ children, size = 'base', className }: { children: string; /** `sm` for a side panel, a comment or a quoted body. */ size?: 'base' | 'sm'; className?: string }) {
+export const Prose = memo(function Prose({ children, size = 'base', className }: { children: string; /** `sm` for a side panel, a comment or a quoted body. */ size?: 'base' | 'sm'; className?: string }) {
   return (
     <div className={cn('min-w-0 text-ink-2 break-words', size === 'base' ? 'text-base leading-[1.7]' : 'text-sm leading-relaxed', className)}>
       <ReactMarkdown remarkPlugins={[remarkGfm]} urlTransform={safeMarkdownUrl} components={COMPONENTS}>
@@ -59,4 +60,4 @@ export function Prose({ children, size = 'base', className }: { children: string
       </ReactMarkdown>
     </div>
   );
-}
+});

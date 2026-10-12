@@ -29,7 +29,7 @@
  * Then the remaining controlled cases, each on its own copy of that fixture: finalize with and
  * without --verify, an interruption and its resume, a failed install, a type error, a check that writes source, abort,
  * a dirty tree, a removal and an addition, and a rebrand followed by an update on both routes. The variant package and
- * the 0.5.1 package exist only in this script's scratch folder; they test the updater and are never releases.
+ * the next-patch package exist only in this script's scratch folder; they test the updater and are never releases.
  */
 import { execFileSync, spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
@@ -397,10 +397,15 @@ function mainUpgrade(): Upgraded {
   check(fs.existsSync(path.join(proj, '.meridian/history', VERSION)) && !fs.existsSync(path.join(proj, session)), 'the session is archived under .meridian/history');
 
   // The team's bytes.
-  // The one team file the release's migration edits is next.config.ts: the two flags, and nothing else.
+  // Two team files are edited, each by the migration that names it and by nothing else: next.config.ts gets the two
+  // flags, and since 0.13.0 every item of the nav in src/app.config.ts gets its `needs`.
   check(/cacheComponents: true/.test(read(proj, 'next.config.ts')) && /partialPrefetching: true/.test(read(proj, 'next.config.ts')), "the cache-components-config migration's edit is in the adopted project's next.config.ts");
-  const changed = OWNED.filter((f) => f !== 'next.config.ts' && sha(path.join(proj, f)) !== owned[f]);
-  check(changed.length === 0, "the brief, the extra doc, README, app config, verify config, the team's files and the kept files are unchanged", changed.join('\n'));
+  const navNeeds = resolutions.some((r) => r.id === 'migration:nav-needs' && r.status === 'resolved');
+  const navItems = read(proj, 'src/app.config.ts').split('\n').filter((l) => /\bhref\s*:/.test(l));
+  check(!navNeeds || (navItems.length > 0 && navItems.every((l) => /\bneeds\s*:/.test(l))), "the nav-needs migration's edit is in the adopted project's src/app.config.ts: every item names its needs", navItems.join('\n'));
+  const migrated = ['next.config.ts', ...(navNeeds ? ['src/app.config.ts'] : [])];
+  const changed = OWNED.filter((f) => !migrated.includes(f) && sha(path.join(proj, f)) !== owned[f]);
+  check(changed.length === 0, "the brief, the extra doc, README, verify config, the team's files and the kept files are unchanged, and the app config where no migration names it", changed.join('\n'));
   const agentsAfter = read(proj, 'AGENTS.md');
   const begin = agentsAfter.indexOf(BEGIN);
   const end = agentsAfter.indexOf(END);
@@ -674,8 +679,11 @@ if (args.includes('--update-all') && adoptedBase()) {
     const releases = path.join(work, 'releases');
     fs.mkdirSync(releases);
     fs.copyFileSync(tarball, path.join(releases, `zz-meridian-${VERSION}.tgz`));
-    const NEXT = '0.5.1';
-    const test051 = variant('051', NEXT, (payload) => fs.appendFileSync(path.join(payload, CARD), '// meridian 0.5.1 test change\n'));
+    // The patch after the running version: a version that is never the project's own, whatever release is being tested.
+    // It was a fixed 0.5.1, which every release since 0.5.0 is newer than, so `update` refused it as a downgrade.
+    const [major, minor, patch] = VERSION.split('.').map(Number);
+    const NEXT = `${major}.${minor}.${patch! + 1}`;
+    const nextPackage = variant('next', NEXT, (payload) => fs.appendFileSync(path.join(payload, CARD), `// meridian ${NEXT} test change\n`));
     const env = { ZZ_MERIDIAN_LOCAL_RELEASES: releases };
     const NEW_HEX = '#0E8A5F';
     for (const origin of ['adopt', 'create'] as const) {
@@ -703,7 +711,7 @@ if (args.includes('--update-all') && adoptedBase()) {
 
       edit(proj, CARD, (t) => `${t}// the team edit\n`);
       commit(proj, 'the team edits the card');
-      const dry = zz(test051, proj, ['update', '--dry-run'], 'dry-run', env);
+      const dry = zz(nextPackage, proj, ['update', '--dry-run'], 'dry-run', env);
       const rows = dry.out.split('\n').filter((l) => l.includes(CARD));
       check(dry.status === 0 && rows.length === 1 && /merge required\s*$/.test(rows[0]!), `${label}: after the committed edit, the dry-run still reports ${CARD}`, dry.out + dry.err);
 
@@ -719,9 +727,9 @@ if (args.includes('--update-all') && adoptedBase()) {
       write(proj, OUTPUT, was);
       commit(proj, 'revert the brand output edit');
 
-      const up = zz(test051, proj, ['update'], 'update', env);
-      check(up.status === 2 && /ZZ_MERIDIAN_LOCAL_RELEASES/.test(up.out), `${label}: the update to the local ${NEXT} package applies, reading 0.5.0 through ZZ_MERIDIAN_LOCAL_RELEASES`, up.out + up.err);
-      finish(proj, label, test051, env, NEXT);
+      const up = zz(nextPackage, proj, ['update'], 'update', env);
+      check(up.status === 2 && /ZZ_MERIDIAN_LOCAL_RELEASES/.test(up.out), `${label}: the update to the local ${NEXT} package applies, reading ${VERSION} through ZZ_MERIDIAN_LOCAL_RELEASES`, up.out + up.err);
+      finish(proj, label, nextPackage, env, NEXT);
       const manifest = finalManifest(proj);
       check(manifest.version === NEXT && manifest.brand.hex === NEW_HEX && unmanaged(manifest).length === 0, `${label}: the manifest is ${NEXT}, keeps the rebranded brand and holds only managed paths`, JSON.stringify(manifest.brand));
       done(proj);

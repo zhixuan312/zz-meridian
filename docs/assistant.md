@@ -89,7 +89,7 @@ export const orders: Collection<Order, 'id'> = arrayCollection({
 });
 ```
 
-Add it to `collections`, and let the policy bind it and a role read it, or nobody is offered it (`skills/zz-meridian/references/customize.md`, "The assistant"). For a real store, write the same `Collection` yourself: `query` takes `{ where, sort, limit }` and returns `{ rows, total }`; implement `create`, `update` and `remove` only for what the store may do. A collection without an operation gets no tool for it.
+Add it to `collections`, and let the policy bind it and a role read it, or nobody is offered it (`skills/zz-meridian/references/customize.md`, "The assistant"). For a real store, write the same `Collection` yourself: `query` takes `{ where, sort, limit }` and returns `{ rows, total }`; implement `create`, `update` and `remove` only for what the store may do. A collection without an operation gets no tool for it, and the assistant is told nobody can do it here; an operation a page performs through its own call is named in `pageOnly`, implemented or not, and the assistant is told it is done on the page. A store that answers with a list filters, orders and pages it with `queryRows(rows, key, query)` from `src/lib/collection.ts`, which is what the sample's collections call.
 
 Two fields on a collection keep the assistant in bounds:
 

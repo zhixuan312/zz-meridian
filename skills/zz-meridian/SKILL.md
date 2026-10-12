@@ -103,7 +103,7 @@ follow steps 1 to 8: the project is already built.
   the standard again (`references/standard.md`): run the loop on what it changed.
 - **Rebrand.** `npx zz-meridian@<the manifest's version> brand [brand flags]`, from a clean git tree. Never hand-edit the
   brand outputs; an edited one makes it refuse. Step 4's check applies to the new colour. The exact brand colour lives
-  in the product's own logo (an SVG in `public/`, named by `logo` in `src/app.config.ts`), never in a token. The rebrand
+  in the product's own logo (an SVG, a PNG or a WebP in `public/`, named by `logo` in `src/app.config.ts`), never in a token. The rebrand
   is finished when the project meets the standard again, scored above all on Colour.
 - **The hand-over** for an update or a rebrand follows step 7, with what changed in place of "Pages".
 
@@ -242,8 +242,8 @@ Read `references/customize.md` and follow it. In short:
   numbers before building pages: a `example:tests/data.test.ts` asserting the counts your pages need (vitest resolves `@/`;
   plain `node` does not).
 - **Navigation** in `src/app.config.ts`; one line per page. A created project starts with the sample's three workspaces:
-  keep them (every new entry names a `workspace`) or take them out when the product has one navigation
-  (`references/customize.md`, "Navigation" says how). An adopted project has none.
+  keep them (every new entry names a `workspace`) when the person asked for several places to look, and take them out
+  when they did not say (`references/customize.md`, "Navigation" says how). An adopted project has none.
 - **Pages from presets.** Start each page from the closest template page and change what it shows, not how it is laid
   out. Every page has one protagonist (a featured metric, a table, a form), a kicker, a title and one sentence.
 - **Remove what they did not ask for**: sample pages, their nav lines, their embed views, their entries in

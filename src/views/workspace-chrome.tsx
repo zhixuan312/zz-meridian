@@ -12,10 +12,10 @@
  * boundary of its own and the shell keeps its prerendered frame wherever the parent gives it none.
  */
 import { usePathname, useRouter } from 'next/navigation';
-import { Suspense } from 'react';
+import { Suspense, use } from 'react';
 import { workspaces, type WorkspaceId } from '@/app.config';
 import { useLeave } from '@/components/base/shell';
-import { ConsolePalette, ConsoleRail } from '@/views/console-chrome';
+import { ConsolePalette, ConsoleRail, RailPending, visible } from '@/views/console-chrome';
 import { WORKSPACE_IDS, navOf, workspaceOf } from '@/views/workspaces';
 import type { ChromeAccess } from '@/lib/collection';
 
@@ -34,18 +34,36 @@ export function WorkspaceRail({ access }: { access: Promise<ChromeAccess | null>
 
 function RailInView({ access }: { access: Promise<ChromeAccess | null> }) {
   const current = useWorkspace();
+  return (
+    <Suspense fallback={<RailPending />}>
+      <RailFor access={access} current={current} />
+    </Suspense>
+  );
+}
+
+/**
+ * The rail once the person is known, because the menu offers only where they may go: a workspace is listed when they may
+ * open at least one of its destinations, and its row opens the workspace's home, or the first destination they may open
+ * when the home is not one. A workspace still decides nothing about access; this only keeps the menu from offering what
+ * the page would refuse. With one workspace left there is nothing to switch between, and the rail says so itself.
+ */
+function RailFor({ access, current }: { access: Promise<ChromeAccess | null>; current: WorkspaceId }) {
+  const chrome = use(access);
   const router = useRouter();
   const leave = useLeave();
-  // Choosing the workspace already in view does nothing, so the page and its filters stay.
-  const scopes = WORKSPACE_IDS.map((id) => ({
+  const open = (id: WorkspaceId) => (chrome ? visible(chrome.only, navOf(id)).flatMap((g) => g.items.map((i) => i.href)) : []);
+  const scopes = WORKSPACE_IDS.filter((id) => open(id).length > 0).map((id) => ({
     id,
     label: workspaces[id].label,
     active: id === current,
+    // Choosing the workspace already in view does nothing, so the page and its filters stay.
     onSelect: () => {
-      if (id !== current) leave(() => router.push(workspaces[id].homeHref));
+      if (id === current) return;
+      const home = workspaces[id].homeHref;
+      leave(() => router.push(open(id).includes(home) ? home : open(id)[0]!));
     },
   }));
-  return <ConsoleRail access={access} nav={navOf(current)} workspace={workspaces[current].label} scopes={scopes} />;
+  return <ConsoleRail access={chrome} nav={navOf(current)} workspace={workspaces[current].label} scopes={scopes} />;
 }
 
 export function WorkspacePalette({ access }: { access: Promise<ChromeAccess | null> }) {

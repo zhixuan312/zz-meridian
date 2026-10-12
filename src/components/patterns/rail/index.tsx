@@ -95,10 +95,23 @@ export function Rail({
   // Measured after paint, not before it: a rail mounts inside the tap that opens the phone drawer, and a measurement
   // there forces a layout of the whole page and a second render before the drawer can show. Until the marker has a
   // position the current link draws the same pill itself, so nothing moves when the marker takes over.
+  // The link also moves without a navigation (the rail is resized, a font arrives late, a group above it changes
+  // height), so the list is observed and the marker measured again whenever its size changes.
   useEffect(() => {
-    const el = list.current?.querySelector<HTMLElement>('[aria-current="page"]');
-    setMarker(el ? { y: el.offsetTop, h: el.offsetHeight } : null);
-  }, [path]);
+    const nav = list.current;
+    if (!nav) return;
+    const measure = () => {
+      const el = nav.querySelector<HTMLElement>('[aria-current="page"]');
+      setMarker((was) => {
+        const now = el ? { y: el.offsetTop, h: el.offsetHeight } : null;
+        return was?.y === now?.y && was?.h === now?.h ? was : now;
+      });
+    };
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(nav);
+    return () => ro.disconnect();
+  }, [path, here]);
 
   return (
     <div className="flex h-full w-full flex-col">

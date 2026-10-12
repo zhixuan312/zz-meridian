@@ -20,7 +20,7 @@ import { Select } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from '@/components/ui/toast';
 import { MetricTile } from '@/components/patterns/metric-tile';
-import { DataTable, useQueryState, type Column } from '@/components/patterns/data-table';
+import { DataTable, useQueryState, useSearchDraft, type Column } from '@/components/patterns/data-table';
 import { FilterBar } from '@/components/patterns/filter-bar';
 import { formatRelative } from '@/lib/format-date';
 import { useLive } from '@/lib/live';
@@ -65,6 +65,8 @@ export function TicketsView({ rows, now, may = { create: true, update: true }, l
   useLive(['tickets']);
   const asOf = new Date(now);
   const [f, set] = useQueryState({ q: '', state: 'all', priority: 'all', sort: 'changed', dir: 'desc', page: '1' });
+  // The box shows each key; the address, and so the list, follows when the typing stops.
+  const [search, setSearch] = useSearchDraft(f.q, (q) => set({ q, page: '1' }));
   const matching = useMemo(() => matchingTickets(rows, { q: f.q, state: f.state, priority: f.priority }), [rows, f.q, f.state, f.priority]);
   const isFiltered = f.q !== '' || f.state !== 'all' || f.priority !== 'all';
   useShareView(ticketsContext(rows, now, f));
@@ -193,7 +195,7 @@ export function TicketsView({ rows, now, may = { create: true, update: true }, l
             onClearFilters={clear}
             toolbar={
               <FilterBar
-                search={{ value: f.q, onChange: (q) => set({ q, page: '1' }), placeholder: 'Search tickets' }}
+                search={{ value: search, onChange: setSearch, placeholder: 'Search tickets' }}
                 filters={[
                   { key: 'state', label: 'State', value: f.state, onChange: (state) => set({ state, page: '1' }), options: [{ value: 'all', label: 'All' }, ...choices(['open', 'waiting', 'closed'])] },
                   { key: 'priority', label: 'Priority', value: f.priority, onChange: (priority) => set({ priority, page: '1' }), options: [{ value: 'all', label: 'All' }, ...choices(['high', 'normal', 'low'])] },

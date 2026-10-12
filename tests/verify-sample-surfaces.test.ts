@@ -16,6 +16,11 @@ describe('the sample surfaces the walk-throughs drive', () => {
     write(root, 'src/views/orders.tsx');
     expect(sampleSurfaces(root, 'app')).toEqual({ overview: false, members: false, keys: false, settings: false });
   });
+  it('are found under whatever route group a product keeps its console in', () => {
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'surfaces-'));
+    for (const f of ['app/(dash)/(overview)/page.tsx', 'src/views/overview-context.ts', 'app/(dash)/members/page.tsx', 'src/views/members.tsx', 'app/(dash)/keys/page.tsx']) write(root, f);
+    expect(sampleSurfaces(root, 'app')).toEqual({ overview: true, members: true, keys: true, settings: false });
+  });
   it('need the page and its view: a Members route the product rewrote without the sample view is not the sample', () => {
     const root = fs.mkdtempSync(path.join(os.tmpdir(), 'surfaces-'));
     write(root, 'src/app/(dashboard)/members/page.tsx');

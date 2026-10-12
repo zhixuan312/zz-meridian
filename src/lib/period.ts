@@ -20,8 +20,9 @@ export const PERIOD_LABEL: Record<Period, string> = {
   all: 'All time',
 };
 
-/** The picker's short label per period ("30D"), here beside the full name so one file holds the vocabulary: a product
- *  that adds its own period edits this file and the picker follows, with nothing to patch in the component. */
+/** The picker's short label per period ("30D"), here beside the full name so one file holds the vocabulary and the picker
+ *  follows it, with nothing to patch in the component. The file is one Meridian manages: a product with other periods
+ *  edits it and names it in `.meridian/keep.json` with the reason, so an update leaves it alone. */
 export const PERIOD_SHORT: Record<Period, string> = {
   '7d': '7D',
   '30d': '30D',
