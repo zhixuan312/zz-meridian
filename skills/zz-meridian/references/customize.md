@@ -61,7 +61,7 @@ from `optional:src/data/features.ts` — never a grant written a second time: th
 destinations the signed-in person satisfies, and a test fails an item that restates a need. That filtering is
 presentation, not the gate: every page refuses on its own (see "Data" below). An adopted project has no `features.ts`: `adopt` writes
 `needs: 'public'` on every item. `'public'` is the need any signed-in, Active person satisfies (`satisfies` in
-`src/data/access.ts`), so the item is drawn for everyone who is signed in and no role decides it; it is right for a
+`optional:src/data/access.ts`), so the item is drawn for everyone who is signed in and no role decides it; it is right for a
 destination every member may open, and an item moves to a feature of its own once the project has a role table.
 
 A project made by `create` (or a clone) starts with the sample's three workspaces: `workspaces` in `src/app.config.ts` (Main,
@@ -94,7 +94,7 @@ to all of this.
   `optional:tests/workspace-chrome.test.tsx`. In `optional:tests/shell-alerts.test.ts` drop the `workspaceOf` check, and in
   `optional:tests/workspace-overview.test.tsx` the test that reads `workspaces.main.audience`, with the two imports only
   it uses.
-- A clone that keeps the Atlas also changes `src/system/atlas-shell.tsx`, which lists the workspaces; a created project
+- A clone that keeps the Atlas also changes `optional:src/system/atlas-shell.tsx`, which lists the workspaces; a created project
   has no Atlas.
 
 `grep -rn "workspaces\.\|WorkspaceId\|views/workspaces\|workspace-chrome" app src tests journeys` finds what is left.

@@ -279,6 +279,7 @@ This lists every path that differs from the plan's base, by file, or by folder f
 | `tests/cli-product-workspaces-doc.test.ts` | added | the gate in this repository; the package leaves it out of a project |
 | `tests/cli-rail-preview.test.ts` | added | the gate in this repository; the package leaves it out of a project |
 | `tests/cli-shell-preview.test.ts` | added | the gate in this repository; the package leaves it out of a project |
+| `tests/cli-skill-layouts.test.ts` | changed | the gate in this repository; the package leaves it out of a project |
 | `tests/cli-template-update.test.ts` | added | the gate in this repository; the package leaves it out of a project |
 | `tests/cli-workspace-shell.test.ts` | added | the gate in this repository; the package leaves it out of a project |
 | `tests/customer-figures.test.ts` | added | the gate, here and in a project that keeps the file |
