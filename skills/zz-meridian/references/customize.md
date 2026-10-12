@@ -239,7 +239,7 @@ names its own brand route follows it instead of `brand` (`standard.md`, "The reg
 
 Branding is configuration, not source patching: `scripts/brand.ts` edits `src/app.config.ts` and the token files, and
 never `src/lib/preferences.ts`, which reads the accent and theme defaults from the app configuration.
-Logo: set `logo: '/logo.svg'` in `src/app.config.ts`, a root-relative local SVG, PNG or WebP served from `public/`. `AppMark` renders it
+Logo: set `logo: '/logo.svg'` in `src/app.config.ts`, a root-relative local SVG served from `public/`. `AppMark` renders it
 at 20, 24, 28 and 32 pixels with an empty alt beside the app name, and with the app name as alt when given a `label`.
 Any other value renders the default mark.
 Theme default: `npx zz-meridian@<the manifest's version> brand --theme dark|light` sets `theme` in `src/app.config.ts`; it applies before paint and

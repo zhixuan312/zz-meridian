@@ -5,7 +5,7 @@ import { logoSource } from '@/lib/logo';
 const cfg: { name: string; logo?: string } = app;
 
 /**
- * The product's mark: `app.logo` when it is a root-relative local path to an SVG, a PNG or a WebP, otherwise the template's neutral mark, an
+ * The product's mark: `app.logo` when it is a root-relative local SVG path, otherwise the template's neutral mark, an
  * accent tile holding a meridian, a trend crossed by the line that reads it. Beside the app name it is decorative (no
  * `label`); on its own, pass the app name as `label`. Sizes are 20, 24, 28 and 32.
  */
@@ -13,7 +13,7 @@ export function AppMark({ size = 24, className, label }: { size?: 20 | 24 | 28 |
   const logo = logoSource(cfg.logo);
   if (logo) {
     return (
-      // eslint-disable-next-line @next/next/no-img-element -- a local file from public/ at four fixed sizes; next/image adds nothing for it.
+      // eslint-disable-next-line @next/next/no-img-element -- a local SVG from public/ at four fixed sizes; next/image adds nothing for it.
       <img src={logo} width={size} height={size} alt={label ?? ''} className={cn('shrink-0', className)} />
     );
   }

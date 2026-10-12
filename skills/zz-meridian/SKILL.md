@@ -103,7 +103,7 @@ follow steps 1 to 8: the project is already built.
   the standard again (`references/standard.md`): run the loop on what it changed.
 - **Rebrand.** `npx zz-meridian@<the manifest's version> brand [brand flags]`, from a clean git tree. Never hand-edit the
   brand outputs; an edited one makes it refuse. Step 4's check applies to the new colour. The exact brand colour lives
-  in the product's own logo (an SVG, a PNG or a WebP in `public/`, named by `logo` in `src/app.config.ts`), never in a token. The rebrand
+  in the product's own logo (an SVG in `public/`, named by `logo` in `src/app.config.ts`), never in a token. The rebrand
   is finished when the project meets the standard again, scored above all on Colour.
 - **The hand-over** for an update or a rebrand follows step 7, with what changed in place of "Pages".
 

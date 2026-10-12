@@ -340,7 +340,7 @@ const retirements: Retirement[] = [];
   const logo = (app as { logo?: unknown }).logo;
   if (logo !== undefined) {
     const source = logoSource(logo);
-    if (!source) problems.push(`src/app.config.ts: app.logo ${JSON.stringify(logo)} is not a root-relative path to an SVG, a PNG or a WebP such as "/logo.svg"`);
+    if (!source) problems.push(`src/app.config.ts: app.logo ${JSON.stringify(logo)} is not a root-relative SVG path such as "/logo.svg"`);
     else if (!fs.existsSync(path.join(ROOT, 'public', source))) problems.push(`src/app.config.ts: app.logo is ${source}, but public${source} does not exist`);
   }
 }
