@@ -56,7 +56,7 @@ export default function RecordsPreview() {
         <Records
           summary={[
             <MetricTile key="a" label="Requests" value={2_943_120} format="count" />,
-            <MetricTile key="b" label="Error rate" value="Unavailable" note="The error counter did not answer." />,
+            <MetricTile key="b" label="Error rate" value="Unavailable" note="Counter did not answer" />,
             <MetricTile key="c" label="Latency p95" value={294} format="duration" intent="down" />,
           ]}
         >
