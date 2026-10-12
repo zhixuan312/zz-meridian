@@ -133,7 +133,7 @@ function Shelf({ nav }: { nav: AtlasNav }) {
                         <Link href={it.href} aria-current={on ? 'page' : undefined} className={cn('relative flex h-8 items-center gap-2 rounded-sm px-2.5 text-sm', on ? 'bg-accent-tint font-medium text-ink' : 'text-ink-2 hover:bg-fill-hover hover:text-ink')}>
                           {on ? <span aria-hidden className="absolute top-1.5 bottom-1.5 -left-[9px] w-0.5 rounded-full bg-accent" /> : null}
                           <span className="flex-1 truncate">{it.title}</span>
-                          {/* A template is told from the pages built from it: the layout names the mark, the shelf only draws it. */}{it.mark ? <span className="font-mono text-2xs tracking-[0.08em] text-ink-3 uppercase">{it.mark}</span> : null}
+                          {/* A template is told from the pages built from it: the layout names the mark, the shelf only draws it. */}{it.mark ? <span className="font-mono text-2xs tracking-[0.08em] text-ink-2 uppercase">{it.mark}</span> : null}
                           {/* Only the exception is marked: most cards are beta, so a mark on every row says nothing. */}{it.status === 'draft' ? <span className="font-mono text-2xs tracking-[0.08em] text-ink-2 uppercase">{it.status}</span> : null}
                         </Link>
                       </li>

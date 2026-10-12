@@ -6,7 +6,7 @@ This repository is the single source of truth for how a Meridian dashboard looks
 
 A new card passes two questions before anyone specifies it:
 
-- **Useful.** Name the job in one sentence, the page that needs it now, and the principle it serves. A card for an imagined future need is not proposed.
+- **Useful.** Name the job in one sentence, the page that needs it now, and the principle it serves. A card for an imagined future need is not proposed. An example built for a named scenario in the product is the page that needs it: say which scenario and which page draws it. A wrapper made only to fill a layer is not, and is not proposed.
 - **Unique.** Nothing in the system already does the job. Look one layer down first: a page need is met by arranging patterns, a pattern need by composing components, a component need by combining tokens and base roles. Go down a layer only when the layer below truly cannot express it.
 
 ## Making something new
