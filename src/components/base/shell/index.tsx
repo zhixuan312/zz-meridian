@@ -1,12 +1,14 @@
 'use client';
 
-import { Children, Suspense, createContext, use, useContext, useEffect, useImperativeHandle, useLayoutEffect, useMemo, useRef, useState, type HTMLAttributes, type ReactNode, type Ref, type RefObject } from 'react';
+import { Children, Suspense, createContext, use, useCallback, useContext, useEffect, useImperativeHandle, useLayoutEffect, useMemo, useRef, useState, type HTMLAttributes, type ReactNode, type Ref, type RefObject } from 'react';
 import { Dialog } from 'radix-ui';
 import { Menu, X } from 'lucide-react';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { cn } from '@/lib/cn';
 import { usePreferences } from '@/components/base/providers';
 import { ConsoleSurface } from '@/components/base/surface';
+import { Button } from '@/components/ui/button';
+import { Dialog as Question, DialogContent as QuestionContent } from '@/components/ui/dialog';
 import dynamic from 'next/dynamic';
 
 // The assistant loads only where it is shown: a product without it, or a person who switched it off, never downloads it.
@@ -36,6 +38,92 @@ const AssistantLauncher = dynamic(() => import('@/components/patterns/assistant/
  */
 
 const ShellCtx = createContext<{ openNav: () => void; tools: ReactNode; assistant: Promise<boolean> }>({ openNav: () => {}, tools: null, assistant: Promise.resolve(false) });
+
+/**
+ * The leave guard. Something on the page that holds unsaved changes says so with `useUnsavedChanges`; while any does, the
+ * shell holds a plain click on a link and a navigation that code starts through `useLeave`, and asks first. Outside a
+ * shell (a card's preview, an embed, a test that draws a form alone) nothing is registered and `leave(go)` runs `go`.
+ */
+const LeaveCtx = createContext<{ hold: () => () => void; leave: (go: () => void) => void }>({ hold: () => () => {}, leave: (go) => go() });
+
+/** A component calls this to say it holds unsaved changes while `dirty` is true. Saved, discarded or unmounted, it stops holding at once. */
+export function useUnsavedChanges(dirty: boolean) {
+  const { hold } = useContext(LeaveCtx);
+  // An effect, not a render-time write: a page the router keeps hidden has its effects cleaned up, so it holds nothing while hidden.
+  useEffect(() => (dirty ? hold() : undefined), [dirty, hold]);
+}
+
+/**
+ * Answers `leave(go)`: `go` runs at once when nothing is unsaved, and otherwise only if the person chooses to leave.
+ * Code that navigates (a button, a menu, a palette command) goes through it; a link needs nothing, the shell hears it.
+ */
+export function useLeave(): (go: () => void) => void {
+  return useContext(LeaveCtx).leave;
+}
+
+/** Whether a click on this link is one the browser would follow in this tab, to a page of this origin other than the one in view. */
+function plainFollow(e: MouseEvent): string | null {
+  if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return null;
+  const a = e.target instanceof Element ? e.target.closest('a[href]') : null;
+  if (!(a instanceof HTMLAnchorElement) || a.hasAttribute('download') || (a.target && a.target !== '_self')) return null;
+  const url = new URL(a.href, location.href);
+  if (url.origin !== location.origin) return null;
+  // A place on the page already in view is the browser's to scroll to.
+  if (url.pathname + url.search === location.pathname + location.search) return null;
+  return url.pathname + url.search + url.hash;
+}
+
+/** The question, and the guard behind it. It sits at the shell's top and reads no address: it only listens. */
+function useLeaveGuard() {
+  const router = useRouter();
+  const held = useRef(0);
+  const [pending, setPending] = useState<(() => void) | null>(null);
+  const hold = useCallback(() => {
+    held.current += 1;
+    return () => { held.current -= 1; };
+  }, []);
+  const leave = useCallback((go: () => void) => {
+    if (held.current === 0) go();
+    // One question at most: a second navigation while one is open waits behind the dialog, which is modal.
+    else setPending((open) => open ?? go);
+  }, []);
+  useEffect(() => {
+    // The capture phase of the document runs before any handler of the link, which in a router's link component is
+    // where it navigates; a listener after it would find the navigation done.
+    const onClick = (e: MouseEvent) => {
+      if (held.current === 0) return;
+      const follow = plainFollow(e);
+      if (!follow) return;
+      e.preventDefault();
+      e.stopPropagation();
+      leave(() => router.push(follow));
+    };
+    const onUnload = (e: Event) => { if (held.current > 0) e.preventDefault(); };
+    document.addEventListener('click', onClick, true);
+    window.addEventListener('beforeunload', onUnload);
+    return () => {
+      document.removeEventListener('click', onClick, true);
+      window.removeEventListener('beforeunload', onUnload);
+    };
+  }, [leave, router]);
+  const value = useMemo(() => ({ hold, leave }), [hold, leave]);
+  const question = (
+    <Question open={pending !== null} onOpenChange={(o) => { if (!o) setPending(null); }}>
+      <QuestionContent
+        size="sm"
+        title="Leave without saving?"
+        description="This page has changes that are not saved. If you leave, they are lost."
+        footer={
+          <>
+            <Button variant="ghost" onClick={() => setPending(null)}>Stay</Button>
+            <Button variant="danger" onClick={() => { const go = pending; setPending(null); go?.(); }}>Leave</Button>
+          </>
+        }
+      />
+    </Question>
+  );
+  return { value, question };
+}
 
 /** The promise of whether the product has an assistant: Settings offers the person's switch only when it resolves true. */
 export function useAssistantAvailable(): Promise<boolean> {
@@ -150,6 +238,7 @@ export function AppShell({
   children: ReactNode;
 }) {
   const drawer = useRef<{ open: () => void }>(null);
+  const guard = useLeaveGuard();
   const main = useRef<HTMLElement>(null);
   const [assistantOpen, setAssistantOpen] = useState(false);
   // The panel's chunk is a third of a megabyte, so it is NOT in a page's first load: the column mounts the first time
@@ -184,6 +273,7 @@ export function AppShell({
     </>
   );
   return (
+    <LeaveCtx.Provider value={guard.value}>
     <ShellCtx.Provider value={{ openNav: () => drawer.current?.open(), tools: allTools, assistant }}>
       <div className="fixed inset-0 isolate flex overflow-hidden">
         {/* The first stop for a keyboard: past the rail and the top bar, straight to the page's masthead (PageFrame). */}
@@ -205,7 +295,9 @@ export function AppShell({
           <ResolvedColumn assistant={assistant} open={assistantOpen} used={assistantUsed} onClose={() => setAssistantOpen(false)} ask={pendingAsk} onAsked={() => setPendingAsk(null)} />
         </Suspense>
       </div>
+      {guard.question}
     </ShellCtx.Provider>
+    </LeaveCtx.Provider>
   );
 }
 

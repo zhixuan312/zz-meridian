@@ -34,7 +34,7 @@ The dialog enters with `dialog-in` (rise and fade over `dur-enter`) and leaves f
 ## Behaviour
 
 - ⌘K or Ctrl K toggles it from anywhere; Escape and the scrim close it.
-- ↑ and ↓ move the highlight and keep it in view; the pointer moves it too; Enter or a click runs the command and closes the palette.
+- ↑ and ↓ move the highlight and keep it in view; the pointer moves it too; Enter or a click runs the command and closes the palette. A destination asks "Leave without saving?" first while a form on the page has unsaved changes (the shell's `useLeave`).
 - Closing clears the query.
 
 ## Surfaces

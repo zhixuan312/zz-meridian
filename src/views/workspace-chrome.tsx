@@ -14,6 +14,7 @@
 import { usePathname, useRouter } from 'next/navigation';
 import { Suspense } from 'react';
 import { workspaces, type WorkspaceId } from '@/app.config';
+import { useLeave } from '@/components/base/shell';
 import { ConsolePalette, ConsoleRail } from '@/views/console-chrome';
 import { WORKSPACE_IDS, navOf, workspaceOf } from '@/views/workspaces';
 import type { ChromeAccess } from '@/lib/collection';
@@ -34,13 +35,14 @@ export function WorkspaceRail({ access }: { access: Promise<ChromeAccess | null>
 function RailInView({ access }: { access: Promise<ChromeAccess | null> }) {
   const current = useWorkspace();
   const router = useRouter();
+  const leave = useLeave();
   // Choosing the workspace already in view does nothing, so the page and its filters stay.
   const scopes = WORKSPACE_IDS.map((id) => ({
     id,
     label: workspaces[id].label,
     active: id === current,
     onSelect: () => {
-      if (id !== current) router.push(workspaces[id].homeHref);
+      if (id !== current) leave(() => router.push(workspaces[id].homeHref));
     },
   }));
   return <ConsoleRail access={access} nav={navOf(current)} workspace={workspaces[current].label} scopes={scopes} />;

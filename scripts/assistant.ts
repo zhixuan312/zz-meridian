@@ -19,6 +19,10 @@
  * Controls are found through open shadow roots (scripts/lib/deep.ts), so a design system whose buttons, rows and menus are
  * web components is walked the same way: a control is searched for under the light-DOM container that holds it (the panel,
  * the page's scroll region, the rail's `nav`) and named by its rendered text.
+ *
+ * A rail may draw only the part of the navigation its page belongs to. The walk-through therefore follows only a link that is on
+ * screen (the first one that is neither the page it is on nor an Atlas page), and where a step needs a page the rail on screen
+ * does not link to, it opens that address.
  */
 import path from 'node:path';
 import { slug } from '../src/app.config.ts';

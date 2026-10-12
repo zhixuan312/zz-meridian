@@ -24,7 +24,9 @@ passed; not run: <suites>`; only a run with nothing left unrun ends with `the pr
 Steps in order:
 
 0. **Rail navigation** (`--full` only): every rail route is navigated, with its data and interaction mappings from
-   `navigationChecks`.
+   `navigationChecks`. A journey starts from the nearest rail route, in rail order, whose rail draws a link to the
+   destination, so a rail that shows only part of the navigation on a page is followed; a destination no other route's
+   rail links to is reported as a problem, never as a pass.
 1. **The gate** (`node scripts/gate.ts`): tokens regenerate to the same CSS; the card registry is fresh; every card and
    page specification follows the anatomy; the product's own rules in `optional:scripts/check.local.ts`, when the file exists;
    contrast holds for every pair in every theme and accent, and the chart palette passes the colour-vision checks;
@@ -39,7 +41,8 @@ Steps in order:
    model. What every product shares runs on its own rail (no agent control while off, the panel, a reply, the page the
    model was told, markdown, the thread across navigation, Clear, the layout, a refused key, the key never reaching the
    browser); the steps that drive the template's sample Overview, Members, API keys and Settings run while those pages
-   exist and print `n/a` with the reason once the product has replaced them. It finds the launcher, the panel's controls,
+   exist and print `n/a` with the reason once the product has replaced them. It follows only rail links that are on screen
+   and opens an address when the rail on screen does not link to it. It finds the launcher, the panel's controls,
    rows and menus inside open shadow roots too, so a design system built from web components is walked the same way.
 4. **The built app, served**, and the **browser audit** of every static route under `app/` and the `detailRoutes` in
    `scripts/verify.config.ts` (embeds under `/embed` on a simulated host ground) at 2560, 1440, 1024, 768 and 390px in

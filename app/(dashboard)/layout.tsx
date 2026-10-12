@@ -1,11 +1,11 @@
 import { connection } from 'next/server';
 import { AppShell } from '@/components/base/shell';
 import { WorkspacePalette, WorkspaceRail } from '@/views/workspace-chrome';
-import { ShellTools } from '@/components/patterns/shell-tools';
 import { assistantConfig } from '@/lib/assistant/config';
-import { DEMO_NOW, ALERTS } from '@/data/sample';
+import { readAlerts } from '@/data/alerts';
 import { chromeAccess, resolveAccess } from '@/data/access';
 import { ConsoleLive } from '@/views/console-live';
+import { ShellAlerts } from '@/views/shell-alerts';
 
 /** Every console page: the rail on the frame, the page on the canvas. Put your sign-in gate here. */
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
@@ -19,8 +19,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   // awaited, so the frame is still the first thing streamed. An identity nobody can resolve settles on null, which the
   // chrome draws as the placeholder person and no destination — never the sample person.
   const access = chromeAccess().catch(() => null);
+  // The bell's alerts are read the same way: the shell draws the tools with no alert and fills them in when the read
+  // settles. A person who may not be told anything, or a read that fails, settles on null and the tools stay quiet.
+  const alerts = readAlerts().catch(() => null);
   return (
-    <AppShell rail={<WorkspaceRail access={access} />} tools={<ShellTools alerts={ALERTS} now={DEMO_NOW} />} assistant={assistant}>
+    <AppShell rail={<WorkspaceRail access={access} />} tools={<ShellAlerts alerts={alerts} />} assistant={assistant}>
       <ConsoleLive scope={scope}>{children}</ConsoleLive>
       <WorkspacePalette access={access} />
     </AppShell>

@@ -2,6 +2,7 @@
 
 import Link, { useLinkStatus } from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
+import { useLeave } from '@/components/base/shell';
 import { useEffect, useRef, useState } from 'react';
 import { Check, ChevronDown, ChevronsUpDown, LogOut, Settings } from 'lucide-react';
 import { app, type NavGroup } from '@/app.config';
@@ -73,6 +74,7 @@ export function Rail({
   const switcher = scopes.length > 1;
   const pathname = usePathname();
   const router = useRouter();
+  const leave = useLeave();
   // Menu items only for routes the product has.
   const hasSettings = nav.some((g) => g.items.some((it) => it.href === '/settings'));
   const path = current ?? pathname;
@@ -126,8 +128,8 @@ export function Rail({
               </>
             ) : null}
             {hasSettings || signOut ? <MenuSeparator /> : null}
-            {hasSettings ? <MenuItem onSelect={() => router.push('/settings')}><Settings />Workspace settings</MenuItem> : null}
-            {signOut ? <MenuItem onSelect={() => (typeof signOut === 'function' ? signOut() : router.push(signOut))}><LogOut />Sign out</MenuItem> : null}
+            {hasSettings ? <MenuItem onSelect={() => leave(() => router.push('/settings'))}><Settings />Workspace settings</MenuItem> : null}
+            {signOut ? <MenuItem onSelect={() => leave(() => (typeof signOut === 'function' ? signOut() : router.push(signOut)))}><LogOut />Sign out</MenuItem> : null}
             {viewAs ? (
               <>
                 <MenuSeparator />

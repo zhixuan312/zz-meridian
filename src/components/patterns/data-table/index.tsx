@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { useLeave } from '@/components/base/shell';
 import { useMemo, useState, type MouseEvent, type ReactNode } from 'react';
 import { RotateCw } from 'lucide-react';
 import { cn } from '@/lib/cn';
@@ -212,6 +213,7 @@ export function DataTable<R>({
   className?: string;
 }) {
   const router = useRouter();
+  const leave = useLeave();
   const [own, setOwn] = useState<TableState>({ sort: '', dir: 'desc', page: '1' });
   const [size, setSize] = useState(initialSize);
   const st = controlled ?? own;
@@ -249,7 +251,7 @@ export function DataTable<R>({
     if (!href) return;
     if ((e.target as HTMLElement).closest('a,button,input,[role="checkbox"],[role="menuitem"]')) return;
     if (window.getSelection()?.toString()) return;
-    router.push(href);
+    leave(() => router.push(href));
   };
 
   const titleColumn = columns.find((c) => c.mobile === 'title') ?? columns[0];

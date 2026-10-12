@@ -45,6 +45,7 @@ Colours change over `dur-hover` 160ms. The marker moves (`transform`, `height`) 
 - An item is a link: Enter or a click navigates; the marker follows the new page.
 - While a destination's page is on the way (a page that renders on request and is not prefetched), its icon turns into a 14px Spinner in the same 16px slot (`useLinkStatus`), named "Opening Members", so the click is answered at once and nothing shifts. A prefetched page is never pending, so it never shows.
 - An item is current when the path equals its route or sits beneath it (`/requests/req_…` keeps Requests current); Overview (`/`) only matches itself.
+- Navigation from the account menu (Workspace settings, Sign out, and a workspace chosen from the switcher) asks first while a form on the page has unsaved changes, through the shell's `useLeave`; a link is held by the shell itself. Outside a shell it goes at once.
 - `current` overrides the pathname (previews and tests); products leave it unset.
 - View as: the personas are radio items, so the arrows move through them and Enter switches. The one in view carries the check; a persona who is not Active is listed but disabled. A `choose` that rejects shows its message in a critical toast and changes nothing — the check stays on the person who is still signed in.
 

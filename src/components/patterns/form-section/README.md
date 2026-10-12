@@ -47,7 +47,7 @@ Status: beta
 ## Behaviour
 
 - Enter in a field submits the section when it is dirty; nothing else on the page saves.
-- Discard restores the saved values. Leaving with unsaved changes is the page's concern, not the section's.
+- Discard restores the saved values. Leaving with unsaved changes asks first: while `dirty` is true the section tells the shell (`useUnsavedChanges`), and following a link, a menu or palette destination or a table row asks "Leave without saving?" (Stay or Leave); closing the tab gets the browser's own warning. Saving or discarding stops the asking at once, and outside a shell nothing is asked.
 - A field's own validation error (Field `error`) blocks Save without a banner; the banner is for a server refusal.
 
 ## Composition

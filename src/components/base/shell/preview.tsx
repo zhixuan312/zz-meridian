@@ -1,6 +1,9 @@
 'use client';
 
+import { X } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { DIALOG_FOOT, DIALOG_HEAD, DIALOG_PANEL } from '@/components/ui/dialog';
 import { Specimen, State } from '@/system/specimen';
 import { Row } from '@/components/base/shell';
 import { app } from '@/app.config';
@@ -56,6 +59,23 @@ export default function ShellPreview() {
         </State>
         <State label="reading · 832px, centred: one long document, such as an article" className="w-full">
           <div className="mx-auto h-8 w-[53%] rounded-md border border-dashed border-line-strong bg-fill-hover" />
+        </State>
+      </Specimen>
+      <Specimen label="Leaving with unsaved changes" note="While a form section on the page has unsaved changes, following a link, choosing a destination or a workspace, or a table row asks first. Stay closes the question and changes nothing; Leave goes where the person was going. A link opened in a new tab is never asked about, and closing the tab gets the browser's own warning.">
+        <State label="The question" className="w-full">
+          <div className="grid w-full place-items-center rounded-lg bg-scrim p-8 max-sm:p-3">
+            <div className={`${DIALOG_PANEL} w-full max-w-100 rounded-xl`}>
+              <div className={DIALOG_HEAD}>
+                <div className="min-w-0 flex-1">
+                  <p className="t-section">Leave without saving?</p>
+                  <p className="t-small mt-1.5 text-ink-2">This page has changes that are not saved. If you leave, they are lost.</p>
+                </div>
+                <span className="-mt-0.5 -mr-2 grid size-8 place-items-center rounded-md text-ink-3"><X className="size-4" /></span>
+              </div>
+              <div className="pb-3" />
+              <div className={DIALOG_FOOT}><Button variant="ghost">Stay</Button><Button variant="danger">Leave</Button></div>
+            </div>
+          </div>
         </State>
       </Specimen>
     </>
