@@ -45,12 +45,15 @@ async function hydrateBeforeItsCode() {
   const served = host.querySelector('[data-testid="specimen"]')!;
   let removed = false;
   new MutationObserver((ms) => { for (const m of ms) for (const n of m.removedNodes) if (n === served || n.contains(served)) removed = true; }).observe(host, { subtree: true, childList: true });
-  let load!: () => void;
+  let load: (() => void) | undefined;
   const Late = lazy(() => new Promise<{ default: ComponentType }>((r) => { load = () => r({ default: Specimen }); }));
   root = hydrateRoot(host, <Providers><main><Suspense><Late /></Suspense></main></Providers>);
+  // Hydration has reached the boundary once it has asked for the specimen's code. On a busy machine that is later than
+  // any fixed wait (one run of the whole suite found it had not yet, after 60 ms), so wait for the asking itself.
+  for (let i = 0; i < 100 && !load; i++) await settle();
   await settle();
   const before = { removed, there: host.contains(served) };
-  load();
+  load!();
   await settle();
   return { before, after: { removed, there: host.contains(served) } };
 }

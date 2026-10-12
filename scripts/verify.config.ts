@@ -125,6 +125,8 @@ const config: VerifyConfig = {
     '/requests/req_missing', // no such request: the not-found screen in the shell
   ],
   smokeRoutes: ['/', '/requests', '/settings'],
+  // The sample's own journeys across its three workspaces, run beside the audit, the presses and the keyboard walk.
+  browserChecks: ['journeys/workspaces.ts'],
   // Sizes to hold. /health is the longest streamed document of the analytical pages: ninety days of bars, six
   // services each with their own strip, an incident timeline, and a screen-reader table behind every chart. It
   // measured 99-100 KiB when this cap was set, so the cap sat exactly on the measurement and the next legitimate
