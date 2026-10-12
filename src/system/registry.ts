@@ -62,6 +62,7 @@ export const CARDS: Card[] = [
   { id: 'freshness', layer: 3, section: 'patterns', dir: 'src/components/patterns/freshness', Preview: dynamic(() => import('@/components/patterns/freshness/preview')) },
   { id: 'incident-card', layer: 3, section: 'patterns', dir: 'src/components/patterns/incident-card', Preview: dynamic(() => import('@/components/patterns/incident-card/preview')) },
   { id: 'metric-tile', layer: 3, section: 'patterns', dir: 'src/components/patterns/metric-tile', Preview: dynamic(() => import('@/components/patterns/metric-tile/preview')) },
+  { id: 'page-loading', layer: 3, section: 'patterns', dir: 'src/components/patterns/page-loading', Preview: dynamic(() => import('@/components/patterns/page-loading/preview')) },
   { id: 'period-select', layer: 3, section: 'patterns', dir: 'src/components/patterns/period-select', Preview: dynamic(() => import('@/components/patterns/period-select/preview')) },
   { id: 'proposal', layer: 3, section: 'patterns', dir: 'src/components/patterns/proposal', Preview: dynamic(() => import('@/components/patterns/proposal/preview')) },
   { id: 'prose', layer: 3, section: 'patterns', dir: 'src/components/patterns/prose', Preview: dynamic(() => import('@/components/patterns/prose/preview')) },

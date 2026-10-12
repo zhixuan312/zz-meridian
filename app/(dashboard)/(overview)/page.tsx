@@ -11,7 +11,7 @@ import { overviewTool } from '@/views/tools';
 import { cache } from 'react';
 import { parsePeriod } from '@/lib/period';
 import { app } from '@/app.config';
-import { Busy } from '../_loading';
+import { Busy } from '@/components/patterns/page-loading';
 import { OverviewSkeleton } from './loading';
 
 export const metadata = { title: 'Overview' };

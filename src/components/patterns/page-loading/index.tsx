@@ -30,11 +30,11 @@ export function Busy({ name, children }: { name: string; children: ReactNode }) 
   );
 }
 
-/** A row of three metric tiles. */
-export function TilesSkeleton() {
+/** A row of metric tiles: three unless the page has another number. */
+export function TilesSkeleton({ count = 3 }: { count?: number }) {
   return (
     <Row split="tiles">
-      {[0, 1, 2].map((i) => (
+      {Array.from({ length: count }, (_, i) => (
         <Card key={i} className="gap-3 p-(--card-pad)">
           <Skeleton className="h-3 w-24" />
           <Skeleton className="h-9 w-32 rounded-md" />

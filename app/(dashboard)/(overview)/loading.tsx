@@ -1,7 +1,7 @@
 import { Card } from '@/components/ui/card';
 import { Row } from '@/components/base/shell';
 import { Skeleton } from '@/components/ui/skeleton';
-import { LoadingPage } from '../_loading';
+import { LoadingPage } from '@/components/patterns/page-loading';
 
 /** The rows of the Overview body, in its shape: the page streams them in behind its masthead, and a cold load shows them under the masthead skeleton. */
 export function OverviewSkeleton() {

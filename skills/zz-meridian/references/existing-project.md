@@ -69,10 +69,12 @@ Migrate in place, page by page, keeping their data layer.
    (`src/views/console-chrome.tsx`), since each destination carries its icon component, and take what depends on the
    request from the layout as props: `<ConsoleRail access={…} signOut={…} />` and `<ConsolePalette access={…} />`,
    where `access` is a promise of `{ only, user, viewAs }` — the hrefs this person may see, the signed-in person from
-   their session, and a View as group if they have one (`ChromeAccess` from `@/lib/collection`, built by your own
-   `chromeAccess()`). Both pieces of chrome wait for that promise in their own `<Suspense>` boundary, so the frame is in
-   the static shell and the person's own rail streams in the same response; pass the promise without awaiting it, and
-   never draw the sample person while it is pending. `workspace` and `scopes` still arrive as plain props. A console
+   their session, and a View as group if they have one; leave `viewAs` out and the menu has no such group
+   (`ChromeAccess` from `@/lib/collection`, built by your own `chromeAccess()`). Both take an optional `nav` as well,
+   for a product that draws other destinations than the `nav` in `src/app.config.ts`: it is drawn in its own groups and
+   order, filtered by `access` the same way, and an empty list stays empty. Both pieces of chrome wait for that promise
+   in their own `<Suspense>` boundary, so the frame is in the static shell and the person's own rail streams in the same
+   response; pass the promise without awaiting it, and never draw the sample person while it is pending. `workspace` and `scopes` still arrive as plain props. A console
    with no sign-in passes no `access` at all, and the chrome then shows the full `nav` and the `app.user` it was given,
    so the rail never shows a sample person or a Sign out that goes nowhere.
    **Turn on Cache Components.** Meridian's pages prerender a shell and stream what each request reads, and the route

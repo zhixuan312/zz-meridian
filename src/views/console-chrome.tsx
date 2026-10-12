@@ -17,17 +17,23 @@ import type { ChromeAccess } from '@/lib/collection';
  * shell streams first, the person's own rail follows in the same response, and no destination is ever drawn and then
  * taken away. Until it resolves the rail keeps its frame, the placeholder person and no destination.
  *
- * Without `access` at all (the Atlas's previews and held-still screens) the chrome shows the full `nav` and `app.user`;
- * that is the no-sign-in console, never a fallback for an identity that failed to resolve.
+ * Without `access` at all (the Atlas's previews and held-still screens) the chrome shows the full navigation and
+ * `app.user`; that is the no-sign-in console, never a fallback for an identity that failed to resolve.
+ *
+ * A product that has its own destinations passes them as `nav`: they are drawn in place of the configured ones, in their
+ * own groups and order, and filtered by `access` the same way. A supplied empty navigation stays empty.
  */
-export function ConsoleRail({ access, ...props }: Omit<ComponentProps<typeof Rail>, 'nav' | 'user' | 'viewAs'> & { access?: Promise<ChromeAccess | null> }) {
-  if (!access) return <Rail nav={nav} {...props} />;
+export function ConsoleRail({ access, nav: given, ...props }: RailProps & { access?: Promise<ChromeAccess | null> }) {
+  if (!access) return <Rail nav={given ?? nav} {...props} />;
   return (
     <Suspense fallback={<RailPending />}>
-      <ResolvedRail access={access} {...props} />
+      <ResolvedRail access={access} nav={given} {...props} />
     </Suspense>
   );
 }
+
+/** What the layout hands the rail: the Rail's own props, less the three the request decides, with the navigation optional. */
+type RailProps = Omit<ComponentProps<typeof Rail>, 'nav' | 'user' | 'viewAs'> & { nav?: NavGroup[] };
 
 /**
  * The rail's shape while the person's own rail is on its way: the frame's space, held open so the page never shifts and
@@ -55,11 +61,11 @@ function RailPending() {
   );
 }
 
-export function ConsolePalette({ access }: { access?: Promise<ChromeAccess | null> }) {
-  if (!access) return <CommandPalette nav={nav} />;
+export function ConsolePalette({ access, nav: given }: { access?: Promise<ChromeAccess | null>; nav?: NavGroup[] }) {
+  if (!access) return <CommandPalette nav={given ?? nav} />;
   return (
     <Suspense fallback={null}>
-      <ResolvedPalette access={access} />
+      <ResolvedPalette access={access} nav={given} />
     </Suspense>
   );
 }
@@ -67,26 +73,28 @@ export function ConsolePalette({ access }: { access?: Promise<ChromeAccess | nul
 /** The rail with nobody signed in yet: its frame, the placeholder person, and no destination to click. */
 const NOTHING: NavGroup[] = [];
 
-function ResolvedRail({ access, ...props }: Omit<ComponentProps<typeof Rail>, 'nav' | 'user' | 'viewAs'> & { access: Promise<ChromeAccess | null> }) {
+function ResolvedRail({ access, nav: given, ...props }: RailProps & { access: Promise<ChromeAccess | null> }) {
   const chrome = use(access);
   // A promise that settled on nothing is an identity nobody could resolve: keep the placeholder, never the sample person.
   if (!chrome) return <Rail nav={NOTHING} user={null} {...props} />;
-  return <Rail nav={visible(chrome.only)} user={chrome.user} viewAs={chrome.viewAs} {...props} />;
+  return <Rail nav={visible(chrome.only, given)} user={chrome.user} viewAs={chrome.viewAs} {...props} />;
 }
 
-function ResolvedPalette({ access }: { access: Promise<ChromeAccess | null> }) {
+function ResolvedPalette({ access, nav: given }: { access: Promise<ChromeAccess | null>; nav?: NavGroup[] }) {
   const chrome = use(access);
-  return <CommandPalette nav={chrome ? visible(chrome.only) : NOTHING} />;
+  return <CommandPalette nav={chrome ? visible(chrome.only, given) : NOTHING} />;
 }
 
 /**
- * `nav` narrowed to the hrefs given, with a group left empty dropped; every destination without them.
+ * The navigation narrowed to the hrefs given, with a group left empty dropped; every destination without them. The
+ * navigation is `sourceNav` when one is supplied, an empty one included, and the configured `nav` otherwise.
  *
  * The hrefs come from `chromeAccess().only`, the destinations this person satisfies the need of. This is presentation
  * only and never the gate: a destination kept out of the rail is still reachable by its address, so each page carries
  * its own gate (a later task puts one on every page). The palette takes the same list, so the two always agree.
  */
-export function visible(only?: string[]): NavGroup[] {
-  if (!only) return nav;
-  return nav.map((g) => ({ ...g, items: g.items.filter((i) => only.includes(i.href)) })).filter((g) => g.items.length);
+export function visible(only?: string[], sourceNav?: NavGroup[]): NavGroup[] {
+  const source = sourceNav ?? nav;
+  if (!only) return source;
+  return source.map((g) => ({ ...g, items: g.items.filter((i) => only.includes(i.href)) })).filter((g) => g.items.length);
 }

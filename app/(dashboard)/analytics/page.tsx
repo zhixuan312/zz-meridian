@@ -11,7 +11,7 @@ import { DEMO_NOW, DEMO_UPDATED_AT } from '@/data/sample';
 import { analyticsTool } from '@/views/tools';
 import { cache } from 'react';
 import { parsePeriod } from '@/lib/period';
-import { Busy } from '../_loading';
+import { Busy } from '@/components/patterns/page-loading';
 import { AnalyticsSkeleton } from './loading';
 
 export const metadata = { title: 'Analytics' };

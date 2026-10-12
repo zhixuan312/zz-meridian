@@ -62,6 +62,7 @@ export const PREVIEW_LOADERS: Record<string, () => Promise<{ default: ComponentT
   'patterns/freshness': () => import('@/components/patterns/freshness/preview'),
   'patterns/incident-card': () => import('@/components/patterns/incident-card/preview'),
   'patterns/metric-tile': () => import('@/components/patterns/metric-tile/preview'),
+  'patterns/page-loading': () => import('@/components/patterns/page-loading/preview'),
   'patterns/period-select': () => import('@/components/patterns/period-select/preview'),
   'patterns/proposal': () => import('@/components/patterns/proposal/preview'),
   'patterns/prose': () => import('@/components/patterns/prose/preview'),

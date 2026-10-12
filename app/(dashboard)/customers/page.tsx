@@ -5,7 +5,7 @@ import { gate } from '@/data/access';
 import { read } from '@/data/read';
 import type { CustomerRecord } from '@/data/sample';
 import { CustomersView, InviteCustomer } from '@/views/customers';
-import { Busy, TableSkeleton, TilesSkeleton } from '../_loading';
+import { Busy, TableSkeleton, TilesSkeleton } from '@/components/patterns/page-loading';
 
 export const metadata = { title: 'Customers' };
 

@@ -1,5 +1,5 @@
 import { Skeleton } from '@/components/ui/skeleton';
-import { LoadingPage } from '../_loading';
+import { LoadingPage } from '@/components/patterns/page-loading';
 
 /** Settings on its way: a stack of sections, each a title, a sentence and its controls. */
 export default function SettingsLoading() {

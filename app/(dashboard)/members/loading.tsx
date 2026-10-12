@@ -1,4 +1,4 @@
-import { LoadingPage, TableSkeleton } from '../_loading';
+import { LoadingPage, TableSkeleton } from '@/components/patterns/page-loading';
 
 /** Members on its way: the table of people. */
 export default function MembersLoading() {

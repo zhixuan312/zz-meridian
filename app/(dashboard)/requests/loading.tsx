@@ -1,4 +1,4 @@
-import { LoadingPage, TableSkeleton, TilesSkeleton } from '../_loading';
+import { LoadingPage, TableSkeleton, TilesSkeleton } from '@/components/patterns/page-loading';
 
 /** Requests on its way: three tiles over a few table rows; the page's own fallback is the same, so a navigation does not jump. */
 export default function RequestsLoading() {

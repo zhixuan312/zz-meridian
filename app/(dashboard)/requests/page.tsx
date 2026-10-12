@@ -7,7 +7,7 @@ import { gate } from '@/data/access';
 import { readRequests, requestsQuery, REQUEST_PAGE } from '@/data/requests';
 import { DEMO_UPDATED_AT } from '@/data/sample';
 import { RequestsView } from '@/views/requests';
-import { Busy, TableSkeleton, TilesSkeleton } from '../_loading';
+import { Busy, TableSkeleton, TilesSkeleton } from '@/components/patterns/page-loading';
 
 export const metadata = { title: 'Requests' };
 

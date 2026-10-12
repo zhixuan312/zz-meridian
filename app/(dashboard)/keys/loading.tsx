@@ -1,5 +1,5 @@
 import { Skeleton } from '@/components/ui/skeleton';
-import { LoadingPage, TableSkeleton } from '../_loading';
+import { LoadingPage, TableSkeleton } from '@/components/patterns/page-loading';
 
 /** API keys on its way: the table of keys, and the line about rotating them. */
 export default function KeysLoading() {

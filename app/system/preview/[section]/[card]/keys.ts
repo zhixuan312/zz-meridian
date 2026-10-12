@@ -58,6 +58,7 @@ export const PREVIEW_KEYS: string[] = [
   'patterns/freshness',
   'patterns/incident-card',
   'patterns/metric-tile',
+  'patterns/page-loading',
   'patterns/period-select',
   'patterns/proposal',
   'patterns/prose',

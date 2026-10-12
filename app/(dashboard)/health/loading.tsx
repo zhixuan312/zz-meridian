@@ -1,7 +1,7 @@
 import { Row } from '@/components/base/shell';
 import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { LoadingPage } from '../_loading';
+import { LoadingPage } from '@/components/patterns/page-loading';
 
 /** Health on its way: the uptime figure with its service grid, the service list and the past incidents. */
 export default function HealthLoading() {

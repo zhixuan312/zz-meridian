@@ -1,5 +1,5 @@
 import { Row } from '@/components/base/shell';
-import { ChartSkeleton, LoadingPage, TableSkeleton } from '../_loading';
+import { ChartSkeleton, LoadingPage, TableSkeleton } from '@/components/patterns/page-loading';
 
 /** The rows of the Analytics body, in its shape: the page streams them in behind its masthead, and a cold load shows them under the masthead skeleton. */
 export function AnalyticsSkeleton() {
