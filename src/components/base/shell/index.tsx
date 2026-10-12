@@ -7,8 +7,6 @@ import { usePathname, useRouter } from 'next/navigation';
 import { cn } from '@/lib/cn';
 import { usePreferences } from '@/components/base/providers';
 import { ConsoleSurface } from '@/components/base/surface';
-import { Button } from '@/components/ui/button';
-import { Dialog as Question, DialogContent as QuestionContent } from '@/components/ui/dialog';
 import dynamic from 'next/dynamic';
 
 // The assistant loads only where it is shown: a product without it, or a person who switched it off, never downloads it.
@@ -17,6 +15,11 @@ import dynamic from 'next/dynamic';
 // adopter's build, issue #7 — into every page that carries a button nobody had pressed.
 const AssistantColumn = dynamic(() => import('@/components/patterns/assistant').then((m) => m.AssistantColumn));
 const AssistantLauncher = dynamic(() => import('@/components/patterns/assistant/launcher').then((m) => m.AssistantLauncher));
+// The question the leave guard asks is the same kind of code: a dialog and two buttons that most pages never show. With it
+// in the shell's own file every Atlas page downloaded them (25 to 29 KB of first-load JS, measured), so it is a chunk of
+// its own, fetched when something on the page first becomes unsaved and drawn when a person tries to leave.
+const loadLeaveQuestion = () => import('./leave-question').then((m) => m.LeaveQuestion);
+const LeaveQuestion = dynamic(loadLeaveQuestion);
 
 /**
  * The shell and the layout contract, in one file. src/components/base/shell/README.md is the prose for it.
@@ -80,6 +83,8 @@ function useLeaveGuard() {
   const [pending, setPending] = useState<(() => void) | null>(null);
   const hold = useCallback(() => {
     held.current += 1;
+    // Something is unsaved, so the question may be needed: fetch it now and it is there by the time it is asked.
+    void loadLeaveQuestion();
     return () => { held.current -= 1; };
   }, []);
   const leave = useCallback((go: () => void) => {
@@ -107,21 +112,7 @@ function useLeaveGuard() {
     };
   }, [leave, router]);
   const value = useMemo(() => ({ hold, leave }), [hold, leave]);
-  const question = (
-    <Question open={pending !== null} onOpenChange={(o) => { if (!o) setPending(null); }}>
-      <QuestionContent
-        size="sm"
-        title="Leave without saving?"
-        description="This page has changes that are not saved. If you leave, they are lost."
-        footer={
-          <>
-            <Button variant="ghost" onClick={() => setPending(null)}>Stay</Button>
-            <Button variant="danger" onClick={() => { const go = pending; setPending(null); go?.(); }}>Leave</Button>
-          </>
-        }
-      />
-    </Question>
-  );
+  const question = pending ? <LeaveQuestion onStay={() => setPending(null)} onLeave={() => { setPending(null); pending(); }} /> : null;
   return { value, question };
 }
 

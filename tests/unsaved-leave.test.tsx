@@ -52,7 +52,9 @@ const page = async (unsaved: boolean) => {
 const link = () => screen.getByRole('link', { name: 'Reports' });
 // By role: one question at most is ever open, or this throws.
 const asked = () => screen.queryByRole('dialog', { name: 'Leave without saving?' });
-const answer = async (name: 'Stay' | 'Leave') => { await act(async () => { fireEvent.click(screen.getByRole('button', { name })); }); };
+/** The question, once it is asked: its code is the shell's to fetch when it is needed, so it is waited for. */
+const question = () => screen.findByRole('dialog', { name: 'Leave without saving?' });
+const answer = async (name: 'Stay' | 'Leave') => { await question(); await act(async () => { fireEvent.click(screen.getByRole('button', { name })); }); };
 /**
  * Follows the link as a browser would, and answers whether the click was stopped before the browser would have acted on
  * it. A click that reaches the document is judged there, and ended there, since jsdom cannot follow a link; one that
@@ -76,7 +78,7 @@ describe('leaving a form that has unsaved changes', () => {
     expect(follow()).toBe(true);
     // The link's own handler either never ran or found the click already stopped: a link that navigates itself did not.
     expect(own.filter((prevented) => !prevented)).toEqual([]);
-    expect(asked()).not.toBeNull();
+    await question();
     await answer('Stay');
     expect(asked()).toBeNull();
     expect(went.to).toEqual([]);
@@ -96,16 +98,17 @@ describe('leaving a form that has unsaved changes', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Open navigation' }));
     expect(follow()).toBe(true);
     expect(own.filter((prevented) => !prevented)).toEqual([]);
-    expect(asked()).not.toBeNull();
+    await question();
     expect(went.to).toEqual([]);
   });
 
   it('asks the same of a navigation started from code, such as choosing another workspace', async () => {
     await page(true);
     fireEvent.click(screen.getByRole('button', { name: 'Switch workspace' }));
-    expect(asked()).not.toBeNull();
+    await question();
     expect(went.to).toEqual([]);
     await answer('Stay');
+    expect(asked()).toBeNull();
     expect(went.to).toEqual([]);
     fireEvent.click(screen.getByRole('button', { name: 'Switch workspace' }));
     await answer('Leave');
