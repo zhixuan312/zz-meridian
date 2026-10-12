@@ -2,7 +2,7 @@
 
 The assistant is a panel beside the page where a person asks about what they are looking at, opened from the top bar.
 
-Status: draft
+Status: beta
 
 ## Anatomy
 

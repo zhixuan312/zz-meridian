@@ -18,6 +18,8 @@ Status: beta
 
 `react-markdown` with `remark-gfm` (tables, task lists, strikethrough, autolinks) and no raw-HTML plugin; every element drawn on Meridian's roles. URLs pass `safeMarkdownUrl` (`src/lib/safe-markdown.ts`).
 
+Prose has no state and no client code of its own, so where it is rendered decides what it costs. From a Server Component it costs the page no JavaScript at all: the markdown is parsed on the server and the reader is sent HTML. Imported into a client component, the renderer comes with it, 143 KiB in this build, and a reading page then waits for that chunk before its text can paint (an adopter's `--full` run reported it on four document pages: LCP 2.88 to 2.95 s against the 2.5 s floor, with 10 KiB of headroom under the first-load cap, so the route could not take it as first-load code either). A page whose view is a client component renders Prose in the server page and passes it down as `children`. The one place the template loads it in the browser is the assistant's panel, where the text arrives in the browser and the panel's code is fetched only when it is opened.
+
 ## Data
 
 A markdown string. Line endings are normalised and the ends trimmed; nothing else is rewritten, so `` `<projectId>` `` in a code span reads as written.
@@ -59,6 +61,7 @@ An agent's reply in the assistant panel or an embed is written by a model, so it
 
 - Do render anything a person or a model wrote with Prose.
 - Do not add `rehype-raw` or render markdown through `dangerouslySetInnerHTML`: `node scripts/check.ts` fails on the first, and the second throws the policy away.
+- Do not import Prose into a client component for text the server already has: render it in the server page and pass it down as `children`, and it costs the page no code.
 - Do not use Prose for the system's own specifications; the Atlas has its own reader, with anchored headings.
 
 ## Implementation
