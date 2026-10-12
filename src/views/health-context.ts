@@ -45,7 +45,7 @@ export function healthContext(data: HealthData): SharedContext {
   const resolved = past.filter((i) => i.resolved);
   if (resolved.length) {
     const longest = resolved.reduce((m, i) => (Date.parse(i.resolved!) - Date.parse(i.started) > Date.parse(m.resolved!) - Date.parse(m.started) ? i : m));
-    insights.push({ text: `${resolved.length} incident${resolved.length === 1 ? '' : 's'} resolved in the period; the longest, "${longest.title}" on ${formatDate(longest.started)}, lasted ${hours(longest.started, longest.resolved!)}.` });
+    insights.push({ text: `${resolved.length} incident${resolved.length === 1 ? '' : 's'} resolved in the last 90 days; the longest, "${longest.title}" on ${formatDate(longest.started)}, lasted ${hours(longest.started, longest.resolved!)}.` });
   }
   unknowns.push('Latency is one reading per service, now; there is no latency history here to say whether it is unusual.');
 

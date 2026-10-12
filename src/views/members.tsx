@@ -195,7 +195,7 @@ export function MembersView({ rows, now, actions, access, roles, workspace }: { 
     setInviting(false);
     setInvite(BLANK);
     setInviteError(null);
-    act(row.id, { type: 'add', row }, () => actions.invite(draft), { title: `Invitation sent to ${row.email}`, description: `${row.name} joins as ${draft.role} on ${draft.team} when they accept.` }, (reason) => { setInvite(draft); setInviteError(reason); setInviting(true); });
+    act(row.id, { type: 'add', row }, () => actions.invite(draft), { title: `Invited ${row.email}`, description: `${row.name} is listed as Invited, as ${draft.role} on ${draft.team}.` }, (reason) => { setInvite(draft); setInviteError(reason); setInviting(true); });
   };
 
   const columns: Column<Shown>[] = [
@@ -278,10 +278,10 @@ export function MembersView({ rows, now, actions, access, roles, workspace }: { 
         <SheetContent
           title="Invite a member"
           description={`They are added to ${workspace ?? 'this workspace'} as invited, with the role you choose.`}
-          footer={<><SheetClose asChild><Button variant="ghost">Cancel</Button></SheetClose><Button variant="primary" busy={pending} onClick={send}>Send invitation</Button></>}
+          footer={<><SheetClose asChild><Button variant="ghost">Cancel</Button></SheetClose><Button variant="primary" busy={pending} onClick={send}>Invite</Button></>}
         >
           <div className="flex flex-col gap-6">
-            {inviteError ? <Banner tone="critical" title="Invitation not sent">{inviteError}</Banner> : null}
+            {inviteError ? <Banner tone="critical" title="Not invited">{inviteError}</Banner> : null}
             <Field label="Name" error={errors.name} required>
               {(p) => <Input {...p} value={invite.name} onChange={(e) => { setInvite({ ...invite, name: e.target.value }); setErrors({ ...errors, name: undefined }); }} placeholder="Ana Costa" />}
             </Field>

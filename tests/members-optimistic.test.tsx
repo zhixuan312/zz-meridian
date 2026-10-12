@@ -26,7 +26,7 @@ async function invite(name: string) {
   fireEvent.click(screen.getAllByRole('button', { name: 'Invite member' })[0]);
   fireEvent.change(await screen.findByLabelText(/^Name/), { target: { value: name } });
   fireEvent.change(screen.getByLabelText(/^Email/), { target: { value: 'ana@northwind.example' } });
-  fireEvent.click(screen.getByRole('button', { name: 'Send invitation' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Invite' }));
 }
 
 describe('members, optimistically', () => {
@@ -39,7 +39,7 @@ describe('members, optimistically', () => {
     await act(async () => { d.resolve({ ok: false, error: 'There is no seat left on this plan.' }); });
     await waitFor(() => expect(screen.queryByText('Ana Ruiz')).toBeNull());
     const alert = within(await screen.findByRole('dialog')).getByRole('alert');
-    expect(alert.textContent).toContain('Invitation not sent');
+    expect(alert.textContent).toContain('Not invited');
     expect(alert.textContent).toContain('There is no seat left on this plan.');
     expect((screen.getByLabelText(/^Name/) as HTMLInputElement).value).toBe('Ana Ruiz');
     expect(toasts.length).toBe(before);
@@ -76,6 +76,15 @@ describe('the invitation sheet', () => {
     expect(sheet.textContent).toContain('Acme Staging');
     // The sample sends nothing, so the sheet promises no email.
     expect(sheet.textContent).not.toMatch(/email to join|get an email/i);
+  });
+  it('confirms what happened, a member listed as invited, and promises neither a message nor an acceptance', async () => {
+    toasts.length = 0;
+    render(view(withActions({})));
+    await invite('Ana Ruiz');
+    await waitFor(() => expect(toasts.length).toBe(1));
+    expect(toasts[0].title).toBe('Invited ana@northwind.example');
+    expect(`${toasts[0].title} ${toasts[0].description}`).not.toMatch(/sent|when they accept|email to/i);
+    expect(toasts[0].description).toMatch(/listed as Invited/);
   });
   it('says the workspace, unnamed, when the page could not', async () => {
     render(view(withActions({})));

@@ -11,7 +11,7 @@ Status: beta
 | Masthead | PageFrame: kicker, "Members", one sentence, Invite member (primary), shown only to a person who may invite (`invitableRoles()` is not empty) | One band | Stacked |
 | 1 | Data table: Name (avatar and name, grow), Email (from 896px), Role as a person reads it, add-ons and all (as a column from 512px, and on the card at every width below), Team (from 1152px), Status, Joined (from 896px), Last active, and a row action menu | Columns | Cards: name and the menu, then the role with its add-ons, status and last active |
 | 2 | Roles & access matrix: a card whose table ticks each role, main roles first and add-ons after, against every non-public feature and then every action; a legend under it says that an add-on adds to a main role and that the member rules still apply. Generated from `GRANTS`, `FEATURES` and `ACTIONS`, never written by hand; at a phone's width the table scrolls inside its own frame | Columns, scrolling inside the card | The same table, scrolling inside the card |
-| Sheet | Invite a member: Name and Email (required), Role, Team; Cancel and Send invitation | From the right, 440px | From the bottom |
+| Sheet | Invite a member: Name and Email (required), Role, Team; Cancel and Invite | From the right, 440px | From the bottom |
 | Sheet | Change {name}'s role: Role and Add-ons, offering only the choices the row's boundary allowed; a refusal reopens it with the reason in a critical Banner; Cancel and Save role | From the right, 440px | From the bottom |
 | Toast | Remove: the person leaves the table at once and a toast says "{name} removed · They lose access when this closes" with Undo. The removal is sent when the toast closes (8 s, `UNDO_MS`), or at once if the page goes away first; Undo brings them back and sends nothing; a refusal brings them back with its reason | Bottom right | Top, full width |
 
@@ -28,8 +28,8 @@ The body (rows 1 and 2) is the records template, `Records` from `src/components/
 | Invited | The status Badge in `accent`; Last active reads "Never" in `ink-3`; no row actions |
 | Suspended | The status Badge in `warning` |
 | Name or email missing | The field's error under it; nothing is sent |
-| Changed | The page refreshes from the collection and a toast confirms: "Role changed", "Member suspended", "Member reactivated", "Invitation sent to {email}"; a removal's toast is its Undo, "{name} removed" |
-| Rejected | The table goes back to what it was. A refused invitation reopens the sheet with what was typed and a critical Banner, "Invitation not sent", with the reason; a refused role change reopens the Change role sheet with the draft it was sent from and a critical Banner, "Role not changed", with the reason; a refused status change or removal shows a critical toast with the reason |
+| Changed | The page refreshes from the collection and a toast confirms: "Role changed", "Member suspended", "Member reactivated", "Invited {email}", which says the member is listed as Invited (the sample delivers no message, and an invited member has no acceptance step); a removal's toast is its Undo, "{name} removed" |
+| Rejected | The table goes back to what it was. A refused invitation reopens the sheet with what was typed and a critical Banner, "Not invited", with the reason; a refused role change reopens the Change role sheet with the draft it was sent from and a critical Banner, "Role not changed", with the reason; a refused status change or removal shows a critical toast with the reason |
 | No members | The first-run empty state with Invite member |
 | May not invite | No Invite member in the masthead and none in the empty state, because the boundary offers no invitable role |
 
