@@ -30,7 +30,7 @@ The rows follow the navigation's order. The last column names who the rail leave
 | Engineering | API keys | `/keys` | The keys that let services call the product, with owner and scopes | A Viewer, unless it also holds the Key manager add-on |
 | Engineering | Operations tickets | `/operations-tickets` | The work tracked against a service: what is open, what is waiting and who has it | Nobody |
 | Engineering | Tests and verification | `/tests` | The verification runs, newest first, and which are failing now | Nobody |
-| Engineering | Releases | `/releases` | Each release, what it still waits for, and which version is live | Nobody |
+| Engineering | Releases | `/releases` | Each release, which required verifications it has not passed, and which version is live | Nobody |
 
 Seven of these pages are lists of records, and share one arrangement, an optional row of summary tiles over a table (Members and API keys have no tiles), which is the [Records template](/system/pages/template-records): Members, Customers, Requests, API keys, Operations tickets, Tests and verification and Releases.
 

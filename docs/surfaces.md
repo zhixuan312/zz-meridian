@@ -154,7 +154,7 @@ All components are surface-agnostic by construction: they size from control toke
 | Requests | List: three tiles, filter bar, data table, detail on select | Tiles over the table | Tiles in one column, card list | `requests` inline: the five latest that match the tool's query |
 | Request | Detail: head, facts, timeline | Facts 2/3 + context 1/3 | One column | Not offered; the inline list links here |
 | Analytics | Four figures, heatmap, breakdowns, endpoints | Four tiles · heatmap full width · hour of day 1/2 + regions 1/2 · requests and errors per day 1/2 + 1/2 · endpoints table full | Grouped heatmap | Fullscreen only |
-| Operations | Operational: status list, incidents | Status 2/3 + incident 1/3 · the incidents also open, when there are any · services table full · past incidents full | One column | `health` inline: the status list |
+| Operations | Operational: status list, incidents | Status 2/3 + incident 1/3 · the incidents also open, when there are any · services status list full · past incidents full | One column | `health` inline: the status list |
 | Customers | List with sparklines | Three tiles · table | Tiles in one column, then a card list | Not offered |
 | API keys | List with destructive actions | Table | Card list | Not offered |
 | Members | List with destructive actions | Table | Card list | Not offered |

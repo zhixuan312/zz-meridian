@@ -25,7 +25,7 @@ export function stageOf(r: ReleaseRow): Stage {
 export const RELEASE_METRICS = {
   live: { label: 'Live versions', hint: 'The version released last for each service and environment. A release that has not gone out is never live.' },
   ready: { label: 'Ready to release', hint: 'Releases whose every required verification has passed and that have not gone out.' },
-  testing: { label: 'In testing', hint: 'Releases that have not gone out and still wait for a required verification: it has no run, or its latest run failed or was skipped.' },
+  testing: { label: 'In testing', hint: 'Releases that have not gone out and have a required verification that has not passed: it has no run, or its latest run failed or was skipped.' },
 } as const;
 
 /** The three figures the tiles show and the assistant is told, worked out once from every release passed in. */
@@ -33,7 +33,7 @@ export function releaseFigures(rows: ReleaseRow[]): { live: ReleaseRow[]; ready:
   return { live: currentVersions(rows), ready: rows.filter((r) => stageOf(r) === 'ready').length, testing: rows.filter((r) => stageOf(r) === 'testing').length };
 }
 
-/** What a release waits for, in a line: `load on POST /v1/messages: no run yet`. */
+/** One verification a release has not passed, in a line: `load on POST /v1/messages: no run yet`. */
 export function unresolvedText(u: Unresolved): string {
   return `${u.suite} on ${u.endpointId}: ${u.state === 'missing' ? 'no run yet' : u.state}`;
 }
@@ -86,7 +86,7 @@ export function releasesContext(rows: ReleaseRow[], now: string, f: ReleasesStat
 
   const insights: Insight[] = [];
   const waiting = rows.filter((r) => stageOf(r) === 'testing');
-  if (waiting.length) insights.push({ text: `${waiting.length} ${waiting.length === 1 ? 'release is' : 'releases are'} still in testing: ${listed(waiting, (r) => `${r.version} of ${r.service} waits for ${r.verification.unresolved.map(unresolvedText).join(', ')}`, more, 5)}.` });
+  if (waiting.length) insights.push({ text: `${waiting.length} ${waiting.length === 1 ? 'release is' : 'releases are'} still in testing: ${listed(waiting, (r) => `${r.version} of ${r.service} has not passed ${r.verification.unresolved.map(unresolvedText).join(', ')}`, more, 5)}.` });
 
   return {
     view: 'releases',

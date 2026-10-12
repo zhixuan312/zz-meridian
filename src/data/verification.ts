@@ -1,6 +1,6 @@
 /**
  * The three rules that turn runs and releases into what a person reads: which run is the latest of a verification, what a
- * release still waits for, and which version is live. Pages, the view tools and the reads all use these, so a figure on a
+ * release has not passed, and which version is live. Pages, the view tools and the reads all use these, so a figure on a
  * page and the same figure told to the assistant cannot differ.
  *
  * Pure functions with type-only imports and no server import of any kind, because the client views import this file.

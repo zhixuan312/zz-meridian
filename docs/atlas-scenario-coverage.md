@@ -304,6 +304,7 @@ This lists every path that differs from the plan's base, by file, or by folder f
 | `tests/records-consumers.test.tsx` | added | the gate, here and in a project that keeps the file |
 | `tests/records-template.test.tsx` | added | the gate, here and in a project that keeps the file |
 | `tests/release-phone-cell.test.ts` | added | the gate, here and in a project that keeps the file |
+| `tests/release-wording.test.ts` | added | the gate, here and in a project that keeps the file |
 | `tests/roles.test.ts` | changed | the gate, here and in a project that keeps the file |
 | `tests/settings-access.test.tsx` | changed | the gate, here and in a project that keeps the file |
 | `tests/settings-agents.test.tsx` | added | the gate; it holds Settings' sections and the absence of what was removed |
