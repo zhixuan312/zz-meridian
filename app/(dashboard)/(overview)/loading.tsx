@@ -32,6 +32,14 @@ export function OverviewSkeleton() {
           </Card>
         ))}
       </Row>
+      <Row split="tiles">
+        {[0, 1, 2].map((i) => (
+          <Card key={i} className="gap-4 p-(--card-pad)">
+            <Skeleton className="h-4 w-28" />
+            {[0, 1, 2, 3].map((j) => <Skeleton key={j} className="h-3" />)}
+          </Card>
+        ))}
+      </Row>
       <Row>
         <Card className="gap-4 p-(--card-pad)">
           <Skeleton className="h-4 w-32" />
@@ -42,7 +50,7 @@ export function OverviewSkeleton() {
   );
 }
 
-/** Overview on its way: the featured figure beside three tiles, two cards of rows, and the activity feed. */
+/** Overview on its way: the featured figure beside three tiles, two cards of rows, the three regions, and the activity feed. */
 export default function OverviewLoading() {
   return (
     <LoadingPage name="overview" title="Overview">

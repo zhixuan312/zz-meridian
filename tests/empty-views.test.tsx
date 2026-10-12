@@ -11,8 +11,10 @@ const NOW = '2026-10-05T09:00:00.000Z';
 
 describe('a page body with no data shows its empty state, not a route error', () => {
   it('Overview, with no requests', () => {
-    render(<OverviewBody period="30d" incidents={[]} updatedAt={NOW} series={[]} totals={{ current: totals, previous: totals }} endpoints={[]} mix={[]} activity={[]} now={NOW} />);
+    render(<OverviewBody period="30d" incidents={[]} updatedAt={NOW} series={[]} totals={{ current: totals, previous: totals }} endpoints={[]} mix={[]} activity={[]} now={NOW} summary={{ business: null, operation: null, delivery: null }} />);
     expect(screen.getByText('No requests yet')).toBeTruthy();
+    // The three regions draw without traffic: here each says its summary is unavailable.
+    for (const name of ['Business', 'Operation', 'Delivery']) expect(screen.getByRole('region', { name }).textContent).toMatch(/unavailable/);
   });
   it('Analytics, with no requests in the period', () => {
     render(<AnalyticsBody period="30d" activity={[]} incidents={[]} updatedAt={NOW} now={NOW} series={[]} heat={[]} hours={[]} regions={[]} endpoints={[]} />);

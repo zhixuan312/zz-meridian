@@ -14,6 +14,7 @@ vi.mock('next/cache', () => ({ cacheTag: () => {}, cacheLife: () => {}, updateTa
 import { createTicket, updateTicket } from '../app/(dashboard)/operations-tickets/actions';
 import { collectionFor, resolveAccess } from '@/data/access';
 import { collections } from '@/data/collections';
+import { readMainSummary } from '@/data/main';
 import { collectionTag, read } from '@/data/read';
 import { readTickets } from '@/data/tickets';
 import { ticketCounts } from '@/views/tickets-context';
@@ -51,6 +52,14 @@ describe('a ticket created from the page', () => {
     }
     expect((await stored()).length).toBe(before);
     expect(cache.tags).not.toContain(TAG);
+  });
+});
+
+describe('a ticket created from the page, as Main counts it', () => {
+  it('raises the open tickets of Main\'s delivery summary at its next read', async () => {
+    const before = (await readMainSummary()).delivery!.open;
+    expect(await createTicket({ ...draft, title: 'Counted by Main' })).toEqual({ ok: true });
+    expect((await readMainSummary()).delivery!.open).toBe(before + 1);
   });
 });
 

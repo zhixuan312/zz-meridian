@@ -9,7 +9,7 @@ Status: beta
 | Mode | Holds |
 |---|---|
 | Inline (fits 480px) | Embed frame head (mark, "Overview · Last 30 days", freshness, Expand, Open in ZZ Meridian); three Metric tiles (Requests featured in the accent, Error rate, Latency p95); a card with the requests trend at 168px and Ask |
-| Fullscreen | The console Overview's rows under the embed head |
+| Fullscreen | The console Overview's rows, the Business, Operation and Delivery regions among them, under the embed head. Inline shows no region |
 
 ## States
 
@@ -19,11 +19,11 @@ Status: beta
 
 ## Tool
 
-`zz_meridian_overview { period: "7d" | "30d" | "90d" | "all" }` returns the totals and the daily series and names `ui://zz-meridian/overview`.
+`zz_meridian_overview { period: "7d" | "30d" | "90d" | "all" }` returns the totals and the daily series, with Main's three summaries, and names `ui://zz-meridian/overview`.
 
 ## Agents
 
-The Overview page's context, unchanged (`app/(dashboard)/(overview)/README.md` lists it): the view renders the console's figures and shares the console's context, so an MCP host and the console's assistant are told the same thing. Ask on the trend posts "Why did requests change on <day>?" or "What drove the trend in requests this period?".
+The Overview page's context (`app/(dashboard)/(overview)/README.md` lists it, Main's figures included): the view renders the console's figures and shares the console's context, so an MCP host and the console's assistant are told the same thing. Ask on the trend posts "Why did requests change on <day>?" or "What drove the trend in requests this period?".
 
 ### What the agent reads
 

@@ -26,7 +26,7 @@ export type ActionId =
 
 /** Each feature: its name as a person reads it, and the need a person must satisfy to reach it. */
 export const FEATURES: Record<FeatureId, { title: string; needs: Need }> = {
-  overview: { title: 'Overview', needs: { allOf: ['days:read', 'endpoints:read', 'responses:read', 'activity:read', 'incidents:read'] } },
+  overview: { title: 'Overview', needs: { allOf: ['days:read', 'endpoints:read', 'responses:read', 'activity:read', 'incidents:read', 'customers:read', 'services:read', 'tickets:read', 'tests:read', 'releases:read'] } },
   requests: { title: 'Requests', needs: 'requests:read' },
   request: { title: 'Request', needs: { allOf: ['requests:read', 'endpoints:read'] } },
   analytics: { title: 'Analytics', needs: { allOf: ['days:read', 'endpoints:read', 'activity:read', 'incidents:read', 'requests:read'] } },

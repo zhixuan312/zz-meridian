@@ -13,6 +13,7 @@ import { FEATURES } from '@/data/features';
 import { read } from '@/data/read';
 import { readRequests, REQUEST_PAGE } from '@/data/requests';
 import { readReleases, readRuns } from '@/data/engineering';
+import { readMainSummary } from '@/data/main';
 import { readTickets } from '@/data/tickets';
 import { readActivity, readDays, readEndpoints, readIncidents, readResponses, readServices } from '@/data/metrics';
 import {
@@ -42,14 +43,14 @@ const updatedAt = () => DEMO_UPDATED_AT.toISOString();
 export const overviewTool = defineViewTool({
   name: 'overview',
   title: 'Overview',
-  description: 'How the API is doing over a period: requests, error rate, latency and spend with their change, the days that stand out, and what explains them.',
+  description: 'How the API is doing over a period: requests, error rate, latency and spend with their change, the days that stand out, and what explains them; and Main\'s summary of the whole product: customers, services and incidents, tickets, failing verifications and releases.',
   needs: FEATURES.overview.needs,
   input: z.object({ period, day }),
   resourceUri: `ui://${slug}/overview`,
   async read({ period: p = '30d', day: d }) {
     await requireNeed(FEATURES.overview.needs);
-    const [{ series, totals, observedAt }, endpoints, mix, activity, { all: incidents }] = await Promise.all([readDays(p), readEndpoints(), readResponses(), readActivity(), readIncidents()]);
-    const data: OverviewData = { period: p, series, totals, endpoints, mix, activity, incidents, updatedAt: updatedAt(), now: observedAt, day: d ?? null };
+    const [{ series, totals, observedAt }, endpoints, mix, activity, { all: incidents }, summary] = await Promise.all([readDays(p), readEndpoints(), readResponses(), readActivity(), readIncidents(), readMainSummary()]);
+    const data: OverviewData = { period: p, series, totals, endpoints, mix, activity, incidents, summary, updatedAt: updatedAt(), now: observedAt, day: d ?? null };
     const index = d ? data.series.findIndex((x) => x.date === d) : -1;
     return { context: overviewContext(data, index >= 0 ? index : null), data };
   },

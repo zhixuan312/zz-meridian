@@ -4,7 +4,8 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Suspense, useEffect, useImperativeHandle, useMemo, useRef, useState, type ReactNode, type Ref } from 'react';
 import { Dialog } from 'radix-ui';
-import { ArrowRight, ChevronRight, Menu, Search, X } from 'lucide-react';
+import { ArrowLeft, ArrowRight, ChevronRight, Menu, Search, X } from 'lucide-react';
+import { workspaces } from '@/app.config';
 import { cn } from '@/lib/cn';
 import { AppMark } from '@/components/base/app-mark';
 import { Kbd } from '@/components/ui/kbd';
@@ -144,7 +145,13 @@ function Shelf({ nav }: { nav: AtlasNav }) {
         })}
       </nav>
       <div className="flex items-center gap-2 border-t border-line px-4 py-3">
-        <Link href="/" className="inline-flex flex-1 items-center gap-1 text-xs font-medium text-ink-2 hover:text-ink">Open the template <ArrowRight className="size-3.5" /></Link>
+        {/* The way back to the product: Main first, then each other workspace, under the names the declaration gives them. */}
+        <nav aria-label="Workspaces" className="flex min-w-0 flex-1 flex-col gap-1">
+          <Link href={workspaces.main.homeHref} className="inline-flex items-center gap-1 text-xs font-medium text-ink-2 hover:text-ink"><ArrowLeft className="size-3.5" />Back to {workspaces.main.label}</Link>
+          {(Object.keys(workspaces) as (keyof typeof workspaces)[]).filter((id) => id !== 'main').map((id) => (
+            <Link key={id} href={workspaces[id].homeHref} className="inline-flex items-center gap-1 text-xs font-medium text-ink-2 hover:text-ink">{workspaces[id].label}<ArrowRight className="size-3.5" /></Link>
+          ))}
+        </nav>
         <AppearanceMenu />
       </div>
     </div>

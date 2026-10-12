@@ -6,6 +6,11 @@
 import type { ActivityEvent } from '@/components/patterns/activity-feed';
 import type { Incident } from '@/components/patterns/incident-card';
 import type { DailyPoint, Totals } from '@/data/sample';
+import { CUSTOMER_METRICS } from './customers-context';
+import type { MainSummary } from './main-summary';
+import { RELEASE_METRICS } from './releases-context';
+import { TEST_METRICS } from './tests-context';
+import { TICKET_METRICS } from './tickets-context';
 import { formatCompact, formatCost, formatDuration, formatPercent } from '@/lib/format';
 import { formatDate } from '@/lib/format-date';
 import { deviations, largest, runs, sameWeekdayBaseline, weekday, weekendRatio, median } from '@/lib/insight';
@@ -29,6 +34,8 @@ export type OverviewData = {
   activity: ActivityEvent[];
   /** Live and past incidents: what might explain a day that stands out. */
   incidents: Incident[];
+  /** Main's three summaries of the whole product; one that could not be read is null. */
+  summary: MainSummary;
   updatedAt: string;
   now: string;
   /** The day the address names (`?day=`): the page opens pointed at it. */
@@ -113,6 +120,38 @@ export function overviewFindings(series: DailyPoint[]): { usual: { errorRate: nu
   return { usual, errorSpike: { text: `${times(errorRate[peak] / usual.errorRate)} usual on ${days(run.map((i) => series[i].date))}`, day: series[peak].date } };
 }
 
+/**
+ * What Main says of the whole product, as the assistant reads it: the same figures the three regions draw, under the
+ * labels their own pages use, and a plain unknown for a summary that could not be read.
+ */
+function summaryContext({ business, operation, delivery }: MainSummary): { facts: Fact[]; insights: Insight[]; unknowns: string[] } {
+  const facts: Fact[] = [];
+  const insights: Insight[] = [];
+  const unknowns: string[] = [];
+  if (business) {
+    facts.push({ label: CUSTOMER_METRICS.customers.label, value: String(business.customers) });
+  } else unknowns.push('The business summary could not be read, so the customer figures are missing, not zero.');
+  if (operation) {
+    const said = [
+      operation.outage.length && `Out: ${operation.outage.join(', ')}.`,
+      operation.degraded.length && `Degraded: ${operation.degraded.join(', ')}.`,
+      operation.incidents.length && `Open incidents: ${operation.incidents.map((i) => `"${i.title}"`).join(', ')}.`,
+    ].filter(Boolean);
+    insights.push({ text: said.length ? said.join(' ') : 'Every service is operational and no incident is open.' });
+  } else unknowns.push('The operation summary could not be read, so the services and incidents are missing, not healthy.');
+  if (delivery) {
+    facts.push(
+      { label: TICKET_METRICS.open.label, value: String(delivery.open) },
+      { label: TICKET_METRICS.waiting.label, value: String(delivery.waiting) },
+      { label: TEST_METRICS.failing.label, value: String(delivery.failing) },
+      { label: RELEASE_METRICS.live.label, value: String(delivery.live) },
+      { label: RELEASE_METRICS.ready.label, value: String(delivery.ready) },
+      { label: RELEASE_METRICS.testing.label, value: String(delivery.testing) },
+    );
+  } else unknowns.push('The delivery summary could not be read, so the tickets, verifications and releases are missing, not zero.');
+  return { facts, insights, unknowns };
+}
+
 /** The Overview's context for `data`, with the person pointing at day `index` of the series, or at nothing. */
 export function overviewContext(data: OverviewData, index: number | null = null): SharedContext {
   const { period, series, totals } = data;
@@ -129,14 +168,16 @@ export function overviewContext(data: OverviewData, index: number | null = null)
     { label: M.p95.label, value: formatDuration(c.p95), change: change(c.p95, p.p95, period, formatDuration), definition: M.p95.hint },
     { label: M.spend.label, value: formatCost(c.spend), change: change(c.spend, p.spend, period, formatCost), definition: M.spend.hint },
   ];
-  if (!series.length) return { view: 'overview', title: 'Overview', address, scope, freshness: freshnessOf(data.updatedAt, data.now), facts, insights: [], unknowns: ['No requests have arrived in this period, so there is nothing to compare.'] };
+  const main = summaryContext(data.summary);
+  facts.push(...main.facts);
+  if (!series.length) return { view: 'overview', title: 'Overview', address, scope, freshness: freshnessOf(data.updatedAt, data.now), facts, insights: main.insights, unknowns: ['No requests have arrived in this period, so there is nothing to compare.', ...main.unknowns] };
 
   const dates = series.map((d) => d.date);
   const errorRate = series.map((d) => (d.requests ? d.errors / d.requests : 0));
   const p95 = series.map((d) => d.p95);
   const requests = series.map((d) => d.requests);
   const insights: Insight[] = [];
-  const unknowns: string[] = [];
+  const unknowns: string[] = [...main.unknowns];
   const errMedian = median(errorRate);
 
   const spikes = errorSpikes(data);
@@ -174,6 +215,8 @@ export function overviewContext(data: OverviewData, index: number | null = null)
     const wd = WEEKDAY[weekday(d.date)];
     focus = `${formatDate(d.date)}, a ${wd}: ${d.requests.toLocaleString('en-US')} requests${usual ? ` (${times(d.requests / usual)} the median ${wd})` : ''}; error rate ${pct(errorRate[index])} (${times(errorRate[index] / errMedian)} the period's median); latency p95 ${formatDuration(d.p95)} (${times(d.p95 / median(p95))} the median); spend ${formatCost(d.spend)}.`;
   }
+
+  insights.push(...main.insights);
 
   return { view: 'overview', title: 'Overview', address, scope, freshness: freshnessOf(data.updatedAt, data.now), focus, facts, insights, unknowns };
 }

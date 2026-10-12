@@ -13,11 +13,17 @@ import { overviewContext, type OverviewData } from '@/views/overview-context';
 import { healthContext } from '@/views/health-context';
 import { EmbedOverview } from '../app/embed/overview/view';
 
-/** What every view's text may take: the budget the console prompt and a host's context both afford. */
-const BUDGET = 2400;
+/** What every view's text may take: the budget the console prompt and a host's context both afford. The Overview's carries Main's seven figures beside its traffic. */
+const BUDGET = 2600;
 const overview = (period: Period): OverviewData => ({
   period, series: demoSeries(period).current, totals: demoTotals(period), endpoints: ENDPOINTS, mix: STATUS_MIX, activity: ACTIVITY,
-  incidents: [...INCIDENTS, ...PAST_INCIDENTS], updatedAt: DEMO_UPDATED_AT.toISOString(), now: DEMO_NOW.toISOString(),
+  incidents: [...INCIDENTS, ...PAST_INCIDENTS],
+  summary: {
+    business: { customers: 12, byStatus: { active: 9, trial: 2, 'past due': 1 }, byPlan: { Enterprise: 3, Scale: 5, Starter: 4 }, spend: 48210.5 },
+    operation: { degraded: ['Inference API'], outage: [], incidents: [{ id: 'inc_1', title: 'Elevated latency in eu-west-1' }] },
+    delivery: { open: 4, waiting: 3, failing: 2, live: 3, ready: 1, testing: 3 },
+  },
+  updatedAt: DEMO_UPDATED_AT.toISOString(), now: DEMO_NOW.toISOString(),
 });
 
 describe('the insight functions', () => {

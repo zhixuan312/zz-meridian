@@ -8,7 +8,7 @@ Status: beta
 
 | Row | Split | Content | Pattern |
 |---|---|---|---|
-| Masthead | | Kicker "ZZ Meridian · Production", title, one sentence; Freshness and "Subscribe to updates" | Page frame |
+| Masthead | | Kicker "ZZ Meridian · Production", title, one sentence that ends with who Engineering is for (`workspaces.engineering.audience`, read from the declaration); Freshness and "Subscribe to updates" | Page frame |
 | 1 | 2/3 + 1/3 | Uptime over 90 days at hero size, the worst state in words, a "right now" grid of every service, and the worst-state-per-day bars; the live incident beside it | Featured metric, Uptime bars, Incident card |
 | 2 | Full | Services: state, p95 and 90 days of bars per service | Status list in a Card |
 | 3 | Full | Past incidents, newest first | Incident card, `row` |

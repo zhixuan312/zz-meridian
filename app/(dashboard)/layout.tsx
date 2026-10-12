@@ -1,6 +1,6 @@
 import { connection } from 'next/server';
 import { AppShell } from '@/components/base/shell';
-import { ConsolePalette, ConsoleRail } from '@/views/console-chrome';
+import { WorkspacePalette, WorkspaceRail } from '@/views/workspace-chrome';
 import { ShellTools } from '@/components/patterns/shell-tools';
 import { assistantConfig } from '@/lib/assistant/config';
 import { DEMO_NOW, ALERTS } from '@/data/sample';
@@ -20,9 +20,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   // chrome draws as the placeholder person and no destination — never the sample person.
   const access = chromeAccess().catch(() => null);
   return (
-    <AppShell rail={<ConsoleRail access={access} />} tools={<ShellTools alerts={ALERTS} now={DEMO_NOW} />} assistant={assistant}>
+    <AppShell rail={<WorkspaceRail access={access} />} tools={<ShellTools alerts={ALERTS} now={DEMO_NOW} />} assistant={assistant}>
       <ConsoleLive scope={scope}>{children}</ConsoleLive>
-      <ConsolePalette access={access} />
+      <WorkspacePalette access={access} />
     </AppShell>
   );
 }

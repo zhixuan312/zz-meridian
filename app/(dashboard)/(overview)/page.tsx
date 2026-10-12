@@ -10,7 +10,7 @@ import { DEMO_NOW, DEMO_UPDATED_AT } from '@/data/sample';
 import { overviewTool } from '@/views/tools';
 import { cache } from 'react';
 import { parsePeriod } from '@/lib/period';
-import { app } from '@/app.config';
+import { app, workspaces } from '@/app.config';
 import { Busy } from '@/components/patterns/page-loading';
 import { OverviewSkeleton } from './loading';
 
@@ -29,7 +29,7 @@ export default async function OverviewPage({ searchParams }: { searchParams: Sea
     <PageFrame
       kicker={<>{app.name} · {app.workspace}</>}
       title="Overview"
-      description="Traffic, reliability and spend across every endpoint, for the period you choose."
+      description={`Traffic, reliability and spend across every endpoint, for the period you choose. ${workspaces.main.audience}`}
       meta={<Freshness updatedAt={DEMO_UPDATED_AT} now={DEMO_NOW} />}
       actions={
         <Suspense fallback={<Skeleton className="h-9 w-48 rounded-md" />}>

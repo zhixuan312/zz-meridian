@@ -8,7 +8,7 @@ Status: beta
 
 | Row | Split | Content | Pattern |
 |---|---|---|---|
-| Masthead | | Title, one sentence; Freshness, Period select, Export | Page frame |
+| Masthead | | Title, one sentence that ends with who Business is for (`workspaces.business.audience`, read from the declaration); Freshness, Period select, Export | Page frame |
 | 1 | Full | Requests by weekday and hour (UTC), with the busiest hour as a badge | Heatmap |
 | 2 | 1/2 + 1/2 | Requests by hour of day, the busiest hour highlighted; requests by region with p50 (the bars are the share; a second share bar would say it twice) | Column chart; Bar list |
 | 3 | 1/2 + 1/2 | Requests per day and errors per day, on one Meridian: pointing at a day in either reads it in both | Trend chart, Column chart, Meridian |

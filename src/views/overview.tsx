@@ -2,9 +2,12 @@
 
 import { AlertTriangle, ArrowRight, CircleDollarSign, Gauge } from 'lucide-react';
 import Link from 'next/link';
+import type { ReactNode } from 'react';
 import { Row, Stack } from '@/components/base/shell';
 import { EmptyState } from '@/components/ui/empty-state';
 import { Card, CardBody, CardFooter, CardHeader } from '@/components/ui/card';
+import { KeyValue, type KeyValueItem } from '@/components/ui/key-value';
+import { StatusDot } from '@/components/ui/status-dot';
 import { Meridian, useMeridianIndex } from '@/components/charts/meridian';
 import { useShareView } from '@/components/base/use-share-view';
 import { useLive } from '@/lib/live';
@@ -19,6 +22,11 @@ import { ActivityFeed } from '@/components/patterns/activity-feed';
 import { AskAbout } from '@/components/patterns/ask-about';
 import { formatCompact, formatCost, formatDuration, formatPercent } from '@/lib/format';
 import { PERIOD_LABEL } from '@/lib/period';
+import { CUSTOMER_METRICS, customersAddress } from './customers-context';
+import type { MainSummary } from './main-summary';
+import { RELEASE_METRICS, releasesAddress } from './releases-context';
+import { TEST_METRICS, testsAddress } from './tests-context';
+import { TICKET_METRICS, ticketsAddress } from './tickets-context';
 import { OVERVIEW_METRICS, overviewContext, overviewFindings, type OverviewData } from './overview-context';
 
 /** Tells both agents what the Overview shows, and which day the Meridian points at (decision 0011). Inside `Meridian`. */
@@ -26,6 +34,77 @@ export function ShareOverview({ data }: { data: OverviewData }) {
   const { index } = useMeridianIndex();
   useShareView(overviewContext(data, index));
   return null;
+}
+
+const linkClass = 'row-link inline-flex items-center gap-1 font-medium text-ink hover:text-accent-ink';
+
+/** A figure that opens the list it counts. */
+const figure = (n: number, href: string) => <Link href={href} className="row-link font-medium hover:text-accent-ink">{n}</Link>;
+
+/** One region of Main: a card named for what it summarises, its figures, and the pages that hold the detail. A summary that did not arrive says so and draws neither a figure nor a link. */
+function Region({ name, description, available, links, children }: { name: string; description: string; available: boolean; links: { href: string; label: string }[]; children: ReactNode }) {
+  return (
+    <Card role="region" aria-label={name}>
+      <CardHeader title={name} description={description} />
+      {available ? (
+        <>
+          <CardBody>{children}</CardBody>
+          <CardFooter className="flex-wrap gap-x-5 gap-y-2">
+            {links.map((l) => <Link key={l.href} href={l.href} className={linkClass}>{l.label} <ArrowRight className="size-3.5" /></Link>)}
+          </CardFooter>
+        </>
+      ) : (
+        <CardBody><EmptyState kind="error" layout="inline" title={`The ${name.toLowerCase()} summary is unavailable`}>It could not be read. The other summaries and the rest of the page are unaffected.</EmptyState></CardBody>
+      )}
+    </Card>
+  );
+}
+
+/**
+ * Main's three regions: the whole product in a glance, each with the figures of its own page and a way into it. A
+ * figure that has a filter on its page opens the list it counts; the footer links open the pages themselves.
+ */
+export function MainRegions({ summary: { business, operation, delivery } }: { summary: MainSummary }) {
+  const businessRows: KeyValueItem[] = business ? [
+    { label: CUSTOMER_METRICS.customers.label, value: business.customers },
+    { label: 'By status', wrap: true, value: <>{Object.entries(business.byStatus).map(([status, n], i) => <span key={status}>{i ? ' · ' : ''}{figure(n, customersAddress({ q: '', plan: 'all', status, sort: 'spend', dir: 'desc', page: '1' }))} {status}</span>)}</> },
+    { label: 'By plan', wrap: true, value: <>{Object.entries(business.byPlan).map(([plan, n], i) => <span key={plan}>{i ? ' · ' : ''}{figure(n, customersAddress({ q: '', plan, status: 'all', sort: 'spend', dir: 'desc', page: '1' }))} {plan}</span>)}</> },
+    { label: CUSTOMER_METRICS.spend.label, value: formatCost(business.spend) },
+  ] : [];
+  const unwell = operation ? [
+    { label: 'Out of service', names: operation.outage, tone: 'critical' as const },
+    { label: 'Degraded', names: operation.degraded, tone: 'warning' as const },
+  ].filter((g) => g.names.length) : [];
+  const deliveryRows: KeyValueItem[] = delivery ? [
+    { label: TICKET_METRICS.open.label, value: figure(delivery.open, ticketsAddress({ q: '', state: 'open', priority: 'all' })) },
+    { label: TICKET_METRICS.waiting.label, value: figure(delivery.waiting, ticketsAddress({ q: '', state: 'waiting', priority: 'all' })) },
+    { label: TEST_METRICS.failing.label, value: figure(delivery.failing, testsAddress({ q: '', state: 'failed', release: '' })) },
+    { label: RELEASE_METRICS.live.label, value: delivery.live },
+    { label: RELEASE_METRICS.ready.label, value: figure(delivery.ready, releasesAddress({ q: '', state: 'ready', environment: 'all' })) },
+    { label: RELEASE_METRICS.testing.label, value: figure(delivery.testing, releasesAddress({ q: '', state: 'testing', environment: 'all' })) },
+  ] : [];
+  return (
+    <Row split="tiles">
+      <Region name="Business" description="Customers and what they spend" available={business !== null} links={[{ href: '/customers', label: 'Customers' }, { href: '/analytics', label: 'Analytics' }]}>
+        <KeyValue items={businessRows} />
+      </Region>
+      <Region name="Operation" description="Services and incidents, now" available={operation !== null} links={[{ href: '/health', label: 'Operations' }]}>
+        {operation && !unwell.length && !operation.incidents.length ? (
+          <p className="flex items-center gap-2.5 py-2.5 text-sm"><StatusDot tone="positive" />Every service is operational and nothing is open.</p>
+        ) : (
+          <KeyValue
+            items={[
+              ...unwell.map((g) => ({ label: g.label, wrap: true, value: <span className="inline-flex items-center gap-2"><StatusDot tone={g.tone} />{g.names.join(', ')}</span> })),
+              { label: 'Open incidents', wrap: true, value: operation?.incidents.length ? <>{operation.incidents.map((i) => <span key={i.id} className="block">{i.title}</span>)}</> : 'None' },
+            ]}
+          />
+        )}
+      </Region>
+      <Region name="Delivery" description="Tickets, verifications and releases" available={delivery !== null} links={[{ href: '/operations-tickets', label: 'Operations tickets' }, { href: '/tests', label: 'Tests and verification' }, { href: '/releases', label: 'Releases' }]}>
+        <KeyValue items={deliveryRows} />
+      </Region>
+    </Row>
+  );
 }
 
 /** Ask on the featured card: about the day the Meridian points at, or about the period. */
@@ -46,12 +125,15 @@ export function OverviewBody(data: OverviewData) {
   const period = PERIOD_LABEL[data.period].toLowerCase();
   if (series.length === 0) {
     return (
-      <Card>
-        <ShareOverview data={data} />
-        <EmptyState title="No requests yet" action={<Link href="/keys" className="row-link inline-flex items-center gap-1 font-medium text-ink hover:text-accent-ink">API keys <ArrowRight className="size-3.5" /></Link>} className="py-16">
-          Traffic, reliability and spend appear here once a key makes its first call.
-        </EmptyState>
-      </Card>
+      <Stack>
+        <Card>
+          <ShareOverview data={data} />
+          <EmptyState title="No requests yet" action={<Link href="/keys" className={linkClass}>API keys <ArrowRight className="size-3.5" /></Link>} className="py-16">
+            Traffic, reliability and spend appear here once a key makes its first call.
+          </EmptyState>
+        </Card>
+        <MainRegions summary={data.summary} />
+      </Stack>
     );
   }
   const { current: c, previous: p } = totals;
@@ -168,6 +250,7 @@ export function OverviewBody(data: OverviewData) {
             </CardBody>
           </Card>
         </Row>
+        <MainRegions summary={data.summary} />
         <Row>
           <Card>
             <CardHeader title="Activity" description="Changes to this workspace, newest first" divided />

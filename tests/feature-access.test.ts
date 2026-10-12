@@ -30,7 +30,7 @@ describe('the feature table', () => {
   it('declares every feature the spec freezes, with its need', () => {
     expect(Object.keys(FEATURES).sort()).toEqual(['analytics', 'customers', 'docs', 'health', 'keys', 'members', 'overview', 'releases', 'request', 'requests', 'settings', 'system', 'tests', 'tickets']);
     const N: Record<string, unknown> = {
-      overview: { allOf: ['days:read', 'endpoints:read', 'responses:read', 'activity:read', 'incidents:read'] },
+      overview: { allOf: ['days:read', 'endpoints:read', 'responses:read', 'activity:read', 'incidents:read', 'customers:read', 'services:read', 'tickets:read', 'tests:read', 'releases:read'] },
       requests: 'requests:read',
       request: { allOf: ['requests:read', 'endpoints:read'] },
       analytics: { allOf: ['days:read', 'endpoints:read', 'activity:read', 'incidents:read', 'requests:read'] },

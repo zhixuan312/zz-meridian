@@ -1,8 +1,20 @@
 // @vitest-environment node
-import { describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
+const jar = vi.hoisted(() => ({ value: undefined as string | undefined }));
+vi.mock('next/headers', () => ({
+  cookies: async () => ({ get: (n: string) => (n === 'zz_meridian_view_as' && jar.value !== undefined ? { name: n, value: jar.value } : undefined), set: () => {} }),
+  headers: async () => new Headers(),
+}));
+vi.mock('next/cache', () => ({ cacheTag: () => {}, cacheLife: () => {}, updateTag: () => {}, revalidateTag: () => {}, revalidatePath: () => {}, refresh: () => {} }));
 import { renderToStaticMarkup } from 'react-dom/server';
 import { EmptyState } from '@/components/ui/empty-state';
 import { NoAccess, noAccessCopy } from '@/views/no-access';
+
+/** The links a piece of markup holds, each as its address and its words. */
+const linksOf = (html: string) => [...html.matchAll(/<a\b[^>]*\bhref="([^"]*)"[^>]*>([\s\S]*?)<\/a>/g)].map((m) => ({ href: m[1], text: m[2].replace(/<[^>]*>/g, '').trim() }));
+
+beforeEach(() => { jar.value = 'members_12'; });
 
 describe('the no-access state', () => {
   it('is its own kind: a lock mark, a neutral disc, no alert, and data-no-access', () => {
@@ -33,5 +45,15 @@ describe('the no-access state', () => {
     const html = renderToStaticMarkup(await NoAccess({ feature: 'keys' }));
     expect(html).toContain('API keys');
     expect(html).toContain('data-no-access');
+  });
+
+  it('offers one link, named for where it leads, to the first destination of its own workspace the person may open', async () => {
+    expect(linksOf(renderToStaticMarkup(await NoAccess({ feature: 'keys' })))).toEqual([{ href: '/health', text: 'Go to Operations' }]);
+    expect(linksOf(renderToStaticMarkup(await NoAccess({ feature: 'members' })))).toEqual([{ href: '/', text: 'Go to Overview' }]);
+  });
+
+  it('offers Main\'s home when who the person is cannot be told', async () => {
+    jar.value = 'nobody';
+    expect(linksOf(renderToStaticMarkup(await NoAccess({ feature: 'keys' })))).toEqual([{ href: '/', text: 'Go to Main' }]);
   });
 });
