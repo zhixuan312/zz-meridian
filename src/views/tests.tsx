@@ -44,6 +44,8 @@ export function TestsView({ rows, now }: { rows: RunRow[]; now: string }) {
           <Link href={`/requests?q=${encodeURIComponent(routeOf(r.endpointId))}`} className={`t-caption truncate ${link}`}>{r.endpointId}</Link>
         </span>
       ),
+      // A card on a phone is text: a link one line of caption high is no target for a thumb.
+      mobileCell: (r) => `${LABEL(r.suite)} on ${r.endpointId}`,
     },
     {
       key: 'release', header: 'Release', truncate: true, hideBelow: 'md', mobile: 'fact', sortValue: (r) => r.release?.version ?? '', title: (r) => (r.release ? `${r.release.version} · ${r.release.service} · ${r.release.environment} · ${r.release.commit}` : 'Release unavailable'),

@@ -11,7 +11,7 @@ Status: beta
 | Masthead | PageFrame: kicker, "Tests and verification", one sentence. No button: the page changes nothing | One band | Stacked |
 | 1 | Three metric tiles: Latest runs, Failing now, Skipped now, each counting every run whatever the filters show | Three across | Stacked |
 | 2 | One caption line naming the release, with a link to all runs, only when the address carries a release | Full width | Full width |
-| 3 | Data table with its Filter bar (search, Verdict): Verification with its endpoint, Release with its service, environment and commit (from 768px), Verdict, Duration (from 1024px), Started, Why it failed (from 1024px) | Columns | Cards: verification and verdict, release, and "Started …" |
+| 3 | Data table with its Filter bar (search, Verdict): Verification with its endpoint, Release with its service, environment and commit (once the table is wider than 672px), Verdict, Duration (wider than 896px), Started, Why it failed (wider than 896px) | Columns | Cards: verification and verdict, release, and "Started …" |
 
 The body (rows 1 to 3, under the masthead) is the records template, `Records` from `src/components/templates/records`. The masthead is drawn by the server page, because nothing on it shares state with the body.
 
@@ -36,7 +36,7 @@ The page has no action, no server action and no control that reruns anything: th
 
 ## Surfaces
 
-- **Console**: as above. **Mobile**: cards. **Embed**: not offered.
+- **Console**: as above. **Mobile**: cards of text; a run's links to its release and to its endpoint's requests are in the table, from tablet width up, because a link one line of caption high is no target for a thumb. **Embed**: not offered.
 
 ## Agents
 
