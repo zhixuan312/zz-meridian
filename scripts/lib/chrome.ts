@@ -22,34 +22,64 @@ export type Page = {
   close: () => void;
 };
 
+type Launched = { proc: ChildProcess; dir: string; guard?: ChildProcess };
 /** Every Chrome this process launched and has not closed: each is killed, and its profile removed, whichever way the process ends. */
-const launched = new Set<{ proc: ChildProcess; dir: string }>();
+const launched = new Set<Launched>();
+/** Profiles whose removal has started in the background and not finished: a process that exits first finishes them itself. */
+const removing = new Set<string>();
+function removeNow(dir: string) {
+  try {
+    fs.rmSync(dir, { recursive: true, force: true, maxRetries: 20, retryDelay: 50 });
+  } catch {
+    /* a profile left in the temp folder is cheaper than a run that failed tidying up after itself */
+  }
+}
 /**
  * Kill a browser and remove its profile. The removal is never the caller's work: a suite closes its browser inside a hook
  * and a hook has a ten-second ceiling, while a profile that has loaded many pages runs to tens of megabytes — removing one
  * that way timed a hook out on a runner (`Hook timed out in 10000ms`, tests/deep-dom.test.ts's afterAll), and before that
  * it threw `ENOTEMPTY: directory not empty` when Chrome was still writing into the directory. So it starts at once, in the
- * background; at exit, where nothing is timed, it is one last synchronous attempt for a browser nobody closed.
+ * background; at exit, where nothing is timed, it is one last synchronous attempt — for a browser nobody closed, and for
+ * every removal still under way, since a check ends `page.close(); process.exit()` and a removal the exit cut short left
+ * the whole profile behind on every run.
  */
-function reap(c: { proc: ChildProcess; dir: string }, sync = false) {
+function reap(c: Launched, sync = false) {
   launched.delete(c);
+  c.guard?.kill('SIGKILL');
   c.proc.kill('SIGKILL');
-  if (!sync) { fs.rm(c.dir, { recursive: true, force: true }, () => {}); return; }
-  try {
-    fs.rmSync(c.dir, { recursive: true, force: true, maxRetries: 20, retryDelay: 50 });
-  } catch {
-    /* a profile left in the temp folder is cheaper than a run that failed tidying up after itself */
-  }
+  if (sync) return removeNow(c.dir);
+  removing.add(c.dir);
+  fs.rm(c.dir, { recursive: true, force: true }, () => removing.delete(c.dir));
 }
-process.on('exit', () => { for (const c of [...launched]) reap(c, true); });
-for (const sig of ['SIGINT', 'SIGTERM'] as const) process.on(sig, () => process.exit(sig === 'SIGINT' ? 130 : 143));
+process.on('exit', () => {
+  for (const c of [...launched]) reap(c, true);
+  for (const dir of removing) removeNow(dir);
+});
+// A signal that ends the process by default runs no exit handler unless it is caught: a closed terminal (SIGHUP) and a
+// quit (SIGQUIT) each left a whole browser running under launchd. The codes are the shell's: 128 plus the signal.
+for (const [sig, code] of [['SIGHUP', 129], ['SIGINT', 130], ['SIGQUIT', 131], ['SIGTERM', 143]] as const) process.on(sig, () => process.exit(code));
+
+/**
+ * The one ending nothing in this process can answer is being killed outright (SIGKILL: a harness's timeout, `kill -9`),
+ * so something outside it has to. A shell watches this process and, once it is gone, kills the browser and removes the
+ * profile. It kills only a process whose command line still names this browser's own profile, so a pid the system has
+ * handed to something else since is never touched. Not on Windows, which has no such shell; there the handlers above are
+ * the whole of it.
+ */
+function guard(proc: ChildProcess, dir: string): ChildProcess | undefined {
+  if (process.platform === 'win32' || !proc.pid) return undefined;
+  const watch = 'while kill -0 "$1" 2>/dev/null; do sleep 1; done; case "$(ps -p "$2" -o command= 2>/dev/null)" in *"$3"*) kill -9 "$2" 2>/dev/null;; esac; rm -rf "$3"';
+  const g = spawn('/bin/sh', ['-c', watch, 'sh', String(process.pid), String(proc.pid), dir], { stdio: 'ignore', detached: true });
+  g.unref();
+  return g;
+}
 
 export async function launch(): Promise<Page> {
   // Port 0 lets Chrome pick a free port and write it into its own profile, so this never attaches to another
   // session's browser that happens to hold a guessed port.
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'meridian-chrome-'));
   const proc = spawn(CHROME, [...SANDBOX, '--headless=new', '--disable-gpu', '--hide-scrollbars', '--force-color-profile=srgb', '--remote-debugging-port=0', `--user-data-dir=${dir}`, 'about:blank'], { stdio: 'ignore' });
-  const handle = { proc, dir };
+  const handle: Launched = { proc, dir, guard: guard(proc, dir) };
   launched.add(handle);
   try {
     return await attach(proc, dir, handle);
@@ -59,7 +89,7 @@ export async function launch(): Promise<Page> {
   }
 }
 
-async function attach(proc: ChildProcess, dir: string, handle: { proc: ChildProcess; dir: string }): Promise<Page> {
+async function attach(proc: ChildProcess, dir: string, handle: Launched): Promise<Page> {
   let list: any[] | undefined;
   // A cold Chrome on a busy machine or runner can take well over ten seconds to open its debugging port; wait up to 30 s,
   // and stop at once if it exited instead.
