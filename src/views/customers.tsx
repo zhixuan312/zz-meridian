@@ -2,7 +2,6 @@
 
 import { useMemo, useState } from 'react';
 import { UserPlus } from 'lucide-react';
-import { Row, Stack } from '@/components/base/shell';
 import { Avatar } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -15,6 +14,7 @@ import { Sparkline } from '@/components/charts/sparkline';
 import { MetricTile } from '@/components/patterns/metric-tile';
 import { DataTable, useQueryState, type Column } from '@/components/patterns/data-table';
 import { FilterBar } from '@/components/patterns/filter-bar';
+import { Records } from '@/components/templates/records';
 import { formatCompact, formatCost, formatPercent } from '@/lib/format';
 import { formatDate } from '@/lib/format-date';
 import type { CustomerRecord } from '@/data/sample';
@@ -64,12 +64,13 @@ export function CustomersView({ rows }: { rows: CustomerRecord[] }) {
   const requestsDaily = (rows[0]?.trend ?? []).map((_, d) => rows.reduce((a, c) => a + c.trend[d], 0));
 
   return (
-    <Stack>
-      <Row split="tiles">
-        <MetricTile label={CUSTOMER_METRICS.customers.label} value={rows.length} format={(n) => String(n)} hint={CUSTOMER_METRICS.customers.hint} daily={requestsDaily} />
-        <MetricTile label={CUSTOMER_METRICS.spend.label} value={spend} format={formatCost} hint={CUSTOMER_METRICS.spend.hint} daily={spendDaily} emphasis />
-        <MetricTile label={CUSTOMER_METRICS.pastDue.label} value={pastDue.length} format={(n) => String(n)} hint={CUSTOMER_METRICS.pastDue.hint} note={pastDue.map((c) => c.name).join(', ') || 'Every invoice is paid'} />
-      </Row>
+    <Records
+      summary={[
+        <MetricTile key="customers" label={CUSTOMER_METRICS.customers.label} value={rows.length} format={(n) => String(n)} hint={CUSTOMER_METRICS.customers.hint} daily={requestsDaily} />,
+        <MetricTile key="spend" label={CUSTOMER_METRICS.spend.label} value={spend} format={formatCost} hint={CUSTOMER_METRICS.spend.hint} daily={spendDaily} emphasis />,
+        <MetricTile key="past-due" label={CUSTOMER_METRICS.pastDue.label} value={pastDue.length} format={(n) => String(n)} hint={CUSTOMER_METRICS.pastDue.hint} note={pastDue.map((c) => c.name).join(', ') || 'Every invoice is paid'} />,
+      ]}
+    >
       <DataTable
         caption="Customers"
         noun="customers"
@@ -98,7 +99,7 @@ export function CustomersView({ rows }: { rows: CustomerRecord[] }) {
           />
         }
       />
-    </Stack>
+    </Records>
   );
 }
 

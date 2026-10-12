@@ -12,6 +12,8 @@ Status: beta
 | 1 | Row `tiles`: Customers (with combined requests over 14 days), Spend, last 30 days (emphasis, with its 14-day shape), Past due | Three across | One column |
 | 2 | Data table: search and Status in the Filter bar, the plan as a Segmented view; columns Customer (avatar and name, grow), Plan, Status, Requests, Last 14 days (sparkline, from 896px), Error rate (from 1152px), Spend, Customer since (from 1152px) | Columns | Cards: name and status, then plan, requests and spend |
 
+The body (rows 1 and 2) is the records template, `Records` from `src/components/templates/records`; its Atlas entry is [/system/pages/template-records](/system/pages/template-records). The page supplies the tiles and the table.
+
 ## States
 
 | State | What shows |
