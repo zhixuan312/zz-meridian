@@ -5,7 +5,8 @@ import { gate } from '@/data/access';
 import { read } from '@/data/read';
 import type { CustomerRecord } from '@/data/sample';
 import { CustomersView, InviteCustomer } from '@/views/customers';
-import { Busy, TableSkeleton, TilesSkeleton } from '@/components/patterns/page-loading';
+import { Busy } from '@/components/patterns/page-loading';
+import { RecordsSkeleton } from '@/components/templates/records';
 
 export const metadata = { title: 'Customers' };
 
@@ -27,8 +28,7 @@ export default async function CustomersPage() {
       <Suspense
         fallback={
           <Busy name="customers">
-            <TilesSkeleton />
-            <TableSkeleton rows={8} />
+            <RecordsSkeleton tiles={3} rows={8} />
           </Busy>
         }
       >

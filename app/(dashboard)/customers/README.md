@@ -18,7 +18,7 @@ The body (rows 1 and 2) is the records template, `Records` from `src/components/
 
 | State | What shows |
 |---|---|
-| Loading | `loading.tsx`: three tiles over the filter bar and skeleton table rows |
+| Loading | `loading.tsx` and the page's fallback: `RecordsSkeleton` from the records template, three tiles over the filter bar and eight skeleton table rows |
 | Default | Sorted by spend, descending |
 | Past due | The status Badge in `critical`; the sparkline in neutral |
 | Error rate over 1% | Written in `warning-ink` |

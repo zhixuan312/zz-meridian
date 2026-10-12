@@ -2,13 +2,14 @@
 
 The arrangement of a page that lists records: an optional row of summary tiles over a table with its toolbar.
 
-Status: draft
+Status: beta
 
 ## Anatomy
 
 1. **Root**: one `Stack`, marked `data-template="records"`.
 2. **Summary row** (optional, `summary`): a `Row split="tiles"` whose direct children are the items of `summary`; two to four tiles, columns chosen by their count.
 3. **Records** (`children`): a Data table with its Filter bar as `toolbar`.
+4. **Skeleton** (`RecordsSkeleton({ tiles?, rows?, filters? })`): the arrangement while its data is on its way, `tiles` summary tiles (none when not given) over a table skeleton of `rows` rows with or without its filter row. It adds no element of its own: it returns a fragment, so it sits inside a page's loading frame where `Records` will sit.
 
 ## Composition
 
@@ -16,17 +17,17 @@ Stack gap between the summary row and the records, from `--stack-gap`. The templ
 
 ## States
 
-Each state is covered by a named specimen in the preview, inapplicable with the reason, or not covered yet with the reason. The ones not covered yet are what keeps the template at `draft`.
+Each of the seven states has one disposition: covered by a named specimen in the preview, or inapplicable with the reason. `tests/atlas-template-contracts.test.tsx` holds this table and the preview to each other.
 
 | State | Disposition |
 |---|---|
-| Normal | Covered: "With a summary" and "Without a summary". |
-| Loading | Not covered yet: the table has a loading state, but no specimen shows it inside this arrangement. |
+| Normal | Covered: the "With a summary" and "Without a summary" specimens. |
+| Loading | Covered: the "Loading" specimen, which is `RecordsSkeleton`: the tiles and the table's shape with no table. |
 | Empty | Covered: the "Empty" specimen. |
 | Filtered-empty | Covered: the "Filtered-empty" specimen. |
-| Error | Not covered yet: the table has an error state with Retry; no specimen shows it here. |
-| Partial | Not covered yet: no specimen shows tiles that failed while the table loaded. |
-| Read-only | Not covered yet: no specimen shows the arrangement without its create action for a reader who may not write. |
+| Error | Covered: the "Error" specimen, the table's own error state with Retry inside the arrangement. |
+| Partial | Covered: the "Partial" specimen, a summary in which a figure that could not be worked out is the word Unavailable with a line saying why, over records that did arrive. |
+| Read-only | Covered: the "Read-only" specimen, a line saying who can write, over the table, with nothing that creates, adds or invites. |
 
 ## Surfaces
 
@@ -44,6 +45,8 @@ Not applicable: the template presents what its children show. Agent marks and pr
 - Reading order is the visual order: summary, then records.
 
 ## Implementation
+
+While the data is on its way, a route's `loading.tsx` and its Suspense fallback draw `<RecordsSkeleton tiles={3} rows={8} />` inside `LoadingPage` or `Busy`.
 
 ```tsx
 <Records summary={[<MetricTile key="a" label="Customers" value={42} />, <MetricTile key="b" label="Spend" value={1200} format="cost" />]}>

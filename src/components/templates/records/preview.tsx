@@ -7,7 +7,7 @@ import { FilterBar } from '@/components/patterns/filter-bar';
 import { Button } from '@/components/ui/button';
 import { REQUESTS } from '@/system/fixtures/sample';
 import { requestColumns } from '@/system/sample-cells';
-import { Records } from '.';
+import { Records, RecordsSkeleton } from '.';
 
 const rows = REQUESTS.slice(0, 6);
 const compact = requestColumns.filter((c) => ['request', 'status', 'latency', 'at'].includes(c.key));
@@ -45,6 +45,29 @@ export default function RecordsPreview() {
       </Specimen>
       <Specimen label="Filtered-empty" note="The filters left nothing: the table offers Clear filters, not Create." stack>
         <Records>{table({ rows: [], filtered: true, onClearFilters: () => {} })}</Records>
+      </Specimen>
+      <Specimen label="Loading" note="The arrangement while its data is on its way: three tiles over the filter row and eight rows, with no table yet." stack>
+        <RecordsSkeleton tiles={3} rows={8} />
+      </Specimen>
+      <Specimen label="Error" note="The records did not load: the table says so and offers Retry, inside the arrangement." stack>
+        <Records>{table({ rows: [], error: 'The request log could not be reached. Try again in a moment.', onRetry: () => {} })}</Records>
+      </Specimen>
+      <Specimen label="Partial" note="One figure could not be worked out: its tile says Unavailable and why, beside the tiles that did arrive, over the records that did." stack>
+        <Records
+          summary={[
+            <MetricTile key="a" label="Requests" value={2_943_120} format="count" />,
+            <MetricTile key="b" label="Error rate" value="Unavailable" note="The error counter did not answer." />,
+            <MetricTile key="c" label="Latency p95" value={294} format="duration" intent="down" />,
+          ]}
+        >
+          {table()}
+        </Records>
+      </Specimen>
+      <Specimen label="Read-only" note="A reader who may not write: one line says who can, and nothing on the page offers to create." stack>
+        <Records>
+          <p className="t-caption max-w-[72ch]">Only admins can change requests here; you can read them.</p>
+          {table()}
+        </Records>
       </Specimen>
     </>
   );

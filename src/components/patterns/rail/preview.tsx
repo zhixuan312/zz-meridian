@@ -1,58 +1,37 @@
 'use client';
 
-import { Check, LogOut, Settings } from 'lucide-react';
+import { useState } from 'react';
 import { nav } from '@/app.config';
 import { Specimen } from '@/system/specimen';
 import { Rail } from '.';
 
-const Column = ({ current, label, user }: { current: string; label: string; user?: null }) => (
+type RailProps = Parameters<typeof Rail>[0];
+
+const Column = ({ current, label, user, scopes, workspace, viewAs }: { current: string; label: string; user?: null; scopes?: RailProps['scopes']; workspace?: string; viewAs?: RailProps['viewAs'] }) => (
   <figure className="flex flex-col gap-2">
     <div className="relative h-150 w-(--rail-width) overflow-hidden rounded-lg border border-line bg-frame backdrop-blur-xl">
-      <Rail nav={nav} current={current} user={user} />
+      <Rail nav={nav} current={current} user={user} scopes={scopes} workspace={workspace} viewAs={viewAs} />
     </div>
     <figcaption className="text-2xs text-ink-3">{label}</figcaption>
   </figure>
 );
 
-const PANEL = 'w-60 rounded-lg bg-surface-raised p-1 shadow-overlay';
-const ROW = 'relative flex h-8 items-center gap-2.5 rounded-sm px-2 text-sm text-ink [&_svg]:size-4 [&_svg]:text-ink-3';
-
 /** The sample personas, in the order the View as group lists them: the demo signs in as the first until one is chosen. */
 const PERSONAS = ['Maya Chen', 'Jonas Weber', 'Priya Nair', 'Lucas Meyer', 'Grace Liu'];
+const SCOPES = [{ id: 'northwind', label: 'Northwind' }, { id: 'contoso', label: 'Contoso' }];
 
-/**
- * The workspace menu's surface, drawn inline: a Radix menu mounts only while it is open, so a preview that wants the
- * View as group looked at has to draw the panel itself. `scopes` draws the group a product with more than one workspace
- * or scope gets; without it the panel is the account menu the template itself has, with nothing to switch between.
- */
-function MenuPanel({ suspended = false, scopes = false }: { suspended?: boolean; scopes?: boolean }) {
-  return (
-    <div className={PANEL}>
-      {scopes ? (
-        <>
-          <p className="t-eyebrow px-2 pt-2 pb-1.5">Show</p>
-          <div className={ROW}><Check className="!text-accent" strokeWidth={2.25} /><span className="min-w-0 flex-1 truncate">Northwind</span></div>
-          <div className={`${ROW} pr-8 text-ink-2`}>Contoso</div>
-          <div className="-mx-1 my-1 h-px bg-line" />
-        </>
-      ) : null}
-      <div className={ROW}><Settings />Workspace settings</div>
-      <div className={ROW}><LogOut />Sign out</div>
-      <div className="-mx-1 my-1 h-px bg-line" />
-      <p className="t-eyebrow px-2 pt-2 pb-1.5">View as</p>
-      {PERSONAS.map((name, i) => {
-        // Listed and out of reach: the product draws this one as a disabled menu item (the sign-in panel adds "· Not active"),
-        // and `ink-disabled` is the token for exactly that — exempt from the contrast rule, and never the only signal.
-        const off = suspended && i === PERSONAS.length - 1;
-        return (
-          <div key={name} className={`${ROW} pr-8 ${off ? 'text-ink-disabled' : ''}`} aria-disabled={off || undefined}>
-            {name}
-            {i === 0 ? <Check className="absolute right-2 !text-accent" strokeWidth={2.25} /> : null}
-          </div>
-        );
-      })}
-    </div>
-  );
+/** Two workspaces, kept in the preview's own state: choosing one moves the check and the line under the product name. */
+function SeveralWorkspaces() {
+  const [at, setAt] = useState(SCOPES[0].id);
+  const scopes = SCOPES.map((s) => ({ ...s, active: s.id === at, onSelect: () => setAt(s.id) }));
+  return <Column current="/" label="Two workspaces: open the row, choose one" scopes={scopes} workspace={scopes.find((s) => s.active)!.label} />;
+}
+
+/** The five sample personas; the last is not Active, so it is listed and out of reach. The one chosen moves the check. */
+function ViewAs() {
+  const [current, setCurrent] = useState('persona-0');
+  const options = PERSONAS.map((label, i) => ({ id: `persona-${i}`, label, disabled: i === PERSONAS.length - 1 }));
+  return <Column current="/" label="Maya Chen is in view; the last persona is listed, out of reach" viewAs={{ current, options, choose: (id) => { setCurrent(id); return Promise.resolve(); } }} />;
 }
 
 export default function RailPreview() {
@@ -65,24 +44,14 @@ export default function RailPreview() {
           <Column current="/" user={null} label="The session is still being found out: a skeleton, not a name" />
         </div>
       </Specimen>
-      <Specimen label="View as" note="The foot of the workspace menu, drawn where it opens. The five sample personas, in order, the one read as checked; it ports only on open, so no persona's name reaches a page's first HTML.">
+      <Specimen label="View as" note="The foot of the workspace menu, the real one: open the row to see it. The five sample personas, in order, the one in view checked and the last listed but out of reach; choosing one moves the check. It mounts only on open, so no persona's name reaches a page's first HTML.">
         <div className="flex flex-wrap gap-6">
-          <figure className="flex flex-col gap-2">
-            <MenuPanel />
-            <figcaption className="text-2xs text-ink-3">Open: Maya Chen is read as</figcaption>
-          </figure>
-          <figure className="flex flex-col gap-2">
-            <MenuPanel suspended />
-            <figcaption className="text-2xs text-ink-3">A persona who is not Active: listed, out of reach</figcaption>
-          </figure>
+          <ViewAs />
         </div>
       </Specimen>
-      <Specimen label="Several workspaces" note="A product that passes more than one workspace or scope gets the Show group — radio items with the one in view checked — and its row is a switcher (ChevronsUpDown). One workspace or none is nothing to switch between: the row is the account menu, with a plain chevron, and the menu holds no Show group and no checked row of its own.">
+      <Specimen label="Several workspaces" note="A product that passes more than one workspace or scope gets the Show group — radio items with the one in view checked — and its row is a switcher (ChevronsUpDown). Open the row to see the menu; choosing a workspace moves the check and the line under the product name. One workspace or none is nothing to switch between: the row is the account menu, with a plain chevron, and the menu holds no Show group and no checked row of its own, as in the first specimen.">
         <div className="flex flex-wrap gap-6">
-          <figure className="flex flex-col gap-2">
-            <MenuPanel scopes />
-            <figcaption className="text-2xs text-ink-3">Two scopes: Northwind is in view</figcaption>
-          </figure>
+          <SeveralWorkspaces />
         </div>
       </Specimen>
       <Specimen label="Item states" stack>
