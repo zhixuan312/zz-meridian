@@ -7,7 +7,7 @@ import { readServices } from '@/data/metrics';
 
 /**
  * The sample's footer for the standalone screens: the copyright, the Design Atlas, and the services' state, linking to
- * Health. A product passes its own footer to Standalone, or none. The services are read like any page reads them, at
+ * Operations. A product passes its own footer to Standalone, or none. The services are read like any page reads them, at
  * request time behind their own boundary, so the screen itself still prerenders; a visitor who may not read them
  * (signed out, on the sign-in page of a product that requires a session) sees the footer without their state.
  */

@@ -1,5 +1,5 @@
 /**
- * The sample's data for the operational pages (Health, Analytics, Settings), derived from ./sample so the numbers agree
+ * The sample's data for the operational pages (Operations, Analytics, Settings), derived from ./sample so the numbers agree
  * across pages.
  */
 import { DEMO_NOW, INCIDENTS, REGIONS, demoHeatmap } from '@/system/fixtures/sample';

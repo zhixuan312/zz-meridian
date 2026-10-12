@@ -89,7 +89,7 @@ export const PAGES: { id: string; title: string; route: string; embed?: string; 
   { id: 'requests', title: 'Requests', route: '/requests', embed: '/embed/requests', spec: 'app/(dashboard)/requests/README.md' },
   { id: 'request', title: 'Request', route: '/requests/req_qmi1vbyi3uqt', spec: 'app/(dashboard)/requests/[id]/README.md' },
   { id: 'analytics', title: 'Analytics', route: '/analytics', spec: 'app/(dashboard)/analytics/README.md' },
-  { id: 'health', title: 'Health', route: '/health', embed: '/embed/health', spec: 'app/(dashboard)/health/README.md' },
+  { id: 'health', title: 'Operations', route: '/health', embed: '/embed/health', spec: 'app/(dashboard)/health/README.md' },
   { id: 'customers', title: 'Customers', route: '/customers', spec: 'app/(dashboard)/customers/README.md' },
   { id: 'keys', title: 'API keys', route: '/keys', spec: 'app/(dashboard)/keys/README.md' },
   { id: 'tickets', title: 'Operations tickets', route: '/operations-tickets', spec: 'app/(dashboard)/operations-tickets/README.md' },

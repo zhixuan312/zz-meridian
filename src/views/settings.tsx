@@ -245,7 +245,7 @@ function Agents() {
     >
       <Switch
         label="Let assistants read dashboards"
-        description="Connected assistants can open Overview, Requests and Health, and see what is on screen when you share a view."
+        description="Connected assistants can open Overview, Requests and Operations, and see what is on screen when you share a view."
         checked={read}
         onCheckedChange={(on) => { setRead(on); toast({ tone: 'neutral', title: on ? 'Assistants can read dashboards' : 'Assistants can no longer read dashboards' }); }}
       />

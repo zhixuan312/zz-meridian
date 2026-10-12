@@ -74,15 +74,23 @@ function routes(root: string, dir: string): string[] {
 
 const label = (route: string) => (route === '/' ? 'Home' : route.split('/').pop()!.replace(/[-_]+/g, ' ').replace(/^./, (c) => c.toUpperCase()));
 
-function appConfig(pages: string[]): string {
-  const template = readPayload('src/app.config.ts');
+/**
+ * The configuration `adopt` writes: the template's own file with the project's pages as its navigation. Everything that
+ * belongs to the sample is left out, because the project does not have it: the feature table (so every item is `public`,
+ * the honest default, until step 4 of the Start guide points each at a feature of its own), every icon but the one the
+ * items use, and the sample's workspaces with the field that names one. It throws when the template has no navigation
+ * block to replace, since a configuration that still listed the sample's pages would be wrong without saying so.
+ */
+export function projectConfig(template: string, pages: string[]): string {
+  if (!/export const nav: NavGroup\[\] = \[[\s\S]*?\n\];/.test(template)) throw new Error('the template\'s src/app.config.ts has no `export const nav: NavGroup[] = [ … ];` block to replace');
   const items = pages.map((r) => `      { href: ${JSON.stringify(r)}, label: ${JSON.stringify(label(r))}, icon: LayoutGrid, needs: 'public' },`).join('\n');
   return template
     .replace(/^import \{[\s\S]*?\} from 'lucide-react';/m, "import { LayoutGrid, type LucideIcon } from 'lucide-react';")
-    // The project's pages have no feature entry yet, so every item is `public` — the honest default — and step 4 of the
-    // Start guide points each at its own feature once it has one. The template's own `FEATURES` import would name a file
-    // this project's `src/data/` need not have, and a nav item without a `needs` is a type error since 0.13.0.
+    // The template's own `FEATURES` import would name a file this project's `src/data/` need not have, and a nav item
+    // without a `needs` is a type error since 0.13.0.
     .replace(/^import \{ FEATURES \} from '\.\/data\/features\.ts';\n/m, '')
+    .replace(/\/\*\*(?:(?!\*\/)[\s\S])*\*\/\nexport const workspaces = \{[\s\S]*?\n\} as const;\nexport type WorkspaceId = [^\n]*\n\n/, '')
+    .replace(' workspace?: WorkspaceId;', '')
     .replace(/export const nav: NavGroup\[\] = \[[\s\S]*?\n\];/, `/** Written by zz-meridian adopt from the project's pages: give each its own icon and group them. */\nexport const nav: NavGroup[] = [\n  {\n    items: [\n${items}\n    ],\n  },\n];`);
 }
 
@@ -166,7 +174,9 @@ https://github.com/zhixuan312/zz-meridian/blob/master/skills/zz-meridian/referen
     const raw = payloadBytes(rel);
     own(rel, TS.test(rel) ? exactImports(rel, raw.toString('utf8'), known) : raw);
   }
-  own('src/app.config.ts', exactImports('src/app.config.ts', appConfig(routes(root, dir)), known));
+  let config: string;
+  try { config = projectConfig(readPayload('src/app.config.ts'), routes(root, dir)); } catch (e) { return fail((e as Error).message); }
+  own('src/app.config.ts', exactImports('src/app.config.ts', config, known));
   own('scripts/verify.config.ts', verifyConfig());
   // Meridian's scripts are ES modules; a project whose package.json is not "type": "module" gets that for scripts/ only.
   if (pkg.type !== 'module') own('scripts/package.json', '{\n  "type": "module"\n}\n');

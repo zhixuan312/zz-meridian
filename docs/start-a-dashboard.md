@@ -71,7 +71,7 @@ Every page is a `PageFrame` holding a `Stack` of `Row`s. Start from the closest 
 | A list of records with filters | Requests (`/requests`) |
 | One record | Request (`/requests/[id]`) |
 | Two big charts and breakdowns | Analytics (`/analytics`) |
-| Services and incidents | Health (`/health`) |
+| Services and incidents | Operations (`/health`) |
 | Settings and forms | Settings (`/settings`) |
 
 If a page seems to need a new style, it needs a pattern or a component instead: specify it in its layer (see `CONTRIBUTING.md`).

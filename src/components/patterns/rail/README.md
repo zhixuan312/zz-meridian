@@ -67,7 +67,7 @@ Not applicable: navigation is how a person moves. An agent opens a view by its a
 ## Content
 
 - Labels are nouns for places, one or two words, sentence case: "Overview", "API keys", "Design system".
-- Group names are short nouns for what a person does there: "Operate", "Workspace".
+- A group's name, where a navigation names its groups, is a short noun for what a person does there: "Operate", "Billing". The sample names none: each of its groups is one workspace's entries.
 - A persona is the person's name as the roster spells it ("Lucas Meyer"), never an id or an address; "View as" stays sentence case, like every other menu label here.
 
 ## Do and do not

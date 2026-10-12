@@ -14,7 +14,7 @@ A standalone screen outside the shell, on the lit ground:
 | Left | Kicker "ZZ Meridian · Console"; "Know your API before your customers do" at `text-display`, ending on an accent full stop; one sentence of lead |
 | Right, the demo | Without a password, the persona list above the sign-in panel: "Open the demo as", then one row per persona (Avatar, name, role, a forward arrow), each row opening the console as that person. With `DEMO_PASSWORD`, one panel instead: the demo password and "Open as" (Field, Select `lg`, default Maya Chen, a non-Active persona disabled) |
 | Right, the product | The sign-in panel: work email (Field, Input `lg`), "Continue with email" (primary, block, `lg`), "or", "Continue with SSO" (secondary, block, `lg`), the legal caption |
-| Foot | Copyright, a link to the design system, and the live service status (derived, linking to Health) |
+| Foot | Copyright, a link to the design system, and the live service status (derived, linking to Operations) |
 
 Two columns from 1024px; one below, the panels under the sentence. The panel column stacks: the demo's own surface first, the product's sign-in under it.
 
@@ -42,7 +42,7 @@ bypasses the password: the gated form checks the password before the person, and
 ## Data
 
 The five personas, read through the members collection (name, role and whether the record is Active), so a role change
-or a suspension reads at the next visit; and the service status in the foot, from the Health summary.
+or a suspension reads at the next visit; and the service status in the foot, from the Operations summary.
 
 ## Surfaces
 

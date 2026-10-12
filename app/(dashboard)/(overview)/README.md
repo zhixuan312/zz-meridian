@@ -27,7 +27,7 @@ Below 1024px every row stacks: the featured card first, then the tiles (two acro
 | Empty (no traffic yet) | The body is one card that says "No requests yet" with a link to API keys; no tile or chart is drawn |
 | Partial (a series missing) | That tile shows a dash and "Not measured"; the chart breaks its line over missing days |
 | Stale | Freshness turns to warning: "Stale · updated 47 min ago" |
-| Error | `error.tsx`, inside the shell at the data width, like every page: the title says the view did not load and nothing was changed; one card says retrying usually works, with Retry (primary), a second way out read from `nav` (Check Health where the product has one, the home page where it does not), and the reference |
+| Error | `error.tsx`, inside the shell at the data width, like every page: the title says the view did not load and nothing was changed; one card says retrying usually works, with Retry (primary), a second way out read from `nav` (Check Operations where the product has one, the home page where it does not), and the reference |
 
 ## Data
 

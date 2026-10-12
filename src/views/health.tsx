@@ -24,7 +24,7 @@ import { healthContext, type HealthData } from './health-context';
 const RANK: Record<DayState, number> = { operational: 0, none: 0, degraded: 1, outage: 2 };
 const TONE: Record<DayState, Tone> = { operational: 'positive', none: 'neutral', degraded: 'warning', outage: 'critical' };
 
-/** The Health page's body: shared by the console route; the embed view uses its parts. */
+/** The Operations page's body: shared by the console route; the embed view uses its parts. */
 export function HealthBody(data: HealthData) {
   const { services, current, past, now } = data;
   const end = new Date(now);

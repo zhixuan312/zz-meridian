@@ -114,7 +114,7 @@ type VerifyConfig = {
 };
 
 /** Every rail route, in the rail's own order: what a persona who may open all of them is expected to see. */
-const EVERY_ROUTE = ['/', '/requests', '/analytics', '/health', '/customers', '/keys', '/operations-tickets', '/tests', '/releases', '/members', '/settings', '/system', '/system/start/start-a-dashboard'] as const;
+const EVERY_ROUTE = ['/', '/members', '/settings', '/system', '/system/start/start-a-dashboard', '/analytics', '/customers', '/requests', '/health', '/keys', '/operations-tickets', '/tests', '/releases'] as const;
 
 const config: VerifyConfig = {
   // Ids from the sample (src/system/fixtures/sample.ts); tests/sample.test.ts fails if one stops being what it says.
@@ -133,14 +133,6 @@ const config: VerifyConfig = {
   budgets: { htmlKb: { '/health': 104, '/requests': 150 } },
   navigationChecks: [
     { path: '/', title: 'Overview', readySelector: 'main table tbody tr', probe: 'toggle', controlSelector: 'main [role="radio"][aria-checked="false"]', resultSelector: 'main [role="radio"]' },
-    { path: '/requests', title: 'Requests', readySelector: 'main table tbody tr', probe: 'filter', controlSelector: 'main input[type="search"]', resultSelector: 'main table tbody tr' },
-    { path: '/analytics', title: 'Analytics', readySelector: 'main table tbody tr', probe: 'toggle', controlSelector: 'main [role="radio"][aria-checked="false"]', resultSelector: 'main [role="radio"]' },
-    { path: '/health', title: 'Health', readySelector: 'main', readyText: 'Uptime', probe: 'toggle', controlSelector: 'main button[aria-pressed]', resultSelector: 'main button[aria-pressed]' },
-    { path: '/customers', title: 'Customers', readySelector: 'main table tbody tr', probe: 'filter', controlSelector: 'main input[type="search"]', resultSelector: 'main table tbody tr' },
-    { path: '/keys', title: 'API keys', readySelector: 'main table tbody tr', probe: 'dialog', controlSelector: 'main button[aria-haspopup="dialog"]', resultSelector: '[role="dialog"]' },
-    { path: '/operations-tickets', title: 'Operations tickets', readySelector: 'main table tbody tr', probe: 'dialog', controlSelector: 'main button[aria-haspopup="dialog"]', resultSelector: '[role="dialog"]' },
-    { path: '/tests', title: 'Tests and verification', readySelector: 'main table tbody tr', probe: 'filter', controlSelector: 'main input[type="search"]', resultSelector: 'main table tbody tr' },
-    { path: '/releases', title: 'Releases', readySelector: 'main table tbody tr', probe: 'filter', controlSelector: 'main input[type="search"]', resultSelector: 'main table tbody tr' },
     { path: '/members', title: 'Members', readySelector: 'main table tbody tr', probe: 'toggle', controlSelector: 'main button[aria-haspopup="menu"]', resultSelector: '[role="menu"]' },
     { path: '/settings', title: 'Settings', readySelector: 'main [role="switch"]', probe: 'toggle', controlSelector: 'main [role="switch"]', resultSelector: 'main [role="switch"]' },
     { path: '/system', title: 'One dashboard', readySelector: 'section[aria-label="The system in numbers"]', probe: 'link', controlSelector: 'section a[href^="/system/"]', resultSelector: 'h1' },
@@ -150,6 +142,14 @@ const config: VerifyConfig = {
     // the access work, at 152,388 bytes) and not its content (`585349a` measures the same with byte-identical HTML) — the
     // review's Backlog carries the measurement. 300 ms holds this route's phone shell; nothing else moves.
     { path: '/system/start/start-a-dashboard', title: 'Start a dashboard', readySelector: 'article h2', probe: 'link', controlSelector: 'nav[aria-label="Next and previous"] a', resultSelector: 'h1', budget: { shellMs: { phone: 300 } } },
+    { path: '/analytics', title: 'Analytics', readySelector: 'main table tbody tr', probe: 'toggle', controlSelector: 'main [role="radio"][aria-checked="false"]', resultSelector: 'main [role="radio"]' },
+    { path: '/customers', title: 'Customers', readySelector: 'main table tbody tr', probe: 'filter', controlSelector: 'main input[type="search"]', resultSelector: 'main table tbody tr' },
+    { path: '/requests', title: 'Requests', readySelector: 'main table tbody tr', probe: 'filter', controlSelector: 'main input[type="search"]', resultSelector: 'main table tbody tr' },
+    { path: '/health', title: 'Operations', readySelector: 'main', readyText: 'Uptime', probe: 'toggle', controlSelector: 'main button[aria-pressed]', resultSelector: 'main button[aria-pressed]' },
+    { path: '/keys', title: 'API keys', readySelector: 'main table tbody tr', probe: 'dialog', controlSelector: 'main button[aria-haspopup="dialog"]', resultSelector: '[role="dialog"]' },
+    { path: '/operations-tickets', title: 'Operations tickets', readySelector: 'main table tbody tr', probe: 'dialog', controlSelector: 'main button[aria-haspopup="dialog"]', resultSelector: '[role="dialog"]' },
+    { path: '/tests', title: 'Tests and verification', readySelector: 'main table tbody tr', probe: 'filter', controlSelector: 'main input[type="search"]', resultSelector: 'main table tbody tr' },
+    { path: '/releases', title: 'Releases', readySelector: 'main table tbody tr', probe: 'filter', controlSelector: 'main input[type="search"]', resultSelector: 'main table tbody tr' },
   ],
   // The sample's five frozen personas, the member ids of src/system/fixtures/sample-members.ts. The four with a full
   // role differ in what they may DO, not in what they may see; the Viewer is the one denied a route, so it is the one
@@ -161,7 +161,7 @@ const config: VerifyConfig = {
     'key-manager': { cookie: { name: 'zz_meridian_view_as', value: 'members_5' }, expectedRoutes: EVERY_ROUTE },
     viewer: {
       cookie: { name: 'zz_meridian_view_as', value: 'members_12' },
-      expectedRoutes: ['/', '/requests', '/analytics', '/health', '/customers', '/operations-tickets', '/tests', '/releases', '/settings', '/system', '/system/start/start-a-dashboard'],
+      expectedRoutes: ['/', '/settings', '/system', '/system/start/start-a-dashboard', '/analytics', '/customers', '/requests', '/health', '/operations-tickets', '/tests', '/releases'],
       deniedProbe: { '/keys': 'Load test, October', '/members': 'maya.chen@' },
     },
   },

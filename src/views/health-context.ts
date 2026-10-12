@@ -1,5 +1,5 @@
 /**
- * Health's shared context (decision 0011): the console page, the MCP view and the console's assistant read the same
+ * Operations' shared context (decision 0011): the console page, the MCP view and the console's assistant read the same
  * account of every service now, its last 90 days, and the incidents that explain them.
  */
 import type { Incident } from '@/components/patterns/incident-card';
@@ -49,5 +49,5 @@ export function healthContext(data: HealthData): SharedContext {
   }
   unknowns.push('Latency is one reading per service, now; there is no latency history here to say whether it is unusual.');
 
-  return { view: 'health', title: 'Health', address: '/health', scope: `every monitored service, now and the last ${days} days`, freshness: freshnessOf(data.updatedAt, data.now), facts, insights, unknowns };
+  return { view: 'health', title: 'Operations', address: '/health', scope: `every monitored service, now and the last ${days} days`, freshness: freshnessOf(data.updatedAt, data.now), facts, insights, unknowns };
 }

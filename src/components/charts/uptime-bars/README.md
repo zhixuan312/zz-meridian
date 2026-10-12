@@ -20,7 +20,7 @@ Status: beta
 | Outage | A `critical` mark |
 | None | A `line-strong` mark, opaque so the baseline never shows through; read as "No data" and never counted as up |
 
-`size="lg"` draws a 56px strip for one that leads its card (the Health page's featured card); the default is 32px. `measure` is the word after the percentage: "uptime" by default, "on time" or "in stock" for other domains.
+`size="lg"` draws a 56px strip for one that leads its card (the Operations page's featured card); the default is 32px. `measure` is the word after the percentage: "uptime" by default, "on time" or "in stock" for other domains.
 
 ## Sizes
 
@@ -44,7 +44,7 @@ The strip is a focusable group: Arrow Left and Right, Home and End move the focu
 
 ## Agents
 
-The Health view shares each service's state and uptime as structured context; an agent names incidents by date from it.
+The Operations view shares each service's state and uptime as structured context; an agent names incidents by date from it.
 
 ## Accessibility
 

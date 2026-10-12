@@ -27,36 +27,47 @@ export const app = {
   user: { name: 'Maya Chen', role: 'Owner' },
 } as const;
 
+/**
+ * The product's workspaces, in the order the rail's menu lists them. A workspace is where a person looks, not what they
+ * may do: access is decided by each page's feature, never by this. Each is `label` (its name), `audience` (a sentence
+ * saying who it is for, drawn on its home) and `homeHref` (the entry the menu opens). A project without workspaces
+ * deletes this declaration and the `workspace` field of its entries; `zz-meridian adopt` writes it that way.
+ */
+export const workspaces = {
+  main: { label: 'Main', audience: 'For everyone who needs the whole product at a glance: how it is doing, who is in it and how it is set up.', homeHref: '/' },
+  business: { label: 'Business', audience: 'For the people who answer for customers and usage: traffic, who relies on the product and what they ask of it.', homeHref: '/analytics' },
+  engineering: { label: 'Engineering', audience: 'For the people who run the product: whether it is up, who holds its keys, what is being fixed, tested and released.', homeHref: '/health' },
+} as const;
+export type WorkspaceId = keyof typeof workspaces;
+
 /** `needs` is the feature's own need from `src/data/features.ts`, by reference: the rail asks it of the person. */
-export type NavItem = { href: string; label: string; icon: LucideIcon; badge?: string; needs: Need };
+export type NavItem = { href: string; label: string; icon: LucideIcon; badge?: string; workspace?: WorkspaceId; needs: Need };
 export type NavGroup = { label?: string; items: NavItem[] };
 
 export const nav: NavGroup[] = [
   {
     items: [
-      { href: '/', label: 'Overview', icon: LayoutGrid, needs: FEATURES.overview.needs },
-      { href: '/requests', label: 'Requests', icon: Activity, needs: FEATURES.requests.needs },
-      { href: '/analytics', label: 'Analytics', icon: BarChart3, needs: FEATURES.analytics.needs },
+      { href: '/', label: 'Overview', icon: LayoutGrid, workspace: 'main', needs: FEATURES.overview.needs },
+      { href: '/members', label: 'Members', icon: UserRound, workspace: 'main', needs: FEATURES.members.needs },
+      { href: '/settings', label: 'Settings', icon: Settings, workspace: 'main', needs: FEATURES.settings.needs },
+      { href: '/system', label: 'Design system', icon: Boxes, workspace: 'main', needs: FEATURES.system.needs },
+      { href: '/system/start/start-a-dashboard', label: 'Docs', icon: FileText, workspace: 'main', needs: FEATURES.docs.needs },
     ],
   },
   {
-    label: 'Operate',
     items: [
-      { href: '/health', label: 'Health', icon: Gauge, needs: FEATURES.health.needs },
-      { href: '/customers', label: 'Customers', icon: Users, needs: FEATURES.customers.needs },
-      { href: '/keys', label: 'API keys', icon: KeyRound, needs: FEATURES.keys.needs },
-      { href: '/operations-tickets', label: 'Operations tickets', icon: Ticket, needs: FEATURES.tickets.needs },
-      { href: '/tests', label: 'Tests and verification', icon: FlaskConical, needs: FEATURES.tests.needs },
-      { href: '/releases', label: 'Releases', icon: Rocket, needs: FEATURES.releases.needs },
+      { href: '/analytics', label: 'Analytics', icon: BarChart3, workspace: 'business', needs: FEATURES.analytics.needs },
+      { href: '/customers', label: 'Customers', icon: Users, workspace: 'business', needs: FEATURES.customers.needs },
+      { href: '/requests', label: 'Requests', icon: Activity, workspace: 'business', needs: FEATURES.requests.needs },
     ],
   },
   {
-    label: 'Workspace',
     items: [
-      { href: '/members', label: 'Members', icon: UserRound, needs: FEATURES.members.needs },
-      { href: '/settings', label: 'Settings', icon: Settings, needs: FEATURES.settings.needs },
-      { href: '/system', label: 'Design system', icon: Boxes, needs: FEATURES.system.needs },
-      { href: '/system/start/start-a-dashboard', label: 'Docs', icon: FileText, needs: FEATURES.docs.needs },
+      { href: '/health', label: 'Operations', icon: Gauge, workspace: 'engineering', needs: FEATURES.health.needs },
+      { href: '/keys', label: 'API keys', icon: KeyRound, workspace: 'engineering', needs: FEATURES.keys.needs },
+      { href: '/operations-tickets', label: 'Operations tickets', icon: Ticket, workspace: 'engineering', needs: FEATURES.tickets.needs },
+      { href: '/tests', label: 'Tests and verification', icon: FlaskConical, workspace: 'engineering', needs: FEATURES.tests.needs },
+      { href: '/releases', label: 'Releases', icon: Rocket, workspace: 'engineering', needs: FEATURES.releases.needs },
     ],
   },
 ];

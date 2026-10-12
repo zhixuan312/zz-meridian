@@ -1,6 +1,6 @@
-# Health · MCP view
+# Operations · MCP view
 
-The Health view is what an assistant shows when asked whether ZZ Meridian is healthy: the live incident and every service's state, small enough to sit in a conversation.
+The Operations view is what an assistant shows when asked whether ZZ Meridian is healthy: the live incident and every service's state, small enough to sit in a conversation.
 
 Status: beta
 
@@ -8,8 +8,8 @@ Status: beta
 
 | Mode | Content |
 |---|---|
-| Inline | Embed frame head (mark, "Health", Freshness, Expand, Open in ZZ Meridian); a warning Banner for a live incident with Ask; the Status list with its summary and without descriptions |
-| Fullscreen | The Health page's rows under the embed head |
+| Inline | Embed frame head (mark, "Operations", Freshness, Expand, Open in ZZ Meridian); a warning Banner for a live incident with Ask; the Status list with its summary and without descriptions |
+| Fullscreen | The Operations page's rows under the embed head |
 
 ## States
 
@@ -29,7 +29,7 @@ Embed only, at 360 to 760px inline and the host's full panel in fullscreen. The 
 
 ## Agents
 
-The Health page's context (`app/(dashboard)/health/README.md` lists it), inline and in fullscreen. Ask on the banner posts "What is the impact of … on my traffic?".
+The Operations page's context (`app/(dashboard)/health/README.md` lists it), inline and in fullscreen. Ask on the banner posts "What is the impact of … on my traffic?".
 
 ### What the agent reads
 

@@ -19,7 +19,7 @@ type Props = { services: Service[]; current: Incident | null; past: Incident[]; 
 export function EmbedHealth(p: Props) {
   const s = useSurface();
   return (
-    <EmbedFrame title="Health" meta={<Freshness updatedAt={new Date(p.updatedAt)} now={new Date(p.now)} />} consolePath="/health">
+    <EmbedFrame title="Operations" meta={<Freshness updatedAt={new Date(p.updatedAt)} now={new Date(p.now)} />} consolePath="/health">
       {s.mode === 'fullscreen' ? (
         <HealthBody {...p} />
       ) : (

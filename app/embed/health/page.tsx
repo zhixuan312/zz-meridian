@@ -2,11 +2,11 @@ import { Suspense } from 'react';
 import { healthTool } from '@/views/tools';
 import { EmbedHealth } from './view';
 
-export const metadata = { title: 'Health' };
+export const metadata = { title: 'Operations' };
 
 /**
  * Tool: `zz_meridian_health {}` (`healthTool` in `src/views/tools.ts`), rendered from the tool's own read, at request
- * time for whoever is asking. Inline: the status list and the live incident. Fullscreen: the console's Health rows.
+ * time for whoever is asking. Inline: the status list and the live incident. Fullscreen: the console's Operations rows.
  */
 export default function Page() {
   return (

@@ -95,7 +95,7 @@ export const requestTool = defineViewTool({
 
 export const healthTool = defineViewTool({
   name: 'health',
-  title: 'Health',
+  title: 'Operations',
   description: 'Every service now and over 90 days, the open incident with its latest update, and the incidents resolved in the period.',
   needs: FEATURES.health.needs,
   input: z.object({}),

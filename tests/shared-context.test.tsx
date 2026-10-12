@@ -57,7 +57,7 @@ describe("the Overview's shared context", () => {
     const index = data.series.findIndex((d) => d.date === '2026-09-22');
     expect(overviewContext(data, index).focus).toBe("22 Sept 2026, a Tuesday: 121,795 requests (1.1× the median Tuesday); error rate 2.18% (2.7× the period's median); latency p95 505ms (1.7× the median); spend $12.18.");
   });
-  it('fits its budget for every period, and so does Health', () => {
+  it('fits its budget for every period, and so does Operations', () => {
     for (const p of ['7d', '30d', '90d', 'all'] as const) expect(contextText(overviewContext(overview(p), 0)).length).toBeLessThanOrEqual(BUDGET);
     const health = healthContext({ services: SERVICES, current: INCIDENTS.find((i) => i.state !== 'resolved') ?? null, past: PAST_INCIDENTS, updatedAt: DEMO_UPDATED_AT.toISOString(), now: DEMO_NOW.toISOString() });
     expect(contextText(health).length).toBeLessThanOrEqual(BUDGET);
