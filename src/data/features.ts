@@ -17,7 +17,7 @@ import type { Need, ProtectedNeed } from '@/lib/collection';
 /** Every page the console offers, by the id the rail, the palette and a page's gate name it. */
 export type FeatureId =
   | 'overview' | 'requests' | 'request' | 'analytics' | 'health' | 'customers'
-  | 'keys' | 'members' | 'settings' | 'system' | 'docs' | 'tickets';
+  | 'keys' | 'members' | 'settings' | 'system' | 'docs' | 'tickets' | 'tests' | 'releases';
 
 /** Every action a page offers that only some people may take, by the id its control names it. */
 export type ActionId =
@@ -38,6 +38,8 @@ export const FEATURES: Record<FeatureId, { title: string; needs: Need }> = {
   system: { title: 'Design system', needs: 'public' },
   docs: { title: 'Docs', needs: 'public' },
   tickets: { title: 'Operations tickets', needs: 'tickets:read' },
+  tests: { title: 'Tests and verification', needs: 'tests:read' },
+  releases: { title: 'Releases', needs: 'releases:read' },
 };
 
 /**

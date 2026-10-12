@@ -10,4 +10,4 @@ export type { Member } from '@/system/fixtures/sample-members';
 export { ALERTS, CONNECTED_HOSTS, REGION_LATENCY, TIMEZONES, requestsByHour } from '@/system/fixtures/sample-ops';
 export { FEATURED_REQUEST_IDS, STATUS_TEXT, payloadsOf, statusClass, statusTone, traceOf, usageOf } from '@/system/fixtures/sample-records';
 export type { ApiKey, CustomerRecord, Span } from '@/system/fixtures/sample-records';
-export type { Ticket } from '@/system/fixtures/sample-engineering';
+export type { Release, Ticket, VerificationRun } from '@/system/fixtures/sample-engineering';

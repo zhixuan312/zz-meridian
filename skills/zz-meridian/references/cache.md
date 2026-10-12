@@ -373,6 +373,24 @@ export async function read(name: string, q: Query = {}): Promise<{ rows: Record<
   if (!(await can(scope, name, 'read'))) throw new AccessDenied();
   return cachedRead(scope, name, normalizeQuery(collectionFor(scope, name), q));
 }
+
+/** The most rows one read returns (`normalizeQuery`'s own ceiling). */
+const PAGE = 500;
+
+/**
+ * Every row of a collection the caller may read. A read returns a page, so this keeps asking until the total is in
+ * hand: a count, a join or a summary over a collection starts here, never from a first page.
+ */
+export async function readAll(name: string): Promise<{ rows: Record<string, unknown>[]; observedAt: string }> {
+  const first = await read(name, { limit: PAGE });
+  const rows = [...first.rows];
+  while (rows.length < first.total) {
+    const next = await read(name, { limit: PAGE, offset: rows.length });
+    if (next.rows.length === 0) throw new Error(`${name} could not be read in full.`);
+    rows.push(...next.rows);
+  }
+  return { rows, observedAt: first.observedAt };
+}
 ```
 
 `normalizeQuery` (in `optional:src/lib/collection.ts`, Meridian's) defaults and caps the limit and offset, rejects an

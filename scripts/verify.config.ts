@@ -114,7 +114,7 @@ type VerifyConfig = {
 };
 
 /** Every rail route, in the rail's own order: what a persona who may open all of them is expected to see. */
-const EVERY_ROUTE = ['/', '/requests', '/analytics', '/health', '/customers', '/keys', '/operations-tickets', '/members', '/settings', '/system', '/system/start/start-a-dashboard'] as const;
+const EVERY_ROUTE = ['/', '/requests', '/analytics', '/health', '/customers', '/keys', '/operations-tickets', '/tests', '/releases', '/members', '/settings', '/system', '/system/start/start-a-dashboard'] as const;
 
 const config: VerifyConfig = {
   // Ids from the sample (src/system/fixtures/sample.ts); tests/sample.test.ts fails if one stops being what it says.
@@ -139,6 +139,8 @@ const config: VerifyConfig = {
     { path: '/customers', title: 'Customers', readySelector: 'main table tbody tr', probe: 'filter', controlSelector: 'main input[type="search"]', resultSelector: 'main table tbody tr' },
     { path: '/keys', title: 'API keys', readySelector: 'main table tbody tr', probe: 'dialog', controlSelector: 'main button[aria-haspopup="dialog"]', resultSelector: '[role="dialog"]' },
     { path: '/operations-tickets', title: 'Operations tickets', readySelector: 'main table tbody tr', probe: 'dialog', controlSelector: 'main button[aria-haspopup="dialog"]', resultSelector: '[role="dialog"]' },
+    { path: '/tests', title: 'Tests and verification', readySelector: 'main table tbody tr', probe: 'filter', controlSelector: 'main input[type="search"]', resultSelector: 'main table tbody tr' },
+    { path: '/releases', title: 'Releases', readySelector: 'main table tbody tr', probe: 'filter', controlSelector: 'main input[type="search"]', resultSelector: 'main table tbody tr' },
     { path: '/members', title: 'Members', readySelector: 'main table tbody tr', probe: 'toggle', controlSelector: 'main button[aria-haspopup="menu"]', resultSelector: '[role="menu"]' },
     { path: '/settings', title: 'Settings', readySelector: 'main [role="switch"]', probe: 'toggle', controlSelector: 'main [role="switch"]', resultSelector: 'main [role="switch"]' },
     { path: '/system', title: 'One dashboard', readySelector: 'section[aria-label="The system in numbers"]', probe: 'link', controlSelector: 'section a[href^="/system/"]', resultSelector: 'h1' },
@@ -159,7 +161,7 @@ const config: VerifyConfig = {
     'key-manager': { cookie: { name: 'zz_meridian_view_as', value: 'members_5' }, expectedRoutes: EVERY_ROUTE },
     viewer: {
       cookie: { name: 'zz_meridian_view_as', value: 'members_12' },
-      expectedRoutes: ['/', '/requests', '/analytics', '/health', '/customers', '/operations-tickets', '/settings', '/system', '/system/start/start-a-dashboard'],
+      expectedRoutes: ['/', '/requests', '/analytics', '/health', '/customers', '/operations-tickets', '/tests', '/releases', '/settings', '/system', '/system/start/start-a-dashboard'],
       deniedProbe: { '/keys': 'Load test, October', '/members': 'maya.chen@' },
     },
   },

@@ -12,6 +12,7 @@ import { clock } from '@/data/collections';
 import { FEATURES } from '@/data/features';
 import { read } from '@/data/read';
 import { readRequests, REQUEST_PAGE } from '@/data/requests';
+import { readReleases, readRuns } from '@/data/engineering';
 import { readTickets } from '@/data/tickets';
 import { readActivity, readDays, readEndpoints, readIncidents, readResponses, readServices } from '@/data/metrics';
 import {
@@ -30,6 +31,8 @@ import { membersContext } from './members-context';
 import { overviewContext, type OverviewData } from './overview-context';
 import { requestContext } from './request-context';
 import { requestsContext } from './requests-context';
+import { releaseFigures, releasesContext } from './releases-context';
+import { testFigures, testsContext } from './tests-context';
 import { ticketCounts, ticketsContext } from './tickets-context';
 
 const day = z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional().describe('A day of the period, YYYY-MM-DD: the view opens pointed at it.');
@@ -176,5 +179,32 @@ export const ticketsTool = defineViewTool({
   },
 });
 
+export const testsTool = defineViewTool({
+  name: 'tests',
+  title: 'Tests and verification',
+  description: 'The verification runs: how many verifications have a latest run, how many are failing or skipped, why the failing ones failed, and the newest runs.',
+  needs: FEATURES.tests.needs,
+  input: z.object({ q: z.string().max(100).optional(), state: z.enum(['all', 'passed', 'failed', 'skipped']).optional(), release: z.string().max(40).optional().describe('A release id: only the runs of that release.') }),
+  async read({ q = '', state = 'all', release = '' }) {
+    // The one way the tool sees runs: the read the page uses, so the figures it is told are the figures on the screen.
+    const { rows, observedAt } = await readRuns();
+    const { latest, failing, skipped } = testFigures(rows);
+    return { context: testsContext(rows, observedAt, { q, state, release }), data: { latest: latest.length, failing: failing.length, skipped: skipped.length } };
+  },
+});
+
+export const releasesTool = defineViewTool({
+  name: 'releases',
+  title: 'Releases',
+  description: 'The releases: which version is live in each environment, which are ready to go out, and for those still in testing which required verification is missing, failed or skipped.',
+  needs: FEATURES.releases.needs,
+  input: z.object({ q: z.string().max(100).optional(), state: z.enum(['all', 'testing', 'ready', 'released']).optional(), environment: z.enum(['all', 'staging', 'production']).optional() }),
+  async read({ q = '', state = 'all', environment = 'all' }) {
+    const { rows, observedAt } = await readReleases();
+    const { live, ready, testing } = releaseFigures(rows);
+    return { context: releasesContext(rows, observedAt, { q, state, environment }), data: { live: live.length, ready, testing } };
+  },
+});
+
 /** Every view's tool. The assistant route hands these to `assistantTools`, as it hands the collections. */
-export const viewTools: ViewTool[] = [overviewTool, requestsTool, requestTool, healthTool, analyticsTool, customersTool, membersTool, keysTool, ticketsTool] as ViewTool[];
+export const viewTools: ViewTool[] = [overviewTool, requestsTool, requestTool, healthTool, analyticsTool, customersTool, membersTool, keysTool, ticketsTool, testsTool, releasesTool] as ViewTool[];

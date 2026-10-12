@@ -93,6 +93,8 @@ export const PAGES: { id: string; title: string; route: string; embed?: string; 
   { id: 'customers', title: 'Customers', route: '/customers', spec: 'app/(dashboard)/customers/README.md' },
   { id: 'keys', title: 'API keys', route: '/keys', spec: 'app/(dashboard)/keys/README.md' },
   { id: 'tickets', title: 'Operations tickets', route: '/operations-tickets', spec: 'app/(dashboard)/operations-tickets/README.md' },
+  { id: 'tests', title: 'Tests and verification', route: '/tests', spec: 'app/(dashboard)/tests/README.md' },
+  { id: 'releases', title: 'Releases', route: '/releases', spec: 'app/(dashboard)/releases/README.md' },
   { id: 'members', title: 'Members', route: '/members', spec: 'app/(dashboard)/members/README.md' },
   { id: 'settings', title: 'Settings', route: '/settings', spec: 'app/(dashboard)/settings/README.md' },
   { id: 'sign-in', title: 'Sign in', route: '/sign-in', spec: 'app/sign-in/README.md' },
