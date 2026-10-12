@@ -21,7 +21,7 @@ To keep the Atlas while you build, clone this repository instead (`git clone htt
 - `app.name`, `app.workspace`: the rail, the document title, the sign-in screen.
 - `app.accent`: `indigo`, `cobalt`, `jade` or `graphite`. A person can still change it in Settings.
 - `app.timezone`: every date and every daily bucket is cut on it.
-- `nav`: the rail. Adding a page is a route file plus a line here, with the `needs` of its feature. ZZ Meridian's own dashboard also declares `workspaces` and gives each entry a `workspace`; a product with one navigation needs neither (`skills/zz-meridian/references/customize.md`, "Navigation").
+- `nav`: the rail. Adding a page is a route file plus a line here, with the `needs` of its feature. ZZ Meridian's own dashboard also declares `workspaces` and gives each entry a `workspace`; a product with one navigation needs neither, but while `workspaces` is declared, as it is in a new project, an entry without a `workspace` is drawn by no rail and no palette (`skills/zz-meridian/references/customize.md`, "Navigation", has both ways forward).
 
 Put your logo in `public/` as an SVG and set `logo: '/logo.svg'` in `app`: the mark shows it at 20, 24, 28 and 32 pixels, with an empty `alt` beside the product name. `theme: 'dark'` or `'light'` sets the default theme before anyone picks one.
 
@@ -43,7 +43,7 @@ Your pages, your server actions and the assistant read and change records throug
 - Read freshness from when the data arrived (the newest ingest time), never from `now()`.
 - Return `null` for "not measured"; the formatters render it as a dash, never as zero.
 
-The console keeps Members and Keys fresh without a reload: one stream per tab carries a hint that names only a collection, and the page refreshes through the same authorized `read()`. The sample stream is a single process; across processes, `skills/zz-meridian/references/live.md` holds the Postgres and Redis adapters a product writes for itself.
+The console keeps its collection-backed pages (Overview, Members, API keys, Operations tickets, Tests and verification, Releases) fresh without a reload: one stream per tab carries a hint that names only a collection, and the page refreshes through the same authorized `read()`. The sample stream is a single process; across processes, `skills/zz-meridian/references/live.md` holds the Postgres and Redis adapters a product writes for itself.
 
 ## 5. Decide who may do what
 

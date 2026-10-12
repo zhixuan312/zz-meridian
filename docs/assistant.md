@@ -89,7 +89,7 @@ export const orders: Collection<Order, 'id'> = arrayCollection({
 });
 ```
 
-Add it to `collections`. For a real store, write the same `Collection` yourself: `query` takes `{ where, sort, limit }` and returns `{ rows, total }`; implement `create`, `update` and `remove` only for what the store may do. A collection without an operation gets no tool for it.
+Add it to `collections`, and let the policy bind it and a role read it, or nobody is offered it (`skills/zz-meridian/references/customize.md`, "The assistant"). For a real store, write the same `Collection` yourself: `query` takes `{ where, sort, limit }` and returns `{ rows, total }`; implement `create`, `update` and `remove` only for what the store may do. A collection without an operation gets no tool for it.
 
 Two fields on a collection keep the assistant in bounds:
 

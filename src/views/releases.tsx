@@ -12,7 +12,7 @@ import { FilterBar } from '@/components/patterns/filter-bar';
 import type { ReleaseRow } from '@/data/engineering';
 import { formatRelative } from '@/lib/format-date';
 import { useLive } from '@/lib/live';
-import { matchingReleases, RELEASE_METRICS, releaseFigures, releaseMoment, releasesContext, stageOf, STAGE_LABEL, unresolvedText, type Stage } from './releases-context';
+import { matchingReleases, RELEASE_METRICS, releaseFigures, releaseMoment, releasesContext, stageOf, STAGE_LABEL, unresolvedCounts, unresolvedText, type Stage } from './releases-context';
 
 const STAGE_TONE: Record<Stage, Tone> = { testing: 'warning', ready: 'accent', released: 'positive' };
 const LABEL = (word: string) => word[0].toUpperCase() + word.slice(1);
@@ -58,7 +58,7 @@ export function ReleasesView({ rows, now }: { rows: ReleaseRow[]; now: string })
           {r.verification.unresolved.map((u) => <span key={`${u.suite}|${u.endpointId}`} className="t-caption truncate">{unresolvedText(u)}</span>)}
         </span>
       ),
-      mobileCell: (r) => (r.verification.unresolved.length ? `${passedText(r)}, ${r.verification.unresolved.length} waiting` : passedText(r)),
+      mobileCell: (r) => (r.verification.unresolved.length ? `${passedText(r)}, ${unresolvedCounts(r.verification.unresolved)}` : passedText(r)),
     },
     { key: 'commit', header: 'Commit', muted: true, hideBelow: 'lg', mobile: 'hidden', sortValue: (r) => r.commit, cell: (r) => <code className="font-mono">{r.commit}</code> },
     {

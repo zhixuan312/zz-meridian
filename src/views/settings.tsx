@@ -118,7 +118,7 @@ function Workspace({ may, record, save }: { may: SettingsMay; record: WorkspaceV
       <Field label="Name" error={nameError}>
         {(p) => <Input {...p} value={v.name} readOnly={!editable} onChange={(e) => setV({ ...v, name: e.target.value })} />}
       </Field>
-      <Field label="Address" hint="Used in links you share. It is set when the workspace is created and is not changed here.">
+      <Field label="Address" hint="It is set when the workspace is created and is not changed here.">
         {(p) => <Input {...p} value={`app.${domain}/${v.slug}`} readOnly leading={<Globe className="size-4" />} className="font-mono text-xs" />}
       </Field>
     </FormSection>

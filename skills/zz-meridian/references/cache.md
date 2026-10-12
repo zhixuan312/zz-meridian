@@ -85,8 +85,8 @@ must change whenever what the scope may see changes; derive it on the server fro
 authorization revision. If an adapter cannot supply a stable, correct visibility identity, leave its read uncached
 until it can.
 
-`optional:src/data/access.ts` builds `resolveAccess`, `collectionFor` and `can` from one policy. The sample binds a
-single scope. A product replaces `policy.current` with its session (null when there is none), `policy.bind` with the
+`optional:src/data/access.ts` builds `resolveAccess`, `collectionFor` and `can` from one policy. The sample binds one
+tenant and resolves the person asking, one of its five, on every request. A product replaces `policy.current` with its session (null when there is none), `policy.bind` with the
 collection of that tenant with its database predicate already applied, and `policy.allows` with its permission check.
 A production adapter binds the predicate and the subscription filter; prepending a cache key is not isolation.
 

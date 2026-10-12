@@ -246,6 +246,7 @@ This lists every path that differs from the plan's base, by file, or by folder f
 | `scripts/verify.baseline.json` | changed | named by `scripts/sizes.ts`, `scripts/verify.config.ts`, `scripts/verify.ts` |
 | `scripts/verify.config.ts` | changed | `pnpm verify`; it names the workspace journeys, finds Settings ready by its theme choice and presses Operations' strip of days |
 | `scripts/verify.ts` | changed | named by `package.json` |
+| `docs/assistant.md` | changed | read by `src/system/content.ts` |
 | `docs/atlas-scenario-coverage.md` | added | `tests/cli-atlas-inventory.test.ts` and `tests/cli-atlas-review.test.ts` |
 | `docs/benchmark.md` | changed | read by `src/system/content.ts` |
 | `docs/distribution.md` | changed | readers of the repository; no code reads it |
@@ -302,6 +303,7 @@ This lists every path that differs from the plan's base, by file, or by folder f
 | `tests/providers-hydration.test.tsx` | changed | the gate, here and in a project that keeps the file |
 | `tests/records-consumers.test.tsx` | added | the gate, here and in a project that keeps the file |
 | `tests/records-template.test.tsx` | added | the gate, here and in a project that keeps the file |
+| `tests/release-phone-cell.test.ts` | added | the gate, here and in a project that keeps the file |
 | `tests/roles.test.ts` | changed | the gate, here and in a project that keeps the file |
 | `tests/settings-access.test.tsx` | changed | the gate, here and in a project that keeps the file |
 | `tests/settings-agents.test.tsx` | added | the gate; it holds Settings' sections and the absence of what was removed |

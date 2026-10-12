@@ -24,7 +24,7 @@ Below 1024px the rail becomes a drawer (the same node, so nothing is defined twi
 |---|---|---|---|
 | Navigation | Rail | Drawer from the masthead's menu button; closes on Escape, on the scrim and on navigation | AppShell |
 | Masthead | Title, head-note, actions on one band | Title row with the menu button; head-note under it; actions wrap to their own row, the primary last | PageFrame |
-| Metric tiles | Four across | Two across from 34rem of row width, one below | Row `tiles` |
+| Metric tiles | As many across as the row holds: four, three or two | Counted from the row's own width, never leaving a hole: four are four or two (two from 34rem), three are three or one (three from 48rem), two are two from 34rem | Row `tiles` |
 | Tables | Columns, sortable heads | A list of cards, one per row: the primary column as the title, two or three facts under it, the status at the end; low-value columns drop first (`hideBelow`). Both read the table's own width, so a table in a narrow frame on a wide screen becomes cards too | DataTable |
 | Dialogs | Centred, 520px | A bottom sheet, full width, safe-area padding | Dialog |
 | Menus and selects | Popover | Popover, at least 44px rows on touch | Menu, Select |
@@ -154,8 +154,8 @@ All components are surface-agnostic by construction: they size from control toke
 | Requests | List: three tiles, filter bar, data table, detail on select | Tiles over the table | Tiles in one column, card list | `requests` inline: the five latest that match the tool's query |
 | Request | Detail: head, facts, timeline | Facts 2/3 + context 1/3 | One column | Not offered; the inline list links here |
 | Analytics | Four figures, heatmap, breakdowns, endpoints | Four tiles · heatmap full width · hour of day 1/2 + regions 1/2 · requests and errors per day 1/2 + 1/2 · endpoints table full | Grouped heatmap | Fullscreen only |
-| Operations | Operational: status list, incidents | Status 2/3 + incident 1/3 | One column | `health` inline: the status list |
-| Customers | List with sparklines | Table | Card list | Not offered |
+| Operations | Operational: status list, incidents | Status 2/3 + incident 1/3 · the incidents also open, when there are any · services table full · past incidents full | One column | `health` inline: the status list |
+| Customers | List with sparklines | Three tiles · table | Tiles in one column, then a card list | Not offered |
 | API keys | List with destructive actions | Table | Card list | Not offered |
 | Members | List with destructive actions | Table | Card list | Not offered |
 | Operations tickets | List: summary tiles, filter bar, data table, a create dialog and a row menu to move a ticket | Tiles over the table; New ticket in the masthead | Tiles in one column, card list | Not offered |

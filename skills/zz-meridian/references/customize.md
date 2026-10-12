@@ -75,7 +75,9 @@ Operations and Analytics pages print `workspaces.<id>.audience` in their descrip
 navigation, `workspaceOf` says which workspace an address belongs to) and `optional:src/views/workspace-chrome.tsx`
 (`WorkspaceRail` and `WorkspacePalette`). The address alone decides the workspace; nothing is stored, and a workspace
 chooses what the rail lists, never what a person may open. Keep a workspace with the key `main`: the adapter and the
-refusal page fall back to it for an address no entry owns. `optional:docs/product-workspaces.md` is the sample's own guide
+refusal page fall back to it for an address no entry owns. The sample's browser journeys (`optional:journeys/workspaces.ts`)
+also name `business` and `engineering`, so `verify --full` fails on a renamed workspace until the journeys are changed
+with it or removed. `optional:docs/product-workspaces.md` is the sample's own guide
 to all of this.
 
 **Take them out** when the product has one navigation. In `src/app.config.ts` delete `workspaces`, `WorkspaceId` and the
@@ -203,6 +205,11 @@ The layout hands the shell whether it is on as a promise it does not await, `ass
 - **Collections** live in `optional:src/data/collections.ts`: one `arrayCollection` per kind of record, with `rows`, the `fields`
   schema, `allow` (which of create, update and remove the assistant may propose) and `hidden` fields. Replace each
   `rows` with the person's API and `clock` with `new Date()`; the assistant reads and proposes changes only through them.
+  A new collection is read by nobody until the policy binds it and a role is granted it. In the sample's policy that is
+  three places: its entry in `DEMO_COLLECTIONS` in `optional:src/data/access.ts`, `<name>:read` for the roles that may read
+  it in `GRANTS` in `optional:src/data/roles.ts`, and, for a page, a feature with that need in `optional:src/data/features.ts`.
+  Without the first, `read()` refuses everybody and the assistant is given no tool for it. A product's own policy binds
+  the collection in `policy.bind` and decides the grant in `policy.allows`.
   **When `rows` becomes a real database, read through `read()`** (`optional:src/data/read.ts`): a page asks for the same
   records from several places (the layout's alerts read, a page strip, the page and its freshness stamp), and `read()`
   caches per caller's scope and refreshes exactly the tenant a write touched, so do not wrap the read in a second cache;
@@ -270,8 +277,8 @@ then stays off without them). Then fix what still points at the sample:
 This finds what is left:
 
 ```sh
-grep -rn "/health\|/requests\|/customers\|/keys\|/settings\|fixtures/sample\|sample-cells" app src/views src/components \
-  --include=*.tsx | grep -v preview.tsx
+grep -rn "/health\|/requests\|/customers\|/keys\|/settings\|/members\|/analytics\|/operations-tickets\|/tests\|/releases\|fixtures/sample\|sample-cells" \
+  app src/views src/components --include=*.tsx --include=*.ts | grep -v preview.tsx
 ```
 
 Then `node scripts/registry.ts` and `pnpm verify --full`.

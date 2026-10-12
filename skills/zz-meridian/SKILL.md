@@ -174,7 +174,7 @@ lightness so contrast holds), registered everywhere, and checked by the contrast
 the hue; when it warns that the hue is near a status hue, step 4 says what to run next. To
 change the brand later, run `npx zz-meridian@<the manifest's version> brand` with the new flags; never `node scripts/brand.ts`, which the manifest does not record.
 
-Requirements: Node 22.18 or newer. A new project uses pnpm when it is installed, npm otherwise; an existing one keeps the
+Requirements: Node 22.18 or newer. A new project uses pnpm when it is installed or corepack can run it, npm otherwise; an existing one keeps the
 package manager its lockfile names, and one with no lockfile gets npm, as `adopt` chooses. The commands here say `pnpm`: in an npm project `pnpm verify` is `npm run verify`, and a flag goes after `--`
 (`npm run verify -- --full`). The browser checks use Google Chrome
 (`CHROME=/path/to/chrome` if it is not where the platform keeps it; a Chromium build works too). When one is missing,
@@ -258,7 +258,7 @@ Read `references/customize.md` and follow it. In short:
 - **MCP App views** under `optional:app/embed/` only if they asked for the agent surface; see `references/agents.md`.
 
 Build up, never sideways: use Meridian's components and tokens. A new colour, size or shadow is a token, never a literal;
-a missing component is specified as a card per `CONTRIBUTING.md`. Interface copy follows `references/voice.md`: sentence case,
+a missing component is specified as a card per `optional:CONTRIBUTING.md`, which Meridian's own repository has. Interface copy follows `references/voice.md`: sentence case,
 verbs on buttons, units and periods on every number.
 
 ## 6. Score it, and improve it until it meets the standard

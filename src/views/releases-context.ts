@@ -38,6 +38,14 @@ export function unresolvedText(u: Unresolved): string {
   return `${u.suite} on ${u.endpointId}: ${u.state === 'missing' ? 'no run yet' : u.state}`;
 }
 
+/** What a release has not passed, counted by kind for a cell with one line: `1 failed, 2 not run`. */
+export function unresolvedCounts(unresolved: Unresolved[]): string {
+  const count = (state: Unresolved['state']) => unresolved.filter((u) => u.state === state).length;
+  return ([['failed', 'failed'], ['skipped', 'skipped'], ['missing', 'not run']] as const)
+    .flatMap(([state, word]) => (count(state) ? [`${count(state)} ${word}`] : []))
+    .join(', ');
+}
+
 /** When a release went out, or else when it last changed. */
 export const releaseMoment = (r: Pick<Release, 'releasedAt' | 'updatedAt'>) => r.releasedAt ?? r.updatedAt;
 

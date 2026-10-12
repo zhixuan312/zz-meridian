@@ -25,7 +25,7 @@ export default async function RequestsPage({ searchParams }: { searchParams: Sea
     <PageFrame
       kicker={<>{app.name} · {app.workspace}</>}
       title="Requests"
-      description="Every call that reached the gateway, newest first. Open one to see where its time went."
+      description="The most recent calls that reached the gateway, newest first. Open one to see where its time went."
       meta={<Suspense fallback={<span className="inline-block h-4 w-28" />}><RequestsFreshness searchParams={searchParams} /></Suspense>}
       actions={<Suspense fallback={<span className="inline-block h-9 w-32" />}><RequestsExport searchParams={searchParams} /></Suspense>}
     >
