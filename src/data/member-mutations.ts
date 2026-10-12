@@ -13,28 +13,12 @@
  * `src/data/read` would close a cycle, because the demo policy binds `members` through this module. A product replaces
  * the queue with a database transaction; the adopter guide says so.
  */
-import { revalidateTag, updateTag } from 'next/cache';
 import { activity, clock, members } from '@/data/collections';
 import { ADD_ONS, effective, MAIN_ROLES, roleLabel, type AddOn, type MainRole } from '@/data/roles';
 import type { AnyCollection, Grant } from '@/lib/collection';
 import type { Member } from '@/data/sample';
 import type { AccessScope } from '@/data/access';
-
-/**
- * Invalidate a tag after a write, from wherever the write came. `updateTag` is the right call from a Server Action —
- * it gives the person their own change on the next read — but Next allows it only there, and it throws everywhere
- * else, which is exactly where this boundary's other callers live: the assistant's route handler and an adopter's
- * MCP server. `revalidateTag` is the call that works in both, so a write from an agent invalidates the same tag
- * instead of failing the change. Found by the assistant walk-through in a built app: suspending a member through an
- * approved Proposal answered "updateTag can only be called from within a Server Action" and the rows never moved.
- */
-function invalidate(t: string) {
-  try {
-    updateTag(t);
-  } catch {
-    revalidateTag(t, { expire: 0 });
-  }
-}
+import { invalidate, writeQueue } from '@/data/write-boundary';
 
 /** Every refusal the boundary produces, in the frozen order the spec checks. */
 export const REFUSALS = {
@@ -104,16 +88,8 @@ async function callerOrThrow(): Promise<{ member: Member; grants: ReadonlySet<Gr
   return { member, grants: effective(member.role, member.addOns) };
 }
 
-/** One promise queue per workspace, on globalThis so a route handler, a server action and a page share it. */
-const QUEUES = Symbol.for('zz-meridian.member-writes');
-const queues = () => ((globalThis as Record<symbol, unknown>)[QUEUES] ??= new Map<string, Promise<unknown>>()) as Map<string, Promise<unknown>>;
-function enqueue<T>(tenantId: string, step: () => Promise<T>): Promise<T> {
-  const tail = queues().get(tenantId) ?? Promise.resolve();
-  const run = tail.then(step, step);
-  // The queue holds a settled copy, so a refused step never leaves an unhandled rejection behind it.
-  queues().set(tenantId, run.then(() => undefined, () => undefined));
-  return run;
-}
+/** Member writes run one at a time for a workspace, so two concurrent changes cannot both pass on a stale count. */
+const enqueue = writeQueue('member-writes');
 
 /** The members collection, bound to a scope: its create, update and remove pass the boundary, its reads do not. */
 export function membersFor(scope: AccessScope): AnyCollection {

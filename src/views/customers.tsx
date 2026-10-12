@@ -19,7 +19,7 @@ import { formatCompact, formatCost, formatPercent } from '@/lib/format';
 import { formatDate } from '@/lib/format-date';
 import type { CustomerRecord } from '@/data/sample';
 import { useShareView } from '@/components/base/use-share-view';
-import { CUSTOMER_METRICS, customersContext } from './customers-context';
+import { CUSTOMER_METRICS, customerFigures, customersContext } from './customers-context';
 
 const PLAN_TONE = { Enterprise: 'accent', Scale: 'neutral', Starter: 'neutral' } as const;
 /** Colour only where a row needs a look: past due and trial. Active is the normal case, so it stays quiet. */
@@ -58,15 +58,14 @@ export function CustomersView({ rows }: { rows: CustomerRecord[] }) {
   const isFiltered = f.q !== '' || f.plan !== 'all' || f.status !== 'all';
   useShareView(customersContext(rows, matching, f));
   const clear = () => set({ q: '', plan: 'all', status: 'all', by: '', page: '1' });
-  const spend = rows.reduce((a, c) => a + c.spend, 0);
-  const pastDue = rows.filter((c) => c.status === 'past due');
+  const { customers, spend, pastDue } = customerFigures(rows);
   const spendDaily = (rows[0]?.trend ?? []).map((_, d) => rows.reduce((a, c) => a + c.trend[d] * 0.000104, 0));
   const requestsDaily = (rows[0]?.trend ?? []).map((_, d) => rows.reduce((a, c) => a + c.trend[d], 0));
 
   return (
     <Records
       summary={[
-        <MetricTile key="customers" label={CUSTOMER_METRICS.customers.label} value={rows.length} format={(n) => String(n)} hint={CUSTOMER_METRICS.customers.hint} daily={requestsDaily} />,
+        <MetricTile key="customers" label={CUSTOMER_METRICS.customers.label} value={customers} format={(n) => String(n)} hint={CUSTOMER_METRICS.customers.hint} daily={requestsDaily} />,
         <MetricTile key="spend" label={CUSTOMER_METRICS.spend.label} value={spend} format={formatCost} hint={CUSTOMER_METRICS.spend.hint} daily={spendDaily} emphasis />,
         <MetricTile key="past-due" label={CUSTOMER_METRICS.pastDue.label} value={pastDue.length} format={(n) => String(n)} hint={CUSTOMER_METRICS.pastDue.hint} note={pastDue.map((c) => c.name).join(', ') || 'Every invoice is paid'} />,
       ]}

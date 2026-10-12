@@ -14,11 +14,13 @@ Status: beta
 | Sheet | Create a key: Name (required), Environment (Live or Test), Scopes (checkboxes); Cancel and Create key | From the right, 440px | From the bottom |
 | Dialog | Revoke: "Revoke {name}?", what fails and that it cannot be undone, when it was last used; Cancel and Revoke key (danger) | Centred | Bottom sheet |
 
+The body (rows 1 to 3, under the masthead and beside the sheet and dialog) is the records template, `Records` from `src/components/templates/records`, with no summary.
+
 ## States
 
 | State | What shows |
 |---|---|
-| Loading | `loading.tsx`: skeleton table rows and the line about rotating keys; the keys are read per request, so the prerendered shell holds none |
+| Loading | `loading.tsx`: the template's skeleton, table rows without tiles, and the line about rotating keys; the keys are read per request, so the prerendered shell holds none |
 | Default | The collection's keys, in its order |
 | Just created | The accent Banner with the only full view of the secret; a toast "Key created" |
 | Name missing | The Name field's error: "Name the key after what uses it" |

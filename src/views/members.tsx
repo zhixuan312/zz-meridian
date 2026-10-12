@@ -6,7 +6,8 @@ import { useEffect, useOptimistic, useRef, useState, useTransition } from 'react
 import { useRouter } from 'next/navigation';
 import { MoreHorizontal, Trash2, UserCheck, UserCog, UserPlus, UserX } from 'lucide-react';
 import { app } from '@/app.config';
-import { PageFrame, Stack } from '@/components/base/shell';
+import { PageFrame } from '@/components/base/shell';
+import { Records } from '@/components/templates/records';
 import { Avatar } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Banner } from '@/components/ui/banner';
@@ -257,7 +258,7 @@ export function MembersView({ rows, now, actions, access, roles }: { rows: Membe
       description="Who is in the workspace, what they can do, and when they last used it."
       actions={mayInvite ? <Button variant="primary" icon={<UserPlus />} onClick={() => { setInviteError(null); setInviting(true); }}>Invite member</Button> : undefined}
     >
-      <Stack>
+      <Records>
         {/* One line for the whole page, not one per row: who can manage the roster, when a row withholds its actions. */}
         {line ? <p className="t-caption max-w-[72ch]">{line}</p> : null}
         <DataTable
@@ -271,7 +272,7 @@ export function MembersView({ rows, now, actions, access, roles }: { rows: Membe
         {/* What the table's roles and the page's own actions mean, generated from the same tables: the page's gate is
             this section's gate, so a person reading it has already been allowed to. */}
         <RolesMatrix />
-      </Stack>
+      </Records>
 
       <Sheet open={inviting} onOpenChange={setInviting}>
         <SheetContent

@@ -23,6 +23,7 @@ import { MEMBERS, STATUSES, TEAMS, type Member } from '@/system/fixtures/sample-
 import { ADD_ONS, MAIN_ROLES } from '@/data/roles';
 import { ACTIVITY, DEMO_NOW, ENDPOINTS, INCIDENTS, REQUESTS, SERVICES, STATUS_MIX, demoSeries, type DailyPoint, type Endpoint, type RequestRow } from '@/system/fixtures/sample';
 import { PAST_INCIDENTS } from '@/system/fixtures/sample-ops';
+import { RELEASES, RUNS, TICKETS, type Release, type Ticket, type VerificationRun } from '@/system/fixtures/sample-engineering';
 import type { ActivityEvent } from '@/components/patterns/activity-feed';
 import type { Incident } from '@/components/patterns/incident-card';
 import type { Service } from '@/components/patterns/status-list';
@@ -214,6 +215,76 @@ export const customers: Collection<CustomerRecord, 'id'> = arrayCollection({
   allow: [],
 });
 
+const stamp = z.iso.datetime();
+
+/**
+ * The work the team tracks against a service. A ticket is created and changed only through `ticketsFor` (the ticket
+ * boundary), which sets its state, its id and both times and applies the step rules; the collection's own fields are the
+ * shape it stores. `openedAt` and `updatedAt` are `pageOnlyFields`, so no agent tool asks for either. Nobody removes one.
+ */
+export const tickets: Collection<Ticket, 'id'> = arrayCollection({
+  name: 'tickets',
+  label: 'Tickets',
+  description: 'The work the team tracks against a service: its title, priority, state (open, waiting or closed), who it is assigned to, and when it was opened and last changed.',
+  key: 'id',
+  title: (t) => t.title,
+  fields: z.object({
+    title: z.string().trim().min(1).max(160),
+    service: z.string().describe('The name of a service, as the services collection spells it.'),
+    priority: z.enum(['low', 'normal', 'high']),
+    state: z.enum(['open', 'waiting', 'closed']).default('open').describe('A new ticket is always open; a change moves it along open, waiting and closed.'),
+    assigneeId: z.string().nullable().default(null).describe('The id of a member, or null when nobody has it.'),
+    openedAt: stamp,
+    updatedAt: stamp,
+    summary: z.string().max(4000).default(''),
+  }),
+  rows: TICKETS,
+  allow: ['create', 'update'],
+  pageOnlyFields: ['openedAt', 'updatedAt'],
+});
+
+/** Each run of a verification suite against one endpoint of one release, with its verdict. Read-only. */
+export const tests: Collection<VerificationRun, 'id'> = arrayCollection({
+  name: 'tests',
+  label: 'Verification runs',
+  description: 'Each run of a verification suite against one endpoint of a release: the verdict (passed, failed or skipped), how long it took, when it started and, for a failure, why.',
+  key: 'id',
+  title: (r) => `${r.suite} on ${r.endpointId}`,
+  fields: z.object({
+    suite: z.string(),
+    endpointId: z.string(),
+    releaseId: z.string(),
+    state: z.enum(['passed', 'failed', 'skipped']),
+    durationMs: z.number(),
+    startedAt: stamp,
+    failure: z.string().nullable(),
+  }),
+  rows: RUNS,
+  allow: [],
+});
+
+/** What is being shipped to an environment, and the verifications it needs before it can go. Read-only. */
+export const releases: Collection<Release, 'id'> = arrayCollection({
+  name: 'releases',
+  label: 'Releases',
+  description: 'A version of a service on its way to an environment: testing while a required verification is missing, failed or skipped, pending when all have passed, released once it is out.',
+  key: 'id',
+  title: (r) => `${r.service} ${r.version}`,
+  fields: z.object({
+    version: z.string(),
+    service: z.string(),
+    environment: z.enum(['staging', 'production']),
+    commit: z.string(),
+    state: z.enum(['testing', 'pending', 'released']),
+    updatedAt: stamp,
+    releasedAt: stamp.nullable(),
+    notes: z.string(),
+    requiredVerifications: z.array(z.object({ suite: z.string(), endpointId: z.string() })),
+  }),
+  rows: RELEASES,
+  allow: [],
+});
+
 /** What the workspace record is: its key is the one row's id, so a page changes it by that id. */
 type WorkspaceRow = { id: string; name: string; slug: string; timezone: string };
 
@@ -235,4 +306,4 @@ export const workspace: Collection<WorkspaceRow, 'id'> = arrayCollection({
   pageOnly: ['update', 'remove'],
 });
 
-export const collections: AnyCollection[] = [members, keys, requests, days, endpoints, responses, services, incidents, activity, customers, workspace];
+export const collections: AnyCollection[] = [members, keys, requests, days, endpoints, responses, services, incidents, activity, customers, tickets, tests, releases, workspace];

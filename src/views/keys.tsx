@@ -5,7 +5,8 @@ import { useRouter } from 'next/navigation';
 import { Tooltip } from 'radix-ui';
 import { KeyRound, Plus, Trash2 } from 'lucide-react';
 import { app } from '@/app.config';
-import { PageFrame, Stack } from '@/components/base/shell';
+import { PageFrame } from '@/components/base/shell';
+import { Records } from '@/components/templates/records';
 import { Badge } from '@/components/ui/badge';
 import { Banner } from '@/components/ui/banner';
 import { Button } from '@/components/ui/button';
@@ -126,7 +127,7 @@ export function KeysView({ rows, now, createKey, revokeKey, may = { create: true
       description={`Keys let your services call ${app.name}. Each one carries only the scopes it needs.`}
       actions={may.create ? <Button variant="primary" icon={<Plus />} onClick={() => { setCreateError(null); setCreating(true); }}>Create key</Button> : undefined}
     >
-      <Stack>
+      <Records>
         {/* One line for the whole page, not one per control: who can create and revoke, when the page withholds either. */}
         {line && (!may.create || !may.revoke) ? <p className="t-caption max-w-[72ch]">{line}</p> : null}
         {fresh ? (
@@ -147,7 +148,7 @@ export function KeysView({ rows, now, createKey, revokeKey, may = { create: true
           />
         </Tooltip.Provider>
         <p className="t-caption max-w-[72ch]">Keys never expire. To rotate one, create its replacement, move your services to it, then revoke the old key: requests signed with it fail at once.</p>
-      </Stack>
+      </Records>
 
       <Sheet open={creating} onOpenChange={setCreating}>
         <SheetContent

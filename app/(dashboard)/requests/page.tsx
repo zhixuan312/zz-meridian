@@ -7,7 +7,8 @@ import { gate } from '@/data/access';
 import { readRequests, requestsQuery, REQUEST_PAGE } from '@/data/requests';
 import { DEMO_UPDATED_AT } from '@/data/sample';
 import { RequestsView } from '@/views/requests';
-import { Busy, TableSkeleton, TilesSkeleton } from '@/components/patterns/page-loading';
+import { Busy } from '@/components/patterns/page-loading';
+import { RecordsSkeleton } from '@/components/templates/records';
 
 export const metadata = { title: 'Requests' };
 
@@ -31,8 +32,7 @@ export default async function RequestsPage({ searchParams }: { searchParams: Sea
       <Suspense
         fallback={
           <Busy name="requests">
-            <TilesSkeleton />
-            <TableSkeleton rows={3} filters={false} />
+            <RecordsSkeleton tiles={3} rows={3} filters={false} />
           </Busy>
         }
       >

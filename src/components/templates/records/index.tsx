@@ -1,14 +1,15 @@
-import { Children, type ReactNode } from 'react';
+import { Children, Fragment, isValidElement, type ReactElement, type ReactNode } from 'react';
 import { Row, Stack } from '@/components/base/shell';
 import { TableSkeleton, TilesSkeleton } from '@/components/patterns/page-loading';
 
 /**
  * The arrangement of a page that lists records: an optional row of summary tiles over the records themselves
  * (a Data table with its Filter bar). It keeps no state and reads no data; the page supplies both. Each item of
- * `summary` is a direct child of the tiles row, which sizes its columns by counting them.
+ * `summary` is a direct child of the tiles row, which sizes its columns by counting them; a fragment counts as its children.
  */
-export function Records({ summary, children }: { /** The summary tiles: one node, or an array whose items become the row's direct children. */ summary?: ReactNode; children: ReactNode }) {
-  const tiles = Children.toArray(summary);
+export function Records({ summary, children }: { /** The summary tiles: one node, a fragment or an array, whose items become the row's direct children. */ summary?: ReactNode; children: ReactNode }) {
+  /* A fragment is one child to React, but the row counts tiles: open it one level. */
+  const tiles = Children.toArray(isValidElement(summary) && summary.type === Fragment ? (summary as ReactElement<{ children?: ReactNode }>).props.children : summary);
   return (
     <Stack data-template="records">
       {tiles.length ? <Row split="tiles">{tiles}</Row> : null}

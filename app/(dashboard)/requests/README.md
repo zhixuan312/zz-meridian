@@ -12,6 +12,8 @@ Status: beta
 | 1 | Row `tiles`: three Metric tiles for what the filters let through: requests (emphasis), errors and limits, latency p95, each with its 5-minute shape over the last hour and the last half hour against the one before | Three across | One column |
 | 2 | Data table with a Filter bar in its toolbar: search, Status, Method, Region, the result count | Columns: Request (grow), Status, Latency, Customer and Region (once the table is 896px wide), Size (1152px), Received; a table under 640px wide is the card list | Card list: route and status, then latency, customer and when |
 
+The body (rows 1 and 2) is the records template, `Records` from `src/components/templates/records`: the three tiles are its summary and the table its records.
+
 ## States
 
 | State | What shows |
@@ -20,7 +22,7 @@ Status: beta
 | Filtered | The tiles describe the matching set ("Matching requests"); the active filters take the accent wash; Clear appears |
 | Set by an agent | `?by=Claude` adds the provenance line under the filters until a person changes them |
 | Nothing matches | The table's filtered-out empty state with Clear filters; the tiles read zero |
-| Loading | `loading.tsx`: the masthead skeleton, three tiles over a few skeleton table rows. On a navigation the real masthead (title, sentence) shows at once, with skeletons for the freshness stamp, the export and the body |
+| Loading | `loading.tsx`: the masthead skeleton and the template's skeleton, three tiles over a few skeleton table rows. On a navigation the real masthead (title, sentence) shows at once, with skeletons for the freshness stamp, the export and the body |
 | Error | The table's error state with Retry; the filters stay |
 
 ## Data

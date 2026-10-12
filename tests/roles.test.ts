@@ -1,11 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import { ADD_ONS, GRANTS, MAIN_ROLES, effective, whoCan } from '@/data/roles';
 
-const DASHBOARDS = ['requests:read', 'days:read', 'endpoints:read', 'responses:read', 'services:read', 'incidents:read', 'customers:read', 'activity:read'];
+const DASHBOARDS = ['requests:read', 'days:read', 'endpoints:read', 'responses:read', 'services:read', 'incidents:read', 'customers:read', 'activity:read', 'tickets:read', 'tests:read', 'releases:read'];
 const TABLE: Record<string, string[]> = {
-  Owner: [...DASHBOARDS, 'requests:create', 'keys:read', 'keys:create', 'keys:remove', 'members:read', 'members:create', 'members:update', 'members:remove', 'activity:create', 'workspace:read', 'workspace:update', 'workspace:remove'],
-  Admin: [...DASHBOARDS, 'requests:create', 'keys:read', 'keys:create', 'keys:remove', 'members:read', 'members:create', 'members:update', 'members:remove', 'activity:create', 'workspace:read'],
-  Member: [...DASHBOARDS, 'requests:create', 'keys:read', 'members:read', 'activity:create'],
+  Owner: [...DASHBOARDS, 'requests:create', 'keys:read', 'keys:create', 'keys:remove', 'members:read', 'members:create', 'members:update', 'members:remove', 'activity:create', 'tickets:create', 'tickets:update', 'workspace:read', 'workspace:update', 'workspace:remove'],
+  Admin: [...DASHBOARDS, 'requests:create', 'keys:read', 'keys:create', 'keys:remove', 'members:read', 'members:create', 'members:update', 'members:remove', 'activity:create', 'tickets:create', 'tickets:update', 'workspace:read'],
+  Member: [...DASHBOARDS, 'requests:create', 'keys:read', 'members:read', 'activity:create', 'tickets:create', 'tickets:update'],
   Viewer: [...DASHBOARDS],
   'Key manager': ['keys:read', 'keys:create', 'keys:remove', 'activity:create'],
 };
@@ -32,6 +32,8 @@ describe('the role table', () => {
   it('names the roles whose own grants satisfy a whole need, in table order', () => {
     expect(whoCan('keys:create')).toEqual(['Owner', 'Admin', 'Key manager']);
     expect(whoCan('members:update')).toEqual(['Owner', 'Admin']);
+    expect(whoCan('tickets:update')).toEqual(['Owner', 'Admin', 'Member']);
+    expect(whoCan('releases:read')).toEqual(['Owner', 'Admin', 'Member', 'Viewer']);
     expect(whoCan('requests:read')).toEqual(['Owner', 'Admin', 'Member', 'Viewer']);
     expect(whoCan({ allOf: ['workspace:read', 'workspace:update'] })).toEqual(['Owner']);
   });

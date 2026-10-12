@@ -20,6 +20,11 @@ const sum = (xs: number[]) => xs.reduce((a, b) => a + b, 0);
 /** The last seven days of a 14-day trend against the seven before: the change a sparkline shows and a list does not say. */
 const week = (t: number[]) => (t.length >= 14 && sum(t.slice(0, 7)) ? sum(t.slice(7)) / sum(t.slice(0, 7)) - 1 : null);
 
+/** The three figures the tiles show and the assistant is told, worked out once from every customer the page read. */
+export function customerFigures(rows: CustomerRecord[]): { customers: number; spend: number; pastDue: CustomerRecord[] } {
+  return { customers: rows.length, spend: sum(rows.map((c) => c.spend)), pastDue: rows.filter((c) => c.status === 'past due') };
+}
+
 export function customersAddress(f: CustomersState): string {
   const p = new URLSearchParams();
   if (f.q) p.set('q', f.q);
@@ -35,11 +40,10 @@ export function customersContext(rows: CustomerRecord[], filtered: CustomerRecor
   const field = ({ errors: 'errorRate', trend: 'requests' } as Record<string, keyof CustomerRecord>)[f.sort] ?? (f.sort as keyof CustomerRecord);
   const matching = [...filtered].sort((a, b) => (f.dir === 'desc' ? -1 : 1) * (a[field] > b[field] ? 1 : a[field] < b[field] ? -1 : 0));
   const filters = [f.plan !== 'all' && `plan ${f.plan}`, f.status !== 'all' && `status ${f.status}`, f.q && `matching "${f.q}"`].filter(Boolean).join(', ');
-  const spend = sum(rows.map((c) => c.spend));
-  const pastDue = rows.filter((c) => c.status === 'past due');
+  const { customers, spend, pastDue } = customerFigures(rows);
   const M = CUSTOMER_METRICS;
   const facts: Fact[] = [
-    { label: M.customers.label, value: String(rows.length), definition: M.customers.hint },
+    { label: M.customers.label, value: String(customers), definition: M.customers.hint },
     { label: M.spend.label, value: formatCost(spend), definition: M.spend.hint },
     { label: M.pastDue.label, value: pastDue.length ? `${pastDue.length}: ${pastDue.map((c) => `${c.name} (${formatCost(c.spend)} spend)`).join(', ')}` : '0, every invoice is paid', definition: M.pastDue.hint },
     { label: filters ? 'Matching' : 'Shown', value: `${matching.length} of ${rows.length}, sorted by ${f.sort} ${f.dir === 'desc' ? 'descending' : 'ascending'}: ${listed(matching, (c) => `${c.name} (${c.plan}, ${c.status}, ${formatCompact(c.requests)} requests, ${formatCost(c.spend)}, error rate ${formatPercent(c.errorRate, 2)})`, 'narrow the filters to see them')}` },

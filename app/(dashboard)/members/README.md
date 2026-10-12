@@ -17,11 +17,13 @@ Status: beta
 
 A row the caller may not change draws no menu at all: its own reason where the restriction is the target's — the first rule in the boundary's frozen order that hides the action, such as "Only an Owner can change or remove an Owner." on an Owner's row read by an Admin — and nothing where the caller simply lacks the grant, which the page's one line above the table already says ("Owners and Admins manage members."). The row menu holds Change role, Suspend (Reactivate on a suspended member) and Remove, each shown only where the boundary allowed it; an invited row offers none until the server gives it a capability.
 
+The body (rows 1 and 2) is the records template, `Records` from `src/components/templates/records`, with no summary.
+
 ## States
 
 | State | What shows |
 |---|---|
-| Loading | `loading.tsx`: skeleton table rows; the members are read per request, so the prerendered shell holds none |
+| Loading | `loading.tsx`: the template's skeleton, table rows without tiles; the members are read per request, so the prerendered shell holds none |
 | Default | Newest members first, as the Joined column beside them shows |
 | Invited | The status Badge in `accent`; Last active reads "Never" in `ink-3`; no row actions |
 | Suspended | The status Badge in `warning` |

@@ -18,10 +18,11 @@ import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import type { JSX } from 'react';
 import { nav } from '@/app.config';
-import { activity, customers, days, endpoints, incidents, keys, members, requests, responses, services, workspace } from '@/data/collections';
+import { activity, customers, days, endpoints, incidents, keys, members, releases, requests, responses, services, tests, tickets, workspace } from '@/data/collections';
 import { FEATURES, type FeatureId } from '@/data/features';
 import { effective, roleLabel, type AddOn, type MainRole } from '@/data/roles';
 import { membersFor } from '@/data/member-mutations';
+import { ticketsFor } from '@/data/ticket-mutations';
 import { chooseViewAs } from '@/data/view-as';
 import { NoAccess } from '@/views/no-access';
 import type { Member } from '@/data/sample';
@@ -122,6 +123,9 @@ const DEMO_COLLECTIONS: Record<string, { collection: AnyCollection; ops: readonl
   incidents: { collection: incidents, ops: ['read'] },
   activity: { collection: activity, ops: ['read', 'create'] },
   customers: { collection: customers, ops: ['read'] },
+  tickets: { collection: tickets, ops: ['read', 'create', 'update'] },
+  tests: { collection: tests, ops: ['read'] },
+  releases: { collection: releases, ops: ['read'] },
   workspace: { collection: workspace, ops: ['read', 'update', 'remove'] },
 };
 
@@ -130,8 +134,13 @@ export const { resolveAccess, collectionFor, can, nameOf } = accessFrom({
     const member = await currentMember();
     return member ? { tenantId: TENANT, subjectId: member.id, authorizationKey: authorizationKeyOf(member) } : null;
   },
-  // Members are bound through the boundary (`member-mutations.ts`), so no write reaches the raw collection.
-  bind: (scope, name) => (scope.tenantId === TENANT ? (name === 'members' ? membersFor(scope) : DEMO_COLLECTIONS[name]?.collection) : undefined),
+  // Members and tickets are bound through their boundaries (`member-mutations.ts`, `ticket-mutations.ts`), so no write reaches the raw collection.
+  bind: (scope, name) => {
+    if (scope.tenantId !== TENANT) return undefined;
+    if (name === 'members') return membersFor(scope);
+    if (name === 'tickets') return ticketsFor(scope);
+    return DEMO_COLLECTIONS[name]?.collection;
+  },
   allows: async (scope, name, op, ids) => {
     const member = await memberById(scope.subjectId);
     if (!member || member.status !== 'Active') return false;
@@ -154,8 +163,8 @@ export const { resolveAccess, collectionFor, can, nameOf } = accessFrom({
  * proved; a grant is asked of the role table (`effective`, main role and add-ons unioned), an `allOf` of every grant.
  *
  * The question is the role's, not the collection's. A grant a role carries is what that person may do, and whether a
- * collection of that name is bound — `can` — is a question about the data behind it. `customers:read` is every viewer's
- * grant and the Customers page reads a fixture rather than a collection, so the rail asks `effective` for it.
+ * collection of that name is bound — `can` — is a question about the data behind it. The rail asks `effective` for the
+ * grant because it draws a destination, not a read.
  */
 function satisfies(member: Member, need: Need): boolean {
   if (member.status !== 'Active') return false;
