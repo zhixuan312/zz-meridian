@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import { describe, expect, it } from 'vitest';
 import { render } from '@testing-library/react';
+import { MetricTile } from '@/components/patterns/metric-tile';
 import { Breadcrumb } from '@/components/ui/breadcrumb';
 import { CopyField } from '@/components/ui/copy-field';
 import { Table, TableBody, TableCell, TableRow } from '@/components/ui/table';
@@ -70,5 +71,22 @@ describe('a breadcrumb and a copy field', () => {
     const key = render(<CopyField label="API key" secret value="zzm_live_7Hc2x9a3m4cQ91" />).container.querySelector('code')!;
     expect(key.getAttribute('title')).toBe(key.textContent);
     expect(key.getAttribute('title')).not.toContain('7Hc2x9a3m4c');
+  });
+});
+
+/**
+ * And in the metric tile, whose note sits on one line where the change would: found by the audit of the records
+ * template's Partial specimen, where "The error counter did not answer." was cut in a tile a third of a phone wide.
+ */
+describe("a metric tile's note", () => {
+  it('carries the whole line in its title when the line is text, and leaves a crafted node to its author', () => {
+    const noted = (note: ReactNode) => render(<MetricTile label="Error rate" value="Unavailable" note={note} />).container.querySelector('span.truncate')!;
+    expect(noted('The error counter did not answer.').getAttribute('title')).toBe('The error counter did not answer.');
+    expect(noted(<b>Northwind, Contoso</b>).getAttribute('title')).toBeNull();
+  });
+
+  it('titles the line it writes itself when there is no earlier period', () => {
+    const line = render(<MetricTile label="Webhooks delivered" value={21_070} delta={null} />).container.querySelector('span.truncate')!;
+    expect(line.getAttribute('title')).toBe('No earlier period to compare');
   });
 });
