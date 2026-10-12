@@ -294,6 +294,7 @@ This lists every path that differs from the plan's base, by file, or by folder f
 | `tests/honest-controls.test.tsx` | added | the gate, here and in a project that keeps the file |
 | `tests/leave-then-unload.test.tsx` | added | the gate, here and in a project that keeps the file |
 | `tests/loading-routes.test.tsx` | changed | the gate, here and in a project that keeps the file |
+| `tests/member-duplicate.test.ts` | added | the gate, here and in a project that keeps the file |
 | `tests/members-optimistic.test.tsx` | changed | the gate, here and in a project that keeps the file |
 | `tests/navigate-start.test.ts` | added | the gate, here and in a project that keeps the file |
 | `tests/no-access.test.tsx` | changed | the gate, here and in a project that keeps the file |

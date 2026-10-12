@@ -31,6 +31,7 @@ export const REFUSALS = {
   giveOwner: 'Only an Owner can give or take away the Owner role.',
   changeOwner: 'Only an Owner can change or remove an Owner.',
   lastOwner: 'The workspace needs at least one active Owner.',
+  taken: 'Somebody with that address is already in the workspace.',
 } as const;
 
 /** What a member row offers the caller reading it, and why an action is hidden. */
@@ -101,13 +102,16 @@ export function membersFor(scope: AccessScope): AnyCollection {
   };
 }
 
-/** A create: the grant, the role and add-ons the caller names, and giving Owner only with `workspace:update`. */
+/** A create: the grant, the role and add-ons the caller names, giving Owner only with `workspace:update`, and an address nobody in the workspace has yet. */
 async function createStep(scope: AccessScope, input: Record<string, unknown>): Promise<Member> {
   const { grants } = await callerOrThrow();
   if (!grants.has('members:create')) throw new MemberRefusal(REFUSALS.noGrant);
   if (input.role !== undefined && !(MAIN_ROLES as readonly unknown[]).includes(input.role)) throw new MemberRefusal(REFUSALS.values);
   if (input.addOns !== undefined && (!Array.isArray(input.addOns) || input.addOns.some((addOn) => !(ADD_ONS as readonly unknown[]).includes(addOn)))) throw new MemberRefusal(REFUSALS.values);
   if (input.role === 'Owner' && !grants.has('workspace:update')) throw new MemberRefusal(REFUSALS.giveOwner);
+  // One person, one member: the address is compared without its case, as a mail server reads it.
+  const address = typeof input.email === 'string' ? input.email.trim().toLowerCase() : '';
+  if (address && (await members.query({ where: [{ field: 'email', op: 'contains', value: address }] })).rows.some((m) => m.email.toLowerCase() === address)) throw new MemberRefusal(REFUSALS.taken);
   const row = await members.create!(input);
   invalidate(await tag(scope.tenantId, 'members'));
   return row;

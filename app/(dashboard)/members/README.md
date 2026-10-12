@@ -29,7 +29,7 @@ The body (rows 1 and 2) is the records template, `Records` from `src/components/
 | Suspended | The status Badge in `warning` |
 | Name or email missing | The field's error under it; nothing is sent |
 | Changed | The page refreshes from the collection and a toast confirms: "Role changed", "Member suspended", "Member reactivated", "Invited {email}", which says the member is listed as Invited (the sample delivers no message, and an invited member has no acceptance step); a removal's toast is its Undo, "{name} removed" |
-| Rejected | The table goes back to what it was. A refused invitation reopens the sheet with what was typed and a critical Banner, "Not invited", with the reason; a refused role change reopens the Change role sheet with the draft it was sent from and a critical Banner, "Role not changed", with the reason; a refused status change or removal shows a critical toast with the reason |
+| Rejected | The table goes back to what it was. A refused invitation reopens the sheet with what was typed and a critical Banner, "Not invited", with the reason (an address somebody in the workspace already has is one: "Somebody with that address is already in the workspace."); a refused role change reopens the Change role sheet with the draft it was sent from and a critical Banner, "Role not changed", with the reason; a refused status change or removal shows a critical toast with the reason |
 | No members | The first-run empty state with Invite member |
 | May not invite | No Invite member in the masthead and none in the empty state, because the boundary offers no invitable role |
 
