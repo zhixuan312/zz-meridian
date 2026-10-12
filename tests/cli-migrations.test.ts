@@ -118,3 +118,24 @@ describe('the 0.13.0 migration', () => {
     expect(byId('nav-needs').applies(project({ 'package.json': '{}' }))).toBeNull();
   });
 });
+
+describe('the 0.15.0 migration', () => {
+  // The gate's rule followed a folder named (dashboard); 0.15.0 follows whatever route group the project keeps, so an
+  // adopted project with its own group meets the rule for the first time and is told so before its gate fails.
+  it('finds a page README under the project\'s own route group with no "What the agent reads"', () => {
+    const old = project({
+      'app/(dash)/teams/README.md': '# Teams\n\nThe teams.\n\n## Agents\n\nNot applicable.\n',
+      'app/(dash)/people/README.md': '# People\n\nThe people.\n\n## Agents\n\nShared.\n\n### What the agent reads\n\nEvery person.\n',
+      'app/sign-in/README.md': '# Sign in\n\nThe way in.\n',
+    });
+    expect(byId('agent-reads-own-group').since).toBe('0.15.0');
+    expect(byId('agent-reads-own-group').applies(old)).toEqual(['app/(dash)/teams/README.md']);
+  });
+
+  it('leaves the template\'s own group to the rule that has covered it since 0.9.0, and finds nothing in a project on the new shape', () => {
+    expect(byId('agent-reads-own-group').applies(project({ 'app/(dashboard)/orders/README.md': '# Orders\n\nThe orders.\n\n## Agents\n\nNot applicable.\n' }))).toBeNull();
+    expect(byId('agent-reads-own-group').applies(project({ 'src/app/(console)/orders/README.md': '# Orders\n\nThe orders.\n\n## Agents\n\nShared.\n\n### What the agent reads\n\nEvery order.\n' }))).toBeNull();
+    expect(byId('agent-reads-own-group').applies(project({ 'src/app/(console)/orders/README.md': '# Orders\n\nThe orders.\n' }))).toEqual(['src/app/(console)/orders/README.md']);
+    expect(byId('agent-reads-own-group').applies(project({ 'package.json': '{}' }))).toBeNull();
+  });
+});

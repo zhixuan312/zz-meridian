@@ -257,6 +257,14 @@ export const RELEASE_MIGRATIONS: ReleaseMigration[] = [
     instructions: 'Read "5. Decide who may do what" in the Start guide (docs/start-a-dashboard.md). For each item in `src/app.config.ts`\'s `nav`, add `needs: \'public\'` when everyone may open that page, or point it at its feature (`needs: FEATURES.<id>.needs`); the fourth of its four steps covers it, and `scripts/check.ts` fails the project\'s gate, naming the href, on an item without one. `adopt` writes `needs: \'public\'` for a project it sets up from now on.',
     checks: ['gate'],
   },
+  {
+    id: 'agent-reads-own-group',
+    since: '0.15.0',
+    applies: ownGroupPagesWithoutAgentReads,
+    summary: 'A page under the route group the project keeps its console in says what the agent reads.',
+    instructions: 'The gate asked this of pages under `app/(dashboard)/` only; from 0.15.0 it asks it under whatever route group sits at the top of the app folder. Read "A page spec" in references/customize.md. Under `## Agents` in each page\'s README.md listed here, add `### What the agent reads`: what the page\'s shared context tells each agent, with a real line of it, and what the MCP App and the console assistant do with it. A copy of the rule kept in `scripts/check.local.ts` for the project\'s own group can be deleted.',
+    checks: ['gate'],
+  },
 ];
 
 /** The project's own nav, with any item still missing the `needs` that 0.13.0 requires of it. */
@@ -276,6 +284,21 @@ function navItemsWithoutNeeds(root: string): string[] | null {
   const declaredType = /export type NavItem[^;]*\};/.test(body);
   const typeHasNeeds = /export type NavItem[^;]*\bneeds\s*:/.test(body);
   return items.some((l) => !/\bneeds\s*:/.test(l)) || (declaredType && !typeHasNeeds) ? [rel] : null;
+}
+
+/**
+ * The page specifications under a route group of the project's own, at the top of its app folder, that lack the part the
+ * gate asks for there from 0.15.0. The template's `(dashboard)` is left out: the rule has covered it since 0.9.0.
+ */
+function ownGroupPagesWithoutAgentReads(root: string): string[] | null {
+  const files: string[] = [];
+  for (const app of ['app', 'src/app']) {
+    let groups: string[] = [];
+    try { groups = fs.readdirSync(path.join(root, app), { withFileTypes: true }).filter((e) => e.isDirectory() && /^\(.+\)$/.test(e.name) && e.name !== '(dashboard)').map((e) => e.name); } catch { /* no such folder */ }
+    for (const g of groups) walk(root, `${app}/${g}`, files, /^README\.md$/);
+  }
+  const hits = files.filter((rel) => !/^## Agents\n[\s\S]*?^### What the agent reads$/m.test(text(root, rel) ?? ''));
+  return hits.length > 0 ? hits : null;
 }
 
 /** The page specifications under the console and embed folders that lack the part the 0.9.0 check requires. */
