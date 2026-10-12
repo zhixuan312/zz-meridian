@@ -141,7 +141,7 @@ export function TicketsView({ rows, now, may = { create: true, update: true }, l
       cell: (t) => (t.assignee ? <span className="whitespace-nowrap">{t.assignee}</span> : <span className="text-ink-3">Nobody</span>),
       mobileCell: (t) => (t.assignee ? `Assigned to ${t.assignee}` : 'Unassigned'),
     },
-    { key: 'opened', header: 'Opened', numeric: true, muted: true, hideBelow: 'xl', mobile: 'hidden', sortValue: (t) => t.openedAt, cell: (t) => formatRelative(t.openedAt, asOf) },
+    { key: 'opened', header: 'Opened', numeric: true, muted: true, hideBelow: 'lg', mobile: 'hidden', sortValue: (t) => t.openedAt, cell: (t) => formatRelative(t.openedAt, asOf) },
     { key: 'changed', header: 'Last changed', numeric: true, mobile: 'fact', sortValue: (t) => t.updatedAt, cell: (t) => formatRelative(t.updatedAt, asOf), mobileCell: (t) => `Changed ${formatRelative(t.updatedAt, asOf)}` },
     ...(may.update ? [{
       key: 'steps', header: <span className="sr-only">Actions</span>, align: 'right' as const, mobile: 'status' as const,
