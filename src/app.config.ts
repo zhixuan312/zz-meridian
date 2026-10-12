@@ -1,5 +1,5 @@
 import {
-  Activity, BarChart3, Boxes, FileText, Gauge, KeyRound, LayoutGrid, Settings, UserRound, Users, type LucideIcon,
+  Activity, BarChart3, Boxes, FileText, Gauge, KeyRound, LayoutGrid, Settings, Ticket, UserRound, Users, type LucideIcon,
 } from 'lucide-react';
 // Relative with its extension, and a type-only need below: `scripts/check.ts` imports this file under plain node.
 import { FEATURES } from './data/features.ts';
@@ -42,9 +42,10 @@ export const nav: NavGroup[] = [
   {
     label: 'Operate',
     items: [
-      { href: '/health', label: 'Health', icon: Gauge, badge: '1', needs: FEATURES.health.needs },
+      { href: '/health', label: 'Health', icon: Gauge, needs: FEATURES.health.needs },
       { href: '/customers', label: 'Customers', icon: Users, needs: FEATURES.customers.needs },
       { href: '/keys', label: 'API keys', icon: KeyRound, needs: FEATURES.keys.needs },
+      { href: '/operations-tickets', label: 'Operations tickets', icon: Ticket, needs: FEATURES.tickets.needs },
     ],
   },
   {

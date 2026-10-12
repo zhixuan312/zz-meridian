@@ -482,7 +482,7 @@ if (asPersonas.length) {
             if (extra.length) problems.push(`${name}: the rail shows ${extra.join(', ')}, which this persona is not expected to see`);
           }
           // (b) The role-dependent routes this persona expects, every control pressed at 1440px as that person.
-          const roleRoutes = ['/keys', '/members', '/settings'].filter((r) => persona.expectedRoutes.includes(r));
+          const roleRoutes = ['/keys', '/operations-tickets', '/members', '/settings'].filter((r) => persona.expectedRoutes.includes(r));
           if (roleRoutes.length) {
             const presses = await run('scripts/interactions.ts', ['--base', here, '--as', name, '--width', '1440', '--routes', roleRoutes.join(',')], app);
             if (presses.status !== 0) problems.push(`${name}: the presses failed on ${roleRoutes.join(', ')} — ${presses.out.split('\n').filter(Boolean).slice(-1)[0] ?? 'no output'}`);

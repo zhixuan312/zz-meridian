@@ -8,11 +8,12 @@ import Customers from '../app/(dashboard)/customers/loading';
 import Health from '../app/(dashboard)/health/loading';
 import Keys from '../app/(dashboard)/keys/loading';
 import Members from '../app/(dashboard)/members/loading';
+import Tickets from '../app/(dashboard)/operations-tickets/loading';
 import Requests from '../app/(dashboard)/requests/loading';
 import RequestDetail from '../app/(dashboard)/requests/[id]/loading';
 import Settings from '../app/(dashboard)/settings/loading';
 
-const ROUTES = { Overview, Analytics, Customers, Health, Keys, Members, Requests, RequestDetail, Settings };
+const ROUTES = { Overview, Analytics, Customers, Health, Keys, Members, Requests, RequestDetail, Settings, Tickets };
 
 describe('every console route has its own loading state', () => {
   it('drops the shared Overview fallback', () => {

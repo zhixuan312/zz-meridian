@@ -17,12 +17,12 @@ import type { Need, ProtectedNeed } from '@/lib/collection';
 /** Every page the console offers, by the id the rail, the palette and a page's gate name it. */
 export type FeatureId =
   | 'overview' | 'requests' | 'request' | 'analytics' | 'health' | 'customers'
-  | 'keys' | 'members' | 'settings' | 'system' | 'docs';
+  | 'keys' | 'members' | 'settings' | 'system' | 'docs' | 'tickets';
 
 /** Every action a page offers that only some people may take, by the id its control names it. */
 export type ActionId =
   | 'create-key' | 'revoke-key' | 'invite-member' | 'change-role' | 'suspend-member' | 'reactivate-member'
-  | 'remove-member' | 'replay-request' | 'save-workspace' | 'delete-workspace';
+  | 'remove-member' | 'replay-request' | 'save-workspace' | 'delete-workspace' | 'create-ticket' | 'update-ticket';
 
 /** Each feature: its name as a person reads it, and the need a person must satisfy to reach it. */
 export const FEATURES: Record<FeatureId, { title: string; needs: Need }> = {
@@ -37,6 +37,7 @@ export const FEATURES: Record<FeatureId, { title: string; needs: Need }> = {
   settings: { title: 'Settings', needs: 'public' },
   system: { title: 'Design system', needs: 'public' },
   docs: { title: 'Docs', needs: 'public' },
+  tickets: { title: 'Operations tickets', needs: 'tickets:read' },
 };
 
 /**
@@ -54,4 +55,6 @@ export const ACTIONS: Record<ActionId, { feature: FeatureId; label: string; need
   'replay-request': { feature: 'request', label: 'Replay', needs: 'requests:create', line: 'Owners, Admins and Members can replay requests.' },
   'save-workspace': { feature: 'settings', label: 'Save workspace', needs: { allOf: ['workspace:read', 'workspace:update'] } },
   'delete-workspace': { feature: 'settings', label: 'Delete workspace', needs: 'workspace:remove' },
+  'create-ticket': { feature: 'tickets', label: 'New ticket', needs: 'tickets:create', line: 'Owners, Admins and Members create and change tickets.' },
+  'update-ticket': { feature: 'tickets', label: 'Change ticket state', needs: 'tickets:update', line: 'Owners, Admins and Members create and change tickets.' },
 };

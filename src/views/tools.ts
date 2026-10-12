@@ -12,6 +12,7 @@ import { clock } from '@/data/collections';
 import { FEATURES } from '@/data/features';
 import { read } from '@/data/read';
 import { readRequests, REQUEST_PAGE } from '@/data/requests';
+import { readTickets } from '@/data/tickets';
 import { readActivity, readDays, readEndpoints, readIncidents, readResponses, readServices } from '@/data/metrics';
 import {
   DEMO_UPDATED_AT, STATUS_TEXT, payloadsOf, traceOf,
@@ -29,6 +30,7 @@ import { membersContext } from './members-context';
 import { overviewContext, type OverviewData } from './overview-context';
 import { requestContext } from './request-context';
 import { requestsContext } from './requests-context';
+import { ticketCounts, ticketsContext } from './tickets-context';
 
 const day = z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional().describe('A day of the period, YYYY-MM-DD: the view opens pointed at it.');
 const period = z.enum(PERIODS).optional().describe('The reporting period; 30d when not given.');
@@ -161,5 +163,18 @@ export const keysTool = defineViewTool({
   },
 });
 
+export const ticketsTool = defineViewTool({
+  name: 'tickets',
+  title: 'Operations tickets',
+  description: 'The tickets the team tracks against a service: how many are open, waiting and closed, which are unowned or have gone quiet, and the newest changes.',
+  needs: FEATURES.tickets.needs,
+  input: z.object({ q: z.string().max(100).optional(), state: z.enum(['all', 'open', 'waiting', 'closed']).optional(), priority: z.enum(['all', 'high', 'normal', 'low']).optional() }),
+  async read({ q = '', state = 'all', priority = 'all' }) {
+    // The one way the tool sees tickets: the read the page uses, so the figures it is told are the figures on the screen.
+    const { rows, observedAt } = await readTickets();
+    return { context: ticketsContext(rows, observedAt, { q, state, priority }), data: { counts: ticketCounts(rows) } };
+  },
+});
+
 /** Every view's tool. The assistant route hands these to `assistantTools`, as it hands the collections. */
-export const viewTools: ViewTool[] = [overviewTool, requestsTool, requestTool, healthTool, analyticsTool, customersTool, membersTool, keysTool] as ViewTool[];
+export const viewTools: ViewTool[] = [overviewTool, requestsTool, requestTool, healthTool, analyticsTool, customersTool, membersTool, keysTool, ticketsTool] as ViewTool[];

@@ -19,7 +19,7 @@ const hrefsOf = (only: string[]) => items.filter((i) => only.includes(i.href)).m
 
 /**
  * The template's own repository: the Atlas is still here. A project brought in with `adopt` or `create` has it removed
- * (`scripts/brand.ts` deletes `app/system`), so the eight routes below are the template's and not that project's: its rail
+ * (`scripts/brand.ts` deletes `app/system`), so the nine routes below are the template's and not that project's: its rail
  * is its own. Asserting the template's list in a product failed that product's gate for a project that was right.
  */
 const TEMPLATE = fs.existsSync(path.resolve(import.meta.dirname, '../app/system'));
@@ -28,7 +28,7 @@ beforeEach(() => { jar.value = undefined; });
 
 describe('the feature table', () => {
   it('declares every feature the spec freezes, with its need', () => {
-    expect(Object.keys(FEATURES).sort()).toEqual(['analytics', 'customers', 'docs', 'health', 'keys', 'members', 'overview', 'request', 'requests', 'settings', 'system']);
+    expect(Object.keys(FEATURES).sort()).toEqual(['analytics', 'customers', 'docs', 'health', 'keys', 'members', 'overview', 'request', 'requests', 'settings', 'system', 'tickets']);
     const N: Record<string, unknown> = {
       overview: { allOf: ['days:read', 'endpoints:read', 'responses:read', 'activity:read', 'incidents:read'] },
       requests: 'requests:read',
@@ -41,6 +41,7 @@ describe('the feature table', () => {
       settings: 'public',
       system: 'public',
       docs: 'public',
+      tickets: 'tickets:read',
     };
     for (const [id, need] of Object.entries(N)) expect(FEATURES[id as FeatureId].needs).toEqual(need);
     for (const [id, f] of Object.entries(FEATURES)) expect(typeof f.title, id).toBe('string');
@@ -53,6 +54,7 @@ describe('the feature table', () => {
       'suspend-member': ['members', 'members:update'], 'reactivate-member': ['members', 'members:update'],
       'remove-member': ['members', 'members:remove'], 'replay-request': ['request', 'requests:create'],
       'save-workspace': ['settings', { allOf: ['workspace:read', 'workspace:update'] }], 'delete-workspace': ['settings', 'workspace:remove'],
+      'create-ticket': ['tickets', 'tickets:create'], 'update-ticket': ['tickets', 'tickets:update'],
     };
     expect(Object.keys(ACTIONS).sort()).toEqual(Object.keys(A).sort());
     for (const [id, [feature, needs]] of Object.entries(A)) {
@@ -71,11 +73,11 @@ describe('the feature table', () => {
 });
 
 describe('the rail asks the table', () => {
-  it('gives a Viewer the eight routes and everyone else all ten', async (ctx) => {
-    if (!TEMPLATE) ctx.skip('this project replaced the template’s pages: its rail is its own, and these eight routes are the template’s');
+  it('gives a Viewer the nine routes and everyone else all eleven', async (ctx) => {
+    if (!TEMPLATE) ctx.skip('this project replaced the template’s pages: its rail is its own, and these nine routes are the template’s');
     const all = items.map((i) => i.href).sort();
     jar.value = 'members_12';
-    expect(hrefsOf((await chromeAccess()).only)).toEqual(['/', '/analytics', '/customers', '/health', '/requests', '/settings', '/system', '/system/start/start-a-dashboard']);
+    expect(hrefsOf((await chromeAccess()).only)).toEqual(['/', '/analytics', '/customers', '/health', '/operations-tickets', '/requests', '/settings', '/system', '/system/start/start-a-dashboard']);
     for (const id of ['members_1', 'members_2', 'members_4', 'members_5']) {
       jar.value = id;
       expect(hrefsOf((await chromeAccess()).only), id).toEqual(all);

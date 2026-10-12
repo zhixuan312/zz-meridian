@@ -19,7 +19,7 @@ beforeEach(() => { jar.value = undefined; });
 
 describe('the view tools ask their feature', () => {
   it('takes each tool need from the feature table, not from a literal', () => {
-    expect(viewTools.map((t) => t.name).sort()).toEqual(['analytics', 'customers', 'health', 'keys', 'members', 'overview', 'request', 'requests']);
+    expect(viewTools.map((t) => t.name).sort()).toEqual(['analytics', 'customers', 'health', 'keys', 'members', 'overview', 'request', 'requests', 'tickets']);
     expect(known.has('requests:read')).toBe(true);
     for (const tool of viewTools) {
       expect(known.has(tool.needs), `${tool.name} restates its need`).toBe(true);
