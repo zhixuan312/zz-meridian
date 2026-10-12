@@ -76,4 +76,5 @@ export const PREVIEW_LOADERS: Record<string, () => Promise<{ default: ComponentT
   'patterns/sparkline': () => import('@/components/charts/sparkline/preview'),
   'patterns/trend-chart': () => import('@/components/charts/trend-chart/preview'),
   'patterns/uptime-bars': () => import('@/components/charts/uptime-bars/preview'),
+  'pages/template-records': () => import('@/components/templates/records/preview'),
 };

@@ -25,9 +25,9 @@ A new card passes two questions before anyone specifies it:
 | 1 Base | `src/styles/base.css`, `src/styles/motion.css`, `src/components/base/` | Element defaults, text roles, motion, the shell, surfaces, the app mark |
 | 2 Components | `src/components/ui/` | Single-purpose parts |
 | 3 Patterns | `src/components/patterns/`, `src/components/charts/` | Components composed for one dashboard job |
-| 4 Pages | `app/(dashboard)/`, `app/embed/`, `src/views/` | Routes (console and embed); a view shared by both lives in `src/views/` |
+| 4 Pages | `app/(dashboard)/`, `app/embed/`, `src/views/`, `src/components/templates/` | Routes (console and embed); a view shared by both lives in `src/views/`; a page template is a card folder in `src/components/templates/` (listed in Pages as `template-<folder>`) |
 
-A product's data comes from `src/data/` (`collections.ts`, where actions and the assistant change records; `read.ts`, the pages' authorized cached read; `access.ts`, who may do what) and the modules beside it, and nowhere else; the sample (ZZ Meridian's own dashboard) that the Atlas, the previews and the template's sample pages read lives in `src/system/fixtures/`. Formatting comes from `src/lib/format.ts` and `src/lib/format-date.ts`. A component never imports data: it defines the types it renders (`ActivityEvent`, `Incident`, `Service`) and data conforms to them.
+A product's data comes from `src/data/` (`collections.ts`, where actions and the assistant change records; `read.ts`, the pages' authorized cached read; `access.ts`, who may do what) and the modules beside it, and nowhere else; the sample (ZZ Meridian's own dashboard) that the Atlas, the previews and the template's sample pages read lives in `src/system/fixtures/`. Formatting comes from `src/lib/format.ts` and `src/lib/format-date.ts`. A page template arranges patterns for a kind of page and keeps no state; outside its `preview.tsx` it imports nothing from `@/data`, `@/views`, `@/system` or `@/app.config`. A component never imports data: it defines the types it renders (`ActivityEvent`, `Incident`, `Service`) and data conforms to them.
 
 ## Card anatomy
 

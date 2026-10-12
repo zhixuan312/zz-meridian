@@ -72,4 +72,5 @@ export const PREVIEW_KEYS: string[] = [
   'patterns/sparkline',
   'patterns/trend-chart',
   'patterns/uptime-bars',
+  'pages/template-records',
 ];

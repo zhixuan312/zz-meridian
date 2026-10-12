@@ -4,6 +4,10 @@ Every release of ZZ Meridian, newest first. Versions follow semver: a removed or
 
 ## [Unreleased]
 
+### Added
+
+- **Records, the first page template.** A page template arranges patterns for a kind of page, at layer 4: `Records` puts an optional row of summary tiles over a table with its toolbar, and marks its root `data-template="records"`. Templates live in `src/components/templates/`, are listed in the Atlas under Pages as `template-<folder>` with a real preview, and import no data, view, system or config module, so an adopted project receives them like any component. Pass the tiles as `summary` and the table as its children. It is `draft`: its loading, error, partial and read-only states are not specified yet.
+
 ### Fixed
 
 - **A record's page has a shell again, and so does every other route with a parameter.** `AppShell` called `usePathname()` at its top. Under Cache Components a route whose parameter the build did not know has no pathname until the request, and a component that asks for one waits; with nothing between the shell and the document, everything waited with it. The build's shell for `/requests/[id]` was **a file of 0 bytes**: no frame, no rail, no skeleton was prerendered for any record the build had not listed, which in a product is every record. An adopter whose layout put a `Suspense` above the shell got the other face of the same fault, that boundary's fallback and nothing else. The shell no longer reads the address: the drawer, the mark that holds a navigated page still and the rail each do, behind their own boundaries. The Atlas's shell did the same thing and so did its pages, and has the same fix. After: `/requests/[id]` prerenders **17.7 KB** (the frame and the page's skeleton), and all thirteen such shells in the build are non-empty. `scripts/route-policy.ts`, which `pnpm verify` runs after its build, now fails a route counted as partial whose shell for an unknown parameter is empty.

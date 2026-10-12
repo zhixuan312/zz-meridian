@@ -51,11 +51,13 @@ function parseSpec(md: string) {
   return { title, lead: lead.replace(/[*`]/g, ''), status, body };
 }
 
-const COMPONENT_DIRS: [string, SectionId][] = [
-  ['src/components/base', 'base'],
-  ['src/components/ui', 'components'],
-  ['src/components/patterns', 'patterns'],
-  ['src/components/charts', 'patterns'],
+/** Where cards live: the folder, its section and the prefix of its ids. A page template is listed in Pages under `template-<folder>`, the same id scripts/registry.ts gives its preview, so no bound page's id can collide with it. */
+const COMPONENT_DIRS: [string, SectionId, string][] = [
+  ['src/components/base', 'base', ''],
+  ['src/components/ui', 'components', ''],
+  ['src/components/patterns', 'patterns', ''],
+  ['src/components/charts', 'patterns', ''],
+  ['src/components/templates', 'pages', 'template-'],
 ];
 
 const TOKEN_VIEWS = [
@@ -111,14 +113,14 @@ export function entries(): Entry[] {
   const out: Entry[] = [];
   for (const d of DOCS.filter((x) => x.section === 'start')) { const e = docEntry(d); if (e) out.push(e); }
   for (const t of TOKEN_VIEWS) out.push({ href: `/system/tokens/${t.id}`, section: 'tokens', id: t.id, title: t.title, summary: t.summary, source: 'tokens/', kind: 'tokens' });
-  for (const [dir, section] of COMPONENT_DIRS) {
+  for (const [dir, section, prefix] of COMPONENT_DIRS) {
     const abs = path.join(/*turbopackIgnore: true*/ ROOT, dir);
     if (!fs.existsSync(abs)) continue;
     for (const name of fs.readdirSync(abs).sort()) {
       const md = read(`${dir}/${name}/README.md`);
       if (!md) continue;
       const s = parseSpec(md);
-      out.push({ href: `/system/${section}/${name}`, section, id: name, title: s.title, summary: s.lead, status: s.status, source: `${dir}/${name}`, kind: 'card' });
+      out.push({ href: `/system/${section}/${prefix}${name}`, section, id: `${prefix}${name}`, title: s.title, summary: s.lead, status: s.status, source: `${dir}/${name}`, kind: 'card' });
     }
   }
   for (const p of PAGES) {

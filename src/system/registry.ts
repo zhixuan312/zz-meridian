@@ -76,4 +76,5 @@ export const CARDS: Card[] = [
   { id: 'sparkline', layer: 3, section: 'patterns', dir: 'src/components/charts/sparkline', Preview: dynamic(() => import('@/components/charts/sparkline/preview')) },
   { id: 'trend-chart', layer: 3, section: 'patterns', dir: 'src/components/charts/trend-chart', Preview: dynamic(() => import('@/components/charts/trend-chart/preview')) },
   { id: 'uptime-bars', layer: 3, section: 'patterns', dir: 'src/components/charts/uptime-bars', Preview: dynamic(() => import('@/components/charts/uptime-bars/preview')) },
+  { id: 'template-records', layer: 4, section: 'pages', dir: 'src/components/templates/records', Preview: dynamic(() => import('@/components/templates/records/preview')) },
 ];
