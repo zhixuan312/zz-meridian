@@ -1,6 +1,6 @@
 'use client';
 
-import { Suspense, useState, useSyncExternalStore, type ReactNode } from 'react';
+import { Suspense, useMemo, useState, useSyncExternalStore, type ReactNode } from 'react';
 import { ExternalLink } from 'lucide-react';
 import { cn } from '@/lib/cn';
 import { ACCENTS, type Preferences } from '@/lib/preferences';
@@ -85,13 +85,19 @@ export function CardStage({ id }: { id: string }) {
   const { theme, setTheme, accent, setAccent, scoped } = useStageLook();
   const [density, setDensity] = useState<Density>('comfortable');
   const [width, setWidth] = useState<Width>('fluid');
-  if (!card?.Preview) return null;
-  const P = card.Preview;
+  const P = card?.Preview;
+  // One element for the life of the stage, and one pane that stays mounted while a single theme shows. A preview's code
+  // arrives after the page (`dynamic()`), and until it does React keeps the server's HTML for it only while nothing
+  // above it changes. The stage does change at once for a reader whose theme or accent is not the default: it learns the
+  // page's look as it hydrates. A new element here, or a pane keyed by that theme, made React drop the specimen and draw
+  // nothing until its code loaded, and the specification below jumped up the page and back.
+  const specimen = useMemo(() => (P ? <Suspense><P /></Suspense> : null), [P]);
+  if (!specimen) return null;
   const pane = (t: 'dark' | 'light') => (
-    <Scope key={t} theme={theme === 'both' ? t : scoped.theme} accent={scoped.accent} density={density} className="px-5 py-8 sm:px-10">
+    <Scope key={theme === 'both' ? t : 'one'} theme={theme === 'both' ? t : scoped.theme} accent={scoped.accent} density={density} className="px-5 py-8 sm:px-10">
       {theme === 'both' ? <p className="t-kicker mb-6">{t}</p> : null}
       {/* A specimen, not the page: its own headings and scroll regions are the card's (a Detail head is an h1 where it is used), so the audit keeps them out of the page's outline and its one scroller (issue #8). */}
-      <div data-specimen className={cn('mx-auto', width === 'phone' ? 'max-w-[390px]' : 'max-w-none')}><Suspense><P /></Suspense></div>
+      <div data-specimen className={cn('mx-auto', width === 'phone' ? 'max-w-[390px]' : 'max-w-none')}>{specimen}</div>
     </Scope>
   );
   return (

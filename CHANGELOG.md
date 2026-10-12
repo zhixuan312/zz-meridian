@@ -2,6 +2,12 @@
 
 Every release of ZZ Meridian, newest first. Versions follow semver: a removed or renamed token, prop or card is major; a new card, token or variant is minor; a corrected value is a patch. Each entry says what breaks and what to do instead.
 
+## [Unreleased]
+
+### Fixed
+
+- **A page that arrived whole no longer empties while its code loads.** `Providers` read the stored appearance choices on mount as an ordinary update, and that update sits above every part of a page whose code arrives after the page does (a `dynamic()` component, a lazy panel). React answers an urgent update above such a part by discarding the server's HTML for it and drawing its Suspense fallback until the code is there, so the part vanished and came back. On the Atlas every card page did this: the specimen left, the specification jumped up the page and back, and all ten card pages sampled measured **CLS 0.30 to 0.61 against the 0.1 floor** on the phone profile (`/system/patterns/data-table` 0.500, `/system/patterns/trend-chart` 0.611). The read is a transition now, which waits for the part to hydrate first; the pre-paint script has already put the choice on the root, so nothing a reader sees is later. The card stage had the same fault from a second direction, for a reader in the light theme or with another accent: it learns the page's look as it hydrates, renders again at once, and was handing the specimen a new element under a pane keyed by the theme. The specimen is one element for the life of the stage and the single pane stays mounted. Measured after, same profile: **CLS 0.000** on the same pages, for the default reader, a reader in the light theme, and one with a stored theme, accent and density. An adopter's own `dynamic()` part under `Providers` was open to the first fault and is covered by the same change.
+
 ## [0.14.1] · 2026-10-12
 
 ### Fixed
