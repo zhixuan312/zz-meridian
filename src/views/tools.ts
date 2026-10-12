@@ -112,13 +112,13 @@ export const healthTool = defineViewTool({
 export const analyticsTool = defineViewTool({
   name: 'analytics',
   title: 'Analytics',
-  description: 'When traffic comes and from where over a period: the busiest hours, regions with their latency, every endpoint, and the days that stand out.',
+  description: 'Requests, error rate, latency and spend over a period against the period before, the days that stand out, and when traffic comes and from where: the busiest hours, regions with their latency, and every endpoint.',
   needs: FEATURES.analytics.needs,
   input: z.object({ period }),
   async read({ period: p = '30d' }) {
     await requireNeed(FEATURES.analytics.needs);
-    const [{ series, observedAt }, endpoints, activity, { all: incidents }, figures] = await Promise.all([readDays(p), readEndpoints(), readActivity(), readIncidents(), analyticsFigures()]);
-    const data = { period: p, series, ...figures, endpoints, activity, incidents, updatedAt: updatedAt(), now: observedAt };
+    const [{ series, totals, observedAt }, endpoints, activity, { all: incidents }, figures] = await Promise.all([readDays(p), readEndpoints(), readActivity(), readIncidents(), analyticsFigures()]);
+    const data = { period: p, series, totals, ...figures, endpoints, activity, incidents, updatedAt: updatedAt(), now: observedAt };
     return { context: analyticsContext(data), data };
   },
 });

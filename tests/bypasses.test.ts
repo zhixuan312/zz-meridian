@@ -45,7 +45,7 @@ describe('the workspace is a collection', () => {
   it('holds one record with the identity the settings form shows', async () => {
     const { rows } = await read('workspace');
     expect(rows.length).toBe(1);
-    expect(Object.keys(rows[0]).sort()).toEqual(['id', 'name', 'slug', 'timezone']);
+    expect(Object.keys(rows[0]).sort()).toEqual(['id', 'name', 'slug']);
   });
 });
 

@@ -1,11 +1,11 @@
 'use client';
 
-import { X } from 'lucide-react';
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { DIALOG_FOOT, DIALOG_HEAD, DIALOG_PANEL } from '@/components/ui/dialog';
 import { Specimen, State } from '@/system/specimen';
 import { Row } from '@/components/base/shell';
+import { LeaveQuestion } from '@/components/base/shell/leave-question';
 import { app } from '@/app.config';
 
 const Cell = ({ label, tall }: { label: string; tall?: boolean }) => (
@@ -14,10 +14,21 @@ const Cell = ({ label, tall }: { label: string; tall?: boolean }) => (
   </Card>
 );
 
+/** The shell's own question, asked by a button: Stay and Leave both close it here, since there is nowhere to go. */
+function AskToLeave() {
+  const [asking, setAsking] = useState(false);
+  return (
+    <>
+      <Button onClick={() => setAsking(true)}>Leave this page</Button>
+      {asking ? <LeaveQuestion onStay={() => setAsking(false)} onLeave={() => setAsking(false)} /> : null}
+    </>
+  );
+}
+
 export default function ShellPreview() {
   return (
     <>
-      <Specimen label="The frame" note="One scroller per page. The rail keeps its own scroll; the top bar stays; the masthead scrolls away.">
+      <Specimen label="The frame, as a diagram" note="A diagram of the frame's regions, not the shell itself: every console page of the product is the shell drawn for real. One scroller per page. The rail keeps its own scroll; the top bar stays; the masthead scrolls away.">
         <div className="grid h-80 w-full grid-cols-[7rem_1fr] overflow-hidden rounded-xl border border-line">
           <div className="border-r border-line bg-frame p-3"><p className="t-eyebrow">Rail</p></div>
           <div className="flex min-w-0 flex-col">
@@ -62,20 +73,8 @@ export default function ShellPreview() {
         </State>
       </Specimen>
       <Specimen label="Leaving with unsaved changes" note="While a form section on the page has unsaved changes, following a link, choosing a destination or a workspace, or a table row asks first. Stay closes the question and changes nothing; Leave goes where the person was going. A link opened in a new tab is never asked about, and closing the tab gets the browser's own warning.">
-        <State label="The question" className="w-full">
-          <div className="grid w-full place-items-center rounded-lg bg-scrim p-8 max-sm:p-3">
-            <div className={`${DIALOG_PANEL} w-full max-w-100 rounded-xl`}>
-              <div className={DIALOG_HEAD}>
-                <div className="min-w-0 flex-1">
-                  <p className="t-section">Leave without saving?</p>
-                  <p className="t-small mt-1.5 text-ink-2">This page has changes that are not saved. If you leave, they are lost.</p>
-                </div>
-                <span className="-mt-0.5 -mr-2 grid size-8 place-items-center rounded-md text-ink-3"><X className="size-4" /></span>
-              </div>
-              <div className="pb-3" />
-              <div className={DIALOG_FOOT}><Button variant="ghost">Stay</Button><Button variant="danger">Leave</Button></div>
-            </div>
-          </div>
+        <State label="The question, asked by the shell's own component: press the button">
+          <AskToLeave />
         </State>
       </Specimen>
     </>

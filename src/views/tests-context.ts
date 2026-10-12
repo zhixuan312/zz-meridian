@@ -9,7 +9,7 @@ import { formatDuration } from '@/lib/format';
 import { formatRelative } from '@/lib/format-date';
 import { listed, type Fact, type Insight, type SharedContext } from '@/lib/shared-context';
 
-export type TestsState = { q: string; state: string; release: string };
+type TestsState = { q: string; state: string; release: string };
 
 /** The tiles' labels and what they count: the info buttons show the hints and the facts carry the same labels. */
 export const TEST_METRICS = {

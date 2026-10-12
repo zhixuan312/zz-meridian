@@ -72,7 +72,7 @@ type Draft = { id: string; name: string; role: MainRole; addOns: AddOn[]; roles:
 
 /** `now` is the data's clock, so "last active" reads the same on the server and in the browser. */
 
-export function MembersView({ rows, now, actions, access, roles }: { rows: Member[]; now: string; actions: MemberActions; /** What the boundary says of every row, read once by the page: the actions it offers this caller and why not. */ access: Record<string, MemberRowAccess>; /** The roles the page may put on an invitation, from the boundary's `invitableRoles`. */ roles: readonly MainRole[] }) {
+export function MembersView({ rows, now, actions, access, roles, workspace }: { rows: Member[]; now: string; actions: MemberActions; /** What the boundary says of every row, read once by the page: the actions it offers this caller and why not. */ access: Record<string, MemberRowAccess>; /** The roles the page may put on an invitation, from the boundary's `invitableRoles`. */ roles: readonly MainRole[]; /** The workspace's name as its record holds it, where the page could read it: the invitation names it. */ workspace?: string }) {
   useShareView(membersContext(rows, now));
   const asOf = new Date(now);
   const router = useRouter();
@@ -277,7 +277,7 @@ export function MembersView({ rows, now, actions, access, roles }: { rows: Membe
       <Sheet open={inviting} onOpenChange={setInviting}>
         <SheetContent
           title="Invite a member"
-          description="They get an email to join the workspace."
+          description={`They are added to ${workspace ?? 'this workspace'} as invited, with the role you choose.`}
           footer={<><SheetClose asChild><Button variant="ghost">Cancel</Button></SheetClose><Button variant="primary" busy={pending} onClick={send}>Send invitation</Button></>}
         >
           <div className="flex flex-col gap-6">

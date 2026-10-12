@@ -9,7 +9,7 @@ import { currentVersions, type Unresolved } from '@/data/verification';
 import { formatRelative } from '@/lib/format-date';
 import { listed, type Fact, type Insight, type SharedContext } from '@/lib/shared-context';
 
-export type ReleasesState = { q: string; state: string; environment: string };
+type ReleasesState = { q: string; state: string; environment: string };
 
 /** A release in the product's words: still being verified, ready to go out, or out. */
 export type Stage = 'testing' | 'ready' | 'released';

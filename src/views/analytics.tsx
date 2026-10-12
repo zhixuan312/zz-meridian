@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { AlertTriangle, Activity, CircleDollarSign, Gauge } from 'lucide-react';
 import { Row, Stack } from '@/components/base/shell';
 import { Card, CardBody, CardHeader } from '@/components/ui/card';
 import { EmptyState } from '@/components/ui/empty-state';
@@ -9,12 +10,14 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, type Sor
 import { Meridian, useMeridianIndex } from '@/components/charts/meridian';
 import { useShareView } from '@/components/base/use-share-view';
 import { analyticsContext, type AnalyticsData } from './analytics-context';
+import { OVERVIEW_METRICS } from './overview-context';
+import { MetricTile } from '@/components/patterns/metric-tile';
 import { TrendChart } from '@/components/charts/trend-chart';
 import { ColumnChart } from '@/components/charts/column-chart';
 import { Heatmap } from '@/components/charts/heatmap';
 import { BarList } from '@/components/charts/bar-list';
 import { cn } from '@/lib/cn';
-import { formatCompact, formatDuration, formatPercent } from '@/lib/format';
+import { formatCompact, formatCost, formatDuration, formatPercent } from '@/lib/format';
 import { formatDate } from '@/lib/format-date';
 import { RouteCell } from '@/system/sample-cells';
 import { AskAbout } from '@/components/patterns/ask-about';
@@ -34,9 +37,9 @@ function AskErrors() {
   return <AskAbout question={index !== null ? `Why did errors change on ${formatDate(dates[index])}?` : 'Which days stand out in errors this period, and why?'} />;
 }
 
-/** The Analytics page's body: when traffic comes, where from, and what is slow. */
+/** The Analytics page's body: the period's four figures against the period before, then when traffic comes, where from, and what is slow. */
 export function AnalyticsBody(data: AnalyticsData) {
-  const { series, heat, hours, regions, endpoints } = data;
+  const { series, totals, heat, hours, regions, endpoints } = data;
   const [sort, setSort] = useState<{ key: 'requests' | 'errorRate' | 'p95'; dir: Exclude<SortDirection, false> }>({ key: 'p95', dir: 'desc' });
   if (!series.length || !heat.length || !hours.length || !regions.length || !endpoints.length) {
     return (
@@ -47,6 +50,9 @@ export function AnalyticsBody(data: AnalyticsData) {
     );
   }
   const dates = series.map((d) => d.date);
+  const { current: c, previous: p } = totals;
+  const change = (a: number, b: number) => (b ? a / b - 1 : null);
+  const sortLabel = `${{ requests: 'requests', errorRate: 'error rate', p95: 'p95' }[sort.key]} ${sort.dir === 'desc' ? 'descending' : 'ascending'}`;
   const peak = heat.flatMap((row, d) => row.map((v, h) => ({ v, d, h }))).reduce((m, c) => (c.v > m.v ? c : m));
   const peakHour = hours.reduce((m, c) => (c.value > m.value ? c : m));
   const rows = [...endpoints].sort((a, b) => (sort.dir === 'asc' ? 1 : -1) * (a[sort.key] - b[sort.key]));
@@ -56,12 +62,21 @@ export function AnalyticsBody(data: AnalyticsData) {
     onSort: () => setSort((s) => ({ key, dir: s.key === key && s.dir === 'desc' ? 'asc' : 'desc' })),
   });
   return (
+    // One Meridian for the page: pointing at a day in either trend reads that day in the four figures too.
+    <Meridian dates={dates}>
+    <ShareAnalytics data={data} sort={sortLabel} />
     <Stack>
+      <Row split="tiles">
+        <MetricTile label={OVERVIEW_METRICS.requests.label} hint={OVERVIEW_METRICS.requests.hint} icon={<Activity />} value={c.requests} delta={change(c.requests, p.requests)} daily={series.map((d) => d.requests)} format={formatCompact} emphasis />
+        <MetricTile label={OVERVIEW_METRICS.errorRate.label} hint={OVERVIEW_METRICS.errorRate.hint} icon={<AlertTriangle />} value={c.errorRate} delta={change(c.errorRate, p.errorRate)} intent="down" daily={series.map((d) => (d.requests ? d.errors / d.requests : 0))} format={(n) => formatPercent(n, 2)} />
+        <MetricTile label={OVERVIEW_METRICS.p95.label} hint={OVERVIEW_METRICS.p95.hint} icon={<Gauge />} value={c.p95} delta={change(c.p95, p.p95)} intent="down" daily={series.map((d) => d.p95)} format={(n) => formatDuration(n)} />
+        <MetricTile label={OVERVIEW_METRICS.spend.label} hint={OVERVIEW_METRICS.spend.hint} icon={<CircleDollarSign />} value={c.spend} delta={change(c.spend, p.spend)} intent="neutral" daily={series.map((d) => d.spend)} format={(n) => formatCost(n)} />
+      </Row>
       <Row>
         <Card>
           <CardHeader
             title="When requests come"
-            description="Requests by weekday and hour, UTC, summed over the period."
+            description="Requests by weekday and hour, UTC, over a typical week."
             actions={<Badge tone="accent">Busiest: {DAYS[peak.d].slice(0, 3)} {String(peak.h).padStart(2, '0')}:00</Badge>}
           />
           <CardBody>
@@ -77,7 +92,7 @@ export function AnalyticsBody(data: AnalyticsData) {
           </CardBody>
         </Card>
         <Card>
-          <CardHeader title="By region" description="Requests in the period, with median latency" />
+          <CardHeader title="By region" description="Share of requests, with median latency" />
           <CardBody className="flex flex-col">
             {/* Four rows spread over the card's height, so it ends level with the chart beside it. */}
             <BarList
@@ -90,31 +105,28 @@ export function AnalyticsBody(data: AnalyticsData) {
           </CardBody>
         </Card>
       </Row>
-      <Meridian dates={dates}>
-        <ShareAnalytics data={data} sort={`${{ requests: 'requests', errorRate: 'error rate', p95: 'p95' }[sort.key]} ${sort.dir === 'desc' ? 'descending' : 'ascending'}`} />
-        <Row split="1/2">
-          <Card>
-            <CardHeader title="Requests per day" description="Point at a day: the errors beside it follow." />
-            <CardBody>
-              <TrendChart label="Requests per day" height={220} dates={dates} series={[{ key: 'r', label: 'Requests', values: series.map((d) => d.requests), kind: 'area' }]} />
-            </CardBody>
-          </Card>
-          <Card>
-            <CardHeader title="Errors per day" description="5xx and 429 responses" actions={<AskErrors />} />
-            <CardBody>
-              <ColumnChart
-                label="Errors per day"
-                height={220}
-                dates={dates}
-                format={formatCompact}
-                axisFormat={formatCompact}
-                highlight={series.reduce((m, d) => (d.errors > m.errors ? d : m)).date}
-                columns={series.map((d) => ({ key: d.date, label: formatDate(d.date).replace(/,? \d{4}$/, ''), value: d.errors }))}
-              />
-            </CardBody>
-          </Card>
-        </Row>
-      </Meridian>
+      <Row split="1/2">
+        <Card>
+          <CardHeader title="Requests per day" description="Point at a day: the errors beside it and the figures above follow." />
+          <CardBody>
+            <TrendChart label="Requests per day" height={220} dates={dates} series={[{ key: 'r', label: 'Requests', values: series.map((d) => d.requests), kind: 'area' }]} />
+          </CardBody>
+        </Card>
+        <Card>
+          <CardHeader title="Errors per day" description="5xx and 429 responses" actions={<AskErrors />} />
+          <CardBody>
+            <ColumnChart
+              label="Errors per day"
+              height={220}
+              dates={dates}
+              format={formatCompact}
+              axisFormat={formatCompact}
+              highlight={series.reduce((m, d) => (d.errors > m.errors ? d : m)).date}
+              columns={series.map((d) => ({ key: d.date, label: formatDate(d.date).replace(/,? \d{4}$/, ''), value: d.errors }))}
+            />
+          </CardBody>
+        </Card>
+      </Row>
       <Row>
         <Card className="overflow-hidden">
           <CardHeader title="Endpoints" description="Sorted by latency p95; select a heading to sort by it." divided />
@@ -149,5 +161,6 @@ export function AnalyticsBody(data: AnalyticsData) {
         </Card>
       </Row>
     </Stack>
+    </Meridian>
   );
 }

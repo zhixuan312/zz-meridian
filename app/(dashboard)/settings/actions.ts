@@ -4,11 +4,10 @@ import { updateTag } from 'next/cache';
 import { AccessDenied, Unauthenticated, collectionFor, requireNeed, resolveAccess } from '@/data/access';
 import { ACTIONS } from '@/data/features';
 import { collectionTag } from '@/data/read';
-import { TIMEZONES } from '@/data/sample';
 import type { Result } from '@/views/members';
 
-/** The name and time zone a Settings save carries; the address is not editable here. */
-export type WorkspaceInput = { name: string; timezone: string };
+/** The name a Settings save carries; the address is not editable here. */
+export type WorkspaceInput = { name: string };
 
 const fail = (e: unknown): Result => ({
   ok: false,
@@ -26,13 +25,11 @@ const fail = (e: unknown): Result => ({
  */
 export async function saveWorkspace(input: WorkspaceInput): Promise<Result> {
   const name = String(input?.name ?? '').trim();
-  const timezone = String(input?.timezone ?? '');
-  if (!name) return { ok: false, error: 'Give the workspace a name: it appears in the rail and on invitations.' };
-  if (!TIMEZONES.some((t) => t.value === timezone)) return { ok: false, error: 'Choose a time zone from the list.' };
+  if (!name) return { ok: false, error: 'Give the workspace a name: an invitation names it.' };
   try {
     await requireNeed(ACTIONS['save-workspace'].needs);
     const scope = await resolveAccess();
-    await collectionFor(scope, 'workspace').update!(['workspace'], { name, timezone });
+    await collectionFor(scope, 'workspace').update!(['workspace'], { name });
     updateTag(collectionTag(scope.tenantId, 'workspace'));
     return { ok: true };
   } catch (e) {

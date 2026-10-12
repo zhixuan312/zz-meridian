@@ -33,15 +33,6 @@ export const WEEKDAY_HOURS = demoHeatmap().flatMap((row, weekday) => row.map((re
 /** Requests and median latency (ms) for each region, in the order Analytics draws them. Fixed, like the grid above. */
 export const REGION_TRAFFIC = REGIONS.map((r, i) => ({ ...r, p50: [92, 118, 164, 101][i] }));
 
-export const TIMEZONES = [
-  { value: 'UTC', label: 'UTC', description: 'Coordinated Universal Time' },
-  { value: 'America/New_York', label: 'New York', description: 'UTC−04:00 in October' },
-  { value: 'Europe/London', label: 'London', description: 'UTC+01:00 in October' },
-  { value: 'Europe/Berlin', label: 'Berlin', description: 'UTC+02:00 in October' },
-  { value: 'Asia/Singapore', label: 'Singapore', description: 'UTC+08:00' },
-  { value: 'Asia/Tokyo', label: 'Tokyo', description: 'UTC+09:00' },
-];
-
 /** What the bell holds: the live incident first (new), then what happened recently that someone may act on. */
 export const ALERTS: Alert[] = [
   { id: 'a1', tone: 'warning', unread: true, title: INCIDENTS[0].title, detail: 'Monitoring · p95 back under 650ms', at: INCIDENTS[0].updates.at(-1)!.at, href: '/health' },

@@ -14,9 +14,9 @@ import { customerFigures } from './customers-context';
 import { releaseFigures } from './releases-context';
 import { ticketCounts } from './tickets-context';
 
-export type MainBusiness = { customers: number; byStatus: Record<string, number>; byPlan: Record<string, number>; spend: number };
-export type MainOperation = { degraded: string[]; outage: string[]; incidents: { id: string; title: string }[] };
-export type MainDelivery = { open: number; waiting: number; failing: number; live: number; ready: number; testing: number };
+type MainBusiness = { customers: number; byStatus: Record<string, number>; byPlan: Record<string, number>; spend: number };
+type MainOperation = { degraded: string[]; outage: string[]; incidents: { id: string; title: string }[] };
+type MainDelivery = { open: number; waiting: number; failing: number; live: number; ready: number; testing: number };
 export type MainSummary = { business: MainBusiness | null; operation: MainOperation | null; delivery: MainDelivery | null };
 
 /** How many rows hold each value of `field`, keyed as the collection spells the value. */

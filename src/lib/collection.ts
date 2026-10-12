@@ -93,11 +93,6 @@ const listeners = () => ((globalThis as Record<symbol, unknown>)[LIVE] ??= new M
 /** How many listeners a tenant's collection has: for tests and diagnostics. */
 export const liveListeners = (tenantId: string, name: string): number => listeners().get(storeKey(tenantId, name))?.size ?? 0;
 
-/** Forget every store and listener: for tests. */
-export function resetCollections(): void {
-  stores().clear();
-  listeners().clear();
-}
 
 const OPS = ['eq', 'ne', 'gt', 'lt', 'contains', 'in'];
 const DEFAULT_LIMIT = 100;

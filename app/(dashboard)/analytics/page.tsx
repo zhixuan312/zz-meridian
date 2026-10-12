@@ -26,7 +26,7 @@ export default async function AnalyticsPage({ searchParams }: { searchParams: Se
     <PageFrame
       kicker={<>{app.name} · {app.workspace}</>}
       title="Analytics"
-      description={`When traffic comes, where it comes from, and which endpoints are slow. ${workspaces.business.audience}`}
+      description={`How usage and spend moved over the period, when traffic comes and from where, and which endpoints are slow. ${workspaces.business.audience}`}
       meta={<Freshness updatedAt={DEMO_UPDATED_AT} now={DEMO_NOW} />}
       actions={
         <Suspense fallback={<Skeleton className="h-9 w-48 rounded-md" />}>

@@ -16,7 +16,7 @@ export function ticketCounts(rows: { state: Ticket['state'] }[]): { open: number
   return counts;
 }
 
-export type TicketsState = { q: string; state: string; priority: string };
+type TicketsState = { q: string; state: string; priority: string };
 
 /** The tiles' labels and what they count: the info buttons show the hints and the facts carry the same labels. */
 export const TICKET_METRICS = {

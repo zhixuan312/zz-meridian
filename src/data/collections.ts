@@ -310,21 +310,20 @@ export const releases: Collection<Release, 'id'> = arrayCollection({
 });
 
 /** What the workspace record is: its key is the one row's id, so a page changes it by that id. */
-type WorkspaceRow = { id: string; name: string; slug: string; timezone: string };
+type WorkspaceRow = { id: string; name: string; slug: string };
 
 /**
- * This workspace itself: the name the rail and invitations show, its address, and the time zone its daily totals are cut
- * on. One record, seeded from the identity the Settings form has always shown, and the only collection a Settings save
- * changes. Its one write is `pageOnly`, so no agent tool carries it, and it cannot be removed.
+ * This workspace itself: the name an invitation to join it shows, and its address. One record, seeded from the identity
+ * the Settings form has always shown, and the only collection a Settings save changes. Its one write is `pageOnly`, so no agent tool carries it, and it cannot be removed.
  */
 export const workspace: Collection<WorkspaceRow, 'id'> = arrayCollection({
   name: 'workspace',
   label: 'Workspace',
-  description: 'This workspace: the name the rail and invitations show, its address, and the time zone its daily totals are cut on.',
+  description: 'This workspace: the name an invitation to join it shows, and its address.',
   key: 'id',
   title: (w) => w.name,
-  fields: z.object({ name: z.string().trim().min(1), slug: z.string(), timezone: z.string() }),
-  rows: [{ id: 'workspace', name: `${app.name} ${app.workspace}`, slug: workspaceSlug, timezone: app.timezone as string }],
+  fields: z.object({ name: z.string().trim().min(1), slug: z.string() }),
+  rows: [{ id: 'workspace', name: `${app.name} ${app.workspace}`, slug: workspaceSlug }],
   allow: ['update'],
   pageOnly: ['update'],
 });

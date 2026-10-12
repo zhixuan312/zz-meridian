@@ -7,7 +7,7 @@ import { formatCompact, formatCost, formatPercent } from '@/lib/format';
 import { median } from '@/lib/insight';
 import { listed, type Fact, type Insight, type SharedContext } from '@/lib/shared-context';
 
-export type CustomersState = { q: string; plan: string; status: string; sort: string; dir: string; page: string };
+type CustomersState = { q: string; plan: string; status: string; sort: string; dir: string; page: string };
 
 /** The tiles' definitions: the info buttons show them and the agents read them. */
 export const CUSTOMER_METRICS = {

@@ -5,7 +5,7 @@ import { requestContext } from './request-context';
 import Link from 'next/link';
 import { useTransition } from 'react';
 import { useRouter } from 'next/navigation';
-import { ArrowRight, Copy, Link2, RotateCw, ShieldBan, Terminal } from 'lucide-react';
+import { ArrowRight, Copy, KeyRound, Link2, RotateCw, Terminal } from 'lucide-react';
 import { PageFrame, Row, Stack } from '@/components/base/shell';
 import { Button } from '@/components/ui/button';
 import { Card, CardBody, CardFooter, CardHeader } from '@/components/ui/card';
@@ -110,7 +110,7 @@ export function RequestView({ request: r, trace, payloads, routeP95, now, replay
         more: [
           { label: 'Copy request ID', icon: <Copy />, onSelect: () => { void navigator.clipboard?.writeText(r.id); toast({ tone: 'positive', title: 'Request ID copied' }); } },
           { label: 'Copy link', icon: <Link2 />, onSelect: () => { void navigator.clipboard?.writeText(location.href); toast({ tone: 'positive', title: 'Link copied' }); } },
-          { label: 'Revoke the key…', icon: <ShieldBan />, tone: 'critical', onSelect: () => router.push('/keys') },
+          { label: 'Open API keys', icon: <KeyRound />, onSelect: () => router.push('/keys') },
         ],
       })}
     >

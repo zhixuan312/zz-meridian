@@ -5,17 +5,19 @@
 import type { ActivityEvent } from '@/components/patterns/activity-feed';
 import type { Column } from '@/components/charts/column-chart';
 import type { Incident } from '@/components/patterns/incident-card';
-import type { DailyPoint, Endpoint } from '@/data/sample';
-import { formatCompact, formatDuration, formatPercent } from '@/lib/format';
+import type { DailyPoint, Endpoint, Totals } from '@/data/sample';
+import { formatCompact, formatCost, formatDuration, formatPercent } from '@/lib/format';
 import { formatDate } from '@/lib/format-date';
 import { median } from '@/lib/insight';
 import { PERIOD_LABEL, type Period } from '@/lib/period';
 import { freshnessOf, listed, type Fact, type Insight, type SharedContext } from '@/lib/shared-context';
-import { errorSpikes } from './overview-context';
+import { OVERVIEW_METRICS, change, errorSpikes } from './overview-context';
 
 export type AnalyticsData = {
   period: Period;
   series: DailyPoint[];
+  /** The period's totals and those of the same number of days before it: the four figures the Overview shows. */
+  totals: { current: Totals; previous: Totals };
   heat: number[][];
   hours: Column[];
   regions: { label: string; value: number; p50: number }[];
@@ -31,10 +33,10 @@ const times = (r: number) => `${r.toFixed(1)}×`;
 
 /** Analytics' context; `sort` is how the endpoints table is ordered, `index` the day the Meridian points at. */
 export function analyticsContext(data: AnalyticsData, { sort = 'p95 descending', index = null as number | null } = {}): SharedContext {
-  const { series, heat, hours, regions, endpoints } = data;
+  const { series, totals, heat, hours, regions, endpoints } = data;
   const address = `/analytics?period=${data.period}`;
   const label = PERIOD_LABEL[data.period].toLowerCase();
-  const scope = series.length ? `${label}, ${formatDate(series[0].date)} to ${formatDate(series.at(-1)!.date)} (UTC); the weekday and hour patterns are summed over it` : label;
+  const scope = series.length ? `${label}, ${formatDate(series[0].date)} to ${formatDate(series.at(-1)!.date)} (UTC)` : label;
   if (!series.length || !heat.length || !endpoints.length) return { view: 'analytics', title: 'Analytics', address, scope, freshness: freshnessOf(data.updatedAt, data.now), facts: [], insights: [], unknowns: ['No requests arrived in this period.'] };
 
   const cells = heat.flatMap((row, d) => row.map((v, h) => ({ v, d, h })));
@@ -46,7 +48,14 @@ export function analyticsContext(data: AnalyticsData, { sort = 'p95 descending',
   const errors = endpoints.reduce((s, e) => s + e.requests * e.errorRate, 0);
   const overall = errors / traffic;
 
+  const { current: c, previous: p } = totals;
+  const pct = (n: number) => formatPercent(n, 2);
+  const M = OVERVIEW_METRICS;
   const facts: Fact[] = [
+    { label: M.requests.label, value: c.requests.toLocaleString('en-US'), change: change(c.requests, p.requests, data.period, (n) => n.toLocaleString('en-US')), definition: M.requests.hint },
+    { label: M.errorRate.label, value: pct(c.errorRate), change: change(c.errorRate, p.errorRate, data.period, pct), definition: M.errorRate.hint },
+    { label: M.p95.label, value: formatDuration(c.p95), change: change(c.p95, p.p95, data.period, formatDuration), definition: M.p95.hint },
+    { label: M.spend.label, value: formatCost(c.spend), change: change(c.spend, p.spend, data.period, formatCost), definition: M.spend.hint },
     { label: 'Busiest hour of the week', value: `${DAYS[peak.d]} ${String(peak.h).padStart(2, '0')}:00 UTC, ${formatCompact(peak.v)} requests` },
     { label: 'Busiest hour of the day', value: `${peakHour.label} UTC, every weekday summed` },
     { label: 'Requests by region', value: regions.map((r) => `${r.label} ${formatPercent(r.value / totalRegions, 0)} (p50 ${formatDuration(r.p50)})`).join(', '), definition: 'p50 is the median latency: half of the requests finished faster.' },
@@ -68,7 +77,7 @@ export function analyticsContext(data: AnalyticsData, { sort = 'p95 descending',
   const weekdays = heat.slice(0, 5).flat().reduce((s, v) => s + v, 0) / 5;
   const weekend = heat.slice(5).flat().reduce((s, v) => s + v, 0) / 2;
   if (weekdays) insights.push({ text: `A weekend day carries ${formatPercent(weekend / weekdays, 0)} of a weekday's requests.` });
-  unknowns.push('The weekday-and-hour pattern, the regions and the endpoints are summed over the whole period: none of them shows a single day.');
+  unknowns.push('The weekday-and-hour pattern, the regions and the endpoints are one fixed set of figures: they do not follow the period chosen, and none of them shows a single day.');
 
   let focus: string | undefined;
   if (index !== null && series[index]) {

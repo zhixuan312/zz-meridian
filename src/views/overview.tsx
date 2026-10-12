@@ -202,7 +202,7 @@ export function OverviewBody(data: OverviewData) {
         </Row>
         <Row split="1/2">
           <Card>
-            <CardHeader title="Busiest endpoints" description="Requests in the period" />
+            <CardHeader title="Busiest endpoints" description="By requests" />
             <CardBody>
               <BarList
                 label="Requests by endpoint"
@@ -223,7 +223,7 @@ export function OverviewBody(data: OverviewData) {
             </CardFooter>
           </Card>
           <Card>
-            <CardHeader title="Responses" description="By status class, in the period" />
+            <CardHeader title="Responses" description="By status class" />
             <CardBody className="flex flex-col gap-6">
               <CompositionBar
                 label="Responses by status class"

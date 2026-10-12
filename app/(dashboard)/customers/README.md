@@ -8,8 +8,8 @@ Status: beta
 
 | Row | Pattern | Console | Mobile |
 |---|---|---|---|
-| Masthead | PageFrame: kicker, "Customers", one sentence, Invite customer (primary) | One band | Stacked |
-| 1 | Row `tiles`: Customers (with combined requests over 14 days), Spend, last 30 days (emphasis, with its 14-day shape), Past due | Three across | One column |
+| Masthead | PageFrame: kicker, "Customers", one sentence. No action: nobody in the console creates or changes a customer | One band | Stacked |
+| 1 | Row `tiles`: Customers, Spend, last 30 days (emphasis), Past due with who. None carries a trend: no daily series of customers or of spend by customer exists, and a tile draws only what a series stands behind | Three across | One column |
 | 2 | Data table: search and Status in the Filter bar, the plan as a Segmented view; columns Customer (avatar and name, grow), Plan, Status, Requests, Last 14 days (sparkline, from 896px), Error rate (from 1152px), Spend, Customer since (from 1152px) | Columns | Cards: name and status, then plan, requests and spend |
 
 The body (rows 1 and 2) is the records template, `Records` from `src/components/templates/records`; its Atlas entry is [/system/pages/template-records](/system/pages/template-records). The page supplies the tiles and the table.
@@ -27,9 +27,9 @@ The body (rows 1 and 2) is the records template, `Records` from `src/components/
 
 ## Data
 
-`CUSTOMERS`, imported from `src/data/sample.ts` (derived from `CUSTOMER_ROWS` in `src/system/fixtures/sample-records.ts`). Spend is metered usage before credits. This is a module constant, not a collection: it has no tenant and no access check, so a product serves customers through `read()` with a tenant-scoped collection before it has a second tenant.
+The `customers` collection, read through `read()` under `customers:read`, like every other collection; its rows are the sample's `CUSTOMERS` (derived from `CUSTOMER_ROWS` in `src/system/fixtures/sample-records.ts`). It is read-only: nobody in the console creates or changes a customer. Spend is metered usage before credits.
 
-The page renders the masthead (title, sentence, Invite customer) itself, outside the boundary that reads the address, so a cold load has them in the first HTML. The tiles and the table wait inside their own boundary.
+The page renders the masthead (title, sentence) itself, outside the boundary that reads the address, so a cold load has them in the first HTML. The tiles and the table wait inside their own boundary.
 
 ## Embed view
 
@@ -41,7 +41,7 @@ None yet: a `zz_meridian_customer { name }` view would show one customer's card 
 
 ## Agents
 
-An agent reads customers through this page's shared context and their requests view; it never changes a plan or invites from here. The context is built by `customersContext` in `src/views/customers-context.ts`, and the tiles' `hint`s come from its `CUSTOMER_METRICS`.
+An agent reads customers through this page's shared context and their requests view; it changes nothing here: no one in the console creates or changes a customer. The context is built by `customersContext` in `src/views/customers-context.ts`, and the tiles' `hint`s come from its `CUSTOMER_METRICS`.
 
 ### What the agent reads
 

@@ -13,11 +13,9 @@ import { FormSection, SettingRow } from '@/components/patterns/form-section';
 import { Field } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
 import { Segmented } from '@/components/ui/segmented';
-import { Select } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Switch } from '@/components/ui/switch';
 import { toast } from '@/components/ui/toast';
-import { TIMEZONES } from '@/data/sample';
 import type { Result } from './members';
 
 /** Settings, in sections that save on their own. */
@@ -49,18 +47,18 @@ export type SettingsMay = {
   workspaceUpdate: boolean;
 };
 
-/** The workspace as the page read it through the collection: the three values the section edits. */
-export type WorkspaceValues = { name: string; slug: string; timezone: string };
+/** The workspace as the page read it through the collection: the name the section edits, and the address it shows. */
+export type WorkspaceValues = { name: string; slug: string };
 
 /** The server action the section saves through: the shared `Result`, and never a thrown error at the person. */
-export type SaveWorkspace = (input: { name: string; timezone: string }) => Promise<Result>;
+export type SaveWorkspace = (input: { name: string }) => Promise<Result>;
 
 /**
  * What the form shows when the page hands it no record: the identity the sample has always shown. The page reads the
  * `workspace` collection and passes it; this is the fallback for a policy that does not bind the collection, and for the
  * checks that render this view on its own.
  */
-const WORKSPACE_DEFAULTS: WorkspaceValues = { name: `${app.name} ${app.workspace}`, slug: workspaceSlug, timezone: app.timezone as string };
+const WORKSPACE_DEFAULTS: WorkspaceValues = { name: `${app.name} ${app.workspace}`, slug: workspaceSlug };
 
 /**
  * Settings, split by need: Appearance, Assistant and Agents and MCP are for everyone; the Workspace follows `may`. A
@@ -91,12 +89,12 @@ function Workspace({ may, record, save }: { may: SettingsMay; record: WorkspaceV
   // Only a person who may change the workspace has anything to save or discard; everyone else reads the values as they are.
   const editable = may.workspaceUpdate;
   const dirty = editable && JSON.stringify(v) !== JSON.stringify(base);
-  const nameError = v.name.trim() === '' ? 'Give the workspace a name: it appears in the rail and on invitations.' : undefined;
-  useReport('Workspace', `name "${base.name}", address app.${domain}/${base.slug}, time zone ${base.timezone}${dirty ? `; unsaved edits: name "${v.name}", time zone ${v.timezone}"` : ''}`);
+  const nameError = v.name.trim() === '' ? 'Give the workspace a name: an invitation names it.' : undefined;
+  useReport('Workspace', `name "${base.name}", address app.${domain}/${base.slug}${dirty ? `; unsaved edit: name "${v.name}"` : ''}`);
   return (
     <FormSection
       title="Workspace"
-      description="How this workspace is named, and the time zone every date and daily total is cut on."
+      description="What this workspace is called. An invitation to join names it."
       dirty={dirty}
       saving={saving}
       error={error}
@@ -106,7 +104,7 @@ function Workspace({ may, record, save }: { may: SettingsMay; record: WorkspaceV
         setSaving(true);
         setError(undefined);
         // The values, not the promise, decide: a refusal is a sentence beside the fields, and the form keeps the edits.
-        const result = save ? await save({ name: v.name.trim(), timezone: v.timezone }) : { ok: true } as Result;
+        const result = save ? await save({ name: v.name.trim() }) : { ok: true } as Result;
         setSaving(false);
         if (!result.ok) { setError(result.error); return; }
         setBase(v);
@@ -117,11 +115,8 @@ function Workspace({ may, record, save }: { may: SettingsMay; record: WorkspaceV
       <Field label="Name" error={nameError}>
         {(p) => <Input {...p} value={v.name} readOnly={!editable} onChange={(e) => setV({ ...v, name: e.target.value })} />}
       </Field>
-      <Field label="Address" hint="Used in links you share. Only an owner can change it.">
+      <Field label="Address" hint="Used in links you share. It is set when the workspace is created and is not changed here.">
         {(p) => <Input {...p} value={`app.${domain}/${v.slug}`} readOnly leading={<Globe className="size-4" />} className="font-mono text-xs" />}
-      </Field>
-      <Field label="Time zone" hint="Daily totals and charts are cut at midnight in this zone.">
-        {(p) => <Select {...p} value={v.timezone} disabled={!editable} onValueChange={(timezone) => setV({ ...v, timezone })} options={TIMEZONES} />}
       </Field>
     </FormSection>
   );

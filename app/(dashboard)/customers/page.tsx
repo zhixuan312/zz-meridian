@@ -4,7 +4,7 @@ import { PageFrame } from '@/components/base/shell';
 import { gate } from '@/data/access';
 import { read } from '@/data/read';
 import type { CustomerRecord } from '@/data/sample';
-import { CustomersView, InviteCustomer } from '@/views/customers';
+import { CustomersView } from '@/views/customers';
 import { Busy } from '@/components/patterns/page-loading';
 import { RecordsSkeleton } from '@/components/templates/records';
 
@@ -23,7 +23,6 @@ export default async function CustomersPage() {
       kicker={<>{app.name} · {app.workspace}</>}
       title="Customers"
       description="Who is calling the API, on which plan, and what they spent in the last 30 days."
-      actions={<InviteCustomer />}
     >
       <Suspense
         fallback={

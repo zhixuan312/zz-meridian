@@ -43,7 +43,7 @@ export default function RailPreview() {
       <Specimen label="The rail" note="260px, on a translucent wash over the lit ground. The current page is an accent-tinted pill with a lit edge; it springs to the item you choose.">
         <div className="flex flex-wrap gap-6">
           <Column current="/" label="Overview is current" />
-          <Column current="/health" groups={WITH_COUNT} label="Operations is current; its badge counts one open incident" />
+          <Column current="/health" groups={WITH_COUNT} label="Operations is current, with a count badge a product sets on an entry (the sample sets none)" />
           <Column current="/" user={null} label="The session is still being found out: a skeleton, not a name" />
         </div>
       </Specimen>

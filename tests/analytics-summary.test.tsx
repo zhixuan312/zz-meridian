@@ -1,0 +1,80 @@
+import { render, screen } from '@testing-library/react';
+import { Tooltip } from 'radix-ui';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
+const jar = vi.hoisted(() => ({ value: undefined as string | undefined }));
+vi.mock('next/headers', () => ({
+  cookies: async () => ({ get: (n: string) => (n === 'zz_meridian_view_as' && jar.value !== undefined ? { name: n, value: jar.value } : undefined), set: () => {} }),
+  headers: async () => new Headers(),
+}));
+vi.mock('next/cache', () => ({ cacheTag: () => {}, cacheLife: () => {}, updateTag: () => {}, revalidateTag: () => {}, revalidatePath: () => {}, refresh: () => {} }));
+
+import { formatCost, formatDuration, formatPercent } from '@/lib/format';
+import { AnalyticsBody } from '@/views/analytics';
+import { OVERVIEW_METRICS } from '@/views/overview-context';
+import { analyticsTool, viewTools } from '@/views/tools';
+
+type Totals = { requests: number; errorRate: number; p95: number; spend: number };
+const overview = viewTools.find((t) => t.name === 'overview')!;
+const LABELS = Object.values(OVERVIEW_METRICS).map((m) => m.label);
+/** The card a tile is, found by the tile's heading. */
+const tile = (label: string) => screen.getByRole('heading', { level: 2, name: label }).closest('.card') as HTMLElement;
+
+beforeEach(() => { jar.value = 'members_12'; });
+
+describe('what Analytics says of the period', () => {
+  it('reads the period\'s totals and those of the period before, the ones the Overview reads', async () => {
+    for (const period of ['7d', '30d'] as const) {
+      const mine = (await analyticsTool.read({ period })).data.totals;
+      const theirs = ((await overview.read({ period })).data as { totals: { current: Totals; previous: Totals } }).totals;
+      expect(mine, period).toEqual(theirs);
+    }
+    const [week, month] = [(await analyticsTool.read({ period: '7d' })).data.totals, (await analyticsTool.read({ period: '30d' })).data.totals];
+    expect(week.current.requests).toBeLessThan(month.current.requests);
+  });
+
+  it('draws them as four figures under the Overview\'s own labels, each with its change against the period before', async () => {
+    const { data } = await analyticsTool.read({ period: '30d' });
+    render(<Tooltip.Provider><AnalyticsBody {...data} /></Tooltip.Provider>);
+    const { current: c } = data.totals;
+    for (const label of LABELS) expect(tile(label).textContent, label).toMatch(/(up|down|unchanged)[\s\S]*vs previous period/);
+    expect(tile('Error rate').textContent).toContain(formatPercent(c.errorRate, 2).replace('%', ''));
+    expect(tile('Spend').textContent?.replace(/[^0-9]/g, '')).toContain(formatCost(c.spend).replace(/[^0-9]/g, ''));
+    expect(tile('Latency p95').textContent?.replace(/[^0-9]/g, '')).toContain(formatDuration(c.p95).replace(/[^0-9]/g, ''));
+  });
+
+  it('draws no figure when no request arrived in the period', () => {
+    const none = { requests: 0, errorRate: 0, p95: 0, spend: 0 };
+    render(<AnalyticsBody period="30d" activity={[]} incidents={[]} updatedAt="2026-10-05T09:00:00.000Z" now="2026-10-05T09:00:00.000Z" series={[]} totals={{ current: none, previous: none }} heat={[]} hours={[]} regions={[]} endpoints={[]} />);
+    expect(screen.queryAllByRole('heading', { level: 2, name: 'Spend' })).toEqual([]);
+  });
+});
+
+describe('what the assistant is told of Analytics', () => {
+  it('is the same four figures, with the change and the figure it is measured against', async () => {
+    const { context, data } = await analyticsTool.read({ period: '30d' });
+    const fact = (label: string) => context.facts.find((f) => f.label === label);
+    for (const label of LABELS) expect(fact(label)?.change, label).toMatch(/vs the previous 30 days/);
+    expect(fact('Requests')!.value).toBe(data.totals.current.requests.toLocaleString('en-US'));
+    expect(fact('Spend')!.value).toBe(formatCost(data.totals.current.spend));
+  });
+
+  it('says that the week\'s pattern, the regions and the endpoints do not follow the period, and never that they are summed over it', async () => {
+    const [week, month] = [await analyticsTool.read({ period: '7d' }), await analyticsTool.read({ period: '30d' })];
+    // They are the same rows whatever the period: the sample holds one fixed week, one list of regions and one of endpoints.
+    expect(week.data.heat).toEqual(month.data.heat);
+    expect(week.data.regions).toEqual(month.data.regions);
+    expect(week.data.endpoints).toEqual(month.data.endpoints);
+    for (const { context } of [week, month]) {
+      const said = [context.scope, ...context.unknowns, ...context.facts.map((f) => `${f.label} ${f.value}`)].join('\n');
+      expect(said).not.toMatch(/summed over (it|the period|the whole period)/);
+      expect(context.unknowns.join('\n')).toMatch(/do not follow the period/);
+    }
+  });
+
+  it('claims no period for them on the page either', async () => {
+    const { data } = await analyticsTool.read({ period: '7d' });
+    const { container } = render(<Tooltip.Provider><AnalyticsBody {...data} /></Tooltip.Provider>);
+    expect(container.textContent).not.toMatch(/summed over the period|Requests in the period/);
+  });
+});

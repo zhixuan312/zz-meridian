@@ -32,7 +32,7 @@ async function workspaceRecord(): Promise<WorkspaceValues | null> {
   try {
     const { rows } = await read('workspace');
     const row = rows[0];
-    return row ? { name: String(row.name), slug: String(row.slug), timezone: String(row.timezone) } : null;
+    return row ? { name: String(row.name), slug: String(row.slug) } : null;
   } catch {
     return null;
   }

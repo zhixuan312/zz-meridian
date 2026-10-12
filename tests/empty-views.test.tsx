@@ -17,7 +17,7 @@ describe('a page body with no data shows its empty state, not a route error', ()
     for (const name of ['Business', 'Operation', 'Delivery']) expect(screen.getByRole('region', { name }).textContent).toMatch(/unavailable/);
   });
   it('Analytics, with no requests in the period', () => {
-    render(<AnalyticsBody period="30d" activity={[]} incidents={[]} updatedAt={NOW} now={NOW} series={[]} heat={[]} hours={[]} regions={[]} endpoints={[]} />);
+    render(<AnalyticsBody period="30d" activity={[]} incidents={[]} updatedAt={NOW} now={NOW} series={[]} totals={{ current: totals, previous: totals }} heat={[]} hours={[]} regions={[]} endpoints={[]} />);
     expect(screen.getByText('No requests in this period')).toBeTruthy();
   });
   it('Health, with no services', () => {

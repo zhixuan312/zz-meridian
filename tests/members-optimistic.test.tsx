@@ -68,6 +68,22 @@ describe('members, optimistically', () => {
   });
 });
 
+describe('the invitation sheet', () => {
+  it('names the workspace by the name its record holds, when the page could read it', async () => {
+    render(<MembersView rows={MEMBERS} now="2026-10-05T09:00:00.000Z" actions={withActions({})} access={ACCESS} roles={MAIN_ROLES} workspace="Acme Staging" />);
+    fireEvent.click(screen.getAllByRole('button', { name: 'Invite member' })[0]);
+    const sheet = await screen.findByRole('dialog');
+    expect(sheet.textContent).toContain('Acme Staging');
+    // The sample sends nothing, so the sheet promises no email.
+    expect(sheet.textContent).not.toMatch(/email to join|get an email/i);
+  });
+  it('says the workspace, unnamed, when the page could not', async () => {
+    render(view(withActions({})));
+    fireEvent.click(screen.getAllByRole('button', { name: 'Invite member' })[0]);
+    expect((await screen.findByRole('dialog')).textContent).toMatch(/this workspace/);
+  });
+});
+
 async function openMenu(name: string) {
   const trigger = screen.getByRole('button', { name: `Actions for ${name}` });
   fireEvent.keyDown(trigger, { key: 'ArrowDown' });

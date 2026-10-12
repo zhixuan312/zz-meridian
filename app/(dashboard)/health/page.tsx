@@ -2,7 +2,7 @@ import { app, workspaces } from '@/app.config';
 import { gate } from '@/data/access';
 import { PageFrame } from '@/components/base/shell';
 import { Freshness } from '@/components/patterns/freshness';
-import { PackedHealthBody, SubscribeButton } from '@/views/health';
+import { PackedHealthBody } from '@/views/health';
 import { healthTool } from '@/views/tools';
 import { packServices } from '@/components/patterns/status-list/summarise';
 
@@ -19,7 +19,6 @@ export default async function HealthPage() {
       title="Operations"
       description={`Every service, how it is right now, and what happened in the last 90 days. ${workspaces.engineering.audience}`}
       meta={<Freshness updatedAt={new Date(data.updatedAt)} now={new Date(data.now)} />}
-      actions={<SubscribeButton />}
     >
       <PackedHealthBody {...data} services={packServices(data.services)} />
     </PageFrame>

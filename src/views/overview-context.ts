@@ -56,7 +56,7 @@ function days(dates: string[]): string {
 }
 
 /** "up 12.4% vs the previous 30 days (0.80%)": the relative change, its direction, and the figure it is against. */
-function change(now: number, before: number, period: Period, format: (n: number) => string): string | undefined {
+export function change(now: number, before: number, period: Period, format: (n: number) => string): string | undefined {
   const n = PERIOD_DAYS[period];
   if (!n || !before) return undefined;
   const r = now / before - 1;
@@ -188,7 +188,7 @@ export function overviewContext(data: OverviewData, index: number | null = null)
   const top = largest(data.endpoints, (e) => e.requests * e.errorRate);
   if (top) {
     const trafficShare = top.item.requests / data.endpoints.reduce((s, e) => s + e.requests, 0);
-    insights.push({ text: `${top.item.method} ${top.item.route} accounts for ${formatPercent(top.share, 0)} of the period's errors on ${formatPercent(trafficShare, 0)} of its requests (its error rate ${pct(top.item.errorRate)}).`, evidence: '/analytics' });
+    insights.push({ text: `${top.item.method} ${top.item.route} accounts for ${formatPercent(top.share, 0)} of the errors on ${formatPercent(trafficShare, 0)} of its requests (its error rate ${pct(top.item.errorRate)}).`, evidence: '/analytics' });
   }
   const worst = data.endpoints.reduce((m, e) => (e.errorRate > m.errorRate ? e : m), data.endpoints[0]);
   if (worst && worst !== top?.item && worst.errorRate >= 2 * c.errorRate) {

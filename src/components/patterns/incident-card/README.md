@@ -39,7 +39,7 @@ Status: beta
 
 ## Behaviour
 
-- Static: the card carries no actions of its own. A page adds "Subscribe to updates" or a link to the full incident.
+- Static: the card carries no actions of its own. A page adds a link to the full incident where it has one.
 - Times are relative ("36 min ago") with the exact time in the title attribute; past a fortnight they become dates.
 
 ## Composition
