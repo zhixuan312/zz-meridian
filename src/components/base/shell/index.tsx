@@ -1,6 +1,6 @@
 'use client';
 
-import { Children, Suspense, createContext, use, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState, type HTMLAttributes, type ReactNode } from 'react';
+import { Children, Suspense, createContext, use, useContext, useEffect, useImperativeHandle, useLayoutEffect, useMemo, useRef, useState, type HTMLAttributes, type ReactNode, type Ref, type RefObject } from 'react';
 import { Dialog } from 'radix-ui';
 import { Menu, X } from 'lucide-react';
 import { usePathname } from 'next/navigation';
@@ -76,23 +76,66 @@ function ResolvedColumn({ assistant, open, used, onClose, ask, onAsked }: { assi
  * (issue #19). A change of path marks the main area still before paint; the mark lifts once the longest arrival would
  * have ended, so a change made on the page afterwards, such as a new period, still animates. A change of query alone
  * keeps the path, so it is not a navigation here.
+ *
+ * It reads the address, so it is a part of its own behind its own boundary and draws nothing (see `AppShell`).
  */
-function useStillOnNavigation(path: string) {
-  const [still, setStill] = useState(false);
+function StillOnNavigation({ main }: { main: RefObject<HTMLElement | null> }) {
+  const path = usePathname();
   const shown = useRef(path);
   useLayoutEffect(() => {
-    if (shown.current === path) return;
+    const el = main.current;
+    if (shown.current === path || !el) return;
     shown.current = path;
-    setStill(true);
+    el.setAttribute('data-still', '');
     const css = getComputedStyle(document.documentElement);
     // A build may write 820ms as .82s, so read the unit, not only the number.
     const ms = (name: string) => { const v = css.getPropertyValue(name).trim(); return parseFloat(v) * (v.endsWith('ms') ? 1 : 1000); };
-    const t = setTimeout(() => setStill(false), ms('--dur-grow') + ms('--dur-enter'));
-    return () => clearTimeout(t);
-  }, [path]);
-  return still;
+    const t = setTimeout(() => el.removeAttribute('data-still'), ms('--dur-grow') + ms('--dur-enter'));
+    return () => { clearTimeout(t); el.removeAttribute('data-still'); };
+  }, [path, main]);
+  return null;
 }
 
+/**
+ * The navigation drawer below 1024px. It remembers the page it opened on, so navigating closes it without an effect;
+ * that is a read of the address, so the drawer is a part of its own behind its own boundary (see `AppShell`), and the
+ * shell opens it through the handle.
+ */
+function Drawer({ rail, ref }: { rail: ReactNode; ref: Ref<{ open: () => void }> }) {
+  const path = usePathname();
+  const [openOn, setOpenOn] = useState<string | null>(null);
+  useImperativeHandle(ref, () => ({ open: () => setOpenOn(path) }), [path]);
+  return (
+    <Dialog.Root open={openOn === path} onOpenChange={(o) => setOpenOn(o ? path : null)}>
+      <Dialog.Portal>
+        <Dialog.Overlay className="scrim-in fixed inset-0 z-(--layer-rail) bg-scrim lg:hidden" />
+        <Dialog.Content
+          aria-describedby={undefined}
+          className="sheet-in fixed inset-y-0 left-0 z-(--layer-rail) flex w-(--rail-width) max-w-[86vw] border-r border-line bg-ground shadow-overlay lg:hidden"
+        >
+          <Dialog.Title className="sr-only">Navigation</Dialog.Title>
+          {rail}
+          <Dialog.Close
+            aria-label="Close navigation"
+            className="absolute top-4 -right-12 grid size-9 place-items-center rounded-full bg-surface-raised text-ink-2 shadow-overlay"
+          >
+            <X className="size-4" />
+          </Dialog.Close>
+        </Dialog.Content>
+      </Dialog.Portal>
+    </Dialog.Root>
+  );
+}
+
+/**
+ * The shell itself never reads the address. A route with a parameter the build did not know (a record's own page, which
+ * in a product is every record) has no pathname until the request, and a component that asks for one waits for it; when
+ * the shell asked, at its top, the whole page waited with it and nothing at all was prerendered for such a route — the
+ * build's shell for `/requests/[id]` was an empty file, and an adopter whose layout put a boundary above the shell was
+ * served that boundary's fallback and nothing else. So what reads the address is each a part of its own, behind its own
+ * boundary, with a fallback that takes the same room: the drawer, the mark that holds a navigated page still, and the
+ * rail, whatever a product passes for one.
+ */
 export function AppShell({
   rail,
   tools,
@@ -106,12 +149,8 @@ export function AppShell({
   assistant: Promise<boolean>;
   children: ReactNode;
 }) {
-  const path = usePathname();
-  const still = useStillOnNavigation(path);
-  // The drawer remembers the page it opened on, so navigating closes it without an effect.
-  const [openOn, setOpenOn] = useState<string | null>(null);
-  const open = openOn === path;
-  const setOpen = (o: boolean) => setOpenOn(o ? path : null);
+  const drawer = useRef<{ open: () => void }>(null);
+  const main = useRef<HTMLElement>(null);
   const [assistantOpen, setAssistantOpen] = useState(false);
   // The panel's chunk is a third of a megabyte, so it is NOT in a page's first load: the column mounts the first time
   // somebody opens it, and stays mounted from then on, so closing it and reopening keeps the thread. Before this, a
@@ -145,7 +184,7 @@ export function AppShell({
     </>
   );
   return (
-    <ShellCtx.Provider value={{ openNav: () => setOpen(true), tools: allTools, assistant }}>
+    <ShellCtx.Provider value={{ openNav: () => drawer.current?.open(), tools: allTools, assistant }}>
       <div className="fixed inset-0 isolate flex overflow-hidden">
         {/* The first stop for a keyboard: past the rail and the top bar, straight to the page's masthead (PageFrame). */}
         <a
@@ -155,27 +194,13 @@ export function AppShell({
           Skip to content
         </a>
         <aside aria-label="Primary" className="hidden h-full w-(--rail-width) shrink-0 border-r border-line bg-frame backdrop-blur-xl backdrop-saturate-150 lg:flex">
-          {rail}
+          <Suspense fallback={null}>{rail}</Suspense>
         </aside>
-        <Dialog.Root open={open} onOpenChange={setOpen}>
-          <Dialog.Portal>
-            <Dialog.Overlay className="scrim-in fixed inset-0 z-(--layer-rail) bg-scrim lg:hidden" />
-            <Dialog.Content
-              aria-describedby={undefined}
-              className="sheet-in fixed inset-y-0 left-0 z-(--layer-rail) flex w-(--rail-width) max-w-[86vw] border-r border-line bg-ground shadow-overlay lg:hidden"
-            >
-              <Dialog.Title className="sr-only">Navigation</Dialog.Title>
-              {rail}
-              <Dialog.Close
-                aria-label="Close navigation"
-                className="absolute top-4 -right-12 grid size-9 place-items-center rounded-full bg-surface-raised text-ink-2 shadow-overlay"
-              >
-                <X className="size-4" />
-              </Dialog.Close>
-            </Dialog.Content>
-          </Dialog.Portal>
-        </Dialog.Root>
-        <main data-still={still || undefined} className="relative flex min-w-0 flex-1 flex-col"><ConsoleSurface ask={ask}>{children}</ConsoleSurface></main>
+        <Suspense fallback={null}>
+          <Drawer ref={drawer} rail={rail} />
+          <StillOnNavigation main={main} />
+        </Suspense>
+        <main ref={main} className="relative flex min-w-0 flex-1 flex-col"><ConsoleSurface ask={ask}>{children}</ConsoleSurface></main>
         <Suspense fallback={null}>
           <ResolvedColumn assistant={assistant} open={assistantOpen} used={assistantUsed} onClose={() => setAssistantOpen(false)} ask={pendingAsk} onAsked={() => setPendingAsk(null)} />
         </Suspense>

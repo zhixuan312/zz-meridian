@@ -42,6 +42,7 @@ Status: beta
 
 - The compact title fades into the top bar (opacity and 4px rise over `dur-enter`) when the page title passes under it, measured with an IntersectionObserver.
 - The drawer closes on navigation, Escape and the scrim, and returns focus.
+- The shell never reads the address itself. A route with a parameter the build did not know (a record's page) has no pathname until the request, and whatever asks for one waits for it; so each part that does ask — the drawer, the mark that holds a navigated page still, and the rail a product passes — waits behind its own boundary, and the frame and the page's own skeleton are prerendered for every route. `pnpm verify` fails a build in which a route's shell for an unknown parameter is an empty file.
 - Never set `transform`, `filter` or `will-change` on `html`, `body` or anything above AppShell: it would turn the fixed frame into one that scrolls.
 
 ## Surfaces

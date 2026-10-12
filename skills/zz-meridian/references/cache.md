@@ -26,7 +26,10 @@ remove that and read the request-dependent data behind a boundary. A promise bui
 `connection().then(() => ...)`, that a component resolves behind a boundary is how the shell reads the environment
 without blocking the frame. `node scripts/route-policy.ts` classifies every route of a production build and fails a
 route that is neither static nor partial, unless `optional:scripts/verify.config.ts` lists it in `requestDependentRoutes` with a
-reason.
+reason. It also fails a partial route whose shell for a parameter the build did not know is an empty file (`empty shell
+/requests/[id]`): such a route prerenders nothing, so every record's page waits whole. The usual cause is a read of the
+address above the page with no boundary around it — `usePathname()` or `useSearchParams()` in a layout's client
+component, or `await params` in a page with no `loading.tsx`: put what reads it behind its own `Suspense`.
 
 A navigation is as fast as where its data comes from. Data read through `read()` (cached and tagged, so a write
 refreshes it) is in the prerendered shell; prefetching brings it, and the page is whole in about 30 ms. A request-time

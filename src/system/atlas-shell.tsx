@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { Suspense, useEffect, useImperativeHandle, useMemo, useRef, useState, type ReactNode, type Ref } from 'react';
 import { Dialog } from 'radix-ui';
 import { ArrowRight, ChevronRight, Menu, Search, X } from 'lucide-react';
 import { cn } from '@/lib/cn';
@@ -17,12 +17,9 @@ export type AtlasNav = { id: string; num?: string; title: string; line: string; 
  * layer, numbered 0 to 4 from tokens to pages; "/" filters it; the current section opens on its own.
  */
 export function AtlasShell({ nav, children }: { nav: AtlasNav; children: ReactNode }) {
-  const path = usePathname();
-  // The drawer remembers the page it opened on, so navigating closes it without an effect.
-  const [openOn, setOpenOn] = useState<string | null>(null);
-  const open = openOn === path;
-  const setOpen = (o: boolean) => setOpenOn(o ? path : null);
-  const shelf = <Shelf nav={nav} />;
+  // The frame never reads the address (see `AppShell` for why): the shelf and the drawer do, each behind its own boundary.
+  const drawer = useRef<{ open: () => void }>(null);
+  const shelf = <Suspense fallback={null}><Shelf nav={nav} /></Suspense>;
   return (
     <div className="min-h-dvh lg:grid lg:grid-cols-[var(--rail-width)_minmax(0,1fr)]">
       {/* The first stop for a keyboard: past the shelf's sixty entries, straight to what is being read. */}
@@ -34,25 +31,37 @@ export function AtlasShell({ nav, children }: { nav: AtlasNav; children: ReactNo
       </a>
       <aside className="sticky top-0 hidden h-dvh border-r border-line bg-frame backdrop-blur-xl lg:block">{shelf}</aside>
       <div className="sticky top-0 z-(--layer-sticky) flex h-14 items-center gap-3 border-b border-line bg-ground/72 px-4 backdrop-blur-xl lg:hidden">
-        <button type="button" aria-label="Open the contents" onClick={() => setOpen(true)} className="press hit -ml-1 grid size-9 place-items-center rounded-md text-ink-2 hover:bg-fill-hover">
+        <button type="button" aria-label="Open the contents" onClick={() => drawer.current?.open()} className="press hit -ml-1 grid size-9 place-items-center rounded-md text-ink-2 hover:bg-fill-hover">
           <Menu className="size-[18px]" strokeWidth={1.75} />
         </button>
         <Link href="/system" className="flex items-center gap-2 text-sm font-semibold"><AppMark size={20} />ZZ Meridian</Link>
       </div>
-      <Dialog.Root open={open} onOpenChange={setOpen}>
-        <Dialog.Portal>
-          <Dialog.Overlay className="scrim-in fixed inset-0 z-(--layer-rail) bg-scrim lg:hidden" />
-          <Dialog.Content aria-describedby={undefined} className="sheet-in fixed inset-y-0 left-0 z-(--layer-rail) w-(--rail-width) max-w-[86vw] border-r border-line bg-ground shadow-overlay lg:hidden">
-            <Dialog.Title className="sr-only">Contents</Dialog.Title>
-            {shelf}
-            <Dialog.Close aria-label="Close the contents" className="absolute top-4 -right-12 grid size-9 place-items-center rounded-full bg-surface-raised text-ink-2 shadow-overlay">
-              <X className="size-4" />
-            </Dialog.Close>
-          </Dialog.Content>
-        </Dialog.Portal>
-      </Dialog.Root>
-      <div id="content" tabIndex={-1} className="min-w-0 outline-none">{children}</div>
+      <Suspense fallback={null}><Drawer ref={drawer} shelf={shelf} /></Suspense>
+      {/* An entry's page reads its own address (its section and id), so it too waits behind a boundary: for an address the
+          build did not know, the frame is what is prerendered, and the page or its not-found follows. */}
+      <div id="content" tabIndex={-1} className="min-w-0 outline-none"><Suspense fallback={null}>{children}</Suspense></div>
     </div>
+  );
+}
+
+/** The contents as a drawer below 1024px. It remembers the page it opened on, so navigating closes it without an effect. */
+function Drawer({ shelf, ref }: { shelf: ReactNode; ref: Ref<{ open: () => void }> }) {
+  const path = usePathname();
+  const [openOn, setOpenOn] = useState<string | null>(null);
+  useImperativeHandle(ref, () => ({ open: () => setOpenOn(path) }), [path]);
+  return (
+    <Dialog.Root open={openOn === path} onOpenChange={(o) => setOpenOn(o ? path : null)}>
+      <Dialog.Portal>
+        <Dialog.Overlay className="scrim-in fixed inset-0 z-(--layer-rail) bg-scrim lg:hidden" />
+        <Dialog.Content aria-describedby={undefined} className="sheet-in fixed inset-y-0 left-0 z-(--layer-rail) w-(--rail-width) max-w-[86vw] border-r border-line bg-ground shadow-overlay lg:hidden">
+          <Dialog.Title className="sr-only">Contents</Dialog.Title>
+          {shelf}
+          <Dialog.Close aria-label="Close the contents" className="absolute top-4 -right-12 grid size-9 place-items-center rounded-full bg-surface-raised text-ink-2 shadow-overlay">
+            <X className="size-4" />
+          </Dialog.Close>
+        </Dialog.Content>
+      </Dialog.Portal>
+    </Dialog.Root>
   );
 }
 
