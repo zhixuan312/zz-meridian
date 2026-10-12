@@ -16,6 +16,11 @@ import { viewTools } from '@/views/tools';
 import { navOf, WORKSPACE_IDS } from '@/views/workspaces';
 
 const ROOT = path.resolve(import.meta.dirname, '..');
+/**
+ * The template's own repository keeps the Atlas. A project made by `create` has it removed (`scripts/brand.ts` deletes
+ * `app/system`), and the two entries that lead there go with it: the same declaration then holds eleven destinations.
+ */
+const ATLAS = fs.existsSync(path.join(ROOT, 'app/system')) ? ['/system', '/system/start/start-a-dashboard'] : [];
 const PERSONAS = { owner: 'members_1', admin: 'members_2', member: 'members_4', keyManager: 'members_5', viewer: 'members_12' };
 /** What a person is shown of a workspace: its declared entries, less the ones they may not open. */
 const shown = async (id: (typeof WORKSPACE_IDS)[number]) => {
@@ -33,10 +38,10 @@ describe('every persona enters every workspace', () => {
     }
   });
 
-  it('sees all thirteen destinations, unless they are a Viewer', async () => {
+  it('sees every destination, unless they are a Viewer', async () => {
     for (const id of [PERSONAS.owner, PERSONAS.admin, PERSONAS.member, PERSONAS.keyManager]) {
       jar.value = id;
-      expect((await Promise.all(WORKSPACE_IDS.map(shown))).map((hrefs) => hrefs.length), id).toEqual([5, 3, 5]);
+      expect((await Promise.all(WORKSPACE_IDS.map(shown))).map((hrefs) => hrefs.length), id).toEqual([3 + ATLAS.length, 3, 5]);
     }
   });
 });
@@ -44,8 +49,8 @@ describe('every persona enters every workspace', () => {
 describe('a Viewer', () => {
   beforeEach(() => { jar.value = PERSONAS.viewer; });
 
-  it('reaches eleven of the thirteen: everything but Members and API keys', async () => {
-    expect(await shown('main')).toEqual(['/', '/settings', '/system', '/system/start/start-a-dashboard']);
+  it('reaches everything but Members and API keys', async () => {
+    expect(await shown('main')).toEqual(['/', '/settings', ...ATLAS]);
     expect(await shown('business')).toEqual(['/analytics', '/customers', '/requests']);
     expect(await shown('engineering')).toEqual(['/health', '/operations-tickets', '/tests', '/releases']);
   });

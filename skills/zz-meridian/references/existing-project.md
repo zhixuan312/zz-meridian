@@ -62,9 +62,13 @@ Migrate in place, page by page, keeping their data layer.
    in `optional:app/(dashboard)/`. Without network access to GitHub, `npx zz-meridian@<version> create /tmp/meridian-ref
    --no-install` writes the same files to a scratch folder.
 3. Wrap their root layout like the template's `app/layout.tsx` (fonts, the pre-paint script, `Providers`) and their
-   console routes in `AppShell` with the rail, `ShellTools` and the command palette (see `optional:app/(dashboard)/layout.tsx`).
-   The template's layout passes `ShellTools` the sample `ALERTS` and `DEMO_NOW` from `optional:src/data/sample.ts`, which
-   is not copied: pass their own alerts (an empty list until they have some) and their own clock. Give each `nav`
+   console routes in `AppShell` with the rail, the bell and the command palette (see `optional:app/(dashboard)/layout.tsx`).
+   The template's layout hands `AppShell` its tools as `<ShellAlerts alerts={…} />` (`optional:src/views/shell-alerts.tsx`),
+   given the promise of `readAlerts()` from `optional:src/data/alerts.ts`, unawaited and settled on `null` when the read
+   fails; the answer carries the alerts and the clock they were read at. Neither file is copied: hand `ShellTools` (the
+   pattern `ShellAlerts` renders) their own alerts, an empty list until they have some, and their own clock. The template
+   draws `WorkspaceRail` and `WorkspacePalette`; a console with one navigation draws `ConsoleRail` and `ConsolePalette`
+   as below. Give each `nav`
    entry in `src/app.config.ts` its icon and group. The Rail and the palette are rendered from a client module
    (`src/views/console-chrome.tsx`), since each destination carries its icon component, and take what depends on the
    request from the layout as props: `<ConsoleRail access={…} signOut={…} />` and `<ConsolePalette access={…} />`,
@@ -87,7 +91,8 @@ Migrate in place, page by page, keeping their data layer.
    **Catch the shell's own data in the layout.** A page's error boundary only catches what the page throws: if the
    layout awaits something the shell needs — the alert list, the signed-in person — one failed query takes the whole
    layout down, and the framework's bare error page shows instead of the designed one inside the shell. Read those
-   defensively (`const alerts = await recentAlerts().catch(() => [])`), so the shell stands and the page's own
+   defensively, as the template does (`const alerts = readAlerts().catch(() => null)`, handed to the shell unawaited, and
+   `null` leaves the bell quiet), so the shell stands and the page's own
    `error.tsx` shows "This view did not load" with Retry.
 4. Rebuild each page on `PageFrame`, `Stack` and `Row` with Meridian components (imported as
    `@meridian/components/…`), keeping their data fetching and business logic untouched. Their old Tailwind utilities

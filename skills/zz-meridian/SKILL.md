@@ -233,12 +233,13 @@ Read `references/customize.md` and follow it. In short:
   says plainly why the sample is a single process and holds the Postgres and Redis adapters).
 - **Data first.** Write `src/data/<product>.ts` for the person's domain: real types from their schema or materials, and
   deterministic sample data until they wire their API. Pages import data from `optional:src/data/` and nowhere else. Delete the
-  sample pages you replace. `optional:src/data/collections.ts` and `optional:src/data/sample.ts` import `optional:src/system/fixtures/` (and the dashboard layout imports
-  `DEMO_NOW` and `ALERTS` through `optional:src/data/sample.ts`), so the fixtures and `optional:src/system/sample-cells.tsx` stay until nothing imports them:
+  sample pages you replace. `optional:src/data/collections.ts` and `optional:src/data/sample.ts` import `optional:src/system/fixtures/` (and the bell's alerts, `readAlerts` in `optional:src/data/alerts.ts`, are worked out
+  from the same collections), so the fixtures and `optional:src/system/sample-cells.tsx` stay until nothing imports them:
   replace each collection's `rows` with the person's data first, then delete them. Prove the
   numbers before building pages: a `example:tests/data.test.ts` asserting the counts your pages need (vitest resolves `@/`;
   plain `node` does not).
-- **Navigation** in `src/app.config.ts`; one line per page.
+- **Navigation** in `src/app.config.ts`; one line per page. A product with one navigation needs nothing more; one whose
+  destinations fall into a few places to look declares `workspaces` too (`references/customize.md`, "Navigation").
 - **Pages from presets.** Start each page from the closest template page and change what it shows, not how it is laid
   out. Every page has one protagonist (a featured metric, a table, a form), a kicker, a title and one sentence.
 - **Remove what they did not ask for**: sample pages, their nav lines, their embed views, their entries in

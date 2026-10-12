@@ -10,12 +10,20 @@ vi.mock('next/navigation', () => ({
   useRouter: () => ({ push: (to: string) => { at.pushed.push(to); }, replace() {}, refresh() {}, back() {}, forward() {}, prefetch() {} }),
 }));
 
-import { nav } from '@/app.config';
+import { app, nav } from '@/app.config';
 import { openCommand } from '@/components/patterns/command-palette';
 import type { ChromeAccess } from '@/lib/collection';
 import { WorkspacePalette, WorkspaceRail } from '@/views/workspace-chrome';
 
 const ROOT = path.resolve(import.meta.dirname, '..');
+/**
+ * The template's own repository keeps the Atlas. A project made by `create` has it removed (`scripts/brand.ts` deletes
+ * `app/system`), and the two entries that lead there go with it: the same declaration then holds eleven destinations.
+ */
+const ATLAS = fs.existsSync(path.join(ROOT, 'app/system')) ? ['Design system', 'Docs'] : [];
+/** Main's entries as the rail draws them, and the menu's name: the product's own name, then the workspace in view. */
+const MAIN = ['Overview', 'Members', 'Settings', ...ATLAS];
+const menuOf = (workspace: string) => `${app.name}, ${workspace}: workspace menu`;
 const EVERY = nav.flatMap((g) => g.items).map((i) => i.href);
 const person = { name: 'Maya Chen', role: 'Owner' };
 const everything = (): Promise<ChromeAccess | null> => Promise.resolve({ only: EVERY, user: person });
@@ -33,26 +41,26 @@ beforeEach(() => { at.path = '/'; at.pushed.length = 0; });
 describe('the rail, wherever the address is', () => {
   it('draws Main at the home address', async () => {
     await rail('/');
-    expect(links()).toEqual(['Overview', 'Members', 'Settings', 'Design system', 'Docs']);
-    expect(trigger().getAttribute('aria-label')).toBe('ZZ Meridian, Main: workspace menu');
+    expect(links()).toEqual(MAIN);
+    expect(trigger().getAttribute('aria-label')).toBe(menuOf('Main'));
   });
 
   it('draws Business on a request\'s own page, with Requests as the current entry', async () => {
     await rail('/requests/req_1');
     expect(links()).toEqual(['Analytics', 'Customers', 'Requests']);
-    expect(trigger().getAttribute('aria-label')).toBe('ZZ Meridian, Business: workspace menu');
+    expect(trigger().getAttribute('aria-label')).toBe(menuOf('Business'));
     expect(screen.getByRole('link', { name: 'Requests' }).getAttribute('aria-current')).toBe('page');
   });
 
   it('draws Engineering on its pages', async () => {
     await rail('/operations-tickets');
     expect(links()).toEqual(['Operations', 'API keys', 'Operations tickets', 'Tests and verification', 'Releases']);
-    expect(trigger().getAttribute('aria-label')).toBe('ZZ Meridian, Engineering: workspace menu');
+    expect(trigger().getAttribute('aria-label')).toBe(menuOf('Engineering'));
   });
 
   it('draws Main for an address no entry owns', async () => {
     await rail('/nowhere');
-    expect(links()).toEqual(['Overview', 'Members', 'Settings', 'Design system', 'Docs']);
+    expect(links()).toEqual(MAIN);
   });
 });
 

@@ -61,24 +61,43 @@ is a short string, used only for something that needs attention ("1").
 the signed-in person satisfies, and a test fails an item that restates a need. That filtering is presentation, not the
 gate: every page refuses on its own (see "Data" below).
 
+A product with one navigation draws `ConsoleRail` and `ConsolePalette` from `src/views/console-chrome.tsx` in its layout,
+with the `nav` above, and declares no workspaces; `adopt` writes a configuration that way. A product whose destinations
+fall into a few places to look declares `workspaces` once in `src/app.config.ts`, each with a `label`, an `audience`
+sentence and a `homeHref`, and gives every `nav` entry a `workspace` naming one. It keeps `optional:src/views/workspaces.ts`
+(`navOf` derives a workspace's navigation, `workspaceOf` says which workspace an address belongs to) and
+`optional:src/views/workspace-chrome.tsx` (`WorkspaceRail` and `WorkspacePalette`, which the layout draws in place of the
+plain pair). The address alone decides the workspace; nothing is stored, and a workspace chooses what the rail lists,
+never what a person may open. Keep a workspace with the key `main`: the adapter falls back to it for an address no entry
+owns. `optional:docs/product-workspaces.md` is the sample's own guide to all of this.
+
 ## Pages: presets to start from
 
 | They need | Copy and adapt | Its protagonist |
 |---|---|---|
 | A summary with one leading figure | `optional:app/(dashboard)/(overview)/page.tsx` + `optional:src/views/overview.tsx` | Featured metric with its trend |
 | A list of records with filters | `optional:app/(dashboard)/requests/` + `optional:src/views/requests.tsx` | Data table with filter bar |
+| Summary tiles over a list people only read (what ran, what is going out) | `optional:app/(dashboard)/tests/`, `optional:app/(dashboard)/releases/` + `optional:src/views/tests.tsx`, `optional:src/views/releases.tsx` | Data table under three tiles |
 | One record | `optional:app/(dashboard)/requests/[id]/` + `optional:src/views/request.tsx` | Detail head and key facts |
-| Breakdowns and patterns over time | `optional:app/(dashboard)/analytics/` + `optional:src/views/analytics.tsx` | Heatmap or the main chart |
-| Systems and incidents | `optional:app/(dashboard)/health/` + `optional:src/views/health.tsx` | Status summary |
-| Customers, accounts, people | `optional:app/(dashboard)/customers/` + `optional:src/views/customers.tsx` | Table with sparklines |
+| Four figures for a period, then breakdowns and patterns over time | `optional:app/(dashboard)/analytics/` + `optional:src/views/analytics.tsx` | The four figures, then the heatmap |
+| Systems and incidents (Operations, at `/health`) | `optional:app/(dashboard)/health/` + `optional:src/views/health.tsx` | Status summary |
+| Customers, accounts, people | `optional:app/(dashboard)/customers/` + `optional:src/views/customers.tsx` | Data table, a usage sparkline in each row |
 | Keys, tokens, secrets | `optional:app/(dashboard)/keys/` + `optional:src/views/keys.tsx` | Table with masked values |
 | Records people add, edit and remove (also what the assistant reads) | `optional:app/(dashboard)/members/`, `optional:app/(dashboard)/keys/` + `optional:src/views/members.tsx`, `optional:src/views/keys.tsx` | Data table over a collection |
+| Work people create and move along, through a write boundary | `optional:app/(dashboard)/operations-tickets/` + `optional:src/views/tickets.tsx` and `optional:src/data/ticket-mutations.ts` | Data table with New ticket and a row menu |
 | Settings (a sample: keep only if asked; its Assistant section holds the assistant's switch) | `optional:app/(dashboard)/settings/` + `optional:src/views/settings.tsx` | Form sections |
 | Sign in, not found | `optional:app/sign-in/` (`page.tsx` + `panel.tsx`), `optional:app/not-found.tsx` + `optional:src/views/standalone.tsx` | One sentence at display size |
 
-The health preset assumes software services. For other things that are up or not (warehouses, branches, sites), pass
+The Operations preset assumes software services. For other things that are up or not (warehouses, branches, sites), pass
 `StatusList` a `noun`, a `measure` ("on time") and a `metric`, and `UptimeBars` a `measure`. A Metric tile says what
 its change compares with in `compare` ("vs the 3 days before") and takes a `note` where no comparison fits.
+
+A copied sample page does not do what a product would assume of it. Its writes are held in memory: a ticket, a member or a
+key lives in the running server and is lost when it restarts, until your own database stands behind the collection. Its
+figures that are fixed (Analytics' weekday-and-hour grid, hours and regions, the endpoints, the Overview's response split)
+are not worked out from the request log and do not follow the period chosen. Nothing runs a suite or ships a version
+behind Tests and verification and Releases, no message is sent, and the bell only lists what needs a person when the page
+is read. `optional:docs/product-workspaces.md` lists each limit.
 
 Rules that make every page look like it belongs:
 
@@ -93,9 +112,15 @@ Rules that make every page look like it belongs:
 - **One protagonist.** At most one `FeaturedMetric` per page; everything else is a `MetricTile` or a `Card`.
 - **Charts on one page share one `Meridian`** (wrap the rows in `<Meridian dates={...}>`), so pointing at a day reads it
   everywhere. Two measures of a different size are two charts, never one chart with two axes.
+- **A list of records** is the records template: `Records` from `src/components/templates/records` puts optional summary
+  tiles (`summary`) over the Data table and its Filter bar, and keeps no state and reads no data. Its loading twin,
+  `RecordsSkeleton` (`tiles`, `rows`, `filters`), goes inside the page's `LoadingPage`, so the page and its skeleton are
+  spaced the same way.
 - **Tables**: mark one column `grow` (the lead), numbers `numeric`, low-value columns `hideBelow`; give `rowHref` so rows
   open their record. Below 768px a `DataTable` becomes a card list by itself — a markdown table inside `Prose` does not: it keeps its columns and scrolls sideways, so a document meant to be read on a phone wants a list, not a table.
-- **Every state**: loading (`loading.tsx` with skeletons shaped like the page; read through `read()` so the page is
+- **Every state**: loading (`loading.tsx` is a `LoadingPage` from `src/components/patterns/page-loading`, with `name`,
+  `title` and the page's `width`, around skeletons shaped like the page: `TilesSkeleton`, `ChartSkeleton`,
+  `TableSkeleton` or `RecordsSkeleton`; read through `read()` so the page is
   in its prerendered shell and the skeleton is rarely seen, since a request-time read waits at least 300 ms behind it:
   `cache.md`), empty (Empty state with the one action), error (`error.tsx`, what failed and Retry).
 - **A file picker** is a visible `Button` that calls `input.click()` on an `<input type="file">` with `tabIndex={-1}`
@@ -125,9 +150,14 @@ Rules that make every page look like it belongs:
   ### What the agent reads
   The shared context: the period, how many are late, the longest wait, and the five longest with their shops.
   ```
+- **A form reports unsaved changes** so the shell can ask before a person leaves: a `FormSection` does it from its `dirty`
+  prop, and any other component calls `useUnsavedChanges(dirty)` from `src/components/base/shell`. Code that navigates
+  on its own (a button, a menu, a palette command) goes through `useLeave()`, which runs the move at once when nothing
+  is unsaved and otherwise only if the person chooses to leave. A link needs nothing, and Back and Forward are the
+  browser's.
 - **A shared context** for each page (decision 0011): a pure function beside the view builds it from the page's data
   (copy `optional:src/views/overview-context.ts`: scope, freshness, each figure with its unit, change and definition,
-  what `optional:src/lib/insight.ts` finds, what the data cannot say), within 2,400 characters, lists cut at 25 with a
+  what `optional:src/lib/insight.ts` finds, what the data cannot say), within 2,600 characters, lists cut at 25 with a
   count of the rest (`listed`), and the view passes it to `useShareView`; a
   server page with no client view places `<ShareContext context={…} />` among its cards instead. Both
   agents read it: an MCP host and the console's assistant. Add the page's tool to `optional:src/views/tools.ts` so the
@@ -146,7 +176,7 @@ The layout hands the shell whether it is on as a promise it does not await, `ass
   schema, `allow` (which of create, update and remove the assistant may propose) and `hidden` fields. Replace each
   `rows` with the person's API and `clock` with `new Date()`; the assistant reads and proposes changes only through them.
   **When `rows` becomes a real database, read through `read()`** (`optional:src/data/read.ts`): a page asks for the same
-  records from several places (the layout's shell tools, a page strip, the page and its freshness stamp), and `read()`
+  records from several places (the layout's alerts read, a page strip, the page and its freshness stamp), and `read()`
   caches per caller's scope and refreshes exactly the tenant a write touched, so do not wrap the read in a second cache;
   writes call `updateTag` after the commit (`cache.md`). Raise the pool's idle timeout too: `pg` drops an idle connection after 10s, and a remote Postgres with TLS
   costs hundreds of milliseconds to reconnect. Issue #7 has the numbers. A pool that keeps connections idle must also
@@ -190,15 +220,18 @@ writes go through `Proposal` (see `optional:app/embed/proposal/`). Read `agents.
 
 Delete the sample pages, views and embed views the product does not use, with their nav lines. Do not delete
 `optional:src/system/fixtures/` or `optional:src/system/sample-cells.tsx` yet: `optional:src/data/collections.ts` and `optional:src/data/sample.ts`
-import the fixtures. Once your collections' `rows`, `clock` and the layout's `DEMO_NOW` and `ALERTS` come from your own
-data and nothing imports them, delete them (with the Atlas kept, the previews read them: leave them, and remove the
+import the fixtures. Once your collections' `rows` and `clock`, and the clock in the quiet bell of `optional:src/views/shell-alerts.tsx`
+(`DEMO_NOW`), come from your own data and nothing imports them, delete them (with the Atlas kept, the previews read them: leave them, and remove the
 pages' entries in `PAGES` in `example:src/system/content.ts`). Keep `optional:src/data/collections.ts`, `optional:src/lib/collection.ts`,
 `src/lib/assistant/`, `optional:app/api/assistant/` and the assistant panel, unless the person does not want the assistant (it
 then stays off without them). Then fix what still points at the sample:
 
-- `optional:src/views/standalone.tsx`: the footer status line and its link to `/health`, and `optional:app/not-found.tsx`'s "Check service
-  health" link.
-- `src/components/patterns/shell-tools/index.tsx`: the alerts count ("Alerts · 1 new") is sample copy.
+- `optional:src/views/sample-footer.tsx`: the footer status line and its link to `/health`, which `optional:app/not-found.tsx`
+  and the sign-in page draw.
+- `optional:src/data/alerts.ts`: `readAlerts` works the bell's alerts out of the sample's incidents, customers, verification
+  runs and tickets. Write your own exceptions the same way, each from a read the caller may make and linked to the page
+  that handles it; the layout hands the read's promise to `ShellAlerts` (`optional:src/views/shell-alerts.tsx`) without
+  awaiting it.
 - `optional:app/sign-in/page.tsx`: the headline and lead describe the sample product.
 - `example:src/system/content.ts`: `PAGES` names a sample request id route.
 - Each page `README.md`: its States rows must describe what your view renders; `check.ts` only checks that the section

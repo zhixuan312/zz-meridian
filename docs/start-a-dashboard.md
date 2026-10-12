@@ -2,7 +2,7 @@
 
 A new dashboard starts from this repository running, not from a blank page. Seven steps take it from ZZ Meridian's own dashboard to yours; each is one file or one folder.
 
-The fastest way is to let your coding agent do all six: `npx zz-meridian@latest create my-dashboard --name "Acme Ops"` copies and brands the template and installs the `zz-meridian` skill into it; then describe the dashboard you need to Codex or Claude Code. The steps below are what they do, for doing it by hand.
+The fastest way is to let your coding agent do all seven: `npx zz-meridian@latest create my-dashboard --name "Acme Ops"` copies and brands the template and installs the `zz-meridian` skill into it; then describe the dashboard you need to Codex or Claude Code. The steps below are what they do, for doing it by hand.
 
 ## 1. Copy it
 
@@ -21,7 +21,7 @@ To keep the Atlas while you build, clone this repository instead (`git clone htt
 - `app.name`, `app.workspace`: the rail, the document title, the sign-in screen.
 - `app.accent`: `indigo`, `cobalt`, `jade` or `graphite`. A person can still change it in Settings.
 - `app.timezone`: every date and every daily bucket is cut on it.
-- `nav`: the rail. Adding a page is a route file plus a line here.
+- `nav`: the rail. Adding a page is a route file plus a line here, with the `needs` of its feature. ZZ Meridian's own dashboard also declares `workspaces` and gives each entry a `workspace`; a product with one navigation needs neither (`skills/zz-meridian/references/customize.md`, "Navigation").
 
 Put your logo in `public/` as an SVG and set `logo: '/logo.svg'` in `app`: the mark shows it at 20, 24, 28 and 32 pixels, with an empty `alt` beside the product name. `theme: 'dark'` or `'light'` sets the default theme before anyone picks one.
 
@@ -38,7 +38,7 @@ If a pair fails, lower the chroma, or give the preset a lightness override for t
 
 ## 4. Connect your data
 
-Your pages, your server actions and the assistant read and change records through `src/data/`, and read nothing else: `collections.ts` holds the collections, `access.ts` says who the request is and what they may do, and `read.ts` is the pages' authorized, cached `read(name, query)`. Replace the collections with yours (rows from your API, or `arrayCollection` while you build), replace the policy in `access.ts` with your session and permissions, add `src/data/<product>.ts` for any other types and queries, and point your pages at them. The sample pages take the rest of what they draw from `src/data/sample.ts`. The template's own sample, ZZ Meridian's own dashboard, lives in `src/system/fixtures/` because the Atlas and every card preview read it; leave it there. Shape your records to the types the patterns define (`ActivityEvent`, `Incident`, `Service`) and they render without adapters. Two rules carry over:
+Your pages, your server actions and the assistant read and change records through `src/data/`, and read nothing else: `collections.ts` holds the collections, `access.ts` says who the request is and what they may do, and `read.ts` is the pages' authorized, cached `read(name, query)`. Replace the collections with yours (rows from your API, or `arrayCollection` while you build), replace the policy in `access.ts` with your session and permissions, add `src/data/<product>.ts` for any other types and queries, and point your pages at them. What the sample pages still draw as a constant (types, the regions list, the daily series the sign-in page shows) comes from `src/data/sample.ts`, and the bell's alerts are worked out by `readAlerts` in `src/data/alerts.ts`. The template's own sample, ZZ Meridian's own dashboard, lives in `src/system/fixtures/` because the Atlas and every card preview read it; leave it there. Shape your records to the types the patterns define (`ActivityEvent`, `Incident`, `Service`) and they render without adapters. Two rules carry over:
 
 - Read freshness from when the data arrived (the newest ingest time), never from `now()`.
 - Return `null` for "not measured"; the formatters render it as a dash, never as zero.
@@ -69,10 +69,14 @@ Every page is a `PageFrame` holding a `Stack` of `Row`s. Start from the closest 
 |---|---|
 | A summary with one leading figure | Overview (`/`) |
 | A list of records with filters | Requests (`/requests`) |
+| A list people create and move along | Operations tickets (`/operations-tickets`) |
+| What ran and what is going out | Tests and verification (`/tests`), Releases (`/releases`) |
 | One record | Request (`/requests/[id]`) |
-| Two big charts and breakdowns | Analytics (`/analytics`) |
+| Four figures for a period, then breakdowns | Analytics (`/analytics`) |
 | Services and incidents | Operations (`/health`) |
 | Settings and forms | Settings (`/settings`) |
+
+A list of records is the records template, `Records` in `src/components/templates/records`: summary tiles over the table, with `RecordsSkeleton` as its loading state inside `LoadingPage` (`src/components/patterns/page-loading`). A form reports unsaved changes to the shell through `useUnsavedChanges`, so leaving asks first. A copied page holds its writes in memory and shows some figures that are fixed; `skills/zz-meridian/references/customize.md` says which.
 
 If a page seems to need a new style, it needs a pattern or a component instead: specify it in its layer (see `CONTRIBUTING.md`).
 

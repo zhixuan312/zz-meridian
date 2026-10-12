@@ -6,6 +6,11 @@ import { nav, workspaces } from '@/app.config';
 import { navOf, WORKSPACE_IDS, workspaceOf } from '@/views/workspaces';
 
 const ROOT = path.resolve(import.meta.dirname, '..');
+/**
+ * The template's own repository keeps the Atlas. A project made by `create` has it removed (`scripts/brand.ts` deletes
+ * `app/system`), and the two entries that lead there go with it: the same declaration then holds eleven destinations.
+ */
+const ATLAS: [string, string][] = fs.existsSync(path.join(ROOT, 'app/system')) ? [['/system', 'Design system'], ['/system/start/start-a-dashboard', 'Docs']] : [];
 const items = nav.flatMap((g) => g.items);
 const entries = (id: (typeof WORKSPACE_IDS)[number]) => navOf(id).flatMap((g) => g.items).map((i) => [i.href, i.label]);
 
@@ -35,16 +40,17 @@ describe('the navigation as it is declared', () => {
   });
 });
 
-describe('the thirteen destinations', () => {
+describe('the destinations', () => {
   it('each belong to one workspace, under the names and in the order the product declares', () => {
-    expect(entries('main')).toEqual([['/', 'Overview'], ['/members', 'Members'], ['/settings', 'Settings'], ['/system', 'Design system'], ['/system/start/start-a-dashboard', 'Docs']]);
+    expect(entries('main')).toEqual([['/', 'Overview'], ['/members', 'Members'], ['/settings', 'Settings'], ...ATLAS]);
     expect(entries('business')).toEqual([['/analytics', 'Analytics'], ['/customers', 'Customers'], ['/requests', 'Requests']]);
     expect(entries('engineering')).toEqual([['/health', 'Operations'], ['/keys', 'API keys'], ['/operations-tickets', 'Operations tickets'], ['/tests', 'Tests and verification'], ['/releases', 'Releases']]);
   });
 
   it('are declared once: every entry has one owner, and the three navigations together are the whole of it', () => {
-    expect(items.length).toBe(13);
-    expect(new Set(items.map((i) => i.href)).size).toBe(13);
+    // Thirteen in the template: eleven, and the Atlas's two.
+    expect(items.length).toBe(11 + ATLAS.length);
+    expect(new Set(items.map((i) => i.href)).size).toBe(items.length);
     for (const i of items) expect(WORKSPACE_IDS, i.href).toContain(i.workspace);
     const derived = WORKSPACE_IDS.flatMap((id) => navOf(id).flatMap((g) => g.items));
     expect(derived.map((i) => i.href).sort()).toEqual(items.map((i) => i.href).sort());
@@ -61,8 +67,9 @@ describe('the workspace a page belongs to', () => {
     expect(workspaceOf('/customers')).toBe('business');
     expect(workspaceOf('/operations-tickets')).toBe('engineering');
     expect(workspaceOf('/health/')).toBe('engineering');
-    expect(workspaceOf('/system/patterns/rail')).toBe('main');
-    expect(workspaceOf('/system/start/start-a-dashboard')).toBe('main');
+    // The Atlas's pages are Main's where there is an Atlas, and nobody's where there is none.
+    expect(workspaceOf('/system/patterns/rail')).toBe(ATLAS.length ? 'main' : null);
+    expect(workspaceOf('/system/start/start-a-dashboard')).toBe(ATLAS.length ? 'main' : null);
   });
 
   it('is nobody\'s when no entry owns the path: a lookalike is not a detail', () => {
