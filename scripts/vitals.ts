@@ -1,7 +1,7 @@
 /**
  * Core Web Vitals on a mid-range phone, per page: LCP, CLS and INP, and the frames dropped while a person used it.
  *
- *   node scripts/vitals.ts [--base http://localhost:3100] [--routes /,/requests]
+ *   node scripts/vitals.ts [--base http://localhost:3100] [--routes /,/requests] [--atlas] [--list]
  *
  * The phone is Lighthouse's mobile profile: CPU slowed four times, Slow 4G (150 ms round trip, 1.6 Mbps down,
  * 750 kbps up), a 390px touch screen, motion not reduced. LCP and CLS come from PerformanceObservers installed before
@@ -12,10 +12,16 @@
  * A dropped frame is a gap over 50 ms between animation frames while those taps play out. Each line says how many controls
  * it tapped, found through open shadow roots (scripts/lib/deep.ts), so a page whose INP rests on no tap says so.
  *
- * Every static page and the detail pages in scripts/verify.config.ts are measured; the Atlas is not a product page.
+ * Every static page and the detail pages in scripts/verify.config.ts are measured, the Atlas's among them: its front
+ * page and one card page, the sample every other suite takes. `--atlas` measures every Atlas entry instead (the guides,
+ * the token views, the cards and the page specs, about fifteen minutes), and is not part of `pnpm verify`. The Atlas was
+ * left out as "not a product page" until it was measured once: every card page shifted 0.3 to 0.6 against the 0.1
+ * floor, and nothing had been looking. `--list` prints the routes a run would visit and exits without a browser.
+ *
  * Run it against a production build (`next start`), never `next dev`. Fails (exit 1) when a page's LCP is 2.5 s or more,
  * INP 200 ms or more, or CLS 0.1 or more.
  */
+import { atlasCoverage, atlasEntries } from './lib/atlas.ts';
 import { launch } from './lib/chrome.ts';
 import { DEEP_SOURCE } from './lib/deep.ts';
 import { discover } from './lib/routes.ts';
@@ -26,9 +32,15 @@ const opt = (k: string, d: string) => { const i = args.indexOf(k); return i >= 0
 const base = opt('--base', process.env.BASE ?? 'http://localhost:3100');
 // verify.config.ts is the team's, so read the one field this needs through its own type.
 const detailRoutes = (config as { detailRoutes?: string[] }).detailRoutes ?? [];
-const ROUTES = opt('--routes', '')
-  ? opt('--routes', '').split(',')
-  : [...discover().filter((r) => !r.startsWith('/system')), ...detailRoutes];
+const ATLAS = args.includes('--atlas');
+const entries = ATLAS ? await atlasEntries().catch((e: Error) => { console.error(`vitals --atlas: ${e.message}`); process.exit(1); }) : [];
+const ROUTES = ATLAS ? entries.map((e) => e.href) : opt('--routes', '') ? opt('--routes', '').split(',') : [...discover(), ...detailRoutes];
+if (args.includes('--list')) {
+  console.log(ROUTES.join('\n'));
+  if (ATLAS) console.log(`atlas: ${atlasCoverage(entries)}`);
+  process.exit(0);
+}
+if (ATLAS) console.log(`atlas: ${atlasCoverage(entries)}`);
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 /** Installed before any page script: every vital the page produces lands on window.__v. */

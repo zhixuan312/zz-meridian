@@ -355,7 +355,7 @@ async function start(env: NodeJS.ProcessEnv) {
 /** Run a node script to completion and keep what it printed; `echo` also shows its progress (stderr) as it goes, for a run measured in minutes. */
 const run = (script: string, extra: string[], env: NodeJS.ProcessEnv = process.env, echo = false) => new Promise<{ status: number | null; out: string; took: number }>((resolve) => {
   const t = Date.now();
-  const child = spawn('node', [script, ...extra], { cwd: ROOT, env: { ...env, DPR: process.env.DPR ?? '1' } as NodeJS.ProcessEnv });
+  const child = spawn('node', [script, ...extra], { cwd: ROOT, env });
   suites.add(child);
   let out = '';
   child.stdout.on('data', (d) => (out += d));

@@ -9,6 +9,12 @@ const CHROME = process.env.CHROME ?? (process.platform === 'darwin' ? '/Applicat
 // A Linux CI runner (Ubuntu 24.04's AppArmor) refuses Chrome's sandbox; there it only ever opens the app just built.
 const SANDBOX = process.platform === 'linux' && process.env.CI === 'true' ? ['--no-sandbox'] : [];
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+/**
+ * The device pixel ratio a page is opened at: 1 unless `DPR` asks for another. A check measures geometry, and for as long
+ * as this default was 2 while `pnpm verify` set 1, one suite gave two answers for one page, by hand and inside verify (a
+ * table 368px wide in a 356px frame at 2x that fits at 1x). A picture for the eye asks for 2 itself (scripts/shot.ts).
+ */
+const dpr = () => Number(process.env.DPR ?? 1);
 
 export type Page = {
   /** Uncaught exceptions and console errors since the last open(). */
@@ -139,7 +145,7 @@ async function attach(proc: ChildProcess, dir: string, handle: Launched): Promis
       if (theme) features.push({ name: 'prefers-color-scheme', value: theme });
       errors.length = 0;
       await send('Emulation.setEmulatedMedia', { features });
-      await send('Emulation.setDeviceMetricsOverride', { width, height, deviceScaleFactor: Number(process.env.DPR ?? 2), mobile: width < 600 });
+      await send('Emulation.setDeviceMetricsOverride', { width, height, deviceScaleFactor: dpr(), mobile: width < 600 });
       // A phone is touch: pointer: coarse, so touch targets and tap behaviour are what a phone gets.
       await send('Emulation.setTouchEmulationEnabled', width < 600 ? { enabled: true, maxTouchPoints: 5 } : { enabled: false });
       // A cookie is set through the network domain, BEFORE the navigation, so the very first request already carries it
@@ -163,7 +169,7 @@ async function attach(proc: ChildProcess, dir: string, handle: Launched): Promis
       if (full && m.sh > 0) {
         // The document never scrolls: grow the viewport by the scroll region's overflow so the whole page shows.
         h = m.h + m.sh;
-        await send('Emulation.setDeviceMetricsOverride', { width: width ?? m.w, height: h, deviceScaleFactor: Number(process.env.DPR ?? 2), mobile: (width ?? m.w) < 600 });
+        await send('Emulation.setDeviceMetricsOverride', { width: width ?? m.w, height: h, deviceScaleFactor: dpr(), mobile: (width ?? m.w) < 600 });
         await sleep(1200);
         await page.eval("new Promise(r => requestAnimationFrame(() => requestAnimationFrame(() => r(true))))");
       }

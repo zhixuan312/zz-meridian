@@ -210,5 +210,77 @@
     "suite": "vitals",
     "outcome": "pass",
     "line": "taps: 1"
+  },
+  {
+    "page": "/svg-contrast",
+    "suite": "audit",
+    "outcome": "fail",
+    "line": "contrast:"
+  },
+  {
+    "page": "/svg-label-on-bar-dark",
+    "suite": "audit",
+    "outcome": "fail",
+    "line": "contrast:"
+  },
+  {
+    "page": "/truncated",
+    "suite": "audit",
+    "outcome": "fail",
+    "line": "truncated:"
+  },
+  {
+    "page": "/truncated-fixed",
+    "suite": "audit",
+    "outcome": "pass"
+  },
+  {
+    "page": "/overlap-text",
+    "suite": "audit",
+    "outcome": "fail",
+    "line": "overlap:"
+  },
+  {
+    "page": "/overlap-line",
+    "suite": "audit",
+    "outcome": "fail",
+    "line": "overlap: a line"
+  },
+  {
+    "page": "/late-unnamed",
+    "suite": "audit",
+    "outcome": "fail",
+    "line": "unnamed:"
+  },
+  {
+    "page": "/late-unnamed-fixed",
+    "suite": "audit",
+    "outcome": "pass"
+  },
+  {
+    "page": "/late-dead-control",
+    "suite": "presses",
+    "outcome": "fail",
+    "line": "does nothing"
+  },
+  {
+    "page": "/late-dead-control-fixed",
+    "suite": "presses",
+    "outcome": "pass"
+  },
+  {
+    "page": "/late-unnamed-fixed",
+    "suite": "keyboard",
+    "outcome": "pass"
+  },
+  {
+    "page": "/svg-text-read",
+    "suite": "audit",
+    "outcome": "pass"
+  },
+  {
+    "page": "/overlap-none",
+    "suite": "audit",
+    "outcome": "pass"
   }
 ]

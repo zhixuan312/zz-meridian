@@ -48,6 +48,15 @@ Every page has an `h1`, `lang="en"`, a `main`, an opaque ground and controls of 
 | `/nav-missing-target` | Navigation: the mapping names a control the page does not have |
 | `/nav-multi` | Navigation: the control selector matches two elements, the first hidden |
 | `/deep-tap` | Vitals: the Alerts button a phone taps is inside an open root (passes, `taps: 1`) |
+| `/svg-contrast` | An SVG's `<text>` filled `#9a9a9a` on white. Light DOM, like every page from here down: these are about what the audit measures, not how deep it reaches |
+| `/svg-label-on-bar-dark` | Dark text on a dark bar inside the SVG (fails). Read against the page instead of the bar it would pass, and the white label of `/svg-text-read` would fail, so the pair proves the bar is what is read. The bar has `pointer-events: none`, so only a geometric test finds it |
+| `/svg-text-read` | Both corrected on one page (passes): a label dark enough on the page, and a white label on the dark bar |
+| `/truncated` | Text cut with an ellipsis and no `title`. `-fixed` carries the whole text in its `title` |
+| `/overlap-text` | Two paragraphs drawn on each other by a negative margin |
+| `/overlap-line` | A stroked line through an SVG caption |
+| `/overlap-none` | What is not a collision, on one page (passes): the two corrected twins, and the three shapes the first sweep of real pages misreported, a clamp's hidden lines, a line below the fold of a clipped list, and the text of a closed `<details>` |
+| `/late-unnamed` | An unnamed control that arrives in `[data-assistant-slot]` 2.6 s after the page, past the audit's fixed wait. Also a keyboard case (`-fixed`) |
+| `/late-dead-control` | A control that does nothing, arriving 3.6 s after the page, past the presses' fixed wait: unlisted, it was never pressed and the run read `0 controls pressed … 0 issues` |
 | `/slow-load` | Not a suite case: its image answers after 6 s, so `open()` must wait for the load event (`tests/deep-dom.test.ts`) |
 | `/helper` | Not a case: nested roots, a slot and a closed root, for `tests/deep-dom.test.ts` |
 
@@ -55,4 +64,4 @@ The decorative border is a light-DOM control on purpose: the audit's existing ri
 
 ## The manifest and the blind record
 
-`expected.json` lists `{ page, suite, outcome, line? }`: `outcome` is `fail` (exit non-zero), `pass` (exit zero) or `note` (exit zero and the line printed); `line` is a substring the suite must print. It states what each suite must say once it reads inside open roots. `blind-d37f8a8.txt` records what the suites at commit `d37f8a8`, before any change, said about the same pages: where it differs from the manifest, the old suite was blind (it passed a broken page) or wrong (it failed a correct one). Both files are frozen once this fixture set lands; a suite change adds cases to `tests/deep-checks.test.ts` and never edits them.
+`expected.json` lists `{ page, suite, outcome, line? }`: `outcome` is `fail` (exit non-zero), `pass` (exit zero) or `note` (exit zero and the line printed); `line` is a substring the suite must print. It states what each suite must say once it reads inside open roots. `blind-d37f8a8.txt` records what the suites at commit `d37f8a8`, before any change, said about the same pages: where it differs from the manifest, the old suite was blind (it passed a broken page) or wrong (it failed a correct one). The cases recorded there are never edited; a suite that learns to see something new appends its pages and its cases, as the rows from `/svg-contrast` down were.
