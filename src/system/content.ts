@@ -18,9 +18,11 @@ type Entry = {
   summary: string;
   status?: string;
   source: string;
-  kind: 'card' | 'doc' | 'tokens' | 'page';
+  kind: 'card' | 'template' | 'doc' | 'tokens' | 'page';
+  /** For a bound page: the id of the template entry it is built from. */
+  template?: string;
 };
-type SectionId = 'start' | 'tokens' | 'base' | 'components' | 'patterns' | 'pages' | 'system';
+type SectionId = 'start' | 'tokens' | 'base' | 'components' | 'patterns' | 'pages' | 'products' | 'system';
 
 export const SECTIONS: { id: SectionId; num?: string; title: string; line: string }[] = [
   { id: 'start', title: 'Start here', line: 'What Meridian is, the surfaces it serves, and how to build with it' },
@@ -29,6 +31,7 @@ export const SECTIONS: { id: SectionId; num?: string; title: string; line: strin
   { id: 'components', num: '2', title: 'Components', line: 'Single-purpose parts that never know which page they are on' },
   { id: 'patterns', num: '3', title: 'Patterns', line: 'Components composed for one dashboard job, charts included' },
   { id: 'pages', num: '4', title: 'Pages', line: 'Routes on the console and views in an MCP host' },
+  { id: 'products', num: '5', title: 'Product workspaces', line: 'How a product is assembled from its pages, declared in the configuration and written down in its guide' },
   { id: 'system', title: 'The system', line: 'How to change it, what changed, and what was decided' },
 ];
 
@@ -51,13 +54,13 @@ function parseSpec(md: string) {
   return { title, lead: lead.replace(/[*`]/g, ''), status, body };
 }
 
-/** Where cards live: the folder, its section and the prefix of its ids. A page template is listed in Pages under `template-<folder>`, the same id scripts/registry.ts gives its preview, so no bound page's id can collide with it. */
-const COMPONENT_DIRS: [string, SectionId, string][] = [
-  ['src/components/base', 'base', ''],
-  ['src/components/ui', 'components', ''],
-  ['src/components/patterns', 'patterns', ''],
-  ['src/components/charts', 'patterns', ''],
-  ['src/components/templates', 'pages', 'template-'],
+/** Where cards live: the folder, its section, the prefix of its ids and what each is. A page template is listed in Pages under `template-<folder>`, the same id scripts/registry.ts gives its preview, so no bound page's id can collide with it. */
+const COMPONENT_DIRS: [string, SectionId, string, 'card' | 'template'][] = [
+  ['src/components/base', 'base', '', 'card'],
+  ['src/components/ui', 'components', '', 'card'],
+  ['src/components/patterns', 'patterns', '', 'card'],
+  ['src/components/charts', 'patterns', '', 'card'],
+  ['src/components/templates', 'pages', 'template-', 'template'],
 ];
 
 const TOKEN_VIEWS = [
@@ -78,24 +81,26 @@ const DOCS: { id: string; section: SectionId; file: string; title?: string; summ
   { id: 'start-a-dashboard', section: 'start', file: 'docs/start-a-dashboard.md' },
   { id: 'data-display', section: 'start', file: 'docs/data-display.md' },
   { id: 'voice', section: 'start', file: 'docs/voice.md' },
+  { id: 'workspaces', section: 'products', file: 'docs/product-workspaces.md' },
   { id: 'contributing', section: 'system', file: 'CONTRIBUTING.md', title: 'Contributing', summary: 'How to propose, build, check and release a change' },
   { id: 'changelog', section: 'system', file: 'CHANGELOG.md', title: 'Changelog', summary: 'Every release, with what breaks and what to do instead' },
   { id: 'decisions', section: 'system', file: 'decisions', title: 'Decisions', summary: 'Choices recorded so they are not argued again' },
   { id: 'benchmark', section: 'system', file: 'docs/benchmark.md', title: 'Benchmark', summary: 'Meridian against award-winning systems, and what changed because of it' },
 ];
 
-export const PAGES: { id: string; title: string; route: string; embed?: string; spec: string }[] = [
+/** The bound pages. `template` names the template entry a page's view is built from; a page that arranges its own patterns names none. */
+export const PAGES: { id: string; title: string; route: string; embed?: string; spec: string; template?: string }[] = [
   { id: 'overview', title: 'Overview', route: '/', embed: '/embed/overview', spec: 'app/(dashboard)/(overview)/README.md' },
-  { id: 'requests', title: 'Requests', route: '/requests', embed: '/embed/requests', spec: 'app/(dashboard)/requests/README.md' },
+  { id: 'requests', title: 'Requests', route: '/requests', embed: '/embed/requests', spec: 'app/(dashboard)/requests/README.md', template: 'template-records' },
   { id: 'request', title: 'Request', route: '/requests/req_qmi1vbyi3uqt', spec: 'app/(dashboard)/requests/[id]/README.md' },
   { id: 'analytics', title: 'Analytics', route: '/analytics', spec: 'app/(dashboard)/analytics/README.md' },
   { id: 'health', title: 'Operations', route: '/health', embed: '/embed/health', spec: 'app/(dashboard)/health/README.md' },
-  { id: 'customers', title: 'Customers', route: '/customers', spec: 'app/(dashboard)/customers/README.md' },
-  { id: 'keys', title: 'API keys', route: '/keys', spec: 'app/(dashboard)/keys/README.md' },
-  { id: 'tickets', title: 'Operations tickets', route: '/operations-tickets', spec: 'app/(dashboard)/operations-tickets/README.md' },
-  { id: 'tests', title: 'Tests and verification', route: '/tests', spec: 'app/(dashboard)/tests/README.md' },
-  { id: 'releases', title: 'Releases', route: '/releases', spec: 'app/(dashboard)/releases/README.md' },
-  { id: 'members', title: 'Members', route: '/members', spec: 'app/(dashboard)/members/README.md' },
+  { id: 'customers', title: 'Customers', route: '/customers', spec: 'app/(dashboard)/customers/README.md', template: 'template-records' },
+  { id: 'keys', title: 'API keys', route: '/keys', spec: 'app/(dashboard)/keys/README.md', template: 'template-records' },
+  { id: 'tickets', title: 'Operations tickets', route: '/operations-tickets', spec: 'app/(dashboard)/operations-tickets/README.md', template: 'template-records' },
+  { id: 'tests', title: 'Tests and verification', route: '/tests', spec: 'app/(dashboard)/tests/README.md', template: 'template-records' },
+  { id: 'releases', title: 'Releases', route: '/releases', spec: 'app/(dashboard)/releases/README.md', template: 'template-records' },
+  { id: 'members', title: 'Members', route: '/members', spec: 'app/(dashboard)/members/README.md', template: 'template-records' },
   { id: 'settings', title: 'Settings', route: '/settings', spec: 'app/(dashboard)/settings/README.md' },
   { id: 'sign-in', title: 'Sign in', route: '/sign-in', spec: 'app/sign-in/README.md' },
   { id: 'not-found', title: 'Not found', route: '/does-not-exist', spec: 'app/not-found/README.md' },
@@ -116,22 +121,22 @@ export function entries(): Entry[] {
   const out: Entry[] = [];
   for (const d of DOCS.filter((x) => x.section === 'start')) { const e = docEntry(d); if (e) out.push(e); }
   for (const t of TOKEN_VIEWS) out.push({ href: `/system/tokens/${t.id}`, section: 'tokens', id: t.id, title: t.title, summary: t.summary, source: 'tokens/', kind: 'tokens' });
-  for (const [dir, section, prefix] of COMPONENT_DIRS) {
+  for (const [dir, section, prefix, kind] of COMPONENT_DIRS) {
     const abs = path.join(/*turbopackIgnore: true*/ ROOT, dir);
     if (!fs.existsSync(abs)) continue;
     for (const name of fs.readdirSync(abs).sort()) {
       const md = read(`${dir}/${name}/README.md`);
       if (!md) continue;
       const s = parseSpec(md);
-      out.push({ href: `/system/${section}/${prefix}${name}`, section, id: `${prefix}${name}`, title: s.title, summary: s.lead, status: s.status, source: `${dir}/${name}`, kind: 'card' });
+      out.push({ href: `/system/${section}/${prefix}${name}`, section, id: `${prefix}${name}`, title: s.title, summary: s.lead, status: s.status, source: `${dir}/${name}`, kind });
     }
   }
   for (const p of PAGES) {
     const md = read(p.spec);
     const s = md ? parseSpec(md) : null;
-    out.push({ href: `/system/pages/${p.id}`, section: 'pages', id: p.id, title: p.title, summary: s?.lead ?? '', status: s?.status, source: p.spec, kind: 'page' });
+    out.push({ href: `/system/pages/${p.id}`, section: 'pages', id: p.id, title: p.title, summary: s?.lead ?? '', status: s?.status, source: p.spec, kind: 'page', template: p.template });
   }
-  for (const d of DOCS.filter((x) => x.section === 'system')) { const e = docEntry(d); if (e) out.push(e); }
+  for (const d of DOCS.filter((x) => x.section === 'products' || x.section === 'system')) { const e = docEntry(d); if (e) out.push(e); }
   return out.map((e) => ({ ...e })).sort((a, b) => (a.section === b.section && a.kind === 'card' && b.kind === 'card' ? a.title.localeCompare(b.title) : 0));
 }
 
@@ -140,7 +145,7 @@ export function entry(section: string, id: string) {
 }
 
 export function specOf(e: Entry) {
-  if (e.kind === 'card') return parseSpec(read(`${e.source}/README.md`));
+  if (e.kind === 'card' || e.kind === 'template') return parseSpec(read(`${e.source}/README.md`));
   if (e.kind === 'page') return parseSpec(read(e.source));
   if (e.id === 'decisions') {
     const dir = path.join(/*turbopackIgnore: true*/ ROOT, 'decisions');
@@ -149,6 +154,16 @@ export function specOf(e: Entry) {
     return { title: 'Decisions', lead: 'One record per lasting decision. A record is superseded by a new one, never rewritten.', status: undefined, body };
   }
   return parseSpec(read(e.source));
+}
+
+/**
+ * The line an entry's article and the shelf name it by. Layer 4 tells a reusable template from a page bound to the
+ * product; a section with no number (the guides, the system's own pages) is named by its title alone.
+ */
+export function layerOf(e: Entry) {
+  const sec = SECTIONS.find((s) => s.id === e.section)!;
+  if (e.section === 'pages') return `Layer ${sec.num} · ${e.kind === 'template' ? 'Page template' : 'Page'}`;
+  return sec.num ? `Layer ${sec.num} · ${sec.title}` : sec.title;
 }
 
 /** Facts for the front door, derived, never typed in. */
@@ -163,6 +178,7 @@ export function stats() {
     components: all.filter((e) => e.section === 'components').length,
     patterns: all.filter((e) => e.section === 'patterns').length,
     pages: PAGES.length,
+    templates: all.filter((e) => e.kind === 'template').length,
     version: read('CHANGELOG.md').match(/^## \[([\d.]+)\]/m)?.[1] ?? '0.1.0',
   };
 }

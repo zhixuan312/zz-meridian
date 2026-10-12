@@ -22,7 +22,7 @@ import { API_KEYS, CUSTOMERS, type ApiKey, type CustomerRecord } from '@/system/
 import { MEMBERS, STATUSES, TEAMS, type Member } from '@/system/fixtures/sample-members';
 import { ADD_ONS, MAIN_ROLES } from '@/data/roles';
 import { ACTIVITY, DEMO_NOW, ENDPOINTS, INCIDENTS, REQUESTS, SERVICES, STATUS_MIX, demoSeries, type DailyPoint, type Endpoint, type RequestRow } from '@/system/fixtures/sample';
-import { PAST_INCIDENTS } from '@/system/fixtures/sample-ops';
+import { PAST_INCIDENTS, REGION_TRAFFIC, WEEKDAY_HOURS } from '@/system/fixtures/sample-ops';
 import { RELEASES, RUNS, TICKETS, type Release, type Ticket, type VerificationRun } from '@/system/fixtures/sample-engineering';
 import type { ActivityEvent } from '@/components/patterns/activity-feed';
 import type { Incident } from '@/components/patterns/incident-card';
@@ -143,6 +143,30 @@ export const responses: Collection<{ label: string; value: number }, 'label'> = 
   title: (r) => r.label,
   fields: z.object({ value: z.number() }),
   rows: STATUS_MIX,
+  allow: [],
+});
+
+/** Requests for each weekday and UTC hour: the cells of Analytics' heatmap, and the hours of the day are their sums. Read-only. */
+export const hours: Collection<(typeof WEEKDAY_HOURS)[number], 'id'> = arrayCollection({
+  name: 'hours',
+  label: 'Requests by weekday and hour',
+  description: 'One row per weekday and hour (UTC): the requests over the period. The weekday is 0 (Monday) to 6 (Sunday) and the hour 0 to 23; the id is both, as "weekday-hour".',
+  key: 'id',
+  title: (h) => h.id,
+  fields: z.object({ weekday: z.number().int().min(0).max(6), hour: z.number().int().min(0).max(23), requests: z.number() }),
+  rows: WEEKDAY_HOURS,
+  allow: [],
+});
+
+/** Requests and median latency for each region, in the order Analytics draws them. Read-only. */
+export const regions: Collection<(typeof REGION_TRAFFIC)[number], 'label'> = arrayCollection({
+  name: 'regions',
+  label: 'Requests by region',
+  description: 'Each region over the period: requests and median latency (p50) in ms.',
+  key: 'label',
+  title: (r) => r.label,
+  fields: z.object({ value: z.number(), p50: z.number() }),
+  rows: REGION_TRAFFIC,
   allow: [],
 });
 
@@ -305,4 +329,4 @@ export const workspace: Collection<WorkspaceRow, 'id'> = arrayCollection({
   pageOnly: ['update'],
 });
 
-export const collections: AnyCollection[] = [members, keys, requests, days, endpoints, responses, services, incidents, activity, customers, tickets, tests, releases, workspace];
+export const collections: AnyCollection[] = [members, keys, requests, days, endpoints, responses, hours, regions, services, incidents, activity, customers, tickets, tests, releases, workspace];

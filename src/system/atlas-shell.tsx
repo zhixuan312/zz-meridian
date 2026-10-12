@@ -11,11 +11,11 @@ import { AppMark } from '@/components/base/app-mark';
 import { Kbd } from '@/components/ui/kbd';
 import { AppearanceMenu } from '@/components/patterns/appearance-menu';
 
-export type AtlasNav = { id: string; num?: string; title: string; line: string; items: { href: string; title: string; status?: string; kind: string }[] }[];
+export type AtlasNav = { id: string; num?: string; title: string; line: string; items: { href: string; title: string; status?: string; mark?: string }[] }[];
 
 /**
  * The Atlas frame: a reference shelf on the left, the reading column on the right. The shelf lists every entry by
- * layer, numbered 0 to 4 from tokens to pages; "/" filters it; the current section opens on its own.
+ * layer, numbered 0 to 5 from tokens to the product's workspaces; "/" filters it; the current section opens on its own.
  */
 export function AtlasShell({ nav, children }: { nav: AtlasNav; children: ReactNode }) {
   // The frame never reads the address (see `AppShell` for why): the shelf and the drawer do, each behind its own boundary.
@@ -23,7 +23,7 @@ export function AtlasShell({ nav, children }: { nav: AtlasNav; children: ReactNo
   const shelf = <Suspense fallback={null}><Shelf nav={nav} /></Suspense>;
   return (
     <div className="min-h-dvh lg:grid lg:grid-cols-[var(--rail-width)_minmax(0,1fr)]">
-      {/* The first stop for a keyboard: past the shelf's sixty entries, straight to what is being read. */}
+      {/* The first stop for a keyboard: past the whole shelf, straight to what is being read. */}
       <a
         href="#content"
         className="pointer-events-none fixed top-3 left-3 z-(--layer-tooltip) -translate-y-16 rounded-md bg-surface-raised px-3 py-2 text-sm font-medium text-ink opacity-0 shadow-overlay focus-visible:pointer-events-auto focus-visible:translate-y-0 focus-visible:opacity-100"
@@ -133,6 +133,7 @@ function Shelf({ nav }: { nav: AtlasNav }) {
                         <Link href={it.href} aria-current={on ? 'page' : undefined} className={cn('relative flex h-8 items-center gap-2 rounded-sm px-2.5 text-sm', on ? 'bg-accent-tint font-medium text-ink' : 'text-ink-2 hover:bg-fill-hover hover:text-ink')}>
                           {on ? <span aria-hidden className="absolute top-1.5 bottom-1.5 -left-[9px] w-0.5 rounded-full bg-accent" /> : null}
                           <span className="flex-1 truncate">{it.title}</span>
+                          {/* A template is told from the pages built from it: the layout names the mark, the shelf only draws it. */}{it.mark ? <span className="font-mono text-2xs tracking-[0.08em] text-ink-3 uppercase">{it.mark}</span> : null}
                           {/* Only the exception is marked: most cards are beta, so a mark on every row says nothing. */}{it.status === 'draft' ? <span className="font-mono text-2xs tracking-[0.08em] text-ink-2 uppercase">{it.status}</span> : null}
                         </Link>
                       </li>

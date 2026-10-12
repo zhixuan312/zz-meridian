@@ -122,14 +122,17 @@ describe('every page shares a context within its budget, and nothing hidden', ()
     const { membersContext } = await import('@/views/members-context');
     const { keysContext } = await import('@/views/keys-context');
     const { requestContext } = await import('@/views/request-context');
-    const { REGION_LATENCY, demoHeatmap, requestsByHour, traceOf } = await import('@/data/sample');
+    const { traceOf } = await import('@/data/sample');
+    const { REGION_TRAFFIC, WEEKDAY_HOURS } = await import('@/system/fixtures/sample-ops');
+    const heat = Array.from({ length: 7 }, (_, d) => WEEKDAY_HOURS.filter((r) => r.weekday === d).map((r) => r.requests));
+    const hours = Array.from({ length: 24 }, (_, h) => ({ key: String(h), label: `${String(h).padStart(2, '0')}:00`, value: heat.reduce((n, row) => n + row[h], 0) }));
     const { CUSTOMERS } = await import('@/system/fixtures/sample-records');
     const { MEMBERS } = await import('@/system/fixtures/sample-members');
     const { API_KEYS, REQUESTS } = await import('@/system/fixtures/sample-records').then(async (m) => ({ ...m, REQUESTS: (await import('@/system/fixtures/sample')).REQUESTS }));
     const { SCOPES } = await import('@/views/key-scopes');
     const now = DEMO_NOW.toISOString();
     const contexts = [
-      analyticsContext({ ...overview('30d'), endpoints: ENDPOINTS, heat: demoHeatmap(), hours: requestsByHour(), regions: REGION_LATENCY }),
+      analyticsContext({ ...overview('30d'), endpoints: ENDPOINTS, heat, hours, regions: REGION_TRAFFIC }),
       customersContext(CUSTOMERS, CUSTOMERS, { q: '', plan: 'all', status: 'all', sort: 'spend', dir: 'desc', page: '1' }),
       membersContext(MEMBERS, now),
       keysContext(API_KEYS, now, SCOPES),

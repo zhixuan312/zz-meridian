@@ -179,6 +179,8 @@ if (has('--no-atlas') || has('--product')) {
   fs.rmSync(file('app/system'), { recursive: true, force: true });
   const atlasOnly = ['content.ts', 'hero.tsx', 'markdown.tsx', 'page-stage.tsx', 'atlas-shell.tsx', 'card-stage.tsx', 'preview-loaders.ts', 'strata.tsx', 'token-view.tsx', 'tokens-data.ts'];
   for (const f of atlasOnly) fs.rmSync(file(`src/system/${f}`), { force: true });
+  // The test of the content module goes with it: a shipped test of a module the project no longer has would fail there.
+  fs.rmSync(file('tests/atlas-layers.test.ts'), { force: true });
   // Nav entries for /system and /system/... exactly (never /systemic), then any group they leave empty.
   let cfg = read('src/app.config.ts').replace(/\n\s*\{ href: '\/system(?:\/[^']*)?'[^}]*\},/g, '');
   cfg = cfg.replace(/\n {2}\{\n(?: {4}label: '[^']*',\n)? {4}items: \[\s*\],\n {2}\},/g, '');

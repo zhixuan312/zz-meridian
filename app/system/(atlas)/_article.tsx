@@ -1,8 +1,8 @@
-import type { ReactNode } from 'react';
+import { Fragment, type ReactNode } from 'react';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { ArrowLeft, ArrowRight } from 'lucide-react';
-import { SECTIONS, entries, entry, specOf } from '@/system/content';
+import { entries, entry, layerOf, specOf } from '@/system/content';
 import { Doc, headings } from '@/system/markdown';
 import { Badge } from '@/components/ui/badge';
 
@@ -19,23 +19,31 @@ export async function entryMetadata(section: string, params: Promise<{ id: strin
 
 /** An entry set for reading: its masthead, then what the route puts on the stage, its specification and its neighbours. */
 export function Article({ e, stage }: { e: Entry; stage?: ReactNode }) {
-  const sec = SECTIONS.find((s) => s.id === e.section)!;
   const spec = e.kind === 'tokens' ? null : specOf(e);
   const toc = spec ? headings(spec.body) : [];
   const all = entries();
   const i = all.findIndex((x) => x.href === e.href);
   const prev = all[i - 1], next = all[i + 1];
+  // Layer 4 tells a template from the pages built from it: each names the other, so a reader can walk either way.
+  const from = e.template ? all.find((x) => x.kind === 'template' && x.id === e.template) : undefined;
+  const builtOn = e.kind === 'template' ? all.filter((x) => x.template === e.id) : [];
 
   return (
     <article className="mx-auto w-full max-w-[1240px] px-(--gutter) pt-10 pb-24 lg:pt-14">
       <header className="max-w-[60rem]">
-        <p className="t-kicker">{sec.num ? `Layer ${sec.num} · ${sec.title}` : sec.title}</p>
+        <p className="t-kicker">{layerOf(e)}</p>
         <div className="mt-5 flex flex-wrap items-center gap-x-4 gap-y-2">
           <h1 className="t-page">{e.title}</h1>
           {e.status ? <Badge tone={e.status === 'draft' ? 'warning' : 'neutral'} dot className="mt-2">{e.status}</Badge> : null}
         </div>
         {(spec?.lead || e.summary) ? <p className="t-lead mt-4 max-w-[62ch] text-pretty">{spec?.lead || e.summary}</p> : null}
         <p className="t-mono mt-4 text-ink-3">{e.source}</p>
+        {from ? <p className="t-small mt-3 text-ink-2">Built from the <Link href={from.href} className="link font-medium">{from.title}</Link> template.</p> : null}
+        {builtOn.length ? (
+          <p className="t-small mt-3 max-w-[62ch] text-ink-2">
+            Pages built from this template: {builtOn.map((p, n) => <Fragment key={p.id}>{n ? ', ' : ''}<Link href={p.href} className="link font-medium">{p.title}</Link></Fragment>)}.
+          </p>
+        ) : null}
       </header>
 
       {stage ? <div className="mt-10">{stage}</div> : null}

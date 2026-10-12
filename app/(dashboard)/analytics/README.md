@@ -25,9 +25,9 @@ Status: beta
 
 ## Data
 
-- Heatmap: `demoHeatmap()`, requests summed by UTC weekday and hour.
-- By hour: the heatmap's columns summed (`requestsByHour()`).
-- Regions: `REGION_LATENCY`, requests and median latency.
+- Heatmap: the rows of the `hours` collection, requests for each UTC weekday and hour (`analyticsFigures()`, which asks `hours:read`).
+- By hour: the heatmap's columns summed; there is no third collection.
+- Regions: the rows of the `regions` collection, requests and median latency, in the order the page draws them (`regions:read`).
 - Daily series and endpoints: `demoSeries(period)` and `ENDPOINTS`.
 - Error rate above 1% is critical ink; p95 above one second is warning ink. The longest p95 is the one accent bar.
 

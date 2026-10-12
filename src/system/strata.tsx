@@ -1,10 +1,10 @@
 import Link from 'next/link';
 import { ArrowRight } from 'lucide-react';
-import { app } from '@/app.config';
+import { app, workspaces } from '@/app.config';
 
 type Layer = { id: string; num?: string; title: string; line: string; count: number; href: string };
 
-/** Five layers drawn as strata, the widest at the bottom, each holding a live miniature of what it contains. */
+/** The layers drawn as strata, the widest at the bottom and the last one full width, each holding a miniature of what it contains. */
 export function Strata({ sections }: { sections: Layer[] }) {
   const top = [...sections].reverse();
   return (
@@ -14,7 +14,7 @@ export function Strata({ sections }: { sections: Layer[] }) {
           key={l.id}
           href={l.href}
           className="edge-lit edge-hover group relative grid w-full grid-cols-[2.5rem_minmax(0,1fr)_auto] items-center gap-4 rounded-lg border border-line bg-surface px-5 py-4 transition-[box-shadow] duration-(--dur-enter) hover:shadow-halo sm:grid-cols-[3rem_minmax(0,14rem)_minmax(0,1fr)_auto]"
-          style={{ maxWidth: `${76 + i * 6}%`, minWidth: 'min(100%, 22rem)' }}
+          style={{ maxWidth: `${100 - (top.length - 1 - i) * 5}%`, minWidth: 'min(100%, 22rem)' }}
         >
           <span className="t-figure t-num text-ink-3 transition-colors group-hover:text-accent-ink">{l.num}</span>
           <span className="min-w-0">
@@ -28,7 +28,7 @@ export function Strata({ sections }: { sections: Layer[] }) {
           </span>
         </Link>
       ))}
-      <p className="t-eyebrow mt-3">Tokens at the base · pages at the top</p>
+      <p className="t-eyebrow mt-3">Tokens at the base · the product at the top</p>
     </div>
   );
 }
@@ -79,6 +79,14 @@ function Mini({ id }: { id: string }) {
                 <span className="flex-1 rounded-[1px] bg-fill-track" />
               </span>
             </span>
+          ))}
+        </span>
+      );
+    case 'products':
+      return (
+        <span className="flex items-center gap-1.5">
+          {(Object.keys(workspaces) as (keyof typeof workspaces)[]).map((id, i) => (
+            <span key={id} className={i === 0 ? 'inline-flex h-7 items-center rounded-md bg-accent-tint px-2.5 text-xs font-medium text-ink ring-1 ring-accent-line' : 'inline-flex h-7 items-center rounded-md border border-line-strong bg-surface px-2.5 text-xs font-medium text-ink-2'}>{workspaces[id].label}</span>
           ))}
         </span>
       );

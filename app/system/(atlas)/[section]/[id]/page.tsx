@@ -23,8 +23,8 @@ async function toolResultOf(embed?: string) {
   return { name: tool.name, text: contextText(context), resourceUri: tool.resourceUri, structured: Object.keys(data) };
 }
 
-/** Cards, pages and the token views: the entries that put something on the stage. The guides read from their own routes. */
-const STAGED = ['card', 'page', 'tokens'];
+/** Cards, templates, pages and the token views: the entries that put something on the stage. The guides read from their own routes. */
+const STAGED = ['card', 'template', 'page', 'tokens'];
 
 export function generateStaticParams() {
   return entries().filter((e) => STAGED.includes(e.kind)).map((e) => ({ section: e.section, id: e.id }));
@@ -42,7 +42,7 @@ export default async function EntryPage({ params }: { params: Promise<{ section:
   if (!e) notFound();
   const page = PAGES.find((p) => p.id === e.id);
   const stage =
-    e.kind === 'card' ? <CardStage id={`${e.section}/${e.id}`} />
+    e.kind === 'card' || e.kind === 'template' ? <CardStage id={`${e.section}/${e.id}`} />
     // The tool result is read at request time, like the view it describes; the stage shows at once without it.
     : e.kind === 'page' && page ? <Suspense fallback={<PageStage route={page.route} embed={page.embed} title={page.title} />}><StageWithTool page={page} /></Suspense>
     : e.kind === 'tokens' ? <TokenView view={e.id} groups={tokenGroups()} />

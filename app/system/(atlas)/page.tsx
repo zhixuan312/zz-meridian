@@ -19,7 +19,7 @@ export default function AtlasHome() {
   const changelog = all.find((e) => e.id === 'changelog')?.href;
   const series = demoSeries('30d').current;
   const counts = [
-    [s.tokens, 'Tokens'], [s.components, 'Components'], [s.patterns, 'Patterns'], [s.pages, 'Pages'], [2, 'Themes'], [4, 'Accents'], [3, 'Surfaces'],
+    [s.tokens, 'Tokens'], [s.components, 'Components'], [s.patterns, 'Patterns'], [s.templates, 'Templates'], [s.pages, 'Pages'], [2, 'Themes'], [4, 'Accents'], [3, 'Surfaces'],
   ] as const;
   return (
     <div className="mx-auto w-full max-w-[1320px] px-(--gutter) pb-24">
@@ -34,7 +34,7 @@ export default function AtlasHome() {
         <div className="mt-10 grid items-end gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
           <div>
             <p className="t-lead text-pretty">
-              Tokens, five layers of React components and a working template that hold at a desk, on a phone, and inside the conversation where an agent reads the dashboard with you.
+              Tokens, components, patterns, pages and a product’s workspaces, in a working template that holds at a desk, on a phone, and inside the conversation where an agent reads the dashboard with you.
             </p>
             <div className="mt-7 flex flex-wrap items-center gap-3">
               <Link href="/system/tokens/colour" className="press group inline-flex h-(--control-lg) items-center gap-2 rounded-lg bg-accent bg-(image:--accent-fill) px-5 text-base font-medium text-on-accent shadow-accent hover:brightness-[0.94]">
@@ -55,7 +55,7 @@ export default function AtlasHome() {
       </section>
 
       {/* Counts */}
-      <section aria-label="The system in numbers" className="mt-20 grid grid-cols-2 border-y border-line sm:grid-cols-4 lg:grid-cols-7">
+      <section aria-label="The system in numbers" className="mt-20 grid grid-cols-2 border-y border-line sm:grid-cols-4 lg:grid-cols-8">
         {counts.map(([n, l], i) => (
           <div key={l} className={'px-1 py-6 sm:px-5 ' + (i > 0 ? 'lg:border-l lg:border-line' : '')}>
             <p className="t-figure t-num">{n}</p>
@@ -66,7 +66,7 @@ export default function AtlasHome() {
 
       {/* Layers */}
       <section className="mt-28">
-        <SectionHead title={<>Five layers,<br />built from the bottom.</>} line="Each layer uses only the ones beneath it, so a change at the bottom moves everything above, and nothing above invents a value of its own." />
+        <SectionHead title={<>Six layers,<br />built from the bottom.</>} line="Each layer uses only the ones beneath it, so a change at the bottom moves everything above, and nothing above invents a value of its own." />
         <Strata sections={SECTIONS.filter((x) => x.num).map((x) => ({ ...x, count: all.filter((e) => e.section === x.id).length, href: all.find((e) => e.section === x.id)?.href ?? '/system' }))} />
       </section>
 

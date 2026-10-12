@@ -17,7 +17,7 @@ export type MainRole = (typeof MAIN_ROLES)[number];
 export type AddOn = (typeof ADD_ONS)[number];
 
 /** Reading every dashboard is one grant per dashboard, so the four roles that see the console share this list. */
-const DASHBOARDS: readonly Grant[] = ['requests:read', 'days:read', 'endpoints:read', 'responses:read', 'services:read', 'incidents:read', 'customers:read', 'activity:read', 'tickets:read', 'tests:read', 'releases:read'];
+const DASHBOARDS: readonly Grant[] = ['requests:read', 'days:read', 'endpoints:read', 'responses:read', 'hours:read', 'regions:read', 'services:read', 'incidents:read', 'customers:read', 'activity:read', 'tickets:read', 'tests:read', 'releases:read'];
 
 /** Each role's own grants, and only its own: a member's add-ons are unioned in by `effective`, never written here. */
 export const GRANTS: Record<MainRole | AddOn, readonly Grant[]> = {

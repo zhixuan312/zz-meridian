@@ -24,14 +24,14 @@ export const PAST_INCIDENTS: Incident[] = [
   },
 ];
 
-/** Requests by hour of day (UTC), summed across the week: the shape of a working day. */
-export function requestsByHour() {
-  const grid = demoHeatmap();
-  return Array.from({ length: 24 }, (_, h) => ({ key: String(h), label: `${String(h).padStart(2, '0')}:00`, value: grid.reduce((a, row) => a + row[h], 0) }));
-}
+/**
+ * Requests for each weekday (0 is Monday) and UTC hour: the Analytics heatmap's cells, one row each. These are the
+ * sample's own fixed shape, not worked out from the request log or the daily totals.
+ */
+export const WEEKDAY_HOURS = demoHeatmap().flatMap((row, weekday) => row.map((requests, hour) => ({ id: `${weekday}-${hour}`, weekday, hour, requests })));
 
-/** Requests and median latency by region. */
-export const REGION_LATENCY = REGIONS.map((r, i) => ({ ...r, p50: [92, 118, 164, 101][i] }));
+/** Requests and median latency (ms) for each region, in the order Analytics draws them. Fixed, like the grid above. */
+export const REGION_TRAFFIC = REGIONS.map((r, i) => ({ ...r, p50: [92, 118, 164, 101][i] }));
 
 export const TIMEZONES = [
   { value: 'UTC', label: 'UTC', description: 'Coordinated Universal Time' },

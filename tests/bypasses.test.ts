@@ -49,7 +49,7 @@ describe('the workspace is a collection', () => {
   });
 });
 
-describe('the analytics figures ask requests:read', () => {
+describe('the analytics figures ask for their own grants', () => {
   it('refuses the analytics tool to somebody with no session', async () => {
     jar.value = 'members_999';
     await expect(byName.analytics.read({ period: '30d' })).rejects.toBeTruthy();

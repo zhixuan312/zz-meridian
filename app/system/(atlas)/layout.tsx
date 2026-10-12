@@ -8,7 +8,7 @@ export default function AtlasLayout({ children }: { children: React.ReactNode })
   const all = entries();
   const nav: AtlasNav = SECTIONS.map((s) => ({
     ...s,
-    items: all.filter((e) => e.section === s.id).map((e) => ({ href: e.href, title: e.title, status: e.status, kind: e.kind })),
+    items: all.filter((e) => e.section === s.id).map((e) => ({ href: e.href, title: e.title, status: e.status, mark: e.kind === 'template' ? 'Template' : undefined })),
   }));
   return <AtlasShell nav={nav}>{children}</AtlasShell>;
 }
