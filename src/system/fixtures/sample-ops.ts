@@ -33,7 +33,7 @@ export const WEEKDAY_HOURS = demoHeatmap().flatMap((row, weekday) => row.map((re
 /** Requests and median latency (ms) for each region, in the order Analytics draws them. Fixed, like the grid above. */
 export const REGION_TRAFFIC = REGIONS.map((r, i) => ({ ...r, p50: [92, 118, 164, 101][i] }));
 
-/** What the bell holds: the live incident first (new), then what happened recently that someone may act on. */
+/** A fixed set of alerts for the Shell tools card's specimens and the Atlas's held-still screens (the product's bell reads `readAlerts()`): the live incident first (new), then what happened recently that someone may act on. */
 export const ALERTS: Alert[] = [
   { id: 'a1', tone: 'warning', unread: true, title: INCIDENTS[0].title, detail: 'Monitoring · p95 back under 650ms', at: INCIDENTS[0].updates.at(-1)!.at, href: '/health' },
   { id: 'a2', tone: 'warning', title: 'Lumen Studio is past due', detail: 'Their latest invoice is overdue', at: ago(0.3 * DAY), href: '/customers' },

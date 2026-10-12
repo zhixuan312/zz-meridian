@@ -51,10 +51,11 @@ export async function readActivity(): Promise<ActivityEvent[]> {
   return (await read('activity', { sort: { field: 'at', dir: 'desc' }, limit: ACTIVITY_SHOWN })).rows as ActivityEvent[];
 }
 
-/** Every incident, newest first: the open one, if any, and those resolved. */
-export async function readIncidents(): Promise<{ current: Incident | null; past: Incident[]; all: Incident[] }> {
+/** Every incident, newest first: those nobody has resolved (the newest of them is `current`, the one a page leads with) and those resolved. */
+export async function readIncidents(): Promise<{ current: Incident | null; open: Incident[]; past: Incident[]; all: Incident[] }> {
   const all = (await read('incidents', { sort: { field: 'started', dir: 'desc' } })).rows as Incident[];
-  return { current: all.find((i) => i.state !== 'resolved') ?? null, past: all.filter((i) => i.state === 'resolved'), all };
+  const open = all.filter((i) => i.state !== 'resolved');
+  return { current: open[0] ?? null, open, past: all.filter((i) => i.state === 'resolved'), all };
 }
 
 export async function readServices(): Promise<Service[]> {

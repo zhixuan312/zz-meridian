@@ -9,7 +9,8 @@ import { formatDuration } from '@/lib/format';
 import { formatDate, formatDateTime, formatRelative } from '@/lib/format-date';
 import { freshnessOf, type Fact, type Insight, type SharedContext } from '@/lib/shared-context';
 
-export type HealthData = { services: Service[]; current: Incident | null; past: Incident[]; updatedAt: string; now: string };
+/** `current` is the newest incident nobody has resolved, the one the page leads with; `alsoOpen` is every other one. */
+export type HealthData = { services: Service[]; current: Incident | null; alsoOpen?: Incident[]; past: Incident[]; updatedAt: string; now: string };
 
 const uptime = (n: number) => `${(n * 100).toFixed(n >= 0.9999 ? 3 : 2)}%`;
 const hours = (a: string, b: string) => {
@@ -42,6 +43,7 @@ export function healthContext(data: HealthData): SharedContext {
     insights.push({ text: `Open incident "${current.title}" on ${current.service}, ${current.severity}, ${current.state}: started ${formatRelative(current.started, now)} (${formatDateTime(current.started)} UTC)${latest ? `; latest update ${formatRelative(latest.at, now)}: "${latest.text}"` : ''}.`, evidence: '/health' });
     if (current.state === 'monitoring') unknowns.push('The open incident is monitoring: a fix is in place, and nobody has yet confirmed it holds.');
   }
+  for (const i of data.alsoOpen ?? []) insights.push({ text: `Also open: "${i.title}" on ${i.service}, ${i.severity}, ${i.state}, started ${formatRelative(i.started, now)}.`, evidence: '/health' });
   const resolved = past.filter((i) => i.resolved);
   if (resolved.length) {
     const longest = resolved.reduce((m, i) => (Date.parse(i.resolved!) - Date.parse(i.started) > Date.parse(m.resolved!) - Date.parse(m.started) ? i : m));

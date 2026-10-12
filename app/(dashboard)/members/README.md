@@ -35,7 +35,7 @@ The body (rows 1 and 2) is the records template, `Records` from `src/components/
 
 ## Data
 
-The `members` collection in `src/data/collections.ts`, read with `members.query({})` at request time. Server actions in `actions.ts` call `members.create` (status `Invited`, joined today by the data's clock, never active), `members.update` (status), `members.remove` and `assignRole`; the view refreshes the page after each and keeps no copy of the rows. Last active is relative to the data's clock.
+The `members` collection in `src/data/collections.ts`, read through `read('members')` at request time, so the person's grant is asked on the path every page reads by. Server actions in `actions.ts` call `members.create` (status `Invited`, joined today by the data's clock, never active), `members.update` (status), `members.remove` and `assignRole`; the view refreshes the page after each and keeps no copy of the rows. Last active is relative to the data's clock.
 
 Every one of those writes passes `src/data/member-mutations.ts`, which re-resolves the caller, checks the operation's grant and refuses a change or removal of an Owner without `workspace:update`, one's own role or add-ons, suspending or removing oneself, and any change that would leave no active Owner. The page reads that boundary per row, once, and is handed only what it allows: `memberAccess(id)` gives the row's booleans, its role choices, its add-on choices and its reason, and `invitableRoles()` gives the roles an invitation may carry. The page decides nothing from a role of its own. A role or add-on change is one `assignRole` write, with its Activity line in the same step; the matrix in row 2 asks `whoCan` over the same `GRANTS` the boundary uses.
 

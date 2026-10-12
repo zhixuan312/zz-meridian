@@ -97,14 +97,14 @@ export const requestTool = defineViewTool({
 export const healthTool = defineViewTool({
   name: 'health',
   title: 'Operations',
-  description: 'Every service now and over 90 days, the open incident with its latest update, and the incidents resolved in the last 90 days.',
+  description: 'Every service now and over 90 days, every open incident with its latest update, and the incidents resolved in the last 90 days.',
   needs: FEATURES.health.needs,
   input: z.object({}),
   resourceUri: `ui://${slug}/health`,
   async read() {
     await requireNeed(FEATURES.health.needs);
-    const [services, { current, past }] = await Promise.all([readServices(), readIncidents()]);
-    const data = { services, current, past, updatedAt: updatedAt(), now: clock().toISOString() };
+    const [services, { current, open, past }] = await Promise.all([readServices(), readIncidents()]);
+    const data = { services, current, alsoOpen: open.slice(1), past, updatedAt: updatedAt(), now: clock().toISOString() };
     return { context: healthContext(data), data };
   },
 });
@@ -185,12 +185,12 @@ export const testsTool = defineViewTool({
   title: 'Tests and verification',
   description: 'The verification runs: how many verifications have a latest run, how many are failing or skipped, why the failing ones failed, and the newest runs.',
   needs: FEATURES.tests.needs,
-  input: z.object({ q: z.string().max(100).optional(), state: z.enum(['all', 'passed', 'failed', 'skipped']).optional(), release: z.string().max(40).optional().describe('A release id: only the runs of that release.') }),
-  async read({ q = '', state = 'all', release = '' }) {
+  input: z.object({ q: z.string().max(100).optional(), state: z.enum(['all', 'passed', 'failed', 'skipped']).optional(), release: z.string().max(40).optional().describe('A release id: only the runs of that release.'), runs: z.enum(['all', 'latest']).optional().describe('`latest` keeps only the latest run of each verification, which is what the figures count.') }),
+  async read({ q = '', state = 'all', release = '', runs = 'all' }) {
     // The one way the tool sees runs: the read the page uses, so the figures it is told are the figures on the screen.
     const { rows, observedAt } = await readRuns();
     const { latest, failing, skipped } = testFigures(rows);
-    return { context: testsContext(rows, observedAt, { q, state, release }), data: { latest: latest.length, failing: failing.length, skipped: skipped.length } };
+    return { context: testsContext(rows, observedAt, { q, state, release, runs }), data: { latest: latest.length, failing: failing.length, skipped: skipped.length } };
   },
 });
 

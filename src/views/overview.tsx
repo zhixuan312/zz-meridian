@@ -78,7 +78,7 @@ export function MainRegions({ summary: { business, operation, delivery } }: { su
   const deliveryRows: KeyValueItem[] = delivery ? [
     { label: TICKET_METRICS.open.label, value: figure(delivery.open, ticketsAddress({ q: '', state: 'open', priority: 'all' })) },
     { label: TICKET_METRICS.waiting.label, value: figure(delivery.waiting, ticketsAddress({ q: '', state: 'waiting', priority: 'all' })) },
-    { label: TEST_METRICS.failing.label, value: figure(delivery.failing, testsAddress({ q: '', state: 'failed', release: '' })) },
+    { label: TEST_METRICS.failing.label, value: figure(delivery.failing, testsAddress({ q: '', state: 'failed', release: '', runs: 'latest' })) },
     { label: RELEASE_METRICS.live.label, value: delivery.live },
     { label: RELEASE_METRICS.ready.label, value: figure(delivery.ready, releasesAddress({ q: '', state: 'ready', environment: 'all' })) },
     { label: RELEASE_METRICS.testing.label, value: figure(delivery.testing, releasesAddress({ q: '', state: 'testing', environment: 'all' })) },

@@ -129,7 +129,14 @@ function summaryContext({ business, operation, delivery }: MainSummary): { facts
   const insights: Insight[] = [];
   const unknowns: string[] = [];
   if (business) {
-    facts.push({ label: CUSTOMER_METRICS.customers.label, value: String(business.customers) });
+    const counts = (by: Record<string, number>) => Object.entries(by).map(([k, n]) => `${n} ${k}`).join(', ');
+    facts.push(
+      { label: CUSTOMER_METRICS.customers.label, value: String(business.customers) },
+      // Under the labels the region itself uses, each beside the count of customers it divides.
+      { label: 'By status', value: counts(business.byStatus) },
+      { label: 'By plan', value: counts(business.byPlan) },
+      { label: CUSTOMER_METRICS.spend.label, value: formatCost(business.spend) },
+    );
   } else unknowns.push('The business summary could not be read, so the customer figures are missing, not zero.');
   if (operation) {
     const said = [

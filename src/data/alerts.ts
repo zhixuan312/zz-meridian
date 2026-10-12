@@ -17,7 +17,7 @@ import type { Alert } from '@/components/patterns/shell-tools';
 import { customerFigures, customersAddress } from '@/views/customers-context';
 import { operationOf } from '@/views/main-summary';
 import { testFigures, testsAddress } from '@/views/tests-context';
-import { ticketsAddress } from '@/views/tickets-context';
+import { ticketsAddress, unownedTickets } from '@/views/tickets-context';
 
 /** An alert as the shell's tools take it, and the time of the read that told it. */
 export type AlertsRead = { alerts: Alert[]; now: string };
@@ -76,7 +76,7 @@ async function verificationAlerts(): Promise<{ alerts: Alert[]; observedAt: stri
       title: `${failing.length} ${failing.length === 1 ? 'verification is' : 'verifications are'} failing`,
       detail: 'The latest run of each has failed',
       at: failing.reduce((t, r) => later(t, r.startedAt), failing[0].startedAt),
-      href: testsAddress({ q: '', state: 'failed', release: '' }),
+      href: testsAddress({ q: '', state: 'failed', release: '', runs: 'latest' }),
       tone: 'critical',
     }],
     observedAt,
@@ -86,16 +86,15 @@ async function verificationAlerts(): Promise<{ alerts: Alert[]; observedAt: stri
 /** Each high-priority ticket that is open or waiting and has nobody assigned, newest change first. */
 async function ticketAlerts(): Promise<{ alerts: Alert[]; observedAt: string }> {
   const { rows, observedAt } = await readTickets();
-  const href = ticketsAddress({ q: '', state: 'all', priority: 'high' });
-  const alerts = rows
-    .filter((t) => t.priority === 'high' && t.state !== 'closed' && !t.assigneeId)
+  const alerts = unownedTickets(rows)
     .sort((a, b) => (a.updatedAt < b.updatedAt ? 1 : a.updatedAt > b.updatedAt ? -1 : 0))
     .map((t): Alert => ({
       id: `ticket:${t.id}`,
       title: `${t.title} has no owner`,
       detail: `High priority · ${t.service}`,
       at: t.updatedAt,
-      href,
+      // The list filtered to this ticket: its own title is what the search matches.
+      href: ticketsAddress({ q: t.title, state: 'all', priority: 'high' }),
       tone: 'warning',
     }));
   return { alerts, observedAt };

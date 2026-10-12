@@ -32,7 +32,7 @@ The whole route inside the shell is held still at [/system/states/loading](/syst
 
 ## Surfaces
 
-- **Console**: every dashboard route's `loading.tsx` and the Suspense fallbacks of the Overview, Analytics, Customers and Requests pages.
+- **Console**: every dashboard route's `loading.tsx` and the Suspense fallbacks of the Overview, Analytics, Customers, Requests, Tests and verification and Releases pages.
 - **Mobile**: the shapes stack as the page does.
 - **Embed**: not used; an embed view draws its own small state.
 

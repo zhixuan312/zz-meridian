@@ -320,10 +320,15 @@ try {
       if (after !== null && after >= before + 1) break;
       await sleep(250);
     }
-    if (after === null || after < before + 1) throw new Error(`expected Main's open tickets to be at least ${before + 1} after the ticket was created; found ${after} (read ${before} just before)`);
-    // The figure opens the list it counts.
+    if (after === null || after < 1) throw new Error(`expected Main to count the new ticket among its open tickets; found ${after} (read ${before} just before it was created)`);
+    // The figure opens the list it counts, and that list holds the ticket just made.
     await press(a, { role: 'link', hrefRe: `^${TICKETS}\\?.*state=open`, within: '[role="region"][aria-label="Delivery"]' });
     await settle(a, 'member', TICKETS, 'engineering');
+    await until('the new ticket in the list Main\'s figure opens', () => ask<boolean>(a, `return text(document.querySelector('main')).includes(${JSON.stringify(title)});`))
+      .catch(() => { throw new Error(`expected the open tickets Main's figure opens to hold "${title}"; they do not`); });
+    // The presses share this server and move tickets along while this runs, so a count that did not grow by one is not a
+    // defect when the ticket itself is counted: the line says which of the two was seen.
+    if (after < before + 1) return `(${before} -> ${after}, beside another writer: the ticket is in the list the figure opens)`;
     return `(${before} -> ${after})`;
   }, () => [a]);
 

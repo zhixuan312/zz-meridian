@@ -9,7 +9,8 @@ import { formatDuration } from '@/lib/format';
 import { formatRelative } from '@/lib/format-date';
 import { listed, type Fact, type Insight, type SharedContext } from '@/lib/shared-context';
 
-type TestsState = { q: string; state: string; release: string };
+/** `runs` is `latest` to keep only the latest run of each verification, which is what the tiles count; anything else is every run. */
+type TestsState = { q: string; state: string; release: string; runs?: string };
 
 /** The tiles' labels and what they count: the info buttons show the hints and the facts carry the same labels. */
 export const TEST_METRICS = {
@@ -27,10 +28,10 @@ export function testFigures(rows: RunRow[]): { latest: RunRow[]; failing: RunRow
 /** The route of an endpoint id (`POST /v1/messages` is `/v1/messages`): what the requests search matches. */
 export const routeOf = (endpointId: string) => endpointId.split(' ').slice(1).join(' ') || endpointId;
 
-/** The runs a search, the verdict filter and a release let through, newest start first: the table's default order. */
+/** The runs a search, the verdict filter, a release and the choice of latest runs let through, newest start first: the table's default order. */
 export function matchingRuns(rows: RunRow[], f: TestsState): RunRow[] {
   const q = f.q.trim().toLowerCase();
-  return rows
+  return (f.runs === 'latest' ? latestRuns(rows) : rows)
     .filter((r) => (f.state === 'all' || r.state === f.state) && (!f.release || r.releaseId === f.release))
     .filter((r) => !q || [r.suite, r.endpointId, r.failure ?? '', r.release?.version ?? '', r.release?.service ?? '', r.release?.commit ?? ''].some((x) => x.toLowerCase().includes(q)))
     .sort((a, b) => (a.startedAt < b.startedAt ? 1 : a.startedAt > b.startedAt ? -1 : a.id < b.id ? 1 : -1));
@@ -41,6 +42,7 @@ export function testsAddress(f: TestsState): string {
   if (f.q) p.set('q', f.q);
   if (f.state !== 'all') p.set('state', f.state);
   if (f.release) p.set('release', f.release);
+  if (f.runs === 'latest') p.set('runs', 'latest');
   return `/tests${p.size ? `?${p}` : ''}`;
 }
 
@@ -52,7 +54,7 @@ export function testsContext(rows: RunRow[], now: string, f: TestsState): Shared
   const at = new Date(now);
   const { latest, failing, skipped } = testFigures(rows);
   const matching = matchingRuns(rows, f);
-  const filters = [f.state !== 'all' && `verdict ${f.state}`, f.release && `release ${f.release}`, f.q && `matching "${f.q}"`].filter(Boolean).join(', ');
+  const filters = [f.runs === 'latest' && 'the latest run of each verification', f.state !== 'all' && `verdict ${f.state}`, f.release && `release ${f.release}`, f.q && `matching "${f.q}"`].filter(Boolean).join(', ');
   const M = TEST_METRICS;
   const more = 'query_tests finds them';
   const facts: Fact[] = [

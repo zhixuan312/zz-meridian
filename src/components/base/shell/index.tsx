@@ -80,9 +80,12 @@ function plainFollow(e: MouseEvent): string | null {
 function useLeaveGuard() {
   const router = useRouter();
   const held = useRef(0);
+  // The person has answered Leave: the move they chose may end in a full page load, and the browser must not ask again.
+  const leaving = useRef(false);
   const [pending, setPending] = useState<(() => void) | null>(null);
   const hold = useCallback(() => {
     held.current += 1;
+    leaving.current = false;
     // Something is unsaved, so the question may be needed: fetch it now and it is there by the time it is asked.
     void loadLeaveQuestion();
     return () => { held.current -= 1; };
@@ -103,7 +106,7 @@ function useLeaveGuard() {
       e.stopPropagation();
       leave(() => router.push(follow));
     };
-    const onUnload = (e: Event) => { if (held.current > 0) e.preventDefault(); };
+    const onUnload = (e: Event) => { if (held.current > 0 && !leaving.current) e.preventDefault(); };
     document.addEventListener('click', onClick, true);
     window.addEventListener('beforeunload', onUnload);
     return () => {
@@ -112,7 +115,7 @@ function useLeaveGuard() {
     };
   }, [leave, router]);
   const value = useMemo(() => ({ hold, leave }), [hold, leave]);
-  const question = pending ? <LeaveQuestion onStay={() => setPending(null)} onLeave={() => { setPending(null); pending(); }} /> : null;
+  const question = pending ? <LeaveQuestion onStay={() => setPending(null)} onLeave={() => { setPending(null); leaving.current = true; pending(); }} /> : null;
   return { value, question };
 }
 
@@ -311,7 +314,6 @@ export const WIDTH = { data: 'max-w-(--data-width)', reading: 'max-w-(--reading-
 export type PageWidth = keyof typeof WIDTH;
 
 /**
- * A page: one scroll region holding a glass top bar/**
  * A page: one scroll region holding a glass top bar, the masthead and the rows. The masthead (kicker, title, one
  * sentence, actions) scrolls away with the content; once the title leaves view, a compact title fades into the top
  * bar, which also carries the global tools. Every band shares the gutter and the width, so the title starts exactly

@@ -104,10 +104,13 @@ function Workspace({ may, record, save }: { may: SettingsMay; record: WorkspaceV
         setSaving(true);
         setError(undefined);
         // The values, not the promise, decide: a refusal is a sentence beside the fields, and the form keeps the edits.
-        const result = save ? await save({ name: v.name.trim() }) : { ok: true } as Result;
+        // What is saved is the name without the space around it, so that is what the field and the context then hold.
+        const saved = { ...v, name: v.name.trim() };
+        const result = save ? await save({ name: saved.name }) : { ok: true } as Result;
         setSaving(false);
         if (!result.ok) { setError(result.error); return; }
-        setBase(v);
+        setV(saved);
+        setBase(saved);
         toast({ tone: 'positive', title: 'Workspace saved' });
       } : undefined}
       footnote={editable ? undefined : 'Only an Owner can change the workspace.'}

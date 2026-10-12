@@ -21,7 +21,7 @@ Status: beta
 
 ## Data
 
-`SERVICES`, the first unresolved incident from `INCIDENTS`, and `PAST_INCIDENTS` for fullscreen.
+The Operations tool's read (`healthTool` in `src/views/tools.ts`): the `services` collection, the newest incident nobody has resolved, and, for fullscreen, every other open incident and the resolved ones.
 
 ## Surfaces
 

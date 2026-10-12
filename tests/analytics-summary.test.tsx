@@ -39,8 +39,8 @@ describe('what Analytics says of the period', () => {
     const { current: c } = data.totals;
     for (const label of LABELS) expect(tile(label).textContent, label).toMatch(/(up|down|unchanged)[\s\S]*vs previous period/);
     expect(tile('Error rate').textContent).toContain(formatPercent(c.errorRate, 2).replace('%', ''));
-    expect(tile('Spend').textContent?.replace(/[^0-9]/g, '')).toContain(formatCost(c.spend).replace(/[^0-9]/g, ''));
-    expect(tile('Latency p95').textContent?.replace(/[^0-9]/g, '')).toContain(formatDuration(c.p95).replace(/[^0-9]/g, ''));
+    expect(tile('Spend').textContent).toContain(formatCost(c.spend));
+    expect(tile('Latency p95').textContent).toContain(formatDuration(c.p95));
   });
 
   it('draws no figure when no request arrived in the period', () => {

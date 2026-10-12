@@ -11,7 +11,7 @@ Status: beta
 | Masthead | PageFrame: kicker, "Tests and verification", one sentence. No button: the page changes nothing | One band | Stacked |
 | 1 | Three metric tiles: Latest runs, Failing now, Skipped now, each counting every run whatever the filters show | Three across | Stacked |
 | 2 | One caption line naming the release, with a link to all runs, only when the address carries a release | Full width | Full width |
-| 3 | Data table with its Filter bar (search, Verdict): Verification with its endpoint, Release with its service, environment and commit (once the table is wider than 672px), Verdict, Duration (wider than 896px), Started, Why it failed (wider than 896px) | Columns | Cards: verification and verdict, release, and "Started …" |
+| 3 | Data table with its Filter bar (search, Verdict, and Runs: all of them, or the latest of each verification, which is what the tiles count): Verification with its endpoint, Release with its service, environment and commit (once the table is wider than 672px), Verdict, Duration (wider than 896px), Started, Why it failed (wider than 896px) | Columns | Cards: verification and verdict, release, duration ("Not run" for a skipped run) and "Started …" |
 
 The body (rows 1 to 3, under the masthead) is the records template, `Records` from `src/components/templates/records`. The masthead is drawn by the server page, because nothing on it shares state with the body.
 
@@ -25,7 +25,7 @@ The body (rows 1 to 3, under the masthead) is the records template, `Records` fr
 | One release | The caption "Runs of v4.18.2" and only that release's runs, reached from the Releases page |
 | No matches | The table's filtered-empty state with Clear filters |
 | No runs | The table's first-run empty state |
-| Release unavailable | A run whose release cannot be read says so in place of a version |
+| Release unavailable | A run that names no release the page has says "Unavailable" in the table and "Release unavailable" on a card, in place of a version |
 | Failed read | The route's error screen; nothing is shown that was not read |
 
 ## Data
@@ -44,7 +44,7 @@ An agent reads the page through the tests view tool and may look runs up through
 
 ### What the agent reads
 
-The three counts, labelled "Latest runs", "Failing now" and "Skipped now", of every run in the workspace; the list the person has filtered to, with each run's id, suite, endpoint, release, verdict, failure and age, capped at ten; and the latest runs that are failing, with why.
+The three counts, labelled "Latest runs", "Failing now" and "Skipped now", of every run in the workspace; the list the person has filtered to (the context says when it is the latest run of each verification only), with each run's id, suite, endpoint, release, verdict, failure and age, capped at ten; and the latest runs that are failing, with why.
 
 - **Console assistant:** this text in its prompt's `<view-context>` block, with the page's address and query, and the page text after it for anything the context does not cover.
 - **MCP App:** no embed view; an MCP server can return this context as a tool's text (`docs/agents.md`).

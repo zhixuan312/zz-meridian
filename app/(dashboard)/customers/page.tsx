@@ -2,7 +2,7 @@ import { Suspense } from 'react';
 import { app } from '@/app.config';
 import { PageFrame } from '@/components/base/shell';
 import { gate } from '@/data/access';
-import { read } from '@/data/read';
+import { readAll } from '@/data/read';
 import type { CustomerRecord } from '@/data/sample';
 import { CustomersView } from '@/views/customers';
 import { Busy } from '@/components/patterns/page-loading';
@@ -43,6 +43,7 @@ export default async function CustomersPage() {
  * a row is drawn, exactly as it does for the members, the keys and the request log.
  */
 async function Customers() {
-  const { rows } = await read('customers');
+  // Every customer, not a first page: the tiles are sums over them, and Main's Business region counts them the same way.
+  const { rows } = await readAll('customers');
   return <CustomersView rows={rows as CustomerRecord[]} />;
 }

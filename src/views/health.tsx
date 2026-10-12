@@ -21,7 +21,7 @@ const TONE: Record<DayState, Tone> = { operational: 'positive', none: 'neutral',
 
 /** The Operations page's body: shared by the console route; the embed view uses its parts. */
 export function HealthBody(data: HealthData) {
-  const { services, current, past, now } = data;
+  const { services, current, alsoOpen = [], past, now } = data;
   const end = new Date(now);
   if (services.length === 0) {
     return (
@@ -69,6 +69,14 @@ export function HealthBody(data: HealthData) {
         </FeaturedMetric>
         {current ? <IncidentCard incident={current} now={end} /> : null}
       </Row>
+      {alsoOpen.length ? (
+        <Row>
+          <Card className="overflow-hidden">
+            <CardHeader title="Also open" description="Every other incident nobody has resolved, newest first" divided />
+            <div className="divide-y divide-line">{alsoOpen.map((i) => <IncidentCard key={i.id} incident={i} now={end} variant="row" />)}</div>
+          </Card>
+        </Row>
+      ) : null}
       <Row>
         <Card className="overflow-hidden">
           <CardHeader title="Services" description="State now, latency, and 90 days of history. Point at a bar to read its day." divided />

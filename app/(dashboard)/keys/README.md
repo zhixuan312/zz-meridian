@@ -31,7 +31,7 @@ The body (rows 1 to 3, under the masthead and beside the sheet and dialog) is th
 
 ## Data
 
-The keys come from `collections.keys` (`src/data/collections.ts`), read on every request. Create and Revoke are server actions (`actions.ts`) that call `keys.create` and `keys.remove`, then the view refreshes the route. A rejected create is said inside the sheet; a rejected revoke shows a critical toast and puts the row back. The secret is generated on the server and returned once, to the banner, which is the only place it is ever shown. The collection stores the key's hint (its prefix and last four characters) and the secret's SHA-256, never the secret, so the table shows the hint and nothing in the browser or the cache can reveal or copy a listed key. To replace a key, create a new one and revoke the old.
+The keys are the `keys` collection (`src/data/collections.ts`), read through `read('keys')` on every request. Create and Revoke are server actions (`actions.ts`) that write the caller's own collection (`collectionFor(scope, 'keys')`), then the view refreshes the route. A rejected create is said inside the sheet; a rejected revoke shows a critical toast and puts the row back. The secret is generated on the server and returned once, to the banner, which is the only place it is ever shown. The collection stores the key's hint (its prefix and last four characters) and the secret's SHA-256, never the secret, so the table shows the hint and nothing in the browser or the cache can reveal or copy a listed key. To replace a key, create a new one and revoke the old.
 
 ## Embed view
 

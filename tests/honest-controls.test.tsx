@@ -30,12 +30,15 @@ const buttons = (html: string) => [...html.matchAll(/<button\b[^>]*>([\s\S]*?)<\
 describe('a control that says it did something did it', () => {
   it('Operations offers no subscription: nothing would keep one, and nothing sends an update', async () => {
     const html = renderToStaticMarkup(await HealthPage());
+    // The page drew: an empty page would hold no button either.
+    expect(html).toMatch(/<h1[^>]*>[^<]*Operations/);
     expect(buttons(html).filter((b) => /subscribe/i.test(b))).toEqual([]);
     expect(Object.keys(health)).not.toContain('SubscribeButton');
   });
 
   it('Customers offers no invitation: nothing would write one, and nobody would receive it', async () => {
     const html = renderToStaticMarkup(await CustomersPage());
+    expect(html).toMatch(/<h1[^>]*>[^<]*Customers/);
     expect(buttons(html).filter((b) => /invite/i.test(b))).toEqual([]);
     expect(Object.keys(customers)).not.toContain('InviteCustomer');
   });

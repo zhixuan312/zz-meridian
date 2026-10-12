@@ -46,6 +46,12 @@ const DAY = 86_400_000;
 /** Days an open ticket may go without a change before it is worth a look. */
 export const QUIET_DAYS = 7;
 
+/**
+ * The high-priority tickets still in play that nobody owns: the page, the assistant and the bell all ask this one
+ * function. A ticket whose assignee is no longer a member has nobody to own it, whatever id it still carries.
+ */
+export const unownedTickets = (rows: TicketRow[]): TicketRow[] => rows.filter((t) => t.state !== 'closed' && t.priority === 'high' && !t.assignee);
+
 export function ticketsContext(rows: TicketRow[], now: string, f: TicketsState): SharedContext {
   const at = new Date(now);
   const counts = ticketCounts(rows);
@@ -64,7 +70,7 @@ export function ticketsContext(rows: TicketRow[], now: string, f: TicketsState):
   ];
 
   const insights: Insight[] = [];
-  const unowned = rows.filter((t) => t.state !== 'closed' && t.priority === 'high' && !t.assignee);
+  const unowned = unownedTickets(rows);
   if (unowned.length) insights.push({ text: `${unowned.length} high-priority ${plural(unowned.length, 'ticket has', 'tickets have')} no owner: ${listed(unowned, (t) => t.title, more, 5)}.` });
   const quiet = rows.filter((t) => t.state === 'open' && at.getTime() - Date.parse(t.updatedAt) >= QUIET_DAYS * DAY);
   if (quiet.length) insights.push({ text: `${quiet.length} open ${plural(quiet.length, 'ticket has', 'tickets have')} not changed for ${QUIET_DAYS} days or more: ${listed(quiet, (t) => t.title, more, 5)}.` });

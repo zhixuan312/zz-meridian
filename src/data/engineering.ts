@@ -11,7 +11,7 @@ import { verificationOf, type Verification } from '@/data/verification';
 
 /** The release a run belongs to, as far as a run row shows it. The run itself stores none of this. */
 type RunRelease = Pick<Release, 'version' | 'service' | 'environment' | 'commit'>;
-/** A run as the page and the tool carry it: the record, and the release it names (null when that release cannot be read). */
+/** A run as the page and the tool carry it: the record, and the release it names (null when no release has that id). */
 export type RunRow = VerificationRun & { release: RunRelease | null };
 /** A release as the page and the tool carry it: the record, and what its required verifications come to. */
 export type ReleaseRow = Release & { verification: Verification };

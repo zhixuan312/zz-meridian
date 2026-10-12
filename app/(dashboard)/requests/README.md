@@ -23,7 +23,7 @@ The body (rows 1 and 2) is the records template, `Records` from `src/components/
 | Set by an agent | `?by=Claude` adds the provenance line under the filters until a person changes them |
 | Nothing matches | The table's filtered-out empty state with Clear filters; the tiles read zero |
 | Loading | `loading.tsx`: the masthead skeleton and the template's skeleton, three tiles over a few skeleton table rows. On a navigation the real masthead (title, sentence) shows at once, with skeletons for the freshness stamp, the export and the body |
-| Error | The table's error state with Retry; the filters stay |
+| Error | The dashboard error screen with Retry: a read that fails is the page's failure, not the table's |
 
 ## Data
 

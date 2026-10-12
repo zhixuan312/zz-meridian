@@ -6,7 +6,7 @@ export default function SettingsLoading() {
   return (
     <LoadingPage name="settings" title="Settings" width="form">
       <div className="flex flex-col gap-14">
-        {[3, 4, 3, 2].map((n, i) => (
+        {[2, 3, 1, 1].map((n, i) => (
           <div key={i} className="flex flex-col gap-4">
             <Skeleton className="h-4 w-40" />
             <Skeleton className="h-3 w-96 max-w-full" />

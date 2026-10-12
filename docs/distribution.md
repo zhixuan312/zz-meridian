@@ -144,8 +144,8 @@ Two environment variables exist for the updater's own tests and are used only wh
 reports as `migration:<id>` because it cannot make them. An entry applies when the project's recorded version is older
 than its `since` and the target is not, and its `applies(root)` returns the paths that still have the old shape, or
 null. It only reads, and only team-owned files (the ownership rule's managed paths are skipped); a file it cannot read is
-absent. A project already on the new shape gets no line. Every entry carries `gate` and `build` as its checks (`verify-modes`, `gate` alone), and its
-instructions name the section of `references/cache.md`, `references/live.md` or `references/validation.md` to follow.
+absent. A project already on the new shape gets no line. Every entry carries `gate` and `build` as its checks (`verify-modes`, `agent-reads-section` and `nav-needs`, `gate` alone), and its
+instructions name the section of a reference (`cache.md`, `live.md`, `validation.md`, `agents.md`, `customize.md`) or of the Start guide to follow.
 
 Four arrived after 0.5.0 and are resolved as the skill's `references/update.md` says: `share-view-context` and `agent-reads-section` (0.9.0), `assistant-view-tools` (0.10.0) and `nav-needs` (0.13.0). The ten of 0.5.0 are:
 

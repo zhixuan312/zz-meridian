@@ -41,7 +41,7 @@ const STEPS: Record<string, readonly string[]> = { open: ['waiting', 'closed'], 
 const SETTABLE = ['title', 'service', 'priority', 'assigneeId', 'summary', 'state'] as const;
 
 /** A boundary refusal: thrown, so a page turns its message into a reason and an agent's tool reports it. */
-class TicketRefusal extends Error {}
+export class TicketRefusal extends Error {}
 
 const load: { policy?: Promise<typeof import('@/data/access')>; tag?: Promise<typeof import('@/data/read')> } = {};
 const policy = () => (load.policy ??= import('@/data/access'));

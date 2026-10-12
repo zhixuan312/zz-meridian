@@ -27,11 +27,11 @@ const link = 'underline-offset-2 hover:underline';
 export function TestsView({ rows, now }: { rows: RunRow[]; now: string }) {
   useLive(['tests', 'releases']);
   const asOf = new Date(now);
-  const [f, set] = useQueryState({ q: '', state: 'all', release: '', sort: 'started', dir: 'desc', page: '1' });
-  const matching = useMemo(() => matchingRuns(rows, { q: f.q, state: f.state, release: f.release }), [rows, f.q, f.state, f.release]);
-  const isFiltered = f.q !== '' || f.state !== 'all' || f.release !== '';
+  const [f, set] = useQueryState({ q: '', state: 'all', release: '', runs: 'all', sort: 'started', dir: 'desc', page: '1' });
+  const matching = useMemo(() => matchingRuns(rows, { q: f.q, state: f.state, release: f.release, runs: f.runs }), [rows, f.q, f.state, f.release, f.runs]);
+  const isFiltered = f.q !== '' || f.state !== 'all' || f.release !== '' || f.runs !== 'all';
   useShareView(testsContext(rows, now, f));
-  const clear = () => set({ q: '', state: 'all', release: '', page: '1' });
+  const clear = () => set({ q: '', state: 'all', release: '', runs: 'all', page: '1' });
   const { latest, failing, skipped } = testFigures(rows);
   const of = f.release ? rows.find((r) => r.releaseId === f.release)?.release : undefined;
 
@@ -99,6 +99,8 @@ export function TestsView({ rows, now }: { rows: RunRow[]; now: string }) {
               search={{ value: f.q, onChange: (q) => set({ q, page: '1' }), placeholder: 'Search runs' }}
               filters={[
                 { key: 'state', label: 'Verdict', value: f.state, onChange: (state) => set({ state, page: '1' }), options: [{ value: 'all', label: 'All' }, ...['passed', 'failed', 'skipped'].map((w) => ({ value: w, label: LABEL(w) }))] },
+                // What the tiles count: the latest run of each verification, without the runs it replaced.
+                { key: 'runs', label: 'Runs', value: f.runs, onChange: (runs) => set({ runs, page: '1' }), options: [{ value: 'all', label: 'All' }, { value: 'latest', label: 'Latest of each' }] },
               ]}
               result={<>{matching.length} of {rows.length}</>}
               onClear={clear}

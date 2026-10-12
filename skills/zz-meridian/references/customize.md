@@ -59,7 +59,7 @@ is a short string, used only for something that needs attention ("1").
 `needs` is required, and in a created project it is a feature's own need **by reference** — `needs: FEATURES.overview.needs`,
 from `optional:src/data/features.ts` — never a grant written a second time: the rail and the palette draw only the
 destinations the signed-in person satisfies, and a test fails an item that restates a need. That filtering is
-presentation, not the gate: every page refuses on its own (see "Data" below). An adopted project has no `features.ts`: `adopt` writes
+presentation, not the gate: every page refuses on its own (see "Data" above). An adopted project has no `features.ts`: `adopt` writes
 `needs: 'public'` on every item. `'public'` is the need any signed-in, Active person satisfies (`satisfies` in
 `optional:src/data/access.ts`), so the item is drawn for everyone who is signed in and no role decides it; it is right for a
 destination every member may open, and an item moves to a feature of its own once the project has a role table.

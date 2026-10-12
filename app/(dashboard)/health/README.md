@@ -13,7 +13,7 @@ Status: beta
 | 2 | Full | Services: state, p95 and 90 days of bars per service | Status list in a Card |
 | 3 | Full | Past incidents, newest first | Incident card, `row` |
 
-Without a live incident row 1 becomes one full-width featured card.
+Without a live incident row 1 becomes one full-width featured card. With more than one, a full-width card, "Also open", follows row 1 and lists every other incident nobody has resolved, newest first, so each incident the bell and Main name is on this page.
 
 ## States
 
@@ -32,7 +32,8 @@ Without a live incident row 1 becomes one full-width featured card.
 - Uptime: the mean of each service's uptime over the 90 days shown.
 - The day bars of row 1: the worst state of any service that day.
 - "Right now": each service's state and p95 over the last hour.
-- Incidents: `INCIDENTS` (the live one is the first not resolved) and `PAST_INCIDENTS` from `src/system/fixtures/sample-ops.ts`.
+- Incidents: the `incidents` collection, read through the Operations tool (`readIncidents()` in `src/data/metrics.ts`). The newest one nobody has resolved leads the page; any other unresolved one is listed under "Also open"; the resolved ones are the past incidents. The sample's rows are `INCIDENTS` and `PAST_INCIDENTS` in `src/system/fixtures/sample-ops.ts`.
+- Services: the `services` collection, in the order the team reads its stack.
 
 ## Surfaces
 
@@ -46,7 +47,7 @@ The page itself takes no agent action. It shares one context with both agents (d
 
 ### What the agent reads
 
-Every service's state, latency now and uptime; the average uptime with its definition; which services carry the days below operational ("Inference API accounts for 3 of them"); the open incident with its latest update by time, not by position; the longest incident resolved in the last 90 days. Unknowns: that a monitoring incident is not yet confirmed fixed, and that latency is one reading with no history to call it unusual.
+Every service's state, latency now and uptime; the average uptime with its definition; which services carry the days below operational ("Inference API accounts for 3 of them"); the newest open incident with its latest update by time, not by position, and a line for every other incident nobody has resolved; the longest incident resolved in the last 90 days. Unknowns: that a monitoring incident is not yet confirmed fixed, and that latency is one reading with no history to call it unusual.
 
 - **MCP App:** the text above as `ui/update-model-context`, with the same context as its structured part, from the inline view and from fullscreen alike, on load and on every change.
 - **Console assistant:** the same text in its prompt's `<view-context>` block, with the page's address and query, and the page text after it for anything the context does not cover.

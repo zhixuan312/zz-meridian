@@ -56,7 +56,7 @@ Unknown:
 - Nothing is recorded between 20 Sept and 23 Sept: no incident and no activity event, so nothing on this page explains the rise on 21 and 22 Sept.
 ```
 
-It also carries Main's figures under the labels their pages use, as plain numbers: `Customers`, `Open tickets`, `Waiting tickets`, `Failing now`, `Live versions`, `Ready to release` and `In testing`, and which services are out of service or degraded and which incidents are unresolved (or that every service is operational and none is open). A region that could not be read is told as unknown, missing and not zero.
+It also carries Main's figures under the labels their pages use, as plain numbers: `Customers`, with `By status`, `By plan` and `Spend, last 30 days` as the Business region draws them, `Open tickets`, `Waiting tickets`, `Failing now`, `Live versions`, `Ready to release` and `In testing`, and which services are out of service or degraded and which incidents are unresolved (or that every service is operational and none is open). A region that could not be read is told as unknown, missing and not zero.
 
 It also says which endpoint contributes most errors, that requests follow the week, what the status classes mean against the error rate's definition, which incident sits beside a spike when one does (in 90 days: "Upload failures for files over 50 MB"), and that today is partial.
 

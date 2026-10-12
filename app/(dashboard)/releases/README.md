@@ -10,7 +10,7 @@ Status: beta
 |---|---|---|---|
 | Masthead | PageFrame: kicker, "Releases", one sentence. No button: the page changes nothing | One band | Stacked |
 | 1 | Three metric tiles: Live versions, Ready to release, In testing, each counting every release whatever the filters show | Three across | Stacked |
-| 2 | Data table with its Filter bar (search, State, Environment): Release with its service and environment and a Live mark on the version that is out, State, Verification (from 768px), Commit (from 1024px), Released or changed | Columns | Cards: release and state, verification and "Released …" or "Changed …" |
+| 2 | Data table with its Filter bar (search, State, Environment): Release with its service and environment and a Live mark on the version that is out, State, Verification (once the table is wider than 672px), Commit (wider than 896px), Released or changed | Columns | Cards: release and state, verification and "Released …" or "Changed …" |
 
 The body (rows 1 and 2, under the masthead) is the records template, `Records` from `src/components/templates/records`. The masthead is drawn by the server page, because nothing on it shares state with the body.
 

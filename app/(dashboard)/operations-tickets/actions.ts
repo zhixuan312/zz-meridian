@@ -2,6 +2,7 @@
 
 import { collectionFor, resolveAccess } from '@/data/access';
 import type { Ticket } from '@/data/sample';
+import { TicketRefusal } from '@/data/ticket-mutations';
 import type { TicketResult } from '@/views/tickets';
 
 /** What a person types into the form; the boundary checks every field again, so nothing here is trusted. */
@@ -20,7 +21,8 @@ async function run(write: (tickets: ReturnType<typeof collectionFor>) => Promise
     await write(collectionFor(await resolveAccess(), 'tickets'));
     return { ok: true };
   } catch (e) {
-    return { ok: false, error: e instanceof Error && e.message ? e.message : 'The change did not go through.' };
+    // The boundary's refusal is a sentence written for the person; anything else that went wrong is not theirs to read.
+    return { ok: false, error: e instanceof TicketRefusal && e.message ? e.message : 'The change did not go through.' };
   }
 }
 
