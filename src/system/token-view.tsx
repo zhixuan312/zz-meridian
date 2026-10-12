@@ -216,7 +216,7 @@ function Type({ groups }: { groups: TokenGroup[] }) {
             <p className="mt-1 font-mono text-2xs text-ink-3">{spec[cls]?.[0]}</p>
             {spec[cls]?.[1] ? <p className="font-mono text-2xs text-ink-3">{spec[cls][1]}</p> : null}
           </div>
-          <p data-role={cls} className={cn(cls, 'min-w-0 truncate', cls === 't-display' && 'text-[clamp(40px,6vw,88px)]')}>{sample}</p>
+          <p data-role={cls} title={sample} className={cn(cls, 'min-w-0 truncate', cls === 't-display' && 'text-[clamp(40px,6vw,88px)]')}>{sample}</p>
         </div>
       ))}
       {type ? <p className="t-caption mt-8 max-w-[62ch]">{type.about}</p> : null}

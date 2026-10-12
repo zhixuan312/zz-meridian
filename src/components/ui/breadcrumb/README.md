@@ -33,7 +33,7 @@ Status: beta
 ## Behaviour
 
 - Links navigate; the current page is not a link.
-- When space runs out, the current page truncates first with an ellipsis and its full name in the masthead title below.
+- When space runs out, the current page truncates first with an ellipsis; its full name is in the masthead title below, and every label the line cuts carries the whole of itself in its own title.
 
 ## Surfaces
 

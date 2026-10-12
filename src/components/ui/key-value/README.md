@@ -8,7 +8,7 @@ Status: beta
 
 1. **Row**: at least 44px tall, 10px vertical padding, a `line` hairline under every row but the last.
 2. **Label**: 128px wide, `text-sm`, `ink-3`.
-3. **Value**: `text-sm`, `ink`, tabular figures; `mono` sets it in `font-mono` `text-xs` for identifiers. Long values truncate with the full value in the title.
+3. **Value**: `text-sm`, `ink`, tabular figures; `mono` sets it in `font-mono` `text-xs` for identifiers. Long values truncate with the full value in the title: a value that is text titles itself, and a value drawn as a node (a link, a method beside a route) takes the whole of it as the item's `title`.
 4. **Action** (optional): a small ghost Button or a Copy button at the end of the row.
 
 ## Variants
@@ -16,7 +16,7 @@ Status: beta
 | Variant | Use |
 |---|---|
 | One column (default) | A record's facts in reading order, in a card or a side panel |
-| Two columns | Many short facts in a wide card, from 640px; one column below |
+| Two columns | Many short facts in a wide card, from 640px of the list's own width; one column below. The window's width does not decide it: a card beside another is narrow in a wide window |
 
 ## Sizes
 

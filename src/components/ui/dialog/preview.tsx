@@ -33,7 +33,7 @@ export default function DialogPreview() {
             footer={<><Button variant="ghost">Cancel</Button><Button variant="danger">Revoke key</Button></>}
           >
             <dl className="grid grid-cols-[auto_minmax(0,1fr)] gap-x-6 gap-y-2 rounded-md bg-surface-sunk px-4 py-3 text-sm">
-              <dt className="text-ink-3">Key</dt><dd className="truncate font-mono text-xs leading-5">zzm_live_7Hc2…q91</dd>
+              <dt className="text-ink-3">Key</dt><dd title="zzm_live_7Hc2…q91" className="truncate font-mono text-xs leading-5">zzm_live_7Hc2…q91</dd>
               <dt className="text-ink-3">Last used</dt><dd>4 minutes ago, from 34.201.88.12</dd>
               <dt className="text-ink-3">Requests today</dt><dd className="t-num">18,402</dd>
             </dl>

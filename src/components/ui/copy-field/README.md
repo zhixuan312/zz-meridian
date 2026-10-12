@@ -7,7 +7,7 @@ Status: beta
 ## Anatomy
 
 1. **Well**: `control-md` tall, `surface-sunk`, 1px `line-strong`, `radius-md`, `shadow-control`.
-2. **Value**: `font-mono`, `text-xs`, `ink`, truncated at the end.
+2. **Value**: `font-mono`, `text-xs`, `ink`, truncated at the end, with the whole of what is shown in its title (a masked secret titles its mask, never the secret).
 3. **Reveal** (secret only): an eye icon button that shows or hides the value.
 4. **Copy**: a 32px icon button; after a copy it shows a check in `positive-ink` for 1.6s.
 

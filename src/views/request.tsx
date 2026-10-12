@@ -32,7 +32,7 @@ function Waterfall({ spans, total }: { spans: Span[]; total: number }) {
         <div key={s.name} className="flex flex-col gap-2">
           <p className="flex min-w-0 items-baseline gap-2 text-sm">
             <span className="shrink-0 font-medium">{s.name}</span>
-            <span className="min-w-0 flex-1 truncate text-xs text-ink-3">{s.detail}</span>
+            <span title={s.detail} className="min-w-0 flex-1 truncate text-xs text-ink-3">{s.detail}</span>
             <span className="t-num shrink-0 text-xs text-ink-2">{formatDuration(s.duration)}</span>
           </p>
           <div className="relative h-1.5 rounded-full bg-fill-track">
@@ -122,17 +122,17 @@ export function RequestView({ request: r, trace, payloads, routeP95, now, replay
               <KeyValue
                 columns={2}
                 items={[
-                  { label: 'Received', value: <time dateTime={r.at}>{formatDateTime(r.at)}</time> },
-                  { label: 'Endpoint', value: <span className="font-mono text-xs" title={`${r.method} ${r.route}`}><span className="text-ink-3">{r.method}</span> {r.route}</span> },
+                  { label: 'Received', value: <time dateTime={r.at}>{formatDateTime(r.at)}</time>, title: formatDateTime(r.at) },
+                  { label: 'Endpoint', value: <span className="font-mono text-xs"><span className="text-ink-3">{r.method}</span> {r.route}</span>, title: `${r.method} ${r.route}` },
                   { label: 'Latency', value: <span className={r.latency > 1000 ? 'font-medium text-warning-ink' : undefined}>{formatDuration(r.latency)}</span> },
                   { label: 'Response size', value: formatBytes(r.bytes) },
-                  { label: 'Customer', value: <Link href={`/requests?q=${encodeURIComponent(r.customer)}`} className="link">{r.customer}</Link> },
+                  { label: 'Customer', value: <Link href={`/requests?q=${encodeURIComponent(r.customer)}`} className="link">{r.customer}</Link>, title: r.customer },
                   { label: 'Region', value: r.region, mono: true },
-                  ...(r.replayOf ? [{ label: 'Replay of', value: <Link href={`/requests/${r.replayOf}`} className="link font-mono text-xs">{r.replayOf}</Link> }] : []),
+                  ...(r.replayOf ? [{ label: 'Replay of', value: <Link href={`/requests/${r.replayOf}`} className="link font-mono text-xs">{r.replayOf}</Link>, title: r.replayOf }] : []),
                   ...(r.model
                     ? [
                         { label: 'Model', value: r.model, mono: true },
-                        { label: 'Tokens', value: usage.tokens ? <span className="t-num">{usage.tokens.input.toLocaleString('en-US')} in · {usage.tokens.output.toLocaleString('en-US')} out</span> : <span className="text-ink-3">None, refused</span> },
+                        { label: 'Tokens', value: usage.tokens ? <span className="t-num">{usage.tokens.input.toLocaleString('en-US')} in · {usage.tokens.output.toLocaleString('en-US')} out</span> : <span className="text-ink-3">None, refused</span>, title: usage.tokens ? `${usage.tokens.input.toLocaleString('en-US')} in · ${usage.tokens.output.toLocaleString('en-US')} out` : undefined },
                       ]
                     : []),
                   { label: 'Cost', value: usage.cost ? <span className="t-num">{formatCost(usage.cost)}</span> : <span className="text-ink-3">None, refused</span> },
