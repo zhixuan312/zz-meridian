@@ -156,9 +156,19 @@ export function createLiveClient({ refresh, endpoint = '/api/live', pollMs = 300
       polling = false;
       resync();
     });
-    mine.addEventListener('resync', () => { if (current()) resync(); });
+    // The stream's first frame is always a resync of every name (src/data/live-stream.ts), written before the server
+    // subscribes to anything. The open above has just asked for that read, and it began after the frame was written, so
+    // the frame says nothing the open did not: answering both read every collection twice on every open, and on a page
+    // load the second router read sent every prefetch out again. Any later resync is the server reporting lost hints.
+    let greeting = true;
+    mine.addEventListener('resync', () => {
+      if (!current()) return;
+      if (greeting) { greeting = false; return; }
+      resync();
+    });
     mine.addEventListener('change', (e) => {
       if (!current()) return;
+      greeting = false;
       try {
         const { collection } = JSON.parse((e as MessageEvent<string>).data) as { collection?: unknown };
         if (typeof collection === 'string') hint(collection);

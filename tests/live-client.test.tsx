@@ -46,6 +46,47 @@ describe('the live client', () => {
     expect(refresh).toHaveBeenCalledWith(['members']);
     c.dispose();
   });
+  // The stream's first frame is always a resync (src/data/live-stream.ts), and the open has just asked for that very
+  // read. Answering both read every collection twice on every open: measured on a built app, a cold load of `/` made
+  // two refresh actions and two router reads of the page, and the second read sent every rail prefetch out again.
+  it('reads once when a stream opens, and again for a resync the stream sends later', async () => {
+    const refresh = vi.fn(async () => {});
+    const { c, states } = client(refresh);
+    c.setNames(['members']);
+    live()[0].open();
+    live()[0].send('resync', { collections: ['members'] });
+    await flush(600);
+    expect(refresh).toHaveBeenCalledTimes(1);
+    expect(states.at(-1)).toBe('live');
+    // Later, it is the server saying hints were lost, which nothing else has answered.
+    live()[0].send('resync', { collections: ['members'] });
+    await flush(600);
+    expect(refresh).toHaveBeenCalledTimes(2);
+    c.dispose();
+  });
+  it('reads again for a resync that follows a hint, and treats every new stream\'s first frame alike', async () => {
+    const refresh = vi.fn(async () => {});
+    const { c } = client(refresh);
+    c.setNames(['members']);
+    live()[0].open();
+    await flush(600);
+    refresh.mockClear();
+    // No greeting on this stream: its first frame is a hint, so the resync after it is news.
+    live()[0].send('change', { collection: 'members' });
+    await flush(600);
+    live()[0].send('resync', { collections: ['members'] });
+    await flush(600);
+    expect(refresh).toHaveBeenCalledTimes(2);
+    // A stream that replaces it greets again, and its open is again the one read.
+    refresh.mockClear();
+    live()[0].fail();
+    await flush(1100);
+    live().at(-1)!.open();
+    live().at(-1)!.send('resync', { collections: ['members'] });
+    await flush(600);
+    expect(refresh).toHaveBeenCalledTimes(1);
+    c.dispose();
+  });
   it('does not starve under a sustained burst: a refresh at least every 500 ms', async () => {
     const refresh = vi.fn(async () => {});
     const { c } = client(refresh);
