@@ -18,7 +18,7 @@ export const CUSTOMER_METRICS = {
 
 const sum = (xs: number[]) => xs.reduce((a, b) => a + b, 0);
 /** The last seven days of a 14-day trend against the seven before: the change a sparkline shows and a list does not say. */
-const week = (t: number[]) => (t.length >= 14 && sum(t.slice(0, 7)) ? sum(t.slice(7)) / sum(t.slice(0, 7)) - 1 : null);
+export const week = (t: number[]) => (t.length >= 14 && sum(t.slice(0, 7)) ? sum(t.slice(7)) / sum(t.slice(0, 7)) - 1 : null);
 
 /** The three figures the tiles show and the assistant is told, worked out once from every customer the page read. */
 export function customerFigures(rows: CustomerRecord[]): { customers: number; spend: number; pastDue: CustomerRecord[] } {

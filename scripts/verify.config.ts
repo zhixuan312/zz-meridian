@@ -114,7 +114,7 @@ type VerifyConfig = {
 };
 
 /** Every rail route, in the rail's own order: what a persona who may open all of them is expected to see. */
-const EVERY_ROUTE = ['/', '/members', '/settings', '/system', '/system/start/start-a-dashboard', '/analytics', '/customers', '/requests', '/health', '/keys', '/operations-tickets', '/tests', '/releases'] as const;
+const EVERY_ROUTE = ['/', '/members', '/settings', '/system', '/system/start/start-a-dashboard', '/business', '/analytics', '/customers', '/requests', '/engineering', '/health', '/keys', '/operations-tickets', '/tests', '/releases'] as const;
 
 const config: VerifyConfig = {
   // Ids from the sample (src/system/fixtures/sample.ts); tests/sample.test.ts fails if one stops being what it says.
@@ -144,9 +144,11 @@ const config: VerifyConfig = {
     // the access work, at 152,388 bytes) and not its content (`585349a` measures the same with byte-identical HTML) — the
     // review's Backlog carries the measurement. 300 ms holds this route's phone shell; nothing else moves.
     { path: '/system/start/start-a-dashboard', title: 'Start a dashboard', readySelector: 'article h2', probe: 'link', controlSelector: 'nav[aria-label="Next and previous"] a', resultSelector: 'h1', budget: { shellMs: { phone: 300 } } },
+    { path: '/business', title: 'Revenue', readySelector: 'main', readyText: 'Past due', probe: 'link', controlSelector: 'main a[href="/customers"]', resultSelector: 'h1' },
     { path: '/analytics', title: 'Analytics', readySelector: 'main table tbody tr', probe: 'toggle', controlSelector: 'main [role="radio"][aria-checked="false"]', resultSelector: 'main [role="radio"]' },
     { path: '/customers', title: 'Customers', readySelector: 'main table tbody tr', probe: 'filter', controlSelector: 'main input[type="search"]', resultSelector: 'main table tbody tr' },
     { path: '/requests', title: 'Requests', readySelector: 'main table tbody tr', probe: 'filter', controlSelector: 'main input[type="search"]', resultSelector: 'main table tbody tr' },
+    { path: '/engineering', title: 'Now', readySelector: 'main', readyText: 'Services', probe: 'link', controlSelector: 'main a[href="/health"]', resultSelector: 'h1' },
     // Operations has no button of its own: its one control is the strip of days, which reads a day when it is pointed at.
     { path: '/health', title: 'Operations', readySelector: 'main', readyText: 'Uptime', probe: 'toggle', controlSelector: 'main figure [role="group"]', resultSelector: 'main figure [aria-live="polite"]' },
     { path: '/keys', title: 'API keys', readySelector: 'main table tbody tr', probe: 'dialog', controlSelector: 'main button[aria-haspopup="dialog"]', resultSelector: '[role="dialog"]' },
@@ -164,7 +166,7 @@ const config: VerifyConfig = {
     'key-manager': { cookie: { name: 'zz_meridian_view_as', value: 'members_5' }, expectedRoutes: EVERY_ROUTE },
     viewer: {
       cookie: { name: 'zz_meridian_view_as', value: 'members_12' },
-      expectedRoutes: ['/', '/settings', '/system', '/system/start/start-a-dashboard', '/analytics', '/customers', '/requests', '/health', '/operations-tickets', '/tests', '/releases'],
+      expectedRoutes: ['/', '/settings', '/system', '/system/start/start-a-dashboard', '/business', '/analytics', '/customers', '/requests', '/engineering', '/health', '/operations-tickets', '/tests', '/releases'],
       deniedProbe: { '/keys': 'Load test, October', '/members': 'maya.chen@' },
     },
   },

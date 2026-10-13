@@ -1,5 +1,5 @@
 import { Suspense } from 'react';
-import { app, workspaces } from '@/app.config';
+import { app } from '@/app.config';
 import { PageFrame } from '@/components/base/shell';
 import { ExportButton } from '@/components/patterns/export-button';
 import { Freshness } from '@/components/patterns/freshness';
@@ -26,7 +26,7 @@ export default async function AnalyticsPage({ searchParams }: { searchParams: Se
     <PageFrame
       kicker={<>{app.name} · {app.workspace}</>}
       title="Analytics"
-      description={`How usage and spend moved over the period, when traffic comes and from where, and which endpoints are slow. ${workspaces.business.audience}`}
+      description={`How usage and spend moved over the period, when traffic comes and from where, and which endpoints are slow.`}
       meta={<Freshness updatedAt={DEMO_UPDATED_AT} now={DEMO_NOW} />}
       actions={
         <Suspense fallback={<Skeleton className="h-9 w-48 rounded-md" />}>

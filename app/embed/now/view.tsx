@@ -8,23 +8,19 @@ import { Freshness } from '@/components/patterns/freshness';
 import { AskAbout } from '@/components/patterns/ask-about';
 import { StatusList } from '@/components/patterns/status-list';
 import { ShareContext } from '@/components/base/use-share-view';
-import { HealthBody } from '@/views/health';
-import { healthContext } from '@/views/health-context';
+import { NowBody } from '@/views/now';
+import { nowContext, type NowData } from '@/views/now-context';
 import { formatRelative } from '@/lib/format-date';
-import type { Incident } from '@/components/patterns/incident-card';
-import type { Service } from '@/components/patterns/status-list';
 
-type Props = { services: Service[]; current: Incident | null; past: Incident[]; updatedAt: string; now: string };
-
-export function EmbedHealth(p: Props) {
+export function EmbedNow(p: NowData) {
   const s = useSurface();
   return (
-    <EmbedFrame title="Operations" meta={<Freshness updatedAt={new Date(p.updatedAt)} now={new Date(p.now)} />} consolePath="/health">
+    <EmbedFrame title="Now" meta={<Freshness updatedAt={new Date(p.updatedAt)} now={new Date(p.now)} />} consolePath="/engineering">
       {s.mode === 'fullscreen' ? (
-        <HealthBody {...p} />
+        <NowBody {...p} />
       ) : (
         <div className="flex flex-col gap-3">
-          <ShareContext context={healthContext(p)} />
+          <ShareContext context={nowContext(p)} />
           {p.current ? (
             <Banner
               tone="warning"

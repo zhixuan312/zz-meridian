@@ -31,7 +31,7 @@ describe('the product guide', () => {
     }
   });
 
-  it('lists the thirteen destinations in the navigation\'s order, each by its name, its address and its workspace', () => {
+  it('lists the fifteen destinations in the navigation\'s order, each by its name, its address and its workspace', () => {
     const rows = guide.split('\n').filter((l) => l.trim().startsWith('|'));
     const at = items.map((i) => rows.findIndex((r) => r.includes(`| ${i.label} |`) && r.includes('`' + i.href + '`') && r.includes(workspaces[i.workspace!].label)));
     expect(at.filter((n) => n < 0)).toEqual([]);
@@ -39,8 +39,8 @@ describe('the product guide', () => {
     expect(new Set(at).size).toBe(items.length);
   });
 
-  it('says what a Viewer reaches: eleven of the thirteen, and neither Members nor API keys', () => {
-    expect(guide).toMatch(/\beleven\b/i);
+  it('says what a Viewer reaches: thirteen of the fifteen, and neither Members nor API keys', () => {
+    expect(guide).toMatch(/\bthirteen\b/i);
     expect(guide).toMatch(/Viewer[^.]*\b(Members|API keys)\b[^.]*\b(Members|API keys)\b/);
   });
 

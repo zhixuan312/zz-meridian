@@ -10,7 +10,7 @@ import { slug } from '@/app.config';
 import { requireNeed } from '@/data/access';
 import { clock } from '@/data/collections';
 import { FEATURES } from '@/data/features';
-import { read } from '@/data/read';
+import { read, readAll } from '@/data/read';
 import { readRequests, REQUEST_PAGE } from '@/data/requests';
 import { readReleases, readRuns } from '@/data/engineering';
 import { readMainSummary } from '@/data/main';
@@ -24,13 +24,16 @@ import { PERIODS } from '@/lib/period';
 import { defineViewTool, type ViewTool } from '@/lib/shared-context';
 import { analyticsContext } from './analytics-context';
 import { analyticsFigures } from '@/data/analytics';
-import { customersContext } from './customers-context';
+import { customerFigures, customersContext } from './customers-context';
+import { customerContext, type CustomerData } from './customer-context';
 import { healthContext } from './health-context';
 import { SCOPES } from './key-scopes';
 import { keysContext } from './keys-context';
 import { membersContext } from './members-context';
+import { nowContext } from './now-context';
 import { overviewContext, type OverviewData } from './overview-context';
 import { requestContext } from './request-context';
+import { revenueContext } from './revenue-context';
 import { requestsContext } from './requests-context';
 import { releaseFigures, releasesContext } from './releases-context';
 import { testFigures, testsContext } from './tests-context';
@@ -100,12 +103,26 @@ export const healthTool = defineViewTool({
   description: 'Every service now and over 90 days, every open incident with its latest update, and the incidents resolved in the last 90 days.',
   needs: FEATURES.health.needs,
   input: z.object({}),
-  resourceUri: `ui://${slug}/health`,
   async read() {
     await requireNeed(FEATURES.health.needs);
     const [services, { current, open, past }] = await Promise.all([readServices(), readIncidents()]);
     const data = { services, current, alsoOpen: open.slice(1), past, updatedAt: updatedAt(), now: clock().toISOString() };
     return { context: healthContext(data), data };
+  },
+});
+
+export const nowTool = defineViewTool({
+  name: 'now',
+  title: 'Now',
+  description: 'Which services are up this moment, with their latency, and the incidents nobody has resolved, the newest with its latest update.',
+  needs: FEATURES.now.needs,
+  input: z.object({}),
+  resourceUri: `ui://${slug}/now`,
+  async read() {
+    await requireNeed(FEATURES.now.needs);
+    const [services, { current, open }] = await Promise.all([readServices(), readIncidents()]);
+    const data = { services, current, alsoOpen: open.slice(1), updatedAt: updatedAt(), now: clock().toISOString() };
+    return { context: nowContext(data), data };
   },
 });
 
@@ -138,6 +155,42 @@ export const customersTool = defineViewTool({
     const f = { q, plan, status, sort: 'spend', dir: 'desc', page: '1' };
     const matching = all.filter((c) => (plan === 'all' || c.plan === plan) && (status === 'all' || c.status === status) && (!q || c.name.toLowerCase().includes(q.toLowerCase())));
     return { context: customersContext(all, matching, f), data: {} };
+  },
+});
+
+export const revenueTool = defineViewTool({
+  name: 'revenue',
+  title: 'Revenue',
+  description: 'How many customers there are, what they spent in the last 30 days and who is past due.',
+  needs: FEATURES.revenue.needs,
+  input: z.object({}),
+  async read() {
+    await requireNeed(FEATURES.revenue.needs);
+    const { rows } = await readAll('customers');
+    const { customers, spend, pastDue } = customerFigures(rows as CustomerRecord[]);
+    const data = { customers, spend, pastDue: pastDue.map((c) => ({ name: c.name, spend: c.spend })), updatedAt: updatedAt(), now: clock().toISOString() };
+    return { context: revenueContext(data), data };
+  },
+});
+
+/** One customer's page data, or null when no customer has the id: the page and the tool read it the same way. */
+export async function readCustomer(id: string): Promise<CustomerData | null> {
+  const { rows } = await read('customers', { where: [{ field: 'id', op: 'eq', value: id }], limit: 1 });
+  const customer = rows[0] as CustomerRecord | undefined;
+  return customer ? { customer, updatedAt: updatedAt(), now: clock().toISOString() } : null;
+}
+
+export const customerTool = defineViewTool({
+  name: 'customer',
+  title: 'Customer',
+  description: 'One customer by its id: its plan and status, what it asked of the API and spent in the last 30 days, its error rate, and how its last 14 days moved.',
+  needs: FEATURES.customer.needs,
+  input: z.object({ id: z.string().min(1).max(60) }),
+  async read({ id }) {
+    await requireNeed(FEATURES.customer.needs);
+    const data = await readCustomer(id);
+    if (!data) throw new Error(`No customer with the id ${id}.`);
+    return { context: customerContext(data), data };
   },
 });
 
@@ -208,4 +261,4 @@ export const releasesTool = defineViewTool({
 });
 
 /** Every view's tool. The assistant route hands these to `assistantTools`, as it hands the collections. */
-export const viewTools: ViewTool[] = [overviewTool, requestsTool, requestTool, healthTool, analyticsTool, customersTool, membersTool, keysTool, ticketsTool, testsTool, releasesTool] as ViewTool[];
+export const viewTools: ViewTool[] = [overviewTool, requestsTool, requestTool, healthTool, nowTool, analyticsTool, revenueTool, customersTool, customerTool, membersTool, keysTool, ticketsTool, testsTool, releasesTool] as ViewTool[];

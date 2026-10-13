@@ -1,6 +1,6 @@
 # Customers page
 
-Who is calling the API, on which plan, and what they spent in the last 30 days, which adds up to the Overview's 30-day spend; each customer opens their requests.
+Who is calling the API, on which plan, and what they spent in the last 30 days, which adds up to the Overview's 30-day spend; each customer opens its own page.
 
 Status: beta
 
@@ -10,7 +10,7 @@ Status: beta
 |---|---|---|---|
 | Masthead | PageFrame: kicker, "Customers", one sentence. No action: nobody in the console creates or changes a customer | One band | Stacked |
 | 1 | Row `tiles`: Customers, Spend, last 30 days (emphasis), Past due with who. None carries a trend: no daily series of customers or of spend by customer exists, and a tile draws only what a series stands behind | Three across | One column |
-| 2 | Data table: search and Status in the Filter bar, the plan as a Segmented view; columns Customer (avatar and name, grow), Plan, Status, Requests, Last 14 days (sparkline, from 896px), Error rate (from 1152px), Spend, Customer since (from 1152px) | Columns | Cards: name and status, then plan, requests and spend |
+| 2 | Data table: search and Status in the Filter bar, the plan as a Segmented view; columns Customer (avatar and name, grow), Plan, Status, Requests, Last 14 days (sparkline, from 896px), Error rate (from 1152px), Spend, Customer since (from 1152px); a row opens that customer's page (`/customers/<id>`) | Columns | Cards: name and status, then plan, requests and spend |
 
 The body (rows 1 and 2) is the records template, `Records` from `src/components/templates/records`; its Atlas entry is [/system/pages/template-records](/system/pages/template-records). The page supplies the tiles and the table.
 
@@ -33,7 +33,7 @@ The page renders the masthead (title, sentence) itself, outside the boundary tha
 
 ## Embed view
 
-None yet: a `zz_meridian_customer { name }` view would show one customer's card with their 14-day shape.
+None yet: a `zz_meridian_customer { id }` view would show one customer's card with their 14-day shape; the page is `/customers/<id>` (`app/(dashboard)/customers/[id]/README.md`).
 
 ## Surfaces
 

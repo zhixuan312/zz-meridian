@@ -29,10 +29,10 @@ const linksOf = (html: string) => [...html.matchAll(/<a\b[^>]*\bhref="([^"]*)"[^
 beforeEach(() => { jar.value = 'members_12'; });
 
 describe('a page a person may not open', () => {
-  it('offers the first destination of its own workspace that they may: for a Viewer at API keys, Operations', async () => {
+  it('offers the first destination of its own workspace that they may: for a Viewer at API keys, Now', async () => {
     const html = renderToStaticMarkup(await NoAccess({ feature: 'keys' }));
     expect(html).toContain('data-no-access');
-    expect(linksOf(html)).toEqual([{ href: '/health', text: expect.stringContaining('Operations') }]);
+    expect(linksOf(html)).toEqual([{ href: '/engineering', text: expect.stringContaining('Now') }]);
   });
 
   it('offers Main\'s home for a Viewer at Members', async () => {
@@ -60,6 +60,6 @@ describe('the Atlas', () => {
 
 describe('Business, as a workspace home', () => {
   it('says who the workspace is for, in the words the declaration holds', () => {
-    expect(fs.readFileSync(path.join(ROOT, 'app/(dashboard)/analytics/page.tsx'), 'utf8')).toMatch(/workspaces\.business\.audience/);
+    expect(fs.readFileSync(path.join(ROOT, 'app/(dashboard)/business/page.tsx'), 'utf8')).toMatch(/workspaces\.business\.audience/);
   });
 });

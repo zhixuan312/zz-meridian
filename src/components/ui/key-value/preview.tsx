@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { Specimen } from '@/system/specimen';
 import { Badge } from '@/components/ui/badge';
 import { Copy } from 'lucide-react';
@@ -17,7 +18,7 @@ export default function KeyValuePreview() {
             { label: 'Endpoint', value: 'POST /v1/messages', mono: true },
             { label: 'Status', value: <Badge tone="critical">503 Unavailable</Badge> },
             { label: 'Latency', value: '1.8s' },
-            { label: 'Customer', value: <a href="/customers" className="link">Parallax AI</a> },
+            { label: 'Customer', value: <Link href="/customers/parallax-ai" className="link">Parallax AI</Link> },
           ]}
         />
       </Specimen>

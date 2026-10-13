@@ -19,7 +19,7 @@ beforeEach(() => { jar.value = undefined; });
 
 describe('the view tools ask their feature', () => {
   it('takes each tool need from the feature table, not from a literal', () => {
-    expect(viewTools.map((t) => t.name).sort()).toEqual(['analytics', 'customers', 'health', 'keys', 'members', 'overview', 'releases', 'request', 'requests', 'tests', 'tickets']);
+    expect(viewTools.map((t) => t.name).sort()).toEqual(['analytics', 'customer', 'customers', 'health', 'keys', 'members', 'now', 'overview', 'releases', 'request', 'requests', 'revenue', 'tests', 'tickets']);
     expect(known.has('requests:read')).toBe(true);
     for (const tool of viewTools) {
       expect(known.has(tool.needs), `${tool.name} restates its need`).toBe(true);
@@ -31,10 +31,15 @@ describe('the view tools ask their feature', () => {
     jar.value = 'members_12';
     await expect(byName.keys.read({})).rejects.toBeInstanceOf(AccessDenied);
     await expect(byName.members.read({})).rejects.toBeInstanceOf(AccessDenied);
-    for (const name of ['overview', 'analytics', 'health', 'customers', 'requests']) {
-      const input = name === 'overview' || name === 'analytics' ? { period: '30d' } : {};
+    for (const name of ['overview', 'analytics', 'health', 'now', 'revenue', 'customers', 'customer', 'requests']) {
+      const input = name === 'overview' || name === 'analytics' ? { period: '30d' } : name === 'customer' ? { id: 'northwind-labs' } : {};
       expect((await byName[name].read(input)).context.view, name).toBeTruthy();
     }
+  });
+
+  it('answers a customer that does not exist with an error, not a record', async () => {
+    jar.value = 'members_1';
+    await expect(byName.customer.read({ id: 'nobody-here' })).rejects.toThrow('No customer with the id nobody-here.');
   });
 
   it('answers the keys and members tools for the people who may use them', async () => {

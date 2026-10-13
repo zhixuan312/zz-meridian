@@ -72,8 +72,8 @@ places to look (by audience, by team, by job), keep the workspaces; when they di
 navigation is what a product has until somebody asks for more.
 
 **Keep the workspaces** when the destinations fall into a few places to look. Each has a `label`, an `audience` sentence
-and a `homeHref`; give every `nav` entry a `workspace` naming one. Rewrite each `audience` sentence (the Overview,
-Operations and Analytics pages print `workspaces.<id>.audience` in their description) and move the homes to your own pages. Keep `optional:src/views/workspaces.ts` (`navOf` derives a workspace's
+and a `homeHref`; give every `nav` entry a `workspace` naming one. Rewrite each `audience` sentence (the Overview page and the two
+workspace homes, Revenue and Now, print `workspaces.<id>.audience` in their description) and move the homes to your own pages. Keep `optional:src/views/workspaces.ts` (`navOf` derives a workspace's
 navigation, `workspaceOf` says which workspace an address belongs to) and `optional:src/views/workspace-chrome.tsx`
 (`WorkspaceRail` and `WorkspacePalette`). The address alone decides the workspace; nothing is stored, and a workspace
 chooses what the rail lists, never what a person may open. Keep a workspace with the key `main`: the adapter and the
@@ -92,7 +92,7 @@ to all of this.
 - In `optional:src/views/no-access.tsx` the refusal page's way out reads `navOf` and `workspaces.main`: make it the first
   destination of `nav` the person may open, or `/`, and rewrite the two cases of `optional:tests/no-access.test.tsx` that
   expect a workspace's first destination and Main's home.
-- Take `${workspaces.<id>.audience}` out of the descriptions of the Overview, Operations and Analytics pages, or delete
+- Take `${workspaces.<id>.audience}` out of the descriptions of the Overview, Revenue and Now pages, or delete
   the pages.
 - Delete `optional:tests/workspaces.test.ts`, `optional:tests/workspace-access.test.ts` and
   `optional:tests/workspace-chrome.test.tsx`. In `optional:tests/shell-alerts.test.ts` drop the `workspaceOf` check, and in

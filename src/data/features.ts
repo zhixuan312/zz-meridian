@@ -16,13 +16,16 @@ import type { Need, ProtectedNeed } from '@/lib/collection';
 
 /** Every page the console offers, by the id the rail, the palette and a page's gate name it. */
 export type FeatureId =
-  | 'overview' | 'requests' | 'request' | 'analytics' | 'health' | 'customers'
+  | 'overview' | 'requests' | 'request' | 'analytics' | 'health' | 'customers' | 'customer' | 'revenue' | 'now'
   | 'keys' | 'members' | 'settings' | 'system' | 'docs' | 'tickets' | 'tests' | 'releases';
 
 /** Every action a page offers that only some people may take, by the id its control names it. */
 export type ActionId =
   | 'create-key' | 'revoke-key' | 'invite-member' | 'change-role' | 'suspend-member' | 'reactivate-member'
   | 'remove-member' | 'replay-request' | 'save-workspace' | 'create-ticket' | 'update-ticket';
+
+/** What reading customers asks: Revenue, the customer list and one customer's page all ask it, so they cannot drift apart. */
+const CUSTOMERS_NEED: Need = 'customers:read';
 
 /** Each feature: its name as a person reads it, and the need a person must satisfy to reach it. */
 export const FEATURES: Record<FeatureId, { title: string; needs: Need }> = {
@@ -31,7 +34,10 @@ export const FEATURES: Record<FeatureId, { title: string; needs: Need }> = {
   request: { title: 'Request', needs: { allOf: ['requests:read', 'endpoints:read'] } },
   analytics: { title: 'Analytics', needs: { allOf: ['days:read', 'endpoints:read', 'activity:read', 'incidents:read', 'hours:read', 'regions:read'] } },
   health: { title: 'Operations', needs: { allOf: ['services:read', 'incidents:read'] } },
-  customers: { title: 'Customers', needs: 'customers:read' },
+  customers: { title: 'Customers', needs: CUSTOMERS_NEED },
+  customer: { title: 'Customer', needs: CUSTOMERS_NEED },
+  revenue: { title: 'Revenue', needs: CUSTOMERS_NEED },
+  now: { title: 'Now', needs: { allOf: ['services:read', 'incidents:read'] } },
   keys: { title: 'API keys', needs: 'keys:read' },
   members: { title: 'Members', needs: 'members:read' },
   settings: { title: 'Settings', needs: 'public' },

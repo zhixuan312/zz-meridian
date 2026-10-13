@@ -1,5 +1,5 @@
 import {
-  Activity, BarChart3, Boxes, FileText, FlaskConical, Gauge, KeyRound, LayoutGrid, Rocket, Settings, Ticket, UserRound, Users, type LucideIcon,
+  Activity, BarChart3, Boxes, CircleDollarSign, FileText, FlaskConical, Gauge, KeyRound, LayoutGrid, Radio, Rocket, Settings, Ticket, UserRound, Users, type LucideIcon,
 } from 'lucide-react';
 // Relative with its extension, and a type-only need below: `scripts/check.ts` imports this file under plain node.
 import { FEATURES } from './data/features.ts';
@@ -35,8 +35,8 @@ export const app = {
  */
 export const workspaces = {
   main: { label: 'Main', audience: 'For everyone who needs the whole product at a glance: how it is doing, who is in it and how it is set up.', homeHref: '/' },
-  business: { label: 'Business', audience: 'For the people who answer for customers and usage: traffic, who relies on the product and what they ask of it.', homeHref: '/analytics' },
-  engineering: { label: 'Engineering', audience: 'For the people who run the product: whether it is up, who holds its keys, what is being fixed, tested and released.', homeHref: '/health' },
+  business: { label: 'Business', audience: 'For the people who answer for customers and usage: traffic, who relies on the product and what they ask of it.', homeHref: '/business' },
+  engineering: { label: 'Engineering', audience: 'For the people who run the product: whether it is up, who holds its keys, what is being fixed, tested and released.', homeHref: '/engineering' },
 } as const;
 export type WorkspaceId = keyof typeof workspaces;
 
@@ -56,6 +56,7 @@ export const nav: NavGroup[] = [
   },
   {
     items: [
+      { href: '/business', label: 'Revenue', icon: CircleDollarSign, workspace: 'business', needs: FEATURES.revenue.needs },
       { href: '/analytics', label: 'Analytics', icon: BarChart3, workspace: 'business', needs: FEATURES.analytics.needs },
       { href: '/customers', label: 'Customers', icon: Users, workspace: 'business', needs: FEATURES.customers.needs },
       { href: '/requests', label: 'Requests', icon: Activity, workspace: 'business', needs: FEATURES.requests.needs },
@@ -63,6 +64,7 @@ export const nav: NavGroup[] = [
   },
   {
     items: [
+      { href: '/engineering', label: 'Now', icon: Radio, workspace: 'engineering', needs: FEATURES.now.needs },
       { href: '/health', label: 'Operations', icon: Gauge, workspace: 'engineering', needs: FEATURES.health.needs },
       { href: '/keys', label: 'API keys', icon: KeyRound, workspace: 'engineering', needs: FEATURES.keys.needs },
       { href: '/operations-tickets', label: 'Operations tickets', icon: Ticket, workspace: 'engineering', needs: FEATURES.tickets.needs },

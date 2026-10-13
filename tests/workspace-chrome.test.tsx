@@ -18,7 +18,7 @@ import { WorkspacePalette, WorkspaceRail } from '@/views/workspace-chrome';
 const ROOT = path.resolve(import.meta.dirname, '..');
 /**
  * The template's own repository keeps the Atlas. A project made by `create` has it removed (`scripts/brand.ts` deletes
- * `app/system`), and the two entries that lead there go with it: the same declaration then holds eleven destinations.
+ * `app/system`), and the two entries that lead there go with it: the same declaration then holds thirteen destinations.
  */
 const ATLAS = fs.existsSync(path.join(ROOT, 'app/system')) ? ['Design system', 'Docs'] : [];
 /** Main's entries as the rail draws them, and the menu's name: the product's own name, then the workspace in view. */
@@ -47,14 +47,14 @@ describe('the rail, wherever the address is', () => {
 
   it('draws Business on a request\'s own page, with Requests as the current entry', async () => {
     await rail('/requests/req_1');
-    expect(links()).toEqual(['Analytics', 'Customers', 'Requests']);
+    expect(links()).toEqual(['Revenue', 'Analytics', 'Customers', 'Requests']);
     expect(trigger().getAttribute('aria-label')).toBe(menuOf('Business'));
     expect(screen.getByRole('link', { name: 'Requests' }).getAttribute('aria-current')).toBe('page');
   });
 
   it('draws Engineering on its pages', async () => {
     await rail('/operations-tickets');
-    expect(links()).toEqual(['Operations', 'API keys', 'Operations tickets', 'Tests and verification', 'Releases']);
+    expect(links()).toEqual(['Now', 'Operations', 'API keys', 'Operations tickets', 'Tests and verification', 'Releases']);
     expect(trigger().getAttribute('aria-label')).toBe(menuOf('Engineering'));
   });
 
@@ -67,7 +67,7 @@ describe('the rail, wherever the address is', () => {
 describe('the rail, for a person who may not open everything', () => {
   it('leaves out what they may not open, in every workspace, and still offers all three', async () => {
     await rail('/health', viewer());
-    expect(links()).toEqual(['Operations', 'Operations tickets', 'Tests and verification', 'Releases']);
+    expect(links()).toEqual(['Now', 'Operations', 'Operations tickets', 'Tests and verification', 'Releases']);
     fireEvent.keyDown(trigger(), { key: 'Enter' });
     expect(within(await screen.findByRole('menu')).getAllByRole('menuitemradio').map((r) => r.textContent)).toEqual(['Main', 'Business', 'Engineering']);
   });
@@ -95,7 +95,7 @@ describe('choosing a workspace', () => {
   it('goes to that workspace\'s home, and the check is on the workspace the address is in', async () => {
     await rail('/customers');
     expect(await choose('Engineering')).toEqual(['Business']);
-    expect(at.pushed).toEqual(['/health']);
+    expect(at.pushed).toEqual(['/engineering']);
   });
 
   it('goes nowhere when it is the workspace already in view: the page and its filters stay', async () => {
@@ -115,7 +115,7 @@ describe('the palette', () => {
     const offered = links();
     act(() => openCommand());
     const options = within(await screen.findByRole('dialog')).getAllByRole('option').map((o) => o.textContent ?? '');
-    expect(offered).toEqual(['Operations', 'Operations tickets', 'Tests and verification', 'Releases']);
+    expect(offered).toEqual(['Now', 'Operations', 'Operations tickets', 'Tests and verification', 'Releases']);
     for (const label of offered) expect(options.some((o) => o.startsWith(label!)), label!).toBe(true);
     for (const label of ['Overview', 'Analytics', 'Customers', 'API keys', 'Members']) expect(options.some((o) => o.startsWith(label)), label).toBe(false);
   });

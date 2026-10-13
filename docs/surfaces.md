@@ -153,9 +153,12 @@ All components are surface-agnostic by construction: they size from control toke
 | Overview | Dashboard: featured metric, tiles, breakdowns, three regions | Featured metric with trend 2/3 + three tiles 1/3 · ranked list 1/2 + composition and trend 1/2 · Business, Operation and Delivery regions · activity full | One column | `overview` inline: three tiles and the trend; fullscreen: the page |
 | Requests | List: three tiles, filter bar, data table, detail on select | Tiles over the table | Tiles in one column, card list | `requests` inline: the five latest that match the tool's query |
 | Request | Detail: head, facts, timeline | Facts 2/3 + context 1/3 | One column | Not offered; the inline list links here |
+| Revenue | The Business home, thin: the customers' figures | Three tiles · a way to Customers | Tiles in one column | Not offered |
 | Analytics | Four figures, heatmap, breakdowns, endpoints | Four tiles · heatmap full width · hour of day 1/2 + regions 1/2 · requests and errors per day 1/2 + 1/2 · endpoints table full | Grouped heatmap | Fullscreen only |
-| Operations | Operational: status list, incidents | Status 2/3 + incident 1/3 · the incidents also open, when there are any · services status list full · past incidents full | One column | `health` inline: the status list |
+| Now | The Engineering home, thin: services and the open incident | Services status list full · the incident full · a way to Operations | One column | `now` inline: the incident banner and the status list; fullscreen: the page's rows |
+| Operations | Operational: status list, incidents | Status 2/3 + incident 1/3 · the incidents also open, when there are any · services status list full · past incidents full | One column | Not offered; the embed of the present is Now's |
 | Customers | List with sparklines | Three tiles · table | Tiles in one column, then a card list | Not offered |
+| Customer | Detail: head, facts, 14 days | Facts 2/3 + the 14 days 1/3 | One column | Not offered |
 | API keys | List with destructive actions | Table | Card list | Not offered |
 | Members | List with destructive actions | Table | Card list | Not offered |
 | Operations tickets | List: summary tiles, filter bar, data table, a create dialog and a row menu to move a ticket | Tiles over the table; New ticket in the masthead | Tiles in one column, card list | Not offered |
@@ -168,7 +171,7 @@ All components are surface-agnostic by construction: they size from control toke
 
 ### Layer 5 · Product workspaces
 
-Not a component: a product's own grouping of its pages. The sample declares three workspaces, Main, Business and Engineering, in `src/app.config.ts`, and each of its thirteen destinations belongs to one. The address decides which workspace a page is in, and a workspace decides only which destinations the rail and the command palette list; access stays with each page. `docs/product-workspaces.md` is its guide: the workspaces and their audiences, where each destination lives, how a page finds its workspace, who can do what, tasks to try, how a product makes its own, and what the sample does not do.
+Not a component: a product's own grouping of its pages. The sample declares three workspaces, Main, Business and Engineering, in `src/app.config.ts`, and each of its fifteen destinations belongs to one. The address decides which workspace a page is in, and a workspace decides only which destinations the rail and the command palette list; access stays with each page. `docs/product-workspaces.md` is its guide: the workspaces and their audiences, where each destination lives, how a page finds its workspace, who can do what, tasks to try, how a product makes its own, and what the sample does not do.
 
 | Surface | What a workspace changes |
 |---|---|

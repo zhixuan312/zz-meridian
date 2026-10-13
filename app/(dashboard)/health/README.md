@@ -8,7 +8,7 @@ Status: beta
 
 | Row | Split | Content | Pattern |
 |---|---|---|---|
-| Masthead | | Kicker "ZZ Meridian · Production", title, one sentence that ends with who Engineering is for (`workspaces.engineering.audience`, read from the declaration); Freshness. No action: the product sends no incident updates, so it offers no subscription | Page frame |
+| Masthead | | Kicker "ZZ Meridian · Production", title, one sentence; Freshness. No action: the product sends no incident updates, so it offers no subscription | Page frame |
 | 1 | 2/3 + 1/3 | Uptime over 90 days at hero size, the worst state in words, a "right now" grid of every service, and the worst-state-per-day bars; the live incident beside it | Featured metric, Uptime bars, Incident card |
 | 2 | Full | Services: state, p95 and 90 days of bars per service | Status list in a Card |
 | 3 | Full | Past incidents, newest first | Incident card, `row` |
@@ -39,7 +39,7 @@ Without a live incident row 1 becomes one full-width featured card. With more th
 
 - **Console**: as above at the data width.
 - **Mobile**: rows stack; the grid shows two services across; the bars still draw every day.
-- **Embed**: see Embed view.
+- **Embed**: none; see Embed view.
 
 ## Agents
 
@@ -55,7 +55,7 @@ Every service's state, latency now and uptime; the average uptime with its defin
 
 ## Embed view
 
-`/embed/health` (tool `zz_meridian_health {}`): inline, a warning banner for the live incident (with Ask) above the status list with its summary; fullscreen, the page's rows. It shares: "ZZ Meridian health: 1 service degraded (Inference API degraded). Open incident: … monitoring."
+None of its own. The embed of what is happening now is Now's (`/embed/now`, `app/embed/now/README.md`); this page's 90-day record is not offered as an embed.
 
 ## Accessibility
 

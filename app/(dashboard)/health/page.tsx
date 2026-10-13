@@ -1,4 +1,4 @@
-import { app, workspaces } from '@/app.config';
+import { app } from '@/app.config';
 import { gate } from '@/data/access';
 import { PageFrame } from '@/components/base/shell';
 import { Freshness } from '@/components/patterns/freshness';
@@ -17,7 +17,7 @@ export default async function HealthPage() {
     <PageFrame
       kicker={<>{app.name} · {app.workspace}</>}
       title="Operations"
-      description={`Every service, how it is right now, and what happened in the last 90 days. ${workspaces.engineering.audience}`}
+      description={`Every service, how it is right now, and what happened in the last 90 days.`}
       meta={<Freshness updatedAt={new Date(data.updatedAt)} now={new Date(data.now)} />}
     >
       <PackedHealthBody {...data} services={packServices(data.services)} />

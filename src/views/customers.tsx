@@ -71,7 +71,7 @@ export function CustomersView({ rows }: { rows: CustomerRecord[] }) {
         columns={columns}
         rowKey={(c) => c.id}
         empty={{ title: 'No customers yet', body: 'A customer appears here with their plan and usage once they have an account.' }}
-        rowHref={(c) => `/requests?q=${encodeURIComponent(c.name)}`}
+        rowHref={(c) => `/customers/${c.id}`}
         state={{ sort: f.sort, dir: f.dir, page: f.page }}
         onStateChange={set}
         filtered={isFiltered}

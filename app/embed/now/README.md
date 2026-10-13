@@ -1,6 +1,6 @@
-# Operations · MCP view
+# Now · MCP view
 
-The Operations view is what an assistant shows when asked whether ZZ Meridian is healthy: the live incident and every service's state, small enough to sit in a conversation.
+The Now view is what an assistant shows when asked whether ZZ Meridian is healthy: the live incident and every service's state, small enough to sit in a conversation.
 
 Status: beta
 
@@ -8,8 +8,8 @@ Status: beta
 
 | Mode | Content |
 |---|---|
-| Inline | Embed frame head (mark, "Operations", Freshness, Expand, Open in ZZ Meridian); a warning Banner for a live incident with Ask; the Status list with its summary and without descriptions |
-| Fullscreen | The Operations page's rows under the embed head |
+| Inline | Embed frame head (mark, "Now", Freshness, Expand, Open in ZZ Meridian); a warning Banner for a live incident with Ask; the Status list with its summary and without descriptions |
+| Fullscreen | The Now page's rows under the embed head |
 
 ## States
 
@@ -21,7 +21,7 @@ Status: beta
 
 ## Data
 
-The Operations tool's read (`healthTool` in `src/views/tools.ts`): the `services` collection, the newest incident nobody has resolved, and, for fullscreen, every other open incident and the resolved ones.
+The Now tool's read (`nowTool` in `src/views/tools.ts`): the `services` collection, the newest incident nobody has resolved and a count of every other open one.
 
 ## Surfaces
 
@@ -29,7 +29,7 @@ Embed only, at 360 to 760px inline and the host's full panel in fullscreen. The 
 
 ## Agents
 
-The Operations page's context (`app/(dashboard)/health/README.md` lists it), inline and in fullscreen. Ask on the banner posts "What is the impact of … on my traffic?".
+The Now page's context (`app/(dashboard)/engineering/README.md` lists it), inline and in fullscreen. Ask on the banner posts "What is the impact of … on my traffic?".
 
 ### What the agent reads
 

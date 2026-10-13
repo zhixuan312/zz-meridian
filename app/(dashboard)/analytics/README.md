@@ -8,7 +8,7 @@ Status: beta
 
 | Row | Split | Content | Pattern |
 |---|---|---|---|
-| Masthead | | Title, one sentence that ends with who Business is for (`workspaces.business.audience`, read from the declaration); Freshness, Period select, Export | Page frame |
+| Masthead | | Title, one sentence; Freshness, Period select, Export | Page frame |
 | 1 | Tiles | Requests, Error rate, Latency p95 and Spend for the period, each with its change against the period before and its daily shape; the labels and definitions are the Overview's (`OVERVIEW_METRICS`) | Metric tile |
 | 2 | Full | Requests by weekday and hour (UTC), over a typical week, with the busiest hour as a badge | Heatmap |
 | 3 | 1/2 + 1/2 | Requests by hour of day, the busiest hour highlighted; requests by region with p50 (the bars are the share; a second share bar would say it twice) | Column chart; Bar list |
