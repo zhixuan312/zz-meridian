@@ -114,7 +114,7 @@ type VerifyConfig = {
 };
 
 /** Every rail route, in the rail's own order: what a persona who may open all of them is expected to see. */
-const EVERY_ROUTE = ['/', '/members', '/settings', '/system', '/system/start/start-a-dashboard', '/business', '/analytics', '/customers', '/requests', '/engineering', '/health', '/keys', '/operations-tickets', '/tests', '/releases'] as const;
+const EVERY_ROUTE = ['/', '/members', '/settings', '/system', '/system/start/start-a-dashboard', '/business', '/usage', '/customers', '/requests', '/engineering', '/services', '/keys', '/operations-tickets', '/tests', '/releases'] as const;
 
 const config: VerifyConfig = {
   // Ids from the sample (src/system/fixtures/sample.ts); tests/sample.test.ts fails if one stops being what it says.
@@ -127,14 +127,14 @@ const config: VerifyConfig = {
   smokeRoutes: ['/', '/requests', '/settings'],
   // The sample's own journeys across its three workspaces, run beside the audit, the presses and the keyboard walk.
   browserChecks: ['journeys/workspaces.ts'],
-  // Sizes to hold. /health is the longest streamed document of the analytical pages: ninety days of bars, six
+  // Sizes to hold. /services is the longest streamed document of the analytical pages: ninety days of bars, six
   // services each with their own strip, an incident timeline, and a screen-reader table behind every chart. It
   // measured 99-100 KiB when this cap was set, so the cap sat exactly on the measurement and the next legitimate
   // byte failed: the access work that gave every page a gate added 0.6% (101 KiB, 103,025 bytes), which is markup
   // the page needs rather than fat to trim. Held at 104 — above the measurement, so the next few KiB still fail.
-  budgets: { htmlKb: { '/health': 104, '/requests': 150 } },
+  budgets: { htmlKb: { '/services': 104, '/requests': 150 } },
   navigationChecks: [
-    { path: '/', title: 'Overview', readySelector: 'main table tbody tr', probe: 'toggle', controlSelector: 'main [role="radio"][aria-checked="false"]', resultSelector: 'main [role="radio"]' },
+    { path: '/', title: 'Home', readySelector: 'main table tbody tr', probe: 'toggle', controlSelector: 'main [role="radio"][aria-checked="false"]', resultSelector: 'main [role="radio"]' },
     { path: '/members', title: 'Members', readySelector: 'main table tbody tr', probe: 'toggle', controlSelector: 'main button[aria-haspopup="menu"]', resultSelector: '[role="menu"]' },
     { path: '/settings', title: 'Settings', readySelector: 'main [role="radio"]', probe: 'toggle', controlSelector: 'main [role="radio"][aria-checked="false"]', resultSelector: 'main [role="radio"]' },
     { path: '/system', title: 'One dashboard', readySelector: 'section[aria-label="The system in numbers"]', probe: 'link', controlSelector: 'section a[href^="/system/"]', resultSelector: 'h1' },
@@ -145,15 +145,15 @@ const config: VerifyConfig = {
     // review's Backlog carries the measurement. 300 ms holds this route's phone shell; nothing else moves.
     { path: '/system/start/start-a-dashboard', title: 'Start a dashboard', readySelector: 'article h2', probe: 'link', controlSelector: 'nav[aria-label="Next and previous"] a', resultSelector: 'h1', budget: { shellMs: { phone: 300 } } },
     { path: '/business', title: 'Revenue', readySelector: 'main', readyText: 'Past due', probe: 'link', controlSelector: 'main a[href="/customers"]', resultSelector: 'h1' },
-    { path: '/analytics', title: 'Analytics', readySelector: 'main table tbody tr', probe: 'toggle', controlSelector: 'main [role="radio"][aria-checked="false"]', resultSelector: 'main [role="radio"]' },
+    { path: '/usage', title: 'Usage', readySelector: 'main table tbody tr', probe: 'toggle', controlSelector: 'main [role="radio"][aria-checked="false"]', resultSelector: 'main [role="radio"]' },
     { path: '/customers', title: 'Customers', readySelector: 'main table tbody tr', probe: 'filter', controlSelector: 'main input[type="search"]', resultSelector: 'main table tbody tr' },
     { path: '/requests', title: 'Requests', readySelector: 'main table tbody tr', probe: 'filter', controlSelector: 'main input[type="search"]', resultSelector: 'main table tbody tr' },
-    { path: '/engineering', title: 'Now', readySelector: 'main', readyText: 'Services', probe: 'link', controlSelector: 'main a[href="/health"]', resultSelector: 'h1' },
-    // Operations has no button of its own: its one control is the strip of days, which reads a day when it is pointed at.
-    { path: '/health', title: 'Operations', readySelector: 'main', readyText: 'Uptime', probe: 'toggle', controlSelector: 'main figure [role="group"]', resultSelector: 'main figure [aria-live="polite"]' },
+    { path: '/engineering', title: 'Now', readySelector: 'main', readyText: 'Services', probe: 'link', controlSelector: 'main a[href="/services"]', resultSelector: 'h1' },
+    // Services has no button of its own: its one control is the strip of days, which reads a day when it is pointed at.
+    { path: '/services', title: 'Services', readySelector: 'main', readyText: 'Uptime', probe: 'toggle', controlSelector: 'main figure [role="group"]', resultSelector: 'main figure [aria-live="polite"]' },
     { path: '/keys', title: 'API keys', readySelector: 'main table tbody tr', probe: 'dialog', controlSelector: 'main button[aria-haspopup="dialog"]', resultSelector: '[role="dialog"]' },
-    { path: '/operations-tickets', title: 'Operations tickets', readySelector: 'main table tbody tr', probe: 'dialog', controlSelector: 'main button[aria-haspopup="dialog"]', resultSelector: '[role="dialog"]' },
-    { path: '/tests', title: 'Tests and verification', readySelector: 'main table tbody tr', probe: 'filter', controlSelector: 'main input[type="search"]', resultSelector: 'main table tbody tr' },
+    { path: '/operations-tickets', title: 'Tickets', readySelector: 'main table tbody tr', probe: 'dialog', controlSelector: 'main button[aria-haspopup="dialog"]', resultSelector: '[role="dialog"]' },
+    { path: '/tests', title: 'Tests', readySelector: 'main table tbody tr', probe: 'filter', controlSelector: 'main input[type="search"]', resultSelector: 'main table tbody tr' },
     { path: '/releases', title: 'Releases', readySelector: 'main table tbody tr', probe: 'filter', controlSelector: 'main input[type="search"]', resultSelector: 'main table tbody tr' },
   ],
   // The sample's five frozen personas, the member ids of src/system/fixtures/sample-members.ts. The four with a full
@@ -166,7 +166,7 @@ const config: VerifyConfig = {
     'key-manager': { cookie: { name: 'zz_meridian_view_as', value: 'members_5' }, expectedRoutes: EVERY_ROUTE },
     viewer: {
       cookie: { name: 'zz_meridian_view_as', value: 'members_12' },
-      expectedRoutes: ['/', '/settings', '/system', '/system/start/start-a-dashboard', '/business', '/analytics', '/customers', '/requests', '/engineering', '/health', '/operations-tickets', '/tests', '/releases'],
+      expectedRoutes: ['/', '/settings', '/system', '/system/start/start-a-dashboard', '/business', '/usage', '/customers', '/requests', '/engineering', '/services', '/operations-tickets', '/tests', '/releases'],
       deniedProbe: { '/keys': 'Load test, October', '/members': 'maya.chen@' },
     },
   },

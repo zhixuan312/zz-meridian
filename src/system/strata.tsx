@@ -47,7 +47,7 @@ function Mini({ id }: { id: string }) {
       return (
         <span className="flex items-baseline gap-4">
           <span className="t-kicker">{app.name} · {app.workspace}</span>
-          <span className="text-2xl font-semibold tracking-[-0.035em]">Overview</span>
+          <span className="text-2xl font-semibold tracking-[-0.035em]">Home</span>
         </span>
       );
     case 'components':

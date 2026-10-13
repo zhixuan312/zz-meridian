@@ -23,10 +23,10 @@ describe("Now's context", () => {
     expect(contextText(nowContext(data())).length).toBeLessThanOrEqual(BUDGET);
   });
 
-  it('says that no incident is open, and sends the history to Operations', () => {
+  it('says that no incident is open, and sends the history to Services', () => {
     const c = nowContext(data({ current: null, alsoOpen: [] }));
     expect(c.insights.map((i) => i.text)).toEqual(['No incident is open.']);
-    expect(c.unknowns.join(' ')).toContain('/health');
+    expect(c.unknowns.join(' ')).toContain('/services');
   });
 
   it('counts every other open incident', () => {

@@ -35,7 +35,7 @@ export function NowBody(data: NowData) {
       </Row>
       {alsoOpen.length ? <p className="t-caption">{alsoOpen.length} other {plural(alsoOpen.length, 'incident is', 'incidents are')} open.</p> : null}
       <div>
-        <Button asChild><Link href="/health">Open operations<ArrowRight /></Link></Button>
+        <Button asChild><Link href="/services">Open services<ArrowRight /></Link></Button>
       </div>
     </Stack>
   );

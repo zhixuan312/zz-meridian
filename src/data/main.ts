@@ -21,9 +21,9 @@ async function attempt<T>(summary: () => Promise<T>): Promise<T | null> {
   }
 }
 
-/** Main's summaries of the business, the operation and delivery. Refused, before any read, to a person without the Overview's need. */
+/** Main's summaries of the business, the operation and delivery. Refused, before any read, to a person without the Home's need. */
 export async function readMainSummary(): Promise<MainSummary> {
-  await requireNeed(FEATURES.overview.needs);
+  await requireNeed(FEATURES.home.needs);
   const [business, operation, delivery] = await Promise.all([
     attempt(async () => businessOf((await readAll('customers')).rows as CustomerRecord[])),
     attempt(async () => operationOf(await readServices(), (await readIncidents()).all)),

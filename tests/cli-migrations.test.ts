@@ -22,7 +22,7 @@ const byId = (id: string) => {
 const OLD = {
   'app/(dashboard)/layout.tsx': "import { AppShell } from '@/components/base/shell';\nexport default async function L({ children }) { const assistant = true; return <AppShell rail={null} assistant={assistant}>{children}</AppShell>; }\n",
   'src/views/settings.tsx': "const available = useAssistantAvailable();\nif (!available) return null;\n",
-  'src/views/health.tsx': "<Freshness updatedAt={at} />\nformatRelative(at)\n",
+  'src/views/services.tsx': "<Freshness updatedAt={at} />\nformatRelative(at)\n",
   'next.config.ts': 'export default { reactStrictMode: true };\n',
   'app/(dashboard)/members/page.tsx': "await connection();\nconst { rows } = await members.query({});\n",
   'app/(dashboard)/members/actions.ts': "'use server';\nexport async function add() { await members.create!({}); }\n",
@@ -32,7 +32,7 @@ const OLD = {
 const NEW = {
   'app/(dashboard)/layout.tsx': "import { AppShell } from '@/components/base/shell';\nimport { LiveProvider } from '@/lib/live';\nexport default function L({ children }) { const assistant = connection().then(() => true); return <AppShell rail={null} assistant={assistant}><LiveProvider refresh={refreshCollections} scopeKey=\"demo/owner\">{children}</LiveProvider></AppShell>; }\n",
   'src/views/settings.tsx': 'const available = use(useAssistantAvailable());\n',
-  'src/views/health.tsx': '<Freshness updatedAt={at} now={observedAt} />\nformatRelative(at, observedAt)\n',
+  'src/views/services.tsx': '<Freshness updatedAt={at} now={observedAt} />\nformatRelative(at, observedAt)\n',
   'next.config.ts': 'export default { cacheComponents: true, partialPrefetching: true };\n',
   'app/(dashboard)/members/page.tsx': "const { rows, observedAt } = await read('members');\n",
   'app/(dashboard)/members/actions.ts': "'use server';\nexport async function add() { const scope = await resolveAccess(); await collectionFor(scope, 'members').create!({}); updateTag(collectionTag(scope.tenantId, 'members')); }\n",

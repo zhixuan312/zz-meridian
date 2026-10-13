@@ -7,7 +7,7 @@ import { readServices } from '@/data/metrics';
 
 /**
  * The sample's footer for the standalone screens: the copyright, the Design Atlas, and the services' state, linking to
- * Operations. A product passes its own footer to Standalone, or none. The services are read like any page reads them, at
+ * Services. A product passes its own footer to Standalone, or none. The services are read like any page reads them, at
  * request time behind their own boundary, so the screen itself still prerenders; a visitor who may not read them
  * (signed out, on the sign-in page of a product that requires a session) sees the footer without their state.
  */
@@ -28,7 +28,7 @@ async function ServicesState() {
   if (!services) return null;
   const status = summarise(services);
   return (
-    <Link href="/health" className="hit ml-auto inline-flex items-center gap-2 hover:text-ink-2">
+    <Link href="/services" className="hit ml-auto inline-flex items-center gap-2 hover:text-ink-2">
       <StatusDot tone={status.status === 'operational' ? 'positive' : status.status === 'degraded' ? 'warning' : 'critical'} />
       {status.text}
     </Link>

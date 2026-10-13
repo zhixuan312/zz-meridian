@@ -7,10 +7,10 @@ import { TokenView } from '@/system/token-view';
 import { tokenGroups } from '@/system/tokens-data';
 import { Article } from '../../_article';
 import { contextText } from '@/lib/shared-context';
-import { nowTool, overviewTool, requestsTool } from '@/views/tools';
+import { nowTool, homeTool, requestsTool } from '@/views/tools';
 
 /** The tool behind each embed view, so the host simulator shows the result an MCP server would return for it. */
-const TOOLS = { '/embed/overview': overviewTool, '/embed/requests': requestsTool, '/embed/now': nowTool } as const;
+const TOOLS = { '/embed/home': homeTool, '/embed/requests': requestsTool, '/embed/now': nowTool } as const;
 
 /**
  * What an MCP server returns for the view's tool (`docs/agents.md`), slimmed for the page: `content` is the context's

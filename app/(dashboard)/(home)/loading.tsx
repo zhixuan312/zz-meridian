@@ -3,8 +3,8 @@ import { Row } from '@/components/base/shell';
 import { Skeleton } from '@/components/ui/skeleton';
 import { LoadingPage } from '@/components/patterns/page-loading';
 
-/** The rows of the Overview body, in its shape: the page streams them in behind its masthead, and a cold load shows them under the masthead skeleton. */
-export function OverviewSkeleton() {
+/** The rows of the Home body, in its shape: the page streams them in behind its masthead, and a cold load shows them under the masthead skeleton. */
+export function HomeSkeleton() {
   return (
     <>
       <Row split="2/3">
@@ -50,11 +50,11 @@ export function OverviewSkeleton() {
   );
 }
 
-/** Overview on its way: the featured figure beside three tiles, two cards of rows, the three regions, and the activity feed. */
-export default function OverviewLoading() {
+/** Home on its way: the featured figure beside three tiles, two cards of rows, the three regions, and the activity feed. */
+export default function HomeLoading() {
   return (
-    <LoadingPage name="overview" title="Overview">
-      <OverviewSkeleton />
+    <LoadingPage name="home" title="Home">
+      <HomeSkeleton />
     </LoadingPage>
   );
 }

@@ -43,7 +43,7 @@ Your pages, your server actions and the assistant read and change records throug
 - Read freshness from when the data arrived (the newest ingest time), never from `now()`.
 - Return `null` for "not measured"; the formatters render it as a dash, never as zero.
 
-The console keeps its collection-backed pages (Overview, Members, API keys, Operations tickets, Tests and verification, Releases) fresh without a reload: one stream per tab carries a hint that names only a collection, and the page refreshes through the same authorized `read()`. The sample stream is a single process; across processes, `skills/zz-meridian/references/live.md` holds the Postgres and Redis adapters a product writes for itself.
+The console keeps its collection-backed pages (Home, Members, API keys, Tickets, Tests, Releases) fresh without a reload: one stream per tab carries a hint that names only a collection, and the page refreshes through the same authorized `read()`. The sample stream is a single process; across processes, `skills/zz-meridian/references/live.md` holds the Postgres and Redis adapters a product writes for itself.
 
 ## 5. Decide who may do what
 
@@ -67,13 +67,13 @@ Every page is a `PageFrame` holding a `Stack` of `Row`s. Start from the closest 
 
 | You need | Start from |
 |---|---|
-| A summary with one leading figure | Overview (`/`) |
+| A summary with one leading figure | Home (`/`) |
 | A list of records with filters | Requests (`/requests`) |
-| A list people create and move along | Operations tickets (`/operations-tickets`) |
-| What ran and what is going out | Tests and verification (`/tests`), Releases (`/releases`) |
+| A list people create and move along | Tickets (`/operations-tickets`) |
+| What ran and what is going out | Tests (`/tests`), Releases (`/releases`) |
 | One record | Request (`/requests/[id]`) |
-| Four figures for a period, then breakdowns | Analytics (`/analytics`) |
-| Services and incidents | Operations (`/health`) |
+| Four figures for a period, then breakdowns | Usage (`/usage`) |
+| Services and incidents | Services (`/services`) |
 | Settings and forms | Settings (`/settings`) |
 
 A list of records is the records template, `Records` in `src/components/templates/records`: summary tiles over the table, with `RecordsSkeleton` as its loading state inside `LoadingPage` (`src/components/patterns/page-loading`). A form reports unsaved changes to the shell through `useUnsavedChanges`, so leaving asks first. A copied page holds its writes in memory and shows some figures that are fixed; `skills/zz-meridian/references/customize.md` says which.

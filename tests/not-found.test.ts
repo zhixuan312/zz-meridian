@@ -10,7 +10,7 @@ describe('nearestOf', () => {
     expect(nearestOf('/requests/req_missing')).toEqual({ href: '/requests', label: 'Requests', rest: '/req_missing' });
   });
   it('matches on a segment boundary only', () => {
-    expect(nearestOf('/requestsx')).toEqual({ href: '/', label: 'Overview', rest: '/requestsx' });
+    expect(nearestOf('/requestsx')).toEqual({ href: '/', label: 'Home', rest: '/requestsx' });
   });
   it.runIf(hasAtlas)('prefers the longest entry: Docs over Design system', () => {
     expect(nearestOf('/system/start/start-a-dashboard/gone').label).toBe('Docs');
@@ -22,7 +22,7 @@ describe('nearestOf', () => {
   it('ignores a trailing slash', () => {
     expect(nearestOf('/requests/')).toEqual({ href: '/requests', label: 'Requests', rest: '' });
   });
-  it('falls back to the Overview with the whole address left over', () => {
+  it('falls back to the Home with the whole address left over', () => {
     expect(nearestOf('/this-page-does-not-exist').rest).toBe('/this-page-does-not-exist');
   });
 });

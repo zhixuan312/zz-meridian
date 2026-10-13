@@ -37,7 +37,7 @@ describe('a page a person may not open', () => {
 
   it('offers Main\'s home for a Viewer at Members', async () => {
     const html = renderToStaticMarkup(await NoAccess({ feature: 'members' }));
-    expect(linksOf(html)).toEqual([{ href: '/', text: expect.stringContaining('Overview') }]);
+    expect(linksOf(html)).toEqual([{ href: '/', text: expect.stringContaining('Home') }]);
   });
 
   it('still says who can open it and whom to ask', async () => {

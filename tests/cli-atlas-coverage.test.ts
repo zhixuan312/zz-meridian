@@ -23,7 +23,7 @@ describe('an Atlas run', () => {
     const routes = r.stdout.split('\n').filter((l) => l.startsWith('/'));
     for (const k of cards) expect(routes).toEqual(expect.arrayContaining([`/system/${k}`, `/system/preview/${k}`]));
     // One of each kind that lives under a dynamic segment, which is what was being missed.
-    expect(routes).toEqual(expect.arrayContaining(['/system/tokens/colour', '/system/pages/overview', '/system/start/start-a-dashboard']));
+    expect(routes).toEqual(expect.arrayContaining(['/system/tokens/colour', '/system/pages/home', '/system/start/start-a-dashboard']));
     expect(routes.length).toBeGreaterThan(cards.length * 2);
     expect(r.stdout).toMatch(/atlas: \d+ cards, \d+ token views, \d+ page specs, \d+ guides, and \d+ bare previews/);
   });
@@ -32,7 +32,7 @@ describe('an Atlas run', () => {
     const all = list('scripts/vitals.ts', '--atlas');
     expect(all.status, all.stderr).toBe(0);
     const routes = all.stdout.split('\n').filter((l) => l.startsWith('/'));
-    expect(routes).toEqual(expect.arrayContaining(['/system/tokens/colour', '/system/pages/overview', '/system/start/start-a-dashboard', `/system/${cards[0]}`]));
+    expect(routes).toEqual(expect.arrayContaining(['/system/tokens/colour', '/system/pages/home', '/system/start/start-a-dashboard', `/system/${cards[0]}`]));
     expect(routes.some((r) => r.startsWith('/system/preview/'))).toBe(false);
     const usual = list('scripts/vitals.ts').stdout.split('\n');
     expect(usual).toEqual(expect.arrayContaining(['/', '/system', '/system/components/button']));

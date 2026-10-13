@@ -27,7 +27,7 @@ As Segmented: rest `ink-2`, hover `ink`, chosen on the lifted thumb, focus ring.
 
 - **Console**: in the masthead's actions.
 - **Mobile**: on the masthead's actions row; four short options fit at 360px.
-- **Embed**: the period is a tool argument. An inline view states it in its title ("Overview · Last 7 days") instead of offering the control; fullscreen may show it.
+- **Embed**: the period is a tool argument. An inline view states it in its title ("Home · Last 7 days") instead of offering the control; fullscreen may show it.
 
 ## Agents
 

@@ -4,7 +4,7 @@ import { payloadsOf, traceOf, usageOf } from '@/system/fixtures/sample-records';
 import verify from '../scripts/verify.config';
 
 describe('the sample agrees with itself', () => {
-  it('customers add up to the Overview’s 30-day requests and spend', () => {
+  it('customers add up to the Home’s 30-day requests and spend', () => {
     const month = demoTotals('30d').current;
     expect(CUSTOMER_ROWS.reduce((a, c) => a + c.requests, 0)).toBe(month.requests);
     expect(Math.round(CUSTOMER_ROWS.reduce((a, c) => a + c.spend, 0) * 100) / 100).toBe(month.spend);

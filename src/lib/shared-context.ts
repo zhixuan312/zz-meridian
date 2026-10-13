@@ -31,9 +31,9 @@ export type Insight = {
 };
 
 export type SharedContext = {
-  /** A stable name for the view: "overview". */
+  /** A stable name for the view: "home". */
   view: string;
-  /** The view's title: "Overview". */
+  /** The view's title: "Home". */
   title: string;
   /** The console address that opens this exact view, with its query: "/?period=30d". */
   address: string;

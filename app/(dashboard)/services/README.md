@@ -1,6 +1,6 @@
-# Operations
+# Services
 
-The Operations page answers "is anything wrong, and since when": uptime across every service, the live incident, each service's state and history, and what happened before.
+The Services page answers "is anything wrong, and since when": uptime across every service, the live incident, each service's state and history, and what happened before.
 
 Status: beta
 
@@ -22,7 +22,7 @@ Without a live incident row 1 becomes one full-width featured card. With more th
 | Loading | `loading.tsx`: the uptime figure with its service grid, the service list and the past incidents, as skeletons in their rows |
 | All operational | The featured caption says "All services operational."; row 1 is full width; no warning colour anywhere |
 | Degraded | The affected service is named in the caption, its dot pulses in the grid and the list; the incident card sits beside |
-| Outage | As degraded, in critical; a product that wants a count on the rail's Operations entry sets `badge` in `src/app.config.ts` (the sample sets none) |
+| Outage | As degraded, in critical; a product that wants a count on the rail's Services entry sets `badge` in `src/app.config.ts` (the sample sets none) |
 | No services | One card: "No services yet" |
 | No past incidents | An empty state in the card: "No incidents in 90 days" |
 | Error | The dashboard error screen with Retry |
@@ -32,7 +32,7 @@ Without a live incident row 1 becomes one full-width featured card. With more th
 - Uptime: the mean of each service's uptime over the 90 days shown.
 - The day bars of row 1: the worst state of any service that day.
 - "Right now": each service's state and p95 over the last hour.
-- Incidents: the `incidents` collection, read through the Operations tool (`readIncidents()` in `src/data/metrics.ts`). The newest one nobody has resolved leads the page; any other unresolved one is listed under "Also open"; the resolved ones are the past incidents. The sample's rows are `INCIDENTS` and `PAST_INCIDENTS` in `src/system/fixtures/sample-ops.ts`.
+- Incidents: the `incidents` collection, read through the Services tool (`readIncidents()` in `src/data/metrics.ts`). The newest one nobody has resolved leads the page; any other unresolved one is listed under "Also open"; the resolved ones are the past incidents. The sample's rows are `INCIDENTS` and `PAST_INCIDENTS` in `src/system/fixtures/sample-ops.ts`.
 - Services: the `services` collection, in the order the team reads its stack.
 
 ## Surfaces
@@ -43,7 +43,7 @@ Without a live incident row 1 becomes one full-width featured card. With more th
 
 ## Agents
 
-The page itself takes no agent action. It shares one context with both agents (decision 0011), built by `healthContext` in `src/views/health-context.ts`.
+The page itself takes no agent action. It shares one context with both agents (decision 0011), built by `servicesContext` in `src/views/services-context.ts`.
 
 ### What the agent reads
 

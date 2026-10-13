@@ -77,6 +77,6 @@ describe('the inventory of surfaces', () => {
 
   it('lists every page the product has in layer 4, and the template they share', () => {
     const layer4 = surfaces.slice(surfaces.indexOf('### Layer 4 · Pages'), surfaces.indexOf('### Layer 5 · Product workspaces'));
-    for (const name of ['Operations tickets', 'Tests and verification', 'Releases', 'Records']) expect(layer4, name).toContain(`| ${name}`);
+    for (const name of ['Tickets', 'Tests', 'Releases', 'Records']) expect(layer4, name).toContain(`| ${name}`);
   });
 });

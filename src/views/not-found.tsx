@@ -12,8 +12,8 @@ export type Nearest = { href: string; label: string; rest: string };
 /**
  * What the home page is called, read from `nav` rather than written here.
  *
- * A product whose front page is a ranked list, not "Overview", should not have to edit this file — and the two
- * "Go to Overview" buttons beside it — to say so. `nav` is where the product already names its own pages.
+ * A product whose front page is a ranked list, not "Home", should not have to edit this file — and the two
+ * "Go to Home" buttons beside it — to say so. `nav` is where the product already names its own pages.
  */
 export const homeLabel = nav.flatMap((g) => g.items).find((it) => it.href === '/')?.label ?? 'Home';
 

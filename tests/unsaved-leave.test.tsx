@@ -22,7 +22,7 @@ const rail = <a href="/reports?range=30d" onClick={(e) => { own.push(e.defaultPr
 
 function Switcher() {
   const leave = useLeave();
-  return <button type="button" onClick={() => leave(() => { went.to.push('/health'); })}>Switch workspace</button>;
+  return <button type="button" onClick={() => leave(() => { went.to.push('/services'); })}>Switch workspace</button>;
 }
 function Page({ unsaved }: { unsaved: boolean }) {
   const [dirty, setDirty] = useState(unsaved);
@@ -112,7 +112,7 @@ describe('leaving a form that has unsaved changes', () => {
     expect(went.to).toEqual([]);
     fireEvent.click(screen.getByRole('button', { name: 'Switch workspace' }));
     await answer('Leave');
-    expect(went.to).toEqual(['/health']);
+    expect(went.to).toEqual(['/services']);
   });
 
   it('stops the tab from closing or reloading without a word', async () => {
@@ -142,7 +142,7 @@ describe('leaving a page with nothing unsaved', () => {
     expect(asked()).toBeNull();
     expect(went.to).toEqual([]);
     fireEvent.click(screen.getByRole('button', { name: 'Switch workspace' }));
-    expect(went.to).toEqual(['/health']);
+    expect(went.to).toEqual(['/services']);
     const closing = new Event('beforeunload', { cancelable: true });
     window.dispatchEvent(closing);
     expect(closing.defaultPrevented).toBe(false);

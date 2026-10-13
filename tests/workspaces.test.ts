@@ -43,9 +43,9 @@ describe('the navigation as it is declared', () => {
 
 describe('the destinations', () => {
   it('each belong to one workspace, under the names and in the order the product declares', () => {
-    expect(entries('main')).toEqual([['/', 'Overview'], ['/members', 'Members'], ['/settings', 'Settings'], ...ATLAS]);
-    expect(entries('business')).toEqual([['/business', 'Revenue'], ['/analytics', 'Analytics'], ['/customers', 'Customers'], ['/requests', 'Requests']]);
-    expect(entries('engineering')).toEqual([['/engineering', 'Now'], ['/health', 'Operations'], ['/keys', 'API keys'], ['/operations-tickets', 'Operations tickets'], ['/tests', 'Tests and verification'], ['/releases', 'Releases']]);
+    expect(entries('main')).toEqual([['/', 'Home'], ['/members', 'Members'], ['/settings', 'Settings'], ...ATLAS]);
+    expect(entries('business')).toEqual([['/business', 'Revenue'], ['/customers', 'Customers'], ['/usage', 'Usage'], ['/requests', 'Requests']]);
+    expect(entries('engineering')).toEqual([['/engineering', 'Now'], ['/services', 'Services'], ['/operations-tickets', 'Tickets'], ['/tests', 'Tests'], ['/releases', 'Releases'], ['/keys', 'API keys']]);
   });
 
   it('are declared once: every entry has one owner, and the three navigations together are the whole of it', () => {
@@ -70,7 +70,7 @@ describe('the workspace a page belongs to', () => {
     expect(workspaceOf('/business')).toBe('business');
     expect(workspaceOf('/engineering')).toBe('engineering');
     expect(workspaceOf('/operations-tickets')).toBe('engineering');
-    expect(workspaceOf('/health/')).toBe('engineering');
+    expect(workspaceOf('/services/')).toBe('engineering');
     // The Atlas's pages are Main's where there is an Atlas, and nobody's where there is none.
     expect(workspaceOf('/system/patterns/rail')).toBe(ATLAS.length ? 'main' : null);
     expect(workspaceOf('/system/start/start-a-dashboard')).toBe(ATLAS.length ? 'main' : null);
@@ -78,7 +78,7 @@ describe('the workspace a page belongs to', () => {
 
   it('is nobody\'s when no entry owns the path: a lookalike is not a detail', () => {
     expect(workspaceOf('/requests-archive')).toBeNull();
-    expect(workspaceOf('/health-check')).toBeNull();
+    expect(workspaceOf('/services-check')).toBeNull();
     expect(workspaceOf('/nowhere')).toBeNull();
     expect(workspaceOf('/sign-in')).toBeNull();
   });

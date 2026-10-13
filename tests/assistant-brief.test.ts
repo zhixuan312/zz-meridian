@@ -11,7 +11,7 @@ const guidance = {
 };
 const brief = (over: Partial<Record<keyof typeof guidance, string>>) =>
   ['# Acme Ops', '', ...Object.entries(guidance).flatMap(([k, g]) => [`## ${k}`, over[k as keyof typeof guidance] ?? g, ''])].join('\n');
-const page = { title: 'Overview', path: '/', text: 'Requests 1,204' };
+const page = { title: 'Home', path: '/', text: 'Requests 1,204' };
 const now = new Date('2026-10-05T09:00:00Z');
 
 describe('briefExcerpt', () => {

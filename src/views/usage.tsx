@@ -9,8 +9,8 @@ import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, type SortDirection } from '@/components/ui/table';
 import { Meridian, useMeridianIndex } from '@/components/charts/meridian';
 import { useShareView } from '@/components/base/use-share-view';
-import { analyticsContext, type AnalyticsData } from './analytics-context';
-import { OVERVIEW_METRICS } from './overview-context';
+import { usageContext, type UsageData } from './usage-context';
+import { HOME_METRICS } from './home-context';
 import { MetricTile } from '@/components/patterns/metric-tile';
 import { TrendChart } from '@/components/charts/trend-chart';
 import { ColumnChart } from '@/components/charts/column-chart';
@@ -24,10 +24,10 @@ import { AskAbout } from '@/components/patterns/ask-about';
 
 const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
-/** Tells both agents what Analytics shows, the endpoints' order and the day the Meridian points at (decision 0011). */
-function ShareAnalytics({ data, sort }: { data: AnalyticsData; sort: string }) {
+/** Tells both agents what Usage shows, the endpoints' order and the day the Meridian points at (decision 0011). */
+function ShareUsage({ data, sort }: { data: UsageData; sort: string }) {
   const { index } = useMeridianIndex();
-  useShareView(analyticsContext(data, { sort, index }));
+  useShareView(usageContext(data, { sort, index }));
   return null;
 }
 
@@ -37,14 +37,14 @@ function AskErrors() {
   return <AskAbout question={index !== null ? `Why did errors change on ${formatDate(dates[index])}?` : 'Which days stand out in errors this period, and why?'} />;
 }
 
-/** The Analytics page's body: the period's four figures against the period before, then when traffic comes, where from, and what is slow. */
-export function AnalyticsBody(data: AnalyticsData) {
+/** The Usage page's body: the period's four figures against the period before, then when traffic comes, where from, and what is slow. */
+export function UsageBody(data: UsageData) {
   const { series, totals, heat, hours, regions, endpoints } = data;
   const [sort, setSort] = useState<{ key: 'requests' | 'errorRate' | 'p95'; dir: Exclude<SortDirection, false> }>({ key: 'p95', dir: 'desc' });
   if (!series.length || !heat.length || !hours.length || !regions.length || !endpoints.length) {
     return (
       <Card>
-        <ShareAnalytics data={data} sort="p95 descending" />
+        <ShareUsage data={data} sort="p95 descending" />
         <EmptyState title="No requests in this period" className="py-16">Pick a longer period, or come back once traffic arrives.</EmptyState>
       </Card>
     );
@@ -64,13 +64,13 @@ export function AnalyticsBody(data: AnalyticsData) {
   return (
     // One Meridian for the page: pointing at a day in either trend reads that day in the four figures too.
     <Meridian dates={dates}>
-    <ShareAnalytics data={data} sort={sortLabel} />
+    <ShareUsage data={data} sort={sortLabel} />
     <Stack>
       <Row split="tiles">
-        <MetricTile label={OVERVIEW_METRICS.requests.label} hint={OVERVIEW_METRICS.requests.hint} icon={<Activity />} value={c.requests} delta={change(c.requests, p.requests)} daily={series.map((d) => d.requests)} format={formatCompact} emphasis />
-        <MetricTile label={OVERVIEW_METRICS.errorRate.label} hint={OVERVIEW_METRICS.errorRate.hint} icon={<AlertTriangle />} value={c.errorRate} delta={change(c.errorRate, p.errorRate)} intent="down" daily={series.map((d) => (d.requests ? d.errors / d.requests : 0))} format={(n) => formatPercent(n, 2)} />
-        <MetricTile label={OVERVIEW_METRICS.p95.label} hint={OVERVIEW_METRICS.p95.hint} icon={<Gauge />} value={c.p95} delta={change(c.p95, p.p95)} intent="down" daily={series.map((d) => d.p95)} format={(n) => formatDuration(n)} />
-        <MetricTile label={OVERVIEW_METRICS.spend.label} hint={OVERVIEW_METRICS.spend.hint} icon={<CircleDollarSign />} value={c.spend} delta={change(c.spend, p.spend)} intent="neutral" daily={series.map((d) => d.spend)} format={(n) => formatCost(n)} />
+        <MetricTile label={HOME_METRICS.requests.label} hint={HOME_METRICS.requests.hint} icon={<Activity />} value={c.requests} delta={change(c.requests, p.requests)} daily={series.map((d) => d.requests)} format={formatCompact} emphasis />
+        <MetricTile label={HOME_METRICS.errorRate.label} hint={HOME_METRICS.errorRate.hint} icon={<AlertTriangle />} value={c.errorRate} delta={change(c.errorRate, p.errorRate)} intent="down" daily={series.map((d) => (d.requests ? d.errors / d.requests : 0))} format={(n) => formatPercent(n, 2)} />
+        <MetricTile label={HOME_METRICS.p95.label} hint={HOME_METRICS.p95.hint} icon={<Gauge />} value={c.p95} delta={change(c.p95, p.p95)} intent="down" daily={series.map((d) => d.p95)} format={(n) => formatDuration(n)} />
+        <MetricTile label={HOME_METRICS.spend.label} hint={HOME_METRICS.spend.hint} icon={<CircleDollarSign />} value={c.spend} delta={change(c.spend, p.spend)} intent="neutral" daily={series.map((d) => d.spend)} format={(n) => formatCost(n)} />
       </Row>
       <Row>
         <Card>

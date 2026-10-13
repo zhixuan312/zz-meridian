@@ -14,7 +14,7 @@ vi.mock('@/data/roles', async (original) => {
   return { ...actual, effective: (role: string, addOns: never) => (role === 'Viewer' && policy.viewer ? new Set(policy.viewer) : actual.effective(role as never, addOns)) };
 });
 
-import { analyticsFigures } from '@/data/analytics';
+import { usageFigures } from '@/data/usage';
 import { collections } from '@/data/collections';
 import { FEATURES } from '@/data/features';
 import * as sample from '@/data/sample';
@@ -22,7 +22,7 @@ import * as sample from '@/data/sample';
 type Row = Record<string, unknown>;
 const collection = (name: string) => collections.find((c) => c.name === name)!;
 const all = async (name: string) => (await collection(name).query({})).rows as Row[];
-const needs = [...(FEATURES.analytics.needs as unknown as { allOf: readonly string[] }).allOf];
+const needs = [...(FEATURES.usage.needs as unknown as { allOf: readonly string[] }).allOf];
 const kept = new Map<string, unknown>();
 const stub = (name: string, rows: Row[]) => {
   const c = collection(name);
@@ -41,7 +41,7 @@ describe('when traffic comes and where it comes from', () => {
   it('are drawn from what those reads answer: every weekday and hour, the hours of the day, and each region', async () => {
     const [hours, regions] = [await all('hours'), await all('regions')];
     expect(hours.length).toBe(7 * 24);
-    const { heat, hours: byHour, regions: byRegion } = await analyticsFigures();
+    const { heat, hours: byHour, regions: byRegion } = await usageFigures();
     for (const r of hours) expect(heat[r.weekday as number][r.hour as number], `${r.weekday}/${r.hour}`).toBe(r.requests);
     expect(byHour.map((h) => h.value)).toEqual(Array.from({ length: 24 }, (_, h) => hours.filter((r) => r.hour === h).reduce((n, r) => n + (r.requests as number), 0)));
     expect(byRegion.map((r) => [r.label, r.value, r.p50])).toEqual(regions.map((r) => [r.label, r.value, r.p50]));
@@ -49,7 +49,7 @@ describe('when traffic comes and where it comes from', () => {
 
   it('change when the data does', async () => {
     stub('regions', [{ label: 'moon-1', value: 7, p50: 3 }]);
-    expect((await analyticsFigures()).regions.map((r) => [r.label, r.value, r.p50])).toEqual([['moon-1', 7, 3]]);
+    expect((await usageFigures()).regions.map((r) => [r.label, r.value, r.p50])).toEqual([['moon-1', 7, 3]]);
   });
 });
 
@@ -57,14 +57,14 @@ describe('who may see them', () => {
   it('is whoever holds the grants the page asks for, which name both collections', async () => {
     for (const grant of ['hours:read', 'regions:read']) expect(needs, grant).toContain(grant);
     policy.viewer = [...needs];
-    expect((await analyticsFigures()).heat.length).toBe(7);
+    expect((await usageFigures()).heat.length).toBe(7);
   });
 
   it('is nobody who lacks one of them', async () => {
     policy.viewer = needs.filter((g) => g !== 'hours:read');
-    await expect(analyticsFigures()).rejects.toBeTruthy();
+    await expect(usageFigures()).rejects.toBeTruthy();
     policy.viewer = needs.filter((g) => g !== 'regions:read');
-    await expect(analyticsFigures()).rejects.toBeTruthy();
+    await expect(usageFigures()).rejects.toBeTruthy();
   });
 });
 

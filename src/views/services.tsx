@@ -14,19 +14,19 @@ import type { Tone } from '@/components/ui/badge';
 import { cn } from '@/lib/cn';
 import { formatDuration } from '@/lib/format';
 import { ShareContext } from '@/components/base/use-share-view';
-import { healthContext, type HealthData } from './health-context';
+import { servicesContext, type ServicesData } from './services-context';
 
 const RANK: Record<DayState, number> = { operational: 0, none: 0, degraded: 1, outage: 2 };
 const TONE: Record<DayState, Tone> = { operational: 'positive', none: 'neutral', degraded: 'warning', outage: 'critical' };
 
-/** The Operations page's body: shared by the console route; the embed view uses its parts. */
-export function HealthBody(data: HealthData) {
+/** The Services page's body: shared by the console route; the embed view uses its parts. */
+export function ServicesBody(data: ServicesData) {
   const { services, current, alsoOpen = [], past, now } = data;
   const end = new Date(now);
   if (services.length === 0) {
     return (
       <Card>
-        <ShareContext context={healthContext(data)} />
+        <ShareContext context={servicesContext(data)} />
         <EmptyState title="No services yet" className="py-16">Every service you monitor appears here with its state now and its last 90 days.</EmptyState>
       </Card>
     );
@@ -39,7 +39,7 @@ export function HealthBody(data: HealthData) {
   const affected = services.filter((x) => x.status !== 'operational').map((x) => x.name);
   return (
     <Stack>
-      <ShareContext context={healthContext(data)} />
+      <ShareContext context={servicesContext(data)} />
       <Row split={current ? '2/3' : 'full'}>
         <FeaturedMetric
           kicker="Uptime · all services · 90 days"
@@ -98,6 +98,6 @@ export function HealthBody(data: HealthData) {
 }
 
 /** The console route's body: the histories arrive packed, one character a day, and are unpacked here where the strips are drawn. */
-export function PackedHealthBody({ services, ...rest }: Omit<Parameters<typeof HealthBody>[0], 'services'> & { services: PackedService[] }) {
-  return <HealthBody services={unpackServices(services)} {...rest} />;
+export function PackedServicesBody({ services, ...rest }: Omit<Parameters<typeof ServicesBody>[0], 'services'> & { services: PackedService[] }) {
+  return <ServicesBody services={unpackServices(services)} {...rest} />;
 }

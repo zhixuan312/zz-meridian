@@ -49,7 +49,7 @@ describe('the no-access state', () => {
 
   it('offers one link, named for where it leads, to the first destination of its own workspace the person may open', async () => {
     expect(linksOf(renderToStaticMarkup(await NoAccess({ feature: 'keys' })))).toEqual([{ href: '/engineering', text: 'Go to Now' }]);
-    expect(linksOf(renderToStaticMarkup(await NoAccess({ feature: 'members' })))).toEqual([{ href: '/', text: 'Go to Overview' }]);
+    expect(linksOf(renderToStaticMarkup(await NoAccess({ feature: 'members' })))).toEqual([{ href: '/', text: 'Go to Home' }]);
   });
 
   it('offers Main\'s home when who the person is cannot be told', async () => {

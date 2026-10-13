@@ -51,8 +51,8 @@ describe('a Viewer', () => {
 
   it('reaches everything but Members and API keys', async () => {
     expect(await shown('main')).toEqual(['/', '/settings', ...ATLAS]);
-    expect(await shown('business')).toEqual(['/business', '/analytics', '/customers', '/requests']);
-    expect(await shown('engineering')).toEqual(['/engineering', '/health', '/operations-tickets', '/tests', '/releases']);
+    expect(await shown('business')).toEqual(['/business', '/customers', '/usage', '/requests']);
+    expect(await shown('engineering')).toEqual(['/engineering', '/services', '/operations-tickets', '/tests', '/releases']);
   });
 
   it('cannot read members or keys, by the read or by the view an assistant opens', async () => {

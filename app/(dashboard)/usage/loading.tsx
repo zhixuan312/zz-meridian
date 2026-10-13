@@ -1,8 +1,8 @@
 import { Row } from '@/components/base/shell';
 import { ChartSkeleton, LoadingPage, TableSkeleton, TilesSkeleton } from '@/components/patterns/page-loading';
 
-/** The rows of the Analytics body, in its shape: the page streams them in behind its masthead, and a cold load shows them under the masthead skeleton. */
-export function AnalyticsSkeleton() {
+/** The rows of the Usage body, in its shape: the page streams them in behind its masthead, and a cold load shows them under the masthead skeleton. */
+export function UsageSkeleton() {
   return (
     <>
       <TilesSkeleton count={4} />
@@ -14,11 +14,11 @@ export function AnalyticsSkeleton() {
   );
 }
 
-/** Analytics on its way: the four figures, the heatmap, two breakdowns, two trends and the endpoint table. */
-export default function AnalyticsLoading() {
+/** Usage on its way: the four figures, the heatmap, two breakdowns, two trends and the endpoint table. */
+export default function UsageLoading() {
   return (
-    <LoadingPage name="analytics" title="Analytics">
-      <AnalyticsSkeleton />
+    <LoadingPage name="usage" title="Usage">
+      <UsageSkeleton />
     </LoadingPage>
   );
 }

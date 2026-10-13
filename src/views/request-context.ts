@@ -10,7 +10,7 @@ import type { Insight, SharedContext } from '@/lib/shared-context';
 export type RequestData = {
   request: RequestRow;
   trace: Span[];
-  /** The route's p95 over the period, for "is this slow?": from the endpoints the Overview and Analytics read. */
+  /** The route's p95 over the period, for "is this slow?": from the endpoints the Home and Usage read. */
   routeP95: number | null;
   statusText: string;
   payloadBytes: { request: number | null; response: number };

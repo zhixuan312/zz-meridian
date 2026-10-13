@@ -1,4 +1,4 @@
-# Tests and verification
+# Tests
 
 What ran against each release: every verification run with its verdict, how long it took, when it started and, for a failed one, why, with a way to its release and to the requests of its endpoint.
 
@@ -8,7 +8,7 @@ Status: beta
 
 | Row | Pattern | Console | Mobile |
 |---|---|---|---|
-| Masthead | PageFrame: kicker, "Tests and verification", one sentence. No button: the page changes nothing | One band | Stacked |
+| Masthead | PageFrame: kicker, "Tests", one sentence. No button: the page changes nothing | One band | Stacked |
 | 1 | Three metric tiles: Latest runs, Failing now, Skipped now, each counting every run whatever the filters show | Three across | Stacked |
 | 2 | One caption line naming the release, with a link to all runs, only when the address carries a release | Full width | Full width |
 | 3 | Data table with its Filter bar (search, Verdict, and Runs: all of them, or the latest of each verification, which is what the tiles count): Verification with its endpoint, Release with its service, environment and commit (once the table is wider than 672px), Verdict, Duration (wider than 896px), Started, Why it failed (wider than 896px) | Columns | Cards: verification and verdict, release, duration ("Not run" for a skipped run) and "Started …" |

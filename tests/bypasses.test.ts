@@ -13,7 +13,7 @@ import path from 'node:path';
 import { AccessDenied } from '@/data/access';
 import { collections } from '@/data/collections';
 import { read } from '@/data/read';
-import { analyticsFigures } from '@/data/analytics';
+import { usageFigures } from '@/data/usage';
 import { viewTools } from '@/views/tools';
 
 const byName = Object.fromEntries(viewTools.map((t) => [t.name, t]));
@@ -49,15 +49,15 @@ describe('the workspace is a collection', () => {
   });
 });
 
-describe('the analytics figures ask for their own grants', () => {
-  it('refuses the analytics tool to somebody with no session', async () => {
+describe('the usage figures ask for their own grants', () => {
+  it('refuses the usage tool to somebody with no session', async () => {
     jar.value = 'members_999';
-    await expect(byName.analytics.read({ period: '30d' })).rejects.toBeTruthy();
+    await expect(byName.usage.read({ period: '30d' })).rejects.toBeTruthy();
   });
 
   it('answers the figures to the people who read the dashboards', async () => {
     jar.value = 'members_12';
-    const figures = await analyticsFigures();
+    const figures = await usageFigures();
     expect(Array.isArray(figures.regions) && figures.regions.length > 0).toBe(true);
     expect(figures.hours.length).toBe(24);
   });
@@ -65,6 +65,6 @@ describe('the analytics figures ask for their own grants', () => {
   it('refuses a scope that may not read requests at all', async () => {
     expect((await read('days')).rows.length).toBeGreaterThan(1);
     // A whole scope, for a subject the roster does not have: `allows` re-reads the member and refuses.
-    await expect(analyticsFigures({ tenantId: 'demo', subjectId: 'nobody', authorizationKey: 'demo:nobody:Viewer:' })).rejects.toBeInstanceOf(AccessDenied);
+    await expect(usageFigures({ tenantId: 'demo', subjectId: 'nobody', authorizationKey: 'demo:nobody:Viewer:' })).rejects.toBeInstanceOf(AccessDenied);
   });
 });

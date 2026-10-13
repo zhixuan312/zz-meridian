@@ -9,40 +9,40 @@ import { EmbedFrame } from '@/components/patterns/embed-frame';
 import { Freshness } from '@/components/patterns/freshness';
 import { MetricTile } from '@/components/patterns/metric-tile';
 import { AskAbout } from '@/components/patterns/ask-about';
-import { OverviewBody, ShareOverview } from '@/views/overview';
-import { OVERVIEW_METRICS, overviewFindings, type OverviewData } from '@/views/overview-context';
+import { HomeBody, ShareHome } from '@/views/home';
+import { HOME_METRICS, homeFindings, type HomeData } from '@/views/home-context';
 import { formatCompact, formatDuration, formatPercent } from '@/lib/format';
 import { formatDate } from '@/lib/format-date';
 import { PERIOD_LABEL } from '@/lib/period';
 
-/** Inline: three figures and the trend. Fullscreen: the console's Overview rows. Both share the same context. */
-export function EmbedOverview(p: OverviewData) {
+/** Inline: three figures and the trend. Fullscreen: the console's Home rows. Both share the same context. */
+export function EmbedHome(p: HomeData) {
   const s = useSurface();
   const dates = p.series.map((d) => d.date);
   return (
     <Meridian dates={dates} day={p.day}>
       <EmbedFrame
-        title={`Overview · ${PERIOD_LABEL[p.period]}`}
+        title={`Home · ${PERIOD_LABEL[p.period]}`}
         meta={<Freshness updatedAt={new Date(p.updatedAt)} now={new Date(p.now)} />}
         consolePath={`/?period=${p.period}`}
       >
-        {s.mode === 'fullscreen' ? <OverviewBody {...p} /> : <Inline {...p} dates={dates} />}
+        {s.mode === 'fullscreen' ? <HomeBody {...p} /> : <Inline {...p} dates={dates} />}
       </EmbedFrame>
     </Meridian>
   );
 }
 
-function Inline(p: OverviewData & { dates: string[] }) {
+function Inline(p: HomeData & { dates: string[] }) {
   const { series, totals, dates } = p;
   const { current: c, previous: v } = totals;
   const { index } = useMeridianIndex();
   const day = index !== null ? series[index] : null;
   const change = (a: number, b: number) => (b ? a / b - 1 : null);
-  const M = OVERVIEW_METRICS;
-  const found = overviewFindings(series);
+  const M = HOME_METRICS;
+  const found = homeFindings(series);
   return (
     <Stack className="gap-3">
-      <ShareOverview data={p} />
+      <ShareHome data={p} />
       <Row split="tiles" className="gap-3">
         <MetricTile label={M.requests.label} hint={M.requests.hint} value={c.requests} delta={change(c.requests, v.requests)} daily={series.map((d) => d.requests)} format={formatCompact} emphasis />
         <MetricTile label={M.errorRate.label} hint={M.errorRate.hint} value={c.errorRate} delta={change(c.errorRate, v.errorRate)} intent="down" daily={series.map((d) => d.errors / d.requests)} baseline={found.usual.errorRate} finding={found.errorSpike} format={(n) => formatPercent(n, 2)} />

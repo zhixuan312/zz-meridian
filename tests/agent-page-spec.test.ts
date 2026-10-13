@@ -11,7 +11,7 @@ const spec = (folder: string) => `${folder}/${['README', 'md'].join('.')}`;
 
 describe('which page specifications must say what the agent reads', () => {
   test('a page in the route group at the top of the app folder, by any name, and an embed view', () => {
-    for (const folder of ['app/(dashboard)/requests', 'app/(dash)/teams', 'app/(console)/(overview)', 'app/embed/now']) expect(agentPageSpec(spec(folder), 'app'), folder).toBe(true);
+    for (const folder of ['app/(dashboard)/requests', 'app/(dash)/teams', 'app/(console)/(home)', 'app/embed/now']) expect(agentPageSpec(spec(folder), 'app'), folder).toBe(true);
     expect(agentPageSpec(spec('src/app/(dash)/teams'), 'src/app')).toBe(true);
   });
 

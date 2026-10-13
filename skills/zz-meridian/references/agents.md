@@ -8,7 +8,7 @@ Agents work in two places: an MCP host, a chat where the dashboard appears as an
 
 ## The model
 
-A person asks the agent something in a chat ("how is the API doing this month?"). The agent calls a tool on the product's MCP server (`zz_meridian_overview { period: "30d" }`). The tool returns data and names a `ui://` resource; the host renders that resource, which is one of this template's `app/embed/*` routes, in a sandboxed frame beside the answer. From then on there are two operators on one view: the person points, taps and asks; the agent reads what the view shares and proposes what to do.
+A person asks the agent something in a chat ("how is the API doing this month?"). The agent calls a tool on the product's MCP server (`zz_meridian_home { period: "30d" }`). The tool returns data and names a `ui://` resource; the host renders that resource, which is one of this template's `app/embed/*` routes, in a sandboxed frame beside the answer. From then on there are two operators on one view: the person points, taps and asks; the agent reads what the view shares and proposes what to do.
 
 ```
 person ──asks──▶ agent ──calls tool──▶ MCP server ──returns ui:// view──▶ host frames it
@@ -28,7 +28,7 @@ Every view's state lives in its address: the period, the filters, the sort, the 
 
 Every view tells both agents what is on screen in one shared context (decision 0011), and tells them again when that changes: a filter, the period, the day the Meridian points at. "Why did this spike?" then has a referent, and the agent answers about the day the person is looking at, not the one it guessed. The context is the whole state every time: its address and scope, how fresh the data is, what the person points at, each figure with its unit, its change and its definition, what code computed from them (a baseline, a deviation, a share, with the address of its evidence), and what the data cannot say.
 
-**In the system:** a view's context is built by a pure function beside it (`example:src/views/overview-context.ts`) and passed to `useShareView(context)`. In an MCP host that sends `ui/update-model-context`, debounced, once a host is connected; on the console the assistant reads the same context with the person's next question. `contextText` writes it as labelled lines for a model; the structured part mirrors them, but the text stands alone, because a host need not give the model the structured part.
+**In the system:** a view's context is built by a pure function beside it (`example:src/views/home-context.ts`) and passed to `useShareView(context)`. In an MCP host that sends `ui/update-model-context`, debounced, once a host is connected; on the console the assistant reads the same context with the person's next question. `contextText` writes it as labelled lines for a model; the structured part mirrors them, but the text stands alone, because a host need not give the model the structured part.
 
 ### 3. Consent
 

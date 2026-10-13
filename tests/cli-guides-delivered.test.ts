@@ -62,9 +62,9 @@ describe('the guides, held to what was delivered', () => {
     }
   });
 
-  it('call the page at /health by its name, Operations', () => {
+  it('call the page at /services by its name, Services', () => {
     expect(customize).not.toMatch(/The health preset/);
-    expect(customize).toMatch(/Operations/);
+    expect(customize).toMatch(/Services/);
   });
 
   it('say what the sample does not do, where a product would otherwise copy a promise', () => {

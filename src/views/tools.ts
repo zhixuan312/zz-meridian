@@ -22,16 +22,16 @@ import {
 } from '@/data/sample';
 import { PERIODS } from '@/lib/period';
 import { defineViewTool, type ViewTool } from '@/lib/shared-context';
-import { analyticsContext } from './analytics-context';
-import { analyticsFigures } from '@/data/analytics';
+import { usageContext } from './usage-context';
+import { usageFigures } from '@/data/usage';
 import { customerFigures, customersContext } from './customers-context';
 import { customerContext, type CustomerData } from './customer-context';
-import { healthContext } from './health-context';
+import { servicesContext } from './services-context';
 import { SCOPES } from './key-scopes';
 import { keysContext } from './keys-context';
 import { membersContext } from './members-context';
 import { nowContext } from './now-context';
-import { overviewContext, type OverviewData } from './overview-context';
+import { homeContext, type HomeData } from './home-context';
 import { requestContext } from './request-context';
 import { revenueContext } from './revenue-context';
 import { requestsContext } from './requests-context';
@@ -43,19 +43,19 @@ const day = z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional().describe('A day o
 const period = z.enum(PERIODS).optional().describe('The reporting period; 30d when not given.');
 const updatedAt = () => DEMO_UPDATED_AT.toISOString();
 
-export const overviewTool = defineViewTool({
-  name: 'overview',
-  title: 'Overview',
+export const homeTool = defineViewTool({
+  name: 'home',
+  title: 'Home',
   description: 'How the API is doing over a period: requests, error rate, latency and spend with their change, the days that stand out, and what explains them; and Main\'s summary of the whole product: customers, services and incidents, tickets, failing verifications and releases.',
-  needs: FEATURES.overview.needs,
+  needs: FEATURES.home.needs,
   input: z.object({ period, day }),
-  resourceUri: `ui://${slug}/overview`,
+  resourceUri: `ui://${slug}/home`,
   async read({ period: p = '30d', day: d }) {
-    await requireNeed(FEATURES.overview.needs);
+    await requireNeed(FEATURES.home.needs);
     const [{ series, totals, observedAt }, endpoints, mix, activity, { all: incidents }, summary] = await Promise.all([readDays(p), readEndpoints(), readResponses(), readActivity(), readIncidents(), readMainSummary()]);
-    const data: OverviewData = { period: p, series, totals, endpoints, mix, activity, incidents, summary, updatedAt: updatedAt(), now: observedAt, day: d ?? null };
+    const data: HomeData = { period: p, series, totals, endpoints, mix, activity, incidents, summary, updatedAt: updatedAt(), now: observedAt, day: d ?? null };
     const index = d ? data.series.findIndex((x) => x.date === d) : -1;
-    return { context: overviewContext(data, index >= 0 ? index : null), data };
+    return { context: homeContext(data, index >= 0 ? index : null), data };
   },
 });
 
@@ -97,17 +97,17 @@ export const requestTool = defineViewTool({
   },
 });
 
-export const healthTool = defineViewTool({
-  name: 'health',
-  title: 'Operations',
+export const servicesTool = defineViewTool({
+  name: 'services',
+  title: 'Services',
   description: 'Every service now and over 90 days, every open incident with its latest update, and the incidents resolved in the last 90 days.',
-  needs: FEATURES.health.needs,
+  needs: FEATURES.services.needs,
   input: z.object({}),
   async read() {
-    await requireNeed(FEATURES.health.needs);
+    await requireNeed(FEATURES.services.needs);
     const [services, { current, open, past }] = await Promise.all([readServices(), readIncidents()]);
     const data = { services, current, alsoOpen: open.slice(1), past, updatedAt: updatedAt(), now: clock().toISOString() };
-    return { context: healthContext(data), data };
+    return { context: servicesContext(data), data };
   },
 });
 
@@ -126,17 +126,17 @@ export const nowTool = defineViewTool({
   },
 });
 
-export const analyticsTool = defineViewTool({
-  name: 'analytics',
-  title: 'Analytics',
+export const usageTool = defineViewTool({
+  name: 'usage',
+  title: 'Usage',
   description: 'Requests, error rate, latency and spend over a period against the period before, the days that stand out, and when traffic comes and from where: the busiest hours, regions with their latency, and every endpoint.',
-  needs: FEATURES.analytics.needs,
+  needs: FEATURES.usage.needs,
   input: z.object({ period }),
   async read({ period: p = '30d' }) {
-    await requireNeed(FEATURES.analytics.needs);
-    const [{ series, totals, observedAt }, endpoints, activity, { all: incidents }, figures] = await Promise.all([readDays(p), readEndpoints(), readActivity(), readIncidents(), analyticsFigures()]);
+    await requireNeed(FEATURES.usage.needs);
+    const [{ series, totals, observedAt }, endpoints, activity, { all: incidents }, figures] = await Promise.all([readDays(p), readEndpoints(), readActivity(), readIncidents(), usageFigures()]);
     const data = { period: p, series, totals, ...figures, endpoints, activity, incidents, updatedAt: updatedAt(), now: observedAt };
-    return { context: analyticsContext(data), data };
+    return { context: usageContext(data), data };
   },
 });
 
@@ -222,7 +222,7 @@ export const keysTool = defineViewTool({
 
 export const ticketsTool = defineViewTool({
   name: 'tickets',
-  title: 'Operations tickets',
+  title: 'Tickets',
   description: 'The tickets the team tracks against a service: how many are open, waiting and closed, which are unowned or have gone quiet, and the newest changes.',
   needs: FEATURES.tickets.needs,
   input: z.object({ q: z.string().max(100).optional(), state: z.enum(['all', 'open', 'waiting', 'closed']).optional(), priority: z.enum(['all', 'high', 'normal', 'low']).optional() }),
@@ -235,7 +235,7 @@ export const ticketsTool = defineViewTool({
 
 export const testsTool = defineViewTool({
   name: 'tests',
-  title: 'Tests and verification',
+  title: 'Tests',
   description: 'The verification runs: how many verifications have a latest run, how many are failing or skipped, why the failing ones failed, and the newest runs.',
   needs: FEATURES.tests.needs,
   input: z.object({ q: z.string().max(100).optional(), state: z.enum(['all', 'passed', 'failed', 'skipped']).optional(), release: z.string().max(40).optional().describe('A release id: only the runs of that release.'), runs: z.enum(['all', 'latest']).optional().describe('`latest` keeps only the latest run of each verification, which is what the figures count.') }),
@@ -261,4 +261,4 @@ export const releasesTool = defineViewTool({
 });
 
 /** Every view's tool. The assistant route hands these to `assistantTools`, as it hands the collections. */
-export const viewTools: ViewTool[] = [overviewTool, requestsTool, requestTool, healthTool, nowTool, analyticsTool, revenueTool, customersTool, customerTool, membersTool, keysTool, ticketsTool, testsTool, releasesTool] as ViewTool[];
+export const viewTools: ViewTool[] = [homeTool, requestsTool, requestTool, servicesTool, nowTool, usageTool, revenueTool, customersTool, customerTool, membersTool, keysTool, ticketsTool, testsTool, releasesTool] as ViewTool[];

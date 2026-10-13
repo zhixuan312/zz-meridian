@@ -16,10 +16,10 @@ vi.mock('next/navigation', () => ({
 }));
 
 import CustomersPage from '../app/(dashboard)/customers/page';
-import HealthPage from '../app/(dashboard)/health/page';
+import ServicesPage from '../app/(dashboard)/services/page';
 import * as customers from '@/views/customers';
 import { CustomersView } from '@/views/customers';
-import * as health from '@/views/health';
+import * as services from '@/views/services';
 import { CUSTOMERS } from '@/system/fixtures/sample-records';
 
 beforeEach(() => { jar.value = 'members_12'; });
@@ -28,12 +28,12 @@ beforeEach(() => { jar.value = 'members_12'; });
 const buttons = (html: string) => [...html.matchAll(/<button\b[^>]*>([\s\S]*?)<\/button>/g)].map((m) => m[1].replace(/<[^>]*>/g, '').trim());
 
 describe('a control that says it did something did it', () => {
-  it('Operations offers no subscription: nothing would keep one, and nothing sends an update', async () => {
-    const html = renderToStaticMarkup(await HealthPage());
+  it('Services offers no subscription: nothing would keep one, and nothing sends an update', async () => {
+    const html = renderToStaticMarkup(await ServicesPage());
     // The page drew: an empty page would hold no button either.
-    expect(html).toMatch(/<h1[^>]*>[^<]*Operations/);
+    expect(html).toMatch(/<h1[^>]*>[^<]*Services/);
     expect(buttons(html).filter((b) => /subscribe/i.test(b))).toEqual([]);
-    expect(Object.keys(health)).not.toContain('SubscribeButton');
+    expect(Object.keys(services)).not.toContain('SubscribeButton');
   });
 
   it('Customers offers no invitation: nothing would write one, and nobody would receive it', async () => {

@@ -15,7 +15,7 @@ const s = demoSeries('7d').current;
 function View({ mode }: { mode: 'inline' | 'fullscreen' }) {
   return (
     <SurfaceOverride surface={{ kind: 'embed', mode, connected: true }}>
-      <EmbedFrame title="Overview · Last 7 days" meta={<Freshness updatedAt={DEMO_UPDATED_AT} now={DEMO_NOW} />} consolePath="/?period=7d">
+      <EmbedFrame title="Home · Last 7 days" meta={<Freshness updatedAt={DEMO_UPDATED_AT} now={DEMO_NOW} />} consolePath="/?period=7d">
         <div className="grid gap-3 @min-[30rem]:grid-cols-2">
           <MetricTile label="Requests" icon={<Zap />} value={612_480} delta={0.041} daily={s.map((d) => d.requests)} format={formatCompact} emphasis />
           <MetricTile label="Latency p95" icon={<Gauge />} value={301} delta={0.02} intent="down" daily={s.map((d) => d.p95)} format={formatDuration} />

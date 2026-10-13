@@ -75,7 +75,7 @@ Every console page keeps its state in its address (period, filters, the selected
 ```tsx
 import { PageFrame, Row, Stack } from '@/components/base/shell';
 
-<PageFrame kicker="ZZ Meridian · Production" title="Overview" description="…" meta={<Freshness … />} actions={<PeriodSelect … />}>
+<PageFrame kicker="ZZ Meridian · Production" title="Home" description="…" meta={<Freshness … />} actions={<PeriodSelect … />}>
   <Stack>
     <Row split="2/3"><FeaturedMetric … /><div>…tiles…</div></Row>
     <Row split="1/2"><Card … /><Card … /></Row>
@@ -87,5 +87,5 @@ import { PageFrame, Row, Stack } from '@/components/base/shell';
 
 ```tsx
 const leave = useLeave();
-<Button onClick={() => leave(() => router.push('/health'))}>Open Operations</Button>
+<Button onClick={() => leave(() => router.push('/services'))}>Open Services</Button>
 ```

@@ -5,7 +5,7 @@ import { app } from '@/app.config';
 
 const ROLES: { cls: string; spec: string; sample: React.ReactNode }[] = [
   { cls: 't-display', spec: 'text-display 52–104px · 600 · −0.035em · 0.96', sample: 'Every number, in place.' },
-  { cls: 't-page', spec: 'text-page 36–56px · 600 · −0.035em · 1.02', sample: 'Overview' },
+  { cls: 't-page', spec: 'text-page 36–56px · 600 · −0.035em · 1.02', sample: 'Home' },
   { cls: 't-hero', spec: 'text-hero 52–80px · 600 · −0.035em', sample: <>2.9<span className="unit">M</span></> },
   { cls: 't-section', spec: 'text-xl 24–32px · 600 · −0.022em', sample: 'Busiest endpoints' },
   { cls: 't-figure', spec: 'text-2xl 32–42px · 600 · −0.03em', sample: <><span className="unit pre">$</span>298<span className="frac">.43</span></> },

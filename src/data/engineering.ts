@@ -1,5 +1,5 @@
 /**
- * The reads behind Tests and verification and Releases. The pages and the assistant's tools both read here, so what a
+ * The reads behind Tests and Releases. The pages and the assistant's tools both read here, so what a
  * person sees and what an agent is told come from the same authorized rows, and every count over them is of the whole
  * collection. The rules the rows are joined by are in `verification.ts`, which a client view may import.
  */

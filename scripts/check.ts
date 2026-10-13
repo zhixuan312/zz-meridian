@@ -119,7 +119,7 @@ for (const f of SPECS) {
 //
 //   - the literal route, in prose: `/embed/orders`. A name followed by a dot is a FILE in that folder
 //     (`app/embed/layout.tsx`), not a route, so it is left alone.
-//   - the surfaces inventory's own column (`docs/surfaces.md`, Layer 4), which names the view: `` `overview` ``. It
+//   - the surfaces inventory's own column (`docs/surfaces.md`, Layer 4), which names the view: `` `home` ``. It
 //     offered a `request` and a `customer` view that had never been built and left out the `proposal` one that had, and
 //     nothing noticed: a reader following the guide went looking for a view that is not there.
 const isEmbed = (name: string) => fs.existsSync(path.join(ROOT, APP_DIR, 'embed', name, 'page.tsx'));

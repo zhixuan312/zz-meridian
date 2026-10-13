@@ -140,9 +140,9 @@ in `optional:src/views/settings.tsx`.
 Three things an adopter meets here. The layout's promise is a request-time part of every page, so each page's HTML
 carries that part's flight data beside the prerendered one: one adopter measured a page going from 65 to 90 KiB of
 HTML (11.2 to 12.0 KiB compressed), so a team with an `htmlKb` budget in `scripts/verify.config.ts` should expect the
-number to move and record it again. The assistant walk-through in `pnpm verify --full` drives the sample's own Overview
+number to move and record it again. The assistant walk-through in `pnpm verify --full` drives the sample's own Home
 and Settings, and reports those steps as not applicable in a product that replaced them; what the product's own
-Overview hands the assistant is checked by a journey the product writes, a script named in `browserChecks` in
+Home hands the assistant is checked by a journey the product writes, a script named in `browserChecks` in
 `scripts/verify.config.ts`, as `optional:journeys/workspaces.ts` is. And a test setup of the product's own (a provider
 around every render, a polyfill) goes in a second file listed after `./tests/setup.ts` in `setupFiles` in
 `vitest.config.ts`: `tests/setup.ts` is Meridian's, and an update replaces it.

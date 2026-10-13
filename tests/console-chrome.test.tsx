@@ -17,12 +17,12 @@ describe("the console's rail, configured from the product's layout", () => {
     await act(async () => { render(<ConsoleRail signOut={null} access={access} />); });
     // The rail is never drawn with a name or a link it would then take away.
     expect(screen.queryByText('Shop team')).toBeNull();
-    expect(screen.queryByRole('link', { name: /Overview/ })).toBeNull();
+    expect(screen.queryByRole('link', { name: /Home/ })).toBeNull();
     await act(async () => { settle({ only: ['/'], user: { name: 'Shop team', role: 'No sign-in' }, viewAs: { current: 'members_1', options: [], choose: async () => {} } }); });
     expect(await screen.findByText('Shop team')).toBeTruthy();
     expect(screen.getByText('No sign-in')).toBeTruthy();
     expect(screen.queryByRole('link', { name: 'Members' })).toBeNull();
-    expect(screen.getByRole('link', { name: /Overview/ })).toBeTruthy();
+    expect(screen.getByRole('link', { name: /Home/ })).toBeTruthy();
   });
 
   it('keeps the placeholder and every destination away when the identity cannot be resolved', async () => {

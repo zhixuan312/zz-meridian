@@ -1,6 +1,6 @@
 /**
- * Analytics' shared context (decision 0011): when traffic comes, where from, what is slow and what fails, as both agents
- * read it. The days that stand out are found by the same code as the Overview's.
+ * Usage' shared context (decision 0011): when traffic comes, where from, what is slow and what fails, as both agents
+ * read it. The days that stand out are found by the same code as the Home's.
  */
 import type { ActivityEvent } from '@/components/patterns/activity-feed';
 import type { Column } from '@/components/charts/column-chart';
@@ -11,12 +11,12 @@ import { formatDate } from '@/lib/format-date';
 import { median } from '@/lib/insight';
 import { PERIOD_LABEL, type Period } from '@/lib/period';
 import { freshnessOf, listed, type Fact, type Insight, type SharedContext } from '@/lib/shared-context';
-import { OVERVIEW_METRICS, change, errorSpikes } from './overview-context';
+import { HOME_METRICS, change, errorSpikes } from './home-context';
 
-export type AnalyticsData = {
+export type UsageData = {
   period: Period;
   series: DailyPoint[];
-  /** The period's totals and those of the same number of days before it: the four figures the Overview shows. */
+  /** The period's totals and those of the same number of days before it: the four figures the Home shows. */
   totals: { current: Totals; previous: Totals };
   heat: number[][];
   hours: Column[];
@@ -31,13 +31,13 @@ export type AnalyticsData = {
 const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 const times = (r: number) => `${r.toFixed(1)}×`;
 
-/** Analytics' context; `sort` is how the endpoints table is ordered, `index` the day the Meridian points at. */
-export function analyticsContext(data: AnalyticsData, { sort = 'p95 descending', index = null as number | null } = {}): SharedContext {
+/** Usage' context; `sort` is how the endpoints table is ordered, `index` the day the Meridian points at. */
+export function usageContext(data: UsageData, { sort = 'p95 descending', index = null as number | null } = {}): SharedContext {
   const { series, totals, heat, hours, regions, endpoints } = data;
-  const address = `/analytics?period=${data.period}`;
+  const address = `/usage?period=${data.period}`;
   const label = PERIOD_LABEL[data.period].toLowerCase();
   const scope = series.length ? `${label}, ${formatDate(series[0].date)} to ${formatDate(series.at(-1)!.date)} (UTC)` : label;
-  if (!series.length || !heat.length || !endpoints.length) return { view: 'analytics', title: 'Analytics', address, scope, freshness: freshnessOf(data.updatedAt, data.now), facts: [], insights: [], unknowns: ['No requests arrived in this period.'] };
+  if (!series.length || !heat.length || !endpoints.length) return { view: 'usage', title: 'Usage', address, scope, freshness: freshnessOf(data.updatedAt, data.now), facts: [], insights: [], unknowns: ['No requests arrived in this period.'] };
 
   const cells = heat.flatMap((row, d) => row.map((v, h) => ({ v, d, h })));
   const peak = cells.reduce((m, c) => (c.v > m.v ? c : m));
@@ -50,7 +50,7 @@ export function analyticsContext(data: AnalyticsData, { sort = 'p95 descending',
 
   const { current: c, previous: p } = totals;
   const pct = (n: number) => formatPercent(n, 2);
-  const M = OVERVIEW_METRICS;
+  const M = HOME_METRICS;
   const facts: Fact[] = [
     { label: M.requests.label, value: c.requests.toLocaleString('en-US'), change: change(c.requests, p.requests, data.period, (n) => n.toLocaleString('en-US')), definition: M.requests.hint },
     { label: M.errorRate.label, value: pct(c.errorRate), change: change(c.errorRate, p.errorRate, data.period, pct), definition: M.errorRate.hint },
@@ -84,5 +84,5 @@ export function analyticsContext(data: AnalyticsData, { sort = 'p95 descending',
     const d = series[index];
     focus = `${formatDate(d.date)}: ${d.requests.toLocaleString('en-US')} requests and ${d.errors.toLocaleString('en-US')} errors (${formatPercent(d.errors / d.requests, 2)}).`;
   }
-  return { view: 'analytics', title: 'Analytics', address, scope, freshness: freshnessOf(data.updatedAt, data.now), focus, facts, insights, unknowns };
+  return { view: 'usage', title: 'Usage', address, scope, freshness: freshnessOf(data.updatedAt, data.now), focus, facts, insights, unknowns };
 }

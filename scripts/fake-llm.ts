@@ -90,8 +90,8 @@ function script(body: { messages?: Message[] }): Reply {
       const row = rowsIn(messages).flat().find((r) => r.name.toLowerCase() === remove.toLowerCase());
       if (row) return { calls: [{ name: 'remove_members', args: { ids: [row.id] } }] };
     }
-    const period = /^open the overview for the last (\d+) days/i.exec(said)?.[1];
-    if (period) return { calls: [{ name: 'view_overview', args: { period: `${period}d` } }] };
+    const period = /^open the home for the last (\d+) days/i.exec(said)?.[1];
+    if (period) return { calls: [{ name: 'view_home', args: { period: `${period}d` } }] };
     if (/who is suspended/i.test(said)) return { calls: [{ name: 'query_members', args: { where: [{ field: 'status', op: 'eq', value: 'Suspended' }] } }] };
   }
 

@@ -6,7 +6,7 @@ import { TicketsView } from '@/views/tickets';
 import { actionLine } from '@/views/no-access';
 import { createTicket, updateTicket } from './actions';
 
-export const metadata = { title: 'Operations tickets' };
+export const metadata = { title: 'Tickets' };
 
 /**
  * The page asks its feature before it reads anything; the rail hiding the route is presentation, this gate is the check.

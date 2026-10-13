@@ -1,5 +1,5 @@
 /**
- * The sample's data for the operational pages (Operations, Analytics, Settings), derived from ./sample so the numbers agree
+ * The sample's data for the operational pages (Services, Usage, Settings), derived from ./sample so the numbers agree
  * across pages.
  */
 import { DEMO_NOW, INCIDENTS, REGIONS, demoHeatmap } from '@/system/fixtures/sample';
@@ -25,17 +25,17 @@ export const PAST_INCIDENTS: Incident[] = [
 ];
 
 /**
- * Requests for each weekday (0 is Monday) and UTC hour: the Analytics heatmap's cells, one row each. These are the
+ * Requests for each weekday (0 is Monday) and UTC hour: the Usage heatmap's cells, one row each. These are the
  * sample's own fixed shape, not worked out from the request log or the daily totals.
  */
 export const WEEKDAY_HOURS = demoHeatmap().flatMap((row, weekday) => row.map((requests, hour) => ({ id: `${weekday}-${hour}`, weekday, hour, requests })));
 
-/** Requests and median latency (ms) for each region, in the order Analytics draws them. Fixed, like the grid above. */
+/** Requests and median latency (ms) for each region, in the order Usage draws them. Fixed, like the grid above. */
 export const REGION_TRAFFIC = REGIONS.map((r, i) => ({ ...r, p50: [92, 118, 164, 101][i] }));
 
 /** A fixed set of alerts for the Shell tools card's specimens and the Atlas's held-still screens (the product's bell reads `readAlerts()`): the live incident first (new), then what happened recently that someone may act on. */
 export const ALERTS: Alert[] = [
-  { id: 'a1', tone: 'warning', unread: true, title: INCIDENTS[0].title, detail: 'Monitoring · p95 back under 650ms', at: INCIDENTS[0].updates.at(-1)!.at, href: '/health' },
+  { id: 'a1', tone: 'warning', unread: true, title: INCIDENTS[0].title, detail: 'Monitoring · p95 back under 650ms', at: INCIDENTS[0].updates.at(-1)!.at, href: '/services' },
   { id: 'a2', tone: 'warning', title: 'Lumen Studio is past due', detail: 'Their latest invoice is overdue', at: ago(0.3 * DAY), href: '/customers' },
   { id: 'a3', tone: 'neutral', title: 'Claude raised the rate limit for Parallax AI', detail: 'For Jonas Weber · 2,000 requests a minute', at: ago(2.4 * 3600_000), href: '/customers' },
   { id: 'a4', tone: 'positive', title: 'Gateway v4.18.2 deployed', detail: 'Every region, no errors during rollout', at: ago(5.1 * 3600_000), href: '/' },

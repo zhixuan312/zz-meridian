@@ -181,7 +181,7 @@ function HostSimulator({ route, theme, toolResult }: { route: string; theme: 'da
           {mode === 'inline' ? (
             <>
               <Bubble from="person" ink={ink} host={hostTheme}>How is the API doing this month?</Bubble>
-              <p className="max-w-[60ch] text-sm leading-relaxed" style={{ color: ink2 }}>Here is {app.name}&rsquo;s overview for the last 30 days. Traffic is up; errors rose on two days in late September.</p>
+              <p className="max-w-[60ch] text-sm leading-relaxed" style={{ color: ink2 }}>Here is {app.name} over the last 30 days. Traffic is up; errors rose on two days in late September.</p>
             </>
           ) : null}
           <div className={cn(mode === 'inline' && 'mx-auto w-full')} style={mode === 'inline' ? { maxWidth: Number(width) } : undefined}>

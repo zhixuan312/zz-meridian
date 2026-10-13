@@ -28,13 +28,13 @@ beforeEach(() => { jar.value = undefined; });
 
 describe('the feature table', () => {
   it('declares every feature the spec freezes, with its need', () => {
-    expect(Object.keys(FEATURES).sort()).toEqual(['analytics', 'customer', 'customers', 'docs', 'health', 'keys', 'members', 'now', 'overview', 'releases', 'request', 'requests', 'revenue', 'settings', 'system', 'tests', 'tickets']);
+    expect(Object.keys(FEATURES).sort()).toEqual(['customer', 'customers', 'docs', 'home', 'keys', 'members', 'now', 'releases', 'request', 'requests', 'revenue', 'services', 'settings', 'system', 'tests', 'tickets', 'usage']);
     const N: Record<string, unknown> = {
-      overview: { allOf: ['days:read', 'endpoints:read', 'responses:read', 'activity:read', 'incidents:read', 'customers:read', 'services:read', 'tickets:read', 'tests:read', 'releases:read'] },
+      home: { allOf: ['days:read', 'endpoints:read', 'responses:read', 'activity:read', 'incidents:read', 'customers:read', 'services:read', 'tickets:read', 'tests:read', 'releases:read'] },
       requests: 'requests:read',
       request: { allOf: ['requests:read', 'endpoints:read'] },
-      analytics: { allOf: ['days:read', 'endpoints:read', 'activity:read', 'incidents:read', 'hours:read', 'regions:read'] },
-      health: { allOf: ['services:read', 'incidents:read'] },
+      usage: { allOf: ['days:read', 'endpoints:read', 'activity:read', 'incidents:read', 'hours:read', 'regions:read'] },
+      services: { allOf: ['services:read', 'incidents:read'] },
       customers: 'customers:read',
       customer: 'customers:read',
       revenue: 'customers:read',
@@ -82,7 +82,7 @@ describe('the rail asks the table', () => {
     if (!TEMPLATE) ctx.skip('this project replaced the template’s pages: its rail is its own, and these thirteen routes are the template’s');
     const all = items.map((i) => i.href).sort();
     jar.value = 'members_12';
-    expect(hrefsOf((await chromeAccess()).only)).toEqual(['/', '/analytics', '/business', '/customers', '/engineering', '/health', '/operations-tickets', '/releases', '/requests', '/settings', '/system', '/system/start/start-a-dashboard', '/tests']);
+    expect(hrefsOf((await chromeAccess()).only)).toEqual(['/', '/business', '/customers', '/engineering', '/operations-tickets', '/releases', '/requests', '/services', '/settings', '/system', '/system/start/start-a-dashboard', '/tests', '/usage']);
     for (const id of ['members_1', 'members_2', 'members_4', 'members_5']) {
       jar.value = id;
       expect(hrefsOf((await chromeAccess()).only), id).toEqual(all);

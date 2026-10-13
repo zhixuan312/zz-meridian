@@ -1,6 +1,6 @@
 /**
  * Now's shared context (decision 0011): which services are up this moment and which incident is open, as both agents
- * read it. History and the incidents already resolved belong to Operations (/health), which the context says.
+ * read it. History and the incidents already resolved belong to Services (/services), which the context says.
  */
 import type { Incident } from '@/components/patterns/incident-card';
 import type { Service } from '@/components/patterns/status-list';
@@ -23,11 +23,11 @@ export function nowContext({ services, current, alsoOpen, updatedAt, now }: NowD
   const insights: Insight[] = [];
   if (current) {
     const latest = current.updates.reduce<Incident['updates'][number] | undefined>((m, u) => (!m || u.at > m.at ? u : m), undefined);
-    insights.push({ text: `Open incident "${current.title}" on ${current.service}, ${current.severity}, ${current.state}: started ${formatRelative(current.started, at)} (${formatDateTime(current.started)} UTC)${latest ? `; latest update ${formatRelative(latest.at, at)}: "${latest.text}"` : ''}.`, evidence: '/health' });
+    insights.push({ text: `Open incident "${current.title}" on ${current.service}, ${current.severity}, ${current.state}: started ${formatRelative(current.started, at)} (${formatDateTime(current.started)} UTC)${latest ? `; latest update ${formatRelative(latest.at, at)}: "${latest.text}"` : ''}.`, evidence: '/services' });
   } else {
     insights.push({ text: 'No incident is open.' });
   }
-  if (alsoOpen.length) insights.push({ text: `${alsoOpen.length} other ${plural(alsoOpen.length, 'incident is', 'incidents are')} open: ${alsoOpen.map((i) => `"${i.title}" on ${i.service}`).join('; ')}.`, evidence: '/health' });
+  if (alsoOpen.length) insights.push({ text: `${alsoOpen.length} other ${plural(alsoOpen.length, 'incident is', 'incidents are')} open: ${alsoOpen.map((i) => `"${i.title}" on ${i.service}`).join('; ')}.`, evidence: '/services' });
   return {
     view: 'now',
     title: 'Now',
@@ -36,6 +36,6 @@ export function nowContext({ services, current, alsoOpen, updatedAt, now }: NowD
     freshness: freshnessOf(updatedAt, now),
     facts,
     insights,
-    unknowns: ['Latency is one reading per service, now; the last 90 days and the resolved incidents are on Operations (/health).', ...(current?.state === 'monitoring' ? ['The open incident is monitoring: a fix is in place, and nobody has yet confirmed it holds.'] : [])],
+    unknowns: ['Latency is one reading per service, now; the last 90 days and the resolved incidents are on Services (/services).', ...(current?.state === 'monitoring' ? ['The open incident is monitoring: a fix is in place, and nobody has yet confirmed it holds.'] : [])],
   };
 }

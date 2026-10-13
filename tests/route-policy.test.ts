@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { emptyShells, offenders } from '../scripts/route-policy.ts';
 
 const routes = [
-  { path: '/', kind: 'partial' }, { path: '/health', kind: 'static' }, { path: '/members', kind: 'dynamic' },
+  { path: '/', kind: 'partial' }, { path: '/services', kind: 'static' }, { path: '/members', kind: 'dynamic' },
   { path: '/api/live', kind: 'dynamic' }, { path: '/reports', kind: 'dynamic' },
 ] as { path: string; kind: 'static' | 'partial' | 'dynamic' }[];
 

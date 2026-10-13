@@ -95,7 +95,7 @@ try {
           })()`);
           if (!readout.fits) { console.log(`FAIL ${r} at ${w}px ${t}: readout missing or outside its chart: ${readout.detail}`); failed = true; }
         }
-        const name = (r.replace(/^\//, '').replace(/[/?=&#]+/g, '-') || 'overview') + (presses.length ? `-${slug(presses.at(-1)!)}` : '') + (point ? `-${slug(point)}-point-${at}` : '') + `-${w}-${t}.png`;
+        const name = (r.replace(/^\//, '').replace(/[/?=&#]+/g, '-') || 'home') + (presses.length ? `-${slug(presses.at(-1)!)}` : '') + (point ? `-${slug(point)}-point-${at}` : '') + `-${w}-${t}.png`;
         const h = await page.shot(path.join(out, name), { full });
         console.log(`${path.join(out, name)} ${w}x${h}`);
         if (point && w < 600) await page.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });

@@ -90,18 +90,18 @@ const DOCS: { id: string; section: SectionId; file: string; title?: string; summ
 
 /** The bound pages. `template` names the template entry a page's view is built from; a page that arranges its own patterns names none. */
 export const PAGES: { id: string; title: string; route: string; embed?: string; spec: string; template?: string }[] = [
-  { id: 'overview', title: 'Overview', route: '/', embed: '/embed/overview', spec: 'app/(dashboard)/(overview)/README.md' },
+  { id: 'home', title: 'Home', route: '/', embed: '/embed/home', spec: 'app/(dashboard)/(home)/README.md' },
   { id: 'requests', title: 'Requests', route: '/requests', embed: '/embed/requests', spec: 'app/(dashboard)/requests/README.md', template: 'template-records' },
   { id: 'request', title: 'Request', route: '/requests/req_qmi1vbyi3uqt', spec: 'app/(dashboard)/requests/[id]/README.md' },
   { id: 'revenue', title: 'Revenue', route: '/business', spec: 'app/(dashboard)/business/README.md' },
-  { id: 'analytics', title: 'Analytics', route: '/analytics', spec: 'app/(dashboard)/analytics/README.md' },
+  { id: 'usage', title: 'Usage', route: '/usage', spec: 'app/(dashboard)/usage/README.md' },
   { id: 'now', title: 'Now', route: '/engineering', embed: '/embed/now', spec: 'app/(dashboard)/engineering/README.md' },
-  { id: 'health', title: 'Operations', route: '/health', spec: 'app/(dashboard)/health/README.md' },
+  { id: 'services', title: 'Services', route: '/services', spec: 'app/(dashboard)/services/README.md' },
   { id: 'customers', title: 'Customers', route: '/customers', spec: 'app/(dashboard)/customers/README.md', template: 'template-records' },
   { id: 'customer', title: 'Customer', route: '/customers/northwind-labs', spec: 'app/(dashboard)/customers/[id]/README.md' },
   { id: 'keys', title: 'API keys', route: '/keys', spec: 'app/(dashboard)/keys/README.md', template: 'template-records' },
-  { id: 'tickets', title: 'Operations tickets', route: '/operations-tickets', spec: 'app/(dashboard)/operations-tickets/README.md', template: 'template-records' },
-  { id: 'tests', title: 'Tests and verification', route: '/tests', spec: 'app/(dashboard)/tests/README.md', template: 'template-records' },
+  { id: 'tickets', title: 'Tickets', route: '/operations-tickets', spec: 'app/(dashboard)/operations-tickets/README.md', template: 'template-records' },
+  { id: 'tests', title: 'Tests', route: '/tests', spec: 'app/(dashboard)/tests/README.md', template: 'template-records' },
   { id: 'releases', title: 'Releases', route: '/releases', spec: 'app/(dashboard)/releases/README.md', template: 'template-records' },
   { id: 'members', title: 'Members', route: '/members', spec: 'app/(dashboard)/members/README.md', template: 'template-records' },
   { id: 'settings', title: 'Settings', route: '/settings', spec: 'app/(dashboard)/settings/README.md' },

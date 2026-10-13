@@ -7,7 +7,7 @@ import { gate } from '@/data/access';
 import { readRuns } from '@/data/engineering';
 import { TestsView } from '@/views/tests';
 
-export const metadata = { title: 'Tests and verification' };
+export const metadata = { title: 'Tests' };
 
 /**
  * The page asks its feature before it reads anything; the rail hiding the route is presentation, this gate is the check.
@@ -21,7 +21,7 @@ export default async function TestsPage() {
   return (
     <PageFrame
       kicker={<>{app.name} · {app.workspace}</>}
-      title="Tests and verification"
+      title="Tests"
       description="What ran against each release, what failed and why, and where to look next."
     >
       <Suspense

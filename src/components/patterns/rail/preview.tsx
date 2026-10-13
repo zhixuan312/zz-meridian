@@ -16,8 +16,8 @@ const Column = ({ current, label, user, scopes, workspace, viewAs, groups = nav 
   </figure>
 );
 
-/** The configured navigation with a count on Operations: the configuration carries none, so this specimen draws one of its own. */
-const WITH_COUNT = nav.map((group) => ({ ...group, items: group.items.map((item) => (item.href === '/health' ? { ...item, badge: '1' } : item)) }));
+/** The configured navigation with a count on Services: the configuration carries none, so this specimen draws one of its own. */
+const WITH_COUNT = nav.map((group) => ({ ...group, items: group.items.map((item) => (item.href === '/services' ? { ...item, badge: '1' } : item)) }));
 
 /** The sample personas, in the order the View as group lists them: the demo signs in as the first until one is chosen. */
 const PERSONAS = ['Maya Chen', 'Jonas Weber', 'Priya Nair', 'Lucas Meyer', 'Grace Liu'];
@@ -42,8 +42,8 @@ export default function RailPreview() {
     <>
       <Specimen label="The rail" note="260px, on a translucent wash over the lit ground. The current page is an accent-tinted pill with a lit edge; it springs to the item you choose.">
         <div className="flex flex-wrap gap-6">
-          <Column current="/" label="Overview is current" />
-          <Column current="/health" groups={WITH_COUNT} label="Operations is current, with a count badge a product sets on an entry (the sample sets none)" />
+          <Column current="/" label="Home is current" />
+          <Column current="/services" groups={WITH_COUNT} label="Services is current, with a count badge a product sets on an entry (the sample sets none)" />
           <Column current="/" user={null} label="The session is still being found out: a skeleton, not a name" />
         </div>
       </Specimen>

@@ -23,10 +23,10 @@ const rogue = () => {
   put('app/(dashboard)/rogue/actions.ts', "'use server';\nimport { revalidateTag } from 'next/cache';\nexport async function stale() { revalidateTag('collection:x', 'max'); }\n");
 };
 const check = () => spawnSync(process.execPath, ['scripts/check.ts'], { cwd: dir, encoding: 'utf8' }).stdout;
-/** The template's own `src/app.config.ts`, with the Overview item's need replaced (or dropped) to plant a nav case. */
+/** The template's own `src/app.config.ts`, with the Home item's need replaced (or dropped) to plant a nav case. */
 const plantNav = (needs: string | null) => {
   const base = fs.readFileSync(path.join(ROOT, 'src/app.config.ts'), 'utf8');
-  const at = 'needs: FEATURES.overview.needs';
+  const at = 'needs: FEATURES.home.needs';
   put('src/app.config.ts', needs === null ? base.replace(`, ${at}`, '') : base.replace(at, `needs: ${needs}`));
 };
 const restoreAppConfig = () => put('src/app.config.ts', fs.readFileSync(path.join(ROOT, 'src/app.config.ts'), 'utf8'));

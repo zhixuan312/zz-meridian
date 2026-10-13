@@ -262,12 +262,12 @@ try {
 }
 
 try {
-  await step("Main to a request's own page, with the rail on Business", missing(REQUESTS) ?? (has('/analytics') ? null : '/analytics is not in the navigation'), async () => {
+  await step("Main to a request's own page, with the rail on Business", missing(REQUESTS) ?? (has('/usage') ? null : '/usage is not in the navigation'), async () => {
     await go(a, 'member', HOME);
     await settle(a, 'member', HOME, 'main');
-    // Main's Business region links to Analytics; the rail then names Business and offers Requests.
-    await press(a, { role: 'link', name: labelOf('/analytics'), within: '[role="region"][aria-label="Business"]' });
-    await settle(a, 'member', '/analytics', 'business');
+    // Main's Business region links to Usage; the rail then names Business and offers Requests.
+    await press(a, { role: 'link', name: labelOf('/usage'), within: '[role="region"][aria-label="Business"]' });
+    await settle(a, 'member', '/usage', 'business');
     await press(a, { role: 'link', name: labelOf(REQUESTS), within: 'nav[aria-label="Main"]' });
     await settle(a, 'member', REQUESTS, 'business');
     await press(a, { role: 'link', hrefRe: '^/requests/[^/]+$', within: 'main table tbody' });
@@ -332,7 +332,7 @@ try {
     return `(${before} -> ${after})`;
   }, () => [a]);
 
-  await step('a refresh, then Back and Forward, each leave the rail on the address\'s workspace', missing(REQUESTS, '/analytics'), async () => {
+  await step('a refresh, then Back and Forward, each leave the rail on the address\'s workspace', missing(REQUESTS, '/usage'), async () => {
     await go(a, 'member', HOME);
     await settle(a, 'member', HOME, 'main');
     await choose(a, 'business');

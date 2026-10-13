@@ -109,7 +109,7 @@ export const requests: Collection<RequestRecord, 'id'> = arrayCollection({
   pageOnly: ['create'],
 });
 
-/** One row per day: what the Overview's and Analytics' figures, trends and baselines are computed from. Read-only. */
+/** One row per day: what the Home's and Usage' figures, trends and baselines are computed from. Read-only. */
 export const days: Collection<DailyPoint, 'date'> = arrayCollection({
   name: 'days',
   label: 'Daily totals',
@@ -146,7 +146,7 @@ export const responses: Collection<{ label: string; value: number }, 'label'> = 
   allow: [],
 });
 
-/** Requests for each weekday and UTC hour: the cells of Analytics' heatmap, and the hours of the day are their sums. Read-only. */
+/** Requests for each weekday and UTC hour: the cells of Usage' heatmap, and the hours of the day are their sums. Read-only. */
 export const hours: Collection<(typeof WEEKDAY_HOURS)[number], 'id'> = arrayCollection({
   name: 'hours',
   label: 'Requests by weekday and hour',
@@ -158,7 +158,7 @@ export const hours: Collection<(typeof WEEKDAY_HOURS)[number], 'id'> = arrayColl
   allow: [],
 });
 
-/** Requests and median latency for each region, in the order Analytics draws them. Read-only. */
+/** Requests and median latency for each region, in the order Usage draws them. Read-only. */
 export const regions: Collection<(typeof REGION_TRAFFIC)[number], 'label'> = arrayCollection({
   name: 'regions',
   label: 'Requests by region',

@@ -56,7 +56,7 @@ The frame is where an agent's tool result appears. Its view shares what is on sc
 
 ## Content
 
-- The title names the view and its scope: "Overview · Last 7 days", "Parallax AI · Requests".
+- The title names the view and its scope: "Home · Last 7 days", "Parallax AI · Requests".
 - The way out names the product: "Open in ZZ Meridian".
 
 ## Do and do not
@@ -69,7 +69,7 @@ The frame is where an agent's tool result appears. Its view shares what is on sc
 ```tsx
 import { EmbedFrame } from '@/components/patterns/embed-frame';
 
-<EmbedFrame title="Overview · Last 7 days" meta={<Freshness updatedAt={updatedAt} />} consolePath="/?period=7d">
+<EmbedFrame title="Home · Last 7 days" meta={<Freshness updatedAt={updatedAt} />} consolePath="/?period=7d">
   <Row split="tiles">…</Row>
 </EmbedFrame>
 ```

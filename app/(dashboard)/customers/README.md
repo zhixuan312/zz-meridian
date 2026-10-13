@@ -1,6 +1,6 @@
 # Customers page
 
-Who is calling the API, on which plan, and what they spent in the last 30 days, which adds up to the Overview's 30-day spend; each customer opens its own page.
+Who is calling the API, on which plan, and what they spent in the last 30 days, which adds up to the Home's 30-day spend; each customer opens its own page.
 
 Status: beta
 

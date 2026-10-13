@@ -11,7 +11,7 @@ const page = (assistant: Promise<boolean>) =>
   render(
     <Tooltip.Provider>
       <AppShell rail={null} assistant={assistant}>
-        <PageFrame title="Overview"><p>Traffic, reliability and spend.</p></PageFrame>
+        <PageFrame title="Home"><p>Traffic, reliability and spend.</p></PageFrame>
       </AppShell>
     </Tooltip.Provider>,
   );

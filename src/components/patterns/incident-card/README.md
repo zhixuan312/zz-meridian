@@ -18,7 +18,7 @@ Status: beta
 
 | Variant | Use |
 |---|---|
-| `card` (default) | The current incident beside the status on Operations; an incident's own page |
+| `card` (default) | The current incident beside the status on Services; an incident's own page |
 | `row` | A compact entry in a list of past incidents: title (wraps, never truncated), severity, service, date, how long it lasted, state word |
 
 ## Sizes
@@ -57,13 +57,13 @@ Card (Layer 2) with Badge, Status dot and text; the timeline is an ordered list.
 
 ## Surfaces
 
-- **Console**: the `card` beside the Operations figure; `row`s under "Past incidents".
+- **Console**: the `card` beside the Services figure; `row`s under "Past incidents".
 - **Mobile**: the card stacks under the figure; nothing else changes.
-- **Embed**: the inline Operations view reduces a live incident to a warning Banner (title, state, started) with Ask; the card appears in fullscreen.
+- **Embed**: the inline Services view reduces a live incident to a warning Banner (title, state, started) with Ask; the card appears in fullscreen.
 
 ## Agents
 
-An agent reads incidents through the Operations view's shared context (title, state, id). Updates are written by people; an agent may draft one only as a Proposal.
+An agent reads incidents through the Services view's shared context (title, state, id). Updates are written by people; an agent may draft one only as a Proposal.
 
 ## Accessibility
 

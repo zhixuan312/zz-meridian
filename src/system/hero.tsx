@@ -143,7 +143,7 @@ function ChatMini({ series }: { series: DailyPoint[] }) {
       <div className="rounded-lg border border-line bg-surface p-3">
         <div className="flex items-center gap-2">
           <AppMark size={20} />
-          <span className="text-xs font-semibold">Overview</span>
+          <span className="text-xs font-semibold">Home</span>
           <span className="ml-auto inline-flex items-center gap-1 rounded-sm px-1.5 py-0.5 text-2xs font-medium text-accent-ink ring-1 ring-accent-line"><Sparkles className="size-3" />Ask</span>
         </div>
         <p className="t-num mt-2 text-xl font-semibold tracking-[-0.02em]">{formatCompact(day.requests)}</p>

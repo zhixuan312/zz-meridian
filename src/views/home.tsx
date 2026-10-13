@@ -27,12 +27,12 @@ import type { MainSummary } from './main-summary';
 import { RELEASE_METRICS, releasesAddress } from './releases-context';
 import { TEST_METRICS, testsAddress } from './tests-context';
 import { TICKET_METRICS, ticketsAddress } from './tickets-context';
-import { OVERVIEW_METRICS, overviewContext, overviewFindings, type OverviewData } from './overview-context';
+import { HOME_METRICS, homeContext, homeFindings, type HomeData } from './home-context';
 
-/** Tells both agents what the Overview shows, and which day the Meridian points at (decision 0011). Inside `Meridian`. */
-export function ShareOverview({ data }: { data: OverviewData }) {
+/** Tells both agents what the Home shows, and which day the Meridian points at (decision 0011). Inside `Meridian`. */
+export function ShareHome({ data }: { data: HomeData }) {
   const { index } = useMeridianIndex();
-  useShareView(overviewContext(data, index));
+  useShareView(homeContext(data, index));
   return null;
 }
 
@@ -85,10 +85,10 @@ export function MainRegions({ summary: { business, operation, delivery } }: { su
   ] : [];
   return (
     <Row split="tiles">
-      <Region name="Business" description="Customers and what they spend" available={business !== null} links={[{ href: '/customers', label: 'Customers' }, { href: '/analytics', label: 'Analytics' }]}>
+      <Region name="Business" description="Customers and what they spend" available={business !== null} links={[{ href: '/customers', label: 'Customers' }, { href: '/usage', label: 'Usage' }]}>
         <KeyValue items={businessRows} />
       </Region>
-      <Region name="Operation" description="Services and incidents, now" available={operation !== null} links={[{ href: '/health', label: 'Operations' }]}>
+      <Region name="Operation" description="Services and incidents, now" available={operation !== null} links={[{ href: '/services', label: 'Services' }]}>
         {operation && !unwell.length && !operation.incidents.length ? (
           <p className="flex items-center gap-2.5 py-2.5 text-sm"><StatusDot tone="positive" />Every service is operational and nothing is open.</p>
         ) : (
@@ -100,7 +100,7 @@ export function MainRegions({ summary: { business, operation, delivery } }: { su
           />
         )}
       </Region>
-      <Region name="Delivery" description="Tickets, verifications and releases" available={delivery !== null} links={[{ href: '/operations-tickets', label: 'Operations tickets' }, { href: '/tests', label: 'Tests and verification' }, { href: '/releases', label: 'Releases' }]}>
+      <Region name="Delivery" description="Tickets, verifications and releases" available={delivery !== null} links={[{ href: '/operations-tickets', label: 'Tickets' }, { href: '/tests', label: 'Tests' }, { href: '/releases', label: 'Releases' }]}>
         <KeyValue items={deliveryRows} />
       </Region>
     </Row>
@@ -108,26 +108,26 @@ export function MainRegions({ summary: { business, operation, delivery } }: { su
 }
 
 /** Ask on the featured card: about the day the Meridian points at, or about the period. */
-function AskOverview({ period }: { period: string }) {
+function AskHome({ period }: { period: string }) {
   const { index, dates } = useMeridianIndex();
   const day = index !== null ? dates[index] : null;
   return <AskAbout question={day ? `Why do requests, errors and latency on ${formatDate(day)} look the way they do?` : `What stands out in requests, errors and latency over the ${period}, and why?`} />;
 }
 
 /**
- * The Overview's rows: the console page and the MCP view in fullscreen. `now` is the data's clock, as an ISO string:
+ * The Home's rows: the console page and the MCP view in fullscreen. `now` is the data's clock, as an ISO string:
  * relative times read against it, never against render time.
  */
-export function OverviewBody(data: OverviewData) {
+export function HomeBody(data: HomeData) {
   const { series, totals, endpoints, mix, activity, now } = data;
-  // A change anyone makes, an agent's included, reaches an open Overview's Activity without a reload.
+  // A change anyone makes, an agent's included, reaches an open Home's Activity without a reload.
   useLive(['activity']);
   const period = PERIOD_LABEL[data.period].toLowerCase();
   if (series.length === 0) {
     return (
       <Stack>
         <Card>
-          <ShareOverview data={data} />
+          <ShareHome data={data} />
           <EmptyState title="No requests yet" action={<Link href="/keys" className={linkClass}>API keys <ArrowRight className="size-3.5" /></Link>} className="py-16">
             Traffic, reliability and spend appear here once a key makes its first call.
           </EmptyState>
@@ -140,15 +140,15 @@ export function OverviewBody(data: OverviewData) {
   const dates = series.map((d) => d.date);
   const change = (a: number, b: number) => (b ? a / b - 1 : null);
   const peak = series.reduce((m, d) => (d.requests > m.requests ? d : m), series[0]);
-  const found = overviewFindings(series);
+  const found = homeFindings(series);
   return (
     <Meridian dates={dates} day={data.day}>
-      <ShareOverview data={data} />
+      <ShareHome data={data} />
       <Stack>
         <Row split="2/3">
           <FeaturedMetric
             kicker={<>Requests · {period}</>}
-            actions={<AskOverview period={period} />}
+            actions={<AskHome period={period} />}
             value={c.requests}
             daily={series.map((d) => d.requests)}
             format={formatCompact}
@@ -166,8 +166,8 @@ export function OverviewBody(data: OverviewData) {
           </FeaturedMetric>
           <div className="grid min-w-0 gap-(--stack-gap) md:grid-cols-3 lg:flex lg:flex-col">
             <MetricTile
-              label={OVERVIEW_METRICS.errorRate.label}
-              hint={OVERVIEW_METRICS.errorRate.hint}
+              label={HOME_METRICS.errorRate.label}
+              hint={HOME_METRICS.errorRate.hint}
               icon={<AlertTriangle />}
               value={c.errorRate}
               delta={change(c.errorRate, p.errorRate)}
@@ -178,8 +178,8 @@ export function OverviewBody(data: OverviewData) {
               format={(n) => formatPercent(n, 2)}
             />
             <MetricTile
-              label={OVERVIEW_METRICS.p95.label}
-              hint={OVERVIEW_METRICS.p95.hint}
+              label={HOME_METRICS.p95.label}
+              hint={HOME_METRICS.p95.hint}
               icon={<Gauge />}
               value={c.p95}
               delta={change(c.p95, p.p95)}
@@ -189,8 +189,8 @@ export function OverviewBody(data: OverviewData) {
               format={(n) => formatDuration(n)}
             />
             <MetricTile
-              label={OVERVIEW_METRICS.spend.label}
-              hint={OVERVIEW_METRICS.spend.hint}
+              label={HOME_METRICS.spend.label}
+              hint={HOME_METRICS.spend.hint}
               icon={<CircleDollarSign />}
               value={c.spend}
               delta={change(c.spend, p.spend)}
@@ -217,7 +217,7 @@ export function OverviewBody(data: OverviewData) {
               />
             </CardBody>
             <CardFooter>
-              <Link href="/analytics" className="row-link inline-flex items-center gap-1 font-medium text-ink hover:text-accent-ink">
+              <Link href="/usage" className="row-link inline-flex items-center gap-1 font-medium text-ink hover:text-accent-ink">
                 All endpoints <ArrowRight className="size-3.5" />
               </Link>
             </CardFooter>

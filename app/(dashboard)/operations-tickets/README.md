@@ -1,4 +1,4 @@
-# Operations tickets
+# Tickets
 
 The work the team tracks against a service: filter it by state and priority, see who has each ticket and how long it has waited, and, unless you are a Viewer, open a ticket and move it along.
 
@@ -8,7 +8,7 @@ Status: beta
 
 | Row | Pattern | Console | Mobile |
 |---|---|---|---|
-| Masthead | PageFrame: kicker, "Operations tickets", one sentence, New ticket (primary, only for someone who may create) | One band | Stacked |
+| Masthead | PageFrame: kicker, "Tickets", one sentence, New ticket (primary, only for someone who may create) | One band | Stacked |
 | 1 | Three metric tiles: Open tickets, Waiting tickets, Closed tickets, each counting every ticket whatever the filters show | Three across | Stacked |
 | 2 | One caption line saying who can create and change tickets, only when the page withholds either | Full width | Full width |
 | 3 | Data table with its Filter bar (search, State, Priority): Ticket with its service, Priority, State, Assigned to and Opened (once the table is wider than 896px), Last changed, and a row menu named "Change state of" and the title | Columns | Cards: title and state, priority, assignee and "Changed …" |

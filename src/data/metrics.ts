@@ -1,5 +1,5 @@
 /**
- * The aggregate reads behind the Overview, Analytics and Operations: daily totals, endpoints, responses, services,
+ * The aggregate reads behind the Home, Usage and Services: daily totals, endpoints, responses, services,
  * incidents and activity, each through `read()`, so a page, an embed route and a view tool see only what the caller may
  * read (decision 0011). The figures a page shows are computed here from the rows, once, for the person and both agents.
  */

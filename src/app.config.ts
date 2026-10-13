@@ -47,7 +47,7 @@ export type NavGroup = { label?: string; items: NavItem[] };
 export const nav: NavGroup[] = [
   {
     items: [
-      { href: '/', label: 'Overview', icon: LayoutGrid, workspace: 'main', needs: FEATURES.overview.needs },
+      { href: '/', label: 'Home', icon: LayoutGrid, workspace: 'main', needs: FEATURES.home.needs },
       { href: '/members', label: 'Members', icon: UserRound, workspace: 'main', needs: FEATURES.members.needs },
       { href: '/settings', label: 'Settings', icon: Settings, workspace: 'main', needs: FEATURES.settings.needs },
       { href: '/system', label: 'Design system', icon: Boxes, workspace: 'main', needs: FEATURES.system.needs },
@@ -57,19 +57,19 @@ export const nav: NavGroup[] = [
   {
     items: [
       { href: '/business', label: 'Revenue', icon: CircleDollarSign, workspace: 'business', needs: FEATURES.revenue.needs },
-      { href: '/analytics', label: 'Analytics', icon: BarChart3, workspace: 'business', needs: FEATURES.analytics.needs },
       { href: '/customers', label: 'Customers', icon: Users, workspace: 'business', needs: FEATURES.customers.needs },
+      { href: '/usage', label: 'Usage', icon: BarChart3, workspace: 'business', needs: FEATURES.usage.needs },
       { href: '/requests', label: 'Requests', icon: Activity, workspace: 'business', needs: FEATURES.requests.needs },
     ],
   },
   {
     items: [
       { href: '/engineering', label: 'Now', icon: Radio, workspace: 'engineering', needs: FEATURES.now.needs },
-      { href: '/health', label: 'Operations', icon: Gauge, workspace: 'engineering', needs: FEATURES.health.needs },
-      { href: '/keys', label: 'API keys', icon: KeyRound, workspace: 'engineering', needs: FEATURES.keys.needs },
-      { href: '/operations-tickets', label: 'Operations tickets', icon: Ticket, workspace: 'engineering', needs: FEATURES.tickets.needs },
-      { href: '/tests', label: 'Tests and verification', icon: FlaskConical, workspace: 'engineering', needs: FEATURES.tests.needs },
+      { href: '/services', label: 'Services', icon: Gauge, workspace: 'engineering', needs: FEATURES.services.needs },
+      { href: '/operations-tickets', label: 'Tickets', icon: Ticket, workspace: 'engineering', needs: FEATURES.tickets.needs },
+      { href: '/tests', label: 'Tests', icon: FlaskConical, workspace: 'engineering', needs: FEATURES.tests.needs },
       { href: '/releases', label: 'Releases', icon: Rocket, workspace: 'engineering', needs: FEATURES.releases.needs },
+      { href: '/keys', label: 'API keys', icon: KeyRound, workspace: 'engineering', needs: FEATURES.keys.needs },
     ],
   },
 ];

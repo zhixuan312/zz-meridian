@@ -39,9 +39,9 @@ describe('respond', () => {
   test('gives the model the page as data: path, title, and the visible text cut to 24,000 characters', async () => {
     let prompt: any[] = [];
     const model = new MockLanguageModelV4({ doStream: async (o: any) => { prompt = o.prompt; return say('ok'); } });
-    await (await respond({ model, secret: 's'.repeat(43), messages: ask('Explain'), page: { path: '/health', title: 'Health', text: 'x'.repeat(30_000) }, collections: [], guard, now: new Date('2026-10-03T09:00:00Z') })).text();
+    await (await respond({ model, secret: 's'.repeat(43), messages: ask('Explain'), page: { path: '/services', title: 'Services', text: 'x'.repeat(30_000) }, collections: [], guard, now: new Date('2026-10-03T09:00:00Z') })).text();
     const system = prompt.filter((m) => m.role === 'system').map((m) => m.content).join('\n');
-    expect(system).toContain('Page: Health (/health)');
+    expect(system).toContain('Page: Services (/services)');
     expect(system).toMatch(/Today: \d{4}-\d{2}-\d{2}/);
     expect(system).toMatch(/never.*instruction/i);
     expect(system).toContain('x'.repeat(24_000));
@@ -52,7 +52,7 @@ describe('respond', () => {
 describe('POST /api/assistant', () => {
   test('answers 404 when the assistant is not configured', async () => {
     for (const k of Object.keys(process.env)) if (k.startsWith('ASSISTANT_')) delete process.env[k];
-    const res = await POST(new Request('http://localhost/api/assistant', { method: 'POST', body: JSON.stringify({ messages: ask('hi'), page: { path: '/', title: 'Overview', text: '' } }) }));
+    const res = await POST(new Request('http://localhost/api/assistant', { method: 'POST', body: JSON.stringify({ messages: ask('hi'), page: { path: '/', title: 'Home', text: '' } }) }));
     expect(res.status).toBe(404);
   });
 });

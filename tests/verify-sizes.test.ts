@@ -26,7 +26,7 @@ describe('first-load JS', () => {
 
 describe('HTML and prefetch', () => {
   it('names a page over its HTML cap', () => {
-    expect(htmlProblems({ '/health': 131 * KiB, '/requests': 70 * KiB }, { '/health': 100, '/requests': 80 })).toEqual(['/health: HTML 131 KiB over its 100 KiB cap']);
+    expect(htmlProblems({ '/services': 131 * KiB, '/requests': 70 * KiB }, { '/services': 100, '/requests': 80 })).toEqual(['/services: HTML 131 KiB over its 100 KiB cap']);
   });
   it('tells a prefetch from a page request, and checks both device caps', () => {
     expect(isPrefetch({ headers: { 'next-router-prefetch': '1', rsc: '1' } })).toBe(true);

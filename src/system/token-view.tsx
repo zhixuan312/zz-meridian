@@ -178,7 +178,7 @@ function DataColour({ theme, accent }: { theme: string; accent: string }) {
 const ROLES: [string, string, string][] = [
   ['t-display', 'Display', 'One line of meaning.'],
   ['t-hero', 'Hero figure', '2.94M'],
-  ['t-page', 'Page title', 'Overview'],
+  ['t-page', 'Page title', 'Home'],
   ['t-section', 'Section', 'Busiest endpoints'],
   ['t-figure', 'Figure', '0.90%'],
   ['t-card', 'Card title', 'Requests per day'],

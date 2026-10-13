@@ -84,7 +84,7 @@ import { Card, CardBody, CardFooter, CardHeader } from '@/components/ui/card';
 <Card>
   <CardHeader title="Busiest endpoints" description="Requests in the period" divided />
   <CardBody flush>{list}</CardBody>
-  <CardFooter><Link href="/analytics">All endpoints</Link></CardFooter>
+  <CardFooter><Link href="/usage">All endpoints</Link></CardFooter>
 </Card>
 ```
 

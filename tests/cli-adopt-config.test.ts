@@ -13,7 +13,7 @@ describe('the configuration adopt writes for a project', () => {
   it('lists the project\'s own pages, each public, and none of the sample\'s destinations', () => {
     for (const href of ['/', '/orders', '/orders/returns']) expect(written).toContain(`href: ${JSON.stringify(href)}`);
     expect(written.match(/needs: 'public'/g)?.length).toBe(3);
-    for (const sample of ['/analytics', '/health', '/operations-tickets', '/system']) expect(written, sample).not.toContain(`'${sample}'`);
+    for (const sample of ['/usage', '/services', '/operations-tickets', '/system']) expect(written, sample).not.toContain(`'${sample}'`);
   });
 
   it('names nothing the project does not have: no feature table, no icon but its own, no workspace of the sample', () => {

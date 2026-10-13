@@ -18,7 +18,7 @@ Status: beta
 | Variant | Prop | Use |
 |---|---|---|
 | With summary (default) | `summary` | A list that stands alone: an embed, a card without its own title |
-| Without summary | `summary={false}` | Under a Card header that already names the list (Operations page) |
+| Without summary | `summary={false}` | Under a Card header that already names the list (Services page) |
 | Without descriptions | `descriptions={false}` | Inline embeds and narrow cards, where one line per service is enough |
 
 ## Sizes
@@ -48,7 +48,7 @@ The worst state wins the summary. A pulsing dot is the system's one allowed loop
 
 ## Composition
 
-A Card (`overflow-hidden`) holding: the summary line, then one row per service. Each row composes Status dot (Layer 2), the service text, Uptime bars (Layer 3) and the state text. On the Operations page a Card header ("Services") replaces the summary.
+A Card (`overflow-hidden`) holding: the summary line, then one row per service. Each row composes Status dot (Layer 2), the service text, Uptime bars (Layer 3) and the state text. On the Services page a Card header ("Services") replaces the summary.
 
 ## Data
 
@@ -63,9 +63,9 @@ The list assumes software services by default. For other things that are up or n
 
 ## Surfaces
 
-- **Console**: wide rows on the Operations page, without the summary.
+- **Console**: wide rows on the Services page, without the summary.
 - **Mobile**: narrow rows; the bars drop under the name and still show every day.
-- **Embed**: the inline Operations view shows the list with its summary and without descriptions, under a Banner for any live incident.
+- **Embed**: the inline Services view shows the list with its summary and without descriptions, under a Banner for any live incident.
 
 ## Agents
 

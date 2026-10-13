@@ -17,7 +17,7 @@ vi.mock('next/navigation', () => ({
   useRouter: () => ({ push() {}, replace() {}, refresh() {}, back() {}, forward() {}, prefetch() {} }),
   redirect: (url: string) => { spy.redirected.push(url); throw new Error(`redirect ${url}`); },
 }));
-// The sample's Viewer reads every dashboard, so no persona is denied the overview, the analytics or a request detail.
+// The sample's Viewer reads every dashboard, so no persona is denied the home, the usage or a request detail.
 // The spec's partial fixture is what makes those refusals reachable: a policy holding only `days:read`. `effective` is
 // replaced alongside the table, because overriding a module's export does not rebind what its neighbours closed over —
 // and the production union rule stays in roles.ts, where it belongs.
@@ -33,8 +33,8 @@ vi.mock('@/data/read', async (orig) => {
   return { ...real, read: async (name: string, q?: unknown) => { spy.reads.push(name); return real.read(name, q as never); } };
 });
 
-import OverviewPage from '../app/(dashboard)/(overview)/page';
-import AnalyticsPage from '../app/(dashboard)/analytics/page';
+import HomePage from '../app/(dashboard)/(home)/page';
+import UsagePage from '../app/(dashboard)/usage/page';
 import KeysPage from '../app/(dashboard)/keys/page';
 import MembersPage from '../app/(dashboard)/members/page';
 import { generateMetadata } from '../app/(dashboard)/requests/[id]/page';
@@ -52,10 +52,10 @@ describe('a page a person may not open', () => {
     expect(spy.reads.filter((n) => n === 'keys' || n === 'members')).toEqual([]);
   });
 
-  it('refuses a days-only policy at Overview and Analytics before any protected read', async () => {
+  it('refuses a days-only policy at Home and Usage before any protected read', async () => {
     jar.value = 'members_12';
-    expect(await markup(OverviewPage)).toContain('data-no-access');
-    expect(await markup(AnalyticsPage)).toContain('data-no-access');
+    expect(await markup(HomePage)).toContain('data-no-access');
+    expect(await markup(UsagePage)).toContain('data-no-access');
     expect(spy.reads).toEqual([]);
   });
 

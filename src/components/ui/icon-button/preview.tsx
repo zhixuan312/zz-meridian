@@ -21,7 +21,7 @@ export default function IconButtonPreview() {
         <State label="Rest"><IconButton variant="secondary" label="Refresh" icon={<RefreshCw />} /></State>
         <State label="Hover"><IconButton variant="secondary" label="Refresh" icon={<RefreshCw />} className="bg-surface-sunk text-ink" /></State>
         <State label="Focus" still><IconButton variant="secondary" label="Refresh" icon={<RefreshCw />} className="outline-2 outline-offset-2 outline-accent" /></State>
-        <State label="Pressed (toggle)"><IconButton label="Pin to overview" icon={<Star />} pressed /></State>
+        <State label="Pressed (toggle)"><IconButton label="Pin to home" icon={<Star />} pressed /></State>
         <State label="Disabled"><IconButton variant="secondary" label="Refresh" icon={<RefreshCw />} disabled /></State>
       </Specimen>
     </>

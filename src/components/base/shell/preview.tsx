@@ -33,13 +33,13 @@ export default function ShellPreview() {
           <div className="border-r border-line bg-frame p-3"><p className="t-eyebrow">Rail</p></div>
           <div className="flex min-w-0 flex-col">
             <div className="flex h-11 items-center gap-2 border-b border-line bg-ground/72 px-4 backdrop-blur-xl">
-              <span className="text-xs font-semibold">Overview</span>
+              <span className="text-xs font-semibold">Home</span>
               <span className="ml-auto h-6 w-28 rounded-full border border-line-strong" />
               <span className="size-6 rounded-full border border-line-strong" />
             </div>
             <div className="flex-1 overflow-hidden p-4">
               <p className="t-kicker">{app.name} · {app.workspace}</p>
-              <p className="mt-2 text-xl font-semibold tracking-[-0.03em]">Overview</p>
+              <p className="mt-2 text-xl font-semibold tracking-[-0.03em]">Home</p>
               <div className="mt-4 grid grid-cols-3 gap-2">
                 <div className="col-span-2 h-24 rounded-lg border border-accent-line bg-accent-tint" />
                 <div className="h-24 rounded-lg border border-line bg-surface" />

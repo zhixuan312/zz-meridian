@@ -9,7 +9,7 @@ import { AlertsPanel, ShellTools } from '.';
 
 const Bar = ({ stuck, title }: { stuck?: boolean; title?: string }) => (
   <div className={`@container flex h-14 w-full items-center gap-3 rounded-lg border px-4 ${stuck ? 'border-line bg-ground/72 backdrop-blur-xl' : 'border-transparent'}`}>
-    <p className={`min-w-0 truncate text-sm font-semibold transition-opacity ${stuck ? 'opacity-100' : 'opacity-0'}`}>{title ?? 'Overview'}</p>
+    <p className={`min-w-0 truncate text-sm font-semibold transition-opacity ${stuck ? 'opacity-100' : 'opacity-0'}`}>{title ?? 'Home'}</p>
     <div className="ml-auto flex items-center gap-1.5"><ShellTools alerts={ALERTS} now={DEMO_NOW} /></div>
   </div>
 );

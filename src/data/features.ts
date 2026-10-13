@@ -6,7 +6,7 @@
  * must be able to do to run it, and an action's optional `line` is the one sentence a page shows when it withholds that
  * action, saying who can (`actionLine` in `src/views/no-access.tsx`). All three name grants only — the role names and
  * the grant table stay in `roles.ts`. The nav
- * in `src/app.config.ts` points each item at its feature's need **by reference** (`needs: FEATURES.analytics.needs`),
+ * in `src/app.config.ts` points each item at its feature's need **by reference** (`needs: FEATURES.usage.needs`),
  * so an item and the table never restate one another.
  *
  * Pure data with type-only imports, so plain `node` can import it: `scripts/check.ts` reads `src/app.config.ts`, which
@@ -16,7 +16,7 @@ import type { Need, ProtectedNeed } from '@/lib/collection';
 
 /** Every page the console offers, by the id the rail, the palette and a page's gate name it. */
 export type FeatureId =
-  | 'overview' | 'requests' | 'request' | 'analytics' | 'health' | 'customers' | 'customer' | 'revenue' | 'now'
+  | 'home' | 'requests' | 'request' | 'usage' | 'services' | 'customers' | 'customer' | 'revenue' | 'now'
   | 'keys' | 'members' | 'settings' | 'system' | 'docs' | 'tickets' | 'tests' | 'releases';
 
 /** Every action a page offers that only some people may take, by the id its control names it. */
@@ -29,11 +29,11 @@ const CUSTOMERS_NEED: Need = 'customers:read';
 
 /** Each feature: its name as a person reads it, and the need a person must satisfy to reach it. */
 export const FEATURES: Record<FeatureId, { title: string; needs: Need }> = {
-  overview: { title: 'Overview', needs: { allOf: ['days:read', 'endpoints:read', 'responses:read', 'activity:read', 'incidents:read', 'customers:read', 'services:read', 'tickets:read', 'tests:read', 'releases:read'] } },
+  home: { title: 'Home', needs: { allOf: ['days:read', 'endpoints:read', 'responses:read', 'activity:read', 'incidents:read', 'customers:read', 'services:read', 'tickets:read', 'tests:read', 'releases:read'] } },
   requests: { title: 'Requests', needs: 'requests:read' },
   request: { title: 'Request', needs: { allOf: ['requests:read', 'endpoints:read'] } },
-  analytics: { title: 'Analytics', needs: { allOf: ['days:read', 'endpoints:read', 'activity:read', 'incidents:read', 'hours:read', 'regions:read'] } },
-  health: { title: 'Operations', needs: { allOf: ['services:read', 'incidents:read'] } },
+  usage: { title: 'Usage', needs: { allOf: ['days:read', 'endpoints:read', 'activity:read', 'incidents:read', 'hours:read', 'regions:read'] } },
+  services: { title: 'Services', needs: { allOf: ['services:read', 'incidents:read'] } },
   customers: { title: 'Customers', needs: CUSTOMERS_NEED },
   customer: { title: 'Customer', needs: CUSTOMERS_NEED },
   revenue: { title: 'Revenue', needs: CUSTOMERS_NEED },
@@ -43,8 +43,8 @@ export const FEATURES: Record<FeatureId, { title: string; needs: Need }> = {
   settings: { title: 'Settings', needs: 'public' },
   system: { title: 'Design system', needs: 'public' },
   docs: { title: 'Docs', needs: 'public' },
-  tickets: { title: 'Operations tickets', needs: 'tickets:read' },
-  tests: { title: 'Tests and verification', needs: 'tests:read' },
+  tickets: { title: 'Tickets', needs: 'tickets:read' },
+  tests: { title: 'Tests', needs: 'tests:read' },
   releases: { title: 'Releases', needs: 'releases:read' },
 };
 

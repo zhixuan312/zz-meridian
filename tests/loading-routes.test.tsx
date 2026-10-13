@@ -2,10 +2,10 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { render, screen, cleanup } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
-import Overview from '../app/(dashboard)/(overview)/loading';
-import Analytics from '../app/(dashboard)/analytics/loading';
+import Home from '../app/(dashboard)/(home)/loading';
+import Usage from '../app/(dashboard)/usage/loading';
 import Customers from '../app/(dashboard)/customers/loading';
-import Operations from '../app/(dashboard)/health/loading';
+import Services from '../app/(dashboard)/services/loading';
 import Keys from '../app/(dashboard)/keys/loading';
 import Members from '../app/(dashboard)/members/loading';
 import Tickets from '../app/(dashboard)/operations-tickets/loading';
@@ -15,10 +15,10 @@ import RequestDetail from '../app/(dashboard)/requests/[id]/loading';
 import Settings from '../app/(dashboard)/settings/loading';
 import Tests from '../app/(dashboard)/tests/loading';
 
-const ROUTES = { Overview, Analytics, Customers, Operations, Keys, Members, Requests, RequestDetail, Settings, Tickets, Tests, Releases };
+const ROUTES = { Home, Usage, Customers, Services, Keys, Members, Requests, RequestDetail, Settings, Tickets, Tests, Releases };
 
 describe('every console route has its own loading state', () => {
-  it('drops the shared Overview fallback', () => {
+  it('drops the shared Home fallback', () => {
     expect(fs.existsSync(path.resolve(import.meta.dirname, '../app/(dashboard)/loading.tsx'))).toBe(false);
   });
   it('announces each as busy, under its own name', () => {

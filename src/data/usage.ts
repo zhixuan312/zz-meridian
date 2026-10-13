@@ -1,18 +1,18 @@
 /**
- * The three Analytics figures that come from rows of two collections: the weekday-and-hour heatmap and the hour-of-day
+ * The three Usage figures that come from rows of two collections: the weekday-and-hour heatmap and the hour-of-day
  * columns (both from `hours`) and the regions with their p50 (`regions`), read here and nowhere else, so the one thing
  * they share is the grants they cost.
  *
- * It lives in the data layer rather than beside Analytics' shared context because that module is read by a client view:
+ * It lives in the data layer rather than beside Usage' shared context because that module is read by a client view:
  * this one asks the policy, and `next/headers` may not reach a browser bundle.
  */
 import { AccessDenied, can, collectionFor, resolveAccess, type AccessScope } from '@/data/access';
 // A type-only import, so the view module it names never enters this module's runtime graph (and this module's policy
 // import never enters the view's).
-import type { AnalyticsData } from '@/views/analytics-context';
+import type { UsageData } from '@/views/usage-context';
 
-/** The three figures, as the Analytics view draws them. */
-type Figures = Pick<AnalyticsData, 'heat' | 'hours' | 'regions'>;
+/** The three figures, as the Usage view draws them. */
+type Figures = Pick<UsageData, 'heat' | 'hours' | 'regions'>;
 
 /**
  * The heatmap, the hours and the regions, asking `hours:read` and `regions:read` on the scope in hand, or on the
@@ -20,7 +20,7 @@ type Figures = Pick<AnalyticsData, 'heat' | 'hours' | 'regions'>;
  * anything is read. Every row is taken from the scope's own collection as it is stored (no sort, no limit), so the
  * regions keep the order the page draws them in and all 168 hours arrive.
  */
-export async function analyticsFigures(scope?: AccessScope): Promise<Figures> {
+export async function usageFigures(scope?: AccessScope): Promise<Figures> {
   const held = scope ?? (await resolveAccess());
   if (!(await can(held, 'hours', 'read')) || !(await can(held, 'regions', 'read'))) throw new AccessDenied();
   const [cells, regions] = await Promise.all([collectionFor(held, 'hours').query({}), collectionFor(held, 'regions').query({})]);

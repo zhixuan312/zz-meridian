@@ -1,5 +1,5 @@
 /**
- * Tests and verification's shared context (decision 0011): how many verifications have a latest run, how many of those
+ * Tests's shared context (decision 0011): how many verifications have a latest run, how many of those
  * are failing, and the runs the person has filtered to, as both agents read it. The counts are of every run, whatever the
  * filters show, and are the same figures the page's tiles draw.
  */
@@ -69,7 +69,7 @@ export function testsContext(rows: RunRow[], now: string, f: TestsState): Shared
 
   return {
     view: 'tests',
-    title: 'Tests and verification',
+    title: 'Tests',
     address: testsAddress(f),
     scope: filters ? `every verification run of this workspace, shown with ${filters}` : 'every verification run of this workspace',
     facts,

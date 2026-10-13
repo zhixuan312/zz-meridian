@@ -1,5 +1,5 @@
 /**
- * The Overview's shared context (decision 0011): what the console page, the MCP view and the console's assistant are
+ * The Home's shared context (decision 0011): what the console page, the MCP view and the console's assistant are
  * all told about traffic, reliability and spend. The tiles' definitions live here too, so the person's info button and
  * the agents read the same words.
  */
@@ -17,15 +17,15 @@ import { deviations, largest, runs, sameWeekdayBaseline, weekday, weekendRatio, 
 import { PERIOD_DAYS, PERIOD_LABEL, type Period } from '@/lib/period';
 import { freshnessOf, type Fact, type Insight, type SharedContext } from '@/lib/shared-context';
 
-/** Each Overview figure: its label and what it counts. The tile's info button shows `hint`; the agents read it too. */
-export const OVERVIEW_METRICS = {
+/** Each Home figure: its label and what it counts. The tile's info button shows `hint`; the agents read it too. */
+export const HOME_METRICS = {
   requests: { label: 'Requests', hint: 'Every call the gateway answered, whatever its status.' },
   errorRate: { label: 'Error rate', hint: 'Share of requests answered with a 5xx or a 429.' },
   p95: { label: 'Latency p95', hint: '95 of every 100 requests finished faster than this.' },
   spend: { label: 'Spend', hint: 'Metered usage in US dollars, before credits.' },
 } as const;
 
-export type OverviewData = {
+export type HomeData = {
   period: Period;
   series: DailyPoint[];
   totals: { current: Totals; previous: Totals };
@@ -65,7 +65,7 @@ export function change(now: number, before: number, period: Period, format: (n: 
 }
 
 /** Whether anything recorded (an activity event or an incident) falls within a day of `from`..`to`, and what. */
-function recorded(from: string, to: string, data: Pick<OverviewData, 'incidents' | 'activity'>): string[] {
+function recorded(from: string, to: string, data: Pick<HomeData, 'incidents' | 'activity'>): string[] {
   const a = Date.parse(from) - DAY, b = Date.parse(to) + 2 * DAY;
   const inside = (iso?: string) => !!iso && Date.parse(iso) >= a && Date.parse(iso) < b;
   return [
@@ -77,9 +77,9 @@ function recorded(from: string, to: string, data: Pick<OverviewData, 'incidents'
 /**
  * The days whose error rate stands far above the period's own steady state, in runs of consecutive days, with latency
  * when it rose with them, and what was recorded beside them (an incident, an activity event) or that nothing was.
- * The Overview and Analytics both read the same run of days.
+ * The Home and Usage both read the same run of days.
  */
-export function errorSpikes(data: Pick<OverviewData, 'series' | 'incidents' | 'activity' | 'period'>): { insights: Insight[]; unknowns: string[] } {
+export function errorSpikes(data: Pick<HomeData, 'series' | 'incidents' | 'activity' | 'period'>): { insights: Insight[]; unknowns: string[] } {
   const { series } = data;
   const dates = series.map((d) => d.date);
   const errorRate = series.map((d) => (d.requests ? d.errors / d.requests : 0));
@@ -100,7 +100,7 @@ export function errorSpikes(data: Pick<OverviewData, 'series' | 'incidents' | 'a
     const p95Run = run.filter((i) => p95[i] / median(p95) >= 1.4);
     if (p95Run.length) insights.push({ text: `Latency p95 rose on the same ${p95Run.length === 1 ? 'day' : 'days'}: ${p95Run.map((i) => formatDuration(p95[i])).join(' and ')} against a median of ${formatDuration(median(p95))}.` });
     const found = recorded(dates[run[0]], dates[run.at(-1)!], data);
-    if (found.length) insights.push({ text: `Recorded around ${when}: ${found.join('; ')}.`, evidence: '/health' });
+    if (found.length) insights.push({ text: `Recorded around ${when}: ${found.join('; ')}.`, evidence: '/services' });
     else unknowns.push(`Nothing is recorded between ${day(new Date(Date.parse(dates[run[0]]) - DAY).toISOString())} and ${day(new Date(Date.parse(dates[run.at(-1)!]) + DAY).toISOString())}: no incident and no activity event, so nothing on this page explains the rise on ${when}.`);
   }
 
@@ -111,7 +111,7 @@ export function errorSpikes(data: Pick<OverviewData, 'series' | 'incidents' | 'a
  * What the person sees of the same findings (decision 0011): each daily figure's usual value (its median, for "2.7×
  * usual" when the Meridian points at a day) and the error rate's latest spike as one short line that points at its peak.
  */
-export function overviewFindings(series: DailyPoint[]): { usual: { errorRate: number; p95: number }; errorSpike?: { text: string; day: string } } {
+export function homeFindings(series: DailyPoint[]): { usual: { errorRate: number; p95: number }; errorSpike?: { text: string; day: string } } {
   const errorRate = series.map((d) => (d.requests ? d.errors / d.requests : 0));
   const usual = { errorRate: median(errorRate), p95: median(series.map((d) => d.p95)) };
   const run = runs(deviations(errorRate, { direction: 'up' }).map((d) => d.index)).at(-1);
@@ -159,15 +159,15 @@ function summaryContext({ business, operation, delivery }: MainSummary): { facts
   return { facts, insights, unknowns };
 }
 
-/** The Overview's context for `data`, with the person pointing at day `index` of the series, or at nothing. */
-export function overviewContext(data: OverviewData, index: number | null = null): SharedContext {
+/** The Home's context for `data`, with the person pointing at day `index` of the series, or at nothing. */
+export function homeContext(data: HomeData, index: number | null = null): SharedContext {
   const { period, series, totals } = data;
   const { current: c, previous: p } = totals;
   const address = `/?period=${period}${index !== null && series[index] ? `&day=${series[index].date}` : ''}`;
   const label = PERIOD_LABEL[period].toLowerCase();
   const scope = series.length ? `${label}, ${formatDate(series[0].date)} to ${formatDate(series.at(-1)!.date)} (UTC days)` : label;
   const pct = (n: number) => formatPercent(n, 2);
-  const M = OVERVIEW_METRICS;
+  const M = HOME_METRICS;
 
   const facts: Fact[] = [
     { label: M.requests.label, value: c.requests.toLocaleString('en-US'), change: change(c.requests, p.requests, period, (n) => n.toLocaleString('en-US')), definition: M.requests.hint },
@@ -177,7 +177,7 @@ export function overviewContext(data: OverviewData, index: number | null = null)
   ];
   const main = summaryContext(data.summary);
   facts.push(...main.facts);
-  if (!series.length) return { view: 'overview', title: 'Overview', address, scope, freshness: freshnessOf(data.updatedAt, data.now), facts, insights: main.insights, unknowns: ['No requests have arrived in this period, so there is nothing to compare.', ...main.unknowns] };
+  if (!series.length) return { view: 'home', title: 'Home', address, scope, freshness: freshnessOf(data.updatedAt, data.now), facts, insights: main.insights, unknowns: ['No requests have arrived in this period, so there is nothing to compare.', ...main.unknowns] };
 
   const dates = series.map((d) => d.date);
   const errorRate = series.map((d) => (d.requests ? d.errors / d.requests : 0));
@@ -195,11 +195,11 @@ export function overviewContext(data: OverviewData, index: number | null = null)
   const top = largest(data.endpoints, (e) => e.requests * e.errorRate);
   if (top) {
     const trafficShare = top.item.requests / data.endpoints.reduce((s, e) => s + e.requests, 0);
-    insights.push({ text: `${top.item.method} ${top.item.route} accounts for ${formatPercent(top.share, 0)} of the errors on ${formatPercent(trafficShare, 0)} of its requests (its error rate ${pct(top.item.errorRate)}).`, evidence: '/analytics' });
+    insights.push({ text: `${top.item.method} ${top.item.route} accounts for ${formatPercent(top.share, 0)} of the errors on ${formatPercent(trafficShare, 0)} of its requests (its error rate ${pct(top.item.errorRate)}).`, evidence: '/usage' });
   }
   const worst = data.endpoints.reduce((m, e) => (e.errorRate > m.errorRate ? e : m), data.endpoints[0]);
   if (worst && worst !== top?.item && worst.errorRate >= 2 * c.errorRate) {
-    insights.push({ text: `${worst.method} ${worst.route} has the highest error rate, ${pct(worst.errorRate)}, ${times(worst.errorRate / c.errorRate)} the overall rate, on ${formatCompact(worst.requests)} requests.`, evidence: '/analytics' });
+    insights.push({ text: `${worst.method} ${worst.route} has the highest error rate, ${pct(worst.errorRate)}, ${times(worst.errorRate / c.errorRate)} the overall rate, on ${formatCompact(worst.requests)} requests.`, evidence: '/usage' });
   }
 
   // The weekly shape: a weekend is not a drop.
@@ -225,5 +225,5 @@ export function overviewContext(data: OverviewData, index: number | null = null)
 
   insights.push(...main.insights);
 
-  return { view: 'overview', title: 'Overview', address, scope, freshness: freshnessOf(data.updatedAt, data.now), focus, facts, insights, unknowns };
+  return { view: 'home', title: 'Home', address, scope, freshness: freshnessOf(data.updatedAt, data.now), focus, facts, insights, unknowns };
 }

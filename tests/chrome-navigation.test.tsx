@@ -80,7 +80,7 @@ describe("the console's rail and palette, given a navigation", () => {
     act(() => openCommand());
     const options = within(await screen.findByRole('dialog')).getAllByRole('option').map((o) => o.textContent ?? '');
     expect(options.filter((o) => o.endsWith('Workshop'))).toEqual(['JobsWorkshop', 'PartsWorkshop']);
-    expect(options.some((o) => /^(Home|Overview|Members)/.test(o))).toBe(false);
+    expect(options.some((o) => /^(Home|Home|Members)/.test(o))).toBe(false);
   });
 
   it('offers an empty supplied navigation as empty, in both', async () => {
@@ -95,6 +95,6 @@ describe("the console's rail and palette, given a navigation", () => {
     expect(links()).toEqual([]);
     act(() => openCommand());
     const options = within(await screen.findByRole('dialog')).getAllByRole('option').map((o) => o.textContent ?? '');
-    expect(options.some((o) => /^(Overview|Requests|Settings)/.test(o))).toBe(false);
+    expect(options.some((o) => /^(Home|Requests|Settings)/.test(o))).toBe(false);
   });
 });

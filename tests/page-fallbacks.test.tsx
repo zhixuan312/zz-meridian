@@ -10,9 +10,9 @@ vi.mock('next/navigation', () => ({
   useRouter: () => ({ replace() {}, push() {}, refresh() {} }),
 }));
 
-import AnalyticsPage from '../app/(dashboard)/analytics/page';
+import UsagePage from '../app/(dashboard)/usage/page';
 import CustomersPage from '../app/(dashboard)/customers/page';
-import OverviewPage from '../app/(dashboard)/(overview)/page';
+import HomePage from '../app/(dashboard)/(home)/page';
 import RequestsPage from '../app/(dashboard)/requests/page';
 
 /** The first HTML a cold load sends: the shell, with every pending boundary as its fallback. */
@@ -28,8 +28,8 @@ const never = new Promise<never>(() => {});
 
 describe('the page-level fallbacks a console route streams', () => {
   it.each([
-    ['overview', <OverviewPage key="o" searchParams={never} />],
-    ['analytics', <AnalyticsPage key="a" searchParams={never} />],
+    ['home', <HomePage key="o" searchParams={never} />],
+    ['usage', <UsagePage key="a" searchParams={never} />],
     ['requests', <RequestsPage key="r" searchParams={never} />],
     ['customers', <CustomersPage key="c" />],
   ] as const)('%s announces itself as busy once, and carries one masthead', async (name, el) => {

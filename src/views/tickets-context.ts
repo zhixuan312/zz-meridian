@@ -1,5 +1,5 @@
 /**
- * Operations tickets' shared context (decision 0011): how many tickets are open, waiting and closed, which of them need
+ * Tickets' shared context (decision 0011): how many tickets are open, waiting and closed, which of them need
  * a look, and the list the person has filtered to, as both agents read it. The counts are of every ticket, whatever the
  * filters show, and are the same figures the page's tiles draw.
  */
@@ -77,7 +77,7 @@ export function ticketsContext(rows: TicketRow[], now: string, f: TicketsState):
 
   return {
     view: 'tickets',
-    title: 'Operations tickets',
+    title: 'Tickets',
     address: ticketsAddress(f),
     scope: filters ? `every ticket of this workspace, shown with ${filters}` : 'every ticket of this workspace',
     facts,

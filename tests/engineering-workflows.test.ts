@@ -19,8 +19,8 @@ import { viewTools } from '@/views/tools';
 
 const ROOT = path.resolve(import.meta.dirname, '..');
 const DESTINATIONS = [
-  { feature: 'tickets', href: '/operations-tickets', label: 'Operations tickets', folder: 'app/(dashboard)/operations-tickets' },
-  { feature: 'tests', href: '/tests', label: 'Tests and verification', folder: 'app/(dashboard)/tests' },
+  { feature: 'tickets', href: '/operations-tickets', label: 'Tickets', folder: 'app/(dashboard)/operations-tickets' },
+  { feature: 'tests', href: '/tests', label: 'Tests', folder: 'app/(dashboard)/tests' },
   { feature: 'releases', href: '/releases', label: 'Releases', folder: 'app/(dashboard)/releases' },
 ] as const;
 const PERSONAS = ['members_1', 'members_2', 'members_4', 'members_5', 'members_12'];

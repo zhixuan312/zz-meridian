@@ -1,5 +1,5 @@
 /**
- * Operations' shared context (decision 0011): the console page, the MCP view and the console's assistant read the same
+ * Services' shared context (decision 0011): the console page, the MCP view and the console's assistant read the same
  * account of every service now, its last 90 days, and the incidents that explain them.
  */
 import type { Incident } from '@/components/patterns/incident-card';
@@ -10,7 +10,7 @@ import { formatDate, formatDateTime, formatRelative } from '@/lib/format-date';
 import { freshnessOf, type Fact, type Insight, type SharedContext } from '@/lib/shared-context';
 
 /** `current` is the newest incident nobody has resolved, the one the page leads with; `alsoOpen` is every other one. */
-export type HealthData = { services: Service[]; current: Incident | null; alsoOpen?: Incident[]; past: Incident[]; updatedAt: string; now: string };
+export type ServicesData = { services: Service[]; current: Incident | null; alsoOpen?: Incident[]; past: Incident[]; updatedAt: string; now: string };
 
 const uptime = (n: number) => `${(n * 100).toFixed(n >= 0.9999 ? 3 : 2)}%`;
 const hours = (a: string, b: string) => {
@@ -18,7 +18,7 @@ const hours = (a: string, b: string) => {
   return h < 1 ? `${Math.round(h * 60)} min` : `${h.toFixed(1)} h`;
 };
 
-export function healthContext(data: HealthData): SharedContext {
+export function servicesContext(data: ServicesData): SharedContext {
   const { services, current, past } = data;
   const now = new Date(data.now);
   const sum = summarise(services);
@@ -35,15 +35,15 @@ export function healthContext(data: HealthData): SharedContext {
   // Which service carries the history, beyond what the state now shows.
   const below = services.map((s) => ({ s, n: s.days.filter((d) => d !== 'operational').length })).sort((a, b) => b.n - a.n);
   const worstDays = services[0]?.days.map((_, i) => services.some((s) => s.days[i] !== 'operational')).filter(Boolean).length ?? 0;
-  if (below[0]?.n) insights.push({ text: `${worstDays} of the last ${days} days had a service below operational; ${below[0].s.name} accounts for ${below[0].n} of them${below[1]?.n ? `, ${below[1].s.name} for ${below[1].n}` : ''}.`, evidence: '/health' });
+  if (below[0]?.n) insights.push({ text: `${worstDays} of the last ${days} days had a service below operational; ${below[0].s.name} accounts for ${below[0].n} of them${below[1]?.n ? `, ${below[1].s.name} for ${below[1].n}` : ''}.`, evidence: '/services' });
   const lowest = services.reduce((m, s) => (s.uptime < m.uptime ? s : m), services[0]);
   if (lowest && lowest.uptime < average) insights.push({ text: `${lowest.name} has the lowest uptime, ${uptime(lowest.uptime)}, against ${uptime(average)} across all services.` });
   if (current) {
     const latest = current.updates.reduce<Incident['updates'][number] | undefined>((m, u) => (!m || u.at > m.at ? u : m), undefined);
-    insights.push({ text: `Open incident "${current.title}" on ${current.service}, ${current.severity}, ${current.state}: started ${formatRelative(current.started, now)} (${formatDateTime(current.started)} UTC)${latest ? `; latest update ${formatRelative(latest.at, now)}: "${latest.text}"` : ''}.`, evidence: '/health' });
+    insights.push({ text: `Open incident "${current.title}" on ${current.service}, ${current.severity}, ${current.state}: started ${formatRelative(current.started, now)} (${formatDateTime(current.started)} UTC)${latest ? `; latest update ${formatRelative(latest.at, now)}: "${latest.text}"` : ''}.`, evidence: '/services' });
     if (current.state === 'monitoring') unknowns.push('The open incident is monitoring: a fix is in place, and nobody has yet confirmed it holds.');
   }
-  for (const i of data.alsoOpen ?? []) insights.push({ text: `Also open: "${i.title}" on ${i.service}, ${i.severity}, ${i.state}, started ${formatRelative(i.started, now)}.`, evidence: '/health' });
+  for (const i of data.alsoOpen ?? []) insights.push({ text: `Also open: "${i.title}" on ${i.service}, ${i.severity}, ${i.state}, started ${formatRelative(i.started, now)}.`, evidence: '/services' });
   const resolved = past.filter((i) => i.resolved);
   if (resolved.length) {
     const longest = resolved.reduce((m, i) => (Date.parse(i.resolved!) - Date.parse(i.started) > Date.parse(m.resolved!) - Date.parse(m.started) ? i : m));
@@ -51,5 +51,5 @@ export function healthContext(data: HealthData): SharedContext {
   }
   unknowns.push('Latency is one reading per service, now; there is no latency history here to say whether it is unusual.');
 
-  return { view: 'health', title: 'Operations', address: '/health', scope: `every monitored service, now and the last ${days} days`, freshness: freshnessOf(data.updatedAt, data.now), facts, insights, unknowns };
+  return { view: 'services', title: 'Services', address: '/services', scope: `every monitored service, now and the last ${days} days`, freshness: freshnessOf(data.updatedAt, data.now), facts, insights, unknowns };
 }

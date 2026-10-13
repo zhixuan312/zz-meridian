@@ -43,7 +43,7 @@ async function incidentAlerts(): Promise<{ alerts: Alert[]; observedAt: string }
     title: i.title,
     detail: `${i.service} · ${i.state === 'investigating' ? 'Investigating' : 'Monitoring'}`,
     at: i.updates.at(-1)?.at ?? i.started,
-    href: '/health',
+    href: '/services',
     tone: 'warning',
     unread: true,
   }));

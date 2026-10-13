@@ -19,7 +19,7 @@ Button and Toast, with `toCsv` and `downloadFile` from `src/lib/csv.ts`; with `h
 - `href` is a server export's address, with the view's filters in it: the button becomes a download link and `rows` is not needed. Use it when the set is larger than the page shows; the route must authorize, stream and encode with `csvHeader` and `csvRow`.
 - A text value that starts with `=`, `+`, `-`, `@`, a tab or a carriage return is written with a leading `'`, so a spreadsheet reads it as text. Numbers are never prefixed.
 - Values are written raw (ISO dates, milliseconds, cents as decimals), not formatted: a spreadsheet sorts and sums them.
-- `filename` carries what was exported: `overview-30d.csv`, `requests-5xx.csv`.
+- `filename` carries what was exported: `home-30d.csv`, `requests-5xx.csv`.
 
 ## Variants
 
@@ -70,6 +70,6 @@ Not applicable: an export changes nothing. An agent that needs the rows reads th
 ```tsx
 import { ExportButton } from '@/components/patterns/export-button';
 
-<ExportButton rows={days} filename={`overview-${period}.csv`} noun="days" />
+<ExportButton rows={days} filename={`home-${period}.csv`} noun="days" />
 <ExportButton href="/api/export/requests?status=5xx" filename="requests-5xx.csv" noun="requests" />
 ```

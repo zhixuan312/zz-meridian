@@ -50,8 +50,8 @@ export default function TabsPreview() {
           active="requests"
           tabs={[
             { key: 'requests', label: 'Requests', href: '/requests', count: 240 },
-            { key: 'analytics', label: 'Analytics', href: '/analytics' },
-            { key: 'health', label: 'Operations', href: '/health', count: 1 },
+            { key: 'usage', label: 'Usage', href: '/usage' },
+            { key: 'services', label: 'Services', href: '/services', count: 1 },
           ]}
         />
       </Specimen>

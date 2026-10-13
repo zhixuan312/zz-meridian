@@ -165,7 +165,7 @@ export function TicketsView({ rows, now, may = { create: true, update: true }, l
   return (
     <PageFrame
       kicker={<>{app.name} · {app.workspace}</>}
-      title="Operations tickets"
+      title="Tickets"
       description="The work the team tracks against a service: what is open, what is waiting, and who has it."
       actions={newTicket}
     >
@@ -183,7 +183,7 @@ export function TicketsView({ rows, now, may = { create: true, update: true }, l
         {/* A row's menu button carries no tooltip, but the view brings its provider so it also stands alone, as in a test. */}
         <Tooltip.Provider delayDuration={300} skipDelayDuration={120}>
           <DataTable
-            caption="Operations tickets"
+            caption="Tickets"
             noun="tickets"
             rows={matching}
             columns={columns}

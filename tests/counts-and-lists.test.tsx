@@ -27,9 +27,9 @@ import { readRuns } from '@/data/engineering';
 import { readIncidents } from '@/data/metrics';
 import { readTickets } from '@/data/tickets';
 import { customerFigures } from '@/views/customers-context';
-import { HealthBody } from '@/views/health';
-import { healthContext } from '@/views/health-context';
-import { MainRegions } from '@/views/overview';
+import { ServicesBody } from '@/views/services';
+import { servicesContext } from '@/views/services-context';
+import { MainRegions } from '@/views/home';
 import { SettingsBody } from '@/views/settings';
 import { matchingRuns, testFigures } from '@/views/tests-context';
 import { matchingTickets } from '@/views/tickets-context';
@@ -85,7 +85,7 @@ describe('a count opens the records it counts', () => {
   });
 });
 
-describe('Operations, when more than one incident is open', () => {
+describe('Services, when more than one incident is open', () => {
   it('reads every incident nobody has resolved, the newest first', async () => {
     const all = (await collection('incidents').query({})).rows as Row[];
     const second = { ...all.find((i) => i.state !== 'resolved')!, id: 'incidents_second', title: 'Webhook deliveries delayed', service: 'Webhooks', started: '2026-10-01T00:00:00.000Z' };
@@ -97,21 +97,21 @@ describe('Operations, when more than one incident is open', () => {
   });
 
   it('draws them all, and tells the assistant of each', async () => {
-    const { data } = await viewTools.find((t) => t.name === 'health')!.read({});
-    const d = data as Parameters<typeof HealthBody>[0];
+    const { data } = await viewTools.find((t) => t.name === 'services')!.read({});
+    const d = data as Parameters<typeof ServicesBody>[0];
     const other = { ...d.current!, id: 'incidents_second', title: 'Webhook deliveries delayed', service: 'Webhooks' };
     const two = { ...d, alsoOpen: [other] };
-    const { container } = render(<HealthBody {...two} />);
+    const { container } = render(<ServicesBody {...two} />);
     expect(container.textContent).toContain(d.current!.title);
     expect(container.textContent).toContain('Webhook deliveries delayed');
     expect(screen.getByText('Also open')).toBeTruthy();
-    expect(healthContext(two).insights.some((i) => i.text.includes('Webhook deliveries delayed'))).toBe(true);
+    expect(servicesContext(two).insights.some((i) => i.text.includes('Webhook deliveries delayed'))).toBe(true);
   });
 });
 
 describe('what Main tells the assistant of the business', () => {
   it('is every figure the Business region draws: how many, by status, by plan, and what they spent', async () => {
-    const { context, data } = await viewTools.find((t) => t.name === 'overview')!.read({ period: '30d' });
+    const { context, data } = await viewTools.find((t) => t.name === 'home')!.read({ period: '30d' });
     const business = (data as { summary: { business: { byStatus: Record<string, number>; byPlan: Record<string, number> } } }).summary.business;
     const fact = (label: string) => context.facts.find((f) => f.label === label)?.value ?? '';
     for (const [status, n] of Object.entries(business.byStatus)) expect(fact('By status'), status).toContain(`${n} ${status}`);

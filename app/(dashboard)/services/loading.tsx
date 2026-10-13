@@ -3,10 +3,10 @@ import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { LoadingPage } from '@/components/patterns/page-loading';
 
-/** Operations on its way: the uptime figure with its service grid, the service list and the past incidents. */
-export default function HealthLoading() {
+/** Services on its way: the uptime figure with its service grid, the service list and the past incidents. */
+export default function ServicesLoading() {
   return (
-    <LoadingPage name="operations" title="Operations">
+    <LoadingPage name="services" title="Services">
       <Row split="2/3">
         <Card className="min-h-[29rem] gap-4 p-(--card-pad)">
           <Skeleton className="h-2.5 w-48" />

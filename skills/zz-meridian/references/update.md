@@ -180,7 +180,7 @@ Moving a project to 0.9.0 can report two more `migration:<id>` items, to 0.10.0 
 | `agent-reads-own-group` (0.15.0) | a page README under a route group of the project's own at the top of its app folder (`example:app/(dash)/`) with no `### What the agent reads`: the gate asked only under `optional:app/(dashboard)/` before | add the part under `## Agents`: `customize.md`, "A page spec"; checked by the gate. A copy of the rule in `optional:scripts/check.local.ts` can go |
 
 A created project that never changed the template's pages brings the release's version of each affected file over, with
-the files that arrived with them: the view contexts `optional:src/views/overview-context.ts` and its siblings, the view
+the files that arrived with them: the view contexts `optional:src/views/home-context.ts` and its siblings, the view
 tools `optional:src/views/tools.ts`, the reads `optional:src/data/metrics.ts` and the collections in
 `optional:src/data/collections.ts`. `src/lib/shared-context.ts`, `src/lib/agent-guidance.ts` and `src/lib/insight.ts`
 are Meridian's and arrive with the update. An adopted project builds a context for each view it shares.
@@ -215,7 +215,7 @@ How to make the change depends on whose file it is:
   `optional:src/data/read.ts`, `optional:src/data/live-stream.ts`, `optional:src/data/live-actions.ts` and
   `optional:app/api/live/route.ts`, the client `optional:src/views/console-live.tsx`, each console route's
   `loading.tsx`, and the assistant's route-side code (`optional:src/lib/assistant/tools.ts` and
-  `optional:src/lib/assistant/respond.ts`, which take the guard). Remove a file the release moved (the Overview page is now under `optional:app/(dashboard)/(overview)/`),
+  `optional:src/lib/assistant/respond.ts`, which take the guard). Remove a file the release moved (the Home page is now under `optional:app/(dashboard)/(home)/`),
   and carry over your own changes to a file you had edited; do not overwrite them.
 - **A project adopted into an existing app**, whose pages are its own: make the smallest edit the instruction names. A
   Next config that lacks the two flags gets them, and then each route must still be static or partial; the pages Meridian

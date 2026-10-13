@@ -2,25 +2,25 @@ import { app } from '@/app.config';
 import { gate } from '@/data/access';
 import { PageFrame } from '@/components/base/shell';
 import { Freshness } from '@/components/patterns/freshness';
-import { PackedHealthBody } from '@/views/health';
-import { healthTool } from '@/views/tools';
+import { PackedServicesBody } from '@/views/services';
+import { servicesTool } from '@/views/tools';
 import { packServices } from '@/components/patterns/status-list/summarise';
 
-export const metadata = { title: 'Operations' };
+export const metadata = { title: 'Services' };
 
-/** Rendered from the Operations tool's own read (`src/views/tools.ts`), once the page's feature is held: the rail's hiding is presentation, not this gate. */
-export default async function HealthPage() {
-  const denied = await gate('health');
+/** Rendered from the Services tool's own read (`src/views/tools.ts`), once the page's feature is held: the rail's hiding is presentation, not this gate. */
+export default async function ServicesPage() {
+  const denied = await gate('services');
   if (denied) return denied;
-  const { data } = await healthTool.read({});
+  const { data } = await servicesTool.read({});
   return (
     <PageFrame
       kicker={<>{app.name} · {app.workspace}</>}
-      title="Operations"
+      title="Services"
       description={`Every service, how it is right now, and what happened in the last 90 days.`}
       meta={<Freshness updatedAt={new Date(data.updatedAt)} now={new Date(data.now)} />}
     >
-      <PackedHealthBody {...data} services={packServices(data.services)} />
+      <PackedServicesBody {...data} services={packServices(data.services)} />
     </PageFrame>
   );
 }

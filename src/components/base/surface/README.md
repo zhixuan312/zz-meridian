@@ -74,5 +74,5 @@ import { useSurface } from '@/components/base/surface';
 import { useShareView } from '@/components/base/use-share-view';
 
 const { kind, ask } = useSurface();
-useShareView('ZZ Meridian overview for the last 7 days: 612K requests, 0.82% errors.', { view: 'overview', period: '7d' });
+useShareView('ZZ Meridian home for the last 7 days: 612K requests, 0.82% errors.', { view: 'home', period: '7d' });
 ```

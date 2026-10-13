@@ -167,7 +167,7 @@ export const REQUESTS: RequestRow[] = (() => {
 })();
 
 type Customer = { name: string; plan: 'Enterprise' | 'Scale' | 'Starter'; requests: number; spend: number; trend: number[]; status: 'active' | 'trial' | 'past due' };
-/** Each customer's share of the last 30 days, so the customers add up to exactly what the Overview shows for 30D. */
+/** Each customer's share of the last 30 days, so the customers add up to exactly what the Home shows for 30D. */
 const SHARES = CUSTOMERS.map((_, i) => 1 / (i + 1.4));
 const MONTH = demoTotals('30d').current;
 export const CUSTOMER_ROWS: Customer[] = CUSTOMERS.map((name, i) => {

@@ -21,16 +21,16 @@ import { FEATURES } from '@/data/features';
 import { readReleases } from '@/data/engineering';
 import { latestRuns } from '@/data/verification';
 import { customerFigures } from '@/views/customers-context';
-import { MainRegions } from '@/views/overview';
+import { MainRegions } from '@/views/home';
 import { releaseFigures } from '@/views/releases-context';
 import { ticketCounts } from '@/views/tickets-context';
 import { viewTools } from '@/views/tools';
 
 type Row = Record<string, unknown>;
 const all = async (name: string) => (await collections.find((c) => c.name === name)!.query({})).rows as Row[];
-const tool = viewTools.find((t) => t.name === 'overview')!;
+const tool = viewTools.find((t) => t.name === 'home')!;
 const summaryOf = async () => ((await tool.read({ period: '30d' })).data as { summary: Record<'business' | 'operation' | 'delivery', Record<string, unknown> | null> }).summary;
-const needs = [...(FEATURES.overview.needs as unknown as { allOf: readonly string[] }).allOf];
+const needs = [...(FEATURES.home.needs as unknown as { allOf: readonly string[] }).allOf];
 const services = collections.find((c) => c.name === 'services')!;
 const query = services.query;
 
@@ -116,10 +116,10 @@ describe('the three regions on the page', () => {
     render(<MainRegions summary={summary as never} />);
     expect(region('Business').textContent).toContain('12');
     expect(hrefs(region('Business')).some((h) => h.startsWith('/customers'))).toBe(true);
-    expect(hrefs(region('Business')).some((h) => h.startsWith('/analytics'))).toBe(true);
+    expect(hrefs(region('Business')).some((h) => h.startsWith('/usage'))).toBe(true);
     expect(region('Operation').textContent).toContain('Inference API');
     expect(region('Operation').textContent).toContain('Elevated latency in eu-west-1');
-    expect(hrefs(region('Operation')).every((h) => h.startsWith('/health'))).toBe(true);
+    expect(hrefs(region('Operation')).every((h) => h.startsWith('/services'))).toBe(true);
     for (const page of ['/operations-tickets', '/tests', '/releases']) expect(hrefs(region('Delivery')).some((h) => h.startsWith(page)), page).toBe(true);
   });
 
@@ -133,7 +133,7 @@ describe('the three regions on the page', () => {
 
 describe('Main, as a workspace home', () => {
   it('says who the workspace is for, in the words the declaration holds', () => {
-    expect(fs.readFileSync(path.resolve(import.meta.dirname, '../app/(dashboard)/(overview)/page.tsx'), 'utf8')).toMatch(/workspaces\.main\.audience/);
+    expect(fs.readFileSync(path.resolve(import.meta.dirname, '../app/(dashboard)/(home)/page.tsx'), 'utf8')).toMatch(/workspaces\.main\.audience/);
   });
 });
 

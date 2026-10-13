@@ -8,18 +8,18 @@ const write = (root: string, rel: string) => { fs.mkdirSync(path.dirname(path.jo
 
 describe('the sample surfaces the walk-throughs drive', () => {
   it('are all present in the template', () => {
-    expect(sampleSurfaces(path.resolve(import.meta.dirname, '..'), 'app')).toEqual({ overview: true, members: true, keys: true, settings: true });
+    expect(sampleSurfaces(path.resolve(import.meta.dirname, '..'), 'app')).toEqual({ home: true, members: true, keys: true, settings: true });
   });
   it('are absent from a product that replaced the sample pages, so their steps are not applicable', () => {
     const root = fs.mkdtempSync(path.join(os.tmpdir(), 'surfaces-'));
     write(root, 'app/(dashboard)/orders/page.tsx');
     write(root, 'src/views/orders.tsx');
-    expect(sampleSurfaces(root, 'app')).toEqual({ overview: false, members: false, keys: false, settings: false });
+    expect(sampleSurfaces(root, 'app')).toEqual({ home: false, members: false, keys: false, settings: false });
   });
   it('are found under whatever route group a product keeps its console in', () => {
     const root = fs.mkdtempSync(path.join(os.tmpdir(), 'surfaces-'));
-    for (const f of ['app/(dash)/(overview)/page.tsx', 'src/views/overview-context.ts', 'app/(dash)/members/page.tsx', 'src/views/members.tsx', 'app/(dash)/keys/page.tsx']) write(root, f);
-    expect(sampleSurfaces(root, 'app')).toEqual({ overview: true, members: true, keys: true, settings: false });
+    for (const f of ['app/(dash)/(home)/page.tsx', 'src/views/home-context.ts', 'app/(dash)/members/page.tsx', 'src/views/members.tsx', 'app/(dash)/keys/page.tsx']) write(root, f);
+    expect(sampleSurfaces(root, 'app')).toEqual({ home: true, members: true, keys: true, settings: false });
   });
   it('need the page and its view: a Members route the product rewrote without the sample view is not the sample', () => {
     const root = fs.mkdtempSync(path.join(os.tmpdir(), 'surfaces-'));

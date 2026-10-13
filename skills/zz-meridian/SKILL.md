@@ -124,7 +124,7 @@ The sentence is the whole brief you will get, so turn the homework into decision
 
 1. **What it is and for whom.** The product name (from their app, repository or materials, else a plain name for what
    it does), who uses it, and the one question the home page must answer.
-2. **Pages.** Your drafted list, each mapped to the closest Meridian preset (Overview, list, detail, analytics, health,
+2. **Pages.** Your drafted list, each mapped to the closest Meridian preset (Home, list, detail, usage, services,
    settings, sign-in), each with the question it answers.
 3. **Brand and surfaces.** Under Meridian's register: the brand colour from their existing styles or logo, else indigo
    (what `create` and `adopt` give with no brand flag); dark first; MCP views only when they asked for the agent surface.

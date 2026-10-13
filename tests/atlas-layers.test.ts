@@ -29,7 +29,7 @@ describe('the Atlas\'s layers', () => {
 
   it('keep every address the Atlas had', () => {
     const hrefs = all.map((e) => e.href);
-    for (const href of ['/system/start/overview', '/system/start/start-a-dashboard', '/system/tokens/colour', '/system/base/shell', '/system/components/button', '/system/patterns/rail', '/system/patterns/trend-chart', '/system/pages/template-records', '/system/pages/overview', '/system/pages/health', '/system/pages/proposal', '/system/system/changelog']) expect(hrefs, href).toContain(href);
+    for (const href of ['/system/start/overview', '/system/start/start-a-dashboard', '/system/tokens/colour', '/system/base/shell', '/system/components/button', '/system/patterns/rail', '/system/patterns/trend-chart', '/system/pages/template-records', '/system/pages/home', '/system/pages/services', '/system/pages/proposal', '/system/system/changelog']) expect(hrefs, href).toContain(href);
   });
 
   it('name an entry by its layer, and by what it is in layer 4', () => {
@@ -60,7 +60,7 @@ describe('layer 4', () => {
     expect(built.map((e) => e.id)).toEqual(expect.arrayContaining(['customers', 'requests', 'tickets']));
     // A template is not built from one, and neither is a page that arranges its own patterns.
     expect(layer4.find((e) => e.id === 'template-records')!.template).toBeUndefined();
-    expect(layer4.find((e) => e.id === 'overview')!.template).toBeUndefined();
+    expect(layer4.find((e) => e.id === 'home')!.template).toBeUndefined();
   });
 });
 

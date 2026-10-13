@@ -1,7 +1,7 @@
 'use client';
 
 /**
- * The sample's request cells and columns, shared by the Requests page, the Overview, Analytics, the Requests embed and
+ * The sample's request cells and columns, shared by the Requests page, the Home, Usage, the Requests embed and
  * the Data table preview. They live here, not in a page view, so removing a sample page never breaks a preview.
  */
 import { Fragment } from 'react';
@@ -30,7 +30,7 @@ export function MethodChip({ method }: { method: string }) {
 
 /**
  * A method and its route. In a list whose rows are all different routes the route truncates; where the route is the
- * row's whole identity and the column is narrow (Analytics on a phone), `wrap` stacks the method over the route below 640px and lets the route break after a slash instead.
+ * row's whole identity and the column is narrow (Usage on a phone), `wrap` stacks the method over the route below 640px and lets the route break after a slash instead.
  */
 export function RouteCell({ method, route, wrap }: { method: string; route: string; wrap?: boolean }) {
   return (

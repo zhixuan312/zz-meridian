@@ -56,7 +56,7 @@ sample, ZZ Meridian's own dashboard, lives in `optional:src/system/fixtures/`; y
 palette: groups of `{ href, label, icon, needs }`, plus a `workspace` while the workspaces stay (icons from `lucide-react`, 1.75 stroke is applied by the rail). A badge
 is a short string, used only for something that needs attention ("1").
 
-`needs` is required, and in a created project it is a feature's own need **by reference** — `needs: FEATURES.overview.needs`,
+`needs` is required, and in a created project it is a feature's own need **by reference** — `needs: FEATURES.home.needs`,
 from `optional:src/data/features.ts` — never a grant written a second time: the rail and the palette draw only the
 destinations the signed-in person satisfies, and a test fails an item that restates a need. That filtering is
 presentation, not the gate: every page refuses on its own (see "Data" above). An adopted project has no `features.ts`: `adopt` writes
@@ -72,7 +72,7 @@ places to look (by audience, by team, by job), keep the workspaces; when they di
 navigation is what a product has until somebody asks for more.
 
 **Keep the workspaces** when the destinations fall into a few places to look. Each has a `label`, an `audience` sentence
-and a `homeHref`; give every `nav` entry a `workspace` naming one. Rewrite each `audience` sentence (the Overview page and the two
+and a `homeHref`; give every `nav` entry a `workspace` naming one. Rewrite each `audience` sentence (the Home page and the two
 workspace homes, Revenue and Now, print `workspaces.<id>.audience` in their description) and move the homes to your own pages. Keep `optional:src/views/workspaces.ts` (`navOf` derives a workspace's
 navigation, `workspaceOf` says which workspace an address belongs to) and `optional:src/views/workspace-chrome.tsx`
 (`WorkspaceRail` and `WorkspacePalette`). The address alone decides the workspace; nothing is stored, and a workspace
@@ -92,11 +92,11 @@ to all of this.
 - In `optional:src/views/no-access.tsx` the refusal page's way out reads `navOf` and `workspaces.main`: make it the first
   destination of `nav` the person may open, or `/`, and rewrite the two cases of `optional:tests/no-access.test.tsx` that
   expect a workspace's first destination and Main's home.
-- Take `${workspaces.<id>.audience}` out of the descriptions of the Overview, Revenue and Now pages, or delete
+- Take `${workspaces.<id>.audience}` out of the descriptions of the Home, Revenue and Now pages, or delete
   the pages.
 - Delete `optional:tests/workspaces.test.ts`, `optional:tests/workspace-access.test.ts` and
   `optional:tests/workspace-chrome.test.tsx`. In `optional:tests/shell-alerts.test.ts` drop the `workspaceOf` check, and in
-  `optional:tests/workspace-overview.test.tsx` the test that reads `workspaces.main.audience`, with the two imports only
+  `optional:tests/workspace-home.test.tsx` the test that reads `workspaces.main.audience`, with the two imports only
   it uses.
 - A clone that keeps the Atlas also changes `optional:src/system/atlas-shell.tsx`, which lists the workspaces; a created project
   has no Atlas.
@@ -107,12 +107,12 @@ to all of this.
 
 | They need | Copy and adapt | Its protagonist |
 |---|---|---|
-| A summary with one leading figure | `optional:app/(dashboard)/(overview)/page.tsx` + `optional:src/views/overview.tsx` | Featured metric with its trend |
+| A summary with one leading figure | `optional:app/(dashboard)/(home)/page.tsx` + `optional:src/views/home.tsx` | Featured metric with its trend |
 | A list of records with filters | `optional:app/(dashboard)/requests/` + `optional:src/views/requests.tsx` | Data table with filter bar |
 | Summary tiles over a list people only read (what ran, what is going out) | `optional:app/(dashboard)/tests/`, `optional:app/(dashboard)/releases/` + `optional:src/views/tests.tsx`, `optional:src/views/releases.tsx` | Data table under three tiles |
 | One record | `optional:app/(dashboard)/requests/[id]/` + `optional:src/views/request.tsx` | Detail head and key facts |
-| Four figures for a period, then breakdowns and patterns over time | `optional:app/(dashboard)/analytics/` + `optional:src/views/analytics.tsx` | The four figures, then the heatmap |
-| Systems and incidents (Operations, at `/health`) | `optional:app/(dashboard)/health/` + `optional:src/views/health.tsx` | Status summary |
+| Four figures for a period, then breakdowns and patterns over time | `optional:app/(dashboard)/usage/` + `optional:src/views/usage.tsx` | The four figures, then the heatmap |
+| Systems and incidents (Services, at `/services`) | `optional:app/(dashboard)/services/` + `optional:src/views/services.tsx` | Status summary |
 | Customers, accounts, people | `optional:app/(dashboard)/customers/` + `optional:src/views/customers.tsx` | Data table, a usage sparkline in each row |
 | Keys, tokens, secrets | `optional:app/(dashboard)/keys/` + `optional:src/views/keys.tsx` | Table with masked values |
 | Records people add, edit and remove (also what the assistant reads) | `optional:app/(dashboard)/members/`, `optional:app/(dashboard)/keys/` + `optional:src/views/members.tsx`, `optional:src/views/keys.tsx` | Data table over a collection |
@@ -120,15 +120,15 @@ to all of this.
 | Settings (a sample: keep only if asked; its Assistant section holds the assistant's switch) | `optional:app/(dashboard)/settings/` + `optional:src/views/settings.tsx` | Form sections |
 | Sign in, not found | `optional:app/sign-in/` (`page.tsx` + `panel.tsx`), `optional:app/not-found.tsx` + `optional:src/views/standalone.tsx` | One sentence at display size |
 
-The Operations preset assumes software services. For other things that are up or not (warehouses, branches, sites), pass
+The Services preset assumes software services. For other things that are up or not (warehouses, branches, sites), pass
 `StatusList` a `noun`, a `measure` ("on time") and a `metric`, and `UptimeBars` a `measure`. A Metric tile says what
 its change compares with in `compare` ("vs the 3 days before") and takes a `note` where no comparison fits.
 
 A copied sample page does not do what a product would assume of it. Its writes are held in memory: a ticket, a member or a
 key lives in the running server and is lost when it restarts, until your own database stands behind the collection. Its
-figures that are fixed (Analytics' weekday-and-hour grid, hours and regions, the endpoints, the Overview's response split)
+figures that are fixed (Usage' weekday-and-hour grid, hours and regions, the endpoints, the Home's response split)
 are not worked out from the request log and do not follow the period chosen. Nothing runs a suite or ships a version
-behind Tests and verification and Releases, no message is sent, and the bell only lists what needs a person when the page
+behind Tests and Releases, no message is sent, and the bell only lists what needs a person when the page
 is read. `optional:docs/product-workspaces.md` lists each limit.
 
 Rules that make every page look like it belongs:
@@ -188,7 +188,7 @@ Rules that make every page look like it belongs:
   is unsaved and otherwise only if the person chooses to leave. A link needs nothing, and Back and Forward are the
   browser's.
 - **A shared context** for each page (decision 0011): a pure function beside the view builds it from the page's data
-  (copy `optional:src/views/overview-context.ts`: scope, freshness, each figure with its unit, change and definition,
+  (copy `optional:src/views/home-context.ts`: scope, freshness, each figure with its unit, change and definition,
   what `optional:src/lib/insight.ts` finds, what the data cannot say), within 2,600 characters, lists cut at 25 with a
   count of the rest (`listed`), and the view passes it to `useShareView`; a
   server page with no client view places `<ShareContext context={…} />` among its cards instead. Both
@@ -249,8 +249,8 @@ command palette; compact suits operators who scan many rows.
 ## MCP App views (only if asked)
 
 Each `app/embed/<view>/` route is an MCP App: a `ui://` resource an MCP server returns beside a tool result. Copy
-`optional:app/embed/overview/` for a summary or `optional:app/embed/requests/` for a list; wrap the content in `EmbedFrame`; call
-`useShareView(context)` with the page's context (copy `optional:src/views/overview-context.ts`) so the model knows what is on screen; put `AskAbout` on cards worth asking about; agent
+`optional:app/embed/home/` for a summary or `optional:app/embed/requests/` for a list; wrap the content in `EmbedFrame`; call
+`useShareView(context)` with the page's context (copy `optional:src/views/home-context.ts`) so the model knows what is on screen; put `AskAbout` on cards worth asking about; agent
 writes go through `Proposal` (see `optional:app/embed/proposal/`). Read `agents.md` next to this file for the server side.
 
 ## Clean-up before validation
@@ -263,7 +263,7 @@ pages' entries in `PAGES` in `example:src/system/content.ts`). Keep `optional:sr
 `src/lib/assistant/`, `optional:app/api/assistant/` and the assistant panel, unless the person does not want the assistant (it
 then stays off without them). Then fix what still points at the sample:
 
-- `optional:src/views/sample-footer.tsx`: the footer status line and its link to `/health`, which `optional:app/not-found.tsx`
+- `optional:src/views/sample-footer.tsx`: the footer status line and its link to `/services`, which `optional:app/not-found.tsx`
   and the sign-in page draw.
 - `optional:src/data/alerts.ts`: `readAlerts` works the bell's alerts out of the sample's incidents, customers, verification
   runs and tickets. Write your own exceptions the same way, each from a read the caller may make and linked to the page
@@ -279,7 +279,7 @@ then stays off without them). Then fix what still points at the sample:
 This finds what is left:
 
 ```sh
-grep -rn "/health\|/requests\|/customers\|/keys\|/settings\|/members\|/analytics\|/operations-tickets\|/tests\|/releases\|fixtures/sample\|sample-cells" \
+grep -rn "/services\|/requests\|/customers\|/keys\|/settings\|/members\|/usage\|/operations-tickets\|/tests\|/releases\|fixtures/sample\|sample-cells" \
   app src/views src/components --include=*.tsx --include=*.ts | grep -v preview.tsx
 ```
 
@@ -289,7 +289,7 @@ Then `node scripts/registry.ts` and `pnpm verify --full`.
 
 Routes, API paths, tool names (`query_enhancements` → `query_initiatives`), seeds and tables are yours to rename. The
 assistant walk-through (`scripts/assistant.ts`) checks what every product shares on your own rail, and drives the
-template's sample Overview, Members, API keys and Settings only while their files are there: replace one and its steps
+template's sample Home, Members, API keys and Settings only while their files are there: replace one and its steps
 print `n/a` with the reason, never a failure, so you never edit Meridian's scripts to rename your pages. The live checks
 (`scripts/live.ts`) work the same way with the sample Members page. `scripts/verify.config.ts`'s `detailRoutes` name ids from the sample, and its `navigationChecks` and `smokeRoutes` name routes and titles, so they move too.
 

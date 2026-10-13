@@ -2,19 +2,19 @@
 import { describe, expect, it } from 'vitest';
 import { resolveCoverage, selectSmokeRoutes } from '../scripts/lib/coverage.ts';
 
-const nav = ['/', '/analytics', '/requests', '/health', '/settings'];
+const nav = ['/', '/usage', '/requests', '/services', '/settings'];
 const check = (path: string) => ({ path, title: 'T', readySelector: 'main table', probe: 'sort' as const, controlSelector: 'th button', resultSelector: 'tbody tr' });
 
 describe('smoke routes', () => {
   it('take the explicit list, or the landing route and the next two rail routes', () => {
     expect(selectSmokeRoutes({ smokeRoutes: ['/', '/requests', '/settings'], nav, landing: '/' })).toEqual(['/', '/requests', '/settings']);
-    expect(selectSmokeRoutes({ nav, landing: '/' })).toEqual(['/', '/analytics', '/requests']);
-    expect(selectSmokeRoutes({ nav, landing: '/health' })).toEqual(['/health', '/', '/analytics']);
+    expect(selectSmokeRoutes({ nav, landing: '/' })).toEqual(['/', '/usage', '/requests']);
+    expect(selectSmokeRoutes({ nav, landing: '/services' })).toEqual(['/services', '/', '/usage']);
   });
   it('refuse an explicit route that is not one of the rail routes, a duplicate or more than three', () => {
     expect(() => selectSmokeRoutes({ smokeRoutes: ['/nowhere'], nav, landing: '/' })).toThrow(/nowhere/);
     expect(() => selectSmokeRoutes({ smokeRoutes: ['/', '/'], nav, landing: '/' })).toThrow();
-    expect(() => selectSmokeRoutes({ smokeRoutes: ['/', '/analytics', '/requests', '/health'], nav, landing: '/' })).toThrow();
+    expect(() => selectSmokeRoutes({ smokeRoutes: ['/', '/usage', '/requests', '/services'], nav, landing: '/' })).toThrow();
   });
 });
 

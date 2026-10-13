@@ -28,7 +28,7 @@ describe('the alerts in the shell', () => {
     const open = (await all('incidents')).filter((i) => i.state !== 'resolved');
     expect(open.length).toBeGreaterThan(0);
     const { alerts } = await readAlerts();
-    expect(alerts[0]).toMatchObject({ href: '/health', tone: 'warning', unread: true });
+    expect(alerts[0]).toMatchObject({ href: '/services', tone: 'warning', unread: true });
     expect(open.map((i) => i.title)).toContain(alerts[0].title);
   });
 

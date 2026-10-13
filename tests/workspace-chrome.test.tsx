@@ -22,7 +22,7 @@ const ROOT = path.resolve(import.meta.dirname, '..');
  */
 const ATLAS = fs.existsSync(path.join(ROOT, 'app/system')) ? ['Design system', 'Docs'] : [];
 /** Main's entries as the rail draws them, and the menu's name: the product's own name, then the workspace in view. */
-const MAIN = ['Overview', 'Members', 'Settings', ...ATLAS];
+const MAIN = ['Home', 'Members', 'Settings', ...ATLAS];
 const menuOf = (workspace: string) => `${app.name}, ${workspace}: workspace menu`;
 const EVERY = nav.flatMap((g) => g.items).map((i) => i.href);
 const person = { name: 'Maya Chen', role: 'Owner' };
@@ -47,14 +47,14 @@ describe('the rail, wherever the address is', () => {
 
   it('draws Business on a request\'s own page, with Requests as the current entry', async () => {
     await rail('/requests/req_1');
-    expect(links()).toEqual(['Revenue', 'Analytics', 'Customers', 'Requests']);
+    expect(links()).toEqual(['Revenue', 'Customers', 'Usage', 'Requests']);
     expect(trigger().getAttribute('aria-label')).toBe(menuOf('Business'));
     expect(screen.getByRole('link', { name: 'Requests' }).getAttribute('aria-current')).toBe('page');
   });
 
   it('draws Engineering on its pages', async () => {
     await rail('/operations-tickets');
-    expect(links()).toEqual(['Now', 'Operations', 'API keys', 'Operations tickets', 'Tests and verification', 'Releases']);
+    expect(links()).toEqual(['Now', 'Services', 'Tickets', 'Tests', 'Releases', 'API keys']);
     expect(trigger().getAttribute('aria-label')).toBe(menuOf('Engineering'));
   });
 
@@ -66,14 +66,14 @@ describe('the rail, wherever the address is', () => {
 
 describe('the rail, for a person who may not open everything', () => {
   it('leaves out what they may not open, in every workspace, and still offers all three', async () => {
-    await rail('/health', viewer());
-    expect(links()).toEqual(['Now', 'Operations', 'Operations tickets', 'Tests and verification', 'Releases']);
+    await rail('/services', viewer());
+    expect(links()).toEqual(['Now', 'Services', 'Tickets', 'Tests', 'Releases']);
     fireEvent.keyDown(trigger(), { key: 'Enter' });
     expect(within(await screen.findByRole('menu')).getAllByRole('menuitemradio').map((r) => r.textContent)).toEqual(['Main', 'Business', 'Engineering']);
   });
 
   it('draws no destination while who they are is still being found out, and none when it cannot be', async () => {
-    at.path = '/analytics';
+    at.path = '/usage';
     let settle!: (access: ChromeAccess | null) => void;
     await act(async () => { render(<WorkspaceRail access={new Promise<ChromeAccess | null>((resolve) => { settle = resolve; })} />); });
     expect(screen.queryAllByRole('link')).toEqual([]);
@@ -115,9 +115,9 @@ describe('the palette', () => {
     const offered = links();
     act(() => openCommand());
     const options = within(await screen.findByRole('dialog')).getAllByRole('option').map((o) => o.textContent ?? '');
-    expect(offered).toEqual(['Now', 'Operations', 'Operations tickets', 'Tests and verification', 'Releases']);
+    expect(offered).toEqual(['Now', 'Services', 'Tickets', 'Tests', 'Releases']);
     for (const label of offered) expect(options.some((o) => o.startsWith(label!)), label!).toBe(true);
-    for (const label of ['Overview', 'Analytics', 'Customers', 'API keys', 'Members']) expect(options.some((o) => o.startsWith(label)), label).toBe(false);
+    for (const label of ['Home', 'Usage', 'Customers', 'API keys', 'Members']) expect(options.some((o) => o.startsWith(label)), label).toBe(false);
   });
 });
 
