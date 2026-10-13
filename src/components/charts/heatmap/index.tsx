@@ -26,10 +26,14 @@ type Shared = {
   unit?: string;
   label: string;
   className?: string;
+  /** A state drawn still in the Atlas: `focus` draws the ring the grid takes from the keyboard. */
+  'data-preview-state'?: 'focus';
 };
 type HoursProps = Shared & {
   /** Seven rows (Monday first) of twenty-four hourly values (UTC). */
   values: number[][];
+  /** A cell drawn as pointed at in the Atlas, its row and its column (`3-14`); real charts take theirs from the pointer and the keys. */
+  'data-preview-cell'?: string;
 };
 type CalendarProps = Shared & {
   /** One value a calendar date (`2026-10-01`), oldest first: a cell a date, a column a week, a row a weekday. */
@@ -75,6 +79,40 @@ function ramp(values: number[], scale: Scale) {
   return { step, top: scale === 'quantile' ? ranked.find((v) => step(v) === 5) : undefined };
 }
 
+/** The grid's focus ring, from the keyboard and, drawn still, in the Atlas. */
+const focusRing = (still: boolean) => cn('rounded-sm focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent', still && 'outline-2 outline-offset-4 outline-accent');
+
+/**
+ * The readout over the cell pointed at. It fills no measured place: it stands in a row as wide as the grid, between two
+ * spacers that share the room left over as the columns before and after its own, so it is flush with the grid's edge at
+ * the first column and at the last and never leaves it. Too long for the grid, it breaks between its two halves.
+ */
+function Readout({ column, columns, children }: { column: number; columns: number; children: ReactNode }) {
+  return (
+    <div aria-hidden className="pointer-events-none absolute inset-x-0 bottom-full z-10 mb-1.5 flex">
+      <span style={{ flexGrow: column }} />
+      <div data-readout className="rounded-sm bg-surface-inverse px-2 py-1.5 text-xs text-ink-inverse shadow-overlay">{children}</div>
+      <span style={{ flexGrow: columns - 1 - column }} />
+    </div>
+  );
+}
+
+/**
+ * The outline of a day in progress, an edge at a time: three pixels on and two off from each corner, clockwise, with
+ * antialiasing off. A CSS dashed border is one stroke round the rounded box, fitted to its perimeter and antialiased,
+ * so its dashes land on fractions of a pixel and the edges away from where the stroke starts draw fainter.
+ */
+function Frame() {
+  return (
+    <svg aria-hidden className="pointer-events-none absolute inset-0 size-full overflow-visible" stroke="var(--ink)" strokeDasharray="3 2" shapeRendering="crispEdges">
+      <line x1="0" y1="0" x2="100%" y2="0" transform="translate(0 0.5)" />
+      <line x1="100%" y1="0" x2="100%" y2="100%" transform="translate(-0.5 0)" />
+      <line x1="100%" y1="100%" x2="0" y2="100%" transform="translate(0 -0.5)" />
+      <line x1="0" y1="100%" x2="0" y2="0" transform="translate(0.5 0)" />
+    </svg>
+  );
+}
+
 /** The figure's caption: the empty step named in words, then the five steps of the accent from less to more. */
 function Legend({ unit, more, children }: { unit: string; more: string; children?: ReactNode }) {
   return (
@@ -97,9 +135,9 @@ function Legend({ unit, more, children }: { unit: string; more: string; children
   );
 }
 
-function Hours({ values, scale, format, unit, label, className }: HoursProps & Required<Pick<Shared, 'scale' | 'format' | 'unit'>>) {
+function Hours({ values, scale, format, unit, label, className, 'data-preview-state': previewState, 'data-preview-cell': previewCell }: HoursProps & Required<Pick<Shared, 'scale' | 'format' | 'unit'>>) {
   const [box, { width }] = useSize<HTMLElement>();
-  const [hover, setHover] = useState<{ d: number; h: number; x: number; y: number } | null>(null);
+  const [hover, setHover] = useState<{ d: number; h: number } | null>(null);
   const group = width > 0 && width < 560 ? 3 : 1;
   const cols = 24 / group;
   const grid = values.map((row) => Array.from({ length: cols }, (_, c) => row.slice(c * group, c * group + group).reduce((a, b) => a + b, 0)));
@@ -108,22 +146,22 @@ function Hours({ values, scale, format, unit, label, className }: HoursProps & R
   const hourLabel = (c: number) => String(c * group).padStart(2, '0');
   const range = (c: number) => (group === 1 ? `${hourLabel(c)}:00` : `${hourLabel(c)}:00–${String(c * group + group).padStart(2, '0')}:00`);
 
-  /** Place the readout over a cell, from the pointer or the keyboard. */
-  const point = (d: number, h: number) => {
-    const cell = box.current?.querySelector<HTMLElement>(`[data-cell="${d}-${h}"]`);
-    if (!cell || !box.current) return;
-    const r = cell.getBoundingClientRect(), o = box.current.getBoundingClientRect();
-    setHover({ d, h, x: r.left - o.left + r.width / 2, y: r.top - o.top });
-  };
+  /** Point at a cell, from the pointer or the keyboard. */
+  const point = (d: number, h: number) => setHover({ d, h });
+  const [pd, ph] = (previewCell ?? '').split('-').map(Number);
+  const still = previewCell !== undefined && grid[pd]?.[ph] !== undefined ? { d: pd, h: ph } : null;
+  // A cursor placed on 24 columns is not on the grid when the hours regroup into 8.
+  const cursor = hover && hover.h < cols ? hover : null;
+  const on = still ?? cursor;
   const keys = (e: KeyboardEvent) => {
-    const at = hover ?? { d: 0, h: 0 };
+    const at = cursor ?? { d: 0, h: 0 };
     const moves: Record<string, [number, number]> = { ArrowLeft: [0, -1], ArrowRight: [0, 1], ArrowUp: [-1, 0], ArrowDown: [1, 0] };
     if (e.key === 'Escape') return setHover(null);
     if (e.key === 'Home' || e.key === 'End') { e.preventDefault(); return point(at.d, e.key === 'Home' ? 0 : cols - 1); }
     const m = moves[e.key];
     if (!m) return;
     e.preventDefault();
-    if (!hover) return point(0, 0);
+    if (!cursor) return point(0, 0);
     point(Math.min(6, Math.max(0, at.d + m[0])), Math.min(cols - 1, Math.max(0, at.h + m[1])));
   };
 
@@ -142,14 +180,14 @@ function Hours({ values, scale, format, unit, label, className }: HoursProps & R
           aria-label={`${label}. Use the arrow keys to read one ${group === 1 ? 'hour' : 'three-hour block'}.`}
           onKeyDown={keys}
           onBlur={() => setHover(null)}
-          className="col-span-2 grid grid-cols-[2.5rem_minmax(0,1fr)] gap-x-2 rounded-sm focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent"
+          className={cn('col-span-2 grid grid-cols-[2.5rem_minmax(0,1fr)] gap-x-2', focusRing(previewState === 'focus'))}
         >
         {grid.map((row, d) => (
           <div key={d} className="contents">
             <span aria-hidden className="flex items-center text-2xs text-ink-3">{DAYS[d]}</span>
-            <div className="grid gap-0.5 py-px" style={{ gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))` }}>
+            <div className="relative grid gap-0.5 py-px" style={{ gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))` }}>
               {row.map((v, c) => {
-                const on = hover?.d === d && hover?.h === c;
+                const ringed = on?.d === d && on.h === c;
                 return (
                   <span
                     key={c}
@@ -157,28 +195,24 @@ function Hours({ values, scale, format, unit, label, className }: HoursProps & R
                     data-cell={`${d}-${c}`}
                     data-step={step(v)}
                     onPointerEnter={() => point(d, c)}
-                    className={cn('h-6 rounded-xs transition-[box-shadow] duration-(--dur-hover) sm:h-7', on && 'ring-2 ring-ink ring-offset-1 ring-offset-surface')}
+                    className={cn('h-6 rounded-xs transition-[box-shadow] duration-(--dur-hover) sm:h-7', ringed && 'ring-2 ring-ink ring-offset-1 ring-offset-surface')}
                     style={{ background: STEPS[step(v)] }}
                   />
                 );
               })}
+              {on?.d === d ? (
+                <Readout column={on.h} columns={cols}>
+                  <span className="font-medium whitespace-nowrap">{format(row[on.h])} {unit}</span>
+                  <span className="whitespace-nowrap opacity-70"> · {DAYS[d]} {range(on.h)} UTC</span>
+                </Readout>
+              ) : null}
             </div>
           </div>
         ))}
         </div>
       </div>
-      <p className="sr-only" aria-live="polite">{hover ? `${DAYS[hover.d]} ${range(hover.h)} UTC: ${format(grid[hover.d][hover.h])} ${unit}` : ''}</p>
+      <p className="sr-only" aria-live="polite">{on ? `${DAYS[on.d]} ${range(on.h)} UTC: ${format(grid[on.d][on.h])} ${unit}` : ''}</p>
       <Legend unit={unit} more={top === undefined ? 'More' : `${format(top)} or more`} />
-      {hover ? (
-        <div
-          aria-hidden
-          className="pointer-events-none absolute z-10 -translate-x-1/2 -translate-y-full rounded-sm bg-surface-inverse px-2 py-1.5 text-xs whitespace-nowrap text-ink-inverse shadow-overlay"
-          style={{ left: hover.x, top: hover.y - 6 }}
-        >
-          <span className="font-medium">{format(grid[hover.d][hover.h])} {unit}</span>
-          <span className="opacity-70"> · {DAYS[hover.d]} {range(hover.h)} UTC</span>
-        </div>
-      ) : null}
       <table className="sr-only">
         <caption>{label}</caption>
         <thead><tr><th>Day</th>{Array.from({ length: 24 }, (_, h) => <th key={h}>{String(h).padStart(2, '0')}:00</th>)}</tr></thead>
@@ -191,7 +225,7 @@ function Hours({ values, scale, format, unit, label, className }: HoursProps & R
 /** A calendar date is a day, not an instant: its number counts whole days from its own year, month and day, whatever the product's timezone. */
 const dayNumber = (date: string) => Date.UTC(Number(date.slice(0, 4)), Number(date.slice(5, 7)) - 1, Number(date.slice(8, 10))) / DAY;
 
-function Calendar({ days, running = false, meridian = false, scale, format, unit, label, className, 'data-preview-date': previewDate }: CalendarProps & Required<Pick<Shared, 'scale' | 'format' | 'unit'>>) {
+function Calendar({ days, running = false, meridian = false, scale, format, unit, label, className, 'data-preview-state': previewState, 'data-preview-date': previewDate }: CalendarProps & Required<Pick<Shared, 'scale' | 'format' | 'unit'>>) {
   const [box, { width }] = useSize<HTMLElement>();
   const [cursor, setCursor] = useState<string | null>(null);
   const { dates: held } = useMeridianIndex();
@@ -294,7 +328,7 @@ function Calendar({ days, running = false, meridian = false, scale, format, unit
               aria-label={`${label}. Use the arrow keys to read one day.`}
               onKeyDown={keys}
               onBlur={letGo}
-              className="relative grid grid-rows-7 justify-end gap-0.5 rounded-sm focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent"
+              className={cn('relative grid grid-rows-7 justify-end gap-0.5', focusRing(previewState === 'focus'))}
               style={{ gridTemplateColumns: columns }}
             >
               {shown.map((d) => (
@@ -310,23 +344,21 @@ function Calendar({ days, running = false, meridian = false, scale, format, unit
                   className={cn(
                     'aspect-square max-h-7 w-full rounded-[3px] transition-[box-shadow] duration-(--dur-hover)',
                     // A day in progress: a dashed frame on the card, where it holds its contrast whatever the step, around a smaller fill.
-                    d.running && 'border border-dashed border-ink bg-clip-content p-px',
+                    d.running && 'relative bg-clip-content p-0.5',
                     on?.date === d.date && 'relative z-1 ring-2 ring-ink ring-offset-1 ring-offset-surface',
                   )}
                   style={{ gridColumn: d.col + 1, gridRow: d.row + 1, backgroundColor: STEPS[d.step] }}
-                />
+                >
+                  {d.running ? <Frame /> : null}
+                </span>
               ))}
               {on ? (
-                // The readout stands over its day's row and slides along the grid's width with the column, so it never leaves the grid.
-                <div aria-hidden className="pointer-events-none relative z-10 col-span-full" style={{ gridRow: on.row + 1 }}>
-                  <div className="absolute inset-x-0 bottom-full mb-1.5 flex">
-                    <span style={{ flexGrow: on.col + 0.5 }} />
-                    <div className="rounded-sm bg-surface-inverse px-2 py-1.5 text-xs text-ink-inverse shadow-overlay">
-                      <span className="whitespace-nowrap opacity-70">{formatCalendarDate(on.date)} · </span>
-                      <span className="font-medium whitespace-nowrap">{reading(on)}</span>
-                    </div>
-                    <span style={{ flexGrow: weeks - on.col - 0.5 }} />
-                  </div>
+                // The readout stands over its day's row: a grid item across every week, with nothing in the flow.
+                <div aria-hidden className="pointer-events-none relative col-span-full" style={{ gridRow: on.row + 1 }}>
+                  <Readout column={on.col} columns={weeks}>
+                    <span className="whitespace-nowrap opacity-70">{formatCalendarDate(on.date)} · </span>
+                    <span className="font-medium whitespace-nowrap">{reading(on)}</span>
+                  </Readout>
                 </div>
               ) : null}
             </div>

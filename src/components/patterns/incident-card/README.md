@@ -11,9 +11,9 @@ Status: beta
 3. **Severity badge**: "Minor" or "Major".
 4. **Identifier**: the incident's id, `t-caption`, right-aligned.
 5. **Title**: what is wrong, where: "Elevated latency on Inference API in eu-west-1", `t-card`.
-6. **Meta line**: the service, when it started (relative to now, exact on hover), and how long it lasted once resolved.
+6. **Meta line**: the service, when it started (relative to now, exact on hover), and how long it lasted once resolved, in `t-caption`.
 7. **Owner and ticket** (optional, `card` only): a second caption line, "Owner Jonas Weber · Ticket Inference API p95 above target in eu-west-1". The owner is text in `ink-2`; the ticket is a link in `accent-ink`, named by the ticket's title. Either stands alone; with neither there is no line.
-8. **Timeline**: every update, newest first: a dot, how long after the incident's start it came as a kicker ("after 42m", "at the start"), the text. The newest dot of a live incident pulses.
+8. **Timeline**: every update, newest first: a dot, how long after the incident's start it came, as a caption in `t-caption`, medium, with tabular figures ("after 42m", "at the start"), then the text in `t-small`. The newest dot of a live incident pulses.
 
 ## Variants
 
@@ -45,6 +45,7 @@ Status: beta
 - The head says when the incident started relative to `now` ("started 3 h ago"), with the exact time in the title attribute; past a fortnight it becomes a date.
 - Each update is timed from the incident's start, not from now, in the product's durations (`formatDuration`): "after 42m", "after 1.1h", "after 2.6h". A reader of a timeline asks how long each step took, and this reading does not move as the clock does. The exact time stays in the title attribute.
 - An update inside the first minute, or timed before the start, reads "at the start". A first update that came later says how long after: "after 4m".
+- A hyphenated name of up to 24 characters, such as "eu-west-1", stays on one line in the title, in an update and in the ticket's title: a break after its hyphen reads as two words. The hyphen is a real one, so copying and find-in-page still match. A longer run of hyphens, such as a path, wraps as before.
 
 ## Composition
 
@@ -76,7 +77,7 @@ An agent reads incidents through the Services view's shared context (title, stat
 - The timeline is an ordered list labelled "Updates"; each time is a `<time>` element whose `datetime` is the update's own instant and whose text is the time since the start.
 - The owner is plain text after the word "Owner". The ticket is a link named by the ticket's title, after the word "Ticket", and is the card's only Tab stop.
 - State and severity are words, not colours alone.
-- Contrast (dark, indigo): title `ink` 16.9:1; meta and kickers `ink-3` 6.4:1; update text and the owner `ink-2` 8.0:1; the ticket's link `accent-ink` 9.5:1; badges 8.2:1 and up.
+- Contrast (dark, indigo): title `ink` 16.9:1; the meta line and each update's time `ink-3` 6.4:1; update text and the owner `ink-2` 8.0:1; the ticket's link `accent-ink` 9.5:1; badges 8.2:1 and up.
 
 ## Content
 

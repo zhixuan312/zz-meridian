@@ -5,9 +5,17 @@ import { cn } from '@/lib/cn';
  * The vocabulary of a card's preview. A preview shows every variant and state at once, statically, each labelled:
  * a reader compares states side by side instead of hovering to discover them.
  */
-export function Specimen({ label, note, children, className, stack }: { label: string; note?: ReactNode; children: ReactNode; className?: string; stack?: boolean }) {
+export function Specimen({ label, note, children, className, stack, wide }: {
+  label: string;
+  note?: ReactNode;
+  children: ReactNode;
+  className?: string;
+  stack?: boolean;
+  /** The label stands above and the drawing takes the section's whole width: for a form that needs a desk's width to show itself, such as a year of days or a wall four across. */
+  wide?: boolean;
+}) {
   return (
-    <section className="grid gap-x-8 gap-y-3 border-t border-line py-6 first:border-0 first:pt-1 last:pb-1 md:grid-cols-[9.5rem_minmax(0,1fr)]">
+    <section className={cn('grid gap-x-8 gap-y-3 border-t border-line py-6 first:border-0 first:pt-1 last:pb-1', !wide && 'md:grid-cols-[9.5rem_minmax(0,1fr)]')}>
       <div className="min-w-0">
         <h3 className="t-eyebrow">{label}</h3>
         {note ? <p className="t-caption mt-1.5 text-pretty">{note}</p> : null}

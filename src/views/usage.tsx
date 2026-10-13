@@ -17,7 +17,7 @@ import { ColumnChart } from '@/components/charts/column-chart';
 import { Heatmap } from '@/components/charts/heatmap';
 import { BarList } from '@/components/charts/bar-list';
 import { cn } from '@/lib/cn';
-import { formatCompact, formatCost, formatDuration, formatPercent } from '@/lib/format';
+import { AXIS_FORMATTERS, formatCompact, formatCost, formatDuration, formatPercent } from '@/lib/format';
 import { formatDate } from '@/lib/format-date';
 import { RouteCell } from '@/system/sample-cells';
 import { AskAbout } from '@/components/patterns/ask-about';
@@ -88,7 +88,7 @@ export function UsageBody(data: UsageData) {
         <Card>
           <CardHeader title="By hour of day" description={`Every weekday summed. The busiest hour is ${peakHour.label} UTC.`} />
           <CardBody>
-            <ColumnChart columns={hours} highlight={peakHour.key} format={formatCompact} axisFormat={formatCompact} label="Requests by hour of day" labelEvery={6} height={220} />
+            <ColumnChart columns={hours} highlight={peakHour.key} format={formatCompact} axisFormat={AXIS_FORMATTERS.count} label="Requests by hour of day" labelEvery={6} height={220} />
           </CardBody>
         </Card>
         <Card>
@@ -120,7 +120,7 @@ export function UsageBody(data: UsageData) {
               height={220}
               dates={dates}
               format={formatCompact}
-              axisFormat={formatCompact}
+              axisFormat={AXIS_FORMATTERS.count}
               highlight={series.reduce((m, d) => (d.errors > m.errors ? d : m)).date}
               columns={series.map((d) => ({ key: d.date, label: formatDate(d.date).replace(/,? \d{4}$/, ''), value: d.errors }))}
             />

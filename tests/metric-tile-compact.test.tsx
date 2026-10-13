@@ -26,9 +26,32 @@ describe('a compact metric tile: what is missing, and what is long', () => {
     expect(compact(container)).not.toHaveTextContent('%');
   });
 
-  it('says the change and then what it is against', () => {
+  // Down a wall the words would stand eight times, and on a narrow one they fitted beside a change of one digit and not
+  // beside one of two. The card that holds the wall says what the change is against; a tile draws the figure.
+  it('draws the change\'s figure and not the words it is against, which a screen reader still hears after it', () => {
     const { container } = render(<MetricTile size="compact" label="Northwind Labs" value={41200} format={usd} delta={0.12} compare="vs last week" note="Scale" points={points} />);
-    expect(compact(container)).toHaveTextContent(/Northwind Labs.*12\.0%.*vs last week.*\$41\.2K · Scale/);
+    const tile = compact(container);
+    const drawn = tile.cloneNode(true) as HTMLElement;
+    drawn.querySelectorAll('.sr-only').forEach((hidden) => hidden.remove());
+    expect(drawn).toHaveTextContent('12.0%');
+    expect(drawn).not.toHaveTextContent('vs last week');
+    expect(tile.querySelector('[title="vs last week"]')).toBeNull();
+    expect(tile).toHaveTextContent(/Northwind Labs.*12\.0%.*vs last week.*\$41\.2K · Scale/);
+  });
+
+  it('says what the change is against by default too, to a screen reader only', () => {
+    const { container } = render(<MetricTile size="compact" label="Northwind Labs" value={41200} format={usd} delta={0.12} />);
+    const heard = [...compact(container).querySelectorAll('.sr-only')].map((hidden) => hidden.textContent!.trim());
+    expect(heard).toContain('vs previous period');
+  });
+
+  it('keeps no room for the words: the line has the tile\'s whole width under the name and the change', () => {
+    const { container } = render(<MetricTile size="compact" label="Northwind Labs" value={41200} format={usd} delta={0.12} compare="vs last week" note="Scale" />);
+    const tile = compact(container);
+    // Side by side, the name and the change share the first row and the line spans both columns of the second.
+    expect(tile.querySelector('[data-line]')!.className).toContain('col-span-2');
+    expect(tile.querySelector('[class*="max-w-"]')).toBeNull();
+    expect(tile.querySelector('[class*="flex-wrap"]')).toBeNull();
   });
 
   it('draws a dash where there is no earlier period, and says so to a screen reader', () => {

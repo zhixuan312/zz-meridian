@@ -12,18 +12,16 @@ import { useMeridianIndex, usePointMeridian } from '@/components/charts/meridian
 import { StatusDot } from '@/components/ui/status-dot';
 
 /**
- * Compact, from 17rem of the tile's own width (238px, a rem being the root's 14px): the name and the line on the left,
- * the change on the right, its figure level with the name and its words level with the line, so the changes of a wall
- * stand in one column down its right edge. Narrower, as two to a row on a phone, the three are three rows and the name
- * has the whole width. A container query decides it, so the server draws the layout the browser keeps. Literal strings,
- * so Tailwind finds them.
+ * Compact, from 14rem of the tile's own width (196px, a rem being the root's 14px): the name and the change share the
+ * first row, the change's figure at the right, so the changes of a wall stand in one column down its right edge, and the
+ * line has the whole width under them. Narrower, as two to a row on a phone, the three are three rows: the name has the
+ * whole width and the change stands under it, at the left edge of every tile. A container query decides it, so the
+ * server draws the layout the browser keeps. Literal strings, so Tailwind finds them.
  */
-const COMPACT = 'grid grid-cols-1 items-center gap-y-0.5 @min-[17rem]:grid-cols-[minmax(0,1fr)_auto] @min-[17rem]:gap-x-3';
-const COMPACT_NAME = '@min-[17rem]:col-start-1 @min-[17rem]:row-start-1';
-const COMPACT_DELTA = '@min-[17rem]:col-start-2 @min-[17rem]:row-start-1 @min-[17rem]:justify-self-end';
-// Beside the line the words may take under half the tile, so words that run long are cut before they take the name's room.
-const COMPACT_COMPARE = '@min-[17rem]:col-start-2 @min-[17rem]:row-start-2 @min-[17rem]:max-w-[45cqw] @min-[17rem]:justify-self-end @min-[17rem]:truncate';
-const COMPACT_LINE = '@min-[17rem]:col-start-1 @min-[17rem]:row-start-2';
+const COMPACT = 'grid grid-cols-1 items-center gap-y-0.5 @min-[14rem]:grid-cols-[minmax(0,1fr)_auto] @min-[14rem]:gap-x-3';
+const COMPACT_NAME = '@min-[14rem]:col-start-1 @min-[14rem]:row-start-1';
+const COMPACT_CHANGE = '@min-[14rem]:col-start-2 @min-[14rem]:row-start-1 @min-[14rem]:justify-self-end';
+const COMPACT_LINE = '@min-[14rem]:col-span-2 @min-[14rem]:row-start-2';
 
 /**
  * One number the page exists to show, with its change and its shape. The figure is set at the figure size with
@@ -31,8 +29,8 @@ const COMPACT_LINE = '@min-[17rem]:col-start-1 @min-[17rem]:row-start-2';
  * as long as its points are the page's: one for each of the Meridian's dates.
  * One tile per row may be `emphasis`: the finding. Its figure takes the accent; every other tile stays ink.
  *
- * `size="compact"` is the same tile for a wall of many: the name, the change, one line that is the figure and then the
- * note, and the shape. It has no figure at the figure size, no hint, no icon and no finding, whatever it is passed, and
+ * `size="compact"` is the same tile for a wall of many: the name, the change's figure, one line that is the figure and
+ * then the note, and the shape. What the change is against is said once, by the card that holds the wall. It has no figure at the figure size, no hint, no icon and no finding, whatever it is passed, and
  * its line keeps the period's figure whatever the page points at.
  */
 export function MetricTile({
@@ -65,7 +63,10 @@ export function MetricTile({
    * On a compact tile it follows the figure on the tile's one line: "$41.2K · Scale".
    */
   note?: ReactNode;
-  /** What the change is measured against, beside it: "vs previous period", "vs the half hour before". */
+  /**
+   * What the change is measured against, beside it: "vs previous period", "vs the half hour before". A compact tile
+   * does not draw it, and says it after the change to a screen reader.
+   */
   compare?: string;
   intent?: 'up' | 'down' | 'neutral';
   /**
@@ -111,15 +112,12 @@ export function MetricTile({
           {/* A wall is scanned by name, so the name is the ink; a long one is cut and keeps the whole of itself in its title. */}
           <h2 className={cn('t-small min-w-0 truncate font-medium text-ink', COMPACT_NAME)} title={label}>{label}</h2>
           {delta !== undefined ? (
-            // Narrow, one line high enough for one line, as on the default tile: words that do not fit wrap out of sight whole.
-            <div className="flex h-5 flex-wrap content-start items-center gap-x-2 overflow-hidden text-xs @min-[17rem]:contents">
-              <Delta value={delta} intent={intent} className={COMPACT_DELTA} />
-              {delta === null ? (
-                <span className="sr-only">No earlier period to compare</span>
-              ) : (
-                <span className={cn('leading-5 whitespace-nowrap text-ink-3', COMPACT_COMPARE)} title={compare}>{compare}</span>
-              )}
-            </div>
+            // The figure alone is drawn. Down a wall the words it is against would stand once a tile, so the card that
+            // holds the wall says them; here they follow the figure for a screen reader, which meets a tile on its own.
+            <p className={cn('flex h-5 items-center justify-self-start', COMPACT_CHANGE)}>
+              <Delta value={delta} intent={intent} />
+              <span className="sr-only">{' '}{delta === null ? 'No earlier period to compare' : compare}</span>
+            </p>
           ) : null}
           {/* The figure comes first, so what a narrow tile cuts is the end of the note, never the number. */}
           <p data-line className={cn('min-w-0 truncate text-xs leading-5 text-ink-3', COMPACT_LINE)} title={!note ? text : typeof note === 'string' ? `${text} · ${note}` : undefined}>

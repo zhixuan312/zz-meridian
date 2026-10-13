@@ -7,13 +7,13 @@ Status: beta
 ## Anatomy
 
 1. **Kicker**: `t-kicker` in `accent-ink`: the measure and the period ("Requests · last 30 days").
-2. **Actions** (optional): a menu or a small filter. Not a "Live" badge: Freshness in the masthead already says how fresh the data is. They are the card's, drawn once at its head whatever the number of figures.
+2. **Actions** (optional): Ask about, a menu or a small filter. Not a "Live" badge, nor any other badge: Freshness in the masthead already says how fresh the data is. They are the card's, drawn once at its head whatever the number of figures.
 3. **Hero figure**: `t-hero` (52–80px, 600, −0.035em), its unit stepped down — and the cents of a money figure, the same rule the Metric tile's figure follows (`splitFigure` in `src/lib/format.ts`).
 4. **Change pill** (when `delta` is given): a 28px glass pill holding the Delta and what the change is against, in the caller's words: "vs previous period" unless `compare` says otherwise ("vs the week before"). A `delta` of `null` draws the pill with a dash: there is nothing to compare with.
 5. **Point pill**: while the Meridian reads a point, an inverse pill takes the change pill's place and names the point: the date, or what `pointLabel` makes of it ("Week of 14 Sept").
-6. **Caption** (optional): one sentence that makes the number concrete.
+6. **Caption** (optional): one sentence that makes the period's number concrete. It is about the period the kicker names, not about whichever point is being read.
 7. **Finding** (optional): one quiet line under the change and the caption: a neutral 8px dot and one fact the figure does not say ("21 of 30 days above the average day of the 30 before"). The dot is neutral because a finding here is a fact, not a warning.
-8. **Chart**: a Trend chart at `fill` height, or a Column chart at `fill` height when the points are periods and not days.
+8. **Chart**: a Trend chart at `fill` height, or a Column chart at `fill` height when the points are periods and not days. A Column chart is given an axis formatter (`axisFormat`, from `AXIS_FORMATTERS`), so its ticks read as a scale ("$75") while the figure above a column keeps its cents.
 9. **Foot** (optional): a band inside the lit surface, under the chart and divided from it by a hairline, as a Card's footer is. It holds a few supporting figures, a label over each, and one link.
 
 ## Variants
@@ -74,7 +74,7 @@ As Metric tile: `value`, `points`, `delta`, `intent`, `format`, and `compare` fo
 | State | What changes |
 |---|---|
 | Rest | as above |
-| Meridian reading | The figure reads the pointed point; the pill turns inverse and names it. The caption and the finding stay: they are about the period |
+| Meridian reading | The figure reads the pointed point; the pill turns inverse and names it. The caption and the finding stay, unmoved: they are about the period the kicker names, so each must say so in its own words (see Content) |
 | Points that are not the page's | The figure keeps the period and its change while the page reads a day |
 | Nothing to compare (`delta` of `null`) | The pill holds a dash before the comparison's words |
 | Without a chart | Kicker, figure, pill, caption and finding only. A half with no chart is left without one |
@@ -110,6 +110,7 @@ The featured number is the first fact an embed view shares with the model. A fin
 ## Content
 
 - One number a figure. The caption is a sentence a person would say out loud.
+- The caption and the finding stay while a point is read, so each is true on its own, under any point's figure. Name the period or the day a sentence is about: "Last week averaged 103K a day", "The busiest day was 1 Oct, with 128K". Not "About 103K a day" alone under a figure by week: while another week is read it sits under that week's 644K and says something false of it.
 - A finding is one fact, counted, with no praise in it: "The highest 30 days yet", "21 of 30 days above the average day of the 30 before". Never "A great month". When its rule stops holding it leaves the card, with nothing weaker in its place.
 - `compare` starts with "vs" and names the period before in plain words: "vs previous period", "vs the week before", "vs the same week last year".
 - A foot's label is two or three words and its figure carries its unit. The foot has one link, and its text says where it goes: "All endpoints", "How revenue is counted".
@@ -161,7 +162,7 @@ const decided: FeaturedFigure = {
   delta: -0.05,
   intent: 'neutral',
   compare: 'vs the week before',
-  children: <ColumnChart height="fill" label="Decisions per week" dates={weeks} columns={decidedColumns} />,
+  children: <ColumnChart height="fill" label="Decisions per week" dates={weeks} axisFormat={AXIS_FORMATTERS.count} columns={decidedColumns} />,
 };
 
 <Meridian dates={weeks}>
@@ -175,7 +176,7 @@ const decided: FeaturedFigure = {
     pointLabel={(date) => `Week of ${formatDay(date)}`}
     peer={decided}
   >
-    <ColumnChart height="fill" label="Work produced per week" dates={weeks} columns={producedColumns} />
+    <ColumnChart height="fill" label="Work produced per week" dates={weeks} axisFormat={AXIS_FORMATTERS.count} columns={producedColumns} />
   </FeaturedMetric>
 </Meridian>
 ```

@@ -6,7 +6,8 @@ import { CUSTOMER_ROWS, demoSeries } from '@/system/fixtures/sample';
 import { formatCompact, formatCost, formatDuration, formatPercent } from '@/lib/format';
 import { formatDay } from '@/lib/format-date';
 import { Meridian, useMeridian } from '@/components/charts/meridian';
-import { Plane, Specimen, State } from '@/system/specimen';
+import { Card, CardBody, CardHeader } from '@/components/ui/card';
+import { Specimen, State } from '@/system/specimen';
 import { MetricTile } from '.';
 
 const s = demoSeries('30d').current;
@@ -37,11 +38,25 @@ function PointAt({ i }: { i: number }) {
   return null;
 }
 
-/** A wall as a page lays one out: two across, and four from 62rem of the wall's own width, where a row of tiles goes to four. */
+/**
+ * A wall as a page lays one out: two across, and four from 59rem of the wall's own width (826px), the first width at
+ * which each of four tiles has the 14rem its change needs to stand beside its name.
+ */
 const Wall = ({ children }: { children: ReactNode }) => (
   <div className="@container w-full">
-    <div className="grid grid-cols-2 gap-3 @min-[62rem]:grid-cols-4">{children}</div>
+    <div className="grid grid-cols-2 gap-3 @min-[59rem]:grid-cols-4">{children}</div>
   </div>
+);
+
+/**
+ * The card that holds a wall, as a page draws it. Its head says what the figure is, over which days and what the change
+ * is against, once, so no tile repeats it.
+ */
+const Holder = ({ children }: { children: ReactNode }) => (
+  <Card className="w-full">
+    <CardHeader wrap title="Every customer, the last 14 days" description="What each paid in 30 days, and its plan. The change is its requests this week against last." />
+    <CardBody>{children}</CardBody>
+  </Card>
 );
 
 const compactWall = (
@@ -117,29 +132,31 @@ export default function MetricTilePreview() {
           <State label="Named format"><MetricTile label="Pipeline" hint="Open opportunities, in the workspace currency." value={1_240_000} format="cost-compact" delta={0.08} /></State>
         </div>
       </Specimen>
-      <Specimen label="Compact: a wall of eight" note="size=compact, for a wall of many tiles: the name, the change, one line that is the figure and then the note, and the Sparkline. The sample's eight largest customers: what each paid in 30 days, its plan, and its last 14 days of requests, this week against last. Four across from 62rem of the wall's own width." stack>
-        {compactWall}
+      <Specimen wide label="Compact: a wall on a desk" note="size=compact, for a wall of many tiles: the name, the change's figure, one line that is the figure and then the note, and the Sparkline. The sample's eight largest customers, four across from 59rem of the wall's own width, so eight are two rows. The card's head says what the change is against, once: a tile draws the change and not the words." stack>
+        <Holder>{compactWall}</Holder>
       </Specimen>
-      <Specimen label="The same figures at the default size" note="The same eight customers as default tiles. A default tile gives the figure its size and has no place for the plan beside a change; eight of them are a page of their own, which is what the compact size is for." stack>
+      <Specimen wide label="The same figures at the default size" note="The same eight customers as default tiles. A default tile gives the figure its size, says what its change is against and has no place for the plan beside it; eight of them are a page of their own, which is what the compact size is for." stack>
         <div className="grid w-full gap-4 sm:grid-cols-2 xl:grid-cols-4">
           {figures.map((f) => <MetricTile key={f.label} {...f} />)}
         </div>
       </Specimen>
-      <Specimen label="A wall, narrow" note="Two to a row, as on a phone: the name has the tile's whole width, then the change, then the line. Beside it, the same figures at the default size in the same width." className="items-start">
-        <State label="Compact: eight in four rows" className="w-full max-w-100">
-          <Plane>{compactWall}</Plane>
+      <Specimen label="Compact: a wall on a phone" note="The same wall in a card as wide as a phone's: two to a row, each tile about 150px. The name has the tile's whole width, the change stands under it at the same place in every tile, then the line. Beside it, the same figures at the default size in the same width." className="items-start">
+        <State label="Compact: eight in four rows" className="w-full max-w-93">
+          <Holder>{compactWall}</Holder>
         </State>
-        <State label="Default: eight in eight rows" className="w-full max-w-100">
-          <Plane className="flex flex-col gap-3">
-            {figures.map((f) => <MetricTile key={f.label} {...f} />)}
-          </Plane>
+        <State label="Default: eight in eight rows" className="w-full max-w-93">
+          <Holder>
+            <div className="flex flex-col gap-3">
+              {figures.map((f) => <MetricTile key={f.label} {...f} />)}
+            </div>
+          </Holder>
         </State>
       </Specimen>
-      <Specimen label="Compact: its two layouts" note="The tile reads its own width. From 17rem (238px) the change stands on the right, its figure level with the name and its words level with the line. Narrower, the three are three rows.">
-        <State label="288px: the change on the right" className="w-72"><MetricTile className="w-full" size="compact" {...first} /></State>
+      <Specimen label="Compact: its two layouts" note="The tile reads its own width. From 14rem (196px) the change stands at the right of the name's row and the line has the whole width under them. Narrower, the three are three rows: the name, the change, the line." className="items-start">
+        <State label="288px: the change beside the name" className="w-72"><MetricTile className="w-full" size="compact" {...first} /></State>
         <State label="176px: three rows" className="w-44"><MetricTile className="w-full" size="compact" {...first} /></State>
       </Specimen>
-      <Specimen label="Compact: states" note="What a compact tile draws when a part is missing or long. It never draws a hint, an icon or a finding, and its line never reads the page's cursor.">
+      <Specimen label="Compact: states" note="What a compact tile draws when a part is missing or long. It never draws a hint, an icon, a finding or the words its change is against, and its line never reads the page's cursor." className="items-start">
         <State label="Emphasis: the figure and the shape in the accent" className="w-72"><MetricTile className="w-full" size="compact" {...first} emphasis /></State>
         <State label="A fall" className="w-72"><MetricTile className="w-full" size="compact" {...customers[1]} delta={-0.084} /></State>
         <State label="Nothing to compare: a dash" className="w-72"><MetricTile className="w-full" size="compact" {...customers[2]} delta={null} /></State>
@@ -149,7 +166,7 @@ export default function MetricTilePreview() {
         <State label="A long name and a long note, cut with their whole text in the title" className="w-44"><MetricTile className="w-full" size="compact" {...customers[3]} label={`${customers[3].label} of North America`} note={`${customers[3].note}, billed yearly`} /></State>
         <State label="A word for the figure" className="w-72"><MetricTile className="w-full" size="compact" label={customers[6].label} value="On a trial" note={customers[6].note} points={customers[6].points} /></State>
       </Specimen>
-      <Specimen label="Compact on the Meridian" note="The page points at a day. A compact tile keeps its own figure; its Sparkline follows the Sparkline's rule and marks the day only when its points are the page's.">
+      <Specimen label="Compact on the Meridian" note="The page points at a day. A compact tile keeps its own figure; its Sparkline follows the Sparkline's rule and marks the day only when its points are the page's." className="items-start">
         <Meridian dates={dates}>
           <PointAt i={18} />
           <State label="30 points on a page of 30 days: the shape marks the day, the line keeps the period" className="w-72"><MetricTile className="w-full" size="compact" label="Requests" value={2_943_120} delta={0.057} note="30 days" points={s.map((d) => d.requests)} format={formatCompact} /></State>

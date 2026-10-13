@@ -16,7 +16,7 @@ The compact size has four parts of its own, listed under Sizes.
 
 ## Composition
 
-Card, Delta, Status dot, Tooltip, Sparkline. Tiles sit in a `Row split="tiles"`, or stacked in the narrow cell of a `2/3` row beside a Featured metric. Compact tiles sit in a wall: a grid the page lays out, two across and four from 62rem of the wall's own width (868px), so eight are two rows on a desk and four on a phone.
+Card, Delta, Status dot, Tooltip, Sparkline. Tiles sit in a `Row split="tiles"`, or stacked in the narrow cell of a `2/3` row beside a Featured metric. Compact tiles sit in a wall: a grid the page lays out, two across and four from 59rem of the wall's own width (826px), the first width at which each of four tiles has the 14rem its change needs beside its name, so eight are two rows on a desk and four on a phone. The wall stands in a card whose head says what the figure is, over which days and what the change is against.
 
 ## Data
 
@@ -50,25 +50,27 @@ Card, Delta, Status dot, Tooltip, Sparkline. Tiles sit in a `Row split="tiles"`,
 A compact tile is the same tile, set for a wall. It holds four parts and nothing else:
 
 1. **Name**: the label, `text-sm` 500 in `ink`, on one line; a name the tile cuts keeps the whole of itself in its title.
-2. **Change**: the Delta, then `compare` in `text-xs` `ink-3`.
+2. **Change**: the Delta, and nothing after it. The words of `compare` are not drawn: down a wall they would stand once a tile, and on a narrow one they would fit beside one change and not beside the next. The card that holds the wall says what the change is against, once. A screen reader, which meets a tile on its own, hears the words after the change.
 3. **Line**: one line of `text-xs`, carrying `data-line`: the figure as the tile formats it (`ink-2`, 500, tabular), then " · " and the `note` in `ink-3` when there is one: "$41.2K · Scale". The figure comes first, so what a narrow tile cuts is the end of the note, and the whole line is in its title.
 4. **Sparkline**: edge to edge at the foot, 28px tall, when `points` holds two values or more.
 
-It has no figure at the figure size, no hint, no icon and no finding, whatever it is passed: a wall says one thing about each of many, and a finding belongs to the card that holds the wall.
+It has no figure at the figure size, no hint, no icon and no finding, whatever it is passed, and it draws no words after its change: a wall says one thing about each of many, and a finding, a definition and what the change is against belong to the card that holds the wall.
 
 | Part | Compact | Default |
 |---|---|---|
 | Padding | `space-4` 16px at the sides, `space-3` 12px above | `card-pad` (20 to 28px) |
 | Radius, border, shadow | The Card's: `radius-lg`, `line`, `shadow-card` | The same |
 | Rows | 2px apart; 8px above the Sparkline | 12px and 8px apart; 12px above the Sparkline |
-| Height with a Sparkline | About 92px with the change on the right, 114px in three rows | About 175px at 1440px |
+| Height with a Sparkline | About 92px with the change beside the name, 114px in three rows | About 175px at 1440px |
 
 The tile reads its own width, not the screen's:
 
 | Its own width | Layout |
 |---|---|
-| From 17rem (238px) | Two columns. The name and the line on the left; the change on the right, its figure level with the name and its words level with the line, so the changes of a wall stand in one column down its right edge. The words take at most 45% of the tile and are cut past that, whole in their title |
-| Under 17rem | Three rows: the name with the tile's whole width, the change, the line. Words after the change that do not fit wrap out of sight whole, as on the default tile |
+| From 14rem (196px) | The name and the change share the first row, the change at the right, so the changes of a wall stand in one column down its right edge. The line has the tile's whole width under them |
+| Under 14rem | Three rows: the name with the tile's whole width, the change under it at the left edge, the line. Two to a row on a phone, every tile's change stands at the same place |
+
+Neither layout keeps room for anything that is not drawn: the change takes the width of its figure.
 
 ## States
 
@@ -80,7 +82,7 @@ The tile reads its own width, not the screen's:
 | No earlier period | "No earlier period to compare" in place of the change |
 | Loading | A Skeleton of the same shape (figure bar, two lines) |
 | Compact, Meridian pointing | The line keeps the period's figure. The Sparkline follows its own rule and marks the day only when its points are the page's |
-| Compact, no earlier period | A dash in place of the Delta, and no words after it; a screen reader hears "No earlier period to compare" |
+| Compact, no earlier period | A dash in place of the Delta; a screen reader hears "No earlier period to compare" after it |
 | Compact, no `delta` | No change is drawn |
 | Compact, no `points` | No Sparkline; the tile closes 12px under the line |
 
@@ -107,20 +109,21 @@ A view's shared context carries each tile's value, its change with what it is me
 
 - The label is the tile's heading (`h2`, one level under the page title). The figure is text; the sparkline is decorative, so the table behind the page's chart carries the series.
 - A finding's dot is decorative and never the only sign: the words say what was found, and the dot's colour only sorts a fact from something to look at.
-- A compact tile reads in the order it is drawn: the name, the change with what it is against, then the line. Nothing in it is a Tab stop.
-- Contrast (dark): label `ink-2` 8.0:1; figure `ink` 17:1; unit `ink-3` 6.4:1. Compact: name `ink` 17:1; the line's figure `ink-2` 8.0:1; its note and the words after the change `ink-3` 6.4:1. Dots against `surface`: neutral 6.4:1, warning 9.1:1.
+- A compact tile is heard in the order it is drawn: the name, the change, then the line. After the change a screen reader also hears what it is against (`compare`), in text that is visually hidden, because it may meet the tile without the card's head. Nothing in the tile is a Tab stop.
+- Contrast (dark): label `ink-2` 8.0:1; figure `ink` 17:1; unit `ink-3` 6.4:1. Compact: name `ink` 17:1; the line's figure `ink-2` 8.0:1; its note `ink-3` 6.4:1. Dots against `surface`: neutral 6.4:1, warning 9.1:1.
 
 ## Content
 
 - Labels name the measure in two words: "Error rate", "Latency p95". The hint says what it counts, in one sentence.
 - A finding that is a fact states a count with its number and its date and no adjective: "The busiest day was 1 Oct, with 128K", never "A great month".
-- On a compact tile the label is the name of the thing ("Northwind Labs") and the note is one or two words that sort it ("Scale"). The card that holds the wall says what the figure is and over which days.
+- On a compact tile the label is the name of the thing ("Northwind Labs") and the note is one or two words that sort it ("Scale"). The card that holds the wall says, once, what the figure is, over which days, and what the change is against: "What each paid in 30 days, and its plan. The change is its requests this week against last."
 
 ## Do and do not
 
 - Do keep at most one emphasis tile per row, and none when the page has a Featured metric.
 - Do give every finding its tone. Do not make a fact a warning to draw the eye: the warning dot means somebody should look.
 - Do use the compact size when the same figure is shown for many things. Do not mix compact and default tiles in one row.
+- Do say what a wall's change is against in the head of the card that holds it, and still pass `compare` to each tile, for the screen reader.
 - Do give `points` one value for each of the Meridian's dates when the tile should read the pointed day, and any other series when it should not.
 - Do not colour a figure by a threshold; the delta carries direction, the figure stays ink.
 

@@ -79,7 +79,7 @@ export function IncidentCard({ incident, now, variant = 'card', className }: { i
           <p className="t-caption mt-1 text-pretty">
             {incident.owner ? <>Owner <span data-owner className="text-ink-2">{incident.owner}</span></> : null}
             {incident.owner && incident.ticket ? ' · ' : null}
-            {incident.ticket ? <>Ticket <Link href={incident.ticket.href} className="link">{incident.ticket.title}</Link></> : null}
+            {incident.ticket ? <>Ticket <Link href={incident.ticket.href} className="link">{keepHyphenated(incident.ticket.title)}</Link></> : null}
           </p>
         ) : null}
       </div>
@@ -92,7 +92,7 @@ export function IncidentCard({ incident, now, variant = 'card', className }: { i
             </span>
             <div className="min-w-0">
               <time dateTime={u.at} title={formatDateTime(u.at)} className="t-caption t-num font-medium">{since(incident.started, u.at)}</time>
-              <p className="t-small mt-1 text-ink-2">{u.text}</p>
+              <p className="t-small mt-1 text-ink-2">{keepHyphenated(u.text)}</p>
             </div>
           </li>
         ))}

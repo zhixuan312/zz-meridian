@@ -32,7 +32,7 @@ export default function StatusListPreview() {
       <Specimen label="All operational" note="The summary is calm: ink, a still dot." stack>
         <Card className="overflow-hidden"><StatusList services={healthy.slice(0, 2)} end={DEMO_NOW} /></Card>
       </Specimen>
-      <Specimen label="Outage" note="The worst state wins the summary, in words and colour; its dot pulses." stack>
+      <Specimen label="Down" note="The worst state wins the summary, in words and colour; its dot pulses." stack>
         <Card className="overflow-hidden"><StatusList services={outage.slice(2, 5)} end={DEMO_NOW} /></Card>
       </Specimen>
     </>

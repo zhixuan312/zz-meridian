@@ -34,6 +34,7 @@ Two measures of different size are two charts on one Meridian, not one chart wit
 - **Identity** (which series): the six categorical slots in their fixed order, `series-1` to `series-6`. Assign in order; never skip; a seventh series folds into Other. The order is validated for colour-vision deficiency in both themes (`node scripts/contrast.ts`).
 - **The one that matters**: the accent, with every other mark in the neutral population (`chart-neutral`). One highlighted bar, one highlighted line.
 - **Magnitude**: one hue, light to dark, built from the accent and the surface (the heatmap).
+- **Magnitude by rank**: a Heatmap's step is a cell's share of the largest cell (`max`) unless one outlier would leave every other cell at the lowest step. Then it is ranked (`scale="quantile"`): the cells above zero take five steps of equal count. A step no longer says how much, so the legend's upper end reads the value the top step starts at ("900 or more") in place of "More", and the readout and the hidden table give each cell's exact value.
 - **State**: positive, warning, critical, always with a word or an icon.
 - **Parts of one whole**: one hue. The parts share the accent, mixed into the surface, deepest at the bottom and paler upward (the stacked Trend chart and the stacked Column chart take the same mix), with a 1px hairline of the card between neighbours and at most four parts, the fourth being Other. When the parts are outcomes they carry a tone instead: the usual outcome is neutral (`chart-neutral-strong`), one that needs somebody is warning or critical, the accent never stands beside a tone, and the positive colour is never the usual case.
 
@@ -52,7 +53,7 @@ Text never wears a series colour; values and labels stay in ink.
 Today, or the month not over yet, is not a fact like the periods before it, and a part-day drawn solid reads as a fall. So it is drawn unfinished and it reads "so far":
 
 - A Trend chart draws the stretch into its last point dashed, with nothing filled under it.
-- A Column chart draws its last column at half strength under a dashed cap.
+- A Column chart draws its last column's fill at half strength inside a dashed outline, open at the baseline.
 - A Heatmap's calendar draws the day's cell inside a dashed outline.
 
 Each takes `running`, and each says "so far" wherever that period is read: the readout, the line a screen reader hears and the period's row of the hidden table.
@@ -63,7 +64,7 @@ Each takes `running`, and each says "so far" wherever that period is read: the r
 - Tabular figures where numbers stack or change in place (tables, axes, readouts); proportional for a standalone figure.
 - A missing value is a dash, never zero. Every figure names its period and unit somewhere visible.
 - A delta's arrow carries direction; its colour carries the judgement, which depends on the measure (latency down is good).
-- A change says what it is against, in words beside it: "vs previous period" unless the caller says otherwise ("vs the week before"). The Featured metric and the Metric tile take the words as `compare`.
+- A change says what it is against, in words beside it: "vs previous period" unless the caller says otherwise ("vs the week before"). The Featured metric and the Metric tile take the words as `compare`. On a wall of compact tiles the card that holds the wall says it once, and a tile draws the change's figure alone.
 - One fact the featured figure does not say goes on one line under its change, beside a neutral dot (`finding`). It is a fact counted by code, not a warning, so the dot is never a status colour there.
 - A Metric tile's finding names its tone, and there is no default. A fact ("The busiest day was 1 Oct, with 128K") stands beside the neutral dot; a finding that needs a look ("2.7× usual on 21 and 22 Sept") stands beside the warning dot. The code that counts a finding knows which it is and says so. A fact is never made a warning to draw the eye, and the dot is never the only sign: the words say what was found.
 - A few figures that support the featured one go in its foot: a band inside the lit surface, a label over each figure, and one link. A figure that needs its own change or its own shape is a Metric tile, not a line of the foot.
@@ -73,10 +74,10 @@ Each takes `running`, and each says "so far" wherever that period is read: the r
 
 The same figure for many things, each with its own change and shape, is a wall of compact Metric tiles (`size="compact"`), not a page of full ones.
 
-- A compact tile is four parts: the name, the change with what it is against, one line that is the figure and then a word or two that sort it ("$41.2K · Scale"), and the Sparkline. It has no figure at the figure size, no hint, no icon and no finding, whatever it is passed. A finding about the wall belongs to the card that holds it.
+- A compact tile is four parts: the name, the change's figure, one line that is the figure and then a word or two that sort it ("$41.2K · Scale"), and the Sparkline. It has no figure at the figure size, no hint, no icon and no finding, whatever it is passed. A finding about the wall belongs to the card that holds it.
 - Use it from about six of a kind, where each has a shape worth seeing. Under that, default tiles say more. When only the order matters, a Bar list is the form; when a reader will sort and search, a table.
 - A wall is two tiles to a row on a phone and four on a desk, so eight are two rows. A compact tile is never mixed with default tiles in one row.
-- The change stands where the eye compares it down the wall: on the right of each tile, level with the name, from 17rem of the tile's own width (238px); in a row of its own under the name on a narrower tile.
+- The change stands where the eye compares it down the wall: at the right of the name's row from 14rem of the tile's own width (196px); in a row of its own under the name on a narrower tile.
 - The card that holds the wall says what the figure is, over which days, and what the change is against. The tiles do not repeat a definition.
 
 ## Time in an incident, and a run of days

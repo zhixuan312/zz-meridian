@@ -14,7 +14,7 @@ export { summarise };
 const STATE: Record<ServiceStatus, { tone: Tone; word: string; ink: string }> = {
   operational: { tone: 'positive', word: 'Operational', ink: 'text-positive-ink' },
   degraded: { tone: 'warning', word: 'Degraded', ink: 'text-warning-ink' },
-  outage: { tone: 'critical', word: 'Outage', ink: 'text-critical-ink' },
+  outage: { tone: 'critical', word: 'Down', ink: 'text-critical-ink' },
 };
 /** What a row says of its run when its last day is not an operational one: there is no run to count. */
 const TODAY: Record<Exclude<ServiceStatus, 'operational'>, string> = { degraded: 'Degraded today', outage: 'Down today' };

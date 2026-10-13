@@ -18,7 +18,10 @@ type Shared = {
   dates?: string[];
   /** The last column is a period still in progress: it is drawn unfinished and reads "so far". */
   running?: boolean;
+  /** How a column's value reads, above it, in the readout and in the table. It must tell neighbouring columns apart. */
   format?: (n: number) => string;
+  /** How a tick reads: an axis formatter, true at every tick (`AXIS_FORMATTERS` in `@/lib/format`). Without one the axis
+   * reads as `format` does, which is right only while `format` is exact: one that rounds prints a tick it does not stand at. */
   axisFormat?: (n: number) => string;
   /** Pixels for the plot, or `fill` to take the height its card gives it (never under 220px). */
   height?: number | 'fill';
@@ -74,7 +77,7 @@ function stack(columns: StackedColumn[], parts: ColumnPart[]) {
  * table's last cell are the total, and the readout names every part.
  *
  * `running` says the last column is a period still in progress. It is not a fact like the columns before it, so it is
- * drawn at half strength under a dashed cap, and wherever it is read it says "so far".
+ * drawn at half strength inside a dashed outline, and wherever it is read it says "so far".
  *
  * The plot is one Tab stop: Left and Right move a cursor a column, Home and End go to the ends, Escape lets go. It is
  * the cursor the pointer moves, and it is announced to screen readers.
@@ -118,6 +121,9 @@ export function ColumnChart({
   // A column wide enough for a figure keeps its value above it at rest; a narrower one shows it when pointed at.
   const column = n ? (width - left - GAP * (n - 1)) / n : 0;
   const rest = column >= REST;
+  // Whatever is centred on a column and may be wider than it starts with the first column and ends with the last, so
+  // nothing runs past the plot; inside those, a narrower one is still centred.
+  const placed = (i: number) => (i === n - 1 ? 'right-0 flex min-w-full justify-center' : i === 0 ? 'left-0 flex min-w-full justify-center' : 'left-1/2 -translate-x-1/2');
 
   const keys = (e: KeyboardEvent) => {
     const k = e.key;
@@ -169,27 +175,38 @@ export function ColumnChart({
               const hot = pointed || (active === null && b.key === highlight);
               const shown = drawn ? drawn.map((p, k) => ({ p, v: b.values[k] })).filter(({ v }) => v > 0) : [];
               const text = format(b.total);
+              const unfinished = i === soFar;
+              // Plain, the pointed value is the chart's readout and takes the tooltip's plane; stacked, the panel is.
+              const tip = pointed && !drawn;
               return (
                 <div
                   key={b.key}
                   data-column={b.key}
                   data-active={pointed ? '' : undefined}
-                  data-running={i === soFar ? '' : undefined}
+                  data-running={unfinished ? '' : undefined}
                   // A figure wider than its column is cut at rest, and keeps the whole of itself where the pointer finds it.
                   title={rest && text.length * 7 > column ? text : undefined}
                   className="group/col relative flex h-full min-w-0 flex-1 items-end"
                   onPointerEnter={() => set(i)}
                   onPointerDown={() => set(i)}
                 >
-                  {/* The column's box: its share of the scale, and never shorter than its parts can be drawn. */}
-                  <div className="relative w-full" style={{ height: `${(Math.max(0, b.total) / top) * 100}%`, minHeight: drawn ? Math.max(0, shown.length * 4 - 1) : b.total > 0 ? 2 : 0 }}>
+                  {/* The column's box: its share of the scale, and never shorter than its parts and its outline can be drawn. */}
+                  <div className="relative w-full" style={{ height: `${(Math.max(0, b.total) / top) * 100}%`, minHeight: (drawn ? Math.max(0, shown.length * 4 - 1) : b.total > 0 ? 2 : 0) + (unfinished ? 2 : 0) }}>
                     <div
-                      className={cn('grow-y relative h-full rounded-t-[4px]', drawn && 'transition-[box-shadow] duration-(--dur-hover)', drawn && hot && 'z-1 ring-2 ring-ink')}
+                      className={cn(
+                        'grow-y relative h-full rounded-t-[4px]',
+                        drawn && 'transition-[box-shadow] duration-(--dur-hover)',
+                        drawn && hot && 'z-1 ring-2 ring-ink',
+                        // A period still running: a dashed outline, open at the baseline, around a fill at half strength. The
+                        // outline has a pixel of its own and a pixel of the card inside it, so it covers no part and holds
+                        // its contrast whatever it surrounds; it is what keeps a faded column a column on a dark card.
+                        unfinished && 'border border-b-0 border-dashed border-ink p-px pb-0',
+                      )}
                       style={{ ['--i' as string]: i }}
                     >
                       {drawn ? (
                         // A 1px gap between parts lets the card through: the hairline that keeps neighbours apart.
-                        <div className={cn('flex h-full flex-col-reverse gap-px', i === soFar && 'opacity-50')}>
+                        <div className={cn('flex h-full flex-col-reverse gap-px', unfinished && 'opacity-50')}>
                           {shown.map(({ p, v }, k) => (
                             <div
                               key={p.key}
@@ -203,28 +220,26 @@ export function ColumnChart({
                           ))}
                         </div>
                       ) : (
-                        <div className={cn('h-full w-full rounded-t-[4px] transition-colors duration-(--dur-hover)', hot ? 'bg-accent' : 'bg-chart-neutral group-hover/col:bg-chart-neutral-strong', i === soFar && 'opacity-50')} />
+                        <div className={cn('h-full w-full rounded-t-[4px] transition-colors duration-(--dur-hover)', hot ? 'bg-accent' : 'bg-chart-neutral group-hover/col:bg-chart-neutral-strong', unfinished && 'opacity-50')} />
                       )}
-                      {/* Outside the faded fill and at full strength, so the cap holds its contrast whatever is under it. */}
-                      {i === soFar ? <span aria-hidden className="pointer-events-none absolute inset-x-0 top-0 border-t-2 border-dashed border-ink" /> : null}
                     </div>
                     {rest || pointed ? (
-                      // One element at rest and pointed at, so its entrance never replays. Plain, the pointed value is the
-                      // chart's readout and takes the tooltip's plane; stacked, the panel is, and the total only steps up to ink.
-                      <span
-                        aria-hidden
-                        className={cn(
-                          't-num pointer-events-none absolute bottom-full mb-1 text-2xs leading-4',
-                          rest && 'fade-in',
-                          pointed && !drawn
-                            ? 'left-1/2 z-10 -translate-x-1/2 rounded-sm bg-surface-inverse px-1.5 py-1 font-medium whitespace-nowrap text-ink-inverse shadow-overlay'
-                            : rest
-                              ? cn('inset-x-0 truncate text-center', pointed ? 'font-medium text-ink' : 'text-ink-3')
-                              : 'left-1/2 -translate-x-1/2 font-medium whitespace-nowrap text-ink',
-                        )}
-                      >
-                        <span data-value>{text}</span>
-                        {pointed && !drawn && i === soFar ? ' · so far' : null}
+                      // One element at rest and pointed at, so its entrance never replays. At rest the value is held to its
+                      // column; the tooltip, and a total shown only on pointing, may be wider than theirs.
+                      <span aria-hidden className={cn('pointer-events-none absolute bottom-full mb-1', rest && 'fade-in', tip || !rest ? cn('z-10', placed(i)) : 'inset-x-0')}>
+                        <span
+                          className={cn(
+                            't-num block text-2xs leading-4',
+                            tip
+                              ? 'rounded-sm bg-surface-inverse px-1.5 py-1 font-medium whitespace-nowrap text-ink-inverse shadow-overlay'
+                              : rest
+                                ? cn('truncate text-center', pointed ? 'font-medium text-ink' : 'text-ink-3')
+                                : 'font-medium whitespace-nowrap text-ink',
+                          )}
+                        >
+                          <span data-value>{text}</span>
+                          {tip && unfinished ? ' · so far' : null}
+                        </span>
                       </span>
                     ) : null}
                   </div>
@@ -255,11 +270,11 @@ export function ColumnChart({
         {bars.map((b, i) => (
           <span key={b.key} className="relative h-4 min-w-0 flex-1">
             {active === i ? (
-              <span className="absolute left-1/2 z-10 -translate-x-1/2 rounded-xs bg-surface px-1 whitespace-nowrap text-ink">{b.label}</span>
+              <span className={cn('absolute z-10', placed(i))}><span className="rounded-xs bg-surface px-1 whitespace-nowrap text-ink">{b.label}</span></span>
             ) : every1 ? (
               <span className="block truncate px-0.5 text-center">{b.label}</span>
             ) : (every ? i % (every * Math.ceil(fit / every)) === 0 : (n - 1 - i) % fit === 0) ? (
-              <span className="absolute left-1/2 -translate-x-1/2 whitespace-nowrap">{b.label}</span>
+              <span className={cn('absolute whitespace-nowrap', placed(i))}>{b.label}</span>
             ) : null}
           </span>
         ))}

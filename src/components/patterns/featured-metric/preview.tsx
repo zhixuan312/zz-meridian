@@ -1,15 +1,16 @@
 'use client';
 
-import { useEffect, type ReactNode } from 'react';
+import type { ReactNode } from 'react';
 import Link from 'next/link';
 import { ArrowRight } from 'lucide-react';
 import { demoSeries, demoTotals } from '@/system/fixtures/sample';
-import { formatCompact, formatCost, formatDuration, formatPercent } from '@/lib/format';
+import { AXIS_FORMATTERS, formatCompact, formatCost, formatDuration, formatPercent } from '@/lib/format';
 import { formatDay } from '@/lib/format-date';
-import { Badge } from '@/components/ui/badge';
-import { Meridian, useMeridian } from '@/components/charts/meridian';
+import { SurfaceOverride } from '@/components/base/surface';
+import { Meridian } from '@/components/charts/meridian';
 import { ColumnChart } from '@/components/charts/column-chart';
 import { TrendChart } from '@/components/charts/trend-chart';
+import { AskAbout } from '@/components/patterns/ask-about';
 import { Plane, Specimen, State } from '@/system/specimen';
 import { FeaturedMetric, type FeaturedFigure } from '.';
 
@@ -42,21 +43,19 @@ const last = weeks[weeks.length - 1];
 const prior = weeks[weeks.length - 2];
 const week = (date: string) => `Week of ${formatDay(date)}`;
 const earlier = weeks.slice(0, -1);
-const weekFinding = { text: `Above ${earlier.filter((w) => w.requests < last.requests).length} of the ${earlier.length} weeks before it` };
+// A caption and a finding stay while another point is read, so each names the period it is about and is true under any week's figure.
+const weekFinding = { text: `Last week was above ${earlier.filter((w) => w.requests < last.requests).length} of the ${earlier.length} weeks before it` };
 
-function PointAt({ i }: { i: number }) {
-  const { setIndex } = useMeridian(dates);
-  useEffect(() => setIndex(i), [setIndex, i]);
-  return null;
-}
+/** Ask about is drawn only where an agent listens, so a specimen that shows the card's actions stands on a console with an assistant, as Home does. */
+const Asking = ({ children }: { children: ReactNode }) => <SurfaceOverride surface={{ ask: () => {} }}>{children}</SurfaceOverride>;
 
 const Chart = () => (
   <TrendChart height="fill" label="Requests per day" dates={dates} series={[{ key: 'r', label: 'Requests', values: s.map((d) => d.requests), kind: 'area' }]} />
 );
 
-/** A week a column, the latest highlighted: the featured chart when the points are periods. */
-const Weeks = ({ label, value, format }: { label: string; value: (w: (typeof weeks)[number]) => number; format: (n: number) => string }) => (
-  <ColumnChart height="fill" label={label} dates={weekDates} highlight={last.date} format={format} columns={weeks.map((w) => ({ key: w.date, label: formatDay(w.date), value: value(w) }))} />
+/** A week a column, the latest highlighted: the featured chart when the points are periods. Its axis is a scale, so it takes the axis's own formatter: "$75", not "$75.00". */
+const Weeks = ({ label, value, format, axisFormat }: { label: string; value: (w: (typeof weeks)[number]) => number; format: (n: number) => string; axisFormat: (n: number) => string }) => (
+  <ColumnChart height="fill" label={label} dates={weekDates} highlight={last.date} format={format} axisFormat={axisFormat} columns={weeks.map((w) => ({ key: w.date, label: formatDay(w.date), value: value(w) }))} />
 );
 
 const requestsByWeek: FeaturedFigure = {
@@ -66,7 +65,7 @@ const requestsByWeek: FeaturedFigure = {
   format: formatCompact,
   delta: last.requests / prior.requests - 1,
   compare: 'vs the week before',
-  caption: <>About {formatCompact(Math.round(last.requests / 7))} a day.</>,
+  caption: <>Last week averaged {formatCompact(Math.round(last.requests / 7))} a day.</>,
   finding: weekFinding,
 };
 const spendByWeek: FeaturedFigure = {
@@ -77,7 +76,7 @@ const spendByWeek: FeaturedFigure = {
   delta: last.spend / prior.spend - 1,
   intent: 'neutral',
   compare: 'vs the week before',
-  caption: <>About {formatCost(last.spend / 7)} a day.</>,
+  caption: <>Last week averaged {formatCost(last.spend / 7)} a day.</>,
 };
 
 /** Two measures of equal standing that are never added together: requests answered and what they cost, a week a point. */
@@ -88,7 +87,7 @@ const TwoFigures = ({ className, actions }: { className?: string; actions?: Reac
       actions={actions}
       {...requestsByWeek}
       pointLabel={week}
-      peer={{ ...spendByWeek, children: <Weeks label="Spend per week" value={(w) => w.spend} format={formatCost} /> }}
+      peer={{ ...spendByWeek, children: <Weeks label="Spend per week" value={(w) => w.spend} format={formatCost} axisFormat={AXIS_FORMATTERS.cost} /> }}
       foot={
         <>
           <dl>
@@ -100,7 +99,7 @@ const TwoFigures = ({ className, actions }: { className?: string; actions?: Reac
         </>
       }
     >
-      <Weeks label="Requests per week" value={(w) => w.requests} format={formatCompact} />
+      <Weeks label="Requests per week" value={(w) => w.requests} format={formatCompact} axisFormat={AXIS_FORMATTERS.count} />
     </FeaturedMetric>
   </Meridian>
 );
@@ -108,28 +107,36 @@ const TwoFigures = ({ className, actions }: { className?: string; actions?: Reac
 export default function FeaturedMetricPreview() {
   return (
     <>
-      <Specimen label="With its chart" note="The page's protagonist: one per page, carrying the accent's light. Point at the chart to read a day.">
-        <Meridian dates={dates}>
-          <FeaturedMetric
-            className="h-130 w-full"
-            kicker="Requests · last 30 days"
-            value={total}
-            points={s.map((d) => d.requests)}
-            format={formatCompact}
-            delta={0.057}
-            caption="About 98K a day. The busiest day was 1 Oct, with 128K."
-            actions={<Badge tone="accent" dot>Live</Badge>}
-          >
-            <Chart />
-          </FeaturedMetric>
-        </Meridian>
+      <Specimen label="With its chart" note="The page's protagonist: one per page, carrying the accent's light. Point at the chart to read a day. Its action is Ask about, as on Home: drawn where an assistant listens, and absent where none does.">
+        <Asking>
+          <Meridian dates={dates}>
+            <FeaturedMetric
+              className="h-130 w-full"
+              kicker="Requests · last 30 days"
+              value={total}
+              points={s.map((d) => d.requests)}
+              format={formatCompact}
+              delta={0.057}
+              caption="About 98K a day. The busiest day was 1 Oct, with 128K."
+              actions={<AskAbout question="What stands out in requests over the last 30 days, and why?" />}
+            >
+              <Chart />
+            </FeaturedMetric>
+          </Meridian>
+        </Asking>
       </Specimen>
       <Specimen label="States">
-        <State label="Reading a day" className="w-full max-w-110">
-          <Meridian dates={dates}>
-            <PointAt i={21} />
+        {/* One page, pointed at one day: the card whose points are the page's days reads it, and the card whose points are weeks does not. */}
+        <Meridian dates={dates} day={dates[21]}>
+          <State label="Reading a day" className="w-full max-w-110">
             <FeaturedMetric className="w-full" kicker="Requests · last 30 days" value={total} points={s.map((d) => d.requests)} format={formatCompact} delta={0.057} />
-          </Meridian>
+          </State>
+          <State label="Points that are not the page's: the same page reads that day, and a card whose points are weeks keeps its period and its change" className="w-full max-w-110">
+            <FeaturedMetric className="w-full" {...requestsByWeek} />
+          </State>
+        </Meridian>
+        <State label="Nothing to compare: a dash before the comparison's words" className="w-full max-w-110">
+          <FeaturedMetric className="w-full" kicker="Requests · last 30 days" value={total} format={formatCompact} delta={null} />
         </State>
         <State label="Extreme: billions" className="w-full max-w-110">
           <FeaturedMetric className="w-full" kicker="Requests · last 30 days" value={9_876_543_210} format={formatCompact} delta={4.37} />
@@ -141,7 +148,7 @@ export default function FeaturedMetricPreview() {
           <FeaturedMetric className="w-full" kicker="Spend · this month" value={298.43} format={(n) => `$${n.toFixed(2)}`} delta={-0.081} intent="down" caption="Credits cover the rest until 1 Nov." />
         </State>
       </Specimen>
-      <Specimen label="A finding" note="finding: one fact the figure does not say, under the change and the caption, beside a neutral dot. It is counted from the same data as the figure, and it stays while a day is read.">
+      <Specimen label="A finding" note="finding: one fact the figure does not say, under the change and the caption, beside a neutral dot. It is counted from the same data as the figure. It stays while a day is read, as the caption does, so both name what they are about.">
         <State label="At rest" className="w-full max-w-110">
           <FeaturedMetric className="w-full" kicker="Requests · last 30 days" value={total} format={formatCompact} delta={0.057} caption="About 98K a day. The busiest day was 1 Oct, with 128K." finding={monthFinding} />
         </State>
@@ -149,7 +156,7 @@ export default function FeaturedMetricPreview() {
           <FeaturedMetric className="w-full" kicker="Requests · last 30 days" value={total} format={formatCompact} delta={0.057} finding={monthFinding} />
         </State>
       </Specimen>
-      <Specimen label="A foot" note="foot: a band inside the lit surface, under the chart and divided from it by a hairline. A dl in it is the supporting figures, a label over each; the one link goes to the far end, and under them on a narrow card.">
+      <Specimen label="A foot" wide note="foot: a band inside the lit surface, under the chart and divided from it by a hairline. A dl in it is the supporting figures, a label over each; the one link goes to the far end, and under them on a narrow card.">
         <FeaturedMetric
           className="min-h-130 w-full"
           kicker="Requests · last 30 days"
@@ -203,8 +210,10 @@ export default function FeaturedMetricPreview() {
           </Meridian>
         </State>
       </Specimen>
-      <Specimen label="Two figures" note="peer: two measures of equal standing, never added together, as two halves of the one lit surface: one edge, one glow, a hairline between. Each half has its own kicker, figure, change, caption, finding and chart; the foot and the actions are the card's, and the actions head it on a row of their own. From 42rem of the card's own width (588px) the halves stand side by side on shared lines.">
-        <TwoFigures className="min-h-140 w-full" actions={<Badge tone="neutral">{weeks.length} weeks</Badge>} />
+      <Specimen label="Two figures" wide note="peer: two measures of equal standing, never added together, as two halves of the one lit surface: one edge, one glow, a hairline between. Each half has its own kicker, figure, change, caption, finding and chart; the foot and the actions are the card's, and the actions head it on a row of their own. From 42rem of the card's own width (588px) the halves stand side by side on shared lines.">
+        <Asking>
+          <TwoFigures className="min-h-140 w-full" actions={<AskAbout question="What moved requests and spend last week, and why?" />} />
+        </Asking>
       </Specimen>
       <Specimen label="Two figures, narrow" note="Under 42rem of its own width the same card is one column: the first figure, a hairline, the second, each chart at least 220px tall. Nothing is cut.">
         <Plane className="max-w-110">
