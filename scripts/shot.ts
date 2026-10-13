@@ -69,6 +69,13 @@ try {
   for (const r of routes) {
     for (const w of widths) {
       for (const t of themes) {
+        // Each capture starts from a blank page. Without it, the first full-page capture after a navigation that follows a
+        // change of theme returned a frame painted before the page had settled: charts unmeasured, a chart missing, text
+        // at another breakpoint's size, while the DOM already read as settled and waiting longer changed nothing.
+        // Measured on the Heatmap's preview at 1440px: dark then light in one run drew light wrong every time, light
+        // alone and light after a blank page drew it right, pixel for pixel.
+        await page.send('Page.navigate', { url: 'about:blank' });
+        await sleep(300);
         await page.open(base + r, { width: w, height: w < 600 ? 844 : 900, theme: t });
         const missing = [];
         for (const p of presses) if (!(await press(page, p))) { missing.push(p); break; }

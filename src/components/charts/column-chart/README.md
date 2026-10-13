@@ -43,8 +43,8 @@ Status: beta
 
 | Height | Use |
 |---|---|
-| 200px (default) | A chart card |
-| 120 to 160px | A secondary chart |
+| 200px (default) | A chart card: columns grow in 164px |
+| 160 to 180px | A secondary chart: columns grow in 124 to 144px. Under 160px the 36px the box keeps for values and the zero label is a third of the chart, so a chart that short is better a Sparkline or a taller card |
 | `fill` (at least 220px) | A card whose row is taller than the chart: the plot takes what the legend and the labels leave |
 
 The height is the plot's box, and the box holds everything the plot draws. The scale stands inside it: 28px under the box's top, which is room over the top tick for a column's value, at rest (16px, 4px off the column) or pointed at (24px, 4px off), and 8px over its bottom, which is the half line the zero tick's label hangs under its gridline. So columns grow in the height less 36px, and nothing moves when the chart's width arrives. Under the box the labels take 24px, 8px off it, and above it a legend takes one line and 8px, more when it wraps. Columns share the width.

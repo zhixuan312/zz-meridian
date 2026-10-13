@@ -51,6 +51,10 @@ Every release of ZZ Meridian, newest first. Versions follow semver: a removed or
 - **A Column chart's plot holds everything it draws.** The scale stands inside the plot's box, 28px under its top and 8px over its bottom, at any width: room over the top tick for a column's value, at rest or pointed at, and under the zero tick for the half line its label hangs. So at a given `height` the columns grow in 36px less than before (Usage's two charts, at 220px, draw their columns in 184px), the x labels stand 16px under the baseline, and the focus ring, 4px outside the box, crosses nothing the plot draws. A chart that needs its columns as tall as they were takes a `height` 36px larger.
 - **The Heatmap's focus ring encloses its cells.** On a week of hours the ring went round the weekday names too; on both forms it now goes round the cells and nothing else, 4px off, because the Tab stop is what the arrow keys move through. The rows of hours are 2px apart with no padding of their own, so the grid is 2px shorter than it was.
 
+### Fixed
+
+- **`node scripts/shot.ts` with two themes in one run draws both as they are.** The second theme's full-page capture could be a frame painted before the page had settled: charts not yet measured, a chart missing, text at another breakpoint's size. Each capture now starts from a blank page. A render taken with `--theme dark,light` before this change is worth taking again.
+
 ## [0.15.0] · 2026-10-13
 
 ### Added

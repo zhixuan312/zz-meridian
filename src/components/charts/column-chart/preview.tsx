@@ -68,7 +68,7 @@ export default function ColumnChartPreview() {
         <Meridian dates={dates(month)}>
           <Plane on="surface" className="flex flex-col gap-6">
             <TrendChart label="Requests per day" dates={dates(month)} height={160} series={[{ key: 'r', label: 'Requests', values: month.map((d) => d.requests), kind: 'area' }]} />
-            <ColumnChart label="Errors per day" height={120} axisFormat={axis} dates={dates(month)} columns={errors(month)} />
+            <ColumnChart label="Errors per day" height={160} axisFormat={axis} dates={dates(month)} columns={errors(month)} />
           </Plane>
         </Meridian>
       </Specimen>
