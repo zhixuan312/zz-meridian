@@ -11,8 +11,10 @@ How Meridian shows numbers: which form to use, how colour is assigned, how figur
 | Change over time | A line or an area on one axis | Trend chart |
 | The shape of a trend beside a figure | A line without axes | Sparkline |
 | A ranking | Horizontal bars, the longest first | Bar list |
-| Parts of a whole | One stacked bar | Composition bar |
-| Counts per category or per day | Columns | Column chart |
+| Parts of a whole, at one moment | One stacked bar | Composition bar |
+| Counts per category or per period | Columns | Column chart |
+| Parts of a whole over periods, each period a total to read (weeks, months, a handful of days) | Stacked columns, each column a whole | Column chart |
+| Parts of a whole over a long run of days, where the shape is the story | Stacked bands | Trend chart |
 | Two dimensions of time (weekday by hour, or a year of days as week by weekday) | A grid of cells | Heatmap |
 | A service's history | Day bars | Uptime bars |
 | Many records | A table | Data table |
@@ -29,6 +31,7 @@ Two measures of different size are two charts on one Meridian, not one chart wit
 - **The one that matters**: the accent, with every other mark in the neutral population (`chart-neutral`). One highlighted bar, one highlighted line.
 - **Magnitude**: one hue, light to dark, built from the accent and the surface (the heatmap).
 - **State**: positive, warning, critical, always with a word or an icon.
+- **Parts of one whole**: one hue. The parts share the accent, mixed into the surface, deepest at the bottom and paler upward (the stacked Trend chart and the stacked Column chart take the same mix), with a 1px hairline of the card between neighbours and at most four parts, the fourth being Other. When the parts are outcomes they carry a tone instead: the usual outcome is neutral (`chart-neutral-strong`), one that needs somebody is warning or critical, the accent never stands beside a tone, and the positive colour is never the usual case.
 
 Text never wears a series colour; values and labels stay in ink.
 
@@ -37,7 +40,18 @@ Text never wears a series colour; values and labels stay in ink.
 - Lines 2px with round joins; a dashed line 1.5px. The featured series carries a soft glow of its own colour on the dark ground.
 - Bars and columns with 2px gaps and 4px rounded data ends, anchored to the baseline.
 - Gridlines recessive (`chart-grid`), one baseline (`chart-axis`), axis labels at `text-2xs` in `ink-3`. Axis labels are a scale: `$12`, `1.2M`; the exact value is in the tooltip and the table.
-- A legend is always present for two or more series; a single series is named by its title.
+- A legend is always present for two or more series or parts; a single series is named by its title.
+- A column's value stands above it at rest, in `ink-3`, while a column is at least 36px wide; narrower, it shows for the column pointed at. Stacked, the value is the column's total.
+
+## A period still in progress
+
+Today, or the month not over yet, is not a fact like the periods before it, and a part-day drawn solid reads as a fall. So it is drawn unfinished and it reads "so far":
+
+- A Trend chart draws the stretch into its last point dashed, with nothing filled under it.
+- A Column chart draws its last column at half strength under a dashed cap.
+- A Heatmap's calendar draws the day's cell inside a dashed outline.
+
+Each takes `running`, and each says "so far" wherever that period is read: the readout, the line a screen reader hears and the period's row of the hidden table.
 
 ## Figures
 
@@ -49,6 +63,7 @@ Text never wears a series colour; values and labels stay in ink.
 ## Interaction
 
 - Every time chart joins the page's Meridian: pointer, touch drag, arrow keys, Home, End, Escape. Every chart and tile reads the day.
+- A chart read mark by mark is one Tab stop, and its keys move the cursor the pointer moves: a Trend chart's points, a Column chart's columns, a Heatmap's cells. Escape and blur let go.
 - The tooltip shows the day and every series' value; it appears only on the chart being pointed at.
 - Every chart renders a visually hidden table with the same numbers, so screen readers and models read the data, not the picture.
 

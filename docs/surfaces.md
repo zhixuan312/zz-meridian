@@ -129,6 +129,7 @@ All components are surface-agnostic by construction: they size from control toke
 | Metric tile | One number, its change, its shape | Four across | Two or one across | One to three across; the inline view's figure row |
 | Meridian | One time cursor for every chart and tile on a page | Pointer and arrow keys | Finger: press and drag | Same, inside the view |
 | Trend chart | A time series on one axis; or parts of one whole, stacked | 248px tall | 180px | 160px inline, 248px fullscreen |
+| Column chart | Counts side by side, one column a category or a period; or each column a whole split into its parts | 200px tall, or its card's height; a value above each column while a column is 36px or wider | Date labels thin and category labels cut shorter; under 36px a column, a value shows for the column pointed at, and a stacked chart's readout pins to the leading edge | Same as mobile inline; the console's in fullscreen |
 | Sparkline | Shape beside a figure | Same | Same | Same |
 | Bar list | A ranked list with bars | Same | Same | Top five, then Expand |
 | Composition bar | One whole split into parts | Legend four across | Legend two across | Same as mobile |

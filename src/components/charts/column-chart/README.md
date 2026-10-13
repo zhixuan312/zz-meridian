@@ -1,16 +1,22 @@
 # Column chart
 
-A column chart compares counts side by side, one column per category or per day, with one column highlighted.
+A column chart compares counts side by side, one column per category or per period, with one column highlighted; given parts, each column is a whole split into them.
 
 Status: beta
 
 ## Anatomy
 
-1. **Gridlines and y labels**: three "nice" ticks from zero, `chart-grid` lines, `text-2xs` `ink-3` labels in a gutter sized to the longest.
-2. **Columns**: equal width, 2px apart, rounded 4px at the top, growing from the baseline; the population in `chart-neutral`, the highlighted column in `accent`.
-3. **Value label**: on hover, the value above the column on `surface-inverse`.
-4. **X labels**: `text-2xs` `ink-3`. Dates show as many as fit without colliding, counted back from the last column. Categories each keep their label, cut with an ellipsis to their column, while a column is at least 36px wide (an unlabelled category cannot be told apart); narrower, they thin like dates. The hovered column's label always shows whole.
-5. **Screen-reader table**: every column's label and value.
+1. **Legend** (stacked, two or more parts drawn): above the plot, in stack order from the bottom. A 10px square swatch (3px radius, as the Heatmap's) at the part's own strength, ringed by a 1px `ink-3` hairline, and the part's label in `ink-2` at `text-xs`.
+2. **Gridlines and y labels**: three "nice" ticks from zero, `chart-grid` lines, `text-2xs` `ink-3` labels in a gutter sized to the longest. Stacked, the axis is the total's.
+3. **Columns**: equal width, 2px apart, rounded 4px at the top, growing from the baseline. Plain, the population is `chart-neutral` and the highlighted column `accent`.
+4. **Parts** (stacked): the first at the bottom, a 1px hairline of the card where two touch. Only the topmost part drawn is rounded. A part that is not zero is at least 3px tall; a part at zero is absent, with no line and no gap.
+5. **Value at rest**: the column's value, or its total, above it in `text-2xs` `ink-3`, while a column is at least 36px wide.
+6. **Dashed cap** (with a period still running): a 2px dashed `ink` line across the top of the last column, which is drawn at half strength.
+7. **Pointed column**: plain, it takes the accent and its value stands above it on `surface-inverse`. Stacked, it takes a 2px `ink` ring and the readout.
+8. **Readout** (stacked): a panel on `surface-raised` beside the pointed column: the period, every part from the top down with its value, then the total.
+9. **X labels**: `text-2xs` `ink-3`. Dates show as many as fit without colliding, counted back from the last column. Categories each keep their label, cut with an ellipsis to their column, while a column is at least 36px wide (an unlabelled category cannot be told apart); narrower, they thin like dates. The pointed column's label always shows whole.
+10. **Announcement**: a visually hidden line that reads the pointed column to screen readers.
+11. **Screen-reader table**: every column's label and value; stacked, every part and the total.
 
 ## Variants
 
@@ -18,44 +24,88 @@ Status: beta
 |---|---|
 | Categories | One column per category, sorted by value |
 | Days | One column per day; today or the day in question highlighted |
-| On the Meridian | Given `dates`, the columns share the page's cursor: hovering a column points every chart at that day, and the pointed day is highlighted |
+| On the Meridian | Given `dates`, one a column, the columns share the page's cursor: pointing at a column points every chart at that day, and the pointed day is highlighted |
+| Stacked, one hue | `parts` with no tone: parts of one kind, such as requests by region or revenue by plan. Each column is a whole and the top of a column is its total |
+| Stacked, outcomes | `parts` with a tone each: how something ended, such as passed, skipped and failed |
+| Running | The last column is a period still in progress, in either form |
+
+**The colour of a part.** Parts with no tone are one whole, so they share the accent, mixed into the surface: deepest at the bottom and paler with each part above, between the theme's `chart-stack-hi` and `chart-stack-lo` (dark 92% to 20%, light 78% to 36%). It is the mix a stacked Trend chart takes, from the same function, so the two read as one family. Once any part names a tone the parts are outcomes: the usual outcome is `neutral` and takes `chart-neutral-strong`, and one that needs somebody takes `warning` or `critical`. A part with no tone among parts that have one is neutral too, so the accent never stands beside a status colour, and the positive colour is never used for the usual case.
+
+**At most four parts.** Past four, nobody tells the steps of one hue apart. Given more, the fourth drawn is "Other": the sum of the fourth and every later part, in the columns, the legend, the readout and the table alike. Among outcomes it has no tone of its own and is neutral.
+
+**The value at rest.** While `(plot width - 2 × (n - 1)) / n` is 36 or more for n columns, the plot width being the chart's width less the axis gutter, every column carries its value above it, or its total when stacked, as the chart formats it. Narrower, the figures would collide, so only the pointed column carries one. Pass a compact format: a figure wider than its column is cut with an ellipsis at rest, keeps the whole of itself in its column's title, and reads whole when the column is pointed at.
+
+**Running.** The last column is a period not over yet, such as today or the month so far. It is not a fact like the columns before it, so it is drawn at half strength under a dashed cap, and wherever it is read it says "so far": the plain column's value when pointed at, the readout, the announcement and its row of the table. No other column does.
 
 ## Sizes
 
-Default 200px tall; 120 to 160px as a secondary chart. Columns share the width.
+| Height | Use |
+|---|---|
+| 200px (default) | A chart card |
+| 120 to 160px | A secondary chart |
+| `fill` (at least 220px) | A card whose row is taller than the chart: the plot takes what the legend and the labels leave |
+
+The height is the plot's. Under it the labels take 24px, and above it a legend takes one line and 16px, more when it wraps. Columns share the width. With values at rest the plot keeps 20px above its top tick, so the value of a column that reaches the top stays inside the plot.
+
+The readout is at least 144px wide and never wider than the chart, with `space-3` 12px side padding, on `shadow-overlay`.
 
 ## States
 
 | State | Spec |
 |---|---|
-| Arriving | Columns grow from the baseline over `dur-grow`, 12ms apart. |
-| Hover | Neutral columns step up to `chart-neutral-strong`; the hovered one takes the accent and its value label. |
+| Arriving | Columns grow from the baseline over `dur-grow`, 12ms apart; values at rest fade in over `dur-enter`. |
+| Rest | Columns, and their values where a column is 36px or wider. No readout. |
+| Hover | Plain, neutral columns step up to `chart-neutral-strong` over `dur-hover`. |
+| Pointed | By the pointer or the keys. Plain: the column takes the accent, and its value stands above it in `ink-inverse` on `surface-inverse`. Stacked: the column takes a 2px `ink` ring over `dur-hover`, its total steps up to `ink`, and the readout shows. |
+| Highlighted | With no column pointed at, the highlighted column is the accent one (plain) or wears the ring (stacked). |
+| Focus | The plot wears a 2px `accent` outline, 4px off, on `radius-sm`. |
+| Running | The last column at half strength under a 2px dashed `ink` cap; "so far" where it is read. |
+| Zero | A column at zero draws nothing and reads zero; stacked, a column whose parts are all zero draws no part and reads a total of zero. A value that is missing or below zero counts as zero. |
 | Empty | Render the card's Empty state. |
 
 ## Behaviour
 
-Pointer hover or a tap selects a column; leaving clears it. With `dates`, the selection is the page's Meridian index.
+- **Pointer**: entering or tapping a column points at it; leaving the chart lets go.
+- **Keyboard**: the plot is one Tab stop. Left and Right move the cursor a column, Home and End go to the first and the last. With no column pointed at, the cursor starts from the last column: a first Left lands on the last but one, a first Right on the last. Escape and blur let go.
+- **One cursor**: the keys move the cursor the pointer moves. With `dates`, one a column, that cursor is the page's Meridian index, so every chart and tile on the page reads the same day.
+- **Readout**: stacked only. It stands after a column in the first half of the plot and before one in the second, measures its own width and stays inside the chart; long labels wrap. Under 640px it pins to the plot's leading edge.
+- **Width**: the chart reads its own width, and every rule about width follows it, not the window.
 
 ## Surfaces
 
-Same on every surface; date labels thin out as the width shrinks, and category labels cut shorter.
+- **Console**: 200px or `fill`. A week or a quarter of periods usually keeps its values at rest; thirty days in half a row does not.
+- **Mobile**: date labels thin out as the width shrinks and category labels cut shorter; under 36px a column, values show on pointing. A tap points at a column; the readout pins to the leading edge.
+- **Embed**: same as mobile inline; the console's in fullscreen.
 
 ## Agents
 
-The view shares the highlighted column and the day pointed at through `useShareView`; an agent reads values from the table.
+The view shares the highlighted column and the day pointed at through `useShareView`; an agent reads values from the table, never from the drawing. A period still running is marked in the table's row ("03 Oct, so far"), so an agent does not report a part-day as a fall.
 
 ## Accessibility
 
-A labelled `figure` with an `sr-only` table. The accent column holds 3.73:1 dark and 5.91:1 light on `surface`; neutral columns are the population and are not meant to be told apart by colour.
+- A labelled `figure` whose `sr-only` table holds every value: a row a column, its label in the row's header cell. Stacked, the head is the period, each part drawn and "Total". The running column's header cell says "so far".
+- The plot is a `role="group"` named with the chart's label and how to use the keys: "Errors per day. Use the arrow keys to read one column." The column pointed at is read in an `aria-live="polite"` line: "Tue: 20", or "21 Sept: Large $40, Swift $0, Embed $20, Total $60", with ", so far" for the running column. It is empty when no column is pointed at.
+- Contrast on `surface`, dark then light, with the indigo accent (`node scripts/contrast.ts --all`): the accent column 3.71:1 and 5.71:1; `chart-neutral-strong` 3.96:1 and 3.52:1; `warning` 9.06:1 and 3.36:1; `critical` 5.90:1 and 4.58:1; the ring and the dashed cap, `ink`, 16.89:1 and 17.93:1; values at rest, labels and the swatch's hairline, `ink-3`, 6.39:1 and 5.13:1. The plain value, `ink-inverse` on `surface-inverse`: 16.31:1 and 17.00:1. The readout's text, `ink` on `surface-raised`: 15.45:1 and 18.54:1.
+- The deepest part of a stack, the one it stands on, holds 3:1 on `surface`: 3.30:1 dark, 3.61:1 light with the indigo accent, and never under 3.23:1 (jade, dark) in any theme and accent. The paler parts are not held to 3:1, as the neutral columns are not: the hairline, the legend, the total at rest, the readout and the table carry what their colour alone does not (WCAG 1.4.11).
+- A running column is at half strength on purpose and is not told by that alone: the cap is `ink`, and the words "so far" are in every place it is read.
+- An outcome is never colour alone: the legend names each part in words, and the readout repeats the name beside each value.
+- Neutral columns are the population and are not meant to be told apart by colour.
 
 ## Content
 
-Category labels are short (drop shared prefixes like `/v1/`); day labels are "27 Sept".
+- Category labels are short (drop shared prefixes like `/v1/`); day labels are "27 Sept".
+- Part labels are short nouns: "Enterprise", "us-east-1", "Failed". The fold is "Other".
+- A running period is "so far", after its label: "03 Oct · so far" in the readout, "03 Oct, so far" in the table.
+- `label` says what is counted and per what: "Errors per day", "Revenue per month, by plan".
 
 ## Do and do not
 
 - Do highlight at most one column.
+- Do use parts when each period is a whole worth reading by its total. Parts at one moment are a Composition bar; parts over a long run of days, where the shape is the story, are a stacked Trend chart.
+- Do set a period still in progress as running. Do not leave a part-day drawn solid: it reads as a fall.
 - Do not colour columns by value; their height already shows it.
+- Do not give a tone to parts of one kind, and do not put the accent beside a tone.
+- Do not pass more than four outcomes: a fifth folds into a neutral Other, and a failure inside it is drawn as the usual case.
 
 ## Implementation
 
@@ -64,4 +114,38 @@ import { ColumnChart } from '@/components/charts/column-chart';
 
 <ColumnChart label="Errors per day" dates={dates} format={formatCompact}
   columns={series.map((d) => ({ key: d.date, label: formatDate(d.date), value: d.errors }))} />
+
+<ColumnChart label="Revenue per month, by plan" height="fill" running format={formatCost}
+  parts={[{ key: 'enterprise', label: 'Enterprise' }, { key: 'scale', label: 'Scale' }, { key: 'starter', label: 'Starter' }]}
+  columns={months.map((m) => ({ key: m.month, label: m.label, values: [m.enterprise, m.scale, m.starter] }))} />
+
+<ColumnChart label="Verification runs per day, by how they ended" dates={dates}
+  parts={[{ key: 'passed', label: 'Passed', tone: 'neutral' }, { key: 'skipped', label: 'Skipped', tone: 'warning' }, { key: 'failed', label: 'Failed', tone: 'critical' }]}
+  columns={days.map((d) => ({ key: d.date, label: formatDate(d.date), values: [d.passed, d.skipped, d.failed] }))} />
 ```
+
+```ts
+export type Column = { key: string; label: string; value: number };
+export type StackedColumn = { key: string; label: string; values: number[] };
+export type ColumnPart = { key: string; label: string; tone?: 'neutral' | 'warning' | 'critical' };
+
+export type ColumnChartProps = {
+  highlight?: string;              // the key of the one column the card is about
+  dates?: string[];                // one ISO date a column: the chart joins the page's Meridian
+  running?: boolean;               // the last column is a period still in progress
+  format?: (n: number) => string;
+  axisFormat?: (n: number) => string;
+  height?: number | 'fill';        // 'fill': the card's height, never under 220px
+  label: string;
+  labelEvery?: number;             // label every nth column from the first: 6 puts hours at 00, 06, 12, 18
+  className?: string;
+} & ({ columns: Column[] } | { columns: StackedColumn[]; parts: ColumnPart[] });
+```
+
+With `parts`, a column's `values` holds one value a part, in the parts' order, the first at the bottom. On `fill` the chart's parent is a flex column, as a card's body is when its row is taller than the chart.
+
+The colour of a part with no tone is `stackPart(place, parts)` from `@/components/charts/scale`, the one mix every one-hue stack takes: the accent into the surface, by the part's place from the bottom of the parts drawn.
+
+Every column carries `data-column` with its key, `data-active` while it is pointed at and `data-running` when it is the running one. The plot carries `data-plot`, a tick's label `data-tick`, a value `data-value`, the legend `data-legend` and the readout `data-readout`. A part carries `data-part` with its key (`other` for the fold), `data-tone` (`accent`, `neutral`, `warning` or `critical`) and, when it is the topmost drawn, `data-top`.
+
+The Atlas shows a pointed column statically as a chart with `dates` inside a `<Meridian dates day>` opened at a day.

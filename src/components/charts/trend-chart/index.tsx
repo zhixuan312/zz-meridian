@@ -1,10 +1,11 @@
 'use client';
 
-import { useId, useMemo, useState, type CSSProperties, type KeyboardEvent, type PointerEvent, type ReactNode } from 'react';
+import { useId, useMemo, useState, type KeyboardEvent, type PointerEvent } from 'react';
 import { cn } from '@/lib/cn';
 import { AXIS_FORMATTERS, FORMATTERS, type NumberFormat } from '@/lib/format';
 import { formatDate } from '@/lib/format-date';
 import { useMeridian } from '@/components/charts/meridian';
+import { Readout } from '@/components/charts/readout';
 import { monotonePath, niceTicks, SERIES_VAR, stackPart } from '@/components/charts/scale';
 import { useSize } from '@/components/charts/use-size';
 
@@ -286,7 +287,7 @@ export function TrendChart({
         </ul>
       ) : null}
       {active !== null && width > 0 ? (
-        <Readout cursor={cx} width={width} top={pad.t - 4} visible={local || previewIndex !== undefined}>
+        <Readout at={cx} after={cx <= width / 2} top={pad.t - 4} visible={local || previewIndex !== undefined}>
           <p className="t-eyebrow mb-1.5 break-words">{tick ? tick(dates[active]) : formatDate(dates[active])}{active === soFar ? ' · so far' : null}</p>
           {/* Stacked, the readout lists the bands top to bottom, as they sit on the chart, then the total. */}
           {(stacked ? series.map((s, k) => ({ s, k })).reverse() : series.map((s, k) => ({ s, k }))).map(({ s, k }) => (
@@ -316,33 +317,4 @@ export function TrendChart({
 /** The stretch into a point still running: the line's own colour, thinner and dashed, and it fades in as a reference does. */
 function Running({ d, stroke }: { d: string; stroke: string }) {
   return <path data-running d={d} fill="none" stroke={stroke} strokeWidth={1.5} strokeDasharray="3 4" strokeLinecap="round" className="fade-in" />;
-}
-
-/** Measure the readout itself: a fixed side-switch cannot keep long labels inside a narrow chart. */
-function Readout({ cursor, width, top, visible, children }: { cursor: number; width: number; top: number; visible: boolean; children: ReactNode }) {
-  const [box, size] = useSize<HTMLDivElement>();
-  const preferred = cursor > width / 2
-    ? 'calc(var(--readout-cursor) - var(--readout-width) - var(--space-3))'
-    : 'calc(var(--readout-cursor) + var(--space-3))';
-  return (
-    <div
-      ref={box}
-      aria-hidden
-      className={cn(
-        'pointer-events-none absolute z-10 w-max max-w-full min-w-0 rounded-md bg-surface-raised px-3 py-2 shadow-overlay max-sm:!left-0',
-        visible ? 'opacity-100' : 'opacity-0',
-        'transition-opacity duration-(--dur-hover)',
-      )}
-      style={{
-        top,
-        minWidth: 'min(100%, calc(var(--space-1) * 36))',
-        '--readout-cursor': `${cursor}px`,
-        // ResizeObserver gives the content box; the readout also has space-3 on each side.
-        '--readout-width': `calc(${size.width}px + var(--space-3) * 2)`,
-        left: size.width ? `clamp(0px, ${preferred}, calc(100% - var(--readout-width)))` : 0,
-      } as CSSProperties}
-    >
-      {children}
-    </div>
-  );
 }
