@@ -68,7 +68,7 @@ The readout is at least 144px wide and never wider than the chart, with `space-3
 - **Pointer**: entering or tapping a column points at it; leaving the chart lets go.
 - **Keyboard**: the plot is one Tab stop. Left and Right move the cursor a column, Home and End go to the first and the last. With no column pointed at, the cursor starts from the last column: a first Left lands on the last but one, a first Right on the last. Escape and blur let go.
 - **One cursor**: the keys move the cursor the pointer moves. With `dates`, one a column, that cursor is the page's Meridian index, so every chart and tile on the page reads the same day.
-- **Readout**: stacked only. It stands after a column in the first half of the plot and before one in the second, measures its own width and stays inside the chart; long labels wrap. Under 640px it pins to the plot's leading edge.
+- **Readout**: stacked only, and only on the chart being pointed at: a chart that follows another chart's cursor on the page's Meridian rings the day and keeps its panel hidden, as the Trend chart does. It stands after a column in the first half of the plot and before one in the second, measures its own width and stays inside the chart; long labels wrap. Under 640px it pins to the plot's leading edge.
 - **Width**: the chart reads its own width, and every rule about width follows it, not the window.
 
 ## Surfaces
@@ -148,4 +148,4 @@ The colour of a part with no tone is `stackPart(place, parts)` from `@/component
 
 Every column carries `data-column` with its key, `data-active` while it is pointed at and `data-running` when it is the running one. The plot carries `data-plot`, a tick's label `data-tick`, a value `data-value`, the legend `data-legend` and the readout `data-readout`. A part carries `data-part` with its key (`other` for the fold), `data-tone` (`accent`, `neutral`, `warning` or `critical`) and, when it is the topmost drawn, `data-top`.
 
-The Atlas shows a pointed column statically as a chart with `dates` inside a `<Meridian dates day>` opened at a day.
+The Atlas uses `data-preview-index` to show a pointed column and its readout statically, as the Trend chart does. Product charts use the pointer, the keys and the Meridian instead.

@@ -116,20 +116,16 @@ export default function ColumnChartPreview() {
           <ColumnChart label="Requests per day by region, at its card's height" height="fill" format={formatCompact} parts={regions} columns={split(week, byRegion)} />
         </Plane>
       </Specimen>
-      <Specimen label="A column pointed at" stack note="By the pointer, or by the arrow keys on the focused plot. Stacked, the column takes a 2px ring in ink and the readout names the period, every part from the top down and the total. Plain, the column takes the accent and its value the tooltip's plane. Each chart here has dates and stands in a Meridian opened at a day.">
+      <Specimen label="A column pointed at" stack note="By the pointer, or by the arrow keys on the focused plot. Stacked, the column takes a 2px ring in ink and the readout names the period, every part from the top down and the total. Plain, the column takes the accent and its value the tooltip's plane. Each is drawn statically here, through the Atlas-only index.">
         <State label="Stacked" still className="w-full">
-          <Meridian dates={week.map((d) => d.date)} day={week[4].date}>
-            <Plane on="surface">
-              <ColumnChart label="Requests per day by region, with one day read" format={formatCompact} dates={week.map((d) => d.date)} parts={regions} columns={split(week, byRegion)} />
-            </Plane>
-          </Meridian>
+          <Plane on="surface">
+            <ColumnChart label="Requests per day by region, with one day read" format={formatCompact} data-preview-index={4} parts={regions} columns={split(week, byRegion)} />
+          </Plane>
         </State>
         <State label="Plain, in columns too narrow for values at rest" still className="w-full">
-          <Meridian dates={month.map((d) => d.date)} day={month[21].date}>
-            <Plane on="surface" className="max-w-2xl">
-              <ColumnChart label="Errors per day, with one day read" height={160} format={formatCompact} dates={month.map((d) => d.date)} columns={month.map((d) => ({ key: d.date, label: day(d.date), value: d.errors }))} />
-            </Plane>
-          </Meridian>
+          <Plane on="surface" className="max-w-2xl">
+            <ColumnChart label="Errors per day, with one day read" height={160} format={formatCompact} data-preview-index={21} columns={month.map((d) => ({ key: d.date, label: day(d.date), value: d.errors }))} />
+          </Plane>
         </State>
       </Specimen>
     </>

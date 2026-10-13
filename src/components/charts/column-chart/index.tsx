@@ -23,6 +23,8 @@ type Shared = {
   /** Pixels for the plot, or `fill` to take the height its card gives it (never under 220px). */
   height?: number | 'fill';
   label: string;
+  /** A static pointed column in the Atlas; real charts take theirs from the pointer, the keys and the Meridian. */
+  'data-preview-index'?: number;
   /** Label every nth column from the first, for a scale with its own rhythm: 6 puts hours at 00, 06, 12, 18. By
    * default labels count back from the last column, as many as fit. */
   labelEvery?: number;
@@ -86,17 +88,21 @@ export function ColumnChart({
   height = 200,
   label,
   labelEvery: every,
+  'data-preview-index': previewIndex,
   className,
   ...form
 }: ColumnChartProps) {
   const [box, { width }] = useSize<HTMLElement>();
   const meridian = useMeridian(dates ?? []);
   const [own, setOwn] = useState<number | null>(null);
+  // Whether this chart is the one being pointed at: a chart that only follows another chart's cursor marks the day and
+  // keeps its readout to itself, as the Trend chart does.
+  const [local, setLocal] = useState(false);
   const { drawn, bars } = form.parts ? stack(form.columns, form.parts) : { drawn: null, bars: form.columns.map((c) => ({ key: c.key, label: c.label, values: [c.value], total: c.value })) };
   const n = bars.length;
   const timed = Boolean(dates && dates.length === n);
-  const active = timed ? meridian.index : own;
-  const set = (i: number | null) => (timed ? meridian.setIndex(i) : setOwn(i));
+  const active = previewIndex ?? (timed ? meridian.index : own);
+  const set = (i: number | null) => { (timed ? meridian.setIndex : setOwn)(i); setLocal(i !== null); };
   const fill = height === 'fill';
   const soFar = running ? n - 1 : -1;
 
@@ -228,7 +234,7 @@ export function ColumnChart({
           </div>
         </div>
         {on && at !== null && drawn ? (
-          <Readout at={left + at * (column + GAP) + (after ? column : 0)} after={after}>
+          <Readout at={left + at * (column + GAP) + (after ? column : 0)} after={after} visible={local || previewIndex !== undefined}>
             <p className="t-eyebrow mb-1.5 break-words">{on.label}{at === soFar ? ' · so far' : null}</p>
             {/* The parts top to bottom, as they sit in the column, a part at zero included, then the total. */}
             {drawn.map((p, k) => ({ p, k })).reverse().map(({ p, k }) => (
