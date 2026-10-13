@@ -67,7 +67,7 @@ The sample signs in as Maya Chen, an Owner. At the foot of the rail's menu, View
 
 ## Tasks to try
 
-Each task runs in the sample, signed in as Maya Chen unless it says otherwise. The product's own browser journeys walk tasks 1, 2, 3, 5 and 6.
+Each task runs in the sample, signed in as Maya Chen unless it says otherwise. The product's own browser journeys walk tasks 1, 2, 3, 5, 6, 9 and 10.
 
 1. **Follow a request from Main into Business.** Start at Home and press Usage in the Business region. The address is `/usage` and the rail names Business, listing Revenue, Customers, Usage and Requests. Press Requests, then a row of the table. The request's own page opens and the rail still names Business with Requests marked as current. Refresh, then press Back: the rail stays on the workspace of the address each time.
 2. **Switch workspace from the rail.** Start at Home. Open the menu at the top of the rail, named for the product and the workspace in view, and press Engineering under Show. The address becomes `/engineering` and the rail lists Now, Services, Tickets, Tests, Releases and API keys. Open ⌘K: the destinations it lists are Engineering's.
@@ -77,6 +77,8 @@ Each task runs in the sample, signed in as Maya Chen unless it says otherwise. T
 6. **See the product as a Viewer.** Open the rail's menu and, under View as, choose Grace Liu. Members and API keys leave the rail. Open Tickets: there is no New ticket button and no menu on a row, and one line says who can create and change tickets. Type `/members` into the address bar: the page says "You don't have access to Members", says who can open it, and offers "Go to Home".
 7. **Read the bell.** Press the bell, Alerts, in the top bar. Press an alert that names a customer past due: Customers opens filtered to past due. Press one about failing verifications: Tests opens on the latest run of each verification, filtered to the ones that failed, which is what the alert counts, and the rail moves to Engineering.
 8. **Find out why a release is not ready.** In Engineering, open Releases and pick a row whose state is In testing; the Main figure In testing opens that list. Its Verification cell names each required verification that has not passed and why: it failed, it was skipped, or it has no run yet (a phone counts them: "1 failed, 2 not run"). Press the "of" count, for example "2 of 3 passed", and Tests opens with only that release's runs, under a line that names the release. The count is a link in the table a wide screen draws; on a phone the row is a card and the count is text.
+9. **Open every destination, as an Owner and as a Viewer.** Open each of the fifteen destinations by its address, in the order of the rail. Each opens at its address, its page is headed with the entry's name, the rail names the entry's workspace and marks the entry as the current page. Signed in as Grace Liu, the Viewer, every entry opens except Members and API keys; typing the address of either draws "You don't have access to" followed by its name.
+10. **Open a customer from the list.** In Business, open Customers and press a row. The customer's page opens, headed with its name, and the rail still names Business. Open the past-due customer, Lumen Studio, at `/customers/lumen-studio`. An address under `/customers/` that names nobody draws the missing-record page inside the shell, with the rail still on Business.
 
 ## Three meanings of "workspace"
 

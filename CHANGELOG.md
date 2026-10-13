@@ -2,6 +2,19 @@
 
 Every release of ZZ Meridian, newest first. Versions follow semver: a removed or renamed token, prop or card is major; a new card, token or variant is minor; a corrected value is a patch. Each entry says what breaks and what to do instead.
 
+## [Unreleased]
+
+### Breaking
+
+- **The sample's pages are renamed.** Overview is Home, Analytics is Usage at `/usage` and Operations is Services at `/services`, with new homes at `/business` (Revenue) and `/engineering` (Now) and no redirect from an old address. The feature ids and the view tools follow: `view_overview`, `view_analytics` and `view_health` are `view_home`, `view_usage` and `view_services`. The embed views are `/embed/home` and `/embed/now` (they were `/embed/overview` and `/embed/health`), and the Services tool names no embed view. The rail labels Operations tickets and Tests and verification are Tickets and Tests; their addresses stay. An update writes none of a project's pages, configuration or views: a project that kept the sample's pages renames what it kept, or keeps its own names and says so in `.meridian/keep.json`.
+- **The assistant walk-through looks for Home.** `scripts/lib/sample.ts` decides whether the walk-through applies by the folder `(home)` and the file `src/views/home-context.ts`, and `scripts/assistant.ts` and `scripts/fake-llm.ts` name `view_home`. A project that kept the sample's Overview under its old folder gets "not applicable" for that suite until it renames the folder and the file.
+
+### Added
+
+- **Business opens on Revenue and Engineering on Now.** Each workspace has a home of its own: `/business` shows the customers, what they paid in 30 days and who is past due, and `/engineering` shows every service as it is now and the incident nobody has resolved. Both are a first, thin form that reads what the product already records. Each has its feature, its view tool (`view_revenue`, `view_now`), its context and its specification.
+- **A customer has a page.** `/customers/<id>` shows one customer's plan, status, requests, payment, region and last 14 days, and a row of Customers opens it. An id that names no customer draws the missing-record page. Its feature asks what the list asks, so a person refused the page is led back into Business.
+- **The journeys walk every destination.** `journeys/workspaces.ts` opens each of the fifteen rail destinations as an Owner, under the title its navigation check names and in its workspace; opens thirteen as a Viewer and is refused Members and API keys by name; and opens a customer from the list and a customer that does not exist.
+
 ## [0.15.0] · 2026-10-13
 
 ### Added

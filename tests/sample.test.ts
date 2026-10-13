@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { CUSTOMER_ROWS, REQUESTS, demoTotals } from '@/system/fixtures/sample';
-import { payloadsOf, traceOf, usageOf } from '@/system/fixtures/sample-records';
+import { CUSTOMERS, payloadsOf, traceOf, usageOf } from '@/system/fixtures/sample-records';
 import verify from '../scripts/verify.config';
 
 describe('the sample agrees with itself', () => {
@@ -33,11 +33,17 @@ describe('the sample agrees with itself', () => {
 
 describe('the detail pages verify checks by default', () => {
   const byId = (route: string) => REQUESTS.find((r) => `/requests/${r.id}` === route);
-  const [get, post, missing404, absent] = verify.detailRoutes;
+  const [get, post, missing404, absent, active, pastDue, nobody] = verify.detailRoutes;
+  const customer = (route: string) => CUSTOMERS.find((c) => `/customers/${c.id}` === route);
   it('still show the states their comments name', () => {
     expect(byId(get)).toMatchObject({ method: 'GET', status: 200, model: null });
     expect(byId(post)).toMatchObject({ method: 'POST', route: '/v1/messages', status: 201 });
     expect(byId(missing404)?.status).toBe(404);
     expect(byId(absent)).toBeUndefined();
+  });
+  it('still show the customers their comments name', () => {
+    expect(customer(active)).toMatchObject({ status: 'active' });
+    expect(customer(pastDue)).toMatchObject({ status: 'past due', name: 'Lumen Studio' });
+    expect(customer(nobody)).toBeUndefined();
   });
 });

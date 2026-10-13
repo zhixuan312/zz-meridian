@@ -251,6 +251,55 @@ const SETTINGS = '/settings';
 const MEMBERS = '/members';
 const ATLAS = nav.flatMap((g) => g.items).find((i) => i.href === '/system' || i.href.startsWith('/system/'))?.href ?? null;
 const detail = config.detailRoutes.find((r) => /^\/requests\/[^/]+$/.test(r) && !r.includes('missing'));
+const CUSTOMERS = '/customers';
+/** A customer's id is its name in lower case with dashes between the words. */
+const slug = (name: string) => name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+const customerRoutes = config.detailRoutes.filter((r) => /^\/customers\/[^/]+$/.test(r));
+const unknownCustomer = customerRoutes.find((r) => r.includes('missing'));
+const knownCustomers = customerRoutes.filter((r) => r !== unknownCustomer);
+
+/** The title the navigation check names for a rail route: what its page's heading shows (navigate.ts holds it to the same, by inclusion). */
+const titleOf = (href: string) => config.navigationChecks?.find((c) => c.path === href)?.title;
+const headingOf = (page: Page) => until("the page's heading", () => ask<string>(page, `const h = document.querySelector('main h1, h1'); const t = h ? text(h) : ''; return t || null;`));
+const mainText = (page: Page) => ask<string>(page, `const m = document.querySelector('main'); return m ? text(m) : '';`);
+
+/**
+ * Open one rail destination as a person and report what is wrong with it, or null. A destination the person may open must
+ * draw its title as the heading, with the rail naming the entry's workspace and marking the entry current; one the person
+ * may not open must draw the page that says they lack access to it by its title.
+ */
+async function visit(page: Page, who: string, item: (typeof items)[number], may: boolean): Promise<string | null> {
+  const title = titleOf(item.href);
+  if (title === undefined) return `${item.href} (${item.label}): no navigation check in scripts/verify.config.ts names its title`;
+  try {
+    await go(page, who, item.href);
+    if (may && item.href.startsWith('/system')) {
+      // The Atlas draws its own chrome, not the console rail: it names the workspace it leads back to in its shelf.
+      const back = `Back to ${W[item.workspace!].label}`;
+      await until(`the Atlas to lead back with "${back}"`, () => centre(page, { role: 'link', name: back, within: 'nav[aria-label="Workspaces"]' }));
+      const heading = await headingOf(page);
+      if (!heading.includes(title)) return `${item.href}: expected the heading "${title}"; found "${heading}"`;
+    } else if (may) {
+      await settle(page, who, item.href, item.workspace);
+      const heading = await headingOf(page);
+      if (!heading.includes(title)) return `${item.href}: expected the heading "${title}"; found "${heading}"`;
+    } else {
+      const refusal = `You don't have access to ${title}`;
+      const found = await until('the refusal', async () => ((await mainText(page)).includes(refusal) ? true : null), 6000).then(() => null, async () => `"${(await mainText(page)).slice(0, 80)}"`);
+      if (found) return `${item.href}: expected the page that says "${refusal}"; found ${found}`;
+      const heading = await headingOf(page);
+      if (heading !== title) return `${item.href}: expected the refusal under the heading "${title}"; found "${heading}"`;
+      const probe = persona(who).deniedProbe?.[item.href];
+      if (probe && (await ask<boolean>(page, `return document.body.innerText.includes(${JSON.stringify(probe)});`))) return `${item.href}: expected the refusal to hold none of the page's records; it shows "${probe}"`;
+    }
+    quiet(page, item.href);
+    return null;
+  } catch (e) {
+    return `${item.href}: ${(e as Error).message}`;
+  } finally {
+    page.errors.length = 0;
+  }
+}
 
 let a: Page;
 try {
@@ -517,6 +566,54 @@ try {
     if (ownerOf(landed) !== ownerOf(MEMBERS)) throw new Error(`expected "${out.name}" to stay in ${W[ownerOf(MEMBERS) ?? 'main'].label}; found ${landed}`);
     await settle(a, 'viewer', landed);
     return `("${out.name}" -> ${landed})`;
+  }, () => [a]);
+
+  await step('an Owner opens every destination under its name', config.navigationChecks ? null : 'verify.config.ts declares no navigation checks', async () => {
+    const wrong: string[] = [];
+    for (const item of items) {
+      const why = await visit(a, 'owner', item, true);
+      if (why) wrong.push(why);
+    }
+    if (wrong.length) throw new Error(`expected each of the ${items.length} rail destinations to open under the title its navigation check names, in its workspace, current in the rail; found ${wrong.length} that do not: ${wrong.join('; ')}`);
+    return `(${items.length} destinations)`;
+  });
+
+  await step('a Viewer opens what a Viewer may and is refused the rest by name', config.navigationChecks ? null : 'verify.config.ts declares no navigation checks', async () => {
+    const may = routesOf('viewer');
+    const wrong: string[] = [];
+    for (const item of items) {
+      const why = await visit(a, 'viewer', item, may.includes(item.href));
+      if (why) wrong.push(why);
+    }
+    if (wrong.length) throw new Error(`expected a Viewer to open ${may.length} destinations and be refused the other ${items.length - may.length} by title; found ${wrong.length} that differ: ${wrong.join('; ')}`);
+    return `(${may.length} opened, ${items.length - may.length} refused)`;
+  });
+
+  await step("a customer's page opens from the list, and an unknown customer is a missing record", missing(CUSTOMERS) ?? (knownCustomers.length && unknownCustomer ? null : 'verify.config.ts names no customer detail route, or no missing one'), async () => {
+    const [listed, ...others] = knownCustomers;
+    await go(a, 'owner', CUSTOMERS);
+    await settle(a, 'owner', CUSTOMERS, 'business');
+    const row: Spec = { role: 'link', hrefRe: `^${listed}$`, within: 'main table tbody' };
+    const name = await until(`the row of ${listed}`, () => ask<string | null>(a, `const el = find(${JSON.stringify(row)})[0]; return el ? nameOf(el) : null;`));
+    await press(a, row);
+    await settle(a, 'owner', listed, 'business');
+    const heading = await headingOf(a);
+    const id = listed.slice(CUSTOMERS.length + 1);
+    if (!slug(name).includes(id) || !slug(heading).startsWith(id)) throw new Error(`expected the row "${name}" to open the page of ${id}; found a page headed "${heading}"`);
+    const seen = [`${listed} "${heading}"`];
+    for (const route of others) {
+      await go(a, 'owner', route);
+      await settle(a, 'owner', route, 'business');
+      const h = await headingOf(a);
+      if (!slug(h).startsWith(route.slice(CUSTOMERS.length + 1))) throw new Error(`expected ${route} to open the page of ${route.slice(CUSTOMERS.length + 1)}; found a page headed "${h}"`);
+      if (/404 · Not found/.test(await mainText(a))) throw new Error(`expected ${route} to open a customer's page; found the missing-record screen`);
+      seen.push(`${route} "${h}"`);
+    }
+    await go(a, 'owner', unknownCustomer!);
+    await settle(a, 'owner', unknownCustomer!, 'business');
+    const body = await mainText(a);
+    if (!/404 · Not found/.test(body)) throw new Error(`expected ${unknownCustomer} to draw the missing-record screen inside the shell; found "${body.slice(0, 100)}"`);
+    return `(${seen.join(', ')}; ${unknownCustomer} is a missing record)`;
   }, () => [a]);
 } finally {
   for (const p of opened) p.close();
