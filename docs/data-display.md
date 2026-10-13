@@ -9,6 +9,7 @@ How Meridian shows numbers: which form to use, how colour is assigned, how figur
 | One number that matters most | A hero figure in the featured card | Featured metric |
 | Two numbers of equal standing that are never added together | Two hero figures, the halves of the one featured card, each with its own change and chart | Featured metric |
 | A number with its change and shape | A tile | Metric tile |
+| The same number for many things at once (eight customers, six regions), each with its change and shape | A wall of compact tiles: the name, the change, one line and the shape | Metric tile |
 | Change over time | A line or an area on one axis | Trend chart |
 | The shape of a trend beside a figure | A line without axes | Sparkline |
 | A ranking | Horizontal bars, the longest first | Bar list |
@@ -18,6 +19,8 @@ How Meridian shows numbers: which form to use, how colour is assigned, how figur
 | Parts of a whole over a long run of days, where the shape is the story | Stacked bands | Trend chart |
 | Two dimensions of time (weekday by hour, or a year of days as week by weekday) | A grid of cells | Heatmap |
 | A service's history | Day bars | Uptime bars |
+| How long a service has been operational | One line under its day bars: its run | Status list |
+| An incident, step by step | A timeline, newest first, each update timed from the incident's start | Incident card |
 | Many records | A table | Data table |
 
 Sometimes the answer is not a chart: one number and a sentence beat a chart with one interesting point.
@@ -62,13 +65,35 @@ Each takes `running`, and each says "so far" wherever that period is read: the r
 - A delta's arrow carries direction; its colour carries the judgement, which depends on the measure (latency down is good).
 - A change says what it is against, in words beside it: "vs previous period" unless the caller says otherwise ("vs the week before"). The Featured metric and the Metric tile take the words as `compare`.
 - One fact the featured figure does not say goes on one line under its change, beside a neutral dot (`finding`). It is a fact counted by code, not a warning, so the dot is never a status colour there.
+- A Metric tile's finding names its tone, and there is no default. A fact ("The busiest day was 1 Oct, with 128K") stands beside the neutral dot; a finding that needs a look ("2.7× usual on 21 and 22 Sept") stands beside the warning dot. The code that counts a finding knows which it is and says so. A fact is never made a warning to draw the eye, and the dot is never the only sign: the words say what was found.
 - A few figures that support the featured one go in its foot: a band inside the lit surface, a label over each figure, and one link. A figure that needs its own change or its own shape is a Metric tile, not a line of the foot.
 - A page has one featured card. Two measures that are peers are its two halves (`peer`): one lit surface and a hairline between, side by side from 42rem of the card's own width (588px) and one above the other below that. Their sum is never drawn.
 
+## A wall of many
+
+The same figure for many things, each with its own change and shape, is a wall of compact Metric tiles (`size="compact"`), not a page of full ones.
+
+- A compact tile is four parts: the name, the change with what it is against, one line that is the figure and then a word or two that sort it ("$41.2K · Scale"), and the Sparkline. It has no figure at the figure size, no hint, no icon and no finding, whatever it is passed. A finding about the wall belongs to the card that holds it.
+- Use it from about six of a kind, where each has a shape worth seeing. Under that, default tiles say more. When only the order matters, a Bar list is the form; when a reader will sort and search, a table.
+- A wall is two tiles to a row on a phone and four on a desk, so eight are two rows. A compact tile is never mixed with default tiles in one row.
+- The change stands where the eye compares it down the wall: on the right of each tile, level with the name, from 17rem of the tile's own width (238px); in a row of its own under the name on a narrower tile.
+- The card that holds the wall says what the figure is, over which days, and what the change is against. The tiles do not repeat a definition.
+
+## Time in an incident, and a run of days
+
+- An incident's updates are timed from the incident's start, not from now: "at the start", "after 42m", "after 1.1h", in the product's durations. A reader of a timeline asks how long each step took, and that reading does not move as the clock does. An update inside the first minute reads "at the start". Only the head says when the incident started against now, and each update keeps its exact time in its title.
+- An incident names who has it and where the work is tracked, on one caption line under its head: the owner as text, the ticket as a link named by the ticket's title. Either stands alone, and with neither there is no line. Neither is passed to a card customers read.
+- A service's run is the operational days in a row that end today, counted from the same days its strip draws: "Operational for 40 days". The Status list draws it with `run`, on a line of its own under the bars.
+- A run is "its longest in 90" only when no run among the days kept is longer. One that reaches the earliest day kept is "at least 90 days" and is never called the longest, because what came before is not known.
+- A service that is not operational today has no run: it reads "Degraded today" or "Down today".
+- A run is a count of whole days, said as a figure and set in ink in every state. It is never a sentence of praise.
+
 ## Interaction
 
-- Every time chart joins the page's Meridian: pointer, touch drag, arrow keys, Home, End, Escape. Every chart and tile reads the day.
+- Every time chart joins the page's Meridian: pointer, touch drag, arrow keys, Home, End, Escape. Every chart reads the day, and so does every tile whose points are the page's.
 - A point of the Meridian need not be a day. The Featured metric reads the pointed point only when its `points` holds one value for each of the Meridian's dates, the rule a chart joins by, and its pill names the point as the caller names points (`pointLabel`: "Week of 14 Sept"), or by its date.
+- A Metric tile and a Sparkline follow the same rule. A tile reads the pointed point and names its date, and a Sparkline marks it, only when it has one value for each of the Meridian's dates. The cursor is a position in the page's list of dates, so a series of any other length would read a different day: a tile of a customer's 14 days on a page of 30 keeps its period's figure and its change, and its Sparkline draws no cursor.
+- A compact tile's line never reads the cursor, whatever its points: a wall keeps the figures a reader is comparing. Its Sparkline follows the Sparkline's rule.
 - A chart read mark by mark is one Tab stop, and its keys move the cursor the pointer moves: a Trend chart's points, a Column chart's columns, a Heatmap's cells. Escape and blur let go.
 - The tooltip shows the day and every series' value; it appears only on the chart being pointed at.
 - Every chart renders a visually hidden table with the same numbers, so screen readers and models read the data, not the picture.

@@ -110,14 +110,15 @@ export function errorSpikes(data: Pick<HomeData, 'series' | 'incidents' | 'activ
 /**
  * What the person sees of the same findings (decision 0011): each daily figure's usual value (its median, for "2.7×
  * usual" when the Meridian points at a day) and the error rate's latest spike as one short line that points at its peak.
+ * A spike needs a look, so its tone is the warning one.
  */
-export function homeFindings(series: DailyPoint[]): { usual: { errorRate: number; p95: number }; errorSpike?: { text: string; day: string } } {
+export function homeFindings(series: DailyPoint[]): { usual: { errorRate: number; p95: number }; errorSpike?: { text: string; day: string; tone: 'warning' } } {
   const errorRate = series.map((d) => (d.requests ? d.errors / d.requests : 0));
   const usual = { errorRate: median(errorRate), p95: median(series.map((d) => d.p95)) };
   const run = runs(deviations(errorRate, { direction: 'up' }).map((d) => d.index)).at(-1);
   if (!run || !(usual.errorRate > 0)) return { usual };
   const peak = run.reduce((m, i) => (errorRate[i] > errorRate[m] ? i : m));
-  return { usual, errorSpike: { text: `${times(errorRate[peak] / usual.errorRate)} usual on ${days(run.map((i) => series[i].date))}`, day: series[peak].date } };
+  return { usual, errorSpike: { text: `${times(errorRate[peak] / usual.errorRate)} usual on ${days(run.map((i) => series[i].date))}`, day: series[peak].date, tone: 'warning' } };
 }
 
 /**

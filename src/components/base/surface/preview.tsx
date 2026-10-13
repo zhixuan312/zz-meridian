@@ -38,13 +38,13 @@ export default function SurfacePreview() {
         <div className="grid w-full gap-4 md:grid-cols-2">
           <div className="rounded-xl border border-line p-4">
             <p className="t-eyebrow mb-3">Console</p>
-            <MetricTile label="Requests" icon={<Zap />} value={612_480} delta={0.041} daily={s.map((d) => d.requests)} format={formatCompact} emphasis />
+            <MetricTile label="Requests" icon={<Zap />} value={612_480} delta={0.041} points={s.map((d) => d.requests)} format={formatCompact} emphasis />
           </div>
           <div className="rounded-xl border border-dashed border-line-strong p-4">
             <p className="t-eyebrow mb-3">Embed · inline</p>
             <SurfaceOverride surface={{ kind: 'embed', mode: 'inline', connected: true }}>
               <EmbedFrame title="Latency · Last 7 days" meta={<Freshness updatedAt={DEMO_UPDATED_AT} now={DEMO_NOW} />} consolePath="/?period=7d">
-                <MetricTile label="Latency p95" icon={<Gauge />} value={301} delta={0.02} intent="down" daily={s.map((d) => d.p95)} format={formatDuration} />
+                <MetricTile label="Latency p95" icon={<Gauge />} value={301} delta={0.02} intent="down" points={s.map((d) => d.p95)} format={formatDuration} />
               </EmbedFrame>
             </SurfaceOverride>
           </div>

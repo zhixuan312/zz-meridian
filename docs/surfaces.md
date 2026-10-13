@@ -25,6 +25,7 @@ Below 1024px the rail becomes a drawer (the same node, so nothing is defined twi
 | Navigation | Rail | Drawer from the masthead's menu button; closes on Escape, on the scrim and on navigation | AppShell |
 | Masthead | Title, head-note, actions on one band | Title row with the menu button; head-note under it; actions wrap to their own row, the primary last | PageFrame |
 | Metric tiles | As many across as the row holds: four, three or two | Counted from the row's own width, never leaving a hole: four are four or two (two from 34rem), three are three or one (three from 48rem), two are two from 34rem | Row `tiles` |
+| A wall of compact tiles | Four across, so eight are two rows; each tile has its change on the right, level with the name | Two to a row; each tile is three rows: the name, the change, the line | Metric tile, which reads its own width (17rem); the page lays out the wall |
 | Tables | Columns, sortable heads | A list of cards, one per row: the primary column as the title, two or three facts under it, the status at the end; low-value columns drop first (`hideBelow`). Both read the table's own width, so a table in a narrow frame on a wide screen becomes cards too | DataTable |
 | Dialogs | Centred, 520px | A bottom sheet, full width, safe-area padding | Dialog |
 | Menus and selects | Popover | Popover, at least 44px rows on touch | Menu, Select |
@@ -127,11 +128,11 @@ All components are surface-agnostic by construction: they size from control toke
 | Period select | The reporting period, in the URL or held by the page | Masthead actions | Masthead actions row | Embed head, compact |
 | Freshness | When the data last arrived; stale after a contract | Masthead meta | Under the title | Embed head |
 | Featured metric | The page's one leading figure with its chart; or two figures of equal standing as the halves of the one card | The wide cell of the first row; two figures side by side, from 42rem of the card's own width | Full width; two figures in one column, the first figure first | Fullscreen only; an inline view leads with Metric tiles |
-| Metric tile | One number, its change, its shape | Four across | Two or one across | One to three across; the inline view's figure row |
-| Meridian | One time cursor for every chart and tile on a page | Pointer and arrow keys | Finger: press and drag | Same, inside the view |
+| Metric tile | One number, its change, its shape, and one finding beside a neutral dot (a fact) or the warning dot (it needs a look). Compact, one of a wall of many: the name, the change, one line and the shape | Four across; a wall of compact tiles four across | Two or one across; compact tiles two to a row | One to three across; the inline view's figure row |
+| Meridian | One time cursor for every chart on a page, and for every tile and Sparkline with one value for each of its dates | Pointer and arrow keys | Finger: press and drag | Same, inside the view |
 | Trend chart | A time series on one axis; or parts of one whole, stacked | 248px tall | 180px | 160px inline, 248px fullscreen |
 | Column chart | Counts side by side, one column a category or a period; or each column a whole split into its parts | 200px tall, or its card's height; a value above each column while a column is 36px or wider | Date labels thin and category labels cut shorter; under 36px a column, a value shows for the column pointed at, and a stacked chart's readout pins to the leading edge | Same as mobile inline; the console's in fullscreen |
-| Sparkline | Shape beside a figure | Same | Same | Same |
+| Sparkline | Shape beside a figure; it marks the pointed day only when its values are the page's | Same | Same | Same |
 | Bar list | A ranked list with bars | Same | Same | Top five, then Expand |
 | Composition bar | One whole split into parts | Legend four across | Legend two across | Same as mobile |
 | Heatmap | Weekday by hour, or a year of days | 24 columns of hours; a calendar's column is a week | Hours grouped in threes (8 columns); a calendar shows the latest weeks that fit at 12px a cell | Fullscreen only |
@@ -140,7 +141,8 @@ All components are surface-agnostic by construction: they size from control toke
 | Data table | A list of records: sort, select, page, empty and loading states | Columns | Card list | Five rows, Expand |
 | Page loading | The masthead and body shapes a route shows while its page streams in | The page's own width | Same | None |
 | Activity feed | What happened, who did it, when | Timeline | Same | Five events |
-| Status list | Services and their state | Rows with uptime bars | Rows, bars under | Same as mobile |
+| Status list | Services and their state; with `run`, how long each has been operational and whether that is its longest | Rows with uptime bars; a run on a line under the bars | Rows, bars under, a run under them | Same as mobile |
+| Incident card | An incident: what is affected, its state, its owner and its ticket, and every update timed from the incident's start | The card on Now and beside the Services figure; a row under Past incidents | The card stacks under the figure; the owner and the ticket wrap | Fullscreen only; an inline view reduces a live incident to a Banner |
 | Detail head | A record's identity, state and actions | Masthead | Masthead, actions in a menu | Embed head |
 | Form section | A titled group of settings with its own save | Two columns: description, fields | One column | Not offered |
 | Embed frame | The head and token bridge of an MCP App view | Not used | Not used | Always |

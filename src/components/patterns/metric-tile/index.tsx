@@ -12,9 +12,28 @@ import { useMeridianIndex, usePointMeridian } from '@/components/charts/meridian
 import { StatusDot } from '@/components/ui/status-dot';
 
 /**
+ * Compact, from 17rem of the tile's own width (238px, a rem being the root's 14px): the name and the line on the left,
+ * the change on the right, its figure level with the name and its words level with the line, so the changes of a wall
+ * stand in one column down its right edge. Narrower, as two to a row on a phone, the three are three rows and the name
+ * has the whole width. A container query decides it, so the server draws the layout the browser keeps. Literal strings,
+ * so Tailwind finds them.
+ */
+const COMPACT = 'grid grid-cols-1 items-center gap-y-0.5 @min-[17rem]:grid-cols-[minmax(0,1fr)_auto] @min-[17rem]:gap-x-3';
+const COMPACT_NAME = '@min-[17rem]:col-start-1 @min-[17rem]:row-start-1';
+const COMPACT_DELTA = '@min-[17rem]:col-start-2 @min-[17rem]:row-start-1 @min-[17rem]:justify-self-end';
+// Beside the line the words may take under half the tile, so words that run long are cut before they take the name's room.
+const COMPACT_COMPARE = '@min-[17rem]:col-start-2 @min-[17rem]:row-start-2 @min-[17rem]:max-w-[45cqw] @min-[17rem]:justify-self-end @min-[17rem]:truncate';
+const COMPACT_LINE = '@min-[17rem]:col-start-1 @min-[17rem]:row-start-2';
+
+/**
  * One number the page exists to show, with its change and its shape. The figure is set at the figure size with
- * its unit and fraction stepped down. When the page's Meridian points at a day, the tile reads that day instead.
+ * its unit and fraction stepped down. When the page's Meridian points at a point, the tile reads that point instead,
+ * as long as its points are the page's: one for each of the Meridian's dates.
  * One tile per row may be `emphasis`: the finding. Its figure takes the accent; every other tile stays ink.
+ *
+ * `size="compact"` is the same tile for a wall of many: the name, the change, one line that is the figure and then the
+ * note, and the shape. It has no figure at the figure size, no hint, no icon and no finding, whatever it is passed, and
+ * its line keeps the period's figure whatever the page points at.
  */
 export function MetricTile({
   label,
@@ -24,13 +43,14 @@ export function MetricTile({
   note,
   compare = 'vs previous period',
   intent = 'up',
-  daily,
+  points,
   format,
   split,
   emphasis,
   icon,
   baseline,
   finding,
+  size,
   className,
 }: {
   label: string;
@@ -40,38 +60,84 @@ export function MetricTile({
   value: number | string;
   /** Change against the previous period, as a fraction. */
   delta?: number | null;
-  /** A short line where the change would sit, for a figure no period comparison fits: who is past due, what is next. */
+  /**
+   * A short line where the change would sit, for a figure no period comparison fits: who is past due, what is next.
+   * On a compact tile it follows the figure on the tile's one line: "$41.2K · Scale".
+   */
   note?: ReactNode;
   /** What the change is measured against, beside it: "vs previous period", "vs the half hour before". */
   compare?: string;
   intent?: 'up' | 'down' | 'neutral';
-  /** One value per day of the period, for the sparkline and the Meridian readout. */
-  daily?: number[];
+  /**
+   * One value a point of the period, oldest first, for the sparkline. The tile reads the pointed point only when it
+   * has one for each of the Meridian's dates.
+   */
+  points?: number[];
   /** A formatter name (serialisable, so a server page can render the tile) or a function. Ignored for a word value. */
   format?: NumberFormat | ((n: number) => string);
   /** Split a formatted value into prefix, integer, fraction and unit for the figure; defaults to a sensible split. */
   split?: (s: string) => { pre?: string; int: string; frac?: string; unit?: string };
   emphasis?: boolean;
   icon?: ReactNode;
-  /** What is usual for one day of `daily` (its median): when the Meridian points at a day, the tile says how that day compares ("2.7× usual"). */
+  /** What is usual for one of `points` (its median): when the Meridian points at a day, the tile says how that day compares ("2.7× usual"). */
   baseline?: number;
   /**
-   * One thing the period's figures say that the number does not: "2.7× usual on 21 and 22 Sept". Computed by code, the
-   * same finding both agents read. With `day`, it is a button that points the page's Meridian at that day.
+   * One thing the period's figures say that the number does not, computed by code, the same finding both agents read.
+   * Its `tone` says what kind it is, and the caller always says: `neutral` for a fact ("357 of 360 days"), beside a
+   * neutral dot; `warning` for one that needs a look ("2.7× usual on 21 and 22 Sept"), beside the warning dot. With
+   * `day`, it is a button that points the page's Meridian at that day.
    */
-  finding?: { text: string; day?: string };
+  finding?: { text: string; day?: string; tone: 'neutral' | 'warning' };
+  /** `compact` for a wall of many tiles: the name, the change, one line and the shape. */
+  size?: 'compact';
   className?: string;
 }) {
   const { index, dates } = useMeridianIndex();
   const point = usePointMeridian();
-  const reading = index !== null && daily && index < daily.length ? daily[index] : null;
+  const compact = size === 'compact';
+  // The page's cursor is this tile's only when the tile has a value for each of the page's dates: the rule a chart joins
+  // the Meridian by. A tile with any other number of points keeps its period and its change, and so does a compact one.
+  const reading = !compact && index !== null && points && points.length === dates.length ? points[index] : null;
   const fmt = typeof format === 'function' ? format : (n: number) => formatBy(format ?? 'count', n);
   const word = typeof value === 'string';
   const text = word && reading === null ? value : fitFigure(fmt(reading ?? (word ? 0 : value)), reading ?? (word ? 0 : (value as number)));
   const parts = word && reading === null ? { int: value } : (split ?? splitFigure)(text);
+  // Under two values there is no shape to draw, so the tile is laid out as one that was given none.
+  const shape = points && points.length > 1 ? points : null;
+  if (compact) {
+    return (
+      <Card data-size="compact" className={cn('@container gap-0 overflow-hidden px-4 pt-3', shape ? 'pb-0' : 'pb-3', className)}>
+        <div className={COMPACT}>
+          {/* A wall is scanned by name, so the name is the ink; a long one is cut and keeps the whole of itself in its title. */}
+          <h2 className={cn('t-small min-w-0 truncate font-medium text-ink', COMPACT_NAME)} title={label}>{label}</h2>
+          {delta !== undefined ? (
+            // Narrow, one line high enough for one line, as on the default tile: words that do not fit wrap out of sight whole.
+            <div className="flex h-5 flex-wrap content-start items-center gap-x-2 overflow-hidden text-xs @min-[17rem]:contents">
+              <Delta value={delta} intent={intent} className={COMPACT_DELTA} />
+              {delta === null ? (
+                <span className="sr-only">No earlier period to compare</span>
+              ) : (
+                <span className={cn('leading-5 whitespace-nowrap text-ink-3', COMPACT_COMPARE)} title={compare}>{compare}</span>
+              )}
+            </div>
+          ) : null}
+          {/* The figure comes first, so what a narrow tile cuts is the end of the note, never the number. */}
+          <p data-line className={cn('min-w-0 truncate text-xs leading-5 text-ink-3', COMPACT_LINE)} title={!note ? text : typeof note === 'string' ? `${text} · ${note}` : undefined}>
+            <span className={cn('t-num font-medium', emphasis ? 'text-accent-ink' : 'text-ink-2')}>{text}</span>
+            {note ? <>{' · '}{note}</> : null}
+          </p>
+        </div>
+        {shape ? (
+          <div className="-mx-4 mt-2">
+            <Sparkline values={shape} color={emphasis ? 'accent' : 'neutral'} height={28} />
+          </div>
+        ) : null}
+      </Card>
+    );
+  }
   // Phones, without a sparkline: one row, the label and its line on the left and the figure on the right, so a stack
   // of four tiles is half a screen rather than a whole one. Designed for the width, not shrunk to it.
-  const row = !daily;
+  const row = !shape;
   return (
     <Card className={cn('gap-0 overflow-hidden px-(--card-pad) pt-[calc(var(--card-pad)-2px)] pb-0', row && 'max-sm:grid max-sm:grid-cols-[minmax(0,1fr)_auto] max-sm:items-center max-sm:gap-x-4 max-sm:py-3.5', className)}>
       <div className={cn('flex items-center gap-2', row && 'max-sm:col-start-1 max-sm:row-start-1')}>
@@ -86,9 +152,9 @@ export function MetricTile({
         ) : null}
       </div>
       {/* Phones: the sparkline sits beside the figure, so a stack of tiles stays short. */}
-      <div className={cn('grid grid-cols-1', daily && 'max-sm:grid-cols-[minmax(0,1fr)_7rem] max-sm:items-end max-sm:gap-4 max-sm:pb-(--card-pad)', row && 'max-sm:contents')}>
+      <div className={cn('grid grid-cols-1', shape && 'max-sm:grid-cols-[minmax(0,1fr)_7rem] max-sm:items-end max-sm:gap-4 max-sm:pb-(--card-pad)', row && 'max-sm:contents')}>
         <div className={cn('min-w-0', row && 'max-sm:contents')}>
-          <p className={cn(word && reading === null ? 'mt-3 text-2xl leading-[1.15] font-semibold tracking-[-0.02em] text-balance' : 't-figure t-num mt-3', emphasis ? 'text-accent-ink' : 'text-ink', row && 'max-sm:col-start-2 max-sm:row-span-2 max-sm:row-start-1 max-sm:mt-0 max-sm:text-right max-sm:text-xl')} aria-live="off">
+          <p data-value className={cn(word && reading === null ? 'mt-3 text-2xl leading-[1.15] font-semibold tracking-[-0.02em] text-balance' : 't-figure t-num mt-3', emphasis ? 'text-accent-ink' : 'text-ink', row && 'max-sm:col-start-2 max-sm:row-span-2 max-sm:row-start-1 max-sm:mt-0 max-sm:text-right max-sm:text-xl')} aria-live="off">
             {parts.pre ? <span className="unit pre">{parts.pre}</span> : null}
             {parts.int}
             {parts.frac ? <span className="frac">{parts.frac}</span> : null}
@@ -118,25 +184,27 @@ export function MetricTile({
             finding.day ? (
               <button
                 type="button"
+                data-finding
                 onClick={() => point(finding.day!)}
                 aria-label={`${finding.text}. Point at ${formatDate(finding.day)}`}
                 className={cn('hit -mx-1 mt-1 flex max-w-full min-w-0 items-start gap-1.5 rounded-sm px-1 text-left text-xs text-ink-2 transition-colors duration-(--dur-hover) hover:text-ink', row && 'max-sm:col-start-1 max-sm:row-start-3')}
               >
-                {/* A finding is short and its words are the point: it wraps rather than losing its end. */}
-                <StatusDot tone="warning" className="mt-[0.3em]" />
+                {/* A finding is short and its words are the point: it wraps rather than losing its end. Its dot is the
+                    caller's to say: neutral for a fact, the warning dot for one that needs a look. */}
+                <StatusDot tone={finding.tone} className="mt-[0.3em]" />
                 <span className="min-w-0 text-pretty">{finding.text}</span>
               </button>
             ) : (
-              <p className={cn('mt-1 flex min-w-0 items-start gap-1.5 text-xs text-ink-2', row && 'max-sm:col-start-1 max-sm:row-start-3')}>
-                <StatusDot tone="warning" className="mt-[0.3em]" />
+              <p data-finding className={cn('mt-1 flex min-w-0 items-start gap-1.5 text-xs text-ink-2', row && 'max-sm:col-start-1 max-sm:row-start-3')}>
+                <StatusDot tone={finding.tone} className="mt-[0.3em]" />
                 <span className="min-w-0 text-pretty">{finding.text}</span>
               </p>
             )
           ) : null}
         </div>
-        {daily ? (
+        {shape ? (
           <div className="-mx-(--card-pad) mt-3 max-sm:mx-0 max-sm:mt-0">
-            <Sparkline values={daily} color={emphasis ? 'accent' : 'neutral'} height={40} />
+            <Sparkline values={shape} color={emphasis ? 'accent' : 'neutral'} height={40} />
           </div>
         ) : (
           <div className="h-(--card-pad) max-sm:hidden" />

@@ -7,12 +7,13 @@ import { useSize } from '@/components/charts/use-size';
 
 /**
  * A trend without axes, beside the figure it qualifies. It shows shape, never values, so it carries no labels; when
- * the page's Meridian points at a day, a hairline marks that day.
+ * the page's Meridian points at a day, a hairline marks that day, as long as the values are the page's: one for each of
+ * the Meridian's dates.
  */
 export function Sparkline({ values, color = 'accent', height = 36, className }: { values: number[]; color?: number | 'accent' | 'neutral'; height?: number; className?: string }) {
   const id = useId().replace(/[^a-zA-Z0-9_-]/g, '');
   const [ref, { width: W }] = useSize<HTMLDivElement>();
-  const { index } = useMeridianIndex();
+  const { index, dates } = useMeridianIndex();
   // Under two values there is no shape to draw, and `Math.min()`/`Math.max()` over fewer than two give ±Infinity, so
   // the area path closed into a stray filled triangle. The figure stands alone instead — the README's promise.
   if (values.length < 2) return null;
@@ -23,7 +24,9 @@ export function Sparkline({ values, color = 'accent', height = 36, className }: 
   const pts = values.map((v, i) => [(i / Math.max(1, values.length - 1)) * W, pad + (1 - (v - min) / span) * (H - pad - floor)] as [number, number]);
   const line = W ? monotonePath(pts) : '';
   const c = SERIES_VAR(color);
-  const at = index !== null && index < pts.length ? pts[index] : null;
+  // The page's cursor is this line's only when it has a value for each of the page's dates: the rule a chart joins the
+  // Meridian by. Fourteen days of a customer on a page of thirty would otherwise mark the wrong day.
+  const at = index !== null && pts.length === dates.length ? pts[index] : null;
   return (
     <div ref={ref} aria-hidden className={className} style={{ height }}>
       {W ? (

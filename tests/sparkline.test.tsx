@@ -1,5 +1,6 @@
 import { render } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
+import { Meridian } from '@/components/charts/meridian';
 import { Sparkline } from '@/components/charts/sparkline';
 
 // jsdom measures nothing: a real ResizeObserver never fires, so `useSize` stays at width 0 and the chart draws no SVG
@@ -26,5 +27,24 @@ describe('Sparkline', () => {
       expect(d).not.toMatch(/Infinity|NaN/);
       expect(d.length).toBeGreaterThan(0);
     }
+  });
+
+  // The cursor is the hairline and the dot. It is the page's, so it is drawn only for values that are the page's: one
+  // for each of the Meridian's dates. Fourteen days of a customer on a page of thirty marked the wrong day.
+  const dates = ['2026-09-29', '2026-09-30', '2026-10-01', '2026-10-02'];
+  const cursor = (c: HTMLElement) => [c.querySelector('svg line'), c.querySelector('svg circle')];
+
+  it('marks the pointed day when it has a value for each of the page\'s dates', () => {
+    const { container } = render(<Meridian dates={dates} day={dates[2]}><Sparkline values={[4, 9, 6, 7]} /></Meridian>);
+    for (const mark of cursor(container)) expect(mark).not.toBeNull();
+  });
+
+  it('draws no cursor for values that are not the page\'s, fewer or more, and none outside a Meridian', () => {
+    for (const values of [[4, 9, 6], [4, 9, 6, 7, 8]]) {
+      const { container } = render(<Meridian dates={dates} day={dates[2]}><Sparkline values={values} /></Meridian>);
+      expect(container.querySelector('svg path')).not.toBeNull();
+      for (const mark of cursor(container)) expect(mark).toBeNull();
+    }
+    for (const mark of cursor(render(<Sparkline values={[4, 9, 6, 7]} />).container)) expect(mark).toBeNull();
   });
 });

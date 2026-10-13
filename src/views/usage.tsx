@@ -67,10 +67,10 @@ export function UsageBody(data: UsageData) {
     <ShareUsage data={data} sort={sortLabel} />
     <Stack>
       <Row split="tiles">
-        <MetricTile label={HOME_METRICS.requests.label} hint={HOME_METRICS.requests.hint} icon={<Activity />} value={c.requests} delta={change(c.requests, p.requests)} daily={series.map((d) => d.requests)} format={formatCompact} emphasis />
-        <MetricTile label={HOME_METRICS.errorRate.label} hint={HOME_METRICS.errorRate.hint} icon={<AlertTriangle />} value={c.errorRate} delta={change(c.errorRate, p.errorRate)} intent="down" daily={series.map((d) => (d.requests ? d.errors / d.requests : 0))} format={(n) => formatPercent(n, 2)} />
-        <MetricTile label={HOME_METRICS.p95.label} hint={HOME_METRICS.p95.hint} icon={<Gauge />} value={c.p95} delta={change(c.p95, p.p95)} intent="down" daily={series.map((d) => d.p95)} format={(n) => formatDuration(n)} />
-        <MetricTile label={HOME_METRICS.spend.label} hint={HOME_METRICS.spend.hint} icon={<CircleDollarSign />} value={c.spend} delta={change(c.spend, p.spend)} intent="neutral" daily={series.map((d) => d.spend)} format={(n) => formatCost(n)} />
+        <MetricTile label={HOME_METRICS.requests.label} hint={HOME_METRICS.requests.hint} icon={<Activity />} value={c.requests} delta={change(c.requests, p.requests)} points={series.map((d) => d.requests)} format={formatCompact} emphasis />
+        <MetricTile label={HOME_METRICS.errorRate.label} hint={HOME_METRICS.errorRate.hint} icon={<AlertTriangle />} value={c.errorRate} delta={change(c.errorRate, p.errorRate)} intent="down" points={series.map((d) => (d.requests ? d.errors / d.requests : 0))} format={(n) => formatPercent(n, 2)} />
+        <MetricTile label={HOME_METRICS.p95.label} hint={HOME_METRICS.p95.hint} icon={<Gauge />} value={c.p95} delta={change(c.p95, p.p95)} intent="down" points={series.map((d) => d.p95)} format={(n) => formatDuration(n)} />
+        <MetricTile label={HOME_METRICS.spend.label} hint={HOME_METRICS.spend.hint} icon={<CircleDollarSign />} value={c.spend} delta={change(c.spend, p.spend)} intent="neutral" points={series.map((d) => d.spend)} format={(n) => formatCost(n)} />
       </Row>
       <Row>
         <Card>

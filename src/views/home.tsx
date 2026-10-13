@@ -172,7 +172,7 @@ export function HomeBody(data: HomeData) {
               value={c.errorRate}
               delta={change(c.errorRate, p.errorRate)}
               intent="down"
-              daily={series.map((d) => d.errors / d.requests)}
+              points={series.map((d) => d.errors / d.requests)}
               baseline={found.usual.errorRate}
               finding={found.errorSpike}
               format={(n) => formatPercent(n, 2)}
@@ -184,7 +184,7 @@ export function HomeBody(data: HomeData) {
               value={c.p95}
               delta={change(c.p95, p.p95)}
               intent="down"
-              daily={series.map((d) => d.p95)}
+              points={series.map((d) => d.p95)}
               baseline={found.usual.p95}
               format={(n) => formatDuration(n)}
             />
@@ -195,7 +195,7 @@ export function HomeBody(data: HomeData) {
               value={c.spend}
               delta={change(c.spend, p.spend)}
               intent="neutral"
-              daily={series.map((d) => d.spend)}
+              points={series.map((d) => d.spend)}
               format={(n) => formatCost(n)}
             />
           </div>

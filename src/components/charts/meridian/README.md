@@ -10,7 +10,7 @@ Status: beta
 2. **Cursor line**: a 1px vertical hairline in `ink-3` at 55%, from the top of the plot to its baseline, in every time chart on the page.
 3. **Marks**: a 4px dot on each series at that day, filled with the series colour, ringed 2px in `surface`.
 4. **Tooltip**: only on the chart under the pointer: the date as a mono eyebrow, then one row per series (swatch, label, value). Other charts show the line and the dots, never a second tooltip.
-5. **Readouts**: Metric tiles and the Featured metric swap their figure for that day's value and their delta for the date; a Sparkline marks the day with a hairline and a dot.
+5. **Readouts**: Metric tiles and the Featured metric swap their figure for that day's value and their delta for the date; a Sparkline marks the day with a hairline and a dot. Each does so only when it has one value for each of the Meridian's dates.
 
 ## Variants
 
@@ -18,6 +18,7 @@ Status: beta
 |---|---|
 | Shared | Charts inside one `<Meridian>` whose `dates` have the same length follow one cursor. The default for a dashboard page. |
 | Alone | A chart outside a provider (or with a different number of dates) keeps a private cursor; nothing else moves. |
+| Not the page's points | A Metric tile, a Featured metric or a Sparkline inside the provider with any other number of values than the Meridian has dates does not read the cursor: it keeps its period's figure and draws no mark. |
 
 ## Sizes
 
@@ -28,7 +29,7 @@ The Meridian has no size of its own. The line is 1px; the dots 8px across (4px r
 | State | What shows |
 |---|---|
 | Rest | No line. Tiles show the period's figure and delta. |
-| Pointing | The line and dots on every chart; the tooltip on the chart under the pointer; tiles show the day. The tooltip fades in over `dur-hover`. |
+| Pointing | The line and dots on every chart; the tooltip on the chart under the pointer; tiles whose points are the page's show the day. The tooltip fades in over `dur-hover`. |
 | Keyboard | A focused chart draws a 2px `accent` ring around its plot until a day is chosen; then the line moves with the keys. |
 | Left | Leaving the chart (pointer out, Escape, blur) clears the index everywhere. |
 
@@ -39,6 +40,7 @@ The Meridian has no size of its own. The line is 1px; the dots 8px across (4px r
 - **From an address or a finding**: `Meridian day="2026-09-22"` opens the page pointed at a day (`?day=`), and `usePointMeridian()` points it from outside a chart, as a tile's finding does. The person's next pointer takes over.
 - **From a chart of other dates**: a Heatmap of a year of days does not share the page's list of dates. With `meridian` it points the Meridian at the day read through `usePointMeridian()` when the Meridian holds that date, and lets go of it through `useClearMeridian()` when it does not, and when the person lets go.
 - One index per page: the latest pointer wins. A chart, a column chart with `dates`, a tile and a sparkline all read it through `useMeridian` or `useMeridianIndex`.
+- One rule for who reads it: one value for each of the Meridian's dates. A chart joins by it (`useMeridian` compares the lengths), and a Metric tile, a Featured metric and a Sparkline read `useMeridianIndex()` and compare their own number of values with `dates.length` before they read the index. The index is a position in the page's list of dates, so a series of another length would read a different day: a tile of a customer's 14 days on a page of 30 keeps its period's figure. A compact Metric tile never reads the cursor in its line.
 
 ## Surfaces
 
@@ -64,7 +66,7 @@ The Meridian has no size of its own. The line is 1px; the dots 8px across (4px r
 ## Do and do not
 
 - Do wrap a whole page body in one Meridian when its charts share a period.
-- Do not put charts of different periods in one Meridian: give each its own, or none.
+- Do not put charts of different periods in one Meridian: give each its own, or none. A tile or a Sparkline of another period may stand inside it: it does not read the cursor.
 - Do not add a second cursor behaviour (a crosshair, a vertical band); the Meridian is the only one.
 
 ## Implementation
@@ -74,7 +76,7 @@ import { Meridian, useMeridianIndex } from '@/components/charts/meridian';
 
 <Meridian dates={series.map((d) => d.date)}>
   <TrendChart label="Requests per day" dates={dates} series={[...]} />
-  <MetricTile label="Error rate" daily={series.map((d) => d.errors / d.requests)} ... />
+  <MetricTile label="Error rate" points={series.map((d) => d.errors / d.requests)} ... />
 </Meridian>
 ```
 

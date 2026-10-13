@@ -16,7 +16,7 @@ export default function SparklinePreview() {
         <State label="Neutral" className="w-56"><div className="w-full"><Sparkline values={current.map((d) => d.p95)} color="neutral" /></div></State>
         <State label="Slot 3, as in its chart" className="w-56"><div className="w-full"><Sparkline values={current.map((d) => d.spend)} color={3} /></div></State>
       </Specimen>
-      <Specimen label="On the Meridian" note="When the page points at a day, a hairline and a dot mark it. Here the cursor is fixed on day 20.">
+      <Specimen label="On the Meridian" note="When the page points at a day, a hairline and a dot mark it, on a line that has one value for each of the page's dates. Here the page holds 30 days and the cursor is fixed on day 20: the line of 30 values marks it, and a customer's 14 days draw no mark.">
         <Meridian dates={current.map((d) => d.date)}>
           <Fixed />
         </Meridian>
@@ -38,5 +38,10 @@ function Fixed() {
   const dates = current.map((d) => d.date);
   const { setIndex } = useMeridian(dates);
   useEffect(() => setIndex(20), [setIndex]);
-  return <div className="w-72"><Sparkline values={current.map((d) => d.requests)} height={44} /></div>;
+  return (
+    <>
+      <State label="30 values on a page of 30 days: the day is marked" className="w-72"><div className="w-full"><Sparkline values={current.map((d) => d.requests)} height={44} /></div></State>
+      <State label="14 values on a page of 30 days: no mark" className="w-72"><div className="w-full"><Sparkline values={CUSTOMER_ROWS[0].trend} color="neutral" height={44} /></div></State>
+    </>
+  );
 }

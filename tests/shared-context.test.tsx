@@ -162,11 +162,11 @@ describe('the person sees the same findings', () => {
     const { MetricTile } = await import('@/components/patterns/metric-tile');
     const series = demoSeries('30d').current;
     const found = homeFindings(series);
-    expect(found.errorSpike).toEqual({ text: '2.7× usual on 21 and 22 Sept', day: '2026-09-22' });
+    expect(found.errorSpike).toEqual({ text: '2.7× usual on 21 and 22 Sept', day: '2026-09-22', tone: 'warning' });
     render(
       <Tooltip.Provider>
         <Meridian dates={series.map((d) => d.date)}>
-          <MetricTile label="Error rate" value={0.009} delta={0.12} daily={series.map((d) => d.errors / d.requests)} baseline={found.usual.errorRate} finding={found.errorSpike} format={(n) => n.toFixed(4)} />
+          <MetricTile label="Error rate" value={0.009} delta={0.12} points={series.map((d) => d.errors / d.requests)} baseline={found.usual.errorRate} finding={found.errorSpike} format={(n) => n.toFixed(4)} />
         </Meridian>
       </Tooltip.Provider>,
     );

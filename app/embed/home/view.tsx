@@ -44,9 +44,9 @@ function Inline(p: HomeData & { dates: string[] }) {
     <Stack className="gap-3">
       <ShareHome data={p} />
       <Row split="tiles" className="gap-3">
-        <MetricTile label={M.requests.label} hint={M.requests.hint} value={c.requests} delta={change(c.requests, v.requests)} daily={series.map((d) => d.requests)} format={formatCompact} emphasis />
-        <MetricTile label={M.errorRate.label} hint={M.errorRate.hint} value={c.errorRate} delta={change(c.errorRate, v.errorRate)} intent="down" daily={series.map((d) => d.errors / d.requests)} baseline={found.usual.errorRate} finding={found.errorSpike} format={(n) => formatPercent(n, 2)} />
-        <MetricTile label={M.p95.label} hint={M.p95.hint} value={c.p95} delta={change(c.p95, v.p95)} intent="down" daily={series.map((d) => d.p95)} baseline={found.usual.p95} format={formatDuration} />
+        <MetricTile label={M.requests.label} hint={M.requests.hint} value={c.requests} delta={change(c.requests, v.requests)} points={series.map((d) => d.requests)} format={formatCompact} emphasis />
+        <MetricTile label={M.errorRate.label} hint={M.errorRate.hint} value={c.errorRate} delta={change(c.errorRate, v.errorRate)} intent="down" points={series.map((d) => d.errors / d.requests)} baseline={found.usual.errorRate} finding={found.errorSpike} format={(n) => formatPercent(n, 2)} />
+        <MetricTile label={M.p95.label} hint={M.p95.hint} value={c.p95} delta={change(c.p95, v.p95)} intent="down" points={series.map((d) => d.p95)} baseline={found.usual.p95} format={formatDuration} />
       </Row>
       <Card>
         <CardHeader title="Requests per day" actions={<AskAbout question={day ? `Why did requests change on ${formatDate(day.date)}?` : 'What drove the trend in requests this period?'} />} />
