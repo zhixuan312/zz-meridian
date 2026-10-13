@@ -33,7 +33,7 @@ Below 1024px every row stacks (the three regions are three across from 48rem of 
 
 ## Data
 
-The regions come from `readMainSummary()` in `src/data/main.ts`, which reads every customer, service, incident, ticket, verification run and release through `read()`, and the pure functions in `src/views/main-summary.ts` that build each region from the rows. The page needs every grant it reads (`FEATURES.home.needs`) and neither members nor keys: a person lacking one is refused before anything is read. The traffic rows come from `src/system/fixtures/sample.ts`: `demoSeries(period)` (one point per day, and the previous period for the deltas), `demoTotals(period)`, `ENDPOINTS`, `STATUS_MIX`, `ACTIVITY`. Error rate counts 5xx and 429 over all requests; latency is the median of daily p95s; revenue is what customers were billed for metered usage, before credits.
+The regions come from `readMainSummary()` in `src/data/main.ts`, which reads every customer, service, incident, ticket, verification run and release through `read()`, and the pure functions in `src/views/main-summary.ts` that build each region from the rows. The page needs every grant it reads (`FEATURES.home.needs`) and neither members nor keys: a person lacking one is refused before anything is read. The traffic rows come from the Home tool's read (`homeTool` in `src/views/tools.ts`): `readDays(period)` over the `days` collection (one row a complete day, and the same number of days before for the deltas), `readEndpoints()` and `readResponses()` (the `endpoints` and `responses` collections, each a snapshot of the last 30 complete days whatever the period) and `readActivity()`. Error rate counts 5xx and 429 over all requests; latency is the median of daily p95s; revenue is what customers were billed for metered usage, before credits, and over 30 days it is the customers' revenue on Customers and Revenue to the cent. The business summary counts the customers that have not left.
 
 ## Surfaces
 
@@ -50,8 +50,8 @@ The page shares one context with both agents (decision 0011), built by `homeCont
 The period with its dates, freshness, the four figures, each with its change against the previous period and its definition (the tiles' `hint`s come from the same `HOME_METRICS`), the day the Meridian points at against the same weekday and the period's median, and what code computed:
 
 ```text
-- Error rate was 2.6× to 2.7× the period's median of 0.81% on 21 and 22 Sept (2.13%, 2.18%); no other day passed 1.2×.
-- Latency p95 rose on the same days: 525ms and 505ms against a median of 296ms.
+- Error rate was 3.2× to 3.4× the period's median of 0.37% on 21 and 22 Sept (1.19%, 1.27%); no other day passed 1.1×.
+- Latency p95 rose on the same days: 464ms and 498ms against a median of 290ms.
 Unknown:
 - Nothing is recorded between 20 Sept and 23 Sept: no incident and no activity event, so nothing on this page explains the rise on 21 and 22 Sept.
 ```

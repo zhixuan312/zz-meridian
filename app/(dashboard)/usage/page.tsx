@@ -8,6 +8,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { UsageBody } from '@/views/usage';
 import { gate } from '@/data/access';
 import { DEMO_NOW, DEMO_UPDATED_AT } from '@/data/sample';
+import { dayRows } from '@/views/home-context';
 import { usageTool } from '@/views/tools';
 import { cache } from 'react';
 import { parsePeriod } from '@/lib/period';
@@ -50,7 +51,7 @@ async function Actions({ searchParams }: { searchParams: SearchParams }) {
   return (
     <>
       <Suspense><PeriodSelect value={period} /></Suspense>
-      <ExportButton rows={data.series} filename={`usage-${period}.csv`} noun="days" />
+      <ExportButton rows={dayRows(data.series)} filename={`usage-${period}.csv`} noun="days" />
     </>
   );
 }

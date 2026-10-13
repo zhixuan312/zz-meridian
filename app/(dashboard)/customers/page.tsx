@@ -5,6 +5,7 @@ import { gate } from '@/data/access';
 import { readAll } from '@/data/read';
 import type { CustomerRecord } from '@/data/sample';
 import { CustomersView } from '@/views/customers';
+import { customerRow } from '@/views/customers-context';
 import { Busy } from '@/components/patterns/page-loading';
 import { RecordsSkeleton } from '@/components/templates/records';
 
@@ -44,6 +45,7 @@ export default async function CustomersPage() {
  */
 async function Customers() {
   // Every customer, not a first page: the tiles are sums over them, and Main's Business region counts them the same way.
+  // The client is handed the fields a row draws, and not what only a customer's own page shows (its requests by route).
   const { rows } = await readAll('customers');
-  return <CustomersView rows={rows as CustomerRecord[]} />;
+  return <CustomersView rows={(rows as CustomerRecord[]).map(customerRow)} />;
 }

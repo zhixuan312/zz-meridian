@@ -11,16 +11,15 @@ import { FilterBar } from '@/components/patterns/filter-bar';
 import { Records } from '@/components/templates/records';
 import { formatCompact, formatCost, formatPercent } from '@/lib/format';
 import { formatDate } from '@/lib/format-date';
-import type { CustomerRecord } from '@/data/sample';
 import { useShareView } from '@/components/base/use-share-view';
-import { CUSTOMER_METRICS, customerFigures, customersContext } from './customers-context';
+import { CUSTOMER_METRICS, customerFigures, customersContext, pastDueNote, under, type CustomerRow } from './customers-context';
 
 const PLAN_TONE = { Enterprise: 'accent', Scale: 'neutral', Starter: 'neutral' } as const;
-/** Colour only where a row needs a look: past due and trial. Active is the normal case, so it stays quiet. */
-const STATUS_TONE = { active: 'neutral', trial: 'accent', 'past due': 'critical' } as const;
-const STATUS_LABEL = { active: 'Active', trial: 'Trial', 'past due': 'Past due' } as const;
+/** Colour only where a row needs a look: past due and trial. Active is the normal case, so it stays quiet, and a customer that has left is history. */
+const STATUS_TONE = { active: 'neutral', trial: 'accent', 'past due': 'critical', left: 'neutral' } as const;
+const STATUS_LABEL = { active: 'Active', trial: 'Trial', 'past due': 'Past due', left: 'Left' } as const;
 
-const columns: Column<CustomerRecord>[] = [
+const columns: Column<CustomerRow>[] = [
   {
     key: 'name', header: 'Customer', grow: true, truncate: true, mobile: 'title', sortValue: (c) => c.name, title: (c) => c.name,
     cell: (c) => (
@@ -42,14 +41,18 @@ const columns: Column<CustomerRecord>[] = [
   { key: 'joined', header: 'Customer since', numeric: true, muted: true, hideBelow: 'xl', sortValue: (c) => c.joined, cell: (c) => formatDate(c.joined) },
 ];
 
-/** The table and the tiles over it: the page renders the masthead, so this is the only part that waits for the address. */
-export function CustomersView({ rows }: { rows: CustomerRecord[] }) {
+/**
+ * The table and the tiles over it: the page renders the masthead, so this is the only part that waits for the address.
+ * `rows` is every customer, as the list draws one. The list shows those that have not left, and those that have under
+ * their own status; the tiles count the first only.
+ */
+export function CustomersView({ rows }: { rows: CustomerRow[] }) {
   const [f, set] = useQueryState({ q: '', plan: 'all', status: 'all', by: '', sort: 'revenue', dir: 'desc', page: '1' });
   // The box shows each key; the address, and so the list, follows when the typing stops.
   const [draft, setDraft] = useSearchDraft(f.q, (q) => set({ q, by: '', page: '1' }));
   const matching = useMemo(() => {
     const q = f.q.trim().toLowerCase();
-    return rows.filter((c) => (f.plan === 'all' || c.plan === f.plan) && (f.status === 'all' || c.status === f.status) && (!q || c.name.toLowerCase().includes(q)));
+    return under(rows, f.status).filter((c) => (f.plan === 'all' || c.plan === f.plan) && (!q || c.name.toLowerCase().includes(q)));
   }, [rows, f.q, f.plan, f.status]);
   const isFiltered = f.q !== '' || f.plan !== 'all' || f.status !== 'all';
   useShareView(customersContext(rows, matching, f));
@@ -61,7 +64,7 @@ export function CustomersView({ rows }: { rows: CustomerRecord[] }) {
       summary={[
         <MetricTile key="customers" label={CUSTOMER_METRICS.customers.label} value={customers} format={(n) => String(n)} hint={CUSTOMER_METRICS.customers.hint} />,
         <MetricTile key="revenue" label={CUSTOMER_METRICS.revenue.label} value={revenue} format={formatCost} hint={CUSTOMER_METRICS.revenue.hint} emphasis />,
-        <MetricTile key="past-due" label={CUSTOMER_METRICS.pastDue.label} value={pastDue.length} format={(n) => String(n)} hint={CUSTOMER_METRICS.pastDue.hint} note={pastDue.map((c) => c.name).join(', ') || 'Every invoice is paid'} />,
+        <MetricTile key="past-due" label={CUSTOMER_METRICS.pastDue.label} value={pastDue.length} format={(n) => String(n)} hint={CUSTOMER_METRICS.pastDue.hint} note={pastDueNote(pastDue)} />,
       ]}
     >
       <DataTable
@@ -80,13 +83,13 @@ export function CustomersView({ rows }: { rows: CustomerRecord[] }) {
           <FilterBar
             search={{ value: draft, onChange: setDraft, placeholder: 'Search customers' }}
             filters={[
-              { key: 'status', label: 'Status', value: f.status, onChange: (status) => set({ status, by: '', page: '1' }), options: [{ value: 'all', label: 'All' }, { value: 'active', label: 'Active' }, { value: 'trial', label: 'Trial' }, { value: 'past due', label: 'Past due' }] },
+              { key: 'status', label: 'Status', value: f.status, onChange: (status) => set({ status, by: '', page: '1' }), options: [{ value: 'all', label: 'All' }, { value: 'active', label: 'Active' }, { value: 'trial', label: 'Trial' }, { value: 'past due', label: 'Past due' }, { value: 'left', label: 'Left' }] },
             ]}
             view={
               <Segmented size="sm" label="Plan" value={f.plan} onChange={(plan) => set({ plan, by: '', page: '1' })}
                 options={[{ value: 'all', label: 'All plans' }, { value: 'Enterprise', label: 'Enterprise' }, { value: 'Scale', label: 'Scale' }, { value: 'Starter', label: 'Starter' }]} />
             }
-            result={<>{matching.length} of {rows.length}</>}
+            result={<>{matching.length} of {under(rows, f.status).length}</>}
             setBy={f.by || undefined}
             onClear={clear}
           />

@@ -76,7 +76,7 @@ export function UsageBody(data: UsageData) {
         <Card>
           <CardHeader
             title="When requests come"
-            description="Requests by weekday and hour, UTC, over a typical week."
+            description="Requests by weekday and hour, UTC, over the last 30 complete days."
             actions={<Badge tone="accent">Busiest: {DAYS[peak.d].slice(0, 3)} {String(peak.h).padStart(2, '0')}:00</Badge>}
           />
           <CardBody>

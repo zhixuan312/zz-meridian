@@ -4,7 +4,7 @@ import { MetricTile } from '@/components/patterns/metric-tile';
 import { DataTable, useQueryState, useSearchDraft } from '@/components/patterns/data-table';
 import { FilterBar } from '@/components/patterns/filter-bar';
 import { formatCompact, formatDuration, formatPercent } from '@/lib/format';
-import { REGIONS, type RequestRow } from '@/data/sample';
+import { REGION_NAMES, type RequestRow } from '@/data/sample';
 import { REQUEST_METHODS } from '@/data/request-methods';
 import type { readRequests } from '@/data/requests';
 import { useShareView } from '@/components/base/use-share-view';
@@ -71,7 +71,7 @@ export function RequestsView({ rows, total, summary, state, pageSize, updatedAt,
             filters={[
               { key: 'status', label: 'Status', value: state.status, onChange: (status) => change({ status }), options: options('All', STATUS_CLASSES) },
               { key: 'method', label: 'Method', value: state.method, onChange: (method) => change({ method }), options: options('All', REQUEST_METHODS) },
-              { key: 'region', label: 'Region', value: state.region, onChange: (region) => change({ region }), options: options('All', REGIONS.map((r) => r.label)) },
+              { key: 'region', label: 'Region', value: state.region, onChange: (region) => change({ region }), options: options('All', REGION_NAMES) },
             ]}
             result={<>{total.toLocaleString('en-US')} {isFiltered ? 'matching' : 'requests'}</>}
             setBy={f.by || undefined}

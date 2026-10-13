@@ -127,7 +127,7 @@ its change compares with in `compare` ("vs the 3 days before") and takes a `note
 A copied sample page does not do what a product would assume of it. Its writes are held in memory: a ticket, a member or a
 key lives in the running server and is lost when it restarts, until your own database stands behind the collection. Its
 figures that are fixed (Usage' weekday-and-hour grid, hours and regions, the endpoints, the Home's response split)
-are not worked out from the request log and do not follow the period chosen. Nothing runs a suite or ships a version
+cover the last 30 complete days: they are not worked out from the request log and do not follow the period chosen. Nothing runs a suite or ships a version
 behind Tests and Releases, no message is sent, and the bell only lists what needs a person when the page
 is read. `optional:docs/product-workspaces.md` lists each limit.
 
@@ -210,8 +210,10 @@ The layout hands the shell whether it is on as a promise it does not await, `ass
   A new collection is read by nobody until the policy binds it and a role is granted it. In the sample's policy that is
   three places: its entry in `DEMO_COLLECTIONS` in `optional:src/data/access.ts`, `<name>:read` for the roles that may read
   it in `GRANTS` in `optional:src/data/roles.ts`, and, for a page, a feature with that need in `optional:src/data/features.ts`.
-  Without the first, `read()` refuses everybody and the assistant is given no tool for it. A product's own policy binds
-  the collection in `policy.bind` and decides the grant in `policy.allows`.
+  Without the first, `read()` refuses everybody and the assistant is given no tool for it. A grant need not be every
+  role's: the sample's `costs` collection (what compute cost a day) is read under `costs:read`, which only the Owner and
+  the Admin carry, so a Member and a Viewer are refused it by a page, a tool and the assistant alike. A product's own
+  policy binds the collection in `policy.bind` and decides the grant in `policy.allows`.
   **When `rows` becomes a real database, read through `read()`** (`optional:src/data/read.ts`): a page asks for the same
   records from several places (the layout's alerts read, a page strip, the page and its freshness stamp), and `read()`
   caches per caller's scope and refreshes exactly the tenant a write touched, so do not wrap the read in a second cache;
@@ -256,8 +258,8 @@ writes go through `Proposal` (see `optional:app/embed/proposal/`). Read `agents.
 ## Clean-up before validation
 
 Delete the sample pages, views and embed views the product does not use, with their nav lines. Do not delete
-`optional:src/system/fixtures/` or `optional:src/system/sample-cells.tsx` yet: `optional:src/data/collections.ts` and `optional:src/data/sample.ts`
-import the fixtures. Once your collections' `rows` and `clock`, and the clock in the quiet bell of `optional:src/views/shell-alerts.tsx`
+`optional:src/system/fixtures/` or `optional:src/system/sample-cells.tsx` yet: `optional:src/data/collections.ts`, `optional:src/data/sample.ts`
+and `optional:src/data/sign-in.ts` (the 30 days the sign-in page draws) import the fixtures. Once your collections' `rows` and `clock`, and the clock in the quiet bell of `optional:src/views/shell-alerts.tsx`
 (`DEMO_NOW`), come from your own data and nothing imports them, delete them (with the Atlas kept, the previews read them: leave them, and remove the
 pages' entries in `PAGES` in `example:src/system/content.ts`). Keep `optional:src/data/collections.ts`, `optional:src/lib/collection.ts`,
 `src/lib/assistant/`, `optional:app/api/assistant/` and the assistant panel, unless the person does not want the assistant (it

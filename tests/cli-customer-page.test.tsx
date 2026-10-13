@@ -46,6 +46,19 @@ describe("a customer's page", () => {
     expect(await generateMetadata(params('northwind-labs'))).toEqual({ title: 'Northwind Labs' });
   });
 
+  it('draws a customer that has left as a record with its status and nothing counted', async () => {
+    jar.value = 'members_1';
+    const html = await markup(CustomerPage(params('ambervale-motors')));
+    expect(html).toContain('Ambervale Motors');
+    expect(html).toMatch(/>Left</);
+    // Its 30 days hold nothing: no requests and no revenue, drawn as zeros and never as a dash or a blank.
+    expect(html.replace(/<[^>]*>/g, ' ')).toMatch(/Requests, 30 days\s+0\s/);
+    expect(html.replace(/<[^>]*>/g, ' ')).toMatch(/Revenue, 30 days\s+\$0\s/);
+    // Fourteen days of nothing still draw: a flat line, and no figure that is not a number.
+    expect(html).not.toMatch(/NaN|Infinity/);
+    expect(await generateMetadata(params('ambervale-motors'))).toEqual({ title: 'Ambervale Motors' });
+  });
+
   it('draws the missing-record page in the first HTML for an id that names no customer', async () => {
     jar.value = 'members_1';
     const html = await markup(CustomerPage(params('nobody-here')));

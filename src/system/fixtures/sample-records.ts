@@ -1,8 +1,8 @@
 /**
- * The sample's records for the list and detail pages: a request's trace and payloads, the workspace's API keys, and the
- * facts behind each customer. Deterministic, derived from ./sample so the numbers agree.
+ * The sample's records for the list and detail pages: a request's trace and payloads, and the workspace's API keys.
+ * Deterministic, derived from ./sample so the records agree.
  */
-import { CUSTOMER_ROWS, DEMO_NOW, REQUESTS, type RequestRow } from '@/system/fixtures/sample';
+import { DEMO_NOW, REQUESTS, type RequestRow } from '@/system/fixtures/sample';
 
 type StatusClass = '2xx' | '3xx' | '4xx' | '5xx';
 export const statusClass = (s: number): StatusClass => (s >= 500 ? '5xx' : s >= 400 ? '4xx' : s >= 300 ? '3xx' : '2xx');
@@ -109,13 +109,3 @@ export const API_KEYS: ApiKey[] = [
   { id: 'key_04', name: 'Staging', hint: 'zzm_test_…b552', secretHash: 'b7caa2d349c1e2bc72d6d1c80e09c7f20a99e1d86580f5b9c058cdc9aaeb784c', owner: 'Jonas Weber', created: ago(30), lastUsed: ago(2), scopes: ['messages', 'search', 'embeddings', 'files', 'webhooks'], env: 'test' },
   { id: 'key_05', name: 'Load test, October', hint: 'zzm_test_…e389', secretHash: 'cb3e8f7c3409619a25c56b233f885082c1ddfda97d99aa4a60eba6ddca281440', owner: 'Maya Chen', created: ago(1), lastUsed: null, scopes: ['messages'], env: 'test' },
 ];
-
-export type CustomerRecord = (typeof CUSTOMER_ROWS)[number] & { id: string; region: string; joined: string; errorRate: number; seats: number };
-export const CUSTOMERS: CustomerRecord[] = CUSTOMER_ROWS.map((c, i) => ({
-  ...c,
-  id: c.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/-$/, ''),
-  region: ['us-east-1', 'eu-west-1', 'us-east-1', 'ap-southeast-1', 'eu-west-1', 'us-west-2'][i % 6],
-  joined: ago(30 + i * 47),
-  errorRate: [0.004, 0.0021, 0.0063, 0.0012, 0.0094, 0.0031, 0.0018, 0.0142, 0.0027, 0.0056, 0.0009, 0.0038][i % 12],
-  seats: [148, 96, 74, 41, 33, 27, 22, 18, 12, 9, 6, 3][i % 12],
-}));

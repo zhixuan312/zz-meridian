@@ -42,10 +42,27 @@ describe('the alerts in the shell', () => {
     }
   });
 
-  it('name every customer who is past due and say how many verifications are failing', async () => {
+  it('say in one alert how many customers are past due, by name when there is one, and say how many verifications are failing', async () => {
     const { alerts } = await readAlerts();
-    for (const c of (await all('customers')).filter((x) => x.status === 'past due')) {
-      expect(alerts.some((a) => pathOf(a.href) === '/customers' && a.title.includes(String(c.name))), String(c.name)).toBe(true);
+    const pastDue = (await all('customers')).filter((x) => x.status === 'past due');
+    expect(pastDue.length).toBeGreaterThan(1);
+    const owing = alerts.filter((a) => pathOf(a.href) === '/customers');
+    expect(owing).toHaveLength(1);
+    expect(owing[0].title).toBe(`${pastDue.length} customers are past due`);
+    // The alert opens the list filtered to them.
+    expect(new URL(owing[0].href, 'http://x').searchParams.get('status')).toBe('past due');
+    // One customer past due is named: the bell says who, where it can.
+    const customers = collections.find((c) => c.name === 'customers')!;
+    const real = customers.query;
+    customers.query = async (q) => {
+      const answer = await real(q);
+      const rows = answer.rows.filter((c: Row) => c.status !== 'past due' || c.name === 'Lumen Studio');
+      return { rows, total: answer.total - (answer.rows.length - rows.length) };
+    };
+    try {
+      expect((await readAlerts()).alerts.filter((a) => pathOf(a.href) === '/customers').map((a) => a.title)).toEqual(['Lumen Studio is past due']);
+    } finally {
+      customers.query = real;
     }
     const failing = (latestRuns((await all('tests')) as never) as unknown as Row[]).filter((r) => r.state === 'failed').length;
     const told = alerts.filter((a) => pathOf(a.href) === '/tests');

@@ -1,7 +1,8 @@
 'use client';
 
 import { Specimen, State, Plane } from '@/system/specimen';
-import { DEMO_NOW, demoSeries, ENDPOINTS, REGIONS, STATUS_MIX, type DailyPoint } from '@/system/fixtures/sample';
+import { DEMO_NOW, type DailyPoint } from '@/system/fixtures/sample';
+import { demoSeries, ENDPOINTS, REGIONS, STATUS_MIX } from '@/system/fixtures/company';
 import { AXIS_FORMATTERS, formatCompact } from '@/lib/format';
 import { formatDate } from '@/lib/format-date';
 import { Meridian } from '@/components/charts/meridian';

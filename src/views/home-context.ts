@@ -25,6 +25,9 @@ export const HOME_METRICS = {
   revenue: { label: 'Revenue', hint: 'What customers were billed for metered usage, in US dollars, before credits.' },
 } as const;
 
+/** A period's days as the rows of a file: one flat row a day, with the day's revenue by plan in a column each. */
+export const dayRows = (series: DailyPoint[]) => series.map(({ revenueByPlan, ...d }) => ({ ...d, revenueEnterprise: revenueByPlan.Enterprise, revenueScale: revenueByPlan.Scale, revenueStarter: revenueByPlan.Starter }));
+
 export type HomeData = {
   period: Period;
   series: DailyPoint[];

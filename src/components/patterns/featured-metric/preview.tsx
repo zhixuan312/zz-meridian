@@ -3,7 +3,7 @@
 import type { ReactNode } from 'react';
 import Link from 'next/link';
 import { ArrowRight } from 'lucide-react';
-import { demoSeries, demoTotals } from '@/system/fixtures/sample';
+import { demoSeries, demoTotals } from '@/system/fixtures/company';
 import { AXIS_FORMATTERS, formatCompact, formatCost, formatDuration, formatPercent } from '@/lib/format';
 import { formatDay } from '@/lib/format-date';
 import { SurfaceOverride } from '@/components/base/surface';

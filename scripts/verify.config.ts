@@ -117,7 +117,7 @@ type VerifyConfig = {
 const EVERY_ROUTE = ['/', '/members', '/settings', '/system', '/system/start/start-a-dashboard', '/business', '/usage', '/customers', '/requests', '/engineering', '/services', '/keys', '/operations-tickets', '/tests', '/releases'] as const;
 
 const config: VerifyConfig = {
-  // Ids from the sample (src/system/fixtures/sample.ts, sample-records.ts); tests/sample.test.ts fails if one stops being what it says.
+  // Ids from the sample (the requests of src/system/fixtures/sample.ts, the customers of company.ts); tests/sample.test.ts fails if one stops being what it says.
   detailRoutes: [
     '/requests/req_qmi1vbyi3uqt', // GET, 200: no request body, no model
     '/requests/req_jqwm3le188pi', // POST /v1/messages, 201: model, tokens and a streamed response

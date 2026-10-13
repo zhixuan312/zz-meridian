@@ -24,7 +24,7 @@ import { PERIODS } from '@/lib/period';
 import { defineViewTool, type ViewTool } from '@/lib/shared-context';
 import { usageContext } from './usage-context';
 import { usageFigures } from '@/data/usage';
-import { customerFigures, customersContext } from './customers-context';
+import { customerFigures, customerRow, customersContext, under } from './customers-context';
 import { customerContext, type CustomerData } from './customer-context';
 import { servicesContext } from './services-context';
 import { SCOPES } from './key-scopes';
@@ -143,17 +143,18 @@ export const usageTool = defineViewTool({
 export const customersTool = defineViewTool({
   name: 'customers',
   title: 'Customers',
-  description: 'Every customer with plan, status, requests, revenue and error rate; where revenue concentrates, who is moving against the rest, and who fails most.',
+  description: 'The customers that have not left, with plan, status, requests, revenue and error rate: how many there are, where revenue concentrates, who is moving against the rest, and who fails most. A customer that has left is counted in nothing and listed under the status left.',
   needs: FEATURES.customers.needs,
-  input: z.object({ q: z.string().max(100).optional(), plan: z.enum(['all', 'Enterprise', 'Scale', 'Starter']).optional(), status: z.enum(['all', 'active', 'trial', 'past due']).optional() }),
+  input: z.object({ q: z.string().max(100).optional(), plan: z.enum(['all', 'Enterprise', 'Scale', 'Starter']).optional(), status: z.enum(['all', 'active', 'trial', 'past due', 'left']).optional().describe('`all` is every customer that has not left; `left` lists those that have.') }),
   async read({ q = '', plan = 'all', status = 'all' }) {
     await requireNeed(FEATURES.customers.needs);
     // The one way the tool sees customers: through the collection, so `customers:read` is asked on the same path as every
-    // other tool's read, and a policy that does not bind the collection refuses here as it does everywhere else.
-    const { rows } = await read('customers');
-    const all = rows as CustomerRecord[];
+    // other tool's read, and a policy that does not bind the collection refuses here as it does everywhere else. Every
+    // customer, as the page reads them: a read answers a hundred rows, and a count over the first hundred is not the count.
+    const { rows } = await readAll('customers');
+    const all = (rows as CustomerRecord[]).map(customerRow);
     const f = { q, plan, status, sort: 'revenue', dir: 'desc', page: '1' };
-    const matching = all.filter((c) => (plan === 'all' || c.plan === plan) && (status === 'all' || c.status === status) && (!q || c.name.toLowerCase().includes(q.toLowerCase())));
+    const matching = under(all, status).filter((c) => (plan === 'all' || c.plan === plan) && (!q || c.name.toLowerCase().includes(q.toLowerCase())));
     return { context: customersContext(all, matching, f), data: {} };
   },
 });

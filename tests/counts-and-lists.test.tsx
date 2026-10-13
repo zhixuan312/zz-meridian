@@ -26,7 +26,9 @@ import { collections } from '@/data/collections';
 import { readRuns } from '@/data/engineering';
 import { readIncidents } from '@/data/metrics';
 import { readTickets } from '@/data/tickets';
-import { customerFigures } from '@/views/customers-context';
+import { formatCost } from '@/lib/format';
+import { CustomersView } from '@/views/customers';
+import { customerFigures, customerRow } from '@/views/customers-context';
 import { ServicesBody } from '@/views/services';
 import { servicesContext } from '@/views/services-context';
 import { MainRegions } from '@/views/home';
@@ -129,6 +131,44 @@ describe('the Customers page', () => {
     const tiles = html.slice(html.indexOf('data-split="tiles"'), html.indexOf('<table'));
     expect(customerFigures(many as never).customers).toBe(150);
     expect(tiles.replace(/<[^>]*>/g, ' ')).toMatch(/Customers\s[\s\S]*\b150\b/);
+  });
+
+  it('and so does its view tool: every customer is read, those that have not left are counted, and those that have are listed under their status', async () => {
+    const tool = viewTools.find((t) => t.name === 'customers')!;
+    const every = (await collection('customers').query({})).rows as Row[];
+    const staying = every.filter((c) => c.status !== 'left');
+    // More customers than one read answers, and some of each kind past the first hundred.
+    expect(staying.length).toBeGreaterThan(100);
+    expect(every.length).toBeGreaterThan(staying.length);
+    const fact = (context: { facts: { label: string; value: string }[] }, label: string) => context.facts.find((f) => f.label === label)?.value ?? '';
+    const { context } = await tool.read({});
+    const figures = customerFigures(every as never);
+    expect(fact(context, 'Customers')).toBe(String(staying.length));
+    expect(fact(context, 'Revenue, last 30 days')).toBe(formatCost(figures.revenue));
+    expect(fact(context, 'Past due')).toMatch(new RegExp(`^${every.filter((c) => c.status === 'past due').length}: `));
+    expect(fact(context, 'Shown')).toMatch(new RegExp(`^${staying.length} of ${staying.length}, `));
+    for (const plan of ['Enterprise', 'Scale', 'Starter']) {
+      const n = staying.filter((c) => c.plan === plan).length;
+      expect(fact((await tool.read({ plan })).context, 'Matching'), plan).toMatch(new RegExp(`^${n} of ${staying.length}, `));
+    }
+    expect(tool.input.safeParse({ status: 'left' }).success).toBe(true);
+    const gone = (await tool.read({ status: 'left' })).context;
+    const left = every.length - staying.length;
+    expect(fact(gone, 'Matching')).toMatch(new RegExp(`^${left} of ${left} that have left, `));
+    expect(fact(gone, 'Customers')).toBe(String(staying.length));
+    expect(gone.address).toBe('/customers?status=left');
+  });
+
+  it('offers the customers that have left under their own status, and lists and counts the others without them', async () => {
+    const every = (await collection('customers').query({})).rows as Row[];
+    const staying = every.filter((c) => c.status !== 'left').length;
+    const { container } = render(<Tooltip.Provider><CustomersView rows={(every as never[]).map(customerRow)} /></Tooltip.Provider>);
+    expect(container.textContent).toContain(`${staying} of ${staying}`);
+    // The status filter offers them: opened, its list holds Left beside the three statuses of a customer that has not.
+    fireEvent.click(screen.getByRole('combobox', { name: 'Status' }));
+    expect(screen.getAllByRole('option').map((o) => o.textContent)).toEqual(['All', 'Active', 'Trial', 'Past due', 'Left']);
+    // No row of the list as it opens is a customer that has left.
+    expect([...container.querySelectorAll('tbody tr')].filter((row) => /\bLeft\b/.test(row.textContent ?? ''))).toEqual([]);
   });
 });
 

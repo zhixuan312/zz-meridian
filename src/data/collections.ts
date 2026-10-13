@@ -18,11 +18,12 @@
 import { z } from 'zod';
 import { app, workspaceSlug } from '@/app.config';
 import { arrayCollection, type AnyCollection, type Collection } from '@/lib/collection';
-import { API_KEYS, CUSTOMERS, type ApiKey, type CustomerRecord } from '@/system/fixtures/sample-records';
+import { API_KEYS, type ApiKey } from '@/system/fixtures/sample-records';
 import { MEMBERS, STATUSES, TEAMS, type Member } from '@/system/fixtures/sample-members';
 import { ADD_ONS, MAIN_ROLES } from '@/data/roles';
-import { ACTIVITY, DEMO_NOW, ENDPOINTS, INCIDENTS, REQUESTS, SERVICES, STATUS_MIX, demoSeries, type DailyPoint, type Endpoint, type RequestRow } from '@/system/fixtures/sample';
-import { PAST_INCIDENTS, REGION_TRAFFIC, WEEKDAY_HOURS } from '@/system/fixtures/sample-ops';
+import { ACTIVITY, DEMO_NOW, INCIDENTS, MODELS, PLANS, REQUESTS, SERVICES, type ComputeRow, type CostRow, type CustomerRecord, type DailyPoint, type Endpoint, type Model, type RequestRow, type UsageRow } from '@/system/fixtures/sample';
+import { COMPUTE, COSTS, CUSTOMERS, DAYS, ENDPOINTS, REGIONS, STATUS_MIX, USAGE, WEEKDAY_HOURS } from '@/system/fixtures/company';
+import { PAST_INCIDENTS } from '@/system/fixtures/sample-ops';
 import { RELEASES, RUNS, TICKETS, type Release, type Ticket, type VerificationRun } from '@/system/fixtures/sample-engineering';
 import type { ActivityEvent } from '@/components/patterns/activity-feed';
 import type { Incident } from '@/components/patterns/incident-card';
@@ -109,24 +110,71 @@ export const requests: Collection<RequestRecord, 'id'> = arrayCollection({
   pageOnly: ['create'],
 });
 
-/** One row per day: what the Home's and Usage' figures, trends and baselines are computed from. Read-only. */
+/** One row per complete day: what the Home's and Usage' figures, trends and baselines are computed from. Read-only. */
 export const days: Collection<DailyPoint, 'date'> = arrayCollection({
   name: 'days',
   label: 'Daily totals',
-  description: 'One row per day (UTC): requests answered, errors (5xx and 429), latency p95 in ms and revenue in US dollars.',
+  description: 'One row per complete day (UTC): requests answered, errors (5xx and 429), latency p95 in ms, tokens served (input and output, every model), revenue in US dollars (what customers paid for that day\'s tokens and calls), and revenueByPlan, that revenue by the plan of the customer that paid it (Enterprise, Scale, Starter).',
   key: 'date',
   title: (d) => d.date,
-  fields: z.object({ requests: z.number(), errors: z.number(), p95: z.number(), revenue: z.number() }),
-  // Every day the sample holds: the current period and the one before it, for the longest period it offers.
-  rows: [...demoSeries('all').previous, ...demoSeries('all').current],
+  fields: z.object({ requests: z.number(), errors: z.number(), p95: z.number(), tokens: z.number(), revenue: z.number(), revenueByPlan: z.object({ Enterprise: z.number(), Scale: z.number(), Starter: z.number() }) }),
+  rows: DAYS,
   allow: [],
 });
 
-/** Each endpoint over the period: requests, error rate and latency p95. Read-only. */
+/** What the product sells and at what price: the one place money comes from. Read-only. */
+export const models: Collection<Model, 'id'> = arrayCollection({
+  name: 'models',
+  label: 'Models and prices',
+  description: 'What the product sells, four rows: three models, and "none" for the calls that reach no model. Each says the route it serves, its inputPrice and outputPrice in US dollars per million tokens (null where it has none), and its callPrice in US dollars per call (null for a model, which is priced by the token).',
+  key: 'id',
+  title: (m) => m.label,
+  fields: z.object({ label: z.string(), serves: z.string(), inputPrice: z.number().nullable(), outputPrice: z.number().nullable(), callPrice: z.number().nullable() }),
+  rows: MODELS,
+  allow: [],
+});
+
+/** What each model answered on each day, priced at its price: a day of `days` is the sum of its four rows here. Read-only. */
+export const usage: Collection<UsageRow, 'id'> = arrayCollection({
+  name: 'usage',
+  label: 'Usage by model',
+  description: 'One row per complete day (UTC) and model; the id is "<date>:<model>", and the model is an id of the models collection. Requests answered, inputTokens and outputTokens, revenue in US dollars (the tokens at the model\'s price, or the calls at the call price for "none"), errors (5xx and 429), latency p95 in ms, ttft (p95 time to the first token, in ms) and tps (output tokens a second at the median). ttft and tps are null for a model that writes no tokens.',
+  key: 'id',
+  title: (u) => u.id,
+  fields: z.object({ date, model: z.string(), requests: z.number(), inputTokens: z.number(), outputTokens: z.number(), revenue: z.number(), errors: z.number(), p95: z.number(), ttft: z.number().nullable(), tps: z.number().nullable() }),
+  rows: USAGE,
+  allow: [],
+});
+
+/** The GPUs each region ran on each day, and how much of them was used. Read-only. */
+export const compute: Collection<ComputeRow, 'id'> = arrayCollection({
+  name: 'compute',
+  label: 'Compute by region',
+  description: 'One row per complete day (UTC) and region; the id is "<date>:<region>". gpus is the GPUs provisioned that day, and used the GPU-hours used of the gpus x 24 GPU-hours they offered.',
+  key: 'id',
+  title: (c) => c.id,
+  fields: z.object({ date, region: z.string(), gpus: z.number(), used: z.number() }),
+  rows: COMPUTE,
+  allow: [],
+});
+
+/** What each day's compute cost. Read by an Owner and an Admin only (`costs:read`). Read-only. */
+export const costs: Collection<CostRow, 'date'> = arrayCollection({
+  name: 'costs',
+  label: 'Compute cost',
+  description: 'One row per complete day (UTC): compute, what the GPUs provisioned that day cost in US dollars.',
+  key: 'date',
+  title: (c) => c.date,
+  fields: z.object({ compute: z.number() }),
+  rows: COSTS,
+  allow: [],
+});
+
+/** Each endpoint over the last 30 complete days: requests, error rate and latency p95. Read-only. */
 export const endpoints: Collection<Endpoint & { id: string }, 'id'> = arrayCollection({
   name: 'endpoints',
   label: 'Endpoints',
-  description: 'Each API endpoint over the period: requests, error rate (5xx and 429, a fraction) and latency p95 in ms. The id is the method and route.',
+  description: 'Each API endpoint over the last 30 complete days: requests, error rate (5xx and 429, a fraction) and latency p95 in ms. The id is the method and route.',
   key: 'id',
   title: (e) => e.id,
   fields: z.object({ method: z.string(), route: z.string(), requests: z.number(), errorRate: z.number(), p95: z.number() }),
@@ -134,11 +182,11 @@ export const endpoints: Collection<Endpoint & { id: string }, 'id'> = arrayColle
   allow: [],
 });
 
-/** Responses by status class over the period. Read-only. */
+/** Responses by status class over the last 30 complete days. Read-only. */
 export const responses: Collection<{ label: string; value: number }, 'label'> = arrayCollection({
   name: 'responses',
   label: 'Responses by class',
-  description: 'How many responses each status class (2xx, 3xx, 4xx, 5xx) had over the period.',
+  description: 'How many responses each status class (2xx, 3xx, 4xx, 5xx) had over the last 30 complete days.',
   key: 'label',
   title: (r) => r.label,
   fields: z.object({ value: z.number() }),
@@ -150,7 +198,7 @@ export const responses: Collection<{ label: string; value: number }, 'label'> = 
 export const hours: Collection<(typeof WEEKDAY_HOURS)[number], 'id'> = arrayCollection({
   name: 'hours',
   label: 'Requests by weekday and hour',
-  description: 'One row per weekday and hour (UTC): the requests over the period. The weekday is 0 (Monday) to 6 (Sunday) and the hour 0 to 23; the id is both, as "weekday-hour".',
+  description: 'One row per weekday and hour (UTC): the requests over the last 30 complete days. The weekday is 0 (Monday) to 6 (Sunday) and the hour 0 to 23; the id is both, as "weekday-hour".',
   key: 'id',
   title: (h) => h.id,
   fields: z.object({ weekday: z.number().int().min(0).max(6), hour: z.number().int().min(0).max(23), requests: z.number() }),
@@ -159,14 +207,14 @@ export const hours: Collection<(typeof WEEKDAY_HOURS)[number], 'id'> = arrayColl
 });
 
 /** Requests and median latency for each region, in the order Usage draws them. Read-only. */
-export const regions: Collection<(typeof REGION_TRAFFIC)[number], 'label'> = arrayCollection({
+export const regions: Collection<(typeof REGIONS)[number], 'label'> = arrayCollection({
   name: 'regions',
   label: 'Requests by region',
-  description: 'Each region over the period: requests and median latency (p50) in ms.',
+  description: 'Each region over the last 30 complete days: requests and median latency (p50) in ms.',
   key: 'label',
   title: (r) => r.label,
   fields: z.object({ value: z.number(), p50: z.number() }),
-  rows: REGION_TRAFFIC,
+  rows: REGIONS,
   allow: [],
 });
 
@@ -213,27 +261,36 @@ export const activity: Collection<ActivityEvent, 'id'> = arrayCollection({
 });
 
 /**
- * The customers, from the sample's records: plan, requests, revenue, the 14-day trend, status and where they are. Read-only
- * — nobody in the console changes a customer — so a page and a tool read them the same authorized way as every other
- * collection (`read()`), and the `customers:read` grant is asked on that one path.
+ * The customers, from the sample's records: plan and status, what each asked of the API and paid in the last 30 complete
+ * days, the 14-day trend, the dates of its life with us and who looks after it. Read-only — nobody in the console changes
+ * a customer — so a page and a tool read them the same authorized way as every other collection (`read()`), and the
+ * `customers:read` grant is asked on that one path. A customer that has left keeps its record and is counted in nothing.
  */
 export const customers: Collection<CustomerRecord, 'id'> = arrayCollection({
   name: 'customers',
   label: 'Customers',
-  description: 'The workspaces calling the API: their plan, status, requests, revenue over 30 days, 14-day trend, error rate and seats.',
+  description: 'The workspaces calling the API: their plan, their status (active, trial, past due or left), and over the last 30 complete days their requests, tokens, revenue in US dollars and requests by route (byEndpoint, summing to requests); the 14-day trend of requests a day, error rate (5xx and 429, a fraction), seats and region; the dates (YYYY-MM-DD) it joined, changed plan (planSince, with previousPlan), left, its trial ends (trialEnds) and since when it is past due (pastDueSince), each null when it does not apply; and its owner, a member\'s name. A customer that has left is counted in no figure of customers, revenue or requests.',
   key: 'id',
   title: (c) => c.name,
   fields: z.object({
     name: z.string(),
-    plan: z.enum(['Enterprise', 'Scale', 'Starter']),
+    plan: z.enum(PLANS),
+    status: z.enum(['active', 'trial', 'past due', 'left']),
     requests: z.number(),
+    tokens: z.number(),
     revenue: z.number(),
+    byEndpoint: z.record(z.string(), z.number()),
     trend: z.array(z.number()),
-    status: z.enum(['active', 'trial', 'past due']),
-    region: z.string(),
-    joined: z.string(),
     errorRate: z.number(),
     seats: z.number(),
+    region: z.string(),
+    owner: z.string(),
+    joined: date,
+    planSince: date.nullable(),
+    previousPlan: z.enum(PLANS).nullable(),
+    left: date.nullable(),
+    trialEnds: date.nullable(),
+    pastDueSince: date.nullable(),
   }),
   rows: CUSTOMERS,
   allow: [],
@@ -328,4 +385,4 @@ export const workspace: Collection<WorkspaceRow, 'id'> = arrayCollection({
   pageOnly: ['update'],
 });
 
-export const collections: AnyCollection[] = [members, keys, requests, days, endpoints, responses, hours, regions, services, incidents, activity, customers, tickets, tests, releases, workspace];
+export const collections: AnyCollection[] = [members, keys, requests, days, models, usage, compute, costs, endpoints, responses, hours, regions, services, incidents, activity, customers, tickets, tests, releases, workspace];

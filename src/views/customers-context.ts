@@ -20,9 +20,33 @@ const sum = (xs: number[]) => xs.reduce((a, b) => a + b, 0);
 /** The last seven days of a 14-day trend against the seven before: the change a sparkline shows and a list does not say. */
 export const week = (t: number[]) => (t.length >= 14 && sum(t.slice(0, 7)) ? sum(t.slice(7)) / sum(t.slice(0, 7)) - 1 : null);
 
-/** The three figures the tiles show and the assistant is told, worked out once from every customer the page read. */
-export function customerFigures(rows: CustomerRecord[]): { customers: number; revenue: number; pastDue: CustomerRecord[] } {
-  return { customers: rows.length, revenue: sum(rows.map((c) => c.revenue)), pastDue: rows.filter((c) => c.status === 'past due') };
+/** A customer as the list draws it: the fields of a row, and none of what only its own page shows. */
+export type CustomerRow = Pick<CustomerRecord, 'id' | 'name' | 'plan' | 'status' | 'requests' | 'trend' | 'errorRate' | 'revenue' | 'joined'>;
+export const customerRow = ({ id, name, plan, status, requests, trend, errorRate, revenue, joined }: CustomerRecord): CustomerRow => ({ id, name, plan, status, requests, trend, errorRate, revenue, joined });
+
+/** The customers a figure counts: every one that has not left. One that has keeps its record and is in no count or sum. */
+export const kept = <T extends Pick<CustomerRecord, 'status'>>(rows: T[]): T[] => rows.filter((c) => c.status !== 'left');
+
+/** The three figures the tiles show and the assistant is told, worked out once from every customer the page read, less those that have left. */
+export function customerFigures<T extends Pick<CustomerRecord, 'status' | 'revenue'>>(rows: T[]): { customers: number; revenue: number; pastDue: T[] } {
+  const counted = kept(rows);
+  // Summed in cents, so the total is the customers' revenue to the cent whatever their order.
+  return { customers: counted.length, revenue: sum(counted.map((c) => Math.round(c.revenue * 100))) / 100, pastDue: counted.filter((c) => c.status === 'past due') };
+}
+
+/** How many names one line carries before it says how many more there are. */
+const NAMED = 5;
+type Owing = Pick<CustomerRecord, 'name' | 'revenue'>;
+const largestFirst = <T extends Owing>(rows: T[]): T[] => [...rows].sort((a, b) => b.revenue - a.revenue);
+
+/** Who is past due, as the assistant reads it: how many, then the largest of them with the revenue each brought. */
+export const pastDueFact = (pastDue: Owing[]): string =>
+  pastDue.length ? `${pastDue.length}: ${listed(largestFirst(pastDue), (c) => `${c.name} (${formatCost(c.revenue)} revenue)`, 'the Customers list under the status past due has them', NAMED)}` : '0, every invoice is paid';
+
+/** Who is past due, as a tile's one line: the names while there are two or fewer, then the largest two and how many more. */
+export function pastDueNote(pastDue: Owing[]): string {
+  const names = largestFirst(pastDue).map((c) => c.name);
+  return names.length > 2 ? `${names.slice(0, 2).join(', ')} and ${names.length - 2} more` : names.join(', ') || 'Every invoice is paid';
 }
 
 export function customersAddress(f: CustomersState): string {
@@ -35,42 +59,49 @@ export function customersAddress(f: CustomersState): string {
   return `/customers${p.size ? `?${p}` : ''}`;
 }
 
-/** The Customers context; `matching` is the filtered list in the table's order. */
-export function customersContext(rows: CustomerRecord[], filtered: CustomerRecord[], f: CustomersState): SharedContext {
-  const field = ({ errors: 'errorRate', trend: 'requests' } as Record<string, keyof CustomerRecord>)[f.sort] ?? (f.sort as keyof CustomerRecord);
+/** The customers the list shows under a status: `all` is every customer that has not left, and one that has is found under its own status. */
+export const under = <T extends Pick<CustomerRecord, 'status'>>(rows: T[], status: string): T[] => (status === 'all' ? kept(rows) : rows.filter((c) => c.status === status));
+
+/** The Customers context; `filtered` is the list the filters leave, and the context orders it as the table does. */
+export function customersContext(rows: CustomerRow[], filtered: CustomerRow[], f: CustomersState): SharedContext {
+  const field = ({ errors: 'errorRate', trend: 'requests' } as Record<string, keyof CustomerRow>)[f.sort] ?? (f.sort as keyof CustomerRow);
   const matching = [...filtered].sort((a, b) => (f.dir === 'desc' ? -1 : 1) * (a[field] > b[field] ? 1 : a[field] < b[field] ? -1 : 0));
   const filters = [f.plan !== 'all' && `plan ${f.plan}`, f.status !== 'all' && `status ${f.status}`, f.q && `matching "${f.q}"`].filter(Boolean).join(', ');
+  // Every figure and finding is of the customers that have not left; one that has is in the list under its status only.
+  const counted = kept(rows);
   const { customers, revenue, pastDue } = customerFigures(rows);
   const M = CUSTOMER_METRICS;
   const facts: Fact[] = [
     { label: M.customers.label, value: String(customers), definition: M.customers.hint },
     { label: M.revenue.label, value: formatCost(revenue), definition: M.revenue.hint },
-    { label: M.pastDue.label, value: pastDue.length ? `${pastDue.length}: ${pastDue.map((c) => `${c.name} (${formatCost(c.revenue)} revenue)`).join(', ')}` : '0, every invoice is paid', definition: M.pastDue.hint },
-    { label: filters ? 'Matching' : 'Shown', value: `${matching.length} of ${rows.length}, sorted by ${f.sort} ${f.dir === 'desc' ? 'descending' : 'ascending'}: ${listed(matching, (c) => `${c.name} (${c.plan}, ${c.status}, ${formatCompact(c.requests)} requests, ${formatCost(c.revenue)}, error rate ${formatPercent(c.errorRate, 2)})`, 'narrow the filters to see them')}` },
+    { label: M.pastDue.label, value: pastDueFact(pastDue), definition: M.pastDue.hint },
+    { label: filters ? 'Matching' : 'Shown', value: `${matching.length} of ${under(rows, f.status).length}${f.status === 'left' ? ' that have left' : ''}, sorted by ${f.sort} ${f.dir === 'desc' ? 'descending' : 'ascending'}: ${listed(matching, (c) => `${c.name} (${c.plan}, ${c.status}, ${formatCompact(c.requests)} requests, ${formatCost(c.revenue)}, error rate ${formatPercent(c.errorRate, 2)})`, 'narrow the filters to see them', NAMED)}` },
   ];
 
   const insights: Insight[] = [];
-  if (rows.length && revenue) {
-    const byRevenue = [...rows].sort((a, b) => b.revenue - a.revenue);
+  if (counted.length && revenue) {
+    const byRevenue = [...counted].sort((a, b) => b.revenue - a.revenue);
     const top3 = sum(byRevenue.slice(0, 3).map((c) => c.revenue)) / revenue;
     insights.push({ text: `Revenue is concentrated: ${byRevenue[0].name} brings ${formatPercent(byRevenue[0].revenue / revenue, 0)} of it, and the top three ${formatPercent(top3, 0)}.` });
   }
   // Who is moving against everyone else: the combined change first, then whoever departs from it by 10 points or more.
-  const all = rows[0]?.trend.map((_, d) => sum(rows.map((c) => c.trend[d] ?? 0))) ?? [];
+  const all = counted[0]?.trend.map((_, d) => sum(counted.map((c) => c.trend[d] ?? 0))) ?? [];
   const overall = week(all);
   if (overall !== null) {
-    const apart = rows.map((c) => ({ c, w: week(c.trend) })).filter((x): x is { c: CustomerRecord; w: number } => x.w !== null && Math.abs(x.w - overall) >= 0.1).sort((a, b) => b.w - a.w);
+    const apart = counted.map((c) => ({ c, w: week(c.trend) })).filter((x): x is { c: CustomerRow; w: number } => x.w !== null && Math.abs(x.w - overall) >= 0.1).sort((a, b) => Math.abs(b.w - overall) - Math.abs(a.w - overall));
     const pct = (w: number) => `${w >= 0 ? 'up' : 'down'} ${formatPercent(Math.abs(w), 0)}`;
     insights.push({
-      text: `Combined requests are ${pct(overall)} over the last 7 days against the 7 before.${apart.length ? ` Apart from that: ${apart.map(({ c, w }) => `${c.name} ${pct(w)}`).join(', ')}.` : ' Every customer moved within 10 points of that.'}`,
+      text: `Combined requests are ${pct(overall)} over the last 7 days against the 7 before.${apart.length ? ` Apart from that: ${listed(apart, ({ c, w }) => `${c.name} ${pct(w)}`, 'the list has each customer\'s 14 days', NAMED)}.` : ' Every customer moved within 10 points of that.'}`,
       evidence: apart.length ? `/requests?q=${encodeURIComponent(apart[0].c.name)}` : undefined,
     });
   }
-  const errMedian = median(rows.map((c) => c.errorRate));
-  const failing = rows.filter((c) => c.errorRate >= 2 * errMedian).sort((a, b) => b.errorRate - a.errorRate);
-  if (failing.length) insights.push({ text: `${failing.map((c) => `${c.name} (${formatPercent(c.errorRate, 2)})`).join(', ')} ${failing.length === 1 ? 'has' : 'have'} an error rate at least twice the median customer's ${formatPercent(errMedian, 2)}.`, evidence: `/requests?q=${encodeURIComponent(failing[0].name)}&status=5xx` });
+  const errMedian = median(counted.map((c) => c.errorRate));
+  const failing = counted.filter((c) => c.errorRate >= 2 * errMedian).sort((a, b) => b.errorRate - a.errorRate);
+  if (failing.length) insights.push({ text: `${failing.length} of ${counted.length} ${failing.length === 1 ? 'has' : 'have'} an error rate at least twice the median customer's ${formatPercent(errMedian, 2)}: ${listed(failing, (c) => `${c.name} (${formatPercent(c.errorRate, 2)})`, 'sort the list by error rate to see them', NAMED)}.`, evidence: `/requests?q=${encodeURIComponent(failing[0].name)}&status=5xx` });
   const unknowns = ['A customer\'s error rate counts their 5xx and 429 responses; nothing here says whether the errors were theirs or ours.'];
-  if (!rows.length) unknowns.unshift('There are no customers yet.');
+  const left = rows.length - counted.length;
+  if (left) unknowns.push(`${left} ${left === 1 ? 'customer has' : 'customers have'} left and ${left === 1 ? 'is' : 'are'} counted in no figure here; the list shows ${left === 1 ? 'it' : 'them'} under the status left (${customersAddress({ ...f, q: '', plan: 'all', status: 'left', page: '1' })}).`);
+  if (!counted.length) unknowns.unshift('There are no customers yet.');
 
-  return { view: 'customers', title: 'Customers', address: customersAddress(f), scope: filters ? `customers with ${filters}` : 'every customer, revenue over the last 30 days, trend over the last 14', facts, insights, unknowns };
+  return { view: 'customers', title: 'Customers', address: customersAddress(f), scope: filters ? `customers with ${filters}` : 'every customer that has not left, revenue over the last 30 days, trend over the last 14', facts, insights, unknowns };
 }

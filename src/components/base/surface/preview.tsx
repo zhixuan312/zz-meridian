@@ -1,7 +1,8 @@
 'use client';
 
 import { Gauge, Zap } from 'lucide-react';
-import { demoSeries, DEMO_NOW, DEMO_UPDATED_AT } from '@/system/fixtures/sample';
+import { DEMO_NOW, DEMO_UPDATED_AT } from '@/system/fixtures/sample';
+import { demoSeries } from '@/system/fixtures/company';
 import { formatCompact, formatDuration } from '@/lib/format';
 import { SurfaceOverride } from '@/components/base/surface';
 import { EmbedFrame } from '@/components/patterns/embed-frame';

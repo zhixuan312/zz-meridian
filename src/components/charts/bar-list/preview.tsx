@@ -1,7 +1,7 @@
 'use client';
 
 import { Specimen, Plane } from '@/system/specimen';
-import { ENDPOINTS, REGIONS, CUSTOMER_ROWS } from '@/system/fixtures/sample';
+import { ENDPOINTS, REGIONS, CUSTOMERS } from '@/system/fixtures/company';
 import { formatCompact, formatCost } from '@/lib/format';
 import { BarList } from '.';
 
@@ -36,7 +36,7 @@ export default function BarListPreview() {
             limit={4}
             format={formatCost}
             highlight="Northwind Labs"
-            items={CUSTOMER_ROWS.map((c) => ({ key: c.name, label: c.name, value: c.revenue, meta: c.plan }))}
+            items={CUSTOMERS.slice(0, 12).map((c) => ({ key: c.name, label: c.name, value: c.revenue, meta: c.plan }))}
           />
         </Plane>
       </Specimen>

@@ -111,7 +111,7 @@ import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import type { JSX } from 'react';
 import { nav } from '@/app.config';
-import { activity, customers, days, endpoints, hours, incidents, keys, members, regions, releases, requests, responses, services, tests, tickets, workspace } from '@/data/collections';
+import { activity, compute, costs, customers, days, endpoints, hours, incidents, keys, members, models, regions, releases, requests, responses, services, tests, tickets, usage, workspace } from '@/data/collections';
 import { FEATURES, type FeatureId } from '@/data/features';
 import { effective, roleLabel, type AddOn, type MainRole } from '@/data/roles';
 import { membersFor } from '@/data/member-mutations';
@@ -210,6 +210,10 @@ const DEMO_COLLECTIONS: Record<string, { collection: AnyCollection; ops: readonl
   keys: { collection: keys, ops: ['read', 'create', 'remove'] },
   requests: { collection: requests, ops: ['read', 'create'] },
   days: { collection: days, ops: ['read'] },
+  models: { collection: models, ops: ['read'] },
+  usage: { collection: usage, ops: ['read'] },
+  compute: { collection: compute, ops: ['read'] },
+  costs: { collection: costs, ops: ['read'] },
   endpoints: { collection: endpoints, ops: ['read'] },
   responses: { collection: responses, ops: ['read'] },
   hours: { collection: hours, ops: ['read'] },

@@ -1,10 +1,11 @@
 'use client';
 
-import { demoSeries } from '@/system/fixtures/sample';
+import { demoSeries } from '@/system/fixtures/company';
 import { Specimen, State } from '@/system/specimen';
 import { ExportButton } from '.';
 
-const days = demoSeries('30d').current;
+/** A file's row is flat: the day without its revenue by plan. */
+const days = demoSeries('30d').current.map(({ revenueByPlan: _, ...d }) => d);
 
 export default function ExportButtonPreview() {
   return (

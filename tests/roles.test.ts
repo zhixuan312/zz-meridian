@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import { ADD_ONS, GRANTS, MAIN_ROLES, effective, whoCan } from '@/data/roles';
 
-const DASHBOARDS = ['requests:read', 'days:read', 'endpoints:read', 'responses:read', 'hours:read', 'regions:read', 'services:read', 'incidents:read', 'customers:read', 'activity:read', 'tickets:read', 'tests:read', 'releases:read'];
+const DASHBOARDS = ['requests:read', 'days:read', 'models:read', 'usage:read', 'compute:read', 'endpoints:read', 'responses:read', 'hours:read', 'regions:read', 'services:read', 'incidents:read', 'customers:read', 'activity:read', 'tickets:read', 'tests:read', 'releases:read'];
 const TABLE: Record<string, string[]> = {
-  Owner: [...DASHBOARDS, 'requests:create', 'keys:read', 'keys:create', 'keys:remove', 'members:read', 'members:create', 'members:update', 'members:remove', 'activity:create', 'tickets:create', 'tickets:update', 'workspace:read', 'workspace:update'],
-  Admin: [...DASHBOARDS, 'requests:create', 'keys:read', 'keys:create', 'keys:remove', 'members:read', 'members:create', 'members:update', 'members:remove', 'activity:create', 'tickets:create', 'tickets:update', 'workspace:read'],
+  Owner: [...DASHBOARDS, 'costs:read', 'requests:create', 'keys:read', 'keys:create', 'keys:remove', 'members:read', 'members:create', 'members:update', 'members:remove', 'activity:create', 'tickets:create', 'tickets:update', 'workspace:read', 'workspace:update'],
+  Admin: [...DASHBOARDS, 'costs:read', 'requests:create', 'keys:read', 'keys:create', 'keys:remove', 'members:read', 'members:create', 'members:update', 'members:remove', 'activity:create', 'tickets:create', 'tickets:update', 'workspace:read'],
   Member: [...DASHBOARDS, 'requests:create', 'keys:read', 'members:read', 'activity:create', 'tickets:create', 'tickets:update'],
   Viewer: [...DASHBOARDS],
   'Key manager': ['keys:read', 'keys:create', 'keys:remove', 'activity:create'],
@@ -36,5 +36,8 @@ describe('the role table', () => {
     expect(whoCan('releases:read')).toEqual(['Owner', 'Admin', 'Member', 'Viewer']);
     expect(whoCan('requests:read')).toEqual(['Owner', 'Admin', 'Member', 'Viewer']);
     expect(whoCan({ allOf: ['workspace:read', 'workspace:update'] })).toEqual(['Owner']);
+    // What compute cost is an Owner's and an Admin's to read; what was provisioned and used is everyone's.
+    expect(whoCan('costs:read')).toEqual(['Owner', 'Admin']);
+    expect(whoCan('compute:read')).toEqual(['Owner', 'Admin', 'Member', 'Viewer']);
   });
 });

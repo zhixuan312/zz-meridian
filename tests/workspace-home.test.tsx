@@ -38,9 +38,13 @@ beforeEach(() => { jar.value = 'members_12'; policy.viewer = null; });
 afterEach(() => { services.query = query; });
 
 describe('what Main says of the whole product', () => {
-  it('counts the business from every customer: how many, by status and by plan, and what they paid', async () => {
-    const customers = await all('customers');
-    const figures = customerFigures(customers as never);
+  it('counts the business from every customer that has not left: how many, by status and by plan, and what they paid', async () => {
+    const every = await all('customers');
+    const figures = customerFigures(every as never);
+    // A customer that has left keeps its record and is in no count: not the total, not a status, not a plan.
+    const customers = every.filter((c) => c.status !== 'left');
+    expect(every.length).toBeGreaterThan(customers.length);
+    expect(customers).toHaveLength(figures.customers);
     const { business } = await summaryOf();
     expect(business!.customers).toBe(figures.customers);
     // The same sum in whatever order the rows were read: a sum of fractions differs in its last digit with the order.

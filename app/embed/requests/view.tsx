@@ -13,7 +13,7 @@ import { FilterBar } from '@/components/patterns/filter-bar';
 import { Freshness } from '@/components/patterns/freshness';
 import { formatDuration } from '@/lib/format';
 import { formatRelative } from '@/lib/format-date';
-import { REGIONS } from '@/data/sample';
+import { REGION_NAMES } from '@/data/sample';
 import { describeFilters, requestsContext, type RequestsData } from '@/views/requests-context';
 import { activeFilters, options, REQUEST_FILTERS, REQUEST_METHODS } from '@/views/requests';
 import { MethodChip, requestColumns, StatusBadge } from '@/system/sample-cells';
@@ -62,7 +62,7 @@ export function EmbedRequests(data: RequestsData) {
               filters={[
                 { key: 'status', label: 'Status', value: state.status, onChange: (status) => change({ status }), options: options('All', ['2xx', '3xx', '4xx', '5xx']) },
                 { key: 'method', label: 'Method', value: state.method, onChange: (method) => change({ method }), options: options('All', REQUEST_METHODS) },
-                { key: 'region', label: 'Region', value: state.region, onChange: (region) => change({ region }), options: options('All', REGIONS.map((r) => r.label)) },
+                { key: 'region', label: 'Region', value: state.region, onChange: (region) => change({ region }), options: options('All', REGION_NAMES) },
               ]}
               result={<>{total.toLocaleString('en-US')} {isFiltered ? 'matching' : 'requests'}</>}
               setBy={f.by === 'Claude' ? 'Claude' : undefined}

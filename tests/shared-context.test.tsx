@@ -3,7 +3,8 @@ import { Tooltip } from 'radix-ui';
 import { describe, expect, it, vi } from 'vitest';
 import { SurfaceOverride, sharedContextOn } from '@/components/base/surface';
 import { useShareView } from '@/components/base/use-share-view';
-import { DEMO_NOW, DEMO_UPDATED_AT, ACTIVITY, ENDPOINTS, INCIDENTS, SERVICES, STATUS_MIX, demoSeries, demoTotals } from '@/system/fixtures/sample';
+import { DEMO_NOW, DEMO_UPDATED_AT, ACTIVITY, INCIDENTS, SERVICES } from '@/system/fixtures/sample';
+import { ENDPOINTS, STATUS_MIX, demoSeries, demoTotals } from '@/system/fixtures/company';
 import { PAST_INCIDENTS } from '@/system/fixtures/sample-ops';
 import { deviations, median, runs, weekendRatio } from '@/lib/insight';
 import { contextText, freshnessOf, type SharedContext } from '@/lib/shared-context';
@@ -19,7 +20,7 @@ const home = (period: Period): HomeData => ({
   period, series: demoSeries(period).current, totals: demoTotals(period), endpoints: ENDPOINTS, mix: STATUS_MIX, activity: ACTIVITY,
   incidents: [...INCIDENTS, ...PAST_INCIDENTS],
   summary: {
-    business: { customers: 12, byStatus: { active: 9, trial: 2, 'past due': 1 }, byPlan: { Enterprise: 3, Scale: 5, Starter: 4 }, revenue: 48210.5 },
+    business: { customers: 320, byStatus: { active: 296, trial: 14, 'past due': 10 }, byPlan: { Enterprise: 24, Scale: 82, Starter: 214 }, revenue: 3300438.74 },
     operation: { degraded: ['Inference API'], outage: [], incidents: [{ id: 'inc_1', title: 'Elevated latency in eu-west-1' }] },
     delivery: { open: 4, waiting: 3, failing: 2, live: 3, ready: 1, testing: 3 },
   },
@@ -45,13 +46,13 @@ describe('the insight functions', () => {
 describe("the Home's shared context", () => {
   it('names each figure with its unit, its change and its definition', () => {
     const text = contextText(homeContext(home('30d')));
-    expect(text).toContain('Error rate: 0.90%, up 12.4% vs the previous 30 days (0.80%). (Share of requests answered with a 5xx or a 429.)');
-    expect(text).toMatch(/^Home · last 30 days, 04 Sept 2026 to 03 Oct 2026 \(UTC days\) · address \/\?period=30d$/m);
+    expect(text).toContain('Error rate: 0.44%, up 10.4% vs the previous 30 days (0.40%). (Share of requests answered with a 5xx or a 429.)');
+    expect(text).toMatch(/^Home · last 30 days, 03 Sept 2026 to 02 Oct 2026 \(UTC days\) · address \/\?period=30d$/m);
     expect(text).toContain('fresh.');
   });
   it('surfaces the spike nobody explained, with its figures, and says nothing is recorded', () => {
     const c = homeContext(home('30d'));
-    expect(c.insights[0].text).toBe("Error rate was 2.6× to 2.7× the period's median of 0.81% on 21 and 22 Sept (2.13%, 2.18%); no other day passed 1.2×.");
+    expect(c.insights[0].text).toBe("Error rate was 3.2× to 3.4× the period's median of 0.37% on 21 and 22 Sept (1.19%, 1.27%); no other day passed 1.1×.");
     expect(c.unknowns[0]).toMatch(/^Nothing is recorded between 20 Sept and 23 Sept: no incident and no activity event/);
   });
   it('ties a spike to the incident recorded beside it', () => {
@@ -61,7 +62,7 @@ describe("the Home's shared context", () => {
   it('tells what the person points at, against the same weekday', () => {
     const data = home('30d');
     const index = data.series.findIndex((d) => d.date === '2026-09-22');
-    expect(homeContext(data, index).focus).toBe("22 Sept 2026, a Tuesday: 121,795 requests (1.1× the median Tuesday); error rate 2.18% (2.7× the period's median); latency p95 505ms (1.7× the median); revenue $12.18.");
+    expect(homeContext(data, index).focus).toBe("22 Sept 2026, a Tuesday: 42,008,106 requests (1.0× the median Tuesday); error rate 1.27% (3.4× the period's median); latency p95 498ms (1.7× the median); revenue $130,097.57.");
   });
   it('fits its budget for every period, and so does Services', () => {
     for (const p of ['7d', '30d', '90d', 'all'] as const) expect(contextText(homeContext(home(p), 0)).length).toBeLessThanOrEqual(BUDGET);
@@ -123,16 +124,15 @@ describe('every page shares a context within its budget, and nothing hidden', ()
     const { keysContext } = await import('@/views/keys-context');
     const { requestContext } = await import('@/views/request-context');
     const { traceOf } = await import('@/data/sample');
-    const { REGION_TRAFFIC, WEEKDAY_HOURS } = await import('@/system/fixtures/sample-ops');
+    const { REGIONS, WEEKDAY_HOURS, CUSTOMERS } = await import('@/system/fixtures/company');
     const heat = Array.from({ length: 7 }, (_, d) => WEEKDAY_HOURS.filter((r) => r.weekday === d).map((r) => r.requests));
     const hours = Array.from({ length: 24 }, (_, h) => ({ key: String(h), label: `${String(h).padStart(2, '0')}:00`, value: heat.reduce((n, row) => n + row[h], 0) }));
-    const { CUSTOMERS } = await import('@/system/fixtures/sample-records');
     const { MEMBERS } = await import('@/system/fixtures/sample-members');
     const { API_KEYS, REQUESTS } = await import('@/system/fixtures/sample-records').then(async (m) => ({ ...m, REQUESTS: (await import('@/system/fixtures/sample')).REQUESTS }));
     const { SCOPES } = await import('@/views/key-scopes');
     const now = DEMO_NOW.toISOString();
     const contexts = [
-      usageContext({ ...home('30d'), endpoints: ENDPOINTS, heat, hours, regions: REGION_TRAFFIC }),
+      usageContext({ ...home('30d'), endpoints: ENDPOINTS, heat, hours, regions: REGIONS }),
       customersContext(CUSTOMERS, CUSTOMERS, { q: '', plan: 'all', status: 'all', sort: 'revenue', dir: 'desc', page: '1' }),
       membersContext(MEMBERS, now),
       keysContext(API_KEYS, now, SCOPES),
@@ -148,7 +148,7 @@ describe('every page shares a context within its budget, and nothing hidden', ()
   });
   it('Customers compares each customer with everyone, not with nothing', async () => {
     const { customersContext } = await import('@/views/customers-context');
-    const { CUSTOMERS } = await import('@/system/fixtures/sample-records');
+    const { CUSTOMERS } = await import('@/system/fixtures/company');
     const text = contextText(customersContext(CUSTOMERS, CUSTOMERS, { q: '', plan: 'all', status: 'all', sort: 'revenue', dir: 'desc', page: '1' }));
     expect(text).toMatch(/Combined requests are up \d+% over the last 7 days against the 7 before\./);
   });
@@ -162,7 +162,7 @@ describe('the person sees the same findings', () => {
     const { MetricTile } = await import('@/components/patterns/metric-tile');
     const series = demoSeries('30d').current;
     const found = homeFindings(series);
-    expect(found.errorSpike).toEqual({ text: '2.7× usual on 21 and 22 Sept', day: '2026-09-22', tone: 'warning' });
+    expect(found.errorSpike).toEqual({ text: '3.4× usual on 21 and 22 Sept', day: '2026-09-22', tone: 'warning' });
     render(
       <Tooltip.Provider>
         <Meridian dates={series.map((d) => d.date)}>
@@ -170,9 +170,9 @@ describe('the person sees the same findings', () => {
         </Meridian>
       </Tooltip.Provider>,
     );
-    fireEvent.click(screen.getByRole('button', { name: /2\.7× usual on 21 and 22 Sept\. Point at 22 Sept 2026/ }));
+    fireEvent.click(screen.getByRole('button', { name: /3\.4× usual on 21 and 22 Sept\. Point at 22 Sept 2026/ }));
     expect(screen.getByText('22 Sept 2026')).toBeTruthy();
-    expect(screen.getByText('2.7× usual')).toBeTruthy();
+    expect(screen.getByText('3.4× usual')).toBeTruthy();
   });
 });
 

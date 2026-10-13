@@ -1,7 +1,8 @@
 'use client';
 
 import { Specimen, State, Plane } from '@/system/specimen';
-import { demoHeatmap, demoSeries } from '@/system/fixtures/sample';
+import { DEMO_NOW } from '@/system/fixtures/sample';
+import { demoHeatmap, demoSeries } from '@/system/fixtures/company';
 import { formatCompact } from '@/lib/format';
 import { Meridian } from '@/components/charts/meridian';
 import { TrendChart } from '@/components/charts/trend-chart';
@@ -10,9 +11,13 @@ import { Heatmap } from '.';
 const values = demoHeatmap();
 /** The same week with one runaway hour, Thursday 03:00, at sixteen times its usual load. */
 const outlier = values.map((row, d) => row.map((v, h) => (d === 3 && h === 3 ? v * 16 : v)));
-/** 360 days ending on the sample's today: the 180 days of its longest period and the 180 before them. */
+/**
+ * 360 days ending on the sample's today: the 359 complete days before it, and today drawn at what the Saturday before
+ * came to. The sample's records hold complete days, so the day in progress is this specimen's own.
+ */
 const { previous, current } = demoSeries('all');
-const year = [...previous, ...current].map((d) => ({ date: d.date, value: d.requests }));
+const complete = [...previous, ...current].map((d) => ({ date: d.date, value: d.requests }));
+const year = [...complete.slice(1), { date: DEMO_NOW.toISOString().slice(0, 10), value: complete[complete.length - 7].value }];
 /** The sample's today is read at 09:00 UTC: three eighths of the day's requests have come so far. */
 const soFar = (days: typeof year) => days.map((d, i) => (i === days.length - 1 ? { ...d, value: Math.round(d.value * 0.375) } : d));
 /** The latest 26 weeks, from Monday 6 Apr 2026: few enough that every week fits the Atlas's column, at a cell well over 12px. */
@@ -20,7 +25,7 @@ const half = year.slice(-181);
 /** The same weeks with two days on which nothing came. */
 const quiet = half.map((d) => (d.date === '2026-08-11' || d.date === '2026-08-12' ? { ...d, value: 0 } : d));
 /** The page's Meridian in the last specimen: the last 30 days, pointed at a Thursday. */
-const month = demoSeries('30d').current;
+const month = year.slice(-30);
 const POINTED = '2026-09-24';
 
 export default function HeatmapPreview() {
@@ -116,7 +121,7 @@ export default function HeatmapPreview() {
           <Meridian dates={month.map((d) => d.date)} day={POINTED}>
             <Plane on="surface" className="flex flex-col gap-6">
               <Heatmap label="Requests a day over the last 26 weeks, on the page's Meridian" days={half} format={formatCompact} meridian data-preview-date={POINTED} />
-              <TrendChart label="Requests per day over the last 30 days" height={160} dates={month.map((d) => d.date)} series={[{ key: 'r', label: 'Requests', values: month.map((d) => d.requests), kind: 'area' }]} />
+              <TrendChart label="Requests per day over the last 30 days" height={160} dates={month.map((d) => d.date)} series={[{ key: 'r', label: 'Requests', values: month.map((d) => d.value), kind: 'area' }]} />
             </Plane>
           </Meridian>
         </State>

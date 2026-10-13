@@ -16,16 +16,16 @@ export const ADD_ONS = ['Key manager'] as const;
 export type MainRole = (typeof MAIN_ROLES)[number];
 export type AddOn = (typeof ADD_ONS)[number];
 
-/** Reading every dashboard is one grant per dashboard, so the four roles that see the console share this list. */
-const DASHBOARDS: readonly Grant[] = ['requests:read', 'days:read', 'endpoints:read', 'responses:read', 'hours:read', 'regions:read', 'services:read', 'incidents:read', 'customers:read', 'activity:read', 'tickets:read', 'tests:read', 'releases:read'];
+/** Reading every dashboard is one grant per dashboard, so the four roles that see the console share this list. What compute cost is not in it: `costs:read` is an Owner's and an Admin's. */
+const DASHBOARDS: readonly Grant[] = ['requests:read', 'days:read', 'models:read', 'usage:read', 'compute:read', 'endpoints:read', 'responses:read', 'hours:read', 'regions:read', 'services:read', 'incidents:read', 'customers:read', 'activity:read', 'tickets:read', 'tests:read', 'releases:read'];
 
 /** Each role's own grants, and only its own: a member's add-ons are unioned in by `effective`, never written here. */
 export const GRANTS: Record<MainRole | AddOn, readonly Grant[]> = {
   Owner: [
-    ...DASHBOARDS, 'requests:create', 'keys:read', 'keys:create', 'keys:remove', 'members:read', 'members:create', 'members:update', 'members:remove', 'activity:create', 'tickets:create', 'tickets:update', 'workspace:read', 'workspace:update',
+    ...DASHBOARDS, 'costs:read', 'requests:create', 'keys:read', 'keys:create', 'keys:remove', 'members:read', 'members:create', 'members:update', 'members:remove', 'activity:create', 'tickets:create', 'tickets:update', 'workspace:read', 'workspace:update',
   ],
   Admin: [
-    ...DASHBOARDS, 'requests:create', 'keys:read', 'keys:create', 'keys:remove', 'members:read', 'members:create', 'members:update', 'members:remove', 'activity:create', 'tickets:create', 'tickets:update', 'workspace:read',
+    ...DASHBOARDS, 'costs:read', 'requests:create', 'keys:read', 'keys:create', 'keys:remove', 'members:read', 'members:create', 'members:update', 'members:remove', 'activity:create', 'tickets:create', 'tickets:update', 'workspace:read',
   ],
   Member: [...DASHBOARDS, 'requests:create', 'keys:read', 'members:read', 'activity:create', 'tickets:create', 'tickets:update'],
   Viewer: [...DASHBOARDS],

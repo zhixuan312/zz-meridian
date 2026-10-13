@@ -9,7 +9,7 @@ vi.mock('next/headers', () => ({
 }));
 vi.mock('next/cache', () => ({ cacheTag: () => {}, cacheLife: () => {}, updateTag: () => {}, revalidateTag: () => {}, revalidatePath: () => {}, refresh: () => {} }));
 
-import { formatCost, formatDuration, formatPercent } from '@/lib/format';
+import { fitFigure, formatCost, formatDuration, formatPercent } from '@/lib/format';
 import { UsageBody } from '@/views/usage';
 import { HOME_METRICS } from '@/views/home-context';
 import { usageTool, viewTools } from '@/views/tools';
@@ -39,7 +39,8 @@ describe('what Usage says of the period', () => {
     const { current: c } = data.totals;
     for (const label of LABELS) expect(tile(label).textContent, label).toMatch(/(up|down|unchanged)[\s\S]*vs previous period/);
     expect(tile('Error rate').textContent).toContain(formatPercent(c.errorRate, 2).replace('%', ''));
-    expect(tile('Revenue').textContent).toContain(formatCost(c.revenue));
+    // A tile sets a figure too long for it at a glance ($3.3M); the exact amount is in the context.
+    expect(tile('Revenue').textContent).toContain(fitFigure(formatCost(c.revenue), c.revenue));
     expect(tile('Latency p95').textContent).toContain(formatDuration(c.p95));
   });
 

@@ -1,7 +1,7 @@
 'use client';
 
 import { Specimen, State } from '@/system/specimen';
-import { demoSeries, CUSTOMER_ROWS } from '@/system/fixtures/sample';
+import { demoSeries, CUSTOMERS } from '@/system/fixtures/company';
 import { useEffect } from 'react';
 import { Meridian, useMeridian } from '@/components/charts/meridian';
 import { Sparkline } from '.';
@@ -22,7 +22,7 @@ export default function SparklinePreview() {
         </Meridian>
       </Specimen>
       <Specimen label="In a table cell" note="24px tall, beside the number it qualifies, never instead of it." stack>
-        {CUSTOMER_ROWS.slice(0, 4).map((c) => (
+        {CUSTOMERS.slice(0, 4).map((c) => (
           <div key={c.name} className="flex items-center gap-4 border-b border-line pb-3 text-sm last:border-0">
             <span className="w-40 truncate">{c.name}</span>
             <span className="w-28"><Sparkline values={c.trend} color="neutral" height={24} /></span>
@@ -41,7 +41,7 @@ function Fixed() {
   return (
     <>
       <State label="30 values on a page of 30 days: the day is marked" className="w-72"><div className="w-full"><Sparkline values={current.map((d) => d.requests)} height={44} /></div></State>
-      <State label="14 values on a page of 30 days: no mark" className="w-72"><div className="w-full"><Sparkline values={CUSTOMER_ROWS[0].trend} color="neutral" height={44} /></div></State>
+      <State label="14 values on a page of 30 days: no mark" className="w-72"><div className="w-full"><Sparkline values={CUSTOMERS[0].trend} color="neutral" height={44} /></div></State>
     </>
   );
 }

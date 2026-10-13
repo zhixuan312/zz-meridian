@@ -9,7 +9,7 @@ vi.mock('next/headers', () => ({ cookies: async () => ({ get: () => undefined, s
 vi.mock('next/cache', () => ({ cacheTag: () => {}, cacheLife: () => {}, updateTag: () => {}, revalidateTag: () => {}, revalidatePath: () => {}, refresh: () => {} }));
 
 import { contextText } from '@/lib/shared-context';
-import { CUSTOMERS } from '@/system/fixtures/sample-records';
+import { CUSTOMERS } from '@/system/fixtures/company';
 import { customerContext } from '@/views/customer-context';
 import { PAGES } from '@/system/content';
 

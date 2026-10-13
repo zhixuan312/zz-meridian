@@ -6,14 +6,14 @@ import { Standalone } from '@/views/standalone';
 import { Meridian } from '@/components/charts/meridian';
 import { TrendChart } from '@/components/charts/trend-chart';
 import { formatCompact } from '@/lib/format';
-import { demoSeries } from '@/data/sample';
+import { signInDays } from '@/data/sign-in';
 import { app } from '@/app.config';
 
 export const metadata = { title: 'Sign in' };
 
 /** Before the shell: the one screen a visitor sees before they are anyone, with the product's signature as its proof. */
 export default function SignInPage() {
-  const days = demoSeries('30d').current;
+  const days = signInDays();
   return (
     <Standalone
       footer={<SampleFooter />}

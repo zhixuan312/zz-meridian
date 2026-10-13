@@ -10,7 +10,7 @@ import type { Service } from '@/components/patterns/status-list';
 import type { ReleaseRow } from '@/data/engineering';
 import type { CustomerRecord, Ticket, VerificationRun } from '@/data/sample';
 import { latestRuns } from '@/data/verification';
-import { customerFigures } from './customers-context';
+import { customerFigures, kept } from './customers-context';
 import { releaseFigures } from './releases-context';
 import { ticketCounts } from './tickets-context';
 
@@ -26,10 +26,11 @@ function tally(rows: CustomerRecord[], field: 'status' | 'plan'): Record<string,
   return counts;
 }
 
-/** Every customer: how many, how many of each status and plan, and the revenue they brought in the last thirty days. */
+/** Every customer that has not left: how many, how many of each status and plan, and the revenue they brought in the last thirty days. */
 export function businessOf(customers: CustomerRecord[]): MainBusiness {
   const { customers: count, revenue } = customerFigures(customers);
-  return { customers: count, byStatus: tally(customers, 'status'), byPlan: tally(customers, 'plan'), revenue };
+  const counted = kept(customers);
+  return { customers: count, byStatus: tally(counted, 'status'), byPlan: tally(counted, 'plan'), revenue };
 }
 
 /** The services that are not operational, by name and in the services' order, and each incident nobody has resolved. */

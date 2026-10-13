@@ -2,7 +2,7 @@
 
 import { useEffect, type ReactNode } from 'react';
 import { AlertTriangle, CircleDollarSign, Gauge, Zap } from 'lucide-react';
-import { CUSTOMER_ROWS, demoSeries } from '@/system/fixtures/sample';
+import { CUSTOMERS, demoSeries } from '@/system/fixtures/company';
 import { formatCompact, formatCost, formatDuration, formatPercent } from '@/lib/format';
 import { formatDay } from '@/lib/format-date';
 import { Meridian, useMeridian } from '@/components/charts/meridian';
@@ -19,7 +19,7 @@ const peak = s.reduce((m, d) => (d.requests > m.requests ? d : m), s[0]);
  * of requests, the last 7 against the 7 before.
  */
 const sum = (values: number[]) => values.reduce((a, b) => a + b, 0);
-const figures = CUSTOMER_ROWS.slice(0, 8).map((c) => ({
+const figures = CUSTOMERS.slice(0, 8).map((c) => ({
   label: c.name,
   value: c.revenue,
   points: c.trend,
@@ -28,7 +28,7 @@ const figures = CUSTOMER_ROWS.slice(0, 8).map((c) => ({
   compare: 'vs last week',
 }));
 /** The same eight for a compact tile, each with its plan as the note on its line. */
-const customers = figures.map((f, i) => ({ ...f, note: CUSTOMER_ROWS[i].plan }));
+const customers = figures.map((f, i) => ({ ...f, note: CUSTOMERS[i].plan }));
 const [first] = customers;
 
 /** Points the shared cursor at one day, to show the reading state still. */

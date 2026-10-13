@@ -3,7 +3,7 @@ import { ArrowRight } from 'lucide-react';
 import { SECTIONS, entries, readRepo, stats } from '@/system/content';
 import { Hero } from '@/system/hero';
 import { Strata } from '@/system/strata';
-import { demoSeries } from '@/system/fixtures/sample';
+import { demoSeries } from '@/system/fixtures/company';
 
 export const metadata = { title: { absolute: 'ZZ Meridian Design Atlas' } };
 

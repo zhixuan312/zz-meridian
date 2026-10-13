@@ -24,7 +24,8 @@ describe('customers is a collection', () => {
     const customers = collections.find((c) => c.name === 'customers');
     expect(customers, 'no customers collection').toBeTruthy();
     expect(customers!.create ?? customers!.update ?? customers!.remove).toBeUndefined();
-    expect((await read('customers')).rows.length).toBe(12);
+    // A read answers a page of them; the total is every record, the nine that have left among them.
+    expect((await read('customers')).total).toBe(329);
   });
 
   it('is named by no page and no view', () => {

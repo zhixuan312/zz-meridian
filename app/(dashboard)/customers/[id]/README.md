@@ -19,13 +19,14 @@ This body is the thin first form: the facts as label and value and the 14 days a
 |---|---|
 | Loading | `loading.tsx`: the facts beside the 14 days, as skeletons |
 | Default | Status `neutral` when active, `accent` on a trial, `critical` past due; an error rate over 1% in `warning-ink` |
+| Left | A customer that has left still has its page: status "Left" in `neutral`, and zeros for its 30 days and its 14, since the days they cover hold nothing of it |
 | Unknown id | The page renders the console's Not found screen itself (`MissingPage`), with `noindex`, rather than throwing `notFound()`, so the screen is in the first HTML |
 | No access | The product's refusal page, before any read; its metadata names the feature, never the record. The need is `FEATURES.customers.needs` itself, so the page leads back into Business |
 | Error | The dashboard error screen with Retry |
 
 ## Data
 
-One row of the `customers` collection through `read()` under `customers:read`, whose key is the id (`readCustomer` in `src/views/tools.ts`, shared by the page and the Customer tool). Three ids are built ahead of time; any other renders on its first request. Nothing writes.
+One row of the `customers` collection through `read()` under `customers:read`, whose key is the id (`readCustomer` in `src/views/tools.ts`, shared by the page and the Customer tool). Three ids are built ahead of time, the three largest customers; any other renders on its first request. Nothing writes. The record also holds the customer's tokens, its requests by route, its owner and the days it changed plan, left, ends its trial and has been past due since; this thin form draws none of them yet.
 
 ## Surfaces
 
@@ -40,7 +41,7 @@ The page itself takes no agent action. It shares one context with both agents (d
 The customer's plan and status, requests and revenue over 30 days with the revenue's definition, error rate with its definition, region and seats, since when, and how its requests moved over the last 7 days against the 7 before. It says that how the customer compares with the others is on Customers.
 
 ```text
-- Its requests are up 17% over the last 7 days against the 7 before.
+- Its requests are up 10% over the last 7 days against the 7 before. Evidence: /requests?q=Northwind%20Labs
 ```
 
 - **MCP App:** no embed view; an MCP server returns this context as the `customer` tool's text (`docs/agents.md`).

@@ -3,7 +3,7 @@
 import { describe, expect, it } from 'vitest';
 import { formatCost } from '@/lib/format';
 import { contextText } from '@/lib/shared-context';
-import { CUSTOMERS } from '@/system/fixtures/sample-records';
+import { CUSTOMERS } from '@/system/fixtures/company';
 import { customerFigures } from '@/views/customers-context';
 import { revenueContext, type RevenueData } from '@/views/revenue-context';
 

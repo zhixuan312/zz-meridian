@@ -77,7 +77,7 @@ export function usageContext(data: UsageData, { sort = 'p95 descending', index =
   const weekdays = heat.slice(0, 5).flat().reduce((s, v) => s + v, 0) / 5;
   const weekend = heat.slice(5).flat().reduce((s, v) => s + v, 0) / 2;
   if (weekdays) insights.push({ text: `A weekend day carries ${formatPercent(weekend / weekdays, 0)} of a weekday's requests.` });
-  unknowns.push('The weekday-and-hour pattern, the regions and the endpoints are one fixed set of figures: they do not follow the period chosen, and none of them shows a single day.');
+  unknowns.push('The weekday-and-hour pattern, the regions and the endpoints cover the last 30 complete days: they do not follow the period chosen, and none of them shows a single day.');
 
   let focus: string | undefined;
   if (index !== null && series[index]) {

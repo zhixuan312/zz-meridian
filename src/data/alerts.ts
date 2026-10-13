@@ -50,19 +50,23 @@ async function incidentAlerts(): Promise<{ alerts: Alert[]; observedAt: string }
   return { alerts, observedAt };
 }
 
-/** Each customer past due, linking to Customers filtered to the customers who are. */
+/** One alert for the customers past due, linking to Customers filtered to them: the customer's name when there is one, and how many when there are more. */
 async function customerAlerts(): Promise<{ alerts: Alert[]; observedAt: string }> {
   const { rows, observedAt } = await readAll('customers');
-  const href = customersAddress({ q: '', plan: 'all', status: 'past due', sort: 'revenue', dir: 'desc', page: '1' });
-  const alerts = customerFigures(rows as CustomerRecord[]).pastDue.map((c): Alert => ({
-    id: `customer:${c.id}`,
-    title: `${c.name} is past due`,
-    detail: 'Their latest invoice is overdue',
-    at: observedAt,
-    href,
-    tone: 'warning',
-  }));
-  return { alerts, observedAt };
+  const { pastDue } = customerFigures(rows as CustomerRecord[]);
+  if (!pastDue.length) return { alerts: [], observedAt };
+  const one = pastDue.length === 1;
+  return {
+    alerts: [{
+      id: 'customers:past-due',
+      title: one ? `${pastDue[0].name} is past due` : `${pastDue.length} customers are past due`,
+      detail: one ? 'Their latest invoice is overdue' : 'Their latest invoices are overdue',
+      at: observedAt,
+      href: customersAddress({ q: '', plan: 'all', status: 'past due', sort: 'revenue', dir: 'desc', page: '1' }),
+      tone: 'warning',
+    }],
+    observedAt,
+  };
 }
 
 /** One alert saying how many verifications are failing, when any are. */
@@ -101,8 +105,8 @@ async function ticketAlerts(): Promise<{ alerts: Alert[]; observedAt: string }> 
 }
 
 /**
- * What needs a person, in the order the bell shows it: the unresolved incidents, the customers past due, the failing
- * verifications and the high-priority tickets nobody has. `now` is the latest time any of the reads ran, and no alert is
+ * What needs a person, in the order the bell shows it: the unresolved incidents, the customers past due (one alert for
+ * all of them), the failing verifications and the high-priority tickets nobody has. `now` is the latest time any of the reads ran, and no alert is
  * timed after it. Refused to a caller with no session.
  */
 export async function readAlerts(): Promise<AlertsRead> {

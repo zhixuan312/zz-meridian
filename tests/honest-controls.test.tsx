@@ -20,7 +20,7 @@ import ServicesPage from '../app/(dashboard)/services/page';
 import * as customers from '@/views/customers';
 import { CustomersView } from '@/views/customers';
 import * as services from '@/views/services';
-import { CUSTOMERS } from '@/system/fixtures/sample-records';
+import { CUSTOMERS } from '@/system/fixtures/company';
 
 beforeEach(() => { jar.value = 'members_12'; });
 

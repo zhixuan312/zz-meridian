@@ -12,8 +12,8 @@ import { formatCompact, formatCost, formatPercent } from '@/lib/format';
 import { formatDate } from '@/lib/format-date';
 import { customerContext, type CustomerData } from './customer-context';
 
-const STATUS_TONE = { active: 'neutral', trial: 'accent', 'past due': 'critical' } as const;
-const STATUS_LABEL = { active: 'Active', trial: 'Trial', 'past due': 'Past due' } as const;
+const STATUS_TONE = { active: 'neutral', trial: 'accent', 'past due': 'critical', left: 'neutral' } as const;
+const STATUS_LABEL = { active: 'Active', trial: 'Trial', 'past due': 'Past due', left: 'Left' } as const;
 
 /** One customer's page, the thin first form: its facts as label and value and its 14 days as a sparkline. */
 export function CustomerView(data: CustomerData) {
