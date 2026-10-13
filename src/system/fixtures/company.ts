@@ -10,8 +10,10 @@
  * plans and a plan's 30 days among its customers; and the requests of those 30 days are divided among the endpoints, the
  * regions, the status classes, the weekday grid and the customers.
  *
- * It holds the 360 complete days before the clock's own day. No client module of a page imports this file: it is a
- * year of records a browser is never shown (tests/client-imports.test.ts).
+ * It holds the 360 complete days before the clock's own day, and that day as far as the clock has come: the day in
+ * progress is the last row of the days, the usage, the compute and the costs, and is counted in no period, no
+ * customer's figures and no snapshot. No client module of a page imports this file: it is a year of records a browser
+ * is never shown (tests/client-imports.test.ts).
  */
 import { PERIOD_DAYS, type Period } from '@/lib/period';
 import { DEMO_NOW, MODELS, NAMED_CUSTOMERS, PLANS, REGION_NAMES, ROUTES, seeded, type ComputeRow, type CostRow, type CustomerRecord, type DailyPoint, type Endpoint, type Plan, type Totals, type UsageRow } from '@/system/fixtures/sample';
@@ -63,7 +65,12 @@ const REGION_SHAPE = [
 /** US dollars a GPU-hour, and the tokens a GPU-hour serves. */
 const GPU_RATE = 2.5;
 const TOKENS_A_GPU_HOUR = 7_300_000;
+/** The UTC hour the Sunday batch runs in. */
+const BATCH_HOUR = 22;
+/** How a day's requests fall across its UTC hours, before each hour's own noise: an afternoon peak, flatter at a weekend, and a smaller one at night. */
+const hourly = (weekend: boolean, h: number) => (weekend ? 0.2 : 0.12) + (weekend ? 0.6 : 0.9) * Math.exp(-((h - 14.5) ** 2) / 22) + 0.28 * Math.exp(-((h - 3) ** 2) / 10);
 
+/** The complete days, oldest first, and what each model answered, each region ran and the GPUs cost on each of them. */
 export const USAGE: UsageRow[] = [];
 export const DAYS: DailyPoint[] = [];
 export const COMPUTE: ComputeRow[] = [];
@@ -71,70 +78,91 @@ export const COSTS: CostRow[] = [];
 /** Each day's requests from the batch that runs late on a Sunday; the weekday grid puts them in their hour. */
 const BATCH: number[] = [];
 
-{
-  const rand = seeded(0x5eed);
-  const traffic = sum(REGION_SHAPE.map((r) => r.requests));
-  for (let n = 0; n < KEPT; n++) {
-    const before = KEPT - n;
-    const date = back(before), weekday = new Date(`${date}T00:00:00Z`).getUTCDay();
-    const weekend = weekday === 0 || weekday === 6;
-    // A year of growth, one soft month in June that the next three periods of 30 days each beat, and a monthly rhythm
-    // that leaves every period's total alone.
-    const level = (1 + n / 300) * (1 - 0.22 * Math.exp(-(((n - 254.5) / 11) ** 2))) * (1 - 0.03 * Math.cos((2 * Math.PI * (n - 345)) / WINDOW));
-    const organic = Math.round(BASE * (weekday === 0 ? 0.4 : weekday === 6 ? 0.62 : weekday === 1 ? 0.94 : 1) * level * (0.95 + rand() * 0.1));
-    const batch = weekday === 0 ? Math.round(BASE * 0.26 * level * (0.96 + rand() * 0.08)) : 0;
-    // The three days outside the band, where the services' strips mark them: the Inference API 11 and 12 days before
-    // the clock, and Files 47 days before.
-    const inference = before === 11 || before === 12, files = before === 47;
-    // Customers moved to the large model through the year.
-    const large = 0.28 + (0.04 * n) / (KEPT - 1);
-    const answered = split(organic, [0.424 * large * (0.98 + rand() * 0.04), 0.424 * (1 - large), 0.134 * (0.97 + rand() * 0.06), 0.442 * (0.98 + rand() * 0.04)]);
-    // The batch embeds: it is the embedding model's.
-    answered[2] += batch;
-    const rows = MODELS.map((m, k): UsageRow => {
-      const shape = SHAPE[m.id], requests = answered[k];
-      const writes = m.outputPrice !== null;
-      const hit = m.callPrice === null ? inference && writes : files;
-      const inputTokens = Math.round(requests * shape.input * (0.97 + rand() * 0.06));
-      const outputTokens = writes ? Math.round(requests * shape.output * (0.97 + rand() * 0.06)) : 0;
-      const slow = (0.95 + rand() * 0.1) * (weekend ? 0.94 : 1) * (hit ? (writes ? 1.9 : 2.4) : 1);
-      return {
-        id: `${date}:${m.id}`, date, model: m.id, requests, inputTokens, outputTokens,
-        // Priced once: tokens at the model's price, or calls at the price of a call, to the cent.
-        revenue: (m.callPrice !== null ? Math.round(requests * m.callPrice * 100) : Math.round((inputTokens * (m.inputPrice ?? 0) + outputTokens * (m.outputPrice ?? 0)) / 10_000)) / 100,
-        errors: Math.round(requests * shape.errors * (0.85 + rand() * 0.3) * (hit ? (writes ? 6 : 4.5) : 1)),
-        p95: Math.round(shape.p95 * slow),
-        ttft: writes ? Math.round(shape.ttft * slow) : null,
-        tps: writes ? Math.round((shape.tps / (hit ? 1.6 : 1)) * (0.96 + rand() * 0.08)) : null,
-      };
-    });
-    USAGE.push(...rows);
-    BATCH.push(batch);
+const rand = seeded(0x5eed);
+const traffic = sum(REGION_SHAPE.map((r) => r.requests));
 
-    const paid = sum(rows.map((u) => cents(u.revenue)));
-    const enterprise = 0.6 + 0.03 * Math.sin(n / 40);
-    const [byEnterprise, byScale, byStarter] = split(paid, [enterprise, 0.27, 0.73 - enterprise]);
-    const tokens = sum(rows.map((u) => u.inputTokens + u.outputTokens));
-    DAYS.push({
-      date,
-      requests: sum(rows.map((u) => u.requests)),
-      errors: sum(rows.map((u) => u.errors)),
-      p95: Math.round((268 + rand() * 60 + (inference || files ? 190 : 0)) * (weekend ? 0.92 : 1)),
-      tokens,
-      revenue: paid / 100,
-      revenueByPlan: { Enterprise: byEnterprise / 100, Scale: byScale / 100, Starter: byStarter / 100 },
-    });
+/**
+ * The records of the day `n` days after the first day kept, as far as its first `hours` hours: all 24 for a complete
+ * day. A day in progress holds the requests that arrive in the hours it has had, and its GPUs for those hours.
+ */
+function dayOf(n: number, hours = 24) {
+  const before = KEPT - n;
+  const date = back(before), weekday = new Date(`${date}T00:00:00Z`).getUTCDay();
+  const weekend = weekday === 0 || weekday === 6;
+  // The share of the day's requests that arrive in the hours it has had: all of them for a complete day.
+  const arrived = hours === 24 ? 1 : sum(Array.from({ length: hours }, (_, h) => hourly(weekend, h))) / sum(Array.from({ length: 24 }, (_, h) => hourly(weekend, h)));
+  // A year of growth, one soft month in June that the next three periods of 30 days each beat, and a monthly rhythm
+  // that leaves every period's total alone.
+  const level = (1 + n / 300) * (1 - 0.22 * Math.exp(-(((n - 254.5) / 11) ** 2))) * (1 - 0.03 * Math.cos((2 * Math.PI * (n - 345)) / WINDOW));
+  const organic = Math.round(BASE * (weekday === 0 ? 0.4 : weekday === 6 ? 0.62 : weekday === 1 ? 0.94 : 1) * level * (0.95 + rand() * 0.1) * arrived);
+  // The batch is in a day once its hour has passed.
+  const batch = weekday === 0 && hours > BATCH_HOUR ? Math.round(BASE * 0.26 * level * (0.96 + rand() * 0.08)) : 0;
+  // The three days outside the band, where the services' strips mark them: the Inference API 11 and 12 days before
+  // the clock, and Files 47 days before.
+  const inference = before === 11 || before === 12, files = before === 47;
+  // Customers moved to the large model through the year.
+  const large = 0.28 + (0.04 * n) / (KEPT - 1);
+  const answered = split(organic, [0.424 * large * (0.98 + rand() * 0.04), 0.424 * (1 - large), 0.134 * (0.97 + rand() * 0.06), 0.442 * (0.98 + rand() * 0.04)]);
+  // The batch embeds: it is the embedding model's.
+  answered[2] += batch;
+  const rows = MODELS.map((m, k): UsageRow => {
+    const shape = SHAPE[m.id], requests = answered[k];
+    const writes = m.outputPrice !== null;
+    const hit = m.callPrice === null ? inference && writes : files;
+    const inputTokens = Math.round(requests * shape.input * (0.97 + rand() * 0.06));
+    const outputTokens = writes ? Math.round(requests * shape.output * (0.97 + rand() * 0.06)) : 0;
+    const slow = (0.95 + rand() * 0.1) * (weekend ? 0.94 : 1) * (hit ? (writes ? 1.9 : 2.4) : 1);
+    return {
+      id: `${date}:${m.id}`, date, model: m.id, requests, inputTokens, outputTokens,
+      // Priced once: tokens at the model's price, or calls at the price of a call, to the cent.
+      revenue: (m.callPrice !== null ? Math.round(requests * m.callPrice * 100) : Math.round((inputTokens * (m.inputPrice ?? 0) + outputTokens * (m.outputPrice ?? 0)) / 10_000)) / 100,
+      errors: Math.round(requests * shape.errors * (0.85 + rand() * 0.3) * (hit ? (writes ? 6 : 4.5) : 1)),
+      p95: Math.round(shape.p95 * slow),
+      ttft: writes ? Math.round(shape.ttft * slow) : null,
+      tps: writes ? Math.round((shape.tps / (hit ? 1.6 : 1)) * (0.96 + rand() * 0.08)) : null,
+    };
+  });
 
-    // Thirty more GPUs every 30 days, from 360 to 690, and never one fewer.
-    const gpus = split(360 + 30 * Math.floor(n / WINDOW), REGION_SHAPE.map((r) => r.gpus));
-    REGION_NAMES.forEach((region, k) => {
-      const offered = gpus[k] * 24;
-      const share = REGION_SHAPE[k].requests / traffic;
-      COMPUTE.push({ id: `${date}:${region}`, date, region, gpus: gpus[k], used: Math.round(offered * Math.min(0.97, ((tokens * share) / (offered * TOKENS_A_GPU_HOUR)) * (0.97 + rand() * 0.06))) });
-    });
-    COSTS.push({ date, compute: sum(gpus) * 24 * GPU_RATE });
-  }
+  const paid = sum(rows.map((u) => cents(u.revenue)));
+  const enterprise = 0.6 + 0.03 * Math.sin(n / 40);
+  const [byEnterprise, byScale, byStarter] = split(paid, [enterprise, 0.27, 0.73 - enterprise]);
+  const tokens = sum(rows.map((u) => u.inputTokens + u.outputTokens));
+  const day: DailyPoint = {
+    date,
+    requests: sum(rows.map((u) => u.requests)),
+    errors: sum(rows.map((u) => u.errors)),
+    p95: Math.round((268 + rand() * 60 + (inference || files ? 190 : 0)) * (weekend ? 0.92 : 1)),
+    tokens,
+    revenue: paid / 100,
+    revenueByPlan: { Enterprise: byEnterprise / 100, Scale: byScale / 100, Starter: byStarter / 100 },
+  };
+
+  // Thirty more GPUs every 30 days, from 360 to 690, and never one fewer. The day in progress runs on yesterday's.
+  const gpus = split(360 + 30 * Math.floor(Math.min(n, KEPT - 1) / WINDOW), REGION_SHAPE.map((r) => r.gpus));
+  const compute = REGION_NAMES.map((region, k): ComputeRow => {
+    const offered = gpus[k] * hours;
+    const share = REGION_SHAPE[k].requests / traffic;
+    return { id: `${date}:${region}`, date, region, gpus: gpus[k], used: Math.round(offered * Math.min(0.97, ((tokens * share) / (offered * TOKENS_A_GPU_HOUR)) * (0.97 + rand() * 0.06))) };
+  });
+  const cost: CostRow = { date, compute: sum(gpus) * hours * GPU_RATE };
+  return { day, usage: rows, compute, cost, batch };
 }
+
+for (let n = 0; n < KEPT; n++) {
+  const made = dayOf(n);
+  USAGE.push(...made.usage);
+  DAYS.push(made.day);
+  COMPUTE.push(...made.compute);
+  COSTS.push(made.cost);
+  BATCH.push(made.batch);
+}
+
+/**
+ * The day in progress: the clock's own day, with what has arrived by the clock (nine hours at the sample's 09:00 UTC).
+ * It is made as every day is, so its four usage rows sum to it and each is priced at its model's price. The
+ * collections hold it as the last row of the days, the usage, the compute and the costs; nothing here counts it.
+ */
+export const IN_PROGRESS = (({ batch: _, ...records }) => records)(dayOf(KEPT, DEMO_NOW.getUTCHours()));
 
 // ── The last 30 complete days, four ways ─────────────────────────────────────────────────────────────────────────────
 
@@ -187,12 +215,11 @@ export const STATUS_MIX = (() => {
  * among its hours, and the Sunday batch in the hour it runs.
  */
 export const WEEKDAY_HOURS = (() => {
-  const BATCH_HOUR = 22;
   const rand = seeded(0xbeef);
   return Array.from({ length: 7 }, (_, weekday) => {
     const days = MONTH.map((d, i) => ({ ...d, batch: BATCH[KEPT - WINDOW + i] })).filter((d) => (new Date(`${d.date}T00:00:00Z`).getUTCDay() + 6) % 7 === weekday);
     const weekend = weekday > 4;
-    const shape = Array.from({ length: 24 }, (_, h) => ((weekend ? 0.2 : 0.12) + (weekend ? 0.6 : 0.9) * Math.exp(-((h - 14.5) ** 2) / 22) + 0.28 * Math.exp(-((h - 3) ** 2) / 10)) * (0.93 + rand() * 0.14));
+    const shape = Array.from({ length: 24 }, (_, h) => hourly(weekend, h) * (0.93 + rand() * 0.14));
     const cells = split(sum(days.map((d) => d.requests - d.batch)), shape);
     cells[BATCH_HOUR] += sum(days.map((d) => d.batch));
     return cells.map((requests, hour) => ({ id: `${weekday}-${hour}`, weekday, hour, requests }));
@@ -332,10 +359,13 @@ export const CUSTOMERS: CustomerRecord[] = (() => {
 
 // ── What a preview and the Atlas draw ────────────────────────────────────────────────────────────────────────────────
 
-/** A period's days, oldest first, and the same number before them; `all` is 180 days and the 180 before. */
+/**
+ * A period's complete days, oldest first and ending yesterday, the same number before them, and the day in progress on
+ * its own. `all` is every complete day kept, with none before it.
+ */
 export function demoSeries(period: Period) {
-  const n = PERIOD_DAYS[period] ?? 180;
-  return { current: DAYS.slice(-n), previous: DAYS.slice(-2 * n, -n) };
+  const n = PERIOD_DAYS[period];
+  return { current: n ? DAYS.slice(-n) : DAYS, previous: n ? DAYS.slice(-2 * n, -n) : [], running: IN_PROGRESS.day };
 }
 
 function totals(points: DailyPoint[]): Totals {
@@ -348,9 +378,10 @@ function totals(points: DailyPoint[]): Totals {
   };
 }
 
+/** Both periods' totals; the period before has none when no day comes before, as with `all`. */
 export function demoTotals(period: Period) {
   const { current, previous } = demoSeries(period);
-  return { current: totals(current), previous: totals(previous) };
+  return { current: totals(current), previous: previous.length ? totals(previous) : null };
 }
 
 /** Requests by weekday (Mon first) and hour (UTC), as a grid. */

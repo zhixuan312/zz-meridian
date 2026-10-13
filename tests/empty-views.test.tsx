@@ -11,13 +11,13 @@ const NOW = '2026-10-05T09:00:00.000Z';
 
 describe('a page body with no data shows its empty state, not a route error', () => {
   it('Home, with no requests', () => {
-    render(<HomeBody period="30d" incidents={[]} updatedAt={NOW} series={[]} totals={{ current: totals, previous: totals }} endpoints={[]} mix={[]} activity={[]} now={NOW} summary={{ business: null, operation: null, delivery: null }} />);
+    render(<HomeBody period="30d" incidents={[]} updatedAt={NOW} series={[]} totals={{ current: totals, previous: null }} running={null} endpoints={[]} mix={[]} activity={[]} now={NOW} summary={{ business: null, operation: null, delivery: null }} />);
     expect(screen.getByText('No requests yet')).toBeTruthy();
     // The three regions draw without traffic: here each says its summary is unavailable.
     for (const name of ['Business', 'Operation', 'Delivery']) expect(screen.getByRole('region', { name }).textContent).toMatch(/unavailable/);
   });
   it('Usage, with no requests in the period', () => {
-    render(<UsageBody period="30d" activity={[]} incidents={[]} updatedAt={NOW} now={NOW} series={[]} totals={{ current: totals, previous: totals }} heat={[]} hours={[]} regions={[]} endpoints={[]} />);
+    render(<UsageBody period="30d" activity={[]} incidents={[]} updatedAt={NOW} now={NOW} series={[]} totals={{ current: totals, previous: null }} heat={[]} hours={[]} regions={[]} endpoints={[]} />);
     expect(screen.getByText('No requests in this period')).toBeTruthy();
   });
   it('Services, with no services', () => {

@@ -6,12 +6,11 @@
 import type { ActivityEvent } from '@/components/patterns/activity-feed';
 import type { Incident } from '@/components/patterns/incident-card';
 import type { Service } from '@/components/patterns/status-list';
-import { read } from '@/data/read';
+import { clock } from '@/data/collections';
+import { read, readAll } from '@/data/read';
 import type { DailyPoint, Endpoint, Totals } from '@/data/sample';
 import { PERIOD_DAYS, type Period } from '@/lib/period';
 
-/** Days in `all`, the sample's longest period. A product with more history raises it, or reads `all` its own way. */
-const ALL_DAYS = 180;
 /** The newest activity a page shows. */
 const ACTIVITY_SHOWN = 6;
 
@@ -29,13 +28,28 @@ function totalsOf(points: DailyPoint[]): Totals {
   };
 }
 
-/** The period's days, oldest first, and the same number before them, with both periods' totals. */
-export async function readDays(period: Period) {
-  const n = PERIOD_DAYS[period] ?? ALL_DAYS;
-  const { rows, observedAt } = await read('days', { sort: { field: 'date', dir: 'desc' }, limit: n * 2 });
-  const all = (rows as DailyPoint[]).reverse();
-  const current = all.slice(-n), previous = all.slice(0, Math.max(0, all.length - n));
-  return { series: current, totals: { current: totalsOf(current), previous: totalsOf(previous) }, observedAt };
+/** What `readDays` answers: a period's complete days, the days before them, both totals, and the day in progress on its own. */
+type PeriodDays = { series: DailyPoint[]; previous: DailyPoint[]; totals: { current: Totals; previous: Totals | null }; running: DailyPoint | null; observedAt: string };
+
+/**
+ * A period of days. `series` is the period's complete days, oldest first and ending yesterday: the latest 7, 30 or 90,
+ * and for `all` every complete day kept. `previous` is the same number of complete days before them, fewer where fewer
+ * are kept and none for `all`; `totals.previous` is null when there are none, so nothing is compared with nothing.
+ * `running` is the day in progress, the row of the clock's own date, or null when the latest row is a complete day. It
+ * is in no series and no total: it is handed over on its own, for a chart of days to draw as running.
+ *
+ * Every day kept is read, a page at a time and in the order of its date, so no number stands for `all` and a period is
+ * never cut at one read's 500 rows. A product asks its database for the days of the window.
+ */
+export async function readDays(period: Period): Promise<PeriodDays> {
+  const { rows, observedAt } = await readAll('days');
+  // The clock's own date, not the read's: a read answered from the cache was made a moment before.
+  const today = clock().toISOString().slice(0, 10);
+  const days = rows as DailyPoint[];
+  const complete = days.filter((d) => d.date < today);
+  const n = PERIOD_DAYS[period] ?? complete.length;
+  const series = n ? complete.slice(-n) : [], previous = complete.slice(-2 * n, -n);
+  return { series, previous, totals: { current: totalsOf(series), previous: previous.length ? totalsOf(previous) : null }, running: days.find((d) => d.date === today) ?? null, observedAt };
 }
 
 export async function readEndpoints(): Promise<Endpoint[]> {

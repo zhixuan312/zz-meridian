@@ -40,7 +40,7 @@ import { testFigures, testsContext } from './tests-context';
 import { ticketCounts, ticketsContext } from './tickets-context';
 
 const day = z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional().describe('A day of the period, YYYY-MM-DD: the view opens pointed at it.');
-const period = z.enum(PERIODS).optional().describe('The reporting period; 30d when not given.');
+const period = z.enum(PERIODS).optional().describe('The reporting period, in complete days counted back from yesterday: 7d, 30d or 90d, each compared with the same number of days before it, or all, every complete day kept, which has no period before it. 30d when not given.');
 const updatedAt = () => DEMO_UPDATED_AT.toISOString();
 
 export const homeTool = defineViewTool({
@@ -52,8 +52,8 @@ export const homeTool = defineViewTool({
   resourceUri: `ui://${slug}/home`,
   async read({ period: p = '30d', day: d }) {
     await requireNeed(FEATURES.home.needs);
-    const [{ series, totals, observedAt }, endpoints, mix, activity, { all: incidents }, summary] = await Promise.all([readDays(p), readEndpoints(), readResponses(), readActivity(), readIncidents(), readMainSummary()]);
-    const data: HomeData = { period: p, series, totals, endpoints, mix, activity, incidents, summary, updatedAt: updatedAt(), now: observedAt, day: d ?? null };
+    const [{ series, totals, running, observedAt }, endpoints, mix, activity, { all: incidents }, summary] = await Promise.all([readDays(p), readEndpoints(), readResponses(), readActivity(), readIncidents(), readMainSummary()]);
+    const data: HomeData = { period: p, series, totals, running, endpoints, mix, activity, incidents, summary, updatedAt: updatedAt(), now: observedAt, day: d ?? null };
     const index = d ? data.series.findIndex((x) => x.date === d) : -1;
     return { context: homeContext(data, index >= 0 ? index : null), data };
   },

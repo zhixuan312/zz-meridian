@@ -51,7 +51,8 @@ export function UsageBody(data: UsageData) {
   }
   const dates = series.map((d) => d.date);
   const { current: c, previous: p } = totals;
-  const change = (a: number, b: number) => (b ? a / b - 1 : null);
+  // No change against a period that is not kept, as with `all`, or against a figure of zero: the tile says so.
+  const change = (a: number, b?: number) => (b ? a / b - 1 : null);
   const sortLabel = `${{ requests: 'requests', errorRate: 'error rate', p95: 'p95' }[sort.key]} ${sort.dir === 'desc' ? 'descending' : 'ascending'}`;
   const peak = heat.flatMap((row, d) => row.map((v, h) => ({ v, d, h }))).reduce((m, c) => (c.v > m.v ? c : m));
   const peakHour = hours.reduce((m, c) => (c.value > m.value ? c : m));
@@ -67,10 +68,10 @@ export function UsageBody(data: UsageData) {
     <ShareUsage data={data} sort={sortLabel} />
     <Stack>
       <Row split="tiles">
-        <MetricTile label={HOME_METRICS.requests.label} hint={HOME_METRICS.requests.hint} icon={<Activity />} value={c.requests} delta={change(c.requests, p.requests)} points={series.map((d) => d.requests)} format={formatCompact} emphasis />
-        <MetricTile label={HOME_METRICS.errorRate.label} hint={HOME_METRICS.errorRate.hint} icon={<AlertTriangle />} value={c.errorRate} delta={change(c.errorRate, p.errorRate)} intent="down" points={series.map((d) => (d.requests ? d.errors / d.requests : 0))} format={(n) => formatPercent(n, 2)} />
-        <MetricTile label={HOME_METRICS.p95.label} hint={HOME_METRICS.p95.hint} icon={<Gauge />} value={c.p95} delta={change(c.p95, p.p95)} intent="down" points={series.map((d) => d.p95)} format={(n) => formatDuration(n)} />
-        <MetricTile label={HOME_METRICS.revenue.label} hint={HOME_METRICS.revenue.hint} icon={<CircleDollarSign />} value={c.revenue} delta={change(c.revenue, p.revenue)} intent="neutral" points={series.map((d) => d.revenue)} format={(n) => formatCost(n)} />
+        <MetricTile label={HOME_METRICS.requests.label} hint={HOME_METRICS.requests.hint} icon={<Activity />} value={c.requests} delta={change(c.requests, p?.requests)} points={series.map((d) => d.requests)} format={formatCompact} emphasis />
+        <MetricTile label={HOME_METRICS.errorRate.label} hint={HOME_METRICS.errorRate.hint} icon={<AlertTriangle />} value={c.errorRate} delta={change(c.errorRate, p?.errorRate)} intent="down" points={series.map((d) => (d.requests ? d.errors / d.requests : 0))} format={(n) => formatPercent(n, 2)} />
+        <MetricTile label={HOME_METRICS.p95.label} hint={HOME_METRICS.p95.hint} icon={<Gauge />} value={c.p95} delta={change(c.p95, p?.p95)} intent="down" points={series.map((d) => d.p95)} format={(n) => formatDuration(n)} />
+        <MetricTile label={HOME_METRICS.revenue.label} hint={HOME_METRICS.revenue.hint} icon={<CircleDollarSign />} value={c.revenue} delta={change(c.revenue, p?.revenue)} intent="neutral" points={series.map((d) => d.revenue)} format={(n) => formatCost(n)} />
       </Row>
       <Row>
         <Card>

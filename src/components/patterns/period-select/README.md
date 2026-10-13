@@ -17,7 +17,7 @@ Segmented. Two ways to hold the period:
 
 ## Data
 
-The vocabulary lives in `src/lib/period.ts`: `PERIODS`, `PERIOD_LABEL`, `PERIOD_DAYS` and `parsePeriod`, shared by the picker, the queries and the copy, so they cannot disagree. `all` is 180 days in the demo data.
+The vocabulary lives in `src/lib/period.ts`: `PERIODS`, `PERIOD_LABEL`, `PERIOD_DAYS` and `parsePeriod`, shared by the picker, the queries and the copy, so they cannot disagree. A period is complete days counted back from yesterday, and `all` is every complete day the product keeps, with no period before it to compare with (`readDays` in `src/data/metrics.ts`).
 
 ## States
 

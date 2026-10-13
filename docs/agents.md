@@ -56,6 +56,7 @@ A person hands any card to the agent with one press. **Ask** posts a question ab
 - Code computes, the model interprets: every figure the agent quotes arrives computed in the context; the model explains what it might mean.
 - Keep the context's shape stable: the same lines in the same order every turn, so a model compares one turn with the next. Send the whole state, never only what changed: a host keeps only the latest update.
 - Say what the data cannot say: a partial day, a tiny sample, a spike nothing recorded explains. A gap left unsaid is filled with a guess.
+- Count a period in complete days. The sample's periods are the 7, 30 or 90 complete days up to yesterday, or every complete day kept for `all`, which has no period before it and so no change: `readDays(period)` in `src/data/metrics.ts` returns those days, the same number before them, both totals, and the day in progress on its own. The day in progress is in no total, change or finding, and Home's context says so. The last rows of the sample's `days`, `usage`, `compute` and `costs` collections may be that day, and their descriptions say it, so an agent that queries one leaves it out of a sum.
 
 ## The console's own assistant
 

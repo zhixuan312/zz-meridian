@@ -20,14 +20,14 @@ Status: beta
 | State | What shows |
 |---|---|
 | Loading | `loading.tsx`: the four tiles, the heatmap, two breakdowns, two trends and the endpoint table, as skeletons in their rows. The masthead (kicker, title, sentence, freshness) renders at once on a navigation; the period select, the export and the charts read `?period=` inside their own boundaries and stream in behind it, and their fallbacks hold their space |
-| A short period (7 days) | The tiles and row 4 follow the period: seven days, against the seven before. The heatmap, the hours, the regions and the endpoints do not: they hold the last 30 complete days whatever the period |
-| No earlier period | A tile says "No earlier period to compare" where its change would be |
+| A short period (7 days) | The tiles and row 4 follow the period: the seven complete days up to yesterday, against the seven before. The heatmap, the hours, the regions and the endpoints do not: they hold the last 30 complete days whatever the period |
+| No earlier period (All, or a product's first days) | A tile says "No earlier period to compare" where its change would be. All is every complete day kept, and nothing comes before it |
 | No traffic | The body is one empty state ("No requests in this period") and the period select stays usable |
 | Error | The dashboard error screen with Retry |
 
 ## Data
 
-- Tiles: `readDays(period)`, which returns the period's totals and those of the same number of days before it; the Home reads the same totals.
+- Tiles: `readDays(period)`, which returns the period's complete days (counted back from yesterday: the latest 7, 30 or 90, or every complete day kept for All), their totals and those of the same number of days before them, null when no day comes before, as with All; the Home reads the same totals. The day in progress is returned on its own and is counted in no figure here; row 4 draws the complete days.
 - Heatmap: the rows of the `hours` collection, requests for each UTC weekday and hour over the last 30 complete days (`usageFigures()`, which asks `hours:read`). A weekday's row sums to the requests of that weekday's days, so a weekday that falls five times in the 30 days is fuller than one that falls four.
 - By hour: the heatmap's columns summed; there is no third collection.
 - Regions: the rows of the `regions` collection, requests and median latency, in the order the page draws them (`regions:read`).
@@ -47,7 +47,7 @@ An agent drives nothing here; it reads the page through its shared context (deci
 
 ### What the agent reads
 
-The period, freshness, the four figures with their change against the period before, the busiest hour of the week and of the day, each region's share with its p50, every endpoint in the table's current order, the day the Meridian points at, and what code found: the same error spike as the Home (by the same code), the slowest and the most failing endpoint against the median, the slowest region, and the weekend's share of a weekday. It says that the weekday-and-hour pattern, the regions and the endpoints are one fixed set of figures that do not follow the period, and that none of them shows a single day.
+The period with the dates of the complete days it covers, freshness, the four figures with their change against the period before (with All no figure has one, and it says "No previous period is kept, so no figure has a change."), the busiest hour of the week and of the day, each region's share with its p50, every endpoint in the table's current order, the day the Meridian points at, and what code found: the same error spike as the Home (by the same code), the slowest and the most failing endpoint against the median, the slowest region, and the weekend's share of a weekday. It says that the weekday-and-hour pattern, the regions and the endpoints are one fixed set of figures that do not follow the period, and that none of them shows a single day.
 
 ```text
 - POST /v1/files fails most: 1.89% of its requests, 4.3× the 0.44% across endpoints. Evidence: /requests?q=%2Fv1%2Ffiles

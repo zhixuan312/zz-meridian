@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { REQUESTS } from '@/system/fixtures/sample';
-import { CUSTOMERS, DAYS, ENDPOINTS, WEEKDAY_HOURS, demoTotals } from '@/system/fixtures/company';
+import { CUSTOMERS, DAYS, ENDPOINTS, IN_PROGRESS, WEEKDAY_HOURS, demoSeries, demoTotals } from '@/system/fixtures/company';
 import { payloadsOf, traceOf, usageOf } from '@/system/fixtures/sample-records';
 import verify from '../scripts/verify.config';
 
@@ -26,6 +26,27 @@ describe('the sample agrees with itself', () => {
       const days = DAYS.slice(-30).filter((d) => (new Date(`${d.date}T00:00:00Z`).getUTCDay() + 6) % 7 === weekday);
       expect(sum(WEEKDAY_HOURS.filter((h) => h.weekday === weekday).map((h) => h.requests)), `weekday ${weekday}`).toBe(sum(days.map((d) => d.requests)));
     }
+  });
+  it('the day in progress is made as every day is, from the nine hours it has had, and is none of the complete days', () => {
+    const { day, usage, compute, cost } = IN_PROGRESS;
+    expect(day.date).toBe('2026-10-03');
+    expect([DAYS.length, DAYS.at(-1)!.date]).toEqual([360, '2026-10-02']);
+    expect(sum(usage.map((u) => u.requests))).toBe(day.requests);
+    expect(sum(usage.map((u) => cents(u.revenue)))).toBe(cents(day.revenue));
+    expect(sum(Object.values(day.revenueByPlan).map(cents))).toBe(cents(day.revenue));
+    // Yesterday's GPUs, for nine hours of the day.
+    expect(sum(compute.map((c) => c.gpus))).toBe(690);
+    expect(cost.compute).toBe(690 * 9 * 2.5);
+    for (const c of compute) expect(c.used, c.id).toBeLessThanOrEqual(c.gpus * 9);
+    // A Saturday's night and morning are quieter than its afternoon: under nine twenty-fourths of the Saturday before.
+    const share = day.requests / DAYS.at(-7)!.requests;
+    expect(share > 0.2 && share < 9 / 24, `${share} of the Saturday before`).toBe(true);
+  });
+  it('all time is every complete day, with none before it and no totals to compare with', () => {
+    const { current, previous, running } = demoSeries('all');
+    expect([current.length, previous.length, running.date]).toEqual([360, 0, '2026-10-03']);
+    expect(demoTotals('all').previous).toBeNull();
+    expect(demoSeries('90d').previous).toHaveLength(90);
   });
   it('a customer’s dates are days, in the order they happened', () => {
     const today = '2026-10-03';

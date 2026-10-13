@@ -86,7 +86,7 @@ describe('the Heatmap\'s specimens: every state is drawn', () => {
     const { container } = render(<HeatmapPreview />);
     const quiet = figure(container, 'Requests a day, with two days of none');
     expect([...quiet.querySelectorAll('[data-step="0"]')].map((e) => e.getAttribute('data-cell'))).toEqual(['2026-08-11', '2026-08-12']);
-    expect(steps(quiet)).toHaveLength(181);
+    expect(steps(quiet)).toHaveLength(180);
   });
 
   it('draws the day in progress read, so far, with its outline', () => {
@@ -135,6 +135,6 @@ describe('the Heatmap\'s specimens: every state is drawn', () => {
     // The Trend chart draws a dot on its series only at the day the Meridian points at.
     const chart = screen.getByRole('img', { name: /^Requests per day over the last 30 days/ });
     expect(chart.querySelectorAll('circle')).toHaveLength(1);
-    expect(screen.getByRole('table', { name: 'Requests per day over the last 30 days' }).querySelectorAll('tbody tr')[20]).toHaveTextContent('2026-09-24');
+    expect(screen.getByRole('table', { name: 'Requests per day over the last 30 days' }).querySelectorAll('tbody tr')[21]).toHaveTextContent('2026-09-24');
   });
 });

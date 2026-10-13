@@ -58,6 +58,8 @@ Today, or the month not over yet, is not a fact like the periods before it, and 
 
 Each takes `running`, and each says "so far" wherever that period is read: the readout, the line a screen reader hears and the period's row of the hidden table.
 
+A period still in progress is counted in no total, change or finding. A figure for a period covers complete periods and names them, and the read hands the one in progress over on its own for a chart to draw: `readDays` in `src/data/metrics.ts` returns a period's complete days, counted back from yesterday, and the day in progress beside them.
+
 ## Figures
 
 - The figure is set tight (`tracking-display`); its unit steps down to half size in `ink-3`; money steps its cents down; compact counts keep their decimal (`2.9M`).

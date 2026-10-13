@@ -10,6 +10,7 @@ vi.mock('next/headers', () => ({
 vi.mock('next/cache', () => ({ cacheTag: () => {}, cacheLife: () => {}, updateTag: () => {}, revalidateTag: () => {}, revalidatePath: () => {}, refresh: () => {} }));
 
 import { fitFigure, formatCost, formatDuration, formatPercent } from '@/lib/format';
+import { contextText } from '@/lib/shared-context';
 import { UsageBody } from '@/views/usage';
 import { HOME_METRICS } from '@/views/home-context';
 import { usageTool, viewTools } from '@/views/tools';
@@ -48,6 +49,36 @@ describe('what Usage says of the period', () => {
     const none = { requests: 0, errorRate: 0, p95: 0, revenue: 0 };
     render(<UsageBody period="30d" activity={[]} incidents={[]} updatedAt="2026-10-05T09:00:00.000Z" now="2026-10-05T09:00:00.000Z" series={[]} totals={{ current: none, previous: none }} heat={[]} hours={[]} regions={[]} endpoints={[]} />);
     expect(screen.queryAllByRole('heading', { level: 2, name: 'Revenue' })).toEqual([]);
+  });
+});
+
+describe('all time on Usage, which has no period before it', () => {
+  it('reads every complete day kept and no period before them, as the Home does', async () => {
+    const { data } = await usageTool.read({ period: 'all' });
+    expect(data.series).toHaveLength(360);
+    expect(data.series.at(-1)!.date).toBe('2026-10-02');
+    expect(data.totals.previous).toBeNull();
+    expect(data.totals).toEqual(((await home.read({ period: 'all' })).data as { totals: { current: Totals; previous: Totals | null } }).totals);
+  });
+
+  it('draws each figure with no change: the tile says there is no earlier period', async () => {
+    const { data } = await usageTool.read({ period: 'all' });
+    const { container } = render(<Tooltip.Provider><UsageBody {...data} /></Tooltip.Provider>);
+    for (const label of LABELS) {
+      expect(tile(label).textContent, label).toContain('No earlier period to compare');
+      expect(tile(label).textContent, label).not.toMatch(/vs previous period/);
+    }
+    expect(container.textContent).not.toMatch(/NaN|Infinity/);
+  });
+
+  it('tells the assistant no previous period is kept, and gives no figure a change', async () => {
+    const { context } = await usageTool.read({ period: 'all' });
+    for (const label of LABELS) expect(context.facts.find((f) => f.label === label)!.change, label).toBeUndefined();
+    expect(context.unknowns).toContain('No previous period is kept, so no figure has a change.');
+    expect(context.scope).toBe('all time, 08 Oct 2025 to 02 Oct 2026 (UTC)');
+    expect(contextText(context)).not.toMatch(/NaN|Infinity|vs the previous/);
+    // A period with days before it says nothing of the kind.
+    expect((await usageTool.read({ period: '90d' })).context.unknowns.join('\n')).not.toMatch(/No previous period/);
   });
 });
 

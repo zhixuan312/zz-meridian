@@ -19,7 +19,7 @@ Status: beta
 
 ## Tool
 
-`zz_meridian_home { period: "7d" | "30d" | "90d" | "all" }` returns the totals and the daily series, with Main's three summaries, and names `ui://zz-meridian/home`.
+`zz_meridian_home { period: "7d" | "30d" | "90d" | "all" }` returns the period's complete days and their totals, those of the same number of days before (null for `all`, which has none), the day in progress on its own, and Main's three summaries, and names `ui://zz-meridian/home`.
 
 ## Agents
 

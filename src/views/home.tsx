@@ -138,7 +138,9 @@ export function HomeBody(data: HomeData) {
   }
   const { current: c, previous: p } = totals;
   const dates = series.map((d) => d.date);
-  const change = (a: number, b: number) => (b ? a / b - 1 : null);
+  // No change against a period that is not kept, as with `all`, or against a figure of zero: a tile says so in words,
+  // and the featured card draws no pill, which would hold a dash beside "vs previous period".
+  const change = (a: number, b?: number) => (b ? a / b - 1 : null);
   const peak = series.reduce((m, d) => (d.requests > m.requests ? d : m), series[0]);
   const found = homeFindings(series);
   return (
@@ -152,7 +154,7 @@ export function HomeBody(data: HomeData) {
             value={c.requests}
             points={series.map((d) => d.requests)}
             format={formatCompact}
-            delta={change(c.requests, p.requests)}
+            delta={change(c.requests, p?.requests) ?? undefined}
             caption={<>About {formatCompact(Math.round(c.requests / series.length))} a day. The busiest day was {formatDay(peak.date)}, with {formatCompact(peak.requests)}.</>}
           >
             <TrendChart
@@ -170,9 +172,9 @@ export function HomeBody(data: HomeData) {
               hint={HOME_METRICS.errorRate.hint}
               icon={<AlertTriangle />}
               value={c.errorRate}
-              delta={change(c.errorRate, p.errorRate)}
+              delta={change(c.errorRate, p?.errorRate)}
               intent="down"
-              points={series.map((d) => d.errors / d.requests)}
+              points={series.map((d) => (d.requests ? d.errors / d.requests : 0))}
               baseline={found.usual.errorRate}
               finding={found.errorSpike}
               format={(n) => formatPercent(n, 2)}
@@ -182,7 +184,7 @@ export function HomeBody(data: HomeData) {
               hint={HOME_METRICS.p95.hint}
               icon={<Gauge />}
               value={c.p95}
-              delta={change(c.p95, p.p95)}
+              delta={change(c.p95, p?.p95)}
               intent="down"
               points={series.map((d) => d.p95)}
               baseline={found.usual.p95}
@@ -193,7 +195,7 @@ export function HomeBody(data: HomeData) {
               hint={HOME_METRICS.revenue.hint}
               icon={<CircleDollarSign />}
               value={c.revenue}
-              delta={change(c.revenue, p.revenue)}
+              delta={change(c.revenue, p?.revenue)}
               intent="neutral"
               points={series.map((d) => d.revenue)}
               format={(n) => formatCost(n)}

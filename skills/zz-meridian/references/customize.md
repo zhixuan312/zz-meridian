@@ -127,7 +127,9 @@ its change compares with in `compare` ("vs the 3 days before") and takes a `note
 A copied sample page does not do what a product would assume of it. Its writes are held in memory: a ticket, a member or a
 key lives in the running server and is lost when it restarts, until your own database stands behind the collection. Its
 figures that are fixed (Usage' weekday-and-hour grid, hours and regions, the endpoints, the Home's response split)
-cover the last 30 complete days: they are not worked out from the request log and do not follow the period chosen. Nothing runs a suite or ships a version
+cover the last 30 complete days: they are not worked out from the request log and do not follow the period chosen. A period is complete days counted
+back from yesterday, `all` is every complete day kept and has no period before it, and the last row of each daily collection may be a day still in
+progress, which `readDays` in `optional:src/data/metrics.ts` hands over on its own and counts in nothing. Nothing runs a suite or ships a version
 behind Tests and Releases, no message is sent, and the bell only lists what needs a person when the page
 is read. `optional:docs/product-workspaces.md` lists each limit.
 

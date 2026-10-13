@@ -11,13 +11,14 @@ import { formatDate } from '@/lib/format-date';
 import { median } from '@/lib/insight';
 import { PERIOD_LABEL, type Period } from '@/lib/period';
 import { freshnessOf, listed, type Fact, type Insight, type SharedContext } from '@/lib/shared-context';
-import { HOME_METRICS, change, errorSpikes } from './home-context';
+import { HOME_METRICS, NO_PREVIOUS, change, errorSpikes } from './home-context';
 
 export type UsageData = {
   period: Period;
+  /** The period's complete days, oldest first and ending yesterday. */
   series: DailyPoint[];
-  /** The period's totals and those of the same number of days before it: the four figures the Home shows. */
-  totals: { current: Totals; previous: Totals };
+  /** The period's totals and those of the same number of days before it, the four figures the Home shows; `previous` is null when no day before is kept, as with `all`. */
+  totals: { current: Totals; previous: Totals | null };
   heat: number[][];
   hours: Column[];
   regions: { label: string; value: number; p50: number }[];
@@ -52,10 +53,10 @@ export function usageContext(data: UsageData, { sort = 'p95 descending', index =
   const pct = (n: number) => formatPercent(n, 2);
   const M = HOME_METRICS;
   const facts: Fact[] = [
-    { label: M.requests.label, value: c.requests.toLocaleString('en-US'), change: change(c.requests, p.requests, data.period, (n) => n.toLocaleString('en-US')), definition: M.requests.hint },
-    { label: M.errorRate.label, value: pct(c.errorRate), change: change(c.errorRate, p.errorRate, data.period, pct), definition: M.errorRate.hint },
-    { label: M.p95.label, value: formatDuration(c.p95), change: change(c.p95, p.p95, data.period, formatDuration), definition: M.p95.hint },
-    { label: M.revenue.label, value: formatCost(c.revenue), change: change(c.revenue, p.revenue, data.period, formatCost), definition: M.revenue.hint },
+    { label: M.requests.label, value: c.requests.toLocaleString('en-US'), change: change(c.requests, p?.requests, data.period, (n) => n.toLocaleString('en-US')), definition: M.requests.hint },
+    { label: M.errorRate.label, value: pct(c.errorRate), change: change(c.errorRate, p?.errorRate, data.period, pct), definition: M.errorRate.hint },
+    { label: M.p95.label, value: formatDuration(c.p95), change: change(c.p95, p?.p95, data.period, formatDuration), definition: M.p95.hint },
+    { label: M.revenue.label, value: formatCost(c.revenue), change: change(c.revenue, p?.revenue, data.period, formatCost), definition: M.revenue.hint },
     { label: 'Busiest hour of the week', value: `${DAYS[peak.d]} ${String(peak.h).padStart(2, '0')}:00 UTC, ${formatCompact(peak.v)} requests` },
     { label: 'Busiest hour of the day', value: `${peakHour.label} UTC, every weekday summed` },
     { label: 'Requests by region', value: regions.map((r) => `${r.label} ${formatPercent(r.value / totalRegions, 0)} (p50 ${formatDuration(r.p50)})`).join(', '), definition: 'p50 is the median latency: half of the requests finished faster.' },
@@ -67,6 +68,7 @@ export function usageContext(data: UsageData, { sort = 'p95 descending', index =
   const spikes = errorSpikes(data);
   insights.push(...spikes.insights);
   unknowns.push(...spikes.unknowns);
+  if (!p) unknowns.push(NO_PREVIOUS);
   const slowest = endpoints.reduce((m, e) => (e.p95 > m.p95 ? e : m));
   const p95Median = median(endpoints.map((e) => e.p95));
   insights.push({ text: `${slowest.method} ${slowest.route} is the slowest endpoint: p95 ${formatDuration(slowest.p95)}, ${times(slowest.p95 / p95Median)} the median endpoint's ${formatDuration(p95Median)}, on ${formatPercent(slowest.requests / traffic, 0)} of requests.` });

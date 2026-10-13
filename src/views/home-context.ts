@@ -30,8 +30,12 @@ export const dayRows = (series: DailyPoint[]) => series.map(({ revenueByPlan, ..
 
 export type HomeData = {
   period: Period;
+  /** The period's complete days, oldest first and ending yesterday. */
   series: DailyPoint[];
-  totals: { current: Totals; previous: Totals };
+  /** The period's totals and those of the same number of days before it; `previous` is null when no day before is kept, as with `all`. */
+  totals: { current: Totals; previous: Totals | null };
+  /** The day in progress, counted in none of the above; null when the latest day kept is complete. */
+  running: DailyPoint | null;
   endpoints: { method: string; route: string; requests: number; errorRate: number }[];
   mix: { label: string; value: number }[];
   activity: ActivityEvent[];
@@ -58,8 +62,14 @@ function days(dates: string[]): string {
   return short.length === 1 ? short[0] : `${short.slice(0, -1).join(', ')} and ${short.at(-1)}`;
 }
 
-/** "up 12.4% vs the previous 30 days (0.80%)": the relative change, its direction, and the figure it is against. */
-export function change(now: number, before: number, period: Period, format: (n: number) => string): string | undefined {
+/** What a context says when no day is kept before the period: `all`, or a product's first days. */
+export const NO_PREVIOUS = 'No previous period is kept, so no figure has a change.';
+
+/**
+ * "up 12.4% vs the previous 30 days (0.80%)": the relative change, its direction, and the figure it is against. Nothing
+ * when there is no period before, or when its figure was zero.
+ */
+export function change(now: number, before: number | undefined, period: Period, format: (n: number) => string): string | undefined {
   const n = PERIOD_DAYS[period];
   if (!n || !before) return undefined;
   const r = now / before - 1;
@@ -174,10 +184,10 @@ export function homeContext(data: HomeData, index: number | null = null): Shared
   const M = HOME_METRICS;
 
   const facts: Fact[] = [
-    { label: M.requests.label, value: c.requests.toLocaleString('en-US'), change: change(c.requests, p.requests, period, (n) => n.toLocaleString('en-US')), definition: M.requests.hint },
-    { label: M.errorRate.label, value: pct(c.errorRate), change: change(c.errorRate, p.errorRate, period, pct), definition: M.errorRate.hint },
-    { label: M.p95.label, value: formatDuration(c.p95), change: change(c.p95, p.p95, period, formatDuration), definition: M.p95.hint },
-    { label: M.revenue.label, value: formatCost(c.revenue), change: change(c.revenue, p.revenue, period, formatCost), definition: M.revenue.hint },
+    { label: M.requests.label, value: c.requests.toLocaleString('en-US'), change: change(c.requests, p?.requests, period, (n) => n.toLocaleString('en-US')), definition: M.requests.hint },
+    { label: M.errorRate.label, value: pct(c.errorRate), change: change(c.errorRate, p?.errorRate, period, pct), definition: M.errorRate.hint },
+    { label: M.p95.label, value: formatDuration(c.p95), change: change(c.p95, p?.p95, period, formatDuration), definition: M.p95.hint },
+    { label: M.revenue.label, value: formatCost(c.revenue), change: change(c.revenue, p?.revenue, period, formatCost), definition: M.revenue.hint },
   ];
   const main = summaryContext(data.summary);
   facts.push(...main.facts);
@@ -215,9 +225,9 @@ export function homeContext(data: HomeData, index: number | null = null): Shared
   const share = (label: string) => (data.mix.find((m) => m.label === label)?.value ?? 0) / (total || 1);
   if (total) insights.push({ text: `Responses by class: 4xx ${formatPercent(share('4xx'), 1)}, 5xx ${formatPercent(share('5xx'), 1)}. The error rate counts 5xx and 429 only, so most 4xx (client mistakes) are not in it.` });
 
-  // The last day is partial while the data's clock is still inside it.
-  const now = new Date(data.now);
-  if (dates.at(-1) === now.toISOString().slice(0, 10)) unknowns.push(`${day(dates.at(-1)!)} is still in progress (${now.getUTCHours()} of 24 hours, UTC), so its figures are partial.`);
+  if (!p) unknowns.push(NO_PREVIOUS);
+  // The day in progress is in no figure above: the period ends yesterday. One short line, for the context's budget.
+  if (data.running) unknowns.push(`${day(data.running.date)} is in progress and counted in no total.`);
 
   let focus: string | undefined;
   if (index !== null && series[index]) {

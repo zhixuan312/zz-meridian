@@ -40,7 +40,7 @@ const DAY = 86_400_000;
 export const PLANS = ['Enterprise', 'Scale', 'Starter'] as const;
 export type Plan = (typeof PLANS)[number];
 
-/** One complete day (UTC). `revenue` is what customers paid for that day's tokens and calls, in US dollars. */
+/** One day (UTC): a complete one, or the day in progress with what has arrived so far. `revenue` is what customers paid for that day's tokens and calls, in US dollars. */
 export type DailyPoint = { date: string; requests: number; errors: number; p95: number; tokens: number; revenue: number; revenueByPlan: Record<Plan, number> };
 export type Totals = { requests: number; errorRate: number; p95: number; revenue: number };
 export type Endpoint = { method: 'GET' | 'POST' | 'PUT' | 'DELETE'; route: string; requests: number; errorRate: number; p95: number };

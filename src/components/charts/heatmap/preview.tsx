@@ -1,7 +1,6 @@
 'use client';
 
 import { Specimen, State, Plane } from '@/system/specimen';
-import { DEMO_NOW } from '@/system/fixtures/sample';
 import { demoHeatmap, demoSeries } from '@/system/fixtures/company';
 import { formatCompact } from '@/lib/format';
 import { Meridian } from '@/components/charts/meridian';
@@ -11,20 +10,16 @@ import { Heatmap } from '.';
 const values = demoHeatmap();
 /** The same week with one runaway hour, Thursday 03:00, at sixteen times its usual load. */
 const outlier = values.map((row, d) => row.map((v, h) => (d === 3 && h === 3 ? v * 16 : v)));
-/**
- * 360 days ending on the sample's today: the 359 complete days before it, and today drawn at what the Saturday before
- * came to. The sample's records hold complete days, so the day in progress is this specimen's own.
- */
-const { previous, current } = demoSeries('all');
-const complete = [...previous, ...current].map((d) => ({ date: d.date, value: d.requests }));
-const year = [...complete.slice(1), { date: DEMO_NOW.toISOString().slice(0, 10), value: complete[complete.length - 7].value }];
-/** The sample's today is read at 09:00 UTC: three eighths of the day's requests have come so far. */
-const soFar = (days: typeof year) => days.map((d, i) => (i === days.length - 1 ? { ...d, value: Math.round(d.value * 0.375) } : d));
+/** The sample's records: the 360 complete days it keeps, ending yesterday, and the day in progress on its own. */
+const { current, running } = demoSeries('all');
+const year = current.map((d) => ({ date: d.date, value: d.requests }));
 /** The latest 26 weeks, from Monday 6 Apr 2026: few enough that every week fits the Atlas's column, at a cell well over 12px. */
-const half = year.slice(-181);
+const half = year.slice(-180);
+/** The same days with the day in progress after them, as the records hold it at 09:00 UTC: what has arrived so far. */
+const soFar = (days: typeof year) => [...days, { date: running.date, value: running.requests }];
 /** The same weeks with two days on which nothing came. */
 const quiet = half.map((d) => (d.date === '2026-08-11' || d.date === '2026-08-12' ? { ...d, value: 0 } : d));
-/** The page's Meridian in the last specimen: the last 30 days, pointed at a Thursday. */
+/** The page's Meridian in the last specimen: the last 30 complete days, pointed at a Thursday. */
 const month = year.slice(-30);
 const POINTED = '2026-09-24';
 
@@ -64,12 +59,12 @@ export default function HeatmapPreview() {
       <Specimen label="A day in progress" stack note="running: the last day wears a dashed outline around a smaller fill, and its readout and its row of the table say so far. The outline is drawn an edge at a time on the pixel grid, so its four edges weigh the same at any size.">
         <State label="At 12px a cell, where it has least room" className="w-full">
           <Plane on="surface" className="max-w-sm">
-            <Heatmap label="Requests a day, with today so far" days={soFar(year)} running format={formatCompact} />
+            <Heatmap label="Requests a day, with today so far" days={soFar(year.slice(1))} running format={formatCompact} />
           </Plane>
         </State>
         <State label="Read: the readout says so far, flush with the grid's edge at the last week" still className="w-full">
           <Plane on="surface">
-            <Heatmap label="Requests a day, with today so far and read" days={soFar(half)} running format={formatCompact} data-preview-date={half[half.length - 1].date} />
+            <Heatmap label="Requests a day, with today so far and read" days={soFar(half)} running format={formatCompact} data-preview-date={running.date} />
           </Plane>
         </State>
       </Specimen>

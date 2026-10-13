@@ -22,7 +22,7 @@ import { API_KEYS, type ApiKey } from '@/system/fixtures/sample-records';
 import { MEMBERS, STATUSES, TEAMS, type Member } from '@/system/fixtures/sample-members';
 import { ADD_ONS, MAIN_ROLES } from '@/data/roles';
 import { ACTIVITY, DEMO_NOW, INCIDENTS, MODELS, PLANS, REQUESTS, SERVICES, type ComputeRow, type CostRow, type CustomerRecord, type DailyPoint, type Endpoint, type Model, type RequestRow, type UsageRow } from '@/system/fixtures/sample';
-import { COMPUTE, COSTS, CUSTOMERS, DAYS, ENDPOINTS, REGIONS, STATUS_MIX, USAGE, WEEKDAY_HOURS } from '@/system/fixtures/company';
+import { COMPUTE, COSTS, CUSTOMERS, DAYS, ENDPOINTS, IN_PROGRESS, REGIONS, STATUS_MIX, USAGE, WEEKDAY_HOURS } from '@/system/fixtures/company';
 import { PAST_INCIDENTS } from '@/system/fixtures/sample-ops';
 import { RELEASES, RUNS, TICKETS, type Release, type Ticket, type VerificationRun } from '@/system/fixtures/sample-engineering';
 import type { ActivityEvent } from '@/components/patterns/activity-feed';
@@ -110,15 +110,18 @@ export const requests: Collection<RequestRecord, 'id'> = arrayCollection({
   pageOnly: ['create'],
 });
 
-/** One row per complete day: what the Home's and Usage' figures, trends and baselines are computed from. Read-only. */
+/**
+ * One row per day: what the Home's and Usage' figures, trends and baselines are computed from. The last row may be the
+ * day in progress, the row of the clock's own date; `readDays` keeps it out of every period. Read-only.
+ */
 export const days: Collection<DailyPoint, 'date'> = arrayCollection({
   name: 'days',
   label: 'Daily totals',
-  description: 'One row per complete day (UTC): requests answered, errors (5xx and 429), latency p95 in ms, tokens served (input and output, every model), revenue in US dollars (what customers paid for that day\'s tokens and calls), and revenueByPlan, that revenue by the plan of the customer that paid it (Enterprise, Scale, Starter).',
+  description: 'One row per day (UTC): requests answered, errors (5xx and 429), latency p95 in ms, tokens served (input and output, every model), revenue in US dollars (what customers paid for that day\'s tokens and calls), and revenueByPlan, that revenue by the plan of the customer that paid it (Enterprise, Scale, Starter). The last row may be a day still in progress, holding only what has arrived so far: leave it out of a sum or a comparison of complete days.',
   key: 'date',
   title: (d) => d.date,
   fields: z.object({ requests: z.number(), errors: z.number(), p95: z.number(), tokens: z.number(), revenue: z.number(), revenueByPlan: z.object({ Enterprise: z.number(), Scale: z.number(), Starter: z.number() }) }),
-  rows: DAYS,
+  rows: [...DAYS, IN_PROGRESS.day],
   allow: [],
 });
 
@@ -138,11 +141,11 @@ export const models: Collection<Model, 'id'> = arrayCollection({
 export const usage: Collection<UsageRow, 'id'> = arrayCollection({
   name: 'usage',
   label: 'Usage by model',
-  description: 'One row per complete day (UTC) and model; the id is "<date>:<model>", and the model is an id of the models collection. Requests answered, inputTokens and outputTokens, revenue in US dollars (the tokens at the model\'s price, or the calls at the call price for "none"), errors (5xx and 429), latency p95 in ms, ttft (p95 time to the first token, in ms) and tps (output tokens a second at the median). ttft and tps are null for a model that writes no tokens.',
+  description: 'One row per day (UTC) and model; the id is "<date>:<model>", and the model is an id of the models collection. Requests answered, inputTokens and outputTokens, revenue in US dollars (the tokens at the model\'s price, or the calls at the call price for "none"), errors (5xx and 429), latency p95 in ms, ttft (p95 time to the first token, in ms) and tps (output tokens a second at the median). ttft and tps are null for a model that writes no tokens. The rows of the last day may be of a day still in progress, holding only what has arrived so far: leave them out of a sum or a comparison of complete days.',
   key: 'id',
   title: (u) => u.id,
   fields: z.object({ date, model: z.string(), requests: z.number(), inputTokens: z.number(), outputTokens: z.number(), revenue: z.number(), errors: z.number(), p95: z.number(), ttft: z.number().nullable(), tps: z.number().nullable() }),
-  rows: USAGE,
+  rows: [...USAGE, ...IN_PROGRESS.usage],
   allow: [],
 });
 
@@ -150,11 +153,11 @@ export const usage: Collection<UsageRow, 'id'> = arrayCollection({
 export const compute: Collection<ComputeRow, 'id'> = arrayCollection({
   name: 'compute',
   label: 'Compute by region',
-  description: 'One row per complete day (UTC) and region; the id is "<date>:<region>". gpus is the GPUs provisioned that day, and used the GPU-hours used of the gpus x 24 GPU-hours they offered.',
+  description: 'One row per day (UTC) and region; the id is "<date>:<region>". gpus is the GPUs provisioned that day, and used the GPU-hours used of the gpus x 24 GPU-hours they offered. The rows of the last day may be of a day still in progress, where used is of the hours it has had so far: leave them out of a sum or a comparison of complete days.',
   key: 'id',
   title: (c) => c.id,
   fields: z.object({ date, region: z.string(), gpus: z.number(), used: z.number() }),
-  rows: COMPUTE,
+  rows: [...COMPUTE, ...IN_PROGRESS.compute],
   allow: [],
 });
 
@@ -162,11 +165,11 @@ export const compute: Collection<ComputeRow, 'id'> = arrayCollection({
 export const costs: Collection<CostRow, 'date'> = arrayCollection({
   name: 'costs',
   label: 'Compute cost',
-  description: 'One row per complete day (UTC): compute, what the GPUs provisioned that day cost in US dollars.',
+  description: 'One row per day (UTC): compute, what the GPUs provisioned that day cost in US dollars. The last row may be a day still in progress, holding the cost of the hours it has had so far: leave it out of a sum or a comparison of complete days.',
   key: 'date',
   title: (c) => c.date,
   fields: z.object({ compute: z.number() }),
-  rows: COSTS,
+  rows: [...COSTS, IN_PROGRESS.cost],
   allow: [],
 });
 

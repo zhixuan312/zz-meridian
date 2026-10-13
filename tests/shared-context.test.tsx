@@ -1,4 +1,4 @@
-import { render, waitFor } from '@testing-library/react';
+import { render, waitFor, within } from '@testing-library/react';
 import { Tooltip } from 'radix-ui';
 import { describe, expect, it, vi } from 'vitest';
 import { SurfaceOverride, sharedContextOn } from '@/components/base/surface';
@@ -10,6 +10,7 @@ import { deviations, median, runs, weekendRatio } from '@/lib/insight';
 import { contextText, freshnessOf, type SharedContext } from '@/lib/shared-context';
 import { systemPrompt } from '@/lib/assistant/prompt';
 import type { Period } from '@/lib/period';
+import { HomeBody } from '@/views/home';
 import { homeContext, type HomeData } from '@/views/home-context';
 import { servicesContext } from '@/views/services-context';
 import { EmbedHome } from '../app/embed/home/view';
@@ -17,7 +18,7 @@ import { EmbedHome } from '../app/embed/home/view';
 /** What every view's text may take: the budget the console prompt and a host's context both afford. The Home's carries Main's seven figures beside its traffic. */
 const BUDGET = 2600;
 const home = (period: Period): HomeData => ({
-  period, series: demoSeries(period).current, totals: demoTotals(period), endpoints: ENDPOINTS, mix: STATUS_MIX, activity: ACTIVITY,
+  period, series: demoSeries(period).current, totals: demoTotals(period), running: demoSeries(period).running, endpoints: ENDPOINTS, mix: STATUS_MIX, activity: ACTIVITY,
   incidents: [...INCIDENTS, ...PAST_INCIDENTS],
   summary: {
     business: { customers: 320, byStatus: { active: 296, trial: 14, 'past due': 10 }, byPlan: { Enterprise: 24, Scale: 82, Starter: 214 }, revenue: 3300438.74 },
@@ -68,6 +69,27 @@ describe("the Home's shared context", () => {
     for (const p of ['7d', '30d', '90d', 'all'] as const) expect(contextText(homeContext(home(p), 0)).length).toBeLessThanOrEqual(BUDGET);
     const services = servicesContext({ services: SERVICES, current: INCIDENTS.find((i) => i.state !== 'resolved') ?? null, past: PAST_INCIDENTS, updatedAt: DEMO_UPDATED_AT.toISOString(), now: DEMO_NOW.toISOString() });
     expect(contextText(services).length).toBeLessThanOrEqual(BUDGET);
+  });
+  it('counts the day in progress in nothing, and says so from the day handed over on its own', () => {
+    const data = home('30d');
+    expect(data.running?.date).toBe('2026-10-03');
+    expect(data.series.map((d) => d.date)).not.toContain('2026-10-03');
+    expect(homeContext(data).unknowns).toContain('03 Oct is in progress and counted in no total.');
+    expect(contextText(homeContext(data))).not.toContain(data.running!.requests.toLocaleString('en-US'));
+    // A product whose latest day is complete says nothing of a day in progress.
+    expect(homeContext({ ...data, running: null }).unknowns.join('\n')).not.toMatch(/in progress/);
+  });
+  it('compares all time with nothing: no figure has a change, and it says no previous period is kept', () => {
+    const data = home('all');
+    expect(data.series).toHaveLength(360);
+    expect(data.totals.previous).toBeNull();
+    const c = homeContext(data);
+    expect(c.scope).toBe('all time, 08 Oct 2025 to 02 Oct 2026 (UTC days)');
+    for (const label of ['Requests', 'Error rate', 'Latency p95', 'Revenue']) expect(c.facts.find((f) => f.label === label)!.change, label).toBeUndefined();
+    expect(c.unknowns).toContain('No previous period is kept, so no figure has a change.');
+    expect(contextText(c)).not.toMatch(/NaN|Infinity|vs the previous/);
+    // A period with days before it says nothing of the kind.
+    expect(homeContext(home('90d')).unknowns.join('\n')).not.toMatch(/No previous period/);
   });
   it('says when the data is stale', () => {
     expect(freshnessOf('2026-10-03T08:00:00Z', '2026-10-03T09:00:00Z')).toMatch(/STALE/);
@@ -151,6 +173,24 @@ describe('every page shares a context within its budget, and nothing hidden', ()
     const { CUSTOMERS } = await import('@/system/fixtures/company');
     const text = contextText(customersContext(CUSTOMERS, CUSTOMERS, { q: '', plan: 'all', status: 'all', sort: 'revenue', dir: 'desc', page: '1' }));
     expect(text).toMatch(/Combined requests are up \d+% over the last 7 days against the 7 before\./);
+  });
+});
+
+describe('all time on the Home, which has no period before it', () => {
+  it('draws no change: each tile says there is no earlier period, and the featured figure has no pill', () => {
+    const all = render(<Tooltip.Provider><HomeBody {...home('all')} /></Tooltip.Provider>);
+    expect(all.container.querySelector('[data-change]')).toBeNull();
+    expect(within(all.container).getAllByText('No earlier period to compare')).toHaveLength(3);
+    expect(all.container.textContent).not.toMatch(/NaN|Infinity|vs previous period/);
+    // A period with days before it draws the pill and the three changes.
+    const month = render(<Tooltip.Provider><HomeBody {...home('30d')} /></Tooltip.Provider>);
+    expect(month.container.querySelector('[data-change]')).toHaveTextContent('vs previous period');
+    expect(within(month.container).queryByText('No earlier period to compare')).toBeNull();
+  });
+  it('draws no change in the MCP view either', () => {
+    const { container } = render(<Tooltip.Provider><SurfaceOverride surface={{ kind: 'embed', connected: true, mode: 'inline', share: () => {}, ask: () => {} }}><EmbedHome {...home('all')} /></SurfaceOverride></Tooltip.Provider>);
+    expect(within(container).getAllByText('No earlier period to compare')).toHaveLength(3);
+    expect(container.textContent).not.toMatch(/NaN|Infinity|vs previous period/);
   });
 });
 
