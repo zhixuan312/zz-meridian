@@ -7,6 +7,7 @@ How Meridian shows numbers: which form to use, how colour is assigned, how figur
 | The data's job | Form | Card |
 |---|---|---|
 | One number that matters most | A hero figure in the featured card | Featured metric |
+| Two numbers of equal standing that are never added together | Two hero figures, the halves of the one featured card, each with its own change and chart | Featured metric |
 | A number with its change and shape | A tile | Metric tile |
 | Change over time | A line or an area on one axis | Trend chart |
 | The shape of a trend beside a figure | A line without axes | Sparkline |
@@ -59,10 +60,15 @@ Each takes `running`, and each says "so far" wherever that period is read: the r
 - Tabular figures where numbers stack or change in place (tables, axes, readouts); proportional for a standalone figure.
 - A missing value is a dash, never zero. Every figure names its period and unit somewhere visible.
 - A delta's arrow carries direction; its colour carries the judgement, which depends on the measure (latency down is good).
+- A change says what it is against, in words beside it: "vs previous period" unless the caller says otherwise ("vs the week before"). The Featured metric and the Metric tile take the words as `compare`.
+- One fact the featured figure does not say goes on one line under its change, beside a neutral dot (`finding`). It is a fact counted by code, not a warning, so the dot is never a status colour there.
+- A few figures that support the featured one go in its foot: a band inside the lit surface, a label over each figure, and one link. A figure that needs its own change or its own shape is a Metric tile, not a line of the foot.
+- A page has one featured card. Two measures that are peers are its two halves (`peer`): one lit surface and a hairline between, side by side from 42rem of the card's own width (588px) and one above the other below that. Their sum is never drawn.
 
 ## Interaction
 
 - Every time chart joins the page's Meridian: pointer, touch drag, arrow keys, Home, End, Escape. Every chart and tile reads the day.
+- A point of the Meridian need not be a day. The Featured metric reads the pointed point only when its `points` holds one value for each of the Meridian's dates, the rule a chart joins by, and its pill names the point as the caller names points (`pointLabel`: "Week of 14 Sept"), or by its date.
 - A chart read mark by mark is one Tab stop, and its keys move the cursor the pointer moves: a Trend chart's points, a Column chart's columns, a Heatmap's cells. Escape and blur let go.
 - The tooltip shows the day and every series' value; it appears only on the chart being pointed at.
 - Every chart renders a visually hidden table with the same numbers, so screen readers and models read the data, not the picture.

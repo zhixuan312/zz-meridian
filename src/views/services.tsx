@@ -45,7 +45,7 @@ export function ServicesBody(data: ServicesData) {
           kicker="Uptime · all services · 90 days"
           actions={<AskAbout iconBelowSm question={current ? `Which service is hurting uptime, and is "${current.title}" over?` : 'Which service is hurting uptime, and when?'} />}
           value={uptime}
-          daily={daily}
+          points={daily}
           format={(n) => `${(n * 100).toFixed(n >= 0.9999 ? 3 : 2)}%`}
           caption={
             <>

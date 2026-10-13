@@ -126,6 +126,7 @@ All components are surface-agnostic by construction: they size from control toke
 | Appearance menu | Theme, accent, density | In the rail's foot | In the drawer's foot | None: the host decides the theme |
 | Period select | The reporting period, in the URL or held by the page | Masthead actions | Masthead actions row | Embed head, compact |
 | Freshness | When the data last arrived; stale after a contract | Masthead meta | Under the title | Embed head |
+| Featured metric | The page's one leading figure with its chart; or two figures of equal standing as the halves of the one card | The wide cell of the first row; two figures side by side, from 42rem of the card's own width | Full width; two figures in one column, the first figure first | Fullscreen only; an inline view leads with Metric tiles |
 | Metric tile | One number, its change, its shape | Four across | Two or one across | One to three across; the inline view's figure row |
 | Meridian | One time cursor for every chart and tile on a page | Pointer and arrow keys | Finger: press and drag | Same, inside the view |
 | Trend chart | A time series on one axis; or parts of one whole, stacked | 248px tall | 180px | 160px inline, 248px fullscreen |

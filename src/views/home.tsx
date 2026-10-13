@@ -150,7 +150,7 @@ export function HomeBody(data: HomeData) {
             kicker={<>Requests · {period}</>}
             actions={<AskHome period={period} />}
             value={c.requests}
-            daily={series.map((d) => d.requests)}
+            points={series.map((d) => d.requests)}
             format={formatCompact}
             delta={change(c.requests, p.requests)}
             caption={<>About {formatCompact(Math.round(c.requests / series.length))} a day. The busiest day was {formatDay(peak.date)}, with {formatCompact(peak.requests)}.</>}
