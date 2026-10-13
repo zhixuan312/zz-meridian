@@ -37,7 +37,7 @@ The body (rows 1 to 3, under the masthead) is the records template, `Records` fr
 
 The tickets come from `readTickets` (`src/data/tickets.ts`), read on every request through the `tickets` collection, the same read the assistant's tool uses. Each ticket carries the name of the member it is assigned to, joined on the server from just the ids the tickets name: a Viewer reads tickets and not members, so they see the names and are never handed the roster. The people offered as assignee in the form are read only for someone who may read members; otherwise the form offers nobody.
 
-Create and Move are server actions (`actions.ts`) that write through the caller's own `tickets` collection, which is the ticket boundary (`src/data/ticket-mutations.ts`). It re-checks who is asking, validates every field, applies the steps a ticket may take (open to waiting or closed, waiting to open or closed, closed to open), stamps the times and drops the cached reads of tickets only after the write commits. A refusal comes back as `{ ok: false, error }`, never as a thrown error, and writes nothing. The view then refreshes the route. A write adds no Activity line.
+Create and Move are server actions (`actions.ts`) that write through the caller's own `tickets` collection, which is the ticket boundary (`src/data/ticket-mutations.ts`). It re-checks who is asking, validates every field, applies the steps a ticket may take (open to waiting or closed, waiting to open or closed, closed to open), stamps the times and drops the cached reads of tickets only after the write commits. The times are three: when the ticket was opened, when it last changed and when it was closed, which a move into closed sets and a move back to open clears, ticket by ticket. That time and the incident a ticket tracks (`closedAt` and `incidentId`) are the system's: a change that names either is refused. A refusal comes back as `{ ok: false, error }`, never as a thrown error, and writes nothing. The view then refreshes the route. A write adds no Activity line.
 
 ## Surfaces
 
@@ -45,7 +45,7 @@ Create and Move are server actions (`actions.ts`) that write through the caller'
 
 ## Agents
 
-An agent reads the page through the tickets view tool and may create and change tickets through the `tickets` collection tools, which pass the same boundary as the page's actions, so the same step is refused in both places. The page shares its context through `ticketsContext` in `src/views/tickets-context.ts`.
+An agent reads the page through the tickets view tool and may create and change tickets through the `tickets` collection tools, which pass the same boundary as the page's actions, so the same step is refused in both places. Its query tool reads when a ticket was closed and the incident it tracks; neither is in its create or update schema. The page shares its context through `ticketsContext` in `src/views/tickets-context.ts`.
 
 ### What the agent reads
 

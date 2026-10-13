@@ -3,10 +3,12 @@ import { Tooltip } from 'radix-ui';
 import { describe, expect, it, vi } from 'vitest';
 import { SurfaceOverride, sharedContextOn } from '@/components/base/surface';
 import { useShareView } from '@/components/base/use-share-view';
-import { DEMO_NOW, DEMO_UPDATED_AT, ACTIVITY, INCIDENTS, SERVICES } from '@/system/fixtures/sample';
+import { DEMO_NOW, DEMO_UPDATED_AT, ACTIVITY, INCIDENTS as RECORDS, SERVICES, type IncidentRecord } from '@/system/fixtures/sample';
 import { ENDPOINTS, STATUS_MIX, demoSeries, demoTotals } from '@/system/fixtures/company';
-import { PAST_INCIDENTS } from '@/system/fixtures/sample-ops';
+import { PAST_INCIDENTS as PAST_RECORDS } from '@/system/fixtures/sample-ops';
+import type { Incident } from '@/components/patterns/incident-card';
 import { deviations, median, runs, weekendRatio } from '@/lib/insight';
+import { formatCost } from '@/lib/format';
 import { contextText, freshnessOf, type SharedContext } from '@/lib/shared-context';
 import { systemPrompt } from '@/lib/assistant/prompt';
 import type { Period } from '@/lib/period';
@@ -14,6 +16,10 @@ import { HomeBody } from '@/views/home';
 import { homeContext, type HomeData } from '@/views/home-context';
 import { servicesContext } from '@/views/services-context';
 import { EmbedHome } from '../app/embed/home/view';
+
+/** The sample's incidents as a page is handed them: the record without who has it and the id of its ticket. */
+const handed = ({ owner: _, ticketId: __, ...incident }: IncidentRecord): Incident => incident;
+const [INCIDENTS, PAST_INCIDENTS] = [RECORDS.map(handed), PAST_RECORDS.map(handed)];
 
 /** What every view's text may take: the budget the console prompt and a host's context both afford. The Home's carries Main's seven figures beside its traffic. */
 const BUDGET = 2600;
@@ -135,6 +141,25 @@ describe('one context, two consumers', () => {
     expect(p.match(/<\/view-context>/g)).toHaveLength(1);
     expect(p).toContain('do not recompute them');
     expect(systemPrompt({ path: '/', title: 'Home', text: 'page' }, new Date()).includes('<view-context>')).toBe(false);
+  });
+});
+
+describe('a request\'s context', () => {
+  it('says what the request used and cost, as its page does: tokens at its model\'s price, a call at the price of a call, and nothing when it was refused', async () => {
+    const { requestContext } = await import('@/views/request-context');
+    const { traceOf, usageOf } = await import('@/data/sample');
+    const { REQUESTS } = await import('@/system/fixtures/sample');
+    const one = (model: string | null, refused = false) => REQUESTS.find((r) => r.model === model && r.status >= 400 === refused)!;
+    const said = (r: (typeof REQUESTS)[number]) => {
+      const { facts } = requestContext({ request: r, trace: traceOf(r), routeP95: null, statusText: '', payloadBytes: { request: null, response: 0 }, now: DEMO_NOW.toISOString() });
+      return [facts.find((f) => f.label === 'Tokens')?.value, facts.find((f) => f.label === 'Cost')?.value];
+    };
+    const answered = one('meridian-large'), { tokens, cost } = usageOf(answered);
+    expect(said(answered)).toEqual([`${tokens!.input.toLocaleString('en-US')} in, ${tokens!.output.toLocaleString('en-US')} out`, formatCost(cost)]);
+    expect(said(one('meridian-embed'))).toEqual(['18 in, 0 out', formatCost(0.0000018)]);
+    expect(said(one(null))).toEqual([undefined, formatCost(0.0001)]);
+    expect(said(one('meridian-large', true))).toEqual(['none, refused', 'none, refused']);
+    expect(said(one(null, true))).toEqual([undefined, 'none, refused']);
   });
 });
 

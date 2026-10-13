@@ -27,7 +27,7 @@ The body (rows 1 and 2) is the records template, `Records` from `src/components/
 
 ## Data
 
-The server reads one page of the `requests` collection (20 rows and the total) for the filters in the address, through `readRequests()` in `src/data/requests.ts`, and works the three tiles out of the same filtered set (the newest 500 of it, which the tiles say when the set is larger). The page never sends the full set. Error share counts 5xx and 429 responses. Latency above one second is written in `warning-ink`; no other cell is coloured except the status.
+The `requests` collection is a sample of the requests received, as its description tells an agent: how many requests there were is on Home and Usage, from the `days` and `usage` collections. The server reads one page of it (20 rows and the total) for the filters in the address, through `readRequests()` in `src/data/requests.ts`, and works the three tiles out of the same filtered set (the newest 500 of it, which the tiles say when the set is larger). The page never sends the full set. Error share counts 5xx and 429 responses. Latency above one second is written in `warning-ink`; no other cell is coloured except the status.
 
 ## Streaming
 

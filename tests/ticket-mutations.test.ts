@@ -1,4 +1,5 @@
 // @vitest-environment node
+import { asSchema } from 'ai';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const jar = vi.hoisted(() => ({ value: undefined as string | undefined }));
@@ -10,7 +11,7 @@ vi.mock('next/cache', () => ({ cacheTag: () => {}, cacheLife: () => {}, updateTa
 
 import { createTicket, updateTicket } from '../app/(dashboard)/operations-tickets/actions';
 import { can, collectionFor, resolveAccess } from '@/data/access';
-import { collections } from '@/data/collections';
+import { clock, collections } from '@/data/collections';
 import { handedTo } from '@/lib/assistant/scoped';
 import { assistantTools } from '@/lib/assistant/tools';
 import type { AnyCollection } from '@/lib/collection';
@@ -19,13 +20,15 @@ const PERSONAS = { owner: 'members_1', admin: 'members_2', member: 'members_4', 
 const draft = { title: 'Rotate the gateway certificate', service: 'Edge gateway', priority: 'high' as const, assigneeId: null, summary: '' };
 const stored = async () => (await collections.find((c) => c.name === 'tickets')!.query({})).rows as Record<string, unknown>[];
 /** The tools an assistant is given for this person: their readable collections, each handed to them as the route hands it. */
-const toolsFor = async (id: string) => {
+const given = async (id: string) => {
   jar.value = id;
   const scope = await resolveAccess();
   const readable = (await Promise.all(collections.map(async (c) => ((await can(scope, c.name, 'read')) ? handedTo(scope, collectionFor(scope, c.name), c.name) : null)))).filter((c): c is AnyCollection => c !== null);
   const guard = { authorize: async (name: string, op: 'create' | 'update' | 'remove', ids?: string[]) => can(scope, name, op, ids), invalidate: () => {} };
-  return Object.keys(assistantTools(readable, { write() {}, merge() {}, onError: undefined } as never, guard as never).tools);
+  return assistantTools(readable, { write() {}, merge() {}, onError: undefined } as never, guard as never).tools as Record<string, { inputSchema: never }>;
 };
+const toolsFor = async (id: string) => Object.keys(await given(id));
+const NOW = clock().toISOString();
 
 beforeEach(() => { jar.value = undefined; });
 
@@ -67,6 +70,65 @@ describe('who may write a ticket, by every way in', () => {
     const tickets = collectionFor(await resolveAccess(), 'tickets');
     await expect(Promise.resolve().then(() => tickets.create!(draft))).rejects.toThrow();
     await expect(Promise.resolve().then(() => tickets.update!([String(before[0].id)], { state: 'closed' }))).rejects.toThrow();
+    expect(await stored()).toEqual(before);
+  });
+});
+
+describe('when a ticket was closed, and the incident it tracks', () => {
+  it('are read by an agent and asked of none: neither is in a ticket tool\'s create or update schema', async () => {
+    const tools = await given(PERSONAS.owner);
+    const schemaOf = (name: string) => asSchema(tools[name].inputSchema).jsonSchema as { properties?: Record<string, { properties?: Record<string, unknown> }> };
+    const create = Object.keys(schemaOf('create_tickets').properties ?? {});
+    const set = Object.keys(schemaOf('update_tickets').properties?.set?.properties ?? {});
+    const where = JSON.stringify(schemaOf('query_tickets').properties?.where);
+    for (const field of ['closedAt', 'incidentId']) {
+      expect(create, `create ${field}`).not.toContain(field);
+      expect(set, `update ${field}`).not.toContain(field);
+      expect(where, `query ${field}`).toContain(`"${field}"`);
+    }
+    expect(set).toContain('state');
+  });
+
+  it('is each ticket\'s own in a change to several: one the change closes gets the clock\'s time, and one already closed keeps its own', async () => {
+    jar.value = PERSONAS.member;
+    const tickets = collectionFor(await resolveAccess(), 'tickets');
+    // A ticket the sample closed days ago: one closed here would hold the clock's time, and prove nothing.
+    const closed = (await stored()).find((t) => t.state === 'closed' && t.closedAt !== NOW)!;
+    const open = String((await tickets.create!(draft) as Record<string, unknown>).id);
+    const priority = closed.priority === 'low' ? 'normal' : 'low';
+    await tickets.update!([String(closed.id), open], { state: 'closed', priority });
+    const after = await stored();
+    expect(after.find((t) => t.id === closed.id)).toMatchObject({ state: 'closed', priority, closedAt: closed.closedAt, updatedAt: NOW });
+    expect(after.find((t) => t.id === open)).toMatchObject({ state: 'closed', priority, closedAt: NOW, updatedAt: NOW });
+  });
+
+  it('is cleared for each ticket a change opens again, and stays absent on one that was never closed', async () => {
+    jar.value = PERSONAS.member;
+    const tickets = collectionFor(await resolveAccess(), 'tickets');
+    const [reopened, waiting] = [String((await tickets.create!(draft) as Record<string, unknown>).id), String((await tickets.create!(draft) as Record<string, unknown>).id)];
+    await tickets.update!([reopened], { state: 'closed' });
+    await tickets.update!([waiting], { state: 'waiting' });
+    await tickets.update!([reopened, waiting], { state: 'open' });
+    for (const id of [reopened, waiting]) expect((await stored()).find((t) => t.id === id), id).toMatchObject({ state: 'open', closedAt: null, incidentId: null });
+  });
+
+  it('is stamped by a move into closed and by nothing else: a change that leaves a closed ticket closed keeps its time', async () => {
+    jar.value = PERSONAS.member;
+    const tickets = collectionFor(await resolveAccess(), 'tickets');
+    const closed = (await stored()).find((t) => t.state === 'closed' && t.closedAt !== NOW)!;
+    await tickets.update!([String(closed.id)], { summary: 'Checked again after the release.' });
+    expect((await stored()).find((t) => t.id === closed.id)).toMatchObject({ closedAt: closed.closedAt, updatedAt: NOW });
+  });
+
+  it('is nobody\'s to set: a change or a new ticket that names either is refused or ignored, and nothing is stored', async () => {
+    jar.value = PERSONAS.owner;
+    const tickets = collectionFor(await resolveAccess(), 'tickets');
+    const made = await tickets.create!({ ...draft, closedAt: '2020-01-01T00:00:00.000Z', incidentId: 'inc_2610' }) as Record<string, unknown>;
+    expect([made.closedAt, made.incidentId]).toEqual([null, null]);
+    const before = await stored();
+    for (const change of [{ closedAt: '2020-01-01T00:00:00.000Z' }, { closedAt: null }, { incidentId: 'inc_2610' }, { state: 'closed', closedAt: '2020-01-01T00:00:00.000Z' }]) {
+      await expect(tickets.update!([String(made.id)], change), JSON.stringify(change)).rejects.toThrow(/set by the system/);
+    }
     expect(await stored()).toEqual(before);
   });
 });

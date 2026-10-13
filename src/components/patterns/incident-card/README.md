@@ -62,6 +62,8 @@ Card (Layer 2) with Badge, Status dot and text; the timeline is an ordered list.
 | `owner` | Optional. Who has the incident: a person's name, drawn as text |
 | `ticket` | Optional. `{ title, href }`: the ticket the work is tracked in and its address inside the product |
 
+A record may hold more than the card draws. The sample's `incidents` hold `owner`, a member's name or null, and `ticketId`, a ticket's id or null; `readIncidents()` in `src/data/metrics.ts` hands a page this shape, with the owner by name and without the id, and a page that draws the ticket's line joins its title and address from the id.
+
 ## Surfaces
 
 - **Console**: the `card` on Now and beside the Services figure; `row`s under "Past incidents".

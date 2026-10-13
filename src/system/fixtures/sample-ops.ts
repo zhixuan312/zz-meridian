@@ -2,24 +2,25 @@
  * The sample's data for the operational pages (Services, Settings) and the shell: the incidents before the current one
  * and a fixed set of alerts, derived from ./sample so the records agree across pages.
  */
-import { DEMO_NOW, INCIDENTS } from '@/system/fixtures/sample';
+import { DEMO_NOW, INCIDENTS, type IncidentRecord } from '@/system/fixtures/sample';
 import { CUSTOMERS } from '@/system/fixtures/company';
-import type { Incident } from '@/components/patterns/incident-card';
 import type { Alert } from '@/components/patterns/shell-tools';
 
 const DAY = 86_400_000;
 const ago = (ms: number) => new Date(DEMO_NOW.getTime() - ms).toISOString();
 
-/** Incidents before the current one, newest first. */
-export const PAST_INCIDENTS: Incident[] = [
+/** Incidents before the current one, newest first: one names who had it, and one nobody. None was tracked in a ticket the product still holds. */
+export const PAST_INCIDENTS: IncidentRecord[] = [
   INCIDENTS[1],
   {
     id: 'inc_2571', title: 'Webhook deliveries delayed up to 9 minutes', service: 'Webhooks', severity: 'minor', state: 'resolved',
+    owner: 'Lucas Meyer', ticketId: null,
     started: ago(63 * DAY), resolved: ago(63 * DAY - 0.9 * 3600_000),
     updates: [{ at: ago(63 * DAY), text: 'A queue consumer stalled after a deploy. Restarted; the backlog drained in 14 minutes.' }],
   },
   {
     id: 'inc_2540', title: 'Embeddings returned 503 for 6 minutes in us-east-1', service: 'Embeddings', severity: 'major', state: 'resolved',
+    owner: null, ticketId: null,
     started: ago(81 * DAY), resolved: ago(81 * DAY - 0.1 * 3600_000),
     updates: [{ at: ago(81 * DAY), text: 'A capacity rebalance drained too many nodes at once. Rolled back and added a floor.' }],
   },

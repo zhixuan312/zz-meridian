@@ -12,7 +12,7 @@ This body is the thin first form: the services as the Status list draws them, th
 |---|---|---|---|
 | Masthead | | Kicker "ZZ Meridian · Production", title, one sentence that ends with who Engineering is for (`workspaces.engineering.audience`, read from the declaration); Freshness. No action | Page frame |
 | 1 | Full | Services: state now and latency, with the days kept | Status list in a Card |
-| 2 | Full | The newest incident nobody has resolved; without one, the line "No incident is open." | Incident card |
+| 2 | Full | The newest incident nobody has resolved, with who has it when the record names an owner; without one, the line "No incident is open." | Incident card |
 | 3 | | How many other incidents are open, when any are; a button to Services (`/services`) | Button |
 
 ## States

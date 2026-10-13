@@ -6,7 +6,8 @@ import { DEMO_NOW, DEMO_UPDATED_AT, INCIDENTS, SERVICES } from '@/system/fixture
 import { nowContext, type NowData } from '@/views/now-context';
 
 const BUDGET = 2600;
-const open = INCIDENTS.filter((i) => i.state !== 'resolved');
+// As a page is handed them: the record without who has it and the id of its ticket.
+const open = INCIDENTS.filter((i) => i.state !== 'resolved').map(({ owner: _, ticketId: __, ...incident }) => incident);
 const data = (over: Partial<NowData> = {}): NowData => ({ services: SERVICES, current: open[0] ?? null, alsoOpen: open.slice(1), updatedAt: DEMO_UPDATED_AT.toISOString(), now: DEMO_NOW.toISOString(), ...over });
 
 describe("Now's context", () => {

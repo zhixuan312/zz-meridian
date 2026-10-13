@@ -70,7 +70,7 @@ A Card (`overflow-hidden`) holding: the summary line, then one row per service. 
 | Field | Meaning |
 |---|---|
 | `status` | The state now: `operational`, `degraded` or `outage` |
-| `uptime` | Share of the period the service answered within its objective, as a fraction; shown to two decimals, or three at 99.99% and above |
+| `uptime` | Share of the period the service answered within its objective, as a fraction; shown to two decimals, or three at 99.99% and above. It must agree with `days`: 1 only when no day carries a mark |
 | `latency` | p95 over the last hour, in milliseconds |
 | `days` | One state per day, oldest first, ending today: the worst state of that day |
 

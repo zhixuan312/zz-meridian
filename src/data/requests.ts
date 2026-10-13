@@ -48,21 +48,27 @@ export function requestsQuery(params: Params) {
   return { state: { q, status, method, region, sort, dir, page }, query };
 }
 
-/** A collection row as a page may carry it: the record, without the values the data layer worked out. */
-const publicRows = (rows: Record<string, unknown>[]): RequestRow[] =>
-  rows.map(({ id, at, method, route, status, latency, customer, region, bytes, model }) => ({ id, at, method, route, status, latency, customer, region, bytes, model }) as RequestRow);
+/**
+ * A request as the log carries it: the record without the time to its first token, which the list does not draw and a
+ * page of twenty rows does not send. A request's own page reads the record whole.
+ */
+export type LoggedRequest = Omit<RequestRow, 'ttft'>;
 
-const isError = (r: RequestRow) => r.status >= 500 || r.status === 429;
-const p95Of = (rs: RequestRow[]) => {
+/** A collection row as a page may carry it: the logged request, without the values the data layer worked out. */
+const publicRows = (rows: Record<string, unknown>[]): LoggedRequest[] =>
+  rows.map(({ id, at, method, route, status, latency, customer, region, bytes, model }) => ({ id, at, method, route, status, latency, customer, region, bytes, model }) as LoggedRequest);
+
+const isError = (r: LoggedRequest) => r.status >= 500 || r.status === 429;
+const p95Of = (rs: LoggedRequest[]) => {
   const l = rs.map((r) => r.latency).sort((a, b) => a - b);
   return l.length ? l[Math.floor((l.length - 1) * 0.95)] : 0;
 };
-const errorShare = (rs: RequestRow[]) => (rs.length ? rs.filter(isError).length / rs.length : 0);
+const errorShare = (rs: LoggedRequest[]) => (rs.length ? rs.filter(isError).length / rs.length : 0);
 const change = (now: number, before: number) => (before ? now / before - 1 : null);
 
 /** The commonest route, customer and region in `rows`, each with its share of them. */
-function commonest(rows: RequestRow[]) {
-  const top = (key: (r: RequestRow) => string) => {
+function commonest(rows: LoggedRequest[]) {
+  const top = (key: (r: LoggedRequest) => string) => {
     const counts = new Map<string, number>();
     for (const r of rows) counts.set(key(r), (counts.get(key(r)) ?? 0) + 1);
     const [value, n] = [...counts].reduce((m, e) => (e[1] > m[1] ? e : m), ['', 0]);
@@ -72,15 +78,15 @@ function commonest(rows: RequestRow[]) {
 }
 
 /** What the tiles draw, worked out on the server: twelve 5-minute buckets, oldest first, and the last half hour against the one before. */
-function summarize(rows: RequestRow[], total: number, observedAt: string) {
+function summarize(rows: LoggedRequest[], total: number, observedAt: string) {
   const B = 12, W = 5 * 60_000, end = new Date(observedAt).getTime();
-  const out = Array.from({ length: B }, () => [] as RequestRow[]);
+  const out = Array.from({ length: B }, () => [] as LoggedRequest[]);
   for (const r of rows) {
     const i = B - 1 - Math.floor((end - new Date(r.at).getTime()) / W);
     if (i >= 0 && i < B) out[i].push(r);
   }
-  const half = (f: (rs: RequestRow[]) => number, a: number, b: number) => f(out.slice(a, b).flat());
-  const delta = (f: (rs: RequestRow[]) => number) => change(half(f, 6, 12), half(f, 0, 6));
+  const half = (f: (rs: LoggedRequest[]) => number, a: number, b: number) => f(out.slice(a, b).flat());
+  const delta = (f: (rs: LoggedRequest[]) => number) => change(half(f, 6, 12), half(f, 0, 6));
   return {
     count: total,
     errorShare: errorShare(rows),

@@ -96,6 +96,9 @@ describe('Services, when more than one incident is open', () => {
     expect(open.length).toBe(2);
     expect(current).toEqual(open[0]);
     expect(past.every((i) => i.state === 'resolved')).toBe(true);
+    // A page is handed the card's shape: who has the incident by name, and not the id of its ticket.
+    expect(current?.owner).toBe('Jonas Weber');
+    expect([...open, ...past].some((i) => 'ticketId' in i || i.owner === null)).toBe(false);
   });
 
   it('draws them all, and tells the assistant of each', async () => {

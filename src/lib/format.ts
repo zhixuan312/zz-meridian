@@ -23,10 +23,11 @@ export function plural(n: number, one: string, other?: string): string {
 const INT = new Intl.NumberFormat('en-US');
 const CENTS = new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
-/** Money in `app.currency`, symbol first: $298.43, €1,204. */
+/** Money in `app.currency`, symbol first: $298.43, €1,204. An amount under a cent keeps four decimals, and one too small for those keeps its first two digits ($0.0000018), so a cost that is not zero never reads as zero. */
 export function formatCost(amount: number | null): string {
   if (amount === null) return '—';
   if (amount === 0) return `${CURRENCY}0`;
+  if (Math.abs(amount) < 0.00005) return `${CURRENCY}${amount.toFixed(Math.min(20, 1 - Math.floor(Math.log10(Math.abs(amount)))))}`;
   if (Math.abs(amount) < 0.01) return `${CURRENCY}${amount.toFixed(4)}`;
   // Two decimals at every size, so a column of amounts keeps one precision and its decimals line up.
   return `${CURRENCY}${CENTS.format(amount)}`;

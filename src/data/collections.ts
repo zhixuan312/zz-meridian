@@ -21,12 +21,11 @@ import { arrayCollection, type AnyCollection, type Collection } from '@/lib/coll
 import { API_KEYS, type ApiKey } from '@/system/fixtures/sample-records';
 import { MEMBERS, STATUSES, TEAMS, type Member } from '@/system/fixtures/sample-members';
 import { ADD_ONS, MAIN_ROLES } from '@/data/roles';
-import { ACTIVITY, DEMO_NOW, INCIDENTS, MODELS, PLANS, REQUESTS, SERVICES, type ComputeRow, type CostRow, type CustomerRecord, type DailyPoint, type Endpoint, type Model, type RequestRow, type UsageRow } from '@/system/fixtures/sample';
+import { ACTIVITY, DEMO_NOW, INCIDENTS, MODELS, PLANS, REQUESTS, SERVICES, type ComputeRow, type CostRow, type CustomerRecord, type DailyPoint, type Endpoint, type IncidentRecord, type Model, type RequestRow, type UsageRow } from '@/system/fixtures/sample';
 import { COMPUTE, COSTS, CUSTOMERS, DAYS, ENDPOINTS, IN_PROGRESS, REGIONS, STATUS_MIX, USAGE, WEEKDAY_HOURS } from '@/system/fixtures/company';
 import { PAST_INCIDENTS } from '@/system/fixtures/sample-ops';
 import { RELEASES, RUNS, TICKETS, type Release, type Ticket, type VerificationRun } from '@/system/fixtures/sample-engineering';
 import type { ActivityEvent } from '@/components/patterns/activity-feed';
-import type { Incident } from '@/components/patterns/incident-card';
 import type { Service } from '@/components/patterns/status-list';
 import { statusClass } from '@/data/sample';
 
@@ -87,7 +86,7 @@ type RequestRecord = RequestRow & { statusClass: ReturnType<typeof statusClass>;
 export const requests: Collection<RequestRecord, 'id'> = arrayCollection({
   name: 'requests',
   label: 'Requests',
-  description: 'The API requests the workspace received, newest first, with status, latency and customer.',
+  description: 'A sample of the API requests the workspace received, newest first, not every request: each with its status, latency in ms, customer, region, response size in bytes, the model that served it (an id of the models collection, or null when it reached none) and ttft, the ms from arrival to the first token, null where no model wrote one because the request reached none, reached the embedding model, or was refused. Count requests from the days and usage collections, never from here.',
   key: 'id',
   title: (r) => r.id,
   fields: z.object({
@@ -100,6 +99,7 @@ export const requests: Collection<RequestRecord, 'id'> = arrayCollection({
     region: z.string(),
     bytes: z.number(),
     model: z.string().nullable(),
+    ttft: z.number().nullable().default(null),
     replayOf: z.string().nullable().default(null),
   }),
   derived: ['statusClass', 'search'],
@@ -221,11 +221,11 @@ export const regions: Collection<(typeof REGIONS)[number], 'label'> = arrayColle
   allow: [],
 });
 
-/** The monitored services: state now, uptime, latency and 90 days of history. Read-only. */
+/** The monitored services: state now, uptime, latency and 90 days of history, the last of them the day in progress. Read-only. */
 export const services: Collection<Service & { order: number }, 'name'> = arrayCollection({
   name: 'services',
   label: 'Services',
-  description: 'Each monitored service: its state now, uptime over 90 days (a fraction), latency now in ms, and its state on each of the last 90 days.',
+  description: 'Each monitored service: its state now, latency now in ms, its state on each of the last 90 days (oldest first; the last is the day in progress and is its state now), and uptime over those days, a fraction: 1 less what its marked days cost, half an hour for a degraded day and two hours for a day of outage, so it is 1 exactly when every day is operational.',
   key: 'name',
   title: (s) => s.name,
   fields: z.object({ description: z.string(), status: z.enum(['operational', 'degraded', 'outage']), uptime: z.number(), latency: z.number(), days: z.array(z.enum(['operational', 'degraded', 'outage'])), order: z.number() }),
@@ -234,14 +234,14 @@ export const services: Collection<Service & { order: number }, 'name'> = arrayCo
   allow: [],
 });
 
-/** Incidents, live and resolved, with their updates. Read-only. */
-export const incidents: Collection<Incident, 'id'> = arrayCollection({
+/** Incidents, live and resolved, with their updates, who has each and the ticket its work is tracked in. Read-only. */
+export const incidents: Collection<IncidentRecord, 'id'> = arrayCollection({
   name: 'incidents',
   label: 'Incidents',
-  description: 'Incidents, live and resolved: the service, the severity, the state, when it started and was resolved, and its updates.',
+  description: 'Incidents, live and resolved: the service, the severity, the state, when it started and was resolved, its updates, its owner (a member\'s name, or null) and ticketId (the id of the ticket its work is tracked in, which names the incident back as its incidentId, or null).',
   key: 'id',
   title: (i) => i.title,
-  fields: z.object({ title: z.string(), service: z.string(), severity: z.enum(['minor', 'major']), state: z.enum(['investigating', 'monitoring', 'resolved']), started: z.string(), resolved: z.string().optional(), updates: z.array(z.object({ at: z.string(), text: z.string() })) }),
+  fields: z.object({ title: z.string(), service: z.string(), severity: z.enum(['minor', 'major']), state: z.enum(['investigating', 'monitoring', 'resolved']), started: z.string(), resolved: z.string().optional(), updates: z.array(z.object({ at: z.string(), text: z.string() })), owner: z.string().nullable(), ticketId: z.string().nullable() }),
   rows: [...new Map([...INCIDENTS, ...PAST_INCIDENTS].map((i) => [i.id, i])).values()],
   allow: [],
 });
@@ -303,13 +303,14 @@ const stamp = z.iso.datetime();
 
 /**
  * The work the team tracks against a service. A ticket is created and changed only through `ticketsFor` (the ticket
- * boundary), which sets its state, its id and both times and applies the step rules; the collection's own fields are the
- * shape it stores. `openedAt` and `updatedAt` are `pageOnlyFields`, so no agent tool asks for either. Nobody removes one.
+ * boundary), which sets its state, its id and its three times and applies the step rules; the collection's own fields
+ * are the shape it stores. `openedAt`, `updatedAt`, `closedAt` and `incidentId` are `pageOnlyFields`: an agent reads
+ * them and no agent tool asks for one. Nobody removes a ticket.
  */
 export const tickets: Collection<Ticket, 'id'> = arrayCollection({
   name: 'tickets',
   label: 'Tickets',
-  description: 'The work the team tracks against a service: its title, priority, state (open, waiting or closed), who it is assigned to, and when it was opened and last changed.',
+  description: 'The work the team tracks against a service: its title, priority, state (open, waiting or closed), who it is assigned to, when it was opened and last changed, closedAt (when it was closed, null while it is open or waiting) and incidentId (the id of the incident it tracks the work of, or null).',
   key: 'id',
   title: (t) => t.title,
   fields: z.object({
@@ -320,11 +321,13 @@ export const tickets: Collection<Ticket, 'id'> = arrayCollection({
     assigneeId: z.string().nullable().default(null).describe('The id of a member, or null when nobody has it.'),
     openedAt: stamp,
     updatedAt: stamp,
+    closedAt: stamp.nullable().default(null),
+    incidentId: z.string().nullable().default(null),
     summary: z.string().max(4000).default(''),
   }),
   rows: TICKETS,
   allow: ['create', 'update'],
-  pageOnlyFields: ['openedAt', 'updatedAt'],
+  pageOnlyFields: ['openedAt', 'updatedAt', 'closedAt', 'incidentId'],
 });
 
 /** Each run of a verification suite against one endpoint of one release, with its verdict. Read-only. */

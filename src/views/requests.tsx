@@ -4,9 +4,9 @@ import { MetricTile } from '@/components/patterns/metric-tile';
 import { DataTable, useQueryState, useSearchDraft } from '@/components/patterns/data-table';
 import { FilterBar } from '@/components/patterns/filter-bar';
 import { formatCompact, formatDuration, formatPercent } from '@/lib/format';
-import { REGION_NAMES, type RequestRow } from '@/data/sample';
+import { REGION_NAMES } from '@/data/sample';
 import { REQUEST_METHODS } from '@/data/request-methods';
-import type { readRequests } from '@/data/requests';
+import type { LoggedRequest, readRequests } from '@/data/requests';
 import { useShareView } from '@/components/base/use-share-view';
 import { Records } from '@/components/templates/records';
 import { AskAbout } from '@/components/patterns/ask-about';
@@ -28,7 +28,7 @@ export const activeFilters = (f: Pick<Page['state'], 'q' | 'status' | 'method' |
   Object.fromEntries(Object.entries({ q: f.q, status: f.status, method: f.method, region: f.region }).filter(([, v]) => v && v !== 'all'));
 
 /** The page's body under its masthead: the tiles and the table. The server filtered, sorted and paged, `pageSize` rows at a time. */
-export function RequestsView({ rows, total, summary, state, pageSize, updatedAt, now }: { rows: RequestRow[]; total: number; summary: Page['summary']; state: Page['state']; pageSize: number; updatedAt: string; now: string }) {
+export function RequestsView({ rows, total, summary, state, pageSize, updatedAt, now }: { rows: LoggedRequest[]; total: number; summary: Page['summary']; state: Page['state']; pageSize: number; updatedAt: string; now: string }) {
   useShareView(requestsContext({ rows, total, summary, state, pageSize, updatedAt, now }));
   /* One writer for filters, sort and page: two setters in one handler would each write over the other. */
   const [f, setF, pending] = useQueryState({ ...REQUEST_FILTERS, sort: 'at', dir: 'desc', page: '1' });

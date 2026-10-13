@@ -26,7 +26,7 @@ The rows follow the navigation's order. The last column names who the rail leave
 | Business | Revenue | `/business` | The revenue of the last 30 days, how many customers there are and who is past due | Nobody |
 | Business | Customers | `/customers` | Who uses the product, by plan and status, with usage and revenue | Nobody |
 | Business | Usage | `/usage` | How requests, errors, latency and revenue moved over a period, when traffic comes, where it comes from, and which endpoints are slow | Nobody |
-| Business | Requests | `/requests` | The API requests the product received, with status, latency and customer | Nobody |
+| Business | Requests | `/requests` | A sample of the API requests the product received, with status, latency and customer | Nobody |
 | Engineering | Now | `/engineering` | Which services are up this moment and the incident nobody has resolved | Nobody |
 | Engineering | Services | `/services` | Each service's state now and over 90 days, and its incidents | Nobody |
 | Engineering | Tickets | `/operations-tickets` | The work tracked against a service: what is open, what is waiting and who has it | Nobody |

@@ -2,8 +2,8 @@
  * One request's shared context (decision 0011): what it was, how it ended, and where its time went against what is
  * usual for its route, as both agents read it.
  */
-import type { RequestRow, Span } from '@/data/sample';
-import { formatDuration, formatPercent } from '@/lib/format';
+import { usageOf, type RequestRow, type Span } from '@/data/sample';
+import { formatCost, formatDuration, formatPercent } from '@/lib/format';
 import { formatDateTime } from '@/lib/format-date';
 import type { Insight, SharedContext } from '@/lib/shared-context';
 
@@ -19,6 +19,7 @@ export type RequestData = {
 
 export function requestContext({ request: r, trace, routeP95, statusText, payloadBytes, now }: RequestData): SharedContext {
   const failed = r.status >= 500 || r.status === 429;
+  const { tokens, cost } = usageOf(r);
   const total = trace.reduce((m, s) => Math.max(m, s.start + s.duration), 0) || r.latency;
   const insights: Insight[] = [];
   const heaviest = trace.reduce<Span | null>((m, s) => (!m || s.duration > m.duration ? s : m), null);
@@ -36,6 +37,8 @@ export function requestContext({ request: r, trace, routeP95, statusText, payloa
       { label: 'Status', value: `${r.status} ${statusText}` },
       { label: 'Latency', value: formatDuration(r.latency), definition: 'From arrival at the gateway to the last byte sent.' },
       { label: 'Customer and region', value: `${r.customer}, ${r.region}` },
+      ...(r.model ? [{ label: 'Tokens', value: tokens ? `${tokens.input.toLocaleString('en-US')} in, ${tokens.output.toLocaleString('en-US')} out` : 'none, refused' }] : []),
+      { label: 'Cost', value: cost ? formatCost(cost) : 'none, refused', definition: 'Its tokens at its model\'s prices a million in the models collection, or the price of a call when it reached no model; a refused request costs nothing.' },
       { label: 'Phases', value: trace.map((s) => `${s.name} ${formatDuration(s.duration)} from ${formatDuration(s.start)}`).join('; ') },
       { label: 'Payloads', value: `request ${payloadBytes.request === null ? 'none' : `${payloadBytes.request} characters`}, response ${payloadBytes.response} characters; their text is on the page` },
     ],

@@ -37,6 +37,10 @@ describe('formatters', () => {
     // The symbol follows app.currency, so a rebranded product (--currency SGD) keeps this test green.
     const symbol = new Intl.NumberFormat('en', { style: 'currency', currency: app.currency, currencyDisplay: 'narrowSymbol' }).formatToParts(0).find((p) => p.type === 'currency')!.value;
     expect(formatCost(298.43)).toBe(`${symbol}298.43`);
+    // Under a cent, four decimals; and an amount too small for four keeps its first two digits, never a row of zeros.
+    expect(formatCost(0.00522)).toBe(`${symbol}0.0052`);
+    expect(formatCost(0.0000018)).toBe(`${symbol}0.0000018`);
+    expect(formatCost(0)).toBe(`${symbol}0`);
     // One precision in a column: $997.00 above $1,269.40, never above $1,269, so the decimals line up.
     expect(formatCost(1269.4)).toBe(`${symbol}1,269.40`);
     expect(formatCost(997)).toBe(`${symbol}997.00`);

@@ -25,6 +25,10 @@ export type Ticket = {
   assigneeId: string | null;
   openedAt: string;
   updatedAt: string;
+  /** When the ticket was closed: null while it is open or waiting. Set by the ticket boundary and by nobody else. */
+  closedAt: string | null;
+  /** The incident the ticket tracks the work of, by its id, or null. That incident names the ticket back. */
+  incidentId: string | null;
   summary: string;
 };
 
@@ -54,17 +58,18 @@ export type Release = {
   requiredVerifications: RequiredVerification[];
 };
 
+/** The team's tickets. A closed one says when it was closed, the last time it changed; the first is the work behind the open incident, which names it back (./sample). */
 export const TICKETS: Ticket[] = [
-  { id: 'tickets_1', title: 'Inference API p95 above target in eu-west-1', service: 'Inference API', priority: 'high', state: 'open', assigneeId: 'members_2', openedAt: ago(6 * DAY), updatedAt: ago(5 * HOUR), summary: 'p95 has sat above 900 ms for requests routed through eu-west-1 since the last capacity change. Traffic is shifted; the cause is not found yet.' },
-  { id: 'tickets_2', title: 'Large uploads time out behind the proxy', service: 'Files', priority: 'normal', state: 'open', assigneeId: null, openedAt: ago(3 * DAY), updatedAt: ago(2 * DAY), summary: 'Multipart uploads over 40 MB fail on slow connections. Nobody owns it yet.' },
-  { id: 'tickets_3', title: 'Retry schedule for failed webhook deliveries', service: 'Webhooks', priority: 'normal', state: 'waiting', assigneeId: 'members_4', openedAt: ago(9 * DAY), updatedAt: ago(1.5 * DAY), summary: 'Waiting on the customer to confirm which delivery window they can accept before the schedule changes.' },
-  { id: 'tickets_4', title: 'Dashboard shows a stale usage figure after midnight UTC', service: 'Dashboard', priority: 'low', state: 'waiting', assigneeId: 'members_5', openedAt: ago(14 * DAY), updatedAt: ago(4 * DAY), summary: 'The daily total refreshes late for workspaces on a time zone ahead of UTC. Waiting for a reproduction from support.' },
-  { id: 'tickets_5', title: 'Document the embeddings batch limit', service: 'Embeddings', priority: 'low', state: 'closed', assigneeId: 'members_1', openedAt: ago(21 * DAY), updatedAt: ago(16 * DAY), summary: 'The reference now states the 2,048-input limit and the error a larger batch returns.' },
-  { id: 'tickets_6', title: 'Renew the gateway TLS certificate', service: 'Edge gateway', priority: 'high', state: 'closed', assigneeId: 'members_2', openedAt: ago(19 * DAY), updatedAt: ago(12 * DAY), summary: 'Renewed in every region ahead of the expiry date; the monitor now warns 30 days out.' },
-  { id: 'tickets_7', title: 'Rate-limit headers missing on 429 responses', service: 'Edge gateway', priority: 'low', state: 'open', assigneeId: 'members_12', openedAt: ago(8 * DAY), updatedAt: ago(8 * DAY - 2 * HOUR), summary: 'A rate-limited response omits the retry-after header, so clients back off blindly.' },
-  { id: 'tickets_8', title: 'Parser rejects PDFs with an embedded font table', service: 'Files', priority: 'high', state: 'open', assigneeId: 'members_1', openedAt: ago(2 * DAY), updatedAt: ago(7 * HOUR), summary: 'Three customers report uploads failing with a 422. The fix is in the next Files release.' },
-  { id: 'tickets_9', title: 'Capacity plan for the next quarter of inference traffic', service: 'Inference API', priority: 'high', state: 'waiting', assigneeId: null, openedAt: ago(11 * DAY), updatedAt: ago(3 * DAY), summary: 'Waiting for the sales forecast before sizing the reserved capacity.' },
-  { id: 'tickets_10', title: 'Webhook signing secret rotation guide', service: 'Webhooks', priority: 'normal', state: 'closed', assigneeId: 'members_4', openedAt: ago(30 * DAY), updatedAt: ago(24 * DAY), summary: 'Published with an example for both signing versions.' },
+  { id: 'tickets_1', title: 'Inference API p95 above target in eu-west-1', service: 'Inference API', priority: 'high', state: 'open', assigneeId: 'members_2', openedAt: ago(6 * DAY), updatedAt: ago(5 * HOUR), closedAt: null, incidentId: 'inc_2610', summary: 'p95 has sat above 900 ms for requests routed through eu-west-1 since the last capacity change. Traffic is shifted; the cause is not found yet.' },
+  { id: 'tickets_2', title: 'Large uploads time out behind the proxy', service: 'Files', priority: 'normal', state: 'open', assigneeId: null, openedAt: ago(3 * DAY), updatedAt: ago(2 * DAY), closedAt: null, incidentId: null, summary: 'Multipart uploads over 40 MB fail on slow connections. Nobody owns it yet.' },
+  { id: 'tickets_3', title: 'Retry schedule for failed webhook deliveries', service: 'Webhooks', priority: 'normal', state: 'waiting', assigneeId: 'members_4', openedAt: ago(9 * DAY), updatedAt: ago(1.5 * DAY), closedAt: null, incidentId: null, summary: 'Waiting on the customer to confirm which delivery window they can accept before the schedule changes.' },
+  { id: 'tickets_4', title: 'Dashboard shows a stale usage figure after midnight UTC', service: 'Dashboard', priority: 'low', state: 'waiting', assigneeId: 'members_5', openedAt: ago(14 * DAY), updatedAt: ago(4 * DAY), closedAt: null, incidentId: null, summary: 'The daily total refreshes late for workspaces on a time zone ahead of UTC. Waiting for a reproduction from support.' },
+  { id: 'tickets_5', title: 'Document the embeddings batch limit', service: 'Embeddings', priority: 'low', state: 'closed', assigneeId: 'members_1', openedAt: ago(21 * DAY), updatedAt: ago(16 * DAY), closedAt: ago(16 * DAY), incidentId: null, summary: 'The reference now states the 2,048-input limit and the error a larger batch returns.' },
+  { id: 'tickets_6', title: 'Renew the gateway TLS certificate', service: 'Edge gateway', priority: 'high', state: 'closed', assigneeId: 'members_2', openedAt: ago(19 * DAY), updatedAt: ago(12 * DAY), closedAt: ago(12 * DAY), incidentId: null, summary: 'Renewed in every region ahead of the expiry date; the monitor now warns 30 days out.' },
+  { id: 'tickets_7', title: 'Rate-limit headers missing on 429 responses', service: 'Edge gateway', priority: 'low', state: 'open', assigneeId: 'members_12', openedAt: ago(8 * DAY), updatedAt: ago(8 * DAY - 2 * HOUR), closedAt: null, incidentId: null, summary: 'A rate-limited response omits the retry-after header, so clients back off blindly.' },
+  { id: 'tickets_8', title: 'Parser rejects PDFs with an embedded font table', service: 'Files', priority: 'high', state: 'open', assigneeId: 'members_1', openedAt: ago(2 * DAY), updatedAt: ago(7 * HOUR), closedAt: null, incidentId: null, summary: 'Three customers report uploads failing with a 422. The fix is in the next Files release.' },
+  { id: 'tickets_9', title: 'Capacity plan for the next quarter of inference traffic', service: 'Inference API', priority: 'high', state: 'waiting', assigneeId: null, openedAt: ago(11 * DAY), updatedAt: ago(3 * DAY), closedAt: null, incidentId: null, summary: 'Waiting for the sales forecast before sizing the reserved capacity.' },
+  { id: 'tickets_10', title: 'Webhook signing secret rotation guide', service: 'Webhooks', priority: 'normal', state: 'closed', assigneeId: 'members_4', openedAt: ago(30 * DAY), updatedAt: ago(24 * DAY), closedAt: ago(24 * DAY), incidentId: null, summary: 'Published with an example for both signing versions.' },
 ];
 
 const MESSAGES = 'POST /v1/messages';

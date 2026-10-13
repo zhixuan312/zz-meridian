@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { REQUESTS } from '@/system/fixtures/sample';
+import { DEMO_NOW, INCIDENTS, MODELS, REQUESTS, SERVICES, uptimeOf } from '@/system/fixtures/sample';
 import { CUSTOMERS, DAYS, ENDPOINTS, IN_PROGRESS, WEEKDAY_HOURS, demoSeries, demoTotals } from '@/system/fixtures/company';
+import { TICKETS } from '@/system/fixtures/sample-engineering';
+import { MEMBERS } from '@/system/fixtures/sample-members';
+import { PAST_INCIDENTS } from '@/system/fixtures/sample-ops';
 import { payloadsOf, traceOf, usageOf } from '@/system/fixtures/sample-records';
 import verify from '../scripts/verify.config';
 
@@ -78,6 +81,56 @@ describe('the sample agrees with itself', () => {
       const end = t[t.length - 1];
       expect(end.start + end.duration).toBeGreaterThanOrEqual(r.latency);
     }
+  });
+});
+
+describe('the records that name each other', () => {
+  // The latest resolved incident is in both lists.
+  const incidents = [...new Map([...INCIDENTS, ...PAST_INCIDENTS].map((i) => [i.id, i])).values()];
+  it('an incident and its ticket name each other, and whoever has an incident is a member', () => {
+    for (const i of incidents) {
+      if (i.owner !== null) expect(MEMBERS.map((m) => m.name), `${i.id} is owned by a member`).toContain(i.owner);
+      if (i.ticketId !== null) expect(TICKETS.find((t) => t.id === i.ticketId)?.incidentId, `${i.ticketId} names ${i.id} back`).toBe(i.id);
+    }
+    for (const t of TICKETS) if (t.incidentId !== null) expect(incidents.find((i) => i.id === t.incidentId)?.ticketId, `${t.incidentId} names ${t.id} back`).toBe(t.id);
+    // The sample shows each case a page may meet: an owner and a ticket, an owner alone, and neither.
+    expect(incidents.map((i) => [i.state !== 'resolved', i.owner !== null, i.ticketId !== null])).toEqual([[true, true, true], [false, true, false], [false, true, false], [false, false, false]]);
+  });
+  it('a closed ticket was closed the last time it changed, and no other ticket was closed', () => {
+    for (const t of TICKETS) expect(t.closedAt, t.id).toBe(t.state === 'closed' ? t.updatedAt : null);
+  });
+  it('a request has a first token exactly where a model that writes tokens answered it, inside its latency', () => {
+    const writes = new Set(MODELS.filter((m) => m.outputPrice !== null).map((m) => m.id));
+    for (const r of REQUESTS) {
+      // The embedding model writes no tokens, so its requests have no first one, as its rows of usage have none.
+      expect(r.ttft !== null, `${r.id}: ${r.model} answered ${r.status}`).toBe(r.model !== null && writes.has(r.model) && r.status < 400);
+      if (r.ttft !== null) expect(r.ttft >= 1 && r.ttft <= r.latency, `${r.id}: ${r.ttft} ms of ${r.latency}`).toBe(true);
+    }
+    expect(REQUESTS.some((r) => r.model === 'meridian-embed' && r.status < 400), 'the log holds an embedding request that was answered').toBe(true);
+  });
+  it('a request costs its tokens at its model\'s prices, a call the price of a call, and a refused one nothing', () => {
+    const [large, swift, embed, none] = MODELS;
+    const one = (model: string | null, refused = false) => REQUESTS.find((r) => r.model === model && r.status >= 400 === refused)!;
+    const tokens = (model: string) => usageOf(one(model)).tokens!;
+    expect(usageOf(one('meridian-large')).cost).toBeCloseTo((tokens('meridian-large').input * 2 + tokens('meridian-large').output * 10) / 1e6, 12);
+    expect(usageOf(one('meridian-swift')).cost).toBeCloseTo((tokens('meridian-swift').input * 0.5 + tokens('meridian-swift').output * 2.5) / 1e6, 12);
+    expect(usageOf(one('meridian-embed'))).toEqual({ tokens: { input: 18, output: 0 }, cost: (18 * 0.1) / 1e6 });
+    expect(usageOf(one(null))).toEqual({ tokens: null, cost: 0.0001 });
+    for (const model of ['meridian-large', null]) expect(usageOf(one(model, true)), `${model}, refused`).toEqual({ tokens: null, cost: 0 });
+    // The prices are the models', not a list of the function's own.
+    expect([large.inputPrice, large.outputPrice, swift.inputPrice, swift.outputPrice, embed.inputPrice, none.callPrice]).toEqual([2, 10, 0.5, 2.5, 0.1, 0.0001]);
+  });
+  it('a service\'s uptime is what its marked days cost: half an hour a degraded day, two hours a day of outage', () => {
+    for (const s of SERVICES) expect(s.uptime, s.name).toBe(uptimeOf(s.days));
+    expect(Object.fromEntries(SERVICES.map((s) => [s.name, s.uptime]))).toEqual({ 'Edge gateway': 0.99954, 'Inference API': 0.99931, Embeddings: 0.99954, Files: 0.99884, Webhooks: 0.99954, Dashboard: 0.99977 });
+    const strip = (state: 'operational' | 'degraded' | 'outage') => Array.from({ length: 90 }, () => state);
+    expect([uptimeOf(strip('operational')), uptimeOf([...strip('operational').slice(1), 'degraded']), uptimeOf(strip('degraded')), uptimeOf(strip('outage'))]).toEqual([1, 0.99977, 0.97917, 0.91667]);
+  });
+  it('a service\'s last day is its state now, and the three days outside the band are marked where they fell', () => {
+    for (const s of SERVICES) expect(s.days.at(-1), s.name).toBe(s.status);
+    const marked = (name: string) => SERVICES.find((s) => s.name === name)!.days.flatMap((d, i) => (d === 'operational' ? [] : [`${new Date(DEMO_NOW.getTime() - (89 - i) * 86_400_000).toISOString().slice(0, 10)} ${d}`]));
+    expect(marked('Inference API')).toEqual(['2026-09-21 degraded', '2026-09-22 degraded', '2026-10-03 degraded']);
+    expect(marked('Files')).toContain('2026-08-17 outage');
   });
 });
 

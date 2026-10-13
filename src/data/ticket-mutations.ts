@@ -3,12 +3,14 @@
  * for a page action, the assistant and an adopter's MCP server alike.
  *
  * It never takes a caller: it re-resolves one from the request's own scope, reads the roster again and refuses anyone who
- * is not an Active member holding the operation's grant, before anything is written. A ticket's state, id and both times
- * are the server's: a create starts `open` at `clock()` whatever the caller sends, and a change stamps `updatedAt`
- * with `clock()` only when something really changes. A service and an assignee are checked against the collections
- * themselves (`services`, `members`), not through a read the caller might lack. Every write runs inside one promise queue
- * per workspace, and a change naming several tickets is checked whole before any of them is written. A refusal writes
- * nothing, tells no listener and invalidates nothing; its message is a sentence a form can show.
+ * is not an Active member holding the operation's grant, before anything is written. A ticket's state, id and three
+ * times are the server's: a create starts `open` at `clock()` whatever the caller sends, and a change stamps `updatedAt`
+ * with `clock()` only when something really changes. `closedAt` follows the state, ticket by ticket: a ticket a change
+ * moves into closed gets `clock()`, one it moves out of closed gets null, and one that stays where it was keeps what it
+ * has. The incident a ticket tracks is not a caller's to set either. A service and an assignee are checked against the
+ * collections themselves (`services`, `members`), not through a read the caller might lack. Every write runs inside one
+ * promise queue per workspace, and a change naming several tickets is checked whole before any of them is written. A
+ * refusal writes nothing, tells no listener and invalidates nothing; its message is a sentence a form can show.
  *
  * The policy and the tag helper are loaded on demand, for the reason `member-mutations.ts` gives: a static import of
  * `src/data/access` would close a cycle, because the demo policy binds `tickets` through this module.
@@ -30,7 +32,7 @@ const REFUSALS = {
   state: 'Choose a state: open, waiting or closed.',
   service: 'Choose a service that exists.',
   assignee: 'Choose a member of the workspace to assign the ticket to, or leave it unassigned.',
-  fixed: 'A ticket\'s id and times are set by the system and cannot be changed.',
+  fixed: 'A ticket\'s id, its times and its incident are set by the system and cannot be changed.',
 } as const;
 
 const PRIORITIES: readonly string[] = ['low', 'normal', 'high'];
@@ -106,7 +108,7 @@ async function checked(values: Record<string, unknown>): Promise<Partial<Ticket>
   return out;
 }
 
-/** A create: the grant, then the caller's own fields; the state, the id and both times are the server's. */
+/** A create: the grant, then the caller's own fields; the state, the id and the times are the server's, and a new ticket is closed at no time and tracks no incident. */
 async function createStep(scope: AccessScope, input: Record<string, unknown>): Promise<Ticket> {
   if (!(await callerOrThrow()).has('tickets:create')) throw new TicketRefusal(REFUSALS.noGrant);
   if (input.title === undefined) throw new TicketRefusal(REFUSALS.title);
@@ -114,7 +116,7 @@ async function createStep(scope: AccessScope, input: Record<string, unknown>): P
   if (input.priority === undefined) throw new TicketRefusal(REFUSALS.priority);
   const own = await checked({ title: input.title, service: input.service, priority: input.priority, assigneeId: input.assigneeId ?? null, summary: input.summary ?? '' });
   const now = clock().toISOString();
-  const row = await tickets.create!({ ...own, state: 'open', openedAt: now, updatedAt: now });
+  const row = await tickets.create!({ ...own, state: 'open', openedAt: now, updatedAt: now, closedAt: null, incidentId: null });
   invalidate(await (await tagOf()).collectionTag(scope.tenantId, 'tickets'));
   return row;
 }
@@ -123,6 +125,10 @@ async function createStep(scope: AccessScope, input: Record<string, unknown>): P
  * A change: the grant, only the fields a change may set, every field checked, and every named ticket found and allowed
  * the step it asks for, all before any is written. A ticket the change would leave as it is (including one asked for the
  * state it already has) is not written and not stamped. Returns the tickets that changed.
+ *
+ * One change sets one state, so the tickets it changes are of two kinds: those it moves across the line between closed
+ * and not, whose closing time is set or cleared, and those it does not, whose closing time is left alone. Each kind is
+ * one write, both inside this queued step. A product writes the two in one transaction.
  */
 async function updateStep(scope: AccessScope, ids: string[], patch: Record<string, unknown>): Promise<Ticket[]> {
   if (!(await callerOrThrow()).has('tickets:update')) throw new TicketRefusal(REFUSALS.noGrant);
@@ -136,7 +142,14 @@ async function updateStep(scope: AccessScope, ids: string[], patch: Record<strin
   }
   const changing = found.filter((t) => (Object.keys(set) as (keyof Ticket)[]).some((field) => set[field] !== t[field]));
   if (changing.length === 0) return [];
-  const out = await tickets.update!(changing.map((t) => t.id), { ...set, updatedAt: clock().toISOString() });
+  const now = clock().toISOString();
+  const closing = set.state === 'closed';
+  const crosses = (t: Ticket) => set.state !== undefined && closing !== (t.state === 'closed');
+  const [crossing, staying] = [changing.filter(crosses), changing.filter((t) => !crosses(t))];
+  const out = [
+    ...(crossing.length ? await tickets.update!(crossing.map((t) => t.id), { ...set, updatedAt: now, closedAt: closing ? now : null }) : []),
+    ...(staying.length ? await tickets.update!(staying.map((t) => t.id), { ...set, updatedAt: now }) : []),
+  ];
   invalidate(await (await tagOf()).collectionTag(scope.tenantId, 'tickets'));
   return out;
 }

@@ -8,7 +8,7 @@ import type { Incident } from '@/components/patterns/incident-card';
 import type { Service } from '@/components/patterns/status-list';
 import { clock } from '@/data/collections';
 import { read, readAll } from '@/data/read';
-import type { DailyPoint, Endpoint, Totals } from '@/data/sample';
+import type { DailyPoint, Endpoint, IncidentRecord, Totals } from '@/data/sample';
 import { PERIOD_DAYS, type Period } from '@/lib/period';
 
 /** The newest activity a page shows. */
@@ -65,9 +65,16 @@ export async function readActivity(): Promise<ActivityEvent[]> {
   return (await read('activity', { sort: { field: 'at', dir: 'desc' }, limit: ACTIVITY_SHOWN })).rows as ActivityEvent[];
 }
 
+/**
+ * An incident as a page draws it, in the Incident card's shape: with its owner when it has one. A record's ticket is an
+ * id and the card takes a title and an address, so the id is not handed on: a page that draws the ticket's line reads
+ * the record and joins the two.
+ */
+const drawn = ({ ticketId: _, owner, ...incident }: IncidentRecord): Incident => (owner ? { ...incident, owner } : incident);
+
 /** Every incident, newest first: those nobody has resolved (the newest of them is `current`, the one a page leads with) and those resolved. */
 export async function readIncidents(): Promise<{ current: Incident | null; open: Incident[]; past: Incident[]; all: Incident[] }> {
-  const all = (await read('incidents', { sort: { field: 'started', dir: 'desc' } })).rows as Incident[];
+  const all = ((await read('incidents', { sort: { field: 'started', dir: 'desc' } })).rows as IncidentRecord[]).map(drawn);
   const open = all.filter((i) => i.state !== 'resolved');
   return { current: open[0] ?? null, open, past: all.filter((i) => i.state === 'resolved'), all };
 }

@@ -2,8 +2,7 @@
  * The request log's shared context (decision 0011): the console page, the MCP view and the console's assistant read the
  * same account of the matching requests, and of what they have in common. The tiles' definitions live here too.
  */
-import type { readRequests } from '@/data/requests';
-import type { RequestRow } from '@/data/sample';
+import type { LoggedRequest, readRequests } from '@/data/requests';
 import { formatDuration, formatPercent } from '@/lib/format';
 import { formatDateTime } from '@/lib/format-date';
 import { SMALL_SAMPLE } from '@/lib/insight';
@@ -11,7 +10,7 @@ import { freshnessOf, type Fact, type Insight, type SharedContext } from '@/lib/
 
 type Read = Awaited<ReturnType<typeof readRequests>>;
 /** One page of the log as a view holds it; `pageSize` is how many rows the server pages by. */
-export type RequestsData = Pick<Read, 'total' | 'summary' | 'state'> & { rows: RequestRow[]; pageSize: number; updatedAt: string; now: string };
+export type RequestsData = Pick<Read, 'total' | 'summary' | 'state'> & { rows: LoggedRequest[]; pageSize: number; updatedAt: string; now: string };
 
 /** The tiles' definitions: the info buttons show them and the agents read them. */
 export const REQUEST_METRICS = {

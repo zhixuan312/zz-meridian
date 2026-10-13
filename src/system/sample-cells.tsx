@@ -10,7 +10,8 @@ import type { Column } from '@/components/patterns/data-table';
 import { cn } from '@/lib/cn';
 import { formatDuration } from '@/lib/format';
 import { formatDateTime, formatRelative } from '@/lib/format-date';
-import { DEMO_NOW, type RequestRow } from '@/system/fixtures/sample';
+import type { LoggedRequest } from '@/data/requests';
+import { DEMO_NOW } from '@/system/fixtures/sample';
 import { STATUS_TEXT, statusTone } from '@/system/fixtures/sample-records';
 
 export const formatBytes = (b: number) => (b >= 1_000_000 ? `${(b / 1_000_000).toFixed(1)} MB` : b >= 1000 ? `${Math.round(b / 1000)} KB` : `${b} B`);
@@ -49,7 +50,7 @@ export function RouteCell({ method, route, wrap }: { method: string; route: stri
   );
 }
 
-export const requestColumns: Column<RequestRow>[] = [
+export const requestColumns: Column<LoggedRequest>[] = [
   {
     key: 'request', header: 'Request', grow: true, truncate: true, mobile: 'title',
     cell: (r) => <RouteCell method={r.method} route={r.route} />,

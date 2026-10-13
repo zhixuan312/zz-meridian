@@ -2,7 +2,7 @@
  * The sample's records for the list and detail pages: a request's trace and payloads, and the workspace's API keys.
  * Deterministic, derived from ./sample so the records agree.
  */
-import { DEMO_NOW, REQUESTS, type RequestRow } from '@/system/fixtures/sample';
+import { DEMO_NOW, MODELS, REQUESTS, type RequestRow } from '@/system/fixtures/sample';
 
 type StatusClass = '2xx' | '3xx' | '4xx' | '5xx';
 export const statusClass = (s: number): StatusClass => (s >= 500 ? '5xx' : s >= 400 ? '4xx' : s >= 300 ? '3xx' : '2xx');
@@ -57,17 +57,17 @@ export function traceOf(r: RequestRow): Span[] {
 }
 
 /**
- * What a request used and cost at the sample's list price: tokens at $3 in and $15 out per million on the model routes,
- * and $0.10 per thousand calls on the rest. A refused request used nothing; `tokens` is null where no model ran.
+ * What a request used and what it cost, at the prices of the `models` records and no others: its tokens at its model's
+ * prices a million, in and out, or the price of a call when it reached no model. A refused request used nothing and
+ * costs nothing; `tokens` is null where no model ran.
  */
 export function usageOf(r: RequestRow) {
   if (r.status >= 400) return { tokens: null, cost: 0 };
-  if (r.route === '/v1/messages') {
-    const input = 412, output = Math.round(r.bytes / 40);
-    return { tokens: { input, output }, cost: (input * 3 + output * 15) / 1_000_000 };
-  }
-  if (r.route === '/v1/embeddings') return { tokens: { input: 18, output: 0 }, cost: (18 * 3) / 1_000_000 };
-  return { tokens: null, cost: 0.0001 };
+  const model = MODELS.find((m) => m.id === r.model);
+  if (!model) return { tokens: null, cost: MODELS.find((m) => m.id === 'none')?.callPrice ?? 0 };
+  // A model that writes tokens reads the prompt and writes what its answer's size says; the embedding model only reads.
+  const tokens = model.outputPrice === null ? { input: 18, output: 0 } : { input: 412, output: Math.round(r.bytes / 40) };
+  return { tokens, cost: (tokens.input * (model.inputPrice ?? 0) + tokens.output * (model.outputPrice ?? 0)) / 1_000_000 };
 }
 
 const tail = (r: RequestRow, n = 8) => r.id.slice(4, 4 + n);

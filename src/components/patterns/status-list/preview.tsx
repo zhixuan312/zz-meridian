@@ -2,13 +2,15 @@
 
 import { Specimen } from '@/system/specimen';
 import { Card } from '@/components/ui/card';
-import { DEMO_NOW, SERVICES } from '@/system/fixtures/sample';
+import { DEMO_NOW, SERVICES, uptimeOf } from '@/system/fixtures/sample';
 import type { Service } from '@/components/patterns/status-list';
 import { StatusList } from '.';
 
 // Every day operational, so every figure says so: a strip with nothing on it cannot read 99.81%.
 const healthy: Service[] = SERVICES.map((s) => ({ ...s, status: 'operational', uptime: 1, days: s.days.map(() => 'operational') }));
-const outage: Service[] = SERVICES.map((s, i) => (i === 3 ? { ...s, status: 'outage', days: [...s.days.slice(0, -1), 'outage'] } : s));
+// Files down today: its uptime is worked out again from the days it now has, by the sample's rule.
+const down = (s: Service): Service => ((days) => ({ ...s, status: 'outage', uptime: uptimeOf(days), days }))([...s.days.slice(0, -1), 'outage' as const]);
+const outage: Service[] = SERVICES.map((s, i) => (i === 3 ? down(s) : s));
 // Every reading a run has. The sample's own days give three: Dashboard's 69 days are its longest, Embeddings and Webhooks
 // have run longer before, and Inference API is degraded today. The other two are derived: a gateway with no mark in the
 // days kept, and Files down today.

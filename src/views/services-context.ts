@@ -26,7 +26,7 @@ export function servicesContext(data: ServicesData): SharedContext {
   const average = services.length ? services.reduce((a, s) => a + s.uptime, 0) / services.length : 0;
   const facts: Fact[] = [
     { label: 'Services now', value: `${sum.text}${services.some((s) => s.status !== 'operational') ? ` (${services.filter((s) => s.status !== 'operational').map((s) => `${s.name} ${s.status}`).join(', ')})` : ''}` },
-    { label: `Uptime, all services, ${days} days`, value: uptime(average), definition: 'The average of each service\'s share of time operational.' },
+    { label: `Uptime, all services, ${days} days`, value: uptime(average), definition: 'The average of each service\'s uptime, which is 1 less what its marked days cost: half an hour a degraded day, two hours a day of outage.' },
     ...services.map((s) => ({ label: s.name, value: `${s.status}, latency ${formatDuration(s.latency)} now, uptime ${uptime(s.uptime)}` })),
   ];
 

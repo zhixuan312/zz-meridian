@@ -6,18 +6,21 @@ import { DEMO_NOW, INCIDENTS } from '@/system/fixtures/sample';
 import type { Incident } from '@/components/patterns/incident-card';
 import { IncidentCard } from '.';
 
-const investigating: Incident = { ...INCIDENTS[0], state: 'investigating', severity: 'major', updates: INCIDENTS[0].updates.slice(0, 1) };
-// The sample's incidents name nobody yet: the team's reading of the open one, with who has it and the ticket its work is tracked in.
+// The sample's open incident and its latest resolved one, as the card takes them: without who has each and the id of
+// its ticket, which the second specimen adds as the card draws them.
+const [live, resolved] = INCIDENTS.map(({ owner: _, ticketId: __, ...incident }): Incident => incident);
+const investigating: Incident = { ...live, state: 'investigating', severity: 'major', updates: live.updates.slice(0, 1) };
+// The team's reading of the open incident: who has it, and the ticket its work is tracked in by its title and address.
 const ticket = { title: 'Inference API p95 above target in eu-west-1', href: '/operations-tickets?q=p95+above+target' };
-const owned: Incident = { ...INCIDENTS[0], owner: 'Jonas Weber', ticket };
+const owned: Incident = { ...live, owner: 'Jonas Weber', ticket };
 // The same incident with nothing written at its start: its first update came 1.1 hours in.
-const late: Incident = { ...INCIDENTS[0], updates: INCIDENTS[0].updates.slice(1) };
+const late: Incident = { ...live, updates: live.updates.slice(1) };
 
 export default function IncidentCardPreview() {
   return (
     <>
       <Specimen label="Live" note="A warning edge and the newest update first, each timed from the incident's start; the live state pulses." className="grid w-full gap-4 lg:grid-cols-2">
-        <IncidentCard incident={INCIDENTS[0]} now={DEMO_NOW} />
+        <IncidentCard incident={live} now={DEMO_NOW} />
         <IncidentCard incident={investigating} now={DEMO_NOW} />
       </Specimen>
       <Specimen label="Owner and ticket" note="Who has the incident, as text, and the ticket its work is tracked in, a link named by the ticket's title. Either stands alone." stack>
@@ -31,11 +34,11 @@ export default function IncidentCardPreview() {
         <div className="w-full max-w-md"><IncidentCard incident={late} now={DEMO_NOW} /></div>
       </Specimen>
       <Specimen label="Resolved" note="No edge; the head says how long it lasted." stack>
-        <div className="w-full max-w-md"><IncidentCard incident={INCIDENTS[1]} now={DEMO_NOW} /></div>
+        <div className="w-full max-w-md"><IncidentCard incident={resolved} now={DEMO_NOW} /></div>
       </Specimen>
       <Specimen label="Row" note="The one-line form, for a list of past incidents. It names no owner and no ticket." stack>
         <Card className="divide-y divide-line overflow-hidden">
-          {INCIDENTS.map((i) => <IncidentCard key={i.id} incident={i} now={DEMO_NOW} variant="row" />)}
+          {[live, resolved].map((i) => <IncidentCard key={i.id} incident={i} now={DEMO_NOW} variant="row" />)}
         </Card>
       </Specimen>
     </>

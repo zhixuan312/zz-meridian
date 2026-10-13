@@ -29,10 +29,10 @@ Without a live incident row 1 becomes one full-width featured card. With more th
 
 ## Data
 
-- Uptime: the mean of each service's uptime over the 90 days shown.
+- Uptime: the mean of each service's uptime over the 90 days shown. A service's own uptime is worked out from its days by one rule (`uptimeOf()` in `src/system/fixtures/sample.ts`): a degraded day costs half an hour and a day of outage two hours, so it reads 100% exactly when its strip carries no mark. The last day of a strip is the day in progress, and is the service's state now.
 - The day bars of row 1: the worst state of any service that day.
 - "Right now": each service's state and p95 over the last hour.
-- Incidents: the `incidents` collection, read through the Services tool (`readIncidents()` in `src/data/metrics.ts`). The newest one nobody has resolved leads the page; any other unresolved one is listed under "Also open"; the resolved ones are the past incidents. The sample's rows are `INCIDENTS` and `PAST_INCIDENTS` in `src/system/fixtures/sample-ops.ts`.
+- Incidents: the `incidents` collection, read through the Services tool (`readIncidents()` in `src/data/metrics.ts`). The newest one nobody has resolved leads the page; any other unresolved one is listed under "Also open"; the resolved ones are the past incidents. The sample's rows are `INCIDENTS` in `src/system/fixtures/sample.ts` and `PAST_INCIDENTS` in `src/system/fixtures/sample-ops.ts`. A record names who has the incident and, by its id, the ticket its work is tracked in; the read hands the card the owner's name, which the card that leads the page draws, and not the id.
 - Services: the `services` collection, in the order the team reads its stack.
 
 ## Surfaces

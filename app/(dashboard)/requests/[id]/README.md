@@ -27,7 +27,7 @@ Status: beta
 
 ## Data
 
-The request from the `requests` collection (`src/data/collections.ts`), queried by id. Replay is the page's Server Action (`actions.ts`, `replayRequest`): it authorizes, reads the request, and creates a new one with the same method, route, customer, region and model, naming the one it replays, then refreshes the tenant's request reads. A product calls its gateway there with the stored request; the sample's gateway answers a replay of a 5xx or a 429, the only requests that offer Replay, with the route's success. Its its trace and payloads from `traceOf()` and `payloadsOf()` in `src/system/fixtures/sample-records.ts`. Phases add up to the request's latency; the axis shows 0, half and the total.
+The request from the `requests` collection (`src/data/collections.ts`), queried by id. Replay is the page's Server Action (`actions.ts`, `replayRequest`): it authorizes, reads the request, and creates a new one with the same method, route, customer, region and model, naming the one it replays, then refreshes the tenant's request reads. A product calls its gateway there with the stored request; the sample's gateway answers a replay of a 5xx or a 429, the only requests that offer Replay, with the route's success. Its trace and payloads come from `traceOf()` and `payloadsOf()` in `src/system/fixtures/sample-records.ts`. Phases add up to the request's latency; the axis shows 0, half and the total. Its tokens and its cost come from `usageOf()` beside them, which prices the request from the `models` collection's records and from no other list: its tokens at its model's prices a million, in and out, the price of a call when it reached no model, and nothing when it was refused. A cost too small for four decimals keeps its first two digits ("$0.0000018"), so one that is not zero never reads as zero.
 
 ## Embed view
 
@@ -45,7 +45,7 @@ Replay is a person's action here: it is `pageOnly`, so no agent can run or propo
 
 ### What the agent reads
 
-The request, its status, latency (with its definition), customer and region, every phase with its start and duration, the payloads' sizes (their text is in the page text), and what code found: where most of the time went, the latency against the route's p95, and, for a failed request, that it counts in the error rate. It says that one request is one sample, and that replaying it is the person's.
+The request, its status, latency (with its definition), customer and region, its tokens on a route that calls a model and what it cost (with how a cost is worked out), every phase with its start and duration, the payloads' sizes (their text is in the page text), and what code found: where most of the time went, the latency against the route's p95, and, for a failed request, that it counts in the error rate. It says that one request is one sample, and that replaying it is the person's.
 
 ```text
 - Most of its time went to Rate limit (Over 1,200 requests a minute): 159ms, 93% of 171ms.
