@@ -52,3 +52,26 @@ describe('a column chart: the labels under its first and last column', () => {
     expect(placed(dates[0])).toHaveClass('left-0');
   });
 });
+
+describe('a column chart: what its focus ring encloses', () => {
+  /** The scale: the box the ticks and the columns share, inside the plot. */
+  const scale = (c: HTMLElement) => c.querySelector('[data-tick]')!.parentElement!.parentElement as HTMLElement;
+
+  it('draws everything of the plot inside the plot\'s box, at any width: half a tick label\'s line under the zero tick, and a pointed value\'s height over the top one', () => {
+    for (const width of [220, 720]) {
+      size.width = width;
+      const { container, unmount } = render(<ColumnChart label="Errors per day" columns={days} dates={dates} />);
+      expect(scale(container).parentElement, String(width)).toBe(plot());
+      // A tick's label is a 16px line centred on its gridline, so 8px hang under the zero tick; the tallest thing over a
+      // column is its pointed value, 24px and 4px off the column.
+      for (const tick of container.querySelectorAll('[data-tick]')) expect(tick, String(width)).toHaveClass('leading-4');
+      expect(scale(container), String(width)).toHaveClass('bottom-2', 'top-7');
+      unmount();
+    }
+  });
+
+  it('keeps the ring on the plot itself, 4px off its box', () => {
+    render(<ColumnChart label="Errors per day" columns={days} dates={dates} />);
+    expect(plot()).toHaveClass('focus-visible:outline-2', 'focus-visible:outline-offset-4', 'focus-visible:outline-accent');
+  });
+});

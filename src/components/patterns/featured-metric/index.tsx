@@ -20,7 +20,7 @@ export type FeaturedFigure = {
   intent?: 'up' | 'down' | 'neutral';
   /** What the change is against, in the words after it: "vs previous period" by default, "vs the week before". */
   compare?: string;
-  /** One line under the figure that makes it concrete: "About 98K a day; the busiest day was 22 Sept". */
+  /** One line under the figure that makes the period concrete, in words that stay true while a point is read: "The last 30 days averaged 99K a day. The busiest day was 1 Oct, with 128K." */
   caption?: ReactNode;
   /** One fact the figure does not say, beside a neutral dot: "The highest 30 days yet". Counted by code, never typed in. */
   finding?: { text: string };

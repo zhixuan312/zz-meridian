@@ -12,16 +12,22 @@ import { useMeridianIndex, usePointMeridian } from '@/components/charts/meridian
 import { StatusDot } from '@/components/ui/status-dot';
 
 /**
- * Compact, from 14rem of the tile's own width (196px, a rem being the root's 14px): the name and the change share the
- * first row, the change's figure at the right, so the changes of a wall stand in one column down its right edge, and the
- * line has the whole width under them. Narrower, as two to a row on a phone, the three are three rows: the name has the
- * whole width and the change stands under it, at the left edge of every tile. A container query decides it, so the
- * server draws the layout the browser keeps. Literal strings, so Tailwind finds them.
+ * Compact, from 14rem of the tile's own width, border to border (196px, a rem being the root's 14px): the name and the
+ * change share the first row, the change's figure at the right, so the changes of a wall stand in one column down its
+ * right edge, and the line has the whole width under them. Narrower, as two to a row on a phone, the three are three
+ * rows: the name has the whole width and the change stands under it, at the left edge of every tile. A container query
+ * decides it, so the server draws the layout the browser keeps.
+ *
+ * A container query measures the container's content box, so the container is `COMPACT_MEASURE`, an element with no
+ * padding of its own straight inside the Card: the side padding is on the grid within it and is no part of the step.
+ * What the measure still leaves out is the Card's 1px hairline on each side, which is the 2px the step takes off. Were
+ * the Card's border to change, that number changes with it. Literal strings, so Tailwind finds them.
  */
-const COMPACT = 'grid grid-cols-1 items-center gap-y-0.5 @min-[14rem]:grid-cols-[minmax(0,1fr)_auto] @min-[14rem]:gap-x-3';
-const COMPACT_NAME = '@min-[14rem]:col-start-1 @min-[14rem]:row-start-1';
-const COMPACT_CHANGE = '@min-[14rem]:col-start-2 @min-[14rem]:row-start-1 @min-[14rem]:justify-self-end';
-const COMPACT_LINE = '@min-[14rem]:col-span-2 @min-[14rem]:row-start-2';
+const COMPACT_MEASURE = '@container flex min-w-0 flex-col';
+const COMPACT = 'grid grid-cols-1 items-center gap-y-0.5 px-4 pt-3 @min-[calc(14rem-2px)]:grid-cols-[minmax(0,1fr)_auto] @min-[calc(14rem-2px)]:gap-x-3';
+const COMPACT_NAME = '@min-[calc(14rem-2px)]:col-start-1 @min-[calc(14rem-2px)]:row-start-1';
+const COMPACT_CHANGE = '@min-[calc(14rem-2px)]:col-start-2 @min-[calc(14rem-2px)]:row-start-1 @min-[calc(14rem-2px)]:justify-self-end';
+const COMPACT_LINE = '@min-[calc(14rem-2px)]:col-span-2 @min-[calc(14rem-2px)]:row-start-2';
 
 /**
  * One number the page exists to show, with its change and its shape. The figure is set at the figure size with
@@ -107,29 +113,32 @@ export function MetricTile({
   const shape = points && points.length > 1 ? points : null;
   if (compact) {
     return (
-      <Card data-size="compact" className={cn('@container gap-0 overflow-hidden px-4 pt-3', shape ? 'pb-0' : 'pb-3', className)}>
-        <div className={COMPACT}>
-          {/* A wall is scanned by name, so the name is the ink; a long one is cut and keeps the whole of itself in its title. */}
-          <h2 className={cn('t-small min-w-0 truncate font-medium text-ink', COMPACT_NAME)} title={label}>{label}</h2>
-          {delta !== undefined ? (
-            // The figure alone is drawn. Down a wall the words it is against would stand once a tile, so the card that
-            // holds the wall says them; here they follow the figure for a screen reader, which meets a tile on its own.
-            <p className={cn('flex h-5 items-center justify-self-start', COMPACT_CHANGE)}>
-              <Delta value={delta} intent={intent} />
-              <span className="sr-only">{' '}{delta === null ? 'No earlier period to compare' : compare}</span>
+      <Card data-size="compact" className={cn('gap-0 overflow-hidden', className)}>
+        <div className={COMPACT_MEASURE}>
+          <div className={cn(COMPACT, !shape && 'pb-3')}>
+            {/* A wall is scanned by name, so the name is the ink; a long one is cut and keeps the whole of itself in its title. */}
+            <h2 className={cn('t-small min-w-0 truncate font-medium text-ink', COMPACT_NAME)} title={label}>{label}</h2>
+            {delta !== undefined ? (
+              // The figure alone is drawn. Down a wall the words it is against would stand once a tile, so the card that
+              // holds the wall says them; here they follow the figure for a screen reader, which meets a tile on its own.
+              <p className={cn('flex h-5 items-center justify-self-start', COMPACT_CHANGE)}>
+                <Delta value={delta} intent={intent} />
+                <span className="sr-only">{' '}{delta === null ? 'No earlier period to compare' : compare}</span>
+              </p>
+            ) : null}
+            {/* The figure comes first, so what a narrow tile cuts is the end of the note, never the number. */}
+            <p data-line className={cn('min-w-0 truncate text-xs leading-5 text-ink-3', COMPACT_LINE)} title={!note ? text : typeof note === 'string' ? `${text} · ${note}` : undefined}>
+              <span className={cn('t-num font-medium', emphasis ? 'text-accent-ink' : 'text-ink-2')}>{text}</span>
+              {note ? <>{' · '}{note}</> : null}
             </p>
-          ) : null}
-          {/* The figure comes first, so what a narrow tile cuts is the end of the note, never the number. */}
-          <p data-line className={cn('min-w-0 truncate text-xs leading-5 text-ink-3', COMPACT_LINE)} title={!note ? text : typeof note === 'string' ? `${text} · ${note}` : undefined}>
-            <span className={cn('t-num font-medium', emphasis ? 'text-accent-ink' : 'text-ink-2')}>{text}</span>
-            {note ? <>{' · '}{note}</> : null}
-          </p>
-        </div>
-        {shape ? (
-          <div className="-mx-4 mt-2">
-            <Sparkline values={shape} color={emphasis ? 'accent' : 'neutral'} height={28} />
           </div>
-        ) : null}
+          {/* Outside the padded grid, so the shape runs from edge to edge with no margin to undo. */}
+          {shape ? (
+            <div className="mt-2">
+              <Sparkline values={shape} color={emphasis ? 'accent' : 'neutral'} height={28} />
+            </div>
+          ) : null}
+        </div>
       </Card>
     );
   }

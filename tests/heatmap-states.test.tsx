@@ -21,7 +21,8 @@ const calendar = () => screen.getByRole('group', { name: /^Requests a day/ });
 const readout = (c: HTMLElement) => c.querySelector<HTMLElement>('[data-readout]');
 /** The room the readout leaves on each side, as shares of what is left of the row: the columns before its own and the columns after. */
 const shares = (c: HTMLElement) => [readout(c)!.previousElementSibling, readout(c)!.nextElementSibling].map((e) => Number((e as HTMLElement).style.flexGrow));
-const names = () => screen.queryAllByText(/^(Mon|Tue|Wed|Thu|Fri|Sat|Sun)$/).map((e) => e.textContent);
+/** The weekday names drawn beside the grid; the hidden table of a week of hours names its rows too. */
+const names = () => screen.queryAllByText(/^(Mon|Tue|Wed|Thu|Fri|Sat|Sun)$/).filter((e) => !e.closest('table')).map((e) => e.textContent);
 const classes = (e: HTMLElement) => e.className.split(/\s+/);
 
 beforeEach(() => { size.width = 800; size.height = 0; });
@@ -93,6 +94,25 @@ describe('a heatmap drawn still, for the Atlas', () => {
     expect(classes(container.querySelector<HTMLElement>('[data-cell="3-22"]')!)).not.toContain('ring-2');
   });
 
+  it('names an hour, so the cell still resolves where the hours group in threes', () => {
+    size.width = 400;
+    const { container } = render(<Heatmap label="Requests by weekday and hour" values={week} data-preview-cell="3-23" />);
+    expect(readout(container)).toHaveTextContent('582 requests · Thu 21:00–24:00 UTC');
+    expect(shares(container)).toEqual([7, 0]);
+    expect([...container.querySelectorAll('[data-cell]')].filter((e) => classes(e as HTMLElement).includes('ring-2')).map((e) => e.getAttribute('data-cell'))).toEqual(['3-7']);
+  });
+
+  it('says on the figure which cell or day it was asked to draw as pointed at', () => {
+    const a = render(<Heatmap label="Requests by weekday and hour" values={week} data-preview-cell="3-23" />);
+    expect(a.container.querySelector('figure')).toHaveAttribute('data-preview-cell', '3-23');
+    a.unmount();
+    const b = render(<Heatmap label="Requests a day" days={days} data-preview-date="2026-10-01" />);
+    expect(b.container.querySelector('figure')).toHaveAttribute('data-preview-date', '2026-10-01');
+    b.unmount();
+    const c = render(<Heatmap label="Requests a day" days={days} />);
+    expect(c.container.querySelector('figure')).not.toHaveAttribute('data-preview-date');
+  });
+
   it('draws the focus ring on the grid of either form, and none when not asked', () => {
     const a = render(<Heatmap label="Requests by weekday and hour" values={week} data-preview-state="focus" />);
     expect(classes(hours())).toEqual(expect.arrayContaining(['outline-2', 'outline-offset-4', 'outline-accent']));
@@ -111,6 +131,23 @@ describe('a heatmap drawn still, for the Atlas', () => {
     const { container } = render(<Heatmap label="Requests a day" days={days} running data-preview-date="2026-10-04" />);
     expect(readout(container)).toHaveTextContent('Sun 4 Oct 2026 · 463 requests so far');
     expect(container.querySelector('[aria-live="polite"]')).toHaveTextContent(/so far/);
+  });
+});
+
+describe('a heatmap\'s Tab stop is its cells, on either form', () => {
+  const inside = (group: HTMLElement) => [...group.querySelectorAll('*')].filter((e) => /^(Mon|Tue|Wed|Thu|Fri|Sat|Sun)$/.test(e.textContent ?? '')).length;
+
+  it('holds every cell and none of the weekday names, so the focus ring encloses what the keys move through', () => {
+    const a = render(<Heatmap label="Requests by weekday and hour" values={week} />);
+    expect(hours().querySelectorAll('[data-cell]')).toHaveLength(168);
+    expect(inside(hours())).toBe(0);
+    expect(names()).toEqual(['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']);
+    a.unmount();
+    size.width = 878;
+    render(<Heatmap label="Requests a day" days={days} />);
+    expect(calendar().querySelectorAll('[data-cell]')).toHaveLength(364);
+    expect(inside(calendar())).toBe(0);
+    expect(names()).toEqual(['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']);
   });
 });
 

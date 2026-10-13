@@ -12,7 +12,7 @@ Status: beta
 4. **Change pill** (when `delta` is given): a 28px glass pill holding the Delta and what the change is against, in the caller's words: "vs previous period" unless `compare` says otherwise ("vs the week before"). A `delta` of `null` draws the pill with a dash: there is nothing to compare with.
 5. **Point pill**: while the Meridian reads a point, an inverse pill takes the change pill's place and names the point: the date, or what `pointLabel` makes of it ("Week of 14 Sept").
 6. **Caption** (optional): one sentence that makes the period's number concrete. It is about the period the kicker names, not about whichever point is being read.
-7. **Finding** (optional): one quiet line under the change and the caption: a neutral 8px dot and one fact the figure does not say ("21 of 30 days above the average day of the 30 before"). The dot is neutral because a finding here is a fact, not a warning.
+7. **Finding** (optional): one quiet line under the change and the caption: a neutral 8px dot and one fact the figure does not say ("21 of the last 30 days were above the average day of the 30 before"). The dot is neutral because a finding here is a fact, not a warning.
 8. **Chart**: a Trend chart at `fill` height, or a Column chart at `fill` height when the points are periods and not days. A Column chart is given an axis formatter (`axisFormat`, from `AXIS_FORMATTERS`), so its ticks read as a scale ("$75") while the figure above a column keeps its cents.
 9. **Foot** (optional): a band inside the lit surface, under the chart and divided from it by a hairline, as a Card's footer is. It holds a few supporting figures, a label over each, and one link.
 
@@ -61,7 +61,7 @@ A container query and a subgrid decide this, not a measurement in script, so the
 
 ## Data
 
-As Metric tile: `value`, `points`, `delta`, `intent`, `format`, and `compare` for the words after the change. The caption is computed from the same data ("About 98K a day. The busiest day was 1 Oct, with 128K."), never typed in, and so is the finding.
+As Metric tile: `value`, `points`, `delta`, `intent`, `format`, and `compare` for the words after the change. The caption is computed from the same data ("The last 30 days averaged 99K a day. The busiest day was 1 Oct, with 128K."), never typed in, and so is the finding.
 
 - `points` holds one value for each point of the page's Meridian, oldest first. They are days on a page of days and weeks on a page of weeks; the card does not care which.
 - A figure reads the page's cursor only when its `points` has one value for each of the Meridian's dates, which is the rule a chart joins the Meridian by. With any other number of points, or with none, it keeps the period's value and its change while the rest of the page reads the pointed day.
@@ -111,7 +111,7 @@ The featured number is the first fact an embed view shares with the model. A fin
 
 - One number a figure. The caption is a sentence a person would say out loud.
 - The caption and the finding stay while a point is read, so each is true on its own, under any point's figure. Name the period or the day a sentence is about: "Last week averaged 103K a day", "The busiest day was 1 Oct, with 128K". Not "About 103K a day" alone under a figure by week: while another week is read it sits under that week's 644K and says something false of it.
-- A finding is one fact, counted, with no praise in it: "The highest 30 days yet", "21 of 30 days above the average day of the 30 before". Never "A great month". When its rule stops holding it leaves the card, with nothing weaker in its place.
+- A finding is one fact, counted, with no praise in it: "The highest 30 days yet", "21 of the last 30 days were above the average day of the 30 before". Never "A great month". When its rule stops holding it leaves the card, with nothing weaker in its place.
 - `compare` starts with "vs" and names the period before in plain words: "vs previous period", "vs the week before", "vs the same week last year".
 - A foot's label is two or three words and its figure carries its unit. The foot has one link, and its text says where it goes: "All endpoints", "How revenue is counted".
 
@@ -134,7 +134,7 @@ import { FeaturedMetric } from '@/components/patterns/featured-metric';
   points={daily}
   format={formatCompact}
   delta={0.057}
-  finding={{ text: '21 of 30 days above the average day of the 30 before' }}
+  finding={{ text: '21 of the last 30 days were above the average day of the 30 before' }}
   foot={
     <>
       <dl>

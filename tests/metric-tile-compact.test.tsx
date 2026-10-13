@@ -75,6 +75,29 @@ describe('a compact metric tile: what is missing, and what is long', () => {
   });
 });
 
+// A container query measures the container's content box. The tile's root has the Card's hairline, and it once had the
+// side padding too, so "14rem of the tile" was really 14rem plus 34px and a desk's wall drew the phone's layout. A
+// browser proves the widths; this holds the structure they depend on.
+describe('a compact metric tile: what its layout measures', () => {
+  const tile = () => compact(render(<MetricTile size="compact" label="Northwind Labs" value={41200} format={usd} delta={0.12} note="Scale" points={points} />).container);
+  const has = (el: Element, token: RegExp) => el.className.split(/\s+/).some((c) => token.test(c));
+
+  it('is measured by an element with no padding of its own, straight inside the root', () => {
+    const root = tile();
+    expect(has(root, /^@container$/)).toBe(false);
+    expect(has(root, /^p[xytblr]?-(?!0$)/)).toBe(false);
+    const measured = root.querySelector('[class~="@container"]')!;
+    expect(measured.parentElement).toBe(root);
+    expect(has(measured, /^p[xytblr]?-/)).toBe(false);
+    expect(measured.querySelector('[data-line]')).not.toBeNull();
+  });
+
+  it('steps at 14rem of the tile, less only the hairline on each side that the measure leaves out', () => {
+    const steps = new Set([...tile().querySelectorAll('*')].flatMap((el) => [...String(el.getAttribute('class') ?? '').matchAll(/@min-\[([^\]]+)\]:/g)].map((m) => m[1])));
+    expect([...steps]).toEqual(['calc(14rem-2px)']);
+  });
+});
+
 describe('a metric tile of the default size: fewer than two points', () => {
   it('draws no Sparkline and is laid out as a tile given none', () => {
     const { container } = render(<MetricTile label="Requests" value={42} points={[42]} />);

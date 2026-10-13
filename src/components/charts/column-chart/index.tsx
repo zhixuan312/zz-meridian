@@ -146,7 +146,7 @@ export function ColumnChart({
   return (
     <figure ref={box} aria-label={label} className={cn('relative min-w-0 select-none', fill && 'flex min-h-55 flex-1 flex-col', className)} onPointerLeave={() => set(null)}>
       {drawn && drawn.length > 1 ? (
-        <ul data-legend aria-hidden className="mb-4 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-ink-2" style={{ paddingLeft: left }}>
+        <ul data-legend aria-hidden className="mb-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-ink-2" style={{ paddingLeft: left }}>
           {drawn.map((p) => <li key={p.key} className="flex items-center gap-1.5"><Swatch color={p.color} />{p.label}</li>)}
         </ul>
       ) : null}
@@ -161,11 +161,13 @@ export function ColumnChart({
         style={fill ? undefined : { height }}
       >
         {/* The scale, out of the flow, so a column's share resolves against the plot whatever gave the plot its height.
-            With values at rest it starts 20px down: a column that reaches the top tick still has its value inside the plot. */}
-        <div className={cn('absolute inset-x-0 bottom-0', rest ? 'top-5' : 'top-0')}>
+            It stands inside the plot's box with room for all it draws around itself: 28px over the top tick, the height of
+            a pointed value and its 4px off the column, and 8px under the zero tick, the half line its label hangs. So the
+            focus ring, 4px outside the box, crosses nothing the plot draws, and nothing moves when the width arrives. */}
+        <div className="absolute inset-x-0 top-7 bottom-2">
           {ticks.map((t) => (
             <div key={t} aria-hidden className="absolute right-0 flex items-center" style={{ left: 0, bottom: `${(t / top) * 100}%`, transform: 'translateY(50%)' }}>
-              <span data-tick className="t-num w-(--w) pr-2.5 text-right text-2xs text-ink-3" style={{ ['--w' as string]: `${left}px` }}>{af(t)}</span>
+              <span data-tick className="t-num w-(--w) pr-2.5 text-right text-2xs leading-4 text-ink-3" style={{ ['--w' as string]: `${left}px` }}>{af(t)}</span>
               <span className={cn('h-px flex-1', t === 0 ? 'bg-chart-axis' : 'bg-chart-grid')} />
             </div>
           ))}

@@ -116,7 +116,7 @@ export default function ColumnChartPreview() {
           </Plane>
         </State>
       </Specimen>
-      <Specimen label="Values at rest" stack note="While a column is at least 36px wide its value stands above it in ink-3, and the plot keeps 20px above its top tick for it. Narrower, the figures would collide, so a value shows only for the column pointed at. The values are exact counts: a format that rounded them to thousands would give three of these days one figure.">
+      <Specimen label="Values at rest" stack note="While a column is at least 36px wide its value stands above it in ink-3, in the 28px the plot keeps over its top tick. Narrower, the figures would collide, so a value shows only for the column pointed at. The values are exact counts: a format that rounded them to thousands would give three of these days one figure.">
         <State label="Five days: a column of 36px or more" className="w-full">
           <Plane on="surface">
             <ColumnChart label="Errors per day, last 5 days" height={160} axisFormat={axis} dates={dates(week.slice(-5))} columns={errors(week.slice(-5))} />
@@ -145,7 +145,7 @@ export default function ColumnChartPreview() {
           <ColumnChart label="Requests per day by region, at its card's height" height="fill" format={formatCompact} axisFormat={axis} dates={dates(week)} parts={regions} columns={split(week, byRegion)} />
         </Plane>
       </Specimen>
-      <Specimen label="Focus" note="The plot is the chart's one Tab stop. Focused from the keyboard it wears a 2px accent outline, 4px off; the arrow keys then move the cursor a column.">
+      <Specimen label="Focus" note="The plot is the chart's one Tab stop. Focused from the keyboard it wears a 2px accent outline, 4px off its box. The box holds everything the plot draws, the tick labels and a column's value among them, so the ring touches none of it and stands clear of the labels under it; the arrow keys then move the cursor a column.">
         <State label="Focus" still className="w-full">
           <Plane on="surface">
             <ColumnChart label="Errors per day, with the plot focused" height={160} axisFormat={axis} dates={dates(week)} columns={errors(week)} className={FOCUS} />

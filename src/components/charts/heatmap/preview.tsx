@@ -87,7 +87,7 @@ export default function HeatmapPreview() {
           </Plane>
         </State>
       </Specimen>
-      <Specimen label="Focus" stack note="Either grid is one Tab stop. Focused from the keyboard it wears a 2px accent outline, 4px off, until a cell is read with the arrow keys.">
+      <Specimen label="Focus" stack note="Either grid is one Tab stop. Focused from the keyboard it wears a 2px accent outline, 4px off, round the cells and nothing else: the weekday names and the hour or month labels stand outside it on both forms.">
         <State label="A week of hours" still className="w-full">
           <Plane on="surface" className="max-w-sm">
             <Heatmap label="Requests by weekday and three-hour block, focused" values={values} format={formatCompact} data-preview-state="focus" />

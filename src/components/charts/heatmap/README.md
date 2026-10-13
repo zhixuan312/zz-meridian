@@ -49,7 +49,7 @@ A calendar shows `floor((width - 40 - 8 + 2) / 14)` of the latest weeks, the wid
 |---|---|
 | Rest | Cells and legend; no readout. |
 | Pointed | By the pointer or the keys: the cell gains a 2px `ink` ring with a 1px `surface` offset, fading in over `dur-hover`; the readout shows, 6px above the cell's row. On either form it takes its place from the columns before its own and the columns after: centred at the middle of the grid, flush with the grid's edge at the first column and at the last, so it never leaves the grid. Too long for the grid, it breaks between its value and its date. |
-| Focus | The grid wears a 2px `accent` outline, 4px off, on `radius-sm`. |
+| Focus | The grid wears a 2px `accent` outline, 4px off, on `radius-sm`. On both forms the outline encloses the cells and nothing else: the Tab stop is what the arrow keys move through, and the weekday names and the hour or month labels stand outside it. |
 | In progress | Calendar with `running`: the last day wears a 1px dashed `ink` outline with its fill inset 2px inside it, and its readout and its row of the table say "so far". The outline is square and drawn an edge at a time on the pixel grid, 3px on and 2px off from each corner, clockwise, with antialiasing off, so its four edges weigh the same at 12px and at any larger cell. A CSS dashed border is not used: it is one antialiased stroke round the box, and its dashes land on fractions of a pixel. |
 | Empty | All zeros: every cell is the empty track and the legend's upper end reads "More" on either scale; say so in the card. With no days the calendar draws no grid, and the card's Empty state is the caller's. |
 
@@ -110,4 +110,4 @@ import { Heatmap } from '@/components/charts/heatmap';
 | `format`, `unit` | Both | How a value reads and what it counts: "1,318" and "requests" by default |
 | `label` | Both | What the figure shows, for screen readers |
 
-Every cell carries `data-step`, 0 for the empty track and 1 to 5, as drawn; a calendar's cell also carries its date as `data-cell`, and `data-col` and `data-row`. Three props are for the Atlas only, where a state is drawn still: `data-preview-date` draws a day as pointed at, `data-preview-cell` an hour (its row and its column, "3-23"), and `data-preview-state="focus"` the grid's focus outline.
+Every cell carries `data-step`, 0 for the empty track and 1 to 5, as drawn; a calendar's cell also carries its date as `data-cell`, and `data-col` and `data-row`. Three props are for the Atlas only, where a state is drawn still: `data-preview-date` draws a day as pointed at, `data-preview-cell` an hour (its row and its hour, "3-23" for Thursday 23:00; where the hours group in threes it is the block that holds the hour, so the cell exists at every width), and `data-preview-state="focus"` the grid's focus outline.

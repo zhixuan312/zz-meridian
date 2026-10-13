@@ -23,7 +23,10 @@ const month = demoTotals('30d').current;
 /** A fact counted from the same days as the figure: how many of them were above an average day of the period before. */
 const usual = before.reduce((a, d) => a + d.requests, 0) / before.length;
 const above = s.filter((d) => d.requests > usual).length;
-const monthFinding = { text: `${above} of ${s.length} days above the average day of the 30 before` };
+const monthFinding = { text: `${above} of the last ${s.length} days were above the average day of the ${before.length} before` };
+/** The caption, computed from the same days. It names its period and its day, so it is still true while the figure above it reads another day. */
+const peak = s.reduce((m, d) => (d.requests > m.requests ? d : m), s[0]);
+const monthCaption = <>The last {s.length} days averaged {formatCompact(Math.round(total / s.length))} a day. The busiest day was {formatDay(peak.date)}, with {formatCompact(peak.requests)}.</>;
 
 /**
  * The sample keeps days, so the specimens whose points are weeks add them up: every whole week of the last ninety
@@ -117,7 +120,7 @@ export default function FeaturedMetricPreview() {
               points={s.map((d) => d.requests)}
               format={formatCompact}
               delta={0.057}
-              caption="About 98K a day. The busiest day was 1 Oct, with 128K."
+              caption={monthCaption}
               actions={<AskAbout question="What stands out in requests over the last 30 days, and why?" />}
             >
               <Chart />
@@ -150,7 +153,7 @@ export default function FeaturedMetricPreview() {
       </Specimen>
       <Specimen label="A finding" note="finding: one fact the figure does not say, under the change and the caption, beside a neutral dot. It is counted from the same data as the figure. It stays while a day is read, as the caption does, so both name what they are about.">
         <State label="At rest" className="w-full max-w-110">
-          <FeaturedMetric className="w-full" kicker="Requests · last 30 days" value={total} format={formatCompact} delta={0.057} caption="About 98K a day. The busiest day was 1 Oct, with 128K." finding={monthFinding} />
+          <FeaturedMetric className="w-full" kicker="Requests · last 30 days" value={total} format={formatCompact} delta={0.057} caption={monthCaption} finding={monthFinding} />
         </State>
         <State label="No caption: the finding sits under the change" className="w-full max-w-110">
           <FeaturedMetric className="w-full" kicker="Requests · last 30 days" value={total} format={formatCompact} delta={0.057} finding={monthFinding} />
@@ -163,7 +166,7 @@ export default function FeaturedMetricPreview() {
           value={total}
           format={formatCompact}
           delta={0.057}
-          caption="About 98K a day. The busiest day was 1 Oct, with 128K."
+          caption={monthCaption}
           finding={monthFinding}
           foot={
             <>

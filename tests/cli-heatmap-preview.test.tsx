@@ -48,6 +48,31 @@ describe('the Heatmap\'s specimens: the calendar is drawn whole, and large', () 
   });
 });
 
+describe('the Heatmap\'s specimens: what is said to be pointed at is drawn pointed at', () => {
+  const ringed = (f: HTMLElement) => [...f.querySelectorAll('[data-cell]')].filter((e) => classes(e).includes('ring-2'));
+
+  // A specimen that names a cell its figure does not draw at some width draws nothing pointed at, and says nothing.
+  it.each([688, 310])('draws one ring and a readout in every figure asked for a cell or a day, at %ipx', (width) => {
+    size.width = width;
+    const { container } = render(<HeatmapPreview />);
+    const asked = [...container.querySelectorAll<HTMLElement>('figure[data-preview-cell], figure[data-preview-date]')];
+    expect(asked).toHaveLength(5);
+    for (const f of asked) {
+      expect(ringed(f), f.getAttribute('aria-label')!).toHaveLength(1);
+      expect(f.querySelector('[data-readout]'), f.getAttribute('aria-label')!).not.toBeNull();
+    }
+  });
+
+  it('draws the last column pointed at on a phone, where the hours group in threes', () => {
+    size.width = 310;
+    const { container } = render(<HeatmapPreview />);
+    const last = figure(container, 'Requests by weekday and hour, pointed at Thursday 23:00');
+    expect(ringed(last).map((e) => e.getAttribute('data-cell'))).toEqual(['3-7']);
+    expect(readout(last)).toHaveTextContent(/requests · Thu 21:00–24:00 UTC$/);
+    expect(shares(last)).toEqual([7, 0]);
+  });
+});
+
 describe('the Heatmap\'s specimens: every state is drawn', () => {
   it('labels each specimen', () => {
     render(<HeatmapPreview />);

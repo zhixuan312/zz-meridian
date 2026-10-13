@@ -32,7 +32,11 @@ type Shared = {
 type HoursProps = Shared & {
   /** Seven rows (Monday first) of twenty-four hourly values (UTC). */
   values: number[][];
-  /** A cell drawn as pointed at in the Atlas, its row and its column (`3-14`); real charts take theirs from the pointer and the keys. */
+  /**
+   * A cell drawn as pointed at in the Atlas, by its row and its hour (`3-14` is Thursday 14:00), so it names a cell at
+   * any width: where the hours group in threes it is the block that holds the hour. Real charts take theirs from the
+   * pointer and the keys.
+   */
   'data-preview-cell'?: string;
 };
 type CalendarProps = Shared & {
@@ -79,7 +83,11 @@ function ramp(values: number[], scale: Scale) {
   return { step, top: scale === 'quantile' ? ranked.find((v) => step(v) === 5) : undefined };
 }
 
-/** The grid's focus ring, from the keyboard and, drawn still, in the Atlas. */
+/**
+ * The grid's focus ring, from the keyboard and, drawn still, in the Atlas. On either form it is on the Tab stop, which
+ * holds the cells and nothing else: the ring encloses what the keys move through, and the names of rows and columns
+ * stand outside it.
+ */
 const focusRing = (still: boolean) => cn('rounded-sm focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent', still && 'outline-2 outline-offset-4 outline-accent');
 
 /**
@@ -149,7 +157,7 @@ function Hours({ values, scale, format, unit, label, className, 'data-preview-st
   /** Point at a cell, from the pointer or the keyboard. */
   const point = (d: number, h: number) => setHover({ d, h });
   const [pd, ph] = (previewCell ?? '').split('-').map(Number);
-  const still = previewCell !== undefined && grid[pd]?.[ph] !== undefined ? { d: pd, h: ph } : null;
+  const still = previewCell !== undefined && values[pd]?.[ph] !== undefined ? { d: pd, h: Math.floor(ph / group) } : null;
   // A cursor placed on 24 columns is not on the grid when the hours regroup into 8.
   const cursor = hover && hover.h < cols ? hover : null;
   const on = still ?? cursor;
@@ -166,7 +174,7 @@ function Hours({ values, scale, format, unit, label, className, 'data-preview-st
   };
 
   return (
-    <figure ref={box} aria-label={label} className={cn('relative min-w-0', className)} onPointerLeave={() => setHover(null)}>
+    <figure ref={box} aria-label={label} data-preview-cell={previewCell} className={cn('relative min-w-0', className)} onPointerLeave={() => setHover(null)}>
       <div className="grid grid-cols-[2.5rem_minmax(0,1fr)] gap-x-2">
         <div />
         <div aria-hidden className="mb-2 grid text-2xs text-ink-3 tabular-nums" style={{ gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))` }}>
@@ -174,39 +182,40 @@ function Hours({ values, scale, format, unit, label, className, 'data-preview-st
             <span key={c} className="text-left">{(c * group) % 6 === 0 ? hourLabel(c) : ''}</span>
           ))}
         </div>
+        {/* Each name is as tall as the row of cells it stands beside, and as far from the next. */}
+        <div aria-hidden className="flex flex-col gap-0.5 text-2xs text-ink-3">
+          {grid.map((_, d) => <span key={d} className="flex h-6 items-center sm:h-7">{DAYS[d]}</span>)}
+        </div>
         <div
           role="group"
           tabIndex={0}
           aria-label={`${label}. Use the arrow keys to read one ${group === 1 ? 'hour' : 'three-hour block'}.`}
           onKeyDown={keys}
           onBlur={() => setHover(null)}
-          className={cn('col-span-2 grid grid-cols-[2.5rem_minmax(0,1fr)] gap-x-2', focusRing(previewState === 'focus'))}
+          className={cn('flex min-w-0 flex-col gap-0.5', focusRing(previewState === 'focus'))}
         >
         {grid.map((row, d) => (
-          <div key={d} className="contents">
-            <span aria-hidden className="flex items-center text-2xs text-ink-3">{DAYS[d]}</span>
-            <div className="relative grid gap-0.5 py-px" style={{ gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))` }}>
-              {row.map((v, c) => {
-                const ringed = on?.d === d && on.h === c;
-                return (
-                  <span
-                    key={c}
-                    aria-hidden
-                    data-cell={`${d}-${c}`}
-                    data-step={step(v)}
-                    onPointerEnter={() => point(d, c)}
-                    className={cn('h-6 rounded-xs transition-[box-shadow] duration-(--dur-hover) sm:h-7', ringed && 'ring-2 ring-ink ring-offset-1 ring-offset-surface')}
-                    style={{ background: STEPS[step(v)] }}
-                  />
-                );
-              })}
-              {on?.d === d ? (
-                <Readout column={on.h} columns={cols}>
-                  <span className="font-medium whitespace-nowrap">{format(row[on.h])} {unit}</span>
-                  <span className="whitespace-nowrap opacity-70"> · {DAYS[d]} {range(on.h)} UTC</span>
-                </Readout>
-              ) : null}
-            </div>
+          <div key={d} className="relative grid gap-0.5" style={{ gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))` }}>
+            {row.map((v, c) => {
+              const ringed = on?.d === d && on.h === c;
+              return (
+                <span
+                  key={c}
+                  aria-hidden
+                  data-cell={`${d}-${c}`}
+                  data-step={step(v)}
+                  onPointerEnter={() => point(d, c)}
+                  className={cn('h-6 rounded-xs transition-[box-shadow] duration-(--dur-hover) sm:h-7', ringed && 'ring-2 ring-ink ring-offset-1 ring-offset-surface')}
+                  style={{ background: STEPS[step(v)] }}
+                />
+              );
+            })}
+            {on?.d === d ? (
+              <Readout column={on.h} columns={cols}>
+                <span className="font-medium whitespace-nowrap">{format(row[on.h])} {unit}</span>
+                <span className="whitespace-nowrap opacity-70"> · {DAYS[d]} {range(on.h)} UTC</span>
+              </Readout>
+            ) : null}
           </div>
         ))}
         </div>
@@ -301,7 +310,7 @@ function Calendar({ days, running = false, meridian = false, scale, format, unit
   );
 
   return (
-    <figure ref={box} aria-label={label} className={cn('relative min-w-0', className)} onPointerLeave={letGo}>
+    <figure ref={box} aria-label={label} data-preview-date={previewDate} className={cn('relative min-w-0', className)} onPointerLeave={letGo}>
       {shown.length ? (
         <div className="grid grid-cols-[2.5rem_minmax(0,1fr)] gap-x-2">
           <div aria-hidden className="flex flex-col text-2xs text-ink-3">

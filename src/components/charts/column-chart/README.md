@@ -47,7 +47,7 @@ Status: beta
 | 120 to 160px | A secondary chart |
 | `fill` (at least 220px) | A card whose row is taller than the chart: the plot takes what the legend and the labels leave |
 
-The height is the plot's. Under it the labels take 24px, and above it a legend takes one line and 16px, more when it wraps. Columns share the width. With values at rest the plot keeps 20px above its top tick, so the value of a column that reaches the top stays inside the plot.
+The height is the plot's box, and the box holds everything the plot draws. The scale stands inside it: 28px under the box's top, which is room over the top tick for a column's value, at rest (16px, 4px off the column) or pointed at (24px, 4px off), and 8px over its bottom, which is the half line the zero tick's label hangs under its gridline. So columns grow in the height less 36px, and nothing moves when the chart's width arrives. Under the box the labels take 24px, 8px off it, and above it a legend takes one line and 8px, more when it wraps. Columns share the width.
 
 The readout is at least 144px wide and never wider than the chart, with `space-3` 12px side padding, on `shadow-overlay`.
 
@@ -60,7 +60,7 @@ The readout is at least 144px wide and never wider than the chart, with `space-3
 | Hover | Plain, neutral columns step up to `chart-neutral-strong` over `dur-hover`. |
 | Pointed | By the pointer or the keys. Plain: the column takes the accent, and its value stands above it in `ink-inverse` on `surface-inverse`. Stacked: the column takes a 2px `ink` ring over `dur-hover`, its total steps up to `ink`, and the readout shows. |
 | Highlighted | With no column pointed at, the highlighted column is the accent one (plain) or wears the ring (stacked). |
-| Focus | The plot wears a 2px `accent` outline, 4px off, on `radius-sm`. |
+| Focus | The plot wears a 2px `accent` outline, 4px off its box, on `radius-sm`. The ring encloses the plot's box and so all the plot draws: the gridlines, every tick's label whole, the columns, their values at rest and the pointed value. It stands 4px under the line of the zero tick's label and 2px over the line of the x labels, and encloses neither the legend nor the x labels. |
 | Running | The last column's fill at half strength, inside a 1px dashed `ink` outline, open at the baseline, 1px off the fill; "so far" where it is read. |
 | Zero | A column at zero draws nothing and reads zero; stacked, a column whose parts are all zero draws no part and reads a total of zero. A value that is missing or below zero counts as zero. |
 | Empty | Render the card's Empty state. |
@@ -68,7 +68,7 @@ The readout is at least 144px wide and never wider than the chart, with `space-3
 ## Behaviour
 
 - **Pointer**: entering or tapping a column points at it; leaving the chart lets go.
-- **Keyboard**: the plot is one Tab stop. Left and Right move the cursor a column, Home and End go to the first and the last. With no column pointed at, the cursor starts from the last column: a first Left lands on the last but one, a first Right on the last. Escape and blur let go.
+- **Keyboard**: the plot is one Tab stop, and its ring is the plot's own outline. Left and Right move the cursor a column, Home and End go to the first and the last. With no column pointed at, the cursor starts from the last column: a first Left lands on the last but one, a first Right on the last. Escape and blur let go.
 - **One cursor**: the keys move the cursor the pointer moves. With `dates`, one a column, that cursor is the page's Meridian index, so every chart and tile on the page reads the same day.
 - **Readout**: stacked only, and only on the chart being pointed at: a chart that follows another chart's cursor on the page's Meridian rings the day and keeps its panel hidden, as the Trend chart does. It stands after a column in the first half of the plot and before one in the second, measures its own width and stays inside the chart; long labels wrap. Under 640px it pins to the plot's leading edge.
 - **Width**: the chart reads its own width, and every rule about width follows it, not the window.

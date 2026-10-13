@@ -63,7 +63,7 @@ It has no figure at the figure size, no hint, no icon and no finding, whatever i
 | Rows | 2px apart; 8px above the Sparkline | 12px and 8px apart; 12px above the Sparkline |
 | Height with a Sparkline | About 92px with the change beside the name, 114px in three rows | About 175px at 1440px |
 
-The tile reads its own width, not the screen's:
+The tile reads its own width, border to border, not the screen's:
 
 | Its own width | Layout |
 |---|---|
@@ -71,6 +71,8 @@ The tile reads its own width, not the screen's:
 | Under 14rem | Three rows: the name with the tile's whole width, the change under it at the left edge, the line. Two to a row on a phone, every tile's change stands at the same place |
 
 Neither layout keeps room for anything that is not drawn: the change takes the width of its figure.
+
+The step is the tile's, not its content's. A container query measures a content box, so the tile is measured by an element with no padding straight inside the Card, and the query takes off the Card's 1px hairline on each side: a tile 196px wide from border to border is at the step, whatever its padding. A wall goes to four across from 59rem of its own width (826px) because four tiles of 14rem and three gaps of 12px are 820px.
 
 ## States
 
@@ -136,4 +138,4 @@ import { MetricTile } from '@/components/patterns/metric-tile';
 <MetricTile size="compact" label="Northwind Labs" value={41_200} format="cost-compact" delta={0.12} compare="vs last week" note="Scale" points={last14Days} />
 ```
 
-Props: `label`, `value`, `format`, `split`, `delta`, `compare`, `intent`, `note`, `points`, `baseline`, `finding`, `hint`, `icon`, `emphasis`, `size`, `className`. A compact tile is a container, so it takes its cell's width and never sizes itself from what it holds: give it a grid cell or a width.
+Props: `label`, `value`, `format`, `split`, `delta`, `compare`, `intent`, `note`, `points`, `baseline`, `finding`, `hint`, `icon`, `emphasis`, `size`, `className`. A compact tile holds a container, so it takes its cell's width and never sizes itself from what it holds: give it a grid cell or a width.
