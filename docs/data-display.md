@@ -13,7 +13,7 @@ How Meridian shows numbers: which form to use, how colour is assigned, how figur
 | A ranking | Horizontal bars, the longest first | Bar list |
 | Parts of a whole | One stacked bar | Composition bar |
 | Counts per category or per day | Columns | Column chart |
-| Two dimensions of time (weekday by hour) | A grid of cells | Heatmap |
+| Two dimensions of time (weekday by hour, or a year of days as week by weekday) | A grid of cells | Heatmap |
 | A service's history | Day bars | Uptime bars |
 | Many records | A table | Data table |
 

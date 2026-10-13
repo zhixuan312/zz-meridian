@@ -5,7 +5,7 @@ import { cn } from '@/lib/cn';
 import { AXIS_FORMATTERS, FORMATTERS, type NumberFormat } from '@/lib/format';
 import { formatDate } from '@/lib/format-date';
 import { useMeridian } from '@/components/charts/meridian';
-import { monotonePath, niceTicks, SERIES_VAR } from '@/components/charts/scale';
+import { monotonePath, niceTicks, SERIES_VAR, stackPart } from '@/components/charts/scale';
 import { useSize } from '@/components/charts/use-size';
 
 export type TrendSeries = {
@@ -25,6 +25,10 @@ export type TrendSeries = {
  *
  * `stacked` is the other form: the series are the parts of one whole (calls split into attributed, unattributed and
  * refused), drawn as bands one on another, so the top edge is the total. The readout names each part and the total.
+ *
+ * `running` says the last point is a period still in progress, a day or a month not over yet. It is not a fact like
+ * the points before it, so nothing solid reaches it: the line into it is dashed, nothing is filled under that stretch,
+ * and its readout and its row of the table say "so far".
  */
 export function TrendChart({
   dates,
@@ -36,6 +40,7 @@ export function TrendChart({
   tick,
   stacked = false,
   baseline,
+  running = false,
   'data-preview-index': previewIndex,
   className,
 }: {
@@ -54,6 +59,8 @@ export function TrendChart({
   stacked?: boolean;
   /** What is usual, drawn as a quiet dashed line across the plot with its label at the end: `{ value: 296, label: 'Median 296ms' }`. */
   baseline?: { value: number; label: string };
+  /** The last point is a period still in progress: the line into it is dashed and its readout says "so far". */
+  running?: boolean;
   /** A static readout in the Atlas; real charts take their day from the Meridian. */
   'data-preview-index'?: number;
   className?: string;
@@ -81,14 +88,8 @@ export function TrendChart({
     });
   }, [stacked, series, dates]);
   const totals = bases ? bases[bases.length - 1]?.upper ?? [] : null;
-  // Stacked parts are one whole, so they share one hue: the accent, deepest at the bottom and paler toward the surface
-  // with each part above. How deep and how pale is the theme's (chart-stack-hi, -lo): dark needs a wider span for the
-  // bands to read apart. A series given its own colour keeps it.
-  const tone = (k: number) => {
-    const t = (k / Math.max(1, series.length - 1)).toFixed(3);
-    return `color-mix(in oklab, var(--accent) calc((var(--chart-stack-hi) - (var(--chart-stack-hi) - var(--chart-stack-lo)) * ${t}) * 100%), var(--surface))`;
-  };
-  const colorOf = (s: TrendSeries, k: number) => (stacked && !s.color ? tone(k) : SERIES_VAR(s.color ?? (s.kind === 'dashed' ? 'neutral' : 'accent')));
+  // Stacked parts are one whole, so they share one hue, each by its place in the stack. A series given its own colour keeps it.
+  const colorOf = (s: TrendSeries, k: number) => (stacked && !s.color ? stackPart(k, series.length) : SERIES_VAR(s.color ?? (s.kind === 'dashed' ? 'neutral' : 'accent')));
   const max = Math.max(1, baseline?.value ?? 0, ...(totals ?? series.flatMap((s) => s.values.filter((v): v is number => v !== null))));
   const ticks = niceTicks(max, h < 200 ? 3 : 4);
   const top = ticks[ticks.length - 1];
@@ -97,6 +98,8 @@ export function TrendChart({
   const pad = { t: showLegend ? Math.max(34, legendSize.height + 16) : 14, r: 4, b: 26, l: left };
   const W = Math.max(0, width - pad.l - pad.r), H = h - pad.t - pad.b;
   const n = dates.length;
+  // The point still running, if there is one: everything solid stops at the point before it.
+  const soFar = running ? n - 1 : -1;
   const x = (i: number) => pad.l + (n <= 1 ? W / 2 : (i / (n - 1)) * W);
   const y = (v: number) => pad.t + H - (v / top) * H;
 
@@ -105,10 +108,14 @@ export function TrendChart({
       bases?.map(({ lower, upper }, k) => {
         const top = upper.map((v, i) => [x(i), y(v)] as [number, number]);
         const bottom = lower.map((v, i) => [x(i), y(v)] as [number, number]).reverse();
-        return { s: series[k], k, line: monotonePath(top), area: `${monotonePath(top)}${monotonePath(bottom).replace(/^M/, 'L')}Z` };
+        // Running, the bands end at the last complete point. Only the total goes on, and only when some part was measured there.
+        const cut = running && n > 1 ? 1 : 0;
+        const line = monotonePath(top, 0, n - 1 - cut);
+        const tail = cut && k === series.length - 1 && series.some((p) => typeof p.values[n - 1] === 'number') ? monotonePath(top, n - 2) : '';
+        return { s: series[k], k, line, tail, area: `${line}${monotonePath(bottom, cut).replace(/^M/, 'L')}Z` };
       }) ?? [],
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [bases, width, h, top],
+    [bases, width, h, top, running],
   );
 
   const paths = useMemo(
@@ -118,12 +125,17 @@ export function TrendChart({
         const runs: [number, number][][] = [[]];
         s.values.forEach((v, i) => (v === null ? runs[runs.length - 1].length && runs.push([]) : runs[runs.length - 1].push([x(i), y(v)])));
         const segs = runs.filter((r) => r.length > 0);
-        const line = segs.map((r) => monotonePath(r)).join('');
-        const area = segs.map((r) => `${monotonePath(r)}L${r[r.length - 1][0]},${pad.t + H}L${r[0][0]},${pad.t + H}Z`).join('');
-        return { s, line, area };
+        // Running, the last run is solid as far as the point before the running one, and its last stretch is the tail. There
+        // is a tail only when both of its ends were measured; a reference is a whole period and never has one.
+        const last = segs[segs.length - 1];
+        const open = running && s.kind !== 'dashed' && typeof s.values[n - 1] === 'number' && last.length > 1;
+        const end = (r: [number, number][]) => r.length - (open && r === last ? 2 : 1);
+        const line = segs.map((r) => monotonePath(r, 0, end(r))).join('');
+        const area = segs.map((r) => `${monotonePath(r, 0, end(r))}L${r[end(r)][0]},${pad.t + H}L${r[0][0]},${pad.t + H}Z`).join('');
+        return { s, line, area, tail: open ? monotonePath(last, last.length - 2) : '' };
       }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [series, width, h, top],
+    [series, width, h, top, running],
   );
 
   const labelEvery = Math.max(1, Math.ceil(n / Math.max(2, Math.floor(W / 92))));
@@ -218,9 +230,10 @@ export function TrendChart({
             <g key={`total-${dates[0]}-${n}`}>
               <path d={bands[bands.length - 1].line} fill="none" stroke="var(--accent)" strokeWidth={5} strokeLinecap="round" pathLength={1} className="draw" style={{ opacity: 'var(--chart-glow-a)', filter: 'blur(calc(var(--chart-glow-blur) * 1px))', transform: 'translateY(2px)' }} />
               <path d={bands[bands.length - 1].line} fill="none" stroke="var(--accent)" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" pathLength={1} className="draw" />
+              {bands[bands.length - 1].tail ? <Running d={bands[bands.length - 1].tail} stroke="var(--accent)" /> : null}
             </g>
           ) : null}
-          {(stacked ? [] : paths).map(({ s, area, line }) => (
+          {(stacked ? [] : paths).map(({ s, area, line, tail }) => (
             // Keyed by the span it shows: a new period redraws the line from the left instead of snapping to new data.
             <g key={`${s.key}-${dates[0]}-${n}`}>
               {s.kind === 'area' ? <path d={area} fill={`url(#${gid}-${s.key})`} className="reveal-x" /> : null}
@@ -236,6 +249,7 @@ export function TrendChart({
                 strokeLinejoin="round"
                 className={s.kind === 'dashed' ? 'fade-in' : 'draw'}
               />
+              {tail ? <Running d={tail} stroke={SERIES_VAR(s.color ?? 'accent')} /> : null}
             </g>
           ))}
           {active !== null ? (
@@ -244,8 +258,10 @@ export function TrendChart({
               <line x1={0} x2={0} y1={pad.t - 6} y2={pad.t + H} stroke="var(--ink-3)" strokeOpacity={0.55} />
               {series.map((s, k) => {
                 const v = bases ? bases[k].upper[active] : s.values[active];
-                return v === null ? null : (
-                  <circle key={s.key} cx={0} cy={0} r={4} className="transition-transform duration-(--dur-hover) ease-out" style={{ transform: `translateY(${y(v)}px)` }} fill={colorOf(s, k)} stroke="var(--surface)" strokeWidth={2} />
+                // The bands stop short of a running point, so there only the total, which has a line to sit on, keeps its dot.
+                const total = stacked && active === soFar;
+                return v === null || (total && k < series.length - 1) ? null : (
+                  <circle key={s.key} cx={0} cy={0} r={4} className="transition-transform duration-(--dur-hover) ease-out" style={{ transform: `translateY(${y(v)}px)` }} fill={total ? 'var(--accent)' : colorOf(s, k)} stroke="var(--surface)" strokeWidth={2} />
                 );
               })}
             </g>
@@ -271,7 +287,7 @@ export function TrendChart({
       ) : null}
       {active !== null && width > 0 ? (
         <Readout cursor={cx} width={width} top={pad.t - 4} visible={local || previewIndex !== undefined}>
-          <p className="t-eyebrow mb-1.5 break-words">{tick ? tick(dates[active]) : formatDate(dates[active])}</p>
+          <p className="t-eyebrow mb-1.5 break-words">{tick ? tick(dates[active]) : formatDate(dates[active])}{active === soFar ? ' · so far' : null}</p>
           {/* Stacked, the readout lists the bands top to bottom, as they sit on the chart, then the total. */}
           {(stacked ? series.map((s, k) => ({ s, k })).reverse() : series.map((s, k) => ({ s, k }))).map(({ s, k }) => (
             <p key={s.key} className="flex flex-wrap items-start gap-x-2 text-xs leading-6">
@@ -291,10 +307,15 @@ export function TrendChart({
       <table className="sr-only">
         <caption>{label}{baseline ? `. ${baseline.label}` : ''}</caption>
         <thead><tr><th>Date</th>{series.map((s) => <th key={s.key}>{s.label}</th>)}{totals ? <th>Total</th> : null}</tr></thead>
-        <tbody>{dates.map((d, i) => <tr key={d}><td>{d}</td>{series.map((s) => <td key={s.key}>{fmt(s.values[i])}</td>)}{totals ? <td>{fmt(totals[i])}</td> : null}</tr>)}</tbody>
+        <tbody>{dates.map((d, i) => <tr key={d}><td>{d}{i === soFar ? ', so far' : null}</td>{series.map((s) => <td key={s.key}>{fmt(s.values[i])}</td>)}{totals ? <td>{fmt(totals[i])}</td> : null}</tr>)}</tbody>
       </table>
     </div>
   );
+}
+
+/** The stretch into a point still running: the line's own colour, thinner and dashed, and it fades in as a reference does. */
+function Running({ d, stroke }: { d: string; stroke: string }) {
+  return <path data-running d={d} fill="none" stroke={stroke} strokeWidth={1.5} strokeDasharray="3 4" strokeLinecap="round" className="fade-in" />;
 }
 
 /** Measure the readout itself: a fixed side-switch cannot keep long labels inside a narrow chart. */

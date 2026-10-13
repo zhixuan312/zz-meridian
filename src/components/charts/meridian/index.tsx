@@ -38,3 +38,9 @@ export function usePointMeridian(): (date: string) => void {
   const c = useContext(MeridianCtx);
   return (date) => { const i = c?.dates.indexOf(date) ?? -1; if (c && i >= 0) c.setIndex(i); };
 }
+
+/** Lets go of the page's Meridian from outside a chart, as leaving a chart does: a calendar of days does, for a day the Meridian does not hold. No-op without a Meridian. */
+export function useClearMeridian(): () => void {
+  const c = useContext(MeridianCtx);
+  return () => c?.setIndex(null);
+}

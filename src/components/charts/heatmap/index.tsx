@@ -1,41 +1,110 @@
 'use client';
 
-import { useState, type KeyboardEvent } from 'react';
+import { useMemo, useState, type KeyboardEvent, type ReactNode } from 'react';
 import { cn } from '@/lib/cn';
+import { formatCalendarDate, formatCalendarMonth } from '@/lib/format-date';
+import { useClearMeridian, useMeridianIndex, usePointMeridian } from '@/components/charts/meridian';
 import { useSize } from '@/components/charts/use-size';
 
 const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 /** Six steps from nothing to the most: an empty track, then the accent mixed into the surface. */
 const STEPS = ['var(--fill-track)', 18, 34, 52, 74, 100].map((s) => (typeof s === 'string' ? s : `color-mix(in oklab, var(--accent) ${s}%, var(--surface))`));
+const DAY = 86_400_000;
+/** The calendar's measures in pixels: the weekday column, its gap, the space between cells, the smallest cell and the tallest. */
+const NAMES = 40, GAP = 8, SPACE = 2, CELL = 12, ROW = 28;
+const count = (n: number) => n.toLocaleString('en-US');
 
-/**
- * When the load comes: weekday by hour, one cell per hour, darker where there is more. A sequential ramp of the
- * accent in six steps, never a rainbow. On a narrow container the hours group in threes, so a cell is never too
- * small to point at. The grid is one Tab stop: the arrow keys move a cursor cell by cell (Home and End to the ends of a
- * row, Escape to leave), with the same readout as the pointer, announced to screen readers.
- */
-export function Heatmap({
-  values,
-  format = (n) => n.toLocaleString('en-US'),
-  unit = 'requests',
-  label,
-  className,
-}: {
-  /** Seven rows (Monday first) of twenty-four hourly values (UTC). */
-  values: number[][];
+type Scale = 'max' | 'quantile';
+type Shared = {
+  /**
+   * How a cell earns its step. `max`: its share of the largest cell. `quantile`: its rank among the cells above zero,
+   * five steps of equal count, so one outlier does not flatten the rest; the legend then reads the value the top step starts at.
+   */
+  scale?: Scale;
   format?: (n: number) => string;
-  /** What a cell counts, in the tooltip: "requests". */
+  /** What a cell counts, in the readout and the legend: "requests". */
   unit?: string;
   label: string;
   className?: string;
-}) {
-  const [box, { width }] = useSize<HTMLDivElement>();
+};
+type HoursProps = Shared & {
+  /** Seven rows (Monday first) of twenty-four hourly values (UTC). */
+  values: number[][];
+};
+type CalendarProps = Shared & {
+  /** One value a calendar date (`2026-10-01`), oldest first: a cell a date, a column a week, a row a weekday. */
+  days: { date: string; value: number }[];
+  /** The last day is still in progress: its cell wears a dashed outline, and its readout and its row in the table say "so far". */
+  running?: boolean;
+  /** Point the page's Meridian at the day read, when the Meridian holds it. */
+  meridian?: boolean;
+  /** A day drawn as pointed at in the Atlas (`2026-10-01`); real charts take theirs from the pointer and the keys. */
+  'data-preview-date'?: string;
+};
+
+/**
+ * When the load comes, darker where there is more: a sequential ramp of the accent in six steps, never a rainbow.
+ *
+ * `values` is a week of hours: weekday by hour, one cell per hour. On a narrow container the hours group in threes, so
+ * a cell is never too small to point at. `days` is a calendar: a cell a date, a column a week of Monday to Sunday, as
+ * many of the latest weeks as fit at 12px a cell.
+ *
+ * Either grid is one Tab stop: the arrow keys move a cursor cell by cell (Home and End to the ends of a row, Escape to
+ * leave), with the same readout as the pointer, announced to screen readers.
+ */
+export function Heatmap({ scale = 'max', format = count, unit = 'requests', ...props }: HoursProps | CalendarProps) {
+  return 'days' in props ? <Calendar scale={scale} format={format} unit={unit} {...props} /> : <Hours scale={scale} format={format} unit={unit} {...props} />;
+}
+
+/**
+ * The step each cell earns among the cells ranked: 0 for nothing, then 1 to 5. On `quantile`, of the n cells above
+ * zero, a cell with s of them smaller takes ceil((s + 1) × 5 / n), and the cells that hold the largest value take 5: the top
+ * step is never empty, so `top`, the smallest value in it, is always there for the legend to read.
+ */
+function ramp(values: number[], scale: Scale) {
+  const ranked = values.filter((v) => v > 0).sort((a, b) => a - b);
+  const n = ranked.length, largest = ranked[n - 1];
+  // Equal values share one step, the one the lowest of them earns.
+  const smaller = new Map<number, number>();
+  ranked.forEach((v, i) => { if (!smaller.has(v)) smaller.set(v, i); });
+  const step = (v: number) => {
+    if (!(v > 0)) return 0;
+    if (scale === 'max') return Math.min(5, 1 + Math.floor((v / largest) * 4.999));
+    return v === largest ? 5 : Math.ceil((((smaller.get(v) ?? 0) + 1) * 5) / n);
+  };
+  return { step, top: scale === 'quantile' ? ranked.find((v) => step(v) === 5) : undefined };
+}
+
+/** The figure's caption: the empty step named in words, then the five steps of the accent from less to more. */
+function Legend({ unit, more, children }: { unit: string; more: string; children?: ReactNode }) {
+  return (
+    <figcaption className="mt-4 flex flex-wrap items-center justify-end gap-x-4 gap-y-2 text-2xs text-ink-3">
+      {children}
+      <span className="flex flex-wrap items-center justify-end gap-x-4 gap-y-1">
+        <span className="flex items-center gap-1.5">
+          <span aria-hidden className="size-3 rounded-[3px]" style={{ background: STEPS[0] }} />
+          No {unit}
+        </span>
+        <span className="flex items-center gap-2">
+          <span>Less</span>
+          <span aria-hidden className="flex gap-0.5">
+            {STEPS.slice(1).map((s) => <span key={s} className="size-3 rounded-[3px]" style={{ background: s }} />)}
+          </span>
+          <span>{more}</span>
+        </span>
+      </span>
+    </figcaption>
+  );
+}
+
+function Hours({ values, scale, format, unit, label, className }: HoursProps & Required<Pick<Shared, 'scale' | 'format' | 'unit'>>) {
+  const [box, { width }] = useSize<HTMLElement>();
   const [hover, setHover] = useState<{ d: number; h: number; x: number; y: number } | null>(null);
   const group = width > 0 && width < 560 ? 3 : 1;
   const cols = 24 / group;
   const grid = values.map((row) => Array.from({ length: cols }, (_, c) => row.slice(c * group, c * group + group).reduce((a, b) => a + b, 0)));
-  const max = Math.max(1, ...grid.flat());
-  const step = (v: number) => (v <= 0 ? 0 : Math.min(5, 1 + Math.floor((v / max) * 4.999)));
+  // The cells ranked are the cells drawn: grouped in threes, a block is ranked as one.
+  const { step, top } = ramp(grid.flat(), scale);
   const hourLabel = (c: number) => String(c * group).padStart(2, '0');
   const range = (c: number) => (group === 1 ? `${hourLabel(c)}:00` : `${hourLabel(c)}:00–${String(c * group + group).padStart(2, '0')}:00`);
 
@@ -86,6 +155,7 @@ export function Heatmap({
                     key={c}
                     aria-hidden
                     data-cell={`${d}-${c}`}
+                    data-step={step(v)}
                     onPointerEnter={() => point(d, c)}
                     className={cn('h-6 rounded-xs transition-[box-shadow] duration-(--dur-hover) sm:h-7', on && 'ring-2 ring-ink ring-offset-1 ring-offset-surface')}
                     style={{ background: STEPS[step(v)] }}
@@ -98,13 +168,7 @@ export function Heatmap({
         </div>
       </div>
       <p className="sr-only" aria-live="polite">{hover ? `${DAYS[hover.d]} ${range(hover.h)} UTC: ${format(grid[hover.d][hover.h])} ${unit}` : ''}</p>
-      <figcaption className="mt-4 flex items-center justify-end gap-2 text-2xs text-ink-3">
-        <span>Less</span>
-        <span aria-hidden className="flex gap-0.5">
-          {STEPS.map((s, i) => <span key={i} className="size-3 rounded-[3px]" style={{ background: s }} />)}
-        </span>
-        <span>More</span>
-      </figcaption>
+      <Legend unit={unit} more={top === undefined ? 'More' : `${format(top)} or more`} />
       {hover ? (
         <div
           aria-hidden
@@ -120,6 +184,160 @@ export function Heatmap({
         <thead><tr><th>Day</th>{Array.from({ length: 24 }, (_, h) => <th key={h}>{String(h).padStart(2, '0')}:00</th>)}</tr></thead>
         <tbody>{values.map((row, d) => <tr key={d}><th>{DAYS[d]}</th>{row.map((v, h) => <td key={h}>{format(v)}</td>)}</tr>)}</tbody>
       </table>
+    </figure>
+  );
+}
+
+/** A calendar date is a day, not an instant: its number counts whole days from its own year, month and day, whatever the product's timezone. */
+const dayNumber = (date: string) => Date.UTC(Number(date.slice(0, 4)), Number(date.slice(5, 7)) - 1, Number(date.slice(8, 10))) / DAY;
+
+function Calendar({ days, running = false, meridian = false, scale, format, unit, label, className, 'data-preview-date': previewDate }: CalendarProps & Required<Pick<Shared, 'scale' | 'format' | 'unit'>>) {
+  const [box, { width }] = useSize<HTMLElement>();
+  const [cursor, setCursor] = useState<string | null>(null);
+  const { dates: held } = useMeridianIndex();
+  const pointPage = usePointMeridian();
+  const clearPage = useClearMeridian();
+
+  // Every day given is ranked and placed in its own week, shown or not, so a day keeps its step at any width.
+  const all = useMemo(() => {
+    const { step, top } = ramp(days.map((d) => d.value), scale);
+    // Day 0, 1 Jan 1970, was a Thursday: three days on, a week starts on a Monday and Monday is row 0.
+    const placed = days.map((d, i) => {
+      const n = dayNumber(d.date), week = Math.floor((n + 3) / 7);
+      return { ...d, n, week, row: n + 3 - week * 7, step: step(d.value), running: running && i === days.length - 1 };
+    });
+    return { placed, top, weeks: placed.length ? placed[placed.length - 1].week - placed[0].week + 1 : 0 };
+  }, [days, scale, running]);
+
+  // A cell is never under 12px: the latest weeks that fit beside the weekday names. Before the figure is measured every
+  // week is drawn at 12px or more and the earliest are clipped, so the grid keeps its height when the width arrives.
+  const fit = Math.floor((width - NAMES - GAP + SPACE) / (CELL + SPACE));
+  const weeks = width > 0 ? Math.min(all.weeks, Math.max(1, fit)) : all.weeks;
+  const view = useMemo(() => {
+    const from = all.placed.length ? all.placed[all.placed.length - 1].week - weeks + 1 : 0;
+    const shown = all.placed.filter((d) => d.week >= from).map((d) => ({ ...d, col: d.week - from }));
+    // A month is named above the column that holds its first day; the first column too, unless the next name is too close to stand beside.
+    const months = shown.filter((d) => d.date.endsWith('-01'));
+    if (shown.length && months[0] !== shown[0] && (!months.length || months[0].col >= 3)) months.unshift(shown[0]);
+    return { shown, months, byDate: new Map(shown.map((d) => [d.date, d])), byNumber: new Map(shown.map((d) => [d.n, d])) };
+  }, [all, weeks]);
+
+  const { shown, byDate, byNumber } = view;
+  const on = byDate.get(previewDate ?? cursor ?? '');
+  const columns = `repeat(${Math.max(1, weeks)}, minmax(var(--space-3), 1fr))`;
+  // Seven names need 16px a row; a shorter cell names Monday, Wednesday and Friday.
+  const seven = width > 0 && Math.min(ROW, (width - NAMES - GAP - SPACE * (weeks - 1)) / Math.max(1, weeks)) + SPACE >= 16;
+  const reading = (d: { date: string; value: number; running: boolean }) => `${format(d.value)} ${unit}${d.running ? ' so far' : ''}`;
+
+  /** Point at a day, from the pointer or the keyboard, and at the same day on the page's Meridian when it holds it. */
+  const point = (date: string) => {
+    setCursor(date);
+    if (!meridian) return;
+    if (held.includes(date)) pointPage(date);
+    else clearPage();
+  };
+  const letGo = () => {
+    if (cursor === null) return;
+    setCursor(null);
+    if (meridian) clearPage();
+  };
+  const keys = (e: KeyboardEvent) => {
+    if (e.key === 'Escape') return letGo();
+    const move = ({ ArrowUp: -1, ArrowDown: 1, ArrowLeft: -7, ArrowRight: 7 } as Record<string, number | undefined>)[e.key];
+    if (move === undefined && e.key !== 'Home' && e.key !== 'End') return;
+    e.preventDefault();
+    const at = byDate.get(cursor ?? '');
+    // The first key only places the cursor, on the latest day.
+    if (!at) return shown.length ? point(shown[shown.length - 1].date) : undefined;
+    const row = shown.filter((d) => d.row === at.row);
+    // Up and Down stay inside the week; a move with no day to land on leaves the cursor where it is.
+    const to = move === undefined ? row[e.key === 'Home' ? 0 : row.length - 1] : Math.abs(move) === 1 && (at.row + move < 0 || at.row + move > 6) ? undefined : byNumber.get(at.n + move);
+    if (to) point(to.date);
+  };
+
+  const table = useMemo(
+    () => (
+      <table className="sr-only">
+        <caption>{label}</caption>
+        <thead><tr><th>Date</th><th>{unit.charAt(0).toUpperCase() + unit.slice(1)}</th></tr></thead>
+        <tbody>{all.placed.map((d) => <tr key={d.date}><th>{formatCalendarDate(d.date)}</th><td>{format(d.value)}{d.running ? ' so far' : ''}</td></tr>)}</tbody>
+      </table>
+    ),
+    [all, format, label, unit],
+  );
+
+  return (
+    <figure ref={box} aria-label={label} className={cn('relative min-w-0', className)} onPointerLeave={letGo}>
+      {shown.length ? (
+        <div className="grid grid-cols-[2.5rem_minmax(0,1fr)] gap-x-2">
+          <div aria-hidden className="flex flex-col text-2xs text-ink-3">
+            <span className="mb-2 h-4" />
+            {/* Out of the flow, so a name taller than a 12px cell never stretches the rows it stands beside. */}
+            <div className="relative flex-1">
+              <div className="absolute inset-0 grid grid-rows-7 gap-y-0.5">
+                {DAYS.map((d, r) => <span key={d} className="flex items-center leading-none">{seven || r === 0 || r === 2 || r === 4 ? d : null}</span>)}
+              </div>
+            </div>
+          </div>
+          <div className={cn('min-w-0', width === 0 && 'overflow-hidden')}>
+            <div aria-hidden className="mb-2 grid h-4 justify-end gap-x-0.5 text-2xs leading-4 text-ink-3" style={{ gridTemplateColumns: columns }}>
+              {view.months.map((d) => (
+                // The last column's name ends with its column, so it never runs past the grid.
+                <span key={d.date} data-month={d.date.slice(0, 7)} data-col={d.col} className={cn('whitespace-nowrap', d.col > 0 && d.col === weeks - 1 ? 'justify-self-end' : 'justify-self-start')} style={{ gridColumn: d.col + 1, gridRow: 1 }}>
+                  {formatCalendarMonth(d.date)}
+                </span>
+              ))}
+            </div>
+            <div
+              role="group"
+              tabIndex={0}
+              aria-label={`${label}. Use the arrow keys to read one day.`}
+              onKeyDown={keys}
+              onBlur={letGo}
+              className="relative grid grid-rows-7 justify-end gap-0.5 rounded-sm focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent"
+              style={{ gridTemplateColumns: columns }}
+            >
+              {shown.map((d) => (
+                <span
+                  key={d.date}
+                  aria-hidden
+                  data-cell={d.date}
+                  data-col={d.col}
+                  data-row={d.row}
+                  data-step={d.step}
+                  data-running={d.running ? '' : undefined}
+                  onPointerEnter={() => point(d.date)}
+                  className={cn(
+                    'aspect-square max-h-7 w-full rounded-[3px] transition-[box-shadow] duration-(--dur-hover)',
+                    // A day in progress: a dashed frame on the card, where it holds its contrast whatever the step, around a smaller fill.
+                    d.running && 'border border-dashed border-ink bg-clip-content p-px',
+                    on?.date === d.date && 'relative z-1 ring-2 ring-ink ring-offset-1 ring-offset-surface',
+                  )}
+                  style={{ gridColumn: d.col + 1, gridRow: d.row + 1, backgroundColor: STEPS[d.step] }}
+                />
+              ))}
+              {on ? (
+                // The readout stands over its day's row and slides along the grid's width with the column, so it never leaves the grid.
+                <div aria-hidden className="pointer-events-none relative z-10 col-span-full" style={{ gridRow: on.row + 1 }}>
+                  <div className="absolute inset-x-0 bottom-full mb-1.5 flex">
+                    <span style={{ flexGrow: on.col + 0.5 }} />
+                    <div className="rounded-sm bg-surface-inverse px-2 py-1.5 text-xs text-ink-inverse shadow-overlay">
+                      <span className="whitespace-nowrap opacity-70">{formatCalendarDate(on.date)} · </span>
+                      <span className="font-medium whitespace-nowrap">{reading(on)}</span>
+                    </div>
+                    <span style={{ flexGrow: weeks - on.col - 0.5 }} />
+                  </div>
+                </div>
+              ) : null}
+            </div>
+          </div>
+        </div>
+      ) : null}
+      <p className="sr-only" aria-live="polite">{on ? `${formatCalendarDate(on.date)} · ${reading(on)}` : ''}</p>
+      <Legend unit={unit} more={all.top === undefined ? 'More' : `${format(all.top)} or more`}>
+        {weeks < all.weeks ? <span data-weeks className="mr-auto">The latest {weeks} of {all.weeks} weeks</span> : null}
+      </Legend>
+      {table}
     </figure>
   );
 }

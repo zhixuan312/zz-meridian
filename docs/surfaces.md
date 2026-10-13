@@ -132,7 +132,7 @@ All components are surface-agnostic by construction: they size from control toke
 | Sparkline | Shape beside a figure | Same | Same | Same |
 | Bar list | A ranked list with bars | Same | Same | Top five, then Expand |
 | Composition bar | One whole split into parts | Legend four across | Legend two across | Same as mobile |
-| Heatmap | Weekday by hour | 24 columns | Hours grouped in threes (8 columns) | Fullscreen only |
+| Heatmap | Weekday by hour, or a year of days | 24 columns of hours; a calendar's column is a week | Hours grouped in threes (8 columns); a calendar shows the latest weeks that fit at 12px a cell | Fullscreen only |
 | Uptime bars | 90 days of a service's state | 90 bars | 30 bars, the last month | 30 bars |
 | Filter bar | Search, filters and view controls for one list | One row | Search, then a Filters sheet | Search only |
 | Data table | A list of records: sort, select, page, empty and loading states | Columns | Card list | Five rows, Expand |

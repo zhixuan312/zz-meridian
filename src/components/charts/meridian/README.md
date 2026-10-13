@@ -37,6 +37,7 @@ The Meridian has no size of its own. The line is 1px; the dots 8px across (4px r
 - **Pointer**: the nearest day to the pointer's x. **Touch**: press and drag along the chart; vertical drags still scroll the page (`touch-action: pan-y`).
 - **Keyboard** on a focused chart: Left and Right move one day, Home and End jump to the first and last, Escape clears.
 - **From an address or a finding**: `Meridian day="2026-09-22"` opens the page pointed at a day (`?day=`), and `usePointMeridian()` points it from outside a chart, as a tile's finding does. The person's next pointer takes over.
+- **From a chart of other dates**: a Heatmap of a year of days does not share the page's list of dates. With `meridian` it points the Meridian at the day read through `usePointMeridian()` when the Meridian holds that date, and lets go of it through `useClearMeridian()` when it does not, and when the person lets go.
 - One index per page: the latest pointer wins. A chart, a column chart with `dates`, a tile and a sparkline all read it through `useMeridian` or `useMeridianIndex`.
 
 ## Surfaces
@@ -77,4 +78,4 @@ import { Meridian, useMeridianIndex } from '@/components/charts/meridian';
 </Meridian>
 ```
 
-`useMeridian(dates)` returns `{ index, setIndex, dates, shared }` for a chart; `useMeridianIndex()` returns `{ index, dates }` for a readout that never sets it.
+`useMeridian(dates)` returns `{ index, setIndex, dates, shared }` for a chart; `useMeridianIndex()` returns `{ index, dates }` for a readout that never sets it. From outside a chart, `usePointMeridian()` returns a function that points the page's Meridian at a date it holds, and `useClearMeridian()` one that lets go of it; both do nothing without a Meridian.

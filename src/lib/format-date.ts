@@ -61,6 +61,32 @@ export function formatDateTime(input: DateInput): string {
   return `${p.day} ${p.month} ${p.year}, ${p.hour}:${p.minute}`;
 }
 
+/**
+ * A calendar date, `2026-10-01` with no time, names a day and not an instant: a cell of a calendar is that day
+ * wherever the product reports from. `formatDate` reads such a string as midnight UTC and prints it in
+ * DISPLAY_TIMEZONE, which is the day before west of UTC: right for an instant, wrong for a day. The two formatters
+ * below read the date's own year, month and day.
+ */
+let DAY_FMT: Intl.DateTimeFormat | null = null;
+
+function calendarParts(date: string): Record<string, string> | null {
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(date);
+  if (!m) return null;
+  DAY_FMT ??= new Intl.DateTimeFormat('en-GB', { timeZone: 'UTC', weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' });
+  return Object.fromEntries(DAY_FMT.formatToParts(Date.UTC(Number(m[1]), Number(m[2]) - 1, Number(m[3]))).map((p) => [p.type, p.value]));
+}
+
+/** `Thu 1 Oct 2026`: a calendar date as the day it names, with its weekday. */
+export function formatCalendarDate(date: string): string {
+  const p = calendarParts(date);
+  return p ? `${p.weekday} ${p.day} ${p.month} ${p.year}` : date;
+}
+
+/** `Oct`: the month a calendar date is in, for the name above a calendar's column. */
+export function formatCalendarMonth(date: string): string {
+  return calendarParts(date)?.month ?? date;
+}
+
 /** `just now` · `5 min ago` · `3 h ago` · `7 d ago` · then an absolute date. */
 export function formatRelative(input: DateInput, now: Date): string {
   const d = toDate(input);

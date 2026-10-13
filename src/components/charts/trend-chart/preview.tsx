@@ -1,12 +1,15 @@
 'use client';
 
-import { Specimen, Plane } from '@/system/specimen';
-import { demoSeries, REGIONS } from '@/system/fixtures/sample';
+import { Specimen, State, Plane } from '@/system/specimen';
+import { DEMO_NOW, demoSeries, REGIONS } from '@/system/fixtures/sample';
 import { TrendChart } from '.';
 
 const { current, previous } = demoSeries('30d');
 const dates = current.map((d) => d.date);
 const REGION_TOTAL = REGIONS.reduce((a, r) => a + r.value, 0);
+// The sample's clock stands at 09:00 UTC on its last day, so that day has run nine hours of its twenty-four.
+const recent = current.slice(-14);
+const soFar = recent.map((d, i) => (i === recent.length - 1 ? Math.round((d.requests * DEMO_NOW.getUTCHours()) / 24) : d.requests));
 
 export default function TrendChartPreview() {
   return (
@@ -64,6 +67,30 @@ export default function TrendChartPreview() {
             series={REGIONS.map((r) => ({ key: r.label, label: r.label, values: current.map((d) => Math.round((d.requests * r.value) / REGION_TOTAL)) }))}
           />
         </Plane>
+      </Specimen>
+      <Specimen label="Running" note="running: the last point is a period not over yet, here today at 09:00 UTC. Everything solid stops at yesterday: the stretch into today is 1.5px and dashed in the line's colour, with no area and no glow under it. Its readout says so far. Stacked, the bands stop too and only the total goes on." stack>
+        <State label="Rest" className="w-full">
+          <Plane on="surface">
+            <TrendChart label="Requests per day, today so far" height={200} running dates={recent.map((d) => d.date)} series={[{ key: 'r', label: 'Requests', values: soFar, kind: 'area' }]} />
+          </Plane>
+        </State>
+        <State label="Reading the running day" className="w-full">
+          <Plane on="surface">
+            <TrendChart label="Requests per day, with today read" height={200} running data-preview-index={recent.length - 1} dates={recent.map((d) => d.date)} series={[{ key: 'r', label: 'Requests', values: soFar, kind: 'area' }]} />
+          </Plane>
+        </State>
+        <State label="Stacked" className="w-full">
+          <Plane on="surface">
+            <TrendChart
+              label="Requests per day by region, today so far"
+              height={200}
+              stacked
+              running
+              dates={recent.map((d) => d.date)}
+              series={REGIONS.map((r) => ({ key: r.label, label: r.label, values: soFar.map((v) => Math.round((v * r.value) / REGION_TOTAL)) }))}
+            />
+          </Plane>
+        </State>
       </Specimen>
       <Specimen label="Short" note="Under 200px the chart draws three gridlines instead of four, and three or four date labels; drawn here at 150px. A chart told to `fill` takes the height its card gives it, never under 220px.">
         <Plane on="surface" className="max-w-md">
