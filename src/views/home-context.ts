@@ -1,6 +1,6 @@
 /**
  * The Home's shared context (decision 0011): what the console page, the MCP view and the console's assistant are
- * all told about traffic, reliability and spend. The tiles' definitions live here too, so the person's info button and
+ * all told about traffic, reliability and revenue. The tiles' definitions live here too, so the person's info button and
  * the agents read the same words.
  */
 import type { ActivityEvent } from '@/components/patterns/activity-feed';
@@ -22,7 +22,7 @@ export const HOME_METRICS = {
   requests: { label: 'Requests', hint: 'Every call the gateway answered, whatever its status.' },
   errorRate: { label: 'Error rate', hint: 'Share of requests answered with a 5xx or a 429.' },
   p95: { label: 'Latency p95', hint: '95 of every 100 requests finished faster than this.' },
-  spend: { label: 'Spend', hint: 'Metered usage in US dollars, before credits.' },
+  revenue: { label: 'Revenue', hint: 'What customers were billed for metered usage, in US dollars, before credits.' },
 } as const;
 
 export type HomeData = {
@@ -136,7 +136,7 @@ function summaryContext({ business, operation, delivery }: MainSummary): { facts
       // Under the labels the region itself uses, each beside the count of customers it divides.
       { label: 'By status', value: counts(business.byStatus) },
       { label: 'By plan', value: counts(business.byPlan) },
-      { label: CUSTOMER_METRICS.spend.label, value: formatCost(business.spend) },
+      { label: CUSTOMER_METRICS.revenue.label, value: formatCost(business.revenue) },
     );
   } else unknowns.push('The business summary could not be read, so the customer figures are missing, not zero.');
   if (operation) {
@@ -174,7 +174,7 @@ export function homeContext(data: HomeData, index: number | null = null): Shared
     { label: M.requests.label, value: c.requests.toLocaleString('en-US'), change: change(c.requests, p.requests, period, (n) => n.toLocaleString('en-US')), definition: M.requests.hint },
     { label: M.errorRate.label, value: pct(c.errorRate), change: change(c.errorRate, p.errorRate, period, pct), definition: M.errorRate.hint },
     { label: M.p95.label, value: formatDuration(c.p95), change: change(c.p95, p.p95, period, formatDuration), definition: M.p95.hint },
-    { label: M.spend.label, value: formatCost(c.spend), change: change(c.spend, p.spend, period, formatCost), definition: M.spend.hint },
+    { label: M.revenue.label, value: formatCost(c.revenue), change: change(c.revenue, p.revenue, period, formatCost), definition: M.revenue.hint },
   ];
   const main = summaryContext(data.summary);
   facts.push(...main.facts);
@@ -221,7 +221,7 @@ export function homeContext(data: HomeData, index: number | null = null): Shared
     const d = series[index];
     const usual = sameWeekdayBaseline(requests, dates, index);
     const wd = WEEKDAY[weekday(d.date)];
-    focus = `${formatDate(d.date)}, a ${wd}: ${d.requests.toLocaleString('en-US')} requests${usual ? ` (${times(d.requests / usual)} the median ${wd})` : ''}; error rate ${pct(errorRate[index])} (${times(errorRate[index] / errMedian)} the period's median); latency p95 ${formatDuration(d.p95)} (${times(d.p95 / median(p95))} the median); spend ${formatCost(d.spend)}.`;
+    focus = `${formatDate(d.date)}, a ${wd}: ${d.requests.toLocaleString('en-US')} requests${usual ? ` (${times(d.requests / usual)} the median ${wd})` : ''}; error rate ${pct(errorRate[index])} (${times(errorRate[index] / errMedian)} the period's median); latency p95 ${formatDuration(d.p95)} (${times(d.p95 / median(p95))} the median); revenue ${formatCost(d.revenue)}.`;
   }
 
   insights.push(...main.insights);

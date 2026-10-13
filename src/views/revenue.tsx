@@ -13,12 +13,12 @@ import { revenueContext, type RevenueData } from './revenue-context';
 /** Revenue's body, the thin first form: the three figures of the Customers page, drawn by the same tiles. */
 export function RevenueBody(data: RevenueData) {
   useShareView(revenueContext(data));
-  const { customers, spend, pastDue } = data;
+  const { customers, revenue, pastDue } = data;
   return (
     <Stack>
       <Row split="tiles">
         <MetricTile label={CUSTOMER_METRICS.customers.label} value={customers} format={(n) => String(n)} hint={CUSTOMER_METRICS.customers.hint} />
-        <MetricTile label={CUSTOMER_METRICS.spend.label} value={spend} format={formatCost} hint={CUSTOMER_METRICS.spend.hint} emphasis />
+        <MetricTile label={CUSTOMER_METRICS.revenue.label} value={revenue} format={formatCost} hint={CUSTOMER_METRICS.revenue.hint} emphasis />
         <MetricTile label={CUSTOMER_METRICS.pastDue.label} value={pastDue.length} format={(n) => String(n)} hint={CUSTOMER_METRICS.pastDue.hint} note={pastDue.map((c) => c.name).join(', ') || 'Every invoice is paid'} />
       </Row>
       <div>

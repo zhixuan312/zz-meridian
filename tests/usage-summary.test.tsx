@@ -14,7 +14,7 @@ import { UsageBody } from '@/views/usage';
 import { HOME_METRICS } from '@/views/home-context';
 import { usageTool, viewTools } from '@/views/tools';
 
-type Totals = { requests: number; errorRate: number; p95: number; spend: number };
+type Totals = { requests: number; errorRate: number; p95: number; revenue: number };
 const home = viewTools.find((t) => t.name === 'home')!;
 const LABELS = Object.values(HOME_METRICS).map((m) => m.label);
 /** The card a tile is, found by the tile's heading. */
@@ -39,14 +39,14 @@ describe('what Usage says of the period', () => {
     const { current: c } = data.totals;
     for (const label of LABELS) expect(tile(label).textContent, label).toMatch(/(up|down|unchanged)[\s\S]*vs previous period/);
     expect(tile('Error rate').textContent).toContain(formatPercent(c.errorRate, 2).replace('%', ''));
-    expect(tile('Spend').textContent).toContain(formatCost(c.spend));
+    expect(tile('Revenue').textContent).toContain(formatCost(c.revenue));
     expect(tile('Latency p95').textContent).toContain(formatDuration(c.p95));
   });
 
   it('draws no figure when no request arrived in the period', () => {
-    const none = { requests: 0, errorRate: 0, p95: 0, spend: 0 };
+    const none = { requests: 0, errorRate: 0, p95: 0, revenue: 0 };
     render(<UsageBody period="30d" activity={[]} incidents={[]} updatedAt="2026-10-05T09:00:00.000Z" now="2026-10-05T09:00:00.000Z" series={[]} totals={{ current: none, previous: none }} heat={[]} hours={[]} regions={[]} endpoints={[]} />);
-    expect(screen.queryAllByRole('heading', { level: 2, name: 'Spend' })).toEqual([]);
+    expect(screen.queryAllByRole('heading', { level: 2, name: 'Revenue' })).toEqual([]);
   });
 });
 
@@ -56,7 +56,7 @@ describe('what the assistant is told of Usage', () => {
     const fact = (label: string) => context.facts.find((f) => f.label === label);
     for (const label of LABELS) expect(fact(label)?.change, label).toMatch(/vs the previous 30 days/);
     expect(fact('Requests')!.value).toBe(data.totals.current.requests.toLocaleString('en-US'));
-    expect(fact('Spend')!.value).toBe(formatCost(data.totals.current.spend));
+    expect(fact('Revenue')!.value).toBe(formatCost(data.totals.current.revenue));
   });
 
   it('says that the week\'s pattern, the regions and the endpoints do not follow the period, and never that they are summed over it', async () => {

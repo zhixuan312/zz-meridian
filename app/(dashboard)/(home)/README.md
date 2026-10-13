@@ -10,10 +10,10 @@ Status: beta
 |---|---|---|---|
 | Masthead | | Page frame | Kicker `ZZ Meridian · Production`, title, one sentence that ends with who Main is for (`workspaces.main.audience`, read from the declaration); freshness, period select (7D, 30D, 90D, All), Export |
 | 1 | 2/3 | Featured metric with a Trend chart (`fill` height) | Requests in the period at hero size, the change against the previous period, a caption with the daily average and the busiest day, requests per day as an area (errors have their own tile: one chart, one measure) |
-| 1 | 1/3 | Three Metric tiles, stacked | Error rate, Latency p95 (both: down is good), Spend (neutral) |
+| 1 | 1/3 | Three Metric tiles, stacked | Error rate, Latency p95 (both: down is good), Revenue (neutral) |
 | 2 | 1/2 | Card with a Bar list | The busiest endpoints, the top one in the accent; a footer link to Usage |
 | 2 | 1/2 | Card with a Composition bar and a Trend chart | Responses by status class; latency p95 per day |
-| 3 | tiles (3) | Three Cards, each a labelled region: a Key value list and a footer of links | Business: customers, how many of each status and plan, and spend over 30 days; links to Customers and Usage. Operation: the services out of service or degraded and each unresolved incident, or "Every service is operational and nothing is open."; a link to Services. Delivery: open and waiting tickets, failing verifications, and live, ready and in-testing releases; links to Tickets, Tests and Releases |
+| 3 | tiles (3) | Three Cards, each a labelled region: a Key value list and a footer of links | Business: customers, how many of each status and plan, and revenue over 30 days; links to Customers and Usage. Operation: the services out of service or degraded and each unresolved incident, or "Every service is operational and nothing is open."; a link to Services. Delivery: open and waiting tickets, failing verifications, and live, ready and in-testing releases; links to Tickets, Tests and Releases |
 | 4 | full | Card with an Activity feed | The five latest changes, people, the system and agents |
 
 The figures in the regions are of the whole collection and are worked out by the functions their own pages use (`customerFigures`, `ticketCounts`, `latestRuns`, `releaseFigures`); a figure that has a filter on its page links to the list it counts (open tickets to the open filter), and one that has none is plain text. Everything in rows 1 and 2 shares one Meridian: point at a day in either chart and the featured figure, the tiles and both charts read that day.
@@ -33,7 +33,7 @@ Below 1024px every row stacks (the three regions are three across from 48rem of 
 
 ## Data
 
-The regions come from `readMainSummary()` in `src/data/main.ts`, which reads every customer, service, incident, ticket, verification run and release through `read()`, and the pure functions in `src/views/main-summary.ts` that build each region from the rows. The page needs every grant it reads (`FEATURES.home.needs`) and neither members nor keys: a person lacking one is refused before anything is read. The traffic rows come from `src/system/fixtures/sample.ts`: `demoSeries(period)` (one point per day, and the previous period for the deltas), `demoTotals(period)`, `ENDPOINTS`, `STATUS_MIX`, `ACTIVITY`. Error rate counts 5xx and 429 over all requests; latency is the median of daily p95s; spend is metered usage before credits.
+The regions come from `readMainSummary()` in `src/data/main.ts`, which reads every customer, service, incident, ticket, verification run and release through `read()`, and the pure functions in `src/views/main-summary.ts` that build each region from the rows. The page needs every grant it reads (`FEATURES.home.needs`) and neither members nor keys: a person lacking one is refused before anything is read. The traffic rows come from `src/system/fixtures/sample.ts`: `demoSeries(period)` (one point per day, and the previous period for the deltas), `demoTotals(period)`, `ENDPOINTS`, `STATUS_MIX`, `ACTIVITY`. Error rate counts 5xx and 429 over all requests; latency is the median of daily p95s; revenue is what customers were billed for metered usage, before credits.
 
 ## Surfaces
 
@@ -56,7 +56,7 @@ Unknown:
 - Nothing is recorded between 20 Sept and 23 Sept: no incident and no activity event, so nothing on this page explains the rise on 21 and 22 Sept.
 ```
 
-It also carries Main's figures under the labels their pages use, as plain numbers: `Customers`, with `By status`, `By plan` and `Spend, last 30 days` as the Business region draws them, `Open tickets`, `Waiting tickets`, `Failing now`, `Live versions`, `Ready to release` and `In testing`, and which services are out of service or degraded and which incidents are unresolved (or that every service is operational and none is open). A region that could not be read is told as unknown, missing and not zero.
+It also carries Main's figures under the labels their pages use, as plain numbers: `Customers`, with `By status`, `By plan` and `Revenue, last 30 days` as the Business region draws them, `Open tickets`, `Waiting tickets`, `Failing now`, `Live versions`, `Ready to release` and `In testing`, and which services are out of service or degraded and which incidents are unresolved (or that every service is operational and none is open). A region that could not be read is told as unknown, missing and not zero.
 
 It also says which endpoint contributes most errors, that requests follow the week, what the status classes mean against the error rate's definition, which incident sits beside a spike when one does (in 90 days: "Upload failures for files over 50 MB"), and that today is partial.
 

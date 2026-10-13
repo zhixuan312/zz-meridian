@@ -1,6 +1,6 @@
 # Customer page
 
-One customer: its plan and status, what it asked of the API and spent in the last 30 days, and how its last 14 days moved.
+One customer: its plan and status, what it asked of the API and was billed in the last 30 days, and how its last 14 days moved.
 
 Status: draft
 
@@ -11,7 +11,7 @@ This body is the thin first form: the facts as label and value and the 14 days a
 | Row | Pattern | Console | Mobile |
 |---|---|---|---|
 | Masthead | Detail head: "← Customers", the name with its status Badge, and a button to its requests | One band | Actions on their own row |
-| 1 | Row `2/3`: Customer (Key value, two columns: plan, status, requests, spend, region, customer since, seats, error rate) · Last 14 days (Sparkline, requests a day) | Side by side | Stacked |
+| 1 | Row `2/3`: Customer (Key value, two columns: plan, status, requests, revenue, region, customer since, seats, error rate) · Last 14 days (Sparkline, requests a day) | Side by side | Stacked |
 
 ## States
 
@@ -37,7 +37,7 @@ The page itself takes no agent action. It shares one context with both agents (d
 
 ### What the agent reads
 
-The customer's plan and status, requests and spend over 30 days with the spend's definition, error rate with its definition, region and seats, since when, and how its requests moved over the last 7 days against the 7 before. It says that how the customer compares with the others is on Customers.
+The customer's plan and status, requests and revenue over 30 days with the revenue's definition, error rate with its definition, region and seats, since when, and how its requests moved over the last 7 days against the 7 before. It says that how the customer compares with the others is on Customers.
 
 ```text
 - Its requests are up 17% over the last 7 days against the 7 before.

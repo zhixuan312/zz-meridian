@@ -14,7 +14,7 @@ export default function SparklinePreview() {
       <Specimen label="Colours" note="Accent for the figure that carries the finding; neutral for every other; a categorical slot only when the line stands for a series drawn elsewhere in that colour.">
         <State label="Accent" className="w-56"><div className="w-full"><Sparkline values={current.map((d) => d.requests)} /></div></State>
         <State label="Neutral" className="w-56"><div className="w-full"><Sparkline values={current.map((d) => d.p95)} color="neutral" /></div></State>
-        <State label="Slot 3, as in its chart" className="w-56"><div className="w-full"><Sparkline values={current.map((d) => d.spend)} color={3} /></div></State>
+        <State label="Slot 3, as in its chart" className="w-56"><div className="w-full"><Sparkline values={current.map((d) => d.revenue)} color={3} /></div></State>
       </Specimen>
       <Specimen label="On the Meridian" note="When the page points at a day, a hairline and a dot mark it, on a line that has one value for each of the page's dates. Here the page holds 30 days and the cursor is fixed on day 20: the line of 30 values marks it, and a customer's 14 days draw no mark.">
         <Meridian dates={current.map((d) => d.date)}>

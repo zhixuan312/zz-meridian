@@ -29,7 +29,7 @@ export default async function HomePage({ searchParams }: { searchParams: SearchP
     <PageFrame
       kicker={<>{app.name} · {app.workspace}</>}
       title="Home"
-      description={`Traffic, reliability and spend across every endpoint, for the period you choose. ${workspaces.main.audience}`}
+      description={`Traffic, reliability and revenue across every endpoint, for the period you choose. ${workspaces.main.audience}`}
       meta={<Freshness updatedAt={DEMO_UPDATED_AT} now={DEMO_NOW} />}
       actions={
         <Suspense fallback={<Skeleton className="h-9 w-48 rounded-md" />}>

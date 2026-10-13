@@ -32,11 +32,11 @@ export default function BarListPreview() {
       <Specimen label="With a meta line" note="A short fact between the label and the value, hidden on phones.">
         <Plane on="surface" className="max-w-xl">
           <BarList
-            label="Spend by customer"
+            label="Revenue by customer"
             limit={4}
             format={formatCost}
             highlight="Northwind Labs"
-            items={CUSTOMER_ROWS.map((c) => ({ key: c.name, label: c.name, value: c.spend, meta: c.plan }))}
+            items={CUSTOMER_ROWS.map((c) => ({ key: c.name, label: c.name, value: c.revenue, meta: c.plan }))}
           />
         </Plane>
       </Specimen>

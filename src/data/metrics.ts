@@ -17,7 +17,7 @@ const ACTIVITY_SHOWN = 6;
 
 const sum = (xs: number[]) => xs.reduce((a, b) => a + b, 0);
 
-/** A period's totals from its days: requests, the error rate over them, the median day's p95, and spend. */
+/** A period's totals from its days: requests, the error rate over them, the median day's p95, and revenue. */
 function totalsOf(points: DailyPoint[]): Totals {
   const requests = sum(points.map((p) => p.requests));
   const p95 = [...points.map((p) => p.p95)].sort((a, b) => a - b);
@@ -25,7 +25,7 @@ function totalsOf(points: DailyPoint[]): Totals {
     requests,
     errorRate: requests ? sum(points.map((p) => p.errors)) / requests : 0,
     p95: p95.length ? p95[Math.floor((p95.length - 1) * 0.5)] : 0,
-    spend: Math.round(sum(points.map((p) => p.spend)) * 100) / 100,
+    revenue: Math.round(sum(points.map((p) => p.revenue)) * 100) / 100,
   };
 }
 

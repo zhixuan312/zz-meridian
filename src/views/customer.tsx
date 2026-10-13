@@ -39,9 +39,9 @@ export function CustomerView(data: CustomerData) {
                   { label: 'Plan', value: c.plan },
                   { label: 'Status', value: STATUS_LABEL[c.status] },
                   { label: 'Requests, 30 days', value: formatCompact(c.requests) },
-                  { label: 'Spend, 30 days', value: formatCost(c.spend) },
+                  { label: 'Revenue, 30 days', value: formatCost(c.revenue) },
                   { label: 'Region', value: c.region, mono: true },
-                  { label: 'Customer since', value: formatDate(c.since) },
+                  { label: 'Customer since', value: formatDate(c.joined) },
                   { label: 'Seats', value: `${c.seats} seats` },
                   { label: 'Error rate', value: <span className={c.errorRate > 0.01 ? 'font-medium text-warning-ink' : undefined}>{formatPercent(c.errorRate, 2)}</span> },
                 ]}

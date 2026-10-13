@@ -21,7 +21,7 @@ const peak = s.reduce((m, d) => (d.requests > m.requests ? d : m), s[0]);
 const sum = (values: number[]) => values.reduce((a, b) => a + b, 0);
 const figures = CUSTOMER_ROWS.slice(0, 8).map((c) => ({
   label: c.name,
-  value: c.spend,
+  value: c.revenue,
   points: c.trend,
   delta: sum(c.trend.slice(7)) / sum(c.trend.slice(0, 7)) - 1,
   format: formatCost,
@@ -73,15 +73,15 @@ export default function MetricTilePreview() {
           <MetricTile label="Requests" hint="Every API call that reached the gateway." icon={<Zap />} value={2_943_120} delta={0.057} points={s.map((d) => d.requests)} format={formatCompact} emphasis />
           <MetricTile label="Error rate" hint="Share of requests answered with a 5xx or a 429." icon={<AlertTriangle />} value={0.009} delta={0.13} intent="down" points={s.map((d) => d.errors / d.requests)} format={(n) => formatPercent(n, 2)} />
           <MetricTile label="Latency p95" icon={<Gauge />} value={294} delta={-0.014} intent="down" points={s.map((d) => d.p95)} format={formatDuration} />
-          <MetricTile label="Spend" icon={<CircleDollarSign />} value={298.43} delta={0.062} intent="neutral" points={s.map((d) => d.spend)} format={formatCost} />
+          <MetricTile label="Revenue" icon={<CircleDollarSign />} value={298.43} delta={0.062} intent="neutral" points={s.map((d) => d.revenue)} format={formatCost} />
         </div>
       </Specimen>
-      <Specimen label="Extreme values" note="The largest figures the formatters print, in the same row: an exact count in the billions, an enterprise month of spend, a slow p95 and a change of several hundred per cent.">
+      <Specimen label="Extreme values" note="The largest figures the formatters print, in the same row: an exact count in the billions, an enterprise month of revenue, a slow p95 and a change of several hundred per cent.">
         <div className="grid w-full gap-4 sm:grid-cols-2 xl:grid-cols-4">
           <MetricTile label="Requests" icon={<Zap />} value={9_876_543_210} delta={4.37} points={s.map((d) => d.requests)} format="count" />
           <MetricTile label="Error rate" icon={<AlertTriangle />} value={1} delta={-0.999} intent="down" points={s.map((d) => d.errors / d.requests)} format={(n) => formatPercent(n, 2)} />
           <MetricTile label="Latency p95" icon={<Gauge />} value={3_725_000} delta={12.5} intent="down" points={s.map((d) => d.p95)} format={formatDuration} />
-          <MetricTile label="Spend" icon={<CircleDollarSign />} value={1_234_567.89} delta={0.062} intent="neutral" points={s.map((d) => d.spend)} format={formatCost} />
+          <MetricTile label="Revenue" icon={<CircleDollarSign />} value={1_234_567.89} delta={0.062} intent="neutral" points={s.map((d) => d.revenue)} format={formatCost} />
         </div>
       </Specimen>
       <Specimen label="Variants">
@@ -101,7 +101,7 @@ export default function MetricTilePreview() {
         <Meridian dates={dates}>
           <PointAt i={18} />
           <div className="grid w-full gap-4 sm:grid-cols-2">
-            <State label="30 points on a page of 30 days: reads the day" className="w-full"><MetricTile className="w-full" label="Spend" icon={<CircleDollarSign />} value={298.43} delta={0.062} intent="neutral" points={s.map((d) => d.spend)} format={formatCost} /></State>
+            <State label="30 points on a page of 30 days: reads the day" className="w-full"><MetricTile className="w-full" label="Revenue" icon={<CircleDollarSign />} value={298.43} delta={0.062} intent="neutral" points={s.map((d) => d.revenue)} format={formatCost} /></State>
             <State label="14 points on a page of 30 days: keeps its period" className="w-full"><MetricTile className="w-full" {...figures[0]} /></State>
           </div>
         </Meridian>

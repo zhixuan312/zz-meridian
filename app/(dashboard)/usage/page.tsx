@@ -26,7 +26,7 @@ export default async function UsagePage({ searchParams }: { searchParams: Search
     <PageFrame
       kicker={<>{app.name} · {app.workspace}</>}
       title="Usage"
-      description={`How usage and spend moved over the period, when traffic comes and from where, and which endpoints are slow.`}
+      description={`How usage and revenue moved over the period, when traffic comes and from where, and which endpoints are slow.`}
       meta={<Freshness updatedAt={DEMO_UPDATED_AT} now={DEMO_NOW} />}
       actions={
         <Suspense fallback={<Skeleton className="h-9 w-48 rounded-md" />}>

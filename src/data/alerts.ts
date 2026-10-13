@@ -53,7 +53,7 @@ async function incidentAlerts(): Promise<{ alerts: Alert[]; observedAt: string }
 /** Each customer past due, linking to Customers filtered to the customers who are. */
 async function customerAlerts(): Promise<{ alerts: Alert[]; observedAt: string }> {
   const { rows, observedAt } = await readAll('customers');
-  const href = customersAddress({ q: '', plan: 'all', status: 'past due', sort: 'spend', dir: 'desc', page: '1' });
+  const href = customersAddress({ q: '', plan: 'all', status: 'past due', sort: 'revenue', dir: 'desc', page: '1' });
   const alerts = customerFigures(rows as CustomerRecord[]).pastDue.map((c): Alert => ({
     id: `customer:${c.id}`,
     title: `${c.name} is past due`,

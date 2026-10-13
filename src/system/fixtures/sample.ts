@@ -35,7 +35,7 @@ const DAY = 86_400_000;
 const iso = (d: Date) => d.toISOString().slice(0, 10);
 const daysOf = (p: Period) => PERIOD_DAYS[p] ?? 180;
 
-export type DailyPoint = { date: string; requests: number; errors: number; p95: number; spend: number };
+export type DailyPoint = { date: string; requests: number; errors: number; p95: number; revenue: number };
 
 /** One point per day, oldest first; `days` more before them, for the previous period. */
 function daily(days: number): DailyPoint[] {
@@ -56,7 +56,7 @@ function daily(days: number): DailyPoint[] {
       requests,
       errors: Math.round(requests * errRate),
       p95: Math.round((268 + rand() * 70 + (incident > 1 ? 190 : 0)) * (wd === 0 || wd === 6 ? 0.9 : 1)),
-      spend: Math.round(requests * 0.000102 * (0.94 + rand() * 0.12) * 100) / 100,
+      revenue: Math.round(requests * 0.000102 * (0.94 + rand() * 0.12) * 100) / 100,
     });
   }
   return out.slice(-days * 2);
@@ -71,14 +71,14 @@ export function demoSeries(period: Period) {
 const sum = (xs: number[]) => xs.reduce((a, b) => a + b, 0);
 const pct = (xs: number[], q: number) => [...xs].sort((a, b) => a - b)[Math.floor((xs.length - 1) * q)];
 
-export type Totals = { requests: number; errorRate: number; p95: number; spend: number };
+export type Totals = { requests: number; errorRate: number; p95: number; revenue: number };
 function totals(points: DailyPoint[]): Totals {
   const requests = sum(points.map((p) => p.requests));
   return {
     requests,
     errorRate: sum(points.map((p) => p.errors)) / requests,
     p95: pct(points.map((p) => p.p95), 0.5),
-    spend: Math.round(sum(points.map((p) => p.spend)) * 100) / 100,
+    revenue: Math.round(sum(points.map((p) => p.revenue)) * 100) / 100,
   };
 }
 
@@ -166,7 +166,7 @@ export const REQUESTS: RequestRow[] = (() => {
   return rows;
 })();
 
-type Customer = { name: string; plan: 'Enterprise' | 'Scale' | 'Starter'; requests: number; spend: number; trend: number[]; status: 'active' | 'trial' | 'past due' };
+type Customer = { name: string; plan: 'Enterprise' | 'Scale' | 'Starter'; requests: number; revenue: number; trend: number[]; status: 'active' | 'trial' | 'past due' };
 /** Each customer's share of the last 30 days, so the customers add up to exactly what the Home shows for 30D. */
 const SHARES = CUSTOMERS.map((_, i) => 1 / (i + 1.4));
 const MONTH = demoTotals('30d').current;
@@ -178,13 +178,13 @@ export const CUSTOMER_ROWS: Customer[] = CUSTOMERS.map((name, i) => {
     name,
     plan: i < 3 ? 'Enterprise' : i < 8 ? 'Scale' : 'Starter',
     requests,
-    spend: Math.round(MONTH.spend * share * 100) / 100,
+    revenue: Math.round(MONTH.revenue * share * 100) / 100,
     trend: Array.from({ length: 14 }, (_, d) => Math.round(requests / 30 * (0.8 + rand() * 0.4) * (1 + d / 40))),
     status: i === 9 ? 'past due' : i === 11 ? 'trial' : 'active',
   };
 });
 // Rounding each share to the cent leaves a few cents over or under; the largest customer carries them.
-CUSTOMER_ROWS[0].spend = Math.round((MONTH.spend - sum(CUSTOMER_ROWS.slice(1).map((c) => c.spend))) * 100) / 100;
+CUSTOMER_ROWS[0].revenue = Math.round((MONTH.revenue - sum(CUSTOMER_ROWS.slice(1).map((c) => c.revenue))) * 100) / 100;
 CUSTOMER_ROWS[0].requests = MONTH.requests - sum(CUSTOMER_ROWS.slice(1).map((c) => c.requests));
 
 export const SERVICES: Service[] = [

@@ -4,10 +4,10 @@ import { CUSTOMERS, payloadsOf, traceOf, usageOf } from '@/system/fixtures/sampl
 import verify from '../scripts/verify.config';
 
 describe('the sample agrees with itself', () => {
-  it('customers add up to the Home’s 30-day requests and spend', () => {
+  it('customers add up to the Home’s 30-day requests and revenue', () => {
     const month = demoTotals('30d').current;
     expect(CUSTOMER_ROWS.reduce((a, c) => a + c.requests, 0)).toBe(month.requests);
-    expect(Math.round(CUSTOMER_ROWS.reduce((a, c) => a + c.spend, 0) * 100) / 100).toBe(month.spend);
+    expect(Math.round(CUSTOMER_ROWS.reduce((a, c) => a + c.revenue, 0) * 100) / 100).toBe(month.revenue);
   });
   it('only the model routes name a model or count tokens', () => {
     for (const r of REQUESTS) {

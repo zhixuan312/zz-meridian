@@ -182,7 +182,7 @@ const ROLES: [string, string, string][] = [
   ['t-section', 'Section', 'Busiest endpoints'],
   ['t-figure', 'Figure', '0.90%'],
   ['t-card', 'Card title', 'Requests per day'],
-  ['t-lead', 'Lead', 'Traffic, reliability and spend across every endpoint.'],
+  ['t-lead', 'Lead', 'Traffic, reliability and revenue across every endpoint.'],
   ['t-body', 'Body', 'Requests that reached the gateway, including those that failed.'],
   ['t-small', 'Small', 'Share of requests answered with a 5xx or a 429.'],
   ['t-caption', 'Caption', 'Updated 4 min ago'],

@@ -38,13 +38,13 @@ const columns: Column<CustomerRecord>[] = [
     cell: (c) => <span className="block w-28"><Sparkline values={c.trend} color="neutral" height={24} /></span>,
   },
   { key: 'errors', header: 'Error rate', numeric: true, muted: true, hideBelow: 'xl', sortValue: (c) => c.errorRate, cell: (c) => <span className={c.errorRate > 0.01 ? 'font-medium text-warning-ink' : undefined}>{formatPercent(c.errorRate, 2)}</span> },
-  { key: 'spend', header: 'Spend', numeric: true, mobile: 'fact', sortValue: (c) => c.spend, cell: (c) => formatCost(c.spend) },
-  { key: 'since', header: 'Customer since', numeric: true, muted: true, hideBelow: 'xl', sortValue: (c) => c.since, cell: (c) => formatDate(c.since) },
+  { key: 'revenue', header: 'Revenue', numeric: true, mobile: 'fact', sortValue: (c) => c.revenue, cell: (c) => formatCost(c.revenue) },
+  { key: 'joined', header: 'Customer since', numeric: true, muted: true, hideBelow: 'xl', sortValue: (c) => c.joined, cell: (c) => formatDate(c.joined) },
 ];
 
 /** The table and the tiles over it: the page renders the masthead, so this is the only part that waits for the address. */
 export function CustomersView({ rows }: { rows: CustomerRecord[] }) {
-  const [f, set] = useQueryState({ q: '', plan: 'all', status: 'all', by: '', sort: 'spend', dir: 'desc', page: '1' });
+  const [f, set] = useQueryState({ q: '', plan: 'all', status: 'all', by: '', sort: 'revenue', dir: 'desc', page: '1' });
   // The box shows each key; the address, and so the list, follows when the typing stops.
   const [draft, setDraft] = useSearchDraft(f.q, (q) => set({ q, by: '', page: '1' }));
   const matching = useMemo(() => {
@@ -54,13 +54,13 @@ export function CustomersView({ rows }: { rows: CustomerRecord[] }) {
   const isFiltered = f.q !== '' || f.plan !== 'all' || f.status !== 'all';
   useShareView(customersContext(rows, matching, f));
   const clear = () => set({ q: '', plan: 'all', status: 'all', by: '', page: '1' });
-  const { customers, spend, pastDue } = customerFigures(rows);
+  const { customers, revenue, pastDue } = customerFigures(rows);
 
   return (
     <Records
       summary={[
         <MetricTile key="customers" label={CUSTOMER_METRICS.customers.label} value={customers} format={(n) => String(n)} hint={CUSTOMER_METRICS.customers.hint} />,
-        <MetricTile key="spend" label={CUSTOMER_METRICS.spend.label} value={spend} format={formatCost} hint={CUSTOMER_METRICS.spend.hint} emphasis />,
+        <MetricTile key="revenue" label={CUSTOMER_METRICS.revenue.label} value={revenue} format={formatCost} hint={CUSTOMER_METRICS.revenue.hint} emphasis />,
         <MetricTile key="past-due" label={CUSTOMER_METRICS.pastDue.label} value={pastDue.length} format={(n) => String(n)} hint={CUSTOMER_METRICS.pastDue.hint} note={pastDue.map((c) => c.name).join(', ') || 'Every invoice is paid'} />,
       ]}
     >

@@ -1,6 +1,6 @@
 # Revenue
 
-The Revenue page is the Business workspace's home: what the customers spent in the last 30 days, how many there are and who has not paid.
+The Revenue page is the Business workspace's home: the revenue of the last 30 days, how many customers there are and who has not paid.
 
 Status: draft
 
@@ -11,7 +11,7 @@ This body is the thin first form: three figures the Customers page already compu
 | Row | Split | Content | Pattern |
 |---|---|---|---|
 | Masthead | | Kicker "ZZ Meridian · Production", title, one sentence that ends with who Business is for (`workspaces.business.audience`, read from the declaration); Freshness. No action | Page frame |
-| 1 | Tiles | Customers, Spend, last 30 days (emphasis), Past due with who | Metric tile |
+| 1 | Tiles | Customers, Revenue, last 30 days (emphasis), Past due with who | Metric tile |
 | 2 | | A button to Customers | Button |
 
 ## States
@@ -26,7 +26,7 @@ This body is the thin first form: three figures the Customers page already compu
 
 ## Data
 
-The Revenue tool's read (`revenueTool` in `src/views/tools.ts`): every row of the `customers` collection through `readAll()`, worked into customers, spend and past due by `customerFigures` in `src/views/customers-context.ts`. The page and the context share that read. Nothing writes.
+The Revenue tool's read (`revenueTool` in `src/views/tools.ts`): every row of the `customers` collection through `readAll()`, worked into customers, revenue and past due by `customerFigures` in `src/views/customers-context.ts`. The page and the context share that read. Nothing writes.
 
 ## Surfaces
 
@@ -40,10 +40,10 @@ The page itself takes no agent action. It shares one context with both agents (d
 
 ### What the agent reads
 
-The three figures with their definitions, who is past due with their spend, and that the customers' plans and trends are on Customers.
+The three figures with their definitions, who is past due with the revenue each brought, and that the customers' plans and trends are on Customers.
 
 ```text
-- Past due: 1: Lumen Studio ($11.13 spend). (Customers whose latest invoice is overdue.)
+- Past due: 1: Lumen Studio ($11.13 revenue). (Customers whose latest invoice is overdue.)
 ```
 
 - **MCP App:** no embed view; an MCP server returns this context as the `revenue` tool's text (`docs/agents.md`).
@@ -56,4 +56,4 @@ The three figures with their definitions, who is past due with their spend, and 
 
 ## Content
 
-- Sentence case; money with its symbol and two decimals; "Spend, last 30 days" carries its period.
+- Sentence case; money with its symbol and two decimals; "Revenue, last 30 days" carries its period.

@@ -9,16 +9,16 @@ import { revenueContext, type RevenueData } from '@/views/revenue-context';
 
 const BUDGET = 2600;
 const data = (rows: typeof CUSTOMERS): RevenueData => {
-  const { customers, spend, pastDue } = customerFigures(rows);
-  return { customers, spend, pastDue: pastDue.map((c) => ({ name: c.name, spend: c.spend })), updatedAt: '2026-10-03T08:56:00Z', now: '2026-10-03T09:00:00Z' };
+  const { customers, revenue, pastDue } = customerFigures(rows);
+  return { customers, revenue, pastDue: pastDue.map((c) => ({ name: c.name, revenue: c.revenue })), updatedAt: '2026-10-03T08:56:00Z', now: '2026-10-03T09:00:00Z' };
 };
 
 describe("Revenue's context", () => {
   it('names its address and carries the three figures of the Customers page, worked out once', () => {
     const c = revenueContext(data(CUSTOMERS));
-    const { customers, spend, pastDue } = customerFigures(CUSTOMERS);
+    const { customers, revenue, pastDue } = customerFigures(CUSTOMERS);
     expect(c.address).toBe('/business');
-    expect(c.facts.map((f) => f.value)).toEqual([String(customers), formatCost(spend), expect.stringMatching(new RegExp(`^${pastDue.length}: `))]);
+    expect(c.facts.map((f) => f.value)).toEqual([String(customers), formatCost(revenue), expect.stringMatching(new RegExp(`^${pastDue.length}: `))]);
     expect(contextText(c)).toContain(pastDue[0].name);
   });
 

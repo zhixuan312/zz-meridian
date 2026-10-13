@@ -10,7 +10,7 @@ const ROLES: { cls: string; spec: string; sample: React.ReactNode }[] = [
   { cls: 't-section', spec: 'text-xl 24–32px · 600 · −0.022em', sample: 'Busiest endpoints' },
   { cls: 't-figure', spec: 'text-2xl 32–42px · 600 · −0.03em', sample: <><span className="unit pre">$</span>298<span className="frac">.43</span></> },
   { cls: 't-card', spec: 'text-md 16px · 600 · −0.012em', sample: 'Requests per day' },
-  { cls: 't-lead', spec: 'text-md 16px · 400 · ink-2 · 1.6', sample: 'Traffic, reliability and spend across every endpoint, for the period you choose.' },
+  { cls: 't-lead', spec: 'text-md 16px · 400 · ink-2 · 1.6', sample: 'Traffic, reliability and revenue across every endpoint, for the period you choose.' },
   { cls: 't-body', spec: 'text-base 14px · 400 · 1.55', sample: 'Traffic shifted to eu-central-1 while eu-west-1 recovers. Latency is back under 650ms.' },
   { cls: 't-small', spec: 'text-sm 13px · 400 · 1.5', sample: 'About 98K a day. The busiest day was 1 Oct, with 128K.' },
   { cls: 't-caption', spec: 'text-xs 12px · ink-3 · 1.45', sample: 'Updated 4 min ago · UTC' },

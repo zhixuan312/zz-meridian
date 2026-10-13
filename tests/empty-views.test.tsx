@@ -6,7 +6,7 @@ import { CustomersView } from '@/views/customers';
 import { ServicesBody } from '@/views/services';
 import { HomeBody } from '@/views/home';
 
-const totals = { requests: 0, errorRate: 0, p95: 0, spend: 0 };
+const totals = { requests: 0, errorRate: 0, p95: 0, revenue: 0 };
 const NOW = '2026-10-05T09:00:00.000Z';
 
 describe('a page body with no data shows its empty state, not a route error', () => {

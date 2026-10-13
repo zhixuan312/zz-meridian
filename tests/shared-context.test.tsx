@@ -19,7 +19,7 @@ const home = (period: Period): HomeData => ({
   period, series: demoSeries(period).current, totals: demoTotals(period), endpoints: ENDPOINTS, mix: STATUS_MIX, activity: ACTIVITY,
   incidents: [...INCIDENTS, ...PAST_INCIDENTS],
   summary: {
-    business: { customers: 12, byStatus: { active: 9, trial: 2, 'past due': 1 }, byPlan: { Enterprise: 3, Scale: 5, Starter: 4 }, spend: 48210.5 },
+    business: { customers: 12, byStatus: { active: 9, trial: 2, 'past due': 1 }, byPlan: { Enterprise: 3, Scale: 5, Starter: 4 }, revenue: 48210.5 },
     operation: { degraded: ['Inference API'], outage: [], incidents: [{ id: 'inc_1', title: 'Elevated latency in eu-west-1' }] },
     delivery: { open: 4, waiting: 3, failing: 2, live: 3, ready: 1, testing: 3 },
   },
@@ -61,7 +61,7 @@ describe("the Home's shared context", () => {
   it('tells what the person points at, against the same weekday', () => {
     const data = home('30d');
     const index = data.series.findIndex((d) => d.date === '2026-09-22');
-    expect(homeContext(data, index).focus).toBe("22 Sept 2026, a Tuesday: 121,795 requests (1.1× the median Tuesday); error rate 2.18% (2.7× the period's median); latency p95 505ms (1.7× the median); spend $12.18.");
+    expect(homeContext(data, index).focus).toBe("22 Sept 2026, a Tuesday: 121,795 requests (1.1× the median Tuesday); error rate 2.18% (2.7× the period's median); latency p95 505ms (1.7× the median); revenue $12.18.");
   });
   it('fits its budget for every period, and so does Services', () => {
     for (const p of ['7d', '30d', '90d', 'all'] as const) expect(contextText(homeContext(home(p), 0)).length).toBeLessThanOrEqual(BUDGET);
@@ -133,7 +133,7 @@ describe('every page shares a context within its budget, and nothing hidden', ()
     const now = DEMO_NOW.toISOString();
     const contexts = [
       usageContext({ ...home('30d'), endpoints: ENDPOINTS, heat, hours, regions: REGION_TRAFFIC }),
-      customersContext(CUSTOMERS, CUSTOMERS, { q: '', plan: 'all', status: 'all', sort: 'spend', dir: 'desc', page: '1' }),
+      customersContext(CUSTOMERS, CUSTOMERS, { q: '', plan: 'all', status: 'all', sort: 'revenue', dir: 'desc', page: '1' }),
       membersContext(MEMBERS, now),
       keysContext(API_KEYS, now, SCOPES),
       requestContext({ request: REQUESTS[0], trace: traceOf(REQUESTS[0]), routeP95: 612, statusText: 'OK', payloadBytes: { request: 120, response: 300 }, now }),
@@ -149,7 +149,7 @@ describe('every page shares a context within its budget, and nothing hidden', ()
   it('Customers compares each customer with everyone, not with nothing', async () => {
     const { customersContext } = await import('@/views/customers-context');
     const { CUSTOMERS } = await import('@/system/fixtures/sample-records');
-    const text = contextText(customersContext(CUSTOMERS, CUSTOMERS, { q: '', plan: 'all', status: 'all', sort: 'spend', dir: 'desc', page: '1' }));
+    const text = contextText(customersContext(CUSTOMERS, CUSTOMERS, { q: '', plan: 'all', status: 'all', sort: 'revenue', dir: 'desc', page: '1' }));
     expect(text).toMatch(/Combined requests are up \d+% over the last 7 days against the 7 before\./);
   });
 });

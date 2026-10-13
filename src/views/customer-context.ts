@@ -16,10 +16,10 @@ export function customerContext({ customer: c, updatedAt, now }: CustomerData): 
   const facts: Fact[] = [
     { label: 'Plan and status', value: `${c.plan}, ${c.status}` },
     { label: 'Requests, last 30 days', value: formatCompact(c.requests) },
-    { label: 'Spend, last 30 days', value: formatCost(c.spend), definition: 'Metered usage before credits.' },
+    { label: 'Revenue, last 30 days', value: formatCost(c.revenue), definition: 'What this customer was billed for metered usage, before credits.' },
     { label: 'Error rate', value: formatPercent(c.errorRate, 2), definition: 'Share of its requests answered with a 5xx or a 429.' },
     { label: 'Region and seats', value: `${c.region}, ${c.seats} seats` },
-    { label: 'Customer since', value: formatDate(c.since) },
+    { label: 'Customer since', value: formatDate(c.joined) },
   ];
   const change = week(c.trend);
   const insights: Insight[] = change === null ? [] : [{ text: `Its requests are ${change >= 0 ? 'up' : 'down'} ${formatPercent(Math.abs(change), 0)} over the last 7 days against the 7 before.`, evidence: `/requests?q=${encodeURIComponent(c.name)}` }];
@@ -27,7 +27,7 @@ export function customerContext({ customer: c, updatedAt, now }: CustomerData): 
     view: 'customer',
     title: c.name,
     address: customerAddress(c.id),
-    scope: 'one customer, spend over the last 30 days, trend over the last 14',
+    scope: 'one customer, revenue over the last 30 days, trend over the last 14',
     freshness: freshnessOf(updatedAt, now),
     facts,
     insights,

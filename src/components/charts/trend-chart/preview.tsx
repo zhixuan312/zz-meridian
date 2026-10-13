@@ -94,7 +94,7 @@ export default function TrendChartPreview() {
       </Specimen>
       <Specimen label="Short" note="Under 200px the chart draws three gridlines instead of four, and three or four date labels; drawn here at 150px. A chart told to `fill` takes the height its card gives it, never under 220px.">
         <Plane on="surface" className="max-w-md">
-          <TrendChart label="Spend per day" dates={dates} height={150} format="cost" series={[{ key: 's', label: 'Spend', values: current.map((d) => d.spend), kind: 'line', color: 'accent' }]} />
+          <TrendChart label="Revenue per day" dates={dates} height={150} format="cost" series={[{ key: 's', label: 'Revenue', values: current.map((d) => d.revenue), kind: 'line', color: 'accent' }]} />
         </Plane>
       </Specimen>
       <Specimen label="Gaps" note="A day with no measurement is a gap, never a zero.">
@@ -110,7 +110,7 @@ export default function TrendChartPreview() {
             height={200}
             format="cost"
             data-preview-index={17}
-            series={[{ key: 'spend', label: 'Metered inference spend after automatic retries', values: current.map((d) => d.spend * 1_000_000_000), kind: 'line' }]}
+            series={[{ key: 'cost', label: 'Metered inference spend after automatic retries', values: current.map((d) => d.revenue * 1_000_000_000), kind: 'line' }]}
           />
         </Plane>
       </Specimen>

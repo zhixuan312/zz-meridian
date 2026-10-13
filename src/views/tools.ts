@@ -46,7 +46,7 @@ const updatedAt = () => DEMO_UPDATED_AT.toISOString();
 export const homeTool = defineViewTool({
   name: 'home',
   title: 'Home',
-  description: 'How the API is doing over a period: requests, error rate, latency and spend with their change, the days that stand out, and what explains them; and Main\'s summary of the whole product: customers, services and incidents, tickets, failing verifications and releases.',
+  description: 'How the API is doing over a period: requests, error rate, latency and revenue with their change, the days that stand out, and what explains them; and Main\'s summary of the whole product: customers, services and incidents, tickets, failing verifications and releases.',
   needs: FEATURES.home.needs,
   input: z.object({ period, day }),
   resourceUri: `ui://${slug}/home`,
@@ -129,7 +129,7 @@ export const nowTool = defineViewTool({
 export const usageTool = defineViewTool({
   name: 'usage',
   title: 'Usage',
-  description: 'Requests, error rate, latency and spend over a period against the period before, the days that stand out, and when traffic comes and from where: the busiest hours, regions with their latency, and every endpoint.',
+  description: 'Requests, error rate, latency and revenue over a period against the period before, the days that stand out, and when traffic comes and from where: the busiest hours, regions with their latency, and every endpoint.',
   needs: FEATURES.usage.needs,
   input: z.object({ period }),
   async read({ period: p = '30d' }) {
@@ -143,7 +143,7 @@ export const usageTool = defineViewTool({
 export const customersTool = defineViewTool({
   name: 'customers',
   title: 'Customers',
-  description: 'Every customer with plan, status, requests, spend and error rate; where spend concentrates, who is moving against the rest, and who fails most.',
+  description: 'Every customer with plan, status, requests, revenue and error rate; where revenue concentrates, who is moving against the rest, and who fails most.',
   needs: FEATURES.customers.needs,
   input: z.object({ q: z.string().max(100).optional(), plan: z.enum(['all', 'Enterprise', 'Scale', 'Starter']).optional(), status: z.enum(['all', 'active', 'trial', 'past due']).optional() }),
   async read({ q = '', plan = 'all', status = 'all' }) {
@@ -152,7 +152,7 @@ export const customersTool = defineViewTool({
     // other tool's read, and a policy that does not bind the collection refuses here as it does everywhere else.
     const { rows } = await read('customers');
     const all = rows as CustomerRecord[];
-    const f = { q, plan, status, sort: 'spend', dir: 'desc', page: '1' };
+    const f = { q, plan, status, sort: 'revenue', dir: 'desc', page: '1' };
     const matching = all.filter((c) => (plan === 'all' || c.plan === plan) && (status === 'all' || c.status === status) && (!q || c.name.toLowerCase().includes(q.toLowerCase())));
     return { context: customersContext(all, matching, f), data: {} };
   },
@@ -161,14 +161,14 @@ export const customersTool = defineViewTool({
 export const revenueTool = defineViewTool({
   name: 'revenue',
   title: 'Revenue',
-  description: 'How many customers there are, what they spent in the last 30 days and who is past due.',
+  description: 'Revenue over the last 30 days, how many customers there are and who is past due.',
   needs: FEATURES.revenue.needs,
   input: z.object({}),
   async read() {
     await requireNeed(FEATURES.revenue.needs);
     const { rows } = await readAll('customers');
-    const { customers, spend, pastDue } = customerFigures(rows as CustomerRecord[]);
-    const data = { customers, spend, pastDue: pastDue.map((c) => ({ name: c.name, spend: c.spend })), updatedAt: updatedAt(), now: clock().toISOString() };
+    const { customers, revenue, pastDue } = customerFigures(rows as CustomerRecord[]);
+    const data = { customers, revenue, pastDue: pastDue.map((c) => ({ name: c.name, revenue: c.revenue })), updatedAt: updatedAt(), now: clock().toISOString() };
     return { context: revenueContext(data), data };
   },
 });
@@ -183,7 +183,7 @@ export async function readCustomer(id: string): Promise<CustomerData | null> {
 export const customerTool = defineViewTool({
   name: 'customer',
   title: 'Customer',
-  description: 'One customer by its id: its plan and status, what it asked of the API and spent in the last 30 days, its error rate, and how its last 14 days moved.',
+  description: 'One customer by its id: its plan and status, what it asked of the API and was billed in the last 30 days, its error rate, and how its last 14 days moved.',
   needs: FEATURES.customer.needs,
   input: z.object({ id: z.string().min(1).max(60) }),
   async read({ id }) {

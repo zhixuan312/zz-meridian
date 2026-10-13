@@ -38,7 +38,7 @@ const weeks = Array.from({ length: Math.floor((quarter.length - monday) / 7) }, 
   date: days[0].date,
   requests: days.reduce((a, d) => a + d.requests, 0),
   errors: days.reduce((a, d) => a + d.errors, 0),
-  spend: days.reduce((a, d) => a + d.spend, 0),
+  revenue: days.reduce((a, d) => a + d.revenue, 0),
   p95: [...days.map((d) => d.p95)].sort((a, b) => a - b)[3],
 }));
 const weekDates = weeks.map((w) => w.date);
@@ -71,18 +71,18 @@ const requestsByWeek: FeaturedFigure = {
   caption: <>Last week averaged {formatCompact(Math.round(last.requests / 7))} a day.</>,
   finding: weekFinding,
 };
-const spendByWeek: FeaturedFigure = {
-  kicker: 'Spend · last week',
-  value: last.spend,
-  points: weeks.map((w) => w.spend),
+const revenueByWeek: FeaturedFigure = {
+  kicker: 'Revenue · last week',
+  value: last.revenue,
+  points: weeks.map((w) => w.revenue),
   format: formatCost,
-  delta: last.spend / prior.spend - 1,
+  delta: last.revenue / prior.revenue - 1,
   intent: 'neutral',
   compare: 'vs the week before',
-  caption: <>Last week averaged {formatCost(last.spend / 7)} a day.</>,
+  caption: <>Last week averaged {formatCost(last.revenue / 7)} a day.</>,
 };
 
-/** Two measures of equal standing that are never added together: requests answered and what they cost, a week a point. */
+/** Two measures of equal standing that are never added together: requests answered and the revenue they brought, a week a point. */
 const TwoFigures = ({ className, actions }: { className?: string; actions?: ReactNode }) => (
   <Meridian dates={weekDates}>
     <FeaturedMetric
@@ -90,13 +90,13 @@ const TwoFigures = ({ className, actions }: { className?: string; actions?: Reac
       actions={actions}
       {...requestsByWeek}
       pointLabel={week}
-      peer={{ ...spendByWeek, children: <Weeks label="Spend per week" value={(w) => w.spend} format={formatCost} axisFormat={AXIS_FORMATTERS.cost} /> }}
+      peer={{ ...revenueByWeek, children: <Weeks label="Revenue per week" value={(w) => w.revenue} format={formatCost} axisFormat={AXIS_FORMATTERS.cost} /> }}
       foot={
         <>
           <dl>
             <div><dt>Error rate</dt><dd>{formatPercent(last.errors / last.requests, 2)}</dd></div>
             <div><dt>Latency p95</dt><dd>{formatDuration(last.p95)}</dd></div>
-            <div><dt>Spend per 1K requests</dt><dd>{formatCost((last.spend / last.requests) * 1000)}</dd></div>
+            <div><dt>Revenue per 1K requests</dt><dd>{formatCost((last.revenue / last.requests) * 1000)}</dd></div>
           </dl>
           <Link href="/requests" className="row-link inline-flex items-center gap-1 font-medium text-ink hover:text-accent-ink">Every request <ArrowRight className="size-3.5" /></Link>
         </>
@@ -173,7 +173,7 @@ export default function FeaturedMetricPreview() {
               <dl>
                 <div><dt>Error rate</dt><dd>{formatPercent(month.errorRate, 2)}</dd></div>
                 <div><dt>Latency p95</dt><dd>{formatDuration(month.p95)}</dd></div>
-                <div><dt>Spend</dt><dd>{formatCost(month.spend)}</dd></div>
+                <div><dt>Revenue</dt><dd>{formatCost(month.revenue)}</dd></div>
               </dl>
               <Link href="/usage" className="row-link inline-flex items-center gap-1 font-medium text-ink hover:text-accent-ink">All endpoints <ArrowRight className="size-3.5" /></Link>
             </>
@@ -193,7 +193,7 @@ export default function FeaturedMetricPreview() {
                 <dl>
                   <div><dt>Error rate</dt><dd>{formatPercent(month.errorRate, 2)}</dd></div>
                   <div><dt>Latency p95</dt><dd>{formatDuration(month.p95)}</dd></div>
-                  <div><dt>Spend</dt><dd>{formatCost(month.spend)}</dd></div>
+                  <div><dt>Revenue</dt><dd>{formatCost(month.revenue)}</dd></div>
                 </dl>
                 <Link href="/usage" className="row-link inline-flex items-center gap-1 font-medium text-ink hover:text-accent-ink">All endpoints <ArrowRight className="size-3.5" /></Link>
               </>
@@ -215,7 +215,7 @@ export default function FeaturedMetricPreview() {
       </Specimen>
       <Specimen label="Two figures" wide note="peer: two measures of equal standing, never added together, as two halves of the one lit surface: one edge, one glow, a hairline between. Each half has its own kicker, figure, change, caption, finding and chart; the foot and the actions are the card's, and the actions head it on a row of their own. From 42rem of the card's own width (588px) the halves stand side by side on shared lines.">
         <Asking>
-          <TwoFigures className="min-h-140 w-full" actions={<AskAbout question="What moved requests and spend last week, and why?" />} />
+          <TwoFigures className="min-h-140 w-full" actions={<AskAbout question="What moved requests and revenue last week, and why?" />} />
         </Asking>
       </Specimen>
       <Specimen label="Two figures, narrow" note="Under 42rem of its own width the same card is one column: the first figure, a hairline, the second, each chart at least 220px tall. Nothing is cut.">

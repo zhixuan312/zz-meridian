@@ -55,7 +55,7 @@ export function usageContext(data: UsageData, { sort = 'p95 descending', index =
     { label: M.requests.label, value: c.requests.toLocaleString('en-US'), change: change(c.requests, p.requests, data.period, (n) => n.toLocaleString('en-US')), definition: M.requests.hint },
     { label: M.errorRate.label, value: pct(c.errorRate), change: change(c.errorRate, p.errorRate, data.period, pct), definition: M.errorRate.hint },
     { label: M.p95.label, value: formatDuration(c.p95), change: change(c.p95, p.p95, data.period, formatDuration), definition: M.p95.hint },
-    { label: M.spend.label, value: formatCost(c.spend), change: change(c.spend, p.spend, data.period, formatCost), definition: M.spend.hint },
+    { label: M.revenue.label, value: formatCost(c.revenue), change: change(c.revenue, p.revenue, data.period, formatCost), definition: M.revenue.hint },
     { label: 'Busiest hour of the week', value: `${DAYS[peak.d]} ${String(peak.h).padStart(2, '0')}:00 UTC, ${formatCompact(peak.v)} requests` },
     { label: 'Busiest hour of the day', value: `${peakHour.label} UTC, every weekday summed` },
     { label: 'Requests by region', value: regions.map((r) => `${r.label} ${formatPercent(r.value / totalRegions, 0)} (p50 ${formatDuration(r.p50)})`).join(', '), definition: 'p50 is the median latency: half of the requests finished faster.' },

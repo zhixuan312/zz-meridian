@@ -49,7 +49,7 @@ describe('a control that says it did something did it', () => {
 });
 
 describe('the Customers tiles', () => {
-  it('draw a trend only for a figure a series stands behind: a count of customers and a sum of spend have none', () => {
+  it('draw a trend only for a figure a series stands behind: a count of customers and a sum of revenue have none', () => {
     const html = renderToStaticMarkup(<Tooltip.Provider><CustomersView rows={CUSTOMERS} /></Tooltip.Provider>);
     const tiles = html.slice(html.indexOf('data-split="tiles"'), html.indexOf('<table'));
     expect(tiles).toContain('Customers');

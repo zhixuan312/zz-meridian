@@ -22,7 +22,7 @@ export default async function CustomersPage() {
     <PageFrame
       kicker={<>{app.name} · {app.workspace}</>}
       title="Customers"
-      description="Who is calling the API, on which plan, and what they spent in the last 30 days."
+      description="Who is calling the API, on which plan, and the revenue each brought in the last 30 days."
     >
       <Suspense
         fallback={

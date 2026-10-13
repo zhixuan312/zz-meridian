@@ -11,7 +11,7 @@ const mono = Geist_Mono({ subsets: ['latin'], weight: ['400', '500'], variable: 
 
 export const metadata: Metadata = {
   title: { default: app.name, template: `%s · ${app.name}` },
-  description: `${app.name}: traffic, latency, spend and health for every endpoint.`,
+  description: `${app.name}: traffic, latency, revenue and health for every endpoint.`,
 };
 
 /* The browser chrome's colour is a meta tag, which cannot read a CSS variable: these are the two grounds, by hand. */

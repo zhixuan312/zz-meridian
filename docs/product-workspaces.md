@@ -6,8 +6,8 @@ ZZ Meridian's own dashboard is one product with fifteen destinations, grouped in
 
 A workspace is where a person looks. It decides which destinations the rail and the command palette (⌘K) list, and nothing else: what a person may open and change is decided by their role, page by page. Choose a workspace in the menu at the top of the rail, under Show; the menu opens that workspace's home.
 
-- **[Main](/)**: For everyone who needs the whole product at a glance: how it is doing, who is in it and how it is set up. Its home is Home, which shows requests, error rate, latency and spend for the period you choose, then three regions that summarise the rest. Business counts customers by status and plan, with their spend in the last 30 days. Operation names the services that are not operational and the incidents nobody has resolved. Delivery counts open and waiting tickets, failing verifications, live versions, releases ready to go and releases in testing. A figure that has a list behind it opens that list. Main also holds Members, Settings, and the Atlas (Design system and Docs).
-- **[Business](/business)**: For the people who answer for customers and usage: traffic, who relies on the product and what they ask of it. Its home is Revenue, which shows how many customers there are, what they spent in the last 30 days and who is past due, with a way to Customers. It holds Customers, where a row opens that customer's own page; Usage, which opens with requests, error rate, latency and spend for the period you choose, each against the period before, then shows when traffic comes, where from and which endpoints are slow; and Requests, where a single request opens inside it.
+- **[Main](/)**: For everyone who needs the whole product at a glance: how it is doing, who is in it and how it is set up. Its home is Home, which shows requests, error rate, latency and revenue for the period you choose, then three regions that summarise the rest. Business counts customers by status and plan, with the revenue they brought in the last 30 days. Operation names the services that are not operational and the incidents nobody has resolved. Delivery counts open and waiting tickets, failing verifications, live versions, releases ready to go and releases in testing. A figure that has a list behind it opens that list. Main also holds Members, Settings, and the Atlas (Design system and Docs).
+- **[Business](/business)**: For the people who answer for customers and usage: traffic, who relies on the product and what they ask of it. Its home is Revenue, which shows how many customers there are, the revenue of the last 30 days and who is past due, with a way to Customers. It holds Customers, where a row opens that customer's own page; Usage, which opens with requests, error rate, latency and revenue for the period you choose, each against the period before, then shows when traffic comes, where from and which endpoints are slow; and Requests, where a single request opens inside it.
 - **[Engineering](/engineering)**: For the people who run the product: whether it is up, who holds its keys, what is being fixed, tested and released. Its home is Now, which shows which services are up this moment and the incident nobody has resolved, with a way to Services. It holds Services, Tickets, Tests, Releases and API keys.
 
 The bell in the top bar is the same in every workspace. It lists what needs a person across the product: incidents nobody has resolved, customers past due, failing verifications, and high-priority tickets nobody owns. Each alert opens the page where it is handled: a customer past due, the failing verifications and an unowned ticket open their list filtered to those records (the latest run of each verification that failed; the one ticket by its title), and an incident opens Services.
@@ -18,14 +18,14 @@ The rows follow the navigation's order. The last column names who the rail leave
 
 | Workspace | Destination | Address | What it is | Who may not open it |
 |---|---|---|---|---|
-| Main | Home | `/` | The product at a glance: traffic, reliability, spend, and the three regions | Nobody |
+| Main | Home | `/` | The product at a glance: traffic, reliability, revenue, and the three regions | Nobody |
 | Main | Members | `/members` | Who is in the workspace, their roles and add-ons, and when they last used it | A Viewer |
 | Main | Settings | `/settings` | The workspace's name, and how the console looks and behaves on your device | Nobody |
 | Main | Design system | `/system` | The Atlas: the specification of every part the product is built from | Nobody |
 | Main | Docs | `/system/start/start-a-dashboard` | The guides, opening at Start a dashboard | Nobody |
-| Business | Revenue | `/business` | What the customers spent in the last 30 days, how many there are and who is past due | Nobody |
-| Business | Customers | `/customers` | Who uses the product, by plan and status, with usage and spend | Nobody |
-| Business | Usage | `/usage` | How requests, errors, latency and spend moved over a period, when traffic comes, where it comes from, and which endpoints are slow | Nobody |
+| Business | Revenue | `/business` | The revenue of the last 30 days, how many customers there are and who is past due | Nobody |
+| Business | Customers | `/customers` | Who uses the product, by plan and status, with usage and revenue | Nobody |
+| Business | Usage | `/usage` | How requests, errors, latency and revenue moved over a period, when traffic comes, where it comes from, and which endpoints are slow | Nobody |
 | Business | Requests | `/requests` | The API requests the product received, with status, latency and customer | Nobody |
 | Engineering | Now | `/engineering` | Which services are up this moment and the incident nobody has resolved | Nobody |
 | Engineering | Services | `/services` | Each service's state now and over 90 days, and its incidents | Nobody |

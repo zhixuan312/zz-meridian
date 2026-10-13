@@ -6,20 +6,20 @@ import { formatCost } from '@/lib/format';
 import { freshnessOf, type Fact, type SharedContext } from '@/lib/shared-context';
 import { CUSTOMER_METRICS } from './customers-context';
 
-export type RevenueData = { customers: number; spend: number; pastDue: { name: string; spend: number }[]; updatedAt: string; now: string };
+export type RevenueData = { customers: number; revenue: number; pastDue: { name: string; revenue: number }[]; updatedAt: string; now: string };
 
-export function revenueContext({ customers, spend, pastDue, updatedAt, now }: RevenueData): SharedContext {
+export function revenueContext({ customers, revenue, pastDue, updatedAt, now }: RevenueData): SharedContext {
   const M = CUSTOMER_METRICS;
   const facts: Fact[] = [
     { label: M.customers.label, value: String(customers), definition: M.customers.hint },
-    { label: M.spend.label, value: formatCost(spend), definition: M.spend.hint },
-    { label: M.pastDue.label, value: pastDue.length ? `${pastDue.length}: ${pastDue.map((c) => `${c.name} (${formatCost(c.spend)} spend)`).join(', ')}` : '0, every invoice is paid', definition: M.pastDue.hint },
+    { label: M.revenue.label, value: formatCost(revenue), definition: M.revenue.hint },
+    { label: M.pastDue.label, value: pastDue.length ? `${pastDue.length}: ${pastDue.map((c) => `${c.name} (${formatCost(c.revenue)} revenue)`).join(', ')}` : '0, every invoice is paid', definition: M.pastDue.hint },
   ];
   return {
     view: 'revenue',
     title: 'Revenue',
     address: '/business',
-    scope: 'every customer, spend over the last 30 days',
+    scope: 'every customer, revenue over the last 30 days',
     freshness: freshnessOf(updatedAt, now),
     facts,
     insights: [],

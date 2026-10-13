@@ -43,7 +43,7 @@ describe('a trend chart readout', () => {
     const label = 'Metered inference spend after automatic retries';
     const { container } = render(
       <TrendChart label="Spend per day" format="cost" dates={['2026-10-01', '2026-10-02']}
-        series={[{ key: 'spend', label, values: [1_234_567_890_123.45, 9_876_543_210_987.65] }]} />,
+        series={[{ key: 'cost', label, values: [1_234_567_890_123.45, 9_876_543_210_987.65] }]} />,
     );
     const chart = screen.getByRole('img', { name: /Spend per day/ });
     fireEvent.keyDown(chart, { key: 'Home' });

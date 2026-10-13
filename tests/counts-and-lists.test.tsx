@@ -110,13 +110,13 @@ describe('Services, when more than one incident is open', () => {
 });
 
 describe('what Main tells the assistant of the business', () => {
-  it('is every figure the Business region draws: how many, by status, by plan, and what they spent', async () => {
+  it('is every figure the Business region draws: how many, by status, by plan, and what they paid', async () => {
     const { context, data } = await viewTools.find((t) => t.name === 'home')!.read({ period: '30d' });
     const business = (data as { summary: { business: { byStatus: Record<string, number>; byPlan: Record<string, number> } } }).summary.business;
     const fact = (label: string) => context.facts.find((f) => f.label === label)?.value ?? '';
     for (const [status, n] of Object.entries(business.byStatus)) expect(fact('By status'), status).toContain(`${n} ${status}`);
     for (const [plan, n] of Object.entries(business.byPlan)) expect(fact('By plan'), plan).toContain(`${n} ${plan}`);
-    expect(fact('Spend, last 30 days')).toMatch(/\d/);
+    expect(fact('Revenue, last 30 days')).toMatch(/\d/);
   });
 });
 

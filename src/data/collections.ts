@@ -113,10 +113,10 @@ export const requests: Collection<RequestRecord, 'id'> = arrayCollection({
 export const days: Collection<DailyPoint, 'date'> = arrayCollection({
   name: 'days',
   label: 'Daily totals',
-  description: 'One row per day (UTC): requests answered, errors (5xx and 429), latency p95 in ms and spend in US dollars.',
+  description: 'One row per day (UTC): requests answered, errors (5xx and 429), latency p95 in ms and revenue in US dollars.',
   key: 'date',
   title: (d) => d.date,
-  fields: z.object({ requests: z.number(), errors: z.number(), p95: z.number(), spend: z.number() }),
+  fields: z.object({ requests: z.number(), errors: z.number(), p95: z.number(), revenue: z.number() }),
   // Every day the sample holds: the current period and the one before it, for the longest period it offers.
   rows: [...demoSeries('all').previous, ...demoSeries('all').current],
   allow: [],
@@ -213,25 +213,25 @@ export const activity: Collection<ActivityEvent, 'id'> = arrayCollection({
 });
 
 /**
- * The customers, from the sample's records: plan, requests, spend, the 14-day trend, status and where they are. Read-only
+ * The customers, from the sample's records: plan, requests, revenue, the 14-day trend, status and where they are. Read-only
  * — nobody in the console changes a customer — so a page and a tool read them the same authorized way as every other
  * collection (`read()`), and the `customers:read` grant is asked on that one path.
  */
 export const customers: Collection<CustomerRecord, 'id'> = arrayCollection({
   name: 'customers',
   label: 'Customers',
-  description: 'The workspaces calling the API: their plan, status, requests, spend over 30 days, 14-day trend, error rate and seats.',
+  description: 'The workspaces calling the API: their plan, status, requests, revenue over 30 days, 14-day trend, error rate and seats.',
   key: 'id',
   title: (c) => c.name,
   fields: z.object({
     name: z.string(),
     plan: z.enum(['Enterprise', 'Scale', 'Starter']),
     requests: z.number(),
-    spend: z.number(),
+    revenue: z.number(),
     trend: z.array(z.number()),
     status: z.enum(['active', 'trial', 'past due']),
     region: z.string(),
-    since: z.string(),
+    joined: z.string(),
     errorRate: z.number(),
     seats: z.number(),
   }),

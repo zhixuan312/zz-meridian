@@ -19,7 +19,7 @@ export default function SignInPage() {
       footer={<SampleFooter />}
       kicker={`${app.name} · Console`}
       sentence="Know your API before your customers do."
-      lead="Traffic, latency, spend and health for every endpoint, on your desk, on your phone, and inside the assistant you already use."
+      lead="Traffic, latency, revenue and health for every endpoint, on your desk, on your phone, and inside the assistant you already use."
       aside={<Suspense fallback={<PanelFrame />}><GatedPanel /></Suspense>}
     >
       {/* The proof is the signature itself: point at a day and the line reads it, as every chart in the console does. */}

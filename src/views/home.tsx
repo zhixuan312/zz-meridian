@@ -67,9 +67,9 @@ function Region({ name, description, available, links, children }: { name: strin
 export function MainRegions({ summary: { business, operation, delivery } }: { summary: MainSummary }) {
   const businessRows: KeyValueItem[] = business ? [
     { label: CUSTOMER_METRICS.customers.label, value: business.customers },
-    { label: 'By status', wrap: true, value: <>{Object.entries(business.byStatus).map(([status, n], i) => <span key={status}>{i ? ' · ' : ''}{figure(n, customersAddress({ q: '', plan: 'all', status, sort: 'spend', dir: 'desc', page: '1' }))} {status}</span>)}</> },
-    { label: 'By plan', wrap: true, value: <>{Object.entries(business.byPlan).map(([plan, n], i) => <span key={plan}>{i ? ' · ' : ''}{figure(n, customersAddress({ q: '', plan, status: 'all', sort: 'spend', dir: 'desc', page: '1' }))} {plan}</span>)}</> },
-    { label: CUSTOMER_METRICS.spend.label, value: formatCost(business.spend) },
+    { label: 'By status', wrap: true, value: <>{Object.entries(business.byStatus).map(([status, n], i) => <span key={status}>{i ? ' · ' : ''}{figure(n, customersAddress({ q: '', plan: 'all', status, sort: 'revenue', dir: 'desc', page: '1' }))} {status}</span>)}</> },
+    { label: 'By plan', wrap: true, value: <>{Object.entries(business.byPlan).map(([plan, n], i) => <span key={plan}>{i ? ' · ' : ''}{figure(n, customersAddress({ q: '', plan, status: 'all', sort: 'revenue', dir: 'desc', page: '1' }))} {plan}</span>)}</> },
+    { label: CUSTOMER_METRICS.revenue.label, value: formatCost(business.revenue) },
   ] : [];
   const unwell = operation ? [
     { label: 'Out of service', names: operation.outage, tone: 'critical' as const },
@@ -85,7 +85,7 @@ export function MainRegions({ summary: { business, operation, delivery } }: { su
   ] : [];
   return (
     <Row split="tiles">
-      <Region name="Business" description="Customers and what they spend" available={business !== null} links={[{ href: '/customers', label: 'Customers' }, { href: '/usage', label: 'Usage' }]}>
+      <Region name="Business" description="Customers and what they pay" available={business !== null} links={[{ href: '/customers', label: 'Customers' }, { href: '/usage', label: 'Usage' }]}>
         <KeyValue items={businessRows} />
       </Region>
       <Region name="Operation" description="Services and incidents, now" available={operation !== null} links={[{ href: '/services', label: 'Services' }]}>
@@ -129,7 +129,7 @@ export function HomeBody(data: HomeData) {
         <Card>
           <ShareHome data={data} />
           <EmptyState title="No requests yet" action={<Link href="/keys" className={linkClass}>API keys <ArrowRight className="size-3.5" /></Link>} className="py-16">
-            Traffic, reliability and spend appear here once a key makes its first call.
+            Traffic, reliability and revenue appear here once a key makes its first call.
           </EmptyState>
         </Card>
         <MainRegions summary={data.summary} />
@@ -189,13 +189,13 @@ export function HomeBody(data: HomeData) {
               format={(n) => formatDuration(n)}
             />
             <MetricTile
-              label={HOME_METRICS.spend.label}
-              hint={HOME_METRICS.spend.hint}
+              label={HOME_METRICS.revenue.label}
+              hint={HOME_METRICS.revenue.hint}
               icon={<CircleDollarSign />}
-              value={c.spend}
-              delta={change(c.spend, p.spend)}
+              value={c.revenue}
+              delta={change(c.revenue, p.revenue)}
               intent="neutral"
-              points={series.map((d) => d.spend)}
+              points={series.map((d) => d.revenue)}
               format={(n) => formatCost(n)}
             />
           </div>

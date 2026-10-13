@@ -14,7 +14,7 @@ import { customerFigures } from './customers-context';
 import { releaseFigures } from './releases-context';
 import { ticketCounts } from './tickets-context';
 
-type MainBusiness = { customers: number; byStatus: Record<string, number>; byPlan: Record<string, number>; spend: number };
+type MainBusiness = { customers: number; byStatus: Record<string, number>; byPlan: Record<string, number>; revenue: number };
 type MainOperation = { degraded: string[]; outage: string[]; incidents: { id: string; title: string }[] };
 type MainDelivery = { open: number; waiting: number; failing: number; live: number; ready: number; testing: number };
 export type MainSummary = { business: MainBusiness | null; operation: MainOperation | null; delivery: MainDelivery | null };
@@ -26,10 +26,10 @@ function tally(rows: CustomerRecord[], field: 'status' | 'plan'): Record<string,
   return counts;
 }
 
-/** Every customer: how many, how many of each status and plan, and what they spent in the last thirty days. */
+/** Every customer: how many, how many of each status and plan, and the revenue they brought in the last thirty days. */
 export function businessOf(customers: CustomerRecord[]): MainBusiness {
-  const { customers: count, spend } = customerFigures(customers);
-  return { customers: count, byStatus: tally(customers, 'status'), byPlan: tally(customers, 'plan'), spend };
+  const { customers: count, revenue } = customerFigures(customers);
+  return { customers: count, byStatus: tally(customers, 'status'), byPlan: tally(customers, 'plan'), revenue };
 }
 
 /** The services that are not operational, by name and in the services' order, and each incident nobody has resolved. */

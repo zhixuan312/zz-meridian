@@ -1,6 +1,6 @@
 # Customers page
 
-Who is calling the API, on which plan, and what they spent in the last 30 days, which adds up to the Home's 30-day spend; each customer opens its own page.
+Who is calling the API, on which plan, and the revenue each brought in the last 30 days, which adds up to the Home's 30-day revenue; each customer opens its own page.
 
 Status: beta
 
@@ -9,8 +9,8 @@ Status: beta
 | Row | Pattern | Console | Mobile |
 |---|---|---|---|
 | Masthead | PageFrame: kicker, "Customers", one sentence. No action: nobody in the console creates or changes a customer | One band | Stacked |
-| 1 | Row `tiles`: Customers, Spend, last 30 days (emphasis), Past due with who. None carries a trend: no daily series of customers or of spend by customer exists, and a tile draws only what a series stands behind | Three across | One column |
-| 2 | Data table: search and Status in the Filter bar, the plan as a Segmented view; columns Customer (avatar and name, grow), Plan, Status, Requests, Last 14 days (sparkline, from 896px), Error rate (from 1152px), Spend, Customer since (from 1152px); a row opens that customer's page (`/customers/<id>`) | Columns | Cards: name and status, then plan, requests and spend |
+| 1 | Row `tiles`: Customers, Revenue, last 30 days (emphasis), Past due with who. None carries a trend: no daily series of customers or of revenue by customer exists, and a tile draws only what a series stands behind | Three across | One column |
+| 2 | Data table: search and Status in the Filter bar, the plan as a Segmented view; columns Customer (avatar and name, grow), Plan, Status, Requests, Last 14 days (sparkline, from 896px), Error rate (from 1152px), Revenue, Customer since (from 1152px); a row opens that customer's page (`/customers/<id>`) | Columns | Cards: name and status, then plan, requests and revenue |
 
 The body (rows 1 and 2) is the records template, `Records` from `src/components/templates/records`; its Atlas entry is [/system/pages/template-records](/system/pages/template-records). The page supplies the tiles and the table.
 
@@ -19,7 +19,7 @@ The body (rows 1 and 2) is the records template, `Records` from `src/components/
 | State | What shows |
 |---|---|
 | Loading | `loading.tsx` and the page's fallback: `RecordsSkeleton` from the records template, three tiles over the filter bar and eight skeleton table rows |
-| Default | Sorted by spend, descending |
+| Default | Sorted by revenue, descending |
 | Past due | The status Badge in `critical`; the sparkline in neutral |
 | Error rate over 1% | Written in `warning-ink` |
 | No customers | The first-run empty state: "No customers yet" |
@@ -27,7 +27,7 @@ The body (rows 1 and 2) is the records template, `Records` from `src/components/
 
 ## Data
 
-The `customers` collection, read through `read()` under `customers:read`, like every other collection; its rows are the sample's `CUSTOMERS` (derived from `CUSTOMER_ROWS` in `src/system/fixtures/sample-records.ts`). It is read-only: nobody in the console creates or changes a customer. Spend is metered usage before credits.
+The `customers` collection, read through `read()` under `customers:read`, like every other collection; its rows are the sample's `CUSTOMERS` (derived from `CUSTOMER_ROWS` in `src/system/fixtures/sample-records.ts`). It is read-only: nobody in the console creates or changes a customer. Revenue is what a customer was billed for metered usage, before credits.
 
 The page renders the masthead (title, sentence) itself, outside the boundary that reads the address, so a cold load has them in the first HTML. The tiles and the table wait inside their own boundary.
 
@@ -45,7 +45,7 @@ An agent reads customers through this page's shared context and their requests v
 
 ### What the agent reads
 
-The three tiles with their definitions, every customer in the table's filter and order (with the columns a narrow screen drops: the error rate and the trend are still the person's to read), and what code found: how concentrated spend is, how combined requests moved over the last 7 days against the 7 before and who departs from that by 10 points or more, and which customers fail at twice the median rate. Lists stop at 25 and say how many more there are.
+The three tiles with their definitions, every customer in the table's filter and order (with the columns a narrow screen drops: the error rate and the trend are still the person's to read), and what code found: how concentrated revenue is, how combined requests moved over the last 7 days against the 7 before and who departs from that by 10 points or more, and which customers fail at twice the median rate. Lists stop at 25 and say how many more there are.
 
 ```text
 - Combined requests are up 15% over the last 7 days against the 7 before. Apart from that: Fernway Bank up 36%.

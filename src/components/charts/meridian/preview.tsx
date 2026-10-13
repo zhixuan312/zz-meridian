@@ -24,7 +24,7 @@ function Readout() {
         <div><dt className="t-caption">Errors</dt><dd className="t-num font-medium">{formatPercent(d.errors / d.requests, 2)}</dd></div>
         <div><dt className="t-caption">p95</dt><dd className="t-num font-medium">{formatDuration(d.p95)}</dd></div>
       </dl>
-      <div className="w-40 pb-1"><Sparkline values={current.map((x) => x.spend)} color="neutral" height={32} /></div>
+      <div className="w-40 pb-1"><Sparkline values={current.map((x) => x.revenue)} color="neutral" height={32} /></div>
     </div>
   );
 }
@@ -43,7 +43,7 @@ export default function MeridianPreview() {
       </Specimen>
       <Specimen label="Alone" note="Outside a Meridian, a chart keeps its own cursor and nothing else follows.">
         <Plane on="surface">
-          <TrendChart label="Spend per day" dates={dates} height={150} format="cost" series={[{ key: 's', label: 'Spend', values: current.map((d) => d.spend), kind: 'line' }]} />
+          <TrendChart label="Revenue per day" dates={dates} height={150} format="cost" series={[{ key: 's', label: 'Revenue', values: current.map((d) => d.revenue), kind: 'line' }]} />
         </Plane>
       </Specimen>
     </>

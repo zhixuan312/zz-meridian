@@ -1,5 +1,5 @@
 /**
- * Customers' shared context (decision 0011): who the customers are, where the spend sits, who is moving and who has
+ * Customers' shared context (decision 0011): who the customers are, where the revenue sits, who is moving and who has
  * not paid, as both agents read it. The columns the table drops on a narrow screen are still the person's to read.
  */
 import type { CustomerRecord } from '@/data/sample';
@@ -12,7 +12,7 @@ type CustomersState = { q: string; plan: string; status: string; sort: string; d
 /** The tiles' definitions: the info buttons show them and the agents read them. */
 export const CUSTOMER_METRICS = {
   customers: { label: 'Customers', hint: 'Workspaces with at least one live key.' },
-  spend: { label: 'Spend, last 30 days', hint: 'Metered usage across every customer, before credits.' },
+  revenue: { label: 'Revenue, last 30 days', hint: 'What every customer was billed for metered usage, before credits.' },
   pastDue: { label: 'Past due', hint: 'Customers whose latest invoice is overdue.' },
 } as const;
 
@@ -21,8 +21,8 @@ const sum = (xs: number[]) => xs.reduce((a, b) => a + b, 0);
 export const week = (t: number[]) => (t.length >= 14 && sum(t.slice(0, 7)) ? sum(t.slice(7)) / sum(t.slice(0, 7)) - 1 : null);
 
 /** The three figures the tiles show and the assistant is told, worked out once from every customer the page read. */
-export function customerFigures(rows: CustomerRecord[]): { customers: number; spend: number; pastDue: CustomerRecord[] } {
-  return { customers: rows.length, spend: sum(rows.map((c) => c.spend)), pastDue: rows.filter((c) => c.status === 'past due') };
+export function customerFigures(rows: CustomerRecord[]): { customers: number; revenue: number; pastDue: CustomerRecord[] } {
+  return { customers: rows.length, revenue: sum(rows.map((c) => c.revenue)), pastDue: rows.filter((c) => c.status === 'past due') };
 }
 
 export function customersAddress(f: CustomersState): string {
@@ -30,7 +30,7 @@ export function customersAddress(f: CustomersState): string {
   if (f.q) p.set('q', f.q);
   if (f.plan !== 'all') p.set('plan', f.plan);
   if (f.status !== 'all') p.set('status', f.status);
-  if (f.sort !== 'spend' || f.dir !== 'desc') { p.set('sort', f.sort); p.set('dir', f.dir); }
+  if (f.sort !== 'revenue' || f.dir !== 'desc') { p.set('sort', f.sort); p.set('dir', f.dir); }
   if (f.page !== '1') p.set('page', f.page);
   return `/customers${p.size ? `?${p}` : ''}`;
 }
@@ -40,20 +40,20 @@ export function customersContext(rows: CustomerRecord[], filtered: CustomerRecor
   const field = ({ errors: 'errorRate', trend: 'requests' } as Record<string, keyof CustomerRecord>)[f.sort] ?? (f.sort as keyof CustomerRecord);
   const matching = [...filtered].sort((a, b) => (f.dir === 'desc' ? -1 : 1) * (a[field] > b[field] ? 1 : a[field] < b[field] ? -1 : 0));
   const filters = [f.plan !== 'all' && `plan ${f.plan}`, f.status !== 'all' && `status ${f.status}`, f.q && `matching "${f.q}"`].filter(Boolean).join(', ');
-  const { customers, spend, pastDue } = customerFigures(rows);
+  const { customers, revenue, pastDue } = customerFigures(rows);
   const M = CUSTOMER_METRICS;
   const facts: Fact[] = [
     { label: M.customers.label, value: String(customers), definition: M.customers.hint },
-    { label: M.spend.label, value: formatCost(spend), definition: M.spend.hint },
-    { label: M.pastDue.label, value: pastDue.length ? `${pastDue.length}: ${pastDue.map((c) => `${c.name} (${formatCost(c.spend)} spend)`).join(', ')}` : '0, every invoice is paid', definition: M.pastDue.hint },
-    { label: filters ? 'Matching' : 'Shown', value: `${matching.length} of ${rows.length}, sorted by ${f.sort} ${f.dir === 'desc' ? 'descending' : 'ascending'}: ${listed(matching, (c) => `${c.name} (${c.plan}, ${c.status}, ${formatCompact(c.requests)} requests, ${formatCost(c.spend)}, error rate ${formatPercent(c.errorRate, 2)})`, 'narrow the filters to see them')}` },
+    { label: M.revenue.label, value: formatCost(revenue), definition: M.revenue.hint },
+    { label: M.pastDue.label, value: pastDue.length ? `${pastDue.length}: ${pastDue.map((c) => `${c.name} (${formatCost(c.revenue)} revenue)`).join(', ')}` : '0, every invoice is paid', definition: M.pastDue.hint },
+    { label: filters ? 'Matching' : 'Shown', value: `${matching.length} of ${rows.length}, sorted by ${f.sort} ${f.dir === 'desc' ? 'descending' : 'ascending'}: ${listed(matching, (c) => `${c.name} (${c.plan}, ${c.status}, ${formatCompact(c.requests)} requests, ${formatCost(c.revenue)}, error rate ${formatPercent(c.errorRate, 2)})`, 'narrow the filters to see them')}` },
   ];
 
   const insights: Insight[] = [];
-  if (rows.length && spend) {
-    const bySpend = [...rows].sort((a, b) => b.spend - a.spend);
-    const top3 = sum(bySpend.slice(0, 3).map((c) => c.spend)) / spend;
-    insights.push({ text: `Spend is concentrated: ${bySpend[0].name} brings ${formatPercent(bySpend[0].spend / spend, 0)} of it, and the top three ${formatPercent(top3, 0)}.` });
+  if (rows.length && revenue) {
+    const byRevenue = [...rows].sort((a, b) => b.revenue - a.revenue);
+    const top3 = sum(byRevenue.slice(0, 3).map((c) => c.revenue)) / revenue;
+    insights.push({ text: `Revenue is concentrated: ${byRevenue[0].name} brings ${formatPercent(byRevenue[0].revenue / revenue, 0)} of it, and the top three ${formatPercent(top3, 0)}.` });
   }
   // Who is moving against everyone else: the combined change first, then whoever departs from it by 10 points or more.
   const all = rows[0]?.trend.map((_, d) => sum(rows.map((c) => c.trend[d] ?? 0))) ?? [];
@@ -72,5 +72,5 @@ export function customersContext(rows: CustomerRecord[], filtered: CustomerRecor
   const unknowns = ['A customer\'s error rate counts their 5xx and 429 responses; nothing here says whether the errors were theirs or ours.'];
   if (!rows.length) unknowns.unshift('There are no customers yet.');
 
-  return { view: 'customers', title: 'Customers', address: customersAddress(f), scope: filters ? `customers with ${filters}` : 'every customer, spend over the last 30 days, trend over the last 14', facts, insights, unknowns };
+  return { view: 'customers', title: 'Customers', address: customersAddress(f), scope: filters ? `customers with ${filters}` : 'every customer, revenue over the last 30 days, trend over the last 14', facts, insights, unknowns };
 }
