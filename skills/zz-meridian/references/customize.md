@@ -163,9 +163,10 @@ Rules that make every page look like it belongs:
   body drops when the page arrives: give `LoadingPage` the page's own `kicker` and `meta` when they read no data, `lead`
   when the sentence under the title is a long one (a line of figures and who the page is for), and `actions` in the
   controls' own width; the page draws that sentence inside the same `LeadRoom` and gives its own fallbacks the same
-  room. Home and Revenue do all of it (`optional:app/(dashboard)/(home)/loading.tsx`,
-  `optional:app/(dashboard)/business/loading.tsx`, `optional:src/views/period-actions.tsx`). The room is the standard,
-  whatever a page holds.
+  room. A shorter line keeps a room of its own, and the loading state passes that room as `description`: One
+  customer's line of figures does (`FactsRoom` in `optional:src/views/customer.tsx`). Home and Revenue do all of it
+  (`optional:app/(dashboard)/(home)/loading.tsx`, `optional:app/(dashboard)/business/loading.tsx`,
+  `optional:src/views/period-actions.tsx`). The room is the standard, whatever a page holds.
 - **A file picker** is a visible `Button` that calls `input.click()` on an `<input type="file">` with `tabIndex={-1}`
   and `aria-hidden`, so the keyboard reaches the button and never the hidden input; give the press a state of its own
   ("Choosing the files…") until the change event arrives. The presses count a file chooser that opens as an answer.
@@ -259,6 +260,12 @@ says "requests" on a page about orders is the sample's, not the product's.
 - **A ranked list's row opens the record it names.** Give a Bar list's row an `href` when it names a record that has a
   page (a customer, a model): its label is then the one link to it, the bar and the figure are not a second way
   there, and the folded "N others" row opens nothing. A row that names no record (a region, a status class) stays text.
+- **Every record a page names opens its page.** Wherever a record that has a page is named (a table's cell, a detail
+  page's head and its facts, a tile of a wall, a line worth a look, an alert of the bell), its name is the link to it.
+  The address is worked out on the server: a record that keeps another's name, as a request keeps its customer's, is
+  joined to it by name when it is read (`customerIds` in `optional:src/data/requests.ts`), and a name nothing holds
+  stays text. A link in a table's cell is followed as itself and does not also open the row. Where the whole row is one
+  control (the Requests embed's list) or a link would navigate a host's frame (an embed's table), the name stays text.
 
 **The sample's. Replace it.**
 
@@ -284,6 +291,13 @@ says "requests" on a page about orders is the sample's, not the product's.
   wording of a customer close to the next plan are the sample company's. Keep the standard they show: each part about
   customers names its window, every customer a part names opens its page, the period moves only what the daily
   records answer, and the four states. Write your own.
+- **One customer's parts and their words**: the head (the trail of Business and Customers, the title, and the line of
+  its plan, what it paid in 30 days with its share of revenue, and its requests), the card of where it stands and since
+  when with its owner on our side, the three tiles (Requests, Paid, Error rate), "What it asks for" and "Its latest
+  requests": what `readCustomer` in `optional:src/views/tools.ts` reads for them, how `optional:src/views/customer.tsx`
+  draws them and how `customerContext` says it. Keep the standard they show: no period control and every window named,
+  a part whose read failed says so in its place, one the reader may not read is absent, and the missing-record page for
+  an id that names nobody. Write your own record's page.
 - **`optional:tests/titles.test.ts`** and **`optional:tests/titles-engineering.test.ts`**, which hold the sample's
   words branch by branch; **`optional:tests/facts-config.test.ts`**, which holds the sample's values of `facts`; and
   the cases of `optional:tests/shared-context.test.tsx` that read the sample's headings and facts. Rewrite their cases

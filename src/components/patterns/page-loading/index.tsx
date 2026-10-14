@@ -13,11 +13,12 @@ import { Skeleton } from '@/components/ui/skeleton';
  * `width` follows the page it stands in for: a skeleton at another width would move the content when the page arrives.
  *
  * The rest of the masthead is held the same way, for a page that knows it: `kicker` is the page's own (it needs no
- * data), `lead` keeps the room of a long sentence under the title (`LeadRoom`), `meta` is the page's freshness and
- * `actions` stands where the page's controls will, as wide as they are. A masthead that keeps every one of them is as
- * tall here as on the page, so the body starts where it will stay.
+ * data), `lead` keeps the room of a long sentence under the title (`LeadRoom`), `description` is the room of a line of
+ * the page's own that is not one (One customer's line of figures), `meta` is the page's freshness and `actions` stands
+ * where the page's controls will, as wide as they are. A masthead that keeps every one of them is as tall here as on
+ * the page, so the body starts where it will stay.
  */
-export function LoadingPage({ name, title, sentence, width, kicker, lead, meta, actions, children }: {
+export function LoadingPage({ name, title, sentence, width, kicker, lead, description, meta, actions, children }: {
   name: string;
   title?: string;
   sentence?: boolean;
@@ -26,6 +27,8 @@ export function LoadingPage({ name, title, sentence, width, kicker, lead, meta, 
   kicker?: ReactNode;
   /** The sentence under the title is a long one, a line of figures and who the page is for: its room is kept (`LeadRoom`). */
   lead?: boolean;
+  /** What stands where the page's line under the title will, in its room, for a line the page keeps a room of its own for. */
+  description?: ReactNode;
   /** The page's freshness, when it reads no data. */
   meta?: ReactNode;
   /** What stands where the page's actions will: the same width, so the masthead's last row wraps as the page's does. */
@@ -39,7 +42,7 @@ export function LoadingPage({ name, title, sentence, width, kicker, lead, meta, 
       width={width}
       kicker={kicker ?? <Skeleton className="h-2.5 w-32" />}
       {...heading}
-      description={lead ? <LeadRoom /> : <Skeleton className="mt-2 h-3.5 w-96 max-w-full" />}
+      description={description ?? (lead ? <LeadRoom /> : <Skeleton className="mt-2 h-3.5 w-96 max-w-full" />)}
       meta={meta}
       actions={actions}
     >

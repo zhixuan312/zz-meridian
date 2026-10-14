@@ -1,8 +1,12 @@
+import { cache } from 'react';
 import { gate, may, Unauthenticated } from '@/data/access';
 import { FEATURES } from '@/data/features';
 import { CustomerView } from '@/views/customer';
 import { MissingPage } from '@/views/missing-page';
 import { readCustomer } from '@/views/tools';
+
+/** The page's one read, shared by its metadata and its body. */
+const readOne = cache(readCustomer);
 
 /** The customers whose pages are built ahead of time, the three largest; any other id renders on its first request. */
 export function generateStaticParams() {
@@ -21,7 +25,7 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
     throw error;
   });
   if (!allowed) return { title: FEATURES.customer.title };
-  const found = await readCustomer(id);
+  const found = await readOne(id);
   return found ? { title: found.customer.name } : { title: 'Not found', robots: { index: false } };
 }
 
@@ -30,7 +34,7 @@ export default async function CustomerPage({ params }: { params: Promise<{ id: s
   const { id } = await params;
   const denied = await gate('customer');
   if (denied) return denied;
-  const found = await readCustomer(id);
+  const found = await readOne(id);
   // Rendered here rather than thrown, so the screen is in the first HTML (see MissingPage).
   if (!found) return <MissingPage />;
   return <CustomerView {...found} />;

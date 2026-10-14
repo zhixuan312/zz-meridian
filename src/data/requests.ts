@@ -4,9 +4,10 @@
  * larger than a page, queries its authorized collection itself.
  */
 import type { Query } from '@/lib/collection';
-import { read } from '@/data/read';
+import { attempt } from '@/data/main';
+import { read, readAll } from '@/data/read';
 import { REQUEST_METHODS } from '@/data/request-methods';
-import { REGION_NAMES, type RequestRow } from '@/data/sample';
+import { REGION_NAMES, type CustomerRecord, type RequestRow } from '@/data/sample';
 
 /** Rows a page sends, and the size the table pages by. */
 export const REQUEST_PAGE = 20;
@@ -50,13 +51,30 @@ export function requestsQuery(params: Params) {
 
 /**
  * A request as the log carries it: the record without the time to its first token, which the list does not draw and a
- * page of twenty rows does not send. A request's own page reads the record whole.
+ * page of twenty rows does not send. A request's own page reads the record whole. `customerId` is the id of the customer
+ * it names, which opens that customer's page; a row has none when the customers hold no customer of that name, or
+ * could not be read, and its name is then text.
  */
-export type LoggedRequest = Omit<RequestRow, 'ttft'>;
+export type LoggedRequest = Omit<RequestRow, 'ttft'> & { customerId?: string };
 
 /** A collection row as a page may carry it: the logged request, without the values the data layer worked out. */
 const publicRows = (rows: Record<string, unknown>[]): LoggedRequest[] =>
   rows.map(({ id, at, method, route, status, latency, customer, region, bytes, model }) => ({ id, at, method, route, status, latency, customer, region, bytes, model }) as LoggedRequest);
+
+/**
+ * Each customer's id by its name, worked out on the server from the customers collection: the log names a customer by
+ * name, and a page links the name to the customer's own. Empty when the customers cannot be read.
+ */
+async function customerIds(): Promise<Map<string, string>> {
+  const all = await attempt(async () => (await readAll('customers')).rows as CustomerRecord[]);
+  return new Map((all ?? []).map((c) => [c.name, c.id]));
+}
+
+/** The newest requests of the log from one customer, by its name, newest first. */
+export async function readLatestFrom(customer: string, limit: number): Promise<LoggedRequest[]> {
+  const { rows } = await read('requests', { where: [{ field: 'customer', op: 'eq', value: customer }], sort: { field: 'at', dir: 'desc' }, limit });
+  return publicRows(rows);
+}
 
 const isError = (r: LoggedRequest) => r.status >= 500 || r.status === 429;
 const p95Of = (rs: LoggedRequest[]) => {
@@ -104,8 +122,12 @@ function summarize(rows: LoggedRequest[], total: number, observedAt: string) {
   };
 }
 
-/** One page of the filtered, sorted log, its total, and the summary of the whole filtered set. */
-export async function readRequests(params: Params) {
+/**
+ * One page of the filtered, sorted log, its total, and the summary of the whole filtered set. With `customers`, each
+ * row of the page carries the id of the customer it names, so the console's log opens the customer's page from its
+ * name. The embed asks without it: its rows open through the host, and a link inside a cell would navigate its frame.
+ */
+export async function readRequests(params: Params, { customers = false }: { customers?: boolean } = {}) {
   const { state, query } = requestsQuery(params);
   let page = await read('requests', query);
   let at = state.page;
@@ -114,9 +136,10 @@ export async function readRequests(params: Params) {
     at = Math.ceil(page.total / REQUEST_PAGE);
     page = await read('requests', { ...query, offset: (at - 1) * REQUEST_PAGE });
   }
-  const whole = await read('requests', { where: query.where, sort: query.sort, limit: SUMMARY_ROWS, offset: 0 });
+  const [whole, ids] = await Promise.all([read('requests', { where: query.where, sort: query.sort, limit: SUMMARY_ROWS, offset: 0 }), customers ? customerIds() : null]);
+  const rows = publicRows(page.rows);
   return {
-    rows: publicRows(page.rows),
+    rows: ids ? rows.map((r) => (ids.has(r.customer) ? { ...r, customerId: ids.get(r.customer) } : r)) : rows,
     total: page.total,
     summary: summarize(publicRows(whole.rows), page.total, page.observedAt),
     state: { ...state, page: at },

@@ -51,7 +51,7 @@ describe('the alerts in the shell', () => {
     expect(owing[0].title).toBe(`${pastDue.length} customers are past due`);
     // The alert opens the list filtered to them.
     expect(new URL(owing[0].href, 'http://x').searchParams.get('status')).toBe('past due');
-    // One customer past due is named: the bell says who, where it can.
+    // One customer past due is named: the bell says who, and opens its page.
     const customers = collections.find((c) => c.name === 'customers')!;
     const real = customers.query;
     customers.query = async (q) => {
@@ -60,7 +60,7 @@ describe('the alerts in the shell', () => {
       return { rows, total: answer.total - (answer.rows.length - rows.length) };
     };
     try {
-      expect((await readAlerts()).alerts.filter((a) => pathOf(a.href) === '/customers').map((a) => a.title)).toEqual(['Lumen Studio is past due']);
+      expect((await readAlerts()).alerts.filter((a) => a.id === 'customers:past-due').map((a) => [a.title, a.href])).toEqual([['Lumen Studio is past due', '/customers/lumen-studio']]);
     } finally {
       customers.query = real;
     }

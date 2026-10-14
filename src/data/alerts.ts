@@ -14,6 +14,7 @@ import { readAll } from '@/data/read';
 import type { CustomerRecord } from '@/data/sample';
 import { readTickets } from '@/data/tickets';
 import type { Alert } from '@/components/patterns/shell-tools';
+import { customerAddress } from '@/views/customer-context';
 import { customerFigures, customersAddress } from '@/views/customers-context';
 import { operationOf } from '@/views/main-summary';
 import { testFigures, testsAddress } from '@/views/tests-context';
@@ -50,7 +51,7 @@ async function incidentAlerts(): Promise<{ alerts: Alert[]; observedAt: string }
   return { alerts, observedAt };
 }
 
-/** One alert for the customers past due, linking to Customers filtered to them: the customer's name when there is one, and how many when there are more. */
+/** One alert for the customers past due: the customer's name and its page when there is one, and how many when there are more, linking to Customers filtered to them. */
 async function customerAlerts(): Promise<{ alerts: Alert[]; observedAt: string }> {
   const { rows, observedAt } = await readAll('customers');
   const { pastDue } = customerFigures(rows as CustomerRecord[]);
@@ -62,7 +63,7 @@ async function customerAlerts(): Promise<{ alerts: Alert[]; observedAt: string }
       title: one ? `${pastDue[0].name} is past due` : `${pastDue.length} customers are past due`,
       detail: one ? 'Their latest invoice is overdue' : 'Their latest invoices are overdue',
       at: observedAt,
-      href: customersAddress({ q: '', plan: 'all', status: 'past due', sort: 'revenue', dir: 'desc', page: '1' }),
+      href: one ? customerAddress(pastDue[0].id) : customersAddress({ q: '', plan: 'all', status: 'past due', sort: 'revenue', dir: 'desc', page: '1' }),
       tone: 'warning',
     }],
     observedAt,

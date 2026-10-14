@@ -42,8 +42,8 @@ export default async function RequestsPage({ searchParams }: { searchParams: Sea
   );
 }
 
-/** The three readers of the address share one read: the awaited address is the same object within a request. */
-const readPage = cache(readRequests);
+/** The three readers of the address share one read: the awaited address is the same object within a request. Each row names its customer's page. */
+const readPage = cache((params: Awaited<SearchParams>) => readRequests(params, { customers: true }));
 
 /** The stamp counts from when the rows were read, the data's clock. */
 async function RequestsFreshness({ searchParams }: { searchParams: SearchParams }) {

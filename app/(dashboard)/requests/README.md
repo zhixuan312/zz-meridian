@@ -10,7 +10,7 @@ Status: beta
 |---|---|---|---|
 | Masthead | PageFrame: kicker "ZZ Meridian · Production", title "Requests", one sentence, Freshness, Export CSV | One band | Title, sentence, then Freshness and Export on their own row |
 | 1 | Row `tiles`: three Metric tiles for what the filters let through: requests (emphasis), errors and limits, latency p95, each with its 5-minute shape over the last hour and the last half hour against the one before | Three across | One column |
-| 2 | Data table with a Filter bar in its toolbar: search, Status, Method, Region, the result count | Columns: Request (grow), Status, Latency, Customer and Region (once the table is 896px wide), Size (1152px), Received; a table under 640px wide is the card list | Card list: route and status, then latency, customer and when |
+| 2 | Data table with a Filter bar in its toolbar: search, Status, Method, Region, the result count | Columns: Request (grow), Status, Latency, Customer and Region (once the table is 896px wide), Size (1152px), Received; a table under 640px wide is the card list. A row opens its request; its Customer opens the customer's page | Card list: route and status, then latency, customer and when |
 
 The body (rows 1 and 2) is the records template, `Records` from `src/components/templates/records`: the three tiles are its summary and the table its records.
 
@@ -27,7 +27,7 @@ The body (rows 1 and 2) is the records template, `Records` from `src/components/
 
 ## Data
 
-The `requests` collection is a sample of the requests received, as its description tells an agent: how many requests there were is on Home and Usage, from the `days` and `usage` collections. The server reads one page of it (20 rows and the total) for the filters in the address, through `readRequests()` in `src/data/requests.ts`, and works the three tiles out of the same filtered set (the newest 500 of it, which the tiles say when the set is larger). The page never sends the full set. Error share counts 5xx and 429 responses. Latency above one second is written in `warning-ink`; no other cell is coloured except the status.
+The `requests` collection is a sample of the requests received, as its description tells an agent: how many requests there were is on Home and Usage, from the `days` and `usage` collections. The server reads one page of it (20 rows and the total) for the filters in the address, through `readRequests()` in `src/data/requests.ts`, and works the three tiles out of the same filtered set (the newest 500 of it, which the tiles say when the set is larger). The page never sends the full set. A request keeps its customer's name, not its id: the read works out each row's customer id on the server from the `customers` collection, by name (`readRequests` with `customers`), so the Customer cell is a link to `/customers/<id>`, followed as itself and not also opening the row; a name the customers do not hold, or a log read by someone the customers refuse, stays text. Error share counts 5xx and 429 responses. Latency above one second is written in `warning-ink`; no other cell is coloured except the status.
 
 ## Streaming
 
@@ -43,7 +43,7 @@ Export CSV is a link to `/api/export/requests` with the same filters and sort: t
 
 ## Embed view
 
-`/embed/requests`: the tool `zz_meridian_requests { status?, method?, region?, q? }`. Inline: the five latest matching requests as a compact list (method, route, customer, when, latency, status), the count, and Ask; Expand when more match. Fullscreen: this page's table and filters, with the provenance line ("Set by Claude"). The view shares the count, the filters and the visible IDs with the model.
+`/embed/requests`: the tool `zz_meridian_requests { status?, method?, region?, q? }`. Inline: the five latest matching requests as a compact list (method, route, customer, when, latency, status), each row one control that opens the request, the count, and Ask; Expand when more match. Fullscreen: this page's table and filters, with the provenance line ("Set by Claude"). The tool's rows carry no customer id, so the customer is text in both: a link there would navigate the host's frame. The view shares the count, the filters and the visible IDs with the model.
 
 ## Surfaces
 

@@ -1,8 +1,10 @@
 import { gate, may, Unauthenticated } from '@/data/access';
+import { attempt } from '@/data/main';
 import { read } from '@/data/read';
 import { readEndpoints } from '@/data/metrics';
 import { ACTIONS, FEATURES } from '@/data/features';
-import { FEATURED_REQUEST_IDS, traceOf, payloadsOf, type RequestRow } from '@/data/sample';
+import { FEATURED_REQUEST_IDS, traceOf, payloadsOf, type CustomerRecord, type RequestRow } from '@/data/sample';
+import { customerAddress } from '@/views/customer-context';
 import { MissingPage } from '@/views/missing-page';
 import { actionLine } from '@/views/no-access';
 import { RequestView } from '@/views/request';
@@ -16,6 +18,15 @@ const byId = async (id: string) => {
   const { rows, observedAt } = await read('requests', { where: [{ field: 'id', op: 'eq', value: id }] });
   return { request: rows[0] as RequestRow | undefined, observedAt };
 };
+
+/**
+ * The page of the customer a request names: the request keeps the customer's name, so its id is worked out here, on the
+ * server, from the customers. Null when they hold no customer of that name or cannot be read: the name is then text.
+ */
+async function customerPage(name: string) {
+  const found = await attempt(async () => (await read('customers', { where: [{ field: 'name', op: 'eq', value: name }], limit: 1 })).rows[0] as CustomerRecord | undefined);
+  return found ? customerAddress(found.id) : null;
+}
 
 /**
  * The record's own title, for a person who may open the request: the id, or the missing-request screen. A person who may
@@ -44,6 +55,7 @@ export default async function RequestPage({ params }: { params: Promise<{ id: st
   // After the gate: what this person may do with the record, so Replay is drawn only where it may be used. A Member
   // holds `requests:read` without `requests:create`, so it is withheld for them and the line says who can.
   const mayReplay = await may(ACTIONS['replay-request'].needs);
-  const route = (await readEndpoints()).find((e) => e.method === r.method && e.route === r.route);
-  return <RequestView request={r} trace={traceOf(r)} payloads={payloadsOf(r)} routeP95={route?.p95 ?? null} now={observedAt} mayReplay={mayReplay} replayLine={actionLine('replay-request')} replay={replayRequest} />;
+  const [endpoints, customerHref] = await Promise.all([readEndpoints(), customerPage(r.customer)]);
+  const route = endpoints.find((e) => e.method === r.method && e.route === r.route);
+  return <RequestView request={r} trace={traceOf(r)} payloads={payloadsOf(r)} routeP95={route?.p95 ?? null} now={observedAt} mayReplay={mayReplay} replayLine={actionLine('replay-request')} replay={replayRequest} customerHref={customerHref} />;
 }

@@ -74,12 +74,14 @@ function Code({ body, label }: { body: string; label: string }) {
 /** `replay` is the page's Server Action: it sends the request again and answers with the new request, or why not. */
 /** `mayReplay` is what the page asked of the action table, so the control is drawn only for a failed request the person */
 /** may replay, and `replayLine` is who can, shown once in its place. Both default to the control being available. */
-export function RequestView({ request: r, trace, payloads, routeP95, now, replay, mayReplay = true, replayLine }: { request: RequestRow; trace: Span[]; payloads: { request: string | null; response: string }; /** The route's p95 over the period, for "is this slow?". */ routeP95: number | null; now: string; replay: (id: string) => Promise<{ ok: true; id: string; status: number } | { ok: false; error: string }>; mayReplay?: boolean; replayLine?: string }) {
+/** `customerHref` is the page of the customer it names, worked out by the page; without one the name is text. */
+export function RequestView({ request: r, trace, payloads, routeP95, now, replay, mayReplay = true, replayLine, customerHref }: { request: RequestRow; trace: Span[]; payloads: { request: string | null; response: string }; /** The route's p95 over the period, for "is this slow?". */ routeP95: number | null; now: string; replay: (id: string) => Promise<{ ok: true; id: string; status: number } | { ok: false; error: string }>; mayReplay?: boolean; replayLine?: string; customerHref?: string | null }) {
   useShareView(requestContext({ request: r, trace, routeP95, statusText: STATUS_TEXT[r.status] ?? '', payloadBytes: { request: payloads.request?.length ?? null, response: payloads.response.length }, now }));
   const router = useRouter();
   const usage = usageOf(r);
   const failed = r.status >= 500 || r.status === 429;
   const [replaying, startReplay] = useTransition();
+  const customer = customerHref ? <Link href={customerHref} className="row-link">{r.customer}</Link> : r.customer;
   const sendAgain = () => startReplay(async () => {
     const result = await replay(r.id);
     if (!result.ok) return toast({ tone: 'critical', title: 'Not replayed', description: result.error });
@@ -96,7 +98,7 @@ export function RequestView({ request: r, trace, payloads, routeP95, now, replay
         facts: [
           <span key="r" className="font-mono text-[0.9em] text-ink">{r.method} {r.route}</span>,
           formatDuration(r.latency),
-          r.customer,
+          customer,
           formatRelative(r.at, new Date(now)),
         ],
         primary: (
@@ -126,7 +128,7 @@ export function RequestView({ request: r, trace, payloads, routeP95, now, replay
                   { label: 'Endpoint', value: <span className="font-mono text-xs"><span className="text-ink-3">{r.method}</span> {r.route}</span>, title: `${r.method} ${r.route}` },
                   { label: 'Latency', value: <span className={r.latency > 1000 ? 'font-medium text-warning-ink' : undefined}>{formatDuration(r.latency)}</span> },
                   { label: 'Response size', value: formatBytes(r.bytes) },
-                  { label: 'Customer', value: <Link href={`/requests?q=${encodeURIComponent(r.customer)}`} className="link">{r.customer}</Link>, title: r.customer },
+                  { label: 'Customer', value: customerHref ? <Link href={customerHref} className="link">{r.customer}</Link> : r.customer, title: r.customer },
                   { label: 'Region', value: r.region, mono: true },
                   ...(r.replayOf ? [{ label: 'Replay of', value: <Link href={`/requests/${r.replayOf}`} className="link font-mono text-xs">{r.replayOf}</Link>, title: r.replayOf }] : []),
                   ...(r.model

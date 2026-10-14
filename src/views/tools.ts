@@ -11,7 +11,7 @@ import { can, requireNeed, resolveAccess } from '@/data/access';
 import { clock } from '@/data/collections';
 import { FEATURES } from '@/data/features';
 import { read, readAll } from '@/data/read';
-import { readRequests, REQUEST_PAGE } from '@/data/requests';
+import { readLatestFrom, readRequests, REQUEST_PAGE } from '@/data/requests';
 import { readReleases, readRuns } from '@/data/engineering';
 import { attempt } from '@/data/main';
 import { readTickets } from '@/data/tickets';
@@ -25,7 +25,7 @@ import { defineViewTool, type ViewTool } from '@/lib/shared-context';
 import { usageContext, usageHead, type UsageData } from './usage-context';
 import { usageFigures } from '@/data/usage';
 import { customerRow, customersContext, under } from './customers-context';
-import { customerContext, type CustomerData } from './customer-context';
+import { LATEST, customerContext, type CustomerData } from './customer-context';
 import { servicesContext, servicesHead, type ServicesData } from './services-context';
 import { SCOPES } from './key-scopes';
 import { keysContext } from './keys-context';
@@ -200,17 +200,35 @@ export const revenueTool = defineViewTool({
   },
 });
 
-/** One customer's page data, or null when no customer has the id: the page and the tool read it the same way. */
+/**
+ * One customer's page data, or null when no customer has the id: the page and the tool read it the same way. Beside
+ * its record, the product's revenue and error rate over the same 30 complete days and its newest requests in the
+ * sampled log, each read apart: one that fails is null and its part says so, and one the person may not read is left
+ * out, with nothing in its place.
+ */
 export async function readCustomer(id: string): Promise<CustomerData | null> {
   const { rows } = await read('customers', { where: [{ field: 'id', op: 'eq', value: id }], limit: 1 });
   const customer = rows[0] as CustomerRecord | undefined;
-  return customer ? { customer, updatedAt: updatedAt(), now: clock().toISOString() } : null;
+  if (!customer) return null;
+  const access = await resolveAccess();
+  const [mayDays, mayLog] = await Promise.all([can(access, 'days', 'read'), can(access, 'requests', 'read')]);
+  const [days, latest] = await Promise.all([
+    mayDays ? attempt(() => readDays('30d')) : undefined,
+    mayLog ? attempt(() => readLatestFrom(customer.name, LATEST)) : undefined,
+  ]);
+  return {
+    customer,
+    ...(days === undefined ? {} : { product: days && { revenue: days.totals.current.revenue, errorRate: days.totals.current.errorRate } }),
+    ...(latest === undefined ? {} : { latest }),
+    updatedAt: updatedAt(),
+    now: clock().toISOString(),
+  };
 }
 
 export const customerTool = defineViewTool({
   name: 'customer',
   title: 'Customer',
-  description: 'One customer by its id: its plan and status, what it asked of the API and was billed in the last 30 days, its error rate, and how its last 14 days moved.',
+  description: 'One customer by its id: its plan and where it stands since when, its owner on our side, what it asked of the API and was billed in the last 30 days with its share of revenue, its error rate against the product\'s, how its last 14 days moved, what it asks for by endpoint, and its latest requests in the sampled log.',
   needs: FEATURES.customer.needs,
   input: z.object({ id: z.string().min(1).max(60) }),
   async read({ id }) {

@@ -2,6 +2,7 @@
 // Named cli-* so the payload leaves it out: it is about the sample's own page, which a product replaces.
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { renderToStaticMarkup } from 'react-dom/server';
+import { Tooltip } from 'radix-ui';
 
 const jar = vi.hoisted(() => ({ value: undefined as string | undefined }));
 const spy = vi.hoisted(() => ({ reads: [] as string[] }));
@@ -34,7 +35,8 @@ import RevenuePage from '../app/(dashboard)/business/page';
 
 beforeEach(() => { jar.value = undefined; spy.reads.length = 0; });
 
-const markup = async (node: Promise<unknown>) => renderToStaticMarkup((await node) as never);
+// The root layout's providers hold the tooltips' one provider, which a page drawn alone has to be given.
+const markup = async (node: Promise<unknown>) => renderToStaticMarkup(<Tooltip.Provider>{(await node) as never}</Tooltip.Provider>);
 const params = (id: string) => ({ params: Promise.resolve({ id }) });
 
 describe("a customer's page", () => {
@@ -50,10 +52,12 @@ describe("a customer's page", () => {
     jar.value = 'members_1';
     const html = await markup(CustomerPage(params('ambervale-motors')));
     expect(html).toContain('Ambervale Motors');
-    expect(html).toMatch(/>Left</);
+    expect(html).toMatch(/>Left on \d{2} [A-Z][a-z]{2,3} \d{4}</);
     // Its 30 days hold nothing: no requests and no revenue, drawn as zeros and never as a dash or a blank.
-    expect(html.replace(/<[^>]*>/g, ' ')).toMatch(/Requests, 30 days\s+0\s/);
-    expect(html.replace(/<[^>]*>/g, ' ')).toMatch(/Revenue, 30 days\s+\$0\s/);
+    const text = html.replace(/<[^>]*>/g, ' ');
+    expect(text).toMatch(/Scale · \$0 in 30 days · 0\.0% of revenue · 0 requests/);
+    expect(text).toMatch(/Requests\s+0\s/);
+    expect(text).toMatch(/Paid\s+\$\s*0\s/);
     // Fourteen days of nothing still draw: a flat line, and no figure that is not a number.
     expect(html).not.toMatch(/NaN|Infinity/);
     expect(await generateMetadata(params('ambervale-motors'))).toEqual({ title: 'Ambervale Motors' });
