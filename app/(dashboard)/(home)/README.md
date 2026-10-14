@@ -58,8 +58,8 @@ Below 1024px every row stacks: the revenue card first, then its three tiles (thr
 | Empty (no complete day kept) | The body is one card that says "No requests have arrived yet" with a link to API keys; no tile, chart or figure is drawn, and the page is headed by its name |
 | Partial (a read failed) | That part's card, with its title, says what could not be read ("The usage by model could not be read") in its own place, and every other part stands; a tile whose figure could not be read shows a dash and "Could not be read". Worth knowing leaves out the lines whose reads failed; when nothing could be said and something was not read, it says so. The context says what could not be read |
 | All time (no previous period) | The period is every complete day kept, and nothing comes before it: the featured figure draws no change pill, and each tile with a change (Requests, Compute cost, Compute in use and Gross margin) says "No earlier period to compare" where its change would be. Nothing is compared with zero |
-| Stale | Freshness turns to warning: "Stale · updated 47 min ago" |
-| Error | `error.tsx`, inside the shell at the data width, like every page: the title says the view did not load and nothing was changed; one card says retrying usually works, with Retry (primary), a second way out read from `nav` (Check Services where the product has one, the home page where it does not), and the reference |
+| Stale | Freshness turns to warning: "Stale · 47 min ago" |
+| Error | `error.tsx`, inside the shell at the data width, like every page: the title says the view did not load, and the line under it that nothing was changed; one card says retrying usually works, with Retry (primary), a second way out read from `nav` (Check Services where the product has one, the home page where it does not), and the reference |
 
 ## Data
 
@@ -78,7 +78,7 @@ The page's client is handed these figures and lines and works nothing out beyond
 
 - **Console**: as above.
 - **Mobile**: one column, the revenue card first; the featured chart is 220px tall; every row of tiles one column at 390px.
-- **Embed**: `/embed/home` (tool `zz_meridian_home { period }`). Inline: the revenue card and its three tiles, with Ask on the card. Fullscreen: the nine parts under the embed head. Compute cost and gross margin follow the page's rule on both.
+- **Embed**: `/embed/home` (tool `zz_meridian_home { period }`). Inline: the revenue card and its three tiles, with Ask on the card. Fullscreen: parts 2 to 9 under the embed head. Compute cost and gross margin follow the page's rule on both.
 
 ## Agents
 

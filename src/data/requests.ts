@@ -136,7 +136,7 @@ export async function readRequests(params: Params, { customers = false }: { cust
     at = Math.ceil(page.total / REQUEST_PAGE);
     page = await read('requests', { ...query, offset: (at - 1) * REQUEST_PAGE });
   }
-  const [whole, ids] = await Promise.all([read('requests', { where: query.where, sort: query.sort, limit: SUMMARY_ROWS, offset: 0 }), customers ? customerIds() : null]);
+  const [whole, ids] = await Promise.all([read('requests', { where: query.where, sort: { field: 'at', dir: 'desc' }, limit: SUMMARY_ROWS, offset: 0 }), customers ? customerIds() : null]);
   const rows = publicRows(page.rows);
   return {
     rows: ids ? rows.map((r) => (ids.has(r.customer) ? { ...r, customerId: ids.get(r.customer) } : r)) : rows,

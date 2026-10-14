@@ -39,12 +39,12 @@ If a pair fails, lower the chroma, or give the preset a lightness override for t
 
 ## 4. Connect your data
 
-Your pages, your server actions and the assistant read and change records through `src/data/`, and read nothing else: `collections.ts` holds the collections, `access.ts` says who the request is and what they may do, and `read.ts` is the pages' authorized, cached `read(name, query)`. Replace the collections with yours (rows from your API, or `arrayCollection` while you build), replace the policy in `access.ts` with your session and permissions, add `src/data/<product>.ts` for any other types and queries, and point your pages at them. What the sample pages still draw as a constant (types, the regions list, the daily series the sign-in page shows) comes from `src/data/sample.ts`, and the bell's alerts are worked out by `readAlerts` in `src/data/alerts.ts`. The template's own sample, ZZ Meridian's own dashboard, lives in `src/system/fixtures/` because the Atlas and every card preview read it; leave it there. Shape your records to the types the patterns define (`ActivityEvent`, `Incident`, `Service`) and they render without adapters. Two rules carry over:
+Your pages, your server actions and the assistant read and change records through `src/data/`, and read nothing else: `collections.ts` holds the collections, `access.ts` says who the request is and what they may do, and `read.ts` is the pages' authorized, cached `read(name, query)`. Replace the collections with yours (rows from your API, or `arrayCollection` while you build), replace the policy in `access.ts` with your session and permissions, add `src/data/<product>.ts` for any other types and queries, and point your pages at them. What the sample pages still draw as a constant (types and the regions list) comes from `src/data/sample.ts`, the daily series the sign-in page shows from `src/data/sign-in.ts`, and the bell's alerts are worked out by `readAlerts` in `src/data/alerts.ts`. The template's own sample, ZZ Meridian's own dashboard, lives in `src/system/fixtures/` because the Atlas and every card preview read it; leave it there. Shape your records to the types the patterns define (`ActivityEvent`, `Incident`, `Service`) and they render without adapters. Two rules carry over:
 
 - Read freshness from when the data arrived (the newest ingest time), never from `now()`.
 - Return `null` for "not measured"; the formatters render it as a dash, never as zero.
 
-The console keeps its collection-backed pages (Home, Members, API keys, Tickets, Tests, Releases) fresh without a reload: one stream per tab carries a hint that names only a collection, and the page refreshes through the same authorized `read()`. The sample stream is a single process; across processes, `skills/zz-meridian/references/live.md` holds the Postgres and Redis adapters a product writes for itself.
+The console keeps its collection-backed pages (Now, Members, API keys, Tickets, Tests, Releases) fresh without a reload: one stream per tab carries a hint that names only a collection, and the page refreshes through the same authorized `read()`. The sample stream is a single process; across processes, `skills/zz-meridian/references/live.md` holds the Postgres and Redis adapters a product writes for itself.
 
 ## 5. Decide who may do what
 
@@ -60,7 +60,7 @@ pnpm gate   # the gate, which fails a nav item whose needs is not a need
 pnpm test   # a test fails a surface that restates a need instead of naming the table
 ```
 
-The rail and the command palette draw only the destinations the signed-in person satisfies, but that is presentation, not the gate: every page refuses on its own — a person who may not open it gets the NoAccess view as a normal 200, and a request with no session goes to `/sign-in`. `skills/zz-meridian/references/customize.md` has the reference for the whole access layer.
+The rail and the command palette draw only the destinations the signed-in person satisfies, but that is presentation, not the gate: every page refuses on its own — a person who may not open it gets the product's `refusal` as a normal 200 (the NoAccess view under the sample's `explain`), and a request with no session goes to `/sign-in`. `skills/zz-meridian/references/customize.md` has the reference for the whole access layer.
 
 ## 6. Arrange your pages
 

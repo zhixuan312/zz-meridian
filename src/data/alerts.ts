@@ -1,6 +1,6 @@
 /**
  * The alerts behind the shell's bell: the product's exceptions, each worked out from a read the caller may make and by
- * the same functions Main's regions and the detail pages use, so a count in the bell and the same count on its page
+ * the same functions Home, Now and the detail pages use, so a count in the bell and the same count on its page
  * cannot differ. Nothing here is typed by hand.
  *
  * Each kind is read apart from the others: one that cannot be read leaves out its own alerts and keeps the rest. A
@@ -10,6 +10,7 @@ import { resolveAccess } from '@/data/access';
 import { readRuns } from '@/data/engineering';
 import type { Incident } from '@/components/patterns/incident-card';
 import { clock } from '@/data/collections';
+import { attempt } from '@/data/main';
 import { readAll } from '@/data/read';
 import type { CustomerRecord } from '@/data/sample';
 import { readTickets } from '@/data/tickets';
@@ -22,15 +23,6 @@ import { ticketsAddress, unownedTickets } from '@/views/tickets-context';
 
 /** An alert as the shell's tools take it, and the time of the read that told it. */
 export type AlertsRead = { alerts: Alert[]; now: string };
-
-/** A kind of alert whose read throws is missing, not empty. */
-async function attempt<T>(kind: () => Promise<T>): Promise<T | null> {
-  try {
-    return await kind();
-  } catch {
-    return null;
-  }
-}
 
 const later = (a: string, b: string) => (a > b ? a : b);
 

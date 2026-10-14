@@ -53,7 +53,7 @@ The ranking is shared as structured context by the view (`useShareView`), so an 
 
 ## Accessibility
 
-A labelled list (`aria-label`); each row's label and value are text, so the bar is reinforcement, never the only signal. A linked row is one link a row, named by its label, so a keyboard has one Tab stop a row and a screen reader hears each name once. The accent bar holds 3.73:1 dark, 5.91:1 light on `surface`.
+A labelled list (`aria-label`); each row's label and value are text, so the bar is reinforcement, never the only signal. A linked row is one link a row, named by its label, so a keyboard has one Tab stop a row and a screen reader hears each name once. The accent bar holds 3.71:1 dark, 5.71:1 light on `surface`.
 
 ## Content
 

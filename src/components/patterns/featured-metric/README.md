@@ -67,7 +67,7 @@ As Metric tile: `value`, `points`, `delta`, `intent`, `format`, and `compare` fo
 - A figure reads the page's cursor only when its `points` has one value for each of the Meridian's dates, which is the rule a chart joins the Meridian by. With any other number of points, or with none, it keeps the period's value and its change while the rest of the page reads the pointed day.
 - `pointLabel` names a pointed point from its date. Leave it out when a point is a day. Give it when a point is a week, a month or a release, so the pill says "Week of 14 Sept" and not a bare date.
 - With `peer`, each half reads its own `points`, and `pointLabel` names the point for both.
-- A figure is never cut. Past nine characters of number (`FIGURE_MAX`), `fitFigure` sets it at a glance with its unit kept: "9,876,543,210" reads "9.9B", "$1,234,567.89" reads "$1.2M". The exact amount is in the table behind the figure. The Extreme values specimen holds the largest figures the formatters print.
+- A figure is never cut. Past nine characters of number (`FIGURE_MAX`), `fitFigure` sets it at a glance with its unit kept: "9,876,543,210" reads "9.9B", "$1,234,567.89" reads "$1.2M". The exact amount is in the table behind the figure. The two Extreme states hold the largest figures the formatters print.
 
 ## States
 
@@ -81,7 +81,7 @@ As Metric tile: `value`, `points`, `delta`, `intent`, `format`, and `compare` fo
 | Without a foot, a finding or actions | Nothing is drawn in their place |
 | Two figures, wide | Two halves side by side on shared rows, from 42rem of the card's width (588px) |
 | Two figures, narrow | One column, a hairline between the halves |
-| Loading | A Skeleton of the figure and the chart area inside the same card |
+| Loading | The card has none of its own: the page's loading state draws its shape, a Skeleton of the figure and the chart area (Home's `loading.tsx`) |
 
 The card has no hover, pressed or focus state of its own: its chart, its actions and the foot's link bring theirs.
 
@@ -94,11 +94,11 @@ The card has no hover, pressed or focus state of its own: its chart, its actions
 
 - **Console**: the wide cell of the first row; with two figures, the whole first row.
 - **Mobile**: full width; the chart keeps at least 220px. Two figures are one column, the first figure first, and the foot's link wraps under its figures.
-- **Embed**: fullscreen views use it as on the console; an inline view leads with Metric tiles instead, because the host's height is short.
+- **Embed**: fullscreen views use it as on the console; an inline view leads with it too, its tiles under it, as Home's view draws it.
 
 ## Agents
 
-The featured number is the first fact an embed view shares with the model. A finding is computed by code from the page's data, and the page's context carries the same sentence, written once, so a person and an agent read one fact and not two versions of it. A page with two figures shares both in its context, each with its own unit and change, and never their sum.
+The featured number is one of the facts an embed view shares with the model. A finding is computed by code from the page's data, and the page's context carries the same sentence, written once, so a person and an agent read one fact and not two versions of it. A page with two figures shares both in its context, each with its own unit and change, and never their sum.
 
 ## Accessibility
 

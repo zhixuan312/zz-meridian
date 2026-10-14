@@ -62,8 +62,8 @@ Brings Meridian into the project in the current folder. It refuses, and copies n
 Then, in this order:
 
 1. Copies the Route A set: `tokens/`, `src/styles/`, `src/components/` (without `README.md` and `preview.tsx`),
-   `src/app.config.ts`, `src/views/console-chrome.tsx`, the `src/lib` modules the components import, `src/lib/assistant/prompt.ts`,
-   `app/icon.ts`, `scripts/`, `tests/setup.ts` and the config files. The list is an array in `cli/src/adopt.ts`; the
+   `src/app.config.ts` (written with the project's own pages as its navigation), `src/views/console-chrome.tsx`, the `src/lib` modules the components import, `src/lib/assistant/prompt.ts`,
+   `app/icon.ts`, `scripts/`, `tests/setup.ts` and the config files. The list is in `cli/src/ownership.ts` (`adoptSetOf`); the
    fixture test (below) is what keeps it complete. A file of the same name that differs is never overwritten: `adopt`
    lists the conflicts and stops before writing anything.
 2. Merges dependencies and scripts into their `package.json`, keeping their versions where newer and compatible; adds
@@ -71,7 +71,8 @@ Then, in this order:
 3. Replaces their global stylesheet with the template's `app/globals.css`, keeping theirs as `app/globals.before.css`
    for the agent to port from.
 4. Runs `scripts/brand.ts --existing` with the brand arguments given (or the name from their `package.json`): the name,
-   the accent, the contrast gate, and the Meridian rules appended to their `AGENTS.md`.
+   the accent and the contrast gate. Then it writes Meridian's managed block into their `AGENTS.md`, and `docs/brief.md`
+   when they have none.
 5. Installs the skill and writes the manifest.
 6. Runs their package manager's install, `next typegen` and `tsc --noEmit`, and prints the result and the next step:
    the skill's Route A from step 2, with the template to read from at the same version.
@@ -108,7 +109,7 @@ three edits named below. It needs a project that adopted or created Meridian 0.3
    changes, then runs the install. Applied: untouched replacements, additions and untouched removals. Staged: every
    managed file the team changed or deleted, or collided with. The only team files it edits are `package.json` (missing
    dependencies and scripts, older ones of the same major, and entries still exactly as the earlier release wrote them;
-   the framework `next`, `react` and `react-dom` always follows the target), the managed block in `AGENTS.md`, and the
+   the framework `next`, `react` and `react-dom` is always among them), the managed block in `AGENTS.md`, and the
    lockfile the install rewrites. Everything else in `MERGE.md` is advice.
 3. **The report.** `MERGE.md` lists every staged item as `file:<path>` and every change beyond copying files as
    `migration:<id>` (a dependency the team pinned itself, a script, a release's own migration), with the paths of the
@@ -146,9 +147,9 @@ reports as `migration:<id>` because it cannot make them. An entry applies when t
 than its `since` and the target is not, and its `applies(root)` returns the paths that still have the old shape, or
 null. It only reads, and only team-owned files (the ownership rule's managed paths are skipped); a file it cannot read is
 absent. A project already on the new shape gets no line. Every entry carries `gate` and `build` as its checks (`verify-modes`, `agent-reads-section`, `nav-needs` and `agent-reads-own-group`, `gate` alone), and its
-instructions name the section of a reference (`cache.md`, `live.md`, `validation.md`, `agents.md`, `customize.md`) or of the Start guide to follow.
+instructions name the section of a reference (`cache.md`, `live.md`, `validation.md`, `agents.md`, `customize.md`), of the Start guide or of `docs/assistant.md` to follow.
 
-Five arrived after 0.5.0 and are resolved as the skill's `references/update.md` says: `share-view-context` and `agent-reads-section` (0.9.0), `assistant-view-tools` (0.10.0), `nav-needs` (0.13.0) and `agent-reads-own-group` (0.15.0). The ten of 0.5.0 are:
+Six arrived after 0.5.0 and are resolved as the skill's `references/update.md` says: `share-view-context` and `agent-reads-section` (0.9.0), `assistant-view-tools` (0.10.0), `nav-needs` (0.13.0), `agent-reads-own-group` (0.15.0) and `refusal-declared` (0.16.0). The ten of 0.5.0 are:
 
 | Id | Reported when a team-owned file still has | Completion step |
 |----|-------------------------------------------|-----------------|
@@ -163,11 +164,10 @@ Five arrived after 0.5.0 and are resolved as the skill's `references/update.md` 
 | `live-provider` | `src/data/collections.ts` without `src/data/live-actions.ts`, or a dashboard layout with neither `LiveProvider` nor `ConsoleLive` | `live.md`, "The live starters" and "Refreshing": add the five files and the provider |
 | `authorized-endpoints` | `app/api/assistant/route.ts`, or an `actions.ts` Server Action file, without a `resolveAccess` call | `cache.md`, "The assistant route": call `resolveAccess()` first and bring `tools.ts` and `respond.ts` over |
 
-The consumer smoke (`--update`) updates a project adopted and a project created with each published release from 0.3.0 on. It resolves the nine migrations that touch source on the 0.3.0 and 0.4.0 origins, as `references/update.md` tells an agent: a created origin, whose files are the template's,
+The consumer smoke (`--update`) updates a project adopted and a project created with each of the newest releases before this one (`--origins`: one at release, three weekly). It resolves the migrations the update reports, as `references/update.md` tells an agent: a created origin, whose files are the template's,
 takes the release's versions of the affected team-owned files and the files that arrived with them; an adopted origin,
 whose pages are the team's own, makes the minimal edit the instruction names. It then records the resolutions and
-finalizes, so the gate and the build run on the result, and checks the team's own files kept their bytes. A 0.4.0
-created project has no conflict at all, and its pending migrations alone keep the update from complete.
+finalizes, so the gate and the build run on the result, and checks the team's own files kept their bytes.
 
 ### The keep register
 
@@ -222,10 +222,10 @@ Modelled on the release pipeline of the owner's earlier packages, one package in
    inside it); and the consumer smoke from the built tarball (step 4). The full, perf and recovery suites are never
    run here: they run weekly (below).
 3. **Pack and assert, before anything is irreversible**: `npm pack` in `cli/`, then on the tarball: the bin has its
-   `#!/usr/bin/env node` line; `payload/skills/zz-meridian/SKILL.md` and its references are there; the component count
-   matches the repository; no `node_modules/`, `tests/` of the CLI, `out/` or `.next/`.
+   `#!/usr/bin/env node` line; `payload/skills/zz-meridian/SKILL.md` and its references are there; at least 60 component
+   folders are there; no `node_modules/`, `tests/` of the CLI, `out/` or `.next/`.
 4. **Consumer smoke, from the tarball** (`smoke.ts --adopt --create --update`):
-   - `adopt` into `cli/test/fixture-next-app` (a minimal App Router app with one page and its own stylesheet), then
+   - `adopt` into `cli/test/fixture-next-app` (a minimal App Router app with two pages, its own stylesheet, a button and a data module), then
      install, `tsc --noEmit` and `next build`, all green. This is the test that keeps the Route A list complete.
    - `create` into a clean folder, then its default `pnpm verify`. The smoke quotes the coverage line.
    - `update` from the release before (adopted and created, read from the registry): a dry-run that writes nothing, the
@@ -249,13 +249,15 @@ Modelled on the release pipeline of the owner's earlier packages, one package in
 broken sample a failure), and the consumer smoke's `--adopt --update --origins 3 --update-all --verify` from a tarball packed from that
 commit, labelled as the next patch so `update` treats it as unpublished: the adopted project's default verify cases,
 the update from each of the last three releases, the updater's stages on the 0.3.0 fixture, and every recovery and
-failure case of the update. Weekly is weekly
-and release is release: neither runs what the other does. Each job keeps its log as an artifact. A failure notifies;
+failure case of the update. Both run the
+consumer smoke's `--adopt` and `--update`; weekly reaches three releases back and every recovery case, a release only the
+one before it. Each job keeps its log as an artifact. A failure notifies;
 nothing waits on it.
 
 A `/release` runbook (`.claude/commands/release.md`) holds the judgement before dispatch: the version, the changelog
 section and the docs sweep. A `cli/scripts/set-version.ts`
-writes the version into `cli/package.json` and checks the root agrees.
+writes the version into `cli/package.json` and the root `package.json`, and refuses a version with no section in
+`CHANGELOG.md`.
 
 ## One-time setup (the maintainer, once)
 

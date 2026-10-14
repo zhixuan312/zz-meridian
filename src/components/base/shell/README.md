@@ -69,7 +69,7 @@ A page headed by its name keeps the one row it always had: the kicker, the title
 | Form width | `form-width` 1253px at the template's own root: a `field-width` card and its head column; a form page centres on it past that |
 | Reading width | `reading-width` 832px: one long document |
 | Stage width | `stage-width` 1560px: a standalone screen (sign in, not found) |
-| Gutter | `gutter`: 16px on phones to 40px on wide screens (fluid) |
+| Gutter | `gutter`: 16px on phones to 56px on wide screens (fluid) |
 | Top bar | 56px |
 | Masthead | 16px under the top bar (24px from 1024px), 32px (40px) under the title block |
 | Title, a name | `t-page`, one line |

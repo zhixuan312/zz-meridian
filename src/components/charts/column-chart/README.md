@@ -7,7 +7,7 @@ Status: beta
 ## Anatomy
 
 1. **Legend** (stacked, two or more parts drawn): above the plot, in stack order from the bottom. A 10px square swatch (3px radius, as the Heatmap's) at the part's own strength, ringed by a 1px `ink-3` hairline, and the part's label in `ink-2` at `text-xs`.
-2. **Gridlines and y labels**: three "nice" ticks from zero, `chart-grid` lines, `text-2xs` `ink-3` labels in a gutter sized to the longest. Each label is the value its tick stands at, written by an axis formatter. Stacked, the axis is the total's.
+2. **Gridlines and y labels**: three or four "nice" ticks from zero, `chart-grid` lines (the one at zero `chart-axis`), `text-2xs` `ink-3` labels in a gutter sized to the longest. Each label is the value its tick stands at, written by an axis formatter. Stacked, the axis is the total's.
 3. **Columns**: equal width, 2px apart while the plot has room for it (see More columns than room), rounded 4px at the top, growing from the baseline. Plain, the population is `chart-neutral` and the highlighted column `accent`.
 4. **Parts** (stacked): the first at the bottom, a 1px hairline of the card where two touch. Only the topmost part drawn is rounded. A part that is not zero is at least 3px tall; a part at zero is absent, with no line and no gap.
 5. **Value at rest**: the column's value, or its total, above it in `text-2xs` `ink-3`, while a column is at least 36px wide.
@@ -65,7 +65,7 @@ The readout is at least 144px wide and never wider than the chart, with `space-3
 | Focus | The plot wears a 2px `accent` outline, 4px off its box, on `radius-sm`. The ring encloses the plot's box and so all the plot draws: the gridlines, every tick's label whole, the columns, their values at rest and the pointed value. It stands 4px under the line of the zero tick's label and 2px over the line of the x labels, and encloses neither the legend nor the x labels. |
 | Running | The last column's fill at half strength, inside a 1px dashed `ink` outline, open at the baseline, 1px off the fill; "so far" where it is read. |
 | More columns than room | The gap closes from 2px to 1px to none as the plot runs out of room for it, in the columns and in the labels under them alike, and the chart keeps its box. A running column narrower than the 4px its outline needs keeps the outline: it ends with the column and stands over the columns before it, never past the plot. |
-| Zero | A column at zero draws nothing and reads zero; stacked, a column whose parts are all zero draws no part and reads a total of zero. A value that is missing or below zero counts as zero. |
+| Zero | A column at zero draws nothing and reads zero; stacked, a column whose parts are all zero draws no part and reads a total of zero. Stacked, a part that is missing or below zero counts as zero; a plain column below zero draws no column and reads its value. |
 | Empty | Render the card's Empty state. |
 
 ## Behaviour
@@ -74,7 +74,7 @@ The readout is at least 144px wide and never wider than the chart, with `space-3
 - **Keyboard**: the plot is one Tab stop, and its ring is the plot's own outline. Left and Right move the cursor a column, Home and End go to the first and the last. With no column pointed at, the cursor starts from the last column: a first Left lands on the last but one, a first Right on the last. Escape and blur let go.
 - **One cursor**: the keys move the cursor the pointer moves. With `dates`, one a column, that cursor is the page's Meridian index, so every chart and tile on the page reads the same day.
 - **Readout**: stacked only, and only on the chart being pointed at: a chart that follows another chart's cursor on the page's Meridian rings the day and keeps its panel hidden, as the Trend chart does. It stands after a column in the first half of the plot and before one in the second, measures its own width and stays inside the chart; long labels wrap. Under 640px it pins to the plot's leading edge.
-- **Width**: the chart reads its own width, and every rule about width follows it, not the window.
+- **Width**: the chart reads its own width, and every rule about width follows it, not the window, except the readout's pin to the leading edge, which follows a window under 640px.
 
 ## Surfaces
 

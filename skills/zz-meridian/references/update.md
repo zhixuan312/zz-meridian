@@ -1,8 +1,8 @@
 # Updating a project built on Meridian
 
 Run `npx zz-meridian@latest update --dry-run` first: it shows what moving this project to the running version of
-Meridian would change, and which of those changes need the team's decision. It writes nothing in the project (it asks
-the registry which versions exist, and works in a temporary folder). A plain
+Meridian would change, and which of those changes need the team's decision. It writes nothing in the project (it fetches
+the recorded release from the registry, and works in a temporary folder). A plain
 `npx zz-meridian@latest update` then applies the safe changes and stages the rest. Do not copy files by hand to make up
 for either.
 
@@ -62,7 +62,7 @@ migration  dependency:zod  pending
 summary: 2 conflicts · aggregated: untouched 310, added 4, removed 1, team-preserved 12, kept 1
 time: plan 3.1s · apply 0.2s · install 8.4s
 outcome: migration-required
-Next: resolve the items in .meridian/update/0.5.0/MERGE.md, then npx zz-meridian@0.5.0 update --finalize (or --abort)
+Next: resolve the items in .meridian/update/0.5.0/MERGE.md, then npx zz-meridian@0.5.0 update --finalize (or npx zz-meridian@0.5.0 update --abort)
 ```
 
 - **`merge required`**: the team changed a managed file and Meridian changed it too (or the team has a file where
@@ -169,7 +169,7 @@ update (`2` pending, `0` finalized, `1` failure). `--abort`: `0` aborted, `1` re
 
 ## Resolving 0.9.0's migrations
 
-Moving a project to 0.9.0 can report two more `migration:<id>` items, to 0.10.0 a third for an assistant kept from before, to 0.13.0 a fourth for a navigation item without a `needs`, and to 0.15.0 a fifth for a page under the project's own route group, resolved the same way as those below:
+Moving a project to 0.9.0 can report two more `migration:<id>` items, to 0.10.0 a third for an assistant kept from before, to 0.13.0 a fourth for a navigation item without a `needs`, to 0.15.0 a fifth for a page under the project's own route group, and to 0.16.0 a sixth for a configuration that does not declare `refusal`, resolved the same way as those below:
 
 | Id | The old shape it found | The change |
 |----|------------------------|------------|
@@ -178,6 +178,7 @@ Moving a project to 0.9.0 can report two more `migration:<id>` items, to 0.10.0 
 | `assistant-view-tools` (0.10.0) | an assistant route, `optional:src/lib/assistant/tools.ts` or `optional:src/lib/assistant/respond.ts` kept from before view tools | bring the two files over from the release and pass `views` to `respond` (the template's `viewTools`, your own, or none): `example:docs/assistant.md`, "Adding an MCP server later" |
 | `nav-needs` (0.13.0) | an item of `nav` in `src/app.config.ts` with no `needs`, or a `NavItem` type declared without the property | add `needs: 'public'` where everyone may open the page, or `needs: FEATURES.<id>.needs`: `customize.md`, "Navigation", and "5. Decide who may do what" in `optional:docs/start-a-dashboard.md`; checked by the gate |
 | `agent-reads-own-group` (0.15.0) | a page README under a route group of the project's own at the top of its app folder (`example:app/(dash)/`) with no `### What the agent reads`: the gate asked only under `optional:app/(dashboard)/` before | add the part under `## Agents`: `customize.md`, "A page spec"; checked by the gate. A copy of the rule in `optional:scripts/check.local.ts` can go |
+| `refusal-declared` (0.16.0) | a `src/app.config.ts` with no `export const refusal` | declare `refusal` beside `facts`, `'explain'` to keep the no-access page a refused page draws today or `'absent'`; a project that keeps the sample's access seam brings `optional:src/data/access.ts` and `optional:src/data/refusal.ts` over from the release: `customize.md`, "Navigation: `src/app.config.ts`"; checked by the gate and a build |
 
 A created project that never changed the template's pages brings the release's version of each affected file over, with
 the files that arrived with them: the view contexts `optional:src/views/home-context.ts` and its siblings, the view
@@ -185,7 +186,7 @@ tools `optional:src/views/tools.ts`, the reads `optional:src/data/metrics.ts` an
 `optional:src/data/collections.ts`. `src/lib/shared-context.ts`, `src/lib/agent-guidance.ts` and `src/lib/insight.ts`
 are Meridian's and arrive with the update. An adopted project builds a context for each view it shares.
 
-## Resolving this release's migrations
+## Resolving 0.5.0's migrations
 
 Moving a project to 0.5.0 can report these ten `migration:<id>` items. Each is a change in the team's own files, so the
 update only reports it: `MERGE.md` lists the files it found, and its instructions name the section to follow. Resolve

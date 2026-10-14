@@ -42,7 +42,7 @@ in a page's kicker ("Production"); it does not touch the navigation workspaces.
 merges the dependencies and scripts it needs into your `package.json`; replaces your global stylesheet (yours is kept
 beside it as `*.before.css`); brands it; adds Meridian's managed block to your `AGENTS.md` between two markers, keeping your own text there byte
 for byte; writes an empty `docs/brief.md` (your product, users, data, decisions and glossary) if you have none; installs the skill into
-`.agents/skills/` (Codex) and `.claude/skills/` (Claude Code); records every copied file in `.meridian/manifest.json`;
+`.agents/skills/` (Codex) and `.claude/skills/` (Claude Code); records every Meridian file it copied in `.meridian/manifest.json`;
 installs and type checks. Your routes, your data layer and your own components are not touched. Meridian's files
 import each other by relative path, so a `components/ui/button` of your own is never confused with Meridian's; your
 code imports Meridian as `@meridian/…`.
@@ -61,7 +61,8 @@ writes nothing; run it first.
   deleted or kept (`.meridian/keep.json`) is never overwritten: an edited or deleted one is staged as base/ours/new copies
   for you to merge.
 - It adds the dependencies and scripts this release needs to `package.json` and updates Meridian's managed block in
-  `AGENTS.md`; a version or script you chose yourself becomes a migration to resolve, never a silent change.
+  `AGENTS.md`; an older version of the same major is raised, and a newer version, an older major or a script you
+  chose yourself becomes a migration to resolve, never a silent change.
 - It reports a migration for each interface the release changed where one of your own files still has the old shape,
   such as `cache-components-config` or `nav-needs`. `cli/src/migrations.ts` holds every one; resolve them as the skill's
   `references/update.md` says.
@@ -83,7 +84,7 @@ Requires Node 22.18 or newer. The default `pnpm verify` runs without Google Chro
 
 It has no dependencies and no install scripts: running it executes only its own code, and only when you call it. It
 sends nothing anywhere; the only network access is your package manager's install, which you can skip with
-`--no-install`. Every release is built and published by GitHub Actions with npm provenance, so the registry shows the
+`--no-install`, and `update` reading releases from npm. Every release is built and published by GitHub Actions with npm provenance, so the registry shows the
 commit and workflow each version came from.
 
 ## Privacy and feedback

@@ -42,7 +42,7 @@ Agent mark, Button, on a card (`radius-lg`); while it waits for a person it carr
 
 ## Surfaces
 
-- **Console** and **Mobile**: in an inbox (Activity) when an agent proposed while the person was away; on phones the change rows put the label above the values.
+- **Console** and **Mobile**: in the assistant panel, under the turn that proposed it; on phones the change rows put the label above the values.
 - **Embed**: the card a tool returns when an agent wants to write.
 
 ## Agents

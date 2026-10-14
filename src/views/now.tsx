@@ -47,6 +47,7 @@ function Services({ data, end }: { data: NowData; end: Date }) {
       All {services.length} {plural(services.length, 'service')} <ArrowRight className="size-3.5" />
     </Link>
   );
+  if (data.unread.includes('the services')) return <Unread title={P.services} what="the services" />;
   if (!services.length) {
     return (
       <Card>

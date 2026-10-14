@@ -51,7 +51,7 @@ Migrate in place, page by page, keeping their data layer.
    into their `AGENTS.md`, between two marker comments, and keeps every byte outside it (a later run replaces only that
    block; a duplicate or unterminated marker is refused, with the files already copied); writes the five-section brief
    `optional:docs/brief.md` when they have none (SKILL.md, step 3: fill it from their answers); installs this skill into
-   `optional:.agents/skills/` and `optional:.claude/skills/`; records every copied file in `optional:.meridian/manifest.json`; installs and type
+   `optional:.agents/skills/` and `optional:.claude/skills/`; records every Meridian file it copied in `optional:.meridian/manifest.json`; installs and type
    checks. It refuses, writing nothing, when the git tree has uncommitted
    changes (commit first, so its change is one diff to review), when the project is not Next.js with the App Router,
    or when a file it would copy already exists with other content (it lists them: move theirs, then run it again).
@@ -122,8 +122,8 @@ Migrate in place, page by page, keeping their data layer.
 6. List their detail pages worth seeing (a normal record, a failed one, a missing one) in `detailRoutes` in
    `scripts/verify.config.ts`, with ids from the fake API's fixtures. Map their main routes in `navigationChecks` (a
    ready selector and one harmless probe each) so the default smoke covers data and interaction, not only the shell.
-   Run `pnpm verify` until it passes, and `pnpm verify --full` before a release; the last line of each says what it
-   covered (`coverage: …`).
+   Run `pnpm verify` until it passes, and `pnpm verify --full` before a release; the line before the last of each says
+   what it covered (`coverage: …`).
 
 Without the assistant, `verify --full` skips its walk-through on its own (it runs only when `optional:app/api/assistant/route.ts`
 exists).
@@ -132,16 +132,16 @@ exists).
 
 The panel (`src/components/patterns/assistant/`) already came with `src/components/`, and `AppShell` mounts it when
 `optional:app/(dashboard)/layout.tsx` passes `assistant`, a promise it does not await: `assistant={connection().then(() => assistantConfig(process.env) !== null)}`. A product that adopts the assistant also brings
-`optional:app/api/assistant/route.ts`, the rest of `src/lib/assistant/`, `optional:src/lib/collection.ts` and `optional:src/data/collections.ts`;
-add `@ai-sdk/anthropic`, `@ai-sdk/openai-compatible` and `zod` to the dependencies. Point `optional:src/data/collections.ts` at their data, bring `optional:src/data/access.ts` with their own session and permissions in its policy (the route and every server action ask it), and set `ASSISTANT_PROVIDER`, `ASSISTANT_API_KEY` and `ASSISTANT_MODEL`
+`optional:app/api/assistant/route.ts`, the rest of `src/lib/assistant/` and `optional:src/data/collections.ts`;
+add `@ai-sdk/anthropic` and `@ai-sdk/openai-compatible` to the dependencies (`adopt` already brought `src/lib/collection.ts` and `zod`). Point `optional:src/data/collections.ts` at their data, bring `optional:src/data/access.ts` with their own session and permissions in its policy (the route and every server action ask it), and set `ASSISTANT_PROVIDER`, `ASSISTANT_API_KEY` and `ASSISTANT_MODEL`
 (plus `ASSISTANT_BASE_URL` for `openai-compatible`): it stays off until they are set. The "Show the assistant" switch is
 in `optional:src/views/settings.tsx`.
 
 Three things an adopter meets here. The layout's promise is a request-time part of every page, so each page's HTML
 carries that part's flight data beside the prerendered one: one adopter measured a page going from 65 to 90 KiB of
 HTML (11.2 to 12.0 KiB compressed), so a team with an `htmlKb` budget in `scripts/verify.config.ts` should expect the
-number to move and record it again. The assistant walk-through in `pnpm verify --full` drives the sample's own Home
-and Settings, and reports those steps as not applicable in a product that replaced them; what the product's own
+number to move and record it again. The assistant walk-through in `pnpm verify --full` drives the sample's own Home,
+Now, Members, API keys and Settings, and reports those steps as not applicable in a product that replaced them; what the product's own
 Home hands the assistant is checked by a journey the product writes, a script named in `browserChecks` in
 `scripts/verify.config.ts`, as `optional:journeys/workspaces.ts` is. And a test setup of the product's own (a provider
 around every render, a polyfill) goes in a second file listed after `./tests/setup.ts` in `setupFiles` in

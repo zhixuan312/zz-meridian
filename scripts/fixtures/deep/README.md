@@ -24,7 +24,7 @@ Any route that is not a page below answers a clean page (light DOM, no control),
 
 ## Pages
 
-Every page has an `h1`, `lang="en"`, a `main`, an opaque ground and controls of at least 44px, so the planted defect is the only one. Each case has a broken page and a corrected `-fixed` page. Every `nav-*` page carries a workspace menu above its rail, in the desktop rail and in the phone drawer, drawn as the console's Rail draws it: a trigger named `<product>, <workspace>: workspace menu` and one `menuitemradio` for each of Main (home `/nav-home`) and Solo (home `/nav-solo`).
+Every page has an `h1`, `lang="en"`, a `main`, an opaque ground and controls of at least 44px, so the planted defect is the only one. Most cases have a broken page and a corrected twin, most often a `-fixed` page. Every `nav-*` page carries a workspace menu above its rail, in the desktop rail and in the phone drawer, drawn as the console's Rail draws it: a trigger named `<product>, <workspace>: workspace menu` and one `menuitemradio` for each of Main (home `/nav-home`) and Solo (home `/nav-solo`).
 
 | Page | Planted case |
 |---|---|

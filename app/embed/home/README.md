@@ -9,7 +9,7 @@ Status: beta
 | Mode | Holds |
 |---|---|
 | Inline (fits 480px) | Embed frame head (mark, "Home · Last 30 days", freshness, Expand, Open in ZZ Meridian); the revenue card, the page's Featured metric with revenue a day and the day in progress running, and Ask as its action; the three tiles beside it on the page (Customers, Tokens served, Requests), one column under 48rem |
-| Fullscreen | The console Home's nine parts under the embed head (`app/(dashboard)/(home)/README.md`, "Structure"): the row of tiles, the year, A year, counted, revenue a period and what we sell, the two team cards and what is worth knowing |
+| Fullscreen | The console Home's parts 2 to 9 under the embed head (`app/(dashboard)/(home)/README.md`, "Structure"): the revenue card and its three tiles, the row of tiles, the year, A year, counted, revenue a period and what we sell, the two team cards and what is worth knowing |
 
 Compute cost and gross margin are drawn only for a person who may read what compute cost, in fullscreen, as on the page; inline draws neither for anyone. Nothing stands in their place.
 

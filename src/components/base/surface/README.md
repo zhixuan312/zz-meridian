@@ -45,7 +45,7 @@ Accent, status and chart colours never bridge: they carry meaning, and the accen
 
 | State | `kind` | `connected` | `ask` |
 |---|---|---|---|
-| Console | `console` | false | absent |
+| Console | `console` | false | present when the console has an assistant, absent otherwise |
 | Embed, in a host | `embed` | true | present |
 | Embed, opened directly (the Atlas, a tab) | `embed` | false | absent; Expand and Open use new tabs |
 
@@ -74,5 +74,5 @@ import { useSurface } from '@/components/base/surface';
 import { useShareView } from '@/components/base/use-share-view';
 
 const { kind, ask } = useSurface();
-useShareView('ZZ Meridian home for the last 7 days: 612K requests, 0.82% errors.', { view: 'home', period: '7d' });
+useShareView({ view: 'home', title: 'Home', address: '/?period=7d', scope: 'last 7 days', facts: [{ label: 'Requests', value: '612K' }, { label: 'Error rate', value: '0.82%' }], insights: [], unknowns: [] });
 ```

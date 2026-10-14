@@ -8,8 +8,8 @@ Status: beta
 
 | Mode | Content |
 |---|---|
-| Inline | Embed frame head (mark, "Now", Freshness, Expand, Open in ZZ Meridian); a warning Banner for the open incident, the most severe first, with Ask; the Status list with its summary and without descriptions |
-| Fullscreen | The Now page's body under the embed head: its twelve parts, from "Services, now" to "Changes" (`app/(dashboard)/engineering/README.md`) |
+| Inline | Embed frame head (mark, "Now", Freshness, Expand, Open in ZZ Meridian); a warning Banner for the open incident, the most severe when several are open, with Ask; the Status list with its summary and without descriptions |
+| Fullscreen | The Now page's body under the embed head: parts 2 to 12, from "Services, now" to "Changes" (`app/(dashboard)/engineering/README.md`) |
 
 ## States
 
@@ -21,7 +21,7 @@ Status: beta
 
 ## Data
 
-The Now tool's read (`nowTool` in `src/views/tools.ts`), the page's own: inline draws the services and the open incidents, fullscreen every part. The strips cross to the browser one character a day (`packNow` in `src/views/now-context.ts`), as the page's do.
+The Now tool's read (`nowTool` in `src/views/tools.ts`), the page's own: inline draws the services and the most severe open incident, fullscreen the page's body. The strips cross to the browser one character a day (`packNow` in `src/views/now-context.ts`), as the page's do.
 
 ## Surfaces
 

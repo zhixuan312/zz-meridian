@@ -15,7 +15,7 @@ Status: beta
 | Sheet | Change {name}'s role: Role and Add-ons, offering only the choices the row's boundary allowed; a refusal reopens it with the reason in a critical Banner; Cancel and Save role | From the right, 440px | From the bottom |
 | Toast | Remove: the person leaves the table at once and a toast says "{name} removed · They lose access when this closes" with Undo. The removal is sent when the toast closes (8 s, `UNDO_MS`), or at once if the page goes away first; Undo brings them back and sends nothing; a refusal brings them back with its reason | Bottom right | Top, full width |
 
-A row the caller may not change draws no menu at all. On the caller's own row it says why, with the first rule in the boundary's frozen order that hides the action ("You cannot change your own role."); on any other row it draws nothing: an Owner's row read by an Admin, and every row read by somebody without the member grants, offer no control and no line, and nothing on the page says who could. A change forced past the page is still refused by the boundary with its own sentence. The row menu holds Change role, Suspend (Reactivate on a suspended member) and Remove, each shown only where the boundary allowed it; an invited row offers none until the server gives it a capability.
+A row the caller may not change draws no menu at all. On the caller's own row it says why, with the first rule in the boundary's frozen order that hides the action ("You cannot change your own role."); on any other row it draws nothing: an Owner's row read by an Admin, and every row read by somebody without the member grants, offer no control and no line, and no row says who could; the matrix in row 2 is where roles are named. A change forced past the page is still refused by the boundary with its own sentence. The row menu holds Change role, Suspend (Reactivate on a suspended member) and Remove, each shown only where the boundary allowed it; an invited row offers none until the server gives it a capability.
 
 The body (rows 1 and 2) is the records template, `Records` from `src/components/templates/records`, with no summary.
 
@@ -25,7 +25,7 @@ The body (rows 1 and 2) is the records template, `Records` from `src/components/
 |---|---|
 | Loading | `loading.tsx`: the template's skeleton, table rows without tiles; the members are read per request, so the prerendered shell holds none |
 | Default | Newest members first, as the Joined column beside them shows |
-| Invited | The status Badge in `accent`; Last active reads "Never" in `ink-3`; no row actions |
+| Invited | The status Badge in `accent`; Last active reads "Never" in `ink-3`; Change role and Remove for a person who may change members, and no Suspend |
 | Suspended | The status Badge in `warning` |
 | Name or email missing | The field's error under it; nothing is sent |
 | Changed | The page refreshes from the collection and a toast confirms: "Role changed", "Member suspended", "Member reactivated", "Invited {email}", which says the member is listed as Invited (the sample delivers no message, and an invited member has no acceptance step); a removal's toast is its Undo, "{name} removed" |

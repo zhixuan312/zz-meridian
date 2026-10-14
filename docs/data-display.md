@@ -42,8 +42,8 @@ Text never wears a series colour; values and labels stay in ink.
 
 ## Marks
 
-- Lines 2px with round joins; a dashed line 1.5px. The featured series carries a soft glow of its own colour on the dark ground.
-- Bars and columns with 2px gaps and 4px rounded data ends, anchored to the baseline. A chart is never wider than its card: a Column chart with more columns than room closes the gap, to 1px and then to none, before it would outgrow it.
+- Lines 2px with round joins (a Sparkline's 1.5px); a dashed line 1.5px. The featured series carries a soft glow of its own colour on the dark ground.
+- Columns with 2px gaps and 4px rounded data ends, anchored to the baseline; a Bar list's bar is a rounded track. A chart is never wider than its card: a Column chart with more columns than room closes the gap, to 1px and then to none, before it would outgrow it.
 - A label inside a plot stands where no series is drawn. A Trend chart sets its baseline's label beside the dashed line at whichever end is clear, and draws no label when neither is.
 - Gridlines recessive (`chart-grid`), one baseline (`chart-axis`), axis labels at `text-2xs` in `ink-3`. Axis labels are a scale: `$12`, `1.2M`; the exact value is in the tooltip and the table.
 - A legend is always present for two or more series or parts; a single series is named by its title.
@@ -57,7 +57,7 @@ Today, or the month not over yet, is not a fact like the periods before it, and 
 - A Column chart draws its last column's fill at half strength inside a dashed outline, open at the baseline.
 - A Heatmap's calendar draws the day's cell inside a dashed outline.
 
-Each takes `running`, and each says "so far" wherever that period is read: the readout, the line a screen reader hears and the period's row of the hidden table.
+Each takes `running`, and each says "so far" wherever that period is read: the readout, the period's row of the hidden table and, on a Column chart and a Heatmap, the line a screen reader hears.
 
 A page whose chart draws the day in progress gives its Meridian that day as the last of its dates, so the chart joins the page's cursor. The Featured metric holding that chart takes the day's value as its last point and names it "so far" in its pill (`pointLabel`). A tile whose points are the complete days has one fewer than the Meridian's dates, so it keeps its period's figure and never reads a part-day as a whole one (Home does this).
 
@@ -65,8 +65,8 @@ A period still in progress is counted in no total, change or finding. A figure f
 
 ## Figures
 
-- The figure is set tight (`tracking-display`); its unit steps down to half size in `ink-3`; money steps its cents down; compact counts keep their decimal (`2.9M`).
-- Tabular figures where numbers stack or change in place (tables, axes, readouts); proportional for a standalone figure.
+- The figure is set tight (the hero figure at `tracking-display`, a card's figure at -0.03em); its unit steps down to half size in `ink-3`; money steps its cents down; compact counts keep their decimal (`2.9M`).
+- Tabular figures where numbers stack or change in place (tables, axes, readouts, and a tile's or the Featured metric's figure, which changes as the Meridian moves); proportional for a standalone figure that stays put.
 - A missing value is a dash, never zero. Every figure names its period and unit somewhere visible.
 - A delta's arrow carries direction; its colour carries the judgement, which depends on the measure (latency down is good).
 - A change says what it is against, in words beside it: "vs previous period" unless the caller says otherwise ("vs the week before"). The Featured metric and the Metric tile take the words as `compare`. On a wall of compact tiles the card that holds the wall says it once, and a tile draws the change's figure alone.
@@ -126,14 +126,14 @@ The same figure for many things, each with its own change and shape, is a wall o
 
 ## Interaction
 
-- Every time chart joins the page's Meridian: pointer, touch drag, arrow keys, Home, End, Escape. Every chart reads the day, and so does every tile whose points are the page's.
+- A time chart joins the page's Meridian (the Trend chart; the Column chart given a date a column; the Heatmap's calendar given `meridian`): pointer, touch drag, arrow keys, Home, End, Escape. Uptime bars keep a cursor of their own. A chart that joins reads the day, and so does every tile whose points are the page's.
 - A point of the Meridian need not be a day. The Featured metric reads the pointed point only when its `points` holds one value for each of the Meridian's dates, the rule a chart joins by, and its pill names the point as the caller names points (`pointLabel`: "Week of 14 Sept"), or by its date.
 - A Metric tile and a Sparkline follow the same rule. A tile reads the pointed point and names its date, and a Sparkline marks it, only when it has one value for each of the Meridian's dates. The cursor is a position in the page's list of dates, so a series of any other length would read a different day: a tile of a customer's 14 days on a page of 30 keeps its period's figure and its change, and its Sparkline draws no cursor.
 - A compact tile's line never reads the cursor, whatever its points: a wall keeps the figures a reader is comparing. Its Sparkline follows the Sparkline's rule.
 - A chart read mark by mark is one Tab stop, and its keys move the cursor the pointer moves: a Trend chart's points, a Column chart's columns, a Heatmap's cells. Escape and blur let go.
 - A ranked list's rows link when each names a record that has a page, as a customer does. The row's label is the one link, named by the label; the bar and the figure are not a second way to the same page, and the folded "N others" row opens nothing. A row whose name has no page, a region or an endpoint in the sample, is text, and so is every row of its list. At rest a linked row looks as any row does: the label takes the accent under the pointer and the focus ring on the keyboard, and answers a 44px target on a phone.
 - The tooltip shows the day and every series' value; it appears only on the chart being pointed at.
-- Every chart renders a visually hidden table with the same numbers, so screen readers and models read the data, not the picture.
+- The Trend chart, the Column chart and the Heatmap render a visually hidden table with the same numbers, so screen readers and models read the data, not the picture; the other charts carry their numbers as text (a Sparkline beside its figure carries none).
 
 ## Motion
 

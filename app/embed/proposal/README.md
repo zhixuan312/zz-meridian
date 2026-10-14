@@ -24,7 +24,7 @@ An agent may read anything the person may read. It changes nothing on its own. E
 | Applying | Approve is busy; Dismiss disabled |
 | Applied | "Applied" in positive ink; the actions leave; the edge goes |
 | Dismissed | "Dismissed"; the actions leave |
-| Failed | "It did not apply. Nothing changed." with Try again |
+| Failed | "It did not apply. Nothing changed; try again or open the console." with Try again |
 
 ## Data
 

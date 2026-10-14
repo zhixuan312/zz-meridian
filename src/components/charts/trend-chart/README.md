@@ -19,7 +19,7 @@ Status: beta
 
 | Kind | Use | Mark |
 |---|---|---|
-| `area` | The series the chart is about. At most one per chart. | 2px line, an area fading from 30% to 0 of its colour, and a 6px blurred glow at 40% under the line |
+| `area` | The series the chart is about. At most one per chart. | 2px line, an area fading from 30% (14% on light) to 0 of its colour, and a 5px glow at 24% (14% on light), blurred 4px (3px on light), 2px under the line |
 | `line` | A peer series of equal standing | 2px line |
 | `dashed` | A reference: the previous period, a target, a budget | 1.5px dashed line in `chart-neutral-strong` |
 | `stacked` (chart prop) | The series are the parts of one whole, such as requests by region, or calls split into attributed, unattributed and refused: the top edge is the total. Parts of similar size; a part under a few percent is invisible as a band, so give it a chart or a tile of its own | Bands one on another, the first at the bottom, in one hue: the accent, deepest at the bottom and paler upward, between the theme's `chart-stack-hi` and `chart-stack-lo` (dark 92% to 20%, light 78% to 36%), a 1px `surface` hairline between them; on light the stack fades toward zero (`chart-stack-fade`); the total is the 2px accent line with its glow, as on an `area`. A series given its own `color` keeps it. The readout lists the bands top to bottom and the total; the y-axis is scaled to the total |
@@ -40,13 +40,13 @@ Colour: `accent` for the series the page is about; categorical slots 1 to 6 in o
 |---|---|---|
 | `fill` (at least 220px) | 4 | Inside the Featured metric and any card whose row is taller than the chart |
 | 248px (default) | 4 | A chart card |
-| 160 to 200px | 3 | A secondary chart; phones; an inline embed |
+| 160 to 199px | 3 | A secondary chart; phones; an inline embed |
 
 ## States
 
 | State | Spec |
 |---|---|
-| Arriving | The line draws left to right and the area reveals over `dur-grow` 820ms `ease-out`; the glow and dashed lines fade in, the running stretch with them. |
+| Arriving | The line draws left to right and the area reveals over `dur-grow` 820ms `ease-out`; the glow draws with its line, and the dashed lines fade in, the running stretch with them. |
 | Rest, pointing, keyboard | See Meridian. The readout is bounded by the chart at every selected day, including the first and last. |
 | Long text, extreme values | Labels wrap inside the readout. It is no wider than its chart, with `space-3` 12px side padding; the static specimen shows a long inference label and spend in billions. |
 | Baseline | The label stands beside the dashed line where no series is drawn: the right end over the line first, then the nearest clear place at either end. With no clear place it is not drawn. |
@@ -65,7 +65,7 @@ Pointer, touch and keys as in Meridian. The chart redraws in real pixels when it
 
 - **Console**: 248px or `fill`; date labels every 92px (six to eight across).
 - **Mobile**: 160 to 200px; three or four date labels; the readout pins to the leading edge at the top of the plot, so it stays still while the finger moves between days.
-- **Embed**: 160 to 168px inline; the console height in fullscreen.
+- **Embed**: `fill` inside the Featured metric inline, as Home's view draws it; the console height in fullscreen.
 
 ## Agents
 
@@ -74,7 +74,7 @@ The view shares what the chart shows through `useShareView` (the period and the 
 ## Accessibility
 
 - Focusable `role="img"` labelled with what it shows and how to read a day; the `sr-only` table holds every value. A running point is never told by its dashes alone: its row reads "2026-10-03, so far" and its readout says the same.
-- Marks hold 3:1 on `surface`: slots 1 to 6 from 5.1:1 to 6.2:1 dark, 3.2:1 to 5.2:1 light (slot 5 is labelled everywhere because it falls under 3:1 on light). Axis labels `ink-3` 6.43:1 dark, 5.31:1 light.
+- Marks hold 3:1 on `surface`: slots 1 to 6 from 5.1:1 to 6.2:1 dark, 3.1:1 to 5.0:1 light (slot 5 is labelled everywhere because it falls under 3:1 on light). Axis labels `ink-3` 6.39:1 dark, 5.13:1 light.
 - The deepest part of a stack, the one it stands on, holds 3:1 on `surface`: 3.30:1 dark, 3.61:1 light with the indigo accent, and never under 3.23:1 (jade, dark) in any theme and accent (`node scripts/contrast.ts --all`, "the deepest part of a stack"). The parts above it are told from their neighbours by the 1px `surface` hairline, and each is named in the legend and the readout.
 - The categorical order passes colour-vision checks: worst adjacent CVD separation 8.7 dark, 10.2 light (`node scripts/contrast.ts`).
 - Identity is never colour alone: a legend names every series and the tooltip repeats the label beside each value.
@@ -110,7 +110,7 @@ import { TrendChart } from '@/components/charts/trend-chart';
 />
 ```
 
-Props: `dates`, `series` (`key`, `label`, `values`, `color`, `kind`), `format` (`count` | `cost` | `duration` | `percent`), `height` (number or `fill`), `label`, `legend` (defaults to two or more series), `tick`, `stacked`, `baseline`, `running` (the last point is still in progress).
+Props: `dates`, `series` (`key`, `label`, `values`, `color`, `kind`), `format` (`count` | `compact` | `cost` | `cost-compact` | `duration` | `percent`), `height` (number or `fill`), `label`, `legend` (defaults to two or more series), `tick`, `stacked`, `baseline`, `running` (the last point is still in progress).
 
 The colour of a stacked part is `stackPart(place, parts)` from `@/components/charts/scale`, the one mix every one-hue stack takes: the accent into the surface, by the part's place from the bottom.
 

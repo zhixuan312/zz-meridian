@@ -19,7 +19,7 @@ Status: beta
 
 | Variant | Use |
 |---|---|
-| `card` (default) | Each open incident on Now and on Services; an incident's own page |
+| `card` (default) | Each open incident on Now and on Services |
 | `row` | A compact entry in a list of past incidents: title (wraps, never truncated), severity, service, date, how long it lasted, state word. It names no owner and no ticket |
 
 ## Sizes
@@ -73,7 +73,7 @@ A record may hold more than the card draws. The sample's `incidents` hold `owner
 
 ## Agents
 
-An agent reads incidents through the Services view's shared context (title, state, id). Updates are written by people; an agent may draft one only as a Proposal.
+An agent reads incidents through the shared context of Services and Now (title, service, severity, state, owner, ticket and latest update). Updates are written by people; an agent may draft one only as a Proposal.
 
 ## Accessibility
 

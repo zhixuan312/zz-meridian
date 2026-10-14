@@ -21,7 +21,7 @@ Status: beta
 
 ## Data
 
-The tool `zz_meridian_requests { status?, method?, region?, q? }`; the arguments are the view's query parameters, the same names as the console's filters. The page reads only the rows it shows, one page of the filtered set and its total, through `read()`: the inline card shows the first five, the fullscreen table pages on the server.
+The tool `zz_meridian_requests { status?, method?, region?, q? }`; the arguments are the view's query parameters, the same names as the console's filters. The page reads what the console page reads, through `readRequests`: one page of the filtered set, its total and the summary of up to 500 of it; the inline card shows the first five, the fullscreen table pages on the server.
 
 ## Agents
 

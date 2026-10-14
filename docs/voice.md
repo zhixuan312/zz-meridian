@@ -6,7 +6,7 @@ How a Meridian dashboard speaks: in titles, labels, buttons, empty states, error
 
 1. **Say what it is, from the reader's side.** Name what people control and recognise: "API keys", "Requests", "Alerts", not "Credentials management" or "Event ingestion".
 2. **Sentence case everywhere.** Titles, buttons, tabs, labels. Capitals are for names.
-3. **Verb first on actions, and the same verb through the flow.** The button says "Revoke key", the dialog title says "Revoke this key?", the toast says "Key revoked".
+3. **Verb first on actions, and the same verb through the flow.** The button says "Revoke key", the dialog title says "Revoke Production backend?", the toast says "Key revoked".
 4. **Numbers carry their unit and period.** "2.94M requests in the last 30 days." A figure without a period is a guess.
 5. **Facts over adjectives.** "Errors rose from 0.6% to 2.1%", not "Errors spiked dramatically".
 6. **One idea per line.** A head-note is one sentence. A hint is one sentence. If it needs two, the second is probably a link.
@@ -22,7 +22,7 @@ How a Meridian dashboard speaks: in titles, labels, buttons, empty states, error
 | Empty, first run | No API keys yet. Create one to start sending requests. | Nothing here. |
 | Empty, filtered | No requests match "status: 5xx" in the last 7 days. Clear filters | No results found. |
 | Error | Requests could not load. The data service did not answer in 10 seconds. Retry | Oops! Something went wrong. |
-| Stale data | Stale · updated 47 min ago | Data may be out of date |
+| Stale data | Stale · 47 min ago | Data may be out of date |
 | Destructive confirm | Revoke key "Production backend"? Requests using it will fail with 401 at once. | Are you sure? |
 | Agent proposal | Raise Parallax AI's rate limit from 1,000 to 2,000 requests a minute. | Claude wants to make a change |
 | Agent provenance | Claude raised the rate limit for Parallax AI · for Jonas Weber | Rate limit updated (AI) |

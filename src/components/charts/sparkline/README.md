@@ -7,7 +7,7 @@ Status: beta
 ## Anatomy
 
 1. **Line**: 1.5px, round joins, drawn in real pixels across the container's full width.
-2. **Area**: the line's colour fading from 18% to 0.
+2. **Area**: the line's colour fading from 21% (10% on light) to 0.
 3. **Day mark** (on a Meridian, when the values are the page's): a 1px `ink-3` hairline at 45% and a 3px dot ringed in `surface`.
 
 ## Variants
@@ -47,7 +47,7 @@ Not applicable: it repeats a series the view already shares.
 
 ## Accessibility
 
-Decorative (`aria-hidden`): the figure beside it and the page's charts carry the numbers. The neutral line holds 3.98:1 dark and 3.64:1 light on `surface`.
+Decorative (`aria-hidden`): the figure beside it and the page's charts carry the numbers. The neutral line holds 3.96:1 dark and 3.52:1 light on `surface`.
 
 ## Content
 

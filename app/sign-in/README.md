@@ -11,8 +11,8 @@ A standalone screen outside the shell, on the lit ground:
 | Part | Content |
 |---|---|
 | Corner | The app mark and the product name, linking home |
-| Left | Kicker "ZZ Meridian · Console"; "Know your API before your customers do" at `text-display`, ending on an accent full stop; one sentence of lead |
-| Right | One panel. Without a password, "Sign in as": one row per persona (Avatar, name, role, a forward arrow), each row signing in as that person. With `DEMO_PASSWORD`, "Sign in": the password and "Sign in as" (Field, Select `lg`, default Maya Chen, a non-Active persona disabled). There is no email link and no company sign-in: the product sends no message and asks no identity provider, so the page offers neither |
+| Left | Kicker "ZZ Meridian · Console"; "Know your API before your customers do" at `text-display`, ending on an accent full stop; one sentence of lead; from 1024px, the requests of the last 30 complete days, their total and a Trend chart on its own Meridian |
+| Right | One panel. Without a password, "Sign in as": one row per persona (Avatar, name, role, a forward arrow), each row signing in as that person. With `DEMO_PASSWORD`, "Sign in": the password and "Sign in as" (Field, a native select at `lg`, default Maya Chen, a non-Active persona disabled). There is no email link and no company sign-in: the product sends no message and asks no identity provider, so the page offers neither |
 | Foot | Copyright, a link to the design system, and the live service status (derived, linking to Services) |
 
 Two columns from 1024px; one below, the panel under the sentence.
@@ -22,7 +22,7 @@ Two columns from 1024px; one below, the panel under the sentence.
 | State | What shows |
 |---|---|
 | Persona list | Without `DEMO_PASSWORD`: one row per persona, a non-Active persona disabled and marked "Not active". A click signs the request in as them and opens the console; a refusal reads its own message under the heading |
-| Behind a password | With `DEMO_PASSWORD` set at run time, the panel is "Sign in": the password (Field, Input `lg`), "Sign in as" (Field, Select `lg`), and "Sign in" (primary, block, `lg`), busy while it is sent; a wrong password reads "That is not the password." in the field after 600 ms, and a persona outside the list sets nothing. A match sets a 30-day session and the View as cookie, then opens the console |
+| Behind a password | With `DEMO_PASSWORD` set at run time, the panel is "Sign in": the password (Field, Input `lg`), "Sign in as" (Field, a native select at `lg`), and "Sign in" (primary, block, `lg`), busy while it is sent; a wrong password reads "That is not the password." in the field after 600 ms, and a persona outside the list sets nothing. A match sets a 30-day session and the View as cookie, then opens the console |
 | Loading | While the panel streams in, its surface holds its place, empty |
 
 ## The demo gate
@@ -37,7 +37,7 @@ bypasses the password: the gated form checks the password before the person, and
 ## Data
 
 The five personas, read through the members collection (name, role and whether the record is Active), so a role change
-or a suspension reads at the next visit; and the service status in the foot, from the Services summary.
+or a suspension reads at the next visit; the service status in the foot, from the Services summary; and the chart's 30 days, from `signInDays()` in `src/data/sign-in.ts`, read with no session.
 
 ## Surfaces
 

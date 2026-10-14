@@ -14,7 +14,7 @@ Status: beta
 | Sheet | Create a key: Name (required), Environment (Live or Test), Scopes (checkboxes); Cancel and Create key | From the right, 440px | From the bottom |
 | Dialog | Revoke: "Revoke {name}?", what fails and that it cannot be undone, when it was last used; Cancel and Revoke key (danger) | Centred | Bottom sheet |
 
-The body (rows 1 to 3, under the masthead and beside the sheet and dialog) is the records template, `Records` from `src/components/templates/records`, with no summary.
+The body (rows 1 and 2 and the line on rotating a key under them, under the masthead and beside the sheet and dialog) is the records template, `Records` from `src/components/templates/records`, with no summary.
 
 ## States
 

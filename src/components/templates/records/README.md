@@ -51,7 +51,7 @@ While the data is on its way, a route's `loading.tsx` and its Suspense fallback 
 `summary` may also be a fragment, which counts as its children; the row sizes its columns by them:
 
 ```tsx
-<Records summary={[<MetricTile key="a" label="Customers" value={42} />, <MetricTile key="b" label="Spend" value={1200} format="cost" />]}>
+<Records summary={[<MetricTile key="a" label="Customers" value={42} />, <MetricTile key="b" label="Revenue" value={1200} format="cost" />]}>
   <DataTable caption="Customers" noun="customers" rows={rows} columns={columns} rowKey={(r) => r.id} toolbar={<FilterBar … />} />
 </Records>
 ```

@@ -48,11 +48,13 @@ An agent reads customers through this page's shared context (the `customers` vie
 
 ### What the agent reads
 
-The three tiles with their definitions, counted over the customers that have not left; how many the list shows of how many, with the first five in the table's filter and order (with the columns a narrow screen drops: the error rate and the trend are still the person's to read); that customers have left and where the list shows them; and what code found: how concentrated revenue is, how combined requests moved over the last 7 days against the 7 before and who departs from that by 10 points or more, and which customers fail at twice the median rate. Lists stop at 25 and say how many more there are.
+The three tiles with their definitions, counted over the customers that have not left; how many the list shows of how many, with the first five in the table's filter and order (with the error rate, a column a narrow screen drops: it is still the person's to read); that customers have left and where the list shows them; and what code found: how concentrated revenue is, how combined requests moved over the last 7 days against the 7 before and who departs from that by 10 points or more, and which customers fail at twice the median rate. Lists stop at five and say how many more there are.
 
 ```text
 - Combined requests are up 7% over the last 7 days against the 7 before. Apart from that: Saltwick Media down 5%; Bexwell Robotics down 4%; Umberly Studios down 4%; Norhaven Capital down 4%; Windrush Labs down 4%; and 11 more (the list has each customer's 14 days). Evidence: /requests?q=Saltwick%20Media
+- 99 of 320 have an error rate at least twice the median customer's 0.28%: Dellmark Media (1.45%); Dunmoor Systems (1.45%); Larkfield Biotech (1.42%); Orbit Retail (1.42%); Everwick Security (1.40%); and 94 more (sort the list by error rate to see them). Evidence: /requests?q=Dellmark%20Media&status=5xx
 Unknown:
+- A customer's error rate counts their 5xx and 429 responses; nothing here says whether the errors were theirs or ours.
 - 9 customers have left and are counted in no figure here; the list shows them under the status left (/customers?status=left).
 ```
 

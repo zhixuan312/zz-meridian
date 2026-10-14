@@ -108,7 +108,7 @@ The period with the dates of its complete days, and freshness; then requests, th
 ## Accessibility
 
 - The heading is the only `h1`: "Usage", read out and not drawn, then the title's sentence.
-- Every chart carries a screen-reader table of its numbers: the calendar a row a date, the hours a weekday by hour.
+- The Trend chart, the Column chart and both Heatmaps carry a screen-reader table of their numbers: the calendar a row a date, the hours a weekday by hour. The Bar lists and the Composition bar give their figures as text.
 - When they come is a radio group named "Count when they come", apart from the period's "Reporting period".
 - The status classes are named in words beside their colours.
 

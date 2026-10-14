@@ -9,7 +9,7 @@ Status: beta
 | Row | Pattern | Console (1024px and wider) | Mobile |
 |---|---|---|---|
 | Masthead | PageFrame: kicker "ZZ Meridian · Production", title "Requests", one sentence, Freshness, Export CSV | One band | Title, sentence, then Freshness and Export on their own row |
-| 1 | Row `tiles`: three Metric tiles for what the filters let through: requests (emphasis), errors and limits, latency p95, each with its 5-minute shape over the last hour and the last half hour against the one before | Three across | One column |
+| 1 | Row `tiles`: three Metric tiles for what the filters let through: requests, errors and limits, latency p95, each with its 5-minute shape over the last hour and the last half hour against the one before | Three across | One column |
 | 2 | Data table with a Filter bar in its toolbar: search, Status, Method, Region, the result count | Columns: Request (grow), Status, Latency, Customer and Region (once the table is 896px wide), Size (1152px), Received; a table under 640px wide is the card list. A row opens its request; its Customer opens the customer's page | Card list: route and status, then latency, customer and when |
 
 The body (rows 1 and 2) is the records template, `Records` from `src/components/templates/records`: the three tiles are its summary and the table its records.
@@ -22,7 +22,7 @@ The body (rows 1 and 2) is the records template, `Records` from `src/components/
 | Filtered | The tiles describe the matching set ("Matching requests"); the active filters take the accent wash; Clear appears |
 | Set by an agent | `?by=Claude` adds the provenance line under the filters until a person changes them |
 | Nothing matches | The table's filtered-out empty state with Clear filters; the tiles read zero |
-| Loading | `loading.tsx`: the masthead skeleton and the template's skeleton, three tiles over a few skeleton table rows. On a navigation the real masthead (title, sentence) shows at once, with skeletons for the freshness stamp, the export and the body |
+| Loading | `loading.tsx`: the masthead skeleton and the template's skeleton, three tiles over a few skeleton table rows. On a navigation the real masthead (title, sentence) shows at once, with empty room for the freshness stamp and the export, and a skeleton for the body |
 | Error | The dashboard error screen with Retry: a read that fails is the page's failure, not the table's |
 
 ## Data
@@ -31,11 +31,11 @@ The `requests` collection is a sample of the requests received, as its descripti
 
 ## Streaming
 
-The page renders `PageFrame` itself, so the static title and sentence commit with the navigation. The freshness stamp, the Export link and the body (tiles and table) each read the address inside their own Suspense boundary, over one shared read.
+The page renders `PageFrame` itself, so the static title and sentence commit with the navigation. The freshness stamp, the Export link and the body (tiles and table) each read the address inside their own Suspense boundary: the stamp and the body over one shared read, the Export from the address alone.
 
 ## Addressable state
 
-`?q=&status=2xx|3xx|4xx|5xx&method=GET|POST|PUT|DELETE&region=&sort=&dir=asc|desc&page=&by=` — one `useQueryState`, so a filter change and the page reset are one write, and the server renders the next page. A value the table does not offer falls back to its default. These are also the arguments of the `zz_meridian_requests` tool.
+`?q=&status=2xx|3xx|4xx|5xx&method=GET|POST|PUT|DELETE&region=&sort=&dir=asc|desc&page=&by=` — one `useQueryState`, so a filter change and the page reset are one write, and the server renders the next page. A value the table does not offer falls back to its default. Its four filters, `q`, `status`, `method` and `region`, are also the arguments of the `zz_meridian_requests` tool.
 
 ## Export
 

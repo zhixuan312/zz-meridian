@@ -16,7 +16,7 @@ sample, ZZ Meridian's own dashboard, lives in `optional:src/system/fixtures/`; y
   `Math.random()` or `new Date()` in render, or the server and the client disagree and React reports a hydration error
   (the audit fails on it). With a real API, "now" is read once on the server, where the data is read, and passed down;
   a client component never reads its own clock in render.
-- **Daily series** for anything a Metric tile or chart shows over time: the Meridian cursor reads one value per day.
+- **Daily series** for anything a Metric tile or chart shows over time: the Meridian cursor reads one value per date it holds.
 - **Freshness** from when data arrived (`DEMO_UPDATED_AT`), never from now.
 - **null for "not measured"**: the formatters in `src/lib/format.ts` render it as a dash. A quantity Meridian has no
   formatter for (weight, distance) gets one in a file of the product's own (`example:src/data/format.ts`), passed as a
@@ -85,8 +85,8 @@ places to look (by audience, by team, by job), keep the workspaces; when they di
 navigation is what a product has until somebody asks for more.
 
 **Keep the workspaces** when the destinations fall into a few places to look. Each has a `label`, an `audience` sentence
-and a `homeHref`; give every `nav` entry a `workspace` naming one. Rewrite each `audience` sentence (the Home page and the two
-workspace homes, Revenue and Now, print `workspaces.<id>.audience` in their description) and move the homes to your own pages. Keep `optional:src/views/workspaces.ts` (`navOf` derives a workspace's
+and a `homeHref`; give every `nav` entry a `workspace` naming one. Rewrite each `audience` sentence (the Home page, the two
+workspace homes, Revenue and Now, and Usage print `workspaces.<id>.audience` in their description) and move the homes to your own pages. Keep `optional:src/views/workspaces.ts` (`navOf` derives a workspace's
 navigation, `workspaceOf` says which workspace an address belongs to) and `optional:src/views/workspace-chrome.tsx`
 (`WorkspaceRail` and `WorkspacePalette`). The address alone decides the workspace; nothing is stored, and a workspace
 chooses what the rail lists, never what a person may open. Keep a workspace with the key `main`: the adapter and the
@@ -105,14 +105,14 @@ to all of this.
 - In `optional:src/views/no-access.tsx` the refusal page's way out reads `navOf` and `workspaces.main`: make it the first
   destination of `nav` the person may open, or `/`, and rewrite the two cases of `optional:tests/no-access.test.tsx` that
   expect a workspace's first destination and Main's home.
-- Take `${workspaces.<id>.audience}` out of the descriptions of the Home, Revenue and Now pages, or delete
+- Take `${workspaces.<id>.audience}` out of the descriptions of the Home, Revenue, Usage and Now pages, or delete
   the pages.
-- Delete `optional:tests/workspaces.test.ts`, `optional:tests/workspace-access.test.ts` and
-  `optional:tests/workspace-chrome.test.tsx`. In `optional:tests/shell-alerts.test.ts` drop the `workspaceOf` check, and in
+- Delete `optional:tests/workspaces.test.ts`, `optional:tests/workspace-access.test.ts`,
+  `optional:tests/workspace-chrome.test.tsx` and `optional:tests/workspace-menu-access.test.tsx`. In `optional:tests/shell-alerts.test.ts` drop the `workspaceOf` check, and in
   `optional:tests/workspace-home.test.tsx` the test that reads `workspaces.main.audience`, with the two imports only
   it uses.
-- A clone that keeps the Atlas also changes `optional:src/system/atlas-shell.tsx`, which lists the workspaces; a created project
-  has no Atlas.
+- A clone that keeps the Atlas also changes `optional:src/system/atlas-shell.tsx` and `optional:src/system/strata.tsx`, which
+  list the workspaces, and `optional:tests/atlas-layers.test.ts`, which expects three; a created project has no Atlas.
 
 `grep -rn "workspaces\.\|WorkspaceId\|views/workspaces\|workspace-chrome" app src tests journeys` finds what is left.
 
@@ -237,7 +237,7 @@ says "requests" on a page about orders is the sample's, not the product's.
 - **A page that leads with figures is headed by a sentence, with its name kept in the heading.** `PageFrame` takes the
   page's `name` beside a `title` that is the sentence. The heading reads the name, out of sight, then the sentence; the
   top bar and the document's title stay the name; the frame holds the sentence's block while the sentence arrives, so
-  nothing under it moves (the Shell's specification, `example:src/components/base/shell/README.md`, "The title"). A list, a form and Settings keep a name.
+  nothing under it moves (the Shell's specification, `optional:src/components/base/shell/README.md`, "The title"). A list, a form and Settings keep a name.
 - **A title is worked out, never written.** A function beside the page's view takes plain figures and returns the
   sentence, with a branch for each thing it may say and a test for every branch. It says what is wrong today in the
   same sentence where its rule has a clause for it, and a page that cannot work its title out is headed by its name.
@@ -303,16 +303,36 @@ says "requests" on a page about orders is the sample's, not the product's.
   sentence (`REFUSALS` in `optional:src/data/member-mutations.ts`), and the roles table on Members, a reference of what
   each role holds, stays.
 - **What a refused address draws is the product's choice, declared once.** `refusal` in `src/app.config.ts` is the one
-  place it is said; `gate` reads it on every page, and every gated page titles itself through `gatedMetadata`. Neither
+  place it is said; `gate` reads it on every page, every gated page titles itself through `gatedMetadata`, and every
+  gated route's loading state passes its words through `gatedLoading` (`optional:src/data/refusal.ts`). Neither
   choice throws `notFound()` or answers anything but 200, and a person with no session is sent to sign-in under both.
 - **Every context is held to the budget.** Every view's context fits 2,600 characters and names its address as each
   person who may read it, at every period, for every record, pointed at every day of a view that takes one, and with
   four to eight times the records there are today. Each list a context states is capped and counted, and the cap is
   never below what the page states with the product's own records. Meridian holds its sample to this with a test of
   its own; a product holds its contexts with cases beside the budget cases of `optional:tests/shared-context.test.tsx`.
+- **The cards' forms are the standard, and an update brings them.** Every card lives in `src/components/`, so what a
+  card can draw is Meridian's whatever a page shows with it: the Column chart's `parts` (each column a whole),
+  `running`, values at rest, `height="fill"` and its one Tab stop; the Trend chart's `running` and `stacked`; the
+  Heatmap's calendar form (`days`, joined to the page's Meridian with `meridian`) and its `scale`; the Featured metric's
+  `points`, `finding`, `foot`, `peer`, `compare` and `pointLabel`; the Metric tile's `points`, a `finding` that names
+  its `tone`, and `size="compact"`; the Incident card's updates timed from the incident's start, its `owner` and its
+  `ticket`; the Status list's `run`; Uptime bars' `endLabel`; and the Composition bar's `stacked`.
+  `example:docs/data-display.md` says when each is the form to draw.
 
 **The sample's. Replace it.**
 
+- **The company the sample is**: one company that sells tokens, priced once: its models and their prices, its plans,
+  its customers, its regions and its days, worked out in `optional:src/system/fixtures/company.ts` from the names, the
+  shapes and the clock in `optional:src/system/fixtures/sample.ts`, and served by `optional:src/data/collections.ts` as
+  each collection's `rows`; `PLANS` and `REGION_NAMES` in `optional:src/data/sample.ts` are its plans and its regions.
+  Replace each collection's `rows` with your data ("Data" above).
+- **The three workspaces**: Main, Business and Engineering, their `audience` sentences and their homes (Home at `/`,
+  Revenue at `/business`, Now at `/engineering`). "Navigation" above says how to declare your own or take them out.
+- **The checks of the sample's pages**: `optional:journeys/workspaces.ts`, which walks every destination of the three
+  workspaces as an Owner and as a Viewer, and the `navigationChecks`, `detailRoutes` and `browserChecks` in
+  `scripts/verify.config.ts` that name the sample's routes. Give each rail page of your own its `navigationChecks`
+  entry (`pnpm verify --full` fails a rail route without one) and take the sample's out with its pages.
 - **The choice `explain`**: the sample answers an address a person may not open with the no-access page, which names the
   page and who to ask. Choose `absent` when a product must not tell a person that a page they may not open exists.
 - **The counts each context's lists are capped at**: six services, two open incidents and three resolved on Services,
@@ -320,8 +340,8 @@ says "requests" on a page about orders is the sample's, not the product's.
   sample's lists within the budget; a product sets its own, at least what its pages state with its own records.
 - **The six title functions and their words**: `homeTitle`, `usageTitle`, `revenueTitle`, `customerTitle`, `nowTitle`
   and `servicesTitle`, each in its view's context file under `optional:src/views/`, with the functions that call the
-  rules for them (`usageHead`, `revenueHead`, `titleOf`, `nowHead`, `servicesHead`, and Home's `homeHead` in
-  `optional:src/views/home-parts.ts`) and Home's line under its title (`homeLine`). Write your pages' own, in your
+  rules for them (`revenueHead`, `titleOf`, `nowHead`, `servicesHead`, Usage's `usageHead` in
+  `optional:src/views/usage-parts.ts` and Home's `homeHead` in `optional:src/views/home-parts.ts`) and Home's line under its title (`homeLine`). Write your pages' own, in your
   product's nouns: a release "in testing" and a run "without a mark" are the sample's words for its own releases and
   services.
 - **Home's nine parts and their words**: the head, the revenue card, the three tiles beside it, the row of the days
@@ -341,7 +361,7 @@ says "requests" on a page about orders is the sample's, not the product's.
   customers names its window, every customer a part names opens its page, the period moves only what the daily
   records answer, and the four states. Write your own.
 - **Usage's parts and their words**: the head and its line (requests a day, the share of errors and the median day's
-  p95), "Requests a day", "A year of requests, a day a cell" with its busiest day, "The period, counted" with its three
+  p95), "Requests a day", "A year of requests, a day a cell" with its busiest day, "The period, counted" with at most three
   facts, "When they come" with its two choices, "Where from" beside "What is asked for", and "How it was answered":
   what `usageData` and `usageHead` in `optional:src/views/usage-parts.ts` work out for them, how
   `optional:src/views/usage.tsx` draws them and how `usageContext` says it. The endpoints, regions and status classes
@@ -474,7 +494,7 @@ then stays off without them). Then fix what still points at the sample:
   runs and tickets. Write your own exceptions the same way, each from a read the caller may make and linked to the page
   that handles it; the layout hands the read's promise to `ShellAlerts` (`optional:src/views/shell-alerts.tsx`) without
   awaiting it.
-- `optional:src/app.config.ts`: each `audience` sentence in `workspaces` describes the sample and prints on a home's
+- `optional:src/app.config.ts`: each `audience` sentence in `workspaces` describes the sample and prints on a page's
   masthead; rewrite it, or take the workspaces out ("Navigation").
 - `optional:app/sign-in/page.tsx`: the headline and lead describe the sample product.
 - `example:src/system/content.ts`: `PAGES` names a sample request id route.

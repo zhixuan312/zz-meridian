@@ -9,7 +9,7 @@ Status: beta
 1. **SVG**: one `<svg role="img">` per strip, labelled by the summary. One baseline `<rect>` spans the whole period in the operational fill; one `<rect data-day data-state>` is drawn per non-operational day. A focus rect appears only while a day is focused.
 2. **Caption**: "90 days ago" (the span shown), a hairline, the uptime percentage in `ink-2`, a hairline, "Today", or the day the strip ends on when it is given `endLabel`.
 3. **Tooltip**: on hover or keyboard focus, the day's state and date, on `surface-inverse`.
-4. **Screen-reader text**: one paragraph with the period and its uptime, then one sentence per degraded, outage or no-data day ("12 Sep 2026: Outage."), or "No incidents." There is no table of every day.
+4. **Screen-reader text**: one paragraph with the period and its uptime, then one sentence per degraded, outage or no-data day ("12 Sept 2026: Outage."), or "No incidents." There is no table of every day.
 
 ## Variants
 
@@ -18,7 +18,7 @@ Status: beta
 | Operational | The baseline: `positive` at 22%, so it recedes |
 | Degraded | A `warning` mark |
 | Outage | A `critical` mark |
-| None | A `line-strong` mark, opaque so the baseline never shows through; read as "No data" and never counted as up |
+| None | A `line-strong` mark with no baseline beneath it, so it never reads as up; read as "No data" and never counted as up |
 
 `size="lg"` draws a 56px strip for one that leads its card (Now's days inside the band); the default is 32px. `measure` is the word after the percentage: "uptime" by default, "on time" or "in stock" for other domains. A strip of complete days ends on the latest of them, not today: it takes that day as `end` and names it in `endLabel` ("02 Oct 2026"), so the caption never calls yesterday "Today".
 
@@ -48,11 +48,11 @@ The Services view shares each service's state and uptime as structured context; 
 
 ## Accessibility
 
-Every state has a word in the tooltip, the live region and the summary; colour is never the only signal. Status fills hold 3:1 on `surface` (positive 8.63:1 dark at full strength; warning 3.48:1 light).
+Every state has a word in the tooltip, the live region and the summary; colour is never the only signal. Status fills hold 3:1 on `surface` (positive 8.58:1 dark at full strength; warning 3.36:1 light).
 
 ## Content
 
-Uptime is shown to three decimals at 99.99% and above, two below ("99.994%", "99.81%").
+Uptime is shown to at most three decimals at 99.99% and above and at most two below, never with a trailing zero ("99.994%", "99.81%", "100%").
 
 ## Do and do not
 

@@ -30,7 +30,7 @@ The Meridian has no size of its own. The line is 1px; the dots 8px across (4px r
 |---|---|
 | Rest | No line. Tiles show the period's figure and delta. |
 | Pointing | The line and dots on every chart; the tooltip on the chart under the pointer; tiles whose points are the page's show the day. The tooltip fades in over `dur-hover`. |
-| Keyboard | A focused chart draws a 2px `accent` ring around its plot until a day is chosen; then the line moves with the keys. |
+| Keyboard | A focused chart draws a 2px `accent` ring around its plot while it has focus; the line moves with the keys. |
 | Left | Leaving the chart (pointer out, Escape, blur) clears the index everywhere. |
 
 ## Behaviour
@@ -50,14 +50,14 @@ The Meridian has no size of its own. The line is 1px; the dots 8px across (4px r
 
 ## Agents
 
-- An embed view calls `useShareView` with a sentence and `{ day }` whenever the index changes, so the model knows which day is pointed at.
+- An embed view calls `useShareView` with its shared context, whose `focus` sentence names the day pointed at, whenever the index changes, so the model knows which day is pointed at.
 - An agent never moves the cursor. It reads the same numbers from the shared context and from every chart's screen-reader table.
 
 ## Accessibility
 
 - Each chart is a focusable `role="img"` with a label that says how to use the keys, and carries an `sr-only` table of every day and series: the tooltip is visual only, the table is the accessible source of the numbers.
-- The cursor line is decorative; the marks hold 3:1 (`accent` on `surface` 3.73:1 dark, 5.91:1 light).
-- Reduced motion: nothing animates; the line jumps with the pointer as it always does.
+- The cursor line is decorative; the marks hold 3:1 (`accent` on `surface` 3.71:1 dark, 5.71:1 light).
+- Reduced motion: nothing animates; the line jumps with the pointer instead of gliding.
 
 ## Content
 

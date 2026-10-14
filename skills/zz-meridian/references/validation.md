@@ -3,7 +3,7 @@
 `pnpm verify` has three modes. Each ends with one coverage line before its outcome, which says what ran and what did not:
 
 ```text
-coverage: <default|full|perf|full+perf>; browser <ran|not run (<reason>)>; <n> routes; data configured <a>/<n>; interaction configured <b>/<n>; not run: <suites>[; failed: <suites>]
+coverage: <default|full|perf|full+perf>; browser <ran|not run (<reason>)>; <n> routes; data configured <a>/<n>; interaction configured <b>/<n>[; personas <names>]; not run: <suites>[; failed: <suites>]
 ```
 
 - **`pnpm verify`** is bounded: steps 1 and 2 below once each, the route policy, the first-load and HTML size checks, and
@@ -23,7 +23,7 @@ second server for the live-data restart case) prints `not run`, never `ok`, and 
 passed; not run: <suites>`; only a run with nothing left unrun ends with `the project meets the Meridian standard`.
 Steps in order:
 
-0. **Rail navigation** (`--full` only): every rail route is navigated, with its data and interaction mappings from
+0. **Rail navigation** (`--full` only, after the build and the size checks of step 2): every rail route is navigated, with its data and interaction mappings from
    `navigationChecks`. A journey starts from the nearest rail route, in rail order, whose rail draws a link to the
    destination, so a rail that shows only part of the navigation on a page is followed. A workspace's home that no other
    route's rail links to (the only destination of its workspace) is reached through the workspace menu: from the nearest
@@ -81,7 +81,7 @@ Steps in order:
 8. **Web Vitals on a mid-range phone** (`scripts/vitals.ts`): Lighthouse's mobile profile (CPU slowed four times, Slow 4G,
    390px touch). Every page must hold LCP under 2.5 s, INP under 200 ms and CLS under 0.1, the template's Design Atlas
    included (its front page and one card page; `node scripts/vitals.ts --atlas` measures every entry); INP is the slowest
-   tap on a control that changes the screen, found inside open shadow roots too, and each line ends with `taps: N`, the
+   tap on a control that changes the screen, found inside open shadow roots too, and each line carries `taps: N`, the
    controls it tapped (`taps: 0` means the page's INP rests on no tap). It runs alone, after the others, since throttling measures the machine
    too: on a busy machine, run it again before believing a near miss.
 

@@ -46,7 +46,7 @@ export default async function CustomersPage() {
  * a row is drawn, exactly as it does for the members, the keys and the request log.
  */
 async function Customers() {
-  // Every customer, not a first page: the tiles are sums over them, and Main's Business region counts them the same way.
+  // Every customer, not a first page: the tiles are sums over them, and Home's read counts them the same way.
   // The client is handed the fields a row draws, and not what only a customer's own page shows (its requests by route).
   const { rows } = await readAll('customers');
   return <CustomersView rows={(rows as CustomerRecord[]).map(customerRow)} />;

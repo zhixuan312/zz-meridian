@@ -110,7 +110,7 @@ Its first insight is the title the page is headed by, word for word; the second,
 ## Accessibility
 
 - The heading is the only `h1`: "Now", read out and not drawn, then the title's sentence. Part titles are `h2`; "Open incident" heads its part above the card, which titles itself with the incident.
-- Every state is a word beside its dot; the band's strip and the runs chart carry a screen-reader summary and table of their days.
+- Every state is a word beside its dot; the band's strip carries a screen-reader summary of its days, and the runs chart a table of them.
 - "Yours" is a word, not a colour alone.
 
 ## Content

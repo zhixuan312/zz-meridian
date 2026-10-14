@@ -39,7 +39,7 @@ The whole route inside the shell is held still at [/system/states/loading](/syst
 
 ## Surfaces
 
-- **Console**: every dashboard route's `loading.tsx` and the Suspense fallbacks of the Home, Usage, Customers, Requests, Tests and Releases pages.
+- **Console**: every dashboard route's `loading.tsx` and the Suspense fallbacks of the Home, Revenue, Now, Usage, Customers, Requests, Services, Tests and Releases pages.
 - **Mobile**: the shapes stack as the page does. The lead room grows to six lines on a narrow phone, as the sentence does.
 - **Embed**: not used; an embed view draws its own small state.
 

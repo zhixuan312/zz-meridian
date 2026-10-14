@@ -68,7 +68,7 @@ A calendar shows `floor((width - 40 - 8 + 2) / 14)` of the latest weeks, the wid
 
 ## Agents
 
-The view shares its busiest windows as structured context (`useShareView`), for example `{ busiest: 'Thu 14:00–15:00 UTC' }`. An agent reads the same numbers a screen reader does, from the table; it never moves the cursor.
+The view that draws it shares its busiest windows in its context (`useShareView`), for example "the busiest of the week Sunday 22:00 UTC, 43.9M requests" on Usage. An agent reads the same numbers a screen reader does, from the table; it never moves the cursor.
 
 ## Accessibility
 

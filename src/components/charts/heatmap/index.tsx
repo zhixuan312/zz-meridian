@@ -175,7 +175,7 @@ function Hours({ values, scale, format, unit, label, className, 'data-preview-st
 
   return (
     <figure ref={box} aria-label={label} data-preview-cell={previewCell} className={cn('relative min-w-0', className)} onPointerLeave={() => setHover(null)}>
-      <div className="grid grid-cols-[2.5rem_minmax(0,1fr)] gap-x-2">
+      <div className="grid grid-cols-[40px_minmax(0,1fr)] gap-x-2">
         <div />
         <div aria-hidden className="mb-2 grid text-2xs text-ink-3 tabular-nums" style={{ gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))` }}>
           {Array.from({ length: cols }, (_, c) => (
@@ -312,7 +312,7 @@ function Calendar({ days, running = false, meridian = false, scale, format, unit
   return (
     <figure ref={box} aria-label={label} data-preview-date={previewDate} className={cn('relative min-w-0', className)} onPointerLeave={letGo}>
       {shown.length ? (
-        <div className="grid grid-cols-[2.5rem_minmax(0,1fr)] gap-x-2">
+        <div className="grid grid-cols-[40px_minmax(0,1fr)] gap-x-2">
           <div aria-hidden className="flex flex-col text-2xs text-ink-3">
             <span className="mb-2 h-4" />
             {/* Out of the flow, so a name taller than a 12px cell never stretches the rows it stands beside. */}

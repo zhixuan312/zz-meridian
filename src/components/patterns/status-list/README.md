@@ -6,7 +6,7 @@ Status: beta
 
 ## Anatomy
 
-1. **Summary line** (optional): a status dot and the worst state among the services, in words: "All systems operational", "1 service degraded", "1 service is down". The count of services on the right from 28rem of card width.
+1. **Summary line** (optional): a status dot and the worst state among the services, in words: "All services operational", "1 service degraded", "1 service is down". The count of services on the right from 28rem of card width.
 2. **Service row**, one per service:
    1. **Dot and name**: a 8px status dot and the service name, `text-sm` medium.
    2. **Description** (optional): in `t-caption`, wrapping to a second line rather than losing its end.
@@ -31,7 +31,7 @@ Status: beta
 | Wide row (card at least 42rem) | Three columns: name 12 to 15rem, bars fill, state 5.5rem |
 | Narrow row (under 42rem) | Name and state on one line; the bars on a second line across the full width |
 | Run | `t-caption`, 8px under the bars' caption, across the bars' own width at every step: beside the name on a wide row, the row's full width on a narrow one. It wraps to a second line before it is cut |
-| Summary | `text-md` 16px semibold, `tracking-title`; a 10px dot |
+| Summary | `text-md` 16px semibold, tracked -0.012em; a 10px dot |
 
 ## States
 
@@ -92,8 +92,8 @@ An embed that shows this list shares the summary, the affected services and the 
 
 - The summary has `role="status"`, so a change of state is announced.
 - State is said in words beside every dot; colour repeats it, never carries it alone.
-- Contrast (dark, indigo): `ink` on `surface` 17.0:1; state words: `positive-ink` 11.9:1, `warning-ink` 12.0:1, `critical-ink` 9.6:1; dots against `surface`: positive 8.6:1, warning 9.1:1, critical 5.9:1.
-- Each Uptime bars figure carries a screen-reader sentence and a by-day table.
+- Contrast (dark, indigo): `ink` on `surface` 16.9:1; state words: `positive-ink` 11.8:1, `warning-ink` 12.0:1, `critical-ink` 9.5:1; dots against `surface`: positive 8.6:1, warning 9.1:1, critical 5.9:1.
+- Each Uptime bars figure carries a screen-reader sentence, and one more for each day that has a mark.
 - A run is a sentence of text in its row, read after the strip it counts; nothing about it is carried by colour. Its words are `ink-3` 6.4:1 and its figure `ink-2` 8.0:1.
 
 ## Content

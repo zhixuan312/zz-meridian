@@ -21,7 +21,7 @@ Card, Delta, Status dot, Tooltip, Sparkline. Tiles sit in a `Row split="tiles"`,
 ## Data
 
 - `value` is the period's figure; `points` one value a point of the same period, oldest first (days on a page of days); `delta` the change as a fraction (0.057 is +5.7%), or `null` when there is no earlier period. `compare` names what the change is measured against (default "vs previous period"; "vs the half hour before" when the window is not the period). `note` is a short line in that place when no comparison fits, such as who is past due; it stays on one line, and a note that is text keeps the whole of itself in its title when the tile cuts it.
-- `intent` says which way is good: `up` (requests), `down` (errors, latency), `neutral` (spend).
+- `intent` says which way is good: `up` (requests), `down` (errors, latency), `neutral` (compute cost).
 - `value` may be a word for a categorical state ("Likely new", "On track"); it is set at `text-2xl` instead of the figure size and wraps to a second line rather than losing its end ("03 Oct 2026" in a narrow tile), and `format` is not used.
 - `format` turns the number into its text: a name (`count`, `compact`, `cost`, `cost-compact`, `duration`, `percent`), which a server page can pass, or a function from a client component; the default split recognises "$298.43" (any currency symbol from `app.currency`), "2.9M", "0.90%" and "294ms".
 - `finding` is `{ text, day?, tone }`. The tone is `neutral` or `warning` and has no default: the code that counts a finding knows whether it is a fact or something to look at, and says so.
@@ -58,7 +58,7 @@ It has no figure at the figure size, no hint, no icon and no finding, whatever i
 
 | Part | Compact | Default |
 |---|---|---|
-| Padding | `space-4` 16px at the sides, `space-3` 12px above | `card-pad` (20 to 28px) |
+| Padding | `space-4` 16px at the sides, `space-3` 12px above | `card-pad` (20 to 28px) at the sides and below, 2px less above; a Sparkline runs to the bottom edge |
 | Radius, border, shadow | The Card's: `radius-lg`, `line`, `shadow-card` | The same |
 | Rows | 2px apart; 8px above the Sparkline | 12px and 8px apart; 12px above the Sparkline |
 | Height with a Sparkline | About 92px with the change beside the name, 114px in three rows | About 175px at 1440px |
@@ -82,7 +82,7 @@ The step is the tile's, not its content's. A container query measures a content 
 | Meridian reading | The figure reads the pointed point; the change line names it ("22 Sept 2026"); a hairline marks it on the sparkline. Only when the tile's points are the page's |
 | Points that are not the page's | The figure and the change stay as at rest, and the Sparkline draws no cursor |
 | No earlier period | "No earlier period to compare" in place of the change |
-| Loading | A Skeleton of the same shape (figure bar, two lines) |
+| Loading | The tile has none of its own: the page's loading state draws its shape with Page loading's `TilesSkeleton` (figure bar, two lines) |
 | Compact, Meridian pointing | The line keeps the period's figure. The Sparkline follows its own rule and marks the day only when its points are the page's |
 | Compact, no earlier period | A dash in place of the Delta; a screen reader hears "No earlier period to compare" after it |
 | Compact, no `delta` | No change is drawn |
@@ -94,13 +94,13 @@ A tile has no hover, pressed or selected state of its own: only its info button 
 
 - The info button shows what the number counts, on hover, on focus and on a press.
 - A finding with a `day` points the page's Meridian at that day when pressed, and the person's next pointer takes over. A day the Meridian does not hold is still drawn, and pressing it points at nothing.
-- A tile follows the Meridian and never sets it, and it follows only when its points are the page's.
+- Apart from a finding's day, a tile follows the Meridian and never sets it, and it follows only when its points are the page's.
 - A compact tile is read, not pressed: nothing in it answers a pointer or a key.
 
 ## Surfaces
 
 - **Console**: four across, or stacked three high beside a Featured metric. A wall of compact tiles is four across.
-- **Mobile**: two across from 34rem of row width, one below. Under 640px a tile with a sparkline sets it beside the figure; a tile without one becomes a single row, the label and its line on the left and the figure on the right at `text-xl`, so four stacked tiles take half a screen, not a whole one. Compact tiles stay two to a row on a phone, each in its three-row layout.
+- **Mobile**: two across from 34rem of row width, one below; a row of three is one across until 48rem. Under 640px a tile with a sparkline sets it beside the figure; a tile without one becomes a single row, the label and its line on the left and the figure on the right at `text-xl`, so four stacked tiles take half a screen, not a whole one. Compact tiles stay two to a row on a phone, each in its three-row layout.
 - **Embed**: one to three across in an inline view; the same tile. A wall of compact tiles is two across at 360px.
 
 ## Agents

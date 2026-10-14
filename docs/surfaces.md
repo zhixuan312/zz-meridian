@@ -24,12 +24,12 @@ Below 1024px the rail becomes a drawer (the same node, so nothing is defined twi
 |---|---|---|---|
 | Navigation | Rail | Drawer from the masthead's menu button; closes on Escape, on the scrim and on navigation | AppShell |
 | Masthead | Title, head-note, actions on one band. A title that is a sentence has a row to itself, two lines on a desk, with the head-note and the actions on the band under it | Title row with the menu button; head-note under it; actions wrap to their own row, the primary last. A title that is a sentence holds three lines at 390px and four on a narrower phone | PageFrame |
-| Metric tiles | As many across as the row holds: four, three or two | Counted from the row's own width, never leaving a hole: four are four or two (two from 34rem), three are three or one (three from 48rem), two are two from 34rem | Row `tiles` |
+| Metric tiles | As many across as the row holds: four, three or two | Counted from the row's own width, never leaving a hole: four are four, two or one (two from 34rem, four from 62rem), three are three or one (three from 48rem), two are two from 34rem | Row `tiles` |
 | A wall of compact tiles | Four across, so eight are two rows; each tile has its change at the right of the name's row. The card that holds the wall says what the change is against | Two to a row; each tile is three rows: the name, the change, the line | Metric tile, which reads its own width (14rem); the page lays out the wall |
 | Tables | Columns, sortable heads | A list of cards, one per row: the primary column as the title, two or three facts under it, the status at the end; low-value columns drop first (`hideBelow`). Both read the table's own width, so a table in a narrow frame on a wide screen becomes cards too | DataTable |
 | Dialogs | Centred, 520px | A bottom sheet, full width, safe-area padding | Dialog |
 | Menus and selects | Popover | Popover, at least 44px rows on touch | Menu, Select |
-| Charts | Full height, 6 to 8 date labels | Shorter (180px), 3 to 4 date labels; the Meridian follows the finger and the tooltip pins to the top edge | TrendChart |
+| Charts | Full height, 6 to 8 date labels | The height the page gives it, 3 to 4 date labels; the Meridian follows the finger and the tooltip pins to the top edge | TrendChart |
 | Toolbar | Search, filters and view controls in one row | Search full width; filters behind one Filters button that opens a sheet | FilterBar |
 | Touch targets | 38px default control | Every control at least 44px tall where it is the main interaction (`control-lg`) | Button, Field |
 
@@ -42,7 +42,7 @@ Meridian's rules for the embed surface:
 1. **Look like a guest.** The background is transparent; the host's ground shows through. Text and lines take the host's colours through the token bridge below; the accent stays the product's, because it is how a reader recognises whose card this is. Type follows the host's `--font-sans` when given.
 2. **One view, one job.** An embed answers the question the tool was called for: one metric with its trend, one chart, one short list, one record. It never has a rail, a masthead or a page of rows.
 3. **Fit inline.** Inline views fit the host's `maxHeight` (design for 480px): at most one figure row and one chart, or a list of five. Anything longer offers **Expand**, which asks for `fullscreen`; if the host refuses, it opens the console in a new tab (`ui/open-link`).
-4. **Fullscreen is the console without the shell.** The same `Stack` and `Row`s as the page, under an `EmbedFrame` head (title, freshness, Open in ZZ Meridian), with tabs instead of the rail.
+4. **Fullscreen is the console without the shell.** The same `Stack` and `Row`s as the page, under an `EmbedFrame` head (title, freshness, Open in ZZ Meridian), and no rail.
 5. **Report height, never scroll inline.** The view measures its body and sends `size-changed`; an inline embed has no scrollbar of its own.
 6. **Respect the safe area.** Padding adds `safeAreaInsets` on mobile hosts.
 7. **Say when the host refuses.** A refused context is tried once more, and Ask then carries the view's address; a refused question is told to the person with its words, so nothing pressed is silently lost.
@@ -74,7 +74,7 @@ A dashboard used to have one operator: a person pointing, tapping and typing. A 
 | Rule | What it means | Where it lives |
 |---|---|---|
 | **Addressable** | Every view's state is in its address: the period, filters, the selected record, the sort, the page. An agent opens exactly the view it means by calling a tool with those arguments; a person shares a link that opens the same view. | Query parameters on console routes; the same names as tool arguments on embed routes |
-| **Legible** | Every embed view tells the model what is on screen, as a sentence and as structured facts, and tells it again when that changes (a filter, the period, the day the Meridian points at). "Why did this spike?" then has a referent. | `useShareView` (`ui/update-model-context`) |
+| **Legible** | Every embed view tells the model what is on screen, as labelled lines and as structured facts, and tells it again when that changes (a filter, the period, the day the Meridian points at). "Why did this spike?" then has a referent. | `useShareView` (`ui/update-model-context`) |
 | **Consent** | An agent may read anything the person may read. It changes nothing without a person: every write it wants arrives as a Proposal (what changes, before and after, why, what else it touches) with Approve and Dismiss. A removal is proposed like any other change, marked critical, and runs only when approved. | Proposal |
 | **Provenance** | Whatever an agent did stays marked: an activity line names the agent and the person it acted for ("Claude raised the rate limit · for Jonas Weber"); a filter or a view an agent set says so until a person changes it. | Agent mark, Activity feed, Filter bar |
 | **Handoff** | A person can hand any card to the agent in one press: Ask posts a question about exactly what the card shows into the conversation. It appears only where an agent is listening, so the console never shows a dead control. | Ask about |
@@ -87,7 +87,7 @@ These rules cost the console almost nothing (addressable state is good practice 
 |---|---|---|---|---|
 | Reads | The assistant panel reads the view's shared context, the page and the product's data; Activity shows its audit | Same | The view's shared context | The view's shared context, the same one |
 | Asks (person to agent) | The assistant panel (a third column from 1024px), and Ask on cards | The assistant panel as a sheet, and Ask on cards | Ask on cards | Ask on cards |
-| Proposes (agent to person) | A Proposal in the assistant's thread; the inbox in Activity | Same | One Proposal card per tool result | Proposals in the page |
+| Proposes (agent to person) | A Proposal in the assistant's thread | Same | One Proposal card per tool result | Same as inline |
 | Marks | Agent mark and "via" | Same | Same | Same |
 
 ## Inventory
@@ -99,7 +99,7 @@ What exists, by layer, and how it changes per surface. "Same" means the card nee
 | Card | Job | Mobile | Embed |
 |---|---|---|---|
 | Planes | Frame, canvas and surface: three planes of depth instead of borders | Frame hidden; canvas full-bleed | Frame and canvas transparent |
-| Text roles | Display, page, section and card titles; figure; lead, body, small, caption, eyebrow, mono | Page title 28px holds; display steps down by clamp | Same; host font when given |
+| Text roles | Display, page, section and card titles; figure; lead, body, small, caption, eyebrow, mono | Page title steps down to 36px by clamp; display steps down by clamp | Same; host font when given |
 | Shell | AppShell, PageFrame, Stack, Row, the three page widths | Drawer, stacked rows | Replaced by EmbedFrame |
 | Icons | Lucide at 1.75 stroke: 14, 16 and 18px | Same | Same |
 | Motion | Arrive, answer, float; reduced motion collapses all | Same | Arrive only on first render, so a re-render in the thread never replays |
@@ -123,20 +123,20 @@ All components are surface-agnostic by construction: they size from control toke
 | Pattern | Job | Console | Mobile | Embed |
 |---|---|---|---|---|
 | Rail | Navigation, workspace, account, appearance | Fixed on the frame | In the drawer | None |
-| Command palette | Every destination and global action behind ⌘K | Centred, 600px | Full width, top | None |
+| Command palette | Every destination and global action behind ⌘K | Centred, 600px | Centred, the screen's width less 24px | None |
 | Appearance menu | Theme, accent, density | In the rail's foot | In the drawer's foot | None: the host decides the theme |
-| Period select | The reporting period, in the URL or held by the page | Masthead actions | Masthead actions row | Embed head, compact |
-| Freshness | When the data last arrived; stale after a contract | Masthead meta | Under the title | Embed head |
-| Featured metric | The page's one leading figure with its chart; or two figures of equal standing as the halves of the one card | The wide cell of the first row; two figures side by side, from 42rem of the card's own width | Full width; two figures in one column, the first figure first | Fullscreen only; an inline view leads with Metric tiles |
+| Period select | The reporting period, in the URL or held by the page | Masthead actions | Masthead actions row | None: the period is the tool's argument, named in the embed's title |
+| Freshness | When the data last arrived; stale after a contract | Masthead meta | With the actions, under the head-note | Embed head |
+| Featured metric | The page's one leading figure with its chart; or two figures of equal standing as the halves of the one card | The wide cell of the first row; two figures side by side, from 42rem of the card's own width | Full width; two figures in one column, the first figure first | Inline and fullscreen; the inline Home leads with it, its three tiles under it |
 | Metric tile | One number, its change, its shape, and one finding beside a neutral dot (a fact) or the warning dot (it needs a look). Compact, one of a wall of many: the name, the change, one line and the shape | Four across; a wall of compact tiles four across | Two or one across; compact tiles two to a row | One to three across; the inline view's figure row |
 | Meridian | One time cursor for every chart on a page, and for every tile and Sparkline with one value for each of its dates | Pointer and arrow keys | Finger: press and drag | Same, inside the view |
-| Trend chart | A time series on one axis; or parts of one whole, stacked | 248px tall | 180px | 160px inline, 248px fullscreen |
+| Trend chart | A time series on one axis; or parts of one whole, stacked | 248px tall, or `fill`, its card's height (220px at least) | The height the page gives it | `fill`, inside the Featured metric, inline and fullscreen |
 | Column chart | Counts side by side, one column a category or a period; or each column a whole split into its parts | 200px tall, or its card's height; a value above each column while a column is 36px or wider | Date labels thin and category labels cut shorter; under 36px a column, a value shows for the column pointed at, and a stacked chart's readout pins to the leading edge | Same as mobile inline; the console's in fullscreen |
 | Sparkline | Shape beside a figure; it marks the pointed day only when its values are the page's | Same | Same | Same |
 | Bar list | A ranked list with bars | Same | Same | Top five, then Expand |
-| Composition bar | One whole split into parts | Legend four across | Legend two across | Same as mobile |
+| Composition bar | One whole split into parts | Legend four across from 36rem of the bar's own width, two under it | Legend two across | Same as mobile |
 | Heatmap | Weekday by hour, or a year of days | 24 columns of hours; a calendar's column is a week | Hours grouped in threes (8 columns); a calendar shows the latest weeks that fit at 12px a cell | Fullscreen only |
-| Uptime bars | 90 days of a service's state | 90 bars | 30 bars, the last month | 30 bars |
+| Uptime bars | A service's state, a bar a day | Every day it is given | Every day it is given, the gaps tighter | Same as mobile |
 | Filter bar | Search, filters and view controls for one list | One row | Search, then a Filters sheet | Search only |
 | Data table | A list of records: sort, select, page, empty and loading states | Columns | Card list | Five rows, Expand |
 | Page loading | The masthead and body shapes a route shows while its page streams in | The page's own width | Same | None |
@@ -146,8 +146,8 @@ All components are surface-agnostic by construction: they size from control toke
 | Detail head | A record's identity, state and actions | Masthead | Masthead, actions in a menu | Embed head |
 | Form section | A titled group of settings with its own save | Two columns: description, fields | One column | Not offered |
 | Embed frame | The head and token bridge of an MCP App view | Not used | Not used | Always |
-| Ask about | Hands a card to the agent as a question | On the featured card, when the assistant is on: opens the panel | Same, the panel as a sheet | On cards, when a host is connected |
-| Proposal | An agent's write, waiting for a person's Approve | Inbox in Activity | Same | The tool result's card |
+| Ask about | Hands a card to the agent as a question | On the featured card and the Requests list, when the assistant is on: opens the panel | Same, the panel as a sheet | On cards, when a host is connected |
+| Proposal | An agent's write, waiting for a person's Approve | In the assistant's thread | Same | The tool result's card |
 | Prose | Markdown a person or a model wrote, rendered safely | Reading width, `base` | One column; tables wrap | `sm`, host font |
 
 ### Layer 4 · Pages
@@ -162,7 +162,7 @@ All components are surface-agnostic by construction: they size from control toke
 | Now | The Engineering home: what is up and open, how steady it has been, what ships and what changed | Services, now 2/3 + open incident 1/3 · N of M days inside the band full · models, now 2/3 + compute in use 1/3 · shipping 1/2 + work 1/2 · slowest endpoints full · four tiles · runs a day 2/3 + changes 1/3 | One column, the services first, the tiles one column, each table a list | `now` inline: the incident banner and the status list; fullscreen: the page's body |
 | Services | Each service over 90 days and every incident | Each service, 90 days 2/3 + incidents 1/3 (the open ones first in their cards, then the resolved as rows) | One column, the services first | Not offered; the embed of the present is Now's |
 | Customers | List with sparklines | Three tiles · table | Tiles in one column, then a card list | Not offered |
-| Customer | Detail: head, facts, 14 days | Facts 2/3 + the 14 days 1/3 | One column | Not offered |
+| Customer | Detail: head, where it stands, three tiles, what it asks for, its latest requests | Where it stands · three tiles · what it asks for 1/3 + its latest requests 2/3 | One column | Not offered |
 | API keys | List with destructive actions | Table | Card list | Not offered |
 | Members | List with destructive actions | Table | Card list | Not offered |
 | Tickets | List: summary tiles, filter bar, data table, a create dialog and a row menu to move a ticket | Tiles over the table; New ticket in the masthead | Tiles in one column, card list | Not offered |
