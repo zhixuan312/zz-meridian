@@ -72,6 +72,7 @@ Its insights lead with the title the page is headed by, word for word. Where the
 
 - **MCP App:** no embed view; an MCP server returns this context as the `customer` tool's text (`docs/agents.md`).
 - **Console assistant:** this text in its prompt's `<view-context>` block, with the page's address, and the page text after it for anything the context does not cover.
+- **Handoff:** Ask on the customer's standing hands the customer to the assistant: "What stands out in Northwind Labs's revenue and requests, and why?"
 
 ## Accessibility
 

@@ -37,6 +37,15 @@ describe('the tickets page, for someone who may not write', () => {
 });
 
 describe('the tickets page, for someone who may', () => {
+  it("keeps each row's step on a phone, beside the title, and its state among the facts", () => {
+    // A card keeps one status: two columns that both asked for it lost the step, so a ticket could not move on a phone.
+    view();
+    const step = screen.getByRole('button', { name: 'Change state of Gateway answers 502 under load' });
+    expect(step.closest('td')!.getAttribute('data-mobile')).toBe('status');
+    const row = step.closest('tr')!;
+    expect([...row.querySelectorAll('td[data-mobile="fact"]')].map((c) => c.textContent).join(' ')).toMatch(/\bOpen\b/);
+  });
+
   it('offers on each row only the steps its state allows', async () => {
     expect(await stepsOf('Gateway answers 502 under load')).toEqual(['Move to waiting', 'Move to closed']);
     expect(await stepsOf('Rotate the signing key')).toEqual(['Move to open', 'Move to closed']);

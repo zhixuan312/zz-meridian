@@ -18,8 +18,9 @@ import { Meridian, useMeridianIndex } from '@/components/charts/meridian';
 import { TrendChart } from '@/components/charts/trend-chart';
 import type { UsageFigures } from '@/data/usage';
 import { AXIS_FORMATTERS, formatCompact, formatDuration } from '@/lib/format';
-import { PERIOD_DAYS } from '@/lib/period';
+import { PERIOD_DAYS, PERIOD_LABEL } from '@/lib/period';
 import { ASKED, STATUS_COLOR, USAGE_PARTS as P, WHEN, shortDate, usageContext, type UsageData, type When } from './usage-context';
+import { AskPeriod } from './ask-period';
 import { Unread } from './unread';
 
 const linkClass = 'row-link inline-flex items-center gap-1 font-medium text-ink hover:text-accent-ink';
@@ -39,7 +40,11 @@ function ByDay({ data, days, dates }: { data: UsageData; days: Days; dates: stri
   const n = PERIOD_DAYS[data.period];
   return (
     <Card>
-      <CardHeader title={P.byDay} description={`${n ? `The last ${n} complete days` : 'Every complete day kept'}${days.running ? ', and today so far' : ''}, UTC`} />
+      <CardHeader
+        title={P.byDay}
+        description={`${n ? `The last ${n} complete days` : 'Every complete day kept'}${days.running ? ', and today so far' : ''}, UTC`}
+        actions={<AskPeriod period={PERIOD_LABEL[data.period].toLowerCase()} what="requests" onDay={(day) => `Why do requests on ${day} look the way they do?`} />}
+      />
       <CardBody>
         <TrendChart
           label="Requests a day, the period"

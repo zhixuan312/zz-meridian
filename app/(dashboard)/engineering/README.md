@@ -102,6 +102,7 @@ Its first insight is the title the page is headed by, word for word; the second,
 
 - **MCP App:** the text above as `ui/update-model-context`, with the same context as its structured part, from the inline view and from fullscreen alike.
 - **Console assistant:** this text in its prompt's `<view-context>` block, with the page's address, and the page text after it for anything the context does not cover.
+- **Handoff:** Ask on "Services, now" hands the services as they stand to the assistant: "Which service needs attention now, and why?"
 
 ## Embed view
 

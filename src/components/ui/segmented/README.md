@@ -6,9 +6,9 @@ Status: beta
 
 ## Anatomy
 
-1. **Track**: `surface-sunk` with an inset `line` hairline, `radius-md`, 2px padding.
+1. **Track**: `surface-sunk` with an inset `line` hairline, `radius-md`, 2px padding; as wide as its options wherever it stands, a column that would stretch it included.
 2. **Thumb**: a `surface` pill with `shadow-control` and a `line` ring, `radius-sm`, under the current option.
-3. **Option**: `text-sm` (`text-xs` small), `weight-medium`, 10px side padding; an optional 14px icon before the label.
+3. **Option**: `text-sm` (`text-xs` small), `weight-medium`, 10px side padding; an optional 14px icon before the label. On touch each option is at least 44px wide, so its own box is the target and nothing reaches past the track.
 
 ## Sizes
 
@@ -37,7 +37,7 @@ The thumb slides and resizes over `dur-enter` with `ease-out`; labels change col
 ## Surfaces
 
 - **Console**: in the masthead (the period) or a card head (a view switch).
-- **Mobile**: it never wraps. When the labels are wider than the room the track has, the track scrolls sideways with the edge fade (`scroll-fade-x`), in a card head with counts in the labels ("All 37 · Idea 3 · Scored 25") as much as anywhere else; shorten labels ("30D") where you can, and prefer five options or fewer.
+- **Mobile**: it never wraps. Only when the labels are wider than the room the track has does the track scroll sideways with the edge fade (`scroll-fade-x`), in a card head with counts in the labels ("All 37 · Idea 3 · Scored 25") as much as anywhere else; shorten labels ("30D") where you can, and prefer five options or fewer.
 - **Embed**: the period control in the embed head, `sm`.
 
 ## Agents

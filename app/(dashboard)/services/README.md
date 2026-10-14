@@ -82,6 +82,7 @@ Its first insight is the title the page is headed by, word for word; the second,
 
 - **MCP App:** the text above as `ui/update-model-context`, with the same context as its structured part.
 - **Console assistant:** the same text in its prompt's `<view-context>` block, with the page's address and query, and the page text after it for anything the context does not cover.
+- **Handoff:** Ask on "Each service, 90 days" hands the services' 90 days to the assistant: "Which service is hurting uptime over the last 90 days, and why?"
 
 ## Embed view
 

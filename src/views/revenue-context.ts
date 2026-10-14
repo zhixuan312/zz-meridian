@@ -48,8 +48,15 @@ export type WallTile = { id: string; name: string; plan: Plan; revenue: number; 
 /** A customer as its stage lists it, with the share it pays of what the next stage's smallest customer pays, when that share is `facts.nextPlanAt` or more. */
 export type LadderRow = { id: string; name: string; revenue: number; next: { stage: Stage; share: number } | null };
 
-/** How close a customer is to the next plan, as its row in the ladder says it. */
-export const nextPlanWords = ({ stage, share }: { stage: Stage; share: number }) => `pays ${formatPercent(share, 0)} of what the smallest ${stage} customer pays`;
+/**
+ * How close a customer is to the next plan, as its row in the ladder says it: the share it pays of what the next plan's
+ * smallest customer pays, or, once it pays more, that it already does (a share in the thousands reads as an error).
+ */
+export const nextPlanWords = ({ stage, share }: { stage: Stage; share: number }) =>
+  share > 1 ? `already pays more than the smallest ${stage} customer` : `pays ${formatPercent(share, 0)} of what the smallest ${stage} customer pays`;
+/** The same in the context's list: in full for a stage's first customer, the share or "more" for the next. */
+const nextPlanShort = ({ stage, share }: { stage: Stage; share: number }, first: boolean) =>
+  share > 1 ? (first ? `more than the smallest ${stage}` : 'more') : `${formatPercent(share, 0)}${first ? ` of the smallest ${stage}` : ''}`;
 /** A line worth a look; where it names a customer, the name as the line writes it and the customer's page. */
 export type WorthLine = { text: string; customer?: { name: string; href: string } };
 
@@ -214,7 +221,7 @@ export function revenueContext(data: RevenueData, order: WallOrder = 'largest'):
     facts.push({ label: M.wall.label, value: `${c.wall.sentMore} of ${c.wall.of} sent more this week than last; ${shown}: ${c.wall.orders[order].map((t) => `${t.name} ${costCompact(t.revenue)} ${weekWords(t.week)}`).join(', ')}` });
     facts.push({
       label: M.ladder.label,
-      value: `${c.ladder.stages.map((s) => `${s.label} ${s.shown.length + s.others.length}: ${s.shown.map((x, i) => `${x.name} ${costCompact(x.revenue)}${x.next ? ` (${formatPercent(x.next.share, 0)}${i ? '' : ` of the smallest ${x.next.stage}`})` : ''}`).join(', ')}${s.others.length ? ` and ${s.others.length} others` : ''}`).join('; ')}. ${c.ladder.line}`,
+      value: `${c.ladder.stages.map((s) => `${s.label} ${s.shown.length + s.others.length}: ${s.shown.map((x, i) => `${x.name} ${costCompact(x.revenue)}${x.next ? ` (${nextPlanShort(x.next, !i)})` : ''}`).join(', ')}${s.others.length ? ` and ${s.others.length} others` : ''}`).join('; ')}. ${c.ladder.line}`,
     });
   }
   if (data.sold) facts.push({ label: M.sold.label, value: data.sold.map((m) => `${m.label} ${costCompact(m.value)}`).join(', ') });

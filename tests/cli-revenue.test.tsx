@@ -95,7 +95,7 @@ function ladder(doc: Document): Element {
   expect(el, 'From a trial to Enterprise').toBeTruthy();
   return el!;
 }
-const NEXT_PLAN = /of what the smallest (Starter|Scale|Enterprise) customer pays/;
+const NEXT_PLAN = /(of what|already pays more than) the smallest (Starter|Scale|Enterprise) customer/;
 
 describe("Revenue's eight parts, in order, from the sample", () => {
   it('draws each part with the card the specification names', async () => {

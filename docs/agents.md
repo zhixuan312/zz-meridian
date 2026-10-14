@@ -46,7 +46,7 @@ Whatever an agent did stays marked. An activity line names the agent and the per
 
 A person hands any card to the agent with one press. **Ask** posts a question about exactly what the card shows into the conversation, as the person, so the thread reads naturally, and the view's shared context goes with it, so the agent and the person mean the same thing by "this". In an MCP host it posts into the chat; on the console it opens the assistant panel and sends there. It appears only where an agent is listening; the console never shows a control that does nothing.
 
-**In the system:** `AskAbout` (renders nothing unless `useSurface().ask` exists, and nothing before hydration); `ConsoleSurface` gives the console an `ask` when the product has an assistant the person has not switched off.
+**In the system:** `AskAbout` (renders nothing unless `useSurface().ask` exists, and nothing before hydration); `ConsoleSurface` gives the console an `ask` when the product has an assistant the person has not switched off. Every page's protagonist, the card worth asking about, carries one, so each page hands what it shows to the agent; `AskPeriod` (`src/views/ask-period.tsx`) asks about the day the Meridian points at, or else the period.
 
 ## Writing for the model
 

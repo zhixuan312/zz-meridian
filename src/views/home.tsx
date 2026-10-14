@@ -13,12 +13,12 @@ import { ColumnChart } from '@/components/charts/column-chart';
 import { CompositionBar } from '@/components/charts/composition-bar';
 import { Meridian, useMeridianIndex } from '@/components/charts/meridian';
 import { TrendChart } from '@/components/charts/trend-chart';
-import { AskAbout } from '@/components/patterns/ask-about';
 import { FeaturedMetric } from '@/components/patterns/featured-metric';
 import { MetricTile } from '@/components/patterns/metric-tile';
 import { AXIS_FORMATTERS, FORMATTERS, formatCompact, formatCost, formatDuration, formatPercent } from '@/lib/format';
 import { formatDate, formatDay } from '@/lib/format-date';
 import { PERIOD_DAYS, PERIOD_LABEL } from '@/lib/period';
+import { AskPeriod } from './ask-period';
 import { COMPANY_METRICS, HOME_METRICS, homeContext, type HomeData, type HomeWindow } from './home-context';
 import { Unread, unreadTile } from './unread';
 
@@ -37,13 +37,6 @@ const short = (date: string) => formatDate(date).replace(/ \d{4}$/, '');
 const share = (n: number) => formatPercent(n, 1);
 const costCompact = FORMATTERS['cost-compact'];
 
-/** Ask on the revenue card: about the day the Meridian points at, or about the period. */
-function AskHome({ period }: { period: string }) {
-  const { index, dates } = useMeridianIndex();
-  const day = index !== null ? dates[index] : null;
-  return <AskAbout question={day ? `Why does revenue on ${formatDate(day)} look the way it does?` : `What stands out in revenue over the ${period}, and why?`} />;
-}
-
 /**
  * The revenue card, the page's one Featured metric: the period's revenue, its change, a day's average and the best day,
  * the record as its finding, and revenue a day with the day in progress drawn running. The day in progress is the
@@ -58,7 +51,7 @@ export function RevenueCard({ data, dates }: { data: HomeData; dates: string[] }
   return (
     <FeaturedMetric
       kicker={<>{HOME_METRICS.revenue.label} · {period}</>}
-      actions={<AskHome period={period} />}
+      actions={<AskPeriod period={period} what="revenue" onDay={(day) => `Why does revenue on ${day} look the way it does?`} />}
       value={r.value}
       points={points}
       format={formatCost}
@@ -95,7 +88,8 @@ export function companyTiles(data: HomeData): ReactNode[] {
         hint={C.customers.hint}
         icon={<Users />}
         value={customers.count}
-        note={`${customers.active} active · ${customers.trial} on a trial · ${customers.pastDue} past due`}
+        // One line in a tile a third of a 720px reply wide: the three counts in the fewest words.
+        note={`${customers.active} active · ${customers.trial} ${customers.trial === 1 ? 'trial' : 'trials'} · ${customers.pastDue} past due`}
         finding={customers.finding ? { text: customers.finding, tone: 'neutral' } : undefined}
       />
     ) : unreadTile(C.customers.label, C.customers.hint),

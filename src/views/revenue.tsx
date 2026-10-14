@@ -20,6 +20,7 @@ import { AXIS_FORMATTERS, FORMATTERS, formatCompact, formatCost, formatPercent }
 import { formatDate, formatDay } from '@/lib/format-date';
 import { PERIOD_DAYS, PERIOD_LABEL } from '@/lib/period';
 import { REVENUE_METRICS, WALL_ORDERS, nextPlanWords, revenueContext, signed, yearAgoNote, type RevenueData, type WallOrder, type WorthLine } from './revenue-context';
+import { AskPeriod } from './ask-period';
 import { Unread, unreadTile } from './unread';
 
 const M = REVENUE_METRICS;
@@ -87,11 +88,15 @@ function tiles(data: RevenueData) {
 }
 
 /** Revenue a day by plan, the plans stacked from the largest up, with the day in progress drawn running. */
-function ByDay({ days, dates }: { days: Days; dates: string[] }) {
+function ByDay({ days, dates, period }: { days: Days; dates: string[]; period: RevenueData['period'] }) {
   const { running } = days;
   return (
     <Card>
-      <CardHeader title={M.byDay.label} description={`Each complete day by the plan of who paid${running ? ', and today so far' : ''}`} />
+      <CardHeader
+        title={M.byDay.label}
+        description={`Each complete day by the plan of who paid${running ? ', and today so far' : ''}`}
+        actions={<AskPeriod period={PERIOD_LABEL[period].toLowerCase()} what="revenue by plan" onDay={(day) => `Why does revenue by plan on ${day} look the way it does?`} />}
+      />
       <CardBody>
         <TrendChart
           label="Revenue a day, by plan"
@@ -308,7 +313,7 @@ export function RevenueBody(data: RevenueData) {
       <Stack>
         <Row split="tiles">{tiles(data)}</Row>
         <Row split="2/3">
-          {days?.series.length ? <ByDay days={days} dates={dates} /> : days ? <NoDays title={M.byDay.label} /> : <Unread title={M.byDay.label} what="the days" />}
+          {days?.series.length ? <ByDay days={days} dates={dates} period={data.period} /> : days ? <NoDays title={M.byDay.label} /> : <Unread title={M.byDay.label} what="the days" />}
           {days?.series.length ? <WhoPays days={days} customers={customers} /> : days ? <NoDays title={M.whoPays.label} /> : <Unread title={M.whoPays.label} what="the days" />}
         </Row>
         {days?.series.length ? <ByWindow data={data} days={days} /> : days ? <NoDays title={M.byWindow.label} /> : <Unread title={M.byWindow.label} what="the days" />}

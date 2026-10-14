@@ -10,7 +10,7 @@ Status: beta
 |---|---|---|---|
 | Masthead | PageFrame: kicker, "Tickets", one sentence, New ticket (primary, only for someone who may create) | One band | Stacked |
 | 1 | Three metric tiles: Open tickets, Waiting tickets, Closed tickets, each counting every ticket whatever the filters show | Three across | Stacked |
-| 2 | Data table with its Filter bar (search, State, Priority): Ticket with its service, Priority, State, Assigned to and Opened (once the table is wider than 896px), Last changed, and a row menu named "Change state of" and the title | Columns | Cards: title and state, priority, assignee and "Changed …" |
+| 2 | Data table with its Filter bar (search, State, Priority): Ticket with its service, Priority, State, Assigned to and Opened (once the table is wider than 896px), Last changed, and a row menu named "Change state of" and the title | Columns | Cards: the title and its row menu, then the priority with the state ("Normal priority · Open"), the assignee and "Changed …"; for someone who may not change a ticket, the title and its state, then the priority |
 | Dialog | New ticket: Title (required), Service, Priority, Assignee, Summary (optional); Cancel and Create ticket | Centred | Bottom sheet |
 
 The body (rows 1 and 2, under the masthead) is the records template, `Records` from `src/components/templates/records`, with three tiles over the table. The masthead is drawn by the client view, because its button shares state with the dialog.

@@ -9,6 +9,7 @@ import { StatusDot } from '@/components/ui/status-dot';
 import { IncidentCard } from '@/components/patterns/incident-card';
 import { StatusList } from '@/components/patterns/status-list';
 import { unpackServices, type PackedService } from '@/components/patterns/status-list/summarise';
+import { AskAbout } from '@/components/patterns/ask-about';
 import { lastedOf, servicesContext, type ServicesData } from './services-context';
 import { Unread } from './unread';
 
@@ -80,7 +81,7 @@ export function ServicesBody(data: ServicesData) {
       <ShareContext context={servicesContext(data)} />
       <Row split="2/3">
         <Card className="overflow-hidden">
-          <CardHeader title={PARTS.services} description="In the order the team reads its stack: the state now, p95, every day's mark and how long each has run" divided />
+          <CardHeader title={PARTS.services} description="In the order the team reads its stack: the state now, p95, every day's mark and how long each has run" actions={<AskAbout question="Which service is hurting uptime over the last 90 days, and why?" />} divided />
           <StatusList services={services} end={end} run />
         </Card>
         {incidents ? <Incidents incidents={incidents} end={end} /> : <Unread title={PARTS.incidents} what="the incidents" />}

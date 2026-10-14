@@ -104,6 +104,7 @@ The period with the dates of its complete days, and freshness; then requests, th
 
 - **MCP App:** no embed view; an MCP server returns this context as the `usage` tool's text (`docs/agents.md`).
 - **Console assistant:** this text in its prompt's `<view-context>` block, with the page's address, and the page text after it for anything the context does not cover.
+- **Handoff:** Ask on "Requests a day" hands the period, or the day the Meridian points at, to the assistant: "What stands out in requests over the last 30 days, and why?"
 
 ## Accessibility
 

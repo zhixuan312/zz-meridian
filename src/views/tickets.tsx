@@ -135,8 +135,9 @@ export function TicketsView({ rows, now, may = { create: true, update: true }, s
         </span>
       ),
     },
-    { key: 'priority', header: 'Priority', mobile: 'fact', sortValue: (t) => PRIORITY_RANK[t.priority], cell: (t) => <Badge tone={PRIORITY_TONE[t.priority]}>{LABEL(t.priority)}</Badge>, mobileCell: (t) => `${LABEL(t.priority)} priority` },
-    { key: 'state', header: 'State', mobile: 'status', sortValue: (t) => t.state, cell: (t) => <Badge tone={STATE_TONE[t.state]} dot>{LABEL(t.state)}</Badge> },
+    { key: 'priority', header: 'Priority', mobile: 'fact', sortValue: (t) => PRIORITY_RANK[t.priority], cell: (t) => <Badge tone={PRIORITY_TONE[t.priority]}>{LABEL(t.priority)}</Badge>, mobileCell: (t) => `${LABEL(t.priority)} priority${may.update ? ` · ${LABEL(t.state)}` : ''}` },
+    // On a phone the state is told with the priority: a card keeps one status, and that is the row's step.
+    { key: 'state', header: 'State', mobile: may.update ? 'hidden' : 'status', sortValue: (t) => t.state, cell: (t) => <Badge tone={STATE_TONE[t.state]} dot>{LABEL(t.state)}</Badge> },
     {
       key: 'assignee', header: 'Assigned to', muted: true, hideBelow: 'lg', mobile: 'fact', sortValue: (t) => t.assignee ?? '',
       cell: (t) => (t.assignee ? <span className="whitespace-nowrap">{t.assignee}</span> : <span className="text-ink-3">Nobody</span>),

@@ -11,6 +11,7 @@ import { StatusDot } from '@/components/ui/status-dot';
 import { BarList } from '@/components/charts/bar-list';
 import { DataTable } from '@/components/patterns/data-table';
 import { MetricTile } from '@/components/patterns/metric-tile';
+import { AskAbout } from '@/components/patterns/ask-about';
 import { formatCompact, formatCost, formatPercent } from '@/lib/format';
 import { formatDate, formatDay } from '@/lib/format-date';
 import { requestColumns } from '@/system/sample-cells';
@@ -75,6 +76,7 @@ function Standing({ data }: { data: CustomerData }) {
       <CardHeader
         title={<span className="inline-flex items-center gap-2.5"><StatusDot tone={STATUS_TONE[c.status]} />{standingOf(c)}</span>}
         description={standingLine(data)}
+        actions={<AskAbout question={`What stands out in ${c.name}'s revenue and requests, and why?`} />}
         wrap
         divided
       />

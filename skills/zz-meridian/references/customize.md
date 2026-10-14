@@ -311,6 +311,10 @@ orders is the sample's, not the product's.
   place it is said; `gate` reads it on every page, every gated page titles itself through `gatedMetadata`, and every
   gated route's loading state passes its words through `gatedLoading` (`optional:src/data/refusal.ts`). Neither
   choice throws `notFound()` or answers anything but 200, and a person with no session is sent to sign-in under both.
+- **Each page's protagonist hands itself to the agent.** The card worth asking about, the page's first, carries an
+  Ask in its header actions whose question names what the card shows for the period and the day in view (`AskPeriod`
+  in `optional:src/views/ask-period.tsx` for a card over time, `AskAbout` otherwise), and the page spec's Agents says
+  where it stands and what it asks. The Ask renders only when the assistant is on.
 - **Every context is held to the budget.** Every view's context fits 2,600 characters and names its address as each
   person who may read it, at every period, for every record, pointed at every day of a view that takes one, and with
   four to eight times the records there are today. Each list a context states is capped and counted, and the cap is

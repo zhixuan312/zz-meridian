@@ -18,6 +18,7 @@ import { DataTable, type Column } from '@/components/patterns/data-table';
 import { IncidentCard } from '@/components/patterns/incident-card';
 import { MetricTile } from '@/components/patterns/metric-tile';
 import { StatusList } from '@/components/patterns/status-list';
+import { AskAbout } from '@/components/patterns/ask-about';
 import type { Endpoint } from '@/data/sample';
 import { formatCompact, formatDuration, formatPercent, plural } from '@/lib/format';
 import { formatDate } from '@/lib/format-date';
@@ -64,7 +65,7 @@ function Services({ data, end }: { data: NowData; end: Date }) {
       <CardHeader
         title={P.services}
         description={shown.length < services.length ? 'The services not operational, then the three that have run longest' : 'State now, the last 90 days and how long each has run'}
-        actions={all}
+        actions={<><AskAbout question="Which service needs attention now, and why?" />{all}</>}
         divided
       />
       <StatusList services={shown} end={end} run />
