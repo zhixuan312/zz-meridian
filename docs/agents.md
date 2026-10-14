@@ -40,7 +40,7 @@ A removal (revoke, delete) is proposed like any other change: the Proposal is ma
 
 Whatever an agent did stays marked. An activity line names the agent and the person it acted for ("Claude raised the rate limit for Parallax AI · for Jonas Weber"). A filter or a view an agent set says so ("Set by Claude") until a person changes it. Agents are drawn as a square mark, never as a round avatar: a reader tells a person from an agent at a glance.
 
-**In the system:** `AgentMark`, `ActivityFeed`'s `via`, `FilterBar`'s `setBy`, and the assistant's `record`, which writes the Activity line once an approved change commits (decision 0011).
+**In the system:** `AgentMark`, `ActivityFeed`'s `via`, `FilterBar`'s `setBy`, and the assistant's `record`, which writes the Activity line once an approved change commits (decision 0011). In the sample the line is drawn on Now's "Changes", the Engineering home.
 
 ### 5. Handoff
 
@@ -63,6 +63,14 @@ A person hands any card to the agent with one press. **Ask** posts a question ab
 ## The console's own assistant
 
 The second place is inside the product. The assistant panel reads the page the person is on (its address with the query, the view's shared context, then the visible text), looks records up through the product's collections (`src/data/collections.ts`) and proposes changes as Proposals in its thread. It follows the same rules: it reads what the person may read, changes nothing without approval, and leaves its mark (the Agent mark and the "Assistant" caption). It is off until a model is configured. `docs/assistant.md` says how to switch it on and point it at your data, and how the same tools can later be offered from an MCP server.
+
+`pnpm verify --full` walks it on a served build (`scripts/assistant.ts`), first with every `ASSISTANT_*` variable blank, then against a fake model (`scripts/fake-llm.ts`), so it needs no provider key. Off: no launcher, panel or Ask on any page or embed view, Home still states "A year, counted", and the route answers 404. On: the panel, a streamed reply, the page the model was told, markdown, the thread across navigation, Clear, the layout at 1440px and 390px, a refused key, and the key reaching no page, payload or script. Then the sample's own pages, while their files are there:
+
+- **Home.** The view context the model is given leads with the page's title and states revenue with its definition, the gross margin an Owner reads and the day in progress counted in no total; each line is matched by its shape, so the walk holds when the sample's figures move. The Ask on the revenue card posts its question with that context. `view_home` for the last 90 days is answered by the fake model quoting the first insight of the result it received, and the walk recognises the answer by its address ("From /?period=90d") and by its being a line of that result's context, not by a sentence written in the script.
+- **Members, Now and API keys.** A query raises no Proposal; an approved suspension shows without a reload, and its Activity line, naming the Assistant and the person it acted for, arrives on Now's "Changes" open in a second tab; a dismissed removal changes nothing; a change made from the row menu is found by the next query; a waiting Proposal expires on a reload and on moving on.
+- **Settings.** "Show the assistant" off hides the launcher, the panel and every Ask, keeps the thread and Home's "A year, counted"; on brings them back.
+
+A product that replaced one of those pages gets `n/a` with the reason for its steps, decided from its files (`scripts/lib/sample.ts`), and every failure names the part it waited on.
 
 ## Building an MCP server for the template
 

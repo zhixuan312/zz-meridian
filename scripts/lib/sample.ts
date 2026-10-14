@@ -7,7 +7,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 
-export type SampleSurfaces = { home: boolean; members: boolean; keys: boolean; settings: boolean };
+export type SampleSurfaces = { home: boolean; now: boolean; members: boolean; keys: boolean; settings: boolean };
 
 export function sampleSurfaces(root: string, appDir: string): SampleSurfaces {
   const has = (p: string) => fs.existsSync(path.join(root, p));
@@ -16,6 +16,7 @@ export function sampleSurfaces(root: string, appDir: string): SampleSurfaces {
   const page = (rest: string) => groups.some((g) => has(`${appDir}/${g}/${rest}/page.tsx`));
   return {
     home: page('(home)') && has('src/views/home-context.ts'),
+    now: page('engineering') && has('src/views/now.tsx'),
     members: page('members') && has('src/views/members.tsx'),
     keys: page('keys'),
     settings: has('src/views/settings.tsx'),

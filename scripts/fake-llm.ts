@@ -9,6 +9,9 @@
  * POST <url>/chat/completions answers in the chat-completions format (streamed as server-sent events when the body has
  * `stream: true`). GET <url>/requests returns every recorded request body as JSON.
  *
+ * A request whose last message is a view tool's result is answered "From <its address>: <its first insight>", the
+ * line quoted as the context carries it; the walk-through recognises that answer by the address and the line.
+ *
  * A request whose last message is the user's and contains "fail" is answered 401, with an error body that repeats the
  * bearer token it was sent: the way a provider that refuses a key can leak it.
  */
@@ -49,12 +52,14 @@ function script(body: { messages?: Message[] }): Reply {
     try { out = JSON.parse(textOf(last.content)); } catch { return { text: 'Nothing changed.' }; }
     const rows = (out as { rows?: { name?: string }[] } | null)?.rows;
     if (Array.isArray(rows)) return { text: rows.length ? `${rows.length} found: ${rows.map((r) => r.name).join(', ')}.` : 'None found.' };
-    // A view tool's result: quote the view's own finding, as a model told to quote rather than recompute would.
+    // A view tool's result: quote the view's first insight, as a model told to quote rather than recompute would. A
+    // context with no insight is quoted by its first line.
     const view = out as { address?: string; context?: string } | null;
     if (typeof view?.context === 'string') {
       const lines = view.context.split('\n');
-      const finding = lines.find((l) => l.startsWith('- Recorded around')) ?? lines[lines.findIndex((l) => l.startsWith('Insights')) + 1] ?? lines[0];
-      return { text: `From ${view.address}: ${finding.replace(/^- /, '')}` };
+      const at = lines.findIndex((l) => l.startsWith('Insights'));
+      const first = (at >= 0 && lines[at + 1]?.startsWith('- ') ? lines[at + 1] : lines[0]).replace(/^- /, '');
+      return { text: `From ${view.address}: ${first}` };
     }
     return { text: 'Done.' };
   }
