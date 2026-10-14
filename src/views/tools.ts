@@ -15,7 +15,7 @@ import { readLatestFrom, readRequests, REQUEST_PAGE } from '@/data/requests';
 import { readReleases, readRuns } from '@/data/engineering';
 import { attempt } from '@/data/main';
 import { readTickets } from '@/data/tickets';
-import { readDays, readEndpoints, readIncidents, readResponses, readServices } from '@/data/metrics';
+import { readActivity, readDays, readEndpoints, readIncidents, readResponses, readServices } from '@/data/metrics';
 import {
   DEMO_UPDATED_AT, STATUS_TEXT, payloadsOf, traceOf,
   type ApiKey, type ComputeRow, type CostRow, type CustomerRecord, type Member, type Model, type RequestRow, type Ticket, type UsageRow,
@@ -31,7 +31,8 @@ import { servicesContext, servicesHead, type ServicesData } from './services-con
 import { SCOPES } from './key-scopes';
 import { keysContext } from './keys-context';
 import { membersContext } from './members-context';
-import { nowContext, nowHead, type NowData } from './now-context';
+import { nowContext } from './now-context';
+import { nowData } from './now-parts';
 import { homeContext } from './home-context';
 import { homeData } from './home-parts';
 import { requestContext } from './request-context';
@@ -138,15 +139,18 @@ export const servicesTool = defineViewTool({
 export const nowTool = defineViewTool({
   name: 'now',
   title: 'Now',
-  description: 'Which services are up this moment, with their latency, how many releases are in testing, the days inside the latency and error band, and the incidents nobody has resolved, the newest with its latest update.',
+  description: 'Engineering now: every service and the incidents nobody has resolved, with their owners and tickets; the days inside the latency and error band with their facts; each model over the last 30 complete days; compute in use a region; what ships; the work, with the reader\'s own marked; the slowest endpoints; the releases out, tickets closed, runs passed and incidents resolved over the last 30 complete days; the runs a day; and the latest changes.',
   needs: FEATURES.now.needs,
   input: z.object({}),
   resourceUri: `ui://${slug}/now`,
   async read() {
     await requireNeed(FEATURES.now.needs);
-    // In testing as the Releases page counts it: not gone out, with a required verification that has not passed.
-    const [services, { current, open }, testing, history] = await Promise.all([readServices(), readIncidents(), attempt(async () => releaseFigures((await readReleases()).rows).testing), readHistory()]);
-    const data: NowData = { services, current, alsoOpen: open.slice(1), head: nowHead({ services, testing, history }), updatedAt: updatedAt(), now: clock().toISOString() };
+    // Each read apart from the others: one that fails leaves its part saying so and the rest standing.
+    const [access, services, incidents, releases, runs, history, usage, models, compute, endpoints, tickets, activity] = await Promise.all([
+      resolveAccess(), attempt(readServices), attempt(async () => (await readIncidents()).all), attempt(async () => (await readReleases()).rows), attempt(async () => (await readRuns()).rows),
+      readHistory(), rowsOf<UsageRow>('usage'), rowsOf<Model>('models'), rowsOf<ComputeRow>('compute'), attempt(readEndpoints), attempt(async () => (await readTickets()).rows), attempt(readActivity),
+    ]);
+    const data = nowData({ services, incidents, releases, runs, history, usage, models, compute, endpoints, tickets, activity, reader: access.subjectId, updatedAt: updatedAt(), now: clock().toISOString() });
     return { context: nowContext(data), data };
   },
 });

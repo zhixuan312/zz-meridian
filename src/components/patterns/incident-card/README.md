@@ -45,6 +45,7 @@ Status: beta
 - The head says when the incident started relative to `now` ("started 3 h ago"), with the exact time in the title attribute; past a fortnight it becomes a date.
 - Each update is timed from the incident's start, not from now, in the product's durations (`formatDuration`): "after 42m", "after 1.1h", "after 2.6h". A reader of a timeline asks how long each step took, and this reading does not move as the clock does. The exact time stays in the title attribute.
 - An update inside the first minute, or timed before the start, reads "at the start". A first update that came later says how long after: "after 4m".
+- `afterStart(started, at)` is exported: a page that times the updates in its own words, as Now's line under its title does, uses the card's helper, so the two never differ.
 - A hyphenated name of up to 24 characters, such as "eu-west-1", stays on one line in the title, in an update and in the ticket's title: a break after its hyphen reads as two words. The hyphen is a real one, so copying and find-in-page still match. A longer run of hyphens, such as a path, wraps as before.
 
 ## Composition
@@ -62,7 +63,7 @@ Card (Layer 2) with Badge, Status dot and text; the timeline is an ordered list.
 | `owner` | Optional. Who has the incident: a person's name, drawn as text |
 | `ticket` | Optional. `{ title, href }`: the ticket the work is tracked in and its address inside the product |
 
-A record may hold more than the card draws. The sample's `incidents` hold `owner`, a member's name or null, and `ticketId`, a ticket's id or null; `readIncidents()` in `src/data/metrics.ts` hands a page this shape, with the owner by name and without the id, and a page that draws the ticket's line joins its title and address from the id.
+A record may hold more than the card draws. The sample's `incidents` hold `owner`, a member's name or null, and `ticketId`, a ticket's id or null; `readIncidents()` in `src/data/metrics.ts` hands a page this shape: the owner by name and, where the person may read the ticket, `ticket` joined from the id as its title and the address the Tickets page finds it at (`/operations-tickets?q=<its title>`).
 
 ## Surfaces
 

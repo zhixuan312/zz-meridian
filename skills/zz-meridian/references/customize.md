@@ -269,6 +269,14 @@ says "requests" on a page about orders is the sample's, not the product's.
   joined to it by name when it is read (`customerIds` in `optional:src/data/requests.ts`), and a name nothing holds
   stays text. A link in a table's cell is followed as itself and does not also open the row. Where the whole row is one
   control (the Requests embed's list) or a link would navigate a host's frame (an embed's table), the name stays text.
+- **An incident names its ticket.** An incident's record names the ticket its work is tracked in by id, and the
+  Incident card takes a title and an address: `readIncidents()` in `optional:src/data/metrics.ts` reads the tickets the
+  incidents name, by their ids, and joins each to its title and the address your tickets page finds it at. A ticket
+  the person may not read, or a read of them that fails, leaves the incident standing without its line, never the page
+  failing. Point the address at your own tickets page.
+- **The reader's own work is marked on the server.** A list of work marks what is the reader's own from
+  `resolveAccess().subjectId`, read where the data is read, so nobody else's read marks a record theirs and no id of
+  the reader reaches the browser to be compared there.
 
 **The sample's. Replace it.**
 
@@ -309,6 +317,15 @@ says "requests" on a page about orders is the sample's, not the product's.
   draws them and how `customerContext` says it. Keep the standard they show: no period control and every window named,
   a part whose read failed says so in its place, one the reader may not read is absent, and the missing-record page for
   an id that names nobody. Write your own record's page.
+- **Now's parts and their words**: the line under its title, the services, the open incidents, the days inside the
+  band with their four facts, the models over the last 30 complete days, compute in use a region on the latest complete
+  day, what ships, the work, the slowest endpoints, the four figures of the last 30 complete days, the runs a day and
+  the latest changes: what `nowData` in `optional:src/views/now-parts.ts` works out for them from what `nowTool` in
+  `optional:src/views/tools.ts` reads, each collection apart, and how `nowContext` says it. The models, the regions,
+  the tickets' priorities and the tiles' words are the sample company's. Keep the standard they show: each figure
+  names its window, a tile's line fits in 32 characters, the day in progress is counted in nothing but the runs a day,
+  the facts Home also states are written by Home's own functions, and a part whose read failed is null and named in the
+  context's unknowns. Write your own engineering home.
 - **`optional:tests/titles.test.ts`** and **`optional:tests/titles-engineering.test.ts`**, which hold the sample's
   words branch by branch; **`optional:tests/facts-config.test.ts`**, which holds the sample's values of `facts`; and
   the cases of `optional:tests/shared-context.test.tsx` that read the sample's headings and facts. Rewrite their cases

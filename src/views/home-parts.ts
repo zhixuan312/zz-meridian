@@ -56,7 +56,7 @@ const homeWindow = (days: DailyPoint[]) => {
  * The year's card: its windows, its title, which states how requests moved from the first window to the latest and the
  * range of the windows' p95, and the median of the windows' p95, which its latency chart draws as its baseline.
  */
-function yearOf(history: readonly DailyPoint[], period: Period): NonNullable<HomeData['year']> {
+export function yearOf(history: readonly DailyPoint[], period: Period): NonNullable<HomeData['year']> {
   const windows: HomeWindow[] = windowsOf(history, PERIOD_DAYS[period] ?? history.length, homeWindow);
   const p95 = windows.map((w) => w.p95);
   const typical = p95.length ? median(p95) : null;
@@ -88,7 +88,7 @@ export function weekdayAverages(history: readonly DailyPoint[]): { value: number
  * yet (a record over the days up to it); the first day requests passed a threshold; and the weekday average, only
  * when the latest week's is the highest yet. A fact whose rule does not hold is not stated.
  */
-function yearFacts(history: readonly DailyPoint[]): Fact[] {
+export function yearFacts(history: readonly DailyPoint[]): Fact[] {
   if (!history.length) return [];
   const requests = history.map((d) => ({ date: d.date, value: d.requests }));
   const busiest = requests.reduce((m, d, i) => (d.value > requests[m].value ? i : m), 0);

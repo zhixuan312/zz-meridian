@@ -29,7 +29,7 @@ export type Incident = { id: string; title: string; service: string; severity: '
  * question a reader has of a timeline is how long each step took, and time ago answers a different one. An update
  * inside the first minute, or timed before the start, came at the start.
  */
-function since(started: string, at: string) {
+export function afterStart(started: string, at: string) {
   const ms = new Date(at).getTime() - new Date(started).getTime();
   return ms < 60_000 ? 'at the start' : `after ${formatDuration(ms)}`;
 }
@@ -91,7 +91,7 @@ export function IncidentCard({ incident, now, variant = 'card', className }: { i
               {i === 0 && live ? <StatusDot tone={st.tone} live /> : <span className="size-1.5 rounded-full bg-ink-3" />}
             </span>
             <div className="min-w-0">
-              <time dateTime={u.at} title={formatDateTime(u.at)} className="t-caption t-num font-medium">{since(incident.started, u.at)}</time>
+              <time dateTime={u.at} title={formatDateTime(u.at)} className="t-caption t-num font-medium">{afterStart(incident.started, u.at)}</time>
               <p className="t-small mt-1 text-ink-2">{keepHyphenated(u.text)}</p>
             </div>
           </li>

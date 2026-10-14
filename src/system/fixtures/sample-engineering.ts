@@ -58,9 +58,9 @@ export type Release = {
   requiredVerifications: RequiredVerification[];
 };
 
-/** The team's tickets. A closed one says when it was closed, the last time it changed; the first is the work behind the open incident, which names it back (./sample). */
+/** The team's tickets. A closed one says when it was closed, the last time it changed; the first is the work behind the open incident, which names it back (./sample), opened once the incident had begun. */
 export const TICKETS: Ticket[] = [
-  { id: 'tickets_1', title: 'Inference API p95 above target in eu-west-1', service: 'Inference API', priority: 'high', state: 'open', assigneeId: 'members_2', openedAt: ago(6 * DAY), updatedAt: ago(5 * HOUR), closedAt: null, incidentId: 'inc_2610', summary: 'p95 has sat above 900 ms for requests routed through eu-west-1 since the last capacity change. Traffic is shifted; the cause is not found yet.' },
+  { id: 'tickets_1', title: 'Inference API p95 above target in eu-west-1', service: 'Inference API', priority: 'high', state: 'open', assigneeId: 'members_2', openedAt: ago(3 * HOUR), updatedAt: ago(2 * HOUR), closedAt: null, incidentId: 'inc_2610', summary: 'p95 has sat above 900 ms for requests routed through eu-west-1 since the last capacity change. Traffic is shifted; the cause is not found yet.' },
   { id: 'tickets_2', title: 'Large uploads time out behind the proxy', service: 'Files', priority: 'normal', state: 'open', assigneeId: null, openedAt: ago(3 * DAY), updatedAt: ago(2 * DAY), closedAt: null, incidentId: null, summary: 'Multipart uploads over 40 MB fail on slow connections. Nobody owns it yet.' },
   { id: 'tickets_3', title: 'Retry schedule for failed webhook deliveries', service: 'Webhooks', priority: 'normal', state: 'waiting', assigneeId: 'members_4', openedAt: ago(9 * DAY), updatedAt: ago(1.5 * DAY), closedAt: null, incidentId: null, summary: 'Waiting on the customer to confirm which delivery window they can accept before the schedule changes.' },
   { id: 'tickets_4', title: 'Dashboard shows a stale usage figure after midnight UTC', service: 'Dashboard', priority: 'low', state: 'waiting', assigneeId: 'members_5', openedAt: ago(14 * DAY), updatedAt: ago(4 * DAY), closedAt: null, incidentId: null, summary: 'The daily total refreshes late for workspaces on a time zone ahead of UTC. Waiting for a reproduction from support.' },

@@ -40,7 +40,7 @@ A release is in testing as the Releases page counts it: it has not gone out and 
 | No services | One card: "No services yet"; the page is headed "Now" |
 | Releases not read | The title is the services' clause alone, and the context says the releases could not be read |
 | Days not read | The title stands; the context states no days inside the band and says the days could not be read |
-| No access | The product's refusal page, before any read (`FEATURES.now.needs` is `services:read`, `incidents:read`, `releases:read`, `tests:read` and `days:read`, which every role that reads the services also holds) |
+| No access | The product's refusal page, before any read (`FEATURES.now.needs` is `services:read`, `incidents:read`, `releases:read`, `tests:read`, `days:read`, `usage:read`, `models:read`, `compute:read`, `endpoints:read`, `tickets:read` and `activity:read`, each of which every role that reads the dashboards holds: `DASHBOARDS` in `src/data/roles.ts`) |
 | Error | The dashboard error screen with Retry |
 
 ## Data

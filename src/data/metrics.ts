@@ -1,14 +1,19 @@
 /**
- * The aggregate reads behind the Home, Usage and Services: daily totals, endpoints, responses, services and
- * incidents, each through `read()`, so a page, an embed route and a view tool see only what the caller may
+ * The aggregate reads behind Home, Usage, Now and Services: daily totals, endpoints, responses, services, incidents
+ * and the activity, each through `read()`, so a page, an embed route and a view tool see only what the caller may
  * read (decision 0011). The figures a page shows are computed here from the rows, once, for the person and both agents.
  */
+import type { ActivityEvent } from '@/components/patterns/activity-feed';
 import type { Incident } from '@/components/patterns/incident-card';
 import type { Service } from '@/components/patterns/status-list';
 import { clock } from '@/data/collections';
+import { attempt } from '@/data/main';
 import { read, readAll } from '@/data/read';
-import type { DailyPoint, Endpoint, IncidentRecord, Totals } from '@/data/sample';
+import type { DailyPoint, Endpoint, IncidentRecord, Ticket, Totals } from '@/data/sample';
 import { PERIOD_DAYS, type Period } from '@/lib/period';
+
+/** The newest changes a page shows. */
+const ACTIVITY_SHOWN = 6;
 
 const sum = (xs: number[]) => xs.reduce((a, b) => a + b, 0);
 
@@ -58,16 +63,35 @@ export async function readResponses(): Promise<{ label: string; value: number }[
   return (await read('responses', { sort: { field: 'label', dir: 'asc' } })).rows as { label: string; value: number }[];
 }
 
-/**
- * An incident as a page draws it, in the Incident card's shape: with its owner when it has one. A record's ticket is an
- * id and the card takes a title and an address, so the id is not handed on: a page that draws the ticket's line reads
- * the record and joins the two.
- */
-const drawn = ({ ticketId: _, owner, ...incident }: IncidentRecord): Incident => (owner ? { ...incident, owner } : incident);
+/** The newest changes in the workspace, newest first: what Now's feed draws. */
+export async function readActivity(): Promise<ActivityEvent[]> {
+  return (await read('activity', { sort: { field: 'at', dir: 'desc' }, limit: ACTIVITY_SHOWN })).rows as ActivityEvent[];
+}
 
-/** Every incident, newest first: those nobody has resolved (the newest of them is `current`, the one a page leads with) and those resolved. */
+/** Where the Tickets page finds a ticket: its own search, on the ticket's title. */
+export const ticketAddress = (title: string) => `/operations-tickets?q=${encodeURIComponent(title)}`;
+
+/**
+ * An incident as a page draws it, in the Incident card's shape: with its owner when it has one, and its ticket as the
+ * card takes it, a title and the address the Tickets page finds it at. A record names its ticket by id, so the id is
+ * joined to the ticket's title here and not handed on; a ticket that cannot be read or is not found leaves no line.
+ */
+function drawn({ ticketId, owner, ...incident }: IncidentRecord, tickets: ReadonlyMap<string, Pick<Ticket, 'title'>>): Incident {
+  const ticket = ticketId ? tickets.get(ticketId) : undefined;
+  return { ...incident, ...(owner ? { owner } : {}), ...(ticket ? { ticket: { title: ticket.title, href: ticketAddress(ticket.title) } } : {}) };
+}
+
+/**
+ * Every incident, newest first: those nobody has resolved (the newest of them is `current`, the one a page leads with)
+ * and those resolved. The tickets they name are read apart, by their ids: a person who may not read tickets, or a read
+ * that fails, leaves every incident standing without its ticket.
+ */
 export async function readIncidents(): Promise<{ current: Incident | null; open: Incident[]; past: Incident[]; all: Incident[] }> {
-  const all = ((await read('incidents', { sort: { field: 'started', dir: 'desc' } })).rows as IncidentRecord[]).map(drawn);
+  const records = (await read('incidents', { sort: { field: 'started', dir: 'desc' } })).rows as IncidentRecord[];
+  const ids = [...new Set(records.flatMap((r) => (r.ticketId ? [r.ticketId] : [])))];
+  const found = ids.length ? await attempt(async () => (await read('tickets', { where: [{ field: 'id', op: 'in', value: ids }], limit: ids.length })).rows as Ticket[]) : null;
+  const tickets = new Map((found ?? []).map((t) => [t.id, t]));
+  const all = records.map((r) => drawn(r, tickets));
   const open = all.filter((i) => i.state !== 'resolved');
   return { current: open[0] ?? null, open, past: all.filter((i) => i.state === 'resolved'), all };
 }

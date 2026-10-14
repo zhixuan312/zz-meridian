@@ -1,0 +1,216 @@
+/**
+ * What Now states, worked out on the server from what its read could read: the line under the title and each part's
+ * figures, lines and points (`NowData`). Pure: it is handed rows and returns figures, so the read in
+ * `src/views/tools.ts` and a test build Now the same way, and no row reaches the browser.
+ *
+ * A read that failed is handed as null: its part is null, `unread` names it, and the rest stands. The day in progress
+ * is counted in nothing but the runs a day, which draw it as running.
+ */
+import { facts as rules } from '@/app.config';
+import type { ActivityEvent } from '@/components/patterns/activity-feed';
+import { afterStart, type Incident } from '@/components/patterns/incident-card';
+import type { Service } from '@/components/patterns/status-list';
+import { summarise } from '@/components/patterns/status-list/summarise';
+import type { ReleaseRow, RunRow } from '@/data/engineering';
+import { ticketAddress } from '@/data/metrics';
+import type { ComputeRow, DailyPoint, Endpoint, Model, UsageRow } from '@/data/sample';
+import type { TicketRow } from '@/data/tickets';
+import { steady } from '@/lib/facts';
+import { formatDuration } from '@/lib/format';
+import { formatDate, formatDay } from '@/lib/format-date';
+import { yearFacts, yearOf } from './home-parts';
+import { inWords, nowHead, type BandFact, type NowData, type NowModel, type NowRunDay, type NowTicket } from './now-context';
+import { releaseFigures, releaseMoment, stageOf, unresolvedText } from './releases-context';
+
+/** The days a strip of the band shows, the window the month's figures count, the tickets Work lists and the longest line a tile draws. */
+const STRIP_DAYS = 360;
+const WINDOW_DAYS = 30;
+const WORK_SHOWN = 6;
+const TILE_LINE = 32;
+
+const DAY = 86_400_000;
+const sum = (xs: readonly number[]) => xs.reduce((a, b) => a + b, 0);
+/** The lower of the two middle values, as a period's median day is chosen (`totalsOf`): always a value that was recorded. */
+const lowerMedian = (xs: readonly number[]) => [...xs].sort((a, b) => a - b)[Math.floor((xs.length - 1) / 2)];
+/** A tile's line, or its shorter form when the line would not fit the tile. */
+const fit = (line: string, shorter: string) => (line.length <= TILE_LINE ? line : shorter);
+const SEVERITY = { major: 0, minor: 1 } as const;
+
+/** What Now's read could read, each null when its read failed. `reader` is who is reading, by the id their tickets are assigned with. */
+export type NowReads = {
+  services: Service[] | null;
+  /** Every incident, newest first, each with its ticket where it could be read. */
+  incidents: Incident[] | null;
+  releases: ReleaseRow[] | null;
+  runs: RunRow[] | null;
+  /** Every complete day kept, oldest first. */
+  history: DailyPoint[] | null;
+  usage: UsageRow[] | null;
+  models: Model[] | null;
+  compute: ComputeRow[] | null;
+  endpoints: Endpoint[] | null;
+  tickets: TicketRow[] | null;
+  activity: ActivityEvent[] | null;
+  reader: string;
+  updatedAt: string;
+  now: string;
+};
+
+/** The facts of the days inside the band, each a line: the days outside by date, the year, p95 on the busiest day yet and the requests answered without an error. */
+function bandFacts(history: readonly DailyPoint[], outside: readonly string[]): BandFact[] {
+  const out: BandFact[] = [];
+  if (outside.length) out.push({ about: 'outside', text: `Outside the band on ${inWords(outside.map(formatDate))}` });
+  // The year and the total are written by the functions Home writes them with, so the two pages state one line.
+  const year = yearOf(history, '30d');
+  if (year.windows.length >= 2) out.push({ about: 'year', text: year.title });
+  const busiest = history.reduce((m, d) => (d.requests > m.requests ? d : m));
+  out.push({ about: 'busiest', text: `p95 was ${Math.round(busiest.p95)} ms on the busiest day yet, ${formatDate(busiest.date)}` });
+  const answered = yearFacts(history).find((f) => f.kind === 'total');
+  if (answered) out.push({ about: 'answered', text: answered.text });
+  return out;
+}
+
+/** Work's order: high priority first, then what nobody owns, then the rest, the newest opened first inside each. */
+const workRank = (t: TicketRow) => (t.priority === 'high' ? 0 : !t.assignee ? 1 : 2);
+
+/** Now's data from what its read could read. */
+export function nowData(r: NowReads): NowData {
+  const unread: string[] = [];
+  const read = <T>(value: T | null, name: string): value is T => {
+    if (value === null) unread.push(name);
+    return value !== null;
+  };
+  const today = r.now.slice(0, 10);
+  // The month: the 30 complete days that end yesterday, by their dates.
+  const from = new Date(Date.parse(`${today}T00:00:00Z`) - WINDOW_DAYS * DAY).toISOString().slice(0, 10);
+  const inMonth = (at: string | null | undefined) => !!at && at.slice(0, 10) >= from && at.slice(0, 10) < today;
+
+  const services = read(r.services, 'the services') ? r.services : [];
+  const incidentsRead = read(r.incidents, 'the incidents');
+  const all = incidentsRead ? r.incidents! : [];
+  const open = all.filter((i) => i.state !== 'resolved');
+  const resolved = all.filter((i) => i.state === 'resolved' && i.resolved).sort((a, b) => (a.resolved! < b.resolved! ? 1 : -1));
+  const length = (i: Incident) => Date.parse(i.resolved!) - Date.parse(i.started);
+  const lasted = (i: Incident) => formatDuration(length(i));
+  const latest = resolved[0] ?? null;
+  const releases = read(r.releases, 'the releases') ? r.releases : null;
+  const history = read(r.history, 'the days') ? r.history : null;
+  const held = history?.length ? steady(history, rules.band) : null;
+
+  // The line under the title: the most severe open incident's updates timed from its start, in the card's words.
+  const lead = [...open].sort((a, b) => SEVERITY[a.severity] - SEVERITY[b.severity] || (a.started < b.started ? 1 : -1));
+  const line = [
+    lead[0] && `${lead[0].service}'s incident: updates ${inWords([...lead[0].updates].sort((a, b) => a.at.localeCompare(b.at)).map((u) => afterStart(lead[0].started, u.at)))}${lead.length > 1 ? `, and ${lead.length - 1} more open` : ''}`,
+    services.length && summarise(services).text,
+    held && `${held.inside} of ${held.of} days inside the band`,
+  ].filter(Boolean).join('; ');
+
+  let band: NowData['band'] = null;
+  if (history?.length && held) {
+    const shown = history.slice(-STRIP_DAYS);
+    const out = new Set(held.outside);
+    const inside = shown.filter((d) => !out.has(d.date)).length;
+    band = { days: shown.map((d) => (out.has(d.date) ? 'degraded' : 'operational')), end: shown.at(-1)!.date, inside: held.inside, of: held.of, share: inside / shown.length, facts: bandFacts(history, held.outside) };
+  }
+
+  let models: NowData['models'] = null;
+  // A model's figures need its rows and its label: either read failing leaves the part unread.
+  if (r.usage && r.models) {
+    const usage = r.usage;
+    const dates = [...new Set(usage.map((u) => u.date).filter((d) => d < today))].sort().slice(-WINDOW_DAYS);
+    const kept = new Set(dates);
+    models = r.models.map((m): NowModel => {
+      const days = usage.filter((u) => u.model === m.id && kept.has(u.date));
+      const requests = sum(days.map((d) => d.requests)), errors = sum(days.map((d) => d.errors));
+      const ttft = days.flatMap((d) => (d.ttft === null ? [] : [d.ttft]));
+      return { id: m.id, label: m.label, serves: m.serves, requests, p95: days.length ? lowerMedian(days.map((d) => d.p95)) : 0, ttft: ttft.length ? lowerMedian(ttft) : null, errors, errorRate: requests ? errors / requests : 0 };
+    }).sort((a, b) => b.requests - a.requests);
+  } else unread.push('the models');
+
+  let compute: NowData['compute'] = null;
+  if (read(r.compute, 'the compute')) {
+    const day = r.compute.map((c) => c.date).filter((d) => d < today).sort().at(-1);
+    if (day) {
+      const regions = r.compute.filter((c) => c.date === day).map((c) => ({ region: c.region, gpus: c.gpus, used: c.used, share: c.gpus ? c.used / (c.gpus * 24) : 0 })).sort((a, b) => b.share - a.share);
+      compute = { day, regions, fullest: regions[0]?.region ?? null };
+    }
+  }
+
+  let shipping: NowData['shipping'] = null;
+  if (releases) {
+    const waiting = releases.filter((x) => stageOf(x) !== 'released').sort((a, b) => (releaseMoment(a) < releaseMoment(b) ? 1 : -1));
+    shipping = {
+      testing: waiting.filter((x) => stageOf(x) === 'testing').map((x) => ({ id: x.id, version: x.version, service: x.service, holds: x.verification.unresolved.map(unresolvedText) })),
+      ready: waiting.filter((x) => stageOf(x) === 'ready').map((x) => ({ id: x.id, version: x.version, service: x.service })),
+      live: releaseFigures(releases).live.map((x) => ({ service: x.service, environment: x.environment, version: x.version })),
+      checks: { passed: sum(waiting.map((x) => x.verification.passed)), required: sum(waiting.map((x) => x.verification.required)) },
+    };
+  }
+
+  const tickets = read(r.tickets, 'the tickets') ? r.tickets : null;
+  let work: NowData['work'] = null;
+  if (tickets) {
+    const inPlay = tickets.filter((t) => t.state !== 'closed').sort((a, b) => workRank(a) - workRank(b) || (a.openedAt < b.openedAt ? 1 : -1));
+    work = {
+      tickets: inPlay.slice(0, WORK_SHOWN).map((t): NowTicket => ({ id: t.id, title: t.title, priority: t.priority, state: t.state as NowTicket['state'], owner: t.assignee, mine: t.assigneeId === r.reader, href: ticketAddress(t.title) })),
+      more: Math.max(0, inPlay.length - WORK_SHOWN),
+      href: '/operations-tickets',
+    };
+  }
+
+  const endpoints = read(r.endpoints, 'the endpoints') ? [...r.endpoints].sort((a, b) => b.p95 - a.p95) : null;
+  const runs = read(r.runs, 'the verification runs') ? r.runs : null;
+  const activity = read(r.activity, 'the changes') ? [...r.activity].sort((a, b) => (a.at < b.at ? 1 : -1)) : null;
+
+  // The month's four tiles, each from what it counts; a tile whose read failed is null and the others stand.
+  const out = releases?.filter((x) => inMonth(x.releasedAt)).sort((a, b) => (a.releasedAt! < b.releasedAt! ? 1 : -1)) ?? null;
+  const closed = tickets?.filter((t) => inMonth(t.closedAt)).map((t) => Math.round((Date.parse(t.closedAt!) - Date.parse(t.openedAt)) / DAY)).sort((a, b) => a - b) ?? null;
+  const ran = runs?.filter((x) => inMonth(x.startedAt)) ?? null;
+  const failed = ran?.filter((x) => x.state === 'failed').sort((a, b) => (a.startedAt < b.startedAt ? 1 : -1))[0];
+  const settled = incidentsRead ? resolved.filter((i) => inMonth(i.resolved)) : null;
+  const month: NowData['month'] = {
+    releases: out && { label: 'Releases out', value: out.length, line: out.length ? fit(`the latest ${out[0].version} on ${formatDay(out[0].releasedAt!)}`, `the latest on ${formatDay(out[0].releasedAt!)}`) : 'none went out' },
+    tickets: closed && { label: 'Tickets closed', value: closed.length, line: closed.length ? fit(`took ${inWords(closed.map(String))} ${closed.at(-1) === 1 ? 'day' : 'days'}`, `took ${closed[0]} to ${closed.at(-1)} days`) : 'none closed' },
+    runs: ran && {
+      label: 'Runs passed', value: ran.filter((x) => x.state === 'passed').length, of: ran.length,
+      line: `${ran.filter((x) => x.state === 'failed').length} failed, ${ran.filter((x) => x.state === 'skipped').length} skipped`,
+      ...(failed ? { finding: { text: fit(`${failed.suite} run failed ${formatDay(failed.startedAt)}`, `a run failed ${formatDay(failed.startedAt)}`), day: failed.startedAt.slice(0, 10), tone: 'warning' as const } } : {}),
+    },
+    incidents: settled && {
+      label: 'Incidents resolved', value: settled.length,
+      line: settled.length ? fit(`lasted ${inWords(settled.map(lasted))}`, `the longest lasted ${formatDuration(Math.max(...settled.map(length)))}`) : latest ? `last ${formatDate(latest.resolved!)}, lasted ${lasted(latest)}` : 'none resolved yet',
+    },
+  };
+
+  let runsADay: NowData['runs'] = null;
+  if (runs) {
+    const days: NowRunDay[] = Array.from({ length: WINDOW_DAYS + 1 }, (_, i) => ({ date: new Date(Date.parse(`${from}T00:00:00Z`) + i * DAY).toISOString().slice(0, 10), passed: 0, skipped: 0, failed: 0 }));
+    const byDate = new Map(days.map((d) => [d.date, d]));
+    for (const x of runs) {
+      const d = byDate.get(x.startedAt.slice(0, 10));
+      if (d) d[x.state] += 1;
+    }
+    runsADay = { days, running: true };
+  }
+
+  return {
+    services,
+    current: open[0] ?? null,
+    alsoOpen: open.slice(1),
+    head: nowHead({ services, testing: releases && releaseFigures(releases).testing, history }),
+    line: line || null,
+    incidents: incidentsRead ? { open: lead, latest: latest && { incident: latest, text: `the last was resolved on ${formatDate(latest.resolved!)} and lasted ${lasted(latest)}` } } : null,
+    band,
+    models,
+    compute,
+    shipping,
+    work,
+    endpoints,
+    month,
+    runs: runsADay,
+    activity,
+    unread,
+    updatedAt: r.updatedAt,
+    now: r.now,
+  };
+}
