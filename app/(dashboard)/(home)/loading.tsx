@@ -53,7 +53,7 @@ export function HomeSkeleton() {
 /** Home on its way: the featured figure beside three tiles, two cards of rows, the three regions, and the activity feed. */
 export default function HomeLoading() {
   return (
-    <LoadingPage name="home" title="Home">
+    <LoadingPage name="home" title="Home" sentence>
       <HomeSkeleton />
     </LoadingPage>
   );

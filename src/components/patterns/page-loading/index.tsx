@@ -7,12 +7,16 @@ import { Skeleton } from '@/components/ui/skeleton';
  * The frame every console route's loading state shares: one masthead skeleton, then the page's own body, announced once
  * as busy under the page's name. Each route's `loading.tsx` composes its body from these rows, in the shape of its page.
  * The title is the page's own heading, so the shell is acknowledged the moment this state commits; a detail page whose
- * title depends on the record leaves it out and keeps a skeleton. `width` follows the page it stands in for: a
- * skeleton at another width would move the content when the page arrives.
+ * title depends on the record leaves it out and keeps a skeleton. `sentence` says the page is headed by a sentence
+ * about its figures: the title is then the page's name, kept in the heading and not drawn, and the frame holds the
+ * sentence's block with its placeholder, so the heading is the same height here as on the page that replaces it.
+ * `width` follows the page it stands in for: a skeleton at another width would move the content when the page arrives.
  */
-export function LoadingPage({ name, title, width, children }: { name: string; title?: string; width?: PageWidth; children: ReactNode }) {
+export function LoadingPage({ name, title, sentence, width, children }: { name: string; title?: string; sentence?: boolean; width?: PageWidth; children: ReactNode }) {
+  // A page headed by a sentence gives the frame its name and no title, which is how the frame is asked for the placeholder.
+  const heading = sentence && title ? { name: title } : { title: title ?? <Skeleton className="mt-3 h-10 w-64 rounded-md" /> };
   return (
-    <PageFrame width={width} kicker={<Skeleton className="h-2.5 w-32" />} title={title ?? <Skeleton className="mt-3 h-10 w-64 rounded-md" />} description={<Skeleton className="mt-2 h-3.5 w-96 max-w-full" />}>
+    <PageFrame width={width} kicker={<Skeleton className="h-2.5 w-32" />} {...heading} description={<Skeleton className="mt-2 h-3.5 w-96 max-w-full" />}>
       <Busy name={name}>{children}</Busy>
     </PageFrame>
   );

@@ -15,7 +15,8 @@ export default async function RevenuePage() {
   return (
     <PageFrame
       kicker={<>{app.name} · {app.workspace}</>}
-      title="Revenue"
+      name="Revenue"
+      title={data.head.title}
       description={`The revenue of the last 30 days and who has not paid. ${workspaces.business.audience}`}
       meta={<Freshness updatedAt={new Date(data.updatedAt)} now={new Date(data.now)} />}
     >

@@ -12,10 +12,10 @@ import { readAll } from '@/data/read';
 import type { CustomerRecord, Ticket, VerificationRun } from '@/data/sample';
 import { businessOf, deliveryOf, operationOf, type MainSummary } from '@/views/main-summary';
 
-/** A summary whose read throws is missing, not zero. */
-async function attempt<T>(summary: () => Promise<T>): Promise<T | null> {
+/** A read that throws is missing, not zero: a summary, the history a title is worked out from, the services a title names. */
+export async function attempt<T>(read: () => Promise<T>): Promise<T | null> {
   try {
-    return await summary();
+    return await read();
   } catch {
     return null;
   }

@@ -136,7 +136,8 @@ is read. `optional:docs/product-workspaces.md` lists each limit.
 Rules that make every page look like it belongs:
 
 - **`PageFrame`** with `kicker` (where it sits: "Product · Workspace" or the parent record), `title`, one-sentence
-  `description`, then `meta` (Freshness) and `actions` (one primary at most). A dashboard page leaves `width` alone:
+  `description`, then `meta` (Freshness) and `actions` (one primary at most). A page that leads with figures passes
+  its `name` too and a `title` that is a sentence ("A title that states the figures" below). A dashboard page leaves `width` alone:
   `data` fills the canvas, so a wider screen shows more. A page that is mostly a form takes `width="form"`, whose band
   fills the canvas until the canvas is wider than a form needs and then centres — a field never stretches across a wide
   screen, and the remainder splits evenly instead of leaving a strip at one side. A page that is one long document takes
@@ -153,7 +154,7 @@ Rules that make every page look like it belongs:
 - **Tables**: mark one column `grow` (the lead), numbers `numeric`, low-value columns `hideBelow`; give `rowHref` so rows
   open their record. A `DataTable` under 640px wide (a phone, or a half-width row on a wide screen) becomes a card list by itself — a markdown table inside `Prose` does not: it keeps its columns and scrolls sideways, so a document meant to be read on a phone wants a list, not a table.
 - **Every state**: loading (`loading.tsx` is a `LoadingPage` from `src/components/patterns/page-loading`, with `name`,
-  `title` and the page's `width`, around skeletons shaped like the page: `TilesSkeleton`, `ChartSkeleton`,
+  `title` and the page's `width`, and `sentence` when the page is headed by one, around skeletons shaped like the page: `TilesSkeleton`, `ChartSkeleton`,
   `TableSkeleton` or `RecordsSkeleton`; read through `read()` so the page is
   in its prerendered shell and the skeleton is rarely seen, since a request-time read waits at least 300 ms behind it:
   `cache.md`), empty (Empty state with the one action), error (`error.tsx`, what failed and Retry).
@@ -196,6 +197,50 @@ Rules that make every page look like it belongs:
   server page with no client view places `<ShareContext context={…} />` among its cards instead. Both
   agents read it: an MCP host and the console's assistant. Add the page's tool to `optional:src/views/tools.ts` so the
   assistant can open it at an address.
+
+## A title that states the figures, and the facts beside it
+
+A page that leads with figures is headed by what they say, and states what its records show as facts. Part of this is
+Meridian's standard, which a product keeps whatever it sells. Part is the sample's, written for a company that sells
+tokens, which a product replaces with its own words and values. Replace all of the second list: a title that still
+says "requests" on a page about orders is the sample's, not the product's.
+
+**The standard. Keep it.**
+
+- **A page that leads with figures is headed by a sentence, with its name kept in the heading.** `PageFrame` takes the
+  page's `name` beside a `title` that is the sentence. The heading reads the name, out of sight, then the sentence; the
+  top bar and the document's title stay the name; the frame holds the sentence's block while the sentence arrives, so
+  nothing under it moves (the Shell's specification, `example:src/components/base/shell/README.md`, "The title"). A list, a form and Settings keep a name.
+- **A title is worked out, never written.** A function beside the page's view takes plain figures and returns the
+  sentence, with a branch for each thing it may say and a test for every branch. It says what is wrong today in the
+  same sentence where its rule has a clause for it, and a page that cannot work its title out is headed by its name.
+- **A fact is stated by a rule with a guard.** The rules are in `src/lib/facts.ts`, which an update brings: `record`
+  (the highest period yet, once enough history is kept), `first` (the first day a threshold was passed, when the
+  records begin below it), `all` (every member of a set, written N of N), `total` (everything recorded, with its first
+  day and its latest) and `runOf`. A rule returns its fact with the one line it wrote, or nothing, and nothing weaker
+  stands in for a fact that stopped holding. `optional:tests/facts.test.ts` holds the rules and stays with them.
+- **No word of praise**, in a title or in a fact: the figure is what is said. The rules' test refuses twelve words.
+- **The title is shared.** The page's context leads its insights with the sentence the page is headed by, word for
+  word, and each fact follows as the rule's own line (`factInsight` and `headInsights` in
+  `optional:src/views/fact-insight.ts`). The history a record, a first or a total is worked out from is read on the
+  server; the page's client is handed the sentences (`head` on the view's data) and never the history.
+- **The day in progress is in no figure a title or a fact states.**
+
+**The sample's. Replace it.**
+
+- **The four title functions and their words**: `homeTitle`, `usageTitle`, `revenueTitle` and `customerTitle`, each in
+  its view's context file under `optional:src/views/`, with the functions that call the rules for them (`homeHead`,
+  `usageHead`, `revenueHead`, `titleOf`) and Home's `servicesLine`. Write your pages' own, in your product's nouns.
+- **`optional:tests/titles.test.ts`**, which holds the sample's words branch by branch, and the cases of
+  `optional:tests/shared-context.test.tsx` that read the sample's headings and facts. Rewrite their cases for your
+  titles: a title no test holds is a sentence nobody checked.
+- **The values of `facts` in `src/app.config.ts`**: `firsts.requestsADay` (10, 25 and 50 million requests a day),
+  `recordNeedsPeriods` (six periods) and `band` (a p95 under 350 ms and an error rate under 1%). They are the sample
+  company's sizes. Keep the keys your pages pass to a rule, set your own values, and delete a key nothing reads.
+- **The facts the sample's contexts state**: the total of requests answered on Home, and the first day requests
+  passed a threshold on Usage. State the facts your own records hold, from the same rules.
+
+`grep -rn "Title(\|Head(\|facts\." src/views src/data app` finds every title, head and reader of the configuration.
 
 ## The assistant
 

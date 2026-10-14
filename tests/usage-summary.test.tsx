@@ -47,7 +47,7 @@ describe('what Usage says of the period', () => {
 
   it('draws no figure when no request arrived in the period', () => {
     const none = { requests: 0, errorRate: 0, p95: 0, revenue: 0 };
-    render(<UsageBody period="30d" activity={[]} incidents={[]} updatedAt="2026-10-05T09:00:00.000Z" now="2026-10-05T09:00:00.000Z" series={[]} totals={{ current: none, previous: none }} heat={[]} hours={[]} regions={[]} endpoints={[]} />);
+    render(<UsageBody period="30d" activity={[]} incidents={[]} updatedAt="2026-10-05T09:00:00.000Z" now="2026-10-05T09:00:00.000Z" series={[]} totals={{ current: none, previous: none }} heat={[]} hours={[]} regions={[]} endpoints={[]} head={{ title: null, facts: [] }} />);
     expect(screen.queryAllByRole('heading', { level: 2, name: 'Revenue' })).toEqual([]);
   });
 });

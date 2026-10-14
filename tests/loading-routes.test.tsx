@@ -15,7 +15,29 @@ import RequestDetail from '../app/(dashboard)/requests/[id]/loading';
 import Settings from '../app/(dashboard)/settings/loading';
 import Tests from '../app/(dashboard)/tests/loading';
 
+import Revenue from '../app/(dashboard)/business/loading';
+import Customer from '../app/(dashboard)/customers/[id]/loading';
+
 const ROUTES = { Home, Usage, Customers, Services, Keys, Members, Requests, RequestDetail, Settings, Tickets, Tests, Releases };
+
+describe('a page headed by a sentence', () => {
+  it('holds the sentence\'s block while it loads, under its name, so nothing moves when the page arrives', () => {
+    for (const [name, Loading] of Object.entries({ Home, Usage, Revenue, Customer })) {
+      render(<Loading />);
+      const heading = screen.getByRole('heading', { level: 1 });
+      expect(heading.textContent, name).toBe(`${name}: `);
+      expect(heading.querySelector('[data-title-pending]'), name).not.toBeNull();
+      expect(heading.className, name).not.toMatch(/\bt-page\b/);
+      cleanup();
+    }
+  });
+
+  it('is told apart from a page headed by its name, which draws the name at once', () => {
+    render(<Customers />);
+    expect(screen.getByRole('heading', { level: 1 }).textContent).toBe('Customers');
+    expect(screen.getByRole('heading', { level: 1 }).querySelector('[data-title-pending]')).toBeNull();
+  });
+});
 
 describe('every console route has its own loading state', () => {
   it('drops the shared Home fallback', () => {

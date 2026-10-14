@@ -11,7 +11,7 @@ Status: beta
 | Display | `t-display` | `text-display` 52–104px | 600 · −0.035em · 0.96 | Sign-in, not found, the Atlas front door |
 | Page | `t-page` | `text-page` 36–56px | 600 · −0.035em · 1.02 | The page title: one per screen |
 | Hero | `t-hero` | `text-hero` 52–80px | 600 · −0.035em · 0.95 | The figure in a Featured metric |
-| Section | `t-section` | `text-xl` 24–32px | 600 · −0.022em · 1.1 | A heading inside a page, a dialog title |
+| Section | `t-section` | `text-xl` 24–32px | 600 · −0.022em · 1.1 | A heading inside a page, a dialog title, and a page's title when it is a sentence (Shell, "The title") |
 | Figure | `t-figure` | `text-2xl` 32–42px | 600 · −0.03em · 1 | A Metric tile's number |
 | Card | `t-card` | `text-md` 16px | 600 · −0.012em · 1.3 | A card's title |
 | Lead | `t-lead` | `text-md` 16px | 400 · `ink-2` · 1.6 | The sentence under a page title |
@@ -51,7 +51,7 @@ Not applicable.
 
 ## Content
 
-- Kickers say where you are, never what to do. Titles are nouns for pages, verbs for dialogs ("Rotate key").
+- Kickers say where you are, never what to do. A page's title is a noun, or on a page that leads with figures a sentence that states them; a dialog's is a verb ("Rotate key").
 
 ## Do and do not
 

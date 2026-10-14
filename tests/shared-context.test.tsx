@@ -1,6 +1,13 @@
 import { render, waitFor, within } from '@testing-library/react';
+import { PassThrough } from 'node:stream';
 import { Tooltip } from 'radix-ui';
+import type { ReactElement } from 'react';
+import { renderToPipeableStream } from 'react-dom/server';
 import { describe, expect, it, vi } from 'vitest';
+
+// The view tools read through `read()`, which tags and times its cache: outside a Next request those calls have nothing to register with.
+vi.mock('next/cache', () => ({ cacheTag: () => {}, cacheLife: () => {}, updateTag: () => {}, revalidateTag: () => {}, revalidatePath: () => {}, refresh: () => {} }));
+
 import { SurfaceOverride, sharedContextOn } from '@/components/base/surface';
 import { useShareView } from '@/components/base/use-share-view';
 import { DEMO_NOW, DEMO_UPDATED_AT, ACTIVITY, INCIDENTS as RECORDS, SERVICES, type IncidentRecord } from '@/system/fixtures/sample';
@@ -13,7 +20,7 @@ import { contextText, freshnessOf, type SharedContext } from '@/lib/shared-conte
 import { systemPrompt } from '@/lib/assistant/prompt';
 import type { Period } from '@/lib/period';
 import { HomeBody } from '@/views/home';
-import { homeContext, type HomeData } from '@/views/home-context';
+import { homeContext, homeHead, servicesLine, type HomeData } from '@/views/home-context';
 import { servicesContext } from '@/views/services-context';
 import { EmbedHome } from '../app/embed/home/view';
 
@@ -23,9 +30,12 @@ const [INCIDENTS, PAST_INCIDENTS] = [RECORDS.map(handed), PAST_RECORDS.map(hande
 
 /** What every view's text may take: the budget the console prompt and a host's context both afford. The Home's carries Main's seven figures beside its traffic. */
 const BUDGET = 2600;
+/** Every complete day the sample keeps, oldest first: what the server reads to work out a title's record, a first and a total. */
+const HISTORY = demoSeries('all').current;
 const home = (period: Period): HomeData => ({
   period, series: demoSeries(period).current, totals: demoTotals(period), running: demoSeries(period).running, endpoints: ENDPOINTS, mix: STATUS_MIX, activity: ACTIVITY,
   incidents: [...INCIDENTS, ...PAST_INCIDENTS],
+  head: homeHead({ period, totals: demoTotals(period), history: HISTORY, services: SERVICES }), unwell: servicesLine(SERVICES),
   summary: {
     business: { customers: 320, byStatus: { active: 296, trial: 14, 'past due': 10 }, byPlan: { Enterprise: 24, Scale: 82, Starter: 214 }, revenue: 3300438.74 },
     operation: { degraded: ['Inference API'], outage: [], incidents: [{ id: 'inc_1', title: 'Elevated latency in eu-west-1' }] },
@@ -59,7 +69,7 @@ describe("the Home's shared context", () => {
   });
   it('surfaces the spike nobody explained, with its figures, and says nothing is recorded', () => {
     const c = homeContext(home('30d'));
-    expect(c.insights[0].text).toBe("Error rate was 3.2× to 3.4× the period's median of 0.37% on 21 and 22 Sept (1.19%, 1.27%); no other day passed 1.1×.");
+    expect(c.insights.map((i) => i.text)).toContain("Error rate was 3.2× to 3.4× the period's median of 0.37% on 21 and 22 Sept (1.19%, 1.27%); no other day passed 1.1×.");
     expect(c.unknowns[0]).toMatch(/^Nothing is recorded between 20 Sept and 23 Sept: no incident and no activity event/);
   });
   it('ties a spike to the incident recorded beside it', () => {
@@ -165,7 +175,7 @@ describe('a request\'s context', () => {
 
 describe('every page shares a context within its budget, and nothing hidden', () => {
   it('Usage, Customers, Members, API keys and a request', async () => {
-    const { usageContext } = await import('@/views/usage-context');
+    const { usageContext, usageHead } = await import('@/views/usage-context');
     const { customersContext } = await import('@/views/customers-context');
     const { membersContext } = await import('@/views/members-context');
     const { keysContext } = await import('@/views/keys-context');
@@ -179,7 +189,7 @@ describe('every page shares a context within its budget, and nothing hidden', ()
     const { SCOPES } = await import('@/views/key-scopes');
     const now = DEMO_NOW.toISOString();
     const contexts = [
-      usageContext({ ...home('30d'), endpoints: ENDPOINTS, heat, hours, regions: REGIONS }),
+      usageContext({ ...home('30d'), endpoints: ENDPOINTS, heat, hours, regions: REGIONS, head: usageHead({ period: '30d', totals: demoTotals('30d'), history: HISTORY }) }),
       customersContext(CUSTOMERS, CUSTOMERS, { q: '', plan: 'all', status: 'all', sort: 'revenue', dir: 'desc', page: '1' }),
       membersContext(MEMBERS, now),
       keysContext(API_KEYS, now, SCOPES),
@@ -238,6 +248,161 @@ describe('the person sees the same findings', () => {
     fireEvent.click(screen.getByRole('button', { name: /3\.4× usual on 21 and 22 Sept\. Point at 22 Sept 2026/ }));
     expect(screen.getByText('22 Sept 2026')).toBeTruthy();
     expect(screen.getByText('3.4× usual')).toBeTruthy();
+  });
+});
+
+/** A page as its request is answered once every part of it has arrived: the whole HTML, read as a document. */
+async function served(page: Promise<unknown>): Promise<Document> {
+  const element = (await page) as ReactElement;
+  const html = await new Promise<string>((resolve, reject) => {
+    const out = new PassThrough();
+    let text = '';
+    out.on('data', (chunk) => { text += chunk; });
+    out.on('end', () => resolve(text));
+    // The root layout's providers hold the tooltips' one provider, which a page drawn alone has to be given.
+    const stream = renderToPipeableStream(<Tooltip.Provider>{element}</Tooltip.Provider>, { onAllReady: () => stream.pipe(out), onShellError: reject, onError: reject });
+  });
+  return new DOMParser().parseFromString(html, 'text/html');
+}
+/** What a page is headed by: the whole heading as assistive technology reads it, and the sentence a person sees in it. */
+function heading(doc: Document) {
+  const all = doc.querySelectorAll('h1');
+  expect(all).toHaveLength(1);
+  return { read: all[0].textContent, drawn: all[0].querySelector('[data-title]')?.textContent ?? '' };
+}
+
+describe('a page is headed by the sentence its context leads with', () => {
+  // The heading is read from the page as it is served, and the line from the context the page's view tool returns.
+  it('Home, for the period chosen', async () => {
+    const { default: HomePage } = await import('../app/(dashboard)/(home)/page');
+    const { homeTool } = await import('@/views/tools');
+    for (const period of ['30d', '90d'] as const) {
+      const { read, drawn } = heading(await served(HomePage({ searchParams: Promise.resolve({ period }) })));
+      const { context } = await homeTool.read({ period });
+      expect(drawn.length, period).toBeGreaterThan(20);
+      expect(read, period).toBe(`Home: ${drawn}`);
+      expect(context.insights[0].text, period).toBe(drawn);
+      expect(contextText(context).split('\n'), period).toContain(`- ${drawn}`);
+      expect(context.title).toBe('Home');
+    }
+    // The two periods say different things, so the title is worked out and not written: a record at 30 days, the change at 90.
+    expect((await homeTool.read({ period: '30d' })).context.insights[0].text).toMatch(/^The highest 30 days yet: \$[\d,.]+, the \d+(st|nd|rd|th) record in a row$/);
+    expect((await homeTool.read({ period: '90d' })).context.insights[0].text).toMatch(/^Revenue is up [\d.]+% on the 90 days before, and /);
+  });
+
+  it('Usage, for the period chosen', async () => {
+    const { default: UsagePage } = await import('../app/(dashboard)/usage/page');
+    const { usageTool } = await import('@/views/tools');
+    for (const period of ['30d', 'all'] as const) {
+      const { read, drawn } = heading(await served(UsagePage({ searchParams: Promise.resolve({ period }) })));
+      const { context } = await usageTool.read({ period });
+      expect(drawn.length, period).toBeGreaterThan(20);
+      expect(read, period).toBe(`Usage: ${drawn}`);
+      expect(context.insights[0].text, period).toBe(drawn);
+      expect(contextText(context).split('\n'), period).toContain(`- ${drawn}`);
+    }
+  });
+
+  it('Revenue, over the last 30 complete days', async () => {
+    const { default: RevenuePage } = await import('../app/(dashboard)/business/page');
+    const { revenueTool } = await import('@/views/tools');
+    const { read, drawn } = heading(await served(RevenuePage()));
+    const { context } = await revenueTool.read({});
+    expect(drawn.length).toBeGreaterThan(20);
+    expect(read).toBe(`Revenue: ${drawn}`);
+    expect(context.insights[0].text).toBe(drawn);
+    expect(contextText(context).split('\n')).toContain(`- ${drawn}`);
+  });
+
+  it('One customer, from its record: active, past due, on a trial and left', async () => {
+    const { default: CustomerPage } = await import('../app/(dashboard)/customers/[id]/page');
+    const { customerTool } = await import('@/views/tools');
+    for (const [id, name, says] of [
+      ['northwind-labs', 'Northwind Labs', /^Northwind Labs paid \$[\d,.]+ in 30 days and sent [\d.]+% (more|less) this week than last$/],
+      ['lumen-studio', 'Lumen Studio', /^Lumen Studio is past due, and sent [\d.]+% (more|less) this week than last$/],
+      ['brightline', 'Brightline', /^Brightline is on a trial that ends on \d\d \w+ \d{4}$/],
+      ['ambervale-motors', 'Ambervale Motors', /^Ambervale Motors left on \d\d \w+ \d{4}$/],
+    ] as const) {
+      const { read, drawn } = heading(await served(CustomerPage({ params: Promise.resolve({ id }) })));
+      const { context } = await customerTool.read({ id });
+      expect(drawn, id).toMatch(says);
+      expect(read, id).toBe(`${name}: ${drawn}`);
+      expect(context.insights[0].text, id).toBe(drawn);
+      expect(contextText(context).split('\n'), id).toContain(`- ${drawn}`);
+      expect(context.title, id).toBe(name);
+    }
+  });
+});
+
+describe('what a context states beside its title', () => {
+  it('Home states the total of requests over every complete day kept, and Usage the first day requests passed a threshold', async () => {
+    const { homeTool, usageTool } = await import('@/views/tools');
+    const requests = HISTORY.reduce((sum, d) => sum + d.requests, 0);
+    for (const period of ['7d', 'all'] as const) {
+      const said = (await homeTool.read({ period })).context.insights[1];
+      expect(said, period).toEqual({ text: `Total: ${requests.toLocaleString('en-US')} requests answered in 360 days, from 08 Oct 2025 to 02 Oct 2026.`, evidence: '/?period=all' });
+    }
+    const first = (await usageTool.read({ period: '7d' })).context.insights[1];
+    expect(first.text).toMatch(/^First: Requests first passed 25\.0M in a day on \d\d \w+ \d{4}; \d+ days have passed it since\.$/);
+    expect(first.evidence).toMatch(/^\/\?period=all&day=\d{4}-\d\d-\d\d$/);
+    // The day in progress is in neither: the total is of complete days, and so is every day the first counts.
+    expect(requests).toBe(demoTotals('all').current.requests);
+  });
+
+  it('a period with fewer whole periods before it than a record needs states the change, and all time the figure alone', () => {
+    expect(home('90d').head.title).toMatch(/^Revenue is up [\d.]+% on the 90 days before, and Inference API is degraded$/);
+    expect(home('all').head.title).toBe(`${formatCost(demoTotals('all').current.revenue)} of revenue in 360 days, and Inference API is degraded`);
+    // A title leaves the services out when they could not be read, and says every one is operational when it is.
+    expect(homeHead({ period: '90d', totals: demoTotals('90d'), history: HISTORY, services: null }).title).toMatch(/^Revenue is up [\d.]+% on the 90 days before$/);
+    expect(homeHead({ period: '90d', totals: demoTotals('90d'), history: HISTORY, services: SERVICES.map((s) => ({ ...s, status: 'operational' as const })) }).title).toMatch(/, and every service is operational$/);
+  });
+
+  it('a page whose history could not be read is headed by its name, and its context says so', async () => {
+    const { usageHead } = await import('@/views/usage-context');
+    const { revenueHead } = await import('@/views/revenue-context');
+    const { CUSTOMERS } = await import('@/system/fixtures/company');
+    const unread = homeHead({ period: '30d', totals: demoTotals('30d'), history: null, services: SERVICES });
+    expect(unread).toEqual({ title: null, facts: [], unknown: expect.stringMatching(/^The history could not be read/) });
+    expect(usageHead({ period: '30d', totals: demoTotals('30d'), history: null })).toEqual(unread);
+    expect(revenueHead({ rows: CUSTOMERS, history: null })).toEqual(unread);
+    const c = homeContext({ ...home('30d'), head: unread });
+    expect(c.unknowns).toContain(unread.unknown);
+    expect(c.insights.map((i) => i.text).join('\n')).not.toMatch(/The highest|^Total: /m);
+    expect(c.title).toBe('Home');
+  });
+
+  it('says which services are not operational in the one sentence under the Home\'s title, and nothing when every one is', () => {
+    const service = (name: string, status: 'operational' | 'degraded' | 'outage') => ({ name, status });
+    expect(servicesLine(SERVICES)).toBe('Inference API is degraded.');
+    expect(servicesLine([service('Files', 'outage'), service('Edge gateway', 'degraded'), service('Webhooks', 'degraded'), service('Dashboard', 'operational')])).toBe('Files is down, and Edge gateway and Webhooks are degraded.');
+    expect(servicesLine([service('Files', 'operational')])).toBeNull();
+    expect(servicesLine(null)).toBeNull();
+  });
+});
+
+describe('a title and a fact follow the product\'s configuration', () => {
+  it('Home loses its record when a record needs more periods than are kept, and Usage\'s first follows the thresholds', async () => {
+    const stated = async () => {
+      const { homeTool, usageTool } = await import('@/views/tools');
+      return { home: (await homeTool.read({ period: '30d' })).context.insights, usage: (await usageTool.read({ period: '30d' })).context.insights };
+    };
+    const shipped = await stated();
+    expect(shipped.home[0].text).toMatch(/^The highest 30 days yet: /);
+    expect(shipped.usage[0].text).toMatch(/, the busiest 30 days yet$/);
+    expect(shipped.usage[1].text).toMatch(/^First: Requests first passed 25\.0M in a day on /);
+    // Twelve whole periods of 30 days are kept, so a record that needs thirteen is never one; and one threshold, of 30M a day.
+    vi.resetModules();
+    vi.doMock('@/app.config', async (load) => {
+      const real = await load<typeof import('@/app.config')>();
+      return { ...real, facts: { ...real.facts, recordNeedsPeriods: 13, firsts: { requestsADay: [30_000_000] } } };
+    });
+    const changed = await stated();
+    expect(changed.home[0].text).toMatch(/^Revenue is up [\d.]+% on the 30 days before, and Inference API is degraded$/);
+    expect(changed.usage[0].text).toMatch(/ requests in 30 days, [\d.]+% more than the 30 days before$/);
+    expect(changed.usage[1].text).toMatch(/^First: Requests first passed 30\.0M in a day on /);
+    expect(changed.usage[1].text).not.toBe(shipped.usage[1].text);
+    vi.doUnmock('@/app.config');
+    vi.resetModules();
   });
 });
 

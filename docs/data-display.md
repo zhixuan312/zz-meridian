@@ -73,6 +73,35 @@ A period still in progress is counted in no total, change or finding. A figure f
 - A few figures that support the featured one go in its foot: a band inside the lit surface, a label over each figure, and one link. A figure that needs its own change or its own shape is a Metric tile, not a line of the foot.
 - A page has one featured card. Two measures that are peers are its two halves (`peer`): one lit surface and a hairline between, side by side from 42rem of the card's own width (588px) and one above the other below that. Their sum is never drawn.
 
+## Facts
+
+A fact is one thing the product's own records show, found by a rule and written as one line: the highest period yet, the first day a threshold was passed, every customer of a plan doing the same thing, a total with its first day and its latest. A page states a fact in its title, beside a figure and in its shared context, and it is the same line wherever it is said.
+
+- A rule is a pure function in `src/lib/facts.ts`. It takes numbers, dates and labels and returns its fact, with the one line it wrote, or nothing when the rule does not hold. Nothing weaker stands in for a fact that stopped holding: a record that ended leaves the page.
+- Every rule has a guard, and what the guard asks for is the product's to set, in `facts` in `src/app.config.ts`. A rule holds no figure of its own: the page that calls it passes the configuration.
+
+| Rule | States | Its guard |
+|---|---|---|
+| `record` | The latest period is higher than every one before it, and how many periods in a row were each a record: "The highest 30 days of revenue yet: $3,300,438.74, the 3rd record in a row" | The period and the periods before it number at least `recordNeedsPeriods`, each a whole period of the same length counted back from yesterday. A period that only equals the highest is no record |
+| `first` | The first day a threshold was passed, and how many days have passed it since: "Requests first passed 25.0M in a day on 02 Jan 2026; 192 days have passed it since" | The largest threshold of `firsts` some day is above, and only when the earliest day kept is below it: a threshold already passed when the records begin has no first day the product can know |
+| `all` | Every member of a set did the same thing, written N of N: "24 of 24 Enterprise customers sent more requests in the last 7 days than in the 7 before" | One member short and it is no fact. Tried on the whole set first, then on each named subset in the order given (the sample: each plan, the one that brings the most revenue first) |
+| `total` | The sum of everything recorded, from its first day to its latest: "9,600,136,928 requests answered in 360 days, from 08 Oct 2025 to 02 Oct 2026" | Every digit, wherever the page has room for them |
+| `runOf` | How long a state has held, up to today | "Its longest" only when no run among the days kept is longer (see "Time in an incident, and a run of days") |
+
+- The figure is what is said. No line of a rule and no title holds a word of praise; the rules' test refuses twelve: `great`, `excellent`, `amazing`, `impressive`, `outstanding`, `congratulations`, `well done`, `good job`, `healthy`, `strong`, `solid` and `nice`.
+- A fact is about a figure the product records, over complete days: the day in progress is in no fact, as it is in no total.
+- What is wrong today is said beside a fact, at the same size. A title carries it as its second clause ("…, and Inference API is degraded"); where a title has no clause for it, as a record's has none, the one sentence under the title says it.
+
+## A title that states the figures
+
+A page that leads with figures is headed by what they say: "The highest 30 days yet: $3,300,438.74, the 3rd record in a row", not "Home". A list, a form and Settings keep a name.
+
+- A title is one sentence, worked out by a function beside the page's view from plain figures, with a branch for each thing it may say and a test for every branch. It reads a rule's result, not its line: the fact says "The highest 30 days of revenue yet", the title of a page about revenue says "The highest 30 days yet".
+- It names its period in words ("30 days") and writes money in full, a count at a glance (`1.1B`) and a change as a percentage with one decimal and no sign: "up 5.3%", "23.6% more". A change that rounds to 0.0% reads "level with". A period with no period before it, or one whose figure was zero, is compared with nothing: the title states the figure alone.
+- It has no full stop, as a name has none, and it is balanced over its lines.
+- The page's name stays in the heading, read out and not drawn, and is what the top bar shows. The Shell holds the sentence's block while the sentence arrives, so nothing under it moves (`src/components/base/shell/README.md`, "The title").
+- A page that cannot work its title out, because the history a record needs could not be read, is headed by its name.
+
 ## A wall of many
 
 The same figure for many things, each with its own change and shape, is a wall of compact Metric tiles (`size="compact"`), not a page of full ones.

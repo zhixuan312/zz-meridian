@@ -8,9 +8,10 @@ vi.mock('server-only', () => ({}));
 vi.mock('next/headers', () => ({ cookies: async () => ({ get: () => undefined, set: () => {} }), headers: async () => new Headers() }));
 vi.mock('next/cache', () => ({ cacheTag: () => {}, cacheLife: () => {}, updateTag: () => {}, revalidateTag: () => {}, revalidatePath: () => {}, refresh: () => {} }));
 
+import { formatCost } from '@/lib/format';
 import { contextText } from '@/lib/shared-context';
 import { CUSTOMERS } from '@/system/fixtures/company';
-import { customerContext } from '@/views/customer-context';
+import { customerContext, titleOf } from '@/views/customer-context';
 import { PAGES } from '@/system/content';
 
 const ROOT = path.resolve(import.meta.dirname, '..');
@@ -30,9 +31,21 @@ describe("One customer's context", () => {
     }
   });
 
-  it('says how the last 7 days moved against the 7 before, and nothing when there is no trend', () => {
-    expect(customerContext({ customer: CUSTOMERS[0], ...at }).insights[0].text).toMatch(/^Its requests are (up|down) \d+% over the last 7 days against the 7 before\.$/);
-    expect(customerContext({ customer: { ...CUSTOMERS[0], trend: [] }, ...at }).insights).toEqual([]);
+  it('leads with the title its page is headed by', () => {
+    for (const customer of CUSTOMERS) expect(customerContext({ customer, ...at }).insights[0], customer.id).toEqual({ text: titleOf(customer) });
+    const [largest] = CUSTOMERS;
+    expect(titleOf(largest)).toMatch(new RegExp(`^${largest.name} paid \\$[\\d,.]+ in 30 days and sent [\\d.]+% (more|less) this week than last$`));
+  });
+
+  it('says what a week is where the title states how it moved, how it moved where the title does not, and nothing when there is no trend', () => {
+    const [largest] = CUSTOMERS;
+    expect(customerContext({ customer: largest, ...at }).insights[1]).toEqual({ text: 'This week is its requests over the last 7 days, and last week the 7 before.', evidence: `/requests?q=${encodeURIComponent(largest.name)}` });
+    const trial = CUSTOMERS.find((c) => c.status === 'trial')!;
+    expect(customerContext({ customer: trial, ...at }).insights[1].text).toMatch(/^Its requests are (up|down) \d+% over the last 7 days against the 7 before\.$/);
+    expect(customerContext({ customer: { ...largest, trend: [] }, ...at }).insights).toEqual([{ text: `${largest.name} paid ${formatCost(largest.revenue)} in 30 days` }]);
+    // A customer that has left has no week: its title says when it left, and nothing follows.
+    const left = CUSTOMERS.find((c) => c.status === 'left')!;
+    expect(customerContext({ customer: left, ...at }).insights).toHaveLength(1);
   });
 });
 

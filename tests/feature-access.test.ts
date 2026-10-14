@@ -37,7 +37,7 @@ describe('the feature table', () => {
       services: { allOf: ['services:read', 'incidents:read'] },
       customers: 'customers:read',
       customer: 'customers:read',
-      revenue: 'customers:read',
+      revenue: { allOf: ['customers:read', 'days:read'] },
       now: { allOf: ['services:read', 'incidents:read'] },
       keys: 'keys:read',
       members: 'members:read',

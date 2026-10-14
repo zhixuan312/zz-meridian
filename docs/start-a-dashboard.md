@@ -22,6 +22,7 @@ To keep the Atlas while you build, clone this repository instead (`git clone htt
 - `app.accent`: `indigo`, `cobalt`, `jade` or `graphite`. A person can still change it in Settings.
 - `app.timezone`: every date and every daily bucket is cut on it.
 - `nav`: the rail. Adding a page is a route file plus a line here, with the `needs` of its feature. ZZ Meridian's own dashboard also declares `workspaces` and gives each entry a `workspace`; a product with one navigation needs neither, but while `workspaces` is declared, as it is in a new project, an entry without a `workspace` is drawn by no rail and no palette (`skills/zz-meridian/references/customize.md`, "Navigation", has both ways forward).
+- `facts`: what the rules behind a page's facts are handed: how many periods of history a record needs (`recordNeedsPeriods`), the thresholds whose first crossing is a fact (`firsts`), and the band a steady day stays inside (`band`). The values are the sample company's; set your own, and delete a key none of your pages passes to a rule (`docs/data-display.md`, "Facts").
 
 Put your logo in `public/` as an SVG and set `logo: '/logo.svg'` in `app`: the mark shows it at 20, 24, 28 and 32 pixels, with an empty `alt` beside the product name. `theme: 'dark'` or `'light'` sets the default theme before anyone picks one.
 
@@ -63,7 +64,7 @@ The rail and the command palette draw only the destinations the signed-in person
 
 ## 6. Arrange your pages
 
-Every page is a `PageFrame` holding a `Stack` of `Row`s. Start from the closest preset and change what it shows, not how it is laid out. A dashboard page leaves its width alone — `data` fills the canvas; a page that is mostly a form takes `width="form"`, whose band centres once the canvas is wider than a form needs; a page that is one long document takes `width="reading"`:
+Every page is a `PageFrame` holding a `Stack` of `Row`s. Start from the closest preset and change what it shows, not how it is laid out. A page that leads with figures is headed by a sentence that states them, worked out by a function with a test, and passes its `name` beside it; a list or a form keeps a name (`docs/data-display.md`, "A title that states the figures"). A dashboard page leaves its width alone — `data` fills the canvas; a page that is mostly a form takes `width="form"`, whose band centres once the canvas is wider than a form needs; a page that is one long document takes `width="reading"`:
 
 | You need | Start from |
 |---|---|

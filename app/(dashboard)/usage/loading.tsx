@@ -17,7 +17,7 @@ export function UsageSkeleton() {
 /** Usage on its way: the four figures, the heatmap, two breakdowns, two trends and the endpoint table. */
 export default function UsageLoading() {
   return (
-    <LoadingPage name="usage" title="Usage">
+    <LoadingPage name="usage" title="Usage" sentence>
       <UsageSkeleton />
     </LoadingPage>
   );

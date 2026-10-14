@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Specimen, State } from '@/system/specimen';
-import { Row } from '@/components/base/shell';
+import { PageTitle, Row } from '@/components/base/shell';
 import { LeaveQuestion } from '@/components/base/shell/leave-question';
 import { app } from '@/app.config';
 
@@ -13,6 +13,17 @@ const Cell = ({ label, tall }: { label: string; tall?: boolean }) => (
     <span className="t-eyebrow">{label}</span>
   </Card>
 );
+
+/** A masthead's text column, drawn with the shell's own heading: the kicker, the heading and the one sentence under it. */
+function Masthead({ name, title, lead }: { name?: string; title?: string | null; lead: string }) {
+  return (
+    <div className="w-full">
+      <p className="t-kicker mb-4">{app.name} · {app.workspace}</p>
+      <PageTitle name={name} title={title} />
+      <p className="t-lead mt-3 max-w-[60ch]">{lead}</p>
+    </div>
+  );
+}
 
 /** The shell's own question, asked by a button: Stay and Leave both close it here, since there is nowhere to go. */
 function AskToLeave() {
@@ -47,6 +58,23 @@ export default function ShellPreview() {
             </div>
           </div>
         </div>
+      </Specimen>
+      <Specimen label="A page headed by a sentence" note="A page that leads with figures is headed by what they say. The page's name stays in the heading, read out and not drawn, and is what the top bar shows; the sentence is set in the section role, balanced, and its block keeps room for the lines it may wrap to, so nothing under it moves when it arrives.">
+        <State label="The sentence · the heading reads &quot;Home: The highest 30 days yet…&quot;" className="w-full">
+          <Masthead name="Home" title="The highest 30 days yet: $3,300,438.74, the 3rd record in a row" lead="Inference API is degraded. For everyone who needs the whole product at a glance." />
+        </State>
+        <State label="A longer sentence · two lines on a desk, three on a phone" className="w-full">
+          <Masthead name="Revenue" title="All 24 Enterprise customers sent more this week than last, in the highest 30 days yet" lead="The revenue of the last 30 days and who has not paid." />
+        </State>
+        <State label="On its way · the name is already in the heading, and two bars hold the sentence's block" className="w-full">
+          <Masthead name="Usage" lead="How usage and revenue moved over the period." />
+        </State>
+        <State label="Came to nothing · the page could not work its sentence out, so its name heads it" className="w-full">
+          <Masthead name="Home" title={null} lead="Traffic, reliability and revenue across every endpoint, for the period you choose." />
+        </State>
+        <State label="A page headed by its name · a list, a form, Settings" className="w-full">
+          <Masthead title="Members" lead="Everyone in the workspace, with their role and when they were last seen." />
+        </State>
       </Specimen>
       <Specimen label="Four splits" note="A page is a stack of rows; a row is one card, or cards split 1/2, 2/3 or 1/3. Cards in a row are the same height. Drawn here at their 1024px-and-up geometry; below 1024px every split stacks to one column.">
         <div className="flex w-full flex-col gap-3">

@@ -74,6 +74,19 @@ export const nav: NavGroup[] = [
   },
 ];
 
+/**
+ * What the rules behind a page's facts are handed (`src/lib/facts.ts`). A rule holds no figure of its own: a title or a
+ * context that calls one passes these, so changing a value here changes what every page states.
+ */
+export const facts = {
+  /** A day is steady when its p95 is under this many milliseconds and its error rate under this fraction. */
+  band: { p95Under: 350, errorRateUnder: 0.01 },
+  /** Requests a day whose first crossing is a fact, smallest first. */
+  firsts: { requestsADay: [10_000_000, 25_000_000, 50_000_000] },
+  /** Periods of history a record needs before it may be called one. */
+  recordNeedsPeriods: 6,
+} as const;
+
 const toSlug = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
 /** The name as identifiers, for the sample's addresses, URLs and MCP tool names. They follow `app.name`. */
 export const slug = toSlug(app.name);

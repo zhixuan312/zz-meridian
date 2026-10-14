@@ -10,7 +10,7 @@ Status: beta
 2. **Rail**: on the left from 1024px, its own scroll; below 1024px, a drawer.
 3. **PageFrame**: the one scroll region of a page, holding:
    - **Top bar**: 56px, sticky. The drawer trigger (under 1024px), the compact title (once the masthead leaves), and the global tools. Clear at rest; glass (`ground` at 72%, `backdrop-blur-xl`, a `line` hairline) once scrolled.
-   - **Masthead**: the kicker, the page title (`t-page`), one sentence (`t-lead`), and the meta and actions, aligned to the title's last line. It scrolls away with the content. A record more than one level deep puts its trail in the kicker: `kicker={<Breadcrumb items={[{ label: 'Teams', href: '/teams' }, { label: 'Atlas', href: '/teams/atlas' }, { label: 'Q3 review' }]} />}`. Breadcrumb's links carry `hit`, as any link laid out as a box must, or they fail the 44px touch rule at 390px.
+   - **Masthead**: the kicker, the page title (a name at `t-page`, or a sentence that states the page's figures: see "The title"), one sentence (`t-lead`), and the meta and actions. Under a name they share the title's row and are aligned to its last line; under a sentence the kicker and the heading take a row of the masthead's whole width, and the meta and actions stand beside the one sentence under it, at the row's end and on its last line. It scrolls away with the content. A record more than one level deep puts its trail in the kicker: `kicker={<Breadcrumb items={[{ label: 'Teams', href: '/teams' }, { label: 'Atlas', href: '/teams/atlas' }, { label: 'Q3 review' }]} />}`. Breadcrumb's links carry `hit`, as any link laid out as a box must, or they fail the 44px touch rule at 390px.
    - **Body**: a `Stack` of `Row`s.
 4. **Stack**: rows one `stack-gap` apart (14–20px), arriving in reading order on the first load; on a client navigation the shell marks its main area still, so a page already there does not replay its arrival, and it does the same on a first load that kept the reader waiting longer than the arrival lasts (Motion).
 5. **Row**: one card, or cards split `1/2`, `2/3` or `1/3`, or a row of tiles.
@@ -22,6 +22,42 @@ Status: beta
 2. **Cards are their content's height.** A list that can pass ten rows pages; a "top N" list stays at N.
 3. **Four splits.** Full, `1/2`, `2/3`, `1/3`; and `tiles`, whose columns follow how many tiles it holds and its own width (four are four or two, three are three or one, never a hole). Cards in a row are the same height; every card is a direct child.
 4. **Three widths, one per kind of page.** `data` fills the canvas at every size (`data-width` is 100%), so a wider screen shows more, not a centred strip: every analytical page uses it, and their titles sit on the same left edge. `form` is a form page's own measure (`form-width`: a 15rem head column, the column gap, a `field-width` card and the page's gutter). It fills the canvas until the canvas is wider than a form needs, then centres — the remainder splits evenly instead of leaving a strip at one side. Settings is the page that uses it. `reading` (`reading-width` 832px, centred) is for a page that is one long document, such as an article rendered with Prose. The top bar always takes the canvas width, so the tools never move; past a page's own width the light fills the margins.
+
+## The title
+
+A page's heading is one of two things, and the page says which.
+
+- **A name.** `title="Members"` and no `name`: the heading is the name at the page-title size (`t-page`), and the top bar shows the same name once the heading has left. A list, a form and Settings are headed this way.
+- **A sentence.** `name="Home"` beside `title="The highest 30 days yet: $3,300,438.74, the 3rd record in a row"`: a page that leads with figures is headed by what they say. The heading is still the page's one `h1`. It holds the name first, read out and not drawn, then a colon, then the sentence, so a screen reader hears "Home: The highest 30 days yet…", its list of headings still finds the page by its name, and so does anything that reads the heading for the name (the journeys and the navigation check look for it there). The top bar shows the name, never the sentence, and the document's title stays the name.
+
+The sentence is set in the section role (`t-section`, `text-xl` 24–32px), balanced. It is not set at the page-title size: some eighty characters at 36 to 56px run to four lines or more on a phone and stand over the page's one featured figure, which is the page's protagonist. At the section size the sentence is a headline of two lines on a desk and three on a phone, and the figure keeps the page.
+
+| State | The heading |
+|---|---|
+| A sentence | The name, out of sight, then the sentence |
+| On its way | The name, out of sight, then two bars in the sentence's block, hidden from assistive technology. `title` may be a part that reads data: the heading is in the first HTML and the sentence takes the bars' place when it arrives |
+| Loading | A loading state that knows the page will be headed by a sentence passes `name` and no `title`, and draws the same bars. `LoadingPage` does it when given `sentence` (Page loading) |
+| Came to nothing | `title` rendered nothing, because the page could not work its sentence out: the name heads the page at the page-title size, as on a page that passes no `name` |
+
+**The sentence's block is held.** It keeps room for the lines a sentence of some eighty characters wraps to, and keeps it whether the sentence fills it or not, with the sentence on the block's last line. So the bars and the sentence are one block, nothing under the heading moves when one takes the other's place, and the body starts at the same height on every page headed by a sentence. The room follows the width of the heading in ems of the role, which is its width in characters; the heading carries the role's size so the steps can be read against it.
+
+| Width of the heading | Lines held | Where |
+|---|---|---|
+| Under 14.5em | 4 | A phone narrower than 380px |
+| From 14.5em | 3 | A 390px phone (14.9em); a 1280px desk with the assistant open (19.8em) |
+| From 21.5em | 2 | A tablet (768px is 30em); a desk (1440px with the rail is 35em, and 22em with the assistant open) |
+| From 42em | 1 | A wide desk (1920px is 49em) |
+
+The steps come from the sample's own titles, measured in the product's font at the role's weight and tracking: every title of Home, Usage and Revenue stands in three lines from 14.5em and in two from 19.9em. A sentence longer than the room held for it takes another line and the block grows by it. Keep a title under ninety characters, and cut words before it wraps a fourth time: type is never shrunk to fit.
+
+**The heading has a row to itself.** The room the block keeps is read from the heading's width, so that width must be the same while the page loads as when it has arrived. Beside the meta and the actions it was not: a loading state has none, and a period select arrives wider than the bar that stands for it, so the heading narrowed past a step when the page arrived, the block went from two lines of room to three, and everything under it dropped (34px at 1440px, 26px at 1024px, measured in a browser). So `PageFrame` lays a sentence's masthead out in two rows:
+
+1. The kicker and the heading, the masthead's whole width. The heading's width follows the viewport, the rail and the assistant only.
+2. The one sentence under the title (12px under the heading), which grows, with the meta and the actions after it, at the row's end and aligned to the sentence's last line; where the row is too narrow for both they wrap under the sentence, 20px below it. With no sentence the meta and the actions stand at the row's start, 20px under the heading, and nothing is left to grow in the sentence's place. With neither there is no second row.
+
+A page headed by its name keeps the one row it always had: the kicker, the title and the sentence in a column that grows, the meta and the actions beside it.
+
+`PageTitle` is the heading alone, for a preview or a frame of your own; `PageFrame` draws it. A frame of your own that places a sentence's heading gives it a width that does not depend on what loads later.
 
 ## Sizes
 
@@ -36,11 +72,13 @@ Status: beta
 | Gutter | `gutter`: 16px on phones to 40px on wide screens (fluid) |
 | Top bar | 56px |
 | Masthead | 16px under the top bar (24px from 1024px), 32px (40px) under the title block |
+| Title, a name | `t-page`, one line |
+| Title, a sentence | `t-section`, in a block of four, three, two or one of its lines by the heading's width |
 | Row gap | `stack-gap` 14–20px (12px compact) |
 
 ## Behaviour
 
-- The compact title fades into the top bar (opacity and 4px rise over `dur-enter`) when the page title passes under it, measured with an IntersectionObserver.
+- The compact title fades into the top bar (opacity and 4px rise over `dur-enter`) when the page title passes under it, measured with an IntersectionObserver. It is the page's name: the `name` of a page headed by a sentence, the title of any other.
 - The drawer closes on navigation, Escape and the scrim, and returns focus.
 - The shell never reads the address itself. A route with a parameter the build did not know (a record's page) has no pathname until the request, and whatever asks for one waits for it; so each part that does ask — the drawer, the mark that holds a navigated page still, and the rail a product passes — waits behind its own boundary, and the frame and the page's own skeleton are prerendered for every route. `pnpm verify` fails a build in which a route's shell for an unknown parameter is an empty file.
 - **Leaving with unsaved changes asks first.** A component that holds unsaved changes calls `useUnsavedChanges(dirty)`; `FormSection` does, with its `dirty`. While any does, the shell hears a plain click on a link anywhere on the page, in the rail a product passes and in the drawer (drawn in a portal, outside the shell's own element), before the link's own handler runs, because a router's link component navigates in its handler unless the click was already prevented. It stops the click and asks "Leave without saving?" with Stay and Leave. Stay closes the question and leaves the address, the form and what was typed as they were, and discards the held navigation. Leave goes through the router to the link's address as written, path, query and fragment. Saving or discarding stops the holding at once, and so does a form that leaves the page (a page the router keeps hidden holds nothing while hidden). One question is open at a time.
@@ -51,18 +89,24 @@ Status: beta
 ## Surfaces
 
 - **Console**: as specified.
-- **Mobile**: under 1024px every split stacks to one column; the rail is a drawer; the masthead's actions wrap under the title.
+- **Mobile**: under 1024px every split stacks to one column; the rail is a drawer; the masthead's actions wrap under the title, or under the one sentence when the title is a sentence. A title that is a sentence holds three lines at 390px and four on a narrower phone.
 - **Embed**: not used. An MCP App view uses the Embed frame instead.
 
 ## Agents
 
-Every console page keeps its state in its address (period, filters, the selected record), so an agent or a shared link opens exactly the same view.
+Every console page keeps its state in its address (period, filters, the selected record), so an agent or a shared link opens exactly the same view. A title that is a sentence is worked out by code from the page's figures, and the page's shared context leads with the same sentence (`docs/agents.md`, "A page's title and its facts"): what a person reads at the head of the page is what an agent is told first.
 
 ## Accessibility
 
 - `aside` named "Primary" for the rail; `main` for the content; one `h1` per page.
+- A heading that is a sentence begins with the page's name, visually hidden and read out: "Home: The highest 30 days yet…". The bars that stand for a sentence on its way are hidden from assistive technology, so until it arrives the heading reads the name alone.
 - The first Tab stop is "Skip to content", shown only while focused: it moves past the rail and the top bar to the masthead (`#content`), so the next Tab is the page's own first control.
 - The compact title is `aria-hidden`: the page title is the heading.
+
+## Content
+
+- A title that is a sentence states a figure the product records, with its unit and its period, and what is wrong today in the same sentence where its rule has a clause for it. It has no full stop, as a name has none, and no word of praise: the figure is what is said (`docs/data-display.md`, "Facts").
+- A page works its title out with a function that has a branch for each thing it may say, with a test for each branch, and never writes the sentence by hand.
 
 ## Do and do not
 
@@ -75,7 +119,7 @@ Every console page keeps its state in its address (period, filters, the selected
 ```tsx
 import { PageFrame, Row, Stack } from '@/components/base/shell';
 
-<PageFrame kicker="ZZ Meridian · Production" title="Home" description="…" meta={<Freshness … />} actions={<PeriodSelect … />}>
+<PageFrame kicker="ZZ Meridian · Production" name="Home" title={<Title … />} description="…" meta={<Freshness … />} actions={<PeriodSelect … />}>
   <Stack>
     <Row split="2/3"><FeaturedMetric … /><div>…tiles…</div></Row>
     <Row split="1/2"><Card … /><Card … /></Row>
@@ -83,7 +127,9 @@ import { PageFrame, Row, Stack } from '@/components/base/shell';
 </PageFrame>
 ```
 
-`src/components/base/shell/index.tsx` exports `AppShell`, `NavTrigger`, `PageFrame`, `Stack`, `Row`, `WIDTH`, `useAssistantAvailable`, `useUnsavedChanges` and `useLeave`.
+`Title` is the page's own part: an async component that reads what the page reads and returns the sentence, or nothing when it could not be worked out. A page whose data is already in hand passes the sentence as a string.
+
+`src/components/base/shell/index.tsx` exports `AppShell`, `NavTrigger`, `PageFrame`, `PageTitle`, `Stack`, `Row`, `WIDTH`, `useAssistantAvailable`, `useUnsavedChanges` and `useLeave`.
 
 ```tsx
 const leave = useLeave();

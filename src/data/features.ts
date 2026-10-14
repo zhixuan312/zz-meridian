@@ -24,7 +24,7 @@ export type ActionId =
   | 'create-key' | 'revoke-key' | 'invite-member' | 'change-role' | 'suspend-member' | 'reactivate-member'
   | 'remove-member' | 'replay-request' | 'save-workspace' | 'create-ticket' | 'update-ticket';
 
-/** What reading customers asks: Revenue, the customer list and one customer's page all ask it, so they cannot drift apart. */
+/** What reading customers asks: the customer list and one customer's page both ask it, so they cannot drift apart. */
 const CUSTOMERS_NEED: Need = 'customers:read';
 
 /** Each feature: its name as a person reads it, and the need a person must satisfy to reach it. */
@@ -36,7 +36,7 @@ export const FEATURES: Record<FeatureId, { title: string; needs: Need }> = {
   services: { title: 'Services', needs: { allOf: ['services:read', 'incidents:read'] } },
   customers: { title: 'Customers', needs: CUSTOMERS_NEED },
   customer: { title: 'Customer', needs: CUSTOMERS_NEED },
-  revenue: { title: 'Revenue', needs: CUSTOMERS_NEED },
+  revenue: { title: 'Revenue', needs: { allOf: ['customers:read', 'days:read'] } },
   now: { title: 'Now', needs: { allOf: ['services:read', 'incidents:read'] } },
   keys: { title: 'API keys', needs: 'keys:read' },
   members: { title: 'Members', needs: 'members:read' },

@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { render, screen } from '@testing-library/react';
+import { cleanup, render, screen } from '@testing-library/react';
 import type { ReactElement } from 'react';
 import { describe, expect, it } from 'vitest';
 import { Busy, ChartSkeleton, LoadingPage, TableSkeleton, TilesSkeleton } from '@/components/patterns/page-loading';
@@ -25,6 +25,40 @@ describe('a page on its way', () => {
     expect(status.getAttribute('aria-label')).toBe('Loading customers');
     expect(status.textContent).toContain('The body');
     expect(screen.getByRole('heading', { level: 1 }).textContent).toBe('Customers');
+  });
+
+  it('holds the block of a sentence when its page is headed by one: the name is announced, the placeholder is drawn, and nothing is set at the page-title size', () => {
+    const { container } = render(<LoadingPage name="home" title="Home" sentence><p>The body</p></LoadingPage>);
+    expect(screen.getAllByRole('heading', { level: 1 })).toHaveLength(1);
+    const heading = screen.getByRole('heading', { level: 1 });
+    // The name and its colon are in the heading for assistive technology, and neither is drawn.
+    expect(heading.textContent).toBe('Home: ');
+    const [name, colon, pending] = [...heading.children];
+    expect([name.textContent, colon.textContent]).toEqual(['Home', ': ']);
+    expect(name.className).toMatch(/\bsr-only\b/);
+    expect(colon.className).toMatch(/\bsr-only\b/);
+    // What is drawn is the placeholder, in the block the sentence will take, hidden from assistive technology.
+    expect(pending.hasAttribute('data-title-pending')).toBe(true);
+    expect(pending.getAttribute('aria-hidden')).toBe('true');
+    expect(pending.className).toMatch(/\bt-section\b/);
+    expect(pending.className).toMatch(/\bmin-h-\[/);
+    // No heading at the page-title size: the heading is not one, and the name carries the role only for a title that came to nothing.
+    expect(heading.className).not.toMatch(/\bt-page\b/);
+    expect([...heading.querySelectorAll('.t-page')].filter((el) => !/\bsr-only\b/.test(el.className))).toEqual([]);
+    // The top bar still has the name, and the page is still announced once as busy.
+    expect(container.querySelector('p[aria-hidden]')!.textContent).toBe('Home');
+    expect(screen.getByRole('status').getAttribute('aria-label')).toBe('Loading home');
+  });
+
+  it('draws a name at the page-title size unless it is told the page is headed by a sentence, and a skeleton when it has no name to say', () => {
+    render(<LoadingPage name="customers" title="Customers"><p>The body</p></LoadingPage>);
+    expect(screen.getByRole('heading', { level: 1 }).className).toBe('t-page');
+    expect(screen.getByRole('heading', { level: 1 }).querySelector('[data-title-pending]')).toBeNull();
+    cleanup();
+    // `sentence` with no title has no name to keep in the heading, so the frame is as a page with no title draws it.
+    render(<LoadingPage name="request" sentence><p>The body</p></LoadingPage>);
+    expect(screen.getByRole('heading', { level: 1 }).className).toBe('t-page');
+    expect(screen.getByRole('heading', { level: 1 }).textContent).toBe('');
   });
 
   it('announces a body that streams under a masthead that is already real', () => {

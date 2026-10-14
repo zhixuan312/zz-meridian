@@ -19,6 +19,12 @@ export function plural(n: number, one: string, other?: string): string {
   return n === 1 ? one : (other ?? `${one}s`);
 }
 
+/** A place in a row, with its ending: 1st, 2nd, 3rd, 4th, 11th, 12th, 13th, 21st. One function, so a rule's line and a page's title spell the same run the same way. */
+export function ordinal(n: number): string {
+  const teens = n % 100 >= 11 && n % 100 <= 13;
+  return `${n}${teens ? 'th' : (['th', 'st', 'nd', 'rd'][n % 10] ?? 'th')}`;
+}
+
 /** Built once: an Intl formatter costs far more to construct than to use, and a table formats a figure per cell. */
 const INT = new Intl.NumberFormat('en-US');
 const CENTS = new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });

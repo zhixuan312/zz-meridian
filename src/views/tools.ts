@@ -13,7 +13,7 @@ import { FEATURES } from '@/data/features';
 import { read, readAll } from '@/data/read';
 import { readRequests, REQUEST_PAGE } from '@/data/requests';
 import { readReleases, readRuns } from '@/data/engineering';
-import { readMainSummary } from '@/data/main';
+import { attempt, readMainSummary } from '@/data/main';
 import { readTickets } from '@/data/tickets';
 import { readActivity, readDays, readEndpoints, readIncidents, readResponses, readServices } from '@/data/metrics';
 import {
@@ -22,7 +22,7 @@ import {
 } from '@/data/sample';
 import { PERIODS } from '@/lib/period';
 import { defineViewTool, type ViewTool } from '@/lib/shared-context';
-import { usageContext } from './usage-context';
+import { usageContext, usageHead, type UsageData } from './usage-context';
 import { usageFigures } from '@/data/usage';
 import { customerFigures, customerRow, customersContext, under } from './customers-context';
 import { customerContext, type CustomerData } from './customer-context';
@@ -31,9 +31,9 @@ import { SCOPES } from './key-scopes';
 import { keysContext } from './keys-context';
 import { membersContext } from './members-context';
 import { nowContext } from './now-context';
-import { homeContext, type HomeData } from './home-context';
+import { homeContext, homeHead, servicesLine, type HomeData } from './home-context';
 import { requestContext } from './request-context';
-import { revenueContext } from './revenue-context';
+import { revenueContext, revenueHead, type RevenueData } from './revenue-context';
 import { requestsContext } from './requests-context';
 import { releaseFigures, releasesContext } from './releases-context';
 import { testFigures, testsContext } from './tests-context';
@@ -42,6 +42,13 @@ import { ticketCounts, ticketsContext } from './tickets-context';
 const day = z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional().describe('A day of the period, YYYY-MM-DD: the view opens pointed at it.');
 const period = z.enum(PERIODS).optional().describe('The reporting period, in complete days counted back from yesterday: 7d, 30d or 90d, each compared with the same number of days before it, or all, every complete day kept, which has no period before it. 30d when not given.');
 const updatedAt = () => DEMO_UPDATED_AT.toISOString();
+
+/**
+ * Every complete day kept, oldest first: what a title's record and a context's first and total are worked out from.
+ * Read on the server and never handed to the browser, which gets the sentences. Null when it could not be read: the
+ * page is then headed by its name, and the rest of it stands.
+ */
+const readHistory = () => attempt(async () => (await readDays('all')).series);
 
 export const homeTool = defineViewTool({
   name: 'home',
@@ -52,8 +59,8 @@ export const homeTool = defineViewTool({
   resourceUri: `ui://${slug}/home`,
   async read({ period: p = '30d', day: d }) {
     await requireNeed(FEATURES.home.needs);
-    const [{ series, totals, running, observedAt }, endpoints, mix, activity, { all: incidents }, summary] = await Promise.all([readDays(p), readEndpoints(), readResponses(), readActivity(), readIncidents(), readMainSummary()]);
-    const data: HomeData = { period: p, series, totals, running, endpoints, mix, activity, incidents, summary, updatedAt: updatedAt(), now: observedAt, day: d ?? null };
+    const [{ series, totals, running, observedAt }, endpoints, mix, activity, { all: incidents }, summary, history, services] = await Promise.all([readDays(p), readEndpoints(), readResponses(), readActivity(), readIncidents(), readMainSummary(), readHistory(), attempt(readServices)]);
+    const data: HomeData = { period: p, series, totals, running, endpoints, mix, activity, incidents, summary, head: homeHead({ period: p, totals, history, services }), unwell: servicesLine(services), updatedAt: updatedAt(), now: observedAt, day: d ?? null };
     const index = d ? data.series.findIndex((x) => x.date === d) : -1;
     return { context: homeContext(data, index >= 0 ? index : null), data };
   },
@@ -134,8 +141,8 @@ export const usageTool = defineViewTool({
   input: z.object({ period }),
   async read({ period: p = '30d' }) {
     await requireNeed(FEATURES.usage.needs);
-    const [{ series, totals, observedAt }, endpoints, activity, { all: incidents }, figures] = await Promise.all([readDays(p), readEndpoints(), readActivity(), readIncidents(), usageFigures()]);
-    const data = { period: p, series, totals, ...figures, endpoints, activity, incidents, updatedAt: updatedAt(), now: observedAt };
+    const [{ series, totals, observedAt }, endpoints, activity, { all: incidents }, figures, history] = await Promise.all([readDays(p), readEndpoints(), readActivity(), readIncidents(), usageFigures(), readHistory()]);
+    const data: UsageData = { period: p, series, totals, ...figures, endpoints, activity, incidents, head: usageHead({ period: p, totals, history }), updatedAt: updatedAt(), now: observedAt };
     return { context: usageContext(data), data };
   },
 });
@@ -162,14 +169,14 @@ export const customersTool = defineViewTool({
 export const revenueTool = defineViewTool({
   name: 'revenue',
   title: 'Revenue',
-  description: 'Revenue over the last 30 days, how many customers there are and who is past due.',
+  description: 'Revenue over the last 30 days against the 30 before, how many customers there are, whether every customer or every customer of a plan sent more this week than last, and who is past due.',
   needs: FEATURES.revenue.needs,
   input: z.object({}),
   async read() {
     await requireNeed(FEATURES.revenue.needs);
-    const { rows } = await readAll('customers');
+    const [{ rows }, history] = await Promise.all([readAll('customers'), readHistory()]);
     const { customers, revenue, pastDue } = customerFigures(rows as CustomerRecord[]);
-    const data = { customers, revenue, pastDue: pastDue.map((c) => ({ name: c.name, revenue: c.revenue })), updatedAt: updatedAt(), now: clock().toISOString() };
+    const data: RevenueData = { customers, revenue, pastDue: pastDue.map((c) => ({ name: c.name, revenue: c.revenue })), head: revenueHead({ rows: rows as CustomerRecord[], history }), updatedAt: updatedAt(), now: clock().toISOString() };
     return { context: revenueContext(data), data };
   },
 });

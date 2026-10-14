@@ -14,7 +14,7 @@ The surface is a fact about the container, not the device: a console on a 900px 
 
 ### Console
 
-The default. The rail sits on the `frame`; each page is a `PageFrame` on the canvas: the masthead (title, one-sentence head-note, freshness, actions) above the one scroll region. Rows of cards follow the four splits. A page names its own width: `data` fills the canvas (an analytical page), `form` is a form page's measure, which fills the canvas until the canvas is wider than a form needs and then centres, and `reading` is one long document. Settings is the page that takes `form`.
+The default. The rail sits on the `frame`; each page is a `PageFrame` on the canvas: the masthead (title, one-sentence head-note, freshness, actions) above the one scroll region. The title is the page's name, or, on a page that leads with figures, a sentence that states them, with the name kept in the heading (`docs/data-display.md`, "A title that states the figures"). Rows of cards follow the four splits. A page names its own width: `data` fills the canvas (an analytical page), `form` is a form page's measure, which fills the canvas until the canvas is wider than a form needs and then centres, and `reading` is one long document. Settings is the page that takes `form`.
 
 ### Mobile
 
@@ -23,7 +23,7 @@ Below 1024px the rail becomes a drawer (the same node, so nothing is defined twi
 | What | Console | Mobile | Owner |
 |---|---|---|---|
 | Navigation | Rail | Drawer from the masthead's menu button; closes on Escape, on the scrim and on navigation | AppShell |
-| Masthead | Title, head-note, actions on one band | Title row with the menu button; head-note under it; actions wrap to their own row, the primary last | PageFrame |
+| Masthead | Title, head-note, actions on one band. A title that is a sentence has a row to itself, two lines on a desk, with the head-note and the actions on the band under it | Title row with the menu button; head-note under it; actions wrap to their own row, the primary last. A title that is a sentence holds three lines at 390px and four on a narrower phone | PageFrame |
 | Metric tiles | As many across as the row holds: four, three or two | Counted from the row's own width, never leaving a hole: four are four or two (two from 34rem), three are three or one (three from 48rem), two are two from 34rem | Row `tiles` |
 | A wall of compact tiles | Four across, so eight are two rows; each tile has its change at the right of the name's row. The card that holds the wall says what the change is against | Two to a row; each tile is three rows: the name, the change, the line | Metric tile, which reads its own width (14rem); the page lays out the wall |
 | Tables | Columns, sortable heads | A list of cards, one per row: the primary column as the title, two or three facts under it, the status at the end; low-value columns drop first (`hideBelow`). Both read the table's own width, so a table in a narrow frame on a wide screen becomes cards too | DataTable |

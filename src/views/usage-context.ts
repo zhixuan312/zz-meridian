@@ -2,15 +2,18 @@
  * Usage' shared context (decision 0011): when traffic comes, where from, what is slow and what fails, as both agents
  * read it. The days that stand out are found by the same code as the Home's.
  */
+import { facts as rules } from '@/app.config';
 import type { ActivityEvent } from '@/components/patterns/activity-feed';
 import type { Column } from '@/components/charts/column-chart';
 import type { Incident } from '@/components/patterns/incident-card';
 import type { DailyPoint, Endpoint, Totals } from '@/data/sample';
+import { first, periods, record } from '@/lib/facts';
 import { formatCompact, formatCost, formatDuration, formatPercent } from '@/lib/format';
 import { formatDate } from '@/lib/format-date';
 import { median } from '@/lib/insight';
-import { PERIOD_LABEL, type Period } from '@/lib/period';
+import { PERIOD_DAYS, PERIOD_LABEL, type Period } from '@/lib/period';
 import { freshnessOf, listed, type Fact, type Insight, type SharedContext } from '@/lib/shared-context';
+import { HISTORY_UNREAD, against, handed, headInsights, inDays, type PageHead } from './fact-insight';
 import { HOME_METRICS, NO_PREVIOUS, change, errorSpikes } from './home-context';
 
 export type UsageData = {
@@ -25,6 +28,8 @@ export type UsageData = {
   endpoints: Endpoint[];
   activity: ActivityEvent[];
   incidents: Incident[];
+  /** The page's title and the first it states, worked out on the server from every complete day kept (`usageHead`). */
+  head: PageHead;
   updatedAt: string;
   now: string;
 };
@@ -32,13 +37,46 @@ export type UsageData = {
 const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 const times = (r: number) => `${r.toFixed(1)}×`;
 
+/**
+ * Usage's title, from plain figures: the period's requests, as the busiest period yet when it is a record, otherwise
+ * against the period before, or alone when no period comes before.
+ */
+export function usageTitle({ days, requests, previous, record: latest }: { days: number; requests: number; previous: number | null; record: { run: number } | null }): string {
+  const period = inDays(days);
+  const said = `${formatCompact(requests)} requests in ${period}`;
+  if (latest) return `${said}, the busiest ${period} yet`;
+  const moved = against(requests, previous);
+  if (!moved) return said;
+  return moved.way === 'level' ? `${said}, level with the ${period} before` : `${said}, ${moved.by} ${moved.way === 'up' ? 'more' : 'less'} than the ${period} before`;
+}
+
+/**
+ * What Usage states at its head, worked out on the server: its title for the period, and the first day requests passed
+ * one of the product's thresholds. `history` is every complete day kept, oldest first and ending yesterday, or null
+ * when it could not be read.
+ */
+export function usageHead({ period, totals, history }: { period: Period; totals: UsageData['totals']; history: readonly DailyPoint[] | null }): PageHead {
+  if (!history) return { title: null, facts: [], unknown: HISTORY_UNREAD };
+  if (!history.length) return { title: null, facts: [] };
+  // The days the period covers: its length, or every day kept where fewer are, as with All.
+  const days = Math.min(PERIOD_DAYS[period] ?? history.length, history.length);
+  const requests = history.map((d) => ({ date: d.date, value: d.requests }));
+  const latest = record(periods(requests.map((d) => d.value), days), { needs: rules.recordNeedsPeriods, what: `${inDays(days)} of requests`, format: formatCompact });
+  const passed = first(requests, { thresholds: rules.firsts.requestsADay, what: 'Requests', format: formatCompact });
+  return {
+    title: usageTitle({ days, requests: totals.current.requests, previous: totals.previous?.requests ?? null, record: latest }),
+    facts: passed ? [handed(passed, `/?period=all&day=${passed.day}`)] : [],
+  };
+}
+
 /** Usage' context; `sort` is how the endpoints table is ordered, `index` the day the Meridian points at. */
 export function usageContext(data: UsageData, { sort = 'p95 descending', index = null as number | null } = {}): SharedContext {
   const { series, totals, heat, hours, regions, endpoints } = data;
   const address = `/usage?period=${data.period}`;
   const label = PERIOD_LABEL[data.period].toLowerCase();
   const scope = series.length ? `${label}, ${formatDate(series[0].date)} to ${formatDate(series.at(-1)!.date)} (UTC)` : label;
-  if (!series.length || !heat.length || !endpoints.length) return { view: 'usage', title: 'Usage', address, scope, freshness: freshnessOf(data.updatedAt, data.now), facts: [], insights: [], unknowns: ['No requests arrived in this period.'] };
+  const stated = data.head.unknown ? [data.head.unknown] : [];
+  if (!series.length || !heat.length || !endpoints.length) return { view: 'usage', title: 'Usage', address, scope, freshness: freshnessOf(data.updatedAt, data.now), facts: [], insights: headInsights(data.head), unknowns: ['No requests arrived in this period.', ...stated] };
 
   const cells = heat.flatMap((row, d) => row.map((v, h) => ({ v, d, h })));
   const peak = cells.reduce((m, c) => (c.v > m.v ? c : m));
@@ -60,11 +98,12 @@ export function usageContext(data: UsageData, { sort = 'p95 descending', index =
     { label: 'Busiest hour of the week', value: `${DAYS[peak.d]} ${String(peak.h).padStart(2, '0')}:00 UTC, ${formatCompact(peak.v)} requests` },
     { label: 'Busiest hour of the day', value: `${peakHour.label} UTC, every weekday summed` },
     { label: 'Requests by region', value: regions.map((r) => `${r.label} ${formatPercent(r.value / totalRegions, 0)} (p50 ${formatDuration(r.p50)})`).join(', '), definition: 'p50 is the median latency: half of the requests finished faster.' },
-    { label: 'Endpoints', value: `${endpoints.length}, sorted by ${sort}: ${listed(endpoints, (e) => `${e.method} ${e.route} ${formatCompact(e.requests)} req, ${formatPercent(e.errorRate, 2)} errors, p95 ${formatDuration(e.p95)}`, 'the table has them', 15)}`, definition: 'Error rate: 5xx and 429 responses. p95: 95 of every 100 requests finished faster.' },
+    { label: 'Endpoints', value: `${endpoints.length}, sorted by ${sort}: ${listed(endpoints, (e) => `${e.method} ${e.route} ${formatCompact(e.requests)} req, ${formatPercent(e.errorRate, 2)} errors, p95 ${formatDuration(e.p95)}`, 'the table has them', 15)}`, definition: 'Errors and p95 as defined above.' },
   ];
 
-  const insights: Insight[] = [];
-  const unknowns: string[] = [];
+  // The title first, as the page is headed, then the first: what the page states before what code found in the period.
+  const insights: Insight[] = headInsights(data.head);
+  const unknowns: string[] = [...stated];
   const spikes = errorSpikes(data);
   insights.push(...spikes.insights);
   unknowns.push(...spikes.unknowns);
@@ -79,7 +118,7 @@ export function usageContext(data: UsageData, { sort = 'p95 descending', index =
   const weekdays = heat.slice(0, 5).flat().reduce((s, v) => s + v, 0) / 5;
   const weekend = heat.slice(5).flat().reduce((s, v) => s + v, 0) / 2;
   if (weekdays) insights.push({ text: `A weekend day carries ${formatPercent(weekend / weekdays, 0)} of a weekday's requests.` });
-  unknowns.push('The weekday-and-hour pattern, the regions and the endpoints cover the last 30 complete days: they do not follow the period chosen, and none of them shows a single day.');
+  unknowns.push('The hours, regions and endpoints cover the last 30 complete days: they do not follow the period, and none shows a single day.');
 
   let focus: string | undefined;
   if (index !== null && series[index]) {

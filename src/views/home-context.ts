@@ -3,26 +3,30 @@
  * all told about traffic, reliability and revenue. The tiles' definitions live here too, so the person's info button and
  * the agents read the same words.
  */
+import { facts as rules } from '@/app.config';
 import type { ActivityEvent } from '@/components/patterns/activity-feed';
 import type { Incident } from '@/components/patterns/incident-card';
+import type { Service } from '@/components/patterns/status-list';
 import type { DailyPoint, Totals } from '@/data/sample';
 import { CUSTOMER_METRICS } from './customers-context';
 import type { MainSummary } from './main-summary';
 import { RELEASE_METRICS } from './releases-context';
 import { TEST_METRICS } from './tests-context';
 import { TICKET_METRICS } from './tickets-context';
-import { formatCompact, formatCost, formatDuration, formatPercent } from '@/lib/format';
+import { periods, record, total } from '@/lib/facts';
+import { formatCompact, formatCost, formatDuration, formatPercent, ordinal, plural } from '@/lib/format';
 import { formatDate } from '@/lib/format-date';
 import { deviations, largest, runs, sameWeekdayBaseline, weekday, weekendRatio, median } from '@/lib/insight';
 import { PERIOD_DAYS, PERIOD_LABEL, type Period } from '@/lib/period';
 import { freshnessOf, type Fact, type Insight, type SharedContext } from '@/lib/shared-context';
+import { HISTORY_UNREAD, against, handed, headInsights, inDays, type PageHead } from './fact-insight';
 
 /** Each Home figure: its label and what it counts. The tile's info button shows `hint`; the agents read it too. */
 export const HOME_METRICS = {
-  requests: { label: 'Requests', hint: 'Every call the gateway answered, whatever its status.' },
+  requests: { label: 'Requests', hint: 'Every call the gateway answered, at any status.' },
   errorRate: { label: 'Error rate', hint: 'Share of requests answered with a 5xx or a 429.' },
-  p95: { label: 'Latency p95', hint: '95 of every 100 requests finished faster than this.' },
-  revenue: { label: 'Revenue', hint: 'What customers were billed for metered usage, in US dollars, before credits.' },
+  p95: { label: 'Latency p95', hint: '95 of every 100 requests finished faster.' },
+  revenue: { label: 'Revenue', hint: 'What customers were billed for metered usage, before credits.' },
 } as const;
 
 /** A period's days as the rows of a file: one flat row a day, with the day's revenue by plan in a column each. */
@@ -43,6 +47,10 @@ export type HomeData = {
   incidents: Incident[];
   /** Main's three summaries of the whole product; one that could not be read is null. */
   summary: MainSummary;
+  /** The page's title and the total it states, worked out on the server from every complete day kept (`homeHead`). */
+  head: PageHead;
+  /** The one sentence under the title when a service is not operational (`servicesLine`); null when every one is, or they could not be read. */
+  unwell: string | null;
   updatedAt: string;
   now: string;
   /** The day the address names (`?day=`): the page opens pointed at it. */
@@ -60,6 +68,69 @@ function days(dates: string[]): string {
   // One month named once: "21 and 22 Sept"; across a month end each day keeps its own.
   const short = names.every((n) => n.split(' ')[1] === month) ? names.map((n, i) => (i < names.length - 1 ? n.split(' ')[0] : n)) : names;
   return short.length === 1 ? short[0] : `${short.slice(0, -1).join(', ')} and ${short.at(-1)}`;
+}
+
+/** A service as a title reads it: its name and its state now. */
+type ServiceNow = Pick<Service, 'name' | 'status'>;
+const STATE = { degraded: 'degraded', outage: 'down' } as const;
+/** The services in the worst state any is in, and that state; null when every one is operational. */
+function worst(services: readonly ServiceNow[]): { names: string[]; state: keyof typeof STATE } | null {
+  for (const state of ['outage', 'degraded'] as const) {
+    const names = services.filter((s) => s.status === state).map((s) => s.name);
+    if (names.length) return { names, state };
+  }
+  return null;
+}
+
+/**
+ * The Home's title, from plain figures. A record is stated alone, with its run. Otherwise the revenue's change on the
+ * period before, or the revenue alone when no period comes before, and then what the services are doing now: a title
+ * says what is wrong today in the same sentence. `services` is null when they could not be read, and the clause is left out.
+ */
+export function homeTitle({ days, revenue, previous, record: latest, services }: { days: number; revenue: number; previous: number | null; record: { run: number } | null; services: readonly ServiceNow[] | null }): string {
+  const period = inDays(days);
+  if (latest) return `The highest ${period} yet: ${formatCost(revenue)}${latest.run > 1 ? `, the ${ordinal(latest.run)} record in a row` : ''}`;
+  const moved = against(revenue, previous);
+  const said = !moved ? `${formatCost(revenue)} of revenue in ${period}` : moved.way === 'level' ? `Revenue is level with the ${period} before` : `Revenue is ${moved.way} ${moved.by} on the ${period} before`;
+  if (!services) return said;
+  const unwell = worst(services);
+  if (!unwell) return `${said}, and every service is operational`;
+  return `${said}, and ${unwell.names.length === 1 ? `${unwell.names[0]} is` : `${unwell.names.length} services are`} ${STATE[unwell.state]}`;
+}
+
+/**
+ * The one sentence under the Home's title when a service is not operational: which are down and which degraded, by
+ * name. A record's title has no clause about the services, so what is wrong today is said here. Null when every
+ * service is operational or the services could not be read.
+ */
+export function servicesLine(services: readonly ServiceNow[] | null): string | null {
+  const named = (state: keyof typeof STATE) => {
+    const names = (services ?? []).filter((s) => s.status === state).map((s) => s.name);
+    if (!names.length) return null;
+    const list = names.length > 3 ? `${names.length} services` : names.length === 1 ? names[0] : `${names.slice(0, -1).join(', ')} and ${names.at(-1)}`;
+    return `${list} ${plural(names.length, 'is', 'are')} ${STATE[state]}`;
+  };
+  const said = [named('outage'), named('degraded')].filter(Boolean);
+  return said.length ? `${said.join(', and ')}.` : null;
+}
+
+/**
+ * What the Home states at its head, worked out on the server: its title for the period and the total of requests over
+ * every complete day kept. `history` is those days, oldest first and ending yesterday, or null when they could not be
+ * read. A record compares the period with each earlier whole window of its length, so 90 days and All, which have fewer
+ * windows than a record needs, state the change or the figure alone.
+ */
+export function homeHead({ period, totals, history, services }: { period: Period; totals: HomeData['totals']; history: readonly DailyPoint[] | null; services: readonly ServiceNow[] | null }): PageHead {
+  if (!history) return { title: null, facts: [], unknown: HISTORY_UNREAD };
+  if (!history.length) return { title: null, facts: [] };
+  // The days the period covers: its length, or every day kept where fewer are, as with All.
+  const days = Math.min(PERIOD_DAYS[period] ?? history.length, history.length);
+  const latest = record(periods(history.map((d) => d.revenue), days), { needs: rules.recordNeedsPeriods, what: `${inDays(days)} of revenue`, format: formatCost });
+  const answered = total(history.map((d) => ({ date: d.date, value: d.requests })), { what: 'requests answered', format: (n) => n.toLocaleString('en-US') });
+  return {
+    title: homeTitle({ days, revenue: totals.current.revenue, previous: totals.previous?.revenue ?? null, record: latest, services }),
+    facts: answered ? [handed(answered, '/?period=all')] : [],
+  };
 }
 
 /** What a context says when no day is kept before the period: `all`, or a product's first days. */
@@ -114,7 +185,7 @@ export function errorSpikes(data: Pick<HomeData, 'series' | 'incidents' | 'activ
     if (p95Run.length) insights.push({ text: `Latency p95 rose on the same ${p95Run.length === 1 ? 'day' : 'days'}: ${p95Run.map((i) => formatDuration(p95[i])).join(' and ')} against a median of ${formatDuration(median(p95))}.` });
     const found = recorded(dates[run[0]], dates[run.at(-1)!], data);
     if (found.length) insights.push({ text: `Recorded around ${when}: ${found.join('; ')}.`, evidence: '/services' });
-    else unknowns.push(`Nothing is recorded between ${day(new Date(Date.parse(dates[run[0]]) - DAY).toISOString())} and ${day(new Date(Date.parse(dates[run.at(-1)!]) + DAY).toISOString())}: no incident and no activity event, so nothing on this page explains the rise on ${when}.`);
+    else unknowns.push(`Nothing is recorded between ${day(new Date(Date.parse(dates[run[0]]) - DAY).toISOString())} and ${day(new Date(Date.parse(dates[run.at(-1)!]) + DAY).toISOString())}: no incident and no activity event, so the rise is unexplained.`);
   }
 
   return { insights, unknowns };
@@ -191,14 +262,16 @@ export function homeContext(data: HomeData, index: number | null = null): Shared
   ];
   const main = summaryContext(data.summary);
   facts.push(...main.facts);
-  if (!series.length) return { view: 'home', title: 'Home', address, scope, freshness: freshnessOf(data.updatedAt, data.now), facts, insights: main.insights, unknowns: ['No requests have arrived in this period, so there is nothing to compare.', ...main.unknowns] };
+  const stated = data.head.unknown ? [data.head.unknown] : [];
+  if (!series.length) return { view: 'home', title: 'Home', address, scope, freshness: freshnessOf(data.updatedAt, data.now), facts, insights: [...headInsights(data.head), ...main.insights], unknowns: ['No requests have arrived in this period, so there is nothing to compare.', ...main.unknowns, ...stated] };
 
   const dates = series.map((d) => d.date);
   const errorRate = series.map((d) => (d.requests ? d.errors / d.requests : 0));
   const p95 = series.map((d) => d.p95);
   const requests = series.map((d) => d.requests);
-  const insights: Insight[] = [];
-  const unknowns: string[] = [...main.unknowns];
+  // The title first, as the page is headed, then the total: what the page states before what code found in the period.
+  const insights: Insight[] = headInsights(data.head);
+  const unknowns: string[] = [...main.unknowns, ...stated];
   const errMedian = median(errorRate);
 
   const spikes = errorSpikes(data);
@@ -218,12 +291,12 @@ export function homeContext(data: HomeData, index: number | null = null): Shared
 
   // The weekly shape: a weekend is not a drop.
   const weekly = weekendRatio(requests, dates);
-  if (weekly !== null && weekly < 0.8) insights.push({ text: `Requests follow the week: a weekend day runs at about ${formatPercent(weekly, 0)} of a weekday, so compare a day with the same weekday, not with the day before.` });
+  if (weekly !== null && weekly < 0.8) insights.push({ text: `A weekend day runs at about ${formatPercent(weekly, 0)} of a weekday: compare same weekdays.` });
 
   // What the status classes mean against the error rate's definition.
-  const total = data.mix.reduce((s, m) => s + m.value, 0);
-  const share = (label: string) => (data.mix.find((m) => m.label === label)?.value ?? 0) / (total || 1);
-  if (total) insights.push({ text: `Responses by class: 4xx ${formatPercent(share('4xx'), 1)}, 5xx ${formatPercent(share('5xx'), 1)}. The error rate counts 5xx and 429 only, so most 4xx (client mistakes) are not in it.` });
+  const answered = data.mix.reduce((s, m) => s + m.value, 0);
+  const share = (label: string) => (data.mix.find((m) => m.label === label)?.value ?? 0) / (answered || 1);
+  if (answered) insights.push({ text: `Responses: 4xx ${formatPercent(share('4xx'), 1)}, 5xx ${formatPercent(share('5xx'), 1)}. Most 4xx are client mistakes, not in the error rate.` });
 
   if (!p) unknowns.push(NO_PREVIOUS);
   // The day in progress is in no figure above: the period ends yesterday. One short line, for the context's budget.

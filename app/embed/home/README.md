@@ -23,7 +23,7 @@ Status: beta
 
 ## Agents
 
-The Home page's context (`app/(dashboard)/(home)/README.md` lists it, Main's figures included): the view renders the console's figures and shares the console's context, so an MCP host and the console's assistant are told the same thing. Ask on the trend posts "Why did requests change on <day>?" or "What drove the trend in requests this period?".
+The Home page's context (`app/(dashboard)/(home)/README.md` lists it, Main's figures included): the view renders the console's figures and shares the console's context, so an MCP host and the console's assistant are told the same thing. It leads with the sentence the console page is headed by and the total of requests answered, which the tool's read works out on the server; the embed head keeps the view's name and period ("Home · Last 30 days"). Ask on the trend posts "Why did requests change on <day>?" or "What drove the trend in requests this period?".
 
 ### What the agent reads
 

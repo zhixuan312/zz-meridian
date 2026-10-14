@@ -20,6 +20,9 @@ const sum = (xs: number[]) => xs.reduce((a, b) => a + b, 0);
 /** The last seven days of a 14-day trend against the seven before: the change a sparkline shows and a list does not say. */
 export const week = (t: number[]) => (t.length >= 14 && sum(t.slice(0, 7)) ? sum(t.slice(7)) / sum(t.slice(0, 7)) - 1 : null);
 
+/** Whether a customer sent more requests in the last seven days of its 14-day trend than in the seven before. */
+export const sentMore = (t: readonly number[]) => t.length >= 14 && sum(t.slice(7)) > sum(t.slice(0, 7));
+
 /** A customer as the list draws it: the fields of a row, and none of what only its own page shows. */
 export type CustomerRow = Pick<CustomerRecord, 'id' | 'name' | 'plan' | 'status' | 'requests' | 'trend' | 'errorRate' | 'revenue' | 'joined'>;
 export const customerRow = ({ id, name, plan, status, requests, trend, errorRate, revenue, joined }: CustomerRecord): CustomerRow => ({ id, name, plan, status, requests, trend, errorRate, revenue, joined });
