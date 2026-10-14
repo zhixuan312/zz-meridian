@@ -3,6 +3,7 @@ import { DEMO_NOW, DEMO_UPDATED_AT } from '@/data/sample';
 import { Row } from '@/components/base/shell';
 import { Freshness } from '@/components/patterns/freshness';
 import { ChartSkeleton, LoadingPage } from '@/components/patterns/page-loading';
+import { gatedLoading } from '@/data/access';
 import { SERVICES_LINE } from '@/views/services-context';
 
 /**
@@ -25,7 +26,7 @@ export function ServicesSkeleton() {
  */
 export default function ServicesLoading() {
   return (
-    <LoadingPage name="services" title="Services" sentence kicker={<>{app.name} · {app.workspace}</>} description={SERVICES_LINE} meta={<Freshness updatedAt={DEMO_UPDATED_AT} now={DEMO_NOW} />}>
+    <LoadingPage {...gatedLoading({ name: 'services', title: 'Services', description: SERVICES_LINE })} sentence kicker={<>{app.name} · {app.workspace}</>} meta={<Freshness updatedAt={DEMO_UPDATED_AT} now={DEMO_NOW} />}>
       <ServicesSkeleton />
     </LoadingPage>
   );

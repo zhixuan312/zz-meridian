@@ -3,6 +3,7 @@ import { DEMO_NOW, DEMO_UPDATED_AT } from '@/data/sample';
 import { Row } from '@/components/base/shell';
 import { Freshness } from '@/components/patterns/freshness';
 import { ChartSkeleton, LoadingPage } from '@/components/patterns/page-loading';
+import { gatedLoading } from '@/data/access';
 import { PeriodActionsRoom } from '@/views/period-actions';
 
 /** The parts of Usage, in their shapes: the page streams them in behind its masthead, and a cold load shows them under the masthead's. */
@@ -31,8 +32,7 @@ export function UsageSkeleton() {
 export default function UsageLoading() {
   return (
     <LoadingPage
-      name="usage"
-      title="Usage"
+      {...gatedLoading({ name: 'usage', title: 'Usage' })}
       sentence
       kicker={<>{app.name} · {app.workspace}</>}
       lead

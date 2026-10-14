@@ -43,7 +43,7 @@ This is where people see the rule (locked on) that nothing an agent proposes run
 
 ### What the agent reads
 
-Every section's current values, which neither an input's nor a switch's text carries: the workspace's name and address (and an unsaved edit, when there is one), this device's theme, accent and density, whether the assistant is shown, and that every proposed change waits for approval. Each section reports its own line; `SettingsBody` shares them as one context. None is offered to an agent as a change, and the context says so.
+Every section's current values, which neither an input's nor a switch's text carries: the workspace's name and address (and an unsaved edit, when there is one), this device's theme, accent and density, whether the assistant is shown, and that every proposed change waits for approval. Each section reports its own line; `SettingsBody` shares them as one context, built by `settingsContext`. None is offered to an agent as a change, and the context says so. It holds no list, so its size is its four sections': within its budget of 2,600 characters, 1,885 with every section's line at 400 characters.
 
 - **Console assistant:** this text in its prompt's `<view-context>` block, with the page's address and query, and the page text after it for anything the context does not cover.
 - **MCP App:** no embed view yet; an MCP server can return this context as a tool's text (`docs/agents.md`).

@@ -1,6 +1,6 @@
 import { Suspense, cache } from 'react';
 import { app } from '@/app.config';
-import { gate } from '@/data/access';
+import { gate, gatedMetadata } from '@/data/access';
 import { DEMO_NOW, DEMO_UPDATED_AT } from '@/data/sample';
 import { PageFrame } from '@/components/base/shell';
 import { Freshness } from '@/components/patterns/freshness';
@@ -11,7 +11,9 @@ import { SERVICES_LINE } from '@/views/services-context';
 import { servicesTool } from '@/views/tools';
 import { ServicesSkeleton } from './loading';
 
-export const metadata = { title: 'Services' };
+export function generateMetadata() {
+  return gatedMetadata('services', { title: 'Services' });
+}
 
 /** The page's one read, through the Services tool (`src/views/tools.ts`), shared by the title and the body. */
 const readServicesView = cache(() => servicesTool.read({}));

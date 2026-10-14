@@ -53,10 +53,10 @@ The assistant reads and proposes changes here through Proposals: it adds, change
 
 ### What the agent reads
 
-Counts by status, role (with what each role may do) and team, everyone with their role, add-ons, team, status and when they were last seen (25 at most; `query_members` finds the rest), and what code found: active members unseen for 60 days or more, unanswered invitations, and who can change the workspace. It says that "last active" is a console sign-in, not use of the API.
+Counts by status, role (with what each role may do) and team, everyone with their role, add-ons, team, status and when they were last seen (the first 24 in the page's order, then how many more; `query_members` finds them), and what code found: active members unseen for 60 days or more and unanswered invitations, the first three of each, and who can change the workspace, the first five, each then counted. It says that "last active" is a console sign-in, not use of the API. Within its budget of 2,600 characters for every persona who may read it: 2,320 in the sample, and 2,505 with four times its members.
 
 ```text
-- 3 active members have not been seen for 60 days or more: Alice Moreno (Viewer, Support, 94 days), Felix Andersson (Viewer, Engineering, 75 days), Ravi Patel (Viewer, Support, 71 days).
+- 3 active members have not been seen for 60 days or more: Alice Moreno (Viewer, Support, 94 days); Felix Andersson (Viewer, Engineering, 75 days); Ravi Patel (Viewer, Support, 71 days).
 ```
 
 - **Console assistant:** this text in its prompt's `<view-context>` block, with the page's address and query, and the page text after it for anything the context does not cover.

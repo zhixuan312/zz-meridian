@@ -48,7 +48,7 @@ An agent reads the page through the tickets view tool and may create and change 
 
 ### What the agent reads
 
-The three counts, labelled "Open tickets", "Waiting tickets" and "Closed tickets", of every ticket in the workspace; the list the person has filtered to, with each ticket's id, state, priority, service, assignee and age, capped at ten; and what code found: high-priority tickets with no owner and open tickets that have not changed for seven days. It also says which steps a ticket may take.
+The three counts, labelled "Open tickets", "Waiting tickets" and "Closed tickets", of every ticket in the workspace; the list the person has filtered to, with each ticket's id, state, priority, service, assignee and age, capped at ten; and what code found: high-priority tickets with no owner and open tickets that have not changed for seven days, the first five of each. Past each cap it says how many more there are (`query_tickets` finds them). Within its budget of 2,600 characters for every persona: 2,173 in the sample, and 2,533 with four times its tickets. It also says which steps a ticket may take.
 
 - **Console assistant:** this text in its prompt's `<view-context>` block, with the page's address and query, and the page text after it for anything the context does not cover.
 - **MCP App:** no embed view; an MCP server can return this context as a tool's text (`docs/agents.md`).

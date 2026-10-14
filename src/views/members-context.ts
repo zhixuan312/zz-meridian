@@ -12,6 +12,12 @@ import { listed, type Insight, type SharedContext } from '@/lib/shared-context';
 const DAY = 86_400_000;
 /** Days without activity after which a member counts as quiet: the question an owner asks before a seat audit. */
 export const QUIET_DAYS = 60;
+/**
+ * How many members each list names before it counts the rest: together they hold the context's budget however many
+ * members there are. Everyone is named in the page's order, newest first.
+ */
+const NAMED = { everyone: 24, quiet: 3, invited: 3, changers: 5 } as const;
+const MORE = 'query_members finds them';
 
 /** What a role does, read off its grants: the phrase per grant, in the order the roles definition reads them. */
 const CAPABILITY: readonly [Grant, string][] = [
@@ -39,9 +45,9 @@ export function membersContext(rows: Member[], now: string): SharedContext {
   const mayChange = whoCan('workspace:update');
   const changers = active.filter((m) => mayChange.includes(m.role));
   const insights: Insight[] = [];
-  if (quiet.length) insights.push({ text: `${quiet.length} active ${plural(quiet.length, 'member has', 'members have')} not been seen for ${QUIET_DAYS} days or more: ${listed(quiet, (m) => `${m.name} (${m.role}, ${m.team}, ${idle(m)} days)`, 'query_members finds them', 10)}.` });
-  if (invited.length) insights.push({ text: `${invited.length} ${plural(invited.length, 'invitation is', 'invitations are')} unanswered: ${listed(invited, (m) => `${m.name}, invited ${formatDate(m.joined)}`, 'query_members finds them', 10)}.` });
-  insights.push({ text: `${changers.length} of ${active.length} active members can change the workspace (${mayChange.join(' or ')}): ${listed(changers, (m) => m.name, 'query_members finds them', 10)}.` });
+  if (quiet.length) insights.push({ text: `${quiet.length} active ${plural(quiet.length, 'member has', 'members have')} not been seen for ${QUIET_DAYS} days or more: ${listed(quiet, (m) => `${m.name} (${m.role}, ${m.team}, ${idle(m)} days)`, MORE, NAMED.quiet)}.` });
+  if (invited.length) insights.push({ text: `${invited.length} ${plural(invited.length, 'invitation is', 'invitations are')} unanswered: ${listed(invited, (m) => `${m.name}, invited ${formatDate(m.joined)}`, MORE, NAMED.invited)}.` });
+  insights.push({ text: `${changers.length} of ${active.length} active members can change the workspace (${mayChange.join(' or ')}): ${listed(changers, (m) => m.name, MORE, NAMED.changers)}.` });
   return {
     view: 'members',
     title: 'Members',
@@ -51,7 +57,7 @@ export function membersContext(rows: Member[], now: string): SharedContext {
       { label: 'Members', value: `${rows.length}: ${count(rows, (m) => m.status)}` },
       { label: 'Roles', value: count(rows, (m) => m.role), definition: ROLES_DEFINITION },
       { label: 'Teams', value: count(rows, (m) => m.team) },
-      { label: 'Everyone', value: listed(rows, (m) => `${m.name} (${roleLabel(m)}, ${m.team}, ${m.status.toLowerCase()}, ${m.lastActive ? `seen ${idle(m) === 0 ? 'today' : `${idle(m)}d ago`}` : 'never seen'})`, 'query_members finds them') },
+      { label: 'Everyone', value: listed(rows, (m) => `${m.name} (${roleLabel(m)}, ${m.team}, ${m.status.toLowerCase()}, ${m.lastActive ? `seen ${idle(m) === 0 ? 'today' : `${idle(m)}d ago`}` : 'never seen'})`, MORE, NAMED.everyone) },
     ],
     insights,
     unknowns: ['"Last active" is the last sign-in to this console; it says nothing about a member\'s use of the API through a key.'],

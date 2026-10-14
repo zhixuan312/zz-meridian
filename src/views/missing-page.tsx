@@ -10,13 +10,17 @@ import { NOT_FOUND } from '@/views/not-found';
  * A record page renders this itself when its ID is missing rather than throwing notFound(): thrown inside the
  * dashboard's loading boundary, notFound() is rendered only once the JavaScript arrives, which on a slow phone pushed
  * the largest paint past 2.5s.
+ *
+ * `gate` renders it too, for an address the person may not open when the product's `refusal` is `absent`, with the
+ * entries they may not open as `withheld`: the walk-back steps past them, so the answer is the one an address that
+ * names nothing gets. `data-missing-page` is what `pnpm verify --as` looks for on such an address.
  */
-export function MissingPage() {
+export function MissingPage({ withheld }: { withheld?: readonly string[] }) {
   return (
     <PageFrame kicker={NOT_FOUND.kicker} title={NOT_FOUND.sentence.replace(/\.$/, '')} description={NOT_FOUND.lead}>
-      <Card className="arrive gap-8 p-(--card-pad)">
-        <MissingAddress />
-        <div className="flex flex-wrap gap-2.5 max-sm:[&>*]:w-full"><WayBack size="md" search /></div>
+      <Card data-missing-page="" className="arrive gap-8 p-(--card-pad)">
+        <MissingAddress withheld={withheld} />
+        <div className="flex flex-wrap gap-2.5 max-sm:[&>*]:w-full"><WayBack size="md" search withheld={withheld} /></div>
       </Card>
     </PageFrame>
   );

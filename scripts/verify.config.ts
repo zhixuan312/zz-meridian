@@ -1,6 +1,8 @@
 /**
  * What `pnpm verify` needs to know about this project that it cannot discover from `app/`. Edit it; verify reads it.
  */
+import { refusal } from '../src/app.config.ts';
+
 type DeviceBudget = { desktop: number; phone: number };
 type ReadinessBudget = { shellMs: DeviceBudget; dataMs: DeviceBudget; interactiveMs: DeviceBudget };
 /** What "this route is ready" means, and one harmless control to press on it. */
@@ -32,7 +34,7 @@ type Persona = {
   cookie: { name: string; value: string };
   /** The rail routes this person may open, written by hand and never derived from the rail or the policy under test. */
   expectedRoutes: readonly string[];
-  /** For each route this person may NOT open: one protected string that must not appear on the NoAccess answer. */
+  /** For each route this person may NOT open: one protected string that must not appear on the page that refuses them. */
   deniedProbe?: Record<string, string>;
 };
 
@@ -111,6 +113,13 @@ type VerifyConfig = {
    * is not Meridian's demo policy: `--as` then names no persona and is refused.
    */
   personas?: Record<string, Persona>;
+  /**
+   * What a route a persona may not open is expected to draw: the product's `refusal`, read from src/app.config.ts where it
+   * is declared, never written here. `explain` expects the no-access page (`[data-no-access]`), `absent` the missing page
+   * (`[data-missing-page]`) and no no-access page; the `deniedProbe` strings must be absent under both. Left out, verify
+   * expects `explain`.
+   */
+  refusal?: 'explain' | 'absent';
 };
 
 /** Every rail route, in the rail's own order: what a persona who may open all of them is expected to see. */
@@ -179,6 +188,7 @@ const config: VerifyConfig = {
       deniedProbe: { '/keys': 'Load test, October', '/members': 'maya.chen@' },
     },
   },
+  refusal,
 };
 
 export default config;

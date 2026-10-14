@@ -1,6 +1,6 @@
 import { Suspense, cache } from 'react';
 import { app, workspaces } from '@/app.config';
-import { gate } from '@/data/access';
+import { gate, gatedMetadata } from '@/data/access';
 import { DEMO_NOW, DEMO_UPDATED_AT } from '@/data/sample';
 import { PageFrame } from '@/components/base/shell';
 import { Freshness } from '@/components/patterns/freshness';
@@ -10,7 +10,9 @@ import { packNow } from '@/views/now-context';
 import { nowTool } from '@/views/tools';
 import { NowSkeleton } from './loading';
 
-export const metadata = { title: 'Now' };
+export function generateMetadata() {
+  return gatedMetadata('now', { title: 'Now' });
+}
 
 /** The page's one read, through the Now tool (`src/views/tools.ts`), shared by the title, the line and the body. */
 const readNow = cache(() => nowTool.read({}));

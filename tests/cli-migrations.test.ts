@@ -139,3 +139,12 @@ describe('the 0.15.0 migration', () => {
     expect(byId('agent-reads-own-group').applies(project({ 'package.json': '{}' }))).toBeNull();
   });
 });
+
+describe('the 0.16.0 migration', () => {
+  it('finds a configuration that does not say what a refused address draws, and leaves one that does alone', () => {
+    expect(byId('refusal-declared').since).toBe('0.16.0');
+    expect(byId('refusal-declared').applies(project({ 'src/app.config.ts': "export const app = { name: 'Rota' } as const;\n" }))).toEqual(['src/app.config.ts']);
+    expect(byId('refusal-declared').applies(project({ 'src/app.config.ts': "export const refusal: 'explain' | 'absent' = 'explain';\n" }))).toBeNull();
+    expect(byId('refusal-declared').applies(project({ 'package.json': '{}' }))).toBeNull();
+  });
+});

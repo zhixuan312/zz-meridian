@@ -48,7 +48,7 @@ An agent may propose revoking a key (a critical Proposal); it never creates one,
 
 ### What the agent reads
 
-Every key with its id, environment, hint (the first and last characters, never the secret), owner, scopes, when it was created and last used, and what code found: live keys unused for 30 days, live keys with every scope, and an owner holding several live keys. The secret and its hash are never in it (`secretHash` is `hidden`), and the context says so, with the rule that creating a key is the person's.
+Every key with its id, environment, hint (the first and last characters, never the secret), owner, scopes, when it was created and last used, the first eight in the page's order and then how many more (`query_keys` finds them); and what code found: live keys unused for 30 days and live keys with every scope, the first five of each and then how many more, and an owner holding several live keys. Within its budget of 2,600 characters for every persona who may read it: 1,085 in the sample, and 1,721 with eight times its keys. The secret and its hash are never in it (`secretHash` is `hidden`), and the context says so, with the rule that creating a key is the person's.
 
 - **Console assistant:** this text in its prompt's `<view-context>` block, with the page's address and query, and the page text after it for anything the context does not cover.
 - **MCP App:** no embed view yet; an MCP server can return this context as a tool's text (`docs/agents.md`).

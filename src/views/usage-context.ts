@@ -37,6 +37,8 @@ export const ASKED = 5;
  */
 export type UsageData = {
   period: Period;
+  /** The day the address names (`?day=`): the page opens pointed at it. */
+  day: string | null;
   /** The page's title and the facts of the period, worked out on the server from every complete day kept (`usageHead`). */
   head: PageHead;
   /** The line under the title: requests a day, the share answered with an error and the median day's p95 (`usageLine`). */
@@ -121,7 +123,6 @@ function partFacts(data: UsageData): Fact[] {
 export function usageContext(data: UsageData, index: number | null = null): SharedContext {
   const { days } = data;
   const series = days?.series ?? [];
-  const address = `/usage?period=${data.period}`;
   const label = PERIOD_LABEL[data.period].toLowerCase();
   const scope = series.length ? `${label}, ${formatDate(series[0].date)} to ${formatDate(series.at(-1)!.date)} (UTC)` : label;
 
@@ -153,6 +154,8 @@ export function usageContext(data: UsageData, index: number | null = null): Shar
   let focus: string | undefined;
   const pointed = index !== null ? [...series, ...(days?.running ? [days.running] : [])][index] : undefined;
   if (pointed) focus = `${formatDate(pointed.date)}: ${count(pointed.requests)} requests${pointed === days?.running ? ' so far' : ''} and ${count(pointed.errors)} errors (${formatPercent(pointed.requests ? pointed.errors / pointed.requests : 0, 2)}).`;
+  // The address names the day the person points at, as Home's does.
+  const address = `/usage?period=${data.period}${pointed ? `&day=${pointed.date}` : ''}`;
 
   return { view: 'usage', title: 'Usage', address, scope, freshness: freshnessOf(data.updatedAt, data.now), focus, facts, insights, unknowns };
 }

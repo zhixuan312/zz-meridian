@@ -25,6 +25,31 @@ export type ServicesData = { services: Service[]; incidents: { open: Incident[];
 /** The one sentence under the page's title. It reads no data, so the loading state draws it too and the masthead does not move. */
 export const SERVICES_LINE = 'Every service, how it is right now, and what happened in the last 90 days.';
 
+/**
+ * How much of each list the context states, so it holds its budget however many services and incidents there are:
+ * the first service lines in the team's order, the open incidents and the resolved ones newest first. Past each, it
+ * says how many more there are. The page draws every one.
+ */
+const SERVICE_LINES = 6;
+const OPEN_STATED = 2;
+const RESOLVED_STATED = 3;
+/** The services not operational a "Services now" line names before it counts the rest. */
+const APART_NAMED = 1;
+
+/** "1 service degraded (Inference API degraded)": the worst state, and the first service not operational named, the rest counted. */
+export function servicesNow(services: Service[]): string {
+  const apart = services.filter((s) => s.status !== 'operational');
+  const named = apart.slice(0, APART_NAMED).map((s) => `${s.name} ${s.status}`);
+  if (apart.length > APART_NAMED) named.push(`and ${apart.length - APART_NAMED} more`);
+  return `${summarise(services).text}${named.length ? ` (${named.join(', ')})` : ''}`;
+}
+
+/** The open incidents past those a context states in full, counted: "And 4 more incidents open, 6 in all." */
+export const moreOpen = (all: number, stated: number) => `And ${all - stated} more ${plural(all - stated, 'incident')} open, ${all} in all.`;
+
+/** An update as a context quotes it: its first sentence, so one long update cannot crowd out the rest. */
+const firstSentence = (text: string) => text.match(/^.*?[.!?](?=\s|$)/)?.[0] ?? text;
+
 /** The uptime the page states for its days: the mean of each service's own. */
 const meanUptime = (services: readonly Pick<Service, 'uptime'>[]) => (services.length ? services.reduce((a, s) => a + s.uptime, 0) / services.length : 0);
 
@@ -84,15 +109,15 @@ function runText(days: Service['days']): string {
 export function servicesContext(data: ServicesData): SharedContext {
   const { services, incidents, head } = data;
   const now = new Date(data.now);
-  const sum = summarise(services);
   const days = services[0]?.days.length ?? 0;
   const average = meanUptime(services);
-  const apart = services.filter((s) => s.status !== 'operational');
+  const unlisted = services.length - SERVICE_LINES;
   const facts: Fact[] = services.length ? [
-    { label: 'Services now', value: `${sum.text}${apart.length ? ` (${apart.map((s) => `${s.name} ${s.status}`).join(', ')})` : ''}` },
+    { label: 'Services now', value: servicesNow(services) },
     { label: `Uptime, all services, ${days} days`, value: formatUptime(average), definition: 'The average of each service\'s uptime, which is 1 less what its marked days cost: half an hour a degraded day, two hours a day of outage.' },
-    // In the team's order, as the page lists them.
-    ...services.map((s) => ({ label: s.name, value: `${s.status}, latency ${formatDuration(s.latency)} now, uptime ${formatUptime(s.uptime)}, ${runText(s.days)}` })),
+    // The first in the team's order, as the page lists them, then how many more.
+    ...services.slice(0, SERVICE_LINES).map((s) => ({ label: s.name, value: `${s.status}, latency ${formatDuration(s.latency)} now, uptime ${formatUptime(s.uptime)}, ${runText(s.days)}` })),
+    ...(unlisted > 0 ? [{ label: `${unlisted} more ${plural(unlisted, 'service')}`, value: `${services.length} in all` }] : []),
   ] : [];
 
   // The title first, as the page is headed, then the days inside the band: what the page states before what explains it.
@@ -106,15 +131,18 @@ export function servicesContext(data: ServicesData): SharedContext {
   if (lowest && lowest.uptime < average) insights.push({ text: `${lowest.name} has the lowest uptime, ${formatUptime(lowest.uptime)}, against ${formatUptime(average)} across all services.` });
 
   if (incidents) {
-    // The open ones first, newest first, as the page lists them: who has each, where it is tracked, how long so far.
-    for (const i of incidents.open) {
+    // The open ones first, newest first, as the page lists them: who has each, where it is tracked, how long so far, and
+    // what its latest update says first. Past the first two they are counted.
+    const { open, resolved } = incidents;
+    for (const i of open.slice(0, OPEN_STATED)) {
       const latest = i.updates.reduce<Incident['updates'][number] | undefined>((m, u) => (!m || u.at > m.at ? u : m), undefined);
       const who = [i.owner && `with ${i.owner}`, i.ticket && `tracked in "${i.ticket.title}"`].filter(Boolean).join(', ');
-      insights.push({ text: `Open incident "${i.title}" on ${i.service}, ${i.severity}, ${i.state}${who ? `, ${who}` : ''}: open for ${lastedOf(i, now)} so far, since ${formatDateTime(i.started)} UTC${latest ? `; latest update ${afterStart(i.started, latest.at)}: "${latest.text}"` : ''}.`, evidence: '/services' });
+      insights.push({ text: `Open incident "${i.title}" on ${i.service}, ${i.severity}, ${i.state}${who ? `, ${who}` : ''}: open for ${lastedOf(i, now)} so far, since ${formatDateTime(i.started)} UTC${latest ? `; latest update ${afterStart(i.started, latest.at)}: "${firstSentence(latest.text)}"` : ''}.`, evidence: '/services' });
     }
-    if (!incidents.open.length) insights.push({ text: 'No incident is open.' });
-    const { resolved } = incidents;
-    if (resolved.length) insights.push({ text: `${resolved.length} ${plural(resolved.length, 'incident')} resolved, newest first: ${resolved.map((i) => `"${i.title}" on ${formatDate(i.started)}, lasted ${lastedOf(i, now)}`).join('; ')}.` });
+    if (open.length > OPEN_STATED) insights.push({ text: moreOpen(open.length, OPEN_STATED) });
+    if (!open.length) insights.push({ text: 'No incident is open.' });
+    const past = resolved.length - RESOLVED_STATED;
+    if (resolved.length) insights.push({ text: `${resolved.length} ${plural(resolved.length, 'incident')} resolved, newest first: ${resolved.slice(0, RESOLVED_STATED).map((i) => `"${i.title}" on ${formatDate(i.started)}, lasted ${lastedOf(i, now)}`).join('; ')}${past > 0 ? `; and ${past} more resolved` : ''}.` });
     if (incidents.open.some((i) => i.state === 'monitoring')) unknowns.push('A monitoring incident has a fix in place that nobody has yet confirmed holds.');
   } else {
     unknowns.push('The incidents could not be read, so no incident is stated, open or resolved.');

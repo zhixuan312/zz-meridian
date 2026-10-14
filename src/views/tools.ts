@@ -163,13 +163,15 @@ export const usageTool = defineViewTool({
   title: 'Usage',
   description: 'Requests over a period against the period before, with the line of errors and latency under the title and the facts of the period; requests a day; a year of requests a day; and, over the last 30 complete days, when they come by hour and by weekday and hour, where from by region, what is asked for by endpoint and how it was answered by status class.',
   needs: FEATURES.usage.needs,
-  input: z.object({ period }),
-  async read({ period: p = '30d' }) {
+  input: z.object({ period, day }),
+  async read({ period: p = '30d', day: d }) {
     await requireNeed(FEATURES.usage.needs);
     // Each read apart from the others: one that fails leaves its part saying so and the rest standing.
     const [days, history, figures, endpoints, responses] = await Promise.all([attempt(() => readDays(p)), readHistory(), attempt(() => usageFigures()), attempt(readEndpoints), attempt(readResponses)]);
-    const data = usageData({ period: p, days, history, figures, endpoints, responses, updatedAt: updatedAt(), now: days?.observedAt ?? clock().toISOString() });
-    return { context: usageContext(data), data };
+    const data = usageData({ period: p, day: d ?? null, days, history, figures, endpoints, responses, updatedAt: updatedAt(), now: days?.observedAt ?? clock().toISOString() });
+    // The Meridian's days, as the page points at them: the period's complete days, then the day in progress.
+    const index = d ? [...(data.days?.series ?? []), ...(data.days?.running ? [data.days.running] : [])].findIndex((x) => x.date === d) : -1;
+    return { context: usageContext(data, index >= 0 ? index : null), data };
   },
 });
 

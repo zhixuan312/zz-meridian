@@ -1,7 +1,7 @@
 import { Suspense } from 'react';
 import { app } from '@/app.config';
 import { PageFrame } from '@/components/base/shell';
-import { gate } from '@/data/access';
+import { gate, gatedMetadata } from '@/data/access';
 import { readAll } from '@/data/read';
 import type { CustomerRecord } from '@/data/sample';
 import { CustomersView } from '@/views/customers';
@@ -9,7 +9,9 @@ import { customerRow } from '@/views/customers-context';
 import { Busy } from '@/components/patterns/page-loading';
 import { RecordsSkeleton } from '@/components/templates/records';
 
-export const metadata = { title: 'Customers' };
+export function generateMetadata() {
+  return gatedMetadata('customers', { title: 'Customers' });
+}
 
 /**
  * The page asks its feature before it renders; the rail hiding `/customers` is presentation, never this gate. The

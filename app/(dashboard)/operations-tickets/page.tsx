@@ -1,11 +1,13 @@
-import { gate, may } from '@/data/access';
+import { gate, gatedMetadata, may } from '@/data/access';
 import { ACTIONS } from '@/data/features';
 import { read } from '@/data/read';
 import { readTickets } from '@/data/tickets';
 import { TicketsView } from '@/views/tickets';
 import { createTicket, updateTicket } from './actions';
 
-export const metadata = { title: 'Tickets' };
+export function generateMetadata() {
+  return gatedMetadata('tickets', { title: 'Tickets' });
+}
 
 /**
  * The page asks its feature before it reads anything; the rail hiding the route is presentation, this gate is the check.

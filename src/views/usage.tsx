@@ -182,7 +182,7 @@ export function UsageBody(data: UsageData) {
   const { days, calendar, figures, endpoints, responses } = data;
   const dates = days ? [...days.series.map((d) => d.date), ...(days.running ? [days.running.date] : [])] : [];
   return (
-    <Meridian dates={dates}>
+    <Meridian dates={dates} day={data.day}>
       <ShareUsage data={data} />
       <Stack>
         {days ? <ByDay data={data} days={days} dates={dates} /> : <Unread title={P.byDay} what="the days" />}

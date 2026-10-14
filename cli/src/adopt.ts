@@ -98,6 +98,8 @@ function verifyConfig(): string {
   return readPayload('scripts/verify.config.ts').replace(/const config: VerifyConfig = \{[\s\S]*?\n\};/, `const config: VerifyConfig = {
   // One detail page per state worth seeing (a normal record, a failed one, a missing one), with ids from your data.
   detailRoutes: [],
+  // What a route a persona may not open draws: the product's choice in src/app.config.ts.
+  refusal,
 };`);
 }
 

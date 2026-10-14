@@ -5,6 +5,7 @@ import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Freshness } from '@/components/patterns/freshness';
 import { ChartSkeleton, LoadingPage, TableSkeleton, TilesSkeleton } from '@/components/patterns/page-loading';
+import { gatedLoading } from '@/data/access';
 
 /** A card of `n` lines under a title: the open incident, what ships, the work and the changes. */
 function LinesSkeleton({ n }: { n: number }) {
@@ -49,7 +50,7 @@ export function NowSkeleton() {
  */
 export default function NowLoading() {
   return (
-    <LoadingPage name="now" title="Now" sentence kicker={<>{app.name} · {app.workspace}</>} lead meta={<Freshness updatedAt={DEMO_UPDATED_AT} now={DEMO_NOW} />}>
+    <LoadingPage {...gatedLoading({ name: 'now', title: 'Now' })} sentence kicker={<>{app.name} · {app.workspace}</>} lead meta={<Freshness updatedAt={DEMO_UPDATED_AT} now={DEMO_NOW} />}>
       <NowSkeleton />
     </LoadingPage>
   );

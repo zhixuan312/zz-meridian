@@ -40,7 +40,7 @@ In a product, Approve calls the apply tool through the host (`tools/call`) and t
 
 ### What the agent reads
 
-The whole proposal, every time its state changes, because a host keeps only the latest context: what it changes, from and to (or, once applied, the new values and what they were), why it was proposed, what else it touches, and where it stands ("this proposal, which waits for them to approve or dismiss it"). An outcome never travels alone, so the model never loses what was approved.
+The whole proposal, every time its state changes, because a host keeps only the latest context: what it changes, from and to (or, once applied, the new values and what they were), why it was proposed, what else it touches, and where it stands ("this proposal, which waits for them to approve or dismiss it"). An outcome never travels alone, so the model never loses what was approved. It holds no list: 615 characters pending, 602 applied and 607 dismissed, within the budget of 2,600 every context is held to.
 
 - **MCP App:** `ui/update-model-context`, on load and on Approve or Dismiss.
 - **Console assistant:** not shown on the console; the console's assistant draws its own Proposals in its thread.

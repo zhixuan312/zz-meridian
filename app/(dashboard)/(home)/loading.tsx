@@ -3,6 +3,7 @@ import { Row } from '@/components/base/shell';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Freshness } from '@/components/patterns/freshness';
 import { ChartSkeleton, LoadingPage, TilesSkeleton } from '@/components/patterns/page-loading';
+import { gatedLoading } from '@/data/access';
 import { app } from '@/app.config';
 import { DEMO_NOW, DEMO_UPDATED_AT } from '@/data/sample';
 import { PeriodActionsRoom } from '@/views/period-actions';
@@ -61,8 +62,7 @@ export function HomeSkeleton() {
 export default function HomeLoading() {
   return (
     <LoadingPage
-      name="home"
-      title="Home"
+      {...gatedLoading({ name: 'home', title: 'Home' })}
       sentence
       kicker={<>{app.name} · {app.workspace}</>}
       lead

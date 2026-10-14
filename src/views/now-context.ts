@@ -7,7 +7,7 @@ import { facts as rules } from '@/app.config';
 import type { ActivityEvent } from '@/components/patterns/activity-feed';
 import type { Incident } from '@/components/patterns/incident-card';
 import type { Service } from '@/components/patterns/status-list';
-import { packServices, summarise, unpackServices, type PackedService } from '@/components/patterns/status-list/summarise';
+import { packServices, unpackServices, type PackedService } from '@/components/patterns/status-list/summarise';
 import type { DayState } from '@/components/charts/uptime-bars';
 import type { DailyPoint, Endpoint } from '@/data/sample';
 import { runOf, steady } from '@/lib/facts';
@@ -15,6 +15,7 @@ import { formatCompact, formatDuration, formatPercent, plural } from '@/lib/form
 import { formatDate, formatRelative } from '@/lib/format-date';
 import { freshnessOf, type Fact, type Insight, type SharedContext } from '@/lib/shared-context';
 import { STATE, handed, headInsights, worst, type PageHead, type ServiceNow } from './fact-insight';
+import { moreOpen, servicesNow } from './services-context';
 
 /** The window the month's figures, the models and the runs a day cover, in the words every label names it with. */
 export const MONTH = 'last 30 complete days';
@@ -180,6 +181,13 @@ export function unpackNow({ services, band, ...rest }: PackedNowData): NowData {
   return { ...rest, services: unpackServices(services), band: band && { ...band, days: [...band.days].map((g) => DAY_OF[g]) } };
 }
 
+/**
+ * How many of each list the context states before it counts the rest, so it holds its budget however much is in play:
+ * the open incidents, the models, the releases in testing and those ready, and the tickets asked about. The page
+ * draws every one.
+ */
+const STATED = { open: 1, models: 4, releases: 3, asked: 4 } as const;
+
 /** Items in a sentence: "a", "a and b", "a, b and c". */
 export const inWords = (items: readonly string[]) => (items.length > 1 ? `${items.slice(0, -1).join(', ')} and ${items.at(-1)}` : (items[0] ?? ''));
 
@@ -203,12 +211,11 @@ export function nowContext(data: NowData): SharedContext {
   const pct = (n: number) => formatPercent(n, 1);
 
   const facts: Fact[] = [];
-  if (services.length) {
-    const apart = services.filter((s) => s.status !== 'operational');
-    facts.push({ label: 'Services now', value: `${summarise(services).text}${apart.length ? ` (${apart.map((s) => `${s.name} ${s.status}`).join(', ')})` : ''}` });
-  }
+  if (services.length) facts.push({ label: 'Services now', value: servicesNow(services) });
   if (models) {
-    facts.push({ label: `Models, ${MONTH}`, value: models.map((m) => `${m.label} ${formatCompact(m.requests)} requests, p95 ${formatDuration(m.p95)}`).join('; '), definition: NOW_METRICS.p95.hint });
+    const named = models.slice(0, STATED.models).map((m) => `${m.label} ${formatCompact(m.requests)} requests, p95 ${formatDuration(m.p95)}`);
+    if (models.length > STATED.models) named.push(`and ${models.length - STATED.models} more ${plural(models.length - STATED.models, 'model')}`);
+    facts.push({ label: `Models, ${MONTH}`, value: named.join('; '), definition: NOW_METRICS.p95.hint });
   }
   if (compute?.regions.length) {
     const fullest = compute.regions.find((r) => r.region === compute.fullest) ?? compute.regions[0];
@@ -216,17 +223,23 @@ export function nowContext(data: NowData): SharedContext {
     facts.push({ label: `Compute in use, ${formatDate(compute.day)}`, value: `${fullest.region} ${pct(fullest.share)} of ${fullest.gpus} GPUs, the fullest${others ? `, and ${others} other ${plural(others, 'region')}` : ''}` });
   }
   if (shipping) {
-    // By version: what holds each is on the page, in its line.
+    // By version, the first of each in the page's order and then how many more: what holds each is on the page, in its line.
+    const versions = (rs: { version: string; service: string }[]) => inWords([
+      ...rs.slice(0, STATED.releases).map((r) => `${r.version} (${r.service})`),
+      ...(rs.length > STATED.releases ? [`${rs.length - STATED.releases} more`] : []),
+    ]);
     const waiting = [
-      shipping.testing.length && `${inWords(shipping.testing.map((r) => `${r.version} (${r.service})`))} in testing`,
-      shipping.ready.length && `${inWords(shipping.ready.map((r) => `${r.version} (${r.service})`))} ready`,
+      shipping.testing.length && `${versions(shipping.testing)} in testing`,
+      shipping.ready.length && `${versions(shipping.ready)} ready`,
     ].filter(Boolean);
     facts.push({ label: 'Shipping', value: `${waiting.length ? waiting.join('; ') : 'no release is waiting to go out'}; ${shipping.checks.passed} of ${shipping.checks.required} required checks passed; ${shipping.live.length} ${plural(shipping.live.length, 'version')} live` });
   }
   if (work) {
     const asked = work.tickets.filter((t) => t.priority === 'high' || !t.owner);
     const all = work.tickets.length + work.more;
-    facts.push({ label: 'Work', value: `${all} ${plural(all, 'ticket')} open or waiting${asked.length ? `; high priority or nobody's: ${asked.map((t) => `${t.title} (${t.priority}, ${t.mine ? 'yours' : (t.owner ?? 'nobody')})`).join('; ')}` : ''}` });
+    const named = asked.slice(0, STATED.asked).map((t) => `${t.title} (${t.priority}, ${t.mine ? 'yours' : (t.owner ?? 'nobody')})`);
+    if (asked.length > STATED.asked) named.push(`and ${asked.length - STATED.asked} more`);
+    facts.push({ label: 'Work', value: `${all} ${plural(all, 'ticket')} open or waiting${named.length ? `; high priority or nobody's: ${named.join('; ')}` : ''}` });
   }
   if (endpoints?.length) {
     facts.push({ label: 'Slowest endpoints, p95 over 30 days', value: endpoints.slice(0, 3).map((e) => `${e.method} ${e.route} ${formatDuration(e.p95)}`).join('; ') });
@@ -242,11 +255,13 @@ export function nowContext(data: NowData): SharedContext {
   const insights: Insight[] = headInsights(head);
   if (incidents) {
     if (incidents.open.length) {
-      for (const i of incidents.open) {
+      // The first, the most severe and then the newest, in full; the rest counted, as the page's line counts them.
+      for (const i of incidents.open.slice(0, STATED.open)) {
         const latest = i.updates.reduce<Incident['updates'][number] | undefined>((m, u) => (!m || u.at > m.at ? u : m), undefined);
         const who = [i.owner && `with ${i.owner}`, i.ticket && `tracked in "${i.ticket.title}"`].filter(Boolean).join(', ');
         insights.push({ text: `Open incident "${i.title}" on ${i.service}, ${i.severity}, ${i.state}${who ? `, ${who}` : ''}: started ${formatRelative(i.started, at)}${latest ? `; latest update ${formatRelative(latest.at, at)}` : ''}.`, evidence: '/services' });
       }
+      if (incidents.open.length > STATED.open) insights.push({ text: moreOpen(incidents.open.length, STATED.open) });
     } else {
       insights.push({ text: `No incident is open${incidents.latest ? `; ${incidents.latest.text}` : ''}.` });
     }

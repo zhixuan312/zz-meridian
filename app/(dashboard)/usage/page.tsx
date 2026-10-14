@@ -1,6 +1,6 @@
 import { Suspense, cache } from 'react';
 import { app, workspaces } from '@/app.config';
-import { gate } from '@/data/access';
+import { gate, gatedMetadata } from '@/data/access';
 import { DEMO_NOW, DEMO_UPDATED_AT } from '@/data/sample';
 import { PageFrame } from '@/components/base/shell';
 import { ExportButton } from '@/components/patterns/export-button';
@@ -14,12 +14,17 @@ import { UsageBody } from '@/views/usage';
 import { usageTool } from '@/views/tools';
 import { UsageSkeleton } from './loading';
 
-export const metadata = { title: 'Usage' };
+export function generateMetadata() {
+  return gatedMetadata('usage', { title: 'Usage' });
+}
 
-type SearchParams = Promise<{ period?: string }>;
+type SearchParams = Promise<{ period?: string; day?: string }>;
 
-/** The page's one read, through the Usage tool (`src/views/tools.ts`), shared by the title, the line, the export and the body. */
-const readPeriod = cache((period: ReturnType<typeof parsePeriod>) => usageTool.read({ period }));
+/**
+ * The page's one read, through the Usage tool (`src/views/tools.ts`), shared by the title, the line, the export and the body.
+ * A day the address names (`?day=`) points the page and its context at it, as Home's does.
+ */
+const readPeriod = cache((period: ReturnType<typeof parsePeriod>, day?: string) => usageTool.read({ period, day: /^\d{4}-\d{2}-\d{2}$/.test(day ?? '') ? day : undefined }));
 
 /**
  * The page asks its feature before it renders — the rail hiding `/usage` is presentation, not this gate — then the
@@ -58,19 +63,22 @@ export default async function UsagePage({ searchParams }: { searchParams: Search
 
 /** The page's title, worked out by the read from the period's figures: a sentence, or nothing when it could not be, and the frame then heads the page by its name. */
 async function Title({ searchParams }: { searchParams: SearchParams }) {
-  return (await readPeriod(parsePeriod((await searchParams).period))).data.head.title;
+  const { period, day } = await searchParams;
+  return (await readPeriod(parsePeriod(period), day)).data.head.title;
 }
 
 /** The line under the title, worked out by the read: requests a day, the share of errors and the median day's p95. Then who Business is for. */
 async function Lead({ searchParams }: { searchParams: SearchParams }) {
-  const { data } = await readPeriod(parsePeriod((await searchParams).period));
+  const { period, day } = await searchParams;
+  const { data } = await readPeriod(parsePeriod(period), day);
   return <LeadRoom>{data.line ? `${data.line} ` : ''}{workspaces.business.audience}</LeadRoom>;
 }
 
 /** The period control and the export of the period's days. */
 async function Actions({ searchParams }: { searchParams: SearchParams }) {
-  const period = parsePeriod((await searchParams).period);
-  const { data } = await readPeriod(period);
+  const { period: p, day } = await searchParams;
+  const period = parsePeriod(p);
+  const { data } = await readPeriod(period, day);
   return (
     <>
       <Suspense fallback={<PeriodRoom />}><PeriodSelect value={period} /></Suspense>
@@ -80,6 +88,7 @@ async function Actions({ searchParams }: { searchParams: SearchParams }) {
 }
 
 async function Body({ searchParams }: { searchParams: SearchParams }) {
-  const { data } = await readPeriod(parsePeriod((await searchParams).period));
+  const { period, day } = await searchParams;
+  const { data } = await readPeriod(parsePeriod(period), day);
   return <UsageBody {...data} />;
 }

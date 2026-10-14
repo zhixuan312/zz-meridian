@@ -1,10 +1,11 @@
 import { Skeleton } from '@/components/ui/skeleton';
 import { LoadingPage } from '@/components/patterns/page-loading';
+import { gatedLoading } from '@/data/access';
 
 /** Settings on its way: a stack of sections, each a title, a sentence and its controls. */
 export default function SettingsLoading() {
   return (
-    <LoadingPage name="settings" title="Settings" width="form">
+    <LoadingPage {...gatedLoading({ name: 'settings', title: 'Settings' })} width="form">
       <div className="flex flex-col gap-14">
         {[2, 3, 1, 1].map((n, i) => (
           <div key={i} className="flex flex-col gap-4">

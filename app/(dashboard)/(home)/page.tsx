@@ -5,7 +5,7 @@ import { Freshness } from '@/components/patterns/freshness';
 import { PeriodSelect } from '@/components/patterns/period-select';
 import { HomeBody } from '@/views/home';
 import { PeriodActionsRoom, PeriodRoom } from '@/views/period-actions';
-import { gate } from '@/data/access';
+import { gate, gatedMetadata } from '@/data/access';
 import { DEMO_NOW, DEMO_UPDATED_AT } from '@/data/sample';
 import { dayRows } from '@/views/home-context';
 import { homeTool } from '@/views/tools';
@@ -15,7 +15,9 @@ import { app, workspaces } from '@/app.config';
 import { Busy, LeadRoom } from '@/components/patterns/page-loading';
 import { HomeSkeleton } from './loading';
 
-export const metadata = { title: 'Home' };
+export function generateMetadata() {
+  return gatedMetadata('home', { title: 'Home' });
+}
 
 type SearchParams = Promise<{ period?: string; day?: string }>;
 

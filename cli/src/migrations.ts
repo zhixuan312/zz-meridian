@@ -265,7 +265,23 @@ export const RELEASE_MIGRATIONS: ReleaseMigration[] = [
     instructions: 'The gate asked this of pages under `app/(dashboard)/` only; from 0.15.0 it asks it under whatever route group sits at the top of the app folder. Read "A page spec" in references/customize.md. Under `## Agents` in each page\'s README.md listed here, add `### What the agent reads`: what the page\'s shared context tells each agent, with a real line of it, and what the MCP App and the console assistant do with it. A copy of the rule kept in `scripts/check.local.ts` for the project\'s own group can be deleted.',
     checks: ['gate'],
   },
+  {
+    id: 'refusal-declared',
+    since: '0.16.0',
+    applies: refusalUndeclared,
+    summary: 'The product says what an address a person may not open draws: `refusal` in `src/app.config.ts`.',
+    instructions: 'Read "Navigation: `src/app.config.ts`" in references/customize.md. Add `export const refusal: \'explain\' | \'absent\' = \'explain\';` to `src/app.config.ts`, beside `facts`: `explain` keeps the no-access page a refused page draws today, and `absent` answers as an address that names nothing. A project that keeps the sample\'s access seam brings `src/data/access.ts` over from the release (`gate` reads `refusal`, and `gatedMetadata`, `gatedLoading` and `withheldEntries` follow it), titles each gated page with `export function generateMetadata() { return gatedMetadata(\'<feature>\', { title: \'<its title>\' }); }` in place of a static `metadata`, passes its loading state\'s `name` and `title` through `gatedLoading`, and adds `refusal,` to the config object of `scripts/verify.config.ts`, imported from `../src/app.config.ts`, so `verify --as` expects the page the product chose.',
+    checks: GATE_AND_BUILD,
+  },
 ];
+
+/** The project's configuration, when it does not yet say what an address a person may not open draws (0.16.0). */
+function refusalUndeclared(root: string): string[] | null {
+  const rel = 'src/app.config.ts';
+  const body = text(root, rel);
+  if (body === null) return null;
+  return /^export const refusal\b/m.test(body) ? null : [rel];
+}
 
 /** The project's own nav, with any item still missing the `needs` that 0.13.0 requires of it. */
 function navItemsWithoutNeeds(root: string): string[] | null {

@@ -43,7 +43,9 @@ sample, ZZ Meridian's own dashboard, lives in `optional:src/system/fixtures/`; y
     An action is its feature, its label and its need, and nothing else: it carries no sentence about who can run it.
   - `optional:src/data/access.ts` is the policy. `current` says who the request is, `allows` says what the scope may do,
     `gate(feature)` is what a page opens with before it reads (`requireNeed(need)` is the view tool's), and `chromeAccess()`
-    is what the rail draws. Replace the demo's `current` with your session and delete the demo's View as —
+    is what the rail draws. For a person who may not use the feature, `gate` draws what the product's `refusal` says (see
+    "Navigation" below), and `gatedMetadata(feature, metadata)` is what every gated page's `generateMetadata` returns, so
+    the tab says the same: a page keeps no static `metadata`. Replace the demo's `current` with your session and delete the demo's View as —
     `optional:src/data/view-as.ts` and its `zz_meridian_view_as` cookie — so nothing signs in as a sample person.
   - `optional:src/data/member-mutations.ts` is the member boundary. `membersFor(scope)` binds the collection so every create,
     update and remove passes it, and `assignMemberRole({ id, role, addOns })` is the one role change; the Owner, self and
@@ -65,6 +67,15 @@ presentation, not the gate: every page refuses on its own (see "Data" above). An
 `needs: 'public'` on every item. `'public'` is the need any signed-in, Active person satisfies (`satisfies` in
 `optional:src/data/access.ts`), so the item is drawn for everyone who is signed in and no role decides it; it is right for a
 destination every member may open, and an item moves to a feature of its own once the project has a role table.
+
+`refusal` is what an address a person may not open draws, the product's choice, declared once here and read by `gate`.
+`'explain'` draws the no-access page: the page's title, who can open it, who to ask and one way out. `'absent'` draws
+exactly what an address that names nothing draws: the console's missing page in the shell, at 200, with "Not found" in the
+tab and the address walked back past every page the person may not open, so nothing names the page, a role or who to ask.
+Every gated route's loading state then names no page for anyone (`gatedLoading`), and the standalone missing page walks
+an address below a refused page back past it too.
+`pnpm verify --as` expects whichever the product chose on every route a persona may not open
+(`scripts/verify.config.ts` reads it from here), and a view tool's refusal is the same under both.
 
 A project made by `create` (or a clone) starts with the sample's three workspaces: `workspaces` in `src/app.config.ts` (Main,
 Business, Engineering), a `workspace` on every `nav` entry, and a layout that draws `WorkspaceRail` and `WorkspacePalette`.
@@ -168,7 +179,10 @@ Rules that make every page look like it belongs:
   room. A shorter line keeps a room of its own, and the loading state passes that room as `description`: One
   customer's line of figures does (`FactsRoom` in `optional:src/views/customer.tsx`). Home and Revenue do all of it
   (`optional:app/(dashboard)/(home)/loading.tsx`, `optional:app/(dashboard)/business/loading.tsx`,
-  `optional:src/views/period-actions.tsx`). The room is the standard, whatever a page holds.
+  `optional:src/views/period-actions.tsx`). The room is the standard, whatever a page holds. A route that opens with
+  `gate` passes what names its page (`name`, `title`, and a `kicker` or `description` of its own words) through
+  `gatedLoading({ … })` from `optional:src/data/access.ts`: the loading state is prerendered before the gate answers,
+  so under `refusal: 'absent'` it names nothing for anyone, and under `explain` the page's own words stand.
 - **A file picker** is a visible `Button` that calls `input.click()` on an `<input type="file">` with `tabIndex={-1}`
   and `aria-hidden`, so the keyboard reaches the button and never the hidden input; give the press a state of its own
   ("Choosing the files…") until the change event arrives. The presses count a file chooser that opens as an answer.
@@ -203,8 +217,10 @@ Rules that make every page look like it belongs:
   browser's.
 - **A shared context** for each page (decision 0011): a pure function beside the view builds it from the page's data
   (copy `optional:src/views/home-context.ts`: scope, freshness, each figure with its unit, change and definition,
-  what `optional:src/lib/insight.ts` finds, what the data cannot say), within 2,600 characters, lists cut at 25 with a
-  count of the rest (`listed`), and the view passes it to `useShareView`; a
+  what `optional:src/lib/insight.ts` finds, what the data cannot say), within 2,600 characters with four to eight
+  times the sample's records and pointed at any day: each list it states keeps the first items its page shows, up to
+  a count that holds the budget, and says how many more there are ("and 9 more resolved"; `listed` writes it). The
+  view passes it to `useShareView`; a
   server page with no client view places `<ShareContext context={…} />` among its cards instead. Both
   agents read it: an MCP host and the console's assistant. Add the page's tool to `optional:src/views/tools.ts` so the
   assistant can open it at an address.
@@ -286,9 +302,22 @@ says "requests" on a page about orders is the sample's, not the product's.
   when the row is the caller's own. A change forced past the page is still refused by the boundary with its own
   sentence (`REFUSALS` in `optional:src/data/member-mutations.ts`), and the roles table on Members, a reference of what
   each role holds, stays.
+- **What a refused address draws is the product's choice, declared once.** `refusal` in `src/app.config.ts` is the one
+  place it is said; `gate` reads it on every page, and every gated page titles itself through `gatedMetadata`. Neither
+  choice throws `notFound()` or answers anything but 200, and a person with no session is sent to sign-in under both.
+- **Every context is held to the budget.** Every view's context fits 2,600 characters and names its address as each
+  person who may read it, at every period, for every record, pointed at every day of a view that takes one, and with
+  four to eight times the records there are today. Each list a context states is capped and counted, and the cap is
+  never below what the page states with the product's own records. Meridian holds its sample to this with a test of
+  its own; a product holds its contexts with cases beside the budget cases of `optional:tests/shared-context.test.tsx`.
 
 **The sample's. Replace it.**
 
+- **The choice `explain`**: the sample answers an address a person may not open with the no-access page, which names the
+  page and who to ask. Choose `absent` when a product must not tell a person that a page they may not open exists.
+- **The counts each context's lists are capped at**: six services, two open incidents and three resolved on Services,
+  one open incident on Now, eight keys, 24 members and the rest in `optional:src/views/*-context.ts`. They hold the
+  sample's lists within the budget; a product sets its own, at least what its pages state with its own records.
 - **The six title functions and their words**: `homeTitle`, `usageTitle`, `revenueTitle`, `customerTitle`, `nowTitle`
   and `servicesTitle`, each in its view's context file under `optional:src/views/`, with the functions that call the
   rules for them (`usageHead`, `revenueHead`, `titleOf`, `nowHead`, `servicesHead`, and Home's `homeHead` in

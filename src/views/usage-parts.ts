@@ -65,6 +65,8 @@ export function usageHead({ period, totals, history }: { period: Period; totals:
 /** What Usage's read could read, each null when its read failed. */
 export type UsageReads = {
   period: Period;
+  /** The day the address names, or null. */
+  day: string | null;
   days: { series: DailyPoint[]; totals: { current: Totals; previous: Totals | null }; running: DailyPoint | null } | null;
   /** Every complete day kept, oldest first and ending yesterday. */
   history: DailyPoint[] | null;
@@ -93,6 +95,7 @@ export function usageData(r: UsageReads): UsageData {
   const busiest = history?.length ? history.reduce((m, d) => (d.requests > m.requests ? d : m)) : null;
   return {
     period: r.period,
+    day: r.day,
     head,
     line: days ? usageLine({ days: days.series.length, totals: days.totals.current }) : null,
     days,

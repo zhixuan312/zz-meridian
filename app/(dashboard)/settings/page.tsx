@@ -1,11 +1,13 @@
 import { app } from '@/app.config';
 import { PageFrame } from '@/components/base/shell';
-import { gate, may, Unauthenticated } from '@/data/access';
+import { gate, gatedMetadata, may, Unauthenticated } from '@/data/access';
 import { read } from '@/data/read';
 import { SettingsBody, type SettingsMay, type WorkspaceValues } from '@/views/settings';
 import { saveWorkspace } from './actions';
 
-export const metadata = { title: 'Settings' };
+export function generateMetadata() {
+  return gatedMetadata('settings', { title: 'Settings' });
+}
 
 /**
  * What this person may do with the workspace. Settings is a `public` feature, so the page never refuses: with no session

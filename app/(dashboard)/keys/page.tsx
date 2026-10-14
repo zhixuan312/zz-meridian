@@ -1,15 +1,17 @@
-import { gate, may } from '@/data/access';
+import { gate, gatedMetadata, may } from '@/data/access';
 import { ACTIONS } from '@/data/features';
 import { read } from '@/data/read';
 import { KeysView } from '@/views/keys';
 import type { ApiKey } from '@/data/sample';
 import { createKey, revokeKey } from './actions';
 
-export const metadata = { title: 'API keys' };
+export function generateMetadata() {
+  return gatedMetadata('keys', { title: 'API keys' });
+}
 
 /**
- * The keys page asks its feature first, before it reads anything: a person who may not see the keys gets the NoAccess
- * view and no record of theirs, and a request with no session is sent to sign-in. The rail hides `/keys` from that
+ * The keys page asks its feature first, before it reads anything: a person who may not see the keys gets the product's
+ * refusal and no record of theirs, and a request with no session is sent to sign-in. The rail hides `/keys` from that
  * person too, but hiding is presentation only — this check is the gate, and it runs before the read either way.
  *
  * After the gate it asks the action table what this person may do here, so the view draws Create key and Revoke only

@@ -31,8 +31,9 @@ The words come from `src/views/not-found.tsx`; the address and the actions from 
 | A long ID (60 characters or more) | The address breaks anywhere rather than overflowing; the sentence says "the address above" instead of repeating an ID over 32 characters |
 | Percent-escapes (`/requests/a%20b`) | Decoded for reading where they decode, shown as typed where they do not |
 | A trailing slash | Ignored: `/requests/` is Requests itself, not a miss |
+| A page the person may not open, under the product's `refusal: 'absent'` (a Viewer's `/keys`, or `/keys/anything`) | The walk-back steps past every page the person may not open (`withheldEntries` in `src/data/access.ts`), so it reads as an address that names nothing: `/` links home, the rest is marked, "No page in ZZ Meridian lives at this address." `/keys` itself is a matched route, so `gate` draws `MissingPage` in the shell at 200; `/keys/anything` matches no route and gets this screen. Under `explain`, the sample's choice, `/keys` draws the no-access page and `/keys/anything` walks back to API keys as any address does |
 
-Matching is on segment boundaries and the longest navigation entry wins: `/requests` claims `/requests/req_1` but not `/requestsx`, and Docs (`/system/start/...`) wins over Design system (`/system`).
+Matching is on segment boundaries and the longest navigation entry wins: `/requests` claims `/requests/req_1` but not `/requestsx`, and Docs (`/system/start/...`) wins over Design system (`/system`). Under `refusal: 'absent'` only the entries the person may open take part.
 
 ## Surfaces
 

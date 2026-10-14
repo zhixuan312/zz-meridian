@@ -217,7 +217,7 @@ describe('every page shares a context within its budget, and nothing hidden', ()
     const now = DEMO_NOW.toISOString();
     const contexts = [
       usageContext(usageData({
-        period: '30d', days: { series: demoSeries('30d').current, totals: demoTotals('30d'), running: demoSeries('30d').running }, history: HISTORY,
+        period: '30d', day: null, days: { series: demoSeries('30d').current, totals: demoTotals('30d'), running: demoSeries('30d').running }, history: HISTORY,
         figures: { heat, hours, regions: REGIONS }, endpoints: ENDPOINTS, responses: STATUS_MIX, updatedAt: DEMO_UPDATED_AT.toISOString(), now: DEMO_NOW.toISOString(),
       })),
       customersContext(CUSTOMERS, CUSTOMERS, { q: '', plan: 'all', status: 'all', sort: 'revenue', dir: 'desc', page: '1' }),
@@ -526,6 +526,62 @@ describe('the days inside the band follow the product\'s configuration', () => {
     for (const line of await stated()) expect(line).toBe('Steady: 359 of 360 days inside the band of p95 under 480 ms and errors under 2%; outside it on 22 Sept 2026.');
     vi.doUnmock('@/app.config');
     vi.resetModules();
+  });
+});
+
+describe("a list a context states names its first, in the page's order, and counts the rest", () => {
+  /** Each row `k` times, every copy a record of its own: a context read with more in it than the sample holds. */
+  const times = <T extends object>(rows: readonly T[], k: number, copy: (row: T, i: number) => Partial<T>) =>
+    rows.flatMap((row) => Array.from({ length: k }, (_, i) => (i ? { ...row, ...copy(row, i) } : row)));
+
+  it('Services: the first six services, the first two open incidents with the first sentence of their latest update, and the newest three resolved', () => {
+    const services = times(SERVICES, 4, (s, i) => ({ name: `${s.name} ${i + 1}` }));
+    const open = times(INCIDENTS, 6, (x, i) => ({ id: `${x.id}_${i}`, title: `${x.title} ${i + 1}` }));
+    const resolved = times(PAST_INCIDENTS, 6, (x, i) => ({ id: `${x.id}_${i}`, title: `${x.title} ${i + 1}` }));
+    const c = servicesContext({ services, incidents: { open, resolved }, head: servicesHead({ services, history: HISTORY }), updatedAt: DEMO_UPDATED_AT.toISOString(), now: DEMO_NOW.toISOString() });
+    const text = contextText(c);
+    expect(c.facts[0]).toEqual({ label: 'Services now', value: '4 services degraded (Inference API degraded, and 3 more)' });
+    expect(c.facts.slice(2, 8).map((f) => f.label)).toEqual(services.slice(0, 6).map((s) => s.name));
+    expect(c.facts[8]).toEqual({ label: '18 more services', value: '24 in all' });
+    const stated = c.insights.filter((i) => i.text.startsWith('Open incident '));
+    expect(stated.map((i) => i.text.match(/^Open incident "([^"]+)"/)![1])).toEqual([open[0].title, open[1].title]);
+    // The sample's update is two sentences; the context quotes the first.
+    for (const i of stated) expect(i.text).toMatch(/: open for [\d.]+h so far, since [^;]+; latest update after 2\.6h: "p95 back under 650ms\."\.$/);
+    expect(text).toContain(`- And ${open.length - 2} more incidents open, ${open.length} in all.`);
+    const line = c.insights.find((i) => i.text.startsWith('18 incidents resolved, newest first: '))!.text;
+    for (const i of resolved.slice(0, 3)) expect(line).toContain(`"${i.title}" on `);
+    expect(line).not.toContain(`"${resolved[3].title}"`);
+    expect(line.endsWith('; and 15 more resolved.')).toBe(true);
+    expect(text.length).toBeLessThanOrEqual(BUDGET);
+  });
+
+  it('API keys: the first eight keys, and the first five of those unused and of those with every scope', async () => {
+    const { keysContext } = await import('@/views/keys-context');
+    const { API_KEYS } = await import('@/system/fixtures/sample-records');
+    const { SCOPES } = await import('@/views/key-scopes');
+    // Twelve live keys after the sample's, never used and with every scope: each is in both lists.
+    const left = Array.from({ length: 12 }, (_, i) => ({ ...API_KEYS[0], id: `key_x${i + 1}`, name: `Forgotten ${i + 1}`, lastUsed: null, scopes: [...SCOPES] }));
+    const rows = [...API_KEYS, ...left];
+    const c = keysContext(rows, DEMO_NOW.toISOString(), SCOPES);
+    const every = c.facts.find((f) => f.label === 'Every key')!.value;
+    expect(every.split('; ').slice(0, 8).map((k) => k.slice(0, k.indexOf(' (')))).toEqual(rows.slice(0, 8).map((k) => k.name));
+    expect(every.endsWith(`; and ${rows.length - 8} more (query_keys finds them)`)).toBe(true);
+    const named = (re: RegExp) => c.insights.find((i) => re.test(i.text))!.text;
+    expect(named(/not been used/)).toMatch(/^12 live keys have not been used for 30 days or more: Forgotten 1 \(never used, owner [^)]+\)(; Forgotten [2-5] \(never used, owner [^)]+\)){4}; and 7 more \(query_keys finds them\)\.$/);
+    expect(named(/every scope/)).toBe('Forgotten 1; Forgotten 2; Forgotten 3; Forgotten 4; Forgotten 5; and 7 more (query_keys finds them) are live keys with every scope; a narrower key limits what a leak can reach.');
+    expect(contextText(c).length).toBeLessThanOrEqual(BUDGET);
+  });
+
+  it('Members: everyone up to twenty-four in the order given, and the first three of those quiet and of the invitations', async () => {
+    const { membersContext } = await import('@/views/members-context');
+    const { MEMBERS } = await import('@/system/fixtures/sample-members');
+    const rows = times(MEMBERS, 4, (m, i) => ({ id: `${m.id}_${i}`, name: `${m.name} ${i + 1}` }));
+    const c = membersContext(rows, DEMO_NOW.toISOString());
+    const everyone = c.facts.find((f) => f.label === 'Everyone')!.value;
+    expect(everyone.split('; ').slice(0, 24).map((m) => m.slice(0, m.indexOf(' (')))).toEqual(rows.slice(0, 24).map((m) => m.name));
+    expect(everyone.endsWith(`; and ${rows.length - 24} more (query_members finds them)`)).toBe(true);
+    for (const re of [/not been seen/, /unanswered/]) expect(c.insights.find((i) => re.test(i.text))!.text).toMatch(/: [^;]+; [^;]+; [^;]+; and \d+ more \(query_members finds them\)\.$/);
+    expect(contextText(c).length).toBeLessThanOrEqual(BUDGET);
   });
 });
 

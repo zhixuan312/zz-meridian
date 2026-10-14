@@ -55,6 +55,7 @@ type VerifyConfig = BudgetsConfig & {
   navigationChecks?: NavigationCheck[];
   smokeRoutes?: string[];
   personas?: Record<string, { cookie: { name: string; value: string }; expectedRoutes: readonly string[]; deniedProbe?: Record<string, string> }>;
+  refusal?: 'explain' | 'absent';
 };
 const config = verifyConfig as VerifyConfig;
 
@@ -463,6 +464,10 @@ if (asPersonas.length) {
     phase('FAIL', 'the personas', null, `(--as needs the browser: ${browser.reason ?? 'the browser did not run'})`);
   } else {
     const personaPage = await launch();
+    // What a route this persona may not open draws: the product's `refusal`, which the config reads from src/app.config.ts.
+    const refused = config.refusal === 'absent'
+      ? { absent: true, selector: '[data-missing-page]', page: 'the missing page' }
+      : { absent: false, selector: '[data-no-access]', page: 'NoAccess' };
     try {
       for (const name of asPersonas) {
         const persona = config.personas![name];
@@ -487,18 +492,20 @@ if (asPersonas.length) {
             const presses = await run('scripts/interactions.ts', ['--base', here, '--as', name, '--width', '1440', '--routes', roleRoutes.join(',')], app);
             if (presses.status !== 0) problems.push(`${name}: the presses failed on ${roleRoutes.join(', ')} — ${presses.out.split('\n').filter(Boolean).slice(-1)[0] ?? 'no output'}`);
           }
-          // (c) Follow every expected route, and open every other rail route expecting NoAccess and no protected record.
+          // (c) Follow every expected route, and open every other rail route expecting the product's refusal and no
+          // protected record: the no-access page under `explain`, the missing page and no no-access page under `absent`.
           for (const route of persona.expectedRoutes) {
             await personaPage.open(here + route, { width: 1440, height: 900, theme: 'dark', cookie: persona.cookie });
-            const denied = await personaPage.eval<boolean>('(async () => { await new Promise((r) => setTimeout(r, 400)); return !!document.querySelector("[data-no-access]"); })()');
-            if (denied) problems.push(`${name}: ${route} is expected of this persona, but the page shows NoAccess`);
+            const denied = await personaPage.eval<boolean>(`(async () => { await new Promise((r) => setTimeout(r, 400)); return !!document.querySelector(${JSON.stringify(refused.selector)}); })()`);
+            if (denied) problems.push(`${name}: ${route} is expected of this persona, but the page shows ${refused.page}`);
           }
           const deniedProbe = persona.deniedProbe ?? {};
           const others = rail!.routes.filter((r) => !persona.expectedRoutes.includes(r));
           for (const route of others) {
             await personaPage.open(here + route, { width: 1440, height: 900, theme: 'dark', cookie: persona.cookie });
-            const denied = await personaPage.eval<boolean>('(async () => { const end = Date.now() + 5000; while (Date.now() < end) { if (document.querySelector("[data-no-access]")) return true; await new Promise((r) => setTimeout(r, 100)); } return false; })()');
-            if (!denied) problems.push(`${name}: ${route} should show NoAccess for this persona, and does not`);
+            const denied = await personaPage.eval<boolean>(`(async () => { const end = Date.now() + 5000; while (Date.now() < end) { if (document.querySelector(${JSON.stringify(refused.selector)})) return true; await new Promise((r) => setTimeout(r, 100)); } return false; })()`);
+            if (!denied) problems.push(`${name}: ${route} should show ${refused.page} for this persona, and does not`);
+            if (refused.absent && (await personaPage.eval<boolean>('!!document.querySelector("[data-no-access]")'))) problems.push(`${name}: ${route} shows NoAccess, and the product's refusal is absent`);
             const probe = deniedProbe[route];
             if (probe) {
               const text = await personaPage.eval<string>('document.body.innerText');

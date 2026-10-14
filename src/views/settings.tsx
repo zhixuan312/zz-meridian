@@ -29,7 +29,7 @@ function useReport(section: string, line: string) {
 const SECTIONS = ['Workspace', 'Appearance', 'Assistant', 'Agents and MCP'];
 
 /** Settings as both agents read it: every section's current values, which an input's or a switch's text does not carry. */
-function settingsContext(lines: Record<string, string>): SharedContext {
+export function settingsContext(lines: Record<string, string>): SharedContext {
   return {
     view: 'settings',
     title: 'Settings',

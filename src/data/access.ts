@@ -14,17 +14,20 @@
  * each collection. `authorizationKey` must change whenever what the scope may see changes, because the cached read
  * keys on it.
  */
+import type { Metadata } from 'next';
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
-import type { JSX } from 'react';
-import { nav } from '@/app.config';
+import { createElement, type JSX, type ReactNode } from 'react';
+import { nav, refusal } from '@/app.config';
 import { activity, compute, costs, customers, days, endpoints, hours, incidents, keys, members, models, regions, releases, requests, responses, services, tests, tickets, usage, workspace } from '@/data/collections';
 import { FEATURES, type FeatureId } from '@/data/features';
 import { effective, roleLabel, type AddOn, type MainRole } from '@/data/roles';
 import { membersFor } from '@/data/member-mutations';
 import { ticketsFor } from '@/data/ticket-mutations';
 import { chooseViewAs } from '@/data/view-as';
+import { MissingPage } from '@/views/missing-page';
 import { NoAccess } from '@/views/no-access';
+import { NOT_FOUND } from '@/views/not-found';
 import type { Member } from '@/data/sample';
 import type { AnyCollection, ChromeAccess, Grant, Need } from '@/lib/collection';
 
@@ -184,7 +187,7 @@ function satisfies(member: Member, need: Need): boolean {
  * any signed-in Active person, a grant by the role table, and an `allOf` by every grant of it.
  *
  * Rejects `Unauthenticated` when there is no session, which is the caller's to catch: this answers about a person, not
- * for one. A page does not catch it — it opens with `gate`, which sends the request to sign-in or renders NoAccess
+ * for one. A page does not catch it — it opens with `gate`, which sends the request to sign-in or refuses the person
  * before the page's own read.
  */
 export async function may(need: Need): Promise<boolean> {
@@ -200,24 +203,73 @@ export async function requireNeed(need: Need): Promise<void> {
 }
 
 /**
+ * The navigation entries a missing page's walk-back steps past, so it names no page the person may not open: under
+ * `refusal: 'absent'` every entry whose need the current person does not satisfy, and every entry when there is no
+ * session; under `explain` none, as the no-access page names the page anyway. `gate` hands them to the missing page it
+ * draws, and the standalone missing page (`app/not-found.tsx`) asks for them itself.
+ */
+export async function withheldEntries(): Promise<string[]> {
+  if (refusal !== 'absent') return [];
+  const scope = await resolveAccess().catch((error: unknown) => {
+    if (error instanceof Unauthenticated) return null;
+    throw error;
+  });
+  const member = scope ? await memberById(scope.subjectId) : null;
+  return nav.flatMap((g) => g.items).filter((i) => !member || !satisfies(member, i.needs)).map((i) => i.href);
+}
+
+/**
  * The one page gate, called as every dashboard page's first statement so the check is what stops the read, never the
  * rail: `chromeAccess().only` hides a destination but forbids nothing, so a page that leaned on it would show a person
  * the records the rail merely left unlinked.
  *
  * It asks the same `requireNeed` a view tool asks, so a page and a tool refuse alike. A request with no session is sent
- * to sign-in. A person who may not use the feature gets the NoAccess view as a normal 200 answer — awaited, because the
- * view is an async server component and a page hands a renderer an element, not a promise. `null` means the feature is
- * held and the page may render and read.
+ * to sign-in. A person who may not use the feature gets the product's `refusal` as a normal 200 answer, read here on
+ * every call: under `explain` the NoAccess view (awaited, because it is an async server component and a page hands a
+ * renderer an element, not a promise); under `absent` the console's missing page, walked back past every entry the
+ * person may not open, so it reads exactly as an address that names nothing. Neither throws `notFound()`, which inside
+ * the dashboard's loading boundary renders only once the JavaScript arrives (see MissingPage). `null` means the feature
+ * is held and the page may render and read.
  */
 export async function gate(feature: FeatureId): Promise<JSX.Element | null> {
   try {
     await requireNeed(FEATURES[feature].needs);
   } catch (error) {
     if (error instanceof Unauthenticated) redirect('/sign-in');
-    if (error instanceof AccessDenied) return await NoAccess({ feature });
+    if (error instanceof AccessDenied) return refusal === 'absent' ? createElement(MissingPage, { withheld: await withheldEntries() }) : await NoAccess({ feature });
     throw error;
   }
   return null;
+}
+
+/**
+ * The title a gated page carries, called from its `generateMetadata` so the tab agrees with what `gate` draws: under
+ * `refusal: 'absent'`, a person who may not use the feature gets the missing page's title, kept out of search, and
+ * anyone else the page's own `metadata`. Under `explain` the page's own title is the answer for everyone, as the
+ * NoAccess view names the page anyway, and the person is not read. With no session the page's own title stands: `gate`
+ * sends that request to sign-in.
+ */
+export async function gatedMetadata(feature: FeatureId, metadata: Metadata): Promise<Metadata> {
+  if (refusal !== 'absent') return metadata;
+  const allowed = await may(FEATURES[feature].needs).catch((error: unknown) => {
+    if (error instanceof Unauthenticated) return true;
+    throw error;
+  });
+  return allowed ? metadata : { title: NOT_FOUND.title, robots: { index: false } };
+}
+
+/** What a loading state says of its page: the words `LoadingPage` takes that name it. */
+type LoadingNames = { name: string; title?: string; kicker?: ReactNode; description?: ReactNode };
+
+/**
+ * What a gated route's `loading.tsx` may say of its page. The loading state is drawn before `gate` has answered and is
+ * prerendered into the route's shell, so it cannot know who is reading: under `refusal: 'absent'` it names nothing for
+ * anyone (the busy region is "Loading page", and the heading, the kicker and the line under it are placeholders), so a
+ * refused address never shows the page's name while it streams. Under `explain` the page's own words stand. The choice
+ * is the configuration's, never the request's, so the shell stays static.
+ */
+export function gatedLoading(named: LoadingNames): LoadingNames {
+  return refusal === 'absent' ? { name: 'page' } : named;
 }
 
 /** The console's chrome reads `ChromeAccess` from `@/lib/collection`, where the access vocabulary lives. */

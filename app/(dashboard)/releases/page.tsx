@@ -3,11 +3,13 @@ import { app } from '@/app.config';
 import { PageFrame } from '@/components/base/shell';
 import { Busy } from '@/components/patterns/page-loading';
 import { RecordsSkeleton } from '@/components/templates/records';
-import { gate } from '@/data/access';
+import { gate, gatedMetadata } from '@/data/access';
 import { readReleases } from '@/data/engineering';
 import { ReleasesView } from '@/views/releases';
 
-export const metadata = { title: 'Releases' };
+export function generateMetadata() {
+  return gatedMetadata('releases', { title: 'Releases' });
+}
 
 /**
  * The page asks its feature before it reads anything; the rail hiding the route is presentation, this gate is the check.

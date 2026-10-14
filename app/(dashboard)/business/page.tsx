@@ -1,6 +1,6 @@
 import { Suspense, cache } from 'react';
 import { app, workspaces } from '@/app.config';
-import { gate } from '@/data/access';
+import { gate, gatedMetadata } from '@/data/access';
 import { DEMO_NOW, DEMO_UPDATED_AT } from '@/data/sample';
 import { PageFrame } from '@/components/base/shell';
 import { ExportButton } from '@/components/patterns/export-button';
@@ -14,7 +14,9 @@ import { RevenueBody } from '@/views/revenue';
 import { revenueTool } from '@/views/tools';
 import { RevenueSkeleton } from './loading';
 
-export const metadata = { title: 'Revenue' };
+export function generateMetadata() {
+  return gatedMetadata('revenue', { title: 'Revenue' });
+}
 
 type SearchParams = Promise<{ period?: string }>;
 

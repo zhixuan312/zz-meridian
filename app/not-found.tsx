@@ -5,17 +5,23 @@ import { SampleFooter } from '@/views/sample-footer';
 import { Standalone } from '@/views/standalone';
 import { MissingAddress, WayBack } from '@/views/not-found-address';
 import { NOT_FOUND } from '@/views/not-found';
+import { withheldEntries } from '@/data/access';
 
-export const metadata = { title: 'Not found' };
+export const metadata = { title: NOT_FOUND.title };
 
-/** The address and the ways back, which depend on the path that was asked for: resolved at request time, never prerendered. */
+/**
+ * The address and the ways back, which depend on the path that was asked for: resolved at request time, never
+ * prerendered. Under the product's `refusal: 'absent'` the walk-back also steps past every page the person may not open,
+ * so `/keys/anything` names API keys only to someone who may open it.
+ */
 async function Address() {
   // A prerendered screen would name /_not-found instead of the address asked for, so the path is read only once the request is known.
   await connection();
+  const withheld = await withheldEntries();
   return (
     <>
-      <div className="mt-8 max-w-[46ch] rounded-md border border-line bg-surface-sunk px-4 py-3.5"><MissingAddress size="quiet" /></div>
-      <div className="mt-9 flex flex-wrap gap-3 max-sm:[&>*]:w-full"><WayBack /></div>
+      <div className="mt-8 max-w-[46ch] rounded-md border border-line bg-surface-sunk px-4 py-3.5"><MissingAddress size="quiet" withheld={withheld} /></div>
+      <div className="mt-9 flex flex-wrap gap-3 max-sm:[&>*]:w-full"><WayBack withheld={withheld} /></div>
     </>
   );
 }

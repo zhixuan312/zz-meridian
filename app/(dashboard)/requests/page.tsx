@@ -3,14 +3,16 @@ import { app } from '@/app.config';
 import { PageFrame } from '@/components/base/shell';
 import { ExportButton } from '@/components/patterns/export-button';
 import { Freshness } from '@/components/patterns/freshness';
-import { gate } from '@/data/access';
+import { gate, gatedMetadata } from '@/data/access';
 import { readRequests, requestsQuery, REQUEST_PAGE } from '@/data/requests';
 import { DEMO_UPDATED_AT } from '@/data/sample';
 import { RequestsView } from '@/views/requests';
 import { Busy } from '@/components/patterns/page-loading';
 import { RecordsSkeleton } from '@/components/templates/records';
 
-export const metadata = { title: 'Requests' };
+export function generateMetadata() {
+  return gatedMetadata('requests', { title: 'Requests' });
+}
 
 type SearchParams = Promise<Record<string, string | string[] | undefined>>;
 

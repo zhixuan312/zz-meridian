@@ -2,6 +2,7 @@ import { Row } from '@/components/base/shell';
 import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ChartSkeleton, LoadingPage, TableSkeleton, TilesSkeleton } from '@/components/patterns/page-loading';
+import { gatedLoading } from '@/data/access';
 import { CustomerTrail, FactsRoom } from '@/views/customer';
 
 /**
@@ -12,10 +13,8 @@ import { CustomerTrail, FactsRoom } from '@/views/customer';
 export default function CustomerLoading() {
   return (
     <LoadingPage
-      name="customer"
-      title="Customer"
+      {...gatedLoading({ name: 'customer', title: 'Customer', kicker: <CustomerTrail /> })}
       sentence
-      kicker={<CustomerTrail />}
       description={<FactsRoom><Skeleton className="my-[0.3lh] h-[0.4lh] w-96 max-w-full" /></FactsRoom>}
     >
       <Card className="gap-4 p-(--card-pad)">

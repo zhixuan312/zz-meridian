@@ -91,6 +91,14 @@ export const facts = {
   concentrationAt: 0.1,
 } as const;
 
+/**
+ * What an address a person may not open draws, the product's choice and declared only here (`gate` in
+ * `src/data/access.ts` reads it). `explain` draws the no-access page: the page's title, who can open it, who to ask and
+ * one way out. `absent` draws exactly what an address that names nothing draws, the console's missing page titled
+ * "Not found", so nothing on it names the page, a role or who to ask.
+ */
+export const refusal: 'explain' | 'absent' = 'explain';
+
 const toSlug = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
 /** The name as identifiers, for the sample's addresses, URLs and MCP tool names. They follow `app.name`. */
 export const slug = toSlug(app.name);

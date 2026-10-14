@@ -50,12 +50,34 @@ describe("Now's context", () => {
     expect(c.insights.slice(0, 3).map((i) => i.text)).toEqual([data.head.title, `Steady: ${data.head.facts[0].text}.`, 'No incident is open; the last was resolved on 17 Aug 2026 and lasted 2.4h.']);
   });
 
-  it('states every open incident, the most severe first', () => {
+  it('states the most severe open incident in full, and counts the rest', () => {
     const started = new Date(DEMO_NOW.getTime() - 40 * 60_000).toISOString();
     const major: Incident = { id: 'inc_2611', title: 'Files uploads fail in us-west-2', service: 'Files', severity: 'major', state: 'investigating', started, updates: [{ at: started, text: 'Uploads over 10 MB fail.' }] };
     const text = contextText(nowContext(nowData(reads({ incidents: [major, ...EVERY] }))));
-    expect(text.indexOf('Open incident "Files uploads fail in us-west-2"')).toBeGreaterThan(-1);
-    expect(text.indexOf('Open incident "Files uploads fail in us-west-2"')).toBeLessThan(text.indexOf(`Open incident "${INCIDENTS[0].title}"`));
+    expect(text).toContain('Open incident "Files uploads fail in us-west-2" on Files, major, investigating: started 40 min ago; latest update 40 min ago.');
+    expect(text).not.toContain(`Open incident "${INCIDENTS[0].title}"`);
+    expect(text).toContain('And 1 more incident open, 2 in all.');
+  });
+
+  it('names the first of each list in the page\'s order, and counts the rest', () => {
+    // Four times the releases, the services and the models: each list states its first and says how many more there are.
+    const times = <T extends object>(rows: readonly T[], k: number, copy: (row: T, i: number) => Partial<T>) =>
+      rows.flatMap((row) => Array.from({ length: k }, (_, i) => (i ? { ...row, ...copy(row, i) } : row)));
+    // Each copy of a release has the runs of the release it copies, so it stands where that one stands.
+    const releases = times(RELEASES, 4, (r, i) => ({ id: `${r.id}_${i}`, version: `${r.version}-${i}` }))
+      .map((r) => ({ ...r, verification: verificationOf(r, RUNS.map((x) => (x.releaseId === r.id.replace(/_\d$/, '') ? { ...x, releaseId: r.id } : x))) }));
+    const services = times(SERVICES, 4, (s, i) => ({ name: `${s.name} ${i + 1}` }));
+    const models = times(MODELS, 2, (m, i) => ({ id: `${m.id}_${i}`, label: `${m.label} ${i + 1}` }));
+    const data = nowData(reads({ releases, services, models }));
+    const c = nowContext(data);
+    const value = (label: string) => c.facts.find((f) => f.label.startsWith(label))!.value;
+    const { testing, ready } = data.shipping!;
+    expect(value('Shipping')).toContain(`${testing.slice(0, 3).map((r) => `${r.version} (${r.service})`).join(', ')} and ${testing.length - 3} more in testing`);
+    expect(value('Shipping')).toContain(`${ready.slice(0, 3).map((r) => `${r.version} (${r.service})`).join(', ')} and ${ready.length - 3} more ready`);
+    const unwell = data.services.filter((s) => s.status !== 'operational');
+    expect(value('Services now')).toBe(`${unwell.length} services degraded (${unwell[0].name} degraded, and ${unwell.length - 1} more)`);
+    expect(value('Models')).toMatch(new RegExp(`^${data.models![0].label} [^;]+(; [^;]+){3}; and ${data.models!.length - 4} more models$`));
+    expect(contextText(c).length).toBeLessThanOrEqual(BUDGET);
   });
 
   it('says what it could not read, and counts the day in progress in nothing but the runs a day', () => {

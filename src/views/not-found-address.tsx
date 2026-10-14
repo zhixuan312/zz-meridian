@@ -12,10 +12,11 @@ import { nearestOf, readable, homeLabel } from '@/views/not-found';
 /**
  * The address that led nowhere, walked back to the deepest page that exists: that part is a link, the part after it is
  * marked as the part that is missing, and one line says which is which. `display` sets it large, as the protagonist of
- * a page inside the shell; `quiet` sets it at body size, under the sentence of a standalone screen.
+ * a page inside the shell; `quiet` sets it at body size, under the sentence of a standalone screen. `withheld` is the
+ * entries the person may not open, which the walk-back steps past (`nearestOf`).
  */
-export function MissingAddress({ size = 'display' }: { size?: 'display' | 'quiet' }) {
-  const n = nearestOf(usePathname() ?? '/');
+export function MissingAddress({ size = 'display', withheld }: { size?: 'display' | 'quiet'; withheld?: readonly string[] }) {
+  const n = nearestOf(usePathname() ?? '/', withheld);
   const atRoot = n.href === '/';
   const found = atRoot ? '/' : n.href;
   const missing = readable(atRoot ? n.rest.slice(1) : n.rest);
@@ -46,8 +47,8 @@ export function MissingAddress({ size = 'display' }: { size?: 'display' | 'quiet
  * The ways back: the nearest page that exists first, then the home page when that is somewhere else. Inside the shell,
  * where the command palette lives, a miss at the root offers search instead. The caller lays them out.
  */
-export function WayBack({ size = 'lg', search = false }: { size?: 'md' | 'lg'; search?: boolean }) {
-  const n = nearestOf(usePathname() ?? '/');
+export function WayBack({ size = 'lg', search = false, withheld }: { size?: 'md' | 'lg'; search?: boolean; withheld?: readonly string[] }) {
+  const n = nearestOf(usePathname() ?? '/', withheld);
   const atRoot = n.href === '/';
   return (
     <>

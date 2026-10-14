@@ -1,11 +1,13 @@
-import { gate, may } from '@/data/access';
+import { gate, gatedMetadata, may } from '@/data/access';
 import { invitableRoles, memberAccess, type MemberRowAccess } from '@/data/member-mutations';
 import { read } from '@/data/read';
 import { assignRole, inviteMember, removeMember, setMemberStatus } from './actions';
 import { MembersView } from '@/views/members';
 import type { Member } from '@/data/sample';
 
-export const metadata = { title: 'Members' };
+export function generateMetadata() {
+  return gatedMetadata('members', { title: 'Members' });
+}
 
 /** The workspace's name from its record, for a person who may read it; nothing for anyone else, or when it cannot be read. */
 async function workspaceName(): Promise<string | undefined> {
