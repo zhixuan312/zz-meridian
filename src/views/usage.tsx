@@ -60,6 +60,7 @@ function Year({ calendar }: { calendar: Calendar }) {
     <Card>
       <CardHeader
         title={P.year}
+        wrap
         description="Every complete day kept, a column a week, UTC. Point at a day of the period and the chart above reads it."
         actions={busiest ? <Badge tone="accent">Busiest: {shortDate(busiest.date)}, {formatCompact(busiest.value)}</Badge> : null}
       />

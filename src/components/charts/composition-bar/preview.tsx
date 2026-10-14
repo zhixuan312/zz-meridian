@@ -27,6 +27,11 @@ export default function CompositionBarPreview() {
           <CompositionBar label="Requests by region" format={formatCompact} parts={REGIONS.map((r) => ({ label: r.label, value: r.value }))} />
         </Plane>
       </Specimen>
+      <Specimen label="Stacked" note="The parts a stacked chart beside it draws: the one-hue stack by place, so each part keeps its colour across the page. In a narrow card the legend stays two across.">
+        <Plane on="surface" className="max-w-xs">
+          <CompositionBar label="Revenue by plan" stacked parts={[{ label: 'Enterprise · 24', value: 2_046_000 }, { label: 'Scale · 82', value: 891_000 }, { label: 'Starter · 214', value: 360_000 }]} />
+        </Plane>
+      </Specimen>
       <Specimen label="A sliver" note="A part under 1% keeps a 3px minimum so it stays visible; its legend carries one decimal.">
         <Plane on="surface" className="max-w-xl">
           <CompositionBar label="Plan mix" parts={[{ label: 'Enterprise', value: 912 }, { label: 'Scale', value: 80 }, { label: 'Starter', value: 4 }]} />

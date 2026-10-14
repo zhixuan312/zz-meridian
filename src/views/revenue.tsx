@@ -16,10 +16,10 @@ import { Meridian } from '@/components/charts/meridian';
 import { TrendChart } from '@/components/charts/trend-chart';
 import { MetricTile } from '@/components/patterns/metric-tile';
 import { PLANS } from '@/data/sample';
-import { AXIS_FORMATTERS, FORMATTERS, formatCompact, formatCost, formatPercent, plural } from '@/lib/format';
+import { AXIS_FORMATTERS, FORMATTERS, formatCompact, formatCost, formatPercent } from '@/lib/format';
 import { formatDate, formatDay } from '@/lib/format-date';
 import { PERIOD_DAYS, PERIOD_LABEL } from '@/lib/period';
-import { REVENUE_METRICS, WALL_ORDERS, nextPlanWords, revenueContext, signed, yearAgoWords, type RevenueData, type WallOrder, type WorthLine } from './revenue-context';
+import { REVENUE_METRICS, WALL_ORDERS, nextPlanWords, revenueContext, signed, yearAgoNote, type RevenueData, type WallOrder, type WorthLine } from './revenue-context';
 import { Unread, unreadTile } from './unread';
 
 const M = REVENUE_METRICS;
@@ -68,20 +68,20 @@ function tiles(data: RevenueData) {
     ) : unreadTile(M.revenue.label, M.revenue.hint),
     days ? (
       days.yearAgo ? (
-        <MetricTile key="year" label={M.yearAgo.label} hint={M.yearAgo.hint} value={days.yearAgo.change} format={signed} note={yearAgoWords(days.yearAgo, period)} />
+        <MetricTile key="year" label={M.yearAgo.label} hint={M.yearAgo.hint} value={days.yearAgo.change} format={signed} note={yearAgoNote(days.yearAgo, period)} />
       ) : (
-        <MetricTile key="year" label={M.yearAgo.label} hint={M.yearAgo.hint} value="—" note={yearAgoWords(null, period)} />
+        <MetricTile key="year" label={M.yearAgo.label} hint={M.yearAgo.hint} value="—" note={yearAgoNote(null, period)} />
       )
     ) : unreadTile(M.yearAgo.label, M.yearAgo.hint),
     days ? (
       days.best ? (
-        <MetricTile key="best" label={M.best.label} hint={M.best.hint} value={days.best.value} format={formatCost} note={`${formatDay(days.best.date)} · ${days.best.inPeriod} of the ${days.best.of} best in the period`} />
+        <MetricTile key="best" label={M.best.label} hint={M.best.hint} value={days.best.value} format={formatCost} note={`${formatDay(days.best.date)} · ${days.best.inPeriod} of the ${days.best.of} best days`} />
       ) : (
-        <MetricTile key="best" label={M.best.label} hint={M.best.hint} value="—" note={days.series.length ? 'Too few days kept before it to call it a record' : 'No complete day is kept yet'} />
+        <MetricTile key="best" label={M.best.label} hint={M.best.hint} value="—" note={days.series.length ? 'Too few days kept for a record' : 'No complete day is kept yet'} />
       )
     ) : unreadTile(M.best.label, M.best.hint),
     customers ? (
-      <MetricTile key="past-due" label={M.pastDue.label} hint={M.pastDue.hint} value={customers.pastDue.count} note={`${formatPercent(customers.pastDue.share, 1)} of the revenue of the last 30 days`} />
+      <MetricTile key="past-due" label={M.pastDue.label} hint={M.pastDue.hint} value={customers.pastDue.count} note={`${formatPercent(customers.pastDue.share, 1)} of 30 days' revenue`} />
     ) : unreadTile(M.pastDue.label, M.pastDue.hint),
   ];
 }
@@ -110,12 +110,13 @@ function ByDay({ days, dates }: { days: Days; dates: string[] }) {
 function WhoPays({ days, customers }: { days: Days; customers: Customers | null }) {
   return (
     <Card>
-      <CardHeader title={M.whoPays.label} description={`${M.whoPays.hint.replace(/\.$/, '')}, with the customers on each`} />
+      <CardHeader title={M.whoPays.label} description={`${M.whoPays.hint.replace(/\.$/, '')}, with how many customers are on each, trials included`} />
       <CardBody>
         <CompositionBar
           label="Revenue by plan"
           format={costCompact}
-          parts={days.byPlan.map((p, i) => ({ label: customers ? `${p.plan} · ${customers.byPlan[p.plan]} ${plural(customers.byPlan[p.plan], 'customer')}` : p.plan, value: p.revenue, color: i + 1 }))}
+          stacked
+          parts={days.byPlan.map((p) => ({ label: customers ? `${p.plan} · ${customers.byPlan[p.plan]}` : p.plan, value: p.revenue }))}
         />
       </CardBody>
     </Card>

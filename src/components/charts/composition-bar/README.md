@@ -7,7 +7,7 @@ Status: beta
 ## Anatomy
 
 1. **Bar**: 10px tall, `radius-full` at its ends, a 2px gap between parts; every part at least 3px wide so a sliver stays visible.
-2. **Legend**: two columns on phones, four from 640px: a swatch and the part's name in `ink-2`, then its share (`text-sm`, `weight-medium`) and its count (`ink-3`).
+2. **Legend**: two columns, four once the bar's own width reaches 36rem (a narrow card in a wide window keeps two): a swatch and the part's name in `ink-2`, then its share (`text-sm`, `weight-medium`) and its count (`ink-3`).
 
 ## Variants
 
@@ -15,6 +15,7 @@ Status: beta
 |---|---|
 | Status | Parts that carry a judgement take status colours (`warning`, `critical`); neutral classes take `neutral` and, beside it, `neutral-ink` (both at least 3:1 on the surface, unlike the `chart-neutral` track), never the accent; the legend names each in words |
 | Categories | Parts with no judgement take slots 1, 2, 3 in order |
+| Stacked | `stacked`: the parts are the ones a stacked Trend or Column chart on the same page draws, so a part with no colour takes `stackPart(place, parts)`, the one-hue stack by its place, and its swatch sits on an `ink-3` hairline as the stacked charts' do. A part is one colour wherever the page draws it |
 
 ## Sizes
 
@@ -34,7 +35,7 @@ Not interactive. `legend={false}` drops the key under the bar where the bar is a
 
 ## Surfaces
 
-- **Console**: legend four across.
+- **Console**: legend four across where the bar is 36rem wide or more, two in a narrow card.
 - **Mobile** and **Embed** inline: legend two across.
 
 ## Agents

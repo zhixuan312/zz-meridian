@@ -28,9 +28,9 @@ const LATEST_COLUMNS = requestColumns.filter((c) => ['request', 'status', 'laten
 export function CustomerTrail() {
   return (
     <span className="inline-flex flex-wrap items-center gap-x-2">
-      <Link href="/business" className="hover:text-ink">Business</Link>
+      <Link href="/business" className="hit hover:text-ink">Business</Link>
       <span aria-hidden>/</span>
-      <Link href="/customers" className="hover:text-ink">Customers</Link>
+      <Link href="/customers" className="hit hover:text-ink">Customers</Link>
     </span>
   );
 }

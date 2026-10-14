@@ -19,7 +19,7 @@ import { HOME_METRICS, NO_PREVIOUS, change } from './home-context';
 export const REVENUE_METRICS = {
   revenue: { label: 'Revenue', hint: HOME_METRICS.revenue.hint },
   yearAgo: { label: 'Against a year ago', hint: 'The period against the same days 52 weeks before, or the earliest whole window of its length kept.' },
-  best: { label: 'Best day yet', hint: 'The complete day kept with the most revenue.' },
+  best: { label: 'Best day yet', hint: 'The complete day kept with the most revenue, and how many of the best days kept fall in the period.' },
   pastDue: { label: 'Past due', hint: CUSTOMER_METRICS.pastDue.hint },
   byDay: { label: 'Revenue a day by plan' },
   whoPays: { label: 'Who pays', hint: 'Each plan\'s share of the period\'s revenue.' },
@@ -161,6 +161,16 @@ export function revenueLine({ customers, byPlan, period }: { customers: { count:
 function between(from: string, to: string): string {
   const a = formatDate(from), b = formatDate(to);
   return a.slice(-4) === b.slice(-4) ? `${a.slice(0, -5)} to ${b}` : `${a} to ${b}`;
+}
+
+/** What the period is against, a year ago, as its tile's one line: the window, and "first kept" when it is not 52 weeks before. */
+export function yearAgoNote(y: NonNullable<RevenueData['days']>['yearAgo'], period: Period): string {
+  const n = PERIOD_DAYS[period];
+  if (!n) return 'No day comes before the period';
+  if (!y) return `No whole ${inDays(n)} kept before it`;
+  // The year is said once, at the end: a window runs forwards, so "08 Oct–05 Jan 2026" starts in 2025.
+  const window = `${formatDate(y.from).slice(0, -5)}–${formatDate(y.to)}`;
+  return y.first ? `${window}, first kept` : window;
 }
 
 /** What the period is against, a year ago, in words: the window it names and why that one. */
