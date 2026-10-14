@@ -232,7 +232,7 @@ function Work({ work }: { work: NonNullable<NowData['work']> }) {
             {work.tickets.map((t) => (
               <li key={t.id} className="border-b border-line py-2.5 last:border-0">
                 <p className="flex min-w-0 items-start gap-2">
-                  <Link href={t.href} className="row-link min-w-0 text-sm font-medium text-pretty text-ink hover:text-accent-ink">{t.title}</Link>
+                  <Link href={t.href} className="row-link hit min-w-0 text-sm font-medium text-pretty text-ink hover:text-accent-ink">{t.title}</Link>
                   {t.mine ? <Badge tone="accent" className="ml-auto shrink-0">Yours</Badge> : null}
                 </p>
                 <p className="t-caption mt-0.5">{PRIORITY[t.priority]} priority · {t.state === 'waiting' ? 'Waiting' : 'Open'} · {t.owner ?? 'Nobody owns it'}</p>
