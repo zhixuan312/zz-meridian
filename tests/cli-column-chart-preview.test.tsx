@@ -94,6 +94,19 @@ describe('the Column chart\'s specimens: every state is drawn', () => {
     expect(stacked.filter((c) => c.querySelectorAll('[data-part]').length === 3)).toHaveLength(1);
   });
 
+  it('draws more columns than a narrow card has room for, a year of days among them, and fixes no gap between them', () => {
+    render(<ColumnChartPreview />);
+    for (const [caption, count] of [['Ninety days in a narrow card: a pixel between columns', 90], ['A year of days in a narrow card: 360 columns, nothing between them', 360]] as const) {
+      const chart = drawn(caption);
+      expect(columns(chart), caption).toHaveLength(count);
+      expect(chart.closest('.max-w-sm'), caption).not.toBeNull();
+      // A fixed gap is what 360 columns cannot give up: 718px of a card 336px wide.
+      for (const row of [columns(chart)[0].parentElement!, chart.querySelector(':scope > div[aria-hidden]:not([data-plot])')!]) {
+        expect(row.className.split(' ').filter((name) => name.startsWith('gap-')), caption).toEqual([]);
+      }
+    }
+  });
+
   it('draws a running column pointed at, with so far in the plain value and in the stacked readout', () => {
     render(<ColumnChartPreview />);
     const plain = drawn('Plain: the running day read');

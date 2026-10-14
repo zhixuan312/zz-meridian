@@ -43,7 +43,8 @@ Text never wears a series colour; values and labels stay in ink.
 ## Marks
 
 - Lines 2px with round joins; a dashed line 1.5px. The featured series carries a soft glow of its own colour on the dark ground.
-- Bars and columns with 2px gaps and 4px rounded data ends, anchored to the baseline.
+- Bars and columns with 2px gaps and 4px rounded data ends, anchored to the baseline. A chart is never wider than its card: a Column chart with more columns than room closes the gap, to 1px and then to none, before it would outgrow it.
+- A label inside a plot stands where no series is drawn. A Trend chart sets its baseline's label beside the dashed line at whichever end is clear, and draws no label when neither is.
 - Gridlines recessive (`chart-grid`), one baseline (`chart-axis`), axis labels at `text-2xs` in `ink-3`. Axis labels are a scale: `$12`, `1.2M`; the exact value is in the tooltip and the table.
 - A legend is always present for two or more series or parts; a single series is named by its title.
 - A column's value stands above it at rest, in `ink-3`, while a column is at least 36px wide; narrower, it shows for the column pointed at. Stacked, the value is the column's total.

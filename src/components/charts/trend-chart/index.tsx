@@ -20,6 +20,55 @@ export type TrendSeries = {
 };
 
 /**
+ * The baseline's label, in pixels: the width a character is given (the text is `text-2xs` in tabular figures and its
+ * width is not known before it is drawn, so this errs wide), how far its ink rises over its text baseline and drops
+ * under it, and the air kept between that ink and anything drawn.
+ */
+const CHAR = 7, RISE = 9, DROP = 3, AIR = 4;
+/** Beside the dashed line: the label's text 6px over it, or its ink 5px under it. */
+const OVER = 6, UNDER = RISE + 5;
+
+/** A series as the plot draws it: where each point stands, and whether it fills what is under its line. */
+type Drawn = { ys: (number | null)[]; filled: boolean };
+
+/**
+ * Where the baseline's label stands: at an end of the dashed line, beside it, and never where a series is drawn. Its
+ * first place is the right end, over the line. When a series comes within its box there, the candidates are, at each
+ * end, the nearest clear place over the dashed line (lifted clear of the highest point under the label) and the
+ * nearest under it (set clear of the lowest), and the one nearest the dashed line wins; of two as near, the right end
+ * before the left, and over before under. A series that fills what is under it, an area or a band of a stack, leaves
+ * no place under its line. The label keeps inside `plot`. When no place is clear there is no label: the dashed line
+ * stands alone, and the table's caption still names it.
+ */
+function placeLabel(text: string, line: number, plot: { left: number; right: number; top: number; bottom: number }, xs: number[], drawn: Drawn[]) {
+  const wide = text.length * CHAR, last = xs.length - 1;
+  let best: { x: number; y: number; anchor: 'end' | 'start'; far: number } | null = null;
+  if (wide > plot.right - plot.left) return best;
+  for (const anchor of ['end', 'start'] as const) {
+    const from = anchor === 'end' ? plot.right - wide : plot.left, to = from + wide;
+    // The points under the label: those inside its span and one more on each side, because a curve that never
+    // overshoots its data stays between neighbouring points.
+    const under = xs.map((_, i) => i).filter((i) => xs[Math.min(last, i + 1)] >= from - AIR && xs[Math.max(0, i - 1)] <= to + AIR);
+    // Where the label's text baseline may not be: on the dashed line, and wherever its ink would come within the air of a series.
+    const shut: [number, number][] = [[line - OVER, line + UNDER]];
+    for (const s of drawn) {
+      const ys = under.map((i) => s.ys[i]).filter((y): y is number => y !== null);
+      if (ys.length) shut.push([Math.min(...ys) - DROP - AIR, s.filled ? Infinity : Math.max(...ys) + RISE + AIR]);
+    }
+    /** The nearest place to `y`, going up or down, that is in none of them. */
+    const clear = (y: number, up: boolean) => {
+      for (let hit = shut.find(([a, b]) => y > a && y < b); hit; hit = shut.find(([a, b]) => y > a && y < b)) y = up ? hit[0] : hit[1];
+      return y;
+    };
+    const over = clear(line - OVER, true), below = clear(line + UNDER, false);
+    for (const [y, far, fits] of [[over, line - OVER - over, over - RISE >= plot.top], [below, below - line - UNDER, below + DROP <= plot.bottom]] as const) {
+      if (fits && (!best || far < best.far)) best = { x: anchor === 'end' ? plot.right : plot.left, y, anchor, far };
+    }
+  }
+  return best;
+}
+
+/**
  * A time series: one shared axis, at most one area, any number of lines. Never two y-scales: two measures of a
  * different size are two charts on one Meridian. Point, or move with the arrow keys, to read a day; every chart on
  * the page follows.
@@ -139,6 +188,18 @@ export function TrendChart({
     [series, width, h, top, running],
   );
 
+  // The baseline's label is placed against everything the plot draws: every line, and the top of every band of a stack.
+  // It may stand in the 14px the chart keeps clear over its top gridline, and never under the axis.
+  const usual = baseline
+    ? placeLabel(
+        baseline.label,
+        y(baseline.value),
+        { left: pad.l, right: pad.l + W, top: pad.t - 14, bottom: pad.t + H },
+        dates.map((_, i) => x(i)),
+        bases ? bases.map(({ upper }) => ({ ys: upper.map(y), filled: true })) : series.map((s) => ({ ys: s.values.map((v) => (v === null ? null : y(v))), filled: s.kind === 'area' })),
+      )
+    : null;
+
   const labelEvery = Math.max(1, Math.ceil(n / Math.max(2, Math.floor(W / 92))));
   const xLabels = dates.map((d, i) => ({ d, i })).filter(({ i }) => (n - 1 - i) % labelEvery === 0);
 
@@ -206,10 +267,11 @@ export function TrendChart({
             </g>
           ))}
           {baseline ? (
-            // What is usual: a dashed hairline under the data, its label lifted off the line by a halo of the card.
+            // What is usual: a dashed hairline under the data. Its label stands where no series is drawn; the halo of the
+            // card lifts it off a gridline that passes behind it.
             <g className="fade-in" pointerEvents="none">
               <line x1={pad.l} x2={pad.l + W} y1={y(baseline.value)} y2={y(baseline.value)} stroke="var(--ink-3)" strokeOpacity={0.6} strokeDasharray="3 4" shapeRendering="crispEdges" />
-              <text x={pad.l + W} y={y(baseline.value) - 6} textAnchor="end" stroke="var(--surface)" strokeWidth={4} strokeLinejoin="round" paintOrder="stroke" className="fill-ink-3 text-2xs tabular-nums">{baseline.label}</text>
+              {usual ? <text x={usual.x} y={usual.y} textAnchor={usual.anchor} stroke="var(--surface)" strokeWidth={4} strokeLinejoin="round" paintOrder="stroke" className="fill-ink-3 text-2xs tabular-nums">{baseline.label}</text> : null}
             </g>
           ) : null}
           {xLabels.map(({ d, i }) => (

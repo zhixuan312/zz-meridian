@@ -32,7 +32,7 @@ export default function TrendChartPreview() {
           />
         </Plane>
       </Specimen>
-      <Specimen label="Against what is usual" note="baseline: the period's median as a dashed hairline under the data, its label at the end on a halo of the card. A spike reads against it at a glance.">
+      <Specimen label="Against what is usual" note="baseline: the period's median as a dashed hairline under the data, named at an end of it. A spike reads against it at a glance. The label stands 6px over the right end unless a series is drawn there; then it takes the nearest place beside the dashed line that no series crosses. The sample's p95 runs along its median, so here the label has moved clear of it.">
         <Plane on="surface">
           <TrendChart
             label="Latency p95 per day"

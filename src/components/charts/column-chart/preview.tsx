@@ -12,6 +12,8 @@ import { ColumnChart, type ColumnPart, type StackedColumn } from '.';
 const week = demoSeries('7d').current;
 const fortnight = demoSeries('30d').current.slice(-14);
 const month = demoSeries('30d').current;
+const quarter = demoSeries('90d').current;
+const year = demoSeries('all').current;
 const day = (date: string) => formatDate(date).replace(/ \d{4}$/, '');
 /** A chart whose columns are periods names each one's date, so its labels thin as dates do and are never cut. */
 const dates = (days: DailyPoint[]) => days.map((d) => d.date);
@@ -126,6 +128,18 @@ export default function ColumnChartPreview() {
         <State label="Fourteen days in a narrow card: under 36px a column" className="w-full">
           <Plane on="surface" className="max-w-sm">
             <ColumnChart label="Errors per day, last 14 days, in a narrow card" height={160} axisFormat={axis} dates={dates(fortnight)} columns={errors(fortnight)} />
+          </Plane>
+        </State>
+      </Specimen>
+      <Specimen label="More columns than room" stack note="A chart never grows past its card. The 2px between columns are kept while every column has a pixel of its own; with less room the gap is a pixel, then none, and only then do the columns go under a pixel. Past that the chart is a shape and no column is read: a Trend chart is the form for so many periods.">
+        <State label="Ninety days in a narrow card: a pixel between columns" className="w-full">
+          <Plane on="surface" className="max-w-sm">
+            <ColumnChart label="Errors per day, last 90 days, in a narrow card" height={160} axisFormat={axis} dates={dates(quarter)} columns={errors(quarter)} />
+          </Plane>
+        </State>
+        <State label="A year of days in a narrow card: 360 columns, nothing between them" className="w-full">
+          <Plane on="surface" className="max-w-sm">
+            <ColumnChart label="Errors per day, a year of days, in a narrow card" height={160} axisFormat={axis} dates={dates(year)} columns={errors(year)} />
           </Plane>
         </State>
       </Specimen>

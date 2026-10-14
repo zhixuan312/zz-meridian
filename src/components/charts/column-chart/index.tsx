@@ -39,8 +39,22 @@ export type ColumnChartProps = Shared & (
   | { columns: StackedColumn[]; parts: ColumnPart[] }
 );
 
-/** The measures in pixels: the space between columns, the narrowest column that keeps its value at rest, the most parts drawn. */
-const GAP = 2, REST = 36, MOST = 4;
+/**
+ * The measures in pixels: the space between columns, the least a column keeps before that space gives way, the
+ * narrowest column that keeps its value at rest, and the most parts drawn.
+ */
+const GAP = 2, THIN = 1, REST = 36, MOST = 4;
+/**
+ * The plot widths past which `n` columns stand another pixel apart, up to `GAP`: each is the width at which every
+ * column still has `THIN` of its own. A chart with more columns than room closes its gaps before it outgrows its box,
+ * and a whole pixel at a time, since a fraction of one is drawn as a gap here and none there.
+ */
+const opens = (n: number) => Array.from({ length: n > 1 ? GAP : 0 }, (_, k) => n * THIN + (k + 1) * (n - 1));
+/**
+ * The gap as the rows carry it: an expression of a row's own width, so it is right in the server's HTML, before any
+ * width is measured. Each term steps from nothing to a pixel as the row passes one of the widths above.
+ */
+const gapOf = (n: number) => (n > 1 ? `calc(${opens(n).map((w) => `clamp(0px, (100% - ${w}px) * 1000, 1px)`).join(' + ')})` : '0px');
 const TONES = { neutral: 'var(--chart-neutral-strong)', warning: 'var(--warning)', critical: 'var(--critical)' };
 const count = (n: number) => n.toLocaleString('en-US');
 /** A value that is missing, or below zero, is no contribution to its column. */
@@ -118,8 +132,10 @@ export function ColumnChart({
   // A category left unlabelled cannot be told apart, so categories each keep a label, cut to their own column, once
   // a column has room for a few letters; dates keep their rhythm and skip.
   const every1 = !timed && !every && (width - left) / n >= 36;
+  // The gap in pixels at this width, as the rows' own expression resolves it: all of GAP wherever there is room.
+  const gap = opens(n).filter((w) => width - left > w).length;
   // A column wide enough for a figure keeps its value above it at rest; a narrower one shows it when pointed at.
-  const column = n ? (width - left - GAP * (n - 1)) / n : 0;
+  const column = n ? (width - left - gap * (n - 1)) / n : 0;
   const rest = column >= REST;
   // Whatever is centred on a column and may be wider than it starts with the first column and ends with the last, so
   // nothing runs past the plot; inside those, a narrower one is still centred.
@@ -171,7 +187,7 @@ export function ColumnChart({
               <span className={cn('h-px flex-1', t === 0 ? 'bg-chart-axis' : 'bg-chart-grid')} />
             </div>
           ))}
-          <div className="absolute inset-y-0 right-0 flex items-end gap-0.5" style={{ left }}>
+          <div className="absolute inset-y-0 right-0 flex items-end" style={{ left, columnGap: gapOf(n) }}>
             {bars.map((b, i) => {
               const pointed = active === i;
               const hot = pointed || (active === null && b.key === highlight);
@@ -201,8 +217,9 @@ export function ColumnChart({
                         drawn && hot && 'z-1 ring-2 ring-ink',
                         // A period still running: a dashed outline, open at the baseline, around a fill at half strength. The
                         // outline has a pixel of its own and a pixel of the card inside it, so it covers no part and holds
-                        // its contrast whatever it surrounds; it is what keeps a faded column a column on a dark card.
-                        unfinished && 'border border-b-0 border-dashed border-ink p-px pb-0',
+                        // its contrast whatever it surrounds; it is what keeps a faded column a column on a dark card. It
+                        // needs 4px of its own; in a narrower column it ends with the column and never runs past the plot.
+                        unfinished && 'ml-[min(0px,calc(100%-4px))] border border-b-0 border-dashed border-ink p-px pb-0',
                       )}
                       style={{ ['--i' as string]: i }}
                     >
@@ -251,7 +268,7 @@ export function ColumnChart({
           </div>
         </div>
         {on && at !== null && drawn ? (
-          <Readout at={left + at * (column + GAP) + (after ? column : 0)} after={after} visible={local || previewIndex !== undefined}>
+          <Readout at={left + at * (column + gap) + (after ? column : 0)} after={after} visible={local || previewIndex !== undefined}>
             <p className="t-eyebrow mb-1.5 break-words">{on.label}{at === soFar ? ' · so far' : null}</p>
             {/* The parts top to bottom, as they sit in the column, a part at zero included, then the total. */}
             {drawn.map((p, k) => ({ p, k })).reverse().map(({ p, k }) => (
@@ -268,7 +285,7 @@ export function ColumnChart({
           </Readout>
         ) : null}
       </div>
-      <div aria-hidden className="mt-2 flex gap-0.5 text-2xs text-ink-3" style={{ paddingLeft: left }}>
+      <div aria-hidden className="mt-2 flex text-2xs text-ink-3" style={{ paddingLeft: left, columnGap: gapOf(n) }}>
         {bars.map((b, i) => (
           <span key={b.key} className="relative h-4 min-w-0 flex-1">
             {active === i ? (
