@@ -3,8 +3,8 @@ import { PageFrame } from '@/components/base/shell';
 import { ExportButton } from '@/components/patterns/export-button';
 import { Freshness } from '@/components/patterns/freshness';
 import { PeriodSelect } from '@/components/patterns/period-select';
-import { Skeleton } from '@/components/ui/skeleton';
 import { HomeBody } from '@/views/home';
+import { HomeActionsRoom, PeriodRoom } from '@/views/home-actions';
 import { gate } from '@/data/access';
 import { DEMO_NOW, DEMO_UPDATED_AT } from '@/data/sample';
 import { dayRows } from '@/views/home-context';
@@ -12,7 +12,7 @@ import { homeTool } from '@/views/tools';
 import { cache } from 'react';
 import { parsePeriod } from '@/lib/period';
 import { app, workspaces } from '@/app.config';
-import { Busy } from '@/components/patterns/page-loading';
+import { Busy, LeadRoom } from '@/components/patterns/page-loading';
 import { HomeSkeleton } from './loading';
 
 export const metadata = { title: 'Home' };
@@ -22,7 +22,14 @@ type SearchParams = Promise<{ period?: string; day?: string }>;
 /** The page's one read, through the Home tool (`src/views/tools.ts`), shared by the export and the body. */
 const readPeriod = cache((period: ReturnType<typeof parsePeriod>, day?: string) => homeTool.read({ period, day: /^\d{4}-\d{2}-\d{2}$/.test(day ?? '') ? day : undefined }));
 
-/** The page asks its feature before it renders — the rail hiding `/` is presentation, not this gate — then the masthead renders and the title, the period select, the export and the body read the address inside their own boundaries. Next always passes the address; the default keeps the component callable with none, which a check that renders it bare relies on. */
+/**
+ * The page asks its feature before it renders — the rail hiding `/` is presentation, not this gate — then the masthead
+ * renders and the title, the line under it, the period select, the export and the body read the address inside their
+ * own boundaries. Each fallback takes the room of what it waits for (the line's room, the controls' width), and so
+ * does `loading.tsx`, so the body starts at one height from the first frame to the last. The nine parts are one
+ * boundary: a part with a boundary of its own would be written after the others. Next always passes the address; the
+ * default keeps the component callable with none, which a check that renders it bare relies on.
+ */
 export default async function HomePage({ searchParams }: { searchParams: SearchParams } = { searchParams: Promise.resolve({}) }) {
   const denied = await gate('home');
   if (denied) return denied;
@@ -32,13 +39,13 @@ export default async function HomePage({ searchParams }: { searchParams: SearchP
       name="Home"
       title={<Title searchParams={searchParams} />}
       description={
-        <Suspense fallback={workspaces.main.audience}>
+        <Suspense fallback={<LeadRoom />}>
           <Lead searchParams={searchParams} />
         </Suspense>
       }
       meta={<Freshness updatedAt={DEMO_UPDATED_AT} now={DEMO_NOW} />}
       actions={
-        <Suspense fallback={<Skeleton className="h-9 w-48 rounded-md" />}>
+        <Suspense fallback={<HomeActionsRoom />}>
           <Actions searchParams={searchParams} />
         </Suspense>
       }
@@ -60,7 +67,7 @@ async function Title({ searchParams }: { searchParams: SearchParams }) {
 async function Lead({ searchParams }: { searchParams: SearchParams }) {
   const { period, day } = await searchParams;
   const { data } = await readPeriod(parsePeriod(period), day);
-  return <>{data.line ? `${data.line} ` : ''}{workspaces.main.audience}</>;
+  return <LeadRoom>{data.line ? `${data.line} ` : ''}{workspaces.main.audience}</LeadRoom>;
 }
 
 async function Actions({ searchParams }: { searchParams: SearchParams }) {
@@ -68,7 +75,7 @@ async function Actions({ searchParams }: { searchParams: SearchParams }) {
   const { data } = await readPeriod(period);
   return (
     <>
-      <Suspense><PeriodSelect value={period} /></Suspense>
+      <Suspense fallback={<PeriodRoom />}><PeriodSelect value={period} /></Suspense>
       <ExportButton rows={dayRows(data.series)} filename={`home-${period}.csv`} noun="days" />
     </>
   );

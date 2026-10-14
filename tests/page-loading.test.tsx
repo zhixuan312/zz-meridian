@@ -3,7 +3,7 @@ import path from 'node:path';
 import { cleanup, render, screen } from '@testing-library/react';
 import type { ReactElement } from 'react';
 import { describe, expect, it } from 'vitest';
-import { Busy, ChartSkeleton, LoadingPage, TableSkeleton, TilesSkeleton } from '@/components/patterns/page-loading';
+import { Busy, ChartSkeleton, LeadRoom, LoadingPage, TableSkeleton, TilesSkeleton } from '@/components/patterns/page-loading';
 
 const ROOT = path.resolve(import.meta.dirname, '..');
 const CARD = 'src/components/patterns/page-loading';
@@ -59,6 +59,38 @@ describe('a page on its way', () => {
     render(<LoadingPage name="request" sentence><p>The body</p></LoadingPage>);
     expect(screen.getByRole('heading', { level: 1 }).className).toBe('t-page');
     expect(screen.getByRole('heading', { level: 1 }).textContent).toBe('');
+  });
+
+  it('holds the masthead its page will have: the kicker, the room of a long sentence, the freshness and where the actions stand', () => {
+    const { container } = render(
+      <LoadingPage name="home" title="Home" sentence kicker="ZZ Meridian · Production" lead meta={<span>Updated 4 min ago</span>} actions={<span data-actions-room>Period and Export</span>}>
+        <p>The body</p>
+      </LoadingPage>,
+    );
+    const masthead = container.querySelector('header')!;
+    expect(masthead.querySelector('.t-kicker')!.textContent).toBe('ZZ Meridian · Production');
+    // The sentence's room is the one a page keeps around its own sentence: at least three lines of the lead, more as its column narrows.
+    const room = masthead.querySelector('[data-lead-room]')!;
+    expect(room.closest('.t-lead')).toBeTruthy();
+    expect(room.firstElementChild!.className).toMatch(/\bmin-h-\[6lh\]/);
+    expect(room.firstElementChild!.className).toMatch(/@min-\[34em\]:min-h-\[3lh\]/);
+    expect(room.querySelectorAll('span[aria-hidden="true"]').length).toBeGreaterThan(0);
+    expect(masthead.textContent).toContain('Updated 4 min ago');
+    expect(masthead.querySelector('[data-actions-room]')).toBeTruthy();
+    // Without them the frame keeps its skeleton kicker, one bar of description and no actions, as before.
+    cleanup();
+    const bare = render(<LoadingPage name="customers" title="Customers"><p>The body</p></LoadingPage>).container.querySelector('header')!;
+    expect(bare.querySelector('[data-lead-room]')).toBeNull();
+    expect(bare.querySelector('.t-kicker')!.textContent).toBe('');
+  });
+
+  it('keeps the same room around the sentence a page draws, so its arrival moves nothing', () => {
+    const empty = render(<p className="t-lead"><LeadRoom /></p>).container.querySelector('[data-lead-room]')!;
+    cleanup();
+    const full = render(<p className="t-lead"><LeadRoom>320 customers, and Inference API is degraded.</LeadRoom></p>).container.querySelector('[data-lead-room]')!;
+    expect(full.firstElementChild!.className).toBe(empty.firstElementChild!.className);
+    expect(full.textContent).toBe('320 customers, and Inference API is degraded.');
+    expect(full.querySelector('span[aria-hidden="true"]')).toBeNull();
   });
 
   it('announces a body that streams under a masthead that is already real', () => {

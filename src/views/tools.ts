@@ -13,9 +13,9 @@ import { FEATURES } from '@/data/features';
 import { read, readAll } from '@/data/read';
 import { readRequests, REQUEST_PAGE } from '@/data/requests';
 import { readReleases, readRuns } from '@/data/engineering';
-import { attempt, readMainSummary } from '@/data/main';
+import { attempt } from '@/data/main';
 import { readTickets } from '@/data/tickets';
-import { readActivity, readDays, readEndpoints, readIncidents, readResponses, readServices } from '@/data/metrics';
+import { readActivity, readDays, readEndpoints, readIncidents, readServices } from '@/data/metrics';
 import {
   DEMO_UPDATED_AT, STATUS_TEXT, payloadsOf, traceOf,
   type ApiKey, type ComputeRow, type CostRow, type CustomerRecord, type Member, type Model, type RequestRow, type Ticket, type UsageRow,
@@ -67,16 +67,14 @@ export const homeTool = defineViewTool({
     // once: for anyone else it is not read at all, and the data carries nothing in its place.
     const mayCost = await can(await resolveAccess(), 'costs', 'read');
     // Each read apart from the others: one that fails leaves its part saying so and the rest standing.
-    const [days, history, customers, usage, models, compute, costs, services, incidents, releases, tickets, endpoints, mix, activity, summary] = await Promise.all([
+    const [days, history, customers, usage, models, compute, costs, services, incidents, releases, tickets] = await Promise.all([
       attempt(() => readDays(p)), readHistory(), rowsOf<CustomerRecord>('customers'), rowsOf<UsageRow>('usage'), rowsOf<Model>('models'), rowsOf<ComputeRow>('compute'),
       mayCost ? rowsOf<CostRow>('costs') : undefined,
       attempt(readServices), attempt(async () => (await readIncidents()).all), attempt(async () => (await readReleases()).rows), rowsOf<Ticket>('tickets'),
-      // What today's body draws, until the page draws its parts.
-      attempt(readEndpoints), attempt(readResponses), attempt(readActivity), readMainSummary(),
     ]);
     const data = homeData({
       period: p, day: d ?? null, days, history, customers, usage, models, compute, ...(mayCost ? { costs } : {}), services, incidents, releases, tickets,
-      endpoints: endpoints ?? [], mix: mix ?? [], activity: activity ?? [], summary, updatedAt: updatedAt(), now: days?.observedAt ?? clock().toISOString(),
+      updatedAt: updatedAt(), now: days?.observedAt ?? clock().toISOString(),
     });
     const index = d ? data.series.findIndex((x) => x.date === d) : -1;
     return { context: homeContext(data, index >= 0 ? index : null), data };

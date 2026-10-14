@@ -8,18 +8,17 @@
  * margin at all.
  */
 import { facts as rules } from '@/app.config';
-import type { ActivityEvent } from '@/components/patterns/activity-feed';
 import type { Incident } from '@/components/patterns/incident-card';
 import type { ReleaseRow } from '@/data/engineering';
 import { totalsOf } from '@/data/metrics';
-import type { ComputeRow, CostRow, CustomerRecord, DailyPoint, Endpoint, Model, Ticket, Totals, UsageRow } from '@/data/sample';
+import type { ComputeRow, CostRow, CustomerRecord, DailyPoint, Model, Ticket, Totals, UsageRow } from '@/data/sample';
 import { first, periods, record, steady, total, type Fact } from '@/lib/facts';
 import { formatCompact, formatCost, formatDuration, formatPercent, plural } from '@/lib/format';
+import { median } from '@/lib/insight';
 import { PERIOD_DAYS, type Period } from '@/lib/period';
 import { allSentMore, customerFigures, customersAddress, kept, sentMore } from './customers-context';
 import { HISTORY_UNREAD, handed, inDays, type PageHead, type ServiceNow } from './fact-insight';
 import { INCIDENTS_OPEN, SERVICES_OPERATIONAL, homeLine, homeTitle, unwellNames, type HomeData, type HomeFigure, type HomeWindow, type WorthKnowing } from './home-context';
-import type { MainSummary } from './main-summary';
 import { releaseMoment, releasesAddress, releaseFigures, stageOf } from './releases-context';
 import { ticketCounts } from './tickets-context';
 
@@ -44,13 +43,17 @@ function windowsOf(history: readonly DailyPoint[], length: number): HomeWindow[]
   return out;
 }
 
-/** The year's card: its windows and its title, which states how requests moved from the first window to the latest and the range of the windows' p95. */
+/**
+ * The year's card: its windows, its title, which states how requests moved from the first window to the latest and the
+ * range of the windows' p95, and the median of the windows' p95, which its latency chart draws as its baseline.
+ */
 function yearOf(history: readonly DailyPoint[], period: Period): NonNullable<HomeData['year']> {
   const windows = windowsOf(history, PERIOD_DAYS[period] ?? history.length);
-  if (windows.length < 2) return { title: 'Requests and latency, a period at a time', windows };
-  const grew = windows.at(-1)!.requests / windows[0].requests - 1;
   const p95 = windows.map((w) => w.p95);
-  return { title: `Requests ${grew < 0 ? 'fell' : 'grew'} ${formatPercent(Math.abs(grew), 1)} in a year, and p95 stayed between ${Math.round(Math.min(...p95))} and ${Math.round(Math.max(...p95))} ms`, windows };
+  const typical = p95.length ? median(p95) : null;
+  if (windows.length < 2) return { title: 'Requests and latency, a period at a time', windows, median: typical };
+  const grew = windows.at(-1)!.requests / windows[0].requests - 1;
+  return { title: `Requests ${grew < 0 ? 'fell' : 'grew'} ${formatPercent(Math.abs(grew), 1)} in a year, and p95 stayed between ${Math.round(Math.min(...p95))} and ${Math.round(Math.max(...p95))} ms`, windows, median: typical };
 }
 
 /**
@@ -126,10 +129,6 @@ export type HomeReads = {
   incidents: Incident[] | null;
   releases: ReleaseRow[] | null;
   tickets: Pick<Ticket, 'state'>[] | null;
-  endpoints: Endpoint[];
-  mix: { label: string; value: number }[];
-  activity: ActivityEvent[];
-  summary: MainSummary;
   updatedAt: string;
   now: string;
 };
@@ -182,7 +181,7 @@ function worthKnowing({ incidents, customers, releases, now }: { incidents: Inci
   return lines.slice(0, WORTH_LINES);
 }
 
-/** The totals of no days: what a period with no day read hands today's body. */
+/** The totals of no days: what a period whose days could not be read is counted as, though no part draws them. */
 const NO_TOTALS: Totals = { requests: 0, errorRate: 0, p95: 0, revenue: 0 };
 
 /** Home's data from what its read could read. */
@@ -295,10 +294,6 @@ export function homeData(r: HomeReads): HomeData {
     },
     worth: worthKnowing({ incidents, customers: r.customers, releases, now: r.now }),
     unread,
-    endpoints: r.endpoints,
-    mix: r.mix,
-    activity: r.activity,
-    summary: r.summary,
     updatedAt: r.updatedAt,
     now: r.now,
     day: r.day,

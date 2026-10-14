@@ -31,7 +31,7 @@ import { CustomersView } from '@/views/customers';
 import { customerFigures, customerRow } from '@/views/customers-context';
 import { ServicesBody } from '@/views/services';
 import { servicesContext } from '@/views/services-context';
-import { MainRegions } from '@/views/home';
+import type { HomeData } from '@/views/home-context';
 import { SettingsBody } from '@/views/settings';
 import { matchingRuns, testFigures } from '@/views/tests-context';
 import { matchingTickets } from '@/views/tickets-context';
@@ -61,7 +61,7 @@ beforeEach(() => { jar.value = 'members_1'; toasts.length = 0; });
 afterEach(() => { for (const [name, query] of kept) collection(name).query = query as never; kept.clear(); });
 
 describe('a count opens the records it counts', () => {
-  it('failing verifications: the bell\'s link and Main\'s figure open the latest run of each, and only the failed ones', async () => {
+  it('failing verifications: the bell\'s link opens the latest run of each, and only the failed ones', async () => {
     const { rows } = await readRuns();
     const { failing } = testFigures(rows);
     expect(failing.length).toBeGreaterThan(0);
@@ -71,9 +71,6 @@ describe('a count opens the records it counts', () => {
     const q = asked(alert.href);
     const opened = matchingRuns(rows, { q: q.q ?? '', state: q.state ?? 'all', release: q.release ?? '', runs: q.runs });
     expect(opened.map((r) => r.id).sort()).toEqual(failing.map((r) => r.id).sort());
-    render(<MainRegions summary={{ business: null, operation: null, delivery: { open: 0, waiting: 0, failing: failing.length, live: 0, ready: 0, testing: 0 } } as never} />);
-    const figure = screen.getAllByRole('link').find((a) => (a.getAttribute('href') ?? '').startsWith('/tests'))!;
-    expect(asked(figure.getAttribute('href')!)).toEqual(q);
   });
 
   it('a ticket nobody owns: the bell\'s alert opens the list on that ticket, not every high-priority one', async () => {
@@ -114,12 +111,13 @@ describe('Services, when more than one incident is open', () => {
   });
 });
 
-describe('what Main tells the assistant of the business', () => {
-  it('is how many customers there are and how many of each status, the figures the Business region counts', async () => {
+describe('what Home tells the assistant of the business', () => {
+  it('is how many customers there are and how many of each status, the figures the Customers tile and the Business card count', async () => {
     const { context, data } = await viewTools.find((t) => t.name === 'home')!.read({ period: '30d' });
-    const business = (data as { summary: { business: { customers: number; byStatus: Record<string, number> } } }).summary.business;
+    const { customers, business } = data as HomeData;
     const fact = context.facts.find((f) => f.label === 'Customers')?.value ?? '';
-    expect(fact).toBe(`${business.customers}: ${business.byStatus.active} active, ${business.byStatus.trial} on a trial, ${business.byStatus['past due']} past due`);
+    expect(fact).toBe(`${customers!.count}: ${customers!.active} active, ${customers!.trial} on a trial, ${customers!.pastDue} past due`);
+    expect(business.lines.find((l) => l.label === 'Customers')?.value).toBe(String(customers!.count));
   });
 });
 

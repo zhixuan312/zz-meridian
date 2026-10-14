@@ -14,9 +14,9 @@ vi.mock('next/cache', () => ({ cacheTag: () => {}, cacheLife: () => {}, updateTa
 import { createTicket, updateTicket } from '../app/(dashboard)/operations-tickets/actions';
 import { collectionFor, resolveAccess } from '@/data/access';
 import { collections } from '@/data/collections';
-import { readMainSummary } from '@/data/main';
 import { collectionTag, read } from '@/data/read';
 import { readTickets } from '@/data/tickets';
+import type { HomeData } from '@/views/home-context';
 import { ticketCounts } from '@/views/tickets-context';
 import { viewTools } from '@/views/tools';
 
@@ -55,11 +55,13 @@ describe('a ticket created from the page', () => {
   });
 });
 
-describe('a ticket created from the page, as Main counts it', () => {
-  it('raises the open tickets of Main\'s delivery summary at its next read', async () => {
-    const before = (await readMainSummary()).delivery!.open;
-    expect(await createTicket({ ...draft, title: 'Counted by Main' })).toEqual({ ok: true });
-    expect((await readMainSummary()).delivery!.open).toBe(before + 1);
+describe('a ticket created from the page, as Home counts it', () => {
+  it('raises the open tickets of Home\'s Engineering card at its next read', async () => {
+    const home = viewTools.find((t) => t.name === 'home')!;
+    const open = async () => Number(((await home.read({ period: '30d' })).data as HomeData).engineering.lines.find((l) => l.label === 'Tickets open')!.value);
+    const before = await open();
+    expect(await createTicket({ ...draft, title: 'Counted by Home' })).toEqual({ ok: true });
+    expect(await open()).toBe(before + 1);
   });
 });
 

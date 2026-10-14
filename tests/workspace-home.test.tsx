@@ -1,6 +1,5 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { render, screen, within } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const jar = vi.hoisted(() => ({ value: undefined as string | undefined }));
@@ -19,9 +18,8 @@ vi.mock('@/data/roles', async (original) => {
 import { collections } from '@/data/collections';
 import { FEATURES } from '@/data/features';
 import { readReleases } from '@/data/engineering';
-import { latestRuns } from '@/data/verification';
 import { customerFigures } from '@/views/customers-context';
-import { MainRegions } from '@/views/home';
+import type { HomeData } from '@/views/home-context';
 import { releaseFigures } from '@/views/releases-context';
 import { ticketCounts } from '@/views/tickets-context';
 import { viewTools } from '@/views/tools';
@@ -29,7 +27,9 @@ import { viewTools } from '@/views/tools';
 type Row = Record<string, unknown>;
 const all = async (name: string) => (await collections.find((c) => c.name === name)!.query({})).rows as Row[];
 const tool = viewTools.find((t) => t.name === 'home')!;
-const summaryOf = async () => ((await tool.read({ period: '30d' })).data as { summary: Record<'business' | 'operation' | 'delivery', Record<string, unknown> | null> }).summary;
+const homeOf = async () => (await tool.read({ period: '30d' })).data as HomeData;
+/** A team card's line, by its label. */
+const line = (team: HomeData['business'], label: string) => team.lines.find((l) => l.label === label)?.value;
 const needs = [...(FEATURES.home.needs as unknown as { allOf: readonly string[] }).allOf];
 const services = collections.find((c) => c.name === 'services')!;
 const query = services.query;
@@ -37,58 +37,47 @@ const query = services.query;
 beforeEach(() => { jar.value = 'members_12'; policy.viewer = null; });
 afterEach(() => { services.query = query; });
 
-describe('what Main says of the whole product', () => {
-  it('counts the business from every customer that has not left: how many, by status and by plan, and what they paid', async () => {
+describe("what Home's two team cards say of the whole product", () => {
+  it('Business counts every customer that has not left: how many, on a trial and past due, and what they paid', async () => {
     const every = await all('customers');
     const figures = customerFigures(every as never);
-    // A customer that has left keeps its record and is in no count: not the total, not a status, not a plan.
+    // A customer that has left keeps its record and is in no count: not the total, not a status.
     const customers = every.filter((c) => c.status !== 'left');
     expect(every.length).toBeGreaterThan(customers.length);
     expect(customers).toHaveLength(figures.customers);
-    const { business } = await summaryOf();
-    expect(business!.customers).toBe(figures.customers);
-    // The same sum in whatever order the rows were read: a sum of fractions differs in its last digit with the order.
-    expect(business!.revenue).toBeCloseTo(figures.revenue, 6);
-    const count = (field: string) => Object.fromEntries([...new Set(customers.map((c) => String(c[field])))].map((v) => [v, customers.filter((c) => c[field] === v).length]));
-    expect(business!.byStatus).toEqual(count('status'));
-    expect(business!.byPlan).toEqual(count('plan'));
+    const { business, customers: tile } = await homeOf();
+    expect(line(business, 'Customers')).toBe(String(figures.customers));
+    expect(line(business, 'On a trial')).toBe(String(customers.filter((c) => c.status === 'trial').length));
+    expect(line(business, 'Past due')).toBe(String(figures.pastDue.length));
+    // The card and the tile beside the revenue card count the same customers.
+    expect(tile!.count).toBe(figures.customers);
+    expect(business.href).toBe('/business');
   });
 
-  it('names the services that are not well and the incidents nobody has resolved', async () => {
-    const [rows, incidents] = [await all('services'), await all('incidents')];
-    const { operation } = await summaryOf();
-    expect(operation!.degraded).toEqual(rows.filter((s) => s.status === 'degraded').map((s) => s.name));
-    expect(operation!.outage).toEqual(rows.filter((s) => s.status === 'outage').map((s) => s.name));
-    expect((operation!.incidents as Row[]).map((i) => i.id).sort()).toEqual(incidents.filter((i) => i.state !== 'resolved').map((i) => i.id).sort());
-  });
-
-  it('counts delivery from every ticket, the latest run of each verification and every release', async () => {
-    const [tickets, runs] = [await all('tickets'), await all('tests')];
-    const counts = ticketCounts(tickets as never);
-    const { delivery } = await summaryOf();
-    expect(delivery).toMatchObject({ open: counts.open, waiting: counts.waiting });
-    expect(delivery!.failing).toBe((latestRuns(runs as never) as unknown as Row[]).filter((r) => r.state === 'failed').length);
-    // Live, ready and in testing as the Releases page's own tiles count them: by what the verifications say of a release,
-    // not by a state somebody recorded on it.
-    const figures = releaseFigures((await readReleases()).rows);
-    expect(delivery).toMatchObject({ live: figures.live.length, ready: figures.ready, testing: figures.testing });
-    expect(figures.ready + figures.testing).toBeGreaterThan(0);
+  it('Engineering counts the services operational, the incidents nobody has resolved, the releases in testing and the open tickets', async () => {
+    const [rows, incidents, tickets] = [await all('services'), await all('incidents'), await all('tickets')];
+    const { engineering } = await homeOf();
+    expect(line(engineering, 'Services operational')).toBe(`${rows.filter((s) => s.status === 'operational').length} of ${rows.length}`);
+    expect(line(engineering, 'Incidents open')).toBe(String(incidents.filter((i) => i.state !== 'resolved').length));
+    // In testing as the Releases page's own tiles count them: by what the verifications say of a release, not by a state somebody recorded on it.
+    expect(line(engineering, 'Releases in testing')).toBe(String(releaseFigures((await readReleases()).rows).testing));
+    expect(line(engineering, 'Tickets open')).toBe(String(ticketCounts(tickets as never).open));
+    expect(engineering.href).toBe('/engineering');
   });
 });
 
-describe('what Main asks to be opened', () => {
-  it('names every collection its summaries read, and neither members nor keys', () => {
-    for (const grant of ['customers:read', 'days:read', 'services:read', 'incidents:read', 'tickets:read', 'tests:read', 'releases:read']) expect(needs, grant).toContain(grant);
-    expect(needs.filter((g) => /^(members|keys|workspace):/.test(g))).toEqual([]);
+describe('what Home asks to be opened', () => {
+  it('names every collection its parts read, and neither members nor keys nor what compute cost', () => {
+    for (const grant of ['customers:read', 'days:read', 'usage:read', 'models:read', 'compute:read', 'services:read', 'incidents:read', 'tickets:read', 'releases:read']) expect(needs, grant).toContain(grant);
+    expect(needs.filter((g) => /^(members|keys|workspace|costs):/.test(g))).toEqual([]);
     expect(new Set(needs).size).toBe(needs.length);
   });
 
-  it('reads nothing beyond that: a person holding exactly those grants gets all three summaries', async () => {
+  it('reads nothing beyond that: a person holding exactly those grants gets every part', async () => {
     policy.viewer = [...needs];
-    const summary = await summaryOf();
-    expect(summary.business).not.toBeNull();
-    expect(summary.operation).not.toBeNull();
-    expect(summary.delivery).not.toBeNull();
+    const data = await homeOf();
+    expect(data.unread).toEqual([]);
+    for (const team of [data.business, data.engineering]) expect(team.lines.map((l) => l.value)).not.toContain('—');
   });
 
   it('refuses a person who lacks one of them, before anything is read', async () => {
@@ -97,41 +86,15 @@ describe('what Main asks to be opened', () => {
   });
 });
 
-describe('a summary whose data did not arrive', () => {
-  it('is missing, not zero, and the other two still answer', async () => {
+describe('a part whose data did not arrive', () => {
+  it('is missing, not zero, and the rest still answers', async () => {
     services.query = async () => { throw new Error('The store did not answer.'); };
-    const summary = await summaryOf();
-    expect(summary.operation).toBeNull();
-    expect(summary.business).not.toBeNull();
-    expect(summary.delivery).not.toBeNull();
-  });
-});
-
-describe('the three regions on the page', () => {
-  const summary = {
-    business: { customers: 12, byStatus: { active: 9, trial: 2, 'past due': 1 }, byPlan: { Enterprise: 3, Scale: 5, Starter: 4 }, revenue: 48210.5 },
-    operation: { degraded: ['Inference API'], outage: [], incidents: [{ id: 'inc_1', title: 'Elevated latency in eu-west-1' }] },
-    delivery: { open: 4, waiting: 3, failing: 2, live: 3, ready: 1, testing: 3 },
-  };
-  const hrefs = (region: HTMLElement) => within(region).getAllByRole('link').map((a) => a.getAttribute('href') ?? '');
-  const region = (name: string) => screen.getByRole('region', { name });
-
-  it('are Business, Operation and Delivery, each with its figures and a way into its detail', () => {
-    render(<MainRegions summary={summary as never} />);
-    expect(region('Business').textContent).toContain('12');
-    expect(hrefs(region('Business')).some((h) => h.startsWith('/customers'))).toBe(true);
-    expect(hrefs(region('Business')).some((h) => h.startsWith('/usage'))).toBe(true);
-    expect(region('Operation').textContent).toContain('Inference API');
-    expect(region('Operation').textContent).toContain('Elevated latency in eu-west-1');
-    expect(hrefs(region('Operation')).every((h) => h.startsWith('/services'))).toBe(true);
-    for (const page of ['/operations-tickets', '/tests', '/releases']) expect(hrefs(region('Delivery')).some((h) => h.startsWith(page)), page).toBe(true);
-  });
-
-  it('say that a summary is unavailable, and draw no figure for it', () => {
-    render(<MainRegions summary={{ ...summary, delivery: null } as never} />);
-    expect(region('Delivery').textContent).toMatch(/unavailable/i);
-    expect(within(region('Delivery')).queryAllByRole('link')).toEqual([]);
-    expect(region('Business').textContent).toContain('12');
+    const data = await homeOf();
+    expect(data.services).toBeNull();
+    expect(data.unread).toContain('the services');
+    expect(line(data.engineering, 'Services operational')).toBe('—');
+    expect(line(data.business, 'Customers')).not.toBe('—');
+    expect(line(data.engineering, 'Tickets open')).not.toBe('—');
   });
 });
 

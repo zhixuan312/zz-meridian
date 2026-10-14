@@ -126,7 +126,7 @@ its change compares with in `compare` ("vs the 3 days before") and takes a `note
 
 A copied sample page does not do what a product would assume of it. Its writes are held in memory: a ticket, a member or a
 key lives in the running server and is lost when it restarts, until your own database stands behind the collection. Its
-figures that are fixed (Usage' weekday-and-hour grid, hours and regions, the endpoints, the Home's response split)
+figures that are fixed (Usage' weekday-and-hour grid, hours and regions, the endpoints, the responses by status class)
 cover the last 30 complete days: they are not worked out from the request log and do not follow the period chosen. A period is complete days counted
 back from yesterday, `all` is every complete day kept and has no period before it, and the last row of each daily collection may be a day still in
 progress, which `readDays` in `optional:src/data/metrics.ts` hands over on its own and counts in nothing. Nothing runs a suite or ships a version
@@ -157,7 +157,13 @@ Rules that make every page look like it belongs:
   `title` and the page's `width`, and `sentence` when the page is headed by one, around skeletons shaped like the page: `TilesSkeleton`, `ChartSkeleton`,
   `TableSkeleton` or `RecordsSkeleton`; read through `read()` so the page is
   in its prerendered shell and the skeleton is rarely seen, since a request-time read waits at least 300 ms behind it:
-  `cache.md`), empty (Empty state with the one action), error (`error.tsx`, what failed and Retry).
+  `cache.md`), empty (Empty state with the one action), error (`error.tsx`, what failed and Retry), and partial (a
+  part whose read failed keeps its card and its title and says what could not be read, in its own place, while the rest
+  of the page stands; a tile shows a dash). A loading state holds the room of the masthead its page will have, or the
+  body drops when the page arrives: give `LoadingPage` the page's own `kicker` and `meta` when they read no data, `lead`
+  when the sentence under the title is a long one (a line of figures and who the page is for), and `actions` in the
+  controls' own width; the page draws that sentence inside the same `LeadRoom` and gives its own fallbacks the same
+  room. Home does all of it (`optional:app/(dashboard)/(home)/loading.tsx`, `optional:src/views/home-actions.tsx`).
 - **A file picker** is a visible `Button` that calls `input.click()` on an `<input type="file">` with `tabIndex={-1}`
   and `aria-hidden`, so the keyboard reaches the button and never the hidden input; give the press a state of its own
   ("Choosing the files…") until the change event arrives. The presses count a file chooser that opens as an answer.
@@ -254,10 +260,14 @@ says "requests" on a page about orders is the sample's, not the product's.
   `optional:src/views/home-parts.ts`) and Home's line under its title (`homeLine`). Write your pages' own, in your
   product's nouns: a release "in testing" and a run "without a mark" are the sample's words for its own releases and
   services.
-- **Home's parts and their words**: what `homeData` in `optional:src/views/home-parts.ts` works out (the revenue card,
-  the tiles, the year, what we sell, the Business and Engineering lines and the lines worth knowing) and how
-  `homeContext` says it. They are the figures of a company that sells tokens. Keep the cost rule and the states; write
-  your own company's parts.
+- **Home's nine parts and their words**: the head, the revenue card, the three tiles beside it, the row of the days
+  inside the band, compute in use, compute cost and gross margin, the year's card, "A year, counted", revenue a period
+  beside "What we sell", the Business and Engineering cards, and "Worth knowing across the company": what `homeData`
+  in `optional:src/views/home-parts.ts` works out for them, how `optional:src/views/home.tsx` draws them and how
+  `homeContext` says it. They are the figures of a company that sells tokens, and the titles, labels and lines are
+  its words. Keep the standard they show: one Featured metric, a part's title alone in its element, a list that holds
+  to its stated number whatever the data, the four states, every row of tiles one column on a phone, and the cost
+  rule. Write your own company's parts.
 - **`optional:tests/titles.test.ts`** and **`optional:tests/titles-engineering.test.ts`**, which hold the sample's
   words branch by branch; **`optional:tests/facts-config.test.ts`**, which holds the sample's values of `facts`; and
   the cases of `optional:tests/shared-context.test.tsx` that read the sample's headings and facts. Rewrite their cases

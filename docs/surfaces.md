@@ -154,7 +154,7 @@ All components are surface-agnostic by construction: they size from control toke
 
 | Page | Preset | Console | Mobile | Embed view |
 |---|---|---|---|---|
-| Home | Dashboard: featured metric, tiles, breakdowns, three regions | Featured metric with trend 2/3 + three tiles 1/3 · ranked list 1/2 + composition and trend 1/2 · Business, Operation and Delivery regions · activity full | One column | `home` inline: three tiles and the trend; fullscreen: the page |
+| Home | Dashboard: the company's nine parts | Revenue featured metric with trend 2/3 + three tiles 1/3 · two or four tiles · the year (columns and trend) · A year, counted · revenue a period 1/2 + what we sell 1/2 · Business 1/2 + Engineering 1/2 · worth knowing | One column, the revenue card first, every row of tiles one column | `home` inline: the revenue card and its three tiles; fullscreen: the page |
 | Requests | List: three tiles, filter bar, data table, detail on select | Tiles over the table | Tiles in one column, card list | `requests` inline: the five latest that match the tool's query |
 | Request | Detail: head, facts, timeline | Facts 2/3 + context 1/3 | One column | Not offered; the inline list links here |
 | Revenue | The Business home, thin: the customers' figures | Three tiles · a way to Customers | Tiles in one column | Not offered |

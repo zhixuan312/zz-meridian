@@ -1,7 +1,7 @@
 'use client';
 
 import { Specimen, State } from '@/system/specimen';
-import { Busy, ChartSkeleton, TableSkeleton, TilesSkeleton } from '.';
+import { Busy, ChartSkeleton, LeadRoom, TableSkeleton, TilesSkeleton } from '.';
 
 export default function PageLoadingPreview() {
   return (
@@ -11,6 +11,14 @@ export default function PageLoadingPreview() {
           <TilesSkeleton />
           <TableSkeleton rows={5} />
         </Busy>
+      </Specimen>
+      <Specimen label="The room of a long sentence" note="The sentence under a page's title on its way, and arrived in the same room: one height, so nothing under the masthead moves. Three lines of the lead at its widest, more as its column narrows." stack>
+        <State label="On its way" className="w-full"><p className="t-lead max-w-[60ch]"><LeadRoom /></p></State>
+        <State label="Arrived" className="w-full">
+          <p className="t-lead max-w-[60ch]">
+            <LeadRoom>320 customers, 1.1B requests in 30 days (up 4.7%), and Inference API is degraded. For everyone who needs the whole product at a glance: how it is doing, who is in it and how it is set up.</LeadRoom>
+          </p>
+        </State>
       </Specimen>
       <Specimen label="Tiles" note="Three unless the page has another number." stack>
         <State label="Three (the default)" className="w-full *:first:w-full"><TilesSkeleton /></State>

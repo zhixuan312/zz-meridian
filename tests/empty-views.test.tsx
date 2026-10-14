@@ -11,11 +11,12 @@ const totals = { requests: 0, errorRate: 0, p95: 0, revenue: 0 };
 const NOW = '2026-10-05T09:00:00.000Z';
 
 describe('a page body with no data shows its empty state, not a route error', () => {
-  it('Home, with no requests', () => {
-    render(<HomeBody {...homeData({ period: '30d', day: null, days: { series: [], previous: [], totals: { current: totals, previous: null }, running: null }, history: [], customers: [], usage: [], models: [], compute: [], services: [], incidents: [], releases: [], tickets: [], endpoints: [], mix: [], activity: [], summary: { business: null, operation: null, delivery: null }, updatedAt: NOW, now: NOW })} />);
-    expect(screen.getByText('No requests yet')).toBeTruthy();
-    // The three regions draw without traffic: here each says its summary is unavailable.
-    for (const name of ['Business', 'Operation', 'Delivery']) expect(screen.getByRole('region', { name }).textContent).toMatch(/unavailable/);
+  it('Home, with no complete day kept', () => {
+    const { container } = render(<HomeBody {...homeData({ period: '30d', day: null, days: { series: [], previous: [], totals: { current: totals, previous: null }, running: null }, history: [], customers: [], usage: [], models: [], compute: [], services: [], incidents: [], releases: [], tickets: [], updatedAt: NOW, now: NOW })} />);
+    expect(screen.getByText('No requests have arrived yet')).toBeTruthy();
+    // Said once, and no figure drawn as if there were one: no revenue of $0, no tile, no chart.
+    expect(container.querySelectorAll('h2')).toHaveLength(0);
+    expect(container.textContent).not.toMatch(/\$0|Revenue ·|Customers/);
   });
   it('Usage, with no requests in the period', () => {
     render(<UsageBody period="30d" activity={[]} incidents={[]} updatedAt={NOW} now={NOW} series={[]} totals={{ current: totals, previous: null }} heat={[]} hours={[]} regions={[]} endpoints={[]} head={{ title: null, facts: [] }} />);

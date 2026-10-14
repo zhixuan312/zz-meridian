@@ -1,33 +1,25 @@
 'use client';
 
-import { AlertTriangle, ArrowRight, CircleDollarSign, Gauge } from 'lucide-react';
+import { ArrowRight, Boxes, Cpu, Users } from 'lucide-react';
 import Link from 'next/link';
 import type { ReactNode } from 'react';
 import { Row, Stack } from '@/components/base/shell';
-import { EmptyState } from '@/components/ui/empty-state';
-import { Card, CardBody, CardFooter, CardHeader } from '@/components/ui/card';
-import { KeyValue, type KeyValueItem } from '@/components/ui/key-value';
-import { StatusDot } from '@/components/ui/status-dot';
-import { Meridian, useMeridianIndex } from '@/components/charts/meridian';
 import { useShareView } from '@/components/base/use-share-view';
-import { useLive } from '@/lib/live';
-import { TrendChart } from '@/components/charts/trend-chart';
-import { BarList } from '@/components/charts/bar-list';
+import { Card, CardBody, CardFooter, CardHeader } from '@/components/ui/card';
+import { EmptyState } from '@/components/ui/empty-state';
+import { KeyValue } from '@/components/ui/key-value';
+import { StatusDot } from '@/components/ui/status-dot';
+import { ColumnChart } from '@/components/charts/column-chart';
 import { CompositionBar } from '@/components/charts/composition-bar';
-import { MetricTile } from '@/components/patterns/metric-tile';
-import { RouteCell } from '@/system/sample-cells';
-import { FeaturedMetric } from '@/components/patterns/featured-metric';
-import { formatDate, formatDay } from '@/lib/format-date';
-import { ActivityFeed } from '@/components/patterns/activity-feed';
+import { Meridian, useMeridianIndex } from '@/components/charts/meridian';
+import { TrendChart } from '@/components/charts/trend-chart';
 import { AskAbout } from '@/components/patterns/ask-about';
-import { formatCompact, formatCost, formatDuration, formatPercent } from '@/lib/format';
-import { PERIOD_LABEL } from '@/lib/period';
-import { CUSTOMER_METRICS, customersAddress } from './customers-context';
-import type { MainSummary } from './main-summary';
-import { RELEASE_METRICS, releasesAddress } from './releases-context';
-import { TEST_METRICS, testsAddress } from './tests-context';
-import { TICKET_METRICS, ticketsAddress } from './tickets-context';
-import { HOME_METRICS, homeContext, homeFindings, type HomeData } from './home-context';
+import { FeaturedMetric } from '@/components/patterns/featured-metric';
+import { MetricTile } from '@/components/patterns/metric-tile';
+import { AXIS_FORMATTERS, FORMATTERS, formatCompact, formatCost, formatDuration, formatPercent } from '@/lib/format';
+import { formatDate, formatDay } from '@/lib/format-date';
+import { PERIOD_DAYS, PERIOD_LABEL } from '@/lib/period';
+import { COMPANY_METRICS, HOME_METRICS, homeContext, pointsChange, type HomeData, type HomeWindow } from './home-context';
 
 /** Tells both agents what the Home shows, and which day the Meridian points at (decision 0011). Inside `Meridian`. */
 export function ShareHome({ data }: { data: HomeData }) {
@@ -37,231 +29,349 @@ export function ShareHome({ data }: { data: HomeData }) {
 }
 
 const linkClass = 'row-link inline-flex items-center gap-1 font-medium text-ink hover:text-accent-ink';
+/** A change against the period before, as a fraction; null when nothing comes before or it was zero, which a tile says in words. */
+const change = (now: number, before: number | null) => (before ? now / before - 1 : null);
+/** "02 Oct": a window's label under its column, the date it ends on. */
+const short = (date: string) => formatDate(date).replace(/ \d{4}$/, '');
+const share = (n: number) => formatPercent(n, 1);
+const costCompact = FORMATTERS['cost-compact'];
 
-/** A figure that opens the list it counts. */
-const figure = (n: number, href: string) => <Link href={href} className="row-link font-medium hover:text-accent-ink">{n}</Link>;
-
-/** One region of Main: a card named for what it summarises, its figures, and the pages that hold the detail. A summary that did not arrive says so and draws neither a figure nor a link. */
-function Region({ name, description, available, links, children }: { name: string; description: string; available: boolean; links: { href: string; label: string }[]; children: ReactNode }) {
+/**
+ * A part whose read failed: its card, with its title, says what could not be read in its own place, and the rest of
+ * the page stands. `what` is the read in words, as the data names it ("the usage by model").
+ */
+function Unread({ title, what }: { title: string; what: string }) {
   return (
-    <Card role="region" aria-label={name}>
-      <CardHeader title={name} description={description} />
-      {available ? (
-        <>
-          <CardBody>{children}</CardBody>
-          <CardFooter className="flex-wrap gap-x-5 gap-y-2">
-            {links.map((l) => <Link key={l.href} href={l.href} className={linkClass}>{l.label} <ArrowRight className="size-3.5" /></Link>)}
-          </CardFooter>
-        </>
-      ) : (
-        <CardBody><EmptyState kind="error" layout="inline" title={`The ${name.toLowerCase()} summary is unavailable`}>It could not be read. The other summaries and the rest of the page are unaffected.</EmptyState></CardBody>
-      )}
+    <Card>
+      <CardHeader title={title} />
+      <CardBody>
+        <EmptyState kind="error" layout="inline" title={`${what.replace(/^./, (s) => s.toUpperCase())} could not be read`}>
+          What it states is missing, not zero. The rest of the page is unaffected.
+        </EmptyState>
+      </CardBody>
     </Card>
   );
 }
 
+/** A tile whose figure could not be read: its name, a dash and why. Nothing is drawn as if it were zero. */
+const unreadTile = (label: string, hint?: string) => <MetricTile key={label} label={label} hint={hint} value="—" note="Could not be read" />;
+
+/** Ask on the revenue card: about the day the Meridian points at, or about the period. */
+function AskHome({ period }: { period: string }) {
+  const { index, dates } = useMeridianIndex();
+  const day = index !== null ? dates[index] : null;
+  return <AskAbout question={day ? `Why does revenue on ${formatDate(day)} look the way it does?` : `What stands out in revenue over the ${period}, and why?`} />;
+}
+
 /**
- * Main's three regions: the whole product in a glance, each with the figures of its own page and a way into it. A
- * figure that has a filter on its page opens the list it counts; the footer links open the pages themselves.
+ * The revenue card, the page's one Featured metric: the period's revenue, its change, a day's average and the best day,
+ * the record as its finding, and revenue a day with the day in progress drawn running. The day in progress is the
+ * Meridian's last date, so pointing at it reads it, and its pill says "so far".
  */
-export function MainRegions({ summary: { business, operation, delivery } }: { summary: MainSummary }) {
-  const businessRows: KeyValueItem[] = business ? [
-    { label: CUSTOMER_METRICS.customers.label, value: business.customers },
-    { label: 'By status', wrap: true, value: <>{Object.entries(business.byStatus).map(([status, n], i) => <span key={status}>{i ? ' · ' : ''}{figure(n, customersAddress({ q: '', plan: 'all', status, sort: 'revenue', dir: 'desc', page: '1' }))} {status}</span>)}</> },
-    { label: 'By plan', wrap: true, value: <>{Object.entries(business.byPlan).map(([plan, n], i) => <span key={plan}>{i ? ' · ' : ''}{figure(n, customersAddress({ q: '', plan, status: 'all', sort: 'revenue', dir: 'desc', page: '1' }))} {plan}</span>)}</> },
-    { label: CUSTOMER_METRICS.revenue.label, value: formatCost(business.revenue) },
-  ] : [];
-  const unwell = operation ? [
-    { label: 'Out of service', names: operation.outage, tone: 'critical' as const },
-    { label: 'Degraded', names: operation.degraded, tone: 'warning' as const },
-  ].filter((g) => g.names.length) : [];
-  const deliveryRows: KeyValueItem[] = delivery ? [
-    { label: TICKET_METRICS.open.label, value: figure(delivery.open, ticketsAddress({ q: '', state: 'open', priority: 'all' })) },
-    { label: TICKET_METRICS.waiting.label, value: figure(delivery.waiting, ticketsAddress({ q: '', state: 'waiting', priority: 'all' })) },
-    { label: TEST_METRICS.failing.label, value: figure(delivery.failing, testsAddress({ q: '', state: 'failed', release: '', runs: 'latest' })) },
-    { label: RELEASE_METRICS.live.label, value: delivery.live },
-    { label: RELEASE_METRICS.ready.label, value: figure(delivery.ready, releasesAddress({ q: '', state: 'ready', environment: 'all' })) },
-    { label: RELEASE_METRICS.testing.label, value: figure(delivery.testing, releasesAddress({ q: '', state: 'testing', environment: 'all' })) },
-  ] : [];
+export function RevenueCard({ data, dates }: { data: HomeData; dates: string[] }) {
+  const r = data.revenue;
+  if (!r) return <Unread title={HOME_METRICS.revenue.label} what="the days" />;
+  const period = PERIOD_LABEL[data.period].toLowerCase();
+  const running = data.running;
+  const points = running ? [...r.points, running.revenue] : r.points;
+  return (
+    <FeaturedMetric
+      kicker={<>{HOME_METRICS.revenue.label} · {period}</>}
+      actions={<AskHome period={period} />}
+      value={r.value}
+      points={points}
+      format={formatCost}
+      delta={change(r.value, r.previous) ?? undefined}
+      intent="up"
+      caption={r.best ? <>About {formatCost(r.average)} a day. The best day was {formatDay(r.best.date)}, with {formatCost(r.best.value)}.</> : undefined}
+      finding={r.finding ? { text: r.finding } : undefined}
+      pointLabel={(date) => (running && date === running.date ? `${formatDate(date)} · so far` : formatDate(date))}
+    >
+      <TrendChart
+        height="fill"
+        label="Revenue per day"
+        format="cost"
+        dates={dates}
+        running={running !== null}
+        series={[{ key: 'revenue', label: HOME_METRICS.revenue.label, values: points, kind: 'area' }]}
+      />
+    </FeaturedMetric>
+  );
+}
+
+/**
+ * The three tiles beside the revenue card: the customers, the tokens served and the requests. An array, so a row of
+ * tiles counts its three.
+ */
+export function companyTiles(data: HomeData): ReactNode[] {
+  const { customers, tokens, requests } = data;
+  const C = COMPANY_METRICS;
+  return [
+    customers ? (
+      <MetricTile
+        key="customers"
+        label={C.customers.label}
+        hint={C.customers.hint}
+        icon={<Users />}
+        value={customers.count}
+        note={`${customers.active} active · ${customers.trial} on a trial · ${customers.pastDue} past due`}
+        finding={customers.finding ? { text: customers.finding, tone: 'neutral' } : undefined}
+      />
+    ) : unreadTile(C.customers.label, C.customers.hint),
+    tokens ? (
+      <MetricTile key="tokens" label={C.tokens.label} hint={C.tokens.hint} icon={<Boxes />} value={tokens.value} format={formatCompact} note={`In ${formatCompact(tokens.requests)} requests`} />
+    ) : unreadTile(C.tokens.label, C.tokens.hint),
+    requests ? (
+      <MetricTile key="requests" label={HOME_METRICS.requests.label} hint={HOME_METRICS.requests.hint} value={requests.value} delta={change(requests.value, requests.previous)} points={requests.points} format={formatCompact} />
+    ) : unreadTile(HOME_METRICS.requests.label, HOME_METRICS.requests.hint),
+  ];
+}
+
+/**
+ * The row under them: the days inside the band and compute in use, then compute cost and gross margin, which are
+ * keys of the data only for a person who may read what compute cost. For anyone else the row holds two tiles and
+ * nothing stands in the place of the others.
+ */
+function OperatingTiles({ data }: { data: HomeData }) {
+  const { band, compute, period } = data;
+  const C = COMPANY_METRICS;
+  const mayCost = 'computeCost' in data;
+  // A share's change is in points, in the words the context uses for it.
+  const points = (now: number, before: number | null) => pointsChange(now, before, period) ?? 'No earlier period to compare';
   return (
     <Row split="tiles">
-      <Region name="Business" description="Customers and what they pay" available={business !== null} links={[{ href: '/customers', label: 'Customers' }, { href: '/usage', label: 'Usage' }]}>
-        <KeyValue items={businessRows} />
-      </Region>
-      <Region name="Operation" description="Services and incidents, now" available={operation !== null} links={[{ href: '/services', label: 'Services' }]}>
-        {operation && !unwell.length && !operation.incidents.length ? (
-          <p className="flex items-center gap-2.5 py-2.5 text-sm"><StatusDot tone="positive" />Every service is operational and nothing is open.</p>
-        ) : (
-          <KeyValue
-            items={[
-              ...unwell.map((g) => ({ label: g.label, wrap: true, value: <span className="inline-flex items-center gap-2"><StatusDot tone={g.tone} />{g.names.join(', ')}</span> })),
-              { label: 'Open incidents', wrap: true, value: operation?.incidents.length ? <>{operation.incidents.map((i) => <span key={i.id} className="block">{i.title}</span>)}</> : 'None' },
-            ]}
-          />
-        )}
-      </Region>
-      <Region name="Delivery" description="Tickets, verifications and releases" available={delivery !== null} links={[{ href: '/operations-tickets', label: 'Tickets' }, { href: '/tests', label: 'Tests' }, { href: '/releases', label: 'Releases' }]}>
-        <KeyValue items={deliveryRows} />
-      </Region>
+      {band ? <MetricTile label={C.band.label} hint={C.band.hint} value={band.inside} note={`of ${band.of} complete days`} /> : unreadTile(C.band.label, C.band.hint)}
+      {compute ? (
+        <MetricTile
+          label={C.compute.label}
+          hint={C.compute.hint}
+          icon={<Cpu />}
+          value={compute.value}
+          format="percent"
+          note={points(compute.value, compute.previous)}
+          finding={compute.fullest ? { text: `The fullest is ${compute.fullest.region}, at ${share(compute.fullest.value)}`, tone: 'neutral' } : undefined}
+        />
+      ) : unreadTile(C.compute.label, C.compute.hint)}
+      {mayCost ? (
+        data.computeCost ? (
+          <MetricTile label={C.computeCost.label} hint={C.computeCost.hint} value={data.computeCost.value} delta={change(data.computeCost.value, data.computeCost.previous)} intent="neutral" points={data.computeCost.points} format={formatCost} />
+        ) : unreadTile(C.computeCost.label, C.computeCost.hint)
+      ) : null}
+      {mayCost ? (
+        data.grossMargin ? (
+          <MetricTile label={C.grossMargin.label} hint={C.grossMargin.hint} value={data.grossMargin.value} format="percent" note={points(data.grossMargin.value, data.grossMargin.previous)} points={data.grossMargin.points} />
+        ) : unreadTile(C.grossMargin.label, C.grossMargin.hint)
+      ) : null}
     </Row>
   );
 }
 
-/** Ask on the featured card: about the day the Meridian points at, or about the period. */
-function AskHome({ period }: { period: string }) {
-  const { index, dates } = useMeridianIndex();
-  const day = index !== null ? dates[index] : null;
-  return <AskAbout question={day ? `Why do requests, errors and latency on ${formatDate(day)} look the way they do?` : `What stands out in requests, errors and latency over the ${period}, and why?`} />;
-}
+/** What one window of the year covers, in words, for a card's line. */
+const windowWords = (data: HomeData) => {
+  const n = PERIOD_DAYS[data.period];
+  return n ? `${n} days a column, counted back from yesterday, the latest highlighted` : 'Every complete day kept, as one column';
+};
 
 /**
- * The Home's rows: the console page and the MCP view in fullscreen. `now` is the data's clock, as an ISO string:
- * relative times read against it, never against render time.
+ * The year: requests a window, the latest highlighted, and the median day's p95 a window with the windows' median as
+ * its baseline. Two charts on one cursor, the windows' own, each from zero, under the sentence that states them.
+ */
+function YearCard({ data, keys }: { data: HomeData; keys: string[] }) {
+  const year = data.year;
+  if (!year) return <Unread title="Requests and latency, a period at a time" what="the history" />;
+  return (
+    <Card>
+      <CardHeader title={year.title} wrap description={windowWords(data)} />
+      <CardBody className="flex flex-col gap-6">
+        <ColumnChart
+          label="Requests a window"
+          columns={year.windows.map((w) => ({ key: w.to, label: short(w.to), value: w.requests }))}
+          highlight={keys.at(-1)}
+          dates={keys}
+          format={formatCompact}
+          axisFormat={AXIS_FORMATTERS.compact}
+          height={168}
+        />
+        <div className="border-t border-line pt-5">
+          <p className="t-eyebrow mb-3">Latency p95 · the median day of each window</p>
+          <TrendChart
+            label="Latency p95 of the median day, a window"
+            height={168}
+            format="duration"
+            dates={keys}
+            baseline={year.median !== null ? { value: year.median, label: `Median ${formatDuration(year.median)}` } : undefined}
+            series={[{ key: 'p95', label: HOME_METRICS.p95.label, values: year.windows.map((w) => w.p95), kind: 'line', color: 'neutral' }]}
+          />
+        </div>
+      </CardBody>
+    </Card>
+  );
+}
+
+/** The facts of a year, each in its rule's own line under its kind: the same line the context carries. */
+function YearCounted({ data }: { data: HomeData }) {
+  const title = 'A year, counted';
+  if (!data.year) return <Unread title={title} what="the history" />;
+  const facts = data.head.facts;
+  return (
+    <Card>
+      <CardHeader title={title} description="Over every complete day kept, whatever the period" />
+      <CardBody>
+        {facts.length ? (
+          <ul className="flex flex-col">
+            {facts.map((f) => (
+              <li key={f.text} className="flex min-w-0 items-baseline gap-4 border-b border-line py-3 last:border-0">
+                <span className="t-eyebrow w-16 shrink-0">{f.kind[0].toUpperCase()}{f.kind.slice(1)}</span>
+                <span className="min-w-0 text-sm text-pretty text-ink">{f.text}</span>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="py-2.5 text-sm text-ink-2">No total, record or first holds yet.</p>
+        )}
+      </CardBody>
+    </Card>
+  );
+}
+
+/** Revenue a window, over the year's windows, the latest highlighted: on the year's cursor too. */
+function RevenueWindows({ data, keys }: { data: HomeData; keys: string[] }) {
+  const title = 'Revenue a period';
+  if (!data.year) return <Unread title={title} what="the history" />;
+  return (
+    <Card>
+      <CardHeader title={title} description={windowWords(data)} />
+      <CardBody>
+        <ColumnChart
+          label="Revenue a window"
+          columns={data.year.windows.map((w: HomeWindow) => ({ key: w.to, label: short(w.to), value: w.revenue }))}
+          highlight={keys.at(-1)}
+          dates={keys}
+          format={costCompact}
+          axisFormat={AXIS_FORMATTERS['cost-compact']}
+          height={200}
+        />
+      </CardBody>
+    </Card>
+  );
+}
+
+/** What we sell: the period's revenue by model, in the categorical slots in their order. */
+function Sold({ data }: { data: HomeData }) {
+  const { label, hint } = COMPANY_METRICS.sold;
+  if (!data.sold) return <Unread title={label} what="the usage by model" />;
+  return (
+    <Card>
+      <CardHeader title={label} description={`${hint.replace(/\.$/, '')}, ${PERIOD_LABEL[data.period].toLowerCase()}`} />
+      <CardBody>
+        <CompositionBar label="Revenue by model" format={costCompact} parts={data.sold.slice(0, 4).map((m, i) => ({ label: m.label, value: m.value, color: i + 1 }))} />
+      </CardBody>
+    </Card>
+  );
+}
+
+/** A team's workspace at a glance: four lines of a label and a figure, one counted fact, and the way in. A labelled region, so it is found by its team's name. */
+function Team({ name, team }: { name: string; team: HomeData['business'] }) {
+  return (
+    <Card role="region" aria-label={name}>
+      <CardHeader title={name} />
+      <CardBody className="flex flex-col gap-3">
+        <KeyValue items={team.lines.map((l) => ({ label: l.label, value: l.value }))} />
+        {team.fact ? (
+          <p className="flex min-w-0 items-start gap-2 text-sm text-ink-2">
+            <StatusDot tone="neutral" className="mt-[0.45em]" />
+            <span className="min-w-0 text-pretty">{team.fact}</span>
+          </p>
+        ) : null}
+      </CardBody>
+      <CardFooter>
+        <Link href={team.href} className={linkClass}>Open {name} <ArrowRight className="size-3.5" /></Link>
+      </CardFooter>
+    </Card>
+  );
+}
+
+/** At most four lines, each opening the page where it is handled; one line when there is nothing to say. */
+function WorthKnowing({ data }: { data: HomeData }) {
+  const title = 'Worth knowing across the company';
+  return (
+    <Card>
+      <CardHeader title={title} />
+      <CardBody>
+        {data.worth.length ? (
+          <ul className="flex flex-col">
+            {data.worth.map((w) => (
+              <li key={w.text} className="flex min-w-0 items-start gap-2.5 border-b border-line py-3 text-sm last:border-0">
+                <StatusDot tone="neutral" className="mt-[0.45em]" />
+                {w.href ? (
+                  <Link href={w.href} className="row-link min-w-0 text-pretty text-ink hover:text-accent-ink">{w.text}</Link>
+                ) : (
+                  <span className="min-w-0 text-pretty text-ink-2">{w.text}</span>
+                )}
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <EmptyState kind="error" layout="inline" title="What it comes from could not be read">The incidents, the customers or the releases did not answer. The rest of the page is unaffected.</EmptyState>
+        )}
+      </CardBody>
+    </Card>
+  );
+}
+
+/** No complete day is kept yet: the days were read and hold none. A read that failed is not this; its parts say so. */
+export const isEmpty = (data: HomeData) => data.revenue !== null && data.series.length === 0;
+
+/** The days the page's Meridian holds: the period's complete days, then the day in progress when there is one. */
+export const meridianDates = (data: HomeData) => [...data.series.map((d) => d.date), ...(data.running ? [data.running.date] : [])];
+
+/**
+ * The Home's nine parts, in order: the console page and the MCP view in fullscreen. The head is the page frame's. Each
+ * part draws what the read handed it and works nothing out; a part whose read failed says so in its own place.
  */
 export function HomeBody(data: HomeData) {
-  const { series, totals, endpoints, mix, activity, now } = data;
-  // A change anyone makes, an agent's included, reaches an open Home's Activity without a reload.
-  useLive(['activity']);
-  const period = PERIOD_LABEL[data.period].toLowerCase();
-  if (series.length === 0) {
+  // No complete day kept: one card says nothing has arrived, and no figure is drawn as if it had.
+  if (isEmpty(data)) {
     return (
       <Stack>
         <Card>
           <ShareHome data={data} />
-          <EmptyState title="No requests yet" action={<Link href="/keys" className={linkClass}>API keys <ArrowRight className="size-3.5" /></Link>} className="py-16">
-            Traffic, reliability and revenue appear here once a key makes its first call.
+          <EmptyState title="No requests have arrived yet" action={<Link href="/keys" className={linkClass}>API keys <ArrowRight className="size-3.5" /></Link>} className="py-16">
+            Revenue, customers and the year&apos;s facts appear here once a key makes its first call and a day is complete.
           </EmptyState>
         </Card>
-        <MainRegions summary={data.summary} />
       </Stack>
     );
   }
-  const { current: c, previous: p } = totals;
-  const dates = series.map((d) => d.date);
-  // No change against a period that is not kept, as with `all`, or against a figure of zero: a tile says so in words,
-  // and the featured card draws no pill, which would hold a dash beside "vs previous period".
-  const change = (a: number, b?: number) => (b ? a / b - 1 : null);
-  const peak = series.reduce((m, d) => (d.requests > m.requests ? d : m), series[0]);
-  const found = homeFindings(series);
+  const dates = meridianDates(data);
+  const keys = data.year?.windows.map((w) => w.to) ?? [];
   return (
     <Meridian dates={dates} day={data.day}>
       <ShareHome data={data} />
       <Stack>
         <Row split="2/3">
-          <FeaturedMetric
-            kicker={<>Requests · {period}</>}
-            actions={<AskHome period={period} />}
-            value={c.requests}
-            points={series.map((d) => d.requests)}
-            format={formatCompact}
-            delta={change(c.requests, p?.requests) ?? undefined}
-            caption={<>About {formatCompact(Math.round(c.requests / series.length))} a day. The busiest day was {formatDay(peak.date)}, with {formatCompact(peak.requests)}.</>}
-          >
-            <TrendChart
-              height="fill"
-              label="Requests per day"
-              dates={dates}
-              series={[
-                { key: 'requests', label: 'Requests', values: series.map((d) => d.requests), kind: 'area' },
-              ]}
-            />
-          </FeaturedMetric>
+          <RevenueCard data={data} dates={dates} />
           <div className="grid min-w-0 gap-(--stack-gap) md:grid-cols-3 lg:flex lg:flex-col">
-            <MetricTile
-              label={HOME_METRICS.errorRate.label}
-              hint={HOME_METRICS.errorRate.hint}
-              icon={<AlertTriangle />}
-              value={c.errorRate}
-              delta={change(c.errorRate, p?.errorRate)}
-              intent="down"
-              points={series.map((d) => (d.requests ? d.errors / d.requests : 0))}
-              baseline={found.usual.errorRate}
-              finding={found.errorSpike}
-              format={(n) => formatPercent(n, 2)}
-            />
-            <MetricTile
-              label={HOME_METRICS.p95.label}
-              hint={HOME_METRICS.p95.hint}
-              icon={<Gauge />}
-              value={c.p95}
-              delta={change(c.p95, p?.p95)}
-              intent="down"
-              points={series.map((d) => d.p95)}
-              baseline={found.usual.p95}
-              format={(n) => formatDuration(n)}
-            />
-            <MetricTile
-              label={HOME_METRICS.revenue.label}
-              hint={HOME_METRICS.revenue.hint}
-              icon={<CircleDollarSign />}
-              value={c.revenue}
-              delta={change(c.revenue, p?.revenue)}
-              intent="neutral"
-              points={series.map((d) => d.revenue)}
-              format={(n) => formatCost(n)}
-            />
+            {companyTiles(data)}
           </div>
         </Row>
+        <OperatingTiles data={data} />
+        {/* The year's windows are a cursor of their own: the year's two charts and revenue a period read it together. */}
+        <Meridian dates={keys}>
+          <YearCard data={data} keys={keys} />
+          <YearCounted data={data} />
+          <Row split="1/2">
+            <RevenueWindows data={data} keys={keys} />
+            <Sold data={data} />
+          </Row>
+        </Meridian>
         <Row split="1/2">
-          <Card>
-            <CardHeader title="Busiest endpoints" description="By requests" />
-            <CardBody>
-              <BarList
-                label="Requests by endpoint"
-                highlight="/v1/messages"
-                limit={5}
-                format={formatCompact}
-                items={endpoints.map((e) => ({
-                  key: e.route,
-                  label: <RouteCell method={e.method} route={e.route} />,
-                  value: e.requests,
-                }))}
-              />
-            </CardBody>
-            <CardFooter>
-              <Link href="/usage" className="row-link inline-flex items-center gap-1 font-medium text-ink hover:text-accent-ink">
-                All endpoints <ArrowRight className="size-3.5" />
-              </Link>
-            </CardFooter>
-          </Card>
-          <Card>
-            <CardHeader title="Responses" description="By status class" />
-            <CardBody className="flex flex-col gap-6">
-              <CompositionBar
-                label="Responses by status class"
-                format={formatCompact}
-                parts={[
-                  // The normal case is the quietest part; only the classes that need a look carry status colour.
-                  { ...mix[0], color: 'neutral' },
-                  { ...mix[1], color: 'neutral-ink' },
-                  { ...mix[2], color: 'warning' },
-                  { ...mix[3], color: 'critical' },
-                ]}
-              />
-              <div className="border-t border-line pt-5">
-                <p className="t-eyebrow mb-3">Latency p95 · per day</p>
-                <TrendChart
-                label="Latency p95 per day"
-                height={168}
-                format="duration"
-                baseline={{ value: found.usual.p95, label: `Median ${formatDuration(found.usual.p95)}` }}
-                dates={dates}
-                series={[{ key: 'p95', label: 'Latency p95', values: series.map((d) => d.p95), kind: 'line', color: 'neutral' }]}
-                />
-              </div>
-            </CardBody>
-          </Card>
+          <Team name="Business" team={data.business} />
+          <Team name="Engineering" team={data.engineering} />
         </Row>
-        <MainRegions summary={data.summary} />
-        <Row>
-          <Card>
-            <CardHeader title="Activity" description="Changes to this workspace, newest first" divided />
-            <CardBody>
-              <ActivityFeed events={activity} now={new Date(now)} />
-            </CardBody>
-          </Card>
-        </Row>
+        <WorthKnowing data={data} />
       </Stack>
     </Meridian>
   );
 }
+

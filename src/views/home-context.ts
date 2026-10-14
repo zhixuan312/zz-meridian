@@ -6,8 +6,7 @@
  */
 import type { ActivityEvent } from '@/components/patterns/activity-feed';
 import type { Incident } from '@/components/patterns/incident-card';
-import type { DailyPoint, Endpoint, Totals } from '@/data/sample';
-import type { MainSummary } from './main-summary';
+import type { DailyPoint, Totals } from '@/data/sample';
 import { formatCompact, formatCost, formatDuration, formatPercent, ordinal } from '@/lib/format';
 import { formatDate } from '@/lib/format-date';
 import { deviations, runs, sameWeekdayBaseline, weekday, median } from '@/lib/insight';
@@ -76,8 +75,8 @@ export type HomeData = {
   compute: (HomeFigure & { used: number; provisioned: number; fullest: { region: string; value: number } | null }) | null;
   computeCost?: HomeFigure | null;
   grossMargin?: HomeFigure | null;
-  /** The year's card and revenue a period: one window a column, oldest first, and the card's title. */
-  year: { title: string; windows: HomeWindow[] } | null;
+  /** The year's card and revenue a period: one window a column, oldest first, the card's title, and the windows' median p95 (null with no window). */
+  year: { title: string; windows: HomeWindow[]; median: number | null } | null;
   /** What we sell: the period's revenue by model, the largest first. */
   sold: { key: string; label: string; value: number; share: number }[] | null;
   /** How many services are operational now, of how many, and each one that is not with its state. */
@@ -88,11 +87,6 @@ export type HomeData = {
   worth: WorthKnowing[];
   /** What could not be read, in words: "the usage by model". */
   unread: string[];
-  /** What today's body draws until the page draws its parts: the endpoints, the responses, the activity and Main's summary. The context states none of them. */
-  endpoints: Endpoint[];
-  mix: { label: string; value: number }[];
-  activity: ActivityEvent[];
-  summary: MainSummary;
   updatedAt: string;
   now: string;
   /** The day the address names (`?day=`): the page opens pointed at it. */
@@ -173,8 +167,8 @@ export function change(now: number, before: number | null | undefined, period: P
   return `${dir}${dir === 'unchanged' ? '' : ` ${formatPercent(Math.abs(r), 1)}`} vs the previous ${n} days${format ? ` (${format(before)})` : ''}`;
 }
 
-/** "up 0.4 points vs the previous 30 days": a share's change, in percentage points, since a share of a share says little. */
-function pointsChange(now: number, before: number | null | undefined, period: Period): string | undefined {
+/** "up 0.4 points vs the previous 30 days": a share's change, in percentage points, since a share of a share says little. The tiles of a share say it in the same words. */
+export function pointsChange(now: number, before: number | null | undefined, period: Period): string | undefined {
   const n = PERIOD_DAYS[period];
   if (!n || before === null || before === undefined) return undefined;
   const by = Math.abs(now - before) * 100;
@@ -225,20 +219,6 @@ export function errorSpikes(data: SpikeData): { insights: Insight[]; unknowns: s
   }
 
   return { insights, unknowns };
-}
-
-/**
- * What the person sees of the same findings (decision 0011): each daily figure's usual value (its median, for "2.7×
- * usual" when the Meridian points at a day) and the error rate's latest spike as one short line that points at its peak.
- * A spike needs a look, so its tone is the warning one.
- */
-export function homeFindings(series: DailyPoint[]): { usual: { errorRate: number; p95: number }; errorSpike?: { text: string; day: string; tone: 'warning' } } {
-  const errorRate = series.map((d) => (d.requests ? d.errors / d.requests : 0));
-  const usual = { errorRate: median(errorRate), p95: median(series.map((d) => d.p95)) };
-  const run = runs(deviations(errorRate, { direction: 'up' }).map((d) => d.index)).at(-1);
-  if (!run || !(usual.errorRate > 0)) return { usual };
-  const peak = run.reduce((m, i) => (errorRate[i] > errorRate[m] ? i : m));
-  return { usual, errorSpike: { text: `${times(errorRate[peak] / usual.errorRate)} usual on ${days(run.map((i) => series[i].date))}`, day: series[peak].date, tone: 'warning' } };
 }
 
 /**

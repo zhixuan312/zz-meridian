@@ -11,7 +11,7 @@ vi.mock('next/cache', () => ({ cacheTag: () => {}, cacheLife: () => {}, updateTa
 import { SurfaceOverride, sharedContextOn } from '@/components/base/surface';
 import { useShareView } from '@/components/base/use-share-view';
 import { DEMO_NOW, DEMO_UPDATED_AT, ACTIVITY, INCIDENTS as RECORDS, MODELS, SERVICES, type IncidentRecord } from '@/system/fixtures/sample';
-import { COMPUTE, COSTS, CUSTOMERS, ENDPOINTS, STATUS_MIX, USAGE, demoSeries, demoTotals } from '@/system/fixtures/company';
+import { COMPUTE, COSTS, CUSTOMERS, ENDPOINTS, USAGE, demoSeries, demoTotals } from '@/system/fixtures/company';
 import { RELEASES, RUNS, TICKETS } from '@/system/fixtures/sample-engineering';
 import { PAST_INCIDENTS as PAST_RECORDS } from '@/system/fixtures/sample-ops';
 import { verificationOf } from '@/data/verification';
@@ -46,12 +46,6 @@ const reads = (period: Period, { costs = true }: { costs?: boolean } = {}): Home
   days: { series: demoSeries(period).current, previous: demoSeries(period).previous, totals: demoTotals(period), running: demoSeries(period).running },
   history: HISTORY, customers: CUSTOMERS, usage: USAGE, models: MODELS, compute: COMPUTE, ...(costs ? { costs: COSTS } : {}),
   services: SERVICES, incidents: EVERY_INCIDENT, releases: RELEASES.map((r) => ({ ...r, verification: verificationOf(r, RUNS) })), tickets: TICKETS,
-  endpoints: ENDPOINTS, mix: STATUS_MIX, activity: ACTIVITY,
-  summary: {
-    business: { customers: 320, byStatus: { active: 296, trial: 14, 'past due': 10 }, byPlan: { Enterprise: 24, Scale: 82, Starter: 214 }, revenue: 3300438.74 },
-    operation: { degraded: ['Inference API'], outage: [], incidents: [{ id: 'inc_1', title: 'Elevated latency in eu-west-1' }] },
-    delivery: { open: 4, waiting: 3, failing: 2, live: 3, ready: 1, testing: 3 },
-  },
   updatedAt: DEMO_UPDATED_AT.toISOString(), now: DEMO_NOW.toISOString(),
 });
 const home = (period: Period, who?: { costs?: boolean }): HomeData => homeData(reads(period, who));
@@ -229,7 +223,7 @@ describe('every page shares a context within its budget, and nothing hidden', ()
     const { SCOPES } = await import('@/views/key-scopes');
     const now = DEMO_NOW.toISOString();
     const contexts = [
-      usageContext({ ...home('30d'), incidents: EVERY_INCIDENT, endpoints: ENDPOINTS, heat, hours, regions: REGIONS, head: usageHead({ period: '30d', totals: demoTotals('30d'), history: HISTORY }) }),
+      usageContext({ ...home('30d'), incidents: EVERY_INCIDENT, endpoints: ENDPOINTS, activity: ACTIVITY, heat, hours, regions: REGIONS, head: usageHead({ period: '30d', totals: demoTotals('30d'), history: HISTORY }) }),
       customersContext(CUSTOMERS, CUSTOMERS, { q: '', plan: 'all', status: 'all', sort: 'revenue', dir: 'desc', page: '1' }),
       membersContext(MEMBERS, now),
       keysContext(API_KEYS, now, SCOPES),
@@ -252,10 +246,11 @@ describe('every page shares a context within its budget, and nothing hidden', ()
 });
 
 describe('all time on the Home, which has no period before it', () => {
-  it('draws no change: each tile says there is no earlier period, and the featured figure has no pill', () => {
+  it('draws no change: each tile with a change says there is no earlier period, and the featured figure has no pill', () => {
     const all = render(<Tooltip.Provider><HomeBody {...home('all')} /></Tooltip.Provider>);
     expect(all.container.querySelector('[data-change]')).toBeNull();
-    expect(within(all.container).getAllByText('No earlier period to compare')).toHaveLength(3);
+    // Requests and compute cost, whose change is a percentage, and compute in use and gross margin, whose change is in points.
+    expect(within(all.container).getAllByText('No earlier period to compare')).toHaveLength(4);
     expect(all.container.textContent).not.toMatch(/NaN|Infinity|vs previous period/);
     // A period with days before it draws the pill and the three changes.
     const month = render(<Tooltip.Provider><HomeBody {...home('30d')} /></Tooltip.Provider>);
@@ -264,24 +259,23 @@ describe('all time on the Home, which has no period before it', () => {
   });
   it('draws no change in the MCP view either', () => {
     const { container } = render(<Tooltip.Provider><SurfaceOverride surface={{ kind: 'embed', connected: true, mode: 'inline', share: () => {}, ask: () => {} }}><EmbedHome {...home('all')} /></SurfaceOverride></Tooltip.Provider>);
-    expect(within(container).getAllByText('No earlier period to compare')).toHaveLength(3);
+    // Inline is the revenue card and its three tiles, of which Requests alone has a change.
+    expect(within(container).getAllByText('No earlier period to compare')).toHaveLength(1);
     expect(container.textContent).not.toMatch(/NaN|Infinity|vs previous period/);
   });
 });
 
-describe('the person sees the same findings', () => {
-  it('the Error rate tile names the spike and points the Meridian at its peak', async () => {
+describe('a tile that needs a look', () => {
+  it('names what it found and points the Meridian at its day', async () => {
     const { fireEvent, screen } = await import('@testing-library/react');
-    const { homeFindings } = await import('@/views/home-context');
     const { Meridian } = await import('@/components/charts/meridian');
     const { MetricTile } = await import('@/components/patterns/metric-tile');
     const series = demoSeries('30d').current;
-    const found = homeFindings(series);
-    expect(found.errorSpike).toEqual({ text: '3.4× usual on 21 and 22 Sept', day: '2026-09-22', tone: 'warning' });
+    const errorRate = series.map((d) => d.errors / d.requests);
     render(
       <Tooltip.Provider>
         <Meridian dates={series.map((d) => d.date)}>
-          <MetricTile label="Error rate" value={0.009} delta={0.12} points={series.map((d) => d.errors / d.requests)} baseline={found.usual.errorRate} finding={found.errorSpike} format={(n) => n.toFixed(4)} />
+          <MetricTile label="Error rate" value={0.009} delta={0.12} points={errorRate} baseline={median(errorRate)} finding={{ text: '3.4× usual on 21 and 22 Sept', day: '2026-09-22', tone: 'warning' }} format={(n) => n.toFixed(4)} />
         </Meridian>
       </Tooltip.Provider>,
     );

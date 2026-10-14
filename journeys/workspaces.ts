@@ -311,12 +311,12 @@ try {
 }
 
 try {
-  await step("Main to a request's own page, with the rail on Business", missing(REQUESTS) ?? (has('/usage') ? null : '/usage is not in the navigation'), async () => {
+  await step("Main to a request's own page, with the rail on Business", missing(REQUESTS) ?? (has('/business') ? null : '/business is not in the navigation'), async () => {
     await go(a, 'member', HOME);
     await settle(a, 'member', HOME, 'main');
-    // Main's Business region links to Usage; the rail then names Business and offers Requests.
-    await press(a, { role: 'link', name: labelOf('/usage'), within: '[role="region"][aria-label="Business"]' });
-    await settle(a, 'member', '/usage', 'business');
+    // Home's Business card opens the Business home; the rail then names Business and offers Requests.
+    await press(a, { role: 'link', hrefRe: '^/business$', within: '[role="region"][aria-label="Business"]' });
+    await settle(a, 'member', '/business', 'business');
     await press(a, { role: 'link', name: labelOf(REQUESTS), within: 'nav[aria-label="Main"]' });
     await settle(a, 'member', REQUESTS, 'business');
     await press(a, { role: 'link', hrefRe: '^/requests/[^/]+$', within: 'main table tbody' });
@@ -334,9 +334,9 @@ try {
   await step("a ticket created in Engineering raises Main's open count", missing(TICKETS, '/'), async () => {
     const title = `Journey ticket ${Date.now().toString(36)}`;
     const openCount = (page: Page) => ask<number | null>(page, `
-      const reg = document.querySelector('[role="region"][aria-label="Delivery"]'); if (!reg) return null;
-      const link = [...reg.querySelectorAll('a[href]')].find((x) => x.getAttribute('href').startsWith(${JSON.stringify(TICKETS)}) && /state=open/.test(x.getAttribute('href')));
-      const n = link ? Number(text(link)) : NaN;
+      const reg = document.querySelector('[role="region"][aria-label="Engineering"]'); if (!reg) return null;
+      const row = [...reg.querySelectorAll('dl > div')].find((r) => text(r.querySelector('dt')) === 'Tickets open');
+      const n = row ? Number(text(row.querySelector('dd'))) : NaN;
       return Number.isFinite(n) ? n : null;`);
     await go(a, 'member', HOME);
     await settle(a, 'member', HOME, 'main');
@@ -370,14 +370,9 @@ try {
       await sleep(250);
     }
     if (after === null || after < 1) throw new Error(`expected Main to count the new ticket among its open tickets; found ${after} (read ${before} just before it was created)`);
-    // The figure opens the list it counts, and that list holds the ticket just made.
-    await press(a, { role: 'link', hrefRe: `^${TICKETS}\\?.*state=open`, within: '[role="region"][aria-label="Delivery"]' });
-    await settle(a, 'member', TICKETS, 'engineering');
-    await until('the new ticket in the list Main\'s figure opens', () => ask<boolean>(a, `return text(document.querySelector('main')).includes(${JSON.stringify(title)});`))
-      .catch(() => { throw new Error(`expected the open tickets Main's figure opens to hold "${title}"; they do not`); });
     // The presses share this server and move tickets along while this runs, so a count that did not grow by one is not a
     // defect when the ticket itself is counted: the line says which of the two was seen.
-    if (after < before + 1) return `(${before} -> ${after}, beside another writer: the ticket is in the list the figure opens)`;
+    if (after < before + 1) return `(${before} -> ${after}, beside another writer)`;
     return `(${before} -> ${after})`;
   }, () => [a]);
 
