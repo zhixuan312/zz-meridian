@@ -4,6 +4,9 @@ import { describe, expect, it } from 'vitest';
 import { niceTicks } from '@/components/charts/scale';
 import { AXIS_FORMATTERS, fitFigure, formatCompact, formatCost, formatDuration, formatPercent, splitFigure } from '@/lib/format';
 
+// The symbol follows app.currency, so a rebranded product (--currency SGD) keeps these tests green.
+const symbol = new Intl.NumberFormat('en', { style: 'currency', currency: app.currency, currencyDisplay: 'narrowSymbol' }).formatToParts(0).find((p) => p.type === 'currency')!.value;
+
 describe('formatters', () => {
   it('render a missing value as a dash, never as zero', () => {
     for (const f of [formatCompact, formatCost, formatDuration, formatPercent]) expect(f(null)).toBe('—');
@@ -41,8 +44,6 @@ describe('formatters', () => {
     expect(splitFigure('CHF 1,234.50')).toEqual({ int: 'CHF 1,234.50' });
   });
   it('format money, durations and shares', () => {
-    // The symbol follows app.currency, so a rebranded product (--currency SGD) keeps this test green.
-    const symbol = new Intl.NumberFormat('en', { style: 'currency', currency: app.currency, currencyDisplay: 'narrowSymbol' }).formatToParts(0).find((p) => p.type === 'currency')!.value;
     expect(formatCost(298.43)).toBe(`${symbol}298.43`);
     // Under a cent, four decimals; and an amount too small for four keeps its first two digits, never a row of zeros.
     expect(formatCost(0.00522)).toBe(`${symbol}0.0052`);
@@ -90,7 +91,7 @@ describe('fitFigure', () => {
     expect(fitFigure('$298.43', 298.43)).toBe('$298.43');
     expect(fitFigure('2,943,120', 2_943_120)).toBe('2,943,120');
     expect(fitFigure('9,876,543,210', 9_876_543_210)).toBe('9.9B');
-    expect(fitFigure('$1,234,567.89', 1_234_567.89)).toBe('$1.2M');
+    expect(fitFigure(`${symbol}1,234,567.89`, 1_234_567.89)).toBe(`${symbol}1.2M`);
     expect(fitFigure('0.90%', 0.009)).toBe('0.90%');
     expect(fitFigure('12,480,000 tokens', 12_480_000)).toBe('12.5M tokens');
     expect(fitFigure('Likely new', NaN)).toBe('Likely new');
@@ -106,9 +107,9 @@ describe('formatDay', () => {
 
 describe('a money axis', () => {
   it('reads large ticks at a glance and small ones exactly', () => {
-    expect(AXIS_FORMATTERS.cost(12)).toBe('$12');
-    expect(AXIS_FORMATTERS.cost(5_000)).toBe('$5,000');
-    expect(AXIS_FORMATTERS.cost(25_000)).toBe('$25K');
-    expect(AXIS_FORMATTERS.cost(5_000_000_000)).toBe('$5.0B');
+    expect(AXIS_FORMATTERS.cost(12)).toBe(`${symbol}12`);
+    expect(AXIS_FORMATTERS.cost(5_000)).toBe(`${symbol}5,000`);
+    expect(AXIS_FORMATTERS.cost(25_000)).toBe(`${symbol}25K`);
+    expect(AXIS_FORMATTERS.cost(5_000_000_000)).toBe(`${symbol}5.0B`);
   });
 });

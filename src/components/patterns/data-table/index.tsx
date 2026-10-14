@@ -84,7 +84,7 @@ const CELLS = [
 /**
  * What a row becomes when the TABLE is under 640px wide: a card. It is a wrapping row, not a grid: the title and the
  * status share the first line, and a full-width break (the row's `::after`) sends the facts to a second line where they
- * flow as one sentence, "391ms · Orbit Retail · 6 min ago", each whole. A grid of thirds put each dot at the edge of a
+ * flow as one sentence, "391ms · Example Co · 6 min ago", each whole. A grid of thirds put each dot at the edge of a
  * third, or alone on a line of its own, and cut a date to fit its third.
  * The table's own width, not the window's, as `hideBelow` reads it: a table in a half-width row on a wide screen, or
  * beside the assistant's column, becomes cards instead of running past its frame (issue #9's Atlas audit).
@@ -337,7 +337,7 @@ export function DataTable<R>({
                           ) : content}
                           {/* The dot that separates two facts, on a phone only — the table has a column for each of
                               them, where a dot would be noise. It trails the fact it follows, so the line reads
-                              "391ms · Orbit Retail · 6 min ago" rather than starting every fact with a bullet. */}
+                              "391ms · Example Co · 6 min ago" rather than starting every fact with a bullet. */}
                           {role === 'fact' && facts.indexOf(c) < facts.length - 1 ? <span aria-hidden data-sep>·</span> : null}
                         </td>
                       );

@@ -14,8 +14,11 @@ export function sampleSurfaces(root: string, appDir: string): SampleSurfaces {
   // The console is the route group at the top of the app folder: `(dashboard)` in the template, any name in a product.
   const groups = has(appDir) ? fs.readdirSync(path.join(root, appDir)).filter((n) => /^\(.+\)$/.test(n)) : [];
   const page = (rest: string) => groups.some((g) => has(`${appDir}/${g}/${rest}/page.tsx`));
+  const holds = (p: string, text: string) => has(p) && fs.readFileSync(path.join(root, p), 'utf8').includes(text);
   return {
-    home: page('(home)') && has('src/views/home-context.ts'),
+    // The guide's summary preset keeps these file names for a product's own Home, so the sample's is told by the year's
+    // card the walk-through reads, which a product's own Home does not draw.
+    home: page('(home)') && has('src/views/home-context.ts') && holds('src/views/home.tsx', 'A year, counted'),
     now: page('engineering') && has('src/views/now.tsx'),
     members: page('members') && has('src/views/members.tsx'),
     keys: page('keys'),

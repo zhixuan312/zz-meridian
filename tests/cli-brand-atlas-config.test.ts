@@ -20,6 +20,8 @@ describe('brand.ts --no-atlas', () => {
     expect(fs.existsSync(path.join(dir, 'app/system'))).toBe(false);
     const config = fs.readFileSync(path.join(dir, 'scripts/verify.config.ts'), 'utf8');
     expect(config).not.toMatch(/'\/system[/']/);
+    // A comment that told why an Atlas entry is as it is goes with the entry.
+    expect(config).not.toMatch(/The reading pages are the Atlas/);
     expect(config).toMatch(/navigationChecks: \[/);
     expect(config).toMatch(/path: '\/requests'/);
   }, 120_000);

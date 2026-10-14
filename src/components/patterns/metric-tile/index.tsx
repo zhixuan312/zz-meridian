@@ -66,7 +66,7 @@ export function MetricTile({
   delta?: number | null;
   /**
    * A short line where the change would sit, for a figure no period comparison fits: who is past due, what is next.
-   * On a compact tile it follows the figure on the tile's one line: "$41.2K · Scale".
+   * On a compact tile it follows the figure on the tile's one line: "$41.2K · next plan".
    */
   note?: ReactNode;
   /**

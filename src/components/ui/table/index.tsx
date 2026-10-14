@@ -24,7 +24,7 @@ export function Table({ className, caption, children, ...rest }: HTMLAttributes<
         className={cn(
           'w-full border-separate border-spacing-0 text-sm',
           '[&_tr>*:first-child]:pl-(--card-pad) [&_tr>*:last-child]:pr-(--card-pad)',
-          /* A text column after a right-aligned number gets room to breathe, so "234ms" and "Parallax AI" read as two facts. */
+          /* A text column after a right-aligned number gets room to breathe, so "234ms" and "Example Co" read as two facts. */
           '[&_[data-num]+:not([data-num])]:pl-8',
           className,
         )}

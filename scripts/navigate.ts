@@ -22,14 +22,15 @@
  * `note: <selector> matches <n> elements; the first visible one was used` is printed once, never a failure. Nothing here writes:
  * probes only open, sort, filter, toggle or follow.
  *
- * A menu item navigates without a link, so nothing prefetches the destination before its press: a journey through the menu
- * waits for no prefetch, is timed from the item's press, and says on its line whether anything had prefetched it all the same.
+ * A menu item navigates without a link; the console's menu prefetches the pages it offers as it opens. A warm journey through
+ * the menu waits for those prefetches, as one through a link waits for the link's, is timed from the item's press, and says
+ * on its line how many prefetches of the destination the page made before the press (`not prefetched` when it made none).
  * A menu that offers no item for the workspace is `never-ready`, naming it.
  *
  * One line per route and device, one per device for the prefetch bytes, and a JSON summary on the last line, whose lines say
  * `via: 'rail'` or `via: 'menu'`:
  *
- *   ok|FAIL|warn|not run <route> <device> shell <ms> · data <ms|not-configured> · interactive <ms|not-configured>[ · noisy][ · through the workspace menu (<workspace>) · not prefetched][ · <reasons>]
+ *   ok|FAIL|warn|not run <route> <device> shell <ms> · data <ms|not-configured> · interactive <ms|not-configured>[ · noisy][ · through the workspace menu (<workspace>) · not prefetched|prefetched <n> time(s) before the press][ · <reasons>]
  *   navigate: {...}
  *
  * scripts/perf.ts drives the same journey 20 times per route, device and condition (warm, cold and after a live refresh).
@@ -424,8 +425,8 @@ export async function journey(page: Page, device: Device, start: string, route: 
     if (!(await poll(() => point(page, leave), t + cap))) throw new Fail('never-ready', `the drawer did not show a ${missing}`);
     drawerMs = Date.now() - t;
   } else if (!(await poll(() => point(page, leave), Date.now() + cap))) throw new Fail('never-ready', `the rail has no pressable ${missing}`);
-  // A menu item is no link, so the router has nothing of the destination to prefetch.
-  const prefetchCapped = menu === undefined && !(await awaitPrefetch(page, route));
+  // A link's destination is prefetched once it is shown; a menu's, once the menu opens (below).
+  let prefetchCapped = menu === undefined && !(await awaitPrefetch(page, route));
   // After-live presses at once after the refresh, which dropped the router's cache: nothing warms the destination again first.
   if (run.condition === 'afterLive') await liveRefresh(page);
   let at: { x: number; y: number } | null;
@@ -437,8 +438,11 @@ export async function journey(page: Page, device: Device, start: string, route: 
     if (!trigger) throw new Fail('never-ready', `the ${missing}, is covered or gone`);
     // The trigger's press is not the journey's: the clock is armed after it, for the item's.
     const t = await press(page, trigger);
-    at = await poll(() => point(page, WORKSPACE_ITEM, menu), t + cap);
-    if (!at) throw new Fail('never-ready', `the workspace menu offers no item for ${menu}`);
+    if (!(await poll(() => point(page, WORKSPACE_ITEM, menu), t + cap))) throw new Fail('never-ready', `the workspace menu offers no item for ${menu}`);
+    // The menu prefetches the pages it offers as it opens: a warm press waits for them, as one on a link does.
+    if (run.condition === 'warm') prefetchCapped = !(await awaitPrefetch(page, route));
+    at = await poll(() => point(page, WORKSPACE_ITEM, menu), Date.now() + cap);
+    if (!at) throw new Fail('never-ready', `the workspace menu's item for ${menu} is covered or gone`);
   }
   const prefetched = menu === undefined ? undefined : await page.eval<number>(`window.__nav.prefetches.filter((p) => p.path === ${JSON.stringify(route)}).length`);
   // A cold sample is cold only if no prefetch of the destination got through: the page refused them, and the browser's own

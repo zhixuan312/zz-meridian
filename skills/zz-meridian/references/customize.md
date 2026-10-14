@@ -46,7 +46,9 @@ sample, ZZ Meridian's own dashboard, lives in `optional:src/system/fixtures/`; y
     is what the rail draws. For a person who may not use the feature, `gate` draws what the product's `refusal` says (see
     "Navigation" below), and `gatedMetadata(feature, metadata)` is what every gated page's `generateMetadata` returns, so
     the tab says the same: a page keeps no static `metadata`. Replace the demo's `current` with your session and delete the demo's View as —
-    `optional:src/data/view-as.ts` and its `zz_meridian_view_as` cookie — so nothing signs in as a sample person.
+    `optional:src/data/view-as.ts` and its `zz_meridian_view_as` cookie — so nothing signs in as a sample person. Until your sign-in
+    exists, keep the demo and point it at your own people: `DEFAULT_MEMBER` and `PERSONAS` in `optional:src/data/access.ts`, and
+    `personas` in `scripts/verify.config.ts`, name the sample's member ids.
   - `optional:src/data/member-mutations.ts` is the member boundary. `membersFor(scope)` binds the collection so every create,
     update and remove passes it, and `assignMemberRole({ id, role, addOns })` is the one role change; the Owner, self and
     last-active-Owner rules hold for a page, the assistant and an MCP server alike. The demo runs one write at a time per
@@ -92,7 +94,9 @@ navigation, `workspaceOf` says which workspace an address belongs to) and `optio
 chooses what the rail lists, never what a person may open. Keep a workspace with the key `main`: the adapter and the
 refusal page fall back to it for an address no entry owns. The sample's browser journeys (`optional:journeys/workspaces.ts`)
 also name `business` and `engineering`, so `verify --full` fails on a renamed workspace until the journeys are changed
-with it or removed. `optional:docs/product-workspaces.md` is the sample's own guide
+with it or removed, and the gate fails on the tests that hold the sample's three until you rewrite them for yours:
+`optional:tests/workspaces.test.ts`, `optional:tests/workspace-access.test.ts`, `optional:tests/workspace-chrome.test.tsx`,
+`optional:tests/workspace-menu-access.test.tsx` and `optional:tests/no-access.test.tsx`. `optional:docs/product-workspaces.md` is the sample's own guide
 to all of this.
 
 **Take them out** when the product has one navigation. In `src/app.config.ts` delete `workspaces`, `WorkspaceId` and the
@@ -229,8 +233,9 @@ Rules that make every page look like it belongs:
 
 A page that leads with figures is headed by what they say, and states what its records show as facts. Part of this is
 Meridian's standard, which a product keeps whatever it sells. Part is the sample's, written for a company that sells
-tokens, which a product replaces with its own words and values. Replace all of the second list: a title that still
-says "requests" on a page about orders is the sample's, not the product's.
+tokens, which a product replaces with its own words and values. Replace all of the second list's parts, words and
+values, and keep the standard a bullet of it says its parts show: a title that still says "requests" on a page about
+orders is the sample's, not the product's.
 
 **The standard. Keep it.**
 
@@ -330,8 +335,9 @@ says "requests" on a page about orders is the sample's, not the product's.
 - **The three workspaces**: Main, Business and Engineering, their `audience` sentences and their homes (Home at `/`,
   Revenue at `/business`, Now at `/engineering`). "Navigation" above says how to declare your own or take them out.
 - **The checks of the sample's pages**: `optional:journeys/workspaces.ts`, which walks every destination of the three
-  workspaces as an Owner and as a Viewer, and the `navigationChecks`, `detailRoutes` and `browserChecks` in
-  `scripts/verify.config.ts` that name the sample's routes. Give each rail page of your own its `navigationChecks`
+  workspaces as an Owner and as a Viewer, the `navigationChecks`, `detailRoutes`, `browserChecks` and `personas` in
+  `scripts/verify.config.ts` that name the sample's routes and people, and the tests under `optional:tests/` that import
+  a sample page, view or fixture. Give each rail page of your own its `navigationChecks`
   entry (`pnpm verify --full` fails a rail route without one) and take the sample's out with its pages.
 - **The choice `explain`**: the sample answers an address a person may not open with the no-access page, which names the
   page and who to ask. Choose `absent` when a product must not tell a person that a page they may not open exists.
@@ -342,8 +348,8 @@ says "requests" on a page about orders is the sample's, not the product's.
   and `servicesTitle`, each in its view's context file under `optional:src/views/`, with the functions that call the
   rules for them (`revenueHead`, `titleOf`, `nowHead`, `servicesHead`, Usage's `usageHead` in
   `optional:src/views/usage-parts.ts` and Home's `homeHead` in `optional:src/views/home-parts.ts`) and Home's line under its title (`homeLine`). Write your pages' own, in your
-  product's nouns: a release "in testing" and a run "without a mark" are the sample's words for its own releases and
-  services.
+  product's nouns: a release "in testing" is the sample's word for its own releases. A run's "without a mark" is
+  written by `run` itself (`src/lib/facts.ts`), so it stays wherever a page states a run.
 - **Home's nine parts and their words**: the head, the revenue card, the three tiles beside it, the row of the days
   inside the band, compute in use, compute cost and gross margin, the year's card, "A year, counted", revenue a period
   beside "What we sell", the Business and Engineering cards, and "Worth knowing across the company": what `homeData`
@@ -480,10 +486,10 @@ writes go through `Proposal` (see `optional:app/embed/proposal/`). Read `agents.
 
 ## Clean-up before validation
 
-Delete the sample pages, views and embed views the product does not use, with their nav lines. Do not delete
+Delete the sample pages, views, embed views and API routes (`optional:app/api/export/requests/`) the product does not use, with their nav lines and the tests that import them. Do not delete
 `optional:src/system/fixtures/` or `optional:src/system/sample-cells.tsx` yet: `optional:src/data/collections.ts`, `optional:src/data/sample.ts`
 and `optional:src/data/sign-in.ts` (the 30 days the sign-in page draws) import the fixtures. Once your collections' `rows` and `clock`, and the clock in the quiet bell of `optional:src/views/shell-alerts.tsx`
-(`DEMO_NOW`), come from your own data and nothing imports them, delete them (with the Atlas kept, the previews read them: leave them, and remove the
+(`DEMO_NOW`), come from your own data and nothing imports them, delete them and `optional:src/data/sample.ts` (with the Atlas kept, the previews read them: leave them, and remove the
 pages' entries in `PAGES` in `example:src/system/content.ts`). Keep `optional:src/data/collections.ts`, `optional:src/lib/collection.ts`,
 `src/lib/assistant/`, `optional:app/api/assistant/` and the assistant panel, unless the person does not want the assistant (it
 then stays off without them). Then fix what still points at the sample:
@@ -496,7 +502,12 @@ then stays off without them). Then fix what still points at the sample:
   awaiting it.
 - `optional:src/app.config.ts`: each `audience` sentence in `workspaces` describes the sample and prints on a page's
   masthead; rewrite it, or take the workspaces out ("Navigation").
-- `optional:app/sign-in/page.tsx`: the headline and lead describe the sample product.
+- `optional:app/sign-in/page.tsx`: the headline and lead describe the sample product, and the root layout's
+  `description` (`optional:app/layout.tsx`) does too.
+- `optional:src/data/README.md`: it describes the sample's collections; describe your own.
+- What only a deleted page read: `node scripts/check.ts` fails an export of `optional:src/data/` that nothing but a test
+  imports, so with Members gone the page side of `optional:src/data/member-mutations.ts` (`memberAccess`,
+  `invitableRoles`, `assignMemberRole`) and `GRANTS` in `optional:src/data/roles.ts` go, or stop being exported.
 - `example:src/system/content.ts`: `PAGES` names a sample request id route.
 - Each page `README.md`: its States rows must describe what your view renders; `check.ts` only checks that the section
   exists.
@@ -508,7 +519,8 @@ grep -rn "/services\|/requests\|/customers\|/keys\|/settings\|/members\|/usage\|
   app src/views src/components --include=*.tsx --include=*.ts | grep -v preview.tsx
 ```
 
-Then `node scripts/registry.ts` and `pnpm verify --full`.
+Then `pnpm verify --full`, after `node scripts/registry.ts` in a clone that keeps the Atlas (a created project has no
+cards' previews, and there it writes a registry of none).
 
 ## Renaming a thing
 

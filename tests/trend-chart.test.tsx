@@ -1,6 +1,10 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { app } from '@/app.config';
 import { TrendChart } from '@/components/charts/trend-chart';
+
+// The symbol follows app.currency, so a rebranded product (--currency SGD) keeps this test green.
+const symbol = new Intl.NumberFormat('en', { style: 'currency', currency: app.currency, currencyDisplay: 'narrowSymbol' }).formatToParts(0).find((p) => p.type === 'currency')!.value;
 
 describe('a stacked trend chart', () => {
   it('reads out each part and the total, for screen readers too', () => {
@@ -49,11 +53,11 @@ describe('a trend chart readout', () => {
     fireEvent.keyDown(chart, { key: 'Home' });
     let readout = container.querySelector('div[aria-hidden]');
     expect(readout).toHaveTextContent(label);
-    expect(readout).toHaveTextContent('$1,234,567,890,123.45');
+    expect(readout).toHaveTextContent(`${symbol}1,234,567,890,123.45`);
     fireEvent.keyDown(chart, { key: 'End' });
     readout = container.querySelector('div[aria-hidden]');
-    expect(readout).toHaveTextContent('$9,876,543,210,987.65');
-    expect(screen.getByRole('table', { name: 'Spend per day' })).toHaveTextContent('$1,234,567,890,123.45');
+    expect(readout).toHaveTextContent(`${symbol}9,876,543,210,987.65`);
+    expect(screen.getByRole('table', { name: 'Spend per day' })).toHaveTextContent(`${symbol}1,234,567,890,123.45`);
     fireEvent.keyDown(chart, { key: 'Escape' });
     expect(container.querySelector('div[aria-hidden]')).toBeNull();
   });

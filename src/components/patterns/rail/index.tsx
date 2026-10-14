@@ -16,7 +16,11 @@ import { toast } from '@/components/ui/toast';
 import { AppearanceMenu } from '@/components/patterns/appearance-menu';
 
 /** One scope the workspace menu offers: the console reads the whole platform or one team. */
-export type Scope = { id: string; label: string; active: boolean; onSelect: () => void };
+/**
+ * A row of the workspace menu. `href` is where choosing it goes, when it goes to a page: the rail prefetches it as the
+ * menu opens, since a row is a press and nothing prefetches it before.
+ */
+export type Scope = { id: string; label: string; active: boolean; onSelect: () => void; href?: string };
 
 /** Who the console is being read as: the persona in view, the ones it may be switched to, and the action that does it. */
 export type ViewAs = {
@@ -116,7 +120,13 @@ export function Rail({
   return (
     <div className="flex h-full w-full flex-col">
       <div className="flex h-16 items-center px-4">
-        <Menu>
+        <Menu
+          onOpenChange={(open) => {
+            // Opening the menu is the person's intent: each other workspace's page is fetched now, so the press that
+            // follows finds it ready, as a link the drawer shows is prefetched when the drawer opens.
+            if (open) for (const s of scopes) if (!s.active && s.href) router.prefetch(s.href);
+          }}
+        >
           <MenuTrigger asChild>
             <button type="button" aria-label={`${app.name}, ${workspace}: ${switcher ? 'workspace menu' : 'account menu'}`} className="group -mx-1.5 flex min-w-0 flex-1 items-center gap-2.5 rounded-md px-1.5 py-1.5 text-left hover:bg-fill-hover data-[state=open]:bg-fill-hover">
               <AppMark size={28} />

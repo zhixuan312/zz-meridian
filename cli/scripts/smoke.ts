@@ -740,7 +740,9 @@ if (args.includes('--update-all') && adoptedBase()) {
 // ── create ─────────────────────────────────────────────────────────────────────────────────────────────
 if (args.includes('--create')) {
   const dir = path.join(work, 'smoke-ops');
-  const create = sh('npx', ['--yes', '--package', tarball, 'zz-meridian', 'create', dir, '--name', 'Smoke Ops'], work);
+  // Not the template's currency: a project made in another one must pass its own gate as made (the shipped tests read
+  // money in `app.currency`).
+  const create = sh('npx', ['--yes', '--package', tarball, 'zz-meridian', 'create', dir, '--name', 'Smoke Ops', '--currency', 'GBP'], work);
   check(create.status === 0, 'create exits 0', create.stdout + create.stderr);
   check(!fs.existsSync(path.join(dir, 'app/system')) && !fs.existsSync(path.join(dir, 'skills')), 'create leaves out the Atlas and the skill source');
   const pm = fs.existsSync(path.join(dir, 'pnpm-lock.yaml')) ? 'pnpm' : 'npm';

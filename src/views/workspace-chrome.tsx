@@ -52,15 +52,16 @@ function RailFor({ access, current }: { access: Promise<ChromeAccess | null>; cu
   const router = useRouter();
   const leave = useLeave();
   const open = (id: WorkspaceId) => (chrome ? visible(chrome.only, navOf(id)).flatMap((g) => g.items.map((i) => i.href)) : []);
+  const target = (id: WorkspaceId) => (open(id).includes(workspaces[id].homeHref) ? workspaces[id].homeHref : open(id)[0]!);
   const scopes = WORKSPACE_IDS.filter((id) => open(id).length > 0).map((id) => ({
     id,
     label: workspaces[id].label,
     active: id === current,
+    href: target(id),
     // Choosing the workspace already in view does nothing, so the page and its filters stay.
     onSelect: () => {
       if (id === current) return;
-      const home = workspaces[id].homeHref;
-      leave(() => router.push(open(id).includes(home) ? home : open(id)[0]!));
+      leave(() => router.push(target(id)));
     },
   }));
   return <ConsoleRail access={chrome} nav={navOf(current)} workspace={workspaces[current].label} scopes={scopes} />;
