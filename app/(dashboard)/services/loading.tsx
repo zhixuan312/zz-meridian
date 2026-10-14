@@ -1,33 +1,32 @@
+import { app } from '@/app.config';
+import { DEMO_NOW, DEMO_UPDATED_AT } from '@/data/sample';
 import { Row } from '@/components/base/shell';
-import { Card } from '@/components/ui/card';
-import { Skeleton } from '@/components/ui/skeleton';
-import { LoadingPage } from '@/components/patterns/page-loading';
+import { Freshness } from '@/components/patterns/freshness';
+import { ChartSkeleton, LoadingPage } from '@/components/patterns/page-loading';
+import { SERVICES_LINE } from '@/views/services-context';
 
-/** Services on its way: the block its title's sentence will take, the uptime figure with its service grid, the service list and the past incidents. */
+/**
+ * The two parts of Services, in their shapes: each service with its strip, and the incidents. Two cards of a block each,
+ * not a bar a row: the page's response carries this skeleton more than once (the body's fallback in its HTML, and the
+ * fallback and the loading state in its payload), and `/services` is held to its HTML cap in `scripts/verify.config.ts`.
+ */
+export function ServicesSkeleton() {
+  return (
+    <Row split="2/3">
+      <ChartSkeleton height="h-[44rem]" />
+      <ChartSkeleton height="h-[36rem]" />
+    </Row>
+  );
+}
+
+/**
+ * Services on its way: the masthead as the page will have it (its kicker, the heading that holds "Services", its one
+ * sentence and the freshness; the page has no action), then the parts' shapes.
+ */
 export default function ServicesLoading() {
   return (
-    <LoadingPage name="services" title="Services" sentence>
-      <Row split="2/3">
-        <Card className="min-h-[29rem] gap-4 p-(--card-pad)">
-          <Skeleton className="h-2.5 w-48" />
-          <Skeleton className="h-16 w-56 rounded-md" />
-          <div className="mt-auto grid grid-cols-2 gap-2">{[0, 1, 2, 3, 4, 5].map((i) => <Skeleton key={i} className="h-9 rounded-md" />)}</div>
-          <Skeleton className="h-8 w-full" />
-        </Card>
-        <Card className="gap-3 p-(--card-pad)">
-          <Skeleton className="h-4 w-40" />
-          <Skeleton className="h-3 w-full" />
-          <Skeleton className="h-3 w-3/4" />
-        </Card>
-      </Row>
-      {[0, 1].map((i) => (
-        <Row key={i}>
-          <Card className="gap-4 p-(--card-pad)">
-            <Skeleton className="h-4 w-32" />
-            {[0, 1, 2, 3].map((j) => <Skeleton key={j} className="h-4" />)}
-          </Card>
-        </Row>
-      ))}
+    <LoadingPage name="services" title="Services" sentence kicker={<>{app.name} · {app.workspace}</>} description={SERVICES_LINE} meta={<Freshness updatedAt={DEMO_UPDATED_AT} now={DEMO_NOW} />}>
+      <ServicesSkeleton />
     </LoadingPage>
   );
 }

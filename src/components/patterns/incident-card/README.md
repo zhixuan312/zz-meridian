@@ -19,7 +19,7 @@ Status: beta
 
 | Variant | Use |
 |---|---|
-| `card` (default) | The current incident beside the status on Services; an incident's own page |
+| `card` (default) | Each open incident on Now and on Services; an incident's own page |
 | `row` | A compact entry in a list of past incidents: title (wraps, never truncated), severity, service, date, how long it lasted, state word. It names no owner and no ticket |
 
 ## Sizes
@@ -67,8 +67,8 @@ A record may hold more than the card draws. The sample's `incidents` hold `owner
 
 ## Surfaces
 
-- **Console**: the `card` on Now and beside the Services figure; `row`s under "Past incidents".
-- **Mobile**: the card stacks under the figure; the owner and the ticket wrap onto as many lines as they need. Nothing else changes.
+- **Console**: the `card` on Now and for each open incident on Services; a `row` for each resolved incident on Services.
+- **Mobile**: the cards stack under the services; the owner and the ticket wrap onto as many lines as they need. Nothing else changes.
 - **Embed**: the inline Now view reduces a live incident to a warning Banner (title, state, started) with Ask; the card appears in fullscreen.
 
 ## Agents

@@ -20,7 +20,7 @@ Status: beta
 | Outage | A `critical` mark |
 | None | A `line-strong` mark, opaque so the baseline never shows through; read as "No data" and never counted as up |
 
-`size="lg"` draws a 56px strip for one that leads its card (the Services page's featured card); the default is 32px. `measure` is the word after the percentage: "uptime" by default, "on time" or "in stock" for other domains. A strip of complete days ends on the latest of them, not today: it takes that day as `end` and names it in `endLabel` ("02 Oct 2026"), so the caption never calls yesterday "Today".
+`size="lg"` draws a 56px strip for one that leads its card (Now's days inside the band); the default is 32px. `measure` is the word after the percentage: "uptime" by default, "on time" or "in stock" for other domains. A strip of complete days ends on the latest of them, not today: it takes that day as `end` and names it in `endLabel` ("02 Oct 2026"), so the caption never calls yesterday "Today".
 
 ## Sizes
 

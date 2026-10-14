@@ -1,103 +1,95 @@
 'use client';
 
+import { useId } from 'react';
 import { Row, Stack } from '@/components/base/shell';
-import { Card, CardHeader } from '@/components/ui/card';
-import { FeaturedMetric } from '@/components/patterns/featured-metric';
-import { StatusList, summarise } from '@/components/patterns/status-list';
-import { unpackServices, type PackedService } from '@/components/patterns/status-list/summarise';
-import { IncidentCard } from '@/components/patterns/incident-card';
-import { AskAbout } from '@/components/patterns/ask-about';
-import { UptimeBars, type DayState } from '@/components/charts/uptime-bars';
+import { ShareContext } from '@/components/base/use-share-view';
+import { Card, CardBody, CardHeader } from '@/components/ui/card';
 import { EmptyState } from '@/components/ui/empty-state';
 import { StatusDot } from '@/components/ui/status-dot';
-import type { Tone } from '@/components/ui/badge';
-import { cn } from '@/lib/cn';
-import { formatDuration } from '@/lib/format';
-import { ShareContext } from '@/components/base/use-share-view';
-import { servicesContext, type ServicesData } from './services-context';
+import { IncidentCard } from '@/components/patterns/incident-card';
+import { StatusList } from '@/components/patterns/status-list';
+import { unpackServices, type PackedService } from '@/components/patterns/status-list/summarise';
+import { lastedOf, servicesContext, type ServicesData } from './services-context';
+import { Unread } from './unread';
 
-const RANK: Record<DayState, number> = { operational: 0, none: 0, degraded: 1, outage: 2 };
-const TONE: Record<DayState, Tone> = { operational: 'positive', none: 'neutral', degraded: 'warning', outage: 'critical' };
+/** The page's two parts, by the titles the page and its specification name them with. */
+const PARTS = { services: 'Each service, 90 days', incidents: 'Incidents' } as const;
 
-/** The Services page's body: shared by the console route; the embed view uses its parts. */
+/**
+ * Incidents: one list, the open ones first, newest first, each in the Incident card's card form with its owner, its
+ * ticket and how long it has lasted so far; then the resolved ones, newest first, in its row form, each with how long
+ * it lasted. The open cards are cards of their own, as on Now, so the part's title stands above them and the resolved
+ * rows share one card under them.
+ */
+function Incidents({ incidents, end }: { incidents: NonNullable<ServicesData['incidents']>; end: Date }) {
+  const { open, resolved } = incidents;
+  const id = useId();
+  return (
+    <section aria-labelledby={id} className="flex min-w-0 flex-col gap-3">
+      <div>
+        <h2 id={id} className="t-card">{PARTS.incidents}</h2>
+        <p className="t-caption mt-1 text-pretty">The open ones first, then the resolved, newest first</p>
+      </div>
+      {open.map((i) => (
+        <div key={i.id} className="flex min-w-0 flex-col gap-2">
+          <p className="t-caption">Open for <span className="t-num font-medium text-ink-2">{lastedOf(i, end)}</span> so far</p>
+          <IncidentCard incident={i} now={end} />
+        </div>
+      ))}
+      {open.length ? null : (
+        <Card>
+          <CardBody className="pt-(--card-pad)">
+            <p className="flex items-start gap-2.5 text-sm text-ink-2">
+              <StatusDot tone="positive" className="mt-[0.45em]" />
+              <span className="text-pretty">No incident is open.</span>
+            </p>
+          </CardBody>
+        </Card>
+      )}
+      {resolved.length ? (
+        <Card className="overflow-hidden">
+          <div className="divide-y divide-line">{resolved.map((i) => <IncidentCard key={i.id} incident={i} now={end} variant="row" />)}</div>
+        </Card>
+      ) : (
+        <p className="t-caption">No incident has been resolved yet.</p>
+      )}
+    </section>
+  );
+}
+
+/**
+ * The Services page's body: each service in the team's order with its strip and how long it has run, then every
+ * incident. Incidents that could not be read leave their part saying so, and every service stands. With no service
+ * yet one card says so and nothing else is drawn.
+ */
 export function ServicesBody(data: ServicesData) {
-  const { services, current, alsoOpen = [], past, now } = data;
-  const end = new Date(now);
-  if (services.length === 0) {
+  const { services, incidents } = data;
+  const end = new Date(data.now);
+  if (!services.length) {
     return (
-      <Card>
+      <Stack>
         <ShareContext context={servicesContext(data)} />
-        <EmptyState title="No services yet" className="py-16">Every service you monitor appears here with its state now and its last 90 days.</EmptyState>
-      </Card>
+        <Card>
+          <EmptyState title="No services yet" className="py-16">Every service you monitor appears here with its state now, its last 90 days and its incidents.</EmptyState>
+        </Card>
+      </Stack>
     );
   }
-  const days = services[0].days.map((_, i) => services.reduce<DayState>((w, s) => (RANK[s.days[i]] > RANK[w] ? s.days[i] : w), 'operational'));
-  const daily = services[0].days.map((_, i) => services.filter((s) => s.days[i] === 'operational').length / services.length);
-  const uptime = services.reduce((a, s) => a + s.uptime, 0) / services.length;
-  const bad = days.filter((d) => d !== 'operational').length;
-  const s = summarise(services);
-  const affected = services.filter((x) => x.status !== 'operational').map((x) => x.name);
   return (
     <Stack>
       <ShareContext context={servicesContext(data)} />
-      <Row split={current ? '2/3' : 'full'}>
-        <FeaturedMetric
-          kicker="Uptime · all services · 90 days"
-          actions={<AskAbout iconBelowSm question={current ? `Which service is hurting uptime, and is "${current.title}" over?` : 'Which service is hurting uptime, and when?'} />}
-          value={uptime}
-          points={daily}
-          format={(n) => `${(n * 100).toFixed(n >= 0.9999 ? 3 : 2)}%`}
-          caption={
-            <>
-              {s.text}
-              {affected.length ? <>: {affected.join(', ')}.</> : '.'} {bad} of the last 90 days had a service below operational.
-            </>
-          }
-        >
-          <div className="@container flex flex-1 flex-col justify-end gap-7 px-2 pb-3">
-            <ul aria-label="Right now" className="grid grid-cols-2 gap-px overflow-hidden rounded-md border border-line bg-line @[40rem]:grid-cols-3 [&>li]:flex [&>li]:min-w-0 [&>li]:items-center [&>li]:gap-2.5 [&>li]:bg-surface/80 [&>li]:px-3.5 [&>li]:py-3">
-              {services.map((svc) => (
-                <li key={svc.name}>
-                  <StatusDot tone={TONE[svc.status]} live={svc.status !== 'operational'} />
-                  <span className="min-w-0 flex-1 truncate text-sm">{svc.name}</span>
-                  <span className={cn('t-num text-xs max-sm:hidden', svc.status === 'operational' ? 'text-ink-3' : 'font-medium text-warning-ink')}>{formatDuration(svc.latency)}</span>
-                </li>
-              ))}
-            </ul>
-            <UptimeBars days={days} uptime={uptime} end={end} size="lg" label="All services, worst state per day, last 90 days" />
-          </div>
-        </FeaturedMetric>
-        {current ? <IncidentCard incident={current} now={end} /> : null}
-      </Row>
-      {alsoOpen.length ? (
-        <Row>
-          <Card className="overflow-hidden">
-            <CardHeader title="Also open" description="Every other incident nobody has resolved, newest first" divided />
-            <div className="divide-y divide-line">{alsoOpen.map((i) => <IncidentCard key={i.id} incident={i} now={end} variant="row" />)}</div>
-          </Card>
-        </Row>
-      ) : null}
-      <Row>
+      <Row split="2/3">
         <Card className="overflow-hidden">
-          <CardHeader title="Services" description="State now, latency, and 90 days of history. Point at a bar to read its day." divided />
-          <StatusList services={services} end={end} summary={false} />
+          <CardHeader title={PARTS.services} description="In the order the team reads its stack: the state now, p95, every day's mark and how long each has run" divided />
+          <StatusList services={services} end={end} run />
         </Card>
-      </Row>
-      <Row>
-        <Card className="overflow-hidden">
-          <CardHeader title="Past incidents" description="Resolved in the last 90 days, newest first" divided />
-          {past.length ? (
-            <div className="divide-y divide-line">{past.map((i) => <IncidentCard key={i.id} incident={i} now={end} variant="row" />)}</div>
-          ) : (
-            <EmptyState title="No incidents in 90 days">Resolved incidents appear here with how long they lasted.</EmptyState>
-          )}
-        </Card>
+        {incidents ? <Incidents incidents={incidents} end={end} /> : <Unread title={PARTS.incidents} what="the incidents" />}
       </Row>
     </Stack>
   );
 }
 
 /** The console route's body: the histories arrive packed, one character a day, and are unpacked here where the strips are drawn. */
-export function PackedServicesBody({ services, ...rest }: Omit<Parameters<typeof ServicesBody>[0], 'services'> & { services: PackedService[] }) {
+export function PackedServicesBody({ services, ...rest }: Omit<ServicesData, 'services'> & { services: PackedService[] }) {
   return <ServicesBody services={unpackServices(services)} {...rest} />;
 }

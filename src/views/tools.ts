@@ -125,13 +125,16 @@ export const requestTool = defineViewTool({
 export const servicesTool = defineViewTool({
   name: 'services',
   title: 'Services',
-  description: 'Every service now and over 90 days, its uptime and the longest clean run, the days inside the latency and error band, every open incident with its latest update, and the incidents resolved in the last 90 days.',
+  description: 'Every service in the team\'s order, now and over 90 days, with its uptime and how long it has run; the uptime of all of them and the longest clean run; the days inside the latency and error band; and every incident, the open ones first with their owners, tickets and how long they have lasted so far, then the resolved ones with how long each lasted.',
   needs: FEATURES.services.needs,
   input: z.object({}),
   async read() {
     await requireNeed(FEATURES.services.needs);
-    const [services, { current, open, past }, history] = await Promise.all([readServices(), readIncidents(), readHistory()]);
-    const data: ServicesData = { services, current, alsoOpen: open.slice(1), past, head: servicesHead({ services, history }), updatedAt: updatedAt(), now: clock().toISOString() };
+    // The incidents are read apart: a read that fails leaves their part saying so and every service standing.
+    const [services, incidents, history] = await Promise.all([readServices(), attempt(readIncidents), readHistory()]);
+    const data: ServicesData = {
+      services, incidents: incidents && { open: incidents.open, resolved: incidents.past }, head: servicesHead({ services, history }), updatedAt: updatedAt(), now: clock().toISOString(),
+    };
     return { context: servicesContext(data), data };
   },
 });

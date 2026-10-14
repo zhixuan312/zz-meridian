@@ -25,8 +25,10 @@ describe('a page body with no data shows its empty state, not a route error', ()
     expect(container.querySelectorAll('h2')).toHaveLength(0);
   });
   it('Services, with no services', () => {
-    render(<ServicesBody services={[]} current={null} past={[]} head={{ title: null, facts: [] }} updatedAt={NOW} now={NOW} />);
+    const { container } = render(<ServicesBody services={[]} incidents={{ open: [], resolved: [] }} head={{ title: null, facts: [] }} updatedAt={NOW} now={NOW} />);
     expect(screen.getByText('No services yet')).toBeTruthy();
+    // Said once, and no part drawn: no list of services and no list of incidents.
+    expect(container.querySelectorAll('h2')).toHaveLength(0);
   });
   it('Customers, with no customers', () => {
     render(<Tooltip.Provider><CustomersView rows={[]} /></Tooltip.Provider>);

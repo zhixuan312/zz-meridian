@@ -130,8 +130,8 @@ const config: VerifyConfig = {
   smokeRoutes: ['/', '/requests', '/settings'],
   // The sample's own journeys across its three workspaces, run beside the audit, the presses and the keyboard walk.
   browserChecks: ['journeys/workspaces.ts'],
-  // Sizes to hold. /services is the longest streamed document of the analytical pages: ninety days of bars, six
-  // services each with their own strip, an incident timeline, and a screen-reader table behind every chart. It
+  // Sizes to hold. /services is the longest streamed document of the analytical pages: six services each with their own
+  // ninety days of bars and the screen-reader summary behind each, an incident timeline and the resolved incidents. It
   // measured 99-100 KiB when this cap was set, so the cap sat exactly on the measurement and the next legitimate
   // byte failed: the access work that gave every page a gate added 0.6% (101 KiB, 103,025 bytes), which is markup
   // the page needs rather than fat to trim. Held at 104 — above the measurement, so the next few KiB still fail.
@@ -156,8 +156,10 @@ const config: VerifyConfig = {
     { path: '/requests', title: 'Requests', readySelector: 'main table tbody tr', probe: 'filter', controlSelector: 'main input[type="search"]', resultSelector: 'main table tbody tr' },
     // Now's first part links to every service by how many there are ("All 6 services"): the one link to Services it has.
     { path: '/engineering', title: 'Now', readySelector: 'main', readyText: 'Services, now', probe: 'link', controlSelector: 'main a[href="/services"]', resultSelector: 'h1' },
-    // Services has no button of its own: its one control is the strip of days, which reads a day when it is pointed at.
-    { path: '/services', title: 'Services', readySelector: 'main', readyText: 'Uptime', probe: 'toggle', controlSelector: 'main figure [role="group"]', resultSelector: 'main figure [aria-live="polite"]' },
+    // Services has no button of its own. Its data has arrived when its first part has, "Each service, 90 days", which only
+    // the body draws (the heading's sentence also says "uptime"); its control is a service's strip of days in that part,
+    // which reads a day when it is pointed at.
+    { path: '/services', title: 'Services', readySelector: 'main', readyText: 'Each service, 90 days', probe: 'toggle', controlSelector: 'main figure [role="group"]', resultSelector: 'main figure [aria-live="polite"]' },
     { path: '/keys', title: 'API keys', readySelector: 'main table tbody tr', probe: 'dialog', controlSelector: 'main button[aria-haspopup="dialog"]', resultSelector: '[role="dialog"]' },
     { path: '/operations-tickets', title: 'Tickets', readySelector: 'main table tbody tr', probe: 'dialog', controlSelector: 'main button[aria-haspopup="dialog"]', resultSelector: '[role="dialog"]' },
     { path: '/tests', title: 'Tests', readySelector: 'main table tbody tr', probe: 'filter', controlSelector: 'main input[type="search"]', resultSelector: 'main table tbody tr' },

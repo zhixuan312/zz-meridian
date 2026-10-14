@@ -41,7 +41,7 @@ export function UptimeBars({
   label: string;
   /** The word after the percentage: "uptime" for services, "on time" for a warehouse's days. */
   measure?: string;
-  /** `lg` (56px) when the strip is a card's protagonist, as on the Services page's featured card. */
+  /** `lg` (56px) when the strip is a card's protagonist, as Now's days inside the band. */
   size?: 'md' | 'lg';
   className?: string;
 }) {

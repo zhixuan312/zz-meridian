@@ -24,7 +24,7 @@ import type { Period } from '@/lib/period';
 import { HomeBody } from '@/views/home';
 import { homeContext, homeLine, type HomeData } from '@/views/home-context';
 import { homeData, homeHead, type HomeReads } from '@/views/home-parts';
-import { servicesContext, servicesHead } from '@/views/services-context';
+import { servicesContext, servicesHead, servicesTitle } from '@/views/services-context';
 import { EmbedHome } from '../app/embed/home/view';
 
 /** The sample's incidents as a page is handed them: the record without who has it and the id of its ticket. */
@@ -109,7 +109,7 @@ describe("the Home's shared context", () => {
         expect(contextText(homeContext(data, 0)).length, p).toBeLessThanOrEqual(BUDGET);
       }
     }
-    const services = servicesContext({ services: SERVICES, current: INCIDENTS.find((i) => i.state !== 'resolved') ?? null, past: PAST_INCIDENTS, head: servicesHead({ services: SERVICES, history: HISTORY }), updatedAt: DEMO_UPDATED_AT.toISOString(), now: DEMO_NOW.toISOString() });
+    const services = servicesContext({ services: SERVICES, incidents: { open: INCIDENTS.filter((i) => i.state !== 'resolved'), resolved: PAST_INCIDENTS }, head: servicesHead({ services: SERVICES, history: HISTORY }), updatedAt: DEMO_UPDATED_AT.toISOString(), now: DEMO_NOW.toISOString() });
     expect(contextText(services).length).toBeLessThanOrEqual(BUDGET);
   });
   it('counts the day in progress in nothing, and says so from the day handed over on its own', () => {
@@ -434,10 +434,20 @@ describe('what a context states beside its title', () => {
     const services = servicesHead({ services: SERVICES, history: null });
     expect(services.title).toMatch(/^[\d.]+% uptime in 90 days$/);
     expect(services).toMatchObject({ facts: [], unknown: expect.stringMatching(/^The days could not be read/) });
-    expect(servicesContext({ services: SERVICES, current: null, past: [], head: services, updatedAt: DEMO_UPDATED_AT.toISOString(), now: DEMO_NOW.toISOString() }).unknowns).toContain(services.unknown);
+    expect(servicesContext({ services: SERVICES, incidents: null, head: services, updatedAt: DEMO_UPDATED_AT.toISOString(), now: DEMO_NOW.toISOString() }).unknowns).toContain(services.unknown);
     // A product with no service yet is headed by the page's name.
     expect(nowHead({ services: [], testing: 0, history: HISTORY }).title).toBeNull();
     expect(servicesHead({ services: [], history: HISTORY }).title).toBeNull();
+  });
+
+  it('Services writes an uptime under one never as a whole one, and a whole one as 100%, and says when the incidents could not be read', () => {
+    expect(servicesTitle({ uptime: 0.99996, days: 90, run: null })).toBe('99.99% uptime in 90 days');
+    expect(servicesTitle({ uptime: 0.99995, days: 90, run: null })).toBe('99.99% uptime in 90 days');
+    expect(servicesTitle({ uptime: 0.99994, days: 90, run: null })).toBe('99.99% uptime in 90 days');
+    expect(servicesTitle({ uptime: 1, days: 90, run: null })).toBe('100% uptime in 90 days');
+    const context = servicesContext({ services: SERVICES, incidents: null, head: servicesHead({ services: SERVICES, history: HISTORY }), updatedAt: DEMO_UPDATED_AT.toISOString(), now: DEMO_NOW.toISOString() });
+    expect(context.unknowns).toContain('The incidents could not be read, so no incident is stated, open or resolved.');
+    expect(context.insights.some((i) => /incident/i.test(i.text))).toBe(false);
   });
 
   it('a period with fewer whole periods before it than a record needs states the change, and all time the figure alone', () => {

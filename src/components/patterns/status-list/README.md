@@ -19,7 +19,7 @@ Status: beta
 | Variant | Prop | Use |
 |---|---|---|
 | With summary (default) | `summary` | A list that stands alone: an embed, a card without its own title |
-| Without summary | `summary={false}` | Under a Card header that already names the list (Services page) |
+| Without summary | `summary={false}` | Under a Card header that already says what the summary would |
 | Without descriptions | `descriptions={false}` | Inline embeds and narrow cards, where one line per service is enough |
 | With runs | `run` | A page about the services as they are now: each row says how long the service has been operational |
 
@@ -63,7 +63,7 @@ With `run`, a row reads one of these under its bars:
 
 ## Composition
 
-A Card (`overflow-hidden`) holding: the summary line, then one row per service. Each row composes Status dot (Layer 2), the service text, Uptime bars (Layer 3) and the state text. On the Services page a Card header ("Services") replaces the summary.
+A Card (`overflow-hidden`) holding: the summary line, then one row per service. Each row composes Status dot (Layer 2), the service text, Uptime bars (Layer 3) and the state text. On Services the summary follows the Card header "Each service, 90 days".
 
 ## Data
 
@@ -80,7 +80,7 @@ The list assumes software services by default. For other things that are up or n
 
 ## Surfaces
 
-- **Console**: wide rows on the Services page, without the summary.
+- **Console**: wide rows on Services and Now, with the summary and each service's run.
 - **Mobile**: narrow rows; the bars drop under the name and still show every day, and a run keeps its line under them.
 - **Embed**: the inline Now view shows the list with its summary and without descriptions, under a Banner for any live incident.
 

@@ -86,14 +86,14 @@ function drawn({ ticketId, owner, ...incident }: IncidentRecord, tickets: Readon
  * and those resolved. The tickets they name are read apart, by their ids: a person who may not read tickets, or a read
  * that fails, leaves every incident standing without its ticket.
  */
-export async function readIncidents(): Promise<{ current: Incident | null; open: Incident[]; past: Incident[]; all: Incident[] }> {
+export async function readIncidents(): Promise<{ open: Incident[]; past: Incident[]; all: Incident[] }> {
   const records = (await read('incidents', { sort: { field: 'started', dir: 'desc' } })).rows as IncidentRecord[];
   const ids = [...new Set(records.flatMap((r) => (r.ticketId ? [r.ticketId] : [])))];
   const found = ids.length ? await attempt(async () => (await read('tickets', { where: [{ field: 'id', op: 'in', value: ids }], limit: ids.length })).rows as Ticket[]) : null;
   const tickets = new Map((found ?? []).map((t) => [t.id, t]));
   const all = records.map((r) => drawn(r, tickets));
   const open = all.filter((i) => i.state !== 'resolved');
-  return { current: open[0] ?? null, open, past: all.filter((i) => i.state === 'resolved'), all };
+  return { open, past: all.filter((i) => i.state === 'resolved'), all };
 }
 
 export async function readServices(): Promise<Service[]> {

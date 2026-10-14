@@ -89,25 +89,33 @@ describe('Services, when more than one incident is open', () => {
     const all = (await collection('incidents').query({})).rows as Row[];
     const second = { ...all.find((i) => i.state !== 'resolved')!, id: 'incidents_second', title: 'Webhook deliveries delayed', service: 'Webhooks', started: '2026-10-01T00:00:00.000Z' };
     stub('incidents', [...all, second]);
-    const { current, open, past } = await readIncidents();
+    const { open, past } = await readIncidents();
     expect(open.length).toBe(2);
-    expect(current).toEqual(open[0]);
+    expect(open[0].started > open[1].started).toBe(true);
     expect(past.every((i) => i.state === 'resolved')).toBe(true);
     // A page is handed the card's shape: who has the incident by name, and not the id of its ticket.
-    expect(current?.owner).toBe('Jonas Weber');
+    expect(open[0].owner).toBe('Jonas Weber');
     expect([...open, ...past].some((i) => 'ticketId' in i || i.owner === null)).toBe(false);
   });
 
-  it('draws them all, and tells the assistant of each', async () => {
+  it('draws them all in one list, the open ones first, and tells the assistant of each', async () => {
     const { data } = await viewTools.find((t) => t.name === 'services')!.read({});
     const d = data as Parameters<typeof ServicesBody>[0];
-    const other = { ...d.current!, id: 'incidents_second', title: 'Webhook deliveries delayed', service: 'Webhooks' };
-    const two = { ...d, alsoOpen: [other] };
-    const { container } = render(<ServicesBody {...two} />);
-    expect(container.textContent).toContain(d.current!.title);
-    expect(container.textContent).toContain('Webhook deliveries delayed');
-    expect(screen.getByText('Also open')).toBeTruthy();
-    expect(servicesContext(two).insights.some((i) => i.text.includes('Webhook deliveries delayed'))).toBe(true);
+    const first = d.incidents!.open[0];
+    const other = { ...first, id: 'incidents_second', title: 'Webhook deliveries delayed', service: 'Webhooks' };
+    const two = { ...d, incidents: { ...d.incidents!, open: [first, other] } };
+    const { container } = render(<Tooltip.Provider><ServicesBody {...two} /></Tooltip.Provider>);
+    const list = screen.getByRole('region', { name: 'Incidents' });
+    const text = list.textContent ?? '';
+    // Both open ones, each in its card with how long it has lasted so far, before every resolved one.
+    expect(text.indexOf(first.title)).toBeGreaterThanOrEqual(0);
+    expect(text.indexOf('Webhook deliveries delayed')).toBeGreaterThan(text.indexOf(first.title));
+    expect(text.match(/Open for \S+ so far/g)).toHaveLength(2);
+    for (const r of d.incidents!.resolved) expect(text.indexOf(r.title), r.title).toBeGreaterThan(text.indexOf('Webhook deliveries delayed'));
+    expect(container.textContent).not.toMatch(/Also open|Past incidents/);
+    const said = servicesContext(two).insights.map((i) => i.text);
+    expect(said.some((t) => t.startsWith(`Open incident "${first.title}"`))).toBe(true);
+    expect(said.some((t) => t.startsWith('Open incident "Webhook deliveries delayed"'))).toBe(true);
   });
 });
 

@@ -112,7 +112,7 @@ to all of this.
 | Summary tiles over a list people only read (what ran, what is going out) | `optional:app/(dashboard)/tests/`, `optional:app/(dashboard)/releases/` + `optional:src/views/tests.tsx`, `optional:src/views/releases.tsx` | Data table under three tiles |
 | One record | `optional:app/(dashboard)/requests/[id]/` + `optional:src/views/request.tsx` | Detail head and key facts |
 | A count over a period, its facts, then breakdowns and patterns over time | `optional:app/(dashboard)/usage/` + `optional:src/views/usage.tsx` | Requests a day, then a year of days |
-| Systems and incidents (Services, at `/services`) | `optional:app/(dashboard)/services/` + `optional:src/views/services.tsx` | Status summary |
+| Systems and incidents (Services, at `/services`) | `optional:app/(dashboard)/services/` + `optional:src/views/services.tsx` | Status list with each service's run, beside one list of incidents |
 | Customers, accounts, people | `optional:app/(dashboard)/customers/` + `optional:src/views/customers.tsx` | Data table, a usage sparkline in each row |
 | Keys, tokens, secrets | `optional:app/(dashboard)/keys/` + `optional:src/views/keys.tsx` | Table with masked values |
 | Records people add, edit and remove (also what the assistant reads) | `optional:app/(dashboard)/members/`, `optional:app/(dashboard)/keys/` + `optional:src/views/members.tsx`, `optional:src/views/keys.tsx` | Data table over a collection |
@@ -332,6 +332,16 @@ says "requests" on a page about orders is the sample's, not the product's.
   marked "Yours", worked out on the server from who is reading; a part that changes while it is read registers its
   collection with `useLive`; nothing arrived is one card and the page headed by its name. Write your own engineering
   home.
+- **Services' parts and their words**: "Each service, 90 days" and "Incidents", the page's one sentence, the services,
+  their order and their incidents: what `servicesTool` in `optional:src/views/tools.ts` reads, how
+  `optional:src/views/services.tsx` draws them and how `servicesContext` in `optional:src/views/services-context.ts`
+  says it. The six services, their 90 days and the rule an uptime is worked out by are the sample company's. Keep the
+  standard they show: the services in the order the team reads its stack, each with its run (the Status list's `run`);
+  one list of incidents, the open ones first in the Incident card's card form with how long each has lasted so far,
+  then the resolved in its row form with how long each lasted; an uptime under one never written as a whole one, and
+  exactly one written "100%"; incidents that cannot be read leave their part saying so while every service stands; and
+  no service yet is one card with the page headed by its name. The masthead's freshness reads the sample's clock
+  (`DEMO_UPDATED_AT`), as Now's does: a product passes when its own data last arrived. Write your own.
 - **`optional:tests/titles.test.ts`** and **`optional:tests/titles-engineering.test.ts`**, which hold the sample's
   words branch by branch; **`optional:tests/facts-config.test.ts`**, which holds the sample's values of `facts`; and
   the cases of `optional:tests/shared-context.test.tsx` that read the sample's headings and facts. Rewrite their cases

@@ -1,6 +1,8 @@
 // @vitest-environment node
+import { PassThrough } from 'node:stream';
 import { Tooltip } from 'radix-ui';
-import { renderToStaticMarkup } from 'react-dom/server';
+import type { ReactElement } from 'react';
+import { renderToPipeableStream, renderToStaticMarkup } from 'react-dom/server';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const jar = vi.hoisted(() => ({ value: undefined as string | undefined }));
@@ -24,14 +26,29 @@ import { CUSTOMERS } from '@/system/fixtures/company';
 
 beforeEach(() => { jar.value = 'members_12'; });
 
+/** A page as it is served, every boundary resolved: its parts stream in behind its masthead. */
+async function served(page: Promise<unknown>): Promise<string> {
+  const element = (await page) as ReactElement;
+  return new Promise<string>((resolve, reject) => {
+    const out = new PassThrough();
+    let text = '';
+    out.on('data', (chunk) => { text += chunk; });
+    out.on('end', () => resolve(text));
+    const stream = renderToPipeableStream(<Tooltip.Provider>{element}</Tooltip.Provider>, { onAllReady: () => stream.pipe(out), onShellError: reject, onError: reject, progressiveChunkSize: Infinity });
+  });
+}
+
 /** The buttons a piece of markup holds, by their words. */
 const buttons = (html: string) => [...html.matchAll(/<button\b[^>]*>([\s\S]*?)<\/button>/g)].map((m) => m[1].replace(/<[^>]*>/g, '').trim());
 
 describe('a control that says it did something did it', () => {
   it('Services offers no subscription: nothing would keep one, and nothing sends an update', async () => {
-    const html = renderToStaticMarkup(await ServicesPage());
-    // The page drew: an empty page would hold no button either. Its heading holds its name before the title's sentence.
+    const html = await served(ServicesPage());
+    // The page drew, its parts and not their placeholders: an empty page would hold no button either. Its heading holds
+    // its name before the title's sentence.
     expect(html).toMatch(/<h1[^>]*>(?:<[^>]*>)*Services/);
+    expect(html).toContain('Each service, 90 days');
+    expect(html).toContain('Incidents');
     expect(buttons(html).filter((b) => /subscribe/i.test(b))).toEqual([]);
     expect(Object.keys(services)).not.toContain('SubscribeButton');
   });
