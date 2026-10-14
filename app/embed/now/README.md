@@ -1,6 +1,6 @@
 # Now · MCP view
 
-The Now view is what an assistant shows when asked whether ZZ Meridian is healthy: the live incident and every service's state, small enough to sit in a conversation.
+The Now view is what an assistant shows when asked whether ZZ Meridian is healthy: the open incident and every service's state, small enough to sit in a conversation, and the whole Now page in fullscreen.
 
 Status: beta
 
@@ -8,24 +8,24 @@ Status: beta
 
 | Mode | Content |
 |---|---|
-| Inline | Embed frame head (mark, "Now", Freshness, Expand, Open in ZZ Meridian); a warning Banner for a live incident with Ask; the Status list with its summary and without descriptions |
-| Fullscreen | The Now page's rows under the embed head |
+| Inline | Embed frame head (mark, "Now", Freshness, Expand, Open in ZZ Meridian); a warning Banner for the open incident, the most severe first, with Ask; the Status list with its summary and without descriptions |
+| Fullscreen | The Now page's body under the embed head: its twelve parts, from "Services, now" to "Changes" (`app/(dashboard)/engineering/README.md`) |
 
 ## States
 
 | State | Inline |
 |---|---|
 | All operational | No banner; the summary reads "All services operational" |
-| Live incident | The banner names it, its state and when it started |
+| Open incident | The banner names it, its state and when it started; with several, the most severe |
 | Not connected (opened directly) | The same view; Ask is absent; Expand opens the console |
 
 ## Data
 
-The Now tool's read (`nowTool` in `src/views/tools.ts`): the `services` collection, the newest incident nobody has resolved and a count of every other open one, and the page's title and days inside the band, worked out on the server from the releases and every complete day kept and handed to the view as sentences.
+The Now tool's read (`nowTool` in `src/views/tools.ts`), the page's own: inline draws the services and the open incidents, fullscreen every part. The strips cross to the browser one character a day (`packNow` in `src/views/now-context.ts`), as the page's do.
 
 ## Surfaces
 
-Embed only, at 360 to 760px inline and the host's full panel in fullscreen. The status list's bars show the last 30 days inline.
+Embed only, at 360 to 760px inline and the host's full panel in fullscreen. The status list's bars show the last 90 days inline, as on the page; fullscreen lays the parts out as the page does at the panel's width.
 
 ## Agents
 

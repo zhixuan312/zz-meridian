@@ -9,11 +9,14 @@ import { AskAbout } from '@/components/patterns/ask-about';
 import { StatusList } from '@/components/patterns/status-list';
 import { ShareContext } from '@/components/base/use-share-view';
 import { NowBody } from '@/views/now';
-import { nowContext, type NowData } from '@/views/now-context';
+import { nowContext, unpackNow, type PackedNowData } from '@/views/now-context';
 import { formatRelative } from '@/lib/format-date';
 
-export function EmbedNow(p: NowData) {
+/** Inline, the services and the open incident, the most severe first; fullscreen, Now's whole body. The strips arrive packed, as the page's do. */
+export function EmbedNow(packed: PackedNowData) {
   const s = useSurface();
+  const p = unpackNow(packed);
+  const lead = p.incidents?.open[0] ?? null;
   return (
     <EmbedFrame title="Now" meta={<Freshness updatedAt={new Date(p.updatedAt)} now={new Date(p.now)} />} consolePath="/engineering">
       {s.mode === 'fullscreen' ? (
@@ -21,13 +24,13 @@ export function EmbedNow(p: NowData) {
       ) : (
         <div className="flex flex-col gap-3">
           <ShareContext context={nowContext(p)} />
-          {p.current ? (
+          {lead ? (
             <Banner
               tone="warning"
-              title={p.current.title}
-              action={<AskAbout question={`What is the impact of "${p.current.title}" on my traffic?`} />}
+              title={lead.title}
+              action={<AskAbout question={`What is the impact of "${lead.title}" on my traffic?`} />}
             >
-              {p.current.state === 'monitoring' ? 'Fix in place, monitoring' : 'Investigating'} · started {formatRelative(p.current.started, new Date(p.now))}
+              {lead.state === 'monitoring' ? 'Fix in place, monitoring' : 'Investigating'} · started {formatRelative(lead.started, new Date(p.now))}
             </Banner>
           ) : null}
           <Card className="overflow-hidden">

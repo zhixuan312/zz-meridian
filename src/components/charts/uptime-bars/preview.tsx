@@ -2,7 +2,10 @@
 
 import { Specimen, Plane } from '@/system/specimen';
 import { DEMO_NOW, SERVICES } from '@/system/fixtures/sample';
+import { formatDate } from '@/lib/format-date';
 import { UptimeBars } from '.';
+
+const YESTERDAY = new Date(DEMO_NOW.getTime() - 86_400_000);
 
 export default function UptimeBarsPreview() {
   return (
@@ -23,6 +26,11 @@ export default function UptimeBarsPreview() {
       <Specimen label="No data" note="A day with no data is drawn in the line colour, never as an operational day, and the summary lists it as No data.">
         <Plane on="surface" className="max-w-sm">
           <UptimeBars label="Batch worker over 90 days" days={SERVICES[0].days.map((d, i) => (i >= 20 && i < 26 ? 'none' : d))} uptime={SERVICES[0].uptime} end={DEMO_NOW} />
+        </Plane>
+      </Specimen>
+      <Specimen label="Complete days" note="A strip that ends on the latest complete day takes it as end and names it in endLabel; the caption never calls it Today.">
+        <Plane on="surface" className="max-w-sm">
+          <UptimeBars label="Days inside the band, the last 90 complete days" days={SERVICES[1].days} uptime={SERVICES[1].uptime} end={YESTERDAY} endLabel={formatDate(YESTERDAY)} measure="inside the band" />
         </Plane>
       </Specimen>
       <Specimen label="No incidents" note="Every day operational: one baseline, no marks, and the summary says No incidents.">

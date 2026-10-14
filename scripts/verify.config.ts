@@ -154,7 +154,8 @@ const config: VerifyConfig = {
     { path: '/usage', title: 'Usage', readySelector: 'main table tbody tr', probe: 'toggle', controlSelector: 'main [role="radio"][aria-checked="false"]', resultSelector: 'main [role="radio"]' },
     { path: '/customers', title: 'Customers', readySelector: 'main table tbody tr', probe: 'filter', controlSelector: 'main input[type="search"]', resultSelector: 'main table tbody tr' },
     { path: '/requests', title: 'Requests', readySelector: 'main table tbody tr', probe: 'filter', controlSelector: 'main input[type="search"]', resultSelector: 'main table tbody tr' },
-    { path: '/engineering', title: 'Now', readySelector: 'main', readyText: 'Services', probe: 'link', controlSelector: 'main a[href="/services"]', resultSelector: 'h1' },
+    // Now's first part links to every service by how many there are ("All 6 services"): the one link to Services it has.
+    { path: '/engineering', title: 'Now', readySelector: 'main', readyText: 'Services, now', probe: 'link', controlSelector: 'main a[href="/services"]', resultSelector: 'h1' },
     // Services has no button of its own: its one control is the strip of days, which reads a day when it is pointed at.
     { path: '/services', title: 'Services', readySelector: 'main', readyText: 'Uptime', probe: 'toggle', controlSelector: 'main figure [role="group"]', resultSelector: 'main figure [aria-live="polite"]' },
     { path: '/keys', title: 'API keys', readySelector: 'main table tbody tr', probe: 'dialog', controlSelector: 'main button[aria-haspopup="dialog"]', resultSelector: '[role="dialog"]' },

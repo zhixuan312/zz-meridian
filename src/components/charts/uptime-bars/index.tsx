@@ -24,17 +24,20 @@ export function UptimeBars({
   days,
   uptime,
   end,
+  endLabel = 'Today',
   label,
   measure = 'uptime',
   size = 'md',
   className,
 }: {
-  /** One state per day, oldest first, ending today. */
+  /** One state per day, oldest first, ending on `end`. */
   days: DayState[];
   /** The uptime over the days shown, as a fraction. */
   uptime: number;
-  /** The last day's date (today). */
+  /** The last day's date: today, or the latest complete day. */
   end: Date;
+  /** The caption's right end: "Today" by default; a strip of complete days names the day it ends on ("02 Oct 2026"). */
+  endLabel?: string;
   label: string;
   /** The word after the percentage: "uptime" for services, "on time" for a warehouse's days. */
   measure?: string;
@@ -88,7 +91,7 @@ export function UptimeBars({
         <span aria-hidden className="h-px flex-1 bg-line" />
         <span className="t-num font-medium text-ink-2">{pct(uptime)} {measure}</span>
         <span aria-hidden className="h-px flex-1 bg-line" />
-        <span>Today</span>
+        <span>{endLabel}</span>
       </figcaption>
       {hover !== null ? (
         <div

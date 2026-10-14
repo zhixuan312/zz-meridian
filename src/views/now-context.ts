@@ -7,10 +7,10 @@ import { facts as rules } from '@/app.config';
 import type { ActivityEvent } from '@/components/patterns/activity-feed';
 import type { Incident } from '@/components/patterns/incident-card';
 import type { Service } from '@/components/patterns/status-list';
-import { summarise } from '@/components/patterns/status-list/summarise';
+import { packServices, summarise, unpackServices, type PackedService } from '@/components/patterns/status-list/summarise';
 import type { DayState } from '@/components/charts/uptime-bars';
 import type { DailyPoint, Endpoint } from '@/data/sample';
-import { steady } from '@/lib/facts';
+import { runOf, steady } from '@/lib/facts';
 import { formatCompact, formatDuration, formatPercent, plural } from '@/lib/format';
 import { formatDate, formatRelative } from '@/lib/format-date';
 import { freshnessOf, type Fact, type Insight, type SharedContext } from '@/lib/shared-context';
@@ -39,14 +39,11 @@ export type BandFact = { about: 'outside' | 'year' | 'busiest' | 'answered'; tex
 export type NowRunDay = { date: string; passed: number; skipped: number; failed: number };
 
 /**
- * What Now's read hands the page, its embed and its context. `current` is the newest incident nobody has resolved, the
- * one the embed leads with, and `alsoOpen` every other one; `head` is the page's title and the days inside the band,
+ * What Now's read hands the page, its embed and its context. `head` is the page's title and the days inside the band,
  * worked out on the server (`nowHead`). Each part's key is null when its read failed, and `unread` names it.
  */
 export type NowData = {
   services: Service[];
-  current: Incident | null;
-  alsoOpen: Incident[];
   head: PageHead;
   /** The line under the title: how long after its start each update of the open incident came, the services and the days inside the band. */
   line: string | null;
@@ -114,6 +111,73 @@ export function nowHead({ services, testing, history }: { services: readonly Ser
     facts: held ? [handed(held, '/engineering')] : [],
     ...(unread.length ? { unknown: unread.join(' ') } : {}),
   };
+}
+
+/** Each part's title, as the page heads it: the band's is its figure ("357 of 360 days inside the band"), and this one heads it when the days could not be read. */
+export const NOW_PARTS = {
+  services: 'Services, now',
+  incident: 'Open incident',
+  incidents: 'Open incidents',
+  band: 'Days inside the band',
+  models: 'Models, now',
+  compute: 'Compute in use',
+  shipping: 'Shipping',
+  work: 'Work',
+  endpoints: 'Slowest endpoints',
+  runs: 'Verification runs a day, by how they ended',
+  changes: 'Changes',
+} as const;
+/** The month's four tiles by name, for a tile whose figure could not be read. */
+export const NOW_TILES = { releases: 'Releases out', tickets: 'Tickets closed', runs: 'Runs passed', incidents: 'Incidents resolved' } as const;
+
+/** The most services "Services, now" lists whole, and how many of the longest runs it keeps past that. */
+export const SERVICES_WHOLE = 8;
+const LONGEST_RUNS = 3;
+
+/**
+ * The services "Services, now" hands the Status list, which never folds: every one up to eight; past that, the ones
+ * not operational in the team's order, then the three with the longest current runs, longest first. The link under
+ * the list names how many there are and opens every one.
+ */
+export function servicesShown(services: Service[]): Service[] {
+  if (services.length <= SERVICES_WHOLE) return services;
+  const longest = services
+    .filter((s) => s.status === 'operational')
+    .map((s, order) => ({ s, order, run: runOf(s.days, 'operational').length }))
+    .sort((a, b) => b.run - a.run || a.order - b.order)
+    .slice(0, LONGEST_RUNS)
+    .map((x) => x.s);
+  return [...services.filter((s) => s.status !== 'operational'), ...longest];
+}
+
+/**
+ * Nothing has arrived yet: every read answered, and none holds a record of any part (no service, no complete day, no
+ * incident, no request of a model, no compute, no release, no ticket, no endpoint, no run and no change). A read that
+ * failed is not this: its part says so and the rest stands.
+ */
+export function nothingArrived(d: NowData): boolean {
+  const ships = d.shipping && (d.shipping.testing.length || d.shipping.ready.length || d.shipping.live.length);
+  const ran = d.runs?.days.some((x) => x.passed + x.skipped + x.failed);
+  const counted = Object.values(d.month).some((t) => t?.value);
+  return !d.unread.length && !d.services.length && !d.band && !d.incidents?.open.length && !d.incidents?.latest && !d.models?.some((m) => m.requests)
+    && !d.compute && !ships && !d.work?.tickets.length && !d.endpoints?.length && !ran && !counted && !d.activity?.length;
+}
+
+/** A day of the band's strip as one character, so the 360 days cross to the browser as one string, as the services' strips do. */
+const DAY_GLYPH: Record<DayState, string> = { operational: 'o', degraded: 'd', outage: 'x', none: '-' };
+const DAY_OF = Object.fromEntries(Object.entries(DAY_GLYPH).map(([state, glyph]) => [glyph, state])) as Record<string, DayState>;
+
+type Band = NonNullable<NowData['band']>;
+/** Now's body as it crosses to the browser: the strips one character a day. */
+export type PackedNowData = Omit<NowData, 'services' | 'band'> & { services: PackedService[]; band: (Omit<Band, 'days'> & { days: string }) | null };
+
+export function packNow({ services, band, ...rest }: NowData): PackedNowData {
+  return { ...rest, services: packServices(services), band: band && { ...band, days: band.days.map((d) => DAY_GLYPH[d]).join('') } };
+}
+
+/** The inverse of `packNow`, in the client component that draws the strips. */
+export function unpackNow({ services, band, ...rest }: PackedNowData): NowData {
+  return { ...rest, services: unpackServices(services), band: band && { ...band, days: [...band.days].map((g) => DAY_OF[g]) } };
 }
 
 /** Items in a sentence: "a", "a and b", "a, b and c". */

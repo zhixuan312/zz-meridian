@@ -7,7 +7,7 @@ Status: beta
 ## Anatomy
 
 1. **SVG**: one `<svg role="img">` per strip, labelled by the summary. One baseline `<rect>` spans the whole period in the operational fill; one `<rect data-day data-state>` is drawn per non-operational day. A focus rect appears only while a day is focused.
-2. **Caption**: "90 days ago" (the span shown), a hairline, the uptime percentage in `ink-2`, a hairline, "Today".
+2. **Caption**: "90 days ago" (the span shown), a hairline, the uptime percentage in `ink-2`, a hairline, "Today", or the day the strip ends on when it is given `endLabel`.
 3. **Tooltip**: on hover or keyboard focus, the day's state and date, on `surface-inverse`.
 4. **Screen-reader text**: one paragraph with the period and its uptime, then one sentence per degraded, outage or no-data day ("12 Sep 2026: Outage."), or "No incidents." There is no table of every day.
 
@@ -20,7 +20,7 @@ Status: beta
 | Outage | A `critical` mark |
 | None | A `line-strong` mark, opaque so the baseline never shows through; read as "No data" and never counted as up |
 
-`size="lg"` draws a 56px strip for one that leads its card (the Services page's featured card); the default is 32px. `measure` is the word after the percentage: "uptime" by default, "on time" or "in stock" for other domains.
+`size="lg"` draws a 56px strip for one that leads its card (the Services page's featured card); the default is 32px. `measure` is the word after the percentage: "uptime" by default, "on time" or "in stock" for other domains. A strip of complete days ends on the latest of them, not today: it takes that day as `end` and names it in `endLabel` ("02 Oct 2026"), so the caption never calls yesterday "Today".
 
 ## Sizes
 

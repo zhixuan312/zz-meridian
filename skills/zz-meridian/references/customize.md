@@ -321,11 +321,17 @@ says "requests" on a page about orders is the sample's, not the product's.
   band with their four facts, the models over the last 30 complete days, compute in use a region on the latest complete
   day, what ships, the work, the slowest endpoints, the four figures of the last 30 complete days, the runs a day and
   the latest changes: what `nowData` in `optional:src/views/now-parts.ts` works out for them from what `nowTool` in
-  `optional:src/views/tools.ts` reads, each collection apart, and how `nowContext` says it. The models, the regions,
-  the tickets' priorities and the tiles' words are the sample company's. Keep the standard they show: each figure
-  names its window, a tile's line fits in 32 characters, the day in progress is counted in nothing but the runs a day,
-  the facts Home also states are written by Home's own functions, and a part whose read failed is null and named in the
-  context's unknowns. Write your own engineering home.
+  `optional:src/views/tools.ts` reads, each collection apart, how `optional:src/views/now.tsx` draws them, in twelve
+  parts, and how `nowContext` says it. The parts, their titles and words, the models, the regions, the tickets'
+  priorities, the tiles, the eight services a list holds whole and the three longest runs it keeps past that are the
+  sample company's. Keep the standard they show: each figure names its window, a tile's line fits in 32 characters,
+  the day in progress is counted in nothing but the runs a day, the facts Home also states are written by Home's own
+  functions, and a part whose read failed is null, says so in its own place and is named in the context's unknowns; a
+  list that never folds is handed what the page's rule keeps (`servicesShown` in `optional:src/views/now-context.ts`)
+  beside a link that counts every one; an incident names its owner and opens its ticket; the reader's own record is
+  marked "Yours", worked out on the server from who is reading; a part that changes while it is read registers its
+  collection with `useLive`; nothing arrived is one card and the page headed by its name. Write your own engineering
+  home.
 - **`optional:tests/titles.test.ts`** and **`optional:tests/titles-engineering.test.ts`**, which hold the sample's
   words branch by branch; **`optional:tests/facts-config.test.ts`**, which holds the sample's values of `facts`; and
   the cases of `optional:tests/shared-context.test.tsx` that read the sample's headings and facts. Rewrite their cases

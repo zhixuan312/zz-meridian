@@ -19,7 +19,7 @@ import { steady } from '@/lib/facts';
 import { formatDuration } from '@/lib/format';
 import { formatDate, formatDay } from '@/lib/format-date';
 import { yearFacts, yearOf } from './home-parts';
-import { inWords, nowHead, type BandFact, type NowData, type NowModel, type NowRunDay, type NowTicket } from './now-context';
+import { inWords, NOW_TILES, nowHead, type BandFact, type NowData, type NowModel, type NowRunDay, type NowTicket } from './now-context';
 import { releaseFigures, releaseMoment, stageOf, unresolvedText } from './releases-context';
 
 /** The days a strip of the band shows, the window the month's figures count, the tickets Work lists and the longest line a tile draws. */
@@ -97,10 +97,11 @@ export function nowData(r: NowReads): NowData {
   const history = read(r.history, 'the days') ? r.history : null;
   const held = history?.length ? steady(history, rules.band) : null;
 
-  // The line under the title: the most severe open incident's updates timed from its start, in the card's words.
+  // The line under the title: the most severe open incident's updates timed from its start, in the card's words. The
+  // title names the service and the card the incident, so the line does not: it keeps to three lines beside Freshness.
   const lead = [...open].sort((a, b) => SEVERITY[a.severity] - SEVERITY[b.severity] || (a.started < b.started ? 1 : -1));
   const line = [
-    lead[0] && `${lead[0].service}'s incident: updates ${inWords([...lead[0].updates].sort((a, b) => a.at.localeCompare(b.at)).map((u) => afterStart(lead[0].started, u.at)))}${lead.length > 1 ? `, and ${lead.length - 1} more open` : ''}`,
+    lead[0] && `Updates ${inWords([...lead[0].updates].sort((a, b) => a.at.localeCompare(b.at)).map((u) => afterStart(lead[0].started, u.at)))}${lead.length > 2 ? `, and ${lead.length - 1} more incidents open` : lead.length > 1 ? ', and another incident open' : ''}`,
     services.length && summarise(services).text,
     held && `${held.inside} of ${held.of} days inside the band`,
   ].filter(Boolean).join('; ');
@@ -169,15 +170,15 @@ export function nowData(r: NowReads): NowData {
   const failed = ran?.filter((x) => x.state === 'failed').sort((a, b) => (a.startedAt < b.startedAt ? 1 : -1))[0];
   const settled = incidentsRead ? resolved.filter((i) => inMonth(i.resolved)) : null;
   const month: NowData['month'] = {
-    releases: out && { label: 'Releases out', value: out.length, line: out.length ? fit(`the latest ${out[0].version} on ${formatDay(out[0].releasedAt!)}`, `the latest on ${formatDay(out[0].releasedAt!)}`) : 'none went out' },
-    tickets: closed && { label: 'Tickets closed', value: closed.length, line: closed.length ? fit(`took ${inWords(closed.map(String))} ${closed.at(-1) === 1 ? 'day' : 'days'}`, `took ${closed[0]} to ${closed.at(-1)} days`) : 'none closed' },
+    releases: out && { label: NOW_TILES.releases, value: out.length, line: out.length ? fit(`the latest ${out[0].version} on ${formatDay(out[0].releasedAt!)}`, `the latest on ${formatDay(out[0].releasedAt!)}`) : 'none went out' },
+    tickets: closed && { label: NOW_TILES.tickets, value: closed.length, line: closed.length ? fit(`took ${inWords(closed.map(String))} ${closed.at(-1) === 1 ? 'day' : 'days'}`, `took ${closed[0]} to ${closed.at(-1)} days`) : 'none closed' },
     runs: ran && {
-      label: 'Runs passed', value: ran.filter((x) => x.state === 'passed').length, of: ran.length,
+      label: NOW_TILES.runs, value: ran.filter((x) => x.state === 'passed').length, of: ran.length,
       line: `${ran.filter((x) => x.state === 'failed').length} failed, ${ran.filter((x) => x.state === 'skipped').length} skipped`,
       ...(failed ? { finding: { text: fit(`${failed.suite} run failed ${formatDay(failed.startedAt)}`, `a run failed ${formatDay(failed.startedAt)}`), day: failed.startedAt.slice(0, 10), tone: 'warning' as const } } : {}),
     },
     incidents: settled && {
-      label: 'Incidents resolved', value: settled.length,
+      label: NOW_TILES.incidents, value: settled.length,
       line: settled.length ? fit(`lasted ${inWords(settled.map(lasted))}`, `the longest lasted ${formatDuration(Math.max(...settled.map(length)))}`) : latest ? `last ${formatDate(latest.resolved!)}, lasted ${lasted(latest)}` : 'none resolved yet',
     },
   };
@@ -195,8 +196,6 @@ export function nowData(r: NowReads): NowData {
 
   return {
     services,
-    current: open[0] ?? null,
-    alsoOpen: open.slice(1),
     head: nowHead({ services, testing: releases && releaseFigures(releases).testing, history }),
     line: line || null,
     incidents: incidentsRead ? { open: lead, latest: latest && { incident: latest, text: `the last was resolved on ${formatDate(latest.resolved!)} and lasted ${lasted(latest)}` } } : null,
