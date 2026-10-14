@@ -59,8 +59,12 @@ export function record(values: readonly number[], { needs, what, format, day, we
  * threshold has been passed, and nothing when the earliest day is not below that threshold: a threshold already passed
  * when the records begin has no first day the product can know. `daysSince` counts the later days above it, not the
  * days gone by.
+ *
+ * `period` is how many of the latest days are a page's period, when the fact is stated about one: it counts how many of
+ * them passed the threshold (`inPeriod`), and the line says so. The rule is still given every day kept, never the
+ * period's days alone, which would make a day inside the period the first ever.
  */
-export function first(days: readonly DayValue[], { thresholds, what, format }: { thresholds: readonly number[]; what: string; format: (n: number) => string }): (Fact & { threshold: number; day: string; daysSince: number }) | null {
+export function first(days: readonly DayValue[], { thresholds, what, format, period }: { thresholds: readonly number[]; what: string; format: (n: number) => string; period?: number }): (Fact & { threshold: number; day: string; daysSince: number; inPeriod?: number }) | null {
   const passed = thresholds.filter((t) => days.some((d) => d.value > t));
   if (!passed.length) return null;
   const threshold = Math.max(...passed);
@@ -68,7 +72,12 @@ export function first(days: readonly DayValue[], { thresholds, what, format }: {
   const at = days.findIndex((d) => d.value > threshold);
   const daysSince = days.slice(at + 1).filter((d) => d.value > threshold).length;
   const day = days[at].date;
-  return { kind: 'first', threshold, day, daysSince, text: `${what} first passed ${format(threshold)} in a day on ${formatDate(day)}${daysSince ? `; ${daysSince} ${plural(daysSince, 'day has', 'days have')} passed it since` : ''}` };
+  const since = daysSince ? `; ${daysSince} ${plural(daysSince, 'day has', 'days have')} passed it since` : '';
+  if (!period) return { kind: 'first', threshold, day, daysSince, text: `${what} first passed ${format(threshold)} in a day on ${formatDate(day)}${since}` };
+  const n = Math.min(period, days.length);
+  const inPeriod = days.slice(-n).filter((d) => d.value > threshold).length;
+  const within = `${since ? ', and' : ';'} ${inPeriod} of the last ${n} ${plural(n, 'day')} passed it`;
+  return { kind: 'first', threshold, day, daysSince, inPeriod, text: `${what} first passed ${format(threshold)} in a day on ${formatDate(day)}${since}${within}` };
 }
 
 /**

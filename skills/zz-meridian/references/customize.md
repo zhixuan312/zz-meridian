@@ -111,7 +111,7 @@ to all of this.
 | A list of records with filters | `optional:app/(dashboard)/requests/` + `optional:src/views/requests.tsx` | Data table with filter bar |
 | Summary tiles over a list people only read (what ran, what is going out) | `optional:app/(dashboard)/tests/`, `optional:app/(dashboard)/releases/` + `optional:src/views/tests.tsx`, `optional:src/views/releases.tsx` | Data table under three tiles |
 | One record | `optional:app/(dashboard)/requests/[id]/` + `optional:src/views/request.tsx` | Detail head and key facts |
-| Four figures for a period, then breakdowns and patterns over time | `optional:app/(dashboard)/usage/` + `optional:src/views/usage.tsx` | The four figures, then the heatmap |
+| A count over a period, its facts, then breakdowns and patterns over time | `optional:app/(dashboard)/usage/` + `optional:src/views/usage.tsx` | Requests a day, then a year of days |
 | Systems and incidents (Services, at `/services`) | `optional:app/(dashboard)/services/` + `optional:src/views/services.tsx` | Status summary |
 | Customers, accounts, people | `optional:app/(dashboard)/customers/` + `optional:src/views/customers.tsx` | Data table, a usage sparkline in each row |
 | Keys, tokens, secrets | `optional:app/(dashboard)/keys/` + `optional:src/views/keys.tsx` | Table with masked values |
@@ -126,8 +126,8 @@ its change compares with in `compare` ("vs the 3 days before") and takes a `note
 
 A copied sample page does not do what a product would assume of it. Its writes are held in memory: a ticket, a member or a
 key lives in the running server and is lost when it restarts, until your own database stands behind the collection. Its
-figures that are fixed (Usage' weekday-and-hour grid, hours and regions, the endpoints, the responses by status class)
-cover the last 30 complete days: they are not worked out from the request log and do not follow the period chosen. A period is complete days counted
+figures that are fixed (Usage' weekday-and-hour grid, hours and regions, its endpoints and its responses by status
+class) cover the last 30 complete days: they are not worked out from the request log and do not follow the period chosen. A period is complete days counted
 back from yesterday, `all` is every complete day kept and has no period before it, and the last row of each daily collection may be a day still in
 progress, which `readDays` in `optional:src/data/metrics.ts` hands over on its own and counts in nothing. Nothing runs a suite or ships a version
 behind Tests and Releases, no message is sent, and the bell only lists what needs a person when the page
@@ -247,7 +247,10 @@ says "requests" on a page about orders is the sample's, not the product's.
 - **A rule may say more of its own fact, never a second rule.** `record` takes the `day` its latest value is about,
   and names it in its line ("on 01 Oct 2026", or "in the week to" it with `week`); `total` takes a `share`, a part of
   each day's figure, and adds the part's share of the sum ("99.62% of them without an error"). Both are optional, so
-  a call without them says what it said before, and both facts carry the date they are about (`day`).
+  a call without them says what it said before, and both facts carry the date they are about (`day`). `first` takes
+  a `period`, how many of the latest days a page's period covers, and adds how many of them passed the threshold ("and
+  26 of the last 30 days passed it"); it is still given every day kept, never the period's days alone, which would
+  make a day inside the period the first ever.
 - **A count reads at a glance at every size.** `formatCompact` (`src/lib/format.ts`, which an update brings) steps
   from K to M, B and T, and a count that rounds up to a thousand of one step is written in the next: 999,960,000,000
   is "1.0T", not "1000.0B".
@@ -291,6 +294,14 @@ says "requests" on a page about orders is the sample's, not the product's.
   wording of a customer close to the next plan are the sample company's. Keep the standard they show: each part about
   customers names its window, every customer a part names opens its page, the period moves only what the daily
   records answer, and the four states. Write your own.
+- **Usage's parts and their words**: the head and its line (requests a day, the share of errors and the median day's
+  p95), "Requests a day", "A year of requests, a day a cell" with its busiest day, "The period, counted" with its three
+  facts, "When they come" with its two choices, "Where from" beside "What is asked for", and "How it was answered":
+  what `usageData` and `usageHead` in `optional:src/views/usage-parts.ts` work out for them, how
+  `optional:src/views/usage.tsx` draws them and how `usageContext` says it. The endpoints, regions and status classes
+  are the sample company's. Keep the standard they show: a part that does not follow the period names its window, the
+  calendar is every day kept and joins the page's Meridian, a ranked list holds to its stated number, status classes
+  take status colours, and the four states. Write your own.
 - **One customer's parts and their words**: the head (the trail of Business and Customers, the title, and the line of
   its plan, what it paid in 30 days with its share of revenue, and its requests), the card of where it stands and since
   when with its owner on our side, the three tiles (Requests, Paid, Error rate), "What it asks for" and "Its latest
@@ -309,8 +320,10 @@ says "requests" on a page about orders is the sample's, not the product's.
   pass to a rule, set your own values, and delete a key nothing reads.
 - **The facts the sample's contexts state**: on Home the facts of a year (the requests answered with the share answered
   without an error, what customers were billed, the busiest day yet, the first day requests passed a threshold and the
-  weekday average when it is the highest yet), the first day requests passed a threshold on Usage, and the days inside
-  the band on Now and on Services. State the facts your own records hold, from the same rules.
+  weekday average when it is the highest yet), on Usage the facts of the period (the busiest day yet, the first day
+  requests passed a threshold with how many of the period's days passed it, and the weekday average when it is the
+  highest yet), and the days inside the band on Now and on Services. State the facts your own records hold, from the
+  same rules.
 
 `grep -rn "Title(\|Head(\|facts as rules" src/views src/data app` finds every title, head and reader of the configuration.
 

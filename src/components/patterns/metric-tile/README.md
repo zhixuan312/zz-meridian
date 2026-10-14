@@ -24,7 +24,7 @@ Card, Delta, Status dot, Tooltip, Sparkline. Tiles sit in a `Row split="tiles"`,
 - `intent` says which way is good: `up` (requests), `down` (errors, latency), `neutral` (spend).
 - `value` may be a word for a categorical state ("Likely new", "On track"); it is set at `text-2xl` instead of the figure size and wraps to a second line rather than losing its end ("03 Oct 2026" in a narrow tile), and `format` is not used.
 - `format` turns the number into its text: a name (`count`, `compact`, `cost`, `cost-compact`, `duration`, `percent`), which a server page can pass, or a function from a client component; the default split recognises "$298.43" (any currency symbol from `app.currency`), "2.9M", "0.90%" and "294ms".
-- `finding` is `{ text, day?, tone }`. The tone is `neutral` or `warning` and has no default: the code that counts a finding knows whether it is a fact or something to look at, and says so. The error spike the Home counts is a warning.
+- `finding` is `{ text, day?, tone }`. The tone is `neutral` or `warning` and has no default: the code that counts a finding knows whether it is a fact or something to look at, and says so.
 - A tile reads the page's cursor only when its `points` has one value for each of the Meridian's dates, which is the rule a chart joins the Meridian by. With any other number of points, or with none, it keeps the period's figure and its change while the rest of the page reads the pointed day: a customer's 14 days on a page of 30 are not the page's days, and the day at the same position would be the wrong one.
 - Under two points there is no shape: the tile draws no Sparkline and is laid out as a tile given none.
 

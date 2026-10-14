@@ -4,17 +4,15 @@
  * the same words. The figures are worked out on the server (`homeData` in `src/views/home-parts.ts`); this file only
  * says them, so the page's client builds the same text from the same data.
  */
-import type { ActivityEvent } from '@/components/patterns/activity-feed';
-import type { Incident } from '@/components/patterns/incident-card';
 import type { DailyPoint, Totals } from '@/data/sample';
 import { formatCompact, formatCost, formatDuration, formatPercent, ordinal } from '@/lib/format';
 import { formatDate } from '@/lib/format-date';
-import { deviations, runs, sameWeekdayBaseline, weekday, median } from '@/lib/insight';
+import { sameWeekdayBaseline, weekday, median } from '@/lib/insight';
 import { PERIOD_DAYS, PERIOD_LABEL, type Period } from '@/lib/period';
 import { freshnessOf, type Fact, type Insight, type SharedContext } from '@/lib/shared-context';
 import { STATE, against, factInsight, inDays, worst, type PageHead, type ServiceNow } from './fact-insight';
 
-/** The traffic's four figures, Home's and Usage's: each label and what it counts. The tile's info button shows `hint`; the agents read it too. */
+/** The traffic's four figures, each label and what it counts: Home's tiles draw them, and Usage's context states the first three. The tile's info button shows `hint`; the agents read it too. */
 export const HOME_METRICS = {
   requests: { label: 'Requests', hint: 'Every call answered, at any status.' },
   errorRate: { label: 'Error rate', hint: 'Share of requests answered with a 5xx or a 429.' },
@@ -94,18 +92,8 @@ export type HomeData = {
 };
 
 const WEEKDAY = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-const DAY = 86_400_000;
 const shortDay = (iso: string) => formatDate(iso).replace(/ \d{4}$/, '');
 const times = (r: number) => `${r.toFixed(1)}×`;
-/** "21 Sept", "21 and 22 Sept", "21, 22 and 23 Sept" (the month repeats when it changes). */
-function days(dates: string[]): string {
-  const names = dates.map(shortDay);
-  const month = names[0].split(' ')[1];
-  // One month named once: "21 and 22 Sept"; across a month end each day keeps its own.
-  const short = names.every((n) => n.split(' ')[1] === month) ? names.map((n, i) => (i < names.length - 1 ? n.split(' ')[0] : n)) : names;
-  return short.length === 1 ? short[0] : `${short.slice(0, -1).join(', ')} and ${short.at(-1)}`;
-}
-
 /**
  * The Home's title, from plain figures. A record is stated alone, with its run. Otherwise the revenue's change on the
  * period before, or the revenue alone when no period comes before, and then what the services are doing now: a title
@@ -173,52 +161,6 @@ function pointsChange(now: number, before: number | null | undefined, period: Pe
   if (!n || before === null || before === undefined) return undefined;
   const by = Math.abs(now - before) * 100;
   return `${by < 0.05 ? 'unchanged' : `${now > before ? 'up' : 'down'} ${by.toFixed(1)} points`} vs the previous ${n} days`;
-}
-
-/** What `errorSpikes` reads: a period's days, and what was recorded around them. */
-type SpikeData = { period: Period; series: DailyPoint[]; incidents: Incident[]; activity: ActivityEvent[] };
-
-/** Whether anything recorded (an activity event or an incident) falls within a day of `from`..`to`, and what. */
-function recorded(from: string, to: string, data: Pick<SpikeData, 'incidents' | 'activity'>): string[] {
-  const a = Date.parse(from) - DAY, b = Date.parse(to) + 2 * DAY;
-  const inside = (iso?: string) => !!iso && Date.parse(iso) >= a && Date.parse(iso) < b;
-  return [
-    ...[...new Map(data.incidents.map((i) => [i.id, i])).values()].filter((i) => inside(i.started)).map((i) => `the incident "${i.title}" (${i.state}, started ${formatDate(i.started)})`),
-    ...data.activity.filter((e) => inside(e.at)).map((e) => `${e.actor} ${e.verb} ${e.object} (${formatDate(e.at)})`),
-  ];
-}
-
-/**
- * The days whose error rate stands far above the period's own steady state, in runs of consecutive days, with latency
- * when it rose with them, and what was recorded beside them (an incident, an activity event) or that nothing was.
- * Usage reads it; Home no longer states it.
- */
-export function errorSpikes(data: SpikeData): { insights: Insight[]; unknowns: string[] } {
-  const { series } = data;
-  const dates = series.map((d) => d.date);
-  const errorRate = series.map((d) => (d.requests ? d.errors / d.requests : 0));
-  const p95 = series.map((d) => d.p95);
-  const pct = (n: number) => formatPercent(n, 2);
-  const insights: Insight[] = [];
-  const unknowns: string[] = [];
-  // Days whose error rate stands far above the period's own steady state, in runs of consecutive days.
-  const errMedian = median(errorRate);
-  const errDev = deviations(errorRate, { direction: 'up' });
-  const flagged = new Set(errDev.map((d) => d.index));
-  const quietMax = Math.max(...errorRate.filter((_, i) => !flagged.has(i)).map((v) => v / errMedian));
-  for (const run of runs([...flagged]).slice(-3)) {
-    const ratios = run.map((i) => errorRate[i] / errMedian);
-    const lo = Math.min(...ratios), hi = Math.max(...ratios);
-    const when = days(run.map((i) => dates[i]));
-    insights.push({ text: `Error rate was ${lo === hi ? times(hi) : `${times(lo)} to ${times(hi)}`} the period's median of ${pct(errMedian)} on ${when} (${run.map((i) => pct(errorRate[i])).join(', ')}); no other day passed ${times(quietMax)}.`, evidence: `/?period=${data.period}&day=${dates[run.reduce((m, i) => (errorRate[i] > errorRate[m] ? i : m))]}` });
-    const p95Run = run.filter((i) => p95[i] / median(p95) >= 1.4);
-    if (p95Run.length) insights.push({ text: `Latency p95 rose on the same ${p95Run.length === 1 ? 'day' : 'days'}: ${p95Run.map((i) => formatDuration(p95[i])).join(' and ')} against a median of ${formatDuration(median(p95))}.` });
-    const found = recorded(dates[run[0]], dates[run.at(-1)!], data);
-    if (found.length) insights.push({ text: `Recorded around ${when}: ${found.join('; ')}.`, evidence: '/services' });
-    else unknowns.push(`Nothing is recorded between ${shortDay(new Date(Date.parse(dates[run[0]]) - DAY).toISOString())} and ${shortDay(new Date(Date.parse(dates[run.at(-1)!]) + DAY).toISOString())}: no incident and no activity event, so the rise is unexplained.`);
-  }
-
-  return { insights, unknowns };
 }
 
 /**

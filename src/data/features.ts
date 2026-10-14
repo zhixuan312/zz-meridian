@@ -32,7 +32,7 @@ export const FEATURES: Record<FeatureId, { title: string; needs: Need }> = {
   home: { title: 'Home', needs: { allOf: ['days:read', 'usage:read', 'models:read', 'compute:read', 'incidents:read', 'customers:read', 'services:read', 'tickets:read', 'tests:read', 'releases:read'] } },
   requests: { title: 'Requests', needs: 'requests:read' },
   request: { title: 'Request', needs: { allOf: ['requests:read', 'endpoints:read'] } },
-  usage: { title: 'Usage', needs: { allOf: ['days:read', 'endpoints:read', 'activity:read', 'incidents:read', 'hours:read', 'regions:read'] } },
+  usage: { title: 'Usage', needs: { allOf: ['days:read', 'hours:read', 'regions:read', 'endpoints:read', 'responses:read'] } },
   services: { title: 'Services', needs: { allOf: ['services:read', 'incidents:read', 'days:read'] } },
   customers: { title: 'Customers', needs: CUSTOMERS_NEED },
   customer: { title: 'Customer', needs: CUSTOMERS_NEED },

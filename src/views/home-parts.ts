@@ -67,9 +67,10 @@ function yearOf(history: readonly DailyPoint[], period: Period): NonNullable<Hom
 
 /**
  * The requests a day over Monday to Friday of each week whose five weekdays are all kept, oldest first, with the
- * Friday each ends on. A week the records begin or end inside, short of a weekday, is not one.
+ * Friday each ends on. A week the records begin or end inside, short of a weekday, is not one. Home's year and Usage's
+ * period state the latest week's when it is the highest yet.
  */
-function weekdayAverages(history: readonly DailyPoint[]): { value: number; friday: string }[] {
+export function weekdayAverages(history: readonly DailyPoint[]): { value: number; friday: string }[] {
   const weeks = new Map<string, DailyPoint[]>();
   for (const d of history) {
     const at = new Date(`${d.date}T00:00:00Z`);

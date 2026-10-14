@@ -1,18 +1,14 @@
 /**
- * The aggregate reads behind the Home, Usage and Services: daily totals, endpoints, services,
- * incidents and activity, each through `read()`, so a page, an embed route and a view tool see only what the caller may
+ * The aggregate reads behind the Home, Usage and Services: daily totals, endpoints, responses, services and
+ * incidents, each through `read()`, so a page, an embed route and a view tool see only what the caller may
  * read (decision 0011). The figures a page shows are computed here from the rows, once, for the person and both agents.
  */
-import type { ActivityEvent } from '@/components/patterns/activity-feed';
 import type { Incident } from '@/components/patterns/incident-card';
 import type { Service } from '@/components/patterns/status-list';
 import { clock } from '@/data/collections';
 import { read, readAll } from '@/data/read';
 import type { DailyPoint, Endpoint, IncidentRecord, Totals } from '@/data/sample';
 import { PERIOD_DAYS, type Period } from '@/lib/period';
-
-/** The newest activity a page shows. */
-const ACTIVITY_SHOWN = 6;
 
 const sum = (xs: number[]) => xs.reduce((a, b) => a + b, 0);
 
@@ -57,8 +53,9 @@ export async function readEndpoints(): Promise<Endpoint[]> {
   return (rows as (Endpoint & { id: string })[]).map(({ id: _, ...e }) => e);
 }
 
-export async function readActivity(): Promise<ActivityEvent[]> {
-  return (await read('activity', { sort: { field: 'at', dir: 'desc' }, limit: ACTIVITY_SHOWN })).rows as ActivityEvent[];
+/** How many responses each status class had over the window the collection covers, in the order of the classes: 2xx first. */
+export async function readResponses(): Promise<{ label: string; value: number }[]> {
+  return (await read('responses', { sort: { field: 'label', dir: 'asc' } })).rows as { label: string; value: number }[];
 }
 
 /**

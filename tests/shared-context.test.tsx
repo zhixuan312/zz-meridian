@@ -10,19 +10,19 @@ vi.mock('next/cache', () => ({ cacheTag: () => {}, cacheLife: () => {}, updateTa
 
 import { SurfaceOverride, sharedContextOn } from '@/components/base/surface';
 import { useShareView } from '@/components/base/use-share-view';
-import { DEMO_NOW, DEMO_UPDATED_AT, ACTIVITY, INCIDENTS as RECORDS, MODELS, SERVICES, type IncidentRecord } from '@/system/fixtures/sample';
+import { DEMO_NOW, DEMO_UPDATED_AT, INCIDENTS as RECORDS, MODELS, SERVICES, type IncidentRecord } from '@/system/fixtures/sample';
 import { COMPUTE, COSTS, CUSTOMERS, ENDPOINTS, USAGE, demoSeries, demoTotals } from '@/system/fixtures/company';
 import { RELEASES, RUNS, TICKETS } from '@/system/fixtures/sample-engineering';
 import { PAST_INCIDENTS as PAST_RECORDS } from '@/system/fixtures/sample-ops';
 import { verificationOf } from '@/data/verification';
 import type { Incident } from '@/components/patterns/incident-card';
-import { deviations, median, runs } from '@/lib/insight';
+import { median } from '@/lib/insight';
 import { formatCost } from '@/lib/format';
 import { contextText, freshnessOf, type SharedContext } from '@/lib/shared-context';
 import { systemPrompt } from '@/lib/assistant/prompt';
 import type { Period } from '@/lib/period';
 import { HomeBody } from '@/views/home';
-import { errorSpikes, homeContext, homeLine, type HomeData } from '@/views/home-context';
+import { homeContext, homeLine, type HomeData } from '@/views/home-context';
 import { homeData, homeHead, type HomeReads } from '@/views/home-parts';
 import { servicesContext, servicesHead } from '@/views/services-context';
 import { EmbedHome } from '../app/embed/home/view';
@@ -51,12 +51,9 @@ const reads = (period: Period, { costs = true }: { costs?: boolean } = {}): Home
 const home = (period: Period, who?: { costs?: boolean }): HomeData => homeData(reads(period, who));
 
 describe('the insight functions', () => {
-  it('find the days far from a steady state, and only those', () => {
+  it('find the middle value', () => {
     expect(median([3, 1, 2])).toBe(2);
     expect(median([1, 2, 3, 4])).toBe(2.5);
-    expect(deviations([1, 1.1, 0.9, 1, 1.05, 0.95, 3])).toEqual([expect.objectContaining({ index: 6, ratio: 3 })]);
-    expect(deviations([2, 2, 2, 2])).toEqual([]);
-    expect(runs([9, 3, 4])).toEqual([[3, 4], [9]]);
   });
 });
 
@@ -69,13 +66,8 @@ describe("the Home's shared context", () => {
     expect(text).toMatch(/^Home · last 30 days, 03 Sept 2026 to 02 Oct 2026 \(UTC days\) · address \/\?period=30d$/m);
     expect(text).toContain('fresh.');
   });
-  it('states no error spike: Usage states the days that stand out, from the same function', () => {
-    const text = contextText(homeContext(home('30d')));
-    expect(text).not.toMatch(/Error rate was|Recorded around|Nothing is recorded between/);
-    const spikes = (period: Period) => errorSpikes({ period, series: demoSeries(period).current, incidents: EVERY_INCIDENT, activity: ACTIVITY });
-    expect(spikes('30d').insights.map((i) => i.text)).toContain("Error rate was 3.2× to 3.4× the period's median of 0.37% on 21 and 22 Sept (1.19%, 1.27%); no other day passed 1.1×.");
-    expect(spikes('30d').unknowns[0]).toMatch(/^Nothing is recorded between 20 Sept and 23 Sept: no incident and no activity event/);
-    expect(spikes('90d').insights.map((i) => i.text).join('\n')).toMatch(/Recorded around 17 Aug: the incident "Upload failures for files over 50 MB"/);
+  it('states no error spike', () => {
+    expect(contextText(homeContext(home('30d')))).not.toMatch(/Error rate was|Recorded around|Nothing is recorded between/);
   });
   it('states the facts of a year, at most five, each with the date it is about, and puts the day pointed at in their place', () => {
     const data = home('30d');
@@ -209,13 +201,14 @@ describe('a request\'s context', () => {
 
 describe('every page shares a context within its budget, and nothing hidden', () => {
   it('Usage, Customers, Members, API keys and a request', async () => {
-    const { usageContext, usageHead } = await import('@/views/usage-context');
+    const { usageContext } = await import('@/views/usage-context');
+    const { usageData } = await import('@/views/usage-parts');
     const { customersContext } = await import('@/views/customers-context');
     const { membersContext } = await import('@/views/members-context');
     const { keysContext } = await import('@/views/keys-context');
     const { requestContext } = await import('@/views/request-context');
     const { traceOf } = await import('@/data/sample');
-    const { REGIONS, WEEKDAY_HOURS, CUSTOMERS } = await import('@/system/fixtures/company');
+    const { REGIONS, STATUS_MIX, WEEKDAY_HOURS, CUSTOMERS } = await import('@/system/fixtures/company');
     const heat = Array.from({ length: 7 }, (_, d) => WEEKDAY_HOURS.filter((r) => r.weekday === d).map((r) => r.requests));
     const hours = Array.from({ length: 24 }, (_, h) => ({ key: String(h), label: `${String(h).padStart(2, '0')}:00`, value: heat.reduce((n, row) => n + row[h], 0) }));
     const { MEMBERS } = await import('@/system/fixtures/sample-members');
@@ -223,7 +216,10 @@ describe('every page shares a context within its budget, and nothing hidden', ()
     const { SCOPES } = await import('@/views/key-scopes');
     const now = DEMO_NOW.toISOString();
     const contexts = [
-      usageContext({ ...home('30d'), incidents: EVERY_INCIDENT, endpoints: ENDPOINTS, activity: ACTIVITY, heat, hours, regions: REGIONS, head: usageHead({ period: '30d', totals: demoTotals('30d'), history: HISTORY }) }),
+      usageContext(usageData({
+        period: '30d', days: { series: demoSeries('30d').current, totals: demoTotals('30d'), running: demoSeries('30d').running }, history: HISTORY,
+        figures: { heat, hours, regions: REGIONS }, endpoints: ENDPOINTS, responses: STATUS_MIX, updatedAt: DEMO_UPDATED_AT.toISOString(), now: DEMO_NOW.toISOString(),
+      })),
       customersContext(CUSTOMERS, CUSTOMERS, { q: '', plan: 'all', status: 'all', sort: 'revenue', dir: 'desc', page: '1' }),
       membersContext(MEMBERS, now),
       keysContext(API_KEYS, now, SCOPES),
@@ -415,7 +411,8 @@ describe('what a context states beside its title', () => {
       expect(said, period).toEqual({ text: `Total: ${requests.toLocaleString('en-US')} requests answered in 360 days, from 08 Oct 2025 to 02 Oct 2026, ${answered}% of them without an error.` });
     }
     const first = (await usageTool.read({ period: '7d' })).context.insights[1];
-    expect(first.text).toMatch(/^First: Requests first passed 25\.0M in a day on \d\d \w+ \d{4}; \d+ days have passed it since\.$/);
+    // The period's part of the fact: how many of its days passed the threshold, out of every complete day kept.
+    expect(first.text).toMatch(/^First: Requests first passed 25\.0M in a day on \d\d \w+ \d{4}; \d+ days have passed it since, and \d of the last 7 days passed it\.$/);
     expect(first.evidence).toMatch(/^\/\?period=all&day=\d{4}-\d\d-\d\d$/);
     // The day in progress is in neither: the total is of complete days, and so is every day the first counts.
     expect(requests).toBe(demoTotals('all').current.requests);
@@ -452,7 +449,7 @@ describe('what a context states beside its title', () => {
   });
 
   it('a page whose history could not be read is headed by its name, and its context says so', async () => {
-    const { usageHead } = await import('@/views/usage-context');
+    const { usageHead } = await import('@/views/usage-parts');
     const { revenueHead } = await import('@/views/revenue-context');
     const { CUSTOMERS } = await import('@/system/fixtures/company');
     const { record: _, ...unread } = homeHead({ period: '30d', totals: demoTotals('30d'), history: null, services: SERVICES });

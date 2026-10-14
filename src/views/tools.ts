@@ -15,14 +15,15 @@ import { readLatestFrom, readRequests, REQUEST_PAGE } from '@/data/requests';
 import { readReleases, readRuns } from '@/data/engineering';
 import { attempt } from '@/data/main';
 import { readTickets } from '@/data/tickets';
-import { readActivity, readDays, readEndpoints, readIncidents, readServices } from '@/data/metrics';
+import { readDays, readEndpoints, readIncidents, readResponses, readServices } from '@/data/metrics';
 import {
   DEMO_UPDATED_AT, STATUS_TEXT, payloadsOf, traceOf,
   type ApiKey, type ComputeRow, type CostRow, type CustomerRecord, type Member, type Model, type RequestRow, type Ticket, type UsageRow,
 } from '@/data/sample';
 import { PERIODS } from '@/lib/period';
 import { defineViewTool, type ViewTool } from '@/lib/shared-context';
-import { usageContext, usageHead, type UsageData } from './usage-context';
+import { usageContext } from './usage-context';
+import { usageData } from './usage-parts';
 import { usageFigures } from '@/data/usage';
 import { customerRow, customersContext, under } from './customers-context';
 import { LATEST, customerContext, type CustomerData } from './customer-context';
@@ -153,13 +154,14 @@ export const nowTool = defineViewTool({
 export const usageTool = defineViewTool({
   name: 'usage',
   title: 'Usage',
-  description: 'Requests, error rate, latency and revenue over a period against the period before, the days that stand out, and when traffic comes and from where: the busiest hours, regions with their latency, and every endpoint.',
+  description: 'Requests over a period against the period before, with the line of errors and latency under the title and the facts of the period; requests a day; a year of requests a day; and, over the last 30 complete days, when they come by hour and by weekday and hour, where from by region, what is asked for by endpoint and how it was answered by status class.',
   needs: FEATURES.usage.needs,
   input: z.object({ period }),
   async read({ period: p = '30d' }) {
     await requireNeed(FEATURES.usage.needs);
-    const [{ series, totals, observedAt }, endpoints, activity, { all: incidents }, figures, history] = await Promise.all([readDays(p), readEndpoints(), readActivity(), readIncidents(), usageFigures(), readHistory()]);
-    const data: UsageData = { period: p, series, totals, ...figures, endpoints, activity, incidents, head: usageHead({ period: p, totals, history }), updatedAt: updatedAt(), now: observedAt };
+    // Each read apart from the others: one that fails leaves its part saying so and the rest standing.
+    const [days, history, figures, endpoints, responses] = await Promise.all([attempt(() => readDays(p)), readHistory(), attempt(() => usageFigures()), attempt(readEndpoints), attempt(readResponses)]);
+    const data = usageData({ period: p, days, history, figures, endpoints, responses, updatedAt: updatedAt(), now: days?.observedAt ?? clock().toISOString() });
     return { context: usageContext(data), data };
   },
 });

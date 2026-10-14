@@ -12,42 +12,6 @@ export function median(values: number[]): number {
   return v.length % 2 ? v[m] : (v[m - 1] + v[m]) / 2;
 }
 
-/** The median absolute deviation: the spread a few wild days cannot inflate, unlike the standard deviation. */
-function mad(values: number[]): number {
-  const m = median(values);
-  return median(values.map((v) => Math.abs(v - m)));
-}
-
-/** A day far from its steady state: its value, the steady state, the ratio and the robust z-score. */
-type Deviation = { index: number; value: number; baseline: number; ratio: number; z: number };
-
-/**
- * The days whose value sits at least `z` robust deviations from the median of `values` (1.4826 × MAD makes it comparable
- * to a standard deviation on normal data). Days with no spread to measure against are never flagged, so a flat series
- * raises nothing. `direction` keeps only rises or only falls.
- */
-export function deviations(values: number[], { z = 3.5, direction = 'both' as 'up' | 'down' | 'both' } = {}): Deviation[] {
-  const base = median(values);
-  const spread = 1.4826 * mad(values);
-  if (!Number.isFinite(base) || !(spread > 0)) return [];
-  return values.flatMap((value, index) => {
-    const score = (value - base) / spread;
-    const kept = Math.abs(score) >= z && (direction === 'both' || (direction === 'up' ? score > 0 : score < 0));
-    return kept ? [{ index, value, baseline: base, ratio: base ? value / base : NaN, z: score }] : [];
-  });
-}
-
-/** Consecutive indices grouped into runs: [3, 4, 9] → [[3, 4], [9]]. */
-export function runs(indices: number[]): number[][] {
-  const out: number[][] = [];
-  for (const i of [...indices].sort((a, b) => a - b)) {
-    const last = out.at(-1);
-    if (last && i === last.at(-1)! + 1) last.push(i);
-    else out.push([i]);
-  }
-  return out;
-}
-
 /** Day of the week for a YYYY-MM-DD date, 0 for Sunday, read in UTC so the date string is the day it names. */
 export const weekday = (date: string) => new Date(`${date}T12:00:00Z`).getUTCDay();
 

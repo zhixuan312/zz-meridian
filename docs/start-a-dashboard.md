@@ -73,7 +73,7 @@ Every page is a `PageFrame` holding a `Stack` of `Row`s. Start from the closest 
 | A list people create and move along | Tickets (`/operations-tickets`) |
 | What ran and what is going out | Tests (`/tests`), Releases (`/releases`) |
 | One record | Request (`/requests/[id]`) |
-| Four figures for a period, then breakdowns | Usage (`/usage`) |
+| Requests over a period, its facts, then breakdowns | Usage (`/usage`) |
 | Services and incidents | Services (`/services`) |
 | Settings and forms | Settings (`/settings`) |
 

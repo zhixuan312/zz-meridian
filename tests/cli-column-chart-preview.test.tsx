@@ -118,12 +118,12 @@ describe('the Column chart\'s specimens: every state is drawn', () => {
   });
 });
 
-describe('Usage\'s two Column charts', () => {
-  it('label every tick with the value it stands at, on a week and on a month', async () => {
+describe('Usage\'s Column chart', () => {
+  it('labels every tick with the value it stands at, on a week and on a month', async () => {
     for (const period of ['7d', '30d'] as const) {
       const { data } = await usageTool.read({ period });
       const { container, unmount } = render(<Tooltip.Provider><UsageBody {...data} /></Tooltip.Provider>);
-      expect(charts(container).map(name)).toEqual(['Requests by hour of day', 'Errors per day']);
+      expect(charts(container).map(name)).toEqual(['Requests by hour of day']);
       for (const chart of charts(container)) expect(evenSteps(ticks(chart)), `${period} ${name(chart)}: ${[...chart.querySelectorAll('[data-tick]')].map((e) => e.textContent).join(' ')}`).toBe(true);
       unmount();
     }

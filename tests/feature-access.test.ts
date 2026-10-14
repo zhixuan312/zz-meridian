@@ -33,7 +33,7 @@ describe('the feature table', () => {
       home: { allOf: ['days:read', 'usage:read', 'models:read', 'compute:read', 'incidents:read', 'customers:read', 'services:read', 'tickets:read', 'tests:read', 'releases:read'] },
       requests: 'requests:read',
       request: { allOf: ['requests:read', 'endpoints:read'] },
-      usage: { allOf: ['days:read', 'endpoints:read', 'activity:read', 'incidents:read', 'hours:read', 'regions:read'] },
+      usage: { allOf: ['days:read', 'hours:read', 'regions:read', 'endpoints:read', 'responses:read'] },
       services: { allOf: ['services:read', 'incidents:read', 'days:read'] },
       customers: 'customers:read',
       customer: 'customers:read',
