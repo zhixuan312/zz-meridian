@@ -1,5 +1,5 @@
 import { LoadingPage } from '@/components/patterns/page-loading';
-import { gatedLoading } from '@/data/access';
+import { gatedLoading } from '@/data/refusal';
 import { RecordsSkeleton } from '@/components/templates/records';
 
 /** Requests on its way: three tiles over a few table rows; the page's own fallback is the same, so a navigation does not jump. */

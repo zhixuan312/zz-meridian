@@ -3,7 +3,7 @@ import { DEMO_NOW, DEMO_UPDATED_AT } from '@/data/sample';
 import { Row } from '@/components/base/shell';
 import { Freshness } from '@/components/patterns/freshness';
 import { ChartSkeleton, LoadingPage } from '@/components/patterns/page-loading';
-import { gatedLoading } from '@/data/access';
+import { gatedLoading } from '@/data/refusal';
 import { SERVICES_LINE } from '@/views/services-context';
 
 /**

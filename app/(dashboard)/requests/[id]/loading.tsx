@@ -2,7 +2,7 @@ import { Row } from '@/components/base/shell';
 import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ChartSkeleton, LoadingPage } from '@/components/patterns/page-loading';
-import { gatedLoading } from '@/data/access';
+import { gatedLoading } from '@/data/refusal';
 
 /** A request on its way: the facts beside the trace, then the request and response bodies. */
 export default function RequestLoading() {

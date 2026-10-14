@@ -5,7 +5,7 @@ import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Freshness } from '@/components/patterns/freshness';
 import { ChartSkeleton, LoadingPage, TilesSkeleton } from '@/components/patterns/page-loading';
-import { gatedLoading } from '@/data/access';
+import { gatedLoading } from '@/data/refusal';
 import { PeriodActionsRoom } from '@/views/period-actions';
 
 /** A card of `n` lines under a title: the ladder's stages, or the lines worth a look. */

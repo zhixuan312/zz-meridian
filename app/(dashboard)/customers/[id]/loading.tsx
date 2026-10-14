@@ -2,7 +2,7 @@ import { Row } from '@/components/base/shell';
 import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ChartSkeleton, LoadingPage, TableSkeleton, TilesSkeleton } from '@/components/patterns/page-loading';
-import { gatedLoading } from '@/data/access';
+import { gatedLoading } from '@/data/refusal';
 import { CustomerTrail, FactsRoom } from '@/views/customer';
 
 /**

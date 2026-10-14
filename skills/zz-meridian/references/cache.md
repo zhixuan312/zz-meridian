@@ -110,7 +110,7 @@ A production adapter binds the predicate and the subscription filter; prepending
 import type { Metadata } from 'next';
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
-import { createElement, type JSX, type ReactNode } from 'react';
+import { createElement, type JSX } from 'react';
 import { nav, refusal } from '@/app.config';
 import { activity, compute, costs, customers, days, endpoints, hours, incidents, keys, members, models, regions, releases, requests, responses, services, tests, tickets, usage, workspace } from '@/data/collections';
 import { FEATURES, type FeatureId } from '@/data/features';
@@ -349,20 +349,6 @@ export async function gatedMetadata(feature: FeatureId, metadata: Metadata): Pro
     throw error;
   });
   return allowed ? metadata : { title: NOT_FOUND.title, robots: { index: false } };
-}
-
-/** What a loading state says of its page: the words `LoadingPage` takes that name it. */
-type LoadingNames = { name: string; title?: string; kicker?: ReactNode; description?: ReactNode };
-
-/**
- * What a gated route's `loading.tsx` may say of its page. The loading state is drawn before `gate` has answered and is
- * prerendered into the route's shell, so it cannot know who is reading: under `refusal: 'absent'` it names nothing for
- * anyone (the busy region is "Loading page", and the heading, the kicker and the line under it are placeholders), so a
- * refused address never shows the page's name while it streams. Under `explain` the page's own words stand. The choice
- * is the configuration's, never the request's, so the shell stays static.
- */
-export function gatedLoading(named: LoadingNames): LoadingNames {
-  return refusal === 'absent' ? { name: 'page' } : named;
 }
 
 /** The console's chrome reads `ChromeAccess` from `@/lib/collection`, where the access vocabulary lives. */

@@ -1,6 +1,6 @@
 import { Skeleton } from '@/components/ui/skeleton';
 import { LoadingPage } from '@/components/patterns/page-loading';
-import { gatedLoading } from '@/data/access';
+import { gatedLoading } from '@/data/refusal';
 import { RecordsSkeleton } from '@/components/templates/records';
 
 /** API keys on its way: the table of keys, and the line about rotating them. */

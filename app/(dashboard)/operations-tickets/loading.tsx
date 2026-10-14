@@ -1,5 +1,5 @@
 import { LoadingPage } from '@/components/patterns/page-loading';
-import { gatedLoading } from '@/data/access';
+import { gatedLoading } from '@/data/refusal';
 import { RecordsSkeleton } from '@/components/templates/records';
 
 /** Tickets on its way: three tiles over the table of tickets and its filters. */

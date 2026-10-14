@@ -181,7 +181,7 @@ Rules that make every page look like it belongs:
   (`optional:app/(dashboard)/(home)/loading.tsx`, `optional:app/(dashboard)/business/loading.tsx`,
   `optional:src/views/period-actions.tsx`). The room is the standard, whatever a page holds. A route that opens with
   `gate` passes what names its page (`name`, `title`, and a `kicker` or `description` of its own words) through
-  `gatedLoading({ … })` from `optional:src/data/access.ts`: the loading state is prerendered before the gate answers,
+  `gatedLoading({ … })` from `optional:src/data/refusal.ts`, which reads only the configuration: the loading state is prerendered before the gate answers,
   so under `refusal: 'absent'` it names nothing for anyone, and under `explain` the page's own words stand.
 - **A file picker** is a visible `Button` that calls `input.click()` on an `<input type="file">` with `tabIndex={-1}`
   and `aria-hidden`, so the keyboard reaches the button and never the hidden input; give the press a state of its own

@@ -1,6 +1,6 @@
 import { Skeleton } from '@/components/ui/skeleton';
 import { LoadingPage } from '@/components/patterns/page-loading';
-import { gatedLoading } from '@/data/access';
+import { gatedLoading } from '@/data/refusal';
 
 /** Settings on its way: a stack of sections, each a title, a sentence and its controls. */
 export default function SettingsLoading() {
