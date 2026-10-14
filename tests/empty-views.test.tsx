@@ -21,7 +21,7 @@ describe('a page body with no data shows its empty state, not a route error', ()
     expect(screen.getByText('No requests in this period')).toBeTruthy();
   });
   it('Services, with no services', () => {
-    render(<ServicesBody services={[]} current={null} past={[]} updatedAt={NOW} now={NOW} />);
+    render(<ServicesBody services={[]} current={null} past={[]} head={{ title: null, facts: [] }} updatedAt={NOW} now={NOW} />);
     expect(screen.getByText('No services yet')).toBeTruthy();
   });
   it('Customers, with no customers', () => {

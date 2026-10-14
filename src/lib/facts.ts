@@ -6,7 +6,7 @@
  * A rule that states a fact writes the fact's one line itself, with the product's formatters, so the line is written
  * once: a page draws it and the page's context shares it. Each returns its fact when the rule holds and null when it
  * does not, and none has a weaker thing to say in its place. A line is a figure and what it counts, never a judgement
- * of it. What a rule needs of the product (the history a record asks for, the thresholds of a first) is an argument:
+ * of it. What a rule needs of the product (the history a record asks for, the thresholds of a first, the band of a steady day) is an argument:
  * the readers pass `facts` from `src/app.config.ts`.
  */
 import { ordinal, plural } from '@/lib/format';
@@ -91,8 +91,49 @@ export function total(days: readonly DayValue[], { what, format }: { what: strin
 }
 
 /**
- * The rule of a run: how long a state has held, up to today. `days` is one state a day, oldest first, the last of them
- * today; `good` is the state that counts.
+ * The rule of a run, as a fact: how long `name` has held the `good` state, up to today. `days` is one state a day,
+ * oldest first, the last of them today. Nothing when today is not `good` or no day is given. A run that reaches the
+ * earliest day given is "at least" that long and never the longest; otherwise it is called its longest when no run
+ * among the days is longer. Worked out by `runOf`, which the Status list draws from the same days.
+ */
+export function run<S>(days: readonly S[], good: S, { name }: { name: string }): (Fact & { length: number; atLeast: boolean; longest: boolean }) | null {
+  const { length, reachesStart, longest } = runOf(days, good);
+  if (!length) return null;
+  const mine = longest && !reachesStart;
+  return {
+    kind: 'run', length, atLeast: reachesStart, longest: mine,
+    text: `${name} has run ${reachesStart ? 'at least ' : ''}${length} ${plural(length, 'day')} without a mark${mine ? `, its longest in ${days.length}` : ''}`,
+  };
+}
+
+/** One complete day as `steady` reads it: its p95 in milliseconds, its errors and its requests. */
+type DayService = { date: string; p95: number; errors: number; requests: number };
+
+/**
+ * The rule of a steady state: how many of the days given were inside the band, and which were not, by date. `days`
+ * are complete days, oldest first; the caller leaves the day in progress out. A day is inside when its p95 is under
+ * `band.p95Under` and its errors over its requests under `band.errorRateUnder`: a day at either edge is outside, and so
+ * is a day with no requests, which has no rate to hold. The line names the band's own figures, then the first three
+ * days outside it and how many more.
+ */
+export function steady(days: readonly DayService[], band: { p95Under: number; errorRateUnder: number }): (Fact & { inside: number; of: number; outside: string[] }) | null {
+  if (!days.length) return null;
+  const outside = days.filter((d) => !(d.p95 < band.p95Under && d.errors / d.requests < band.errorRateUnder)).map((d) => d.date);
+  const inside = days.length - outside.length;
+  const named = outside.slice(0, 3).map(formatDate);
+  const more = outside.length - named.length;
+  const list = more ? `${named.join(', ')} and ${more} more` : named.length > 1 ? `${named.slice(0, -1).join(', ')} and ${named.at(-1)}` : named[0];
+  // The band as it was given, to the hundredth of a percent: a band of 0.5% is not written 1%.
+  const rate = `${Number((band.errorRateUnder * 100).toFixed(2))}%`;
+  return {
+    kind: 'steady', inside, of: days.length, outside,
+    text: `${inside} of ${days.length} ${plural(days.length, 'day')} inside the band of p95 under ${band.p95Under} ms and errors under ${rate}${outside.length ? `; outside it on ${list}` : ''}`,
+  };
+}
+
+/**
+ * How long a state has held, up to today. `days` is one state a day, oldest first, the last of them today; `good` is
+ * the state that counts. `run` states it as a fact; the Status list draws it under each service's strip.
  *
  * - `length`: the days in a row that end today and were `good`, today included; 0 when today is not.
  * - `reachesStart`: the run goes back to the earliest day given. What came before is not known, so the run is at least

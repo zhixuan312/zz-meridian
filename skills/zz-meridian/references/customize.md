@@ -217,30 +217,39 @@ says "requests" on a page about orders is the sample's, not the product's.
 - **A fact is stated by a rule with a guard.** The rules are in `src/lib/facts.ts`, which an update brings: `record`
   (the highest period yet, once enough history is kept), `first` (the first day a threshold was passed, when the
   records begin below it), `all` (every member of a set, written N of N), `total` (everything recorded, with its first
-  day and its latest) and `runOf`. A rule returns its fact with the one line it wrote, or nothing, and nothing weaker
-  stands in for a fact that stopped holding. `optional:tests/facts.test.ts` holds the rules and stays with them.
+  day and its latest), `run` (how long a state has held, its longest only when no run kept is longer, worked out by
+  `runOf`, which the Status list draws) and `steady` (how many complete days were inside a band, and the days outside
+  it by date). A rule returns its fact with the one line it wrote, or nothing, and nothing weaker stands in for a fact
+  that stopped holding. `optional:tests/facts.test.ts` and `optional:tests/facts-engineering.test.ts` hold the rules
+  and stay with them.
 - **No word of praise**, in a title or in a fact: the figure is what is said. The rules' test refuses twelve words.
 - **The title is shared.** The page's context leads its insights with the sentence the page is headed by, word for
   word, and each fact follows as the rule's own line (`factInsight` and `headInsights` in
-  `optional:src/views/fact-insight.ts`). The history a record, a first or a total is worked out from is read on the
-  server; the page's client is handed the sentences (`head` on the view's data) and never the history.
+  `optional:src/views/fact-insight.ts`). The history a record, a first, a total or the days inside the band are
+  worked out from is read on the server; the page's client is handed the sentences (`head` on the view's data) and
+  never the history. A title that cannot read one of its clauses states the rest, and the context says what was not
+  read.
 - **The day in progress is in no figure a title or a fact states.**
 
 **The sample's. Replace it.**
 
-- **The four title functions and their words**: `homeTitle`, `usageTitle`, `revenueTitle` and `customerTitle`, each in
-  its view's context file under `optional:src/views/`, with the functions that call the rules for them (`homeHead`,
-  `usageHead`, `revenueHead`, `titleOf`) and Home's `servicesLine`. Write your pages' own, in your product's nouns.
-- **`optional:tests/titles.test.ts`**, which holds the sample's words branch by branch, and the cases of
-  `optional:tests/shared-context.test.tsx` that read the sample's headings and facts. Rewrite their cases for your
-  titles: a title no test holds is a sentence nobody checked.
+- **The six title functions and their words**: `homeTitle`, `usageTitle`, `revenueTitle`, `customerTitle`, `nowTitle`
+  and `servicesTitle`, each in its view's context file under `optional:src/views/`, with the functions that call the
+  rules for them (`homeHead`, `usageHead`, `revenueHead`, `titleOf`, `nowHead`, `servicesHead`) and Home's
+  `servicesLine`. Write your pages' own, in your product's nouns: a release "in testing" and a run "without a mark" are
+  the sample's words for its own releases and services.
+- **`optional:tests/titles.test.ts`** and **`optional:tests/titles-engineering.test.ts`**, which hold the sample's
+  words branch by branch; **`optional:tests/facts-config.test.ts`**, which holds the sample's values of `facts`; and
+  the cases of `optional:tests/shared-context.test.tsx` that read the sample's headings and facts. Rewrite their cases
+  for your titles and your values: a title no test holds is a sentence nobody checked.
 - **The values of `facts` in `src/app.config.ts`**: `firsts.requestsADay` (10, 25 and 50 million requests a day),
   `recordNeedsPeriods` (six periods) and `band` (a p95 under 350 ms and an error rate under 1%). They are the sample
   company's sizes. Keep the keys your pages pass to a rule, set your own values, and delete a key nothing reads.
-- **The facts the sample's contexts state**: the total of requests answered on Home, and the first day requests
-  passed a threshold on Usage. State the facts your own records hold, from the same rules.
+- **The facts the sample's contexts state**: the total of requests answered on Home, the first day requests passed a
+  threshold on Usage, and the days inside the band on Now and on Services. State the facts your own records hold, from
+  the same rules.
 
-`grep -rn "Title(\|Head(\|facts\." src/views src/data app` finds every title, head and reader of the configuration.
+`grep -rn "Title(\|Head(\|facts as rules" src/views src/data app` finds every title, head and reader of the configuration.
 
 ## The assistant
 

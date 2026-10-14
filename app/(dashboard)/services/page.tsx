@@ -16,7 +16,8 @@ export default async function ServicesPage() {
   return (
     <PageFrame
       kicker={<>{app.name} · {app.workspace}</>}
-      title="Services"
+      name="Services"
+      title={data.head.title}
       description={`Every service, how it is right now, and what happened in the last 90 days.`}
       meta={<Freshness updatedAt={new Date(data.updatedAt)} now={new Date(data.now)} />}
     >

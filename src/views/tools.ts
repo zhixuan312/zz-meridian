@@ -26,11 +26,11 @@ import { usageContext, usageHead, type UsageData } from './usage-context';
 import { usageFigures } from '@/data/usage';
 import { customerFigures, customerRow, customersContext, under } from './customers-context';
 import { customerContext, type CustomerData } from './customer-context';
-import { servicesContext } from './services-context';
+import { servicesContext, servicesHead, type ServicesData } from './services-context';
 import { SCOPES } from './key-scopes';
 import { keysContext } from './keys-context';
 import { membersContext } from './members-context';
-import { nowContext } from './now-context';
+import { nowContext, nowHead, type NowData } from './now-context';
 import { homeContext, homeHead, servicesLine, type HomeData } from './home-context';
 import { requestContext } from './request-context';
 import { revenueContext, revenueHead, type RevenueData } from './revenue-context';
@@ -44,9 +44,9 @@ const period = z.enum(PERIODS).optional().describe('The reporting period, in com
 const updatedAt = () => DEMO_UPDATED_AT.toISOString();
 
 /**
- * Every complete day kept, oldest first: what a title's record and a context's first and total are worked out from.
- * Read on the server and never handed to the browser, which gets the sentences. Null when it could not be read: the
- * page is then headed by its name, and the rest of it stands.
+ * Every complete day kept, oldest first: what a title's record and a context's first, total and days inside the band
+ * are worked out from. Read on the server and never handed to the browser, which gets the sentences. Null when it could
+ * not be read: the page is then headed by what it can state without them, and the rest of it stands.
  */
 const readHistory = () => attempt(async () => (await readDays('all')).series);
 
@@ -107,13 +107,13 @@ export const requestTool = defineViewTool({
 export const servicesTool = defineViewTool({
   name: 'services',
   title: 'Services',
-  description: 'Every service now and over 90 days, every open incident with its latest update, and the incidents resolved in the last 90 days.',
+  description: 'Every service now and over 90 days, its uptime and the longest clean run, the days inside the latency and error band, every open incident with its latest update, and the incidents resolved in the last 90 days.',
   needs: FEATURES.services.needs,
   input: z.object({}),
   async read() {
     await requireNeed(FEATURES.services.needs);
-    const [services, { current, open, past }] = await Promise.all([readServices(), readIncidents()]);
-    const data = { services, current, alsoOpen: open.slice(1), past, updatedAt: updatedAt(), now: clock().toISOString() };
+    const [services, { current, open, past }, history] = await Promise.all([readServices(), readIncidents(), readHistory()]);
+    const data: ServicesData = { services, current, alsoOpen: open.slice(1), past, head: servicesHead({ services, history }), updatedAt: updatedAt(), now: clock().toISOString() };
     return { context: servicesContext(data), data };
   },
 });
@@ -121,14 +121,15 @@ export const servicesTool = defineViewTool({
 export const nowTool = defineViewTool({
   name: 'now',
   title: 'Now',
-  description: 'Which services are up this moment, with their latency, and the incidents nobody has resolved, the newest with its latest update.',
+  description: 'Which services are up this moment, with their latency, how many releases are in testing, the days inside the latency and error band, and the incidents nobody has resolved, the newest with its latest update.',
   needs: FEATURES.now.needs,
   input: z.object({}),
   resourceUri: `ui://${slug}/now`,
   async read() {
     await requireNeed(FEATURES.now.needs);
-    const [services, { current, open }] = await Promise.all([readServices(), readIncidents()]);
-    const data = { services, current, alsoOpen: open.slice(1), updatedAt: updatedAt(), now: clock().toISOString() };
+    // In testing as the Releases page counts it: not gone out, with a required verification that has not passed.
+    const [services, { current, open }, testing, history] = await Promise.all([readServices(), readIncidents(), attempt(async () => releaseFigures((await readReleases()).rows).testing), readHistory()]);
+    const data: NowData = { services, current, alsoOpen: open.slice(1), head: nowHead({ services, testing, history }), updatedAt: updatedAt(), now: clock().toISOString() };
     return { context: nowContext(data), data };
   },
 });

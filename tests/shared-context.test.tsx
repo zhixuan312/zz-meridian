@@ -21,7 +21,7 @@ import { systemPrompt } from '@/lib/assistant/prompt';
 import type { Period } from '@/lib/period';
 import { HomeBody } from '@/views/home';
 import { homeContext, homeHead, servicesLine, type HomeData } from '@/views/home-context';
-import { servicesContext } from '@/views/services-context';
+import { servicesContext, servicesHead } from '@/views/services-context';
 import { EmbedHome } from '../app/embed/home/view';
 
 /** The sample's incidents as a page is handed them: the record without who has it and the id of its ticket. */
@@ -83,7 +83,7 @@ describe("the Home's shared context", () => {
   });
   it('fits its budget for every period, and so does Services', () => {
     for (const p of ['7d', '30d', '90d', 'all'] as const) expect(contextText(homeContext(home(p), 0)).length).toBeLessThanOrEqual(BUDGET);
-    const services = servicesContext({ services: SERVICES, current: INCIDENTS.find((i) => i.state !== 'resolved') ?? null, past: PAST_INCIDENTS, updatedAt: DEMO_UPDATED_AT.toISOString(), now: DEMO_NOW.toISOString() });
+    const services = servicesContext({ services: SERVICES, current: INCIDENTS.find((i) => i.state !== 'resolved') ?? null, past: PAST_INCIDENTS, head: servicesHead({ services: SERVICES, history: HISTORY }), updatedAt: DEMO_UPDATED_AT.toISOString(), now: DEMO_NOW.toISOString() });
     expect(contextText(services).length).toBeLessThanOrEqual(BUDGET);
   });
   it('counts the day in progress in nothing, and says so from the day handed over on its own', () => {
@@ -332,6 +332,32 @@ describe('a page is headed by the sentence its context leads with', () => {
       expect(context.title, id).toBe(name);
     }
   });
+
+  it('Now, from the services and the releases in testing', async () => {
+    const { default: NowPage } = await import('../app/(dashboard)/engineering/page');
+    const { nowTool } = await import('@/views/tools');
+    const { read, drawn } = heading(await served(NowPage()));
+    const { context } = await nowTool.read({});
+    // What is wrong first: the sample's Inference API is degraded, and three releases have a verification not yet passed.
+    expect(drawn).toBe('Inference API is degraded, and 3 releases are in testing');
+    expect(read).toBe(`Now: ${drawn}`);
+    expect(context.insights[0].text).toBe(drawn);
+    expect(contextText(context).split('\n')).toContain(`- ${drawn}`);
+    expect(context.title).toBe('Now');
+  });
+
+  it('Services, from the uptime of its 90 days and the longest clean run', async () => {
+    const { default: ServicesPage } = await import('../app/(dashboard)/services/page');
+    const { servicesTool } = await import('@/views/tools');
+    const { read, drawn } = heading(await served(ServicesPage()));
+    const { context } = await servicesTool.read({});
+    // Dashboard's run is the longest of any service now, and its own longest in the 90 days, which it does not reach back to the start of.
+    expect(drawn).toMatch(/^[\d.]+% uptime in 90 days, and Dashboard has run 69 days without a mark$/);
+    expect(read).toBe(`Services: ${drawn}`);
+    expect(context.insights[0].text).toBe(drawn);
+    expect(contextText(context).split('\n')).toContain(`- ${drawn}`);
+    expect(context.title).toBe('Services');
+  });
 });
 
 describe('what a context states beside its title', () => {
@@ -347,6 +373,28 @@ describe('what a context states beside its title', () => {
     expect(first.evidence).toMatch(/^\/\?period=all&day=\d{4}-\d\d-\d\d$/);
     // The day in progress is in neither: the total is of complete days, and so is every day the first counts.
     expect(requests).toBe(demoTotals('all').current.requests);
+  });
+
+  it('Now and Services state the days inside the band over every complete day kept, each with its own address', async () => {
+    const { nowTool, servicesTool } = await import('@/views/tools');
+    const line = 'Steady: 357 of 360 days inside the band of p95 under 350 ms and errors under 1%; outside it on 17 Aug 2026, 21 Sept 2026 and 22 Sept 2026.';
+    expect((await nowTool.read({})).context.insights[1]).toEqual({ text: line, evidence: '/engineering' });
+    expect((await servicesTool.read({})).context.insights[1]).toEqual({ text: line, evidence: '/services' });
+  });
+
+  it('Now and Services say what could not be read, and are headed by what they can state without it', async () => {
+    const { nowHead } = await import('@/views/now-context');
+    const operational = SERVICES.map((s) => ({ ...s, status: 'operational' as const }));
+    expect(nowHead({ services: SERVICES, testing: null, history: HISTORY })).toMatchObject({ title: 'Inference API is degraded', unknown: expect.stringMatching(/^The releases could not be read/) });
+    const unread = nowHead({ services: operational, testing: 1, history: null });
+    expect(unread).toEqual({ title: 'All 6 services are operational, and 1 release is in testing', facts: [], unknown: expect.stringMatching(/^The days could not be read/) });
+    const services = servicesHead({ services: SERVICES, history: null });
+    expect(services.title).toMatch(/^[\d.]+% uptime in 90 days$/);
+    expect(services).toMatchObject({ facts: [], unknown: expect.stringMatching(/^The days could not be read/) });
+    expect(servicesContext({ services: SERVICES, current: null, past: [], head: services, updatedAt: DEMO_UPDATED_AT.toISOString(), now: DEMO_NOW.toISOString() }).unknowns).toContain(services.unknown);
+    // A product with no service yet is headed by the page's name.
+    expect(nowHead({ services: [], testing: 0, history: HISTORY }).title).toBeNull();
+    expect(servicesHead({ services: [], history: HISTORY }).title).toBeNull();
   });
 
   it('a period with fewer whole periods before it than a record needs states the change, and all time the figure alone', () => {
@@ -401,6 +449,25 @@ describe('a title and a fact follow the product\'s configuration', () => {
     expect(changed.usage[0].text).toMatch(/ requests in 30 days, [\d.]+% more than the 30 days before$/);
     expect(changed.usage[1].text).toMatch(/^First: Requests first passed 30\.0M in a day on /);
     expect(changed.usage[1].text).not.toBe(shipped.usage[1].text);
+    vi.doUnmock('@/app.config');
+    vi.resetModules();
+  });
+});
+
+describe('the days inside the band follow the product\'s configuration', () => {
+  it('Now and Services count them against `facts.band`, and name the days it leaves out', async () => {
+    const stated = async () => {
+      const { nowTool, servicesTool } = await import('@/views/tools');
+      return [(await nowTool.read({})).context, (await servicesTool.read({})).context].map((c) => c.insights.find((i) => i.text.startsWith('Steady: '))!.text);
+    };
+    for (const line of await stated()) expect(line).toMatch(/^Steady: 357 of 360 days inside the band of p95 under 350 ms and errors under 1%; outside it on /);
+    // A wider band: every day's error rate is under 2%, and only 22 Sept, at 498 ms, has a p95 of 480 ms or more.
+    vi.resetModules();
+    vi.doMock('@/app.config', async (load) => {
+      const real = await load<typeof import('@/app.config')>();
+      return { ...real, facts: { ...real.facts, band: { p95Under: 480, errorRateUnder: 0.02 } } };
+    });
+    for (const line of await stated()) expect(line).toBe('Steady: 359 of 360 days inside the band of p95 under 480 ms and errors under 2%; outside it on 22 Sept 2026.');
     vi.doUnmock('@/app.config');
     vi.resetModules();
   });

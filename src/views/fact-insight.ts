@@ -5,6 +5,7 @@
  * them, so a person and an agent are told the same thing in the same words.
  */
 import { formatPercent, plural } from '@/lib/format';
+import type { Service } from '@/components/patterns/status-list';
 import type { Fact } from '@/lib/facts';
 import type { Insight } from '@/lib/shared-context';
 
@@ -25,6 +26,19 @@ export const handed = ({ kind, text, day }: Fact, evidence?: string): Fact => ({
 
 /** What a context leads its insights with: the page's title as the page draws it, then each fact. */
 export const headInsights = ({ title, facts }: PageHead): Insight[] => [...(title ? [{ text: title }] : []), ...facts.map(factInsight)];
+
+/** A service as a title reads it: its name and its state now. */
+export type ServiceNow = Pick<Service, 'name' | 'status'>;
+/** A state that is wrong, as a title says it. */
+export const STATE = { degraded: 'degraded', outage: 'down' } as const;
+/** The services in the worst state any is in, and that state; null when every one is operational. */
+export function worst(services: readonly ServiceNow[]): { names: string[]; state: keyof typeof STATE } | null {
+  for (const state of ['outage', 'degraded'] as const) {
+    const names = services.filter((s) => s.status === state).map((s) => s.name);
+    if (names.length) return { names, state };
+  }
+  return null;
+}
 
 /** A period in words: "30 days". */
 export const inDays = (days: number) => `${days} ${plural(days, 'day')}`;

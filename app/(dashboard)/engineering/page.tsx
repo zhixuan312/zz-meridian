@@ -16,7 +16,8 @@ export default async function NowPage() {
   return (
     <PageFrame
       kicker={<>{app.name} · {app.workspace}</>}
-      title="Now"
+      name="Now"
+      title={data.head.title}
       description={`Which services are up this moment and what is open. ${workspaces.engineering.audience}`}
       meta={<Freshness updatedAt={new Date(data.updatedAt)} now={new Date(data.now)} />}
     >

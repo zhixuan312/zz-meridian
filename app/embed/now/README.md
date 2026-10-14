@@ -21,7 +21,7 @@ Status: beta
 
 ## Data
 
-The Now tool's read (`nowTool` in `src/views/tools.ts`): the `services` collection, the newest incident nobody has resolved and a count of every other open one.
+The Now tool's read (`nowTool` in `src/views/tools.ts`): the `services` collection, the newest incident nobody has resolved and a count of every other open one, and the page's title and days inside the band, worked out on the server from the releases and every complete day kept and handed to the view as sentences.
 
 ## Surfaces
 
@@ -29,7 +29,7 @@ Embed only, at 360 to 760px inline and the host's full panel in fullscreen. The 
 
 ## Agents
 
-The Now page's context (`app/(dashboard)/engineering/README.md` lists it), inline and in fullscreen. Ask on the banner posts "What is the impact of … on my traffic?".
+The Now page's context (`app/(dashboard)/engineering/README.md` lists it), inline and in fullscreen: it leads with the title the page is headed by and the days inside the band, so the view shares them though its head says "Now". Ask on the banner posts "What is the impact of … on my traffic?".
 
 ### What the agent reads
 

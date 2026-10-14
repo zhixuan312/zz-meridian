@@ -6,7 +6,6 @@
 import { facts as rules } from '@/app.config';
 import type { ActivityEvent } from '@/components/patterns/activity-feed';
 import type { Incident } from '@/components/patterns/incident-card';
-import type { Service } from '@/components/patterns/status-list';
 import type { DailyPoint, Totals } from '@/data/sample';
 import { CUSTOMER_METRICS } from './customers-context';
 import type { MainSummary } from './main-summary';
@@ -19,7 +18,7 @@ import { formatDate } from '@/lib/format-date';
 import { deviations, largest, runs, sameWeekdayBaseline, weekday, weekendRatio, median } from '@/lib/insight';
 import { PERIOD_DAYS, PERIOD_LABEL, type Period } from '@/lib/period';
 import { freshnessOf, type Fact, type Insight, type SharedContext } from '@/lib/shared-context';
-import { HISTORY_UNREAD, against, handed, headInsights, inDays, type PageHead } from './fact-insight';
+import { HISTORY_UNREAD, STATE, against, handed, headInsights, inDays, worst, type PageHead, type ServiceNow } from './fact-insight';
 
 /** Each Home figure: its label and what it counts. The tile's info button shows `hint`; the agents read it too. */
 export const HOME_METRICS = {
@@ -68,18 +67,6 @@ function days(dates: string[]): string {
   // One month named once: "21 and 22 Sept"; across a month end each day keeps its own.
   const short = names.every((n) => n.split(' ')[1] === month) ? names.map((n, i) => (i < names.length - 1 ? n.split(' ')[0] : n)) : names;
   return short.length === 1 ? short[0] : `${short.slice(0, -1).join(', ')} and ${short.at(-1)}`;
-}
-
-/** A service as a title reads it: its name and its state now. */
-type ServiceNow = Pick<Service, 'name' | 'status'>;
-const STATE = { degraded: 'degraded', outage: 'down' } as const;
-/** The services in the worst state any is in, and that state; null when every one is operational. */
-function worst(services: readonly ServiceNow[]): { names: string[]; state: keyof typeof STATE } | null {
-  for (const state of ['outage', 'degraded'] as const) {
-    const names = services.filter((s) => s.status === state).map((s) => s.name);
-    if (names.length) return { names, state };
-  }
-  return null;
 }
 
 /**

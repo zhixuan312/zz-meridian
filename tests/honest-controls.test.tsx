@@ -30,8 +30,8 @@ const buttons = (html: string) => [...html.matchAll(/<button\b[^>]*>([\s\S]*?)<\
 describe('a control that says it did something did it', () => {
   it('Services offers no subscription: nothing would keep one, and nothing sends an update', async () => {
     const html = renderToStaticMarkup(await ServicesPage());
-    // The page drew: an empty page would hold no button either.
-    expect(html).toMatch(/<h1[^>]*>[^<]*Services/);
+    // The page drew: an empty page would hold no button either. Its heading holds its name before the title's sentence.
+    expect(html).toMatch(/<h1[^>]*>(?:<[^>]*>)*Services/);
     expect(buttons(html).filter((b) => /subscribe/i.test(b))).toEqual([]);
     expect(Object.keys(services)).not.toContain('SubscribeButton');
   });

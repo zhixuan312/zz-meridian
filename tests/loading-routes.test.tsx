@@ -17,12 +17,13 @@ import Tests from '../app/(dashboard)/tests/loading';
 
 import Revenue from '../app/(dashboard)/business/loading';
 import Customer from '../app/(dashboard)/customers/[id]/loading';
+import Now from '../app/(dashboard)/engineering/loading';
 
 const ROUTES = { Home, Usage, Customers, Services, Keys, Members, Requests, RequestDetail, Settings, Tickets, Tests, Releases };
 
 describe('a page headed by a sentence', () => {
   it('holds the sentence\'s block while it loads, under its name, so nothing moves when the page arrives', () => {
-    for (const [name, Loading] of Object.entries({ Home, Usage, Revenue, Customer })) {
+    for (const [name, Loading] of Object.entries({ Home, Usage, Revenue, Customer, Now, Services })) {
       render(<Loading />);
       const heading = screen.getByRole('heading', { level: 1 });
       expect(heading.textContent, name).toBe(`${name}: `);

@@ -75,7 +75,7 @@ A period still in progress is counted in no total, change or finding. A figure f
 
 ## Facts
 
-A fact is one thing the product's own records show, found by a rule and written as one line: the highest period yet, the first day a threshold was passed, every customer of a plan doing the same thing, a total with its first day and its latest. A page states a fact in its title, beside a figure and in its shared context, and it is the same line wherever it is said.
+A fact is one thing the product's own records show, found by a rule and written as one line: the highest period yet, the first day a threshold was passed, every customer of a plan doing the same thing, a total with its first day and its latest, how long a service has run without a mark, how many days were inside the band. A page states a fact in its title, beside a figure and in its shared context, and it is the same line wherever it is said.
 
 - A rule is a pure function in `src/lib/facts.ts`. It takes numbers, dates and labels and returns its fact, with the one line it wrote, or nothing when the rule does not hold. Nothing weaker stands in for a fact that stopped holding: a record that ended leaves the page.
 - Every rule has a guard, and what the guard asks for is the product's to set, in `facts` in `src/app.config.ts`. A rule holds no figure of its own: the page that calls it passes the configuration.
@@ -86,7 +86,8 @@ A fact is one thing the product's own records show, found by a rule and written 
 | `first` | The first day a threshold was passed, and how many days have passed it since: "Requests first passed 25.0M in a day on 02 Jan 2026; 192 days have passed it since" | The largest threshold of `firsts` some day is above, and only when the earliest day kept is below it: a threshold already passed when the records begin has no first day the product can know |
 | `all` | Every member of a set did the same thing, written N of N: "24 of 24 Enterprise customers sent more requests in the last 7 days than in the 7 before" | One member short and it is no fact. Tried on the whole set first, then on each named subset in the order given (the sample: each plan, the one that brings the most revenue first) |
 | `total` | The sum of everything recorded, from its first day to its latest: "9,600,136,928 requests answered in 360 days, from 08 Oct 2025 to 02 Oct 2026" | Every digit, wherever the page has room for them |
-| `runOf` | How long a state has held, up to today | "Its longest" only when no run among the days kept is longer (see "Time in an incident, and a run of days") |
+| `run` | How long a state has held, up to today: "Dashboard has run 69 days without a mark, its longest in 90" | "Its longest" only when no run among the days kept is longer; a run that reaches the earliest day kept reads "at least N days" and is never the longest; nothing when today is not the good state. Worked out by `runOf`, which the Status list draws from the same days (see "Time in an incident, and a run of days") |
+| `steady` | How many complete days were inside the band, and the days outside it by date: "357 of 360 days inside the band of p95 under 350 ms and errors under 1%; outside it on 17 Aug 2026, 21 Sept 2026 and 22 Sept 2026" | The band is `band`: a day is inside when its p95 is under `p95Under` and its errors over its requests under `errorRateUnder`, and a day at an edge is outside. Complete days only. The first three days outside are named, then "and N more" |
 
 - The figure is what is said. No line of a rule and no title holds a word of praise; the rules' test refuses twelve: `great`, `excellent`, `amazing`, `impressive`, `outstanding`, `congratulations`, `well done`, `good job`, `healthy`, `strong`, `solid` and `nice`.
 - A fact is about a figure the product records, over complete days: the day in progress is in no fact, as it is in no total.
@@ -100,7 +101,7 @@ A page that leads with figures is headed by what they say: "The highest 30 days 
 - It names its period in words ("30 days") and writes money in full, a count at a glance (`1.1B`) and a change as a percentage with one decimal and no sign: "up 5.3%", "23.6% more". A change that rounds to 0.0% reads "level with". A period with no period before it, or one whose figure was zero, is compared with nothing: the title states the figure alone.
 - It has no full stop, as a name has none, and it is balanced over its lines.
 - The page's name stays in the heading, read out and not drawn, and is what the top bar shows. The Shell holds the sentence's block while the sentence arrives, so nothing under it moves (`src/components/base/shell/README.md`, "The title").
-- A page that cannot work its title out, because the history a record needs could not be read, is headed by its name.
+- A page that cannot work its title out, because the history a record needs could not be read, is headed by its name. A page whose title leaves out a clause it could not read states the rest: Now says what the services are doing when the releases cannot be read, and Services its uptime alone when the days cannot be. The context says what was not read.
 
 ## A wall of many
 
