@@ -23,7 +23,7 @@ Page frame, Card and Skeleton. It knows nothing of the product: each route compo
 - `width` is the page's own width; a skeleton at another width moves the content when the page arrives.
 - `kicker` and `meta` are the page's own, when they read no data: a skeleton kicker is a line shorter than the words, and a masthead with no freshness wraps its last row where the page's does not.
 - `lead` keeps the room of a long sentence under the title: a line of the page's figures and who the page is for, up to about 220 characters. The room is three lines of the lead from 34em of the sentence's own column, four from 25em, five from 21em and six under that, in ems of the lead's 16px. The steps were worked out from Geist's advance widths, breaking lines as a browser does, for Home's longest sentence (an Owner's, 212 characters with who Main is for): three lines at 636px (the 60-character column) and 560px, four from 400px to 528px, five from 336px to 380px (358px on a 390px phone), six at 320px. A shorter sentence keeps the same room; a page whose sentence is longer needs steps of its own. The room is its own block formatting context (`flow-root`), so the margins of the bars it draws while empty stay inside it: a margin that passed through to the masthead's row would make the loading state taller than the page.
-- `actions` stands where the page's controls will, as wide as they are, so the masthead's last row wraps where the page's does: on a phone the controls take a line of their own under the sentence, and a narrower placeholder would leave that line out. A page passes its controls themselves, out of sight and out of reach (`aria-hidden`, `inert`, `invisible`), as Home does in `src/views/home-actions.tsx`, and gives its own actions' fallback the same.
+- `actions` stands where the page's controls will, as wide as they are, so the masthead's last row wraps where the page's does: on a phone the controls take a line of their own under the sentence, and a narrower placeholder would leave that line out. A page passes its controls themselves, out of sight and out of reach (`aria-hidden`, `inert`, `invisible`), as Home does in `src/views/period-actions.tsx`, and gives its own actions' fallback the same.
 - `count`, `height`, `rows` and `filters` size the shapes to the page they stand in for.
 
 ## States
@@ -83,7 +83,7 @@ export default function Loading() {
 A page headed by a sentence, with the rest of its masthead held:
 
 ```tsx
-<LoadingPage name="home" title="Home" sentence kicker={<>{app.name} · {app.workspace}</>} lead meta={<Freshness updatedAt={DEMO_UPDATED_AT} now={DEMO_NOW} />} actions={<HomeActionsRoom />}>
+<LoadingPage name="home" title="Home" sentence kicker={<>{app.name} · {app.workspace}</>} lead meta={<Freshness updatedAt={DEMO_UPDATED_AT} now={DEMO_NOW} />} actions={<PeriodActionsRoom />}>
   <HomeSkeleton />
 </LoadingPage>
 ```
@@ -94,7 +94,7 @@ The page draws the sentence in the same room, and waits for it in an empty one:
 <PageFrame
   name="Home"
   description={<Suspense fallback={<LeadRoom />}><Lead /></Suspense>}
-  actions={<Suspense fallback={<HomeActionsRoom />}><Actions /></Suspense>}
+  actions={<Suspense fallback={<PeriodActionsRoom />}><Actions /></Suspense>}
   …
 />
 // Lead returns <LeadRoom>{line} {audience}</LeadRoom>

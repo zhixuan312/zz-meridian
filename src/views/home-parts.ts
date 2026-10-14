@@ -32,23 +32,32 @@ const count = (n: number) => n.toLocaleString('en-US');
 /** A share as the configuration gives it, to the hundredth of a percent: 0.1 is "10%", 0.001 is "0.1%". */
 const share = (n: number) => `${Number((n * 100).toFixed(2))}%`;
 
-/** The windows of the year: each whole window of `length` complete days, counted back from the latest, oldest first. */
-function windowsOf(history: readonly DailyPoint[], length: number): HomeWindow[] {
-  const out: HomeWindow[] = [];
+/**
+ * The windows of the year: each whole window of `length` complete days, counted back from the latest, oldest first,
+ * with the dates it runs between and what `of` works out from its days. Home's year and Revenue's periods by plan cut
+ * the same windows.
+ */
+export function windowsOf<T>(history: readonly DailyPoint[], length: number, of: (days: DailyPoint[]) => T): ({ from: string; to: string } & T)[] {
+  const out: ({ from: string; to: string } & T)[] = [];
   for (let end = history.length; length > 0 && end - length >= 0; end -= length) {
     const days = history.slice(end - length, end);
-    const { requests, p95, revenue } = totalsOf(days);
-    out.unshift({ from: days[0].date, to: days[days.length - 1].date, requests, p95, revenue });
+    out.unshift({ from: days[0].date, to: days[days.length - 1].date, ...of(days) });
   }
   return out;
 }
+
+/** A window as the year's card and revenue a period draw it: its requests, the median day's p95 and its revenue. */
+const homeWindow = (days: DailyPoint[]) => {
+  const { requests, p95, revenue } = totalsOf(days);
+  return { requests, p95, revenue };
+};
 
 /**
  * The year's card: its windows, its title, which states how requests moved from the first window to the latest and the
  * range of the windows' p95, and the median of the windows' p95, which its latency chart draws as its baseline.
  */
 function yearOf(history: readonly DailyPoint[], period: Period): NonNullable<HomeData['year']> {
-  const windows = windowsOf(history, PERIOD_DAYS[period] ?? history.length);
+  const windows: HomeWindow[] = windowsOf(history, PERIOD_DAYS[period] ?? history.length, homeWindow);
   const p95 = windows.map((w) => w.p95);
   const typical = p95.length ? median(p95) : null;
   if (windows.length < 2) return { title: 'Requests and latency, a period at a time', windows, median: typical };

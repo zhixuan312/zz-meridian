@@ -5,7 +5,7 @@ import { Freshness } from '@/components/patterns/freshness';
 import { ChartSkeleton, LoadingPage, TilesSkeleton } from '@/components/patterns/page-loading';
 import { app } from '@/app.config';
 import { DEMO_NOW, DEMO_UPDATED_AT } from '@/data/sample';
-import { HomeActionsRoom } from '@/views/home-actions';
+import { PeriodActionsRoom } from '@/views/period-actions';
 
 /** A card of `n` lines under a title: a list part of the page, a year's facts or the lines worth knowing. */
 function LinesSkeleton({ n }: { n: number }) {
@@ -67,7 +67,7 @@ export default function HomeLoading() {
       kicker={<>{app.name} · {app.workspace}</>}
       lead
       meta={<Freshness updatedAt={DEMO_UPDATED_AT} now={DEMO_NOW} />}
-      actions={<HomeActionsRoom />}
+      actions={<PeriodActionsRoom />}
     >
       <HomeSkeleton />
     </LoadingPage>

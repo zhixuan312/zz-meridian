@@ -4,7 +4,7 @@ import { ExportButton } from '@/components/patterns/export-button';
 import { Freshness } from '@/components/patterns/freshness';
 import { PeriodSelect } from '@/components/patterns/period-select';
 import { HomeBody } from '@/views/home';
-import { HomeActionsRoom, PeriodRoom } from '@/views/home-actions';
+import { PeriodActionsRoom, PeriodRoom } from '@/views/period-actions';
 import { gate } from '@/data/access';
 import { DEMO_NOW, DEMO_UPDATED_AT } from '@/data/sample';
 import { dayRows } from '@/views/home-context';
@@ -45,7 +45,7 @@ export default async function HomePage({ searchParams }: { searchParams: SearchP
       }
       meta={<Freshness updatedAt={DEMO_UPDATED_AT} now={DEMO_NOW} />}
       actions={
-        <Suspense fallback={<HomeActionsRoom />}>
+        <Suspense fallback={<PeriodActionsRoom />}>
           <Actions searchParams={searchParams} />
         </Suspense>
       }

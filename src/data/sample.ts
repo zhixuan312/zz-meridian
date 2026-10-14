@@ -7,8 +7,8 @@
  * in `src/system/fixtures/company.ts`, which only the server reads (`collections.ts`, `sign-in.ts`), and from which this
  * file takes nothing.
  */
-export { DEMO_NOW, DEMO_UPDATED_AT, REGION_NAMES, writesTokens } from '@/system/fixtures/sample';
-export type { ComputeRow, CostRow, CustomerRecord, DailyPoint, Endpoint, IncidentRecord, Model, RequestRow, Totals, UsageRow } from '@/system/fixtures/sample';
+export { DEMO_NOW, DEMO_UPDATED_AT, PLANS, REGION_NAMES, writesTokens } from '@/system/fixtures/sample';
+export type { ComputeRow, CostRow, CustomerRecord, DailyPoint, Endpoint, IncidentRecord, Model, Plan, RequestRow, Totals, UsageRow } from '@/system/fixtures/sample';
 export { STATUSES, TEAMS } from '@/system/fixtures/sample-members';
 export type { Member } from '@/system/fixtures/sample-members';
 export { FEATURED_REQUEST_IDS, STATUS_TEXT, payloadsOf, statusClass, statusTone, traceOf, usageOf } from '@/system/fixtures/sample-records';

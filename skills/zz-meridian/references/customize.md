@@ -163,7 +163,9 @@ Rules that make every page look like it belongs:
   body drops when the page arrives: give `LoadingPage` the page's own `kicker` and `meta` when they read no data, `lead`
   when the sentence under the title is a long one (a line of figures and who the page is for), and `actions` in the
   controls' own width; the page draws that sentence inside the same `LeadRoom` and gives its own fallbacks the same
-  room. Home does all of it (`optional:app/(dashboard)/(home)/loading.tsx`, `optional:src/views/home-actions.tsx`).
+  room. Home and Revenue do all of it (`optional:app/(dashboard)/(home)/loading.tsx`,
+  `optional:app/(dashboard)/business/loading.tsx`, `optional:src/views/period-actions.tsx`). The room is the standard,
+  whatever a page holds.
 - **A file picker** is a visible `Button` that calls `input.click()` on an `<input type="file">` with `tabIndex={-1}`
   and `aria-hidden`, so the keyboard reaches the button and never the hidden input; give the press a state of its own
   ("Choosing the files…") until the change event arrives. The presses count a file chooser that opens as an answer.
@@ -251,6 +253,12 @@ says "requests" on a page about orders is the sample's, not the product's.
 - **The share of revenue that makes a customer worth knowing is configured.** `facts.concentrationAt` in
   `src/app.config.ts` is read when the read runs, never captured when a module loads; the key is the standard, and a
   page that states concentration reads it.
+- **The share that puts a customer close to the next plan is configured.** `facts.nextPlanAt` in `src/app.config.ts`
+  is read when the read runs, as `concentrationAt` is; the key is the standard, and a page that says a customer is
+  close to a plan reads it.
+- **A ranked list's row opens the record it names.** Give a Bar list's row an `href` when it names a record that has a
+  page (a customer, a model): its label is then the one link to it, the bar and the figure are not a second way
+  there, and the folded "N others" row opens nothing. A row that names no record (a region, a status class) stays text.
 
 **The sample's. Replace it.**
 
@@ -268,13 +276,22 @@ says "requests" on a page about orders is the sample's, not the product's.
   its words. Keep the standard they show: one Featured metric, a part's title alone in its element, a list that holds
   to its stated number whatever the data, the four states, every row of tiles one column on a phone, and the cost
   rule. Write your own company's parts.
+- **Revenue's eight parts and their words**: the head and its line, the four tiles (Revenue, Against a year ago, Best
+  day yet, Past due), revenue a day by plan beside "Who pays", revenue a period by plan, the wall of "Every customer,
+  the last 14 days" with its three orders, the ladder "From a trial to Enterprise" with its stages, "Worth a look", and
+  "What they buy" beside "Where they are": what `revenueData` in `optional:src/views/revenue-parts.ts` works out for
+  them, how `optional:src/views/revenue.tsx` draws them and how `revenueContext` says it. The plans, the stages and the
+  wording of a customer close to the next plan are the sample company's. Keep the standard they show: each part about
+  customers names its window, every customer a part names opens its page, the period moves only what the daily
+  records answer, and the four states. Write your own.
 - **`optional:tests/titles.test.ts`** and **`optional:tests/titles-engineering.test.ts`**, which hold the sample's
   words branch by branch; **`optional:tests/facts-config.test.ts`**, which holds the sample's values of `facts`; and
   the cases of `optional:tests/shared-context.test.tsx` that read the sample's headings and facts. Rewrite their cases
   for your titles and your values: a title no test holds is a sentence nobody checked.
 - **The values of `facts` in `src/app.config.ts`**: `firsts.requestsADay` (10, 25 and 50 million requests a day),
-  `recordNeedsPeriods` (six periods), `band` (a p95 under 350 ms and an error rate under 1%) and `concentrationAt` (a
-  tenth of the revenue of the last 30 complete days). They are the sample company's sizes. Keep the keys your pages
+  `recordNeedsPeriods` (six periods), `band` (a p95 under 350 ms and an error rate under 1%), `nextPlanAt` (three
+  quarters of what the next plan's smallest customer pays) and `concentrationAt` (a tenth of the revenue of the last
+  30 complete days). They are the sample company's sizes. Keep the keys your pages
   pass to a rule, set your own values, and delete a key nothing reads.
 - **The facts the sample's contexts state**: on Home the facts of a year (the requests answered with the share answered
   without an error, what customers were billed, the busiest day yet, the first day requests passed a threshold and the

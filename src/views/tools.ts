@@ -24,7 +24,7 @@ import { PERIODS } from '@/lib/period';
 import { defineViewTool, type ViewTool } from '@/lib/shared-context';
 import { usageContext, usageHead, type UsageData } from './usage-context';
 import { usageFigures } from '@/data/usage';
-import { customerFigures, customerRow, customersContext, under } from './customers-context';
+import { customerRow, customersContext, under } from './customers-context';
 import { customerContext, type CustomerData } from './customer-context';
 import { servicesContext, servicesHead, type ServicesData } from './services-context';
 import { SCOPES } from './key-scopes';
@@ -34,7 +34,8 @@ import { nowContext, nowHead, type NowData } from './now-context';
 import { homeContext } from './home-context';
 import { homeData } from './home-parts';
 import { requestContext } from './request-context';
-import { revenueContext, revenueHead, type RevenueData } from './revenue-context';
+import { revenueContext } from './revenue-context';
+import { revenueData } from './revenue-parts';
 import { requestsContext } from './requests-context';
 import { releaseFigures, releasesContext } from './releases-context';
 import { testFigures, testsContext } from './tests-context';
@@ -185,14 +186,16 @@ export const customersTool = defineViewTool({
 export const revenueTool = defineViewTool({
   name: 'revenue',
   title: 'Revenue',
-  description: 'Revenue over the last 30 days against the 30 before, how many customers there are, whether every customer or every customer of a plan sent more this week than last, and who is past due.',
+  description: 'Revenue over a period against the period before and against a year ago, the best day yet, revenue by plan and who pays it, who is past due, every customer\'s week, the customers on each plan from a trial to Enterprise, what is worth a look, what they buy by model and where they are by region.',
   needs: FEATURES.revenue.needs,
-  input: z.object({}),
-  async read() {
+  input: z.object({ period }),
+  async read({ period: p = '30d' }) {
     await requireNeed(FEATURES.revenue.needs);
-    const [{ rows }, history] = await Promise.all([readAll('customers'), readHistory()]);
-    const { customers, revenue, pastDue } = customerFigures(rows as CustomerRecord[]);
-    const data: RevenueData = { customers, revenue, pastDue: pastDue.map((c) => ({ name: c.name, revenue: c.revenue })), head: revenueHead({ rows: rows as CustomerRecord[], history }), updatedAt: updatedAt(), now: clock().toISOString() };
+    // Each read apart from the others: one that fails leaves its part saying so and the rest standing.
+    const [days, history, customers, usage, models, regions] = await Promise.all([
+      attempt(() => readDays(p)), readHistory(), rowsOf<CustomerRecord>('customers'), rowsOf<UsageRow>('usage'), rowsOf<Model>('models'), rowsOf<{ label: string; value: number }>('regions'),
+    ]);
+    const data = revenueData({ period: p, days, history, customers, usage, models, regions, updatedAt: updatedAt(), now: days?.observedAt ?? clock().toISOString() });
     return { context: revenueContext(data), data };
   },
 });

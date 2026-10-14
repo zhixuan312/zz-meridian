@@ -458,7 +458,7 @@ describe('what a context states beside its title', () => {
     const { record: _, ...unread } = homeHead({ period: '30d', totals: demoTotals('30d'), history: null, services: SERVICES });
     expect(unread).toEqual({ title: null, facts: [], unknown: expect.stringMatching(/^The history could not be read/) });
     expect(usageHead({ period: '30d', totals: demoTotals('30d'), history: null })).toEqual(unread);
-    expect(revenueHead({ rows: CUSTOMERS, history: null })).toEqual(unread);
+    expect(revenueHead({ period: '30d', rows: CUSTOMERS, history: null })).toEqual({ ...unread, record: null });
     const c = homeContext({ ...home('30d'), head: unread });
     expect(c.unknowns).toContain(unread.unknown);
     expect(c.insights.map((i) => i.text).join('\n')).not.toMatch(/The highest|^Total: /m);
