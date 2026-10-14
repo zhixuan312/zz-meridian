@@ -167,8 +167,8 @@ export function change(now: number, before: number | null | undefined, period: P
   return `${dir}${dir === 'unchanged' ? '' : ` ${formatPercent(Math.abs(r), 1)}`} vs the previous ${n} days${format ? ` (${format(before)})` : ''}`;
 }
 
-/** "up 0.4 points vs the previous 30 days": a share's change, in percentage points, since a share of a share says little. The tiles of a share say it in the same words. */
-export function pointsChange(now: number, before: number | null | undefined, period: Period): string | undefined {
+/** "up 0.4 points vs the previous 30 days": a share's change, in percentage points, since a share of a share says little. */
+function pointsChange(now: number, before: number | null | undefined, period: Period): string | undefined {
   const n = PERIOD_DAYS[period];
   if (!n || before === null || before === undefined) return undefined;
   const by = Math.abs(now - before) * 100;

@@ -257,6 +257,17 @@ describe('all time on the Home, which has no period before it', () => {
     expect(month.container.querySelector('[data-change]')).toHaveTextContent('vs previous period');
     expect(within(month.container).queryByText('No earlier period to compare')).toBeNull();
   });
+  it('says a share\'s change in points, in a line short enough for a phone\'s tile', () => {
+    const { container } = render(<Tooltip.Provider><HomeBody {...home('30d')} /></Tooltip.Provider>);
+    // The tiles of a share, Compute in use and Gross margin, say how far they moved as every tile says a change: against the previous period.
+    const notes = [...container.querySelectorAll('span[title]')].map((e) => e.textContent ?? '').filter((t) => / points vs /.test(t));
+    expect(notes).toHaveLength(2);
+    for (const note of notes) {
+      expect(note).toMatch(/^(up|down) \d+\.\d points vs previous period$/);
+      expect(note.length, note).toBeLessThanOrEqual('down 12.3 points vs previous period'.length);
+    }
+    expect(notes).toContain('up 0.3 points vs previous period');
+  });
   it('draws no change in the MCP view either', () => {
     const { container } = render(<Tooltip.Provider><SurfaceOverride surface={{ kind: 'embed', connected: true, mode: 'inline', share: () => {}, ask: () => {} }}><EmbedHome {...home('all')} /></SurfaceOverride></Tooltip.Provider>);
     // Inline is the revenue card and its three tiles, of which Requests alone has a change.

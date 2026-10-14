@@ -19,7 +19,7 @@ import { MetricTile } from '@/components/patterns/metric-tile';
 import { AXIS_FORMATTERS, FORMATTERS, formatCompact, formatCost, formatDuration, formatPercent } from '@/lib/format';
 import { formatDate, formatDay } from '@/lib/format-date';
 import { PERIOD_DAYS, PERIOD_LABEL } from '@/lib/period';
-import { COMPANY_METRICS, HOME_METRICS, homeContext, pointsChange, type HomeData, type HomeWindow } from './home-context';
+import { COMPANY_METRICS, HOME_METRICS, homeContext, type HomeData, type HomeWindow } from './home-context';
 
 /** Tells both agents what the Home shows, and which day the Meridian points at (decision 0011). Inside `Meridian`. */
 export function ShareHome({ data }: { data: HomeData }) {
@@ -133,11 +133,9 @@ export function companyTiles(data: HomeData): ReactNode[] {
  * nothing stands in the place of the others.
  */
 function OperatingTiles({ data }: { data: HomeData }) {
-  const { band, compute, period } = data;
+  const { band, compute } = data;
   const C = COMPANY_METRICS;
   const mayCost = 'computeCost' in data;
-  // A share's change is in points, in the words the context uses for it.
-  const points = (now: number, before: number | null) => pointsChange(now, before, period) ?? 'No earlier period to compare';
   return (
     <Row split="tiles">
       {band ? <MetricTile label={C.band.label} hint={C.band.hint} value={band.inside} note={`of ${band.of} complete days`} /> : unreadTile(C.band.label, C.band.hint)}
@@ -164,6 +162,18 @@ function OperatingTiles({ data }: { data: HomeData }) {
       ) : null}
     </Row>
   );
+}
+
+/**
+ * A share's change against the period before, in points, said as every tile says its change: "up 0.3 points vs
+ * previous period". It is a tile's one line, so it is held to what a phone's tile beside its Sparkline has room for
+ * (about 200px of the line at 390px, in Geist at 12px): a move of two digits, "down 12.3 points vs previous period",
+ * is 194px, where the context's "vs the previous 30 days" cut the line at 205px.
+ */
+function points(now: number, before: number | null): string {
+  if (before === null) return 'No earlier period to compare';
+  const by = Math.abs(now - before) * 100;
+  return by < 0.05 ? 'unchanged vs previous period' : `${now > before ? 'up' : 'down'} ${by.toFixed(1)} points vs previous period`;
 }
 
 /** What one window of the year covers, in words, for a card's line. */
@@ -291,7 +301,7 @@ function Team({ name, team }: { name: string; team: HomeData['business'] }) {
   );
 }
 
-/** At most four lines, each opening the page where it is handled; one line when there is nothing to say. */
+/** At most four lines, each opening the page where it is handled; one line when there is nothing to say. A line's link is a flex item, laid out as a box, so it carries `hit`: a finger's 44px whatever its own height. */
 function WorthKnowing({ data }: { data: HomeData }) {
   const title = 'Worth knowing across the company';
   return (
@@ -304,7 +314,7 @@ function WorthKnowing({ data }: { data: HomeData }) {
               <li key={w.text} className="flex min-w-0 items-start gap-2.5 border-b border-line py-3 text-sm last:border-0">
                 <StatusDot tone="neutral" className="mt-[0.45em]" />
                 {w.href ? (
-                  <Link href={w.href} className="row-link min-w-0 text-pretty text-ink hover:text-accent-ink">{w.text}</Link>
+                  <Link href={w.href} className="row-link hit min-w-0 text-pretty text-ink hover:text-accent-ink">{w.text}</Link>
                 ) : (
                   <span className="min-w-0 text-pretty text-ink-2">{w.text}</span>
                 )}

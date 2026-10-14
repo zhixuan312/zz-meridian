@@ -59,8 +59,12 @@ export function LoadingPage({ name, title, sentence, width, kicker, lead, meta, 
  * worked out from the face's advance widths, breaking lines as a browser does: the sample's longest sentence takes
  * three lines at 636px and 560px, four from 400px to 528px, five from 336px to 380px (a 390px phone is 358px) and six
  * at 320px.
+ *
+ * The room is its own block formatting context (`flow-root`): the bars' vertical margins stay inside it. As a plain
+ * block, the first bar's top margin passed through the room and the paragraph around it and was added to the masthead's
+ * row, which made the loading state 7px taller than the page that replaced it.
  */
-const LEAD_ROOM = 'block min-h-[6lh] @min-[21em]:min-h-[5lh] @min-[25em]:min-h-[4lh] @min-[34em]:min-h-[3lh]';
+const LEAD_ROOM = 'flow-root min-h-[6lh] @min-[21em]:min-h-[5lh] @min-[25em]:min-h-[4lh] @min-[34em]:min-h-[3lh]';
 
 export function LeadRoom({ children }: { children?: ReactNode }) {
   return (

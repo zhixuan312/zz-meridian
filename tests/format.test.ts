@@ -75,6 +75,11 @@ describe('the count axis', () => {
     expect(AXIS_FORMATTERS.count(1500)).toBe('1.5K');
     expect(AXIS_FORMATTERS.count(2000)).toBe('2K');
     expect(AXIS_FORMATTERS.count(2_500_000)).toBe('2.5M');
+    // Past a billion a tick reads in billions, as the figure at rest does: 1.5B, never 1500M.
+    expect(AXIS_FORMATTERS.count(1_500_000_000)).toBe('1.5B');
+    expect(AXIS_FORMATTERS.count(1_000_000_000)).toBe('1B');
+    expect(AXIS_FORMATTERS.count(2_000_000_000_000)).toBe('2T');
+    expect(AXIS_FORMATTERS.compact(-1_500_000_000)).toBe('-1.5B');
     expect(AXIS_FORMATTERS.count(0)).toBe('0');
     expect(AXIS_FORMATTERS.count(500)).toBe('500');
   });

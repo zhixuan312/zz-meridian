@@ -93,6 +93,14 @@ describe('a page on its way', () => {
     expect(full.querySelector('span[aria-hidden="true"]')).toBeNull();
   });
 
+  it('keeps its placeholder\'s margins inside the room, so the room is as tall empty as full', () => {
+    // A bar's vertical margin that escapes the room is added to the row the sentence stands in: the loading state's
+    // masthead was 7px taller than the page's. The room holds its own block formatting context, so nothing escapes it.
+    const room = render(<p className="t-lead"><LeadRoom /></p>).container.querySelector('[data-lead-room]')!.firstElementChild!;
+    expect(room.className).toMatch(/(^|\s)flow-root(\s|$)/);
+    expect(room.className).not.toMatch(/(^|\s)block(\s|$)/);
+  });
+
   it('announces a body that streams under a masthead that is already real', () => {
     render(<Busy name="requests"><p>The body</p></Busy>);
     const status = screen.getByRole('status');
