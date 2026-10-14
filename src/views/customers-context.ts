@@ -3,6 +3,7 @@
  * not paid, as both agents read it. The columns the table drops on a narrow screen are still the person's to read.
  */
 import type { CustomerRecord } from '@/data/sample';
+import { all } from '@/lib/facts';
 import { formatCompact, formatCost, formatPercent } from '@/lib/format';
 import { median } from '@/lib/insight';
 import { listed, type Fact, type Insight, type SharedContext } from '@/lib/shared-context';
@@ -22,6 +23,20 @@ export const week = (t: number[]) => (t.length >= 14 && sum(t.slice(0, 7)) ? sum
 
 /** Whether a customer sent more requests in the last seven days of its 14-day trend than in the seven before. */
 export const sentMore = (t: readonly number[]) => t.length >= 14 && sum(t.slice(7)) > sum(t.slice(0, 7));
+
+/**
+ * The `all` fact about this week: every customer that has not left sent more requests in the last 7 days than in the 7
+ * before, tried on every one of them first and then on each plan, the plan that brings the most revenue first. Revenue
+ * heads its page with it and Home's Customers tile states it.
+ */
+export function allSentMore(rows: readonly Pick<CustomerRecord, 'plan' | 'status' | 'revenue' | 'trend'>[]) {
+  const counted = kept([...rows]);
+  const byPlan = new Map<string, typeof counted>();
+  for (const c of counted) byPlan.set(c.plan, [...(byPlan.get(c.plan) ?? []), c]);
+  const paid = (members: typeof counted) => members.reduce((s, c) => s + c.revenue, 0);
+  const plans = [...byPlan].sort((a, b) => paid(b[1]) - paid(a[1])).map(([label, members]) => ({ label, members }));
+  return all([{ label: '', members: counted }, ...plans], (c) => sentMore(c.trend), { what: 'customers', did: 'sent more requests in the last 7 days than in the 7 before' });
+}
 
 /** A customer as the list draws it: the fields of a row, and none of what only its own page shows. */
 export type CustomerRow = Pick<CustomerRecord, 'id' | 'name' | 'plan' | 'status' | 'requests' | 'trend' | 'errorRate' | 'revenue' | 'joined'>;

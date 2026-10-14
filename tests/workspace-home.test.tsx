@@ -142,16 +142,15 @@ describe('Main, as a workspace home', () => {
 });
 
 describe('what the assistant is told of Main', () => {
-  it('is the same figures, under the labels the pages they come from use', async () => {
-    const { context, data } = await tool.read({ period: '30d' });
-    const summary = (data as { summary: Record<string, Record<string, unknown>> }).summary;
+  it('is the company\'s figures, worked out by the functions the pages they come from use', async () => {
+    const { context } = await tool.read({ period: '30d' });
     const fact = (label: string) => context.facts.find((f) => f.label === label)?.value;
-    expect(fact('Customers')).toBe(String(summary.business.customers));
-    expect(fact('Open tickets')).toBe(String(summary.delivery.open));
-    expect(fact('Waiting tickets')).toBe(String(summary.delivery.waiting));
-    expect(fact('Failing now')).toBe(String(summary.delivery.failing));
-    expect(fact('Live versions')).toBe(String(summary.delivery.live));
-    expect(fact('Ready to release')).toBe(String(summary.delivery.ready));
-    expect(fact('In testing')).toBe(String(summary.delivery.testing));
+    const customers = (await all('customers')).filter((c) => c.status !== 'left');
+    const status = (s: string) => customers.filter((c) => c.status === s).length;
+    expect(fact('Customers')).toBe(`${customerFigures(customers as never).customers}: ${status('active')} active, ${status('trial')} on a trial, ${status('past due')} past due`);
+    const services = await all('services');
+    expect(fact('Services')).toMatch(new RegExp(`^${services.filter((s) => s.status === 'operational').length} of ${services.length} operational`));
+    const { testing } = releaseFigures((await readReleases()).rows);
+    expect(fact('Engineering')).toBe(`Releases in testing ${testing}, tickets open ${ticketCounts(await all('tickets') as never).open}`);
   });
 });

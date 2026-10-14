@@ -16,8 +16,8 @@ const ACTIVITY_SHOWN = 6;
 
 const sum = (xs: number[]) => xs.reduce((a, b) => a + b, 0);
 
-/** A period's totals from its days: requests, the error rate over them, the median day's p95, and revenue. */
-function totalsOf(points: DailyPoint[]): Totals {
+/** A period's totals from its days: requests, the error rate over them, the median day's p95, and revenue. Home's year reads each of its windows the same way. */
+export function totalsOf(points: DailyPoint[]): Totals {
   const requests = sum(points.map((p) => p.requests));
   const p95 = [...points.map((p) => p.p95)].sort((a, b) => a - b);
   return {

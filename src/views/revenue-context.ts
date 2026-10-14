@@ -4,10 +4,10 @@
  */
 import { facts as rules } from '@/app.config';
 import type { CustomerRecord, DailyPoint } from '@/data/sample';
-import { all, periods, record } from '@/lib/facts';
+import { periods, record } from '@/lib/facts';
 import { formatCost, plural } from '@/lib/format';
 import { freshnessOf, type Fact, type SharedContext } from '@/lib/shared-context';
-import { CUSTOMER_METRICS, kept, pastDueFact, sentMore } from './customers-context';
+import { CUSTOMER_METRICS, allSentMore, kept, pastDueFact } from './customers-context';
 import { HISTORY_UNREAD, against, headInsights, inDays, type PageHead } from './fact-insight';
 
 /** The days Revenue's title covers: the last 30 complete ones, the window a customer's figures cover. */
@@ -48,17 +48,13 @@ export function revenueHead({ rows, history }: { rows: readonly Pick<CustomerRec
   // Each whole 30 days of revenue, to the cent, oldest first: the latest is the title's figure and the one before it what it is against.
   const months = periods(history.map((d) => d.revenue), REVENUE_DAYS).map((sum) => Math.round(sum * 100) / 100);
   if (!months.length || !counted.length) return { title: null, facts: [] };
-  const byPlan = new Map<string, typeof counted>();
-  for (const c of counted) byPlan.set(c.plan, [...(byPlan.get(c.plan) ?? []), c]);
-  const paid = (members: typeof counted) => members.reduce((sum, c) => sum + c.revenue, 0);
-  const plans = [...byPlan].sort((a, b) => paid(b[1]) - paid(a[1])).map(([label, members]) => ({ label, members }));
   return {
     title: revenueTitle({
       days: REVENUE_DAYS,
       customers: counted.length,
       revenue: months.at(-1)!,
       previous: months.at(-2) ?? null,
-      all: all([{ label: '', members: counted }, ...plans], (c) => sentMore(c.trend), { what: 'customers', did: 'sent more requests in the last 7 days than in the 7 before' }),
+      all: allSentMore(counted),
       record: record(months, { needs: rules.recordNeedsPeriods, what: `${inDays(REVENUE_DAYS)} of revenue`, format: formatCost }),
     }),
     facts: [],

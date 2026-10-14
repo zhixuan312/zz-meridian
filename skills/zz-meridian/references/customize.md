@@ -230,24 +230,46 @@ says "requests" on a page about orders is the sample's, not the product's.
   never the history. A title that cannot read one of its clauses states the rest, and the context says what was not
   read.
 - **The day in progress is in no figure a title or a fact states.**
+- **A figure only some roles read is asked of the policy, not left to fail.** A view's read asks
+  `can(await resolveAccess(), '<collection>', 'read')` once, the question `read()` and the assistant's query ask, and
+  reads the collection only on a yes. For anyone else the view's data has no key for the figure, the page has no tile
+  in its place and the context and the line under the title say nothing of it: not a dash, not a null. Home does this
+  for what compute cost (`costs`), so a Member and a Viewer see neither Compute cost nor Gross margin.
+- **A rule may say more of its own fact, never a second rule.** `record` takes the `day` its latest value is about,
+  and names it in its line ("on 01 Oct 2026", or "in the week to" it with `week`); `total` takes a `share`, a part of
+  each day's figure, and adds the part's share of the sum ("99.62% of them without an error"). Both are optional, so
+  a call without them says what it said before, and both facts carry the date they are about (`day`).
+- **A count reads at a glance at every size.** `formatCompact` (`src/lib/format.ts`, which an update brings) steps
+  from K to M, B and T, and a count that rounds up to a thousand of one step is written in the next: 999,960,000,000
+  is "1.0T", not "1000.0B".
+- **The share of revenue that makes a customer worth knowing is configured.** `facts.concentrationAt` in
+  `src/app.config.ts` is read when the read runs, never captured when a module loads; the key is the standard, and a
+  page that states concentration reads it.
 
 **The sample's. Replace it.**
 
 - **The six title functions and their words**: `homeTitle`, `usageTitle`, `revenueTitle`, `customerTitle`, `nowTitle`
   and `servicesTitle`, each in its view's context file under `optional:src/views/`, with the functions that call the
-  rules for them (`homeHead`, `usageHead`, `revenueHead`, `titleOf`, `nowHead`, `servicesHead`) and Home's
-  `servicesLine`. Write your pages' own, in your product's nouns: a release "in testing" and a run "without a mark" are
-  the sample's words for its own releases and services.
+  rules for them (`usageHead`, `revenueHead`, `titleOf`, `nowHead`, `servicesHead`, and Home's `homeHead` in
+  `optional:src/views/home-parts.ts`) and Home's line under its title (`homeLine`). Write your pages' own, in your
+  product's nouns: a release "in testing" and a run "without a mark" are the sample's words for its own releases and
+  services.
+- **Home's parts and their words**: what `homeData` in `optional:src/views/home-parts.ts` works out (the revenue card,
+  the tiles, the year, what we sell, the Business and Engineering lines and the lines worth knowing) and how
+  `homeContext` says it. They are the figures of a company that sells tokens. Keep the cost rule and the states; write
+  your own company's parts.
 - **`optional:tests/titles.test.ts`** and **`optional:tests/titles-engineering.test.ts`**, which hold the sample's
   words branch by branch; **`optional:tests/facts-config.test.ts`**, which holds the sample's values of `facts`; and
   the cases of `optional:tests/shared-context.test.tsx` that read the sample's headings and facts. Rewrite their cases
   for your titles and your values: a title no test holds is a sentence nobody checked.
 - **The values of `facts` in `src/app.config.ts`**: `firsts.requestsADay` (10, 25 and 50 million requests a day),
-  `recordNeedsPeriods` (six periods) and `band` (a p95 under 350 ms and an error rate under 1%). They are the sample
-  company's sizes. Keep the keys your pages pass to a rule, set your own values, and delete a key nothing reads.
-- **The facts the sample's contexts state**: the total of requests answered on Home, the first day requests passed a
-  threshold on Usage, and the days inside the band on Now and on Services. State the facts your own records hold, from
-  the same rules.
+  `recordNeedsPeriods` (six periods), `band` (a p95 under 350 ms and an error rate under 1%) and `concentrationAt` (a
+  tenth of the revenue of the last 30 complete days). They are the sample company's sizes. Keep the keys your pages
+  pass to a rule, set your own values, and delete a key nothing reads.
+- **The facts the sample's contexts state**: on Home the facts of a year (the requests answered with the share answered
+  without an error, what customers were billed, the busiest day yet, the first day requests passed a threshold and the
+  weekday average when it is the highest yet), the first day requests passed a threshold on Usage, and the days inside
+  the band on Now and on Services. State the facts your own records hold, from the same rules.
 
 `grep -rn "Title(\|Head(\|facts as rules" src/views src/data app` finds every title, head and reader of the configuration.
 

@@ -15,8 +15,16 @@ describe('the payload exclusion', () => {
     }
   });
 
+  it('leaves out every CLI and deep test, .ts and .tsx alike: they hold the sample\'s own figures and the CLI\'s own source', () => {
+    for (const f of ['tests/cli-home-read.test.ts', 'tests/cli-customer-page.test.tsx', 'tests/cli-heatmap-preview.test.tsx', 'tests/deep-dom.test.tsx']) {
+      expect(PAYLOAD_EXCLUDE.test(f), f).toBe(true);
+    }
+    const files = execFileSync('git', ['ls-files', '-z', '--cached', '--others', '--exclude-standard'], { cwd: ROOT, encoding: 'utf8' }).split('\0').filter((f) => f && fs.existsSync(path.join(ROOT, f)));
+    expect(files.filter((f) => /^tests\/(cli|deep)-[^/]*$/.test(f) && !PAYLOAD_EXCLUDE.test(f))).toEqual([]);
+  });
+
   it('still ships the helper the suites inject, and tests that are not the CLI\'s or the deep ones', () => {
-    for (const f of ['scripts/lib/deep.ts', 'scripts/audit.ts', 'tests/format.test.ts', 'tests/deep.ts', 'tests/sub/deep-dom.test.ts']) {
+    for (const f of ['scripts/lib/deep.ts', 'scripts/audit.ts', 'tests/format.test.ts', 'tests/shared-context.test.tsx', 'tests/deep.ts', 'tests/sub/deep-dom.test.ts', 'tests/sub/cli-home.test.tsx']) {
       expect(PAYLOAD_EXCLUDE.test(f), f).toBe(false);
     }
   });

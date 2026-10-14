@@ -37,7 +37,8 @@ rebuilding each page on Meridian's components, the fake API, and reading what `p
 - **Payload**: a snapshot of the template, built by `cli/scripts/build-payload.ts` into `cli/payload/` with `git archive
   HEAD`, never from a walk of the folder, so a build output, a local `.env` or an uncommitted edit cannot ship
   (`--worktree` exists for trying a change before committing). The package itself, CI, agent settings and `.env` files
-  are left out. The package carries `dist/`, `payload/`, its README and nothing else: no dependencies, no install
+  are left out, and so is every top-level `tests/cli-*` and `tests/deep-*` file, `.ts` and `.tsx` alike: they test the
+  CLI's own source or hold the sample's own figures, which a product replaces. The package carries `dist/`, `payload/`, its README and nothing else: no dependencies, no install
   scripts.
 - **No runtime dependency**: nothing in a dashboard imports `zz-meridian`. It needs Node 22.18 or newer.
 

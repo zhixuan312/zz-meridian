@@ -19,11 +19,11 @@ Status: beta
 
 ## Tool
 
-`zz_meridian_home { period: "7d" | "30d" | "90d" | "all" }` returns the period's complete days and their totals, those of the same number of days before (null for `all`, which has none), the day in progress on its own, and Main's three summaries, and names `ui://zz-meridian/home`.
+`zz_meridian_home { period: "7d" | "30d" | "90d" | "all", day? }` returns Home's data, the read the console page renders from (`app/(dashboard)/(home)/README.md`, "Data"): the period's complete days and their totals, those of the same number of days before (null for `all`, which has none), the day in progress on its own, the title and the facts of a year, the line under the title, each part's figures and what could not be read, and, until the page draws its parts, Main's three summaries; and names `ui://zz-meridian/home`. Compute cost and gross margin are in it only for a person who may read what compute cost, under the same rule as the page, so the embedded Home names neither to anyone else.
 
 ## Agents
 
-The Home page's context (`app/(dashboard)/(home)/README.md` lists it, Main's figures included): the view renders the console's figures and shares the console's context, so an MCP host and the console's assistant are told the same thing. It leads with the sentence the console page is headed by and the total of requests answered, which the tool's read works out on the server; the embed head keeps the view's name and period ("Home · Last 30 days"). Ask on the trend posts "Why did requests change on <day>?" or "What drove the trend in requests this period?".
+The Home page's context (`app/(dashboard)/(home)/README.md` lists it): the view renders the console's figures and shares the console's context, so an MCP host and the console's assistant are told the same thing. It leads with the company's figures and the sentence the console page is headed by, then the facts of a year and the lines worth knowing, which the tool's read works out on the server; the embed head keeps the view's name and period ("Home · Last 30 days"). Ask on the trend posts "Why did requests change on <day>?" or "What drove the trend in requests this period?".
 
 ### What the agent reads
 

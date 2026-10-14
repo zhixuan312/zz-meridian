@@ -10,17 +10,20 @@ vi.mock('next/cache', () => ({ cacheTag: () => {}, cacheLife: () => {}, updateTa
 
 import { SurfaceOverride, sharedContextOn } from '@/components/base/surface';
 import { useShareView } from '@/components/base/use-share-view';
-import { DEMO_NOW, DEMO_UPDATED_AT, ACTIVITY, INCIDENTS as RECORDS, SERVICES, type IncidentRecord } from '@/system/fixtures/sample';
-import { ENDPOINTS, STATUS_MIX, demoSeries, demoTotals } from '@/system/fixtures/company';
+import { DEMO_NOW, DEMO_UPDATED_AT, ACTIVITY, INCIDENTS as RECORDS, MODELS, SERVICES, type IncidentRecord } from '@/system/fixtures/sample';
+import { COMPUTE, COSTS, CUSTOMERS, ENDPOINTS, STATUS_MIX, USAGE, demoSeries, demoTotals } from '@/system/fixtures/company';
+import { RELEASES, RUNS, TICKETS } from '@/system/fixtures/sample-engineering';
 import { PAST_INCIDENTS as PAST_RECORDS } from '@/system/fixtures/sample-ops';
+import { verificationOf } from '@/data/verification';
 import type { Incident } from '@/components/patterns/incident-card';
-import { deviations, median, runs, weekendRatio } from '@/lib/insight';
+import { deviations, median, runs } from '@/lib/insight';
 import { formatCost } from '@/lib/format';
 import { contextText, freshnessOf, type SharedContext } from '@/lib/shared-context';
 import { systemPrompt } from '@/lib/assistant/prompt';
 import type { Period } from '@/lib/period';
 import { HomeBody } from '@/views/home';
-import { homeContext, homeHead, servicesLine, type HomeData } from '@/views/home-context';
+import { errorSpikes, homeContext, homeLine, type HomeData } from '@/views/home-context';
+import { homeData, homeHead, type HomeReads } from '@/views/home-parts';
 import { servicesContext, servicesHead } from '@/views/services-context';
 import { EmbedHome } from '../app/embed/home/view';
 
@@ -28,14 +31,22 @@ import { EmbedHome } from '../app/embed/home/view';
 const handed = ({ owner: _, ticketId: __, ...incident }: IncidentRecord): Incident => incident;
 const [INCIDENTS, PAST_INCIDENTS] = [RECORDS.map(handed), PAST_RECORDS.map(handed)];
 
-/** What every view's text may take: the budget the console prompt and a host's context both afford. The Home's carries Main's seven figures beside its traffic. */
+/** What every view's text may take: the budget the console prompt and a host's context both afford. The Home's carries the company's figures, a year's facts and four lines worth knowing. */
 const BUDGET = 2600;
 /** Every complete day the sample keeps, oldest first: what the server reads to work out a title's record, a first and a total. */
 const HISTORY = demoSeries('all').current;
-const home = (period: Period): HomeData => ({
-  period, series: demoSeries(period).current, totals: demoTotals(period), running: demoSeries(period).running, endpoints: ENDPOINTS, mix: STATUS_MIX, activity: ACTIVITY,
-  incidents: [...INCIDENTS, ...PAST_INCIDENTS],
-  head: homeHead({ period, totals: demoTotals(period), history: HISTORY, services: SERVICES }), unwell: servicesLine(SERVICES),
+/** Every incident, newest first, as Home's read hands them. */
+const EVERY_INCIDENT = [...INCIDENTS, ...PAST_INCIDENTS].sort((a, b) => (a.started < b.started ? 1 : -1));
+/**
+ * What Home's read reads, from the sample's records: as an Owner, who may read what compute cost, or (`costs: false`)
+ * as anyone else. `home` builds Home's data from it with the function the read builds it with.
+ */
+const reads = (period: Period, { costs = true }: { costs?: boolean } = {}): HomeReads => ({
+  period, day: null,
+  days: { series: demoSeries(period).current, previous: demoSeries(period).previous, totals: demoTotals(period), running: demoSeries(period).running },
+  history: HISTORY, customers: CUSTOMERS, usage: USAGE, models: MODELS, compute: COMPUTE, ...(costs ? { costs: COSTS } : {}),
+  services: SERVICES, incidents: EVERY_INCIDENT, releases: RELEASES.map((r) => ({ ...r, verification: verificationOf(r, RUNS) })), tickets: TICKETS,
+  endpoints: ENDPOINTS, mix: STATUS_MIX, activity: ACTIVITY,
   summary: {
     business: { customers: 320, byStatus: { active: 296, trial: 14, 'past due': 10 }, byPlan: { Enterprise: 24, Scale: 82, Starter: 214 }, revenue: 3300438.74 },
     operation: { degraded: ['Inference API'], outage: [], incidents: [{ id: 'inc_1', title: 'Elevated latency in eu-west-1' }] },
@@ -43,6 +54,7 @@ const home = (period: Period): HomeData => ({
   },
   updatedAt: DEMO_UPDATED_AT.toISOString(), now: DEMO_NOW.toISOString(),
 });
+const home = (period: Period, who?: { costs?: boolean }): HomeData => homeData(reads(period, who));
 
 describe('the insight functions', () => {
   it('find the days far from a steady state, and only those', () => {
@@ -52,29 +64,52 @@ describe('the insight functions', () => {
     expect(deviations([2, 2, 2, 2])).toEqual([]);
     expect(runs([9, 3, 4])).toEqual([[3, 4], [9]]);
   });
-  it('tell a weekend from a drop', () => {
-    const dates = Array.from({ length: 14 }, (_, i) => new Date(Date.UTC(2026, 8, 7 + i)).toISOString().slice(0, 10));
-    const values = dates.map((d) => ([0, 6].includes(new Date(`${d}T12:00Z`).getUTCDay()) ? 50 : 100));
-    expect(weekendRatio(values, dates)).toBe(0.5);
-    expect(weekendRatio(values.slice(0, 7), dates.slice(0, 7))).toBeNull();
-  });
 });
 
 describe("the Home's shared context", () => {
   it('names each figure with its unit, its change and its definition', () => {
     const text = contextText(homeContext(home('30d')));
-    expect(text).toContain('Error rate: 0.44%, up 10.4% vs the previous 30 days (0.40%). (Share of requests answered with a 5xx or a 429.)');
+    expect(text).toContain('- Requests: 1,101,098,030, up 4.7% vs the previous 30 days. (Every call answered, at any status.)');
+    expect(text).toContain('- Gross margin: 62.4%, up 0.3 points vs the previous 30 days. (Revenue less compute cost, over revenue.)');
+    expect(text).toContain('- Compute cost: $1,242,000.00, up 4.5% vs the previous 30 days. (What the GPUs provisioned cost.)');
     expect(text).toMatch(/^Home · last 30 days, 03 Sept 2026 to 02 Oct 2026 \(UTC days\) · address \/\?period=30d$/m);
     expect(text).toContain('fresh.');
   });
-  it('surfaces the spike nobody explained, with its figures, and says nothing is recorded', () => {
-    const c = homeContext(home('30d'));
-    expect(c.insights.map((i) => i.text)).toContain("Error rate was 3.2× to 3.4× the period's median of 0.37% on 21 and 22 Sept (1.19%, 1.27%); no other day passed 1.1×.");
-    expect(c.unknowns[0]).toMatch(/^Nothing is recorded between 20 Sept and 23 Sept: no incident and no activity event/);
+  it('states no error spike: Usage states the days that stand out, from the same function', () => {
+    const text = contextText(homeContext(home('30d')));
+    expect(text).not.toMatch(/Error rate was|Recorded around|Nothing is recorded between/);
+    const spikes = (period: Period) => errorSpikes({ period, series: demoSeries(period).current, incidents: EVERY_INCIDENT, activity: ACTIVITY });
+    expect(spikes('30d').insights.map((i) => i.text)).toContain("Error rate was 3.2× to 3.4× the period's median of 0.37% on 21 and 22 Sept (1.19%, 1.27%); no other day passed 1.1×.");
+    expect(spikes('30d').unknowns[0]).toMatch(/^Nothing is recorded between 20 Sept and 23 Sept: no incident and no activity event/);
+    expect(spikes('90d').insights.map((i) => i.text).join('\n')).toMatch(/Recorded around 17 Aug: the incident "Upload failures for files over 50 MB"/);
   });
-  it('ties a spike to the incident recorded beside it', () => {
-    const c = homeContext(home('90d'));
-    expect(c.insights.map((i) => i.text).join('\n')).toMatch(/Recorded around 17 Aug: the incident "Upload failures for files over 50 MB"/);
+  it('states the facts of a year, at most five, each with the date it is about, and puts the day pointed at in their place', () => {
+    const data = home('30d');
+    expect(data.head.facts.length).toBeGreaterThanOrEqual(4);
+    expect(data.head.facts.length).toBeLessThanOrEqual(5);
+    for (const fact of data.head.facts) expect(fact.day, fact.text).toMatch(/^\d{4}-\d\d-\d\d$/);
+    const said = homeContext(data).insights.map((i) => i.text);
+    for (const fact of data.head.facts) expect(said).toContain(`${fact.kind[0].toUpperCase()}${fact.kind.slice(1)}: ${fact.text}.`);
+    const pointed = homeContext(data, data.series.findIndex((d) => d.date === '2026-09-21'));
+    expect(pointed.focus).toMatch(/^21 Sept 2026, a Monday: /);
+    expect(pointed.insights.map((i) => i.text).join('\n')).not.toMatch(/^(Total|Record|First): /m);
+  });
+  it('names a cost and a margin only for a person who may read what compute cost', () => {
+    const viewer = home('30d', { costs: false });
+    expect(Object.keys(viewer)).not.toContain('computeCost');
+    expect(Object.keys(viewer)).not.toContain('grossMargin');
+    expect(viewer.line).toBe('320 customers, 1.1B requests in 30 days (up 4.7%), and Inference API is degraded.');
+    expect(contextText(homeContext(viewer))).not.toMatch(/cost|margin/i);
+    expect(home('30d').line).toBe('320 customers, 1.1B requests in 30 days (up 4.7%), a gross margin of 62.4%, and Inference API is degraded.');
+  });
+  it('says what could not be read, and states the rest', () => {
+    const data = homeData({ ...reads('30d'), usage: null, costs: null, releases: null });
+    expect([data.sold, data.computeCost, data.grossMargin]).toEqual([null, null, null]);
+    expect(data.unread).toEqual(['the usage by model', 'the compute cost', 'the releases']);
+    const c = homeContext(data);
+    expect(c.unknowns[0]).toBe('The usage by model, the compute cost and the releases could not be read, so what they state is missing, not zero.');
+    expect(contextText(c)).toContain('$3,300,438.74');
+    expect(data.worth.map((w) => w.href)).not.toContain('/releases?state=ready');
   });
   it('tells what the person points at, against the same weekday', () => {
     const data = home('30d');
@@ -82,7 +117,12 @@ describe("the Home's shared context", () => {
     expect(homeContext(data, index).focus).toBe("22 Sept 2026, a Tuesday: 42,008,106 requests (1.0× the median Tuesday); error rate 1.27% (3.4× the period's median); latency p95 498ms (1.7× the median); revenue $130,097.57.");
   });
   it('fits its budget for every period, and so does Services', () => {
-    for (const p of ['7d', '30d', '90d', 'all'] as const) expect(contextText(homeContext(home(p), 0)).length).toBeLessThanOrEqual(BUDGET);
+    for (const p of ['7d', '30d', '90d', 'all'] as const) {
+      for (const data of [home(p), home(p, { costs: false })]) {
+        expect(contextText(homeContext(data)).length, p).toBeLessThanOrEqual(BUDGET);
+        expect(contextText(homeContext(data, 0)).length, p).toBeLessThanOrEqual(BUDGET);
+      }
+    }
     const services = servicesContext({ services: SERVICES, current: INCIDENTS.find((i) => i.state !== 'resolved') ?? null, past: PAST_INCIDENTS, head: servicesHead({ services: SERVICES, history: HISTORY }), updatedAt: DEMO_UPDATED_AT.toISOString(), now: DEMO_NOW.toISOString() });
     expect(contextText(services).length).toBeLessThanOrEqual(BUDGET);
   });
@@ -101,7 +141,7 @@ describe("the Home's shared context", () => {
     expect(data.totals.previous).toBeNull();
     const c = homeContext(data);
     expect(c.scope).toBe('all time, 08 Oct 2025 to 02 Oct 2026 (UTC days)');
-    for (const label of ['Requests', 'Error rate', 'Latency p95', 'Revenue']) expect(c.facts.find((f) => f.label === label)!.change, label).toBeUndefined();
+    for (const label of ['Requests', 'Revenue', 'Gross margin', 'Compute cost']) expect(c.facts.find((f) => f.label === label)!.change, label).toBeUndefined();
     expect(c.unknowns).toContain('No previous period is kept, so no figure has a change.');
     expect(contextText(c)).not.toMatch(/NaN|Infinity|vs the previous/);
     // A period with days before it says nothing of the kind.
@@ -189,7 +229,7 @@ describe('every page shares a context within its budget, and nothing hidden', ()
     const { SCOPES } = await import('@/views/key-scopes');
     const now = DEMO_NOW.toISOString();
     const contexts = [
-      usageContext({ ...home('30d'), endpoints: ENDPOINTS, heat, hours, regions: REGIONS, head: usageHead({ period: '30d', totals: demoTotals('30d'), history: HISTORY }) }),
+      usageContext({ ...home('30d'), incidents: EVERY_INCIDENT, endpoints: ENDPOINTS, heat, hours, regions: REGIONS, head: usageHead({ period: '30d', totals: demoTotals('30d'), history: HISTORY }) }),
       customersContext(CUSTOMERS, CUSTOMERS, { q: '', plan: 'all', status: 'all', sort: 'revenue', dir: 'desc', page: '1' }),
       membersContext(MEMBERS, now),
       keysContext(API_KEYS, now, SCOPES),
@@ -364,9 +404,10 @@ describe('what a context states beside its title', () => {
   it('Home states the total of requests over every complete day kept, and Usage the first day requests passed a threshold', async () => {
     const { homeTool, usageTool } = await import('@/views/tools');
     const requests = HISTORY.reduce((sum, d) => sum + d.requests, 0);
+    const answered = (HISTORY.reduce((sum, d) => sum + d.requests - d.errors, 0) / requests * 100).toFixed(2);
     for (const period of ['7d', 'all'] as const) {
-      const said = (await homeTool.read({ period })).context.insights[1];
-      expect(said, period).toEqual({ text: `Total: ${requests.toLocaleString('en-US')} requests answered in 360 days, from 08 Oct 2025 to 02 Oct 2026.`, evidence: '/?period=all' });
+      const said = (await homeTool.read({ period })).context.insights.find((i) => i.text.startsWith('Total: ') && i.text.includes('requests answered'));
+      expect(said, period).toEqual({ text: `Total: ${requests.toLocaleString('en-US')} requests answered in 360 days, from 08 Oct 2025 to 02 Oct 2026, ${answered}% of them without an error.` });
     }
     const first = (await usageTool.read({ period: '7d' })).context.insights[1];
     expect(first.text).toMatch(/^First: Requests first passed 25\.0M in a day on \d\d \w+ \d{4}; \d+ days have passed it since\.$/);
@@ -409,7 +450,7 @@ describe('what a context states beside its title', () => {
     const { usageHead } = await import('@/views/usage-context');
     const { revenueHead } = await import('@/views/revenue-context');
     const { CUSTOMERS } = await import('@/system/fixtures/company');
-    const unread = homeHead({ period: '30d', totals: demoTotals('30d'), history: null, services: SERVICES });
+    const { record: _, ...unread } = homeHead({ period: '30d', totals: demoTotals('30d'), history: null, services: SERVICES });
     expect(unread).toEqual({ title: null, facts: [], unknown: expect.stringMatching(/^The history could not be read/) });
     expect(usageHead({ period: '30d', totals: demoTotals('30d'), history: null })).toEqual(unread);
     expect(revenueHead({ rows: CUSTOMERS, history: null })).toEqual(unread);
@@ -419,12 +460,15 @@ describe('what a context states beside its title', () => {
     expect(c.title).toBe('Home');
   });
 
-  it('says which services are not operational in the one sentence under the Home\'s title, and nothing when every one is', () => {
+  it('says under the Home\'s title the customers, the requests and their change, gross margin for who may read it, and each service that is not operational', () => {
     const service = (name: string, status: 'operational' | 'degraded' | 'outage') => ({ name, status });
-    expect(servicesLine(SERVICES)).toBe('Inference API is degraded.');
-    expect(servicesLine([service('Files', 'outage'), service('Edge gateway', 'degraded'), service('Webhooks', 'degraded'), service('Dashboard', 'operational')])).toBe('Files is down, and Edge gateway and Webhooks are degraded.');
-    expect(servicesLine([service('Files', 'operational')])).toBeNull();
-    expect(servicesLine(null)).toBeNull();
+    const month = { days: 30, customers: 320, requests: 1_101_098_030, previous: 1_051_357_951 };
+    expect(homeLine({ ...month, margin: 0.6237, services: SERVICES })).toBe('320 customers, 1.1B requests in 30 days (up 4.7%), a gross margin of 62.4%, and Inference API is degraded.');
+    expect(homeLine({ ...month, services: [service('Files', 'outage'), service('Edge gateway', 'degraded'), service('Webhooks', 'degraded'), service('Dashboard', 'operational')] })).toBe('320 customers, 1.1B requests in 30 days (up 4.7%), and Files is down, Edge gateway is degraded and Webhooks is degraded.');
+    expect(homeLine({ ...month, services: [service('Files', 'operational')] })).toBe('320 customers, 1.1B requests in 30 days (up 4.7%), and every service is operational.');
+    // What could not be read is left out, and no period before leaves the change out.
+    expect(homeLine({ ...month, previous: null, customers: null, margin: null, services: null })).toBe('1.1B requests in 30 days.');
+    expect(homeLine({ days: 0, customers: null, requests: null, previous: null, services: null })).toBeNull();
   });
 });
 

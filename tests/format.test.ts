@@ -14,6 +14,13 @@ describe('formatters', () => {
     expect(formatCompact(999_999)).toBe('1.0M');
     expect(formatCompact(2_941_000)).toBe('2.9M');
   });
+  it('step a count up to trillions, and up a step where one decimal rounds it to a thousand of the one below', () => {
+    expect(formatCompact(1_101_098_030)).toBe('1.1B');
+    expect(formatCompact(2_234_100_000_000)).toBe('2.2T');
+    expect(formatCompact(999_960_000_000)).toBe('1.0T');
+    expect(formatCompact(999_960_000)).toBe('1.0B');
+    expect(formatCompact(-2_234_100_000_000)).toBe('-2.2T');
+  });
   it('read a negative compact count like the positive it mirrors', () => {
     // A net or a delta: the tile used to fall through to "-1,500,000" while the axis rendered "-1.5M".
     expect(formatCompact(-1_500_000)).toBe('-1.5M');

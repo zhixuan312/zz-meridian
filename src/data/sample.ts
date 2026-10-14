@@ -8,7 +8,7 @@
  * file takes nothing.
  */
 export { DEMO_NOW, DEMO_UPDATED_AT, REGION_NAMES, writesTokens } from '@/system/fixtures/sample';
-export type { CustomerRecord, DailyPoint, Endpoint, IncidentRecord, RequestRow, Totals } from '@/system/fixtures/sample';
+export type { ComputeRow, CostRow, CustomerRecord, DailyPoint, Endpoint, IncidentRecord, Model, RequestRow, Totals, UsageRow } from '@/system/fixtures/sample';
 export { STATUSES, TEAMS } from '@/system/fixtures/sample-members';
 export type { Member } from '@/system/fixtures/sample-members';
 export { FEATURED_REQUEST_IDS, STATUS_TEXT, payloadsOf, statusClass, statusTone, traceOf, usageOf } from '@/system/fixtures/sample-records';

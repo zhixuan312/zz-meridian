@@ -7,7 +7,7 @@
  */
 import { z } from 'zod';
 import { slug } from '@/app.config';
-import { requireNeed } from '@/data/access';
+import { can, requireNeed, resolveAccess } from '@/data/access';
 import { clock } from '@/data/collections';
 import { FEATURES } from '@/data/features';
 import { read, readAll } from '@/data/read';
@@ -18,7 +18,7 @@ import { readTickets } from '@/data/tickets';
 import { readActivity, readDays, readEndpoints, readIncidents, readResponses, readServices } from '@/data/metrics';
 import {
   DEMO_UPDATED_AT, STATUS_TEXT, payloadsOf, traceOf,
-  type ApiKey, type CustomerRecord, type Member, type RequestRow,
+  type ApiKey, type ComputeRow, type CostRow, type CustomerRecord, type Member, type Model, type RequestRow, type Ticket, type UsageRow,
 } from '@/data/sample';
 import { PERIODS } from '@/lib/period';
 import { defineViewTool, type ViewTool } from '@/lib/shared-context';
@@ -31,7 +31,8 @@ import { SCOPES } from './key-scopes';
 import { keysContext } from './keys-context';
 import { membersContext } from './members-context';
 import { nowContext, nowHead, type NowData } from './now-context';
-import { homeContext, homeHead, servicesLine, type HomeData } from './home-context';
+import { homeContext } from './home-context';
+import { homeData } from './home-parts';
 import { requestContext } from './request-context';
 import { revenueContext, revenueHead, type RevenueData } from './revenue-context';
 import { requestsContext } from './requests-context';
@@ -50,17 +51,33 @@ const updatedAt = () => DEMO_UPDATED_AT.toISOString();
  */
 const readHistory = () => attempt(async () => (await readDays('all')).series);
 
+/** Every row of a collection, or null when it could not be read. */
+const rowsOf = <T>(name: string) => attempt(async () => (await readAll(name)).rows as T[]);
+
 export const homeTool = defineViewTool({
   name: 'home',
   title: 'Home',
-  description: 'How the API is doing over a period: requests, error rate, latency and revenue with their change, the days that stand out, and what explains them; and Main\'s summary of the whole product: customers, services and incidents, tickets, failing verifications and releases.',
+  description: 'The company over a period: revenue, customers, tokens served, requests, the days inside the band and compute in use, each with its change; the year at a period a window and the facts it holds; what we sell by model; the Business and Engineering workspaces at a glance; and what is worth knowing across the company.',
   needs: FEATURES.home.needs,
   input: z.object({ period, day }),
   resourceUri: `ui://${slug}/home`,
   async read({ period: p = '30d', day: d }) {
     await requireNeed(FEATURES.home.needs);
-    const [{ series, totals, running, observedAt }, endpoints, mix, activity, { all: incidents }, summary, history, services] = await Promise.all([readDays(p), readEndpoints(), readResponses(), readActivity(), readIncidents(), readMainSummary(), readHistory(), attempt(readServices)]);
-    const data: HomeData = { period: p, series, totals, running, endpoints, mix, activity, incidents, summary, head: homeHead({ period: p, totals, history, services }), unwell: servicesLine(services), updatedAt: updatedAt(), now: observedAt, day: d ?? null };
+    // What compute cost is read only by a person who may read it, asked as `read()` and the assistant's query ask it,
+    // once: for anyone else it is not read at all, and the data carries nothing in its place.
+    const mayCost = await can(await resolveAccess(), 'costs', 'read');
+    // Each read apart from the others: one that fails leaves its part saying so and the rest standing.
+    const [days, history, customers, usage, models, compute, costs, services, incidents, releases, tickets, endpoints, mix, activity, summary] = await Promise.all([
+      attempt(() => readDays(p)), readHistory(), rowsOf<CustomerRecord>('customers'), rowsOf<UsageRow>('usage'), rowsOf<Model>('models'), rowsOf<ComputeRow>('compute'),
+      mayCost ? rowsOf<CostRow>('costs') : undefined,
+      attempt(readServices), attempt(async () => (await readIncidents()).all), attempt(async () => (await readReleases()).rows), rowsOf<Ticket>('tickets'),
+      // What today's body draws, until the page draws its parts.
+      attempt(readEndpoints), attempt(readResponses), attempt(readActivity), readMainSummary(),
+    ]);
+    const data = homeData({
+      period: p, day: d ?? null, days, history, customers, usage, models, compute, ...(mayCost ? { costs } : {}), services, incidents, releases, tickets,
+      endpoints: endpoints ?? [], mix: mix ?? [], activity: activity ?? [], summary, updatedAt: updatedAt(), now: days?.observedAt ?? clock().toISOString(),
+    });
     const index = d ? data.series.findIndex((x) => x.date === d) : -1;
     return { context: homeContext(data, index >= 0 ? index : null), data };
   },

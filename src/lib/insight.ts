@@ -51,30 +51,10 @@ export function runs(indices: number[]): number[][] {
 /** Day of the week for a YYYY-MM-DD date, 0 for Sunday, read in UTC so the date string is the day it names. */
 export const weekday = (date: string) => new Date(`${date}T12:00:00Z`).getUTCDay();
 
-/**
- * The weekly shape of a daily series: the median of weekends against the median of weekdays. `null` when the series is
- * shorter than two weeks, too short to tell a week from noise.
- */
-export function weekendRatio(values: number[], dates: string[]): number | null {
-  if (values.length < 14) return null;
-  const end = values.filter((_, i) => [0, 6].includes(weekday(dates[i])));
-  const work = values.filter((_, i) => ![0, 6].includes(weekday(dates[i])));
-  const a = median(end), b = median(work);
-  return a > 0 && b > 0 ? a / b : null;
-}
-
 /** The steady state of day `index` in a series that follows the week: the median of the other days on the same weekday. */
 export function sameWeekdayBaseline(values: number[], dates: string[], index: number): number {
   const day = weekday(dates[index]);
   return median(values.filter((_, i) => i !== index && weekday(dates[i]) === day));
-}
-
-/** The part that contributes most to a total, and its share of it. `null` for an empty or zero total. */
-export function largest<T>(items: T[], value: (t: T) => number): { item: T; share: number } | null {
-  const total = items.reduce((s, t) => s + value(t), 0);
-  if (!items.length || !(total > 0)) return null;
-  const item = items.reduce((m, t) => (value(t) > value(m) ? t : m));
-  return { item, share: value(item) / total };
 }
 
 /** Fewer than this many observations make a percentage or a percentile a guess, and the context says so. */

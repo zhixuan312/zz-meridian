@@ -9,7 +9,7 @@
  * of it. What a rule needs of the product (the history a record asks for, the thresholds of a first, the band of a steady day) is an argument:
  * the readers pass `facts` from `src/app.config.ts`.
  */
-import { ordinal, plural } from '@/lib/format';
+import { formatPercent, ordinal, plural } from '@/lib/format';
 import { formatDate } from '@/lib/format-date';
 
 type FactKind = 'record' | 'first' | 'run' | 'steady' | 'all' | 'total';
@@ -38,15 +38,19 @@ export function periods(values: readonly number[], length: number): number[] {
  * oldest first. A period may be called a record only when it and the periods before it number at least `needs`: with
  * less history the highest yet says little. `run` counts the periods in a row, ending with the latest, that were each a
  * record; a period that only equals the highest is not one.
+ *
+ * `day` is the date the latest value is about, when the caller has one: the fact carries it and its line names it, "on"
+ * the day, or "in the week to" it when `week` says the value is a week's.
  */
-export function record(values: readonly number[], { needs, what, format }: { needs: number; what: string; format: (n: number) => string }): (Fact & { run: number }) | null {
+export function record(values: readonly number[], { needs, what, format, day, week }: { needs: number; what: string; format: (n: number) => string; day?: string; week?: boolean }): (Fact & { run: number }) | null {
   let highest = -Infinity, run = 0;
   values.forEach((value, i) => {
     run = i + 1 >= needs && value > highest ? run + 1 : 0;
     highest = Math.max(highest, value);
   });
   if (!run) return null;
-  return { kind: 'record', run, text: `The highest ${what} yet: ${format(values[values.length - 1])}${run > 1 ? `, the ${ordinal(run)} record in a row` : ''}` };
+  const on = day ? `, ${week ? 'in the week to' : 'on'} ${formatDate(day)}` : '';
+  return { kind: 'record', run, ...(day ? { day } : {}), text: `The highest ${what} yet: ${format(values[values.length - 1])}${run > 1 ? `, the ${ordinal(run)} record in a row` : ''}${on}` };
 }
 
 /**
@@ -82,12 +86,18 @@ export function all<T>(sets: readonly { label: string; members: readonly T[] }[]
 
 /**
  * The rule of a total: the sum of everything recorded, with its first day and its latest. `days` is one figure a day,
- * oldest first. `format` writes the sum; hand it one that keeps every digit wherever the page has room for them.
+ * oldest first. `format` writes the sum; hand it one that keeps every digit wherever the page has room for them. The
+ * fact is about its latest day.
+ *
+ * `share` is a part of each day's figure, in the same order, when the caller wants the part's share of the sum beside
+ * it: "99.57% of them without an error". It is left out when the sum is zero, which has no share.
  */
-export function total(days: readonly DayValue[], { what, format }: { what: string; format: (n: number) => string }): (Fact & { sum: number }) | null {
+export function total(days: readonly DayValue[], { what, format, share }: { what: string; format: (n: number) => string; share?: { part: readonly number[]; what: string } }): (Fact & { sum: number; share?: number }) | null {
   if (!days.length) return null;
   const sum = days.reduce((s, d) => s + d.value, 0);
-  return { kind: 'total', sum, text: `${format(sum)} ${what} in ${days.length} ${plural(days.length, 'day')}, from ${formatDate(days[0].date)} to ${formatDate(days[days.length - 1].date)}` };
+  const part = share && sum ? share.part.reduce((s, v) => s + v, 0) / sum : null;
+  const text = `${format(sum)} ${what} in ${days.length} ${plural(days.length, 'day')}, from ${formatDate(days[0].date)} to ${formatDate(days[days.length - 1].date)}`;
+  return { kind: 'total', sum, day: days[days.length - 1].date, ...(part !== null ? { share: part } : {}), text: part !== null ? `${text}, ${formatPercent(part, 2)} ${share!.what}` : text };
 }
 
 /**

@@ -78,21 +78,23 @@ export function fitFigure(text: string, value: number): string {
   return pre ? formatCostCompact(value) : `${formatCompact(value)}${unit ? (/\s[%a-zA-Z]+$/.test(text) ? ' ' : '') + unit : ''}`;
 }
 
-/** 1.2M, 846K, 912: a count at a glance. The exact number belongs in the tooltip and the table. */
+/** The steps of a count at a glance from a million up, largest first. */
+const STEPS = [{ size: 1_000_000_000_000, unit: 'T' }, { size: 1_000_000_000, unit: 'B' }, { size: 1_000_000, unit: 'M' }] as const;
+
+/** 2.2T, 1.2M, 846K, 912: a count at a glance. The exact number belongs in the tooltip and the table. */
 export function formatCompact(n: number | null): string {
   if (n === null) return '—';
   // Every branch turns on the MAGNITUDE, so a negative reads like the positive it mirrors — "-1.5M", which is what an
   // axis already renders through `formatAxisCount`. Branching on the signed value dropped a negative all the way to
   // "-1,500,000", which is not a count at a glance.
   const abs = Math.abs(n);
-  if (abs >= 1_000_000_000) return `${(n / 1_000_000_000).toFixed(1)}B`;
-  if (abs >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
-  if (abs >= 1_000) {
-    // Rounding to whole thousands can reach 1000K (999_999 does); that reads as 1.0M.
-    const thousands = Math.round(n / 1_000);
-    return Math.abs(thousands) >= 1_000 ? `${(n / 1_000_000).toFixed(1)}M` : `${thousands}K`;
-  }
-  return INT.format(n);
+  if (abs < 1_000) return INT.format(n);
+  const thousands = Math.round(n / 1_000);
+  if (Math.abs(thousands) < 1_000) return `${thousands}K`;
+  // The largest step the count reaches once rounded to one decimal: 999,999 rounds to 1000K and reads 1.0M, and
+  // 999,960,000,000 would read 1000.0B, so it reads 1.0T.
+  const step = STEPS.find((s) => Math.round((abs / s.size) * 10) >= 10) ?? STEPS[STEPS.length - 1];
+  return `${(n / step.size).toFixed(1)}${step.unit}`;
 }
 
 export function formatDuration(ms: number | null): string {

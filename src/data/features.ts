@@ -29,7 +29,7 @@ const CUSTOMERS_NEED: Need = 'customers:read';
 
 /** Each feature: its name as a person reads it, and the need a person must satisfy to reach it. */
 export const FEATURES: Record<FeatureId, { title: string; needs: Need }> = {
-  home: { title: 'Home', needs: { allOf: ['days:read', 'endpoints:read', 'responses:read', 'activity:read', 'incidents:read', 'customers:read', 'services:read', 'tickets:read', 'tests:read', 'releases:read'] } },
+  home: { title: 'Home', needs: { allOf: ['days:read', 'usage:read', 'models:read', 'compute:read', 'endpoints:read', 'responses:read', 'activity:read', 'incidents:read', 'customers:read', 'services:read', 'tickets:read', 'tests:read', 'releases:read'] } },
   requests: { title: 'Requests', needs: 'requests:read' },
   request: { title: 'Request', needs: { allOf: ['requests:read', 'endpoints:read'] } },
   usage: { title: 'Usage', needs: { allOf: ['days:read', 'endpoints:read', 'activity:read', 'incidents:read', 'hours:read', 'regions:read'] } },

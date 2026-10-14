@@ -22,9 +22,6 @@ type SearchParams = Promise<{ period?: string; day?: string }>;
 /** The page's one read, through the Home tool (`src/views/tools.ts`), shared by the export and the body. */
 const readPeriod = cache((period: ReturnType<typeof parsePeriod>, day?: string) => homeTool.read({ period, day: /^\d{4}-\d{2}-\d{2}$/.test(day ?? '') ? day : undefined }));
 
-/** What the Home answers, said under its title while every service is operational. */
-const LEAD = 'Traffic, reliability and revenue across every endpoint, for the period you choose.';
-
 /** The page asks its feature before it renders — the rail hiding `/` is presentation, not this gate — then the masthead renders and the title, the period select, the export and the body read the address inside their own boundaries. Next always passes the address; the default keeps the component callable with none, which a check that renders it bare relies on. */
 export default async function HomePage({ searchParams }: { searchParams: SearchParams } = { searchParams: Promise.resolve({}) }) {
   const denied = await gate('home');
@@ -35,7 +32,7 @@ export default async function HomePage({ searchParams }: { searchParams: SearchP
       name="Home"
       title={<Title searchParams={searchParams} />}
       description={
-        <Suspense fallback={<>{LEAD} {workspaces.main.audience}</>}>
+        <Suspense fallback={workspaces.main.audience}>
           <Lead searchParams={searchParams} />
         </Suspense>
       }
@@ -59,11 +56,11 @@ async function Title({ searchParams }: { searchParams: SearchParams }) {
   return (await readPeriod(parsePeriod(period), day)).data.head.title;
 }
 
-/** The one sentence under the title: which services are not operational when any is, since a record's title has no clause for them; otherwise what the page answers. Then who Main is for. */
+/** The line under the title, worked out by the read: the customers, the period's requests and their change, gross margin for a person who may read it, and the services, each one that is not operational named. Then who Main is for. */
 async function Lead({ searchParams }: { searchParams: SearchParams }) {
   const { period, day } = await searchParams;
   const { data } = await readPeriod(parsePeriod(period), day);
-  return <>{data.unwell ?? LEAD} {workspaces.main.audience}</>;
+  return <>{data.line ? `${data.line} ` : ''}{workspaces.main.audience}</>;
 }
 
 async function Actions({ searchParams }: { searchParams: SearchParams }) {

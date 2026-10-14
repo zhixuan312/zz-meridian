@@ -85,6 +85,8 @@ export const facts = {
   firsts: { requestsADay: [10_000_000, 25_000_000, 50_000_000] },
   /** Periods of history a record needs before it may be called one. */
   recordNeedsPeriods: 6,
+  /** A customer paying this share of the revenue of the last 30 complete days is worth knowing across the company. */
+  concentrationAt: 0.1,
 } as const;
 
 const toSlug = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
