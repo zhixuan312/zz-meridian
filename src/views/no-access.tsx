@@ -4,7 +4,7 @@ import { PageFrame } from '@/components/base/shell';
 import { EmptyState } from '@/components/ui/empty-state';
 import { Button } from '@/components/ui/button';
 import { chromeAccess } from '@/data/access';
-import { ACTIONS, FEATURES, type ActionId, type FeatureId } from '@/data/features';
+import { FEATURES, type FeatureId } from '@/data/features';
 import { whoCan } from '@/data/roles';
 import type { Need } from '@/lib/collection';
 import { navOf } from '@/views/workspaces';
@@ -35,15 +35,6 @@ export function noAccessCopy(need: Need, title: string): { title: string; descri
     title: `You don't have access to ${title}`,
     description: roles.length === 0 ? `Access needs a main role together with an add-on. ${ask}` : `${list(roles)} can open it. ${ask}`,
   };
-}
-
-/**
- * What a page shows when it withholds an action: the one sentence saying who can run it, frozen on the action's own
- * entry in the table, so the control and its explanation never drift. A page asks for it by the action's id and renders
- * it once; `NoAccess` covers the whole feature, this covers one control on a page the person may otherwise open.
- */
-export function actionLine(id: ActionId): string {
-  return ACTIONS[id].line ?? '';
 }
 
 /**

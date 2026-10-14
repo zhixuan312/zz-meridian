@@ -15,13 +15,15 @@ describe('the settings page by need', () => {
     // placeholder; tests/assistant-settings.test.tsx is what settles that section, and this check leaves it alone.
     for (const s of ['Workspace', 'Appearance', 'Agents and MCP']) expect(html, s).toContain(s);
     for (const s of ['Notifications', 'Danger zone']) expect(html, s).not.toContain(s);
+    expect(html).not.toContain('Read-only');
     expect(html).not.toContain('Only an Owner can change the workspace.');
   });
 
-  it('shows the workspace read-only, with the line', () => {
+  it('shows the workspace read-only, saying so and naming nobody who could change it', () => {
     const html = settings(READ);
     expect(html).toContain('Workspace');
-    expect(html).toContain('Only an Owner can change the workspace.');
+    expect(html).toContain('Read-only');
+    expect(html).not.toMatch(/\bOnly an? \b|\bAsk an? (Owner|Admin)\b|\b(Owners|Admins)\b/);
     expect(html).not.toContain('Save changes');
   });
 

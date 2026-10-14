@@ -10,11 +10,10 @@ Status: beta
 |---|---|---|---|
 | Masthead | PageFrame: kicker, "Tickets", one sentence, New ticket (primary, only for someone who may create) | One band | Stacked |
 | 1 | Three metric tiles: Open tickets, Waiting tickets, Closed tickets, each counting every ticket whatever the filters show | Three across | Stacked |
-| 2 | One caption line saying who can create and change tickets, only when the page withholds either | Full width | Full width |
-| 3 | Data table with its Filter bar (search, State, Priority): Ticket with its service, Priority, State, Assigned to and Opened (once the table is wider than 896px), Last changed, and a row menu named "Change state of" and the title | Columns | Cards: title and state, priority, assignee and "Changed …" |
+| 2 | Data table with its Filter bar (search, State, Priority): Ticket with its service, Priority, State, Assigned to and Opened (once the table is wider than 896px), Last changed, and a row menu named "Change state of" and the title | Columns | Cards: title and state, priority, assignee and "Changed …" |
 | Dialog | New ticket: Title (required), Service, Priority, Assignee, Summary (optional); Cancel and Create ticket | Centred | Bottom sheet |
 
-The body (rows 1 to 3, under the masthead) is the records template, `Records` from `src/components/templates/records`, with three tiles over the table. The masthead is drawn by the client view, because its button shares state with the dialog.
+The body (rows 1 and 2, under the masthead) is the records template, `Records` from `src/components/templates/records`, with three tiles over the table. The masthead is drawn by the client view, because its button shares state with the dialog.
 
 ## States
 
@@ -30,7 +29,7 @@ The body (rows 1 to 3, under the masthead) is the records template, `Records` fr
 | Created | The dialog closes, a toast "Ticket created", and the new ticket and the three tiles show on the refreshed page |
 | Moved | A toast "Moved to waiting" (or open, or closed); the row and the tiles update |
 | Step refused | A critical toast with the server's sentence; nothing changed |
-| Read-only | A Viewer sees every ticket and a line saying who can create and change them; no New ticket and no row menu |
+| Read-only | A Viewer sees every ticket; no New ticket and no row menu, and nothing on the page says who can create or change one |
 | Failed read | The route's error screen; nothing is shown that was not read |
 
 ## Data

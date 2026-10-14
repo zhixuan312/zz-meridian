@@ -25,7 +25,8 @@ describe('the member boundary', () => {
     expect([member.changeRole, member.suspend, member.remove]).toEqual([true, true, true]);
     const owner = await memberAccess('members_1');
     expect([owner.changeRole, owner.suspend, owner.remove]).toEqual([false, false, false]);
-    expect(owner.reason).toBe('Only an Owner can change or remove an Owner.');
+    // An Owner's row gives an Admin no reason: the page draws nothing there, and a forced change is refused below.
+    expect(owner.reason).toBeUndefined();
     const self = await memberAccess('members_2');
     expect([self.changeRole, self.suspend, self.remove]).toEqual([false, false, false]);
     // The row reason is the first firing rule in the frozen order, and the assignment rule precedes the suspension one.

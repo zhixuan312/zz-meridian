@@ -2,7 +2,6 @@ import { gate, may } from '@/data/access';
 import { ACTIONS } from '@/data/features';
 import { read } from '@/data/read';
 import { KeysView } from '@/views/keys';
-import { actionLine } from '@/views/no-access';
 import type { ApiKey } from '@/data/sample';
 import { createKey, revokeKey } from './actions';
 
@@ -14,8 +13,9 @@ export const metadata = { title: 'API keys' };
  * person too, but hiding is presentation only — this check is the gate, and it runs before the read either way.
  *
  * After the gate it asks the action table what this person may do here, so the view draws Create key and Revoke only
- * where they may be used. A Member opens this page (they may read keys) but may not create or revoke one, and the line
- * says who can. The authority is a snapshot: a control shown here is still refused by the server action if it changed.
+ * where they may be used. A Member opens this page (they may read keys) but may not create or revoke one, and sees
+ * neither control and nothing that says why. The authority is a snapshot: a control shown here is still refused by the
+ * server action if it changed.
  */
 export default async function KeysPage() {
   const denied = await gate('keys');
@@ -28,7 +28,6 @@ export default async function KeysPage() {
       rows={rows as ApiKey[]}
       now={observedAt}
       may={{ create: mayCreate, revoke: mayRevoke }}
-      line={mayCreate ? undefined : actionLine('create-key')}
       createKey={createKey}
       revokeKey={revokeKey}
     />

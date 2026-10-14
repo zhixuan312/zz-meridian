@@ -26,7 +26,8 @@ The body (rows 1 to 3, under the masthead and beside the sheet and dialog) is th
 | Name missing | The Name field's error: "Name the key after what uses it" |
 | Not created | A critical Banner at the top of the open sheet, "Key not created", with the server's reason; the sheet keeps what was typed |
 | Revoked | The row leaves; a toast "Key revoked" |
-| No keys | The first-run empty state with Create key |
+| No keys | The first-run empty state with Create key, for someone who may create |
+| Read-only | A Member reads every key; Create key and Revoke are not drawn, and nothing on the page says who can use them |
 | Never used | "Never" in `ink-3` |
 
 ## Data

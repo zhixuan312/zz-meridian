@@ -24,8 +24,8 @@ it('describes every role from the table, not from a sentence', () => {
   }
 });
 
-it('counts who can change the workspace from the grants', () => {
-  const may = whoCan('members:update');
+it('counts who can change the workspace from the grant that decides it', () => {
+  const may = whoCan('workspace:update');
   const active = MEMBERS.filter((m) => m.status === 'Active');
   const allowed = active.filter((m) => may.includes(m.role));
   const insight = ctx.insights.find((i) => i.text.includes('can change the workspace'))!;

@@ -32,9 +32,9 @@ type Draft = { name: string; env: 'live' | 'test'; scopes: Scope[] };
 
 /** The server actions arrive as props: the page owns them, the view only calls them and refreshes the route. */
 /** `now` is the read's observation time, so "last used" is never fresher than the data. */
-/** `may` is what the page asked of the action table, so a control the person may not use is not drawn at all; `line` is */
-/** who can, rendered once when a control is withheld. Defaults allow both, for a view mounted on its own. */
-export function KeysView({ rows, now, createKey, revokeKey, may = { create: true, revoke: true }, line }: { rows: ApiKey[]; now: string; createKey: (draft: Draft) => Promise<ApiKey & { secret: string }>; revokeKey: (id: string) => Promise<void>; may?: { create: boolean; revoke: boolean }; line?: string }) {
+/** `may` is what the page asked of the action table, so a control the person may not use is not drawn at all, and */
+/** nothing says why. Defaults allow both, for a view mounted on its own. */
+export function KeysView({ rows, now, createKey, revokeKey, may = { create: true, revoke: true } }: { rows: ApiKey[]; now: string; createKey: (draft: Draft) => Promise<ApiKey & { secret: string }>; revokeKey: (id: string) => Promise<void>; may?: { create: boolean; revoke: boolean } }) {
   useShareView(keysContext(rows, now, SCOPES));
   const router = useRouter();
   useLive(['keys']);
@@ -128,8 +128,6 @@ export function KeysView({ rows, now, createKey, revokeKey, may = { create: true
       actions={may.create ? <Button variant="primary" icon={<Plus />} onClick={() => { setCreateError(null); setCreating(true); }}>Create key</Button> : undefined}
     >
       <Records>
-        {/* One line for the whole page, not one per control: who can create and revoke, when the page withholds either. */}
-        {line && (!may.create || !may.revoke) ? <p className="t-caption max-w-[72ch]">{line}</p> : null}
         {fresh ? (
           <Banner tone="accent" icon={<KeyRound />} title={`Copy ${fresh.name} now`} onDismiss={() => setFresh(null)}
             action={<CopyField value={fresh.secret} label="New key" className="w-[min(26rem,70vw)]" />}>

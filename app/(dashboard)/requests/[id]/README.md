@@ -20,7 +20,8 @@ Status: beta
 | Success | Status `neutral`; the route's own phase (Model, Search, Storage or Parse) in the accent; no primary action |
 | Rate limited, rejected, not found | Status `warning`; the trace ends at the limit, the validation or the lookup phase, in `critical`; tokens and cost read "None, refused"; the response is a short error body |
 | No request body (GET, DELETE) | The Request body card says "No body: a GET carries everything it needs in its address." in a dashed frame; Copy as cURL sends no `-d` |
-| Failed | Status `critical`; the route's own phase and the error phase in `critical`; Replay is the primary |
+| Failed | Status `critical`; the route's own phase and the error phase in `critical`; Replay is the primary for someone who may replay |
+| Failed, for a Viewer | The same, with no Replay and nothing in its place: the page does not say who can replay |
 | Replayed | A toast "Replayed: 200 OK" (or 201) naming the new request, with Open; the new request leads the list and its page shows "Replay of" linking back |
 | Replay refused | A critical toast "Not replayed" with the reason; nothing is written |
 | Unknown ID | The page renders the console's Not found screen itself (`MissingPage`, see `app/not-found/README.md`), with `noindex`, rather than throwing `notFound()`, so the screen is in the first HTML |

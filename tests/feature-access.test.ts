@@ -8,11 +8,13 @@ vi.mock('next/headers', () => ({
 }));
 vi.mock('next/cache', () => ({ cacheTag: () => {}, cacheLife: () => {}, updateTag: () => {}, revalidateTag: () => {}, revalidatePath: () => {}, refresh: () => {} }));
 
-import { ACTIONS, FEATURES, type ActionId, type FeatureId } from '@/data/features';
+import { ACTIONS, FEATURES, type FeatureId } from '@/data/features';
 import { nav } from '@/app.config';
 import { chromeAccess, may } from '@/data/access';
 import fs from 'node:fs';
 import path from 'node:path';
+
+type ActionId = keyof typeof ACTIONS;
 
 const items = nav.flatMap((g) => g.items);
 const hrefsOf = (only: string[]) => items.filter((i) => only.includes(i.href)).map((i) => i.href).sort();

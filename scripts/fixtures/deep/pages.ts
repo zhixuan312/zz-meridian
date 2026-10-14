@@ -235,13 +235,29 @@ export const CLEAN = `<!doctype html>
 
 // ---- navigation pages for scripts/navigate.ts, on the readiness fixtures' skeleton ----
 
-/** The rail routes, in rail order. */
+/** The rail routes of the Main workspace, in rail order. */
 export const NAV: [string, string][] = [['/nav-home', 'Home'], ['/nav-root-target', 'Root target'], ['/nav-missing-target', 'Missing target'], ['/nav-multi', 'Several matches'], ['/nav-root-hydrated', 'Hydrated root']];
-const links = NAV.map(([href, label]) => `<li><a href="${href}">${label}</a></li>`).join('');
+const linksOf = (rail: [string, string][]) => rail.map(([href, label]) => `<li><a href="${href}">${label}</a></li>`).join('');
 const TABLE = '<table><thead><tr><th>Name</th></tr></thead><tbody><tr><td>Rows</td></tr></tbody></table>';
 
-/** The readiness skeleton: a rail from 1024px up and a drawer under it, with controls sized for a phone. */
-const nav = (title: string, main: string, script = ''): string => `<!doctype html>
+/**
+ * The workspace menu every navigation page carries, as the console's Rail draws it while there is more than one workspace:
+ * a trigger named "<product>, <workspace>: workspace menu" and one `menuitemradio` a workspace, which opens its home with
+ * no link, so nothing prefetches it. It offers Main, whose home is /nav-home, and Solo, a workspace of one destination
+ * (/nav-solo) that no other page's rail links to. /nav-solo-unoffered is a home the menu never offers.
+ */
+const WORKSPACES: [string, string][] = [['Main', '/nav-home'], ['Solo', '/nav-solo']];
+const menu = (current: string) => `<button type="button" data-menu aria-haspopup="menu" aria-expanded="false" aria-label="Fixture, ${current}: workspace menu">${current}</button>
+<div role="menu" hidden>${WORKSPACES.map(([name, home]) => `<div role="menuitemradio" tabindex="-1" aria-checked="${name === current}" data-home="${home}">${name}</div>`).join('')}</div>`;
+const MENU_WIRE = `
+  for (const b of document.querySelectorAll('button[data-menu]')) b.addEventListener('click', () => { const m = b.nextElementSibling; m.hidden = !m.hidden; b.setAttribute('aria-expanded', String(!m.hidden)); });
+  for (const item of document.querySelectorAll('[role="menuitemradio"]')) item.addEventListener('click', () => { location.assign(item.dataset.home); });`;
+
+/**
+ * The readiness skeleton: a rail from 1024px up and a drawer under it, each with the workspace menu above the rail's links,
+ * and controls sized for a phone. A page is in Main, with Main's rail, unless it names its own workspace and rail.
+ */
+const nav = (title: string, main: string, script = '', { workspace = 'Main', rail = NAV }: { workspace?: string; rail?: [string, string][] } = {}): string => `<!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>${title}</title>
 <style>
   html, body { background: #ffffff; color: #1a1a1a; }
@@ -250,21 +266,23 @@ const nav = (title: string, main: string, script = ''): string => `<!doctype htm
   main { flex: 1; padding: 16px; }
   [role="dialog"] { position: fixed; inset: 0 auto 0 0; width: 240px; padding: 16px; background: #ffffff; }
   [role="dialog"][hidden] { display: none; }
+  [role="menu"][hidden] { display: none; }
+  [role="menuitemradio"] { min-height: 44px; line-height: 44px; cursor: default; }
   button { min-width: 44px; min-height: 44px; }
   nav a { display: inline-block; min-height: 44px; line-height: 44px; }
   @media (max-width: 1023px) { aside { display: none; } }
   @media (min-width: 1024px) { #open { display: none; } }
 </style></head>
 <body>
-<aside aria-label="Primary"><nav aria-label="Main"><ul>${links}</ul></nav></aside>
-<div role="dialog" aria-label="Navigation" hidden><nav aria-label="Main"><ul>${links}</ul></nav></div>
+<aside aria-label="Primary">${menu(workspace)}<nav aria-label="Main"><ul>${linksOf(rail)}</ul></nav></aside>
+<div role="dialog" aria-label="Navigation" hidden>${menu(workspace)}<nav aria-label="Main"><ul>${linksOf(rail)}</ul></nav></div>
 <main>
   <button id="open" aria-label="Open navigation">Menu</button>
   <h1>${title}</h1>
   ${main}
 </main>
 <script>
-  document.getElementById('open').addEventListener('click', () => { document.querySelector('[role="dialog"]').hidden = false; });
+  document.getElementById('open').addEventListener('click', () => { document.querySelector('[role="dialog"]').hidden = false; });${MENU_WIRE}
   ${script}
 </script>
 </body></html>`;
@@ -286,4 +304,8 @@ export const NAV_PAGES: Record<string, string> = {
   // open root React never renders into, so readiness is its host's.
   '/nav-root-hydrated': nav('Hydrated root', `<x-toggle></x-toggle>${TABLE}`, `${ROOT_TOGGLE}\n  self.__next_f = [];\n  for (const el of document.querySelectorAll('*')) el.__reactProps$fixture = {};`),
   '/nav-multi': nav('Several matches', `<button class="pick" aria-pressed="false" hidden>Hidden</button><button class="pick" aria-pressed="false">Toggle</button>${TABLE}`, PICK),
+  // The only destination of its workspace: no other page's rail links to it, and the workspace menu's Solo item opens it.
+  '/nav-solo': nav('Solo', `${TOGGLE}${TABLE}`, WIRE, { workspace: 'Solo', rail: [['/nav-solo', 'Solo']] }),
+  // The same, in a workspace the menu does not offer: no item opens it.
+  '/nav-solo-unoffered': nav('Unoffered', `${TOGGLE}${TABLE}`, WIRE, { workspace: 'Unoffered', rail: [['/nav-solo-unoffered', 'Unoffered']] }),
 };

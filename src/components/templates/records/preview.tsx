@@ -65,11 +65,8 @@ export default function RecordsPreview() {
           {table()}
         </Records>
       </Specimen>
-      <Specimen label="Read-only" note="A reader who may not write: one line says who can, and nothing on the page offers to create." stack>
-        <Records>
-          <p className="t-caption max-w-[72ch]">Only admins can change requests here; you can read them.</p>
-          {table()}
-        </Records>
+      <Specimen label="Read-only" note="A reader who may not write: the records, and nothing that offers to create. Nothing says who could." stack>
+        <Records>{table()}</Records>
       </Specimen>
     </>
   );

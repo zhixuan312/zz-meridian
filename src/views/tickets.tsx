@@ -47,15 +47,14 @@ const blank = (services: string[]): Draft => ({ title: '', service: services[0] 
 
 /**
  * `now` is the read's observation time, so an age is never fresher than the data. `may` is what the page asked of the
- * action table, so a control the person may not use is not drawn at all (both true when it is left out, for a view mounted
- * on its own); `line` says who can, once, when either is withheld. `services` and `assignees` are what the form offers.
+ * action table, so a control the person may not use is not drawn at all and nothing says why (both true when it is left
+ * out, for a view mounted on its own). `services` and `assignees` are what the form offers.
  * The two functions are the page's server actions: the view calls them, shows a refusal and refreshes the route.
  */
-export function TicketsView({ rows, now, may = { create: true, update: true }, line, services, assignees, createTicket, updateTicket }: {
+export function TicketsView({ rows, now, may = { create: true, update: true }, services, assignees, createTicket, updateTicket }: {
   rows: TicketRow[];
   now: string;
   may?: { create: boolean; update: boolean };
-  line?: string;
   services: string[];
   assignees: { id: string; name: string }[];
   createTicket: (draft: Draft) => Promise<TicketResult>;
@@ -178,8 +177,6 @@ export function TicketsView({ rows, now, may = { create: true, update: true }, l
           </>
         }
       >
-        {/* One line for the whole page, not one per control: who can create and change tickets, when either is withheld. */}
-        {line && (!may.create || !may.update) ? <p className="t-caption max-w-[72ch]">{line}</p> : null}
         {/* A row's menu button carries no tooltip, but the view brings its provider so it also stands alone, as in a test. */}
         <Tooltip.Provider delayDuration={300} skipDelayDuration={120}>
           <DataTable

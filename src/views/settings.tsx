@@ -62,8 +62,8 @@ const WORKSPACE_DEFAULTS: WorkspaceValues = { name: `${app.name} ${app.workspace
 
 /**
  * Settings, split by need: Appearance, Assistant and Agents and MCP are for everyone; the Workspace follows `may`. A
- * person who may not change the workspace sees its fields read-only with the line saying who can, and never a control
- * that would refuse: no save bar.
+ * person who may not change the workspace sees its fields read-only, marked so and naming nobody who could change them,
+ * and never a control that would refuse: no save bar.
  */
 export function SettingsBody({ may, workspace, save }: { may: SettingsMay; workspace?: WorkspaceValues | null; save?: SaveWorkspace }) {
   const [lines, setLines] = useState<Record<string, string>>({});
@@ -113,10 +113,10 @@ function Workspace({ may, record, save }: { may: SettingsMay; record: WorkspaceV
         setBase(saved);
         toast({ tone: 'positive', title: 'Workspace saved' });
       } : undefined}
-      footnote={editable ? undefined : 'Only an Owner can change the workspace.'}
+      readOnly={!editable}
     >
       <Field label="Name" error={nameError}>
-        {(p) => <Input {...p} value={v.name} readOnly={!editable} onChange={(e) => setV({ ...v, name: e.target.value })} />}
+        {(p) => <Input {...p} value={v.name} onChange={(e) => setV({ ...v, name: e.target.value })} />}
       </Field>
       <Field label="Address" hint="It is set when the workspace is created and is not changed here.">
         {(p) => <Input {...p} value={`app.${domain}/${v.slug}`} readOnly leading={<Globe className="size-4" />} className="font-mono text-xs" />}

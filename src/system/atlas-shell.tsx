@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Suspense, useEffect, useImperativeHandle, useMemo, useRef, useState, type ReactNode, type Ref } from 'react';
+import { Suspense, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { Dialog } from 'radix-ui';
 import { ArrowLeft, ArrowRight, ChevronRight, Menu, Search, X } from 'lucide-react';
 import { workspaces } from '@/app.config';
@@ -19,7 +19,8 @@ export type AtlasNav = { id: string; num?: string; title: string; line: string; 
  */
 export function AtlasShell({ nav, children }: { nav: AtlasNav; children: ReactNode }) {
   // The frame never reads the address (see `AppShell` for why): the shelf and the drawer do, each behind its own boundary.
-  const drawer = useRef<{ open: () => void }>(null);
+  // How many times the contents have been asked for; the drawer answers each one (see `Drawer`).
+  const [asked, setAsked] = useState(0);
   const shelf = <Suspense fallback={null}><Shelf nav={nav} /></Suspense>;
   return (
     <div className="min-h-dvh lg:grid lg:grid-cols-[var(--rail-width)_minmax(0,1fr)]">
@@ -32,12 +33,12 @@ export function AtlasShell({ nav, children }: { nav: AtlasNav; children: ReactNo
       </a>
       <aside className="sticky top-0 hidden h-dvh border-r border-line bg-frame backdrop-blur-xl lg:block">{shelf}</aside>
       <div className="sticky top-0 z-(--layer-sticky) flex h-14 items-center gap-3 border-b border-line bg-ground/72 px-4 backdrop-blur-xl lg:hidden">
-        <button type="button" aria-label="Open the contents" onClick={() => drawer.current?.open()} className="press hit -ml-1 grid size-9 place-items-center rounded-md text-ink-2 hover:bg-fill-hover">
+        <button type="button" aria-label="Open the contents" onClick={() => setAsked((n) => n + 1)} className="press hit -ml-1 grid size-9 place-items-center rounded-md text-ink-2 hover:bg-fill-hover">
           <Menu className="size-[18px]" strokeWidth={1.75} />
         </button>
         <Link href="/system" className="flex items-center gap-2 text-sm font-semibold"><AppMark size={20} />ZZ Meridian</Link>
       </div>
-      <Suspense fallback={null}><Drawer ref={drawer} shelf={shelf} /></Suspense>
+      <Suspense fallback={null}><Drawer asked={asked} shelf={shelf} /></Suspense>
       {/* An entry's page reads its own address (its section and id), so it too waits behind a boundary: for an address the
           build did not know, the frame is what is prerendered, and the page or its not-found follows. */}
       <div id="content" tabIndex={-1} className="min-w-0 outline-none"><Suspense fallback={null}>{children}</Suspense></div>
@@ -45,11 +46,21 @@ export function AtlasShell({ nav, children }: { nav: AtlasNav; children: ReactNo
   );
 }
 
-/** The contents as a drawer below 1024px. It remembers the page it opened on, so navigating closes it without an effect. */
-function Drawer({ shelf, ref }: { shelf: ReactNode; ref: Ref<{ open: () => void }> }) {
+/**
+ * The contents as a drawer below 1024px. It remembers the page it opened on, so navigating closes it without an effect.
+ * It waits behind its own boundary, which can arrive after the button that opens it, so the frame counts the presses
+ * and the drawer opens whenever the count it has answered is behind: a press made before it was there is answered when
+ * it arrives, and each press once (issue #32, as in the console's shell).
+ */
+function Drawer({ shelf, asked }: { shelf: ReactNode; asked: number }) {
   const path = usePathname();
   const [openOn, setOpenOn] = useState<string | null>(null);
-  useImperativeHandle(ref, () => ({ open: () => setOpenOn(path) }), [path]);
+  // From none, not from `asked`: a drawer that arrives late starts here with the presses it missed still to answer.
+  const [answered, setAnswered] = useState(0);
+  if (answered !== asked) {
+    setAnswered(asked);
+    setOpenOn(path);
+  }
   return (
     <Dialog.Root open={openOn === path} onOpenChange={(o) => setOpenOn(o ? path : null)}>
       <Dialog.Portal>

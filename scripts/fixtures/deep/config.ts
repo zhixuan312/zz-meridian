@@ -14,6 +14,10 @@ const config = {
     { path: '/nav-root-hydrated', title: 'Hydrated root', readySelector: 'main table tbody tr', probe: 'toggle', controlSelector: 'button.root-toggle', resultSelector: 'button.root-toggle' },
     // Two elements match: the first is hidden.
     { path: '/nav-multi', title: 'Several matches', readySelector: 'main table tbody tr', probe: 'toggle', controlSelector: 'button.pick', resultSelector: 'button.pick' },
+    // The only destination of its workspace, reached through the workspace menu (issue #31).
+    { path: '/nav-solo', title: 'Solo', readySelector: 'main table tbody tr', probe: 'toggle', controlSelector: 'main button#toggle', resultSelector: 'main button#toggle' },
+    // The same, in a workspace the menu does not offer.
+    { path: '/nav-solo-unoffered', title: 'Unoffered', readySelector: 'main table tbody tr', probe: 'toggle', controlSelector: 'main button#toggle', resultSelector: 'main button#toggle' },
   ],
 };
 

@@ -1,6 +1,6 @@
 'use client';
 
-import { Children, Suspense, createContext, use, useCallback, useContext, useEffect, useImperativeHandle, useLayoutEffect, useMemo, useRef, useState, type HTMLAttributes, type ReactNode, type Ref, type RefObject } from 'react';
+import { Children, Suspense, createContext, use, useCallback, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState, type HTMLAttributes, type ReactNode, type Ref, type RefObject } from 'react';
 import { Dialog } from 'radix-ui';
 import { Menu, X } from 'lucide-react';
 import { usePathname, useRouter } from 'next/navigation';
@@ -189,13 +189,22 @@ function StillOnNavigation({ main }: { main: RefObject<HTMLElement | null> }) {
 
 /**
  * The navigation drawer below 1024px. It remembers the page it opened on, so navigating closes it without an effect;
- * that is a read of the address, so the drawer is a part of its own behind its own boundary (see `AppShell`), and the
- * shell opens it through the handle.
+ * that is a read of the address, so the drawer is a part of its own behind its own boundary (see `AppShell`).
+ *
+ * That boundary can arrive after the page, and the page holds the trigger: on a phone a press could land while there was
+ * no drawer to take it, and it was dropped (issue #32). So the shell counts the presses in its own state and passes the
+ * count down, and the drawer opens whenever the count it has answered is behind it. A press made before the drawer was
+ * there is answered when it arrives, and each press is answered once.
  */
-function Drawer({ rail, ref }: { rail: ReactNode; ref: Ref<{ open: () => void }> }) {
+function Drawer({ rail, asked }: { rail: ReactNode; asked: number }) {
   const path = usePathname();
   const [openOn, setOpenOn] = useState<string | null>(null);
-  useImperativeHandle(ref, () => ({ open: () => setOpenOn(path) }), [path]);
+  // From none, not from `asked`: a drawer that arrives late starts here with the presses it missed still to answer.
+  const [answered, setAnswered] = useState(0);
+  if (answered !== asked) {
+    setAnswered(asked);
+    setOpenOn(path);
+  }
   return (
     <Dialog.Root open={openOn === path} onOpenChange={(o) => setOpenOn(o ? path : null)}>
       <Dialog.Portal>
@@ -240,7 +249,8 @@ export function AppShell({
   assistant: Promise<boolean>;
   children: ReactNode;
 }) {
-  const drawer = useRef<{ open: () => void }>(null);
+  // How many times the page has asked for the drawer; the drawer answers each one (see `Drawer`).
+  const [navAsked, setNavAsked] = useState(0);
   const guard = useLeaveGuard();
   const main = useRef<HTMLElement>(null);
   const [assistantOpen, setAssistantOpen] = useState(false);
@@ -277,7 +287,7 @@ export function AppShell({
   );
   return (
     <LeaveCtx.Provider value={guard.value}>
-    <ShellCtx.Provider value={{ openNav: () => drawer.current?.open(), tools: allTools, assistant }}>
+    <ShellCtx.Provider value={{ openNav: () => setNavAsked((n) => n + 1), tools: allTools, assistant }}>
       <div className="fixed inset-0 isolate flex overflow-hidden">
         {/* The first stop for a keyboard: past the rail and the top bar, straight to the page's masthead (PageFrame). */}
         <a
@@ -290,7 +300,7 @@ export function AppShell({
           <Suspense fallback={null}>{rail}</Suspense>
         </aside>
         <Suspense fallback={null}>
-          <Drawer ref={drawer} rail={rail} />
+          <Drawer asked={navAsked} rail={rail} />
         </Suspense>
         <main ref={main} className="relative flex min-w-0 flex-1 flex-col"><ConsoleSurface ask={ask}>{children}</ConsoleSurface></main>
         {/* After the main area, so the main area is there to mark when this first runs. */}

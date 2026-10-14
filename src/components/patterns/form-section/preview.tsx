@@ -24,8 +24,8 @@ export default function FormSectionPreview() {
           <Field label="Name">{(p) => <Input {...p} defaultValue={app.name} />}</Field>
         </FormSection>
       </Specimen>
-      <Specimen label="Read-only" note="Says who can change it, instead of disabling silently." stack>
-        <FormSection title="Billing contact" readOnly="Only an owner can change billing. Ask Maya Chen.">
+      <Specimen label="Read-only" note="The fields are disabled and the section says it is read-only, instead of disabling silently. It names nobody who could change it." stack>
+        <FormSection title="Billing contact" readOnly>
           <Field label="Email">{(p) => <Input {...p} defaultValue={`finance@${domain}`} />}</Field>
         </FormSection>
       </Specimen>

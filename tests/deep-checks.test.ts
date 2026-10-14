@@ -72,8 +72,9 @@ describe('keyboard', () => {
 });
 
 describe('navigate', () => {
-  // The readiness journey on desktop and phone, with the fixture's own mappings and rail. A note passes and prints its line.
-  casesFor('navigate', (page, base) => ['scripts/navigate.ts', '--base', base, '--config', 'scripts/fixtures/deep/config.ts', '--rail', '/nav-home,/nav-root-target,/nav-missing-target,/nav-multi,/nav-root-hydrated', '--routes', page], 180_000);
+  // The readiness journey on desktop and phone, with the fixture's own mappings, rail and workspace homes. A note passes and
+  // prints its line. The two homes of a workspace of one destination sit after /nav-home, so every other page starts where it did.
+  casesFor('navigate', (page, base) => ['scripts/navigate.ts', '--base', base, '--config', 'scripts/fixtures/deep/config.ts', '--rail', '/nav-home,/nav-solo,/nav-solo-unoffered,/nav-root-target,/nav-missing-target,/nav-multi,/nav-root-hydrated', '--homes', '/nav-home=Main,/nav-solo=Solo,/nav-solo-unoffered=Unoffered', '--routes', page], 180_000);
 });
 
 describe('vitals', () => {

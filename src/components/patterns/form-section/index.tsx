@@ -27,7 +27,7 @@ export function FormSection({
   dirty = false,
   saving = false,
   error,
-  readOnly,
+  readOnly = false,
   onSave,
   onDiscard,
   saveLabel = 'Save changes',
@@ -46,8 +46,11 @@ export function FormSection({
   saving?: boolean;
   /** Why the last save failed, and what to do. Shown above the fields. */
   error?: ReactNode;
-  /** The reader may see but not change these: say who can, instead of disabling silently. */
-  readOnly?: ReactNode;
+  /**
+   * The reader may see but not change these: the fields are disabled and the section reads "Read-only" beside a lock, so
+   * it is not disabled silently. It never says who could change them.
+   */
+  readOnly?: boolean;
   onSave?: () => void | Promise<void>;
   onDiscard?: () => void;
   saveLabel?: string;
@@ -79,7 +82,7 @@ export function FormSection({
     <>
       {error ? <Banner tone="critical" title="Not saved">{error}</Banner> : null}
       {readOnly ? (
-        <p className="flex items-center gap-2 rounded-md bg-surface-sunk px-3 py-2 text-xs text-ink-2"><Lock className="size-3.5 shrink-0 text-ink-3" />{readOnly}</p>
+        <p className="flex items-center gap-2 rounded-md bg-surface-sunk px-3 py-2 text-xs text-ink-2"><Lock className="size-3.5 shrink-0 text-ink-3" />Read-only</p>
       ) : null}
       {children}
     </>
@@ -97,7 +100,7 @@ export function FormSection({
       <div className={cn('relative rounded-lg border bg-surface shadow-card', tone === 'critical' ? 'border-critical/30' : 'border-line', flush && 'has-[>[data-flush]:first-child]:overflow-hidden')}>
         {as === 'form' ? (
           // Read-only is not unavailable: its values are what the reader came for, so they stay legible in ink-2.
-          <fieldset data-flush={flush ? '' : undefined} disabled={Boolean(readOnly) || saving} className={cn(body, readOnly && '[&_button:disabled]:text-ink-2 [&_input:disabled]:text-ink-2 [&_textarea:disabled]:text-ink-2')}>{inner}</fieldset>
+          <fieldset data-flush={flush ? '' : undefined} disabled={readOnly || saving} className={cn(body, readOnly && '[&_button:disabled]:text-ink-2 [&_input:disabled]:text-ink-2 [&_textarea:disabled]:text-ink-2')}>{inner}</fieldset>
         ) : (
           <div data-flush={flush ? '' : undefined} className={body}>{inner}</div>
         )}

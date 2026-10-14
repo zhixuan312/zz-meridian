@@ -3,7 +3,6 @@ import { ACTIONS } from '@/data/features';
 import { read } from '@/data/read';
 import { readTickets } from '@/data/tickets';
 import { TicketsView } from '@/views/tickets';
-import { actionLine } from '@/views/no-access';
 import { createTicket, updateTicket } from './actions';
 
 export const metadata = { title: 'Tickets' };
@@ -34,7 +33,6 @@ export default async function TicketsPage() {
       rows={rows}
       now={observedAt}
       may={{ create: mayCreate, update: mayUpdate }}
-      line={mayCreate && mayUpdate ? undefined : actionLine(mayCreate ? 'update-ticket' : 'create-ticket')}
       services={services.rows.map((s) => String(s.name))}
       assignees={people.map((m) => ({ id: String(m.id), name: String(m.name) }))}
       createTicket={createTicket}

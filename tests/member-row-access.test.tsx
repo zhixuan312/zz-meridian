@@ -21,7 +21,8 @@ const view = (access: never) => renderToStaticMarkup(<MembersView rows={rows as 
 
 const ALLOWED = {
   members_5: { changeRole: true, suspend: true, reactivate: false, remove: true, roles: ['Admin', 'Member', 'Viewer'], addOns: ['Key manager'] },
-  members_12: { changeRole: false, suspend: false, reactivate: false, remove: false, roles: [], addOns: [], reason: 'Only an Owner can change or remove an Owner.' },
+  // What the boundary answers for a row the caller may not change that is not their own: no control and no reason.
+  members_12: { changeRole: false, suspend: false, reactivate: false, remove: false, roles: [], addOns: [] },
 };
 
 describe('a member row shows what the person may do to it', () => {
@@ -34,9 +35,10 @@ describe('a member row shows what the person may do to it', () => {
     expect(triggers).toEqual(['aria-label="Actions for Lucas Meyer"']);
   });
 
-  it('keeps the refused row and says why, once', () => {
+  it('keeps the refused row and draws nothing in place of its controls, and no line says who can', () => {
     const html = view(ALLOWED as never);
-    expect(html.split('Only an Owner can change or remove an Owner.').length - 1).toBe(1);
+    expect(html).toContain('Grace Liu');
+    expect(html).not.toMatch(/\bOnly an? \b|\b(Owners|Admins) (and|or) (Owners|Admins)\b|\bmanage members\b/);
   });
 
   it('reads a member with an add-on by their full role', () => {

@@ -100,7 +100,8 @@ describe('the records template, state by state', () => {
     expect(readOnly).not.toBeNull();
     expect(readOnly!.querySelectorAll('tbody tr').length).toBeGreaterThan(0);
     expect(within(readOnly!).queryByRole('button', { name: /^(create|add|invite|new)\b/i })).toBeNull();
-    expect(readOnly!.querySelector('[data-template="records"]')?.textContent ?? '').toMatch(/\bcan\b/);
+    // A read-only page says nothing about who could write: no sentence names a role beside what it may do.
+    expect(readOnly!.querySelector('[data-template="records"]')?.textContent ?? '').not.toMatch(/\b(owners?|admins?|members?|viewers?)\b.*\bcan\b|\bonly an? \b|\bask an? \b/i);
   });
 });
 

@@ -27,7 +27,7 @@ Each of the seven states has one disposition: covered by a named specimen in the
 | Filtered-empty | Covered: the "Filtered-empty" specimen. |
 | Error | Covered: the "Error" specimen, the table's own error state with Retry inside the arrangement. |
 | Partial | Covered: the "Partial" specimen, a summary in which a figure that could not be worked out is the word Unavailable with a line saying why, over records that did arrive. |
-| Read-only | Covered: the "Read-only" specimen, a line saying who can write, over the table, with nothing that creates, adds or invites. |
+| Read-only | Covered: the "Read-only" specimen, the table with nothing that creates, adds or invites. A read-only page offers no control it withholds and says nothing about who holds it: no line names a role beside what it may do. |
 
 ## Surfaces
 

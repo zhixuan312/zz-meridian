@@ -24,26 +24,12 @@ import { DataTable, type Column } from '@/components/patterns/data-table';
 import { formatDate, formatRelative } from '@/lib/format-date';
 import { useLive } from '@/lib/live';
 import { RolesMatrix } from './roles-matrix';
-import { ACTIONS } from '@/data/features';
 import type { MemberRowAccess } from '@/data/member-mutations';
-import { roleLabel, whoCan, type AddOn, type MainRole } from '@/data/roles';
+import { roleLabel, type AddOn, type MainRole } from '@/data/roles';
 import { TEAMS, type Member } from '@/data/sample';
 /** Colour only where a row needs a look: an open invitation and a suspension. Active is the normal case, so it stays quiet. */
 const STATUS_TONE = { Active: 'neutral', Invited: 'accent', Suspended: 'warning' } as const;
 const options = (xs: readonly string[]) => xs.map((x) => ({ value: x, label: x }));
-/** Names as a reader meets them, in table order: "Owners", "Owners and Admins" — the idiom the NoAccess copy uses. */
-function list(names: readonly string[]): string {
-  const plural = names.map((name) => `${name}s`);
-  return plural.length < 2 ? plural.join('') : `${plural.slice(0, -1).join(', ')} and ${plural.at(-1)}`;
-}
-/**
- * Who manages the roster, read off the grant table through the action's own need — never a role name written here, so
- * editing `GRANTS` edits this sentence. A row that offers nothing because the caller lacks the grant says no more than
- * the page does: this line stands once above the table, where Task I-11 puts a withheld control's line. A product whose
- * table lets no single role invite gets no sentence, only the withheld controls.
- */
-const MANAGERS = whoCan(ACTIONS['invite-member'].needs);
-const MANAGE_LINE = MANAGERS.length ? `${list(MANAGERS)} manage members.` : null;
 /** What a change reports back: the page toasts the reason and leaves the table as it was. */
 export type Result = { ok: true } | { ok: false; error: string };
 /** The page's server actions, passed in so the view stays free of server imports. */
@@ -226,9 +212,8 @@ export function MembersView({ rows, now, actions, access, roles, workspace }: { 
       key: 'actions', header: <span className="sr-only">Actions</span>, align: 'right', mobile: 'status',
       cell: (m) => {
         const may = access[m.id];
-        // A row the caller may not touch draws no control at all: its own reason where the restriction is the target's
-        // — the first rule the boundary says fires — and nothing where the caller simply lacks the grant, which the
-        // page's own line above the table already covers.
+        // A row the caller may not touch draws no control at all: the boundary's reason where the row is the caller's own,
+        // and nothing otherwise, so no row says who could.
         if (!may || !offersWork(may)) return may?.reason ? <p className="t-caption max-w-[36ch] text-pretty">{may.reason}</p> : null;
         return (
           <Menu>
@@ -248,9 +233,6 @@ export function MembersView({ rows, now, actions, access, roles, workspace }: { 
     },
   ];
 
-  // One line for the page, not one per row: who can, when a row offers nothing because the caller lacks the grant.
-  const line = shown.some((m) => { const may = access[m.id]; return may !== undefined && !offersWork(may) && may.reason === undefined; }) ? MANAGE_LINE : null;
-
   return (
     <PageFrame
       kicker={<>{app.name} · {app.workspace}</>}
@@ -259,8 +241,6 @@ export function MembersView({ rows, now, actions, access, roles, workspace }: { 
       actions={mayInvite ? <Button variant="primary" icon={<UserPlus />} onClick={() => { setInviteError(null); setInviting(true); }}>Invite member</Button> : undefined}
     >
       <Records>
-        {/* One line for the whole page, not one per row: who can manage the roster, when a row withholds its actions. */}
-        {line ? <p className="t-caption max-w-[72ch]">{line}</p> : null}
         <DataTable
           caption="Members"
           noun="members"

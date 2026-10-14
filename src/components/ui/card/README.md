@@ -19,6 +19,7 @@ Status: beta
 | Default | Any group of content | As above |
 | Divided header | The body is a table or a list that runs edge to edge | A `line` hairline under the header; header bottom padding 14px |
 | Interactive | The whole card is one link (a customer, a service) | Hover: border `line-strong`, `shadow-raise` |
+| Wrapped header | A title that must be read whole: an objective, a record's name, the point of the card | `wrap`: the title wraps to as many lines as it needs, and carries no `title` attribute |
 
 ## Sizes
 
@@ -37,6 +38,7 @@ A card never sets its own outer margin: the row's gap places it. Cards in one ro
 | State | Spec |
 |---|---|
 | Rest | as above |
+| Title cut | a header without `wrap` keeps its title to one line and cuts it with an ellipsis where it has no room; a title that is plain text carries its whole text as the heading's `title` |
 | Hover (interactive only) | border `line-strong`, shadow `shadow-raise`, over `dur-hover` |
 | Focus (interactive only) | the link's 2px `accent` focus ring around the card |
 | Loading | the same card holding Skeletons in the shape of its content |
@@ -46,6 +48,8 @@ A card never sets its own outer margin: the row's gap places it. Cards in one ro
 ## Behaviour
 
 A card is not interactive unless it is one link; then the whole card is the target and nothing inside it is a second control.
+
+A header's title is one line unless the header takes `wrap`. Where a narrow column or the actions beside it leave it no room, it is cut with an ellipsis, and a title that is plain text carries its whole text as the heading's `title`, so a pointer reads it and the audit finds the cut held. A title built of elements gets no `title`: keep it short enough not to be cut, or pass `wrap`. Pass `wrap` whenever the title must be read whole, on a phone as much as at 1440px: a title the reader has to hover for is a label, not the point of the card.
 
 ## Surfaces
 
@@ -60,6 +64,7 @@ A card is the unit an agent is asked about: on the embed surface a card's header
 ## Accessibility
 
 - A card with a title is a region of its page: the title is an `h2` (`t-card`) so headings outline the page.
+- A cut title's whole text is its `title`, for a pointer. A screen reader reads the heading's own text, which is whole however it is drawn.
 - Contrast (light, cobalt): title `ink` on `surface` 18.1:1; description `ink-3` on `surface` 5.3:1.
 - The border and the highlight are decorative; the title and spacing carry the grouping.
 
@@ -88,4 +93,4 @@ import { Card, CardBody, CardFooter, CardHeader } from '@/components/ui/card';
 </Card>
 ```
 
-`Card`: `interactive` and div attributes. `CardHeader`: `title`, `description`, `actions`, `divided`, `wrap` (let the title wrap to as many lines as it needs, for a title that is the point of the card rather than a label in a list). `CardBody`: `flush` (no padding, and a first-child `Table` is clipped with its top border dropped). `CardFooter`: div attributes.
+`Card`: `interactive` and div attributes. `CardHeader`: `title`, `description`, `actions`, `divided`, `wrap` (let the title wrap to as many lines as it needs, for a title that is the point of the card rather than a label in a list; without it a title that is plain text is also the heading's `title`). `CardBody`: `flush` (no padding, and a first-child `Table` is clipped with its top border dropped). `CardFooter`: div attributes.

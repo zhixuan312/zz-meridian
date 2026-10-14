@@ -5,8 +5,10 @@
  *   node scripts/navigate.ts --base http://127.0.0.1:3000 [--routes /,/requests,/settings] [--mode default|full] [--samples 1]
  *
  * Each journey starts from the rail route before the destination (the one after it for the first) whose rail draws a link to
- * it, because a rail may show only the part of the navigation its page belongs to; a destination no other route's rail links to
- * is a problem, never a pass. It waits for what a visitor would wait for (the destination's router prefetch and every chunk
+ * it, because a rail may show only the part of the navigation its page belongs to. A workspace's home that no other route's
+ * rail links to (the only destination of its workspace) is reached as a person reaches it: from the nearest rail route
+ * before it, through the workspace menu's item named for its workspace (`journeyStart`). Any other destination no rail links
+ * to is a problem, never a pass. It waits for what a visitor would wait for (the destination's router prefetch and every chunk
  * it brought in, once its link is shown; the drawer on a phone), presses the destination in the rail and times three things from that press:
  * the shell (the path and the heading), the data (the mapping's `readySelector` and `readyText`, never a skeleton's rows) and the interaction (its
  * `probe` on `controlSelector`, observed on `resultSelector`). Times are the page's own clock, from the press event to the first
@@ -20,16 +22,23 @@
  * `note: <selector> matches <n> elements; the first visible one was used` is printed once, never a failure. Nothing here writes:
  * probes only open, sort, filter, toggle or follow.
  *
- * One line per route and device, one per device for the prefetch bytes, and a JSON summary on the last line:
+ * A menu item navigates without a link, so nothing prefetches the destination before its press: a journey through the menu
+ * waits for no prefetch, is timed from the item's press, and says on its line whether anything had prefetched it all the same.
+ * A menu that offers no item for the workspace is `never-ready`, naming it.
  *
- *   ok|FAIL|warn|not run <route> <device> shell <ms> · data <ms|not-configured> · interactive <ms|not-configured>[ · noisy][ · <reasons>]
+ * One line per route and device, one per device for the prefetch bytes, and a JSON summary on the last line, whose lines say
+ * `via: 'rail'` or `via: 'menu'`:
+ *
+ *   ok|FAIL|warn|not run <route> <device> shell <ms> · data <ms|not-configured> · interactive <ms|not-configured>[ · noisy][ · through the workspace menu (<workspace>) · not prefetched][ · <reasons>]
  *   navigate: {...}
  *
  * scripts/perf.ts drives the same journey 20 times per route, device and condition (warm, cold and after a live refresh).
  *
  * The exit code is non-zero on a FAIL and on a configuration error. Missing Chrome makes every line `not run`: exit 0 in
  * the default mode, non-zero in `full`. The mappings and budgets come from scripts/verify.config.ts, which `--config` can
- * replace and `--rail` can name the rail routes for (the readiness fixtures, which have no src/app.config.ts).
+ * replace and `--rail` can name the rail routes for (the readiness fixtures, which have no src/app.config.ts). Each
+ * workspace's home and name come from `workspaces` in src/app.config.ts (its `homeHref` and `label`); beside `--rail`, a
+ * fixture names them with `--homes <home>=<workspace>,...`, and with `--rail` and no `--homes` no route is a home.
  */
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
@@ -73,7 +82,8 @@ export class Fail extends Error {
   constructor(kind: Kind, message: string) { super(message); this.kind = kind; }
 }
 export type Measured = { ms: number } | { fail: Fail };
-export type Sample = { shell: Measured; data: Measured | null; interactive: Measured | null; drawerMs?: number; prefetchCapped: boolean; refused?: number };
+/** `prefetched`, on a journey through the workspace menu: how many prefetches of the destination the page made before the press. */
+export type Sample = { shell: Measured; data: Measured | null; interactive: Measured | null; drawerMs?: number; prefetchCapped: boolean; refused?: number; prefetched?: number };
 
 // ---- in the page ----
 
@@ -190,23 +200,26 @@ const INSTRUMENT = `${DEEP_SOURCE}\n${DEEP_MATCHES}\n(() => {
 
 /**
  * The first element of `selector` a person could press now: shown, and once the page is a Next one, hydrated, because a
- * press before hydration does nothing. Null when there is none.
+ * press before hydration does nothing. With `name`, only an element whose accessible text is exactly it (a menu item has
+ * nothing else to tell it from its neighbours). Null when there is none.
  */
-const pickable = (selector: string) => `(() => {
+const pickable = (selector: string, name?: string) => `(() => {
   // React marks what it rendered once it hydrates; it never renders into a shadow root, so a control inside one is ready
   // when the host React rendered is.
   const rendered = (el) => { let n = el; while (n.getRootNode() instanceof ShadowRoot) n = n.getRootNode().host; return n; };
   const hydrated = typeof self.__next_f === 'undefined' ? () => true : (el) => Object.keys(rendered(el)).some((k) => k.startsWith('__reactProps$'));
+  const name = ${JSON.stringify(name ?? null)};
   return deepMatches(${JSON.stringify(selector)}).find((el) => {
+    if (name !== null && (el.getAttribute('aria-label') ?? el.textContent ?? '').trim() !== name) return false;
     const r = el.getBoundingClientRect();
     return r.width > 0 && r.height > 0 && getComputedStyle(el).visibility !== 'hidden' && hydrated(el);
   }) ?? null;
 })()`;
 
-/** Where the centre of the first pressable element of `selector` is, or null while none is or something covers it. */
-async function point(page: Page, selector: string): Promise<{ x: number; y: number } | null> {
+/** Where the centre of the first pressable element of `selector` (named `name`, when given) is, or null while none is or something covers it. */
+async function point(page: Page, selector: string, name?: string): Promise<{ x: number; y: number } | null> {
   return page.eval<{ x: number; y: number } | null>(`(() => {
-    const el = ${pickable(selector)};
+    const el = ${pickable(selector, name)};
     if (!el) return null;
     el.scrollIntoView({ block: 'center' });
     const r = el.getBoundingClientRect();
@@ -344,6 +357,29 @@ export function startFor(order: string[], route: string, pool: string[] = order,
   return [...order.slice(0, Math.max(at, 0)).reverse(), ...order.slice(at + 1)].find((r) => pool.includes(r) && r !== route && (!drawn || (drawn[r] ?? []).includes(route)));
 }
 
+/** Where a journey starts and what it presses there: the destination's link in the rail, or the workspace menu's item. */
+export type JourneyStart = { from: string; via: 'rail' | 'menu' };
+
+/**
+ * Where a journey to `route` starts, and how it gets there. Through the rail from wherever `startFor` says, whenever a rail
+ * links to it. Otherwise, when `route` is one of `homes` (each workspace's home, which its item in the workspace menu
+ * opens), through the menu from the nearest route before it in `order` that may start one, or the nearest after it for the
+ * first: the only destination of a workspace is linked from no other workspace's rail. Undefined for any other route, and
+ * when no other route may start a journey.
+ */
+export function journeyStart(order: string[], route: string, pool: string[], drawn: Record<string, string[]>, homes: string[]): JourneyStart | undefined {
+  const rail = startFor(order, route, pool, drawn);
+  if (rail !== undefined) return { from: rail, via: 'rail' };
+  if (!homes.includes(route)) return undefined;
+  // What a rail draws does not matter here: every page with the console's drawer has the workspace menu.
+  const from = startFor(order, route, pool);
+  return from === undefined ? undefined : { from, via: 'menu' };
+}
+
+/** The trigger of the rail's workspace menu, by the name the Rail gives it while there is more than one workspace to show. */
+const WORKSPACE_MENU = 'button[aria-label$=": workspace menu"]';
+const WORKSPACE_ITEM = '[role="menuitemradio"]';
+
 /**
  * What each rail route's phone page offers a journey: `starts`, the routes whose page has the console's drawer (a journey can
  * only start from one; a route with a frame of its own, the Atlas, is a destination, never a start), and `drawn`, the addresses
@@ -367,28 +403,44 @@ export async function drawerRoutes(page: Page, origin: string, routes: string[])
   return { starts, drawn };
 }
 
-export async function journey(page: Page, device: Device, start: string, route: string, check: NavigationCheck | undefined, run: { origin: string; condition: Condition }): Promise<Sample> {
+/**
+ * One journey from `start` to `route`. With `run.menu`, the name of the destination's workspace, it goes through the
+ * workspace menu instead of the rail: the trigger (on a phone, inside the drawer it opens first), then the item named for
+ * the workspace, timed from the item's press.
+ */
+export async function journey(page: Page, device: Device, start: string, route: string, check: NavigationCheck | undefined, run: { origin: string; condition: Condition; menu?: string }): Promise<Sample> {
   await openStart(page, device, start, run.origin);
   const link = `nav a[href=${JSON.stringify(route)}]`;
   const cap = PATIENCE[device];
+  const menu = run.menu;
+  // What is pressed to leave: the destination's link, or the menu's trigger, which the item is found behind.
+  const leave = menu === undefined ? link : WORKSPACE_MENU;
+  const missing = menu === undefined ? `link to ${route}` : `workspace menu, which ${menu} is reached through`;
   let drawerMs: number | undefined;
-  let idle = true;
   if (device === 'phone') {
     const opened = await poll(() => point(page, 'button[aria-label="Open navigation"]'), Date.now() + cap);
     if (!opened) throw new Fail('never-ready', 'the Open navigation button is not pressable on the phone');
     const t = await press(page, opened);
-    if (!(await poll(() => point(page, link), t + cap))) throw new Fail('never-ready', `the drawer did not show a link to ${route}`);
+    if (!(await poll(() => point(page, leave), t + cap))) throw new Fail('never-ready', `the drawer did not show a ${missing}`);
     drawerMs = Date.now() - t;
-    idle = await awaitPrefetch(page, route);
-  } else {
-    if (!(await poll(() => point(page, link), Date.now() + cap))) throw new Fail('never-ready', `the rail has no pressable link to ${route}`);
-    idle = await awaitPrefetch(page, route);
-  }
-  const prefetchCapped = !idle;
+  } else if (!(await poll(() => point(page, leave), Date.now() + cap))) throw new Fail('never-ready', `the rail has no pressable ${missing}`);
+  // A menu item is no link, so the router has nothing of the destination to prefetch.
+  const prefetchCapped = menu === undefined && !(await awaitPrefetch(page, route));
   // After-live presses at once after the refresh, which dropped the router's cache: nothing warms the destination again first.
   if (run.condition === 'afterLive') await liveRefresh(page);
-  const at = await poll(() => point(page, link), Date.now() + cap);
-  if (!at) throw new Fail('never-ready', `the link to ${route} is covered or gone`);
+  let at: { x: number; y: number } | null;
+  if (menu === undefined) {
+    at = await poll(() => point(page, link), Date.now() + cap);
+    if (!at) throw new Fail('never-ready', `the link to ${route} is covered or gone`);
+  } else {
+    const trigger = await poll(() => point(page, WORKSPACE_MENU), Date.now() + cap);
+    if (!trigger) throw new Fail('never-ready', `the ${missing}, is covered or gone`);
+    // The trigger's press is not the journey's: the clock is armed after it, for the item's.
+    const t = await press(page, trigger);
+    at = await poll(() => point(page, WORKSPACE_ITEM, menu), t + cap);
+    if (!at) throw new Fail('never-ready', `the workspace menu offers no item for ${menu}`);
+  }
+  const prefetched = menu === undefined ? undefined : await page.eval<number>(`window.__nav.prefetches.filter((p) => p.path === ${JSON.stringify(route)}).length`);
   // A cold sample is cold only if no prefetch of the destination got through: the page refused them, and the browser's own
   // record of requests has none for the destination either.
   const refused = await page.eval<number>(`window.__nav.blocked.length`);
@@ -412,15 +464,16 @@ export async function journey(page: Page, device: Device, start: string, route: 
       drawerMs,
       prefetchCapped,
       refused,
+      prefetched,
     };
   }
   const shell = { ms: shellMs };
-  if (!check) return { shell, data: null, interactive: null, drawerMs, prefetchCapped, refused };
+  if (!check) return { shell, data: null, interactive: null, drawerMs, prefetchCapped, refused, prefetched };
 
   // Data and interaction run side by side: a control that is there at once does not wait for a body that is not.
   const [data, interactive] = await Promise.all([measureData(page, route, check, t0, cap), measureInteraction(page, route, check, t0, cap, RESULT_WAIT[device])]);
   if (check.probe === 'dialog') await page.send('Input.dispatchKeyEvent', { type: 'keyDown', key: 'Escape', code: 'Escape', windowsVirtualKeyCode: 27 });
-  return { shell, data, interactive, drawerMs, prefetchCapped, refused };
+  return { shell, data, interactive, drawerMs, prefetchCapped, refused, prefetched };
 }
 
 /** The page's own time for `name`, in ms since the press, once it has one; null when `until` (a clock time) passes first. */
@@ -473,12 +526,20 @@ type Line = {
   prefetchCapped: boolean;
   noisy: boolean;
   problems: string[];
+  /** What the journey pressed to leave its start: the rail's link, or the workspace menu's item for `workspace`. */
+  via: 'rail' | 'menu';
+  workspace?: string;
+  /** Through the menu: how many prefetches of the destination the starting page had made before the press. */
+  prefetched?: number;
 };
 
 const value = (m: Measured | null): number | null => (m && 'ms' in m ? m.ms : null);
 
-async function measure(page: Page, device: Device, start: string, route: string, check: NavigationCheck | undefined, limits: Record<Metric, number>): Promise<Line> {
-  const line: Line = { route, device, status: 'ok', shell: { ms: null, verdict: 'pass' }, data: { ms: null, verdict: 'not-configured' }, interactive: { ms: null, verdict: 'not-configured' }, noisy: false, prefetchCapped: false, problems: [] };
+/** Where a measured journey starts, and the workspace whose menu item it presses when it goes through the menu. */
+type From = { from: string; menu?: string };
+
+async function measure(page: Page, device: Device, start: From, route: string, check: NavigationCheck | undefined, limits: Record<Metric, number>): Promise<Line> {
+  const line: Line = { route, device, status: 'ok', shell: { ms: null, verdict: 'pass' }, data: { ms: null, verdict: 'not-configured' }, interactive: { ms: null, verdict: 'not-configured' }, noisy: false, prefetchCapped: false, problems: [], ...viaOf(start) };
   const fill = (name: Metric, m: Measured | null) => {
     if (m === null) return;
     if ('fail' in m) {
@@ -486,16 +547,17 @@ async function measure(page: Page, device: Device, start: string, route: string,
       line.problems.push(`${name} ${m.fail.kind}: ${m.fail.message}`);
     } else line[name] = { ms: m.ms, limit: limits[name], verdict: 'pass' };
   };
-  const first = await journey(page, device, start, route, check, { origin: base, condition: 'warm' });
+  const run = { origin: base, condition: 'warm' as const, menu: start.menu };
+  const first = await journey(page, device, start.from, route, check, run);
   line.drawerMs = first.drawerMs;
   line.prefetchCapped = first.prefetchCapped;
+  line.prefetched = first.prefetched;
   for (const name of METRICS) fill(name, first[name]);
   // A wrong result, a never-ready page or a dead control is the answer: no retake can replace it.
   if (line.problems.length) return finish(line);
   const over = METRICS.filter((name) => { const v = value(first[name]); return v !== null && judge([v], limits[name]).verdict === 'retake'; });
   if (over.length) {
-    const run = { origin: base, condition: 'warm' as const };
-    const retakes = [await journey(page, device, start, route, check, run), await journey(page, device, start, route, check, run)];
+    const retakes = [await journey(page, device, start.from, route, check, run), await journey(page, device, start.from, route, check, run)];
     const all = [first, ...retakes];
     for (const retake of retakes) for (const name of METRICS) {
       const m = retake[name];
@@ -514,6 +576,8 @@ async function measure(page: Page, device: Device, start: string, route: string,
   return finish(line);
 }
 
+const viaOf = (start: From | undefined): Pick<Line, 'via' | 'workspace'> => (start?.menu === undefined ? { via: 'rail' } : { via: 'menu', workspace: start.menu });
+
 function finish(line: Line): Line {
   line.status = line.problems.length ? 'FAIL' : line.noisy || line.data.verdict === 'not-configured' || line.interactive.verdict === 'not-configured' ? 'warn' : 'ok';
   return line;
@@ -525,6 +589,8 @@ const text = (l: Line): string =>
   + (l.noisy ? ' · noisy' : '')
   + (l.prefetchCapped ? ` · prefetch not idle after ${PREFETCH_WAIT / 1000} s` : '')
   + (l.drawerMs !== undefined ? ` · drawer ${l.drawerMs} ms` : '')
+  + (l.via === 'menu' ? ` · through the workspace menu (${l.workspace})` : '')
+  + (l.prefetched === undefined ? '' : l.prefetched === 0 ? ' · not prefetched' : ` · prefetched ${l.prefetched} time(s) before the press`)
   + (l.problems.length ? ` · ${l.problems.join('; ')}` : '');
 
 // ---- prefetch ----
@@ -548,6 +614,26 @@ async function prefetchKiB(page: Page, device: Device, landing: string): Promise
 
 const summary = (o: Record<string, unknown>) => console.log(`navigate: ${JSON.stringify(o)}`);
 
+/**
+ * Each workspace's home, with the name of the workspace menu's item that opens it: `--homes <home>=<workspace>,...` beside
+ * `--rail`; none for `--rail` alone; otherwise `homeHref` and `label` of each of `workspaces` in src/app.config.ts, of
+ * which a project without workspaces has none. Throws on an entry of `--homes` that does not name both.
+ */
+export async function workspaceHomes(): Promise<Map<string, string>> {
+  const listed = opt('--homes');
+  if (listed !== undefined) {
+    return new Map(listed.split(',').filter(Boolean).map((entry) => {
+      const at = entry.indexOf('=');
+      if (at <= 0 || at === entry.length - 1) throw new Error(`--homes: ${entry} is not <home>=<workspace>`);
+      return [entry.slice(0, at), entry.slice(at + 1)];
+    }));
+  }
+  if (opt('--rail') !== undefined) return new Map();
+  type Workspaces = Record<string, { homeHref?: unknown; label?: unknown }>;
+  const { workspaces } = (await import(pathToFileURL(path.join(ROOT, 'src/app.config.ts')).href)) as { workspaces?: Workspaces };
+  return new Map(Object.values(workspaces ?? {}).flatMap((w) => (typeof w?.homeHref === 'string' && typeof w.label === 'string' ? [[w.homeHref, w.label] as const] : [])));
+}
+
 async function main(): Promise<number> {
   if (mode !== 'default' && mode !== 'full') { console.error(`--mode must be default or full, got ${mode}`); return 1; }
   if ((opt('--samples') ?? '1') !== '1') { console.error('--samples: one sample and two retakes is the only protocol here; scripts/perf.ts takes the 20-sample one'); return 1; }
@@ -566,6 +652,15 @@ async function main(): Promise<number> {
     console.log(`${mode === 'full' ? 'FAIL   ' : 'not run'} navigate: ${reason}`);
     summary({ mode, status: mode === 'full' ? 'FAIL' : 'not-run', reason });
     return mode === 'full' ? 1 : 0;
+  }
+
+  let homes: Map<string, string>;
+  try {
+    homes = await workspaceHomes();
+  } catch (e) {
+    console.log(`FAIL    navigate: ${(e as Error).message}`);
+    summary({ mode, status: 'FAIL', errors: [(e as Error).message] });
+    return 1;
   }
 
   const requested = opt('--routes')?.split(',').filter(Boolean);
@@ -619,8 +714,10 @@ async function main(): Promise<number> {
     const { starts, drawn } = await drawerRoutes(page, base, rail.routes);
     for (const route of routes) {
       const check = checks.find((c) => c.path === route);
-      // Each journey comes from the nearest rail route whose rail links to the destination, so it is a navigation and not the page already shown.
-      const start = startFor(rail.routes, route, starts, drawn);
+      // Each journey comes from the nearest rail route whose rail links to the destination, so it is a navigation and not the
+      // page already shown; a workspace's only destination, from the nearest route of another workspace, through the menu.
+      const way = journeyStart(rail.routes, route, starts, drawn, [...homes.keys()]);
+      const start: From | undefined = way && { from: way.from, menu: way.via === 'menu' ? homes.get(route) : undefined };
       for (const device of DEVICES) {
         const limits = Object.fromEntries(METRICS.map((m) => {
           // A route's own figure, where the config gives one, stands in for the shared one on that metric and device.
@@ -635,7 +732,7 @@ async function main(): Promise<number> {
         } catch (e) {
           // The starting page never loading is a failure of this route and device, not of the run.
           const reason = e instanceof Fail ? `${e.kind}: ${e.message}` : (e as Error).message;
-          line = finish({ route, device, status: 'FAIL', shell: { ms: null, verdict: 'fail', reason }, data: { ms: null, verdict: 'not-run' }, interactive: { ms: null, verdict: 'not-run' }, noisy: false, prefetchCapped: false, problems: [reason] });
+          line = finish({ route, device, status: 'FAIL', shell: { ms: null, verdict: 'fail', reason }, data: { ms: null, verdict: 'not-run' }, interactive: { ms: null, verdict: 'not-run' }, noisy: false, prefetchCapped: false, problems: [reason], ...viaOf(start) });
         }
         if (!check) {
           line.data = { ms: null, verdict: 'not-configured' };
@@ -664,7 +761,7 @@ async function main(): Promise<number> {
     status,
     routes,
     warnings: coverage.warnings,
-    lines: lines.map(({ route, device, status: s, shell, data, interactive, drawerMs, prefetchCapped, noisy, problems: p }) => ({ route, device, status: s, shell, data, interactive, drawerMs, prefetchCapped, noisy, problems: p })),
+    lines: lines.map(({ route, device, status: s, shell, data, interactive, drawerMs, prefetchCapped, noisy, problems: p, via, workspace, prefetched }) => ({ route, device, status: s, via, workspace, prefetched, shell, data, interactive, drawerMs, prefetchCapped, noisy, problems: p })),
     prefetch: prefetch && { ...prefetch, problems },
   });
   return failed ? 1 : 0;

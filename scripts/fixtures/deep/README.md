@@ -20,11 +20,11 @@ Any route that is not a page below answers a clean page (light DOM, no control),
 | `presses` | `node scripts/interactions.ts --base <url> --routes <page>` |
 | `keyboard` | `node scripts/keyboard.ts --base <url> --routes <page>` |
 | `vitals` | `node scripts/vitals.ts --base <url> --routes <page>` |
-| `navigate` | `node scripts/navigate.ts --base <url> --config scripts/fixtures/deep/config.ts --rail /nav-home,/nav-root-target,/nav-missing-target,/nav-multi,/nav-root-hydrated --routes <page>` |
+| `navigate` | `node scripts/navigate.ts --base <url> --config scripts/fixtures/deep/config.ts --rail /nav-home,/nav-solo,/nav-solo-unoffered,/nav-root-target,/nav-missing-target,/nav-multi,/nav-root-hydrated --homes /nav-home=Main,/nav-solo=Solo,/nav-solo-unoffered=Unoffered --routes <page>` |
 
 ## Pages
 
-Every page has an `h1`, `lang="en"`, a `main`, an opaque ground and controls of at least 44px, so the planted defect is the only one. Each case has a broken page and a corrected `-fixed` page.
+Every page has an `h1`, `lang="en"`, a `main`, an opaque ground and controls of at least 44px, so the planted defect is the only one. Each case has a broken page and a corrected `-fixed` page. Every `nav-*` page carries a workspace menu above its rail, in the desktop rail and in the phone drawer, drawn as the console's Rail draws it: a trigger named `<product>, <workspace>: workspace menu` and one `menuitemradio` for each of Main (home `/nav-home`) and Solo (home `/nav-solo`).
 
 | Page | Planted case |
 |---|---|
@@ -47,6 +47,8 @@ Every page has an `h1`, `lang="en"`, a `main`, an opaque ground and controls of 
 | `/nav-root-hydrated` | The same on a page marked as a hydrated Next page: the control inside the root is ready once its host is |
 | `/nav-missing-target` | Navigation: the mapping names a control the page does not have |
 | `/nav-multi` | Navigation: the control selector matches two elements, the first hidden |
+| `/nav-solo` | Navigation: the only destination of its workspace (Solo). No other page's rail links to it, so the journey starts on `/nav-home` and presses the workspace menu's Solo item, which opens it with no link (passes, `through the workspace menu (Solo) · not prefetched`) |
+| `/nav-solo-unoffered` | Navigation: the same, in a workspace the menu does not offer: the journey is `never-ready`, naming the workspace (fails) |
 | `/deep-tap` | Vitals: the Alerts button a phone taps is inside an open root (passes, `taps: 1`) |
 | `/svg-contrast` | An SVG's `<text>` filled `#9a9a9a` on white. Light DOM, like every page from here down: these are about what the audit measures, not how deep it reaches |
 | `/svg-label-on-bar-dark` | Dark text on a dark bar inside the SVG (fails). Read against the page instead of the bar it would pass, and the white label of `/svg-text-read` would fail, so the pair proves the bar is what is read. The bar has `pointer-events: none`, so only a geometric test finds it |

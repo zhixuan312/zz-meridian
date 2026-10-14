@@ -47,6 +47,18 @@ export default function CardPreview() {
           </Card>
         </Plane>
       </Specimen>
+      <Specimen label="Title cut, and wrapped" note="Beside its actions a long title has no room. Without wrap it is one line cut with an ellipsis, its whole text the heading's title for a pointer; with wrap it takes the lines it needs." stack>
+        <Plane className="grid gap-4 sm:grid-cols-2">
+          <Card>
+            <CardHeader title="Requests by region and by model, the last 30 complete days" description="Without wrap" actions={<Button variant="ghost" size="sm" aria-label="More"><MoreHorizontal /></Button>} />
+            <CardBody><p className="t-figure t-num">4.8M</p></CardBody>
+          </Card>
+          <Card>
+            <CardHeader title="Requests by region and by model, the last 30 complete days" description="With wrap" wrap actions={<Button variant="ghost" size="sm" aria-label="More"><MoreHorizontal /></Button>} />
+            <CardBody><p className="t-figure t-num">4.8M</p></CardBody>
+          </Card>
+        </Plane>
+      </Specimen>
       <Specimen label="Flush, a table first" note="A flush body clips a table that is its first child, and drops the header row's top border: the card's edge is the table's edge, with no second line under it and no square corner over the card's round one." stack>
         <Plane>
           <Card className="max-w-md">

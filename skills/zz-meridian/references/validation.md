@@ -25,8 +25,11 @@ Steps in order:
 
 0. **Rail navigation** (`--full` only): every rail route is navigated, with its data and interaction mappings from
    `navigationChecks`. A journey starts from the nearest rail route, in rail order, whose rail draws a link to the
-   destination, so a rail that shows only part of the navigation on a page is followed; a destination no other route's
-   rail links to is reported as a problem, never as a pass.
+   destination, so a rail that shows only part of the navigation on a page is followed. A workspace's home that no other
+   route's rail links to (the only destination of its workspace) is reached through the workspace menu: from the nearest
+   rail route before it, by the menu's item for its workspace, timed from that press, and its line says
+   `through the workspace menu (<workspace>)`. Any other destination no rail links to is reported as a problem, never as
+   a pass.
 1. **The gate** (`node scripts/gate.ts`): tokens regenerate to the same CSS; the card registry is fresh; every card and
    page specification follows the anatomy; the product's own rules in `optional:scripts/check.local.ts`, when the file exists;
    contrast holds for every pair in every theme and accent, and the chart palette passes the colour-vision checks;
@@ -104,7 +107,7 @@ and supply-chain check before a script runs; that is pnpm, not an install, and n
 |---|---|---|
 | `sideways: scroll region 1042 > 768` | Something wider than the window | A table with too many columns: `hideBelow` on low-value ones; a long id: `truncate` with a `title`; a fixed width: use `min-w-0` and fractions |
 | `clipped: … "text"` | Text cut without an ellipsis | Give the element `truncate`, or let it wrap; never shrink the type |
-| `truncated: … "text" is cut with an ellipsis and no title holds the whole of it` | Text is cut on purpose and the whole value is kept nowhere a pointer can reach | A `title` with the whole text on the element or what holds it (a `DataTable` column's `title`, a `TableCell` whose cell is a value sets its own); or let it wrap |
+| `truncated: … "text" is cut with an ellipsis and no title holds the whole of it` | Text is cut on purpose and the whole value is kept nowhere a pointer can reach | A `title` with the whole text on the element or what holds it (a `DataTable` column's `title`, a `TableCell` whose cell is a value sets its own, a `CardHeader` without `wrap` whose title is plain text sets its own); or let it wrap |
 | `overlap: … and … are drawn in the same place` | Two pieces of text share a third of a line or more: a negative margin, an absolute label, a row that did not wrap | Give each its own place: a gap, a wrap, or a narrower label at that width |
 | `overlap: a line (…) is drawn through … "text"` | A stroked shape (a sparkline, a rule, an axis) crosses the middle of a line of text | Move the caption out of the plot, or end the line before it; a filled shape under text is a ground and is read by the contrast check instead |
 | `unnamed: button…` | An icon-only control (a web component's button counts the text slotted into its host as its name) | `aria-label` on it (Icon button requires one) |

@@ -3,9 +3,7 @@
  * palette and every page ask, so a destination and a control cannot drift apart.
  *
  * A feature's `needs` is what a person must be able to do to reach the page behind it; an action's `needs` is what they
- * must be able to do to run it, and an action's optional `line` is the one sentence a page shows when it withholds that
- * action, saying who can (`actionLine` in `src/views/no-access.tsx`). All three name grants only — the role names and
- * the grant table stay in `roles.ts`. The nav
+ * must be able to do to run it. Both name grants only — the role names and the grant table stay in `roles.ts`. The nav
  * in `src/app.config.ts` points each item at its feature's need **by reference** (`needs: FEATURES.usage.needs`),
  * so an item and the table never restate one another.
  *
@@ -20,7 +18,7 @@ export type FeatureId =
   | 'keys' | 'members' | 'settings' | 'system' | 'docs' | 'tickets' | 'tests' | 'releases';
 
 /** Every action a page offers that only some people may take, by the id its control names it. */
-export type ActionId =
+type ActionId =
   | 'create-key' | 'revoke-key' | 'invite-member' | 'change-role' | 'suspend-member' | 'reactivate-member'
   | 'remove-member' | 'replay-request' | 'save-workspace' | 'create-ticket' | 'update-ticket';
 
@@ -49,19 +47,19 @@ export const FEATURES: Record<FeatureId, { title: string; needs: Need }> = {
 };
 
 /**
- * Each action: the feature it belongs to, its name as a control reads it, the need that permits it, and — for an action
- * a page withholds — the one sentence saying who can, so the control and its explanation are frozen together.
+ * Each action: the feature it belongs to, its name as a control reads it, and the need that permits it. A page draws
+ * the control only for a person who meets the need, and says nothing in its place for anyone else.
  */
-export const ACTIONS: Record<ActionId, { feature: FeatureId; label: string; needs: ProtectedNeed; line?: string }> = {
-  'create-key': { feature: 'keys', label: 'Create key', needs: 'keys:create', line: 'Owners, Admins and Key managers create and revoke keys.' },
-  'revoke-key': { feature: 'keys', label: 'Revoke', needs: 'keys:remove', line: 'Owners, Admins and Key managers create and revoke keys.' },
+export const ACTIONS: Record<ActionId, { feature: FeatureId; label: string; needs: ProtectedNeed }> = {
+  'create-key': { feature: 'keys', label: 'Create key', needs: 'keys:create' },
+  'revoke-key': { feature: 'keys', label: 'Revoke', needs: 'keys:remove' },
   'invite-member': { feature: 'members', label: 'Invite member', needs: 'members:create' },
   'change-role': { feature: 'members', label: 'Change role', needs: 'members:update' },
   'suspend-member': { feature: 'members', label: 'Suspend', needs: 'members:update' },
   'reactivate-member': { feature: 'members', label: 'Reactivate', needs: 'members:update' },
   'remove-member': { feature: 'members', label: 'Remove', needs: 'members:remove' },
-  'replay-request': { feature: 'request', label: 'Replay', needs: 'requests:create', line: 'Owners, Admins and Members can replay requests.' },
+  'replay-request': { feature: 'request', label: 'Replay', needs: 'requests:create' },
   'save-workspace': { feature: 'settings', label: 'Save workspace', needs: { allOf: ['workspace:read', 'workspace:update'] } },
-  'create-ticket': { feature: 'tickets', label: 'New ticket', needs: 'tickets:create', line: 'Owners, Admins and Members create and change tickets.' },
-  'update-ticket': { feature: 'tickets', label: 'Change ticket state', needs: 'tickets:update', line: 'Owners, Admins and Members create and change tickets.' },
+  'create-ticket': { feature: 'tickets', label: 'New ticket', needs: 'tickets:create' },
+  'update-ticket': { feature: 'tickets', label: 'Change ticket state', needs: 'tickets:update' },
 };

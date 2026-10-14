@@ -9,7 +9,7 @@ Status: beta
 1. **Head**: the title (`t-card`) and one or two sentences (`t-small`, `ink-2`) saying what these settings change, for whom.
 2. **Card**: the fields, 20px apart, in a `surface` card with a `line` border.
 3. **Error banner** (when a save failed): a critical Banner above the fields.
-4. **Read-only notice** (when the reader cannot change it): a lock and who can.
+4. **Read-only notice** (`readOnly`, when the reader cannot change it): a lock and the words "Read-only". It never says who can change the section: a read-only page offers no control it withholds and says nothing about who holds it.
 5. **Save bar** (with `onSave`, when dirty): "Unsaved changes", Discard (ghost) and Save changes (primary), pinned to the bottom of the view while the section is on screen.
 6. **Footnote** (optional): a caption under the card: "Changes apply at once".
 7. **Setting row** (`SettingRow`): for a control that is not a text field, its label and description on the left and the control on the right.
@@ -42,7 +42,7 @@ Status: beta
 | Saving | Fields disabled; Save shows its busy spinner; Discard disabled |
 | Saved | The bar closes; a toast confirms ("Workspace saved") |
 | Error | The bar stays; a critical Banner above the fields says why and what to do |
-| Read-only | Fields disabled, their values kept legible in `ink-2` (the reader came to read them); the notice says who can change them |
+| Read-only | Fields disabled, their values kept legible in `ink-2` (the reader came to read them); the notice reads "Read-only" beside the lock, and nothing names a role or a person who could change them |
 
 ## Behaviour
 

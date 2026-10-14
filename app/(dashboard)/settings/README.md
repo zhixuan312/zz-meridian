@@ -25,6 +25,7 @@ On a form page's own measure (`form-width`), which fills the canvas until it is 
 | Save refused | A critical banner "Not saved" with the reason above the fields; the edit and the save bar stay, and Discard puts the saved name back |
 | Empty name | The field's error; Save does nothing until it is fixed |
 | A switch flipped | It applies at once; a toast names the setting and its new state |
+| Workspace read-only | For someone who may read the workspace and not change it, an Admin in the sample: the fields are disabled and the section reads "Read-only" beside a lock, with no save bar, and nothing names who can change it. Someone who may not read it, a Member or a Viewer, sees no Workspace section |
 
 ## Data
 

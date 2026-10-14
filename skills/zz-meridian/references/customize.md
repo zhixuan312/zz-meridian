@@ -37,8 +37,10 @@ sample, ZZ Meridian's own dashboard, lives in `optional:src/system/fixtures/`; y
     and `roleLabel(member)` is how a member reads ("Member + Key manager"). Edit the table, not a page: every sentence the
     NoAccess view writes is read off it.
   - `optional:src/data/features.ts` is one table of what each page needs (`FEATURES`) and what each control needs
-    (`ACTIONS`), keyed by `FeatureId` and `ActionId`. A nav item, a page, a view tool and an action name their need here **by
-    reference** (`needs: FEATURES.<id>.needs`); a need is never written twice, and a test fails a surface that restates one.
+    (`ACTIONS`), keyed by a feature's id and an action's id. A nav item, a page, a view tool and an action name their need
+    here **by reference** (`needs: FEATURES.<id>.needs`); a need is never written twice, and a test fails a surface that
+    restates one.
+    An action is its feature, its label and its need, and nothing else: it carries no sentence about who can run it.
   - `optional:src/data/access.ts` is the policy. `current` says who the request is, `allows` says what the scope may do,
     `gate(feature)` is what a page opens with before it reads (`requireNeed(need)` is the view tool's), and `chromeAccess()`
     is what the rail draws. Replace the demo's `current` with your session and delete the demo's View as —
@@ -277,6 +279,13 @@ says "requests" on a page about orders is the sample's, not the product's.
 - **The reader's own work is marked on the server.** A list of work marks what is the reader's own from
   `resolveAccess().subjectId`, read where the data is read, so nobody else's read marks a record theirs and no id of
   the reader reaches the browser to be compared there.
+- **No page says who can use a control it withholds.** A page asks `may(ACTIONS[<id>].needs)` and draws the control
+  only on a yes; for anyone else the control is absent and nothing names a role, a person or a grant in its place. A
+  read-only Form section passes `readOnly` (a boolean) and reads "Read-only" beside its lock, and the Records template
+  draws a read-only page as its table with nothing that creates. A row the member boundary refuses gives a reason only
+  when the row is the caller's own. A change forced past the page is still refused by the boundary with its own
+  sentence (`REFUSALS` in `optional:src/data/member-mutations.ts`), and the roles table on Members, a reference of what
+  each role holds, stays.
 
 **The sample's. Replace it.**
 

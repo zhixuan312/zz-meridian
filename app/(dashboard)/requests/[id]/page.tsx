@@ -6,7 +6,6 @@ import { ACTIONS, FEATURES } from '@/data/features';
 import { FEATURED_REQUEST_IDS, traceOf, payloadsOf, type CustomerRecord, type RequestRow } from '@/data/sample';
 import { customerAddress } from '@/views/customer-context';
 import { MissingPage } from '@/views/missing-page';
-import { actionLine } from '@/views/no-access';
 import { RequestView } from '@/views/request';
 import { replayRequest } from './actions';
 
@@ -52,10 +51,10 @@ export default async function RequestPage({ params }: { params: Promise<{ id: st
   const { request: r, observedAt } = await byId(id);
   // Rendered here rather than thrown, so the screen is in the first HTML (see MissingPage).
   if (!r) return <MissingPage />;
-  // After the gate: what this person may do with the record, so Replay is drawn only where it may be used. A Member
-  // holds `requests:read` without `requests:create`, so it is withheld for them and the line says who can.
+  // After the gate: what this person may do with the record, so Replay is drawn only where it may be used. A Viewer
+  // holds `requests:read` without `requests:create`, so it is withheld for them and nothing is drawn in its place.
   const mayReplay = await may(ACTIONS['replay-request'].needs);
   const [endpoints, customerHref] = await Promise.all([readEndpoints(), customerPage(r.customer)]);
   const route = endpoints.find((e) => e.method === r.method && e.route === r.route);
-  return <RequestView request={r} trace={traceOf(r)} payloads={payloadsOf(r)} routeP95={route?.p95 ?? null} now={observedAt} mayReplay={mayReplay} replayLine={actionLine('replay-request')} replay={replayRequest} customerHref={customerHref} />;
+  return <RequestView request={r} trace={traceOf(r)} payloads={payloadsOf(r)} routeP95={route?.p95 ?? null} now={observedAt} mayReplay={mayReplay} replay={replayRequest} customerHref={customerHref} />;
 }

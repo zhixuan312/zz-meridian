@@ -43,7 +43,7 @@ export type MemberRowAccess = {
   /** The role choices this caller may assign to this member, and the add-ons it may add. */
   roles: readonly MainRole[];
   addOns: readonly AddOn[];
-  /** Why a row action is hidden, when the reason is the target's rather than a missing grant. */
+  /** Why a row action is hidden, when the row is the caller's own; a row withheld for any other reason gives none. */
   reason?: string;
 };
 
@@ -153,8 +153,10 @@ async function removeStep(scope: AccessScope, ids: string[]): Promise<number> {
 
 /**
  * What one member row offers the caller reading it, from the same rules the boundary enforces: the three action
- * capabilities, the role and add-on choices for this member, and — when the reason is the target's, not a missing
- * grant — the first firing rule's message, in the frozen order.
+ * capabilities, the role and add-on choices for this member, and — when the row is the caller's own — the first firing
+ * self rule's message, in the frozen order. A row withheld because its member is an Owner gives no reason: the page
+ * draws no control there and says nothing about who holds it, and a change forced past the page is still refused with
+ * `REFUSALS.changeOwner`.
  */
 export async function memberAccess(id: string): Promise<MemberRowAccess> {
   const scope = await currentScope();
@@ -180,8 +182,7 @@ export async function memberAccess(id: string): Promise<MemberRowAccess> {
       ? undefined
       : mayUpdate && self ? REFUSALS.ownRole
         : (mayUpdate || mayRemove) && self ? REFUSALS.ownStatus
-          : (mayUpdate || mayRemove) && blocked ? REFUSALS.changeOwner
-            : undefined,
+          : undefined,
   };
 }
 

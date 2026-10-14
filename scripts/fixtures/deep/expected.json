@@ -282,5 +282,17 @@
     "page": "/overlap-none",
     "suite": "audit",
     "outcome": "pass"
+  },
+  {
+    "page": "/nav-solo",
+    "suite": "navigate",
+    "outcome": "pass",
+    "line": "through the workspace menu (Solo) · not prefetched"
+  },
+  {
+    "page": "/nav-solo-unoffered",
+    "suite": "navigate",
+    "outcome": "fail",
+    "line": "never-ready: the workspace menu offers no item for Unoffered"
   }
 ]
