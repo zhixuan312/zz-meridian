@@ -9,7 +9,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import {
-  VERSION, brandArgs, effectiveBrand, inside, installSkill, packageManager, payloadBytes, payloadFiles, readJsonc, readPayload, relativeImports,
+  VERSION, brandArgs, effectiveBrand, inside, installSkill, jsoncExtras, packageManager, payloadBytes, payloadFiles, readJsonc, readPayload, relativeImports,
   run, runTool, sha256, writeIn, writeManifest,
 } from './files.js';
 import { BRIEF_TEMPLATE, managedBlock, upsertManagedBlock } from './context.js';
@@ -230,7 +230,15 @@ Rename or move them, then run adopt again.`);
     ts.compilerOptions.paths['@meridian/*'] = ['./src/*'];
     const at = ts.compilerOptions.paths['@/*']?.[0];
     if (typeof at === 'string') atAlias = at.replace(/\/\*$/, '').replace(/^\.\//, '') || '.';
+    // A tsconfig may carry comments and trailing commas, which `next dev` keeps (`comment-json`) and `JSON.stringify`
+    // cannot hold. What the team wrote is kept beside the rewritten file, as the stylesheet and the postcss config are,
+    // rather than dropped in silence — the note says so, and there is no backup to explain when there was nothing to lose.
+    const was = fs.readFileSync(tsPath, 'utf8');
     writes.set('tsconfig.json', JSON.stringify(ts, null, 2) + '\n');
+    if (jsoncExtras(was)) {
+      writes.set('tsconfig.before.json', was);
+      notes.push('tsconfig.json carried comments or trailing commas, which the rewritten file cannot: yours is tsconfig.before.json');
+    }
   } else {
     return fail('no tsconfig.json: Meridian is TypeScript. Add one (next dev writes it), then run adopt again.');
   }

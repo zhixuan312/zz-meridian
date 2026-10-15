@@ -87,20 +87,33 @@ export function runTool(root: string, entry: string, args: string[], quiet = tru
 
 export const hasCommand = (cmd: string) => spawnSync(cmd, ['--version'], { stdio: 'ignore', shell: process.platform === 'win32' }).status === 0;
 
-/** JSON with the comments and trailing commas a tsconfig may carry. */
-export function readJsonc(file: string): any {
-  const text = fs.readFileSync(file, 'utf8');
+/** A JSONC document's text with the comments dropped, and whether anything had to be dropped to read it. */
+function strippedJsonc(text: string): { json: string; dropped: boolean } {
   let out = '';
+  let dropped = false;
   for (let i = 0, str = false; i < text.length; i++) {
     const c = text[i];
     if (str) { out += c; if (c === '\\') out += text[++i]; else if (c === '"') str = false; continue; }
     if (c === '"') { str = true; out += c; continue; }
-    if (c === '/' && text[i + 1] === '/') { while (i < text.length && text[i] !== '\n') i++; out += '\n'; continue; }
-    if (c === '/' && text[i + 1] === '*') { i += 2; while (i < text.length && !(text[i] === '*' && text[i + 1] === '/')) i++; i++; continue; }
+    if (c === '/' && text[i + 1] === '/') { dropped = true; while (i < text.length && text[i] !== '\n') i++; out += '\n'; continue; }
+    if (c === '/' && text[i + 1] === '*') { dropped = true; i += 2; while (i < text.length && !(text[i] === '*' && text[i + 1] === '/')) i++; i++; continue; }
     out += c;
   }
-  return JSON.parse(out.replace(/,(\s*[}\]])/g, '$1'));
+  const json = out.replace(/,(\s*[}\]])/g, '$1');
+  return { json, dropped: dropped || json.length !== out.length };
 }
+
+/** JSON with the comments and trailing commas a tsconfig may carry. */
+export function readJsonc(file: string): any {
+  return JSON.parse(strippedJsonc(fs.readFileSync(file, 'utf8')).json);
+}
+
+/**
+ * Whether a project's file carries what plain JSON cannot hold: a comment, or a trailing comma. `next dev` writes a
+ * tsconfig through `comment-json`, which keeps both, so a tool that re-serialises one drops what the team's own
+ * toolchain preserves — and this is the question to ask before doing it.
+ */
+export const jsoncExtras = (text: string) => strippedJsonc(text).dropped;
 
 /**
  * Meridian's own `@/` imports, made relative to the file. An adopting project may map `@/` somewhere else, or already
