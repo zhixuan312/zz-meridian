@@ -287,12 +287,29 @@
     "page": "/nav-solo",
     "suite": "navigate",
     "outcome": "pass",
-    "line": "through the workspace menu (Solo) · not prefetched"
+    "line": "through the workspace menu (Solo) \u00b7 not prefetched"
   },
   {
     "page": "/nav-solo-unoffered",
     "suite": "navigate",
     "outcome": "fail",
     "line": "never-ready: the workspace menu offers no item for Unoffered"
+  },
+  {
+    "page": "/deep-unnamed-labelledby",
+    "suite": "audit",
+    "outcome": "fail",
+    "line": "unnamed:"
+  },
+  {
+    "page": "/deep-unnamed-labelledby-fixed",
+    "suite": "audit",
+    "outcome": "pass"
+  },
+  {
+    "page": "/truncated-titled-wrong",
+    "suite": "audit",
+    "outcome": "fail",
+    "line": "truncated:"
   }
 ]

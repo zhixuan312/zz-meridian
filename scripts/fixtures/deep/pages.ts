@@ -120,6 +120,10 @@ export const PAGES: Record<string, string> = {
 
   '/deep-unnamed': deep('Unnamed control', { body: '<x-outer></x-outer>', script: nested(`<button type="button" class="icon">${ICON}</button>`, UNNAMED) }),
   '/deep-unnamed-fixed': deep('Unnamed control, corrected', { body: '<x-outer></x-outer>', script: nested(`<button type="button" class="icon" aria-label="Close">${ICON}</button>`, UNNAMED) }),
+  // A name given as `aria-labelledby` is the text of what it names. An id that names nothing names no control, and the
+  // attribute's own text is not a name — the same lookup `label[for]` gets.
+  '/deep-unnamed-labelledby': deep('Control named by an id that is not there', { body: '<x-outer></x-outer>', script: nested(`<button type="button" class="icon" aria-labelledby="no-such-heading">${ICON}</button>`, UNNAMED) }),
+  '/deep-unnamed-labelledby-fixed': deep('Control named by an id that is there', { body: '<x-outer></x-outer>', script: nested(`<span id="close-heading" hidden>Close</span><button type="button" class="icon" aria-labelledby="close-heading">${ICON}</button>`, UNNAMED) }),
 
   // A web component's button named by the text slotted into it, as most design-system buttons are: the name lives in
   // the light DOM, the button in the root, so a name read from the button's own text alone finds nothing.
@@ -186,6 +190,9 @@ document.getElementById('first').addEventListener('keydown', (e) => { if (e.key 
   // ---- text cut with an ellipsis, with the whole of it kept nowhere ----
   '/truncated': deep('Cut value', { css: CUT, body: `<p class="cut">${ACCOUNT}</p>` }),
   '/truncated-fixed': deep('Cut value, corrected', { css: CUT, body: `<p class="cut" title="${ACCOUNT}">${ACCOUNT}</p>` }),
+  // A title that does not hold the cut text keeps none of it: the pointer reaches "Orders" where "acct_9f27…, Northwind
+  // Trading" was, which is the same as no title at all.
+  '/truncated-titled-wrong': deep('Cut value, titled with something else', { css: CUT, body: `<p class="cut" title="Orders">${ACCOUNT}</p>` }),
 
   // ---- two things in the same place ----
   '/overlap-text': deep('Text over text', { css: '.figure { margin-top: -32px; }', body: '<p>Requests per day</p><p class="figure">1,204 in the last hour</p>' }),

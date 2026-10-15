@@ -140,9 +140,13 @@ const MEASURE = `(() => {
     }
     return b;
   };
-  // Text cut with an ellipsis has to keep the whole of itself where a pointer can reach it: a title on the element or
-  // on what holds it (a cell, a row, a link), or on the one thing inside it that the pointer is over.
-  const titled = (el) => { for (let n = el, i = 0; n && i < 4; n = deepParent(n), i++) if ((n.getAttribute('title') || '').trim()) return true; return [...el.querySelectorAll('[title]')].some((n) => n.getAttribute('title').trim()); };
+  // Text cut with an ellipsis has to keep the whole of itself where a pointer can reach it: a title attribute on the element or
+  // on what holds it (a cell, a row, a link), or on the one thing inside it that the pointer is over. The title has to
+  // *hold* the text, compared as a whole — a title on any ancestor or descendant used to count whatever it said, so a
+  // cell titled "Orders" over a cut account id passed as keeping it.
+  const whole = (s) => (s || '').replace(/\\s+/g, ' ').trim();
+  const keeps = (el, title) => { const t = whole(title), own = whole(el.textContent); return t.length > 0 && own.length > 0 && t.includes(own); };
+  const titled = (el) => { for (let n = el, i = 0; n && i < 4; n = deepParent(n), i++) if (keeps(el, n.getAttribute('title'))) return true; return [...el.querySelectorAll('[title]')].some((n) => keeps(el, n.getAttribute('title'))); };
   const inked = [];
   const ringSig = (c) => [c.outlineStyle, c.outlineWidth, c.outlineColor, c.boxShadow, c.borderTopStyle, c.borderTopWidth, c.borderTopColor, c.borderBottomColor, c.borderLeftColor, c.borderRightColor].join('|');
   const texts = [];
@@ -184,7 +188,11 @@ const MEASURE = `(() => {
     // A card drawn as a specimen in the Atlas keeps its own scroll regions; only the page's count against the one scroller.
     if (/(auto|scroll)/.test(c.overflowY) && el.scrollHeight > el.clientHeight + 1 && el.clientHeight > 120 && !deepClosest(el, '[data-specimen]')) out.scrollers.push(label(el));
     if (el.matches('button,a[href],[role="button"],[role="tab"],[role="switch"],[role="checkbox"],[role="radio"],input:not([type=hidden]),select,textarea')) {
-      const name = el.getAttribute('aria-label') || el.getAttribute('aria-labelledby') || el.getAttribute('title') || deepText(el).trim() || el.querySelector('img[alt]')?.getAttribute('alt') || (el.id && el.getRootNode().querySelector('label[for="' + el.id + '"]')?.textContent.trim()) || el.closest('label')?.textContent.trim() || el.getAttribute('placeholder') || '';
+      // A name is what the control is announced as. aria-labelledby names elements that hold it, and is worth
+      // nothing until they are looked up — the same lookup a label-for gets two terms later — so an id that names
+      // nothing leaves the control unnamed rather than passing on the attribute's own text.
+      const byIds = (attr) => (el.getAttribute(attr) || '').split(/\\s+/).filter(Boolean).map((id) => { const t = el.getRootNode().querySelector('#' + CSS.escape(id)); return t ? whole(t.textContent) : ''; }).join(' ').trim();
+      const name = el.getAttribute('aria-label') || byIds('aria-labelledby') || el.getAttribute('title') || deepText(el).trim() || el.querySelector('img[alt]')?.getAttribute('alt') || (el.id && el.getRootNode().querySelector('label[for="' + el.id + '"]')?.textContent.trim()) || el.closest('label')?.textContent.trim() || el.getAttribute('placeholder') || '';
       if (!name) out.unnamed.push(label(el));
       // On touch (a phone is emulated as one) every control answers at least 44px: its own box, its field's frame, or
       // the .hit square around it. A link inside running text is exempt, as WCAG exempts it.
