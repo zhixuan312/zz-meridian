@@ -774,10 +774,14 @@ if (args.includes('--update-all') && adoptedBase()) {
 // ── create ─────────────────────────────────────────────────────────────────────────────────────────────
 if (args.includes('--create')) {
   const dir = path.join(work, 'smoke-ops');
-  // Not the template's currency: a project made in another one must pass its own gate as made (the shipped tests read
-  // money in `app.currency`).
-  const create = sh('npx', ['--yes', '--package', tarball, 'zz-meridian', 'create', dir, '--name', 'Smoke Ops', '--currency', 'GBP'], work);
+  // None of the template's own values: a project made in another timezone, currency, accent and signed-in role must pass
+  // its own gate and its own verify as made. The timezone is the case that broke once — a project created with
+  // `--timezone Europe/London` shipped failing its first verify, because the shipped tests read money in `app.currency`
+  // and dates in `app.timezone` — and the accent is where the contrast gate is asked about a hue the template never
+  // shipped, which is the part of `brand.ts` that adjusts a fill until every pair passes.
+  const create = sh('npx', ['--yes', '--package', tarball, 'zz-meridian', 'create', dir, '--name', 'Smoke Ops', '--timezone', 'Europe/London', '--currency', 'GBP', '--hex', '#B4508A', '--user', 'Ada Park', '--role', 'Admin'], work);
   check(create.status === 0, 'create exits 0', create.stdout + create.stderr);
+  check(fs.readFileSync(path.join(dir, 'src/app.config.ts'), 'utf8').includes("timezone: 'Europe/London'") && fs.readFileSync(path.join(dir, 'src/app.config.ts'), 'utf8').includes("user: { name: 'Ada Park', role: 'Admin' }"), 'create wrote the timezone, currency, accent and user it was asked for');
   check(!fs.existsSync(path.join(dir, 'app/system')) && !fs.existsSync(path.join(dir, 'skills')), 'create leaves out the Atlas and the skill source');
   const pm = fs.existsSync(path.join(dir, 'pnpm-lock.yaml')) ? 'pnpm' : 'npm';
   const text = (f: string) => read(dir, f);
