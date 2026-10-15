@@ -57,7 +57,7 @@ Every key with its id, environment, hint (the first and last characters, never t
 
 Protagonist: API keys.
 
-The page marks the list `data-protagonist="API keys"` on a wrapper whose display is `contents`; the list is headed by its count ("6 keys"), with its Ask beside it: "What stands out in the API keys, and why?".
+The page marks the list `data-protagonist="API keys"` on a wrapper whose display is `contents`; the list is headed by its count ("5 keys" in the sample), with its Ask beside it: "What stands out in the API keys, and why?".
 
 - "How many live keys does each owner hold?" — the keys whose environment is live, by owner
 - "Which keys have not been used since 1 September, and what are their ids?" — the keys whose last use is before 2026-09-01, with up to 20 of them, each with the id a revocation names

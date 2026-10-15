@@ -17,7 +17,7 @@ export const requestExplore: PreparedQuery<{ id: string }> = {
       // The route is the page's: a call cannot narrow or group by another.
       filters,
       facets: requestsSource.facets.filter((f) => f !== 'route'),
-      cannot: 'These are the requests to its route in the sampled log, a sample of the latest requests the workspace received, not every request to it: its route over 30 days is on Usage (/usage).',
+      cannot: 'These are the requests to its route in the sampled log, a sample of the latest requests the workspace received, not every request to it: every route\'s last 30 days is on Now\'s Slowest endpoints (/engineering).',
     },
   },
   async fixed({ id }) {

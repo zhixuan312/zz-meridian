@@ -43,7 +43,7 @@ export function requestContext({ request: r, trace, routeP95, statusText, payloa
       { label: 'Payloads', value: `request ${payloadBytes.request === null ? 'none' : `${payloadBytes.request} characters`}, response ${payloadBytes.response} characters; their text is on the page` },
     ],
     insights,
-    unknowns: [`One request is one sample: explore_request counts the sampled requests to its route by status class, customer and region, and its route over 30 days is on Usage. Replaying a request is the person's to do on this page; an agent cannot.`],
+    unknowns: [`One request is one sample: explore_request counts the sampled requests to its route by status class, customer and region, and every route's last 30 days is on Now's Slowest endpoints (/engineering). Replaying a request is the person's to do on this page; an agent cannot.`],
     freshness: `Read ${formatDateTime(now)} UTC.`,
   };
 }

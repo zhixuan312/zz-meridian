@@ -66,7 +66,7 @@ Counts by status, role (with what each role may do) and team, everyone with thei
 
 Protagonist: Members.
 
-The page marks the list `data-protagonist="Members"` on a wrapper whose display is `contents`; the list is headed by its count ("8 members"), with its Ask beside it: "What stands out in the members, and why?".
+The page marks the list `data-protagonist="Members"` on a wrapper whose display is `contents`; the list is headed by its count ("24 members" in the sample), with its Ask beside it: "What stands out in the members, and why?".
 
 - "How many members does each team have, and how many of them are active?" — the members and the active members, by team
 - "Which active members have not signed in since 1 August?" — the members whose status is Active and whose last sign-in is before 2026-08-01, with up to 20 of them
