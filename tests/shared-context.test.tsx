@@ -28,7 +28,10 @@ import { servicesContext, servicesHead, servicesTitle } from '@/views/services-c
 import { EmbedHome } from '../app/embed/home/view';
 
 /** The product's currency mark, as `formatCost` writes it before the digits: a project made with `--currency GBP` writes £. */
-const MONEY = formatCost(0).replace(/\d.*$/, '').replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+const MARK = formatCost(0).replace(/\d.*$/, '');
+const MONEY = MARK.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+/** A line of the sample's figures, written in dollars here and in the product's own mark when it is made in another currency. */
+const inMark = (line: string) => line.replaceAll('$', MARK);
 
 /** The sample's incidents as a page is handed them: the record without who has it and the id of its ticket. */
 const handed = ({ owner: _, ticketId: __, ...incident }: IncidentRecord): Incident => incident;
@@ -65,7 +68,7 @@ describe("the Home's shared context", () => {
     const text = contextText(homeContext(home('30d')));
     expect(text).toContain('- Requests: 1,101,098,030, up 4.7% vs the previous 30 days. (Every call answered, at any status.)');
     expect(text).toContain('- Gross margin: 62.4%, up 0.3 points vs the previous 30 days. (Revenue less compute cost, over revenue.)');
-    expect(text).toContain('- Compute cost: $1,242,000.00, up 4.5% vs the previous 30 days. (What the GPUs provisioned cost.)');
+    expect(text).toContain(inMark('- Compute cost: $1,242,000.00, up 4.5% vs the previous 30 days. (What the GPUs provisioned cost.)'));
     expect(text).toMatch(/^Home · last 30 days, 03 Sept 2026 to 02 Oct 2026 \(UTC days\) · address \/\?period=30d$/m);
     expect(text).toContain('fresh.');
   });
@@ -97,13 +100,13 @@ describe("the Home's shared context", () => {
     expect(data.unread).toEqual(['the usage by model', 'the compute cost', 'the releases']);
     const c = homeContext(data);
     expect(c.unknowns[0]).toBe('The usage by model, the compute cost and the releases could not be read, so what they state is missing, not zero.');
-    expect(contextText(c)).toContain('$3,300,438.74');
+    expect(contextText(c)).toContain(inMark('$3,300,438.74'));
     expect(data.worth.map((w) => w.href)).not.toContain('/releases?state=ready');
   });
   it('tells what the person points at, against the same weekday', () => {
     const data = home('30d');
     const index = data.series.findIndex((d) => d.date === '2026-09-22');
-    expect(homeContext(data, index).focus).toBe("22 Sept 2026, a Tuesday: 42,008,106 requests (1.0× the median Tuesday); error rate 1.27% (3.4× the period's median); latency p95 498ms (1.7× the median); revenue $130,097.57.");
+    expect(homeContext(data, index).focus).toBe(inMark("22 Sept 2026, a Tuesday: 42,008,106 requests (1.0× the median Tuesday); error rate 1.27% (3.4× the period's median); latency p95 498ms (1.7× the median); revenue $130,097.57."));
   });
   it('fits its budget for every period, and so does Services', () => {
     for (const p of ['7d', '30d', '90d', 'all'] as const) {
