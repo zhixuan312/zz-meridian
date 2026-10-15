@@ -123,7 +123,7 @@ type VerifyConfig = {
 };
 
 /** Every rail route, in the rail's own order: what a persona who may open all of them is expected to see. */
-const EVERY_ROUTE = ['/', '/members', '/settings', '/system', '/system/start/start-a-dashboard', '/business', '/usage', '/customers', '/requests', '/engineering', '/services', '/keys', '/operations-tickets', '/tests', '/releases'] as const;
+const EVERY_ROUTE = ['/', '/members', '/settings', '/system', '/system/start/start-a-dashboard', '/business', '/customers', '/usage', '/requests', '/engineering', '/services', '/operations-tickets', '/tests', '/releases', '/keys'] as const;
 
 const config: VerifyConfig = {
   // Ids from the sample (the requests of src/system/fixtures/sample.ts, the customers of company.ts); tests/sample.test.ts fails if one stops being what it says.
@@ -186,7 +186,7 @@ const config: VerifyConfig = {
     'key-manager': { cookie: { name: 'zz_meridian_view_as', value: 'members_5' }, expectedRoutes: EVERY_ROUTE },
     viewer: {
       cookie: { name: 'zz_meridian_view_as', value: 'members_12' },
-      expectedRoutes: ['/', '/settings', '/system', '/system/start/start-a-dashboard', '/business', '/usage', '/customers', '/requests', '/engineering', '/services', '/operations-tickets', '/tests', '/releases'],
+      expectedRoutes: ['/', '/settings', '/system', '/system/start/start-a-dashboard', '/business', '/customers', '/usage', '/requests', '/engineering', '/services', '/operations-tickets', '/tests', '/releases'],
       deniedProbe: { '/keys': 'Load test, October', '/members': 'maya.chen@' },
     },
   },

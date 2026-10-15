@@ -23,7 +23,7 @@ describe('the personas', () => {
     expect(Object.keys(personas).sort()).toEqual(['admin', 'key-manager', 'member', 'owner', 'viewer']);
     const viewer = personas.viewer;
     expect(viewer.cookie).toEqual({ name: 'zz_meridian_view_as', value: 'members_12' });
-    expect([...viewer.expectedRoutes]).toEqual(['/', '/settings', '/system', '/system/start/start-a-dashboard', '/business', '/usage', '/customers', '/requests', '/engineering', '/services', '/operations-tickets', '/tests', '/releases']);
+    expect([...viewer.expectedRoutes]).toEqual(['/', '/settings', '/system', '/system/start/start-a-dashboard', '/business', '/customers', '/usage', '/requests', '/engineering', '/services', '/operations-tickets', '/tests', '/releases']);
     expect(Object.keys(viewer.deniedProbe ?? {}).sort()).toEqual(['/keys', '/members']);
     for (const [name, p] of Object.entries(personas)) expect(p.expectedRoutes.length, name).toBeGreaterThan(0);
     expect([...personas.owner.expectedRoutes].length).toBe(15);
