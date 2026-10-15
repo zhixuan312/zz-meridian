@@ -10,7 +10,7 @@ Status: beta
 |---|---|---|---|
 | Masthead | PageFrame: kicker, "API keys", one sentence, Create key (primary) | One band | Stacked |
 | 1 | Banner (accent), only right after a key is created: "Copy {name} now", the full key in a Copy field, dismissable | Full width | Full width |
-| 2 | Data table: Name with its environment, Key (its hint, `zzm_live_…f601`, in mono, from 672px), Scopes (two and "+N", from 1152px), Created by (from 896px), Created, Last used, and Revoke | Columns | Cards: name and environment, "Created …" and "Used …", Revoke |
+| 2 | Data table headed by its count, with an Ask beside it: Name with its environment, Key (its hint, `zzm_live_…f601`, in mono, from 672px), Scopes (two and "+N", from 1152px), Created by (from 896px), Created, Last used, and Revoke | Columns | Cards: name and environment, "Created …" and "Used …", Revoke |
 | Sheet | Create a key: Name (required), Environment (Live or Test), Scopes (checkboxes); Cancel and Create key | From the right, 440px | From the bottom |
 | Dialog | Revoke: "Revoke {name}?", what fails and that it cannot be undone, when it was last used; Cancel and Revoke key (danger) | Centred | Bottom sheet |
 
@@ -56,6 +56,8 @@ Every key with its id, environment, hint (the first and last characters, never t
 ### What the agent does here
 
 Protagonist: API keys.
+
+The page marks the list `data-protagonist="API keys"` on a wrapper whose display is `contents`; the list is headed by its count ("6 keys"), with its Ask beside it: "What stands out in the API keys, and why?".
 
 - "How many live keys does each owner hold?" — the keys whose environment is live, by owner
 - "Which keys have not been used since 1 September, and what are their ids?" — the keys whose last use is before 2026-09-01, with up to 20 of them, each with the id a revocation names

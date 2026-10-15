@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Segmented } from '@/components/ui/segmented';
 import { Sparkline } from '@/components/charts/sparkline';
 import { MetricTile } from '@/components/patterns/metric-tile';
+import { AskAbout } from '@/components/patterns/ask-about';
 import { DataTable, useQueryState, useSearchDraft, type Column } from '@/components/patterns/data-table';
 import { FilterBar } from '@/components/patterns/filter-bar';
 import { Records } from '@/components/templates/records';
@@ -55,6 +56,7 @@ export function CustomersView({ rows }: { rows: CustomerRow[] }) {
     return under(rows, f.status).filter((c) => (f.plan === 'all' || c.plan === f.plan) && (!q || c.name.toLowerCase().includes(q)));
   }, [rows, f.q, f.plan, f.status]);
   const isFiltered = f.q !== '' || f.plan !== 'all' || f.status !== 'all';
+  const filters = [f.plan !== 'all' && `on ${f.plan}`, f.status !== 'all' && f.status, f.q && `matching "${f.q}"`].filter(Boolean).join(', ');
   useShareView(customersContext(rows, matching, f));
   const clear = () => set({ q: '', plan: 'all', status: 'all', by: '', page: '1' });
   const { customers, revenue, pastDue } = customerFigures(rows);
@@ -67,34 +69,38 @@ export function CustomersView({ rows }: { rows: CustomerRow[] }) {
         <MetricTile key="past-due" label={CUSTOMER_METRICS.pastDue.label} value={pastDue.length} format={(n) => String(n)} hint={CUSTOMER_METRICS.pastDue.hint} note={pastDueNote(pastDue)} />,
       ]}
     >
-      <DataTable
-        caption="Customers"
-        noun="customers"
-        rows={matching}
-        columns={columns}
-        rowKey={(c) => c.id}
-        empty={{ title: 'No customers yet', body: 'A customer appears here with their plan and usage once they have an account.' }}
-        rowHref={(c) => `/customers/${c.id}`}
-        state={{ sort: f.sort, dir: f.dir, page: f.page }}
-        onStateChange={set}
-        filtered={isFiltered}
-        onClearFilters={clear}
-        toolbar={
-          <FilterBar
-            search={{ value: draft, onChange: setDraft, placeholder: 'Search customers' }}
-            filters={[
-              { key: 'status', label: 'Status', value: f.status, onChange: (status) => set({ status, by: '', page: '1' }), options: [{ value: 'all', label: 'All' }, { value: 'active', label: 'Active' }, { value: 'trial', label: 'Trial' }, { value: 'past due', label: 'Past due' }, { value: 'left', label: 'Left' }] },
-            ]}
-            view={
-              <Segmented size="sm" label="Plan" value={f.plan} onChange={(plan) => set({ plan, by: '', page: '1' })}
-                options={[{ value: 'all', label: 'All plans' }, { value: 'Enterprise', label: 'Enterprise' }, { value: 'Scale', label: 'Scale' }, { value: 'Starter', label: 'Starter' }]} />
-            }
-            result={<>{matching.length} of {under(rows, f.status).length}</>}
-            setBy={f.by || undefined}
-            onClear={clear}
-          />
-        }
-      />
+      {/* The page's protagonist, the list, marked on a wrapper whose display is `contents`. */}
+      <div data-protagonist="Customers" className="contents">
+        <DataTable
+          caption="Customers"
+          noun="customers"
+          rows={matching}
+          columns={columns}
+          rowKey={(c) => c.id}
+          empty={{ title: 'No customers yet', body: 'A customer appears here with their plan and usage once they have an account.' }}
+          rowHref={(c) => `/customers/${c.id}`}
+          state={{ sort: f.sort, dir: f.dir, page: f.page }}
+          onStateChange={set}
+          filtered={isFiltered}
+          onClearFilters={clear}
+          toolbar={
+            <FilterBar
+              ask={<AskAbout question={isFiltered ? `What do the customers ${filters} have in common, and why?` : 'What stands out in our customers, and why?'} />}
+              search={{ value: draft, onChange: setDraft, placeholder: 'Search customers' }}
+              filters={[
+                { key: 'status', label: 'Status', value: f.status, onChange: (status) => set({ status, by: '', page: '1' }), options: [{ value: 'all', label: 'All' }, { value: 'active', label: 'Active' }, { value: 'trial', label: 'Trial' }, { value: 'past due', label: 'Past due' }, { value: 'left', label: 'Left' }] },
+              ]}
+              view={
+                <Segmented size="sm" label="Plan" value={f.plan} onChange={(plan) => set({ plan, by: '', page: '1' })}
+                  options={[{ value: 'all', label: 'All plans' }, { value: 'Enterprise', label: 'Enterprise' }, { value: 'Scale', label: 'Scale' }, { value: 'Starter', label: 'Starter' }]} />
+              }
+              result={<>{matching.length} of {under(rows, f.status).length}</>}
+              setBy={f.by || undefined}
+              onClear={clear}
+            />
+          }
+        />
+      </div>
     </Records>
   );
 }

@@ -6,6 +6,7 @@ import { Tooltip } from 'radix-ui';
 import { useShareView } from '@/components/base/use-share-view';
 import { Records } from '@/components/templates/records';
 import { Badge, type Tone } from '@/components/ui/badge';
+import { AskAbout } from '@/components/patterns/ask-about';
 import { MetricTile } from '@/components/patterns/metric-tile';
 import { DataTable, useQueryState, useSearchDraft, type Column } from '@/components/patterns/data-table';
 import { FilterBar } from '@/components/patterns/filter-bar';
@@ -32,6 +33,7 @@ export function TestsView({ rows, now }: { rows: RunRow[]; now: string }) {
   const [draft, setDraft] = useSearchDraft(f.q, (q) => set({ q, page: '1' }));
   const matching = useMemo(() => matchingRuns(rows, { q: f.q, state: f.state, release: f.release, runs: f.runs }), [rows, f.q, f.state, f.release, f.runs]);
   const isFiltered = f.q !== '' || f.state !== 'all' || f.release !== '' || f.runs !== 'all';
+  const filters = [f.state !== 'all' && f.state, f.runs === 'latest' && 'the latest of each', f.release && `of ${f.release}`, f.q && `matching "${f.q}"`].filter(Boolean).join(', ');
   useShareView(testsContext(rows, now, f));
   const clear = () => set({ q: '', state: 'all', release: '', runs: 'all', page: '1' });
   const { latest, failing, skipped } = testFigures(rows);
@@ -84,32 +86,36 @@ export function TestsView({ rows, now }: { rows: RunRow[]; now: string }) {
           Runs of {of ? `${of.version} (${of.service}, ${of.environment})` : f.release}. <Link href="/tests" className="underline">All runs</Link>
         </p>
       ) : null}
-      <Tooltip.Provider delayDuration={300} skipDelayDuration={120}>
-        <DataTable
-          caption="Verification runs"
-          noun="runs"
-          rows={matching}
-          columns={columns}
-          rowKey={(r) => r.id}
-          empty={{ title: 'No runs yet', body: 'A run appears here once a suite has run against an endpoint of a release.' }}
-          state={{ sort: f.sort, dir: f.dir, page: f.page }}
-          onStateChange={set}
-          filtered={isFiltered}
-          onClearFilters={clear}
-          toolbar={
-            <FilterBar
-              search={{ value: draft, onChange: setDraft, placeholder: 'Search runs' }}
-              filters={[
-                { key: 'state', label: 'Verdict', value: f.state, onChange: (state) => set({ state, page: '1' }), options: [{ value: 'all', label: 'All' }, ...['passed', 'failed', 'skipped'].map((w) => ({ value: w, label: LABEL(w) }))] },
-                // What the tiles count: the latest run of each verification, without the runs it replaced.
-                { key: 'runs', label: 'Runs', value: f.runs, onChange: (runs) => set({ runs, page: '1' }), options: [{ value: 'all', label: 'All' }, { value: 'latest', label: 'Latest of each' }] },
-              ]}
-              result={<>{matching.length} of {rows.length}</>}
-              onClear={clear}
-            />
-          }
-        />
-      </Tooltip.Provider>
+      {/* The page's protagonist, the list, marked on a wrapper whose display is `contents`. */}
+      <div data-protagonist="Verification runs" className="contents">
+        <Tooltip.Provider delayDuration={300} skipDelayDuration={120}>
+          <DataTable
+            caption="Verification runs"
+            noun="runs"
+            rows={matching}
+            columns={columns}
+            rowKey={(r) => r.id}
+            empty={{ title: 'No runs yet', body: 'A run appears here once a suite has run against an endpoint of a release.' }}
+            state={{ sort: f.sort, dir: f.dir, page: f.page }}
+            onStateChange={set}
+            filtered={isFiltered}
+            onClearFilters={clear}
+            toolbar={
+              <FilterBar
+                ask={<AskAbout question={isFiltered ? `What do the verification runs ${filters} have in common, and why?` : 'What stands out in the verification runs, and why?'} />}
+                search={{ value: draft, onChange: setDraft, placeholder: 'Search runs' }}
+                filters={[
+                  { key: 'state', label: 'Verdict', value: f.state, onChange: (state) => set({ state, page: '1' }), options: [{ value: 'all', label: 'All' }, ...['passed', 'failed', 'skipped'].map((w) => ({ value: w, label: LABEL(w) }))] },
+                  // What the tiles count: the latest run of each verification, without the runs it replaced.
+                  { key: 'runs', label: 'Runs', value: f.runs, onChange: (runs) => set({ runs, page: '1' }), options: [{ value: 'all', label: 'All' }, { value: 'latest', label: 'Latest of each' }] },
+                ]}
+                result={<>{matching.length} of {rows.length}</>}
+                onClear={clear}
+              />
+            }
+          />
+        </Tooltip.Provider>
+      </div>
     </Records>
   );
 }

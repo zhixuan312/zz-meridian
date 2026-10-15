@@ -115,6 +115,8 @@ With a day pointed at, the line about that day (against the same weekday and the
 
 Protagonist: Revenue.
 
+The page marks the revenue card `data-protagonist="Revenue"` on a wrapper whose display is `contents`, so the row's grid is unchanged; its Ask is the one the Handoff line names.
+
 - "Which model brought the most revenue in the last 90 days, and how did that move?" — the usage's revenue over 90 complete days, by model, against the 90 days before
 - "How did gross margin move a week at a time over the last 90 days?" — the days' gross margin over 90 complete days, a week at a time, worked out against what compute cost in the same weeks
 - "How many customers are on each plan, and what did each plan pay?" — the customers that have not left and their revenue over the last 30 complete days, by plan

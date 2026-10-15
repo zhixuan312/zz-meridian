@@ -49,36 +49,39 @@ export function RequestsView({ rows, total, summary, state, pageSize, updatedAt,
         </>
       }
     >
-      <DataTable
-        caption="Requests"
-        noun="requests"
-        rows={rows}
-        columns={requestColumns}
-        rowKey={(r) => r.id}
-        rowHref={(r) => `/requests/${r.id}`}
-        manual
-        total={total}
-        pageSizes={[pageSize]}
-        state={{ sort: f.sort, dir: f.dir, page: f.page }}
-        onStateChange={setF}
-        busy={pending}
-        filtered={isFiltered}
-        onClearFilters={clear}
-        toolbar={
-          <FilterBar
-            ask={<AskAbout question={isFiltered ? `What do these requests with ${describeFilters(state)} have in common, and why?` : 'What stands out in the latest requests, and why?'} />}
-            search={{ value: draft, onChange: setDraft, placeholder: 'Search requests' }}
-            filters={[
-              { key: 'status', label: 'Status', value: state.status, onChange: (status) => change({ status }), options: options('All', STATUS_CLASSES) },
-              { key: 'method', label: 'Method', value: state.method, onChange: (method) => change({ method }), options: options('All', REQUEST_METHODS) },
-              { key: 'region', label: 'Region', value: state.region, onChange: (region) => change({ region }), options: options('All', REGION_NAMES) },
-            ]}
-            result={<>{total.toLocaleString('en-US')} {isFiltered ? 'matching' : 'requests'}</>}
-            setBy={f.by || undefined}
-            onClear={clear}
-          />
-        }
-      />
+      {/* The page's protagonist, the request log, marked on a wrapper whose display is `contents`. */}
+      <div data-protagonist="The request log" className="contents">
+        <DataTable
+          caption="Requests"
+          noun="requests"
+          rows={rows}
+          columns={requestColumns}
+          rowKey={(r) => r.id}
+          rowHref={(r) => `/requests/${r.id}`}
+          manual
+          total={total}
+          pageSizes={[pageSize]}
+          state={{ sort: f.sort, dir: f.dir, page: f.page }}
+          onStateChange={setF}
+          busy={pending}
+          filtered={isFiltered}
+          onClearFilters={clear}
+          toolbar={
+            <FilterBar
+              ask={<AskAbout question={isFiltered ? `What do these requests with ${describeFilters(state)} have in common, and why?` : 'What stands out in the latest requests, and why?'} />}
+              search={{ value: draft, onChange: setDraft, placeholder: 'Search requests' }}
+              filters={[
+                { key: 'status', label: 'Status', value: state.status, onChange: (status) => change({ status }), options: options('All', STATUS_CLASSES) },
+                { key: 'method', label: 'Method', value: state.method, onChange: (method) => change({ method }), options: options('All', REQUEST_METHODS) },
+                { key: 'region', label: 'Region', value: state.region, onChange: (region) => change({ region }), options: options('All', REGION_NAMES) },
+              ]}
+              result={<>{total.toLocaleString('en-US')} {isFiltered ? 'matching' : 'requests'}</>}
+              setBy={f.by || undefined}
+              onClear={clear}
+            />
+          }
+        />
+      </div>
     </Records>
   );
 }

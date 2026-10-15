@@ -53,6 +53,8 @@ The three counts, labelled "Live versions", "Ready to release" and "In testing",
 
 Protagonist: Releases.
 
+The page marks the list `data-protagonist="Releases"` on a wrapper whose display is `contents`; its Ask, in the Filter bar: "What stands out in the releases, and why?", or, filtered, "What do the releases in testing, in production have in common, and why?".
+
 - "How many releases went out in the last 90 days, and to which environments?" — the releases that went out over 90 complete days, by environment
 - "Which services shipped most often this quarter?" — the releases that went out over 90 complete days, by service
 - "Which release failed the most verification runs this month?" — the verification runs that failed over 30 complete days, by release

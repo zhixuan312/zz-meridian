@@ -40,7 +40,8 @@ const costCompact = FORMATTERS['cost-compact'];
 /**
  * The revenue card, the page's one Featured metric: the period's revenue, its change, a day's average and the best day,
  * the record as its finding, and revenue a day with the day in progress drawn running. The day in progress is the
- * Meridian's last date, so pointing at it reads it, and its pill says "so far".
+ * Meridian's last date, so pointing at it reads it, and its pill says "so far". It is the page's protagonist, marked on
+ * a wrapper whose display is `contents`, so the row's grid is unchanged.
  */
 export function RevenueCard({ data, dates }: { data: HomeData; dates: string[] }) {
   const r = data.revenue;
@@ -49,27 +50,29 @@ export function RevenueCard({ data, dates }: { data: HomeData; dates: string[] }
   const running = data.running;
   const points = running ? [...r.points, running.revenue] : r.points;
   return (
-    <FeaturedMetric
-      kicker={<>{HOME_METRICS.revenue.label} · {period}</>}
-      actions={<AskPeriod period={period} what="revenue" onDay={(day) => `Why does revenue on ${day} look the way it does?`} />}
-      value={r.value}
-      points={points}
-      format={formatCost}
-      delta={change(r.value, r.previous) ?? undefined}
-      intent="up"
-      caption={r.best ? <>About {formatCost(r.average)} a day. The best day was {formatDay(r.best.date)}, with {formatCost(r.best.value)}.</> : undefined}
-      finding={r.finding ? { text: r.finding } : undefined}
-      pointLabel={(date) => (running && date === running.date ? `${formatDate(date)} · so far` : formatDate(date))}
-    >
-      <TrendChart
-        height="fill"
-        label="Revenue per day"
-        format="cost"
-        dates={dates}
-        running={running !== null}
-        series={[{ key: 'revenue', label: HOME_METRICS.revenue.label, values: points, kind: 'area' }]}
-      />
-    </FeaturedMetric>
+    <div data-protagonist="Revenue" className="contents">
+      <FeaturedMetric
+        kicker={<>{HOME_METRICS.revenue.label} · {period}</>}
+        actions={<AskPeriod period={period} what="revenue" onDay={(day) => `Why does revenue on ${day} look the way it does?`} />}
+        value={r.value}
+        points={points}
+        format={formatCost}
+        delta={change(r.value, r.previous) ?? undefined}
+        intent="up"
+        caption={r.best ? <>About {formatCost(r.average)} a day. The best day was {formatDay(r.best.date)}, with {formatCost(r.best.value)}.</> : undefined}
+        finding={r.finding ? { text: r.finding } : undefined}
+        pointLabel={(date) => (running && date === running.date ? `${formatDate(date)} · so far` : formatDate(date))}
+      >
+        <TrendChart
+          height="fill"
+          label="Revenue per day"
+          format="cost"
+          dates={dates}
+          running={running !== null}
+          series={[{ key: 'revenue', label: HOME_METRICS.revenue.label, values: points, kind: 'area' }]}
+        />
+      </FeaturedMetric>
+    </div>
   );
 }
 

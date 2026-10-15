@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardBody, CardFooter, CardHeader } from '@/components/ui/card';
 import { KeyValue } from '@/components/ui/key-value';
 import { toast } from '@/components/ui/toast';
+import { AskAbout } from '@/components/patterns/ask-about';
 import { detailHead } from '@/components/patterns/detail-head';
 import { cn } from '@/lib/cn';
 import { formatCost, formatDuration } from '@/lib/format';
@@ -116,35 +117,43 @@ export function RequestView({ request: r, trace, payloads, routeP95, now, replay
     >
       <Stack>
         <Row split="2/3">
-          <Card>
-            <CardHeader title="Request" description="What arrived, who sent it, and what it cost." divided />
-            <CardBody className="pt-1">
-              <KeyValue
-                columns={2}
-                items={[
-                  { label: 'Received', value: <time dateTime={r.at}>{formatDateTime(r.at)}</time>, title: formatDateTime(r.at) },
-                  { label: 'Endpoint', value: <span className="font-mono text-xs"><span className="text-ink-3">{r.method}</span> {r.route}</span>, title: `${r.method} ${r.route}` },
-                  { label: 'Latency', value: <span className={r.latency > 1000 ? 'font-medium text-warning-ink' : undefined}>{formatDuration(r.latency)}</span> },
-                  { label: 'Response size', value: formatBytes(r.bytes) },
-                  { label: 'Customer', value: customerHref ? <Link href={customerHref} className="link">{r.customer}</Link> : r.customer, title: r.customer },
-                  { label: 'Region', value: r.region, mono: true },
-                  ...(r.replayOf ? [{ label: 'Replay of', value: <Link href={`/requests/${r.replayOf}`} className="link font-mono text-xs">{r.replayOf}</Link>, title: r.replayOf }] : []),
-                  ...(r.model
-                    ? [
-                        { label: 'Model', value: r.model, mono: true },
-                        { label: 'Tokens', value: usage.tokens ? <span className="t-num">{usage.tokens.input.toLocaleString('en-US')} in · {usage.tokens.output.toLocaleString('en-US')} out</span> : <span className="text-ink-3">None, refused</span>, title: usage.tokens ? `${usage.tokens.input.toLocaleString('en-US')} in · ${usage.tokens.output.toLocaleString('en-US')} out` : undefined },
-                      ]
-                    : []),
-                  { label: 'Cost', value: usage.cost ? <span className="t-num">{formatCost(usage.cost)}</span> : <span className="text-ink-3">None, refused</span> },
-                ]}
+          {/* The page's protagonist, marked on a wrapper whose display is `contents`, so the row's grid is unchanged. */}
+          <div data-protagonist="Request" className="contents">
+            <Card>
+              <CardHeader
+                title="Request"
+                description="What arrived, who sent it, and what it cost."
+                actions={<AskAbout question={`Why did ${r.method} ${r.route} for ${r.customer} answer ${r.status} in ${formatDuration(r.latency)}?`} />}
+                divided
               />
-            </CardBody>
-            <CardFooter>
-              <Link href={`/requests?q=${encodeURIComponent(r.customer)}`} className="row-link inline-flex items-center gap-1 font-medium text-ink hover:text-accent-ink">
-                More from {r.customer} <ArrowRight className="size-3.5" />
-              </Link>
-            </CardFooter>
-          </Card>
+              <CardBody className="pt-1">
+                <KeyValue
+                  columns={2}
+                  items={[
+                    { label: 'Received', value: <time dateTime={r.at}>{formatDateTime(r.at)}</time>, title: formatDateTime(r.at) },
+                    { label: 'Endpoint', value: <span className="font-mono text-xs"><span className="text-ink-3">{r.method}</span> {r.route}</span>, title: `${r.method} ${r.route}` },
+                    { label: 'Latency', value: <span className={r.latency > 1000 ? 'font-medium text-warning-ink' : undefined}>{formatDuration(r.latency)}</span> },
+                    { label: 'Response size', value: formatBytes(r.bytes) },
+                    { label: 'Customer', value: customerHref ? <Link href={customerHref} className="link">{r.customer}</Link> : r.customer, title: r.customer },
+                    { label: 'Region', value: r.region, mono: true },
+                    ...(r.replayOf ? [{ label: 'Replay of', value: <Link href={`/requests/${r.replayOf}`} className="link font-mono text-xs">{r.replayOf}</Link>, title: r.replayOf }] : []),
+                    ...(r.model
+                      ? [
+                          { label: 'Model', value: r.model, mono: true },
+                          { label: 'Tokens', value: usage.tokens ? <span className="t-num">{usage.tokens.input.toLocaleString('en-US')} in · {usage.tokens.output.toLocaleString('en-US')} out</span> : <span className="text-ink-3">None, refused</span>, title: usage.tokens ? `${usage.tokens.input.toLocaleString('en-US')} in · ${usage.tokens.output.toLocaleString('en-US')} out` : undefined },
+                        ]
+                      : []),
+                    { label: 'Cost', value: usage.cost ? <span className="t-num">{formatCost(usage.cost)}</span> : <span className="text-ink-3">None, refused</span> },
+                  ]}
+                />
+              </CardBody>
+              <CardFooter>
+                <Link href={`/requests?q=${encodeURIComponent(r.customer)}`} className="row-link inline-flex items-center gap-1 font-medium text-ink hover:text-accent-ink">
+                  More from {r.customer} <ArrowRight className="size-3.5" />
+                </Link>
+              </CardFooter>
+            </Card>
+          </div>
           <Card>
             <CardHeader title="Trace" description={`${trace.length} phases, ${formatDuration(r.latency)} end to end`} divided />
             <CardBody className="pt-5">

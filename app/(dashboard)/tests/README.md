@@ -53,6 +53,8 @@ The three counts, labelled "Latest runs", "Failing now" and "Skipped now", of ev
 
 Protagonist: Verification runs.
 
+The page marks the list `data-protagonist="Verification runs"` on a wrapper whose display is `contents`; its Ask, in the Filter bar: "What stands out in the verification runs, and why?", or, filtered, "What do the verification runs failed, the latest of each have in common, and why?".
+
 - "How many runs passed in the last seven days?" — the runs of the last 7 complete days by how they ended, against the 7 before
 - "Which suite fails most often?" — the failed runs of every complete day kept, by suite
 - "How long do the runs of each suite take?" — the p95 duration of the runs over the last 30 complete days, by suite

@@ -19,6 +19,7 @@ import { Menu, MenuContent, MenuItem, MenuTrigger } from '@/components/ui/menu';
 import { Select } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from '@/components/ui/toast';
+import { AskAbout } from '@/components/patterns/ask-about';
 import { MetricTile } from '@/components/patterns/metric-tile';
 import { DataTable, useQueryState, useSearchDraft, type Column } from '@/components/patterns/data-table';
 import { FilterBar } from '@/components/patterns/filter-bar';
@@ -68,6 +69,7 @@ export function TicketsView({ rows, now, may = { create: true, update: true }, s
   const [search, setSearch] = useSearchDraft(f.q, (q) => set({ q, page: '1' }));
   const matching = useMemo(() => matchingTickets(rows, { q: f.q, state: f.state, priority: f.priority }), [rows, f.q, f.state, f.priority]);
   const isFiltered = f.q !== '' || f.state !== 'all' || f.priority !== 'all';
+  const filters = [f.state !== 'all' && f.state, f.priority !== 'all' && `${f.priority} priority`, f.q && `matching "${f.q}"`].filter(Boolean).join(', ');
   useShareView(ticketsContext(rows, now, f));
   const clear = () => set({ q: '', state: 'all', priority: 'all', page: '1' });
   const counts = ticketCounts(rows);
@@ -178,32 +180,36 @@ export function TicketsView({ rows, now, may = { create: true, update: true }, s
           </>
         }
       >
-        {/* A row's menu button carries no tooltip, but the view brings its provider so it also stands alone, as in a test. */}
-        <Tooltip.Provider delayDuration={300} skipDelayDuration={120}>
-          <DataTable
-            caption="Tickets"
-            noun="tickets"
-            rows={matching}
-            columns={columns}
-            rowKey={(t) => t.id}
-            empty={{ title: 'No tickets yet', body: 'Open one when there is work to track against a service.', action: may.create ? <Button variant="primary" size="sm" icon={<Plus />} aria-haspopup="dialog" onClick={open}>New ticket</Button> : undefined }}
-            state={{ sort: f.sort, dir: f.dir, page: f.page }}
-            onStateChange={set}
-            filtered={isFiltered}
-            onClearFilters={clear}
-            toolbar={
-              <FilterBar
-                search={{ value: search, onChange: setSearch, placeholder: 'Search tickets' }}
-                filters={[
-                  { key: 'state', label: 'State', value: f.state, onChange: (state) => set({ state, page: '1' }), options: [{ value: 'all', label: 'All' }, ...choices(['open', 'waiting', 'closed'])] },
-                  { key: 'priority', label: 'Priority', value: f.priority, onChange: (priority) => set({ priority, page: '1' }), options: [{ value: 'all', label: 'All' }, ...choices(['high', 'normal', 'low'])] },
-                ]}
-                result={<>{matching.length} of {rows.length}</>}
-                onClear={clear}
-              />
-            }
-          />
-        </Tooltip.Provider>
+        {/* The page's protagonist, the list, marked on a wrapper whose display is `contents`. A row's menu button carries
+            no tooltip, but the view brings its provider so it also stands alone, as in a test. */}
+        <div data-protagonist="Tickets" className="contents">
+          <Tooltip.Provider delayDuration={300} skipDelayDuration={120}>
+            <DataTable
+              caption="Tickets"
+              noun="tickets"
+              rows={matching}
+              columns={columns}
+              rowKey={(t) => t.id}
+              empty={{ title: 'No tickets yet', body: 'Open one when there is work to track against a service.', action: may.create ? <Button variant="primary" size="sm" icon={<Plus />} aria-haspopup="dialog" onClick={open}>New ticket</Button> : undefined }}
+              state={{ sort: f.sort, dir: f.dir, page: f.page }}
+              onStateChange={set}
+              filtered={isFiltered}
+              onClearFilters={clear}
+              toolbar={
+                <FilterBar
+                  ask={<AskAbout question={isFiltered ? `What do the tickets ${filters} have in common, and why?` : 'What stands out in the tickets, and why?'} />}
+                  search={{ value: search, onChange: setSearch, placeholder: 'Search tickets' }}
+                  filters={[
+                    { key: 'state', label: 'State', value: f.state, onChange: (state) => set({ state, page: '1' }), options: [{ value: 'all', label: 'All' }, ...choices(['open', 'waiting', 'closed'])] },
+                    { key: 'priority', label: 'Priority', value: f.priority, onChange: (priority) => set({ priority, page: '1' }), options: [{ value: 'all', label: 'All' }, ...choices(['high', 'normal', 'low'])] },
+                  ]}
+                  result={<>{matching.length} of {rows.length}</>}
+                  onClear={clear}
+                />
+              }
+            />
+          </Tooltip.Provider>
+        </div>
       </Records>
 
       <Dialog open={creating} onOpenChange={setCreating}>

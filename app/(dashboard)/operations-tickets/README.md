@@ -57,6 +57,8 @@ The three counts, labelled "Open tickets", "Waiting tickets" and "Closed tickets
 
 Protagonist: Tickets.
 
+The page marks the list `data-protagonist="Tickets"` on a wrapper whose display is `contents`; its Ask, in the Filter bar: "What stands out in the tickets, and why?", or, filtered, "What do the tickets open, high priority have in common, and why?".
+
 - "How many tickets were closed in the last 30 days, against the 30 before?" — the tickets closed over 30 complete days, by when each was closed, against the 30 days before
 - "Which service had the most tickets opened in the last 90 days?" — the tickets opened over 90 complete days, by service
 - "How many tickets were opened each week this quarter, and how many of them are still in play?" — the tickets opened and those still open or waiting over 90 complete days, a week at a time

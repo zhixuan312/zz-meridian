@@ -20,6 +20,7 @@ import { Menu, MenuContent, MenuItem, MenuSeparator, MenuTrigger } from '@/compo
 import { Select } from '@/components/ui/select';
 import { Sheet, SheetClose, SheetContent } from '@/components/ui/sheet';
 import { toast, UNDO_MS } from '@/components/ui/toast';
+import { AskAbout } from '@/components/patterns/ask-about';
 import { DataTable, type Column } from '@/components/patterns/data-table';
 import { formatDate, formatRelative } from '@/lib/format-date';
 import { useLive } from '@/lib/live';
@@ -233,6 +234,7 @@ export function MembersView({ rows, now, actions, access, roles, workspace }: { 
     },
   ];
 
+  const listed = held.size ? shown.filter((m) => !held.has(m.id)) : shown;
   return (
     <PageFrame
       kicker={<>{app.name} · {app.workspace}</>}
@@ -241,14 +243,20 @@ export function MembersView({ rows, now, actions, access, roles, workspace }: { 
       actions={mayInvite ? <Button variant="primary" icon={<UserPlus />} onClick={() => { setInviteError(null); setInviting(true); }}>Invite member</Button> : undefined}
     >
       <Records>
-        <DataTable
-          caption="Members"
-          noun="members"
-          rows={held.size ? shown.filter((m) => !held.has(m.id)) : shown}
-          columns={columns}
-          rowKey={(m) => m.id}
-          empty={{ title: 'No members yet', body: `Invite the people who work in ${app.name}.`, action: mayInvite ? <Button variant="primary" size="sm" icon={<UserPlus />} onClick={() => { setInviteError(null); setInviting(true); }}>Invite member</Button> : undefined }}
-        />
+        {/* The page's protagonist, the list, marked on a wrapper whose display is `contents`. Its header counts the
+            members and holds the Ask, which the list has no filter bar to carry. */}
+        <div data-protagonist="Members" className="contents">
+          <DataTable
+            caption="Members"
+            noun="members"
+            title={`${listed.length} ${listed.length === 1 ? 'member' : 'members'}`}
+            actions={<AskAbout question="What stands out in the members, and why?" />}
+            rows={listed}
+            columns={columns}
+            rowKey={(m) => m.id}
+            empty={{ title: 'No members yet', body: `Invite the people who work in ${app.name}.`, action: mayInvite ? <Button variant="primary" size="sm" icon={<UserPlus />} onClick={() => { setInviteError(null); setInviting(true); }}>Invite member</Button> : undefined }}
+          />
+        </div>
         {/* What the table's roles and the page's own actions mean, generated from the same tables: the page's gate is
             this section's gate, so a person reading it has already been allowed to. */}
         <RolesMatrix />

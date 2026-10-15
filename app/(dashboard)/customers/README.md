@@ -65,6 +65,8 @@ Unknown:
 
 Protagonist: Customers.
 
+The page marks the list `data-protagonist="Customers"` on a wrapper whose display is `contents`; its Ask, in the Filter bar, hands the list in view to the assistant: "What stands out in our customers, and why?", or, filtered, "What do the customers on Enterprise, past due have in common, and why?".
+
 - "What did the past due customers bring in the last 30 days, plan by plan?" — the customers whose status is past due and their revenue over the last 30 complete days, by plan
 - "How much revenue does each owner on our side look after?" — the customers that have not left and their revenue, by owner, the largest first
 - "Which region do our customers' requests come from?" — the customers' requests over the last 30 complete days, by region

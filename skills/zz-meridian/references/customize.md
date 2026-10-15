@@ -192,8 +192,13 @@ Rules that make every page look like it belongs:
   ("Choosing the files…") until the change event arrives. The presses count a file chooser that opens as an answer.
 - **A page spec** next to each route (`README.md`: summary, Structure, States, Surfaces, Agents), so the next person, or
   agent, knows what the page is for. `node scripts/check.ts` requires Structure and States, and under `## Agents` a
-  `### What the agent reads` part for every page in `optional:app/(dashboard)/` and `optional:app/embed/`. A created project
-  carries none of the template's to copy, so start from this shape:
+  `### What the agent reads` part for every page in `optional:app/(dashboard)/` and `optional:app/embed/`. A page with a
+  view tool also needs `### What the agent does here`: a line `Protagonist: <name>.` naming the card worth asking
+  about, then at least three items `- "<question>" — <what the prepared query is asked>`, each a question a person on
+  the page asks that its context does not answer alone; `node scripts/check.ts` fails the spec without it or its form,
+  and `node scripts/ask.ts` asks the questions of a served product. The page marks that card
+  `data-protagonist="<name>"` on a wrapper whose display is `contents`, and gives it an Ask. Settings and the embed
+  views carry none. A created project carries none of the template's to copy, so start from this shape:
 
   ```md
   # Late pickups
@@ -213,6 +218,13 @@ Rules that make every page look like it belongs:
   ## Agents
   ### What the agent reads
   The shared context: the period, how many are late, the longest wait, and the five longest with their shops.
+
+  ### What the agent does here
+  Protagonist: Late pickups.
+
+  - "Which shop had the most late pickups this week?" — the late orders over 7 complete days, by shop
+  - "Are pickups later on weekends?" — the late orders' average wait over 30 complete days, by weekday
+  - "Which late orders waited over an hour, and where do I open them?" — the late orders whose wait is over 60 minutes, with up to 20 of them, each with its order's address
   ```
 - **A form reports unsaved changes** so the shell can ask before a person leaves: a `FormSection` does it from its `dirty`
   prop, and any other component calls `useUnsavedChanges(dirty)` from `src/components/base/shell`. Code that navigates
@@ -311,10 +323,11 @@ orders is the sample's, not the product's.
   place it is said; `gate` reads it on every page, every gated page titles itself through `gatedMetadata`, and every
   gated route's loading state passes its words through `gatedLoading` (`optional:src/data/refusal.ts`). Neither
   choice throws `notFound()` or answers anything but 200, and a person with no session is sent to sign-in under both.
-- **Each page's protagonist hands itself to the agent.** The card worth asking about, the page's first, carries an
-  Ask in its header actions whose question names what the card shows for the period and the day in view (`AskPeriod`
-  in `optional:src/views/ask-period.tsx` for a card over time, `AskAbout` otherwise), and the page spec's Agents says
-  where it stands and what it asks. The Ask renders only when the assistant is on.
+- **Each page's protagonist hands itself to the agent.** The card worth asking about, the one the page spec names on
+  its `Protagonist:` line, is marked `data-protagonist` with that name, on a wrapper whose display is `contents` so the
+  row's grid is unchanged, and carries an Ask in its header actions or its Filter bar whose question names what the
+  card shows for the period, the filters and the day in view (`AskPeriod` in `optional:src/views/ask-period.tsx` for a
+  card over time, `AskAbout` otherwise). The Ask renders only when the assistant is on.
 - **Every context is held to the budget.** Every view's context fits 2,600 characters and names its address as each
   person who may read it, at every period, for every record, pointed at every day of a view that takes one, and with
   four to eight times the records there are today. Each list a context states is capped and counted, and the cap is

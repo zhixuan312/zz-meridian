@@ -78,6 +78,8 @@ Its insights lead with the title the page is headed by, word for word. Where the
 
 Protagonist: Where it stands.
 
+The page marks the card `data-protagonist="Where it stands"` on a wrapper whose display is `contents`; its Ask is the one the Handoff line names.
+
 - "Which routes do its sampled requests hit most?" — its requests in the sampled log, by route, which says they are a sample of the latest requests
 - "How did its sampled requests end?" — its requests in the sampled log, by status class
 - "Which of its sampled requests failed, and where do I open them?" — its requests in the sampled log whose status class is 4xx or 5xx, with up to 20 of them, each with its request's address

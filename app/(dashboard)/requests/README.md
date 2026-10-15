@@ -73,6 +73,8 @@ When a half hour holds fewer than 30 requests it says the change is too few to r
 
 Protagonist: The request log.
 
+The page marks the log `data-protagonist="The request log"` on a wrapper whose display is `contents`; its Ask is the Filter bar's, which the Handoff line names.
+
 - "Which routes fail most in the sample?" — the sampled log's errors and limits and their share of the requests, by route, which says the log is a sample of the latest requests
 - "Which customer's requests are the slowest?" — the latency p95 of the sampled log, by customer
 - "How were the requests that reached a model answered, model by model?" — the sampled log's requests and errors and limits, by model

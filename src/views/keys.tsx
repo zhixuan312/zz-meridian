@@ -19,6 +19,7 @@ import { Input } from '@/components/ui/input';
 import { Segmented } from '@/components/ui/segmented';
 import { Sheet, SheetClose, SheetContent } from '@/components/ui/sheet';
 import { toast } from '@/components/ui/toast';
+import { AskAbout } from '@/components/patterns/ask-about';
 import { DataTable, type Column } from '@/components/patterns/data-table';
 import { formatDate, formatRelative } from '@/lib/format-date';
 import { useLive } from '@/lib/live';
@@ -134,17 +135,23 @@ export function KeysView({ rows, now, createKey, revokeKey, may = { create: true
             This is the only time the full key is shown. Store it in your secret manager.
           </Banner>
         ) : null}
-        {/* The row's revoke button carries a tooltip; the view brings its provider so it also stands alone, as in a test. */}
-        <Tooltip.Provider delayDuration={300} skipDelayDuration={120}>
-          <DataTable
-            caption="API keys"
-            noun="keys"
-            rows={shown}
-            columns={columns}
-            rowKey={(k) => k.id}
-            empty={{ title: 'No keys yet', body: `Create a key for each service that calls ${app.name}.`, action: may.create ? <Button variant="primary" size="sm" icon={<Plus />} onClick={() => { setCreateError(null); setCreating(true); }}>Create key</Button> : undefined }}
-          />
-        </Tooltip.Provider>
+        {/* The page's protagonist, the list, marked on a wrapper whose display is `contents`. Its header counts the keys
+            and holds the Ask, which the list has no filter bar to carry. The row's revoke button carries a tooltip; the
+            view brings its provider so it also stands alone, as in a test. */}
+        <div data-protagonist="API keys" className="contents">
+          <Tooltip.Provider delayDuration={300} skipDelayDuration={120}>
+            <DataTable
+              caption="API keys"
+              noun="keys"
+              title={`${shown.length} ${shown.length === 1 ? 'key' : 'keys'}`}
+              actions={<AskAbout question="What stands out in the API keys, and why?" />}
+              rows={shown}
+              columns={columns}
+              rowKey={(k) => k.id}
+              empty={{ title: 'No keys yet', body: `Create a key for each service that calls ${app.name}.`, action: may.create ? <Button variant="primary" size="sm" icon={<Plus />} onClick={() => { setCreateError(null); setCreating(true); }}>Create key</Button> : undefined }}
+            />
+          </Tooltip.Provider>
+        </div>
         <p className="t-caption max-w-[72ch]">Keys never expire. To rotate one, create its replacement, move your services to it, then revoke the old key: requests signed with it fail at once.</p>
       </Records>
 

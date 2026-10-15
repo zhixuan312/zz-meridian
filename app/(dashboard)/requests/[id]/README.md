@@ -59,6 +59,8 @@ The request, its status, latency (with its definition), customer and region, its
 
 Protagonist: Request.
 
+The page marks the Request card `data-protagonist="Request"` on a wrapper whose display is `contents`, so the row's grid is unchanged; its Ask, in the card's header, hands the request to the assistant: "Why did <method> <route> for <customer> answer <status> in <latency>?".
+
 - "How did the other sampled requests to this route end?" — the sampled requests to its route, by status class, which says they are a sample of the latest requests
 - "Is this route slower for some customers than others?" — the latency p95 of the sampled requests to its route, by customer
 - "How often does this route fail in each region?" — the errors and limits of the sampled requests to its route and their share, by region

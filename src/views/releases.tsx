@@ -6,6 +6,7 @@ import { Tooltip } from 'radix-ui';
 import { useShareView } from '@/components/base/use-share-view';
 import { Records } from '@/components/templates/records';
 import { Badge, type Tone } from '@/components/ui/badge';
+import { AskAbout } from '@/components/patterns/ask-about';
 import { MetricTile } from '@/components/patterns/metric-tile';
 import { DataTable, useQueryState, useSearchDraft, type Column } from '@/components/patterns/data-table';
 import { FilterBar } from '@/components/patterns/filter-bar';
@@ -32,6 +33,7 @@ export function ReleasesView({ rows, now }: { rows: ReleaseRow[]; now: string })
   const [draft, setDraft] = useSearchDraft(f.q, (q) => set({ q, page: '1' }));
   const matching = useMemo(() => matchingReleases(rows, { q: f.q, state: f.state, environment: f.environment }), [rows, f.q, f.state, f.environment]);
   const isFiltered = f.q !== '' || f.state !== 'all' || f.environment !== 'all';
+  const filters = [f.state !== 'all' && STAGE_LABEL[f.state as Stage]?.toLowerCase(), f.environment !== 'all' && `in ${f.environment}`, f.q && `matching "${f.q}"`].filter(Boolean).join(', ');
   useShareView(releasesContext(rows, now, f));
   const clear = () => set({ q: '', state: 'all', environment: 'all', page: '1' });
   const { live, ready, testing } = releaseFigures(rows);
@@ -80,31 +82,35 @@ export function ReleasesView({ rows, now }: { rows: ReleaseRow[]; now: string })
         </>
       }
     >
-      <Tooltip.Provider delayDuration={300} skipDelayDuration={120}>
-        <DataTable
-          caption="Releases"
-          noun="releases"
-          rows={matching}
-          columns={columns}
-          rowKey={(r) => r.id}
-          empty={{ title: 'No releases yet', body: 'A release appears here once a version is recorded against a service and an environment.' }}
-          state={{ sort: f.sort, dir: f.dir, page: f.page }}
-          onStateChange={set}
-          filtered={isFiltered}
-          onClearFilters={clear}
-          toolbar={
-            <FilterBar
-              search={{ value: draft, onChange: setDraft, placeholder: 'Search releases' }}
-              filters={[
-                { key: 'state', label: 'State', value: f.state, onChange: (state) => set({ state, page: '1' }), options: [{ value: 'all', label: 'All' }, ...(['testing', 'ready', 'released'] as const).map((w) => ({ value: w, label: STAGE_LABEL[w] }))] },
-                { key: 'environment', label: 'Environment', value: f.environment, onChange: (environment) => set({ environment, page: '1' }), options: [{ value: 'all', label: 'All' }, { value: 'staging', label: 'Staging' }, { value: 'production', label: 'Production' }] },
-              ]}
-              result={<>{matching.length} of {rows.length}</>}
-              onClear={clear}
-            />
-          }
-        />
-      </Tooltip.Provider>
+      {/* The page's protagonist, the list, marked on a wrapper whose display is `contents`. */}
+      <div data-protagonist="Releases" className="contents">
+        <Tooltip.Provider delayDuration={300} skipDelayDuration={120}>
+          <DataTable
+            caption="Releases"
+            noun="releases"
+            rows={matching}
+            columns={columns}
+            rowKey={(r) => r.id}
+            empty={{ title: 'No releases yet', body: 'A release appears here once a version is recorded against a service and an environment.' }}
+            state={{ sort: f.sort, dir: f.dir, page: f.page }}
+            onStateChange={set}
+            filtered={isFiltered}
+            onClearFilters={clear}
+            toolbar={
+              <FilterBar
+                ask={<AskAbout question={isFiltered ? `What do the releases ${filters} have in common, and why?` : 'What stands out in the releases, and why?'} />}
+                search={{ value: draft, onChange: setDraft, placeholder: 'Search releases' }}
+                filters={[
+                  { key: 'state', label: 'State', value: f.state, onChange: (state) => set({ state, page: '1' }), options: [{ value: 'all', label: 'All' }, ...(['testing', 'ready', 'released'] as const).map((w) => ({ value: w, label: STAGE_LABEL[w] }))] },
+                  { key: 'environment', label: 'Environment', value: f.environment, onChange: (environment) => set({ environment, page: '1' }), options: [{ value: 'all', label: 'All' }, { value: 'staging', label: 'Staging' }, { value: 'production', label: 'Production' }] },
+                ]}
+                result={<>{matching.length} of {rows.length}</>}
+                onClear={clear}
+              />
+            }
+          />
+        </Tooltip.Provider>
+      </div>
     </Records>
   );
 }

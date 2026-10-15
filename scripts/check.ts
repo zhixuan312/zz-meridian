@@ -4,7 +4,8 @@
  *   node scripts/check.ts
  *
  * - Every card folder has its README.md and preview.tsx, and every README follows the card anatomy.
- * - Every page specification exists and follows the page anatomy.
+ * - Every page specification exists and follows the page anatomy, and a page with a view tool says what the agent does
+ *   there: its protagonist and at least three questions its prepared query answers.
  * - Every token a specification names in backticks, and every var(--x) or (--x) a component uses, exists.
  * - No literal colour (hex, rgb, hsl) and no Tailwind default palette in the layers: colours come from roles.
  * - One implementation: the fixtures a collection serves are read through src/data/collections.ts, not imported again.
@@ -26,7 +27,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { importTarget, projectAliases } from './lib/aliases.ts';
 import { checkBrief, scanReferences } from './lib/context-check.ts';
-import { APP_DIR, agentPageSpec } from './lib/routes.ts';
+import { APP_DIR, agentPageSpec, agentSection, specRoute, viewToolPages } from './lib/routes.ts';
 import { keepProblems, unresolved, parseJournal, parseKeep, parseResolutions, verifiedRetirements, type Hash, type Retirement } from './lib/update-session.ts';
 import { cards } from './registry.ts';
 import { app, nav } from '../src/app.config.ts';
@@ -75,6 +76,29 @@ for (const p of PAGE_SPECS) {
   for (const s of ['## Structure', '## States']) if (!md.includes(s)) problems.push(`${p}: missing ${s}`);
   // Every console page and embed view shares a context with both agents (decision 0011), and its spec says what it says.
   if (agentPageSpec(p) && !/^## Agents\n[\s\S]*?^### What the agent reads$/m.test(md)) problems.push(`${p}: no "### What the agent reads" under ## Agents`);
+}
+
+// ── What the agent does on a page with a view tool ────────────────────────────────────────────────────
+// A page an agent can view has a prepared query, and its specification names the card worth asking about and the
+// questions a person asks there that the context does not answer alone (FR-42): the line `Protagonist: <name>.` and at
+// least three items `- "<question>" — <what the prepared query is asked>`. The page marks that card with
+// `data-protagonist="<name>"`, and `scripts/ask.ts` asks the questions. Settings, the Atlas, Docs and the embed views are
+// no view tool's page, so they are asked nothing; a project without `src/views/tools.ts` has no view tools to read.
+{
+  const pages = new Set((viewToolPages() ?? []).map((v) => v.page));
+  for (const p of PAGE_SPECS.filter((f) => agentPageSpec(f) && pages.has(specRoute(f)))) {
+    const md = read(p);
+    const section = agentSection(md);
+    if (!section || !/^## Agents$(?:\n(?!## ).*)*\n### What the agent does here$/m.test(md)) {
+      problems.push(`${p}: no "### What the agent does here" under ## Agents`);
+      continue;
+    }
+    if (!section.protagonist) problems.push(`${p}: "### What the agent does here" has no "Protagonist: <the card's name>." line`);
+    if (section.questions.length < 3) {
+      const stray = section.stray.length ? `; not in that form: ${section.stray.map((s) => s.slice(0, 60)).join(' | ')}` : '';
+      problems.push(`${p}: "### What the agent does here" has ${section.questions.length} of the three questions it needs, each - "<question>" — <what the prepared query is asked>${stray}`);
+    }
+  }
 }
 
 // ── Token names in specifications ────────────────────────────────────────────────────────────────────

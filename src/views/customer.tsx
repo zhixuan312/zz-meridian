@@ -68,30 +68,35 @@ function standingLine(data: CustomerData) {
   return c.planSince && c.previousPlan ? `On ${c.plan} since ${formatDate(c.planSince)}, after ${c.previousPlan}.` : `On ${c.plan} since it joined.`;
 }
 
-/** Why it is worth opening: where it stands and since when, and who has it on our side. */
+/**
+ * Why it is worth opening: where it stands and since when, and who has it on our side. The page's protagonist, "Where it
+ * stands", whatever its standing sentence says, marked on a wrapper whose display is `contents`.
+ */
 function Standing({ data }: { data: CustomerData }) {
   const c = data.customer;
   return (
-    <Card>
-      <CardHeader
-        title={<span className="inline-flex items-center gap-2.5"><StatusDot tone={STATUS_TONE[c.status]} />{standingOf(c)}</span>}
-        description={standingLine(data)}
-        actions={<AskAbout question={`What stands out in ${c.name}'s revenue and requests, and why?`} />}
-        wrap
-        divided
-      />
-      <CardBody className="pt-1">
-        <KeyValue
-          columns={2}
-          items={[
-            { label: 'Owner, on our side', value: c.owner },
-            { label: 'Customer since', value: formatDate(c.joined) },
-            { label: 'Region', value: c.region, mono: true },
-            { label: 'Seats', value: `${c.seats} seats` },
-          ]}
+    <div data-protagonist="Where it stands" className="contents">
+      <Card>
+        <CardHeader
+          title={<span className="inline-flex items-center gap-2.5"><StatusDot tone={STATUS_TONE[c.status]} />{standingOf(c)}</span>}
+          description={standingLine(data)}
+          actions={<AskAbout question={`What stands out in ${c.name}'s revenue and requests, and why?`} />}
+          wrap
+          divided
         />
-      </CardBody>
-    </Card>
+        <CardBody className="pt-1">
+          <KeyValue
+            columns={2}
+            items={[
+              { label: 'Owner, on our side', value: c.owner },
+              { label: 'Customer since', value: formatDate(c.joined) },
+              { label: 'Region', value: c.region, mono: true },
+              { label: 'Seats', value: `${c.seats} seats` },
+            ]}
+          />
+        </CardBody>
+      </Card>
+    </div>
   );
 }
 
