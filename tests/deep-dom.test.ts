@@ -147,7 +147,7 @@ describe('the pixel ratio a check measures at', () => {
   // A check measures geometry, and the same page gave two answers: 1x inside `pnpm verify`, which set it, and 2x for
   // the same suite run by hand, where a table measured 368px in a 356px frame that fits at 1x. One default, for both.
   it('is 1 unless DPR asks for another', async () => {
-    expect(process.env.DPR).toBeUndefined();
+    expect(process.env.DPR, 'this suite pins the default density: run it without DPR set, as `pnpm gate` and `verify` do').toBeUndefined();
     expect(await page.eval('devicePixelRatio')).toBe(1);
   });
 });

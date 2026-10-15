@@ -1,6 +1,6 @@
 // @vitest-environment node
 import { describe, expect, it } from 'vitest';
-import { journeyStart, startFor } from '../scripts/navigate.ts';
+import { journeyStart } from '../scripts/navigate.ts';
 
 // A product whose rail shows the part of the navigation the page belongs to: three workspaces of three, two and one
 // routes. The workspace menu opens each workspace's home, so a home no other rail links to is still reached: from a page
@@ -11,9 +11,11 @@ const drawn: Record<string, string[]> = { ...part(['/', '/members', '/settings']
 const homes = ['/', '/usage', '/services'];
 
 describe('where a journey to a destination starts, and how it gets there', () => {
-  it('through the rail wherever a rail links to it, from where startFor says', () => {
-    for (const route of ['/', '/members', '/settings', '/usage', '/customers']) {
-      expect(journeyStart(order, route, order, drawn, homes), route).toEqual({ from: startFor(order, route, order, drawn), via: 'rail' });
+  it('through the rail wherever a rail links to it, from the nearest route before it whose rail links to it', () => {
+    // The route to start from, written out: `startFor` is the function under test, so an expectation computed by it
+    // agreed with it whatever it did.
+    for (const [route, from] of [['/', '/members'], ['/members', '/'], ['/settings', '/members'], ['/usage', '/customers'], ['/customers', '/usage']] as const) {
+      expect(journeyStart(order, route, order, drawn, homes), route).toEqual({ from, via: 'rail' });
     }
   });
 

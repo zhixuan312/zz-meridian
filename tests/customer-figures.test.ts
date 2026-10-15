@@ -46,9 +46,12 @@ describe("the customers' figures", () => {
     expect(fact(CUSTOMER_METRICS.pastDue.label).startsWith(String(figures.pastDue.length))).toBe(true);
   });
 
-  it('are what the page draws: the view asks for them and adds nothing up itself', () => {
+  it('are what the page draws: it takes them from customerFigures and spells no total of its own', () => {
     const view = fs.readFileSync(path.join(ROOT, 'src/views/customers.tsx'), 'utf8');
-    expect(view).toMatch(/\bcustomerFigures\(/);
+    // A source check, and only that: it holds the view to calling the one function and to destructuring what it returns,
+    // and to the two spellings a total of its own would most likely take. A second total through a helper would pass
+    // it, which is why the case above compares the figures with what the context states.
+    expect(view).toMatch(/const \{[^}]*\} = customerFigures\(/);
     expect(view).not.toMatch(/\.reduce\(\(a, c\) => a \+ c\.revenue/);
     expect(view).not.toMatch(/status === 'past due'/);
   });

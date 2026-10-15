@@ -44,6 +44,19 @@ describe('GET /api/export/requests', () => {
     spy.mockRestore();
     expect(called).toBeLessThan(Math.ceil(total / 100));
   });
+  it('queries nothing at all when the request was already aborted', async () => {
+    // The case above counts pulls, and a cancelled reader stops those by itself: it holds whatever the route does with
+    // the signal. This one asks the stream for its first chunk with the signal already aborted, where the route's own
+    // check is the only thing between the request and a query.
+    const spy = vi.spyOn(requests, 'query');
+    const ac = new AbortController();
+    ac.abort();
+    const res = await get('', ac.signal);
+    const first = await res.body!.getReader().read();
+    spy.mockRestore();
+    expect(first.done).toBe(true);
+    expect(spy).not.toHaveBeenCalled();
+  });
   it('answers 401 without a session', async () => {
     session.signedIn = false;
     try { expect((await get('')).status).toBe(401); } finally { session.signedIn = true; }

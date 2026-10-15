@@ -19,11 +19,15 @@ describe('POST /api/assistant refuses what is not a thread', () => {
   });
 
   test('a thread with a proposal and a tool part waiting for approval is a valid thread', async () => {
+    Object.assign(process.env, { ASSISTANT_PROVIDER: 'openai-compatible', ASSISTANT_API_KEY: 'k', ASSISTANT_MODEL: 'm', ASSISTANT_BASE_URL: 'http://127.0.0.1:9/v1' });
     const thread = [ask('u1'), { id: 'a1', role: 'assistant', parts: [
       { type: 'data-proposal', id: 'c1', data: { title: 'Remove Alice Moreno', tone: 'critical', changes: [] } },
       { type: 'tool-remove_members', toolCallId: 'c1', state: 'approval-responded', input: { ids: ['members_13'] }, approval: { id: 'ap1', approved: true } },
     ] }];
     expect((await safeValidateUIMessages({ messages: thread })).success).toBe(true);
+    // The SDK's own schema is not what this file is about: 400 is what the route answers a thread that is not one, and
+    // the model call it makes next is not the case's subject (the base URL above is a port nothing listens on).
+    expect((await post({ messages: thread, page })).status).not.toBe(400);
   });
 });
 
