@@ -9,7 +9,7 @@ Status: beta
 | Mode | Content |
 |---|---|
 | Inline | Embed frame head (mark, "Now", Freshness, Expand, Open in ZZ Meridian); a warning Banner for the open incident, the most severe when several are open, with Ask; the Status list with its summary and without descriptions |
-| Fullscreen | The Now page's body under the embed head: parts 2 to 12, from "Services, now" to "Changes" (`app/(dashboard)/engineering/README.md`) |
+| Fullscreen | The Now page's body under the embed head: parts 2 to 13, from the Featured metric of the days inside the band to "Changes" (`app/(dashboard)/engineering/README.md`) |
 
 ## States
 

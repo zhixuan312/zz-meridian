@@ -21,8 +21,8 @@ vi.mock('next/navigation', () => ({
 import HomePage from '../app/(dashboard)/(home)/page';
 import EmbedHomePage from '../app/embed/home/page';
 import { can, collectionFor, resolveAccess, may } from '@/data/access';
-import { collections } from '@/data/collections';
-import { read } from '@/data/read';
+import { clock, collections } from '@/data/collections';
+import { aggregate, read } from '@/data/read';
 import { handedTo } from '@/lib/assistant/scoped';
 import { assistantTools } from '@/lib/assistant/tools';
 import type { AnyCollection } from '@/lib/collection';
@@ -60,7 +60,10 @@ async function assistantFor(id: string) {
   const readable = (await Promise.all(collections.map(async (c) => ((await can(scope, c.name, 'read')) ? handedTo(scope, collectionFor(scope, c.name), c.name) : null)))).filter((c): c is AnyCollection => c !== null);
   const views = (await Promise.all(viewTools.map(async (v) => ((await may(v.needs)) ? v : null)))).filter((v): v is ViewTool => v !== null);
   const guard = { authorize: async (name: string, op: 'create' | 'update' | 'remove', ids?: string[]) => can(scope, name, op, ids), invalidate: () => {} };
-  return assistantTools(readable, { write() {}, merge() {}, onError: undefined } as never, guard as never, views).tools as Record<string, { execute: (input: unknown, options: unknown) => Promise<unknown> }>;
+  // Home's prepared query, handed as the route hands the page's own: under this person's rights, read through the authorized reads.
+  const rights = { readable: new Set(readable.map((c) => c.name)), hidden: (name: string) => ((collections.find((c) => c.name === name)?.hidden ?? []) as string[]) };
+  const explore = { view: homeTool, rights, io: { aggregate, read: (name: string, q: Parameters<typeof read>[1]) => read(name, q), today: clock().toISOString().slice(0, 10) }, page: '/' };
+  return assistantTools(readable, { write() {}, merge() {}, onError: undefined } as never, guard as never, views, explore as never).tools as Record<string, { execute: (input: unknown, options: unknown) => Promise<unknown> }>;
 }
 
 describe('compute cost and gross margin, for an Owner and an Admin', () => {
@@ -75,11 +78,11 @@ describe('compute cost and gross margin, for an Owner and an Admin', () => {
       expect(contextText(context), id).toMatch(/gross margin/i);
       expect(keys(data).some((k) => /cost|margin/i.test(k)), id).toBe(true);
       const tools = await assistantFor(id);
-      expect(Object.keys(tools), id).toContain('query_costs');
+      expect(Object.keys(tools), id).toContain('explore_home');
       const viewed = (await tools.view_home.execute({ period: '30d' }, {})) as { context: string };
       expect(viewed.context, id).toMatch(/gross margin/i);
-      const queried = (await tools.query_costs.execute({ limit: 5 }, {})) as { rows: unknown[] };
-      expect(queried.rows.length, id).toBeGreaterThan(0);
+      const asked = (await tools.explore_home.execute({ source: 'costs', measures: ['compute'] }, {})) as { answer: string };
+      expect(asked.answer, id).toMatch(/USD/);
     }
   });
 });
@@ -98,6 +101,9 @@ describe('compute cost and gross margin, for a Member and a Viewer', () => {
       expect(keys(data).filter((k) => /cost|margin/i.test(k)), id).toEqual([]);
       const tools = await assistantFor(id);
       expect(Object.keys(tools).filter((t) => /cost/i.test(t)), id).toEqual([]);
+      // Named anyway, compute cost is answered as anything withheld is, and nothing is read.
+      const refused = (await tools.explore_home.execute({ source: 'costs', measures: ['compute'] }, {})) as { answer: string };
+      expect(refused.answer, id).toBe('You do not have access to that.');
       const viewed = (await tools.view_home.execute({ period: '30d' }, {})) as { context: string };
       expect(viewed.context, id).not.toMatch(NAMED);
       // The read itself refuses, whatever asks it.

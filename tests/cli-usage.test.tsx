@@ -45,6 +45,7 @@ vi.mock('@/components/charts/trend-chart', async (orig) => mark(await orig(), 'T
 vi.mock('@/components/charts/composition-bar', async (orig) => mark(await orig(), 'CompositionBar', 'composition-bar'));
 vi.mock('@/components/charts/bar-list', async (orig) => mark(await orig(), 'BarList', 'bar-list'));
 vi.mock('@/components/charts/heatmap', async (orig) => mark(await orig(), 'Heatmap', 'heatmap'));
+vi.mock('@/components/patterns/featured-metric', async (orig) => mark(await orig(), 'FeaturedMetric', 'featured-metric'));
 
 import UsagePage from '../app/(dashboard)/usage/page';
 import UsageLoading from '../app/(dashboard)/usage/loading';
@@ -91,10 +92,14 @@ describe("Usage's parts, in order, from the sample", () => {
     expect(doc.querySelectorAll('h1')).toHaveLength(1);
     expect(doc.querySelector('h1')!.textContent).toMatch(/^Usage: 1\.1B requests in 30 days/);
     expect(doc.querySelector('[role="radiogroup"][aria-label="Reporting period"]')).toBeTruthy();
-    // Requests a day; a year of requests a day a cell, joined to the Meridian; when they come, by hour; where from beside
-    // what is asked for; how it was answered.
-    expect(cards(doc)).toEqual(['trend-chart', 'heatmap:calendar:max:meridian', 'column-chart', 'bar-list', 'bar-list', 'composition-bar']);
-    const titles = ['Requests a day', 'A year of requests, a day a cell', 'The period, counted', 'When they come', 'Where from', 'What is asked for', 'How it was answered'].map((t) => titled(doc, t));
+    // The Featured metric, first after the head: the period's requests, with requests a day as its chart; a year of
+    // requests a day a cell, joined to the Meridian; when they come, by hour; where from beside what is asked for; how it
+    // was answered.
+    expect(cards(doc)).toEqual(['featured-metric', 'trend-chart', 'heatmap:calendar:max:meridian', 'column-chart', 'bar-list', 'bar-list', 'composition-bar']);
+    const featured = doc.querySelector('[data-card="featured-metric"]')!;
+    expect(featured.textContent).toContain('1.1B');
+    expect(featured.contains(doc.querySelector('[data-card="trend-chart"]'))).toBe(true);
+    const titles = ['A year of requests, a day a cell', 'The period, counted', 'When they come', 'Where from', 'What is asked for', 'How it was answered'].map((t) => titled(doc, t));
     for (let i = 1; i < titles.length; i++) expect(Boolean(titles[i - 1].compareDocumentPosition(titles[i]) & Node.DOCUMENT_POSITION_FOLLOWING), titles[i].textContent ?? '').toBe(true);
     // The calendar names the busiest day as its badge.
     expect(part(doc, 'A year of requests, a day a cell', '[data-card="heatmap"]').textContent).toMatch(/Busiest[^]*01 Oct/);

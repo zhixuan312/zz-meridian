@@ -49,10 +49,10 @@ describe("each page's protagonist carries an Ask", () => {
     expect(ask.getAttribute('aria-label')).toMatch(/last 30 days/);
   });
 
-  it('Usage: its requests a day', async () => {
+  it('Usage: its Featured metric, requests', async () => {
     const { data } = await usageTool.read({ period: '90d' });
     onConsole(<UsageBody {...data} />);
-    const [ask] = await asks(card('Requests a day'));
+    const [ask] = await asks(document.querySelector<HTMLElement>('[data-protagonist="Requests"]')!);
     expect(ask.getAttribute('aria-label')).toMatch(/requests/i);
     expect(ask.getAttribute('aria-label')).toMatch(/last 90 days/);
   });
@@ -64,11 +64,11 @@ describe("each page's protagonist carries an Ask", () => {
     expect(ask.getAttribute('aria-label')).toMatch(/service/i);
   });
 
-  it('Services: each service, 90 days', async () => {
+  it('Services: its Featured metric, uptime', async () => {
     const { data } = await servicesTool.read({});
     onConsole(<ServicesBody {...data} />);
-    const [ask] = await asks(card('Each service, 90 days'));
-    expect(ask.getAttribute('aria-label')).toMatch(/service/i);
+    const [ask] = await asks(document.querySelector<HTMLElement>('[data-protagonist="Uptime"]')!);
+    expect(ask.getAttribute('aria-label')).toMatch(/uptime/i);
   });
 
   it("A customer's page: its standing", async () => {

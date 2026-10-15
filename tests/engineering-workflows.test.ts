@@ -106,9 +106,9 @@ describe('what an agent may do to the three collections', () => {
   const { tools } = assistantTools(collections, { write() {}, merge() {}, onError: undefined } as never, guard);
   const named = Object.keys(tools);
 
-  it('is look anything up, create and change a ticket, and nothing else', () => {
-    expect(named.filter((n) => n.endsWith('_tickets')).sort()).toEqual(['create_tickets', 'query_tickets', 'update_tickets']);
-    expect(named.filter((n) => n.endsWith('_tests'))).toEqual(['query_tests']);
-    expect(named.filter((n) => n.endsWith('_releases'))).toEqual(['query_releases']);
+  it('is create and change a ticket, and nothing else: runs and releases are only read, through their pages\' prepared queries', () => {
+    expect(named.filter((n) => n.endsWith('_tickets')).sort()).toEqual(['create_tickets', 'update_tickets']);
+    expect(named.filter((n) => n.endsWith('_tests'))).toEqual([]);
+    expect(named.filter((n) => n.endsWith('_releases'))).toEqual([]);
   });
 });

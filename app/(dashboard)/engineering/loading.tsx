@@ -17,10 +17,16 @@ function LinesSkeleton({ n }: { n: number }) {
   );
 }
 
-/** The twelve parts of Now, in their shapes: the page streams them in behind its masthead, and a cold load shows them under the masthead's. */
+/** The thirteen parts of Now, in their shapes, the Featured metric's room first: the page streams them in behind its masthead, and a cold load shows them under the masthead's. */
 export function NowSkeleton() {
   return (
     <>
+      <Card className="min-h-[22rem] gap-4 p-(--card-pad)">
+        <Skeleton className="h-2.5 w-40" />
+        <Skeleton className="h-16 w-56 rounded-md" />
+        <Skeleton className="h-3 w-80 max-w-full" />
+        <Skeleton className="mt-auto h-56 w-full rounded-md" />
+      </Card>
       <Row split="2/3">
         <ChartSkeleton height="h-96" />
         <LinesSkeleton n={8} />

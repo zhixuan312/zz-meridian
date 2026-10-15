@@ -16,9 +16,11 @@ import { CompositionBar } from '@/components/charts/composition-bar';
 import { Heatmap } from '@/components/charts/heatmap';
 import { Meridian, useMeridianIndex } from '@/components/charts/meridian';
 import { TrendChart } from '@/components/charts/trend-chart';
+import { FeaturedMetric } from '@/components/patterns/featured-metric';
 import type { UsageFigures } from '@/data/usage';
 import { AXIS_FORMATTERS, formatCompact, formatDuration } from '@/lib/format';
-import { PERIOD_DAYS, PERIOD_LABEL } from '@/lib/period';
+import { formatDate } from '@/lib/format-date';
+import { PERIOD_LABEL } from '@/lib/period';
 import { ASKED, STATUS_COLOR, USAGE_PARTS as P, WHEN, shortDate, usageContext, type UsageData, type When } from './usage-context';
 import { AskPeriod } from './ask-period';
 import { Unread } from './unread';
@@ -35,26 +37,35 @@ function ShareUsage({ data }: { data: UsageData }) {
   return null;
 }
 
-/** Requests a day: the period's complete days as an area, and the day in progress as its running point. */
-function ByDay({ data, days, dates }: { data: UsageData; days: Days; dates: string[] }) {
-  const n = PERIOD_DAYS[data.period];
+/** A change against the period before, as a fraction; undefined when nothing comes before or it was zero, and the figure then draws no change. */
+const change = (now: number, before: number | null) => (before ? now / before - 1 : undefined);
+
+/**
+ * The page's protagonist, its one Featured metric: the period's requests, their change, the period's record as its
+ * finding, and requests a day with the day in progress drawn running. The caption states the exact count, about the
+ * period it names, which stays true while a day is read. Its mark is a wrapper whose display is `contents`.
+ */
+function Requests({ data, days, dates }: { data: UsageData; days: Days; dates: string[] }) {
+  const { series, running, totals } = days;
+  const period = PERIOD_LABEL[data.period].toLowerCase();
+  const points = [...series.map((d) => d.requests), ...(running ? [running.requests] : [])];
   return (
-    <Card>
-      <CardHeader
-        title={P.byDay}
-        description={`${n ? `The last ${n} complete days` : 'Every complete day kept'}${days.running ? ', and today so far' : ''}, UTC`}
-        actions={<AskPeriod period={PERIOD_LABEL[data.period].toLowerCase()} what="requests" onDay={(day) => `Why do requests on ${day} look the way they do?`} />}
-      />
-      <CardBody>
-        <TrendChart
-          label="Requests a day, the period"
-          height={220}
-          dates={dates}
-          running={days.running !== null}
-          series={[{ key: 'requests', label: 'Requests', values: [...days.series.map((d) => d.requests), ...(days.running ? [days.running.requests] : [])], kind: 'area' }]}
-        />
-      </CardBody>
-    </Card>
+    <div data-protagonist="Requests" className="contents">
+      <FeaturedMetric
+        className="w-full"
+        kicker={<>Requests · {period}</>}
+        actions={<AskPeriod period={period} what="requests" onDay={(day) => `Why do requests on ${day} look the way they do?`} />}
+        value={totals.current.requests}
+        points={points}
+        format={formatCompact}
+        delta={change(totals.current.requests, totals.previous?.requests ?? null)}
+        caption={series.length ? `${totals.current.requests.toLocaleString('en-US')} requests over the ${series.length} complete ${series.length === 1 ? 'day' : 'days'} to ${formatDate(series.at(-1)!.date)}, UTC.` : undefined}
+        finding={data.record ? { text: data.record } : undefined}
+        pointLabel={(date) => (running && date === running.date ? `${formatDate(date)} · so far` : formatDate(date))}
+      >
+        {series.length ? <TrendChart height="fill" label="Requests a day, the period" dates={dates} running={running !== null} series={[{ key: 'requests', label: 'Requests', values: points, kind: 'area' }]} /> : null}
+      </FeaturedMetric>
+    </div>
   );
 }
 
@@ -167,9 +178,10 @@ function Answered({ responses }: { responses: NonNullable<UsageData['responses']
 const isEmpty = (data: UsageData) => data.days !== null && data.days.series.length === 0 && data.calendar !== null && data.calendar.busiest === null;
 
 /**
- * Usage's parts, in order. The head is the page frame's. Each part draws what the read handed it and works nothing
- * out; a part whose read failed says so in its own place. One Meridian holds the period's days: pointing at a day in
- * requests a day, or at a day of the period in the calendar, reads it in both.
+ * Usage's parts, in order: the head is the page frame's, and the Featured metric leads the body. Each part draws what
+ * the read handed it and works nothing out; a part whose read failed says so in its own place. One Meridian holds the
+ * period's days: pointing at a day in the Featured metric's chart, or at a day of the period in the calendar, reads it
+ * in both.
  */
 export function UsageBody(data: UsageData) {
   if (isEmpty(data)) {
@@ -190,7 +202,7 @@ export function UsageBody(data: UsageData) {
     <Meridian dates={dates} day={data.day}>
       <ShareUsage data={data} />
       <Stack>
-        {days ? <ByDay data={data} days={days} dates={dates} /> : <Unread title={P.byDay} what="the days" />}
+        {days ? <Requests data={data} days={days} dates={dates} /> : <Unread title="Requests" what="the days" />}
         {calendar ? <Year calendar={calendar} /> : <Unread title={P.year} what="the history" />}
         <Row split="1/3">
           {calendar && days ? <Counted data={data} /> : <Unread title={P.counted} what={calendar ? 'the days' : 'the history'} />}

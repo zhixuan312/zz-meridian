@@ -52,9 +52,10 @@ export type NowData = {
   incidents: { open: Incident[]; latest: { incident: Incident; text: string } | null } | null;
   /**
    * The days inside the band: the last 360 complete days a state, ending on the latest (`end`), a day outside the band
-   * marked; the steady count over every complete day kept; the share of the days shown inside it; and the four facts.
+   * marked; each of those days' p95 in whole milliseconds, the Featured metric's chart; the steady count over every
+   * complete day kept; the share of the days shown inside it; and the four facts.
    */
-  band: { days: DayState[]; end: string; inside: number; of: number; share: number; facts: BandFact[] } | null;
+  band: { days: DayState[]; p95: number[]; end: string; inside: number; of: number; share: number; facts: BandFact[] } | null;
   models: NowModel[] | null;
   /** Compute in use on the latest complete day (`day`), a row a region, the fullest first. */
   compute: { day: string; regions: NowRegion[]; fullest: string | null } | null;

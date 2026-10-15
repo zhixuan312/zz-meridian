@@ -12,7 +12,7 @@ const DAY = 86_400_000;
 export const UNUSED_DAYS = 30;
 /** How many keys each list names before it counts the rest, so the context holds its budget however many keys there are. */
 const NAMED = { every: 8, idle: 5, broad: 5 } as const;
-const MORE = 'query_keys finds them';
+const MORE = 'explore_keys finds them';
 
 export function keysContext(rows: ApiKey[], now: string, scopes: readonly string[]): SharedContext {
   const at = Date.parse(now);

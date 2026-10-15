@@ -6,22 +6,23 @@ Status: beta
 
 ## Structure
 
-Twelve parts, in this order. Every chart and list is the card named, and no other part draws a Status list, an Incident card, Uptime bars, a Bar list, a Metric tile, a Column chart or an Activity feed.
+Thirteen parts, in this order. Every chart and list is the card named, the page leads with its one Featured metric, first after the head, and no other part draws a Status list, an Incident card, Uptime bars, a Bar list, a Metric tile, a Column chart or an Activity feed.
 
 | Part | Split | Pattern | Holds |
 |---|---|---|---|
 | 1. Head | | Page frame | Kicker `ZZ Meridian · Production`; the title, a sentence about the services and the releases (below), with the page's name kept in the heading; the line under it (below), then who Engineering is for (`workspaces.engineering.audience`, read from the declaration); Freshness. No action |
-| 2. Services, now | 2/3 | Card with a Status list, `run` | Every service in the team's order with its state, its last 90 days and how long it has run ("Operational for 69 days · its longest in 90"). Past eight services, the ones not operational, then the three with the longest current runs (below). Always a link to Services that names how many there are: "All 6 services" |
-| 3. Open incident | 1/3 | Incident card, under the part's own heading | The incident nobody has resolved, each update timed from its start ("at the start", "after 1.1h"), its owner and its ticket, which opens the Tickets page on it. With several, "Open incidents": one card each, the most severe first and then the newest. With none, one card says so with when the last one was resolved and how long it lasted ("the last was resolved on 17 Aug 2026 and lasted 2.4h") |
-| 4. N of M days inside the band | full | Card with Uptime bars, `lg`, and a list | Titled by its figure, "357 of 360 days inside the band". The last 360 complete days, ending on the latest complete day, a mark for each day outside the band (`facts.band` in `src/app.config.ts`); the share of the days shown inside it, read "99.17% inside the band"; then four facts: the days outside by date, the year of requests beside the range of the median day's p95, p95 on the busiest day yet, and the requests answered without an error |
-| 5. Models, now | 2/3 | Data table | A row a model over the last 30 complete days, the most requested first: its name with the route it serves under it, its requests, "p95, median day", its first token on the median day (a dash where the model streams none; the column drops when the table is under 672px), and "Errors, 5xx and 429" with their share |
-| 6. Compute in use | 1/3 | Card with a Bar list | GPU-hours used of those provisioned, a row a region, on the latest complete day, named; the fullest highlighted; each row's second line its GPUs provisioned |
-| 7. Shipping | 1/2 | Card with three lists | The releases in testing, each with what holds it ("Held by smoke on POST /v1/embeddings: failed"); the ones ready; the live version of each service. Its line counts the required checks passed of all over the releases not yet out ("4 of 7"). A link to every release |
-| 8. Work | 1/2 | Card with a list | At most six open or waiting tickets: high priority first, then those nobody owns, then the rest, the newest opened first inside each. Each opens the Tickets page on it, with its priority, its state and its owner or "Nobody owns it"; the reader's own is marked "Yours". How many more, and a link to every ticket |
-| 9. Slowest endpoints | full | Data table | Every endpoint by p95, the slowest first, with its requests and its error rate, over the 30 days the endpoints cover |
-| 10. The month | tiles | Four Metric tiles | Over the last 30 complete days: Releases out (the latest named), Tickets closed (how long each took), Runs passed (of how many, with the latest failed run as the one finding, a warning) and Incidents resolved (every duration, or the last one with its date and how long it lasted). A tile's line is at most 32 characters |
-| 11. Verification runs a day, by how they ended | 2/3 | Card with a Column chart, stacked with tones | The last 30 complete days and today so far, running: passed `neutral`, skipped `warning`, failed `critical`. A day with no run is a column of nothing. The tiles and the chart share a Meridian of the runs' days, so the finding on Runs passed points the chart at its day |
-| 12. Changes | 1/3 | Card with an Activity feed | The latest changes, newest first, live: an agent's change names the agent and the person it acted for |
+| 2. Days inside the band | full | Featured metric with a Trend chart, line, with `height="fill"` | The page's protagonist, marked `data-protagonist="Days inside the band"` on a wrapper whose display is `contents`: the days inside the band over every complete day kept, 357, its kicker naming of how many ("Days inside the band · of 360 complete days kept"); the steady fact as its finding, the line the context carries ("357 of 360 days inside the band of p95 under 350 ms and errors under 1%; outside it on 17 Aug 2026, 21 Sept 2026 and 22 Sept 2026"); and the p95 of each of the last 360 complete days as its chart. Its Ask asks what stands out in the days inside the band. With the days not read, its place says so; with none kept, it is not drawn |
+| 3. Services, now | 2/3 | Card with a Status list, `run` | Every service in the team's order with its state, its last 90 days and how long it has run ("Operational for 69 days · its longest in 90"). Past eight services, the ones not operational, then the three with the longest current runs (below). Always a link to Services that names how many there are: "All 6 services" |
+| 4. Open incident | 1/3 | Incident card, under the part's own heading | The incident nobody has resolved, each update timed from its start ("at the start", "after 1.1h"), its owner and its ticket, which opens the Tickets page on it. With several, "Open incidents": one card each, the most severe first and then the newest. With none, one card says so with when the last one was resolved and how long it lasted ("the last was resolved on 17 Aug 2026 and lasted 2.4h") |
+| 5. N of M days inside the band | full | Card with Uptime bars, `lg`, and a list | Titled by its figure, "357 of 360 days inside the band". The last 360 complete days, ending on the latest complete day, a mark for each day outside the band (`facts.band` in `src/app.config.ts`); the share of the days shown inside it, read "99.17% inside the band"; then four facts: the days outside by date, the year of requests beside the range of the median day's p95, p95 on the busiest day yet, and the requests answered without an error |
+| 6. Models, now | 2/3 | Data table | A row a model over the last 30 complete days, the most requested first: its name with the route it serves under it, its requests, "p95, median day", its first token on the median day (a dash where the model streams none; the column drops when the table is under 672px), and "Errors, 5xx and 429" with their share |
+| 7. Compute in use | 1/3 | Card with a Bar list | GPU-hours used of those provisioned, a row a region, on the latest complete day, named; the fullest highlighted; each row's second line its GPUs provisioned |
+| 8. Shipping | 1/2 | Card with three lists | The releases in testing, each with what holds it ("Held by smoke on POST /v1/embeddings: failed"); the ones ready; the live version of each service. Its line counts the required checks passed of all over the releases not yet out ("4 of 7"). A link to every release |
+| 9. Work | 1/2 | Card with a list | At most six open or waiting tickets: high priority first, then those nobody owns, then the rest, the newest opened first inside each. Each opens the Tickets page on it, with its priority, its state and its owner or "Nobody owns it"; the reader's own is marked "Yours". How many more, and a link to every ticket |
+| 10. Slowest endpoints | full | Data table | Every endpoint by p95, the slowest first, with its requests and its error rate, over the 30 days the endpoints cover |
+| 11. The month | tiles | Four Metric tiles | Over the last 30 complete days: Releases out (the latest named), Tickets closed (how long each took), Runs passed (of how many, with the latest failed run as the one finding, a warning) and Incidents resolved (every duration, or the last one with its date and how long it lasted). A tile's line is at most 32 characters |
+| 12. Verification runs a day, by how they ended | 2/3 | Card with a Column chart, stacked with tones | The last 30 complete days and today so far, running: passed `neutral`, skipped `warning`, failed `critical`. A day with no run is a column of nothing. The tiles and the chart share a Meridian of the runs' days, so the finding on Runs passed points the chart at its day |
+| 13. Changes | 1/3 | Card with an Activity feed | The latest changes, newest first, live: an agent's change names the agent and the person it acted for |
 
 The parts are one Suspense boundary, the page's body: a part with a boundary of its own would be written after the others.
 
@@ -50,16 +51,16 @@ The Status list never folds. Up to eight services "Services, now" hands it every
 
 ### At 390px
 
-Every row stacks in reading order, "Services, now" first; each Status list row drops its strip under the name. The four tiles are one column, each a row of its name, its line and its figure. Both Data tables become cards (the model or the endpoint, then its requests, its p95 and its errors), and no part scrolls sideways. The two long titles, the band's and the runs', wrap rather than being cut.
+Every row stacks in reading order, the Featured metric first, then "Services, now"; each Status list row drops its strip under the name. The four tiles are one column, each a row of its name, its line and its figure. Both Data tables become cards (the model or the endpoint, then its requests, its p95 and its errors), and no part scrolls sideways. The two long titles, the band's and the runs', wrap rather than being cut.
 
 ## States
 
 | State | What shows |
 |---|---|
-| Loading | `loading.tsx`: the parts' shapes under a masthead that takes the room the page's takes, so the body does not move when the page arrives. `LoadingPage` draws the kicker, the heading that holds "Now", read out and not drawn, with the sentence's block (`sentence`), the room of the line under the title (`lead`) and the freshness. The page's own fallbacks take the same room Under `refusal: 'absent'` the masthead names nothing (`gatedLoading`), since it is drawn before the gate answers. |
+| Loading | `loading.tsx`: the parts' shapes, the Featured metric's room first, under a masthead that takes the room the page's takes, so the body does not move when the page arrives. `LoadingPage` draws the kicker, the heading that holds "Now", read out and not drawn, with the sentence's block (`sentence`), the room of the line under the title (`lead`) and the freshness. The page's own fallbacks take the same room Under `refusal: 'absent'` the masthead names nothing (`gatedLoading`), since it is drawn before the gate answers. |
 | Empty (nothing has arrived yet) | Every read answered and none holds a record of any part (`nothingArrived` in `src/views/now-context.ts`): the body is one card, "No services yet", no part is drawn, and the page is headed by its name |
 | No service yet, other records | The parts that have records stand, and "Services, now" says no service is monitored yet |
-| Partial (a read failed) | That part's card, with its title, says what could not be read ("The tickets could not be read") in its own place, and every other part stands; a tile whose figure could not be read shows a dash. The context names what could not be read |
+| Partial (a read failed) | That part's card, with its title, says what could not be read ("The tickets could not be read") in its own place, and every other part stands. The days are said once, in the Featured metric's place: the band's part below it draws nothing then; a tile whose figure could not be read shows a dash. The context names what could not be read |
 | No open incident | "Open incident" stays and says when the last one was resolved and how long it lasted |
 | Several open incidents | "Open incidents": one card each, the most severe first |
 | No access | The product's refusal page, before any read (`FEATURES.now.needs`: `services:read`, `incidents:read`, `releases:read`, `tests:read`, `days:read`, `usage:read`, `models:read`, `compute:read`, `endpoints:read`, `tickets:read` and `activity:read`, each of which every role that reads the dashboards holds: `DASHBOARDS` in `src/data/roles.ts`) |
@@ -70,7 +71,7 @@ Every row stacks in reading order, "Services, now" first; each Status list row d
 Every figure is read on the server by the Now tool's read (`nowTool` in `src/views/tools.ts`), each collection apart from the others, so one that cannot be read leaves its part saying so (`unread` on the page's data) and the rest standing. `nowData` in `src/views/now-parts.ts` turns the rows into what the parts draw; the page works nothing out.
 
 - **The services and the incidents**: `readServices()` and `readIncidents()` in `src/data/metrics.ts`; an incident's ticket is joined to its title and the address the Tickets page finds it at.
-- **The band, its facts and the title's days**: every complete day kept (`readDays('all')`), held to `facts.band` by `steady`; the year and the requests answered are written by the functions Home writes them with.
+- **The band, its facts, the Featured metric and the title's days**: every complete day kept (`readDays('all')`), held to `facts.band` by `steady`, and each of the last 360 days' p95 in whole milliseconds for the Featured metric's chart; the year and the requests answered are written by the functions Home writes them with.
 - **The models**: the `usage` rows of the last 30 complete days, a model's p95 and first token the lower median of its days', labelled from `models`.
 - **Compute in use**: the `compute` rows of the latest complete day, a region's share its GPU-hours used over its GPUs times 24.
 - **Shipping and Releases out**: `readReleases()` in `src/data/engineering.ts`, through `releaseFigures`, `stageOf` and `unresolvedText` in `src/views/releases-context.ts`.
@@ -102,7 +103,18 @@ Its first insight is the title the page is headed by, word for word; the second,
 
 - **MCP App:** the text above as `ui/update-model-context`, with the same context as its structured part, from the inline view and from fullscreen alike.
 - **Console assistant:** this text in its prompt's `<view-context>` block, with the page's address, and the page text after it for anything the context does not cover.
-- **Handoff:** Ask on "Services, now" hands the services as they stand to the assistant: "Which service needs attention now, and why?"
+- **Handoff:** Ask on the Featured metric hands the days inside the band to the assistant: "What stands out in the days inside the band over the last 360 complete days, and why?". Ask on "Services, now" hands the services as they stand: "Which service needs attention now, and why?"
+
+### What the agent does here
+
+Protagonist: Days inside the band.
+
+- "Which months had days outside the band in the last 360 days?" — the days outside the band over every complete day kept, a month at a time
+- "On which weekday do days fall outside the band most?" — the days and the days inside the band over every complete day kept, by weekday
+- "Which model answered the most requests with the most errors over the last 30 days?" — the usage's requests and errors over 30 complete days, by model, against the 30 days before
+- "How many high-priority tickets were opened in the last 30 days, and how many are closed now?" — the tickets opened in 30 complete days where the priority is high, and those of them closed now
+
+Now's prepared query (`nowExplore` in `src/views/now-explore.ts`, set as `explore` on the Now tool) reads five sources. `days` is windowed by complete days and bucketed by week, month or weekday, with the days inside the band, a count over the `inBand` each day carries, so it is the steady fact's number, the days, and their highest p95. `models` is the usage by model, `compute` by region with the share in use, `tickets` by when each was opened, and `runs` the verification runs by when each started. A drilled day or model-day opens the page, a ticket the Tickets page on it, and a run the Tests page on its release.
 
 ## Embed view
 

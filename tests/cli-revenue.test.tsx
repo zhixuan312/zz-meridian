@@ -105,17 +105,20 @@ describe("Revenue's eight parts, in order, from the sample", () => {
     expect(doc.querySelector('h1')!.textContent).toMatch(/^Revenue: All 24 Enterprise customers sent more this week than last/);
     expect(doc.querySelector('[role="radiogroup"][aria-label="Reporting period"]')).toBeTruthy();
     const all = cards(doc);
-    // 2. Four tiles, the first with emphasis.
-    expect(all.slice(0, 4)).toEqual(['metric-tile:Revenue', 'metric-tile:Against a year ago', 'metric-tile:Best day yet', 'metric-tile:Past due']);
+    // 2. The Featured metric, first after the head: the period's revenue, with revenue a day as its chart, beside three tiles.
+    expect(all.slice(0, 5)).toEqual(['featured-metric', 'trend-chart', 'metric-tile:Against a year ago', 'metric-tile:Best day yet', 'metric-tile:Past due']);
+    const featured = doc.querySelector('[data-card="featured-metric"]')!;
+    expect(featured.textContent).toContain('$3,300,438.74');
+    expect(featured.contains(doc.querySelector('[data-card="trend-chart"]'))).toBe(true);
     // 3. Revenue a day by plan beside who pays; 4. revenue a period, by plan.
-    expect(all.slice(4, 7)).toEqual(['trend-chart', 'composition-bar', 'column-chart']);
+    expect(all.slice(5, 8)).toEqual(['trend-chart', 'composition-bar', 'column-chart']);
     // 5. Every customer, the last 14 days: eight compact tiles, the largest first.
-    const wall = all.slice(7, 15);
+    const wall = all.slice(8, 16);
     expect(wall).toHaveLength(8);
     for (const t of wall) expect(t).toMatch(/^metric-tile:/);
     expect(wall[0]).toBe('metric-tile:Northwind Labs');
     // 6. From a trial to Enterprise: a Bar list a stage; 8. what they buy beside where they are.
-    expect(all.slice(15)).toEqual(['bar-list', 'bar-list', 'bar-list', 'bar-list', 'bar-list', 'bar-list']);
+    expect(all.slice(16)).toEqual(['bar-list', 'bar-list', 'bar-list', 'bar-list', 'bar-list', 'bar-list']);
     // The parts' titles stand in the specification's order.
     const titles = ['Who pays', 'Every customer, the last 14 days', 'From a trial to Enterprise', 'Worth a look', 'What they buy', 'Where they are'].map((t) => titled(doc, t));
     for (let i = 1; i < titles.length; i++) expect(Boolean(titles[i - 1].compareDocumentPosition(titles[i]) & Node.DOCUMENT_POSITION_FOLLOWING), titles[i].textContent ?? '').toBe(true);
@@ -167,7 +170,7 @@ describe("Revenue's eight parts, in order, from the sample", () => {
 describe("Revenue's period control", () => {
   it('moves what is read from the daily records and no card about customers', async () => {
     const [week, month] = [await served('7d'), await served('30d')];
-    const tile = (doc: Document) => doc.querySelector('[data-card="metric-tile"][data-label="Revenue"]')!.textContent;
+    const tile = (doc: Document) => doc.querySelector('[data-card="featured-metric"]')!.textContent;
     expect(tile(week)).not.toBe(tile(month));
     for (const title of ['Every customer, the last 14 days']) expect(part(week, title, '[data-card]').textContent).toBe(part(month, title, '[data-card]').textContent);
     expect(ladder(week).textContent).toBe(ladder(month).textContent);

@@ -565,10 +565,10 @@ describe("a list a context states names its first, in the page's order, and coun
     const c = keysContext(rows, DEMO_NOW.toISOString(), SCOPES);
     const every = c.facts.find((f) => f.label === 'Every key')!.value;
     expect(every.split('; ').slice(0, 8).map((k) => k.slice(0, k.indexOf(' (')))).toEqual(rows.slice(0, 8).map((k) => k.name));
-    expect(every.endsWith(`; and ${rows.length - 8} more (query_keys finds them)`)).toBe(true);
+    expect(every.endsWith(`; and ${rows.length - 8} more (explore_keys finds them)`)).toBe(true);
     const named = (re: RegExp) => c.insights.find((i) => re.test(i.text))!.text;
-    expect(named(/not been used/)).toMatch(/^12 live keys have not been used for 30 days or more: Forgotten 1 \(never used, owner [^)]+\)(; Forgotten [2-5] \(never used, owner [^)]+\)){4}; and 7 more \(query_keys finds them\)\.$/);
-    expect(named(/every scope/)).toBe('Forgotten 1; Forgotten 2; Forgotten 3; Forgotten 4; Forgotten 5; and 7 more (query_keys finds them) are live keys with every scope; a narrower key limits what a leak can reach.');
+    expect(named(/not been used/)).toMatch(/^12 live keys have not been used for 30 days or more: Forgotten 1 \(never used, owner [^)]+\)(; Forgotten [2-5] \(never used, owner [^)]+\)){4}; and 7 more \(explore_keys finds them\)\.$/);
+    expect(named(/every scope/)).toBe('Forgotten 1; Forgotten 2; Forgotten 3; Forgotten 4; Forgotten 5; and 7 more (explore_keys finds them) are live keys with every scope; a narrower key limits what a leak can reach.');
     expect(contextText(c).length).toBeLessThanOrEqual(BUDGET);
   });
 
@@ -579,8 +579,8 @@ describe("a list a context states names its first, in the page's order, and coun
     const c = membersContext(rows, DEMO_NOW.toISOString());
     const everyone = c.facts.find((f) => f.label === 'Everyone')!.value;
     expect(everyone.split('; ').slice(0, 24).map((m) => m.slice(0, m.indexOf(' (')))).toEqual(rows.slice(0, 24).map((m) => m.name));
-    expect(everyone.endsWith(`; and ${rows.length - 24} more (query_members finds them)`)).toBe(true);
-    for (const re of [/not been seen/, /unanswered/]) expect(c.insights.find((i) => re.test(i.text))!.text).toMatch(/: [^;]+; [^;]+; [^;]+; and \d+ more \(query_members finds them\)\.$/);
+    expect(everyone.endsWith(`; and ${rows.length - 24} more (explore_members finds them)`)).toBe(true);
+    for (const re of [/not been seen/, /unanswered/]) expect(c.insights.find((i) => re.test(i.text))!.text).toMatch(/: [^;]+; [^;]+; [^;]+; and \d+ more \(explore_members finds them\)\.$/);
     expect(contextText(c).length).toBeLessThanOrEqual(BUDGET);
   });
 });

@@ -15,7 +15,6 @@ import { HOME_METRICS, NO_PREVIOUS, change } from './home-context';
 
 /** Each part's title, as its card is headed. The context names the parts by the same words. */
 export const USAGE_PARTS = {
-  byDay: 'Requests a day',
   year: 'A year of requests, a day a cell',
   counted: 'The period, counted',
   when: 'When they come',
@@ -41,6 +40,8 @@ export type UsageData = {
   day: string | null;
   /** The page's title and the facts of the period, worked out on the server from every complete day kept (`usageHead`). */
   head: PageHead;
+  /** The period's record when it is the busiest of its length yet, the Featured metric's finding; null otherwise. */
+  record: string | null;
   /** The line under the title: requests a day, the share answered with an error and the median day's p95 (`usageLine`). */
   line: string | null;
   /** The period's complete days, oldest first and ending yesterday, their totals and those of as many days before, and the day in progress on its own. */

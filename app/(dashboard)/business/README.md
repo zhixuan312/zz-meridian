@@ -6,12 +6,12 @@ Status: beta
 
 ## Structure
 
-Eight parts, in this order. Every chart is the card named, and the page has no Featured metric.
+Eight parts, in this order. Every chart is the card named, and the page leads with its one Featured metric, first after the head.
 
 | Part | Split | Pattern | Holds |
 |---|---|---|---|
 | 1. Head | | Page frame | Kicker `ZZ Meridian · Production`; the title, a sentence for the period chosen (below), with the page's name kept in the heading; the line under it (below), then who Business is for (`workspaces.business.audience`, read from the declaration); freshness, period select (7D, 30D, 90D, All), Export (the period's days, a day's revenue and its revenue by plan, as a CSV) |
-| 2. Four tiles | tiles | Four Metric tiles | `Revenue` (emphasis: the period's revenue, its change on the period before, a point a day, the record as its finding when one holds); `Against a year ago` (the change, signed, with the window it is against named in its line: "08 Oct–06 Nov 2025, first kept"); `Best day yet` (the best complete day kept, its day and how many of the ten best days kept fall in the period: "1 Oct · 7 of the 10 best days"); `Past due` (how many, and their share of the revenue of the last 30 days, naming no customer: "1.3% of 30 days' revenue"). A tile's line is one line of a four-up tile, at most 32 characters; the context says each in full |
+| 2. Revenue, beside three tiles | 2/3 | Featured metric with a Trend chart, area, with `height="fill"`; three Metric tiles stacked beside it | The page's protagonist, marked `data-protagonist="Revenue"` on a wrapper whose display is `contents`: the period's revenue (`formatCost`), its change on the period before, the record as its finding when one holds ("The highest 30 days of revenue yet: $3,300,438.74, the 3rd record in a row"), and revenue a day with the day in progress `running`, on the page's Meridian, its pill saying "so far" on that day. The hero rounds a figure past nine characters ("$3.3M"), so the caption states it in full over the days it names: "$3,300,438.74 over the 30 complete days to 02 Oct 2026." Its Ask asks about revenue over the period, or about the day the Meridian points at. Beside it, `Against a year ago` (the change, signed, with the window it is against named in its line: "08 Oct–06 Nov 2025, first kept"); `Best day yet` (the best complete day kept, its day and how many of the ten best days kept fall in the period: "1 Oct · 7 of the 10 best days"); `Past due` (how many, and their share of the revenue of the last 30 days, naming no customer: "1.3% of 30 days' revenue"). A tile's line is at most 32 characters; the context says each in full |
 | 3. Revenue a day by plan, Who pays | 2/3 | Card with a stacked Trend chart; card with a Composition bar | The period's complete days by the plan of who paid, Enterprise at the bottom, the day in progress `running`; each plan's share of the period's revenue, `stacked` so each plan is the colour the stacked charts draw it, each plan named with how many customers it has, trials included ("Scale · 82"; the ladder counts its trials apart) |
 | 4. Revenue a period, by plan | full | Card with a stacked Column chart, on a Meridian of its own | One column a whole window of the period's length kept, counted back from yesterday (Home's year's windows: 51 of 7 days, 12 of 30, 4 of 90, one of All), Enterprise at the bottom, each column's total at rest while it is 36px wide |
 | 5. Every customer, the last 14 days | full | Card with a Segmented control and eight compact Metric tiles | The order, `Largest`, `Fell this week` or `Growing fastest`, Largest first; "N of M sent more this week than last" over every customer that has not left; the eight the order picks, each tile its name, its change this week against last, what it paid in 30 days and its plan, and its 14 days, the whole tile one link to `/customers/<id>`; a footer link to `/customers` |
@@ -23,7 +23,7 @@ The eight parts are one Suspense boundary, the page's body: a part with a bounda
 
 ### The period
 
-The period control moves what is read from the daily records: the title's revenue and its record, the tiles Revenue, Against a year ago and Best day yet, revenue a day by plan, who pays, revenue a period by plan and what they buy. Every part about customers reads the window a customer's figures cover and names it: 30 complete days for what a customer paid and sent, 14 for its trend, the last 7 against the 7 before for this week; the ladder's count is of the last 30 complete days; where they are is the regions' 30 days. A period is N complete days counted back from yesterday, or every complete day kept; the day in progress is counted in nothing and drawn as running.
+The period control moves what is read from the daily records: the title's revenue and its record, the Featured metric, the tiles Against a year ago and Best day yet, revenue a day by plan, who pays, revenue a period by plan and what they buy. Every part about customers reads the window a customer's figures cover and names it: 30 complete days for what a customer paid and sent, 14 for its trend, the last 7 against the 7 before for this week; the ladder's count is of the last 30 complete days; where they are is the regions' 30 days. A period is N complete days counted back from yesterday, or every complete day kept; the day in progress is counted in nothing and drawn as running.
 
 **Against a year ago** compares the period with the same days 52 weeks (364 days) before when every one of them is kept. The sample keeps 360 complete days, so that window is kept at no period, and the tile compares the period with the earliest whole window of its length kept, naming it: its line reads "08 Oct–06 Nov 2025, first kept", and the context "against 08 Oct to 06 Nov 2025, the first 30 days kept" (7 days compares with a week 353 days earlier, 30 days with a window 330 days earlier, 90 days with one 270 days earlier). With All no earlier whole window exists: the tile shows a dash and says so. A figure is never compared with a window it does not name.
 
@@ -46,17 +46,17 @@ One customer short and a set is not stated: the rule tries the next. In the samp
 
 One line, worked out by `revenueLine`: the customers that have not left, how many are on a trial and how many past due, and the plan that brings the most of the period's revenue with its share. In the sample at 30 days: "320 customers, 14 on a trial and 10 past due; Enterprise brings 62.1% of the revenue of the last 30 days." A clause whose figures could not be read is left out.
 
-Below 1024px every row stacks. The four tiles are two across from 34rem of their row and four from 62rem, one at 390px; the wall is two compact tiles across, four from 48rem; the ladder's stages are two across from 1024px. At 390px a Bar list hides its rows' lines, and the actions wrap under the line: the period select, then Export.
+Below 64rem (896px) every row stacks, the Featured metric first. The three tiles beside it stand in a column from 64rem, three across from 48rem (672px) and one column below it; the wall is two compact tiles across, four from 48rem of its card; the ladder's stages are two across from 64rem. At 390px a Bar list hides its rows' lines, and the actions wrap under the line: the period select, then Export.
 
 ## States
 
 | State | What shows |
 |---|---|
 | Loading | `loading.tsx`: the eight parts' shapes under a masthead that takes the room the page's takes, so the body does not move when the page arrives. `LoadingPage` draws the kicker, the heading that holds "Revenue", read out and not drawn, with the sentence's block (`sentence`), the room of the line under the title (`lead`), the freshness, and the period control and Export where they will stand (`PeriodActionsRoom` in `src/views/period-actions.tsx`). The page's own fallbacks take the same room Under `refusal: 'absent'` the masthead names nothing (`gatedLoading`), since it is drawn before the gate answers. |
-| Empty (no customer and no complete day kept) | The body is one card that says "Nothing has arrived yet", with a link to API keys; no tile, chart or figure is drawn, and the page is headed by its name |
-| Partial (a read failed) | That part's card, with its title, says what could not be read ("The usage by model could not be read") in its own place, and every other part stands; a tile whose figure could not be read shows a dash and "Could not be read". The days feed the tiles Revenue, Against a year ago and Best day yet and parts 3 and 4; the customers feed Past due and parts 5 to 7; the usage by model and the models feed what they buy; the regions feed where they are. The context says what could not be read |
-| No day kept yet | A part about the days says "No complete day is kept yet" in its card |
-| All time (no previous period) | The Revenue tile says "No earlier period to compare", and Against a year ago shows a dash: nothing comes before the period |
+| Empty (no customer and no complete day kept) | The body is one card that says "Nothing has arrived yet", with a link to API keys; no Featured metric, tile, chart or figure is drawn, and the page is headed by its name |
+| Partial (a read failed) | That part's card, with its title, says what could not be read ("The usage by model could not be read") in its own place, and every other part stands; a tile whose figure could not be read shows a dash and "Could not be read". The days feed the Featured metric (in its place, "The days could not be read" under its name), the tiles Against a year ago and Best day yet and parts 3 and 4; the customers feed Past due and parts 5 to 7; the usage by model and the models feed what they buy; the regions feed where they are. The context says what could not be read |
+| No day kept yet | The Featured metric draws no chart, and a part about the days says "No complete day is kept yet" in its card |
+| All time (no previous period) | The Featured metric draws no change, and Against a year ago shows a dash: nothing comes before the period |
 | No access | The product's refusal page, before any read (`FEATURES.revenue.needs`: the customers, the days, the usage by model, the models and the regions, which every role that reads customers also holds) |
 | Error | The dashboard error screen with Retry |
 
@@ -75,7 +75,7 @@ Revenue over 30 days equals Home's and the customers' revenue to the cent. Nothi
 ## Surfaces
 
 - **Console**: as above at the data width.
-- **Mobile**: one column; the four tiles one column at 390px, the wall two compact tiles across.
+- **Mobile**: one column, the Featured metric first; the three tiles one column at 390px, the wall two compact tiles across.
 - **Embed**: none.
 
 ## Agents
@@ -97,7 +97,18 @@ The period with the dates of its complete days, the windows a customer's figures
 
 - **MCP App:** no embed view; an MCP server returns this context as the `revenue` tool's text (`docs/agents.md`).
 - **Console assistant:** this text in its prompt's `<view-context>` block, with the page's address, and the page text after it for anything the context does not cover.
-- **Handoff:** Ask on "Revenue a day by plan" hands the period, or the day the Meridian points at, to the assistant: "What stands out in revenue by plan over the last 30 days, and why?"
+- **Handoff:** Ask on the Featured metric hands the period, or the day the Meridian points at, to the assistant: "What stands out in revenue over the last 30 days, and why?". Ask on "Revenue a day by plan" does the same for revenue by plan.
+
+### What the agent does here
+
+Protagonist: Revenue.
+
+- "How did revenue move a week at a time over the last 90 days?" — the days' revenue over 90 complete days, a week at a time
+- "What did Scale customers pay on each weekday over the last 30 days, against the 30 before?" — the days' Scale revenue over 30 complete days, by weekday, against the 30 days before
+- "Which model brought the most revenue in the last 90 days, and how did that move?" — the usage's revenue over 90 complete days, by model, against the 90 days before
+- "What do the customers past due pay, by plan?" — the customers whose status is past due, their revenue over the last 30 complete days, by plan
+
+Revenue's prepared query (`revenueExplore` in `src/views/revenue-explore.ts`, set as `explore` on the Revenue tool) reads three sources. `days` is windowed by complete days and bucketed by day, week, month or weekday, with revenue and each plan's revenue. `customers` has no date: each customer's figures cover the last 30 complete days, narrowed and grouped by plan, status, region and owner. `usage` is the days by model, with revenue and requests. A drilled day or model-day opens the page at every day kept, and a drilled customer its own page.
 
 ## Accessibility
 

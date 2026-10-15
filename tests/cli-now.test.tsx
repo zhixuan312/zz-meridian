@@ -71,6 +71,7 @@ vi.mock('@/components/charts/bar-list', async (orig) => mark(await orig(), 'BarL
 vi.mock('@/components/patterns/metric-tile', async (orig) => mark(await orig(), 'MetricTile', 'metric-tile'));
 vi.mock('@/components/charts/column-chart', async (orig) => mark(await orig(), 'ColumnChart', 'column-chart'));
 vi.mock('@/components/patterns/activity-feed', async (orig) => mark(await orig(), 'ActivityFeed', 'activity-feed'));
+vi.mock('@/components/patterns/featured-metric', async (orig) => mark(await orig(), 'FeaturedMetric', 'featured-metric'));
 
 import NowPage from '../app/(dashboard)/engineering/page';
 import NowLoading from '../app/(dashboard)/engineering/loading';
@@ -125,7 +126,10 @@ describe("Now's twelve parts, in order, from the sample", () => {
     expect(masthead).toMatch(/at the start/);
     expect(masthead).toMatch(/after \d/);
     expect(masthead).toMatch(/357 of 360 days/);
+    // The Featured metric, first after the head: the days inside the band over the last 360 complete days.
+    expect(doc.querySelector('[data-card="featured-metric"]')!.textContent).toMatch(/357[^]*360/);
     expect(cards(doc)).toEqual([
+      'featured-metric',
       'status-list:6',
       'incident-card:minor',
       'uptime-bars:360:3',

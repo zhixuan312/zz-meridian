@@ -45,6 +45,18 @@ function periodFacts(history: readonly DailyPoint[], days: number): Fact[] {
   ].filter((f): f is Fact => f !== null).map((f) => (f.kind === 'first' ? f : handed(f)));
 }
 
+/** The days a period covers of every day kept: its length, or every day kept where fewer are, as with All. */
+const coveredBy = (period: Period, history: readonly DailyPoint[]) => Math.min(PERIOD_DAYS[period] ?? history.length, history.length);
+
+/**
+ * The period's record for requests: the latest whole period against every earlier one of its length, or null. The
+ * title says it in its words, and the Featured metric states its line as its finding.
+ */
+function periodRecord(period: Period, history: readonly DailyPoint[]) {
+  const days = coveredBy(period, history);
+  return record(periods(history.map((d) => d.requests), days), { needs: rules.recordNeedsPeriods, what: `${inDays(days)} of requests`, format: formatCompact });
+}
+
 /**
  * What Usage states at its head, worked out on the server: its title for the period, and the facts of the period.
  * `history` is every complete day kept, oldest first and ending yesterday, or null when it could not be read; the
@@ -53,11 +65,9 @@ function periodFacts(history: readonly DailyPoint[], days: number): Fact[] {
 export function usageHead({ period, totals, history }: { period: Period; totals: { current: Totals; previous: Totals | null }; history: readonly DailyPoint[] | null }): PageHead {
   if (!history) return { title: null, facts: [], unknown: HISTORY_UNREAD };
   if (!history.length) return { title: null, facts: [] };
-  // The days the period covers: its length, or every day kept where fewer are, as with All.
-  const days = Math.min(PERIOD_DAYS[period] ?? history.length, history.length);
-  const latest = record(periods(history.map((d) => d.requests), days), { needs: rules.recordNeedsPeriods, what: `${inDays(days)} of requests`, format: formatCompact });
+  const days = coveredBy(period, history);
   return {
-    title: usageTitle({ days, requests: totals.current.requests, previous: totals.previous?.requests ?? null, record: latest }),
+    title: usageTitle({ days, requests: totals.current.requests, previous: totals.previous?.requests ?? null, record: periodRecord(period, history) }),
     facts: periodFacts(history, days),
   };
 }
@@ -97,6 +107,8 @@ export function usageData(r: UsageReads): UsageData {
     period: r.period,
     day: r.day,
     head,
+    // As the title: a record of the period's own days, so only when both were read.
+    record: days && history?.length ? periodRecord(r.period, history)?.text ?? null : null,
     line: days ? usageLine({ days: days.series.length, totals: days.totals.current }) : null,
     days,
     calendar: history && {

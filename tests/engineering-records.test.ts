@@ -205,10 +205,10 @@ describe('what an agent may do to the three collections', () => {
   const named = Object.keys(tools);
   const schemaOf = (name: string) => asSchema((tools as Record<string, { inputSchema: never }>)[name].inputSchema).jsonSchema as { properties?: Record<string, { properties?: Record<string, unknown>; required?: string[] }>; required?: string[] };
 
-  it('is look anything up, create and change a ticket, and nothing else', () => {
-    expect(named.filter((n) => n.endsWith('_tickets')).sort()).toEqual(['create_tickets', 'query_tickets', 'update_tickets']);
-    expect(named.filter((n) => n.endsWith('_tests'))).toEqual(['query_tests']);
-    expect(named.filter((n) => n.endsWith('_releases'))).toEqual(['query_releases']);
+  it('is create and change a ticket, and nothing else: runs and releases are only read, through their pages\' prepared queries', () => {
+    expect(named.filter((n) => n.endsWith('_tickets')).sort()).toEqual(['create_tickets', 'update_tickets']);
+    expect(named.filter((n) => n.endsWith('_tests'))).toEqual([]);
+    expect(named.filter((n) => n.endsWith('_releases'))).toEqual([]);
   });
 
   it('never asks an agent for what the server sets: a new ticket\'s state and its two times', () => {

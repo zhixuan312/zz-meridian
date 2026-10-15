@@ -17,7 +17,7 @@ export const QUIET_DAYS = 60;
  * members there are. Everyone is named in the page's order, newest first.
  */
 const NAMED = { everyone: 24, quiet: 3, invited: 3, changers: 5 } as const;
-const MORE = 'query_members finds them';
+const MORE = 'explore_members finds them';
 
 /** What a role does, read off its grants: the phrase per grant, in the order the roles definition reads them. */
 const CAPABILITY: readonly [Grant, string][] = [

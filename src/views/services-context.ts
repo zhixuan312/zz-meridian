@@ -51,13 +51,17 @@ export const moreOpen = (all: number, stated: number) => `And ${all - stated} mo
 const firstSentence = (text: string) => text.match(/^.*?[.!?](?=\s|$)/)?.[0] ?? text;
 
 /** The uptime the page states for its days: the mean of each service's own. */
-const meanUptime = (services: readonly Pick<Service, 'uptime'>[]) => (services.length ? services.reduce((a, s) => a + s.uptime, 0) / services.length : 0);
+export const meanUptime = (services: readonly Pick<Service, 'uptime'>[]) => (services.length ? services.reduce((a, s) => a + s.uptime, 0) / services.length : 0);
+
+/** The share of the services operational on each of their days, oldest first, the last the day in progress: the Featured metric's chart. */
+export const operationalShare = (services: readonly Pick<Service, 'days'>[]) =>
+  (services[0]?.days ?? []).map((_, i) => services.filter((s) => s.days[i] === 'operational').length / services.length);
 
 /**
  * An uptime as the page, its title and its context write it: two decimals, except that a whole one reads "100%" and an
  * uptime under one never reads as a whole one, so one that would round to "100.00%" reads "99.99%".
  */
-function formatUptime(uptime: number): string {
+export function formatUptime(uptime: number): string {
   if (uptime >= 1) return '100%';
   const said = formatPercent(uptime, 2);
   return said === formatPercent(1, 2) ? formatPercent(0.9999, 2) : said;
@@ -78,23 +82,30 @@ export function servicesTitle({ uptime, days, run: held }: { uptime: number; day
 }
 
 /**
+ * The run the page states: that of the service whose current run is the longest, the team's order deciding a tie, when
+ * it is that service's longest and does not reach the earliest day of its strip; null otherwise. The title names it,
+ * and the Featured metric states its line as its finding.
+ */
+export function longestRun(services: readonly Pick<Service, 'name' | 'days'>[]): { name: string; length: number; text: string } | null {
+  // The first in the team's order wins a tie, because a later one must be longer to replace it.
+  const runs = services.map((s) => run(s.days, 'operational', { name: s.name }));
+  const leader = runs.reduce<(typeof runs)[number]>((m, r) => (r && (!m || r.length > m.length) ? r : m), null);
+  return leader?.longest ? { name: services[runs.indexOf(leader)].name, length: leader.length, text: leader.text } : null;
+}
+
+/**
  * What Services states at its head, worked out on the server. The title's uptime is the one the page states for the
- * services' days, and its run is that of the service whose current run is the longest, the team's order deciding a
- * tie, named only when it is that service's longest and does not reach the earliest day of its strip. After it, the
- * days inside the band over every complete day kept, with `facts.band`. `history` is those days, or null when they
- * could not be read: the page is then headed by the uptime alone and the context says so. A product with no service
- * yet is headed by the page's name.
+ * services' days, and its run is the longest run (`longestRun`). After it, the days inside the band over every
+ * complete day kept, with `facts.band`. `history` is those days, or null when they could not be read: the page is then
+ * headed by the uptime alone and the context says so. A product with no service yet is headed by the page's name.
  */
 export function servicesHead({ services, history }: { services: readonly Pick<Service, 'name' | 'uptime' | 'days'>[]; history: readonly DailyPoint[] | null }): PageHead {
   const held = history && steady(history, rules.band);
   const facts = held ? [handed(held, '/services')] : [];
   const unknown = history ? {} : { unknown: 'The days could not be read, so the title states the uptime alone and no day is counted inside the band.' };
   if (!services.length) return { title: null, facts, ...unknown };
-  // The longest current run of all: the first in the team's order wins a tie, because a later one must be longer to replace it.
-  const runs = services.map((s) => run(s.days, 'operational', { name: s.name }));
-  const leader = runs.reduce<(typeof runs)[number]>((m, r) => (r && (!m || r.length > m.length) ? r : m), null);
-  const named = history && leader?.longest ? { name: services[runs.indexOf(leader)].name, length: leader.length } : null;
-  return { title: servicesTitle({ uptime: meanUptime(services), days: services[0].days.length, run: named }), facts, ...unknown };
+  const named = history && longestRun(services);
+  return { title: servicesTitle({ uptime: meanUptime(services), days: services[0].days.length, run: named || null }), facts, ...unknown };
 }
 
 /** How long a service has run, in the Status list's words: the operational days that end today, from the days its strip draws. */

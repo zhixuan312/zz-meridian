@@ -14,9 +14,10 @@
  * model, three of whose lines are matched by their shape, so a sample whose figures move still passes; the Ask on its
  * revenue card; and `view_home` for the last 90 days, whose answer is the fake model quoting the first insight of the
  * result it received (scripts/fake-llm.ts), recognised by its address and by being a line of that context, never by a
- * sentence written here. On /members, a query with no Proposal, an approved change shown without a reload and its
- * Activity line arriving on Now's "Changes" open in a second tab, a dismissed removal, a row-menu change the next query
- * finds, and a waiting Proposal expiring on reload and on moving on (from /keys); on /usage and /tests, the first
+ * sentence written here. On /members, a lookup through its prepared query (`explore_members`) with no Proposal, an
+ * approved change by the ids it drilled shown without a reload and its Activity line arriving on Now's "Changes" open in
+ * a second tab, a dismissed removal, a row-menu change the next lookup finds, and a waiting removal expiring on a reload
+ * into /keys; there, a key's revocation, a change /keys makes, expiring on moving on; on /usage and /tests, the first
  * question each page's specification lists, asked through that page's prepared query (`explore_usage`, `explore_tests`),
  * handed there and no other page's, whose answer is the fake model quoting the first group line of the result it
  * received; and the Settings switch. A product that removed one of those pages has no such flow to walk: each step says
@@ -153,6 +154,19 @@ try {
     const reach = async (href: string) => { if (await page.eval<boolean>(`!!${linkTo(href)}`)) await follow(href); else await page.open(`${base}${href}`, { width: 1440 }); };
     type Recorded = { messages?: { role: string; content: unknown; tool_call_id?: string; tool_calls?: { id: string; function: { name: string } }[] }[]; tools?: { function?: { name?: string } }[] };
     const recorded = async () => (await (await fetch(`${llm}/requests`)).json()) as Recorded[];
+    /**
+     * That the requests since `since`, all from `route`, were each handed `name` and no other page's prepared query, and
+     * that the model called it: a lookup made through the page's prepared query, read from the fake model's record.
+     */
+    const lookedUp = async (route: string, name: string, since: number, reply: string) => {
+      const requests = (await recorded()).slice(since);
+      if (!requests.length) fail(`the lookup on ${route} reached no model`);
+      for (const r of requests) {
+        const prepared = (r.tools ?? []).map((t) => t.function?.name ?? '').filter((n) => n.startsWith('explore_'));
+        if (prepared.join() !== name) fail(`a request from ${route} handed ${prepared.join(', ') || 'no prepared query'}, not ${name} alone; the reply read "${reply}"`);
+      }
+      if (!requests.at(-1)!.messages?.some((m) => m.tool_calls?.some((c) => c.function.name === name))) fail(`the lookup on ${route} did not call ${name}; the reply read "${reply}"`);
+    };
     const LOCAL = `${slug}.assistant`;
     const ABOUT_PAGE = /^This is the .+ page\.$/;
 
@@ -255,11 +269,13 @@ try {
       await press(`deepQueryAll('[role="menuitem"]').find((i) => deepText(i).includes('50 per page'))`);
       await until('every member to show', () => row('Alice Moreno'), Boolean);
 
+      const beforeLookup = (await recorded()).length;
       await ask('Which Support viewers have been inactive for more than 60 days?');
-      const listed = await until('the query result', said, (t) => t.includes('Alice Moreno') && t.includes('Ravi Patel'));
-      if ((await proposals()).length) fail(`the query raised a Proposal: ${JSON.stringify(await proposals())}`);
-      if (/Amara|Noah|Grace/.test(listed)) fail(`the query listed more than two members: "${listed}"`);
-      ok(`the query listed Alice Moreno and Ravi Patel with no Proposal ("${listed}")`);
+      const listed = await until('the lookup\'s result', said, (t) => t.includes('Alice Moreno') && t.includes('Ravi Patel'));
+      if ((await proposals()).length) fail(`the lookup raised a Proposal: ${JSON.stringify(await proposals())}`);
+      if (/Amara|Noah|Grace/.test(listed)) fail(`the lookup listed more than two members: "${listed}"`);
+      await lookedUp('/members', 'explore_members', beforeLookup, listed);
+      ok(`explore_members, handed on /members, listed Alice Moreno and Ravi Patel with no Proposal ("${listed}")`);
 
       await ask('Suspend them');
       await until('a Proposal to change two members', proposals, (t) => t.some((l) => l?.startsWith('Proposal from Assistant: Change 2 members')));
@@ -303,9 +319,11 @@ try {
       await until('the row menu', () => page.eval<boolean>(`!!deepQuery('[role="menu"]')`), Boolean);
       await press(`deepQueryAll('[role="menuitem"]').find((i) => deepText(i).trim() === 'Suspend')`);
       await until(`${who} to read Suspended`, () => row(who as string), (t) => !!t?.includes('Suspended'));
+      const beforeFound = (await recorded()).length;
       await ask('Who is suspended?');
       const found = await until(`the answer to name ${who}`, said, (t) => t.includes(who as string));
-      ok(`a member suspended from the row menu is found by the assistant's next query ("${found}")`);
+      await lookedUp('/members', 'explore_members', beforeFound, found);
+      ok(`a member suspended from the row menu is found by the assistant's next lookup through explore_members ("${found}")`);
 
       // The page context: the title and path, and the page's text, capped.
       const onMembers = (await recorded()).filter((r) => JSON.stringify(r.messages?.[0]).includes('Page: Members (/members)')).at(-1);
@@ -333,7 +351,10 @@ try {
     } else na('the thread across navigation', 'the rail has one route');
 
     if (SAMPLE.members && SAMPLE.keys) {
-      // Reload: a removal that waited is Expired with the reload reason and cannot be approved.
+      // Reload: a removal that waited is Expired with the reload reason and cannot be approved. The members' writes are
+      // handed on /members alone, so the removal is asked there.
+      await page.open(`${base}/members`, { width: 1440 });
+      if (!(await panelOpen())) await openPanel();
       await ask('Remove Ravi Patel');
       await until('a waiting removal', cards, (c) => c.length > 0 && c.at(-1)!.buttons.some((b) => b.startsWith('Approve')));
       await sleep(500);
@@ -345,15 +366,21 @@ try {
       if (afterReload.some((c) => c.buttons.some((b) => b.startsWith('Approve')))) fail('after a reload a card still offers Approve');
       ok('after a reload the thread is back and the waiting removal reads Expired with the reload reason and no Approve');
 
-      // Moved on: a new message closes whatever still waits.
+      // Moved on: a new message closes whatever still waits. On /keys the change asked for is one /keys makes, revoking a
+      // key, by the id its prepared query drills; the key is one the page offers this person to revoke.
       const before = afterReload.length;
-      await ask('Remove Ravi Patel');
-      await until('a new waiting removal', cards, (c) => c.length === before + 1 && c.at(-1)!.buttons.some((b) => b.startsWith('Approve')));
+      const key = (await until('a key the page offers to revoke', () => page.eval<string>(`deepQuery('button[aria-label^="Revoke "]', ${CONTENT})?.getAttribute('aria-label') ?? ''`), Boolean)).slice('Revoke '.length);
+      const beforeKeys = (await recorded()).length;
+      await ask('Which keys are there?');
+      const keys = await until('the keys\' lookup', said, (t) => t.includes(key));
+      await lookedUp('/keys', 'explore_keys', beforeKeys, keys);
+      await ask(`Revoke ${key}`);
+      await until('a new waiting revocation', cards, (c) => c.length === before + 1 && c.at(-1)!.buttons.some((b) => b.startsWith('Approve')));
       await ask('What is this page?');
       await until('the reply', said, (t) => t === 'This is the API keys page.');
       const closed = (await cards()).at(-1)!;
       if (!closed.text.includes('Expired') || !closed.text.includes('You moved on before approving it.') || closed.buttons.length) fail(`after moving on the waiting card reads "${closed.text}" with buttons ${JSON.stringify(closed.buttons)}`);
-      ok('asking something else closes the waiting removal as Expired with the moved-on reason');
+      ok(`asking something else closes the waiting revocation of ${key}, found through explore_keys on /keys, as Expired with the moved-on reason`);
     } else na('a waiting Proposal expiring on reload and on moving on', 'the sample Members and API keys pages are not both in this product');
 
     // Clear: the panel and the stored thread are both emptied.

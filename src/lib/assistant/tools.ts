@@ -1,6 +1,6 @@
 import { jsonSchema, tool, type JSONSchema7, type SingleToolApprovalFunction, type ToolSet, type UIMessageStreamWriter } from 'ai';
 import { z } from 'zod';
-import { patchOf, queryInput, writableFields, type AnyCollection } from '@/lib/collection';
+import { patchOf, writableFields, type AnyCollection } from '@/lib/collection';
 import { exploreSchema, runExplore, type ExploreIO, type ExploreRights } from '@/lib/explore';
 import { contextText, type ViewTool } from '@/lib/shared-context';
 
@@ -60,7 +60,7 @@ export type HandedExplore = { view: ViewTool; rights: ExploreRights; io: Explore
  * its `fixed`; a rail page's input is not, as the query has its own period and conditions.
  */
 function exploreTool({ view, rights, io, page }: HandedExplore) {
-  const query = view.explore!;
+  const query = view.explore;
   const own = view.page.includes('[') ? view.input : undefined;
   const whole = exploreSchema(query, null, own);
   return tool({
@@ -79,8 +79,10 @@ function exploreTool({ view, rights, io, page }: HandedExplore) {
 const lower = (label: string) => (/^.[A-Z]/.test(label) ? label : label.charAt(0).toLowerCase() + label.slice(1));
 
 /**
- * The assistant's tools for `collections`, and the rule that holds every change for the person's approval.
- * A rule writes the server's preview of the change to `writer` before the approval request goes out. An approval is
+ * The assistant's write tools for `collections` (`create_`, `update_` and `remove_<name>`, for what each allows and
+ * does not keep for a page), and the rule that holds every change for the person's approval. Nothing here reads a
+ * collection for the model: an agent reads through the view tools and the page's prepared query, and the route hands
+ * this the collections that query reads, so a page offers the writes of what it shows. A rule writes the server's preview of the change to `writer` before the approval request goes out. An approval is
  * only the person's consent: each execution asks `guard` again before it mutates, so a permission revoked since the
  * approval refuses the change, and invalidates the collection after it commits.
  *
@@ -95,7 +97,7 @@ export function assistantTools(collections: AnyCollection[], writer: UIMessageSt
   const tools: ToolSet = {};
   const toolApproval: Record<string, Rule> = {};
 
-  if (explore?.view.explore) tools[`explore_${explore.view.name}`] = exploreTool(explore);
+  if (explore) tools[`explore_${explore.view.name}`] = exploreTool(explore);
 
   for (const v of views) {
     tools[`view_${v.name}`] = tool({
@@ -116,15 +118,6 @@ export function assistantTools(collections: AnyCollection[], writer: UIMessageSt
     // create schema and the update tool's `set` come from this, so a page-only field is absent from the schema and —
     // because the schema is strict — refused at execution if a call names it anyway.
     const fields = writableFields(c);
-
-    tools[`query_${c.name}`] = tool({
-      description: `Look up ${c.label.toLowerCase()}: ${c.description} A field with no value matches only ne.`,
-      inputSchema: queryInput(c),
-      execute: async (input) => {
-        const { rows, total } = await c.query(input);
-        return { rows: rows.map(strip), total };
-      },
-    });
 
     /** The rows for `ids` in the order asked, or the ids the collection does not have. */
     const find = async (asked: string[]): Promise<{ rows: Row[] } | { missing: string[] }> => {

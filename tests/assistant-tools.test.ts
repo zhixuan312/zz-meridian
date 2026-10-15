@@ -3,9 +3,10 @@ import { describe, expect, test } from 'vitest';
 import { z } from 'zod';
 import { asSchema, readUIMessageStream, type UIMessage, type UIMessageChunk } from 'ai';
 import { MockLanguageModelV4 } from 'ai/test';
-import { arrayCollection } from '@/lib/collection';
+import { arrayCollection, type AnyCollection } from '@/lib/collection';
+import type { PreparedQuery } from '@/lib/explore';
 import { respond } from '@/lib/assistant/respond';
-import { assistantTools } from '@/lib/assistant/tools';
+import { assistantTools, type HandedExplore } from '@/lib/assistant/tools';
 import { collections, members } from '@/data/collections';
 
 type Person = { id: string; name: string; team: 'Support' | 'Sales' };
@@ -41,6 +42,32 @@ const scripted = (...steps: Step[]) => {
   model.calls = 0;
   return model;
 };
+/**
+ * A page's prepared query over `c`, handed as the route hands one: `c`'s `drill` columns, a filter and a facet on `team`
+ * where it has one, read straight from `c` under rights that read it and hide what it hides.
+ */
+function explored(c: AnyCollection, query: Partial<PreparedQuery['sources'][string]> = {}): HandedExplore {
+  const explore: PreparedQuery = {
+    sources: {
+      staff: {
+        collection: c.name,
+        filters: { team: { ops: ['eq', 'in'], values: ['Support', 'Sales'] } },
+        facets: ['team'],
+        measures: { people: { label: 'People', unit: 'people', definition: 'People in the test.', agg: 'count' } },
+        drill: { columns: ['id', 'name'], address: () => '/staff' },
+        cannot: 'Seats are not counted here.',
+        ...query,
+      },
+    },
+  };
+  const view = { name: 'staff', title: 'Staff', description: 'The staff.', needs: [], page: '/staff', input: z.object({}), read: async () => { throw new Error('not read here'); }, explore };
+  return {
+    view: view as never,
+    rights: { readable: new Set([c.name]), hidden: () => (c.hidden ?? []) as string[] },
+    io: { aggregate: (_, q) => c.aggregate(q), read: (_, q) => c.query(q), today: '2026-10-03' },
+    page: '/staff',
+  };
+}
 const SECRET = 's'.repeat(43);
 const NOW = new Date('2026-10-03T09:00:00Z');
 const page = { path: '/staff', title: 'Staff', text: '' };
@@ -59,33 +86,44 @@ async function message(events: any[]): Promise<UIMessage> {
 }
 
 describe('retrieval', () => {
-  test('a query runs at once: no approval, no proposal, rows in the tool output', async () => {
+  test("the page's prepared query runs at once: no approval, no proposal, its answer and rows in the tool output", async () => {
     const c = people();
-    const events = await chunks(await respond({ model: scripted(call('q1', `query_${c.name}`, { where: [{ field: 'team', op: 'eq', value: 'Support' }] }), say('Two.')), secret: SECRET, now: NOW, messages: ask('Who is in Support?'), page, guard, collections: [c] }));
+    const call1 = call('q1', 'explore_staff', { source: 'staff', measures: ['people'], where: [{ field: 'team', op: 'eq', value: 'Support' }], rows: 20 });
+    const events = await chunks(await respond({ model: scripted(call1, say('Two.')), secret: SECRET, now: NOW, messages: ask('Who is in Support?'), page, guard, collections: [], explore: explored(c) }));
     expect(events.some((e) => e.type === 'tool-approval-request')).toBe(false);
     expect(events.some((e) => e.type === 'data-proposal')).toBe(false);
     const out = events.find((e) => e.type === 'tool-output-available' && e.toolCallId === 'q1');
-    expect(out.output.total).toBe(2);
-    expect(out.output.rows.map((r: Person) => r.name)).toEqual(['Alice Moreno', 'Ravi Patel']);
+    expect(out.output.address).toBe('/staff');
+    expect(out.output.answer).toContain('People: 2 people.');
+    expect(out.output.answer.split('\n').filter((l: string) => l.startsWith('- /staff: '))).toEqual(['- /staff: id p_1, name Alice Moreno', '- /staff: id p_2, name Ravi Patel']);
   });
 
-  test('a query returns 50 rows when no limit is given, and refuses a limit above 100', async () => {
+  test('a prepared query drills at most 20 rows, and refuses more', async () => {
     const many = Array.from({ length: 120 }, (_, i) => ({ id: `p_${i + 1}`, name: `Person ${i + 1}`, team: 'Sales' as const }));
     const c = people(many);
-    const a = await chunks(await respond({ model: scripted(call('q1', `query_${c.name}`, {}), say('ok')), secret: SECRET, now: NOW, messages: ask('All'), page, guard, collections: [c] }));
+    const a = await chunks(await respond({ model: scripted(call('q1', 'explore_staff', { source: 'staff', measures: ['people'], rows: 20 }), say('ok')), secret: SECRET, now: NOW, messages: ask('All'), page, guard, collections: [], explore: explored(c) }));
     const out = a.find((e) => e.type === 'tool-output-available' && e.toolCallId === 'q1');
-    expect(out.output.rows).toHaveLength(50);
-    expect(out.output.total).toBe(120);
-    const b = await chunks(await respond({ model: scripted(call('q2', `query_${c.name}`, { limit: 101 }), say('ok')), secret: SECRET, now: NOW, messages: ask('All'), page, guard, collections: [c] }));
+    expect(out.output.answer).toContain('Rows, in order, 20 of 120:');
+    expect(out.output.answer.split('\n').filter((l: string) => l.startsWith('- /staff: '))).toHaveLength(20);
+    const b = await chunks(await respond({ model: scripted(call('q2', 'explore_staff', { source: 'staff', measures: ['people'], rows: 21 }), say('ok')), secret: SECRET, now: NOW, messages: ask('All'), page, guard, collections: [], explore: explored(c) }));
     expect(b.some((e) => e.type === 'tool-output-available' && e.toolCallId === 'q2')).toBe(false);
     expect(b.some((e) => /error/.test(e.type) && e.toolCallId === 'q2')).toBe(true);
+  });
+
+  test('a thread that carries a write this page does not hand, closed without a decision, is still answered', async () => {
+    // A removal asked on another page and expired on a reload: its tool is not handed here, and the thread goes on.
+    const c = people();
+    const expired = { id: 'a1', role: 'assistant', parts: [{ type: `tool-remove_${c.name}`, toolCallId: 'r1', state: 'output-denied', input: { ids: ['p_3'] }, approval: { id: 'x', approved: false, reason: 'The page was reloaded before anyone approved it.' } }] } as UIMessage;
+    const events = await chunks(await respond({ model: scripted(say('ok')), secret: SECRET, now: NOW, messages: [...ask('Remove Amara'), expired, ...ask('What is this page?')], page, guard, collections: [], explore: explored(c) }));
+    expect(events.filter((e) => e.type === 'text-delta').map((e) => e.delta).join('')).toBe('ok');
+    expect(events.some((e) => e.type === 'error')).toBe(false);
   });
 
   test('one reply makes at most 8 model steps', async () => {
     const c = people();
     let k = 0;
-    const model = scripted(() => call(`loop${++k}`, `query_${c.name}`, {})());
-    await (await respond({ model, secret: SECRET, now: NOW, messages: ask('Loop'), page, guard, collections: [c] })).text();
+    const model = scripted(() => call(`loop${++k}`, 'explore_staff', { source: 'staff', measures: ['people'] })());
+    await (await respond({ model, secret: SECRET, now: NOW, messages: ask('Loop'), page, guard, collections: [], explore: explored(c) })).text();
     expect(model.calls).toBe(8);
   });
 });
@@ -130,15 +168,17 @@ describe('mutations', () => {
 });
 
 describe('hidden fields', () => {
-  test('a hidden field never reaches the model: not in a query result, not a field to filter on', async () => {
+  test("a hidden field never reaches the model: not in a prepared query's rows, not a field to filter on", async () => {
     type Key = { id: string; name: string; secret: string };
     const k = arrayCollection({ name: `vault${++n}`, label: 'Vault', description: 'Keys in a test.', fields: z.object({ name: z.string(), secret: z.string() }), key: 'id', title: (r: Key) => r.name, rows: [{ id: 'k_1', name: 'Production', secret: 'sk-live-123' }], allow: ['remove'], hidden: ['secret'] });
-    const ok = await chunks(await respond({ model: scripted(call('q1', `query_${k.name}`, {}), say('ok')), secret: SECRET, now: NOW, messages: ask('Keys?'), page, guard, collections: [k] }));
+    // The page's author declared the secret anyway: the person's rights leave it out of what is offered and what is drilled.
+    const handed = explored(k, { filters: { secret: { ops: ['eq'] } }, facets: [], drill: { columns: ['id', 'name', 'secret'], address: () => '/staff' } });
+    const ok = await chunks(await respond({ model: scripted(call('q1', 'explore_staff', { source: 'staff', measures: ['people'], rows: 5 }), say('ok')), secret: SECRET, now: NOW, messages: ask('Keys?'), page, guard, collections: [k], explore: handed }));
     const out = ok.find((e) => e.type === 'tool-output-available' && e.toolCallId === 'q1');
-    expect(out.output.rows).toEqual([{ id: 'k_1', name: 'Production' }]);
+    expect(out.output.answer).toContain('- /staff: id k_1, name Production');
     expect(JSON.stringify(ok)).not.toContain('sk-live-123');
-    const bad = await chunks(await respond({ model: scripted(call('q2', `query_${k.name}`, { where: [{ field: 'secret', op: 'eq', value: 'sk-live-123' }] }), say('ok')), secret: SECRET, now: NOW, messages: ask('Keys?'), page, guard, collections: [k] }));
-    expect(bad.some((e) => e.type === 'tool-output-available' && e.toolCallId === 'q2')).toBe(false);
+    const bad = await chunks(await respond({ model: scripted(call('q2', 'explore_staff', { source: 'staff', measures: ['people'], where: [{ field: 'secret', op: 'eq', value: 'sk-live-123' }] }), say('ok')), secret: SECRET, now: NOW, messages: ask('Keys?'), page, guard, collections: [k], explore: handed }));
+    expect(bad.find((e) => e.type === 'tool-output-available' && e.toolCallId === 'q2').output.answer).toBe('You do not have access to that.');
     expect((await k.query({})).rows[0].secret).toBe('sk-live-123');
   });
 });
@@ -165,10 +205,11 @@ describe('the sample\'s tools, as an MCP server would list them', () => {
     const { tools } = assistantTools(collections, { write() {}, merge() {}, onError: undefined } as never, guard);
     const defs = Object.entries(tools).map(([name, t]: [string, any]) => ({ name, description: t.description, inputSchema: asSchema(t.inputSchema).jsonSchema as { type?: string } }));
     const named = defs.map((d) => d.name);
-    for (const t of ['query_members', 'create_members', 'update_members', 'remove_members', 'query_keys', 'remove_keys', 'query_requests']) expect(named).toContain(t);
+    for (const t of ['create_members', 'update_members', 'remove_members', 'remove_keys']) expect(named).toContain(t);
     expect(named).not.toContain('create_keys');
-    expect(named.filter((x) => x.endsWith('_requests'))).toEqual(['query_requests']);
-    expect(JSON.stringify(defs.find((d) => d.name === 'query_keys')!.inputSchema)).not.toContain('secret');
+    // Reading is the views' and the prepared queries': no collection is a tool to read.
+    expect(named.filter((x) => !/^(create|update|remove)_/.test(x))).toEqual([]);
+    expect(named.filter((x) => x.endsWith('_requests'))).toEqual([]);
     for (const d of defs) {
       expect(d.description?.length).toBeGreaterThan(10);
       expect(d.inputSchema.type).toBe('object');

@@ -1,7 +1,7 @@
 // @vitest-environment node
 import { describe, expect, test } from 'vitest';
 import { z } from 'zod';
-import { arrayCollection, queryInput } from '@/lib/collection';
+import { arrayCollection } from '@/lib/collection';
 
 type Person = { id: string; name: string; team: 'Support' | 'Sales'; seats: number; lastActive: string | null };
 const ROWS: Person[] = [
@@ -100,16 +100,7 @@ describe('changes', () => {
   });
 });
 
-describe('queryInput', () => {
-  test('fields are the key and the record fields; limit is 1 to 100, 50 when absent', () => {
-    const schema = queryInput(people());
-    expect(schema.parse({}).limit).toBe(50);
-    expect(schema.safeParse({ limit: 101 }).success).toBe(false);
-    expect(schema.safeParse({ limit: 0 }).success).toBe(false);
-    expect(schema.safeParse({ where: [{ field: 'salary', op: 'gt', value: 1 }] }).success).toBe(false);
-    expect(schema.safeParse({ where: [{ field: 'id', op: 'eq', value: 'p_1' }, { field: 'lastActive', op: 'lt', value: '2026-08-05' }] }).success).toBe(true);
-  });
-
+describe('derived fields', () => {
   test('a derived field can be filtered on and can never be set', async () => {
     type Banded = Person & { band: string };
     const c = arrayCollection<Banded, 'id'>({
@@ -120,8 +111,8 @@ describe('queryInput', () => {
       rows: structuredClone(ROWS).map((r) => ({ ...r, band: r.seats > 5 ? 'large' : 'small' })),
       allow: ['create', 'update'],
     });
-    // Readable: the query tool may name it, the same as any field.
-    expect(queryInput(c).safeParse({ where: [{ field: 'band', op: 'eq', value: 'large' }] }).success).toBe(true);
+    // Readable: a query may name it, the same as any field.
+    expect((await c.query({ where: [{ field: 'band', op: 'eq', value: 'large' }] })).rows.map((r) => r.id)).toEqual(['p_2', 'p_3']);
     // Never writable. `patchOf` builds its shape from `fields` and is strict, so a change that names a derived field
     // is refused; a create is parsed by `fields` too, which drops what the write fields do not describe rather than
     // storing it. Either way the value on the row is the data layer's, never the caller's.

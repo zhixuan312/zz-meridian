@@ -8,9 +8,10 @@ vi.mock('next/headers', () => ({
 }));
 vi.mock('next/cache', () => ({ cacheTag: () => {}, cacheLife: () => {}, updateTag: () => {}, revalidateTag: () => {}, revalidatePath: () => {}, refresh: () => {} }));
 
-import { may, resolveAccess } from '@/data/access';
+import { can, may, resolveAccess } from '@/data/access';
 import { ACTIONS, FEATURES } from '@/data/features';
-import { members } from '@/data/collections';
+import { clock, collections, members } from '@/data/collections';
+import { aggregate, read } from '@/data/read';
 import { membersFor } from '@/data/member-mutations';
 import { handedTo } from '@/lib/assistant/scoped';
 import { assistantTools } from '@/lib/assistant/tools';
@@ -34,8 +35,7 @@ describe('what the assistant may reach, by the person it acts for', () => {
     // for one: the builder only builds what it is given.
     const readOnly = { ...members, create: undefined, update: undefined, remove: undefined };
     const { tools } = assistantTools([readOnly as typeof members], writer, guard);
-    expect(Object.keys(tools).filter((n) => /^(create|update|remove)_/.test(n))).toEqual([]);
-    expect(Object.keys(tools)).toEqual(['query_members']);
+    expect(Object.keys(tools)).toEqual([]);
   });
 
   it('registers every view tool and every action for the Owner', async () => {
@@ -59,7 +59,7 @@ describe('what the assistant may reach, by the person it acts for', () => {
     jar.value = 'members_4';
     const scope = await resolveAccess();
     const handed = await handedTo(scope, membersFor(scope), 'members');
-    expect(Object.keys(assistantTools([handed], writer, guard).tools)).toEqual(['query_members']);
+    expect(Object.keys(assistantTools([handed], writer, guard).tools)).toEqual([]);
     // And the Owner, whose create is allowed, keeps it — forced to Member with no add-ons.
     jar.value = 'members_1';
     const ownerScope = await resolveAccess();
@@ -77,7 +77,7 @@ describe('what the assistant may reach, by the person it acts for', () => {
     jar.value = 'members_4';
     const member = await handedTo(await resolveAccess(), { ...members }, 'members');
     expect([member.create, member.update, member.remove]).toEqual([undefined, undefined, undefined]);
-    expect(Object.keys(assistantTools([member], writer, guard).tools)).toEqual(['query_members']);
+    expect(Object.keys(assistantTools([member], writer, guard).tools)).toEqual([]);
     // The Owner keeps them all, and a Key manager keeps only the key operations it has.
     jar.value = 'members_1';
     expect(Object.keys(assistantTools([await handedTo(await resolveAccess(), { ...members }, 'members')], writer, guard).tools)).toContain('update_members');
@@ -93,22 +93,30 @@ describe('what the assistant may reach, by the person it acts for', () => {
     expect(shapeKeys(tools as Record<string, unknown>, 'create_members')).not.toContain('addOns');
     expect(setKeys(tools as Record<string, unknown>, 'update_members')).not.toContain('role');
     expect(setKeys(tools as Record<string, unknown>, 'update_members')).not.toContain('addOns');
-    // The fields stay readable: a query still sees them.
+    // The other fields stay writable.
     expect(shapeKeys(tools as Record<string, unknown>, 'create_members')).toContain('name');
     expect([...(members.pageOnlyFields ?? [])]).toEqual(['role', 'addOns']);
   });
 
-  it('refuses an already-registered query tool once the person has been demoted', async () => {
+  it('reads nothing through an already-handed prepared query once the person has been suspended', async () => {
+    // The route hands the page's prepared query under the person's rights, reading through `aggregate()` and `read()`,
+    // which ask the grant again at the moment a call runs.
     jar.value = 'members_4';
     const scope = await resolveAccess();
-    const { tools } = assistantTools([await handedTo(scope, members, 'members')], writer, guard);
-    expect((await run(tools as Record<string, unknown>, 'query_members', {})) as unknown).toBeTruthy();
-    // The demotion lands between registration and execution: the tool that was listed must refuse at the moment it runs.
-    await members.update!(['members_4'], { role: 'Viewer' });
+    const readable = new Set<string>();
+    for (const c of collections) if (await can(scope, c.name, 'read')) readable.add(c.name);
+    const view = viewTools.find((v) => v.page === '/members')!;
+    const rights = { readable, hidden: (name: string) => ((collections.find((c) => c.name === name)?.hidden ?? []) as string[]) };
+    const explore = { view, rights, io: { aggregate, read: (name: string, q: Parameters<typeof read>[1]) => read(name, q), today: clock().toISOString().slice(0, 10) }, page: '/members' };
+    const { tools } = assistantTools([await handedTo(scope, members, 'members')], writer, guard, [], explore);
+    const call = { source: 'members', measures: ['members'], rows: 1 };
+    expect(((await run(tools as Record<string, unknown>, `explore_${view.name}`, call)) as { answer: string }).answer).toMatch(/members/);
+    // The suspension lands between handing and execution: the tool that was handed must read nothing when it runs.
+    await members.update!(['members_4'], { status: 'Suspended' });
     try {
-      await expect(run(tools as Record<string, unknown>, 'query_members', {})).rejects.toBeTruthy();
+      await expect(run(tools as Record<string, unknown>, `explore_${view.name}`, call)).rejects.toBeTruthy();
     } finally {
-      await members.update!(['members_4'], { role: 'Member' });
+      await members.update!(['members_4'], { status: 'Active' });
     }
   });
 

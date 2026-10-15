@@ -19,7 +19,7 @@ describe('a page body with no data shows its empty state, not a route error', ()
     expect(container.textContent).not.toMatch(/\$0|Revenue ·|Customers/);
   });
   it('Usage, with no complete day kept', () => {
-    const { container } = render(<UsageBody period="30d" day={null} head={{ title: null, facts: [] }} line={null} days={{ series: [], totals: { current: totals, previous: null }, running: null }} calendar={{ days: [], running: false, busiest: null }} figures={null} endpoints={[]} responses={[]} unread={[]} updatedAt={NOW} now={NOW} />);
+    const { container } = render(<UsageBody period="30d" day={null} head={{ title: null, facts: [] }} record={null} line={null} days={{ series: [], totals: { current: totals, previous: null }, running: null }} calendar={{ days: [], running: false, busiest: null }} figures={null} endpoints={[]} responses={[]} unread={[]} updatedAt={NOW} now={NOW} />);
     expect(screen.getByText('No requests have arrived yet')).toBeTruthy();
     // Said once, and no part drawn as if a request had arrived.
     expect(container.querySelectorAll('h2')).toHaveLength(0);

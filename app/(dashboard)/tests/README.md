@@ -40,18 +40,18 @@ The page has no action, no server action and no control that reruns anything: th
 
 ## Agents
 
-An agent reads the page through the tests view tool and may look runs up through the `tests` collection tools; it cannot create or change a run. The page shares its context through `testsContext` in `src/views/tests-context.ts`.
+An agent reads the page through the tests view tool and its prepared query, `explore_tests`; it cannot create or change a run. The page shares its context through `testsContext` in `src/views/tests-context.ts`.
 
 ### What the agent reads
 
-The three counts, labelled "Latest runs", "Failing now" and "Skipped now", of every run in the workspace; the list the person has filtered to (the context says when it is the latest run of each verification only), with each run's id, suite, endpoint, release, verdict, failure and age, capped at ten; and the latest runs that are failing, with why, the first five. Past each cap it says how many more there are (`query_tests` finds them). Within its budget of 2,600 characters for every persona: 2,103 in the sample, and 2,256 with four times its runs and releases.
+The three counts, labelled "Latest runs", "Failing now" and "Skipped now", of every run in the workspace; the list the person has filtered to (the context says when it is the latest run of each verification only), with each run's id, suite, endpoint, release, verdict, failure and age, capped at ten; and the latest runs that are failing, with why, the first five. Past each cap it says how many more there are (`explore_tests` finds them). Within its budget of 2,600 characters for every persona: 2,105 in the sample, and 2,258 with four times its runs and releases.
 
 - **Console assistant:** this text in its prompt's `<view-context>` block, with the page's address and query, and the page text after it for anything the context does not cover.
 - **MCP App:** no embed view; an MCP server can return this context as a tool's text (`docs/agents.md`).
 
 ### What the agent does here
 
-Protagonist: Latest runs.
+Protagonist: Verification runs.
 
 - "How many runs passed in the last seven days?" — the runs of the last 7 complete days by how they ended, against the 7 before
 - "Which suite fails most often?" — the failed runs of every complete day kept, by suite

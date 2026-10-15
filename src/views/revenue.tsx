@@ -14,6 +14,7 @@ import { ColumnChart } from '@/components/charts/column-chart';
 import { CompositionBar } from '@/components/charts/composition-bar';
 import { Meridian } from '@/components/charts/meridian';
 import { TrendChart } from '@/components/charts/trend-chart';
+import { FeaturedMetric } from '@/components/patterns/featured-metric';
 import { MetricTile } from '@/components/patterns/metric-tile';
 import { PLANS } from '@/data/sample';
 import { AXIS_FORMATTERS, FORMATTERS, formatCompact, formatCost, formatPercent } from '@/lib/format';
@@ -47,26 +48,43 @@ function NoDays({ title }: { title: string }) {
 }
 
 /**
- * The four tiles: the period's revenue (the one with emphasis, the record as its finding), the period against a year
- * ago with the window it is against named, the best day yet, and who is past due as a count and a share, naming no
- * customer. An array, so a row of tiles counts its four.
+ * The page's protagonist, its one Featured metric: the period's revenue, its change, the record as its finding and
+ * revenue a day with the day in progress drawn running. The hero rounds a figure past nine characters ("$3.3M"), so the
+ * caption states it in full, about the period it names, which stays true while a day is read. Its mark is a wrapper
+ * whose display is `contents`, so the row's grid is unchanged.
+ */
+function RevenueFigure({ days, dates, period }: { days: Days; dates: string[]; period: RevenueData['period'] }) {
+  const { revenue, running, series } = days;
+  const label = PERIOD_LABEL[period].toLowerCase();
+  const points = [...series.map((d) => d.revenue), ...(running ? [running.revenue] : [])];
+  return (
+    <div data-protagonist="Revenue" className="contents">
+      <FeaturedMetric
+        kicker={<>{M.revenue.label} · {label}</>}
+        actions={<AskPeriod period={label} what="revenue" onDay={(day) => `Why does revenue on ${day} look the way it does?`} />}
+        value={revenue.value}
+        points={points}
+        format={formatCost}
+        delta={change(revenue.value, revenue.previous) ?? undefined}
+        caption={series.length ? `${formatCost(revenue.value)} over the ${series.length} complete ${series.length === 1 ? 'day' : 'days'} to ${formatDate(series.at(-1)!.date)}.` : undefined}
+        finding={revenue.finding ? { text: revenue.finding } : undefined}
+        pointLabel={(date) => (running && date === running.date ? `${formatDate(date)} · so far` : formatDate(date))}
+      >
+        {series.length ? (
+          <TrendChart height="fill" label="Revenue a day, the period" format="cost" dates={dates} running={running !== null} series={[{ key: 'revenue', label: M.revenue.label, values: points, kind: 'area' }]} />
+        ) : null}
+      </FeaturedMetric>
+    </div>
+  );
+}
+
+/**
+ * The three tiles beside it: the period against a year ago with the window it is against named, the best day yet, and
+ * who is past due as a count and a share, naming no customer. An array, so the cell beside the figure counts its three.
  */
 function tiles(data: RevenueData) {
   const { days, customers, period } = data;
   return [
-    days ? (
-      <MetricTile
-        key="revenue"
-        label={M.revenue.label}
-        hint={M.revenue.hint}
-        value={days.revenue.value}
-        format={formatCost}
-        delta={change(days.revenue.value, days.revenue.previous)}
-        points={days.series.map((d) => d.revenue)}
-        emphasis
-        finding={days.revenue.finding ? { text: days.revenue.finding, tone: 'neutral' } : undefined}
-      />
-    ) : unreadTile(M.revenue.label, M.revenue.hint),
     days ? (
       days.yearAgo ? (
         <MetricTile key="year" label={M.yearAgo.label} hint={M.yearAgo.hint} value={days.yearAgo.change} format={signed} note={yearAgoNote(days.yearAgo, period)} />
@@ -288,7 +306,7 @@ function Regions({ data }: { data: RevenueData }) {
 const isEmpty = (data: RevenueData) => data.days !== null && data.days.series.length === 0 && data.customers !== null && data.customers.count === 0;
 
 /**
- * Revenue's eight parts, in order. The head is the page frame's. Each part draws what the read handed it and works
+ * Revenue's eight parts, in order: the head is the page frame's, and the Featured metric leads the body. Each part draws what the read handed it and works
  * nothing out; a part whose read failed says so in its own place. The wall's order is the person's, and the context
  * follows it.
  */
@@ -311,7 +329,10 @@ export function RevenueBody(data: RevenueData) {
   return (
     <Meridian dates={dates}>
       <Stack>
-        <Row split="tiles">{tiles(data)}</Row>
+        <Row split="2/3">
+          {days ? <RevenueFigure days={days} dates={dates} period={data.period} /> : <Unread title={M.revenue.label} what="the days" />}
+          <div className="grid min-w-0 gap-(--stack-gap) md:grid-cols-3 lg:flex lg:flex-col">{tiles(data)}</div>
+        </Row>
         <Row split="2/3">
           {days?.series.length ? <ByDay days={days} dates={dates} period={data.period} /> : days ? <NoDays title={M.byDay.label} /> : <Unread title={M.byDay.label} what="the days" />}
           {days?.series.length ? <WhoPays days={days} customers={customers} /> : days ? <NoDays title={M.whoPays.label} /> : <Unread title={M.whoPays.label} what="the days" />}

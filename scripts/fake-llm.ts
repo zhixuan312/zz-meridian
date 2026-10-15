@@ -11,12 +11,15 @@
  *
  * A request whose last message is a view tool's result is answered "From <its address>: <its first insight>", the
  * line quoted as the context carries it; the walk-through recognises that answer by the address and the line. A
- * prepared query's result (`explore_<view>`, `{ address, answer }`) is answered "From <its address>: <its first group
- * line>", the first line of the answer that begins `- `.
+ * prepared query's result (`explore_<view>`, `{ address, answer }`) that drilled rows is answered "<n> found: <their
+ * names>.", and one that did not "From <its address>: <its first group line>", the first line of the answer that begins
+ * `- `.
  *
- * Asked Usage's or Tests' first question, it calls that page's prepared query, but only where the request hands it:
- * a request without it is answered in words, so the walk-through, which reads the tools each request handed from
- * GET <url>/requests, names what was missing rather than the client failing on a tool it does not know.
+ * Asked a question the walk-through asks, it calls the tool a model reading the page's tools would call: Usage's and
+ * Tests' first questions and the member and key lookups through the page's prepared query, a suspension, a removal or a
+ * revocation through a write tool, by the ids the drilled rows in the history give. It calls a tool only where the
+ * request hands it: a request without it is answered in words, so the walk-through, which reads the tools each request
+ * handed from GET <url>/requests, names what was missing rather than the client failing on a tool it does not know.
  *
  * A request whose last message is the user's and contains "fail" is answered 401, with an error body that repeats the
  * bearer token it was sent: the way a provider that refuses a key can leak it.
@@ -32,14 +35,31 @@ type Reply = { text: string } | { calls: Call[] };
 const textOf = (content: unknown): string =>
   typeof content === 'string' ? content : Array.isArray(content) ? content.map((p) => (typeof p?.text === 'string' ? p.text : '')).join('') : '';
 
-/** The rows each tool result in the history returned, newest result first. */
-function rowsIn(messages: Message[]): { id: string; name: string }[][] {
-  const results: { id: string; name: string }[][] = [];
+type Row = { id: string; name: string };
+/**
+ * The rows a prepared query's answer drilled, each `- <address>: id <id>, name <name>, <column> <value>, ...`, under its
+ * `Rows, ...:` line; null for an answer that drilled none. A name may hold a comma ("Load test, October"), so it ends
+ * where the next column's name and a space begin.
+ */
+function drilled(answer: string): Row[] | null {
+  const lines = answer.split('\n');
+  const lead = lines.findIndex((l) => /^Rows, .* of \d+:$/.test(l));
+  if (lead < 0) return lines.includes('No row matches.') ? [] : null;
+  return lines.slice(lead + 1).flatMap((l) => {
+    const m = /^- .+?: id ([^,]+), name (.+?)(?=, [A-Za-z][\w.]* |$)/.exec(l);
+    return m ? [{ id: m[1], name: m[2] }] : [];
+  });
+}
+
+/** The rows each prepared query in the history drilled, newest result first. */
+function rowsIn(messages: Message[]): Row[][] {
+  const results: Row[][] = [];
   for (const m of messages) {
     if (m.role !== 'tool') continue;
     try {
       const out = JSON.parse(textOf(m.content));
-      if (Array.isArray(out?.rows)) results.unshift(out.rows);
+      const rows = typeof out?.answer === 'string' ? drilled(out.answer) : null;
+      if (rows) results.unshift(rows);
     } catch { /* a denial or an error is plain text */ }
   }
   return results;
@@ -72,8 +92,6 @@ function script(body: { messages?: Message[]; tools?: Tool[] }): Reply {
   if (last?.role === 'tool') {
     let out: unknown;
     try { out = JSON.parse(textOf(last.content)); } catch { return { text: 'Nothing changed.' }; }
-    const rows = (out as { rows?: { name?: string }[] } | null)?.rows;
-    if (Array.isArray(rows)) return { text: rows.length ? `${rows.length} found: ${rows.map((r) => r.name).join(', ')}.` : 'None found.' };
     // A view tool's result: quote the view's first insight, as a model told to quote rather than recompute would. A
     // context with no insight is quoted by its first line.
     const view = out as { address?: string; context?: string } | null;
@@ -83,10 +101,12 @@ function script(body: { messages?: Message[]; tools?: Tool[] }): Reply {
       const first = (at >= 0 && lines[at + 1]?.startsWith('- ') ? lines[at + 1] : lines[0]).replace(/^- /, '');
       return { text: `From ${view.address}: ${first}` };
     }
-    // A prepared query's answer: quote its first group line, as a model told to quote rather than recompute would. An
-    // answer with no group is quoted by its first line.
+    // A prepared query's answer: name the rows it drilled, or quote its first group line, as a model told to quote rather
+    // than recompute would. An answer with neither is quoted by its first line.
     const prepared = out as { address?: string; answer?: string } | null;
     if (typeof prepared?.answer === 'string') {
+      const rows = drilled(prepared.answer);
+      if (rows) return { text: rows.length ? `${rows.length} found: ${rows.map((r) => r.name).join(', ')}.` : 'None found.' };
       const lines = prepared.answer.split('\n');
       return { text: `From ${prepared.address}: ${(lines.find((l) => l.startsWith('- ')) ?? lines[0]).replace(/^- /, '')}` };
     }
@@ -110,28 +130,31 @@ function script(body: { messages?: Message[]; tools?: Tool[] }): Reply {
         '| Requests | `1204` |',
       ].join('\n') };
     }
+    /** The call, where the request hands its tool; otherwise the words that say it was not handed here. */
+    const handed = (c: Call): Reply => ((body.tools ?? []).some((t) => t.function?.name === c.name) ? { calls: [c] } : { text: `I was not handed ${c.name} here.` });
+    /** The drilled row a person names, newest first. */
+    const named = (name: string) => rowsIn(messages).flat().find((r) => r.name.toLowerCase() === name.toLowerCase());
     const today = /Today: (\d{4}-\d{2}-\d{2})/.exec(system)?.[1];
     if (today && /support/i.test(said) && /60 days/i.test(said)) {
       const where = [{ field: 'team', op: 'eq', value: 'Support' }, { field: 'role', op: 'eq', value: 'Viewer' }, { field: 'lastActive', op: 'lt', value: daysBefore(today, 60) }];
-      return { calls: [{ name: 'query_members', args: { where } }] };
+      return handed({ name: 'explore_members', args: { source: 'members', measures: ['members'], where, rows: 20 } });
     }
     if (/^suspend them/i.test(said)) {
       const ids = (rowsIn(messages)[0] ?? []).map((r) => r.id);
-      if (ids.length) return { calls: [{ name: 'update_members', args: { ids, set: { status: 'Suspended' } } }] };
+      if (ids.length) return handed({ name: 'update_members', args: { ids, set: { status: 'Suspended' } } });
     }
     const remove = /^remove (.+?)\.?$/i.exec(said)?.[1];
-    if (remove) {
-      const row = rowsIn(messages).flat().find((r) => r.name.toLowerCase() === remove.toLowerCase());
-      if (row) return { calls: [{ name: 'remove_members', args: { ids: [row.id] } }] };
-    }
+    const member = remove && named(remove);
+    if (member) return handed({ name: 'remove_members', args: { ids: [member.id] } });
+    const revoke = /^revoke (.+?)\.?$/i.exec(said)?.[1];
+    const key = revoke && named(revoke);
+    if (key) return handed({ name: 'remove_keys', args: { ids: [key.id] } });
     const period = /^open the home for the last (\d+) days/i.exec(said)?.[1];
-    if (period) return { calls: [{ name: 'view_home', args: { period: `${period}d` } }] };
-    if (/who is suspended/i.test(said)) return { calls: [{ name: 'query_members', args: { where: [{ field: 'status', op: 'eq', value: 'Suspended' }] } }] };
+    if (period) return handed({ name: 'view_home', args: { period: `${period}d` } });
+    if (/who is suspended/i.test(said)) return handed({ name: 'explore_members', args: { source: 'members', measures: ['members'], where: [{ field: 'status', op: 'eq', value: 'Suspended' }], rows: 20 } });
+    if (/which keys are there/i.test(said)) return handed({ name: 'explore_keys', args: { source: 'keys', measures: ['keys'], rows: 20 } });
     const explore = EXPLORES.find((e) => e.asked.test(said));
-    if (explore) {
-      const handed = (body.tools ?? []).some((t) => t.function?.name === explore.call.name);
-      return handed ? { calls: [explore.call] } : { text: `I was not handed ${explore.call.name} here.` };
-    }
+    if (explore) return handed(explore.call);
   }
 
   const title = /Page: (.+?) \(/.exec(system)?.[1];

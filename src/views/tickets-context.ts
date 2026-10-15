@@ -58,7 +58,7 @@ export function ticketsContext(rows: TicketRow[], now: string, f: TicketsState):
   const matching = matchingTickets(rows, f);
   const filters = [f.state !== 'all' && `state ${f.state}`, f.priority !== 'all' && `priority ${f.priority}`, f.q && `matching "${f.q}"`].filter(Boolean).join(', ');
   const M = TICKET_METRICS;
-  const more = 'query_tickets finds them';
+  const more = 'explore_tickets finds them';
   const facts: Fact[] = [
     { label: M.open.label, value: String(counts.open), definition: M.open.hint },
     { label: M.waiting.label, value: String(counts.waiting), definition: M.waiting.hint },

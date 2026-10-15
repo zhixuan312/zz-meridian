@@ -17,6 +17,9 @@ const IMPACT = [
   "The sample's pages are renamed.",
   "The sample's collections changed shape.",
   'The assistant walk-through looks for Home.',
+  'A collection has an `aggregate`.',
+  'A view tool has a prepared query.',
+  'The assistant has no `query_<name>` tools.',
 ];
 
 /**

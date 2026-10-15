@@ -128,8 +128,8 @@ export function revenueTitle({ days, customers, revenue, previous, all: every, r
 }
 
 /**
- * What Revenue states at its head, worked out on the server, and the period's record, which the Revenue tile states as
- * its finding. `history` is every complete day kept, oldest first and ending yesterday, or null when it could not be
+ * What Revenue states at its head, worked out on the server, and the period's record, which the Featured metric states
+ * as its finding. `history` is every complete day kept, oldest first and ending yesterday, or null when it could not be
  * read: the revenue is of the period's days, against as many before. A record compares the period with each earlier
  * whole window of its length. The "all" is tried on every customer that has not left, then on each plan, the plan
  * that brings the most revenue first.

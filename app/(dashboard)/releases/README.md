@@ -40,11 +40,11 @@ The page has no action, no server action and no control that deploys, publishes 
 
 ## Agents
 
-An agent reads the page through the releases view tool and may look releases up through the `releases` collection tools; it cannot create or change a release. The page shares its context through `releasesContext` in `src/views/releases-context.ts`.
+An agent reads the page through the releases view tool and its prepared query, `explore_releases`; it cannot create or change a release. The page shares its context through `releasesContext` in `src/views/releases-context.ts`.
 
 ### What the agent reads
 
-The three counts, labelled "Live versions", "Ready to release" and "In testing", of every release in the workspace; the live version of each service and environment; the list the person has filtered to, with each release's id, service, environment, state, verifications passed and commit, capped at ten; and, for the releases in testing, what each still waits for, the first five. The live versions are capped at ten too. Past each cap it says how many more there are (`query_releases` finds them). Within its budget of 2,600 characters for every persona: 1,842 in the sample, and 2,529 with four times its releases and their runs.
+The three counts, labelled "Live versions", "Ready to release" and "In testing", of every release in the workspace; the live version of each service and environment; the list the person has filtered to, with each release's id, service, environment, state, verifications passed and commit, capped at ten; and, for the releases in testing, what each still waits for, the first five. The live versions are capped at ten too. Past each cap it says how many more there are (`explore_releases` finds them). Within its budget of 2,600 characters for every persona: 1,842 in the sample, and 2,533 with four times its releases and their runs.
 
 - **Console assistant:** this text in its prompt's `<view-context>` block, with the page's address and query, and the page text after it for anything the context does not cover.
 - **MCP App:** no embed view; an MCP server can return this context as a tool's text (`docs/agents.md`).

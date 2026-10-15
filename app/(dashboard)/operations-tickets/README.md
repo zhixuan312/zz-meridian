@@ -44,11 +44,11 @@ Create and Move are server actions (`actions.ts`) that write through the caller'
 
 ## Agents
 
-An agent reads the page through the tickets view tool and may create and change tickets through the `tickets` collection tools, which pass the same boundary as the page's actions, so the same step is refused in both places. Its query tool reads when a ticket was closed and the incident it tracks; neither is in its create or update schema. The page shares its context through `ticketsContext` in `src/views/tickets-context.ts`.
+An agent reads the page through the tickets view tool and its prepared query, `explore_tickets`, and on this page may create and change tickets through the `tickets` write tools, which pass the same boundary as the page's actions, so the same step is refused in both places. The prepared query reads when a ticket was closed and the incident it tracks; neither is in a write tool's create or update schema. The page shares its context through `ticketsContext` in `src/views/tickets-context.ts`.
 
 ### What the agent reads
 
-The three counts, labelled "Open tickets", "Waiting tickets" and "Closed tickets", of every ticket in the workspace; the list the person has filtered to, with each ticket's id, state, priority, service, assignee and age, capped at ten; and what code found: high-priority tickets with no owner and open tickets that have not changed for seven days, the first five of each. Past each cap it says how many more there are (`query_tickets` finds them). Within its budget of 2,600 characters for every persona: 2,173 in the sample, and 2,533 with four times its tickets. It also says which steps a ticket may take.
+The three counts, labelled "Open tickets", "Waiting tickets" and "Closed tickets", of every ticket in the workspace; the list the person has filtered to, with each ticket's id, state, priority, service, assignee and age, capped at ten; and what code found: high-priority tickets with no owner and open tickets that have not changed for seven days, the first five of each. Past each cap it says how many more there are (`explore_tickets` finds them). Within its budget of 2,600 characters for every persona: 2,173 in the sample, and 2,535 with four times its tickets. It also says which steps a ticket may take.
 
 - **Console assistant:** this text in its prompt's `<view-context>` block, with the page's address and query, and the page text after it for anything the context does not cover.
 - **MCP App:** no embed view; an MCP server can return this context as a tool's text (`docs/agents.md`).

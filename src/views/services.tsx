@@ -6,15 +6,47 @@ import { ShareContext } from '@/components/base/use-share-view';
 import { Card, CardBody, CardHeader } from '@/components/ui/card';
 import { EmptyState } from '@/components/ui/empty-state';
 import { StatusDot } from '@/components/ui/status-dot';
+import { TrendChart } from '@/components/charts/trend-chart';
+import { FeaturedMetric } from '@/components/patterns/featured-metric';
 import { IncidentCard } from '@/components/patterns/incident-card';
 import { StatusList } from '@/components/patterns/status-list';
 import { unpackServices, type PackedService } from '@/components/patterns/status-list/summarise';
 import { AskAbout } from '@/components/patterns/ask-about';
-import { lastedOf, servicesContext, type ServicesData } from './services-context';
+import { formatUptime, lastedOf, longestRun, meanUptime, operationalShare, servicesContext, type ServicesData } from './services-context';
 import { Unread } from './unread';
 
-/** The page's two parts, by the titles the page and its specification name them with. */
+/** The page's two parts after its Featured metric, by the titles the page and its specification name them with. */
 const PARTS = { services: 'Each service, 90 days', incidents: 'Incidents' } as const;
+
+const DAY = 86_400_000;
+
+/**
+ * The page's protagonist, its one Featured metric: the uptime the title states, written as the title writes it, the
+ * longest run as its finding, and the share of the services operational on each day of their strips, the last the day
+ * in progress, drawn running. Its mark is a wrapper whose display is `contents`, so the stack's layout is unchanged.
+ */
+function Uptime({ services, end }: { services: ServicesData['services']; end: Date }) {
+  const share = operationalShare(services);
+  const n = share.length;
+  // The strips end today: the dates count back from it.
+  const dates = share.map((_, i) => new Date(end.getTime() - (n - 1 - i) * DAY).toISOString().slice(0, 10));
+  const run = longestRun(services);
+  return (
+    <div data-protagonist="Uptime" className="contents">
+      <FeaturedMetric
+        className="w-full"
+        kicker={`Uptime · last ${n} days`}
+        actions={<AskAbout question={`Which service is hurting uptime over the last ${n} days, and why?`} />}
+        value={meanUptime(services)}
+        format={formatUptime}
+        caption={`The mean of ${services.length} services' uptime over their last ${n} days, today included.`}
+        finding={run ? { text: run.text } : undefined}
+      >
+        <TrendChart height="fill" label="Share of the services operational, a day" format="percent" dates={dates} running series={[{ key: 'operational', label: 'Operational', values: share, kind: 'area' }]} />
+      </FeaturedMetric>
+    </div>
+  );
+}
 
 /**
  * Incidents: one list, the open ones first, newest first, each in the Incident card's card form with its owner, its
@@ -59,8 +91,8 @@ function Incidents({ incidents, end }: { incidents: NonNullable<ServicesData['in
 }
 
 /**
- * The Services page's body: each service in the team's order with its strip and how long it has run, then every
- * incident. Incidents that could not be read leave their part saying so, and every service stands. With no service
+ * The Services page's body: its Featured metric, the uptime over the services' days, then each service in the team's
+ * order with its strip and how long it has run, then every incident. Incidents that could not be read leave their part saying so, and every service stands. With no service
  * yet one card says so and nothing else is drawn.
  */
 export function ServicesBody(data: ServicesData) {
@@ -79,9 +111,10 @@ export function ServicesBody(data: ServicesData) {
   return (
     <Stack>
       <ShareContext context={servicesContext(data)} />
+      <Uptime services={services} end={end} />
       <Row split="2/3">
         <Card className="overflow-hidden">
-          <CardHeader title={PARTS.services} description="In the order the team reads its stack: the state now, p95, every day's mark and how long each has run" actions={<AskAbout question="Which service is hurting uptime over the last 90 days, and why?" />} divided />
+          <CardHeader title={PARTS.services} description="In the order the team reads its stack: the state now, p95, every day's mark and how long each has run" divided />
           <StatusList services={services} end={end} run />
         </Card>
         {incidents ? <Incidents incidents={incidents} end={end} /> : <Unread title={PARTS.incidents} what="the incidents" />}

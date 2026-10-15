@@ -128,8 +128,8 @@ to all of this.
 | A list of records with filters | `optional:app/(dashboard)/requests/` + `optional:src/views/requests.tsx` | Data table with filter bar |
 | Summary tiles over a list people only read (what ran, what is going out) | `optional:app/(dashboard)/tests/`, `optional:app/(dashboard)/releases/` + `optional:src/views/tests.tsx`, `optional:src/views/releases.tsx` | Data table under three tiles |
 | One record | `optional:app/(dashboard)/requests/[id]/` + `optional:src/views/request.tsx` | Detail head and key facts |
-| A count over a period, its facts, then breakdowns and patterns over time | `optional:app/(dashboard)/usage/` + `optional:src/views/usage.tsx` | Requests a day, then a year of days |
-| Systems and incidents (Services, at `/services`) | `optional:app/(dashboard)/services/` + `optional:src/views/services.tsx` | Status list with each service's run, beside one list of incidents |
+| A count over a period, its facts, then breakdowns and patterns over time | `optional:app/(dashboard)/usage/` + `optional:src/views/usage.tsx` | Featured metric of the period's requests with requests a day, then a year of days |
+| Systems and incidents (Services, at `/services`) | `optional:app/(dashboard)/services/` + `optional:src/views/services.tsx` | Featured metric of uptime over 90 days, then a Status list with each service's run beside one list of incidents |
 | Customers, accounts, people | `optional:app/(dashboard)/customers/` + `optional:src/views/customers.tsx` | Data table, a usage sparkline in each row |
 | Keys, tokens, secrets | `optional:app/(dashboard)/keys/` + `optional:src/views/keys.tsx` | Table with masked values |
 | Records people add, edit and remove (also what the assistant reads) | `optional:app/(dashboard)/members/`, `optional:app/(dashboard)/keys/` + `optional:src/views/members.tsx`, `optional:src/views/keys.tsx` | Data table over a collection |
@@ -362,8 +362,9 @@ orders is the sample's, not the product's.
   its words. Keep the standard they show: one Featured metric, a part's title alone in its element, a list that holds
   to its stated number whatever the data, the four states, every row of tiles one column on a phone, and the cost
   rule. Write your own company's parts.
-- **Revenue's eight parts and their words**: the head and its line, the four tiles (Revenue, Against a year ago, Best
-  day yet, Past due), revenue a day by plan beside "Who pays", revenue a period by plan, the wall of "Every customer,
+- **Revenue's eight parts and their words**: the head and its line, the Featured metric that leads it (the period's
+  revenue, its record as its finding, revenue a day as its chart) beside three tiles (Against a year ago, Best day yet,
+  Past due), revenue a day by plan beside "Who pays", revenue a period by plan, the wall of "Every customer,
   the last 14 days" with its three orders, the ladder "From a trial to Enterprise" with its stages, "Worth a look", and
   "What they buy" beside "Where they are": what `revenueData` in `optional:src/views/revenue-parts.ts` works out for
   them, how `optional:src/views/revenue.tsx` draws them and how `revenueContext` says it. The plans, the stages and the
@@ -371,7 +372,8 @@ orders is the sample's, not the product's.
   customers names its window, every customer a part names opens its page, the period moves only what the daily
   records answer, and the four states. Write your own.
 - **Usage's parts and their words**: the head and its line (requests a day, the share of errors and the median day's
-  p95), "Requests a day", "A year of requests, a day a cell" with its busiest day, "The period, counted" with at most three
+  p95), the Featured metric that leads it (the period's requests, its record as its finding, requests a day as its
+  chart), "A year of requests, a day a cell" with its busiest day, "The period, counted" with at most three
   facts, "When they come" with its two choices, "Where from" beside "What is asked for", and "How it was answered":
   what `usageData` and `usageHead` in `optional:src/views/usage-parts.ts` work out for them, how
   `optional:src/views/usage.tsx` draws them and how `usageContext` says it. The endpoints, regions and status classes
@@ -385,11 +387,12 @@ orders is the sample's, not the product's.
   draws them and how `customerContext` says it. Keep the standard they show: no period control and every window named,
   a part whose read failed says so in its place, one the reader may not read is absent, and the missing-record page for
   an id that names nobody. Write your own record's page.
-- **Now's parts and their words**: the line under its title, the services, the open incidents, the days inside the
+- **Now's parts and their words**: the line under its title, the Featured metric that leads it (the days inside the
+  band, the steady fact as its finding, the median day's p95 a day as its chart), the services, the open incidents, the days inside the
   band with their four facts, the models over the last 30 complete days, compute in use a region on the latest complete
   day, what ships, the work, the slowest endpoints, the four figures of the last 30 complete days, the runs a day and
   the latest changes: what `nowData` in `optional:src/views/now-parts.ts` works out for them from what `nowTool` in
-  `optional:src/views/tools.ts` reads, each collection apart, how `optional:src/views/now.tsx` draws them, in twelve
+  `optional:src/views/tools.ts` reads, each collection apart, how `optional:src/views/now.tsx` draws them, in thirteen
   parts, and how `nowContext` says it. The parts, their titles and words, the models, the regions, the tickets'
   priorities, the tiles, the eight services a list holds whole and the three longest runs it keeps past that are the
   sample company's. Keep the standard they show: each figure names its window, a tile's line fits in 32 characters,
@@ -400,7 +403,9 @@ orders is the sample's, not the product's.
   marked "Yours", worked out on the server from who is reading; a part that changes while it is read registers its
   collection with `useLive`; nothing arrived is one card and the page headed by its name. Write your own engineering
   home.
-- **Services' parts and their words**: "Each service, 90 days" and "Incidents", the page's one sentence, the services,
+- **Services' parts and their words**: the Featured metric that leads it (uptime over 90 days, the run fact as its
+  finding, the share of services operational a day as its chart), "Each service, 90 days" and "Incidents", the page's
+  one sentence, the services,
   their order and their incidents: what `servicesTool` in `optional:src/views/tools.ts` reads, how
   `optional:src/views/services.tsx` draws them and how `servicesContext` in `optional:src/views/services-context.ts`
   says it. The six services, their 90 days and the rule an uptime is worked out by are the sample company's. Keep the
@@ -439,7 +444,8 @@ The layout hands the shell whether it is on as a promise it does not await, `ass
 
 - **Collections** live in `optional:src/data/collections.ts`: one `arrayCollection` per kind of record, with `rows`, the `fields`
   schema, `allow` (which of create, update and remove the assistant may propose) and `hidden` fields. Replace each
-  `rows` with the person's API and `clock` with `new Date()`; the assistant reads and proposes changes only through them.
+  `rows` with the person's API and `clock` with `new Date()`; the assistant reads them through the views and each page's
+  prepared query, and proposes changes only through them, on the page whose prepared query reads them.
   A new collection is read by nobody until the policy binds it and a role is granted it. In the sample's policy that is
   three places: its entry in `DEMO_COLLECTIONS` in `optional:src/data/access.ts`, `<name>:read` for the roles that may read
   it in `GRANTS` in `optional:src/data/roles.ts`, and, for a page, a feature with that need in `optional:src/data/features.ts`.
@@ -530,9 +536,10 @@ cards' previews, and there it writes a registry of none).
 
 ## Renaming a thing
 
-Routes, API paths, tool names (`query_enhancements` → `query_initiatives`), seeds and tables are yours to rename. The
+Routes, API paths, tool names (`explore_enhancements` → `explore_initiatives`), seeds and tables are yours to rename. The
 assistant walk-through (`scripts/assistant.ts`) checks what every product shares on your own rail, and drives the
-template's sample Home, Now, Members, API keys and Settings, and asks its Usage and Tests through their prepared queries, only while their files are there: replace one and its steps
+template's sample Home, Now, Members (its lookups through `explore_members`), API keys (a revocation found through
+`explore_keys`) and Settings, and asks its Usage and Tests through their prepared queries, only while their files are there: replace one and its steps
 print `n/a` with the reason, never a failure, so you never edit Meridian's scripts to rename your pages. The live checks
 (`scripts/live.ts`) work the same way with the sample Members page. `scripts/verify.config.ts`'s `detailRoutes` name ids from the sample, and its `navigationChecks` and `smokeRoutes` name routes and titles, so they move too.
 

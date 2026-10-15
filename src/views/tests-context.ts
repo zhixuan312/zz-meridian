@@ -56,7 +56,7 @@ export function testsContext(rows: RunRow[], now: string, f: TestsState): Shared
   const matching = matchingRuns(rows, f);
   const filters = [f.runs === 'latest' && 'the latest run of each verification', f.state !== 'all' && `verdict ${f.state}`, f.release && `release ${f.release}`, f.q && `matching "${f.q}"`].filter(Boolean).join(', ');
   const M = TEST_METRICS;
-  const more = 'query_tests finds them';
+  const more = 'explore_tests finds them';
   const facts: Fact[] = [
     { label: M.latest.label, value: String(latest.length), definition: M.latest.hint },
     { label: M.failing.label, value: String(failing.length), definition: M.failing.hint },

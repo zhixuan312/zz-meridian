@@ -25,7 +25,7 @@ function limitsOf(collections: AnyCollection[]): string[] {
 
 /** The audience with the name of the prepared query `assistantTools` hands, when it hands one. */
 function told(audience: Omit<Audience, 'explore'> | undefined, explore: HandedExplore | undefined): Audience | undefined {
-  const name = explore?.view.explore ? `explore_${explore.view.name}` : undefined;
+  const name = explore ? `explore_${explore.view.name}` : undefined;
   if (!audience && !name) return undefined;
   return { ...audience, explore: name };
 }
@@ -34,19 +34,22 @@ function told(audience: Omit<Audience, 'explore'> | undefined, explore: HandedEx
 const MAX_STEPS = 8;
 
 /**
- * Streams the model's answer to `messages`, about `page`, as a UI message stream response. `guard` is asked again as
- * each approved change runs; `explore`, when the page's view declares a prepared query, is handed as `explore_<view>`.
- * `audience`, what the route worked out about the person (the addresses they may open, what they may not read), is said
- * in the prompt, with the prepared query's name when one is handed.
+ * Streams the model's answer to `messages`, about `page`, as a UI message stream response. `collections` are those the
+ * assistant is handed write tools for: the route hands the ones the page's prepared query reads. `readable` is every
+ * collection the person may read, which the prompt's limits are said over, so the assistant can say why a change is not
+ * one it can make on any of them; it is `collections` when not given. `guard` is asked again as each approved change
+ * runs; `explore`, the page's prepared query, is handed as `explore_<view>`. `audience`, what the route worked out about
+ * the person (the addresses they may open, what they may not read), is said in the prompt, with the prepared query's
+ * name when one is handed.
  */
-export async function respond({ model, secret, messages, page, collections, views = [], explore, guard, now, audience }: { model: LanguageModel; secret: string; messages: UIMessage[]; page: PageContext; collections: AnyCollection[]; views?: ViewTool[]; explore?: HandedExplore; guard: Guard; now: Date; audience?: Omit<Audience, 'explore'> }): Promise<Response> {
+export async function respond({ model, secret, messages, page, collections, readable = collections, views = [], explore, guard, now, audience }: { model: LanguageModel; secret: string; messages: UIMessage[]; page: PageContext; collections: AnyCollection[]; readable?: AnyCollection[]; views?: ViewTool[]; explore?: HandedExplore; guard: Guard; now: Date; audience?: Omit<Audience, 'explore'> }): Promise<Response> {
   const modelMessages = await convertToModelMessages(messages);
   const stream = createUIMessageStream({
     execute: ({ writer }) => {
       const { tools, toolApproval } = assistantTools(collections, writer, guard, views, explore);
       const result = streamText({
         model,
-        system: systemPrompt(page, now, briefExcerpt(readBrief()), limitsOf(collections), told(audience, explore)),
+        system: systemPrompt(page, now, briefExcerpt(readBrief()), limitsOf(readable), told(audience, explore)),
         tools,
         toolApproval,
         messages: modelMessages,

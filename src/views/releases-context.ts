@@ -72,7 +72,7 @@ export function releasesContext(rows: ReleaseRow[], now: string, f: ReleasesStat
   const matching = matchingReleases(rows, f);
   const filters = [f.state !== 'all' && `state ${STAGE_LABEL[f.state as Stage] ?? f.state}`, f.environment !== 'all' && `environment ${f.environment}`, f.q && `matching "${f.q}"`].filter(Boolean).join(', ');
   const M = RELEASE_METRICS;
-  const more = 'query_releases finds them';
+  const more = 'explore_releases finds them';
   const facts: Fact[] = [
     { label: M.live.label, value: String(live.length), definition: M.live.hint },
     { label: M.ready.label, value: String(ready), definition: M.ready.hint },

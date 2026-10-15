@@ -6,13 +6,13 @@ Status: beta
 
 ## Structure
 
-Seven parts, in this order. Every chart is the card named, and the page has no Featured metric and no tile.
+Seven parts, in this order. Every chart is the card named; the page leads with its one Featured metric, first after the head, and has no tile.
 
 | Part | Split | Pattern | Holds |
 |---|---|---|---|
 | 1. Head | | Page frame | Kicker `ZZ Meridian · Production`; the title, a sentence for the period chosen (below), with the page's name kept in the heading; the line under it (below), then who Business is for (`workspaces.business.audience`, read from the declaration); freshness, period select (7D, 30D, 90D, All), Export (the period's days, as a CSV) |
-| 2. Requests a day | full | Card with a Trend chart, area | The period's complete days, and the day in progress `running`: the stretch into it is dashed and its readout says so far |
-| 3. A year of requests, a day a cell | full | Card with a Heatmap, calendar form, `scale="max"`, `meridian` | Every complete day kept and the day in progress, a cell a date and a column a week; the busiest complete day as the card's badge ("Busiest: 01 Oct, 44.9M"). Pointing at a day of the period points requests a day at it |
+| 2. Requests | full | Featured metric with a Trend chart, area, with `height="fill"` | The page's protagonist, marked `data-protagonist="Requests"` on a wrapper whose display is `contents`: the period's requests (`formatCompact`, "1.1B"), their change on the period before, the period's record as its finding when it is one ("The highest 30 days of requests yet: 1.1B, the 3rd record in a row"), and requests a day over the period's complete days with the day in progress `running`: the stretch into it is dashed and its pill and readout say so far. The caption states the exact count over the days it names. Its Ask asks about requests over the period, or about the day the Meridian points at |
+| 3. A year of requests, a day a cell | full | Card with a Heatmap, calendar form, `scale="max"`, `meridian` | Every complete day kept and the day in progress, a cell a date and a column a week; the busiest complete day as the card's badge ("Busiest: 01 Oct, 44.9M"). Pointing at a day of the period points the Featured metric's chart at it |
 | 4. The period, counted | 1/3 | Card with a list | At most three facts, each from a rule of `src/lib/facts.ts` with its date (below). With none, one line says so |
 | 5. When they come | 2/3 | Card with a Segmented control, then a Column chart or a Heatmap | `By hour` first: requests by hour of day, UTC, every weekday summed, the busiest hour highlighted; `By weekday and hour`: the Heatmap's hours form on `scale="quantile"`. The choice is the view's own, not the address. Both over the last 30 complete days, named |
 | 6. Where from, What is asked for | 1/2 | Two cards with a Bar list | Requests by region, each with its median latency; requests by endpoint, the five most requested and the rest folded into "2 others", summed. Both over the last 30 complete days, named |
@@ -22,7 +22,7 @@ The parts are one Suspense boundary, the page's body: a part with a boundary of 
 
 ### The period
 
-The period control moves the title, the line under it, requests a day and the period's facts. A period is N complete days counted back from yesterday (7, 30 or 90), or every complete day kept; the day in progress is counted in nothing and drawn as running. The calendar is every day kept whatever the period. When they come, where from, what is asked for and how it was answered are snapshots of the last 30 complete days: they do not follow the period, and each card says so.
+The period control moves the title, the line under it, the Featured metric and the period's facts. A period is N complete days counted back from yesterday (7, 30 or 90), or every complete day kept; the day in progress is counted in nothing and drawn as running. The calendar is every day kept whatever the period. When they come, where from, what is asked for and how it was answered are snapshots of the last 30 complete days: they do not follow the period, and each card says so.
 
 ### The title
 
@@ -57,16 +57,16 @@ Requests first passed 25.0M in a day on 02 Jan 2026; 192 days have passed it sin
 The highest weekday average yet: 42,815,463 requests a day, in the week to 02 Oct 2026
 ```
 
-Below 64rem (896px) every row stacks, requests a day first; the calendar shows the latest weeks that fit at 12px a cell and says how many of how many; the hours group in threes under 560px. At 390px a Bar list hides its rows' lines, and the actions wrap under the line: the period select, then Export.
+Below 64rem (896px) every row stacks, the Featured metric first; the calendar shows the latest weeks that fit at 12px a cell and says how many of how many; the hours group in threes under 560px. At 390px a Bar list hides its rows' lines, and the actions wrap under the line: the period select, then Export.
 
 ## States
 
 | State | What shows |
 |---|---|
 | Loading | `loading.tsx`: the parts' shapes under a masthead that takes the room the page's takes, so the body does not move when the page arrives. `LoadingPage` draws the kicker, the heading that holds "Usage", read out and not drawn, with the sentence's block (`sentence`), the room of the line under the title (`lead`), the freshness, and the period control and Export where they will stand (`PeriodActionsRoom` in `src/views/period-actions.tsx`). The page's own fallbacks take the same room Under `refusal: 'absent'` the masthead names nothing (`gatedLoading`), since it is drawn before the gate answers. |
-| Empty (no complete day kept) | The body is one card that says "No requests have arrived yet", with a link to API keys; no chart or figure is drawn, and the page is headed by its name |
-| Partial (a read failed) | That part's card, with its title, says what could not be read ("The responses could not be read") in its own place, and every other part stands. The days feed requests a day and the period's facts; the history feeds the calendar, the facts and the title; the hours and the regions feed when they come and where from; the endpoints feed what is asked for; the responses feed how it was answered. The context says what could not be read |
-| All time (no previous period) | The title states the figure alone, and the context says no previous period is kept |
+| Empty (no complete day kept) | The body is one card that says "No requests have arrived yet", with a link to API keys; no Featured metric, chart or figure is drawn, and the page is headed by its name |
+| Partial (a read failed) | That part's card, with its title, says what could not be read ("The responses could not be read") in its own place, and every other part stands. The days feed the Featured metric (in its place, "The days could not be read" under "Requests") and the period's facts; with days read and none complete in the period, it draws no chart; the history feeds the calendar, the facts and the title; the hours and the regions feed when they come and where from; the endpoints feed what is asked for; the responses feed how it was answered. The context says what could not be read |
+| All time (no previous period) | The title states the figure alone, the Featured metric draws no change, and the context says no previous period is kept |
 | No access | The product's refusal page, before any read (`FEATURES.usage.needs`: the days, the hours, the regions, the endpoints and the responses, which every role holds) |
 | Error | The dashboard error screen with Retry |
 
@@ -74,7 +74,7 @@ Below 64rem (896px) every row stacks, requests a day first; the calendar shows t
 
 Every figure is read on the server by the Usage tool's read (`usageTool` in `src/views/tools.ts`, which takes `period`, 30d when not given). Each read is made apart from the others, so one that cannot be read leaves its part saying so (`unread` on the page's data) and the rest standing. `usageData` in `src/views/usage-parts.ts` turns the rows into what the parts draw.
 
-- **Requests a day and the period's facts**: `readDays(period)`, the period's complete days, their totals and those of as many days before, and the day in progress on its own.
+- **The Featured metric and the period's facts**: `readDays(period)`, the period's complete days, their totals and those of as many days before, and the day in progress on its own.
 - **The calendar, the busiest day, the title's record and the facts**: every complete day kept (`readDays('all')`); the page is handed each day's requests and the facts' sentences.
 - **When they come and where from**: `usageFigures()` in `src/data/usage.ts`, the `hours` and `regions` collections under `hours:read` and `regions:read`. A weekday's row sums to the requests of that weekday's days, and the hours of the day are the grid's columns summed.
 - **What is asked for**: `readEndpoints()`, the `endpoints` collection. **How it was answered**: `readResponses()`, the `responses` collection. Both in `src/data/metrics.ts`, through `read()`.
@@ -84,7 +84,7 @@ The hours, the regions, the endpoints and the responses each add up to the reque
 ## Surfaces
 
 - **Console**: as above at the data width.
-- **Mobile**: one column, requests a day first; the calendar its latest weeks, the hours grouped in threes.
+- **Mobile**: one column, the Featured metric first; the calendar its latest weeks, the hours grouped in threes.
 - **Embed**: none.
 
 ## Agents
@@ -104,11 +104,11 @@ The period with the dates of its complete days, and freshness; then requests, th
 
 - **MCP App:** no embed view; an MCP server returns this context as the `usage` tool's text (`docs/agents.md`).
 - **Console assistant:** this text in its prompt's `<view-context>` block, with the page's address, and the page text after it for anything the context does not cover.
-- **Handoff:** Ask on "Requests a day" hands the period, or the day the Meridian points at, to the assistant: "What stands out in requests over the last 30 days, and why?"
+- **Handoff:** Ask on the Featured metric hands the period, or the day the Meridian points at, to the assistant: "What stands out in requests over the last 30 days, and why?"
 
 ### What the agent does here
 
-Protagonist: Requests a day.
+Protagonist: Requests.
 
 - "How many requests came at 22:00 UTC on each weekday?" — the hours' requests where the hour is 22, by weekday, which names Sunday's cell and says requests are not kept by customer and hour, so who sent them cannot be said
 - "Which hours of a Sunday are the busiest?" — the hours' requests where the weekday is Sunday, by hour, the largest first
@@ -126,6 +126,6 @@ Usage's prepared query (`usageExplore` in `src/views/usage-explore.ts`, set as `
 
 ## Content
 
-- Card titles are the part's own words: "Requests a day", "When they come", "Where from".
+- Card titles are the part's own words: "When they come", "Where from"; the Featured metric's kicker names its measure and its period, "Requests · last 30 days".
 - Times are UTC and the cards say so.
 - Each part that does not follow the period names its window: "over the last 30 complete days".

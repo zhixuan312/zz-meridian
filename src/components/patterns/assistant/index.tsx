@@ -48,7 +48,8 @@ type ToolPart = { type: string; toolCallId: string; state: string; errorText?: s
 /** The page a question was asked on, as the column sends it with the message. */
 const pageOf = (m: UIMessage) => (m.metadata as { page?: { title?: string } } | undefined)?.page?.title;
 const textOf = (m: UIMessage) => m.parts.map((p) => (p.type === 'text' ? p.text : '')).join('');
-const isMutation = (p: { type: string }) => p.type.startsWith('tool-') && !p.type.startsWith('tool-query_');
+/** A write tool's part: only `create_`, `update_` and `remove_` tools change anything, so only they draw a Proposal. */
+const isMutation = (p: { type: string }) => /^tool-(create|update|remove)_/.test(p.type);
 
 /** The card's state for a tool part's state, and the reason a closed one carries. */
 function stateOf(part: ToolPart): { state: ProposalState; note?: string } | null {

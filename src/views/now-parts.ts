@@ -111,7 +111,12 @@ export function nowData(r: NowReads): NowData {
     const shown = history.slice(-STRIP_DAYS);
     const out = new Set(held.outside);
     const inside = shown.filter((d) => !out.has(d.date)).length;
-    band = { days: shown.map((d) => (out.has(d.date) ? 'degraded' : 'operational')), end: shown.at(-1)!.date, inside: held.inside, of: held.of, share: inside / shown.length, facts: bandFacts(history, held.outside) };
+    band = {
+      days: shown.map((d) => (out.has(d.date) ? 'degraded' : 'operational')),
+      // Whole milliseconds: 360 of them cross to the browser, and the chart reads no finer.
+      p95: shown.map((d) => Math.round(d.p95)),
+      end: shown.at(-1)!.date, inside: held.inside, of: held.of, share: inside / shown.length, facts: bandFacts(history, held.outside),
+    };
   }
 
   let models: NowData['models'] = null;

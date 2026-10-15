@@ -15,11 +15,12 @@ import { clock, collections } from '@/data/collections';
 import { handedTo } from '@/lib/assistant/scoped';
 import { assistantTools } from '@/lib/assistant/tools';
 import type { AnyCollection } from '@/lib/collection';
+import { ticketsExplore } from '@/views/tickets-explore';
 
 const PERSONAS = { owner: 'members_1', admin: 'members_2', member: 'members_4', keyManager: 'members_5', viewer: 'members_12' };
 const draft = { title: 'Rotate the gateway certificate', service: 'Edge gateway', priority: 'high' as const, assigneeId: null, summary: '' };
 const stored = async () => (await collections.find((c) => c.name === 'tickets')!.query({})).rows as Record<string, unknown>[];
-/** The tools an assistant is given for this person: their readable collections, each handed to them as the route hands it. */
+/** The write tools of every collection this person may read, each handed as the route hands it; the route then keeps those of the page's prepared query. */
 const given = async (id: string) => {
   jar.value = id;
   const scope = await resolveAccess();
@@ -49,18 +50,18 @@ describe('who may write a ticket, by every way in', () => {
     expect(await stored()).toEqual(before);
   });
 
-  it('is everyone but a Viewer, through an assistant\'s tools: a Viewer is given the look-up and no way to write', async () => {
+  it('is everyone but a Viewer, through an assistant\'s tools: a Viewer is given no way to write', async () => {
     for (const id of [PERSONAS.owner, PERSONAS.admin, PERSONAS.member, PERSONAS.keyManager]) {
-      expect((await toolsFor(id)).filter((n) => n.endsWith('_tickets')).sort(), id).toEqual(['create_tickets', 'query_tickets', 'update_tickets']);
+      expect((await toolsFor(id)).filter((n) => n.endsWith('_tickets')).sort(), id).toEqual(['create_tickets', 'update_tickets']);
     }
-    expect((await toolsFor(PERSONAS.viewer)).filter((n) => n.endsWith('_tickets'))).toEqual(['query_tickets']);
+    expect((await toolsFor(PERSONAS.viewer)).filter((n) => n.endsWith('_tickets'))).toEqual([]);
   });
 
-  it('is nobody, for a verification run or a release: every persona is given only the look-up', async () => {
+  it('is nobody, for a verification run or a release: no persona is given a tool to write one', async () => {
     for (const id of Object.values(PERSONAS)) {
       const names = await toolsFor(id);
-      expect(names.filter((n) => n.endsWith('_tests')), id).toEqual(['query_tests']);
-      expect(names.filter((n) => n.endsWith('_releases')), id).toEqual(['query_releases']);
+      expect(names.filter((n) => n.endsWith('_tests')), id).toEqual([]);
+      expect(names.filter((n) => n.endsWith('_releases')), id).toEqual([]);
     }
   });
 
@@ -75,16 +76,16 @@ describe('who may write a ticket, by every way in', () => {
 });
 
 describe('when a ticket was closed, and the incident it tracks', () => {
-  it('are read by an agent and asked of none: neither is in a ticket tool\'s create or update schema', async () => {
+  it('are read by an agent and asked of none: Tickets\' prepared query drills both, and neither is in a ticket tool\'s create or update schema', async () => {
     const tools = await given(PERSONAS.owner);
     const schemaOf = (name: string) => asSchema(tools[name].inputSchema).jsonSchema as { properties?: Record<string, { properties?: Record<string, unknown> }> };
     const create = Object.keys(schemaOf('create_tickets').properties ?? {});
     const set = Object.keys(schemaOf('update_tickets').properties?.set?.properties ?? {});
-    const where = JSON.stringify(schemaOf('query_tickets').properties?.where);
+    const drilled = Object.values(ticketsExplore.sources).map((s) => s.drill.columns);
     for (const field of ['closedAt', 'incidentId']) {
       expect(create, `create ${field}`).not.toContain(field);
       expect(set, `update ${field}`).not.toContain(field);
-      expect(where, `query ${field}`).toContain(`"${field}"`);
+      for (const columns of drilled) expect(columns, `drilled ${field}`).toContain(field);
     }
     expect(set).toContain('state');
   });

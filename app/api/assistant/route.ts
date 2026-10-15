@@ -32,15 +32,15 @@ export async function POST(request: Request): Promise<Response> {
   const valid = await safeValidateUIMessages({ messages });
   if (!valid.success) return new Response(null, { status: 400 });
 
-  // The assistant is handed this caller's own collections, only those they may read, and of those only the operations
-  // they may perform, each through `scopedQuery` so its `query` re-checks the person it was handed to at the moment it
-  // runs — the same tenant and subject, still permitted to read. Listing a tool is not enforcement: the checks that stop
-  // a read or a write are the ones that run at execution.
+  // This caller's own collections, only those they may read, and of those only the operations they may perform. The
+  // assistant reads none of them directly: it reads through the view tools and the page's prepared query, which ask the
+  // grant again when they run. Listing a tool is not enforcement: the checks that stop a read or a write are the ones
+  // that run at execution.
   const readable = (await Promise.all(collections.map(async (c) => {
     if (!(await can(scope, c.name, 'read'))) return null;
     // A collection bound to this scope: for members, `membersFor(scope)`, so every write passes Task I-14's boundary
     // and the Owner, self and last-active-Owner rules apply to an agent exactly as they do to the page. `handedTo` is
-    // where the order lives — the query re-check, the agent's member create, then FR-17's narrowing.
+    // where the order lives — the agent's member create, then FR-17's narrowing.
     return await handedTo(scope, collectionFor(scope, c.name), c.name);
   }))).filter((c): c is AnyCollection => c !== null);
 
@@ -52,9 +52,10 @@ export async function POST(request: Request): Promise<Response> {
   // they may use it. It reads through `aggregate()` and `read()`, which ask the person's grant again when a call runs;
   // its schema offers only what they may read: the collections handed above, without each one's hidden fields.
   const path = pathOf(String(page?.path ?? ''));
-  const view = views.find((v) => v.explore && onPage(v.page, path));
+  const view = views.find((v) => onPage(v.page, path));
   const names = new Set(readable.map((c) => c.name));
-  const explore: HandedExplore | undefined = view?.explore && Object.values(view.explore.sources).some((s) => names.has(s.collection))
+  const reads = new Set(view ? Object.values(view.explore.sources).map((s) => s.collection) : []);
+  const explore: HandedExplore | undefined = view && [...reads].some((name) => names.has(name))
     ? {
       view,
       rights: { readable: names, hidden: (name) => (readable.find((c) => c.name === name)?.hidden ?? []) as string[] },
@@ -96,7 +97,12 @@ export async function POST(request: Request): Promise<Response> {
 
   return respond({
     ...config,
-    collections: readable,
+    // The write tools are those of the collections the page's prepared query reads, so a page offers the changes of what
+    // it shows and its drill hands the ids; a page with no view offers none. A change another page makes is not a tool
+    // here, and the prompt tells the model to give that page's address. The limits are said over every collection the
+    // person may read, so the assistant can still say why a change is not one it can make.
+    collections: readable.filter((c) => reads.has(c.name)),
+    readable,
     // Every view tool this caller may use; each reads through `read()`, so it sees only what this caller may read.
     views,
     explore,

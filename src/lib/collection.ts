@@ -62,7 +62,7 @@ export type Collection<T extends Record<string, unknown>, K extends keyof T & st
   fields: z.ZodObject;
   /**
    * Fields the data layer works out and no write ever takes: a score, a band, a stage, a value joined in from another
-   * table. They live on the record, so a page reads them and the assistant may filter on them, and they are never in
+   * table. They live on the record, so a page reads them and a prepared query may filter on them, and they are never in
    * `fields` — a change cannot set one, because `patchOf` builds its shape from `fields` alone.
    */
   derived?: (keyof T & string)[];
@@ -465,28 +465,11 @@ export function visibleFields(c: AnyCollection): z.ZodObject {
  * (`pageOnlyFields`). The create tool is built from this and the update tool's `set` from `patchOf` of it, so a field
  * a page owns is absent from the schema and, because the schema is strict, refused at execution if sent anyway.
  *
- * It says nothing about reading: `queryInput` still names every visible field, so an agent filters on a role or an
- * add-on the same as on any other field. Reading a field and changing it are different rules, and this is the second.
+ * It says nothing about reading: a page's prepared query may still filter, group or drill on a role or an add-on the
+ * same as on any other visible field. Reading a field and changing it are different rules, and this is the second.
  */
 export function writableFields(c: AnyCollection): z.ZodObject {
   const base = visibleFields(c);
   const pageOnly = (c.pageOnlyFields ?? []) as string[];
   return pageOnly.length ? base.omit(Object.fromEntries(pageOnly.map((f) => [f, true])) as Record<string, true>).strict() : base;
-}
-
-/** The input schema of the query tool: field names come from the collection, so an unknown or hidden field is rejected.
- *
- * `derived` fields are named here and nowhere else: they are readable and queryable, and no write can set one, because
- * `fields` is what a write takes. `visibleFields` has already dropped the hidden ones from `fields`, so only a hidden
- * derived field needs dropping here. */
-export function queryInput(c: AnyCollection) {
-  const hidden = new Set((c.hidden ?? []) as string[]);
-  const derived = ((c.derived ?? []) as string[]).filter((f) => !hidden.has(f));
-  const field = z.enum([c.key, ...Object.keys(visibleFields(c).shape), ...derived] as [string, ...string[]]);
-  const scalar = z.union([z.string(), z.number(), z.boolean(), z.null()]);
-  return z.object({
-    where: z.array(z.object({ field, op: z.enum(['eq', 'ne', 'gt', 'lt', 'contains', 'in']), value: z.union([scalar, z.array(scalar)]) })).optional(),
-    sort: z.object({ field, dir: z.enum(['asc', 'desc']) }).optional(),
-    limit: z.number().int().min(1).max(100).default(50),
-  });
 }

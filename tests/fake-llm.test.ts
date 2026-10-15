@@ -73,3 +73,44 @@ test('runs the call through a client that hands the tool, and quotes what the to
   expect(input).toEqual({ source: 'runs', measures: ['runs'], by: 'state', period: '7d' });
   expect(llm.requests.at(-2).tools.map((t: { function: { name: string } }) => t.function.name)).toEqual(['explore_tests']);
 });
+
+/** A prepared query's answer that drilled `rows`, each a line of `- <address>: id <id>, name <name>, <column> <value>`. */
+const drilledAnswer = (source: string, address: string, rows: string[]) => JSON.stringify({ address, answer: [`Source ${source}, no window, as it has no date.`, `Rows, in order, ${rows.length} of ${rows.length}:`, ...rows.map((r) => `- ${address}: ${r}`)].join('\n') });
+const SUPPORT = 'Which Support viewers have been inactive for more than 60 days?';
+const viewers = drilledAnswer('members', '/members', ['id members_9, name Alice Moreno, role Viewer, team Support, status Active, lastActive 2026-07-22', 'id members_14, name Ravi Patel, role Viewer, team Support, status Active, lastActive 2026-07-04']);
+
+test("looks members up through Members' prepared query, and names the rows it drilled", async () => {
+  const lookup = await complete([{ role: 'system', content: 'Page: Members (/members)\nToday: 2026-10-03' }, { role: 'user', content: SUPPORT }], [handed('explore_members')]);
+  expect(lookup.tool_calls?.map((c) => c.function.name)).toEqual(['explore_members']);
+  expect(JSON.parse(lookup.tool_calls![0].function.arguments)).toEqual({
+    source: 'members', measures: ['members'], rows: 20,
+    where: [{ field: 'team', op: 'eq', value: 'Support' }, { field: 'role', op: 'eq', value: 'Viewer' }, { field: 'lastActive', op: 'lt', value: '2026-08-04' }],
+  });
+  const reply = await complete([{ role: 'user', content: SUPPORT }, { role: 'tool', tool_call_id: 'call_1', content: viewers }], []);
+  expect(reply.content).toBe('2 found: Alice Moreno, Ravi Patel.');
+  const none = await complete([{ role: 'user', content: 'Who is suspended?' }, { role: 'tool', tool_call_id: 'call_1', content: JSON.stringify({ address: '/members', answer: 'Source members, no window, as it has no date.\nNo row matches.' }) }], []);
+  expect(none.content).toBe('None found.');
+});
+
+test('changes members by the ids the lookup drilled, and only where the request hands the write', async () => {
+  const history = [{ role: 'user', content: SUPPORT }, { role: 'tool', tool_call_id: 'call_1', content: viewers }, { role: 'assistant', content: '2 found: Alice Moreno, Ravi Patel.' }];
+  const suspend = await complete([...history, { role: 'user', content: 'Suspend them' }], [handed('update_members')]);
+  expect(JSON.parse(suspend.tool_calls![0].function.arguments)).toEqual({ ids: ['members_9', 'members_14'], set: { status: 'Suspended' } });
+  const remove = await complete([...history, { role: 'user', content: 'Remove Ravi Patel' }], [handed('remove_members')]);
+  expect(remove.tool_calls?.map((c) => c.function.name)).toEqual(['remove_members']);
+  expect(JSON.parse(remove.tool_calls![0].function.arguments)).toEqual({ ids: ['members_14'] });
+  const elsewhere = await complete([...history, { role: 'user', content: 'Remove Ravi Patel' }], [handed('remove_keys')]);
+  expect(elsewhere.tool_calls).toBeUndefined();
+  expect(elsewhere.content).toBe('I was not handed remove_members here.');
+});
+
+test("revokes a key found through API keys' prepared query, a name with a comma among them", async () => {
+  const lookup = await complete([{ role: 'user', content: 'Which keys are there?' }], [handed('explore_keys')]);
+  expect(JSON.parse(lookup.tool_calls![0].function.arguments)).toEqual({ source: 'keys', measures: ['keys'], rows: 20 });
+  const keys = drilledAnswer('keys', '/keys', ['id key_04, name Staging, env test, hint zzm_test_…b552, owner Jonas Weber', 'id key_05, name Load test, October, env test, hint zzm_test_…e389, owner Maya Chen']);
+  const history = [{ role: 'user', content: 'Which keys are there?' }, { role: 'tool', tool_call_id: 'call_1', content: keys }];
+  expect((await complete(history, [])).content).toBe('2 found: Staging, Load test, October.');
+  const revoke = await complete([...history, { role: 'user', content: 'Revoke Load test, October' }], [handed('remove_keys')]);
+  expect(revoke.tool_calls?.map((c) => c.function.name)).toEqual(['remove_keys']);
+  expect(JSON.parse(revoke.tool_calls![0].function.arguments)).toEqual({ ids: ['key_05'] });
+});

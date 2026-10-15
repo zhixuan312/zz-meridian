@@ -1,6 +1,7 @@
 /**
- * How an agent uses a view's shared context, said once for both agents (decision 0011): the console's system prompt and
- * every view tool's description read these lines. No imports, so `scripts/check.ts` can load the prompt under plain node.
+ * How an agent uses a view's shared context, said once (decision 0011): the console's system prompt
+ * (`src/lib/assistant/prompt.ts`) reads these lines. No imports, so the prompt, which `scripts/lib/context-check.ts`
+ * loads under plain node, stays loadable there.
  */
 export const AGENT_GUIDANCE = [
   'When the person says "this" or "here", they mean what the view context says they are looking at.',

@@ -12,9 +12,11 @@ import { StatusDot } from '@/components/ui/status-dot';
 import { BarList } from '@/components/charts/bar-list';
 import { ColumnChart } from '@/components/charts/column-chart';
 import { Meridian } from '@/components/charts/meridian';
+import { TrendChart } from '@/components/charts/trend-chart';
 import { UptimeBars } from '@/components/charts/uptime-bars';
 import { ActivityFeed } from '@/components/patterns/activity-feed';
 import { DataTable, type Column } from '@/components/patterns/data-table';
+import { FeaturedMetric } from '@/components/patterns/featured-metric';
 import { IncidentCard } from '@/components/patterns/incident-card';
 import { MetricTile } from '@/components/patterns/metric-tile';
 import { StatusList } from '@/components/patterns/status-list';
@@ -39,6 +41,33 @@ const RUN_PARTS = [
   { key: 'failed', label: 'Failed', tone: 'critical' },
 ] as const;
 const PRIORITY = { high: 'High', normal: 'Normal', low: 'Low' } as const;
+const DAY = 86_400_000;
+
+/**
+ * The page's protagonist, its one Featured metric: the days inside the band over every complete day kept, the steady
+ * fact as its finding (the line the context carries), and each of the strip's days' p95 a day. Its mark is a wrapper
+ * whose display is `contents`, so the stack's layout is unchanged.
+ */
+function DaysInside({ band, steady }: { band: NonNullable<NowData['band']>; steady: string | null }) {
+  const n = band.p95.length;
+  // The strip ends on the latest complete day: the dates count back from it.
+  const dates = band.p95.map((_, i) => new Date(Date.parse(`${band.end}T00:00:00Z`) - (n - 1 - i) * DAY).toISOString().slice(0, 10));
+  return (
+    <div data-protagonist="Days inside the band" className="contents">
+      <FeaturedMetric
+        className="w-full"
+        kicker={`Days inside the band · of ${band.of} complete days kept`}
+        actions={<AskAbout question={`What stands out in the days inside the band over the last ${band.of} complete days, and why?`} />}
+        value={band.inside}
+        format={String}
+        caption={`Every complete day kept, to ${formatDate(band.end)}. The chart draws each day's p95 over the last ${n}.`}
+        finding={steady ? { text: steady } : undefined}
+      >
+        <TrendChart height="fill" label={`p95 a day, the last ${n} complete days`} format="duration" dates={dates} series={[{ key: 'p95', label: 'p95', values: band.p95, kind: 'line' }]} />
+      </FeaturedMetric>
+    </div>
+  );
+}
 
 /** Services, now: every service with its run, or past eight the ones not operational and the three longest runs; always the way to every one. */
 function Services({ data, end }: { data: NowData; end: Date }) {
@@ -314,7 +343,7 @@ function Changes({ events, end }: { events: NonNullable<NowData['activity']>; en
 }
 
 /**
- * Now's body: twelve parts, in order, the head being the page frame's. Each part draws what the read handed it and
+ * Now's body: thirteen parts, in order, the head being the page frame's and the Featured metric leading the rest. Each part draws what the read handed it and
  * works nothing out; a part whose read failed says so in its own place, and the rest stands. With nothing arrived yet
  * one card says so and no part is drawn. The changes are kept live: a change the product records redraws the page.
  * The embed's fullscreen view draws it too.
@@ -335,14 +364,17 @@ export function NowBody(data: NowData) {
     );
   }
   const { incidents, band, models, compute, shipping, work, endpoints, month, runs, activity } = data;
+  const steady = data.head.facts.find((f) => f.kind === 'steady')?.text ?? null;
   return (
     <Stack>
       <ShareContext context={nowContext(data)} />
+      {band ? <DaysInside band={band} steady={steady} /> : data.unread.includes('the days') ? <Unread title={P.band} what="the days" /> : null}
       <Row split="2/3">
         <Services data={data} end={end} />
         {incidents ? <Incidents incidents={incidents} end={end} /> : <Unread title={P.incident} what="the incidents" />}
       </Row>
-      {band ? <Band band={band} /> : <Unread title={P.band} what="the days" />}
+      {/* With no band, the Featured metric's place already says the days could not be read, or nothing was kept. */}
+      {band ? <Band band={band} /> : null}
       <Row split="2/3">
         {models ? <Models models={models} /> : <Unread title={P.models} what="the models" />}
         {compute ? <Compute compute={compute} /> : <Unread title={P.compute} what="the compute" />}

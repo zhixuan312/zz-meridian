@@ -43,7 +43,7 @@ describe('what Usage says of the period', () => {
 
   it('draws no part when no request has arrived', () => {
     const none = { requests: 0, errorRate: 0, p95: 0, revenue: 0 };
-    render(<UsageBody period="30d" day={null} head={{ title: null, facts: [] }} line={null} days={{ series: [], totals: { current: none, previous: null }, running: null }} calendar={{ days: [], running: false, busiest: null }} figures={null} endpoints={[]} responses={[]} unread={[]} updatedAt="2026-10-05T09:00:00.000Z" now="2026-10-05T09:00:00.000Z" />);
+    render(<UsageBody period="30d" day={null} head={{ title: null, facts: [] }} record={null} line={null} days={{ series: [], totals: { current: none, previous: null }, running: null }} calendar={{ days: [], running: false, busiest: null }} figures={null} endpoints={[]} responses={[]} unread={[]} updatedAt="2026-10-05T09:00:00.000Z" now="2026-10-05T09:00:00.000Z" />);
     expect(screen.getByText('No requests have arrived yet')).toBeTruthy();
     expect(screen.queryAllByRole('heading', { level: 2 })).toEqual([]);
   });

@@ -60,8 +60,8 @@ describe('a proposed change in the panel', () => {
     expect(within(card).queryByRole('button', { name: /Approve/ })).toBeNull();
   });
 
-  test('a query shows no Proposal', () => {
-    render(<Tooltip.Provider><AssistantPanel inline messages={[{ id: 'a1', role: 'assistant', parts: [{ type: 'tool-query_members', toolCallId: 'q', state: 'output-available', input: {}, output: { rows: [], total: 0 } }, { type: 'text', text: 'Nobody matches.' }] } as UIMessage]} onSend={() => {}} onClose={() => {}} onDecide={() => {}} /></Tooltip.Provider>);
+  test('a read shows no Proposal: a prepared query or a view tool', () => {
+    render(<Tooltip.Provider><AssistantPanel inline messages={[{ id: 'a1', role: 'assistant', parts: [{ type: 'tool-explore_members', toolCallId: 'q', state: 'output-available', input: {}, output: { address: '/members', answer: 'No row matches.' } }, { type: 'data-proposal', id: 'v', data: { title: 'Not a change', tone: 'neutral', changes: [] } }, { type: 'tool-view_members', toolCallId: 'v', state: 'output-available', input: {}, output: { address: '/members', context: '' } }, { type: 'text', text: 'Nobody matches.' }] } as UIMessage]} onSend={() => {}} onClose={() => {}} onDecide={() => {}} /></Tooltip.Provider>);
     expect(screen.queryByRole('article')).toBeNull();
     expect(screen.getByText('Nobody matches.')).toBeInTheDocument();
   });

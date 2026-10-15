@@ -1,22 +1,33 @@
 import { app } from '@/app.config';
 import { DEMO_NOW, DEMO_UPDATED_AT } from '@/data/sample';
 import { Row } from '@/components/base/shell';
+import { Card } from '@/components/ui/card';
+import { Skeleton } from '@/components/ui/skeleton';
 import { Freshness } from '@/components/patterns/freshness';
 import { ChartSkeleton, LoadingPage } from '@/components/patterns/page-loading';
 import { gatedLoading } from '@/data/refusal';
 import { SERVICES_LINE } from '@/views/services-context';
 
 /**
- * The two parts of Services, in their shapes: each service with its strip, and the incidents. Two cards of a block each,
- * not a bar a row: the page's response carries this skeleton more than once (the body's fallback in its HTML, and the
- * fallback and the loading state in its payload), and `/services` is held to its HTML cap in `scripts/verify.config.ts`.
+ * The three parts of Services, in their shapes: the Featured metric's room first, then each service with its strip,
+ * and the incidents. A card of a block each, not a bar a row: the page's response carries this skeleton more than once
+ * (the body's fallback in its HTML, and the fallback and the loading state in its payload), and `/services` is held to
+ * its HTML cap in `scripts/verify.config.ts`.
  */
 export function ServicesSkeleton() {
   return (
-    <Row split="2/3">
-      <ChartSkeleton height="h-[44rem]" />
-      <ChartSkeleton height="h-[36rem]" />
-    </Row>
+    <>
+      <Card className="min-h-[22rem] gap-4 p-(--card-pad)">
+        <Skeleton className="h-2.5 w-40" />
+        <Skeleton className="h-16 w-56 rounded-md" />
+        <Skeleton className="h-3 w-80 max-w-full" />
+        <Skeleton className="mt-auto h-56 w-full rounded-md" />
+      </Card>
+      <Row split="2/3">
+        <ChartSkeleton height="h-[44rem]" />
+        <ChartSkeleton height="h-[36rem]" />
+      </Row>
+    </>
   );
 }
 

@@ -49,11 +49,11 @@ Not offered. Inviting and removing people are decisions for the console, not a c
 
 ## Agents
 
-The assistant reads and proposes changes here through Proposals: it adds, changes and removes members only after a person approves, and what it changed shows on this page after a refresh. A change made here is what the assistant reads next. The page shares its context through `membersContext` in `src/views/members-context.ts`.
+The assistant reads the page through the members view tool and its prepared query, `explore_members`, and, on this page alone, proposes changes through Proposals by the ids the query's drilled members give: it adds, changes and removes members only after a person approves, and what it changed shows on this page after a refresh. A change made here is what the assistant reads next. The page shares its context through `membersContext` in `src/views/members-context.ts`.
 
 ### What the agent reads
 
-Counts by status, role (with what each role may do) and team, everyone with their role, add-ons, team, status and when they were last seen (the first 24 in the page's order, then how many more; `query_members` finds them), and what code found: active members unseen for 60 days or more and unanswered invitations, the first three of each, and who can change the workspace, the first five, each then counted. It says that "last active" is a console sign-in, not use of the API. Within its budget of 2,600 characters for every persona who may read it: 2,320 in the sample, and 2,505 with four times its members.
+Counts by status, role (with what each role may do) and team, everyone with their role, add-ons, team, status and when they were last seen (the first 24 in the page's order, then how many more; `explore_members` finds them), and what code found: active members unseen for 60 days or more and unanswered invitations, the first three of each, and who can change the workspace, the first five, each then counted. It says that "last active" is a console sign-in, not use of the API. Within its budget of 2,600 characters for every persona who may read it: 2,320 in the sample, and 2,511 with four times its members.
 
 ```text
 - 3 active members have not been seen for 60 days or more: Alice Moreno (Viewer, Support, 94 days); Felix Andersson (Viewer, Engineering, 75 days); Ravi Patel (Viewer, Support, 71 days).
