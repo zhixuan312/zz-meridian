@@ -7,6 +7,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { parseArgs } from 'node:util';
 import { adopt } from './adopt.js';
+import { misapplied } from './command-flags.js';
 import { create } from './create.js';
 import { BRAND_FLAGS, VERSION, installSkill } from './files.js';
 import { brandCommand } from './rebrand.js';
@@ -70,6 +71,9 @@ function main(): number {
   const unsafe = Object.entries(brand).find(([, v]) => /[\\\r\n\u2028\u2029]/.test(v));
   if (unsafe) { console.error(`zz-meridian: --${unsafe[0]} may not contain a backslash or a line break`); return 1; }
   if (values.help || !command) { console.log(HELP); return command || values.help ? 0 : 1; }
+  // A flag a command does not read is refused, never ignored: `adopt --dry-run` wrote the project rather than previewing it.
+  const wrong = misapplied(command, flags);
+  if (wrong) { console.error(`zz-meridian ${command}: --${wrong.flag} belongs to ${wrong.belongsTo}`); return 1; }
   if (command === 'adopt') return adopt({ root: process.cwd(), brand, allowDirty: Boolean(values['allow-dirty']), install });
   if (command === 'create') {
     if (!arg) { console.error('zz-meridian create: name the folder for the new dashboard'); return 1; }
