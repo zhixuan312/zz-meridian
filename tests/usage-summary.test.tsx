@@ -11,6 +11,8 @@ vi.mock('next/cache', () => ({ cacheTag: () => {}, cacheLife: () => {}, updateTa
 
 import { formatCompact, formatDuration, formatPercent } from '@/lib/format';
 import { contextText } from '@/lib/shared-context';
+// The scope names the project's own timezone, so a project branded to another one still states the same contract.
+import { app } from '@/app.config';
 import { UsageBody } from '@/views/usage';
 import { HOME_METRICS } from '@/views/home-context';
 import { usageTool, viewTools } from '@/views/tools';
@@ -62,7 +64,7 @@ describe('all time on Usage, which has no period before it', () => {
     const { context } = await usageTool.read({ period: 'all' });
     for (const label of LABELS) expect(context.facts.find((f) => f.label === label)!.change, label).toBeUndefined();
     expect(context.unknowns).toContain('No previous period is kept, so no figure has a change.');
-    expect(context.scope).toBe('all time, 08 Oct 2025 to 02 Oct 2026 (UTC)');
+    expect(context.scope).toBe(`all time, 08 Oct 2025 to 02 Oct 2026 (${app.timezone})`);
     expect(contextText(context)).not.toMatch(/NaN|Infinity|vs the previous/);
     // A period with days before it says nothing of the kind.
     expect((await usageTool.read({ period: '90d' })).context.unknowns.join('\n')).not.toMatch(/No previous period/);
