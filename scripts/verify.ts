@@ -40,7 +40,7 @@ import { bin } from './lib/bin.ts';
 import { launch } from './lib/chrome.ts';
 import type { BudgetsConfig, NavigationCheck } from './lib/budgets.ts';
 import { finalOutcome, resolveCoverage, selectSmokeRoutes, suiteCoverage, suiteOutcome } from './lib/coverage.ts';
-import { dataHost, isLocalHost } from './lib/data-url.ts';
+import { unsafeDataUrls } from './lib/data-url.ts';
 import { APP_DIR, railRoutes } from './lib/routes.ts';
 import { sampleSurfaces } from './lib/sample.ts';
 import verifyConfig from './verify.config.ts';
@@ -224,14 +224,8 @@ function unsafeBackend(): { reason: string; fix: string } | null {
     };
   }
   const fromFiles = envFiles();
-  const offenders = ['DATABASE_URL', ...(config.dataUrls ?? [])].flatMap((name) => {
-    const value = process.env[name] ?? fromFiles[name];
-    if (!value) return [];
-    // Not a URL is not something this can judge; the app will fail on it long before a press.
-    const host = dataHost(value);
-    if (host === null) return [];
-    return isLocalHost(host) ? [] : [`${name} → ${host}`];
-  });
+  const named = ['DATABASE_URL', ...(config.dataUrls ?? [])];
+  const offenders = unsafeDataUrls(Object.fromEntries(named.map((name) => [name, process.env[name] ?? fromFiles[name] ?? ''])));
   if (offenders.length && !config.allowRemoteData) {
     return {
       reason: `data URL not on this machine: ${offenders.join(', ')}`,

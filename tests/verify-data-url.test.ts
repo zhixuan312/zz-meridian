@@ -1,6 +1,6 @@
 // @vitest-environment node
 import { describe, expect, it } from 'vitest';
-import { dataHost, isLocalHost } from '../scripts/lib/data-url.ts';
+import { dataHost, isLocalHost, unsafeDataUrls } from '../scripts/lib/data-url.ts';
 
 /**
  * `scripts/verify.ts` refuses a data URL that is not on this machine before it builds anything, because the presses and
@@ -38,5 +38,25 @@ describe('where a data URL points', () => {
       expect(host, value).not.toBeNull();
       expect(isLocalHost(host!), value).toBe(true);
     }
+  });
+
+  it('calls a schemeless value with credentials remote, not unreadable', () => {
+    // The case the gate failed open on: the authority is the whole `user:pass@host`, the `@` is not host-shaped, and a
+    // null is a value `unsafeBackend` skipped — so the presses ran against it.
+    expect(dataHost('user:pass@db.prod.example.com:5432/app')).toBe('db.prod.example.com');
+    expect(isLocalHost(dataHost('user:pass@db.prod.example.com:5432/app')!)).toBe(false);
+    expect(dataHost('u:p@localhost:5432/app')).toBe('localhost');
+    expect(isLocalHost(dataHost('u:p@localhost:5432/app')!)).toBe(true);
+  });
+
+  it('refuses a value it cannot read the host of, rather than skipping it', () => {
+    // A libpq line is a real DSN shape with no host this can read; a press against it lands wherever it points.
+    expect(unsafeDataUrls({ DATABASE_URL: 'host=db.prod.example.com user=ops' })).toEqual(['DATABASE_URL → a value whose host cannot be read']);
+    expect(unsafeDataUrls({ DATABASE_URL: 'user:pass@db.prod.example.com:5432/app' })).toEqual(['DATABASE_URL → db.prod.example.com']);
+    // What a local run looks like, and what names no backend at all.
+    expect(unsafeDataUrls({ DATABASE_URL: 'postgres://u:p@localhost:5432/app' })).toEqual([]);
+    expect(unsafeDataUrls({ DATABASE_URL: '', OTHER: 'postgres:5432' })).toEqual([]);
+    // And a run that knows what its presses reach says so in the config, never here.
+    expect(unsafeDataUrls({ DATABASE_URL: 'db.prod.example.com/app' })).toEqual(['DATABASE_URL → db.prod.example.com']);
   });
 });

@@ -28,7 +28,10 @@ export function isLocalHost(host: string): boolean {
  */
 export function dataHost(value: string): string | null {
   const byHand = (): string | null => {
-    const authority = value.split(/[/?#]/)[0].replace(/:\d+$/, '');
+    // The authority, with anything before its last `@` dropped: a DSN written without a scheme keeps its credentials
+    // (`user:pass@db.prod.example.com:5432/app`), and reading the whole authority as the host rejects it on the `@` —
+    // which used to come back null, and a null is a value the caller cannot judge.
+    const authority = value.split(/[/?#]/)[0].replace(/:\d+$/, '').replace(/.*@/, '');
     return /^[A-Za-z0-9._:[\]-]+$/.test(authority) ? authority : null;
   };
   try {
@@ -36,4 +39,19 @@ export function dataHost(value: string): string | null {
   } catch {
     return byHand();
   }
+}
+
+/**
+ * The data URLs among `values` that are not on this machine, as `NAME → host`, for the refusal `scripts/verify.ts`
+ * prints. A value whose host cannot be read is one of them: skipping it is how this gate failed open, since a DSN
+ * written without a scheme, or a libpq line (`host=db.prod.example.com user=…`), has no host it can read — and a press
+ * against a backend reaches it whatever the string looked like. An empty value names no backend at all.
+ */
+export function unsafeDataUrls(values: Record<string, string>): string[] {
+  return Object.entries(values).flatMap(([name, value]) => {
+    if (!value) return [];
+    const host = dataHost(value);
+    if (host === null) return [`${name} → a value whose host cannot be read`];
+    return isLocalHost(host) ? [] : [`${name} → ${host}`];
+  });
 }
