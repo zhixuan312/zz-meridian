@@ -25,7 +25,7 @@ export default function TablePreview() {
   const toggle = (key: 'latency' | 'status') => setSort((s) => ({ key, dir: s.key === key && s.dir === 'desc' ? 'asc' : 'desc' }));
   return (
     <>
-      <Specimen label="Sortable" note="Sorted by latency; hover a head to see it can sort. Region drops under 1024px, customer under 768px, status under 640px." stack>
+      <Specimen label="Sortable" note="Sorted by latency; hover a head to see it can sort. Status drops under 512px of the table's own width, customer under 672px, region under 896px — the sm, md and lg steps, which read the table and not the window." stack>
         <Plane on="surface" className="overflow-hidden p-0">
           <Table caption="Recent requests">
             <TableHead>
@@ -56,7 +56,7 @@ export default function TablePreview() {
           </Table>
         </Plane>
       </Specimen>
-      <Specimen label="Row states" note="Rest, hover, selected and archived. Requests drops under 640px, where the name column keeps its 160px." stack>
+      <Specimen label="Row states" note="Rest, hover, selected and archived. Requests drops under 512px of the table's own width, where the name column keeps its 160px." stack>
         <Plane on="surface" className="overflow-hidden p-0">
           <Table caption="Row states">
             <TableHead>

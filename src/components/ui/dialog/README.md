@@ -36,13 +36,12 @@ Head padding 20px 24px 4px; body 12px 24px 24px; footer 14px 24px. Maximum heigh
 |---|---|
 | Opening | Scrim fades in; the panel rises 10px and scales from 98% over `dur-enter` 320ms `ease-out` |
 | Closing | Fade and scale to 98% over 140ms |
-| Busy | The primary shows its busy state; Escape and the scrim do not close it while the task runs |
 | Error | A Banner (critical) at the top of the body says what failed; the fields keep their values |
 
 ## Behaviour
 
 - Focus moves to the first field (or the close button) on open, is trapped inside, and returns to the trigger on close.
-- Escape, the close button and the scrim close it, except while busy.
+- Escape, the close button and the scrim close it.
 - Enter in a single-field form submits.
 
 ## Surfaces

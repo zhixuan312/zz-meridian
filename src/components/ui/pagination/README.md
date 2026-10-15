@@ -36,7 +36,7 @@ Controls at `control-sm` 32px; page buttons at least 30px wide with 6px padding,
 
 - Changing page keeps the scroll position of the page's header and moves focus to the first row of the list.
 - Changing rows per page returns to page 1.
-- In a Data table, the page and the size live in the URL (`?page=2&size=20`), so a page of results is linkable.
+- In a Data table, the page lives in the URL (`?page=2`), so a page of results is linkable. The rows per page is the table's own, alongside its sort: it is a way of reading, not part of the view, and no page has to carry it in the address.
 - A list that is not a data table (a roster in a settings card, a short list inside a card) pages with `usePaged(rows, { pageSize, resetKey })`. `resetKey` is whatever narrows the rows (the search, a filter): narrowing lands on page 1 without an effect, and the page is clamped when read, so a refetch with fewer rows never leaves an empty page. The pager shows only when `paged` is true.
 
 ## Surfaces

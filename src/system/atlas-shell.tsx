@@ -91,7 +91,11 @@ function Shelf({ nav }: { nav: AtlasNav }) {
   }
   useEffect(() => {
     const on = (e: KeyboardEvent) => {
-      if (e.key === '/' && !(e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement)) { e.preventDefault(); input.current?.focus(); }
+      // The search pill is in the sheet below 1024px, so there is nothing here to focus: swallowing the key then
+      // would leave `/` doing nothing at all, which is worse than leaving the character alone.
+      if (e.key !== '/' || e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement || !input.current) return;
+      e.preventDefault();
+      input.current.focus();
     };
     window.addEventListener('keydown', on);
     return () => window.removeEventListener('keydown', on);
