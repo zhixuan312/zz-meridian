@@ -117,8 +117,9 @@ export function RequestView({ request: r, trace, payloads, routeP95, now, replay
     >
       <Stack>
         <Row split="2/3">
-          {/* The page's protagonist, marked on a wrapper whose display is `contents`, so the row's grid is unchanged. */}
-          <div data-protagonist="Request" className="contents">
+          {/* The page's protagonist, marked on a wrapper that is itself the row's first grid item, its card stretched to
+              fill it, so the row's two columns are its. */}
+          <div data-protagonist="Request" className="flex min-w-0 flex-col *:flex-1">
             <Card>
               <CardHeader
                 title="Request"

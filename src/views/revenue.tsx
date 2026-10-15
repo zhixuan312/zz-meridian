@@ -51,14 +51,14 @@ function NoDays({ title }: { title: string }) {
  * The page's protagonist, its one Featured metric: the period's revenue, its change, the record as its finding and
  * revenue a day with the day in progress drawn running. The hero rounds a figure past nine characters ("$3.3M"), so the
  * caption states it in full, about the period it names, which stays true while a day is read. Its mark is a wrapper
- * whose display is `contents`, so the row's grid is unchanged.
+ * that is itself the row's first grid item, its card stretched to fill it, so the row's two columns are its.
  */
 function RevenueFigure({ days, dates, period }: { days: Days; dates: string[]; period: RevenueData['period'] }) {
   const { revenue, running, series } = days;
   const label = PERIOD_LABEL[period].toLowerCase();
   const points = [...series.map((d) => d.revenue), ...(running ? [running.revenue] : [])];
   return (
-    <div data-protagonist="Revenue" className="contents">
+    <div data-protagonist="Revenue" className="flex min-w-0 flex-col *:flex-1">
       <FeaturedMetric
         kicker={<>{M.revenue.label} · {label}</>}
         actions={<AskPeriod period={label} what="revenue" onDay={(day) => `Why does revenue on ${day} look the way it does?`} />}

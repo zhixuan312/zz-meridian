@@ -197,7 +197,7 @@ Rules that make every page look like it belongs:
   about, then at least three items `- "<question>" — <what the prepared query is asked>`, each a question a person on
   the page asks that its context does not answer alone; `node scripts/check.ts` fails the spec without it or its form,
   and `node scripts/ask.ts` asks the questions of a served product. The page marks that card
-  `data-protagonist="<name>"` on a wrapper whose display is `contents`, and gives it an Ask. Settings and the embed
+  `data-protagonist="<name>"` on a wrapper whose display is `contents` (in a `2/3` or `1/3` row, where the row gives its first or last card the wider span, the wrapper is itself that grid item, `flex min-w-0 flex-col` with its card stretched to fill it: a `contents` wrapper draws no box, so the span would land on nothing), and gives it an Ask. Settings and the embed
   views carry none. A created project carries none of the template's to copy, so start from this shape:
 
   ```md
@@ -325,7 +325,7 @@ orders is the sample's, not the product's.
   choice throws `notFound()` or answers anything but 200, and a person with no session is sent to sign-in under both.
 - **Each page's protagonist hands itself to the agent.** The card worth asking about, the one the page spec names on
   its `Protagonist:` line, is marked `data-protagonist` with that name, on a wrapper whose display is `contents` so the
-  row's grid is unchanged, and carries an Ask in its header actions or its Filter bar whose question names what the
+  row's grid is unchanged (or, as the wide card of a `2/3` or `1/3` row, on a wrapper that is that grid item), and carries an Ask in its header actions or its Filter bar whose question names what the
   card shows for the period, the filters and the day in view (`AskPeriod` in `optional:src/views/ask-period.tsx` for a
   card over time, `AskAbout` otherwise). The Ask renders only when the assistant is on.
 - **Every context is held to the budget.** Every view's context fits 2,600 characters and names its address as each

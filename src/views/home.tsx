@@ -41,7 +41,8 @@ const costCompact = FORMATTERS['cost-compact'];
  * The revenue card, the page's one Featured metric: the period's revenue, its change, a day's average and the best day,
  * the record as its finding, and revenue a day with the day in progress drawn running. The day in progress is the
  * Meridian's last date, so pointing at it reads it, and its pill says "so far". It is the page's protagonist, marked on
- * a wrapper whose display is `contents`, so the row's grid is unchanged.
+ * a wrapper that is itself the row's first grid item, its card stretched to fill it: a wrapper whose display is
+ * `contents` draws no box, so the row's two columns would land on nothing.
  */
 export function RevenueCard({ data, dates }: { data: HomeData; dates: string[] }) {
   const r = data.revenue;
@@ -50,7 +51,7 @@ export function RevenueCard({ data, dates }: { data: HomeData; dates: string[] }
   const running = data.running;
   const points = running ? [...r.points, running.revenue] : r.points;
   return (
-    <div data-protagonist="Revenue" className="contents">
+    <div data-protagonist="Revenue" className="flex min-w-0 flex-col *:flex-1">
       <FeaturedMetric
         kicker={<>{HOME_METRICS.revenue.label} · {period}</>}
         actions={<AskPeriod period={period} what="revenue" onDay={(day) => `Why does revenue on ${day} look the way it does?`} />}
