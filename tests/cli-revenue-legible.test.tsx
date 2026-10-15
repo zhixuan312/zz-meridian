@@ -41,7 +41,7 @@ describe("Revenue's page reads whole", () => {
       for (const label of ['Against a year ago', 'Best day yet', 'Past due']) {
         let tile: HTMLElement | null = within(root).getAllByText(label)[0];
         while (tile && !tile.querySelector('[data-value]')) tile = tile.parentElement;
-        const note = tile!.querySelector('[data-value] ~ div span.truncate')?.textContent ?? '';
+        const note = tile!.querySelector('[data-value] ~ div [data-note]')?.textContent ?? '';
         expect(note, `${period}: ${label}`).not.toBe('');
         expect(note.length, `${period}: ${label}: ${note}`).toBeLessThanOrEqual(32);
       }

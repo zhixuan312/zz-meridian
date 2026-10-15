@@ -373,8 +373,17 @@ export async function runExplore<I>(query: PreparedQuery<I>, input: unknown, rig
       rest = { groups: past.length + (main.others?.groups ?? 0), vs: new Map([[name, merged]]) };
     } else rest = null;
   }
+  /** A compared group's figures in the window before, with its change; a bucket's keys are dates the window before does not share. */
+  const against = (key: string, at: Values): string => {
+    if (!then || by === undefined) return '';
+    const g = then[0].groups.find((x) => x.key === key);
+    // A group the window before folded into its others may have had rows there: say nothing rather than none.
+    if (!g) return then[0].others ? '' : ' (none in the window before)';
+    const vs = groupValues(then, g, (r) => r.groups.find((x) => x.key === key));
+    return ` (the window before ${asked.map((m) => `${figure(value(name, m, vs), s.measures[m].unit)}${moved(m, at, vs)}`).join('; ')})`;
+  };
   const body = [
-    ...groups.map((g) => `- ${label(g.key)}: ${values(g.vs)}`),
+    ...groups.map((g) => `- ${label(g.key)}: ${values(g.vs)}${against(g.key, g.vs)}`),
     ...(rest ? [`- ${rest.groups} others: ${values(rest.vs)}`] : []),
     ...(s.cannot ? [s.cannot] : []),
   ];

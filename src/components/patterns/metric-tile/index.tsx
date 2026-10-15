@@ -168,8 +168,9 @@ export function MetricTile({
             {parts.unit ? <span className="unit">{parts.unit}</span> : null}
           </p>
           {/* One line, high enough for one line: a part that does not fit wraps out of sight whole, rather than ending
-              "vs previou…". A screen reader still hears it, and the page's head says the period. */}
-          <div className={cn('mt-2 flex h-5 flex-wrap content-start items-center gap-x-2 overflow-hidden text-xs', row && 'max-sm:col-start-1 max-sm:row-start-2 max-sm:mt-0.5 max-sm:min-w-0')}>
+              "vs previou…". A screen reader still hears it, and the page's head says the period. A note is words read
+              whole, so it takes a second line first. */}
+          <div className={cn('mt-2 flex flex-wrap content-start items-center gap-x-2 overflow-hidden text-xs', reading === null && delta === undefined && note ? 'min-h-5' : 'h-5', row && 'max-sm:col-start-1 max-sm:row-start-2 max-sm:mt-0.5 max-sm:min-w-0')}>
             {reading !== null ? (
               <>
                 <span className="t-num font-medium text-ink-2">{formatDate(dates[index!])}</span>
@@ -183,8 +184,8 @@ export function MetricTile({
                 <span className="leading-5 whitespace-nowrap text-ink-3">{compare}</span>
               </>
             ) : note ? (
-              // One line, cut where the tile ends: a line of text keeps the whole of itself in its title.
-              <span className="truncate text-ink-3" title={typeof note === 'string' ? note : undefined}>{note}</span>
+              // Two lines, cut where the second ends: a line of text keeps the whole of itself in its title.
+              <span data-note className="line-clamp-2 min-w-0 leading-5 text-ink-3" title={typeof note === 'string' ? note : undefined}>{note}</span>
             ) : null}
           </div>
           {finding ? (

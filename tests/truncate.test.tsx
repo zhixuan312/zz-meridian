@@ -75,12 +75,12 @@ describe('a breadcrumb and a copy field', () => {
 });
 
 /**
- * And in the metric tile, whose note sits on one line where the change would: found by the audit of the records
+ * And in the metric tile, whose note sits where the change would, on up to two lines: found by the audit of the records
  * template's Partial specimen, where "The error counter did not answer." was cut in a tile a third of a phone wide.
  */
 describe("a metric tile's note", () => {
   it('carries the whole line in its title when the line is text, and leaves a crafted node to its author', () => {
-    const noted = (note: ReactNode) => render(<MetricTile label="Error rate" value="Unavailable" note={note} />).container.querySelector('span.truncate')!;
+    const noted = (note: ReactNode) => render(<MetricTile label="Error rate" value="Unavailable" note={note} />).container.querySelector('[data-note]')!;
     expect(noted('The error counter did not answer.').getAttribute('title')).toBe('The error counter did not answer.');
     expect(noted(<b>Northwind, Contoso</b>).getAttribute('title')).toBeNull();
   });

@@ -39,7 +39,7 @@ function Uptime({ services, end }: { services: ServicesData['services']; end: Da
         actions={<AskAbout question={`Which service is hurting uptime over the last ${n} days, and why?`} />}
         value={meanUptime(services)}
         format={formatUptime}
-        caption={`The mean of ${services.length} services' uptime over their last ${n} days, today included.`}
+        caption={`The mean of ${services.length} services' uptime over their last ${n} days, today included. The line is the share of the services operational each day.`}
         finding={run ? { text: run.text } : undefined}
       >
         <TrendChart height="fill" label="Share of the services operational, a day" format="percent" dates={dates} running series={[{ key: 'operational', label: 'Operational', values: share, kind: 'area' }]} />

@@ -107,7 +107,7 @@ export function systemPrompt(page: PageContext, now: Date, brief = '', limits: s
       : []),
     ...(withheld.length
       ? [
-          'What this person may not read, and who can (say so when they ask for it):',
+          'What this person may not read, and who can (say so when they ask for it). The pages that hold it show it to those roles: never say a page has no place for it, and never send the person to a page that does not hold it.',
           ...withheld.map((w) => (w.roles.length
             ? `- ${oneLine(w.label)}: ${either(w.roles)} can read it.`
             : `- ${oneLine(w.label)}: no single role can read it; it takes a main role together with an add-on.`)),

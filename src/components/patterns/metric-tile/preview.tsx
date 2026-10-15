@@ -130,6 +130,7 @@ export default function MetricTilePreview() {
         <div className="grid w-full gap-4 sm:grid-cols-2">
           <State label="Categorical value"><MetricTile label="Forecast" hint="Whether the trend points to a new customer segment." value="Likely new" note="Based on the last 14 days" /></State>
           <State label="Named format"><MetricTile label="Pipeline" hint="Open opportunities, in the workspace currency." value={1_240_000} format="cost-compact" delta={0.08} /></State>
+          <State label="A note in a narrow tile takes a second line" className="w-56"><MetricTile className="w-full" label="Customers" value={320} note="296 active · 14 trials · 10 past due" /></State>
         </div>
       </Specimen>
       <Specimen wide label="Compact: a wall on a desk" note="size=compact, for a wall of many tiles: the name, the change's figure, one line that is the figure and then the note, and the Sparkline. The sample's eight largest customers, four across from 59rem of the wall's own width, so eight are two rows. The card's head says what the change is against, once: a tile draws the change and not the words." stack>
