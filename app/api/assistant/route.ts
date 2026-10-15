@@ -3,10 +3,10 @@ import { revalidateTag } from 'next/cache';
 import { assistantConfig } from '@/lib/assistant/config';
 import { clock, collections } from '@/data/collections';
 import { Unauthenticated, can, collectionFor, may, nameOf, resolveAccess } from '@/data/access';
-import { collectionTag } from '@/data/read';
+import { aggregate, collectionTag, read } from '@/data/read';
 import { respond } from '@/lib/assistant/respond';
 import { handedTo } from '@/lib/assistant/scoped';
-import type { AgentChange } from '@/lib/assistant/tools';
+import type { AgentChange, HandedExplore } from '@/lib/assistant/tools';
 import type { AnyCollection } from '@/lib/collection';
 import type { ViewTool } from '@/lib/shared-context';
 import { viewTools } from '@/views/tools';
@@ -46,6 +46,21 @@ export async function POST(request: Request): Promise<Response> {
   // so filtering the list is presentation, not the gate; both stay.
   const views = (await Promise.all(viewTools.map(async (v) => ((await may(v.needs)) ? v : null)))).filter((v): v is ViewTool => v !== null);
 
+  // The prepared query of the page the person is on, and no other page's: the view whose page the address is, where
+  // they may use it. It reads through `aggregate()` and `read()`, which ask the person's grant again when a call runs;
+  // its schema offers only what they may read: the collections handed above, without each one's hidden fields.
+  const path = pathOf(String(page?.path ?? ''));
+  const view = views.find((v) => v.explore && onPage(v.page, path));
+  const names = new Set(readable.map((c) => c.name));
+  const explore: HandedExplore | undefined = view?.explore && Object.values(view.explore.sources).some((s) => names.has(s.collection))
+    ? {
+      view,
+      rights: { readable: names, hidden: (name) => (readable.find((c) => c.name === name)?.hidden ?? []) as string[] },
+      io: { aggregate, read, today: clock().toISOString().slice(0, 10) },
+      page: path,
+    }
+    : undefined;
+
   const guard = {
     authorize: async (name: string, op: 'create' | 'update' | 'remove', ids?: string[]) => {
       const now = await resolveAccess().catch(() => null);
@@ -67,11 +82,24 @@ export async function POST(request: Request): Promise<Response> {
     collections: readable,
     // Every view tool this caller may use; each reads through `read()`, so it sees only what this caller may read.
     views,
+    explore,
     guard,
     now: clock(),
     messages: valid.data,
     page: { path: String(page?.path ?? ''), title: String(page?.title ?? ''), context: String(page?.context ?? ''), text: String(page?.text ?? '') },
   });
+}
+
+/** The address the panel sends without its query or fragment, and without a trailing slash: `/usage?period=7d` is `/usage`. */
+function pathOf(address: string): string {
+  const path = address.split(/[?#]/)[0];
+  return (path.length > 1 ? path.replace(/\/+$/, '') : path) || '/';
+}
+
+/** Whether `path` is the page `route` renders: each segment equal, a `[name]` segment matching any one segment. */
+function onPage(route: string, path: string): boolean {
+  const want = route.split('/'), got = path.split('/');
+  return want.length === got.length && want.every((w, i) => (/^\[[^\]/]+\]$/.test(w) ? got[i] !== '' : w === got[i]));
 }
 
 /** An agent's change as an Activity line: "changed status to Suspended for Alice Moreno and Ravi Patel". */

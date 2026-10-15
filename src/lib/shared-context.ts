@@ -10,6 +10,7 @@ import { app } from '@/app.config';
 import type { z } from 'zod';
 import { formatDateTime, formatRelative } from '@/lib/format-date';
 import type { Need } from '@/lib/collection';
+import type { PreparedQuery } from '@/lib/explore';
 
 /** One figure as the screen shows it, with what it counts. */
 export type Fact = {
@@ -86,11 +87,12 @@ export function contextText(c: SharedContext): string {
 }
 
 /**
- * A view's tool: its name, the feature table entry that permits it, the question it answers, its address as input, and
- * one read that returns what the view renders (`data`) and what both agents are told (`context`). The console's
- * assistant offers it as `view_<name>`; an MCP server registers the same contract under its own prefix, with
- * `resourceUri` when the view has an embed (decision 0011). The embed route renders from the same read, so the model's
- * figures and the screen's are one.
+ * A view's tool: its name, the feature table entry that permits it, the question it answers, the page it renders, its
+ * address as input, one read that returns what the view renders (`data`) and what both agents are told (`context`), and
+ * the prepared query an agent counts, groups and compares the page's own collections with (`src/lib/explore.ts`). The
+ * console's assistant offers it as `view_<name>`, and on the page itself the prepared query as `explore_<name>`; an MCP
+ * server registers the same contract under its own prefix, with `resourceUri` when the view has an embed (decision
+ * 0011). The embed route renders from the same read, so the model's figures and the screen's are one.
  */
 export type ViewTool<I extends z.ZodObject = z.ZodObject, D extends object = object> = {
   name: string;
@@ -99,11 +101,21 @@ export type ViewTool<I extends z.ZodObject = z.ZodObject, D extends object = obj
   description: string;
   /** What a person must be able to do to use the view, taken from its feature entry by reference (`FEATURES.<id>.needs`). */
   needs: Need;
+  /**
+   * The console route of the page the view renders: a rail destination's `href` in `nav`, or a detail page's route with
+   * its segment (`/customers/[id]`). The assistant finds the view of the page a person is on by it.
+   */
+  page: string;
   /** The view's address parameters: the same names as its query string. */
   input: I;
   /** The MCP App to render beside the result, when the view has one: `ui://<slug>/<view>`. */
   resourceUri?: string;
   read: (input: z.infer<I>) => Promise<{ context: SharedContext; data: D }>;
+  /**
+   * What an agent may count, group and compare over the page's own collections. A detail page's `fixed` is handed the
+   * view's own input, so it reads the record the page shows.
+   */
+  explore?: PreparedQuery<z.infer<I>>;
 };
 
 /** A view tool, typed from its input schema: `read` receives what `input` parses to. */

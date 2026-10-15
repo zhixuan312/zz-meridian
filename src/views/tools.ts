@@ -62,6 +62,7 @@ export const homeTool = defineViewTool({
   title: 'Home',
   description: 'The company over a period: revenue, customers, tokens served, requests, the days inside the band and compute in use, each with its change; the year at a period a window and the facts it holds; what we sell by model; the Business and Engineering workspaces at a glance; and what is worth knowing across the company.',
   needs: FEATURES.home.needs,
+  page: '/',
   input: z.object({ period, day }),
   resourceUri: `ui://${slug}/home`,
   async read({ period: p = '30d', day: d }) {
@@ -89,6 +90,7 @@ export const requestsTool = defineViewTool({
   title: 'Requests',
   description: 'The request log, filtered: how many match, their errors and latency against the half hour before, the newest of them, and what they have in common.',
   needs: FEATURES.requests.needs,
+  page: '/requests',
   input: z.object({
     status: z.enum(['all', '2xx', '3xx', '4xx', '5xx']).optional(),
     method: z.string().optional(),
@@ -109,6 +111,7 @@ export const requestTool = defineViewTool({
   title: 'Request',
   description: 'One request by its id: how it ended, where its time went, and how its latency compares with its route.',
   needs: FEATURES.request.needs,
+  page: '/requests/[id]',
   input: z.object({ id: z.string().min(1).max(40) }),
   async read({ id }) {
     await requireNeed(FEATURES.request.needs);
@@ -127,6 +130,7 @@ export const servicesTool = defineViewTool({
   title: 'Services',
   description: 'Every service in the team\'s order, now and over 90 days, with its uptime and how long it has run; the uptime of all of them and the longest clean run; the days inside the latency and error band; and every incident, the open ones first with their owners, tickets and how long they have lasted so far, then the resolved ones with how long each lasted.',
   needs: FEATURES.services.needs,
+  page: '/services',
   input: z.object({}),
   async read() {
     await requireNeed(FEATURES.services.needs);
@@ -144,6 +148,7 @@ export const nowTool = defineViewTool({
   title: 'Now',
   description: 'Engineering now: every service and the incidents nobody has resolved, with their owners and tickets; the days inside the latency and error band with their facts; each model over the last 30 complete days; compute in use a region; what ships; the work, with the reader\'s own marked; the slowest endpoints; the releases out, tickets closed, runs passed and incidents resolved over the last 30 complete days; the runs a day; and the latest changes.',
   needs: FEATURES.now.needs,
+  page: '/engineering',
   input: z.object({}),
   resourceUri: `ui://${slug}/now`,
   async read() {
@@ -163,6 +168,7 @@ export const usageTool = defineViewTool({
   title: 'Usage',
   description: 'Requests over a period against the period before, with the line of errors and latency under the title and the facts of the period; requests a day; a year of requests a day; and, over the last 30 complete days, when they come by hour and by weekday and hour, where from by region, what is asked for by endpoint and how it was answered by status class.',
   needs: FEATURES.usage.needs,
+  page: '/usage',
   input: z.object({ period, day }),
   async read({ period: p = '30d', day: d }) {
     await requireNeed(FEATURES.usage.needs);
@@ -180,6 +186,7 @@ export const customersTool = defineViewTool({
   title: 'Customers',
   description: 'The customers that have not left, with plan, status, requests, revenue and error rate: how many there are, where revenue concentrates, who is moving against the rest, and who fails most. A customer that has left is counted in nothing and listed under the status left.',
   needs: FEATURES.customers.needs,
+  page: '/customers',
   input: z.object({ q: z.string().max(100).optional(), plan: z.enum(['all', 'Enterprise', 'Scale', 'Starter']).optional(), status: z.enum(['all', 'active', 'trial', 'past due', 'left']).optional().describe('`all` is every customer that has not left; `left` lists those that have.') }),
   async read({ q = '', plan = 'all', status = 'all' }) {
     await requireNeed(FEATURES.customers.needs);
@@ -199,6 +206,7 @@ export const revenueTool = defineViewTool({
   title: 'Revenue',
   description: 'Revenue over a period against the period before and against a year ago, the best day yet, revenue by plan and who pays it, who is past due, every customer\'s week, the customers on each plan from a trial to Enterprise, what is worth a look, what they buy by model and where they are by region.',
   needs: FEATURES.revenue.needs,
+  page: '/business',
   input: z.object({ period }),
   async read({ period: p = '30d' }) {
     await requireNeed(FEATURES.revenue.needs);
@@ -241,6 +249,7 @@ export const customerTool = defineViewTool({
   title: 'Customer',
   description: 'One customer by its id: its plan and where it stands since when, its owner on our side, what it asked of the API and was billed in the last 30 days with its share of revenue, its error rate against the product\'s, how its last 14 days moved, what it asks for by endpoint, and its latest requests in the sampled log.',
   needs: FEATURES.customer.needs,
+  page: '/customers/[id]',
   input: z.object({ id: z.string().min(1).max(60) }),
   async read({ id }) {
     await requireNeed(FEATURES.customer.needs);
@@ -255,6 +264,7 @@ export const membersTool = defineViewTool({
   title: 'Members',
   description: 'Everyone in the workspace with role, team, status and when they were last seen; who has gone quiet and which invitations wait.',
   needs: FEATURES.members.needs,
+  page: '/members',
   input: z.object({}),
   async read() {
     await requireNeed(FEATURES.members.needs);
@@ -268,6 +278,7 @@ export const keysTool = defineViewTool({
   title: 'API keys',
   description: 'Every API key with owner, scopes and last use; which live keys sit unused or carry every scope. Never a secret.',
   needs: FEATURES.keys.needs,
+  page: '/keys',
   input: z.object({}),
   async read() {
     await requireNeed(FEATURES.keys.needs);
@@ -281,6 +292,7 @@ export const ticketsTool = defineViewTool({
   title: 'Tickets',
   description: 'The tickets the team tracks against a service: how many are open, waiting and closed, which are unowned or have gone quiet, and the newest changes.',
   needs: FEATURES.tickets.needs,
+  page: '/operations-tickets',
   input: z.object({ q: z.string().max(100).optional(), state: z.enum(['all', 'open', 'waiting', 'closed']).optional(), priority: z.enum(['all', 'high', 'normal', 'low']).optional() }),
   async read({ q = '', state = 'all', priority = 'all' }) {
     // The one way the tool sees tickets: the read the page uses, so the figures it is told are the figures on the screen.
@@ -294,6 +306,7 @@ export const testsTool = defineViewTool({
   title: 'Tests',
   description: 'The verification runs: how many verifications have a latest run, how many are failing or skipped, why the failing ones failed, and the newest runs.',
   needs: FEATURES.tests.needs,
+  page: '/tests',
   input: z.object({ q: z.string().max(100).optional(), state: z.enum(['all', 'passed', 'failed', 'skipped']).optional(), release: z.string().max(40).optional().describe('A release id: only the runs of that release.'), runs: z.enum(['all', 'latest']).optional().describe('`latest` keeps only the latest run of each verification, which is what the figures count.') }),
   async read({ q = '', state = 'all', release = '', runs = 'all' }) {
     // The one way the tool sees runs: the read the page uses, so the figures it is told are the figures on the screen.
@@ -308,6 +321,7 @@ export const releasesTool = defineViewTool({
   title: 'Releases',
   description: 'The releases: which version is live in each environment, which are ready to go out, and for those still in testing which required verification is missing, failed or skipped.',
   needs: FEATURES.releases.needs,
+  page: '/releases',
   input: z.object({ q: z.string().max(100).optional(), state: z.enum(['all', 'testing', 'ready', 'released']).optional(), environment: z.enum(['all', 'staging', 'production']).optional() }),
   async read({ q = '', state = 'all', environment = 'all' }) {
     const { rows, observedAt } = await readReleases();

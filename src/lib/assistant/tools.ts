@@ -1,6 +1,7 @@
-import { tool, type SingleToolApprovalFunction, type ToolSet, type UIMessageStreamWriter } from 'ai';
+import { jsonSchema, tool, type JSONSchema7, type SingleToolApprovalFunction, type ToolSet, type UIMessageStreamWriter } from 'ai';
 import { z } from 'zod';
 import { patchOf, queryInput, writableFields, type AnyCollection } from '@/lib/collection';
+import { exploreSchema, runExplore, type ExploreIO, type ExploreRights } from '@/lib/explore';
 import { contextText, type ViewTool } from '@/lib/shared-context';
 
 type Row = Record<string, unknown>;
@@ -44,6 +45,36 @@ export type AgentChange = { name: string; label: string; op: 'create' | 'update'
 
 /** A change the collection or the run-once rule refused. Its reason is the person's to read, so it is shown as it is. */
 export class ChangeRefused extends Error {}
+
+/**
+ * The prepared query of the page the person is on, as the route hands it: the page's view, the person's rights, the
+ * authorized reads the call runs through, and the page's address, which an answer names when the query names none.
+ */
+export type HandedExplore = { view: ViewTool; rights: ExploreRights; io: ExploreIO; page: string };
+
+/**
+ * `explore_<view>`: the view's prepared query as a read-only tool. The schema the model is offered is the person's (only
+ * the sources and names they may read), while a call is validated against the whole declaration, so a name that is
+ * declared but withheld from them reaches the runner and is answered "You do not have access to that." rather than
+ * refused as malformed. A detail page's own input (One customer's `{ id }`) is offered beside the query and handed to
+ * its `fixed`; a rail page's input is not, as the query has its own period and conditions.
+ */
+function exploreTool({ view, rights, io, page }: HandedExplore) {
+  const query = view.explore!;
+  const own = view.page.includes('[') ? view.input : undefined;
+  const whole = exploreSchema(query, null, own);
+  return tool({
+    description: `Count, sum, group and compare what the ${view.title} page reads, over every row and never a page of them: one source a call, one to three of its measures, its conditions, a facet or a time bucket, a period of complete days and the window before, and up to 20 rows. Answers in text: the window, each measure with its unit, at most eight groups and the rest, what the source cannot say, and each row's console address. Prefer it to counting rows yourself.`,
+    inputSchema: jsonSchema<Record<string, unknown>>(z.toJSONSchema(exploreSchema(query, rights, own)) as JSONSchema7, {
+      validate: (value) => {
+        const parsed = whole.safeParse(value);
+        return parsed.success ? { success: true, value: parsed.data } : { success: false, error: parsed.error };
+      },
+    }),
+    execute: (input) => runExplore(query, input, rights, io, page, own),
+  });
+}
+
 /** "API keys" stays, "Members" becomes "members". */
 const lower = (label: string) => (/^.[A-Z]/.test(label) ? label : label.charAt(0).toLowerCase() + label.slice(1));
 
@@ -56,10 +87,15 @@ const lower = (label: string) => (/^.[A-Z]/.test(label) ? label : label.charAt(0
  * `views` adds one read-only `view_<name>` tool per view (decision 0011): it opens the view at an address and returns
  * its shared context, the same text the page tells the assistant, so the assistant can look at another period, filter
  * or record without the person navigating. A view tool changes nothing and needs no approval.
+ *
+ * `explore` adds the page's own prepared query as `explore_<view>`, read-only too. Only the page the person is on hands
+ * one: fourteen schemas would crowd every request.
  */
-export function assistantTools(collections: AnyCollection[], writer: UIMessageStreamWriter, guard: Guard, views: ViewTool[] = []): { tools: ToolSet; toolApproval: Record<string, Rule> } {
+export function assistantTools(collections: AnyCollection[], writer: UIMessageStreamWriter, guard: Guard, views: ViewTool[] = [], explore?: HandedExplore): { tools: ToolSet; toolApproval: Record<string, Rule> } {
   const tools: ToolSet = {};
   const toolApproval: Record<string, Rule> = {};
+
+  if (explore?.view.explore) tools[`explore_${explore.view.name}`] = exploreTool(explore);
 
   for (const v of views) {
     tools[`view_${v.name}`] = tool({

@@ -496,7 +496,7 @@ Delete the sample pages, views, embed views and API routes (`optional:app/api/ex
 `optional:src/system/fixtures/` or `optional:src/system/sample-cells.tsx` yet: `optional:src/data/collections.ts`, `optional:src/data/sample.ts`
 and `optional:src/data/sign-in.ts` (the 30 days the sign-in page draws) import the fixtures. Once your collections' `rows` and `clock`, and the clock in the quiet bell of `optional:src/views/shell-alerts.tsx`
 (`DEMO_NOW`), come from your own data and nothing imports them, delete them and `optional:src/data/sample.ts` (with the Atlas kept, the previews read them: leave them, and remove the
-pages' entries in `PAGES` in `example:src/system/content.ts`). Keep `optional:src/data/collections.ts`, `optional:src/lib/collection.ts`,
+pages' entries in `PAGES` in `example:src/system/content.ts`). Keep `optional:src/data/collections.ts`, `optional:src/lib/collection.ts`, `optional:src/lib/explore.ts`,
 `src/lib/assistant/`, `optional:app/api/assistant/` and the assistant panel, unless the person does not want the assistant (it
 then stays off without them). Then fix what still points at the sample:
 

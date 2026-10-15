@@ -87,6 +87,7 @@ Every release of ZZ Meridian, newest first. Versions follow semver: a removed or
 - **Services quotes the first sentence of an open incident's latest update.** Its context reads `latest update after 2.6h: "p95 back under 650ms."`, where it quoted the whole update; the page still draws all of it. A test of yours that matches the whole update matches the first sentence.
 - **Usage opens at the day its address names.** `UsageData` holds `day`, the day the address names (`?day=`) or null, and `UsageBody` opens its Meridian pointed at it, as Home does; pointed at a day, Usage's context names `/usage?period=30d&day=2026-09-21`. Add `day: null` where you build a `UsageData` yourself, and `day` to the reads you hand `usageData`.
 - **A collection has an `aggregate`.** A collection written by hand adds one: `aggregateRows` over its rows for a table it holds in memory, or one grouped query for a database.
+- **A view tool has a prepared query.** `defineViewTool` takes `page`, the console route of the page the view renders (a rail page's `href` in `nav`, or `/customers/[id]` for a detail page), and may take `explore`, its prepared query (`src/lib/explore.ts`, which an update brings): what an agent may ask of the page's own collections, answered as text with its window, its units and its rows' addresses. The assistant is handed the `explore_<view>` of the page the person is on, and no other page's. A view tool of yours adds `page`.
 
 ### Added
 

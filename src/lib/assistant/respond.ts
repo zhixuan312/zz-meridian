@@ -1,7 +1,7 @@
 import { APICallError, RetryError, convertToModelMessages, createUIMessageStream, createUIMessageStreamResponse, isStepCount, streamText, toUIMessageStream, type LanguageModel, type UIMessage } from 'ai';
 import type { AnyCollection } from '@/lib/collection';
 import type { ViewTool } from '@/lib/shared-context';
-import { ChangeRefused, assistantTools, type Guard } from './tools';
+import { ChangeRefused, assistantTools, type Guard, type HandedExplore } from './tools';
 import { readBrief } from './brief';
 import { briefExcerpt, systemPrompt, type PageContext } from './prompt';
 
@@ -26,12 +26,15 @@ function limitsOf(collections: AnyCollection[]): string[] {
 /** The most model steps one reply may take. */
 const MAX_STEPS = 8;
 
-/** Streams the model's answer to `messages`, about `page`, as a UI message stream response. `guard` is asked again as each approved change runs. */
-export async function respond({ model, secret, messages, page, collections, views = [], guard, now }: { model: LanguageModel; secret: string; messages: UIMessage[]; page: PageContext; collections: AnyCollection[]; views?: ViewTool[]; guard: Guard; now: Date }): Promise<Response> {
+/**
+ * Streams the model's answer to `messages`, about `page`, as a UI message stream response. `guard` is asked again as
+ * each approved change runs; `explore`, when the page's view declares a prepared query, is handed as `explore_<view>`.
+ */
+export async function respond({ model, secret, messages, page, collections, views = [], explore, guard, now }: { model: LanguageModel; secret: string; messages: UIMessage[]; page: PageContext; collections: AnyCollection[]; views?: ViewTool[]; explore?: HandedExplore; guard: Guard; now: Date }): Promise<Response> {
   const modelMessages = await convertToModelMessages(messages);
   const stream = createUIMessageStream({
     execute: ({ writer }) => {
-      const { tools, toolApproval } = assistantTools(collections, writer, guard, views);
+      const { tools, toolApproval } = assistantTools(collections, writer, guard, views, explore);
       const result = streamText({
         model,
         system: systemPrompt(page, now, briefExcerpt(readBrief()), limitsOf(collections)),

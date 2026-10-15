@@ -62,13 +62,32 @@ A person hands any card to the agent with one press. **Ask** posts a question ab
 - Work a title and a fact out where the history is. The days a record, a first or a total needs are read on the server, once a request, and never handed to the browser: a view's read returns the sentences (`head` on its data: the title, each fact's line, and what to say when the history could not be read), and the context is built from those. The browser and the view tool then share the same text, and a page's payload does not grow with the history. `factInsight` in `optional:src/views/fact-insight.ts` turns a rule's fact into an insight.
 - Count a period in complete days. The sample's periods are the 7, 30 or 90 complete days up to yesterday, or every complete day kept for `all`, which has no period before it and so no change: `readDays(period)` in `optional:src/data/metrics.ts` returns those days, the same number before them, both totals, and the day in progress on its own. The day in progress is in no total, change or finding, and Home's context says so. The last rows of the sample's `days`, `usage`, `compute` and `costs` collections may be that day, and their descriptions say it, so an agent that queries one leaves it out of a sum.
 
+## Prepared queries
+
+A view's context says what the page shows. A question the context does not answer alone ("how many requests came at 22:00 on each weekday?") is asked of the page's prepared query: what the page's author lets an agent count, group and compare over the page's own collections, declared beside the view as `explore` on its view tool (`PreparedQuery` in `src/lib/explore.ts`). Code still computes and the model still interprets: the collection works the figures out, and the agent never counts rows itself.
+
+A prepared query names at most five sources. Each is one collection with:
+
+- `date`, the field a window is cut on; a source without one has no window and no window before;
+- `filters`, the fields that narrow it, each with its operators (`eq`, `ne`, `in`, `lt`, `gt`) and, where it has them, its values;
+- `facets`, the fields that group it, and `buckets`, the time buckets of its date (day, week, month, weekday);
+- `measures`, each with its label, unit and definition: a count (of the rows that meet conditions the author declares, when it has them), a field's sum, average, minimum, maximum or p95 (a field may be a path, such as `revenueByPlan.Enterprise`), or a ratio or a margin of two measures, of this source or `<source>.<measure>` of another, read over the same window on that source's own date;
+- `drill`, the columns of a row, the collection's key among them, and the console address that opens it;
+- `cannot`, what its answers cannot say, in the words the page's context uses; and `labels`, how a facet's value reads (the hours' weekday `6` reads Sunday).
+
+A detail page's query adds `fixed`, which turns the view's own input (One customer's `{ id }`) into each source's conditions, so every answer is about the record the page shows. `address` says which console address shows what a call asked; without it, an answer names the page's own.
+
+An agent asks it as the read-only tool `explore_<view>`. Its input is one object: `{ source, measures (one to three), where? (up to four conditions), by? or bucket? (never both), period? ('7d', '30d', '90d' or 'all'; 30d when not given), compare?, rows? (0 to 20; none when not given) }`, with a detail page's own input beside it. It may name only what the query declares, and it is checked against the named source's own declaration, so a name the query lacks, a facet of another source or a period on a source with no date is refused. The schema is the person's: a source over a collection they may not read, and a measure, filter or facet over a field hidden from them, is left out; a call that names one anyway is answered "You do not have access to that." and reads nothing. Its JSON Schema stays under 6,000 characters.
+
+The answer is text of at most 3,000 characters, in a fixed order: the window as its first and last complete days, and the conditions; each measure with its label, value, unit and definition; the window before and the change, when asked; at most eight groups, largest first, or the latest eight buckets in date order (a weekday Monday to Sunday); the rest on one line with their own figures; what the source cannot say; then the rows, each with its console address. Figures are written in full, with at most two decimals. Rows that do not fit are dropped from the end, and a last line says how many. The tool returns the answer with an `address`. A call reads through one `aggregate` for each source and window (the window before is a second, and a measure over another source adds that source's) and one `read` for its rows, through `aggregate()` and `read()` in `optional:src/data/read.ts`, so the person is checked again when it runs.
+
 ## The console's own assistant
 
-The second place is inside the product. The assistant panel reads the page the person is on (its address with the query, the view's shared context, then the visible text), looks records up through the product's collections (`optional:src/data/collections.ts`) and proposes changes as Proposals in its thread. It follows the same rules: it reads what the person may read, changes nothing without approval, and leaves its mark (the Agent mark and the "Assistant" caption). It is off until a model is configured. `example:docs/assistant.md` says how to switch it on and point it at your data, and how the same tools can later be offered from an MCP server.
+The second place is inside the product. The assistant panel reads the page the person is on (its address with the query, the view's shared context, then the visible text), looks records up through the product's collections (`optional:src/data/collections.ts`) and proposes changes as Proposals in its thread. On a page whose view declares a prepared query, it is handed that page's `explore_<view>` and no other page's, beside every `view_<name>`: the route finds the view whose `page`, the console route of the page it renders, is the address the panel sends, and hands its prepared query only where the person may use that view. A rail page's `page` is its `href` in `nav`; a detail page's has its segment (`/customers/[id]`) and matches any one segment there. It follows the same rules: it reads what the person may read, changes nothing without approval, and leaves its mark (the Agent mark and the "Assistant" caption). It is off until a model is configured. `example:docs/assistant.md` says how to switch it on and point it at your data, and how the same tools can later be offered from an MCP server.
 
 ## Building an MCP server for the template
 
-The template ships the views and their tool contracts; the server is yours. Every view's contract is in `example:src/views/tools.ts`: its `name`, the question it answers (`description`), its address as a zod `input`, its `resourceUri` when it has an embed route, and one `read` that returns what the view renders (`data`) and what both agents are told (`context`). The console's assistant offers each one as `view_<name>`, but registers it only where the caller satisfies that view's need (`may(v.needs)` in `optional:app/api/assistant/route.ts`); register the same list, filtered the same way:
+The template ships the views and their tool contracts; the server is yours. Every view's contract is in `example:src/views/tools.ts`: its `name`, the question it answers (`description`), the console route of its page (`page`), its address as a zod `input`, its `resourceUri` when it has an embed route, one `read` that returns what the view renders (`data`) and what both agents are told (`context`), and its prepared query (`explore`) when it declares one. The console's assistant offers each one as `view_<name>`, but registers it only where the caller satisfies that view's need (`may(v.needs)` in `optional:app/api/assistant/route.ts`); register the same list, filtered the same way:
 
 ```ts
 import { z } from 'zod';
@@ -87,6 +106,33 @@ for (const v of viewTools) {
     // `content` is what the model reads; `structuredContent` is the view's data, which the specification keeps out of
     // the model's context. The text therefore carries everything.
     return { content: [{ type: 'text', text: contextText(context) }], structuredContent: data };
+  });
+}
+```
+
+A host has no page the person is on, so an MCP server may register every view's prepared query, each with the caller's own schema. `rights` are the caller's: the collections they may read, and each one's `hidden` fields.
+
+```ts
+import { may } from '@/data/access';
+import { clock } from '@/data/collections';
+import { aggregate, read } from '@/data/read';
+import { exploreSchema, runExplore, type ExploreRights } from '@/lib/explore';
+
+declare const rights: ExploreRights; // { readable: the collections the caller may read, hidden: (name) => that collection's hidden fields }
+for (const v of viewTools) {
+  if (!v.explore || !(await may(v.needs))) continue;
+  // A query none of whose sources the caller may read offers them nothing.
+  if (!Object.values(v.explore.sources).some((s) => rights.readable.has(s.collection))) continue;
+  // A detail page's own input (its `id`) is offered beside the query and handed to its `fixed`.
+  const own = v.page.includes('[') ? v.input : undefined;
+  server.registerTool(`${toolPrefix}_explore_${v.name}`, {
+    description: `Count, group and compare what the ${v.title} page reads.`,
+    inputSchema: z.toJSONSchema(exploreSchema(v.explore, rights, own)),
+    annotations: { readOnlyHint: true },
+  }, async (input) => {
+    const today = clock().toISOString().slice(0, 10);
+    const { address, answer } = await runExplore(v.explore!, input, rights, { aggregate, read, today }, v.page, own);
+    return { content: [{ type: 'text', text: `${answer}\nAddress: ${address}` }] };
   });
 }
 ```

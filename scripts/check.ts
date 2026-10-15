@@ -400,7 +400,7 @@ const SWEPT = /^src\/(lib|data)\//;
  * Meridian gave it. Naming them here is the fix: "this module is a library a product may use in part" is a decision
  * about the module, so it is declared rather than inferred, and the list is short on purpose.
  */
-const TOOLKIT = /^src\/lib\/(format|color|collection|live)\.ts$/;
+const TOOLKIT = /^src\/lib\/(format|color|collection|explore|live)\.ts$/;
 // In a project built on Meridian (adopted or created), Meridian's own modules are a library it uses in part: a newer
 // release may add an export the team's code does not use yet. Only the project's own src/lib and src/data are swept.
 // The template, with no manifest, is swept whole.
