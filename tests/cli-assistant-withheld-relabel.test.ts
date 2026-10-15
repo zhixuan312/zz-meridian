@@ -49,7 +49,7 @@ describe('a rail page labelled in the product\'s own words', () => {
     expect(res.status).toBe(200);
     await res.text();
     const line = seen.system.split('\n').find((l) => l.startsWith('- Workspace: ')) ?? '';
-    expect(line).toBe('- Workspace: Owner or Admin can read it. Workspace settings (/settings) shows it to those roles; this person can open Workspace settings, where it is not shown to them.');
+    expect(line).toBe('- Workspace: Owner or Admin can read it. Owner can change it. Workspace settings (/settings) shows it to those roles; this person can open Workspace settings, where it is not shown to them.');
   });
 
   it("names, on each item that names one, a feature whose need is the item's", () => {

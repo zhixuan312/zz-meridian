@@ -8,6 +8,7 @@
 import { REGION_NAMES } from '@/data/sample';
 import type { PreparedQuery } from '@/lib/explore';
 import { testsAddress } from './tests-context';
+import { releaseRefers } from './tests-explore';
 import { ticketsAddress } from './tickets-context';
 
 const NOW = '/engineering';
@@ -84,6 +85,7 @@ export const nowExplore: PreparedQuery = {
         passed: { label: 'Passed', unit: 'runs', definition: 'Runs that started in the window and passed.', agg: 'count', where: [{ field: 'state', op: 'eq', value: 'passed' }] },
       },
       drill: { columns: ['id', 'suite', 'endpointId', 'releaseId', 'state', 'startedAt'], address: (r) => testsAddress({ q: '', state: 'all', release: String(r.releaseId) }) },
+      refers: releaseRefers,
       cannot: 'The runs are recorded outside this product: nothing here reruns a verification.',
     },
   },

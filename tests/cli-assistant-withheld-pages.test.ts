@@ -63,6 +63,8 @@ describe('what a Viewer may not read, and where it is shown', () => {
   it('API keys and Members are pages they may not open, which tell them who can', async () => {
     const system = await promptFor('members_12', 'explain');
     expect(lineOf(system, 'API keys')).toContain('API keys (/keys) shows it to those roles; this person may not open it, and it tells them who can.');
+    // A Member reads keys and makes none: the roles that create one are named apart (the second reading, D3).
+    expect(lineOf(system, 'API keys')).toContain('Owner, Admin, Member or Key manager can read it. Owner, Admin or Key manager can create or remove it.');
     expect(lineOf(system, 'Members')).toContain('Members (/members) shows it to those roles; this person may not open it, and it tells them who can.');
   });
 
@@ -70,7 +72,7 @@ describe('what a Viewer may not read, and where it is shown', () => {
   // the action the features table declares on it (Save workspace needs `workspace:read`), never from its name.
   it('the workspace is on Settings, which they open without it, and on no other public page', async () => {
     const line = lineOf(await promptFor('members_12', 'explain'), 'Workspace');
-    expect(line).toBe('- Workspace: Owner or Admin can read it. Settings (/settings) shows it to those roles; this person can open Settings, where it is not shown to them.');
+    expect(line).toBe('- Workspace: Owner or Admin can read it. Owner can change it. Settings (/settings) shows it to those roles; this person can open Settings, where it is not shown to them.');
   });
 
   it('is said to nobody under absent', async () => {

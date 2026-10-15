@@ -75,7 +75,7 @@ A prepared query names at most five sources. Each is one collection with:
 - `facets`, the fields that group it, and `buckets`, the time buckets of its date (day, week, month, weekday);
 - `measures`, each with its label, unit and definition: a count (of the rows that meet conditions the author declares, when it has them), a field's sum, average, minimum, maximum or p95 (a field may be a path, such as `revenueByPlan.Enterprise`), or a ratio `a / (b * scale)` or a margin `(1 - b / a) / scale` of two measures, of this source or `<source>.<measure>` of another, read over the same window on that source's own date, where a margin takes a `scale` as a ratio does (1 when not given, `0.01` to state it in %);
 - `drill`, the columns of a row, the collection's key among them, and the console address that opens it;
-- `cannot`, what its answers cannot say, in the words the page's context uses; and `labels`, how a facet's value reads (the hours' weekday `6` reads Sunday).
+- `cannot`, what its answers cannot say, in the words the page's context uses; `labels`, how a facet's value reads (the hours' weekday `6` reads Sunday); and `refers`, a field that holds another collection's key and how that record reads, so a run's `releaseId` is named with its release's version.
 
 A detail page's query adds `fixed`, which turns the view's own input (One customer's `{ id }`) into each source's conditions, so every answer is about the record the page shows. `address` says which console address shows what a call asked; without it, an answer names the page's own.
 

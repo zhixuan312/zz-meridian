@@ -3,10 +3,15 @@
  * verification runs, windowed by when each started, so "how many passed in the last seven days" is a figure the
  * collection works out rather than rows an agent counts. Server only: `tools.ts` sets it on the Tests tool.
  */
-import type { PreparedQuery } from '@/lib/explore';
+import type { PreparedQuery, Source } from '@/lib/explore';
 import { testsAddress } from './tests-context';
 
 const all = { q: '', state: 'all', release: '' };
+
+/** A run's release, as the pages write it: its key reads "releases_1 (v4.18.2, Edge gateway, production)". */
+export const releaseRefers: NonNullable<Source['refers']> = {
+  releaseId: { collection: 'releases', name: (r) => `${String(r.version)}, ${String(r.service)}, ${String(r.environment)}` },
+};
 
 export const testsExplore: PreparedQuery = {
   sources: {
@@ -28,6 +33,7 @@ export const testsExplore: PreparedQuery = {
       },
       // A run has no page of its own: its release's runs are the page that lists it.
       drill: { columns: ['id', 'suite', 'endpointId', 'releaseId', 'state', 'startedAt', 'failure'], address: (r) => testsAddress({ ...all, release: String(r.releaseId) }) },
+      refers: releaseRefers,
       cannot: 'The page only shows what ran: nothing here reruns a verification, and the runs are recorded outside this product. A window holds complete days, so a run that started today is in none.',
     },
   },

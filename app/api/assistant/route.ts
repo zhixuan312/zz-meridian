@@ -97,7 +97,9 @@ export async function POST(request: Request): Promise<Response> {
           ...own.map((i) => ({ label: i.label, address: i.href, open: open.includes(i) })),
         ];
         const derived = [...new Set(holding.flatMap((v) => workedFrom(v.explore, c.name)))];
-        return { label: c.label, roles: whoCan(`${c.name}:read`), ...(pages.length ? { pages } : {}), ...(derived.length ? { derived } : {}) };
+        // Who may make each change, apart from who may read it: a Member reads keys and creates none.
+        const changes = (['create', 'update', 'remove'] as const).map((op) => ({ op, roles: whoCan(`${c.name}:${op}`) })).filter((x) => x.roles.length);
+        return { label: c.label, roles: whoCan(`${c.name}:read`), ...(changes.length ? { changes } : {}), ...(pages.length ? { pages } : {}), ...(derived.length ? { derived } : {}) };
       })
       : undefined,
   };

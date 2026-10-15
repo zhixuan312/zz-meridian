@@ -53,6 +53,12 @@ export type Source = {
    * group reads it, and a condition names it as null, which only a field given a word here admits.
    */
   none?: Record<string, string>;
+  /**
+   * A field that holds another collection's key, and how that record reads: a run's `releaseId` reads "v4.18.2, Edge
+   * gateway, production". A group and a drilled row name the record beside its key, read once per call under the
+   * person's rights, so a model never pairs keys with names by guessing; one who may not read it sees the key alone.
+   */
+  refers?: Record<string, { collection: string; name: (record: Record<string, unknown>) => string }>;
 };
 
 export type PreparedQuery<I = unknown> = {
@@ -377,7 +383,7 @@ export async function runExplore<I>(query: PreparedQuery<I>, input: unknown, rig
 
   // The groups, at most eight, and the rest on one line.
   const main = now[0];
-  const label = (key: string | null) => (by === undefined ? String(key) : key === null ? s.none?.[by] ?? `no ${by}` : s.labels?.[by]?.[key] ?? key);
+  const label = (key: string | null) => (by === undefined ? String(key) : key === null ? s.none?.[by] ?? `no ${by}` : s.labels?.[by]?.[key] ?? named(by, key));
   let groups = main.groups.map((g) => ({ key: g.key, vs: groupValues(now, g, (r) => r.groups.find((x) => x.key === g.key)) }));
   let rest: { groups: number; vs: Values } | null = main.others && { groups: main.others.groups, vs: groupValues(now, main.others, (r) => r.others ?? undefined) };
   if (main.groups.length && by !== undefined && derivedOnly) {
@@ -408,22 +414,40 @@ export async function runExplore<I>(query: PreparedQuery<I>, input: unknown, rig
     const vs = groupValues(then, g, (r) => r.groups.find((x) => x.key === key));
     return ` (the window before ${asked.map((m) => `${figure(value(name, m, vs), s.measures[m].unit)}${moved(m, at, vs)}`).join('; ')})`;
   };
+  // The drill: one read of at most twenty rows, the latest first, each with its address. Rows that do not fit 3,000
+  // characters are dropped from the end, and a line says how many.
+  const window: Condition[] = w && period !== 'all'
+    ? [{ field: w.field, op: 'gt', value: `${shift(w.from, -1)}T23:59:59.999Z` }, { field: w.field, op: 'lt', value: shift(w.to, 1) }]
+    : w ? [{ field: w.field, op: 'lt', value: shift(w.to, 1) }] : [];
+  const read = rows === 0 ? { rows: [], total: 0 } : await io.read(s.collection, { where: [...conds, ...window], limit: rows, ...(s.date ? { sort: { field: s.date, dir: 'desc' as const } } : {}) });
+  const columns = s.drill.columns.filter((c) => !hidden.has(c));
+
+  // The records the groups and the drilled rows refer to, one read per collection the person may read.
+  const names = new Map<string, Map<string, string>>();
+  for (const [field, ref] of Object.entries(s.refers ?? {})) {
+    if (hidden.has(field) || !rights.readable.has(ref.collection)) continue;
+    const keys = unique([
+      ...(by === field ? groups.flatMap((g) => (g.key === null ? [] : [g.key])) : []),
+      ...(columns.includes(field) ? read.rows.flatMap((r) => (typeof r[field] === 'string' ? [r[field] as string] : [])) : []),
+    ]);
+    if (!keys.length) continue;
+    const omit = new Set(rights.hidden(ref.collection));
+    const found = await io.read(ref.collection, { where: [{ field: 'id', op: 'in', value: keys }], limit: keys.length });
+    names.set(field, new Map(found.rows.map((r) => [String(r.id), ref.name(Object.fromEntries(Object.entries(r).filter(([k]) => !omit.has(k))))])));
+  }
+  function named(field: string, key: string): string {
+    const name = names.get(field)?.get(key);
+    return name ? `${key} (${name})` : key;
+  }
+
   const body = [
     ...groups.map((g) => `- ${label(g.key)}: ${values(g.vs)}${against(g.key, g.vs)}`),
     ...(rest ? [`- ${rest.groups} others: ${values(rest.vs)}`] : []),
     ...(s.cannot ? [s.cannot] : []),
   ];
-
-  // The drill: one read of at most twenty rows, the latest first, each with its address. Rows that do not fit 3,000
-  // characters are dropped from the end, and a line says how many.
   const fixedLines = [...head, ...body];
   if (rows === 0) return reply(fixedLines.join('\n'));
-  const window: Condition[] = w && period !== 'all'
-    ? [{ field: w.field, op: 'gt', value: `${shift(w.from, -1)}T23:59:59.999Z` }, { field: w.field, op: 'lt', value: shift(w.to, 1) }]
-    : w ? [{ field: w.field, op: 'lt', value: shift(w.to, 1) }] : [];
-  const read = await io.read(s.collection, { where: [...conds, ...window], limit: rows, ...(s.date ? { sort: { field: s.date, dir: 'desc' as const } } : {}) });
-  const columns = s.drill.columns.filter((c) => !hidden.has(c));
-  const drilled = read.rows.map((r) => `- ${s.drill.address(r)}: ${columns.map((c) => `${c} ${text(r[c])}`).join(', ')}`);
+  const drilled = read.rows.map((r) => `- ${s.drill.address(r)}: ${columns.map((c) => `${c} ${names.has(c) && typeof r[c] === 'string' ? named(c, r[c]) : text(r[c])}`).join(', ')}`);
   const lead = read.rows.length ? `Rows, ${s.date ? 'the latest first' : 'in order'}, ${read.rows.length} of ${read.total}:` : 'No row matches.';
   const answer = (k: number) => [...fixedLines, lead, ...drilled.slice(0, k), ...(k < drilled.length ? [`${drilled.length - k} more rows are not shown.`] : [])].join('\n');
   let k = drilled.length;

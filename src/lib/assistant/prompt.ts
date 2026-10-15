@@ -70,18 +70,36 @@ export function briefExcerpt(text: string): string {
  * What is true of the person the assistant answers, worked out by the route from their access and handed here as data, so
  * this file reads nothing of the product's data layer. `addresses` are the console addresses they may open, as the rail
  * labels them, a detail page's with `<id>` in place of its segment; `withheld` is each collection they may not read, the
- * roles that can, the pages that show it to those roles (each saying whether this person may open it) and the figures
- * worked out from it, given only under `refusal: 'explain'`; `explore` is the page's prepared query tool when one is
+ * roles that can, the roles that may make each change to it (a Member reads keys and creates none), the pages that show
+ * it to those roles (each saying whether this person may open it) and the figures worked out from it, given only under
+ * `refusal: 'explain'`; `explore` is the page's prepared query tool when one is
  * handed. What is left out is not said.
  */
 export type Audience = {
   addresses?: readonly { label: string; address: string }[];
-  withheld?: readonly { label: string; roles: readonly string[]; pages?: readonly { label: string; address: string; open: boolean }[]; derived?: readonly string[] }[];
+  withheld?: readonly {
+    label: string;
+    roles: readonly string[];
+    changes?: readonly { op: 'create' | 'update' | 'remove'; roles: readonly string[] }[];
+    pages?: readonly { label: string; address: string; open: boolean }[];
+    derived?: readonly string[];
+  }[];
   explore?: string;
 };
 
 /** Roles as one choice, in table order: "Owner", "Owner or Admin", "Owner, Admin or Member". */
 const either = (roles: readonly string[]) => (roles.length < 2 ? roles.join('') : `${roles.slice(0, -1).join(', ')} or ${roles.at(-1)}`);
+
+const VERB = { create: 'create', update: 'change', remove: 'remove' } as const;
+/** Who may make each change, the changes the same roles make said once: "Owner or Admin can create or remove it; Owner can change it." */
+function changesOf(changes: readonly { op: keyof typeof VERB; roles: readonly string[] }[]): string {
+  const same = new Map<string, { roles: readonly string[]; verbs: string[] }>();
+  for (const c of changes) {
+    const key = c.roles.join('|');
+    same.set(key, { roles: c.roles, verbs: [...(same.get(key)?.verbs ?? []), VERB[c.op]] });
+  }
+  return [...same.values()].map((g) => `${either(g.roles)} can ${either(g.verbs)} it`).join('; ');
+}
 
 /**
  * The system prompt: the assistant's job, its tools and approvals, what is true of the person it answers, the page it is
@@ -98,7 +116,7 @@ export function systemPrompt(page: PageContext, now: Date, brief = '', limits: s
       : []),
     // A page the person may not open is never where they make a change: told /keys "tells this person who can open it",
     // the model joined the two lines and sent a Viewer there to make a key.
-    'Your write tools change what this page shows and nothing else. Asked for a change another page makes, give that page\'s address when it is one this person may open, where they can ask for it or make it. A page they may not open is never where they can make a change: say it is not a change they can make, and who can open that page where it is named.',
+    'Your write tools change what this page shows and nothing else. Asked for a change another page makes, give that page\'s address when it is one this person may open, where they can ask for it or make it. A page they may not open is never where they can make a change: say it is not a change they can make, and who can make it where that is named, not merely the roles that read it.',
     'The person approves or dismisses each Proposal in its preview. Do not retry a change they did not approve.',
     ...AGENT_GUIDANCE,
     'Some records exist that this person may not read. Never say that something is not in the product; say it is not something they may read here.',
@@ -114,6 +132,7 @@ export function systemPrompt(page: PageContext, now: Date, brief = '', limits: s
           ...withheld.map((w) => (w.roles.length
             ? `- ${oneLine(w.label)}: ${either(w.roles)} can read it.`
             : `- ${oneLine(w.label)}: no single role can read it; it takes a main role together with an add-on.`)
+            + (w.changes?.length ? ` ${changesOf(w.changes)}.` : '')
             + (w.pages ?? []).map((p) => ` ${oneLine(p.label)} (${oneLine(p.address)}) shows it to those roles; ${p.open ? `this person can open ${oneLine(p.label)}, where it is not shown to them.` : 'this person may not open it, and it tells them who can.'}`).join('')
             + (w.derived?.length ? ` Worked out from it, and so withheld with it: ${w.derived.map(oneLine).join(', ')}.` : '')),
         ]

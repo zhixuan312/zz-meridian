@@ -7,6 +7,7 @@
 import type { PreparedQuery } from '@/lib/explore';
 import { releasesAddress } from './releases-context';
 import { testsAddress } from './tests-context';
+import { releaseRefers } from './tests-explore';
 
 export const releasesExplore: PreparedQuery = {
   sources: {
@@ -44,6 +45,7 @@ export const releasesExplore: PreparedQuery = {
         failed: { label: 'Failed', unit: 'runs', definition: 'Runs that started in the window and failed.', agg: 'count', where: [{ field: 'state', op: 'eq', value: 'failed' }] },
       },
       drill: { columns: ['id', 'releaseId', 'suite', 'endpointId', 'state', 'startedAt', 'failure'], address: (r) => testsAddress({ q: '', state: 'all', release: String(r.releaseId) }) },
+      refers: releaseRefers,
       cannot: 'A count of runs is not what holds a release: only the latest run of each required verification does, which the page states as In testing.',
     },
   },
