@@ -39,6 +39,13 @@ describe('Home', () => {
     expect(homeTitle({ ...month, record: null, services: [degraded[1], { name: 'Files', status: 'degraded' }] })).toBe('Revenue is up 5.3% on the 30 days before, and 2 services are degraded');
   });
 
+  it('says no service is monitored yet when the read answered with none, rather than calling that all clear', () => {
+    // A read that succeeded and returned no rows is not a read that found everything well: `[]` is truthy, so the
+    // all-clear branch used to state the one thing the page cannot know.
+    expect(homeTitle({ ...month, record: null, services: [] })).toBe('Revenue is up 5.3% on the 30 days before, and no service is monitored yet');
+    expect(homeTitle({ days: 360, revenue: 27_710_624.39, previous: null, record: null, services: [] })).toBe(`${formatCost(27_710_624.39)} of revenue in 360 days, and no service is monitored yet`);
+  });
+
   it('states the revenue alone when no period comes before', () => {
     expect(homeTitle({ days: 360, revenue: 27_710_624.39, previous: null, record: null, services: up })).toBe(`${formatCost(27_710_624.39)} of revenue in 360 days, and every service is operational`);
   });

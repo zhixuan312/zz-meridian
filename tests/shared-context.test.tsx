@@ -496,6 +496,8 @@ describe('what a context states beside its title', () => {
     expect(homeLine({ ...month, margin: 0.6237, services: SERVICES })).toBe('320 customers, 1.1B requests in 30 days (up 4.7%), a gross margin of 62.4%, and Inference API is degraded.');
     expect(homeLine({ ...month, services: [service('Files', 'outage'), service('Edge gateway', 'degraded'), service('Webhooks', 'degraded'), service('Dashboard', 'operational')] })).toBe('320 customers, 1.1B requests in 30 days (up 4.7%), and Files is down, Edge gateway is degraded and Webhooks is degraded.');
     expect(homeLine({ ...month, services: [service('Files', 'operational')] })).toBe('320 customers, 1.1B requests in 30 days (up 4.7%), and every service is operational.');
+    // None monitored is not the same as all of them well: the clause states the one thing that is true of an empty read.
+    expect(homeLine({ ...month, services: [] })).toBe('320 customers, 1.1B requests in 30 days (up 4.7%), and no service is monitored yet.');
     // What could not be read is left out, and no period before leaves the change out.
     expect(homeLine({ ...month, previous: null, customers: null, margin: null, services: null })).toBe('1.1B requests in 30 days.');
     expect(homeLine({ days: 0, customers: null, requests: null, previous: null, services: null })).toBeNull();

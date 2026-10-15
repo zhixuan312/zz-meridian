@@ -110,10 +110,18 @@ export function homeTitle({ days, revenue, previous, record: latest, services }:
   const moved = against(revenue, previous);
   const said = !moved ? `${formatCost(revenue)} of revenue in ${period}` : moved.way === 'level' ? `Revenue is level with the ${period} before` : `Revenue is ${moved.way} ${moved.by} on the ${period} before`;
   if (!services) return said;
+  if (!services.length) return `${said}, and ${NO_SERVICES}`;
   const unwell = worst(services);
   if (!unwell) return `${said}, and every service is operational`;
   return `${said}, and ${unwell.names.length === 1 ? `${unwell.names[0]} is` : `${unwell.names.length} services are`} ${STATE[unwell.state]}`;
 }
+
+/**
+ * What the services clause says when there is no service to state. A read that succeeded and returned no rows is not a
+ * read that found everything well — `[]` is truthy — and the empty state the Services and Now pages draw already says
+ * this, so the two agree.
+ */
+export const NO_SERVICES = 'no service is monitored yet';
 
 /** The labels of Engineering's lines the context states elsewhere: the services as a figure, the open incident as worth knowing. */
 export const SERVICES_OPERATIONAL = 'Services operational';
@@ -137,7 +145,7 @@ export function homeLine({ days: n, customers, requests, previous, margin, servi
     customers !== null && `${formatCompact(customers)} ${customers === 1 ? 'customer' : 'customers'}`,
     requests !== null && n > 0 && `${formatCompact(requests)} requests in ${inDays(n)}${moved ? ` (${moved.way === 'level' ? 'level' : `${moved.way} ${moved.by}`})` : ''}`,
     typeof margin === 'number' && `a gross margin of ${formatPercent(margin, 1)}`,
-    services && (unwellNames(services) ?? 'every service is operational'),
+    services && (unwellNames(services) ?? (services.length ? 'every service is operational' : NO_SERVICES)),
   ].filter((c): c is string => Boolean(c));
   if (!clauses.length) return null;
   const said = clauses.length === 1 ? clauses[0] : `${clauses.slice(0, -1).join(', ')}, and ${clauses.at(-1)}`;
