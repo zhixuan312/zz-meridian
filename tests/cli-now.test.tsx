@@ -116,7 +116,7 @@ const TILES = ['Releases out', 'Tickets closed', 'Runs passed', 'Incidents resol
 /** A service that has been operational for every day it keeps, under a name of its own and after the team's six. */
 const calm = (n: number) => ({ ...SERVICES[0], name: `Service ${n}`, description: `A further service, ${n}`, status: 'operational', days: SERVICES[0].days.map(() => 'operational'), uptime: 1, order: 100 + n });
 
-describe("Now's twelve parts, in order, from the sample", () => {
+describe("Now's thirteen parts, in order, from the sample", () => {
   it('draws each part with the card the specification names', async () => {
     const doc = await served();
     expect(doc.querySelectorAll('h1')).toHaveLength(1);
