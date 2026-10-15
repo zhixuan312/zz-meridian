@@ -25,6 +25,7 @@
  * an analytical page.
  */
 import fs from 'node:fs';
+import path from 'node:path';
 import { atlasCoverage, atlasEntries } from './lib/atlas.ts';
 import { launch } from './lib/chrome.ts';
 import { DEEP_SOURCE } from './lib/deep.ts';
@@ -53,7 +54,9 @@ const ATLAS = args.includes('--atlas');
  */
 let atlasLine = '';
 async function atlasRoutes(): Promise<string[]> {
-  const file = 'app/system/preview/[section]/[card]/keys.ts';
+  // Resolved from this file, like every other path a check reads: run by hand from another folder, a bare relative path
+  // told a repository with an Atlas that it had none.
+  const file = path.resolve(import.meta.dirname, '../app/system/preview/[section]/[card]/keys.ts');
   if (!fs.existsSync(file)) { console.error('audit --atlas: this project has no Design Atlas to audit'); process.exit(1); }
   const keys = [...fs.readFileSync(file, 'utf8').matchAll(/'([a-z]+\/[a-z0-9-]+)'/g)].map((m) => m[1]);
   const cards = keys.flatMap((k) => [`/system/${k}`, `/system/preview/${k}`]);
