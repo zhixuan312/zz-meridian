@@ -10,7 +10,7 @@ const all = { q: '', state: 'all', release: '' };
 
 /** A run's release, as the pages write it: its key reads "releases_1 (v4.18.2, Edge gateway, production)". */
 export const releaseRefers: NonNullable<Source['refers']> = {
-  releaseId: { collection: 'releases', name: (r) => `${String(r.version)}, ${String(r.service)}, ${String(r.environment)}` },
+  releaseId: { collection: 'releases', key: 'id', name: (r) => `${String(r.version)}, ${String(r.service)}, ${String(r.environment)}` },
 };
 
 export const testsExplore: PreparedQuery = {

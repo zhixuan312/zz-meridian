@@ -15,7 +15,7 @@ import { read, aggregate } from '@/data/read';
 import { runExplore, type ExploreRights, type PreparedQuery } from '@/lib/explore';
 import { nowExplore } from '@/views/now-explore';
 import { releasesExplore } from '@/views/releases-explore';
-import { testsExplore } from '@/views/tests-explore';
+import { releaseRefers, testsExplore } from '@/views/tests-explore';
 
 /**
  * The runs Releases, Tests and Now count name each release by the version, service and environment the pages write
@@ -37,6 +37,10 @@ describe('a run names its release', () => {
     expect(answer).toMatch(/^- releases_1 \(v4\.18\.2, Edge gateway, production\): 1 runs, 3 runs$/m);
     expect(answer).toContain('id tests_1, releaseId releases_1 (v4.18.2, Edge gateway, production), suite smoke');
     expect(answer.length).toBeLessThanOrEqual(3000);
+  });
+
+  it("reads the releases by the collection's own key", () => {
+    expect(releaseRefers.releaseId.key).toBe(collections.find((c) => c.name === 'releases')!.key);
   });
 
   it('on Tests and on Now', async () => {

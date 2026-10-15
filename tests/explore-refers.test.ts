@@ -31,7 +31,7 @@ const QUERY: PreparedQuery = {
       },
       drill: { columns: ['id', 'releaseId', 'state'], address: (r) => `/tests?release=${String(r.releaseId)}` },
       cannot: '',
-      refers: { releaseId: { collection: 'releases', name: (r) => `${String(r.version)}, ${String(r.service)}, ${String(r.environment)}` } },
+      refers: { releaseId: { collection: 'releases', key: 'id', name: (r) => `${String(r.version)}, ${String(r.service)}, ${String(r.environment)}` } },
     },
   },
 };
@@ -69,6 +69,13 @@ describe('a field that holds another collection key', () => {
     expect(answer).toMatch(/^- releases_1: 2 runs$/m);
     expect(answer).not.toContain('v4.18.2');
     expect(reads.some((r) => r.name === 'releases')).toBe(false);
+  });
+
+  it("reads the other collection by that collection's own key field", async () => {
+    const BY_SLUG: PreparedQuery = { sources: { runs: { ...QUERY.sources.runs, refers: { releaseId: { collection: 'releases', key: 'slug', name: (r) => String(r.version) } } } } };
+    const slugged: ExploreIO = { ...io, read: async (name: string, q: Query) => queryRows(name === 'releases' ? RELEASES.map((r) => ({ slug: r.id, version: r.version })) : RUNS, name === 'releases' ? 'slug' : 'id', q) };
+    const answer = (await runExplore(BY_SLUG, { source: 'runs', measures: ['runs'], by: 'releaseId' }, OWNER, slugged, '/releases')).answer;
+    expect(answer).toMatch(/^- releases_1 \(v4\.18\.2\): 2 runs$/m);
   });
 
   it('is not read for a call that neither groups by it nor drills it', async () => {

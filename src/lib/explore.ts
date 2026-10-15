@@ -54,11 +54,11 @@ export type Source = {
    */
   none?: Record<string, string>;
   /**
-   * A field that holds another collection's key, and how that record reads: a run's `releaseId` reads "v4.18.2, Edge
-   * gateway, production". A group and a drilled row name the record beside its key, read once per call under the
+   * A field that holds another collection's key, that collection's key field, and how its record reads: a run's
+   * `releaseId` reads "v4.18.2, Edge gateway, production". A group and a drilled row name the record beside its key, read once per call under the
    * person's rights, so a model never pairs keys with names by guessing; one who may not read it sees the key alone.
    */
-  refers?: Record<string, { collection: string; name: (record: Record<string, unknown>) => string }>;
+  refers?: Record<string, { collection: string; key: string; name: (record: Record<string, unknown>) => string }>;
 };
 
 export type PreparedQuery<I = unknown> = {
@@ -432,8 +432,8 @@ export async function runExplore<I>(query: PreparedQuery<I>, input: unknown, rig
     ]);
     if (!keys.length) continue;
     const omit = new Set(rights.hidden(ref.collection));
-    const found = await io.read(ref.collection, { where: [{ field: 'id', op: 'in', value: keys }], limit: keys.length });
-    names.set(field, new Map(found.rows.map((r) => [String(r.id), ref.name(Object.fromEntries(Object.entries(r).filter(([k]) => !omit.has(k))))])));
+    const found = await io.read(ref.collection, { where: [{ field: ref.key, op: 'in', value: keys }], limit: keys.length });
+    names.set(field, new Map(found.rows.map((r) => [String(r[ref.key]), ref.name(Object.fromEntries(Object.entries(r).filter(([k]) => !omit.has(k))))])));
   }
   function named(field: string, key: string): string {
     const name = names.get(field)?.get(key);
