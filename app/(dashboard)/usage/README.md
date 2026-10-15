@@ -57,7 +57,7 @@ Requests first passed 25.0M in a day on 02 Jan 2026; 192 days have passed it sin
 The highest weekday average yet: 42,815,463 requests a day, in the week to 02 Oct 2026
 ```
 
-Below 64rem (896px) every row stacks, the Featured metric first; the calendar shows the latest weeks that fit at 12px a cell and says how many of how many; the hours group in threes under 560px. At 390px a Bar list hides its rows' lines, and the actions wrap under the line: the period select, then Export.
+Below 1024px (`lg`) every row stacks, the Featured metric first; the calendar shows the latest weeks that fit at 12px a cell and says how many of how many; the hours group in threes under 560px. At 390px a Bar list hides its rows' lines, and the actions wrap under the line: the period select, then Export.
 
 ## States
 

@@ -133,7 +133,7 @@ exists).
 The panel (`src/components/patterns/assistant/`) already came with `src/components/`, and `AppShell` mounts it when
 `optional:app/(dashboard)/layout.tsx` passes `assistant`, a promise it does not await: `assistant={connection().then(() => assistantConfig(process.env) !== null)}`. A product that adopts the assistant also brings
 `optional:app/api/assistant/route.ts`, the rest of `src/lib/assistant/` and `optional:src/data/collections.ts`;
-add `@ai-sdk/anthropic` and `@ai-sdk/openai-compatible` to the dependencies (`adopt` already brought `src/lib/collection.ts` and `zod`). Point `optional:src/data/collections.ts` at their data, bring `optional:src/data/access.ts` with their own session and permissions in its policy (the route and every server action ask it), and set `ASSISTANT_PROVIDER`, `ASSISTANT_API_KEY` and `ASSISTANT_MODEL`
+add `@ai-sdk/anthropic` and `@ai-sdk/openai-compatible` to the dependencies (`adopt` already brought `src/lib/collection.ts` and `zod`). Point `optional:src/data/collections.ts` at their data. The assistant reads only through view tools: bring `optional:src/views/tools.ts` with a view tool and its prepared query for each page it should answer on (`agents.md`), and `optional:src/data/roles.ts`, which the route imports. Bring `optional:src/data/access.ts` with their own session and permissions in its policy (the route and every server action ask it), and set `ASSISTANT_PROVIDER`, `ASSISTANT_API_KEY` and `ASSISTANT_MODEL`
 (plus `ASSISTANT_BASE_URL` for `openai-compatible`): it stays off until they are set. The "Show the assistant" switch is
 in `optional:src/views/settings.tsx`.
 

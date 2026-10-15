@@ -146,7 +146,7 @@ All components are surface-agnostic by construction: they size from control toke
 | Detail head | A record's identity, state and actions | Masthead | Masthead, actions in a menu | Embed head |
 | Form section | A titled group of settings with its own save | Two columns: description, fields | One column | Not offered |
 | Embed frame | The head and token bridge of an MCP App view | Not used | Not used | Always |
-| Ask about | Hands a card to the agent as a question | On the featured card and the Requests list, when the assistant is on: opens the panel | Same, the panel as a sheet | On cards, when a host is connected |
+| Ask about | Hands a card to the agent as a question | On each page's protagonist (its Featured metric, its list or its record's card), when the assistant is on: opens the panel | Same, the panel as a sheet | On cards, when a host is connected |
 | Proposal | An agent's write, waiting for a person's Approve | In the assistant's thread | Same | The tool result's card |
 | Prose | Markdown a person or a model wrote, rendered safely | Reading width, `base` | One column; tables wrap | `sm`, host font |
 

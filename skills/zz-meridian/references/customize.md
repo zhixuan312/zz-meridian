@@ -401,7 +401,7 @@ orders is the sample's, not the product's.
   a part whose read failed says so in its place, one the reader may not read is absent, and the missing-record page for
   an id that names nobody. Write your own record's page.
 - **Now's parts and their words**: the line under its title, the Featured metric that leads it (the days inside the
-  band, the steady fact as its finding, the median day's p95 a day as its chart), the services, the open incidents, the days inside the
+  band, the steady fact as its finding, each complete day's p95 as its chart), the services, the open incidents, the days inside the
   band with their four facts, the models over the last 30 complete days, compute in use a region on the latest complete
   day, what ships, the work, the slowest endpoints, the four figures of the last 30 complete days, the runs a day and
   the latest changes: what `nowData` in `optional:src/views/now-parts.ts` works out for them from what `nowTool` in

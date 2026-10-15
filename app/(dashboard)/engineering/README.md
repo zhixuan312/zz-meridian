@@ -88,7 +88,7 @@ The strips cross to the browser one character a day (`packNow` in `src/views/now
 
 ## Agents
 
-The page itself takes no agent action. It shares one context with both agents (decision 0011), built by `nowContext` in `src/views/now-context.ts` from the figures the page draws.
+The page's prepared query reads the tickets, so the agent here may also propose a new ticket or a change to one, as on Tickets: each is a Proposal a person approves. It shares one context with both agents (decision 0011), built by `nowContext` in `src/views/now-context.ts` from the figures the page draws.
 
 ### What the agent reads
 

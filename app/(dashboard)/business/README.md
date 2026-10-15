@@ -46,7 +46,7 @@ One customer short and a set is not stated: the rule tries the next. In the samp
 
 One line, worked out by `revenueLine`: the customers that have not left, how many are on a trial and how many past due, and the plan that brings the most of the period's revenue with its share. In the sample at 30 days: "320 customers, 14 on a trial and 10 past due; Enterprise brings 62.1% of the revenue of the last 30 days." A clause whose figures could not be read is left out.
 
-Below 64rem (896px) every row stacks, the Featured metric first. The three tiles beside it stand in a column from 64rem, three across from 48rem (672px) and one column below it; the wall is two compact tiles across, four from 48rem of its card; the ladder's stages are two across from 64rem. At 390px a Bar list hides its rows' lines, and the actions wrap under the line: the period select, then Export.
+Below 1024px (`lg`) every row stacks, the Featured metric first. The three tiles beside it stand in a column from 1024px, three across from 768px (`md`) and one column below it; the wall is two compact tiles across, four from 48rem of its card (672px); the ladder's stages are two across from 1024px. At 390px a Bar list hides its rows' lines, and the actions wrap under the line: the period select, then Export.
 
 ## States
 
