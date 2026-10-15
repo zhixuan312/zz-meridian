@@ -16,10 +16,12 @@
  * result it received (scripts/fake-llm.ts), recognised by its address and by being a line of that context, never by a
  * sentence written here. On /members, a query with no Proposal, an approved change shown without a reload and its
  * Activity line arriving on Now's "Changes" open in a second tab, a dismissed removal, a row-menu change the next query
- * finds, and a waiting Proposal expiring on reload and on moving on (from /keys); and the Settings switch. A product
- * that removed one of those pages has no such flow to walk: each step says `n/a` with the reason, and the rest still
- * runs. Whether a sample surface is there is decided from its files (scripts/lib/sample.ts), so Meridian's own
- * repository, which has every one, always walks all of them.
+ * finds, and a waiting Proposal expiring on reload and on moving on (from /keys); on /usage and /tests, the first
+ * question each page's specification lists, asked through that page's prepared query (`explore_usage`, `explore_tests`),
+ * handed there and no other page's, whose answer is the fake model quoting the first group line of the result it
+ * received; and the Settings switch. A product that removed one of those pages has no such flow to walk: each step says
+ * `n/a` with the reason, and the rest still runs. Whether a sample surface is there is decided from its files
+ * (scripts/lib/sample.ts), so Meridian's own repository, which has every one, always walks all of them.
  *
  * Controls are found through open shadow roots (scripts/lib/deep.ts), so a design system whose buttons, rows and menus are
  * web components is walked the same way: a control is searched for under the light-DOM container that holds it (the panel,
@@ -34,9 +36,10 @@ import { slug } from '../src/app.config.ts';
 import { launch } from './lib/chrome.ts';
 import { DEEP_SOURCE } from './lib/deep.ts';
 import { APP_DIR, discover, railRoutes } from './lib/routes.ts';
-import { sampleSurfaces } from './lib/sample.ts';
+import { exploreSurfaces, sampleSurfaces } from './lib/sample.ts';
 
 const SAMPLE = sampleSurfaces(path.resolve(import.meta.dirname, '..'), APP_DIR);
+const EXPLORE = exploreSurfaces(path.resolve(import.meta.dirname, '..'), APP_DIR);
 
 const args = process.argv.slice(2);
 const opt = (k: string) => { const i = args.indexOf(k); return i >= 0 ? args[i + 1] : undefined; };
@@ -148,7 +151,8 @@ try {
     const follow = async (href: string) => { await press(linkTo(href)); await until(`the address to be ${href}`, here, (p) => p === href); };
     // The rail may draw only the part of the navigation the address belongs to: follow the link when it is on screen, open the address when it is not.
     const reach = async (href: string) => { if (await page.eval<boolean>(`!!${linkTo(href)}`)) await follow(href); else await page.open(`${base}${href}`, { width: 1440 }); };
-    const recorded = async () => (await (await fetch(`${llm}/requests`)).json()) as { messages?: { role: string; content: unknown }[] }[];
+    type Recorded = { messages?: { role: string; content: unknown; tool_call_id?: string; tool_calls?: { id: string; function: { name: string } }[] }[]; tools?: { function?: { name?: string } }[] };
+    const recorded = async () => (await (await fetch(`${llm}/requests`)).json()) as Recorded[];
     const LOCAL = `${slug}.assistant`;
     const ABOUT_PAGE = /^This is the .+ page\.$/;
 
@@ -357,6 +361,59 @@ try {
     await until('the panel to empty', () => page.eval<number>(`deepQueryAll('[data-role]', ${PANEL}).length`), (n) => n === 0);
     await until('the stored thread to go', stored, (v) => v === null);
     ok(`Clear conversation empties the panel and removes ${LOCAL} from local storage`);
+
+    /**
+     * A page's prepared query: ask the page's first question on it, and read from the fake model's record which tools
+     * each request handed and what `explore_<view>` returned. The answer is the fake model quoting the result's first
+     * group line, so the step holds that the reply carries that line's figure, whatever the sample's figures are.
+     * Returns the answer's lines for the step's own line.
+     */
+    const explore = async (route: string, view: string, question: string) => {
+      const name = `explore_${view}`;
+      await page.open(`${base}${route}`, { width: 1440 });
+      if (!(await panelOpen())) await openPanel();
+      const before = (await recorded()).length;
+      const earlier = await said();
+      await ask(question);
+      const reply = await until(`the reply on ${route}`, said, (t) => t !== '' && t !== earlier);
+      const requests = (await recorded()).slice(before);
+      if (!requests.length) fail(`asking "${question}" on ${route} reached no model`);
+      for (const r of requests) {
+        const prepared = (r.tools ?? []).map((t) => t.function?.name ?? '').filter((n) => n.startsWith('explore_'));
+        if (!prepared.includes(name)) fail(`a request from ${route} was not handed ${name} (it handed ${prepared.join(', ') || 'no prepared query'}); the reply read "${reply}"`);
+        if (prepared.length > 1) fail(`a request from ${route} was handed another page's prepared query beside ${name}: ${prepared.filter((n) => n !== name).join(', ')}`);
+      }
+      const messages = requests.at(-1)!.messages ?? [];
+      const calls = new Set(messages.flatMap((m) => m.tool_calls ?? []).filter((c) => c.function.name === name).map((c) => c.id));
+      const returned = messages.findLast((m) => m.role === 'tool' && calls.has(m.tool_call_id ?? ''));
+      if (!returned) fail(`no result of ${name} reached the model from ${route}; the reply read "${reply}"`);
+      let result: { address?: unknown; answer?: unknown } | null = null;
+      try { result = JSON.parse(textOf(returned!.content)); } catch { /* an error the tool returned is plain text */ }
+      if (typeof result?.answer !== 'string') fail(`${name} returned no answer on ${route}: "${textOf(returned!.content).slice(0, 200)}"`);
+      const lines = (result!.answer as string).split('\n');
+      const groups = lines.filter((l) => l.startsWith('- ')).map((l) => l.slice(2));
+      const figure = /: (-?[\d,]+(?:\.\d+)?)/.exec(groups[0] ?? '')?.[1];
+      if (!figure) fail(`${name}'s answer on ${route} has no group line with a figure: "${(result!.answer as string).slice(0, 200)}"`);
+      // The figure as a whole number, so 8 is not found inside 18 or 2,800.
+      const quotes = new RegExp(`(^|[^\\d.,])${figure!.replace(/[.]/g, '\\.')}(?![\\d]|[.,]\\d)`).test(reply);
+      if (!quotes) fail(`the reply on ${route} does not carry ${figure}, the figure of ${name}'s first group line "${groups[0]}": "${reply}"`);
+      return { name, address: String(result!.address), head: lines[0].replace(/\.$/, ''), groups, figure: figure!, reply };
+    };
+
+    if (EXPLORE.usage) {
+      // Usage's first question (W10): the hours at 22:00, a weekday at a time, which is how one Sunday hour is found.
+      const a = await explore('/usage', 'usage', 'How many requests came at 22:00 UTC on each weekday?');
+      if (a.groups.length < 2) fail(`${a.name}'s answer on /usage has ${a.groups.length} group line(s), not a weekday against the next`);
+      ok(`${a.name} was handed on /usage and no other page's; it answered at ${a.address} "${a.groups[0]}" against "${a.groups[1]}" (${a.head}), and the reply quotes ${a.figure}`);
+    } else na('explore_usage on /usage', 'the sample Usage page or its prepared query, src/views/usage-explore.ts, is not in this product');
+
+    if (EXPLORE.tests) {
+      // Tests' first question (W11): the runs of the last seven complete days, by how they ended.
+      const a = await explore('/tests', 'tests', 'How many runs passed in the last seven days?');
+      const passed = a.groups.find((g) => g.startsWith('passed: '));
+      if (!passed) fail(`${a.name}'s answer on /tests has no group of passed runs: ${JSON.stringify(a.groups)}`);
+      ok(`${a.name} was handed on /tests and no other page's; it answered at ${a.address} "${passed}" (${a.head}), and the reply quotes ${a.figure}`);
+    } else na('explore_tests on /tests', 'the sample Tests page or its prepared query, src/views/tests-explore.ts, is not in this product');
 
     if (SAMPLE.settings) {
       // The switch: off hides the launcher and the panel and keeps the thread; on brings both back.

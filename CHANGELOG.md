@@ -156,6 +156,7 @@ Every release of ZZ Meridian, newest first. Versions follow semver: a removed or
 - **The missing page can step past what a person may not open.** `nearestOf(path, withheld?)` in `src/views/not-found.tsx`, `MissingPage`'s `withheld` and the `withheld` of `MissingAddress` and `WayBack` leave those entries out of the walk-back. The missing page's card carries `data-missing-page`, and `NOT_FOUND.title` is the tab's "Not found".
 - **`view_usage` takes `day`**, as `view_home` does: the context it returns is pointed at that day of the period.
 - **`settingsContext` is exported** from `src/views/settings.tsx`, so a test can measure Settings' context without rendering the page.
+- **The assistant walk-through asks Usage and Tests through their prepared queries.** On `/usage` it asks "How many requests came at 22:00 UTC on each weekday?" and on `/tests` "How many runs passed in the last seven days?". It holds that the page handed its own `explore_<view>` and no other page's, and that the reply carries the figure of the first group line the tool returned. `scripts/lib/sample.ts` gains `exploreSurfaces(root, appDir)`, which says whether the sample's Usage and Tests are there: each page together with its prepared query's file. A product that replaced either reads its step as not applicable.
 
 ### Changed
 

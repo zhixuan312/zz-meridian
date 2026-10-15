@@ -10,7 +10,13 @@
  * `stream: true`). GET <url>/requests returns every recorded request body as JSON.
  *
  * A request whose last message is a view tool's result is answered "From <its address>: <its first insight>", the
- * line quoted as the context carries it; the walk-through recognises that answer by the address and the line.
+ * line quoted as the context carries it; the walk-through recognises that answer by the address and the line. A
+ * prepared query's result (`explore_<view>`, `{ address, answer }`) is answered "From <its address>: <its first group
+ * line>", the first line of the answer that begins `- `.
+ *
+ * Asked Usage's or Tests' first question, it calls that page's prepared query, but only where the request hands it:
+ * a request without it is answered in words, so the walk-through, which reads the tools each request handed from
+ * GET <url>/requests, names what was missing rather than the client failing on a tool it does not know.
  *
  * A request whose last message is the user's and contains "fail" is answered 401, with an error body that repeats the
  * bearer token it was sent: the way a provider that refuses a key can leak it.
@@ -19,6 +25,7 @@ import http from 'node:http';
 import type { AddressInfo } from 'node:net';
 
 type Message = { role?: string; content?: unknown };
+type Tool = { function?: { name?: string } };
 type Call = { name: string; args: object };
 type Reply = { text: string } | { calls: Call[] };
 
@@ -38,11 +45,26 @@ function rowsIn(messages: Message[]): { id: string; name: string }[][] {
   return results;
 }
 
+/**
+ * The questions the walk-through asks a page's prepared query, as Usage's and Tests' specifications list them first
+ * (W10 and W11), and the call a model that reads the query's schema makes for each.
+ */
+const EXPLORES: { asked: RegExp; call: Call }[] = [
+  {
+    asked: /requests came at 22:00 UTC on each weekday/i,
+    call: { name: 'explore_usage', args: { source: 'hours', measures: ['requests'], where: [{ field: 'hour', op: 'eq', value: 22 }], by: 'weekday' } },
+  },
+  {
+    asked: /how many runs passed in the last seven days/i,
+    call: { name: 'explore_tests', args: { source: 'runs', measures: ['runs'], by: 'state', period: '7d' } },
+  },
+];
+
 /** `days` before the YYYY-MM-DD `day`, as YYYY-MM-DD. */
 const daysBefore = (day: string, days: number) => new Date(Date.parse(day) - days * 86_400_000).toISOString().slice(0, 10);
 
 /** The scripted reply for a request, chosen by the last message. Without a scripted case it answers about the page. */
-function script(body: { messages?: Message[] }): Reply {
+function script(body: { messages?: Message[]; tools?: Tool[] }): Reply {
   const messages = body.messages ?? [];
   const system = textOf(messages.find((m) => m.role === 'system')?.content);
   const last = messages.at(-1);
@@ -60,6 +82,13 @@ function script(body: { messages?: Message[] }): Reply {
       const at = lines.findIndex((l) => l.startsWith('Insights'));
       const first = (at >= 0 && lines[at + 1]?.startsWith('- ') ? lines[at + 1] : lines[0]).replace(/^- /, '');
       return { text: `From ${view.address}: ${first}` };
+    }
+    // A prepared query's answer: quote its first group line, as a model told to quote rather than recompute would. An
+    // answer with no group is quoted by its first line.
+    const prepared = out as { address?: string; answer?: string } | null;
+    if (typeof prepared?.answer === 'string') {
+      const lines = prepared.answer.split('\n');
+      return { text: `From ${prepared.address}: ${(lines.find((l) => l.startsWith('- ')) ?? lines[0]).replace(/^- /, '')}` };
     }
     return { text: 'Done.' };
   }
@@ -98,6 +127,11 @@ function script(body: { messages?: Message[] }): Reply {
     const period = /^open the home for the last (\d+) days/i.exec(said)?.[1];
     if (period) return { calls: [{ name: 'view_home', args: { period: `${period}d` } }] };
     if (/who is suspended/i.test(said)) return { calls: [{ name: 'query_members', args: { where: [{ field: 'status', op: 'eq', value: 'Suspended' }] } }] };
+    const explore = EXPLORES.find((e) => e.asked.test(said));
+    if (explore) {
+      const handed = (body.tools ?? []).some((t) => t.function?.name === explore.call.name);
+      return handed ? { calls: [explore.call] } : { text: `I was not handed ${explore.call.name} here.` };
+    }
   }
 
   const title = /Page: (.+?) \(/.exec(system)?.[1];

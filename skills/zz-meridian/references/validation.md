@@ -43,7 +43,7 @@ Steps in order:
 3. **The assistant walk-through**, only when the project has `optional:app/api/assistant/route.ts`: off, then on against a fake
    model. What every product shares runs on its own rail (no agent control while off, the panel, a reply, the page the
    model was told, markdown, the thread across navigation, Clear, the layout, a refused key, the key never reaching the
-   browser); the steps that drive the template's sample Home, Now, Members, API keys and Settings run while those pages
+   browser); the steps that drive the template's sample Home, Now, Members, API keys and Settings, and those that ask its Usage and Tests through their prepared queries (`explore_usage`, `explore_tests`), run while those pages
    exist and print `n/a` with the reason once the product has replaced them. It follows only rail links that are on screen
    and opens an address when the rail on screen does not link to it. It finds the launcher, the panel's controls,
    rows and menus inside open shadow roots too, so a design system built from web components is walked the same way.

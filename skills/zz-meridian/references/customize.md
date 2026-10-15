@@ -532,7 +532,7 @@ cards' previews, and there it writes a registry of none).
 
 Routes, API paths, tool names (`query_enhancements` → `query_initiatives`), seeds and tables are yours to rename. The
 assistant walk-through (`scripts/assistant.ts`) checks what every product shares on your own rail, and drives the
-template's sample Home, Now, Members, API keys and Settings only while their files are there: replace one and its steps
+template's sample Home, Now, Members, API keys and Settings, and asks its Usage and Tests through their prepared queries, only while their files are there: replace one and its steps
 print `n/a` with the reason, never a failure, so you never edit Meridian's scripts to rename your pages. The live checks
 (`scripts/live.ts`) work the same way with the sample Members page. `scripts/verify.config.ts`'s `detailRoutes` name ids from the sample, and its `navigationChecks` and `smokeRoutes` name routes and titles, so they move too.
 
