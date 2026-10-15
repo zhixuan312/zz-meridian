@@ -6,7 +6,7 @@
  */
 import type { DailyPoint, Totals } from '@/data/sample';
 import { formatCompact, formatCost, formatDuration, formatPercent, ordinal } from '@/lib/format';
-import { formatDate } from '@/lib/format-date';
+import { formatDate, formatDay } from '@/lib/format-date';
 import { sameWeekdayBaseline, weekday, median } from '@/lib/insight';
 import { PERIOD_DAYS, PERIOD_LABEL, type Period } from '@/lib/period';
 import { freshnessOf, type Fact, type Insight, type SharedContext } from '@/lib/shared-context';
@@ -98,7 +98,6 @@ export type HomeData = {
 };
 
 const WEEKDAY = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-const shortDay = (iso: string) => formatDate(iso).replace(/ \d{4}$/, '');
 const times = (r: number) => `${r.toFixed(1)}×`;
 /**
  * The Home's title, from plain figures. A record is stated alone, with its run. Otherwise the revenue's change on the
@@ -233,7 +232,7 @@ export function homeContext(data: HomeData, index: number | null = null): Shared
   if (!series.length && !data.unread.includes('the days')) unknowns.push('No requests have arrived in this period, so there is nothing to compare.');
   if (series.length && !data.totals.previous) unknowns.push(NO_PREVIOUS);
   // The day in progress is in no figure above: the period ends yesterday. One short line, for the context's budget.
-  if (data.running) unknowns.push(`${shortDay(data.running.date)} is in progress and counted in no total.`);
+  if (data.running) unknowns.push(`${formatDay(data.running.date)} is in progress and counted in no total.`);
 
   let focus: string | undefined;
   if (pointed && index !== null) {
@@ -242,7 +241,12 @@ export function homeContext(data: HomeData, index: number | null = null): Shared
     const errorRate = series.map((x) => (x.requests ? x.errors / x.requests : 0));
     const usual = sameWeekdayBaseline(requests, series.map((x) => x.date), index);
     const wd = WEEKDAY[weekday(d.date)];
-    focus = `${formatDate(d.date)}, a ${wd}: ${count(d.requests)} requests${usual ? ` (${times(d.requests / usual)} the median ${wd})` : ''}; error rate ${formatPercent(errorRate[index], 2)} (${times(errorRate[index] / median(errorRate))} the period's median); latency p95 ${formatDuration(d.p95)} (${times(d.p95 / median(series.map((x) => x.p95)))} the median); revenue ${formatCost(d.revenue)}.`;
+    const medianError = median(errorRate);
+    const medianP95 = median(series.map((x) => x.p95));
+    // A ratio against a median of zero has no meaning — a healthy period's error rate and latency both are — and the
+    // line is read by a person and by the agent, so the clause is left out rather than written as `NaN×`.
+    const ratioAgainst = (value: number, base: number, what: string) => (base ? ` (${times(value / base)} ${what})` : '');
+    focus = `${formatDate(d.date)}, a ${wd}: ${count(d.requests)} requests${usual ? ` (${times(d.requests / usual)} the median ${wd})` : ''}; error rate ${formatPercent(errorRate[index], 2)}${ratioAgainst(errorRate[index], medianError, "the period's median")}; latency p95 ${formatDuration(d.p95)}${ratioAgainst(d.p95, medianP95, 'the median')}; revenue ${formatCost(d.revenue)}.`;
   }
 
   return { view: 'home', title: 'Home', address, scope, freshness: freshnessOf(data.updatedAt, data.now), focus, facts, insights, unknowns };

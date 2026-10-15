@@ -29,6 +29,18 @@ const reads = (over: Partial<NowReads> = {}): NowReads => ({
 });
 
 describe("Now's context", () => {
+  it('says a model with no row in the window was not measured, rather than 0ms and 0.00%', () => {
+    const models = [...MODELS, { ...MODELS[0], id: 'meridian_unused', label: 'Meridian Unused' }];
+    const data = nowData(reads({ models }));
+    const row = data.models!.find((m) => m.id === 'meridian_unused')!;
+    // Nobody used it, so it answered no requests: that really is none. But no latency and no error share were measured,
+    // and 0ms and 0.00% are claims nobody took — the same defect the request log had.
+    expect(row.requests).toBe(0);
+    expect(row.p95).toBeNull();
+    expect(row.errorRate).toBeNull();
+    expect(row.ttft).toBeNull();
+    expect(contextText(nowContext(data))).not.toMatch(/NaN|Infinity/);
+  });
   it('names its address, the services as their summary and the open incident with its owner and its ticket', () => {
     const data = nowData(reads());
     const c = nowContext(data);
@@ -84,7 +96,7 @@ describe("Now's context", () => {
     const c = nowContext(nowData(reads({ tickets: null, compute: null })));
     expect(c.unknowns).toContain('The compute could not be read, so compute in use is not stated.');
     expect(c.unknowns).toContain('The tickets could not be read, so the work and the tickets closed are not stated.');
-    expect(c.unknowns).toContain('03 Oct 2026 is in progress and counted in no figure but the runs a day.');
+    expect(c.unknowns).toContain('3 Oct is in progress and counted in no figure but the runs a day.');
     expect(c.facts.map((f) => f.label)).not.toContain('Work');
   });
 });

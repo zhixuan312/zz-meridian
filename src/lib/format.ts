@@ -29,14 +29,16 @@ export function ordinal(n: number): string {
 const INT = new Intl.NumberFormat('en-US');
 const CENTS = new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
-/** Money in `app.currency`, symbol first: $298.43, €1,204. An amount under a cent keeps four decimals, and one too small for those keeps its first two digits ($0.0000018), so a cost that is not zero never reads as zero. */
+/** Money in `app.currency`, symbol first: $298.43, €1,204. An amount under a cent keeps four decimals, and one too small for those keeps its first two digits ($0.0000018), so a cost that is not zero never reads as zero. A credit is negative, and its minus stands before the mark at every size — `$-0.0050` reads as a typo and hides the sign a column is sorted by. */
 export function formatCost(amount: number | null): string {
   if (amount === null) return '—';
   if (amount === 0) return `${CURRENCY}0`;
-  if (Math.abs(amount) < 0.00005) return `${CURRENCY}${amount.toFixed(Math.min(20, 1 - Math.floor(Math.log10(Math.abs(amount)))))}`;
-  if (Math.abs(amount) < 0.01) return `${CURRENCY}${amount.toFixed(4)}`;
+  const sign = amount < 0 ? '-' : '';
+  const a = Math.abs(amount);
+  if (a < 0.00005) return `${sign}${CURRENCY}${a.toFixed(Math.min(20, 1 - Math.floor(Math.log10(a))))}`;
+  if (a < 0.01) return `${sign}${CURRENCY}${a.toFixed(4)}`;
   // Two decimals at every size, so a column of amounts keeps one precision and its decimals line up.
-  return `${CURRENCY}${CENTS.format(amount)}`;
+  return `${sign}${CURRENCY}${CENTS.format(a)}`;
 }
 
 /** Money at a glance, for dense tables and tiles: $1.2M, $340K, $912. The exact amount belongs in the tooltip. */

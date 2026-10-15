@@ -146,7 +146,9 @@ export function nowData(r: NowReads): NowData {
       const days = usage.filter((u) => u.model === m.id && kept.has(u.date));
       const requests = sum(days.map((d) => d.requests)), errors = sum(days.map((d) => d.errors));
       const ttft = days.flatMap((d) => (d.ttft === null ? [] : [d.ttft]));
-      return { id: m.id, label: m.label, serves: m.serves, requests, p95: days.length ? lowerMedian(days.map((d) => d.p95)) : 0, ttft: ttft.length ? lowerMedian(ttft) : null, errors, errorRate: requests ? errors / requests : 0 };
+      // A model with no row in the window answered nothing: its requests are none. Its p95 and its error share were
+      // never measured, and 0ms and 0.00% are claims nobody took — the same zero-for-missing the request log had.
+      return { id: m.id, label: m.label, serves: m.serves, requests, p95: days.length ? lowerMedian(days.map((d) => d.p95)) : null, ttft: ttft.length ? lowerMedian(ttft) : null, errors, errorRate: requests ? errors / requests : null };
     }).sort((a, b) => b.requests - a.requests);
   }
 

@@ -108,6 +108,18 @@ describe("the Home's shared context", () => {
     const index = data.series.findIndex((d) => d.date === '2026-09-22');
     expect(homeContext(data, index).focus).toBe(inMark("22 Sept 2026, a Tuesday: 42,008,106 requests (1.0× the median Tuesday); error rate 1.27% (3.4× the period's median); latency p95 498ms (1.7× the median); revenue $130,097.57."));
   });
+  it('states no ratio against a median that is zero, rather than NaN× or Infinity×', () => {
+    const data = home('30d');
+    const index = data.series.findIndex((d) => d.date === '2026-09-22');
+    // A healthy period: no errors and no latency on any of its days. The ratios against those medians have no meaning,
+    // and the line a person and the agent both read must not print one.
+    const quiet = { ...data, series: data.series.map((d) => ({ ...d, errors: 0, p95: 0 })) };
+    const focus = homeContext(quiet, index).focus!;
+    expect(focus).not.toMatch(/NaN|Infinity|undefined/);
+    expect(focus).toContain('error rate 0.00%');
+    expect(focus).toContain('latency p95 0ms');
+    expect(focus).toContain('revenue');
+  });
   it('fits its budget for every period, and so does Services', () => {
     for (const p of ['7d', '30d', '90d', 'all'] as const) {
       for (const data of [home(p), home(p, { costs: false })]) {
@@ -122,7 +134,7 @@ describe("the Home's shared context", () => {
     const data = home('30d');
     expect(data.running?.date).toBe('2026-10-03');
     expect(data.series.map((d) => d.date)).not.toContain('2026-10-03');
-    expect(homeContext(data).unknowns).toContain('03 Oct is in progress and counted in no total.');
+    expect(homeContext(data).unknowns).toContain('3 Oct is in progress and counted in no total.');
     expect(contextText(homeContext(data))).not.toContain(data.running!.requests.toLocaleString('en-US'));
     // A product whose latest day is complete says nothing of a day in progress.
     expect(homeContext({ ...data, running: null }).unknowns.join('\n')).not.toMatch(/in progress/);

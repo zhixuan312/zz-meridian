@@ -52,6 +52,11 @@ describe('formatters', () => {
     // One precision in a column: $997.00 above $1,269.40, never above $1,269, so the decimals line up.
     expect(formatCost(1269.4)).toBe(`${symbol}1,269.40`);
     expect(formatCost(997)).toBe(`${symbol}997.00`);
+    // A credit or a refund is negative, and the minus stands where a reader looks for it: before the mark, at every
+    // size, as `formatCostCompact` already writes it. `$-0.0050` reads as a typo, and hides the sign a column is sorted by.
+    expect(formatCost(-1269.4)).toBe(`-${symbol}1,269.40`);
+    expect(formatCost(-0.005)).toBe(`-${symbol}0.0050`);
+    expect(formatCost(-0.0000018)).toBe(`-${symbol}0.0000018`);
     expect(formatDuration(294)).toBe('294ms');
     expect(formatDuration(1420)).toBe('1.4s');
     expect(formatPercent(0.0090, 2)).toBe('0.90%');

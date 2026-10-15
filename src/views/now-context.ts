@@ -12,7 +12,7 @@ import type { DayState } from '@/components/charts/uptime-bars';
 import type { DailyPoint, Endpoint } from '@/data/sample';
 import { runOf, steady } from '@/lib/facts';
 import { formatCompact, formatDuration, formatPercent, plural } from '@/lib/format';
-import { formatDate, formatRelative } from '@/lib/format-date';
+import { formatDate, formatDay, formatRelative } from '@/lib/format-date';
 import { freshnessOf, type Fact, type Insight, type SharedContext } from '@/lib/shared-context';
 import { STATE, handed, headInsights, worst, type PageHead, type ServiceNow } from './fact-insight';
 import { moreOpen, servicesNow } from './services-context';
@@ -27,7 +27,7 @@ export const NOW_METRICS = {
 } as const;
 
 /** A model over the last 30 complete days: the route it serves, its requests, its p95 and time to first token on the median day, and its errors. */
-export type NowModel = { id: string; label: string; serves: string; requests: number; p95: number; ttft: number | null; errors: number; errorRate: number };
+export type NowModel = { id: string; label: string; serves: string; requests: number; p95: number | null; ttft: number | null; errors: number; errorRate: number | null };
 /** A region on the latest complete day: the GPUs provisioned, the GPU-hours used and the share of the hours offered that were used. */
 export type NowRegion = { region: string; gpus: number; used: number; share: number };
 /** A ticket in play as Work lists it: its owner by name, whether it is the reader's own, and where the Tickets page finds it. */
@@ -276,7 +276,7 @@ export function nowContext(data: NowData): SharedContext {
   if (head.unknown) unknowns.push(head.unknown);
   if (incidents?.open.some((i) => i.state === 'monitoring')) unknowns.push('A monitoring incident has a fix in place that nobody has yet confirmed holds.');
   // The day in progress is in no figure above but the runs a day, where it is drawn as running.
-  if (data.runs?.running) unknowns.push(`${formatDate(now)} is in progress and counted in no figure but the runs a day.`);
+  if (data.runs?.running) unknowns.push(`${formatDay(now)} is in progress and counted in no figure but the runs a day.`);
 
   return {
     view: 'now',
