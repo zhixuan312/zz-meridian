@@ -68,7 +68,7 @@ describe('the embed view of what is happening now', () => {
     expect(exists('app/embed/now/page.tsx')).toBe(true);
     expect(exists('app/embed/health')).toBe(false);
     expect(tools.now?.resourceUri, 'the Now tool names its view').toMatch(/\/now$/);
-    expect(viewTools.filter((t) => t.resourceUri && !['now', 'requests', 'overview', 'home'].includes(t.name)).map((t) => t.name)).toEqual([]);
+    expect(viewTools.filter((t) => t.resourceUri && !['now', 'requests', 'home'].includes(t.name)).map((t) => t.name)).toEqual([]);
     expect(PAGES.find((p) => p.id === 'now')?.embed).toBe('/embed/now');
   });
 });

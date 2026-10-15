@@ -12,7 +12,9 @@ const atlasOnly = [...(/const atlasOnly = \[([^\]]*)\]/.exec(brand)?.[1] ?? '').
 /** The script's own lines for the Atlas removal: from its list of modules to where the product removal begins. */
 const atlasBlock = brand.slice(brand.indexOf('const atlasOnly = ['), brand.indexOf("if (has('--product'))"));
 /** The tests a project is given: the package leaves out tests/cli-*.test.ts and tests/deep-*. */
-const shipped = fs.readdirSync(path.join(ROOT, 'tests')).filter((f) => /\.test\.tsx?$/.test(f) && !/^(cli-[^/]*|deep-[^/]*)\.test\.ts$/.test(f) && !f.startsWith('deep-'));
+// What the package leaves out is every cli-* and deep-* test, `.tsx` as much as `.ts`: the exclusion used to end in
+// `\.test\.ts$`, so the 27 cli-*.test.tsx files counted as shipped and a product would have been held to them.
+const shipped = fs.readdirSync(path.join(ROOT, 'tests')).filter((f) => /\.test\.tsx?$/.test(f) && !/^(cli-|deep-)/.test(f));
 
 describe('a project without the Atlas keeps no test of a module it does not keep', () => {
   it('reads the modules the brand script removes with the Atlas', () => {

@@ -27,16 +27,20 @@ describe("a prepared query's cannot line", () => {
     it(`${who}: names only addresses they may open`, async () => {
       jar.value = id;
       const wrong: string[] = [];
+      let seen = 0;
       for (const v of viewTools) {
         if (!(await may(v.needs))) continue;
         for (const [name, s] of Object.entries((v.explore as PreparedQuery).sources)) {
           for (const [, address] of s.cannot.matchAll(/\((\/[^)\s]*)\)/g)) {
+            seen++;
             const page = viewTools.find((t) => t.page === address);
             if (!page) wrong.push(`view_${v.name}.${name} names ${address}, which is no page with a view`);
             else if (!(await may(page.needs))) wrong.push(`view_${v.name}.${name} sends ${who} to ${address}, which they may not open`);
           }
         }
       }
+      // A floor, so a cannot line that stopped naming any page is a failure and not an empty loop.
+      expect(seen, `${who} reads no address at all`).toBeGreaterThan(0);
       expect(wrong).toEqual([]);
     });
   }

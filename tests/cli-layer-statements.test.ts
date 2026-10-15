@@ -31,6 +31,8 @@ describe('every place outside the Atlas that counts the layers', () => {
   it('says six in the package\'s description and in the header the tokens are written under', () => {
     expect(JSON.parse(read('package.json')).description).toMatch(/six layers/i);
     expect(read('scripts/tokens.ts')).toMatch(/Six layers/);
-    expect(read('scripts/tokens.ts')).toMatch(/5 .*Product workspaces|Product workspaces/);
+    // The layer number is part of the claim: `|` binds loosest, so the old pattern was `/Product workspaces/`, which a
+    // header numbering that layer wrongly was equally happy with.
+    expect(read('scripts/tokens.ts')).toMatch(/5 Product workspaces/);
   });
 });

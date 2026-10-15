@@ -77,7 +77,8 @@ describe('the panel', () => {
     saveThread(localStorage, 'acme/members_1', [ask('u1', 'What did compute cost us?'), say('a1', 'Compute cost $1.2M.')]);
     await consoleFor('acme/members_12');
     const panel = await openPanel();
-    await waitFor(() => expect(within(panel).getByText(/Ask about this page: what a figure means/)).toBeTruthy());
+    // `getByText` throws when the node is absent: the wait is what has force here, and the `expect` around it none.
+    await waitFor(() => within(panel).getByText(/Ask about this page: what a figure means/));
     expect(panel.textContent).not.toContain('Compute cost $1.2M.');
     expect(localStorage.getItem(THREAD_KEY)).toBeNull();
   });

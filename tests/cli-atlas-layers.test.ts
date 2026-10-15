@@ -26,8 +26,16 @@ describe('the Atlas\'s browser checks', () => {
 
 describe('the Atlas\'s routes', () => {
   it('build a template\'s page with the cards\' and the pages\', not on its first request', () => {
-    const params = read('app/system/(atlas)/[section]/[id]/page.tsx');
-    expect(params.slice(params.indexOf('generateStaticParams'))).toMatch(/'template'/);
+    const page = read('app/system/(atlas)/[section]/[id]/page.tsx');
+    // What is prebuilt is the STAGED list's, and the assertion is on that list: asking whether the word "template"
+    // appears anywhere after `generateStaticParams` also found the stage switch, which is a different question, and
+    // dropping the kind from STAGED — the regression this names — left it green.
+    const staged = page.match(/const STAGED = \[([^\]]*)\]/)?.[1] ?? '';
+    expect(staged).toMatch(/'card'/);
+    expect(staged).toMatch(/'template'/);
+    expect(staged).toMatch(/'page'/);
+    expect(staged).toMatch(/'tokens'/);
+    expect(page.slice(page.indexOf('generateStaticParams'))).toMatch(/STAGED\.includes\(e\.kind\)/);
   });
 
   it('serve the layer-5 entry from a reading route of its own', () => {

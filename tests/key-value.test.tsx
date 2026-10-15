@@ -42,6 +42,12 @@ describe('a key value list', () => {
 
   it('keeps the hairline under every row but the last of a one-column list', () => {
     const { container } = render(<KeyValue items={[1, 2, 3, 4].map((n) => ({ label: `Fact ${n}`, value: n }))} />);
-    for (const row of container.querySelectorAll('dl > div')) expect(row.className).not.toMatch(/nth-last-child\(2\)/);
+    const rows = [...container.querySelectorAll('dl > div')];
+    expect(rows).toHaveLength(4);
+    // The hairline is on every row but the last, which is what the case's name claims; and the two-column variant's own
+    // selector, whose leaking into one column is the regression it was written for, is on none of them.
+    for (const row of rows.slice(0, -1)) expect(row.className).toMatch(/\bborder-b\b/);
+    expect(rows.at(-1)!.className).toMatch(/last:border-0/);
+    for (const row of rows) expect(row.className).not.toMatch(/nth-last-child\(2\)/);
   });
 });

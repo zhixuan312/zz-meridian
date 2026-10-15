@@ -39,7 +39,10 @@ describe('CopyField', () => {
     vi.stubGlobal('navigator', {});
     render(<CopyField label="API key" value="zzm_live_abc123" />);
     press('API key');
-    await waitFor(() => expect(screen.queryByRole('button', { name: 'Copied' })).toBeNull());
+    // Past a turn of the event loop, not on the first tick: a "Copied" set after a promise or a timer is the regression
+    // this guards, and a `waitFor` around a predicate that already holds returns without waiting for one.
+    await new Promise((r) => setTimeout(r, 25));
+    expect(screen.queryByRole('button', { name: 'Copied' })).toBeNull();
     expect(screen.getByRole('button', { name: 'Copy API key' })).toBeTruthy();
   });
 });

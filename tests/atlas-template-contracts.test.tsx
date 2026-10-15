@@ -89,7 +89,7 @@ describe('the records template, state by state', () => {
     const error = specimen('Error');
     expect(error).not.toBeNull();
     expect(error!.querySelector('[role="alert"]')).not.toBeNull();
-    expect(within(error!).getByRole('button', { name: /retry/i })).toBeTruthy();
+    within(error!).getByRole('button', { name: /retry/i });
 
     const partial = specimen('Partial');
     expect(partial).not.toBeNull();
@@ -121,7 +121,7 @@ describe('the rail in the Atlas is the rail', () => {
     expect(several).not.toBeNull();
     const trigger = () => within(several!).getAllByRole('button', { name: /: workspace menu$/ })[0];
     const menu = await open(trigger());
-    expect(within(menu).getByText('Show')).toBeTruthy();
+    within(menu).getByText('Show');
     const scopes = within(menu).getAllByRole('menuitemradio').filter((r) => r.closest('[role="group"]') === null);
     expect(scopes.length).toBeGreaterThan(1);
     expect(scopes.filter((s) => s.getAttribute('aria-checked') === 'true')).toHaveLength(1);

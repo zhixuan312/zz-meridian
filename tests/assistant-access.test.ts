@@ -8,7 +8,7 @@ vi.mock('next/headers', () => ({
 }));
 vi.mock('next/cache', () => ({ cacheTag: () => {}, cacheLife: () => {}, updateTag: () => {}, revalidateTag: () => {}, revalidatePath: () => {}, refresh: () => {} }));
 
-import { can, may, resolveAccess } from '@/data/access';
+import { Unauthenticated, can, may, resolveAccess } from '@/data/access';
 import { ACTIONS, FEATURES } from '@/data/features';
 import { clock, collections, members } from '@/data/collections';
 import { aggregate, read } from '@/data/read';
@@ -112,9 +112,19 @@ describe('what the assistant may reach, by the person it acts for', () => {
     const call = { source: 'members', measures: ['members'], rows: 1 };
     expect(((await run(tools as Record<string, unknown>, `explore_${view.name}`, call)) as { answer: string }).answer).toMatch(/members/);
     // The suspension lands between handing and execution: the tool that was handed must read nothing when it runs.
+    // A rejection is not that: an implementation that read every row and then threw satisfies it the same way, so the
+    // reads themselves are spied on — the shape `cli-explore-access.test.ts` already uses for the same rule.
     await members.update!(['members_4'], { status: 'Suspended' });
     try {
-      await expect(run(tools as Record<string, unknown>, `explore_${view.name}`, call)).rejects.toBeTruthy();
+      const spy = { aggregate: vi.fn(aggregate), read: vi.fn((name: string, q: Parameters<typeof read>[1]) => read(name, q)), today: explore.io.today };
+      const { tools: again } = assistantTools([await handedTo(scope, members, 'members')], writer, guard, [], { ...explore, io: spy });
+      // The refusal is the read layer's own, raised before its cached code runs — a suspended person has no scope, so
+      // it is the sign-in one — and that is the property "reads nothing" stands on. A bare `rejects.toBeTruthy()` was
+      // satisfied by an implementation that read every row and then threw; the spy on `read` says the rows were never
+      // reached, which is the claim the test's name makes.
+      await expect(run(again as Record<string, unknown>, `explore_${view.name}`, call)).rejects.toBeInstanceOf(Unauthenticated);
+      expect(spy.aggregate).toHaveBeenCalledTimes(1);
+      expect(spy.read).not.toHaveBeenCalled();
     } finally {
       await members.update!(['members_4'], { status: 'Active' });
     }

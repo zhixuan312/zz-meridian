@@ -7,12 +7,22 @@ vi.mock('next/headers', () => ({
   headers: async () => new Headers(),
 }));
 vi.mock('next/cache', () => ({ cacheTag: () => {}, cacheLife: () => {}, updateTag: () => {}, revalidateTag: () => {}, revalidatePath: () => {}, refresh: () => {} }));
+import fs from 'node:fs';
+import path from 'node:path';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { EmptyState } from '@/components/ui/empty-state';
 import { NoAccess, noAccessCopy } from '@/views/no-access';
 
 /** The links a piece of markup holds, each as its address and its words. */
 const linksOf = (html: string) => [...html.matchAll(/<a\b[^>]*\bhref="([^"]*)"[^>]*>([\s\S]*?)<\/a>/g)].map((m) => ({ href: m[1], text: m[2].replace(/<[^>]*>/g, '').trim() }));
+
+/**
+ * The template's own repository: the Atlas is still here. A project brought in with `adopt` or `create` has it removed
+ * and its rail is its own, so the destinations below are the template's and not that project's — asserting them in a
+ * product fails that product's gate for a page that is right, which is why the other two files that pin the template's
+ * rail guard themselves the same way.
+ */
+const TEMPLATE = fs.existsSync(path.resolve(import.meta.dirname, '../app/system'));
 
 beforeEach(() => { jar.value = 'members_12'; });
 
@@ -47,7 +57,8 @@ describe('the no-access state', () => {
     expect(html).toContain('data-no-access');
   });
 
-  it('offers one link, named for where it leads, to the first destination of its own workspace the person may open', async () => {
+  it('offers one link, named for where it leads, to the first destination of its own workspace the person may open', async (ctx) => {
+    if (!TEMPLATE) ctx.skip('this project replaced the template\u2019s pages: its rail is its own, and these destinations are the template\u2019s');
     expect(linksOf(renderToStaticMarkup(await NoAccess({ feature: 'keys' })))).toEqual([{ href: '/engineering', text: 'Go to Now' }]);
     expect(linksOf(renderToStaticMarkup(await NoAccess({ feature: 'members' })))).toEqual([{ href: '/', text: 'Go to Home' }]);
   });

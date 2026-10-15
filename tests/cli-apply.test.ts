@@ -119,7 +119,11 @@ describe('update applies what is safe and stages the rest', () => {
     const { c, lines } = ctx(root);
     expect(start(c, opts)).toBe(2);
     expect(has(session(root), 'MERGE.md')).toBe(true);
-    expect(lines.filter((l) => !l.startsWith('migration ')).length).toBeLessThanOrEqual(20);
+    // A bound of 20 alone is satisfied by a run that said nothing at all, and by construction it cannot see the lines
+    // it filters out; the floor is what says the run reported itself.
+    const said = lines.filter((l) => !l.startsWith('migration '));
+    expect(said.length).toBeGreaterThan(0);
+    expect(said.length).toBeLessThanOrEqual(20);
     expect(lines.join('\n')).not.toContain(ui('a'));
   });
 

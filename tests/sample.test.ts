@@ -75,7 +75,7 @@ describe('the sample agrees with itself', () => {
       if (r.status === 404) expect(r.route.endsWith(':id')).toBe(true);
     }
   });
-  it('every trace ends exactly at the request’s latency', () => {
+  it('every trace ends at or after the request’s latency, never before it', () => {
     for (const r of REQUESTS) {
       const t = traceOf(r);
       const end = t[t.length - 1];

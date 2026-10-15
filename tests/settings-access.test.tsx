@@ -29,6 +29,9 @@ describe('the settings page by need', () => {
 
   it('shows no workspace, and everything else, to a member', () => {
     const html = settings(NONE);
+    // The section itself is absent, which is the case's whole point: "Only an Owner…" is a sentence the component no
+    // longer carries anywhere, and "Save changes" only appears once the form is dirty, so neither could fail.
+    expect(html).not.toContain('>Workspace<');
     expect(html).not.toContain('Only an Owner can change the workspace.');
     expect(html).not.toContain('Save changes');
     for (const s of ['Appearance', 'Agents and MCP']) expect(html, s).toContain(s);

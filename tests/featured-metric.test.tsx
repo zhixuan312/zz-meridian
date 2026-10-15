@@ -155,7 +155,7 @@ describe('the featured metric: two figures of equal standing', () => {
     }
   });
 
-  it('lays the halves side by side from 672px of its own width, and one above the other below that', () => {
+  it('lays the halves side by side from 42rem of its own width (588px: one rem is the root\'s 14px), and one above the other below that', () => {
     // A container query, so the server draws the layout the browser keeps: the test reads the utilities, and a browser
     // measures the two layouts at the phase end.
     const { container } = render(two);

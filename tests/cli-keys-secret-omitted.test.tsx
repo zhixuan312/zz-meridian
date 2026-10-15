@@ -48,6 +48,6 @@ describe('a newly created key on the API keys page', () => {
     expect(sent).toContain('This is the only time the full key is shown.');
     // Read, and still on screen as it was drawn: the whole key, with its Copy button.
     expect(screen.getByLabelText('New key').textContent).toBe(secret);
-    expect(screen.getByRole('button', { name: 'Copy New key' })).toBeTruthy();
+    screen.getByRole('button', { name: 'Copy New key' });
   });
 });

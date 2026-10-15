@@ -108,9 +108,13 @@ describe('the member boundary', () => {
     const made = await members.create!({ name: 'Second Owner', email: 'second.owner@example.com', team: 'Support', status: 'Active', joined: '2026-10-01', lastActive: null, role: 'Owner', addOns: [] });
     try {
       as(made.id);
-      await assignMemberRole({ id: 'members_1', role: 'Member', addOns: [] }).catch(() => {});
+      // `made` is an active Owner, so the membership after the change keeps the workspace governed and the demotion is
+      // allowed. A count of active Owners above zero held before this call as well as after it — the setup guaranteed
+      // it — so it said nothing about what the boundary did; the roster after the call is what says it.
+      await assignMemberRole({ id: 'members_1', role: 'Member', addOns: [] });
       const owners = (await members.query({})).rows.filter((m) => m.role === 'Owner' && m.status === 'Active');
-      expect(owners.length).toBeGreaterThan(0);
+      expect(owners.map((m) => m.id)).toEqual([made.id]);
+      expect((await rowOf('members_1')).role).toBe('Member');
     } finally {
       as('members_1');
       await assignMemberRole({ id: 'members_1', role: 'Owner', addOns: [] }).catch(() => {});
