@@ -4,23 +4,24 @@
  * of at most 500 rows, so `readAll` keeps asking — and it must keep asking for *the same question*, or a caller that
  * needs the rows in an order or with a condition gets the first page of a different one.
  *
- * The requests log is the sample's one collection larger than a page: 240 rows.
+ * The requests log is the sample's one collection larger than a page.
  */
 import { describe, expect, it, vi } from 'vitest';
 
 vi.mock('next/cache', () => ({ cacheTag: () => {}, cacheLife: () => {}, updateTag: () => {}, revalidateTag: () => {} }));
 
 import { readAll } from '@/data/read';
+import { REQUESTS } from '@/system/fixtures/sample';
 
 describe('readAll with a question', () => {
   it('answers with every row the collection holds when no condition is asked', async () => {
     const { rows } = await readAll('requests');
-    expect(rows).toHaveLength(240);
+    expect(rows).toHaveLength(REQUESTS.length);
   });
 
   it('keeps the order it was asked for across the page boundary', async () => {
     const { rows } = await readAll('requests', { sort: { field: 'at', dir: 'desc' } });
-    expect(rows).toHaveLength(240);
+    expect(rows).toHaveLength(REQUESTS.length);
     const at = rows.map((r) => String(r.at));
     // Every page holds the newest of what is left, so the whole run descends. A page read without the sort would come
     // back in the key's order instead, and the last row of one page would be newer than the first of the next.
@@ -37,6 +38,6 @@ describe('readAll with a question', () => {
 
   it('means every row even when the caller passes a limit', async () => {
     const { rows } = await readAll('requests', { limit: 10 });
-    expect(rows).toHaveLength(240);
+    expect(rows).toHaveLength(REQUESTS.length);
   });
 });
