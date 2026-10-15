@@ -45,6 +45,15 @@ export function formatDate(input: DateInput): string {
   return `${p.day} ${p.month} ${p.year}`;
 }
 
+/** `01 Oct`: a chart's axis or a badge, where the year is noise and the padded day keeps a column of cells aligned. A day
+ * inside a sentence is `formatDay`. */
+export function formatShortDate(input: DateInput): string {
+  const d = toDate(input);
+  if (!d) return String(input);
+  const p = parts(d);
+  return `${p.day} ${p.month}`;
+}
+
 /** `1 Oct`: a day inside a sentence, where a padded "01 Oct" reads like a table cell. Tables and axes keep formatDate. */
 export function formatDay(input: DateInput): string {
   const d = toDate(input);

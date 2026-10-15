@@ -23,7 +23,7 @@ import { StatusList } from '@/components/patterns/status-list';
 import { AskAbout } from '@/components/patterns/ask-about';
 import type { Endpoint } from '@/data/sample';
 import { formatCompact, formatDuration, formatPercent, plural } from '@/lib/format';
-import { formatDate } from '@/lib/format-date';
+import { formatDate, formatShortDate } from '@/lib/format-date';
 import { cn } from '@/lib/cn';
 import { useLive } from '@/lib/live';
 import {
@@ -34,7 +34,6 @@ import { Unread, unreadTile } from './unread';
 
 const linkClass = 'row-link inline-flex items-center gap-1 font-medium text-ink hover:text-accent-ink';
 /** "02 Oct": a day's label under its column. */
-const short = (date: string) => formatDate(date).replace(/ \d{4}$/, '');
 const RUN_PARTS = [
   { key: 'passed', label: 'Passed', tone: 'neutral' },
   { key: 'skipped', label: 'Skipped', tone: 'warning' },
@@ -339,7 +338,7 @@ function Runs({ runs }: { runs: NonNullable<NowData['runs']> }) {
         <ColumnChart
           label="Verification runs a day, by how they ended"
           parts={RUN_PARTS.map((p) => ({ ...p }))}
-          columns={runs.days.map((d) => ({ key: d.date, label: short(d.date), values: [d.passed, d.skipped, d.failed] }))}
+          columns={runs.days.map((d) => ({ key: d.date, label: formatShortDate(d.date), values: [d.passed, d.skipped, d.failed] }))}
           dates={runs.days.map((d) => d.date)}
           running={runs.running}
           format={(n) => formatCompact(n)}

@@ -8,7 +8,7 @@ import { app } from '@/app.config';
 import type { DailyPoint, Endpoint, Totals } from '@/data/sample';
 import type { UsageFigures } from '@/data/usage';
 import { formatCompact, formatDuration, formatPercent, plural } from '@/lib/format';
-import { formatDate } from '@/lib/format-date';
+import { formatDate, formatDay } from '@/lib/format-date';
 import { PERIOD_LABEL, type Period } from '@/lib/period';
 import { freshnessOf, type Fact, type Insight, type SharedContext } from '@/lib/shared-context';
 import { against, factInsight, inDays, type PageHead } from './fact-insight';
@@ -63,7 +63,6 @@ export type UsageData = {
 
 const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 /** "02 Oct": a day in a badge or a short line, the year left to the date beside it. */
-export const shortDate = (date: string) => formatDate(date).replace(/ \d{4}$/, '');
 const count = (n: number) => n.toLocaleString('en-US');
 
 /**
@@ -150,7 +149,7 @@ export function usageContext(data: UsageData, index: number | null = null): Shar
   if (data.head.unknown) unknowns.push(data.head.unknown);
   if (days && !series.length) unknowns.push('No requests have arrived in this period, so there is nothing to compare.');
   if (series.length && !days?.totals.previous) unknowns.push(NO_PREVIOUS);
-  if (days?.running) unknowns.push(`${shortDate(days.running.date)} is in progress and counted in no total.`);
+  if (days?.running) unknowns.push(`${formatDay(days.running.date)} is in progress and counted in no total.`);
   if (data.figures || data.endpoints || data.responses) unknowns.push('The hours, the regions, the endpoints and the responses cover the last 30 complete days: they do not follow the period, and none shows a single day.');
 
   let focus: string | undefined;

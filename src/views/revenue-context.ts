@@ -8,7 +8,7 @@ import { facts as rules } from '@/app.config';
 import type { CustomerRecord, DailyPoint, Plan } from '@/data/sample';
 import { periods, record } from '@/lib/facts';
 import { FORMATTERS, formatCompact, formatCost, formatPercent, plural } from '@/lib/format';
-import { formatDate } from '@/lib/format-date';
+import { formatDate, formatDay } from '@/lib/format-date';
 import { PERIOD_DAYS, PERIOD_LABEL, type Period } from '@/lib/period';
 import { freshnessOf, type Fact, type Insight, type SharedContext } from '@/lib/shared-context';
 import { CUSTOMER_METRICS, allSentMore, kept } from './customers-context';
@@ -236,7 +236,7 @@ export function revenueContext(data: RevenueData, order: WallOrder = 'largest'):
   if (data.head.unknown) unknowns.push(data.head.unknown);
   if (days && !series.length && c && !c.count) unknowns.push('Nothing has arrived yet: no customer and no complete day is kept.');
   if (series.length && days?.revenue.previous === null) unknowns.push(NO_PREVIOUS);
-  if (days?.running) unknowns.push(`${formatDate(days.running.date)} is in progress and counted in no total.`);
+  if (days?.running) unknowns.push(`${formatDay(days.running.date)} is in progress and counted in no total.`);
 
   return { view: 'revenue', title: 'Revenue', address: `/business?period=${period}`, scope, freshness: freshnessOf(data.updatedAt, data.now), facts, insights, unknowns };
 }

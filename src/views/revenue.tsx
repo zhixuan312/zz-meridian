@@ -18,7 +18,7 @@ import { FeaturedMetric } from '@/components/patterns/featured-metric';
 import { MetricTile } from '@/components/patterns/metric-tile';
 import { PLANS } from '@/data/sample';
 import { AXIS_FORMATTERS, FORMATTERS, formatCompact, formatCost, formatPercent } from '@/lib/format';
-import { formatDate, formatDay } from '@/lib/format-date';
+import { formatDate, formatDay, formatShortDate } from '@/lib/format-date';
 import { PERIOD_DAYS, PERIOD_LABEL } from '@/lib/period';
 import { REVENUE_METRICS, WALL_ORDERS, nextPlanWords, revenueContext, signed, yearAgoNote, type RevenueData, type WallOrder, type WorthLine } from './revenue-context';
 import { AskPeriod } from './ask-period';
@@ -30,7 +30,6 @@ const costCompact = FORMATTERS['cost-compact'];
 /** A change against the period before, as a fraction; null when nothing comes before or it was zero, which a tile says in words. */
 const change = (now: number, before: number | null) => (before ? now / before - 1 : null);
 /** "02 Oct": a window's label under its column, the date it ends on. */
-const short = (date: string) => formatDate(date).replace(/ \d{4}$/, '');
 
 type Days = NonNullable<RevenueData['days']>;
 type Customers = NonNullable<RevenueData['customers']>;
@@ -160,7 +159,7 @@ function ByWindow({ data, days }: { data: RevenueData; days: Days }) {
             <ColumnChart
               label="Revenue a window, by plan"
               parts={PLANS.map((p) => ({ key: p, label: p }))}
-              columns={days.windows.map((w) => ({ key: w.to, label: short(w.to), values: w.byPlan }))}
+              columns={days.windows.map((w) => ({ key: w.to, label: formatShortDate(w.to), values: w.byPlan }))}
               dates={keys}
               format={costCompact}
               axisFormat={AXIS_FORMATTERS['cost-compact']}

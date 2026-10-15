@@ -20,9 +20,9 @@ import { TrendChart } from '@/components/charts/trend-chart';
 import { FeaturedMetric } from '@/components/patterns/featured-metric';
 import type { UsageFigures } from '@/data/usage';
 import { AXIS_FORMATTERS, formatCompact, formatDuration } from '@/lib/format';
-import { formatDate } from '@/lib/format-date';
+import { formatDate, formatShortDate } from '@/lib/format-date';
 import { PERIOD_LABEL } from '@/lib/period';
-import { ASKED, STATUS_COLOR, USAGE_PARTS as P, WHEN, shortDate, usageContext, type UsageData, type When } from './usage-context';
+import { ASKED, STATUS_COLOR, USAGE_PARTS as P, WHEN, usageContext, type UsageData, type When } from './usage-context';
 import { AskPeriod } from './ask-period';
 import { Unread } from './unread';
 
@@ -79,7 +79,7 @@ function Year({ calendar }: { calendar: Calendar }) {
         title={P.year}
         wrap
         description={`Every complete day kept, a column a week, ${app.timezone}. Point at a day of the period and the chart above reads it.`}
-        actions={busiest ? <Badge tone="accent">Busiest: {shortDate(busiest.date)}, {formatCompact(busiest.value)}</Badge> : null}
+        actions={busiest ? <Badge tone="accent">Busiest: {formatShortDate(busiest.date)}, {formatCompact(busiest.value)}</Badge> : null}
       />
       <CardBody>
         <Heatmap days={calendar.days} running={calendar.running} scale="max" meridian label="Requests a day, every day kept" format={formatCompact} />

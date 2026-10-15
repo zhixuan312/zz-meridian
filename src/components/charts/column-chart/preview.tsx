@@ -4,7 +4,7 @@ import { Specimen, State, Plane } from '@/system/specimen';
 import { DEMO_NOW, type DailyPoint } from '@/system/fixtures/sample';
 import { demoSeries, ENDPOINTS, REGIONS, STATUS_MIX } from '@/system/fixtures/company';
 import { AXIS_FORMATTERS, formatCompact } from '@/lib/format';
-import { formatDate } from '@/lib/format-date';
+import { formatShortDate } from '@/lib/format-date';
 import { Meridian } from '@/components/charts/meridian';
 import { TrendChart } from '@/components/charts/trend-chart';
 import { ColumnChart, type ColumnPart, type StackedColumn } from '.';
@@ -14,7 +14,6 @@ const fortnight = demoSeries('30d').current.slice(-14);
 const month = demoSeries('30d').current;
 const quarter = demoSeries('90d').current;
 const year = demoSeries('all').current;
-const day = (date: string) => formatDate(date).replace(/ \d{4}$/, '');
 /** A chart whose columns are periods names each one's date, so its labels thin as dates do and are never cut. */
 const dates = (days: DailyPoint[]) => days.map((d) => d.date);
 /** The axis reads a scale, true at every tick. Errors, in the hundreds and low thousands, are exact counts at rest; requests, in the tens of thousands, are compact. */
@@ -24,7 +23,7 @@ const sum = (xs: { value: number }[]) => xs.reduce((a, x) => a + x.value, 0);
 /** The sample keeps one split of its requests for the whole period, so a day's parts are the day's requests in those shares. */
 const split = (days: DailyPoint[], shares: number[], requests = (d: DailyPoint) => d.requests): StackedColumn[] => {
   const whole = shares.reduce((a, b) => a + b, 0);
-  return days.map((d) => ({ key: d.date, label: day(d.date), values: shares.map((s) => Math.round((requests(d) * s) / whole)) }));
+  return days.map((d) => ({ key: d.date, label: formatShortDate(d.date), values: shares.map((s) => Math.round((requests(d) * s) / whole)) }));
 };
 
 const regions: ColumnPart[] = REGIONS.map((r) => ({ key: r.label, label: r.label }));
@@ -40,7 +39,7 @@ const endpoints: ColumnPart[] = ENDPOINTS.map((e) => ({ key: e.route, label: e.r
 const byEndpoint = ENDPOINTS.map((e) => e.requests);
 // The sample's clock stands at 09:00 UTC on its last day, so that day has run nine hours of its twenty-four.
 const soFar = (d: DailyPoint) => (d === week[week.length - 1] ? Math.round((d.requests * DEMO_NOW.getUTCHours()) / 24) : d.requests);
-const errors = (days: DailyPoint[]) => days.map((d) => ({ key: d.date, label: day(d.date), value: d.errors }));
+const errors = (days: DailyPoint[]) => days.map((d) => ({ key: d.date, label: formatShortDate(d.date), value: d.errors }));
 // The sample has no day of zero, so the zero specimens make one: a day with no errors, a day with no requests at all,
 // and a day with none from one region.
 const noErrors = errors(week).map((c, i) => (i === 2 ? { ...c, value: 0 } : c));
@@ -105,7 +104,7 @@ export default function ColumnChartPreview() {
       <Specimen label="Running" stack note="running: the last column is a period not over yet, here today at 09:00 UTC. Its fill is at half strength inside a dashed outline, open at the baseline: the outline has a pixel of its own, so it covers no part, and it is what keeps the faded column a column. Read, the day says so far: in the plain value, the readout, the announcement and its row of the table.">
         <State label="Plain" className="w-full">
           <Plane on="surface">
-            <ColumnChart label="Requests per day, today so far" height={160} format={formatCompact} axisFormat={axis} running dates={dates(week)} columns={week.map((d) => ({ key: d.date, label: day(d.date), value: soFar(d) }))} />
+            <ColumnChart label="Requests per day, today so far" height={160} format={formatCompact} axisFormat={axis} running dates={dates(week)} columns={week.map((d) => ({ key: d.date, label: formatShortDate(d.date), value: soFar(d) }))} />
           </Plane>
         </State>
         <State label="Stacked" className="w-full">
@@ -115,7 +114,7 @@ export default function ColumnChartPreview() {
         </State>
         <State label="Plain: the running day read" still className="w-full">
           <Plane on="surface">
-            <ColumnChart label="Requests per day, with today read" height={160} format={formatCompact} axisFormat={axis} running data-preview-index={week.length - 1} dates={dates(week)} columns={week.map((d) => ({ key: d.date, label: day(d.date), value: soFar(d) }))} />
+            <ColumnChart label="Requests per day, with today read" height={160} format={formatCompact} axisFormat={axis} running data-preview-index={week.length - 1} dates={dates(week)} columns={week.map((d) => ({ key: d.date, label: formatShortDate(d.date), value: soFar(d) }))} />
           </Plane>
         </State>
         <State label="Stacked: the running day read" still className="w-full">

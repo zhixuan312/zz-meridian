@@ -16,7 +16,7 @@ import { TrendChart } from '@/components/charts/trend-chart';
 import { FeaturedMetric } from '@/components/patterns/featured-metric';
 import { MetricTile } from '@/components/patterns/metric-tile';
 import { AXIS_FORMATTERS, FORMATTERS, formatCompact, formatCost, formatDuration, formatPercent } from '@/lib/format';
-import { formatDate, formatDay } from '@/lib/format-date';
+import { formatDate, formatDay, formatShortDate } from '@/lib/format-date';
 import { PERIOD_DAYS, PERIOD_LABEL } from '@/lib/period';
 import { AskPeriod } from './ask-period';
 import { COMPANY_METRICS, HOME_METRICS, SOLD_SLOTS, homeContext, type HomeData, type HomeWindow } from './home-context';
@@ -33,7 +33,6 @@ const linkClass = 'row-link inline-flex items-center gap-1 font-medium text-ink 
 /** A change against the period before, as a fraction; null when nothing comes before or it was zero, which a tile says in words. */
 const change = (now: number, before: number | null) => (before ? now / before - 1 : null);
 /** "02 Oct": a window's label under its column, the date it ends on. */
-const short = (date: string) => formatDate(date).replace(/ \d{4}$/, '');
 const share = (n: number) => formatPercent(n, 1);
 const costCompact = FORMATTERS['cost-compact'];
 
@@ -174,7 +173,7 @@ function YearCard({ data, keys }: { data: HomeData; keys: string[] }) {
       <CardBody className="flex flex-col gap-6">
         <ColumnChart
           label="Requests a window"
-          columns={year.windows.map((w) => ({ key: w.to, label: short(w.to), value: w.requests }))}
+          columns={year.windows.map((w) => ({ key: w.to, label: formatShortDate(w.to), value: w.requests }))}
           highlight={keys.at(-1)}
           dates={keys}
           format={formatCompact}
@@ -233,7 +232,7 @@ function RevenueWindows({ data, keys }: { data: HomeData; keys: string[] }) {
       <CardBody>
         <ColumnChart
           label="Revenue a window"
-          columns={data.year.windows.map((w: HomeWindow) => ({ key: w.to, label: short(w.to), value: w.revenue }))}
+          columns={data.year.windows.map((w: HomeWindow) => ({ key: w.to, label: formatShortDate(w.to), value: w.revenue }))}
           highlight={keys.at(-1)}
           dates={keys}
           format={costCompact}
