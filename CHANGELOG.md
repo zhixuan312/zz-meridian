@@ -2,6 +2,37 @@
 
 Every release of ZZ Meridian, newest first. Versions follow semver: a removed or renamed token, prop or card is major; a new card, token or variant is minor; a corrected value is a patch. Each entry says what breaks and what to do instead.
 
+## [Unreleased]
+
+### Breaking
+
+- **The literal-colour rule reads more forms.** `scripts/check.ts` matched `#rrggbb`, `#rgb`, `rgb(`/`rgba(` and `hsl(`/`hsla(`. It now reads a hex of four or eight digits too — `#0a5F`, `#0a58caFF` — and `oklch()`, `oklab()`, `lab()`, `lch()` and `color()`. A gate that passed can fail on a line that writes one of them: use a role or a token (`text-ink`, `border-line`, `var(--…)`), or mark the line `allow-literal-colour` where the colour is genuinely a literal of its own, as an embed's simulated host and a third party's brand are. A colour composed from tokens is not a literal and is not reported, so `color-mix(in oklch, var(--ink) 40%, transparent)` stays as it is.
+- **A flag a command does not read is refused, not ignored.** `zz-meridian adopt --dry-run` — and any other flag named outside the command that reads it — exits 1, naming the command it belongs to. A CI step that passed one did nothing quietly; it fails now, which is what it should have done.
+- **A figure nobody measured is `null`, not zero.** `RequestSummary.p95` and `RequestSummary.errorShare` (`src/data/requests.ts`) are `null` when the set is empty, and `MetricTile.points` is `(number | null)[]`. A page, a fixture or a test of yours that builds one of them adds the `null` case; a tile whose point is `null` draws a gap where it drew a fall to zero, and the request log says "not measured" where it said `0ms` and `0.0%`.
+
+### New
+
+- **`readAll(name, q)`** (`src/data/read.ts`) answers with every row a collection holds, asking the same question of every page: a list that counts, totals or claims "every" starts there, and a `limit` passed to it is ignored, because its answer means every row. `readEndpoints`, `readServices` and the incident read that joins each ticket go through it, and so do the Members and the Keys view tools and the three pages that list them: the endpoint list, the incidents the bell and Services count, every member, every key and every service are now all of them, where each was the first hundred. A page of yours that read one page of a collection and called it every row reads through `readAll` too.
+
+### Changed
+
+- **Home says no service is monitored yet.** A services read that succeeded and returned no rows had the page's title and its line say "every service is operational" while the page's own fact said "0 of 0 operational". Both say the empty state now, in the words the Services and Now pages already use.
+- **The backend gate refuses a data URL it cannot read the host of.** `unsafeBackend` (`scripts/verify.ts`) skipped a value it could not read the host of, which is how a DSN written without a scheme (`user:pass@db.prod.example.com:5432/app`) or a libpq line (`host=… user=…`) reached the presses. The authority is now read with its credentials dropped, and a value whose host still cannot be read is refused with the same way out as a remote one: point it at a local copy for the run, or set `allowRemoteData: true` in `scripts/verify.config.ts`.
+- **`adopt` keeps a commented tsconfig beside the rewritten one.** `adopt` rewrites `tsconfig.json` to raise the target and add the `@meridian/*` path, and `JSON.stringify` cannot hold a comment or a trailing comma. When the team's file carries either, it is kept as `tsconfig.before.json` and the notes say so; a plain tsconfig gets no backup.
+- **`brand` reports a flag it cannot use.** `brand --theme purple` printed an uncaught `Error` where `adopt` and `create` answer the same value with a sentence. All three report it the same way now, before anything is copied.
+- **The standard names three motion loops.** The token layer defines three (`--dur-loop-spin`, `--dur-loop-shimmer`, `--dur-loop-pulse`) and the Motion floor and the Skeleton card named two. All three are named everywhere now, and `tests/motion-loops.test.ts` holds the count to the tokens.
+
+### Fixed
+
+- **A held-back answer agrees with itself.** The line an answer ends with when the 3,000-character cap holds part of it back read "1 more line are not shown."; it reads "1 more line is not shown.", and the row messages follow.
+- **A resumed update keeps the lockfile preimage a killed install left behind.** `--resume` probed the project for the team's lockfile, so a lockfile a killed install had rewritten stood in as "ours" and an abort would have put a half-written file back in place of the team's. It comes from the session's backup now.
+- **The prepared query's 3,000-character cap bounds the whole answer.** It bounded the drilled rows, the one part it could shorten, so a summary over budget by itself came back over.
+- **`nav-needs` reads a nav item by its braces.** An item a team had spread over its keys was reported as missing a `needs` that was two lines below its `href`.
+- **Copy says "Copied" only when the copy happened.** A refused clipboard write left the button saying it had copied.
+- **The short date is one function.** `formatShortDate` (`01 Oct`) and `formatDay` (`3 Oct`) in `src/lib/format-date.ts`; six copies of the same expression in five views and a chart preview are gone, and four sentences that wrote the day in two different ways agree.
+- **A project created in another timezone passes its own gate.** A shipped test pinned the template's timezone; it states the project's own now, so `create --timezone Europe/London` no longer fails the gate it ships with.
+- **The 0.16.0 section below was corrected in place.** Revenue's own needs were stated twice and one of them wrongly; nothing a product renders changed.
+
 ## [0.16.0] · 2026-10-15
 
 ### Breaking
