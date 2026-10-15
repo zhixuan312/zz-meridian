@@ -14,7 +14,7 @@ const GRID = 'grid gap-x-10 gap-y-5 @3xl:grid-cols-[15rem_minmax(0,var(--field-w
  * A titled group of settings that saves on its own. Its title and one sentence sit on the left, the fields in a card on
  * the right (stacked on narrow widths). With `onSave`, editing shows a save bar that stays in view until the change is
  * saved or discarded; without it, every control applies at once and the section says so. `tone="critical"` is the
- * danger zone.
+ * danger zone. `actions` stand beside the title, on its row at every width: an Ask about, as on a card's head.
  *
  * `as="div"` is the same layout with no `<form>` around it, for a section that cannot have one: a card holding a table
  * that runs edge to edge (access tokens, people, members), or a form of its own, since forms cannot nest. It has no
@@ -23,6 +23,7 @@ const GRID = 'grid gap-x-10 gap-y-5 @3xl:grid-cols-[15rem_minmax(0,var(--field-w
 export function FormSection({
   title,
   description,
+  actions,
   children,
   dirty = false,
   saving = false,
@@ -40,6 +41,8 @@ export function FormSection({
   title: ReactNode;
   /** What these settings change, for whom, in one or two sentences. */
   description?: ReactNode;
+  /** Beside the title, on its row on a phone too: the same contract as `CardHeader`'s `actions`. */
+  actions?: ReactNode;
   children: ReactNode;
   /** The values differ from what is saved: show the save bar, and ask before the person leaves the page. */
   dirty?: boolean;
@@ -93,7 +96,10 @@ export function FormSection({
   const cols = (
     <>
     <header className="min-w-0 @3xl:pt-1">
-      <h2 className={cn('t-card', tone === 'critical' && 'text-critical-ink')}>{title}</h2>
+      <div className="flex items-start gap-4">
+        <h2 className={cn('t-card min-w-0 flex-1', tone === 'critical' && 'text-critical-ink')}>{title}</h2>
+        {actions ? <div className="-my-1 flex shrink-0 items-center gap-1.5">{actions}</div> : null}
+      </div>
       {description ? <p className="t-small mt-2 text-pretty text-ink-2">{description}</p> : null}
     </header>
     <div className="min-w-0">

@@ -82,7 +82,7 @@ Not applicable: navigation is how a person moves. An agent opens a view by its a
 ## Session
 
 - `user` is the signed-in person (`{ name, role }`); pass your session's. `null` while the session is still being found out draws a skeleton in its place, never a name that is not theirs. It defaults to the sample user in `app.config`. The console's own `ConsoleRail` takes the promise instead and passes this for you.
-- `signOut` is a route (`'/sign-in'`, the default), a function (your auth's sign-out; from a server layout, wrap the rail in a small client component to pass one), or `null` to hide it.
+- `signOut` is a route (`'/sign-in'`, the default), a function (your auth's sign-out; from a server layout, wrap the rail in a small client component to pass one), or `null` to hide it. Sign out first removes the assistant's conversation from the browser (`clearThread`), so the next person to sign in there neither sees it nor sends it.
 - `viewAs` is the personas the console may be read as: `{ current, options: { id, label, disabled? }[], choose }`. The menu lists them as radio items under "View as", with `current` checked. A product with one session leaves it unset and the menu has no such group. The options mount with the menu, so no persona's name is in a page's first HTML.
 - The account menu shows Workspace settings only when the navigation has `/settings`; with more than one scope it is the workspace menu, and it is named that way for anyone reading the row with a screen reader.
 

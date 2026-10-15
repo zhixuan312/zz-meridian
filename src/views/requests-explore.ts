@@ -24,6 +24,7 @@ export const requestsSource: Source = {
     model: { ops: ['eq', 'ne', 'in'] },
   },
   facets: ['statusClass', 'route', 'customer', 'region', 'model'],
+  none: { model: 'no model' },
   measures: {
     requests: { label: 'Requests', unit: 'requests', definition: 'Requests in the sampled log.', agg: 'count' },
     errors: { label: 'Errors and limits', unit: 'requests', definition: 'Requests in the sampled log answered with a 5xx or a 429.', agg: 'count', where: [{ field: 'status', op: 'in', value: ERRORS }] },

@@ -353,9 +353,42 @@ orders is the sample's, not the product's.
   Revenue at `/business`, Now at `/engineering`). "Navigation" above says how to declare your own or take them out.
 - **The checks of the sample's pages**: `optional:journeys/workspaces.ts`, which walks every destination of the three
   workspaces as an Owner and as a Viewer, the `navigationChecks`, `detailRoutes`, `browserChecks` and `personas` in
-  `scripts/verify.config.ts` that name the sample's routes and people, and the tests under `optional:tests/` that import
-  a sample page, view or fixture. Give each rail page of your own its `navigationChecks`
+  `scripts/verify.config.ts` that name the sample's routes and people, and the shipped tests that hold the sample (the
+  next item). Give each rail page of your own its `navigationChecks`
   entry (`pnpm verify --full` fails a rail route without one) and take the sample's out with its pages.
+  `optional:journeys/workspaces.ts` expects of a refused destination what your `refusal` chooses, as `pnpm verify --as`
+  does, and gates each step on the destinations it walks.
+- **The shipped tests that hold the sample**: a test under `optional:tests/` holds the sample when it imports a sample
+  page, view or fixture, and also when it reads the sample through a module you keep (`optional:src/data/collections.ts`,
+  `optional:src/data/read.ts`, `optional:src/data/access.ts`, the assistant and live routes) and names the sample's
+  clock, collections, records, people or routes. The gate fails on each once you replace what it names. Keep what each
+  holds for your own data: rewrite its cases for your collections, people and records, and delete a case about a
+  collection, page or person you dropped. Among them, by what they hold:
+  - The clock and the collections of the company: `optional:tests/day-in-progress.test.ts` (today is 03 Oct 2026; four
+    usage rows, four compute rows and one cost row a day; 361 days kept) and `optional:tests/data-model.test.ts` (the
+    collections models, usage, compute and costs with their keys and fields, the four model ids and the routes they
+    serve, what each persona may read). What they hold is the product's: the day in progress is counted in no period, a
+    read of all history pages past the 500 rows one read returns, a collection holds the fields its pages read and only
+    the roles the table names read it.
+  - The people of the demo, by member id (`members_1` is Maya Chen, the Owner; `members_12` is Grace Liu, a Viewer):
+    `optional:tests/demo-policy.test.ts`, `optional:tests/view-as.test.ts`, `optional:tests/sign-in-persona.test.ts`,
+    `optional:tests/sign-in-honest.test.tsx`, `optional:tests/verify-personas.test.ts`,
+    `optional:tests/member-mutations.test.ts`, `optional:tests/data-access.test.ts`, `optional:tests/data-write.test.ts`,
+    `optional:tests/assistant-tools.test.ts` (the members collection's write schema) and
+    `optional:tests/assistant-prompt-truth.test.ts`. While the demo signs in as your own people
+    (`PERSONAS`), write their ids into these cases; once your sign-in replaces the demo, delete the first four with
+    `optional:src/data/view-as.ts` and the sign-in page, and rewrite the rest for your sign-in's people.
+  - The records and routes of the company: `optional:tests/shell-alerts.test.ts` (more than one past-due customer, one
+    of them Lumen Studio at `/customers/lumen-studio`, a high-priority ticket nobody has, the failing verifications:
+    rewrite it for the exceptions your `readAlerts` raises), `optional:tests/feature-access.test.ts` (the sample's
+    seventeen features by id and each action's need), `optional:tests/data-read.test.ts`,
+    `optional:tests/live-route.test.ts` and `optional:tests/live-actions.test.ts` (the members and keys collections),
+    `optional:tests/assistant-guard.test.ts` (the members collection), `optional:tests/engineering-records.test.ts`
+    (tickets, verification runs and releases, and who of the demo's people writes them) and `optional:tests/requests-summary-newest.test.ts` (the requests
+    collection).
+
+  The sample's own figures, pages and answers are in `cli-*` tests, which a created project does not receive. A shipped
+  test that still fails after this names something of the sample's too: change it the same way.
 - **The choice `explain`**: the sample answers an address a person may not open with the no-access page, which names the
   page and who to ask. Choose `absent` when a product must not tell a person that a page they may not open exists.
 - **The counts each context's lists are capped at**: six services, two open incidents and three resolved on Services,
@@ -511,7 +544,7 @@ writes go through `Proposal` (see `optional:app/embed/proposal/`). Read `agents.
 
 ## Clean-up before validation
 
-Delete the sample pages, views, embed views and API routes (`optional:app/api/export/requests/`) the product does not use, with their nav lines and the tests that import them. Do not delete
+Delete the sample pages, views, embed views and API routes (`optional:app/api/export/requests/`) the product does not use, with their nav lines and the tests that import them, and change the tests that read the sample through a module you keep ("The shipped tests that hold the sample" above). Do not delete
 `optional:src/system/fixtures/` or `optional:src/system/sample-cells.tsx` yet: `optional:src/data/collections.ts`, `optional:src/data/sample.ts`
 and `optional:src/data/sign-in.ts` (the 30 days the sign-in page draws) import the fixtures. Once your collections' `rows` and `clock`, and the clock in the quiet bell of `optional:src/views/shell-alerts.tsx`
 (`DEMO_NOW`), come from your own data and nothing imports them, delete them and `optional:src/data/sample.ts` (with the Atlas kept, the previews read them: leave them, and remove the

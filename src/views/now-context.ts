@@ -57,7 +57,7 @@ export type NowData = {
    */
   band: { days: DayState[]; p95: number[]; end: string; inside: number; of: number; share: number; facts: BandFact[] } | null;
   models: NowModel[] | null;
-  /** Compute in use on the latest complete day (`day`), a row a region, the fullest first. */
+  /** Compute in use on the latest complete day (`day`), a row a region, the fullest first. Null when its read failed, and then `unread` names it, or when it holds no complete day yet. */
   compute: { day: string; regions: NowRegion[]; fullest: string | null } | null;
   /** The releases not yet out, in testing with what holds each and ready; the live version of each service; and the required checks passed of all over the releases not yet out. */
   shipping: {
@@ -197,6 +197,7 @@ const UNREAD: Record<string, string> = {
   'the services': 'no service is stated',
   'the incidents': 'no incident is stated, open or resolved',
   'the days': 'no day is counted inside the band',
+  'the usage': "no model's figures are stated",
   'the models': "no model's figures are stated",
   'the compute': 'compute in use is not stated',
   'the releases': 'what ships and the releases out are not stated',

@@ -27,7 +27,7 @@ import { formatDate } from '@/lib/format-date';
 import { cn } from '@/lib/cn';
 import { useLive } from '@/lib/live';
 import {
-  MONTH, NOW_METRICS, NOW_PARTS as P, NOW_TILES, nothingArrived, nowContext, servicesShown, unpackNow,
+  MONTH, NOW_METRICS, NOW_PARTS as P, NOW_TILES, inWords, nothingArrived, nowContext, servicesShown, unpackNow,
   type NowData, type NowModel, type NowTile, type PackedNowData,
 } from './now-context';
 import { Unread, unreadTile } from './unread';
@@ -69,6 +69,24 @@ function DaysInside({ band, steady }: { band: NonNullable<NowData['band']>; stea
   );
 }
 
+/**
+ * "Services, now" with no list to draw: the services could not be read, or none is monitored yet; null when there is a
+ * list. The embed's inline view draws it in its list's place too, so neither says the services are operational when it
+ * does not know.
+ */
+export function NoServices({ data }: { data: NowData }) {
+  if (data.unread.includes('the services')) return <Unread title={P.services} what="the services" />;
+  if (data.services.length) return null;
+  return (
+    <Card>
+      <CardHeader title={P.services} />
+      <CardBody>
+        <EmptyState layout="inline" title="No service is monitored yet">Every service you monitor appears here with its state now and how long it has run.</EmptyState>
+      </CardBody>
+    </Card>
+  );
+}
+
 /** Services, now: every service with its run, or past eight the ones not operational and the three longest runs; always the way to every one. */
 function Services({ data, end }: { data: NowData; end: Date }) {
   const { services } = data;
@@ -77,17 +95,7 @@ function Services({ data, end }: { data: NowData; end: Date }) {
       All {services.length} {plural(services.length, 'service')} <ArrowRight className="size-3.5" />
     </Link>
   );
-  if (data.unread.includes('the services')) return <Unread title={P.services} what="the services" />;
-  if (!services.length) {
-    return (
-      <Card>
-        <CardHeader title={P.services} />
-        <CardBody>
-          <EmptyState layout="inline" title="No service is monitored yet">Every service you monitor appears here with its state now and how long it has run.</EmptyState>
-        </CardBody>
-      </Card>
-    );
-  }
+  if (!services.length || data.unread.includes('the services')) return <NoServices data={data} />;
   const shown = servicesShown(services);
   return (
     <Card className="overflow-hidden">
@@ -195,6 +203,18 @@ function Compute({ compute }: { compute: NonNullable<NowData['compute']> }) {
           highlight={compute.fullest ?? undefined}
           items={compute.regions.map((r) => ({ key: r.region, label: <span className="font-mono text-xs">{r.region}</span>, value: r.share, meta: `${r.gpus} GPUs provisioned` }))}
         />
+      </CardBody>
+    </Card>
+  );
+}
+
+/** Compute in use, read and holding no complete day yet: the part says so, and nothing is drawn as if it were zero. */
+function NoCompute() {
+  return (
+    <Card>
+      <CardHeader title={P.compute} />
+      <CardBody>
+        <EmptyState layout="inline" title="No complete day of compute is recorded yet">The GPU-hours used of those provisioned appear here, a row a region, once a day of compute is complete.</EmptyState>
       </CardBody>
     </Card>
   );
@@ -376,8 +396,8 @@ export function NowBody(data: NowData) {
       {/* With no band, the Featured metric's place already says the days could not be read, or nothing was kept. */}
       {band ? <Band band={band} /> : null}
       <Row split="2/3">
-        {models ? <Models models={models} /> : <Unread title={P.models} what="the models" />}
-        {compute ? <Compute compute={compute} /> : <Unread title={P.compute} what="the compute" />}
+        {models ? <Models models={models} /> : <Unread title={P.models} what={inWords(['the usage', 'the models'].filter((n) => data.unread.includes(n)))} />}
+        {compute ? <Compute compute={compute} /> : data.unread.includes('the compute') ? <Unread title={P.compute} what="the compute" /> : <NoCompute />}
       </Row>
       <Row split="1/2">
         {shipping ? <Shipping shipping={shipping} /> : <Unread title={P.shipping} what="the releases" />}

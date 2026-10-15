@@ -2,6 +2,8 @@
 
 import { useState } from 'react';
 import { Specimen } from '@/system/specimen';
+import { SurfaceOverride } from '@/components/base/surface';
+import { AskAbout } from '@/components/patterns/ask-about';
 import { Button } from '@/components/ui/button';
 import { Field } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
@@ -18,6 +20,13 @@ export default function FormSectionPreview() {
         <FormSection title="Workspace" description={`How this workspace is named across ${app.name}.`} dirty onDiscard={() => setName(`${app.name} ${app.workspace}`)} onSave={() => {}}>
           <Field label="Name">{(p) => <Input {...p} value={name} onChange={(e) => setName(e.target.value)} />}</Field>
         </FormSection>
+      </Specimen>
+      <Specimen label="With actions" note="actions: beside the title, on its row on a phone too, as on a card's head. A settings page hands itself to the assistant here: Ask about, in the first section's actions." stack>
+        <SurfaceOverride surface={{ ask: () => {} }}>
+          <FormSection title="Workspace" description={`How this workspace is named across ${app.name}.`} actions={<AskAbout question="What do these settings change for this workspace?" />}>
+            <Field label="Name">{(p) => <Input {...p} defaultValue={`${app.name} ${app.workspace}`} />}</Field>
+          </FormSection>
+        </SurfaceOverride>
       </Specimen>
       <Specimen label="Error" note="A failed save keeps the edit and says why, above the fields." stack>
         <FormSection title="Workspace" description={`How this workspace is named across ${app.name}.`} dirty error="The name is taken by another workspace in this organisation. Choose another." onSave={() => {}} onDiscard={() => {}}>

@@ -17,6 +17,9 @@ Status: beta
 |---|---|
 | All operational | No banner; the summary reads "All services operational" |
 | Open incident | The banner names it, its state and when it started; with several, the most severe |
+| Services not read | The list's place says the services could not be read, as "Services, now" on the page does; never "All services operational" |
+| No service monitored yet | The list's place says no service is monitored yet |
+| Nothing arrived yet | Every read answered and none holds a record (`nothingArrived`): the page's one card, "No services yet", as fullscreen draws it |
 | Not connected (opened directly) | The same view; Ask is absent; Expand opens the console |
 
 ## Data

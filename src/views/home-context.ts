@@ -49,6 +49,9 @@ export type HomeFigure = { value: number; previous: number | null; points: numbe
  * Compute cost and gross margin are keys only for a person who may read what compute cost; for anyone else they are
  * absent, not null.
  */
+/** The models What we sell names, one a categorical slot of its Composition bar; the rest are one part after them, "Other". */
+export const SOLD_SLOTS = 4;
+
 export type HomeData = {
   period: Period;
   /** The period's complete days, oldest first and ending yesterday. */
@@ -75,7 +78,10 @@ export type HomeData = {
   grossMargin?: HomeFigure | null;
   /** The year's card and revenue a period: one window a column, oldest first, the card's title, and the windows' median p95 (null with no window). */
   year: { title: string; windows: HomeWindow[]; median: number | null } | null;
-  /** What we sell: the period's revenue by model, the largest first. */
+  /**
+   * What we sell: the period's revenue by model, the largest first, each with its share of the whole. Past the
+   * Composition bar's categorical slots (`SOLD_SLOTS`) the rest are one part, "Other", so every share is of all revenue.
+   */
   sold: { key: string; label: string; value: number; share: number }[] | null;
   /** How many services are operational now, of how many, and each one that is not with its state. */
   services: { operational: number; of: number; unwell: string | null } | null;

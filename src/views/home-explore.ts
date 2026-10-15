@@ -21,7 +21,7 @@ export const homeExplore: PreparedQuery = {
       facets: [],
       buckets: ['day', 'week', 'month', 'weekday'],
       measures: {
-        revenue: { label: 'Revenue', unit: 'USD', definition: 'Billed for metered usage over the complete days, before credits.', agg: 'sum', field: 'revenue' },
+        revenue: { label: 'Revenue', unit: 'money', definition: 'Billed for metered usage over the complete days, before credits.', agg: 'sum', field: 'revenue' },
         grossMargin: { label: 'Gross margin', unit: '%', definition: 'Revenue less compute cost, over revenue.', derive: 'margin', of: ['revenue', 'costs.compute'], scale: 0.01 },
         requests: { label: 'Requests', unit: 'requests', definition: 'Every call answered, at any status, over the complete days.', agg: 'sum', field: 'requests' },
         tokens: { label: 'Tokens served', unit: 'tokens', definition: 'Input and output, every model, over the complete days.', agg: 'sum', field: 'tokens' },
@@ -36,7 +36,7 @@ export const homeExplore: PreparedQuery = {
       facets: ['model'],
       buckets: ['day', 'week', 'month'],
       measures: {
-        revenue: { label: 'Revenue', unit: 'USD', definition: 'What the model\'s tokens were billed at its price; "none" is the calls that reach no model, at the price of a call.', agg: 'sum', field: 'revenue' },
+        revenue: { label: 'Revenue', unit: 'money', definition: 'What the model\'s tokens were billed at its price; "none" is the calls that reach no model, at the price of a call.', agg: 'sum', field: 'revenue' },
         requests: { label: 'Requests', unit: 'requests', definition: 'Requests the model answered over the complete days.', agg: 'sum', field: 'requests' },
         outputTokens: { label: 'Output tokens', unit: 'tokens', definition: 'Tokens the model wrote over the complete days.', agg: 'sum', field: 'outputTokens' },
       },
@@ -66,7 +66,7 @@ export const homeExplore: PreparedQuery = {
       facets: [],
       buckets: ['day', 'week', 'month'],
       measures: {
-        compute: { label: 'Compute cost', unit: 'USD', definition: 'What the GPUs provisioned cost over the complete days.', agg: 'sum', field: 'compute' },
+        compute: { label: 'Compute cost', unit: 'money', definition: 'What the GPUs provisioned cost over the complete days.', agg: 'sum', field: 'compute' },
       },
       drill: { columns: ['date', 'compute'], address: onDay },
       cannot: 'The day in progress is counted in no total, and compute cost is not kept by region or by model.',

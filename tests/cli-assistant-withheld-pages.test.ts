@@ -1,4 +1,5 @@
 // @vitest-environment node
+// Named cli-* so the payload leaves it out: it reads what the sample's own Home, API keys and Members pages read.
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { MockLanguageModelV4 } from 'ai/test';
 import type { UIMessage } from 'ai';
@@ -32,11 +33,13 @@ vi.mock('@/lib/assistant/config', () => ({
 import { POST } from '../app/api/assistant/route';
 
 /**
- * The route names a withheld record's own page, the rail's destination that needs that read alone, so a Viewer asking
- * where keys are made is given API keys, whose refusal says who can open it, and not a page that makes none (scoreboard
- * round 5, W8). Under `absent` it names nothing, as the page names nothing.
+ * Where the route says a withheld record is shown (AC-14.8 at review, C1): a Viewer on Home was told Home has no gross
+ * margin and that no page they can open holds compute cost, because the route named a page only where a rail item needs
+ * that one read alone. It names every page whose prepared query reads the record, whether this person may open it, and
+ * what is worked out from it: compute cost is on Home, which a Viewer opens without it, and gross margin is worked out
+ * from it. API keys and Members are pages a Viewer may not open, and they tell them who can.
  */
-const ask: UIMessage[] = [{ id: 'u1', role: 'user', parts: [{ type: 'text', text: 'Where do I create an API key?' }] }];
+const ask: UIMessage[] = [{ id: 'u1', role: 'user', parts: [{ type: 'text', text: 'What did compute cost us, and what was our gross margin?' }] }];
 async function promptFor(member: string, refusal: 'explain' | 'absent'): Promise<string> {
   jar.value = member;
   policy.refusal = refusal;
@@ -46,17 +49,24 @@ async function promptFor(member: string, refusal: 'explain' | 'absent'): Promise
   await res.text();
   return seen.system;
 }
+const lineOf = (system: string, label: string) => system.split('\n').find((l) => l.startsWith(`- ${label}: `)) ?? '';
 afterEach(() => { jar.value = undefined; policy.refusal = 'explain'; });
 
-describe("a withheld record's own page", () => {
-  it("is named for a Viewer under explain: API keys and Members, each with its address; compute cost has none", async () => {
-    const system = await promptFor('members_12', 'explain');
-    expect(system).toContain('Its page is API keys (/keys), which tells this person who can open it.');
-    expect(system).toContain('Its page is Members (/members), which tells this person who can open it.');
-    expect(system).toMatch(/^- Compute cost: [^\n]*can read it\.$/m);
+describe('what a Viewer may not read, and where it is shown', () => {
+  it('compute cost is on Home, which they open without it, and gross margin is worked out from it', async () => {
+    const line = lineOf(await promptFor('members_12', 'explain'), 'Compute cost');
+    expect(line).toContain('Home (/) shows it to those roles; this person can open Home, where it is not shown to them.');
+    expect(line).toContain('Worked out from it, and so withheld with it: Gross margin.');
+    expect(line).not.toMatch(/who can open|tells them who can/);
   });
 
-  it('is named for nobody under absent', async () => {
-    expect(await promptFor('members_12', 'absent')).not.toContain('Its page is');
+  it('API keys and Members are pages they may not open, which tell them who can', async () => {
+    const system = await promptFor('members_12', 'explain');
+    expect(lineOf(system, 'API keys')).toContain('API keys (/keys) shows it to those roles; this person may not open it, and it tells them who can.');
+    expect(lineOf(system, 'Members')).toContain('Members (/members) shows it to those roles; this person may not open it, and it tells them who can.');
+  });
+
+  it('is said to nobody under absent', async () => {
+    expect(await promptFor('members_12', 'absent')).not.toMatch(/shows it to those roles/);
   });
 });

@@ -189,7 +189,8 @@ function StillOnNavigation({ main }: { main: RefObject<HTMLElement | null> }) {
 
 /**
  * The navigation drawer below 1024px. It remembers the page it opened on, so navigating closes it without an effect;
- * that is a read of the address, so the drawer is a part of its own behind its own boundary (see `AppShell`).
+ * that is a read of the address, so the drawer is a part of its own behind its own boundary (see `AppShell`). A change
+ * of address also forgets that page: kept, Back to it would match it again and open the drawer with nobody pressing.
  *
  * That boundary can arrive after the page, and the page holds the trigger: on a phone a press could land while there was
  * no drawer to take it, and it was dropped (issue #32). So the shell counts the presses in its own state and passes the
@@ -199,6 +200,11 @@ function StillOnNavigation({ main }: { main: RefObject<HTMLElement | null> }) {
 function Drawer({ rail, asked }: { rail: ReactNode; asked: number }) {
   const path = usePathname();
   const [openOn, setOpenOn] = useState<string | null>(null);
+  const [seen, setSeen] = useState(path);
+  if (seen !== path) {
+    setSeen(path);
+    setOpenOn(null);
+  }
   // From none, not from `asked`: a drawer that arrives late starts here with the presses it missed still to answer.
   const [answered, setAnswered] = useState(0);
   if (answered !== asked) {

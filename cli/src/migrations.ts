@@ -113,6 +113,104 @@ function callArity(src: string, fn: string): number[] {
   return out;
 }
 
+/** Where an import of the team's file `rel` points, as a project path with no extension; null for a package. */
+const resolvedImport = (rel: string, spec: string): string | null => {
+  const bare = spec.replace(/\.[mc]?[jt]sx?$/, '');
+  if (bare.startsWith('@/')) return `src/${bare.slice(2)}`;
+  return bare.startsWith('.') ? path.posix.join(path.posix.dirname(rel), bare) : null;
+};
+
+/** Each import of a file of the team's: the module it resolves to, the names it takes and its namespace, if it has one. */
+function importsOf(rel: string, src: string): { from: string; names: string[]; namespace: string | null }[] {
+  const out: { from: string; names: string[]; namespace: string | null }[] = [];
+  for (const m of src.matchAll(/^\s*import\s+(?:type\s+)?([^'"]*?)\s+from\s+(['"])([^'"]+)\2/gm)) {
+    const from = resolvedImport(rel, m[3]!);
+    if (from === null) continue;
+    const names = (/\{([^}]*)\}/.exec(m[1]!)?.[1] ?? '').split(',').map((s) => s.trim().replace(/^type\s+/, '').split(/\s+as\s+/)[0]!).filter(Boolean);
+    out.push({ from, names, namespace: /\*\s*as\s+([\w$]+)/.exec(m[1]!)?.[1] ?? null });
+  }
+  return out;
+}
+
+/**
+ * The index just past the string, template or comment that starts at `i`, or `i` when none does. A regular expression is
+ * not told from a division here: a view tool's object holds none whose brackets or quotes do not balance.
+ */
+function skipLiteral(src: string, i: number): number {
+  const c = src[i], next = src[i + 1];
+  if (c === '/' && next === '/') { const e = src.indexOf('\n', i); return e < 0 ? src.length : e; }
+  if (c === '/' && next === '*') { const e = src.indexOf('*/', i + 2); return e < 0 ? src.length : e + 2; }
+  if (c === "'" || c === '"') {
+    let j = i + 1;
+    while (j < src.length && src[j] !== c && src[j] !== '\n') j += src[j] === '\\' ? 2 : 1;
+    return j + 1;
+  }
+  if (c === '`') {
+    let j = i + 1;
+    while (j < src.length && src[j] !== '`') {
+      if (src[j] === '\\') j += 2;
+      else if (src[j] === '$' && src[j + 1] === '{') j = closeOf(src, j + 1) + 1;
+      else j++;
+    }
+    return j + 1;
+  }
+  return i;
+}
+
+/** The index of the bracket that closes the `{`, `(` or `[` at `open`, passing over strings and comments. */
+function closeOf(src: string, open: number): number {
+  let depth = 0;
+  for (let i = open; i < src.length;) {
+    const past = skipLiteral(src, i);
+    if (past !== i) { i = past; continue; }
+    const c = src[i]!;
+    if ('{(['.includes(c)) depth++;
+    else if ('})]'.includes(c) && --depth === 0) return i;
+    i++;
+  }
+  return src.length;
+}
+
+/**
+ * Each `defineViewTool({ … })` call of a file, as the keys of its object's own level, each with its value when that is a
+ * string and null otherwise; a key inside a nested object, call or function body, such as an input's `page`, is not
+ * the tool's. An object that spreads another has the key `...`, since what it spreads cannot be read here.
+ */
+function viewToolCalls(src: string): Map<string, string | null>[] {
+  const out: Map<string, string | null>[] = [];
+  const call = /defineViewTool\s*(?:<[^>]*>)?\s*\(\s*\{/y;
+  const key = /(?:async\s+)?([A-Za-z_$][\w$]*)(?:\s*:\s*(['"])((?:\\.|(?!\2)[^\\\n])*)\2)?/y;
+  for (let i = 0; i < src.length;) {
+    const past = skipLiteral(src, i);
+    if (past !== i) { i = past; continue; }
+    call.lastIndex = i;
+    const m = call.exec(src);
+    if (!m || /[\w$.]/.test(src[i - 1] ?? '')) { i++; continue; }
+    const open = i + m[0].length - 1;
+    const close = closeOf(src, open);
+    const keys = new Map<string, string | null>();
+    let prev = '{';
+    for (let k = open + 1; k < close;) {
+      const lit = skipLiteral(src, k);
+      if (lit !== k) { k = lit; continue; }
+      const c = src[k]!;
+      if (/\s/.test(c)) { k++; continue; }
+      if (prev === '{' || prev === ',') {
+        if (src.startsWith('...', k)) keys.set('...', null);
+        key.lastIndex = k;
+        const found = key.exec(src);
+        if (found && !keys.has(found[1]!)) keys.set(found[1]!, found[3] ?? null);
+      }
+      if ('{(['.includes(c)) { k = closeOf(src, k) + 1; prev = '}'; continue; }
+      prev = c;
+      k++;
+    }
+    out.push(keys);
+    i = close + 1;
+  }
+  return out;
+}
+
 // ── The registry ─────────────────────────────────────────────────────────────────────────────────────
 
 const GATE_AND_BUILD = ['gate', 'build'];
@@ -273,7 +371,112 @@ export const RELEASE_MIGRATIONS: ReleaseMigration[] = [
     instructions: 'Read "Navigation: `src/app.config.ts`" in references/customize.md. Add `export const refusal: \'explain\' | \'absent\' = \'explain\';` to `src/app.config.ts`, beside `facts`: `explain` keeps the no-access page a refused page draws today, and `absent` answers as an address that names nothing. A project that keeps the sample\'s access seam brings `src/data/access.ts` and `src/data/refusal.ts` over from the release (`gate` reads `refusal`, with `gatedMetadata` and `withheldEntries` beside it, and `gatedLoading` reads it alone), titles each gated page with `export function generateMetadata() { return gatedMetadata(\'<feature>\', { title: \'<its title>\' }); }` in place of a static `metadata`, passes its loading state\'s `name` and `title` through `gatedLoading`, and adds `refusal,` to the config object of `scripts/verify.config.ts`, imported from `../src/app.config.ts`, so `verify --as` expects the page the product chose.',
     checks: GATE_AND_BUILD,
   },
+  {
+    id: 'managed-exports-removed',
+    since: '0.16.0',
+    applies: removedExportReaders,
+    summary: 'A file of the team\'s imports an export the release removed from a managed module: `deviations`, `largest`, `runs` or `weekendRatio` from `src/lib/insight.ts`, or `queryInput` from `src/lib/collection.ts`.',
+    instructions: 'The update brought `src/lib/insight.ts` and `src/lib/collection.ts` without them, so each file listed here fails the type check. A file of the sample\'s comes over from the release: the Overview context is Home\'s, `src/views/home-context.ts` (see `sample-pages-renamed`); the assistant reads through `view_<name>` and `explore_<view>` and has no `query_<name>` tools, so bring `src/lib/assistant/tools.ts` and `src/lib/assistant/respond.ts` over and pass `readable`, every collection the person may read, from the assistant route to `respond` beside `collections` (read "Prepared queries" in references/agents.md); and a shipped test that imports one, such as `tests/shared-context.test.tsx` or `tests/collection.test.ts`, comes over as the release has it. A file of your own that still needs one of the functions writes it in that file, from its 0.15.0 source.',
+    checks: GATE_AND_BUILD,
+  },
+  {
+    id: 'view-tool-page-explore',
+    since: '0.16.0',
+    applies: (root) => matching(root, (_, src) => viewToolCalls(src).some((k) => !k.has('...') && !(k.has('page') && k.has('explore')))),
+    summary: 'Every view tool names the page it renders and its prepared query: `page` and `explore` on `defineViewTool`.',
+    instructions: 'Read "Prepared queries" in references/agents.md. Add to each `defineViewTool` call in the files listed here `page`, the console route of the page the view renders (a rail destination\'s `href` in `nav`, or a detail page\'s route with its segment, such as `/customers/[id]`), and `explore`, its prepared query (`PreparedQuery` in `src/lib/explore.ts`), declared beside the view as the sample\'s are in `src/views/<view>-explore.ts`. `ViewTool` in `src/lib/shared-context.ts` requires both, so a tool without them fails the type check. A project that kept the sample\'s view tools brings `src/views/tools.ts` and the `src/views/*-explore.ts` files over from the release. Once a tool names its page, the gate asks that page\'s specification what the agent does there (`agent-does-here-section`).',
+    checks: GATE_AND_BUILD,
+  },
+  {
+    id: 'agent-does-here-section',
+    since: '0.16.0',
+    applies: viewToolPagesWithoutAgentDoes,
+    summary: 'The specification of a page a view tool renders says what the agent does there.',
+    instructions: 'Read "Prepared queries" in references/agents.md. Under `## Agents` in the README.md of each page a view tool\'s `page` names, add `### What the agent does here`: a line `Protagonist: <the card\'s name>.`, then at least three questions a person on the page asks that its context does not answer alone, each `- "<question>" — <what the prepared query is asked>`, and mark that card on the page with `data-protagonist="<name>"`. `scripts/check.ts` fails the gate on such a page without the part. While a view tool in `src/views/tools.ts` names no page yet (`view-tool-page-explore`), every console page specification without the part is listed: one that no tool comes to name needs nothing.',
+    checks: ['gate'],
+  },
+  {
+    id: 'sample-pages-renamed',
+    since: '0.16.0',
+    applies: renamedSampleFiles,
+    summary: 'The project holds the sample\'s pages and views under their 0.15.0 names: Overview is Home, Analytics is Usage at `/usage` and Operations is Services at `/services`.',
+    instructions: 'The release renamed them with no redirect, and an update writes none of the team\'s pages, views or tests. Each file listed is one of them or names one: a page or a view, the view tools, `src/app.config.ts`\'s nav and the feature ids it names, the routes of `scripts/verify.config.ts`, or a shipped test that expects them. A project that kept the sample\'s pages as they were brings the release\'s over: `app/(dashboard)/` and `app/embed/`, `src/views/`, `src/data/`, `src/lib/assistant/` beside `prompt.ts`, `src/app.config.ts` with its own `app` kept, and each shipped test as the release has it; a file listed here that the release no longer has is deleted. A project that made the pages its own keeps its own names, makes the changes this release\'s other migrations list in them, and reads "not applicable" for the assistant walk-through\'s steps on Home and Now (`scripts/lib/sample.ts`).',
+    checks: GATE_AND_BUILD,
+  },
 ];
+
+/** The team's files that import an export 0.16.0 removed from a managed module, by name or through a namespace. */
+function removedExportReaders(root: string): string[] | null {
+  const removed: Record<string, string[]> = { 'src/lib/insight': ['deviations', 'largest', 'runs', 'weekendRatio'], 'src/lib/collection': ['queryInput'] };
+  return matching(root, (rel, src) => importsOf(rel, src).some(({ from, names, namespace }) => {
+    const gone = removed[from] ?? [];
+    return names.some((n) => gone.includes(n)) || (namespace !== null && gone.some((g) => new RegExp(`(?<![\\w$.])${namespace.replace(/\$/g, '\\$')}\\.${g}\\b`).test(src)));
+  }));
+}
+
+/**
+ * The specifications of the pages the view tools of `src/views/tools.ts` render, as the gate reads them from 0.16.0,
+ * that lack "What the agent does here". While a tool names no page, the gate cannot tell its page, and neither can this:
+ * every console page specification without the part is listed then.
+ */
+function viewToolPagesWithoutAgentDoes(root: string): string[] | null {
+  const tools = text(root, 'src/views/tools.ts');
+  if (tools === null) return null;
+  const calls = viewToolCalls(tools).filter((k) => !k.has('...'));
+  if (calls.length === 0) return null;
+  const pages = new Set(calls.map((k) => k.get('page')).filter((p): p is string => typeof p === 'string'));
+  const unnamed = calls.some((k) => !k.has('page'));
+  const app = fs.existsSync(path.join(root, 'app')) ? 'app' : 'src/app';
+  const specs: string[] = [];
+  walk(root, app, specs, /^README\.md$/);
+  const hits = specs.filter((rel) => {
+    const rest = rel.slice(app.length + 1);
+    if (!/^\([^/)]+\)\//.test(rest)) return false;
+    const route = `/${path.posix.dirname(rest).split('/').filter((s) => !/^\(.*\)$/.test(s)).join('/')}`;
+    return (unnamed || pages.has(route)) && !/^## Agents$(?:\n(?!## ).*)*\n### What the agent does here$/m.test(text(root, rel) ?? '');
+  });
+  return hits.length > 0 ? hits : null;
+}
+
+/**
+ * The sample's pages and views under the names 0.16.0 replaced, and every file of the team's that names one: an import
+ * of one of their modules, a feature id or view tool of theirs, the walk-through's surfaces as they were, and the
+ * verify config's routes for them. Only a project that still holds one of the sample's old files is read, so a page of
+ * a product's own at the same address, or a feature of its own of the same name, is never taken for the sample's. The
+ * names are put together from their parts: the repository holds them out of everything but its history.
+ */
+function renamedSampleFiles(root: string): string[] | null {
+  const old = ['overview', 'analytics', 'health'];
+  const modules = new Set([...old.flatMap((n) => [`src/views/${n}`, `src/views/${n}-context`]), `src/data/${old[1]}`]);
+  const group = `(${old[0]})`;
+  const named = new RegExp(`\\b(?:FEATURES\\.|view_)(?:${old.join('|')})\\b`);
+  const isOld = (rel: string) => modules.has(rel.replace(/\.[mc]?[jt]sx?$/, '')) || (/^(?:src\/)?app\//.test(rel) && rel.split('/').includes(group));
+  const sources = teamSources(root);
+  if (!sources.some((f) => isOld(f.rel))) return null;
+  const seeds = sources.filter(({ rel, src }) => isOld(rel)
+    || importsOf(rel, src).some((i) => modules.has(i.from))
+    || named.test(src)
+    || (/\bsampleSurfaces\b/.test(src) && new RegExp(`\\b${old[0]}\\s*:|\\.${old[0]}\\b`).test(src))).map((f) => f.rel);
+  // A page or an embed view of the sample's goes with its folder: its loading state and its specification name nothing
+  // of the old, and are as much the sample's. A file that imports one of the old files, such as a test that renders the
+  // page, names it too; a file that only names one, such as the configuration, is not itself the old.
+  const oldFiles = new Set(sources.map((f) => f.rel).filter(isOld));
+  const pages = sources.filter(({ rel, src }) => /^(?:src\/)?app\//.test(rel) && /^(?:page|view)\.tsx?$/.test(base(rel)) && (isOld(rel) || importsOf(rel, src).some((i) => modules.has(i.from))));
+  for (const { rel } of pages) {
+    const dir = path.posix.dirname(rel);
+    try {
+      for (const e of fs.readdirSync(path.join(root, dir), { withFileTypes: true })) if (e.isFile()) oldFiles.add(`${dir}/${e.name}`);
+    } catch { /* gone since it was read */ }
+  }
+  const oldPaths = new Set([...oldFiles].map((r) => r.replace(/\.[mc]?[jt]sx?$/, '')));
+  const found = new Set([...seeds, ...oldFiles]);
+  for (const { rel, src } of sources) if (importsOf(rel, src).some((i) => oldPaths.has(i.from))) found.add(rel);
+  const hits = [...found].sort();
+  const verifyConfig = 'scripts/verify.config.ts';
+  const routes = new RegExp(`'/(?:${old[1]}|${old[2]})'|title:\\s*'(?:Overview|Analytics|Operations)'`);
+  if (routes.test(text(root, verifyConfig) ?? '')) hits.push(verifyConfig);
+  return hits;
+}
 
 /** The project's configuration, when it does not yet say what an address a person may not open draws (0.16.0). */
 function refusalUndeclared(root: string): string[] | null {

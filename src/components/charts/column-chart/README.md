@@ -12,11 +12,12 @@ Status: beta
 4. **Parts** (stacked): the first at the bottom, a 1px hairline of the card where two touch. Only the topmost part drawn is rounded. A part that is not zero is at least 3px tall; a part at zero is absent, with no line and no gap.
 5. **Value at rest**: the column's value, or its total, above it in `text-2xs` `ink-3`, while a column is at least 36px wide.
 6. **Dashed outline** (with a period still running): a 1px dashed `ink` line around the last column, open at the baseline, with 1px of the card between it and the fill, which is drawn at half strength. The outline has space of its own: it covers no part.
-7. **Pointed column**: plain, it takes the accent and its value stands above it on `surface-inverse`. Stacked, it takes a 2px `ink` ring and the readout.
-8. **Readout** (stacked): a panel on `surface-raised` beside the pointed column: the period, every part from the top down with its value, then the total.
-9. **X labels**: `text-2xs` `ink-3`. Dates show as many as fit without colliding, counted back from the last column, and are never cut. Categories each keep their label, cut with an ellipsis to their column, while a column is at least 36px wide (an unlabelled category cannot be told apart); narrower, they thin like dates. The pointed column's label always shows whole. A label is centred under its column, but the first starts no earlier than its column and the last ends no later than its own, so neither runs past the plot; the plain pointed value is placed the same way.
-10. **Announcement**: a visually hidden line that reads the pointed column to screen readers.
-11. **Screen-reader table**: every column's label and value; stacked, every part and the total.
+7. **Empty track** (a period with no data): in place of the column, a `fill-track` track the height of the scale, rounded 4px at the top as a column is, which the Heatmap's empty cell is too. It holds no value, so it reads as the period's place, not as a column; its value reads "No data".
+8. **Pointed column**: plain, it takes the accent and its value stands above it on `surface-inverse`. Stacked, it takes a 2px `ink` ring and the readout.
+9. **Readout** (stacked): a panel on `surface-raised` beside the pointed column: the period, every part from the top down with its value, then the total.
+10. **X labels**: `text-2xs` `ink-3`. Dates show as many as fit without colliding, counted back from the last column, and are never cut. Categories each keep their label, cut with an ellipsis to their column, while a column is at least 36px wide (an unlabelled category cannot be told apart); narrower, they thin like dates. The pointed column's label always shows whole. A label is centred under its column, but the first starts no earlier than its column and the last ends no later than its own, so neither runs past the plot; the plain pointed value is placed the same way.
+11. **Announcement**: a visually hidden line that reads the pointed column to screen readers.
+12. **Screen-reader table**: every column's label and value; stacked, every part and the total.
 
 ## Variants
 
@@ -36,6 +37,8 @@ Status: beta
 **The value at rest.** While `(plot width - 2 × (n - 1)) / n` is 36 or more for n columns, the plot width being the chart's width less the axis gutter, every column carries its value above it, or its total when stacked, as the chart formats it. Narrower, the figures would collide, so only the pointed column carries one. Pass a compact format: a figure wider than its column is cut with an ellipsis at rest, keeps the whole of itself in its column's title, and reads whole when the column is pointed at. A column that wide always has its whole gap, so the 2 in the rule is the gap as drawn.
 
 **More columns than room.** A chart is never wider than its box, whatever it is given. The 2px between columns are kept while every column has a pixel of its own, which for n columns is a plot wider than `3n - 2` pixels. Under that the gap is 1px, and under `2n - 1` pixels there is none: the columns stand side by side and share the whole plot, each under a pixel once the plot is narrower than n pixels. The gap closes a whole pixel at a time, because a fraction of a pixel is drawn as a gap between some columns and none between others. Thirty days keep their 2px in a plot wider than 88px and ninety in one wider than 268px; a year of 360 needs 1,078px, and in a card half a desk wide has no gap at all. The rule is written in the rows' own style as an expression of their width, so it holds in the server's HTML, before the chart has measured itself, and the labels under the columns take the same gap and stay under them. Columns that narrow are a shape, and none of them is read on its own: for that many periods the form is a Trend chart.
+
+**No data.** A period with no data is not a period of zero: a week in which nothing was called has no failure rate, and drawn as zero it says the rate was perfect. Pass `null` for it, as a Trend chart's value is passed. The column keeps its slot, so the periods either side stay apart and the time axis is true, and draws only the empty track. Wherever its value would be read it reads `noData`, "No data" unless the product passes another word: at rest above it, pointed at, in the announcement and in the table. The scale is the periods that have data. Stacked, each part may be `null`: a column whose every part is `null` is a period with no data, drawn and read as one; a part that is `null` among parts that were read draws nothing, reads "No data" in the readout and the table, and adds nothing to the total, which is the total of the parts read. A running period with no data reads "No data so far" in every place its value is read.
 
 **Periods take dates.** A chart whose columns are periods (days, weeks, months) passes `dates`, one ISO date a column, the period's first day. Its labels then thin as dates do and are never cut; passed as categories, "27 Sept" is cut to its column on a phone and reads "27 S…". Outside a Meridian the dates change nothing else.
 
@@ -66,6 +69,7 @@ The readout is at least 144px wide and never wider than the chart, with `space-3
 | Running | The last column's fill at half strength, inside a 1px dashed `ink` outline, open at the baseline, 1px off the fill; "so far" where it is read. |
 | More columns than room | The gap closes from 2px to 1px to none as the plot runs out of room for it, in the columns and in the labels under them alike, and the chart keeps its box. A running column narrower than the 4px its outline needs keeps the outline: it ends with the column and stands over the columns before it, never past the plot. |
 | Zero | A column at zero draws nothing and reads zero; stacked, a column whose parts are all zero draws no part and reads a total of zero. Stacked, a part that is missing or below zero counts as zero; a plain column below zero draws no column and reads its value. |
+| No data | A `null` period keeps its slot and draws the empty track the height of the scale, and reads "No data" (or `noData`) at rest, pointed at, in the announcement and in the table. The scale leaves it out. Stacked, a column of `null` parts is the same; a `null` part among parts read draws nothing, reads "No data" and adds nothing to the total. Running, it reads "No data so far". |
 | Empty | Render the card's Empty state. |
 
 ## Behaviour
@@ -84,15 +88,16 @@ The readout is at least 144px wide and never wider than the chart, with `space-3
 
 ## Agents
 
-The view shares the highlighted column and the day pointed at through `useShareView`; an agent reads values from the table, never from the drawing. A period still running is marked in the table's row ("03 Oct, so far"), so an agent does not report a part-day as a fall.
+The view shares the highlighted column and the day pointed at through `useShareView`; an agent reads values from the table, never from the drawing. A period still running is marked in the table's row ("03 Oct, so far"), so an agent does not report a part-day as a fall. A period with no data reads "No data" in its row, never 0, so an agent does not report a gap as a perfect period.
 
 ## Accessibility
 
 - A labelled `figure` whose `sr-only` table holds every value: a row a column, its label in the row's header cell. Stacked, the head is the period, each part drawn and "Total". The running column's header cell says "so far".
-- The plot is a `role="group"` named with the chart's label and how to use the keys: "Errors per day. Use the arrow keys to read one column." The column pointed at is read in an `aria-live="polite"` line: "Tue: 20", or "21 Sept: Large $40, Swift $0, Embed $20, Total $60", with ", so far" for the running column. It is empty when no column is pointed at.
+- The plot is a `role="group"` named with the chart's label and how to use the keys: "Errors per day. Use the arrow keys to read one column." The column pointed at is read in an `aria-live="polite"` line: "Tue: 20", or "21 Sept: Large $40, Swift $0, Embed $20, Total $60", with ", so far" for the running column. A period with no data reads "21 Sept: No data". It is empty when no column is pointed at.
 - Contrast on `surface`, dark then light, with the indigo accent (`node scripts/contrast.ts --all`): the accent column 3.71:1 and 5.71:1; `chart-neutral-strong` 3.96:1 and 3.52:1; `warning` 9.06:1 and 3.36:1; `critical` 5.90:1 and 4.58:1; the ring and the dashed outline, `ink`, 16.89:1 and 17.93:1; values at rest, labels and the swatch's hairline, `ink-3`, 6.39:1 and 5.13:1. The plain value, `ink-inverse` on `surface-inverse`: 16.31:1 and 17.00:1. The readout's text, `ink` on `surface-raised`: 15.45:1 and 18.54:1.
 - The deepest part of a stack, the one it stands on, holds 3:1 on `surface`: 3.30:1 dark, 3.61:1 light with the indigo accent, and never under 3.23:1 (jade, dark) in any theme and accent. The paler parts are not held to 3:1, as the neutral columns are not: the hairline, the legend, the total at rest, the readout and the table carry what their colour alone does not (WCAG 1.4.11).
 - A running column's fill is at half strength on purpose. Measured on `surface` with the repository's colour helpers, dark then light: a neutral column 1.50:1 and 1.39:1 complete, 1.20:1 and 1.17:1 at half strength; the accent column, with the indigo accent, 3.71:1 and 5.71:1 complete, 1.81:1 and 2.18:1 at half strength. No fill at half strength holds 3:1, so the column is not told by its fill: the dashed outline is `ink` (16.89:1 and 17.93:1) and stands on the card, with 1px of the card inside it, so it holds that contrast whatever it surrounds; and the words "so far" are in every place the column is read.
+- A period with no data is never told by its track alone: the track, `fill-track`, is the faint empty step the Heatmap and the Bar list use and is not held to 3:1, and the words "No data" stand at rest, pointed at, in the announcement and in the table.
 - An outcome is never colour alone: the legend names each part in words, and the readout repeats the name beside each value.
 - Neutral columns are the population and are not meant to be told apart by colour.
 
@@ -103,6 +108,7 @@ The view shares the highlighted column and the day pointed at through `useShareV
 - `format` must tell neighbouring columns apart, because it writes the value above each: an exact count where the values are in the hundreds and low thousands ("902", "1,124", "1,016"), a compact one from the tens of thousands up ("62K", "108K"). Three columns of different heights that all read "1K" say the chart is wrong.
 - Part labels are short nouns: "Enterprise", "us-east-1", "Failed". The fold is "Other".
 - A running period is "so far", after its label: "03 Oct · so far" in the readout, "03 Oct, so far" in the table.
+- A period with no data reads "No data". A product that says it another way ("Not observed", "No calls") passes `noData`; the word says there is no figure, never that the figure is zero.
 - `label` says what is counted and per what: "Errors per day", "Revenue per month, by plan".
 
 ## Do and do not
@@ -114,6 +120,7 @@ The view shares the highlighted column and the day pointed at through `useShareV
 - Do use parts when each period is a whole worth reading by its total. Parts at one moment are a Composition bar; parts over a long run of days, where the shape is the story, are a stacked Trend chart.
 - Do use a Trend chart for a long run of days. A Column chart keeps its box with any number of columns, but once its gaps have closed nobody reads one column from the next.
 - Do set a period still in progress as running. Do not leave a part-day drawn solid: it reads as a fall.
+- Do pass `null` for a period with no data. Do not pass 0, which is drawn and read as a real zero, and do not leave the period out, which closes the gap and puts its neighbours side by side.
 - Do not colour columns by value; their height already shows it.
 - Do not give a tone to parts of one kind, and do not put the accent beside a tone.
 - Do not pass more than four outcomes: a fifth folds into a neutral Other, and a failure inside it is drawn as the usual case.
@@ -141,8 +148,8 @@ import { AXIS_FORMATTERS, formatCompact, formatCost } from '@/lib/format';
 ```
 
 ```ts
-export type Column = { key: string; label: string; value: number };
-export type StackedColumn = { key: string; label: string; values: number[] };
+export type Column = { key: string; label: string; value: number | null };   // null: a period with no data
+export type StackedColumn = { key: string; label: string; values: (number | null)[] };
 export type ColumnPart = { key: string; label: string; tone?: 'neutral' | 'warning' | 'critical' };
 
 export type ColumnChartProps = {
@@ -150,6 +157,7 @@ export type ColumnChartProps = {
   dates?: string[];                // one ISO date a column, for periods: labels thin as dates, and the chart joins the page's Meridian
   running?: boolean;               // the last column is a period still in progress
   format?: (n: number) => string;       // a column's value; it must tell neighbouring columns apart
+  noData?: string;                 // how a period with no data reads: "No data" by default
   axisFormat?: (n: number) => string;   // a tick's label: an axis formatter, true at every tick
   height?: number | 'fill';        // 'fill': the card's height, never under 220px
   label: string;
@@ -164,6 +172,6 @@ The colour of a part with no tone is `stackPart(place, parts)` from `@/component
 
 The gap is each row's own `column-gap`, set in its style from the number of columns: a sum of steps, each from nothing to 1px as the row's width passes the next threshold.
 
-Every column carries `data-column` with its key, `data-active` while it is pointed at and `data-running` when it is the running one. The plot carries `data-plot`, a tick's label `data-tick`, a value `data-value`, the legend `data-legend` and the readout `data-readout`. A part carries `data-part` with its key (`other` for the fold), `data-tone` (`accent`, `neutral`, `warning` or `critical`) and, when it is the topmost drawn, `data-top`.
+Every column carries `data-column` with its key, `data-active` while it is pointed at, `data-running` when it is the running one and `data-no-data` when it has no data; its empty track carries `data-track`. The plot carries `data-plot`, a tick's label `data-tick`, a value `data-value`, the legend `data-legend` and the readout `data-readout`. A part carries `data-part` with its key (`other` for the fold), `data-tone` (`accent`, `neutral`, `warning` or `critical`) and, when it is the topmost drawn, `data-top`.
 
 The Atlas uses `data-preview-index` to show a pointed column and its readout statically, as the Trend chart does, and draws the focused plot with a class that gives the plot its outline. Product charts use the pointer, the keys and the Meridian instead.

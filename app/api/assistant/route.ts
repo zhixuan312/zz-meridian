@@ -10,6 +10,7 @@ import { respond } from '@/lib/assistant/respond';
 import { handedTo } from '@/lib/assistant/scoped';
 import type { AgentChange, HandedExplore } from '@/lib/assistant/tools';
 import type { AnyCollection } from '@/lib/collection';
+import type { PreparedQuery } from '@/lib/explore';
 import type { ViewTool } from '@/lib/shared-context';
 import { viewTools } from '@/views/tools';
 
@@ -17,7 +18,10 @@ import { viewTools } from '@/views/tools';
 const MAX_MESSAGES = 100;
 const MAX_BODY = 2_000_000;
 
-/** `POST /api/assistant`: answers about the page the person is on. 401 without a session, 404 until the `ASSISTANT_*` variables are set. */
+/**
+ * `POST /api/assistant`: answers about the page the person is on. 401 without a session, 404 until the `ASSISTANT_*`
+ * variables are set, 409 when the thread was started for another person or tenant.
+ */
 export async function POST(request: Request): Promise<Response> {
   const scope = await resolveAccess().catch((e: unknown) => { if (e instanceof Unauthenticated) return null; throw e; });
   if (!scope) return new Response(null, { status: 401 });
@@ -27,8 +31,13 @@ export async function POST(request: Request): Promise<Response> {
   const raw = await request.text();
   if (raw.length > MAX_BODY) return new Response(null, { status: 413 });
   const body: unknown = (() => { try { return JSON.parse(raw); } catch { return null; } })();
-  const { messages, page } = (body ?? {}) as { messages?: unknown; page?: { path?: unknown; title?: unknown; context?: unknown; text?: unknown } };
+  const { messages, page, scope: started } = (body ?? {}) as { messages?: unknown; page?: { path?: unknown; title?: unknown; context?: unknown; text?: unknown }; scope?: unknown };
   if (!Array.isArray(messages) || messages.length === 0 || messages.length > MAX_MESSAGES) return new Response(null, { status: 400 });
+  // The panel names the scope its thread was started for. A thread of another person or tenant (a sign-in from another
+  // tab since) is never answered for this one: nothing of it reaches the model, and the panel clears it on the 409.
+  if (started !== undefined && started !== `${scope.tenantId}/${scope.subjectId}`) {
+    return new Response('You are signed in as someone else now, so the earlier conversation was cleared. Ask again.', { status: 409, headers: { 'content-type': 'text/plain; charset=utf-8' } });
+  }
   const valid = await safeValidateUIMessages({ messages });
   if (!valid.success) return new Response(null, { status: 400 });
 
@@ -66,9 +75,10 @@ export async function POST(request: Request): Promise<Response> {
 
   // What the prompt says is true of this person. The addresses are the rail's destinations whose need they satisfy, the
   // predicate `chromeAccess().only` draws the rail by, and the detail pages of the views they may use. Under
-  // `refusal: 'explain'` it also names each collection not handed above and the roles that can read it, as the page names
-  // who can open it, with the rail's page that needs that read alone, whose refusal says who can; under `absent` it names
-  // none, as the page names nothing.
+  // `refusal: 'explain'` it also names each collection not handed above, the roles that can read it, as the page names
+  // who can open it, every page whose prepared query reads it or that needs that read alone, with whether this person
+  // may open that page, and the figures worked out from it: compute cost is on Home, which a Viewer opens without it,
+  // and gross margin is worked out from it. Under `absent` it names none, as the page names nothing.
   const open = (await Promise.all(nav.flatMap((g) => g.items).map(async (i) => ((await may(i.needs)) ? [i] : [])))).flat();
   const audience = {
     addresses: [
@@ -77,8 +87,15 @@ export async function POST(request: Request): Promise<Response> {
     ],
     withheld: refusal === 'explain'
       ? collections.filter((c) => !names.has(c.name)).map((c) => {
-        const at = nav.flatMap((g) => g.items).find((i) => i.needs === `${c.name}:read`);
-        return { label: c.label, roles: whoCan(`${c.name}:read`), ...(at ? { page: { label: at.label, address: at.href } } : {}) };
+        const holding = viewTools.filter((v) => Object.values(v.explore.sources).some((s) => s.collection === c.name));
+        // A rail page that needs that read alone holds it too, though no view's prepared query reads it.
+        const own = nav.flatMap((g) => g.items).filter((i) => i.needs === `${c.name}:read` && !holding.some((v) => v.page === i.href));
+        const pages = [
+          ...holding.map((v) => ({ label: v.title, address: v.page.replace(/\[([^\]/]+)\]/g, '<$1>'), open: views.includes(v) })),
+          ...own.map((i) => ({ label: i.label, address: i.href, open: open.includes(i) })),
+        ];
+        const derived = [...new Set(holding.flatMap((v) => workedFrom(v.explore, c.name)))];
+        return { label: c.label, roles: whoCan(`${c.name}:read`), ...(pages.length ? { pages } : {}), ...(derived.length ? { derived } : {}) };
       })
       : undefined,
   };
@@ -128,6 +145,26 @@ function pathOf(address: string): string {
 function onPage(route: string, path: string): boolean {
   const want = route.split('/'), got = path.split('/');
   return want.length === got.length && want.every((w, i) => (/^\[[^\]/]+\]$/.test(w) ? got[i] !== '' : w === got[i]));
+}
+
+/**
+ * The labels of the derived measures of `query` that read a source over `collection`, directly or through another
+ * derived measure: Home's gross margin is worked out from what compute cost. A reference `<source>.<measure>` names a
+ * measure of another source, as the runner reads it.
+ */
+function workedFrom(query: PreparedQuery<never>, collection: string): string[] {
+  const reads = (source: string, measure: string, seen: string[] = []): boolean => {
+    const s = query.sources[source];
+    const m = s?.measures[measure];
+    if (!m || seen.includes(`${source}.${measure}`)) return false;
+    if (!('derive' in m)) return s.collection === collection;
+    return m.of.some((ref) => {
+      const dot = ref.indexOf('.');
+      const [src, name] = dot > 0 && query.sources[ref.slice(0, dot)] ? [ref.slice(0, dot), ref.slice(dot + 1)] : [source, ref];
+      return reads(src, name, [...seen, `${source}.${measure}`]);
+    });
+  };
+  return Object.entries(query.sources).flatMap(([source, s]) => Object.entries(s.measures).filter(([name, m]) => 'derive' in m && reads(source, name)).map(([, m]) => m.label));
 }
 
 /** An agent's change as an Activity line: "changed status to Suspended for Alice Moreno and Ravi Patel". */

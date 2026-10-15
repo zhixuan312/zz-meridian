@@ -69,13 +69,14 @@ export function briefExcerpt(text: string): string {
 /**
  * What is true of the person the assistant answers, worked out by the route from their access and handed here as data, so
  * this file reads nothing of the product's data layer. `addresses` are the console addresses they may open, as the rail
- * labels them, a detail page's with `<id>` in place of its segment; `withheld` is each collection they may not read and
- * the roles that can, with its own page where it has one, given only under `refusal: 'explain'`; `explore` is the page's prepared query tool when one is handed.
- * What is left out is not said.
+ * labels them, a detail page's with `<id>` in place of its segment; `withheld` is each collection they may not read, the
+ * roles that can, the pages that show it to those roles (each saying whether this person may open it) and the figures
+ * worked out from it, given only under `refusal: 'explain'`; `explore` is the page's prepared query tool when one is
+ * handed. What is left out is not said.
  */
 export type Audience = {
   addresses?: readonly { label: string; address: string }[];
-  withheld?: readonly { label: string; roles: readonly string[]; page?: { label: string; address: string } }[];
+  withheld?: readonly { label: string; roles: readonly string[]; pages?: readonly { label: string; address: string; open: boolean }[]; derived?: readonly string[] }[];
   explore?: string;
 };
 
@@ -95,7 +96,9 @@ export function systemPrompt(page: PageContext, now: Date, brief = '', limits: s
     ...(audience?.explore
       ? [`To count, group, compare or find records, ask ${audience.explore}, this page's prepared query, and quote the figures it returns with their window and unit rather than working them out from records. A change to a record takes the id its rows give.`]
       : []),
-    'Your write tools change what this page shows and nothing else. Asked for a change another page makes, give that page\'s address, where the person can ask for it or make it.',
+    // A page the person may not open is never where they make a change: told /keys "tells this person who can open it",
+    // the model joined the two lines and sent a Viewer there to make a key.
+    'Your write tools change what this page shows and nothing else. Asked for a change another page makes, give that page\'s address when it is one this person may open, where they can ask for it or make it. A page they may not open is never where they can make a change: say it is not a change they can make, and who can open that page where it is named.',
     'The person approves or dismisses each Proposal in its preview. Do not retry a change they did not approve.',
     ...AGENT_GUIDANCE,
     'Some records exist that this person may not read. Never say that something is not in the product; say it is not something they may read here.',
@@ -107,11 +110,12 @@ export function systemPrompt(page: PageContext, now: Date, brief = '', limits: s
       : []),
     ...(withheld.length
       ? [
-          'What this person may not read, and who can (say so when they ask for it). The pages that hold it show it to those roles: never say a page has no place for it, and never send the person to a page that does not hold it; where its page is named, give that address.',
+          'What this person may not read, and who can (say so when they ask for it). The pages named with it show it to those roles, with what is worked out from it: never say a page has no place for it, and never send the person to a page that does not hold it; where its page is named, give that address.',
           ...withheld.map((w) => (w.roles.length
             ? `- ${oneLine(w.label)}: ${either(w.roles)} can read it.`
             : `- ${oneLine(w.label)}: no single role can read it; it takes a main role together with an add-on.`)
-            + (w.page ? ` Its page is ${oneLine(w.page.label)} (${oneLine(w.page.address)}), which tells this person who can open it.` : '')),
+            + (w.pages ?? []).map((p) => ` ${oneLine(p.label)} (${oneLine(p.address)}) shows it to those roles; ${p.open ? `this person can open ${oneLine(p.label)}, where it is not shown to them.` : 'this person may not open it, and it tells them who can.'}`).join('')
+            + (w.derived?.length ? ` Worked out from it, and so withheld with it: ${w.derived.map(oneLine).join(', ')}.` : '')),
         ]
       : []),
     ...(limits.length ? ['What you cannot do or see, by the product\'s rules (say so when asked, and why):', ...limits.map((l) => `- ${l}`)] : []),

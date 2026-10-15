@@ -10,7 +10,7 @@ import type { Insight, SharedContext } from '@/lib/shared-context';
 export type RequestData = {
   request: RequestRow;
   trace: Span[];
-  /** The route's p95 over the period, for "is this slow?": from the endpoints the Home and Usage read. */
+  /** The route's p95 over the last 30 complete days, for "is this slow?": from the endpoints the Home and Usage read. */
   routeP95: number | null;
   statusText: string;
   payloadBytes: { request: number | null; response: number };
@@ -24,7 +24,7 @@ export function requestContext({ request: r, trace, routeP95, statusText, payloa
   const insights: Insight[] = [];
   const heaviest = trace.reduce<Span | null>((m, s) => (!m || s.duration > m.duration ? s : m), null);
   if (heaviest) insights.push({ text: `Most of its time went to ${heaviest.name} (${heaviest.detail}): ${formatDuration(heaviest.duration)}, ${formatPercent(heaviest.duration / total, 0)} of ${formatDuration(total)}.` });
-  if (routeP95) insights.push({ text: `Its latency is ${(r.latency / routeP95).toFixed(1)}× the p95 of ${r.method} ${r.route} (${formatDuration(routeP95)}): ${r.latency > routeP95 ? 'slower than 95 of 100 requests to this route' : 'within what this route usually takes'}.`, evidence: `/requests?q=${encodeURIComponent(r.route)}` });
+  if (routeP95) insights.push({ text: `Its latency is ${(r.latency / routeP95).toFixed(1)}× the p95 of ${r.method} ${r.route} over the last 30 complete days (${formatDuration(routeP95)}): ${r.latency > routeP95 ? 'slower than 95 of 100 requests to this route' : 'within what this route usually takes'}.`, evidence: `/requests?q=${encodeURIComponent(r.route)}` });
   if (failed) insights.push({ text: `It failed (${r.status} ${statusText}), so it counts in the error rate; a person can replay it from this page.`, evidence: `/requests?q=${encodeURIComponent(r.customer)}&status=${r.status === 429 ? '4xx' : '5xx'}` });
   if (r.replayOf) insights.push({ text: `It replays ${r.replayOf}.`, evidence: `/requests/${r.replayOf}` });
   return {

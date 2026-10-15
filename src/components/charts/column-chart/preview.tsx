@@ -45,6 +45,11 @@ const errors = (days: DailyPoint[]) => days.map((d) => ({ key: d.date, label: da
 // and a day with none from one region.
 const noErrors = errors(week).map((c, i) => (i === 2 ? { ...c, value: 0 } : c));
 const noRequests = split(week, byRegion).map((c, i) => (i === 2 ? { ...c, values: c.values.map(() => 0) } : i === 4 ? { ...c, values: c.values.map((v, k) => (k === 2 ? 0 : v)) } : c));
+// The sample reads every day, so the no-data specimens make the gaps: a day whose figures could not be read, a day with
+// nothing from any region and one with nothing from one region, and today before anything has arrived.
+const unread = errors(week).map((c, i) => (i === 2 ? { ...c, value: null } : c));
+const unreadParts = split(week, byRegion).map((c, i) => (i === 2 ? { ...c, values: c.values.map(() => null) } : i === 4 ? { ...c, values: c.values.map((v, k) => (k === 1 ? null : v)) } : c));
+const nothingYet = errors(week).map((c, i) => (i === week.length - 1 ? { ...c, value: null } : c));
 /** The ring the focused plot takes, as a class: a specimen cannot hold the keyboard's focus. */
 const FOCUS = '[&_[data-plot]]:outline-2 [&_[data-plot]]:outline-offset-4 [&_[data-plot]]:outline-accent';
 
@@ -152,6 +157,33 @@ export default function ColumnChartPreview() {
         <State label="Stacked: a day with no requests, and a day with none from one region" className="w-full">
           <Plane on="surface">
             <ColumnChart label="Requests per day by region, with a day of none" height={160} format={formatCompact} axisFormat={axis} dates={dates(week)} parts={regions} columns={noRequests} />
+          </Plane>
+        </State>
+      </Specimen>
+      <Specimen label="No data" stack note="null: a period with no data keeps its slot on the axis and draws no column, only the empty track the height of the scale, and it reads No data, at rest, pointed at, in the announcement and in the table: never zero, which would say the rate was perfect that day. The scale is the periods that have data. Stacked, a column whose every part is null is no data; a part that is null reads No data and adds nothing to the total of the parts read. A running period with no data reads No data so far.">
+        <State label="Plain: a day not read" className="w-full">
+          <Plane on="surface">
+            <ColumnChart label="Errors per day, with a day not read" height={160} axisFormat={axis} dates={dates(week)} columns={unread} />
+          </Plane>
+        </State>
+        <State label="Stacked: a day not read from any region, and a day not read from one" className="w-full">
+          <Plane on="surface">
+            <ColumnChart label="Requests per day by region, with days not read" height={160} format={formatCompact} axisFormat={axis} dates={dates(week)} parts={regions} columns={unreadParts} />
+          </Plane>
+        </State>
+        <State label="Pointed at: the day not read" still className="w-full">
+          <Plane on="surface">
+            <ColumnChart label="Errors per day, with the day not read pointed at" height={160} axisFormat={axis} data-preview-index={2} dates={dates(week)} columns={unread} />
+          </Plane>
+        </State>
+        <State label="Stacked, pointed at: a region not read" still className="w-full">
+          <Plane on="surface">
+            <ColumnChart label="Requests per day by region, with a region not read pointed at" format={formatCompact} axisFormat={axis} data-preview-index={4} dates={dates(week)} parts={regions} columns={unreadParts} />
+          </Plane>
+        </State>
+        <State label="Running: today with nothing yet" className="w-full">
+          <Plane on="surface">
+            <ColumnChart label="Errors per day, today with nothing yet" height={160} axisFormat={axis} running dates={dates(week)} columns={nothingYet} />
           </Plane>
         </State>
       </Specimen>

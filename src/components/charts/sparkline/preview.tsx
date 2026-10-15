@@ -7,6 +7,8 @@ import { Meridian, useMeridian } from '@/components/charts/meridian';
 import { Sparkline } from '.';
 
 const { current } = demoSeries('30d');
+/** The sample reads every day, so the gaps are made here: three days with no value, and the day the cursor stands on among them. */
+const gaps = current.map((d, i) => ([8, 19, 20].includes(i) ? null : d.requests));
 
 export default function SparklinePreview() {
   return (
@@ -16,10 +18,13 @@ export default function SparklinePreview() {
         <State label="Neutral" className="w-56"><div className="w-full"><Sparkline values={current.map((d) => d.p95)} color="neutral" /></div></State>
         <State label="Slot 3, as in its chart" className="w-56"><div className="w-full"><Sparkline values={current.map((d) => d.revenue)} color={3} /></div></State>
       </Specimen>
-      <Specimen label="On the Meridian" note="When the page points at a day, a hairline and a dot mark it, on a line that has one value for each of the page's dates. Here the page holds 30 days and the cursor is fixed on day 20: the line of 30 values marks it, and a customer's 14 days draw no mark.">
+      <Specimen label="On the Meridian" note="When the page points at a day, a hairline and a dot mark it, on a line that has one value for each of the page's dates. Here the page holds 30 days and the cursor is fixed on day 20: the line of 30 values marks it, a line with no value on day 20 marks the day with the hairline alone, and a customer's 14 days draw no mark.">
         <Meridian dates={current.map((d) => d.date)}>
           <Fixed />
         </Meridian>
+      </Specimen>
+      <Specimen label="A day with no value" note="null: a day that was not observed keeps its place on the x axis and breaks the line and its area there, as the Trend chart's does; it is never drawn as zero. The range is the numbers'. With fewer than two numbers nothing is drawn.">
+        <State label="Three days with no value" className="w-56"><div className="w-full"><Sparkline values={gaps} /></div></State>
       </Specimen>
       <Specimen label="In a table cell" note="24px tall, beside the number it qualifies, never instead of it." stack>
         {CUSTOMERS.slice(0, 4).map((c) => (
@@ -41,6 +46,7 @@ function Fixed() {
   return (
     <>
       <State label="30 values on a page of 30 days: the day is marked" className="w-72"><div className="w-full"><Sparkline values={current.map((d) => d.requests)} height={44} /></div></State>
+      <State label="Day 20 with no value: the hairline alone" className="w-72"><div className="w-full"><Sparkline values={gaps} height={44} /></div></State>
       <State label="14 values on a page of 30 days: no mark" className="w-72"><div className="w-full"><Sparkline values={CUSTOMERS[0].trend} color="neutral" height={44} /></div></State>
     </>
   );

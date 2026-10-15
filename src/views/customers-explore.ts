@@ -28,7 +28,7 @@ export const customersSource: Source = {
   facets: ['plan', 'status', 'region', 'owner'],
   measures: {
     customers: { label: 'Customers', unit: 'customers', definition: 'Customers that have not left.', agg: 'count', where: [{ field: 'status', op: 'ne', value: 'left' }] },
-    revenue: { label: 'Revenue, last 30 days', unit: 'USD', definition: 'What they were billed for metered usage over the last 30 complete days, before credits.', agg: 'sum', field: 'revenue' },
+    revenue: { label: 'Revenue, last 30 days', unit: 'money', definition: 'What they were billed for metered usage over the last 30 complete days, before credits.', agg: 'sum', field: 'revenue' },
     requests: { label: 'Requests, last 30 days', unit: 'requests', definition: 'What they asked of the API over the last 30 complete days.', agg: 'sum', field: 'requests' },
     tokens: { label: 'Tokens, last 30 days', unit: 'tokens', definition: 'Tokens served to them over the last 30 complete days, input and output.', agg: 'sum', field: 'tokens' },
   },

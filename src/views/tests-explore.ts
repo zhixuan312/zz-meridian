@@ -22,7 +22,7 @@ export const testsExplore: PreparedQuery = {
       facets: ['state', 'suite', 'endpointId', 'releaseId'],
       buckets: ['day', 'week'],
       measures: {
-        runs: { label: 'Runs', unit: 'runs', definition: 'Every run that started in the window, however it ended, earlier runs of a verification among them.', agg: 'count' },
+        runs: { label: 'Runs', unit: 'runs', definition: 'The runs that started in the window, however they ended, earlier runs of a verification among them.', agg: 'count' },
         failed: { label: 'Failed', unit: 'runs', definition: 'Runs that started in the window and failed.', agg: 'count', where: [{ field: 'state', op: 'eq', value: 'failed' }] },
         duration: { label: 'p95 duration', unit: 'ms', definition: 'How long a run took, at the 95th percentile.', agg: 'p95', field: 'durationMs' },
       },

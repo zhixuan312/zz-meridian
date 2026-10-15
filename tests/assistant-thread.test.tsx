@@ -20,23 +20,25 @@ const waiting = (): UIMessage[] => [
     { type: 'tool-remove_members', toolCallId: 'c1', state: 'approval-requested', input: { ids: ['members_13'] }, approval: { id: 'ap1' } },
   ] } as UIMessage,
 ];
+/** The person and tenant the thread is kept for. */
+const SCOPE = 'acme/members_1';
 afterEach(() => localStorage.clear());
 
 describe('the thread in local storage', () => {
   test('saves and loads under the product key, keeping only the last 100 messages', () => {
     const many = Array.from({ length: 130 }, (_, i) => (i % 2 ? say(`a${i}`, `answer ${i}`) : ask(`u${i}`, `question ${i}`)));
-    saveThread(localStorage, many);
+    saveThread(localStorage, SCOPE, many);
     expect(THREAD_KEY).toMatch(/\.assistant$/);
-    expect(JSON.parse(localStorage.getItem(THREAD_KEY)!).v).toBe(1);
-    const back = loadThread(localStorage);
+    expect(JSON.parse(localStorage.getItem(THREAD_KEY)!)).toMatchObject({ v: 2, scope: SCOPE });
+    const back = loadThread(localStorage, SCOPE);
     expect(back).toHaveLength(100);
     expect(back[0].id).toBe('u30');
     expect(back.at(-1)!.id).toBe('a129');
   });
 
   test('loading closes a waiting approval as expired, with the reload reason; nothing else changes', () => {
-    saveThread(localStorage, waiting());
-    const back = loadThread(localStorage);
+    saveThread(localStorage, SCOPE, waiting());
+    const back = loadThread(localStorage, SCOPE);
     const part = back[1].parts.find((p) => p.type === 'tool-remove_members') as any;
     expect(part.state).toBe('output-denied');
     expect(part.approval).toMatchObject({ id: 'ap1', approved: false, reason: REASONS.reload });
@@ -44,11 +46,11 @@ describe('the thread in local storage', () => {
   });
 
   test('a missing, broken or foreign entry loads as an empty thread', () => {
-    expect(loadThread(localStorage)).toEqual([]);
+    expect(loadThread(localStorage, SCOPE)).toEqual([]);
     localStorage.setItem(THREAD_KEY, '{not json');
-    expect(loadThread(localStorage)).toEqual([]);
+    expect(loadThread(localStorage, SCOPE)).toEqual([]);
     localStorage.setItem(THREAD_KEY, JSON.stringify({ v: 99, messages: [] }));
-    expect(loadThread(localStorage)).toEqual([]);
+    expect(loadThread(localStorage, SCOPE)).toEqual([]);
   });
 
   test('a save over the quota keeps the newer half and tries again', () => {
@@ -56,14 +58,14 @@ describe('the thread in local storage', () => {
     const store = new Map<string, string>();
     let calls = 0;
     const tight = { getItem: (k: string) => store.get(k) ?? null, setItem: (k: string, v: string) => { calls++; if (calls === 1) throw new DOMException('full', 'QuotaExceededError'); store.set(k, v); }, removeItem: (k: string) => store.delete(k) } as unknown as Storage;
-    saveThread(tight, messages);
+    saveThread(tight, SCOPE, messages);
     const kept = JSON.parse(store.get(THREAD_KEY)!).messages as UIMessage[];
     expect(kept).toHaveLength(20);
     expect(kept[0].id).toBe('a20');
   });
 
   test('clear removes the thread', () => {
-    saveThread(localStorage, [ask('u1', 'hello')]);
+    saveThread(localStorage, SCOPE, [ask('u1', 'hello')]);
     clearThread(localStorage);
     expect(localStorage.getItem(THREAD_KEY)).toBeNull();
   });

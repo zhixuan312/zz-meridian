@@ -14,6 +14,8 @@ const filters: Source['filters'] = {
   assigneeId: { ops: ['eq', 'ne', 'in'] },
 };
 const facets = ['state', 'priority', 'service', 'assigneeId'];
+/** A ticket nobody has reads as the page says it. */
+const none = { assigneeId: 'unassigned' };
 /** A ticket opens on the page searched for its title, which is how the page finds one ticket. */
 const drill: Source['drill'] = {
   columns: ['id', 'title', 'state', 'priority', 'service', 'assigneeId', 'openedAt', 'closedAt', 'incidentId'],
@@ -27,19 +29,21 @@ export const ticketsExplore: PreparedQuery = {
       date: 'openedAt',
       filters,
       facets,
+      none,
       buckets: ['day', 'week', 'month'],
       measures: {
         tickets: { label: 'Tickets opened', unit: 'tickets', definition: 'Tickets opened in the window, whatever their state now.', agg: 'count' },
         inPlay: { label: 'Still in play', unit: 'tickets', definition: 'Tickets opened in the window that are open or waiting now.', agg: 'count', where: [{ field: 'state', op: 'ne', value: 'closed' }] },
       },
       drill,
-      cannot: 'A window holds complete days, so a ticket opened today is in none: the page counts it. A ticket keeps its state now, not its history, so when it was waiting, or who had it before, cannot be said; its assignee is a member id, which Members (/members) names.',
+      cannot: 'A window holds complete days, so a ticket opened today is in none: the page counts it. A ticket keeps its state now, not its history, so when it was waiting, or who had it before, cannot be said; its assignee is a member id, and the page names the member each ticket is assigned to.',
     },
     closed: {
       collection: 'tickets',
       date: 'closedAt',
       filters,
       facets,
+      none,
       buckets: ['day', 'week', 'month'],
       measures: {
         tickets: { label: 'Tickets closed', unit: 'tickets', definition: 'Tickets closed in the window, wherever they were opened.', agg: 'count' },

@@ -14,6 +14,7 @@ import { Spinner } from '@/components/ui/spinner';
 import { Menu, MenuContent, MenuItem, MenuLabel, MenuRadioGroup, MenuRadioItem, MenuSeparator, MenuTrigger } from '@/components/ui/menu';
 import { toast } from '@/components/ui/toast';
 import { AppearanceMenu } from '@/components/patterns/appearance-menu';
+import { clearThread } from '@/components/patterns/assistant/thread';
 
 /** One scope the workspace menu offers: the console reads the whole platform or one team. */
 /**
@@ -152,7 +153,8 @@ export function Rail({
             ) : null}
             {hasSettings || signOut ? <MenuSeparator /> : null}
             {hasSettings ? <MenuItem onSelect={() => leave(() => router.push('/settings'))}><Settings />Workspace settings</MenuItem> : null}
-            {signOut ? <MenuItem onSelect={() => leave(() => (typeof signOut === 'function' ? signOut() : router.push(signOut)))}><LogOut />Sign out</MenuItem> : null}
+            {/* The assistant's conversation is the signed-in person's: it leaves the browser with them. */}
+            {signOut ? <MenuItem onSelect={() => leave(() => { clearThread(localStorage); if (typeof signOut === 'function') signOut(); else router.push(signOut); })}><LogOut />Sign out</MenuItem> : null}
             {viewAs ? (
               <>
                 <MenuSeparator />

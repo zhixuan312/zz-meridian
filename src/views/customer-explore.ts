@@ -32,7 +32,7 @@ export const customerExplore: PreparedQuery<{ id: string }> = {
       measures: {
         requests: { label: 'Requests', unit: 'requests', definition: 'What it asked of the API over the last 30 complete days.', agg: 'sum', field: 'requests' },
         tokens: { label: 'Tokens', unit: 'tokens', definition: 'Tokens served to it over the last 30 complete days, input and output.', agg: 'sum', field: 'tokens' },
-        revenue: { label: 'Revenue', unit: 'USD', definition: 'What it was billed for metered usage over the last 30 complete days, before credits.', agg: 'sum', field: 'revenue' },
+        revenue: { label: 'Revenue', unit: 'money', definition: 'What it was billed for metered usage over the last 30 complete days, before credits.', agg: 'sum', field: 'revenue' },
       },
       drill: { columns: ['id', 'name', 'plan', 'status', 'requests', 'revenue'], address: (r) => customerAddress(String(r.id)) },
       cannot: 'Its own row covers the last 30 complete days as one figure each, so no single day of them can be said; how it compares with the others is on Customers (/customers).',

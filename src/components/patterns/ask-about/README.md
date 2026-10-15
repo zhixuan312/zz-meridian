@@ -11,7 +11,7 @@ Status: beta
 
 ## Composition
 
-Placed in a card's header actions. It reads `useSurface().ask`; when that is absent it renders nothing.
+Placed in a card's header actions; on a settings page, in the first FormSection's actions, beside its title. It reads `useSurface().ask`; when that is absent it renders nothing.
 
 ## Data
 
@@ -64,4 +64,8 @@ import { AskAbout } from '@/components/patterns/ask-about';
 <CardHeader title="Requests per day" actions={<AskAbout question="What drove the trend in requests this period?" />} />
 ```
 
-In a list's toolbar, pass it to `FilterBar`'s `ask`, which keeps it in the row on a phone.
+In a list's toolbar, pass it to `FilterBar`'s `ask`, which keeps it in the row on a phone. A settings page is built of Form sections and has no card head, so its Ask goes in the first section's `actions`, which keep it on the title's row on a phone:
+
+```tsx
+<FormSection title="Workspace" description="What this workspace is called." actions={<AskAbout question="What do these settings change for this workspace?" />}>
+```

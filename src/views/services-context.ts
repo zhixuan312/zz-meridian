@@ -53,9 +53,24 @@ const firstSentence = (text: string) => text.match(/^.*?[.!?](?=\s|$)/)?.[0] ?? 
 /** The uptime the page states for its days: the mean of each service's own. */
 export const meanUptime = (services: readonly Pick<Service, 'uptime'>[]) => (services.length ? services.reduce((a, s) => a + s.uptime, 0) / services.length : 0);
 
-/** The share of the services operational on each of their days, oldest first, the last the day in progress: the Featured metric's chart. */
+/** The days the page counts: those of the longest strip. Every strip ends today, so a service that keeps fewer days keeps the latest of them. */
+export const stripDays = (services: readonly Pick<Service, 'days'>[]) => Math.max(0, ...services.map((s) => s.days.length));
+
+/** Each day of the longest strip, oldest first and the last today: the state of every service that keeps that day. */
+function byDay(services: readonly Pick<Service, 'days'>[]): Service['days'][] {
+  const n = stripDays(services);
+  return Array.from({ length: n }, (_, i) => services.flatMap((s) => {
+    const at = s.days.length - n + i;
+    return at >= 0 ? [s.days[at]] : [];
+  }));
+}
+
+/**
+ * The share of the services operational on each day of the longest strip, oldest first, the last the day in progress:
+ * the Featured metric's chart. A day a service does not keep counts it neither up nor down.
+ */
 export const operationalShare = (services: readonly Pick<Service, 'days'>[]) =>
-  (services[0]?.days ?? []).map((_, i) => services.filter((s) => s.days[i] === 'operational').length / services.length);
+  byDay(services).map((day) => day.filter((d) => d === 'operational').length / day.length);
 
 /**
  * An uptime as the page, its title and its context write it: two decimals, except that a whole one reads "100%" and an
@@ -105,7 +120,7 @@ export function servicesHead({ services, history }: { services: readonly Pick<Se
   const unknown = history ? {} : { unknown: 'The days could not be read, so the title states the uptime alone and no day is counted inside the band.' };
   if (!services.length) return { title: null, facts, ...unknown };
   const named = history && longestRun(services);
-  return { title: servicesTitle({ uptime: meanUptime(services), days: services[0].days.length, run: named || null }), facts, ...unknown };
+  return { title: servicesTitle({ uptime: meanUptime(services), days: stripDays(services), run: named || null }), facts, ...unknown };
 }
 
 /** How long a service has run, in the Status list's words: the operational days that end today, from the days its strip draws. */
@@ -120,7 +135,7 @@ function runText(days: Service['days']): string {
 export function servicesContext(data: ServicesData): SharedContext {
   const { services, incidents, head } = data;
   const now = new Date(data.now);
-  const days = services[0]?.days.length ?? 0;
+  const days = stripDays(services);
   const average = meanUptime(services);
   const unlisted = services.length - SERVICE_LINES;
   const facts: Fact[] = services.length ? [
@@ -136,7 +151,7 @@ export function servicesContext(data: ServicesData): SharedContext {
   const unknowns: string[] = head.unknown ? [head.unknown] : [];
   // Which service carries the history, beyond what the state now shows.
   const below = services.map((s) => ({ s, n: s.days.filter((d) => d !== 'operational').length })).sort((a, b) => b.n - a.n);
-  const worstDays = services[0]?.days.map((_, i) => services.some((s) => s.days[i] !== 'operational')).filter(Boolean).length ?? 0;
+  const worstDays = byDay(services).filter((day) => day.some((d) => d !== 'operational')).length;
   if (below[0]?.n) insights.push({ text: `${worstDays} of the last ${days} days had a service below operational; ${below[0].s.name} accounts for ${below[0].n} of them${below[1]?.n ? `, ${below[1].s.name} for ${below[1].n}` : ''}.`, evidence: '/services' });
   const lowest = services.reduce((m, s) => (s.uptime < m.uptime ? s : m), services[0]);
   if (lowest && lowest.uptime < average) insights.push({ text: `${lowest.name} has the lowest uptime, ${formatUptime(lowest.uptime)}, against ${formatUptime(average)} across all services.` });

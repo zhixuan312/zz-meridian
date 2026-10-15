@@ -186,8 +186,11 @@ function zz(pkg: string, cwd: string, a: string[], label: string, env: Record<st
   return { status: r.status, out: r.stdout, err: r.stderr, wall };
 }
 
-/** The migrations 0.5.0 declares in `cli/src/migrations.ts`: changes in the team's own files, resolved by editing them. */
-const RELEASE_IDS = ['shell-assistant-promise', 'assistant-available-promise', 'clock-now-required', 'cache-components-config', 'connection-boundaries', 'authorized-read', 'scoped-invalidation', 'live-provider', 'authorized-endpoints', 'share-view-context', 'agent-reads-section', 'assistant-view-tools', 'nav-needs', 'agent-reads-own-group'];
+/**
+ * The migrations `cli/src/migrations.ts` declares since 0.5.0: changes in the team's own files, resolved by editing them.
+ * `verify-modes` is not here: its edit is a flag in a script, and no origin passes one.
+ */
+const RELEASE_IDS = ['shell-assistant-promise', 'assistant-available-promise', 'clock-now-required', 'cache-components-config', 'connection-boundaries', 'authorized-read', 'scoped-invalidation', 'live-provider', 'authorized-endpoints', 'share-view-context', 'agent-reads-section', 'assistant-view-tools', 'nav-needs', 'agent-reads-own-group', 'refusal-declared', 'managed-exports-removed', 'view-tool-page-explore', 'agent-does-here-section', 'sample-pages-renamed'];
 
 const filesUnder = (dir: string, rel = ''): string[] => {
   if (!fs.existsSync(path.join(dir, rel))) return [];
@@ -200,9 +203,10 @@ const filesUnder = (dir: string, rel = ''): string[] => {
 /**
  * What `references/update.md` tells an agent to do for this release's migrations, on a project whose files are the
  * earlier release's.
- * A created project never changed the template's pages, so each affected file comes over from the release (the package's
- * template), with the files that arrived with it, and a file the release moved goes. An adopted project's pages are the
- * team's own: the smallest edit the instruction names, here the two flags in its Next config.
+ * A created project never changed the template's pages, so each affected file comes over from the release as a project
+ * created with it holds the file, with the files that arrived with it, the configuration and the tests, and a file the
+ * release moved goes. An adopted project's pages are the team's own: the smallest edit the instruction names, here the
+ * two flags in its Next config.
  */
 function bringReleaseOver(proj: string, route: string, reported: string[] = []) {
   // The smallest edit each reported migration's instruction names, in the team's own file. `nav-needs` is 0.13.0's: an item
@@ -219,23 +223,51 @@ function bringReleaseOver(proj: string, route: string, reported: string[] = []) 
       return `import type { Need } from './lib/collection.ts';\n${added}`;
     });
   }
+  // `refusal-declared` is 0.16.0's: the configuration says what a refused address draws, `explain` keeping the no-access
+  // page a refused page drew before. A created project's configuration then comes over from the release, which declares it.
+  if (reported.includes('refusal-declared')) edit(proj, 'src/app.config.ts', (t) => (/^export const refusal\b/m.test(t) ? t : `${t.trimEnd()}\n\nexport const refusal: 'explain' | 'absent' = 'explain';\n`));
   if (route === 'adopt') {
     edit(proj, 'next.config.ts', (t) => t.replace(/\/\* config options here \*\//, 'cacheComponents: true,\n  partialPrefetching: true,'));
     return;
   }
-  const payload = path.join(unpack(), 'payload');
-  // The template's console, its data seam and the assistant's route-side code (which takes the guard). The Atlas
-  // (app/system) is not in a created project, and a test is replaced only where the project already has it.
+  // Each file as a project created with this release holds it: the template after `create`'s product pass, which has no
+  // Atlas, no page specifications and no Atlas entries in its nav or its verify config.
+  const created = createdRelease();
+  // The template's console, its data seam and the assistant's route-side code (which takes the guard). A test is replaced
+  // only where the project already has it.
   const owned = (f: string) => (f.startsWith('app/') && !f.startsWith('app/system/')) || f.startsWith('src/views/') || f.startsWith('src/data/') || f.startsWith('src/system/fixtures/') || f === 'src/system/sample-cells.tsx' || (f.startsWith('src/lib/assistant/') && f !== 'src/lib/assistant/prompt.ts');
-  const release = new Set(filesUnder(payload).filter(owned));
+  const release = new Set(filesUnder(created).filter(owned));
   for (const f of filesUnder(proj).filter(owned)) if (!release.has(f)) fs.rmSync(path.join(proj, f));
-  for (const f of release) write(proj, f, fs.readFileSync(path.join(payload, f), 'utf8'));
+  for (const f of release) write(proj, f, read(created, f));
+  // A created project wrote none of its tests, so a test the release no longer has is one it removed or renamed (a test of
+  // a page it renamed reads that page's old files) and goes.
   for (const f of filesUnder(path.join(proj, 'tests'))) {
     const rel = `tests/${f}`;
-    if (rel !== 'tests/setup.ts' && fs.existsSync(path.join(payload, rel))) write(proj, rel, fs.readFileSync(path.join(payload, rel), 'utf8'));
+    if (rel === 'tests/setup.ts') continue;
+    if (fs.existsSync(path.join(created, rel))) write(proj, rel, read(created, rel));
+    else fs.rmSync(path.join(proj, rel));
   }
+  // The configuration names the pages, their features and the facts their titles read, so it comes over with them, the
+  // project's own `app` (its name, workspace, accent, zone, currency and user) kept; the verify config names their routes.
+  const APP = /^export const app = \{[\s\S]*?^\} as const;$/m;
+  const own = APP.exec(read(proj, 'src/app.config.ts'))?.[0];
+  const released = read(created, 'src/app.config.ts');
+  write(proj, 'src/app.config.ts', own ? released.replace(APP, () => own) : released);
+  write(proj, 'scripts/verify.config.ts', read(created, 'scripts/verify.config.ts'));
   // The 0.5.0 flags, added only to a config that lacks them: a project created since already has them.
   edit(proj, 'next.config.ts', (t) => (/\bcacheComponents\s*:/.test(t) ? t : t.replace('reactStrictMode: true,', 'reactStrictMode: true,\n  cacheComponents: true,\n  partialPrefetching: true,')));
+}
+
+/** A project created with the release under test, made once with the origins' name: what this release's `create` writes. */
+let createdOnce: string | undefined;
+function createdRelease(): string {
+  if (!createdOnce) {
+    const dir = path.join(work, 'release-created');
+    const made = sh('npx', ['--yes', '--package', tarball, 'zz-meridian', 'create', dir, '--name', 'Smoke Ops', '--no-install'], work);
+    if (made.status !== 0) throw new Error(`create with the release under test failed: ${made.stdout}${made.stderr}`);
+    createdOnce = dir;
+  }
+  return createdOnce;
 }
 
 /** `references/update.md`: resolve in the project's own file, then one object per item with its reason and the files' current hashes. */
@@ -398,12 +430,14 @@ function mainUpgrade(): Upgraded {
 
   // The team's bytes.
   // Two team files are edited, each by the migration that names it and by nothing else: next.config.ts gets the two
-  // flags, and since 0.13.0 every item of the nav in src/app.config.ts gets its `needs`.
+  // flags, and src/app.config.ts gets the `needs` of every item of its nav since 0.13.0 and its `refusal` since 0.16.0.
   check(/cacheComponents: true/.test(read(proj, 'next.config.ts')) && /partialPrefetching: true/.test(read(proj, 'next.config.ts')), "the cache-components-config migration's edit is in the adopted project's next.config.ts");
   const navNeeds = resolutions.some((r) => r.id === 'migration:nav-needs' && r.status === 'resolved');
   const navItems = read(proj, 'src/app.config.ts').split('\n').filter((l) => /\bhref\s*:/.test(l));
   check(!navNeeds || (navItems.length > 0 && navItems.every((l) => /\bneeds\s*:/.test(l))), "the nav-needs migration's edit is in the adopted project's src/app.config.ts: every item names its needs", navItems.join('\n'));
-  const migrated = ['next.config.ts', ...(navNeeds ? ['src/app.config.ts'] : [])];
+  const refusalDeclared = resolutions.some((r) => r.id === 'migration:refusal-declared' && r.status === 'resolved');
+  check(!refusalDeclared || /^export const refusal\b/m.test(read(proj, 'src/app.config.ts')), "the refusal-declared migration's edit is in the adopted project's src/app.config.ts: it declares refusal");
+  const migrated = ['next.config.ts', ...(navNeeds || refusalDeclared ? ['src/app.config.ts'] : [])];
   const changed = OWNED.filter((f) => !migrated.includes(f) && sha(path.join(proj, f)) !== owned[f]);
   check(changed.length === 0, "the brief, the extra doc, README, verify config, the team's files and the kept files are unchanged, and the app config where no migration names it", changed.join('\n'));
   const agentsAfter = read(proj, 'AGENTS.md');
@@ -513,8 +547,8 @@ function originUpgrade(version: string, route: 'adopt' | 'create') {
   if (route === 'create' && historical.length > 0) {
     check(historical.every((p) => fs.existsSync(path.join(proj, p)) && !(p in manifest.files)) && files.length > Object.keys(manifest.files).length, `${label}: its historical page and config entries stay on disk and leave the manifest`, historical.join('\n'));
   }
-  // `src/app.config.ts` is the team's, and 0.13.0's migration is theirs to make in it: `bringReleaseOver` makes that edit
-  // when the update reports the migration, exactly as it makes 0.5.0's edit to `next.config.ts`, which `mainUpgrade`'s own
+  // `src/app.config.ts` is the team's, and 0.13.0's and 0.16.0's migrations are theirs to make in it: `bringReleaseOver`
+  // makes those edits when the update reports them, exactly as it makes 0.5.0's edit to `next.config.ts`, which `mainUpgrade`'s own
   // list above excludes for the same reason. Every other team file must be byte-identical.
   const changed = teamOwned.filter((f) => f !== 'src/app.config.ts' && sha(path.join(proj, f)) !== owned[f]);
   check(changed.length === 0, `${label}: the team's own files are unchanged`, changed.join('\n'));

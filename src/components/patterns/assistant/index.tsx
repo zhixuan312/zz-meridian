@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { useChat } from '@ai-sdk/react';
-import { DefaultChatTransport, lastAssistantMessageIsCompleteWithApprovalResponses, type UIMessage } from 'ai';
+import { APICallError, DefaultChatTransport, lastAssistantMessageIsCompleteWithApprovalResponses, type UIMessage } from 'ai';
 import { ArrowUp, Eraser, X } from 'lucide-react';
 import { cn } from '@/lib/cn';
 import { app } from '@/app.config';
@@ -16,6 +16,8 @@ import { Spinner } from '@/components/ui/spinner';
 import { Textarea } from '@/components/ui/textarea';
 import type { PageContext } from '@/lib/assistant/prompt';
 import { sharedContextOn } from '@/components/base/surface';
+import { pageText } from './page-text';
+import { useThreadScope } from './scope';
 import { AssistantText } from './text';
 import { REASONS, clearThread, closeOpenApprovals, loadThread, recent, saveThread } from './thread';
 
@@ -24,7 +26,8 @@ const TITLE_SUFFIX = ` · ${app.name}`;
 
 /**
  * Reads the page from the scroll region: the page's own title, its address with the query that sets its filters, the
- * shared context its view published (decision 0011), and its visible text.
+ * shared context its view published (decision 0011), and its visible text, without any node the page marked
+ * `data-assistant="omit"` (`pageText`).
  *
  * The title comes from `document.title`, never the masthead `h1`. On a detail page that `h1` is the Detail head — the
  * record's name with its status badge run into it — so a question asked there was labelled "REC-1042high risk · 0.64".
@@ -38,7 +41,7 @@ function readPage(path: string): PageContext {
   const declared = document.title.endsWith(TITLE_SUFFIX)
     ? document.title.slice(0, -TITLE_SUFFIX.length).trim()
     : document.title.trim();
-  return { path: `${path}${location.search}`, title: declared && declared !== app.name ? declared : h1, context, text: region?.innerText ?? '' };
+  return { path: `${path}${location.search}`, title: declared && declared !== app.name ? declared : h1, context, text: region ? pageText(region) : '' };
 }
 
 type Preview = { title: string; tone: 'neutral' | 'critical'; changes: ProposalChange[] };
@@ -224,39 +227,53 @@ export function AssistantPanel({
 
 /**
  * The assistant's state: the conversation and whether the panel is open. It lives in the shell, so it survives
- * navigation. The panel itself is not in the page while closed.
+ * navigation. The panel itself is not in the page while closed. The thread is the scope's (`AssistantScope`): it is
+ * loaded and saved under it, and every request names it, so a server that now answers someone else refuses with 409
+ * and the thread is cleared rather than continued for them.
  */
 export function AssistantColumn({ open, onClose, ask, onAsked }: { open: boolean; onClose: () => void; ask?: { id: number; text: string } | null; onAsked?: () => void }) {
   const path = usePathname();
+  const scope = useThreadScope();
   const transport = useMemo(
     () =>
       new DefaultChatTransport({
         api: '/api/assistant',
-        // The route takes the last 100 messages, as the thread keeps them, and the page the person is on now.
-        // The page is read when the message is sent, from the address, so it is always the one on screen.
-        prepareSendMessagesRequest: ({ messages }) => ({ body: { messages: recent(messages), page: readPage(location.pathname) } }),
+        // The route takes the last 100 messages, as the thread keeps them, the page the person is on now and the scope
+        // the thread was started for (none in a shell rendered without one). The page is read when the message is sent,
+        // from the address, so it is always the one on screen.
+        prepareSendMessagesRequest: ({ messages }) => ({ body: { messages: recent(messages), page: readPage(location.pathname), ...(scope ? { scope } : {}) } }),
       }),
-    [],
+    [scope],
   );
   const router = useRouter();
+  // The error that said the session changed hands since the thread began: the thread is gone, so it offers no Retry.
+  const [changedHands, setChangedHands] = useState<Error | null>(null);
   const { messages, setMessages, sendMessage, regenerate, addToolApprovalResponse, status, error } = useChat({
     transport,
     sendAutomaticallyWhen: lastAssistantMessageIsCompleteWithApprovalResponses,
+    onError: (e) => {
+      if (!(APICallError.isInstance(e) && e.statusCode === 409)) return;
+      setMessages([]);
+      clearThread(localStorage);
+      setChangedHands(e);
+    },
   });
-  // The thread loads once the page is on screen, never during render, and saves only after that.
-  const [loaded, setLoaded] = useState(false);
+  // The thread loads once the page is on screen, never during render, and saves only after that. `loaded` is the scope
+  // it was loaded for: when the scope changes (View as, another tenant) the messages still held are the earlier
+  // scope's, so nothing is saved until the new scope's thread has loaded.
+  const [loaded, setLoaded] = useState<string | null>(null);
   // A change that applied is on the page's data now: refresh once per tool part, never for one that applied before a reload.
   const refreshed = useRef(new Set<string>());
   useEffect(() => {
-    const thread = loadThread(localStorage);
+    const thread = loadThread(localStorage, scope);
     for (const m of thread) for (const p of m.parts) if (isMutation(p)) refreshed.current.add((p as unknown as ToolPart).toolCallId);
     setMessages(thread);
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- the thread is an external store read once on mount; the server render never sees localStorage.
-    setLoaded(true);
-  }, [setMessages]);
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- the thread is an external store read once a scope; the server render never sees localStorage.
+    setLoaded(scope);
+  }, [setMessages, scope]);
   useEffect(() => {
-    if (loaded) saveThread(localStorage, messages);
-  }, [loaded, messages]);
+    if (loaded === scope) saveThread(localStorage, scope, messages);
+  }, [loaded, scope, messages]);
   useEffect(() => {
     for (const m of messages) for (const p of m.parts) {
       const part = p as unknown as ToolPart;
@@ -270,13 +287,13 @@ export function AssistantColumn({ open, onClose, ask, onAsked }: { open: boolean
   // so it carries the page and its view context like a typed one.
   const sentAsk = useRef<number | null>(null);
   useEffect(() => {
-    if (!ask || !loaded || sentAsk.current === ask.id || status === 'submitted' || status === 'streaming') return;
+    if (!ask || loaded !== scope || sentAsk.current === ask.id || status === 'submitted' || status === 'streaming') return;
     sentAsk.current = ask.id;
     setMessages(closeOpenApprovals(messages, REASONS.movedOn));
     void sendMessage({ text: ask.text, metadata: { page: { path, title: readPage(path).title } } });
     onAsked?.();
     // eslint-disable-next-line react-hooks/exhaustive-deps -- runs when a question arrives or the panel becomes able to send it.
-  }, [ask, loaded, status]);
+  }, [ask, loaded, scope, status]);
   if (!open) return null;
   return (
     <AssistantPanel
@@ -293,7 +310,7 @@ export function AssistantColumn({ open, onClose, ask, onAsked }: { open: boolean
         clearThread(localStorage);
       }}
       error={error?.message}
-      onRetry={() => regenerate()}
+      onRetry={error && error === changedHands ? undefined : () => regenerate()}
     />
   );
 }

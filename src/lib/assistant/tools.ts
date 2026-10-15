@@ -56,19 +56,26 @@ export type HandedExplore = { view: ViewTool; rights: ExploreRights; io: Explore
  * `explore_<view>`: the view's prepared query as a read-only tool. The schema the model is offered is the person's (only
  * the sources and names they may read), while a call is validated against the whole declaration, so a name that is
  * declared but withheld from them reaches the runner and is answered "You do not have access to that." rather than
- * refused as malformed. A detail page's own input (One customer's `{ id }`) is offered beside the query and handed to
- * its `fixed`; a rail page's input is not, as the query has its own period and conditions.
+ * refused as malformed. A call the whole declaration refuses is told why by the person's schema, whose every option is
+ * theirs: the whole one's error would list the withheld sources and measures among the names it expected. A detail
+ * page's own input (One customer's `{ id }`) is offered beside the query and handed to its `fixed`, which holds every
+ * call to the page's record, and the description says so: offered an `id` and no condition naming the record, a model
+ * concluded the query could not narrow to it. A rail page's input is not offered, as the query has its own period and
+ * conditions.
  */
 function exploreTool({ view, rights, io, page }: HandedExplore) {
   const query = view.explore;
   const own = view.page.includes('[') ? view.input : undefined;
   const whole = exploreSchema(query, null, own);
+  const offered = exploreSchema(query, rights, own);
   return tool({
-    description: `Count, sum, group and compare what the ${view.title} page reads, over every row and never a page of them: one source a call, one to three of its measures, its conditions, a facet or a time bucket, a period of complete days and the window before, and up to 20 rows. Answers in text: the window, each measure with its unit, at most eight groups and the rest, what the source cannot say, and each row's console address. Prefer it to counting rows yourself.`,
-    inputSchema: jsonSchema<Record<string, unknown>>(z.toJSONSchema(exploreSchema(query, rights, own)) as JSONSchema7, {
+    description: `Count, sum, group and compare what the ${view.title} page reads, over every row and never a page of them: one source a call, one to three of its measures, its conditions, a facet or a time bucket, a period of complete days and the window before, and up to 20 rows. Answers in text: the window, each measure with its unit, at most eight groups and the rest, what the source cannot say, and each row's console address. Prefer it to counting rows yourself.${own ? " On this page every call is held to the record this page shows, the one its id names: there is no condition to add for it, and every figure, group and row is that record's alone." : ''}`,
+    inputSchema: jsonSchema<Record<string, unknown>>(z.toJSONSchema(offered) as JSONSchema7, {
       validate: (value) => {
         const parsed = whole.safeParse(value);
-        return parsed.success ? { success: true, value: parsed.data } : { success: false, error: parsed.error };
+        if (parsed.success) return { success: true, value: parsed.data };
+        const theirs = offered.safeParse(value);
+        return { success: false, error: new Error(theirs.success ? 'The call does not fit this prepared query.' : `The call does not fit: ${theirs.error.issues.map((i) => `${i.path.join('.') || 'call'} ${i.message}`).join('; ')}.`) };
       },
     }),
     execute: (input) => runExplore(query, input, rights, io, page, own),

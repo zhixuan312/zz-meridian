@@ -123,8 +123,8 @@ describe('the stored thread', () => {
   test('an approved change whose result never arrived comes back closed, so it cannot run again', () => {
     const store = new Map<string, string>();
     const storage = { getItem: (k: string) => store.get(k) ?? null, setItem: (k: string, v: string) => void store.set(k, v), removeItem: (k: string) => void store.delete(k) } as unknown as Storage;
-    saveThread(storage, [...ask, { id: 'a1', role: 'assistant', parts: [{ type: 'tool-remove_members', toolCallId: 'c1', state: 'approval-responded', input: { ids: ['members_1'] }, approval: { id: 'ap1', approved: true } }] } as UIMessage]);
-    const part = loadThread(storage)[1].parts[0] as any;
+    saveThread(storage, 'acme/members_1', [...ask, { id: 'a1', role: 'assistant', parts: [{ type: 'tool-remove_members', toolCallId: 'c1', state: 'approval-responded', input: { ids: ['members_1'] }, approval: { id: 'ap1', approved: true } }] } as UIMessage]);
+    const part = loadThread(storage, 'acme/members_1')[1].parts[0] as any;
     expect(part.state).toBe('output-denied');
     expect(part.approval).toMatchObject({ approved: false, reason: REASONS.interrupted });
   });

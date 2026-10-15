@@ -11,7 +11,9 @@
  * person is checked again at the moment a call runs.
  */
 import { z } from 'zod';
+import { app } from '@/app.config';
 import type { AggregateQuery, AggregateResult, AggregateValues, Condition, Query } from '@/lib/collection';
+import { formatCost } from '@/lib/format';
 
 export type ExploreOp = 'eq' | 'ne' | 'in' | 'lt' | 'gt';
 type ExploreBucket = 'day' | 'week' | 'month' | 'weekday';
@@ -22,7 +24,9 @@ type ExploreBucket = 'day' | 'week' | 'month' | 'weekday';
  * ratio `a / (b * scale)` or a margin `(1 - b / a) / scale`, `scale` 1 when not given, so `scale: 0.01` states either
  * in %. `of` names measures of this source, or `<source>.<measure>` of another, which is then read over the same window
  * on that source's own date field. A margin's change on the window before is in percentage points, as Home states its
- * gross margin; every other measure's is a percent of the window before.
+ * gross margin; every other measure's is a percent of the window before. `unit` is the word a figure is written with
+ * (requests, ms, %), or `money`: an amount in `app.currency`, written as the pages write money (`formatCost`), never a
+ * currency code of its own, so a product made in pounds reads £ in its context and in its answers alike.
  */
 export type Measure = { label: string; unit: string; definition: string } & (
   | { agg: 'count'; where?: Condition[] }
@@ -44,6 +48,11 @@ export type Source = {
   cannot: string;
   /** How a facet's value reads in an answer, by facet and value: the hours' weekday `6` reads Sunday. */
   labels?: Record<string, Record<string, string>>;
+  /**
+   * How a field's missing value reads, by field, in the page's words: a request that reached no model is `no model`. Its
+   * group reads it, and a condition names it as null, which only a field given a word here admits.
+   */
+  none?: Record<string, string>;
 };
 
 export type PreparedQuery<I = unknown> = {
@@ -65,7 +74,7 @@ export type ExploreIO = {
   today: string;
 };
 
-type Scalar = string | number | boolean;
+type Scalar = string | number | boolean | null;
 type Period = '7d' | '30d' | '90d' | 'all';
 /** One call, as the schema parses it. A detail view's own input sits beside these. */
 type ExploreCall = {
@@ -147,17 +156,20 @@ export function exploreSchema<I>(query: PreparedQuery<I>, rights: ExploreRights 
   if (!offers.size) throw new Error('This prepared query offers no source to this person.');
   const all = <K extends keyof Offer>(k: K) => unique([...offers.values()].flatMap((o) => o[k] as string[]));
   const dated = [...offers].filter(([, o]) => o.dated).map(([name]) => name);
-  const scalar = z.union([z.string(), z.number(), z.boolean()]);
+  // Null only where an offered field has a word for it: no other value of the input reads as null.
+  const nullable = [...offers].some(([name, o]) => o.filters.some((f) => q.sources[name].none?.[f] !== undefined));
+  const scalar = nullable ? z.union([z.string(), z.number(), z.boolean(), z.null()]) : z.union([z.string(), z.number(), z.boolean()]);
   const measure = (name: string, m: string) => {
     const d = q.sources[name].measures[m];
-    return `${m} (${d.label}, ${d.unit})`;
+    return `${m} (${d.label}, ${unitOf(d)})`;
   };
   // A value the source reads through `labels` is named with its label, so a model asked about Sundays narrows to 6.
   const filter = (name: string, f: string) => {
     const d = q.sources[name].filters[f];
     const named = q.sources[name].labels?.[f];
     const value = (v: Scalar) => (named?.[String(v)] ? `${String(v)} (${named[String(v)]})` : String(v));
-    return `${f} ${d.ops.join('|')}${d.values ? ` of ${d.values.map(value).join(', ')}` : ''}`;
+    const none = q.sources[name].none?.[f];
+    return `${f} ${d.ops.join('|')}${d.values ? ` of ${d.values.map(value).join(', ')}` : ''}${none ? `, null for ${none}` : ''}`;
   };
   const ops = unique([...offers].flatMap(([name, o]) => o.filters.flatMap((f) => q.sources[name].filters[f].ops)));
 
@@ -191,7 +203,8 @@ export function exploreSchema<I>(query: PreparedQuery<I>, rights: ExploreRights 
       if (!f.ops.includes(w.op)) refuse(`${w.field} takes ${f.ops.join(', ')}, not ${w.op}.`);
       if ((w.op === 'in') !== Array.isArray(w.value)) refuse(w.op === 'in' ? '`in` takes a list.' : `${w.op} takes one value.`);
       const values = Array.isArray(w.value) ? w.value : [w.value];
-      if (f.values && values.some((v) => !f.values!.includes(v))) refuse(`${w.field} is one of ${f.values.join(', ')}.`);
+      if (values.includes(null) && s.none?.[w.field] === undefined) refuse(`${w.field} always has a value, so it is never null.`);
+      if (f.values && values.some((v) => v !== null && !f.values!.includes(v))) refuse(`${w.field} is one of ${f.values.join(', ')}.`);
     }
     if (call.by !== undefined && call.bucket !== undefined) refuse('Ask by or bucket, not both.');
     if (call.by !== undefined && !o.facets.includes(call.by)) refuse(`${call.source} cannot be grouped by ${call.by}.`);
@@ -203,9 +216,16 @@ export function exploreSchema<I>(query: PreparedQuery<I>, rights: ExploreRights 
 const DAY = 86_400_000;
 const shift = (day: string, days: number) => new Date(Date.parse(`${day}T00:00:00Z`) + days * DAY).toISOString().slice(0, 10);
 const number = new Intl.NumberFormat('en-US', { maximumFractionDigits: 2 });
-const figure = (v: number | null, unit: string) => (v === null ? 'no value' : `${number.format(v)} ${unit}`);
+const MONEY = 'money';
+/** The unit as the model is told it: money is in the product's currency. */
+const unitOf = (m: Measure) => (m.unit === MONEY ? app.currency : m.unit);
+const figure = (v: number | null, unit: string) => (v === null ? 'no value' : unit === MONEY ? formatCost(v) : `${number.format(v)} ${unit}`);
 const text = (v: unknown) => (v === null || v === undefined ? '—' : typeof v === 'number' ? number.format(v) : typeof v === 'object' ? JSON.stringify(v) : String(v));
-const said = (c: Condition) => `${c.field} ${c.op} ${Array.isArray(c.value) ? c.value.join(', ') : String(c.value)}`;
+/** A condition in words, a missing value with the source's word for it: "model eq null (no model)". */
+const said = (c: Condition, none: Source['none']) => {
+  const one = (v: unknown) => (v === null ? `null (${none?.[c.field] ?? `no ${c.field}`})` : String(v));
+  return `${c.field} ${c.op} ${Array.isArray(c.value) ? c.value.map(one).join(', ') : one(c.value)}`;
+};
 
 /** The change from `before` to `now`, in words; none when there is nothing to measure it against. */
 function change(now: number | null, before: number | null): string {
@@ -328,21 +348,27 @@ export async function runExplore<I>(query: PreparedQuery<I>, input: unknown, rig
   };
   const totals = (rs: AggregateResult[]): Values => new Map(sources.map((src, i) => [src, rs[i].total.values]));
   /** A group's values: this source's own, and, for a derived measure over another source, that source's group of the same key. */
-  const groupValues = (rs: AggregateResult[], g: AggregateValues & { key?: string }, other: (r: AggregateResult) => AggregateValues | undefined): Values =>
+  const groupValues = (rs: AggregateResult[], g: AggregateValues & { key?: string | null }, other: (r: AggregateResult) => AggregateValues | undefined): Values =>
     new Map(sources.map((src, i) => [src, i === 0 ? g.values : other(rs[i])?.values ?? {}]));
   const values = (vs: Values) => asked.map((m) => figure(value(name, m, vs), s.measures[m].unit)).join(', ');
 
   // The head: the window and the conditions, then each measure, then the window before.
   const w = windowOf(name, false);
   const conds = [...(fixed[name] ?? []), ...where];
+  const narrowed = conds.map((c) => said(c, s.none)).join(' and ');
   const head = [[
     `Source ${name}`,
     w ? (period === 'all' ? `every complete day kept, up to ${w.to}` : `${w.from} to ${w.to}, complete days`) : 'no window, as it has no date',
-    ...(conds.length ? [`where ${conds.map(said).join(' and ')}`] : []),
+    ...(conds.length ? [`where ${narrowed}`] : []),
     ...(by !== undefined ? [`by ${by}`] : bucket !== undefined ? [`a ${bucket} at a time`] : []),
   ].join(', ') + '.'];
   const current = totals(now);
-  for (const m of asked) head.push(`${s.measures[m].label}: ${figure(value(name, m, current), s.measures[m].unit)}. ${s.measures[m].definition}`);
+  // Money names its currency once, on its own line; a definition says what the whole measure counts, so a narrowed call
+  // says it holds only some of it, or "Runs: 1 runs" under `state eq failed` reads as every run of the window.
+  for (const m of asked) {
+    const d = s.measures[m];
+    head.push(`${d.label}${d.unit === MONEY ? `, in ${app.currency}` : ''}: ${figure(value(name, m, current), d.unit)}. ${d.definition}${conds.length ? ` This figure is only of those where ${narrowed}.` : ''}`);
+  }
   if (then) {
     const b = windowOf(name, true)!;
     const before = totals(then);
@@ -351,7 +377,7 @@ export async function runExplore<I>(query: PreparedQuery<I>, input: unknown, rig
 
   // The groups, at most eight, and the rest on one line.
   const main = now[0];
-  const label = (key: string) => (by !== undefined ? s.labels?.[by]?.[key] : undefined) ?? key;
+  const label = (key: string | null) => (by === undefined ? String(key) : key === null ? s.none?.[by] ?? `no ${by}` : s.labels?.[by]?.[key] ?? key);
   let groups = main.groups.map((g) => ({ key: g.key, vs: groupValues(now, g, (r) => r.groups.find((x) => x.key === g.key)) }));
   let rest: { groups: number; vs: Values } | null = main.others && { groups: main.others.groups, vs: groupValues(now, main.others, (r) => r.others ?? undefined) };
   if (main.groups.length && by !== undefined && derivedOnly) {
@@ -374,7 +400,7 @@ export async function runExplore<I>(query: PreparedQuery<I>, input: unknown, rig
     } else rest = null;
   }
   /** A compared group's figures in the window before, with its change; a bucket's keys are dates the window before does not share. */
-  const against = (key: string, at: Values): string => {
+  const against = (key: string | null, at: Values): string => {
     if (!then || by === undefined) return '';
     const g = then[0].groups.find((x) => x.key === key);
     // A group the window before folded into its others may have had rows there: say nothing rather than none.

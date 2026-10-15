@@ -30,8 +30,13 @@ type Shared = {
   'data-preview-state'?: 'focus';
 };
 type HoursProps = Shared & {
-  /** Seven rows (Monday first) of twenty-four hourly values (UTC). */
+  /** Seven rows (Monday first) of twenty-four hourly values, in the timezone named by `timezone` (UTC by default). */
   values: number[][];
+  /**
+   * The timezone the hours are cut in, as the readout, the announcement and the table name it: `Asia/Singapore` or
+   * `UTC+08:00`. It is a label only: the values are drawn as given.
+   */
+  timezone?: string;
   /**
    * A cell drawn as pointed at in the Atlas, by its row and its hour (`3-14` is Thursday 14:00), so it names a cell at
    * any width: where the hours group in threes it is the block that holds the hour. Real charts take theirs from the
@@ -143,7 +148,7 @@ function Legend({ unit, more, children }: { unit: string; more: string; children
   );
 }
 
-function Hours({ values, scale, format, unit, label, className, 'data-preview-state': previewState, 'data-preview-cell': previewCell }: HoursProps & Required<Pick<Shared, 'scale' | 'format' | 'unit'>>) {
+function Hours({ values, timezone = 'UTC', scale, format, unit, label, className, 'data-preview-state': previewState, 'data-preview-cell': previewCell }: HoursProps & Required<Pick<Shared, 'scale' | 'format' | 'unit'>>) {
   const [box, { width }] = useSize<HTMLElement>();
   const [hover, setHover] = useState<{ d: number; h: number } | null>(null);
   const group = width > 0 && width < 560 ? 3 : 1;
@@ -213,18 +218,18 @@ function Hours({ values, scale, format, unit, label, className, 'data-preview-st
             {on?.d === d ? (
               <Readout column={on.h} columns={cols}>
                 <span className="font-medium whitespace-nowrap">{format(row[on.h])} {unit}</span>
-                <span className="whitespace-nowrap opacity-70"> · {DAYS[d]} {range(on.h)} UTC</span>
+                <span className="whitespace-nowrap opacity-70"> · {DAYS[d]} {range(on.h)} {timezone}</span>
               </Readout>
             ) : null}
           </div>
         ))}
         </div>
       </div>
-      <p className="sr-only" aria-live="polite">{on ? `${DAYS[on.d]} ${range(on.h)} UTC: ${format(grid[on.d][on.h])} ${unit}` : ''}</p>
+      <p className="sr-only" aria-live="polite">{on ? `${DAYS[on.d]} ${range(on.h)} ${timezone}: ${format(grid[on.d][on.h])} ${unit}` : ''}</p>
       <Legend unit={unit} more={top === undefined ? 'More' : `${format(top)} or more`} />
       <table className="sr-only">
         <caption>{label}</caption>
-        <thead><tr><th>Day</th>{Array.from({ length: 24 }, (_, h) => <th key={h}>{String(h).padStart(2, '0')}:00</th>)}</tr></thead>
+        <thead><tr><th>Day ({timezone})</th>{Array.from({ length: 24 }, (_, h) => <th key={h}>{String(h).padStart(2, '0')}:00</th>)}</tr></thead>
         <tbody>{values.map((row, d) => <tr key={d}><th>{DAYS[d]}</th>{row.map((v, h) => <td key={h}>{format(v)}</td>)}</tr>)}</tbody>
       </table>
     </figure>

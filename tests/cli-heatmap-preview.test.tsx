@@ -56,7 +56,7 @@ describe('the Heatmap\'s specimens: what is said to be pointed at is drawn point
     size.width = width;
     const { container } = render(<HeatmapPreview />);
     const asked = [...container.querySelectorAll<HTMLElement>('figure[data-preview-cell], figure[data-preview-date]')];
-    expect(asked).toHaveLength(5);
+    expect(asked).toHaveLength(6);
     for (const f of asked) {
       expect(ringed(f), f.getAttribute('aria-label')!).toHaveLength(1);
       expect(f.querySelector('[data-readout]'), f.getAttribute('aria-label')!).not.toBeNull();
@@ -71,6 +71,12 @@ describe('the Heatmap\'s specimens: what is said to be pointed at is drawn point
     expect(readout(last)).toHaveTextContent(/requests · Thu 21:00–24:00 UTC$/);
     expect(shares(last)).toEqual([7, 0]);
   });
+
+  it('names the zone a product reports its hours in, in place of UTC', () => {
+    size.width = 688;
+    const { container } = render(<HeatmapPreview />);
+    expect(readout(figure(container, 'Requests by weekday and hour in Asia/Singapore, pointed at Monday 09:00'))).toHaveTextContent(/requests · Mon 09:00 Asia\/Singapore$/);
+  });
 });
 
 describe('the Heatmap\'s specimens: every state is drawn', () => {
@@ -78,7 +84,7 @@ describe('the Heatmap\'s specimens: every state is drawn', () => {
     render(<HeatmapPreview />);
     expect(screen.getAllByRole('heading', { level: 3 }).map((h) => h.textContent)).toEqual([
       'By hour', 'Grouped', 'A year of days', 'The latest weeks that fit', 'Half a year', 'A day of zero', 'A day in progress',
-      'A day pointed at', 'An hour pointed at', 'Focus', 'Empty', 'On the page\'s Meridian', 'One outlier hour',
+      'A day pointed at', 'An hour pointed at', 'In another timezone', 'Focus', 'Empty', 'On the page\'s Meridian', 'One outlier hour',
     ]);
   });
 

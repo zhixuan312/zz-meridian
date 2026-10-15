@@ -12,7 +12,7 @@ import { EmptyState } from '@/components/ui/empty-state';
  * A page that failed to load: in place, inside the shell, so the rail and the way out stay where they were. The title
  * says what happened once; the card says what to do about it, with the reference support will ask for.
  *
- * The second way out is read from `nav`, never written here: not every product has an Services page, and one that does not
+ * The second way out is read from `nav`, never written here: not every product has a Services page, and one that does not
  * would otherwise offer a button to an address that leads nowhere while the reader is already having a bad day.
  */
 export default function DashboardError({ error, reset }: { error: Error & { digest?: string }; reset: () => void }) {

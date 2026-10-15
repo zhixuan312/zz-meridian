@@ -11,7 +11,7 @@ Status: beta
 3. **Cells**: one per hour or per date, 2px apart, filled with the step its value earns.
 4. **Legend**: the figure's caption, right-aligned under the grid. The empty step and its name ("No requests"), then "Less", the five steps of the accent and "More".
 5. **Weeks shown**: on a calendar that cannot show every week, "The latest 19 of 52 weeks", at the leading edge of the caption.
-6. **Readout**: over the cell pointed at, on `surface-inverse`: the value, its unit and when.
+6. **Readout**: over the cell pointed at, on `surface-inverse`: the value, its unit and when; on a week of hours, when names the timezone ("Thu 14:00 UTC").
 7. **Screen-reader table**: every value given, whatever is drawn.
 
 ## Variants
@@ -72,14 +72,14 @@ The view that draws it shares its busiest windows in its context (`useShareView`
 
 ## Accessibility
 
-- A labelled `figure` whose `sr-only` table holds every value: a week of hours as weekday by hour, a calendar as a row a date ("Thu 1 Oct 2026", then the value), for every date given.
-- The grid is a `role="group"` named with the figure's label and how to use the keys. The cell pointed at is read in an `aria-live="polite"` line: "Thu 14:00 UTC: 3,912 requests" on a week of hours, "Thu 1 Oct 2026 · 1,318 requests" on a calendar.
+- A labelled `figure` whose `sr-only` table holds every value: a week of hours as weekday by hour, its corner cell naming the timezone ("Day (UTC)"), a calendar as a row a date ("Thu 1 Oct 2026", then the value), for every date given.
+- The grid is a `role="group"` named with the figure's label and how to use the keys. The cell pointed at is read in an `aria-live="polite"` line: "Thu 14:00 UTC: 3,912 requests" on a week of hours ("Thu 14:00 Asia/Singapore: …" given that `timezone`), "Thu 1 Oct 2026 · 1,318 requests" on a calendar.
 - The ramp is one hue in monotone steps (sequential encoding), never a rainbow, and the legend explains direction in words and names the empty step. The steps are a magnitude, not a boundary: the exact value is in the readout and the table.
 - Labels and legend, `ink-3` on `surface`: 6.39:1 dark, 5.13:1 light. The ring and the dashed outline, `ink` on `surface`: 16.89:1 dark, 17.93:1 light; the outline is drawn on the card, not on the fill, so it holds whatever the day's step. The readout, `ink-inverse` on `surface-inverse`: 16.31:1 dark, 17.00:1 light. The focus outline, `accent` on `surface`: 3.71:1 dark, 5.71:1 light.
 
 ## Content
 
-- Hours are UTC (the product's reporting zone) and the readout says so.
+- Hours are in the product's reporting zone, and the readout, the announcement and the table say which. That is UTC unless the product passes `timezone`, a label such as `Asia/Singapore` or `UTC+08:00`. A product that cuts its days at local midnight cuts its hours in the same zone and names it, so a local Monday morning stays in Monday's row; converting the hours to UTC to keep the label true moves them into another weekday's row. The zone is a label: the values are drawn as given.
 - A calendar date is a day, not an instant: "2026-10-01" reads "Thu 1 Oct 2026" and sits in Thursday's row whatever the product's timezone.
 - The legend names what a cell counts: `unit` is a plural noun, "requests", so the empty step reads "No requests".
 - A day in progress says "so far"; a complete day says nothing.
@@ -97,12 +97,15 @@ The view that draws it shares its busiest windows in its context (`useShareView`
 import { Heatmap } from '@/components/charts/heatmap';
 
 <Heatmap label="Requests by weekday and hour" values={demoHeatmap()} format={formatCompact} />
+// The product cuts its hours in its own zone and names it.
+<Heatmap label="Requests by weekday and hour" values={hours} timezone="Asia/Singapore" />
 <Heatmap label="Requests a day" days={series.map((d) => ({ date: d.date, value: d.requests }))} running meridian scale="quantile" />
 ```
 
 | Prop | Form | What it is |
 |---|---|---|
-| `values` | Hours | Seven rows, Monday first, of twenty-four hourly values (UTC) |
+| `values` | Hours | Seven rows, Monday first, of twenty-four hourly values, in the timezone named by `timezone` (UTC by default) |
+| `timezone` | Hours | The zone the hours are cut in, as the readout, the announcement and the table name it: `UTC` by default |
 | `days` | Calendar | `{ date, value }` a calendar date (`2026-10-01`), oldest first |
 | `running` | Calendar | The last day is still in progress |
 | `meridian` | Calendar | Point the page's Meridian at the day read |

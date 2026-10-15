@@ -6,8 +6,8 @@ Status: beta
 
 ## Anatomy
 
-1. **Line**: 1.5px, round joins, drawn in real pixels across the container's full width.
-2. **Area**: the line's colour fading from 21% (10% on light) to 0.
+1. **Line**: 1.5px, round joins, drawn in real pixels across the container's full width. A day with no value breaks it.
+2. **Area**: the line's colour fading from 21% (10% on light) to 0, under each run of the line.
 3. **Day mark** (on a Meridian, when the values are the page's): a 1px `ink-3` hairline at 45% and a 3px dot ringed in `surface`.
 
 ## Variants
@@ -20,16 +20,17 @@ Status: beta
 
 ## Sizes
 
-Height 24px in a table cell, 28px in a compact Metric tile, 32 to 44px in a tile; the width is the container's. The scale fits the data's own range (minimum to maximum), because a sparkline shows shape, not magnitude.
+Height 24px in a table cell, 28px in a compact Metric tile, 32 to 44px in a tile; the width is the container's. The scale fits the data's own range (minimum to maximum of the numbers, a day with no value left out), because a sparkline shows shape, not magnitude.
 
 ## States
 
 | State | Spec |
 |---|---|
 | Arriving | Draws and reveals over `dur-grow` with `ease-out`. |
-| Day pointed at | The hairline and dot at that day, when the line has one value for each of the Meridian's dates. |
+| Day pointed at | The hairline and dot at that day, when the line has one value for each of the Meridian's dates. On a day with no value, the hairline alone: there is no point for the dot to stand on. |
+| Gap | A `null` is a day with no value: it keeps its place on the x axis and the line and its area break there, as the Trend chart's line does. Each run of days with a value is its own stretch; a day with a value between two gaps has no neighbour to join and draws no line. A gap is never drawn as zero. |
 | Values that are not the page's | With any other number of values, no hairline and no dot: the line alone, whatever the page points at. |
-| Too few points | Under two values, render nothing and let the figure stand alone. |
+| Too few points | Under two numbers, render nothing and let the figure stand alone. A `null` is not a number. |
 
 ## Behaviour
 
@@ -58,6 +59,7 @@ None. A sparkline never carries a label, a value or an axis.
 - Do place it beside or under its figure, never instead of it.
 - Do not compare two sparklines' heights: each has its own scale.
 - Do not pad or cut a series to the page's length to make the mark appear: a line that marks a day must hold that day at that position.
+- Do pass `null` for a day with no value. Do not pass 0, which draws a dip to the floor that never happened, and do not leave the day out, which joins the days either side as if they were neighbours.
 
 ## Implementation
 
@@ -65,4 +67,9 @@ None. A sparkline never carries a label, a value or an axis.
 import { Sparkline } from '@/components/charts/sparkline';
 
 <Sparkline values={series.map((d) => d.p95)} color="neutral" height={40} />
+
+// A day with no calls has no failure rate: null breaks the line there.
+<Sparkline values={series.map((d) => (d.calls ? d.failed / d.calls : null))} color="neutral" />
 ```
+
+`values` is `(number | null)[]`.

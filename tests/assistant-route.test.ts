@@ -26,3 +26,12 @@ describe('POST /api/assistant refuses what is not a thread', () => {
     expect((await safeValidateUIMessages({ messages: thread })).success).toBe(true);
   });
 });
+
+describe('POST /api/assistant answers a thread only for the scope it was started for', () => {
+  test('a thread started for another person or tenant is refused with 409 and a sentence that says why, before the model is reached', async () => {
+    Object.assign(process.env, { ASSISTANT_PROVIDER: 'openai-compatible', ASSISTANT_API_KEY: 'k', ASSISTANT_MODEL: 'm', ASSISTANT_BASE_URL: 'http://127.0.0.1:9/v1' });
+    const res = await post({ messages: [ask('u1')], page, scope: 'another-tenant/someone-else' });
+    expect(res.status).toBe(409);
+    expect(await res.text()).toMatch(/signed in as someone else/);
+  });
+});

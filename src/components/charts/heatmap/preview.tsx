@@ -26,7 +26,7 @@ const POINTED = '2026-09-24';
 export default function HeatmapPreview() {
   return (
     <>
-      <Specimen label="By hour" note="Twenty-four columns, Monday first, UTC. An empty track, then five steps of the accent; the legend names the empty step in words.">
+      <Specimen label="By hour" note="Twenty-four columns, Monday first, UTC unless the product names another zone. An empty track, then five steps of the accent; the legend names the empty step in words.">
         <Plane on="surface">
           <Heatmap label="Requests by weekday and hour" values={values} format={formatCompact} />
         </Plane>
@@ -84,6 +84,13 @@ export default function HeatmapPreview() {
         <State label="The first column, grouped" still className="w-full">
           <Plane on="surface" className="max-w-sm">
             <Heatmap label="Requests by weekday and three-hour block, pointed at Wednesday 00:00" values={values} format={formatCompact} data-preview-cell="2-0" />
+          </Plane>
+        </State>
+      </Specimen>
+      <Specimen label="In another timezone" note="timezone: a product that cuts its hours in its own zone names it, and the readout, the announcement and the table's corner name it in place of UTC. It is a label: the values are drawn as given, cut in that zone by the product.">
+        <State label="Hours in Asia/Singapore, Monday 09:00 pointed at" still className="w-full">
+          <Plane on="surface">
+            <Heatmap label="Requests by weekday and hour in Asia/Singapore, pointed at Monday 09:00" values={values} format={formatCompact} timezone="Asia/Singapore" data-preview-cell="0-9" />
           </Plane>
         </State>
       </Specimen>

@@ -25,14 +25,14 @@ const settings = (assistant: boolean) =>
       </Providers>,
     );
   });
-/** The thread's storage key (spec FR-13): the product slug and `.assistant`. */
+/** The thread's storage key (spec FR-13): the product slug and `.assistant`; a shell rendered without a scope keeps it under the empty one. */
 const THREAD_KEY = `${slug}.assistant`;
 const launcher = () => screen.queryByRole('button', { name: 'Assistant' });
 afterEach(() => localStorage.clear());
 
 describe('the person\'s switch', () => {
   test('on by default; off hides the launcher and keeps the thread; on brings both back', async () => {
-    localStorage.setItem(THREAD_KEY, JSON.stringify({ v: 1, messages: [{ id: 'u1', role: 'user', parts: [{ type: 'text', text: 'hello' }] }] }));
+    localStorage.setItem(THREAD_KEY, JSON.stringify({ v: 2, scope: '', messages: [{ id: 'u1', role: 'user', parts: [{ type: 'text', text: 'hello' }] }] }));
     const saved = localStorage.getItem(THREAD_KEY);
     await settings(true);
     const toggle = screen.getByRole('switch', { name: /Show the assistant/ });

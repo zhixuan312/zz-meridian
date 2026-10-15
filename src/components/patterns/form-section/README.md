@@ -7,12 +7,13 @@ Status: beta
 ## Anatomy
 
 1. **Head**: the title (`t-card`) and one or two sentences (`t-small`, `ink-2`) saying what these settings change, for whom.
-2. **Card**: the fields, 20px apart, in a `surface` card with a `line` border.
-3. **Error banner** (when a save failed): a critical Banner above the fields.
-4. **Read-only notice** (`readOnly`, when the reader cannot change it): a lock and the words "Read-only". It never says who can change the section: a read-only page offers no control it withholds and says nothing about who holds it.
-5. **Save bar** (with `onSave`, when dirty): "Unsaved changes", Discard (ghost) and Save changes (primary), pinned to the bottom of the view while the section is on screen.
-6. **Footnote** (optional): a caption under the card: "Changes apply at once".
-7. **Setting row** (`SettingRow`): for a control that is not a text field, its label and description on the left and the control on the right.
+2. **Actions** (`actions`, optional): beside the title, at its end, on the title's row at every width, a phone's included; the description stands under the row. The same contract as a Card header's actions: on a settings page, Ask about, in the first section's.
+3. **Card**: the fields, 20px apart, in a `surface` card with a `line` border.
+4. **Error banner** (when a save failed): a critical Banner above the fields.
+5. **Read-only notice** (`readOnly`, when the reader cannot change it): a lock and the words "Read-only". It never says who can change the section: a read-only page offers no control it withholds and says nothing about who holds it.
+6. **Save bar** (with `onSave`, when dirty): "Unsaved changes", Discard (ghost) and Save changes (primary), pinned to the bottom of the view while the section is on screen.
+7. **Footnote** (optional): a caption under the card: "Changes apply at once".
+8. **Setting row** (`SettingRow`): for a control that is not a text field, its label and description on the left and the control on the right.
 
 ## Variants
 
@@ -20,6 +21,7 @@ Status: beta
 |---|---|---|
 | Saves on its own | `onSave`, `onDiscard`, `dirty` | Text fields, selects: anything that should not apply on each keystroke |
 | Applies at once | no `onSave` | Switches and segmented controls; add a footnote that says so |
+| With actions | `actions` | A control about the whole section beside its title: Ask about on a settings page |
 | Danger zone | `tone="critical"` | Irreversible actions; the title and border take the critical tone |
 | Layout only | `as="div"` | The same head and card with no `<form>` around them: a card holding a table that runs edge to edge (tokens, people, members), or a form of its own, since forms cannot nest. Nothing submits, so there is no save bar — its children save themselves |
 | Layout only, flush | `as="div" flush` | The table runs to the card's edges; the card clips it and drops its header row's top border, so the card's edge is the table's edge |
@@ -30,6 +32,7 @@ Status: beta
 |---|---|
 | Layout | Two columns from 48rem of section width: 15rem head, the card fills up to `field-width`; one column below |
 | Gap | 40px between the columns, 20px between head and card when stacked |
+| Actions | 16px from the title, at the top of its row; controls 6px apart, as a Card header's |
 | Card | `radius-lg` 16px, `card-pad` padding, `shadow-card` |
 | Save bar | `surface-raised` at 90% with a backdrop blur, `line` top border, small buttons |
 
@@ -52,7 +55,7 @@ Status: beta
 
 ## Composition
 
-A form element holding a fieldset, or — with `as="div"` — a plain element holding a div; Field, Input, Select, Switch and Segmented from Layer 2; Table when the section holds one; Banner for errors; Button for the save bar; Toast for confirmation. Settings pages stack sections 56px apart on a form page (`form-width`), which fills the canvas until it is wider than a form needs and then centres.
+A form element holding a fieldset, or — with `as="div"` — a plain element holding a div; Field, Input, Select, Switch and Segmented from Layer 2; Table when the section holds one; Banner for errors; Button for the save bar; Toast for confirmation; whatever `actions` holds, Ask about on a settings page. Settings pages stack sections 56px apart on a form page (`form-width`), which fills the canvas until it is wider than a form needs and then centres.
 
 `SettingRow` is a section's own child and needs nothing from `FormSection`: with `as="div"` and no `onSave`, a switch that applies the moment it is flipped sits in the same layout, saving itself.
 
@@ -68,7 +71,7 @@ The section holds no values: the page owns them, compares them with what is save
 
 ## Agents
 
-An agent never edits a form section. A change it wants (a rate limit, a notification) arrives as a Proposal that names the setting, its value before and after, and why. The "Agents and MCP" section on Settings shows that approval is always required, locked on.
+An agent never edits a form section. A change it wants (a rate limit, a notification) arrives as a Proposal that names the setting, its value before and after, and why. The "Agents and MCP" section on Settings shows that approval is always required, locked on. Ask about in a section's `actions` hands the page to the assistant to ask about, never to change.
 
 ## Accessibility
 
@@ -94,7 +97,8 @@ An agent never edits a form section. A change it wants (a rate limit, a notifica
 ```tsx
 import { FormSection, SettingRow } from '@/components/patterns/form-section';
 
-<FormSection title="Workspace" description="How this workspace is named." dirty={dirty} saving={saving} onSave={save} onDiscard={reset}>
+<FormSection title="Workspace" description="How this workspace is named." dirty={dirty} saving={saving} onSave={save} onDiscard={reset}
+  actions={<AskAbout question="What do these settings change for this workspace?" />}>
   <Field label="Name">{(p) => <Input {...p} value={name} onChange={(e) => setName(e.target.value)} />}</Field>
 </FormSection>
 ```

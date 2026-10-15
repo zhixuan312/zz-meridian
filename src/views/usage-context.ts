@@ -95,7 +95,7 @@ function partFacts(data: UsageData): Fact[] {
   if (figures) {
     const cells = figures.heat.flatMap((row, d) => row.map((v, h) => ({ v, d, h })));
     const peak = cells.reduce((m, c) => (c.v > m.v ? c : m));
-    const hour = figures.hours.reduce((m, c) => (c.value > m.value ? c : m));
+    const hour = figures.hours.reduce((m, c) => ((c.value ?? 0) > (m.value ?? 0) ? c : m));
     facts.push({ label: `${USAGE_PARTS.when}, the last 30 days`, value: `the busiest hour ${hour.label} UTC, every weekday summed; the busiest of the week ${DAYS[peak.d]} ${String(peak.h).padStart(2, '0')}:00 UTC, ${formatCompact(peak.v)} requests` });
     const whole = figures.regions.reduce((s, r) => s + r.value, 0);
     facts.push({ label: `${USAGE_PARTS.where}, the last 30 days`, value: figures.regions.map((r) => `${r.label} ${formatPercent(whole ? r.value / whole : 0, 0)} (p50 ${formatDuration(r.p50)})`).join(', '), definition: 'p50 is the median latency: half of the requests finished faster.' });

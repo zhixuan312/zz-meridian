@@ -6,7 +6,7 @@
  * A read that failed is handed as null: its part is null, `unread` names it, and the rest stands. The day in progress
  * is counted in nothing but the runs a day, which draw it as running.
  */
-import { facts as rules } from '@/app.config';
+import { facts as rules, workspaces } from '@/app.config';
 import type { ActivityEvent } from '@/components/patterns/activity-feed';
 import { afterStart, type Incident } from '@/components/patterns/incident-card';
 import type { Service } from '@/components/patterns/status-list';
@@ -16,9 +16,10 @@ import { ticketAddress } from '@/data/metrics';
 import type { ComputeRow, DailyPoint, Endpoint, Model, UsageRow } from '@/data/sample';
 import type { TicketRow } from '@/data/tickets';
 import { steady } from '@/lib/facts';
-import { formatDuration } from '@/lib/format';
+import { formatDuration, plural } from '@/lib/format';
 import { formatDate, formatDay } from '@/lib/format-date';
-import { yearFacts, yearOf } from './home-parts';
+import { PERIOD_DAYS } from '@/lib/period';
+import { yearFacts, yearLine, yearOf } from './home-parts';
 import { inWords, NOW_TILES, nowHead, type BandFact, type NowData, type NowModel, type NowRunDay, type NowTicket } from './now-context';
 import { releaseFigures, releaseMoment, stageOf, unresolvedText } from './releases-context';
 
@@ -27,6 +28,12 @@ const STRIP_DAYS = 360;
 const WINDOW_DAYS = 30;
 const WORK_SHOWN = 6;
 const TILE_LINE = 32;
+/**
+ * The characters the line under the title may take: the lead's room (`LeadRoom` in
+ * `src/components/patterns/page-loading`, about 220 characters) less who Engineering is for and the ". " the page
+ * writes between them.
+ */
+const LINE_ROOM = 220 - 2 - workspaces.engineering.audience.length;
 
 const DAY = 86_400_000;
 const sum = (xs: readonly number[]) => xs.reduce((a, b) => a + b, 0);
@@ -61,8 +68,8 @@ function bandFacts(history: readonly DailyPoint[], outside: readonly string[]): 
   const out: BandFact[] = [];
   if (outside.length) out.push({ about: 'outside', text: `Outside the band on ${inWords(outside.map(formatDate))}` });
   // The year and the total are written by the functions Home writes them with, so the two pages state one line.
-  const year = yearOf(history, '30d');
-  if (year.windows.length >= 2) out.push({ about: 'year', text: year.title });
+  const year = yearLine(yearOf(history, '30d').windows, PERIOD_DAYS['30d']!);
+  if (year) out.push({ about: 'year', text: year });
   const busiest = history.reduce((m, d) => (d.requests > m.requests ? d : m));
   out.push({ about: 'busiest', text: `p95 was ${Math.round(busiest.p95)} ms on the busiest day yet, ${formatDate(busiest.date)}` });
   const answered = yearFacts(history).find((f) => f.kind === 'total');
@@ -98,13 +105,23 @@ export function nowData(r: NowReads): NowData {
   const held = history?.length ? steady(history, rules.band) : null;
 
   // The line under the title: the most severe open incident's updates timed from its start, in the card's words. The
-  // title names the service and the card the incident, so the line does not: it keeps to three lines beside Freshness.
+  // title names the service and the card the incident, so the line does not. It shares the lead's room with who
+  // Engineering is for, so it takes the fullest form that fits: every update, then the updates counted and the latest
+  // named, then the incidents counted; then without the band, which the Featured metric under it states.
   const lead = [...open].sort((a, b) => SEVERITY[a.severity] - SEVERITY[b.severity] || (a.started < b.started ? 1 : -1));
-  const line = [
-    lead[0] && `Updates ${inWords([...lead[0].updates].sort((a, b) => a.at.localeCompare(b.at)).map((u) => afterStart(lead[0].started, u.at)))}${lead.length > 2 ? `, and ${lead.length - 1} more incidents open` : lead.length > 1 ? ', and another incident open' : ''}`,
-    services.length && summarise(services).text,
-    held && `${held.inside} of ${held.of} days inside the band`,
-  ].filter(Boolean).join('; ');
+  const times = lead[0] ? [...lead[0].updates].sort((a, b) => a.at.localeCompare(b.at)).map((u) => afterStart(lead[0].started, u.at)) : [];
+  const others = lead.length > 2 ? `, and ${lead.length - 1} more incidents open` : lead.length > 1 ? ', and another incident open' : '';
+  const incident = lead.length ? [
+    ...(times.length ? [`Updates ${inWords(times)}${others}`] : []),
+    ...(times.length > 1 ? [`${times.length} updates, the latest ${times.at(-1)}${others}`] : []),
+    `${lead.length} ${plural(lead.length, 'incident')} open`,
+  ] : [null];
+  const state = services.length ? summarise(services).text : null;
+  const inBand = held && `${held.inside} of ${held.of} days inside the band`;
+  const shortest = incident.at(-1) ?? null;
+  const line = [...incident.map((i) => [i, state, inBand]), [shortest, state], [shortest]]
+    .map((clauses) => clauses.filter(Boolean).join('; '))
+    .find((l, i, all) => l.length <= LINE_ROOM || i === all.length - 1)!;
 
   let band: NowData['band'] = null;
   if (history?.length && held) {
@@ -120,9 +137,9 @@ export function nowData(r: NowReads): NowData {
   }
 
   let models: NowData['models'] = null;
-  // A model's figures need its rows and its label: either read failing leaves the part unread.
-  if (r.usage && r.models) {
-    const usage = r.usage;
+  // A model's figures need its rows and its label: either read failing leaves the part unread, and each that failed is named.
+  const usage = read(r.usage, 'the usage') ? r.usage : null;
+  if (read(r.models, 'the models') && usage) {
     const dates = [...new Set(usage.map((u) => u.date).filter((d) => d < today))].sort().slice(-WINDOW_DAYS);
     const kept = new Set(dates);
     models = r.models.map((m): NowModel => {
@@ -131,8 +148,9 @@ export function nowData(r: NowReads): NowData {
       const ttft = days.flatMap((d) => (d.ttft === null ? [] : [d.ttft]));
       return { id: m.id, label: m.label, serves: m.serves, requests, p95: days.length ? lowerMedian(days.map((d) => d.p95)) : 0, ttft: ttft.length ? lowerMedian(ttft) : null, errors, errorRate: requests ? errors / requests : 0 };
     }).sort((a, b) => b.requests - a.requests);
-  } else unread.push('the models');
+  }
 
+  // Read, and holding no day before today, the compute is null and not unread: the part says none is recorded yet.
   let compute: NowData['compute'] = null;
   if (read(r.compute, 'the compute')) {
     const day = r.compute.map((c) => c.date).filter((d) => d < today).sort().at(-1);

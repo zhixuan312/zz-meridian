@@ -19,7 +19,7 @@ import { AXIS_FORMATTERS, FORMATTERS, formatCompact, formatCost, formatDuration,
 import { formatDate, formatDay } from '@/lib/format-date';
 import { PERIOD_DAYS, PERIOD_LABEL } from '@/lib/period';
 import { AskPeriod } from './ask-period';
-import { COMPANY_METRICS, HOME_METRICS, homeContext, type HomeData, type HomeWindow } from './home-context';
+import { COMPANY_METRICS, HOME_METRICS, SOLD_SLOTS, homeContext, type HomeData, type HomeWindow } from './home-context';
 import { Unread, unreadTile } from './unread';
 
 /** Tells both agents what the Home shows, and which day the Meridian points at (decision 0011). Inside `Meridian`. */
@@ -245,15 +245,15 @@ function RevenueWindows({ data, keys }: { data: HomeData; keys: string[] }) {
   );
 }
 
-/** What we sell: the period's revenue by model, in the categorical slots in their order. */
+/** What we sell: the period's revenue by model, in the categorical slots in their order, and past them "Other", neutral. */
 function Sold({ data }: { data: HomeData }) {
   const { label, hint } = COMPANY_METRICS.sold;
-  if (!data.sold) return <Unread title={label} what="the usage by model" />;
+  if (!data.sold) return <Unread title={label} what={['the usage by model', 'the models'].filter((n) => data.unread.includes(n)).join(' and ')} />;
   return (
     <Card>
       <CardHeader title={label} description={`${hint.replace(/\.$/, '')}, ${PERIOD_LABEL[data.period].toLowerCase()}`} />
       <CardBody>
-        <CompositionBar label="Revenue by model" format={costCompact} parts={data.sold.slice(0, 4).map((m, i) => ({ label: m.label, value: m.value, color: i + 1 }))} />
+        <CompositionBar label="Revenue by model" format={costCompact} parts={data.sold.map((m, i) => ({ label: m.label, value: m.value, color: i < SOLD_SLOTS ? i + 1 : 'neutral' }))} />
       </CardBody>
     </Card>
   );

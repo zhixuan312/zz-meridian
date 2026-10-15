@@ -140,11 +140,113 @@ describe('the 0.15.0 migration', () => {
   });
 });
 
-describe('the 0.16.0 migration', () => {
+describe('the 0.16.0 migrations', () => {
   it('finds a configuration that does not say what a refused address draws, and leaves one that does alone', () => {
     expect(byId('refusal-declared').since).toBe('0.16.0');
     expect(byId('refusal-declared').applies(project({ 'src/app.config.ts': "export const app = { name: 'Rota' } as const;\n" }))).toEqual(['src/app.config.ts']);
     expect(byId('refusal-declared').applies(project({ 'src/app.config.ts': "export const refusal: 'explain' | 'absent' = 'explain';\n" }))).toBeNull();
     expect(byId('refusal-declared').applies(project({ 'package.json': '{}' }))).toBeNull();
+  });
+
+  it('are all declared for 0.16.0', () => {
+    for (const id of ['managed-exports-removed', 'view-tool-page-explore', 'agent-does-here-section', 'sample-pages-renamed']) expect(byId(id).since, id).toBe('0.16.0');
+  });
+
+  // The sample's 0.15.0 names, spelled in parts: the repository holds the whole names out of everything but its history.
+  const [O, A, H] = ['overview', 'analytics', 'health'];
+
+  it('finds the files of the team that still import an export the release removed from a managed module', () => {
+    // The lines a project created at 0.15.0 holds: the Overview context, the assistant's tools and a shipped test.
+    const old = project({
+      [`src/views/${O}-context.ts`]: "import { deviations, largest, runs, sameWeekdayBaseline, weekday, weekendRatio, median } from '@/lib/insight';\n",
+      'src/lib/assistant/tools.ts': "import { patchOf, queryInput, writableFields, type AnyCollection } from '@/lib/collection';\n",
+      'tests/shared-context.test.tsx': "import { deviations, median, runs, weekendRatio } from '@/lib/insight';\n",
+      'src/views/trend.ts': "import * as insight from '../lib/insight';\nexport const r = insight.weekendRatio([], []);\n",
+      'src/views/customers-context.ts': "import { median } from '@/lib/insight';\n",
+      // A managed module is Meridian's and arrives with the update: it is never the team's to change.
+      'src/lib/facts.ts': "import { largest } from '@/lib/insight';\n",
+    });
+    expect(byId('managed-exports-removed').applies(old)).toEqual(['src/lib/assistant/tools.ts', `src/views/${O}-context.ts`, 'src/views/trend.ts', 'tests/shared-context.test.tsx']);
+    expect(byId('managed-exports-removed').applies(project({ 'src/views/home-context.ts': "import { median, sameWeekdayBaseline } from '@/lib/insight';\nimport { patchOf } from '@/lib/collection';\n" }))).toBeNull();
+    expect(byId('managed-exports-removed').applies(project({ 'package.json': '{}' }))).toBeNull();
+  });
+
+  it('finds a view tool without the page it renders or its prepared query, and not a key inside its code', () => {
+    // 0.15.0's shape: the keys of the object itself, where `page` also names a field of the input and of the data.
+    const tool = (extra: string) => `export const requestsTool = defineViewTool({\n  name: 'requests',\n  description: 'The log, filtered {by status}.',\n  needs: FEATURES.requests.needs,\n${extra}  input: z.object({ page: z.number().optional() }),\n  async read(input) { const data = { page: 1, explore: null }; return { context: requestsContext(data), data }; },\n});\n`;
+    expect(byId('view-tool-page-explore').applies(project({ 'src/views/tools.ts': tool('') }))).toEqual(['src/views/tools.ts']);
+    expect(byId('view-tool-page-explore').applies(project({ 'src/views/tools.ts': tool("  page: '/requests',\n") }))).toEqual(['src/views/tools.ts']);
+    expect(byId('view-tool-page-explore').applies(project({ 'src/views/tools.ts': tool("  page: '/requests',\n  explore: requestsExplore,\n") }))).toBeNull();
+    // A definition of its own is not a call, and a project with no view tools has nothing to change.
+    expect(byId('view-tool-page-explore').applies(project({ 'src/lib/views.ts': 'export function defineViewTool(t) { return t; }\n' }))).toBeNull();
+    expect(byId('view-tool-page-explore').applies(project({ 'package.json': '{}' }))).toBeNull();
+  });
+
+  it("finds the specification of a view tool's page with no \"What the agent does here\"", () => {
+    const tool = (name: string, page: string | null) => `defineViewTool({ name: '${name}', ${page === null ? '' : `page: '${page}', `}explore: q, read });\n`;
+    const spec = (title: string, does: boolean) => `# ${title}\n\nThe ${title}.\n\n## Agents\n\nShared.\n\n### What the agent reads\n\nEvery row.\n${does ? '\n### What the agent does here\n\nProtagonist: Rows.\n' : ''}`;
+    const specs = {
+      'app/(dashboard)/requests/README.md': spec('Requests', false),
+      'app/(dashboard)/customers/[id]/README.md': spec('One customer', true),
+      'app/(dashboard)/settings/README.md': spec('Settings', false),
+      'app/embed/requests/README.md': spec('Requests embed', false),
+    };
+    // With every tool naming its page, the gate's rule is exact: the pages named, never Settings or an embed view.
+    const named = project({ ...specs, 'src/views/tools.ts': tool('requests', '/requests') + tool('customer', '/customers/[id]') });
+    expect(byId('agent-does-here-section').applies(named)).toEqual(['app/(dashboard)/requests/README.md']);
+    // A tool of 0.15.0 names no page, and the rule fires once it does: every console page without the part is listed.
+    const unnamed = project({ ...specs, 'src/views/tools.ts': tool('requests', null) + tool('customer', '/customers/[id]') });
+    expect(byId('agent-does-here-section').applies(unnamed)).toEqual(['app/(dashboard)/requests/README.md', 'app/(dashboard)/settings/README.md']);
+    expect(byId('agent-does-here-section').applies(project({ ...specs, 'src/views/tools.ts': tool('customer', '/customers/[id]') }))).toBeNull();
+    expect(byId('agent-does-here-section').applies(project(specs))).toBeNull();
+  });
+
+  it("finds the sample's pages and views under their 0.15.0 names, and the files and tests that still read them", () => {
+    const old = project({
+      [`app/(dashboard)/(${O})/page.tsx`]: `import { OverviewView } from '@/views/${O}';\n`,
+      [`app/(dashboard)/(${O})/loading.tsx`]: 'export default function Loading() { return null; }\n',
+      [`app/(dashboard)/${A}/page.tsx`]: `import { gate } from '@/data/access';\nawait gate('${A}');\nimport { AnalyticsView } from '@/views/${A}';\n`,
+      [`src/views/${O}-context.ts`]: 'export function context() {}\n',
+      [`src/views/${A}.tsx`]: `import { analyticsFigures } from '@/data/${A}';\n`,
+      [`src/data/${A}.ts`]: 'export function analyticsFigures() {}\n',
+      'src/views/tools.ts': `import { ${O}Context } from './${O}-context';\nexport const t = { name: '${O}', needs: FEATURES.${O}.needs };\n`,
+      'src/app.config.ts': `export const nav = [\n  { href: '/', label: 'Overview', needs: FEATURES.${O}.needs },\n];\n`,
+      'tests/verify-sample-surfaces.test.ts': "import { sampleSurfaces } from '../scripts/lib/sample.ts';\nexpect(sampleSurfaces(root, 'app')).toEqual({ overview: true, members: true, keys: true, settings: true });\n",
+      [`tests/workspace-${O}.test.tsx`]: `import { OverviewBody } from '@/views/${O}';\n`,
+      'tests/fake.test.ts': `expect(names).toContain('view_${H}');\n`,
+      'scripts/verify.config.ts': `const config = { navigationChecks: [\n    { path: '/${H}', title: 'Operations', readySelector: 'main' },\n  ] };\n`,
+      // A product's own page at the same address is not the sample's, and neither is a test of the walk-through's new shape.
+      [`app/(dashboard)/${H}/page.tsx`]: "import { StatusView } from '@/views/status';\n",
+      'tests/members.test.ts': "import { sampleSurfaces } from '../scripts/lib/sample.ts';\nexpect(sampleSurfaces(root, 'app').members).toBe(true);\n",
+    });
+    expect(byId('sample-pages-renamed').applies(old)).toEqual([
+      `app/(dashboard)/(${O})/loading.tsx`, `app/(dashboard)/(${O})/page.tsx`, `app/(dashboard)/${A}/page.tsx`,
+      'src/app.config.ts', `src/data/${A}.ts`, `src/views/${A}.tsx`, `src/views/${O}-context.ts`, 'src/views/tools.ts',
+      'tests/fake.test.ts', 'tests/verify-sample-surfaces.test.ts', `tests/workspace-${O}.test.tsx`,
+      'scripts/verify.config.ts',
+    ]);
+    const current = project({
+      'app/(dashboard)/(home)/page.tsx': "import { HomeView } from '@/views/home';\n",
+      'src/views/home-context.ts': 'export function homeContext() {}\n',
+      'src/app.config.ts': "export const nav = [\n  { href: '/', label: 'Home', needs: FEATURES.home.needs },\n];\n",
+      'tests/verify-sample-surfaces.test.ts': "expect(sampleSurfaces(root, 'app')).toEqual({ home: true, now: true, members: true, keys: true, settings: true });\n",
+      'scripts/verify.config.ts': "const config = { navigationChecks: [{ path: '/services', title: 'Services' }] };\n",
+    });
+    expect(byId('sample-pages-renamed').applies(current)).toBeNull();
+    // The verify config alone names an address the product may own: without the sample's pages it is not this migration's.
+    expect(byId('sample-pages-renamed').applies(project({ 'scripts/verify.config.ts': `const config = { navigationChecks: [{ path: '/${H}', title: 'Operations' }] };\n` }))).toBeNull();
+    expect(byId('sample-pages-renamed').applies(project({ 'package.json': '{}' }))).toBeNull();
+  });
+});
+
+describe("the consumer smoke's record of the release migrations", () => {
+  // `resolveAll` resolves only the ids `RELEASE_IDS` lists, with the edit `bringReleaseOver` makes for each: a release
+  // migration missing from it is resolved as not applicable, and the origin it applies to fails at finalize.
+  it('names every migration since 0.5.0', () => {
+    const smoke = fs.readFileSync(path.resolve(import.meta.dirname, '../cli/scripts/smoke.ts'), 'utf8');
+    const listed = /^const RELEASE_IDS = \[([^\]]*)\];$/m.exec(smoke)?.[1] ?? '';
+    const ids = new Set([...listed.matchAll(/'([^']+)'/g)].map((m) => m[1]));
+    // `verify-modes` alone is left out: its edit is a flag in a script, and no origin the smoke updates passes one.
+    expect(RELEASE_MIGRATIONS.filter((m) => m.id !== 'verify-modes' && !ids.has(m.id)).map((m) => m.id)).toEqual([]);
   });
 });

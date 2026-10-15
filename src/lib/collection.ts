@@ -22,7 +22,7 @@ export type AggregateQuery = {
 export type AggregateValues = { rows: number; values: Record<string, number | null> };
 export type AggregateResult = {
   total: AggregateValues;                    // over every row the conditions keep
-  groups: (AggregateValues & { key: string })[];
+  groups: (AggregateValues & { key: string | null })[]; // null is the group of the rows with no value in the field
   others: (AggregateValues & { groups: number }) | null; // the groups past `top`, their measures over their own rows
 };
 
@@ -154,10 +154,13 @@ function compare(a: unknown, b: unknown): number {
   return x.length - y.length;
 }
 
-/** A null field matches only `ne`; `gt`/`lt` need the field and the value to be the same kind. */
+/**
+ * A field with no value (null, or not there) matches `ne` of any value but null, and is named by `eq null` or an `in`
+ * list holding null; `gt`/`lt` need the field and the value to be the same kind.
+ */
 function matches(row: Record<string, unknown>, { field, op, value }: Condition): boolean {
   const v = row[field];
-  if (v === null || v === undefined) return op === 'ne';
+  if (v === null || v === undefined) return op === 'ne' ? value !== null : op === 'eq' ? value === null : op === 'in' && Array.isArray(value) && value.includes(null);
   switch (op) {
     case 'eq': return v === value;
     case 'ne': return v !== value;
@@ -282,7 +285,8 @@ const valuesOf = (rows: Record<string, unknown>[], measures: AggregateQuery['mea
 
 /**
  * An aggregate query answered over a list of rows, as `queryRows` answers a query: every condition and the window must
- * hold; a group's key is `String` of its field, or its bucket's key, and only a group a row falls in appears. Groups by a
+ * hold; a group's key is `String` of its field, null for the rows with no value in it, or its bucket's key (a row whose
+ * field is no date is in no bucket), and only a group a row falls in appears. Groups by a
  * field come largest first by the first measure (ties by key), buckets the latest `top` in date order, Monday to Sunday
  * for a weekday; the rest are `others`, their measures over their own rows. A collection that holds its rows answers
  * `aggregate` with this; it checks no names, which `normalizeAggregate` does.
@@ -300,11 +304,17 @@ export function aggregateRows<T extends Record<string, unknown>>(rows: T[], q: A
   if (!group) return { total, groups: [], others: null };
 
   const bucket = 'bucket' in group ? group.bucket : undefined;
-  const keyOf = (r: T) => (bucket ? bucketOf(valueAt(r, group.field), bucket) : String(valueAt(r, group.field)));
+  // undefined is no group: a bucket of a field that holds no date. A field with no value is the group keyed null, never
+  // "null", which a field may really hold.
+  const keyOf = (r: T): string | null | undefined => {
+    const v = valueAt(r, group.field);
+    if (bucket) return bucketOf(v, bucket) ?? undefined;
+    return v === null || v === undefined ? null : String(v);
+  };
   const keyed = kept.map((r) => [keyOf(r), r] as const);
-  const members = new Map<string, T[]>();
+  const members = new Map<string | null, T[]>();
   for (const [key, r] of keyed) {
-    if (key === null) continue;
+    if (key === undefined) continue;
     const list = members.get(key);
     if (list) list.push(r);
     else members.set(key, [r]);
@@ -313,7 +323,7 @@ export function aggregateRows<T extends Record<string, unknown>>(rows: T[], q: A
 
   let shown: typeof all, past: typeof all;
   if (bucket) {
-    all.sort(bucket === 'weekday' ? (a, b) => WEEKDAYS.indexOf(a.key) - WEEKDAYS.indexOf(b.key) : (a, b) => compare(a.key, b.key));
+    all.sort(bucket === 'weekday' ? (a, b) => WEEKDAYS.indexOf(a.key!) - WEEKDAYS.indexOf(b.key!) : (a, b) => compare(a.key, b.key));
     const cut = Math.max(0, all.length - top);
     [past, shown] = [all.slice(0, cut), all.slice(cut)];
   } else {
@@ -328,7 +338,7 @@ export function aggregateRows<T extends Record<string, unknown>>(rows: T[], q: A
   }
   if (!past.length) return { total, groups: shown, others: null };
   const pastKeys = new Set(past.map((g) => g.key));
-  const theirs = keyed.filter(([key]) => key !== null && pastKeys.has(key)).map(([, r]) => r);
+  const theirs = keyed.filter(([key]) => key !== undefined && pastKeys.has(key)).map(([, r]) => r);
   return { total, groups: shown, others: { groups: past.length, ...valuesOf(theirs, measures) } };
 }
 

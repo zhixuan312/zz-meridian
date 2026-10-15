@@ -16,6 +16,7 @@
  *
  * One line per step: `ok`, `FAIL` with what was expected and what was found, or `n/a` with the reason. The last line is
  * `journeys: ` and a JSON summary. Exit 0 when every step passed, 1 when one failed, 2 when no browser can be launched.
+ * The steps run only when this file is the command run; imported, it runs nothing and launches no browser.
  */
 import { launch, type Page } from '../scripts/lib/chrome.ts';
 import config from '../scripts/verify.config.ts';
@@ -239,7 +240,7 @@ async function step(name: string, applies: string | null, run: () => Promise<str
   }
 }
 
-const missing = (...hrefs: string[]) => {
+export const missing = (...hrefs: string[]) => {
   const gone = hrefs.filter((h) => !has(h));
   return gone.length ? `${gone.join(', ')} is not in the navigation` : null;
 };
@@ -264,11 +265,18 @@ const headingOf = (page: Page) => until("the page's heading", () => ask<string>(
 const mainText = (page: Page) => ask<string>(page, `const m = document.querySelector('main'); return m ? text(m) : '';`);
 
 /**
+ * The trail the refresh step walks back along: Requests, Business's home, Main's home. The step needs each of them in the
+ * navigation and nothing else.
+ */
+export const trail = [REQUESTS, W.business.homeHref, HOME];
+
+/**
  * Open one rail destination as a person and report what is wrong with it, or null. A destination the person may open must
  * draw its title as the heading, with the rail naming the entry's workspace and marking the entry current; one the person
- * may not open must draw the page that says they lack access to it by its title.
+ * may not open must draw what the product's `refusal` chooses, as `pnpm verify --as` expects it: under `explain` the page
+ * that says they lack access to it by its title, under `absent` the missing page and no no-access page.
  */
-async function visit(page: Page, who: string, item: (typeof items)[number], may: boolean): Promise<string | null> {
+export async function visit(page: Page, who: string, item: (typeof items)[number], may: boolean): Promise<string | null> {
   const title = titleOf(item.href);
   if (title === undefined) return `${item.href} (${item.label}): no navigation check in scripts/verify.config.ts names its title`;
   try {
@@ -283,6 +291,12 @@ async function visit(page: Page, who: string, item: (typeof items)[number], may:
       await settle(page, who, item.href, item.workspace);
       const heading = await headingOf(page);
       if (!heading.includes(title)) return `${item.href}: expected the heading "${title}"; found "${heading}"`;
+    } else if (config.refusal === 'absent') {
+      const found = await until('the missing page', () => ask<boolean>(page, `return !!document.querySelector('[data-missing-page]');`), 6000).then(() => null, async () => `"${(await mainText(page)).slice(0, 80)}"`);
+      if (found) return `${item.href}: expected the missing page, as the product's refusal is absent; found ${found}`;
+      if (await ask<boolean>(page, `return !!document.querySelector('[data-no-access]');`)) return `${item.href}: expected no no-access page, as the product's refusal is absent; it shows one`;
+      const probe = persona(who).deniedProbe?.[item.href];
+      if (probe && (await ask<boolean>(page, `return document.body.innerText.includes(${JSON.stringify(probe)});`))) return `${item.href}: expected the missing page to hold none of the page's records; it shows "${probe}"`;
     } else {
       const refusal = `You don't have access to ${title}`;
       const found = await until('the refusal', async () => ((await mainText(page)).includes(refusal) ? true : null), 6000).then(() => null, async () => `"${(await mainText(page)).slice(0, 80)}"`);
@@ -301,319 +315,320 @@ async function visit(page: Page, who: string, item: (typeof items)[number], may:
   }
 }
 
-let a: Page;
-try {
-  a = await browser();
-} catch (e) {
-  console.log(`not run: no browser could be launched (${(e as Error).message})`);
-  summary('not run', 0, []);
-  process.exit(2);
-}
+if (import.meta.main) {
+  let a: Page;
+  try {
+    a = await browser();
+  } catch (e) {
+    console.log(`not run: no browser could be launched (${(e as Error).message})`);
+    summary('not run', 0, []);
+    process.exit(2);
+  }
 
-try {
-  await step("Main to a request's own page, with the rail on Business", missing(REQUESTS) ?? (has('/business') ? null : '/business is not in the navigation'), async () => {
-    await go(a, 'member', HOME);
-    await settle(a, 'member', HOME, 'main');
-    // Home's Business card opens the Business home; the rail then names Business and offers Requests.
-    await press(a, { role: 'link', hrefRe: '^/business$', within: '[role="region"][aria-label="Business"]' });
-    await settle(a, 'member', '/business', 'business');
-    await press(a, { role: 'link', name: labelOf(REQUESTS), within: 'nav[aria-label="Main"]' });
-    await settle(a, 'member', REQUESTS, 'business');
-    await press(a, { role: 'link', hrefRe: '^/requests/[^/]+$', within: 'main table tbody' });
-    const at = await settle(a, 'member', /^\/requests\/[^/]+$/, 'business');
-    return `(${at})`;
-  }, () => [a]);
+  try {
+    await step("Main to a request's own page, with the rail on Business", missing(REQUESTS) ?? (has('/business') ? null : '/business is not in the navigation'), async () => {
+      await go(a, 'member', HOME);
+      await settle(a, 'member', HOME, 'main');
+      // Home's Business card opens the Business home; the rail then names Business and offers Requests.
+      await press(a, { role: 'link', hrefRe: '^/business$', within: '[role="region"][aria-label="Business"]' });
+      await settle(a, 'member', '/business', 'business');
+      await press(a, { role: 'link', name: labelOf(REQUESTS), within: 'nav[aria-label="Main"]' });
+      await settle(a, 'member', REQUESTS, 'business');
+      await press(a, { role: 'link', hrefRe: '^/requests/[^/]+$', within: 'main table tbody' });
+      const at = await settle(a, 'member', /^\/requests\/[^/]+$/, 'business');
+      return `(${at})`;
+    }, () => [a]);
 
-  await step("the rail's menu opens Engineering: its address, its name and its entries", null, async () => {
-    await go(a, 'member', HOME);
-    await settle(a, 'member', HOME, 'main');
-    await choose(a, 'engineering');
-    await settle(a, 'member', W.engineering.homeHref, 'engineering');
-  }, () => [a]);
+    await step("the rail's menu opens Engineering: its address, its name and its entries", null, async () => {
+      await go(a, 'member', HOME);
+      await settle(a, 'member', HOME, 'main');
+      await choose(a, 'engineering');
+      await settle(a, 'member', W.engineering.homeHref, 'engineering');
+    }, () => [a]);
 
-  await step("a ticket created in Engineering raises Main's open count", missing(TICKETS, '/'), async () => {
-    const title = `Journey ticket ${Date.now().toString(36)}`;
-    const openCount = (page: Page) => ask<number | null>(page, `
-      const reg = document.querySelector('[role="region"][aria-label="Engineering"]'); if (!reg) return null;
-      const row = [...reg.querySelectorAll('dl > div')].find((r) => text(r.querySelector('dt')) === 'Tickets open');
-      const n = row ? Number(text(row.querySelector('dd'))) : NaN;
-      return Number.isFinite(n) ? n : null;`);
-    await go(a, 'member', HOME);
-    await settle(a, 'member', HOME, 'main');
-    const before = await until("Main's open ticket count", async () => (await openCount(a)) ?? undefined);
-    await choose(a, 'engineering');
-    await settle(a, 'member', W.engineering.homeHref, 'engineering');
-    await press(a, { role: 'link', name: labelOf(TICKETS), within: 'nav[aria-label="Main"]' });
-    await settle(a, 'member', TICKETS, 'engineering');
-    await press(a, { role: 'button', name: 'New ticket' });
-    const titleField: Spec = { role: 'textbox', re: '^Title', within: '[role="dialog"]' };
-    await press(a, titleField);
-    await type(a, title);
-    await press(a, { role: 'button', name: 'Create ticket', within: '[role="dialog"]' });
-    // The form closes when the ticket exists; a refusal stays in it, and is the failure.
-    await until('the new ticket to be created', async () => {
-      const state = await ask<string>(a, `
-        const d = document.querySelector('[role="dialog"]');
-        if (!d) return 'closed';
-        return /Ticket not created/.test(text(d)) ? 'refused: ' + text(d).slice(0, 200) : 'open';`);
-      if (state.startsWith('refused')) throw new Error(`the ticket was refused (${state})`);
-      return state === 'closed';
-    }).catch((e) => { throw new Error(`expected the member's ticket to be created; ${(e as Error).message}`); });
-    await until('the new ticket in the table', () => ask<boolean>(a, `return text(document.querySelector('main')).includes(${JSON.stringify(title)});`));
-    await choose(a, 'main');
-    await settle(a, 'member', HOME, 'main');
-    let after: number | null = null;
-    const end = Date.now() + 15000;
-    while (Date.now() < end) {
-      after = await openCount(a);
-      if (after !== null && after >= before + 1) break;
-      await sleep(250);
-    }
-    if (after === null || after < 1) throw new Error(`expected Main to count the new ticket among its open tickets; found ${after} (read ${before} just before it was created)`);
-    // The presses share this server and move tickets along while this runs, so a count that did not grow by one is not a
-    // defect when the ticket itself is counted: the line says which of the two was seen.
-    if (after < before + 1) return `(${before} -> ${after}, beside another writer)`;
-    return `(${before} -> ${after})`;
-  }, () => [a]);
-
-  await step('a refresh, then Back and Forward, each leave the rail on the address\'s workspace', missing(REQUESTS, '/usage'), async () => {
-    await go(a, 'member', HOME);
-    await settle(a, 'member', HOME, 'main');
-    await choose(a, 'business');
-    await settle(a, 'member', W.business.homeHref, 'business');
-    await press(a, { role: 'link', name: labelOf(REQUESTS), within: 'nav[aria-label="Main"]' });
-    await settle(a, 'member', REQUESTS, 'business');
-    await press(a, { role: 'link', hrefRe: '^/requests/[^/]+$', within: 'main table tbody' });
-    const request = await settle(a, 'member', /^\/requests\/[^/]+$/, 'business');
-    // A refresh: the page is marked first, so that only the new document can satisfy the wait.
-    await a.eval('window.__before = true');
-    await a.send('Page.reload');
-    await until('the page to reload', () => a.eval<boolean>('window.__before === undefined && document.readyState !== "loading"'));
-    await settle(a, 'member', request, 'business');
-    const trail = [REQUESTS, W.business.homeHref, HOME];
-    for (const path of trail) {
-      await a.eval('history.back()');
-      await settle(a, 'member', path);
-    }
-    for (const path of [...trail].reverse().slice(1).concat(request)) {
-      await a.eval('history.forward()');
-      await settle(a, 'member', path);
-    }
-  }, () => [a]);
-
-  await step('a second, independent browser on another workspace is unaffected', null, async () => {
-    const b = await browser();
-    await go(a, 'member', W.engineering.homeHref);
-    await go(b, 'member', W.business.homeHref);
-    await settle(a, 'member', W.engineering.homeHref, 'engineering');
-    await settle(b, 'member', W.business.homeHref, 'business');
-    await choose(a, 'main');
-    await settle(a, 'member', HOME, 'main');
-    await settle(b, 'member', W.business.homeHref, 'business');
-    await choose(b, 'engineering');
-    await settle(b, 'member', W.engineering.homeHref, 'engineering');
-    await settle(a, 'member', HOME, 'main');
-    quiet(b, 'the second browser');
-  }, () => [a]);
-
-  await step("a request's address opened directly lands in Business", detail ? missing(REQUESTS) : 'verify.config.ts names no request detail route', async () => {
-    await go(a, 'member', detail!);
-    await settle(a, 'member', detail!, 'business');
-    const heading = await until('the page\'s heading', () => ask<string>(a, `const h = document.querySelector('main h1, h1'); return h ? text(h) : '';`));
-    return `("${heading}")`;
-  }, () => [a]);
-
-  await step('the Atlas leads back to Main and into each workspace', ATLAS ? null : 'no entry under /system is configured, so this product has no Atlas', async () => {
-    const shelf = 'nav[aria-label="Workspaces"]';
-    const inAtlas = () => until('the Atlas\'s workspace links', () => ask<boolean>(a, `return location.pathname.startsWith('/system') && !!document.querySelector(${JSON.stringify(shelf)});`));
-    await go(a, 'member', HOME);
-    await settle(a, 'member', HOME, 'main');
-    await press(a, { role: 'link', name: labelOf(ATLAS!), within: 'nav[aria-label="Main"]' });
-    await inAtlas();
-    await press(a, { role: 'link', name: `Back to ${W.main.label}`, within: shelf });
-    await settle(a, 'member', HOME, 'main');
-    for (const id of IDS.filter((x) => x !== 'main')) {
-      await go(a, 'member', ATLAS!);
-      await inAtlas();
-      await press(a, { role: 'link', name: W[id].label, within: shelf });
-      await settle(a, 'member', W[id].homeHref, id);
-    }
-  }, () => [a]);
-
-  await step('choosing the workspace already in view changes nothing', missing(TICKETS), async () => {
-    const at = `${TICKETS}?state=open`;
-    await go(a, 'member', at);
-    await settle(a, 'member', TICKETS, 'engineering');
-    await until('the table', () => ask<boolean>(a, `return document.querySelectorAll('main table tbody tr').length > 0;`));
-    const read = () => ask<{ where: string; entries: number; rows: number }>(a, `return { where: location.pathname + location.search, entries: history.length, rows: document.querySelectorAll('main table tbody tr').length };`);
-    const before = await read();
-    await choose(a, 'engineering');
-    await until('the menu to close', () => ask<boolean>(a, `return !document.querySelector('[role="menu"]');`));
-    // Nothing happens, which only a stretch of looking can show: the address and the history must stay as they were throughout.
-    for (const end = Date.now() + 1500; Date.now() < end; await sleep(150)) {
-      const now = await read();
-      if (now.where !== before.where || now.entries !== before.entries || now.rows !== before.rows) throw new Error(`expected ${JSON.stringify(before)} unchanged; found ${JSON.stringify(now)}`);
-    }
-    await settle(a, 'member', TICKETS, 'engineering');
-    return `(${before.where})`;
-  }, () => [a]);
-
-  await step('an unsaved change in Settings asks before another workspace is opened', missing(SETTINGS), async () => {
-    const other = IDS.find((x) => x !== 'main')!;
-    const field: Spec = { role: 'textbox', name: 'Name' };
-    const dialog: Spec = { role: 'dialog', re: 'Leave without saving' };
-    await go(a, 'owner', SETTINGS);
-    await settle(a, 'owner', SETTINGS, 'main');
-    const original = await until('the Workspace name field', () => ask<string | null>(a, `const el = find(${JSON.stringify(field)})[0]; return el ? el.value : null;`));
-    await press(a, field);
-    await key(a, 'End', 'End', 35);
-    const typed = ' edited';
-    await type(a, typed);
-    const edited = original + typed;
-    const valueNow = () => ask<string | null>(a, `const el = find(${JSON.stringify(field)})[0]; return el ? el.value : null;`);
-    await until('the typed value', async () => (await valueNow()) === edited);
-    await until('the save bar', () => centre(a, { role: 'button', name: 'Save changes' }));
-    const question = () => until('the question "Leave without saving?"', () => centre(a, dialog)).catch(() => { throw new Error(`expected the question "Leave without saving?" after choosing ${W[other].label} with an unsaved change; found none`); });
-    // Staying changes nothing.
-    await choose(a, other);
-    await question();
-    await press(a, { role: 'button', name: 'Stay', within: '[role="dialog"]' });
-    await until('the question to close', async () => !(await centre(a, dialog)));
-    const stayed = await railOf(a);
-    const value = await valueNow();
-    if (stayed.path !== SETTINGS || value !== edited || railWorkspace(stayed) !== W.main.label) {
-      throw new Error(`expected to stay at ${SETTINGS} with "${edited}" and the rail on ${W.main.label}; found ${stayed.path} with "${value}" and the rail on ${railWorkspace(stayed)}`);
-    }
-    // Leaving arrives at the chosen workspace's home.
-    await choose(a, other);
-    await question();
-    await press(a, { role: 'button', name: 'Leave', within: '[role="dialog"]' });
-    await settle(a, 'owner', W[other].homeHref, other);
-  }, () => [a]);
-
-  await step('a navigation that cannot complete leaves the rail where the address is', null, async () => {
-    const c = await browser();
-    const target = W.engineering.homeHref;
-    // Every request for the destination is held, none is answered: the browser is put in the state of a navigation that
-    // has not arrived. The hold is set before the first page opens so that nothing for the destination is already cached.
-    await c.send('Fetch.enable', { patterns: [{ urlPattern: `*${target}*`, requestStage: 'Request' }] });
-    await go(c, 'member', HOME);
-    await settle(c, 'member', HOME, 'main');
-    await choose(c, 'engineering');
-    await until('the menu to close', () => ask<boolean>(c, `return !document.querySelector('[role="menu"]');`));
-    for (const end = Date.now() + 2500; Date.now() < end; await sleep(200)) {
-      const r = await railOf(c);
-      if (r.path !== HOME || railWorkspace(r) !== W.main.label) {
-        throw new Error(`expected the address ${HOME} and the rail on ${W.main.label} while ${target} has not arrived; found ${r.path} with the rail on ${railWorkspace(r)}`);
+    await step("a ticket created in Engineering raises Main's open count", missing(TICKETS, '/'), async () => {
+      const title = `Journey ticket ${Date.now().toString(36)}`;
+      const openCount = (page: Page) => ask<number | null>(page, `
+        const reg = document.querySelector('[role="region"][aria-label="Engineering"]'); if (!reg) return null;
+        const row = [...reg.querySelectorAll('dl > div')].find((r) => text(r.querySelector('dt')) === 'Tickets open');
+        const n = row ? Number(text(row.querySelector('dd'))) : NaN;
+        return Number.isFinite(n) ? n : null;`);
+      await go(a, 'member', HOME);
+      await settle(a, 'member', HOME, 'main');
+      const before = await until("Main's open ticket count", async () => (await openCount(a)) ?? undefined);
+      await choose(a, 'engineering');
+      await settle(a, 'member', W.engineering.homeHref, 'engineering');
+      await press(a, { role: 'link', name: labelOf(TICKETS), within: 'nav[aria-label="Main"]' });
+      await settle(a, 'member', TICKETS, 'engineering');
+      await press(a, { role: 'button', name: 'New ticket' });
+      const titleField: Spec = { role: 'textbox', re: '^Title', within: '[role="dialog"]' };
+      await press(a, titleField);
+      await type(a, title);
+      await press(a, { role: 'button', name: 'Create ticket', within: '[role="dialog"]' });
+      // The form closes when the ticket exists; a refusal stays in it, and is the failure.
+      await until('the new ticket to be created', async () => {
+        const state = await ask<string>(a, `
+          const d = document.querySelector('[role="dialog"]');
+          if (!d) return 'closed';
+          return /Ticket not created/.test(text(d)) ? 'refused: ' + text(d).slice(0, 200) : 'open';`);
+        if (state.startsWith('refused')) throw new Error(`the ticket was refused (${state})`);
+        return state === 'closed';
+      }).catch((e) => { throw new Error(`expected the member's ticket to be created; ${(e as Error).message}`); });
+      await until('the new ticket in the table', () => ask<boolean>(a, `return text(document.querySelector('main')).includes(${JSON.stringify(title)});`));
+      await choose(a, 'main');
+      await settle(a, 'member', HOME, 'main');
+      let after: number | null = null;
+      const end = Date.now() + 15000;
+      while (Date.now() < end) {
+        after = await openCount(a);
+        if (after !== null && after >= before + 1) break;
+        await sleep(250);
       }
-    }
-    await settle(c, 'member', HOME, 'main');
-    quiet(c, 'the held navigation');
-    // Let it through: the destination arrives, and address and rail agree on it.
-    await c.send('Fetch.disable');
-    const arrived = await until('the held navigation to arrive', async () => (await railOf(c)).path === target).then(() => true, () => false);
-    if (arrived) {
-      await settle(c, 'member', target, 'engineering');
-      return '(held, then released: arrived and the rail followed)';
-    }
-    return '(held; the release did not resume it, so only the held half was observed)';
-  });
+      if (after === null || after < 1) throw new Error(`expected Main to count the new ticket among its open tickets; found ${after} (read ${before} just before it was created)`);
+      // The presses share this server and move tickets along while this runs, so a count that did not grow by one is not a
+      // defect when the ticket itself is counted: the line says which of the two was seen.
+      if (after < before + 1) return `(${before} -> ${after}, beside another writer)`;
+      return `(${before} -> ${after})`;
+    }, () => [a]);
 
-  await step('a Viewer is offered all three workspaces and enters each', null, async () => {
-    await go(a, 'viewer', HOME);
-    await settle(a, 'viewer', HOME, 'main');
-    await press(a, { role: 'button', re: `${MENU_END}$` });
-    const offered = await until('the workspace menu', async () => {
-      const labels = await ask<string[]>(a, `return find({ role: 'menuitemradio' }).map(nameOf);`);
-      return labels.length ? labels : null;
+    await step('a refresh, then Back and Forward, each leave the rail on the address\'s workspace', missing(...trail), async () => {
+      await go(a, 'member', HOME);
+      await settle(a, 'member', HOME, 'main');
+      await choose(a, 'business');
+      await settle(a, 'member', W.business.homeHref, 'business');
+      await press(a, { role: 'link', name: labelOf(REQUESTS), within: 'nav[aria-label="Main"]' });
+      await settle(a, 'member', REQUESTS, 'business');
+      await press(a, { role: 'link', hrefRe: '^/requests/[^/]+$', within: 'main table tbody' });
+      const request = await settle(a, 'member', /^\/requests\/[^/]+$/, 'business');
+      // A refresh: the page is marked first, so that only the new document can satisfy the wait.
+      await a.eval('window.__before = true');
+      await a.send('Page.reload');
+      await until('the page to reload', () => a.eval<boolean>('window.__before === undefined && document.readyState !== "loading"'));
+      await settle(a, 'member', request, 'business');
+      for (const path of trail) {
+        await a.eval('history.back()');
+        await settle(a, 'member', path);
+      }
+      for (const path of [...trail].reverse().slice(1).concat(request)) {
+        await a.eval('history.forward()');
+        await settle(a, 'member', path);
+      }
+    }, () => [a]);
+
+    await step('a second, independent browser on another workspace is unaffected', null, async () => {
+      const b = await browser();
+      await go(a, 'member', W.engineering.homeHref);
+      await go(b, 'member', W.business.homeHref);
+      await settle(a, 'member', W.engineering.homeHref, 'engineering');
+      await settle(b, 'member', W.business.homeHref, 'business');
+      await choose(a, 'main');
+      await settle(a, 'member', HOME, 'main');
+      await settle(b, 'member', W.business.homeHref, 'business');
+      await choose(b, 'engineering');
+      await settle(b, 'member', W.engineering.homeHref, 'engineering');
+      await settle(a, 'member', HOME, 'main');
+      quiet(b, 'the second browser');
+    }, () => [a]);
+
+    await step("a request's address opened directly lands in Business", detail ? missing(REQUESTS) : 'verify.config.ts names no request detail route', async () => {
+      await go(a, 'member', detail!);
+      await settle(a, 'member', detail!, 'business');
+      const heading = await until('the page\'s heading', () => ask<string>(a, `const h = document.querySelector('main h1, h1'); return h ? text(h) : '';`));
+      return `("${heading}")`;
+    }, () => [a]);
+
+    await step('the Atlas leads back to Main and into each workspace', ATLAS ? null : 'no entry under /system is configured, so this product has no Atlas', async () => {
+      const shelf = 'nav[aria-label="Workspaces"]';
+      const inAtlas = () => until('the Atlas\'s workspace links', () => ask<boolean>(a, `return location.pathname.startsWith('/system') && !!document.querySelector(${JSON.stringify(shelf)});`));
+      await go(a, 'member', HOME);
+      await settle(a, 'member', HOME, 'main');
+      await press(a, { role: 'link', name: labelOf(ATLAS!), within: 'nav[aria-label="Main"]' });
+      await inAtlas();
+      await press(a, { role: 'link', name: `Back to ${W.main.label}`, within: shelf });
+      await settle(a, 'member', HOME, 'main');
+      for (const id of IDS.filter((x) => x !== 'main')) {
+        await go(a, 'member', ATLAS!);
+        await inAtlas();
+        await press(a, { role: 'link', name: W[id].label, within: shelf });
+        await settle(a, 'member', W[id].homeHref, id);
+      }
+    }, () => [a]);
+
+    await step('choosing the workspace already in view changes nothing', missing(TICKETS), async () => {
+      const at = `${TICKETS}?state=open`;
+      await go(a, 'member', at);
+      await settle(a, 'member', TICKETS, 'engineering');
+      await until('the table', () => ask<boolean>(a, `return document.querySelectorAll('main table tbody tr').length > 0;`));
+      const read = () => ask<{ where: string; entries: number; rows: number }>(a, `return { where: location.pathname + location.search, entries: history.length, rows: document.querySelectorAll('main table tbody tr').length };`);
+      const before = await read();
+      await choose(a, 'engineering');
+      await until('the menu to close', () => ask<boolean>(a, `return !document.querySelector('[role="menu"]');`));
+      // Nothing happens, which only a stretch of looking can show: the address and the history must stay as they were throughout.
+      for (const end = Date.now() + 1500; Date.now() < end; await sleep(150)) {
+        const now = await read();
+        if (now.where !== before.where || now.entries !== before.entries || now.rows !== before.rows) throw new Error(`expected ${JSON.stringify(before)} unchanged; found ${JSON.stringify(now)}`);
+      }
+      await settle(a, 'member', TICKETS, 'engineering');
+      return `(${before.where})`;
+    }, () => [a]);
+
+    await step('an unsaved change in Settings asks before another workspace is opened', missing(SETTINGS), async () => {
+      const other = IDS.find((x) => x !== 'main')!;
+      const field: Spec = { role: 'textbox', name: 'Name' };
+      const dialog: Spec = { role: 'dialog', re: 'Leave without saving' };
+      await go(a, 'owner', SETTINGS);
+      await settle(a, 'owner', SETTINGS, 'main');
+      const original = await until('the Workspace name field', () => ask<string | null>(a, `const el = find(${JSON.stringify(field)})[0]; return el ? el.value : null;`));
+      await press(a, field);
+      await key(a, 'End', 'End', 35);
+      const typed = ' edited';
+      await type(a, typed);
+      const edited = original + typed;
+      const valueNow = () => ask<string | null>(a, `const el = find(${JSON.stringify(field)})[0]; return el ? el.value : null;`);
+      await until('the typed value', async () => (await valueNow()) === edited);
+      await until('the save bar', () => centre(a, { role: 'button', name: 'Save changes' }));
+      const question = () => until('the question "Leave without saving?"', () => centre(a, dialog)).catch(() => { throw new Error(`expected the question "Leave without saving?" after choosing ${W[other].label} with an unsaved change; found none`); });
+      // Staying changes nothing.
+      await choose(a, other);
+      await question();
+      await press(a, { role: 'button', name: 'Stay', within: '[role="dialog"]' });
+      await until('the question to close', async () => !(await centre(a, dialog)));
+      const stayed = await railOf(a);
+      const value = await valueNow();
+      if (stayed.path !== SETTINGS || value !== edited || railWorkspace(stayed) !== W.main.label) {
+        throw new Error(`expected to stay at ${SETTINGS} with "${edited}" and the rail on ${W.main.label}; found ${stayed.path} with "${value}" and the rail on ${railWorkspace(stayed)}`);
+      }
+      // Leaving arrives at the chosen workspace's home.
+      await choose(a, other);
+      await question();
+      await press(a, { role: 'button', name: 'Leave', within: '[role="dialog"]' });
+      await settle(a, 'owner', W[other].homeHref, other);
+    }, () => [a]);
+
+    await step('a navigation that cannot complete leaves the rail where the address is', null, async () => {
+      const c = await browser();
+      const target = W.engineering.homeHref;
+      // Every request for the destination is held, none is answered: the browser is put in the state of a navigation that
+      // has not arrived. The hold is set before the first page opens so that nothing for the destination is already cached.
+      await c.send('Fetch.enable', { patterns: [{ urlPattern: `*${target}*`, requestStage: 'Request' }] });
+      await go(c, 'member', HOME);
+      await settle(c, 'member', HOME, 'main');
+      await choose(c, 'engineering');
+      await until('the menu to close', () => ask<boolean>(c, `return !document.querySelector('[role="menu"]');`));
+      for (const end = Date.now() + 2500; Date.now() < end; await sleep(200)) {
+        const r = await railOf(c);
+        if (r.path !== HOME || railWorkspace(r) !== W.main.label) {
+          throw new Error(`expected the address ${HOME} and the rail on ${W.main.label} while ${target} has not arrived; found ${r.path} with the rail on ${railWorkspace(r)}`);
+        }
+      }
+      await settle(c, 'member', HOME, 'main');
+      quiet(c, 'the held navigation');
+      // Let it through: the destination arrives, and address and rail agree on it.
+      await c.send('Fetch.disable');
+      const arrived = await until('the held navigation to arrive', async () => (await railOf(c)).path === target).then(() => true, () => false);
+      if (arrived) {
+        await settle(c, 'member', target, 'engineering');
+        return '(held, then released: arrived and the rail followed)';
+      }
+      return '(held; the release did not resume it, so only the held half was observed)';
     });
-    const want = IDS.map((id) => W[id].label);
-    if (want.some((l) => !offered.includes(l))) throw new Error(`expected the menu to offer ${want.join(', ')}; found ${offered.join(', ')}`);
-    await press(a, { role: 'menuitemradio', name: W.business.label });
-    await settle(a, 'viewer', W.business.homeHref, 'business');
-    await choose(a, 'engineering');
-    await settle(a, 'viewer', W.engineering.homeHref, 'engineering');
-    await choose(a, 'main');
-    await settle(a, 'viewer', HOME, 'main');
-  }, () => [a]);
 
-  await step('a Viewer finds no way to create or move a ticket', missing(TICKETS), async () => {
-    await go(a, 'viewer', HOME);
-    await settle(a, 'viewer', HOME, 'main');
-    await choose(a, 'engineering');
-    await settle(a, 'viewer', W.engineering.homeHref, 'engineering');
-    await press(a, { role: 'link', name: labelOf(TICKETS), within: 'nav[aria-label="Main"]' });
-    await settle(a, 'viewer', TICKETS, 'engineering');
-    await until('the tickets table', () => ask<boolean>(a, `return document.querySelectorAll('main table tbody tr').length > 0;`));
-    const writes = await ask<string[]>(a, `return [...find({ role: 'button', name: 'New ticket' }), ...find({ role: 'button', re: '^Change state of ' })].map(nameOf);`);
-    if (writes.length) throw new Error(`expected no control to create or move a ticket; found ${writes.slice(0, 3).join(', ')}`);
-  }, () => [a]);
+    await step('a Viewer is offered all three workspaces and enters each', null, async () => {
+      await go(a, 'viewer', HOME);
+      await settle(a, 'viewer', HOME, 'main');
+      await press(a, { role: 'button', re: `${MENU_END}$` });
+      const offered = await until('the workspace menu', async () => {
+        const labels = await ask<string[]>(a, `return find({ role: 'menuitemradio' }).map(nameOf);`);
+        return labels.length ? labels : null;
+      });
+      const want = IDS.map((id) => W[id].label);
+      if (want.some((l) => !offered.includes(l))) throw new Error(`expected the menu to offer ${want.join(', ')}; found ${offered.join(', ')}`);
+      await press(a, { role: 'menuitemradio', name: W.business.label });
+      await settle(a, 'viewer', W.business.homeHref, 'business');
+      await choose(a, 'engineering');
+      await settle(a, 'viewer', W.engineering.homeHref, 'engineering');
+      await choose(a, 'main');
+      await settle(a, 'viewer', HOME, 'main');
+    }, () => [a]);
 
-  await step('a Viewer on Members is told, holds none of its records, and is given a way out', missing(MEMBERS), async () => {
-    const probe = persona('viewer').deniedProbe?.[MEMBERS];
-    await go(a, 'viewer', MEMBERS);
-    const out = await until('the refusal\'s way out', () => ask<{ href: string; name: string } | null>(a, `
-      const el = find({ role: 'link', re: '^Go to ' , within: 'main' })[0];
-      return el ? { href: el.getAttribute('href'), name: nameOf(el) } : null;`));
-    if (probe && (await ask<boolean>(a, `return document.body.innerText.includes(${JSON.stringify(probe)});`))) throw new Error(`expected the refused page to hold none of the member list; it shows "${probe}"`);
-    await press(a, { role: 'link', name: out.name, within: 'main' });
-    const landed = await until('the way out to be followed', async () => { const r = await railOf(a); return r.path !== MEMBERS ? r.path : null; });
-    if (ownerOf(landed) !== ownerOf(MEMBERS)) throw new Error(`expected "${out.name}" to stay in ${W[ownerOf(MEMBERS) ?? 'main'].label}; found ${landed}`);
-    await settle(a, 'viewer', landed);
-    return `("${out.name}" -> ${landed})`;
-  }, () => [a]);
+    await step('a Viewer finds no way to create or move a ticket', missing(TICKETS), async () => {
+      await go(a, 'viewer', HOME);
+      await settle(a, 'viewer', HOME, 'main');
+      await choose(a, 'engineering');
+      await settle(a, 'viewer', W.engineering.homeHref, 'engineering');
+      await press(a, { role: 'link', name: labelOf(TICKETS), within: 'nav[aria-label="Main"]' });
+      await settle(a, 'viewer', TICKETS, 'engineering');
+      await until('the tickets table', () => ask<boolean>(a, `return document.querySelectorAll('main table tbody tr').length > 0;`));
+      const writes = await ask<string[]>(a, `return [...find({ role: 'button', name: 'New ticket' }), ...find({ role: 'button', re: '^Change state of ' })].map(nameOf);`);
+      if (writes.length) throw new Error(`expected no control to create or move a ticket; found ${writes.slice(0, 3).join(', ')}`);
+    }, () => [a]);
 
-  await step('an Owner opens every destination under its name', config.navigationChecks ? null : 'verify.config.ts declares no navigation checks', async () => {
-    const wrong: string[] = [];
-    for (const item of items) {
-      const why = await visit(a, 'owner', item, true);
-      if (why) wrong.push(why);
-    }
-    if (wrong.length) throw new Error(`expected each of the ${items.length} rail destinations to open under the title its navigation check names, in its workspace, current in the rail; found ${wrong.length} that do not: ${wrong.join('; ')}`);
-    return `(${items.length} destinations)`;
-  });
+    await step('a Viewer on Members is told, holds none of its records, and is given a way out', missing(MEMBERS), async () => {
+      const probe = persona('viewer').deniedProbe?.[MEMBERS];
+      await go(a, 'viewer', MEMBERS);
+      const out = await until('the refusal\'s way out', () => ask<{ href: string; name: string } | null>(a, `
+        const el = find({ role: 'link', re: '^Go to ' , within: 'main' })[0];
+        return el ? { href: el.getAttribute('href'), name: nameOf(el) } : null;`));
+      if (probe && (await ask<boolean>(a, `return document.body.innerText.includes(${JSON.stringify(probe)});`))) throw new Error(`expected the refused page to hold none of the member list; it shows "${probe}"`);
+      await press(a, { role: 'link', name: out.name, within: 'main' });
+      const landed = await until('the way out to be followed', async () => { const r = await railOf(a); return r.path !== MEMBERS ? r.path : null; });
+      if (ownerOf(landed) !== ownerOf(MEMBERS)) throw new Error(`expected "${out.name}" to stay in ${W[ownerOf(MEMBERS) ?? 'main'].label}; found ${landed}`);
+      await settle(a, 'viewer', landed);
+      return `("${out.name}" -> ${landed})`;
+    }, () => [a]);
 
-  await step('a Viewer opens what a Viewer may and is refused the rest by name', config.navigationChecks ? null : 'verify.config.ts declares no navigation checks', async () => {
-    const may = routesOf('viewer');
-    const wrong: string[] = [];
-    for (const item of items) {
-      const why = await visit(a, 'viewer', item, may.includes(item.href));
-      if (why) wrong.push(why);
-    }
-    if (wrong.length) throw new Error(`expected a Viewer to open ${may.length} destinations and be refused the other ${items.length - may.length} by title; found ${wrong.length} that differ: ${wrong.join('; ')}`);
-    return `(${may.length} opened, ${items.length - may.length} refused)`;
-  });
+    await step('an Owner opens every destination under its name', config.navigationChecks ? null : 'verify.config.ts declares no navigation checks', async () => {
+      const wrong: string[] = [];
+      for (const item of items) {
+        const why = await visit(a, 'owner', item, true);
+        if (why) wrong.push(why);
+      }
+      if (wrong.length) throw new Error(`expected each of the ${items.length} rail destinations to open under the title its navigation check names, in its workspace, current in the rail; found ${wrong.length} that do not: ${wrong.join('; ')}`);
+      return `(${items.length} destinations)`;
+    });
 
-  await step("a customer's page opens from the list, and an unknown customer is a missing record", missing(CUSTOMERS) ?? (knownCustomers.length && unknownCustomer ? null : 'verify.config.ts names no customer detail route, or no missing one'), async () => {
-    const [listed, ...others] = knownCustomers;
-    await go(a, 'owner', CUSTOMERS);
-    await settle(a, 'owner', CUSTOMERS, 'business');
-    const row: Spec = { role: 'link', hrefRe: `^${listed}$`, within: 'main table tbody' };
-    const name = await until(`the row of ${listed}`, () => ask<string | null>(a, `const el = find(${JSON.stringify(row)})[0]; return el ? nameOf(el) : null;`));
-    await press(a, row);
-    await settle(a, 'owner', listed, 'business');
-    const heading = await headingOf(a);
-    const id = listed.slice(CUSTOMERS.length + 1);
-    if (!slug(name).includes(id) || !slug(heading).startsWith(id)) throw new Error(`expected the row "${name}" to open the page of ${id}; found a page headed "${heading}"`);
-    const seen = [`${listed} "${heading}"`];
-    for (const route of others) {
-      await go(a, 'owner', route);
-      await settle(a, 'owner', route, 'business');
-      const h = await headingOf(a);
-      if (!slug(h).startsWith(route.slice(CUSTOMERS.length + 1))) throw new Error(`expected ${route} to open the page of ${route.slice(CUSTOMERS.length + 1)}; found a page headed "${h}"`);
-      if (/404 · Not found/.test(await mainText(a))) throw new Error(`expected ${route} to open a customer's page; found the missing-record screen`);
-      seen.push(`${route} "${h}"`);
-    }
-    await go(a, 'owner', unknownCustomer!);
-    await settle(a, 'owner', unknownCustomer!, 'business');
-    const body = await mainText(a);
-    if (!/404 · Not found/.test(body)) throw new Error(`expected ${unknownCustomer} to draw the missing-record screen inside the shell; found "${body.slice(0, 100)}"`);
-    return `(${seen.join(', ')}; ${unknownCustomer} is a missing record)`;
-  }, () => [a]);
-} finally {
-  for (const p of opened) p.close();
+    await step(`a Viewer opens what a Viewer may and is refused the rest ${config.refusal === 'absent' ? 'as a missing page' : 'by name'}`, config.navigationChecks ? null : 'verify.config.ts declares no navigation checks', async () => {
+      const may = routesOf('viewer');
+      const wrong: string[] = [];
+      for (const item of items) {
+        const why = await visit(a, 'viewer', item, may.includes(item.href));
+        if (why) wrong.push(why);
+      }
+      if (wrong.length) throw new Error(`expected a Viewer to open ${may.length} destinations and be refused the other ${items.length - may.length} ${config.refusal === 'absent' ? 'as a missing page' : 'by title'}; found ${wrong.length} that differ: ${wrong.join('; ')}`);
+      return `(${may.length} opened, ${items.length - may.length} refused)`;
+    });
+
+    await step("a customer's page opens from the list, and an unknown customer is a missing record", missing(CUSTOMERS) ?? (knownCustomers.length && unknownCustomer ? null : 'verify.config.ts names no customer detail route, or no missing one'), async () => {
+      const [listed, ...others] = knownCustomers;
+      await go(a, 'owner', CUSTOMERS);
+      await settle(a, 'owner', CUSTOMERS, 'business');
+      const row: Spec = { role: 'link', hrefRe: `^${listed}$`, within: 'main table tbody' };
+      const name = await until(`the row of ${listed}`, () => ask<string | null>(a, `const el = find(${JSON.stringify(row)})[0]; return el ? nameOf(el) : null;`));
+      await press(a, row);
+      await settle(a, 'owner', listed, 'business');
+      const heading = await headingOf(a);
+      const id = listed.slice(CUSTOMERS.length + 1);
+      if (!slug(name).includes(id) || !slug(heading).startsWith(id)) throw new Error(`expected the row "${name}" to open the page of ${id}; found a page headed "${heading}"`);
+      const seen = [`${listed} "${heading}"`];
+      for (const route of others) {
+        await go(a, 'owner', route);
+        await settle(a, 'owner', route, 'business');
+        const h = await headingOf(a);
+        if (!slug(h).startsWith(route.slice(CUSTOMERS.length + 1))) throw new Error(`expected ${route} to open the page of ${route.slice(CUSTOMERS.length + 1)}; found a page headed "${h}"`);
+        if (/404 · Not found/.test(await mainText(a))) throw new Error(`expected ${route} to open a customer's page; found the missing-record screen`);
+        seen.push(`${route} "${h}"`);
+      }
+      await go(a, 'owner', unknownCustomer!);
+      await settle(a, 'owner', unknownCustomer!, 'business');
+      const body = await mainText(a);
+      if (!/404 · Not found/.test(body)) throw new Error(`expected ${unknownCustomer} to draw the missing-record screen inside the shell; found "${body.slice(0, 100)}"`);
+      return `(${seen.join(', ')}; ${unknownCustomer} is a missing record)`;
+    }, () => [a]);
+  } finally {
+    for (const p of opened) p.close();
+  }
+
+  const failed = results.filter((r) => r.status === 'FAIL').map((r) => r.name);
+  summary(failed.length ? 'failed' : 'ok', results.filter((r) => r.status !== 'n/a').length, failed, { notApplicable: results.filter((r) => r.status === 'n/a').length });
+  process.exit(failed.length ? 1 : 0);
 }
-
-const failed = results.filter((r) => r.status === 'FAIL').map((r) => r.name);
-summary(failed.length ? 'failed' : 'ok', results.filter((r) => r.status !== 'n/a').length, failed, { notApplicable: results.filter((r) => r.status === 'n/a').length });
-process.exit(failed.length ? 1 : 0);

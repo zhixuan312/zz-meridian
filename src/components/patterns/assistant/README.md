@@ -33,6 +33,7 @@ Head 56px, composer padding 12px, thread padding 16px, message gap 16px. Launche
 | Open, thread | Messages; the thread follows the newest |
 | Thread, several pages | Each question is captioned with the page it was asked on ("On Members") |
 | Error | A critical alert with what happened and Retry; the thread stays |
+| Signed in as someone else | The thread is cleared and the alert says so: "You are signed in as someone else now, so the earlier conversation was cleared. Ask again.", with no Retry |
 | Cleared | Back to the empty state; Clear conversation is disabled while there is no thread |
 | Waiting | Until the first words arrive, the thread ends with a Spinner and "Working on an answer" in `ink-3` (the Spinner is the status, so it is announced once); Send is disabled until the answer ends |
 | Change waiting | A Proposal with Approve and Dismiss ("Approve and remove" for a removal) |
@@ -47,12 +48,13 @@ The panel enters with no motion of its own yet; the launcher's states ease `colo
 - Approve and Dismiss answer the waiting change; once the answer arrives the assistant continues on its own, and the page refreshes once after a change applies.
 - Queries never draw a card; a mutation with no preview draws nothing.
 - The thread lasts: it is kept in this browser's local storage under `<slug>.assistant`, the last 100 messages, until Clear conversation removes it. One thread serves the whole console and is sent nowhere but the assistant route.
+- The thread is one person's, for the tenant they act for. `AssistantScope` (`scope.tsx`), around the shell in the dashboard layout, hands the panel that scope (`<tenant>/<subject>`); the thread is stored with it, and a change of either (another sign-in, View as, another tenant) starts an empty thread and removes the earlier one, on the first console page, before any panel opens. Each request names the scope; a route that now answers someone else refuses with 409, and the panel clears the thread and says why, with no Retry. A shell rendered without `AssistantScope`, as a preview, keeps its thread under no scope.
 - It loads after the page is on screen. A change that was waiting when the page closed or reloaded comes back expired: "The page was reloaded before anyone approved it." Sending a new message while one is waiting expires it: "You moved on before approving it." A change approved but reloaded before its result arrived comes back expired too, so it never runs again: "The page was reloaded before the change finished. Check the page to see whether it applied."
 - If storage is full the newer half is kept; if storage is unavailable the thread lasts for the visit only.
 - Each question is sent with the page it was asked on, and keeps that label when asked on another page later.
 - Retry asks for the answer again.
 - Enter sends; Shift+Enter adds a line.
-- On send the browser reads the page: `path`, the masthead title (the `h1` in the scroll region) and the text of the scroll region, and sends them with the messages to `/api/assistant`.
+- On send the browser reads the page: `path`, the masthead title (the `h1` in the scroll region) and the text of the scroll region, and sends them with the messages to `/api/assistant`. A node marked `data-assistant="omit"` is left out of that text (`pageText` in `page-text.ts`): it is taken out of the layout for the one read and put back as it was. A value shown once, such as a newly issued key's secret or a one-time link, is drawn so marked, or outside the scroll region (a `Dialog` portals to the document's body), so a question asked while it is on screen never sends it.
 - When the assistant is off for the request, the shell renders no launcher and no panel, not even hidden markup: the launcher's place in the top bar is an empty, inert `data-assistant-slot`, and the panel's place is empty, because the column mounts only for an assistant that is on and has been opened.
 
 ## Surfaces
@@ -65,7 +67,7 @@ Both are decided by CSS breakpoints, never by measuring the window.
 
 ## Agents
 
-This is the agent's seat in the product. It reads the page the person is on and answers; it changes nothing without a person: every mutation arrives as a Proposal in the thread. Its replies carry the Agent mark in the head and the "Assistant" caption.
+This is the agent's seat in the product. It reads the page the person is on and answers; it changes nothing without a person: every mutation arrives as a Proposal in the thread. Its replies carry the Agent mark in the head and the "Assistant" caption. It reads none of what a page marks `data-assistant="omit"`, and none of another person's or tenant's thread.
 
 ## Accessibility
 

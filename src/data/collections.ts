@@ -86,7 +86,7 @@ type RequestRecord = RequestRow & { statusClass: ReturnType<typeof statusClass>;
 export const requests: Collection<RequestRecord, 'id'> = arrayCollection({
   name: 'requests',
   label: 'Requests',
-  description: 'A sample of the API requests the workspace received, newest first, not every request: each with its status, latency in ms, customer, region, response size in bytes, the model that served it (an id of the models collection, or null when it reached none) and ttft, the ms from arrival to the first token, null where no model wrote one because the request reached none, reached the embedding model, or was refused. Count requests from the days and usage collections, never from here.',
+  description: 'A sample of the API requests the workspace received, newest first, not every request: each with its status, latency in ms, customer, region, response size in bytes, the model that served it (an id of the models collection, or null when it reached none) and ttft, the ms from arrival to the first token, null where no model wrote one because the request reached none, reached the embedding model, or was refused. Being a sample, it is not where requests are counted: the days and usage collections hold every one.',
   key: 'id',
   title: (r) => r.id,
   fields: z.object({
@@ -127,7 +127,7 @@ type DayRecord = DailyPoint & { inBand: boolean };
 export const days: Collection<DayRecord, 'date'> = arrayCollection({
   name: 'days',
   label: 'Daily totals',
-  description: 'One row per day (UTC): requests answered, errors (5xx and 429), latency p95 in ms, tokens served (input and output, every model), revenue in US dollars (what customers paid for that day\'s tokens and calls), and revenueByPlan, that revenue by the plan of the customer that paid it (Enterprise, Scale, Starter); inBand is true when the day\'s p95 and its errors over its requests are both under the band the product holds itself to. The last row may be a day still in progress, holding only what has arrived so far: leave it out of a sum or a comparison of complete days.',
+  description: 'One row per day (UTC): requests answered, errors (5xx and 429), latency p95 in ms, tokens served (input and output, every model), revenue in US dollars (what customers paid for that day\'s tokens and calls), and revenueByPlan, that revenue by the plan of the customer that paid it (Enterprise, Scale, Starter); inBand is true when the day\'s p95 and its errors over its requests are both under the band the product holds itself to. The last row may be a day still in progress, holding only what has arrived so far, so it is not yet a complete day.',
   key: 'date',
   title: (d) => d.date,
   fields: z.object({ requests: z.number(), errors: z.number(), p95: z.number(), tokens: z.number(), revenue: z.number(), revenueByPlan: z.object({ Enterprise: z.number(), Scale: z.number(), Starter: z.number() }) }),
@@ -153,7 +153,7 @@ export const models: Collection<Model, 'id'> = arrayCollection({
 export const usage: Collection<UsageRow, 'id'> = arrayCollection({
   name: 'usage',
   label: 'Usage by model',
-  description: 'One row per day (UTC) and model; the id is "<date>:<model>", and the model is an id of the models collection. Requests answered, inputTokens and outputTokens, revenue in US dollars (the tokens at the model\'s price, or the calls at the call price for "none"), errors (5xx and 429), latency p95 in ms, ttft (p95 time to the first token, in ms) and tps (output tokens a second at the median). ttft and tps are null for a model that writes no tokens. The rows of the last day may be of a day still in progress, holding only what has arrived so far: leave them out of a sum or a comparison of complete days.',
+  description: 'One row per day (UTC) and model; the id is "<date>:<model>", and the model is an id of the models collection. Requests answered, inputTokens and outputTokens, revenue in US dollars (the tokens at the model\'s price, or the calls at the call price for "none"), errors (5xx and 429), latency p95 in ms, ttft (p95 time to the first token, in ms) and tps (output tokens a second at the median). ttft and tps are null for a model that writes no tokens. The rows of the last day may be of a day still in progress, holding only what has arrived so far, so they are not yet of a complete day.',
   key: 'id',
   title: (u) => u.id,
   fields: z.object({ date, model: z.string(), requests: z.number(), inputTokens: z.number(), outputTokens: z.number(), revenue: z.number(), errors: z.number(), p95: z.number(), ttft: z.number().nullable(), tps: z.number().nullable() }),
@@ -165,7 +165,7 @@ export const usage: Collection<UsageRow, 'id'> = arrayCollection({
 export const compute: Collection<ComputeRow, 'id'> = arrayCollection({
   name: 'compute',
   label: 'Compute by region',
-  description: 'One row per day (UTC) and region; the id is "<date>:<region>". gpus is the GPUs provisioned that day, and used the GPU-hours used of the gpus x 24 GPU-hours they offered. The rows of the last day may be of a day still in progress, where used is of the hours it has had so far: leave them out of a sum or a comparison of complete days.',
+  description: 'One row per day (UTC) and region; the id is "<date>:<region>". gpus is the GPUs provisioned that day, and used the GPU-hours used of the gpus x 24 GPU-hours they offered. The rows of the last day may be of a day still in progress, where used is of the hours it has had so far, so they are not yet of a complete day.',
   key: 'id',
   title: (c) => c.id,
   fields: z.object({ date, region: z.string(), gpus: z.number(), used: z.number() }),
@@ -177,7 +177,7 @@ export const compute: Collection<ComputeRow, 'id'> = arrayCollection({
 export const costs: Collection<CostRow, 'date'> = arrayCollection({
   name: 'costs',
   label: 'Compute cost',
-  description: 'One row per day (UTC): compute, what the GPUs provisioned that day cost in US dollars. The last row may be a day still in progress, holding the cost of the hours it has had so far: leave it out of a sum or a comparison of complete days.',
+  description: 'One row per day (UTC): compute, what the GPUs provisioned that day cost in US dollars. The last row may be a day still in progress, holding the cost of the hours it has had so far, so it is not yet a complete day.',
   key: 'date',
   title: (c) => c.date,
   fields: z.object({ compute: z.number() }),

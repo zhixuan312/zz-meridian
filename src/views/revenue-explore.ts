@@ -8,7 +8,7 @@ import type { PreparedQuery } from '@/lib/explore';
 import { customersCallAddress, customersSource } from './customers-explore';
 
 const plan = (name: 'Enterprise' | 'Scale' | 'Starter') =>
-  ({ label: `${name} revenue`, unit: 'USD', definition: `What customers on ${name} were billed over the complete days, before credits.`, agg: 'sum', field: `revenueByPlan.${name}` }) as const;
+  ({ label: `${name} revenue`, unit: 'money', definition: `What customers on ${name} were billed over the complete days, before credits.`, agg: 'sum', field: `revenueByPlan.${name}` }) as const;
 
 export const revenueExplore: PreparedQuery = {
   sources: {
@@ -19,7 +19,7 @@ export const revenueExplore: PreparedQuery = {
       facets: [],
       buckets: ['day', 'week', 'month', 'weekday'],
       measures: {
-        revenue: { label: 'Revenue', unit: 'USD', definition: 'Billed for metered usage over the complete days, before credits.', agg: 'sum', field: 'revenue' },
+        revenue: { label: 'Revenue', unit: 'money', definition: 'Billed for metered usage over the complete days, before credits.', agg: 'sum', field: 'revenue' },
         enterprise: plan('Enterprise'),
         scale: plan('Scale'),
         starter: plan('Starter'),
@@ -36,7 +36,7 @@ export const revenueExplore: PreparedQuery = {
       facets: ['model'],
       buckets: ['day', 'week', 'month'],
       measures: {
-        revenue: { label: 'Revenue', unit: 'USD', definition: 'What the model\'s tokens were billed at its price; "none" is the calls that reach no model, at the price of a call.', agg: 'sum', field: 'revenue' },
+        revenue: { label: 'Revenue', unit: 'money', definition: 'What the model\'s tokens were billed at its price; "none" is the calls that reach no model, at the price of a call.', agg: 'sum', field: 'revenue' },
         requests: { label: 'Requests', unit: 'requests', definition: 'Requests the model answered over the complete days.', agg: 'sum', field: 'requests' },
       },
       drill: { columns: ['id', 'date', 'model', 'requests', 'revenue'], address: () => '/business?period=all' },

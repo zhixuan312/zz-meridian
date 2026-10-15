@@ -1,5 +1,6 @@
 import { connection } from 'next/server';
 import { AppShell } from '@/components/base/shell';
+import { AssistantScope } from '@/components/patterns/assistant/scope';
 import { WorkspacePalette, WorkspaceRail } from '@/views/workspace-chrome';
 import { assistantConfig } from '@/lib/assistant/config';
 import { readAlerts } from '@/data/alerts';
@@ -22,10 +23,14 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   // The bell's alerts are read the same way: the shell draws the tools with no alert and fills them in when the read
   // settles. A person who may not be told anything, or a read that fails, settles on null and the tools stay quiet.
   const alerts = readAlerts().catch(() => null);
+  // The assistant keeps its thread for the same key, so a change of person or tenant starts an empty one; a scope nobody
+  // can resolve keeps the thread of no one.
   return (
-    <AppShell rail={<WorkspaceRail access={access} />} tools={<ShellAlerts alerts={alerts} />} assistant={assistant}>
-      <ConsoleLive scope={scope}>{children}</ConsoleLive>
-      <WorkspacePalette access={access} />
-    </AppShell>
+    <AssistantScope scope={scope.catch(() => '')}>
+      <AppShell rail={<WorkspaceRail access={access} />} tools={<ShellAlerts alerts={alerts} />} assistant={assistant}>
+        <ConsoleLive scope={scope}>{children}</ConsoleLive>
+        <WorkspacePalette access={access} />
+      </AppShell>
+    </AssistantScope>
   );
 }

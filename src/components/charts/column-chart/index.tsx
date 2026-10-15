@@ -7,8 +7,9 @@ import { Readout } from '@/components/charts/readout';
 import { niceTicks, stackPart } from '@/components/charts/scale';
 import { useSize } from '@/components/charts/use-size';
 
-export type Column = { key: string; label: string; value: number };
-export type StackedColumn = { key: string; label: string; values: number[] };
+/** `null` is a period with no data: it keeps its slot, draws no column and reads `noData`, never zero. */
+export type Column = { key: string; label: string; value: number | null };
+export type StackedColumn = { key: string; label: string; values: (number | null)[] };
 export type ColumnPart = { key: string; label: string; tone?: 'neutral' | 'warning' | 'critical' };
 
 type Shared = {
@@ -20,6 +21,8 @@ type Shared = {
   running?: boolean;
   /** How a column's value reads, above it, in the readout and in the table. It must tell neighbouring columns apart. */
   format?: (n: number) => string;
+  /** How a period with no data reads, wherever its value would: "No data" unless the product names it otherwise. */
+  noData?: string;
   /** How a tick reads: an axis formatter, true at every tick (`AXIS_FORMATTERS` in `@/lib/format`). Without one the axis
    * reads as `format` does, which is right only while `format` is exact: one that rounds prints a tick it does not stand at. */
   axisFormat?: (n: number) => string;
@@ -58,8 +61,10 @@ const gapOf = (n: number) => (n > 1 ? `calc(${opens(n).map((w) => `clamp(0px, (1
 const TONES = { neutral: 'var(--chart-neutral-strong)', warning: 'var(--warning)', critical: 'var(--critical)' };
 const count = (n: number) => n.toLocaleString('en-US');
 /** A value that is missing, or below zero, is no contribution to its column. */
-const amount = (v: number | undefined) => (typeof v === 'number' && v > 0 ? v : 0);
+const amount = (v: number | null | undefined) => (typeof v === 'number' && v > 0 ? v : 0);
 
+/** A column as drawn: its parts' values, `null` where a part has no data, and whether the whole column has none. */
+type Bar = { key: string; label: string; values: (number | null)[]; total: number; none: boolean };
 type Drawn = { key: string; label: string; tone: 'accent' | keyof typeof TONES; color: string };
 
 /**
@@ -73,10 +78,12 @@ function stack(columns: StackedColumn[], parts: ColumnPart[]) {
   const listed: ColumnPart[] = fold ? [...parts.slice(0, MOST - 1), { key: 'other', label: 'Other' }] : parts;
   const toned = parts.some((p) => p.tone);
   const drawn: Drawn[] = listed.map((p, k) => ({ key: p.key, label: p.label, tone: toned ? p.tone ?? 'neutral' : 'accent', color: toned ? TONES[p.tone ?? 'neutral'] : stackPart(k, listed.length) }));
-  const bars = columns.map((c) => {
-    const all = parts.map((_, k) => amount(c.values[k]));
-    const values = fold ? [...all.slice(0, MOST - 1), all.slice(MOST - 1).reduce((a, b) => a + b, 0)] : all;
-    return { key: c.key, label: c.label, values, total: values.reduce((a, b) => a + b, 0) };
+  const bars = columns.map((c): Bar => {
+    // A part with no data stays `null`, so it is read as no data; it adds nothing to the total of the parts that were read.
+    const all = parts.map((_, k) => (c.values[k] === null ? null : amount(c.values[k])));
+    const rest = all.slice(MOST - 1);
+    const values = fold ? [...all.slice(0, MOST - 1), rest.every((v) => v === null) ? null : rest.reduce<number>((a, b) => a + (b ?? 0), 0)] : all;
+    return { key: c.key, label: c.label, values, total: values.reduce<number>((a, b) => a + (b ?? 0), 0), none: all.every((v) => v === null) };
   });
   return { drawn, bars };
 }
@@ -101,6 +108,7 @@ export function ColumnChart({
   dates,
   running = false,
   format = count,
+  noData = 'No data',
   axisFormat,
   height = 200,
   label,
@@ -115,7 +123,7 @@ export function ColumnChart({
   // Whether this chart is the one being pointed at: a chart that only follows another chart's cursor marks the day and
   // keeps its readout to itself, as the Trend chart does.
   const [local, setLocal] = useState(false);
-  const { drawn, bars } = form.parts ? stack(form.columns, form.parts) : { drawn: null, bars: form.columns.map((c) => ({ key: c.key, label: c.label, values: [c.value], total: c.value })) };
+  const { drawn, bars } = form.parts ? stack(form.columns, form.parts) : { drawn: null, bars: form.columns.map((c): Bar => ({ key: c.key, label: c.label, values: [c.value], total: c.value ?? 0, none: c.value === null })) };
   const n = bars.length;
   const timed = Boolean(dates && dates.length === n);
   const active = previewIndex ?? (timed ? meridian.index : own);
@@ -123,7 +131,8 @@ export function ColumnChart({
   const fill = height === 'fill';
   const soFar = running ? n - 1 : -1;
 
-  const ticks = niceTicks(Math.max(1, ...bars.map((b) => b.total)), 3);
+  // A period with no data has no height, so the scale is the periods that have one.
+  const ticks = niceTicks(Math.max(1, ...bars.filter((b) => !b.none).map((b) => b.total)), 3);
   const top = ticks[ticks.length - 1];
   const af = axisFormat ?? format;
   const left = Math.max(...ticks.map((t) => af(t).length)) * 6.4 + 10;
@@ -139,6 +148,9 @@ export function ColumnChart({
   const rest = column >= REST;
   // Whatever is centred on a column and may be wider than it starts with the first column and ends with the last, so
   // nothing runs past the plot; inside those, a narrower one is still centred.
+  /** A value as it reads; a period with no data reads the product's word, and "so far" with it while it is running. */
+  const value = (v: number | null, running = false) => (v === null ? (running ? `${noData} so far` : noData) : format(v));
+  const totalOf = (b: Bar, i: number) => value(b.none ? null : b.total, i === soFar);
   const placed = (i: number) => (i === n - 1 ? 'right-0 flex min-w-full justify-center' : i === 0 ? 'left-0 flex min-w-full justify-center' : 'left-1/2 -translate-x-1/2');
 
   const keys = (e: KeyboardEvent) => {
@@ -155,8 +167,11 @@ export function ColumnChart({
   // The readout stands after a column in the first half of the plot and before one in the second.
   const after = at !== null && at * 2 < n - 1;
   /** The column pointed at, in words: the table's own order, the first part first. */
-  const reading = on
-    ? `${on.label}: ${drawn ? `${drawn.map((p, k) => `${p.label} ${format(on.values[k])}`).join(', ')}, Total ${format(on.total)}` : format(on.total)}${at === soFar ? ', so far' : ''}`
+  // A period with no data says "so far" in its word, so the reading does not say it twice.
+  const reading = on && at !== null
+    ? on.none
+      ? `${on.label}: ${totalOf(on, at)}`
+      : `${on.label}: ${drawn ? `${drawn.map((p, k) => `${p.label} ${value(on.values[k])}`).join(', ')}, Total ${format(on.total)}` : format(on.total)}${at === soFar ? ', so far' : ''}`
     : null;
 
   return (
@@ -191,8 +206,8 @@ export function ColumnChart({
             {bars.map((b, i) => {
               const pointed = active === i;
               const hot = pointed || (active === null && b.key === highlight);
-              const shown = drawn ? drawn.map((p, k) => ({ p, v: b.values[k] })).filter(({ v }) => v > 0) : [];
-              const text = format(b.total);
+              const shown = drawn ? drawn.map((p, k) => ({ p, v: b.values[k] ?? 0 })).filter(({ v }) => v > 0) : [];
+              const text = totalOf(b, i);
               const unfinished = i === soFar;
               // Plain, the pointed value is the chart's readout and takes the tooltip's plane; stacked, the panel is.
               const tip = pointed && !drawn;
@@ -202,14 +217,17 @@ export function ColumnChart({
                   data-column={b.key}
                   data-active={pointed ? '' : undefined}
                   data-running={unfinished ? '' : undefined}
+                  data-no-data={b.none ? '' : undefined}
                   // A figure wider than its column is cut at rest, and keeps the whole of itself where the pointer finds it.
                   title={rest && text.length * 7 > column ? text : undefined}
                   className="group/col relative flex h-full min-w-0 flex-1 items-end"
                   onPointerEnter={() => set(i)}
                   onPointerDown={() => set(i)}
                 >
-                  {/* The column's box: its share of the scale, and never shorter than its parts and its outline can be drawn. */}
-                  <div className="relative w-full" style={{ height: `${(Math.max(0, b.total) / top) * 100}%`, minHeight: (drawn ? Math.max(0, shown.length * 4 - 1) : b.total > 0 ? 2 : 0) + (unfinished ? 2 : 0) }}>
+                  {/* The column's box: its share of the scale, and never shorter than its parts and its outline can be drawn. A
+                      period with no data keeps its slot as an empty track the height of the scale, as the Heatmap's empty
+                      cell is the track: nothing in it is a value, so it reads as a place, not as a column of zero. */}
+                  <div className="relative w-full" style={{ height: b.none ? '100%' : `${(Math.max(0, b.total) / top) * 100}%`, minHeight: (drawn ? Math.max(0, shown.length * 4 - 1) : b.total > 0 ? 2 : 0) + (unfinished ? 2 : 0) }}>
                     <div
                       className={cn(
                         'grow-y relative h-full rounded-t-[4px]',
@@ -223,7 +241,9 @@ export function ColumnChart({
                       )}
                       style={{ ['--i' as string]: i }}
                     >
-                      {drawn ? (
+                      {b.none ? (
+                        <div data-track className={cn('h-full w-full rounded-t-[4px] bg-fill-track', unfinished && 'opacity-50')} />
+                      ) : drawn ? (
                         // A 1px gap between parts lets the card through: the hairline that keeps neighbours apart.
                         <div className={cn('flex h-full flex-col-reverse gap-px', unfinished && 'opacity-50')}>
                           {shown.map(({ p, v }, k) => (
@@ -257,7 +277,7 @@ export function ColumnChart({
                           )}
                         >
                           <span data-value>{text}</span>
-                          {tip && unfinished ? ' · so far' : null}
+                          {tip && unfinished && !b.none ? ' · so far' : null}
                         </span>
                       </span>
                     ) : null}
@@ -275,12 +295,12 @@ export function ColumnChart({
               <p key={p.key} className="flex flex-wrap items-start gap-x-2 text-xs leading-6">
                 <Swatch color={p.color} className="mt-1.75" />
                 <span className="min-w-0 flex-1 break-words text-ink-2">{p.label}</span>
-                <span className="t-num ml-auto min-w-0 break-words font-medium text-ink">{format(on.values[k])}</span>
+                <span className="t-num ml-auto min-w-0 break-words font-medium text-ink">{value(on.values[k])}</span>
               </p>
             ))}
             <p className="mt-1 flex items-center gap-2 border-t border-line pt-1 text-xs leading-6">
               <span className="text-ink-2">Total</span>
-              <span className="t-num ml-auto pl-4 font-semibold text-ink">{format(on.total)}</span>
+              <span className="t-num ml-auto pl-4 font-semibold text-ink">{totalOf(on, at)}</span>
             </p>
           </Readout>
         ) : null}
@@ -306,8 +326,8 @@ export function ColumnChart({
           {bars.map((b, i) => (
             <tr key={b.key}>
               <th scope="row">{b.label}{i === soFar ? ', so far' : null}</th>
-              {drawn ? b.values.map((v, k) => <td key={drawn[k].key}>{format(v)}</td>) : null}
-              <td>{format(b.total)}</td>
+              {drawn ? b.values.map((v, k) => <td key={drawn[k].key}>{value(v, b.none && i === soFar)}</td>) : null}
+              <td>{totalOf(b, i)}</td>
             </tr>
           ))}
         </tbody>

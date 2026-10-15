@@ -114,7 +114,7 @@ function Counted({ data }: { data: UsageData }) {
 /** When they come, over the last 30 complete days: by hour of day, the busiest highlighted, or by weekday and hour. The choice is the view's own. */
 function WhenTheyCome({ figures }: { figures: UsageFigures }) {
   const [when, setWhen] = useState<When>('hour');
-  const busiest = figures.hours.reduce((m, c) => (c.value > m.value ? c : m));
+  const busiest = figures.hours.reduce((m, c) => ((c.value ?? 0) > (m.value ?? 0) ? c : m));
   return (
     <Card>
       <CardHeader

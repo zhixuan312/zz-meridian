@@ -14,11 +14,12 @@ import { totalsOf } from '@/data/metrics';
 import type { ComputeRow, CostRow, CustomerRecord, DailyPoint, Model, Ticket, Totals, UsageRow } from '@/data/sample';
 import { first, periods, record, steady, total, type Fact } from '@/lib/facts';
 import { formatCompact, formatCost, formatDuration, formatPercent, plural } from '@/lib/format';
+import { formatDate } from '@/lib/format-date';
 import { median } from '@/lib/insight';
 import { PERIOD_DAYS, type Period } from '@/lib/period';
 import { allSentMore, customerFigures, customersAddress, kept, sentMore } from './customers-context';
 import { HISTORY_UNREAD, handed, inDays, type PageHead, type ServiceNow } from './fact-insight';
-import { INCIDENTS_OPEN, SERVICES_OPERATIONAL, homeLine, homeTitle, unwellNames, type HomeData, type HomeFigure, type HomeWindow, type WorthKnowing } from './home-context';
+import { INCIDENTS_OPEN, SERVICES_OPERATIONAL, SOLD_SLOTS, homeLine, homeTitle, unwellNames, type HomeData, type HomeFigure, type HomeWindow, type WorthKnowing } from './home-context';
 import { releaseMoment, releasesAddress, releaseFigures, stageOf } from './releases-context';
 import { ticketCounts } from './tickets-context';
 
@@ -53,16 +54,30 @@ const homeWindow = (days: DailyPoint[]) => {
 };
 
 /**
- * The year's card: its windows, its title, which states how requests moved from the first window to the latest and the
- * range of the windows' p95, and the median of the windows' p95, which its latency chart draws as its baseline.
+ * The year's sentence, or null when fewer than two windows hold a request: how requests moved from the first window
+ * that holds one to the latest, and the range of those windows' p95. A window before the first request has nothing to
+ * grow from and no p95 to state, so the sentence starts after it and names the window it starts from; from the first
+ * window kept it says "in a year". `length` is a window's days.
+ */
+export function yearLine(windows: readonly HomeWindow[], length: number): string | null {
+  const from = windows.findIndex((w) => w.requests > 0);
+  const counted = from < 0 ? [] : windows.slice(from);
+  if (counted.length < 2) return null;
+  const p95 = counted.map((w) => w.p95);
+  const grew = counted.at(-1)!.requests / counted[0].requests - 1;
+  const span = from === 0 ? 'in a year' : `from the ${inDays(length)} to ${formatDate(counted[0].to)}`;
+  return `Requests ${grew < 0 ? 'fell' : 'grew'} ${formatPercent(Math.abs(grew), 1)} ${span}, and p95 stayed between ${Math.round(Math.min(...p95))} and ${Math.round(Math.max(...p95))} ms`;
+}
+
+/**
+ * The year's card: its windows, its title, which is the year's sentence (`yearLine`), and the median of the windows'
+ * p95, which its latency chart draws as its baseline.
  */
 export function yearOf(history: readonly DailyPoint[], period: Period): NonNullable<HomeData['year']> {
-  const windows: HomeWindow[] = windowsOf(history, PERIOD_DAYS[period] ?? history.length, homeWindow);
+  const length = PERIOD_DAYS[period] ?? history.length;
+  const windows: HomeWindow[] = windowsOf(history, length, homeWindow);
   const p95 = windows.map((w) => w.p95);
-  const typical = p95.length ? median(p95) : null;
-  if (windows.length < 2) return { title: 'Requests and latency, a period at a time', windows, median: typical };
-  const grew = windows.at(-1)!.requests / windows[0].requests - 1;
-  return { title: `Requests ${grew < 0 ? 'fell' : 'grew'} ${formatPercent(Math.abs(grew), 1)} in a year, and p95 stayed between ${Math.round(Math.min(...p95))} and ${Math.round(Math.max(...p95))} ms`, windows, median: typical };
+  return { title: yearLine(windows, length) ?? 'Requests and latency, a period at a time', windows, median: p95.length ? median(p95) : null };
 }
 
 /**
@@ -220,13 +235,17 @@ export function homeData(r: HomeReads): HomeData {
   };
 
   let sold: HomeData['sold'] = null;
-  if (read(r.usage, 'the usage by model') && read(r.models, 'the models')) {
-    const usage = r.usage, inPeriod = new Set(dates);
+  // Its rows and its labels: either read failing leaves the part unread, and each that failed is named.
+  const usage = read(r.usage, 'the usage by model') ? r.usage : null;
+  if (read(r.models, 'the models') && usage) {
+    const inPeriod = new Set(dates);
     const of = (model: string) => cents(sum(usage.filter((u) => u.model === model && inPeriod.has(u.date)).map((u) => u.revenue)));
-    // The largest first, the order a Composition bar takes its slots in.
+    // The largest first, the order a Composition bar takes its slots in; past its slots, the rest are one part.
     const byModel = r.models.map((m) => ({ key: m.id, label: m.label, value: of(m.id) })).sort((a, b) => b.value - a.value);
-    const whole = sum(byModel.map((m) => m.value));
-    sold = byModel.map((m) => ({ ...m, share: whole ? m.value / whole : 0 }));
+    const rest = byModel.slice(SOLD_SLOTS);
+    const parts = rest.length ? [...byModel.slice(0, SOLD_SLOTS), { key: 'other', label: 'Other', value: cents(sum(rest.map((m) => m.value))) }] : byModel;
+    const whole = sum(parts.map((m) => m.value));
+    sold = parts.map((m) => ({ ...m, share: whole ? m.value / whole : 0 }));
   }
 
   let compute: HomeData['compute'] = null;

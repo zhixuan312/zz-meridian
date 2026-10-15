@@ -154,17 +154,20 @@ questions from its tools. Each page specification lists those questions under `#
 ```bash
 pnpm build                                     # the assistant's ASSISTANT_* variables in .env.local, as the app reads them
 node_modules/.bin/next start --port 3100       # served, and stopped by its own id when the questions are answered
-node scripts/ask.ts --base http://127.0.0.1:3100 [--view usage] [--as viewer]
+node scripts/ask.ts --base http://127.0.0.1:3100 [--view usage] [--as viewer] [--out <folder>]
 ```
 
 - **What it asks.** Every view whose specification lists questions, or the one `--view` names, by its view tool's name.
   Each question is asked once, in a thread of its own, on the page's address; a detail page's on its first record, the
-  first link of its form on its listing page.
+  first link of its form on its listing page. Each carries the page as the console's panel sends it, as near as a
+  script can: its title and its visible text as the persona is served the page. The view's shared context is published
+  in the browser, so it is not sent.
 - **Who asks.** A persona of `personas` in `scripts/verify.config.ts`: the one `--as` names, else `owner`, else the first
   declared. Its cookie signs every request in, so the assistant answers with exactly that person's rights.
-- **What it writes.** `out/asks/<view>.md`: each question, every tool the assistant called with its input and what the
-  tool returned, and the answer's text. It prints one line for each file it writes, and exits 1 when a question went
-  unanswered.
+- **What it writes.** `<folder>/<view>.md`, in `out/asks/` unless `--out` names another folder: each question, every
+  tool the assistant called with its input and what the tool returned, every Proposal a write raised with its approval
+  request or denial, and the answer's text. It prints one line for each file it writes, and exits 1 when a question
+  went unanswered; a question answered by a Proposal alone is answered.
 - **When it does not run.** It reads no environment and prints none of it: whether the assistant is on is the served
   product's to say. When `POST /api/assistant` answers 404 (no `ASSISTANT_*` variables), or the configuration declares
   no personas, it prints one line saying it did not run and why, and exits 0. An unknown `--view` or `--as` exits 1
