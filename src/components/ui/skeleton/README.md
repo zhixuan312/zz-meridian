@@ -25,7 +25,7 @@ A skeleton takes the size of what it stands in for; it has no size of its own. L
 
 | State | Spec |
 |---|---|
-| Loading | the shimmer loops (the one other loop the system allows) |
+| Loading | the shimmer loops (one of the three loops the system allows) |
 | Reduced motion | still `fill-track`, no shimmer |
 
 ## Behaviour

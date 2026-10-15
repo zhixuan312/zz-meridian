@@ -18,4 +18,4 @@ After 0002, the owner asked for the overall feeling to be more refined and less 
 ## Consequences
 
 - Every card picks up the ground's light; contrast is still computed by compositing the surface over the ground (`node scripts/contrast.ts`).
-- Nothing in the interface loops except a live dot and a skeleton.
+- Nothing in the interface loops except a live dot, a skeleton and a spinner's ring. (Amended 2026-10-16: this line named a dot and a skeleton; the spinner's ring is the third loop the token layer defines, and the standard's floor names all three.)
