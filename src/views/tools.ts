@@ -27,24 +27,35 @@ import { usageExplore } from './usage-explore';
 import { usageData } from './usage-parts';
 import { usageFigures } from '@/data/usage';
 import { customerRow, customersContext, under } from './customers-context';
+import { customersExplore } from './customers-explore';
 import { LATEST, customerContext, type CustomerData } from './customer-context';
 import { customerExplore } from './customer-explore';
 import { servicesContext, servicesHead, type ServicesData } from './services-context';
+import { servicesExplore } from './services-explore';
 import { SCOPES } from './key-scopes';
 import { keysContext } from './keys-context';
+import { keysExplore } from './keys-explore';
 import { membersContext } from './members-context';
+import { membersExplore } from './members-explore';
 import { nowContext } from './now-context';
+import { nowExplore } from './now-explore';
 import { nowData } from './now-parts';
 import { homeContext } from './home-context';
+import { homeExplore } from './home-explore';
 import { homeData } from './home-parts';
 import { requestContext } from './request-context';
+import { requestExplore } from './request-explore';
 import { revenueContext } from './revenue-context';
+import { revenueExplore } from './revenue-explore';
 import { revenueData } from './revenue-parts';
 import { requestsContext } from './requests-context';
+import { requestsExplore } from './requests-explore';
 import { releaseFigures, releasesContext } from './releases-context';
+import { releasesExplore } from './releases-explore';
 import { testFigures, testsContext } from './tests-context';
 import { testsExplore } from './tests-explore';
 import { ticketCounts, ticketsContext } from './tickets-context';
+import { ticketsExplore } from './tickets-explore';
 
 const day = z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional().describe('A day of the period, YYYY-MM-DD: the view opens pointed at it.');
 const period = z.enum(PERIODS).optional().describe('The reporting period, in complete days counted back from yesterday: 7d, 30d or 90d, each compared with the same number of days before it, or all, every complete day kept, which has no period before it. 30d when not given.');
@@ -86,6 +97,7 @@ export const homeTool = defineViewTool({
     const index = d ? data.series.findIndex((x) => x.date === d) : -1;
     return { context: homeContext(data, index >= 0 ? index : null), data };
   },
+  explore: homeExplore,
 });
 
 export const requestsTool = defineViewTool({
@@ -107,6 +119,7 @@ export const requestsTool = defineViewTool({
     const data = { rows, total, summary, state, pageSize: REQUEST_PAGE, updatedAt: updatedAt(), now: observedAt };
     return { context: requestsContext(data, 5), data };
   },
+  explore: requestsExplore,
 });
 
 export const requestTool = defineViewTool({
@@ -126,6 +139,7 @@ export const requestTool = defineViewTool({
     const context = requestContext({ request: r, trace: traceOf(r), routeP95: endpoints.find((e) => e.method === r.method && e.route === r.route)?.p95 ?? null, statusText: STATUS_TEXT[r.status] ?? '', payloadBytes: { request: payloads.request?.length ?? null, response: payloads.response.length }, now: observedAt });
     return { context, data: {} };
   },
+  explore: requestExplore,
 });
 
 export const servicesTool = defineViewTool({
@@ -144,6 +158,7 @@ export const servicesTool = defineViewTool({
     };
     return { context: servicesContext(data), data };
   },
+  explore: servicesExplore,
 });
 
 export const nowTool = defineViewTool({
@@ -164,6 +179,7 @@ export const nowTool = defineViewTool({
     const data = nowData({ services, incidents, releases, runs, history, usage, models, compute, endpoints, tickets, activity, reader: access.subjectId, updatedAt: updatedAt(), now: clock().toISOString() });
     return { context: nowContext(data), data };
   },
+  explore: nowExplore,
 });
 
 export const usageTool = defineViewTool({
@@ -203,6 +219,7 @@ export const customersTool = defineViewTool({
     const matching = under(all, status).filter((c) => (plan === 'all' || c.plan === plan) && (!q || c.name.toLowerCase().includes(q.toLowerCase())));
     return { context: customersContext(all, matching, f), data: {} };
   },
+  explore: customersExplore,
 });
 
 export const revenueTool = defineViewTool({
@@ -221,6 +238,7 @@ export const revenueTool = defineViewTool({
     const data = revenueData({ period: p, days, history, customers, usage, models, regions, updatedAt: updatedAt(), now: days?.observedAt ?? clock().toISOString() });
     return { context: revenueContext(data), data };
   },
+  explore: revenueExplore,
 });
 
 /**
@@ -276,6 +294,7 @@ export const membersTool = defineViewTool({
     const { rows, observedAt } = await read('members', { sort: { field: 'joined', dir: 'desc' } });
     return { context: membersContext(rows as Member[], observedAt), data: {} };
   },
+  explore: membersExplore,
 });
 
 export const keysTool = defineViewTool({
@@ -290,6 +309,7 @@ export const keysTool = defineViewTool({
     const { rows, observedAt } = await read('keys');
     return { context: keysContext(rows as ApiKey[], observedAt, SCOPES), data: {} };
   },
+  explore: keysExplore,
 });
 
 export const ticketsTool = defineViewTool({
@@ -304,6 +324,7 @@ export const ticketsTool = defineViewTool({
     const { rows, observedAt } = await readTickets();
     return { context: ticketsContext(rows, observedAt, { q, state, priority }), data: { counts: ticketCounts(rows) } };
   },
+  explore: ticketsExplore,
 });
 
 export const testsTool = defineViewTool({
@@ -334,6 +355,7 @@ export const releasesTool = defineViewTool({
     const { live, ready, testing } = releaseFigures(rows);
     return { context: releasesContext(rows, observedAt, { q, state, environment }), data: { live: live.length, ready, testing } };
   },
+  explore: releasesExplore,
 });
 
 /** Every view's tool. The assistant route hands these to `assistantTools`, as it hands the collections. */

@@ -89,10 +89,11 @@ export function contextText(c: SharedContext): string {
 /**
  * A view's tool: its name, the feature table entry that permits it, the question it answers, the page it renders, its
  * address as input, one read that returns what the view renders (`data`) and what both agents are told (`context`), and
- * the prepared query an agent counts, groups and compares the page's own collections with (`src/lib/explore.ts`). The
- * console's assistant offers it as `view_<name>`, and on the page itself the prepared query as `explore_<name>`; an MCP
- * server registers the same contract under its own prefix, with `resourceUri` when the view has an embed (decision
- * 0011). The embed route renders from the same read, so the model's figures and the screen's are one.
+ * the prepared query an agent counts, groups and compares the page's own collections with (`src/lib/explore.ts`), which
+ * every view tool declares. The console's assistant offers it as `view_<name>`, and on the page itself the prepared
+ * query as `explore_<name>`; an MCP server registers the same contract under its own prefix, with `resourceUri` when the
+ * view has an embed (decision 0011). The embed route renders from the same read, so the model's figures and the
+ * screen's are one.
  */
 export type ViewTool<I extends z.ZodObject = z.ZodObject, D extends object = object> = {
   name: string;
@@ -112,10 +113,12 @@ export type ViewTool<I extends z.ZodObject = z.ZodObject, D extends object = obj
   resourceUri?: string;
   read: (input: z.infer<I>) => Promise<{ context: SharedContext; data: D }>;
   /**
-   * What an agent may count, group and compare over the page's own collections. A detail page's `fixed` is handed the
-   * view's own input, so it reads the record the page shows.
+   * What an agent may count, group and compare over the page's own collections, declared by the page's author beside the
+   * view. Every view has one: a question its context does not answer alone is asked of it, and the page's specification
+   * lists those questions under "What the agent does here". A detail page's `fixed` is handed the view's own input, so it
+   * reads the record the page shows.
    */
-  explore?: PreparedQuery<z.infer<I>>;
+  explore: PreparedQuery<z.infer<I>>;
 };
 
 /** A view tool, typed from its input schema: `read` receives what `input` parses to. */

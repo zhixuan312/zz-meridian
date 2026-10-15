@@ -66,6 +66,8 @@ A person hands any card to the agent with one press. **Ask** posts a question ab
 
 A view's context says what the page shows. A question the context does not answer alone ("how many requests came at 22:00 on each weekday?") is asked of the page's prepared query: what the page's author lets an agent count, group and compare over the page's own collections, declared beside the view as `explore` on its view tool (`PreparedQuery` in `src/lib/explore.ts`). Code still computes and the model still interprets: the collection works the figures out, and the agent never counts rows itself.
 
+Every view tool declares one. `explore` is required on `defineViewTool`, so a view without it fails the type check, and `optional:tests/explore-contract.test.ts` fails it too. A product's own view declares its prepared query beside its page, as the sample's do (`example:src/views/<view>-explore.ts`), and the page's specification says what it is for: under `## Agents`, a section `### What the agent does here` names the page's protagonist (`Protagonist: <name>.`) and lists at least three questions a person on the page asks that its context does not answer alone, each with what the prepared query is asked (`- "<question>" — <what is asked>`).
+
 A prepared query names at most five sources. Each is one collection with:
 
 - `date`, the field a window is cut on; a source without one has no window and no window before;
@@ -83,11 +85,11 @@ The answer is text of at most 3,000 characters, in a fixed order: the window as 
 
 ## The console's own assistant
 
-The second place is inside the product. The assistant panel reads the page the person is on (its address with the query, the view's shared context, then the visible text), looks records up through the product's collections (`optional:src/data/collections.ts`) and proposes changes as Proposals in its thread. On a page whose view declares a prepared query, it is handed that page's `explore_<view>` and no other page's, beside every `view_<name>`: the route finds the view whose `page`, the console route of the page it renders, is the address the panel sends, and hands its prepared query only where the person may use that view. A rail page's `page` is its `href` in `nav`; a detail page's has its segment (`/customers/[id]`) and matches any one segment there. It follows the same rules: it reads what the person may read, changes nothing without approval, and leaves its mark (the Agent mark and the "Assistant" caption). It is off until a model is configured. `example:docs/assistant.md` says how to switch it on and point it at your data, and how the same tools can later be offered from an MCP server.
+The second place is inside the product. The assistant panel reads the page the person is on (its address with the query, the view's shared context, then the visible text), looks records up through the product's collections (`optional:src/data/collections.ts`) and proposes changes as Proposals in its thread. On a page with a view, it is handed that page's `explore_<view>` and no other page's, beside every `view_<name>`: the route finds the view whose `page`, the console route of the page it renders, is the address the panel sends, and hands its prepared query only where the person may use that view. A rail page's `page` is its `href` in `nav`; a detail page's has its segment (`/customers/[id]`) and matches any one segment there. It follows the same rules: it reads what the person may read, changes nothing without approval, and leaves its mark (the Agent mark and the "Assistant" caption). It is off until a model is configured. `example:docs/assistant.md` says how to switch it on and point it at your data, and how the same tools can later be offered from an MCP server.
 
 ## Building an MCP server for the template
 
-The template ships the views and their tool contracts; the server is yours. Every view's contract is in `example:src/views/tools.ts`: its `name`, the question it answers (`description`), the console route of its page (`page`), its address as a zod `input`, its `resourceUri` when it has an embed route, one `read` that returns what the view renders (`data`) and what both agents are told (`context`), and its prepared query (`explore`) when it declares one. The console's assistant offers each one as `view_<name>`, but registers it only where the caller satisfies that view's need (`may(v.needs)` in `optional:app/api/assistant/route.ts`); register the same list, filtered the same way:
+The template ships the views and their tool contracts; the server is yours. Every view's contract is in `example:src/views/tools.ts`: its `name`, the question it answers (`description`), the console route of its page (`page`), its address as a zod `input`, its `resourceUri` when it has an embed route, one `read` that returns what the view renders (`data`) and what both agents are told (`context`), and its prepared query (`explore`), which every view declares. The console's assistant offers each one as `view_<name>`, but registers it only where the caller satisfies that view's need (`may(v.needs)` in `optional:app/api/assistant/route.ts`); register the same list, filtered the same way:
 
 ```ts
 import { z } from 'zod';
@@ -120,7 +122,7 @@ import { exploreSchema, runExplore, type ExploreRights } from '@/lib/explore';
 
 declare const rights: ExploreRights; // { readable: the collections the caller may read, hidden: (name) => that collection's hidden fields }
 for (const v of viewTools) {
-  if (!v.explore || !(await may(v.needs))) continue;
+  if (!(await may(v.needs))) continue;
   // A query none of whose sources the caller may read offers them nothing.
   if (!Object.values(v.explore.sources).some((s) => rights.readable.has(s.collection))) continue;
   // A detail page's own input (its `id`) is offered beside the query and handed to its `fixed`.
@@ -131,7 +133,7 @@ for (const v of viewTools) {
     annotations: { readOnlyHint: true },
   }, async (input) => {
     const today = clock().toISOString().slice(0, 10);
-    const { address, answer } = await runExplore(v.explore!, input, rights, { aggregate, read, today }, v.page, own);
+    const { address, answer } = await runExplore(v.explore, input, rights, { aggregate, read, today }, v.page, own);
     return { content: [{ type: 'text', text: `${answer}\nAddress: ${address}` }] };
   });
 }
