@@ -7,8 +7,15 @@ import { describe, expect, it } from 'vitest';
 const ROOT = path.resolve(import.meta.dirname, '..');
 const brand = fs.readFileSync(path.join(ROOT, 'scripts/brand.ts'), 'utf8');
 const shipped = fs.readdirSync(path.join(ROOT, 'tests')).filter((f) => /\.test\.tsx?$/.test(f) && !f.startsWith('cli-') && !f.startsWith('deep-'));
-/** A product keeps its components and loses every preview and every spec: a test that imports one, or reads one, cannot run there. */
-const needsThem = (t: string) => { const src = fs.readFileSync(path.join(ROOT, 'tests', t), 'utf8'); return /from '[^']*\/preview'/.test(src) || /README\.md/.test(src); };
+/**
+ * A product keeps its components and loses every preview and every spec: a test that imports a preview module, or that
+ * opens a spec file, cannot run there. Naming one is not needing it — a comment that cites a README still runs, and the
+ * earlier rule would have had `brand --product` delete tests a product can keep.
+ */
+const needsThem = (t: string) => {
+  const src = fs.readFileSync(path.join(ROOT, 'tests', t), 'utf8');
+  return /from '[^']*\/preview'/.test(src) || /(readFileSync|existsSync|readFile)\([^)]*README\.md/.test(src);
+};
 
 describe('a product keeps no test of a preview or a spec it removes', () => {
   it('finds the shipped tests that draw a preview or read a spec', () => {
