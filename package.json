@@ -1,6 +1,6 @@
 {
   "name": "zz-meridian-template",
-  "version": "0.15.0",
+  "version": "0.16.0",
   "private": true,
   "license": "MIT",
   "description": "ZZ Meridian: a dashboard design system and starter. Six layers, from DTCG tokens through four layers of React components to product workspaces, and a Design Atlas, in a light and a dark theme.",
