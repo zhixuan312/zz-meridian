@@ -117,6 +117,21 @@ describe('the 0.13.0 migration', () => {
     expect(byId('nav-needs').applies(project({ 'src/app.config.ts': "export const brand = {};\n" }))).toBeNull();
     expect(byId('nav-needs').applies(project({ 'package.json': '{}' }))).toBeNull();
   });
+
+  it('reads an item however many lines it is written over', () => {
+    // A team that formats its editor's way: an item spread over its keys, with the `needs` two lines below its `href`.
+    // Read by line, the `href` line carries no `needs` and the migration was reported for a file that has none of the
+    // old shape left in it.
+    const spread = project({
+      'src/app.config.ts': "export const nav: NavGroup[] = [\n  {\n    items: [\n      {\n        href: '/',\n        label: 'Overview',\n        icon: LayoutGrid,\n        needs: 'public',\n      },\n      {\n        href: '/keys',\n        label: 'API keys',\n        icon: KeyRound,\n        needs: 'keys:read',\n      },\n    ],\n  },\n];\n",
+    });
+    expect(byId('nav-needs').applies(spread)).toBeNull();
+    // And one spread item without a need is still the change.
+    const spreadOld = project({
+      'src/app.config.ts': "export const nav: NavGroup[] = [\n  {\n    items: [\n      {\n        href: '/',\n        label: 'Overview',\n        icon: LayoutGrid,\n      },\n    ],\n  },\n];\n",
+    });
+    expect(byId('nav-needs').applies(spreadOld)).toEqual(['src/app.config.ts']);
+  });
 });
 
 describe('the 0.15.0 migration', () => {

@@ -486,6 +486,32 @@ function refusalUndeclared(root: string): string[] | null {
   return /^export const refusal\b/m.test(body) ? null : [rel];
 }
 
+/** The nav item objects of a nav array, by brace: an object naming an `href` of its own, however many lines it is over. Braces inside a quoted value are not braces. */
+function navItemObjects(nav: string): string[] {
+  const found: string[] = [];
+  const open: number[] = [];
+  let quote: string | null = null;
+  for (let i = 0; i < nav.length; i++) {
+    const ch = nav[i];
+    if (quote) {
+      if (ch === '\\') i++;
+      else if (ch === quote) quote = null;
+      continue;
+    }
+    if (ch === "'" || ch === '"' || ch === '`') quote = ch;
+    else if (ch === '{') open.push(i);
+    else if (ch === '}') {
+      const start = open.pop();
+      if (start === undefined) continue;
+      const inner = nav.slice(start + 1, i);
+      // What is left once the objects inside it are taken out: a group's `href`s are all in its items, so a group has
+      // none of its own left and is not an item.
+      if (/\bhref\s*:/.test(inner.replace(/\{[^{}]*\}/g, ''))) found.push(inner);
+    }
+  }
+  return found;
+}
+
 /** The project's own nav, with any item still missing the `needs` that 0.13.0 requires of it. */
 function navItemsWithoutNeeds(root: string): string[] | null {
   const rel = 'src/app.config.ts';
@@ -493,16 +519,17 @@ function navItemsWithoutNeeds(root: string): string[] | null {
   if (body === null) return null;
   const nav = /export const nav\b[^=]*=\s*\[([\s\S]*?)\n\];/.exec(body)?.[1];
   if (nav === undefined) return null;
-  // One item per line, as `adopt` writes them and as a hand-kept nav keeps them, so the item is the line naming its
-  // `href`: a group's opening line — every project groups its nav — names no `href` and carries no `needs` of its own,
-  // so counting it as an item would report a change no edit can settle. Anything the file does beyond that is the
-  // team's own shape, and none of it is read.
-  const items = nav.split('\n').filter((l) => /\bhref\s*:/.test(l));
+  // The item is the object naming its `href`, read by its braces rather than by its line: a team that spreads an item
+  // over its keys put the `needs` two lines below the `href`, and a line-based read reported the migration for a file
+  // with none of the old shape left in it. A group is not a destination and carries no `needs`: its own `href`s belong
+  // to the items inside it, so an object whose braces hold only other objects is not read. Anything the file does
+  // beyond that is the team's own shape, and none of it is read.
+  const items = navItemObjects(nav);
   // A project of 0.12.3's vintage also declares `NavItem` itself, without the property: an item that names a `needs` its
   // own type does not have is the type error the gate prints next, so the change is not done until the type carries it.
   const declaredType = /export type NavItem[^;]*\};/.test(body);
   const typeHasNeeds = /export type NavItem[^;]*\bneeds\s*:/.test(body);
-  return items.some((l) => !/\bneeds\s*:/.test(l)) || (declaredType && !typeHasNeeds) ? [rel] : null;
+  return items.some((item) => !/\bneeds\s*:/.test(item)) || (declaredType && !typeHasNeeds) ? [rel] : null;
 }
 
 /**
