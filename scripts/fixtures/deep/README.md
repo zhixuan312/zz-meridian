@@ -1,6 +1,6 @@
 # Deep-DOM fixtures
 
-Pages whose one defect sits inside an open shadow root, a server for them, and the manifest of what each browser suite must say about each page. They exist so that a suite which cannot see into a custom element fails a test, not a user. Nothing here ships to a project: the payload excludes `scripts/fixtures/` and `tests/deep-*.test.ts`.
+Pages whose one defect a browser suite has to catch — most of them inside an open shadow root, the rest in the light DOM, where the question is what the suite asks of a page rather than how far into a root it reaches — a server for them, and the manifest of what each browser suite must say about each page. They exist so that a suite which cannot see into a custom element fails a test, not a user. Nothing here ships to a project: the payload excludes `scripts/fixtures/` and `tests/deep-*.test.ts`.
 
 ## Supported boundary
 
@@ -59,6 +59,16 @@ Every page has an `h1`, `lang="en"`, a `main`, an opaque ground and controls of 
 | `/overlap-none` | What is not a collision, on one page (passes): the two corrected twins, and the three shapes the first sweep of real pages misreported, a clamp's hidden lines, a line below the fold of a clipped list, and the text of a closed `<details>` |
 | `/late-unnamed` | An unnamed control that arrives in `[data-assistant-slot]` 2.6 s after the page, past the audit's fixed wait. Also a keyboard case (`-fixed`) |
 | `/late-dead-control` | A control that does nothing, arriving 3.6 s after the page, past the presses' fixed wait: unlisted, it was never pressed and the run read `0 controls pressed … 0 issues` |
+| `/sideways-region` | A content region 600px wide in a 300px canvas: the first of the sideways rule's three arms. `-fixed` fits |
+| `/sideways-data-page` | A `[data-page-width="data"]` page 200px wide in a 400px canvas: the page is what should stretch. `-fixed` fills it |
+| `/sideways-table` | A 600px table in a 240px frame that clips rather than scrolls, so no scrollbar offers the rest. `-fixed` fits |
+| `/double-scroller` | Two 200px scrollers over 400px of content: a page may have one, and the content region is it. `-fixed` has one |
+| `/heading-skip` | An `h2` then an `h4`: the outline a screen reader reads has a hole in it. `-fixed` descends one at a time |
+| `/empty-region` | A content region that rendered nothing — every other rule passes a page with no content. `-fixed` holds the day's rows |
+| `/moved-page` | The server answers it with a 302 to `/moved-page-now`, so the audit measured a page it did not ask for |
+| `/drops-query` | Asked for as `/drops-query?view=all`, answered with a 302 to the bare path: the address came back without its view |
+| `/page-error` | The page throws while it renders, and nothing catches it |
+| `/console-error` | The page reports a failure itself, through `console.error` |
 | `/slow-load` | Not a suite case: its image answers after 6 s, so `open()` must wait for the load event (`tests/deep-dom.test.ts`) |
 | `/helper` | Not a case: nested roots, a slot and a closed root, for `tests/deep-dom.test.ts` |
 
@@ -66,4 +76,4 @@ The decorative border is a light-DOM control on purpose: the audit's existing ri
 
 ## The manifest and the blind record
 
-`expected.json` lists `{ page, suite, outcome, line? }`: `outcome` is `fail` (exit non-zero), `pass` (exit zero) or `note` (exit zero and the line printed); `line` is a substring the suite must print. It states what each suite must say once it reads inside open roots. `blind-d37f8a8.txt` records what the suites at commit `d37f8a8`, before any change, said about the same pages: where it differs from the manifest, the old suite was blind (it passed a broken page) or wrong (it failed a correct one). The cases recorded there are never edited; a suite that learns to see something new appends its pages and its cases, as the rows from `/svg-contrast` down were.
+`expected.json` lists `{ page, suite, outcome, line? }`: `outcome` is `fail` (exit non-zero), `pass` (exit zero) or `note` (exit zero and the line printed); `line` is a substring the suite must print. It states what each suite must say once it reads inside open roots. `blind-d37f8a8.txt` records what the suites at commit `d37f8a8`, before any change, said about the pages that existed then: where it differs from the manifest, the old suite was blind (it passed a broken page) or wrong (it failed a correct one). Neither file is edited after the fact — the record of what the old suite said stays as it was, and a suite that learns to see something new appends its pages and their cases to `expected.json`, as the rows from `/svg-contrast` down were.

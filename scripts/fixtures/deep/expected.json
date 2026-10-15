@@ -311,5 +311,95 @@
     "suite": "audit",
     "outcome": "fail",
     "line": "truncated:"
+  },
+  {
+    "page": "/sideways-region",
+    "suite": "audit",
+    "outcome": "fail",
+    "line": "sideways: scroll region"
+  },
+  {
+    "page": "/sideways-data-page",
+    "suite": "audit",
+    "outcome": "fail",
+    "line": "sideways: data page"
+  },
+  {
+    "page": "/sideways-table",
+    "suite": "audit",
+    "outcome": "fail",
+    "line": "sideways: table"
+  },
+  {
+    "page": "/double-scroller",
+    "suite": "audit",
+    "outcome": "fail",
+    "line": "scrollers: "
+  },
+  {
+    "page": "/heading-skip",
+    "suite": "audit",
+    "outcome": "fail",
+    "line": "heading skips a level: h2 then h4"
+  },
+  {
+    "page": "/empty-region",
+    "suite": "audit",
+    "outcome": "fail",
+    "line": "the page holds 0 characters of text"
+  },
+  {
+    "page": "/moved-page",
+    "suite": "audit",
+    "outcome": "fail",
+    "line": "the audit measured /moved-page-now while asking for /moved-page"
+  },
+  {
+    "page": "/drops-query?view=all",
+    "suite": "audit",
+    "outcome": "fail",
+    "line": "the address dropped view"
+  },
+  {
+    "page": "/sideways-region-fixed",
+    "suite": "audit",
+    "outcome": "pass"
+  },
+  {
+    "page": "/sideways-data-page-fixed",
+    "suite": "audit",
+    "outcome": "pass"
+  },
+  {
+    "page": "/sideways-table-fixed",
+    "suite": "audit",
+    "outcome": "pass"
+  },
+  {
+    "page": "/double-scroller-fixed",
+    "suite": "audit",
+    "outcome": "pass"
+  },
+  {
+    "page": "/heading-skip-fixed",
+    "suite": "audit",
+    "outcome": "pass"
+  },
+  {
+    "page": "/empty-region-fixed",
+    "suite": "audit",
+    "outcome": "pass"
+  },
+  {
+    "page": "/page-error",
+    "suite": "audit",
+    "outcome": "fail",
+    "line": "exception: Error: the fixture throws on purpose"
+  },
+  {
+    "page": "/console-error",
+    "suite": "audit",
+    "outcome": "fail",
+    "line": "console.error: the fixture logs a failure on purpose"
   }
 ]

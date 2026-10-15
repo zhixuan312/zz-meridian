@@ -17,12 +17,14 @@
  * own content is measured like any other. A defined custom element that shows a box but exposes no open root and no
  * light-DOM content, and one that is still undefined after the settle wait, are reported as `unmeasured:` instead of passed.
  *
- * Fails (exit 1) on: sideways scroll, text clipped without an ellipsis, text cut with an ellipsis that keeps the whole
- * of it nowhere, two pieces of text in the same place or a line drawn through one, a control with no accessible name,
- * more than one page scroller, and rendered text under its WCAG minimum, an SVG's text included, read by its `fill`
- * against whatever the SVG paints behind it. Prints the design metrics per page: distinct type
- * sizes, weights and radii, and the hierarchy ratio (largest text over the median), which should be 3 or more on
- * an analytical page.
+ * Fails (exit 1) on: a route that served another page or dropped a parameter it was asked for, a page whose content
+ * region rendered nothing or that threw or logged a failure while it rendered, sideways scroll, text clipped without an
+ * ellipsis, text cut with an ellipsis that keeps the whole of it nowhere, two pieces of text in the same place or a line
+ * drawn through one, a control with no accessible name or one under 44px on touch, a heading two levels below the one
+ * before it, more than one page scroller, and rendered text under its WCAG minimum, an SVG's text included, read by its
+ * `fill` against whatever the SVG paints behind it. Prints the design metrics per page: distinct type sizes, weights and
+ * radii, and the hierarchy ratio (largest text over the median), which should be 3 or more on an analytical page.
+ * Every rule above has a page in `scripts/fixtures/deep/` that makes it fire.
  */
 import fs from 'node:fs';
 import path from 'node:path';

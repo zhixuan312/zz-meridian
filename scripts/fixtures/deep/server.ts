@@ -16,9 +16,15 @@ const ALL: Record<string, string> = { ...PAGES, ...NAV_PAGES };
 
 const i = process.argv.indexOf('--port');
 const server = http.createServer((req, res) => {
+  const [pathname, search] = (req.url ?? '/').split('?');
   // The image /slow-load waits for: answered after 6 s, past the 4 s open() gives fonts, so the page's load event comes well after its HTML.
   if (req.url === '/slow-asset') { setTimeout(() => res.writeHead(200, { 'content-type': 'image/gif' }).end(Buffer.from('R0lGODlhAQABAAAAACw=', 'base64')), 6000); return; }
-  const html = ALL[(req.url ?? '/').split('?')[0]] ?? CLEAN;
+  // Two redirects, for the audit's address rules: one page that answers at another address, and one that keeps its
+  // address and loses the view it was asked for. Both are answered before the page is, so the browser is on the second
+  // address by the time anything is measured — the state the rules are about, and not one a page can arrange itself.
+  if (pathname === '/moved-page') { res.writeHead(302, { location: '/moved-page-now' }).end(); return; }
+  if (pathname === '/drops-query' && search) { res.writeHead(302, { location: pathname }).end(); return; }
+  const html = ALL[pathname] ?? CLEAN;
   res.writeHead(200, { 'content-type': 'text/html; charset=utf-8' }).end(html);
 });
 server.listen(i >= 0 ? Number(process.argv[i + 1]) : 0, '127.0.0.1', () => {

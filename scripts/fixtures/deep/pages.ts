@@ -16,6 +16,7 @@
  *   truncated                                                            text cut with an ellipsis and kept nowhere
  *   overlap-text, overlap-line, overlap-none                             two things drawn in the same place, and five shapes that are not
  *   late-unnamed, late-dead-control                                      a control that arrives after a fixed wait has ended
+ *   sideways-*, double-scroller, heading-skip, empty-region, moved-page, drops-query, page-error   the rules of the standard that no page made fire
  *   slow-load                                                            a page whose load event comes late (chrome.ts)
  *   nav-*                                                                pages for scripts/navigate.ts
  */
@@ -216,6 +217,73 @@ ${chart(`${RULE(50)}${CAPTION}`)}
   '/late-unnamed-fixed': deep('Late control, corrected', { css: UNNAMED, body: SLOT, script: arrive(2600, `<button type="button" class="icon" aria-label="Ask">${ICON}</button>`) }),
   '/late-dead-control': deep('Late dead control', { body: SLOT, script: arrive(3600, '<button type="button">Ask</button>') }),
   '/late-dead-control-fixed': deep('Late dead control, corrected', { body: SLOT, script: arrive(3600, '<button type="button">Ask</button>', `slot.querySelector('button').addEventListener('click', () => { document.querySelector('.status').textContent = 'Asked'; });`) }),
+
+  // ---- the rules of the standard that no page had ever made fire ----
+  // Light DOM, and about the page rather than about a root: a rule whose only evidence is that it has never reported
+  // anything has been green in the one direction that matters, the direction where it passes. Each page is otherwise
+  // clean — an h1, a landmark, an opaque ground, no control — so the planted defect is the only thing wrong with it.
+
+  // A page that goes sideways. The card contract answers it with `hideBelow` on a column, a data page by filling its
+  // canvas, and the region by fitting what it holds; the audit reports the three apart, so each has its own page.
+  '/sideways-region': deep('Region that scrolls sideways', {
+    css: '.rail { width: 300px; overflow: hidden; } .wide { width: 600px; }',
+    body: '<div class="rail" data-scroll-region><div class="wide">Quarterly revenue by region and segment, with last year beside it</div></div>',
+  }),
+  '/sideways-region-fixed': deep('Region that scrolls sideways, corrected', {
+    css: '.rail { width: 300px; overflow: hidden; } .wide { width: 300px; }',
+    body: '<div class="rail" data-scroll-region><div class="wide">Quarterly revenue by region and segment, with last year beside it</div></div>',
+  }),
+  '/sideways-data-page': deep('Data page that does not fill its canvas', {
+    css: '.canvas { width: 400px; overflow: hidden; } .page { width: 200px; }',
+    body: '<div class="canvas" data-scroll-region><div class="page" data-page-width="data">Rows per page, and the requests behind them</div></div>',
+  }),
+  '/sideways-data-page-fixed': deep('Data page that fills its canvas', {
+    css: '.canvas { width: 400px; overflow: hidden; } .page { width: 400px; }',
+    body: '<div class="canvas" data-scroll-region><div class="page" data-page-width="data">Rows per page, and the requests behind them</div></div>',
+  }),
+  // The frame clips rather than scrolls, so the table is wider than what holds it and no scrollbar offers the rest.
+  '/sideways-table': deep('Table wider than its frame', {
+    css: '.frame { width: 240px; overflow: hidden; } table { width: 600px; border-collapse: collapse; } td, caption { text-align: left; }',
+    body: '<div class="frame"><table><caption>Requests</caption><tbody><tr><td>Requests per day</td></tr></tbody></table></div>',
+  }),
+  '/sideways-table-fixed': deep('Table that fits its frame', {
+    css: '.frame { width: 240px; overflow: hidden; } table { width: 240px; border-collapse: collapse; } td, caption { text-align: left; }',
+    body: '<div class="frame"><table><caption>Requests</caption><tbody><tr><td>Requests per day</td></tr></tbody></table></div>',
+  }),
+
+  // A page with a second scroller: the content region may scroll, and anything else is a scrollbar to go looking for.
+  // Each is 200px of box over 400px of content, which is over the 120px the rule asks a scroller to be.
+  '/double-scroller': deep('Two scrollers', {
+    css: '.log { height: 200px; overflow-y: auto; } .lines { height: 400px; }',
+    body: '<div class="log" id="errors"><div class="lines">Requests per day, and the errors beside them</div></div><div class="log" id="slow"><div class="lines">The slowest paths of the day</div></div>',
+  }),
+  '/double-scroller-fixed': deep('One scroller', {
+    css: '.log { height: 200px; overflow-y: auto; } .lines { height: 400px; }',
+    body: '<div class="log" id="errors"><div class="lines">Requests per day, and the errors beside them</div></div>',
+  }),
+
+  // A heading two levels below the one before it, so the outline a screen reader reads has a hole in it.
+  '/heading-skip': deep('Heading that skips a level', { body: '<h2>Requests</h2><h4>Errors</h4><p>What the day answered.</p>' }),
+  '/heading-skip-fixed': deep('Headings that descend one at a time', { body: '<h2>Requests</h2><h3>Errors</h3><p>What the day answered.</p>' }),
+
+  // The page's content region rendered nothing: a skeleton, a read that never arrived. Every rule above passes a page
+  // with no content, so this is the case that has to say so rather than end the run with the standard's line over it.
+  '/empty-region': deep('A region that rendered nothing', { body: '<div data-scroll-region></div>' }),
+  '/empty-region-fixed': deep('A region that rendered its content', { body: '<div data-scroll-region><p>Every request of the day, by route.</p></div>' }),
+
+  // The two address rules. The audit asks for a route and measures what came back, and both halves of that are worth a
+  // case: a route that redirected somewhere else, and one whose address came back without the parameters it was asked
+  // for — which would otherwise be measured as the view it fell back to, and reported as if it were the one asked for.
+  // The redirect itself is the server's (server.ts): a browser that follows it is on the second address before the
+  // page's own scripts run, which is where a redirect leaves a real visitor.
+  '/moved-page': deep('A route that moved', { body: '<p>This route answers at another address.</p>' }),
+  '/moved-page-now': deep('Where the moved route answers', { body: '<p>The dashboard moved here.</p>' }),
+  '/drops-query': deep('A route that drops its query', { body: '<p>Every request of the day, whichever view was asked for.</p>' }),
+
+  // A page that failed while it rendered. Both arms of the rule: an exception nothing caught, and a failure the page
+  // reported itself. Either one is a page a person is looking at, whatever the pixels say.
+  '/page-error': deep('A page that threw', { body: '<p>The figures are below.</p>', script: "throw new Error('the fixture throws on purpose');" }),
+  '/console-error': deep('A page that logged a failure', { body: '<p>The figures are below.</p>', script: "console.error('the fixture logs a failure on purpose');" }),
 
   // ---- the helper's own page: nested roots, a slot, a closed root ----
   '/helper': `<!doctype html>
