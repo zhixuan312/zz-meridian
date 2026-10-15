@@ -143,11 +143,13 @@ const config: VerifyConfig = {
   // ninety days of bars and the screen-reader summary behind each, an incident timeline and the resolved incidents. It
   // measured 99-100 KiB when this cap was set, so the cap sat exactly on the measurement and the next legitimate
   // byte failed: the access work that gave every page a gate added 0.6% (101 KiB, 103,025 bytes), which is markup
-  // the page needs rather than fat to trim. Held at 104 — above the measurement, so the next few KiB still fail.
+  // the page needs rather than fat to trim. Then the page came to lead with a Featured metric of uptime, whose chart is
+  // the share of services operational on each of the ninety days: 106 KiB. Held at 110 — above the measurement, so the
+  // next few KiB still fail.
   // /customers hands its client every customer, because the list filters, sorts and pages them in the browser as the
   // request log does: 329 rows of the nine fields a row draws measured 318 KiB (325,841 bytes) when the sample became a
   // company. Held at 330, so a field added to a row, or a second copy of the rows, fails here.
-  budgets: { htmlKb: { '/services': 104, '/requests': 150, '/customers': 330 } },
+  budgets: { htmlKb: { '/services': 110, '/requests': 150, '/customers': 330 } },
   navigationChecks: [
     { path: '/', title: 'Home', readySelector: 'main table tbody tr', probe: 'toggle', controlSelector: 'main [role="radio"][aria-checked="false"]', resultSelector: 'main [role="radio"]' },
     { path: '/members', title: 'Members', readySelector: 'main table tbody tr', probe: 'toggle', controlSelector: 'main button[aria-haspopup="menu"]', resultSelector: '[role="menu"]' },
