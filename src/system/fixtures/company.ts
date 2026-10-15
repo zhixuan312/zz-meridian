@@ -8,7 +8,8 @@
  * count is a whole number; a total is divided by `split`, whose parts always sum to it. A model's day is its tokens at
  * the model's price, rounded to the cent once; a day is the sum of its four rows; a day's revenue is divided among the
  * plans and a plan's 30 days among its customers; and the requests of those 30 days are divided among the endpoints, the
- * regions, the status classes, the weekday grid and the customers.
+ * regions, the status classes, the weekday grid and the customers. A route the request log shows a customer calling is
+ * one its mix counts: requests are moved into it from the customer's other routes, never added.
  *
  * It holds the 360 complete days before the clock's own day, and that day as far as the clock has come: the day in
  * progress is the last row of the days, the usage, the compute and the costs, and is counted in no period, no
@@ -16,7 +17,7 @@
  * is never shown (tests/client-imports.test.ts).
  */
 import { PERIOD_DAYS, type Period } from '@/lib/period';
-import { DEMO_NOW, MODELS, NAMED_CUSTOMERS, PLANS, REGION_NAMES, ROUTES, seeded, type ComputeRow, type CostRow, type CustomerRecord, type DailyPoint, type Endpoint, type Plan, type Totals, type UsageRow } from '@/system/fixtures/sample';
+import { DEMO_NOW, MODELS, NAMED_CUSTOMERS, PLANS, REGION_NAMES, REQUESTS, ROUTES, seeded, type ComputeRow, type CostRow, type CustomerRecord, type DailyPoint, type Endpoint, type Plan, type Totals, type UsageRow } from '@/system/fixtures/sample';
 import { MEMBERS } from '@/system/fixtures/sample-members';
 
 const DAY = 86_400_000;
@@ -334,6 +335,23 @@ export const CUSTOMERS: CustomerRecord[] = (() => {
       return uses < none ? 0 : c.calls * (from + much * by);
     });
     split(e.requests, weights).forEach((n, i) => (drafts[i].byEndpoint[e.route] = n));
+  }
+  // The request log samples the named customers' requests, so a route it shows one of them calling is a route that
+  // customer's mix counts. Where the draw above left such a route at nothing, the customer sends it what the median
+  // customer that calls it sends, taken from its own largest route; and, of the customers no release names that call
+  // both, the one that sends that route the most gives the same number back, from that route to the other. Requests
+  // move and none is added, so no customer's requests and no endpoint's change, and nothing here draws from the stream.
+  for (const [name, route] of [...new Set(REQUESTS.map((r) => `${r.customer}\n${r.route}`))].map((pair) => pair.split('\n'))) {
+    const c = of(name);
+    if (c.byEndpoint[route] > 0) continue;
+    const callers = drafts.map((d) => d.byEndpoint[route]).filter((n) => n > 0).sort((a, b) => a - b);
+    const median = callers[Math.floor(callers.length / 2)];
+    const largest = ROUTES.map((r) => r.route).reduce((a, b) => (c.byEndpoint[b] > c.byEndpoint[a] ? b : a));
+    const giver = drafts.filter((d) => !NAMED_CUSTOMERS.includes(d.name) && d.byEndpoint[largest] > 0).reduce((a, b) => (b.byEndpoint[route] > a.byEndpoint[route] ? b : a));
+    c.byEndpoint[largest] -= median;
+    c.byEndpoint[route] += median;
+    giver.byEndpoint[route] -= median;
+    giver.byEndpoint[largest] += median;
   }
   for (const c of drafts) c.requests = sum(Object.values(c.byEndpoint));
   // Tokens go with what a customer pays: its mix of models moves the price of a token a little either way.

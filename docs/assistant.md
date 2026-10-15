@@ -72,7 +72,7 @@ A new page needs nothing for the panel to work. The panel lives in the dashboard
 
 The assistant reads and changes records through collections, the same ones your pages use. `src/data/collections.ts` is the one place both are pointed at your data. It exports the `collections` list, and `clock`, the data's "now" (the sample returns its fixed day; a product returns `new Date()`).
 
-A `Collection` (`src/lib/collection.ts`) is a name, a label, a description the model reads, a zod schema for the fields, the `key`, a `title` for a row, and `query`, with `create`, `update` and `remove` each optional.
+A `Collection` (`src/lib/collection.ts`) is a name, a label, a description the model reads, a zod schema for the fields, the `key`, a `title` for a row, `query` and `aggregate`, with `create`, `update` and `remove` each optional.
 
 For in-memory data, `arrayCollection` builds one from rows and an `allow` list:
 
@@ -89,7 +89,7 @@ export const orders: Collection<Order, 'id'> = arrayCollection({
 });
 ```
 
-Add it to `collections`, and let the policy bind it and a role read it, or nobody is offered it (`skills/zz-meridian/references/customize.md`, "The assistant"). For a real store, write the same `Collection` yourself: `query` takes `{ where, sort, limit }` and returns `{ rows, total }`; implement `create`, `update` and `remove` only for what the store may do. A collection without an operation gets no tool for it, and the assistant is told nobody can do it here; an operation a page performs through its own call is named in `pageOnly`, implemented or not, and the assistant is told it is done on the page. A store that answers with a list filters, orders and pages it with `queryRows(rows, key, query)` from `src/lib/collection.ts`, which is what the sample's collections call.
+Add it to `collections`, and let the policy bind it and a role read it, or nobody is offered it (`skills/zz-meridian/references/customize.md`, "The assistant"). For a real store, write the same `Collection` yourself: `query` takes `{ where, sort, limit }` and returns `{ rows, total }`, and `aggregate` takes an `AggregateQuery` (conditions, a date window, a group by a field or a time bucket, the measures and `top`) and returns `{ total, groups, others }` over every row, as one grouped query to the database, never by reading every page; implement `create`, `update` and `remove` only for what the store may do. A collection without an operation gets no tool for it, and the assistant is told nobody can do it here; an operation a page performs through its own call is named in `pageOnly`, implemented or not, and the assistant is told it is done on the page. A store that answers with a list filters, orders and pages it with `queryRows(rows, key, query)` from `src/lib/collection.ts`, and answers `aggregate` with `aggregateRows(rows, query)` over the rows it holds, which is what the sample's collections call. Pages and prepared queries ask it through `aggregate(name, query)` in `src/data/read.ts`, which asks the grant `read()` asks.
 
 Two fields on a collection keep the assistant in bounds:
 

@@ -5,7 +5,7 @@
  */
 import fs from 'node:fs';
 import { z } from 'zod';
-import type { Collection, LiveEvent } from '../../src/lib/collection.ts';
+import { aggregateRows, type Collection, type LiveEvent } from '../../src/lib/collection.ts';
 
 export type Item = { id: string; name: string };
 
@@ -27,6 +27,9 @@ export function fileCollection(file: string): Collection<Item, 'id'> {
     async query({ limit, offset = 0 }) {
       const rows = read();
       return { rows: rows.slice(offset, limit === undefined ? undefined : offset + limit), total: rows.length };
+    },
+    async aggregate(q) {
+      return aggregateRows(read(), q);
     },
     subscribe(listener) {
       listeners.add(listener);

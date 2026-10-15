@@ -170,9 +170,10 @@ cookie has no such credential, and a cached function cannot read `cookies()`. It
   so the prerendered HTML holds the rail's space.
 - **The assistant's route reads as the person.** It forwards the session cookie the request carried to the API,
   uncached, and builds its collections from the answer. A collection over a list calls `queryRows(rows, key, query)`
-  from `@/lib/collection`, so `where`, `sort`, `limit` and `offset` mean what they mean in the sample. A change the page
-  makes through its own call is named in `pageOnly` with no implementation, and the assistant then says it is made on
-  the page, where "nobody can" would be untrue.
+  from `@/lib/collection`, so `where`, `sort`, `limit` and `offset` mean what they mean in the sample, and answers its
+  `aggregate` with `aggregateRows(rows, query)` over the same rows; a collection over a database answers it as one
+  grouped query. A change the page makes through its own call is named in `pageOnly` with no implementation, and the
+  assistant then says it is made on the page, where "nobody can" would be untrue.
 
 ## The database behind the collections
 

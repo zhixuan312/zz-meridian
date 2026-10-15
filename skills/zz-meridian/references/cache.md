@@ -77,6 +77,9 @@ browser's clock, so a prerendered page and its hydration agree. Pass `now={new D
 A page calls `read(name, query)` and never `collection.query()`. `read()` resolves the caller itself, so no caller can
 choose a tenant. It refuses a collection the caller may not read before any cached code runs, and the cached function
 it calls sees only the whole `AccessScope`, the collection's name and the normalized query, never a mutable collection.
+A figure over every row (a count, a sum, a p95, a group by a field or a time bucket) is `aggregate(name, query)` beside
+it: the same grant asked the same way, the same tag and profile, and the collection's own `aggregate` answering it in
+one call, so nothing reads a collection page by page to count it.
 
 The profile is `{ stale: 30, revalidate: 60, expire: 3600 }`. The tag is `collection:<sha256 of canonical [tenantId,
 collectionName]>`: bounded, deterministic and free of any raw identifier. The real cache key still includes the subject
@@ -384,18 +387,18 @@ export async function chromeAccess(): Promise<ChromeAccess> {
 }
 ```
 
-`optional:src/data/read.ts` is the cached read and the tag helper:
+`optional:src/data/read.ts` is the cached read, the cached aggregate and the tag helper:
 
 ```ts
 /**
- * The pages' read: authorized, scoped and cached. A page calls `read()`; it cannot choose a tenant, and the cached
- * helper below sees only the whole scope, the collection's name and the normalized query. A write calls
- * `updateTag(collectionTag(tenantId, name))` after it commits, which drops every user's cached variants of that
- * collection and nobody else's.
+ * The pages' read: authorized, scoped and cached. A page calls `read()`, or `aggregate()` for a figure over every row;
+ * it cannot choose a tenant, and the cached helpers below see only the whole scope, the collection's name and the
+ * normalized query. A write calls `updateTag(collectionTag(tenantId, name))` after it commits, which drops every user's
+ * cached variants of that collection, rows and aggregates alike, and nobody else's.
  */
 import { createHash } from 'node:crypto';
 import { cacheLife, cacheTag } from 'next/cache';
-import { normalizeQuery, type Query } from '@/lib/collection';
+import { normalizeAggregate, normalizeQuery, type AggregateQuery, type AggregateResult, type Query } from '@/lib/collection';
 import { AccessDenied, collectionFor, can, resolveAccess, type AccessScope } from '@/data/access';
 import { clock } from '@/data/collections';
 
@@ -416,6 +419,24 @@ export async function read(name: string, q: Query = {}): Promise<{ rows: Record<
   const scope = await resolveAccess();
   if (!(await can(scope, name, 'read'))) throw new AccessDenied();
   return cachedRead(scope, name, normalizeQuery(collectionFor(scope, name), q));
+}
+
+async function cachedAggregate(scope: AccessScope, name: string, query: AggregateQuery) {
+  'use cache';
+  cacheTag(collectionTag(scope.tenantId, name));
+  cacheLife({ stale: 30, revalidate: 60, expire: 3600 });
+  const result = await collectionFor(scope, name).aggregate(query);
+  return { ...result, observedAt: clock().toISOString() };
+}
+
+/**
+ * An aggregate query over every row of a collection the caller may read, answered by the collection itself, with the
+ * time it actually ran. It asks the grant `read()` asks and throws before any cached code runs when it may not.
+ */
+export async function aggregate(name: string, q: AggregateQuery): Promise<AggregateResult & { observedAt: string }> {
+  const scope = await resolveAccess();
+  if (!(await can(scope, name, 'read'))) throw new AccessDenied();
+  return cachedAggregate(scope, name, normalizeAggregate(collectionFor(scope, name), q));
 }
 
 /** The most rows one read returns (`normalizeQuery`'s own ceiling). */
@@ -439,7 +460,8 @@ export async function readAll(name: string): Promise<{ rows: Record<string, unkn
 
 `normalizeQuery` (in `optional:src/lib/collection.ts`, Meridian's) defaults and caps the limit and offset, rejects an
 unknown field or operator, and sorts by the collection's key last. A caller cannot supply or remove an authorization
-predicate through `where`: the predicate belongs to the bound collection.
+predicate through `where`: the predicate belongs to the bound collection. `normalizeAggregate` does the same for an
+aggregate query, and holds its `top` at 8 groups when none is asked and 50 at most.
 
 A page moves like this:
 

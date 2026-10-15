@@ -446,7 +446,9 @@ The layout hands the shell whether it is on as a promise it does not await, `ass
   Without the first, `read()` refuses everybody and the assistant is given no tool for it. A grant need not be every
   role's: the sample's `costs` collection (what compute cost a day) is read under `costs:read`, which only the Owner and
   the Admin carry, so a Member and a Viewer are refused it by a page, a tool and the assistant alike. A product's own
-  policy binds the collection in `policy.bind` and decides the grant in `policy.allows`.
+  policy binds the collection in `policy.bind` and decides the grant in `policy.allows`. A collection written by hand,
+  not through `arrayCollection`, has an `aggregate` as well as a `query`: `aggregateRows(rows, query)` from
+  `optional:src/lib/collection.ts` over the rows it holds, or one grouped query for a database.
   **When `rows` becomes a real database, read through `read()`** (`optional:src/data/read.ts`): a page asks for the same
   records from several places (the layout's alerts read, a page strip, the page and its freshness stamp), and `read()`
   caches per caller's scope and refreshes exactly the tenant a write touched, so do not wrap the read in a second cache;

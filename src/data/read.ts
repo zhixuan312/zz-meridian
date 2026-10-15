@@ -1,12 +1,12 @@
 /**
- * The pages' read: authorized, scoped and cached. A page calls `read()`; it cannot choose a tenant, and the cached
- * helper below sees only the whole scope, the collection's name and the normalized query. A write calls
- * `updateTag(collectionTag(tenantId, name))` after it commits, which drops every user's cached variants of that
- * collection and nobody else's.
+ * The pages' read: authorized, scoped and cached. A page calls `read()`, or `aggregate()` for a figure over every row;
+ * it cannot choose a tenant, and the cached helpers below see only the whole scope, the collection's name and the
+ * normalized query. A write calls `updateTag(collectionTag(tenantId, name))` after it commits, which drops every user's
+ * cached variants of that collection, rows and aggregates alike, and nobody else's.
  */
 import { createHash } from 'node:crypto';
 import { cacheLife, cacheTag } from 'next/cache';
-import { normalizeQuery, type Query } from '@/lib/collection';
+import { normalizeAggregate, normalizeQuery, type AggregateQuery, type AggregateResult, type Query } from '@/lib/collection';
 import { AccessDenied, collectionFor, can, resolveAccess, type AccessScope } from '@/data/access';
 import { clock } from '@/data/collections';
 
@@ -27,6 +27,24 @@ export async function read(name: string, q: Query = {}): Promise<{ rows: Record<
   const scope = await resolveAccess();
   if (!(await can(scope, name, 'read'))) throw new AccessDenied();
   return cachedRead(scope, name, normalizeQuery(collectionFor(scope, name), q));
+}
+
+async function cachedAggregate(scope: AccessScope, name: string, query: AggregateQuery) {
+  'use cache';
+  cacheTag(collectionTag(scope.tenantId, name));
+  cacheLife({ stale: 30, revalidate: 60, expire: 3600 });
+  const result = await collectionFor(scope, name).aggregate(query);
+  return { ...result, observedAt: clock().toISOString() };
+}
+
+/**
+ * An aggregate query over every row of a collection the caller may read, answered by the collection itself, with the
+ * time it actually ran. It asks the grant `read()` asks and throws before any cached code runs when it may not.
+ */
+export async function aggregate(name: string, q: AggregateQuery): Promise<AggregateResult & { observedAt: string }> {
+  const scope = await resolveAccess();
+  if (!(await can(scope, name, 'read'))) throw new AccessDenied();
+  return cachedAggregate(scope, name, normalizeAggregate(collectionFor(scope, name), q));
 }
 
 /** The most rows one read returns (`normalizeQuery`'s own ceiling). */
