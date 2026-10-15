@@ -23,10 +23,12 @@ import {
 import { PERIODS } from '@/lib/period';
 import { defineViewTool, type ViewTool } from '@/lib/shared-context';
 import { usageContext } from './usage-context';
+import { usageExplore } from './usage-explore';
 import { usageData } from './usage-parts';
 import { usageFigures } from '@/data/usage';
 import { customerRow, customersContext, under } from './customers-context';
 import { LATEST, customerContext, type CustomerData } from './customer-context';
+import { customerExplore } from './customer-explore';
 import { servicesContext, servicesHead, type ServicesData } from './services-context';
 import { SCOPES } from './key-scopes';
 import { keysContext } from './keys-context';
@@ -41,6 +43,7 @@ import { revenueData } from './revenue-parts';
 import { requestsContext } from './requests-context';
 import { releaseFigures, releasesContext } from './releases-context';
 import { testFigures, testsContext } from './tests-context';
+import { testsExplore } from './tests-explore';
 import { ticketCounts, ticketsContext } from './tickets-context';
 
 const day = z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional().describe('A day of the period, YYYY-MM-DD: the view opens pointed at it.');
@@ -179,6 +182,7 @@ export const usageTool = defineViewTool({
     const index = d ? [...(data.days?.series ?? []), ...(data.days?.running ? [data.days.running] : [])].findIndex((x) => x.date === d) : -1;
     return { context: usageContext(data, index >= 0 ? index : null), data };
   },
+  explore: usageExplore,
 });
 
 export const customersTool = defineViewTool({
@@ -257,6 +261,7 @@ export const customerTool = defineViewTool({
     if (!data) throw new Error(`No customer with the id ${id}.`);
     return { context: customerContext(data), data };
   },
+  explore: customerExplore,
 });
 
 export const membersTool = defineViewTool({
@@ -314,6 +319,7 @@ export const testsTool = defineViewTool({
     const { latest, failing, skipped } = testFigures(rows);
     return { context: testsContext(rows, observedAt, { q, state, release, runs }), data: { latest: latest.length, failing: failing.length, skipped: skipped.length } };
   },
+  explore: testsExplore,
 });
 
 export const releasesTool = defineViewTool({

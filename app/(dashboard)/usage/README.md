@@ -106,6 +106,17 @@ The period with the dates of its complete days, and freshness; then requests, th
 - **Console assistant:** this text in its prompt's `<view-context>` block, with the page's address, and the page text after it for anything the context does not cover.
 - **Handoff:** Ask on "Requests a day" hands the period, or the day the Meridian points at, to the assistant: "What stands out in requests over the last 30 days, and why?"
 
+### What the agent does here
+
+Protagonist: Requests a day.
+
+- "How many requests came at 22:00 UTC on each weekday?" — the hours' requests where the hour is 22, by weekday, which names Sunday's cell and says requests are not kept by customer and hour, so who sent them cannot be said
+- "Which hours of a Sunday are the busiest?" — the hours' requests where the weekday is Sunday, by hour, the largest first
+- "How did requests and errors move a week at a time over the last 90 days?" — the days' requests and errors over 90 complete days, a week at a time
+- "Which model answered the most requests in the last 30 days, and with what error rate?" — the usage's requests and error rate over 30 complete days, by model, against the 30 days before
+
+Usage's prepared query (`usageExplore` in `src/views/usage-explore.ts`, set as `explore` on the Usage tool) reads three sources. `hours`, the requests of each weekday and UTC hour over the last 30 complete days, has no date: it is narrowed by weekday and hour, grouped by either, and names a weekday by its English name. `days` is windowed by complete days and bucketed by day, week, month or weekday, with requests, errors, their rate and the highest p95. `usage` is the same days by model. A drilled day or model-day opens the page pointed at that day.
+
 ## Accessibility
 
 - The heading is the only `h1`: "Usage", read out and not drawn, then the title's sentence.

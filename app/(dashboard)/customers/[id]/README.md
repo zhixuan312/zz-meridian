@@ -74,6 +74,17 @@ Its insights lead with the title the page is headed by, word for word. Where the
 - **Console assistant:** this text in its prompt's `<view-context>` block, with the page's address, and the page text after it for anything the context does not cover.
 - **Handoff:** Ask on the customer's standing hands the customer to the assistant: "What stands out in Northwind Labs's revenue and requests, and why?"
 
+### What the agent does here
+
+Protagonist: Where it stands.
+
+- "Which routes do its sampled requests hit most?" — its requests in the sampled log, by route, which says they are a sample of the latest requests
+- "How did its sampled requests end?" — its requests in the sampled log, by status class
+- "Which of its sampled requests failed, and where do I open them?" — its requests in the sampled log whose status class is 4xx or 5xx, with up to 20 of them, each with its request's address
+- "How many tokens did it use in the last 30 days?" — the tokens, requests and revenue of its own row of the customers
+
+The protagonist is the card the structure calls Where it stands, which is titled by where the customer stands and since when. One customer's prepared query (`customerExplore` in `src/views/customer-explore.ts`, set as `explore` on the Customer tool) takes the page's `id` beside the call and reads two sources, neither with a date: its requests in the sampled log, grouped by route or status class, and its own row of the customers. Its `fixed` reads that row by the id under the person's rights and holds every call to the customer's name and id, so no other customer is read; an id that names no customer is answered that there is no such customer, and nothing else is read.
+
 ## Accessibility
 
 - The heading is the only `h1`: the customer's name, read out and not drawn, then the title's sentence. The status is a sentence beside its dot, never the dot alone.

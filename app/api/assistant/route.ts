@@ -1,9 +1,11 @@
 import { safeValidateUIMessages } from 'ai';
 import { revalidateTag } from 'next/cache';
+import { nav, refusal } from '@/app.config';
 import { assistantConfig } from '@/lib/assistant/config';
 import { clock, collections } from '@/data/collections';
 import { Unauthenticated, can, collectionFor, may, nameOf, resolveAccess } from '@/data/access';
 import { aggregate, collectionTag, read } from '@/data/read';
+import { whoCan } from '@/data/roles';
 import { respond } from '@/lib/assistant/respond';
 import { handedTo } from '@/lib/assistant/scoped';
 import type { AgentChange, HandedExplore } from '@/lib/assistant/tools';
@@ -61,6 +63,21 @@ export async function POST(request: Request): Promise<Response> {
     }
     : undefined;
 
+  // What the prompt says is true of this person. The addresses are the rail's destinations whose need they satisfy, the
+  // predicate `chromeAccess().only` draws the rail by, and the detail pages of the views they may use. Under
+  // `refusal: 'explain'` it also names each collection not handed above and the roles that can read it, as the page names
+  // who can open it; under `absent` it names none, as the page names nothing.
+  const open = (await Promise.all(nav.flatMap((g) => g.items).map(async (i) => ((await may(i.needs)) ? [i] : [])))).flat();
+  const audience = {
+    addresses: [
+      ...open.filter((i, n) => open.findIndex((o) => o.href === i.href) === n).map((i) => ({ label: i.label, address: i.href })),
+      ...views.filter((v) => /\[[^\]/]+\]/.test(v.page)).map((v) => ({ label: v.title, address: v.page.replace(/\[([^\]/]+)\]/g, '<$1>') })),
+    ],
+    withheld: refusal === 'explain'
+      ? collections.filter((c) => !names.has(c.name)).map((c) => ({ label: c.label, roles: whoCan(`${c.name}:read`) }))
+      : undefined,
+  };
+
   const guard = {
     authorize: async (name: string, op: 'create' | 'update' | 'remove', ids?: string[]) => {
       const now = await resolveAccess().catch(() => null);
@@ -84,6 +101,7 @@ export async function POST(request: Request): Promise<Response> {
     views,
     explore,
     guard,
+    audience,
     now: clock(),
     messages: valid.data,
     page: { path: String(page?.path ?? ''), title: String(page?.title ?? ''), context: String(page?.context ?? ''), text: String(page?.text ?? '') },

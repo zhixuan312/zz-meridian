@@ -50,6 +50,17 @@ ASSISTANT_MODEL=<a local model that supports tools>
 
 The assistant reads the product brief, `docs/brief.md`, on every reply. Of its sections it takes three, Product, Users and Glossary, labelled, at most 2000 characters together; Data and Decisions are for the people building the dashboard and are left out. A section still holding only the template's guidance line is skipped, and a brief with nothing written yet adds nothing to the prompt. The brief reaches the model as context, never as instructions. It is sent to the provider with every question, so it must hold no secrets: no keys, no credentials, nothing the person asking must never be shown.
 
+## What it is told about the person
+
+The route works out what is true of the person asking and says it in the system prompt, so the assistant never claims more than the person can do:
+
+- **Where they may go.** The prompt lists the console addresses the person may open, one line each, label then address: every destination in `nav` whose need they satisfy (the rail's own rule) and each detail page whose view they may use, written with `<id>` in place of the record (`/customers/<id>`). It tells the model to give only these and name no other.
+- **What a change is.** A change exists only as the Proposal a write tool returns; the model never writes that a change is proposed or awaiting approval unless a tool returned one.
+- **What they may not read.** Under either value of `refusal` in `src/app.config.ts`, the prompt says some records exist that this person may not read, and that nothing is to be called "not in the product", only not something they may read here. Under `explain` it then names each collection the route does not hand them and the roles that can read it, read from the role table (`whoCan`), as the page names who can open it. Under `absent` it names no collection and no role, as the page names nothing.
+- **How to count.** On a page whose view hands its prepared query, the prompt tells the model to count, group and compare with `explore_<view>` and quote the figures it returns.
+
+`systemPrompt` takes this as data (its optional last argument), and `respond` passes what the route hands it as `audience`; `src/lib/assistant/prompt.ts` reads nothing of the data layer itself.
+
 ## What a person sees
 
 - **The panel.** A launcher in the top bar opens it: a third column from 1024px, a sheet over the page below that. Escape and Close assistant shut it; the conversation stays.

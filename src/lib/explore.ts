@@ -150,9 +150,12 @@ export function exploreSchema<I>(query: PreparedQuery<I>, rights: ExploreRights 
     const d = q.sources[name].measures[m];
     return `${m} (${d.label}, ${d.unit})`;
   };
+  // A value the source reads through `labels` is named with its label, so a model asked about Sundays narrows to 6.
   const filter = (name: string, f: string) => {
     const d = q.sources[name].filters[f];
-    return `${f} ${d.ops.join('|')}${d.values ? ` of ${d.values.join(', ')}` : ''}`;
+    const named = q.sources[name].labels?.[f];
+    const value = (v: Scalar) => (named?.[String(v)] ? `${String(v)} (${named[String(v)]})` : String(v));
+    return `${f} ${d.ops.join('|')}${d.values ? ` of ${d.values.map(value).join(', ')}` : ''}`;
   };
   const ops = unique([...offers].flatMap(([name, o]) => o.filters.flatMap((f) => q.sources[name].filters[f].ops)));
 

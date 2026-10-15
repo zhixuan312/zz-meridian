@@ -67,16 +67,51 @@ export function briefExcerpt(text: string): string {
 }
 
 /**
- * The system prompt: the assistant's job, its tools and approvals, the page it is on, the page text as data and, when the
- * product has a brief, its excerpt as context.
+ * What is true of the person the assistant answers, worked out by the route from their access and handed here as data, so
+ * this file reads nothing of the product's data layer. `addresses` are the console addresses they may open, as the rail
+ * labels them, a detail page's with `<id>` in place of its segment; `withheld` is each collection they may not read and
+ * the roles that can, given only under `refusal: 'explain'`; `explore` is the page's prepared query tool when one is handed.
+ * What is left out is not said.
  */
-export function systemPrompt(page: PageContext, now: Date, brief = '', limits: string[] = []): string {
+export type Audience = {
+  addresses?: readonly { label: string; address: string }[];
+  withheld?: readonly { label: string; roles: readonly string[] }[];
+  explore?: string;
+};
+
+/** Roles as one choice, in table order: "Owner", "Owner or Admin", "Owner, Admin or Member". */
+const either = (roles: readonly string[]) => (roles.length < 2 ? roles.join('') : `${roles.slice(0, -1).join(', ')} or ${roles.at(-1)}`);
+
+/**
+ * The system prompt: the assistant's job, its tools and approvals, what is true of the person it answers, the page it is
+ * on, the page text as data and, when the product has a brief, its excerpt as context.
+ */
+export function systemPrompt(page: PageContext, now: Date, brief = '', limits: string[] = [], audience?: Audience): string {
+  const withheld = audience?.withheld ?? [];
   return [
     `You are the assistant in the ${app.name} console. Explain the page the person is on and answer questions about it.`,
     'Be concise: facts and figures with their units and period, no filler. Say so when the page does not show the answer.',
     'Look records up with the query tools, and open another period, filter or record with the view tools (view_*), which return that view\'s context and the address that shows it; run several at once when they are independent. Give the person the address when you cite another view.',
-    'Every add, change and removal waits for the person to approve a preview. Do not retry a change they did not approve.',
+    ...(audience?.explore
+      ? [`To count, group or compare, ask ${audience.explore}, this page's prepared query, and quote the figures it returns with their window and unit rather than working them out from records.`]
+      : []),
+    'The person approves or dismisses each Proposal in its preview. Do not retry a change they did not approve.',
     ...AGENT_GUIDANCE,
+    'Some records exist that this person may not read. Never say that something is not in the product; say it is not something they may read here.',
+    ...(audience?.addresses
+      ? [
+          'The console addresses this person may open follow, each with its label; a detail page takes the record\'s id in place of <id>. Give only these addresses and name no other:',
+          ...audience.addresses.map((a) => `- ${oneLine(a.label)}: ${oneLine(a.address)}`),
+        ]
+      : []),
+    ...(withheld.length
+      ? [
+          'What this person may not read, and who can (say so when they ask for it):',
+          ...withheld.map((w) => (w.roles.length
+            ? `- ${oneLine(w.label)}: ${either(w.roles)} can read it.`
+            : `- ${oneLine(w.label)}: no single role can read it; it takes a main role together with an add-on.`)),
+        ]
+      : []),
     ...(limits.length ? ['What you cannot do or see, by the product\'s rules (say so when asked, and why):', ...limits.map((l) => `- ${l}`)] : []),
     '',
     `Page: ${oneLine(page.title)} (${oneLine(page.path)})`,

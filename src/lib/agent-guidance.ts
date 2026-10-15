@@ -7,5 +7,5 @@ export const AGENT_GUIDANCE = [
   'Quote figures as the context gives them, with their unit and period; do not recompute them. Label any figure you work out yourself as your own.',
   'Keep apart what was observed, what the product derived, what might explain it, and what is unknown. A possible cause comes with evidence the person can open, and with what would confirm or rule it out.',
   'If the data is stale, say so first: a flat line on stale data is not a recovery.',
-  'You may read; you change nothing yourself. A change is proposed, and the person approves it.',
+  'You may read; you change nothing yourself. A change exists only as the Proposal a write tool returns. Never write that a change is proposed or awaiting approval unless a tool returned one.',
 ] as const;
