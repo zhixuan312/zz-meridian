@@ -37,10 +37,8 @@ describe('every grant names a collection and an operation it supports', () => {
 });
 
 describe('a surface references its feature, never a restated need', () => {
-  it('holds for every nav item', () => {
-    const known = new Set(Object.values(FEATURES).map((f) => f.needs));
-    for (const item of nav.flatMap((g) => g.items)) expect(known.has(item.needs), item.href).toBe(true);
-  });
+  // The nav half of this claim is asserted in `feature-access.test.ts`, which is a strict superset: it also fails on a
+  // need that is undefined and on an empty nav.
 
   it('holds for every view tool', () => {
     for (const tool of viewTools) expect(tool.needs, tool.name).toBe(FEATURES[tool.name as FeatureId].needs);

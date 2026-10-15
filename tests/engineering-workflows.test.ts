@@ -12,9 +12,7 @@ vi.mock('next/cache', () => ({ cacheTag: () => {}, cacheLife: () => {}, updateTa
 
 import { nav } from '@/app.config';
 import { chromeAccess, may } from '@/data/access';
-import { collections } from '@/data/collections';
 import { ACTIONS, FEATURES } from '@/data/features';
-import { assistantTools } from '@/lib/assistant/tools';
 import { viewTools } from '@/views/tools';
 
 const ROOT = path.resolve(import.meta.dirname, '..');
@@ -101,14 +99,5 @@ describe('each destination is a view an assistant can open', () => {
   });
 });
 
-describe('what an agent may do to the three collections', () => {
-  const guard = { authorize: async () => true, invalidate: () => {} };
-  const { tools } = assistantTools(collections, { write() {}, merge() {}, onError: undefined } as never, guard);
-  const named = Object.keys(tools);
-
-  it('is create and change a ticket, and nothing else: runs and releases are only read, through their pages\' prepared queries', () => {
-    expect(named.filter((n) => n.endsWith('_tickets')).sort()).toEqual(['create_tickets', 'update_tickets']);
-    expect(named.filter((n) => n.endsWith('_tests'))).toEqual([]);
-    expect(named.filter((n) => n.endsWith('_releases'))).toEqual([]);
-  });
-});
+// The same three assertions stand in `engineering-records.test.ts`, over the same tools and the same fixture, where
+// they are a strict superset: the copy here added nothing and was the one that would drift.
