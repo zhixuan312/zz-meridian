@@ -69,6 +69,17 @@ When a half hour holds fewer than 30 requests it says the change is too few to r
 - **Console assistant:** the same text in its prompt's `<view-context>` block, with the page's address and query, and the page text after it for anything the context does not cover.
 - **Handoff:** Ask in the filter bar hands the filtered set to the assistant: "What do these requests with status 5xx have in common, and why?"
 
+### What the agent does here
+
+Protagonist: The request log.
+
+- "Which routes fail most in the sample?" — the sampled log's errors and limits and their share of the requests, by route, which says the log is a sample of the latest requests
+- "Which customer's requests are the slowest?" — the latency p95 of the sampled log, by customer
+- "How were the requests that reached a model answered, model by model?" — the sampled log's requests and errors and limits, by model
+- "Which requests to /v1/messages failed with a 5xx, and where do I open them?" — the sampled log where the route is /v1/messages and the status class is 5xx, with up to 20 of them, each with its request's address
+
+The request log's prepared query (`requestsExplore` in `src/views/requests-explore.ts`) reads one source, `requests`, the sampled log: a sample of the latest requests, windowed by nothing, so it has no period and no window before, and every answer says it is of the sample. It is narrowed by status class, status, route, method, customer, region and model, grouped by status class, route, customer, region or model, with the requests, the errors and limits (a 5xx or a 429), their share and the latency p95. A drilled request opens its own page, and a call narrowed to one status class, method, region, customer or route opens the log filtered to it.
+
 ## Accessibility
 
 - The table has a caption; sorting is announced by `aria-sort`; rows are links by their route.

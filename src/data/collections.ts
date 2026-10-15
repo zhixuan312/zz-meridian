@@ -16,7 +16,7 @@
  *    database closing one is an uncaught error and the server exits (issue #16); add `connectionTimeoutMillis` too.
  */
 import { z } from 'zod';
-import { app, workspaceSlug } from '@/app.config';
+import { app, facts, workspaceSlug } from '@/app.config';
 import { arrayCollection, type AnyCollection, type Collection } from '@/lib/collection';
 import { API_KEYS, type ApiKey } from '@/system/fixtures/sample-records';
 import { MEMBERS, STATUSES, TEAMS, type Member } from '@/system/fixtures/sample-members';
@@ -111,17 +111,29 @@ export const requests: Collection<RequestRecord, 'id'> = arrayCollection({
 });
 
 /**
+ * Whether a day is inside the band, by the rule `steady` counts: its p95 under `facts.band`'s latency and its errors over
+ * its requests under its error rate. A day at either edge is outside, and so is a day with no requests, whose rate is
+ * not a number.
+ */
+const inBand = (d: Record<string, unknown>) => Number(d.p95) < facts.band.p95Under && Number(d.errors) / Number(d.requests) < facts.band.errorRateUnder;
+
+/** A day as the collection holds it: the record plus `inBand`, worked out from the configuration and never written. */
+type DayRecord = DailyPoint & { inBand: boolean };
+
+/**
  * One row per day: what the Home's and Usage' figures, trends and baselines are computed from. The last row may be the
  * day in progress, the row of the clock's own date; `readDays` keeps it out of every period. Read-only.
  */
-export const days: Collection<DailyPoint, 'date'> = arrayCollection({
+export const days: Collection<DayRecord, 'date'> = arrayCollection({
   name: 'days',
   label: 'Daily totals',
-  description: 'One row per day (UTC): requests answered, errors (5xx and 429), latency p95 in ms, tokens served (input and output, every model), revenue in US dollars (what customers paid for that day\'s tokens and calls), and revenueByPlan, that revenue by the plan of the customer that paid it (Enterprise, Scale, Starter). The last row may be a day still in progress, holding only what has arrived so far: leave it out of a sum or a comparison of complete days.',
+  description: 'One row per day (UTC): requests answered, errors (5xx and 429), latency p95 in ms, tokens served (input and output, every model), revenue in US dollars (what customers paid for that day\'s tokens and calls), and revenueByPlan, that revenue by the plan of the customer that paid it (Enterprise, Scale, Starter); inBand is true when the day\'s p95 and its errors over its requests are both under the band the product holds itself to. The last row may be a day still in progress, holding only what has arrived so far: leave it out of a sum or a comparison of complete days.',
   key: 'date',
   title: (d) => d.date,
   fields: z.object({ requests: z.number(), errors: z.number(), p95: z.number(), tokens: z.number(), revenue: z.number(), revenueByPlan: z.object({ Enterprise: z.number(), Scale: z.number(), Starter: z.number() }) }),
-  rows: [...DAYS, IN_PROGRESS.day],
+  derived: ['inBand'],
+  derive: (d) => ({ inBand: inBand(d) }),
+  rows: [...DAYS, IN_PROGRESS.day].map((d) => ({ ...d, inBand: inBand(d) })),
   allow: [],
 });
 
@@ -222,15 +234,19 @@ export const regions: Collection<(typeof REGIONS)[number], 'label'> = arrayColle
 });
 
 /** The monitored services: state now, uptime, latency and 90 days of history, the last of them the day in progress. Read-only. */
-export const services: Collection<Service & { order: number }, 'name'> = arrayCollection({
+export const services: Collection<Service & { order: number; uptimePercent: number }, 'name'> = arrayCollection({
   name: 'services',
   label: 'Services',
-  description: 'Each monitored service: its state now, latency now in ms, its state on each of the last 90 days (oldest first; the last is the day in progress and is its state now), and uptime over those days, a fraction: 1 less what its marked days cost, half an hour for a degraded day and two hours for a day of outage, so it is 1 exactly when every day is operational.',
+  description: 'Each monitored service: its state now, latency now in ms, its state on each of the last 90 days (oldest first; the last is the day in progress and is its state now), and uptime over those days, a fraction: 1 less what its marked days cost, half an hour for a degraded day and two hours for a day of outage, so it is 1 exactly when every day is operational; uptimePercent is the same uptime as a percentage.',
   key: 'name',
   title: (s) => s.name,
   fields: z.object({ description: z.string(), status: z.enum(['operational', 'degraded', 'outage']), uptime: z.number(), latency: z.number(), days: z.array(z.enum(['operational', 'degraded', 'outage'])), order: z.number() }),
+  // `uptimePercent` is the uptime as the pages write it, a percentage: an answer writes two decimals, so a fraction
+  // such as 0.9994 would read 1.
+  derived: ['uptimePercent'],
+  derive: (s) => ({ uptimePercent: Number(s.uptime) * 100 }),
   // `order` is where a service sits in every list: the gateway first, the way the team reads its stack.
-  rows: SERVICES.map((s, order) => ({ ...s, order })),
+  rows: SERVICES.map((s, order) => ({ ...s, order, uptimePercent: s.uptime * 100 })),
   allow: [],
 });
 

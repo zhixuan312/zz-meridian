@@ -55,6 +55,17 @@ The request, its status, latency (with its definition), customer and region, its
 - **Console assistant:** this text in its prompt's `<view-context>` block, with the page's address and query, and the page text after it for anything the context does not cover.
 - **MCP App:** no embed view yet; an MCP server can return this context as a tool's text (`docs/agents.md`).
 
+### What the agent does here
+
+Protagonist: Request.
+
+- "How did the other sampled requests to this route end?" — the sampled requests to its route, by status class, which says they are a sample of the latest requests
+- "Is this route slower for some customers than others?" — the latency p95 of the sampled requests to its route, by customer
+- "How often does this route fail in each region?" — the errors and limits of the sampled requests to its route and their share, by region
+- "Which other requests to this route failed, and where do I open them?" — the sampled requests to its route whose status class is 5xx, with up to 20 of them, each with its request's address
+
+The protagonist, Request, is the Request facts card the structure places beside the trace. One request's prepared query (`requestExplore` in `src/views/request-explore.ts`) takes the page's `id` beside the call and reads one source, the sampled log, with the measures of the request log's query. Its `fixed` reads the request by the id under the person's rights and holds every call to the request's route, so a call can neither narrow nor group by another route; an id that names no request is answered that there is no such request, and nothing else is read.
+
 ## Accessibility
 
 - The trace carries a hidden table of phases and durations.

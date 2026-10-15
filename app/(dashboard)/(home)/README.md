@@ -111,6 +111,17 @@ With a day pointed at, the line about that day (against the same weekday and the
 - **Console assistant:** the same text in its prompt's `<view-context>` block, with the page's address and query, and the page text after it for anything the context does not cover.
 - **Handoff:** Ask on the revenue card hands the period, or the day the Meridian points at, to the assistant: "What stands out in revenue over the last 30 days, and why?"
 
+### What the agent does here
+
+Protagonist: Revenue.
+
+- "Which model brought the most revenue in the last 90 days, and how did that move?" — the usage's revenue over 90 complete days, by model, against the 90 days before
+- "How did gross margin move a week at a time over the last 90 days?" — the days' gross margin over 90 complete days, a week at a time, worked out against what compute cost in the same weeks
+- "How many customers are on each plan, and what did each plan pay?" — the customers that have not left and their revenue over the last 30 complete days, by plan
+- "How full were the GPUs in each region over the last 90 days?" — compute in use over 90 complete days, by region, against the 90 days before
+
+Home's prepared query (`homeExplore` in `src/views/home-explore.ts`) reads five sources. `days` is windowed by complete days and bucketed by day, week, month or weekday, with revenue, requests, tokens served and gross margin, a margin of the days' revenue and what compute cost over the same window. `usage` is the same days by model, `compute` by region, with the share of GPU-hours used, and `costs` is what compute cost a day. `customers` has no date: each customer's figures cover the last 30 complete days, narrowed and grouped by plan, status, region and owner. What compute cost, and so gross margin, is offered only to an Owner and an Admin: for anyone else the `costs` source and the gross margin are absent from the tool. A drilled day opens Home pointed at it, and a drilled customer its own page.
+
 ## Embed view
 
 See `app/embed/home/README.md`.

@@ -62,6 +62,17 @@ Counts by status, role (with what each role may do) and team, everyone with thei
 - **Console assistant:** this text in its prompt's `<view-context>` block, with the page's address and query, and the page text after it for anything the context does not cover.
 - **MCP App:** no embed view yet; an MCP server can return this context as a tool's text (`docs/agents.md`).
 
+### What the agent does here
+
+Protagonist: Members.
+
+- "How many members does each team have, and how many of them are active?" — the members and the active members, by team
+- "Which active members have not signed in since 1 August?" — the members whose status is Active and whose last sign-in is before 2026-08-01, with up to 20 of them
+- "Who is suspended, and what are their ids?" — the members whose status is Suspended, with up to 20 of them, each opening with its id and its name
+- "How many Admins does each team have?" — the members whose role is Admin, by team
+
+Members' prepared query (`membersExplore` in `src/views/members-explore.ts`, set as `explore` on the Members tool) reads one source, `members`, with no date: narrowed by status, role, team, name and last sign-in, and grouped by status, role or team. A drilled member's line opens with its id and its name, and that id is the one the assistant's proposal to suspend or remove the member names. Last active is a sign-in to this console, never use of the API, and a member who has never signed in is left out of any narrowing by it.
+
 ## Content
 
 - One verb through each flow: "Remove", then "{name} removed" with Undo. A removal is undone, not confirmed: it is the change a person makes on purpose and regrets by accident. Revoking an API key stays a confirmation, because requests using the key fail the moment it is sent.

@@ -145,6 +145,33 @@ Two lines say something about what the suites could see, not about a defect in a
   control you meant, write a more specific selector. A descendant combinator does not cross a shadow boundary, so name an
   element inside a root with a selector written for that root.
 
+## Asking the agent's questions: `scripts/ask.ts`
+
+verify proves the assistant works with a stand-in model; it cannot say whether the real model answers a page's own
+questions from its tools. Each page specification lists those questions under `### What the agent does here`, and
+`node scripts/ask.ts` asks them of a served product, so a reader can judge each answer against what the tools returned.
+
+```bash
+pnpm build                                     # the assistant's ASSISTANT_* variables in .env.local, as the app reads them
+node_modules/.bin/next start --port 3100       # served, and stopped by its own id when the questions are answered
+node scripts/ask.ts --base http://127.0.0.1:3100 [--view usage] [--as viewer]
+```
+
+- **What it asks.** Every view whose specification lists questions, or the one `--view` names, by its view tool's name.
+  Each question is asked once, in a thread of its own, on the page's address; a detail page's on its first record, the
+  first link of its form on its listing page.
+- **Who asks.** A persona of `personas` in `scripts/verify.config.ts`: the one `--as` names, else `owner`, else the first
+  declared. Its cookie signs every request in, so the assistant answers with exactly that person's rights.
+- **What it writes.** `out/asks/<view>.md`: each question, every tool the assistant called with its input and what the
+  tool returned, and the answer's text. It prints one line for each file it writes, and exits 1 when a question went
+  unanswered.
+- **When it does not run.** It reads no environment and prints none of it: whether the assistant is on is the served
+  product's to say. When `POST /api/assistant` answers 404 (no `ASSISTANT_*` variables), or the configuration declares
+  no personas, it prints one line saying it did not run and why, and exits 0. An unknown `--view` or `--as` exits 1
+  naming the ones that exist.
+- **Not part of verify.** Neither `pnpm verify` nor `pnpm verify --full` runs it: a real model costs money and is not
+  deterministic, so its answers are read by a person or a reviewing agent, never passed or failed by a script.
+
 ## After it passes
 
 Look at the pages (SKILL.md step 6). The audit measures what can be measured; the eye checks what cannot: one

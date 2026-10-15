@@ -53,6 +53,16 @@ Every key with its id, environment, hint (the first and last characters, never t
 - **Console assistant:** this text in its prompt's `<view-context>` block, with the page's address and query, and the page text after it for anything the context does not cover.
 - **MCP App:** no embed view yet; an MCP server can return this context as a tool's text (`docs/agents.md`).
 
+### What the agent does here
+
+Protagonist: API keys.
+
+- "How many live keys does each owner hold?" — the keys whose environment is live, by owner
+- "Which keys have not been used since 1 September, and what are their ids?" — the keys whose last use is before 2026-09-01, with up to 20 of them, each with the id a revocation names
+- "How many keys were created this year, live and test?" — the keys created after 2026-01-01, by environment
+
+API keys' prepared query (`keysExplore` in `src/views/keys-explore.ts`, set as `explore` on the API keys tool) reads one source, `keys`, with no date: narrowed by environment, owner, last use and creation, and grouped by environment or owner. A key's secret is in no filter, group, measure or drilled row, and its hash is `hidden` besides: a drilled key shows its hint, the first and last characters. A key never used is left out of any narrowing by its last use.
+
 ## Content
 
 - "Create key", "Revoke key", "Key created", "Key revoked": one verb through the flow.

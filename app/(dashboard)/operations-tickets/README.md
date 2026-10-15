@@ -53,6 +53,17 @@ The three counts, labelled "Open tickets", "Waiting tickets" and "Closed tickets
 - **Console assistant:** this text in its prompt's `<view-context>` block, with the page's address and query, and the page text after it for anything the context does not cover.
 - **MCP App:** no embed view; an MCP server can return this context as a tool's text (`docs/agents.md`).
 
+### What the agent does here
+
+Protagonist: Tickets.
+
+- "How many tickets were closed in the last 30 days, against the 30 before?" — the tickets closed over 30 complete days, by when each was closed, against the 30 days before
+- "Which service had the most tickets opened in the last 90 days?" — the tickets opened over 90 complete days, by service
+- "How many tickets were opened each week this quarter, and how many of them are still in play?" — the tickets opened and those still open or waiting over 90 complete days, a week at a time
+- "Which high-priority tickets opened this month are still in play, and where do I open them?" — the tickets opened over 30 complete days whose priority is high and whose state is not closed, with up to 20 of them, each with its address
+
+Tickets' prepared query (`ticketsExplore` in `src/views/tickets-explore.ts`, set as `explore` on the Tickets tool) reads the `tickets` collection as two sources: `opened`, windowed by when a ticket was opened, and `closed`, windowed by when it was closed, which holds no ticket still in play. Both are narrowed by state, priority, service and assignee, grouped by any of them or a day, a week or a month at a time. A drilled ticket opens on this page searched for its title, and a call narrowed to one state or one priority answers with the page filtered the same way. A ticket opened today is in no window, as a window holds complete days.
+
 ## Content
 
 - "New ticket" opens the form and "Create ticket" submits it: one verb through the flow.

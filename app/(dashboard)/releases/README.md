@@ -49,6 +49,17 @@ The three counts, labelled "Live versions", "Ready to release" and "In testing",
 - **Console assistant:** this text in its prompt's `<view-context>` block, with the page's address and query, and the page text after it for anything the context does not cover.
 - **MCP App:** no embed view; an MCP server can return this context as a tool's text (`docs/agents.md`).
 
+### What the agent does here
+
+Protagonist: Releases.
+
+- "How many releases went out in the last 90 days, and to which environments?" — the releases that went out over 90 complete days, by environment
+- "Which services shipped most often this quarter?" — the releases that went out over 90 complete days, by service
+- "Which release failed the most verification runs this month?" — the verification runs that failed over 30 complete days, by release
+- "How many runs started each day this week, and how many failed?" — the verification runs and the failed ones over 7 complete days, a day at a time
+
+Releases' prepared query (`releasesExplore` in `src/views/releases-explore.ts`, set as `explore` on the Releases tool) reads two sources. `releases` is windowed by when a release last changed, which for one that went out is when it went out; it is narrowed and grouped by state, environment and service, where the record's pending is what this page calls Ready to release. `runs` reads the `tests` collection, windowed by when a run started, narrowed and grouped by release, verdict, suite and endpoint. A drilled release opens on this page searched for its version, and a drilled run opens the runs of its release (`/tests?release=<id>`). A count of runs is not what holds a release: only the latest run of each required verification does, which the page states as In testing.
+
 ## Content
 
 - A state is named in the product's words: In testing, Ready to release, Released.
