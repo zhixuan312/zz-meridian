@@ -70,12 +70,12 @@ export function briefExcerpt(text: string): string {
  * What is true of the person the assistant answers, worked out by the route from their access and handed here as data, so
  * this file reads nothing of the product's data layer. `addresses` are the console addresses they may open, as the rail
  * labels them, a detail page's with `<id>` in place of its segment; `withheld` is each collection they may not read and
- * the roles that can, given only under `refusal: 'explain'`; `explore` is the page's prepared query tool when one is handed.
+ * the roles that can, with its own page where it has one, given only under `refusal: 'explain'`; `explore` is the page's prepared query tool when one is handed.
  * What is left out is not said.
  */
 export type Audience = {
   addresses?: readonly { label: string; address: string }[];
-  withheld?: readonly { label: string; roles: readonly string[] }[];
+  withheld?: readonly { label: string; roles: readonly string[]; page?: { label: string; address: string } }[];
   explore?: string;
 };
 
@@ -107,10 +107,11 @@ export function systemPrompt(page: PageContext, now: Date, brief = '', limits: s
       : []),
     ...(withheld.length
       ? [
-          'What this person may not read, and who can (say so when they ask for it). The pages that hold it show it to those roles: never say a page has no place for it, and never send the person to a page that does not hold it.',
+          'What this person may not read, and who can (say so when they ask for it). The pages that hold it show it to those roles: never say a page has no place for it, and never send the person to a page that does not hold it; where its page is named, give that address.',
           ...withheld.map((w) => (w.roles.length
             ? `- ${oneLine(w.label)}: ${either(w.roles)} can read it.`
-            : `- ${oneLine(w.label)}: no single role can read it; it takes a main role together with an add-on.`)),
+            : `- ${oneLine(w.label)}: no single role can read it; it takes a main role together with an add-on.`)
+            + (w.page ? ` Its page is ${oneLine(w.page.label)} (${oneLine(w.page.address)}), which tells this person who can open it.` : '')),
         ]
       : []),
     ...(limits.length ? ['What you cannot do or see, by the product\'s rules (say so when asked, and why):', ...limits.map((l) => `- ${l}`)] : []),

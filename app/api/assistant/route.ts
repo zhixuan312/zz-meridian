@@ -67,7 +67,8 @@ export async function POST(request: Request): Promise<Response> {
   // What the prompt says is true of this person. The addresses are the rail's destinations whose need they satisfy, the
   // predicate `chromeAccess().only` draws the rail by, and the detail pages of the views they may use. Under
   // `refusal: 'explain'` it also names each collection not handed above and the roles that can read it, as the page names
-  // who can open it; under `absent` it names none, as the page names nothing.
+  // who can open it, with the rail's page that needs that read alone, whose refusal says who can; under `absent` it names
+  // none, as the page names nothing.
   const open = (await Promise.all(nav.flatMap((g) => g.items).map(async (i) => ((await may(i.needs)) ? [i] : [])))).flat();
   const audience = {
     addresses: [
@@ -75,7 +76,10 @@ export async function POST(request: Request): Promise<Response> {
       ...views.filter((v) => /\[[^\]/]+\]/.test(v.page)).map((v) => ({ label: v.title, address: v.page.replace(/\[([^\]/]+)\]/g, '<$1>') })),
     ],
     withheld: refusal === 'explain'
-      ? collections.filter((c) => !names.has(c.name)).map((c) => ({ label: c.label, roles: whoCan(`${c.name}:read`) }))
+      ? collections.filter((c) => !names.has(c.name)).map((c) => {
+        const at = nav.flatMap((g) => g.items).find((i) => i.needs === `${c.name}:read`);
+        return { label: c.label, roles: whoCan(`${c.name}:read`), ...(at ? { page: { label: at.label, address: at.href } } : {}) };
+      })
       : undefined,
   };
 
