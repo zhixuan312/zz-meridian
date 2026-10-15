@@ -45,6 +45,11 @@ const MAX_STEPS = 8;
 export async function respond({ model, secret, messages, page, collections, readable = collections, views = [], explore, guard, now, audience }: { model: LanguageModel; secret: string; messages: UIMessage[]; page: PageContext; collections: AnyCollection[]; readable?: AnyCollection[]; views?: ViewTool[]; explore?: HandedExplore; guard: Guard; now: Date; audience?: Omit<Audience, 'explore'> }): Promise<Response> {
   const modelMessages = await convertToModelMessages(messages);
   const stream = createUIMessageStream({
+    // The thread as the panel holds it, so the SDK can tell this reply apart from a new turn. A thread ending in an
+    // assistant message is that turn continuing — an answer to an approval — and the reply carries that message's id,
+    // which is what makes the panel replace it rather than add a second one holding the same tool part. Without this
+    // the change is drawn twice: the one being applied, and, forever, the one that says "Applying…".
+    originalMessages: messages,
     execute: ({ writer }) => {
       const { tools, toolApproval } = assistantTools(collections, writer, guard, views, explore);
       const result = streamText({

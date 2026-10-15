@@ -47,6 +47,37 @@ describe('respond', () => {
     expect(system).toContain('x'.repeat(24_000));
     expect(system).not.toContain('x'.repeat(24_001));
   });
+
+  test('a reply that answers an approval continues the assistant message it answers', async () => {
+    // The thread after a person approves: it ends with the assistant message whose tool part carries the approval.
+    // The reply to that approval is the same turn continuing, so it must carry that message's id. Without it the
+    // panel is handed a second assistant message holding the same tool part and draws the change twice — once
+    // forever "Applying…", beside the one that says "Applied". The id is what makes the client replace, not append.
+    const model = new MockLanguageModelV4({ doStream: async () => say('Applied.') });
+    const thread: UIMessage[] = [
+      { id: 'u1', role: 'user', parts: [{ type: 'text', text: 'Suspend Alice Moreno' }] },
+      {
+        id: 'a1',
+        role: 'assistant',
+        parts: [
+          { type: 'data-proposal', id: 'c1', data: { title: 'Change Alice Moreno', tone: 'neutral', changes: [] } },
+          { type: 'tool-update_members', toolCallId: 'c1', state: 'approval-responded', input: { ids: ['members_13'] }, approval: { id: 'ap1', approved: true } },
+        ],
+      },
+    ] as UIMessage[];
+    const res = await respond({ model, secret: 's'.repeat(43), messages: thread, page: { path: '/members', title: 'Members', text: '' }, collections: [], guard, now: new Date('2026-10-03T09:00:00Z') });
+    const start = (await events(res)).find((e) => e.type === 'start');
+    expect(start?.messageId).toBe('a1');
+  });
+
+  test('a reply to a question is a new turn: a fresh id, so the panel appends it', async () => {
+    const model = new MockLanguageModelV4({ doStream: async () => say('24 members.') });
+    const thread = ask('How many members?');
+    const res = await respond({ model, secret: 's'.repeat(43), messages: thread, page: { path: '/members', title: 'Members', text: '' }, collections: [], guard, now: new Date('2026-10-03T09:00:00Z') });
+    const start = (await events(res)).find((e) => e.type === 'start');
+    expect(start?.messageId).toBeTruthy();
+    expect(thread.map((m) => m.id)).not.toContain(start?.messageId);
+  });
 });
 
 describe('POST /api/assistant', () => {
