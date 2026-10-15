@@ -54,14 +54,16 @@ const homeWindow = (days: DailyPoint[]) => {
 };
 
 /**
- * The year's sentence, or null when fewer than two windows run from the first with a request on every day: how
- * requests moved from that window to the latest, and the range of p95 over the windows from there. A window with a day before the
- * first request is a part of a window: its requests are short and its median day may have no p95, so measured from it
- * flat traffic reads as growth and p95 as 0. The sentence starts after it and names the window it starts from; from the
+ * The year's sentence, or null when fewer than two windows run from the first that starts on or after the first request:
+ * how requests moved from that window to the latest, and the range of p95 over the windows from there. A window with a
+ * day before the first request is a part of a window: its requests are short and its median day may have no p95, so
+ * measured from it flat traffic reads as growth and p95 as 0. A quiet day after the first request is a day of the
+ * product's and keeps its window. The sentence starts after the part and names the window it starts from; from the
  * first window kept it says "in a year". A change that rounds to 0.0% is "held level". `length` is a window's days.
  */
 export function yearLine(history: readonly DailyPoint[], length: number): string | null {
-  const windows = windowsOf(history, length, (days) => ({ ...homeWindow(days), whole: days.every((d) => d.requests > 0) }));
+  const first = history.find((d) => d.requests > 0)?.date;
+  const windows = windowsOf(history, length, (days) => ({ ...homeWindow(days), whole: first !== undefined && days[0].date >= first }));
   const from = windows.findIndex((w) => w.whole);
   const counted = from < 0 ? [] : windows.slice(from);
   if (counted.length < 2) return null;

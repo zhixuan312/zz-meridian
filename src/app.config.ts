@@ -40,8 +40,12 @@ export const workspaces = {
 } as const;
 export type WorkspaceId = keyof typeof workspaces;
 
-/** `needs` is the feature's own need from `src/data/features.ts`, by reference: the rail asks it of the person. */
-export type NavItem = { href: string; label: string; icon: LucideIcon; badge?: string; workspace?: WorkspaceId; needs: Need };
+/**
+ * `needs` is the feature's own need from `src/data/features.ts`, by reference: the rail asks it of the person. `feature`
+ * names that feature by its id where its need is one others share, as every `public` one is: the assistant reads from
+ * it what the page shows (the actions the features table puts on it), whatever the item is labelled.
+ */
+export type NavItem = { href: string; label: string; icon: LucideIcon; badge?: string; workspace?: WorkspaceId; needs: Need; feature?: string };
 export type NavGroup = { label?: string; items: NavItem[] };
 
 export const nav: NavGroup[] = [
@@ -49,9 +53,9 @@ export const nav: NavGroup[] = [
     items: [
       { href: '/', label: 'Home', icon: LayoutGrid, workspace: 'main', needs: FEATURES.home.needs },
       { href: '/members', label: 'Members', icon: UserRound, workspace: 'main', needs: FEATURES.members.needs },
-      { href: '/settings', label: 'Settings', icon: Settings, workspace: 'main', needs: FEATURES.settings.needs },
-      { href: '/system', label: 'Design system', icon: Boxes, workspace: 'main', needs: FEATURES.system.needs },
-      { href: '/system/start/start-a-dashboard', label: 'Docs', icon: FileText, workspace: 'main', needs: FEATURES.docs.needs },
+      { href: '/settings', label: 'Settings', icon: Settings, workspace: 'main', needs: FEATURES.settings.needs, feature: 'settings' },
+      { href: '/system', label: 'Design system', icon: Boxes, workspace: 'main', needs: FEATURES.system.needs, feature: 'system' },
+      { href: '/system/start/start-a-dashboard', label: 'Docs', icon: FileText, workspace: 'main', needs: FEATURES.docs.needs, feature: 'docs' },
     ],
   },
   {

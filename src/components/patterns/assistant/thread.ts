@@ -6,6 +6,12 @@ import { slug } from '@/app.config';
  * nowhere but the assistant route.
  */
 export const THREAD_KEY = `${slug}.assistant`;
+/**
+ * The scope the console last loaded for in this browser: the person signed in now, since a page loads for whoever is.
+ * A tab left open for another scope writes nothing while it is not this one.
+ */
+const CURRENT_KEY = `${THREAD_KEY}.scope`;
+const current = (storage: Storage, scope: string) => storage.setItem(CURRENT_KEY, scope);
 const KEEP = 100;
 
 /** Why a change that was never answered is closed. */
@@ -60,6 +66,7 @@ function stored(storage: Storage): { scope: string; messages: UIMessage[] } | nu
  */
 export function loadThread(storage: Storage, scope: string): UIMessage[] {
   try {
+    current(storage, scope);
     const thread = stored(storage);
     if (!thread || thread.scope !== scope) {
       storage.removeItem(THREAD_KEY);
@@ -72,9 +79,10 @@ export function loadThread(storage: Storage, scope: string): UIMessage[] {
   }
 }
 
-/** Removes the stored thread unless it is of `scope`. */
+/** Removes the stored thread unless it is of `scope`, the one the console has loaded for. */
 export function dropThread(storage: Storage, scope: string): void {
   try {
+    current(storage, scope);
     if (stored(storage)?.scope !== scope) storage.removeItem(THREAD_KEY);
   } catch {
     // Storage is unavailable: nothing is stored that could be removed.
@@ -92,14 +100,14 @@ export function forgetThread(storage: Storage, scope: string): void {
 
 /**
  * Keeps the last 100 messages of `scope`; an empty thread removes the key; over the quota it keeps the newer half and
- * tries once more. A thread stored under another scope is neither replaced nor removed: it was written since this one
- * loaded, by another tab whose person is signed in now, and a tab left open for the earlier one learns so only when the
- * route refuses it. The tab of that other scope removes it when it loads.
+ * tries once more. Nothing is written while the console has since loaded for another scope: another tab's person is
+ * signed in now, and a tab left open for the earlier one, whenever its reply lands, neither replaces nor removes what
+ * that person stored. It learns it is stale when the route refuses its next question.
  */
 export function saveThread(storage: Storage, scope: string, messages: UIMessage[]): void {
   try {
-    const held = stored(storage);
-    if (held && held.scope !== scope) return;
+    const now = storage.getItem(CURRENT_KEY);
+    if (now !== null && now !== scope) return;
     if (messages.length === 0) return storage.removeItem(THREAD_KEY);
     const kept = recent(messages);
     try {
@@ -116,6 +124,7 @@ export function saveThread(storage: Storage, scope: string, messages: UIMessage[
 export function clearThread(storage: Storage): void {
   try {
     storage.removeItem(THREAD_KEY);
+    storage.removeItem(CURRENT_KEY);
   } catch {
     // Nothing stored that could be removed.
   }

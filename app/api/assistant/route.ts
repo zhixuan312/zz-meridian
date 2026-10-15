@@ -154,12 +154,13 @@ const grantsOf = (need: Need): readonly Grant[] => (need === 'public' ? [] : typ
 
 /**
  * The grants a rail page declares: its feature's need and the need of every action the features table puts on that
- * feature. An item is its feature's by the need it points at by reference (`src/app.config.ts`); features that share a
- * need, as every `public` one does, are told apart by the title the item is labelled with.
+ * feature. An item is the feature it names (`feature`), else the one feature whose need it points at by reference
+ * (`src/app.config.ts`); an item whose need several features share and that names none declares only its need.
  */
 function declared(item: NavItem): Grant[] {
   const ids = (Object.keys(FEATURES) as FeatureId[]).filter((f) => FEATURES[f].needs === item.needs);
-  const own = ids.length > 1 ? ids.filter((f) => FEATURES[f].title === item.label) : ids;
+  const named = item.feature !== undefined && item.feature in FEATURES ? [item.feature as FeatureId] : [];
+  const own = named.length ? named : ids.length === 1 ? ids : [];
   return [...grantsOf(item.needs), ...Object.values(ACTIONS).filter((a) => own.includes(a.feature)).flatMap((a) => grantsOf(a.needs))];
 }
 

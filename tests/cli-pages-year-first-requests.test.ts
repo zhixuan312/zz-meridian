@@ -32,6 +32,16 @@ describe("the year's sentence, when the days kept begin before the first request
     expect(yearOf(flat, '30d').title).toBe('Requests held level from the 30 days to 14 Sept 2026, and p95 stayed between 300 and 300 ms');
   });
 
+  it('keeps a window whose quiet day comes after the first request', () => {
+    // A year of requests from the first day kept, with none on one day a week, or on one day of the first window: each
+    // window is whole, so the sentence runs over the year.
+    const year = Array.from({ length: 364 }, (_, i) => ({ ...history[0], date: new Date(Date.parse('2025-10-15T00:00:00Z') + i * DAY).toISOString().slice(0, 10), requests: 1_000 + i * 10, p95: 300 }));
+    const weekly = year.map((d, i) => (i % 7 === 6 ? { ...d, requests: 0, p95: 0 } : d));
+    for (const period of ['7d', '30d', '90d'] as const) expect(yearOf(weekly, period).title, period).toMatch(/^Requests grew [\d.]+% in a year, and p95 stayed between/);
+    const outage = year.map((d, i) => (i === 10 ? { ...d, requests: 0, p95: 0 } : d));
+    expect(yearOf(outage, '30d').title).toMatch(/^Requests grew [\d.]+% in a year, and p95 stayed between 300 and 300 ms$/);
+  });
+
   it('is the line Now states among the facts of the band', () => {
     const now = '2026-10-15T09:00:00.000Z';
     const data = nowData({

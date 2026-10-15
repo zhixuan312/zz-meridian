@@ -9,7 +9,7 @@ const router = vi.hoisted(() => ({ refreshed: 0 }));
 vi.mock('next/navigation', () => ({ usePathname: () => '/', useRouter: () => ({ refresh: () => { router.refreshed++; }, push() {}, replace() {} }) }));
 import { AppShell, PageFrame } from '@/components/base/shell';
 import { AssistantScope } from '@/components/patterns/assistant/scope';
-import { THREAD_KEY, saveThread } from '@/components/patterns/assistant/thread';
+import { THREAD_KEY, dropThread, saveThread } from '@/components/patterns/assistant/thread';
 
 // jsdom has no IntersectionObserver; PageFrame observes its masthead.
 vi.stubGlobal('IntersectionObserver', class { observe() {} unobserve() {} disconnect() {} });
@@ -67,7 +67,8 @@ describe('a tab left open while someone else signs in from another tab', () => {
     let out!: ReturnType<typeof render>;
     await act(async () => { out = render(consoleOf('acme/members_1')); });
     const panel = await openPanel();
-    // The other tab, members_12's, stores its own thread after this tab opened.
+    // The other tab, members_12's, loads the console for them and stores its own thread after this tab opened.
+    dropThread(localStorage, NOW);
     saveThread(localStorage, NOW, [ask('u9', 'Mine'), say('a9', 'Yours.')]);
 
     fireEvent.change(within(panel).getByRole('textbox'), { target: { value: 'First question?' } });

@@ -6,7 +6,7 @@ import type { UIMessage } from 'ai';
 vi.mock('next/navigation', () => ({ usePathname: () => '/', useRouter: () => ({ refresh() {}, push() {}, replace() {} }) }));
 import { AppShell, PageFrame } from '@/components/base/shell';
 import { AssistantScope } from '@/components/patterns/assistant/scope';
-import { THREAD_KEY, loadThread, saveThread } from '@/components/patterns/assistant/thread';
+import { THREAD_KEY, dropThread, loadThread, saveThread } from '@/components/patterns/assistant/thread';
 
 // jsdom has no IntersectionObserver; PageFrame observes its masthead.
 vi.stubGlobal('IntersectionObserver', class { observe() {} unobserve() {} disconnect() {} });
@@ -21,6 +21,21 @@ const say = (id: string, text: string): UIMessage => ({ id, role: 'assistant', p
 afterEach(() => { localStorage.clear(); vi.unstubAllGlobals(); vi.stubGlobal('IntersectionObserver', class { observe() {} unobserve() {} disconnect() {} }); });
 
 describe('the stored thread', () => {
+  test("is the latest loaded person's: a tab left open for another writes nothing over it, whenever its reply lands", () => {
+    const A = 'acme/members_1', B = 'acme/members_12';
+    saveThread(localStorage, A, [ask('u1', 'A asks')]);
+    // B signs in from another tab: the console drops A's thread and the panel loads B's.
+    dropThread(localStorage, B);
+    expect(loadThread(localStorage, B)).toEqual([]);
+    // A's tab, still streaming a reply to a question sent before, saves after B loaded.
+    saveThread(localStorage, A, [ask('u1', 'A asks'), say('a1', 'A answer')]);
+    expect(localStorage.getItem(THREAD_KEY) ?? '').not.toMatch(/A answer/);
+    // B's saves are kept, and B finds them on a reload.
+    saveThread(localStorage, B, [ask('u2', 'B asks')]);
+    saveThread(localStorage, B, [ask('u2', 'B asks'), ask('u3', 'B again')]);
+    expect(loadThread(localStorage, B).map((m) => m.id)).toEqual(['u2', 'u3']);
+  });
+
   test("loads only for the scope it was saved for; another scope's load is empty and removes it", () => {
     saveThread(localStorage, 'acme/members_1', [ask('u1', 'What did compute cost us?'), say('a1', '$1.2M')]);
     expect(loadThread(localStorage, 'acme/members_1').map((m) => m.id)).toEqual(['u1', 'a1']);

@@ -69,6 +69,8 @@ presentation, not the gate: every page refuses on its own (see "Data" above). An
 `needs: 'public'` on every item. `'public'` is the need any signed-in, Active person satisfies (`satisfies` in
 `optional:src/data/access.ts`), so the item is drawn for everyone who is signed in and no role decides it; it is right for a
 destination every member may open, and an item moves to a feature of its own once the project has a role table.
+Where several features share one need, as every `public` one does, the item also names its feature
+(`feature: 'settings'`): the assistant reads from it what the page shows, whatever the item is labelled.
 
 `refusal` is what an address a person may not open draws, the product's choice, declared once here and read by `gate`.
 `'explain'` draws the no-access page: the page's title, who can open it, who to ask and one way out. `'absent'` draws
