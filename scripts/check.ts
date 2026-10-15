@@ -7,7 +7,8 @@
  * - Every page specification exists and follows the page anatomy, and a page with a view tool says what the agent does
  *   there: its protagonist and at least three questions its prepared query answers.
  * - Every token a specification names in backticks, and every var(--x) or (--x) a component uses, exists.
- * - No literal colour (hex, rgb, hsl) and no Tailwind default palette in the layers: colours come from roles.
+ * - No literal colour (hex of 3, 4, 6 or 8 digits; rgb, hsl, oklch, oklab, lab, lch, color) and no Tailwind default
+ *   palette in the layers: colours come from roles.
  * - One implementation: the fixtures a collection serves are read through src/data/collections.ts, not imported again.
  * - In the template, `connection()` is called only where the request is meant to be read: the console layout and the
  *   not-found page; pages and views reach the sample through src/data, never src/system/fixtures; and a writer path
@@ -192,7 +193,10 @@ for (const f of LAYERS) {
     if (/allow-literal-colour/.test(line)) return;
     if (f === 'src/system/page-stage.tsx' && /HOST_STYLES|--color-|--border-radius|#2A2A30|#EDEDF0/.test(line)) return; // a simulated foreign host's own colours
     const at = `${f}:${i + 1}`;
-    const lit = line.match(/#[0-9a-fA-F]{6}\b|#[0-9a-fA-F]{3}\b(?![0-9a-fA-F])|\brgba?\(\s*\d|\bhsla?\(/);
+    // Literal colour, in every form a browser takes: hex of 3, 4, 6 or 8 digits, and the colour functions. A function
+    // is matched by its own name and its parenthesis, and not after a dot — so `color-mix(in oklch, var(--ink) 40%,
+    // transparent)`, which is how the layers compose a tint out of tokens, is not a literal and is not reported.
+    const lit = line.match(/#[0-9a-fA-F]{8}\b|#[0-9a-fA-F]{4}\b|#[0-9a-fA-F]{6}\b|#[0-9a-fA-F]{3}\b(?![0-9a-fA-F])|\brgba?\(\s*\d|\bhsla?\(|(?<![\w.$])(?:oklch|oklab|lab|lch|color)\(/);
     if (lit && !/^\s*(\*|\/\/|\/\*)/.test(line)) problems.push(`${at}: literal colour ${lit[0]} (use a role)`);
     // Meridian resets Tailwind's scales; a utility outside them emits no CSS and fails silently.
     const dead = line.match(/\b(?:font-(?:normal|light|bold|extrabold|black|thin)|rounded-(?:2xl|3xl)|shadow-(?:sm|md|lg|xl|2xl)|text-(?:3xl|4xl|5xl))\b/);

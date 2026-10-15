@@ -41,6 +41,26 @@ describe("the template's own rules", () => {
     expect(out).toMatch(/app\/\(dashboard\)\/rogue\/page\.tsx:\d+: connection\(\)/);
     expect(out).toMatch(/app\/\(dashboard\)\/rogue\/actions\.ts:\d+: revalidates with 'max' on a writer path/);
   }, 60_000);
+  it('catch a literal colour in every form a browser takes, and leave a tint composed from tokens alone', () => {
+    put('src/views/paint.tsx', [
+      "export const Paint = () => (",
+      "  <>",
+      "    <p style={{ color: '#0a58caFF' }}>eight digits</p>",
+      "    <p style={{ color: '#0a5F' }}>four digits</p>",
+      "    <p style={{ color: 'oklch(0.62 0.19 259)' }}>a function</p>",
+      "    <p style={{ color: 'lab(50% 40 59)' }}>another</p>",
+      "    <p style={{ color: 'color(display-p3 0.1 0.4 0.8)' }}>and another</p>",
+      "    <p style={{ color: 'color-mix(in oklch, var(--ink) 40%, transparent)' }}>not a literal: the layers compose tints this way</p>",
+      "  </>",
+      ");",
+    ].join('\n') + '\n');
+    const out = check();
+    for (const [line, what] of [[3, '#0a58caFF'], [4, '#0a5F'], [5, 'oklch('], [6, 'lab('], [7, 'color(']] as const) {
+      expect(out, `${what} on line ${line}`).toMatch(new RegExp(`src/views/paint\\.tsx:${line}: literal colour ${what.replace(/[()#]/g, (m) => `\\${m}`)}`));
+    }
+    expect(out).not.toMatch(/src\/views\/paint\.tsx:8:/);
+    fs.rmSync(path.join(dir, 'src/views/paint.tsx'));
+  }, 60_000);
   it('allow one protagonist a page, in the template and in a product', () => {
     const featured = "<FeaturedMetric kicker=\"A\" value={1} />";
     put('src/views/two.tsx', `import { FeaturedMetric } from '@/components/patterns/featured-metric';\nexport const Two = () => (\n  <>\n    ${featured}\n    ${featured}\n  </>\n);\n`);
