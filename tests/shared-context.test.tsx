@@ -27,6 +27,9 @@ import { homeData, homeHead, type HomeReads } from '@/views/home-parts';
 import { servicesContext, servicesHead, servicesTitle } from '@/views/services-context';
 import { EmbedHome } from '../app/embed/home/view';
 
+/** The product's currency mark, as `formatCost` writes it before the digits: a project made with `--currency GBP` writes £. */
+const MONEY = formatCost(0).replace(/\d.*$/, '').replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
 /** The sample's incidents as a page is handed them: the record without who has it and the id of its ticket. */
 const handed = ({ owner: _, ticketId: __, ...incident }: IncidentRecord): Incident => incident;
 const [INCIDENTS, PAST_INCIDENTS] = [RECORDS.map(handed), PAST_RECORDS.map(handed)];
@@ -327,7 +330,7 @@ describe('a page is headed by the sentence its context leads with', () => {
       expect(context.title).toBe('Home');
     }
     // The two periods say different things, so the title is worked out and not written: a record at 30 days, the change at 90.
-    expect((await homeTool.read({ period: '30d' })).context.insights[0].text).toMatch(/^The highest 30 days yet: \$[\d,.]+, the \d+(st|nd|rd|th) record in a row$/);
+    expect((await homeTool.read({ period: '30d' })).context.insights[0].text).toMatch(new RegExp(`^The highest 30 days yet: ${MONEY}[\\d,.]+, the \\d+(st|nd|rd|th) record in a row$`));
     expect((await homeTool.read({ period: '90d' })).context.insights[0].text).toMatch(/^Revenue is up [\d.]+% on the 90 days before, and /);
   });
 
@@ -359,7 +362,7 @@ describe('a page is headed by the sentence its context leads with', () => {
     const { default: CustomerPage } = await import('../app/(dashboard)/customers/[id]/page');
     const { customerTool } = await import('@/views/tools');
     for (const [id, name, says] of [
-      ['northwind-labs', 'Northwind Labs', /^Northwind Labs paid \$[\d,.]+ in 30 days and sent [\d.]+% (more|less) this week than last$/],
+      ['northwind-labs', 'Northwind Labs', new RegExp(`^Northwind Labs paid ${MONEY}[\\d,.]+ in 30 days and sent [\\d.]+% (more|less) this week than last$`)],
       ['lumen-studio', 'Lumen Studio', /^Lumen Studio is past due, and sent [\d.]+% (more|less) this week than last$/],
       ['brightline', 'Brightline', /^Brightline is on a trial that ends on \d\d \w+ \d{4}$/],
       ['ambervale-motors', 'Ambervale Motors', /^Ambervale Motors left on \d\d \w+ \d{4}$/],
