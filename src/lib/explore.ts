@@ -19,8 +19,10 @@ type ExploreBucket = 'day' | 'week' | 'month' | 'weekday';
 /**
  * A figure an answer states: a count (optionally of the rows that meet conditions the author declares), a field's sum,
  * average, minimum, maximum or p95 (`field` may be a path into an object field), or one derived from two measures: a
- * ratio `a / (b * scale)` or a margin `1 - b / a`. `of` names measures of this source, or `<source>.<measure>` of
- * another, which is then read over the same window on that source's own date field.
+ * ratio `a / (b * scale)` or a margin `(1 - b / a) / scale`, `scale` 1 when not given, so `scale: 0.01` states either
+ * in %. `of` names measures of this source, or `<source>.<measure>` of another, which is then read over the same window
+ * on that source's own date field. A margin's change on the window before is in percentage points, as Home states its
+ * gross margin; every other measure's is a percent of the window before.
  */
 export type Measure = { label: string; unit: string; definition: string } & (
   | { agg: 'count'; where?: Condition[] }
@@ -212,6 +214,16 @@ function change(now: number | null, before: number | null): string {
   return d === 0 ? ', unchanged' : `, ${d > 0 ? 'up' : 'down'} ${number.format(Math.abs(d) * 100)}%`;
 }
 
+/**
+ * A margin's change from `before` to `now`, both fractions before their scale, in percentage points to one decimal, as
+ * Home's context states its gross margin: a share of a share says little. A change from 0 has its points too.
+ */
+function pointsChange(now: number | null, before: number | null): string {
+  if (now === null || before === null) return '';
+  const by = Math.abs(now - before) * 100;
+  return by < 0.05 ? ', unchanged' : `, ${now > before ? 'up' : 'down'} ${by.toFixed(1)} points`;
+}
+
 type Merge = 'add' | 'min' | 'max' | null;
 
 /**
@@ -295,13 +307,24 @@ export async function runExplore<I>(query: PreparedQuery<I>, input: unknown, rig
   const [now, then] = [await reading, previous && (await previous)];
 
   type Values = Map<string, Record<string, number | null>>;
+  /** A margin as a fraction, before its scale: none over no revenue, or when either of its measures has no value. */
+  const fraction = (src: string, d: Extract<Measure, { derive: string }>, vs: Values): number | null => {
+    const [a, b] = d.of.map((ref) => value(...refOf(q, src, ref), vs));
+    return a === null || b === null || a === 0 ? null : 1 - b / a;
+  };
   const value = (src: string, m: string, vs: Values): number | null => {
     const d = q.sources[src].measures[m];
     if (!('derive' in d)) return vs.get(src)?.[m] ?? null;
+    if (d.derive === 'margin') { const f = fraction(src, d, vs); return f === null ? null : f / (d.scale ?? 1); }
     const [a, b] = d.of.map((ref) => value(...refOf(q, src, ref), vs));
     if (a === null || b === null) return null;
-    if (d.derive === 'ratio') { const den = b * (d.scale ?? 1); return den === 0 ? null : a / den; }
-    return a === 0 ? null : 1 - b / a;
+    const den = b * (d.scale ?? 1);
+    return den === 0 ? null : a / den;
+  };
+  /** A measure's change on the window before: a margin's in points of its fraction, any other's as a percent. */
+  const moved = (m: string, at: Values, was: Values) => {
+    const d = s.measures[m];
+    return 'derive' in d && d.derive === 'margin' ? pointsChange(fraction(name, d, at), fraction(name, d, was)) : change(value(name, m, at), value(name, m, was));
   };
   const totals = (rs: AggregateResult[]): Values => new Map(sources.map((src, i) => [src, rs[i].total.values]));
   /** A group's values: this source's own, and, for a derived measure over another source, that source's group of the same key. */
@@ -323,7 +346,7 @@ export async function runExplore<I>(query: PreparedQuery<I>, input: unknown, rig
   if (then) {
     const b = windowOf(name, true)!;
     const before = totals(then);
-    head.push(`The window before, ${b.from} to ${b.to}: ${asked.map((m) => `${s.measures[m].label} ${figure(value(name, m, before), s.measures[m].unit)}${change(value(name, m, current), value(name, m, before))}`).join('; ')}.`);
+    head.push(`The window before, ${b.from} to ${b.to}: ${asked.map((m) => `${s.measures[m].label} ${figure(value(name, m, before), s.measures[m].unit)}${moved(m, current, before)}`).join('; ')}.`);
   }
 
   // The groups, at most eight, and the rest on one line.

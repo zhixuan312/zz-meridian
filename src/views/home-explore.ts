@@ -22,7 +22,7 @@ export const homeExplore: PreparedQuery = {
       buckets: ['day', 'week', 'month', 'weekday'],
       measures: {
         revenue: { label: 'Revenue', unit: 'USD', definition: 'Billed for metered usage over the complete days, before credits.', agg: 'sum', field: 'revenue' },
-        grossMargin: { label: 'Gross margin', unit: 'of revenue', definition: 'Revenue less compute cost, over revenue, as a fraction: 0.5 is 50%.', derive: 'margin', of: ['revenue', 'costs.compute'] },
+        grossMargin: { label: 'Gross margin', unit: '%', definition: 'Revenue less compute cost, over revenue.', derive: 'margin', of: ['revenue', 'costs.compute'], scale: 0.01 },
         requests: { label: 'Requests', unit: 'requests', definition: 'Every call answered, at any status, over the complete days.', agg: 'sum', field: 'requests' },
         tokens: { label: 'Tokens served', unit: 'tokens', definition: 'Input and output, every model, over the complete days.', agg: 'sum', field: 'tokens' },
       },
