@@ -76,10 +76,11 @@ export function MetricTile({
   compare?: string;
   intent?: 'up' | 'down' | 'neutral';
   /**
-   * One value a point of the period, oldest first, for the sparkline. The tile reads the pointed point only when it
-   * has one for each of the Meridian's dates.
+   * One value a point of the period, oldest first, for the sparkline; `null` where nothing was measured for that point,
+   * which the Sparkline draws as a gap rather than a fall to zero. The tile reads the pointed point only when it has one
+   * for each of the Meridian's dates.
    */
-  points?: number[];
+  points?: (number | null)[];
   /** A formatter name (serialisable, so a server page can render the tile) or a function. Ignored for a word value. */
   format?: NumberFormat | ((n: number) => string);
   /** Split a formatted value into prefix, integer, fraction and unit for the figure; defaults to a sensible split. */

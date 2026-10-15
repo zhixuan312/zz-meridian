@@ -77,12 +77,18 @@ export async function readLatestFrom(customer: string, limit: number): Promise<L
 }
 
 const isError = (r: LoggedRequest) => r.status >= 500 || r.status === 429;
-const p95Of = (rs: LoggedRequest[]) => {
+/**
+ * The 95th percentile of a set, or null when the set is empty. A figure nobody took is not a zero: a filter that
+ * matches nothing, and a five-minute window with no requests, have no latency at all — `null` is what the formatters
+ * draw as a dash, and `0` is what they draw as `0ms`, which is a measurement this never made.
+ */
+const p95Of = (rs: LoggedRequest[]): number | null => {
   const l = rs.map((r) => r.latency).sort((a, b) => a - b);
-  return l.length ? l[Math.floor((l.length - 1) * 0.95)] : 0;
+  return l.length ? l[Math.floor((l.length - 1) * 0.95)] : null;
 };
-const errorShare = (rs: LoggedRequest[]) => (rs.length ? rs.filter(isError).length / rs.length : 0);
-const change = (now: number, before: number) => (before ? now / before - 1 : null);
+/** The share of the set that errored, or null when the set is empty, for the reason above. */
+const errorShare = (rs: LoggedRequest[]): number | null => (rs.length ? rs.filter(isError).length / rs.length : null);
+const change = (now: number | null, before: number | null) => (now !== null && before ? now / before - 1 : null);
 
 /** The commonest route, customer and region in `rows`, each with its share of them. */
 function commonest(rows: LoggedRequest[]) {
@@ -103,8 +109,8 @@ function summarize(rows: LoggedRequest[], total: number, observedAt: string) {
     const i = B - 1 - Math.floor((end - new Date(r.at).getTime()) / W);
     if (i >= 0 && i < B) out[i].push(r);
   }
-  const half = (f: (rs: LoggedRequest[]) => number, a: number, b: number) => f(out.slice(a, b).flat());
-  const delta = (f: (rs: LoggedRequest[]) => number) => change(half(f, 6, 12), half(f, 0, 6));
+  const half = <T,>(f: (rs: LoggedRequest[]) => T, a: number, b: number) => f(out.slice(a, b).flat());
+  const delta = (f: (rs: LoggedRequest[]) => number | null) => change(half(f, 6, 12), half(f, 0, 6));
   return {
     count: total,
     errorShare: errorShare(rows),

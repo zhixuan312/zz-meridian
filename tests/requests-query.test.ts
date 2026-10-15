@@ -36,4 +36,19 @@ describe('readRequests', () => {
     const last = await readRequests({ page: String(Math.ceil(all.total / REQUEST_PAGE)) });
     expect(last.rows.length).toBe(all.total - (Math.ceil(all.total / REQUEST_PAGE) - 1) * REQUEST_PAGE);
   });
+
+  it('says nothing was measured, rather than zero, when the filter matches nothing', async () => {
+    const none = await readRequests({ q: 'zzzz-no-such-request' });
+    expect(none.total).toBe(0);
+    expect(none.rows).toHaveLength(0);
+    // A latency and an error share nobody took are not 0ms and 0.0%: the formatters draw null as a dash, and 0 as a
+    // measurement this never made. The tiles and the shared context both read these two.
+    expect(none.summary.p95).toBeNull();
+    expect(none.summary.errorShare).toBeNull();
+    expect(none.summary.buckets.p95.every((v) => v === null)).toBe(true);
+    expect(none.summary.buckets.errors.every((v) => v === null)).toBe(true);
+    // The counts are honest zeros, because those really are none.
+    expect(none.summary.count).toBe(0);
+    expect(none.summary.buckets.count.every((v) => v === 0)).toBe(true);
+  });
 });
