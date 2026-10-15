@@ -151,8 +151,13 @@ function attempt(ctx: RebrandContext, change: Record<string, string>, allowDirty
 
 /** The command: the real context, which replays the running release and runs its branding script in scratch. */
 export function brandCommand({ root, flags, allowDirty }: { root: string; flags: Record<string, string>; allowDirty: boolean }): number {
-  const scratch = fs.mkdtempSync(path.join(os.tmpdir(), 'zz-meridian-brand-'));
   const log = (line: string) => (line.startsWith('zz-meridian brand:') ? console.error(line) : console.log(line));
+  // The flags are read before anything is copied, and a value the branding script refuses is refused here with the
+  // command's own sentence: `adopt` and `create` read the same flags through `effectiveBrand` and answer its Error
+  // (`adopt.ts:153`, `create.ts:19`), where `brand` let it out as a stack trace.
+  let brand: Record<string, string>;
+  try { brand = effectiveBrand(flags); } catch (e) { log(`zz-meridian brand: ${(e as Error).message}`); return 1; }
+  const scratch = fs.mkdtempSync(path.join(os.tmpdir(), 'zz-meridian-brand-'));
   const replays = new Map<string, ReturnType<RebrandContext['replay']>>();
   let n = 0;
   try {
@@ -184,7 +189,7 @@ export function brandCommand({ root, flags, allowDirty }: { root: string; flags:
         return fs.readFileSync(path.join(copy, APP_CONFIG), 'utf8');
       },
     };
-    return rebrand(ctx, effectiveBrand(flags), { allowDirty });
+    return rebrand(ctx, brand, { allowDirty });
   } finally {
     fs.rmSync(scratch, { recursive: true, force: true });
   }

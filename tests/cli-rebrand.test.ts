@@ -3,9 +3,9 @@ import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { sha256 } from '../cli/src/files.ts';
-import { mergeBrand, rebrand, type RebrandContext } from '../cli/src/rebrand.ts';
+import { brandCommand, mergeBrand, rebrand, type RebrandContext } from '../cli/src/rebrand.ts';
 
 const tmp: string[] = [];
 afterEach(() => { for (const d of tmp.splice(0)) fs.rmSync(d, { recursive: true, force: true }); });
@@ -100,6 +100,26 @@ describe('rebrand', () => {
     const root = project();
     const before = snapshot(root);
     expect(rebrand(ctx(root), { accent: 'indigo' }, { allowDirty: false })).toBe(0);
+    expect(snapshot(root)).toEqual(before);
+  });
+});
+
+/**
+ * `adopt` and `create` read the brand flags through `effectiveBrand` and answer what it throws with their own refusal
+ * (`adopt.ts:153`, `create.ts:19`). `brand` did not, so a value the branding script refuses left the command as an
+ * uncaught Error — a stack trace where the other two print a sentence.
+ */
+describe('brand with a flag it cannot use', () => {
+  it('reports the flag in the command\'s own voice, and touches nothing', () => {
+    const root = mk();
+    put(root, { 'src/app.config.ts': "name: 'Acme'\n" });
+    const before = snapshot(root);
+    const said: string[] = [];
+    const spy = vi.spyOn(console, 'error').mockImplementation((l: unknown) => void said.push(String(l)));
+    let code: number | undefined;
+    try { code = brandCommand({ root, flags: { theme: 'purple' }, allowDirty: false }); } finally { spy.mockRestore(); }
+    expect(code).toBe(1);
+    expect(said.join('\n')).toMatch(/zz-meridian brand: --theme must be dark or light/);
     expect(snapshot(root)).toEqual(before);
   });
 });
