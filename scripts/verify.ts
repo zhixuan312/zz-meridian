@@ -40,6 +40,7 @@ import { bin } from './lib/bin.ts';
 import { launch } from './lib/chrome.ts';
 import type { BudgetsConfig, NavigationCheck } from './lib/budgets.ts';
 import { finalOutcome, resolveCoverage, selectSmokeRoutes, suiteCoverage, suiteOutcome } from './lib/coverage.ts';
+import { dataHost, isLocalHost } from './lib/data-url.ts';
 import { APP_DIR, railRoutes } from './lib/routes.ts';
 import { sampleSurfaces } from './lib/sample.ts';
 import verifyConfig from './verify.config.ts';
@@ -190,15 +191,6 @@ const FIX = 'fix the issues above and run pnpm verify again';
 
 // ---- what is safe to run against ----
 
-/** Can this hostname only be this machine — or a name that can only resolve inside it? */
-function isLocalHost(host: string): boolean {
-  const h = host.toLowerCase().replace(/^\[|\]$/g, '');
-  if (h === 'localhost' || h === '::1' || h === '0.0.0.0') return true;
-  if (/^127\./.test(h)) return true;
-  // A name with no dot cannot be a public address: a compose service (`postgres`), a container name, a bare hostname.
-  return !h.includes('.');
-}
-
 /** The `.env` files Next loads into the build and the server, in its own order: a later file wins over an earlier one. */
 function envFiles(): Record<string, string> {
   const out: Record<string, string> = {};
@@ -235,9 +227,10 @@ function unsafeBackend(): { reason: string; fix: string } | null {
   const offenders = ['DATABASE_URL', ...(config.dataUrls ?? [])].flatMap((name) => {
     const value = process.env[name] ?? fromFiles[name];
     if (!value) return [];
-    let host: string;
+    let host: string | null;
     // Not a URL is not something this can judge; the app will fail on it long before a press.
-    try { host = new URL(value).hostname; } catch { return []; }
+    host = dataHost(value);
+    if (host === null) return [];
     return isLocalHost(host) ? [] : [`${name} → ${host}`];
   });
   if (offenders.length && !config.allowRemoteData) {
@@ -537,7 +530,9 @@ if (perf && !browser.ran) {
   const status: Status = timed.status !== 0 || !result || result.status === 'FAIL' ? 'FAIL' : result.status;
   phase(status, 'performance: 20 samples per route, device and condition, p95 reported against the budgets', timed.took);
   beneath(timed.out.split('\n').filter((l) => !l.startsWith('perf: ') && !l.startsWith('… ')));
-  if (status === 'FAIL') ok = false;
+  // A perf run that failed is recorded as failed, not only in `ok`: the coverage line is what a reader takes the run's
+  // summary from, and a suite that failed has to appear in it as one — `suiteCoverage` builds `failed:` from this set.
+  if (status === 'FAIL') { ok = false; failedSuites.add('perf'); }
 }
 
 // 7. --full: every exhaustive suite.
