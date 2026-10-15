@@ -240,6 +240,27 @@ describe('resume', () => {
     expect(has(root, ui('c'))).toBe(false);
     expect(read(root, ui('e'))).toBe('e2');
   });
+  it('keeps the lockfile preimage a killed install left behind, not the one it rewrote', () => {
+    // A lockfile the team had, and what an install killed mid-write leaves in its place.
+    const PRISTINE = '{"lockfileVersion": 3, "ours": true}\n';
+    const HALF = '{"lockfileVersion": 3, "half": true}\n';
+    const DONE = '{"lockfileVersion": 3, "done": true}\n';
+    const root = project({ disk: { 'package-lock.json': PRISTINE } });
+    // The install is killed after it has rewritten the lockfile: the run throws, the process is gone, and the journal
+    // never got as far as recording the change. The session holds the one copy of what the file was.
+    const killed = ctx(root, { run: (_cmd, args) => { if (args.includes('install')) { fs.writeFileSync(path.join(root, 'package-lock.json'), HALF); throw new Error('killed'); } return { status: 0, output: '' }; } });
+    expect(start(killed.c, opts)).toBe(1);
+    expect(read(root, 'package-lock.json')).toBe(HALF);
+    expect(has(root, '.meridian/update/0.5.0/backup/package-lock.json')).toBe(true);
+    // The resumed install finishes the job, and the lockfile changes a second time.
+    const again = ctx(root, { run: (_cmd, args) => { if (args.includes('install')) fs.writeFileSync(path.join(root, 'package-lock.json'), DONE); return { status: 0, output: '' }; } });
+    resume(again.c, { install: true, verbose: false });
+    const op = state(root).operations.find((o) => o.path === 'package-lock.json');
+    // Ours is what the *team's* lockfile was, so an abort restores that and not the half-written one a killed install
+    // left: the preimage is the backup the first run took before running it, not whatever the project holds now.
+    expect(op?.base.hash).toBe(sha256(PRISTINE));
+  });
+
   it('never overwrites an edit made after the interruption', () => {
     const root = project();
     start(ctx(root, { interruptAfter: 1 }).c, opts);

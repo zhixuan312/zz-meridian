@@ -272,8 +272,11 @@ function install(ctx: Context, session: string, j: UpdateJournal, pm: keyof type
   const { root } = ctx;
   const lock = lockfileFor(root, pm);
   const prior = j.operations.find((o) => o.path === lock && o.disposition === 'team-preserved' && o.applied);
-  const before = prior ? prior.base : probe(root, lock).side;
   const backup = path.join(session, 'backup', lock);
+  // The preimage is what the lockfile was before this update's install, and the first run wrote it here before running
+  // one. A resumed run that probed the project instead takes whatever a killed install left behind as "ours", and an
+  // abort would then put a half-written lockfile back in place of the team's.
+  const before = prior ? prior.base : fs.existsSync(backup) ? sideOf(sha(fs.readFileSync(backup))) : probe(root, lock).side;
   if (before.exists && !fs.existsSync(backup)) writeAtomic(backup, fs.readFileSync(inside(root, lock)));
   const t0 = performance.now();
   const r = ctx.run(pm, ['install'], root);
