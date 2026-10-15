@@ -81,9 +81,25 @@ export function dropThread(storage: Storage, scope: string): void {
   }
 }
 
-/** Keeps the last 100 messages of `scope`; an empty thread removes the key; over the quota it keeps the newer half and tries once more. */
+/** Removes the stored thread if it is of `scope`: the one a refused request named, never another tab's of another scope. */
+export function forgetThread(storage: Storage, scope: string): void {
+  try {
+    if (stored(storage)?.scope === scope) storage.removeItem(THREAD_KEY);
+  } catch {
+    // Storage is unavailable: nothing is stored that could be removed.
+  }
+}
+
+/**
+ * Keeps the last 100 messages of `scope`; an empty thread removes the key; over the quota it keeps the newer half and
+ * tries once more. A thread stored under another scope is neither replaced nor removed: it was written since this one
+ * loaded, by another tab whose person is signed in now, and a tab left open for the earlier one learns so only when the
+ * route refuses it. The tab of that other scope removes it when it loads.
+ */
 export function saveThread(storage: Storage, scope: string, messages: UIMessage[]): void {
   try {
+    const held = stored(storage);
+    if (held && held.scope !== scope) return;
     if (messages.length === 0) return storage.removeItem(THREAD_KEY);
     const kept = recent(messages);
     try {
@@ -96,6 +112,7 @@ export function saveThread(storage: Storage, scope: string, messages: UIMessage[
   }
 }
 
+/** Removes the stored thread, whoever's it is: signing out leaves none in the browser. */
 export function clearThread(storage: Storage): void {
   try {
     storage.removeItem(THREAD_KEY);

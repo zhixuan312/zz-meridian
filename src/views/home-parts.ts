@@ -54,19 +54,23 @@ const homeWindow = (days: DailyPoint[]) => {
 };
 
 /**
- * The year's sentence, or null when fewer than two windows hold a request: how requests moved from the first window
- * that holds one to the latest, and the range of those windows' p95. A window before the first request has nothing to
- * grow from and no p95 to state, so the sentence starts after it and names the window it starts from; from the first
- * window kept it says "in a year". `length` is a window's days.
+ * The year's sentence, or null when fewer than two windows run from the first with a request on every day: how
+ * requests moved from that window to the latest, and the range of p95 over the windows from there. A window with a day before the
+ * first request is a part of a window: its requests are short and its median day may have no p95, so measured from it
+ * flat traffic reads as growth and p95 as 0. The sentence starts after it and names the window it starts from; from the
+ * first window kept it says "in a year". A change that rounds to 0.0% is "held level". `length` is a window's days.
  */
-export function yearLine(windows: readonly HomeWindow[], length: number): string | null {
-  const from = windows.findIndex((w) => w.requests > 0);
+export function yearLine(history: readonly DailyPoint[], length: number): string | null {
+  const windows = windowsOf(history, length, (days) => ({ ...homeWindow(days), whole: days.every((d) => d.requests > 0) }));
+  const from = windows.findIndex((w) => w.whole);
   const counted = from < 0 ? [] : windows.slice(from);
   if (counted.length < 2) return null;
   const p95 = counted.map((w) => w.p95);
   const grew = counted.at(-1)!.requests / counted[0].requests - 1;
+  const moved = formatPercent(Math.abs(grew), 1);
   const span = from === 0 ? 'in a year' : `from the ${inDays(length)} to ${formatDate(counted[0].to)}`;
-  return `Requests ${grew < 0 ? 'fell' : 'grew'} ${formatPercent(Math.abs(grew), 1)} ${span}, and p95 stayed between ${Math.round(Math.min(...p95))} and ${Math.round(Math.max(...p95))} ms`;
+  const requests = moved === formatPercent(0, 1) ? `Requests held level ${span}` : `Requests ${grew < 0 ? 'fell' : 'grew'} ${moved} ${span}`;
+  return `${requests}, and p95 stayed between ${Math.round(Math.min(...p95))} and ${Math.round(Math.max(...p95))} ms`;
 }
 
 /**
@@ -77,7 +81,7 @@ export function yearOf(history: readonly DailyPoint[], period: Period): NonNulla
   const length = PERIOD_DAYS[period] ?? history.length;
   const windows: HomeWindow[] = windowsOf(history, length, homeWindow);
   const p95 = windows.map((w) => w.p95);
-  return { title: yearLine(windows, length) ?? 'Requests and latency, a period at a time', windows, median: p95.length ? median(p95) : null };
+  return { title: yearLine(history, length) ?? 'Requests and latency, a period at a time', windows, median: p95.length ? median(p95) : null };
 }
 
 /**

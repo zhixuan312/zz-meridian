@@ -66,6 +66,13 @@ describe('what a Viewer may not read, and where it is shown', () => {
     expect(lineOf(system, 'Members')).toContain('Members (/members) shows it to those roles; this person may not open it, and it tells them who can.');
   });
 
+  // Settings reads the workspace record through `read()` with no view tool and a `public` need: the page is found from
+  // the action the features table declares on it (Save workspace needs `workspace:read`), never from its name.
+  it('the workspace is on Settings, which they open without it, and on no other public page', async () => {
+    const line = lineOf(await promptFor('members_12', 'explain'), 'Workspace');
+    expect(line).toBe('- Workspace: Owner or Admin can read it. Settings (/settings) shows it to those roles; this person can open Settings, where it is not shown to them.');
+  });
+
   it('is said to nobody under absent', async () => {
     expect(await promptFor('members_12', 'absent')).not.toMatch(/shows it to those roles/);
   });

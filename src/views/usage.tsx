@@ -3,6 +3,7 @@
 import { ArrowRight } from 'lucide-react';
 import Link from 'next/link';
 import { useState } from 'react';
+import { app } from '@/app.config';
 import { Row, Stack } from '@/components/base/shell';
 import { useShareView } from '@/components/base/use-share-view';
 import { Badge } from '@/components/ui/badge';
@@ -59,7 +60,7 @@ function Requests({ data, days, dates }: { data: UsageData; days: Days; dates: s
         points={points}
         format={formatCompact}
         delta={change(totals.current.requests, totals.previous?.requests ?? null)}
-        caption={series.length ? `${totals.current.requests.toLocaleString('en-US')} requests over the ${series.length} complete ${series.length === 1 ? 'day' : 'days'} to ${formatDate(series.at(-1)!.date)}, UTC.` : undefined}
+        caption={series.length ? `${totals.current.requests.toLocaleString('en-US')} requests over the ${series.length} complete ${series.length === 1 ? 'day' : 'days'} to ${formatDate(series.at(-1)!.date)}, ${app.timezone}.` : undefined}
         finding={data.record ? { text: data.record } : undefined}
         pointLabel={(date) => (running && date === running.date ? `${formatDate(date)} · so far` : formatDate(date))}
       >
@@ -77,7 +78,7 @@ function Year({ calendar }: { calendar: Calendar }) {
       <CardHeader
         title={P.year}
         wrap
-        description="Every complete day kept, a column a week, UTC. Point at a day of the period and the chart above reads it."
+        description={`Every complete day kept, a column a week, ${app.timezone}. Point at a day of the period and the chart above reads it.`}
         actions={busiest ? <Badge tone="accent">Busiest: {shortDate(busiest.date)}, {formatCompact(busiest.value)}</Badge> : null}
       />
       <CardBody>
@@ -119,14 +120,14 @@ function WhenTheyCome({ figures }: { figures: UsageFigures }) {
     <Card>
       <CardHeader
         title={P.when}
-        description={when === 'hour' ? `Every weekday summed, UTC, over the last 30 complete days. The busiest hour is ${busiest.label}.` : 'Each weekday and hour, UTC, over the last 30 complete days, in five steps of equal count.'}
+        description={when === 'hour' ? `Every weekday summed, ${app.timezone}, over the last 30 complete days. The busiest hour is ${busiest.label}.` : `Each weekday and hour, ${app.timezone}, over the last 30 complete days, in five steps of equal count.`}
       />
       <CardBody className="flex flex-col gap-4">
         <Segmented label="Count when they come" size="sm" value={when} onChange={setWhen} options={WHEN} />
         {when === 'hour' ? (
           <ColumnChart columns={figures.hours} highlight={busiest.key} format={formatCompact} axisFormat={AXIS_FORMATTERS.count} label="Requests by hour of day" labelEvery={6} height={220} />
         ) : (
-          <Heatmap values={figures.heat} scale="quantile" label="Requests by weekday and hour" format={formatCompact} />
+          <Heatmap values={figures.heat} timezone={app.timezone} scale="quantile" label="Requests by weekday and hour" format={formatCompact} />
         )}
       </CardBody>
     </Card>

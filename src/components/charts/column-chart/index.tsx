@@ -295,7 +295,7 @@ export function ColumnChart({
               <p key={p.key} className="flex flex-wrap items-start gap-x-2 text-xs leading-6">
                 <Swatch color={p.color} className="mt-1.75" />
                 <span className="min-w-0 flex-1 break-words text-ink-2">{p.label}</span>
-                <span className="t-num ml-auto min-w-0 break-words font-medium text-ink">{value(on.values[k])}</span>
+                <span className="t-num ml-auto min-w-0 break-words font-medium text-ink">{value(on.values[k], on.none && at === soFar)}</span>
               </p>
             ))}
             <p className="mt-1 flex items-center gap-2 border-t border-line pt-1 text-xs leading-6">

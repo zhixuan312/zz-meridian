@@ -209,7 +209,7 @@ export const responses: Collection<{ label: string; value: number }, 'label'> = 
   allow: [],
 });
 
-/** Requests for each weekday and UTC hour: the cells of Usage' heatmap, and the hours of the day are their sums. Read-only. */
+/** Requests for each weekday and hour, in the reporting timezone (`app.timezone`; the sample's is UTC): the cells of Usage's heatmap, and the hours of the day are their sums. Read-only. */
 export const hours: Collection<(typeof WEEKDAY_HOURS)[number], 'id'> = arrayCollection({
   name: 'hours',
   label: 'Requests by weekday and hour',

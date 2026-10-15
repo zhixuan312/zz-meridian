@@ -129,9 +129,11 @@ export function KeysView({ rows, now, createKey, revokeKey, may = { create: true
       actions={may.create ? <Button variant="primary" icon={<Plus />} onClick={() => { setCreateError(null); setCreating(true); }}>Create key</Button> : undefined}
     >
       <Records>
+        {/* The secret is shown once, in the scroll region the assistant reads: marked omit, so a question asked while the
+            banner is up never sends it. The banner's words still say a key was created. */}
         {fresh ? (
           <Banner tone="accent" icon={<KeyRound />} title={`Copy ${fresh.name} now`} onDismiss={() => setFresh(null)}
-            action={<CopyField value={fresh.secret} label="New key" className="w-[min(26rem,70vw)]" />}>
+            action={<div data-assistant="omit" className="contents"><CopyField value={fresh.secret} label="New key" className="w-[min(26rem,70vw)]" /></div>}>
             This is the only time the full key is shown. Store it in your secret manager.
           </Banner>
         ) : null}

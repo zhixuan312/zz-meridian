@@ -87,4 +87,21 @@ describe('a stacked column chart: parts with no data', () => {
     expect(cells(container, 2)).toEqual(['640', 'No data', '60', '700']);
     expect(container.querySelector('[data-readout]')).toHaveTextContent('EUNo data');
   });
+
+  it('reads every part of a running column with no data as No data so far, in the readout as in the table', () => {
+    const running = [days[0], { key: 'd2', label: '02 Oct', values: [null, null, null] }];
+    const { container } = render(<ColumnChart label="Requests per day, by region" running parts={parts} columns={running} data-preview-index={1} />);
+    const readout = container.querySelector('[data-readout]')!;
+    const amounts = [...readout.querySelectorAll('p')].slice(1).map((p) => p.querySelector('.t-num')?.textContent);
+    expect(amounts).toEqual(['No data so far', 'No data so far', 'No data so far', 'No data so far']);
+    expect(cells(container, 1)).toEqual(['No data so far', 'No data so far', 'No data so far', 'No data so far']);
+  });
+
+  it('reads a part with no data among parts read in a running column as No data', () => {
+    const running = [days[0], { key: 'd3', label: '03 Oct', values: [640, null, 60] }];
+    const { container } = render(<ColumnChart label="Requests per day, by region" running parts={parts} columns={running} data-preview-index={1} />);
+    expect(container.querySelector('[data-readout]')).toHaveTextContent('EUNo data');
+    expect(container.querySelector('[data-readout]')).not.toHaveTextContent('EUNo data so far');
+    expect(cells(container, 1)).toEqual(['640', 'No data', '60', '700']);
+  });
 });

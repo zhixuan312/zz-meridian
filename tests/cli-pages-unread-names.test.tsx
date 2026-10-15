@@ -1,4 +1,4 @@
-// Named cli-* so the payload leaves it out: it is about the sample's own Now and Home, which a product replaces.
+// Named cli-* so the payload leaves it out: it is about the sample's own Now, Home and Revenue, which a product replaces.
 import { renderToStaticMarkup } from 'react-dom/server';
 import { Tooltip } from 'radix-ui';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -33,7 +33,8 @@ import { HomeBody } from '@/views/home';
 import { NowBody } from '@/views/now';
 import { nowContext } from '@/views/now-context';
 import { nowData, type NowReads } from '@/views/now-parts';
-import { homeTool } from '@/views/tools';
+import { RevenueBody } from '@/views/revenue';
+import { homeTool, revenueTool } from '@/views/tools';
 
 beforeEach(() => { fail.names.clear(); });
 
@@ -98,5 +99,22 @@ describe("Home's What we sell names what could not be read", () => {
     const { data } = await homeTool.read({ period: '30d' });
     expect(data.unread).toEqual(expect.arrayContaining(['the usage by model', 'the models']));
     expect(drawn(renderToStaticMarkup(<Tooltip.Provider><HomeBody {...data} /></Tooltip.Provider>))).toMatch(/The usage by model and the models could not be read/);
+  });
+});
+
+describe("Revenue's What they buy names what could not be read", () => {
+  const revenue = async () => drawn(renderToStaticMarkup(<Tooltip.Provider><RevenueBody {...(await revenueTool.read({ period: '30d' })).data} /></Tooltip.Provider>));
+
+  it('blames the models when the models read failed and the usage was read', async () => {
+    fail.names.add('models');
+    const text = await revenue();
+    expect(text).toMatch(/The models could not be read/);
+    expect(text).not.toMatch(/The usage by model could not be read/);
+  });
+
+  it('names both when both failed', async () => {
+    fail.names.add('models');
+    fail.names.add('usage');
+    expect(await revenue()).toMatch(/The usage by model and the models could not be read/);
   });
 });

@@ -43,15 +43,15 @@ export type WorthKnowing = { text: string; href?: string };
 /** A figure of a tile, the same figure over the period before (null when none is kept) and its points, a day each. */
 export type HomeFigure = { value: number; previous: number | null; points: number[] };
 
+/** The models What we sell names, one a categorical slot of its Composition bar; the rest are one part after them, "Other". */
+export const SOLD_SLOTS = 4;
+
 /**
  * What Home's read hands the page, its embed and its context: the figures, lines and points the parts draw, never a
  * row of the collections they come from. A part whose read failed is null, and `unread` names what could not be read.
  * Compute cost and gross margin are keys only for a person who may read what compute cost; for anyone else they are
  * absent, not null.
  */
-/** The models What we sell names, one a categorical slot of its Composition bar; the rest are one part after them, "Other". */
-export const SOLD_SLOTS = 4;
-
 export type HomeData = {
   period: Period;
   /** The period's complete days, oldest first and ending yesterday. */

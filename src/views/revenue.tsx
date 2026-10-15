@@ -278,7 +278,7 @@ function WorthALook({ customers }: { customers: Customers }) {
 
 /** What they buy: the period's revenue by model. */
 function Sold({ data }: { data: RevenueData }) {
-  if (!data.sold) return <Unread title={M.sold.label} what={data.unread.includes('the usage by model') ? 'the usage by model' : 'the models'} />;
+  if (!data.sold) return <Unread title={M.sold.label} what={['the usage by model', 'the models'].filter((n) => data.unread.includes(n)).join(' and ')} />;
   return (
     <Card>
       <CardHeader title={M.sold.label} description={`${M.sold.hint.replace(/\.$/, '')}, ${PERIOD_LABEL[data.period].toLowerCase()}`} />

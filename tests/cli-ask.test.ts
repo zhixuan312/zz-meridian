@@ -35,7 +35,8 @@ const answered = (said: string): Part[] => [
 ];
 /**
  * The Usage page as `next start` streams it: the rail first, then the scroll region, whose figures arrive after the
- * loading fallback as a hidden segment that a script swaps in, one of them holding a placeholder a later segment fills.
+ * loading fallback as a hidden segment that a script swaps in, one of them holding a placeholder a later segment fills,
+ * and in it a value shown once, marked `data-assistant="omit"` as the panel leaves it out.
  */
 const USAGE_PAGE = `<!DOCTYPE html><html><head><title>Usage · ZZ Meridian</title><style>.x{color:red}</style></head><body>
 <nav aria-label="Main"><a href="/">Rail entry Home</a></nav>
@@ -44,7 +45,7 @@ const USAGE_PAGE = `<!DOCTYPE html><html><head><title>Usage · ZZ Meridian</titl
 <script>self.__next_f.push([1,"Rail entry Home"])</script>
 <div hidden id="S:0"><section><h2>When requests come</h2><table><tr><th>Weekday</th><th>22:00</th></tr><tr><td>Sunday</td><td>43,868,876</td></tr></table><template id="P:1"></template></section></div>
 <script>$RC("B:0","S:0")</script>
-<div hidden id="S:1"><p>Busiest hour: 14:00 UTC</p></div>
+<div hidden id="S:1"><p>Busiest hour: 14:00 UTC</p><p>Shown once: <code data-assistant="omit" class="font-mono">sk-ask-omitted-41d2</code></p></div>
 <script>$RS("S:1","P:1")</script>
 <a href="/customers/northwind-labs">Northwind Labs</a><a href="/requests/req_1">req_1</a></body></html>`;
 /** A stand-in for a served product: `on` answers the assistant with `parts` for each question, and every request is kept. */
@@ -143,7 +144,7 @@ describe('asked of a served product', () => {
     expect(md).not.toContain(SENTINEL);
   }, 60_000);
 
-  it("sends each question with the page's visible text as the persona is served it: the streamed figures in place, not the fallback, the rail or a script", async () => {
+  it("sends each question with the page's visible text as the persona is served it: the streamed figures in place, not the fallback, the rail, a script or a node marked omit", async () => {
     const s = await serve(true);
     const { code } = await run(['--base', s.base, '--view', 'usage', '--out', outDir()]);
     s.close();
@@ -157,16 +158,23 @@ describe('asked of a served product', () => {
     expect(page.text).not.toContain('Rail entry Home');
     expect(page.text).not.toContain('color:red');
     expect(page.text).not.toContain('Northwind');
+    // What the panel leaves out, the script leaves out: the marked node, and only it.
+    expect(page.text).toContain('Shown once:');
+    expect(page.text).not.toContain('sk-ask-omitted-41d2');
   }, 60_000);
 
   it('records every Proposal the assistant raised, its approval request and a denial, and counts a Proposal as an answer', async () => {
     const dir = outDir();
     const s = await serve(true, (_said, n) => (n === 1
       ? [
+          // The order `respond()` streams a write in: the Proposal is written while the approval is decided, before the
+          // step starts and the call's input arrives.
           { type: 'start' },
-          { type: 'tool-input-available', toolCallId: 'w1', toolName: 'update_members', input: { ids: ['members_18'], set: { status: 'Suspended' } } },
           { type: 'data-proposal', id: 'w1', data: { title: 'Suspend Felix Andersson', tone: 'critical', changes: [{ label: 'status', from: 'Active', to: 'Suspended' }] } },
+          { type: 'start-step' },
+          { type: 'tool-input-available', toolCallId: 'w1', toolName: 'update_members', input: { ids: ['members_18'], set: { status: 'Suspended' } } },
           { type: 'tool-approval-request', approvalId: 'a1', toolCallId: 'w1' },
+          { type: 'finish-step' },
           { type: 'finish' },
         ]
       : n === 2

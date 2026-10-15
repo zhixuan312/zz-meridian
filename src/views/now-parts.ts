@@ -19,7 +19,7 @@ import { steady } from '@/lib/facts';
 import { formatDuration, plural } from '@/lib/format';
 import { formatDate, formatDay } from '@/lib/format-date';
 import { PERIOD_DAYS } from '@/lib/period';
-import { yearFacts, yearLine, yearOf } from './home-parts';
+import { yearFacts, yearLine } from './home-parts';
 import { inWords, NOW_TILES, nowHead, type BandFact, type NowData, type NowModel, type NowRunDay, type NowTicket } from './now-context';
 import { releaseFigures, releaseMoment, stageOf, unresolvedText } from './releases-context';
 
@@ -68,7 +68,7 @@ function bandFacts(history: readonly DailyPoint[], outside: readonly string[]): 
   const out: BandFact[] = [];
   if (outside.length) out.push({ about: 'outside', text: `Outside the band on ${inWords(outside.map(formatDate))}` });
   // The year and the total are written by the functions Home writes them with, so the two pages state one line.
-  const year = yearLine(yearOf(history, '30d').windows, PERIOD_DAYS['30d']!);
+  const year = yearLine(history, PERIOD_DAYS['30d']!);
   if (year) out.push({ about: 'year', text: year });
   const busiest = history.reduce((m, d) => (d.requests > m.requests ? d : m));
   out.push({ about: 'busiest', text: `p95 was ${Math.round(busiest.p95)} ms on the busiest day yet, ${formatDate(busiest.date)}` });

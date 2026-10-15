@@ -4,6 +4,7 @@
  * Sunday 22:00 cell is asked for; the days answer requests a day over any window of complete days; and the usage by
  * model says which model answered them. Server only: `tools.ts` sets it on the Usage tool.
  */
+import { app } from '@/app.config';
 import type { PreparedQuery } from '@/lib/explore';
 
 const WEEKDAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
@@ -18,13 +19,14 @@ export const usageExplore: PreparedQuery = {
       collection: 'hours',
       filters: { weekday: { ops: ['eq', 'in'], values: WEEKDAYS.map((_, d) => d) }, hour: { ops: ['eq', 'in', 'lt', 'gt'], values: HOURS } },
       facets: ['weekday', 'hour'],
-      // The sample keeps a weekday as 0 (Monday) to 6 (Sunday): an answer says it by name, and an hour as the page writes it.
+      // The sample keeps a weekday as 0 (Monday) to 6 (Sunday): an answer says it by name, and an hour as the page writes it,
+      // in the reporting timezone its hours are cut in.
       labels: {
         weekday: Object.fromEntries(WEEKDAYS.map((name, d) => [String(d), name])),
-        hour: Object.fromEntries(HOURS.map((h) => [String(h), `${String(h).padStart(2, '0')}:00 UTC`])),
+        hour: Object.fromEntries(HOURS.map((h) => [String(h), `${String(h).padStart(2, '0')}:00 ${app.timezone}`])),
       },
       measures: {
-        requests: { label: 'Requests', unit: 'requests', definition: 'Requests in the weekday and UTC hour, summed over the last 30 complete days.', agg: 'sum', field: 'requests' },
+        requests: { label: 'Requests', unit: 'requests', definition: `Requests in the weekday and ${app.timezone} hour, summed over the last 30 complete days.`, agg: 'sum', field: 'requests' },
       },
       drill: { columns: ['id', 'weekday', 'hour', 'requests'], address: () => '/usage' },
       cannot: 'Requests are not kept by customer and hour, so who sent them cannot be said.',

@@ -10,7 +10,8 @@
  * form on its listing page. Every view with questions is asked, or the one `--view` names.
  *
  * Each question carries the page as the console's panel sends it, as near as a script can: the page's title and its
- * visible text, read from the page as it is served to that persona. The view's shared context is not sent: a view
+ * visible text, read from the page as it is served to that persona, without any node marked `data-assistant="omit"`,
+ * as the panel leaves it out. The view's shared context is not sent: a view
  * publishes it in the browser, so a script that fetches the page cannot read it, and the assistant answers from the
  * page's text and its tools.
  *
@@ -148,9 +149,13 @@ export function arrived(html: string): string {
 const BLOCK = /^(address|article|aside|blockquote|caption|dd|details|dialog|div|dl|dt|fieldset|figcaption|figure|footer|form|h[1-6]|header|hr|legend|li|main|nav|ol|p|pre|section|summary|table|tbody|tfoot|thead|tr|ul)$/;
 const ENTITIES: Record<string, string> = { amp: '&', lt: '<', gt: '>', quot: '"', apos: "'", nbsp: ' ' };
 
+/** The attribute that keeps a node out of the text the assistant is sent, as `src/components/patterns/assistant/page-text.ts` reads it. */
+const OMIT = /\sdata-assistant=(["']?)omit\1(?=[\s/]|$)/;
+
 /**
- * What `innerText` reads of an element's markup, as near as a script can without a layout: no script, style, template
- * or hidden element, a line for each block, a tab between a row's cells, and white space collapsed.
+ * What the panel reads of an element's markup, as near as a script can without a layout: what `innerText` reads, with
+ * no script, style, template, hidden element or node marked `data-assistant="omit"`, a line for each block, a tab
+ * between a row's cells, and white space collapsed.
  */
 export function visibleText(html: string): string {
   let out = '';
@@ -161,8 +166,9 @@ export function visibleText(html: string): string {
     last = tags.lastIndex;
     const name = m[2]?.toLowerCase();
     if (!name) continue;
-    // `hidden` as an attribute, never inside another's value (a class named hidden is not the attribute).
-    if (!m[1] && (RAW.has(name) || name === 'template' || name === 'noscript' || /\shidden(?=[\s=]|$)/.test(m[3].replace(/"[^"]*"/g, '""')))) {
+    // `hidden` as an attribute, never inside another's value (a class named hidden is not the attribute). A node the
+    // page marks `data-assistant="omit"` is left out whole, as the panel leaves it out (`pageText`).
+    if (!m[1] && (RAW.has(name) || name === 'template' || name === 'noscript' || /\shidden(?=[\s=]|$)/.test(m[3].replace(/"[^"]*"/g, '""')) || OMIT.test(m[3]))) {
       last = tags.lastIndex = elementEnd(html, m.index);
       continue;
     }
@@ -202,13 +208,24 @@ async function ask(base: string, cookie: string, address: string, page: { title:
   const res = await fetch(`${base}/api/assistant`, { method: 'POST', headers: { 'content-type': 'application/json', cookie }, body: JSON.stringify(body), signal: AbortSignal.timeout(300_000) });
   const asked: Asked = { question, status: res.status, tools: [], answer: '', errors: [] };
   if (!res.ok) { asked.errors.push(`POST /api/assistant answered ${res.status}`); return asked; }
-  const calls = new Map<string, Asked['tools'][number]>();
-  const approvals = new Map<string, Asked['tools'][number]>();
-  let block: string | undefined;
+  type Part = { type?: string; id?: string; toolCallId?: string; toolName?: string; input?: unknown; output?: unknown; delta?: string; errorText?: string; data?: unknown; approvalId?: string; approved?: boolean; reason?: string; isAutomatic?: boolean };
+  const parts: Part[] = [];
   for (const line of (await res.text()).split('\n')) {
     if (!line.startsWith('data: ') || line === 'data: [DONE]') continue;
-    let part: { type?: string; id?: string; toolCallId?: string; toolName?: string; input?: unknown; output?: unknown; delta?: string; errorText?: string; data?: unknown; approvalId?: string; approved?: boolean; reason?: string; isAutomatic?: boolean };
-    try { part = JSON.parse(line.slice(6)); } catch { continue; }
+    try { parts.push(JSON.parse(line.slice(6))); } catch { continue; }
+  }
+  // Every call is known before anything said about it is read: a part about a call can stream before the call's input,
+  // as `respond()` writes a write's Proposal while its approval is decided, before the step that streams the call.
+  const calls = new Map<string, Asked['tools'][number]>();
+  for (const part of parts) {
+    if (part.type !== 'tool-input-available' || !part.toolCallId) continue;
+    const call = { name: String(part.toolName), input: part.input };
+    calls.set(part.toolCallId, call);
+    asked.tools.push(call);
+  }
+  const approvals = new Map<string, Asked['tools'][number]>();
+  let block: string | undefined;
+  for (const part of parts) {
     if (part.type === 'data-proposal' && part.id) {
       // A write tool's preview is keyed by its call, so the Proposal is read beside the call that raised it.
       const call = calls.get(part.id);
@@ -225,10 +242,6 @@ async function ask(base: string, cookie: string, address: string, page: { title:
     } else if (part.type === 'tool-output-denied' && part.toolCallId) {
       const call = calls.get(part.toolCallId);
       if (call) call.denied = true;
-    } else if (part.type === 'tool-input-available' && part.toolCallId) {
-      const call = { name: String(part.toolName), input: part.input };
-      calls.set(part.toolCallId, call);
-      asked.tools.push(call);
     } else if (part.type === 'tool-output-available' && part.toolCallId) {
       const call = calls.get(part.toolCallId);
       if (call) call.output = part.output;

@@ -19,7 +19,7 @@ import { sharedContextOn } from '@/components/base/surface';
 import { pageText } from './page-text';
 import { useThreadScope } from './scope';
 import { AssistantText } from './text';
-import { REASONS, clearThread, closeOpenApprovals, loadThread, recent, saveThread } from './thread';
+import { REASONS, closeOpenApprovals, forgetThread, loadThread, recent, saveThread } from './thread';
 
 /** The suffix the root layout's title template puts after every route's own title. */
 const TITLE_SUFFIX = ` · ${app.name}`;
@@ -229,7 +229,8 @@ export function AssistantPanel({
  * The assistant's state: the conversation and whether the panel is open. It lives in the shell, so it survives
  * navigation. The panel itself is not in the page while closed. The thread is the scope's (`AssistantScope`): it is
  * loaded and saved under it, and every request names it, so a server that now answers someone else refuses with 409
- * and the thread is cleared rather than continued for them.
+ * and the thread is cleared rather than continued for them. The tab then refreshes the route: the layout resolves the
+ * scope of whoever is signed in now, and the next question is asked as them.
  */
 export function AssistantColumn({ open, onClose, ask, onAsked }: { open: boolean; onClose: () => void; ask?: { id: number; text: string } | null; onAsked?: () => void }) {
   const path = usePathname();
@@ -254,8 +255,11 @@ export function AssistantColumn({ open, onClose, ask, onAsked }: { open: boolean
     onError: (e) => {
       if (!(APICallError.isInstance(e) && e.statusCode === 409)) return;
       setMessages([]);
-      clearThread(localStorage);
+      // Only the refused scope's thread: one stored since by the person signed in now, from another tab, is theirs.
+      forgetThread(localStorage, scope);
       setChangedHands(e);
+      // A client navigation never renders the layout again, so its scope stays the earlier person's until this does.
+      router.refresh();
     },
   });
   // The thread loads once the page is on screen, never during render, and saves only after that. `loaded` is the scope
@@ -307,7 +311,7 @@ export function AssistantColumn({ open, onClose, ask, onAsked }: { open: boolean
       onClose={onClose}
       onClear={() => {
         setMessages([]);
-        clearThread(localStorage);
+        forgetThread(localStorage, scope);
       }}
       error={error?.message}
       onRetry={error && error === changedHands ? undefined : () => regenerate()}

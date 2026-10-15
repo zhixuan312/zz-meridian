@@ -1,15 +1,16 @@
 import { safeValidateUIMessages } from 'ai';
 import { revalidateTag } from 'next/cache';
-import { nav, refusal } from '@/app.config';
+import { nav, refusal, type NavItem } from '@/app.config';
 import { assistantConfig } from '@/lib/assistant/config';
 import { clock, collections } from '@/data/collections';
 import { Unauthenticated, can, collectionFor, may, nameOf, resolveAccess } from '@/data/access';
+import { ACTIONS, FEATURES, type FeatureId } from '@/data/features';
 import { aggregate, collectionTag, read } from '@/data/read';
 import { whoCan } from '@/data/roles';
 import { respond } from '@/lib/assistant/respond';
 import { handedTo } from '@/lib/assistant/scoped';
 import type { AgentChange, HandedExplore } from '@/lib/assistant/tools';
-import type { AnyCollection } from '@/lib/collection';
+import type { AnyCollection, Grant, Need } from '@/lib/collection';
 import type { PreparedQuery } from '@/lib/explore';
 import type { ViewTool } from '@/lib/shared-context';
 import { viewTools } from '@/views/tools';
@@ -76,9 +77,9 @@ export async function POST(request: Request): Promise<Response> {
   // What the prompt says is true of this person. The addresses are the rail's destinations whose need they satisfy, the
   // predicate `chromeAccess().only` draws the rail by, and the detail pages of the views they may use. Under
   // `refusal: 'explain'` it also names each collection not handed above, the roles that can read it, as the page names
-  // who can open it, every page whose prepared query reads it or that needs that read alone, with whether this person
-  // may open that page, and the figures worked out from it: compute cost is on Home, which a Viewer opens without it,
-  // and gross margin is worked out from it. Under `absent` it names none, as the page names nothing.
+  // who can open it, every page whose prepared query reads it or whose declared grants read it (`declared`), with
+  // whether this person may open that page, and the figures worked out from it: compute cost is on Home, which a Viewer
+  // opens without it, and gross margin is worked out from it. Under `absent` it names none, as the page names nothing.
   const open = (await Promise.all(nav.flatMap((g) => g.items).map(async (i) => ((await may(i.needs)) ? [i] : [])))).flat();
   const audience = {
     addresses: [
@@ -88,8 +89,9 @@ export async function POST(request: Request): Promise<Response> {
     withheld: refusal === 'explain'
       ? collections.filter((c) => !names.has(c.name)).map((c) => {
         const holding = viewTools.filter((v) => Object.values(v.explore.sources).some((s) => s.collection === c.name));
-        // A rail page that needs that read alone holds it too, though no view's prepared query reads it.
-        const own = nav.flatMap((g) => g.items).filter((i) => i.needs === `${c.name}:read` && !holding.some((v) => v.page === i.href));
+        // A rail page that declares that read holds it too, though no view's prepared query reads it: Settings reads the
+        // workspace for Save workspace.
+        const own = nav.flatMap((g) => g.items).filter((i) => declared(i).includes(`${c.name}:read`) && !holding.some((v) => v.page === i.href));
         const pages = [
           ...holding.map((v) => ({ label: v.title, address: v.page.replace(/\[([^\]/]+)\]/g, '<$1>'), open: views.includes(v) })),
           ...own.map((i) => ({ label: i.label, address: i.href, open: open.includes(i) })),
@@ -145,6 +147,20 @@ function pathOf(address: string): string {
 function onPage(route: string, path: string): boolean {
   const want = route.split('/'), got = path.split('/');
   return want.length === got.length && want.every((w, i) => (/^\[[^\]/]+\]$/.test(w) ? got[i] !== '' : w === got[i]));
+}
+
+/** The grants a need names: the one, every one of an `allOf`, and none for `public`. */
+const grantsOf = (need: Need): readonly Grant[] => (need === 'public' ? [] : typeof need === 'string' ? [need] : need.allOf);
+
+/**
+ * The grants a rail page declares: its feature's need and the need of every action the features table puts on that
+ * feature. An item is its feature's by the need it points at by reference (`src/app.config.ts`); features that share a
+ * need, as every `public` one does, are told apart by the title the item is labelled with.
+ */
+function declared(item: NavItem): Grant[] {
+  const ids = (Object.keys(FEATURES) as FeatureId[]).filter((f) => FEATURES[f].needs === item.needs);
+  const own = ids.length > 1 ? ids.filter((f) => FEATURES[f].title === item.label) : ids;
+  return [...grantsOf(item.needs), ...Object.values(ACTIONS).filter((a) => own.includes(a.feature)).flatMap((a) => grantsOf(a.needs))];
 }
 
 /**

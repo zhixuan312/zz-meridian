@@ -17,7 +17,7 @@ type Day = { id: string; date: string; revenue: number; compute: number };
 const rows: Day[] = [{ id: 'd1', date: '2026-10-01', revenue: 100, compute: 40 }, { id: 'd2', date: '2026-10-02', revenue: 120, compute: 50 }];
 const collection = (name: string) => arrayCollection({ name, label: name, description: 'Days in a test.', fields: z.object({ date: z.string(), revenue: z.number(), compute: z.number() }), key: 'id', title: (r: Day) => r.date, rows, allow: [] });
 const ledger = collection('ledger');
-const spend = collection('spend');
+const outlay = collection('outlay');
 const query: PreparedQuery = {
   sources: {
     days: {
@@ -33,7 +33,7 @@ const query: PreparedQuery = {
       cannot: '',
     },
     costs: {
-      collection: spend.name,
+      collection: outlay.name,
       date: 'date',
       filters: {},
       facets: [],
@@ -43,10 +43,10 @@ const query: PreparedQuery = {
     },
   },
 };
-/** The page's prepared query handed to a person who may read the ledger and not the spend, as a Viewer on Home. */
+/** The page's prepared query handed to a person who may read the ledger and not the outlay, as a Viewer on Home. */
 function handed(page = '/', input: z.ZodObject = z.object({}), fixed?: PreparedQuery['fixed']): HandedExplore {
   const view = { name: 'home', title: 'Home', description: 'The company.', needs: [], page, input, read: async () => { throw new Error('not read here'); }, explore: { ...query, ...(fixed ? { fixed } : {}) } };
-  const all = { [ledger.name]: ledger, [spend.name]: spend };
+  const all = { [ledger.name]: ledger, [outlay.name]: outlay };
   return {
     view: view as never,
     rights: { readable: new Set([ledger.name]), hidden: () => [] },

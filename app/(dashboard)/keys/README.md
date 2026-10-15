@@ -9,7 +9,7 @@ Status: beta
 | Row | Pattern | Console | Mobile |
 |---|---|---|---|
 | Masthead | PageFrame: kicker, "API keys", one sentence, Create key (primary) | One band | Stacked |
-| 1 | Banner (accent), only right after a key is created: "Copy {name} now", the full key in a Copy field, dismissable | Full width | Full width |
+| 1 | Banner (accent), only right after a key is created: "Copy {name} now", the full key in a Copy field marked `data-assistant="omit"`, dismissable | Full width | Full width |
 | 2 | Data table headed by its count, with an Ask beside it: Name with its environment, Key (its hint, `zzm_live_…f601`, in mono, from 672px), Scopes (two and "+N", from 1152px), Created by (from 896px), Created, Last used, and Revoke | Columns | Cards: name and environment, "Created …" and "Used …", Revoke |
 | Sheet | Create a key: Name (required), Environment (Live or Test), Scopes (checkboxes); Cancel and Create key | From the right, 440px | From the bottom |
 | Dialog | Revoke: "Revoke {name}?", what fails and that it cannot be undone, when it was last used; Cancel and Revoke key (danger) | Centred | Bottom sheet |
@@ -32,7 +32,7 @@ The body (rows 1 and 2 and the line on rotating a key under them, under the mast
 
 ## Data
 
-The keys are the `keys` collection (`src/data/collections.ts`), read through `read('keys')` on every request. Create and Revoke are server actions (`actions.ts`) that write the caller's own collection (`collectionFor(scope, 'keys')`), then the view refreshes the route. A rejected create is said inside the sheet; a rejected revoke shows a critical toast and puts the row back. The secret is generated on the server and returned once, to the banner, which is the only place it is ever shown. The collection stores the key's hint (its prefix and last four characters) and the secret's SHA-256, never the secret, so the table shows the hint and nothing in the browser or the cache can reveal or copy a listed key. To replace a key, create a new one and revoke the old.
+The keys are the `keys` collection (`src/data/collections.ts`), read through `read('keys')` on every request. Create and Revoke are server actions (`actions.ts`) that write the caller's own collection (`collectionFor(scope, 'keys')`), then the view refreshes the route. A rejected create is said inside the sheet; a rejected revoke shows a critical toast and puts the row back. The secret is generated on the server and returned once, to the banner, which is the only place it is ever shown. Its Copy field is marked `data-assistant="omit"`, so a question asked or an Ask pressed while the banner is up sends the page text without it: the assistant reads that a key was created, never its value. The collection stores the key's hint (its prefix and last four characters) and the secret's SHA-256, never the secret, so the table shows the hint and nothing in the browser or the cache can reveal or copy a listed key. To replace a key, create a new one and revoke the old.
 
 ## Embed view
 
