@@ -63,4 +63,21 @@ describe("a prepared query's answer", () => {
     expect(answer.length).toBeLessThanOrEqual(MAX_ANSWER);
     expect(answer).toMatch(/more lines? are not shown/);
   });
+
+  it('says one line is not shown when one line is what it dropped, and not "1 line are"', async () => {
+    // Sized from the answer's own length rather than by a character count written here: with the whole answer `over`
+    // characters past the cap, holding the last line back is what brings it inside — and an assistant reads that line,
+    // so its count, noun and verb have to agree.
+    const short = (i: number, pad: number) => ({ label: `Measure number ${i} of the plan`, unit: 'days' as const, definition: `Measure ${i} counts the rows the window keeps for the plan.${'x'.repeat(pad)}`, agg: 'count' as const });
+    const at = async (pad: number) => {
+      const query = { ...QUERY, sources: { days: { ...QUERY.sources.days, measures: Object.fromEntries([0, 1, 2].map((i) => [`m${i}`, short(i, i === 0 ? pad : 0)])) } } } as PreparedQuery;
+      const { answer } = await runExplore(query, { source: 'days', measures: asked, by: 'plan', period: '30d', rows: 0 }, OWNER, io, '/days');
+      return answer;
+    };
+    const whole = await at(0);
+    expect(whole.length).toBeLessThan(MAX_ANSWER);
+    const answer = await at(MAX_ANSWER - whole.length + 3);
+    expect(answer.split('\n').at(-1)).toBe('1 more line is not shown.');
+    expect(answer).not.toMatch(/1 more line are not shown/);
+  });
 });

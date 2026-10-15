@@ -98,6 +98,13 @@ const PERIODS: Period[] = ['7d', '30d', '90d', 'all'];
 const DAYS: Record<Exclude<Period, 'all'>, number> = { '7d': 7, '30d': 30, '90d': 90 };
 const MAX_ANSWER = 3000;
 const GROUPS = 8;
+
+/**
+ * The line an answer ends with when the cap holds some of it back: "3 lines are not shown", "1 row is not shown". The
+ * count, its noun and its verb agree, because an assistant reads this line and "1 more line are not shown" is the kind
+ * of sentence that makes a reader trust the figures less, not more.
+ */
+const notShown = (n: number, what: 'row' | 'line') => `${n} more ${plural(n, what)} ${plural(n, 'is', 'are')} not shown.`;
 /** Asked for when every measure is derived: the collection ranks by its first measure, so the runner ranks these itself. */
 const RANKED = 50;
 const NO_ACCESS = 'You do not have access to that.';
@@ -449,19 +456,19 @@ export async function runExplore<I>(query: PreparedQuery<I>, input: unknown, rig
   const held = (lines: string[]): string => {
     for (let n = lines.length; n > 0; n--) {
       const said = lines.length - n;
-      const text = [...lines.slice(0, n), ...(said ? [`${said} more ${plural(said, 'line')} are not shown.`] : [])].join('\n');
+      const text = [...lines.slice(0, n), ...(said ? [notShown(said, 'line')] : [])].join('\n');
       if (text.length <= MAX_ANSWER) return text;
     }
-    return `${lines.length} more ${plural(lines.length, 'line')} are not shown.`;
+    return notShown(lines.length, 'line');
   };
   const fixedLines = [...head, ...body];
   if (rows === 0) return reply(held(fixedLines));
   const drilled = read.rows.map((r) => `- ${s.drill.address(r)}: ${columns.map((c) => `${c} ${names.has(c) && typeof r[c] === 'string' ? named(c, r[c]) : text(r[c])}`).join(', ')}`);
   const lead = read.rows.length ? `Rows, ${s.date ? 'the latest first' : 'in order'}, ${read.rows.length} of ${read.total}:` : 'No row matches.';
-  const answer = (k: number) => [...fixedLines, lead, ...drilled.slice(0, k), ...(k < drilled.length ? [`${drilled.length - k} more rows are not shown.`] : [])].join('\n');
+  const answer = (k: number) => [...fixedLines, lead, ...drilled.slice(0, k), ...(k < drilled.length ? [notShown(drilled.length - k, 'row')] : [])].join('\n');
   let k = drilled.length;
   while (k > 0 && answer(k).length > MAX_ANSWER) k--;
   // The rows go first, because they are what the summary leaves out; `held` is what catches a summary over budget by
   // itself, which the row loop cannot shorten at all.
-  return reply(held([...fixedLines, lead, ...drilled.slice(0, k), ...(k < drilled.length ? [`${drilled.length - k} more rows are not shown.`] : [])]));
+  return reply(held([...fixedLines, lead, ...drilled.slice(0, k), ...(k < drilled.length ? [notShown(drilled.length - k, 'row')] : [])]));
 }
