@@ -104,6 +104,7 @@ What exists, by layer, and how it changes per surface. "Same" means the card nee
 | Icons | Lucide at 1.75 stroke: 14, 16 and 18px | Same | Same |
 | Motion | Arrive, answer, float; reduced motion collapses all | Same | Arrive only on first render, so a re-render in the thread never replays |
 | App mark | The product mark at 20, 24, 28 and 32px | Same | 20px in the embed head |
+| Surface | Where a view is being read, the console or an MCP host, and what it may ask of that host: the bridge, the host's theme and style variables, and the one shared context both agents are told | The console, with no host: `expand` opens the console page | Started by EmbedFrame on every route under `app/embed/` |
 
 ### Layer 2 · Components
 
@@ -111,7 +112,7 @@ What exists, by layer, and how it changes per surface. "Same" means the card nee
 |---|---|
 | Actions | Button, Icon button, Menu |
 | Input | Field, Input, Textarea, Select, Checkbox, Radio group, Switch, Segmented, Search input |
-| Display | Card, Badge, Status dot, Delta, Avatar, Tooltip, Progress, Key value, Copy field, Kbd |
+| Display | Card, Badge, Status dot, Delta, Avatar, Agent mark, Tooltip, Progress, Key value, Copy field, Kbd, Popover |
 | Navigation | Tabs, Breadcrumb, Pagination |
 | Feedback | Banner, Toast, Dialog, Sheet, Empty state, Skeleton, Spinner |
 | Data | Table |
@@ -123,6 +124,8 @@ All components are surface-agnostic by construction: they size from control toke
 | Pattern | Job | Console | Mobile | Embed |
 |---|---|---|---|---|
 | Rail | Navigation, workspace, account, appearance | Fixed on the frame | In the drawer | None |
+| Shell tools | Search and commands (⌘K) and alerts, in the top bar of every console page | The top bar, one press away while the page scrolls | In the top bar, the same | None |
+| Assistant | The panel beside the page where a person asks about what they are looking at | A third column at `assistant-width` 400px from 1024px, a sheet over the page under it | The panel as a sheet | None: the host has its own conversation, and Ask posts into it |
 | Command palette | Every destination and global action behind ⌘K | Centred, 600px | Centred, the screen's width less 24px | None |
 | Appearance menu | Theme, accent, density | In the rail's foot | In the drawer's foot | None: the host decides the theme |
 | Period select | The reporting period, in the URL or held by the page | Masthead actions | Masthead actions row | None: the period is the tool's argument, named in the embed's title |
@@ -149,6 +152,7 @@ All components are surface-agnostic by construction: they size from control toke
 | Ask about | Hands a card to the agent as a question | On each page's protagonist (its Featured metric, its list or its record's card), when the assistant is on: opens the panel | Same, the panel as a sheet | On cards, when a host is connected |
 | Proposal | An agent's write, waiting for a person's Approve | In the assistant's thread | Same | The tool result's card |
 | Prose | Markdown a person or a model wrote, rendered safely | Reading width, `base` | One column; tables wrap | `sm`, host font |
+| Export button | The rows behind a view as a CSV, with the period and filters already applied, so the file matches the screen | A masthead action, after the period select; the browser reports the download when it has an `href` | Same | None: the console's export is the page's |
 
 ### Layer 4 · Pages
 
