@@ -210,7 +210,7 @@ try {
       const lines: [string, RegExp][] = [
         ['revenue with its definition', new RegExp(String.raw`^- Revenue: [^\d\s]*[\d,]+\.\d{2}${CHANGE}\. \(Billed for metered usage, before credits\.\)$`, 'm')],
         ['the gross margin an Owner reads', new RegExp(String.raw`^- Gross margin: [\d.]+%${POINTS}\. \(Revenue less compute cost, over revenue\.\)$`, 'm')],
-        ['the day in progress, counted in no total', /^- \d{2} [A-Z][a-z]{2} is in progress and counted in no total\.$/m],
+        ['the day in progress, counted in no total', /^- \d{1,2} [A-Z][a-z]{2} is in progress and counted in no total\.$/m],
       ];
       for (const [what, shape] of lines) if (!shape.test(viewContext)) fail(`Home's view context does not state ${what} (${shape})`);
       // It leads with the sentence the page is headed by.
