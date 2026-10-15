@@ -27,7 +27,7 @@ export const homeExplore: PreparedQuery = {
         tokens: { label: 'Tokens served', unit: 'tokens', definition: 'Input and output, every model, over the complete days.', agg: 'sum', field: 'tokens' },
       },
       drill: { columns: ['date', 'revenue', 'requests', 'tokens'], address: onDay },
-      cannot: 'The day in progress is counted in no total, and a day does not say which customer paid for it.',
+      cannot: 'The day in progress is counted in no total, and a day does not say which customer paid for it. A week or a month the window cuts holds fewer days than its kind, so its total is no movement: compare whole ones.',
     },
     usage: {
       collection: 'usage',

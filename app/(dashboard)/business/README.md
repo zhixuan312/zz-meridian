@@ -103,8 +103,8 @@ The period with the dates of its complete days, the windows a customer's figures
 
 Protagonist: Revenue.
 
-- "How did revenue move a week at a time over the last 90 days?" — the days' revenue over 90 complete days, a week at a time
-- "What did Scale customers pay on each weekday over the last 30 days, against the 30 before?" — the days' Scale revenue over 30 complete days, by weekday, against the 30 days before
+- "How did revenue move in each of the latest eight weeks of the last 90 days?" — the days' revenue over 90 complete days, a week at a time, the latest eight
+- "What did Scale customers pay on each weekday over the last 30 days, and in all against the 30 before?" — the days' Scale revenue over 30 complete days, by weekday, and its total against the 30 days before
 - "Which model brought the most revenue in the last 90 days, and how did that move?" — the usage's revenue over 90 complete days, by model, against the 90 days before
 - "What do the customers past due pay, by plan?" — the customers whose status is past due, their revenue over the last 30 complete days, by plan
 

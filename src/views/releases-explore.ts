@@ -21,7 +21,7 @@ export const releasesExplore: PreparedQuery = {
       facets: ['state', 'environment', 'service'],
       buckets: ['week', 'month'],
       measures: {
-        releases: { label: 'Releases', unit: 'releases', definition: 'Releases that last changed in the window, or went out in it.', agg: 'count' },
+        releases: { label: 'Changed', unit: 'releases', definition: 'Releases that last changed in the window, gone out or not: Went out counts the ones that shipped.', agg: 'count' },
         released: { label: 'Went out', unit: 'releases', definition: 'Releases that went out in the window.', agg: 'count', where: [{ field: 'state', op: 'eq', value: 'released' }] },
       },
       // A release opens on the page searched for its version, which is how the page finds one release.

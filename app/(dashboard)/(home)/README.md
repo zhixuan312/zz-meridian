@@ -118,7 +118,7 @@ Protagonist: Revenue.
 The page marks the revenue card `data-protagonist="Revenue"` on a wrapper that is itself the row's wide grid item, its card stretched to fill it; its Ask is the one the Handoff line names.
 
 - "Which model brought the most revenue in the last 90 days, and how did that move?" — the usage's revenue over 90 complete days, by model, against the 90 days before
-- "How did gross margin move a week at a time over the last 90 days?" — the days' gross margin over 90 complete days, a week at a time, worked out against what compute cost in the same weeks
+- "How did gross margin move in each of the latest eight weeks of the last 90 days?" — the days' gross margin over 90 complete days, a week at a time, the latest eight, worked out against what compute cost in the same weeks
 - "How many customers are on each plan, and what did each plan pay?" — the customers that have not left and their revenue over the last 30 complete days, by plan
 - "How full were the GPUs in each region over the last 90 days?" — compute in use over 90 complete days, by region, against the 90 days before
 

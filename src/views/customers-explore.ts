@@ -33,7 +33,7 @@ export const customersSource: Source = {
     tokens: { label: 'Tokens, last 30 days', unit: 'tokens', definition: 'Tokens served to them over the last 30 complete days, input and output.', agg: 'sum', field: 'tokens' },
   },
   drill: { columns: ['id', 'name', 'plan', 'status', 'requests', 'revenue', 'owner'], address: (r) => customerAddress(String(r.id)) },
-  cannot: 'A customer\'s figures cover the last 30 complete days as one figure each, so no other window and no single day can be said; and one that has left is counted in no figure of customers, revenue or requests.',
+  cannot: 'A customer\'s figures cover the last 30 complete days as one figure each, so no other window and no single day can be said; and one that has left is counted in no figure of customers, revenue or requests. A customer\'s region is where it is based: where its requests arrived is on Usage (/usage).',
 };
 
 export const customersExplore: PreparedQuery = {

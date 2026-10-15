@@ -110,7 +110,7 @@ Its first insight is the title the page is headed by, word for word; the second,
 Protagonist: Days inside the band.
 
 - "Which months had days outside the band in the last 360 days?" — the days outside the band over every complete day kept, a month at a time
-- "On which weekday do days fall outside the band most?" — the days and the days inside the band over every complete day kept, by weekday
+- "On which weekday do days fall outside the band most, over every complete day kept?" — the days and the days inside the band over every complete day kept, by weekday
 - "Which model answered the most requests with the most errors over the last 30 days?" — the usage's requests and errors over 30 complete days, by model, against the 30 days before
 - "How many high-priority tickets were opened in the last 30 days, and how many are closed now?" — the tickets opened in 30 complete days where the priority is high, and those of them closed now
 

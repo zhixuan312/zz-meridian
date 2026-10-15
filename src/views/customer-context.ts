@@ -116,7 +116,7 @@ export function customerContext(data: CustomerData): SharedContext {
     }] : []),
     { label: 'Region and seats', value: `${c.region}, ${c.seats} seats` },
     { label: 'Customer since', value: formatDate(c.joined) },
-    ...(latest ? [{ label: 'Its latest requests in the sampled log', value: latest.length ? `${latest.map((r) => r.id).join(', ')}, newest first` : 'none' }] : []),
+    ...(latest ? [{ label: 'Its latest requests in the sampled log', value: latest.length ? `${latest.map((r) => r.id).join(', ')}, newest first: the latest ${latest.length} only, where the log holds more; explore_customer counts them all by status class` : 'none' }] : []),
   ];
   const change = weekOf(c);
   // A title that states the week leaves this line to say what a week is; one that does not (a trial) leaves it the change.

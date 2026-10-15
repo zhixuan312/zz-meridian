@@ -56,9 +56,9 @@ Protagonist: Verification runs.
 The page marks the list `data-protagonist="Verification runs"` on a wrapper whose display is `contents`; its Ask, in the Filter bar: "What stands out in the verification runs, and why?", or, filtered, "What do the verification runs failed, the latest of each have in common, and why?".
 
 - "How many runs passed in the last seven days?" — the runs of the last 7 complete days by how they ended, against the 7 before
-- "Which suite fails most often?" — the failed runs of every complete day kept, by suite
+- "Which suite fails most often, over every complete day kept?" — the failed runs of every complete day kept, by suite
 - "How long do the runs of each suite take?" — the p95 duration of the runs over the last 30 complete days, by suite
-- "Which runs failed this week, and where do I open them?" — the runs of the last 7 complete days whose verdict is failed, with up to 20 of them, each with its release's runs as its address
+- "Which runs failed in the last seven days, and where do I open them?" — the runs of the last 7 complete days whose verdict is failed, with up to 20 of them, each with its release's runs as its address
 
 Tests' prepared query (`testsExplore` in `src/views/tests-explore.ts`, set as `explore` on the Tests tool) reads one source, `runs`, over the `tests` collection and windowed by when a run started: narrowed by verdict, suite, endpoint and release, grouped by any of them or a day or a week at a time, with the runs, the failed runs and the p95 duration. A run has no page of its own, so a drilled run opens the runs of its release (`/tests?release=<id>`).
 

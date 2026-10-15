@@ -69,7 +69,7 @@ The page marks the list `data-protagonist="Customers"` on a wrapper whose displa
 
 - "What did the past due customers bring in the last 30 days, plan by plan?" — the customers whose status is past due and their revenue over the last 30 complete days, by plan
 - "How much revenue does each owner on our side look after?" — the customers that have not left and their revenue, by owner, the largest first
-- "Which region do our customers' requests come from?" — the customers' requests over the last 30 complete days, by region
+- "Which region are our customers based in, and how many requests do they send?" — the customers' requests over the last 30 complete days, by each customer's own region
 - "Which Enterprise customers are on a trial or past due, and where do I open them?" — the customers on Enterprise whose status is trial or past due, with up to 20 of them, each with its page's address
 
 Customers' prepared query (`customersExplore` in `src/views/customers-explore.ts`) reads one source, `customers`, which has no date: each customer's figures cover the last 30 complete days. It is narrowed and grouped by plan, status, region and owner, with the customers that have not left, their revenue, requests and tokens. A drilled customer opens its own page, and a call narrowed to one plan or one status opens the list filtered to it.

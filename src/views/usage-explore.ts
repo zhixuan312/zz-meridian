@@ -42,7 +42,7 @@ export const usageExplore: PreparedQuery = {
         p95: { label: 'Highest p95', unit: 'ms', definition: "The highest of the days' p95 latency, not the median day's the page states.", agg: 'max', field: 'p95' },
       },
       drill: { columns: ['date', 'requests', 'errors', 'p95'], address: onDay },
-      cannot: 'The day in progress is counted in no total, and a day does not say who sent its requests.',
+      cannot: 'The day in progress is counted in no total, and a day does not say who sent its requests. A week or a month the window cuts holds fewer days than its kind, so its total is no movement: compare whole ones.',
     },
     usage: {
       collection: 'usage',

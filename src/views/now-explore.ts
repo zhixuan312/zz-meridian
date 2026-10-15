@@ -27,7 +27,7 @@ export const nowExplore: PreparedQuery = {
         p95: { label: 'Highest p95', unit: 'ms', definition: "The highest of the days' p95 latency, not the median day's the page draws.", agg: 'max', field: 'p95' },
       },
       drill: { columns: ['date', 'inBand', 'p95', 'errors', 'requests'], address: () => NOW },
-      cannot: 'The day in progress is counted in no total, and a day does not say which service or model was slow.',
+      cannot: 'The day in progress is counted in no total, and a day does not say which service or model was slow. A week or a month the window cuts holds fewer days than its kind, so its total is no movement: compare whole ones.',
     },
     models: {
       collection: 'usage',

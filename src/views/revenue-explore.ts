@@ -26,7 +26,7 @@ export const revenueExplore: PreparedQuery = {
       },
       // Revenue has no day of its own to point at: every complete day kept is the period whose charts hold the row.
       drill: { columns: ['date', 'revenue', 'revenueByPlan'], address: () => '/business?period=all' },
-      cannot: 'The day in progress is counted in no total, and a day says what each plan paid, not which customer.',
+      cannot: 'The day in progress is counted in no total, and a day says what each plan paid, not which customer. A week or a month the window cuts holds fewer days than its kind, so its total is no movement: compare whole ones.',
     },
     customers: customersSource,
     usage: {

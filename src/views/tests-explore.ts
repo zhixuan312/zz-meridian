@@ -28,7 +28,7 @@ export const testsExplore: PreparedQuery = {
       },
       // A run has no page of its own: its release's runs are the page that lists it.
       drill: { columns: ['id', 'suite', 'endpointId', 'releaseId', 'state', 'startedAt', 'failure'], address: (r) => testsAddress({ ...all, release: String(r.releaseId) }) },
-      cannot: 'The page only shows what ran: nothing here reruns a verification, and the runs are recorded outside this product.',
+      cannot: 'The page only shows what ran: nothing here reruns a verification, and the runs are recorded outside this product. A window holds complete days, so a run that started today is in none.',
     },
   },
   // The page filtered as the call was, where the page has the filter: one verdict, or one release.

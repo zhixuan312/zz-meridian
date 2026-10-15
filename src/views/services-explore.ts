@@ -38,7 +38,7 @@ export const servicesExplore: PreparedQuery = {
         open: { label: 'Open', unit: 'incidents', definition: 'Incidents nobody has resolved yet.', agg: 'count', where: [{ field: 'state', op: 'ne', value: 'resolved' }] },
       },
       drill: { columns: ['id', 'title', 'service', 'severity', 'state', 'started', 'resolved', 'owner'], address: () => '/services' },
-      cannot: 'Incidents have no window: every incident kept is counted, and its rows come newest started first. What one cost customers is not recorded.',
+      cannot: 'Incidents have no window: every incident kept is counted, and its rows come newest started first. What one cost customers is not recorded. A service with no incident kept is in no group: the services source names every service.',
     },
   },
 };
