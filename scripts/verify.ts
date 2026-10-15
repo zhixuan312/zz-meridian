@@ -227,9 +227,8 @@ function unsafeBackend(): { reason: string; fix: string } | null {
   const offenders = ['DATABASE_URL', ...(config.dataUrls ?? [])].flatMap((name) => {
     const value = process.env[name] ?? fromFiles[name];
     if (!value) return [];
-    let host: string | null;
     // Not a URL is not something this can judge; the app will fail on it long before a press.
-    host = dataHost(value);
+    const host = dataHost(value);
     if (host === null) return [];
     return isLocalHost(host) ? [] : [`${name} → ${host}`];
   });
