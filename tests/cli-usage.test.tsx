@@ -26,7 +26,7 @@ vi.mock('@/data/read', async (orig) => {
   return {
     ...real,
     read: async (name: string, q?: unknown) => { refuse(name); return store.empty.has(name) ? { rows: [], total: 0, observedAt: new Date().toISOString() } : real.read(name, q as never); },
-    readAll: async (name: string) => { refuse(name); return store.empty.has(name) ? { rows: [], observedAt: new Date().toISOString() } : real.readAll(name); },
+    readAll: async (name: string, q?: unknown) => { refuse(name); return store.empty.has(name) ? { rows: [], observedAt: new Date().toISOString() } : real.readAll(name, q as never); },
   };
 });
 // Each card the page draws marks where it stands; a Heatmap marks its form, its scale and whether it joins the Meridian.

@@ -1,6 +1,6 @@
 import { gate, gatedMetadata, may } from '@/data/access';
 import { ACTIONS } from '@/data/features';
-import { read } from '@/data/read';
+import { readAll } from '@/data/read';
 import { readTickets } from '@/data/tickets';
 import { TicketsView } from '@/views/tickets';
 import { createTicket, updateTicket } from './actions';
@@ -27,9 +27,9 @@ export default async function TicketsPage() {
     may(ACTIONS['create-ticket'].needs),
     may(ACTIONS['update-ticket'].needs),
     may('members:read'),
-    read('services'),
+    readAll('services'),
   ]);
-  const people = mayReadMembers ? (await read('members', { limit: 500 })).rows : [];
+  const people = mayReadMembers ? (await readAll('members')).rows : [];
   return (
     <TicketsView
       rows={rows}

@@ -19,8 +19,8 @@ vi.mock('@/data/read', async (orig) => {
   const real = await orig<typeof import('@/data/read')>();
   return {
     ...real,
-    readAll: async (name: string) => {
-      const answer = await real.readAll(name);
+    readAll: async (name: string, q?: unknown) => {
+      const answer = await real.readAll(name, q as never);
       if (name === 'models') return { ...answer, rows: [...answer.rows, ...MORE.map((m) => ({ ...m, serves: '/v1/messages', inputPrice: 0.2, outputPrice: 1, callPrice: null }))] };
       if (name === 'usage') {
         const embed = (answer.rows as { id: string; model: string; revenue: number }[]).filter((u) => u.model === 'meridian-embed');

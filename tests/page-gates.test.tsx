@@ -30,7 +30,13 @@ vi.mock('@/data/roles', async (orig) => {
 });
 vi.mock('@/data/read', async (orig) => {
   const real = await orig<typeof import('@/data/read')>();
-  return { ...real, read: async (name: string, q?: unknown) => { spy.reads.push(name); return real.read(name, q as never); } };
+  // The page reads through `readAll` (`read` normalizes a page of 100; a page saying "every key" cannot use one), so
+  // the spy wraps both: `readAll` calls the real `read` inside this module, which a mock of its export cannot see.
+  return {
+    ...real,
+    read: async (name: string, q?: unknown) => { spy.reads.push(name); return real.read(name, q as never); },
+    readAll: async (name: string, q?: unknown) => { spy.reads.push(name); return real.readAll(name, q as never); },
+  };
 });
 
 import HomePage from '../app/(dashboard)/(home)/page';

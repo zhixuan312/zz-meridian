@@ -39,7 +39,7 @@ vi.mock('@/data/read', async (orig) => {
   return {
     ...real,
     read: async (name: string, q?: unknown) => { refuse(name); const r = await real.read(name, q as never); const rows = shape(name, r.rows); return { ...r, rows, total: rows.length }; },
-    readAll: async (name: string) => { refuse(name); const r = await real.readAll(name); return { ...r, rows: shape(name, r.rows) }; },
+    readAll: async (name: string, q?: unknown) => { refuse(name); const r = await real.readAll(name, q as never); return { ...r, rows: shape(name, r.rows) }; },
   };
 });
 // What the page asks to be kept live.

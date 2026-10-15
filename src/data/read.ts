@@ -51,14 +51,16 @@ export async function aggregate(name: string, q: AggregateQuery): Promise<Aggreg
 const PAGE = 500;
 
 /**
- * Every row of a collection the caller may read. A read returns a page, so this keeps asking until the total is in
- * hand: a count, a join or a summary over a collection starts here, never from a first page.
+ * Every row a question keeps, of a collection the caller may read. A read returns a page, so this keeps asking the *same*
+ * question until the total is in hand: a count, a join or a summary over a collection starts here, never from a first
+ * page. The order and the conditions are re-asked of every page, so a table claiming "each" is not the first page of
+ * something else. Any `limit` the caller passes is ignored: asking here means every row.
  */
-export async function readAll(name: string): Promise<{ rows: Record<string, unknown>[]; observedAt: string }> {
-  const first = await read(name, { limit: PAGE });
+export async function readAll(name: string, q: Query = {}): Promise<{ rows: Record<string, unknown>[]; observedAt: string }> {
+  const first = await read(name, { ...q, limit: PAGE });
   const rows = [...first.rows];
   while (rows.length < first.total) {
-    const next = await read(name, { limit: PAGE, offset: rows.length });
+    const next = await read(name, { ...q, limit: PAGE, offset: rows.length });
     if (next.rows.length === 0) throw new Error(`${name} could not be read in full.`);
     rows.push(...next.rows);
   }

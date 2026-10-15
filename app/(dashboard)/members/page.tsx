@@ -1,6 +1,6 @@
 import { gate, gatedMetadata, may } from '@/data/access';
 import { invitableRoles, memberAccess, type MemberRowAccess } from '@/data/member-mutations';
-import { read } from '@/data/read';
+import { read, readAll } from '@/data/read';
 import { assignRole, inviteMember, removeMember, setMemberStatus } from './actions';
 import { MembersView } from '@/views/members';
 import type { Member } from '@/data/sample';
@@ -34,7 +34,7 @@ async function workspaceName(): Promise<string | undefined> {
 export default async function MembersPage() {
   const denied = await gate('members');
   if (denied) return denied;
-  const { rows, observedAt } = await read('members', { sort: { field: 'joined', dir: 'desc' } });
+  const { rows, observedAt } = await readAll('members', { sort: { field: 'joined', dir: 'desc' } });
   const members = rows as Member[];
   const [access, roles, workspace] = await Promise.all([
     Promise.all(members.map(async (m): Promise<readonly [string, MemberRowAccess]> => [m.id, await memberAccess(m.id)])).then((entries) => Object.fromEntries(entries)),

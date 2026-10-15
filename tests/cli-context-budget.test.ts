@@ -19,7 +19,7 @@ vi.mock('@/data/read', async (orig) => {
   return {
     ...real,
     read: async (name: string, q?: unknown) => { const r = await real.read(name, q as never); const rows = more(name, r.rows as Record<string, unknown>[]); return { ...r, rows, total: rows.length }; },
-    readAll: async (name: string) => { const r = await real.readAll(name); return { ...r, rows: more(name, r.rows as Record<string, unknown>[]) }; },
+    readAll: async (name: string, q?: unknown) => { const r = await real.readAll(name, q as never); return { ...r, rows: more(name, r.rows as Record<string, unknown>[]) }; },
   };
 });
 

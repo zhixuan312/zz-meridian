@@ -291,7 +291,7 @@ export const membersTool = defineViewTool({
   input: z.object({}),
   async read() {
     await requireNeed(FEATURES.members.needs);
-    const { rows, observedAt } = await read('members', { sort: { field: 'joined', dir: 'desc' } });
+    const { rows, observedAt } = await readAll('members', { sort: { field: 'joined', dir: 'desc' } });
     return { context: membersContext(rows as Member[], observedAt), data: {} };
   },
   explore: membersExplore,
@@ -306,7 +306,7 @@ export const keysTool = defineViewTool({
   input: z.object({}),
   async read() {
     await requireNeed(FEATURES.keys.needs);
-    const { rows, observedAt } = await read('keys');
+    const { rows, observedAt } = await readAll('keys');
     return { context: keysContext(rows as ApiKey[], observedAt, SCOPES), data: {} };
   },
   explore: keysExplore,

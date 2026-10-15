@@ -21,7 +21,7 @@ vi.mock('@/data/read', async (orig) => {
   return {
     ...real,
     read: async (name: string, q?: unknown) => { refuse(name); return real.read(name, q as never); },
-    readAll: async (name: string) => { refuse(name); return real.readAll(name); },
+    readAll: async (name: string, q?: unknown) => { refuse(name); return real.readAll(name, q as never); },
   };
 });
 

@@ -53,8 +53,9 @@ export async function readDays(period: Period): Promise<PeriodDays> {
   return { series, previous, totals: { current: totalsOf(series), previous: previous.length ? totalsOf(previous) : null }, running: days.find((d) => d.date === today) ?? null, observedAt };
 }
 
+/** Each endpoint, busiest first: what the Now page's mix draws and what a request's own page looks its route up in. */
 export async function readEndpoints(): Promise<Endpoint[]> {
-  const { rows } = await read('endpoints', { sort: { field: 'requests', dir: 'desc' } });
+  const { rows } = await readAll('endpoints', { sort: { field: 'requests', dir: 'desc' } });
   return (rows as (Endpoint & { id: string })[]).map(({ id: _, ...e }) => e);
 }
 
@@ -87,9 +88,10 @@ function drawn({ ticketId, owner, ...incident }: IncidentRecord, tickets: Readon
  * that fails, leaves every incident standing without its ticket.
  */
 export async function readIncidents(): Promise<{ open: Incident[]; past: Incident[]; all: Incident[] }> {
-  const records = (await read('incidents', { sort: { field: 'started', dir: 'desc' } })).rows as IncidentRecord[];
+  const { rows } = await readAll('incidents', { sort: { field: 'started', dir: 'desc' } });
+  const records = rows as unknown as IncidentRecord[];
   const ids = [...new Set(records.flatMap((r) => (r.ticketId ? [r.ticketId] : [])))];
-  const found = ids.length ? await attempt(async () => (await read('tickets', { where: [{ field: 'id', op: 'in', value: ids }], limit: ids.length })).rows as Ticket[]) : null;
+  const found = ids.length ? await attempt(async () => (await readAll('tickets', { where: [{ field: 'id', op: 'in', value: ids }] })).rows as Ticket[]) : null;
   const tickets = new Map((found ?? []).map((t) => [t.id, t]));
   const all = records.map((r) => drawn(r, tickets));
   const open = all.filter((i) => i.state !== 'resolved');
@@ -98,6 +100,6 @@ export async function readIncidents(): Promise<{ open: Incident[]; past: Inciden
 
 export async function readServices(): Promise<Service[]> {
   // In the order the team reads its stack, the gateway first, not by name.
-  const { rows } = await read('services', { sort: { field: 'order', dir: 'asc' } });
+  const { rows } = await readAll('services', { sort: { field: 'order', dir: 'asc' } });
   return (rows as (Service & { order: number })[]).map(({ order: _, ...s }) => s);
 }
