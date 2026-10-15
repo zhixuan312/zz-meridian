@@ -13,7 +13,7 @@
 import { z } from 'zod';
 import { app } from '@/app.config';
 import type { AggregateQuery, AggregateResult, AggregateValues, Condition, Query } from '@/lib/collection';
-import { formatCost } from '@/lib/format';
+import { formatCost, plural } from '@/lib/format';
 
 export type ExploreOp = 'eq' | 'ne' | 'in' | 'lt' | 'gt';
 type ExploreBucket = 'day' | 'week' | 'month' | 'weekday';
@@ -445,12 +445,23 @@ export async function runExplore<I>(query: PreparedQuery<I>, input: unknown, rig
     ...(rest ? [`- ${rest.groups} others: ${values(rest.vs)}`] : []),
     ...(s.cannot ? [s.cannot] : []),
   ];
+  /** The answer held to the length a prepared query promises, `docs/assistant.md`. Whole lines go from the end, so nothing is cut mid-sentence, and the last line says how many. */
+  const held = (lines: string[]): string => {
+    for (let n = lines.length; n > 0; n--) {
+      const said = lines.length - n;
+      const text = [...lines.slice(0, n), ...(said ? [`${said} more ${plural(said, 'line')} are not shown.`] : [])].join('\n');
+      if (text.length <= MAX_ANSWER) return text;
+    }
+    return `${lines.length} more ${plural(lines.length, 'line')} are not shown.`;
+  };
   const fixedLines = [...head, ...body];
-  if (rows === 0) return reply(fixedLines.join('\n'));
+  if (rows === 0) return reply(held(fixedLines));
   const drilled = read.rows.map((r) => `- ${s.drill.address(r)}: ${columns.map((c) => `${c} ${names.has(c) && typeof r[c] === 'string' ? named(c, r[c]) : text(r[c])}`).join(', ')}`);
   const lead = read.rows.length ? `Rows, ${s.date ? 'the latest first' : 'in order'}, ${read.rows.length} of ${read.total}:` : 'No row matches.';
   const answer = (k: number) => [...fixedLines, lead, ...drilled.slice(0, k), ...(k < drilled.length ? [`${drilled.length - k} more rows are not shown.`] : [])].join('\n');
   let k = drilled.length;
   while (k > 0 && answer(k).length > MAX_ANSWER) k--;
-  return reply(answer(k));
+  // The rows go first, because they are what the summary leaves out; `held` is what catches a summary over budget by
+  // itself, which the row loop cannot shorten at all.
+  return reply(held([...fixedLines, lead, ...drilled.slice(0, k), ...(k < drilled.length ? [`${drilled.length - k} more rows are not shown.`] : [])]));
 }
