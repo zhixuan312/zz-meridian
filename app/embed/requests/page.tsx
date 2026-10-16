@@ -1,5 +1,7 @@
 import { Suspense } from 'react';
 import { requestsTool } from '@/views/tools';
+import { EmbedBusy } from '@/components/patterns/embed-frame';
+import { TableSkeleton } from '@/components/patterns/page-loading';
 import { EmbedRequests } from './view';
 
 export const metadata = { title: 'Requests' };
@@ -11,12 +13,24 @@ type SearchParams = Promise<Record<string, string | string[] | undefined>>;
  * tool's view and the console's view are the same address. Inline: the five latest that match. Fullscreen: the table.
  * Both read what the console page reads: one page of the filtered set and the summary of all of it, so the shared
  * context is the console's.
+ *
+ * The frame is drawn at once with the view's own name; the scope its title gains ("Requests · Failing") is the read's
+ * to say, and the console link carries the filters once it has: the unfiltered list is where the reader lands meanwhile.
  */
 export default function Page({ searchParams }: { searchParams: SearchParams }) {
   return (
-    <Suspense>
+    <Suspense fallback={<Busy />}>
       <Requests searchParams={searchParams} />
     </Suspense>
+  );
+}
+
+/** The frame the host sees while the read runs: this view's title, and a body of the shape the read will fill. */
+function Busy() {
+  return (
+    <EmbedBusy title="Requests" consolePath="/requests" name="Requests">
+      <TableSkeleton rows={5} filters={false} />
+    </EmbedBusy>
   );
 }
 

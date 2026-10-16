@@ -5,6 +5,7 @@ import type { ReactNode } from 'react';
 import { app } from '@/app.config';
 import { cn } from '@/lib/cn';
 import { AppMark } from '@/components/base/app-mark';
+import { Stack } from '@/components/base/shell';
 import { useSurface } from '@/components/base/surface';
 
 /**
@@ -79,5 +80,21 @@ export function EmbedFrame({
       )}
       {children}
     </section>
+  );
+}
+
+/**
+ * An embed while its read runs: the frame drawn at once from what the address already says, and a body of the shape
+ * the read will fill, announced once as busy under the view's name. A host frames this document, so a `<Suspense>`
+ * with no fallback shows it an empty rectangle — one whose height the host takes as the view's own — and this is the
+ * state every embed route falls back to. It takes no meta: how fresh the data is is one of the things being read.
+ */
+export function EmbedBusy({ title, consolePath, name, children }: { title: ReactNode; consolePath: string; name: string; children: ReactNode }) {
+  return (
+    <EmbedFrame title={title} consolePath={consolePath}>
+      <div role="status" aria-busy="true" aria-label={`Loading ${name}`} className="contents">
+        <Stack className="gap-3">{children}</Stack>
+      </div>
+    </EmbedFrame>
   );
 }
