@@ -157,7 +157,7 @@ function Appearance() {
           ]}
         />
       </SettingRow>
-      <SettingRow label="Accent" description="The one colour that marks the main action and the finding.">
+      <SettingRow label="Accent" description="The colour that marks the main action, the figure the page is about, and the finding.">
         <div role="radiogroup" aria-label="Accent" className="flex items-center gap-1.5">
           {ACCENTS.map((a) => (
             <button

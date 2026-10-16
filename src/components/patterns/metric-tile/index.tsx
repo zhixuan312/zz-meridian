@@ -33,7 +33,10 @@ const COMPACT_LINE = '@min-[calc(14rem-2px)]:col-span-2 @min-[calc(14rem-2px)]:r
  * One number the page exists to show, with its change and its shape. The figure is set at the figure size with
  * its unit and fraction stepped down. When the page's Meridian points at a point, the tile reads that point instead,
  * as long as its points are the page's: one for each of the Meridian's dates.
- * One tile per row may be `emphasis`: the finding. Its figure takes the accent; every other tile stays ink.
+ * One tile per row may be `emphasis`: the one figure the page is about — its finding where it has one, and otherwise
+ * the figure a person opens the page for (open tickets, revenue, what is live). Its figure takes the accent, as a hero
+ * card's protagonist figure does; every other tile stays ink. That figure is not the first tile on every page, and it
+ * is the same device in either place; two accented tiles in one row would leave neither reading as the one to look at.
  *
  * `size="compact"` is the same tile for a wall of many: the name, the change's figure, one line that is the figure and
  * then the note, and the shape. What the change is against is said once, by the card that holds the wall. It has no figure at the figure size, no hint, no icon and no finding, whatever it is passed, and

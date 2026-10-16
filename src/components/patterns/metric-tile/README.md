@@ -123,6 +123,7 @@ A view's shared context carries each tile's value, its change with what it is me
 ## Do and do not
 
 - Do keep at most one emphasis tile per row, and none when the page has a Featured metric.
+- Do put the emphasis on the figure the page is about — its finding where it has one, and otherwise the figure a person opens the page for. It is not the first tile on every page, and the accent says the same thing in either place.
 - Do give every finding its tone. Do not make a fact a warning to draw the eye: the warning dot means somebody should look.
 - Do use the compact size when the same figure is shown for many things. Do not mix compact and default tiles in one row.
 - Do say what a wall's change is against in the head of the card that holds it, and still pass `compare` to each tile, for the screen reader.
