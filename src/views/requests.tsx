@@ -43,7 +43,8 @@ export function RequestsView({ rows, total, summary, state, pageSize, updatedAt,
     <Records
       summary={
         <>
-          <MetricTile label={isFiltered ? REQUEST_METRICS.count.filtered : REQUEST_METRICS.count.label} value={summary.count} format={formatCompact} points={buckets.count} delta={deltas.count} compare="vs the half hour before" intent="neutral" hint={`${REQUEST_METRICS.count.hint}${note}`} />
+          {/* The count takes the same intent the same measure takes on Home and Usage: this product bills for what goes through it, so more of it is the business. A volume read as neither good nor bad on one page and as good on two others is one measure with two meanings. */}
+          <MetricTile label={isFiltered ? REQUEST_METRICS.count.filtered : REQUEST_METRICS.count.label} value={summary.count} format={formatCompact} points={buckets.count} delta={deltas.count} compare="vs the half hour before" intent="up" hint={`${REQUEST_METRICS.count.hint}${note}`} />
           <MetricTile label={REQUEST_METRICS.errors.label} value={summary.errorShare ?? '—'} format={(n) => formatPercent(n, 1)} points={buckets.errors} delta={deltas.errors} compare="vs the half hour before" intent="down" hint={`${REQUEST_METRICS.errors.hint}${note}`} />
           <MetricTile label={REQUEST_METRICS.p95.label} value={summary.p95 ?? '—'} format={formatDuration} points={buckets.p95} delta={deltas.p95} compare="vs the half hour before" intent="down" hint={`${REQUEST_METRICS.p95.hint}${note}`} />
         </>
