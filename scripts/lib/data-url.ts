@@ -20,8 +20,9 @@ export function isLocalHost(host: string): boolean {
 const FILE_SCHEME = /^(?:file|sqlite|sqlite3|duckdb|libsql):/i;
 
 /**
- * The host a data URL names, or null when the value is not something this can judge (the app fails on it long before a
- * press lands).
+ * The host a data URL names; the empty string when it names no host at all, which is this machine (`file:./dev.db`,
+ * `postgres:///app` — `isLocalHost('')` is true); or null when the value is not something this can judge, which its
+ * caller refuses rather than skips (the app fails on a value it cannot read long before a press lands).
  *
  * Most values are read by `URL`. Three shapes are not, and each matters here because getting it wrong is the difference
  * between refusing a backend and writing to it:
