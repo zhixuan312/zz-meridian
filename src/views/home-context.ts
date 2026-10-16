@@ -146,16 +146,27 @@ export function unwellNames(services: readonly ServiceNow[]): string | null {
  */
 export function homeLine({ days: n, customers, requests, previous, margin, services }: { days: number; customers: number | null; requests: number | null; previous: number | null; margin?: number | null; services: readonly ServiceNow[] | null }): string | null {
   const moved = requests !== null ? against(requests, previous) : null;
-  const clauses = [
+  const figures = [
     customers !== null && `${formatCompact(customers)} ${customers === 1 ? 'customer' : 'customers'}`,
     requests !== null && n > 0 && `${formatCompact(requests)} requests in ${inDays(n)}${moved ? ` (${moved.way === 'level' ? 'level' : `${moved.way} ${moved.by}`})` : ''}`,
     typeof margin === 'number' && `a gross margin of ${formatPercent(margin, 1)}`,
-    services && (unwellNames(services) ?? (services.length ? 'every service is operational' : NO_SERVICES)),
   ].filter((c): c is string => Boolean(c));
-  if (!clauses.length) return null;
-  const said = clauses.length === 1 ? clauses[0] : `${clauses.slice(0, -1).join(', ')}, and ${clauses.at(-1)}`;
-  return `${said[0].toUpperCase()}${said.slice(1)}.`;
+  // A service that is not operational, or a product monitoring none, is the one thing on this line a person may have to
+  // act on: it is its own sentence, after the figures and with an "and" of its own, rather than the last clause of a
+  // list, where on a day the title states a record it is the only place on the page that says it. A line whose services
+  // are all well keeps that clause last, inside the sentence, where it reassures rather than announces.
+  const unwell = services ? unwellNames(services) : null;
+  const unwellOrNone = unwell ?? (services && !services.length ? NO_SERVICES : null);
+  const well = services && !unwell && services.length ? 'every service is operational' : null;
+  const said = asList(unwellOrNone ? figures : [...figures, well].filter((c): c is string => Boolean(c)));
+  if (unwellOrNone) return `${said ? `${asSentence(said)}. ` : ''}${asSentence(unwellOrNone)}.`;
+  return said ? `${asSentence(said)}.` : null;
 }
+
+/** The clauses as one list: "A", "A and B", "A, B, and C". */
+const asList = (xs: string[]) => (xs.length < 2 ? (xs[0] ?? '') : xs.length === 2 ? `${xs[0]} and ${xs[1]}` : `${xs.slice(0, -1).join(', ')}, and ${xs.at(-1)}`);
+/** A clause as a sentence: its first letter up. */
+const asSentence = (s: string) => `${s[0]!.toUpperCase()}${s.slice(1)}`;
 
 /** What a context says when no day is kept before the period: `all`, or a product's first days. */
 export const NO_PREVIOUS = 'No previous period is kept, so no figure has a change.';

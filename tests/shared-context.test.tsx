@@ -90,9 +90,9 @@ describe("the Home's shared context", () => {
     const viewer = home('30d', { costs: false });
     expect(Object.keys(viewer)).not.toContain('computeCost');
     expect(Object.keys(viewer)).not.toContain('grossMargin');
-    expect(viewer.line).toBe('320 customers, 1.1B requests in 30 days (up 4.7%), and Inference API is degraded.');
+    expect(viewer.line).toBe('320 customers and 1.1B requests in 30 days (up 4.7%). Inference API is degraded.');
     expect(contextText(homeContext(viewer))).not.toMatch(/cost|margin/i);
-    expect(home('30d').line).toBe('320 customers, 1.1B requests in 30 days (up 4.7%), a gross margin of 62.4%, and Inference API is degraded.');
+    expect(home('30d').line).toBe('320 customers, 1.1B requests in 30 days (up 4.7%), and a gross margin of 62.4%. Inference API is degraded.');
   });
   it('says what could not be read, and states the rest', () => {
     const data = homeData({ ...reads('30d'), usage: null, costs: null, releases: null });
@@ -492,14 +492,18 @@ describe('what a context states beside its title', () => {
     expect(c.title).toBe('Home');
   });
 
-  it('says under the Home\'s title the customers, the requests and their change, gross margin for who may read it, and each service that is not operational', () => {
+  it('says under the Home\'s title each service that is not operational, then the customers, the requests and their change, and gross margin for who may read it', () => {
     const service = (name: string, status: 'operational' | 'degraded' | 'outage') => ({ name, status });
     const month = { days: 30, customers: 320, requests: 1_101_098_030, previous: 1_051_357_951 };
-    expect(homeLine({ ...month, margin: 0.6237, services: SERVICES })).toBe('320 customers, 1.1B requests in 30 days (up 4.7%), a gross margin of 62.4%, and Inference API is degraded.');
-    expect(homeLine({ ...month, services: [service('Files', 'outage'), service('Edge gateway', 'degraded'), service('Webhooks', 'degraded'), service('Dashboard', 'operational')] })).toBe('320 customers, 1.1B requests in 30 days (up 4.7%), and Files is down, Edge gateway is degraded and Webhooks is degraded.');
+    // A service that is not operational leads: it is the one thing on the line a person may have to act on, and on a
+    // day the title states a record it is the only place on the page that says it.
+    expect(homeLine({ ...month, margin: 0.6237, services: SERVICES })).toBe('320 customers, 1.1B requests in 30 days (up 4.7%), and a gross margin of 62.4%. Inference API is degraded.');
+    expect(homeLine({ ...month, services: [service('Files', 'outage'), service('Edge gateway', 'degraded'), service('Webhooks', 'degraded'), service('Dashboard', 'operational')] })).toBe('320 customers and 1.1B requests in 30 days (up 4.7%). Files is down, Edge gateway is degraded and Webhooks is degraded.');
     expect(homeLine({ ...month, services: [service('Files', 'operational')] })).toBe('320 customers, 1.1B requests in 30 days (up 4.7%), and every service is operational.');
     // None monitored is not the same as all of them well: the clause states the one thing that is true of an empty read.
-    expect(homeLine({ ...month, services: [] })).toBe('320 customers, 1.1B requests in 30 days (up 4.7%), and no service is monitored yet.');
+    // A product monitoring none says so in the same place a degraded service does: its own sentence, since the reader
+    // has to know that the quiet on the page is an empty read and not a healthy one.
+    expect(homeLine({ ...month, services: [] })).toBe('320 customers and 1.1B requests in 30 days (up 4.7%). No service is monitored yet.');
     // What could not be read is left out, and no period before leaves the change out.
     expect(homeLine({ ...month, previous: null, customers: null, margin: null, services: null })).toBe('1.1B requests in 30 days.');
     expect(homeLine({ days: 0, customers: null, requests: null, previous: null, services: null })).toBeNull();
