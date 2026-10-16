@@ -13,6 +13,10 @@ import { Rail } from '@/components/patterns/rail';
  * The marker is drawn where the current link was measured. A link moves without a navigation: the rail is resized, a
  * font arrives after first paint, a group above it changes height. The marker follows the list, not only the address
  * (issue #23).
+ *
+ * The first measurement is the one `observe` delivers by itself: the rail takes no offsets of its own, because a rail
+ * mounts inside the tap that opens the phone drawer and a read there lays the page out inside that tap. The fake
+ * observer therefore answers `observe` the way the platform does, after the effect that called it.
  */
 describe('the rail\'s marker', () => {
   const at = { top: 40 };
@@ -22,7 +26,12 @@ describe('the rail\'s marker', () => {
   beforeEach(() => {
     at.top = 40;
     observers.length = 0;
-    globalThis.ResizeObserver = class { constructor(cb: () => void) { observers.push(cb); } observe() {} unobserve() {} disconnect() {} } as unknown as typeof ResizeObserver;
+    globalThis.ResizeObserver = class {
+      constructor(cb: () => void) { observers.push(cb); }
+      observe() { for (const cb of observers) queueMicrotask(cb); }
+      unobserve() {}
+      disconnect() {}
+    } as unknown as typeof ResizeObserver;
     Object.defineProperty(HTMLElement.prototype, 'offsetTop', { configurable: true, get: () => at.top });
     Object.defineProperty(HTMLElement.prototype, 'offsetHeight', { configurable: true, get: () => 32 });
   });
@@ -35,7 +44,7 @@ describe('the rail\'s marker', () => {
   const nav = [{ label: 'Group', items: [{ href: '/a', label: 'A', icon: Home, needs: 'public' as const }, { href: '/b', label: 'B', icon: Home, needs: 'public' as const }] }];
   const marker = (c: HTMLElement) => c.querySelector<HTMLElement>('nav [style*="translateY"]')?.style.transform;
 
-  it('is measured again when the list changes size, with the address unchanged', async () => {
+  it('is measured when the list is observed, and again when it changes size, with the address unchanged', async () => {
     let c!: HTMLElement;
     await act(async () => { c = render(<Rail nav={nav as never} user={{ name: 'Maya Chen', role: 'Owner' }} />).container; });
     expect(marker(c)).toBe('translateY(40px)');

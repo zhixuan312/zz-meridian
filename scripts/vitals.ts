@@ -19,7 +19,9 @@
  * floor, and nothing had been looking. `--list` prints the routes a run would visit and exits without a browser.
  *
  * Run it against a production build (`next start`), never `next dev`. Fails (exit 1) when a page's LCP is 2.5 s or more,
- * INP 200 ms or more, or CLS 0.1 or more.
+ * INP 200 ms or more, CLS 0.1 or more, or drops a frame. The frames are a floor and not a figure to read: a person
+ * tapping the phone drawer is the app's most repeated gesture, and one 50 ms frame in it is the whole cost of the
+ * drawer arriving late. It was reported and not failed until the rail stopped measuring itself inside that tap.
  */
 import { atlasCoverage, atlasEntries } from './lib/atlas.ts';
 import { launch } from './lib/chrome.ts';
@@ -101,11 +103,11 @@ for (const route of ROUTES) {
   // A page over the CLS floor says what moved: the three elements whose shifts sum highest (a shift counts for each element it moved).
   const moved = v.cls >= 0.1 ? Object.entries(v.moved).sort((a, b) => b[1] - a[1]).slice(0, 3).map(([k, n]) => `${k} ${n.toFixed(3)}`).join(', ') : '';
   const dropped = v.frames.filter((f) => f > 50).length;
-  const bad = v.lcp >= 2500 || inp >= 200 || v.cls >= 0.1;
+  const bad = v.lcp >= 2500 || inp >= 200 || v.cls >= 0.1 || dropped > 0;
   if (bad) failures++;
   console.log(`${bad ? 'FAIL' : 'ok  '} ${route.padEnd(36)} LCP ${(v.lcp / 1000).toFixed(2)} s · INP ${Math.round(inp)} ms · CLS ${v.cls.toFixed(3)} · frames over 50 ms: ${dropped} of ${v.frames.length} · taps: ${tapped}${inp >= 100 ? ` · slowest tap: ${slowest}` : ''}${moved ? ` · moved most: ${moved}` : ''}`);
 }
 await page.send('Emulation.setCPUThrottlingRate', { rate: 1 });
 page.close();
-console.log(`\nvitals: ${ROUTES.length - failures} of ${ROUTES.length} pages under LCP 2.5 s, INP 200 ms and CLS 0.1 on a mid-range phone`);
+console.log(`\nvitals: ${ROUTES.length - failures} of ${ROUTES.length} pages under LCP 2.5 s, INP 200 ms, CLS 0.1 and no dropped frame on a mid-range phone`);
 process.exit(failures ? 1 : 0);
