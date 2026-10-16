@@ -2,10 +2,11 @@
 
 Every release of ZZ Meridian, newest first. Versions follow semver: a removed or renamed token, prop or card is major; a new card, token or variant is minor; a corrected value is a patch. Each entry says what breaks and what to do instead.
 
-## [Unreleased]
+## [0.16.2] · 2026-10-16
 
 ### Breaking
 
+- **A created project's shipped test of the rail fails until it is brought over.** `tests/rail-marker.test.tsx` — the template's test of the rail's marker — stands over a `ResizeObserver` whose `observe` answers with nothing, which only worked because the rail read its own offsets as well. That read is what 0.16.2 removed (see **Changed**), so the file now asserts a marker position that nothing has measured yet. The file is the project's own from the moment it is created, so the update does not write it: `migration:marker-measured-on-observe` reports it, with the fix — bring the release's `tests/rail-marker.test.tsx` over as the release has it. Its fake answers `observe` with the callback and reads the marker after that delivery; a test of your own that mounts the rail answers `observe` the same way.
 - **The Web Vitals check fails on a dropped frame.** `scripts/vitals.ts` counted frames over 50 ms while its taps played out and printed the number on every line without ever failing on it, so a `verify --full` that passed was not being held to the floor its own header states. It fails now: `frames over 50 ms` must read `0 of N`. Two things about how it counts changed with it. Frames are read **in the tap's own window and no other** — the recording used to run from the moment the page opened, straight through the Escape that closes what a tap opened and the settle after it, which the INP measurement in the same loop already excludes because it is the check's own work and not the person's. And a page that drops one frame is **measured a second time in full** before it is failed, because a single frame in two hundred is inside the noise of the host a four-times throttle is measuring: a page that drops one twice is a page that stutters. A run that was passing still passes; a run that was failing now says so, and names the control the frame was dropped on.
 
 ### New
@@ -15,7 +16,12 @@ Every release of ZZ Meridian, newest first. Versions follow semver: a removed or
 ### Changed
 
 - **The rail reads its own geometry from the observer's first delivery, not by hand.** The rail measured itself with an `offsetTop` read as well as through its `ResizeObserver`, and a rail mounts inside the tap that opens the phone drawer — so that read made the browser lay the whole page out inside the tap: measured at a 50 ms frame on a throttled phone, against 33 ms for the mount alone. The observer's first delivery reports the same numbers after the browser has laid out for itself. Nothing moves while a measurement is missing: the current item draws the same pill itself.
+- **The Atlas's front page names the latest release, not the work toward the next one.** It read the first section of `CHANGELOG.md` — which is `[Unreleased]` while a release is pending, and has no version — so the card showed pending work under the version it was going to be released as. It also read the version, the date and the summary with one pattern that refused the `#` of `### Breaking`, the first line under every heading in that file: the date fell to an empty fallback and the card printed `0.16.2 · ` with nothing after the separator, on every release. The heading and the paragraph are read separately now, and the "Full changelog" link no longer shares the kicker's line.
 - **`AppMark` names its own gradient.** The mark is a client component now, because each draws a sheen whose id has to be its own: a page holds more than one mark (the Atlas draws one in the phone's bar and one in the shelf, both mounted at every width), and a fixed `id` was a duplicate on every one of those pages, with a `url(#…)` naming two elements. A product that overrode the mark's markup rather than its `app.logo` is unaffected; the first load of `/embed/now` in this template moved 809 → 811 KiB.
+
+### Fixed
+
+- **A new dashboard's own `pnpm verify` failed on a test that named the template.** `tests/embed-page-failure.test.tsx` asserts the embed's way out, and wrote the copy out as `Open in ZZ Meridian` — the template's name, while the frame draws `Open in ${app.name}`. Every dashboard is created under its own name, so the test passed in this repository and failed in every project made from it, at the first `pnpm verify` a team runs. It reads the name from `src/app.config.ts` now.
 
 ## [0.16.1] · 2026-10-16
 
