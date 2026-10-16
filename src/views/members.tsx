@@ -259,6 +259,10 @@ export function MembersView({ rows, now, actions, access, roles, workspace }: { 
             rows={listed}
             columns={columns}
             rowKey={(m) => m.id}
+            // The page reads the members newest first (`readAll('members', { sort: { field: 'joined', dir: 'desc' } })`),
+            // so the table states that order rather than arriving in it: the head of the column it is in carries the
+            // caret, as every other list that has an order of its own does.
+            defaultState={{ sort: 'joined', dir: 'desc' }}
             empty={{ title: 'No members yet', body: `Invite the people who work in ${app.name}.`, action: mayInvite ? <Button variant="primary" size="sm" icon={<UserPlus />} onClick={() => { setInviteError(null); setInviting(true); }}>Invite member</Button> : undefined }}
           />
         </div>

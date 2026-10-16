@@ -22,8 +22,8 @@ export type Column<R> = {
   key: string;
   header: ReactNode;
   cell: (row: R) => ReactNode;
-  /** Makes the column sortable: the value rows are ordered by. */
-  sortValue?: (row: R) => number | string;
+  /** What the column is sorted by. A row with no value for it goes last whichever way the column is sorted. */
+  sortValue?: (row: R) => number | string | null | undefined;
   align?: 'left' | 'right' | 'center';
   numeric?: boolean;
   muted?: boolean;
@@ -131,15 +131,19 @@ export function useTableQuery(defaults: Partial<TableState> = {}) {
   return useQueryState<TableState>({ sort: '', dir: 'desc', page: '1', ...defaults });
 }
 
-/** Sort rows by a column's value. Stable; nulls last. */
+/** Sort rows by a column's value. Stable; a row with no value for the column is last whichever way it is sorted. */
 export function sortRows<R>(rows: R[], columns: Column<R>[], sort: string, dir: string) {
   const col = columns.find((c) => c.key === sort);
   if (!col?.sortValue) return rows;
   const v = col.sortValue;
   const sign = dir === 'asc' ? 1 : -1;
+  const none = (k: unknown) => k === null || k === undefined;
   return rows
     .map((r, i) => ({ r, i, k: v(r) }))
-    .sort((a, b) => (a.k === b.k ? a.i - b.i : a.k > b.k ? sign : -sign))
+    // A row with no value — a member who has never signed in, a release with no failure — has no place in the order,
+    // and the two comparisons below are not the inverse of each other when one side is absent, so the sort's result
+    // depended on the array's length and shape. It is said outright instead: those rows go last, and keep their order.
+    .sort((a, b) => (none(a.k) || none(b.k) ? (none(a.k) && none(b.k) ? a.i - b.i : none(a.k) ? 1 : -1) : a.k === b.k ? a.i - b.i : a.k > b.k ? sign : -sign))
     .map((x) => x.r);
 }
 
@@ -170,6 +174,7 @@ export function DataTable<R>({
   selectable,
   selected,
   onSelectedChange,
+  defaultState,
   className,
 }: {
   rows: R[];
@@ -192,6 +197,12 @@ export function DataTable<R>({
   /** Sort and page from outside (the URL, with useTableQuery); otherwise the table keeps its own. */
   state?: TableState;
   onStateChange?: (patch: Partial<TableState>) => void;
+  /**
+   * The order and page a table keeps its own state in, when it is not driven from the URL: `{ sort: 'joined', dir:
+   * 'desc' }` for a list whose own order is the newest first. Without it the rows are shown in the order they were
+   * given, and the head claims no order — which is right only for a list that has no order of its own.
+   */
+  defaultState?: Partial<TableState>;
   pageSize?: number;
   pageSizes?: number[];
   /** Rows arrive already sorted and paged by the server; pass `total`. */
@@ -215,7 +226,7 @@ export function DataTable<R>({
 }) {
   const router = useRouter();
   const leave = useLeave();
-  const [own, setOwn] = useState<TableState>({ sort: '', dir: 'desc', page: '1' });
+  const [own, setOwn] = useState<TableState>({ sort: '', dir: 'desc', page: '1', ...defaultState });
   const [size, setSize] = useState(initialSize);
   const st = controlled ?? own;
   const set = (p: Partial<TableState>) => (onStateChange ? onStateChange(p) : setOwn((s) => ({ ...s, ...p })));

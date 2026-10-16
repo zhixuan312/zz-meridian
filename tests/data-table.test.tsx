@@ -2,7 +2,7 @@ import { render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
 vi.mock('next/navigation', () => ({ useRouter: () => ({ push() {}, refresh() {}, replace() {} }), usePathname: () => '/' }));
-import { DataTable, type Column } from '@/components/patterns/data-table';
+import { DataTable, sortRows, type Column } from '@/components/patterns/data-table';
 
 type Row = { id: string; name: string; status: string; calls: number };
 const rows: Row[] = [
@@ -10,9 +10,9 @@ const rows: Row[] = [
   { id: 'b', name: 'Halcyon Health', status: 'Invited', calls: 375_000 },
 ];
 const columns: Column<Row>[] = [
-  { key: 'name', header: 'Customer', grow: true, mobile: 'title', cell: (r) => r.name },
-  { key: 'status', header: 'Status', mobile: 'status', cell: (r) => r.status },
-  { key: 'calls', header: 'Requests', numeric: true, mobile: 'fact', cell: (r) => r.calls.toLocaleString('en-US'), mobileCell: (r) => `${r.calls} requests` },
+  { key: 'name', header: 'Customer', grow: true, mobile: 'title', sortValue: (r) => r.name, cell: (r) => r.name },
+  { key: 'status', header: 'Status', mobile: 'status', sortValue: (r) => r.status, cell: (r) => r.status },
+  { key: 'calls', header: 'Requests', numeric: true, mobile: 'fact', sortValue: (r) => r.calls, cell: (r) => r.calls.toLocaleString('en-US'), mobileCell: (r) => `${r.calls} requests` },
   { key: 'id', header: 'ID', cell: (r) => r.id },
 ];
 
@@ -47,6 +47,26 @@ describe('DataTable', () => {
     expect(screen.getByText('643,000')).toBeInTheDocument();
     expect(screen.getByText('643000 requests')).toBeInTheDocument();
   });
+  it('sorts by a column, and puts the rows that have no value for it last whichever way it is sorted', () => {
+    type R = { id: string; last: string | null };
+    const rs: R[] = [{ id: 'a', last: '2026-01-01' }, { id: 'b', last: null }, { id: 'c', last: '2026-03-01' }];
+    const cols: Column<R>[] = [{ key: 'last', header: 'Last active', sortValue: (r) => r.last, cell: (r) => r.last ?? 'Never' }];
+    // A member who has never signed in is not the earliest date: the two comparisons are not each other's inverse
+    // when a value is absent, so before this the order depended on the array's length and shape.
+    expect(sortRows(rs, cols, 'last', 'desc').map((r) => r.id)).toEqual(['c', 'a', 'b']);
+    expect(sortRows(rs, cols, 'last', 'asc').map((r) => r.id)).toEqual(['a', 'c', 'b']);
+  });
+
+  it('states the order it keeps its own state in, so the head carries the caret for the order the rows are in', () => {
+    render(<DataTable caption="Members" noun="members" rows={rows} columns={columns} rowKey={(r) => r.id} defaultState={{ sort: 'calls', dir: 'desc' }} />);
+    // The calls column, pressed down by default: 643,000 over 375,000, and its head says so.
+    expect(screen.getAllByRole('columnheader', { name: /Requests/ })[0].getAttribute('aria-sort')).toBe('descending');
+    expect([...document.querySelectorAll('tbody tr')].map((tr) => tr.textContent)).toEqual([
+      expect.stringContaining('Northwind Labs'),
+      expect.stringContaining('Halcyon Health'),
+    ]);
+  });
+
   it('makes the title of a row that opens a record its link; the row is the hover target and the title has no hover style of its own', () => {
     render(<DataTable caption="Customers" noun="customers" rows={rows} columns={columns} rowKey={(r) => r.id} rowHref={(r) => `/customers/${r.id}`} />);
     const link = screen.getAllByRole('link', { name: 'Northwind Labs' })[0];

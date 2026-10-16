@@ -62,7 +62,9 @@ describe('members, optimistically', () => {
     await invite('Ana Ruiz');
     expect(await screen.findByText('Ana Ruiz')).toBeTruthy();
     await act(async () => { d.resolve({ ok: true }); });
-    const added = { ...MEMBERS[0], id: 'mem_new', name: 'Ana Ruiz', email: 'ana@northwind.example', status: 'Invited' as const };
+    // A row the server hands back for a new member carries the day they joined, which is today: the table states the
+    // order (newest joined first), so a row built from another member's older date belongs where that date belongs.
+    const added = { ...MEMBERS[0], id: 'mem_new', name: 'Ana Ruiz', email: 'ana@northwind.example', status: 'Invited' as const, joined: '2026-10-05' };
     rerender(view(actions, [added, ...MEMBERS], '2026-10-05T09:01:00.000Z'));
     await waitFor(() => expect(screen.getAllByText('Ana Ruiz')).toHaveLength(1));
   });
@@ -101,7 +103,10 @@ async function openMenu(name: string) {
 const rowOf = (name: string) => screen.getByText(name).closest('tr, [role="row"], li, article') as HTMLElement;
 
 describe('members, status and removal', () => {
-  const m = MEMBERS.find((x) => x.status === 'Active')!;
+  // The page reads the members newest-joined first (`readAll('members', { sort: { field: 'joined', dir: 'desc' } })`),
+  // and the table states that order and pages it, so the first active member it shows is the newest of them. The
+  // fixture's own first active row joined in August 2025 and is the 24th of 24.
+  const m = [...MEMBERS].filter((x) => x.status === 'Active').sort((a, b) => (a.joined === b.joined ? 0 : a.joined > b.joined ? -1 : 1))[0];
   it('shows a status change at once and puts the old status back with the reason when it is refused', async () => {
     const d = deferred();
     render(view(withActions({ setStatus: () => d.promise })));
@@ -174,7 +179,7 @@ describe('members, status and removal', () => {
     const { rerender } = render(view(actions));
     await invite('Ana Ruiz');
     expect(await screen.findByText('Ana Ruiz')).toBeTruthy();
-    const newer = { ...MEMBERS[0], id: 'mem_live', name: 'Zed Newcomer', email: 'zed@northwind.example', status: 'Active' as const };
+    const newer = { ...MEMBERS[0], id: 'mem_live', name: 'Zed Newcomer', email: 'zed@northwind.example', status: 'Active' as const, joined: '2026-10-05' };
     rerender(view(actions, [newer, ...MEMBERS.slice(1)], '2026-10-05T09:00:30.000Z'));
     expect(await screen.findByText('Zed Newcomer')).toBeTruthy();
     expect(screen.getByText('Ana Ruiz')).toBeTruthy();
