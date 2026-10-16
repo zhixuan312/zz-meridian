@@ -16,7 +16,7 @@ import { ColumnChart } from '@/components/charts/column-chart';
 import { CompositionBar } from '@/components/charts/composition-bar';
 import { Heatmap } from '@/components/charts/heatmap';
 import { Meridian, useMeridianIndex } from '@/components/charts/meridian';
-import { TrendChart } from '@/components/charts/trend-chart';
+import { SO_FAR, TrendChart } from '@/components/charts/trend-chart';
 import { FeaturedMetric } from '@/components/patterns/featured-metric';
 import type { UsageFigures } from '@/data/usage';
 import { AXIS_FORMATTERS, formatCompact, formatDuration } from '@/lib/format';
@@ -60,7 +60,7 @@ function Requests({ data, days, dates }: { data: UsageData; days: Days; dates: s
         points={points}
         format={formatCompact}
         delta={change(totals.current.requests, totals.previous?.requests ?? null)}
-        caption={series.length ? `${totals.current.requests.toLocaleString('en-US')} requests over the ${series.length} complete ${series.length === 1 ? 'day' : 'days'} to ${formatDate(series.at(-1)!.date)}, ${app.timezone}.` : undefined}
+        caption={series.length ? `${totals.current.requests.toLocaleString('en-US')} requests over the ${series.length} complete ${series.length === 1 ? 'day' : 'days'} to ${formatDate(series.at(-1)!.date)}, ${app.timezone}.${running ? ` ${SO_FAR}` : ''}` : undefined}
         finding={data.record ? { text: data.record } : undefined}
         pointLabel={(date) => (running && date === running.date ? `${formatDate(date)} · so far` : formatDate(date))}
       >

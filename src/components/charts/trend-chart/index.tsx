@@ -69,6 +69,14 @@ function placeLabel(text: string, line: number, plot: { left: number; right: num
 }
 
 /**
+ * What every page says about the one mark only this chart draws: the short dashed stretch into a period that is not
+ * over. It could be written on the plot, and it was not: a chart that labels its own last point crowds the data it is
+ * there to show, and the readout already says "so far" for the day under the cursor. The words belong to the caption
+ * above, as the two cards that already state a running period do, and every page that passes `running` says these.
+ */
+export const SO_FAR = 'Today so far, dashed.';
+
+/**
  * A time series: one shared axis, at most one area, any number of lines. Never two y-scales: two measures of a
  * different size are two charts on one Meridian. Point, or move with the arrow keys, to read a day; every chart on
  * the page follows.
@@ -436,7 +444,7 @@ export function TrendChart({
         </Readout>
       ) : null}
       <table className="sr-only">
-        <caption>{label}{band ? `. ${band.label}` : ''}{marks ? `. Marked: ${marks.label}` : ''}{baseline ? `. ${baseline.label}` : ''}</caption>
+        <caption>{label}{band ? `. ${band.label}` : ''}{marks ? `. Marked: ${marks.label}` : ''}{baseline ? `. ${baseline.label}` : ''}{running ? `. ${SO_FAR}` : ''}</caption>
         <thead><tr><th>Date</th>{series.map((s) => <th key={s.key}>{s.label}</th>)}{totals ? <th>Total</th> : null}</tr></thead>
         <tbody>{dates.map((d, i) => <tr key={d}><td>{d}{i === soFar ? ', so far' : null}</td>{series.map((s) => <td key={s.key}>{fmt(s.values[i])}</td>)}{totals ? <td>{fmt(totals[i])}</td> : null}</tr>)}</tbody>
       </table>

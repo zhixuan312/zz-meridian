@@ -13,7 +13,7 @@ import { BarList } from '@/components/charts/bar-list';
 import { ColumnChart } from '@/components/charts/column-chart';
 import { CompositionBar } from '@/components/charts/composition-bar';
 import { Meridian } from '@/components/charts/meridian';
-import { TrendChart } from '@/components/charts/trend-chart';
+import { SO_FAR, TrendChart } from '@/components/charts/trend-chart';
 import { FeaturedMetric } from '@/components/patterns/featured-metric';
 import { MetricTile } from '@/components/patterns/metric-tile';
 import { PLANS } from '@/data/sample';
@@ -65,7 +65,7 @@ function RevenueFigure({ days, dates, period }: { days: Days; dates: string[]; p
         points={points}
         format={formatCost}
         delta={change(revenue.value, revenue.previous) ?? undefined}
-        caption={series.length ? `${formatCost(revenue.value)} over the ${series.length} complete ${series.length === 1 ? 'day' : 'days'} to ${formatDate(series.at(-1)!.date)}.` : undefined}
+        caption={series.length ? `${formatCost(revenue.value)} over the ${series.length} complete ${series.length === 1 ? 'day' : 'days'} to ${formatDate(series.at(-1)!.date)}.${running ? ` ${SO_FAR}` : ''}` : undefined}
         finding={revenue.finding ? { text: revenue.finding } : undefined}
         pointLabel={(date) => (running && date === running.date ? `${formatDate(date)} · so far` : formatDate(date))}
       >

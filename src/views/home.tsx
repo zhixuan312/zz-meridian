@@ -12,7 +12,7 @@ import { StatusDot } from '@/components/ui/status-dot';
 import { ColumnChart } from '@/components/charts/column-chart';
 import { CompositionBar } from '@/components/charts/composition-bar';
 import { Meridian, useMeridianIndex } from '@/components/charts/meridian';
-import { TrendChart } from '@/components/charts/trend-chart';
+import { SO_FAR, TrendChart } from '@/components/charts/trend-chart';
 import { FeaturedMetric } from '@/components/patterns/featured-metric';
 import { MetricTile } from '@/components/patterns/metric-tile';
 import { AXIS_FORMATTERS, FORMATTERS, formatCompact, formatCost, formatDuration, formatPercent } from '@/lib/format';
@@ -63,7 +63,7 @@ export function RevenueCard({ data, dates, finding }: { data: HomeData; dates: s
         format={formatCost}
         delta={change(r.value, r.previous) ?? undefined}
         intent="up"
-        caption={r.best ? <>About {formatCost(r.average)} a day. The best day was {formatDay(r.best.date)}, with {formatCost(r.best.value)}.</> : undefined}
+        caption={r.best || running ? <>{(r.best ? `About ${formatCost(r.average)} a day. The best day was ${formatDay(r.best.date)}, with ${formatCost(r.best.value)}.` : '') + (running ? ` ${SO_FAR}` : '')}</> : undefined}
         finding={finding ? { text: finding } : undefined}
         pointLabel={(date) => (running && date === running.date ? `${formatDate(date)} · so far` : formatDate(date))}
       >
