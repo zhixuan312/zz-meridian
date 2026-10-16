@@ -212,7 +212,9 @@ export function MembersView({ rows, now, actions, access, roles, workspace }: { 
     {
       key: 'active', header: 'Last active', numeric: true, mobile: 'fact', sortValue: (m) => m.lastActive ?? '',
       cell: (m) => (m.lastActive ? formatRelative(m.lastActive, asOf) : <span className="text-ink-3">Never</span>),
-      mobileCell: (m) => (m.lastActive ? `Active ${formatRelative(m.lastActive, asOf)}` : 'Never active'),
+      // "Seen", not "Active": the status is the fact before this one on the card, so "Active · Active 9 h ago" said
+      // the same word twice in three words. A member who has never signed in says that instead.
+      mobileCell: (m) => (m.lastActive ? `Seen ${formatRelative(m.lastActive, asOf)}` : 'Never signed in'),
     },
     {
       key: 'actions', header: <span className="sr-only">Actions</span>, align: 'right', mobile: 'status',
