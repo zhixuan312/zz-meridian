@@ -83,9 +83,11 @@ Steps in order:
    template's Design Atlas included (its front page and one card page; `node scripts/vitals.ts --atlas` measures every
    entry); INP is the slowest tap on a control that changes the screen, found inside open shadow roots too, and each
    line carries `taps: N`, the controls it tapped (`taps: 0` means the page's INP rests on no tap). A dropped frame is a
-   gap over 50 ms between animation frames while those taps play out, so one page's line is a count as well as a
-   verdict: the floor is met when it reads `0 of N`. It runs alone, after the others, since throttling measures the
-   machine too: on a busy machine, run it again before believing a near miss.
+   gap over 50 ms between animation frames, read in the tap's own window and no other, so one page's line is a count as
+   well as a verdict: the floor is met when it reads `0 of N`. A page that drops one frame is measured a second time
+   before it is failed — one frame in two hundred is inside the noise of a host the four-times throttle is measuring
+   too — and a page that drops one twice is a page that stutters. It runs alone, after the others, since throttling
+   measures the machine too: on a busy machine, run it again before believing a near miss.
 
 The report is in `out/verify.txt`. Fix the cause; never weaken a check to make it pass. pnpm may first print a lockfile
 and supply-chain check before a script runs; that is pnpm, not an install, and not a failure.

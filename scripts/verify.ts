@@ -601,7 +601,7 @@ if (full && browser.ran && baseUrl) {
   current = 'web vitals';
   announce('Web Vitals on a mid-range phone, alone');
   const vitals = await run('scripts/vitals.ts', ['--base', here]);
-  reportSuite('vitals', 'LCP, INP and CLS on a mid-range phone', vitals);
+  reportSuite('vitals', 'LCP, INP, CLS and dropped frames on a mid-range phone', vitals);
   if (suiteOutcome(vitals.status) === 'FAIL') ok = false;
 }
 
