@@ -50,11 +50,15 @@ export function dataHost(value: string): string | null {
   const namesAFile = FILE_SCHEME.test(value);
   try {
     const url = new URL(value);
-    // A host named in the query string decides over the authority, which is how libpq reads it — and `hostaddr` before
-    // `host`, since libpq dials the address `hostaddr` gives and uses `host` only to look the name up. A value that
-    // begins with `/` is a Unix socket, so it names nothing off this machine.
-    const named = url.searchParams.get('hostaddr') ?? url.searchParams.get('host');
-    if (named && !named.startsWith('/')) return named;
+    // A host named in the query string decides over the authority, which is how libpq reads it. Read from libpq's own
+    // parser (`conninfo_uri_parse_params`): it stores each keyword's value over the last, so the *last* one it is given
+    // is the one it dials; it rejects a keyword it does not know outright, so the case of the keyword cannot hide one;
+    // and it dials `hostaddr` when both are named, since that is the address and `host` is only how the name is looked
+    // up. So the last of each keyword decides, `hostaddr` first — and a value beginning with `/` is a Unix socket,
+    // which is dropped, so a value naming both a socket and a host is refused rather than allowed.
+    const of = (key: string) => url.searchParams.getAll(key).filter((v) => v && !v.startsWith('/'));
+    const named = of('hostaddr').at(-1) ?? of('host').at(-1);
+    if (named) return named;
     if (url.hostname) return url.hostname;
     // An empty hostname, then, is one of three things: a scheme that carries an authority and names no host
     // (`postgres:///app`), a file scheme with no host — both this machine — or a value `URL` read as a scheme because

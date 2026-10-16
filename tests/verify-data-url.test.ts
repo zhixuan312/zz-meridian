@@ -91,6 +91,10 @@ describe('where a data URL points', () => {
     expect(unsafeDataUrls({ DATABASE_URL: 'postgres:///app?hostaddr=db.prod.example.com' })).toEqual(['DATABASE_URL → db.prod.example.com']);
     // Both given: libpq dials `hostaddr` and uses `host` to look the name up, so the address decides.
     expect(unsafeDataUrls({ DATABASE_URL: 'postgres:///app?host=localhost&hostaddr=10.20.30.40' })).toEqual(['DATABASE_URL → 10.20.30.40']);
+    // Given twice, libpq keeps the last value (`conninfo_uri_parse_params` stores over the one before), so reading the
+    // first would call this remote `localhost` — and the other way round is this machine, which is what it dials.
+    expect(unsafeDataUrls({ DATABASE_URL: 'postgres:///app?host=localhost&host=db.prod.example.com' })).toEqual(['DATABASE_URL → db.prod.example.com']);
+    expect(unsafeDataUrls({ DATABASE_URL: 'postgres:///app?host=db.prod.example.com&host=localhost' })).toEqual([]);
     // A path is a Unix socket, and a query naming no host at all names this machine.
     for (const value of ['postgres:///app?host=/var/run/postgresql', 'postgres:///app?host=localhost', 'postgres:///app', 'postgres:///app?host=']) {
       expect(unsafeDataUrls({ DATABASE_URL: value }), value).toEqual([]);
