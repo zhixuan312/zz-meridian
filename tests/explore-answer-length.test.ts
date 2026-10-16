@@ -53,7 +53,7 @@ describe("a prepared query's answer", () => {
   it('is held to its own length, and says what it left out', async () => {
     const { answer } = await runExplore(QUERY, { source: 'days', measures: asked, by: 'plan', period: '30d' }, OWNER, io, '/days');
     expect(answer.length).toBeLessThanOrEqual(MAX_ANSWER);
-    expect(answer).toMatch(/more lines? are not shown|more rows? are not shown/);
+    expect(answer).toMatch(/more (?:lines?|rows?) (?:are|is) not shown/);
     // Held by whole lines: nothing is cut mid-sentence, so the last kept line ends as a line.
     expect(answer.endsWith('.')).toBe(true);
   });

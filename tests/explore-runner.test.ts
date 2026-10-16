@@ -199,7 +199,7 @@ describe('an answer', () => {
     // Twenty rows of 400-character notes do not fit: rows are dropped from the end, said in a line of its own, and what
     // the source cannot say, which comes before them, is kept.
     expect(answer).toContain('Who placed an order is not recorded.');
-    const left = /^(\d+) more rows are not shown\.$/m.exec(answer);
+    const left = /^(\d+) more rows? (?:are|is) not shown\.$/m.exec(answer);
     expect(left, 'the line saying how many rows were left out').not.toBeNull();
     expect(drilled.length + Number(left![1])).toBe(20);
   });
