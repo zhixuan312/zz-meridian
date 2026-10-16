@@ -21,6 +21,7 @@ import { IncidentCard } from '@/components/patterns/incident-card';
 import { MetricTile } from '@/components/patterns/metric-tile';
 import { StatusList } from '@/components/patterns/status-list';
 import { AskAbout } from '@/components/patterns/ask-about';
+import { facts as rules } from '@/app.config';
 import type { Endpoint } from '@/data/sample';
 import { formatCompact, formatDuration, formatPercent, plural } from '@/lib/format';
 import { formatDate, formatShortDate } from '@/lib/format-date';
@@ -46,11 +47,17 @@ const DAY = 86_400_000;
  * The page's protagonist, its one Featured metric: the days inside the band over every complete day kept, the steady
  * fact as its finding (the line the context carries), and each of the strip's days' p95 a day. Its mark is a wrapper
  * whose display is `contents`, so the stack's layout is unchanged.
+ *
+ * The card is named for the band, so the chart draws it: the region under the ceiling, and a dot on each day the band
+ * left out. The dots come from the strip's own states, which are the same membership the figure above counts — the day
+ * that left the band on its error rate rather than its p95 is marked too, and the chart never says three days are
+ * outside while showing two.
  */
 function DaysInside({ band, steady }: { band: NonNullable<NowData['band']>; steady: string | null }) {
   const n = band.p95.length;
   // The strip ends on the latest complete day: the dates count back from it.
   const dates = band.p95.map((_, i) => new Date(Date.parse(`${band.end}T00:00:00Z`) - (n - 1 - i) * DAY).toISOString().slice(0, 10));
+  const outside = band.days.flatMap((d, i) => (d === 'operational' ? [] : [dates[i]]));
   return (
     <div data-protagonist="Days inside the band" className="contents">
       <FeaturedMetric
@@ -62,7 +69,15 @@ function DaysInside({ band, steady }: { band: NonNullable<NowData['band']>; stea
         caption={`Every complete day kept, to ${formatDate(band.end)}. The chart draws each day's p95 over the last ${n}.`}
         finding={steady ? { text: steady } : undefined}
       >
-        <TrendChart height="fill" label={`p95 a day, the last ${n} complete days`} format="duration" dates={dates} series={[{ key: 'p95', label: 'p95', values: band.p95, kind: 'line' }]} />
+        <TrendChart
+          height="fill"
+          label={`p95 a day, the last ${n} complete days`}
+          format="duration"
+          dates={dates}
+          series={[{ key: 'p95', label: 'p95', values: band.p95, kind: 'line' }]}
+          band={{ value: rules.band.p95Under, label: `Band: p95 under ${rules.band.p95Under} ms` }}
+          marks={{ dates: outside, tone: 'warning', label: `${outside.length} ${outside.length === 1 ? 'day' : 'days'} outside the band` }}
+        />
       </FeaturedMetric>
     </div>
   );

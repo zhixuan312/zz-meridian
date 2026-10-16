@@ -90,6 +90,8 @@ export function TrendChart({
   tick,
   stacked = false,
   baseline,
+  band,
+  marks,
   running = false,
   'data-preview-index': previewIndex,
   className,
@@ -109,6 +111,17 @@ export function TrendChart({
   stacked?: boolean;
   /** What is usual, drawn as a quiet dashed line across the plot with its label at the end: `{ value: 296, label: 'Median 296ms' }`. */
   baseline?: { value: number; label: string };
+  /**
+   * The band the page is judged against: the region from the floor up to `value`, filled with the track's own wash and
+   * labelled at its top edge, so the line is seen leaving it. `{ value: 350, label: 'p95 under 350 ms' }`. Distinct from
+   * `baseline`, which is a line: a median is a level, a band is everything under one.
+   */
+  band?: { value: number; label: string };
+  /**
+   * Days the page names, marked on the first series with a dot, so a reader finds them rather than hunting for them
+   * among 360 points: the days a band's membership left out. Dates it does not draw are skipped.
+   */
+  marks?: { dates: readonly string[]; tone: 'warning' | 'neutral'; label: string };
   /** The last point is a period still in progress: the line into it is dashed and its readout says "so far". */
   running?: boolean;
   /** A static readout in the Atlas; real charts take their day from the Meridian. */
@@ -140,7 +153,7 @@ export function TrendChart({
   const totals = bases ? bases[bases.length - 1]?.upper ?? [] : null;
   // Stacked parts are one whole, so they share one hue, each by its place in the stack. A series given its own colour keeps it.
   const colorOf = (s: TrendSeries, k: number) => (stacked && !s.color ? stackPart(k, series.length) : SERIES_VAR(s.color ?? (s.kind === 'dashed' ? 'neutral' : 'accent')));
-  const max = Math.max(1, baseline?.value ?? 0, ...(totals ?? series.flatMap((s) => s.values.filter((v): v is number => v !== null))));
+  const max = Math.max(1, baseline?.value ?? 0, band?.value ?? 0, ...(totals ?? series.flatMap((s) => s.values.filter((v): v is number => v !== null))));
   const ticks = niceTicks(max, h < 200 ? 3 : 4);
   const top = ticks[ticks.length - 1];
   const left = Math.max(...ticks.map((t) => axis(t).length)) * 6.4 + 12;
@@ -188,17 +201,15 @@ export function TrendChart({
     [series, width, h, top, running],
   );
 
-  // The baseline's label is placed against everything the plot draws: every line, and the top of every band of a stack.
-  // It may stand in the 14px the chart keeps clear over its top gridline, and never under the axis.
-  const usual = baseline
-    ? placeLabel(
-        baseline.label,
-        y(baseline.value),
-        { left: pad.l, right: pad.l + W, top: pad.t - 14, bottom: pad.t + H },
-        dates.map((_, i) => x(i)),
-        bases ? bases.map(({ upper }) => ({ ys: upper.map(y), filled: true })) : series.map((s) => ({ ys: s.values.map((v) => (v === null ? null : y(v))), filled: s.kind === 'area' })),
-      )
-    : null;
+  // What the plot draws, as the label placer needs it: every line, and the top of every band of a stack.
+  const drawn = bases ? bases.map(({ upper }) => ({ ys: upper.map(y), filled: true })) : series.map((s) => ({ ys: s.values.map((v) => (v === null ? null : y(v))), filled: s.kind === 'area' }));
+  // The reference levels, in the order their labels are placed: the band's top edge first, then what is usual. Both are
+  // placed against everything the plot draws. They may stand in the 14px the chart keeps clear over its top gridline,
+  // and never under the axis.
+  const refs = [
+    ...(band ? [{ value: band.value, label: band.label, edge: true }] : []),
+    ...(baseline ? [{ value: baseline.value, label: baseline.label, edge: false }] : []),
+  ].map((r) => ({ ...r, at: placeLabel(r.label, y(r.value), { left: pad.l, right: pad.l + W, top: pad.t - 14, bottom: pad.t + H }, dates.map((_, i) => x(i)), drawn) }));
 
   const labelEvery = Math.max(1, Math.ceil(n / Math.max(2, Math.floor(W / 92))));
   const xLabels = dates.map((d, i) => ({ d, i })).filter(({ i }) => (n - 1 - i) % labelEvery === 0);
@@ -260,20 +271,42 @@ export function TrendChart({
               </linearGradient>
             ))}
           </defs>
+          {band ? (
+            // The band: a wash of the track's own colour up to its ceiling, under the gridlines, so what the page is
+            // judged against is the ground the line stands on rather than a line the reader has to be told about.
+            <rect
+              data-band
+              x={pad.l}
+              y={y(band.value)}
+              width={W}
+              height={pad.t + H - y(band.value)}
+              fill="var(--fill-track)"
+              className="reveal-x"
+            />
+          ) : null}
           {ticks.map((t) => (
             <g key={t}>
               <line x1={pad.l} x2={pad.l + W} y1={y(t)} y2={y(t)} stroke={t === 0 ? 'var(--chart-axis)' : 'var(--chart-grid)'} shapeRendering="crispEdges" />
               <text x={pad.l - 10} y={y(t)} dy="0.32em" textAnchor="end" className="fill-ink-3 text-2xs tabular-nums">{axis(t)}</text>
             </g>
           ))}
-          {baseline ? (
-            // What is usual: a dashed hairline under the data. Its label stands where no series is drawn; the halo of the
-            // card lifts it off a gridline that passes behind it.
-            <g className="fade-in" pointerEvents="none">
-              <line x1={pad.l} x2={pad.l + W} y1={y(baseline.value)} y2={y(baseline.value)} stroke="var(--ink-3)" strokeOpacity={0.6} strokeDasharray="3 4" shapeRendering="crispEdges" />
-              {usual ? <text x={usual.x} y={usual.y} textAnchor={usual.anchor} stroke="var(--surface)" strokeWidth={4} strokeLinejoin="round" paintOrder="stroke" className="fill-ink-3 text-2xs tabular-nums">{baseline.label}</text> : null}
+          {refs.map((r) => (
+            // A reference level: the band's top edge as the axis is drawn, what is usual as a dashed hairline under the
+            // data. The label stands where no series is drawn; the halo of the card lifts it off a gridline behind it.
+            <g key={r.label} className="fade-in" pointerEvents="none">
+              <line
+                x1={pad.l}
+                x2={pad.l + W}
+                y1={y(r.value)}
+                y2={y(r.value)}
+                stroke={r.edge ? 'var(--chart-axis)' : 'var(--ink-3)'}
+                strokeOpacity={r.edge ? 1 : 0.6}
+                strokeDasharray={r.edge ? undefined : '3 4'}
+                shapeRendering="crispEdges"
+              />
+              {r.at ? <text x={r.at.x} y={r.at.y} textAnchor={r.at.anchor} stroke="var(--surface)" strokeWidth={4} strokeLinejoin="round" paintOrder="stroke" className="fill-ink-3 text-2xs tabular-nums">{r.label}</text> : null}
             </g>
-          ) : null}
+          ))}
           {xLabels.map(({ d, i }) => (
             <text key={d} x={x(i)} y={h - 6} textAnchor={i === 0 ? 'start' : i === n - 1 ? 'end' : 'middle'} className="fill-ink-3 text-2xs">
               {tick ? tick(d) : formatDate(d).replace(/,? \d{4}$/, '')}
@@ -315,6 +348,25 @@ export function TrendChart({
               {tail ? <Running d={tail} stroke={SERIES_VAR(s.color ?? 'accent')} /> : null}
             </g>
           ))}
+          {marks && series[0] ? (
+            // The days the page names: found rather than hunted for. A day's point may stand inside a band's region — a
+            // day that left the band on something this chart does not draw — so each mark is a stem down to the axis as
+            // well as a dot on the point, and the dot is ringed in the card's colour as the cursor's dots are.
+            <g className="fade-in" pointerEvents="none">
+              {marks.dates.map((d) => {
+                const i = dates.indexOf(d);
+                const v = i < 0 ? null : series[0].values[i];
+                if (v === null) return null;
+                const tone = marks.tone === 'warning' ? 'var(--warning)' : 'var(--ink-2)';
+                return (
+                  <g key={d} data-mark>
+                    <line x1={x(i)} x2={x(i)} y1={y(v)} y2={pad.t + H} stroke={tone} strokeOpacity={0.45} />
+                    <circle cx={x(i)} cy={y(v)} r={3} fill={tone} stroke="var(--surface)" strokeWidth={2} />
+                  </g>
+                );
+              })}
+            </g>
+          ) : null}
           {active !== null ? (
             // The cursor glides from day to day (transform, so it eases) rather than jumping.
             <g pointerEvents="none" className="transition-transform duration-(--dur-hover) ease-out" style={{ transform: `translateX(${cx}px)` }}>
@@ -368,7 +420,7 @@ export function TrendChart({
         </Readout>
       ) : null}
       <table className="sr-only">
-        <caption>{label}{baseline ? `. ${baseline.label}` : ''}</caption>
+        <caption>{label}{band ? `. ${band.label}` : ''}{marks ? `. Marked: ${marks.label}` : ''}{baseline ? `. ${baseline.label}` : ''}</caption>
         <thead><tr><th>Date</th>{series.map((s) => <th key={s.key}>{s.label}</th>)}{totals ? <th>Total</th> : null}</tr></thead>
         <tbody>{dates.map((d, i) => <tr key={d}><td>{d}{i === soFar ? ', so far' : null}</td>{series.map((s) => <td key={s.key}>{fmt(s.values[i])}</td>)}{totals ? <td>{fmt(totals[i])}</td> : null}</tr>)}</tbody>
       </table>

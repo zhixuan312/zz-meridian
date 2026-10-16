@@ -11,6 +11,9 @@ const REGION_TOTAL = REGIONS.reduce((a, r) => a + r.value, 0);
 // The sample's clock stands at 09:00 UTC on its last day, so that day has run nine hours of its twenty-four.
 const recent = current.slice(-14);
 const soFar = recent.map((d, i) => (i === recent.length - 1 ? Math.round((d.requests * DEMO_NOW.getUTCHours()) / 24) : d.requests));
+/** The sample's p95, with three days put over the band and one left low, as a day that left the band on its error rate would be. */
+const SPIKED = new Set([4, 17, 26]);
+const banded = current.map((d, i) => (i === 26 ? Math.round(d.p95 * 0.7) : SPIKED.has(i) ? Math.round(d.p95 * 1.9) : d.p95));
 
 export default function TrendChartPreview() {
   return (
@@ -41,6 +44,19 @@ export default function TrendChartPreview() {
             dates={dates}
             series={[{ key: 'p95', label: 'Latency p95', values: current.map((d) => d.p95), kind: 'line', color: 'neutral' }]}
             baseline={{ value: 296, label: 'Median 296ms' }}
+          />
+        </Plane>
+      </Specimen>
+      <Specimen label="Inside a band" note="band: the region the page is judged against, from the floor up to its ceiling, in the track's own wash, its top edge drawn as the axis is and named at an end of it. marks: the days the page names, a dot on the day's own point and a stem to the axis. The third day here left the band on something this chart does not draw, so its point stands inside the region — which is why a mark is a stem and not only a dot.">
+        <Plane on="surface">
+          <TrendChart
+            label="Latency p95 per day"
+            height={168}
+            format="duration"
+            dates={dates}
+            series={[{ key: 'p95', label: 'Latency p95', values: banded, kind: 'line' }]}
+            band={{ value: 350, label: 'Band: p95 under 350 ms' }}
+            marks={{ dates: [dates[4], dates[17], dates[26]], tone: 'warning', label: '3 days outside the band' }}
           />
         </Plane>
       </Specimen>
