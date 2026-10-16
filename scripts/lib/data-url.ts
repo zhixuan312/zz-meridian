@@ -14,28 +14,43 @@ export function isLocalHost(host: string): boolean {
 }
 
 /**
+ * A scheme whose value is this machine's own: it names a file, never another machine. `file:./dev.db` is Prisma's
+ * SQLite default, and it is what an adopter's `DATABASE_URL` says while they develop.
+ */
+const FILE_SCHEME = /^(?:file|sqlite|sqlite3|duckdb|libsql):/i;
+
+/**
  * The host a data URL names, or null when the value is not something this can judge (the app fails on it long before a
  * press lands).
  *
- * Most values are read by `URL`. Two shapes are not, and both matter here because getting them wrong is the difference
+ * Most values are read by `URL`. Three shapes are not, and each matters here because getting it wrong is the difference
  * between refusing a backend and writing to it:
  *
  * - A value written without a scheme parses with its first segment as the *protocol* and no host at all —
  *   `db.prod.example.com:5432/app`. An empty host is a name with no dot, which `isLocalHost` would call local.
  * - A value whose first segment is not a valid protocol at all throws — `10.20.30.40:5432/app`, any bare IP.
+ * - A value whose scheme carries a host is read by `URL`; one that carries no authority names no host at all
+ *   (`file:./dev.db`, `postgres:///app`), and a value that names no host is on this machine.
  *
- * Both fall back to reading the authority by hand. A value that is not host-shaped (it has a space, say) is null.
+ * The first two are read by hand. A value that is not host-shaped (it has a space, say) is null.
  */
 export function dataHost(value: string): string | null {
   const byHand = (): string | null => {
-    // The authority, with anything before its last `@` dropped: a DSN written without a scheme keeps its credentials
-    // (`user:pass@db.prod.example.com:5432/app`), and reading the whole authority as the host rejects it on the `@` —
-    // which used to come back null, and a null is a value the caller cannot judge.
-    const authority = value.split(/[/?#]/)[0].replace(/:\d+$/, '').replace(/.*@/, '');
+    // The authority: everything before its last `@` dropped first — a DSN written without a scheme keeps its
+    // credentials (`user:pass@db.prod.example.com:5432/app`), and a password may hold a `/` or a `#`, so cutting at one
+    // of those *before* the credentials go reads the password's first word as the host (`user:pa`, a name with no dot,
+    // which `isLocalHost` calls local) — then cut at the path, then drop the port.
+    const authority = value.replace(/.*@/, '').split(/[/?#]/)[0].replace(/:\d+$/, '');
     return /^[A-Za-z0-9._:[\]-]+$/.test(authority) ? authority : null;
   };
+  if (FILE_SCHEME.test(value)) return ''; // a file of this machine's
   try {
-    return new URL(value).hostname || byHand();
+    const url = new URL(value);
+    if (url.hostname) return url.hostname;
+    // An empty hostname is two different things. A scheme that carries an authority and names no host (`postgres:///app`)
+    // is this machine. A value `URL` read as a scheme because it has none is a schemeless DSN, and its own authority is
+    // the host: `db.prod.example.com:5432/app`, `user:pass@db.prod.example.com:5432/app`.
+    return /^[A-Za-z][A-Za-z0-9+.-]*:\/\//.test(value) ? '' : byHand();
   } catch {
     return byHand();
   }

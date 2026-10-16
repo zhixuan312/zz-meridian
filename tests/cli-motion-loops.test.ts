@@ -1,4 +1,7 @@
 // @vitest-environment node
+// Named cli-* so the payload leaves it out: it reads the standard and the decision records, which a product does not
+// have (`brand --product` removes `skills/`, `docs/` and `decisions/`, and `tests/cli-product-prune.test.ts` holds every
+// shipped test to not reading one).
 /**
  * The system allows three loops, and the token layer is what says so: `--dur-loop-spin`, `--dur-loop-shimmer` and
  * `--dur-loop-pulse`, one animation drawn per token in `src/styles/motion.css`. The prose that names them has disagreed

@@ -59,4 +59,32 @@ describe('where a data URL points', () => {
     // And a run that knows what its presses reach says so in the config, never here.
     expect(unsafeDataUrls({ DATABASE_URL: 'db.prod.example.com/app' })).toEqual(['DATABASE_URL → db.prod.example.com']);
   });
+
+  it('reads the host of a schemeless value whose password holds a / or a #', () => {
+    // Cutting at the path before the credentials go cuts inside the password: the host read as `user:pa`, a name with no
+    // dot, which `isLocalHost` calls local — a remote backend the gate let through.
+    expect(dataHost('user:pa/ss@db.prod.example.com:5432/app')).toBe('db.prod.example.com');
+    expect(dataHost('user:pa#ss@db.prod.example.com:5432/app')).toBe('db.prod.example.com');
+    expect(dataHost('user:p@ss@db.prod.example.com:5432/app')).toBe('db.prod.example.com');
+    for (const value of ['user:pa/ss@db.prod.example.com:5432/app', 'user:pa#ss@db.prod.example.com:5432/app']) {
+      expect(unsafeDataUrls({ DATABASE_URL: value }), value).toEqual(['DATABASE_URL → db.prod.example.com']);
+    }
+  });
+
+  it('calls a value that names a file of this machine local, however its scheme is written', () => {
+    // `file:./dev.db` is Prisma's SQLite default. Reading it by hand gave `file:.` — a name with a dot, so remote — and
+    // an adopter's `verify --full` was refused with a reason that says nothing about their machine.
+    for (const value of ['file:./dev.db', 'file:/var/data/app.db', 'sqlite:///tmp/app.db', 'sqlite:./x', 'postgres:///app']) {
+      expect(dataHost(value), value).not.toBeNull();
+      expect(isLocalHost(dataHost(value)!), value).toBe(true);
+      expect(unsafeDataUrls({ DATABASE_URL: value }), value).toEqual([]);
+    }
+  });
+
+  it('still calls a container name local and a public name remote', () => {
+    // The rule the two above lean on: a name with no dot cannot resolve outside this machine's own network.
+    expect(isLocalHost(dataHost('postgres://postgres@db:5432/app')!)).toBe(true);
+    expect(isLocalHost(dataHost('user:pa#ss@prod-db:5432/app')!)).toBe(true);
+    expect(isLocalHost(dataHost('postgres://u:p@db.prod.example.com/app')!)).toBe(false);
+  });
 });
