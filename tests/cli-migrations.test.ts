@@ -254,6 +254,25 @@ describe('the 0.16.0 migrations', () => {
   });
 });
 
+describe('the 0.16.2 migration', () => {
+  // The template's test of the rail as the releases before 0.16.2 wrote it: a fake observer pushing its callback and
+  // answering `observe` with nothing, which held while the rail also read its own offsets.
+  const railTest = (observe: string) => project({
+    'tests/rail-marker.test.tsx': `import { Rail } from '@/components/patterns/rail';\nglobalThis.ResizeObserver = class { constructor(cb) { observers.push(cb); } ${observe} unobserve() {} disconnect() {} };\n`,
+  });
+
+  it('finds a test of the rail whose fake observer answers `observe` with nothing, and leaves one that answers it', () => {
+    expect(byId('marker-measured-on-observe').since).toBe('0.16.2');
+    expect(byId('marker-measured-on-observe').applies(railTest('observe() {}'))).toEqual(['tests/rail-marker.test.tsx']);
+    // The release's own copy, and a `observe` that answers over more than one line, are what the migration leaves alone.
+    expect(byId('marker-measured-on-observe').applies(railTest('observe() { for (const cb of observers) queueMicrotask(cb); }'))).toBeNull();
+    expect(byId('marker-measured-on-observe').applies(railTest('observe() {\n      for (const cb of observers) queueMicrotask(cb);\n    }'))).toBeNull();
+    // A test that mounts something else, and a project with no test of the rail, have nothing to bring over.
+    expect(byId('marker-measured-on-observe').applies(project({ 'tests/shell.test.tsx': "import { Shell } from '@/components/base/shell';\nobserve() {}\n" }))).toBeNull();
+    expect(byId('marker-measured-on-observe').applies(project({ 'package.json': '{}' }))).toBeNull();
+  });
+});
+
 describe("the consumer smoke's record of the release migrations", () => {
   // `resolveAll` resolves only the ids `RELEASE_IDS` lists, with the edit `bringReleaseOver` makes for each: a release
   // migration missing from it is resolved as not applicable, and the origin it applies to fails at finalize.

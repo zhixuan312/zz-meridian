@@ -403,7 +403,24 @@ export const RELEASE_MIGRATIONS: ReleaseMigration[] = [
     instructions: 'The release renamed them with no redirect, and an update writes none of the team\'s pages, views or tests. Each file listed is one of them or names one: a page or a view, the view tools, `src/app.config.ts`\'s nav and the feature ids it names, the routes of `scripts/verify.config.ts`, or a shipped test that expects them. A project that kept the sample\'s pages as they were brings the release\'s over: `app/(dashboard)/` and `app/embed/`, `src/views/`, `src/data/`, `src/lib/assistant/` beside `prompt.ts`, `src/app.config.ts` with its own `app` kept, and each shipped test as the release has it; a file listed here that the release no longer has is deleted. A project that made the pages its own keeps its own names, makes the changes this release\'s other migrations list in them, and reads "not applicable" for the assistant walk-through\'s steps on Home and Now (`scripts/lib/sample.ts`).',
     checks: GATE_AND_BUILD,
   },
+  {
+    id: 'marker-measured-on-observe',
+    since: '0.16.2',
+    applies: railObserverNeverAnswers,
+    summary: 'A test mounts the rail over a `ResizeObserver` whose `observe` answers nothing: the rail takes its first measurement from the observer now, where it took one by hand.',
+    instructions: 'Bring `tests/rail-marker.test.tsx` over from the release as it has it. Since 0.16.2 `src/components/patterns/rail/index.tsx` reads no offset of its own — a rail mounts inside the tap that opens the phone drawer, and a read there lays the page out inside that tap — so the marker\'s first position is the one `observe` delivers, after the effect that called it. A test whose fake answers `observe` with an empty body expects the marker before any delivery and fails; the release\'s fake answers it with the callback, `observe() { for (const cb of observers) queueMicrotask(cb); }`, and reads the marker after that delivery. A test of your own that mounts the rail changes the same way.',
+    checks: ['gate'],
+  },
 ];
+
+/**
+ * A test of the rail that stands over a fake `ResizeObserver` answering `observe` with nothing (0.16.2). The lookbehind
+ * keeps `unobserve() {}` out of it: a fake that answers the callback and also stubs `unobserve` is the release's own
+ * shape, and the one thing to bring over.
+ */
+function railObserverNeverAnswers(root: string): string[] | null {
+  return matching(root, (rel, src) => /\.(?:test|spec)\.tsx?$/.test(rel) && /\bRail\b/.test(src) && /\bResizeObserver\b/.test(src) && /(?<![\w$.])observe\s*\(\s*\)\s*\{\s*\}/.test(src));
+}
 
 /** The team's files that import an export 0.16.0 removed from a managed module, by name or through a namespace. */
 function removedExportReaders(root: string): string[] | null {
