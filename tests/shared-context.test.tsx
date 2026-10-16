@@ -480,7 +480,7 @@ describe('what a context states beside its title', () => {
     const { usageHead } = await import('@/views/usage-parts');
     const { revenueHead } = await import('@/views/revenue-context');
     const { CUSTOMERS } = await import('@/system/fixtures/company');
-    const { record: _, ...unread } = homeHead({ period: '30d', totals: demoTotals('30d'), history: null, services: SERVICES });
+    const unread = homeHead({ period: '30d', totals: demoTotals('30d'), history: null, services: SERVICES });
     expect(unread).toEqual({ title: null, facts: [], unknown: expect.stringMatching(/^The history could not be read/) });
     expect(usageHead({ period: '30d', totals: demoTotals('30d'), history: null })).toEqual(unread);
     expect(revenueHead({ period: '30d', rows: CUSTOMERS, history: null })).toEqual({ ...unread, record: null });

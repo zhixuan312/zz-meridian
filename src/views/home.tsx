@@ -38,10 +38,13 @@ const costCompact = FORMATTERS['cost-compact'];
 
 /**
  * The revenue card, the page's one Featured metric: the period's revenue, its change, a day's average and the best day,
- * the record as its finding, and revenue a day with the day in progress drawn running. The day in progress is the
+ * and revenue a day with the day in progress drawn running. The day in progress is the
  * Meridian's last date, so pointing at it reads it, and its pill says "so far". It is the page's protagonist, marked on
  * a wrapper that is itself the row's first grid item, its card stretched to fill it: a wrapper whose display is
  * `contents` draws no box, so the row's two columns would land on nothing.
+ *
+ * It carries no finding. The period's record is the page's title, figure and run together, and the card would state it
+ * a second time one screen below; the caption's average and best day are what this card alone can say.
  */
 export function RevenueCard({ data, dates }: { data: HomeData; dates: string[] }) {
   const r = data.revenue;
@@ -60,7 +63,6 @@ export function RevenueCard({ data, dates }: { data: HomeData; dates: string[] }
         delta={change(r.value, r.previous) ?? undefined}
         intent="up"
         caption={r.best ? <>About {formatCost(r.average)} a day. The best day was {formatDay(r.best.date)}, with {formatCost(r.best.value)}.</> : undefined}
-        finding={r.finding ? { text: r.finding } : undefined}
         pointLabel={(date) => (running && date === running.date ? `${formatDate(date)} · so far` : formatDate(date))}
       >
         <TrendChart

@@ -126,21 +126,24 @@ export function yearFacts(history: readonly DailyPoint[]): Fact[] {
 }
 
 /**
- * What Home states at its head, worked out on the server: its title for the period, the facts of a year, and the
- * revenue's record line the revenue card states as its finding. `history` is every complete day kept, oldest first
- * and ending yesterday, or null when it could not be read. A record compares the period with each earlier whole window
- * of its length, so 90 days and All, which have fewer windows than a record needs, state the change or the figure alone.
+ * What Home states at its head, worked out on the server: its title for the period, and the facts of a year.
+ * `history` is every complete day kept, oldest first and ending yesterday, or null when it could not be read. A record
+ * compares the period with each earlier whole window of its length, so 90 days and All, which have fewer windows than
+ * a record needs, state the change or the figure alone.
+ *
+ * The title states a record itself, figure and run together, which is the news the page opens on. The revenue card
+ * takes no finding from it: a second sentence with the same figure and the same ordinal, one screen below the first,
+ * is one fact said twice. Revenue states its record on the card instead, because its title only alludes to it.
  */
-export function homeHead({ period, totals, history, services }: { period: Period; totals: HomeData['totals']; history: readonly DailyPoint[] | null; services: readonly ServiceNow[] | null }): PageHead & { record: string | null } {
-  if (!history) return { title: null, facts: [], unknown: HISTORY_UNREAD, record: null };
-  if (!history.length) return { title: null, facts: [], record: null };
+export function homeHead({ period, totals, history, services }: { period: Period; totals: HomeData['totals']; history: readonly DailyPoint[] | null; services: readonly ServiceNow[] | null }): PageHead {
+  if (!history) return { title: null, facts: [], unknown: HISTORY_UNREAD };
+  if (!history.length) return { title: null, facts: [] };
   // The days the period covers: its length, or every day kept where fewer are, as with All.
   const days = Math.min(PERIOD_DAYS[period] ?? history.length, history.length);
   const latest = record(periods(history.map((d) => d.revenue), days), { needs: rules.recordNeedsPeriods, what: `${inDays(days)} of revenue`, format: formatCost });
   return {
     title: homeTitle({ days, revenue: totals.current.revenue, previous: totals.previous?.revenue ?? null, record: latest, services }),
     facts: yearFacts(history),
-    record: latest?.text ?? null,
   };
 }
 
@@ -297,7 +300,7 @@ export function homeData(r: HomeReads): HomeData {
     running: r.days?.running ?? null,
     head: { title: head.title, facts: head.facts, ...(head.unknown ? { unknown: head.unknown } : {}) },
     line: homeLine({ days: series.length, customers: customers?.count ?? null, requests: days ? c.requests : null, previous: p?.requests ?? null, ...(r.costs !== undefined ? { margin: money.grossMargin?.value ?? null } : {}), services: r.services }),
-    revenue: days ? { value: c.revenue, previous: p?.revenue ?? null, points: series.map((d) => d.revenue), average: series.length ? cents(c.revenue / series.length) : 0, best: best && { date: best.date, value: best.revenue }, finding: head.record, running: r.days?.running?.revenue ?? null } : null,
+    revenue: days ? { value: c.revenue, previous: p?.revenue ?? null, points: series.map((d) => d.revenue), average: series.length ? cents(c.revenue / series.length) : 0, best: best && { date: best.date, value: best.revenue }, running: r.days?.running?.revenue ?? null } : null,
     customers,
     tokens: days ? { value: sum(series.map((d) => d.tokens)), requests: c.requests } : null,
     requests: days ? { value: c.requests, previous: p?.requests ?? null, points: series.map((d) => d.requests) } : null,

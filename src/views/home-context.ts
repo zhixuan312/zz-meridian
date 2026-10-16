@@ -64,8 +64,8 @@ export type HomeData = {
   head: PageHead;
   /** The line under the title: customers, requests and their change, gross margin for a person who may read it, and the services (`homeLine`). */
   line: string | null;
-  /** The revenue card: the period's revenue, a day's average, the best day, the record as its finding, and revenue a day with the day in progress apart. */
-  revenue: (HomeFigure & { average: number; best: { date: string; value: number } | null; finding: string | null; running: number | null }) | null;
+  /** The revenue card: the period's revenue, a day's average, the best day, and revenue a day with the day in progress apart. */
+  revenue: (HomeFigure & { average: number; best: { date: string; value: number } | null; running: number | null }) | null;
   /** The customers that have not left, by status, and the `all` fact as the tile's finding when one holds. */
   customers: { count: number; active: number; trial: number; pastDue: number; finding: string | null } | null;
   tokens: { value: number; requests: number } | null;
