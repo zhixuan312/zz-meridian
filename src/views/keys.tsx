@@ -96,8 +96,9 @@ export function KeysView({ rows, now, createKey, revokeKey, may = { create: true
         </span>
       ),
     },
-    // The full key is shown once, when it is created; a listed key is known by its hint, which is not a secret.
-    { key: 'hint', header: 'Key', hideBelow: 'md', cell: (k) => <code className="font-mono text-xs text-ink-2">{k.hint}</code> },
+    // The full key is shown once, when it is created; a listed key is known by its hint, which is not a secret. Held on
+    // one line: a hint is one token, and a column squeezed by the name beside it broke it into "zzm_live_…" and "f601".
+    { key: 'hint', header: 'Key', hideBelow: 'md', cell: (k) => <code className="font-mono text-xs whitespace-nowrap text-ink-2">{k.hint}</code> },
     {
       key: 'scopes', header: 'Scopes', hideBelow: 'xl',
       cell: (k) => (

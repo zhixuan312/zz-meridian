@@ -288,7 +288,7 @@ export function DataTable<R>({
               </TableHeader>
             ) : null}
             {columns.map((c) => (
-              <TableHeader key={c.key} align={c.align ?? (c.numeric ? 'right' : 'left')} hideBelow={c.hideBelow} grow={c.grow} className={c.width} sort={c.sortValue ? dirOf(c) : undefined} onSort={c.sortValue ? () => toggleSort(c) : undefined}>
+              <TableHeader key={c.key} align={c.align ?? (c.numeric ? 'right' : 'left')} hideBelow={c.hideBelow} grow={c.grow} flexible={c.truncate} className={c.width} sort={c.sortValue ? dirOf(c) : undefined} onSort={c.sortValue ? () => toggleSort(c) : undefined}>
                 {c.header}
               </TableHeader>
             ))}
@@ -327,6 +327,13 @@ export function DataTable<R>({
                       const content = c === titleColumn && href ? <Link href={href}>{value}</Link> : value;
                       return (
                         <td key={c.key} data-mobile={role} data-num={c.numeric ? 'num' : c.align === 'right' ? 'true' : undefined} title={c.title ? c.title(r) : c.truncate && (typeof value === 'string' || typeof value === 'number') ? String(value) : undefined} className={cellClass(c) || undefined}>
+                          {/* The dot that separates two facts, on a phone only — the table has a column for each of
+                              them, where a dot would be noise. It leads the fact it separates, in that fact's own
+                              cell: each fact is a flex item, so a line that runs out of room wraps whole ones and a
+                              trailing dot was left at the end of a line separating nothing ("… Jonas Weber ·" and
+                              then a new line). A leading dot travels with its fact and the line reads
+                              "391ms · Example Co · 6 min ago" either way. */}
+                          {role === 'fact' && facts.indexOf(c) > 0 ? <span aria-hidden data-sep>·</span> : null}
                           {/* A phone may want other words for the same cell — "Used 1 min ago", not "1 min ago" — so
                               both are rendered and one is hidden: a few words each, never a second copy of the row. */}
                           {c.mobileCell ? (
@@ -335,10 +342,6 @@ export function DataTable<R>({
                               <span className="hidden @max-[640px]:contents">{c.mobileCell(r)}</span>
                             </>
                           ) : content}
-                          {/* The dot that separates two facts, on a phone only — the table has a column for each of
-                              them, where a dot would be noise. It trails the fact it follows, so the line reads
-                              "391ms · Example Co · 6 min ago" rather than starting every fact with a bullet. */}
-                          {role === 'fact' && facts.indexOf(c) < facts.length - 1 ? <span aria-hidden data-sep>·</span> : null}
                         </td>
                       );
                     })}

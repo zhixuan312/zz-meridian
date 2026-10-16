@@ -27,7 +27,7 @@ Status: beta
 
 ## Sizes
 
-Row height and card padding come from the density: comfortable 52px and 24px, compact 38px and 16px. The table never sets its own width; the grow column (`grow`) takes what remains and its cells truncate with a `title`, every other column keeps its content width. A column whose content is short and fixed (an ID, a key, a date) can take `width` (`w-28`), so a two-column table does not hand the short column most of the row.
+Row height and card padding come from the density: comfortable 52px and 24px, compact 38px and 16px. The table never sets its own width; the columns whose cells can be cut take what remains — `grow` for the record's name, and every column whose cells `truncate` — sharing it where there is more than one, and every column that must show its whole value keeps its content width. A column whose content is short and fixed (an ID, a key, a date) can take `width` (`w-28`), so a two-column table does not hand the short column most of the row.
 
 ## States
 
@@ -84,7 +84,7 @@ Rows arrive whole for client-side sorting and paging (a few hundred at most), or
 
 ## Do and do not
 
-- Do give exactly one column `grow`: the record's name.
+- Do give the record's name `grow`. A second column may be cut only if it must be, since two of them then share what the table has left.
 - Do drop columns with `hideBelow` rather than letting the table scroll sideways.
 - Do not put more than one action per row; a row with several actions opens a record that has them.
 - Do not show pagination for a list that fits on one page.

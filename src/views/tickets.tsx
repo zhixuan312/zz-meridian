@@ -137,7 +137,19 @@ export function TicketsView({ rows, now, may = { create: true, update: true }, s
         </span>
       ),
     },
-    { key: 'priority', header: 'Priority', mobile: 'fact', sortValue: (t) => PRIORITY_RANK[t.priority], cell: (t) => <Badge tone={PRIORITY_TONE[t.priority]}>{LABEL(t.priority)}</Badge>, mobileCell: (t) => `${LABEL(t.priority)} priority${may.update ? ` · ${LABEL(t.state)}` : ''}` },
+    {
+      key: 'priority', header: 'Priority', mobile: 'fact', sortValue: (t) => PRIORITY_RANK[t.priority], cell: (t) => <Badge tone={PRIORITY_TONE[t.priority]}>{LABEL(t.priority)}</Badge>,
+      // One fact, not three: the state is told with the priority, so a row's line is not a list of words. The two
+      // words the tone rule above calls for a look keep their colour here — a phone was the one surface that dropped
+      // it, so a waiting ticket read like any other until the word was found. One element, since a cell's content is
+      // one flex item and a fragment's parts would space and wrap apart.
+      mobileCell: (t) => (
+        <span>
+          <span className={PRIORITY_TONE[t.priority] === 'critical' ? 'text-critical-ink' : undefined}>{LABEL(t.priority)} priority</span>
+          {may.update ? <> · <span className={STATE_TONE[t.state] === 'warning' ? 'text-warning-ink' : undefined}>{LABEL(t.state)}</span></> : null}
+        </span>
+      ),
+    },
     // On a phone the state is told with the priority: a card keeps one status, and that is the row's step.
     { key: 'state', header: 'State', mobile: may.update ? 'hidden' : 'status', sortValue: (t) => t.state, cell: (t) => <Badge tone={STATE_TONE[t.state]} dot>{LABEL(t.state)}</Badge> },
     {
