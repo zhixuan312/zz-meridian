@@ -10,6 +10,7 @@ import { cn } from '@/lib/cn';
 import { AppMark } from '@/components/base/app-mark';
 import { Kbd } from '@/components/ui/kbd';
 import { AppearanceMenu } from '@/components/patterns/appearance-menu';
+import { useNavDrawer } from '@/components/base/use-nav-drawer';
 
 export type AtlasNav = { id: string; num?: string; title: string; line: string; items: { href: string; title: string; status?: string; mark?: string }[] }[];
 
@@ -47,22 +48,15 @@ export function AtlasShell({ nav, children }: { nav: AtlasNav; children: ReactNo
 }
 
 /**
- * The contents as a drawer below 1024px. It remembers the page it opened on, so navigating closes it without an effect.
- * It waits behind its own boundary, which can arrive after the button that opens it, so the frame counts the presses
- * and the drawer opens whenever the count it has answered is behind: a press made before it was there is answered when
- * it arrives, and each press once (issue #32, as in the console's shell).
+ * The contents as a drawer below 1024px: the shelf, in a dialog that the top bar's button opens. Whether it is open is
+ * `useNavDrawer`'s. It waits behind its own boundary, which can arrive after the button that opens it, so the frame
+ * counts the presses and the drawer opens whenever the count it has answered is behind: a press made before it was
+ * there is answered when it arrives, and each press once (issue #32, as in the console's shell).
  */
 function Drawer({ shelf, asked }: { shelf: ReactNode; asked: number }) {
-  const path = usePathname();
-  const [openOn, setOpenOn] = useState<string | null>(null);
-  // From none, not from `asked`: a drawer that arrives late starts here with the presses it missed still to answer.
-  const [answered, setAnswered] = useState(0);
-  if (answered !== asked) {
-    setAnswered(asked);
-    setOpenOn(path);
-  }
+  const nav = useNavDrawer(asked);
   return (
-    <Dialog.Root open={openOn === path} onOpenChange={(o) => setOpenOn(o ? path : null)}>
+    <Dialog.Root open={nav.open} onOpenChange={nav.setOpen}>
       <Dialog.Portal>
         <Dialog.Overlay className="scrim-in fixed inset-0 z-(--layer-rail) bg-scrim lg:hidden" />
         <Dialog.Content aria-describedby={undefined} className="sheet-in fixed inset-y-0 left-0 z-(--layer-rail) w-(--rail-width) max-w-[86vw] border-r border-line bg-ground shadow-overlay lg:hidden">

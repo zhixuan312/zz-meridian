@@ -6,6 +6,7 @@ import { Menu, X } from 'lucide-react';
 import { usePathname, useRouter } from 'next/navigation';
 import { cn } from '@/lib/cn';
 import { usePreferences } from '@/components/base/providers';
+import { useNavDrawer } from '@/components/base/use-nav-drawer';
 import { ConsoleSurface } from '@/components/base/surface';
 import { Skeleton } from '@/components/ui/skeleton';
 import dynamic from 'next/dynamic';
@@ -188,9 +189,9 @@ function StillOnNavigation({ main }: { main: RefObject<HTMLElement | null> }) {
 }
 
 /**
- * The navigation drawer below 1024px. It remembers the page it opened on, so navigating closes it without an effect;
- * that is a read of the address, so the drawer is a part of its own behind its own boundary (see `AppShell`). A change
- * of address also forgets that page: kept, Back to it would match it again and open the drawer with nobody pressing.
+ * The navigation drawer below 1024px: the rail, in a dialog that the top bar's button opens. Whether it is open is
+ * `useNavDrawer`'s, and that is a read of the address, so the drawer is a part of its own behind its own boundary (see
+ * `AppShell`).
  *
  * That boundary can arrive after the page, and the page holds the trigger: on a phone a press could land while there was
  * no drawer to take it, and it was dropped (issue #32). So the shell counts the presses in its own state and passes the
@@ -198,21 +199,9 @@ function StillOnNavigation({ main }: { main: RefObject<HTMLElement | null> }) {
  * there is answered when it arrives, and each press is answered once.
  */
 function Drawer({ rail, asked }: { rail: ReactNode; asked: number }) {
-  const path = usePathname();
-  const [openOn, setOpenOn] = useState<string | null>(null);
-  const [seen, setSeen] = useState(path);
-  if (seen !== path) {
-    setSeen(path);
-    setOpenOn(null);
-  }
-  // From none, not from `asked`: a drawer that arrives late starts here with the presses it missed still to answer.
-  const [answered, setAnswered] = useState(0);
-  if (answered !== asked) {
-    setAnswered(asked);
-    setOpenOn(path);
-  }
+  const nav = useNavDrawer(asked);
   return (
-    <Dialog.Root open={openOn === path} onOpenChange={(o) => setOpenOn(o ? path : null)}>
+    <Dialog.Root open={nav.open} onOpenChange={nav.setOpen}>
       <Dialog.Portal>
         <Dialog.Overlay className="scrim-in fixed inset-0 z-(--layer-rail) bg-scrim lg:hidden" />
         <Dialog.Content

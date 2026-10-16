@@ -30,8 +30,10 @@ export const app = {
 /**
  * The product's workspaces, in the order the rail's menu lists them. A workspace is where a person looks, not what they
  * may do: access is decided by each page's feature, never by this. Each is `label` (its name), `audience` (a sentence
- * saying who it is for, drawn on its home) and `homeHref` (the entry the menu opens). A project without workspaces
- * deletes this declaration and the `workspace` field of its entries; `zz-meridian adopt` writes it that way.
+ * saying who it is for, drawn on its home) and `homeHref` (the entry the menu opens). The rail's menu offers a workspace
+ * when the person may open at least one of its destinations and opens `homeHref`, or the first of them they may open
+ * when the home is not one — which is the only place a workspace and a grant meet. A project without workspaces deletes
+ * this declaration and the `workspace` field of its entries; `zz-meridian adopt` writes it that way.
  */
 export const workspaces = {
   main: { label: 'Main', audience: 'For everyone who needs the whole product at a glance: how it is doing, who is in it and how it is set up.', homeHref: '/' },

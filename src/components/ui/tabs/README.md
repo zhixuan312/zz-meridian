@@ -18,7 +18,7 @@ Status: beta
 |---|---|
 | Default | Views of one record or one page |
 | With counts | Views that filter one list: each says how many it holds |
-| Links (`LinkTabs`) | Views that are routes of their own (`/knowledge`, `/knowledge/ask`, or `?view=log`): each tab is a link, the current one has `aria-current="page"` and the accent line, and the page renders the view itself; no panels |
+| Links (`LinkTabs`) | Views that are routes of their own, each tab a link with its own address: the current one has `aria-current="page"` and the accent line, and the page renders the view itself; no panels |
 
 ## Sizes
 
