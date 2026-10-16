@@ -328,7 +328,11 @@ export function TrendChart({
                 strokeDasharray={r.edge ? undefined : '3 4'}
                 shapeRendering="crispEdges"
               />
-              {r.at ? <text x={r.at.x} y={r.at.y} textAnchor={r.at.anchor} stroke="var(--surface)" strokeWidth={4} strokeLinejoin="round" paintOrder="stroke" className="fill-ink-3 text-2xs tabular-nums">{r.label}</text> : null}
+              {/* `ink-2`, not `ink-3` like the axis ticks: this label stands over the band's own fill as often as over the
+                  card, and ink-3 on `fill-track` measures 4.43:1 in light — the one pair the contrast gate did not carry,
+                  because nothing drew text on a track before the band was drawn. The halo lifts it off a gridline; it
+                  does not raise the ratio the gate reads. */}
+              {r.at ? <text x={r.at.x} y={r.at.y} textAnchor={r.at.anchor} stroke="var(--surface)" strokeWidth={4} strokeLinejoin="round" paintOrder="stroke" className="fill-ink-2 text-2xs tabular-nums">{r.label}</text> : null}
             </g>
           ))}
           {xLabels.map(({ d, i }) => (
