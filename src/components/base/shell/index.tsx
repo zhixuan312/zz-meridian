@@ -438,9 +438,13 @@ export function PageFrame({
     io.observe(el);
     return () => io.disconnect();
   }, []);
+  // The freshness stamp and the page's controls are one cluster, and a phone is where it has to be arranged rather than
+  // merely allowed to fit: with the stamp inline, the period select ends the line and the export button is left stranded
+  // on a line of its own, which reads as a layout that ran out. The stamp takes the line on its own there, so the two
+  // controls stay together.
   const beside = meta || actions ? (
     <div className="flex flex-wrap items-center gap-2.5">
-      {meta ? <div className="mr-1.5">{meta}</div> : null}
+      {meta ? <div className="mr-1.5 max-lg:w-full">{meta}</div> : null}
       {actions}
     </div>
   ) : null;
