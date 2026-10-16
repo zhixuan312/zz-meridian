@@ -39,7 +39,9 @@ Brand flags: `--name "Acme Ops"`, `--hex '#2E6BE4'` (or `--accent indigo|cobalt|
 in a page's kicker ("Production"); it does not touch the navigation workspaces.
 
 **adopt** copies Meridian's tokens, styles, components, gates and scripts into `src/`, `tokens/` and `scripts/`;
-merges the dependencies and scripts it needs into your `package.json`; replaces your global stylesheet (yours is kept
+merges the dependencies and scripts it needs into your `package.json`; adds the `@meridian/*` alias to your
+`tsconfig.json` (yours is kept as `tsconfig.before.json` when it carries comments or trailing commas, which JSON
+cannot hold); replaces your global stylesheet (yours is kept
 beside it as `*.before.css`); brands it; adds Meridian's managed block to your `AGENTS.md` between two markers, keeping your own text there byte
 for byte; writes an empty `docs/brief.md` (your product, users, data, decisions and glossary) if you have none; installs the skill into
 `.agents/skills/` (Codex) and `.claude/skills/` (Claude Code); records every Meridian file it copied in `.meridian/manifest.json`;

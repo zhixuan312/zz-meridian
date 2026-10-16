@@ -46,7 +46,8 @@ Migrate in place, page by page, keeping their data layer.
    from step 2 of SKILL.md (`--name`, `--hex` or `--accent`, `--workspace`, `--timezone`, `--currency`), and commit what
    it changed as one commit before building on it: that is the diff a reviewer reads to see what Meridian brought. It copies Meridian's tokens, styles, components,
    gates and scripts in; merges the dependencies and scripts it needs into their `package.json`; adds `@meridian/*`
-   (`src/*`) to `tsconfig.json`; replaces their global stylesheet, keeping theirs beside it as `*.before.css` to port
+   (`src/*`) to `tsconfig.json`, keeping theirs as `tsconfig.before.json` when it carries comments or trailing commas,
+   which JSON cannot hold; replaces their global stylesheet, keeping theirs beside it as `*.before.css` to port
    from as tokens; writes a first `nav` from their routes into `src/app.config.ts`; brands it; writes a managed block
    into their `AGENTS.md`, between two marker comments, and keeps every byte outside it (a later run replaces only that
    block; a duplicate or unterminated marker is refused, with the files already copied); writes the five-section brief

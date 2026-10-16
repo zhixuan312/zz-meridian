@@ -67,7 +67,8 @@ Then, in this order:
    fixture test (below) is what keeps it complete. A file of the same name that differs is never overwritten: `adopt`
    lists the conflicts and stops before writing anything.
 2. Merges dependencies and scripts into their `package.json`, keeping their versions where newer and compatible; adds
-   the `@meridian/* → ./src/*` alias to `tsconfig.json` when theirs differs (their own `@/*` is left as it is).
+   the `@meridian/* → ./src/*` alias to `tsconfig.json` when theirs differs (their own `@/*` is left as it is), keeping
+   theirs as `tsconfig.before.json` when it carries comments or trailing commas, which JSON cannot hold.
 3. Replaces their global stylesheet with the template's `app/globals.css`, keeping theirs as `app/globals.before.css`
    for the agent to port from.
 4. Runs `scripts/brand.ts --existing` with the brand arguments given (or the name from their `package.json`): the name,
