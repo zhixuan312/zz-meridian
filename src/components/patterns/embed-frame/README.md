@@ -33,6 +33,8 @@ The head responds to its own container, not the viewport: under 34rem the meta a
 | Inline | One job; Expand offered when there is more |
 | Fullscreen | The console page's rows, without the shell |
 | Not connected (opened outside a host) | Expand and Open in ZZ Meridian open new tabs |
+| Loading (`EmbedBusy`) | The frame at once, from what the address already says, over a body of placeholder blocks (`blocks`: a chart, a row of tiles, a table). A `<Suspense>` with no fallback shows the host an empty rectangle, whose height it takes as the view's own |
+| Failed (`EmbedFailed`) | The frame, and a card that says the view did not load and that nothing was changed. The page catches a read that threw and draws this; `app/embed/error.tsx` is the last net under it for a view that fails to render, and imports nothing, because a segment's error boundary lands in the route's entry chunk and everything it imports lands with it — a boundary that drew this frame cost 28 KiB on every embed route's first load |
 
 ## Behaviour
 
