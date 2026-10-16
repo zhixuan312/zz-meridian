@@ -128,6 +128,40 @@ export default defineConfig({
 `;
 }
 
+/**
+ * What `adopt` writes for a team's `tsconfig.json`, and what it must say about it: the file Meridian's code needs (its
+ * scripts import with `.ts` extensions, its code is ES2022, `@meridian/*` reaches its files), the team's own kept beside
+ * it when it carries what `JSON.stringify` cannot hold, and what their `@/*` alias stands for. A function rather than a
+ * block inside `adopt` so a test can hold it to those three: a test that ran the whole `adopt` would need the template
+ * the payload carries, which a checkout has only after a build, and it would be testing the copy, not this decision.
+ */
+export function tsconfigWrites(tsPath: string): { writes: Map<string, string>; notes: string[]; atAlias: string | null } {
+  const writes = new Map<string, string>();
+  const notes: string[] = [];
+  const ts = readJsonc(tsPath);
+  ts.compilerOptions ??= {};
+  ts.compilerOptions.allowImportingTsExtensions = true;
+  ts.compilerOptions.noEmit = true;
+  if (!/^es20(2[2-9]|[3-9]\d)|^esnext$/i.test(ts.compilerOptions.target ?? '')) {
+    notes.push(`raised tsconfig target from ${ts.compilerOptions.target ?? 'its default'} to ES2022`);
+    ts.compilerOptions.target = 'ES2022';
+  }
+  ts.compilerOptions.paths ??= {};
+  ts.compilerOptions.paths['@meridian/*'] = ['./src/*'];
+  const at = ts.compilerOptions.paths['@/*']?.[0];
+  const atAlias = typeof at === 'string' ? at.replace(/\/\*$/, '').replace(/^\.\//, '') || '.' : null;
+  // A tsconfig may carry comments and trailing commas, which `next dev` keeps (`comment-json`) and `JSON.stringify`
+  // cannot hold. What the team wrote is kept beside the rewritten file, as the stylesheet and the postcss config are,
+  // rather than dropped in silence — the note says so, and there is no backup to explain when there was nothing to lose.
+  const was = fs.readFileSync(tsPath, 'utf8');
+  writes.set('tsconfig.json', JSON.stringify(ts, null, 2) + '\n');
+  if (jsoncExtras(was)) {
+    writes.set('tsconfig.before.json', was);
+    notes.push('tsconfig.json carried comments or trailing commas, which the rewritten file cannot: yours is tsconfig.before.json');
+  }
+  return { writes, notes, atAlias };
+}
+
 export function adopt(o: AdoptOptions): number {
   const { root } = o;
   const say = (s: string) => console.log(s);
@@ -218,27 +252,10 @@ Rename or move them, then run adopt again.`);
   const tsPath = path.join(root, 'tsconfig.json');
   let atAlias: string | null = null;
   if (fs.existsSync(tsPath)) {
-    const ts = readJsonc(tsPath);
-    ts.compilerOptions ??= {};
-    ts.compilerOptions.allowImportingTsExtensions = true;
-    ts.compilerOptions.noEmit = true;
-    if (!/^es20(2[2-9]|[3-9]\d)|^esnext$/i.test(ts.compilerOptions.target ?? '')) {
-      notes.push(`raised tsconfig target from ${ts.compilerOptions.target ?? 'its default'} to ES2022`);
-      ts.compilerOptions.target = 'ES2022';
-    }
-    ts.compilerOptions.paths ??= {};
-    ts.compilerOptions.paths['@meridian/*'] = ['./src/*'];
-    const at = ts.compilerOptions.paths['@/*']?.[0];
-    if (typeof at === 'string') atAlias = at.replace(/\/\*$/, '').replace(/^\.\//, '') || '.';
-    // A tsconfig may carry comments and trailing commas, which `next dev` keeps (`comment-json`) and `JSON.stringify`
-    // cannot hold. What the team wrote is kept beside the rewritten file, as the stylesheet and the postcss config are,
-    // rather than dropped in silence — the note says so, and there is no backup to explain when there was nothing to lose.
-    const was = fs.readFileSync(tsPath, 'utf8');
-    writes.set('tsconfig.json', JSON.stringify(ts, null, 2) + '\n');
-    if (jsoncExtras(was)) {
-      writes.set('tsconfig.before.json', was);
-      notes.push('tsconfig.json carried comments or trailing commas, which the rewritten file cannot: yours is tsconfig.before.json');
-    }
+    const ts = tsconfigWrites(tsPath);
+    for (const [f, text] of ts.writes) writes.set(f, text);
+    notes.push(...ts.notes);
+    atAlias = ts.atAlias;
   } else {
     return fail('no tsconfig.json: Meridian is TypeScript. Add one (next dev writes it), then run adopt again.');
   }
