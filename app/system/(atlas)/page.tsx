@@ -13,9 +13,17 @@ export default function AtlasHome() {
   const readme = readRepo('README.md');
   const principles = [...(readme.split('## Principles')[1]?.split('\n## ')[0] ?? '').matchAll(/\*\*(.+?)\*\*\s*(.+)/g)].map((m) => ({ title: m[1].replace(/\.$/, ''), text: m[2] }));
   const all = entries();
-  const latest = readRepo('CHANGELOG.md').split(/\n(?=## \[)/)[1] ?? '';
-  const head = latest.match(/^## \[([^\]]+)\] · (\S+)\n+([^\n#][^\n]*)/);
-  const release = { version: head?.[1] ?? s.version, date: head?.[2] ?? '', summary: head?.[3] ?? '', headlines: [...latest.matchAll(/^- \*\*(.+?)\*\*/gm)].map((m) => m[1].replace(/[.:]$/, '').replace(/`/g, '')) };
+  // The front page states the latest *release*, not the work toward the next one. `[Unreleased]` is a section like any
+  // other and it sits first, and reading it here named pending work with the version it is going to be released
+  // under, without a date and without its summary — the entry is written for the day it becomes `## [x.y.z] · date`.
+  const latest = readRepo('CHANGELOG.md').split(/\n(?=## \[)/).slice(1).find((s) => /^## \[\d+\.\d+\.\d+\] · \S+/.test(s)) ?? '';
+  // The version and its date are on the heading, and the summary is the paragraph under it — a line every one of these
+  // releases does without, since they all open on a `###` heading, but the card has the place for one. Read together as
+  // they were, `[^\n#]` refused the `#` of `### Breaking`, so the newest release lost its date to the fallback and the
+  // card printed a separator with nothing after it.
+  const heading = latest.match(/^## \[([^\]]+)\] · (\S+)/);
+  const summary = latest.split(/\n\n/).slice(1).map((p) => p.trim()).find((p) => p && !p.startsWith('#') && !p.startsWith('-') && !p.startsWith('|')) ?? '';
+  const release = { version: heading?.[1] ?? s.version, date: heading?.[2] ?? '', summary, headlines: [...latest.matchAll(/^- \*\*(.+?)\*\*/gm)].map((m) => m[1].replace(/[.:]$/, '').replace(/`/g, '')) };
   const changelog = all.find((e) => e.id === 'changelog')?.href;
   const series = demoSeries('30d').current;
   const counts = [
@@ -126,10 +134,13 @@ export default function AtlasHome() {
         <SectionHead title="What changed." line="Every release, with what breaks and what to do instead." />
         <div className="grid gap-8 rounded-xl border border-line bg-surface p-7 lg:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]">
           <div>
-            <p className="t-kicker">{release.version} · {release.date}</p>
-            <p className="t-small mt-4 max-w-[48ch] text-ink-2">{release.summary}</p>
+            {/* A release is named and dated, always; the paragraph under it is a release's own to have. */}
+            <p className="t-kicker">{release.date ? `${release.version} · ${release.date}` : release.version}</p>
+            {release.summary ? <p className="t-small mt-4 max-w-[48ch] text-ink-2">{release.summary}</p> : null}
+            {/* The link takes its own line: the kicker above it is `inline-flex`, so an inline link shares its line and
+                reads as one word, which is what it did once the empty summary paragraph between them went. */}
             {changelog ? (
-              <Link href={changelog} className="mt-6 inline-flex items-center gap-1.5 text-sm font-medium text-accent-ink hover:text-ink">
+              <Link href={changelog} className="mt-6 flex w-fit items-center gap-1.5 text-sm font-medium text-accent-ink hover:text-ink">
                 Full changelog <ArrowRight className="size-3.5" />
               </Link>
             ) : null}
