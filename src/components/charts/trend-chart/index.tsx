@@ -6,7 +6,7 @@ import { AXIS_FORMATTERS, FORMATTERS, type NumberFormat } from '@/lib/format';
 import { formatDate } from '@/lib/format-date';
 import { useMeridian } from '@/components/charts/meridian';
 import { Readout } from '@/components/charts/readout';
-import { monotonePath, niceTicks, SERIES_VAR, stackPart } from '@/components/charts/scale';
+import { monotonePath, ticksBetween, SERIES_VAR, stackPart } from '@/components/charts/scale';
 import { useSize } from '@/components/charts/use-size';
 
 export type TrendSeries = {
@@ -91,6 +91,7 @@ export function TrendChart({
   stacked = false,
   baseline,
   band,
+  floor,
   marks,
   running = false,
   'data-preview-index': previewIndex,
@@ -117,6 +118,14 @@ export function TrendChart({
    * `baseline`, which is a line: a median is a level, a band is everything under one.
    */
   band?: { value: number; label: string };
+  /**
+   * The lowest level the axis shows, snapped down to a "nice" step: for a quantity that lives in a narrow band, such
+   * as uptime, where an axis from zero makes the one thing the chart is about the smallest mark on it. A hint, not a
+   * crop: the floor is held at or under the lowest value drawn, so the scale widens to the data and never hides it, and
+   * every value is placed inside the plot. For `line` and `dashed` series only — an `area` and every stack are read by
+   * their height, which a floor would change the meaning of. Defaults to 0, an axis from zero.
+   */
+  floor?: number;
   /**
    * Days the page names, marked on the first series with a dot, so a reader finds them rather than hunting for them
    * among 360 points: the days a band's membership left out. Dates it does not draw are skipped.
@@ -153,8 +162,15 @@ export function TrendChart({
   const totals = bases ? bases[bases.length - 1]?.upper ?? [] : null;
   // Stacked parts are one whole, so they share one hue, each by its place in the stack. A series given its own colour keeps it.
   const colorOf = (s: TrendSeries, k: number) => (stacked && !s.color ? stackPart(k, series.length) : SERIES_VAR(s.color ?? (s.kind === 'dashed' ? 'neutral' : 'accent')));
-  const max = Math.max(1, baseline?.value ?? 0, band?.value ?? 0, ...(totals ?? series.flatMap((s) => s.values.filter((v): v is number => v !== null))));
-  const ticks = niceTicks(max, h < 200 ? 3 : 4);
+  const values = totals ?? series.flatMap((s) => s.values.filter((v): v is number => v !== null));
+  const max = Math.max(1, baseline?.value ?? 0, band?.value ?? 0, ...values);
+  // A floor is a hint and never a crop: it is held at or under the lowest value drawn, or a day that fell further than
+  // the floor would be drawn below the plot's own axis. So the scale widens to the data and never hides it.
+  const from = floor === undefined ? 0 : Math.min(floor, ...values);
+  // The levels, and the floor the plot is drawn to: `ticks[0]` is 0 unless the chart was given a floor, and the two ends
+  // of the scale are what every point, area, band and level line is measured against.
+  const ticks = ticksBetween(from, max, h < 200 ? 3 : 4);
+  const low = ticks[0];
   const top = ticks[ticks.length - 1];
   const left = Math.max(...ticks.map((t) => axis(t).length)) * 6.4 + 12;
   const showLegend = legend ?? series.length > 1;
@@ -164,7 +180,7 @@ export function TrendChart({
   // The point still running, if there is one: everything solid stops at the point before it.
   const soFar = running ? n - 1 : -1;
   const x = (i: number) => pad.l + (n <= 1 ? W / 2 : (i / (n - 1)) * W);
-  const y = (v: number) => pad.t + H - (v / top) * H;
+  const y = (v: number) => pad.t + H - ((v - low) / (top - low)) * H;
 
   const bands = useMemo(
     () =>

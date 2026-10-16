@@ -19,6 +19,13 @@ import { Unread } from './unread';
 const PARTS = { services: 'Each service, 90 days', incidents: 'Incidents' } as const;
 
 const DAY = 86_400_000;
+/**
+ * The lowest level the uptime chart asks its axis to start at. Uptime is 100% on almost every day of a healthy period
+ * and never near zero, so an axis from zero spent 82% of the plot on a range no day reached and left the days that
+ * mattered — the whole of what the card is about — as shallow dents. The chart holds the floor at or under the lowest
+ * day it is given, so the caption names the rule rather than a number the next bad day would make wrong.
+ */
+const FLOOR = 0.7;
 
 /**
  * The page's protagonist, its one Featured metric: the uptime the title states, written as the title writes it, the
@@ -39,10 +46,12 @@ function Uptime({ services, end }: { services: ServicesData['services']; end: Da
         actions={<AskAbout question={`Which service is hurting uptime over the last ${n} days, and why?`} />}
         value={meanUptime(services)}
         format={formatUptime}
-        caption={`The mean of ${services.length} services' uptime over their last ${n} days, today included. The line is the share of the services operational each day.`}
+        caption={`The mean of ${services.length} services' uptime over their last ${n} days, today included. The line is the share of the services operational each day, on an axis that starts under its lowest day rather than at zero, so a day that was not perfect is seen.`}
         finding={run ? { text: run.text } : undefined}
       >
-        <TrendChart height="fill" label="Share of the services operational, a day" format="percent" dates={dates} running series={[{ key: 'operational', label: 'Operational', values: share, kind: 'area' }]} />
+        {/* A line on a floored axis, not an area from zero: uptime lives between 86% and 100%, where an area's height
+            says nothing a reader can use and its fill is the whole plot. Every value is still drawn. */}
+        <TrendChart height="fill" floor={FLOOR} label="Share of the services operational, a day" format="percent" dates={dates} running series={[{ key: 'operational', label: 'Operational', values: share, kind: 'line' }]} />
       </FeaturedMetric>
     </div>
   );

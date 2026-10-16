@@ -14,6 +14,9 @@ const soFar = recent.map((d, i) => (i === recent.length - 1 ? Math.round((d.requ
 /** The sample's p95, with three days put over the band and one left low, as a day that left the band on its error rate would be. */
 const SPIKED = new Set([4, 17, 26]);
 const banded = current.map((d, i) => (i === 26 ? Math.round(d.p95 * 0.7) : SPIKED.has(i) ? Math.round(d.p95 * 1.9) : d.p95));
+/** Six services' share operational a day: 1 on almost every day, with a service down on five of them. */
+const DOWN = new Set([3, 11, 12, 19, 27]);
+const uptime = current.map((_, i) => (DOWN.has(i) ? 5 / 6 : 1));
 
 export default function TrendChartPreview() {
   return (
@@ -44,6 +47,18 @@ export default function TrendChartPreview() {
             dates={dates}
             series={[{ key: 'p95', label: 'Latency p95', values: current.map((d) => d.p95), kind: 'line', color: 'neutral' }]}
             baseline={{ value: 296, label: 'Median 296ms' }}
+          />
+        </Plane>
+      </Specimen>
+      <Specimen label="A quantity that never nears zero" note="floor: for uptime, a success rate, a hit rate — a quantity that is 100% on almost every day. On an axis from zero the one thing the card is about is the smallest mark on it; the axis starts at the nearest step under the floor instead, and under the data whenever a day falls further, since a floor is a hint and never a crop. For line and dashed series only: an area is read by its height, which a floor changes the meaning of.">
+        <Plane on="surface">
+          <TrendChart
+            label="Share of the services operational, a day"
+            height={168}
+            format="percent"
+            dates={dates}
+            floor={0.7}
+            series={[{ key: 'operational', label: 'Operational', values: uptime, kind: 'line' }]}
           />
         </Plane>
       </Specimen>

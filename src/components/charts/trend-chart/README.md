@@ -34,6 +34,8 @@ Status: beta
 
 **A band is a region; a baseline is a line.** They are not interchangeable and a chart may carry both: a median is one level, a band is everything under one. Where a chart has both, the band's label is placed first, so what the page is judged against is named before what is usual.
 
+**Floor** (`floor`): the lowest level the axis shows, for a quantity that lives in a narrow band. Uptime, a success rate and a cache hit rate are 100% on almost every day and never near zero, so an axis from zero spends most of the plot on a range no day reaches and leaves the one thing the card is about as a shallow dent — Services' uptime line sat pinned to the 100% gridline with 82% of the panel empty and its dips 32px of 180. The floor is snapped *down* to a step, so the level the plot is drawn to is one the axis names, and it is held at or under the lowest value drawn: a hint, never a crop, so the scale widens to the data and never hides a day below its own axis. For `line` and `dashed` series only — an `area` and every stack are read by their height, which a floor changes the meaning of. A caption should name the rule ("on an axis that starts under its lowest day rather than at zero") and not the number, which the next bad day would make wrong.
+
 **Marks** (`marks: { dates, tone, label }`): the days the page names in its own words — the days a band left out, a change of state — marked so a reader finds them rather than hunting for one among 360 points. Each is a dot on the first series' own point, ringed in `surface` as the cursor's dots are, and a stem from the point down to the axis at 45% of the same tone. The stem is the load-bearing half: a day can leave a band on a measure the chart does not draw — its error rate, not its p95 — and then its point stands *inside* the band's region, where a 3px dot is lost in the line. A date the chart does not draw, and a day with no value, are skipped rather than marked at the wrong point. The tone is the caller's to say, as a finding's is: `warning` for a day worth a look, `neutral` for one that is only worth knowing. The caption names the count ("Marked: 3 days outside the band").
 
 **Running** (`running`): the last point is a period still in progress, such as today or the month not over yet. It is not a fact like the points before it, so nothing solid reaches it. Every `area` and `line` is drawn as far as the last complete point, and the stretch from there into the running point is a stroke of its own on the same curve: the series' colour, 1.5px, dash 3 4, round caps. No area is filled under that stretch and no glow lies under it, so the lit part of the chart is the part that is settled. A `dashed` series is a reference, a whole period already, and is drawn as ever. Stacked, the bands end at the last complete point and the total's line alone carries the dashed stretch, in the accent; pointing at the running point shows one dot, the total's. The readout says "so far" beside the date and the table's last row says it too; no other point does. The axis is still scaled to every value, the running one included.
@@ -57,6 +59,7 @@ Colour: `accent` for the series the page is about; categorical slots 1 to 6 in o
 | Arriving | The line draws left to right and the area reveals over `dur-grow` 820ms `ease-out`; the glow draws with its line, and the dashed lines fade in, the running stretch with them. |
 | Rest, pointing, keyboard | See Meridian. The readout is bounded by the chart at every selected day, including the first and last. |
 | Long text, extreme values | Labels wrap inside the readout. It is no wider than its chart, with `space-3` 12px side padding; the static specimen shows a long inference label and spend in billions. |
+| Floor | The axis starts at the nearest step at or under `floor`, and under the lowest value drawn when a day falls further: the levels are recomputed, so a floored chart is a chart of its own range and never a cropped one. |
 | Baseline | The label stands beside the dashed line where no series is drawn: the right end over the line first, then the nearest clear place at either end. With no clear place it is not drawn. |
 | Band | The region under the ceiling, its edge and its label: drawn with the data, revealed left to right with the area's wipe. A chart whose data is far under its band still reaches the ceiling, so the region never collapses to nothing. |
 | Marks | One dot and one stem for each named day drawn. A day the chart does not draw, and a day with no value, are skipped: a chart never marks a point it does not have. |
@@ -98,7 +101,7 @@ The view shares what the chart shows through `useShareView` (the period and the 
 ## Do and do not
 
 - Do show two measures of different size as two charts on one Meridian.
-- Do not add a second y-axis, ever.
+- Do use `floor` for a quantity that never approaches zero (uptime, a success rate), and say in the caption that the axis starts under the data. Do not floor a quantity whose zero is the meaning — revenue, requests, tokens — where the distance from zero is what the chart is for.
 - Do not stack more than one area; use lines for peers.
 - Do not put a number on every point.
 - Do keep a baseline's label short ("Median 296ms"). A long one spans more of the plot, so more of the data stands under it and fewer places are clear.
@@ -122,7 +125,7 @@ import { TrendChart } from '@/components/charts/trend-chart';
 />
 ```
 
-Props: `dates`, `series` (`key`, `label`, `values`, `color`, `kind`), `format` (`count` | `compact` | `cost` | `cost-compact` | `duration` | `percent`), `height` (number or `fill`), `label`, `legend` (defaults to two or more series), `tick`, `stacked`, `baseline`, `band`, `marks`, `running` (the last point is still in progress).
+Props: `dates`, `series` (`key`, `label`, `values`, `color`, `kind`), `format` (`count` | `compact` | `cost` | `cost-compact` | `duration` | `percent`), `height` (number or `fill`), `label`, `legend` (defaults to two or more series), `tick`, `stacked`, `baseline`, `band`, `floor`, `marks`, `running` (the last point is still in progress).
 
 The colour of a stacked part is `stackPart(place, parts)` from `@/components/charts/scale`, the one mix every one-hue stack takes: the accent into the surface, by the part's place from the bottom.
 
