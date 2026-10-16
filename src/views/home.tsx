@@ -43,10 +43,11 @@ const costCompact = FORMATTERS['cost-compact'];
  * a wrapper that is itself the row's first grid item, its card stretched to fill it: a wrapper whose display is
  * `contents` draws no box, so the row's two columns would land on nothing.
  *
- * It carries no finding. The period's record is the page's title, figure and run together, and the card would state it
- * a second time one screen below; the caption's average and best day are what this card alone can say.
+ * It carries a finding only where the surface around it has no headline of its own to state the period's record: the
+ * console's page title says it, figure and run together, and the card would state it again one screen below. An embed
+ * is framed by the view's name and period alone, so there the card carries it. `finding` is that line.
  */
-export function RevenueCard({ data, dates }: { data: HomeData; dates: string[] }) {
+export function RevenueCard({ data, dates, finding }: { data: HomeData; dates: string[]; finding?: string | null }) {
   const r = data.revenue;
   if (!r) return <Unread title={HOME_METRICS.revenue.label} what="the days" />;
   const period = PERIOD_LABEL[data.period].toLowerCase();
@@ -63,6 +64,7 @@ export function RevenueCard({ data, dates }: { data: HomeData; dates: string[] }
         delta={change(r.value, r.previous) ?? undefined}
         intent="up"
         caption={r.best ? <>About {formatCost(r.average)} a day. The best day was {formatDay(r.best.date)}, with {formatCost(r.best.value)}.</> : undefined}
+        finding={finding ? { text: finding } : undefined}
         pointLabel={(date) => (running && date === running.date ? `${formatDate(date)} · so far` : formatDate(date))}
       >
         <TrendChart
@@ -318,8 +320,11 @@ export const meridianDates = (data: HomeData) => [...data.series.map((d) => d.da
 /**
  * The Home's nine parts, in order: the console page and the MCP view in fullscreen. The head is the page frame's. Each
  * part draws what the read handed it and works nothing out; a part whose read failed says so in its own place.
+ *
+ * `finding` is the record line the revenue card states, and is passed only by a surface with no headline above it to
+ * state that record itself. `data.record` is not it: the read always hands the line over, and the surface decides.
  */
-export function HomeBody(data: HomeData) {
+export function HomeBody(data: HomeData & { finding?: string | null }) {
   // No complete day kept: one card says nothing has arrived, and no figure is drawn as if it had.
   if (isEmpty(data)) {
     return (
@@ -340,7 +345,7 @@ export function HomeBody(data: HomeData) {
       <ShareHome data={data} />
       <Stack>
         <Row split="2/3">
-          <RevenueCard data={data} dates={dates} />
+          <RevenueCard data={data} dates={dates} finding={data.finding} />
           <div className="grid min-w-0 gap-(--stack-gap) md:grid-cols-3 lg:flex lg:flex-col">
             {companyTiles(data)}
           </div>

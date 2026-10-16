@@ -126,24 +126,28 @@ export function yearFacts(history: readonly DailyPoint[]): Fact[] {
 }
 
 /**
- * What Home states at its head, worked out on the server: its title for the period, and the facts of a year.
+ * What Home states at its head, worked out on the server: its title for the period, the facts of a year, and the
+ * period's record as its own line.
  * `history` is every complete day kept, oldest first and ending yesterday, or null when it could not be read. A record
  * compares the period with each earlier whole window of its length, so 90 days and All, which have fewer windows than
  * a record needs, state the change or the figure alone.
  *
- * The title states a record itself, figure and run together, which is the news the page opens on. The revenue card
- * takes no finding from it: a second sentence with the same figure and the same ordinal, one screen below the first,
- * is one fact said twice. Revenue states its record on the card instead, because its title only alludes to it.
+ * The title states a record itself, figure and run together, which is the news the page opens on. So the console's
+ * revenue card takes no finding: a second sentence with the same figure and the same ordinal, one screen below the
+ * first, is one fact said twice. An embed has no such headline — its frame names the view and its period and nothing
+ * else — and there the card is the only place the record can stand, which is why the line is returned and not dropped.
+ * Revenue states its record on the card instead, because its title only alludes to it.
  */
-export function homeHead({ period, totals, history, services }: { period: Period; totals: HomeData['totals']; history: readonly DailyPoint[] | null; services: readonly ServiceNow[] | null }): PageHead {
-  if (!history) return { title: null, facts: [], unknown: HISTORY_UNREAD };
-  if (!history.length) return { title: null, facts: [] };
+export function homeHead({ period, totals, history, services }: { period: Period; totals: HomeData['totals']; history: readonly DailyPoint[] | null; services: readonly ServiceNow[] | null }): PageHead & { record: string | null } {
+  if (!history) return { title: null, facts: [], unknown: HISTORY_UNREAD, record: null };
+  if (!history.length) return { title: null, facts: [], record: null };
   // The days the period covers: its length, or every day kept where fewer are, as with All.
   const days = Math.min(PERIOD_DAYS[period] ?? history.length, history.length);
   const latest = record(periods(history.map((d) => d.revenue), days), { needs: rules.recordNeedsPeriods, what: `${inDays(days)} of revenue`, format: formatCost });
   return {
     title: homeTitle({ days, revenue: totals.current.revenue, previous: totals.previous?.revenue ?? null, record: latest, services }),
     facts: yearFacts(history),
+    record: latest?.text ?? null,
   };
 }
 
@@ -296,6 +300,7 @@ export function homeData(r: HomeReads): HomeData {
   return {
     period: r.period,
     series,
+    record: head.record,
     totals,
     running: r.days?.running ?? null,
     head: { title: head.title, facts: head.facts, ...(head.unknown ? { unknown: head.unknown } : {}) },

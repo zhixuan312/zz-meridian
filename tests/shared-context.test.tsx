@@ -481,9 +481,11 @@ describe('what a context states beside its title', () => {
     const { revenueHead } = await import('@/views/revenue-context');
     const { CUSTOMERS } = await import('@/system/fixtures/company');
     const unread = homeHead({ period: '30d', totals: demoTotals('30d'), history: null, services: SERVICES });
-    expect(unread).toEqual({ title: null, facts: [], unknown: expect.stringMatching(/^The history could not be read/) });
-    expect(usageHead({ period: '30d', totals: demoTotals('30d'), history: null })).toEqual(unread);
-    expect(revenueHead({ period: '30d', rows: CUSTOMERS, history: null })).toEqual({ ...unread, record: null });
+    expect(unread).toEqual({ title: null, facts: [], unknown: expect.stringMatching(/^The history could not be read/), record: null });
+    // Usage's head states the record in its title and returns none; Home's and Revenue's return it, for the one surface
+    // that has no headline of its own to state it — an embed's card. With the history unread, none of the three has one.
+    expect(usageHead({ period: '30d', totals: demoTotals('30d'), history: null })).toEqual({ title: null, facts: [], unknown: unread.unknown });
+    expect(revenueHead({ period: '30d', rows: CUSTOMERS, history: null })).toEqual(unread);
     const c = homeContext({ ...home('30d'), head: unread });
     expect(c.unknowns).toContain(unread.unknown);
     expect(c.insights.map((i) => i.text).join('\n')).not.toMatch(/The highest|^Total: /m);

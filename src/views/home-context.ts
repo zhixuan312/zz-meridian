@@ -62,6 +62,11 @@ export type HomeData = {
   running: DailyPoint | null;
   /** The page's title and the facts of a year, worked out on the server from every complete day kept (`homeHead`). */
   head: PageHead;
+  /**
+   * The period's record as its own line, figure and run together, or null when the period is not one: the news the
+   * console's title opens on, and the finding an embed's revenue card states, since an embed's frame cannot.
+   */
+  record: string | null;
   /** The line under the title: customers, requests and their change, gross margin for a person who may read it, and the services (`homeLine`). */
   line: string | null;
   /** The revenue card: the period's revenue, a day's average, the best day, and revenue a day with the day in progress apart. */

@@ -9,7 +9,11 @@ import { HomeBody, RevenueCard, ShareHome, companyTiles, isEmpty, meridianDates 
 import type { HomeData } from '@/views/home-context';
 import { PERIOD_LABEL } from '@/lib/period';
 
-/** Inline: the revenue card and the three tiles beside it. Fullscreen: the console's Home, its nine parts. Both share the same context. */
+/**
+ * Inline: the revenue card and the three tiles beside it. Fullscreen: the console's Home, its nine parts. Both share the
+ * same context. Both state the period's record on the revenue card: the frame above them names the view and its period,
+ * where the console's page names the record itself, so this is the one surface left that can say it.
+ */
 export function EmbedHome(p: HomeData) {
   const s = useSurface();
   return (
@@ -18,7 +22,7 @@ export function EmbedHome(p: HomeData) {
       meta={<Freshness updatedAt={new Date(p.updatedAt)} now={new Date(p.now)} />}
       consolePath={`/?period=${p.period}`}
     >
-      {s.mode === 'fullscreen' || isEmpty(p) ? <HomeBody {...p} /> : <Inline {...p} />}
+      {s.mode === 'fullscreen' || isEmpty(p) ? <HomeBody {...p} finding={p.record} /> : <Inline {...p} />}
     </EmbedFrame>
   );
 }
@@ -30,7 +34,7 @@ function Inline(p: HomeData) {
     <Meridian dates={dates} day={p.day}>
       <ShareHome data={p} />
       <Stack className="gap-3">
-        <RevenueCard data={p} dates={dates} />
+        <RevenueCard data={p} dates={dates} finding={p.record} />
         <Row split="tiles" className="gap-3">
           {companyTiles(p)}
         </Row>
