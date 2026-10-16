@@ -1,8 +1,7 @@
 import { Suspense } from 'react';
 import { packNow } from '@/views/now-context';
 import { nowTool } from '@/views/tools';
-import { EmbedBusy } from '@/components/patterns/embed-frame';
-import { TableSkeleton, TilesSkeleton } from '@/components/patterns/page-loading';
+import { EmbedBusy, EmbedFailed } from '@/components/patterns/embed-frame';
 import { EmbedNow } from './view';
 
 export const metadata = { title: 'Now' };
@@ -25,14 +24,13 @@ export default function Page() {
 /** The frame the host sees while the read runs: this view's title, and a body of the shape the read will fill. */
 function Busy() {
   return (
-    <EmbedBusy title="Now" consolePath="/engineering" name="Now">
-      <TilesSkeleton count={3} />
-      <TableSkeleton rows={4} filters={false} />
-    </EmbedBusy>
+    <EmbedBusy title="Now" consolePath="/engineering" name="Now" blocks={['tiles', 'table']} />
   );
 }
 
 async function Now() {
-  const { data } = await nowTool.read({});
-  return <EmbedNow {...packNow(data)} />;
+  // A read that threw is this view's own failure, drawn in the frame. The segment's error boundary is the last net
+  // under it, and imports nothing, because anything a boundary imports lands in every embed's first load.
+  const read = await nowTool.read({}).catch(() => null);
+  return read ? <EmbedNow {...packNow(read.data)} /> : <EmbedFailed title="Now" consolePath="/engineering" name="Now" />;
 }

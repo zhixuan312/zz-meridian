@@ -1,8 +1,7 @@
 import { Suspense } from 'react';
 import { homeTool } from '@/views/tools';
 import { parsePeriod } from '@/lib/period';
-import { EmbedBusy } from '@/components/patterns/embed-frame';
-import { ChartSkeleton, TilesSkeleton } from '@/components/patterns/page-loading';
+import { EmbedBusy, EmbedFailed } from '@/components/patterns/embed-frame';
 import { EmbedHome } from './view';
 
 export const metadata = { title: 'Home' };
@@ -29,15 +28,14 @@ export default function Page({ searchParams }: { searchParams: SearchParams }) {
 /** The frame the host sees while the read runs: this view's title, and a body of the shape the read will fill. */
 function Busy() {
   return (
-    <EmbedBusy title="Home" consolePath="/" name="Home">
-      <ChartSkeleton height="h-40" />
-      <TilesSkeleton count={3} />
-    </EmbedBusy>
+    <EmbedBusy title="Home" consolePath="/" name="Home" blocks={['chart', 'tiles']} />
   );
 }
 
 async function Home({ searchParams }: { searchParams: SearchParams }) {
   const { period, day } = await searchParams;
-  const { data } = await homeTool.read({ period: parsePeriod(period), day: /^\d{4}-\d{2}-\d{2}$/.test(day ?? '') ? day : undefined });
-  return <EmbedHome {...data} />;
+  // A read that threw is this view's own failure, drawn in the frame. The segment's error boundary is the last net
+  // under it, and imports nothing, because anything a boundary imports lands in every embed's first load.
+  const read = await homeTool.read({ period: parsePeriod(period), day: /^\d{4}-\d{2}-\d{2}$/.test(day ?? '') ? day : undefined }).catch(() => null);
+  return read ? <EmbedHome {...read.data} /> : <EmbedFailed title="Home" consolePath="/" name="Home" />;
 }

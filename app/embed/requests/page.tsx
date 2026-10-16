@@ -1,7 +1,6 @@
 import { Suspense } from 'react';
 import { requestsTool } from '@/views/tools';
-import { EmbedBusy } from '@/components/patterns/embed-frame';
-import { TableSkeleton } from '@/components/patterns/page-loading';
+import { EmbedBusy, EmbedFailed } from '@/components/patterns/embed-frame';
 import { EmbedRequests } from './view';
 
 export const metadata = { title: 'Requests' };
@@ -28,9 +27,7 @@ export default function Page({ searchParams }: { searchParams: SearchParams }) {
 /** The frame the host sees while the read runs: this view's title, and a body of the shape the read will fill. */
 function Busy() {
   return (
-    <EmbedBusy title="Requests" consolePath="/requests" name="Requests">
-      <TableSkeleton rows={5} filters={false} />
-    </EmbedBusy>
+    <EmbedBusy title="Requests" consolePath="/requests" name="Requests" blocks={['table']} />
   );
 }
 
@@ -38,6 +35,8 @@ async function Requests({ searchParams }: { searchParams: SearchParams }) {
   const p = await searchParams;
   const one = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v);
   // The tool's own read: the address's filters are its arguments, and the sort and page the table may set ride along.
-  const { data } = await requestsTool.read({ status: one(p.status) as 'all' | undefined, method: one(p.method), region: one(p.region), q: one(p.q), ...(p.sort || p.dir || p.page ? { sort: one(p.sort), dir: one(p.dir), page: one(p.page) } : {}) } as Parameters<typeof requestsTool.read>[0]);
-  return <EmbedRequests {...data} />;
+  // A read that threw is this view's own failure, drawn in the frame. The segment's error boundary is the last net
+  // under it, and imports nothing, because anything a boundary imports lands in every embed's first load.
+  const read = await requestsTool.read({ status: one(p.status) as 'all' | undefined, method: one(p.method), region: one(p.region), q: one(p.q), ...(p.sort || p.dir || p.page ? { sort: one(p.sort), dir: one(p.dir), page: one(p.page) } : {}) } as Parameters<typeof requestsTool.read>[0]).catch(() => null);
+  return read ? <EmbedRequests {...read.data} /> : <EmbedFailed title="Requests" consolePath="/requests" name="Requests" />;
 }
