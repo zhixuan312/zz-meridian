@@ -4,7 +4,7 @@
 import { Suspense, createContext, use, useCallback, useContext, useEffect, useState } from 'react';
 import { useShareView } from '@/components/base/use-share-view';
 import type { SharedContext } from '@/lib/shared-context';
-import { Globe, Lock, Moon, Monitor, Sun } from 'lucide-react';
+import { Lock, Moon, Monitor, Sun } from 'lucide-react';
 import { app, domain, workspaceSlug } from '@/app.config';
 import { ACCENTS } from '@/lib/preferences';
 import { usePreferences } from '@/components/base/providers';
@@ -118,10 +118,25 @@ function Workspace({ may, record, save }: { may: SettingsMay; record: WorkspaceV
       <Field label="Name" error={nameError}>
         {(p) => <Input {...p} value={v.name} onChange={(e) => setV({ ...v, name: e.target.value })} />}
       </Field>
-      <Field label="Address" hint="It is set when the workspace is created and is not changed here.">
-        {(p) => <Input {...p} value={`app.${domain}/${v.slug}`} readOnly leading={<Globe className="size-4" />} className="font-mono text-xs" />}
-      </Field>
+      <AddressValue slug={v.slug} />
     </FormSection>
+  );
+}
+
+/**
+ * The workspace's address, which is read and never typed here: it is set when the workspace is created. A field that
+ * refuses input is the wrong control for it, and a one-line field is narrower than the address on a phone, so the
+ * address was cut to "app.zz-meridian.example/zz-meridian-p" with no ellipsis and no way to see the rest. It is a value
+ * instead, whole and wrapping, with the label and hint a field would have had. The label is a paragraph rather than a
+ * `<label>`: nothing here is labelable, and a `for` pointing at a paragraph names nothing.
+ */
+function AddressValue({ slug }: { slug: string }) {
+  return (
+    <div className="flex min-w-0 flex-col gap-1.5">
+      <p className="text-sm font-medium text-ink">Address</p>
+      <p className="font-mono text-xs text-pretty text-ink-2 [overflow-wrap:anywhere]">app.{domain}/{slug}</p>
+      <p className="text-xs leading-snug text-ink-3">It is set when the workspace is created and is not changed here.</p>
+    </div>
   );
 }
 
