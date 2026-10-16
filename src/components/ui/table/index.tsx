@@ -100,7 +100,11 @@ export function TableHeader({
            needed, and a second cut column beside it was left "1 of 2 pass…" on every row. Asking for all of it leaves
            the browser nothing to spread; two or more such columns share it between them, which is what the tables with
            three long columns (Tests: the verification, the release, the reason) need. */
-        (grow || flexible) && 'w-full min-w-40 @min-[672px]:min-w-64',
+        (grow || flexible) && 'w-full',
+        // The floor belongs to the lead column alone. A second column that can be cut asks for the slack but must be
+        // able to give it up: with the same floor on two columns the Releases table held 837px inside a 713px frame
+        // at 1024 and 768, and no column could shrink because both had a minimum.
+        grow && 'min-w-40 @min-[672px]:min-w-64',
         className,
       )}
       {...rest}
