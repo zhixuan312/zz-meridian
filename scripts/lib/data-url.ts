@@ -14,8 +14,9 @@ export function isLocalHost(host: string): boolean {
 }
 
 /**
- * A scheme whose value is this machine's own: it names a file, never another machine. `file:./dev.db` is Prisma's
- * SQLite default, and it is what an adopter's `DATABASE_URL` says while they develop.
+ * A scheme whose value names a file rather than a machine: Prisma's `file:./dev.db`, `sqlite:///tmp/app.db`. A scheme
+ * and nothing more — a host in the authority is read like any other, because `file://db.prod.example.com/share/app.db`
+ * is a file on another machine and `libsql://…` is a database over the network.
  */
 const FILE_SCHEME = /^(?:file|sqlite|sqlite3|duckdb|libsql):/i;
 
@@ -24,14 +25,16 @@ const FILE_SCHEME = /^(?:file|sqlite|sqlite3|duckdb|libsql):/i;
  * `postgres:///app` — `isLocalHost('')` is true); or null when the value is not something this can judge, which its
  * caller refuses rather than skips (the app fails on a value it cannot read long before a press lands).
  *
- * Most values are read by `URL`. Three shapes are not, and each matters here because getting it wrong is the difference
+ * Most values are read by `URL`. Four shapes are not, and each matters here because getting it wrong is the difference
  * between refusing a backend and writing to it:
  *
  * - A value written without a scheme parses with its first segment as the *protocol* and no host at all —
  *   `db.prod.example.com:5432/app`. An empty host is a name with no dot, which `isLocalHost` would call local.
  * - A value whose first segment is not a valid protocol at all throws — `10.20.30.40:5432/app`, any bare IP.
- * - A value whose scheme carries a host is read by `URL`; one that carries no authority names no host at all
- *   (`file:./dev.db`, `postgres:///app`), and a value that names no host is on this machine.
+ * - A value whose scheme carries an authority with no host (`postgres:///app`) names no host at all, and a value that
+ *   names no host is on this machine — unless its query names one, which is where libpq reads a host from and lets it
+ *   override the authority: `postgres:///app?host=db.prod.example.com` reaches that host, not this machine.
+ * - A file scheme with no host (`file:./dev.db`) is a path on this machine; a file scheme *with* one is not.
  *
  * The first two are read by hand. A value that is not host-shaped (it has a space, say) is null.
  */
@@ -44,16 +47,22 @@ export function dataHost(value: string): string | null {
     const authority = value.replace(/.*@/, '').split(/[/?#]/)[0].replace(/:\d+$/, '');
     return /^[A-Za-z0-9._:[\]-]+$/.test(authority) ? authority : null;
   };
-  if (FILE_SCHEME.test(value)) return ''; // a file of this machine's
+  const namesAFile = FILE_SCHEME.test(value);
   try {
     const url = new URL(value);
+    // A host named in the query string decides over the authority, which is how libpq reads it — and `hostaddr` before
+    // `host`, since libpq dials the address `hostaddr` gives and uses `host` only to look the name up. A value that
+    // begins with `/` is a Unix socket, so it names nothing off this machine.
+    const named = url.searchParams.get('hostaddr') ?? url.searchParams.get('host');
+    if (named && !named.startsWith('/')) return named;
     if (url.hostname) return url.hostname;
-    // An empty hostname is two different things. A scheme that carries an authority and names no host (`postgres:///app`)
-    // is this machine. A value `URL` read as a scheme because it has none is a schemeless DSN, and its own authority is
-    // the host: `db.prod.example.com:5432/app`, `user:pass@db.prod.example.com:5432/app`.
+    // An empty hostname, then, is one of three things: a scheme that carries an authority and names no host
+    // (`postgres:///app`), a file scheme with no host — both this machine — or a value `URL` read as a scheme because
+    // it has none, which is a schemeless DSN whose own authority is the host: `db.prod.example.com:5432/app`.
+    if (namesAFile) return '';
     return /^[A-Za-z][A-Za-z0-9+.-]*:\/\//.test(value) ? '' : byHand();
   } catch {
-    return byHand();
+    return namesAFile ? '' : byHand();
   }
 }
 

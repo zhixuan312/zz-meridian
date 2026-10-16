@@ -81,6 +81,34 @@ describe('where a data URL points', () => {
     }
   });
 
+  it('reads a host named in the query string, which libpq lets decide over the authority', () => {
+    // `postgres:///app?host=…` is a real DSN shape: the authority is empty and libpq takes the host from the query, so
+    // reading only the authority called a production database local and the presses would have run against it.
+    expect(dataHost('postgres:///app?host=db.prod.example.com')).toBe('db.prod.example.com');
+    expect(dataHost('postgresql:///app?host=10.0.0.5&port=5432')).toBe('10.0.0.5');
+    expect(unsafeDataUrls({ DATABASE_URL: 'postgres:///app?host=db.prod.example.com' })).toEqual(['DATABASE_URL → db.prod.example.com']);
+    expect(unsafeDataUrls({ DATABASE_URL: 'postgresql:///app?host=10.0.0.5&port=5432' })).toEqual(['DATABASE_URL → 10.0.0.5']);
+    expect(unsafeDataUrls({ DATABASE_URL: 'postgres:///app?hostaddr=db.prod.example.com' })).toEqual(['DATABASE_URL → db.prod.example.com']);
+    // Both given: libpq dials `hostaddr` and uses `host` to look the name up, so the address decides.
+    expect(unsafeDataUrls({ DATABASE_URL: 'postgres:///app?host=localhost&hostaddr=10.20.30.40' })).toEqual(['DATABASE_URL → 10.20.30.40']);
+    // A path is a Unix socket, and a query naming no host at all names this machine.
+    for (const value of ['postgres:///app?host=/var/run/postgresql', 'postgres:///app?host=localhost', 'postgres:///app', 'postgres:///app?host=']) {
+      expect(unsafeDataUrls({ DATABASE_URL: value }), value).toEqual([]);
+    }
+  });
+
+  it('reads the host of a file scheme that names another machine', () => {
+    // The file schemes were answered local before the value was read at all: `file://host/share/app.db` is a file on
+    // another machine, and `libsql://…` is a database over the network.
+    expect(dataHost('file://db.prod.example.com/share/app.db')).toBe('db.prod.example.com');
+    expect(unsafeDataUrls({ DATABASE_URL: 'file://db.prod.example.com/share/app.db' })).toEqual(['DATABASE_URL → db.prod.example.com']);
+    expect(unsafeDataUrls({ DATABASE_URL: 'libsql://db.prod.example.com/app' })).toEqual(['DATABASE_URL → db.prod.example.com']);
+    // And the forms that are this machine's own file stay local.
+    for (const value of ['file:./dev.db', 'file:///var/data/app.db', 'file://localhost/share/app.db', 'sqlite:///tmp/app.db', 'libsql:./local.db']) {
+      expect(unsafeDataUrls({ DATABASE_URL: value }), value).toEqual([]);
+    }
+  });
+
   it('still calls a container name local and a public name remote', () => {
     // The rule the two above lean on: a name with no dot cannot resolve outside this machine's own network.
     expect(isLocalHost(dataHost('postgres://postgres@db:5432/app')!)).toBe(true);
