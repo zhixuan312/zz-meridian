@@ -38,7 +38,10 @@ describe("Revenue's context", () => {
   it('leads with the title its page is headed by, then the record and the lines worth a look', () => {
     const c = context('30d');
     expect(c.insights[0]).toEqual({ text: 'All 24 Enterprise customers sent more this week than last, in the highest 30 days yet' });
-    expect(c.insights[1].text).toMatch(/^Record: The highest 30 days of revenue yet: /);
+    expect(c.insights[1].text).toMatch(/^Record: The highest 30 days of revenue yet, the \d+(st|nd|rd|th) record in a row\.$/);
+    // The figure the record is about is not repeated in the insight: the card's own figure and caption state it, and the
+    // context states it as a fact ("Revenue: $3,300,438.74") a reader or an agent reads either way.
+    expect(c.facts.map((f) => f.value).join(' ')).toContain(formatCost(3_300_438.74));
     expect(c.insights[2]).toEqual({ text: expect.stringMatching(/^10 customers are past due, the largest Juniperth Travel, /), evidence: '/customers/juniperth-travel' });
     // One Enterprise customer short and the next plan is tried; with none, the title says who paid what against the 30 days before.
     const flat = CUSTOMERS.map((customer) => ({ ...customer, trend: customer.trend.map(() => 1) }));

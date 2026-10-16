@@ -41,8 +41,12 @@ export function periods(values: readonly number[], length: number): number[] {
  *
  * `day` is the date the latest value is about, when the caller has one: the fact carries it and its line names it, "on"
  * the day, or "in the week to" it when `week` says the value is a week's.
+ *
+ * `beside` says the figure this record is about already stands beside the line — the card's own hero figure, and the
+ * caption under it — so the line states the record and not the number a second time. A period record under a hero
+ * figure is the case it is for; the record of a day, whose figure is nowhere else on the card, states its own.
  */
-export function record(values: readonly number[], { needs, what, format, day, week }: { needs: number; what: string; format: (n: number) => string; day?: string; week?: boolean }): (Fact & { run: number }) | null {
+export function record(values: readonly number[], { needs, what, format, day, week, beside }: { needs: number; what: string; format: (n: number) => string; day?: string; week?: boolean; beside?: boolean }): (Fact & { run: number }) | null {
   let highest = -Infinity, run = 0;
   values.forEach((value, i) => {
     run = i + 1 >= needs && value > highest ? run + 1 : 0;
@@ -50,7 +54,7 @@ export function record(values: readonly number[], { needs, what, format, day, we
   });
   if (!run) return null;
   const on = day ? `, ${week ? 'in the week to' : 'on'} ${formatDate(day)}` : '';
-  return { kind: 'record', run, ...(day ? { day } : {}), text: `The highest ${what} yet: ${format(values[values.length - 1])}${run > 1 ? `, the ${ordinal(run)} record in a row` : ''}${on}` };
+  return { kind: 'record', run, ...(day ? { day } : {}), text: `The highest ${what} yet${beside ? '' : `: ${format(values[values.length - 1])}`}${run > 1 ? `, the ${ordinal(run)} record in a row` : ''}${on}` };
 }
 
 /**

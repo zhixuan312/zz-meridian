@@ -141,7 +141,8 @@ export function revenueHead({ period, rows, history }: { period: Period; rows: r
   const days = Math.min(PERIOD_DAYS[period] ?? history.length, history.length);
   // Each whole window of revenue, to the cent, oldest first: the latest is the title's figure and the one before it what it is against.
   const windows = periods(history.map((d) => d.revenue), days).map((sum) => Math.round(sum * 100) / 100);
-  const latest = windows.length ? record(windows, { needs: rules.recordNeedsPeriods, what: `${inDays(days)} of revenue`, format: formatCost }) : null;
+  // `beside`: the card's figure and its caption both state this period's revenue, so the record line says the record.
+  const latest = windows.length ? record(windows, { needs: rules.recordNeedsPeriods, what: `${inDays(days)} of revenue`, format: formatCost, beside: true }) : null;
   if (!windows.length || !counted.length) return { title: null, facts: [], record: latest?.text ?? null };
   return {
     title: revenueTitle({ days, customers: counted.length, revenue: windows.at(-1)!, previous: windows.at(-2) ?? null, all: allSentMore(counted), record: latest }),

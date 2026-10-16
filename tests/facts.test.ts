@@ -53,6 +53,21 @@ describe('a record', () => {
       expect(record(rising(periods), { ...revenue, format: String })!.text, `${periods} periods`).toMatch(new RegExp(`, the ${nth} record in a row$`));
     }
   });
+
+  it('leaves the figure out when it already stands beside the line, and states it when it does not', () => {
+    // A period record under a card's own hero figure: the figure and the caption above it both say the number, and a
+    // third line saying it again is one figure read three times. It is the caller's to say, and only the two period
+    // records — Revenue's and Usage's — say it; every fact a context carries states its own figure.
+    const beside = record(PERIODS, { ...revenue, beside: true })!;
+    expect(beside.run).toBe(3);
+    expect(beside.text).toBe('The highest 30 days of revenue yet, the 3rd record in a row');
+    expect(beside.text).not.toContain(formatCost(3_300_438.74));
+    // The same fact, the way a context states it, still carries the figure it is about.
+    expect(record(PERIODS, revenue)!.text).toBe(`The highest 30 days of revenue yet: ${formatCost(3_300_438.74)}, the 3rd record in a row`);
+    // The record of a day, whose figure is on no card of its own, is called without it and names its own.
+    const day = record([1, 2, 3, 4, 5, 6], { needs: 6, what: 'day of requests', format: String, day: '2026-10-03' })!;
+    expect(day.text).toBe('The highest day of requests yet: 6, on 03 Oct 2026');
+  });
 });
 
 describe('a first', () => {

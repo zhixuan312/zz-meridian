@@ -54,7 +54,8 @@ const coveredBy = (period: Period, history: readonly DailyPoint[]) => Math.min(P
  */
 function periodRecord(period: Period, history: readonly DailyPoint[]) {
   const days = coveredBy(period, history);
-  return record(periods(history.map((d) => d.requests), days), { needs: rules.recordNeedsPeriods, what: `${inDays(days)} of requests`, format: formatCompact });
+  // `beside`: the card's figure and its caption both state this period's requests, so the record line says the record.
+  return record(periods(history.map((d) => d.requests), days), { needs: rules.recordNeedsPeriods, what: `${inDays(days)} of requests`, format: formatCompact, beside: true });
 }
 
 /**
