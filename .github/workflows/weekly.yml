@@ -30,7 +30,7 @@ concurrency:
 jobs:
   template:
     runs-on: ubuntu-24.04
-    # About 70 minutes on an Apple M5 for both suites; the 4-CPU runner is slower.
+    # The template job took 2 h 13 min (run 39028932986, before the Phase 3 fixes); 240 leaves room for a slow day.
     timeout-minutes: 240
     env:
       CHROME: /usr/bin/google-chrome

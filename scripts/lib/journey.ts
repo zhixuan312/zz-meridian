@@ -16,7 +16,6 @@ export type Metric = 'shell' | 'data' | 'interactive';
 export type Condition = 'warm' | 'cold' | 'afterLive';
 export const DEVICES: Device[] = ['desktop', 'phone'];
 export const METRICS: Metric[] = ['shell', 'data', 'interactive'];
-export const BUDGET_KEY = { shell: 'shellMs', data: 'dataMs', interactive: 'interactiveMs' } as const;
 /** The phone is slow by design: its waits are longer, never its budgets. */
 const PATIENCE: Record<Device, number> = { desktop: 10_000, phone: 30_000 };
 /** How long a press may take to show its result before the control is called dead: past every cold interactive budget. */

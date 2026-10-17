@@ -45,11 +45,11 @@
  */
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
-import { budgetsOf, type NavigationCheck } from './lib/budgets.ts';
+import { budgetsOf, limitsFor, type NavigationCheck } from './lib/budgets.ts';
 import { launch, type Page } from './lib/chrome.ts';
 import { resolveCoverage, selectSmokeRoutes } from './lib/coverage.ts';
 import { railRoutes } from './lib/routes.ts';
-import { BUDGET_KEY, DEVICES, Fail, METRICS, PREFETCH_WAIT, drawerRoutes, journey, journeyStart, openStart, prepare, sleep, type Device, type Measured, type Metric, type NavConfig } from './lib/journey.ts';
+import { DEVICES, Fail, METRICS, PREFETCH_WAIT, drawerRoutes, journey, journeyStart, openStart, prepare, sleep, type Device, type Measured, type Metric, type NavConfig } from './lib/journey.ts';
 import { isPrefetch, prefetchProblems } from './lib/sizes.ts';
 import { judge } from './lib/timing.ts';
 
@@ -271,11 +271,7 @@ async function main(): Promise<number> {
       const way = journeyStart(rail.routes, route, starts, drawn, [...homes.keys()]);
       const start: From | undefined = way && { from: way.from, menu: way.via === 'menu' ? homes.get(route) : undefined };
       for (const device of DEVICES) {
-        const limits = Object.fromEntries(METRICS.map((m) => {
-          // A route's own figure, where the config gives one, stands in for the shared one on that metric and device.
-          const shared = budgets.navigation.warm[BUDGET_KEY[m]][device];
-          return [m, check?.budget?.[BUDGET_KEY[m]]?.[device] ?? shared];
-        })) as Record<Metric, number>;
+        const limits = limitsFor(budgets, 'warm', device, check);
         let line: Line;
         try {
           // A route with no other route to start from has no navigation to time: it is a problem, never a 0 ms pass.
