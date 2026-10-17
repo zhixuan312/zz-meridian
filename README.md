@@ -77,8 +77,8 @@ Dark is the default, written on `:root`; the light theme follows the operating s
 | `scripts/` | Generators, gates, `brand.ts` and `verify.ts` (see `CONTRIBUTING.md`) |
 | `skills/zz-meridian/` | The agent skill (Claude Code, Codex) that builds dashboards on this template or brings it into yours, to the standard in `references/standard.md`; how it is evaluated is `docs/skill-evals.md` |
 | `cli/` | The `zz-meridian` npm package: `create`, `adopt`, `update`, `brand` and `skill`, its build, its smoke test and the fixture apps (`docs/distribution.md`) |
-| `.github/workflows/release.yml` | The release, each check once: a timed default verify and the consumer path from the tarball (the release before updated; the last three weekly), then npm with provenance, the registry's bytes and provenance checked, then the tag (`.claude/commands/release.md`) |
-| `.github/workflows/weekly.yml` | Weekly, never at release: `verify --full --perf` (perf a report) and the consumer smoke's recovery and failure cases; nothing waits on it |
+| `.github/workflows/release.yml` | The release, each check once: the default verify within its time limit and the consumer path from the tarball (the release before updated; the last three weekly), then npm with provenance, the registry's bytes and provenance checked, then the tag (`.claude/commands/release.md`) |
+| `.github/workflows/weekly.yml` | Weekly, never at release: `verify --full --timed --perf` (perf a report) and the consumer smoke's recovery and failure cases; nothing waits on it |
 | `Dockerfile`, `captain-definition` | The demo deployment: the template and the Atlas behind `DEMO_PASSWORD` (`proxy.ts`, `app/sign-in/README.md`), deployed to CapRover from this repository; never in the package |
 
 ## Get a dashboard on Meridian, in one sentence
@@ -90,11 +90,11 @@ words at the end:
 
 In Claude Code or Codex, send it as a goal (`/goal Run npx zz-meridian@latest skill --global, then …`): the agent keeps
 working until the condition holds, and a separate model checks it after every turn against the hand-over, which quotes
-its evidence. The sentence says what you want; the skill carries how good it has to be. It builds, renders every view
-at phone and desktop width in both themes, scores each one on a scoreboard of floors (measured by `pnpm verify --full`)
-and craft (judged on the renders), and improves it round by round until nothing is weak, deciding what it can find out
-and recording each decision it made for you. You get the finished product, the renders, and the few questions only you
-can answer.
+its evidence. The sentence says what you want; the skill carries how good it has to be. It builds, renders every view at
+phone and desktop width in both themes, scores each one on a scoreboard of floors (measured by
+`pnpm verify --full --timed`) and craft (judged on the renders), and improves it round by round until nothing is weak,
+deciding what it can find out and recording each decision it made for you. You get the finished product, the renders,
+and the few questions only you can answer.
 
 You do not choose between the package's commands; the skill does, from what you said and what is in the folder, and
 names the route before it runs anything:
@@ -108,12 +108,13 @@ names the route before it runs anything:
 
 `adopt` copies the components, tokens and gates in, merges the dependencies, brands it, adds Meridian's managed block to
 your `AGENTS.md` (your own text there is kept byte for byte) and an empty `docs/brief.md` for your product's own
-context, and installs the skill into the project. `create` writes a new, branded project with the same skill. The
-agent then does the judgement: building each page on Meridian, and running `pnpm verify` until the project meets the
-standard (`pnpm verify --full` after a change to shared components, the shell or data). It needs Node 22.18+, and
-Google Chrome for the browser checks. If your pages call a live API, say so in the sentence: `verify --full` presses
-every control, Delete included, so the agent builds a fake API first. The package (`cli/`, decision 0009) copies files
-and nothing depends on it afterwards; its commands are in `cli/README.md`.
+context, and installs the skill into the project. `create` writes a new, branded project with the same skill. The agent
+then does the judgement: building each page on Meridian, and running `pnpm verify` until the project meets the standard
+(`pnpm verify --full` after a change to shared components, the shell or data, and `pnpm verify --full --timed`, the
+whole standard, before it hands over). It needs Node 22.18+, and Google Chrome for the browser checks. If your pages
+call a live API, say so in the sentence: `verify --full` presses every control, Delete included, so the agent builds a
+fake API first. The package (`cli/`, decision 0009) copies files and nothing depends on it afterwards; its commands are
+in `cli/README.md`.
 
 ## Privacy and feedback
 
@@ -137,7 +138,8 @@ pnpm install
 pnpm dev                 # the template at /, the Design Atlas at /system
 pnpm gate                # tokens fresh, registry fresh, specs consistent, contrast in every theme and accent, types, tests
 pnpm verify              # the gate once, one production build, the size checks and a smoke of up to three routes
-pnpm verify --full       # every route, every control and link, the keyboard walk, the assistant and the live data
+pnpm verify --full       # every route, every control and link, the keyboard walk, the assistant and the product's own checks; no time is judged
+pnpm verify --timed      # the navigation budgets, the live data and Web Vitals; needs a quiet machine, runs alone and last
                          # (the browser suites look inside open shadow roots; validation.md says what each line means)
 pnpm brand --name "Acme" --hue 25 --chroma 0.16   # rename and rebrand in place
 ```

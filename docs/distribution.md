@@ -18,10 +18,10 @@ An earlier sentence named `adopt`, the wrong command for every request for a new
 The sentence is written to be sent as a goal (`/goal` in Claude Code and Codex), which keeps the agent working until a
 separate model, reading the conversation after every turn, finds the condition met. That model sees the sentence, not
 the skill, so the sentence ends with a condition the transcript can show: the hand-over (SKILL.md, step 7) quotes
-`pnpm verify --full`'s last line and the scoreboard's count, or names what only the person can decide or provide. The
-degree lives in the skill, never in the sentence: `skills/zz-meridian/references/standard.md` holds the register, the
-scoreboard of floors and craft kept for every view, the loop run until nothing is weak, and which decisions the agent
-makes and records and which wait for the person. People do not say how good it has to be, so the skill does not ask.
+`pnpm verify --full --timed`'s last line and the scoreboard's count, or names what only the person can decide or
+provide. The degree lives in the skill, never in the sentence: `skills/zz-meridian/references/standard.md` holds the
+register, the scoreboard of floors and craft kept for every view, the loop run until nothing is weak, and which
+decisions the agent makes and records and which wait for the person. People do not say how good it has to be, so the skill does not ask.
 
 The split follows what each part is good at. The package does the settled work, the same way every time, and proves it
 built: what to copy, which dependencies to merge, the alias, the stylesheet, the brand. The agent does the judgement:
@@ -154,7 +154,7 @@ Eleven arrived after 0.5.0 and are resolved as the skill's `references/update.md
 
 | Id | Reported when a team-owned file still has | Completion step |
 |----|-------------------------------------------|-----------------|
-| `verify-modes` | a `package.json` script, workflow or shell file passing `--quick`, `--no-vitals` or `--extra` to `verify` | `validation.md`: replace each with `pnpm verify`, `--full` or `--perf` in the script, workflow or shell file |
+| `verify-modes` | a `package.json` script, workflow or shell file passing `--quick`, `--no-vitals` or `--extra` to `verify` | `validation.md`: replace each with `pnpm verify`, `--full`, `--timed` or `--perf` in the script, workflow or shell file |
 | `shell-assistant-promise` | `<AppShell` with an `assistant=` prop and no promise (`.then(`, `Promise`, `use(`) | `cache.md`, "The shell's assistant promise": pass a promise and do not await it |
 | `assistant-available-promise` | `useAssistantAvailable()` used as a boolean | same section: `use(useAssistantAvailable())` inside `Suspense` |
 | `clock-now-required` | `<Freshness`, `<ShellTools` or `<AlertsPanel` without `now=`, or `formatRelative(` with one argument | `cache.md`, "The clock is the data's": pass the data's clock |
@@ -216,7 +216,7 @@ Modelled on the release pipeline of the owner's earlier packages, one package in
 1. **Dispatch**: `gh workflow run release.yml -f version=<v> [-f dry_run=true]`, from `master`. The version must equal
    `cli/package.json`'s and the tag must be unused.
 2. **Gates** (ubuntu-24.04, 4 CPUs, the reference profile), each run once: the package's own tests (`tests/cli-*`) and the
-   browser-fixture tests of the checks (`tests/deep-*`), which no adopted or created project has and the timed default
+   browser-fixture tests of the checks (`tests/deep-*`), which no adopted or created project has and the default
    `verify` leaves out; the template's default `verify` from a clean `.next` through
    `cli/scripts/release-check.ts`, within 180 s on the shared runner (whose CPU varies: one commit measured 111 s on one
    and 152 s on another) and with its browser smoke (the gate and the template's unit tests run
@@ -246,7 +246,7 @@ Modelled on the release pipeline of the owner's earlier packages, one package in
 `dry_run` stops after step 4.
 
 **Weekly** (`.github/workflows/weekly.yml`, Mondays and on demand, master's current commit): the template's
-`verify --full --perf`, one gate and one build for both (the perf part a report: a p95 over budget is a warning, a
+`verify --full --timed --perf`, one gate and one build for both (the perf part a report: a p95 over budget is a warning, a
 broken sample a failure), and the consumer smoke's `--adopt --update --origins 3 --update-all --verify` from a tarball packed from that
 commit, labelled as the next patch so `update` treats it as unpublished: the adopted project's default verify cases,
 the update from each of the last three releases, the updater's stages on the 0.3.0 fixture, and every recovery and

@@ -96,7 +96,7 @@ type VerifyConfig = {
     prefetchKb?: { desktop: number; phoneClosed: number };
   };
   /**
-   * One check for every route in the rail (`nav` in src/app.config.ts). `--full` and `--perf` fail on a rail route that has
+   * One check for every route in the rail (`nav` in src/app.config.ts). `--full`, `--timed` and `--perf` fail on a rail route that has
    * none; the default smoke reports its data and interaction as not configured. Probes never write.
    * Selectors resolve inside open shadow roots as well as the light DOM; a descendant combinator does not cross a shadow
    * boundary, so name an element inside a root with a selector written for that root. When `controlSelector` matches more than

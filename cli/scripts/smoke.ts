@@ -8,7 +8,8 @@
  * layer), committed to git as a team's would be. The team's files must come out unchanged, the gate must pass under
  * the team's own eslint config, and next build must succeed.
  * --create: a new dashboard from the tarball, then its default pnpm verify (the gate, one build, the bounded smoke).
- * --verify runs pnpm verify --full on it instead (Chrome required).
+ * --verify runs pnpm verify --full --timed on it instead (Chrome required; the timed verdicts need a quiet machine, so it
+ * runs on request and no workflow runs this case).
  * --keep leaves the fixture projects in the temporary folder for inspection; without it they are removed, pass, fail, error or interrupt.
  * --verify also runs the default verify twice in scratch copies of the adopted project: once with `noLiveApi: true` as a
  * team edit and no mappings, and once with no safe backend. Each case prints its coverage line.
@@ -793,12 +794,12 @@ if (args.includes('--create')) {
   check(text('next.config.ts').includes("'/api/assistant': ['./docs/brief.md']"), "next.config.ts still traces docs/brief.md for /api/assistant");
   const createOffenders = unmanaged(JSON.parse(text('.meridian/manifest.json')));
   check(JSON.parse(text('.meridian/manifest.json')).version === VERSION && createOffenders.length === 0, 'the create manifest is the running version and holds only managed paths', createOffenders.join('\n'));
-  // The default verify (the gate, one build, the bounded smoke) is what the team runs every day; --verify asks for --full.
+  // The default verify (the gate, one build, the bounded smoke) is what the team runs every day; --verify asks for --full --timed.
   if (args.includes('--verify')) {
-    const v = sh(pm, pm === 'npm' ? ['run', 'verify', '--', '--full'] : ['run', 'verify', '--full'], dir);
+    const v = sh(pm, pm === 'npm' ? ['run', 'verify', '--', '--full', '--timed'] : ['run', 'verify', '--full', '--timed'], dir);
     const line = coverageOf(v.stdout);
-    console.log(`     coverage (created, --full): ${line}`);
-    check(v.status === 0 && /^coverage: full; browser ran; /.test(line) && /not run: none$/.test(line), `${pm} run verify --full passes in the new dashboard with nothing left unrun`, v.stdout + v.stderr);
+    console.log(`     coverage (created, --full --timed): ${line}`);
+    check(v.status === 0 && line.startsWith('coverage: full+timed; browser ran; ') && /not run: none$/.test(line), `${pm} run verify --full --timed passes in the new dashboard with nothing left unrun`, v.stdout + v.stderr);
   } else {
     const t0 = performance.now();
     const v = sh(pm, ['run', 'verify'], dir);

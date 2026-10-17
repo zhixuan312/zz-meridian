@@ -152,7 +152,7 @@ jobs:
 
       - run: pnpm install --frozen-lockfile
       # The tests only this repository has: tests/cli-* (the package's own) and tests/deep-* (the browser-fixture tests of
-      # the checks, about 230 s). No adopted or created project has them, so the timed default verify below leaves them
+      # the checks, about 230 s). No adopted or created project has them, so the default verify below leaves them
       # out, and they run here, once. The deep files each launch headless Chrome (deep-checks runs five suites at a time),
       # so they run one file after another: on this 4-CPU runner a Chrome started beside them missed its start window.
       - name: The package's own tests

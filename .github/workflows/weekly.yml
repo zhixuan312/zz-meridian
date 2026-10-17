@@ -2,12 +2,14 @@
 # master's current commit. Weekly is weekly and release is release: nothing here runs in release.yml, and nothing runs
 # twice. A failure fails this run and GitHub notifies; nothing waits on it.
 #
-# - `template`: the template's `pnpm verify --full --perf`, one gate and one build for both: every rail route with the
-#   audit, every control and link, the keyboard walk, the assistant, the live data and the vitals, then 20 samples per
-#   route, device and condition. A p95 over its budget is a `warn` in the report; only a broken sample fails.
+# - `template`: the template's `pnpm verify --full --timed --perf`, one gate and one build for all three tiers: the
+#   complete suites first (every rail route with the audit, every control and link, the keyboard walk, the assistant and
+#   the template's own checks; `--full` judges no time), then the timed ones alone (the navigation budgets, the live data
+#   and the Web Vitals; `--timed` judges every time), then 20 samples per route, device and condition (`--perf`). A p95
+#   over its budget is a `warn` in the report; only a broken sample fails.
 # - `consumer`: the consumer smoke from a tarball packed from this commit: the adopted project's default verify cases,
 #   the update from each of the last three releases (adopted and created), and every recovery and failure case of the
-#   update.
+#   update. The created project's `--verify` case (`--full --timed`) is not run here or in release.yml; it runs on request.
 #
 # Each job keeps its log as an artifact. This workflow holds no publishing permission and no credential.
 
@@ -44,11 +46,11 @@ jobs:
           node-version: 22
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - name: verify --full --perf (the perf part a report)
+      - name: verify --full --timed --perf (the perf part a report)
         run: |
           set -euo pipefail
           mkdir -p out
-          pnpm verify --full --perf 2>&1 | tee out/weekly-template.txt
+          pnpm verify --full --timed --perf 2>&1 | tee out/weekly-template.txt
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         if: always()
         with:

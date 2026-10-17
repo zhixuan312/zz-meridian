@@ -29,7 +29,7 @@ sample, ZZ Meridian's own dashboard, lives in `optional:src/system/fixtures/`; y
   JavaScript has loaded and run, about 2.5 s on a mid-range phone, which puts LCP past the limit. Call
   `preload(url, { as: 'fetch', crossOrigin: 'anonymous' })` from `react-dom` inside the read hook: the server render
   writes a preload into the HTML, and the read starts with the page (ZZ Console measured about 170 ms instead).
-  `pnpm verify --full` measures LCP on that phone profile (`scripts/vitals.ts`).
+  `pnpm verify --timed` measures LCP on that phone profile (`scripts/vitals.ts`).
 - **The access seam**: who may do what lives in `optional:src/data/`, and a page never answers it on its own. Three files
   hold the rules and one holds the member boundary.
   - `optional:src/data/roles.ts` is the role table. `MAIN_ROLES`, `ADD_ONS` and `GRANTS`; `effective(role, addOns)` unions a
@@ -579,8 +579,8 @@ grep -rn "/services\|/requests\|/customers\|/keys\|/settings\|/members\|/usage\|
   app src/views src/components --include=*.tsx --include=*.ts | grep -v preview.tsx
 ```
 
-Then `pnpm verify --full`, after `node scripts/registry.ts` in a clone that keeps the Atlas (a created project has no
-cards' previews, and there it writes a registry of none).
+Then `pnpm verify --full --timed`, after `node scripts/registry.ts` in a clone that keeps the Atlas (a created project
+has no cards' previews, and there it writes a registry of none).
 
 ## Renaming a thing
 

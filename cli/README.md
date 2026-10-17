@@ -13,11 +13,11 @@ words at the end:
 
 In Claude Code or Codex, send it as a goal (`/goal Run npx zz-meridian@latest skill --global, then …`): the agent keeps
 working until the condition holds, and a separate model checks it after every turn against the hand-over, which quotes
-its evidence. The sentence says what you want; the skill carries how good it has to be. It builds, renders every view
-at phone and desktop width in both themes, scores each one on a scoreboard of floors (measured by `pnpm verify --full`)
-and craft (judged on the renders), and improves it round by round until nothing is weak, deciding what it can find out
-and recording each decision it made for you. You get the finished product, the renders, and the few questions only you
-can answer.
+its evidence. The sentence says what you want; the skill carries how good it has to be. It builds, renders every view at
+phone and desktop width in both themes, scores each one on a scoreboard of floors (measured by
+`pnpm verify --full --timed`) and craft (judged on the renders), and improves it round by round until nothing is weak,
+deciding what it can find out and recording each decision it made for you. You get the finished product, the renders,
+and the few questions only you can answer.
 
 The skill picks the command from what you said and what is in the folder, and names it before running anything:
 `adopt` to change this Next.js App Router project in place ("make this admin panel look professional"), `create` for a
@@ -80,7 +80,7 @@ styles) and `src/app.config.ts` for the new flags and records them in the manife
 refuses when one of those outputs was edited, while an update is open, or on a dirty tree (unless `--allow-dirty`). Run
 it with the version the manifest records. The project's own `pnpm brand` still works, but its changes count as your edits.
 
-Requires Node 22.18 or newer. The default `pnpm verify` runs without Google Chrome and reports the browser checks as not run; `--full` and `--perf` need it.
+Requires Node 22.18 or newer. The default `pnpm verify` runs without Google Chrome and reports the browser checks as not run; `--full`, `--timed` and `--perf` need it.
 
 ## What this package does not do
 

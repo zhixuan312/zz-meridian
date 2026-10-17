@@ -6,12 +6,12 @@ the recorded release from the registry, and works in a temporary folder). A plai
 `npx zz-meridian@latest update` then applies the safe changes and stages the rest. Do not copy files by hand to make up
 for either.
 
-When the project is already on the running version, `update` (and its dry run) prints `already at <version>; nothing
-to update` and exits 0: say so in the hand-over and stop there; the standard is not re-proven for a change that did
-not happen. After an update that changed files, run the
-loop in `standard.md` on what it changed, and close with `pnpm verify --full`. A release can make a suite look further
-than the last one did (the browser checks now look inside open shadow roots), so a finding that is new after an update may be
-a page that was never measured before; `validation.md` says what each line means.
+When the project is already on the running version, `update` (and its dry run) prints
+`already at <version>; nothing to update` and exits 0: say so in the hand-over and stop there; the standard is not
+re-proven for a change that did not happen. After an update that changed files, run the loop in `standard.md` on what it
+changed, and close with `pnpm verify --full --timed`. A release can make a suite look further than the last one did (the
+browser checks now look inside open shadow roots), so a finding that is new after an update may be a page that was never
+measured before; `validation.md` says what each line means.
 
 An update is tested from the last three releases. When the manifest's version is older than that (`npm view
 zz-meridian versions` lists them), update in steps: first with the release three after it,
@@ -146,11 +146,11 @@ conflict. A protected file a check rewrites, such as a `tsconfig.json` that Next
 commit the change, then finalize again.
 
 **What "complete" means.** The gate and one production build passed on the live project, the files are the target
-release's (plus the team's resolutions), and `optional:.meridian/manifest.json` now records the target as the baseline for the
-next update. Without `--verify` it does not mean the browser checks ran: the output says `browser: not run`, and `<pm> run verify`
-runs the bounded smoke (`<pm> run verify -- --full` the exhaustive suites). With `--verify` the output, `MERGE.md` and
-the archived evidence carry verify's coverage line, which says what ran and what did not. A failing verify fails the
-session as a failing gate does.
+release's (plus the team's resolutions), and `optional:.meridian/manifest.json` now records the target as the baseline
+for the next update. Without `--verify` it does not mean the browser checks ran: the output says `browser: not run`, and
+`<pm> run verify` runs the bounded smoke (`<pm> run verify -- --full` the exhaustive suites, `-- --timed` the timed
+ones). With `--verify` the output, `MERGE.md` and the archived evidence carry verify's coverage line, which says what
+ran and what did not. A failing verify fails the session as a failing gate does.
 
 A zero-conflict update finalizes in the same command: `update` prints the conflict summary and then the finalize
 output, exit `0`.
@@ -202,7 +202,7 @@ each one in the project, then record it as above, with the hashes of the files a
 
 | Id | The old shape it found | The change |
 |----|------------------------|------------|
-| `verify-modes` | a `package.json` script, workflow or shell file passing `--quick`, `--no-vitals` or `--extra` to verify | use `pnpm verify`, `--full` or `--perf` instead: `validation.md`; only the gate runs after it |
+| `verify-modes` | a `package.json` script, workflow or shell file passing `--quick`, `--no-vitals` or `--extra` to verify | use `pnpm verify`, `--full`, `--timed` or `--perf` instead: `validation.md`; only the gate runs after it |
 | `shell-assistant-promise` | `<AppShell assistant=...>` with a boolean | pass a `Promise<boolean>`: `cache.md`, "The shell's assistant promise" |
 | `assistant-available-promise` | `useAssistantAvailable()` read as a boolean | `use(useAssistantAvailable())` inside a `Suspense` boundary: same section |
 | `clock-now-required` | `Freshness`, `ShellTools` or `AlertsPanel` without `now`, `formatRelative` with one argument | pass the data's clock: "The clock is the data's" |
