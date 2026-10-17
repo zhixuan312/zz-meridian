@@ -4,6 +4,13 @@ Every release of ZZ Meridian, newest first. Versions follow semver: a removed or
 
 ## [Unreleased]
 
+### Breaking
+
+- **`pnpm verify --full` no longer judges a time.** It runs the complete suites: every rail route navigated for its function, the audit, every control pressed and link followed, the keyboard walk, the assistant and the product's own browser checks. The navigation budgets, the live-data suite and Web Vitals moved to the new `pnpm verify --timed`, which runs them alone and last and needs a quiet machine. Only `pnpm verify --full --timed` can end `the project meets the Meridian standard`; a `--full` run with nothing else unrun ends `every check that ran passed; not run: timing, live, vitals; pnpm verify --timed runs them`. A script, workflow or agent prompt that ran `--full` for the whole standard runs `--full --timed` instead; weekly CI runs `pnpm verify --full --timed --perf`. `docs/testing.md` classifies every check by size, type and tier.
+- **`pnpm verify` and `--full` no longer fail a route for being slow.** Their navigation (`scripts/navigate.ts --timing off`) judges whether each route's shell, data and first interaction arrive, never how fast; `pnpm verify --timed` judges the same journeys against `budgets.navigation`. A project that relied on the default smoke to catch a slow route runs `pnpm verify --timed` on a quiet machine.
+- **`pnpm gate` no longer runs `tests/deep-*`**, the browser-fixture tests of the checks, which only this repository has. Its closing line names the command that does: `pnpm exec vitest run tests/deep- --no-file-parallelism`.
+- **The coverage line has new words.** Its depth can be `timed`, `full+timed` or `full+timed+perf`, and its `not run:` list can name `timing`. A script that matched `coverage: full;` for a complete run matches `coverage: full+timed;` and `not run: none`.
+
 ### Fixed
 
 - **The gate and `ask` find a view tool kept in a module of its own** ([#43](https://github.com/zhixuan312/zz-meridian/issues/43)). `viewToolPages()` (`scripts/lib/routes.ts`) read the `defineViewTool` calls written in `src/views/tools.ts` alone, so a project that keeps each tool in a module the registry imports got an empty list. `scripts/check.ts` then asked no page for its `### What the agent does here` — green by absence — and `scripts/ask.ts` named every view by its page's folder, never by its tool. It now reads every project module the registry reaches through its imports, by a relative path or a tsconfig alias, an `index` included. A project whose tools sat in such modules can find pages failing `check.ts` that passed before: each is a page a tool names whose specification lacks the part, and the fix is that part.
