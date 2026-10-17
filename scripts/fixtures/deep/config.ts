@@ -18,6 +18,8 @@ const config = {
     { path: '/nav-solo', title: 'Solo', readySelector: 'main table tbody tr', probe: 'toggle', controlSelector: 'main button#toggle', resultSelector: 'main button#toggle' },
     // The same, in a workspace the menu does not offer.
     { path: '/nav-solo-unoffered', title: 'Unoffered', readySelector: 'main table tbody tr', probe: 'toggle', controlSelector: 'main button#toggle', resultSelector: 'main button#toggle' },
+    // The control is there and pressable, and pressing it changes nothing.
+    { path: '/nav-dead-control', title: 'Dead control', readySelector: 'main table tbody tr', probe: 'toggle', controlSelector: 'main button#toggle', resultSelector: 'main button#toggle' },
   ],
 };
 

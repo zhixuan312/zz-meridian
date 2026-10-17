@@ -20,7 +20,9 @@ Any route that is not a page below answers a clean page (light DOM, no control),
 | `presses` | `node scripts/interactions.ts --base <url> --routes <page>` |
 | `keyboard` | `node scripts/keyboard.ts --base <url> --routes <page>` |
 | `vitals` | `node scripts/vitals.ts --base <url> --routes <page>` |
-| `navigate` | `node scripts/navigate.ts --base <url> --config scripts/fixtures/deep/config.ts --rail /nav-home,/nav-solo,/nav-solo-unoffered,/nav-root-target,/nav-missing-target,/nav-multi,/nav-root-hydrated --homes /nav-home=Main,/nav-solo=Solo,/nav-solo-unoffered=Unoffered --routes <page>` |
+| `navigate` | `node scripts/navigate.ts --base <url> --config scripts/fixtures/deep/config.ts --rail /nav-home,/nav-solo,/nav-solo-unoffered,/nav-root-target,/nav-missing-target,/nav-multi,/nav-root-hydrated,/nav-dead-control --homes /nav-home=Main,/nav-solo=Solo,/nav-solo-unoffered=Unoffered --routes <page>` |
+| `navigate-timing-off` | The `navigate` command with `--config scripts/fixtures/deep/config-tight.ts --timing off`. `config-tight.ts` is `config.ts`'s mappings with every navigation budget at 1 ms, so only function can fail a line |
+| `navigate-timing-on` | The same with `--timing on`: a page that works is over its 1 ms budget |
 
 ## Pages
 
@@ -47,6 +49,7 @@ Every page has an `h1`, `lang="en"`, a `main`, an opaque ground and controls of 
 | `/nav-root-hydrated` | The same on a page marked as a hydrated Next page: the control inside the root is ready once its host is |
 | `/nav-missing-target` | Navigation: the mapping names a control the page does not have |
 | `/nav-multi` | Navigation: the control selector matches two elements, the first hidden |
+| `/nav-dead-control` | Navigation: the mapping's control is there and pressable, and pressing it changes nothing: `control-dead` (fails). Last in the rail, so every other page starts where it did |
 | `/nav-solo` | Navigation: the only destination of its workspace (Solo). No other page's rail links to it, so the journey starts on `/nav-home` and presses the workspace menu's Solo item, which opens it with no link (passes, `through the workspace menu (Solo) · not prefetched`) |
 | `/nav-solo-unoffered` | Navigation: the same, in a workspace the menu does not offer: the journey is `never-ready`, naming the workspace (fails) |
 | `/deep-tap` | Vitals: the Alerts button a phone taps is inside an open root (`taps: 1`) |
@@ -60,6 +63,7 @@ Every page has an `h1`, `lang="en"`, a `main`, an opaque ground and controls of 
 | `/overlap-none` | What is not a collision, on one page (passes): the two corrected twins, and the three shapes the first sweep of real pages misreported, a clamp's hidden lines, a line below the fold of a clipped list, and the text of a closed `<details>` |
 | `/late-unnamed` | An unnamed control that arrives in `[data-assistant-slot]` 2.6 s after the page, past the audit's fixed wait. Also a keyboard case (`-fixed`) |
 | `/late-dead-control` | A control that does nothing, arriving 3.6 s after the page, past the presses' fixed wait: unlisted, it was never pressed and the run read `0 controls pressed … 0 issues` |
+| `/late-answer` | A control whose answer, a status line, comes 1.5 s after its press, past the presses' first look at 600 ms: slow, not dead (passes) |
 | `/sideways-region` | A content region 600px wide in a 300px canvas: the first of the sideways rule's three arms. `-fixed` fits |
 | `/sideways-data-page` | A `[data-page-width="data"]` page 200px wide in a 400px canvas: the page is what should stretch. `-fixed` fills it |
 | `/sideways-table` | A 600px table in a 240px frame that clips rather than scrolls, so no scrollbar offers the rest. `-fixed` fits |

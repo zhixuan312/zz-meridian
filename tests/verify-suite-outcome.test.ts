@@ -18,10 +18,10 @@ describe('a suite that ran nothing', () => {
     expect(suiteOutcome(1)).toBe('FAIL');
     expect(suiteOutcome(null)).toBe('FAIL');
   });
-  it('keeps --full from saying the project meets the standard while a suite did not run', () => {
-    expect(finalOutcome(true, [])).toBe('the project meets the Meridian standard');
-    expect(finalOutcome(true, ['live'])).toBe('every check that ran passed; not run: live');
-    expect(finalOutcome(false, ['audit'])).toBe('every check that ran passed; pnpm verify --full runs the rest');
+  it('keeps --full --timed from saying the project meets the standard while a suite did not run', () => {
+    expect(finalOutcome({ full: true, timed: true }, [])).toBe('the project meets the Meridian standard');
+    expect(finalOutcome({ full: true, timed: true }, ['live'])).toBe('every check that ran passed; not run: live');
+    expect(finalOutcome({ full: false, timed: false }, ['audit'])).toBe('every check that ran passed; pnpm verify --full --timed runs the rest');
   });
 });
 

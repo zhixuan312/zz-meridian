@@ -77,10 +77,27 @@ describe('keyboard', () => {
   casesFor('keyboard', (page, base) => ['scripts/keyboard.ts', '--base', base, '--routes', page], 120_000);
 });
 
+// The rail and the homes the three navigate blocks share. The page added last sits at the end of the rail, so every other page
+// starts where it did. The two homes of a workspace of one destination sit after /nav-home for the same reason.
+const NAV_RAIL = '/nav-home,/nav-solo,/nav-solo-unoffered,/nav-root-target,/nav-missing-target,/nav-multi,/nav-root-hydrated,/nav-dead-control';
+const NAV_HOMES = '/nav-home=Main,/nav-solo=Solo,/nav-solo-unoffered=Unoffered';
+const navigate = (config: string, timing: string[]) => (page: string, base: string) => ['scripts/navigate.ts', '--base', base, '--config', config, '--rail', NAV_RAIL, '--homes', NAV_HOMES, ...timing, '--routes', page];
+
 describe('navigate', () => {
-  // The readiness journey on desktop and phone, with the fixture's own mappings, rail and workspace homes. A note passes and
-  // prints its line. The two homes of a workspace of one destination sit after /nav-home, so every other page starts where it did.
-  casesFor('navigate', (page, base) => ['scripts/navigate.ts', '--base', base, '--config', 'scripts/fixtures/deep/config.ts', '--rail', '/nav-home,/nav-solo,/nav-solo-unoffered,/nav-root-target,/nav-missing-target,/nav-multi,/nav-root-hydrated', '--homes', '/nav-home=Main,/nav-solo=Solo,/nav-solo-unoffered=Unoffered', '--routes', page], 180_000);
+  // The readiness journey on desktop and phone, with the fixture's own mappings, rail and workspace homes, and the default
+  // timing. A note passes and prints its line.
+  casesFor('navigate', navigate('scripts/fixtures/deep/config.ts', []), 180_000);
+});
+
+describe('navigate-timing-off', () => {
+  // The same journeys under 1 ms budgets with `--timing off`: no time is compared, so only a wrong result, a control that
+  // is not there or a control that does nothing fails.
+  casesFor('navigate-timing-off', navigate('scripts/fixtures/deep/config-tight.ts', ['--timing', 'off']), 180_000);
+});
+
+describe('navigate-timing-on', () => {
+  // The same budgets with `--timing on`: the page that works is over its 1 ms budget.
+  casesFor('navigate-timing-on', navigate('scripts/fixtures/deep/config-tight.ts', ['--timing', 'on']), 180_000);
 });
 
 describe('vitals', () => {

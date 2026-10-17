@@ -8,7 +8,7 @@ import { SUITE_NAMES } from '../scripts/lib/coverage.ts';
 const verify = fs.readFileSync(path.resolve(import.meta.dirname, '../scripts/verify.ts'), 'utf8');
 
 it('exports every suite name verify can list, in the coverage line order', () => {
-  expect([...SUITE_NAMES]).toEqual(['audit', 'presses', 'keyboard', 'assistant', 'live', 'vitals', 'browserChecks', 'perf']);
+  expect([...SUITE_NAMES]).toEqual(['audit', 'presses', 'keyboard', 'assistant', 'browserChecks', 'timing', 'live', 'vitals', 'perf']);
 });
 
 it('is the only place the suite names are written: verify builds its list from it', () => {
