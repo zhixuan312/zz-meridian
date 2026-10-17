@@ -411,6 +411,14 @@ export const RELEASE_MIGRATIONS: ReleaseMigration[] = [
     instructions: 'Bring `tests/rail-marker.test.tsx` over from the release as it has it. Since 0.16.2 `src/components/patterns/rail/index.tsx` reads no offset of its own — a rail mounts inside the tap that opens the phone drawer, and a read there lays the page out inside that tap — so the marker\'s first position is the one `observe` delivers, after the effect that called it. A test whose fake answers `observe` with an empty body expects the marker before any delivery and fails; the release\'s fake answers it with the callback, `observe() { for (const cb of observers) queueMicrotask(cb); }`, and reads the marker after that delivery. A test of your own that mounts the rail changes the same way.',
     checks: ['gate'],
   },
+  {
+    id: 'view-page-matched-as-next',
+    since: '0.16.3',
+    applies: (root) => (/\bfunction onPage\s*\(/.test(text(root, 'app/api/assistant/route.ts') ?? '') ? ['app/api/assistant/route.ts'] : null),
+    summary: 'The assistant route finds the view of the page a person is on with `viewAt` from `src/lib/shared-context.ts`, which matches a catch-all `page` as Next.js does.',
+    instructions: 'In `app/api/assistant/route.ts`, delete the local `onPage` and find the view with `viewAt` from `@/lib/shared-context`: `const at = viewAt(viewTools, path); const view = at && views.includes(at) ? at : undefined;`, where `views` are the view tools the person may use. `onPage` matched a `[...name]` segment as one segment and a `[[...name]]` never, so a view whose `page` is a catch-all (`/docs/[...path]`) was handed its prepared query at one depth only. `viewAt` matches as Next.js does — `[...name]` one or more segments, `[[...name]]` zero or more — and where two views match one address it takes the one Next.js renders, before asking whether the person may use it, so a less specific view never stands in for the page.',
+    checks: ['gate'],
+  },
 ];
 
 /**

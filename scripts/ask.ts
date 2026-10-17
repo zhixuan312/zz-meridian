@@ -317,11 +317,16 @@ function report(view: View, address: string, persona: string, base: string, page
   return `${out.join('\n')}\n`;
 }
 
-/** The address a page's questions are asked on: the page itself, or for a detail page the first record its listing page links. */
+/**
+ * The address a page's questions are asked on: the page itself, or for a detail page the first record its listing page
+ * links. An optional catch-all (`/docs/[[...path]]`) renders with none of its segments too, so it is asked there; a
+ * catch-all takes a link of any depth.
+ */
 async function addressOf(base: string, cookie: string, page: string): Promise<string | null> {
   if (!/\[[^\]/]+\]/.test(page)) return page;
+  if (/\/\[\[\.\.\.[^\]/]+\]\]$/.test(page)) return addressOf(base, cookie, page.replace(/\/\[\[\.\.\.[^\]/]+\]\]$/, '') || '/');
   const listing = page.split('/[')[0] || '/';
-  const form = page.split('/').map((s) => (/^\[[^\]/]+\]$/.test(s) ? `[^/"'?#\\s<>]+` : s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))).join('/');
+  const form = page.split('/').map((s) => (/^\[\.\.\.[^\]/]+\]$/.test(s) ? `[^"'?#\\s<>]+` : /^\[[^\]/]+\]$/.test(s) ? `[^/"'?#\\s<>]+` : s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))).join('/');
   const html = await (await fetch(`${base}${listing}`, { headers: { cookie }, signal: AbortSignal.timeout(60_000) })).text();
   return new RegExp(`href="(${form})(?:[?#][^"]*)?"`).exec(html)?.[1] ?? null;
 }

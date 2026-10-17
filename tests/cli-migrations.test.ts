@@ -273,6 +273,18 @@ describe('the 0.16.2 migration', () => {
   });
 });
 
+describe('the 0.16.3 migration', () => {
+  // The assistant route as the releases before 0.16.3 wrote it: its own `onPage`, which matched a catch-all as one segment.
+  const old = "function onPage(route: string, path: string): boolean {\n  const want = route.split('/'), got = path.split('/');\n  return want.length === got.length;\n}\n";
+
+  it('finds a route that matches the page with its own `onPage`, and leaves one that asks `viewAt`', () => {
+    expect(byId('view-page-matched-as-next').since).toBe('0.16.3');
+    expect(byId('view-page-matched-as-next').applies(project({ 'app/api/assistant/route.ts': old }))).toEqual(['app/api/assistant/route.ts']);
+    expect(byId('view-page-matched-as-next').applies(path.resolve(import.meta.dirname, '..'))).toBeNull();
+    expect(byId('view-page-matched-as-next').applies(project({ 'package.json': '{}' }))).toBeNull();
+  });
+});
+
 describe("the consumer smoke's record of the release migrations", () => {
   // `resolveAll` resolves only the ids `RELEASE_IDS` lists, with the edit `bringReleaseOver` makes for each: a release
   // migration missing from it is resolved as not applicable, and the origin it applies to fails at finalize.

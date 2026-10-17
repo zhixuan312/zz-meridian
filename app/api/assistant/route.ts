@@ -12,7 +12,7 @@ import { handedTo } from '@/lib/assistant/scoped';
 import type { AgentChange, HandedExplore } from '@/lib/assistant/tools';
 import type { AnyCollection, Grant, Need } from '@/lib/collection';
 import type { PreparedQuery } from '@/lib/explore';
-import type { ViewTool } from '@/lib/shared-context';
+import { viewAt, type ViewTool } from '@/lib/shared-context';
 import { viewTools } from '@/views/tools';
 
 /** The panel sends at most the last 100 messages; a larger body than 2 MB is refused before it is parsed. */
@@ -62,7 +62,8 @@ export async function POST(request: Request): Promise<Response> {
   // they may use it. It reads through `aggregate()` and `read()`, which ask the person's grant again when a call runs;
   // its schema offers only what they may read: the collections handed above, without each one's hidden fields.
   const path = pathOf(String(page?.path ?? ''));
-  const view = views.find((v) => onPage(v.page, path));
+  const at = viewAt(viewTools, path);
+  const view = at && views.includes(at) ? at : undefined;
   const names = new Set(readable.map((c) => c.name));
   const reads = new Set(view ? Object.values(view.explore.sources).map((s) => s.collection) : []);
   const explore: HandedExplore | undefined = view && [...reads].some((name) => names.has(name))
@@ -143,12 +144,6 @@ export async function POST(request: Request): Promise<Response> {
 function pathOf(address: string): string {
   const path = address.split(/[?#]/)[0];
   return (path.length > 1 ? path.replace(/\/+$/, '') : path) || '/';
-}
-
-/** Whether `path` is the page `route` renders: each segment equal, a `[name]` segment matching any one segment. */
-function onPage(route: string, path: string): boolean {
-  const want = route.split('/'), got = path.split('/');
-  return want.length === got.length && want.every((w, i) => (/^\[[^\]/]+\]$/.test(w) ? got[i] !== '' : w === got[i]));
 }
 
 /** The grants a need names: the one, every one of an `allOf`, and none for `public`. */

@@ -2,6 +2,12 @@
 
 Every release of ZZ Meridian, newest first. Versions follow semver: a removed or renamed token, prop or card is major; a new card, token or variant is minor; a corrected value is a patch. Each entry says what breaks and what to do instead.
 
+## [Unreleased]
+
+### Fixed
+
+- **A view whose page is a catch-all route is handed its prepared query at every depth** ([#40](https://github.com/zhixuan312/zz-meridian/issues/40)). The assistant route matched a view's `page` against the address segment by segment and required the two to have as many segments, reading `[...name]` as any one segment and `[[...name]]` as one too: a view on `/docs/[...path]` was the page at `/docs/a` and not at `/docs/a/b`, which the same Next.js route renders, and one on `/docs/[[...path]]` was never the page at `/docs`. The match is `viewAt` in `src/lib/shared-context.ts` now, and it matches as Next.js does — `[...name]` one or more segments, `[[...name]]` zero or more — and where two views match one address it takes the one Next.js renders: a static segment over `[name]`, that over a catch-all. The route asks whether the person may use that view after choosing it, so a less specific view never stands in for the page. `app/api/assistant/route.ts` is the team's own file, so the update does not write it: it reports it as the migration `view-page-matched-as-next` — delete the route's `onPage` and find the view with `viewAt`. `node scripts/ask.ts` asks a catch-all page's questions on a link of any depth, and an optional catch-all's on the page with none.
+
 ## [0.16.2] · 2026-10-16
 
 ### Breaking

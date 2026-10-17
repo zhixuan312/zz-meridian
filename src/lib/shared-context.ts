@@ -104,7 +104,8 @@ export type ViewTool<I extends z.ZodObject = z.ZodObject, D extends object = obj
   needs: Need;
   /**
    * The console route of the page the view renders: a rail destination's `href` in `nav`, or a detail page's route with
-   * its segment (`/customers/[id]`). The assistant finds the view of the page a person is on by it.
+   * its segment (`/customers/[id]`, or a catch-all such as `/docs/[...path]`). The assistant finds the view of the page a
+   * person is on by it, matched as Next.js matches the route (`viewAt`).
    */
   page: string;
   /** The view's address parameters: the same names as its query string. */
@@ -123,3 +124,40 @@ export type ViewTool<I extends z.ZodObject = z.ZodObject, D extends object = obj
 
 /** A view tool, typed from its input schema: `read` receives what `input` parses to. */
 export const defineViewTool = <I extends z.ZodObject, D extends object>(tool: ViewTool<I, D>) => tool;
+
+/**
+ * How specific each segment of `route` is, as Next.js ranks a route segment: 0 static, 1 `[name]`, 2 `[...name]`, 3
+ * `[[...name]]`.
+ */
+const ranks = (route: string) => segments(route).map((s) => (/^\[\[\.\.\.[^\]/]+\]\]$/.test(s) ? 3 : /^\[\.\.\.[^\]/]+\]$/.test(s) ? 2 : /^\[[^\]/]+\]$/.test(s) ? 1 : 0));
+
+/** An address's segments after the root: `/` has none. */
+const segments = (address: string) => (address === '/' ? [''] : address.split('/'));
+
+/**
+ * Whether `path`, an address without its query and trailing slash, is one `route` renders, matched the way Next.js
+ * matches it: a static segment is itself, `[name]` is any one segment, `[...name]` one or more and `[[...name]]` zero or
+ * more of the segments left. A catch-all is the last segment of a route, as Next.js requires.
+ */
+function rendersAt(route: string, path: string): boolean {
+  const want = segments(route), got = segments(path), rank = ranks(route);
+  const last = want.length - 1;
+  // The segments before a catch-all are matched one for one; the catch-all takes every segment left.
+  const fixed = rank[last] >= 2 ? last : want.length;
+  const fewest = rank[last] === 3 ? last : want.length;
+  if (got.length < fewest || (fixed === want.length && got.length !== want.length)) return false;
+  return got.every((s, i) => (i >= fixed || rank[i] ? s !== '' : s === want[i]));
+}
+
+/**
+ * The view whose `page` renders `path`. Where several do, the one Next.js would render: at the first segment where two
+ * routes differ, a static segment wins over `[name]`, `[name]` over `[...name]` and that over `[[...name]]`; two views
+ * on one route are the first declared.
+ */
+export function viewAt<V extends { page: string }>(views: readonly V[], path: string): V | undefined {
+  const order = (a: number[], b: number[]) => {
+    for (let i = 0; i < Math.min(a.length, b.length); i++) if (a[i] !== b[i]) return a[i] - b[i];
+    return a.length - b.length;
+  };
+  return views.filter((v) => rendersAt(v.page, path)).sort((a, b) => order(ranks(a.page), ranks(b.page)))[0];
+}
