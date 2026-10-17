@@ -7,7 +7,7 @@ import type { AddressInfo } from 'node:net';
 import os from 'node:os';
 import path from 'node:path';
 import { afterAll, describe, expect, it } from 'vitest';
-import { personaFor, questionsOf } from '../scripts/ask.ts';
+import { chosenOf, formOf, personaFor, questionsOf, viewsOf } from '../scripts/ask.ts';
 
 /**
  * `node scripts/ask.ts --base <url> [--view <name>] [--as <persona>]` asks a served product's assistant the questions each
@@ -91,6 +91,37 @@ describe('the questions a page specification lists', () => {
     expect(qs.length).toBeGreaterThanOrEqual(3);
     expect(qs[0]).toBe('How many requests came at 22:00 UTC on each weekday?');
     expect(questionsOf('# A page\n\n## Agents\n\n### What the agent reads\n\nIts context.\n')).toEqual([]);
+  });
+});
+
+describe('which views it asks, and the file each writes (issue #47)', () => {
+  const spec = (route: string, folder: string) => ({ route, folder, questions: ['How many?'] });
+
+  it('names a view by its tool, else by its whole route, so a list and its detail page write two transcripts', () => {
+    const views = viewsOf([spec('/things', 'things'), spec('/things/[id]', '[id]'), spec('/teams/[team]/bugs', 'bugs'), spec('/', '(home)'), { route: '/quiet', folder: 'quiet', questions: [] }], [{ name: 'access', page: '/teams/[team]/bugs' }]);
+    expect(views.map((v) => [v.name, v.page])).toEqual([['things', '/things'], ['things-id', '/things/[id]'], ['access', '/teams/[team]/bugs'], ['home', '/']]);
+  });
+
+  it('tells apart two views that would share a name by their routes, and refuses a name still shared', () => {
+    expect(viewsOf([spec('/a', 'a'), spec('/b', 'b')], [{ name: 'x', page: '/a' }, { name: 'x', page: '/b' }]).map((v) => v.name)).toEqual(['x-a', 'x-b']);
+    expect(() => viewsOf([spec('/a', 'a'), spec('/b', 'b'), spec('/x-a', 'x-a')], [{ name: 'x', page: '/a' }, { name: 'x', page: '/b' }])).toThrow(/two views would write one transcript: x-a/);
+  });
+
+  it('takes --view as the name or as the assistant names the tool, and --path as the record to ask on', () => {
+    const all = viewsOf([spec('/things', 'things'), spec('/things/[id]', '[id]'), spec('/things/new', 'new')], [{ name: 'things', page: '/things' }, { name: 'thing', page: '/things/[id]' }]);
+    expect(chosenOf(all, 'thing').views.map((v) => v.page)).toEqual(['/things/[id]']);
+    expect(chosenOf(all, 'view_thing').views.map((v) => v.page)).toEqual(['/things/[id]']);
+    expect(chosenOf(all, 'view_nothing').error).toMatch(/no view named view_nothing lists questions; these do: things, thing, things-new/);
+    // The record a question is about, rather than the first row its list draws; a static page beside it wins its own address.
+    expect(chosenOf(all, undefined, '/things/t_42?tab=open').views.map((v) => v.page)).toEqual(['/things/[id]']);
+    expect(chosenOf(all, undefined, '/things/new').views.map((v) => v.page)).toEqual(['/things/new']);
+    expect(chosenOf(all, 'things', '/things/t_42').error).toMatch(/no page of things with questions renders \/things\/t_42/);
+  });
+
+  it('matches an address to a page as Next.js matches the route', () => {
+    const renders = (page: string, address: string) => new RegExp(`^${formOf(page)}$`).test(address);
+    expect([renders('/things/[id]', '/things/t_1'), renders('/things/[id]', '/things/t_1/edit'), renders('/docs/[...path]', '/docs/a/b'), renders('/docs/[...path]', '/docs')]).toEqual([true, false, true, false]);
+    expect([renders('/docs/[[...path]]', '/docs'), renders('/docs/[[...path]]', '/docs/a/b'), renders('/[[...path]]', '/'), renders('/[[...path]]', '/a')]).toEqual([true, true, true, true]);
   });
 });
 

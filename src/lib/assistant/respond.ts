@@ -54,7 +54,7 @@ export async function respond({ model, secret, messages, page, collections, read
       const { tools, toolApproval } = assistantTools(collections, writer, guard, views, explore);
       const result = streamText({
         model,
-        system: systemPrompt(page, now, briefExcerpt(readBrief()), limitsOf(readable), told(audience, explore)),
+        system: systemPrompt(page, now, briefExcerpt(readBrief()), limitsOf(readable), { ...told(audience, explore), writes: Object.keys(toolApproval).length > 0 }),
         tools,
         toolApproval,
         messages: modelMessages,

@@ -62,7 +62,7 @@ describe('the prompt on what the person may not read', () => {
 
   it('never offers a page the person may not open as where they make a change', () => {
     const prompt = systemPrompt(page, NOW, '', [], viewer);
-    expect(prompt).toMatch(/give that page's address when it is one this person may open/);
+    expect(prompt).toMatch(/give the address of the page that makes it when it is one this person may open/);
     expect(prompt).toMatch(/A page they may not open is never where they can make a change/);
   });
 
