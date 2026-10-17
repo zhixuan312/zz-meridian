@@ -1,6 +1,9 @@
 /** Smoke route selection and coverage resolution: what is configured is checked, what is not is reported, never passed. */
 import type { NavigationCheck } from './budgets.ts';
 
+/** Every suite verify can list, in the order the coverage line prints them; verify keeps those the project has and the run asked for. */
+export const SUITE_NAMES = ['audit', 'presses', 'keyboard', 'assistant', 'live', 'vitals', 'browserChecks', 'perf'] as const;
+
 const PROBES = ['dialog', 'filter', 'sort', 'toggle', 'link'];
 
 /** The exit code of a suite that failed nothing but left a case unrun: neither a pass nor a failure. */

@@ -11,7 +11,7 @@
  *   deep-dead-control                                                    a press that changes nothing
  *   deep-shift-tab                                                       a control only Shift+Tab reaches
  *   deep-closed, deep-undefined                                          content the suites cannot enter
- *   deep-tap                                                             a phone tap on a control inside a root (vitals)
+ *   deep-tap, deep-shifts                                                a phone tap on a control inside a root (vitals), and a page that moves after load (vitals)
  *   svg-contrast, svg-label-on-bar-dark, svg-text-read                   an SVG's text, read by its fill on what is behind it
  *   truncated                                                            text cut with an ellipsis and kept nowhere
  *   overlap-text, overlap-line, overlap-none                             two things drawn in the same place, and five shapes that are not
@@ -174,6 +174,13 @@ document.getElementById('first').addEventListener('keydown', (e) => { if (e.key 
   '/deep-tap': deep('Tap inside a root', {
     body: '<x-bar></x-bar>',
     script: define('x-bar', '<button type="button" aria-label="Alerts">!</button><p class="panel" hidden>No new alerts</p>', HOST_RING, 'open', `this.shadowRoot.querySelector('button').addEventListener('click', () => { this.shadowRoot.querySelector('.panel').hidden = false; });`),
+  }),
+  // A banner inserted above the content 1.2 s after load, by no input: the card of 360px shifts down 300px on a 390px phone, a CLS well over 0.1.
+  // The Alerts button is a tap vitals finds, so the run still prints a nonzero `taps:` beside `moved most:`.
+  '/deep-shifts': deep('Content that moves after load', {
+    css: '.card { height: 360px; background: #e8e8e8; padding: 8px; box-sizing: border-box; } .banner { height: 300px; background: #cfd8ff; }',
+    body: '<div class="slot"></div><div class="card"><p>Requests per day</p><x-bar></x-bar></div>',
+    script: `${define('x-bar', '<button type="button" aria-label="Alerts">!</button>', HOST_RING)}\nsetTimeout(() => { const b = document.createElement('div'); b.className = 'banner'; document.querySelector('.slot').append(b); }, 1200);`,
   }),
 
   // ---- a page whose load event waits for an image the server answers late (see server.ts) ----

@@ -9,7 +9,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 const ROOT = path.resolve(import.meta.dirname, '..');
 
-type Entry = { page: string; suite: string; outcome: 'fail' | 'pass' | 'note'; line?: string };
+type Entry = { page: string; suite: string; outcome: 'fail' | 'pass' | 'note' | 'measured'; line?: string };
 const MANIFEST: Entry[] = JSON.parse(fs.readFileSync(path.join(ROOT, 'scripts/fixtures/deep/expected.json'), 'utf8'));
 
 let server: ChildProcess;
@@ -50,8 +50,14 @@ function casesFor(suite: string, command: (page: string, base: string) => string
     it.concurrent(`${e.page}: ${e.outcome}${e.line ? ` (${e.line})` : ''}`, async () => {
       const r = await runSuite(command(e.page, url), timeout);
       expect(r.timedOut, `timed out after ${timeout} ms\n${r.out}`).toBe(false);
-      expect(r.code, r.out).toBe(e.outcome === 'fail' ? 1 : 0);
+      if (e.outcome === 'measured') expect([0, 1], r.out).toContain(r.code);
+      else expect(r.code, r.out).toBe(e.outcome === 'fail' ? 1 : 0);
       if (e.line) expect(r.out).toContain(e.line);
+      // Vitals exits 1 when a page misses a floor, which these cases do not decide; what they decide is what was tapped.
+      if (e.outcome === 'measured') {
+        const taps = Number(r.out.match(/taps: (\d+)/)?.[1] ?? 0);
+        expect(taps, `no control was tapped\n${r.out}`).toBeGreaterThan(0);
+      }
     }, timeout + 10_000);
   }
 }
@@ -78,6 +84,7 @@ describe('navigate', () => {
 });
 
 describe('vitals', () => {
-  // The phone profile, one page: the taps it measures must reach a control inside an open root.
+  // The phone profile, one page: the taps it measures must reach a control inside an open root. A case reads the line and the
+  // taps, not the floors, so a page that misses one (/deep-shifts) passes on the line it plants.
   casesFor('vitals', (page, base) => ['scripts/vitals.ts', '--base', base, '--routes', page], 120_000);
 });

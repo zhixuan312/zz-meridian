@@ -208,8 +208,14 @@
   {
     "page": "/deep-tap",
     "suite": "vitals",
-    "outcome": "pass",
+    "outcome": "measured",
     "line": "taps: 1"
+  },
+  {
+    "page": "/deep-shifts",
+    "suite": "vitals",
+    "outcome": "measured",
+    "line": "moved most:"
   },
   {
     "page": "/svg-contrast",

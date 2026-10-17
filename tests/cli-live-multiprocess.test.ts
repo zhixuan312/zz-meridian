@@ -9,6 +9,9 @@ import { createLiveClient, type LiveState } from '../src/lib/live.ts';
 
 const ROOT = path.resolve(import.meta.dirname, '..');
 const POLL_MS = 1000;
+// A hang bound, not a latency promise: a client that never converges fails here, however loaded the machine is. How
+// fast the safety poll runs is judged in scripts/live.ts.
+const HANG_BOUND_MS = 15_000;
 const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'zz-live-multi-'));
 const file = path.join(dir, 'items.json');
 fs.writeFileSync(file, '[]');
@@ -109,9 +112,8 @@ describe('two processes over one shared file store', () => {
       const before = received.filter((e) => e === 'change').length;
       const t = Date.now();
       await write(a, 'written-through-a');
-      const ms = await until('B converges on the write made through A', () => rows.some((r) => r.name === 'written-through-a'), POLL_MS + 2000);
-      console.log(`ok   B converged on A's write in ${ms} ms (${Date.now() - t} ms after the write began; bound ${POLL_MS + 2000} ms), no hint`);
-      expect(ms).toBeLessThanOrEqual(POLL_MS + 2000);
+      const ms = await until('B converges on the write made through A', () => rows.some((r) => r.name === 'written-through-a'), HANG_BOUND_MS);
+      console.log(`ok   B converged on A's write in ${ms} ms (${Date.now() - t} ms after the write began), no hint`);
       // B never heard A's write: only the safety refresh repaired it.
       expect(received.filter((e) => e === 'change').length).toBe(before);
 
@@ -122,5 +124,5 @@ describe('two processes over one shared file store', () => {
     } finally {
       client.dispose();
     }
-  }, 30_000);
+  }, HANG_BOUND_MS + 30_000);
 });

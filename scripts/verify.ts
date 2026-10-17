@@ -39,7 +39,7 @@ import path from 'node:path';
 import { bin } from './lib/bin.ts';
 import { launch } from './lib/chrome.ts';
 import type { BudgetsConfig, NavigationCheck } from './lib/budgets.ts';
-import { finalOutcome, resolveCoverage, selectSmokeRoutes, suiteCoverage, suiteOutcome } from './lib/coverage.ts';
+import { finalOutcome, resolveCoverage, SUITE_NAMES, selectSmokeRoutes, suiteCoverage, suiteOutcome } from './lib/coverage.ts';
 import { unsafeDataUrls } from './lib/data-url.ts';
 import { APP_DIR, railRoutes } from './lib/routes.ts';
 import { sampleSurfaces } from './lib/sample.ts';
@@ -110,7 +110,8 @@ const hasAssistant = fs.existsSync(path.join(ROOT, APP_DIR, 'api/assistant/route
 // themselves through `browserChecks`.
 const hasLiveSample = sampleSurfaces(ROOT, APP_DIR).members;
 const own = config.browserChecks ?? [];
-const SUITES = ['audit', 'presses', 'keyboard', ...(hasAssistant ? ['assistant'] : []), ...(hasLiveSample ? ['live'] : []), 'vitals', ...(own.length ? ['browserChecks'] : []), ...(perf ? ['perf'] : [])];
+const absent = new Set<string>([...(hasAssistant ? [] : ['assistant']), ...(hasLiveSample ? [] : ['live']), ...(own.length ? [] : ['browserChecks']), ...(perf ? [] : ['perf'])]);
+const SUITES = SUITE_NAMES.filter((name) => !absent.has(name));
 const ranSuites = new Set<string>();
 const failedSuites = new Set<string>();
 
