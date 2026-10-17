@@ -11,7 +11,7 @@ import { facts as rules } from '@/app.config';
 import { PLANS, type CustomerRecord, type DailyPoint, type Model, type Plan, type Totals, type UsageRow } from '@/data/sample';
 import { record } from '@/lib/facts';
 import { formatCost, formatPercent } from '@/lib/format';
-import { formatDate } from '@/lib/format-date';
+import { dayOf, formatDate } from '@/lib/format-date';
 import { PERIOD_DAYS, type Period } from '@/lib/period';
 import { customerFigures, kept, sentMore, week } from './customers-context';
 import { windowsOf } from './home-parts';
@@ -155,7 +155,7 @@ export function revenueData(r: RevenueReads): RevenueData {
     if (value === null) unread.push(name);
     return value !== null;
   };
-  const today = r.now.slice(0, 10);
+  const today = dayOf(r.now);
   const head = revenueHead({ period: r.period, rows: r.customers ?? [], history: r.history });
 
   let days: RevenueData['days'] = null;

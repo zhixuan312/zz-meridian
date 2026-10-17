@@ -427,6 +427,14 @@ export const RELEASE_MIGRATIONS: ReleaseMigration[] = [
     instructions: 'Bring `tests/navigate-start.test.ts` and `tests/navigate-menu-start.test.ts` over from the release as it has them. A file of your own that imports the journey — `startFor`, `journeyStart`, `journey`, `drawerRoutes`, `prepare`, `liveRefresh`, `Fail` and the types `Device`, `Metric`, `Condition`, `Measured`, `Sample` and `NavConfig` — imports it from `scripts/lib/journey.ts` instead; `scripts/navigate.ts` keeps the command and `workspaceHomes` only.',
     checks: ['gate'],
   },
+  {
+    id: 'today-in-timezone',
+    since: '0.16.3',
+    applies: (root) => matching(root, (rel, src) => (rel === 'app/api/assistant/route.ts' || rel === 'src/data/metrics.ts') && /\bconst today = clock\(\)\.toISOString\(\)\.slice\(0, 10\)|\btoday: clock\(\)\.toISOString\(\)\.slice\(0, 10\)/.test(src)),
+    summary: "Today is the day in `app.timezone` wherever a day is cut: `dayOf(clock())` from `src/lib/format-date.ts`, not the UTC date.",
+    instructions: "Replace `clock().toISOString().slice(0, 10)` with `dayOf(clock())` (`dayOf` in `src/lib/format-date.ts`) in each file listed: the prepared query's `today` in `app/api/assistant/route.ts`, and `readDays`'s today in `src/data/metrics.ts`. The prompt has told the model today in `app.timezone` all along, while the prepared query and the page cut their periods at the UTC date, so east of UTC after local midnight (west of UTC in the evening) the model's today and its `7d` window's end were a day apart. A day row is kept under its day in `app.timezone`, so a file of your own that compares an instant's day with one — `now.slice(0, 10)`, `at.slice(0, 10)` — asks `dayOf` too. A product whose `app.timezone` is UTC sees no change. A project that kept the sample's views brings `src/views/now-parts.ts`, `src/views/revenue-parts.ts`, `src/views/customer-context.ts`, `src/views/customer.tsx` and `src/views/members.tsx` over from the release.",
+    checks: ['gate'],
+  },
 ];
 
 /**

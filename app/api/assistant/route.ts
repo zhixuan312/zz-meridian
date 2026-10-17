@@ -12,6 +12,7 @@ import { handedTo } from '@/lib/assistant/scoped';
 import type { AgentChange, HandedExplore } from '@/lib/assistant/tools';
 import type { AnyCollection, Grant, Need } from '@/lib/collection';
 import type { PreparedQuery } from '@/lib/explore';
+import { dayOf } from '@/lib/format-date';
 import { viewAt, type ViewTool } from '@/lib/shared-context';
 import { viewTools } from '@/views/tools';
 
@@ -70,7 +71,7 @@ export async function POST(request: Request): Promise<Response> {
     ? {
       view,
       rights: { readable: names, hidden: (name) => (readable.find((c) => c.name === name)?.hidden ?? []) as string[] },
-      io: { aggregate, read, today: clock().toISOString().slice(0, 10) },
+      io: { aggregate, read, today: dayOf(clock()) },
       page: path,
     }
     : undefined;

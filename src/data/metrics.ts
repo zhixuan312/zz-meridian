@@ -10,6 +10,7 @@ import { clock } from '@/data/collections';
 import { attempt } from '@/data/main';
 import { read, readAll } from '@/data/read';
 import type { DailyPoint, Endpoint, IncidentRecord, Ticket, Totals } from '@/data/sample';
+import { dayOf } from '@/lib/format-date';
 import { PERIOD_DAYS, type Period } from '@/lib/period';
 
 /** The newest changes a page shows. */
@@ -36,7 +37,7 @@ type PeriodDays = { series: DailyPoint[]; previous: DailyPoint[]; totals: { curr
  * A period of days. `series` is the period's complete days, oldest first and ending yesterday: the latest 7, 30 or 90,
  * and for `all` every complete day kept. `previous` is the same number of complete days before them, fewer where fewer
  * are kept and none for `all`; `totals.previous` is null when there are none, so nothing is compared with nothing.
- * `running` is the day in progress, the row of the clock's own date, or null when the latest row is a complete day. It
+ * `running` is the day in progress, the row of the clock's own date in `app.timezone`, or null when the latest row is a complete day. It
  * is in no series and no total: it is handed over on its own, for a chart of days to draw as running.
  *
  * Every day kept is read, a page at a time and in the order of its date, so no number stands for `all` and a period is
@@ -44,8 +45,9 @@ type PeriodDays = { series: DailyPoint[]; previous: DailyPoint[]; totals: { curr
  */
 export async function readDays(period: Period): Promise<PeriodDays> {
   const { rows, observedAt } = await readAll('days');
-  // The clock's own date, not the read's: a read answered from the cache was made a moment before.
-  const today = clock().toISOString().slice(0, 10);
+  // The clock's own date in the reporting timezone, not the read's: a read answered from the cache was made a moment
+  // before, and a day row is kept under its day in `app.timezone`.
+  const today = dayOf(clock());
   const days = rows as DailyPoint[];
   const complete = days.filter((d) => d.date < today);
   const n = PERIOD_DAYS[period] ?? complete.length;

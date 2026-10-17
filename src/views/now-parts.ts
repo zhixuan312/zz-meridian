@@ -17,7 +17,7 @@ import type { ComputeRow, DailyPoint, Endpoint, Model, UsageRow } from '@/data/s
 import type { TicketRow } from '@/data/tickets';
 import { steady } from '@/lib/facts';
 import { formatDuration, plural } from '@/lib/format';
-import { formatDate, formatDay } from '@/lib/format-date';
+import { dayOf, formatDate, formatDay } from '@/lib/format-date';
 import { PERIOD_DAYS } from '@/lib/period';
 import { yearFacts, yearLine } from './home-parts';
 import { inWords, NOW_TILES, nowHead, type BandFact, type NowData, type NowModel, type NowRunDay, type NowTicket } from './now-context';
@@ -87,10 +87,10 @@ export function nowData(r: NowReads): NowData {
     if (value === null) unread.push(name);
     return value !== null;
   };
-  const today = r.now.slice(0, 10);
+  const today = dayOf(r.now);
   // The month: the 30 complete days that end yesterday, by their dates.
   const from = new Date(Date.parse(`${today}T00:00:00Z`) - WINDOW_DAYS * DAY).toISOString().slice(0, 10);
-  const inMonth = (at: string | null | undefined) => !!at && at.slice(0, 10) >= from && at.slice(0, 10) < today;
+  const inMonth = (at: string | null | undefined) => !!at && dayOf(at) >= from && dayOf(at) < today;
 
   const services = read(r.services, 'the services') ? r.services : [];
   const incidentsRead = read(r.incidents, 'the incidents');
@@ -200,7 +200,7 @@ export function nowData(r: NowReads): NowData {
     runs: ran && {
       label: NOW_TILES.runs, value: ran.filter((x) => x.state === 'passed').length, of: ran.length,
       line: `${ran.filter((x) => x.state === 'failed').length} failed, ${ran.filter((x) => x.state === 'skipped').length} skipped`,
-      ...(failed ? { finding: { text: fit(`${failed.suite} run failed ${formatDay(failed.startedAt)}`, `a run failed ${formatDay(failed.startedAt)}`), day: failed.startedAt.slice(0, 10), tone: 'warning' as const } } : {}),
+      ...(failed ? { finding: { text: fit(`${failed.suite} run failed ${formatDay(failed.startedAt)}`, `a run failed ${formatDay(failed.startedAt)}`), day: dayOf(failed.startedAt), tone: 'warning' as const } } : {}),
     },
     incidents: settled && {
       label: NOW_TILES.incidents, value: settled.length,
@@ -213,7 +213,7 @@ export function nowData(r: NowReads): NowData {
     const days: NowRunDay[] = Array.from({ length: WINDOW_DAYS + 1 }, (_, i) => ({ date: new Date(Date.parse(`${from}T00:00:00Z`) + i * DAY).toISOString().slice(0, 10), passed: 0, skipped: 0, failed: 0 }));
     const byDate = new Map(days.map((d) => [d.date, d]));
     for (const x of runs) {
-      const d = byDate.get(x.startedAt.slice(0, 10));
+      const d = byDate.get(dayOf(x.startedAt));
       if (d) d[x.state] += 1;
     }
     runsADay = { days, running: true };

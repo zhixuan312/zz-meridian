@@ -292,6 +292,18 @@ describe('the 0.16.3 migrations', () => {
     expect(byId('journey-moved').applies(project({ 'tests/homes.test.ts': "import { workspaceHomes } from '../scripts/navigate.ts';\n" }))).toBeNull();
     expect(byId('journey-moved').applies(path.resolve(import.meta.dirname, '..'))).toBeNull();
   });
+
+  it("finds a route or a read that cuts today at the UTC date, and leaves one that asks `dayOf`", () => {
+    expect(byId('today-in-timezone').since).toBe('0.16.3');
+    expect(byId('today-in-timezone').applies(project({
+      'app/api/assistant/route.ts': "const io = { aggregate, read, today: clock().toISOString().slice(0, 10) };\n",
+      'src/data/metrics.ts': "export async function readDays() {\n  const today = clock().toISOString().slice(0, 10);\n}\n",
+    }))).toEqual(['app/api/assistant/route.ts', 'src/data/metrics.ts']);
+    expect(byId('today-in-timezone').applies(project({ 'app/api/assistant/route.ts': 'const io = { aggregate, read, today: dayOf(clock()) };\n' }))).toBeNull();
+    // A date stamped on a record elsewhere is not this migration's.
+    expect(byId('today-in-timezone').applies(project({ 'app/keys/actions.ts': "const today = clock().toISOString().slice(0, 10);\n" }))).toBeNull();
+    expect(byId('today-in-timezone').applies(path.resolve(import.meta.dirname, '..'))).toBeNull();
+  });
 });
 
 describe("the consumer smoke's record of the release migrations", () => {

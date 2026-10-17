@@ -4,6 +4,7 @@ import { clock } from '@/data/collections';
 import { can, collectionFor, resolveAccess, Unauthenticated } from '@/data/access';
 import { assignMemberRole, REFUSALS } from '@/data/member-mutations';
 import type { AnyCollection } from '@/lib/collection';
+import { dayOf } from '@/lib/format-date';
 import type { Result } from '@/views/members';
 import { STATUSES, TEAMS, type Member } from '@/data/sample';
 import { MAIN_ROLES, type AddOn, type MainRole } from '@/data/roles';
@@ -38,7 +39,7 @@ export async function inviteMember(input: { name: string; email: string; role: M
   if (!MAIN_ROLES.includes(input.role) || !TEAMS.includes(input.team)) return { ok: false, error: 'Choose a role and a team from the lists.' };
   // The boundary decides the role the caller may give — an Admin inviting an Owner is refused there with the frozen
   // rule's message — so this path only shapes the invitation.
-  return run('create', undefined, (c) => c.create!({ name, email, role: input.role, team: input.team, status: 'Invited', joined: clock().toISOString().slice(0, 10), lastActive: null }));
+  return run('create', undefined, (c) => c.create!({ name, email, role: input.role, team: input.team, status: 'Invited', joined: dayOf(clock()), lastActive: null }));
 }
 
 export async function setMemberStatus(id: string, status: Member['status']): Promise<Result> {

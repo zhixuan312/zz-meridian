@@ -13,7 +13,7 @@ import { DataTable } from '@/components/patterns/data-table';
 import { MetricTile } from '@/components/patterns/metric-tile';
 import { AskAbout } from '@/components/patterns/ask-about';
 import { formatCompact, formatCost, formatPercent } from '@/lib/format';
-import { formatDate, formatDay } from '@/lib/format-date';
+import { dayOf, formatDate, formatDay } from '@/lib/format-date';
 import { requestColumns } from '@/system/sample-cells';
 import {
   LATEST, busiestOf, customerContext, endpointsOf, requestsOf, shareOf, standingOf, thisWeekOf, titleOf, weekOf, type CustomerData,
@@ -62,7 +62,7 @@ function standingLine(data: CustomerData) {
   if (c.status === 'past due') return 'Its latest invoice is overdue.';
   if (c.status === 'left') return `It was on ${c.plan}, and nothing it sends is counted.`;
   if (c.status === 'trial') {
-    const left = c.trialEnds ? Math.round((Date.parse(c.trialEnds) - Date.parse(data.now.slice(0, 10))) / 86_400_000) : null;
+    const left = c.trialEnds ? Math.round((Date.parse(c.trialEnds) - Date.parse(dayOf(data.now))) / 86_400_000) : null;
     return left !== null && left >= 0 ? `It joined on ${formatDate(c.joined)}, and its trial has ${left} ${left === 1 ? 'day' : 'days'} left.` : `It joined on ${formatDate(c.joined)}.`;
   }
   return c.planSince && c.previousPlan ? `On ${c.plan} since ${formatDate(c.planSince)}, after ${c.previousPlan}.` : `On ${c.plan} since it joined.`;

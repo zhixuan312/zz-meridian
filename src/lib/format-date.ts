@@ -37,6 +37,22 @@ function parts(d: Date): Record<string, string> {
   return Object.fromEntries(FMT.formatToParts(d).map((p) => [p.type, p.value]));
 }
 
+/** One formatter per timezone, built once for the reason `FMT` is. */
+const DAY_OF = new Map<string, Intl.DateTimeFormat>();
+
+/**
+ * The calendar day an instant falls on in the reporting timezone, `2026-06-09`: the day a daily row of it is kept under,
+ * and the today a period of days ends before. Never `toISOString().slice(0, 10)`, which is the day in UTC. Empty for an
+ * input that is not a date.
+ */
+export function dayOf(input: DateInput, timeZone: string = DISPLAY_TIMEZONE): string {
+  const d = toDate(input);
+  if (!d) return '';
+  let fmt = DAY_OF.get(timeZone);
+  if (!fmt) DAY_OF.set(timeZone, (fmt = new Intl.DateTimeFormat('en-CA', { timeZone, year: 'numeric', month: '2-digit', day: '2-digit' })));
+  return fmt.format(d);
+}
+
 /** `09 Jun 2026` */
 export function formatDate(input: DateInput): string {
   const d = toDate(input);

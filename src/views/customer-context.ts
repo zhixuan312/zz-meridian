@@ -6,7 +6,7 @@
 import type { LoggedRequest } from '@/data/requests';
 import type { CustomerRecord } from '@/data/sample';
 import { formatCompact, formatCost, formatPercent } from '@/lib/format';
-import { formatDate } from '@/lib/format-date';
+import { dayOf, formatDate } from '@/lib/format-date';
 import { freshnessOf, type Fact, type Insight, type SharedContext } from '@/lib/shared-context';
 import { week } from './customers-context';
 import { against, inDays } from './fact-insight';
@@ -79,7 +79,7 @@ export const thisWeekOf = (c: CustomerRecord) => (c.trend.length >= 14 ? sum(c.t
 export function busiestOf(c: CustomerRecord, now: string): { date: string; requests: number } | null {
   if (!c.trend.some((n) => n > 0)) return null;
   const at = c.trend.reduce((m, n, i) => (n > c.trend[m] ? i : m), 0);
-  const yesterday = Date.parse(`${now.slice(0, 10)}T00:00:00Z`) - DAY;
+  const yesterday = Date.parse(`${dayOf(now)}T00:00:00Z`) - DAY;
   return { date: new Date(yesterday - (c.trend.length - 1 - at) * DAY).toISOString().slice(0, 10), requests: c.trend[at] };
 }
 

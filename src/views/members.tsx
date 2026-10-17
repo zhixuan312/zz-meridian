@@ -22,7 +22,7 @@ import { Sheet, SheetClose, SheetContent } from '@/components/ui/sheet';
 import { toast, UNDO_MS } from '@/components/ui/toast';
 import { AskAbout } from '@/components/patterns/ask-about';
 import { DataTable, type Column } from '@/components/patterns/data-table';
-import { formatDate, formatRelative } from '@/lib/format-date';
+import { dayOf, formatDate, formatRelative } from '@/lib/format-date';
 import { useLive } from '@/lib/live';
 import { RolesMatrix } from './roles-matrix';
 import type { MemberRowAccess } from '@/data/member-mutations';
@@ -178,7 +178,7 @@ export function MembersView({ rows, now, actions, access, roles, workspace }: { 
     setErrors(e);
     if (e.name || e.email) return;
     const draft = invite;
-    const row: Shown = { id: `pending-${tempId.current++}`, name: draft.name.trim(), email: draft.email.trim(), role: draft.role, addOns: [], team: draft.team, status: 'Invited', joined: now.slice(0, 10), lastActive: null, pending: true };
+    const row: Shown = { id: `pending-${tempId.current++}`, name: draft.name.trim(), email: draft.email.trim(), role: draft.role, addOns: [], team: draft.team, status: 'Invited', joined: dayOf(now), lastActive: null, pending: true };
     setInviting(false);
     setInvite(BLANK);
     setInviteError(null);
