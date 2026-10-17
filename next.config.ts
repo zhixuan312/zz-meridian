@@ -8,6 +8,9 @@ const config: NextConfig = {
   cacheComponents: true,
   partialPrefetching: true,
   devIndicators: false,
+  // `pnpm verify` sets MERIDIAN_TYPES_CHECKED for its one build, only after its own gate has type-checked this tree with
+  // the same tsconfig, so the build does not check it twice. Every other `next build` checks the types itself.
+  typescript: { ignoreBuildErrors: process.env.MERIDIAN_TYPES_CHECKED === '1' },
   // Card specifications (README.md next to each component) are read at build time by the Design Atlas.
   outputFileTracingIncludes: { '/system/**': ['./src/**/*.md', './app/**/*.md', './docs/**/*.md', './decisions/**/*.md', './*.md', './tokens/**/*.json'], '/icon': ['./tokens/**/*.json'], '/api/assistant': ['./docs/brief.md'] },
 };

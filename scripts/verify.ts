@@ -84,7 +84,7 @@ const depth = full && perf ? 'full+perf' : full ? 'full' : perf ? 'perf' : 'defa
 const flags = argv.join(' ');
 
 // The personas a run may sign the browser in as, from the team's config. `--as` is validated HERE, at argv parsing:
-// the gate is the first thing this script runs and takes around forty seconds, so a refusal after it is one a test that
+// the gate is the first thing this script runs and takes the better part of a minute, so a refusal after it is one a test that
 // spawns this script and reads its output never sees. An unknown persona, or `--as` beside `--perf`, stops the run
 // before the gate, the build or any server.
 const personaConfig = config.personas ?? {};
@@ -398,7 +398,9 @@ if (config.fakeApi && serve) {
 
 // 2. The build, once, and 3. the route policy on it: every non-API route static or partial, unless verify.config.ts says why not.
 builds++;
-step('build', bin('next'), ['build'], app);
+// The gate above type-checked this tree with the same tsconfig, generated route types included, so the build does not
+// check it again (`typescript.ignoreBuildErrors` in next.config.ts reads this; a project whose config does not checks twice).
+step('build', bin('next'), ['build'], { ...app, MERIDIAN_TYPES_CHECKED: '1' });
 step('route policy', 'node', ['scripts/route-policy.ts'], app, true);
 
 // The built app, for the page sizes and the browser. The assistant is off in this start.
