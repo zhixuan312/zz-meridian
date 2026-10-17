@@ -273,7 +273,7 @@ describe('the 0.16.2 migration', () => {
   });
 });
 
-describe('the 0.16.3 migration', () => {
+describe('the 0.16.3 migrations', () => {
   // The assistant route as the releases before 0.16.3 wrote it: its own `onPage`, which matched a catch-all as one segment.
   const old = "function onPage(route: string, path: string): boolean {\n  const want = route.split('/'), got = path.split('/');\n  return want.length === got.length;\n}\n";
 
@@ -282,6 +282,15 @@ describe('the 0.16.3 migration', () => {
     expect(byId('view-page-matched-as-next').applies(project({ 'app/api/assistant/route.ts': old }))).toEqual(['app/api/assistant/route.ts']);
     expect(byId('view-page-matched-as-next').applies(path.resolve(import.meta.dirname, '..'))).toBeNull();
     expect(byId('view-page-matched-as-next').applies(project({ 'package.json': '{}' }))).toBeNull();
+  });
+
+  it('finds a test that imports the journey from `scripts/navigate.ts`, and leaves one that imports it from its module', () => {
+    expect(byId('journey-moved').since).toBe('0.16.3');
+    expect(byId('journey-moved').applies(project({ 'tests/navigate-start.test.ts': "import { startFor } from '../scripts/navigate.ts';\n" }))).toEqual(['tests/navigate-start.test.ts']);
+    expect(byId('journey-moved').applies(project({ 'tests/navigate-start.test.ts': "import { startFor } from '../scripts/lib/journey.ts';\n" }))).toBeNull();
+    // `workspaceHomes` stayed with the command.
+    expect(byId('journey-moved').applies(project({ 'tests/homes.test.ts': "import { workspaceHomes } from '../scripts/navigate.ts';\n" }))).toBeNull();
+    expect(byId('journey-moved').applies(path.resolve(import.meta.dirname, '..'))).toBeNull();
   });
 });
 

@@ -1,6 +1,6 @@
 // @vitest-environment node
 import { describe, expect, it } from 'vitest';
-import { journeyStart } from '../scripts/navigate.ts';
+import { journeyStart } from '../scripts/lib/journey.ts';
 
 // A product whose rail shows the part of the navigation the page belongs to: three workspaces of three, two and one
 // routes. The workspace menu opens each workspace's home, so a home no other rail links to is still reached: from a page

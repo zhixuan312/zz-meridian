@@ -419,6 +419,14 @@ export const RELEASE_MIGRATIONS: ReleaseMigration[] = [
     instructions: 'In `app/api/assistant/route.ts`, delete the local `onPage` and find the view with `viewAt` from `@/lib/shared-context`: `const at = viewAt(viewTools, path); const view = at && views.includes(at) ? at : undefined;`, where `views` are the view tools the person may use. `onPage` matched a `[...name]` segment as one segment and a `[[...name]]` never, so a view whose `page` is a catch-all (`/docs/[...path]`) was handed its prepared query at one depth only. `viewAt` matches as Next.js does — `[...name]` one or more segments, `[[...name]]` zero or more — and where two views match one address it takes the one Next.js renders, before asking whether the person may use it, so a less specific view never stands in for the page.',
     checks: ['gate'],
   },
+  {
+    id: 'journey-moved',
+    since: '0.16.3',
+    applies: (root) => matching(root, (rel, src) => importsOf(rel, src).some(({ from, names, namespace }) => from === 'scripts/navigate' && (namespace !== null || names.some((n) => n !== 'workspaceHomes')))),
+    summary: 'The navigation journey moved from `scripts/navigate.ts` to `scripts/lib/journey.ts`, which keeps every source file Meridian ships under 700 lines.',
+    instructions: 'Bring `tests/navigate-start.test.ts` and `tests/navigate-menu-start.test.ts` over from the release as it has them. A file of your own that imports the journey — `startFor`, `journeyStart`, `journey`, `drawerRoutes`, `prepare`, `liveRefresh`, `Fail` and the types `Device`, `Metric`, `Condition`, `Measured`, `Sample` and `NavConfig` — imports it from `scripts/lib/journey.ts` instead; `scripts/navigate.ts` keeps the command and `workspaceHomes` only.',
+    checks: ['gate'],
+  },
 ];
 
 /**

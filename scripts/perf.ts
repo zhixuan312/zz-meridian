@@ -9,7 +9,7 @@
  * - warm: the destination's prefetch and the chunks it brought in finished first, as a visitor who waited would have. A
  *   journey starts from the rail route before its destination (the one after it for the first) whose rail links to it, so
  *   the order a person browses in is the one measured. A workspace's home that no other route's rail links to is reached
- *   through the workspace menu, as scripts/navigate.ts reaches it (`journeyStart`); any other destination no rail links
+ *   through the workspace menu, as scripts/navigate.ts reaches it (`journeyStart` in scripts/lib/journey.ts); any other destination no rail links
  *   to is a problem.
  * - cold: a fresh browser (no cache, no storage, no router state) for every sample, and the page refuses every prefetch of
  *   the destination before it leaves the page. The sample is void, and fails, if the browser's own record shows a request
@@ -38,7 +38,8 @@ import { launch, type Page } from './lib/chrome.ts';
 import { resolveCoverage } from './lib/coverage.ts';
 import { railRoutes } from './lib/routes.ts';
 import { summary } from './lib/timing.ts';
-import { BUDGET_KEY, DEVICES, Fail, drawerRoutes, journey, journeyStart, liveRefresh, METRICS, prepare, workspaceHomes, type Condition, type Device, type Metric, type NavConfig } from './navigate.ts';
+import { BUDGET_KEY, DEVICES, Fail, drawerRoutes, journey, journeyStart, liveRefresh, METRICS, prepare, type Condition, type Device, type Metric, type NavConfig } from './lib/journey.ts';
+import { workspaceHomes } from './navigate.ts';
 
 const ROOT = path.resolve(import.meta.dirname, '..');
 const args = process.argv.slice(2);

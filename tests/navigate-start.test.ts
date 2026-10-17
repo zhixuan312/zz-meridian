@@ -1,6 +1,6 @@
 // @vitest-environment node
 import { describe, expect, it } from 'vitest';
-import { startFor } from '../scripts/navigate.ts';
+import { startFor } from '../scripts/lib/journey.ts';
 
 // A product whose rail shows the part of the navigation the page belongs to: three parts, of three, two and one routes.
 const order = ['/', '/members', '/settings', '/usage', '/customers', '/services'];
