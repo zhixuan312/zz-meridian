@@ -82,9 +82,11 @@ Write the status on the line under the title: `Status: beta`.
 
 ## Tools
 
+[`docs/testing.md`](docs/testing.md) holds each check's size, type and tier, and what it costs.
+
 | Command | What it does | When |
 |---|---|---|
-| `pnpm gate` | Every check below, in order | Before every commit |
+| `pnpm gate` | Every check below, in order; the deep tests (`tests/deep-*`) are left out | Before every commit |
 | `pnpm tokens` | Generates the token CSS and the Tailwind bridge from `tokens/` (`--check` only compares) | After any token change |
 | `node scripts/contrast.ts [--all]` | Every specified foreground on its background, in every theme and accent, and the chart palette's colour-vision checks | Gate |
 | `node scripts/registry.ts` | Regenerates the Atlas registry from the card folders (`--check` only compares) | After adding or renaming a card |
@@ -96,6 +98,7 @@ Write the status on the line under the title: `Status: beta`.
 | `node scripts/vitals.ts [--atlas]` | With a production build running: LCP, INP, CLS and dropped frames on a mid-range phone for every static page, the Atlas's front page and one card page among them. `--atlas` measures every Atlas entry instead, about fifteen minutes, and is not part of `pnpm verify` | Inside `pnpm verify --full`; `--atlas` after changing what every card page shares |
 | `node scripts/interactions.ts` | With the app running: presses every control on every page (mouse at 1440px, taps at 390px) and follows every link. Reaches controls inside open shadow roots. Fails on a control that changes nothing, one something covers, and a link that answers 4xx | Before release |
 | `node scripts/keyboard.ts` | With the app running: Tab through each page until focus comes back round, then Shift+Tab back. Fails on a stop with no focus ring, a control hidden under the sticky bar, a visible control never reached, and a reverse order that differs | Before release |
+| `pnpm exec vitest run tests/deep- --no-file-parallelism` | The browser-fixture tests of the check scripts: each planted defect is found and each corrected twin passes | After changing a check script; the release runs it |
 | `pnpm verify` | The gate once, one production build, the route policy, the size checks and a smoke of up to three routes on desktop and the phone drawer; ends with a coverage line, and the report is in `out/verify.txt` | Before finishing any change |
 | `pnpm verify --full` | The navigation of every rail route, then every exhaustive suite: the audit, every control pressed and link followed, the keyboard walk, the assistant, the live data and Web Vitals | After a change to shared components, the shell or data, and before release |
 | `pnpm verify --perf` | The 20-sample navigation protocol; combine with `--full` to run both without repeating the gate or the build | When timing is what changed |
