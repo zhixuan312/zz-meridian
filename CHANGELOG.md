@@ -2,6 +2,12 @@
 
 Every release of ZZ Meridian, newest first. Versions follow semver: a removed or renamed token, prop or card is major; a new card, token or variant is minor; a corrected value is a patch. Each entry says what breaks and what to do instead.
 
+## [Unreleased]
+
+### Fixed
+
+- **The gate and `ask` find a view tool kept in a module of its own** ([#43](https://github.com/zhixuan312/zz-meridian/issues/43)). `viewToolPages()` (`scripts/lib/routes.ts`) read the `defineViewTool` calls written in `src/views/tools.ts` alone, so a project that keeps each tool in a module the registry imports got an empty list. `scripts/check.ts` then asked no page for its `### What the agent does here` — green by absence — and `scripts/ask.ts` named every view by its page's folder, never by its tool. It now reads every project module the registry reaches through its imports, by a relative path or a tsconfig alias, an `index` included. A project whose tools sat in such modules can find pages failing `check.ts` that passed before: each is a page a tool names whose specification lacks the part, and the fix is that part.
+
 ## [0.16.3] · 2026-10-17
 
 ### Breaking
