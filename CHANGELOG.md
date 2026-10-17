@@ -11,8 +11,13 @@ Every release of ZZ Meridian, newest first. Versions follow semver: a removed or
 - **`pnpm gate` no longer runs `tests/deep-*`**, the browser-fixture tests of the checks, which only this repository has. Its closing line names the command that does: `pnpm exec vitest run tests/deep- --no-file-parallelism`.
 - **The coverage line has new words.** Its depth can be `timed`, `full+timed` or `full+timed+perf`, and its `not run:` list can name `timing`. A script that matched `coverage: full;` for a complete run matches `coverage: full+timed;` and `not run: none`.
 
+### New
+
+- **A Featured metric can say its period has no number** ([#45](https://github.com/zhixuan312/zz-meridian/issues/45)). `FeaturedFigure.value` is `number | null`, and `points` takes `null` entries. With no number, the figure's line holds `missing`, the caller's words ("No words recorded", "Unavailable"; "Not recorded" by default), a size down and at the figure's own height, so a period without a number draws the same card as one with. A pointed point that is `null` reads the same way. Before this, the only ways through were a false `0`, or `NaN` with a `format` that turned it into a word; a card that did the second can pass `null` and `missing` now.
+
 ### Fixed
 
+- **Pointing at a Featured metric's chart moves nothing below the figure** ([#44](https://github.com/zhixuan312/zz-meridian/issues/44)). A figure given `points` and no `delta` drew the row under the figure only while a point was pointed at, so the card grew by the point pill's row as the pointer crossed its chart and shrank when it left: measured at 390 px, 380 → 426 px, and a control below moved 46 px with it, enough for a press aimed at it to land on something else. The row is now drawn at rest as a line of its own, holding the pill's place empty, so the card stays 426 px either way however long the point's name.
 - **The gate and `ask` find a view tool kept in a module of its own** ([#43](https://github.com/zhixuan312/zz-meridian/issues/43)). `viewToolPages()` (`scripts/lib/routes.ts`) read the `defineViewTool` calls written in `src/views/tools.ts` alone, so a project that keeps each tool in a module the registry imports got an empty list. `scripts/check.ts` then asked no page for its `### What the agent does here` — green by absence — and `scripts/ask.ts` named every view by its page's folder, never by its tool. It now reads every project module the registry reaches through its imports, by a relative path or a tsconfig alias, an `index` included. A project whose tools sat in such modules can find pages failing `check.ts` that passed before: each is a page a tool names whose specification lacks the part, and the fix is that part.
 
 ## [0.16.3] · 2026-10-17

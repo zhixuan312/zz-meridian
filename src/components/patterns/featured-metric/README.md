@@ -10,7 +10,7 @@ Status: beta
 2. **Actions** (optional): Ask about, a menu or a small filter. Not a "Live" badge, nor any other badge: Freshness in the masthead already says how fresh the data is. They are the card's, drawn once at its head whatever the number of figures.
 3. **Hero figure**: `t-hero` (52–80px, 600, −0.035em), its unit stepped down — and the cents of a money figure, the same rule the Metric tile's figure follows (`splitFigure` in `src/lib/format.ts`).
 4. **Change pill** (when `delta` is given): a 28px glass pill holding the Delta and what the change is against, in the caller's words: "vs previous period" unless `compare` says otherwise ("vs the week before"). A `delta` of `null` draws the pill with a dash: there is nothing to compare with.
-5. **Point pill**: while the Meridian reads a point, an inverse pill takes the change pill's place and names the point: the date, or what `pointLabel` makes of it ("Week of 14 Sept").
+5. **Point pill**: while the Meridian reads a point, an inverse pill takes the change pill's place and names the point: the date, or what `pointLabel` makes of it ("Week of 14 Sept"). A figure with `points` and no `delta` keeps the pill's row empty at rest, so the pill arrives without moving anything.
 6. **Caption** (optional): one sentence that makes the period's number concrete. It is about the period the kicker names, not about whichever point is being read.
 7. **Finding** (optional): one quiet line under the change and the caption: a neutral 8px dot and one fact the figure does not say ("21 of the last 30 days were above the average day of the 30 before"). The dot is neutral because a finding here is a fact, not a warning.
 8. **Chart**: a Trend chart at `fill` height, or a Column chart at `fill` height when the points are periods and not days. A Column chart is given an axis formatter (`axisFormat`, from `AXIS_FORMATTERS`), so its ticks read as a scale ("$75") while the figure above a column keeps its cents.
@@ -63,7 +63,8 @@ A container query and a subgrid decide this, not a measurement in script, so the
 
 As Metric tile: `value`, `points`, `delta`, `intent`, `format`, and `compare` for the words after the change. The caption is computed from the same data ("The last 30 days averaged 99K a day. The busiest day was 1 Oct, with 128K."), never typed in, and so is the finding.
 
-- `points` holds one value for each point of the page's Meridian, oldest first. They are days on a page of days and weeks on a page of weeks; the card does not care which.
+- `value` is `null` when the period has no number: nothing was recorded, or the read was unavailable. The figure's line then holds `missing`, the words the caller gives ("No words recorded", "Unavailable"; "Not recorded" by default), a size down and in `ink-2`, at the figure's own height, so a period with no number draws the same card as one with a number. Never pass `0` for a number nobody measured.
+- `points` holds one value for each point of the page's Meridian, oldest first, `null` where that point has no number: a pointed point with none reads `missing`. They are days on a page of days and weeks on a page of weeks; the card does not care which.
 - A figure reads the page's cursor only when its `points` has one value for each of the Meridian's dates, which is the rule a chart joins the Meridian by. With any other number of points, or with none, it keeps the period's value and its change while the rest of the page reads the pointed day.
 - `pointLabel` names a pointed point from its date. Leave it out when a point is a day. Give it when a point is a week, a month or a release, so the pill says "Week of 14 Sept" and not a bare date.
 - With `peer`, each half reads its own `points`, and `pointLabel` names the point for both.
@@ -77,6 +78,8 @@ As Metric tile: `value`, `points`, `delta`, `intent`, `format`, and `compare` fo
 | Meridian reading | The figure reads the pointed point; the pill turns inverse and names it. The caption and the finding stay, unmoved: they are about the period the kicker names, so each must say so in its own words (see Content) |
 | Points that are not the page's | The figure keeps the period and its change while the page reads a day |
 | Nothing to compare (`delta` of `null`) | The pill holds a dash before the comparison's words |
+| Points and no change | The pill's row is drawn at rest too, a line of its own under the figure holding the point pill's empty place, so pointing at the chart changes what the figure says and never where anything below it stands, however long the point's name |
+| No number (`value` of `null`) | The figure's line holds `missing`, a size down, at the figure's height; a pointed point that is `null` reads the same way |
 | Without a chart | Kicker, figure, pill, caption and finding only. A half with no chart is left without one |
 | Without a foot, a finding or actions | Nothing is drawn in their place |
 | Two figures, wide | Two halves side by side on shared rows, from 42rem of the card's width (588px) |

@@ -176,3 +176,75 @@ describe('the featured metric: two figures of equal standing', () => {
     expect(figures(container)).toHaveLength(1);
   });
 });
+
+describe('the featured metric: pointing moves nothing below the figure (issue #44)', () => {
+  // The row under the figure, by what it holds: the change, the point, or the reserved place of the point's pill.
+  const row = (c: HTMLElement) => value(c)!.nextElementSibling;
+
+  it('keeps the pill\'s row for a figure with points and no change, holding an empty place while nothing is pointed at', () => {
+    const idle = render(
+      <Meridian dates={weeks}>
+        <FeaturedMetric kicker="Produced · this week" value={100} points={[10, 20, 30, 40]} format={plain} />
+      </Meridian>,
+    );
+    const place = row(idle.container)!.firstElementChild!;
+    expect(place.getAttribute('aria-hidden')).not.toBeNull();
+    expect(place.className).toContain('invisible');
+    expect(place.className).toContain('min-h-7');
+    // A line of its own, so a named point wider than the empty place never wraps under the figure when it arrives.
+    expect(row(idle.container)!.className).toContain('w-full');
+    idle.unmount();
+    const pointed = render(
+      <Meridian dates={weeks} day={weeks[1]}>
+        <FeaturedMetric kicker="Produced · this week" value={100} points={[10, 20, 30, 40]} format={plain} />
+      </Meridian>,
+    );
+    const pill = row(pointed.container)!.firstElementChild!;
+    expect(pill.hasAttribute('data-point')).toBe(true);
+    expect(pill.className).toContain('min-h-7');
+    expect(row(pointed.container)!.className).toBe(row(render(
+      <Meridian dates={weeks}>
+        <FeaturedMetric kicker="Produced · this week" value={100} points={[10, 20, 30, 40]} format={plain} />
+      </Meridian>,
+    ).container)!.className);
+  });
+
+  it('has no row for a figure with neither points nor a change', () => {
+    const { container } = render(<FeaturedMetric kicker="Requests · last 30 days" value={1280} format={plain} />);
+    expect(row(container)).toBeNull();
+  });
+});
+
+describe('the featured metric: a period with no number (issue #45)', () => {
+  it('draws the words in the figure\'s place, in the figure\'s own line, and never a zero', () => {
+    const { container } = render(<FeaturedMetric kicker="Words · this week" value={null} missing="No words recorded" format={plain} delta={null} />);
+    const figure = value(container)!;
+    expect(figure.className).toContain('t-hero');
+    expect(figure.querySelector('[data-missing]')).toHaveTextContent('No words recorded');
+    expect(figure).not.toHaveTextContent('0');
+    expect(container.querySelector('[data-change]')).not.toBeNull();
+  });
+
+  it('says "Not recorded" when the caller gives no words', () => {
+    const { container } = render(<FeaturedMetric kicker="Words · this week" value={null} format={plain} />);
+    expect(value(container)).toHaveTextContent('Not recorded');
+  });
+
+  it('reads a pointed point with no number as the words, and a pointed point with one as its figure', () => {
+    const missingWeek = render(
+      <Meridian dates={weeks} day={weeks[1]}>
+        <FeaturedMetric kicker="Words · this week" value={40} points={[10, null, 30, 40]} missing="No words recorded" format={plain} />
+      </Meridian>,
+    );
+    expect(value(missingWeek.container)).toHaveTextContent('No words recorded');
+    expect(missingWeek.container.querySelector('[data-point]')).not.toBeNull();
+    missingWeek.unmount();
+    const counted = render(
+      <Meridian dates={weeks} day={weeks[2]}>
+        <FeaturedMetric kicker="Words · this week" value={40} points={[10, null, 30, 40]} missing="No words recorded" format={plain} />
+      </Meridian>,
+    );
+    expect(value(counted.container)).toHaveTextContent('30');
+    expect(value(counted.container)!.querySelector('[data-missing]')).toBeNull();
+  });
+});

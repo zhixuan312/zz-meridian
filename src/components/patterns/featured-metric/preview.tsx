@@ -137,7 +137,16 @@ export default function FeaturedMetricPreview() {
           <State label="Points that are not the page's: the same page reads that day, and a card whose points are weeks keeps its period and its change" className="w-full max-w-110">
             <FeaturedMetric className="w-full" {...requestsByWeek} />
           </State>
+          <State label="Reading a day with no number: the words in the figure's place" className="w-full max-w-110">
+            <FeaturedMetric className="w-full" kicker="Requests · last 30 days" value={total} points={s.map((d, i) => (i === 21 ? null : d.requests))} missing="Not recorded" format={formatCompact} />
+          </State>
         </Meridian>
+        <State label="Points and no change: the pill's row is held empty at rest, so reading a day moves nothing below the figure" className="w-full max-w-110">
+          <FeaturedMetric className="w-full" kicker="Requests · last 30 days" value={total} points={s.map((d) => d.requests)} format={formatCompact} caption={monthCaption} />
+        </State>
+        <State label="No number for the period: the words stand in the figure's line, at its height" className="w-full max-w-110">
+          <FeaturedMetric className="w-full" kicker="Requests · this week" value={null} missing="Unavailable" format={formatCompact} delta={null} />
+        </State>
         <State label="Nothing to compare: a dash before the comparison's words" className="w-full max-w-110">
           <FeaturedMetric className="w-full" kicker="Requests · last 30 days" value={total} format={formatCompact} delta={null} />
         </State>
