@@ -2,10 +2,19 @@
 
 Every release of ZZ Meridian, newest first. Versions follow semver: a removed or renamed token, prop or card is major; a new card, token or variant is minor; a corrected value is a patch. Each entry says what breaks and what to do instead.
 
-## [Unreleased]
+## [0.16.3] · 2026-10-17
+
+### Breaking
+
+- **The navigation journey moved to `scripts/lib/journey.ts`.** A created project's `tests/navigate-start.test.ts` and `tests/navigate-menu-start.test.ts` import `startFor` and `journeyStart` from `scripts/navigate.ts`, which no longer has them, so they fail the type check until they are brought over. The files are the project's own, so the update does not write them: it reports them as the migration `journey-moved` — bring the release's copies over, and import the journey (`journey`, `journeyStart`, `startFor`, `drawerRoutes`, `prepare`, `liveRefresh`, `Fail` and its types) from `scripts/lib/journey.ts` in a file of your own. `scripts/navigate.ts` keeps the command and `workspaceHomes`.
+
+### Changed
+
+- **Every source file Meridian ships is under 700 lines** ([#41](https://github.com/zhixuan312/zz-meridian/issues/41)). `scripts/navigate.ts` had grown to 775, the only managed file past a ceiling a project may hold its own files to — and a project cannot split a managed file, because the update restores it. The journey and its measurements are `scripts/lib/journey.ts` now (467 lines) and `scripts/navigate.ts` keeps the command and its report (319); nothing either does changed. A test of the package holds every shipped file under `src`, `app`, `scripts` and `tests` to 700 lines, so a release cannot grow one past it again.
 
 ### Fixed
 
+- **Today is the product's day wherever a day is cut** ([#42](https://github.com/zhixuan312/zz-meridian/issues/42)). The assistant's prompt told the model today in `app.timezone`, while the prepared query (`today` in `app/api/assistant/route.ts`) and the pages' periods (`readDays` in `src/data/metrics.ts`) cut their days at the UTC date. So east of UTC after local midnight, and west of it in the evening, the model's today and the end of its `7d` window were a day apart, and a day row — kept under its day in `app.timezone` — fell on the wrong side of the cut. **`dayOf(at)`** (`src/lib/format-date.ts`) is the calendar day of an instant in `app.timezone`, and the route, `readDays` and the sample's views (Now's month and its runs by day, Revenue's ladder and trials, a customer's busiest day and trial days left, a new member's joined date) ask it now. A product whose `app.timezone` is UTC sees no change. The route and `src/data/metrics.ts` are the team's own files, so the update reports them as the migration `today-in-timezone` — replace `clock().toISOString().slice(0, 10)` with `dayOf(clock())`.
 - **A view whose page is a catch-all route is handed its prepared query at every depth** ([#40](https://github.com/zhixuan312/zz-meridian/issues/40)). The assistant route matched a view's `page` against the address segment by segment and required the two to have as many segments, reading `[...name]` as any one segment and `[[...name]]` as one too: a view on `/docs/[...path]` was the page at `/docs/a` and not at `/docs/a/b`, which the same Next.js route renders, and one on `/docs/[[...path]]` was never the page at `/docs`. The match is `viewAt` in `src/lib/shared-context.ts` now, and it matches as Next.js does — `[...name]` one or more segments, `[[...name]]` zero or more — and where two views match one address it takes the one Next.js renders: a static segment over `[name]`, that over a catch-all. The route asks whether the person may use that view after choosing it, so a less specific view never stands in for the page. `app/api/assistant/route.ts` is the team's own file, so the update does not write it: it reports it as the migration `view-page-matched-as-next` — delete the route's `onPage` and find the view with `viewAt`. `node scripts/ask.ts` asks a catch-all page's questions on a link of any depth, and an optional catch-all's on the page with none.
 
 ## [0.16.2] · 2026-10-16
