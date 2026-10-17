@@ -74,6 +74,8 @@ Every figure is read on the server by the Home tool's read (`homeTool` in `src/v
 
 The page's client is handed these figures and lines and works nothing out beyond a change against the period before. Revenue is what customers were billed for metered usage, before credits, and over 30 days it is the customers' revenue on Customers and Revenue to the cent; latency is the median day's p95.
 
+The body registers the ten collections its feature needs (`days`, `usage`, `models`, `compute`, `incidents`, `customers`, `services`, `tickets`, `tests` and `releases`) with `useLive` (`src/lib/live.ts`), before the empty state returns, so the page is drawn fresh in every state without a reload. It registers those and no others, because `GET /api/live` answers 403 for any name the caller may not read, and a person who reaches the page may read exactly what its feature needs: `costs`, which the page reads only for a person who may, is not registered. Nothing here writes, so no change hints; the page resyncs on open, on reconnect and on the safety poll.
+
 ## Surfaces
 
 - **Console**: as above.

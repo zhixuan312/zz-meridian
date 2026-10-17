@@ -44,7 +44,7 @@ Your pages, your server actions and the assistant read and change records throug
 - Read freshness from when the data arrived (the newest ingest time), never from `now()`.
 - Return `null` for "not measured"; the formatters render it as a dash, never as zero.
 
-The console keeps its collection-backed pages (Now, Members, API keys, Tickets, Tests, Releases) fresh without a reload: one stream per tab carries a hint that names only a collection, and the page refreshes through the same authorized `read()`. The sample stream is a single process; across processes, `skills/zz-meridian/references/live.md` holds the Postgres and Redis adapters a product writes for itself.
+The console keeps its collection-backed pages (Home, Revenue, Now, Members, API keys, Tickets, Tests, Releases) fresh without a reload: one stream per tab carries a hint that names only a collection, and the page refreshes through the same authorized `read()`. The sample stream is a single process; across processes, `skills/zz-meridian/references/live.md` holds the Postgres and Redis adapters a product writes for itself.
 
 ## 5. Decide who may do what
 

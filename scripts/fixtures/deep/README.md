@@ -20,7 +20,7 @@ Any route that is not a page below answers a clean page (light DOM, no control),
 | `presses` | `node scripts/interactions.ts --base <url> --routes <page>` |
 | `keyboard` | `node scripts/keyboard.ts --base <url> --routes <page>` |
 | `vitals` | `node scripts/vitals.ts --base <url> --routes <page>` |
-| `navigate` | `node scripts/navigate.ts --base <url> --config scripts/fixtures/deep/config.ts --rail /nav-home,/nav-solo,/nav-solo-unoffered,/nav-root-target,/nav-missing-target,/nav-multi,/nav-root-hydrated,/nav-dead-control --homes /nav-home=Main,/nav-solo=Solo,/nav-solo-unoffered=Unoffered --routes <page>` |
+| `navigate` | `node scripts/navigate.ts --base <url> --config scripts/fixtures/deep/config.ts --rail /nav-home,/nav-solo,/nav-solo-unoffered,/nav-root-target,/nav-missing-target,/nav-multi,/nav-root-hydrated,/nav-dead-control,/nav-link-late --homes /nav-home=Main,/nav-solo=Solo,/nav-solo-unoffered=Unoffered --routes <page>` |
 | `navigate-timing-off` | The `navigate` command with `--config scripts/fixtures/deep/config-tight.ts --timing off`. `config-tight.ts` is `config.ts`'s mappings with every navigation budget at 1 ms, so only function can fail a line |
 | `navigate-timing-on` | The same with `--timing on`: a page that works is over its 1 ms budget |
 
@@ -50,6 +50,7 @@ Every page has an `h1`, `lang="en"`, a `main`, an opaque ground and controls of 
 | `/nav-missing-target` | Navigation: the mapping names a control the page does not have |
 | `/nav-multi` | Navigation: the control selector matches two elements, the first hidden |
 | `/nav-dead-control` | Navigation: the mapping's control is there and pressable, and pressing it changes nothing: `control-dead` (fails). Last in the rail, so every other page starts where it did |
+| `/nav-link-late` | Navigation: a `link` probe whose link is pressable at once and whose ready text comes 800 ms later. The link is pressed once the data is measured, so the line passes; pressed beside the data it would leave first and report `is there but never shows`. Last in the rail |
 | `/nav-solo` | Navigation: the only destination of its workspace (Solo). No other page's rail links to it, so the journey starts on `/nav-home` and presses the workspace menu's Solo item, which opens it with no link (passes, `through the workspace menu (Solo) · not prefetched`) |
 | `/nav-solo-unoffered` | Navigation: the same, in a workspace the menu does not offer: the journey is `never-ready`, naming the workspace (fails) |
 | `/deep-tap` | Vitals: the Alerts button a phone taps is inside an open root (`taps: 1`) |

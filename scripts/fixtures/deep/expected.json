@@ -437,6 +437,11 @@
     "line": "control-dead"
   },
   {
+    "page": "/nav-link-late",
+    "suite": "navigate-timing-off",
+    "outcome": "pass"
+  },
+  {
     "page": "/nav-home",
     "suite": "navigate-timing-on",
     "outcome": "fail",

@@ -20,6 +20,8 @@ const config = {
     { path: '/nav-solo-unoffered', title: 'Unoffered', readySelector: 'main table tbody tr', probe: 'toggle', controlSelector: 'main button#toggle', resultSelector: 'main button#toggle' },
     // The control is there and pressable, and pressing it changes nothing.
     { path: '/nav-dead-control', title: 'Dead control', readySelector: 'main table tbody tr', probe: 'toggle', controlSelector: 'main button#toggle', resultSelector: 'main button#toggle' },
+    // The link is pressable at once and the ready text comes 800 ms later: the link is pressed once the data is measured.
+    { path: '/nav-link-late', title: 'Late data', readySelector: 'main', readyText: 'Loaded', probe: 'link', controlSelector: 'main a[href="/nav-home"]', resultSelector: 'h1' },
   ],
 };
 

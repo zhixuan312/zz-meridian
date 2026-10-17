@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useState } from 'react';
 import { Row, Stack } from '@/components/base/shell';
 import { useShareView } from '@/components/base/use-share-view';
+import { useLive } from '@/lib/live';
 import { Card, CardBody, CardFooter, CardHeader } from '@/components/ui/card';
 import { EmptyState } from '@/components/ui/empty-state';
 import { Segmented } from '@/components/ui/segmented';
@@ -312,6 +313,8 @@ const isEmpty = (data: RevenueData) => data.days !== null && data.days.series.le
 export function RevenueBody(data: RevenueData) {
   const [order, setOrder] = useState<WallOrder>('largest');
   useShareView(revenueContext(data, order));
+  // Exactly the feature's needs (FEATURES.revenue): /api/live refuses a name the caller may not read.
+  useLive(['customers', 'days', 'usage', 'models', 'regions']);
   if (isEmpty(data)) {
     return (
       <Stack>

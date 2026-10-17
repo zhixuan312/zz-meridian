@@ -435,6 +435,14 @@ export const RELEASE_MIGRATIONS: ReleaseMigration[] = [
     instructions: "Replace `clock().toISOString().slice(0, 10)` with `dayOf(clock())` (`dayOf` in `src/lib/format-date.ts`) in each file listed: the prepared query's `today` in `app/api/assistant/route.ts`, and `readDays`'s today in `src/data/metrics.ts`. The prompt has told the model today in `app.timezone` all along, while the prepared query and the page cut their periods at the UTC date, so east of UTC after local midnight (west of UTC in the evening) the model's today and its `7d` window's end were a day apart. A day row is kept under its day in `app.timezone`, so a file of your own that compares an instant's day with one — `now.slice(0, 10)`, `at.slice(0, 10)` — asks `dayOf` too. A product whose `app.timezone` is UTC sees no change. A project that kept the sample's views brings `src/views/now-parts.ts`, `src/views/revenue-parts.ts`, `src/views/customer-context.ts`, `src/views/customer.tsx` and `src/views/members.tsx` over from the release.",
     checks: ['gate'],
   },
+  {
+    id: 'verify-tiers',
+    since: '0.16.4',
+    applies: (root) => matching(root, (rel, src) => importsOf(rel, src).some(({ from, names }) => from === 'scripts/lib/coverage' && names.includes('finalOutcome')) && /(?<![\w.$])finalOutcome\(\s*(?!\{)/.test(src)),
+    summary: '`finalOutcome` in `scripts/lib/coverage.ts` takes `{ full, timed }` as its first argument, because verify has a timed tier apart from the full one.',
+    instructions: 'Bring `tests/verify-suite-outcome.test.ts` over from the release as it has it. A file of your own that calls `finalOutcome` passes the tiers, `finalOutcome({ full, timed }, notRun)`, where it passed whether the run was full (`finalOutcome(true, notRun)`): `references/validation.md` describes the tiers, `pnpm verify`, `--full` and `--timed`.',
+    checks: ['gate'],
+  },
 ];
 
 /**

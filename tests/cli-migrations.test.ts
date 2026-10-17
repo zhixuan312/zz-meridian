@@ -306,6 +306,18 @@ describe('the 0.16.3 migrations', () => {
   });
 });
 
+describe('the 0.16.4 migration', () => {
+  it('finds a file that calls `finalOutcome` with a boolean, and leaves one that passes the tiers', () => {
+    const imp = "import { finalOutcome } from '../scripts/lib/coverage.ts';\n";
+    expect(byId('verify-tiers').since).toBe('0.16.4');
+    expect(byId('verify-tiers').applies(project({ 'tests/verify-suite-outcome.test.ts': `${imp}finalOutcome(true, []);\n` }))).toEqual(['tests/verify-suite-outcome.test.ts']);
+    expect(byId('verify-tiers').applies(project({ 'tests/verify-suite-outcome.test.ts': `${imp}finalOutcome({ full: true, timed: false }, []);\n` }))).toBeNull();
+    // A call of another function by that name, with no import of the coverage module, is not this migration's.
+    expect(byId('verify-tiers').applies(project({ 'tests/other.test.ts': 'finalOutcome(true, []);\n' }))).toBeNull();
+    expect(byId('verify-tiers').applies(path.resolve(import.meta.dirname, '..'))).toBeNull();
+  });
+});
+
 describe("the consumer smoke's record of the release migrations", () => {
   // `resolveAll` resolves only the ids `RELEASE_IDS` lists, with the edit `bringReleaseOver` makes for each: a release
   // migration missing from it is resolved as not applicable, and the origin it applies to fails at finalize.

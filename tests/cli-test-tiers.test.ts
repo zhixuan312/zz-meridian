@@ -20,7 +20,7 @@ const RULE = 'A run needs a quiet machine exactly when it runs a check whose typ
 const DEEP_COMMAND = 'pnpm exec vitest run tests/deep- --no-file-parallelism';
 /** verify's phases that are not suites: each has a row of its own. */
 const PHASES = ['build', 'route policy', 'first-load', 'html', 'navigation', 'personas'];
-const STANDALONE = ['audit --atlas', 'vitals --atlas'];
+const STANDALONE = ['audit --atlas', 'vitals --atlas', 'consumer smoke'];
 
 type Row = Record<string, string>;
 type Repo = { steps: string[]; suites: readonly string[]; testFiles: { name: string; source: string }[] };

@@ -70,7 +70,7 @@ Every figure is read on the server by the Revenue tool's read (`revenueTool` in 
 - **What they buy** is the `usage` rows' revenue by model over the period's complete days, labelled from `models`; **where they are** is the `regions` collection.
 - **`facts.nextPlanAt`** (`src/app.config.ts`, 0.75 in the sample) is read each time the read runs.
 
-Revenue over 30 days equals Home's and the customers' revenue to the cent. Nothing writes.
+Revenue over 30 days equals Home's and the customers' revenue to the cent. Nothing writes. The body registers `customers`, `days`, `usage`, `models` and `regions` with `useLive` (`src/lib/live.ts`), before the empty state returns, so the page is drawn fresh in every state without a reload. Those are the collections its feature needs and no others, because `GET /api/live` answers 403 for any name the caller may not read, and a person who reaches the page may read exactly what its feature needs.
 
 ## Surfaces
 

@@ -96,8 +96,8 @@ export function CardStage({ id }: { id: string }) {
   const pane = (t: 'dark' | 'light') => (
     <Scope key={theme === 'both' ? t : 'one'} theme={theme === 'both' ? t : scoped.theme} accent={scoped.accent} density={density} className="px-5 py-8 sm:px-10">
       {theme === 'both' ? <p className="t-kicker mb-6">{t}</p> : null}
-      {/* A specimen, not the page: its own headings and scroll regions are the card's (a Detail head is an h1 where it is used), so the audit keeps them out of the page's outline and its one scroller (issue #8). */}
-      <div data-specimen className={cn('mx-auto', width === 'phone' ? 'max-w-[390px]' : 'max-w-none')}>{specimen}</div>
+      {/* A specimen, not the page: its own headings and scroll regions are the card's (a Detail head is an h1 where it is used), so the audit keeps them out of the page's outline and its one scroller (issue #8). Each top-level section is skipped by style and layout until it nears the viewport (it stays in the accessibility tree): a chart pattern's specimen holds thousands of elements, and a theme switch that restyled every one of them dropped a frame on a mid-range phone. */}
+      <div data-specimen className={cn('mx-auto *:[content-visibility:auto] *:[contain-intrinsic-size:auto_400px]', width === 'phone' ? 'max-w-[390px]' : 'max-w-none')}>{specimen}</div>
     </Scope>
   );
   return (

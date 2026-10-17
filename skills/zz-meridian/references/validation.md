@@ -43,7 +43,9 @@ line naming the command that runs them. Steps in order:
 2. **A production build** (`next build`), against the fake API when `scripts/verify.config.ts` names one. Then the route
    policy and the size checks: first-load JS per route, and the HTML caps in `budgets.htmlKb`. Navigation readiness
    (`scripts/navigate.ts`) follows each rail route's shell, data and interaction from a press — on a desktop and through
-   the phone drawer — and judges them on function only; `--timed` judges the same times against `budgets.navigation`.
+   the phone drawer — and judges them on function only. Data and interaction are measured side by side, except that a
+   `link` probe is pressed once the data is measured or has failed, since its press leaves the route;
+   `--timed` judges the same times against `budgets.navigation`.
    One entry in `navigationChecks` may carry its own `budget` for one of those figures on one device, which is how a
    route whose own page is heavy is held to what it measures instead of lowering the bar for every other route.
 3. **The assistant walk-through**, only when the project has `optional:app/api/assistant/route.ts`: off, then on against a fake
