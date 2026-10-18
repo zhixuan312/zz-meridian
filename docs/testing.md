@@ -96,6 +96,14 @@ A moment is when a person or an agent runs a command. A project's own CI may run
 - **Measurement**: performance judged by percentiles of repeated samples on a quiet machine, the phone after Lighthouse's mobile throttling, the device of benchmark index 800 with the CPU slowed by the host's own index over 800, on Slow 4G ([Lighthouse's throttling guide](https://github.com/GoogleChrome/lighthouse/blob/main/docs/throttling.md)). The benchmark times JavaScript, not style and layout, so two hosts of one index can differ in the second: on 2026-10-19 the scheduled runner spent about twice this machine's time in style and layout at the same rate. A dropped frame stays red wherever it is measured, and its cause in the vitals output says which part of the frame the time went to. The 390 px touch width, the 20 samples, the 1.25 margin and the rounding of `Limits` are Meridian's own.
 - **Flakiness** as a defect: a test that passes and fails on the same code erodes trust in every result (*Software Engineering at Google*, ch. 11 and 14). Where a large test's flakiness is tolerated or retried, Meridian does not clear a red by a retry.
 
+## Budgets
+
+A limit that moved, with what it was set from (`## Rules`, Limits).
+
+| Limit | Old | New | Run | Machine | Commit | Samples | p95 | Margin |
+|---|---|---|---|---|---|---|---|---|
+| `/system/start/start-a-dashboard` phone warm shell, its own `budget` in `scripts/verify.config.ts` | 300 ms | 250 ms, the shared phone warm shell: the route's own figure is withdrawn | weekly `perf` shard 5/5, run 39145209850 | GitHub's `ubuntu-24.04` runner, the phone at 3.2x | `dfdad67` (withdrawn in `55b7ece`) | 20 | 58 ms (median 43, max 59) | none: a withdrawal returns to the shared figure, which holds the p95 with room |
+
 ## The classification
 
 Every check Meridian runs has one row, named by a key: a gate step, a group of test files, a phase or suite of `pnpm verify`, or a standalone suite. In Meridian's repository the table is guarded by `tests/cli-test-tiers.test.ts`, which fails naming the key when a step, suite or group has no row or a row names something that does not exist. A run needs a quiet machine exactly when it runs a check whose type is performance.

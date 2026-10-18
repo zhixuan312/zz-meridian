@@ -37,7 +37,8 @@ function groupOf(file: string): string {
 
 /** The table under `## The classification`: its header and its rows, each cell with surrounding backticks removed from the key. */
 function parseTable(doc: string): { header: string[]; rows: Row[] } {
-  const start = doc.indexOf('## The classification');
+  // The heading line itself: `## Rules` names the section in a sentence, and a `## Budgets` table may sit between the two.
+  const start = doc.indexOf('\n## The classification\n');
   if (start < 0) return { header: [], rows: [] };
   const lines = doc.slice(start).split('\n').filter((l) => l.trim().startsWith('|'));
   const cells = (l: string) => l.trim().replace(/^\|/, '').replace(/\|$/, '').split('|').map((c) => c.trim());
