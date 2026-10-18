@@ -4,6 +4,13 @@ Every release of ZZ Meridian, newest first. Versions follow semver: a removed or
 
 ## [Unreleased]
 
+### Changed
+
+- **Next.js 16.4.2**, from 16.3.8. 16.4.1 carries fixes for two critical advisories, remote code execution through a `use cache` function that returns a typed array (GHSA-673q-mjm6-r5xr) and through the Image Optimization API with SVG files (GHSA-2464-fhr4-w9xw), and a high one, denial of service through Server Actions (GHSA-p3m5-59mp-jv5r); 16.3 has no release that carries them. `npx zz-meridian@latest update` raises `next` and `eslint-config-next` to `16.4.2` in a project's `package.json`; run your package manager's install after it.
+- **The other dependencies, within their majors**: React 19.3.1, `ai` 7.0.143 with `@ai-sdk/react` 4.0.147, `@ai-sdk/anthropic` 4.0.82 and `@ai-sdk/openai-compatible` 3.0.71, `radix-ui` 1.8.1, `lucide-react` 1.59.0, `zod` 4.6.7, and for development `vitest` 5.0.5, `jsdom` 30.1.3 and `@vitejs/plugin-react` 6.1.2.
+- **`@testing-library/jest-dom` 7**, which needs `@testing-library/dom` as a dependency of the project's own. `adopt` and `update` add `@testing-library/dom` `^10.4.2` to `devDependencies`; `update` raises jest-dom to 7 where Meridian wrote it and asks you to where you chose your own. The matchers are unchanged.
+- TypeScript stays at 5.9 and ESLint at 9: `typescript-eslint` supports TypeScript below 6.1, and `eslint-plugin-react`, `eslint-plugin-import` and `eslint-plugin-jsx-a11y`, which `eslint-config-next` installs, do not yet declare ESLint 10.
+
 ### Fixed
 
 - **A client navigation no longer reads the new page's collections again** ([#54](https://github.com/zhixuan312/zz-meridian/issues/54)). 0.18.0 sent the revisions a page was served only on the tab's first stream, so a press in the rail to a page that follows other collections reopened the stream without them, and every collection that page follows was read by its server and again by the stream's resync. `src/lib/live.ts` now sends them on every open that follows a change of the names, and only a reopen after a gap (an error, a tab shown again, the poll's retry) resyncs every name. A created project takes the fix with `npx zz-meridian@latest update`.

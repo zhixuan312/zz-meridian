@@ -5,7 +5,7 @@ import { upsertManagedBlock } from './context.js';
 import type { Migration } from './update-session.js';
 
 /** Adopt's dev dependencies and scripts, which `update` also needs. They mirror `DEV_DEPS` and `SCRIPTS` in adopt.ts. */
-export const TOOLCHAIN = ['typescript', '@types/node', '@types/react', '@types/react-dom', 'tailwindcss', '@tailwindcss/postcss', 'eslint', 'eslint-config-next', 'vitest', '@vitejs/plugin-react', 'jsdom', '@testing-library/react', '@testing-library/jest-dom'];
+export const TOOLCHAIN = ['typescript', '@types/node', '@types/react', '@types/react-dom', 'tailwindcss', '@tailwindcss/postcss', 'eslint', 'eslint-config-next', 'vitest', '@vitejs/plugin-react', 'jsdom', '@testing-library/react', '@testing-library/dom', '@testing-library/jest-dom'];
 export const MERIDIAN_SCRIPTS = ['typecheck', 'test', 'tokens', 'check', 'contrast', 'gate', 'audit', 'verify', 'brand', 'shot', 'interactions', 'keyboard', 'vitals'];
 
 export type Template = { dependencies?: Record<string, string>; devDependencies?: Record<string, string>; scripts?: Record<string, string> };

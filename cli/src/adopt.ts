@@ -19,7 +19,7 @@ export type AdoptOptions = { root: string; brand: Record<string, string>; allowD
 
 /** The template's dependencies a dashboard built from these files needs. */
 const DEPS = ['next', 'react', 'react-dom', 'radix-ui', 'lucide-react', 'clsx', 'tailwind-merge', 'react-markdown', 'remark-gfm', 'ai', '@ai-sdk/react', 'zod'];
-const DEV_DEPS = ['typescript', '@types/node', '@types/react', '@types/react-dom', 'tailwindcss', '@tailwindcss/postcss', 'eslint', 'eslint-config-next', 'vitest', '@vitejs/plugin-react', 'jsdom', '@testing-library/react', '@testing-library/jest-dom'];
+const DEV_DEPS = ['typescript', '@types/node', '@types/react', '@types/react-dom', 'tailwindcss', '@tailwindcss/postcss', 'eslint', 'eslint-config-next', 'vitest', '@vitejs/plugin-react', 'jsdom', '@testing-library/react', '@testing-library/dom', '@testing-library/jest-dom'];
 const SCRIPTS = ['typecheck', 'test', 'tokens', 'check', 'contrast', 'gate', 'audit', 'verify', 'brand', 'shot', 'interactions', 'keyboard', 'vitals'];
 
 const major = (spec: string) => Number(/(\d+)/.exec(spec)?.[1] ?? NaN);
