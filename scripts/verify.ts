@@ -14,6 +14,7 @@
  *   pnpm verify --full --timed   both tiers, the whole standard; the complete suites run first, the timed ones after them
  *   pnpm verify --perf    the default, then the 20-sample navigation protocol (scripts/perf.ts): every rail route, on a desktop
  *                         and through the phone drawer, warm, cold and right after a live refresh, the p95 reported
+ *                         The whole protocol runs only where CI is `true`, a share of it with `--shard <i>/<n>` (with --perf alone)
  *   pnpm verify --full --perf   the deep suites together; the gate and the build are shared, so each runs once
  *
  * It prints one line per phase (`ok`, `warn`, `FAIL` or `not run`, and the seconds), then one coverage line saying what
@@ -47,6 +48,7 @@ import { finalOutcome, resolveCoverage, SUITE_NAMES, selectSmokeRoutes, suiteCov
 import { unsafeDataUrls } from './lib/data-url.ts';
 import { APP_DIR, railRoutes } from './lib/routes.ts';
 import { sampleSurfaces } from './lib/sample.ts';
+import { parseShard, WHOLE_PROTOCOL_REFUSAL } from './lib/shard.ts';
 import verifyConfig from './verify.config.ts';
 
 /** The fields of the team's config that verify reads, each optional: an older product's config has only some of them. */
@@ -72,9 +74,11 @@ const OPTIONS = ['--full', '--timed', '--perf', '--as'];
 const argv = process.argv.slice(2);
 const unknown: string[] = [];
 let asList = '';
+let shardText: string | undefined;
 for (let i = 0; i < argv.length; i++) {
   const a = argv[i];
   if (a === '--as') { asList = argv[++i] ?? ''; continue; }
+  if (a === '--shard') { shardText = argv[++i] ?? ''; continue; }
   if (!OPTIONS.includes(a)) unknown.push(a);
 }
 if (unknown.length) {
@@ -104,6 +108,20 @@ if (asPersonas.length && (perf || timed)) {
 }
 if (undeclared.length) {
   console.error(`verify: --as names ${undeclared.join(', ')}, which ${undeclared.length === 1 ? 'is not a declared persona' : 'are not declared personas'}. Declared personas: ${declaredPersonas.join(', ')}.`);
+  process.exit(1);
+}
+
+// `--shard <i>/<n>` is a share of the --perf report, never part of a run that can meet the standard. Then `--perf` alone is
+// the whole protocol, which runs only in CI. Both refusals come before the gate.
+if (shardText !== undefined) {
+  if (!perf || full || timed) {
+    console.error('verify: --shard divides the --perf protocol; pass it with --perf alone');
+    process.exit(1);
+  }
+  try { parseShard(shardText); } catch (e) { console.error(`verify: ${(e as Error).message}`); process.exit(1); }
+}
+if (perf && process.env.CI !== 'true') {
+  console.error(`verify: --perf: ${WHOLE_PROTOCOL_REFUSAL}`);
   process.exit(1);
 }
 
@@ -536,7 +554,7 @@ if (perf && !browser.ran) {
 } else if (perf && baseUrl) {
   current = 'performance';
   announce('performance: 20 samples per route, device and condition (many minutes)');
-  const timed = await run('scripts/perf.ts', ['--base', baseUrl], app, true);
+  const timed = await run('scripts/perf.ts', ['--base', baseUrl, ...(shardText === undefined ? [] : ['--shard', shardText])], app, true);
   const result = summaryOf<{ status: 'ok' | 'warn' | 'FAIL' }>(timed.out, 'perf');
   ranSuites.add('perf');
   const status: Status = timed.status !== 0 || !result || result.status === 'FAIL' ? 'FAIL' : result.status;
