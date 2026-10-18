@@ -211,14 +211,16 @@ describe('an answer', () => {
   });
 });
 
-describe('a collection of a million rows', () => {
+// The claim is the calls, not the size: 120,000 rows are already far past any page, and a million made the quick check
+// a measure of the machine (2.8 s alone, over its 30 s timeout with the other workers on a loaded host).
+describe('a collection far larger than a page', () => {
   it('is asked one aggregate for its source and window and read no page of rows', async () => {
-    const big: Row[] = Array.from({ length: 1_000_000 }, (_, i) => ({ id: `b${i}`, day: back((i % 120) + 1), team: TEAMS[i % 12], v: 1, cost: 0, note: '' }));
+    const big: Row[] = Array.from({ length: 120_000 }, (_, i) => ({ id: `b${i}`, day: back((i % 120) + 1), team: TEAMS[i % 12], v: 1, cost: 0, note: '' }));
     const x = io({ orders: big, costs: COSTS, plain: PLAIN });
     const { answer } = await run({ source: 'orders', measures: ['n', 'total'], by: 'team', period: '90d' }, OWNER, x);
     expect(x.aggregate).toHaveBeenCalledTimes(1);
     expect(x.read).not.toHaveBeenCalled();
-    // Days 1 to 90 of 120, over rows spread one a day in turn: 40 × 8,334 + 50 × 8,333.
-    expect(answer).toContain('750,010');
+    // Days 1 to 90 of 120, over rows spread one a day in turn: 90 × 1,000.
+    expect(answer).toContain('90,000');
   });
 });
