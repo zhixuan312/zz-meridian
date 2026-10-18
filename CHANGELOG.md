@@ -12,6 +12,7 @@ Every release of ZZ Meridian, newest first. Versions follow semver: a removed or
 
 ### Changed
 
+- **Meridian's weekly CI runs each tier as its own job.** `full`, `timed`, `perf` (five shards of the rail routes) and `consumer` run in parallel, each on its own runner and each within half an hour, where one job ran `pnpm verify --full --timed --perf` for over two hours. A red is rerun by its job alone, and a dispatch can name the jobs it runs (`gh workflow run weekly.yml -f jobs=timed`). `docs/testing.md` says a project's own CI runs the perf protocol the same way.
 - **A dropped frame says where its time went.** `scripts/vitals.ts`'s line for a page that drops a frame ends with the longest gap and, from the Long Animation Frames API, how much of it was script (and whose), style and layout, and render, or that no long animation frame covered it, which points at the compositor or the host rather than the page: `longest gap 167 ms: a long animation frame of 185 ms (script 181 ms by BUTTON.onclick, style and layout 0 ms, render 0 ms)`.
 
 ### Fixed

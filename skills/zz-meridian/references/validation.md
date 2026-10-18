@@ -18,9 +18,10 @@ coverage: <default|full|timed|perf, or their combination such as full+timed+perf
 - **`pnpm verify --timed`** navigates every rail route with its budgets judged, then runs steps 7 and 8, the live data
   and the Web Vitals, alone and last. It judges time, so it needs a quiet machine. It needs the same mappings, Chrome
   and safe backend as `--full`, and does not imply that the `--full` checks ran.
-- **`pnpm verify --perf`** runs the 20-sample navigation protocol. It does not imply that the `--full` or `--timed`
-  checks ran; `--full --timed --perf` unions the three and runs the gate and the build once. `--full --timed` is the
-  whole standard.
+- **`pnpm verify --perf`** runs the 20-sample navigation protocol, and the whole of it runs only in CI, split by route
+  with `--shard <i>/<n>` across runners; it refuses elsewhere. It does not imply that the `--full` or `--timed` checks
+  ran. `--full --timed` is the whole standard. Locally, run perf narrowed, `node scripts/perf.ts --routes <route>`, to
+  diagnose one route.
 
 The testing standard, `optional:docs/testing.md`, says when to run each mode (`## When each runs`) and the rules a
 red, a limit and a release follow (`## Rules`): follow it rather than deciding per change.

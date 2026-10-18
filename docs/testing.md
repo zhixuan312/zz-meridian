@@ -32,7 +32,7 @@ A tier is when a check runs, ordered by speed and scope. The first four are one 
 - **complete**: `pnpm verify --full`. Adds the navigation of every rail route, the audit of every page, every control pressed and every link followed, the keyboard walk, the assistant and the product's own browser checks. Nothing in it judges a time, so it is not the whole standard: `pnpm verify --full --timed` is.
 - **timed**: `pnpm verify --timed`. The navigation of every rail route with its budgets judged, then the live data and Web Vitals, alone and last, so it needs a quiet machine. It does not imply the complete tier ran. `pnpm verify --full --timed` is the whole standard, on one gate and one build with the complete suites first, and the only run that can end "the project meets the Meridian standard". The timed suites measure the server the run left: with the assistant off under `--timed` alone, and with it on, pointed at the fake model, under `--full --timed`, so a page there carries the assistant's launcher.
 - **on request**: a command no tier runs, run at the moment `## When each runs` gives it. The combinations that exist:
-  - `pnpm verify --perf` adds the 20-sample navigation protocol to the tiers beside it, or to the change tier alone; `pnpm verify --full --timed --perf` runs all three on one gate and one build.
+  - `pnpm verify --perf` is the 20-sample navigation protocol, and the whole of it runs only in CI, split by route with `--shard <i>/<n>`, each shard on its own runner. It refuses to run elsewhere, and a shard runs alone or beside the other tiers. Locally, perf runs only narrowed, `node scripts/perf.ts --routes <route>`, to diagnose one route or to sample a recalibration.
   - `pnpm verify --as <persona>` signs the browser in as each persona it names (a comma-separated list), alone or beside `--full`. It is refused beside `--timed` or `--perf`, before anything runs.
   - `node scripts/audit.ts --atlas` and `node scripts/vitals.ts --atlas` run against a served app, outside `pnpm verify`, over every Design Atlas entry.
   - The browser-fixture tests of the checks, `pnpm exec vitest run tests/deep- --no-file-parallelism`, run beside `pnpm verify --full` after a change to a check script. Meridian's repository only.
@@ -50,9 +50,9 @@ A moment is when a person or an agent runs a command. A project's own CI may run
 - **Triggered by what changed**:
   - who may see or do what: `pnpm verify --as <persona>`, for each persona the change touches;
   - a card, a pattern or the Atlas: `node scripts/audit.ts --atlas` and, on a quiet machine, `node scripts/vitals.ts --atlas`;
-  - a navigation budget in question: `pnpm verify --perf`, on a quiet machine;
+  - a navigation budget in question: `node scripts/perf.ts --routes <route>`, narrowed to the route, on a quiet machine;
   - a check script: the browser-fixture tests beside `pnpm verify --full` (Meridian's repository only).
-- **On a schedule**: the slow and statistical checks, `pnpm verify --full --timed --perf`, where the perf part is a report: a p95 over its budget is a warning and only a broken sample fails.
+- **On a schedule**: the slow and statistical checks, each tier as its own job on its own runner: `pnpm verify --full`, `pnpm verify --timed` and `pnpm verify --perf --shard <i>/<n>`. The perf part is a report: a p95 over its budget is a warning and only a broken sample fails. The whole perf protocol runs only in CI: a project runs it in its own CI, split into shards on separate runners.
 - **Meridian's release** (`.github/workflows/release.yml`, dispatched from master; Meridian's repository only), each command once:
   - `pnpm exec vitest run tests/cli-` and `pnpm exec vitest run tests/deep- --no-file-parallelism`;
   - `node cli/scripts/release-check.ts --limit 180`: the default verify from a clean build, within 180 s on the shared 4-CPU runner;
@@ -60,7 +60,7 @@ A moment is when a person or an agent runs a command. A project's own CI may run
   - after the publish, a project created from the registry and one updated to it from the release before.
   - It never runs the complete, timed or perf suites: the weekly run does.
 - **Meridian's weekly run** (`.github/workflows/weekly.yml`, Mondays at 03:17 UTC and on demand, on master's current commit; Meridian's repository only):
-  - `pnpm verify --full --timed --perf`, as on a schedule above;
+  - the jobs `full` (`pnpm verify --full`), `timed` (`pnpm verify --timed`) and `perf` (`pnpm verify --perf --shard <i>/5`, five shards), in parallel on separate runners, as on a schedule above; a red is rerun by its job, and a dispatch names its jobs with `-f jobs=timed`;
   - `node cli/scripts/smoke.ts --tarball <tarball> --adopt --update --origins 3 --update-all --verify`, on a tarball packed from that commit: the adopted project's default verify cases, the update from each of the last three releases, and every recovery and failure case of the update.
   - Nothing waits on it: a failure notifies.
 
@@ -73,7 +73,7 @@ A moment is when a person or an agent runs a command. A project's own CI may run
   - A red whose cause is not named after a run narrowed to its route or page, with the render instrumented, goes to the owner as a decision, with what was measured, before any limit is touched.
 - **Limits**: a navigation budget, a live-data bound, or the LCP or INP floor may move, and only this way.
   - It moves only after a trace of the narrowed run names where the time goes, and none of it is the page's own long task or request that a change in the page would remove.
-  - The new value is the nearest-rank p95 of at least 20 samples on a quiet machine, taken with the phone the timed suites emulate, the larger of the local and the scheduled runner's where both exist, times 1.25, rounded up to the next 10 ms.
+  - The new value is the nearest-rank p95 of at least 20 samples on a quiet machine, taken with the phone the timed suites emulate, the larger of the CI protocol's p95 and a narrowed local run's where both exist, times 1.25, rounded up to the next 10 ms.
   - It is never more than twice the old value without the owner's word.
   - CLS and dropped frames are never moved: a page that misses them is fixed.
   - A moved limit is written where the limit lives (`scripts/lib/budgets.ts`, or the check), and recorded in a `## Budgets` section of this page, placed before `## The classification`: one row per limit with its old and new value, the run, machine and commit it was set from, the samples, the p95 and the margin.
@@ -128,7 +128,7 @@ Every check Meridian runs has one row, named by a key: a gate step, a group of t
 | `verify/live` | large | performance | timed | yes | `pnpm verify --timed` | 40.5 s at 269d307 | Two tabs, a silent stream, a restart, a hidden and an offline tab and a burst: each converges within its bound. |
 | `verify/vitals` | large | performance | timed | yes | `pnpm verify --timed` | 326.3 s at 269d307 | LCP, INP, CLS and dropped frames on a mid-range phone for every static page. |
 | `verify/browserChecks` | large | functional | complete | no | `pnpm verify --full` | 27.8 s at bc1e10b | The product's own browser journeys (`journeys/workspaces.ts`). |
-| `verify/perf` | large | performance | on request | yes | `pnpm verify --perf` | 88.4 min at 269d307 | The 20-sample navigation protocol. |
+| `verify/perf` | large | performance | on request | yes | `pnpm verify --perf --shard <i>/<n>` | 88.4 min at 269d307, whole; the slowest shard's once weekly measures it | The 20-sample navigation protocol. |
 | `suite/audit --atlas` | large | non-functional | on request | no | `node scripts/audit.ts --atlas` | 22.4 min at 269d307 | The audit over the Design Atlas: 183 routes at 1440 and 390px in both themes. |
 | `suite/vitals --atlas` | large | performance | on request | yes | `node scripts/vitals.ts --atlas` | 16.4 min at 269d307 | Web Vitals for every Atlas entry: 110 pages. |
 | `suite/consumer smoke` | large | functional | on request | no | `node cli/scripts/smoke.ts --tarball <tarball> --adopt --create --update` | 4.5 min at 89e4ef4 | Meridian's repository only. The release case: a packed tarball adopted, created and updated end to end. Release runs this command. Weekly runs `--adopt --update --origins 3 --update-all --verify`, whose `--verify` runs the adopted project's default verify cases. The created project's case, `--create --verify`, runs its `verify --full --timed`, runs on request only and wants a quiet machine the release case does not. |
