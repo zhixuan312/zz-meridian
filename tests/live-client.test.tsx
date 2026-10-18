@@ -266,7 +266,26 @@ describe('a first open with the revisions the page was served', () => {
     expect(states.at(-1)).toBe('live');
     c.dispose();
   });
-  it('is the only open that sends them: a reconnect sends none and reads', async () => {
+  it('is sent again by an open for new names, as a client navigation makes one (#54)', async () => {
+    const refresh = vi.fn(async () => {});
+    let held: Record<string, string> = { members: 'boot1:4' };
+    const { c, states } = opened(refresh, () => held);
+    c.setNames(['members']);
+    live()[0].open();
+    live()[0].send('synced', {});
+    await flush(600);
+    held = { keys: 'boot1:2' };
+    c.setNames(['keys']);
+    expect(live()).toHaveLength(1);
+    expect(live()[0].since()).toBe('keys:boot1:2');
+    live()[0].open();
+    live()[0].send('synced', {});
+    await flush(600);
+    expect(refresh).not.toHaveBeenCalled();
+    expect(states.at(-1)).toBe('live');
+    c.dispose();
+  });
+  it('is not sent by a reopen after a gap: a reconnect sends none and reads', async () => {
     const refresh = vi.fn(async () => {});
     const { c } = opened(refresh);
     c.setNames(['members']);
@@ -293,6 +312,23 @@ describe('a first open with the revisions the page was served', () => {
     );
     await flush(0);
     expect(live()[0].since()).toBe('members:b1:5');
+  });
+  it('is sent by the provider for the page a client navigation mounts, which then reads nothing', async () => {
+    function Shows({ names, since }: { names: string[]; since: Record<string, string> }) { useLive(names, since); return null; }
+    const refresh = vi.fn(async () => {});
+    const view = render(<LiveProvider refresh={refresh} scopeKey="demo/owner"><Shows key="home" names={['members']} since={{ members: 'b1:7' }} /></LiveProvider>);
+    await flush(0);
+    live()[0].open();
+    live()[0].send('synced', {});
+    await flush(600);
+    view.rerender(<LiveProvider refresh={refresh} scopeKey="demo/owner"><Shows key="keys" names={['keys']} since={{ keys: 'b1:3' }} /></LiveProvider>);
+    await flush(0);
+    expect(live()).toHaveLength(1);
+    expect(live()[0].since()).toBe('keys:b1:3');
+    live()[0].open();
+    live()[0].send('synced', {});
+    await flush(600);
+    expect(refresh).not.toHaveBeenCalled();
   });
 });
 

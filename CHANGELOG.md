@@ -2,6 +2,12 @@
 
 Every release of ZZ Meridian, newest first. Versions follow semver: a removed or renamed token, prop or card is major; a new card, token or variant is minor; a corrected value is a patch. Each entry says what breaks and what to do instead.
 
+## [Unreleased]
+
+### Fixed
+
+- **A client navigation no longer reads the new page's collections again** ([#54](https://github.com/zhixuan312/zz-meridian/issues/54)). 0.18.0 sent the revisions a page was served only on the tab's first stream, so a press in the rail to a page that follows other collections reopened the stream without them, and every collection that page follows was read by its server and again by the stream's resync. `src/lib/live.ts` now sends them on every open that follows a change of the names, and only a reopen after a gap (an error, a tab shown again, the poll's retry) resyncs every name. A created project takes the fix with `npx zz-meridian@latest update`.
+
 ## [0.18.0] · 2026-10-19
 
 ### Breaking
