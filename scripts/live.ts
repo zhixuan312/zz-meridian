@@ -113,7 +113,7 @@ const INSTRUMENT = `(() => {
   w.fetch = (input, init) => {
     // Three kinds of request, told apart by their headers: a refresh action, a prefetch and the router's own read of a page.
     const action = headerOf(input, init, 'next-action') !== null;
-    const prefetch = !action && headerOf(input, init, 'next-router-prefetch') === '1';
+    const prefetch = !action && /^[1-9]\\d*$/.test(headerOf(input, init, 'next-router-prefetch') ?? '');
     const read = !action && !prefetch && headerOf(input, init, 'rsc') !== null;
     if (!action && !prefetch && !read) return nativeFetch(input, init);
     // The invitation action's own call, kept so the burst can send it again with other names.
@@ -404,7 +404,7 @@ async function offline(t: Tabs) {
 /**
  * B's requests by kind, each with its count and the most in flight at once, and which kind made the route fetches: refresh
  * actions (`next-action`), the router's own reads that follow them (`rsc` without the prefetch header) and prefetches
- * (`next-router-prefetch: 1`).
+ * (`next-router-prefetch`, a positive integer).
  */
 function kinds(s: Seen): string {
   const { reads, prefetches } = s;

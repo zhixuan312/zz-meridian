@@ -155,11 +155,14 @@ const config: VerifyConfig = {
     { path: '/members', title: 'Members', readySelector: 'main table tbody tr', probe: 'toggle', controlSelector: 'main button[aria-haspopup="menu"]', resultSelector: '[role="menu"]' },
     { path: '/settings', title: 'Settings', readySelector: 'main [role="radio"]', probe: 'toggle', controlSelector: 'main [role="radio"][aria-checked="false"]', resultSelector: 'main [role="radio"]' },
     { path: '/system', title: 'One dashboard', readySelector: 'section[aria-label="The system in numbers"]', probe: 'link', controlSelector: 'section a[href^="/system/"]', resultSelector: 'h1' },
-    // The reading pages are the Atlas, and this one is the longest document in the repository: on the 4x-throttled phone
+    // The reading pages are the Atlas, and this one is the longest document in the repository: on the phone
     // its heading has measured 243-282 ms since `0b18355`, while every console route stays inside the shared 250. The cost
     // is browser work in the console-to-Atlas navigation, not this page's payload (which is smaller than the commit before
     // the access work, at 152,388 bytes) and not its content (`585349a` measures the same with byte-identical HTML) — the
     // review's Backlog carries the measurement. 300 ms holds this route's phone shell; nothing else moves.
+    // After the rail's Docs item prefetched this page in full, one navigate run on this machine read 24 ms on the phone
+    // (262 ms before) and 32 ms on the desktop (80 ms before); the exception stays until the final weekly run's calibrated
+    // phone line decides whether it is still needed.
     { path: '/system/start/start-a-dashboard', title: 'Start a dashboard', readySelector: 'article h2', probe: 'link', controlSelector: 'nav[aria-label="Next and previous"] a', resultSelector: 'h1', budget: { shellMs: { phone: 300 } } },
     { path: '/business', title: 'Revenue', readySelector: 'main', readyText: 'Past due', probe: 'link', controlSelector: 'main a[href="/customers"]', resultSelector: 'h1' },
     { path: '/usage', title: 'Usage', readySelector: 'main table tbody tr', probe: 'toggle', controlSelector: 'main [role="radio"][aria-checked="false"]', resultSelector: 'main [role="radio"]' },

@@ -46,8 +46,12 @@ export type WorkspaceId = keyof typeof workspaces;
  * `needs` is the feature's own need from `src/data/features.ts`, by reference: the rail asks it of the person. `feature`
  * names that feature by its id where its need is one others share, as every `public` one is: the assistant reads from
  * it what the page shows (the actions the features table puts on it), whatever the item is labelled.
+ *
+ * `prefetch` asks for the item's page to be prefetched in full, its URL data with it, where Next's default prefetches the
+ * route's App Shell only. It is for a destination whose content is its URL data (a document page under a dynamic
+ * segment), and every visible such link makes a request of its own, so it is for one or two items.
  */
-export type NavItem = { href: string; label: string; icon: LucideIcon; badge?: string; workspace?: WorkspaceId; needs: Need; feature?: string };
+export type NavItem = { href: string; label: string; icon: LucideIcon; badge?: string; workspace?: WorkspaceId; needs: Need; feature?: string; prefetch?: true };
 export type NavGroup = { label?: string; items: NavItem[] };
 
 export const nav: NavGroup[] = [
@@ -57,7 +61,7 @@ export const nav: NavGroup[] = [
       { href: '/members', label: 'Members', icon: UserRound, workspace: 'main', needs: FEATURES.members.needs },
       { href: '/settings', label: 'Settings', icon: Settings, workspace: 'main', needs: FEATURES.settings.needs, feature: 'settings' },
       { href: '/system', label: 'Design system', icon: Boxes, workspace: 'main', needs: FEATURES.system.needs, feature: 'system' },
-      { href: '/system/start/start-a-dashboard', label: 'Docs', icon: FileText, workspace: 'main', needs: FEATURES.docs.needs, feature: 'docs' },
+      { href: '/system/start/start-a-dashboard', label: 'Docs', icon: FileText, workspace: 'main', needs: FEATURES.docs.needs, feature: 'docs', prefetch: true },
     ],
   },
   {

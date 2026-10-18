@@ -446,5 +446,9 @@
     "suite": "navigate-timing-on",
     "outcome": "fail",
     "line": "over its 1 ms budget"
-  }
+  },
+  { "page": "/overlap-cv-auto", "suite": "audit", "outcome": "pass" },
+  { "page": "/overlap-cv-hidden", "suite": "audit", "outcome": "pass" },
+  { "page": "/presses-relative-link", "suite": "presses", "outcome": "fail", "line": "answers 404" },
+  { "page": "/presses-relative-link-fixed", "suite": "presses", "outcome": "pass" }
 ]

@@ -12,7 +12,7 @@ The helper in `scripts/lib/deep.ts` (`deepAll`, `deepActive`, `deepQuery`, `deep
 node scripts/fixtures/deep/server.ts [--port <n>]        prints: listening on http://127.0.0.1:<port>
 ```
 
-Any route that is not a page below answers a clean page (light DOM, no control), which is what the audit's embed pass reaches. It passes every suite. Suites are run one page at a time:
+Any route that is not a page below answers a clean page (light DOM, no control), which is what the audit's embed pass reaches. It passes every suite. Every path under `/gone/` answers 404, for the link case. Suites are run one page at a time:
 
 | Suite in `expected.json` | Command |
 |---|---|
@@ -62,6 +62,10 @@ Every page has an `h1`, `lang="en"`, a `main`, an opaque ground and controls of 
 | `/overlap-text` | Two paragraphs drawn on each other by a negative margin |
 | `/overlap-line` | A stroked line through an SVG caption |
 | `/overlap-none` | What is not a collision, on one page (passes): the two corrected twins, and the three shapes the first sweep of real pages misreported, a clamp's hidden lines, a line below the fold of a clipped list, and the text of a closed `<details>` |
+| `/overlap-cv-auto` | A `content-visibility: auto` section below the fold whose placeholder is shorter than its content: skipped, its lines lie on the next paragraph; drawn, nothing overlaps (passes). The audit renders such a subtree before it measures |
+| `/overlap-cv-hidden` | Text that overlaps inside a `content-visibility: hidden` section, which is not drawn (passes) |
+| `/presses-relative-link` | A visible link `<a href="gone/testing.md">`, which resolves to `/gone/testing.md` and answers 404 (`answers 404`) |
+| `/presses-relative-link-fixed` | A visible relative link to a page that answers 200 (passes) |
 | `/late-unnamed` | An unnamed control that arrives in `[data-assistant-slot]` 2.6 s after the page, past the audit's fixed wait. Also a keyboard case (`-fixed`) |
 | `/late-dead-control` | A control that does nothing, arriving 3.6 s after the page, past the presses' fixed wait: unlisted, it was never pressed and the run read `0 controls pressed … 0 issues` |
 | `/late-answer` | A control whose answer, a status line, comes 1.5 s after its press, past the presses' first look at 600 ms: slow, not dead (passes) |

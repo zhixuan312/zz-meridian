@@ -5,6 +5,7 @@
  * interaction. scripts/navigate.ts says what each time means and how a run is judged; this module only takes them.
  */
 import { DEEP_SOURCE } from './deep.ts';
+import { measurePhone } from './phone.ts';
 import type { BudgetsConfig, NavigationCheck } from './budgets.ts';
 import type { Page } from './chrome.ts';
 
@@ -221,7 +222,7 @@ async function throttle(page: Page, device: Device) {
   await page.send('Network.emulateNetworkConditions', device === 'phone'
     ? { offline: false, latency: 150, downloadThroughput: 200_000, uploadThroughput: 200_000 }
     : { offline: false, latency: 0, downloadThroughput: -1, uploadThroughput: -1 });
-  await page.send('Emulation.setCPUThrottlingRate', { rate: device === 'phone' ? 4 : 1 });
+  await page.send('Emulation.setCPUThrottlingRate', { rate: device === 'phone' ? (await measurePhone(page)).rate : 1 });
 }
 
 export async function openStart(page: Page, device: Device, start: string, origin: string) {

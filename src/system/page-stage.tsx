@@ -51,8 +51,13 @@ export function PageStage({ route, embed, title, toolResult }: { route: string; 
       <div className="relative isolate overflow-hidden bg-ground px-4 py-8 sm:px-8">
         <div aria-hidden className="pointer-events-none absolute inset-0 -z-10 bg-(image:--glow-ground)" />
         <div className={cn('flex gap-8', surface === 'phone' ? 'flex-wrap justify-center' : 'flex-col')}>
-          {themes.map((t) => (
-            <div key={t} className={cn('flex min-w-0 flex-col gap-3', surface !== 'phone' && 'w-full')}>
+          {/* Each pane is keyed by its position, so a single theme's frame stays mounted when the theme changes and
+              dress() re-dresses it. Keyed by its theme, a Dark to Light tap unmounted the pane and loaded the whole page
+              again in a new frame inside the tap (TaskDuration over the tap's window 787-853 ms, against 156-187 ms
+              keyed by position). With Both the first pane keeps its frame and only the second is new. This is the card
+              stage's rule for a pane. */}
+          {themes.map((t, i) => (
+            <div key={i} className={cn('flex min-w-0 flex-col gap-3', surface !== 'phone' && 'w-full')}>
               {themes.length > 1 ? <p className="t-kicker">{t}</p> : null}
               {surface === 'console' ? <ConsoleFrame route={route} theme={t} accent={accent} /> : null}
               {surface === 'phone' ? <PhoneFrame route={route} theme={t} accent={accent} /> : null}

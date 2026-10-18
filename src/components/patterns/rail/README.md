@@ -44,7 +44,7 @@ Colours change over `dur-hover` 160ms. The marker moves (`transform`, `height`) 
 
 ## Behaviour
 
-- An item is a link: Enter or a click navigates; the marker follows the new page.
+- An item is a link: Enter or a click navigates; the marker follows the new page. An item with `prefetch` has its page prefetched in full, URL data included, when the link is shown, so the press finds the page ready.
 - While a destination's page is on the way (a page that renders on request and is not prefetched), its icon turns into a 14px Spinner in the same 16px slot (`useLinkStatus`), named "Opening Members", so the click is answered at once and nothing shifts. A prefetched page is never pending, so it never shows.
 - An item is current when the path equals its route or sits beneath it (`/requests/req_…` keeps Requests current); Home (`/`) only matches itself.
 - Navigation from the account menu (Workspace settings and Sign out) asks first while a form on the page has unsaved changes, through the shell's `useLeave`; a link is held by the shell itself. Outside a shell it goes at once. Opening the menu prefetches each other scope's `href`: a row is a press, so nothing fetches its page before, and a phone's closed drawer prefetches nothing. A workspace chosen from the switcher runs the `onSelect` the product passed, so the product's own handler asks (the sample's does, in `src/views/workspace-chrome.tsx`); choosing a person under View as is not a navigation and is not held.
@@ -94,4 +94,4 @@ import { Rail } from '@/components/patterns/rail';
 <AppShell rail={<Rail />} tools={<ShellTools />} assistant={assistant}>{children}</AppShell>
 ```
 
-Edit `nav` in `src/app.config.ts` to change the destinations: `{ label?, items: [{ href, label, icon, badge? }] }`.
+Edit `nav` in `src/app.config.ts` to change the destinations: `{ label?, items: [{ href, label, icon, badge?, prefetch? }] }`; set `prefetch: true` on an item whose page is its URL data (a document under a dynamic segment), for one or two items at most.

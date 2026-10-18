@@ -3,18 +3,19 @@
  *
  *   node scripts/vitals.ts [--base http://localhost:3100] [--routes /,/requests] [--atlas] [--list]
  *
- * The phone is Lighthouse's mobile profile: CPU slowed four times, Slow 4G (150 ms round trip, 1.6 Mbps down,
- * 750 kbps up), a 390px touch screen, motion not reduced. LCP and CLS come from PerformanceObservers installed before
- * the page loads (CLS as web-vitals defines it: the largest session window of shifts no input caused). INP is the
- * slowest of real taps on controls that change the screen (a period, the alerts, the workspace menu, the drawer), from
- * Event Timing, counting only the tap's own pointer, touch and click events: the Escape that closes what a tap opened
- * is not a person's interaction, and a headless browser can hold a no-op key event open until something else paints.
- * A dropped frame is a gap over 50 ms between animation frames, and it is read in the same window as the tap that
- * caused it and no other, for the same reason INP is: counting frames from the moment the page opened charged a page
- * for the Escape and the settle between taps, which are the check's own work and not the person's. Each line says how
- * many controls it tapped, found through open shadow roots (scripts/lib/deep.ts), so a page whose INP rests on no tap
- * says so, and a page that dropped a frame names the control it dropped it on. A page that drops one is measured a
- * second time before it is failed, and a page that drops one twice is a page that stutters.
+ * The phone is Lighthouse's mobile profile: the device of benchmark index 800, the CPU slowed by the host's own index
+ * over 800 (scripts/lib/phone.ts), Slow 4G (150 ms round trip, 1.6 Mbps down, 750 kbps up), a 390px touch screen,
+ * motion not reduced. LCP and CLS come from PerformanceObservers installed before the page loads (CLS as web-vitals
+ * defines it: the largest session window of shifts no input caused). INP is the slowest of real taps on controls that
+ * change the screen (a period, the alerts, the workspace menu, the drawer), from Event Timing, counting only the tap's
+ * own pointer, touch and click events: the Escape that closes what a tap opened is not a person's interaction, and a
+ * headless browser can hold a no-op key event open until something else paints. A dropped frame is a gap over 50 ms
+ * between animation frames, and it is read in the same window as the tap that caused it and no other, for the same
+ * reason INP is: counting frames from the moment the page opened charged a page for the Escape and the settle between
+ * taps, which are the check's own work and not the person's. Each line says how many controls it tapped, found through
+ * open shadow roots (scripts/lib/deep.ts), so a page whose INP rests on no tap says so, and a page that dropped a frame
+ * names the control it dropped it on. A page that drops one is measured a second time before it is failed, and a page
+ * that drops one twice is a page that stutters.
  *
  * Every static page and the detail pages in scripts/verify.config.ts are measured, the Atlas's among them: its front
  * page and one card page, the sample every other suite takes. `--atlas` measures every Atlas entry instead (the guides,
@@ -30,6 +31,7 @@
 import { atlasCoverage, atlasEntries } from './lib/atlas.ts';
 import { launch } from './lib/chrome.ts';
 import { DEEP_SOURCE } from './lib/deep.ts';
+import { measurePhone } from './lib/phone.ts';
 import { discover } from './lib/routes.ts';
 import config from './verify.config.ts';
 
@@ -87,7 +89,7 @@ type Measured = { lcp: number; cls: number; moved: string; inp: number; slowest:
 async function measure(route: string): Promise<Measured> {
   await page.send('Network.emulateNetworkConditions', { offline: false, latency: 150, downloadThroughput: (1.6 * 1024 * 1024) / 8, uploadThroughput: (750 * 1024) / 8 });
   await page.send('Network.setCacheDisabled', { cacheDisabled: true });
-  await page.send('Emulation.setCPUThrottlingRate', { rate: 4 });
+  await page.send('Emulation.setCPUThrottlingRate', { rate: (await measurePhone(page)).rate });
   await page.open(base + route, { width: 390, height: 844, theme: 'dark', reduced: false, wait: 7000 });
   await page.eval('window.__v.recording = true');
   let inp = 0, slowest = '', tapped = 0, frames = 0, dropped = 0, droppedBy = '';
@@ -122,7 +124,7 @@ let failures = 0;
 for (const route of ROUTES) {
   let m = await measure(route);
   // One dropped frame among two hundred is inside the noise of the machine this measures on, and the frame is not always
-  // the page's: the same route, measured again on the same build, reads zero (a throttled CPU four times over measures
+  // the page's: the same route, measured again on the same build, reads zero (a throttled CPU measures
   // the host too, which is why this suite runs alone last). The floor is still no frames over 50 ms — so a page that
   // drops one is measured a second time before it is failed, and a page that drops one twice is a page that stutters.
   const again = m.dropped > 0;

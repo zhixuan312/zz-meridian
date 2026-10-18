@@ -131,6 +131,11 @@ const log = (s: string) => { console.log(s); lines.push(s); };
 const secs = (since: number) => (Date.now() - since) / 1000;
 const phase = (status: Status, name: string, took: number | null, detail = '') =>
   log(`${status.padEnd(7)} ${name}${took === null ? '' : ` (${took.toFixed(1)}s)`}${detail ? ` ${detail}` : ''}`);
+/** The `phone:` lines of a timed suite's output (scripts/lib/phone.ts): the rate it ran at, kept first in what is printed. */
+function phoneLines(out: string | string[]) {
+  return (Array.isArray(out) ? out : out.split('\n')).filter((l) => l.startsWith('phone:'));
+}
+
 /** What a phase printed beneath its line, indented. */
 const beneath = (text: string | string[]) => (Array.isArray(text) ? text : text.split('\n')).filter((l) => l.trim()).forEach((l) => log(`        ${l}`));
 // Announced before it runs, not only after: a run people wait on should say which phase it is in. It is not a phase line.
@@ -372,9 +377,10 @@ function reportSuite(name: string, label: string, r: { status: number | null; ou
   if (outcome === 'FAIL') failedSuites.add(name);
   phase(outcome, label, r.took);
   const out = r.out.trim().split('\n');
-  if (outcome === 'FAIL') beneath(out.slice(-60));
-  else if (outcome === 'not run') beneath([...out.filter((l) => l.startsWith('not run')), out.at(-1) ?? '']);
-  else beneath([...out.filter((l) => l.startsWith('n/a')), out.at(-1) ?? '']);
+  const phone = phoneLines(out);
+  if (outcome === 'FAIL') beneath([...phone, ...out.filter((l) => !phone.includes(l)).slice(-60)]);
+  else if (outcome === 'not run') beneath([...phone, ...out.filter((l) => l.startsWith('not run')), out.at(-1) ?? '']);
+  else beneath([...phone, ...out.filter((l) => l.startsWith('n/a')), out.at(-1) ?? '']);
   return outcome !== 'FAIL';
 }
 
@@ -442,7 +448,7 @@ if (browserReason) {
   const result = summaryOf<{ status: 'ok' | 'warn' | 'FAIL' | 'not-run'; reason?: string }>(nav.out, 'navigate');
   const status: Status = nav.status !== 0 || !result || result.status === 'FAIL' ? 'FAIL' : result.status === 'not-run' ? 'not run' : result.status;
   phase(status, 'navigation', nav.took, status === 'not run' ? `(${result?.reason ?? 'no reason given'})` : '');
-  beneath(nav.out.split('\n').filter((l) => !l.startsWith('navigate: ')).slice(-60));
+  beneath([...phoneLines(nav.out), ...nav.out.split('\n').filter((l) => !l.startsWith('navigate: ') && !l.startsWith('phone:')).slice(-60)]);
   if (status === 'FAIL') ok = false;
   // The navigation is the timing suite when it judged its budgets: it ran and passed, or it ran and failed.
   if (timed && status === 'FAIL') failedSuites.add('timing');

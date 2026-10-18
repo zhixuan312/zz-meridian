@@ -2,6 +2,20 @@
 
 Every release of ZZ Meridian, newest first. Versions follow semver: a removed or renamed token, prop or card is major; a new card, token or variant is minor; a corrected value is a patch. Each entry says what breaks and what to do instead.
 
+## [Unreleased]
+
+### Breaking
+
+- **The phone the timed suites emulate is one device on every host: the device of Lighthouse benchmark index 800**, the top of Lighthouse's Mid-Tier Mobile bracket. `scripts/vitals.ts` and the navigation journey (`pnpm verify --timed` and `--perf`) measure the host's own index once per run (Lighthouse's `computeBenchmarkIndex`, the median of three readings) and slow the CPU by that index over 800, to one decimal and never below 1, where they slowed it four times on every host. A host whose index is above 3,200 is now slowed more than before and one below it less, so a laptop and a runner whose CPU varies between runs are held to the same phone. Each timed suite prints `phone: this host slowed <rate>x (benchmark index <index> …)`, and `pnpm verify` keeps that line under its navigation and Web Vitals phases. The floors and the budgets are unchanged. A near miss that used to pass on a fast machine is a page to speed up, not a budget to move.
+- **The desktop prefetch cap counts every router prefetch.** It counted only requests carrying `next-router-prefetch: 1`, while Next 16 sends `3` for the runtime shell every link prefetches and `2` for a full prefetch's URL data, so it read a fraction of what the router fetched: Meridian's Home reads 45.3 KiB where it read 8.8 KiB. A project whose landing page now reads over its `budgets.prefetchKb.desktop` either prefetches less from that page or sets the cap from its own measurement.
+
+### Fixed
+
+- **The console rail's Docs link finds the start guide ready.** The rail's Docs item asks for its page in full (`NavItem.prefetch`, a new optional field), since the start guide's article is its page's URL data, which the default App Shell prefetch leaves for after the press: from `/settings` the start guide's desktop shell fell from 77-146 ms to about 30 ms, and on the phone from 262 to 24 ms, at the cost of one prefetch of about 15 KiB on each main-workspace page on the desktop. The rail keeps Next's default for every other item, and compiles in a project whose `NavItem` has no such field. `scripts/live.ts` tells a prefetch from the router's own read by the same rule as the cap.
+- **`node scripts/audit.ts --atlas` no longer reports overlaps on the Atlas pattern pages** (the 0.17.0 known issue). The audit measured `content-visibility: auto` subtrees the browser had not laid out yet; it now renders each such subtree before it measures and waits two frames. A `content-visibility: hidden` subtree is left alone, since it is not drawn.
+- **The presses follow a relative link as a browser does.** `scripts/interactions.ts` skipped every `href` that did not start with `/`, so a relative link that answered 404 passed. It now resolves each link against its page (`linkPath` in `scripts/lib/links.ts`), follows every link to the page's own site, and reports `link <href> (<resolved path>) answers <status>`.
+- **A page specification's Theme control no longer drops a frame on a phone** (the 0.17.0 known issue). The stage keyed each pane by its theme, so a Dark-to-Light tap unmounted the pane and loaded the whole page again in a new frame inside the tap. Each pane is now keyed by its position: the frame on screen stays mounted and is re-dressed.
+
 ## [0.17.0] · 2026-10-18
 
 ### Breaking

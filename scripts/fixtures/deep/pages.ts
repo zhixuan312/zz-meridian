@@ -15,6 +15,8 @@
  *   svg-contrast, svg-label-on-bar-dark, svg-text-read                   an SVG's text, read by its fill on what is behind it
  *   truncated                                                            text cut with an ellipsis and kept nowhere
  *   overlap-text, overlap-line, overlap-none                             two things drawn in the same place, and five shapes that are not
+ *   overlap-cv-auto, overlap-cv-hidden                                   what a content-visibility subtree draws, and what it does not
+ *   presses-relative-link                                                a relative link that answers 404
  *   late-unnamed, late-dead-control                                      a control that arrives after a fixed wait has ended
  *   late-answer                                                          a control whose answer comes 1.5 s after its press
  *   sideways-*, double-scroller, heading-skip, empty-region, moved-page, drops-query, page-error   the rules of the standard that no page made fire
@@ -69,6 +71,8 @@ const LABEL = '<div class="label">Quarterly revenue by region and segment</div>'
 
 const UNNAMED = 'button.icon { width: 44px; height: 44px; }';
 const ICON = '<svg width="20" height="20" viewBox="0 0 20 20" aria-hidden="true"><path d="M4 4l12 12M16 4L4 16" stroke="currentColor" stroke-width="2"/></svg>';
+
+const LINK = 'a { display: inline-block; min-width: 44px; min-height: 44px; }';
 
 const SMALL = 'button.tiny { width: 24px; height: 24px; min-width: 0; min-height: 0; padding: 0; }';
 const BIG = 'button.tiny { width: 44px; height: 44px; }';
@@ -219,6 +223,25 @@ ${chart(`${RULE(50)}${CAPTION}`)}
 <div class="list"><svg width="300" height="120" viewBox="0 0 300 120" role="img" aria-label="Rows"><polyline points="0,52 300,52" fill="none" stroke="#1a1a1a" stroke-width="1.5"/></svg></div><p class="under">Rows per page</p>
 <details><summary>Structured</summary><pre>{\n  "view": "proposal",\n  "title": "Raise the rate limit",\n  "state": "pending"\n}</pre></details><p class="after">What the view tells the model, every time.</p>`,
   }),
+
+  // ---- content-visibility: the audit measures what a page draws ----
+  // Below the fold at every width, a section the browser has not laid out stands in at its placeholder's height (40px);
+  // measured as it is, its two lines lie on the paragraph that follows it. Drawn, the section is as tall as its content and
+  // nothing overlaps: the page is right, and an audit that reads the skipped layout reports a collision that is not there.
+  '/overlap-cv-auto': deep('Drawn, not skipped', {
+    css: '.gap { height: 2400px; } .cv { content-visibility: auto; contain-intrinsic-size: auto 40px; } .cv p, p.after { margin: 0 0 16px; }',
+    body: '<div class="gap"></div><section class="cv"><p>Requests per day</p><p>1,204 in the last hour</p><p>Errors per day</p></section><p class="after">What the view tells the model, every time.</p>',
+  }),
+  // Text that does overlap, inside a subtree that is not drawn: content-visibility: hidden. Nothing to report.
+  '/overlap-cv-hidden': deep('Not drawn', {
+    css: '.cv { content-visibility: hidden; } .figure { margin-top: -32px; }',
+    body: '<section class="cv"><p>Requests per day</p><p class="figure">1,204 in the last hour</p></section>',
+  }),
+
+  // ---- a link the presses follow as a browser does ----
+  // Resolved against its page, `gone/testing.md` is `/gone/testing.md`, which the server answers 404.
+  '/presses-relative-link': deep('Relative link to nowhere', { css: LINK, body: '<a href="gone/testing.md">Testing</a>' }),
+  '/presses-relative-link-fixed': deep('Relative link, corrected', { css: LINK, body: '<a href="clean">Testing</a>' }),
 
   // ---- a control that arrives after a fixed wait has ended (the shell's assistant slot) ----
   '/late-unnamed': deep('Late control', { css: UNNAMED, body: SLOT, script: arrive(2600, `<button type="button" class="icon">${ICON}</button>`) }),

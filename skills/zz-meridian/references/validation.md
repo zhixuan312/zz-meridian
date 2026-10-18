@@ -89,16 +89,17 @@ line naming the command that runs them. Steps in order:
    that cannot run is `not run` and the suite exits 2. It drives the sample Members page; a product without it prints
    `n/a live data`, which does not count against the outcome, and proves its own live pages through `browserChecks`. It
    presses the sheet, the row menu and the Remove dialog inside open shadow roots too.
-8. **Web Vitals on a mid-range phone** (`--timed` only; `scripts/vitals.ts`): Lighthouse's mobile profile (CPU slowed
-   four times, Slow 4G, 390px touch). Every page must hold LCP under 2.5 s, INP under 200 ms and CLS under 0.1, and drop
-   no frame, the template's Design Atlas included (its front page and one card page; `node scripts/vitals.ts --atlas`
-   measures every entry); INP is the slowest tap on a control that changes the screen, found inside open shadow roots
-   too, and each line carries `taps: N`, the controls it tapped (`taps: 0` means the page's INP rests on no tap). A
-   dropped frame is a gap over 50 ms between animation frames, read in the tap's own window and no other, so one page's
-   line is a count as well as a verdict: the floor is met when it reads `0 of N`. A page that drops one frame is
-   measured a second time before it is failed — one frame in two hundred is inside the noise of a host the four-times
-   throttle is measuring too — and a page that drops one twice is a page that stutters. It runs alone, after the others,
-   since throttling measures the machine too: on a busy machine, run it again before believing a near miss.
+8. **Web Vitals on a mid-range phone** (`--timed` only; `scripts/vitals.ts`): Lighthouse's mobile profile (the device of
+   Lighthouse benchmark index 800, the CPU slowed by the host's own index over 800, Slow 4G, 390px touch). Every page
+   must hold LCP under 2.5 s, INP under 200 ms and CLS under 0.1, and drop no frame, the template's Design Atlas
+   included (its front page and one card page; `node scripts/vitals.ts --atlas` measures every entry); INP is the
+   slowest tap on a control that changes the screen, found inside open shadow roots too, and each line carries
+   `taps: N`, the controls it tapped (`taps: 0` means the page's INP rests on no tap). A dropped frame is a gap over 50
+   ms between animation frames, read in the tap's own window and no other, so one page's line is a count as well as a
+   verdict: the floor is met when it reads `0 of N`. A page that drops one frame is measured a second time before it is
+   failed — one frame in two hundred is inside the noise of a host the throttle is measuring too — and a page that drops
+   one twice is a page that stutters. It runs alone, after the others, since throttling measures the machine too: on a
+   busy machine, run it again before believing a near miss.
 
 The report is in `out/verify.txt`. Fix the cause; never weaken a check to make it pass. pnpm may first print a lockfile
 and supply-chain check before a script runs; that is pnpm, not an install, and not a failure.

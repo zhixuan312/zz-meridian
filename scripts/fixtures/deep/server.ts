@@ -6,7 +6,7 @@
  *
  * It prints `listening on <url>` once it answers, on a free port unless --port names one. Every route that is not a
  * fixture page answers a clean page (no shadow root, no control), which is what the audit's embed pass reaches: it passes
- * every suite. Kept outside node_modules: Node does not strip types there.
+ * every suite, except a path under /gone/, which answers 404. Kept outside node_modules: Node does not strip types there.
  */
 import http from 'node:http';
 import type { AddressInfo } from 'node:net';
@@ -24,6 +24,8 @@ const server = http.createServer((req, res) => {
   // address by the time anything is measured — the state the rules are about, and not one a page can arrange itself.
   if (pathname === '/moved-page') { res.writeHead(302, { location: '/moved-page-now' }).end(); return; }
   if (pathname === '/drops-query' && search) { res.writeHead(302, { location: pathname }).end(); return; }
+  // A link that leads nowhere, for the presses' relative-link case.
+  if (pathname.startsWith('/gone/')) { res.writeHead(404, { 'content-type': 'text/html; charset=utf-8' }).end(CLEAN); return; }
   const html = ALL[pathname] ?? CLEAN;
   res.writeHead(200, { 'content-type': 'text/html; charset=utf-8' }).end(html);
 });
