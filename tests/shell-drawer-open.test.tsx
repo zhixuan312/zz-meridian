@@ -25,7 +25,9 @@ describe('the phone drawer', () => {
     await act(async () => { render(shell()); });
     const focus = vi.spyOn(HTMLElement.prototype, 'focus');
     act(() => { fireEvent.click(screen.getByRole('button', { name: 'Open navigation' })); });
-    const dialog = await screen.findByRole('dialog', { name: 'Navigation' });
+    // Read before anything awaits: the tap's task and the open's commit, which act flushed, are over, and the frame
+    // that moves focus has not run. An await here (findByRole polls) can outlast a frame on a loaded machine.
+    const dialog = screen.getByRole('dialog', { name: 'Navigation' });
     expect(focus).not.toHaveBeenCalled();
     await act(async () => { await new Promise((r) => requestAnimationFrame(() => r(null))); });
     expect(dialog.contains(document.activeElement)).toBe(true);
