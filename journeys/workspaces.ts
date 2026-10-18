@@ -261,7 +261,11 @@ const knownCustomers = customerRoutes.filter((r) => r !== unknownCustomer);
 
 /** The title the navigation check names for a rail route: what its page's heading shows (navigate.ts holds it to the same, by inclusion). */
 const titleOf = (href: string) => config.navigationChecks?.find((c) => c.path === href)?.title;
-const headingOf = (page: Page) => until("the page's heading", () => ask<string>(page, `const h = document.querySelector('main h1, h1'); const t = h ? text(h) : ''; return t || null;`));
+/**
+ * The page's heading, once the page is there: while its `loading.tsx` stands in (a `role="status"` that is busy), the
+ * masthead holds the page's name where a record's name will be, and a step reading it then failed on a loaded machine.
+ */
+export const headingOf = (page: Page) => until("the page's heading", () => ask<string>(page, `if (document.querySelector('[role="status"][aria-busy="true"]')) return null; const h = document.querySelector('main h1, h1'); const t = h ? text(h) : ''; return t || null;`));
 const mainText = (page: Page) => ask<string>(page, `const m = document.querySelector('main'); return m ? text(m) : '';`);
 
 /**
