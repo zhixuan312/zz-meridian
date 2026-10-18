@@ -121,14 +121,14 @@ function script(body: { messages?: Message[]; tools?: Tool[] }, steps: readonly 
 
   if (last?.role === 'user') {
     const said = textOf(last.content).trim();
-    // One reply in markdown, for the walk-through that proves the panel RENDERS it rather than printing the model's
-    // own `**`, `- ` and `|---|`. Every model this template has been pointed at answers this way, and a fake model
-    // that only ever answers one plain sentence cannot tell the two apart.
     /** The call, where the request hands its tool; otherwise the words that say it was not handed here. */
     const handed = (c: Call): Reply => ((body.tools ?? []).some((t) => t.function?.name === c.name) ? { calls: [c] } : { text: `I was not handed ${c.name} here.` });
     // A project's own steps come before this file's branches: its question wins over a sample question it resembles.
     const step = steps.find((s) => new RegExp(s.when, 'i').test(said));
     if (step) return handed({ name: step.tool, args: step.input });
+    // One reply in markdown, for the walk-through that proves the panel RENDERS it rather than printing the model's
+    // own `**`, `- ` and `|---|`. Every model this template has been pointed at answers this way, and a fake model
+    // that only ever answers one plain sentence cannot tell the two apart.
     if (/markdown/i.test(said)) {
       return { text: [
         '**Traffic** this week, in short:',

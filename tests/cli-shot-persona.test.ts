@@ -13,6 +13,12 @@ it('refuses a persona the config does not declare, before Chrome starts', () => 
   expect(`${r.stdout}${r.stderr}`).toMatch(/shot: --as names nobody, which is not a declared persona\. Declared personas: /);
 });
 
+it('refuses an option given no value, rather than shooting without it', () => {
+  const r = spawnSync(process.execPath, ['scripts/shot.ts', '/', '--base', 'http://127.0.0.1:9', '--as'], { cwd: ROOT, encoding: 'utf8', timeout: 30_000 });
+  expect(r.status).toBe(1);
+  expect(`${r.stdout}${r.stderr}`).toMatch(/shot: --as needs a value/);
+});
+
 it("hands the persona's cookie to each page it opens", () => {
   const source = fs.readFileSync(path.join(ROOT, 'scripts/shot.ts'), 'utf8');
   expect(source).toMatch(/\.open\([^)]*cookie/);

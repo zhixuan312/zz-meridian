@@ -14,7 +14,7 @@ Every release of ZZ Meridian, newest first. Versions follow semver: a removed or
 
 - **A project's own check that judges a time has a tier of its own** ([#48](https://github.com/zhixuan312/zz-meridian/issues/48)). `timedChecks` in `scripts/verify.config.ts` lists browser checks that judge a time: `pnpm verify --timed` runs each with `--base`, alone, after the live data and before Web Vitals, and reports them as the `timedChecks` suite. A check that measured a budget inside `browserChecks`, under the other suites' load, moves to `timedChecks`.
 - **The fake model can call a project's own tools** ([#49](https://github.com/zhixuan312/zz-meridian/issues/49)). `fakeModel` in `scripts/verify.config.ts` lists `{ when, tool, input }` steps: for a question matching `when` (a case-insensitive pattern) the fake model calls `tool` with `input` when the request hands it, so a journey can check that the assistant cites what the page shows. A pattern that does not compile fails `pnpm verify` before the gate.
-- **`scripts/shot.ts --as <persona>`** ([#50](https://github.com/zhixuan312/zz-meridian/issues/50)) signs each page in with that persona's cookie from `scripts/verify.config.ts` and names each file `<route>-<persona>-<width>-<theme>.png`, so a second persona's pages can be shot for a review.
+- **`scripts/shot.ts --as <persona>`** ([#50](https://github.com/zhixuan312/zz-meridian/issues/50)) signs each page in with that persona's cookie from `scripts/verify.config.ts` and names each file `<route>-<persona>-<width>-<theme>.png`, so a second persona's pages can be shot for a review. An undeclared persona is refused before Chrome starts, and any option of `shot.ts` given no value (`--as` last on the line) is refused rather than shot without it.
 
 ### Changed
 

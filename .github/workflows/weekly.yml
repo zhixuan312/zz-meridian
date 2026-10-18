@@ -23,7 +23,7 @@ on:
   workflow_dispatch:
     inputs:
       jobs:
-        description: 'The jobs to run, comma-separated: full, timed, perf, consumer'
+        description: 'The jobs to run, comma-separated without spaces: full,timed,perf,consumer'
         type: string
         default: full,timed,perf,consumer
 
@@ -35,7 +35,28 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  # A dispatch's list, read before any job starts: a name that is not a job, or a space after a comma, would otherwise
+  # skip that job silently, and a list naming none would end green having run nothing.
+  named:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 2
+    steps:
+      - name: Every name is a job
+        env:
+          JOBS: ${{ inputs.jobs || 'full,timed,perf,consumer' }}
+        run: |
+          set -euo pipefail
+          IFS=',' read -ra names <<< "$JOBS"
+          [ "${#names[@]}" -gt 0 ] || { echo "jobs names no job: give some of full,timed,perf,consumer"; exit 1; }
+          for n in "${names[@]}"; do
+            case "$n" in
+              full|timed|perf|consumer) ;;
+              *) echo "jobs: '$n' is not a job; name some of full,timed,perf,consumer, comma-separated without spaces"; exit 1 ;;
+            esac
+          done
+
   full:
+    needs: named
     if: contains(format(',{0},', inputs.jobs || 'full,timed,perf,consumer'), ',full,')
     runs-on: ubuntu-24.04
     timeout-minutes: 45
@@ -67,6 +88,7 @@ jobs:
           retention-days: 30
 
   timed:
+    needs: named
     if: contains(format(',{0},', inputs.jobs || 'full,timed,perf,consumer'), ',timed,')
     runs-on: ubuntu-24.04
     timeout-minutes: 45
@@ -98,6 +120,7 @@ jobs:
           retention-days: 30
 
   perf:
+    needs: named
     if: contains(format(',{0},', inputs.jobs || 'full,timed,perf,consumer'), ',perf,')
     runs-on: ubuntu-24.04
     timeout-minutes: 45
@@ -133,6 +156,7 @@ jobs:
           retention-days: 30
 
   consumer:
+    needs: named
     if: contains(format(',{0},', inputs.jobs || 'full,timed,perf,consumer'), ',consumer,')
     runs-on: ubuntu-24.04
     timeout-minutes: 120

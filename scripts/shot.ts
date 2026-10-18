@@ -26,7 +26,13 @@ import config from './verify.config.ts';
 process.env.DPR ??= '2';
 
 const args = process.argv.slice(2);
-const opt = (k: string, d: string) => { const i = args.indexOf(k); return i >= 0 ? args.splice(i, 2)[1] : d; };
+const opt = (k: string, d: string) => {
+  const i = args.indexOf(k);
+  if (i < 0) return d;
+  const v = args.splice(i, 2)[1];
+  if (v === undefined || v.startsWith('--')) { console.error(`shot: ${k} needs a value`); process.exit(1); }
+  return v;
+};
 const flag = (k: string) => { const i = args.indexOf(k); return i >= 0 ? (args.splice(i, 1), true) : false; };
 const presses: string[] = [];
 for (let i = args.indexOf('--press'); i >= 0; i = args.indexOf('--press')) presses.push(args.splice(i, 2)[1]);

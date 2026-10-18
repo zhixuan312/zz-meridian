@@ -30,6 +30,11 @@ describe('weekly', () => {
     expect(weekly).toMatch(/default: ['"]?full,timed,perf,consumer['"]?/);
     for (const name of ['full', 'timed', 'perf', 'consumer']) expect(job(name)).toContain(`',${name},'`);
   });
+  it('refuses a dispatch that names no job, or a name that is not one, before any job runs', () => {
+    expect(job('named')).toMatch(/full\|timed\|perf\|consumer\)/);
+    expect(job('named')).toMatch(/JOBS: \$\{\{ inputs\.jobs \|\| 'full,timed,perf,consumer' \}\}/);
+    for (const name of ['full', 'timed', 'perf', 'consumer']) expect(job(name)).toMatch(/needs: named/);
+  });
   it('gives each tier a runner of its own, its log and room for a slow day', () => {
     for (const name of ['full', 'timed', 'perf']) {
       expect(job(name)).toMatch(/timeout-minutes: 45/);
@@ -50,5 +55,7 @@ describe('the testing standard', () => {
     for (const rel of ['docs/testing.md', 'cli/src/context.ts', 'docs/start-a-dashboard.md', 'docs/distribution.md', 'CONTRIBUTING.md', 'README.md']) {
       expect(read(rel), rel).not.toMatch(/--full --timed --perf/);
     }
+    // A migration's instructions are what an adopter reads on update: they name the shard, since the whole protocol refuses outside CI.
+    expect(read('cli/src/migrations.ts')).not.toMatch(/`pnpm verify --perf`/);
   });
 });

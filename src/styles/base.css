@@ -33,7 +33,8 @@
          change stops at the frame; the scrim covers the page, so a press outside is still blocked. It is scoped to the
          drawer's open state, so a menu, select or popover over the page keeps Radix's own blocking untouched.
        - `--removed-body-scroll-bar-size`, which the scroll lock sets on <body> to the width of the scrollbar it removed.
-         The frame never scrolls the document, so that width is 0, and the frame states it, once, for good. */
+         The lock reads it only on elements carrying its `right-scroll-bar-position` and `width-before-scroll-bar`
+         classes, and nothing in a frame does, so the frame states 0, once, for good. */
   [data-drawer-frame] { --removed-body-scroll-bar-size: 0px; }
   [data-drawer-frame][data-drawer-open] { pointer-events: auto; }
   /* A guest in a host: no light; the host's ground shows through. */

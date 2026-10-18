@@ -221,7 +221,7 @@ export const RELEASE_MIGRATIONS: ReleaseMigration[] = [
     since: '0.5.0',
     applies: removedVerifyFlags,
     summary: 'verify has four modes, and --quick, --no-vitals and --extra are gone.',
-    instructions: 'Read "Validation" in references/validation.md. Run `pnpm verify` for the bounded default (the gate once, one build, the size checks and a smoke of up to three routes), `pnpm verify --full` for every exhaustive suite, `pnpm verify --timed` for the timed ones (on a quiet machine) and `pnpm verify --perf` for the 20-sample navigation protocol, and replace the removed flags in the script, workflow or shell file. Read the coverage line each run ends with: it says what ran and what did not.',
+    instructions: 'Read "Validation" in references/validation.md. Run `pnpm verify` for the bounded default (the gate once, one build, the size checks and a smoke of up to three routes), `pnpm verify --full` for every exhaustive suite, `pnpm verify --timed` for the timed ones (on a quiet machine) and, in CI only, `pnpm verify --perf --shard <i>/<n>` for the 20-sample navigation protocol (`node scripts/perf.ts --routes <route>` narrows it to one route on your machine), and replace the removed flags in the script, workflow or shell file. Read the coverage line each run ends with: it says what ran and what did not.',
     checks: ['gate'],
   },
   {
