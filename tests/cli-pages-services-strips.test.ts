@@ -2,7 +2,7 @@
 // Named cli-* so the payload leaves it out: it is about the sample's own Services page, which a product replaces.
 import { describe, expect, it } from 'vitest';
 import type { Service, ServiceStatus } from '@/components/patterns/status-list';
-import { operationalShare, servicesContext, servicesHead } from '@/views/services-context';
+import { operationalShare, servicesContext, servicesHead, stripDates } from '@/views/services-context';
 
 /** A service whose strip is `days` long, operational on every day but those in `marked`, counted back from today (0 is today). */
 const service = (name: string, days: number, marked: Record<number, ServiceStatus> = {}): Service => ({
@@ -34,5 +34,14 @@ describe('services that keep strips of different lengths', () => {
     const context = servicesContext({ services, incidents: { open: [], resolved: [] }, head, updatedAt: NOW, now: NOW });
     expect(context.facts.find((f) => f.label.startsWith('Uptime, all services'))?.label).toBe('Uptime, all services, 90 days');
     expect(context.insights.map((i) => i.text).join('\n')).toMatch(/^1 of the last 90 days had a service below operational; Billing accounts for 1 of them\.$/m);
+  });
+});
+
+describe("the strip's days", () => {
+  it("end on today in the product's time zone, not in UTC", () => {
+    // 23:30 UTC on 15 October is already 16 October in Shanghai: the strip's last day is the day in progress there.
+    const end = new Date('2026-10-15T23:30:00.000Z');
+    expect(stripDates(3, end, 'Asia/Shanghai')).toEqual(['2026-10-14', '2026-10-15', '2026-10-16']);
+    expect(stripDates(3, end, 'UTC')).toEqual(['2026-10-13', '2026-10-14', '2026-10-15']);
   });
 });

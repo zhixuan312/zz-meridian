@@ -12,13 +12,12 @@ import { IncidentCard } from '@/components/patterns/incident-card';
 import { StatusList } from '@/components/patterns/status-list';
 import { unpackServices, type PackedService } from '@/components/patterns/status-list/summarise';
 import { AskAbout } from '@/components/patterns/ask-about';
-import { formatUptime, lastedOf, longestRun, meanUptime, operationalShare, servicesContext, type ServicesData } from './services-context';
+import { formatUptime, lastedOf, longestRun, meanUptime, operationalShare, servicesContext, stripDates, type ServicesData } from './services-context';
 import { Unread } from './unread';
 
 /** The page's two parts after its Featured metric, by the titles the page and its specification name them with. */
 const PARTS = { services: 'Each service, 90 days', incidents: 'Incidents' } as const;
 
-const DAY = 86_400_000;
 /**
  * The lowest level the uptime chart asks its axis to start at. Uptime is 100% on almost every day of a healthy period
  * and never near zero, so an axis from zero spent 82% of the plot on a range no day reached and left the days that
@@ -36,7 +35,7 @@ function Uptime({ services, end }: { services: ServicesData['services']; end: Da
   const share = operationalShare(services);
   const n = share.length;
   // The strips end today: the dates count back from it.
-  const dates = share.map((_, i) => new Date(end.getTime() - (n - 1 - i) * DAY).toISOString().slice(0, 10));
+  const dates = stripDates(n, end);
   const run = longestRun(services);
   return (
     <div data-protagonist="Uptime" className="contents">

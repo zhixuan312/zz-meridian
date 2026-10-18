@@ -10,7 +10,7 @@ import { summarise } from '@/components/patterns/status-list/summarise';
 import type { DailyPoint } from '@/data/sample';
 import { run, runOf, steady } from '@/lib/facts';
 import { formatDuration, formatPercent, plural } from '@/lib/format';
-import { formatDate, formatDateTime } from '@/lib/format-date';
+import { dayOf, formatDate, formatDateTime } from '@/lib/format-date';
 import { freshnessOf, type Fact, type Insight, type SharedContext } from '@/lib/shared-context';
 import { handed, headInsights, inDays, type PageHead } from './fact-insight';
 
@@ -52,6 +52,15 @@ const firstSentence = (text: string) => text.match(/^.*?[.!?](?=\s|$)/)?.[0] ?? 
 
 /** The uptime the page states for its days: the mean of each service's own. */
 export const meanUptime = (services: readonly Pick<Service, 'uptime'>[]) => (services.length ? services.reduce((a, s) => a + s.uptime, 0) / services.length : 0);
+
+/**
+ * The days of a strip `n` long, oldest first, ending on the day `end` falls on in the product's time zone (`dayOf`), as
+ * every other day the page cuts is: the UTC date of `end` is a day off east of UTC after local midnight.
+ */
+export function stripDates(n: number, end: Date, timeZone?: string): string[] {
+  const today = Date.parse(`${dayOf(end, timeZone)}T00:00:00Z`);
+  return Array.from({ length: n }, (_, i) => new Date(today - (n - 1 - i) * 86_400_000).toISOString().slice(0, 10));
+}
 
 /** The days the page counts: those of the longest strip. Every strip ends today, so a service that keeps fewer days keeps the latest of them. */
 export const stripDays = (services: readonly Pick<Service, 'days'>[]) => Math.max(0, ...services.map((s) => s.days.length));

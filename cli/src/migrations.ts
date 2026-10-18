@@ -392,7 +392,7 @@ export const RELEASE_MIGRATIONS: ReleaseMigration[] = [
     since: '0.16.0',
     applies: viewToolPagesWithoutAgentDoes,
     summary: 'The specification of a page a view tool renders says what the agent does there.',
-    instructions: 'Read "Prepared queries" in references/agents.md. Under `## Agents` in the README.md of each page a view tool\'s `page` names, add `### What the agent does here`: a line `Protagonist: <the card\'s name>.`, then at least three questions a person on the page asks that its context does not answer alone, each `- "<question>" — <what the prepared query is asked>`, and mark that card on the page with `data-protagonist="<name>"`. `scripts/check.ts` fails the gate on such a page without the part. While a view tool in `src/views/tools.ts` names no page yet (`view-tool-page-explore`), every console page specification without the part is listed: one that no tool comes to name needs nothing.',
+    instructions: 'Read "Prepared queries" in references/agents.md. Under `## Agents` in the README.md of each page a view tool\'s `page` names, add `### What the agent does here`: a line `Protagonist: <the card\'s name>.`, then at least three questions a person on the page asks that its context does not answer alone, each `- "<question>" — <what the prepared query is asked>`, and mark that card on the page with `data-protagonist="<name>"`. `scripts/check.ts` fails the gate on such a page without the part. While a view tool names no page yet (`view-tool-page-explore`), every console page specification without the part is listed: one that no tool comes to name needs nothing.',
     checks: ['gate'],
   },
   {
@@ -437,7 +437,7 @@ export const RELEASE_MIGRATIONS: ReleaseMigration[] = [
   },
   {
     id: 'verify-tiers',
-    since: '0.16.4',
+    since: '0.17.0',
     applies: (root) => matching(root, (rel, src) => importsOf(rel, src).some(({ from, names }) => from === 'scripts/lib/coverage' && names.includes('finalOutcome')) && /(?<![\w.$])finalOutcome\(\s*(?!\{)/.test(src)),
     summary: '`finalOutcome` in `scripts/lib/coverage.ts` takes `{ full, timed }` as its first argument, because verify has a timed tier apart from the full one.',
     instructions: 'Bring `tests/verify-suite-outcome.test.ts` over from the release as it has it. A file of your own that calls `finalOutcome` passes the tiers, `finalOutcome({ full, timed }, notRun)`, where it passed whether the run was full (`finalOutcome(true, notRun)`): `references/validation.md` describes the tiers, `pnpm verify`, `--full` and `--timed`.',
@@ -464,14 +464,14 @@ function removedExportReaders(root: string): string[] | null {
 }
 
 /**
- * The specifications of the pages the view tools of `src/views/tools.ts` render, as the gate reads them from 0.16.0,
- * that lack "What the agent does here". While a tool names no page, the gate cannot tell its page, and neither can this:
- * every console page specification without the part is listed then.
+ * The specifications of the pages the view tools render, as the gate reads them from 0.16.0, that lack "What the agent
+ * does here". The registry is `src/views/tools.ts`, and a tool may be defined in any module under `src/` it imports, as
+ * the gate reads them since 0.17.0, so every `src/` module is read. While a tool names no page, the gate cannot tell its
+ * page, and neither can this: every console page specification without the part is listed then.
  */
 function viewToolPagesWithoutAgentDoes(root: string): string[] | null {
-  const tools = text(root, 'src/views/tools.ts');
-  if (tools === null) return null;
-  const calls = viewToolCalls(tools).filter((k) => !k.has('...'));
+  if (text(root, 'src/views/tools.ts') === null) return null;
+  const calls = teamSources(root).filter((f) => f.rel.startsWith('src/')).flatMap((f) => viewToolCalls(f.src)).filter((k) => !k.has('...'));
   if (calls.length === 0) return null;
   const pages = new Set(calls.map((k) => k.get('page')).filter((p): p is string => typeof p === 'string'));
   const unnamed = calls.some((k) => !k.has('page'));

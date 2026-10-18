@@ -24,7 +24,7 @@ const IMPORT = "import { finalOutcome } from '../scripts/lib/coverage.ts';\n";
 describe('the verify-tiers migration', () => {
   it('is declared for the release after 0.16.3 and asks for the gate', () => {
     expect(m()).toBeDefined();
-    expect(m().since).toBe('0.16.4');
+    expect(m().since).toBe('0.17.0');
     expect(m().checks).toEqual(['gate']);
   });
   it('finds a test that calls finalOutcome with a boolean', () => {

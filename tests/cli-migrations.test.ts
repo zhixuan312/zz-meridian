@@ -214,6 +214,9 @@ describe('the 0.16.0 migrations', () => {
     expect(byId('agent-does-here-section').applies(unnamed)).toEqual(['app/(dashboard)/requests/README.md', 'app/(dashboard)/settings/README.md']);
     expect(byId('agent-does-here-section').applies(project({ ...specs, 'src/views/tools.ts': tool('customer', '/customers/[id]') }))).toBeNull();
     expect(byId('agent-does-here-section').applies(project(specs))).toBeNull();
+    // A tool kept in a module of its own, which the registry imports, is read as the gate reads it since 0.17.0 (#43).
+    const split = project({ ...specs, 'src/views/tools.ts': "export { requestsTool } from './requests-tool';\n", 'src/views/requests-tool.ts': tool('requests', '/requests') });
+    expect(byId('agent-does-here-section').applies(split)).toEqual(['app/(dashboard)/requests/README.md']);
   });
 
   it("finds the sample's pages and views under their 0.15.0 names, and the files and tests that still read them", () => {
@@ -306,10 +309,10 @@ describe('the 0.16.3 migrations', () => {
   });
 });
 
-describe('the 0.16.4 migration', () => {
+describe('the 0.17.0 migration', () => {
   it('finds a file that calls `finalOutcome` with a boolean, and leaves one that passes the tiers', () => {
     const imp = "import { finalOutcome } from '../scripts/lib/coverage.ts';\n";
-    expect(byId('verify-tiers').since).toBe('0.16.4');
+    expect(byId('verify-tiers').since).toBe('0.17.0');
     expect(byId('verify-tiers').applies(project({ 'tests/verify-suite-outcome.test.ts': `${imp}finalOutcome(true, []);\n` }))).toEqual(['tests/verify-suite-outcome.test.ts']);
     expect(byId('verify-tiers').applies(project({ 'tests/verify-suite-outcome.test.ts': `${imp}finalOutcome({ full: true, timed: false }, []);\n` }))).toBeNull();
     // A call of another function by that name, with no import of the coverage module, is not this migration's.
