@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Suspense, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { Suspense, useEffect, useMemo, useRef, useState, type ReactNode, type RefObject } from 'react';
 import { Dialog } from 'radix-ui';
 import { ArrowLeft, ArrowRight, ChevronRight, Menu, Search, X } from 'lucide-react';
 import { workspaces } from '@/app.config';
@@ -22,9 +22,10 @@ export function AtlasShell({ nav, children }: { nav: AtlasNav; children: ReactNo
   // The frame never reads the address (see `AppShell` for why): the shelf and the drawer do, each behind its own boundary.
   // How many times the contents have been asked for; the drawer answers each one (see `Drawer`).
   const [asked, setAsked] = useState(0);
+  const frame = useRef<HTMLDivElement>(null);
   const shelf = <Suspense fallback={null}><Shelf nav={nav} /></Suspense>;
   return (
-    <div className="min-h-dvh lg:grid lg:grid-cols-[var(--rail-width)_minmax(0,1fr)]">
+    <div ref={frame} data-drawer-frame className="min-h-dvh lg:grid lg:grid-cols-[var(--rail-width)_minmax(0,1fr)]">
       {/* The first stop for a keyboard: past the whole shelf, straight to what is being read. */}
       <a
         href="#content"
@@ -39,7 +40,7 @@ export function AtlasShell({ nav, children }: { nav: AtlasNav; children: ReactNo
         </button>
         <Link href="/system" className="flex items-center gap-2 text-sm font-semibold"><AppMark size={20} />ZZ Meridian</Link>
       </div>
-      <Suspense fallback={null}><Drawer asked={asked} shelf={shelf} /></Suspense>
+      <Suspense fallback={null}><Drawer asked={asked} shelf={shelf} root={frame} /></Suspense>
       {/* An entry's page reads its own address (its section and id), so it too waits behind a boundary: for an address the
           build did not know, the frame is what is prerendered, and the page or its not-found follows. */}
       <div id="content" tabIndex={-1} className="min-w-0 outline-none"><Suspense fallback={null}>{children}</Suspense></div>
@@ -53,13 +54,13 @@ export function AtlasShell({ nav, children }: { nav: AtlasNav; children: ReactNo
  * counts the presses and the drawer opens whenever the count it has answered is behind: a press made before it was
  * there is answered when it arrives, and each press once (issue #32, as in the console's shell).
  */
-function Drawer({ shelf, asked }: { shelf: ReactNode; asked: number }) {
-  const nav = useNavDrawer(asked);
+function Drawer({ shelf, asked, root }: { shelf: ReactNode; asked: number; root: RefObject<HTMLElement | null> }) {
+  const nav = useNavDrawer(asked, root);
   return (
     <Dialog.Root open={nav.open} onOpenChange={nav.setOpen}>
       <Dialog.Portal>
         <Dialog.Overlay className="scrim-in fixed inset-0 z-(--layer-rail) bg-scrim lg:hidden" />
-        <Dialog.Content aria-describedby={undefined} className="sheet-in fixed inset-y-0 left-0 z-(--layer-rail) w-(--rail-width) max-w-[86vw] border-r border-line bg-ground shadow-overlay lg:hidden">
+        <Dialog.Content aria-describedby={undefined} {...nav.content} className="sheet-in fixed inset-y-0 left-0 z-(--layer-rail) w-(--rail-width) max-w-[86vw] border-r border-line bg-ground shadow-overlay lg:hidden">
           <Dialog.Title className="sr-only">Contents</Dialog.Title>
           {shelf}
           <Dialog.Close aria-label="Close the contents" className="absolute top-4 -right-12 grid size-9 place-items-center rounded-full bg-surface-raised text-ink-2 shadow-overlay">
