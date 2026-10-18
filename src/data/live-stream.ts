@@ -11,7 +11,7 @@ const MAX_QUEUED = 100;
 let noted = false;
 
 type LiveStreamOptions = {
-  /** The requested names, already authorized once; the first frame is a resync of them. */
+  /** The requested names, already authorized once; the first frame greets with what moved. */
   names: string[];
   /** One scope-bound collection per name, in the same order. */
   collections: AnyCollection[];
@@ -19,9 +19,11 @@ type LiveStreamOptions = {
   heartbeatMs?: number;
   /** Whether the current scope may still read a collection; asked before every hint is sent. */
   authorize: (name: string) => Promise<boolean>;
+  /** The revision of each collection the page was served, by name; the greeting names only what moved since. */
+  since?: Record<string, string>;
 };
 
-export function liveStream({ names, collections, signal, heartbeatMs = 15000, authorize }: LiveStreamOptions): Response {
+export function liveStream({ names, collections, signal, heartbeatMs = 15000, authorize, since }: LiveStreamOptions): Response {
   const encoder = new TextEncoder();
   const unsubscribe: Array<() => void> = [];
   let timer: ReturnType<typeof setInterval> | undefined;
@@ -29,7 +31,7 @@ export function liveStream({ names, collections, signal, heartbeatMs = 15000, au
   let controller!: ReadableStreamDefaultController<Uint8Array>;
 
   const send = (frame: string) => controller.enqueue(encoder.encode(frame));
-  const resync = () => `event: resync\ndata: ${JSON.stringify({ collections: names })}\n\n`;
+  const resync = (moved: string[] = names) => `event: resync\ndata: ${JSON.stringify({ collections: moved })}\n\n`;
 
   function close() {
     if (closed) return;
@@ -88,11 +90,17 @@ export function liveStream({ names, collections, signal, heartbeatMs = 15000, au
       controller = c;
       if (signal.aborted) return close();
       signal.addEventListener('abort', close);
-      send(`retry: 3000\n\n${resync()}`);
+      // Subscribe first, then compare: a write after the page's read either moves a revision the greeting names or
+      // arrives as a hint.
       collections.forEach((collection, i) => {
         const off = collection.subscribe?.(() => hint(names[i]!));
         if (off) unsubscribe.push(off);
       });
+      const moved = names.filter((n, i) => {
+        const was = since?.[n];
+        return was === undefined || was !== collections[i]!.revision?.();
+      });
+      send(`retry: 3000\n\n${moved.length ? resync(moved) : 'event: synced\ndata: {}\n\n'}`);
       timer = setInterval(() => { if (!closed) send(`: beat ${Date.now()}\n\n`); }, heartbeatMs);
     },
     cancel: close,

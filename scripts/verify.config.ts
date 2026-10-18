@@ -77,6 +77,19 @@ type VerifyConfig = {
    */
   browserChecks?: string[];
   /**
+   * The product's own browser checks that judge a time, run by `pnpm verify --timed` alone and one at a time, after the
+   * live data and before Web Vitals, each with `--base <url>` like `browserChecks`. A check that judges a time under the
+   * load of `--full` judges the load; move it here, and keep in `browserChecks` the half that judges no time.
+   */
+  timedChecks?: string[];
+  /**
+   * Questions the fake model answers with a call to one of the product's own tools, so a journey can check what the
+   * assistant cites. `when` is a case-insensitive regular expression's source, matched against the user's message before
+   * the fake model's own branches; the model then calls `tool` with `input` when the request hands that tool, and answers
+   * with the tool's result. verify hands the steps to the fake model on its command line.
+   */
+  fakeModel?: { when: string; tool: string; input: Record<string, unknown> }[];
+  /**
    * Routes that cannot be prerendered, each with the reason. `node scripts/route-policy.ts`, which verify runs after its
    * production build, fails any non-API route that is neither static nor partial unless it is named here. A route that
    * reads the signed-in user on every request is the usual one; move that read behind a boundary first, so the rest of

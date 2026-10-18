@@ -98,7 +98,7 @@ const INSTRUMENT = `(() => {
       super(url, init);
       this.addEventListener('open', () => { live.opens++; });
       this.addEventListener('error', () => { live.errors++; });
-      for (const type of ['resync', 'change']) this.addEventListener(type, () => live.events.push(type));
+      for (const type of ['resync', 'synced', 'change']) this.addEventListener(type, () => live.events.push(type));
     }
   };
   const headerOf = (input, init, name) => {
@@ -147,7 +147,7 @@ async function tab(): Promise<Page> {
 
 const url = (origin: string) => `${origin}/members?livePollMs=${pollMs}`;
 
-/** Opens /members and waits until the tab's stream is open and its first resynchronization has finished. */
+/** Opens /members and waits until the tab's stream is open and has answered: a refresh has finished, or the greeting said nothing moved since the server's read. */
 async function openMembers(page: Page, origin: string) {
   await page.open(url(origin), { width: 1440, theme: 'dark' });
   // A new member sorts last, which on a table of twenty per page is a page the tab is not showing: show up to a hundred.
@@ -159,8 +159,8 @@ async function openMembers(page: Page, origin: string) {
   const t = Date.now();
   for (;;) {
     const s = await seen(page);
-    if (s.opens >= 1 && s.actions.length >= 1 && s.inFlight === 0) return;
-    if (Date.now() - t > 10_000) throw new Error(`${origin}/members: the live stream did not open and resynchronize in 10 s (opens ${s.opens}, refreshes ${s.actions.length})`);
+    if (s.opens >= 1 && (s.actions.length >= 1 || s.events.includes('synced')) && s.inFlight === 0) return;
+    if (Date.now() - t > 10_000) throw new Error(`${origin}/members: the live stream did not open and answer in 10 s (opens ${s.opens}, refreshes ${s.actions.length}, greetings [${s.events.join(',')}])`);
     await sleep(100);
   }
 }

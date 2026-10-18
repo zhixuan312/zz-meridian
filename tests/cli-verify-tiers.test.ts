@@ -13,7 +13,7 @@ const verify = (...args: string[]) => spawnSync(process.execPath, ['scripts/veri
 describe('the suites, by tier', () => {
   it('names the complete tier, then the timed tier, then perf', () => {
     expect([...COMPLETE_SUITES]).toEqual(['audit', 'presses', 'keyboard', 'assistant', 'browserChecks']);
-    expect([...TIMED_SUITES]).toEqual(['timing', 'live', 'vitals']);
+    expect([...TIMED_SUITES]).toEqual(['timing', 'live', 'timedChecks', 'vitals']);
     expect([...SUITE_NAMES]).toEqual([...COMPLETE_SUITES, ...TIMED_SUITES, 'perf']);
   });
 
@@ -37,7 +37,7 @@ describe('the outcome sentence', () => {
   });
 
   it('names --timed after a complete check that left only the timed tier', () => {
-    expect(finalOutcome({ full: true, timed: false }, timed)).toBe('every check that ran passed; not run: timing, live, vitals; pnpm verify --timed runs them');
+    expect(finalOutcome({ full: true, timed: false }, timed)).toBe('every check that ran passed; not run: timing, live, timedChecks, vitals; pnpm verify --timed runs them');
   });
 
   it('names --full after a timed check that left only the complete tier', () => {
@@ -45,7 +45,7 @@ describe('the outcome sentence', () => {
   });
 
   it('names no command when a suite of an asked-for tier did not run', () => {
-    expect(finalOutcome({ full: true, timed: false }, ['assistant', ...timed])).toBe('every check that ran passed; not run: assistant, timing, live, vitals');
+    expect(finalOutcome({ full: true, timed: false }, ['assistant', ...timed])).toBe('every check that ran passed; not run: assistant, timing, live, timedChecks, vitals');
     expect(finalOutcome({ full: true, timed: true }, ['live'])).toBe('every check that ran passed; not run: live');
   });
 });

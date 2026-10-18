@@ -5,7 +5,7 @@ import Link from 'next/link';
 import type { ReactNode } from 'react';
 import { Row, Stack } from '@/components/base/shell';
 import { useShareView } from '@/components/base/use-share-view';
-import { useLive } from '@/lib/live';
+import { useLive, type Revisions } from '@/lib/live';
 import { Card, CardBody, CardFooter, CardHeader } from '@/components/ui/card';
 import { EmptyState } from '@/components/ui/empty-state';
 import { KeyValue } from '@/components/ui/key-value';
@@ -325,9 +325,9 @@ export const meridianDates = (data: HomeData) => [...data.series.map((d) => d.da
  * `finding` is the record line the revenue card states, and is passed only by a surface with no headline above it to
  * state that record itself. `data.record` is not it: the read always hands the line over, and the surface decides.
  */
-export function HomeBody(data: HomeData & { finding?: string | null }) {
+export function HomeBody(data: HomeData & { finding?: string | null; revisions?: Revisions }) {
   // Exactly the feature's needs (FEATURES.home): /api/live refuses a name the caller may not read, so `costs` is left out.
-  useLive(['days', 'usage', 'models', 'compute', 'incidents', 'customers', 'services', 'tickets', 'tests', 'releases']);
+  useLive(['days', 'usage', 'models', 'compute', 'incidents', 'customers', 'services', 'tickets', 'tests', 'releases'], data.revisions);
   // No complete day kept: one card says nothing has arrived, and no figure is drawn as if it had.
   if (isEmpty(data)) {
     return (

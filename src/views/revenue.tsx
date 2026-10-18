@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useState } from 'react';
 import { Row, Stack } from '@/components/base/shell';
 import { useShareView } from '@/components/base/use-share-view';
-import { useLive } from '@/lib/live';
+import { useLive, type Revisions } from '@/lib/live';
 import { Card, CardBody, CardFooter, CardHeader } from '@/components/ui/card';
 import { EmptyState } from '@/components/ui/empty-state';
 import { Segmented } from '@/components/ui/segmented';
@@ -310,11 +310,11 @@ const isEmpty = (data: RevenueData) => data.days !== null && data.days.series.le
  * nothing out; a part whose read failed says so in its own place. The wall's order is the person's, and the context
  * follows it.
  */
-export function RevenueBody(data: RevenueData) {
+export function RevenueBody(data: RevenueData & { revisions?: Revisions }) {
   const [order, setOrder] = useState<WallOrder>('largest');
   useShareView(revenueContext(data, order));
   // Exactly the feature's needs (FEATURES.revenue): /api/live refuses a name the caller may not read.
-  useLive(['customers', 'days', 'usage', 'models', 'regions']);
+  useLive(['customers', 'days', 'usage', 'models', 'regions'], data.revisions);
   if (isEmpty(data)) {
     return (
       <Stack>

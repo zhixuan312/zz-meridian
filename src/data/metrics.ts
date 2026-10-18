@@ -3,15 +3,52 @@
  * and the activity, each through `read()`, so a page, an embed route and a view tool see only what the caller may
  * read (decision 0011). The figures a page shows are computed here from the rows, once, for the person and both agents.
  */
+import { AsyncLocalStorage } from 'node:async_hooks';
 import type { ActivityEvent } from '@/components/patterns/activity-feed';
 import type { Incident } from '@/components/patterns/incident-card';
 import type { Service } from '@/components/patterns/status-list';
 import { clock } from '@/data/collections';
 import { attempt } from '@/data/main';
-import { read, readAll } from '@/data/read';
+import { read as readRows, readAll as readAllRows } from '@/data/read';
 import type { DailyPoint, Endpoint, IncidentRecord, Ticket, Totals } from '@/data/sample';
 import { dayOf } from '@/lib/format-date';
 import { PERIOD_DAYS, type Period } from '@/lib/period';
+
+/** The revisions of the collections a page's reads touched, by name, one entry per read: what `revisionsOf` reduces. */
+const noted = new AsyncLocalStorage<Map<string, (string | undefined)[]>>();
+const note = (name: string, revision: string | undefined) => {
+  const seen = noted.getStore();
+  if (seen) seen.set(name, [...(seen.get(name) ?? []), revision]);
+};
+
+/** `read` and `readAll` of `@/data/read`, each noting the revision it answered for the `revisionsOf` around it. */
+export async function read(name: string, q?: Parameters<typeof readRows>[1]) {
+  const r = await readRows(name, q);
+  note(name, r.revision);
+  return r;
+}
+export async function readAll(name: string, q?: Parameters<typeof readAllRows>[1]) {
+  const r = await readAllRows(name, q);
+  note(name, r.revision);
+  return r;
+}
+
+/**
+ * Runs `work` and returns what it answered with the revision of each collection its reads touched: the oldest of the
+ * revisions one name was read at, so a write between two reads of it still makes a stream name it moved. A collection
+ * without a revision, or read at another process's, is left out and its stream resyncs it.
+ */
+export async function revisionsOf<T>(work: () => Promise<T>): Promise<{ value: T; revisions: Record<string, string> }> {
+  const seen = new Map<string, (string | undefined)[]>();
+  const value = await noted.run(seen, work);
+  const revisions: Record<string, string> = {};
+  for (const [name, all] of seen) {
+    const at = all.map((r) => (r ? /^([^:]+):(\d+)$/.exec(r) : null));
+    if (at.some((m) => !m) || new Set(at.map((m) => m![1])).size !== 1) continue;
+    revisions[name] = `${at[0]![1]}:${Math.min(...at.map((m) => Number(m![2])))}`;
+  }
+  return { value, revisions };
+}
 
 /** The newest changes a page shows. */
 const ACTIVITY_SHOWN = 6;

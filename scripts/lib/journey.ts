@@ -44,11 +44,16 @@ export type Sample = { shell: Measured; data: Measured | null; interactive: Meas
  * A combinator does not cross a shadow boundary: `x-host .inner` finds nothing inside `x-host`'s root. Page code, defined after
  * the deep-DOM helper in every document this tab opens.
  */
-const DEEP_MATCHES = `function deepMatches(selector) { return deepAll(document).filter((el) => el.matches(selector)); }`;
+export const DEEP_MATCHES = `function deepMatches(selector) { return deepAll(document).filter((el) => el.matches(selector)); }`;
 
-/** What a probe's result looks like: the address, how many elements, their text and their state attributes. Runs in the page. */
-const SNAP = `(selector) => location.href + '|' + deepMatches(selector).slice(0, 40)
-  .map((el) => (el.textContent ?? '').trim().slice(0, 80) + ['aria-sort', 'aria-expanded', 'aria-pressed', 'aria-checked', 'aria-selected', 'data-state', 'open'].map((a) => el.getAttribute(a)).join(','))
+/**
+ * What a probe's result looks like: the address, how many elements, their whole text and their state attributes. Runs in the page.
+ * The whole text, not a prefix: a prefix of 80 characters missed a change at the end of a row (#52). A whole text also counts a
+ * clock that ticks inside the element, which is the page's change, not the probe's, so a `resultSelector` names what the control
+ * changes.
+ */
+export const SNAP = `(selector) => location.href + '|' + deepMatches(selector).slice(0, 40)
+  .map((el) => (el.textContent ?? '').trim() + ['aria-sort', 'aria-expanded', 'aria-pressed', 'aria-checked', 'aria-selected', 'data-state', 'open'].map((a) => el.getAttribute(a)).join(','))
   .join(';')`;
 /**
  * Before the app runs: remembers every router prefetch, so the bytes can be summed and awaited, and keeps the clock for the

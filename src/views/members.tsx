@@ -23,7 +23,7 @@ import { toast, UNDO_MS } from '@/components/ui/toast';
 import { AskAbout } from '@/components/patterns/ask-about';
 import { DataTable, type Column } from '@/components/patterns/data-table';
 import { dayOf, formatDate, formatRelative } from '@/lib/format-date';
-import { useLive } from '@/lib/live';
+import { useLive, type Revisions } from '@/lib/live';
 import { RolesMatrix } from './roles-matrix';
 import type { MemberRowAccess } from '@/data/member-mutations';
 import { roleLabel, type AddOn, type MainRole } from '@/data/roles';
@@ -59,11 +59,11 @@ type Draft = { id: string; name: string; role: MainRole; addOns: AddOn[]; roles:
 
 /** `now` is the data's clock, so "last active" reads the same on the server and in the browser. */
 
-export function MembersView({ rows, now, actions, access, roles, workspace }: { rows: Member[]; now: string; actions: MemberActions; /** What the boundary says of every row, read once by the page: the actions it offers this caller and why not. */ access: Record<string, MemberRowAccess>; /** The roles the page may put on an invitation, from the boundary's `invitableRoles`. */ roles: readonly MainRole[]; /** The workspace's name as its record holds it, where the page could read it: the invitation names it. */ workspace?: string }) {
+export function MembersView({ rows, now, revisions, actions, access, roles, workspace }: { rows: Member[]; now: string; /** The revisions the page's server read the members at: the live stream's first open asks what moved since. */ revisions?: Revisions; actions: MemberActions; /** What the boundary says of every row, read once by the page: the actions it offers this caller and why not. */ access: Record<string, MemberRowAccess>; /** The roles the page may put on an invitation, from the boundary's `invitableRoles`. */ roles: readonly MainRole[]; /** The workspace's name as its record holds it, where the page could read it: the invitation names it. */ workspace?: string }) {
   useShareView(membersContext(rows, now));
   const asOf = new Date(now);
   const router = useRouter();
-  useLive(['members']);
+  useLive(['members'], revisions);
   const [pending, start] = useTransition();
   const [shown, change] = useOptimistic<Shown[], Change>(rows, apply);
   const inFlight = useRef(new Set<string>());

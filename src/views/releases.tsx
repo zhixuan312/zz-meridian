@@ -12,7 +12,7 @@ import { DataTable, useQueryState, useSearchDraft, type Column } from '@/compone
 import { FilterBar } from '@/components/patterns/filter-bar';
 import type { ReleaseRow } from '@/data/engineering';
 import { formatRelative } from '@/lib/format-date';
-import { useLive } from '@/lib/live';
+import { useLive, type Revisions } from '@/lib/live';
 import { matchingReleases, RELEASE_METRICS, releaseFigures, releaseMoment, releasesContext, stageOf, STAGE_LABEL, unresolvedCounts, unresolvedText, type Stage } from './releases-context';
 
 const STAGE_TONE: Record<Stage, Tone> = { testing: 'warning', ready: 'accent', released: 'positive' };
@@ -25,8 +25,8 @@ const passedText = (r: ReleaseRow) => (r.verification.required === 0 ? 'No requi
  * The releases, newest first, under the three figures the assistant is also told. `now` is the read's observation time, so
  * an age is never fresher than the data. The page changes nothing: a release links to its runs, and that is all.
  */
-export function ReleasesView({ rows, now }: { rows: ReleaseRow[]; now: string }) {
-  useLive(['releases', 'tests']);
+export function ReleasesView({ rows, now, revisions }: { rows: ReleaseRow[]; now: string; revisions?: Revisions }) {
+  useLive(['releases', 'tests'], revisions);
   const asOf = new Date(now);
   const [f, set] = useQueryState({ q: '', state: 'all', environment: 'all', sort: 'changed', dir: 'desc', page: '1' });
   // The box shows each key; the address, and so the list, follows when the typing stops.

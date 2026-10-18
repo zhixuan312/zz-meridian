@@ -40,6 +40,6 @@ export default async function TestsPage() {
 }
 
 async function Runs() {
-  const { rows, observedAt } = await readRuns();
-  return <TestsView rows={rows} now={observedAt} />;
+  const { rows, revisions, observedAt } = await readRuns();
+  return <TestsView rows={rows} now={observedAt} revisions={revisions} />;
 }

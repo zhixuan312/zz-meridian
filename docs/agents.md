@@ -96,6 +96,8 @@ The page text it reads is the scroll region's visible text, less every node mark
 
 A product that replaced one of those pages gets `n/a` with the reason for its steps, decided from its files (`scripts/lib/sample.ts`), and every failure names the part it waited on.
 
+A product checks what the assistant cites with a journey of its own (a script in `browserChecks` in `scripts/verify.config.ts`). To make the fake model call one of the product's view tools for a question, list it in `fakeModel` in the same file: `{ when, tool, input }`, where `when` is a case-insensitive regular expression's source. verify hands the steps to the fake model, which matches them before its own branches, calls `tool` with `input` where the request hands that tool (`I was not handed <tool> here.` where it does not), and answers with the tool's result. A question containing the word "fail" is still refused as a bad key, so a step's `when` should not need it alone.
+
 ## Building an MCP server for the template
 
 The template ships the views and their tool contracts; the server is yours. Every view's contract is in `src/views/tools.ts`: its `name`, the question it answers (`description`), the console route of its page (`page`), its address as a zod `input`, its `resourceUri` when it has an embed route, one `read` that returns what the view renders (`data`) and what both agents are told (`context`), and its prepared query (`explore`), which every view declares. The console's assistant offers each one as `view_<name>`, but registers it only where the caller satisfies that view's need (`may(v.needs)` in `app/api/assistant/route.ts`); register the same list, filtered the same way:

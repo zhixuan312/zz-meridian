@@ -5,9 +5,14 @@
  */
 import { requireNeed } from '@/data/access';
 import { FEATURES } from '@/data/features';
-import { readAll } from '@/data/read';
+import { readAll } from '@/data/metrics';
 import type { Release, VerificationRun } from '@/data/sample';
 import { verificationOf, type Verification } from '@/data/verification';
+
+/** The revisions the page's reads were served at, by collection; a read of an adapter without one leaves its name out. */
+type Revisions = Record<string, string>;
+const stamped = (reads: Record<string, { revision?: string }>): Revisions =>
+  Object.fromEntries(Object.entries(reads).flatMap(([name, r]) => (r.revision ? [[name, r.revision]] : [])));
 
 /** The release a run belongs to, as far as a run row shows it. The run itself stores none of this. */
 type RunRelease = Pick<Release, 'version' | 'service' | 'environment' | 'commit'>;
@@ -17,7 +22,7 @@ export type RunRow = VerificationRun & { release: RunRelease | null };
 export type ReleaseRow = Release & { verification: Verification };
 
 /** Every verification run the caller may read, each with the version, service, environment and commit of its release. */
-export async function readRuns(): Promise<{ rows: RunRow[]; observedAt: string }> {
+export async function readRuns(): Promise<{ rows: RunRow[]; revisions: Revisions; observedAt: string }> {
   await requireNeed(FEATURES.tests.needs);
   const [runs, releases] = await Promise.all([readAll('tests'), readAll('releases')]);
   const byId = new Map((releases.rows as Release[]).map((r) => [r.id, r]));
@@ -25,12 +30,12 @@ export async function readRuns(): Promise<{ rows: RunRow[]; observedAt: string }
     const of = byId.get(run.releaseId);
     return { ...run, release: of ? { version: of.version, service: of.service, environment: of.environment, commit: of.commit } : null };
   });
-  return { rows, observedAt: runs.observedAt };
+  return { rows, revisions: stamped({ tests: runs, releases }), observedAt: runs.observedAt };
 }
 
 /** Every release the caller may read, each with what its required verifications come to against every run. */
-export async function readReleases(): Promise<{ rows: ReleaseRow[]; observedAt: string }> {
+export async function readReleases(): Promise<{ rows: ReleaseRow[]; revisions: Revisions; observedAt: string }> {
   await requireNeed(FEATURES.releases.needs);
   const [releases, runs] = await Promise.all([readAll('releases'), readAll('tests')]);
-  return { rows: (releases.rows as Release[]).map((r) => ({ ...r, verification: verificationOf(r, runs.rows as VerificationRun[]) })), observedAt: releases.observedAt };
+  return { rows: (releases.rows as Release[]).map((r) => ({ ...r, verification: verificationOf(r, runs.rows as VerificationRun[]) })), revisions: stamped({ releases, tests: runs }), observedAt: releases.observedAt };
 }

@@ -40,6 +40,6 @@ export default async function ReleasesPage() {
 }
 
 async function ReleaseList() {
-  const { rows, observedAt } = await readReleases();
-  return <ReleasesView rows={rows} now={observedAt} />;
+  const { rows, revisions, observedAt } = await readReleases();
+  return <ReleasesView rows={rows} now={observedAt} revisions={revisions} />;
 }

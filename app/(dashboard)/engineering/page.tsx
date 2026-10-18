@@ -60,5 +60,5 @@ async function Lead() {
 /** The parts, their strips packed one character a day for the trip to the browser. */
 async function Body() {
   const { data } = await readNow();
-  return <PackedNowBody {...packNow(data)} />;
+  return <PackedNowBody {...packNow(data)} revisions={data.revisions} />;
 }

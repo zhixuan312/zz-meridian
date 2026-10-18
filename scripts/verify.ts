@@ -44,6 +44,7 @@ import path from 'node:path';
 import { bin } from './lib/bin.ts';
 import { launch } from './lib/chrome.ts';
 import type { BudgetsConfig, NavigationCheck } from './lib/budgets.ts';
+import { fakeModelArgs, fakeModelProblems, type FakeModelStep } from './lib/config-hooks.ts';
 import { finalOutcome, resolveCoverage, SUITE_NAMES, selectSmokeRoutes, suiteCoverage, suiteOutcome } from './lib/coverage.ts';
 import { unsafeDataUrls } from './lib/data-url.ts';
 import { APP_DIR, railRoutes } from './lib/routes.ts';
@@ -59,6 +60,8 @@ type VerifyConfig = BudgetsConfig & {
   dataUrls?: string[];
   allowRemoteData?: true;
   browserChecks?: string[];
+  timedChecks?: string[];
+  fakeModel?: FakeModelStep[];
   navigationChecks?: NavigationCheck[];
   smokeRoutes?: string[];
   personas?: Record<string, { cookie: { name: string; value: string }; expectedRoutes: readonly string[]; deniedProbe?: Record<string, string> }>;
@@ -125,6 +128,14 @@ if (perf && process.env.CI !== 'true') {
   process.exit(1);
 }
 
+// The fake model's steps are the project's own patterns: one that does not compile stops the run before the gate.
+const fakeSteps = config.fakeModel ?? [];
+const stepProblems = fakeModelProblems(fakeSteps);
+if (stepProblems.length) {
+  console.error(`verify: ${stepProblems.join('; ')}`);
+  process.exit(1);
+}
+
 // A project that has not adopted the assistant has no walk-through to run, only the pages. Through APP_DIR, like the
 // route discovery and check.ts: a project that keeps its routes under `src/app` has the assistant there, and asking for
 // `app/api/...` alone would skip the walk-through without saying so.
@@ -135,7 +146,8 @@ const hasAssistant = fs.existsSync(path.join(ROOT, APP_DIR, 'api/assistant/route
 // themselves through `browserChecks`.
 const hasLiveSample = sampleSurfaces(ROOT, APP_DIR).members;
 const own = config.browserChecks ?? [];
-const absent = new Set<string>([...(hasAssistant ? [] : ['assistant']), ...(hasLiveSample ? [] : ['live']), ...(own.length ? [] : ['browserChecks']), ...(perf ? [] : ['perf'])]);
+const ownTimed = config.timedChecks ?? [];
+const absent = new Set<string>([...(hasAssistant ? [] : ['assistant']), ...(hasLiveSample ? [] : ['live']), ...(own.length ? [] : ['browserChecks']), ...(ownTimed.length ? [] : ['timedChecks']), ...(perf ? [] : ['perf'])]);
 const SUITES = SUITE_NAMES.filter((name) => !absent.has(name));
 const ranSuites = new Set<string>();
 const failedSuites = new Set<string>();
@@ -580,7 +592,7 @@ if (full && browser.ran && baseUrl) {
     if (suiteOutcome(off.status) === 'FAIL') { ok = false; finish(1, FIX); }
 
     // Pointed at the fake LLM, the audit and the presses then see the launcher.
-    const fake = spawn('node', ['scripts/fake-llm.ts', '--port', '0'], { cwd: ROOT, stdio: ['ignore', 'pipe', 'inherit'], detached: true });
+    const fake = spawn('node', ['scripts/fake-llm.ts', '--port', '0', ...fakeModelArgs(fakeSteps)], { cwd: ROOT, stdio: ['ignore', 'pipe', 'inherit'], detached: true });
     children.push(fake);
     llmUrl = await new Promise<string>((resolve) => {
       let buf = '';
@@ -636,6 +648,15 @@ if (timed && browser.ran && baseUrl) {
     if (suiteOutcome(live.status) === 'FAIL') { ok = false; beneath(live.out.split('\n').slice(-40)); }
   } else {
     phase('n/a', 'live data', null, '(the sample Members page the live checks drive is not in this product; its own live pages prove themselves through browserChecks)');
+  }
+
+  // The product's own checks that judge a time (`timedChecks`), one at a time and alone, as the live data is.
+  for (const script of ownTimed) {
+    current = script;
+    announce(`${script}, alone`);
+    const r = await run(script, ['--base', here]);
+    reportSuite('timedChecks', script, r);
+    if (suiteOutcome(r.status) === 'FAIL') ok = false;
   }
 
   // Web Vitals on a mid-range phone, alone: CPU throttling measures the machine too, so nothing else runs beside it.

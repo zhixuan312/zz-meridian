@@ -10,12 +10,11 @@ import { slug } from '@/app.config';
 import { can, requireNeed, resolveAccess } from '@/data/access';
 import { clock } from '@/data/collections';
 import { FEATURES } from '@/data/features';
-import { read, readAll } from '@/data/read';
 import { readLatestFrom, readRequests, REQUEST_PAGE } from '@/data/requests';
 import { readReleases, readRuns } from '@/data/engineering';
 import { attempt } from '@/data/main';
 import { readTickets } from '@/data/tickets';
-import { readActivity, readDays, readEndpoints, readIncidents, readResponses, readServices } from '@/data/metrics';
+import { read, readActivity, readAll, readDays, readEndpoints, readIncidents, readResponses, readServices, revisionsOf } from '@/data/metrics';
 import {
   DEMO_UPDATED_AT, STATUS_TEXT, payloadsOf, traceOf,
   type ApiKey, type ComputeRow, type CostRow, type CustomerRecord, type Member, type Model, type RequestRow, type Ticket, type UsageRow,
@@ -85,17 +84,18 @@ export const homeTool = defineViewTool({
     // once: for anyone else it is not read at all, and the data carries nothing in its place.
     const mayCost = await can(await resolveAccess(), 'costs', 'read');
     // Each read apart from the others: one that fails leaves its part saying so and the rest standing.
-    const [days, history, customers, usage, models, compute, costs, services, incidents, releases, tickets] = await Promise.all([
+    const { value: [days, history, customers, usage, models, compute, costs, services, incidents, releases, tickets], revisions } = await revisionsOf(() => Promise.all([
       attempt(() => readDays(p)), readHistory(), rowsOf<CustomerRecord>('customers'), rowsOf<UsageRow>('usage'), rowsOf<Model>('models'), rowsOf<ComputeRow>('compute'),
       mayCost ? rowsOf<CostRow>('costs') : undefined,
       attempt(readServices), attempt(async () => (await readIncidents()).all), attempt(async () => (await readReleases()).rows), rowsOf<Ticket>('tickets'),
-    ]);
+    ]));
     const data = homeData({
       period: p, day: d ?? null, days, history, customers, usage, models, compute, ...(mayCost ? { costs } : {}), services, incidents, releases, tickets,
       updatedAt: updatedAt(), now: days?.observedAt ?? clock().toISOString(),
     });
     const index = d ? data.series.findIndex((x) => x.date === d) : -1;
-    return { context: homeContext(data, index >= 0 ? index : null), data };
+    // The revisions the reads were served at ride with the data, so the page's stream asks what moved since instead of reading it all again.
+    return { context: homeContext(data, index >= 0 ? index : null), data: { ...data, revisions } };
   },
   explore: homeExplore,
 });
@@ -172,12 +172,12 @@ export const nowTool = defineViewTool({
   async read() {
     await requireNeed(FEATURES.now.needs);
     // Each read apart from the others: one that fails leaves its part saying so and the rest standing.
-    const [access, services, incidents, releases, runs, history, usage, models, compute, endpoints, tickets, activity] = await Promise.all([
+    const { value: [access, services, incidents, releases, runs, history, usage, models, compute, endpoints, tickets, activity], revisions } = await revisionsOf(() => Promise.all([
       resolveAccess(), attempt(readServices), attempt(async () => (await readIncidents()).all), attempt(async () => (await readReleases()).rows), attempt(async () => (await readRuns()).rows),
       readHistory(), rowsOf<UsageRow>('usage'), rowsOf<Model>('models'), rowsOf<ComputeRow>('compute'), attempt(readEndpoints), attempt(async () => (await readTickets()).rows), attempt(readActivity),
-    ]);
+    ]));
     const data = nowData({ services, incidents, releases, runs, history, usage, models, compute, endpoints, tickets, activity, reader: access.subjectId, updatedAt: updatedAt(), now: clock().toISOString() });
-    return { context: nowContext(data), data };
+    return { context: nowContext(data), data: { ...data, revisions } };
   },
   explore: nowExplore,
 });
@@ -232,11 +232,11 @@ export const revenueTool = defineViewTool({
   async read({ period: p = '30d' }) {
     await requireNeed(FEATURES.revenue.needs);
     // Each read apart from the others: one that fails leaves its part saying so and the rest standing.
-    const [days, history, customers, usage, models, regions] = await Promise.all([
+    const { value: [days, history, customers, usage, models, regions], revisions } = await revisionsOf(() => Promise.all([
       attempt(() => readDays(p)), readHistory(), rowsOf<CustomerRecord>('customers'), rowsOf<UsageRow>('usage'), rowsOf<Model>('models'), rowsOf<{ label: string; value: number }>('regions'),
-    ]);
+    ]));
     const data = revenueData({ period: p, days, history, customers, usage, models, regions, updatedAt: updatedAt(), now: days?.observedAt ?? clock().toISOString() });
-    return { context: revenueContext(data), data };
+    return { context: revenueContext(data), data: { ...data, revisions } };
   },
   explore: revenueExplore,
 });

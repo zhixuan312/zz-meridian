@@ -9,7 +9,7 @@
 import { requireNeed } from '@/data/access';
 import { members } from '@/data/collections';
 import { FEATURES } from '@/data/features';
-import { readAll } from '@/data/read';
+import { readAll } from '@/data/metrics';
 import type { Ticket } from '@/data/sample';
 
 /** A ticket as the page and the tool carry it: the record, and the name of the member it is assigned to. */
@@ -19,9 +19,9 @@ export type TicketRow = Ticket & { assignee: string | null };
 const PAGE = 500;
 
 /** Every ticket the caller may read, with the assignee's name on each, and the time the read ran. */
-export async function readTickets(): Promise<{ rows: TicketRow[]; observedAt: string }> {
+export async function readTickets(): Promise<{ rows: TicketRow[]; revisions: Record<string, string>; observedAt: string }> {
   await requireNeed(FEATURES.tickets.needs);
-  const { rows: all, observedAt } = await readAll('tickets');
+  const { rows: all, revision, observedAt } = await readAll('tickets');
   const tickets = all as Ticket[];
   const ids = [...new Set(tickets.flatMap((t) => (t.assigneeId ? [t.assigneeId] : [])))];
   const names = new Map<string, string>();
@@ -29,5 +29,5 @@ export async function readTickets(): Promise<{ rows: TicketRow[]; observedAt: st
     const found = await members.query({ where: [{ field: 'id', op: 'in', value: ids.slice(at, at + PAGE) }], limit: PAGE });
     for (const m of found.rows) names.set(m.id, m.name);
   }
-  return { rows: tickets.map((t) => ({ ...t, assignee: t.assigneeId ? (names.get(t.assigneeId) ?? null) : null })), observedAt };
+  return { rows: tickets.map((t) => ({ ...t, assignee: t.assigneeId ? (names.get(t.assigneeId) ?? null) : null })), revisions: revision ? { tickets: revision } : {}, observedAt };
 }

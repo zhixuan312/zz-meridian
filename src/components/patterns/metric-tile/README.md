@@ -6,7 +6,7 @@ Status: beta
 
 ## Anatomy
 
-1. **Head**: a 14px icon, the label (`text-sm` 500, `ink-2`) and an optional info button whose tooltip says what the number counts.
+1. **Head**: a 14px icon, the label (`text-sm` 500, `ink-2`) and an optional info button whose tooltip says what the number counts. A label the tile cuts keeps the whole of itself in its title, in both sizes.
 2. **Figure**: `t-figure` (32–42px, 600, −0.03em); the unit and the cents step down to half size in `ink-3`.
 3. **Change**: a Delta and "vs previous period" (on a tile too narrow for it the phrase wraps out of sight whole, rather than being cut to "vs previou…"; a screen reader still reads it), or the day the Meridian points at, followed by how it compares with what is usual ("2.7× usual", `ink-3`) when the tile has a `baseline`.
 4. **Finding** (optional): one line under the change, `text-xs` `ink-2` beside a status dot: what the period's figures say that the number does not. The dot is the finding's tone: the neutral dot (`ink-3`) for a fact ("The busiest day was 1 Oct, with 128K"), the `warning` dot for one that needs a look ("2.7× usual on 21 and 22 Sept"). Computed by code, the same line both agents read. With a `day` it is a button (24px target, 44px on touch) that points the page's Meridian at that day; hover takes `ink` over `dur-hover`.

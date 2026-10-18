@@ -24,7 +24,7 @@ import { MetricTile } from '@/components/patterns/metric-tile';
 import { DataTable, useQueryState, useSearchDraft, type Column } from '@/components/patterns/data-table';
 import { FilterBar } from '@/components/patterns/filter-bar';
 import { formatRelative } from '@/lib/format-date';
-import { useLive } from '@/lib/live';
+import { useLive, type Revisions } from '@/lib/live';
 import type { Ticket } from '@/data/sample';
 import type { TicketRow } from '@/data/tickets';
 import { matchingTickets, TICKET_METRICS, ticketCounts, ticketsContext } from './tickets-context';
@@ -52,9 +52,10 @@ const blank = (services: string[]): Draft => ({ title: '', service: services[0] 
  * out, for a view mounted on its own). `services` and `assignees` are what the form offers.
  * The two functions are the page's server actions: the view calls them, shows a refusal and refreshes the route.
  */
-export function TicketsView({ rows, now, may = { create: true, update: true }, services, assignees, createTicket, updateTicket }: {
+export function TicketsView({ rows, now, revisions, may = { create: true, update: true }, services, assignees, createTicket, updateTicket }: {
   rows: TicketRow[];
   now: string;
+  revisions?: Revisions;
   may?: { create: boolean; update: boolean };
   services: string[];
   assignees: { id: string; name: string }[];
@@ -62,7 +63,7 @@ export function TicketsView({ rows, now, may = { create: true, update: true }, s
   updateTicket: (id: string, change: Change) => Promise<TicketResult>;
 }) {
   const router = useRouter();
-  useLive(['tickets']);
+  useLive(['tickets'], revisions);
   const asOf = new Date(now);
   const [f, set] = useQueryState({ q: '', state: 'all', priority: 'all', sort: 'changed', dir: 'desc', page: '1' });
   // The box shows each key; the address, and so the list, follows when the typing stops.

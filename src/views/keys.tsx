@@ -22,7 +22,7 @@ import { toast } from '@/components/ui/toast';
 import { AskAbout } from '@/components/patterns/ask-about';
 import { DataTable, type Column } from '@/components/patterns/data-table';
 import { formatDate, formatRelative } from '@/lib/format-date';
-import { useLive } from '@/lib/live';
+import { useLive, type Revisions } from '@/lib/live';
 import type { ApiKey } from '@/data/sample';
 import { SCOPES, type Scope } from '@/views/key-scopes';
 import { useShareView } from '@/components/base/use-share-view';
@@ -35,10 +35,10 @@ type Draft = { name: string; env: 'live' | 'test'; scopes: Scope[] };
 /** `now` is the read's observation time, so "last used" is never fresher than the data. */
 /** `may` is what the page asked of the action table, so a control the person may not use is not drawn at all, and */
 /** nothing says why. Defaults allow both, for a view mounted on its own. */
-export function KeysView({ rows, now, createKey, revokeKey, may = { create: true, revoke: true } }: { rows: ApiKey[]; now: string; createKey: (draft: Draft) => Promise<ApiKey & { secret: string }>; revokeKey: (id: string) => Promise<void>; may?: { create: boolean; revoke: boolean } }) {
+export function KeysView({ rows, now, revisions, createKey, revokeKey, may = { create: true, revoke: true } }: { rows: ApiKey[]; now: string; revisions?: Revisions; createKey: (draft: Draft) => Promise<ApiKey & { secret: string }>; revokeKey: (id: string) => Promise<void>; may?: { create: boolean; revoke: boolean } }) {
   useShareView(keysContext(rows, now, SCOPES));
   const router = useRouter();
-  useLive(['keys']);
+  useLive(['keys'], revisions);
   const asOf = new Date(now);
   const [shown, removeShown] = useOptimistic(rows, (xs: ApiKey[], id: string) => xs.filter((k) => k.id !== id));
   const revokingIds = useRef(new Set<string>());

@@ -135,6 +135,6 @@ describe('the page itself', () => {
     const page = source('app/(dashboard)/operations-tickets/page.tsx');
     expect(page).toMatch(/gate\('tickets'\)/);
     expect(page).toMatch(/\breadTickets\(/);
-    expect(source('src/views/tickets.tsx')).toMatch(/useLive\(\[\s*'tickets'\s*\]\)/);
+    expect(source('src/views/tickets.tsx')).toMatch(/useLive\(\[\s*'tickets'\s*\](?:,[^)]*)?\)/);
   });
 });

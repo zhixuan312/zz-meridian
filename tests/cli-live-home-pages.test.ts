@@ -15,7 +15,7 @@ const bodyOf = (rel: string, name: string) => {
   return text.slice(start);
 };
 const registered = (body: string) => {
-  const m = body.match(/useLive\(\[([^\]]*)\]\)/);
+  const m = body.match(/useLive\(\[([^\]]*)\](?:, [^)]*)?\)/);
   return m ? [...m[1].matchAll(/'([^']+)'/g)].map((x) => x[1]).sort() : null;
 };
 const needs = (id: 'home' | 'revenue') => {

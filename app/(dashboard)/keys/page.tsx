@@ -22,13 +22,14 @@ export function generateMetadata() {
 export default async function KeysPage() {
   const denied = await gate('keys');
   if (denied) return denied;
-  const { rows, observedAt } = await readAll('keys');
+  const { rows, revision, observedAt } = await readAll('keys');
   const mayCreate = await may(ACTIONS['create-key'].needs);
   const mayRevoke = await may(ACTIONS['revoke-key'].needs);
   return (
     <KeysView
       rows={rows as ApiKey[]}
       now={observedAt}
+      revisions={revision ? { keys: revision } : undefined}
       may={{ create: mayCreate, revoke: mayRevoke }}
       createKey={createKey}
       revokeKey={revokeKey}

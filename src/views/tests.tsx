@@ -13,7 +13,7 @@ import { FilterBar } from '@/components/patterns/filter-bar';
 import type { RunRow } from '@/data/engineering';
 import { formatDuration } from '@/lib/format';
 import { formatRelative } from '@/lib/format-date';
-import { useLive } from '@/lib/live';
+import { useLive, type Revisions } from '@/lib/live';
 import { matchingRuns, routeOf, TEST_METRICS, testFigures, testsContext } from './tests-context';
 
 const VERDICT_TONE: Record<RunRow['state'], Tone> = { passed: 'positive', failed: 'critical', skipped: 'warning' };
@@ -25,8 +25,8 @@ const link = 'underline-offset-2 hover:underline';
  * time, so an age is never fresher than the data. The page changes nothing: a run links to its release and to the requests
  * of its endpoint, and that is all.
  */
-export function TestsView({ rows, now }: { rows: RunRow[]; now: string }) {
-  useLive(['tests', 'releases']);
+export function TestsView({ rows, now, revisions }: { rows: RunRow[]; now: string; revisions?: Revisions }) {
+  useLive(['tests', 'releases'], revisions);
   const asOf = new Date(now);
   const [f, set] = useQueryState({ q: '', state: 'all', release: '', runs: 'all', sort: 'started', dir: 'desc', page: '1' });
   // The box shows each key; the address, and so the list, follows when the typing stops.

@@ -26,7 +26,7 @@ import type { Endpoint } from '@/data/sample';
 import { formatCompact, formatDuration, formatPercent, plural } from '@/lib/format';
 import { formatDate, formatShortDate } from '@/lib/format-date';
 import { cn } from '@/lib/cn';
-import { useLive } from '@/lib/live';
+import { useLive, type Revisions } from '@/lib/live';
 import {
   MONTH, NOW_METRICS, NOW_PARTS as P, NOW_TILES, inWords, nothingArrived, nowContext, servicesShown, unpackNow,
   type NowData, type NowModel, type NowTile, type PackedNowData,
@@ -382,8 +382,8 @@ function Changes({ events, end }: { events: NonNullable<NowData['activity']>; en
  * one card says so and no part is drawn. The changes are kept live: a change the product records redraws the page.
  * The embed's fullscreen view draws it too.
  */
-export function NowBody(data: NowData) {
-  useLive(['activity']);
+export function NowBody(data: NowData & { revisions?: Revisions }) {
+  useLive(['activity'], data.revisions);
   const end = new Date(data.now);
   if (nothingArrived(data)) {
     return (
@@ -436,6 +436,6 @@ export function NowBody(data: NowData) {
 }
 
 /** The console route's body: the strips arrive packed, one character a day, and are unpacked here where they are drawn. */
-export function PackedNowBody(data: PackedNowData) {
-  return <NowBody {...unpackNow(data)} />;
+export function PackedNowBody(data: PackedNowData & { revisions?: Revisions }) {
+  return <NowBody {...unpackNow(data)} revisions={data.revisions} />;
 }

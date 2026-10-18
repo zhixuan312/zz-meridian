@@ -22,7 +22,7 @@ export function generateMetadata() {
 export default async function TicketsPage() {
   const denied = await gate('tickets');
   if (denied) return denied;
-  const [{ rows, observedAt }, mayCreate, mayUpdate, mayReadMembers, services] = await Promise.all([
+  const [{ rows, revisions, observedAt }, mayCreate, mayUpdate, mayReadMembers, services] = await Promise.all([
     readTickets(),
     may(ACTIONS['create-ticket'].needs),
     may(ACTIONS['update-ticket'].needs),
@@ -34,6 +34,7 @@ export default async function TicketsPage() {
     <TicketsView
       rows={rows}
       now={observedAt}
+      revisions={revisions}
       may={{ create: mayCreate, update: mayUpdate }}
       services={services.rows.map((s) => String(s.name))}
       assignees={people.map((m) => ({ id: String(m.id), name: String(m.name) }))}

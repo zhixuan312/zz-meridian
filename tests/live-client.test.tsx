@@ -16,6 +16,7 @@ class FakeSource {
   open() { this.onopen?.(new Event('open')); for (const f of this.on.get('open') ?? []) f(new MessageEvent('open')); }
   fail() { this.onerror?.(new Event('error')); for (const f of this.on.get('error') ?? []) f(new MessageEvent('error')); }
   send(type: string, data: unknown) { for (const f of this.on.get(type) ?? []) f(new MessageEvent(type, { data: JSON.stringify(data) })); }
+  since() { return new URL(this.url, 'http://localhost').searchParams.get('since'); }
   names() { return new URL(this.url, 'http://localhost').searchParams.get('collections')?.split(',').sort() ?? []; }
 }
 const live = () => FakeSource.all.filter((s) => !s.closed);
@@ -215,6 +216,83 @@ describe('the observation time', () => {
     expect(refresh).toHaveBeenCalledTimes(2);
     expect(observed).toBe(settled);
     c.dispose();
+  });
+});
+
+describe('a first open with the revisions the page was served', () => {
+  const served = () => ({ members: 'boot1:4' });
+  function opened(refresh: (names: string[]) => Promise<void>, since: () => Record<string, string> | undefined = served) {
+    const states: LiveState[] = [];
+    const c = createLiveClient({ refresh, since, pollMs: 60_000, EventSource: FakeSource as unknown as typeof EventSource, onState: (s: LiveState) => states.push(s) });
+    return { c, states };
+  }
+  it('sends them as since, and a synced greeting is live with no read', async () => {
+    const refresh = vi.fn(async () => {});
+    const { c, states } = opened(refresh);
+    c.setNames(['members']);
+    expect(live()[0].since()).toBe('members:boot1:4');
+    live()[0].open();
+    live()[0].send('synced', {});
+    await flush(600);
+    expect(refresh).not.toHaveBeenCalled();
+    expect(states.at(-1)).toBe('live');
+    c.dispose();
+  });
+  it('reads once, and only what the greeting names, when it is a resync', async () => {
+    const refresh = vi.fn(async () => {});
+    const { c, states } = opened(refresh, () => ({ members: 'boot1:4', keys: 'boot1:2' }));
+    c.setNames(['keys', 'members']);
+    live()[0].open();
+    live()[0].send('resync', { collections: ['members'] });
+    await flush(600);
+    expect(refresh).toHaveBeenCalledTimes(1);
+    expect(refresh).toHaveBeenCalledWith(['members']);
+    expect(states.at(-1)).toBe('live');
+    // A later resync is lost hints, read as ever.
+    live()[0].send('resync', { collections: ['keys', 'members'] });
+    await flush(600);
+    expect(refresh).toHaveBeenCalledTimes(2);
+    c.dispose();
+  });
+  it('refreshes as today when it carries none', async () => {
+    const refresh = vi.fn(async () => {});
+    const { c, states } = opened(refresh, () => undefined);
+    c.setNames(['members']);
+    expect(live()[0].since()).toBeNull();
+    live()[0].open();
+    live()[0].send('resync', { collections: ['members'] });
+    await flush(600);
+    expect(refresh).toHaveBeenCalledTimes(1);
+    expect(states.at(-1)).toBe('live');
+    c.dispose();
+  });
+  it('is the only open that sends them: a reconnect sends none and reads', async () => {
+    const refresh = vi.fn(async () => {});
+    const { c } = opened(refresh);
+    c.setNames(['members']);
+    live()[0].open();
+    live()[0].send('synced', {});
+    await flush(600);
+    live()[0].fail();
+    await flush(1100);
+    expect(live()).toHaveLength(1);
+    expect(live()[0].since()).toBeNull();
+    live()[0].open();
+    live()[0].send('resync', { collections: ['members'] });
+    await flush(600);
+    expect(refresh).toHaveBeenCalledTimes(1);
+    c.dispose();
+  });
+  it('is sent by the provider as the oldest revision of one boot, and left out where boots differ', async () => {
+    function Shows({ names, since }: { names: string[]; since: Record<string, string> }) { useLive(names, since); return null; }
+    render(
+      <LiveProvider refresh={async () => {}} scopeKey="demo/owner">
+        <Shows names={['members', 'keys']} since={{ members: 'b1:7', keys: 'b1:3' }} />
+        <Shows names={['members', 'keys']} since={{ members: 'b1:5', keys: 'b2:3' }} />
+      </LiveProvider>,
+    );
+    await flush(0);
+    expect(live()[0].since()).toBe('members:b1:5');
   });
 });
 
