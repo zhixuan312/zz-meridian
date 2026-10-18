@@ -2,7 +2,7 @@
 
 Every release of ZZ Meridian, newest first. Versions follow semver: a removed or renamed token, prop or card is major; a new card, token or variant is minor; a corrected value is a patch. Each entry says what breaks and what to do instead.
 
-## [Unreleased]
+## [0.18.0] · 2026-10-19
 
 ### Breaking
 
@@ -38,6 +38,10 @@ Every release of ZZ Meridian, newest first. Versions follow semver: a removed or
 - **The workspace journeys read a page's heading once the page is there.** `journeys/workspaces.ts` read the heading as soon as the address and the rail were right, which on a loaded machine could be while the page's `loading.tsx` still stood in for it, whose masthead holds the page's name where the record's will be: the customer step failed with `found a page headed "Customer:"`. It now waits while a busy `role="status"` is on the page. A project that kept the sample's journeys brings `journeys/workspaces.ts` over from the release.
 - **The `agent-does-here-section` update item finds a view tool kept in a module of its own.** It read `src/views/tools.ts` alone, so a project updating across 0.16.0 whose tools sat in modules the registry imports was told of no page while the gate, which reads those modules since 0.17.0, failed them. It now reads every module under `src/`.
 - **A page specification's Theme control no longer drops a frame on a phone** (the 0.17.0 known issue). The stage keyed each pane by its theme, so a Dark-to-Light tap unmounted the pane and loaded the whole page again in a new frame inside the tap. Each pane is now keyed by its position: the frame on screen stays mounted and is re-dressed.
+
+### Known issues
+
+- **On Meridian's scheduled runner, `pnpm verify --timed` drops one frame on two pages**: opening `/business`'s phone drawer and changing `/`'s period, in style and layout of 49 and 64 ms that the benchmark index does not calibrate (2 of 30 pages). Both pass on a quiet machine at the standard's phone, and no floor moved for them, so the weekly `timed` job stays red until the pages do less work in the tap. `pnpm verify` and `--full` are not affected.
 
 ## [0.17.0] · 2026-10-18
 
