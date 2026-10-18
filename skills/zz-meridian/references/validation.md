@@ -22,6 +22,9 @@ coverage: <default|full|timed|perf, or their combination such as full+timed+perf
   checks ran; `--full --timed --perf` unions the three and runs the gate and the build once. `--full --timed` is the
   whole standard.
 
+The testing standard, `optional:docs/testing.md`, says when to run each mode (`## When each runs`) and the rules a
+red, a limit and a release follow (`## Rules`): follow it rather than deciding per change.
+
 A failing gate, build or start stops the run there, and so does a failing assistant-absent check (step 3); from the
 audit on, every check runs and the report lists each failure. In `--full` and `--timed`, a suite that left a case unrun
 (no Chrome, no second server for the live-data restart case) prints `not run`, never `ok`, and the run ends with

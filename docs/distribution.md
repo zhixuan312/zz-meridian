@@ -222,6 +222,7 @@ Modelled on the release pipeline of the owner's earlier packages, one package in
    and 152 s on another) and with its browser smoke (the gate and the template's unit tests run
    inside it); and the consumer smoke from the built tarball (step 4). The full, perf and recovery suites are never
    run here: they run weekly (below).
+   When each check runs, in a project and in this repository, is `docs/testing.md`'s `## When each runs`.
 3. **Pack and assert, before anything is irreversible**: `npm pack` in `cli/`, then on the tarball: the bin has its
    `#!/usr/bin/env node` line; `payload/skills/zz-meridian/SKILL.md` and its references are there; at least 60 component
    folders are there; no `node_modules/`, `tests/` of the CLI, `out/` or `.next/`.
@@ -253,7 +254,8 @@ the update from each of the last three releases, the updater's stages on the 0.3
 failure case of the update. Both run the
 consumer smoke's `--adopt` and `--update`; weekly reaches three releases back and every recovery case, a release only the
 one before it. Each job keeps its log as an artifact. A failure notifies;
-nothing waits on it.
+nothing waits on it. `docs/testing.md` says when each check runs, and that a red here does not of itself hold
+a release.
 
 A `/release` runbook (`.claude/commands/release.md`) holds the judgement before dispatch: the version, the changelog
 section and the docs sweep. A `cli/scripts/set-version.ts`

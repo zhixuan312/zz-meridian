@@ -16,6 +16,10 @@ Every release of ZZ Meridian, newest first. Versions follow semver: a removed or
 
 - **A Featured metric can say its period has no number** ([#45](https://github.com/zhixuan312/zz-meridian/issues/45)). `FeaturedFigure.value` is `number | null`, and `points` takes `null` entries. With no number, the figure's line holds `missing`, the caller's words ("No words recorded", "Unavailable"; "Not recorded" by default), a size down and at the figure's own height, so a period without a number draws the same card as one with. A pointed point that is `null` reads the same way. Before this, the only ways through were a false `0`, or `NaN` with a `format` that turned it into a word; a card that did the second can pass `null` and `missing` now.
 
+### Changed
+
+- **`docs/testing.md` is the testing standard.** Above its classification it says what kinds of test there are (size and type), the tiers that combine them, when each runs (while editing, before a commit, before finishing and handing over a change, before a release, when a given kind of change is made, and on a schedule), and the rules a red, a limit and a release follow, with the practice they rest on. A project is advised to follow it and Meridian follows it. `AGENTS.md`, `CONTRIBUTING.md`, `docs/distribution.md` and `references/validation.md` point to it instead of keeping their own account, and `tests/cli-testing-standard.test.ts` keeps its shape.
+
 ### Fixed
 
 - **The assistant is told it changes nothing where it is handed no write tool** ([#46](https://github.com/zhixuan312/zz-meridian/issues/46)). The system prompt always said "Your write tools change what this page shows…" and that the person approves each Proposal, even on a page whose collections the assistant may only read, where no write tool is built and no Proposal can follow. `respond` now tells `systemPrompt` whether it handed a write tool (`Audience.writes`). Without one, the prompt says the assistant changes nothing and, asked for any change, gives the page that makes it, or says it is not a change the person can make. With one, it keeps both lines. The shared guidance that no change exists unless a write tool returned one stays in both.
@@ -26,6 +30,13 @@ Every release of ZZ Meridian, newest first. Versions follow semver: a removed or
 - **A link probe is pressed once the destination's data is measured.** The navigation measured the data and pressed the probe side by side, so on a route whose link is ready before its ready text (`/business`, while its title still loaded) the press could leave before the data counted, and a sample failed `main is there but never shows`. A dead link is still reported.
 - **Switching an Atlas card's theme no longer drops a frame on a phone.** The stage's specimen sections are skipped by style and layout until they near the viewport (`content-visibility: auto`), so the Theme, Accent, Density and Width switches restyle only what is on screen; a chart pattern's specimen holds thousands of elements, and the switch cost one frame of 100 to 160 ms on a mid-range phone.
 - **`pnpm verify --perf` holds a route to the budget its navigation check carries**, as `pnpm verify --timed` already did. A route's own figure (`budget` on its check in `verify.config.ts`) now stands in for the shared warm figure in both suites, through one function (`limitsFor` in `scripts/lib/budgets.ts`), so the two no longer judge one route against two bars: the start guide's phone warm shell is reported against its own 300 ms, not the shared 250 ms. Cold and after-live keep the shared figures.
+- **The Atlas's Contributing page no longer links to a page that answers 404.** It linked `docs/testing.md` relatively, which resolved to `/system/system/docs/testing.md`; the file is now named in backticks, as every other Atlas document names a file, and `tests/cli-atlas-doc-links.test.ts` keeps every document the Atlas serves free of relative links.
+
+### Known issues
+
+- **`node scripts/audit.ts --atlas` reports overlaps on the Atlas pattern pages whose specimen renders with `content-visibility: auto`** (featured metric, metric tile, column chart, heatmap and the records template). The pages draw nothing overlapping: the audit measures sections the browser has not laid out yet. Fixed in the next release. `pnpm verify` and its tiers are not affected.
+- **`node scripts/vitals.ts --atlas` can drop one frame on a page specification's look control** (`/system/pages/revenue`, one run in three), where the stage restyles its console and phone frames in one tap. Fixed in the next release. `pnpm verify --timed` is not affected.
+
 
 ## [0.16.3] · 2026-10-17
 
