@@ -33,8 +33,9 @@ export default function AssistantPreview() {
         <State label="Closed"><AssistantLauncher open={false} onClick={noop} /></State>
         <State label="Open"><AssistantLauncher open onClick={noop} /></State>
       </Specimen>
-      <Specimen label="Panel" note="From 1024px a third column at the assistant width; below it the same panel is a sheet over the page." className="items-start">
+      <Specimen label="Panel" note="From 1024px a third column at the assistant width; below it the same panel is a sheet over the page, the whole width of a phone. Empty, it offers the questions the page in view shares (SharedContext.questions), and only its line where the page shares none." className="items-start">
         <State label="Empty"><AssistantPanel inline messages={[]} onSend={noop} onClose={noop} onDecide={noop} onClear={noop} className="h-120 rounded-lg border" /></State>
+        <State label="Empty, with the page's questions"><AssistantPanel inline messages={[]} questions={['Why did requests change over the last 30 days?', 'What moved revenue over the last 30 days?', 'Is anything on this page out of the ordinary?']} onSend={noop} onClose={noop} onDecide={noop} onClear={noop} className="h-120 rounded-lg border" /></State>
         <State label="A short thread"><AssistantPanel inline messages={thread} onSend={noop} onClose={noop} onDecide={noop} onClear={noop} className="h-120 rounded-lg border" /></State>
         <State label="Across pages"><AssistantPanel inline messages={[...thread, asked('3', 'Which keys are unused?', 'API keys'), say('4', 'assistant', 'Two keys have not been used in 30 days.')]} onSend={noop} onClose={noop} onDecide={noop} onClear={noop} className="h-120 rounded-lg border" /></State>
         <State label="Error"><AssistantPanel inline messages={thread.slice(0, 1)} error="The assistant could not reach its provider. Try again." onRetry={noop} onSend={noop} onClose={noop} onDecide={noop} onClear={noop} className="h-120 rounded-lg border" /></State>

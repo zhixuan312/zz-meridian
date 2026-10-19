@@ -273,6 +273,13 @@ export function homeContext(data: HomeData, index: number | null = null): Shared
     focus = `${formatDate(d.date)}, a ${wd}: ${count(d.requests)} requests${usual ? ` (${times(d.requests / usual)} the median ${wd})` : ''}; error rate ${formatPercent(errorRate[index], 2)}${ratioAgainst(errorRate[index], medianError, "the period's median")}; latency p95 ${formatDuration(d.p95)}${ratioAgainst(d.p95, medianP95, 'the median')}; revenue ${formatCost(d.revenue)}.`;
   }
 
-  return { view: 'home', title: 'Home', address, scope, freshness: freshnessOf(data.updatedAt, data.now), focus, facts, insights, unknowns };
+  // What a person asks first on Home, only about the figures they may read.
+  const over = period === 'all' ? 'over all time' : `over the ${label}`;
+  const questions = [
+    ...(data.requests ? [`Why did requests change ${over}?`] : []),
+    ...(data.revenue ? [`What moved revenue ${over}?`] : []),
+    'Is anything on this page out of the ordinary?',
+  ];
+  return { view: 'home', title: 'Home', address, scope, freshness: freshnessOf(data.updatedAt, data.now), focus, facts, insights, unknowns, questions };
 }
 
