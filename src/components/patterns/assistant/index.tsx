@@ -174,7 +174,7 @@ export function AssistantPanel({
               <ul aria-label="Questions to start with" className="flex w-full flex-col gap-2">
                 {questions.map((q) => (
                   <li key={q}>
-                    <button type="button" disabled={busy} onClick={() => onSend(q)} className="press t-small w-full rounded-lg border border-line bg-surface px-3 py-2 text-left text-ink hover:border-line-strong disabled:opacity-45">
+                    <button type="button" disabled={busy} onClick={() => onSend(q)} className="press hit t-small w-full rounded-lg border border-line bg-surface px-3 py-2 text-left text-ink hover:border-line-strong disabled:opacity-45">
                       {q}
                     </button>
                   </li>
