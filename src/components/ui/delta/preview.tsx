@@ -19,6 +19,10 @@ export default function DeltaPreview() {
         <State label="Flat"><Delta value={0} /></State>
         <State label="Nothing to compare"><Delta value={null} /></State>
       </Specimen>
+      <Specimen label="In points" note='format="points": a change in a figure that is itself a share, a refusal share from 33.0% to 46.4%, reads 13.4 points, never 40.6% of itself. No change reads in the same format.'>
+        <State label="Rise"><Delta value={0.134} format="points" intent="down" /></State>
+        <State label="Flat"><Delta value={0} format="points" intent="down" /></State>
+      </Specimen>
       <Specimen label="In context">
         <span className="flex items-center gap-2 text-xs"><Delta value={0.057} /><span className="text-ink-3">vs previous period</span></span>
       </Specimen>

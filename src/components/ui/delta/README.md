@@ -18,11 +18,11 @@ Status: beta
 | Down | Latency, error rate, cost per request | `critical-ink` | `positive-ink` |
 | Neutral | Spend, volume where neither direction is good | `ink-2` | `ink-2` |
 
-A change under 0.05% is flat: no arrow, "0%", `ink-2`. A missing comparison (`null`) is an em dash in `ink-3`: "we measured no change" and "there is nothing to compare with" are different facts.
+A change under 0.05% is flat: no arrow, `ink-2`, and the format reading no change ("0.0 pts" under `points`; "0%" with no format given). A missing comparison (`null`) is an em dash in `ink-3`: "we measured no change" and "there is nothing to compare with" are different facts.
 
 ## Sizes
 
-One size, `text-xs`, so it sits on the caption line under a figure. The format defaults to a percentage with one decimal; pass `format` for absolute changes ("43ms").
+One size, `text-xs`, so it sits on the caption line under a figure. The format defaults to `percent`, the change as a share of the earlier value with one decimal; `points` reads a change in a value that is itself a share in percentage points ("13.4 pts", where `percent` would print a share that went from 33.0% to 46.4% as up 40.6%); pass a function for absolute changes ("43ms").
 
 ## States
 
@@ -64,4 +64,4 @@ import { Delta } from '@/components/ui/delta';
 <Delta value={23.73} format={(n) => `$${n}`} intent="neutral" />
 ```
 
-Props: `value` (a fraction, or null), `format`, `intent` (`up` | `down` | `neutral`), `className`.
+Props: `value` (a fraction, or null), `format` (`percent` | `points` | a function), `intent` (`up` | `down` | `neutral`), `className`.
