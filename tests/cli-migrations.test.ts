@@ -321,6 +321,18 @@ describe('the 0.17.0 migration', () => {
   });
 });
 
+describe('the 0.19.0 migration', () => {
+  it('finds a test that expects a period with no data to draw a track, and leaves the release\'s own', () => {
+    const imp = "import { ColumnChart } from '@/components/charts/column-chart';\n";
+    expect(byId('no-data-mark').since).toBe('0.19.0');
+    expect(byId('no-data-mark').applies(project({ 'tests/column-chart-no-data.test.tsx': `${imp}expect(none.querySelector('.bg-fill-track')).not.toBeNull();\n` }))).toEqual(['tests/column-chart-no-data.test.tsx']);
+    expect(byId('no-data-mark').applies(project({ 'tests/column-chart-no-data.test.tsx': `${imp}expect(none.querySelector('.bg-fill-track')).toBeNull();\n` }))).toBeNull();
+    // A test of another card that draws a track is not this migration's.
+    expect(byId('no-data-mark').applies(project({ 'tests/heatmap.test.tsx': "import { Heatmap } from '@/components/charts/heatmap';\nexpect(cell.querySelector('.bg-fill-track')).not.toBeNull();\n" }))).toBeNull();
+    expect(byId('no-data-mark').applies(path.resolve(import.meta.dirname, '..'))).toBeNull();
+  });
+});
+
 describe("the consumer smoke's record of the release migrations", () => {
   // `resolveAll` resolves only the ids `RELEASE_IDS` lists, with the edit `bringReleaseOver` makes for each: a release
   // migration missing from it is resolved as not applicable, and the origin it applies to fails at finalize.

@@ -443,6 +443,14 @@ export const RELEASE_MIGRATIONS: ReleaseMigration[] = [
     instructions: 'Bring `tests/verify-suite-outcome.test.ts` over from the release as it has it. A file of your own that calls `finalOutcome` passes the tiers, `finalOutcome({ full, timed }, notRun)`, where it passed whether the run was full (`finalOutcome(true, notRun)`): `references/validation.md` describes the tiers, `pnpm verify`, `--full` and `--timed`.',
     checks: ['gate'],
   },
+  {
+    id: 'no-data-mark',
+    since: '0.19.0',
+    applies: (root) => matching(root, (rel, src) => importsOf(rel, src).some(({ from }) => from === 'src/components/charts/column-chart') && /\.bg-fill-track['"]\)\)\.not\.toBeNull\(\)/.test(src)),
+    summary: 'A Column chart\'s period with no data draws a dashed hairline on the baseline, where it drew a `fill-track` track the height of the scale.',
+    instructions: 'Bring `tests/column-chart-no-data.test.tsx` over from the release as it has it. Since 0.19.0 `src/components/charts/column-chart/index.tsx` draws no column for a `null` period: its box has no height, a dashed hairline (`data-no-data-mark`) keeps the slot, and the word stands over it, because the track was the tallest mark on the chart. A test of your own that finds `.bg-fill-track` or `[data-track]` in a no-data column finds `[data-no-data-mark]` instead.',
+    checks: ['gate'],
+  },
 ];
 
 /**
