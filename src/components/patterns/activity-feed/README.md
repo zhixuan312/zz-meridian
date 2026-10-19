@@ -6,7 +6,7 @@ Status: beta
 
 ## Anatomy
 
-1. **Actor**: a 24px Avatar for a person; a dot in a soft disc for the system (toned when the event is good or needs attention); an Agent mark for an agent.
+1. **Actor**: a 24px Avatar for a person; a dot in a soft disc for the system (toned when the event is good or needs attention); an Agent mark for an agent; an empty disc in a dashed `line-strong` hairline, with no initials, for an actor the record does not hold, so nobody unknown reads as a person.
 2. **Sentence**: the actor (`ink` 500), the verb (`ink-2`) and the object (`ink`), which is a link to its record (`ink` 500, `accent-ink` on hover, a → after it) when it has one; for an agent, "· for Jonas Weber" in `ink-3`.
 3. **Time**: relative (`text-xs`, `ink-3`, tabular), the exact time in its title.
 4. **Thread**: a 1px `line` joining the actors down the list.
@@ -17,7 +17,7 @@ Avatar, Agent mark, and the date formatters, inside a Card with a divided header
 
 ## Data
 
-`ActivityEvent { id, at, actor, via?, verb, object, href?, tone? }`. `via` names the agent when an assistant acted for `actor`. `href` is the object's record: an event about a record opens it, so the feed is never a dead end. `tone` (`positive`, `warning`, `critical`) colours the system's dot only.
+`ActivityEvent { id, at, actor, system?, unknown?, via?, verb, object, href?, tone? }`. `via` names the agent when an assistant acted for `actor`. `unknown` says the record does not hold who acted: `actor` is then the product's words for that ("Someone not recorded"), read in the line as any actor is, beside the empty disc. `href` is the object's record: an event about a record opens it, so the feed is never a dead end. `tone` (`positive`, `warning`, `critical`) colours the system's dot only.
 
 ## States
 
