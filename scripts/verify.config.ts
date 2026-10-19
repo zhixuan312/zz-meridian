@@ -99,12 +99,15 @@ type VerifyConfig = {
   /**
    * Limits verify enforces. Leave a key out for Meridian's default: first-load JS 820 KiB per route and 5% growth over
    * `scripts/verify.baseline.json`, the warm, cold and after-live navigation times, and no prefetch on a closed phone drawer.
-   * `htmlKb` caps a route's uncompressed HTML, through the end of the streamed response; it has no default.
+   * Every page's HTML, gzipped through the end of the streamed response, is held to `htmlGrowthPct` (5%) over its own
+   * figure in the baseline's `html`; `htmlKb` adds an absolute cap in KiB, the same gzipped figure, for a page a project
+   * wants pinned, and has no default.
    */
   budgets?: {
     navigation?: { warm?: ReadinessBudget; cold?: ReadinessBudget; afterLive?: ReadinessBudget };
     firstLoadKb?: number;
     firstLoadGrowthPct?: number;
+    htmlGrowthPct?: number;
     htmlKb?: Record<string, number>;
     prefetchKb?: { desktop: number; phoneClosed: number };
   };
@@ -152,17 +155,6 @@ const config: VerifyConfig = {
   smokeRoutes: ['/', '/requests', '/settings'],
   // The sample's own journeys across its three workspaces, run beside the audit, the presses and the keyboard walk.
   browserChecks: ['journeys/workspaces.ts'],
-  // Sizes to hold. /services is the longest streamed document of the analytical pages: six services each with their own
-  // ninety days of bars and the screen-reader summary behind each, an incident timeline and the resolved incidents. It
-  // measured 99-100 KiB when this cap was set, so the cap sat exactly on the measurement and the next legitimate
-  // byte failed: the access work that gave every page a gate added 0.6% (101 KiB, 103,025 bytes), which is markup
-  // the page needs rather than fat to trim. Then the page came to lead with a Featured metric of uptime, whose chart is
-  // the share of services operational on each of the ninety days: 106 KiB. Held at 110 — above the measurement, so the
-  // next few KiB still fail.
-  // /customers hands its client every customer, because the list filters, sorts and pages them in the browser as the
-  // request log does: 329 rows of the nine fields a row draws measured 318 KiB (325,841 bytes) when the sample became a
-  // company. Held at 330, so a field added to a row, or a second copy of the rows, fails here.
-  budgets: { htmlKb: { '/services': 110, '/requests': 150, '/customers': 330 } },
   navigationChecks: [
     { path: '/', title: 'Home', readySelector: 'main table tbody tr', probe: 'toggle', controlSelector: 'main [role="radio"][aria-checked="false"]', resultSelector: 'main [role="radio"]' },
     { path: '/members', title: 'Members', readySelector: 'main table tbody tr', probe: 'toggle', controlSelector: 'main button[aria-haspopup="menu"]', resultSelector: '[role="menu"]' },

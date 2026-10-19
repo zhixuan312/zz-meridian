@@ -1,6 +1,6 @@
 // @vitest-environment node
 import { describe, expect, it } from 'vitest';
-import { firstLoad, firstLoadProblems, htmlProblems, isPrefetch, prefetchProblems } from '../scripts/lib/sizes.ts';
+import { firstLoad, firstLoadProblems, htmlGrowthProblems, htmlProblems, htmlRoutes, isPrefetch, prefetchProblems } from '../scripts/lib/sizes.ts';
 import { DEFAULT_BUDGETS, budgetsOf } from '../scripts/lib/budgets.ts';
 
 const KiB = 1024;
@@ -28,6 +28,15 @@ describe('HTML and prefetch', () => {
   it('names a page over its HTML cap', () => {
     expect(htmlProblems({ '/services': 131 * KiB, '/requests': 70 * KiB }, { '/services': 100, '/requests': 80 })).toEqual(['/services: HTML 131 KiB over its 100 KiB cap']);
   });
+  it('holds each page\'s HTML to its own baseline, and says when there is none (#57)', () => {
+    const baseline = { '/services': 20 * KiB, '/requests': 30 * KiB };
+    const grown = htmlGrowthProblems({ '/services': 21.5 * KiB, '/requests': 30 * KiB }, { growthPct: 5, baseline });
+    expect(grown).toEqual({ growth: 'checked', problems: ['/services: HTML grew 7.5% over its baseline (cap 5%)'] });
+    expect(htmlGrowthProblems({ '/services': 21 * KiB }, { growthPct: 5, baseline: null })).toEqual({ growth: 'not-configured', problems: [] });
+  });
+  it('measures the pages a person opens: no API, no dynamic segment, no not-found', () => {
+    expect(htmlRoutes(['/', '/_not-found', '/api/live', '/customers', '/customers/[id]', '/system/[...slug]'])).toEqual(['/', '/customers']);
+  });
   it('tells a prefetch from a page request, and checks both device caps', () => {
     expect(isPrefetch({ headers: { 'next-router-prefetch': '1', rsc: '1' } })).toBe(true);
     expect(isPrefetch({ headers: { rsc: '1' } })).toBe(false);
@@ -41,7 +50,7 @@ describe('the budgets', () => {
     expect(DEFAULT_BUDGETS.navigation.warm.shellMs).toEqual({ desktop: 150, phone: 250 });
     expect(DEFAULT_BUDGETS.navigation.cold.interactiveMs).toEqual({ desktop: 2000, phone: 4000 });
     expect(DEFAULT_BUDGETS.navigation.afterLive).toEqual(DEFAULT_BUDGETS.navigation.cold);
-    expect(DEFAULT_BUDGETS).toMatchObject({ firstLoadKb: 820, firstLoadGrowthPct: 5, prefetchKb: { desktop: 80, phoneClosed: 0 } });
+    expect(DEFAULT_BUDGETS).toMatchObject({ firstLoadKb: 820, firstLoadGrowthPct: 5, htmlGrowthPct: 5, prefetchKb: { desktop: 80, phoneClosed: 0 } });
     const b = budgetsOf({ budgets: { firstLoadKb: 900, navigation: { cold: { ...DEFAULT_BUDGETS.navigation.cold, shellMs: { desktop: 700, phone: 1600 } } } } });
     expect(b.firstLoadKb).toBe(900);
     expect(b.navigation.afterLive.shellMs).toEqual({ desktop: 700, phone: 1600 });
