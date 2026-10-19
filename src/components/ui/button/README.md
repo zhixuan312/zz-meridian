@@ -38,7 +38,7 @@ Label weight `weight-medium` 500 at every size; icon to label `space-1-5` 6px (s
 | Hover | 5% darker (`brightness-[0.94]`) over `dur-hover`; the fill is a gradient image, so a colour change would not show through it | fill `surface-sunk`, border `line-control` at 40% | fill `fill-hover`, label `ink` | 5% darker |
 | Pressed | scale 0.985, 0.5px down, over `dur-press` | same | same | same |
 | Focus (keyboard) | 2px `accent` outline, 2px offset | same | same | same |
-| Busy | a Spinner takes the icon's place, at this button's own step (14, 16 or 18px); the colour and the shadow stay, because the control is working and not unavailable; `aria-busy` is the announcement | same | same | same |
+| Busy | a Spinner takes the icon's place, at this button's own step (14, 16 or 18px); the colour and the shadow stay, because the control is working and not unavailable; `aria-busy` is the announcement, the pointer is `progress`, and it stays focusable (`aria-disabled`, not `disabled`) | same | same | same |
 | Disabled | 45% opacity, no shadow, no pointer events | same | same | same |
 
 Colour, border and shadow change over `dur-hover` 160ms; the trailing arrow moves over `dur-hover` with `ease-out`. Under reduced motion nothing moves; colours change at once.
@@ -47,7 +47,7 @@ Colour, border and shadow change over `dur-hover` 160ms; the trailing arrow move
 
 - Runs its action on click, Enter or Space. As a link (`asChild` around an `<a>`), it navigates and keeps the look.
 - A disabled button says why nearby in text; greying out is never the only explanation.
-- Busy is for actions that take more than 300ms. It blocks repeat presses, and a button that carries an icon keeps its width exactly, since the spinner is that button's own icon size. A button with no icon gains the slot, so it widens by one icon and the gap beside it: give an action that goes busy an `icon` if its width must not move.
+- Busy is for actions that take more than 300ms. It ignores presses (a submit's too) and keeps its place in the tab order, so a focused button that turns busy, a Retry whose read something else started, keeps the keyboard where it was; and a button that carries an icon keeps its width exactly, since the spinner is that button's own icon size. A button with no icon gains the slot, so it widens by one icon and the gap beside it: give an action that goes busy an `icon` if its width must not move.
 
 ## Surfaces
 

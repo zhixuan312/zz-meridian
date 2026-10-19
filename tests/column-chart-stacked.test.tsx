@@ -149,3 +149,26 @@ describe('stacked columns: what surrounds them', () => {
     expect(rows()[0]).not.toHaveTextContent(/so far/i);
   });
 });
+
+describe('a stacked column chart whose parts are identities (#61)', () => {
+  const outcomes: ColumnPart[] = [
+    { key: 'accepted', label: 'Accepted', color: 1 },
+    { key: 'delivered', label: 'Delivered', color: 2 },
+    { key: 'abandoned', label: 'Abandoned', tone: 'warning' },
+  ];
+  const closed: StackedColumn[] = [{ key: 'w1', label: '14 Sept', values: [4, 3, 1] }];
+  const fill = (c: HTMLElement, key: string) => (column(c, 'w1').querySelector(`[data-part="${key}"]`) as HTMLElement).style.background;
+
+  it('draws a part with a categorical slot in that slot, so two usual outcomes are told apart', () => {
+    const { container } = render(<ColumnChart label="Closed initiatives per week" parts={outcomes} columns={closed} />);
+    expect(fill(container, 'accepted')).toBe('var(--series-1)');
+    expect(fill(container, 'delivered')).toBe('var(--series-2)');
+    expect(fill(container, 'abandoned')).toBe('var(--warning)');
+    expect(column(container, 'w1').querySelector('[data-part="accepted"]')).toHaveAttribute('data-tone', 'series');
+  });
+  it('draws a part with neither a slot nor a tone beside categorical parts as the neutral, never the accent', () => {
+    const teams: ColumnPart[] = [{ key: 'a', label: 'Core', color: 1 }, { key: 'b', label: 'Web', color: 2 }, { key: 'o', label: 'Other' }];
+    const { container } = render(<ColumnChart label="Calls per week, by team" parts={teams} columns={[{ key: 'w1', label: '14 Sept', values: [5, 4, 2] }]} />);
+    expect(fill(container, 'o')).toBe('var(--chart-neutral-strong)');
+  });
+});

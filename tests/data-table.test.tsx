@@ -74,3 +74,14 @@ describe('DataTable', () => {
     expect(link.className).not.toMatch(/row-link|link|underline/);
   });
 });
+
+describe('the error state', () => {
+  it('draws Retry busy while the person\'s retry is on its way (#59)', () => {
+    const onRetry = vi.fn();
+    const view = render(<DataTable caption="Customers" noun="customers" rows={[]} columns={columns} rowKey={(r) => r.id} error="The API did not answer." onRetry={onRetry} />);
+    const retry = () => screen.getByRole('button', { name: 'Retry' });
+    expect(retry()).not.toHaveAttribute('aria-busy');
+    view.rerender(<DataTable caption="Customers" noun="customers" rows={[]} columns={columns} rowKey={(r) => r.id} error="The API did not answer." onRetry={onRetry} retrying />);
+    expect(retry()).toHaveAttribute('aria-busy', 'true');
+  });
+});

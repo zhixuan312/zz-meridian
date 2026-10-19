@@ -35,6 +35,14 @@ const outcomes: ColumnPart[] = [
   { key: 'server', label: 'Server errors', tone: 'critical' },
 ];
 const byOutcome = [sum(STATUS_MIX.slice(0, 2)), STATUS_MIX[2].value, STATUS_MIX[3].value];
+/** Two usual outcomes and two that need somebody: the usual ones are told apart by a categorical slot each. */
+const several: ColumnPart[] = [
+  { key: 'answered', label: 'Answered', color: 1 },
+  { key: 'redirected', label: 'Redirected', color: 2 },
+  { key: 'client', label: 'Client errors', tone: 'warning' },
+  { key: 'server', label: 'Server errors', tone: 'critical' },
+];
+const bySeveral = STATUS_MIX.map((m) => m.value);
 const endpoints: ColumnPart[] = ENDPOINTS.map((e) => ({ key: e.route, label: e.route.replace('/v1/', '') }));
 const byEndpoint = ENDPOINTS.map((e) => e.requests);
 // The sample's clock stands at 09:00 UTC on its last day, so that day has run nine hours of its twenty-four.
@@ -87,6 +95,11 @@ export default function ColumnChartPreview() {
       <Specimen label="Outcomes" note="A tone a part: the usual outcome is neutral, and one that needs somebody is warning or critical, named in the legend. The accent never stands beside a tone. A part that is not zero is at least 3px tall, so a day's server errors are never lost under its answers.">
         <Plane on="surface">
           <ColumnChart label="Requests per day, by how they were answered" format={formatCompact} axisFormat={axis} dates={dates(week)} parts={outcomes} columns={split(week, byOutcome)} />
+        </Plane>
+      </Specimen>
+      <Specimen label="Several usual outcomes" note="Answered and redirected are both usual, and one grey would make them one: each takes a categorical slot (color 1, 2), in order, and the outcomes that need somebody keep their tone. Teams, or any parts that are identities rather than shares of one hue, take the slots the same way; a part with neither is the neutral.">
+        <Plane on="surface">
+          <ColumnChart label="Requests per day, by how they ended" format={formatCompact} axisFormat={axis} dates={dates(week)} parts={several} columns={split(week, bySeveral)} />
         </Plane>
       </Specimen>
       <Specimen label="More than four parts" note="Seven endpoints. Four parts are the most a reader tells apart, so the fourth drawn is Other: the sum of the fourth and every later one, in the columns, the legend, the readout and the table alike.">
@@ -159,7 +172,7 @@ export default function ColumnChartPreview() {
           </Plane>
         </State>
       </Specimen>
-      <Specimen label="No data" stack note="null: a period with no data keeps its slot on the axis and draws no column, only the empty track the height of the scale, and it reads No data, at rest, pointed at, in the announcement and in the table: never zero, which would say the rate was perfect that day. The scale is the periods that have data. Stacked, a column whose every part is null is no data; a part that is null reads No data and adds nothing to the total of the parts read. A running period with no data reads No data so far.">
+      <Specimen label="No data" stack note="null: a period with no data keeps its slot on the axis and draws no column, only a dashed hairline on the baseline, and it reads No data just above it, at rest, pointed at, in the announcement and in the table: never zero, which would say the rate was perfect that day. The scale is the periods that have data. Stacked, a column whose every part is null is no data; a part that is null reads No data and adds nothing to the total of the parts read. A running period with no data reads No data so far.">
         <State label="Plain: a day not read" className="w-full">
           <Plane on="surface">
             <ColumnChart label="Errors per day, with a day not read" height={160} axisFormat={axis} dates={dates(week)} columns={unread} />

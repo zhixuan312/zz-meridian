@@ -47,10 +47,11 @@ export default function DataTablePreview() {
       <Specimen label="Loading" note="Skeleton rows shaped like real rows, so nothing jumps when data lands." stack>
         <DataTable caption="Requests" noun="requests" rows={[]} columns={compact} rowKey={(r) => r.id} loading pageSize={5} />
       </Specimen>
-      <Specimen label="Empty" note="First run offers the action that fills it; filtered-out offers Clear filters; an error offers Retry." stack>
+      <Specimen label="Empty" note="First run offers the action that fills it; filtered-out offers Clear filters; an error offers Retry, busy while the person's retry is on its way." stack>
         <DataTable caption="API keys" noun="keys" rows={[]} columns={compact} rowKey={(r) => r.id} empty={{ title: 'No keys yet', body: `Create a key for each service that calls ${app.name}.`, action: <Button size="sm" variant="primary" icon={<Plus />}>Create key</Button> }} />
         <DataTable caption="Requests" noun="requests" rows={[]} columns={compact} rowKey={(r) => r.id} filtered onClearFilters={() => {}} />
         <DataTable caption="Requests" noun="requests" rows={[]} columns={compact} rowKey={(r) => r.id} error="The log service did not answer within 10 seconds." onRetry={() => {}} />
+        <DataTable caption="Requests" noun="requests" rows={[]} columns={compact} rowKey={(r) => r.id} error="The log service did not answer within 10 seconds." onRetry={() => {}} retrying />
       </Specimen>
     </>
   );

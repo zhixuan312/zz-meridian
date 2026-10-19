@@ -41,7 +41,7 @@ Row height and card padding come from the density: comfortable 52px and 24px, co
 | Loading | `aria-busy`; up to eight skeleton rows shaped like real ones (a wide bar in the grow column, short bars elsewhere, right-aligned bars in numeric columns) — the same eight rows on a phone, laid out as cards |
 | Empty, first run | Empty state `first-run`: what is missing and the one action that fills it |
 | Empty, filtered out | Empty state `filtered`: "No requests match these filters" with Clear filters |
-| Error | Empty state `error`: "The requests did not load", the reason in one sentence, Retry |
+| Error | Empty state `error`: "The requests did not load", the reason in one sentence, Retry; busy while `retrying` |
 
 Arrival: rows rise with the page (`arrive`); under reduced motion they are simply there.
 
