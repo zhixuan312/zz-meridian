@@ -7,7 +7,7 @@ Status: beta
 ## Anatomy
 
 1. **Plot**: horizontal gridlines in `chart-grid`, the baseline in `chart-axis`, 1px, crisp.
-2. **Y axis**: 3 or 4 "nice" ticks from zero, labels `text-2xs` `ink-3`, tabular, right-aligned in a gutter sized to the longest label. Axis labels drop cents and exact digits (`$12`, `1.2M`), and money from $10,000 reads at a glance (`$25K`, `$5.0B`) so a large scale does not widen the gutter; the tooltip and table carry the exact amounts.
+2. **Y axis**: 3 or 4 "nice" ticks from zero (whole numbers only with `whole`, for a chart of counts or a stack of them, so a top of 10 draws no level at 2.5 or 7.5), labels `text-2xs` `ink-3`, tabular, right-aligned in a gutter sized to the longest label. Axis labels drop cents and exact digits (`$12`, `1.2M`), and money from $10,000 reads at a glance (`$25K`, `$5.0B`) so a large scale does not widen the gutter; the tooltip and table carry the exact amounts.
 3. **X axis**: dates, `text-2xs` `ink-3`, one label per 92px, counted back from today so the last day is always labelled.
 4. **Series**: monotone curves that never overshoot their data.
 5. **Band** (with `band`): the region from the floor up to the band's ceiling, in `fill-track`, under the gridlines, its top edge drawn as the axis is, and its label at an end of that edge — in `ink-2`, since it stands over the fill as often as over the card and `ink-3` on `fill-track` is 4.43:1 in light.
@@ -125,7 +125,7 @@ import { TrendChart } from '@/components/charts/trend-chart';
 />
 ```
 
-Props: `dates`, `series` (`key`, `label`, `values`, `color`, `kind`), `format` (`count` | `compact` | `cost` | `cost-compact` | `duration` | `percent`), `height` (number or `fill`), `label`, `legend` (defaults to two or more series), `tick`, `stacked`, `baseline`, `band`, `floor`, `marks`, `running` (the last point is still in progress).
+Props: `dates`, `series` (`key`, `label`, `values`, `color`, `kind`), `format` (`count` | `compact` | `cost` | `cost-compact` | `duration` | `percent`), `height` (number or `fill`), `label`, `legend` (defaults to two or more series), `tick`, `stacked`, `whole` (the values are counts: whole levels only), `baseline`, `band`, `floor`, `marks`, `running` (the last point is still in progress).
 
 The colour of a stacked part is `stackPart(place, parts)` from `@/components/charts/scale`, the one mix every one-hue stack takes: the accent into the surface, by the part's place from the bottom.
 
