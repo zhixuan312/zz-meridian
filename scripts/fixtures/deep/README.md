@@ -69,6 +69,7 @@ Every page has an `h1`, `lang="en"`, a `main`, an opaque ground and controls of 
 | `/late-unnamed` | An unnamed control that arrives in `[data-assistant-slot]` 2.6 s after the page, past the audit's fixed wait. Also a keyboard case (`-fixed`) |
 | `/late-dead-control` | A control that does nothing, arriving 3.6 s after the page, past the presses' fixed wait: unlisted, it was never pressed and the run read `0 controls pressed … 0 issues` |
 | `/presses-controls-move` | Controls drawn in another order on a later load: the first load draws all four, every later one draws two of them 3.2 s late, past the open and the settle, so a control re-found by its place in the walk is missing (passes) |
+| `/presses-live-name` | A control whose name carries a count a read fills in: `Alerts` on the first load, `Alerts, 3 new` on every later one, reached through a Reload press, so a control found again only by its exact name is missing (passes) |
 | `/presses-late-replace` | A press that answers, then a document replaced after the presses' look has closed (Escape replaces it, so it lands between the look and the next read every run): the suite opens the route again and presses the next control, never crashes (passes) |
 | `/late-answer` | A control whose answer, a status line, comes 1.5 s after its press, past the presses' first look at 600 ms: slow, not dead (passes) |
 | `/sideways-region` | A content region 600px wide in a 300px canvas: the first of the sideways rule's three arms. `-fixed` fits |

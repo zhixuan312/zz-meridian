@@ -452,5 +452,6 @@
   { "page": "/presses-relative-link", "suite": "presses", "outcome": "fail", "line": "answers 404" },
   { "page": "/presses-relative-link-fixed", "suite": "presses", "outcome": "pass" },
   { "page": "/presses-late-replace", "suite": "presses", "outcome": "pass", "line": "interactions: 4 controls pressed" },
-  { "page": "/presses-controls-move", "suite": "presses", "outcome": "pass", "line": "; 0 issues" }
+  { "page": "/presses-controls-move", "suite": "presses", "outcome": "pass", "line": "; 0 issues" },
+  { "page": "/presses-live-name", "suite": "presses", "outcome": "pass", "line": "; 0 issues" }
 ]
