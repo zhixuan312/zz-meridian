@@ -125,7 +125,7 @@ Every check Meridian runs has one row, named by a key: a gate step, a group of t
 | `verify/build` | large | functional | change | no | `pnpm verify` | 9.6 s at 40d29c7 | One production build. |
 | `verify/route policy` | large | non-functional | change | no | `pnpm verify` | 0.1 s at 40d29c7 | Every route is declared static or dynamic as its policy says. |
 | `verify/first-load` | large | non-functional | change | no | `pnpm verify` | 0.3 s at 40d29c7 | The first-load size of each route is within its budget. |
-| `verify/html` | large | non-functional | change | no | `pnpm verify` | 0.3 s at 40d29c7 | Every page's served HTML, gzipped, is within `htmlGrowthPct` of its own baseline figure and under any `htmlKb` cap. |
+| `verify/html` | large | non-functional | change | no | `pnpm verify` | 1.5 s at dbf4106 | Every page's served HTML, gzipped, is within `htmlGrowthPct` of its own baseline figure and under any `htmlKb` cap. |
 | `verify/navigation` | large | functional | change | no | `pnpm verify` | 92.5 s at 269d307 | From a press in the rail, each route's shell, data and first interaction arrive, on desktop and through the phone drawer, judged on function only, never on time; up to three routes, every rail route under `--full` or `--timed`. |
 | `verify/timing` | large | performance | timed | yes | `pnpm verify --timed` | 88.2 s at fa5bbff | The same navigation of every rail route, with each shell, data and interaction time judged against its budget. |
 | `verify/personas` | large | functional | on request | no | `pnpm verify --as viewer` | 937.8 s at fa5bbff (the five personas) | Signed in as each named persona, the rail shows the routes that persona may open and a denied route draws its refusal. |
