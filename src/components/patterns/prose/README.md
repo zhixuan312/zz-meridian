@@ -10,7 +10,7 @@ Status: beta
 2. **Headings**: the writer's `#` is an h2 (`text-xl`), `##` an h3 with a hairline above it, `###` an h4: the page keeps the only h1.
 3. **Lists**: discs and numbers in `ink-3`; task boxes drawn as checkboxes named "Done" or "Not done".
 4. **Code**: inline on `surface-sunk` with a `line` border; a fenced block on `surface-sunk`, `radius-lg`, wrapping instead of scrolling.
-5. **Tables**: inside a `line`-bordered frame, a `surface-sunk` header row, `text-sm` cells.
+5. **Tables**: inside a `line`-bordered frame, a `surface-sunk` header row, `text-sm` cells. Every body cell carries its column's heading as `data-label`, in the server's HTML. With `stack`, a table under 480px of its own width reads as one card per row: the header row hidden, the first cell the title in `ink`, each later cell under its heading in `text-xs` `ink-3`.
 6. **Quote**: a 2px `accent` rule on the left, `ink` text.
 7. **Links**: `.link`, in `accent-ink`, turning `ink` on hover, never underlined; a link out of the product sends no referrer.
 
@@ -34,6 +34,7 @@ A markdown string. Line endings are normalised and the ends trimmed; nothing els
 | An image from another origin | Its alt text in italics (or "Image not shown"), never fetched |
 | A long token in code or a link: a URL, a path, a hash | Breaks anywhere rather than widen its paragraph or table; plain words wrap between words |
 | A table with more columns than the card holds | Scrolls inside its own frame; the page never scrolls sideways |
+| `stack`, and a table under 480px of its own width | One card per row, each value under its column's heading; no header row |
 | Empty | Nothing: the caller shows the empty state ("No notes yet") |
 
 ## Surfaces
@@ -71,4 +72,7 @@ import { Prose } from '@/components/patterns/prose';
 
 <Card className="p-(--card-pad)"><Prose>{incident.review}</Prose></Card>
 <Prose size="sm">{comment.body}</Prose>
+<Prose stack>{decision.record}</Prose>   // tables become labelled cards in a narrow column
 ```
+
+`stack` is for a document whose tables carry sentences (a decision record, a comparison) read in a narrow column. A table of short figures reads better scrolling in its frame, which is the default. Without `stack`, a page can still style its own narrow layout from `td[data-label]`.

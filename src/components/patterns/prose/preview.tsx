@@ -40,6 +40,11 @@ const HOSTILE = `A reply pasted from somewhere else:
 
 ![A tracking pixel](https://elsewhere.example/pixel.png)`;
 
+const DECISIONS = `| Choice | Chosen | Rejected because |
+|---|---|---|
+| Queue | Postgres \`SKIP LOCKED\` | a broker is one more service to run for 40 jobs a minute |
+| Retries | Three, with backoff | a fourth retry has never succeeded in the last 90 days |`;
+
 export default function ProsePreview() {
   return (
     <>
@@ -56,6 +61,14 @@ export default function ProsePreview() {
       <Specimen label="Narrow" note="At 320px the long paths and the code break anywhere rather than push the card." stack>
         <Plane on="surface">
           <div className="w-80 p-4"><Prose size="sm">{REVIEW.split('## What we are changing')[1]}</Prose></div>
+        </Plane>
+      </Specimen>
+      <Specimen label="Stacked" note="With stack, a table under 480px of its own width reads as one card per row: the first cell its title, each later cell under its column's heading. Wider, it is the same table." stack>
+        <Plane on="surface">
+          <div className="flex flex-wrap gap-6 p-4">
+            <div className="w-80"><Prose size="sm" stack>{DECISIONS}</Prose></div>
+            <div className="w-[560px] max-w-full"><Prose size="sm" stack>{DECISIONS}</Prose></div>
+          </div>
         </Plane>
       </Specimen>
     </>
