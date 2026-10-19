@@ -43,7 +43,7 @@ Status: beta
 
 **Periods take dates.** A chart whose columns are periods (days, weeks, months) passes `dates`, one ISO date a column, the period's first day. Its labels then thin as dates do and are never cut; passed as categories, "27 Sept" is cut to its column on a phone and reads "27 S…". Outside a Meridian the dates change nothing else.
 
-**Running.** The last column is a period not over yet, such as today or the month so far. It is not a fact like the columns before it, so its fill is drawn at half strength, and a dashed outline, open at the baseline, stands around it. The fill alone would not do: a neutral column at half strength is nearly lost on the card (1.20:1 dark, 1.17:1 light, where a complete one is 1.50:1 and 1.39:1), so the outline, in `ink`, is what keeps the unfinished column a column, while its faded, hollowed body stays plainly weaker than a complete one. Wherever it is read it says "so far": the plain column's value when pointed at, the readout, the announcement and its row of the table. No other column does.
+**Running.** The last column is a period not over yet, such as today or the month so far. It is not a fact like the columns before it, so its fill is drawn at half strength, and a dashed outline, open at the baseline, stands around it. The fill alone would not do: a neutral column at half strength is nearly lost on the card (1.20:1 dark, 1.17:1 light, where a complete one is 1.50:1 and 1.39:1), so the outline, in `ink`, is what keeps the unfinished column a column, while its faded, hollowed body stays plainly weaker than a complete one. Wherever it is read it says "so far": the plain column's value when pointed at, the readout, the announcement and its row of the table. No other column does. A running period with no data reads "No data so far" (the product's `noData`, then "so far"); at rest, where its column is too narrow for those words, as on a phone, it reads "So far" above the dashed outline rather than a word cut short, and the rest say it whole.
 
 ## Sizes
 
@@ -106,6 +106,7 @@ The view shares the highlighted column and the day pointed at through `useShareV
 
 - Category labels are short (drop shared prefixes like `/v1/`); day labels are "27 Sept".
 - The axis takes an axis formatter, `AXIS_FORMATTERS.count` or `AXIS_FORMATTERS.cost` from `@/lib/format`: one that is true at every tick ("1.5K", never "2K" for 1,500). A value formatter that rounds, such as `formatCompact`, is not one. With no `axisFormat` the axis reads as `format` does, which is right only while `format` is exact.
+- A chart of counts passes `whole`: every level is a whole number, so a top of 1 is ticked 0 and 1, with no unlabelled level at 0.5 that no count stands at.
 - `format` must tell neighbouring columns apart, because it writes the value above each: an exact count where the values are in the hundreds and low thousands ("902", "1,124", "1,016"), a compact one from the tens of thousands up ("62K", "108K"). Three columns of different heights that all read "1K" say the chart is wrong.
 - Part labels are short nouns: "Enterprise", "us-east-1", "Failed". The fold is "Other".
 - A running period is "so far", after its label: "03 Oct · so far" in the readout, "03 Oct, so far" in the table.

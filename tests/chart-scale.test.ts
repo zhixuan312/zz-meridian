@@ -39,3 +39,17 @@ describe('ticksBetween: the levels a chart is drawn on', () => {
     expect(ticksBetween(0.7, 0, 4)).toEqual([0, 1]);
   });
 });
+
+describe('niceTicks for counts (#72)', () => {
+  it('steps by whole numbers only, so a top of 1 is ticked 0 and 1 and nothing between', () => {
+    expect(niceTicks(1, 3)).toEqual([0, 0.5, 1]);
+    expect(niceTicks(1, 3, true)).toEqual([0, 1]);
+    expect(niceTicks(2, 3, true)).toEqual([0, 1, 2]);
+    expect(niceTicks(7, 3, true)).toEqual([0, 5, 10]);
+    expect(niceTicks(9, 4, true)).toEqual([0, 5, 10]);
+    expect(niceTicks(0, 3, true)).toEqual([0, 1]);
+  });
+  it('leaves a scale of counts that steps by whole numbers already as it was', () => {
+    for (const max of [12, 40, 75, 640, 3_300_438]) expect(niceTicks(max, 3, true)).toEqual(niceTicks(max, 3));
+  });
+});
