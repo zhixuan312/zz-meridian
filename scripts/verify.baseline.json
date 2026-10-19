@@ -30,5 +30,31 @@
     "/system/system/[id]": 683852,
     "/tests": 804568,
     "/usage": 809012
+  },
+  "html": {
+    "method": "the complete streamed response, gzipped (zlib level 6), bytes",
+    "routes": {
+      "/": 33515,
+      "/business": 41229,
+      "/customers": 71693,
+      "/embed/home": 18484,
+      "/embed/now": 16620,
+      "/embed/proposal": 6052,
+      "/embed/requests": 8142,
+      "/engineering": 35698,
+      "/keys": 16088,
+      "/members": 22179,
+      "/operations-tickets": 21416,
+      "/releases": 19263,
+      "/requests": 22288,
+      "/services": 19814,
+      "/settings": 15697,
+      "/sign-in": 7864,
+      "/system": 32274,
+      "/system/states/error": 9816,
+      "/system/states/loading": 11576,
+      "/tests": 19773,
+      "/usage": 44731
+    }
   }
 }
