@@ -28,6 +28,8 @@ type Shared = {
   format?: (n: number) => string;
   /** How a period with no data reads, wherever its value would: "No data" unless the product names it otherwise. */
   noData?: string;
+  /** The values are counts: every tick is a whole number, so a top of 1 draws no level at 0.5 (#72). */
+  whole?: boolean;
   /** How a tick reads: an axis formatter, true at every tick (`AXIS_FORMATTERS` in `@/lib/format`). Without one the axis
    * reads as `format` does, which is right only while `format` is exact: one that rounds prints a tick it does not stand at. */
   axisFormat?: (n: number) => string;
@@ -52,6 +54,8 @@ export type ColumnChartProps = Shared & (
  * narrowest column that keeps its value at rest, and the most parts drawn.
  */
 const GAP = 2, THIN = 1, REST = 36, MOST = 4;
+/** About the width of one character of a value at rest (`text-2xs`), in px: enough to tell whether a label fits its column. */
+const CH = 6.5;
 /**
  * The plot widths past which `n` columns stand another pixel apart, up to `GAP`: each is the width at which every
  * column still has `THIN` of its own. A chart with more columns than room closes its gaps before it outgrows its box,
@@ -122,6 +126,7 @@ export function ColumnChart({
   running = false,
   format = count,
   noData = 'No data',
+  whole = false,
   axisFormat,
   height = 200,
   label,
@@ -145,7 +150,7 @@ export function ColumnChart({
   const soFar = running ? n - 1 : -1;
 
   // A period with no data has no height, so the scale is the periods that have one.
-  const ticks = niceTicks(Math.max(1, ...bars.filter((b) => !b.none).map((b) => b.total)), 3);
+  const ticks = niceTicks(Math.max(1, ...bars.filter((b) => !b.none).map((b) => b.total)), 3, whole);
   const top = ticks[ticks.length - 1];
   const af = axisFormat ?? format;
   const left = Math.max(...ticks.map((t) => af(t).length)) * 6.4 + 10;
@@ -220,10 +225,13 @@ export function ColumnChart({
               const pointed = active === i;
               const hot = pointed || (active === null && b.key === highlight);
               const shown = drawn ? drawn.map((p, k) => ({ p, v: b.values[k] ?? 0 })).filter(({ v }) => v > 0) : [];
-              const text = totalOf(b, i);
               const unfinished = i === soFar;
               // Plain, the pointed value is the chart's readout and takes the tooltip's plane; stacked, the panel is.
               const tip = pointed && !drawn;
+              // At rest a label is held to its column. A running period with no data whose words do not fit says "So far",
+              // never "No data…" cut mid-word; the tooltip, the readout, the announcement and the table say it whole (#71).
+              const full = totalOf(b, i);
+              const text = !tip && b.none && unfinished && full.length * CH > column ? 'So far' : full;
               return (
                 <div
                   key={b.key}
