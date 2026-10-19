@@ -9,7 +9,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import {
-  VERSION, brandArgs, effectiveBrand, inside, installSkill, jsoncExtras, packageManager, payloadBytes, payloadFiles, readJsonc, readPayload, relativeImports,
+  VERSION, brandArgs, effectiveBrand, inside, installArgs, installSkill, jsoncExtras, packageManager, payloadBytes, payloadFiles, readJsonc, readPayload, relativeImports,
   run, runTool, sha256, writeIn, writeManifest,
 } from './files.js';
 import { BRIEF_TEMPLATE, managedBlock, upsertManagedBlock } from './context.js';
@@ -333,7 +333,7 @@ Rename or move them, then run adopt again.`);
   let typed = 'not run (--no-install)';
   if (o.install) {
     say(`\nInstalling with ${pm}…`);
-    if (run(pm, ['install'], root).status !== 0) return fail(`${pm} install failed (above). Fix it, then run ${pm} install and ${pm} run typecheck.`);
+    if (run(pm, installArgs(pm), root).status !== 0) return fail(`${pm} install failed (above). Fix it, then run ${pm} install and ${pm} run typecheck.`);
     // Route types first (LayoutProps, PageProps), as the gate does.
     runTool(root, 'next/dist/bin/next', ['typegen']);
     const tsc = runTool(root, 'typescript/bin/tsc', ['--noEmit']);

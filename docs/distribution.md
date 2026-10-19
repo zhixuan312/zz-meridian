@@ -75,7 +75,7 @@ Then, in this order:
    the accent and the contrast gate. Then it writes Meridian's managed block into their `AGENTS.md`, and `docs/brief.md`
    when they have none.
 5. Installs the skill and writes the manifest.
-6. Runs their package manager's install, `next typegen` and `tsc --noEmit`, and prints the result and the next step:
+6. Runs their package manager's install (pnpm with `--no-frozen-lockfile`, since adopt has just changed `package.json`), `next typegen` and `tsc --noEmit`, and prints the result and the next step:
    the skill's Route A from step 2, with the template to read from at the same version.
 
 Three things make the copy safe in someone else's project. Meridian's own files import each other by relative path,
@@ -107,7 +107,8 @@ three edits named below. It needs a project that adopted or created Meridian 0.3
 2. **Update.** `npx zz-meridian@latest update` from a clean git tree (or with `--allow-dirty`). It writes the plan first
    (`.meridian/update/<version>/state.json`, the journal, `MERGE.md`, an empty `resolutions.json`, the `base/`, `ours/`
    and `new/` copies of every staged file, and a `backup/` preimage of every path it changes), then applies the safe
-   changes, then runs the install. Applied: untouched replacements, additions and untouched removals. Staged: every
+   changes, then runs the install (pnpm with `--no-frozen-lockfile`, which CI would otherwise refuse after the edit to
+   `package.json`). Applied: untouched replacements, additions and untouched removals. Staged: every
    managed file the team changed or deleted, or collided with. The only team files it edits are `package.json` (missing
    dependencies and scripts, older ones of the same major, and entries still exactly as the earlier release wrote them;
    the framework `next`, `react` and `react-dom` is always among them), the managed block in `AGENTS.md`, and the

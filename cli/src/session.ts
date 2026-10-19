@@ -7,7 +7,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { managedBlock } from './context.js';
-import { inside, packageManager, run as spawn, sha256 } from './files.js';
+import { inside, installArgs, packageManager, run as spawn, sha256 } from './files.js';
 import { aliasesOf, canonicalImports } from './imports.js';
 import { changedPaths, takeInventory } from './inventory.js';
 import { renderMergeReport } from './merge-report.js';
@@ -279,7 +279,7 @@ function install(ctx: Context, session: string, j: UpdateJournal, pm: keyof type
   const before = prior ? prior.base : fs.existsSync(backup) ? sideOf(sha(fs.readFileSync(backup))) : probe(root, lock).side;
   if (before.exists && !fs.existsSync(backup)) writeAtomic(backup, fs.readFileSync(inside(root, lock)));
   const t0 = performance.now();
-  const r = ctx.run(pm, ['install'], root);
+  const r = ctx.run(pm, installArgs(pm), root);
   const ms = performance.now() - t0;
   writeAtomic(path.join(session, 'evidence', '0-install.log'), r.output);
   j.validation = [{ command: `${pm} install`, exitCode: r.status, evidenceFile: 'evidence/0-install.log' }, ...j.validation.filter((v) => !isInstall(v))];

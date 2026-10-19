@@ -80,6 +80,12 @@ export function packageManager(root: string): 'pnpm' | 'yarn' | 'bun' | 'npm' {
   return 'npm';
 }
 
+/**
+ * The install that follows Meridian's own edit to package.json. pnpm freezes the lockfile where `CI` is set and refuses
+ * the edit it was run to take in, so it is asked to write the lockfile; the other managers write it as they are.
+ */
+export const installArgs = (pm: ReturnType<typeof packageManager>): string[] => (pm === 'pnpm' ? ['install', '--no-frozen-lockfile'] : ['install']);
+
 /** A tool in the project's node_modules, run as `node <its script>`: no shell and no .cmd shim on any platform. */
 export function runTool(root: string, entry: string, args: string[], quiet = true): SpawnSyncReturns<string> {
   return spawnSync(process.execPath, [path.join(root, 'node_modules', entry), ...args], { cwd: root, encoding: 'utf8', stdio: quiet ? 'pipe' : 'inherit' });

@@ -13,6 +13,7 @@ Every release of ZZ Meridian, newest first. Versions follow semver: a removed or
 
 ### Fixed
 
+- **`update` and `adopt` install where `CI` is set.** Both change `package.json` and then run the project's install, and pnpm freezes the lockfile where `CI` is set, so an update that raised a dependency failed with `ERR_PNPM_OUTDATED_LOCKFILE` in CI or under an agent that sets it. With pnpm they now run `pnpm install --no-frozen-lockfile`; npm, yarn and bun run `install` as before.
 - **A client navigation no longer reads the new page's collections again** ([#54](https://github.com/zhixuan312/zz-meridian/issues/54)). 0.18.0 sent the revisions a page was served only on the tab's first stream, so a press in the rail to a page that follows other collections reopened the stream without them, and every collection that page follows was read by its server and again by the stream's resync. `src/lib/live.ts` now sends them on every open that follows a change of the names, and only a reopen after a gap (an error, a tab shown again, the poll's retry) resyncs every name. A created project takes the fix with `npx zz-meridian@latest update`.
 
 ## [0.18.0] · 2026-10-19

@@ -343,3 +343,18 @@ describe('a project already on the running version', () => {
     expect(lines.join('\n')).not.toContain('differ from the release');
   });
 });
+
+describe('the install an update runs', () => {
+  it('lets pnpm write the lockfile the update outdated, as CI=true would otherwise refuse', () => {
+    const root = project({ disk: { 'pnpm-lock.yaml': 'lockfileVersion: 9.0\n' } });
+    const { c, calls } = ctx(root);
+    start(c, opts);
+    expect(calls).toContain('pnpm install --no-frozen-lockfile');
+  });
+  it('runs npm install as it is', () => {
+    const root = project();
+    const { c, calls } = ctx(root);
+    start(c, opts);
+    expect(calls).toContain('npm install');
+  });
+});
