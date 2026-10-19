@@ -2,6 +2,12 @@
 
 Every release of ZZ Meridian, newest first. Versions follow semver: a removed or renamed token, prop or card is major; a new card, token or variant is minor; a corrected value is a patch. Each entry says what breaks and what to do instead.
 
+## [Unreleased]
+
+### Fixed
+
+- **The presses suite finds a control again by what it is** ([#65](https://github.com/zhixuan312/zz-meridian/issues/65)). It tagged each control by its place in the walk and, after opening the route again, pressed whatever stood at that place: a later load that drew the controls in another order, or fewer of them for a while (a table still loading on a busy machine, rows another suite's write changed), pressed the wrong control or reported "was listed but could not be found again" for one that was on the page a moment later. A control is now found by its accessible name, and which of the controls named alike it is, and one not drawn yet is waited for up to the hang bound before it is called gone.
+
 ## [0.19.1] · 2026-10-19
 
 ### Fixed

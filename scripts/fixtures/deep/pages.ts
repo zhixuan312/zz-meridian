@@ -20,6 +20,7 @@
  *   late-unnamed, late-dead-control                                      a control that arrives after a fixed wait has ended
  *   late-answer                                                          a control whose answer comes 1.5 s after its press
  *   presses-late-replace                                                 a document replaced after the presses' look has closed
+ *   presses-controls-move                                                controls that are drawn in another order on a later load
  *   sideways-*, double-scroller, heading-skip, empty-region, moved-page, drops-query, page-error   the rules of the standard that no page made fire
  *   slow-load                                                            a page whose load event comes late (chrome.ts)
  *   nav-*                                                                pages for scripts/navigate.ts
@@ -254,6 +255,10 @@ ${chart(`${RULE(50)}${CAPTION}`)}
   // that reloads once its request is accepted. Escape replaces it here, so the replacement lands, every run, between the
   // look and the suite's next read of the page. The second control is pressed on the new document.
   '/presses-late-replace': deep('Late replace', { body: '<button type="button" id="switch">Switch team</button><button type="button" id="other">Other</button><p class="status" aria-live="polite"></p>', script: `for (const id of ['switch', 'other']) document.getElementById(id).addEventListener('click', () => { document.querySelector('.status').textContent = id === 'switch' ? 'Switching' : 'Pressed'; }); document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && document.querySelector('.status').textContent === 'Switching') location.replace(location.href); });` }),
+  // A page whose controls move between loads: the first load draws all four at once; every later one draws Reload and
+  // Page 3 at once and the two row actions 3.2 s later (past the open's wait and the settle), as a table still loading on a busy machine does. A control found
+  // again by its place in the walk is missing; found by what it is, it is there, once it has arrived.
+  '/presses-controls-move': deep('Controls that move', { body: '<div class="list"></div><p class="status" aria-live="polite"></p>', script: `const first = !sessionStorage.getItem('moved'); sessionStorage.setItem('moved', '1'); const list = document.querySelector('.list'); const add = (label, act) => { const b = document.createElement('button'); b.type = 'button'; b.textContent = label; b.addEventListener('click', act); list.append(b); }; const say = (t) => () => { document.querySelector('.status').textContent = t; }; const rows = () => { add('Edit Ada', say('Editing Ada')); add('Edit Grace', say('Editing Grace')); }; add('Reload', () => location.reload()); if (first) rows(); else setTimeout(rows, 3200); add('Page 3', say('Page 3'));` }),
   '/late-answer': deep('Late answer', { body: '<button type="button" id="ask">Ask</button><p class="status" aria-live="polite"></p>', script: `document.getElementById('ask').addEventListener('click', () => { setTimeout(() => { document.querySelector('.status').textContent = 'Answered'; }, 1500); });` }),
 
   // ---- the rules of the standard that no page had ever made fire ----
