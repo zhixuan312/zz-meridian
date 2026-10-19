@@ -2,6 +2,12 @@
 
 Every release of ZZ Meridian, newest first. Versions follow semver: a removed or renamed token, prop or card is major; a new card, token or variant is minor; a corrected value is a patch. Each entry says what breaks and what to do instead.
 
+## [Unreleased]
+
+### Fixed
+
+- **The presses suite no longer crashes when a press replaces the document late** ([#64](https://github.com/zhixuan312/zz-meridian/issues/64)). A control whose answer reloads the page once a request is accepted, a team switch that has the server draw the new team's chrome, could replace the document after `scripts/interactions.ts` had looked for an answer; its next read of the page then found no helper and stopped the whole suite with `ReferenceError: deepQuery is not defined`. A document replaced after the look is a press that moved the page: the suite opens the route again and presses the next control, and the press is not reported as doing nothing.
+
 ## [0.19.0] · 2026-10-19
 
 ### Breaking

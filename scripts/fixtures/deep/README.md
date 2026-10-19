@@ -68,6 +68,7 @@ Every page has an `h1`, `lang="en"`, a `main`, an opaque ground and controls of 
 | `/presses-relative-link-fixed` | A visible relative link to a page that answers 200 (passes) |
 | `/late-unnamed` | An unnamed control that arrives in `[data-assistant-slot]` 2.6 s after the page, past the audit's fixed wait. Also a keyboard case (`-fixed`) |
 | `/late-dead-control` | A control that does nothing, arriving 3.6 s after the page, past the presses' fixed wait: unlisted, it was never pressed and the run read `0 controls pressed … 0 issues` |
+| `/presses-late-replace` | A press that answers, then a document replaced after the presses' look has closed (Escape replaces it, so it lands between the look and the next read every run): the suite opens the route again and presses the next control, never crashes (passes) |
 | `/late-answer` | A control whose answer, a status line, comes 1.5 s after its press, past the presses' first look at 600 ms: slow, not dead (passes) |
 | `/sideways-region` | A content region 600px wide in a 300px canvas: the first of the sideways rule's three arms. `-fixed` fits |
 | `/sideways-data-page` | A `[data-page-width="data"]` page 200px wide in a 400px canvas: the page is what should stretch. `-fixed` fills it |

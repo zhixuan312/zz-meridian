@@ -125,7 +125,8 @@ for (const width of WIDTHS) {
       if (status >= 400) failures.push(`${route}: link ${href}${path === href ? '' : ` (${path})`} answers ${status}`);
     }
     for (let i = 0; i < controls.length; i++) {
-      let armed = await page.eval<{ x: number; y: number; covered?: string } | null>(ARM(i));
+      // A document replaced since the last read has no helper: that is a page to open again, never a crash (#64).
+      let armed = await page.eval<{ x: number; y: number; covered?: string } | null>(ARM(i)).catch(() => null);
       // Something left open or a toast in the way: start the page again and try once more.
       if (!armed || armed.covered) { await fresh(); armed = await page.eval(ARM(i)); }
       // Tagged by this suite a moment ago and gone after a fresh load: say so, never skip it.
@@ -150,14 +151,15 @@ for (const width of WIDTHS) {
         if (!chosen) r = await look().catch(() => ({ changes: 0, moved: true }));
       }
       if (chosen) continue;
-      if (!r.changes && !r.moved) failures.push(`${route} @${width}: "${controls[i]}" does nothing when ${touch ? 'tapped' : 'pressed'}`);
-      if (r.moved) await fresh();
-      else {
-        await page.send('Input.dispatchKeyEvent', { type: 'keyDown', key: 'Escape', code: 'Escape', windowsVirtualKeyCode: 27 });
-        await page.send('Input.dispatchKeyEvent', { type: 'keyUp', key: 'Escape', code: 'Escape', windowsVirtualKeyCode: 27 });
-        await sleep(200);
-        if (await page.eval<boolean>(`!!deepQuery('[role="dialog"],[role="alertdialog"],[role="menu"],[role="listbox"]', document.body)`)) await fresh();
-      }
+      if (r.moved) { await fresh(); continue; }
+      await page.send('Input.dispatchKeyEvent', { type: 'keyDown', key: 'Escape', code: 'Escape', windowsVirtualKeyCode: 27 });
+      await page.send('Input.dispatchKeyEvent', { type: 'keyUp', key: 'Escape', code: 'Escape', windowsVirtualKeyCode: 27 });
+      await sleep(200);
+      // A document replaced after the look closed (a team switch that reloads once its request is accepted) has lost the
+      // helper and the counters: the press moved the page, late, and the route is opened again (#64).
+      const after = await page.eval<{ replaced: boolean; open: boolean }>(`typeof deepQuery !== 'function' ? { replaced: true, open: false } : { replaced: location.href !== window.__href, open: !!deepQuery('[role="dialog"],[role="alertdialog"],[role="menu"],[role="listbox"]', document.body) }`).catch(() => ({ replaced: true, open: false }));
+      if (!r.changes && !after.replaced) failures.push(`${route} @${width}: "${controls[i]}" does nothing when ${touch ? 'tapped' : 'pressed'}`);
+      if (after.replaced || after.open) await fresh();
     }
     if (page.errors.length) failures.push(`${route} @${width}: ${page.errors[0]}`);
   }

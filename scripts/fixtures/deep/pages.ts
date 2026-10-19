@@ -19,6 +19,7 @@
  *   presses-relative-link                                                a relative link that answers 404
  *   late-unnamed, late-dead-control                                      a control that arrives after a fixed wait has ended
  *   late-answer                                                          a control whose answer comes 1.5 s after its press
+ *   presses-late-replace                                                 a document replaced after the presses' look has closed
  *   sideways-*, double-scroller, heading-skip, empty-region, moved-page, drops-query, page-error   the rules of the standard that no page made fire
  *   slow-load                                                            a page whose load event comes late (chrome.ts)
  *   nav-*                                                                pages for scripts/navigate.ts
@@ -249,6 +250,10 @@ ${chart(`${RULE(50)}${CAPTION}`)}
   '/late-dead-control': deep('Late dead control', { body: SLOT, script: arrive(3600, '<button type="button">Ask</button>') }),
   '/late-dead-control-fixed': deep('Late dead control, corrected', { body: SLOT, script: arrive(3600, '<button type="button">Ask</button>', `slot.querySelector('button').addEventListener('click', () => { document.querySelector('.status').textContent = 'Asked'; });`) }),
   // A control whose answer comes about 1.5 s after the press, past the presses' first look at 600 ms: it is slow, not dead.
+  // A press that answers at once, and a document that is replaced after the presses' look has closed: a team switch
+  // that reloads once its request is accepted. Escape replaces it here, so the replacement lands, every run, between the
+  // look and the suite's next read of the page. The second control is pressed on the new document.
+  '/presses-late-replace': deep('Late replace', { body: '<button type="button" id="switch">Switch team</button><button type="button" id="other">Other</button><p class="status" aria-live="polite"></p>', script: `for (const id of ['switch', 'other']) document.getElementById(id).addEventListener('click', () => { document.querySelector('.status').textContent = id === 'switch' ? 'Switching' : 'Pressed'; }); document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && document.querySelector('.status').textContent === 'Switching') location.replace(location.href); });` }),
   '/late-answer': deep('Late answer', { body: '<button type="button" id="ask">Ask</button><p class="status" aria-live="polite"></p>', script: `document.getElementById('ask').addEventListener('click', () => { setTimeout(() => { document.querySelector('.status').textContent = 'Answered'; }, 1500); });` }),
 
   // ---- the rules of the standard that no page had ever made fire ----
