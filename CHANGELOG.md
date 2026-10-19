@@ -2,6 +2,12 @@
 
 Every release of ZZ Meridian, newest first. Versions follow semver: a removed or renamed token, prop or card is major; a new card, token or variant is minor; a corrected value is a patch. Each entry says what breaks and what to do instead.
 
+## [0.19.3] · 2026-10-19
+
+### Fixed
+
+- **The presses suite finds a control again when its name has gained a live count** ([#66](https://github.com/zhixuan312/zz-meridian/issues/66)). `ShellTools` names its button `Alerts`, then `Alerts, 3 new` once its read answers; on a loaded machine the first load was listed before that read and the fresh load after it, so 0.19.2's find-by-name looked for `Alerts`, waited out the hang bound and reported "was listed but could not be found again". When the exact name is gone, the suite now finds the control by the part of its name before the first comma, and which of the controls that share it it is. Names stay as they are: a count in the accessible name is still how a screen reader hears it.
+
 ## [0.19.2] · 2026-10-19
 
 ### Fixed
