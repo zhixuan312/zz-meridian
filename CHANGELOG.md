@@ -2,6 +2,21 @@
 
 Every release of ZZ Meridian, newest first. Versions follow semver: a removed or renamed token, prop or card is major; a new card, token or variant is minor; a corrected value is a patch. Each entry says what breaks and what to do instead.
 
+## [0.20.0] · 2026-10-20
+
+### New
+
+- **The assistant panel offers the page's questions** ([#69](https://github.com/zhixuan312/zz-meridian/issues/69)). `SharedContext.questions` holds the few questions a person would ask first about what a view shows, in their words. While the thread is empty, the console's assistant offers them under its line, as buttons under "Questions to start with", and pressing one sends it as the person's own. A page that shares none keeps the line alone, and the model is never told them. The sample's Home offers questions only about figures the reader may read.
+- **`ColumnChart` takes `whole`** ([#72](https://github.com/zhixuan312/zz-meridian/issues/72)) for a chart of counts: every level is a whole number, so a top of 1 is ticked 0 and 1, with no unlabelled gridline at 0.5. `niceTicks` and `ticksBetween` in `@/components/charts/scale` take the same as a last argument.
+- **`ActivityEvent.unknown`** ([#68](https://github.com/zhixuan312/zz-meridian/issues/68)) says the record does not hold who acted. The feed draws an empty disc in a dashed hairline instead of initials, so nobody unknown reads as a person, and the line still reads the product's words for them (`actor`, such as "Someone not recorded").
+
+### Changed
+
+- **A toned stacked chart tells two usual parts apart** ([#67](https://github.com/zhixuan312/zz-meridian/issues/67)). Where a part already is the neutral (`tone: 'neutral'`), a part with neither a tone nor a slot, Other among them, is drawn in the quieter `chart-neutral`, where it was `chart-neutral-strong` like the neutral beside it. Other beside categorical slots is unchanged. To keep two usual parts apart, give the one that is the usual case `tone: 'neutral'` and leave the other untoned.
+- **The column drawn last takes the card's padding when the last column is hidden** ([#70](https://github.com/zhixuan312/zz-meridian/issues/70)). The Table padded the last cell of every row, so where the last column's `hideBelow` dropped it, the column drawn last kept `px-4` and its cells ran past the card's padding edge. Head and body cells with `hideBelow` now carry `data-hide-below`, and the Table pads the cell drawn last at each width. A cell you write yourself with `hideBelow` passes it to `TableCell` or `TableHeader`, as before.
+- **A running period with no data reads "So far" where its column is too narrow** ([#71](https://github.com/zhixuan312/zz-meridian/issues/71)). A Column chart labelled it "No data so far" and cut that to "No data…" in a phone's column, which reads as no data. At rest, in a column too narrow for the words, it reads "So far" above the dashed outline; pointed at, in the readout, the announcement and the table it says them whole.
+- **The assistant panel's Clear and Close show their words, and on a phone the sheet is the whole width** (#69). Clear and Close are small ghost buttons with an icon and the word, still named "Clear conversation" and "Close assistant". Below `sm` the sheet covers the page: the 48px strip of cut page words it left beside it is gone. Escape and Close still close it.
+
 ## [0.19.3] · 2026-10-19
 
 ### Fixed
