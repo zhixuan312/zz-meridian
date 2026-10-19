@@ -2,6 +2,12 @@
 
 Every release of ZZ Meridian, newest first. Versions follow semver: a removed or renamed token, prop or card is major; a new card, token or variant is minor; a corrected value is a patch. Each entry says what breaks and what to do instead.
 
+## [0.23.0] · 2026-10-20
+
+### New
+
+- **`Prose` names each body cell's column, and stacks a narrow table into labelled cards** ([#75](https://github.com/zhixuan312/zz-meridian/issues/75)). Every body `td` carries its column's heading as `data-label`, written while the markdown is rendered, so it is in the server's HTML and a page can style a narrow table from `td[data-label]` on the first paint, with no second markdown parser. `stack` does it for you: a table under 480px of its own width reads as one card per row, the header row hidden, the first cell the title and each later cell under its column's heading. Wider, it is the same table; without `stack`, nothing changes.
+
 ## [0.22.0] · 2026-10-20
 
 ### New
