@@ -2,7 +2,7 @@
 
 Every release of ZZ Meridian, newest first. Versions follow semver: a removed or renamed token, prop or card is major; a new card, token or variant is minor; a corrected value is a patch. Each entry says what breaks and what to do instead.
 
-## [Unreleased]
+## [0.19.0] · 2026-10-19
 
 ### Breaking
 
@@ -10,7 +10,7 @@ Every release of ZZ Meridian, newest first. Versions follow semver: a removed or
 
 ### New
 
-- **A stacked Column chart's part can take a categorical slot** ([#61](https://github.com/zhixuan312/zz-meridian/issues/61)). `ColumnPart.color` (1 to 6) draws the part in `series-<n>`, as `TrendSeries.color` does, for parts that are identities, such as teams, or for two or more usual outcomes, which one neutral would make one. A part with a tone keeps it beside them, and a part with neither, Other among them, is neutral. `docs/data-display.md`'s Parts of one whole says when to use it.
+- **A stacked Column chart's part can take a categorical slot** ([#61](https://github.com/zhixuan312/zz-meridian/issues/61)). `ColumnPart.color` (1 to 6) draws the part in `series-<n>`, as `TrendSeries.color` does, for parts that are identities, such as teams, or for two or more usual outcomes, which one neutral would make one. A part with no slot, Other among them, is neutral, and status colours stay out of such a chart: coral and saffron read as a warning beside a real one. `docs/data-display.md`'s Parts of one whole says when to use it.
 - **`DataTable` takes `retrying`** ([#59](https://github.com/zhixuan312/zz-meridian/issues/59)): its error state's Retry is busy while the person's retry is on its way. Pass it for their own press only.
 - **`ActivityEvent.href`** ([#63](https://github.com/zhixuan312/zz-meridian/issues/63)) links an event's object to its record, with the arrow that says it stays in the product.
 - **`Rail` takes `declared`**, every destination the product declares; `ConsoleRail` passes it from the whole navigation.
@@ -18,7 +18,7 @@ Every release of ZZ Meridian, newest first. Versions follow semver: a removed or
 ### Fixed
 
 - **A busy Button keeps its focus** ([#58](https://github.com/zhixuan312/zz-meridian/issues/58)). It was `disabled`, so a focused button that turned busy from anything but its own press, a Retry whose read a live hint or a poll started, lost focus to the page and the next Tab began again at the top. It is `aria-disabled` now, stays in the tab order, and drops a press while busy, a submit's included; `aria-busy` and the spinner are unchanged. A test of yours that expects a busy button to be `disabled` expects `aria-disabled="true"`.
-- **A Column chart's period with no data is no longer its tallest mark** ([#60](https://github.com/zhixuan312/zz-meridian/issues/60)). It drew a `fill-track` track the height of the scale, which in light theme read as the biggest period. It draws no column now, a dashed hairline just above the baseline, and its word ("No data") stands over it where a value would. The hairline carries `data-no-data-mark` where the track carried `data-track`.
+- **A Column chart's period with no data is no longer its tallest mark** ([#60](https://github.com/zhixuan312/zz-meridian/issues/60)). It drew a `fill-track` track the height of the scale, which in light theme read as the biggest period. It draws no column now, a dashed hairline just above the baseline, and its word ("No data") stands over it where a value would. The hairline carries `data-no-data-mark` where the track carried `data-track`. `npx zz-meridian@latest update` lists `migration:no-data-mark` for a project whose copy of `tests/column-chart-no-data.test.tsx` still expects the track: bring the release's over.
 - **The rail lights nothing for an address under a destination the person does not hold** ([#62](https://github.com/zhixuan312/zz-meridian/issues/62)). It lit the longest destination they held, so someone refused `/admin/audit` saw `/admin` lit. The current page is found among every declared destination and lit only when their rail holds it. A product that passed `current=''` to work around it can stop.
 - **A Button's class list is 178 bytes, not 394** ([#56](https://github.com/zhixuan312/zz-meridian/issues/56)): the frame every button shares is the `.btn` class in `src/styles/base.css`, so a table of row actions does not repeat it on every instance.
 
