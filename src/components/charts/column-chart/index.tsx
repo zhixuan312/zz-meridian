@@ -77,15 +77,18 @@ type Drawn = { key: string; label: string; tone: 'accent' | 'series' | keyof typ
  * drawn is "Other", the sum of the fourth and every later one. Parts with neither a slot nor a tone share the accent,
  * each by its place in the stack. Once any part names a slot or a tone the parts are identities or outcomes: a part
  * with a slot takes it, a part with a tone takes the tone, and one with neither (Other among them) is the neutral, so
- * the accent never stands beside a categorical or a status colour.
+ * the accent never stands beside a categorical or a status colour. Where a part already is the neutral (`tone:
+ * 'neutral'`, a usual outcome beside one that needs somebody), one with neither is the quieter neutral, so the two
+ * usual parts are told apart and Other stays the quietest (#67).
  */
 function stack(columns: StackedColumn[], parts: ColumnPart[]) {
   const fold = parts.length > MOST;
   const listed: ColumnPart[] = fold ? [...parts.slice(0, MOST - 1), { key: 'other', label: 'Other' }] : parts;
   const named = parts.some((p) => p.tone || p.color);
+  const neutralTaken = parts.some((p) => p.tone === 'neutral' && !p.color);
   const drawn: Drawn[] = listed.map((p, k) => (
     p.color ? { key: p.key, label: p.label, tone: 'series', color: SERIES_VAR(p.color) }
-      : named ? { key: p.key, label: p.label, tone: p.tone ?? 'neutral', color: TONES[p.tone ?? 'neutral'] }
+      : named ? { key: p.key, label: p.label, tone: p.tone ?? 'neutral', color: p.tone ? TONES[p.tone] : neutralTaken ? 'var(--chart-neutral)' : TONES.neutral }
         : { key: p.key, label: p.label, tone: 'accent', color: stackPart(k, listed.length) }
   ));
   const bars = columns.map((c): Bar => {

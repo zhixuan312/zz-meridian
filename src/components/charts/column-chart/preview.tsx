@@ -35,6 +35,14 @@ const outcomes: ColumnPart[] = [
   { key: 'server', label: 'Server errors', tone: 'critical' },
 ];
 const byOutcome = [sum(STATUS_MIX.slice(0, 2)), STATUS_MIX[2].value, STATUS_MIX[3].value];
+/** A second usual outcome beside a tone: it takes no tone, so it is the quieter neutral beside the one that is the neutral. */
+const usualBesideTone: ColumnPart[] = [
+  { key: 'answered', label: 'Answered', tone: 'neutral' },
+  { key: 'redirected', label: 'Redirected' },
+  { key: 'client', label: 'Client errors', tone: 'warning' },
+  { key: 'server', label: 'Server errors', tone: 'critical' },
+];
+const byUsualBesideTone = STATUS_MIX.map((m) => m.value);
 /** Two usual outcomes, which one neutral would make one: a categorical slot each, and no status colour beside them. */
 const several: ColumnPart[] = [
   { key: 'answered', label: 'Answered', color: 1 },
@@ -93,6 +101,11 @@ export default function ColumnChartPreview() {
       <Specimen label="Outcomes" note="A tone a part: the usual outcome is neutral, and one that needs somebody is warning or critical, named in the legend. The accent never stands beside a tone. A part that is not zero is at least 3px tall, so a day's server errors are never lost under its answers.">
         <Plane on="surface">
           <ColumnChart label="Requests per day, by how they were answered" format={formatCompact} axisFormat={axis} dates={dates(week)} parts={outcomes} columns={split(week, byOutcome)} />
+        </Plane>
+      </Specimen>
+      <Specimen label="Two usual outcomes beside a tone" note="Answered is the neutral (tone: 'neutral'); Redirected, also usual, takes no tone and is the quieter neutral, so the two are told apart in the stack and the legend, and Other, when there is one, stays the quietest. Categorical slots stay out, since coral and saffron would read as a warning beside a real one.">
+        <Plane on="surface">
+          <ColumnChart label="Requests per day, by status class" format={formatCompact} axisFormat={axis} dates={dates(week)} parts={usualBesideTone} columns={split(week, byUsualBesideTone)} />
         </Plane>
       </Specimen>
       <Specimen label="Several usual outcomes" note="Answered and redirected are both usual, and one grey would make them one: each takes a categorical slot (color 1, 2), in order. Teams, or any parts that are identities rather than shares of one hue, take the slots the same way, and a part with no slot is the neutral. No status colour stands beside the slots: coral and saffron would read as a warning, so a chart with an outcome that needs somebody is the tone chart above.">

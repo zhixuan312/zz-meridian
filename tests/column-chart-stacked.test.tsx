@@ -171,4 +171,11 @@ describe('a stacked column chart whose parts are identities (#61)', () => {
     const { container } = render(<ColumnChart label="Calls per week, by team" parts={teams} columns={[{ key: 'w1', label: '14 Sept', values: [5, 4, 2] }]} />);
     expect(fill(container, 'o')).toBe('var(--chart-neutral-strong)');
   });
+  it('draws a part with neither beside a part that is the neutral as the quieter neutral, so two usual parts are told apart (#67)', () => {
+    const refusals: ColumnPart[] = [{ key: 'platform', label: 'Platform failed', tone: 'critical' }, { key: 'malformed', label: 'Malformed call', tone: 'warning' }, { key: 'held', label: 'A guardrail held', tone: 'neutral' }, { key: 'other', label: 'Other' }];
+    const { container } = render(<ColumnChart label="Refusals per week, by cause" parts={refusals} columns={[{ key: 'w1', label: '14 Sept', values: [1, 2, 6, 3] }]} />);
+    expect(fill(container, 'held')).toBe('var(--chart-neutral-strong)');
+    expect(fill(container, 'other')).toBe('var(--chart-neutral)');
+    expect(column(container, 'w1').querySelector('[data-part="other"]')).toHaveAttribute('data-tone', 'neutral');
+  });
 });
