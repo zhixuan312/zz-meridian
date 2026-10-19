@@ -2,6 +2,12 @@
 
 Every release of ZZ Meridian, newest first. Versions follow semver: a removed or renamed token, prop or card is major; a new card, token or variant is minor; a corrected value is a patch. Each entry says what breaks and what to do instead.
 
+## [0.21.0] · 2026-10-20
+
+### New
+
+- **`TrendChart` takes `whole`** ([#73](https://github.com/zhixuan312/zz-meridian/issues/73)), as `ColumnChart` does since 0.20.0: the values are counts, a stack of counts too, and every level is a whole number, so a running total whose top is 10 draws no level at 2.5 or 7.5. Pass it on a chart of counts; a chart of a quantity that is not one keeps its halves.
+
 ## [0.20.0] · 2026-10-20
 
 ### New
