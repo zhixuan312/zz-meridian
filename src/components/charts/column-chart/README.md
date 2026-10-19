@@ -28,10 +28,10 @@ Status: beta
 | On the Meridian | Given `dates`, one a column, the columns share the page's cursor: pointing at a column points every chart at that day, and the pointed day is highlighted |
 | Stacked, one hue | `parts` with no tone: parts of one kind, such as requests by region or revenue by plan. Each column is a whole and the top of a column is its total |
 | Stacked, outcomes | `parts` with a tone each: how something ended, such as passed, skipped and failed |
-| Stacked, identities | `parts` with a categorical `color` each: teams, or several usual outcomes (accepted and delivered) that one grey would make one; an outcome that needs somebody keeps its tone beside them |
+| Stacked, identities | `parts` with a categorical `color` each: teams, or several usual outcomes (accepted, delivered and abandoned) that one grey would make one. No tone beside them |
 | Running | The last column is a period still in progress, in either form |
 
-**The colour of a part.** Parts with no tone are one whole, so they share the accent, mixed into the surface: deepest at the bottom and paler with each part above, between the theme's `chart-stack-hi` and `chart-stack-lo` (dark 92% to 20%, light 78% to 36%). It is the mix a stacked Trend chart takes, from the same function, so the two read as one family. Once any part names a tone the parts are outcomes: the usual outcome is `neutral` and takes `chart-neutral-strong`, and one that needs somebody takes `warning` or `critical`. A part with no tone among parts that have one is neutral too, so the accent never stands beside a status colour, and the positive colour is never used for the usual case. When the parts are identities (teams), or more than one outcome is usual, give each a categorical slot, `color` 1 to 6 in order, as a Trend series takes one: each draws in `series-<n>`, a part with a tone keeps it, and a part with neither (Other among them) is neutral.
+**The colour of a part.** Parts with no tone are one whole, so they share the accent, mixed into the surface: deepest at the bottom and paler with each part above, between the theme's `chart-stack-hi` and `chart-stack-lo` (dark 92% to 20%, light 78% to 36%). It is the mix a stacked Trend chart takes, from the same function, so the two read as one family. Once any part names a tone the parts are outcomes: the usual outcome is `neutral` and takes `chart-neutral-strong`, and one that needs somebody takes `warning` or `critical`. A part with no tone among parts that have one is neutral too, so the accent never stands beside a status colour, and the positive colour is never used for the usual case. When the parts are identities (teams), or more than one outcome is usual, give each a categorical slot, `color` 1 to 6 in order, as a Trend series takes one: each draws in `series-<n>`, and a part with no slot (Other among them) is neutral. Keep status colours out of such a chart, as the accent is kept out of a toned one: coral (2) and saffron (5) read as a warning beside a real one. A chart with an outcome that needs somebody is a toned chart.
 
 **At most four parts.** Past four, nobody tells the steps of one hue apart. Given more, the fourth drawn is "Other": the sum of the fourth and every later part, in the columns, the legend, the readout and the table alike. Among outcomes it has no tone of its own and is neutral.
 
@@ -124,7 +124,7 @@ The view shares the highlighted column and the day pointed at through `useShareV
 - Do pass `null` for a period with no data. Do not pass 0, which is drawn and read as a real zero, and do not leave the period out, which closes the gap and puts its neighbours side by side.
 - Do not colour columns by value; their height already shows it.
 - Do not give a tone to parts of one kind, and do not put the accent beside a tone.
-- Do not draw two usual outcomes in one neutral, or teams as shades of the accent: give each a `color` slot, in order.
+- Do not draw two usual outcomes in one neutral, or teams as shades of the accent: give each a `color` slot, in order. Do not put a `warning` or `critical` part beside categorical slots.
 - Do not pass more than four outcomes: a fifth folds into a neutral Other, and a failure inside it is drawn as the usual case.
 
 ## Implementation

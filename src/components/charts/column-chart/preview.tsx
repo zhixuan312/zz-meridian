@@ -35,14 +35,12 @@ const outcomes: ColumnPart[] = [
   { key: 'server', label: 'Server errors', tone: 'critical' },
 ];
 const byOutcome = [sum(STATUS_MIX.slice(0, 2)), STATUS_MIX[2].value, STATUS_MIX[3].value];
-/** Two usual outcomes and two that need somebody: the usual ones are told apart by a categorical slot each. */
+/** Two usual outcomes, which one neutral would make one: a categorical slot each, and no status colour beside them. */
 const several: ColumnPart[] = [
   { key: 'answered', label: 'Answered', color: 1 },
   { key: 'redirected', label: 'Redirected', color: 2 },
-  { key: 'client', label: 'Client errors', tone: 'warning' },
-  { key: 'server', label: 'Server errors', tone: 'critical' },
 ];
-const bySeveral = STATUS_MIX.map((m) => m.value);
+const bySeveral = STATUS_MIX.slice(0, 2).map((m) => m.value);
 const endpoints: ColumnPart[] = ENDPOINTS.map((e) => ({ key: e.route, label: e.route.replace('/v1/', '') }));
 const byEndpoint = ENDPOINTS.map((e) => e.requests);
 // The sample's clock stands at 09:00 UTC on its last day, so that day has run nine hours of its twenty-four.
@@ -97,9 +95,9 @@ export default function ColumnChartPreview() {
           <ColumnChart label="Requests per day, by how they were answered" format={formatCompact} axisFormat={axis} dates={dates(week)} parts={outcomes} columns={split(week, byOutcome)} />
         </Plane>
       </Specimen>
-      <Specimen label="Several usual outcomes" note="Answered and redirected are both usual, and one grey would make them one: each takes a categorical slot (color 1, 2), in order, and the outcomes that need somebody keep their tone. Teams, or any parts that are identities rather than shares of one hue, take the slots the same way; a part with neither is the neutral.">
+      <Specimen label="Several usual outcomes" note="Answered and redirected are both usual, and one grey would make them one: each takes a categorical slot (color 1, 2), in order. Teams, or any parts that are identities rather than shares of one hue, take the slots the same way, and a part with no slot is the neutral. No status colour stands beside the slots: coral and saffron would read as a warning, so a chart with an outcome that needs somebody is the tone chart above.">
         <Plane on="surface">
-          <ColumnChart label="Requests per day, by how they ended" format={formatCompact} axisFormat={axis} dates={dates(week)} parts={several} columns={split(week, bySeveral)} />
+          <ColumnChart label="Answered requests per day, by how they were answered" format={formatCompact} axisFormat={axis} dates={dates(week)} parts={several} columns={split(week, bySeveral)} />
         </Plane>
       </Specimen>
       <Specimen label="More than four parts" note="Seven endpoints. Four parts are the most a reader tells apart, so the fourth drawn is Other: the sum of the fourth and every later one, in the columns, the legend, the readout and the table alike.">

@@ -12,7 +12,8 @@ export type Column = { key: string; label: string; value: number | null };
 export type StackedColumn = { key: string; label: string; values: (number | null)[] };
 /**
  * A part of a stacked column. `color` is a categorical slot (1 to 6) for parts that are identities, teams or several
- * usual outcomes, which one hue cannot tell apart; `tone` is a state, for an outcome that needs somebody.
+ * usual outcomes, which one hue cannot tell apart; `tone` is a state, for an outcome that needs somebody. A chart takes
+ * one or the other: coral and saffron read as a warning beside a real one.
  */
 export type ColumnPart = { key: string; label: string; color?: number; tone?: 'neutral' | 'warning' | 'critical' };
 
