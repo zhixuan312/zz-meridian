@@ -2,6 +2,16 @@
 
 Every release of ZZ Meridian, newest first. Versions follow semver: a removed or renamed token, prop or card is major; a new card, token or variant is minor; a corrected value is a patch. Each entry says what breaks and what to do instead.
 
+## [0.22.0] · 2026-10-20
+
+### New
+
+- **A tile whose figure is a share reads its change in points** ([#74](https://github.com/zhixuan312/zz-meridian/issues/74)). `MetricTile` takes `deltaFormat` and hands it to `Delta`, whose `format` now takes a name as well as a function: `percent` (the default, a share of the earlier value) or `points`, so a share that went from 33.0% to 46.4% reads "▲13.4 pts" (`delta={0.134}`) with the same arrow, colour and screen-reader word, where it could only read "▲40.6%". `DeltaFormat` and `DELTA_FORMATS` are exported from `@/components/ui/delta`.
+
+### Fixed
+
+- **A Delta with no change reads its format** (#74): "0.0 pts" under `points`, or what a function makes of zero, where it printed a literal "0%" whatever the format. With no format given it still reads "0%".
+
 ## [0.21.0] · 2026-10-20
 
 ### New
