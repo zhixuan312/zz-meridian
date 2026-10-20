@@ -22,6 +22,13 @@ describe('first-load JS', () => {
     expect(firstLoadProblems([{ route: '/y', bytes: 535 * KiB }], { capKiB: 820, growthPct: 5, baseline: null })).toEqual({ problems: [], growth: 'not-configured' });
     expect(firstLoadProblems([{ route: '/y', bytes: 535 * KiB }], { capKiB: 1, growthPct: 5, baseline: null }).problems).toHaveLength(1);
   });
+  it('with the cap for unheld routes only, holds a route the baseline holds to its baseline alone (#76)', () => {
+    const routes = [{ route: '/x', bytes: 852 * KiB }, { route: '/y', bytes: 900 * KiB }, { route: '/z', bytes: 700 * KiB }];
+    const got = firstLoadProblems(routes, { capKiB: 820, growthPct: 5, baseline: { '/x': 850 * KiB, '/z': 600 * KiB }, capUnheldOnly: true });
+    expect(got.problems).toEqual(['/y: first-load JS 900 KiB over the 820 KiB cap', '/z: first-load JS grew 16.7% over its baseline (cap 5%)']);
+    expect(budgetsOf({ budgets: { firstLoadKb: null } }).firstLoadKb).toBeNull();
+    expect(budgetsOf({}).firstLoadKb).toBe(820);
+  });
 });
 
 describe('HTML and prefetch', () => {

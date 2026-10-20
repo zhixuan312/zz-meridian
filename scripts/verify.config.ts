@@ -101,11 +101,12 @@ type VerifyConfig = {
    * `scripts/verify.baseline.json`, the warm, cold and after-live navigation times, and no prefetch on a closed phone drawer.
    * Every page's HTML, gzipped through the end of the streamed response, is held to `htmlGrowthPct` (5%) over its own
    * figure in the baseline's `html`; `htmlKb` adds an absolute cap in KiB, the same gzipped figure, for a page a project
-   * wants pinned, and has no default.
+   * wants pinned, and has no default. `firstLoadKb: null` holds first-load JS the same way: each route the baseline holds
+   * to its own figure alone, with the default cap binding only a route the baseline does not hold yet.
    */
   budgets?: {
     navigation?: { warm?: ReadinessBudget; cold?: ReadinessBudget; afterLive?: ReadinessBudget };
-    firstLoadKb?: number;
+    firstLoadKb?: number | null;
     firstLoadGrowthPct?: number;
     htmlGrowthPct?: number;
     htmlKb?: Record<string, number>;
