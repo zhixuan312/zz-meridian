@@ -2,6 +2,12 @@
 
 Every release of ZZ Meridian, newest first. Versions follow semver: a removed or renamed token, prop or card is major; a new card, token or variant is minor; a corrected value is a patch. Each entry says what breaks and what to do instead.
 
+## [0.24.0] · 2026-10-20
+
+### New
+
+- **First-load JS can be held to each route's baseline alone** ([#76](https://github.com/zhixuan312/zz-meridian/issues/76)), as every page's HTML is since 0.19.0. Set `budgets.firstLoadKb: null` in `scripts/verify.config.ts`: a route `scripts/verify.baseline.json` holds is then held to `firstLoadGrowthPct` over its own figure and nothing else, and the 820 KiB cap binds only a route the baseline does not hold yet. A product whose largest page sits near the cap no longer fails `pnpm verify` for a change its own baseline allows, and no longer derives a cap from the baseline to say the same rule twice. Leaving the key out keeps the cap on every route, as before; the size line says which applies (`cap 820 KiB for a route the baseline does not hold`).
+
 ## [0.23.0] · 2026-10-20
 
 ### New
