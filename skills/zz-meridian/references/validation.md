@@ -84,7 +84,9 @@ line naming the command that runs them. Steps in order:
    border (or the frame around it, or any ancestor up to its host inside a shadow root) differs when it has focus. A ring
    that is always there does not count. With them run the
    product's own browser checks (`browserChecks` in `scripts/verify.config.ts`), each given `--base` and the served
-   app's address; none of them judges a time.
+   app's address; none of them judges a time. The run holds at most `--browsers` browsers at once (one per two CPUs and
+   per 4 GiB by default): each suite takes one, a check whose entry is `{ script, browsers }` takes that many, and a
+   check reads how many it holds from `VERIFY_BROWSERS`.
 7. **Live data** (`--timed` only; `scripts/live.ts`), alone after the presses, which change members: two tabs, a quiet
    or restarted stream, a hidden or offline tab and a burst, against a second server that drops its change hints. A case
    that cannot run is `not run` and the suite exits 2. It drives the sample Members page; a product without it prints

@@ -17,8 +17,8 @@
  *                         The whole protocol runs only where CI is `true`, a share of it with `--shard <i>/<n>` (with --perf alone)
  *   pnpm verify --full --perf   the deep suites together; the gate and the build are shared, so each runs once
  *   --browsers <n>        the most browsers the run holds at once (default: one per two CPUs and per 4 GiB of memory,
- *                         whichever is fewer); --full's browser suites start under it, and a product check is told its
- *                         share in VERIFY_BROWSERS
+ *                         whichever is fewer); --full's browser suites start under it, and a product check is told in
+ *                         VERIFY_BROWSERS how many it holds
  *
  * It prints one line per phase (`ok`, `warn`, `FAIL` or `not run`, and the seconds), then one coverage line saying what
  * ran and what did not, then the outcome. Nothing that did not run is reported as passed. The trace, with the commit, the
@@ -63,7 +63,7 @@ type VerifyConfig = BudgetsConfig & {
   noLiveApi?: true;
   dataUrls?: string[];
   allowRemoteData?: true;
-  browserChecks?: string[];
+  browserChecks?: (string | { script: string; browsers: number })[];
   timedChecks?: string[];
   fakeModel?: FakeModelStep[];
   navigationChecks?: NavigationCheck[];
@@ -158,7 +158,8 @@ const hasAssistant = fs.existsSync(path.join(ROOT, APP_DIR, 'api/assistant/route
 // The stream itself is Meridian's, proven on the sample in Meridian's own runs; a product's own live pages prove
 // themselves through `browserChecks`.
 const hasLiveSample = sampleSurfaces(ROOT, APP_DIR).members;
-const own = config.browserChecks ?? [];
+/** Each product check with the browsers it opens at once: one, unless its entry says more. */
+const own = (config.browserChecks ?? []).map((c) => (typeof c === 'string' ? { script: c, browsers: 1 } : c));
 const ownTimed = config.timedChecks ?? [];
 const absent = new Set<string>([...(hasAssistant ? [] : ['assistant']), ...(hasLiveSample ? [] : ['live']), ...(own.length ? [] : ['browserChecks']), ...(ownTimed.length ? [] : ['timedChecks']), ...(perf ? [] : ['perf'])]);
 const SUITES = SUITE_NAMES.filter((name) => !absent.has(name));
@@ -635,24 +636,23 @@ if (full && browser.ran && baseUrl) {
   }
 
   // The audit, the presses and the keyboard walk each run one browser of their own, side by side against the one built
-  // app, as many at once as the ceiling allows (#77). A product check is told in VERIFY_BROWSERS how many it may hold,
-  // what the ceiling leaves beside the three, so a check that pools browsers sizes its pool from that and not from the
-  // machine; it starts once that many are free.
+  // app, as many at once as the ceiling allows (#77). A product check holds the browsers its entry says it opens, the
+  // whole ceiling at most, and is told in VERIFY_BROWSERS how many that is, so a check that pools browsers sizes its pool
+  // from that and not from the machine; it starts once that many are free.
   current = 'the browser suites';
   announce('the audit, every control and link, the keyboard path' + (own.length ? ', and the product\'s own checks' : '') + `, at most ${ceiling} browsers at once`);
   const here = `http://127.0.0.1:${server!.port}`;
   const hold = slots(ceiling);
-  const share = Math.max(1, ceiling - 3);
   const [audit, presses, keys, ...extras] = await Promise.all([
     hold(1, () => run('scripts/audit.ts', ['--base', here])),
     hold(1, () => run('scripts/interactions.ts', ['--base', here])),
     hold(1, () => run('scripts/keyboard.ts', ['--base', here])),
-    ...own.map((script) => hold(share, () => run(script, ['--base', here], { ...process.env, VERIFY_BROWSERS: String(share) }))),
+    ...own.map((c) => hold(c.browsers, () => run(c.script, ['--base', here], { ...process.env, VERIFY_BROWSERS: String(Math.min(c.browsers, ceiling)) }))),
   ]);
   reportSuite('audit', 'audit: every page at 5 widths in both themes', audit);
   reportSuite('presses', 'every control pressed and every link followed', presses);
   reportSuite('keyboard', 'the whole keyboard path', keys);
-  extras.forEach((r, i) => reportSuite('browserChecks', own[i], r));
+  extras.forEach((r, i) => reportSuite('browserChecks', own[i].script, r));
   if ([audit, presses, keys, ...extras].some((r) => suiteOutcome(r.status) === 'FAIL')) ok = false;
 }
 

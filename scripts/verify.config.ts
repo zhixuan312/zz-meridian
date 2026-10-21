@@ -73,10 +73,12 @@ type VerifyConfig = {
   allowRemoteData?: true;
   /**
    * The product's own browser checks, beside Meridian's audit, presses and keyboard walk: scripts verify runs with
-   * `--base <url>` against the built app, failing when one exits non-zero. A check may hold as many browsers at once as
-   * `VERIFY_BROWSERS` says (at least 1): a check that pools browsers sizes its pool from it, not from the machine.
+   * `--base <url>` against the built app, failing when one exits non-zero. An entry is the script's path, for a check that
+   * opens one browser, or `{ script, browsers }` for one that opens more at once. Verify holds that many of the run's
+   * browsers (`--browsers`), the whole ceiling at most, while it runs, and tells it in `VERIFY_BROWSERS` how many that
+   * is: a check that pools browsers sizes its pool from it, not from the machine.
    */
-  browserChecks?: string[];
+  browserChecks?: (string | { script: string; browsers: number })[];
   /**
    * The product's own browser checks that judge a time, run by `pnpm verify --timed` alone and one at a time, after the
    * live data and before Web Vitals, each with `--base <url>` like `browserChecks`. A check that judges a time under the
@@ -155,8 +157,9 @@ const config: VerifyConfig = {
     '/customers/missing', // no customer has this id: the not-found screen in the shell
   ],
   smokeRoutes: ['/', '/requests', '/settings'],
-  // The sample's own journeys across its three workspaces, run beside the audit, the presses and the keyboard walk.
-  browserChecks: ['journeys/workspaces.ts'],
+  // The sample's own journeys across its three workspaces, run beside the audit, the presses and the keyboard walk; three
+  // people at once, so three browsers.
+  browserChecks: [{ script: 'journeys/workspaces.ts', browsers: 3 }],
   navigationChecks: [
     { path: '/', title: 'Home', readySelector: 'main table tbody tr', probe: 'toggle', controlSelector: 'main [role="radio"][aria-checked="false"]', resultSelector: 'main [role="radio"]' },
     { path: '/members', title: 'Members', readySelector: 'main table tbody tr', probe: 'toggle', controlSelector: 'main button[aria-haspopup="menu"]', resultSelector: '[role="menu"]' },
