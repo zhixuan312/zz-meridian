@@ -97,11 +97,12 @@ export function TableHeader({
         'h-9 border-y border-line bg-surface-sunk px-4 text-xs font-medium whitespace-nowrap text-ink-3 first:border-l-0',
         ALIGN[align],
         hideBelow && HIDE[hideBelow],
-        /* No head claims the spare. A cut column asks for its content's width through its cells (`Cut`), so auto layout
-           shares the spare across every column in proportion to that ask; a head with `w-full` took all of it for the
-           lead and left the rest at their minimum, the uneven spacing this replaced. */
-        // The floor belongs to the lead column alone (c8eccdc): a second column with a minimum cannot shrink, and the
-        // Releases table held 837px inside a 713px frame at 1024 and 768 when two columns had one.
+        /* No head claims the spare. Every column asks for its content's width, a cut column through its cells (`Cut`),
+           so auto layout shares the spare across every column in proportion to that ask, the lead's floor counted where
+           it is wider; a cut column shrinks only when the table lacks room, and a head given a width keeps it. A head
+           with `w-full` took all of it for the lead and left the rest at their minimum, the uneven spacing this replaced. */
+        // The floor, 160px and 256px from a 672px table, belongs to the lead column alone (c8eccdc): a second column with
+        // a minimum cannot shrink, and the Releases table held 837px inside a 713px frame at 1024 and 768 when two had one.
         grow && 'min-w-40 @min-[672px]:min-w-64',
         className,
       )}

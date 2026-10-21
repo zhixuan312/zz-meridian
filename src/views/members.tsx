@@ -198,8 +198,10 @@ export function MembersView({ rows, now, revisions, actions, access, roles, work
     },
     // The name is the row's identifier and the table's floor; the email is not a second one, and it is a fixed-width
     // thing (a domain and a local part), so it is drawn whole on one line at the width its longest one needs. Every
-    // column asks for its content width and the table shares the spare in proportion to those widths, so neither
-    // column claims the room. Held on one line, the email column is as wide as the longest address and nothing is cut.
+    // column asks for its content width and the table shares the spare in proportion to those widths (the name's floor,
+    // 160px, 256px from a 672px table, counted where it is wider), so neither column claims the room; a cut column would
+    // shrink only when the table lacked room, and a fixed `width` would keep its width. Held on one line, the email column
+    // is as wide as the longest address and nothing is cut.
     { key: 'email', header: 'Email', muted: true, hideBelow: 'lg', sortValue: (m) => m.email, cell: (m) => <span className="whitespace-nowrap">{m.email}</span> },
     // The role as a person reads it, add-ons and all, as a column and as a fact on the phone card (AC-3.2).
     { key: 'role', header: 'Role', hideBelow: 'sm', mobile: 'fact', sortValue: (m) => m.role, cell: (m) => roleLabel(m), mobileCell: (m) => roleLabel(m) },
