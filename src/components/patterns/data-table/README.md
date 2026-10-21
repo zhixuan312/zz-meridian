@@ -27,7 +27,7 @@ Status: beta
 
 ## Sizes
 
-Row height and card padding come from the density: comfortable 52px and 24px, compact 38px and 16px. The table never sets its own width; the columns whose cells can be cut take what remains — `grow` for the record's name, and every column whose cells `truncate` — sharing it where there is more than one, and every column that must show its whole value keeps its content width. A column whose content is short and fixed (an ID, a key, a date) can take `width` (`w-28`), so a two-column table does not hand the short column most of the row.
+Row height and card padding come from the density: comfortable 52px and 24px, compact 38px and 16px. The table never sets its own width. Every column asks for its content width, and the spare is shared across all columns in proportion to those widths, with the `grow` column's floor (the record's name: 160px, 256px once the table is 672px wide) counted as its preferred width. A column whose cells `truncate` asks for its whole content width too and shrinks only when the table lacks room for every column; every column that must show its whole value keeps its content width. A column whose content is short and fixed (an ID, a key, a date) can take `width` (`w-28`), which it keeps, taking no spare, so a two-column table does not hand the short column most of the row.
 
 ## States
 
@@ -85,7 +85,7 @@ Rows arrive whole for client-side sorting and paging (a few hundred at most), or
 
 ## Do and do not
 
-- Do give the record's name `grow`. A second column may be cut only if it must be, since two of them then share what the table has left.
+- Do give the record's name `grow`: it sets the floor and the phone card's title, and claims no spare. A column may be cut (`truncate`) if its values are long, since it shows them whole while the table has room and shrinks only when it has not.
 - Do drop columns with `hideBelow` rather than letting the table scroll sideways.
 - Do not put more than one action per row; a row with several actions opens a record that has them.
 - Do not show pagination for a list that fits on one page.
