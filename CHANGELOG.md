@@ -2,11 +2,18 @@
 
 Every release of ZZ Meridian, newest first. Versions follow semver: a removed or renamed token, prop or card is major; a new card, token or variant is minor; a corrected value is a patch. Each entry says what breaks and what to do instead.
 
+## [0.25.1] · 2026-10-21
+
+### Fixed
+
+- **A right-aligned or centred cut cell keeps its alignment.** Since 0.25.0 a `truncate` cell's value sits in a grid track as wide as the value, and the cell's `text-align` does not move a track, so a numeric or right-aligned `truncate` cell drew its value at the left. `Cut` takes `align` now and `TableCell` and `DataTable` pass the cell's own; a hand-built cell that uses `Cut` in a right-aligned column passes `align="right"`.
+- **The audit's title check reaches a title column with phone words.** A cut name inside a link and a flex row in a column with `mobileCell` sits seven levels under the cell that carries its title, one more than the walk read, so the audit reported the name as cut without its whole text. The walk reads eight levels.
+
 ## [0.25.0] · 2026-10-21
 
 ### Breaking
 
-- **Every table column shares the spare width, and `TableHeader`'s `flexible` prop is removed.** A cut cell used to zero its own width (`max-w-0`) and the lead head claimed all the rest (`w-full`), so the record's name sat in empty room while the columns beside it were held at their minimum, cramped at both ends and wrapping. Now every column asks for its content width and a table with room to spare shares it across all of its columns in proportion to those widths. A column whose cells `truncate` asks for its whole content width too and shrinks only when the table lacks room for every column; a column given `width` keeps that width and takes no spare; the `grow` column keeps its floor, 160px, 256px once the table is 672px wide. Drop `flexible` from any `TableHeader`: a `truncate` column now asks for its own width. Meridian is pre-1.0, so a removed prop ships in a minor, as it did in 0.19.0.
+- **Every table column shares the spare width, and `TableHeader`'s `flexible` prop is removed.** A cut cell used to zero its own width (`max-w-0`) and the lead head claimed all the rest (`w-full`), so the record's name sat in empty room while the columns beside it were held at their minimum, cramped at both ends and wrapping. Now every column asks for its content width and a table with room to spare shares it across all of its columns in proportion to those widths. A column whose cells `truncate` asks for its whole content width too and shrinks only when the table lacks room for every column; a column given `width` keeps that width and takes no spare; the `grow` column keeps its floor, 160px, 256px once the table is 672px wide. Drop `flexible` from any `TableHeader`: a `truncate` column now asks for its own width. Before 1.0, Meridian marks a breaking change with the minor version, as semver allows for 0.x.
 
 ### New
 
