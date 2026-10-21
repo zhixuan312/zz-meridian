@@ -73,7 +73,8 @@ type VerifyConfig = {
   allowRemoteData?: true;
   /**
    * The product's own browser checks, beside Meridian's audit, presses and keyboard walk: scripts verify runs with
-   * `--base <url>` against the built app, failing when one exits non-zero.
+   * `--base <url>` against the built app, failing when one exits non-zero. A check may hold as many browsers at once as
+   * `VERIFY_BROWSERS` says (at least 1): a check that pools browsers sizes its pool from it, not from the machine.
    */
   browserChecks?: string[];
   /**

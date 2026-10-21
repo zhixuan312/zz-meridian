@@ -62,6 +62,6 @@ describe('the options', () => {
   it('refuses an unknown option, naming --timed among the options', () => {
     const r = verify('--bogus');
     expect(r.status).toBe(1);
-    expect(`${r.stdout}${r.stderr}`).toContain('pnpm verify takes --full, --timed, --perf, --as.');
+    expect(`${r.stdout}${r.stderr}`).toContain('pnpm verify takes --full, --timed, --perf, --as, --browsers.');
   });
 });
