@@ -2,6 +2,28 @@
 
 Every release of ZZ Meridian, newest first. Versions follow semver: a removed or renamed token, prop or card is major; a new card, token or variant is minor; a corrected value is a patch. Each entry says what breaks and what to do instead.
 
+## [0.26.0] · 2026-10-22
+
+### Breaking
+
+- **A table puts its spare width in the gaps between its columns, an equal share in each.** `Table` is laid out as a CSS grid now, not by the table algorithm. Every column is as wide as its content. `justify-content: space-between` spreads the spare across the gaps, so every gap is the same whatever each column's alignment. In 0.25 the table algorithm put a column's spare inside the column, after a left-aligned value and before a right-aligned one. So a gap between a text column and a number held both columns' shares, and the gap after the number held none. Measured from the ink of one column to the ink of the next at 1920px, the gaps on /customers, /members and /tests now vary by 0 to 3% (a coefficient of variation of 0.00 to 0.03), against 42 to 53% in 0.25.1.
+  - **Rows are subgrids** of the table's columns, so a row's border, its hover and its selection run across the gaps. The header row carries the sunk background and the rules.
+  - **The table counts its columns** from the cells of its first row as its own JSX writes them: the head's `TableHeader` cells when it has a head, otherwise the first row's `TableCell` cells. It counts one track per column at each `hideBelow` step. Write that row's cells in the table's own JSX, not inside a component of your own, or the table cannot count them.
+  - **Cells are blocks in a grid.** A cell no longer sets the row height or centres itself: the row is at least `--row-height` tall and centres its cells. A cell you styled as a table cell (`align-middle`, a fixed height, a `colSpan`) is now laid out by its row; drop those classes.
+  - **The `grow` floor is 160px at every width.** It was 256px from a 672px table. A floor is also a width the column claims when its names are shorter, so the gap after the lead was half as wide again as every other gap.
+  - **A text column after a number no longer takes extra left padding** (`pl-8`). With equal gaps it made one gap wider than the rest.
+  - **`DataTable`'s selection checkbox sits over the lead column's left padding**, not in a column of its own, so no gap stands between a checkbox and the name it selects. It is still its own cell, first in the row, marked `data-check`. The table does not count it.
+  - **`update` lists `migration:table-grid`** for a project whose own files expect the old floor (`@min-[672px]:min-w-64`, as `tests/table-cut-cell.test.tsx` did in a project created before 0.26.0) or give a `TableCell` a `colSpan`, which a grid row draws in one track. Bring the release's `tests/table-cut-cell.test.tsx` over, and draw a row that spans the table, such as an empty state, outside it or as a `DataTable` `empty`.
+  - Rows, cells and row groups carry their ARIA roles (`row`, `cell`, `columnheader`, `rowgroup`, `table`), since a table laid out as a grid can lose its native semantics in some browsers.
+
+### New
+
+- **`pnpm verify --browsers <n>`: one run holds at most `n` browsers at once** ([#77](https://github.com/zhixuan312/zz-meridian/issues/77)).
+  - Without the flag, the ceiling is one browser per two CPUs and per 4 GiB of memory, whichever is fewer. `--full`'s audit, presses, keyboard walk and product checks start under the ceiling, not all at once.
+  - A check in `browserChecks` holds one browser, or the number its entry names: `{ script, browsers }`, the whole ceiling at most. It starts once that many are free and is told in `VERIFY_BROWSERS` how many it holds, so a check that pools browsers sizes its pool from that number, not from the machine. The sample's journey drives three people at once and declares `browsers: 3`.
+  - The trace header prints the ceiling used, for example `browsers: at most 5 at once (10 CPUs and 32 GiB)`.
+  - Without a ceiling, one run on a 32 GB laptop held about 70 Chrome processes and pushed the machine about 17 GB into swap.
+
 ## [0.25.1] · 2026-10-21
 
 ### Fixed
