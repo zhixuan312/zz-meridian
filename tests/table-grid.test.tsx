@@ -1,0 +1,49 @@
+import { render } from '@testing-library/react';
+import { describe, expect, it, vi } from 'vitest';
+
+vi.mock('next/navigation', () => ({ useRouter: () => ({ push() {}, refresh() {}, replace() {} }), usePathname: () => '/' }));
+import { DataTable, type Column } from '@/components/patterns/data-table';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+
+const cols = (table: HTMLElement) => ['--cols', '--cols-xl', '--cols-lg', '--cols-md', '--cols-sm'].map((v) => table.style.getPropertyValue(v));
+
+/** The table is a grid of one auto track per column it draws at each width; the spare sits between them. */
+describe('the table counts its columns from its head', () => {
+  it('drops a column from the count below its hideBelow step and every narrower one', () => {
+    const { container } = render(
+      <Table>
+        <TableHead>
+          <TableRow>
+            <TableHeader grow>Request</TableHeader>
+            <TableHeader hideBelow="xl">Region</TableHeader>
+            <TableHeader hideBelow="md">Customer</TableHeader>
+            <TableHeader align="right">Latency</TableHeader>
+          </TableRow>
+        </TableHead>
+        <TableBody><TableRow><TableCell>a</TableCell><TableCell>b</TableCell><TableCell>c</TableCell><TableCell>d</TableCell></TableRow></TableBody>
+      </Table>,
+    );
+    const table = container.querySelector('table')!;
+    expect(cols(table)).toEqual(['repeat(4, auto)', 'repeat(3, auto)', 'repeat(3, auto)', 'repeat(2, auto)', 'repeat(2, auto)']);
+    expect(table.getAttribute('class')).toContain('justify-between');
+    expect(container.querySelector('tbody tr')!.getAttribute('role')).toBe('row');
+  });
+
+  it('counts a headless table from its first row', () => {
+    const { container } = render(<Table><TableBody><TableRow><TableCell>a</TableCell><TableCell hideBelow="sm">b</TableCell></TableRow></TableBody></Table>);
+    expect(cols(container.querySelector('table')!)).toEqual(['repeat(2, auto)', 'repeat(2, auto)', 'repeat(2, auto)', 'repeat(2, auto)', 'repeat(1, auto)']);
+  });
+
+  it("does not count DataTable's selection column, which sits over the lead's padding", () => {
+    type Row = { id: string; name: string };
+    const columns: Column<Row>[] = [
+      { key: 'name', header: 'Name', grow: true, mobile: 'title', cell: (r) => r.name },
+      { key: 'id', header: 'ID', cell: (r) => r.id },
+    ];
+    const { container } = render(<DataTable caption="Things" noun="things" rows={[{ id: 't1', name: 'One' }]} columns={columns} rowKey={(r) => r.id} selectable selected={new Set()} onSelectedChange={() => {}} />);
+    const table = container.querySelector('table')!;
+    expect(cols(table)[0]).toBe('repeat(2, auto)');
+    expect(container.querySelector('thead th')!.hasAttribute('data-check')).toBe(true);
+    expect(container.querySelector('tbody td')!.hasAttribute('data-check')).toBe(true);
+  });
+});

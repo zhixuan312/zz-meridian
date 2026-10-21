@@ -34,7 +34,7 @@ describe('a cut cell keeps its content width (spec AC-1.4)', () => {
     expect(td.getAttribute('title')).toBe('/v1/messages/with/a/long/tail');
     const heads = [...container.querySelectorAll('th')];
     expect(heads.some((th) => classes(th).includes('w-full'))).toBe(false);
-    expect(classes(heads[0])).toEqual(expect.arrayContaining(['min-w-40', '@min-[672px]:min-w-64']));
+    expect(classes(heads[0])).toEqual(expect.arrayContaining(['min-w-40']));
   });
 });
 
@@ -58,8 +58,9 @@ describe('DataTable shares the spare (spec AC-1.4, AC-1.6)', () => {
     const heads = [...container.querySelectorAll('thead th')];
     expect(heads.some((th) => classes(th).includes('w-full'))).toBe(false);
     expect(classes(heads[0])).toContain('w-10');
+    expect(heads[0].hasAttribute('data-check')).toBe(true);
     const customer = heads.find((th) => th.textContent?.includes('Customer'))!;
-    expect(classes(customer)).toEqual(expect.arrayContaining(['min-w-40', '@min-[672px]:min-w-64']));
+    expect(classes(customer)).toEqual(expect.arrayContaining(['min-w-40']));
     expect(classes(heads.find((th) => th.textContent?.includes('ID'))!)).toContain('w-28');
   });
 

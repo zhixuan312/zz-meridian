@@ -1,6 +1,6 @@
 import { render } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
-import { Table, TableBody, TableCell, TableRow } from '@/components/ui/table';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 
 const wrapOf = (td: Element) => td.firstElementChild!.getAttribute('class')?.split(/\s+/) ?? [];
 
@@ -9,6 +9,7 @@ describe('a cut cell keeps its alignment', () => {
   it('justifies a right-aligned, numeric or centred value and leaves a left one alone', () => {
     const { container } = render(
       <Table>
+        <TableHead><TableRow><TableHeader grow>Name</TableHeader><TableHeader align="right">Region</TableHeader><TableHeader align="right">Calls</TableHeader><TableHeader align="center">Tier</TableHeader></TableRow></TableHead>
         <TableBody>
           <TableRow>
             <TableCell truncate>left</TableCell>
