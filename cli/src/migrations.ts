@@ -451,6 +451,14 @@ export const RELEASE_MIGRATIONS: ReleaseMigration[] = [
     instructions: 'Bring `tests/column-chart-no-data.test.tsx` over from the release as it has it. Since 0.19.0 `src/components/charts/column-chart/index.tsx` draws no column for a `null` period: its box has no height, a dashed hairline (`data-no-data-mark`) keeps the slot, and the word stands over it, because the track was the tallest mark on the chart. A test of your own that finds `.bg-fill-track` or `[data-track]` in a no-data column finds `[data-no-data-mark]` instead.',
     checks: ['gate'],
   },
+  {
+    id: 'table-grid',
+    since: '0.26.0',
+    applies: (root) => matching(root, (rel, src) => importsOf(rel, src).some(({ from }) => from === 'src/components/ui/table' || from === 'src/components/patterns/data-table') && (/@min-\[672px\]:min-w-64/.test(src) || /<TableCell\b[^>]*\bcolSpan\s*=/.test(src))),
+    summary: 'A table is a grid since 0.26.0: its spare width sits in the gaps, a `grow` column\'s floor is 160px at every width, and a cell spans no columns.',
+    instructions: 'Bring `tests/table-cut-cell.test.tsx` over from the release as it has it. Since 0.26.0 `src/components/ui/table/index.tsx` lays a table out as a grid whose rows are subgrids: every column is as wide as its content, the spare is shared equally between the gaps, and a `grow` column\'s floor is `min-w-40` at every width, without the `@min-[672px]:min-w-64` it had from a 672px table. A test of your own that expects that class expects `min-w-40` alone. A `TableCell` of your own with a `colSpan` takes one track of the grid, so it draws in the first column only: a row that should run the width of the table, such as an empty state, is drawn outside the table, or as a `DataTable` `empty`.',
+    checks: ['gate'],
+  },
 ];
 
 /**

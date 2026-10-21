@@ -333,6 +333,19 @@ describe('the 0.19.0 migration', () => {
   });
 });
 
+describe('the 0.26.0 migration', () => {
+  it('finds a test that expects the 256px floor and a cell that spans columns, and leaves the release\'s own', () => {
+    const imp = "import { Table, TableCell } from '@/components/ui/table';\n";
+    expect(byId('table-grid').since).toBe('0.26.0');
+    expect(byId('table-grid').applies(project({ 'tests/table-cut-cell.test.tsx': `${imp}expect(classes(heads[0])).toEqual(expect.arrayContaining(['min-w-40', '@min-[672px]:min-w-64']));\n` }))).toEqual(['tests/table-cut-cell.test.tsx']);
+    expect(byId('table-grid').applies(project({ 'src/views/runs.tsx': `${imp}export const Empty = () => <TableCell colSpan={4}>No runs</TableCell>;\n` }))).toEqual(['src/views/runs.tsx']);
+    expect(byId('table-grid').applies(project({ 'tests/table-cut-cell.test.tsx': `${imp}expect(classes(heads[0])).toEqual(expect.arrayContaining(['min-w-40']));\n` }))).toBeNull();
+    // A span in a file that does not draw Meridian's table is not this migration's.
+    expect(byId('table-grid').applies(project({ 'src/views/plain.tsx': 'export const Row = () => <td colSpan={2}>x</td>;\n' }))).toBeNull();
+    expect(byId('table-grid').applies(path.resolve(import.meta.dirname, '..'))).toBeNull();
+  });
+});
+
 describe("the consumer smoke's record of the release migrations", () => {
   // `resolveAll` resolves only the ids `RELEASE_IDS` lists, with the edit `bringReleaseOver` makes for each: a release
   // migration missing from it is resolved as not applicable, and the origin it applies to fails at finalize.
