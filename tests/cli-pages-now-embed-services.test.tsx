@@ -1,5 +1,5 @@
 // Named cli-* so the payload leaves it out: it is about the sample's own Now view, which a product replaces.
-import { render } from '@testing-library/react';
+import { render, waitFor } from '@testing-library/react';
 import { Tooltip } from 'radix-ui';
 import { describe, expect, it, vi } from 'vitest';
 
@@ -28,31 +28,35 @@ const reads: NowReads = {
 };
 const NOTHING: NowReads = { ...reads, services: [], incidents: [], history: [], releases: [], runs: [], usage: [], models: [], compute: [], endpoints: [], tickets: [], activity: [] };
 
-/** The inline Now view's text, as the host draws it in a conversation. */
-const inline = (r: NowReads) => render(
-  <Tooltip.Provider><SurfaceOverride surface={{ kind: 'embed', connected: false, mode: 'inline' }}><EmbedNow {...packNow(nowData(r))} /></SurfaceOverride></Tooltip.Provider>,
-).container.textContent ?? '';
+/**
+ * The inline Now view's text, as the host draws it in a conversation, once it reads `expected`: Now's body and its
+ * states are a chunk the view loads when it draws them, so a state other than the list arrives a moment after the frame.
+ */
+const inline = async (r: NowReads, expected: RegExp) => {
+  const { container } = render(
+    <Tooltip.Provider><SurfaceOverride surface={{ kind: 'embed', connected: false, mode: 'inline' }}><EmbedNow {...packNow(nowData(r))} /></SurfaceOverride></Tooltip.Provider>,
+  );
+  await waitFor(() => expect(container.textContent).toMatch(expected));
+  return container.textContent ?? '';
+};
 
 describe("the inline Now view says what it knows of the services", () => {
-  it('says the services could not be read when their read failed, and never that all are operational', () => {
-    const text = inline({ ...reads, services: null });
-    expect(text).toMatch(/The services could not be read/);
+  it('says the services could not be read when their read failed, and never that all are operational', async () => {
+    const text = await inline({ ...reads, services: null }, /The services could not be read/);
     expect(text).not.toMatch(/All services operational/);
   });
 
-  it('says no service is monitored yet when the services were read and there are none', () => {
-    const text = inline({ ...reads, services: [] });
-    expect(text).toMatch(/No service is monitored yet/);
+  it('says no service is monitored yet when the services were read and there are none', async () => {
+    const text = await inline({ ...reads, services: [] }, /No service is monitored yet/);
     expect(text).not.toMatch(/All services operational/);
   });
 
-  it('says nothing has arrived yet when no part holds a record', () => {
-    const text = inline(NOTHING);
-    expect(text).toMatch(/No services yet/);
+  it('says nothing has arrived yet when no part holds a record', async () => {
+    const text = await inline(NOTHING, /No services yet/);
     expect(text).not.toMatch(/All services operational/);
   });
 
-  it('draws the services with their summary when they were read', () => {
-    expect(inline(reads)).toMatch(/1 service degraded/);
+  it('draws the services with their summary when they were read', async () => {
+    await inline(reads, /1 service degraded/);
   });
 });

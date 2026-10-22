@@ -8,9 +8,15 @@ import { Freshness } from '@/components/patterns/freshness';
 import { AskAbout } from '@/components/patterns/ask-about';
 import { StatusList } from '@/components/patterns/status-list';
 import { ShareContext } from '@/components/base/use-share-view';
-import { NoServices, NowBody } from '@/views/now';
+import dynamic from 'next/dynamic';
 import { nothingArrived, nowContext, unpackNow, type PackedNowData } from '@/views/now-context';
 import { formatRelative } from '@/lib/format-date';
+
+// Now's whole body is the fullscreen view, and the inline one only when nothing has arrived: its charts, tables and
+// feed are a chunk of their own, so the inline view a chat shows first downloads the banner and the list alone. In one
+// created project the embed's first-load JS was 820 KiB, at the cap, with the body in it.
+const NowBody = dynamic(() => import('@/views/now').then((m) => m.NowBody));
+const NoServices = dynamic(() => import('@/views/now').then((m) => m.NoServices));
 
 /**
  * Inline, the services and the open incident, the most severe first; fullscreen, and inline when nothing has arrived

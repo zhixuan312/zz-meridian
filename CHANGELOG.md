@@ -20,6 +20,7 @@ Every release of ZZ Meridian, newest first. Versions follow semver: a removed or
 ### Fixed
 
 - **The rail keeps the whole product name and workspace in a `title`** ([#79](https://github.com/zhixuan312/zz-meridian/issues/79)). A name too long for the rail, such as 23 characters in three words, was cut with an ellipsis and nothing held the whole of it, so `scripts/audit.ts` failed every route at every width.
+- **The Now embed loads its body only when it draws it.** The inline view a chat shows first draws the open incident and the services; Now's whole body, with its charts, tables and feed, is the fullscreen view, now a chunk of its own (`next/dynamic`). In a created project, `/embed/now`'s first-load JS falls from 820 KiB, at the cap, to 712 KiB. `app/embed/now/view.tsx` is a sample file the team owns, so `update` leaves a project's own copy as it is: one whose embed nears the cap can take the release's.
 
 ## [0.26.0] · 2026-10-22
 
