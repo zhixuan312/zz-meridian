@@ -40,6 +40,20 @@ describe('ticksBetween: the levels a chart is drawn on', () => {
   });
 });
 
+describe('ticksBetween for a signed series and a fine one (#78)', () => {
+  it('counts a floor under zero down to a step under it, with zero among the levels', () => {
+    expect(ticksBetween(-35, 80, 4)).toEqual([-50, 0, 50, 100]);
+    expect(ticksBetween(-12, 0, 3)).toEqual([-15, -10, -5, 0]);
+    expect(ticksBetween(-0.3, 0.2, 4)).toContain(0);
+    expect(Object.is(ticksBetween(-0.3, 0.2, 4).find((t) => t === 0), 0)).toBe(true);
+  });
+  it('tells levels a millionth apart from one another', () => {
+    const ticks = ticksBetween(1.00106, 1.00108, 4);
+    expect(ticks).toEqual([1.00106, 1.001065, 1.00107, 1.001075, 1.00108]);
+    expect(new Set(ticksBetween(0.99970, 1.0001, 4)).size).toBe(ticksBetween(0.99970, 1.0001, 4).length);
+  });
+});
+
 describe('niceTicks for counts (#72)', () => {
   it('steps by whole numbers only, so a top of 1 is ticked 0 and 1 and nothing between', () => {
     expect(niceTicks(1, 3)).toEqual([0, 0.5, 1]);

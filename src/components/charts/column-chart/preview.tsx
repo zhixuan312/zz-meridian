@@ -54,6 +54,11 @@ const byEndpoint = ENDPOINTS.map((e) => e.requests);
 // The sample's clock stands at 09:00 UTC on its last day, so that day has run nine hours of its twenty-four.
 const soFar = (d: DailyPoint) => (d === week[week.length - 1] ? Math.round((d.requests * DEMO_NOW.getUTCHours()) / 24) : d.requests);
 const errors = (days: DailyPoint[]) => days.map((d) => ({ key: d.date, label: formatShortDate(d.date), value: d.errors }));
+/** A day's errors less the day before's: a signed series, rises and falls about zero. */
+const lastEight = month.slice(-8);
+const errorChange = lastEight.slice(1).map((d, i) => ({ key: d.date, label: formatShortDate(d.date), value: d.errors - lastEight[i].errors }));
+/** A change reads with its sign, and a fall with the true minus sign, on the axis as at rest. */
+const signed = (read: (n: number) => string) => (n: number) => (n > 0 ? `+${read(n)}` : n < 0 ? `\u2212${read(-n)}` : read(0));
 // The sample has no day of zero, so the zero specimens make one: a day with no errors, a day with no requests at all,
 // and a day with none from one region.
 const noErrors = errors(week).map((c, i) => (i === 2 ? { ...c, value: 0 } : c));
@@ -83,6 +88,11 @@ export default function ColumnChartPreview() {
       <Specimen label="Days" note="Seven days of errors; today highlighted. The columns are periods, so the chart is given their dates: the labels thin as dates do and are never cut.">
         <Plane on="surface" className="max-w-lg">
           <ColumnChart label="Errors per day, last 7 days" height={160} axisFormat={axis} highlight={week[week.length - 1].date} dates={dates(week)} columns={errors(week)} />
+        </Plane>
+      </Specimen>
+      <Specimen label="Rises and falls" note="A signed series, here each day's errors less the day before's: the scale goes under zero for it and zero is drawn as the axis. A rise stands on the zero line and a fall hangs from it, rounded at its lower end, its value under it. Parts make a whole, so a stacked column draws no part under zero; a signed series is plain.">
+        <Plane on="surface" className="max-w-lg">
+          <ColumnChart label="Change in errors, day on day" height={200} format={signed(formatCompact)} axisFormat={signed((n) => axis(n))} dates={dates(lastEight.slice(1))} columns={errorChange} />
         </Plane>
       </Specimen>
       <Specimen label="On the Meridian" note="Given dates, the columns share the page's cursor: point at a column, or move through them with the arrow keys, and the trend above follows.">

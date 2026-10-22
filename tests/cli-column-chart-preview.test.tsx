@@ -17,14 +17,14 @@ import { usageTool } from '@/views/tools';
 
 const charts = (c: HTMLElement) => [...c.querySelectorAll('[data-plot]')].map((p) => p.closest('figure') as HTMLElement);
 const name = (chart: HTMLElement) => chart.getAttribute('aria-label')!;
-/** What a tick's label says, as a number: "1.5K" is 1,500 and "$2M" two million. */
+/** What a tick's label says, as a number: "1.5K" is 1,500, "$2M" two million and "−250K" a fall of 250,000. */
 const said = (label: string) => {
   const m = label.match(/([\d,.]+)\s*([KMB]?)/)!;
-  return Number(m[1].replace(/,/g, '')) * ({ K: 1e3, M: 1e6, B: 1e9 }[m[2]] ?? 1);
+  return (/^[\u2212-]/.test(label.trim()) ? -1 : 1) * Number(m[1].replace(/,/g, '')) * ({ K: 1e3, M: 1e6, B: 1e9 }[m[2]] ?? 1);
 };
 const ticks = (chart: HTMLElement) => [...chart.querySelectorAll('[data-tick]')].map((e) => said(e.textContent!)).sort((a, b) => a - b);
-/** The ticks of a chart are equal steps from zero, so their labels are true only if what they say is equal steps too. */
-const evenSteps = (xs: number[]) => xs.every((x, i) => Math.abs(x - i * xs[1]) <= xs[1] * 0.001);
+/** The ticks of a chart are equal steps, zero among them, so their labels are true only if what they say is equal steps too. */
+const evenSteps = (xs: number[]) => xs.every((x, i) => Math.abs(x - (xs[0] + i * (xs[1] - xs[0]))) <= (xs[1] - xs[0]) * 0.001);
 /** The chart a specimen's state draws, found by the state's caption. */
 const drawn = (caption: string) => screen.getByText(caption, { selector: 'figcaption' }).closest('figure')!.querySelector('[data-plot]')!.closest('figure') as HTMLElement;
 const columns = (chart: HTMLElement) => [...chart.querySelectorAll<HTMLElement>('[data-column]')];
@@ -38,7 +38,9 @@ describe('the Column chart\'s specimens: what they say is true', () => {
     const { container } = render(<ColumnChartPreview />);
     expect(charts(container).length).toBeGreaterThan(10);
     for (const chart of charts(container)) {
-      expect(ticks(chart)[0], name(chart)).toBe(0);
+      expect(ticks(chart), name(chart)).toContain(0);
+      // A scale goes under zero only for a value under zero.
+      if (ticks(chart)[0] < 0) expect([...chart.querySelectorAll('[data-fall]')].length, name(chart)).toBeGreaterThan(0);
       expect(evenSteps(ticks(chart)), `${name(chart)}: ${[...chart.querySelectorAll('[data-tick]')].map((e) => e.textContent).join(' ')}`).toBe(true);
     }
   });

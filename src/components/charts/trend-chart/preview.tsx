@@ -3,6 +3,7 @@
 import { Specimen, State, Plane } from '@/system/specimen';
 import { DEMO_NOW } from '@/system/fixtures/sample';
 import { demoSeries, REGIONS } from '@/system/fixtures/company';
+import { AXIS_FORMATTERS } from '@/lib/format';
 import { TrendChart } from '.';
 
 const { current, previous } = demoSeries('30d');
@@ -17,6 +18,15 @@ const banded = current.map((d, i) => (i === 26 ? Math.round(d.p95 * 0.7) : SPIKE
 /** Six services' share operational a day: 1 on almost every day, with a service down on five of them. */
 const DOWN = new Set([3, 11, 12, 19, 27]);
 const uptime = current.map((_, i) => (DOWN.has(i) ? 5 / 6 : 1));
+
+/** A day's requests less the day before's: rises and falls about zero. */
+const change = current.slice(1).map((d, i) => d.requests - current[i].requests);
+/** A change reads with its sign, and a fall with the true minus sign: exact in the readout, short on the axis. */
+const sign = (read: (n: number) => string) => (n: number) => (n > 0 ? `+${read(n)}` : n < 0 ? `\u2212${read(-n)}` : read(0));
+const signed = sign((n) => n.toLocaleString('en-US'));
+const signedAxis = sign((n) => AXIS_FORMATTERS.count(n));
+/** A price that lives a few ten-thousandths about par, which no named format reads exactly. */
+const price = current.map((d, i) => Math.round((1 + Math.sin(i / 3) * 0.0004 + (d.requests % 7) * 0.00002) * 10_000) / 10_000);
 
 export default function TrendChartPreview() {
   return (
@@ -60,6 +70,16 @@ export default function TrendChartPreview() {
             floor={0.7}
             series={[{ key: 'operational', label: 'Operational', values: uptime, kind: 'line' }]}
           />
+        </Plane>
+      </Specimen>
+      <Specimen label="Below zero" note="A signed series, here each day's requests less the day before's. Without a floor the axis holds zero and every value: it goes under zero for a fall, zero is drawn as the axis, and an area is filled to the zero line from either side. The readout is exact and signed; axisFormat keeps the ticks short.">
+        <Plane on="surface">
+          <TrendChart label="Change in requests, day on day" height={168} format={signed} axisFormat={signedAxis} dates={dates.slice(1)} series={[{ key: 'c', label: 'Change', values: change, kind: 'area' }]} />
+        </Plane>
+      </Specimen>
+      <Specimen label="A format of its own" note="format as a function, from a client component: for a figure no name says exactly, here a price to four decimals, read in the readout and the table, with axisFormat for the ticks. A server component names its format, since a function cannot cross into a client one.">
+        <Plane on="surface">
+          <TrendChart label="Price a day" height={168} format={(n) => n.toFixed(4)} axisFormat={(n) => n.toFixed(4)} floor={0.999} dates={dates} series={[{ key: 'p', label: 'Price', values: price, kind: 'line' }]} />
         </Plane>
       </Specimen>
       <Specimen label="Inside a band" note="band: the region the page is judged against, from the floor up to its ceiling, in the track's own wash, its top edge drawn as the axis is and named at an end of it. marks: the days the page names, a dot on the day's own point and a stem to the axis. The third day here left the band on something this chart does not draw, so its point stands inside the region — which is why a mark is a stem and not only a dot.">
