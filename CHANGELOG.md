@@ -2,6 +2,25 @@
 
 Every release of ZZ Meridian, newest first. Versions follow semver: a removed or renamed token, prop or card is major; a new card, token or variant is minor; a corrected value is a patch. Each entry says what breaks and what to do instead.
 
+## [0.27.0] · 2026-10-23
+
+### Breaking
+
+- **A chart's scale holds every value it draws, zero among them** ([#80](https://github.com/zhixuan312/zz-meridian/issues/80)). `ticksBetween` counts a floor under zero down to a step under it, where it used to clamp it to zero and draw every value below zero under the axis and out of the card.
+  - `TrendChart` without a `floor` now holds zero and every value: a series that goes under zero takes the axis down with it. An `area` is filled to the zero line from either side, not down to the lowest level.
+  - `TrendChart`'s top is the data's own. It was at least 1, so a ratio that peaks at 0.4% was drawn along the floor of an axis to 100%. A chart whose values are all under 1 now draws to a step over its highest value.
+  - Levels are rounded to a digit under their step, not to six places, so a ratio a millionth apart keeps one level per tick.
+- **`ColumnChart` draws a value under zero as a fall** ([#78](https://github.com/zhixuan312/zz-meridian/issues/78)). In the plain form, a value under zero used to draw nothing. Now the scale goes under zero, zero is drawn as the axis, and the column hangs from the zero line, rounded at its lower end, with its value under it. While no value is under zero the chart is drawn as before. Stacked, a part under zero is still no contribution: parts make a whole.
+
+### New
+
+- **`TrendChart`'s `format` may be a function, with an `axisFormat`** ([#78](https://github.com/zhixuan312/zz-meridian/issues/78)). From a client component, pass `(n: number) => string` for a figure no named format says exactly: a price to four decimals, a ratio to six, or an amount in a currency of its own. It reads the readout and the table, and the axis unless `axisFormat` says otherwise. A server component still passes a name, because a function cannot cross into a client component.
+- The Trend chart's Atlas page draws "Below zero" and "A format of its own". The Column chart's page draws "Rises and falls".
+
+### Fixed
+
+- **The rail keeps the whole product name and workspace in a `title`** ([#79](https://github.com/zhixuan312/zz-meridian/issues/79)). A name too long for the rail, such as 23 characters in three words, was cut with an ellipsis and nothing held the whole of it, so `scripts/audit.ts` failed every route at every width.
+
 ## [0.26.0] · 2026-10-22
 
 ### Breaking
