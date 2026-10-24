@@ -2,6 +2,17 @@
 
 Every release of ZZ Meridian, newest first. Versions follow semver: a removed or renamed token, prop or card is major; a new card, token or variant is minor; a corrected value is a patch. Each entry says what breaks and what to do instead.
 
+## [0.27.1] · 2026-10-24
+
+### Fixed
+
+- **`verify` and `live` start the app they measure on loopback** ([#81](https://github.com/zhixuan312/zz-meridian/issues/81)). `next start` with no host bound every interface, so for the half hour a full run takes, the app under test — served with the fake data source — answered on the local network. Both start it with `-H 127.0.0.1`; every client of a run already reached it there.
+- **The keyboard walk and the presses open a disclosure before reaching into it** ([#82](https://github.com/zhixuan312/zz-meridian/issues/82)). A closed `<details>` lays its content out without drawing it, so a button inside was tagged as visible and never reached, and its press found nothing at its centre; `verify --full` failed a page with a folded table. Both suites open the disclosures they walk into, and the presses leave shut the one whose own `summary` holds the control.
+- **The shell's Search button keeps its name below 40rem** ([#83](https://github.com/zhixuan312/zz-meridian/issues/83)). The only word naming it was `display: none`, leaving an icon-only button with no accessible name on every view at 390px. It is `sr-only` now: the word is not drawn, and it is still the button's name.
+- **The rail's menu trigger separates the product name from the workspace** ([#84](https://github.com/zhixuan312/zz-meridian/issues/84)). Its visible text ran the two together, and WCAG 2.5.3 asks for the visible label inside the accessible name, where a comma alone kept them apart. A space now sits between them: invisible between two block spans, present for the name.
+- **A table written in a server component lays out like one written on the client** ([#85](https://github.com/zhixuan312/zz-meridian/issues/85)). `Table` found its columns by component identity, and a server component reaches the client table as lazy references, so it found none and drew every column as one. It counts them from the table's shape now: the first row of the first section that has one, its component cells, through fragments.
+- **The audit fails a strip that scrolls sideways at a phone width, and text drawn past a box that does not clip it** ([#86](https://github.com/zhixuan312/zz-meridian/issues/86)). A strip of chips wider than 390px hid its last items with nothing saying so, and a figure too long for its grid column passed while drawn over its neighbour and past its card. The first is reported unless it is the page's scroll region or draws the system's cut-edge fade (`scroll-fade-x`); the second is measured on the glyphs with a `Range`. The stricter reading found the Atlas counts row overflowing its cells at 1024, which now keeps four columns until `xl` and draws a rule only at the start of a row. The prose tables and code blocks that legitimately scroll now draw that fade.
+
 ## [0.27.0] · 2026-10-23
 
 ### Breaking
