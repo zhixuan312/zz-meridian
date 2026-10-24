@@ -1,4 +1,5 @@
 import { gate, gatedMetadata, may } from '@/data/access';
+import { renderRefusal } from '@/views/refusal';
 import { ACTIONS } from '@/data/features';
 import { readAll } from '@/data/read';
 import { readTickets } from '@/data/tickets';
@@ -21,7 +22,7 @@ export function generateMetadata() {
  */
 export default async function TicketsPage() {
   const denied = await gate('tickets');
-  if (denied) return denied;
+  if (denied) return renderRefusal(denied);
   const [{ rows, revisions, observedAt }, mayCreate, mayUpdate, mayReadMembers, services] = await Promise.all([
     readTickets(),
     may(ACTIONS['create-ticket'].needs),

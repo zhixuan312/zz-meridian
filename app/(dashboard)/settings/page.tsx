@@ -1,6 +1,7 @@
 import { app } from '@/app.config';
 import { PageFrame } from '@/components/base/shell';
 import { gate, gatedMetadata, may, Unauthenticated } from '@/data/access';
+import { renderRefusal } from '@/views/refusal';
 import { read } from '@/data/read';
 import { SettingsBody, type SettingsMay, type WorkspaceValues } from '@/views/settings';
 import { saveWorkspace } from './actions';
@@ -44,7 +45,7 @@ export default async function SettingsPage() {
   // Settings is `public` — its sections are for everyone signed in — and the gate is still what a page opens with: with
   // no session it sends the request to sign-in rather than rendering the page as nobody.
   const denied = await gate('settings');
-  if (denied) return denied;
+  if (denied) return renderRefusal(denied);
   // The flags are computed here, on the server, because the view is a client module and never asks the policy itself;
   // the workspace record and the action that saves it are handed over together, so the section edits what the page read.
   const permissions = await workspaceMay();

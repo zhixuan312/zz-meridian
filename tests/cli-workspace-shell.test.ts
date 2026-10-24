@@ -19,10 +19,13 @@ vi.mock('next/navigation', () => ({
 vi.mock('next/cache', () => ({ cacheTag: () => {}, cacheLife: () => {}, updateTag: () => {}, revalidateTag: () => {}, revalidatePath: () => {}, refresh: () => {} }));
 
 import { workspaces } from '@/app.config';
+import { chromeAccess } from '@/data/access';
 import { AtlasShell } from '@/system/atlas-shell';
 import { NoAccess } from '@/views/no-access';
 
 const ROOT = path.resolve(import.meta.dirname, '..');
+/** The chrome `gate` hands the refusal: resolved for the reader, and null when who they are cannot be told. */
+const chrome = () => chromeAccess().catch(() => null);
 /** The links a piece of markup holds, each as its address and its words. */
 const linksOf = (html: string) => [...html.matchAll(/<a\b[^>]*\bhref="([^"]*)"[^>]*>([\s\S]*?)<\/a>/g)].map((m) => ({ href: m[1], text: m[2].replace(/<[^>]*>/g, '').trim() }));
 
@@ -30,18 +33,18 @@ beforeEach(() => { jar.value = 'members_12'; });
 
 describe('a page a person may not open', () => {
   it('offers the first destination of its own workspace that they may: for a Viewer at API keys, Now', async () => {
-    const html = renderToStaticMarkup(await NoAccess({ feature: 'keys' }));
+    const html = renderToStaticMarkup(await NoAccess({ feature: 'keys', access: await chrome() }));
     expect(html).toContain('data-no-access');
     expect(linksOf(html)).toEqual([{ href: '/engineering', text: expect.stringContaining('Now') }]);
   });
 
   it('offers Main\'s home for a Viewer at Members', async () => {
-    const html = renderToStaticMarkup(await NoAccess({ feature: 'members' }));
+    const html = renderToStaticMarkup(await NoAccess({ feature: 'members', access: await chrome() }));
     expect(linksOf(html)).toEqual([{ href: '/', text: expect.stringContaining('Home') }]);
   });
 
   it('still says who can open it and whom to ask', async () => {
-    const html = renderToStaticMarkup(await NoAccess({ feature: 'keys' }));
+    const html = renderToStaticMarkup(await NoAccess({ feature: 'keys', access: await chrome() }));
     expect(html).toContain('can open it');
     expect(html).toContain('for access');
   });

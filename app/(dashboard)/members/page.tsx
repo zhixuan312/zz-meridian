@@ -1,4 +1,5 @@
 import { gate, gatedMetadata, may } from '@/data/access';
+import { renderRefusal } from '@/views/refusal';
 import { invitableRoles, memberAccess, type MemberRowAccess } from '@/data/member-mutations';
 import { read, readAll } from '@/data/read';
 import { assignRole, inviteMember, removeMember, setMemberStatus } from './actions';
@@ -33,7 +34,7 @@ async function workspaceName(): Promise<string | undefined> {
  */
 export default async function MembersPage() {
   const denied = await gate('members');
-  if (denied) return denied;
+  if (denied) return renderRefusal(denied);
   const { rows, revision, observedAt } = await readAll('members', { sort: { field: 'joined', dir: 'desc' } });
   const members = rows as Member[];
   const [access, roles, workspace] = await Promise.all([

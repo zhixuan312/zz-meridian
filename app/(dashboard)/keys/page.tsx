@@ -1,4 +1,5 @@
 import { gate, gatedMetadata, may } from '@/data/access';
+import { renderRefusal } from '@/views/refusal';
 import { ACTIONS } from '@/data/features';
 import { readAll } from '@/data/read';
 import { KeysView } from '@/views/keys';
@@ -21,7 +22,7 @@ export function generateMetadata() {
  */
 export default async function KeysPage() {
   const denied = await gate('keys');
-  if (denied) return denied;
+  if (denied) return renderRefusal(denied);
   const { rows, revision, observedAt } = await readAll('keys');
   const mayCreate = await may(ACTIONS['create-key'].needs);
   const mayRevoke = await may(ACTIONS['revoke-key'].needs);

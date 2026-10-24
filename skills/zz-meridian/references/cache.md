@@ -113,7 +113,6 @@ A production adapter binds the predicate and the subscription filter; prepending
 import type { Metadata } from 'next';
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
-import { createElement, type JSX } from 'react';
 import { nav, refusal } from '@/app.config';
 import { activity, compute, costs, customers, days, endpoints, hours, incidents, keys, members, models, regions, releases, requests, responses, services, tests, tickets, usage, workspace } from '@/data/collections';
 import { FEATURES, type FeatureId } from '@/data/features';
@@ -121,9 +120,6 @@ import { effective, roleLabel, type AddOn, type MainRole } from '@/data/roles';
 import { membersFor } from '@/data/member-mutations';
 import { ticketsFor } from '@/data/ticket-mutations';
 import { chooseViewAs } from '@/data/view-as';
-import { MissingPage } from '@/views/missing-page';
-import { NoAccess } from '@/views/no-access';
-import { NOT_FOUND } from '@/views/not-found';
 import type { Member } from '@/data/sample';
 import type { AnyCollection, ChromeAccess, Grant, Need } from '@/lib/collection';
 
@@ -301,8 +297,8 @@ export async function requireNeed(need: Need): Promise<void> {
 /**
  * The navigation entries a missing page's walk-back steps past, so it names no page the person may not open: under
  * `refusal: 'absent'` every entry whose need the current person does not satisfy, and every entry when there is no
- * session; under `explain` none, as the no-access page names the page anyway. `gate` hands them to the missing page it
- * draws, and the standalone missing page (`app/not-found.tsx`) asks for them itself.
+ * session; under `explain` none, as the no-access page names the page anyway. `gate` carries them to the missing page's
+ * screen, and the standalone missing page (`app/not-found.tsx`) asks for them itself.
  */
 export async function withheldEntries(): Promise<string[]> {
   if (refusal !== 'absent') return [];
@@ -315,35 +311,59 @@ export async function withheldEntries(): Promise<string[]> {
 }
 
 /**
+ * What a refused page is told, as data rather than as a screen: `src/views/refusal.tsx` draws it, so this layer builds
+ * no element and imports no view. The two kinds carry only what the screens cannot work out for themselves.
+ *
+ * `absent` is the console's missing page, walked back past the entries this person may not open (`withheld`), so the
+ * answer reads exactly as an address that names nothing. `explain` is the no-access screen for `feature`, which is
+ * handed the chrome this person is entitled to (`access`, null when the session cannot be read) because its one way
+ * out is chosen from those destinations.
+ */
+export type Refusal =
+  | { readonly kind: 'absent'; readonly withheld: readonly string[] }
+  | { readonly kind: 'explain'; readonly feature: FeatureId; readonly access: ChromeAccess | null };
+
+/**
  * The one page gate, called as every dashboard page's first statement so the check is what stops the read, never the
  * rail: `chromeAccess().only` hides a destination but forbids nothing, so a page that leaned on it would show a person
  * the records the rail merely left unlinked.
  *
  * It asks the same `requireNeed` a view tool asks, so a page and a tool refuse alike. A request with no session is sent
  * to sign-in. A person who may not use the feature gets the product's `refusal` as a normal 200 answer, read here on
- * every call: under `explain` the NoAccess view (awaited, because it is an async server component and a page hands a
- * renderer an element, not a promise); under `absent` the console's missing page, walked back past every entry the
- * person may not open, so it reads exactly as an address that names nothing. Neither throws `notFound()`, which inside
- * the dashboard's loading boundary renders only once the JavaScript arrives (see MissingPage). `null` means the feature
- * is held and the page may render and read.
+ * every call, returned as the descriptor its screen is drawn from (`Refusal`): under `explain` the feature and the
+ * chrome, under `absent` the entries to walk past. Neither refusal throws `notFound()`, which inside the dashboard's
+ * loading boundary renders only once the JavaScript arrives (see MissingPage). `null` means the feature is held and the
+ * page may render and read.
  */
-export async function gate(feature: FeatureId): Promise<JSX.Element | null> {
+export async function gate(feature: FeatureId): Promise<Refusal | null> {
   try {
     await requireNeed(FEATURES[feature].needs);
   } catch (error) {
     if (error instanceof Unauthenticated) redirect('/sign-in');
-    if (error instanceof AccessDenied) return refusal === 'absent' ? createElement(MissingPage, { withheld: await withheldEntries() }) : await NoAccess({ feature });
+    if (error instanceof AccessDenied) {
+      if (refusal === 'absent') return { kind: 'absent', withheld: await withheldEntries() };
+      // A session was proved a moment ago, so this normally answers; a person removed in between is told no persona,
+      // and the no-access screen falls back to Main's home rather than failing the refusal.
+      return { kind: 'explain', feature, access: await chromeAccess().catch(() => null) };
+    }
     throw error;
   }
   return null;
 }
 
 /**
- * The title a gated page carries, called from its `generateMetadata` so the tab agrees with what `gate` draws: under
+ * The tab a withheld page carries. It is the standalone missing page's own title, written here because this layer may
+ * not import a view to read it; `tests/refusal-descriptor.test.ts` and `tests/cli-refusal.test.tsx` hold the two to one
+ * string, so they cannot drift apart.
+ */
+const WITHHELD_TITLE = 'Not found';
+
+/**
+ * The title a gated page carries, called from its `generateMetadata` so the tab agrees with what `gate` answers: under
  * `refusal: 'absent'`, a person who may not use the feature gets the missing page's title, kept out of search, and
  * anyone else the page's own `metadata`. Under `explain` the page's own title is the answer for everyone, as the
- * NoAccess view names the page anyway, and the person is not read. With no session the page's own title stands: `gate`
- * sends that request to sign-in.
+ * no-access screen names the page anyway, and the person is not read. With no session the page's own title stands:
+ * `gate` sends that request to sign-in.
  */
 export async function gatedMetadata(feature: FeatureId, metadata: Metadata): Promise<Metadata> {
   if (refusal !== 'absent') return metadata;
@@ -351,7 +371,7 @@ export async function gatedMetadata(feature: FeatureId, metadata: Metadata): Pro
     if (error instanceof Unauthenticated) return true;
     throw error;
   });
-  return allowed ? metadata : { title: NOT_FOUND.title, robots: { index: false } };
+  return allowed ? metadata : { title: WITHHELD_TITLE, robots: { index: false } };
 }
 
 /** The console's chrome reads `ChromeAccess` from `@/lib/collection`, where the access vocabulary lives. */

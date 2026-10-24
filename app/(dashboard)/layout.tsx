@@ -3,7 +3,7 @@ import { AppShell } from '@/components/base/shell';
 import { AssistantScope } from '@/components/patterns/assistant/scope';
 import { WorkspacePalette, WorkspaceRail } from '@/views/workspace-chrome';
 import { assistantConfig } from '@/lib/assistant/config';
-import { readAlerts } from '@/data/alerts';
+import { readAlerts } from '@/logic/alerts';
 import { chromeAccess, resolveAccess } from '@/data/access';
 import { ConsoleLive } from '@/views/console-live';
 import { ShellAlerts } from '@/views/shell-alerts';

@@ -65,7 +65,7 @@ Migrate in place, page by page, keeping their data layer.
 3. Wrap their root layout like the template's `app/layout.tsx` (fonts, the pre-paint script, `Providers`) and their
    console routes in `AppShell` with the rail, the bell and the command palette (see `optional:app/(dashboard)/layout.tsx`).
    The template's layout hands `AppShell` its tools as `<ShellAlerts alerts={…} />` (`optional:src/views/shell-alerts.tsx`),
-   given the promise of `readAlerts()` from `optional:src/data/alerts.ts`, unawaited and settled on `null` when the read
+   given the promise of `readAlerts()` from `optional:src/logic/alerts.ts`, unawaited and settled on `null` when the read
    fails; the answer carries the alerts and the clock they were read at. Neither file is copied: hand `ShellTools` (the
    pattern `ShellAlerts` renders) their own alerts, an empty list until they have some, and their own clock. The template
    draws `WorkspaceRail` and `WorkspacePalette`; a console with one navigation draws `ConsoleRail` and `ConsolePalette`

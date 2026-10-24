@@ -11,7 +11,7 @@ vi.mock('next/headers', () => ({
 vi.mock('next/cache', () => ({ cacheTag: () => {}, cacheLife: () => {}, updateTag: () => {}, revalidateTag: () => {}, revalidatePath: () => {}, refresh: () => {} }));
 
 import { createTicket, updateTicket } from '../app/(dashboard)/operations-tickets/actions';
-import { readAlerts } from '@/data/alerts';
+import { readAlerts } from '@/logic/alerts';
 import { collections } from '@/data/collections';
 import { latestRuns } from '@/data/verification';
 import { workspaceOf } from '@/views/workspaces';

@@ -5,6 +5,9 @@
  *
  * Each kind is read apart from the others: one that cannot be read leaves out its own alerts and keeps the rest. A
  * caller with no session is refused before any of them is read, so nobody is told anything.
+ *
+ * It stands in the logic layer, above the data it reads: collections come through `src/data/`, and the judgements about
+ * them through the same context functions the pages use, so no module under `src/data/` reaches up for an alert.
  */
 import { resolveAccess } from '@/data/access';
 import { readRuns } from '@/data/engineering';

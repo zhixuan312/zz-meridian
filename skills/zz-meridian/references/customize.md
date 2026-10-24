@@ -556,7 +556,7 @@ then stays off without them). Then fix what still points at the sample:
 
 - `optional:src/views/sample-footer.tsx`: the footer status line and its link to `/services`, which `optional:app/not-found.tsx`
   and the sign-in page draw.
-- `optional:src/data/alerts.ts`: `readAlerts` works the bell's alerts out of the sample's incidents, customers, verification
+- `optional:src/logic/alerts.ts`: `readAlerts` works the bell's alerts out of the sample's incidents, customers, verification
   runs and tickets. Write your own exceptions the same way, each from a read the caller may make and linked to the page
   that handles it; the layout hands the read's promise to `ShellAlerts` (`optional:src/views/shell-alerts.tsx`) without
   awaiting it.

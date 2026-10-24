@@ -1,6 +1,6 @@
 import { Suspense } from 'react';
 import { ShellTools } from '@/components/patterns/shell-tools';
-import type { AlertsRead } from '@/data/alerts';
+import type { AlertsRead } from '@/logic/alerts';
 import { DEMO_NOW } from '@/data/sample';
 
 /** The tools with no alert: what the bell shows while the alerts are read, and for a person who may not be told any. */

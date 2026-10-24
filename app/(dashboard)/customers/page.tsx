@@ -2,6 +2,7 @@ import { Suspense } from 'react';
 import { app } from '@/app.config';
 import { PageFrame } from '@/components/base/shell';
 import { gate, gatedMetadata } from '@/data/access';
+import { renderRefusal } from '@/views/refusal';
 import { readAll } from '@/data/read';
 import type { CustomerRecord } from '@/data/sample';
 import { CustomersView } from '@/views/customers';
@@ -20,7 +21,7 @@ export function generateMetadata() {
  */
 export default async function CustomersPage() {
   const denied = await gate('customers');
-  if (denied) return denied;
+  if (denied) return renderRefusal(denied);
   return (
     <PageFrame
       kicker={<>{app.name} · {app.workspace}</>}

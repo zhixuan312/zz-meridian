@@ -21,7 +21,7 @@ vi.mock('@/components/ui/toast', () => ({ UNDO_MS: 8000, toast: (t: { title: str
 
 import CustomersPage from '../app/(dashboard)/customers/page';
 import { createTicket } from '../app/(dashboard)/operations-tickets/actions';
-import { readAlerts } from '@/data/alerts';
+import { readAlerts } from '@/logic/alerts';
 import { collections } from '@/data/collections';
 import { readRuns } from '@/data/engineering';
 import { readIncidents } from '@/data/metrics';

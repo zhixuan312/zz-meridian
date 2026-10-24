@@ -4,6 +4,7 @@ import { PageFrame } from '@/components/base/shell';
 import { ExportButton } from '@/components/patterns/export-button';
 import { Freshness } from '@/components/patterns/freshness';
 import { gate, gatedMetadata } from '@/data/access';
+import { renderRefusal } from '@/views/refusal';
 import { readRequests, requestsQuery, REQUEST_PAGE } from '@/data/requests';
 import { DEMO_UPDATED_AT } from '@/data/sample';
 import { RequestsView } from '@/views/requests';
@@ -22,7 +23,7 @@ type SearchParams = Promise<Record<string, string | string[] | undefined>>;
  */
 export default async function RequestsPage({ searchParams }: { searchParams: SearchParams }) {
   const denied = await gate('requests');
-  if (denied) return denied;
+  if (denied) return renderRefusal(denied);
   return (
     <PageFrame
       kicker={<>{app.name} · {app.workspace}</>}

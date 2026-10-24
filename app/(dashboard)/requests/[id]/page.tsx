@@ -1,4 +1,5 @@
 import { gate, gatedMetadata, may, Unauthenticated } from '@/data/access';
+import { renderRefusal } from '@/views/refusal';
 import { attempt } from '@/data/main';
 import { read } from '@/data/read';
 import { readEndpoints } from '@/data/metrics';
@@ -49,7 +50,7 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
 export default async function RequestPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const denied = await gate('request');
-  if (denied) return denied;
+  if (denied) return renderRefusal(denied);
   const { request: r, observedAt } = await byId(id);
   // Rendered here rather than thrown, so the screen is in the first HTML (see MissingPage).
   if (!r) return <MissingPage />;

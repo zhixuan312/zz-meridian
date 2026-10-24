@@ -29,9 +29,9 @@ describe('the guides, held to what was delivered', () => {
   });
 
   it('name the read a product writes for its own alerts', () => {
-    expect(exported('src/data/alerts.ts', 'readAlerts')).toBe(true);
+    expect(exported('src/logic/alerts.ts', 'readAlerts')).toBe(true);
     expect(customize).toMatch(/\breadAlerts\b/);
-    expect(customize).toContain('src/data/alerts.ts');
+    expect(customize).toContain('src/logic/alerts.ts');
   });
 
   it('name the records template and its loading arrangement by the names the code exports, and where they live', () => {

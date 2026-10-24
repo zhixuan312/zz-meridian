@@ -11,10 +11,14 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { EmptyState } from '@/components/ui/empty-state';
+import { chromeAccess } from '@/data/access';
 import { NoAccess, noAccessCopy } from '@/views/no-access';
 
 /** The links a piece of markup holds, each as its address and its words. */
 const linksOf = (html: string) => [...html.matchAll(/<a\b[^>]*\bhref="([^"]*)"[^>]*>([\s\S]*?)<\/a>/g)].map((m) => ({ href: m[1], text: m[2].replace(/<[^>]*>/g, '').trim() }));
+
+/** The chrome `gate` hands the refusal: resolved for the reader, and null when who they are cannot be told. */
+const chrome = () => chromeAccess().catch(() => null);
 
 /**
  * The template's own repository: the Atlas is still here. A project brought in with `adopt` or `create` has it removed
@@ -52,19 +56,19 @@ describe('the no-access state', () => {
   });
 
   it('renders the feature through the page frame', async () => {
-    const html = renderToStaticMarkup(await NoAccess({ feature: 'keys' }));
+    const html = renderToStaticMarkup(await NoAccess({ feature: 'keys', access: await chrome() }));
     expect(html).toContain('API keys');
     expect(html).toContain('data-no-access');
   });
 
   it('offers one link, named for where it leads, to the first destination of its own workspace the person may open', async (ctx) => {
     if (!TEMPLATE) ctx.skip('this project replaced the template\u2019s pages: its rail is its own, and these destinations are the template\u2019s');
-    expect(linksOf(renderToStaticMarkup(await NoAccess({ feature: 'keys' })))).toEqual([{ href: '/engineering', text: 'Go to Now' }]);
-    expect(linksOf(renderToStaticMarkup(await NoAccess({ feature: 'members' })))).toEqual([{ href: '/', text: 'Go to Home' }]);
+    expect(linksOf(renderToStaticMarkup(await NoAccess({ feature: 'keys', access: await chrome() })))).toEqual([{ href: '/engineering', text: 'Go to Now' }]);
+    expect(linksOf(renderToStaticMarkup(await NoAccess({ feature: 'members', access: await chrome() })))).toEqual([{ href: '/', text: 'Go to Home' }]);
   });
 
   it('offers Main\'s home when who the person is cannot be told', async () => {
     jar.value = 'nobody';
-    expect(linksOf(renderToStaticMarkup(await NoAccess({ feature: 'keys' })))).toEqual([{ href: '/', text: 'Go to Main' }]);
+    expect(linksOf(renderToStaticMarkup(await NoAccess({ feature: 'keys', access: await chrome() })))).toEqual([{ href: '/', text: 'Go to Main' }]);
   });
 });
