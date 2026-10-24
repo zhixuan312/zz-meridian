@@ -215,6 +215,33 @@ function viewToolCalls(src: string): Map<string, string | null>[] {
 
 const GATE_AND_BUILD = ['gate', 'build'];
 
+/**
+ * The thirty-eight modules 0.28.0 moved into `src/logic/`, as the path each left and the path it went to: the figures
+ * and sentences that were `src/views/`'s, the status list's summary, and the alerts the dashboard layout reads.
+ */
+const MOVED_TO_LOGIC: readonly [from: string, to: string][] = [
+  ['src/data/alerts.ts', 'src/logic/alerts.ts'],
+  ['src/components/patterns/status-list/summarise.ts', 'src/logic/summarise.ts'],
+  ...['customer-context', 'customer-explore', 'customers-context', 'customers-explore', 'fact-insight',
+    'home-context', 'home-explore', 'home-parts', 'key-scopes', 'keys-context', 'keys-explore', 'main-summary',
+    'members-context', 'members-explore', 'now-context', 'now-explore', 'now-parts', 'releases-context',
+    'releases-explore', 'request-context', 'request-explore', 'requests-context', 'requests-explore',
+    'revenue-context', 'revenue-explore', 'revenue-parts', 'services-context', 'services-explore',
+    'tests-context', 'tests-explore', 'tickets-context', 'tickets-explore', 'tools', 'usage-context',
+    'usage-explore', 'usage-parts',
+  ].map((name): [string, string] => [`src/views/${name}.ts`, `src/logic/${name}.ts`]),
+];
+
+/** The paths those modules left, without their extension, as an import resolves them. */
+const MOVED_FROM = new Set(MOVED_TO_LOGIC.map(([from]) => from.replace(/\.ts$/, '')));
+
+/** Each moved module as "the path it left → the path it went to", for the migration's instruction. */
+const MOVED_LIST = MOVED_TO_LOGIC.map(([from, to]) => `\`${from}\` → \`${to}\``).join(', ');
+
+/** The team's files that import a module from the path the move left behind. */
+const importsAMovedModule = (root: string): string[] | null =>
+  matching(root, (rel, src) => importsOf(rel, src).some(({ from }) => MOVED_FROM.has(from)));
+
 export const RELEASE_MIGRATIONS: ReleaseMigration[] = [
   {
     id: 'verify-modes',
@@ -458,6 +485,14 @@ export const RELEASE_MIGRATIONS: ReleaseMigration[] = [
     summary: 'A table is a grid since 0.26.0: its spare width sits in the gaps, a `grow` column\'s floor is 160px at every width, and a cell spans no columns.',
     instructions: 'Bring `tests/table-cut-cell.test.tsx` over from the release as it has it. Since 0.26.0 `src/components/ui/table/index.tsx` lays a table out as a grid whose rows are subgrids: every column is as wide as its content, the spare is shared equally between the gaps, and a `grow` column\'s floor is `min-w-40` at every width, without the `@min-[672px]:min-w-64` it had from a 672px table. A test of your own that expects that class expects `min-w-40` alone. A `TableCell` of your own with a `colSpan` takes one track of the grid, so it draws in the first column only: a row that should run the width of the table, such as an empty state, is drawn outside the table, or as a `DataTable` `empty`.',
     checks: ['gate'],
+  },
+  {
+    id: 'four-layers',
+    since: '0.28.0',
+    applies: importsAMovedModule,
+    summary: "The template's figures and sentences moved into `src/logic/`: thirty-eight modules left `src/views/` and `src/data/`.",
+    instructions: `Read "The four layers" and "The path an existing product follows" in references/data-layers.md. Thirty-eight modules moved into the logic layer, and each import of one in your own \`src/views/\` producers and pages names the path it left: ${MOVED_LIST}. Rewrite each import to the path the module has now, or move your own module beside the work it does. Doing nothing leaves your tree building, because every path your own files name is still there: the move is in this template, not in your project. The six layer rules stay off until your own \`scripts/check.local.ts\` exports \`fourLayers = true\`; turn them on once your figures have moved, and the gate and the build are what show the work is done.`,
+    checks: GATE_AND_BUILD,
   },
 ];
 

@@ -191,7 +191,7 @@ function zz(pkg: string, cwd: string, a: string[], label: string, env: Record<st
  * The migrations `cli/src/migrations.ts` declares since 0.5.0: changes in the team's own files, resolved by editing them.
  * `verify-modes` is not here: its edit is a flag in a script, and no origin passes one.
  */
-const RELEASE_IDS = ['shell-assistant-promise', 'assistant-available-promise', 'clock-now-required', 'cache-components-config', 'connection-boundaries', 'authorized-read', 'scoped-invalidation', 'live-provider', 'authorized-endpoints', 'share-view-context', 'agent-reads-section', 'assistant-view-tools', 'nav-needs', 'agent-reads-own-group', 'refusal-declared', 'managed-exports-removed', 'view-tool-page-explore', 'agent-does-here-section', 'sample-pages-renamed', 'marker-measured-on-observe', 'view-page-matched-as-next', 'journey-moved', 'today-in-timezone', 'verify-tiers', 'no-data-mark', 'table-grid'];
+const RELEASE_IDS = ['shell-assistant-promise', 'assistant-available-promise', 'clock-now-required', 'cache-components-config', 'connection-boundaries', 'authorized-read', 'scoped-invalidation', 'live-provider', 'authorized-endpoints', 'share-view-context', 'agent-reads-section', 'assistant-view-tools', 'nav-needs', 'agent-reads-own-group', 'refusal-declared', 'managed-exports-removed', 'view-tool-page-explore', 'agent-does-here-section', 'sample-pages-renamed', 'marker-measured-on-observe', 'view-page-matched-as-next', 'journey-moved', 'today-in-timezone', 'verify-tiers', 'no-data-mark', 'table-grid', 'four-layers'];
 
 const filesUnder = (dir: string, rel = ''): string[] => {
   if (!fs.existsSync(path.join(dir, rel))) return [];
@@ -240,6 +240,20 @@ function bringReleaseOver(proj: string, route: string, reported: string[] = []) 
   const release = new Set(filesUnder(created).filter(owned));
   for (const f of filesUnder(proj).filter(owned)) if (!release.has(f)) fs.rmSync(path.join(proj, f));
   for (const f of release) write(proj, f, read(created, f));
+  // `four-layers` is 0.28.0's: the template's figures, its sentences and the alerts the layout reads moved from
+  // `src/views/` and `src/data/` into `src/logic/`. The pages that come over above import `@/logic/…`, so the modules
+  // the move put there come over beside them, and an own file that still names one where it was has that specifier
+  // rewritten — the edit the migration's instruction names.
+  if (reported.includes('four-layers')) {
+    const moved = filesUnder(created).filter((f) => f.startsWith('src/logic/'));
+    for (const f of moved) write(proj, f, read(created, f));
+    const names = new Set(moved.map((f) => f.slice('src/logic/'.length).replace(/\.ts$/, '')));
+    for (const f of filesUnder(proj).filter((f) => /^(?:app|src|tests)\/.*\.tsx?$/.test(f))) {
+      edit(proj, f, (t) => t
+        .replace(/(['"])@\/views\/([\w-]+)\1/g, (m: string, q: string, name: string) => (names.has(name) ? `${q}@/logic/${name}${q}` : m))
+        .replace(/(['"])@\/data\/alerts\1/g, '$1@/logic/alerts$1'));
+    }
+  }
   // A created project wrote none of its tests, so a test the release no longer has is one it removed or renamed (a test of
   // a page it renamed reads that page's old files) and goes.
   for (const f of filesUnder(path.join(proj, 'tests'))) {

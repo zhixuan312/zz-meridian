@@ -2,6 +2,20 @@
 
 Every release of ZZ Meridian, newest first. Versions follow semver: a removed or renamed token, prop or card is major; a new card, token or variant is minor; a corrected value is a patch. Each entry says what breaks and what to do instead.
 
+## [0.28.0] · 2026-10-24
+
+### Breaking
+
+- **The four data layers are the standard, and the template's figures moved into `src/logic/`.** Thirty-eight modules that computed a figure or wrote a sentence — thirty-six under `src/views/`, the status list's `summarise`, and the alerts the dashboard layout reads — live in `src/logic/` now, and every import names the path each has. `docs/data-layers.md` is the standard: the four layers between a database and the screen, the contract a backend answers, the seven direct reads, and the order a product with its own API or tables follows.
+  - **What a team does.** Run `update`; it reports `migration:four-layers` for each of your own files that still imports a module from a path the move left, and its instruction names all thirty-eight with the path each left. Rewrite each of those imports in your own `src/views/` producers and pages to `src/logic/`, or move the module itself beside the work it does.
+  - **Doing nothing.** Your tree keeps building: the move is in this template, not in your project, so every path your own files name is still there. What you do not get is the layer — your figures stay where they were, and the six rules below stay silent about them until you move them and say so.
+  - **Three helpers arrive managed.** `src/logic/after-start.ts`, `src/logic/derivations.ts` and `src/logic/summarise.ts` are Meridian's from this release, because a shipped card imports them: `update` replaces each when you have not edited it, and stages base, ours and new when you have. Every other module under `src/logic/` is yours.
+  - **Six rules, off until you ask.** `node scripts/check.ts` checks `data-imports-neither`, `logic-does-not-import-views`, `views-produce-nothing`, `presentation-does-not-read`, `no-direct-query` and `client-does-not-import-a-reading-module`. Every one is silent until your own `scripts/check.local.ts` exports `fourLayers = true`; until then the check runs exactly as it did before. `docs/data-layers.md`'s "The six rules, and the switch" says what each asks and what skipping it costs.
+
+### Known issues
+
+- **Three routes are over their first-load budget, and no fix ships in this release.** The refusal chain left the layout's chunk group when the data layer stopped importing `@/views`: `/engineering` first-loads 832 KiB against the 820 KiB cap, `/business` is over the same 820 KiB cap, and `/customers/[id]` grew 5.6% against a 5% budget. On 2026-10-24 the owner decided the cap stays. No fix is planned in this release: the plan records that no honest product change restores the sharing, and a known issue that promises a fix nobody has is worse than one that says there is none.
+
 ## [0.27.1] · 2026-10-24
 
 ### Fixed
