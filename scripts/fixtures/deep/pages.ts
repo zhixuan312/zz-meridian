@@ -22,7 +22,8 @@
  *   presses-late-replace                                                 a document replaced after the presses' look has closed
  *   presses-controls-move                                                controls that are drawn in another order on a later load
  *   presses-live-name                                                    a control whose name gains a count on a later load
- *   sideways-*, double-scroller, heading-skip, empty-region, moved-page, drops-query, page-error   the rules of the standard that no page made fire
+ *   sideways-*, strip, spill, double-scroller, heading-skip, empty-region, moved-page, drops-query, page-error   the rules of the standard that no page made fire
+ *   disclosure                                                          a control in a closed disclosure, which both browser suites open
  *   slow-load                                                            a page whose load event comes late (chrome.ts)
  *   nav-*                                                                pages for scripts/navigate.ts
  */
@@ -296,6 +297,36 @@ ${chart(`${RULE(50)}${CAPTION}`)}
   '/sideways-table-fixed': deep('Table that fits its frame', {
     css: '.frame { width: 240px; overflow: hidden; } table { width: 240px; border-collapse: collapse; } td, caption { text-align: left; }',
     body: '<div class="frame"><table><caption>Requests</caption><tbody><tr><td>Requests per day</td></tr></tbody></table></div>',
+  }),
+  // A strip that scrolls sideways at a phone width hides its last items off the edge, where neither the page's scroll
+  // nor a fade at the cut edge says they are: the reader has no way to reach them. The corrected twin wraps.
+  '/strip': deep('Strip that scrolls sideways', {
+    css: '.chips { display: flex; gap: 8px; max-width: 300px; overflow-x: auto; white-space: nowrap; } .chips span { flex: none; }',
+    body: '<div class="chips"><span>Requests</span><span>Errors</span><span>Latency</span><span>Regions</span><span>Retries</span><span>Timeouts</span><span>Throughput</span></div>',
+  }),
+  '/strip-fixed': deep('Strip that wraps', {
+    css: '.chips { display: flex; flex-wrap: wrap; gap: 8px; max-width: 300px; }',
+    body: '<div class="chips"><span>Requests</span><span>Errors</span><span>Latency</span><span>Regions</span><span>Retries</span><span>Timeouts</span><span>Throughput</span></div>',
+  }),
+  // A figure too long for its grid column, in a box that does not clip: it is drawn over the cells beside it and past
+  // its container's edge, while the cell's own scrollWidth is clean because the cell is as wide as the number. The
+  // corrected twin lets the number break anywhere, so the track takes a share of the container.
+  '/spill': deep('A figure past its box', {
+    css: '.grid { display: grid; grid-template-columns: repeat(4, 1fr); width: 120px; } .grid p { margin: 0; }',
+    body: '<div class="grid"><p class="figure">12345678901234567890</p><div></div><div></div><div></div></div>',
+  }),
+  '/spill-fixed': deep('A figure that breaks', {
+    css: '.grid { display: grid; grid-template-columns: repeat(4, 1fr); width: 120px; } .grid p { margin: 0; overflow-wrap: anywhere; }',
+    body: '<div class="grid"><p class="figure">12345678901234567890</p><div></div><div></div><div></div></div>',
+  }),
+
+  // A control inside a closed disclosure has a box and is not drawn: the keyboard suite tagged it and Tab never reached
+  // it, and the presses suite found nothing at its centre. Both open the disclosure first, as a reader does. The
+  // control answers, so a suite that reaches it passes (#82).
+  '/disclosure': deep('A control in a closed disclosure', {
+    css: 'summary { min-height: 44px; line-height: 44px; }',
+    body: '<details><summary>More</summary><button type="button" id="act">Act</button><p class="status" aria-live="polite"></p></details>',
+    script: `document.getElementById('act').addEventListener('click', () => { document.querySelector('.status').textContent = 'Acted'; });`,
   }),
 
   // A page with a second scroller: the content region may scroll, and anything else is a scrollbar to go looking for.

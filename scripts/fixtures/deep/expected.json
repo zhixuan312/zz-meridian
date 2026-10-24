@@ -453,5 +453,11 @@
   { "page": "/presses-relative-link-fixed", "suite": "presses", "outcome": "pass" },
   { "page": "/presses-late-replace", "suite": "presses", "outcome": "pass", "line": "interactions: 4 controls pressed" },
   { "page": "/presses-controls-move", "suite": "presses", "outcome": "pass", "line": "; 0 issues" },
-  { "page": "/presses-live-name", "suite": "presses", "outcome": "pass", "line": "; 0 issues" }
+  { "page": "/presses-live-name", "suite": "presses", "outcome": "pass", "line": "; 0 issues" },
+  { "page": "/strip", "suite": "audit", "outcome": "fail", "line": "sideways: strip" },
+  { "page": "/strip-fixed", "suite": "audit", "outcome": "pass" },
+  { "page": "/spill", "suite": "audit", "outcome": "fail", "line": "spills: p.figure" },
+  { "page": "/spill-fixed", "suite": "audit", "outcome": "pass" },
+  { "page": "/disclosure", "suite": "keyboard", "outcome": "pass" },
+  { "page": "/disclosure", "suite": "presses", "outcome": "pass", "line": "interactions: 2 controls pressed" }
 ]

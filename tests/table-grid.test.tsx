@@ -1,4 +1,5 @@
 import { render } from '@testing-library/react';
+import type { ReactNode } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 
 vi.mock('next/navigation', () => ({ useRouter: () => ({ push() {}, refresh() {}, replace() {} }), usePathname: () => '/' }));
@@ -32,6 +33,36 @@ describe('the table counts its columns from its head', () => {
   it('counts a headless table from its first row', () => {
     const { container } = render(<Table><TableBody><TableRow><TableCell>a</TableCell><TableCell hideBelow="sm">b</TableCell></TableRow></TableBody></Table>);
     expect(cols(container.querySelector('table')!)).toEqual(['repeat(2, auto)', 'repeat(2, auto)', 'repeat(2, auto)', 'repeat(2, auto)', 'repeat(1, auto)']);
+  });
+
+  // A server component's JSX reaches the client Table as references to the client module, not as the functions it
+  // exported; only the props survive. A wrapper of another type reproduces that here: the Table cannot match a cell by
+  // identity, so it reads the shape, and a table that counted columns by identity laid every one out as a single
+  // column (#85).
+  it('counts a table a server component wrote, where no child is the component the client module exports', () => {
+    const Head = ({ children }: { children?: ReactNode }) => <TableHead>{children}</TableHead>;
+    const Body = ({ children }: { children?: ReactNode }) => <TableBody>{children}</TableBody>;
+    const Row = ({ children }: { children?: ReactNode }) => <TableRow>{children}</TableRow>;
+    const Th = ({ children, hideBelow, grow, align }: { children?: ReactNode; hideBelow?: 'xl' | 'md'; grow?: boolean; align?: 'left' | 'right' }) => (
+      <TableHeader hideBelow={hideBelow} grow={grow} align={align}>{children}</TableHeader>
+    );
+    const Td = ({ children }: { children?: ReactNode }) => <TableCell>{children}</TableCell>;
+    const { container } = render(
+      <Table>
+        <>
+          <Head>
+            <Row>
+              <Th grow>Request</Th>
+              <Th hideBelow="xl">Region</Th>
+              <Th hideBelow="md">Customer</Th>
+              <Th align="right">Latency</Th>
+            </Row>
+          </Head>
+        </>
+        <Body><Row><Td>a</Td><Td>b</Td><Td>c</Td><Td>d</Td></Row></Body>
+      </Table>,
+    );
+    expect(cols(container.querySelector('table')!)).toEqual(['repeat(4, auto)', 'repeat(3, auto)', 'repeat(3, auto)', 'repeat(2, auto)', 'repeat(2, auto)']);
   });
 
   it("does not count DataTable's selection column, which sits over the lead's padding", () => {

@@ -63,9 +63,12 @@ export default function AtlasHome() {
       </section>
 
       {/* Counts */}
-      <section aria-label="The system in numbers" className="mt-20 grid grid-cols-2 border-y border-line sm:grid-cols-4 lg:grid-cols-8">
+      {/* Eight columns only where the numbers and their labels fit them: at 1024 with the rail, eight cells were 49px wide
+          and five labels ran past the cell's edge and its neighbour's padding. Four until xl, and a rule only at the start
+          of a row, whichever count is in that row. */}
+      <section aria-label="The system in numbers" className="mt-20 grid grid-cols-2 border-y border-line sm:grid-cols-4 xl:grid-cols-8">
         {counts.map(([n, l], i) => (
-          <div key={l} className={'px-1 py-6 sm:px-5 ' + (i > 0 ? 'lg:border-l lg:border-line' : '')}>
+          <div key={l} className={'border-line px-1 py-6 sm:px-5 ' + (i % 2 ? 'border-l ' : '') + (i % 4 === 0 ? 'sm:border-l-0 ' : 'sm:border-l ') + (i > 0 ? 'xl:border-l' : 'xl:border-l-0')}>
             <p className="t-figure t-num">{n}</p>
             <p className="t-eyebrow mt-2">{l}</p>
           </div>

@@ -34,9 +34,9 @@ export function Doc({ md, className }: { md: string; className?: string }) {
           a: ({ href, children }) => <a href={href} className="link">{children}</a>,
           code: ({ children, className: c }) =>
             c ? <code className={c}>{children}</code> : <code className="t-code">{children}</code>,
-          pre: ({ children }) => <pre className="my-5 overflow-x-auto rounded-lg border border-line bg-surface-sunk p-5 font-mono text-sm leading-relaxed text-ink [&_code]:border-0 [&_code]:bg-transparent [&_code]:p-0">{children}</pre>,
+          pre: ({ children }) => <pre className="scroll-fade-x my-5 overflow-x-auto rounded-lg border border-line bg-surface-sunk p-5 font-mono text-sm leading-relaxed text-ink [&_code]:border-0 [&_code]:bg-transparent [&_code]:p-0">{children}</pre>,
           table: ({ children }) => (
-            <div className="my-6 overflow-x-auto rounded-lg border border-line bg-surface/60">
+            <div className="scroll-fade-x my-6 overflow-x-auto rounded-lg border border-line bg-surface/60">
               <table className="w-full min-w-[560px] text-left text-sm leading-normal">{children}</table>
             </div>
           ),

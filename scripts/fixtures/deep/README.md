@@ -75,6 +75,9 @@ Every page has an `h1`, `lang="en"`, a `main`, an opaque ground and controls of 
 | `/sideways-region` | A content region 600px wide in a 300px canvas: the first of the sideways rule's three arms. `-fixed` fits |
 | `/sideways-data-page` | A `[data-page-width="data"]` page 200px wide in a 400px canvas: the page is what should stretch. `-fixed` fills it |
 | `/sideways-table` | A 600px table in a 240px frame that clips rather than scrolls, so no scrollbar offers the rest. `-fixed` fits |
+| `/strip` | A chip strip with `overflow-x: auto`, wider than 390px: its last items are off the edge with no fade saying so. `-fixed` wraps |
+| `/spill` | A 20-digit figure in one of four `1fr` grid tracks 120px wide, drawn past the track and its container, in a box that does not clip. `-fixed` breaks the figure anywhere |
+| `/disclosure` | A control inside a closed `<details>`: both the keyboard walk and the presses walk open it first, then reach it (passes) |
 | `/double-scroller` | Two 200px scrollers over 400px of content: a page may have one, and the content region is it. `-fixed` has one |
 | `/heading-skip` | An `h2` then an `h4`: the outline a screen reader reads has a hole in it. `-fixed` descends one at a time |
 | `/empty-region` | A content region that rendered nothing — every other rule passes a page with no content. `-fixed` holds the day's rows |

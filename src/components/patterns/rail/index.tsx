@@ -145,7 +145,7 @@ export function Rail({
               <AppMark size={28} />
               <span className="min-w-0 flex-1">
                 {/* Either may be cut to the rail's width; the title holds the whole of it, as every cut text keeps (#79). */}
-                <span title={app.name} className="block truncate text-md leading-tight font-semibold tracking-[-0.015em]">{app.name}</span>
+                <span title={app.name} className="block truncate text-md leading-tight font-semibold tracking-[-0.015em]">{app.name}</span>{' '}
                 <span title={workspace} className="t-eyebrow mt-0.5 block truncate">{workspace}</span>
               </span>
               {/* `ChevronsUpDown` is the glyph for choosing between things; with nothing to switch, the row is the menu. */}

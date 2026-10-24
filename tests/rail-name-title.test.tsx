@@ -21,4 +21,13 @@ describe('the rail\'s head (#79)', () => {
     expect(name).toHaveAttribute('title', 'Northwind Treasury Console');
     expect(workspace).toHaveAttribute('title', 'Treasury operations, Europe and Asia');
   });
+
+  // WCAG 2.5.3: the visible text of the menu trigger has to be in its name. The name is "<app>, <workspace>: account
+  // menu"; with no space between the two spans the visible text ran them together and axe read a word that name does
+  // not hold (#84). The blocks make the space invisible, so it costs the layout nothing.
+  it('separates the product name and the workspace, so the trigger\'s visible text is in its name', () => {
+    const { container } = render(<Rail nav={nav} user={null} workspace="Treasury operations, Europe and Asia" />);
+    const trigger = container.querySelector('button[aria-label$="account menu"]')!;
+    expect(trigger.textContent).toContain('Northwind Treasury Console Treasury operations, Europe and Asia');
+  });
 });
