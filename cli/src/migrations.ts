@@ -248,10 +248,30 @@ const REMOVED_CARD_EXPORTS: readonly [module: string, symbol: string][] = [
 /** Each moved module as "the path it left → the path it went to", for the migration's instruction. */
 const MOVED_LIST = MOVED_TO_LOGIC.map(([from, to]) => `\`${from}\` → \`${to}\``).join(', ');
 
+/**
+ * Whether one of the team's files reads a symbol that left a managed module — by naming it in an import list, through
+ * a namespace (`card.afterStart(…)`), or by handing it on with a re-export. `removedExportReaders` below reads the same
+ * three shapes for 0.16.0's removals; a symbol is named in all three, and each stops compiling once the module is replaced.
+ */
+function readsRemovedExport(rel: string, src: string, module: string, symbols: readonly string[]): boolean {
+  const escapes = (name: string) => name.replace(/\$/g, '\\$');
+  const reading = importsOf(rel, src).some(({ from, names, namespace }) =>
+    from === module && (names.some((n) => symbols.includes(n))
+      || (namespace !== null && symbols.some((s) => new RegExp(`(?<![\\w$.])${escapes(namespace)}\\.${s}\\b`).test(src)))));
+  if (reading) return true;
+  for (const m of src.matchAll(/^\s*export\s+(?:type\s+)?(?:\*|\{([^}]*)\})\s*from\s+(['"])([^'"]+)\2/gm)) {
+    if (resolvedImport(rel, m[3]!) !== module) continue;
+    // `export *` hands on every symbol, the removed one among them.
+    if (m[1] === undefined) return true;
+    if (m[1].split(',').map((s) => s.trim().replace(/^type\s+/, '').split(/\s+as\s+/)[0]!).some((n) => symbols.includes(n))) return true;
+  }
+  return false;
+}
+
 /** The team's files that import a moved module from the path it left, or a symbol from a card it no longer lives on. */
 const importsAMovedModule = (root: string): string[] | null =>
-  matching(root, (rel, src) => importsOf(rel, src).some(({ from, names }) =>
-    MOVED_FROM.has(from) || REMOVED_CARD_EXPORTS.some(([module, symbol]) => from === module && names.includes(symbol))));
+  matching(root, (rel, src) => importsOf(rel, src).some(({ from }) => MOVED_FROM.has(from))
+    || REMOVED_CARD_EXPORTS.some(([module, symbol]) => readsRemovedExport(rel, src, module, [symbol])));
 
 export const RELEASE_MIGRATIONS: ReleaseMigration[] = [
   {

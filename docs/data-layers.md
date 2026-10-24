@@ -154,9 +154,11 @@ is computed at read time. A page never builds either: it reads the answer, or th
 
 `src/data/uptime.ts` builds each service's uptime from the days that service's own record keeps, through
 `derivedAnswer()` in `src/data/derived.ts`, rather than reading an uptime stored beside them. Its source is the services
-collection, read through `readAll('services')`, and the revision that read answers is what makes an unchanged source
-recognisable without building again. `app/(dashboard)/services/page.tsx` reads the answer's payload — its data
-and its `builtAt` — instead of computing an uptime at render, and a write to any other collection never re-stamps it.
+collection, read through `readAllInScope(scope, 'services', …)` on the scope the answer is keyed by — the answer is held
+per tenant, so one tenant's rows are never served from another's build — and the revision that read answers is what makes
+an unchanged source recognisable without building again. `app/(dashboard)/services/page.tsx` reads the answer's payload —
+its data and its `builtAt` — instead of computing an uptime at render, and a write to any other collection never re-stamps
+it.
 
 ## Where this sits among the content layers
 

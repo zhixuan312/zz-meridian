@@ -360,6 +360,13 @@ describe('the 0.28.0 migration', () => {
     // The card itself, and its type, are the card's own business: neither is a break.
     expect(moved.applies(project({ 'app/reports/page.tsx': "import { IncidentCard, type Incident } from '@/components/patterns/incident-card';\nexport default IncidentCard;\n" }))).toBeNull();
     expect(moved.applies(project({ 'app/reports/page.tsx': "import type { Service } from '@/components/patterns/status-list';\nexport default null;\n" }))).toBeNull();
+    // A symbol is named through a namespace, or handed on by a re-export, as often as it is imported by name — and both
+    // stop compiling once the card is replaced, so both are this migration's.
+    expect(moved.applies(project({ 'app/reports/page.tsx': "import * as card from '@/components/patterns/incident-card';\nexport const at = card.afterStart('2026-01-01', '2026-01-02');\n" }))).toEqual(['app/reports/page.tsx']);
+    expect(moved.applies(project({ 'src/views/own.tsx': "export { summarise } from '@/components/patterns/status-list';\n" }))).toEqual(['src/views/own.tsx']);
+    expect(moved.applies(project({ 'src/views/own.tsx': "export * from '@/components/patterns/status-list';\n" }))).toEqual(['src/views/own.tsx']);
+    // A namespace that names something the card still exports is not this migration's.
+    expect(moved.applies(project({ 'app/reports/page.tsx': "import * as card from '@/components/patterns/incident-card';\nexport default card.IncidentCard;\n" }))).toBeNull();
     expect(moved.applies(path.resolve(import.meta.dirname, '..'))).toBeNull();
   });
 });
