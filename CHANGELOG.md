@@ -16,6 +16,8 @@ Every release of ZZ Meridian, newest first. Versions follow semver: a removed or
 
 - **The first load carried a second copy of the shell.** Turbopack's chunker merges small chunks and duplicates what it cannot merge: after the data layer stopped importing `@/views`, every route's first load held a second copy of the shell and the shared UI set — 40.3 and 29.9 KiB of it on `/engineering` — and three routes went over budget, `/engineering` 832 KiB against the 820 KiB cap, `/business` at the cap, and `/customers/[id]` 5.6% over its baseline. Smaller chunks are reusable across pages, so `experimental.turbopackChunking` now asks the chunker for them (`minChunkSize: 35000`, `maxChunkCountPerGroup: 80`): `/engineering` 811 KiB, and a page asks for 27 chunks where it asked for 23. A chunk is also a script tag in the page's HTML, so the split is taken as coarse as the HTML budget allows — every page stays within 3.8% of its baseline HTML, `/keys` the closest — and no cap, baseline or page was moved.
 
+- **A created project's `pnpm verify` no longer fails on this repository's own record.** Two checks that ship with the template read files only this checkout has — the changelog beside the CLI's migrations and their tests, and the five guides the skill is delivered from, which `create` installs at `.claude/skills/` and `.agents/skills/` instead. Each now asks only where its subject exists, which is a checkout carrying `cli/src/migrations.ts`: a created or adopted project has no such record to check, and in this repository both run exactly as they did.
+
 ## [0.27.1] · 2026-10-24
 
 ### Fixed

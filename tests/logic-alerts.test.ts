@@ -36,8 +36,13 @@ describe('the alerts module', () => {
     expect(reaching).toEqual([]);
   });
 
-  it('is named by the guides at its new path', () => {
-    for (const doc of ['skills/zz-meridian/SKILL.md', 'skills/zz-meridian/references/customize.md', 'skills/zz-meridian/references/existing-project.md', 'docs/start-a-dashboard.md', 'src/components/patterns/shell-tools/README.md']) {
+  // The five documents are this repository's own. A project `create` makes carries its skill at `.claude/skills/` and
+  // `.agents/skills/` instead (`cli/src/create.ts:70`) and no `docs/start-a-dashboard.md`, so only a checkout that holds
+  // them can be asked to name the module at its new path. `cli/src/migrations.ts` is what tells the two apart: it exists
+  // here and in no created project, which is why the package's own checks are the `tests/cli-*` ones.
+  const GUIDES = ['skills/zz-meridian/SKILL.md', 'skills/zz-meridian/references/customize.md', 'skills/zz-meridian/references/existing-project.md', 'docs/start-a-dashboard.md', 'src/components/patterns/shell-tools/README.md'];
+  it.skipIf(!fs.existsSync(path.join(ROOT, 'cli/src/migrations.ts')))('is named by the guides at its new path', () => {
+    for (const doc of GUIDES) {
       expect(source(doc), doc).toContain('src/logic/alerts.ts');
       expect(source(doc), doc).not.toContain('src/data/alerts.ts');
     }

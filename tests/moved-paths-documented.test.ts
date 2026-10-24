@@ -42,7 +42,10 @@ describe('the paths a move leaves behind', () => {
     expect(stale).toEqual([]);
   });
 
-  it('leaves the record of what was built as it was written', () => {
+  // The record of what was built is this repository's own: a project `create` makes has no `CHANGELOG.md` and no CLI
+  // source, so only a checkout that holds them can be asked what the record says. `cli/src/migrations.ts` stands for the
+  // record as a whole, because it is one of the files this test reads and no created project carries it.
+  it.skipIf(!fs.existsSync(path.join(ROOT, 'cli/src/migrations.ts')))('leaves the record of what was built as it was written', () => {
     for (const rel of HISTORY) expect(source(rel).match(STALE) ?? [], rel).not.toEqual([]);
   });
 });
