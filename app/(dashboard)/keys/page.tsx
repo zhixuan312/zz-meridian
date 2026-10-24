@@ -3,7 +3,7 @@ import { RefusalScreen } from '@/views/refusal';
 import { ACTIONS } from '@/data/features';
 import { readAll } from '@/data/read';
 import { KeysView } from '@/views/keys';
-import type { ApiKey } from '@/data/sample';
+import { projectKey } from '@/data/projections';
 import { createKey, revokeKey } from './actions';
 
 export function generateMetadata() {
@@ -28,7 +28,7 @@ export default async function KeysPage() {
   const mayRevoke = await may(ACTIONS['revoke-key'].needs);
   return (
     <KeysView
-      rows={rows as ApiKey[]}
+      rows={rows.map((row) => projectKey(row))}
       now={observedAt}
       revisions={revision ? { keys: revision } : undefined}
       may={{ create: mayCreate, revoke: mayRevoke }}

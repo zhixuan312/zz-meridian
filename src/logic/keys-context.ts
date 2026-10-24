@@ -2,7 +2,7 @@
  * API keys' shared context (decision 0011): which keys exist, who owns them, what they can call and which have gone
  * unused. A key's secret, and its hash, are never in it: the secret is shown once, on this page, and nowhere else.
  */
-import type { ApiKey } from '@/data/sample';
+import type { PublicKey } from '@/data/projections';
 import { plural } from '@/lib/format';
 import { formatDate } from '@/lib/format-date';
 import { listed, type Insight, type SharedContext } from '@/lib/shared-context';
@@ -14,9 +14,9 @@ export const UNUSED_DAYS = 30;
 const NAMED = { every: 8, idle: 5, broad: 5 } as const;
 const MORE = 'explore_keys finds them';
 
-export function keysContext(rows: ApiKey[], now: string, scopes: readonly string[]): SharedContext {
+export function keysContext(rows: PublicKey[], now: string, scopes: readonly string[]): SharedContext {
   const at = Date.parse(now);
-  const unused = (k: ApiKey) => (k.lastUsed ? Math.floor((at - Date.parse(k.lastUsed)) / DAY) : null);
+  const unused = (k: PublicKey) => (k.lastUsed ? Math.floor((at - Date.parse(k.lastUsed)) / DAY) : null);
   const live = rows.filter((k) => k.env === 'live');
   const insights: Insight[] = [];
   const idle = live.filter((k) => (unused(k) ?? Infinity) >= UNUSED_DAYS);

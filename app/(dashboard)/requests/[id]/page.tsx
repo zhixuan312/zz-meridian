@@ -4,7 +4,8 @@ import { attempt } from '@/data/main';
 import { read } from '@/data/read';
 import { readEndpoints } from '@/data/metrics';
 import { ACTIONS, FEATURES } from '@/data/features';
-import { FEATURED_REQUEST_IDS, traceOf, payloadsOf, type CustomerRecord, type RequestRow } from '@/data/sample';
+import { FEATURED_REQUEST_IDS, traceOf, payloadsOf } from '@/data/sample';
+import { projectRequest } from '@/data/projections';
 import { customerAddress } from '@/logic/customer-context';
 import { MissingPage } from '@/views/missing-page';
 import { NOT_FOUND } from '@/views/not-found';
@@ -17,7 +18,7 @@ export function generateStaticParams() {
 
 const byId = async (id: string) => {
   const { rows, observedAt } = await read('requests', { where: [{ field: 'id', op: 'eq', value: id }] });
-  return { request: rows[0] as RequestRow | undefined, observedAt };
+  return { request: rows[0] ? projectRequest(rows[0]) : undefined, observedAt };
 };
 
 /**
@@ -25,8 +26,8 @@ const byId = async (id: string) => {
  * server, from the customers. Null when they hold no customer of that name or cannot be read: the name is then text.
  */
 async function customerPage(name: string) {
-  const found = await attempt(async () => (await read('customers', { where: [{ field: 'name', op: 'eq', value: name }], limit: 1 })).rows[0] as CustomerRecord | undefined);
-  return found ? customerAddress(found.id) : null;
+  const found = await attempt(async () => (await read('customers', { where: [{ field: 'name', op: 'eq', value: name }], limit: 1 })).rows[0]);
+  return found && typeof found.id === 'string' ? customerAddress(found.id) : null;
 }
 
 /**

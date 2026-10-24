@@ -6,8 +6,8 @@ import { z } from 'zod';
 import { clock } from '@/data/collections';
 import { AccessDenied, can, collectionFor, nameOf, resolveAccess } from '@/data/access';
 import { collectionTag } from '@/data/read';
+import { projectKey, type PublicKey } from '@/data/projections';
 import { SCOPES } from '@/logic/key-scopes';
-import type { ApiKey } from '@/data/sample';
 
 const draft = z.object({
   name: z.string().trim().min(1, 'Name the key.'),
@@ -21,7 +21,7 @@ const draft = z.object({
  * The key's owner is the caller — the person the policy names — so a key Lucas makes records Lucas, never the sample's
  * own person; `subjectId` is the honest fallback when the policy names nobody.
  */
-export async function createKey(input: z.input<typeof draft>): Promise<ApiKey & { secret: string }> {
+export async function createKey(input: z.input<typeof draft>): Promise<PublicKey & { secret: string }> {
   const { name, env, scopes } = draft.parse(input);
   const scope = await resolveAccess();
   if (!(await can(scope, 'keys', 'create'))) throw new AccessDenied();
@@ -31,7 +31,7 @@ export async function createKey(input: z.input<typeof draft>): Promise<ApiKey & 
   const owner = (await nameOf(scope)) ?? scope.subjectId;
   const key = await collectionFor(scope, 'keys').create!({ name, env, scopes, owner, created: clock().toISOString(), lastUsed: null, hint, secretHash });
   updateTag(collectionTag(scope.tenantId, 'keys'));
-  return { ...(key as ApiKey), secret };
+  return { ...projectKey(key), secret };
 }
 
 export async function revokeKey(id: string): Promise<void> {

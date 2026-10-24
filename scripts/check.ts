@@ -446,6 +446,12 @@ const escaped = (rule: string, f: string, line: number, raw: string) => {
   escapes.push(`escape  ${f}:${line}: ${rule} — ${reason}`);
   return true;
 };
+/** The project file an import specifier names, with the extension resolved, or null for a package or a missing module. */
+const resolveSpec = (from: string, spec: string) => {
+  const base = importTarget(from, spec, ALIASES);
+  if (!base) return null;
+  return [base, `${base}.ts`, `${base}.tsx`, `${base}/index.ts`, `${base}/index.tsx`].find((c) => /\.tsx?$/.test(c) && fs.existsSync(path.join(ROOT, c)) && fs.statSync(path.join(ROOT, c)).isFile()) ?? null;
+};
 if (fourLayers) {
   for (const [rule, dir, forbidden, why] of [
     ['data-imports-neither', 'src/data', /^src\/(?:logic|views)\//, 'the data layer imports neither src/logic nor src/views'],
@@ -484,6 +490,74 @@ if (fourLayers) {
   }
 }
 
+// ── A client module imports no logic module that reads ────────────────────────────────────────────────
+// A module with 'use client' runs in a browser. A logic module it imports by value may derive from the records, but the
+// chain must not reach a module that READS them: access resolution and a fetch belong on the server. A reading module is
+// decided by what it does, not by where it sits — a module under src/data whose own source, comments blanked, calls one
+// of `read(`, `readAll(`, `aggregate(`, `collectionFor(`, `resolveAccess(` or `can(`. A pure helper over values a page
+// was given (`src/data/verification.ts`) is not one, so `src/logic/tests-context.ts` stays legal. The walk stops at a
+// 'use server' module: its module is a reference in the browser and not its body. A project turns this on with the same
+// switch as the other four-layer rules; the escape is `allow-client-does-not-import-a-reading-module: <reason>`.
+if (fourLayers) {
+  const READS = /\b(?:read|readAll|aggregate|collectionFor|resolveAccess|can)\s*\(/;
+  /** Comment-blanked source, read once per module: the walk visits the same modules from many clients. */
+  const codeOf = new Map<string, string>();
+  const code = (f: string) => {
+    if (!codeOf.has(f)) codeOf.set(f, blanked(f));
+    return codeOf.get(f)!;
+  };
+  /** The directive a module opens with, past any comment above it. */
+  const directive = (f: string) => /^\s*['"]use (client|server)['"]/.exec(code(f))?.[1] ?? null;
+  /** A module that reads the company's records. */
+  const reading = (f: string) => /^src\/data\//.test(f) && READS.test(code(f));
+  /** Every specifier a source takes by value, with where it sits. A type-only import is erased before anything runs, so it is not one. */
+  const VALUE = /\b(?:import|export)\s+(type\s+)?([^'";]*?)\s*from\s*['"]([^'"]+)['"]/g;
+  const SIDE_EFFECT = /\bimport\s*(?:\(\s*)?['"]([^'"]+)['"]/g;
+  const valueImports = (src: string) => {
+    const out: { spec: string; at: number }[] = [];
+    for (const m of src.matchAll(VALUE)) {
+      const names = /^\{([^}]*)\}$/.exec(m[2].trim())?.[1].split(',').map((n) => n.trim()).filter(Boolean);
+      if (m[1] || names?.every((n) => /^type\s/.test(n))) continue;
+      out.push({ spec: m[3], at: m.index! + m[0].lastIndexOf(m[3]) });
+    }
+    for (const m of src.matchAll(SIDE_EFFECT)) out.push({ spec: m[1], at: m.index! + m[0].lastIndexOf(m[1]) });
+    return out;
+  };
+  /** The chain of value imports from `start` to the first module that reads, or null when it never reaches one. */
+  const reachesReading = (start: string): string[] | null => {
+    const seen = new Set<string>([start]);
+    const queue: string[][] = [[start]];
+    while (queue.length) {
+      const trail = queue.shift()!;
+      for (const { spec } of valueImports(code(trail.at(-1)!))) {
+        const next = resolveSpec(trail.at(-1)!, spec);
+        if (!next || seen.has(next) || directive(next) === 'server') continue;
+        if (reading(next)) return [...trail, next];
+        seen.add(next);
+        queue.push([...trail, next]);
+      }
+    }
+    return null;
+  };
+  for (const f of [APP_DIR, 'src'].flatMap((d) => walk(d, /\.tsx?$/))) {
+    if (directive(f) !== 'client') continue;
+    const src = code(f);
+    for (const { spec, at } of valueImports(src)) {
+      const target = resolveSpec(f, spec);
+      if (!target || !/^src\/logic\//.test(target)) continue;
+      // A 'use server' logic module is a reference in the browser, so what it does on the server is not the client's.
+      if (directive(target) === 'server') continue;
+      const trail = reachesReading(target);
+      if (!trail) continue;
+      const line = lineOf(src, at);
+      if (escaped('client-does-not-import-a-reading-module', f, line, read(f))) continue;
+      // Paths as an import writes them: the extension a resolution added is not what the reader is looking for.
+      const bare = (m: string) => m.replace(/\.tsx?$/, '');
+      problems.push(`${f}:${line}: imports ${spec} from ${bare(target)}, whose imports reach ${bare(trail.at(-1)!)}, a module that reads (${trail.map(bare).join(' -> ')}); a client module imports no logic module that reads`);
+    }
+  }
+}
+
 // ── No dormant code: an export nothing a product keeps imports ───────────────────────────────────────
 // A product keeps everything except tests, previews, the Atlas pages and the Atlas-only modules scripts/brand.ts removes
 // (read from its list, so the two never disagree). A type the docs tell a product to use stays exported by the sample using it.
@@ -507,11 +581,6 @@ const TOOLKIT = /^src\/lib\/(format|color|collection|explore|live)\.ts$/;
 const meridians = new Set(Object.keys(effective?.files ?? {}));
 // A root proxy.ts is the product's own code too: Next runs it before every request.
 const kept = [...['src', 'app', 'scripts'].flatMap((d) => walk(d, /\.tsx?$/)), ...(fs.existsSync(path.join(ROOT, 'proxy.ts')) ? ['proxy.ts'] : [])].filter((f) => !/(^|\/)preview\.tsx$/.test(f) && !f.startsWith('app/system/') && !atlasOnly.includes(f));
-const resolveSpec = (from: string, spec: string) => {
-  const base = importTarget(from, spec, ALIASES);
-  if (!base) return null;
-  return [base, `${base}.ts`, `${base}.tsx`, `${base}/index.ts`, `${base}/index.tsx`].find((c) => /\.tsx?$/.test(c) && fs.existsSync(path.join(ROOT, c)) && fs.statSync(path.join(ROOT, c)).isFile()) ?? null;
-};
 /** For every module: the names a kept importer uses, or '*' when one takes them all. */
 const used = new Map<string, Set<string>>();
 const record = (f: string | null, name: string) => { if (f) used.set(f, (used.get(f) ?? new Set()).add(name)); };

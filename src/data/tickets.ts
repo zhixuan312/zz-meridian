@@ -10,6 +10,7 @@ import { requireNeed } from '@/data/access';
 import { members } from '@/data/collections';
 import { FEATURES } from '@/data/features';
 import { readAll } from '@/data/metrics';
+import { projectTicket } from '@/data/projections';
 import type { Ticket } from '@/data/sample';
 
 /** A ticket as the page and the tool carry it: the record, and the name of the member it is assigned to. */
@@ -22,12 +23,12 @@ const PAGE = 500;
 export async function readTickets(): Promise<{ rows: TicketRow[]; revisions: Record<string, string>; observedAt: string }> {
   await requireNeed(FEATURES.tickets.needs);
   const { rows: all, revision, observedAt } = await readAll('tickets');
-  const tickets = all as Ticket[];
-  const ids = [...new Set(tickets.flatMap((t) => (t.assigneeId ? [t.assigneeId] : [])))];
+  const ids = [...new Set(all.flatMap((t) => (typeof t.assigneeId === 'string' ? [t.assigneeId] : [])))];
   const names = new Map<string, string>();
   for (let at = 0; at < ids.length; at += PAGE) {
     const found = await members.query({ where: [{ field: 'id', op: 'in', value: ids.slice(at, at + PAGE) }], limit: PAGE });
     for (const m of found.rows) names.set(m.id, m.name);
   }
-  return { rows: tickets.map((t) => ({ ...t, assignee: t.assigneeId ? (names.get(t.assigneeId) ?? null) : null })), revisions: revision ? { tickets: revision } : {}, observedAt };
+  const rows = all.map((row) => projectTicket({ ...row, assignee: typeof row.assigneeId === 'string' ? (names.get(row.assigneeId) ?? null) : null }));
+  return { rows, revisions: revision ? { tickets: revision } : {}, observedAt };
 }

@@ -4,7 +4,7 @@ import { invitableRoles, memberAccess, type MemberRowAccess } from '@/data/membe
 import { read, readAll } from '@/data/read';
 import { assignRole, inviteMember, removeMember, setMemberStatus } from './actions';
 import { MembersView } from '@/views/members';
-import type { Member } from '@/data/sample';
+import { projectMember } from '@/data/projections';
 
 export function generateMetadata() {
   return gatedMetadata('members', { title: 'Members' });
@@ -36,7 +36,7 @@ export default async function MembersPage() {
   const denied = await gate('members');
   if (denied) return RefusalScreen(denied);
   const { rows, revision, observedAt } = await readAll('members', { sort: { field: 'joined', dir: 'desc' } });
-  const members = rows as Member[];
+  const members = rows.map((row) => projectMember(row));
   const [access, roles, workspace] = await Promise.all([
     Promise.all(members.map(async (m): Promise<readonly [string, MemberRowAccess]> => [m.id, await memberAccess(m.id)])).then((entries) => Object.fromEntries(entries)),
     invitableRoles(),

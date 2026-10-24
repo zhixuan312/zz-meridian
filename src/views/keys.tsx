@@ -23,7 +23,7 @@ import { AskAbout } from '@/components/patterns/ask-about';
 import { DataTable, type Column } from '@/components/patterns/data-table';
 import { formatDate, formatRelative } from '@/lib/format-date';
 import { useLive, type Revisions } from '@/lib/live';
-import type { ApiKey } from '@/data/sample';
+import type { PublicKey } from '@/data/projections';
 import { SCOPES, type Scope } from '@/logic/key-scopes';
 import { useShareView } from '@/components/base/use-share-view';
 import { keysContext } from '@/logic/keys-context';
@@ -35,17 +35,17 @@ type Draft = { name: string; env: 'live' | 'test'; scopes: Scope[] };
 /** `now` is the read's observation time, so "last used" is never fresher than the data. */
 /** `may` is what the page asked of the action table, so a control the person may not use is not drawn at all, and */
 /** nothing says why. Defaults allow both, for a view mounted on its own. */
-export function KeysView({ rows, now, revisions, createKey, revokeKey, may = { create: true, revoke: true } }: { rows: ApiKey[]; now: string; revisions?: Revisions; createKey: (draft: Draft) => Promise<ApiKey & { secret: string }>; revokeKey: (id: string) => Promise<void>; may?: { create: boolean; revoke: boolean } }) {
+export function KeysView({ rows, now, revisions, createKey, revokeKey, may = { create: true, revoke: true } }: { rows: PublicKey[]; now: string; revisions?: Revisions; createKey: (draft: Draft) => Promise<PublicKey & { secret: string }>; revokeKey: (id: string) => Promise<void>; may?: { create: boolean; revoke: boolean } }) {
   useShareView(keysContext(rows, now, SCOPES));
   const router = useRouter();
   useLive(['keys'], revisions);
   const asOf = new Date(now);
-  const [shown, removeShown] = useOptimistic(rows, (xs: ApiKey[], id: string) => xs.filter((k) => k.id !== id));
+  const [shown, removeShown] = useOptimistic(rows, (xs: PublicKey[], id: string) => xs.filter((k) => k.id !== id));
   const revokingIds = useRef(new Set<string>());
   const [pending, startTransition] = useTransition();
   const [creating, setCreating] = useState(false);
-  const [revoking, setRevoking] = useState<ApiKey | null>(null);
-  const [fresh, setFresh] = useState<(ApiKey & { secret: string }) | null>(null);
+  const [revoking, setRevoking] = useState<PublicKey | null>(null);
+  const [fresh, setFresh] = useState<(PublicKey & { secret: string }) | null>(null);
   const [name, setName] = useState('');
   const [env, setEnv] = useState<'live' | 'test'>('live');
   const [scopes, setScopes] = useState<Scope[]>(['messages']);
@@ -82,11 +82,11 @@ export function KeysView({ rows, now, revisions, createKey, revokeKey, may = { c
   };
 
   /** The revoke control is drawn only for a person who may use it: hidden, never a button that only fails on submit. */
-  const revokeColumn: Column<ApiKey> = {
+  const revokeColumn: Column<PublicKey> = {
     key: 'revoke', header: <span className="sr-only">Actions</span>, align: 'right', mobile: 'status',
     cell: (k) => <IconButton size="sm" variant="ghost" label={`Revoke ${k.name}`} tooltip icon={<Trash2 />} onClick={() => setRevoking(k)} className="hover:text-critical-ink" />,
   };
-  const columns: Column<ApiKey>[] = [
+  const columns: Column<PublicKey>[] = [
     {
       key: 'name', header: 'Name', grow: true, truncate: true, mobile: 'title', sortValue: (k) => k.name, title: (k) => k.name,
       cell: (k) => (

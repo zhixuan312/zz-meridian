@@ -229,4 +229,97 @@ describe('the four-layer rules', () => {
     restorePlants();
     restore(switchFile);
   }, 60_000);
+
+  it('refuse a client module that imports a logic module whose imports reach a reading module, by alias and by relative path', () => {
+    // `src/logic/alerts.ts` imports `src/data/access.ts`, which resolves access and reads: the logic module is legal, but
+    // a client module that imports it by value would pull the reads into a browser. The chain is in the refusal.
+    const alias = "import { ALERTS } from '@/logic/alerts';";
+    const relative = "import { ALERTS as AGAIN } from '../logic/alerts';";
+    const tail = ['void ALERTS; void AGAIN;', 'export function Planted() { return null; }'];
+    const chain = 'whose imports reach src/data/access, a module that reads (src/logic/alerts -> src/data/access); a client module imports no logic module that reads';
+    try {
+      put('src/views/planted-client.tsx', ["'use client';", alias, relative, ...tail].join('\n') + '\n');
+      const r = runCheck();
+      expect(r.stdout).toContain(`src/views/planted-client.tsx:2: imports @/logic/alerts from src/logic/alerts, ${chain}`);
+      expect(r.stdout).toContain(`src/views/planted-client.tsx:3: imports ../logic/alerts from src/logic/alerts, ${chain}`);
+      expect(r.status).toBe(1);
+      // The stated escape prints as the other rules' escapes do, and the line it sits on is no longer refused.
+      put('src/views/planted-client.tsx', ["'use client';", `${alias} // allow-client-does-not-import-a-reading-module: the sample reads alerts beside usage on purpose`, relative, ...tail].join('\n') + '\n');
+      const e = runCheck();
+      expect(e.stdout).toContain('escape  src/views/planted-client.tsx:2: client-does-not-import-a-reading-module — the sample reads alerts beside usage on purpose');
+      expect(e.stdout).not.toMatch(/src\/views\/planted-client\.tsx:2: imports/);
+      expect(e.stdout).toMatch(/src\/views\/planted-client\.tsx:3: imports \.\.\/logic\/alerts/);
+      expect(e.status).toBe(1);
+    } finally {
+      remove('src/views/planted-client.tsx');
+    }
+  }, 60_000);
+
+  it('say nothing when the logic module a client imports is a pure helper over values a page was given', () => {
+    // `src/logic/tests-context.ts` imports `src/data/verification.ts`, three pure rules over runs and releases, which
+    // calls none of the six reads: a pure helper is not a reading module, and the rule says nothing about it.
+    try {
+      put('src/views/planted-pure.tsx', ["'use client';", "import { requiredOf } from '@/logic/tests-context';", 'void requiredOf;', 'export function PlantedPure() { return null; }'].join('\n') + '\n');
+      const r = runCheck();
+      expect(r.stdout).not.toMatch(/src\/views\/planted-pure\.tsx/);
+      expect(r.stdout).toMatch(/^0 problems/m);
+      expect(r.status).toBe(0);
+    } finally {
+      remove('src/views/planted-pure.tsx');
+    }
+  }, 60_000);
+
+  it("say nothing when the chain crosses a 'use server' module", () => {
+    // `src/data/live-actions.ts` is a Server Action that reads, but the browser gets a reference to it, not its body:
+    // the walk stops there, so a client may import a logic module that names it.
+    try {
+      put('src/logic/planted-through-server.ts', "import { refreshCollections } from '@/data/live-actions';\nexport const through = refreshCollections;\n");
+      put('src/views/planted-server.tsx', ["'use client';", "import { through } from '@/logic/planted-through-server';", 'void through;', 'export function PlantedServer() { return null; }'].join('\n') + '\n');
+      const r = runCheck();
+      expect(r.stdout).not.toMatch(/src\/views\/planted-server\.tsx/);
+      expect(r.stdout).toMatch(/^0 problems/m);
+      expect(r.status).toBe(0);
+    } finally {
+      remove('src/logic/planted-through-server.ts', 'src/views/planted-server.tsx');
+    }
+  }, 60_000);
+
+  it('decide what reads by the code, not by a comment that names read()', () => {
+    // `src/data/collections.ts` names `read()` in its prose and calls none of the six. A raw text match would call it a
+    // reading module and refuse this client, which reaches nothing but the collections' own data.
+    try {
+      put('src/logic/planted-collections.ts', "import { clock } from '@/data/collections';\nexport const at = clock;\n");
+      put('src/views/planted-comment.tsx', ["'use client';", "import { at } from '@/logic/planted-collections';", 'void at;', 'export function PlantedComment() { return null; }'].join('\n') + '\n');
+      const r = runCheck();
+      expect(r.stdout).not.toMatch(/src\/views\/planted-comment\.tsx/);
+      expect(r.stdout).toMatch(/^0 problems/m);
+      expect(r.status).toBe(0);
+    } finally {
+      remove('src/logic/planted-collections.ts', 'src/views/planted-comment.tsx');
+    }
+  }, 60_000);
+});
+
+describe('the client-import walk in a tree that has no sample', () => {
+  it('runs its two unguarded assertions instead of skipping the file', () => {
+    const generator = 'src/system/fixtures/company.ts';
+    const report = path.join(dir, 'client-imports.json');
+    remove(generator);
+    try {
+      const r = spawnSync(path.join(ROOT, 'node_modules/.bin/vitest'), ['run', 'tests/client-imports.test.ts', '--reporter=json', `--outputFile=${report}`], { cwd: dir, encoding: 'utf8' });
+      // The report is written whether or not the run passed, so its own cases say what happened.
+      const results = (JSON.parse(fs.readFileSync(report, 'utf8')).testResults as { assertionResults: { fullName: string; status: string }[] }[]).flatMap((f) => f.assertionResults);
+      // Only the reading-module boundary can speak without a generator, and it does: the two unguarded cases run.
+      const ran = results.filter((a) => a.status === 'passed' || a.status === 'failed');
+      expect(ran.map((a) => `${a.status} ${a.fullName}`), `${r.stdout}\n${r.stderr}`).toEqual([
+        "passed the client modules of the product's pages are found",
+        "passed the client modules of the product's pages never reach a module that reads",
+      ]);
+      // The generator cases are collected and skipped, not absent: the file is one file, and it did not skip whole.
+      expect(results.length).toBeGreaterThan(ran.length);
+      expect(r.status).toBe(0);
+    } finally {
+      restore(generator);
+    }
+  }, 120_000);
 });
