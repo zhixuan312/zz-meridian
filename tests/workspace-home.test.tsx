@@ -18,11 +18,11 @@ vi.mock('@/data/roles', async (original) => {
 import { collections } from '@/data/collections';
 import { FEATURES } from '@/data/features';
 import { readReleases } from '@/data/engineering';
-import { customerFigures } from '@/views/customers-context';
-import type { HomeData } from '@/views/home-context';
-import { releaseFigures } from '@/views/releases-context';
-import { ticketCounts } from '@/views/tickets-context';
-import { viewTools } from '@/views/tools';
+import { customerFigures } from '@/logic/customers-context';
+import type { HomeData } from '@/logic/home-context';
+import { releaseFigures } from '@/logic/releases-context';
+import { ticketCounts } from '@/logic/tickets-context';
+import { viewTools } from '@/logic/tools';
 
 type Row = Record<string, unknown>;
 const all = async (name: string) => (await collections.find((c) => c.name === name)!.query({})).rows as Row[];

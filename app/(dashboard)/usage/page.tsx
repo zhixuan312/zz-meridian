@@ -9,9 +9,9 @@ import { Busy, LeadRoom } from '@/components/patterns/page-loading';
 import { PeriodSelect } from '@/components/patterns/period-select';
 import { parsePeriod } from '@/lib/period';
 import { PeriodActionsRoom, PeriodRoom } from '@/views/period-actions';
-import { dayRows } from '@/views/home-context';
+import { dayRows } from '@/logic/home-context';
 import { UsageBody } from '@/views/usage';
-import { usageTool } from '@/views/tools';
+import { usageTool } from '@/logic/tools';
 import { UsageSkeleton } from './loading';
 
 export function generateMetadata() {

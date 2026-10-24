@@ -5,7 +5,7 @@ import { UsageBody } from '@/views/usage';
 import { CustomersView } from '@/views/customers';
 import { ServicesBody } from '@/views/services';
 import { HomeBody } from '@/views/home';
-import { homeData } from '@/views/home-parts';
+import { homeData } from '@/logic/home-parts';
 
 const totals = { requests: 0, errorRate: 0, p95: 0, revenue: 0 };
 const NOW = '2026-10-05T09:00:00.000Z';

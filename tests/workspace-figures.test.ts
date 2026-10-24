@@ -11,7 +11,7 @@ vi.mock('next/cache', () => ({ cacheTag: () => {}, cacheLife: () => {}, updateTa
 import { collections } from '@/data/collections';
 import { readReleases, readRuns } from '@/data/engineering';
 import { currentVersions, latestRuns, verificationOf } from '@/data/verification';
-import { viewTools } from '@/views/tools';
+import { viewTools } from '@/logic/tools';
 
 type Row = Record<string, unknown>;
 const ids = (rows: unknown) => (rows as Row[]).map((r) => r.id);

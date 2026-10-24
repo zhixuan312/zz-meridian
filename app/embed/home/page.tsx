@@ -1,5 +1,5 @@
 import { Suspense } from 'react';
-import { homeTool } from '@/views/tools';
+import { homeTool } from '@/logic/tools';
 import { parsePeriod } from '@/lib/period';
 import { EmbedBusy, EmbedFailed } from '@/components/patterns/embed-frame';
 import { EmbedHome } from './view';

@@ -13,7 +13,7 @@ import { Records } from '@/components/templates/records';
 import { formatCompact, formatCost, formatPercent } from '@/lib/format';
 import { formatDate } from '@/lib/format-date';
 import { useShareView } from '@/components/base/use-share-view';
-import { CUSTOMER_METRICS, customerFigures, customersContext, pastDueNote, under, type CustomerRow } from './customers-context';
+import { CUSTOMER_METRICS, customerFigures, customersContext, pastDueNote, under, type CustomerRow } from '@/logic/customers-context';
 
 const PLAN_TONE = { Enterprise: 'accent', Scale: 'neutral', Starter: 'neutral' } as const;
 /** Colour only where a row needs a look: past due and trial. Active is the normal case, so it stays quiet, and a customer that has left is history. */

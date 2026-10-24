@@ -20,7 +20,7 @@ import { AXIS_FORMATTERS, FORMATTERS, formatCompact, formatCost, formatDuration,
 import { formatDate, formatDay, formatShortDate } from '@/lib/format-date';
 import { PERIOD_DAYS, PERIOD_LABEL } from '@/lib/period';
 import { AskPeriod } from './ask-period';
-import { COMPANY_METRICS, HOME_METRICS, SOLD_SLOTS, homeContext, type HomeData, type HomeWindow } from './home-context';
+import { COMPANY_METRICS, HOME_METRICS, SOLD_SLOTS, homeContext, type HomeData, type HomeWindow } from '@/logic/home-context';
 import { Unread, unreadTile } from './unread';
 
 /** Tells both agents what the Home shows, and which day the Meridian points at (decision 0011). Inside `Meridian`. */

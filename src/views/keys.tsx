@@ -24,9 +24,9 @@ import { DataTable, type Column } from '@/components/patterns/data-table';
 import { formatDate, formatRelative } from '@/lib/format-date';
 import { useLive, type Revisions } from '@/lib/live';
 import type { ApiKey } from '@/data/sample';
-import { SCOPES, type Scope } from '@/views/key-scopes';
+import { SCOPES, type Scope } from '@/logic/key-scopes';
 import { useShareView } from '@/components/base/use-share-view';
-import { keysContext } from './keys-context';
+import { keysContext } from '@/logic/keys-context';
 
 
 type Draft = { name: string; env: 'live' | 'test'; scopes: Scope[] };

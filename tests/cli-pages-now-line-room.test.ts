@@ -5,7 +5,7 @@ import { workspaces } from '@/app.config';
 import type { Incident } from '@/components/patterns/incident-card';
 import type { Service } from '@/components/patterns/status-list';
 import type { DailyPoint } from '@/data/sample';
-import { nowData, type NowReads } from '@/views/now-parts';
+import { nowData, type NowReads } from '@/logic/now-parts';
 
 /** The characters the lead's room holds (`LeadRoom` in `src/components/patterns/page-loading`): the line, ". " and who Engineering is for. */
 const ROOM = 220;

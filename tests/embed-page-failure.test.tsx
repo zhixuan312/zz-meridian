@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from 'vitest';
 
 vi.mock('next/navigation', () => ({ usePathname: () => '/embed/now', useRouter: () => ({ refresh() {}, push() {}, replace() {} }), useSearchParams: () => new URLSearchParams() }));
 // The read is the tool's, and here it is the thing that fails.
-vi.mock('@/views/tools', () => ({ nowTool: { read: async () => { throw new Error('the backend did not answer'); } } }));
+vi.mock('@/logic/tools', () => ({ nowTool: { read: async () => { throw new Error('the backend did not answer'); } } }));
 
 import { app } from '@/app.config';
 import Page from '../app/embed/now/page';

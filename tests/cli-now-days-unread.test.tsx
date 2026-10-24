@@ -14,7 +14,7 @@ import { ACTIVITY, DEMO_NOW, DEMO_UPDATED_AT, INCIDENTS, MODELS, SERVICES } from
 import { COMPUTE, ENDPOINTS, USAGE } from '@/system/fixtures/company';
 import { RELEASES, RUNS, TICKETS } from '@/system/fixtures/sample-engineering';
 import { NowBody } from '@/views/now';
-import { nowData, type NowReads } from '@/views/now-parts';
+import { nowData, type NowReads } from '@/logic/now-parts';
 
 const reads: NowReads = {
   services: SERVICES, incidents: INCIDENTS.map(({ owner, ticketId: _, ...i }) => ({ ...i, ...(owner ? { owner } : {}) })),

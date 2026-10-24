@@ -14,7 +14,7 @@ import { Freshness } from '@/components/patterns/freshness';
 import { formatDuration } from '@/lib/format';
 import { formatRelative } from '@/lib/format-date';
 import { REGION_NAMES } from '@/data/sample';
-import { describeFilters, requestsContext, type RequestsData } from '@/views/requests-context';
+import { describeFilters, requestsContext, type RequestsData } from '@/logic/requests-context';
 import { activeFilters, options, REQUEST_FILTERS, REQUEST_METHODS } from '@/views/requests';
 import { MethodChip, requestColumns, StatusBadge } from '@/system/sample-cells';
 

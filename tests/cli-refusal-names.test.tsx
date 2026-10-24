@@ -27,7 +27,7 @@ vi.mock('@/app.config', async (orig) => {
 });
 
 import { FEATURES, type FeatureId } from '@/data/features';
-import { SERVICES_LINE } from '@/views/services-context';
+import { SERVICES_LINE } from '@/logic/services-context';
 import HomeLoading from '../app/(dashboard)/(home)/loading';
 import RevenueLoading from '../app/(dashboard)/business/loading';
 import CustomerLoading from '../app/(dashboard)/customers/[id]/loading';

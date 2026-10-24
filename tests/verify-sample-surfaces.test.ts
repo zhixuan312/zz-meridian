@@ -21,7 +21,7 @@ describe('the sample surfaces the walk-throughs drive', () => {
   });
   it('are found under whatever route group a product keeps its console in', () => {
     const root = fs.mkdtempSync(path.join(os.tmpdir(), 'surfaces-'));
-    for (const f of ['app/(dash)/(home)/page.tsx', 'src/views/home-context.ts', 'app/(dash)/members/page.tsx', 'src/views/members.tsx', 'app/(dash)/keys/page.tsx']) write(root, f);
+    for (const f of ['app/(dash)/(home)/page.tsx', 'src/logic/home-context.ts', 'app/(dash)/members/page.tsx', 'src/views/members.tsx', 'app/(dash)/keys/page.tsx']) write(root, f);
     write(root, 'src/views/home.tsx', SAMPLE_HOME);
     expect(sampleSurfaces(root, 'app')).toEqual({ home: true, now: false, members: true, keys: true, settings: false });
   });
@@ -36,7 +36,7 @@ describe('the sample surfaces the walk-throughs drive', () => {
     // The guide's preset for a summary page copies `(home)/page.tsx`, `src/views/home.tsx` and `home-context.ts`; the
     // product's Home that results is its own, and the walk-through's Home steps do not apply to it.
     const root = fs.mkdtempSync(path.join(os.tmpdir(), 'surfaces-'));
-    for (const f of ['app/(dashboard)/(home)/page.tsx', 'src/views/home-context.ts']) write(root, f);
+    for (const f of ['app/(dashboard)/(home)/page.tsx', 'src/logic/home-context.ts']) write(root, f);
     write(root, 'src/views/home.tsx', '<CardHeader title="Sailings this week" />');
     expect(sampleSurfaces(root, 'app').home).toBe(false);
     write(root, 'src/views/home.tsx', SAMPLE_HOME);

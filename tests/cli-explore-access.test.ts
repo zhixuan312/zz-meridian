@@ -14,8 +14,8 @@ import { can, may, resolveAccess } from '@/data/access';
 import { clock, collections, members } from '@/data/collections';
 import { aggregate, read } from '@/data/read';
 import { exploreSchema, runExplore, type ExploreIO, type ExploreRights, type PreparedQuery } from '@/lib/explore';
-import { homeExplore } from '@/views/home-explore';
-import { viewTools } from '@/views/tools';
+import { homeExplore } from '@/logic/home-explore';
+import { viewTools } from '@/logic/tools';
 
 /**
  * A prepared query reads with exactly the page's rights (FR-40, AC-14.3): as each of the sample's five people, it offers no

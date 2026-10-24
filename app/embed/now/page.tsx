@@ -1,6 +1,6 @@
 import { Suspense } from 'react';
-import { packNow } from '@/views/now-context';
-import { nowTool } from '@/views/tools';
+import { packNow } from '@/logic/now-context';
+import { nowTool } from '@/logic/tools';
 import { EmbedBusy, EmbedFailed } from '@/components/patterns/embed-frame';
 import { EmbedNow } from './view';
 

@@ -27,7 +27,7 @@ import { formatRelative } from '@/lib/format-date';
 import { useLive, type Revisions } from '@/lib/live';
 import type { Ticket } from '@/data/sample';
 import type { TicketRow } from '@/data/tickets';
-import { matchingTickets, TICKET_METRICS, ticketCounts, ticketsContext } from './tickets-context';
+import { matchingTickets, TICKET_METRICS, ticketCounts, ticketsContext } from '@/logic/tickets-context';
 
 /** What a write answers: done, or the sentence that says why not. */
 export type TicketResult = { ok: true } | { ok: false; error: string };

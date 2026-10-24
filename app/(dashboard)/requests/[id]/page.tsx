@@ -4,7 +4,7 @@ import { read } from '@/data/read';
 import { readEndpoints } from '@/data/metrics';
 import { ACTIONS, FEATURES } from '@/data/features';
 import { FEATURED_REQUEST_IDS, traceOf, payloadsOf, type CustomerRecord, type RequestRow } from '@/data/sample';
-import { customerAddress } from '@/views/customer-context';
+import { customerAddress } from '@/logic/customer-context';
 import { MissingPage } from '@/views/missing-page';
 import { NOT_FOUND } from '@/views/not-found';
 import { RequestView } from '@/views/request';

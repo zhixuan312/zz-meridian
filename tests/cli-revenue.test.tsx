@@ -52,7 +52,7 @@ import RevenuePage from '../app/(dashboard)/business/page';
 import RevenueLoading from '../app/(dashboard)/business/loading';
 import { facts } from '@/app.config';
 import { contextText } from '@/lib/shared-context';
-import { revenueTool } from '@/views/tools';
+import { revenueTool } from '@/logic/tools';
 
 const OWNER = 'members_1';
 

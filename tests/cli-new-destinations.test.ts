@@ -11,7 +11,7 @@ vi.mock('next/cache', () => ({ cacheTag: () => {}, cacheLife: () => {}, updateTa
 import { nav, workspaces } from '@/app.config';
 import { FEATURES } from '@/data/features';
 import { PAGES } from '@/system/content';
-import { viewTools } from '@/views/tools';
+import { viewTools } from '@/logic/tools';
 import { workspaceOf } from '@/views/workspaces';
 
 const ROOT = path.resolve(import.meta.dirname, '..');

@@ -31,10 +31,10 @@ import { COMPUTE, ENDPOINTS, USAGE } from '@/system/fixtures/company';
 import { RELEASES, RUNS, TICKETS } from '@/system/fixtures/sample-engineering';
 import { HomeBody } from '@/views/home';
 import { NowBody } from '@/views/now';
-import { nowContext } from '@/views/now-context';
-import { nowData, type NowReads } from '@/views/now-parts';
+import { nowContext } from '@/logic/now-context';
+import { nowData, type NowReads } from '@/logic/now-parts';
 import { RevenueBody } from '@/views/revenue';
-import { homeTool, revenueTool } from '@/views/tools';
+import { homeTool, revenueTool } from '@/logic/tools';
 
 beforeEach(() => { fail.names.clear(); });
 

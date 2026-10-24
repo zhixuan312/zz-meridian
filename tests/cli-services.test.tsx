@@ -46,7 +46,7 @@ vi.mock('@/components/patterns/featured-metric', async (orig) => mark(await orig
 import ServicesPage from '../app/(dashboard)/services/page';
 import ServicesLoading from '../app/(dashboard)/services/loading';
 import { contextText } from '@/lib/shared-context';
-import { servicesTool } from '@/views/tools';
+import { servicesTool } from '@/logic/tools';
 
 beforeEach(() => { jar.value = 'members_1'; store.fail.clear(); store.empty.clear(); store.map.clear(); });
 

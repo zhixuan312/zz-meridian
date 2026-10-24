@@ -15,7 +15,7 @@ import { clock, collections } from '@/data/collections';
 import { handedTo } from '@/lib/assistant/scoped';
 import { assistantTools } from '@/lib/assistant/tools';
 import type { AnyCollection } from '@/lib/collection';
-import { ticketsExplore } from '@/views/tickets-explore';
+import { ticketsExplore } from '@/logic/tickets-explore';
 
 const PERSONAS = { owner: 'members_1', admin: 'members_2', member: 'members_4', keyManager: 'members_5', viewer: 'members_12' };
 const draft = { title: 'Rotate the gateway certificate', service: 'Edge gateway', priority: 'high' as const, assigneeId: null, summary: '' };

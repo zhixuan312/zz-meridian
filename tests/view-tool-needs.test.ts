@@ -10,7 +10,7 @@ vi.mock('next/cache', () => ({ cacheTag: () => {}, cacheLife: () => {}, updateTa
 
 import { AccessDenied } from '@/data/access';
 import { FEATURES, type FeatureId } from '@/data/features';
-import { viewTools } from '@/views/tools';
+import { viewTools } from '@/logic/tools';
 
 const byName = Object.fromEntries(viewTools.map((t) => [t.name, t]));
 const known = new Set(Object.values(FEATURES).map((f) => f.needs));

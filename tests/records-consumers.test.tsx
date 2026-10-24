@@ -23,7 +23,7 @@ import { API_KEYS } from '@/system/fixtures/sample-records';
 import { KeysView } from '@/views/keys';
 import { MembersView, type Result } from '@/views/members';
 import { RequestsView } from '@/views/requests';
-import type { RequestsData } from '@/views/requests-context';
+import type { RequestsData } from '@/logic/requests-context';
 
 const ROOT = path.resolve(import.meta.dirname, '..');
 const NOW = '2026-10-05T09:00:00.000Z';

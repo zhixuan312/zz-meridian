@@ -10,9 +10,9 @@ import { TrendChart } from '@/components/charts/trend-chart';
 import { FeaturedMetric } from '@/components/patterns/featured-metric';
 import { IncidentCard } from '@/components/patterns/incident-card';
 import { StatusList } from '@/components/patterns/status-list';
-import { unpackServices, type PackedService } from '@/components/patterns/status-list/summarise';
+import { unpackServices, type PackedService } from '@/logic/summarise';
 import { AskAbout } from '@/components/patterns/ask-about';
-import { formatUptime, lastedOf, longestRun, meanUptime, operationalShare, servicesContext, stripDates, type ServicesData } from './services-context';
+import { formatUptime, lastedOf, longestRun, meanUptime, operationalShare, servicesContext, stripDates, type ServicesData } from '@/logic/services-context';
 import { Unread } from './unread';
 
 /** The page's two parts after its Featured metric, by the titles the page and its specification name them with. */

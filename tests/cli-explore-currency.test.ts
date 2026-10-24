@@ -10,8 +10,8 @@ vi.mock('next/headers', () => ({ cookies: async () => ({ get: () => undefined, s
 vi.mock('next/cache', () => ({ cacheTag: () => {}, cacheLife: () => {}, updateTag: () => {}, revalidateTag: () => {}, revalidatePath: () => {}, refresh: () => {} }));
 
 import { runExplore, type ExploreIO, type PreparedQuery } from '@/lib/explore';
-import { homeExplore } from '@/views/home-explore';
-import { viewTools } from '@/views/tools';
+import { homeExplore } from '@/logic/home-explore';
+import { viewTools } from '@/logic/tools';
 
 /**
  * In a project made with `--currency GBP`, Home's context says "£409,206.80"; `explore_home` must give the same figure

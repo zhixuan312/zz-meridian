@@ -4,7 +4,7 @@ import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { formatCost } from '@/lib/format';
 import { CUSTOMERS } from '@/system/fixtures/company';
-import { CUSTOMER_METRICS, customerFigures, customersContext, under } from '@/views/customers-context';
+import { CUSTOMER_METRICS, customerFigures, customersContext, under } from '@/logic/customers-context';
 
 const ROOT = path.resolve(import.meta.dirname, '..');
 const STATE = { q: '', plan: 'all', status: 'all', sort: 'revenue', dir: 'desc', page: '1' };

@@ -2,7 +2,7 @@
 // Named cli-* so the payload leaves it out: it is about the sample's own Services page, which a product replaces.
 import { describe, expect, it } from 'vitest';
 import type { Service, ServiceStatus } from '@/components/patterns/status-list';
-import { operationalShare, servicesContext, servicesHead, stripDates } from '@/views/services-context';
+import { operationalShare, servicesContext, servicesHead, stripDates } from '@/logic/services-context';
 
 /** A service whose strip is `days` long, operational on every day but those in `marked`, counted back from today (0 is today). */
 const service = (name: string, days: number, marked: Record<number, ServiceStatus> = {}): Service => ({

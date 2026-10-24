@@ -6,9 +6,9 @@ import type { Period } from '@/lib/period';
 import { contextText } from '@/lib/shared-context';
 import { CUSTOMERS, DAYS, REGIONS, USAGE, demoSeries, demoTotals } from '@/system/fixtures/company';
 import { MODELS } from '@/system/fixtures/sample';
-import { customerFigures } from '@/views/customers-context';
-import { revenueContext } from '@/views/revenue-context';
-import { revenueData, type RevenueReads } from '@/views/revenue-parts';
+import { customerFigures } from '@/logic/customers-context';
+import { revenueContext } from '@/logic/revenue-context';
+import { revenueData, type RevenueReads } from '@/logic/revenue-parts';
 
 const BUDGET = 2600;
 const NOW = '2026-10-03T09:00:00Z';

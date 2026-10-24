@@ -12,7 +12,7 @@ import { formatCost } from '@/lib/format';
 import { contextText } from '@/lib/shared-context';
 import { CUSTOMERS, demoTotals } from '@/system/fixtures/company';
 import { REQUESTS } from '@/system/fixtures/sample';
-import { customerContext, titleOf } from '@/views/customer-context';
+import { customerContext, titleOf } from '@/logic/customer-context';
 import { PAGES } from '@/system/content';
 
 const ROOT = path.resolve(import.meta.dirname, '..');

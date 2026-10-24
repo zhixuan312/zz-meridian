@@ -4,7 +4,7 @@ import { ACTIONS, FEATURES, type FeatureId } from '@/data/features';
 import { GRANTS } from '@/data/roles';
 import { collections } from '@/data/collections';
 import { nav } from '@/app.config';
-import { viewTools } from '@/views/tools';
+import { viewTools } from '@/logic/tools';
 
 const byName = Object.fromEntries(collections.map((c) => [c.name, c]));
 const grantsOf = (need: unknown): string[] => (typeof need === 'string' ? (need === 'public' ? [] : [need]) : (need as { allOf: string[] }).allOf);

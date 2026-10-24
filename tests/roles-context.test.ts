@@ -1,7 +1,7 @@
 // @vitest-environment node
 import { expect, it } from 'vitest';
 import { ADD_ONS, GRANTS, MAIN_ROLES, roleLabel, whoCan } from '@/data/roles';
-import { membersContext } from '@/views/members-context';
+import { membersContext } from '@/logic/members-context';
 import { MEMBERS } from '@/system/fixtures/sample-members';
 
 const ctx = membersContext(MEMBERS, '2026-10-04T00:00:00.000Z');

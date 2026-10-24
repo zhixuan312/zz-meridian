@@ -14,7 +14,7 @@ import { ACTIVITY, DEMO_NOW, DEMO_UPDATED_AT, INCIDENTS, MODELS } from '@/system
 import { COMPUTE, ENDPOINTS, USAGE, demoSeries } from '@/system/fixtures/company';
 import { RELEASES, RUNS, TICKETS } from '@/system/fixtures/sample-engineering';
 import { NowBody } from '@/views/now';
-import { nowData, type NowReads } from '@/views/now-parts';
+import { nowData, type NowReads } from '@/logic/now-parts';
 
 const reads: NowReads = {
   // As a page is handed them: the record without the id of its ticket, an owner only when there is one.

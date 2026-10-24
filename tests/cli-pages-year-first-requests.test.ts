@@ -2,8 +2,8 @@
 // Named cli-* so the payload leaves it out: it is about the sample's own Home and Now, which a product replaces.
 import { describe, expect, it } from 'vitest';
 import type { DailyPoint } from '@/data/sample';
-import { yearOf } from '@/views/home-parts';
-import { nowData } from '@/views/now-parts';
+import { yearOf } from '@/logic/home-parts';
+import { nowData } from '@/logic/now-parts';
 
 const DAY = 86_400_000;
 /** 120 complete days ending 14 Oct 2026: none with a request for the first 40, then 1,000 a day growing by 10, each at p95 300 ms. */

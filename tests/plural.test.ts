@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { plural } from '@/lib/format';
-import { summarise } from '@/components/patterns/status-list/summarise';
+import { summarise } from '@/logic/summarise';
 
 /** A count is a count: one of anything reads as one, whichever place writes the sentence. */
 describe('a count and its word', () => {

@@ -77,7 +77,7 @@ import NowPage from '../app/(dashboard)/engineering/page';
 import NowLoading from '../app/(dashboard)/engineering/loading';
 import { contextText } from '@/lib/shared-context';
 import { SERVICES } from '@/system/fixtures/sample';
-import { nowTool } from '@/views/tools';
+import { nowTool } from '@/logic/tools';
 
 const OWNER = 'members_1';
 const VIEWER = 'members_12';

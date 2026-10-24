@@ -13,7 +13,7 @@ vi.mock('next/cache', () => ({ cacheTag: () => {}, cacheLife: () => {}, updateTa
 
 import ColumnChartPreview from '@/components/charts/column-chart/preview';
 import { UsageBody } from '@/views/usage';
-import { usageTool } from '@/views/tools';
+import { usageTool } from '@/logic/tools';
 
 const charts = (c: HTMLElement) => [...c.querySelectorAll('[data-plot]')].map((p) => p.closest('figure') as HTMLElement);
 const name = (chart: HTMLElement) => chart.getAttribute('aria-label')!;

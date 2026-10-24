@@ -12,7 +12,7 @@ vi.mock('next/cache', () => ({ cacheTag: () => {}, cacheLife: () => {}, updateTa
 
 import { chromeAccess } from '@/data/access';
 import { read } from '@/data/read';
-import { viewTools } from '@/views/tools';
+import { viewTools } from '@/logic/tools';
 import { navOf, WORKSPACE_IDS } from '@/views/workspaces';
 
 const ROOT = path.resolve(import.meta.dirname, '..');

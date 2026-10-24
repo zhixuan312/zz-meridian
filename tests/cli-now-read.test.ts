@@ -24,7 +24,7 @@ import { FEATURES } from '@/data/features';
 import { contextText } from '@/lib/shared-context';
 import { INCIDENTS } from '@/system/fixtures/sample';
 import { TICKETS } from '@/system/fixtures/sample-engineering';
-import { nowTool } from '@/views/tools';
+import { nowTool } from '@/logic/tools';
 
 const PERSONAS = { owner: 'members_1', admin: 'members_2', member: 'members_4', viewer: 'members_12' };
 /** What a view's context may take (tests/shared-context.test.tsx holds every view to it). */

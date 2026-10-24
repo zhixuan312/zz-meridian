@@ -1,7 +1,7 @@
 // @vitest-environment node
 // Named cli-* so the payload leaves it out: it is about the sample's own Revenue page, which a product replaces.
 import { describe, expect, it } from 'vitest';
-import { nextPlanWords } from '@/views/revenue-context';
+import { nextPlanWords } from '@/logic/revenue-context';
 
 /**
  * The ladder says a customer is close to the next plan by the share it pays of what that plan's smallest customer pays.

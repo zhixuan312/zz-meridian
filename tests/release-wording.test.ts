@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { RELEASE_METRICS, releasesContext } from '@/views/releases-context';
+import { RELEASE_METRICS, releasesContext } from '@/logic/releases-context';
 import type { ReleaseRow } from '@/data/engineering';
 
 // A run that failed is not something a release waits for: every surface that names it, the tile's definition and what

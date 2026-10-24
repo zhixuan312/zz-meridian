@@ -7,9 +7,10 @@ import { describe, expect, it } from 'vitest';
  * No client module of the product's pages runs the company's generator. `src/system/fixtures/company.ts` makes a year
  * of days, four models' usage, the compute and 329 customers each time it is loaded: the server reads it, and a browser
  * is handed the figures a page draws. A client view imports `src/data/sample.ts` for a type, a list of names or a pure
- * function, so this walks what each client module of `src/views/` and of the pages imports, by value and all the way
- * down, and fails when the walk reaches the generator. The Atlas's own modules and the cards' previews draw the sample
- * and may import it; they are not walked from.
+ * function, so this walks what each client module of `src/views/`, of `src/components/` and of the pages imports, by
+ * value and all the way down, and fails when the walk reaches the generator. The Atlas's own modules and the cards'
+ * previews draw the sample and may import it; they are not walked from, so the `src/components/` root skips every
+ * preview module.
  */
 const ROOT = path.resolve(import.meta.dirname, '..');
 const GENERATOR = 'src/system/fixtures/company.ts';
@@ -60,7 +61,11 @@ function reaches(start: string): string[] | null {
   return null;
 }
 
-const clients = [...walk('src/views'), ...walk(APP).filter((f) => !f.startsWith(`${APP}/system/`))].filter((f) => directive(f) === 'client');
+const clients = [
+  ...walk('src/views'),
+  ...walk('src/components').filter((f) => !/(^|\/)preview\.tsx$/.test(f)),
+  ...walk(APP).filter((f) => !f.startsWith(`${APP}/system/`)),
+].filter((f) => directive(f) === 'client');
 /** A product that has replaced the sample has no generator to keep out of its browser, and nothing here to hold. */
 const SAMPLE = fs.existsSync(path.join(ROOT, GENERATOR)) && fs.existsSync(path.join(ROOT, 'src/data/sample.ts'));
 

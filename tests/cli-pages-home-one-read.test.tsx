@@ -40,7 +40,7 @@ vi.mock('react', async (orig) => {
 });
 
 import HomePage from '../app/(dashboard)/(home)/page';
-import { homeTool } from '@/views/tools';
+import { homeTool } from '@/logic/tools';
 
 beforeEach(() => { request.memo.clear(); vi.restoreAllMocks(); });
 

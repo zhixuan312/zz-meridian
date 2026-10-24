@@ -6,6 +6,7 @@ import { Badge, type Tone } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
 import { StatusDot } from '@/components/ui/status-dot';
 import { keepHyphenated } from '@/components/base/text-roles';
+import { afterStart } from '@/logic/after-start';
 
 const STATE: Record<Incident['state'], { tone: Tone; word: string; ink: string; edge: string; border: string }> = {
   investigating: { tone: 'critical', word: 'Investigating', ink: 'text-critical-ink', edge: 'bg-critical', border: 'border-critical/30' },
@@ -23,16 +24,6 @@ const SEVERITY: Record<Incident['severity'], { tone: Tone; word: string }> = {
  * where the work is tracked, an address inside the product: both are the team's, so a card customers read passes neither.
  */
 export type Incident = { id: string; title: string; service: string; severity: 'minor' | 'major'; state: 'investigating' | 'monitoring' | 'resolved'; started: string; resolved?: string; updates: { at: string; text: string }[]; owner?: string; ticket?: { title: string; href: string } };
-
-/**
- * When an update came, counted from the incident's start in the product's durations: "after 42m", "after 2.6h". The
- * question a reader has of a timeline is how long each step took, and time ago answers a different one. An update
- * inside the first minute, or timed before the start, came at the start.
- */
-export function afterStart(started: string, at: string) {
-  const ms = new Date(at).getTime() - new Date(started).getTime();
-  return ms < 60_000 ? 'at the start' : `after ${formatDuration(ms)}`;
-}
 
 /**
  * An incident, told the way a reader needs it: what is affected, how bad, where it stands, who has it and where it is

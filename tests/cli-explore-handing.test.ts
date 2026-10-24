@@ -37,7 +37,7 @@ vi.mock('@/lib/assistant/config', () => ({
  * the page the person is on, and no other, and only where the person may use its view. The detail view takes its `id`
  * as the sample's One customer does, and its prepared query's `fixed` is handed it.
  */
-vi.mock('@/views/tools', async () => {
+vi.mock('@/logic/tools', async () => {
   const { FEATURES } = await import('@/data/features');
   const hours = {
     collection: 'hours',

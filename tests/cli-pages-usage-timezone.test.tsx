@@ -21,9 +21,9 @@ vi.mock('@/app.config', async (orig) => {
 
 import { contextText } from '@/lib/shared-context';
 import { UsageBody } from '@/views/usage';
-import { usageContext } from '@/views/usage-context';
-import { usageTool } from '@/views/tools';
-import { usageExplore } from '@/views/usage-explore';
+import { usageContext } from '@/logic/usage-context';
+import { usageTool } from '@/logic/tools';
+import { usageExplore } from '@/logic/usage-explore';
 
 describe("Usage names the product's reporting timezone wherever it names a zone", () => {
   it('in the cards, the Heatmap of hours and the context, never UTC', async () => {

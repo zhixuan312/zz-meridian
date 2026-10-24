@@ -2,7 +2,7 @@ import { Suspense } from 'react';
 import Link from 'next/link';
 import { app } from '@/app.config';
 import { StatusDot } from '@/components/ui/status-dot';
-import { summarise } from '@/components/patterns/status-list/summarise';
+import { summarise } from '@/logic/summarise';
 import { readServices } from '@/data/metrics';
 
 /**

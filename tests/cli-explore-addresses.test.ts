@@ -11,7 +11,7 @@ vi.mock('next/cache', () => ({ cacheTag: () => {}, cacheLife: () => {}, updateTa
 
 import { may } from '@/data/access';
 import type { PreparedQuery } from '@/lib/explore';
-import { viewTools } from '@/views/tools';
+import { viewTools } from '@/logic/tools';
 
 /**
  * What a prepared query says it cannot say sends the person only where they may go: every console address in a source's

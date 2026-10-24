@@ -14,7 +14,7 @@ import { AccessDenied } from '@/data/access';
 import { collections } from '@/data/collections';
 import { read } from '@/data/read';
 import { usageFigures } from '@/data/usage';
-import { viewTools } from '@/views/tools';
+import { viewTools } from '@/logic/tools';
 
 const byName = Object.fromEntries(viewTools.map((t) => [t.name, t]));
 beforeEach(() => { jar.value = undefined; });

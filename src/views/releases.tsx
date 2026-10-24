@@ -13,7 +13,7 @@ import { FilterBar } from '@/components/patterns/filter-bar';
 import type { ReleaseRow } from '@/data/engineering';
 import { formatRelative } from '@/lib/format-date';
 import { useLive, type Revisions } from '@/lib/live';
-import { matchingReleases, RELEASE_METRICS, releaseFigures, releaseMoment, releasesContext, stageOf, STAGE_LABEL, unresolvedCounts, unresolvedText, type Stage } from './releases-context';
+import { matchingReleases, RELEASE_METRICS, releaseFigures, releaseMoment, releasesContext, stageOf, STAGE_LABEL, unresolvedCounts, unresolvedText, type Stage } from '@/logic/releases-context';
 
 const STAGE_TONE: Record<Stage, Tone> = { testing: 'warning', ready: 'accent', released: 'positive' };
 const LABEL = (word: string) => word[0].toUpperCase() + word.slice(1);

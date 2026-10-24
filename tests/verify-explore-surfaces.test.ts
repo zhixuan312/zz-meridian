@@ -19,9 +19,9 @@ describe('the sample pages whose prepared query the walk-through asks', () => {
   it('need the page and the file that declares its prepared query', () => {
     const root = fs.mkdtempSync(path.join(os.tmpdir(), 'explore-surfaces-'));
     write(root, 'app/(dashboard)/usage/page.tsx');
-    write(root, 'src/views/tests-explore.ts');
+    write(root, 'src/logic/tests-explore.ts');
     expect(exploreSurfaces(root, 'app')).toEqual({ usage: false, tests: false });
-    write(root, 'src/views/usage-explore.ts');
+    write(root, 'src/logic/usage-explore.ts');
     write(root, 'app/(dashboard)/tests/page.tsx');
     expect(exploreSurfaces(root, 'app')).toEqual({ usage: true, tests: true });
   });

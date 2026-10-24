@@ -51,7 +51,7 @@ import UsagePage from '../app/(dashboard)/usage/page';
 import UsageLoading from '../app/(dashboard)/usage/loading';
 import { contextText } from '@/lib/shared-context';
 import { UsageBody } from '@/views/usage';
-import { usageTool } from '@/views/tools';
+import { usageTool } from '@/logic/tools';
 
 const OWNER = 'members_1';
 

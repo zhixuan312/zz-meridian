@@ -9,8 +9,8 @@ import { COMPUTE, ENDPOINTS, USAGE, demoSeries } from '@/system/fixtures/company
 import { RELEASES, RUNS, TICKETS } from '@/system/fixtures/sample-engineering';
 import { MEMBERS } from '@/system/fixtures/sample-members';
 import { PAST_INCIDENTS } from '@/system/fixtures/sample-ops';
-import { nowContext } from '@/views/now-context';
-import { nowData, type NowReads } from '@/views/now-parts';
+import { nowContext } from '@/logic/now-context';
+import { nowData, type NowReads } from '@/logic/now-parts';
 
 const BUDGET = 2600;
 // As a page is handed them: the record without the id of its ticket, the ticket joined by its title.

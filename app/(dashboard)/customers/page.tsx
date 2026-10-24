@@ -5,7 +5,7 @@ import { gate, gatedMetadata } from '@/data/access';
 import { readAll } from '@/data/read';
 import type { CustomerRecord } from '@/data/sample';
 import { CustomersView } from '@/views/customers';
-import { customerRow } from '@/views/customers-context';
+import { customerRow } from '@/logic/customers-context';
 import { Busy } from '@/components/patterns/page-loading';
 import { RecordsSkeleton } from '@/components/templates/records';
 

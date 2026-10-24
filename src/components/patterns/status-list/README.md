@@ -123,4 +123,4 @@ import { StatusList } from '@/components/patterns/status-list';
 </Card>
 ```
 
-Props: `services`, `end` (today), `summary`, `descriptions`, `run`, `noun`, `measure`, `metric`, `className`. `summarise(services)` (also from `status-list/summarise`, safe on the server) returns the worst state and its sentence for a page's own summary.
+Props: `services`, `end` (today), `summary`, `descriptions`, `run`, `noun`, `measure`, `metric`, `className`. `summarise(services)` (from `src/logic/summarise.ts`, safe on the server) returns the worst state and its sentence for a page's own summary.

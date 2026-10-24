@@ -15,11 +15,11 @@ import { readAll } from '@/data/read';
 import type { CustomerRecord } from '@/data/sample';
 import { readTickets } from '@/data/tickets';
 import type { Alert } from '@/components/patterns/shell-tools';
-import { customerAddress } from '@/views/customer-context';
-import { customerFigures, customersAddress } from '@/views/customers-context';
-import { operationOf } from '@/views/main-summary';
-import { testFigures, testsAddress } from '@/views/tests-context';
-import { ticketsAddress, unownedTickets } from '@/views/tickets-context';
+import { customerAddress } from '@/logic/customer-context';
+import { customerFigures, customersAddress } from '@/logic/customers-context';
+import { operationOf } from '@/logic/main-summary';
+import { testFigures, testsAddress } from '@/logic/tests-context';
+import { ticketsAddress, unownedTickets } from '@/logic/tickets-context';
 
 /** An alert as the shell's tools take it, and the time of the read that told it. */
 export type AlertsRead = { alerts: Alert[]; now: string };

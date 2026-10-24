@@ -33,7 +33,7 @@ vi.mock('@/data/read', async (orig) => {
 
 import { formatPercent } from '@/lib/format';
 import { HomeBody } from '@/views/home';
-import { homeTool } from '@/views/tools';
+import { homeTool } from '@/logic/tools';
 
 describe('What we sell, with more models than the bar has slots', () => {
   it('folds the rest into one Other part, and the page and the context state the same shares of the whole', async () => {

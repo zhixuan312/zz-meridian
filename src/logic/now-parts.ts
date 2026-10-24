@@ -8,9 +8,10 @@
  */
 import { facts as rules, workspaces } from '@/app.config';
 import type { ActivityEvent } from '@/components/patterns/activity-feed';
-import { afterStart, type Incident } from '@/components/patterns/incident-card';
+import type { Incident } from '@/components/patterns/incident-card';
+import { afterStart } from '@/logic/after-start';
 import type { Service } from '@/components/patterns/status-list';
-import { summarise } from '@/components/patterns/status-list/summarise';
+import { summarise } from '@/logic/summarise';
 import type { ReleaseRow, RunRow } from '@/data/engineering';
 import { ticketAddress } from '@/data/metrics';
 import type { ComputeRow, DailyPoint, Endpoint, Model, UsageRow } from '@/data/sample';

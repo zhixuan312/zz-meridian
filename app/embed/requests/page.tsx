@@ -1,5 +1,5 @@
 import { Suspense } from 'react';
-import { requestsTool } from '@/views/tools';
+import { requestsTool } from '@/logic/tools';
 import { EmbedBusy, EmbedFailed } from '@/components/patterns/embed-frame';
 import { EmbedRequests } from './view';
 

@@ -6,7 +6,7 @@ import { Meridian } from '@/components/charts/meridian';
 import { EmbedFrame } from '@/components/patterns/embed-frame';
 import { Freshness } from '@/components/patterns/freshness';
 import { HomeBody, RevenueCard, ShareHome, companyTiles, isEmpty, meridianDates } from '@/views/home';
-import type { HomeData } from '@/views/home-context';
+import type { HomeData } from '@/logic/home-context';
 import { PERIOD_LABEL } from '@/lib/period';
 
 /**

@@ -22,7 +22,7 @@ import type { UsageFigures } from '@/data/usage';
 import { AXIS_FORMATTERS, formatCompact, formatDuration } from '@/lib/format';
 import { formatDate, formatShortDate } from '@/lib/format-date';
 import { PERIOD_LABEL } from '@/lib/period';
-import { ASKED, STATUS_COLOR, USAGE_PARTS as P, WHEN, usageContext, type UsageData, type When } from './usage-context';
+import { ASKED, STATUS_COLOR, USAGE_PARTS as P, WHEN, usageContext, type UsageData, type When } from '@/logic/usage-context';
 import { AskPeriod } from './ask-period';
 import { Unread } from './unread';
 

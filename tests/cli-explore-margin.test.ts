@@ -13,8 +13,8 @@ import { can, resolveAccess } from '@/data/access';
 import { clock, collections } from '@/data/collections';
 import { aggregate, read } from '@/data/read';
 import { runExplore, type ExploreIO, type ExploreRights, type PreparedQuery } from '@/lib/explore';
-import { homeExplore } from '@/views/home-explore';
-import { homeTool } from '@/views/tools';
+import { homeExplore } from '@/logic/home-explore';
+import { homeTool } from '@/logic/tools';
 
 /**
  * Home's prepared query states the gross margin as Home does (FR-39): a percentage of the same complete days, and its

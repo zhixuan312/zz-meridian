@@ -21,7 +21,7 @@ const project = (files: Record<string, string>) => {
 const tool = (name: string, page: string) => `export const ${name}Tool = defineViewTool({\n  name: '${name}',\n  page: '${page}',\n  read: async () => ({ page: 'not this' }),\n});\n`;
 
 /**
- * The gate and `ask` find the view tools in every module the registry reaches, not only in `src/views/tools.ts`
+ * The gate and `ask` find the view tools in every module the registry reaches, not only in `src/logic/tools.ts`
  * (issue #43): a project that keeps each tool in a module of its own is read whole, so every page a tool names is held
  * to its agent section.
  */
@@ -29,11 +29,11 @@ describe('the view tools the registry reaches', () => {
   it('are read from the registry and from each project module it imports, through an alias, a relative path or an index', () => {
     const root = project({
       'tsconfig.json': '{ "compilerOptions": { "paths": { "@/*": ["./src/*"] } } }',
-      'src/views/tools.ts': `import { z } from 'zod';\nimport { oneTool } from '@/views/tools/one';\nimport { twoTool } from './tools/two.ts';\nimport { more } from './more';\n${tool('home', '/')}export const viewTools = [homeTool, oneTool, twoTool, ...more];\n`,
-      'src/views/tools/one.ts': tool('one', '/one'),
-      'src/views/tools/two.ts': `import { homeTool } from '../tools';\n${tool('two', '/two/[id]')}`,
-      'src/views/more/index.ts': `export { threeTool as more } from './three';\n`,
-      'src/views/more/three.ts': tool('three', '/docs/[...path]'),
+      'src/logic/tools.ts': `import { z } from 'zod';\nimport { oneTool } from '@/logic/tools/one';\nimport { twoTool } from './tools/two.ts';\nimport { more } from './more';\n${tool('home', '/')}export const viewTools = [homeTool, oneTool, twoTool, ...more];\n`,
+      'src/logic/tools/one.ts': tool('one', '/one'),
+      'src/logic/tools/two.ts': `import { homeTool } from '../tools';\n${tool('two', '/two/[id]')}`,
+      'src/logic/more/index.ts': `export { threeTool as more } from './three';\n`,
+      'src/logic/more/three.ts': tool('three', '/docs/[...path]'),
     });
     expect(viewToolPages(undefined, root)).toEqual([
       { name: 'home', page: '/' },

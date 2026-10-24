@@ -6,7 +6,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Freshness } from '@/components/patterns/freshness';
 import { ChartSkeleton, LoadingPage } from '@/components/patterns/page-loading';
 import { gatedLoading } from '@/data/refusal';
-import { SERVICES_LINE } from '@/views/services-context';
+import { SERVICES_LINE } from '@/logic/services-context';
 
 /**
  * The three parts of Services, in their shapes: the Featured metric's room first, then each service with its strip,

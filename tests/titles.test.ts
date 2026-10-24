@@ -2,10 +2,10 @@
 import { describe, expect, it } from 'vitest';
 import { formatCompact, formatCost } from '@/lib/format';
 import { formatDate } from '@/lib/format-date';
-import { customerTitle } from '@/views/customer-context';
-import { homeTitle } from '@/views/home-context';
-import { revenueTitle } from '@/views/revenue-context';
-import { usageTitle } from '@/views/usage-context';
+import { customerTitle } from '@/logic/customer-context';
+import { homeTitle } from '@/logic/home-context';
+import { revenueTitle } from '@/logic/revenue-context';
+import { usageTitle } from '@/logic/usage-context';
 
 /**
  * A page's title is worked out from its figures by a rule with a branch for each thing it may have to say, and what is

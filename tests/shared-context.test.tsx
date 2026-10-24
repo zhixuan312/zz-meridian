@@ -22,9 +22,9 @@ import { contextText, freshnessOf, type SharedContext } from '@/lib/shared-conte
 import { systemPrompt } from '@/lib/assistant/prompt';
 import type { Period } from '@/lib/period';
 import { HomeBody } from '@/views/home';
-import { homeContext, homeLine, type HomeData } from '@/views/home-context';
-import { homeData, homeHead, type HomeReads } from '@/views/home-parts';
-import { servicesContext, servicesHead, servicesTitle } from '@/views/services-context';
+import { homeContext, homeLine, type HomeData } from '@/logic/home-context';
+import { homeData, homeHead, type HomeReads } from '@/logic/home-parts';
+import { servicesContext, servicesHead, servicesTitle } from '@/logic/services-context';
 import { EmbedHome } from '../app/embed/home/view';
 
 /** The product's currency mark, as `formatCost` writes it before the digits: a project made with `--currency GBP` writes £. */
@@ -200,7 +200,7 @@ describe('one context, two consumers', () => {
 
 describe('a request\'s context', () => {
   it('says what the request used and cost, as its page does: tokens at its model\'s price, a call at the price of a call, and nothing when it was refused', async () => {
-    const { requestContext } = await import('@/views/request-context');
+    const { requestContext } = await import('@/logic/request-context');
     const { traceOf, usageOf } = await import('@/data/sample');
     const { REQUESTS } = await import('@/system/fixtures/sample');
     const one = (model: string | null, refused = false) => REQUESTS.find((r) => r.model === model && r.status >= 400 === refused)!;
@@ -219,19 +219,19 @@ describe('a request\'s context', () => {
 
 describe('every page shares a context within its budget, and nothing hidden', () => {
   it('Usage, Customers, Members, API keys and a request', async () => {
-    const { usageContext } = await import('@/views/usage-context');
-    const { usageData } = await import('@/views/usage-parts');
-    const { customersContext } = await import('@/views/customers-context');
-    const { membersContext } = await import('@/views/members-context');
-    const { keysContext } = await import('@/views/keys-context');
-    const { requestContext } = await import('@/views/request-context');
+    const { usageContext } = await import('@/logic/usage-context');
+    const { usageData } = await import('@/logic/usage-parts');
+    const { customersContext } = await import('@/logic/customers-context');
+    const { membersContext } = await import('@/logic/members-context');
+    const { keysContext } = await import('@/logic/keys-context');
+    const { requestContext } = await import('@/logic/request-context');
     const { traceOf } = await import('@/data/sample');
     const { REGIONS, STATUS_MIX, WEEKDAY_HOURS, CUSTOMERS } = await import('@/system/fixtures/company');
     const heat = Array.from({ length: 7 }, (_, d) => WEEKDAY_HOURS.filter((r) => r.weekday === d).map((r) => r.requests));
     const hours = Array.from({ length: 24 }, (_, h) => ({ key: String(h), label: `${String(h).padStart(2, '0')}:00`, value: heat.reduce((n, row) => n + row[h], 0) }));
     const { MEMBERS } = await import('@/system/fixtures/sample-members');
     const { API_KEYS, REQUESTS } = await import('@/system/fixtures/sample-records').then(async (m) => ({ ...m, REQUESTS: (await import('@/system/fixtures/sample')).REQUESTS }));
-    const { SCOPES } = await import('@/views/key-scopes');
+    const { SCOPES } = await import('@/logic/key-scopes');
     const now = DEMO_NOW.toISOString();
     const contexts = [
       usageContext(usageData({
@@ -252,7 +252,7 @@ describe('every page shares a context within its budget, and nothing hidden', ()
     expect(keys).toContain('never shared');
   });
   it('Customers compares each customer with everyone, not with nothing', async () => {
-    const { customersContext } = await import('@/views/customers-context');
+    const { customersContext } = await import('@/logic/customers-context');
     const { CUSTOMERS } = await import('@/system/fixtures/company');
     const text = contextText(customersContext(CUSTOMERS, CUSTOMERS, { q: '', plan: 'all', status: 'all', sort: 'revenue', dir: 'desc', page: '1' }));
     expect(text).toMatch(/Combined requests are up \d+% over the last 7 days against the 7 before\./);
@@ -334,7 +334,7 @@ describe('a page is headed by the sentence its context leads with', () => {
   // The heading is read from the page as it is served, and the line from the context the page's view tool returns.
   it('Home, for the period chosen', async () => {
     const { default: HomePage } = await import('../app/(dashboard)/(home)/page');
-    const { homeTool } = await import('@/views/tools');
+    const { homeTool } = await import('@/logic/tools');
     for (const period of ['30d', '90d'] as const) {
       const { read, drawn } = heading(await served(HomePage({ searchParams: Promise.resolve({ period }) })));
       const { context } = await homeTool.read({ period });
@@ -351,7 +351,7 @@ describe('a page is headed by the sentence its context leads with', () => {
 
   it('Usage, for the period chosen', async () => {
     const { default: UsagePage } = await import('../app/(dashboard)/usage/page');
-    const { usageTool } = await import('@/views/tools');
+    const { usageTool } = await import('@/logic/tools');
     for (const period of ['30d', 'all'] as const) {
       const { read, drawn } = heading(await served(UsagePage({ searchParams: Promise.resolve({ period }) })));
       const { context } = await usageTool.read({ period });
@@ -364,7 +364,7 @@ describe('a page is headed by the sentence its context leads with', () => {
 
   it('Revenue, over the last 30 complete days', async () => {
     const { default: RevenuePage } = await import('../app/(dashboard)/business/page');
-    const { revenueTool } = await import('@/views/tools');
+    const { revenueTool } = await import('@/logic/tools');
     const { read, drawn } = heading(await served(RevenuePage()));
     const { context } = await revenueTool.read({});
     expect(drawn.length).toBeGreaterThan(20);
@@ -375,7 +375,7 @@ describe('a page is headed by the sentence its context leads with', () => {
 
   it('One customer, from its record: active, past due, on a trial and left', async () => {
     const { default: CustomerPage } = await import('../app/(dashboard)/customers/[id]/page');
-    const { customerTool } = await import('@/views/tools');
+    const { customerTool } = await import('@/logic/tools');
     for (const [id, name, says] of [
       ['northwind-labs', 'Northwind Labs', new RegExp(`^Northwind Labs paid ${MONEY}[\\d,.]+ in 30 days and sent [\\d.]+% (more|less) this week than last$`)],
       ['lumen-studio', 'Lumen Studio', /^Lumen Studio is past due, and sent [\d.]+% (more|less) this week than last$/],
@@ -394,7 +394,7 @@ describe('a page is headed by the sentence its context leads with', () => {
 
   it('Now, from the services and the releases in testing', async () => {
     const { default: NowPage } = await import('../app/(dashboard)/engineering/page');
-    const { nowTool } = await import('@/views/tools');
+    const { nowTool } = await import('@/logic/tools');
     const { read, drawn } = heading(await served(NowPage()));
     const { context } = await nowTool.read({});
     // What is wrong first: the sample's Inference API is degraded, and three releases have a verification not yet passed.
@@ -407,7 +407,7 @@ describe('a page is headed by the sentence its context leads with', () => {
 
   it('Services, from the uptime of its 90 days and the longest clean run', async () => {
     const { default: ServicesPage } = await import('../app/(dashboard)/services/page');
-    const { servicesTool } = await import('@/views/tools');
+    const { servicesTool } = await import('@/logic/tools');
     const { read, drawn } = heading(await served(ServicesPage()));
     const { context } = await servicesTool.read({});
     // Dashboard's run is the longest of any service now, and its own longest in the 90 days, which it does not reach back to the start of.
@@ -421,7 +421,7 @@ describe('a page is headed by the sentence its context leads with', () => {
 
 describe('what a context states beside its title', () => {
   it('Home states the total of requests over every complete day kept, and Usage the first day requests passed a threshold', async () => {
-    const { homeTool, usageTool } = await import('@/views/tools');
+    const { homeTool, usageTool } = await import('@/logic/tools');
     const requests = HISTORY.reduce((sum, d) => sum + d.requests, 0);
     const answered = (HISTORY.reduce((sum, d) => sum + d.requests - d.errors, 0) / requests * 100).toFixed(2);
     for (const period of ['7d', 'all'] as const) {
@@ -437,14 +437,14 @@ describe('what a context states beside its title', () => {
   });
 
   it('Now and Services state the days inside the band over every complete day kept, each with its own address', async () => {
-    const { nowTool, servicesTool } = await import('@/views/tools');
+    const { nowTool, servicesTool } = await import('@/logic/tools');
     const line = 'Steady: 357 of 360 days inside the band of p95 under 350 ms and errors under 1%; outside it on 17 Aug 2026, 21 Sept 2026 and 22 Sept 2026.';
     expect((await nowTool.read({})).context.insights[1]).toEqual({ text: line, evidence: '/engineering' });
     expect((await servicesTool.read({})).context.insights[1]).toEqual({ text: line, evidence: '/services' });
   });
 
   it('Now and Services say what could not be read, and are headed by what they can state without it', async () => {
-    const { nowHead } = await import('@/views/now-context');
+    const { nowHead } = await import('@/logic/now-context');
     const operational = SERVICES.map((s) => ({ ...s, status: 'operational' as const }));
     expect(nowHead({ services: SERVICES, testing: null, history: HISTORY })).toMatchObject({ title: 'Inference API is degraded', unknown: expect.stringMatching(/^The releases could not be read/) });
     const unread = nowHead({ services: operational, testing: 1, history: null });
@@ -477,8 +477,8 @@ describe('what a context states beside its title', () => {
   });
 
   it('a page whose history could not be read is headed by its name, and its context says so', async () => {
-    const { usageHead } = await import('@/views/usage-parts');
-    const { revenueHead } = await import('@/views/revenue-context');
+    const { usageHead } = await import('@/logic/usage-parts');
+    const { revenueHead } = await import('@/logic/revenue-context');
     const { CUSTOMERS } = await import('@/system/fixtures/company');
     const unread = homeHead({ period: '30d', totals: demoTotals('30d'), history: null, services: SERVICES });
     expect(unread).toEqual({ title: null, facts: [], unknown: expect.stringMatching(/^The history could not be read/), record: null });
@@ -513,7 +513,7 @@ describe('what a context states beside its title', () => {
 describe('a title and a fact follow the product\'s configuration', () => {
   it('Home loses its record when a record needs more periods than are kept, and Usage\'s first follows the thresholds', async () => {
     const stated = async () => {
-      const { homeTool, usageTool } = await import('@/views/tools');
+      const { homeTool, usageTool } = await import('@/logic/tools');
       return { home: (await homeTool.read({ period: '30d' })).context.insights, usage: (await usageTool.read({ period: '30d' })).context.insights };
     };
     const shipped = await stated();
@@ -539,7 +539,7 @@ describe('a title and a fact follow the product\'s configuration', () => {
 describe('the days inside the band follow the product\'s configuration', () => {
   it('Now and Services count them against `facts.band`, and name the days it leaves out', async () => {
     const stated = async () => {
-      const { nowTool, servicesTool } = await import('@/views/tools');
+      const { nowTool, servicesTool } = await import('@/logic/tools');
       return [(await nowTool.read({})).context, (await servicesTool.read({})).context].map((c) => c.insights.find((i) => i.text.startsWith('Steady: '))!.text);
     };
     for (const line of await stated()) expect(line).toMatch(/^Steady: 357 of 360 days inside the band of p95 under 350 ms and errors under 1%; outside it on /);
@@ -582,9 +582,9 @@ describe("a list a context states names its first, in the page's order, and coun
   });
 
   it('API keys: the first eight keys, and the first five of those unused and of those with every scope', async () => {
-    const { keysContext } = await import('@/views/keys-context');
+    const { keysContext } = await import('@/logic/keys-context');
     const { API_KEYS } = await import('@/system/fixtures/sample-records');
-    const { SCOPES } = await import('@/views/key-scopes');
+    const { SCOPES } = await import('@/logic/key-scopes');
     // Twelve live keys after the sample's, never used and with every scope: each is in both lists.
     const left = Array.from({ length: 12 }, (_, i) => ({ ...API_KEYS[0], id: `key_x${i + 1}`, name: `Forgotten ${i + 1}`, lastUsed: null, scopes: [...SCOPES] }));
     const rows = [...API_KEYS, ...left];
@@ -599,7 +599,7 @@ describe("a list a context states names its first, in the page's order, and coun
   });
 
   it('Members: everyone up to twenty-four in the order given, and the first three of those quiet and of the invitations', async () => {
-    const { membersContext } = await import('@/views/members-context');
+    const { membersContext } = await import('@/logic/members-context');
     const { MEMBERS } = await import('@/system/fixtures/sample-members');
     const rows = times(MEMBERS, 4, (m, i) => ({ id: `${m.id}_${i}`, name: `${m.name} ${i + 1}` }));
     const c = membersContext(rows, DEMO_NOW.toISOString());

@@ -14,9 +14,9 @@ import { contextText } from '@/lib/shared-context';
 // The scope names the project's own timezone, so a project branded to another one still states the same contract.
 import { app } from '@/app.config';
 import { UsageBody } from '@/views/usage';
-import { HOME_METRICS } from '@/views/home-context';
-import { usageTool, viewTools } from '@/views/tools';
-import type { UsageData } from '@/views/usage-context';
+import { HOME_METRICS } from '@/logic/home-context';
+import { usageTool, viewTools } from '@/logic/tools';
+import type { UsageData } from '@/logic/usage-context';
 
 type Totals = { requests: number; errorRate: number; p95: number; revenue: number };
 const home = viewTools.find((t) => t.name === 'home')!;

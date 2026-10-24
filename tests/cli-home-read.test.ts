@@ -23,7 +23,7 @@ vi.mock('@/data/read', async (orig) => {
 import { facts } from '@/app.config';
 import { formatCompact } from '@/lib/format';
 import { contextText } from '@/lib/shared-context';
-import { homeTool } from '@/views/tools';
+import { homeTool } from '@/logic/tools';
 
 const PERSONAS = { owner: 'members_1', admin: 'members_2', member: 'members_4', viewer: 'members_12' };
 /** What a view's context may take (tests/shared-context.test.tsx holds every view to it). */
@@ -78,7 +78,7 @@ describe("Home's context states the company", () => {
       const real = await load<typeof import('@/app.config')>();
       return { ...real, facts: { ...real.facts, concentrationAt: 0.13 } };
     });
-    const { homeTool: tool } = await import('@/views/tools');
+    const { homeTool: tool } = await import('@/logic/tools');
     jar.value = PERSONAS.owner;
     const text = contextText((await tool.read({ period: '30d' })).context);
     vi.doUnmock('@/app.config');

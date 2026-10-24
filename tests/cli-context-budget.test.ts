@@ -26,7 +26,7 @@ vi.mock('@/data/read', async (orig) => {
 import { contextText, type SharedContext } from '@/lib/shared-context';
 import { readAll } from '@/data/read';
 import { PERIODS } from '@/lib/period';
-import { viewTools } from '@/views/tools';
+import { viewTools } from '@/logic/tools';
 import { settingsContext } from '@/views/settings';
 
 const BUDGET = 2600;

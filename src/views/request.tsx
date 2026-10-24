@@ -1,7 +1,7 @@
 'use client';
 
 import { useShareView } from '@/components/base/use-share-view';
-import { requestContext } from './request-context';
+import { requestContext } from '@/logic/request-context';
 import Link from 'next/link';
 import { useTransition } from 'react';
 import { useRouter } from 'next/navigation';

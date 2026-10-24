@@ -57,7 +57,7 @@ import HomePage from '../app/(dashboard)/(home)/page';
 import HomeLoading from '../app/(dashboard)/(home)/loading';
 import DashboardError from '../app/(dashboard)/error';
 import { contextText } from '@/lib/shared-context';
-import { homeTool } from '@/views/tools';
+import { homeTool } from '@/logic/tools';
 
 const PERSONAS = { owner: 'members_1', member: 'members_4' };
 

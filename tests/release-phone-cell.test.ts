@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { unresolvedCounts } from '@/views/releases-context';
+import { unresolvedCounts } from '@/logic/releases-context';
 
 // On a phone the Verification cell has one line, so it counts what has not passed. It says what each count is: a run
 // that failed is not waiting for anything.

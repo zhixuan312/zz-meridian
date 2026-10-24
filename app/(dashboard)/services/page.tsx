@@ -5,10 +5,10 @@ import { DEMO_NOW, DEMO_UPDATED_AT } from '@/data/sample';
 import { PageFrame } from '@/components/base/shell';
 import { Freshness } from '@/components/patterns/freshness';
 import { Busy } from '@/components/patterns/page-loading';
-import { packServices } from '@/components/patterns/status-list/summarise';
+import { packServices } from '@/logic/summarise';
 import { PackedServicesBody } from '@/views/services';
-import { SERVICES_LINE } from '@/views/services-context';
-import { servicesTool } from '@/views/tools';
+import { SERVICES_LINE } from '@/logic/services-context';
+import { servicesTool } from '@/logic/tools';
 import { ServicesSkeleton } from './loading';
 
 export function generateMetadata() {

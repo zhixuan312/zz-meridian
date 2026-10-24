@@ -5,7 +5,7 @@ vi.mock('next/headers', () => ({ cookies: async () => ({ get: () => undefined, s
 vi.mock('next/cache', () => ({ cacheTag: () => {}, cacheLife: () => {}, updateTag: () => {}, revalidateTag: () => {}, revalidatePath: () => {}, refresh: () => {} }));
 
 import { clock, collections } from '@/data/collections';
-import { customerFigures } from '@/views/customers-context';
+import { customerFigures } from '@/logic/customers-context';
 
 /**
  * The sample is one company, priced once. Every figure a page shows comes from these records, so the records must agree

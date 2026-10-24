@@ -4,9 +4,10 @@
  * the title the page is headed by and the days inside the band.
  */
 import { facts as rules } from '@/app.config';
-import { afterStart, type Incident } from '@/components/patterns/incident-card';
+import type { Incident } from '@/components/patterns/incident-card';
+import { afterStart } from '@/logic/after-start';
 import type { Service } from '@/components/patterns/status-list';
-import { summarise } from '@/components/patterns/status-list/summarise';
+import { summarise } from '@/logic/summarise';
 import type { DailyPoint } from '@/data/sample';
 import { run, runOf, steady } from '@/lib/facts';
 import { formatDuration, formatPercent, plural } from '@/lib/format';

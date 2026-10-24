@@ -1,8 +1,8 @@
 // @vitest-environment node
 import { describe, expect, it } from 'vitest';
 import { formatPercent } from '@/lib/format';
-import { nowTitle } from '@/views/now-context';
-import { servicesTitle } from '@/views/services-context';
+import { nowTitle } from '@/logic/now-context';
+import { servicesTitle } from '@/logic/services-context';
 
 /**
  * The titles of the two Engineering pages. Now says what is wrong first, then what is waiting to ship; Services says the

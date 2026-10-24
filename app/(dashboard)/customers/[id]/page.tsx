@@ -4,7 +4,7 @@ import { FEATURES } from '@/data/features';
 import { CustomerView } from '@/views/customer';
 import { MissingPage } from '@/views/missing-page';
 import { NOT_FOUND } from '@/views/not-found';
-import { readCustomer } from '@/views/tools';
+import { readCustomer } from '@/logic/tools';
 
 /** The page's one read, shared by its metadata and its body. */
 const readOne = cache(readCustomer);

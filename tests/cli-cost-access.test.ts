@@ -28,7 +28,7 @@ import { assistantTools } from '@/lib/assistant/tools';
 import type { AnyCollection } from '@/lib/collection';
 import { contextText } from '@/lib/shared-context';
 import type { ViewTool } from '@/lib/shared-context';
-import { homeTool, viewTools } from '@/views/tools';
+import { homeTool, viewTools } from '@/logic/tools';
 
 const PERSONAS = { owner: 'members_1', admin: 'members_2', member: 'members_4', keyManager: 'members_5', viewer: 'members_12' };
 const ALLOWED = [PERSONAS.owner, PERSONAS.admin];

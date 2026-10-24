@@ -30,7 +30,7 @@ import { useLive, type Revisions } from '@/lib/live';
 import {
   MONTH, NOW_METRICS, NOW_PARTS as P, NOW_TILES, inWords, nothingArrived, nowContext, servicesShown, unpackNow,
   type NowData, type NowModel, type NowTile, type PackedNowData,
-} from './now-context';
+} from '@/logic/now-context';
 import { Unread, unreadTile } from './unread';
 
 const linkClass = 'row-link inline-flex items-center gap-1 font-medium text-ink hover:text-accent-ink';

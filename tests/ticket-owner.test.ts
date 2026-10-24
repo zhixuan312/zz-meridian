@@ -12,7 +12,7 @@ import { removeMember } from '../app/(dashboard)/members/actions';
 import { createTicket } from '../app/(dashboard)/operations-tickets/actions';
 import { readAlerts } from '@/data/alerts';
 import { readTickets } from '@/data/tickets';
-import { ticketsContext } from '@/views/tickets-context';
+import { ticketsContext } from '@/logic/tickets-context';
 
 beforeEach(() => { jar.value = 'members_1'; });
 

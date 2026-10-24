@@ -13,9 +13,9 @@ import { can, resolveAccess } from '@/data/access';
 import { clock, collections } from '@/data/collections';
 import { read, aggregate } from '@/data/read';
 import { runExplore, type ExploreRights, type PreparedQuery } from '@/lib/explore';
-import { nowExplore } from '@/views/now-explore';
-import { releasesExplore } from '@/views/releases-explore';
-import { releaseRefers, testsExplore } from '@/views/tests-explore';
+import { nowExplore } from '@/logic/now-explore';
+import { releasesExplore } from '@/logic/releases-explore';
+import { releaseRefers, testsExplore } from '@/logic/tests-explore';
 
 /**
  * The runs Releases, Tests and Now count name each release by the version, service and environment the pages write

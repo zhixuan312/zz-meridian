@@ -17,7 +17,7 @@ import { dayOf, formatDate, formatDay } from '@/lib/format-date';
 import { requestColumns } from '@/system/sample-cells';
 import {
   LATEST, busiestOf, customerContext, endpointsOf, requestsOf, shareOf, standingOf, thisWeekOf, titleOf, weekOf, type CustomerData,
-} from './customer-context';
+} from '@/logic/customer-context';
 import { Unread } from './unread';
 
 const STATUS_TONE = { active: 'neutral', trial: 'accent', 'past due': 'critical', left: 'neutral' } as const;

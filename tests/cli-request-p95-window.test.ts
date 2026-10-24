@@ -2,7 +2,7 @@
 import { describe, expect, it } from 'vitest';
 import { traceOf } from '@/data/sample';
 import { DEMO_NOW, REQUESTS } from '@/system/fixtures/sample';
-import { requestContext } from '@/views/request-context';
+import { requestContext } from '@/logic/request-context';
 
 /**
  * One request's context compares its latency with its route's p95 and says over which days that p95 is, the last 30

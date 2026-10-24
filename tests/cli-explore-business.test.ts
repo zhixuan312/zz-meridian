@@ -15,12 +15,12 @@ import { readDays } from '@/data/metrics';
 import { aggregate, read } from '@/data/read';
 import { exploreSchema, runExplore, type ExploreIO, type ExploreRights, type PreparedQuery } from '@/lib/explore';
 import { z } from 'zod';
-import { customersExplore } from '@/views/customers-explore';
-import { homeExplore } from '@/views/home-explore';
-import { requestExplore } from '@/views/request-explore';
-import { requestsExplore } from '@/views/requests-explore';
-import { revenueExplore } from '@/views/revenue-explore';
-import { usageExplore } from '@/views/usage-explore';
+import { customersExplore } from '@/logic/customers-explore';
+import { homeExplore } from '@/logic/home-explore';
+import { requestExplore } from '@/logic/request-explore';
+import { requestsExplore } from '@/logic/requests-explore';
+import { revenueExplore } from '@/logic/revenue-explore';
+import { usageExplore } from '@/logic/usage-explore';
 
 /**
  * The prepared queries of Home, Revenue, Customers, Requests and One request (FR-38, FR-39), and the figures AC-14.2

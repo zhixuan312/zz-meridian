@@ -69,6 +69,6 @@ describe('the pages that were renamed', () => {
     const old = ['Overview', 'Analytics', 'Operations', 'Operations tickets', 'Tests and verification'];
     expect(nav.flatMap((g) => g.items).map((i) => i.label).filter((l) => old.includes(l))).toEqual([]);
     expect(Object.values(FEATURES).map((f) => f.title).filter((t) => old.includes(t))).toEqual([]);
-    expect(hits(/title: '(Overview|Analytics|Operations|Operations tickets|Tests and verification)'/, ['src/views/tools.ts'])).toEqual([]);
+    expect(hits(/title: '(Overview|Analytics|Operations|Operations tickets|Tests and verification)'/, ['src/logic/tools.ts'])).toEqual([]);
   });
 });

@@ -6,8 +6,8 @@ import { PageFrame } from '@/components/base/shell';
 import { Freshness } from '@/components/patterns/freshness';
 import { Busy, LeadRoom } from '@/components/patterns/page-loading';
 import { PackedNowBody } from '@/views/now';
-import { packNow } from '@/views/now-context';
-import { nowTool } from '@/views/tools';
+import { packNow } from '@/logic/now-context';
+import { nowTool } from '@/logic/tools';
 import { NowSkeleton } from './loading';
 
 export function generateMetadata() {

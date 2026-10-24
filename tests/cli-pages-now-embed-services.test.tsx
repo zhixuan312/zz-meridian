@@ -14,8 +14,8 @@ import { verificationOf } from '@/data/verification';
 import { ACTIVITY, DEMO_NOW, DEMO_UPDATED_AT, INCIDENTS, MODELS, SERVICES } from '@/system/fixtures/sample';
 import { COMPUTE, ENDPOINTS, USAGE } from '@/system/fixtures/company';
 import { RELEASES, RUNS, TICKETS } from '@/system/fixtures/sample-engineering';
-import { packNow } from '@/views/now-context';
-import { nowData, type NowReads } from '@/views/now-parts';
+import { packNow } from '@/logic/now-context';
+import { nowData, type NowReads } from '@/logic/now-parts';
 import { EmbedNow } from '../app/embed/now/view';
 
 const reads: NowReads = {

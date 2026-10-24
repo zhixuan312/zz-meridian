@@ -11,7 +11,7 @@ vi.mock('next/navigation', () => ({
 import { SurfaceOverride } from '@/components/base/surface';
 import { EmbedRequests } from '../app/embed/requests/view';
 import { requestsQuery } from '@/data/requests';
-import type { RequestsData } from '@/views/requests-context';
+import type { RequestsData } from '@/logic/requests-context';
 import { REQUESTS } from '@/system/fixtures/sample';
 
 const { state } = requestsQuery({ status: '5xx' });

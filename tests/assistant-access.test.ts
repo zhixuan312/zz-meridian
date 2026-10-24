@@ -15,7 +15,7 @@ import { aggregate, read } from '@/data/read';
 import { membersFor } from '@/data/member-mutations';
 import { handedTo } from '@/lib/assistant/scoped';
 import { assistantTools } from '@/lib/assistant/tools';
-import { viewTools } from '@/views/tools';
+import { viewTools } from '@/logic/tools';
 
 const writer = { write() {}, merge() {}, onError: undefined } as never;
 const guard = { authorize: async () => true, invalidate: () => {}, record: async () => {} };

@@ -17,12 +17,12 @@ import { aggregate, read, readAll } from '@/data/read';
 import { steady } from '@/lib/facts';
 import { exploreSchema, runExplore, type ExploreIO, type ExploreRights, type PreparedQuery } from '@/lib/explore';
 import { z } from 'zod';
-import { keysExplore } from '@/views/keys-explore';
-import { membersExplore } from '@/views/members-explore';
-import { nowExplore } from '@/views/now-explore';
-import { releasesExplore } from '@/views/releases-explore';
-import { servicesExplore } from '@/views/services-explore';
-import { ticketsExplore } from '@/views/tickets-explore';
+import { keysExplore } from '@/logic/keys-explore';
+import { membersExplore } from '@/logic/members-explore';
+import { nowExplore } from '@/logic/now-explore';
+import { releasesExplore } from '@/logic/releases-explore';
+import { servicesExplore } from '@/logic/services-explore';
+import { ticketsExplore } from '@/logic/tickets-explore';
 
 /**
  * The prepared queries of Now, Services, Tickets, Releases, Members and API keys (FR-38, FR-39, FR-40), the fields the

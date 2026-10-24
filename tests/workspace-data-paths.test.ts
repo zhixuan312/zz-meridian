@@ -16,9 +16,9 @@ import { collectionFor, resolveAccess } from '@/data/access';
 import { collections } from '@/data/collections';
 import { collectionTag, read } from '@/data/read';
 import { readTickets } from '@/data/tickets';
-import type { HomeData } from '@/views/home-context';
-import { ticketCounts } from '@/views/tickets-context';
-import { viewTools } from '@/views/tools';
+import type { HomeData } from '@/logic/home-context';
+import { ticketCounts } from '@/logic/tickets-context';
+import { viewTools } from '@/logic/tools';
 
 const ROOT = path.resolve(import.meta.dirname, '..');
 const PEOPLE = { member: 'members_4', viewer: 'members_12', nobody: 'members_999' };

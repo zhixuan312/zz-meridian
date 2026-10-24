@@ -14,7 +14,7 @@ import type { RunRow } from '@/data/engineering';
 import { formatDuration } from '@/lib/format';
 import { formatRelative } from '@/lib/format-date';
 import { useLive, type Revisions } from '@/lib/live';
-import { matchingRuns, routeOf, TEST_METRICS, testFigures, testsContext } from './tests-context';
+import { matchingRuns, routeOf, TEST_METRICS, testFigures, testsContext } from '@/logic/tests-context';
 
 const VERDICT_TONE: Record<RunRow['state'], Tone> = { passed: 'positive', failed: 'critical', skipped: 'warning' };
 const LABEL = (word: string) => word[0].toUpperCase() + word.slice(1);

@@ -1,7 +1,7 @@
 'use client';
 
 import { useShareView } from '@/components/base/use-share-view';
-import { membersContext } from './members-context';
+import { membersContext } from '@/logic/members-context';
 import { useEffect, useOptimistic, useRef, useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { MoreHorizontal, Trash2, UserCheck, UserCog, UserPlus, UserX } from 'lucide-react';

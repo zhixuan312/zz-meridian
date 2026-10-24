@@ -14,7 +14,7 @@ import type { Period } from '@/lib/period';
 import { CUSTOMERS, DAYS, REGIONS, USAGE, demoSeries, demoTotals } from '@/system/fixtures/company';
 import { MODELS } from '@/system/fixtures/sample';
 import { RevenueBody } from '@/views/revenue';
-import { revenueData } from '@/views/revenue-parts';
+import { revenueData } from '@/logic/revenue-parts';
 
 /** Revenue's body as its read builds it from the sample. */
 function body(period: Period = '30d') {

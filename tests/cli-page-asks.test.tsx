@@ -24,7 +24,7 @@ import { DEMO_UPDATED_AT, payloadsOf, traceOf, type ApiKey, type CustomerRecord,
 import { readTickets } from '@/data/tickets';
 import { CustomerView } from '@/views/customer';
 import { CustomersView } from '@/views/customers';
-import { customerRow } from '@/views/customers-context';
+import { customerRow } from '@/logic/customers-context';
 import { HomeBody } from '@/views/home';
 import { KeysView } from '@/views/keys';
 import { MembersView } from '@/views/members';
@@ -36,7 +36,7 @@ import { RevenueBody } from '@/views/revenue';
 import { ServicesBody } from '@/views/services';
 import { TestsView } from '@/views/tests';
 import { TicketsView } from '@/views/tickets';
-import { customerTool, homeTool, nowTool, revenueTool, servicesTool, usageTool, viewTools } from '@/views/tools';
+import { customerTool, homeTool, nowTool, revenueTool, servicesTool, usageTool, viewTools } from '@/logic/tools';
 import { UsageBody } from '@/views/usage';
 
 /**

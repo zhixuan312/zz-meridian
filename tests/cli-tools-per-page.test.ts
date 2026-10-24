@@ -27,7 +27,7 @@ vi.mock('@/lib/assistant/config', () => ({
 }));
 
 import { read } from '@/data/read';
-import { viewTools } from '@/views/tools';
+import { viewTools } from '@/logic/tools';
 import { POST } from '../app/api/assistant/route';
 
 /**
@@ -79,7 +79,7 @@ describe('the tools a person is handed on each page', () => {
 
 describe('nothing names a query tool', () => {
   const files = [
-    ...fs.readdirSync(path.join(ROOT, 'src/views')).filter((f) => /-context\.ts$/.test(f)).map((f) => `src/views/${f}`),
+    ...fs.readdirSync(path.join(ROOT, 'src/logic')).filter((f) => /-context\.ts$/.test(f)).map((f) => `src/logic/${f}`),
     ...(fs.readdirSync(path.join(ROOT, 'app'), { recursive: true }) as string[]).filter((f) => f.endsWith('README.md')).map((f) => `app/${f}`),
     'docs/assistant.md',
     'docs/agents.md',

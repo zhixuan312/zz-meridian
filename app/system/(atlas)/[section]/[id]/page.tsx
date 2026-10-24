@@ -7,7 +7,7 @@ import { TokenView } from '@/system/token-view';
 import { tokenGroups } from '@/system/tokens-data';
 import { Article } from '../../_article';
 import { contextText } from '@/lib/shared-context';
-import { nowTool, homeTool, requestsTool } from '@/views/tools';
+import { nowTool, homeTool, requestsTool } from '@/logic/tools';
 
 /** The tool behind each embed view, so the host simulator shows the result an MCP server would return for it. */
 const TOOLS = { '/embed/home': homeTool, '/embed/requests': requestsTool, '/embed/now': nowTool } as const;

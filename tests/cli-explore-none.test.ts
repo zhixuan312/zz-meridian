@@ -7,8 +7,8 @@ vi.mock('next/cache', () => ({ cacheTag: () => {}, cacheLife: () => {}, updateTa
 
 import { clock, collections } from '@/data/collections';
 import { runExplore, type ExploreIO, type PreparedQuery } from '@/lib/explore';
-import { requestsExplore } from '@/views/requests-explore';
-import { ticketsExplore } from '@/views/tickets-explore';
+import { requestsExplore } from '@/logic/requests-explore';
+import { ticketsExplore } from '@/logic/tickets-explore';
 
 /**
  * The requests that reached no model read "no model" on Requests, and the unassigned tickets "unassigned" on Tickets, as

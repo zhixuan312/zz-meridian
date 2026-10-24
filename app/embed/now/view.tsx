@@ -9,7 +9,7 @@ import { AskAbout } from '@/components/patterns/ask-about';
 import { StatusList } from '@/components/patterns/status-list';
 import { ShareContext } from '@/components/base/use-share-view';
 import dynamic from 'next/dynamic';
-import { nothingArrived, nowContext, unpackNow, type PackedNowData } from '@/views/now-context';
+import { nothingArrived, nowContext, unpackNow, type PackedNowData } from '@/logic/now-context';
 import { formatRelative } from '@/lib/format-date';
 
 // Now's whole body is the fullscreen view, and the inline one only when nothing has arrived: its charts, tables and

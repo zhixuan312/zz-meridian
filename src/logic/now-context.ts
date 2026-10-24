@@ -7,7 +7,7 @@ import { facts as rules } from '@/app.config';
 import type { ActivityEvent } from '@/components/patterns/activity-feed';
 import type { Incident } from '@/components/patterns/incident-card';
 import type { Service } from '@/components/patterns/status-list';
-import { packServices, unpackServices, type PackedService } from '@/components/patterns/status-list/summarise';
+import { packServices, unpackServices, type PackedService } from '@/logic/summarise';
 import type { DayState } from '@/components/charts/uptime-bars';
 import type { DailyPoint, Endpoint } from '@/data/sample';
 import { runOf, steady } from '@/lib/facts';

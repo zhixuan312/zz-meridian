@@ -10,7 +10,7 @@ import type { LoggedRequest, readRequests } from '@/data/requests';
 import { useShareView } from '@/components/base/use-share-view';
 import { Records } from '@/components/templates/records';
 import { AskAbout } from '@/components/patterns/ask-about';
-import { REQUEST_METRICS, describeFilters, requestsContext } from './requests-context';
+import { REQUEST_METRICS, describeFilters, requestsContext } from '@/logic/requests-context';
 import { requestColumns } from '@/system/sample-cells';
 
 type Page = Awaited<ReturnType<typeof readRequests>>;

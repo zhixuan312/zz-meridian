@@ -13,7 +13,7 @@ vi.mock('next/navigation', () => ({
 vi.stubGlobal('IntersectionObserver', class { observe() {} unobserve() {} disconnect() {} });
 
 import { ServicesBody } from '@/views/services';
-import { servicesTool } from '@/views/tools';
+import { servicesTool } from '@/logic/tools';
 
 /**
  * Services' Featured metric states its uptime over a line that is not uptime: the share of the services operational

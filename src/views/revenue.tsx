@@ -21,7 +21,7 @@ import { PLANS } from '@/data/sample';
 import { AXIS_FORMATTERS, FORMATTERS, formatCompact, formatCost, formatPercent } from '@/lib/format';
 import { formatDate, formatDay, formatShortDate } from '@/lib/format-date';
 import { PERIOD_DAYS, PERIOD_LABEL } from '@/lib/period';
-import { REVENUE_METRICS, WALL_ORDERS, nextPlanWords, revenueContext, signed, yearAgoNote, type RevenueData, type WallOrder, type WorthLine } from './revenue-context';
+import { REVENUE_METRICS, WALL_ORDERS, nextPlanWords, revenueContext, signed, yearAgoNote, type RevenueData, type WallOrder, type WorthLine } from '@/logic/revenue-context';
 import { AskPeriod } from './ask-period';
 import { Unread, unreadTile } from './unread';
 

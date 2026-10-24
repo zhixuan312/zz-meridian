@@ -6,7 +6,7 @@ import { z } from 'zod';
 import { clock } from '@/data/collections';
 import { AccessDenied, can, collectionFor, nameOf, resolveAccess } from '@/data/access';
 import { collectionTag } from '@/data/read';
-import { SCOPES } from '@/views/key-scopes';
+import { SCOPES } from '@/logic/key-scopes';
 import type { ApiKey } from '@/data/sample';
 
 const draft = z.object({
