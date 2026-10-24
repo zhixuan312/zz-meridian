@@ -7,6 +7,7 @@ import { Meridian } from '@/components/charts/meridian';
 import { TrendChart } from '@/components/charts/trend-chart';
 import { formatCompact } from '@/lib/format';
 import { signInDays } from '@/data/sign-in';
+import { readServices } from '@/data/metrics';
 import { app } from '@/app.config';
 
 export const metadata = { title: 'Sign in' };
@@ -16,7 +17,7 @@ export default function SignInPage() {
   const days = signInDays();
   return (
     <Standalone
-      footer={<SampleFooter />}
+      footer={<SampleFooter services={() => readServices().catch(() => null)} />}
       kicker={`${app.name} · Console`}
       sentence="Know your API before your customers do."
       lead="Traffic, latency, revenue and health for every endpoint, on your desk, on your phone, and inside the assistant you already use."

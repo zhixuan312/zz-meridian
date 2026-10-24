@@ -284,6 +284,96 @@ describe('the four-layer rules', () => {
     }
   }, 60_000);
 
+  it('refuse a view or a client component that takes a value from a data module, and stay silent on the five vocabulary modules', () => {
+    // A sixth module is any of src/data's that is not roles, features, sample, request-methods or live-actions: a read
+    // wearing a helper's name. The relative form is refused because the scan resolves the specifier, not its spelling.
+    try {
+      put('src/views/planted-read.tsx', ["import { readServices } from '@/data/metrics';", 'void readServices;', 'export function PlantedRead() { return null; }'].join('\n') + '\n');
+      put('src/components/planted-read.tsx', ["'use client';", "import { signInDays } from '@/data/sign-in';", 'void signInDays;', 'export function PlantedClientRead() { return null; }'].join('\n') + '\n');
+      put('src/views/planted-vocabulary.tsx', ["import { roleLabel } from '@/data/roles';", 'void roleLabel;', 'export function PlantedVocabulary() { return null; }'].join('\n') + '\n');
+      const r = runCheck();
+      expect(r.stdout).toContain('src/views/planted-read.tsx:1: imports @/data/metrics from src/data/metrics; presentation does not read');
+      expect(r.stdout).toContain('src/components/planted-read.tsx:2: imports @/data/sign-in from src/data/sign-in; presentation does not read');
+      expect(r.stdout).not.toMatch(/planted-vocabulary/);
+      expect(r.status).toBe(1);
+    } finally {
+      remove('src/views/planted-read.tsx', 'src/components/planted-read.tsx', 'src/views/planted-vocabulary.tsx');
+    }
+  }, 60_000);
+
+  it('print a stated presentation escape with its reason, and pass without the refusal', () => {
+    const f = 'src/views/planted-read.tsx';
+    try {
+      put(f, [
+        "import { readServices } from '@/data/metrics'; // allow-presentation-does-not-read: the footer reads services beside the screen on purpose",
+        'void readServices;',
+        'export function PlantedRead() { return null; }',
+      ].join('\n') + '\n');
+      const r = runCheck();
+      const escape = 'escape  src/views/planted-read.tsx:1: presentation-does-not-read — the footer reads services beside the screen on purpose';
+      expect(r.stdout).toContain(escape);
+      expect(r.stdout).not.toMatch(/src\/views\/planted-read\.tsx:1: imports/);
+      expect(r.stdout).toMatch(/^0 problems/m);
+      expect(r.status).toBe(0);
+      // Printed as its own line after the problem list and before the summary, which it does not change.
+      const lines = r.stdout.trimEnd().split('\n');
+      expect(lines.indexOf(escape)).toBeGreaterThan(lines.indexOf('check: ok'));
+      expect(lines.indexOf(escape)).toBeLessThan(lines.findIndex((l) => /^\d+ problems · /.test(l)));
+    } finally {
+      remove(f);
+    }
+  }, 60_000);
+
+  it('refuse a .query( in a lib module or a view, and say nothing about one a comment names', () => {
+    // The prose file proves the scan reads comment-blanked source: a documented call is not a call.
+    try {
+      put('src/lib/planted-query.ts', ['const collection = { query: (_: object) => [] };', 'void collection.query({});'].join('\n') + '\n');
+      put('src/views/planted-query.tsx', ['const collection = { query: (_: object) => [] };', 'export function PlantedQuery() { return collection.query({}); }'].join('\n') + '\n');
+      put('src/lib/planted-query-comment.ts', ['// members.query({}) is what this rule refuses; the line is prose, not a call.', 'const marker = 1;', 'void marker;'].join('\n') + '\n');
+      const r = runCheck();
+      expect(r.stdout).toContain('src/lib/planted-query.ts:2: calls collection.query( directly; no direct query');
+      expect(r.stdout).toContain('src/views/planted-query.tsx:2: calls collection.query( directly; no direct query');
+      expect(r.stdout).not.toMatch(/planted-query-comment/);
+      expect(r.status).toBe(1);
+    } finally {
+      remove('src/lib/planted-query.ts', 'src/views/planted-query.tsx', 'src/lib/planted-query-comment.ts');
+    }
+  }, 60_000);
+
+  it('print a stated no-direct-query escape with its reason, and pass without the refusal', () => {
+    const f = 'src/lib/planted-query.ts';
+    try {
+      put(f, ['const collection = { query: (_: object) => [] };', 'void collection.query({}); // allow-no-direct-query: the export streams its own batches and must not be cached'].join('\n') + '\n');
+      const r = runCheck();
+      expect(r.stdout).toContain('escape  src/lib/planted-query.ts:2: no-direct-query — the export streams its own batches and must not be cached');
+      expect(r.stdout).not.toMatch(/src\/lib\/planted-query\.ts:2: calls/);
+      expect(r.stdout).toMatch(/^0 problems/m);
+      expect(r.status).toBe(0);
+    } finally {
+      remove(f);
+    }
+  }, 60_000);
+
+  it('carry the reason read() cannot serve it on each of the seven direct reads FR-9 keeps', () => {
+    // FR-9's seven sites, at the lines this tree measures after the reasons are in place: the five the check allows by
+    // site (its own allowlist is checked by the cases above) and the two in src/data/access.ts, which the rule does not
+    // govern and the standard still names. A reason on the line above would move the call off the allowed line.
+    const seven: [string, number][] = [
+      ['src/data/access.ts', 103],
+      ['src/data/access.ts', 299],
+      ['app/sign-in/actions.ts', 16],
+      ['app/sign-in/gated-panel.tsx', 10],
+      ['app/(dashboard)/requests/[id]/actions.ts', 23],
+      ['app/api/export/requests/route.ts', 38],
+      ['src/lib/assistant/tools.ts', 132],
+    ];
+    for (const [file, line] of seven) {
+      const text = fs.readFileSync(path.join(ROOT, file), 'utf8').split('\n')[line - 1] ?? '';
+      expect(text, `${file}:${line} holds the call`).toMatch(/\.query\(/);
+      expect(text, `${file}:${line} carries its reason`).toMatch(/\/\/ read\(\) cannot serve this: \S/);
+    }
+  });
+
   it('decide what reads by the code, not by a comment that names read()', () => {
     // `src/data/collections.ts` names `read()` in its prose and calls none of the six. A raw text match would call it a
     // reading module and refuse this client, which reaches nothing but the collections' own data.

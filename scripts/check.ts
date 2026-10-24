@@ -28,6 +28,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { importTarget, projectAliases } from './lib/aliases.ts';
 import { checkBrief, scanReferences } from './lib/context-check.ts';
+import { blankedText, noDirectQuery, presentationDoesNotRead, resolveSpec as resolveProjectSpec, valueImports } from './lib/layer-rules.ts';
 import { APP_DIR, agentPageSpec, agentSection, specRoute, viewToolPages } from './lib/routes.ts';
 import { keepProblems, unresolved, parseJournal, parseKeep, parseResolutions, verifiedRetirements, type Hash, type Retirement } from './lib/update-session.ts';
 import { cards } from './registry.ts';
@@ -39,8 +40,9 @@ const ROOT = path.resolve(import.meta.dirname, '..');
 const ALIASES = projectAliases(ROOT);
 const read = (p: string) => fs.readFileSync(path.join(ROOT, p), 'utf8');
 /** Comments blanked, not removed, so a scan reads code and a line number is still the file's. */
-const blankedText = (text: string) => text.replace(/\/\*[\s\S]*?\*\//g, (c) => c.replace(/[^\n]/g, ' ')).replace(/(^|[^:])\/\/[^\n]*/g, '$1');
 const blanked = (p: string) => blankedText(read(p));
+/** The project file a specifier names, with the extension resolved; the helper is shared with `scripts/lib/layer-rules.ts`. */
+const resolveSpec = (from: string, spec: string) => resolveProjectSpec(from, spec, ALIASES, ROOT);
 const lineOf = (src: string, at: number) => src.slice(0, at).split('\n').length;
 const problems: string[] = [];
 /** A deviation a line states with `allow-<rule>: <reason>`, printed beside the problems rather than passed in silence. */
@@ -446,12 +448,6 @@ const escaped = (rule: string, f: string, line: number, raw: string) => {
   escapes.push(`escape  ${f}:${line}: ${rule} — ${reason}`);
   return true;
 };
-/** The project file an import specifier names, with the extension resolved, or null for a package or a missing module. */
-const resolveSpec = (from: string, spec: string) => {
-  const base = importTarget(from, spec, ALIASES);
-  if (!base) return null;
-  return [base, `${base}.ts`, `${base}.tsx`, `${base}/index.ts`, `${base}/index.tsx`].find((c) => /\.tsx?$/.test(c) && fs.existsSync(path.join(ROOT, c)) && fs.statSync(path.join(ROOT, c)).isFile()) ?? null;
-};
 if (fourLayers) {
   for (const [rule, dir, forbidden, why] of [
     ['data-imports-neither', 'src/data', /^src\/(?:logic|views)\//, 'the data layer imports neither src/logic nor src/views'],
@@ -510,19 +506,6 @@ if (fourLayers) {
   const directive = (f: string) => /^\s*['"]use (client|server)['"]/.exec(code(f))?.[1] ?? null;
   /** A module that reads the company's records. */
   const reading = (f: string) => /^src\/data\//.test(f) && READS.test(code(f));
-  /** Every specifier a source takes by value, with where it sits. A type-only import is erased before anything runs, so it is not one. */
-  const VALUE = /\b(?:import|export)\s+(type\s+)?([^'";]*?)\s*from\s*['"]([^'"]+)['"]/g;
-  const SIDE_EFFECT = /\bimport\s*(?:\(\s*)?['"]([^'"]+)['"]/g;
-  const valueImports = (src: string) => {
-    const out: { spec: string; at: number }[] = [];
-    for (const m of src.matchAll(VALUE)) {
-      const names = /^\{([^}]*)\}$/.exec(m[2].trim())?.[1].split(',').map((n) => n.trim()).filter(Boolean);
-      if (m[1] || names?.every((n) => /^type\s/.test(n))) continue;
-      out.push({ spec: m[3], at: m.index! + m[0].lastIndexOf(m[3]) });
-    }
-    for (const m of src.matchAll(SIDE_EFFECT)) out.push({ spec: m[1], at: m.index! + m[0].lastIndexOf(m[1]) });
-    return out;
-  };
   /** The chain of value imports from `start` to the first module that reads, or null when it never reaches one. */
   const reachesReading = (start: string): string[] | null => {
     const seen = new Set<string>([start]);
@@ -554,6 +537,24 @@ if (fourLayers) {
       // Paths as an import writes them: the extension a resolution added is not what the reader is looking for.
       const bare = (m: string) => m.replace(/\.tsx?$/, '');
       problems.push(`${f}:${line}: imports ${spec} from ${bare(target)}, whose imports reach ${bare(trail.at(-1)!)}, a module that reads (${trail.map(bare).join(' -> ')}); a client module imports no logic module that reads`);
+    }
+  }
+}
+
+// ── What is drawn imports no read, and a read is written in one place ────────────────────────────────
+// `presentation does not read` refuses a value import from `@/data` in `src/views/**` or `src/components/**` naming any
+// module but FR-4's five vocabulary modules; `no direct query` refuses a `.query(` call in `app/**`, `src/logic/**`,
+// `src/views/**` or `src/lib/**` outside the five FR-9 sites this scope governs. Both scans live in
+// `scripts/lib/layer-rules.ts`, beside the helpers they share with this file, so this managed file stays under the line
+// ceiling a project may enforce. Like the rules above, a line may state its escape and the check prints it.
+if (fourLayers) {
+  for (const [rule, scan] of [
+    ['presentation-does-not-read', presentationDoesNotRead],
+    ['no-direct-query', noDirectQuery],
+  ] as const) {
+    for (const p of scan({ root: ROOT, aliases: ALIASES })) {
+      if (escaped(rule, p.file, p.line, read(p.file))) continue;
+      problems.push(`${p.file}:${p.line}: ${p.message}`);
     }
   }
 }

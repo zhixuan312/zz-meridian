@@ -7,7 +7,7 @@ import { roleLabel } from '@/data/roles';
 
 /** The five personas in their own order, with the name and role the panel shows and whether they may be chosen. */
 async function personaList(): Promise<Persona[]> {
-  const { rows } = await members.query({ where: [{ field: 'id', op: 'in', value: [...PERSONAS] }] });
+  const { rows } = await members.query({ where: [{ field: 'id', op: 'in', value: [...PERSONAS] }] }); // read() cannot serve this: the panel lists personas before an AccessScope exists
   const byId = new Map(rows.map((member) => [member.id, member]));
   return PERSONAS.flatMap((id) => {
     const member = byId.get(id);

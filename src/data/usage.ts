@@ -7,7 +7,8 @@
  * this one asks the policy, and `next/headers` may not reach a browser bundle. The view names the figures' type, a
  * type-only import that never enters its runtime graph.
  */
-import { AccessDenied, can, collectionFor, resolveAccess, type AccessScope } from '@/data/access';
+import { AccessDenied, can, resolveAccess, type AccessScope } from '@/data/access';
+import { readAllInScope } from '@/data/read';
 import type { Column } from '@/components/charts/column-chart';
 
 /** The three figures, as the Usage view draws them: the weekday-and-hour grid, the hours of the day summed from it, and each region with its median latency. */
@@ -16,13 +17,17 @@ export type UsageFigures = { heat: number[][]; hours: Column[]; regions: { label
 /**
  * The heatmap, the hours and the regions, asking `hours:read` and `regions:read` on the scope in hand, or on the
  * request's own when none is given. A scope that does not hold both gets the single `AccessDenied` message, before
- * anything is read. Every row is taken from the scope's own collection as it is stored (no sort, no limit), so the
- * regions keep the order the page draws them in and all 168 hours arrive.
+ * anything is read. Every row is taken through the in-scope reads, so the figures share the cache and the invalidation
+ * of the collections they come from: all 168 hours arrive, and the regions arrive busiest first, the order the card
+ * ranks them in.
  */
 export async function usageFigures(scope?: AccessScope): Promise<UsageFigures> {
   const held = scope ?? (await resolveAccess());
   if (!(await can(held, 'hours', 'read')) || !(await can(held, 'regions', 'read'))) throw new AccessDenied();
-  const [cells, regions] = await Promise.all([collectionFor(held, 'hours').query({}), collectionFor(held, 'regions').query({})]);
+  const [cells, regions] = await Promise.all([
+    readAllInScope(held, 'hours'),
+    readAllInScope(held, 'regions', { sort: { field: 'value', dir: 'desc' } }),
+  ]);
   const heat = Array.from({ length: 7 }, () => Array.from({ length: 24 }, () => 0));
   for (const r of cells.rows) heat[r.weekday as number][r.hour as number] = r.requests as number;
   // The hours of the day are a sum over the grid, never a third collection.

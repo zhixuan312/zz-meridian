@@ -13,7 +13,7 @@ export type SignInAsState = { error?: string };
 /** The member a persona id names, or null: the id must be one of the five, and their record Active. */
 async function personaOf(id: string) {
   if (!(PERSONAS as readonly string[]).includes(id)) return null;
-  const member = (await members.query({ where: [{ field: 'id', op: 'eq', value: id }] })).rows[0];
+  const member = (await members.query({ where: [{ field: 'id', op: 'eq', value: id }] })).rows[0]; // read() cannot serve this: the sign-in resolves the person before an AccessScope exists
   return member?.status === 'Active' ? member : null;
 }
 

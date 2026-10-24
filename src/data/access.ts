@@ -100,7 +100,7 @@ function accessFrom(policy: Policy) {
 
 /** The member a scope names, re-read from the roster every call; null when there is no such record. */
 async function memberById(id: string): Promise<Member | null> {
-  return (await members.query({ where: [{ field: 'id', op: 'eq', value: id }] })).rows[0] ?? null;
+  return (await members.query({ where: [{ field: 'id', op: 'eq', value: id }] })).rows[0] ?? null; // read() cannot serve this: the member a scope is made from is resolved before an AccessScope exists
 }
 
 /** The member the demo is signed in as: the cookie's id, or Maya Chen, and only while that record is Active. */
@@ -296,7 +296,7 @@ export async function chromeAccess(): Promise<ChromeAccess> {
   const member = await memberById(scope.subjectId);
   if (!member) throw new Unauthenticated();
   const personas = new Map(
-    (await members.query({ where: [{ field: 'id', op: 'in', value: [...PERSONAS] }] })).rows.map((m) => [m.id, m]),
+    (await members.query({ where: [{ field: 'id', op: 'in', value: [...PERSONAS] }] })).rows.map((m) => [m.id, m]), // read() cannot serve this: the personas a scope is made from are resolved before an AccessScope exists
   );
   const items = nav.flatMap((g) => g.items);
   return {
