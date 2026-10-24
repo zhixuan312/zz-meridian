@@ -25,8 +25,8 @@ way to a client, built field by field rather than by erasing fields from a type.
 | Layer | What it is | What it owns | May import |
 |---|---|---|---|
 | L1 The database | The adopter's own store, reached through its API, an ORM or a driver | Tables, schema, migrations, indexes, transactions | nothing in this tree |
-| L2 `optional:src/data/` | The backend data layer: the one place a backend is touched | Reading records, the access policy, the write boundary, the projections a record passes through, the read surface (`read()`, `readAll()`, `aggregate()` and the scope-taking forms beside them) | L1 and shared helpers (`src/lib/`); neither `optional:src/logic/` nor `src/views/` |
-| L3 `optional:src/logic/` | The business logic: what the records mean | Every figure with a product definition — a total, a rate, a trend, a status, a threshold, a sentence built from records — and the prepared queries and tools built on them | L2, `src/lib/` and other logic modules; no view |
+| L2 `src/data/` | The backend data layer: the one place a backend is touched | Reading records, the access policy, the write boundary, the projections a record passes through, the read surface (`read()`, `readAll()`, `aggregate()` and the scope-taking forms beside them) | L1 and shared helpers (`src/lib/`); neither `src/logic/` nor `src/views/` |
+| L3 `src/logic/` | The business logic: what the records mean | Every figure with a product definition — a total, a rate, a trend, a status, a threshold, a sentence built from records — and the prepared queries and tools built on them | L2, `src/lib/` and other logic modules; no view |
 | L4 Presentation | `src/views/`, `src/components/`, `app/` | Drawing: the frame, the cards, the routes, the shell | everything below it; it renders what it is handed |
 
 The direction is the point. L1 answers L2, L2 feeds L3, L3 feeds L4, and nothing above reaches past the layer beneath
@@ -36,17 +36,17 @@ doing L2's or L3's job.
 ### The six rules, and the switch
 
 `node scripts/check.ts` checks six rules over the tree. Every one of them is off until the project says otherwise: the
-switch is one exported declaration in the team's own `optional:scripts/check.local.ts`, and until it is set the check
+switch is one exported declaration in the team's own `scripts/check.local.ts`, and until it is set the check
 says nothing about the layers and runs exactly as it did before. The switch is described under "The two places you may
 deviate".
 
 | Rule | Refuses | Shipped in |
 |---|---|---|
-| `data-imports-neither` | an import in `optional:src/data/**` that resolves into `optional:src/logic/` or `src/views/` | `scripts/check.ts` |
-| `logic-does-not-import-views` | an import in `optional:src/logic/**` that resolves into `src/views/` | `scripts/check.ts` |
+| `data-imports-neither` | an import in `src/data/**` that resolves into `src/logic/` or `src/views/` | `scripts/check.ts` |
+| `logic-does-not-import-views` | an import in `src/logic/**` that resolves into `src/views/` | `scripts/check.ts` |
 | `views-produce-nothing` | a file under `src/views/` that is not a renderer: a `.tsx` with no default export and no named export whose identifier starts with a capital letter, or any non-`.tsx` file but `workspaces.ts` | `scripts/check.ts` |
 | `presentation-does-not-read` | a value import from `@/data` in `src/views/**` or `src/components/**` naming any module but the five vocabulary modules — `roles.ts`, `features.ts`, `sample.ts`, `request-methods.ts`, `live-actions.ts` | `scripts/lib/layer-rules.ts` |
-| `no-direct-query` | a `.query(` call on a collection in `app/**`, `optional:src/logic/**`, `src/views/**` or `src/lib/**`, outside the five sites it allows — the other two of the seven direct reads live in `optional:src/data/access.ts`, which this rule does not govern | `scripts/lib/layer-rules.ts` |
+| `no-direct-query` | a `.query(` call on a collection in `app/**`, `src/logic/**`, `src/views/**` or `src/lib/**`, outside the five sites it allows — the other two of the seven direct reads live in `src/data/access.ts`, which this rule does not govern | `scripts/lib/layer-rules.ts` |
 | `client-does-not-import-a-reading-module` | a `'use client'` module that value-imports a logic module whose own imports reach a module that reads (`read(`, `readAll(`, `aggregate(`, `collectionFor(`, `resolveAccess(` or `can(`) | `scripts/check.ts` |
 
 A type import is erased before anything runs, so it is not a value import. Comments are blanked before a scan, so a call
@@ -105,7 +105,7 @@ fresh.
 
 `revision` is optional, and the standard does not assume it. A backend with no change marker to give leaves it out; a
 reader that needs to know whether the records moved — the live stream, or a derived answer's own source — compares
-against the read's `observedAt` instead, the way `optional:src/data/uptime.ts` does. A marker is also not a snapshot guarantee:
+against the read's `observedAt` instead, the way `src/data/uptime.ts` does. A marker is also not a snapshot guarantee:
 this repository takes one revision before a paged read and does not verify that the later pages share it. A backend that
 can promise a snapshot says so of itself; the contract asks for a marker, not for a snapshot.
 
@@ -118,7 +118,7 @@ never implies a preferred store.
 The in-process collection store in `src/lib/collection.ts` is the **reference implementation** of this contract: rows, a
 total, a change marker and a derived field, all in one process's memory, with the read surface above it adding the
 moment, the authorization, the cache and the invalidation. It is what you can delete once your own client answers the
-same questions. `optional:src/data/` is the only place your backend is touched: a page, a view, a logic module and the assistant
+same questions. `src/data/` is the only place your backend is touched: a page, a view, a logic module and the assistant
 never see a client, a connection or a query string.
 
 ## Records and derived answers
@@ -137,8 +137,8 @@ All three save work, and they are easy to confuse. What separates them is what h
 | Thing | What it is | Where it lives | May it be thrown away? |
 |---|---|---|---|
 | Field | A derived field: a value computed once, at write, and stored on the record — a score, a band, a name joined in from another table. It is part of the record, and no write can set it. | On the record: the collection lists it in `derived`, and `patchOf` builds a write's shape from `fields` alone | No. It is part of the record |
-| Answer | A derived answer: an answer rebuilt from records, carrying the moment it was built and the source revision it was built from. | `optional:src/data/derived.ts`, and the module that names one answer, such as `optional:src/data/uptime.ts` | It is rebuilt when its source moves. Until then the previous answer stands, with its own moment |
-| Cache | A cache: a copy kept to save work, correct only while nothing it was made from has changed. | The cached path inside `optional:src/data/read.ts`, tagged by tenant and collection, retired by a write | Yes, at any moment: a miss costs time, never correctness |
+| Answer | A derived answer: an answer rebuilt from records, carrying the moment it was built and the source revision it was built from. | `src/data/derived.ts`, and the module that names one answer, such as `src/data/uptime.ts` | It is rebuilt when its source moves. Until then the previous answer stands, with its own moment |
+| Cache | A cache: a copy kept to save work, correct only while nothing it was made from has changed. | The cached path inside `src/data/read.ts`, tagged by tenant and collection, retired by a write | Yes, at any moment: a miss costs time, never correctness |
 
 ### Whether to precompute: a decision, not a rule
 
@@ -152,10 +152,10 @@ is computed at read time. A page never builds either: it reads the answer, or th
 
 ### The worked example
 
-`optional:src/data/uptime.ts` builds each service's uptime from the days that service's own record keeps, through
-`derivedAnswer()` in `optional:src/data/derived.ts`, rather than reading an uptime stored beside them. Its source is the services
+`src/data/uptime.ts` builds each service's uptime from the days that service's own record keeps, through
+`derivedAnswer()` in `src/data/derived.ts`, rather than reading an uptime stored beside them. Its source is the services
 collection, read through `readAll('services')`, and the revision that read answers is what makes an unchanged source
-recognisable without building again. `optional:app/(dashboard)/services/page.tsx` reads the answer's payload — its data
+recognisable without building again. `app/(dashboard)/services/page.tsx` reads the answer's payload — its data
 and its `builtAt` — instead of computing an uptime at render, and a write to any other collection never re-stamps it.
 
 ## Where this sits among the content layers
@@ -182,7 +182,7 @@ every rule.
    after its problem list, leaves the exit status and the `n problems` summary unchanged, and the run passes. The reason
    is a sentence the next reader can check, and the deviation is visible on every run — which is the difference between
    an escape and silence.
-2. **In your own check file.** `optional:scripts/check.local.ts` is yours: it is team-local and an update never
+2. **In your own check file.** `scripts/check.local.ts` is yours: it is team-local and an update never
    overwrites it. It does two things: it carries the switch (`export const fourLayers = true`) and it may add checks of
    your own, which the gate runs as a step of its own. It can turn a rule on or off as a whole. It cannot override a
    shipped rule's predicate, so a deviation from a rule that is on is written on the line, with a reason.
@@ -203,7 +203,7 @@ module that only counts records carries a browser tree with it. *Deviate:* `allo
 on the import's line.
 
 **`views-produce-nothing`.** A file under `src/views/` is a renderer; a helper that produces a value belongs in
-`optional:src/logic/`. *Skipping it costs:* a module that produces a value cannot be called from a server component, so its logic
+`src/logic/`. *Skipping it costs:* a module that produces a value cannot be called from a server component, so its logic
 is reachable only from the browser and only after hydration. *Deviate:*
 `allow-views-produce-nothing: <reason>` on the file's first line.
 
@@ -230,15 +230,15 @@ before that resolution is possible. Each says why on its own line, and this is t
 
 | Site | Why `read()` cannot serve it |
 |---|---|
-| `optional:src/data/access.ts`, the member the scope is made from | the member a scope is made from is resolved before an `AccessScope` exists |
-| `optional:src/data/access.ts`, the personas the View as menu lists | the personas a scope is made from are resolved before an `AccessScope` exists |
-| `optional:app/sign-in/actions.ts` | the sign-in resolves the person before an `AccessScope` exists |
-| `optional:app/sign-in/gated-panel.tsx` | the panel lists personas before an `AccessScope` exists |
-| `optional:app/(dashboard)/requests/[id]/actions.ts` | a server action reads the record it is about to change, uncached |
-| `optional:app/api/export/requests/route.ts` | a streamed export must not be cached |
-| `optional:src/lib/assistant/tools.ts` | the proposal path reads the rows a write would change, uncached, to show the person the difference |
+| `src/data/access.ts`, the member the scope is made from | the member a scope is made from is resolved before an `AccessScope` exists |
+| `src/data/access.ts`, the personas the View as menu lists | the personas a scope is made from are resolved before an `AccessScope` exists |
+| `app/sign-in/actions.ts` | the sign-in resolves the person before an `AccessScope` exists |
+| `app/sign-in/gated-panel.tsx` | the panel lists personas before an `AccessScope` exists |
+| `app/(dashboard)/requests/[id]/actions.ts` | a server action reads the record it is about to change, uncached |
+| `app/api/export/requests/route.ts` | a streamed export must not be cached |
+| `src/lib/assistant/tools.ts` | the proposal path reads the rows a write would change, uncached, to show the person the difference |
 
-Two of the seven are in `optional:src/data/access.ts`, which `no-direct-query` does not govern; the other five are the rule's
+Two of the seven are in `src/data/access.ts`, which `no-direct-query` does not govern; the other five are the rule's
 allowlist, matched by file and line rather than by file, because a file may hold both an allowed read and ordinary code.
 A product whose own page must read raw does the same: a comment saying why, and a line in the allowlist it keeps.
 
@@ -249,7 +249,7 @@ four layers by moving a folder. It follows an order, and each step says what to 
 it touches. This is written for the coding agent working in that project: the project's own conventions govern its code,
 and Meridian's govern the files Meridian ships.
 
-**1. Replace what `optional:src/data/` reads with your own client.** Keep the read surface — `read`, `readAll`, `aggregate` and
+**1. Replace what `src/data/` reads with your own client.** Keep the read surface — `read`, `readAll`, `aggregate` and
 their scope-taking forms — and replace what is behind it: the collections' rows, the adapter, the clock. Your client
 answers rows with a total, a marker and a moment, and refuses a read the scope may not make. *Run:* the project's own
 suite and `pnpm typecheck`. *Left alone:* your schema, your migrations, your ORM and your API's shape. None of them
@@ -261,16 +261,16 @@ serialised, so a record returned as it is ships whatever the row carries. *Run:*
 `pnpm typecheck`; a test that feeds the projection a row with one unexpected field and asserts the key set it returns.
 *Left alone:* your schema and your client's shape. The projection is the boundary, not a second model.
 
-**3. Move each computation out of a page or a card into `optional:src/logic/`.** A figure that carries a product definition — a
+**3. Move each computation out of a page or a card into `src/logic/`.** A figure that carries a product definition — a
 total, a rate, a trend, a status, a threshold — is computed once, in the logic layer, before it reaches a card. A card
 may still compute geometry, scale, ordering, layout and formatting from the values it is given, and may fold a list it
 was handed in full into "the rest"; it may not compute a figure it then shows as a fact. *Run:* the project's own suite
 and `pnpm typecheck`, then render the pages: the figures are the same as before, and the cards receive them. *Left
 alone:* your schema, your API and the pages' addresses. A computation changes owner, not behaviour.
 
-**4. Switch the rules on, last.** This step is the switch, not the folder: step 3 already created `optional:src/logic/`, and a
+**4. Switch the rules on, last.** This step is the switch, not the folder: step 3 already created `src/logic/`, and a
 project that happened to have a folder of that name before it started must not find six rules on without asking. Create
-`optional:scripts/check.local.ts` if it is not there and set `export const fourLayers = true`; leave any check of your
+`scripts/check.local.ts` if it is not there and set `export const fourLayers = true`; leave any check of your
 own in it as well. *Run:* `node scripts/check.ts`. Fix each line it names, or state an escape with a reason on that
 line. *Left alone:* your schema, your migrations, your ORM and your API's shape, exactly as in every step before it.
 
@@ -281,4 +281,3 @@ delivers the check.
 The one thing the check holds is the six rules; everything else on this page is a default you may state your way out of,
 on the line, with a reason a reader can weigh.
 
-<!-- where: this is this repository's own copy, served by the Atlas; the zz-meridian skill ships the same text to an adopter's agent -->
