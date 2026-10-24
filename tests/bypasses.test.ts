@@ -37,7 +37,8 @@ describe('customers is a collection', () => {
         else if (/\.tsx?$/.test(entry.name) && /\bCUSTOMERS\b/.test(fs.readFileSync(path.join(process.cwd(), rel), 'utf8'))) offenders.push(rel);
       }
     };
-    for (const root of ['app/(dashboard)', 'src/views']) walk(root);
+    // `src/logic` is where the producers that name a raw fixture now live, so it is walked with the pages and the views.
+    for (const root of ['app/(dashboard)', 'src/views', 'src/logic']) walk(root);
     expect(offenders).toEqual([]);
   });
 });
