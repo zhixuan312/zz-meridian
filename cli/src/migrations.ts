@@ -235,12 +235,23 @@ const MOVED_TO_LOGIC: readonly [from: string, to: string][] = [
 /** The paths those modules left, without their extension, as an import resolves them. */
 const MOVED_FROM = new Set(MOVED_TO_LOGIC.map(([from]) => from.replace(/\.ts$/, '')));
 
+/**
+ * The symbols that left a shipped card for the logic layer: `afterStart` was exported by the incident card's own module
+ * and `summarise` re-exported by the status list's. Both cards are Meridian's, so the update replaces them and a team
+ * file that imported either symbol from the card stops compiling — a break the moved paths alone do not report.
+ */
+const REMOVED_CARD_EXPORTS: readonly [module: string, symbol: string][] = [
+  ['src/components/patterns/incident-card', 'afterStart'],
+  ['src/components/patterns/status-list', 'summarise'],
+];
+
 /** Each moved module as "the path it left → the path it went to", for the migration's instruction. */
 const MOVED_LIST = MOVED_TO_LOGIC.map(([from, to]) => `\`${from}\` → \`${to}\``).join(', ');
 
-/** The team's files that import a module from the path the move left behind. */
+/** The team's files that import a moved module from the path it left, or a symbol from a card it no longer lives on. */
 const importsAMovedModule = (root: string): string[] | null =>
-  matching(root, (rel, src) => importsOf(rel, src).some(({ from }) => MOVED_FROM.has(from)));
+  matching(root, (rel, src) => importsOf(rel, src).some(({ from, names }) =>
+    MOVED_FROM.has(from) || REMOVED_CARD_EXPORTS.some(([module, symbol]) => from === module && names.includes(symbol))));
 
 export const RELEASE_MIGRATIONS: ReleaseMigration[] = [
   {
@@ -491,7 +502,7 @@ export const RELEASE_MIGRATIONS: ReleaseMigration[] = [
     since: '0.28.0',
     applies: importsAMovedModule,
     summary: "The template's figures and sentences moved into `src/logic/`: thirty-eight modules left `src/views/` and `src/data/`.",
-    instructions: `Read "The four layers" and "The path an existing product follows" in references/data-layers.md. Thirty-eight modules moved into the logic layer, and each import of one in your own \`src/views/\` producers and pages names the path it left: ${MOVED_LIST}. Rewrite each import to the path the module has now, or move your own module beside the work it does. Doing nothing leaves your tree building, because every path your own files name is still there: the move is in this template, not in your project. The six layer rules stay off until your own \`scripts/check.local.ts\` exports \`fourLayers = true\`; turn them on once your figures have moved, and the gate and the build are what show the work is done.`,
+    instructions: `Read "The four layers" and "The path an existing product follows" in references/data-layers.md. Thirty-eight modules moved into the logic layer, and each import of one in your own \`src/views/\` producers and pages names the path it left: ${MOVED_LIST}. Rewrite each import to the path the module has now, or move your own module beside the work it does. Two symbols left a card of Meridian's, and both must be rewritten because the update replaces the card: \`afterStart\`, which the incident card exported, is \`@/logic/after-start\`, and \`summarise\`, which the status list re-exported, is \`@/logic/summarise\`. Every other path your own files name is still there, so a project that imported neither symbol keeps building as it was. The six layer rules stay off until your own \`scripts/check.local.ts\` exports \`fourLayers = true\`; turn them on once your figures have moved, and the gate and the build are what show the work is done.`,
     checks: GATE_AND_BUILD,
   },
 ];

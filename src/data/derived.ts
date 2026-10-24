@@ -4,10 +4,13 @@
  * moment, until the source's revision moves — a read never re-stamps an older answer as fresh.
  *
  * The cache is in-process like the collection store (`@/lib/collection`): a page, a route handler and the assistant
- * share one answer per name. `source` is asked on every read, because only it can say whether the records moved;
- * `build` runs only when the revision it answers differs from the one the answer was built from.
+ * share one answer per name and tenant, and never one across tenants — the slot's name carries the scope's tenant, so
+ * a product that isolates tenants cannot be handed a build made from another's records. `source` is asked on every
+ * read, because only it can say whether the records moved; `build` runs only when the revision it answers differs from
+ * the one the answer was built from.
  */
 import { clock } from '@/data/collections';
+import type { AccessScope } from '@/data/access';
 
 export type DerivedAnswer<T> = {
   /** The answer, or null when its first build threw: nothing was built, and a later read tries again. */
@@ -19,8 +22,10 @@ export type DerivedAnswer<T> = {
 };
 
 type DerivedOptions<T> = {
-  /** The answer's identity in this process: two answers under one name are the same answer. */
+  /** The answer's identity in this process: two answers under one name and one tenant are the same answer. */
   name: string;
+  /** The scope the answer is built under, and the tenant whose records it may only ever hold. */
+  scope: AccessScope;
   /**
    * The state the answer would be built from, called on every read: at least its revision, which is all a read needs
    * to know whether to build. A failure here is a failed read, not a failed build, and is thrown.
@@ -42,10 +47,11 @@ const slots = () => ((globalThis as Record<symbol, unknown>)[SLOTS] ??= new Map<
  * rebuild that throws leaves the previous answer standing with its own moment; a first build that throws answers with
  * null data and no moment, and a later read tries again. A read that arrives while a build is running waits for it.
  */
-export async function derivedAnswer<T>({ name, source, build }: DerivedOptions<T>): Promise<DerivedAnswer<T>> {
+export async function derivedAnswer<T>({ name, scope, source, build }: DerivedOptions<T>): Promise<DerivedAnswer<T>> {
   const all = slots();
-  const slot = (all.get(name) ?? {}) as Slot;
-  all.set(name, slot);
+  const key = `${scope.tenantId}/${name}`;
+  const slot = (all.get(key) ?? {}) as Slot;
+  all.set(key, slot);
   const run = slot.pending ?? (slot.pending = (async (): Promise<Held> => {
     const { revision } = await source();
     if (slot.held && slot.held.sourceRevision === revision) return slot.held;

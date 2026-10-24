@@ -346,6 +346,24 @@ describe('the 0.26.0 migration', () => {
   });
 });
 
+describe('the 0.28.0 migration', () => {
+  it('finds a team file that names a moved module, or a symbol that left a shipped card', () => {
+    const moved = byId('four-layers');
+    expect(moved.since).toBe('0.28.0');
+    // A module that left `src/views/` is reported from the path it left, under either alias or a relative specifier.
+    expect(moved.applies(project({ 'src/views/own.tsx': "import { homeTool } from '@/views/tools';\nexport default homeTool;\n" }))).toEqual(['src/views/own.tsx']);
+    expect(moved.applies(project({ 'src/views/own.tsx': "import { homeTool } from './tools';\nexport default homeTool;\n" }))).toEqual(['src/views/own.tsx']);
+    // Two symbols left a shipped card for the logic layer. The card is Meridian's, so the update replaces it and a team
+    // file that imported the symbol from it stops compiling: the migration has to name that as well as the paths.
+    expect(moved.applies(project({ 'app/reports/page.tsx': "import { afterStart } from '@/components/patterns/incident-card';\nexport default afterStart;\n" }))).toEqual(['app/reports/page.tsx']);
+    expect(moved.applies(project({ 'app/reports/page.tsx': "import { summarise } from '@/components/patterns/status-list';\nexport default summarise;\n" }))).toEqual(['app/reports/page.tsx']);
+    // The card itself, and its type, are the card's own business: neither is a break.
+    expect(moved.applies(project({ 'app/reports/page.tsx': "import { IncidentCard, type Incident } from '@/components/patterns/incident-card';\nexport default IncidentCard;\n" }))).toBeNull();
+    expect(moved.applies(project({ 'app/reports/page.tsx': "import type { Service } from '@/components/patterns/status-list';\nexport default null;\n" }))).toBeNull();
+    expect(moved.applies(path.resolve(import.meta.dirname, '..'))).toBeNull();
+  });
+});
+
 describe("the consumer smoke's record of the release migrations", () => {
   // `resolveAll` resolves only the ids `RELEASE_IDS` lists, with the edit `bringReleaseOver` makes for each: a release
   // migration missing from it is resolved as not applicable, and the origin it applies to fails at finalize.

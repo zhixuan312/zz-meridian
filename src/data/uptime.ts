@@ -3,12 +3,13 @@
  * rather than read from the uptime stored beside them. The days are a field of the service's row; the `days` collection
  * is the company's daily request totals and has nothing to do with a service's uptime.
  *
- * Its source is the services collection, read through `readAll('services')`: the revision that read answers is what
- * makes an unchanged source recognisable without building again, and a write to any other collection never re-stamps
- * this answer.
+ * Its source is the services collection, read through `readAllInScope` on the scope the answer is keyed by: the
+ * revision that read answers is what makes an unchanged source recognisable without building again, a write to any
+ * other collection never re-stamps this answer, and the build reads the same tenant's records the slot is named for.
  */
 import type { Service } from '@/components/patterns/status-list';
-import { readAll } from '@/data/read';
+import { resolveAccess } from '@/data/access';
+import { readAllInScope } from '@/data/read';
 import { uptimeOf } from '@/system/fixtures/sample';
 import { derivedAnswer, type DerivedAnswer } from './derived';
 
@@ -26,14 +27,17 @@ const NAME = 'services.uptime';
  * null when the first build threw, and the read that needs a figure falls back rather than inventing one.
  */
 export async function serviceUptime(): Promise<DerivedAnswer<ServiceUptimes>> {
+  // The scope the answer is built for: its tenant names the slot, and its own reads are made under it.
+  const scope = await resolveAccess();
   // The rows this call's `source` answered, so `build` works the state its revision names rather than reading again.
   // Held per call rather than in the module: two reads of one answer share a build, and the loser of that race must not
   // be able to swap the rows under the winner's build.
   let rows: ServiceRow[] = [];
   return derivedAnswer({
     name: NAME,
+    scope,
     async source() {
-      const read = await readAll('services', { sort: { field: 'order', dir: 'asc' } });
+      const read = await readAllInScope(scope, 'services', { sort: { field: 'order', dir: 'asc' } });
       rows = read.rows as unknown as ServiceRow[];
       // A collection answers its revision; one that does not is identified by the moment its state was observed.
       return { revision: read.revision ?? read.observedAt };

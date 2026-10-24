@@ -68,10 +68,6 @@ writes nothing; run it first.
 - It reports a migration for each interface the release changed where one of your own files still has the old shape,
   such as `cache-components-config` or `nav-needs`. `cli/src/migrations.ts` holds every one; resolve them as the skill's
   `references/update.md` says.
-- The data standard a project is built to is
-  [data-layers.md](https://github.com/zhixuan312/zz-meridian/blob/main/docs/data-layers.md): the four layers between a
-  database and the screen, the contract a backend answers, and the six rules a project switches on in its own
-  `scripts/check.local.ts`.
 - Everything it did and everything left to do is in `.meridian/update/<version>/MERGE.md`. Resolve the items, then run
   the pinned `npx zz-meridian@<version> update --finalize`; `--resume` continues an interrupted run and `--abort` restores
   what it changed. Only finalize records the new version. `--finalize --verify` validates with the project's default
@@ -83,6 +79,11 @@ writes nothing; run it first.
 styles) and `src/app.config.ts` for the new flags and records them in the manifest together, or changes nothing. It
 refuses when one of those outputs was edited, while an update is open, or on a dirty tree (unless `--allow-dirty`). Run
 it with the version the manifest records. The project's own `pnpm brand` still works, but its changes count as your edits.
+
+The standard a project on Meridian is built to is
+[data-layers.md](https://github.com/zhixuan312/zz-meridian/blob/main/docs/data-layers.md): the four layers between a
+database and the screen, the contract a backend answers, and the six rules a project switches on in its own
+`scripts/check.local.ts`.
 
 Requires Node 22.18 or newer. The default `pnpm verify` runs without Google Chrome and reports the browser checks as not run; `--full`, `--timed` and `--perf` need it.
 

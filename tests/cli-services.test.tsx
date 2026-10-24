@@ -27,6 +27,11 @@ vi.mock('@/data/read', async (orig) => {
     ...real,
     read: async (name: string, q?: unknown) => { refuse(name); const r = await real.read(name, q as never); const rows = shape(name, r.rows); return { ...r, rows, total: rows.length }; },
     readAll: async (name: string, q?: unknown) => { refuse(name); const r = await real.readAll(name, q as never); return { ...r, rows: shape(name, r.rows) }; },
+    // The resolving reads delegate to these, and a data module that already holds a scope calls them directly — the
+    // Services page's uptime answer among them. Both forms are the same read, so both are shaped here, or a figure the
+    // test set aside would come back from the collection it really holds.
+    readInScope: async (scope: never, name: string, q?: unknown) => { refuse(name); const r = await real.readInScope(scope, name, q as never); const rows = shape(name, r.rows); return { ...r, rows, total: rows.length }; },
+    readAllInScope: async (scope: never, name: string, q?: unknown) => { refuse(name); const r = await real.readAllInScope(scope, name, q as never); return { ...r, rows: shape(name, r.rows) }; },
   };
 });
 // Each card the page draws marks where it stands: the Status list how many services and whether it counts their runs,
