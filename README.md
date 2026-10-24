@@ -35,6 +35,8 @@ These govern every layer. When two choices both fit the specs, pick the one that
 
 A change at the bottom moves everything above it, and nothing above may invent a value of its own.
 
+The **four data layers** answer a different question: where an answer comes from. The database, `src/data/` (the one place a product's backend is touched), `src/logic/` (the business logic) and what draws it. They describe the path between records and the screen, so a data layer is not a content layer and adds nothing to the count above. `docs/data-layers.md` is the standard, and the skill ships the same text.
+
 ## Three surfaces, two operators
 
 | Surface | Where | Navigation |

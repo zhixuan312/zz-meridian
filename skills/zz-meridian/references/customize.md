@@ -6,6 +6,10 @@ presets' `@/components/…` and `@/lib/…` imports become `@meridian/components
 
 ## Data: `optional:src/data/`
 
+The standard this section follows is `data-layers.md`: the four layers between a database and the screen, the contract a
+backend answers, the seven direct reads, and the ordered path a project with its own tables follows to reach them. Read
+it before you replace a collection's `rows` with a real query.
+
 `optional:src/data/` is the product's own seam: pages and views import data from it and nowhere else. Write `src/data/<product>.ts`. The template's
 sample, ZZ Meridian's own dashboard, lives in `optional:src/system/fixtures/`; your pages never import it, but
 `optional:src/data/collections.ts` does, so it stays until each collection's `rows` come from your data (see "The assistant").

@@ -80,6 +80,7 @@ const DOCS: { id: string; section: SectionId; file: string; title?: string; summ
   { id: 'assistant', section: 'start', file: 'docs/assistant.md' },
   { id: 'start-a-dashboard', section: 'start', file: 'docs/start-a-dashboard.md' },
   { id: 'data-display', section: 'start', file: 'docs/data-display.md' },
+  { id: 'data-layers', section: 'start', file: 'docs/data-layers.md' },
   { id: 'voice', section: 'start', file: 'docs/voice.md' },
   { id: 'workspaces', section: 'products', file: 'docs/product-workspaces.md' },
   { id: 'contributing', section: 'system', file: 'CONTRIBUTING.md', title: 'Contributing', summary: 'How to propose, build, check and release a change' },

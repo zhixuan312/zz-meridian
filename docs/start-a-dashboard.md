@@ -39,6 +39,8 @@ If a pair fails, lower the chroma, or give the preset a lightness override for t
 
 ## 4. Connect your data
 
+The standard for this step is `docs/data-layers.md`: the four layers between your database and the screen, the contract your backend answers, the seven direct reads, and the ordered path a project with its own API or tables follows to reach them.
+
 Your pages, your server actions and the assistant read and change records through `src/data/`, and read nothing else: `collections.ts` holds the collections, `access.ts` says who the request is and what they may do, and `read.ts` is the pages' authorized, cached `read(name, query)`. Replace the collections with yours (rows from your API, or `arrayCollection` while you build; a collection you write by hand has an `aggregate` too, `aggregateRows` over the rows it holds or one grouped query for a database), replace the policy in `access.ts` with your session and permissions, add `src/data/<product>.ts` for any other types and queries, and point your pages at them. What the sample pages still draw as a constant (types and the regions list) comes from `src/data/sample.ts`, the daily series the sign-in page shows from `src/data/sign-in.ts`, and the bell's alerts are worked out by `readAlerts` in `src/logic/alerts.ts`. The template's own sample, ZZ Meridian's own dashboard, lives in `src/system/fixtures/` because the Atlas and every card preview read it; leave it there. Shape your records to the types the patterns define (`ActivityEvent`, `Incident`, `Service`) and they render without adapters. Two rules carry over:
 
 - Read freshness from when the data arrived (the newest ingest time), never from `now()`.

@@ -45,6 +45,11 @@ These hold in every project, however it started, and nothing below overrides the
   `src/styles/theme.css`.
 - **Agents read freely and write only through a Proposal.** Mark agent work with the Agent mark and "via"
   (`references/agents.md`).
+- **Data has four layers, and one place a backend is touched.** The database, `optional:src/data/` (the seam: the only place your
+  backend is touched), `optional:src/logic/` (the business logic) and what draws. `references/data-layers.md` is the standard:
+  the contract a backend answers, the seven direct reads, and the ordered path an existing product follows to the four
+  layers. It is advice; `node scripts/check.ts` holds the six rules that a machine can decide, once the project sets its
+  own switch in `optional:scripts/check.local.ts`.
 - **Done is when the scoreboard says so.** `pnpm verify` is the loop while you work; the work is finished only when
   `pnpm verify --full --timed` ends with `the project meets the Meridian standard` and every view is rendered, scored
   and none is Weak (`references/standard.md`). Never against a live backend: `--full` presses every control, Delete

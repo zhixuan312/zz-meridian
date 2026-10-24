@@ -126,6 +126,14 @@ Migrate in place, page by page, keeping their data layer.
    `pnpm verify` until it passes, and `pnpm verify --full --timed` before a release (the timed suites want a quiet
    machine); the line before the last of each says what it covered (`coverage: …`).
 
+**The four layers, when the project already has a backend of its own.** Route A keeps their data layer, so the four
+layers are a destination rather than a condition. `data-layers.md` holds the ordered path from where their project is —
+their own client behind the reads in `optional:src/data/`, a projection for every record that reaches a client, every
+computation moved into `optional:src/logic/`, and the rules switched on last — with what to run after each step and what none of
+it touches: their schema, their migrations, their ORM and their API's shape. Until the project sets its own switch in
+`optional:scripts/check.local.ts`, `node scripts/check.ts` says nothing about the four layers: no rule fires, and the
+rest of the check runs as it always did.
+
 Without the assistant, `verify --full` skips its walk-through on its own (it runs only when `optional:app/api/assistant/route.ts`
 exists).
 
