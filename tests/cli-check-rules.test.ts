@@ -149,16 +149,19 @@ describe('the four-layer rules', () => {
   }, 60_000);
 
   it('refuse a file under src/views that is not a renderer, and allow workspaces.ts and a capitalised component', () => {
-    put('src/views/helper.ts', 'export const helper = () => 1;\n');
+    // The fixture is camelCase on purpose: a kebab-case `src/views/<name>.ts` token is the shape
+    // tests/moved-paths-documented.test.ts reads as a module that has moved to src/logic, and this
+    // file exists only inside the copy, for the length of this test.
+    put('src/views/helperFn.ts', 'export const helper = () => 1;\n');
     put('src/views/plain.tsx', 'export const helper = () => 1;\n');
     put('src/views/Good.tsx', 'export function Good() { return null; }\n');
     const r = runCheck();
-    expect(r.stdout).toMatch(/src\/views\/helper\.ts: is not a renderer/);
+    expect(r.stdout).toMatch(/src\/views\/helperFn\.ts: is not a renderer/);
     expect(r.stdout).toMatch(/src\/views\/plain\.tsx: is not a renderer/);
     expect(r.stdout).not.toMatch(/src\/views\/Good\.tsx: is not a renderer/);
     expect(r.stdout).not.toMatch(/src\/views\/workspaces\.ts: is not a renderer/);
     expect(r.status).toBe(1);
-    remove('src/views/helper.ts', 'src/views/plain.tsx', 'src/views/Good.tsx');
+    remove('src/views/helperFn.ts', 'src/views/plain.tsx', 'src/views/Good.tsx');
   }, 60_000);
 
   it('print a stated escape with its reason, and still pass', () => {

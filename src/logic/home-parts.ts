@@ -1,7 +1,7 @@
 /**
  * What Home states, worked out on the server from what its read could read: the title and the facts of a year, the
  * line under the title, and each part's figures, lines and points (`HomeData`). Pure: it is handed rows and returns
- * figures, so the read in `src/views/tools.ts` and a test build Home the same way, and no row reaches the browser.
+ * figures, so the read in `src/logic/tools.ts` and a test build Home the same way, and no row reaches the browser.
  *
  * A read that failed is handed as null: its part is null, `unread` names it, and the rest stands. What compute cost is
  * handed only for a person who may read it; for anyone else it is undefined, and the data has no key for a cost or a

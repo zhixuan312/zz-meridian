@@ -31,7 +31,7 @@ The period control moves what is read from the daily records: the title's revenu
 
 ### The title
 
-The page is headed by what its customers and its revenue say for the period chosen, worked out by `revenueTitle` in `src/views/revenue-context.ts`. The heading reads "Revenue: " before it, out of sight, and the top bar shows "Revenue".
+The page is headed by what its customers and its revenue say for the period chosen, worked out by `revenueTitle` in `src/logic/revenue-context.ts`. The heading reads "Revenue: " before it, out of sight, and the top bar shows "Revenue".
 
 | When | The title |
 |---|---|
@@ -62,10 +62,10 @@ Below 1024px (`lg`) every row stacks, the Featured metric first. The three tiles
 
 ## Data
 
-Every figure is read on the server by the Revenue tool's read (`revenueTool` in `src/views/tools.ts`, which takes `period`, 30d when not given). Each collection is read apart from the others, so one that cannot be read leaves its part saying so (`unread` on the page's data) and the rest standing. `revenueData` in `src/views/revenue-parts.ts` turns the rows into what the parts draw, never a customer's record: the wall gets the eight of each order, the ladder each stage's two named customers (three when it holds three) and what each other customer paid, which the Bar list folds into "N others".
+Every figure is read on the server by the Revenue tool's read (`revenueTool` in `src/logic/tools.ts`, which takes `period`, 30d when not given). Each collection is read apart from the others, so one that cannot be read leaves its part saying so (`unread` on the page's data) and the rest standing. `revenueData` in `src/logic/revenue-parts.ts` turns the rows into what the parts draw, never a customer's record: the wall gets the eight of each order, the ladder each stage's two named customers (three when it holds three) and what each other customer paid, which the Bar list folds into "N others".
 
 - **The period's figures** come from `readDays(period)` and its `revenueByPlan`; the windows, the year ago and the best day from every complete day kept (`readDays('all')`), read on the server, and the page is handed the sentences and figures, never the history.
-- **The customers' figures** are every customer that has not left (`kept`), from the `customers` collection: what each paid in the last 30 complete days, its 14-day trend and its week (`week` in `src/views/customers-context.ts`). Those that have left are counted in nothing but the ladder's "left".
+- **The customers' figures** are every customer that has not left (`kept`), from the `customers` collection: what each paid in the last 30 complete days, its 14-day trend and its week (`week` in `src/logic/customers-context.ts`). Those that have left are counted in nothing but the ladder's "left".
 - **The ladder's moves** are of the last 30 complete days: joined (`joined`), moved up (`planSince` with a `previousPlan` below the plan) and left (`left`).
 - **What they buy** is the `usage` rows' revenue by model over the period's complete days, labelled from `models`; **where they are** is the `regions` collection.
 - **`facts.nextPlanAt`** (`src/app.config.ts`, 0.75 in the sample) is read each time the read runs.
@@ -80,7 +80,7 @@ Revenue over 30 days equals Home's and the customers' revenue to the cent. Nothi
 
 ## Agents
 
-The page itself takes no agent action. It shares one context with both agents (decision 0011), built by `revenueContext` in `src/views/revenue-context.ts` from the figures the page draws; the wall's order is the person's, and the context states the wall in that order.
+The page itself takes no agent action. It shares one context with both agents (decision 0011), built by `revenueContext` in `src/logic/revenue-context.ts` from the figures the page draws; the wall's order is the person's, and the context states the wall in that order.
 
 ### What the agent reads
 
@@ -108,7 +108,7 @@ Protagonist: Revenue.
 - "Which model brought the most revenue in the last 90 days, and how did that move?" — the usage's revenue over 90 complete days, by model, against the 90 days before
 - "What do the customers past due pay, by plan?" — the customers whose status is past due, their revenue over the last 30 complete days, by plan
 
-Revenue's prepared query (`revenueExplore` in `src/views/revenue-explore.ts`, set as `explore` on the Revenue tool) reads three sources. `days` is windowed by complete days and bucketed by day, week, month or weekday, with revenue and each plan's revenue. `customers` has no date: each customer's figures cover the last 30 complete days, narrowed and grouped by plan, status, region and owner. `usage` is the days by model, with revenue and requests. A drilled day or model-day opens the page at every day kept, and a drilled customer its own page.
+Revenue's prepared query (`revenueExplore` in `src/logic/revenue-explore.ts`, set as `explore` on the Revenue tool) reads three sources. `days` is windowed by complete days and bucketed by day, week, month or weekday, with revenue and each plan's revenue. `customers` has no date: each customer's figures cover the last 30 complete days, narrowed and grouped by plan, status, region and owner. `usage` is the days by model, with revenue and requests. A drilled day or model-day opens the page at every day kept, and a drilled customer its own page.
 
 ## Accessibility
 

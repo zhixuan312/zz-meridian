@@ -24,7 +24,7 @@ Status: beta
 
 ## Data
 
-The Now tool's read (`nowTool` in `src/views/tools.ts`), the page's own: inline draws the services and the most severe open incident, fullscreen the page's body. The strips cross to the browser one character a day (`packNow` in `src/views/now-context.ts`), as the page's do.
+The Now tool's read (`nowTool` in `src/logic/tools.ts`), the page's own: inline draws the services and the most severe open incident, fullscreen the page's body. The strips cross to the browser one character a day (`packNow` in `src/logic/now-context.ts`), as the page's do.
 
 ## Surfaces
 

@@ -15,7 +15,7 @@ export function generateMetadata() {
   return gatedMetadata('now', { title: 'Now' });
 }
 
-/** The page's one read, through the Now tool (`src/views/tools.ts`), shared by the title, the line and the body. */
+/** The page's one read, through the Now tool (`src/logic/tools.ts`), shared by the title, the line and the body. */
 const readNow = cache(() => nowTool.read({}));
 
 /**

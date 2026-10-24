@@ -8,7 +8,7 @@ export const metadata = { title: 'Requests' };
 type SearchParams = Promise<Record<string, string | string[] | undefined>>;
 
 /**
- * Tool: `zz_meridian_requests { status?, method?, region?, q? }` (`requestsTool` in `src/views/tools.ts`). The arguments are the console's filter names, so the
+ * Tool: `zz_meridian_requests { status?, method?, region?, q? }` (`requestsTool` in `src/logic/tools.ts`). The arguments are the console's filter names, so the
  * tool's view and the console's view are the same address. Inline: the five latest that match. Fullscreen: the table.
  * Both read what the console page reads: one page of the filtered set and the summary of all of it, so the shared
  * context is the console's.

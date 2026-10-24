@@ -49,7 +49,7 @@ Not offered. Inviting and removing people are decisions for the console, not a c
 
 ## Agents
 
-The assistant reads the page through the members view tool and its prepared query, `explore_members`, and, on this page alone, proposes changes through Proposals by the ids the query's drilled members give: it adds, changes and removes members only after a person approves, and what it changed shows on this page after a refresh. A change made here is what the assistant reads next. The page shares its context through `membersContext` in `src/views/members-context.ts`.
+The assistant reads the page through the members view tool and its prepared query, `explore_members`, and, on this page alone, proposes changes through Proposals by the ids the query's drilled members give: it adds, changes and removes members only after a person approves, and what it changed shows on this page after a refresh. A change made here is what the assistant reads next. The page shares its context through `membersContext` in `src/logic/members-context.ts`.
 
 ### What the agent reads
 
@@ -73,7 +73,7 @@ The page marks the list `data-protagonist="Members"` on a wrapper whose display 
 - "Who is suspended, and what are their ids?" — the members whose status is Suspended, with up to 20 of them, each opening with its id and its name
 - "How many Admins does each team have?" — the members whose role is Admin, by team
 
-Members' prepared query (`membersExplore` in `src/views/members-explore.ts`, set as `explore` on the Members tool) reads one source, `members`, with no date: narrowed by status, role, team, name and last sign-in, and grouped by status, role or team. A drilled member's line opens with its id and its name, and that id is the one the assistant's proposal to suspend or remove the member names. Last active is a sign-in to this console, never use of the API, and a member who has never signed in is left out of any narrowing by it.
+Members' prepared query (`membersExplore` in `src/logic/members-explore.ts`, set as `explore` on the Members tool) reads one source, `members`, with no date: narrowed by status, role, team, name and last sign-in, and grouped by status, role or team. A drilled member's line opens with its id and its name, and that id is the one the assistant's proposal to suspend or remove the member names. Last active is a sign-in to this console, never use of the API, and a member who has never signed in is left out of any narrowing by it.
 
 ## Content
 

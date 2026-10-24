@@ -1,7 +1,7 @@
 /**
  * What Usage states, worked out on the server from what its read could read: the title and the facts of the period,
  * the line under the title, and each part's figures and points (`UsageData`). Pure: it is handed rows and returns
- * figures, so the read in `src/views/tools.ts` and a test build Usage the same way, and the history reaches the
+ * figures, so the read in `src/logic/tools.ts` and a test build Usage the same way, and the history reaches the
  * browser only as the calendar's values.
  *
  * A read that failed is handed as null: its part is null, `unread` names it, and the rest stands. The period moves

@@ -44,7 +44,7 @@ Not offered. Keys are secrets, and creating one is a page-only operation. In the
 
 ## Agents
 
-An agent reads the page through the keys view tool and its prepared query, `explore_keys`, and on this page, where it is handed the keys' write tool, may propose revoking a key (a critical Proposal) by the id a drilled key gives; it never creates one, because a key's secret is shown once, on this page (`pageOnly`). The proposal waits for approval, and its approval removes the key through the same collection. The page shares its context through `keysContext` in `src/views/keys-context.ts`.
+An agent reads the page through the keys view tool and its prepared query, `explore_keys`, and on this page, where it is handed the keys' write tool, may propose revoking a key (a critical Proposal) by the id a drilled key gives; it never creates one, because a key's secret is shown once, on this page (`pageOnly`). The proposal waits for approval, and its approval removes the key through the same collection. The page shares its context through `keysContext` in `src/logic/keys-context.ts`.
 
 ### What the agent reads
 
@@ -63,7 +63,7 @@ The page marks the list `data-protagonist="API keys"` on a wrapper whose display
 - "Which keys have not been used since 1 September, and what are their ids?" — the keys whose last use is before 2026-09-01, with up to 20 of them, each with the id a revocation names
 - "How many keys were created this year, live and test?" — the keys created after 2026-01-01, by environment
 
-API keys' prepared query (`keysExplore` in `src/views/keys-explore.ts`, set as `explore` on the API keys tool) reads one source, `keys`, with no date: narrowed by environment, owner, last use and creation, and grouped by environment or owner. A key's secret is in no filter, group, measure or drilled row, and its hash is `hidden` besides: a drilled key shows its hint, the first and last characters. A key never used is left out of any narrowing by its last use.
+API keys' prepared query (`keysExplore` in `src/logic/keys-explore.ts`, set as `explore` on the API keys tool) reads one source, `keys`, with no date: narrowed by environment, owner, last use and creation, and grouped by environment or owner. A key's secret is in no filter, group, measure or drilled row, and its hash is `hidden` besides: a drilled key shows its hint, the first and last characters. A key never used is left out of any narrowing by its last use.
 
 ## Content
 

@@ -53,7 +53,7 @@ Export CSV is a link to `/api/export/requests` with the same filters and sort: t
 
 ## Agents
 
-An agent opens this page's views through `zz_meridian_requests`; it never exports or blocks from here. Its filters are marked until a person changes one. The page shares one context with both agents (decision 0011), built by `requestsContext` in `src/views/requests-context.ts` from the page's read: the rows on screen and the summary of the whole filtered set.
+An agent opens this page's views through `zz_meridian_requests`; it never exports or blocks from here. Its filters are marked until a person changes one. The page shares one context with both agents (decision 0011), built by `requestsContext` in `src/logic/requests-context.ts` from the page's read: the rows on screen and the summary of the whole filtered set.
 
 ### What the agent reads
 
@@ -80,7 +80,7 @@ The page marks the log `data-protagonist="The request log"` on a wrapper whose d
 - "How were the requests that reached a model answered, model by model?" — the sampled log's requests and errors and limits, by model
 - "Which requests to /v1/messages failed with a 5xx, and where do I open them?" — the sampled log where the route is /v1/messages and the status class is 5xx, with up to 20 of them, each with its request's address
 
-The request log's prepared query (`requestsExplore` in `src/views/requests-explore.ts`) reads one source, `requests`, the sampled log: a sample of the latest requests, windowed by nothing, so it has no period and no window before, and every answer says it is of the sample. It is narrowed by status class, status, route, method, customer, region and model, grouped by status class, route, customer, region or model, with the requests, the errors and limits (a 5xx or a 429), their share and the latency p95. A drilled request opens its own page, and a call narrowed to one status class, method, region, customer or route opens the log filtered to it.
+The request log's prepared query (`requestsExplore` in `src/logic/requests-explore.ts`) reads one source, `requests`, the sampled log: a sample of the latest requests, windowed by nothing, so it has no period and no window before, and every answer says it is of the sample. It is narrowed by status class, status, route, method, customer, region and model, grouped by status class, route, customer, region or model, with the requests, the errors and limits (a 5xx or a 429), their share and the latency p95. A drilled request opens its own page, and a call narrowed to one status class, method, region, customer or route opens the log filtered to it.
 
 ## Accessibility
 

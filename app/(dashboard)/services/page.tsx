@@ -16,7 +16,7 @@ export function generateMetadata() {
   return gatedMetadata('services', { title: 'Services' });
 }
 
-/** The page's one read, through the Services tool (`src/views/tools.ts`), shared by the title and the body. */
+/** The page's one read, through the Services tool (`src/logic/tools.ts`), shared by the title and the body. */
 const readServicesView = cache(() => servicesTool.read({}));
 
 /**

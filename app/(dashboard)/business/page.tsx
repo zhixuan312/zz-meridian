@@ -21,7 +21,7 @@ export function generateMetadata() {
 
 type SearchParams = Promise<{ period?: string }>;
 
-/** The page's one read, through the Revenue tool (`src/views/tools.ts`), shared by the title, the line, the export and the body. */
+/** The page's one read, through the Revenue tool (`src/logic/tools.ts`), shared by the title, the line, the export and the body. */
 const readPeriod = cache((period: ReturnType<typeof parsePeriod>) => revenueTool.read({ period }));
 
 /**

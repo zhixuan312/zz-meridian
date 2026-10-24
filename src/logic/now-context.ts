@@ -1,7 +1,7 @@
 /**
  * Now's shared context (decision 0011): engineering as it is this moment, as both agents read it, led by the title the
  * page is headed by and the days inside the band. Each part's figures are worked out on the server (`nowData` in
- * `src/views/now-parts.ts`); this file only says them, so the page's client builds the same text from the same data.
+ * `src/logic/now-parts.ts`); this file only says them, so the page's client builds the same text from the same data.
  */
 import { facts as rules } from '@/app.config';
 import type { ActivityEvent } from '@/components/patterns/activity-feed';

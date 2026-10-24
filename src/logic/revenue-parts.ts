@@ -1,7 +1,7 @@
 /**
  * What Revenue states, worked out on the server from what its read could read: the title, the line under it, and each
  * part's figures, lines and points (`RevenueData`). Pure: it is handed rows and returns figures, so the read in
- * `src/views/tools.ts` and a test build Revenue the same way, and no customer's record reaches the browser.
+ * `src/logic/tools.ts` and a test build Revenue the same way, and no customer's record reaches the browser.
  *
  * A read that failed is handed as null: its part is null, `unread` names it, and the rest stands. The period moves
  * what is read from the daily records; every part about customers covers the windows a customer's figures cover (30

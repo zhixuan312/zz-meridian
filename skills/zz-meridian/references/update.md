@@ -192,8 +192,8 @@ Moving a project to 0.9.0 can report two more `migration:<id>` items, to 0.10.0 
 | `table-grid` (0.26.0) | a file of the team's importing the Table or the DataTable that expects a `grow` column's `@min-[672px]:min-w-64`, such as `optional:tests/table-cut-cell.test.tsx` as the template wrote it, or passes a `colSpan` to a `TableCell` | a table is a grid since 0.26.0, its spare shared equally between the gaps, and a `grow` column's floor is `min-w-40` at every width: bring `optional:tests/table-cut-cell.test.tsx` over from the release as it has it, expect `min-w-40` alone where a test of your own expected the wider floor, and draw a row that spans the table, such as an empty state, outside it or as a `DataTable` `empty`, since a cell takes one track; checked by the gate |
 
 A created project that never changed the template's pages brings the release's version of each affected file over, with
-the files that arrived with them: the view contexts `optional:src/views/home-context.ts` and its siblings, the view
-tools `optional:src/views/tools.ts`, the reads `optional:src/data/metrics.ts` and the collections in
+the files that arrived with them: the view contexts `optional:src/logic/home-context.ts` and its siblings, the view
+tools `optional:src/logic/tools.ts`, the reads `optional:src/data/metrics.ts` and the collections in
 `optional:src/data/collections.ts`. From 0.16.0 that includes `src/app.config.ts`, whose nav names the pages' features
 (its own `app` kept), and `scripts/verify.config.ts`, which names their routes; each shipped test comes over as the release
 has it, and one the release no longer has is deleted. `src/lib/shared-context.ts`, `src/lib/agent-guidance.ts` and

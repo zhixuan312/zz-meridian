@@ -1,7 +1,7 @@
 /**
  * What Now states, worked out on the server from what its read could read: the line under the title and each part's
  * figures, lines and points (`NowData`). Pure: it is handed rows and returns figures, so the read in
- * `src/views/tools.ts` and a test build Now the same way, and no row reaches the browser.
+ * `src/logic/tools.ts` and a test build Now the same way, and no row reaches the browser.
  *
  * A read that failed is handed as null: its part is null, `unread` names it, and the rest stands. The day in progress
  * is counted in nothing but the runs a day, which draw it as running.

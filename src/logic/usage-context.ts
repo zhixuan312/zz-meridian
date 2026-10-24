@@ -1,7 +1,7 @@
 /**
  * Usage' shared context (decision 0011): how many requests the period had and the facts about it, when they come,
  * where from, what is asked for and how it was answered, as both agents read it. The figures are worked out on the
- * server (`usageData` in `src/views/usage-parts.ts`); this file only says them, so the page's client builds the same
+ * server (`usageData` in `src/logic/usage-parts.ts`); this file only says them, so the page's client builds the same
  * text from the same data.
  */
 import { app } from '@/app.config';

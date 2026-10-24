@@ -22,7 +22,7 @@ export function generateMetadata() {
 
 type SearchParams = Promise<{ period?: string; day?: string }>;
 
-/** The page's one read, through the Home tool (`src/views/tools.ts`), shared by the title, the line, the export and the body. */
+/** The page's one read, through the Home tool (`src/logic/tools.ts`), shared by the title, the line, the export and the body. */
 const readPeriod = cache((period: Period, day: string | undefined) => homeTool.read({ period, day: /^\d{4}-\d{2}-\d{2}$/.test(day ?? '') ? day : undefined }));
 /**
  * Every part reads the page through this, so each asks `readPeriod` with the same two arguments: `cache` keys first on

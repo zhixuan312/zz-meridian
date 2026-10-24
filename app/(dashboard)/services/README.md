@@ -19,7 +19,7 @@ The parts are one Suspense boundary, the page's body, behind a masthead that ren
 
 ### The title
 
-The page is headed by the uptime it states for its 90 days and how long a service has run without a mark, worked out by `servicesTitle` in `src/views/services-context.ts`. The heading reads "Services: " before it, out of sight, and the top bar shows "Services".
+The page is headed by the uptime it states for its 90 days and how long a service has run without a mark, worked out by `servicesTitle` in `src/logic/services-context.ts`. The heading reads "Services: " before it, out of sight, and the top bar shows "Services".
 
 | When | The title |
 |---|---|
@@ -53,10 +53,10 @@ The parts stack, the Featured metric first, then "Each service, 90 days". Each S
 
 ## Data
 
-Every figure is read on the server by the Services tool's read (`servicesTool` in `src/views/tools.ts`); the page, its title and its context share that read, and the page works out nothing but the Featured metric's figures, from the strips it is handed, by the functions the context writes the same figures with.
+Every figure is read on the server by the Services tool's read (`servicesTool` in `src/logic/tools.ts`); the page, its title and its context share that read, and the page works out nothing but the Featured metric's figures, from the strips it is handed, by the functions the context writes the same figures with.
 
-- **The services and the Featured metric**: the `services` collection, `readServices()` in `src/data/metrics.ts`, in the order the team reads its stack. A service's uptime is worked out from its days by one rule (`uptimeOf()` in `src/system/fixtures/sample.ts`): a degraded day costs half an hour and a day of outage two hours, so it reads 100% exactly when its strip carries no mark. The last day of a strip is the day in progress, and is the service's state now. The Featured metric's figure is `meanUptime`, written by `formatUptime`, its finding `longestRun` and its chart `operationalShare`, all in `src/views/services-context.ts`, from the same strips. Every strip ends today, so the strips line up on their last day: the days the title, the chart and the context count are those of the longest strip (`stripDays`), a service that keeps fewer days keeps the latest of them, and on a day it does not keep it is counted neither operational nor below it.
-- **The incidents**: the `incidents` collection, `readIncidents()` in `src/data/metrics.ts`, read apart from the services: a read that fails leaves `incidents` null and the part saying so. Newest first; those nobody has resolved are `open`, the others `resolved`. A record names who has the incident and, by its id, the ticket its work is tracked in; the read hands the card the owner's name and the ticket's title with the address the Tickets page finds it at. How long an incident lasted, or has lasted so far, is `lastedOf` in `src/views/services-context.ts`, in the product's durations. The sample's rows are `INCIDENTS` in `src/system/fixtures/sample.ts` and `PAST_INCIDENTS` in `src/system/fixtures/sample-ops.ts`.
+- **The services and the Featured metric**: the `services` collection, `readServices()` in `src/data/metrics.ts`, in the order the team reads its stack. A service's uptime is worked out from its days by one rule (`uptimeOf()` in `src/system/fixtures/sample.ts`): a degraded day costs half an hour and a day of outage two hours, so it reads 100% exactly when its strip carries no mark. The last day of a strip is the day in progress, and is the service's state now. The Featured metric's figure is `meanUptime`, written by `formatUptime`, its finding `longestRun` and its chart `operationalShare`, all in `src/logic/services-context.ts`, from the same strips. Every strip ends today, so the strips line up on their last day: the days the title, the chart and the context count are those of the longest strip (`stripDays`), a service that keeps fewer days keeps the latest of them, and on a day it does not keep it is counted neither operational nor below it.
+- **The incidents**: the `incidents` collection, `readIncidents()` in `src/data/metrics.ts`, read apart from the services: a read that fails leaves `incidents` null and the part saying so. Newest first; those nobody has resolved are `open`, the others `resolved`. A record names who has the incident and, by its id, the ticket its work is tracked in; the read hands the card the owner's name and the ticket's title with the address the Tickets page finds it at. How long an incident lasted, or has lasted so far, is `lastedOf` in `src/logic/services-context.ts`, in the product's durations. The sample's rows are `INCIDENTS` in `src/system/fixtures/sample.ts` and `PAST_INCIDENTS` in `src/system/fixtures/sample-ops.ts`.
 - **The title and the days inside the band** are worked out in the read, on the server: the title from the services' uptimes and strips, and the days inside the band from every complete day kept (`readDays('all')`), held to `facts.band` in `src/app.config.ts` by `steady`. The page is handed the sentences (`head` on its data) and never the days.
 
 The strips cross to the browser one character a day (`packServices`). Nothing writes.
@@ -69,7 +69,7 @@ The strips cross to the browser one character a day (`packServices`). Nothing wr
 
 ## Agents
 
-The page itself takes no agent action. It shares one context with both agents (decision 0011), built by `servicesContext` in `src/views/services-context.ts` from the figures the page draws.
+The page itself takes no agent action. It shares one context with both agents (decision 0011), built by `servicesContext` in `src/logic/services-context.ts` from the figures the page draws.
 
 ### What the agent reads
 
@@ -94,7 +94,7 @@ Protagonist: Uptime.
 - "How many incidents has each service had, and how many are still open?" — the incidents kept and those open, by service
 - "Which major incidents are on record, and who had them?" — the incidents where the severity is major, drilled, each with its owner
 
-Services' prepared query (`servicesExplore` in `src/views/services-explore.ts`, set as `explore` on the Services tool) reads two sources, neither with a date. `services` reads each service's uptime over its last 90 days as the percentage the collection derives (`uptimePercent`), so their average is the uptime the title states, narrowed and grouped by the state now, with the services counted and the highest latency now. `incidents` is every incident kept, narrowed and grouped by state, severity and service. A drilled service or incident opens this page.
+Services' prepared query (`servicesExplore` in `src/logic/services-explore.ts`, set as `explore` on the Services tool) reads two sources, neither with a date. `services` reads each service's uptime over its last 90 days as the percentage the collection derives (`uptimePercent`), so their average is the uptime the title states, narrowed and grouped by the state now, with the services counted and the highest latency now. `incidents` is every incident kept, narrowed and grouped by state, severity and service. A drilled service or incident opens this page.
 
 ## Embed view
 

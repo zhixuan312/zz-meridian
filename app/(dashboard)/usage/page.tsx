@@ -22,7 +22,7 @@ export function generateMetadata() {
 type SearchParams = Promise<{ period?: string; day?: string }>;
 
 /**
- * The page's one read, through the Usage tool (`src/views/tools.ts`), shared by the title, the line, the export and the body.
+ * The page's one read, through the Usage tool (`src/logic/tools.ts`), shared by the title, the line, the export and the body.
  * A day the address names (`?day=`) points the page and its context at it, as Home's does.
  */
 const readPeriod = cache((period: ReturnType<typeof parsePeriod>, day?: string) => usageTool.read({ period, day: /^\d{4}-\d{2}-\d{2}$/.test(day ?? '') ? day : undefined }));

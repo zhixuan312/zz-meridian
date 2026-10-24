@@ -42,7 +42,7 @@ None of its own. An agent shows a request through `zz_meridian_requests` (inline
 
 ## Agents
 
-Replay is a person's action here: it is `pageOnly`, so no agent can run or propose it. The page shares its context through `requestContext` in `src/views/request-context.ts`.
+Replay is a person's action here: it is `pageOnly`, so no agent can run or propose it. The page shares its context through `requestContext` in `src/logic/request-context.ts`.
 
 ### What the agent reads
 
@@ -66,7 +66,7 @@ The page marks the Request card `data-protagonist="Request"` on a wrapper that i
 - "How often does this route fail in each region?" — the errors and limits of the sampled requests to its route and their share, by region
 - "Which other requests to this route failed, and where do I open them?" — the sampled requests to its route whose status class is 5xx, with up to 20 of them, each with its request's address
 
-The protagonist, Request, is the Request facts card the structure places beside the trace. One request's prepared query (`requestExplore` in `src/views/request-explore.ts`) takes the page's `id` beside the call and reads one source, the sampled log, with the measures of the request log's query. Its `fixed` reads the request by the id under the person's rights and holds every call to the request's route, so a call can neither narrow nor group by another route; an id that names no request is answered that there is no such request, and nothing else is read.
+The protagonist, Request, is the Request facts card the structure places beside the trace. One request's prepared query (`requestExplore` in `src/logic/request-explore.ts`) takes the page's `id` beside the call and reads one source, the sampled log, with the measures of the request log's query. Its `fixed` reads the request by the id under the person's rights and holds every call to the request's route, so a call can neither narrow nor group by another route; an id that names no request is answered that there is no such request, and nothing else is read.
 
 ## Accessibility
 

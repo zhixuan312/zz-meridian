@@ -40,7 +40,7 @@ The page has no action, no server action and no control that deploys, publishes 
 
 ## Agents
 
-An agent reads the page through the releases view tool and its prepared query, `explore_releases`; it cannot create or change a release. The page shares its context through `releasesContext` in `src/views/releases-context.ts`.
+An agent reads the page through the releases view tool and its prepared query, `explore_releases`; it cannot create or change a release. The page shares its context through `releasesContext` in `src/logic/releases-context.ts`.
 
 ### What the agent reads
 
@@ -60,7 +60,7 @@ The page marks the list `data-protagonist="Releases"` on a wrapper whose display
 - "Which release failed the most verification runs in the last 30 days?" — the verification runs that failed over 30 complete days, by release
 - "How many runs started each day this week, and how many failed?" — the verification runs and the failed ones over 7 complete days, a day at a time
 
-Releases' prepared query (`releasesExplore` in `src/views/releases-explore.ts`, set as `explore` on the Releases tool) reads two sources. `releases` is windowed by when a release last changed, which for one that went out is when it went out; it is narrowed and grouped by state, environment and service, where the record's pending is what this page calls Ready to release. `runs` reads the `tests` collection, windowed by when a run started, narrowed and grouped by release, verdict, suite and endpoint. A drilled release opens on this page searched for its version, and a drilled run opens the runs of its release (`/tests?release=<id>`). A count of runs is not what holds a release: only the latest run of each required verification does, which the page states as In testing.
+Releases' prepared query (`releasesExplore` in `src/logic/releases-explore.ts`, set as `explore` on the Releases tool) reads two sources. `releases` is windowed by when a release last changed, which for one that went out is when it went out; it is narrowed and grouped by state, environment and service, where the record's pending is what this page calls Ready to release. `runs` reads the `tests` collection, windowed by when a run started, narrowed and grouped by release, verdict, suite and endpoint. A drilled release opens on this page searched for its version, and a drilled run opens the runs of its release (`/tests?release=<id>`). A count of runs is not what holds a release: only the latest run of each required verification does, which the page states as In testing.
 
 ## Content
 

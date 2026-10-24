@@ -26,7 +26,7 @@ The period control moves the title, the line under it, the Featured metric and t
 
 ### The title
 
-The page is headed by what its requests say for the period chosen, worked out by `usageTitle` in `src/views/usage-context.ts`. The heading reads "Usage: " before it, out of sight, and the top bar shows "Usage".
+The page is headed by what its requests say for the period chosen, worked out by `usageTitle` in `src/logic/usage-context.ts`. The heading reads "Usage: " before it, out of sight, and the top bar shows "Usage".
 
 | When | The title |
 |---|---|
@@ -43,7 +43,7 @@ One line, worked out by `usageLine`: requests a day over the period's complete d
 
 ### The period, counted
 
-Each fact is worked out on the server by `usageHead` in `src/views/usage-parts.ts`, from every complete day kept, in this order:
+Each fact is worked out on the server by `usageHead` in `src/logic/usage-parts.ts`, from every complete day kept, in this order:
 
 1. The busiest day yet, when it falls in the period: the `record` rule over the days up to it, about it.
 2. The first day requests passed the largest of `facts.firsts.requestsADay` they have passed, and how many of the period's days passed it: the `first` rule, given every day kept and the period's length (`period`), so a day inside the period is never called the first ever. With All the period is every day kept, and the line has no period clause.
@@ -72,7 +72,7 @@ Below 1024px (`lg`) every row stacks, the Featured metric first; the calendar sh
 
 ## Data
 
-Every figure is read on the server by the Usage tool's read (`usageTool` in `src/views/tools.ts`, which takes `period`, 30d when not given). Each read is made apart from the others, so one that cannot be read leaves its part saying so (`unread` on the page's data) and the rest standing. `usageData` in `src/views/usage-parts.ts` turns the rows into what the parts draw.
+Every figure is read on the server by the Usage tool's read (`usageTool` in `src/logic/tools.ts`, which takes `period`, 30d when not given). Each read is made apart from the others, so one that cannot be read leaves its part saying so (`unread` on the page's data) and the rest standing. `usageData` in `src/logic/usage-parts.ts` turns the rows into what the parts draw.
 
 - **The Featured metric and the period's facts**: `readDays(period)`, the period's complete days, their totals and those of as many days before, and the day in progress on its own.
 - **The calendar, the busiest day, the title's record and the facts**: every complete day kept (`readDays('all')`); the page is handed each day's requests and the facts' sentences.
@@ -89,7 +89,7 @@ The hours, the regions, the endpoints and the responses each add up to the reque
 
 ## Agents
 
-The page itself takes no agent action. It shares one context with both agents (decision 0011), built by `usageContext` in `src/views/usage-context.ts` from the figures the page draws, with the day the Meridian points at.
+The page itself takes no agent action. It shares one context with both agents (decision 0011), built by `usageContext` in `src/logic/usage-context.ts` from the figures the page draws, with the day the Meridian points at.
 
 ### What the agent reads
 
@@ -115,7 +115,7 @@ Protagonist: Requests.
 - "How did requests and errors move in each of the latest eight weeks of the last 90 days?" — the days' requests and errors over 90 complete days, a week at a time, the latest eight
 - "Which model answered the most requests in the last 30 days, and with what error rate?" — the usage's requests and error rate over 30 complete days, by model, against the 30 days before
 
-Usage's prepared query (`usageExplore` in `src/views/usage-explore.ts`, set as `explore` on the Usage tool) reads three sources. `hours`, the requests of each weekday and hour over the last 30 complete days, in the reporting timezone, has no date: it is narrowed by weekday and hour, grouped by either, names a weekday by its English name and an hour with the zone ("22:00 UTC" in the sample). `days` is windowed by complete days and bucketed by day, week, month or weekday, with requests, errors, their rate and the highest p95. `usage` is the same days by model. A drilled day or model-day opens the page pointed at that day.
+Usage's prepared query (`usageExplore` in `src/logic/usage-explore.ts`, set as `explore` on the Usage tool) reads three sources. `hours`, the requests of each weekday and hour over the last 30 complete days, in the reporting timezone, has no date: it is narrowed by weekday and hour, grouped by either, names a weekday by its English name and an hour with the zone ("22:00 UTC" in the sample). `days` is windowed by complete days and bucketed by day, week, month or weekday, with requests, errors, their rate and the highest p95. `usage` is the same days by model. A drilled day or model-day opens the page pointed at that day.
 
 ## Accessibility
 

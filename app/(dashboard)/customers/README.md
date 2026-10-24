@@ -30,7 +30,7 @@ The body (rows 1 and 2) is the records template, `Records` from `src/components/
 
 The `customers` collection, read through `readAll()` under `customers:read`, like every other collection; its rows are the sample's `CUSTOMERS` (made in `src/system/fixtures/company.ts`): 329 records, 320 that have not left and 9 that have. It is read-only: nobody in the console creates or changes a customer. Revenue is what a customer was billed for metered usage, before credits, over the last 30 complete days; over those days the customers' revenue and requests are the days' own, to the cent and to the request.
 
-The page reads every customer and hands its client the fields a row draws (`customerRow` in `src/views/customers-context.ts`): the id, name, plan, status, requests, 14-day trend, error rate, revenue and the day it joined. What only a customer's own page shows, its requests by route among it, stays on the server. `kept()` and `customerFigures()` there decide what is counted: every customer that has not left.
+The page reads every customer and hands its client the fields a row draws (`customerRow` in `src/logic/customers-context.ts`): the id, name, plan, status, requests, 14-day trend, error rate, revenue and the day it joined. What only a customer's own page shows, its requests by route among it, stays on the server. `kept()` and `customerFigures()` there decide what is counted: every customer that has not left.
 
 The page renders the masthead (title, sentence) itself, outside the boundary that reads the address, so a cold load has them in the first HTML. The tiles and the table wait inside their own boundary.
 
@@ -44,7 +44,7 @@ None yet: a `zz_meridian_customer { id }` view would show one customer's card wi
 
 ## Agents
 
-An agent reads customers through this page's shared context (the `customers` view tool reads every customer, as the page does, and takes the same `q`, `plan` and `status`, `left` among them) and their requests view; it changes nothing here: no one in the console creates or changes a customer. The context is built by `customersContext` in `src/views/customers-context.ts`, and the tiles' `hint`s come from its `CUSTOMER_METRICS`.
+An agent reads customers through this page's shared context (the `customers` view tool reads every customer, as the page does, and takes the same `q`, `plan` and `status`, `left` among them) and their requests view; it changes nothing here: no one in the console creates or changes a customer. The context is built by `customersContext` in `src/logic/customers-context.ts`, and the tiles' `hint`s come from its `CUSTOMER_METRICS`.
 
 ### What the agent reads
 
@@ -72,7 +72,7 @@ The page marks the list `data-protagonist="Customers"` on a wrapper whose displa
 - "Which region are our customers based in, and how many requests do they send?" — the customers' requests over the last 30 complete days, by each customer's own region
 - "Which Enterprise customers are on a trial or past due, and where do I open them?" — the customers on Enterprise whose status is trial or past due, with up to 20 of them, each with its page's address
 
-Customers' prepared query (`customersExplore` in `src/views/customers-explore.ts`) reads one source, `customers`, which has no date: each customer's figures cover the last 30 complete days. It is narrowed and grouped by plan, status, region and owner, with the customers that have not left, their revenue, requests and tokens. A drilled customer opens its own page, and a call narrowed to one plan or one status opens the list filtered to it.
+Customers' prepared query (`customersExplore` in `src/logic/customers-explore.ts`) reads one source, `customers`, which has no date: each customer's figures cover the last 30 complete days. It is narrowed and grouped by plan, status, region and owner, with the customers that have not left, their revenue, requests and tokens. A drilled customer opens its own page, and a call narrowed to one plan or one status opens the list filtered to it.
 
 ## Content
 

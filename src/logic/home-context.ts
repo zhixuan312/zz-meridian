@@ -1,7 +1,7 @@
 /**
  * The Home's shared context (decision 0011): what the console page, the MCP view and the console's assistant are
  * all told about the company. The tiles' definitions live here too, so the person's info button and the agents read
- * the same words. The figures are worked out on the server (`homeData` in `src/views/home-parts.ts`); this file only
+ * the same words. The figures are worked out on the server (`homeData` in `src/logic/home-parts.ts`); this file only
  * says them, so the page's client builds the same text from the same data.
  */
 import type { DailyPoint, Totals } from '@/data/sample';

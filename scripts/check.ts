@@ -106,7 +106,7 @@ for (const p of PAGE_SPECS) {
 // questions a person asks there that the context does not answer alone (FR-42): the line `Protagonist: <name>.` and at
 // least three items `- "<question>" — <what the prepared query is asked>`. The page marks that card with
 // `data-protagonist="<name>"`, and `scripts/ask.ts` asks the questions. Settings, the Atlas, Docs and the embed views are
-// no view tool's page, so they are asked nothing; a project without `src/views/tools.ts` has no view tools to read.
+// no view tool's page, so they are asked nothing; a project without `src/logic/tools.ts` has no view tools to read.
 {
   const pages = new Set((viewToolPages() ?? []).map((v) => v.page));
   for (const p of PAGE_SPECS.filter((f) => agentPageSpec(f) && pages.has(specRoute(f)))) {

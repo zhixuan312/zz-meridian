@@ -9,7 +9,7 @@ export const metadata = { title: 'Home' };
 type SearchParams = Promise<{ period?: string; day?: string }>;
 
 /**
- * Tool: `zz_meridian_home { period, day? }` (`homeTool` in `src/views/tools.ts`). The route renders from the
+ * Tool: `zz_meridian_home { period, day? }` (`homeTool` in `src/logic/tools.ts`). The route renders from the
  * tool's own read, so what the model is told and what the view shows are one. Inline: the revenue card and its three tiles.
  * Fullscreen: the console's Home rows.
  *

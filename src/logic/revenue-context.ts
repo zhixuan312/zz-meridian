@@ -1,7 +1,7 @@
 /**
  * Revenue's shared context (decision 0011): what the console page and the console's assistant are told about the money
  * and who pays it. The parts' labels and definitions live here, so a tile's info button and the agents read the same
- * words. The figures are worked out on the server (`revenueData` in `src/views/revenue-parts.ts`); this file only says
+ * words. The figures are worked out on the server (`revenueData` in `src/logic/revenue-parts.ts`); this file only says
  * them, so the page's client builds the same text from the same data.
  */
 import { facts as rules } from '@/app.config';

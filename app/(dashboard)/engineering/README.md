@@ -28,7 +28,7 @@ The parts are one Suspense boundary, the page's body: a part with a boundary of 
 
 ### The title
 
-The page is headed by what is wrong first and then what is waiting to ship, worked out by `nowTitle` in `src/views/now-context.ts`. The heading reads "Now: " before it, out of sight, and the top bar shows "Now".
+The page is headed by what is wrong first and then what is waiting to ship, worked out by `nowTitle` in `src/logic/now-context.ts`. The heading reads "Now: " before it, out of sight, and the top bar shows "Now".
 
 | When | The title |
 |---|---|
@@ -43,13 +43,13 @@ A release is in testing as the Releases page counts it: it has not gone out and 
 
 ### The line under the title
 
-One line, worked out by `nowData` in `src/views/now-parts.ts`: the most severe open incident's updates timed from its start, in the Incident card's words, then ", and another incident open" or ", and 2 more incidents open" when there are more; the services as the Status list's summary says them; and the days inside the band. The title names the service and the card the incident, so the line does not. In the sample: "Updates at the start, after 1.1h and after 2.6h; 1 service degraded; 357 of 360 days inside the band." Then who Engineering is for.
+One line, worked out by `nowData` in `src/logic/now-parts.ts`: the most severe open incident's updates timed from its start, in the Incident card's words, then ", and another incident open" or ", and 2 more incidents open" when there are more; the services as the Status list's summary says them; and the days inside the band. The title names the service and the card the incident, so the line does not. In the sample: "Updates at the start, after 1.1h and after 2.6h; 1 service degraded; 357 of 360 days inside the band." Then who Engineering is for.
 
 The line and who Engineering is for share the room of the lead (`LeadRoom`), about 220 characters, and `nowData` holds the line to what is left of it, so the masthead is one height however many updates or incidents there are. It takes the fullest form that fits: every update; then the updates counted with the latest named ("8 updates, the latest after 3.4h"); then the incidents counted ("3 incidents open"); then that without the days inside the band, which the Featured metric under it states; then without the services.
 
 ### More than eight services
 
-The Status list never folds. Up to eight services "Services, now" hands it every one; past eight, `servicesShown` in `src/views/now-context.ts` hands it the services not operational in the team's order, then the three with the longest current runs, longest first, and the card's line says so. The link names every service either way ("All 10 services").
+The Status list never folds. Up to eight services "Services, now" hands it every one; past eight, `servicesShown` in `src/logic/now-context.ts` hands it the services not operational in the team's order, then the three with the longest current runs, longest first, and the card's line says so. The link names every service either way ("All 10 services").
 
 ### At 390px
 
@@ -60,7 +60,7 @@ Every row stacks in reading order, the Featured metric first, then "Services, no
 | State | What shows |
 |---|---|
 | Loading | `loading.tsx`: the parts' shapes, the Featured metric's room first, under a masthead that takes the room the page's takes, so the body does not move when the page arrives. `LoadingPage` draws the kicker, the heading that holds "Now", read out and not drawn, with the sentence's block (`sentence`), the room of the line under the title (`lead`) and the freshness. The page's own fallbacks take the same room Under `refusal: 'absent'` the masthead names nothing (`gatedLoading`), since it is drawn before the gate answers. |
-| Empty (nothing has arrived yet) | Every read answered and none holds a record of any part (`nothingArrived` in `src/views/now-context.ts`): the body is one card, "No services yet", no part is drawn, and the page is headed by its name |
+| Empty (nothing has arrived yet) | Every read answered and none holds a record of any part (`nothingArrived` in `src/logic/now-context.ts`): the body is one card, "No services yet", no part is drawn, and the page is headed by its name |
 | No service yet, other records | The parts that have records stand, and "Services, now" says no service is monitored yet |
 | No complete day of compute yet | The compute was read and holds no day before today: "Compute in use" says no complete day of compute is recorded yet, and the context states no compute and no unknown about it |
 | Partial (a read failed) | That part's card, with its title, says what could not be read ("The tickets could not be read") in its own place, and every other part stands. "Models, now" needs the usage and the models, and names whichever could not be read ("The usage could not be read", "The usage and the models could not be read"). The days are said once, in the Featured metric's place: the band's part below it draws nothing then; a tile whose figure could not be read shows a dash. The context names what could not be read |
@@ -71,17 +71,17 @@ Every row stacks in reading order, the Featured metric first, then "Services, no
 
 ## Data
 
-Every figure is read on the server by the Now tool's read (`nowTool` in `src/views/tools.ts`), each collection apart from the others, so one that cannot be read leaves its part saying so (`unread` on the page's data) and the rest standing. `nowData` in `src/views/now-parts.ts` turns the rows into what the parts draw; the page works nothing out.
+Every figure is read on the server by the Now tool's read (`nowTool` in `src/logic/tools.ts`), each collection apart from the others, so one that cannot be read leaves its part saying so (`unread` on the page's data) and the rest standing. `nowData` in `src/logic/now-parts.ts` turns the rows into what the parts draw; the page works nothing out.
 
 - **The services and the incidents**: `readServices()` and `readIncidents()` in `src/data/metrics.ts`; an incident's ticket is joined to its title and the address the Tickets page finds it at.
 - **The band, its facts, the Featured metric and the title's days**: every complete day kept (`readDays('all')`), held to `facts.band` by `steady`, and each of the last 360 days' p95 in whole milliseconds for the Featured metric's chart; the year and the requests answered are written by the functions Home writes them with.
 - **The models**: the `usage` rows of the last 30 complete days, a model's p95 and first token the lower median of its days', labelled from `models`.
 - **Compute in use**: the `compute` rows of the latest complete day, a region's share its GPU-hours used over its GPUs times 24.
-- **Shipping and Releases out**: `readReleases()` in `src/data/engineering.ts`, through `releaseFigures`, `stageOf` and `unresolvedText` in `src/views/releases-context.ts`.
+- **Shipping and Releases out**: `readReleases()` in `src/data/engineering.ts`, through `releaseFigures`, `stageOf` and `unresolvedText` in `src/logic/releases-context.ts`.
 - **Work and Tickets closed**: `readTickets()`; the reader's own is the ticket assigned to `resolveAccess().subjectId`, read on the server.
 - **Slowest endpoints**: `readEndpoints()`. **The runs a day and Runs passed**: `readRuns()`. **Changes**: `readActivity()`, newest first.
 
-The strips cross to the browser one character a day (`packNow` in `src/views/now-context.ts`). The page, the embed view and the context share that read. Nothing writes. The body registers `activity` with `useLive` (`src/lib/live.ts`), so a change the product records, an approved Proposal among them, is drawn without a reload.
+The strips cross to the browser one character a day (`packNow` in `src/logic/now-context.ts`). The page, the embed view and the context share that read. Nothing writes. The body registers `activity` with `useLive` (`src/lib/live.ts`), so a change the product records, an approved Proposal among them, is drawn without a reload.
 
 ## Surfaces
 
@@ -91,7 +91,7 @@ The strips cross to the browser one character a day (`packNow` in `src/views/now
 
 ## Agents
 
-The page's prepared query reads the tickets, so the agent here may also propose a new ticket or a change to one, as on Tickets: each is a Proposal a person approves. It shares one context with both agents (decision 0011), built by `nowContext` in `src/views/now-context.ts` from the figures the page draws.
+The page's prepared query reads the tickets, so the agent here may also propose a new ticket or a change to one, as on Tickets: each is a Proposal a person approves. It shares one context with both agents (decision 0011), built by `nowContext` in `src/logic/now-context.ts` from the figures the page draws.
 
 ### What the agent reads
 
@@ -117,7 +117,7 @@ Protagonist: Days inside the band.
 - "Which model answered the most requests with the most errors over the last 30 days?" — the usage's requests and errors over 30 complete days, by model, against the 30 days before
 - "How many high-priority tickets were opened in the last 30 days, and how many are closed now?" — the tickets opened in 30 complete days where the priority is high, and those of them closed now
 
-Now's prepared query (`nowExplore` in `src/views/now-explore.ts`, set as `explore` on the Now tool) reads five sources. `days` is windowed by complete days and bucketed by week, month or weekday, with the days inside the band, a count over the `inBand` each day carries, so it is the steady fact's number, the days, and their highest p95. `models` is the usage by model, `compute` by region with the share in use, `tickets` by when each was opened, and `runs` the verification runs by when each started. A drilled day or model-day opens the page, a ticket the Tickets page on it, and a run the Tests page on its release.
+Now's prepared query (`nowExplore` in `src/logic/now-explore.ts`, set as `explore` on the Now tool) reads five sources. `days` is windowed by complete days and bucketed by week, month or weekday, with the days inside the band, a count over the `inBand` each day carries, so it is the steady fact's number, the days, and their highest p95. `models` is the usage by model, `compute` by region with the share in use, `tickets` by when each was opened, and `runs` the verification runs by when each started. A drilled day or model-day opens the page, a ticket the Tickets page on it, and a run the Tests page on its release.
 
 ## Embed view
 

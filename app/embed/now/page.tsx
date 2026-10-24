@@ -7,7 +7,7 @@ import { EmbedNow } from './view';
 export const metadata = { title: 'Now' };
 
 /**
- * Tool: `zz_meridian_now {}` (`nowTool` in `src/views/tools.ts`), rendered from the tool's own read, at request time
+ * Tool: `zz_meridian_now {}` (`nowTool` in `src/logic/tools.ts`), rendered from the tool's own read, at request time
  * for whoever is asking. Inline: the status list and the open incident. Fullscreen: the Now page's body.
  *
  * `Now` takes no argument, so its frame is the same whatever the host asks for: the host is framed at once rather than

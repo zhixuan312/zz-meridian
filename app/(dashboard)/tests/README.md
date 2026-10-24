@@ -40,7 +40,7 @@ The page has no action, no server action and no control that reruns anything: th
 
 ## Agents
 
-An agent reads the page through the tests view tool and its prepared query, `explore_tests`; it cannot create or change a run. The page shares its context through `testsContext` in `src/views/tests-context.ts`.
+An agent reads the page through the tests view tool and its prepared query, `explore_tests`; it cannot create or change a run. The page shares its context through `testsContext` in `src/logic/tests-context.ts`.
 
 ### What the agent reads
 
@@ -60,7 +60,7 @@ The page marks the list `data-protagonist="Verification runs"` on a wrapper whos
 - "How long do the runs of each suite take?" — the p95 duration of the runs over the last 30 complete days, by suite
 - "Which runs failed in the last seven days, and where do I open them?" — the runs of the last 7 complete days whose verdict is failed, with up to 20 of them, each with its release's runs as its address
 
-Tests' prepared query (`testsExplore` in `src/views/tests-explore.ts`, set as `explore` on the Tests tool) reads one source, `runs`, over the `tests` collection and windowed by when a run started: narrowed by verdict, suite, endpoint and release, grouped by any of them or a day or a week at a time, with the runs, the failed runs and the p95 duration. A run has no page of its own, so a drilled run opens the runs of its release (`/tests?release=<id>`).
+Tests' prepared query (`testsExplore` in `src/logic/tests-explore.ts`, set as `explore` on the Tests tool) reads one source, `runs`, over the `tests` collection and windowed by when a run started: narrowed by verdict, suite, endpoint and release, grouped by any of them or a day or a week at a time, with the runs, the failed runs and the p95 duration. A run has no page of its own, so a drilled run opens the runs of its release (`/tests?release=<id>`).
 
 ## Content
 

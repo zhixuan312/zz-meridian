@@ -44,7 +44,7 @@ Create and Move are server actions (`actions.ts`) that write through the caller'
 
 ## Agents
 
-An agent reads the page through the tickets view tool and its prepared query, `explore_tickets`, and on this page may create and change tickets through the `tickets` write tools, which pass the same boundary as the page's actions, so the same step is refused in both places. The prepared query reads when a ticket was closed and the incident it tracks; neither is in a write tool's create or update schema. The page shares its context through `ticketsContext` in `src/views/tickets-context.ts`.
+An agent reads the page through the tickets view tool and its prepared query, `explore_tickets`, and on this page may create and change tickets through the `tickets` write tools, which pass the same boundary as the page's actions, so the same step is refused in both places. The prepared query reads when a ticket was closed and the incident it tracks; neither is in a write tool's create or update schema. The page shares its context through `ticketsContext` in `src/logic/tickets-context.ts`.
 
 ### What the agent reads
 
@@ -64,7 +64,7 @@ The page marks the list `data-protagonist="Tickets"` on a wrapper whose display 
 - "How many tickets were opened in each of the latest eight weeks, and how many of them are still in play?" — the tickets opened and those still open or waiting over 90 complete days, a week at a time, the latest eight
 - "Which high-priority tickets opened in the last 30 days are still in play, and where do I open them?" — the tickets opened over 30 complete days whose priority is high and whose state is not closed, with up to 20 of them, each with its address
 
-Tickets' prepared query (`ticketsExplore` in `src/views/tickets-explore.ts`, set as `explore` on the Tickets tool) reads the `tickets` collection as two sources: `opened`, windowed by when a ticket was opened, and `closed`, windowed by when it was closed, which holds no ticket still in play. Both are narrowed by state, priority, service and assignee, grouped by any of them or a day, a week or a month at a time. A drilled ticket opens on this page searched for its title, and a call narrowed to one state or one priority answers with the page filtered the same way. A ticket opened today is in no window, as a window holds complete days.
+Tickets' prepared query (`ticketsExplore` in `src/logic/tickets-explore.ts`, set as `explore` on the Tickets tool) reads the `tickets` collection as two sources: `opened`, windowed by when a ticket was opened, and `closed`, windowed by when it was closed, which holds no ticket still in play. Both are narrowed by state, priority, service and assignee, grouped by any of them or a day, a week or a month at a time. A drilled ticket opens on this page searched for its title, and a call narrowed to one state or one priority answers with the page filtered the same way. A ticket opened today is in no window, as a window holds complete days.
 
 ## Content
 

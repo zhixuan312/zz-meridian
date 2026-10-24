@@ -18,7 +18,7 @@ Five parts, in this order. The page has no period control: every part names the 
 
 ### The title
 
-The page is headed by what the customer's record says, worked out by `customerTitle` in `src/views/customer-context.ts`. The heading reads the customer's name and a colon before it, out of sight, and the top bar shows the name.
+The page is headed by what the customer's record says, worked out by `customerTitle` in `src/logic/customer-context.ts`. The heading reads the customer's name and a colon before it, out of sight, and the top bar shows the name.
 
 | When | The title |
 |---|---|
@@ -49,7 +49,7 @@ A customer is named by its name across the product, and wherever it is, the name
 
 ## Data
 
-One row of the `customers` collection through `read()` under `customers:read`, whose key is the id; the product's revenue and error rate over the last 30 complete days (`readDays('30d')`); and the newest five requests of the `requests` collection whose customer is this one's name (`readLatestFrom` in `src/data/requests.ts`). `readCustomer` in `src/views/tools.ts` reads all three, each apart, and is shared by the page and the Customer tool; the page's metadata and its body share one read. Three ids are built ahead of time, the three largest customers; any other renders on its first request. Nothing writes.
+One row of the `customers` collection through `read()` under `customers:read`, whose key is the id; the product's revenue and error rate over the last 30 complete days (`readDays('30d')`); and the newest five requests of the `requests` collection whose customer is this one's name (`readLatestFrom` in `src/data/requests.ts`). `readCustomer` in `src/logic/tools.ts` reads all three, each apart, and is shared by the page and the Customer tool; the page's metadata and its body share one read. Three ids are built ahead of time, the three largest customers; any other renders on its first request. Nothing writes.
 
 Its share of revenue is what it paid over the revenue of the same 30 complete days. The busiest of its 14 days is the largest of its trend, dated from the day before the read.
 
@@ -59,7 +59,7 @@ Its share of revenue is what it paid over the revenue of the same 30 complete da
 
 ## Agents
 
-The page itself takes no agent action. It shares one context with both agents (decision 0011), built by `customerContext` in `src/views/customer-context.ts`.
+The page itself takes no agent action. It shares one context with both agents (decision 0011), built by `customerContext` in `src/logic/customer-context.ts`.
 
 ### What the agent reads
 
@@ -85,7 +85,7 @@ The page marks the card `data-protagonist="Where it stands"` on a wrapper whose 
 - "Which of its sampled requests failed, and where do I open them?" — its requests in the sampled log whose status class is 4xx or 5xx, with up to 20 of them, each with its request's address
 - "How many tokens did it use in the last 30 days?" — the tokens, requests and revenue of its own row of the customers
 
-The protagonist is the card the structure calls Where it stands, which is titled by where the customer stands and since when. One customer's prepared query (`customerExplore` in `src/views/customer-explore.ts`, set as `explore` on the Customer tool) takes the page's `id` beside the call and reads two sources, neither with a date: its requests in the sampled log, grouped by route or status class, and its own row of the customers. Its `fixed` reads that row by the id under the person's rights and holds every call to the customer's name and id, so no other customer is read; an id that names no customer is answered that there is no such customer, and nothing else is read.
+The protagonist is the card the structure calls Where it stands, which is titled by where the customer stands and since when. One customer's prepared query (`customerExplore` in `src/logic/customer-explore.ts`, set as `explore` on the Customer tool) takes the page's `id` beside the call and reads two sources, neither with a date: its requests in the sampled log, grouped by route or status class, and its own row of the customers. Its `fixed` reads that row by the id under the person's rights and holds every call to the customer's name and id, so no other customer is read; an id that names no customer is answered that there is no such customer, and nothing else is read.
 
 ## Accessibility
 
