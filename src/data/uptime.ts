@@ -1,0 +1,45 @@
+/**
+ * The sample's one derived answer (AC-3.8): each service's uptime, worked out from the days its own record keeps,
+ * rather than read from the uptime stored beside them. The days are a field of the service's row; the `days` collection
+ * is the company's daily request totals and has nothing to do with a service's uptime.
+ *
+ * Its source is the services collection, read through `readAll('services')`: the revision that read answers is what
+ * makes an unchanged source recognisable without building again, and a write to any other collection never re-stamps
+ * this answer.
+ */
+import type { Service } from '@/components/patterns/status-list';
+import { readAll } from '@/data/read';
+import { uptimeOf } from '@/system/fixtures/sample';
+import { derivedAnswer, type DerivedAnswer } from './derived';
+
+/** Each service's uptime over its own days, by the service's name. */
+type ServiceUptimes = Record<string, number>;
+
+/** A service's row as the collection keeps it: the name it is answered under, and the days the uptime is worked from. */
+type ServiceRow = Pick<Service, 'name' | 'days'>;
+
+const NAME = 'services.uptime';
+
+/**
+ * Every service's uptime, built from the services collection through `derivedAnswer`: `data` maps each service's name
+ * to the uptime over its own days, and `sourceRevision` names the collection revision it was built from. `data` is
+ * null when the first build threw, and the read that needs a figure falls back rather than inventing one.
+ */
+export async function serviceUptime(): Promise<DerivedAnswer<ServiceUptimes>> {
+  // The rows this call's `source` answered, so `build` works the state its revision names rather than reading again.
+  // Held per call rather than in the module: two reads of one answer share a build, and the loser of that race must not
+  // be able to swap the rows under the winner's build.
+  let rows: ServiceRow[] = [];
+  return derivedAnswer({
+    name: NAME,
+    async source() {
+      const read = await readAll('services', { sort: { field: 'order', dir: 'asc' } });
+      rows = read.rows as unknown as ServiceRow[];
+      // A collection answers its revision; one that does not is identified by the moment its state was observed.
+      return { revision: read.revision ?? read.observedAt };
+    },
+    async build() {
+      return Object.fromEntries(rows.map((service) => [service.name, uptimeOf(service.days)]));
+    },
+  });
+}

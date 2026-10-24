@@ -10,6 +10,7 @@ import { Tooltip } from '@/components/ui/tooltip';
 import { Sparkline } from '@/components/charts/sparkline';
 import { useMeridianIndex, usePointMeridian } from '@/components/charts/meridian';
 import { StatusDot } from '@/components/ui/status-dot';
+import { comparison } from '@/logic/derivations';
 
 /**
  * Compact, from 14rem of the tile's own width, border to border (196px, a rem being the root's 14px): the name and the
@@ -182,7 +183,7 @@ export function MetricTile({
             {reading !== null ? (
               <>
                 <span className="t-num font-medium text-ink-2">{formatDate(dates[index!])}</span>
-                {baseline ? <span className="t-num leading-5 whitespace-nowrap text-ink-3">{(reading / baseline).toFixed(1)}× usual</span> : null}
+                {baseline ? <span className="t-num leading-5 whitespace-nowrap text-ink-3">{comparison(reading, baseline)}× usual</span> : null}
               </>
             ) : delta === null ? (
               <span className="truncate text-ink-3" title="No earlier period to compare">No earlier period to compare</span>

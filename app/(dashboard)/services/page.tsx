@@ -1,9 +1,11 @@
 import { Suspense, cache } from 'react';
 import { app } from '@/app.config';
 import { gate, gatedMetadata } from '@/data/access';
+import { attempt } from '@/data/main';
 import { RefusalScreen } from '@/views/refusal';
 import { DEMO_NOW, DEMO_UPDATED_AT } from '@/data/sample';
 import { PageFrame } from '@/components/base/shell';
+import { serviceUptime } from '@/data/uptime';
 import { Freshness } from '@/components/patterns/freshness';
 import { Busy } from '@/components/patterns/page-loading';
 import { packServices } from '@/logic/summarise';
@@ -48,8 +50,14 @@ async function Title() {
   return (await readServicesView()).data.head.title;
 }
 
-/** The parts, their strips packed one character a day for the trip to the browser. */
+/**
+ * The parts, their strips packed one character a day for the trip to the browser. Each uptime is the one answer derived
+ * from the service records (`@/data/uptime`), read from its payload rather than recomputed here, and the view is handed
+ * the moment that answer was built. A derived answer that could not be built leaves the services as they were read.
+ */
 async function Body() {
-  const { data } = await readServicesView();
-  return <PackedServicesBody {...data} services={packServices(data.services)} />;
+  const [{ data }, uptime] = await Promise.all([readServicesView(), attempt(() => serviceUptime())]);
+  const derived = uptime?.data;
+  const services = derived ? data.services.map((service) => ({ ...service, uptime: derived[service.name] ?? service.uptime })) : data.services;
+  return <PackedServicesBody {...data} services={packServices(services)} builtAt={uptime?.builtAt || null} />;
 }

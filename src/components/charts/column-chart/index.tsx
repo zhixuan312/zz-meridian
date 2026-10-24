@@ -6,6 +6,7 @@ import { useMeridian } from '@/components/charts/meridian';
 import { Readout } from '@/components/charts/readout';
 import { niceTicks, SERIES_VAR, stackPart, ticksBetween } from '@/components/charts/scale';
 import { useSize } from '@/components/charts/use-size';
+import { columnFold } from '@/logic/derivations';
 
 /** `null` is a period with no data: it keeps its slot, draws no column and reads `noData`, never zero. */
 export type Column = { key: string; label: string; value: number | null };
@@ -50,10 +51,10 @@ export type ColumnChartProps = Shared & (
 );
 
 /**
- * The measures in pixels: the space between columns, the least a column keeps before that space gives way, the
- * narrowest column that keeps its value at rest, and the most parts drawn.
+ * The measures in pixels: the space between columns, the least a column keeps before that space gives way, and the
+ * narrowest column that keeps its value at rest.
  */
-const GAP = 2, THIN = 1, REST = 36, MOST = 4;
+const GAP = 2, THIN = 1, REST = 36;
 /** About the width of one character of a value at rest (`text-2xs`), in px: enough to tell whether a label fits its column. */
 const CH = 6.5;
 /**
@@ -86,8 +87,10 @@ type Drawn = { key: string; label: string; tone: 'accent' | 'series' | keyof typ
  * usual parts are told apart and Other stays the quietest (#67).
  */
 function stack(columns: StackedColumn[], parts: ColumnPart[]) {
-  const fold = parts.length > MOST;
-  const listed: ColumnPart[] = fold ? [...parts.slice(0, MOST - 1), { key: 'other', label: 'Other' }] : parts;
+  // The parts' values, one row a part and one value a column, so the logic layer can fold the ones past the fourth.
+  const matrix = parts.map((_, k) => columns.map((c) => (c.values[k] === null ? null : amount(c.values[k]))));
+  const { values: foldedRows, kept, folded } = columnFold(matrix);
+  const listed: ColumnPart[] = folded ? [...parts.slice(0, kept), { key: 'other', label: 'Other' }] : parts;
   const named = parts.some((p) => p.tone || p.color);
   const neutralTaken = parts.some((p) => p.tone === 'neutral' && !p.color);
   const drawn: Drawn[] = listed.map((p, k) => (
@@ -95,12 +98,10 @@ function stack(columns: StackedColumn[], parts: ColumnPart[]) {
       : named ? { key: p.key, label: p.label, tone: p.tone ?? 'neutral', color: p.tone ? TONES[p.tone] : neutralTaken ? 'var(--chart-neutral)' : TONES.neutral }
         : { key: p.key, label: p.label, tone: 'accent', color: stackPart(k, listed.length) }
   ));
-  const bars = columns.map((c): Bar => {
+  const bars = columns.map((c, j): Bar => {
     // A part with no data stays `null`, so it is read as no data; it adds nothing to the total of the parts that were read.
-    const all = parts.map((_, k) => (c.values[k] === null ? null : amount(c.values[k])));
-    const rest = all.slice(MOST - 1);
-    const values = fold ? [...all.slice(0, MOST - 1), rest.every((v) => v === null) ? null : rest.reduce<number>((a, b) => a + (b ?? 0), 0)] : all;
-    return { key: c.key, label: c.label, values, total: values.reduce<number>((a, b) => a + (b ?? 0), 0), none: all.every((v) => v === null) };
+    const values = foldedRows.map((row) => row[j] ?? null);
+    return { key: c.key, label: c.label, values, total: values.reduce<number>((a, b) => a + (b ?? 0), 0), none: values.every((v) => v === null) };
   });
   return { drawn, bars };
 }

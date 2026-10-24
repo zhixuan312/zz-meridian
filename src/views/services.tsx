@@ -12,6 +12,7 @@ import { IncidentCard } from '@/components/patterns/incident-card';
 import { StatusList } from '@/components/patterns/status-list';
 import { unpackServices, type PackedService } from '@/logic/summarise';
 import { AskAbout } from '@/components/patterns/ask-about';
+import { formatDateTime } from '@/lib/format-date';
 import { formatUptime, lastedOf, longestRun, meanUptime, operationalShare, servicesContext, stripDates, type ServicesData } from '@/logic/services-context';
 import { Unread } from './unread';
 
@@ -30,13 +31,16 @@ const FLOOR = 0.7;
  * The page's protagonist, its one Featured metric: the uptime the title states, written as the title writes it, the
  * longest run as its finding, and the share of the services operational on each day of their strips, the last the day
  * in progress, drawn running. Its mark is a wrapper whose display is `contents`, so the stack's layout is unchanged.
+ * `builtAt` is the moment the uptime answer was built from the service records, and the card states it, so an uptime
+ * that was not rebuilt is never read as freshly worked out.
  */
-function Uptime({ services, end }: { services: ServicesData['services']; end: Date }) {
+function Uptime({ services, end, builtAt }: { services: ServicesData['services']; end: Date; builtAt?: string | null }) {
   const share = operationalShare(services);
   const n = share.length;
   // The strips end today: the dates count back from it.
   const dates = stripDates(n, end);
   const run = longestRun(services);
+  const built = builtAt ? ` Derived at ${formatDateTime(builtAt)} from each service's own days.` : '';
   return (
     <div data-protagonist="Uptime" className="contents">
       <FeaturedMetric
@@ -45,7 +49,7 @@ function Uptime({ services, end }: { services: ServicesData['services']; end: Da
         actions={<AskAbout question={`Which service is hurting uptime over the last ${n} days, and why?`} />}
         value={meanUptime(services)}
         format={formatUptime}
-        caption={`The mean of ${services.length} services' uptime over their last ${n} days, today included. The line is the share of the services operational each day, on an axis that starts under its lowest day rather than at zero, so a day that was not perfect is seen.`}
+        caption={`The mean of ${services.length} services' uptime over their last ${n} days, today included. The line is the share of the services operational each day, on an axis that starts under its lowest day rather than at zero, so a day that was not perfect is seen.${built}`}
         finding={run ? { text: run.text } : undefined}
       >
         {/* A line on a floored axis, not an area from zero: uptime lives between 86% and 100%, where an area's height
@@ -99,12 +103,18 @@ function Incidents({ incidents, end }: { incidents: NonNullable<ServicesData['in
 }
 
 /**
+ * What the body draws: the page's data, and the moment the uptime answer was built from the service records — absent
+ * when that answer could not be built, and the card then states no derivation rather than a made-up one.
+ */
+export type ServicesBodyData = ServicesData & { builtAt?: string | null };
+
+/**
  * The Services page's body: its Featured metric, the uptime over the services' days, then each service in the team's
  * order with its strip and how long it has run, then every incident. Incidents that could not be read leave their part saying so, and every service stands. With no service
  * yet one card says so and nothing else is drawn.
  */
-export function ServicesBody(data: ServicesData) {
-  const { services, incidents } = data;
+export function ServicesBody(data: ServicesBodyData) {
+  const { services, incidents, builtAt } = data;
   const end = new Date(data.now);
   if (!services.length) {
     return (
@@ -119,7 +129,7 @@ export function ServicesBody(data: ServicesData) {
   return (
     <Stack>
       <ShareContext context={servicesContext(data)} />
-      <Uptime services={services} end={end} />
+      <Uptime services={services} end={end} builtAt={builtAt} />
       <Row split="2/3">
         <Card className="overflow-hidden">
           <CardHeader title={PARTS.services} description="In the order the team reads its stack: the state now, p95, every day's mark and how long each has run" divided />
@@ -132,6 +142,6 @@ export function ServicesBody(data: ServicesData) {
 }
 
 /** The console route's body: the histories arrive packed, one character a day, and are unpacked here where the strips are drawn. */
-export function PackedServicesBody({ services, ...rest }: Omit<ServicesData, 'services'> & { services: PackedService[] }) {
-  return <ServicesBody services={unpackServices(services)} {...rest} />;
+export function PackedServicesBody({ services, builtAt, ...rest }: Omit<ServicesBodyData, 'services'> & { services: PackedService[] }) {
+  return <ServicesBody services={unpackServices(services)} builtAt={builtAt} {...rest} />;
 }

@@ -8,6 +8,7 @@ import { useMeridian } from '@/components/charts/meridian';
 import { Readout } from '@/components/charts/readout';
 import { monotonePath, ticksBetween, SERIES_VAR, stackPart } from '@/components/charts/scale';
 import { useSize } from '@/components/charts/use-size';
+import { trendTotals } from '@/logic/derivations';
 
 export type TrendSeries = {
   key: string;
@@ -171,15 +172,15 @@ export function TrendChart({
   const named = typeof format === 'string';
   const fmt = named ? FORMATTERS[format] : (n: number | null) => (n === null ? '—' : format(n));
   const axis = axisFormat ?? (named ? AXIS_FORMATTERS[format] : format);
-  // Stacked, each band sits on the sum of the ones below it; a missing value is no contribution that day.
+  // Stacked, each band sits on the sum of the ones below it: a band's top is every band up to it added up a day at a
+  // time, and its bottom is the same sum without it. The per-day total is the logic layer's figure, not the plot's.
   const bases = useMemo(() => {
     if (!stacked) return null;
-    const acc = dates.map(() => 0);
-    return series.map((s) => {
-      const lower = [...acc];
-      s.values.forEach((v, i) => (acc[i] += v ?? 0));
-      return { lower, upper: [...acc] };
-    });
+    const bands = series.map((s) => dates.map((_, i) => s.values[i] ?? null));
+    return series.map((_, k) => ({
+      lower: k === 0 ? dates.map(() => 0) : trendTotals(bands.slice(0, k)),
+      upper: trendTotals(bands.slice(0, k + 1)),
+    }));
   }, [stacked, series, dates]);
   const totals = bases ? bases[bases.length - 1]?.upper ?? [] : null;
   // Stacked parts are one whole, so they share one hue, each by its place in the stack. A series given its own colour keeps it.

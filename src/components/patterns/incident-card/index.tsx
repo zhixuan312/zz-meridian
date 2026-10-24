@@ -7,6 +7,7 @@ import { Card } from '@/components/ui/card';
 import { StatusDot } from '@/components/ui/status-dot';
 import { keepHyphenated } from '@/components/base/text-roles';
 import { afterStart } from '@/logic/after-start';
+import { elapsed } from '@/logic/derivations';
 
 const STATE: Record<Incident['state'], { tone: Tone; word: string; ink: string; edge: string; border: string }> = {
   investigating: { tone: 'critical', word: 'Investigating', ink: 'text-critical-ink', edge: 'bg-critical', border: 'border-critical/30' },
@@ -35,7 +36,7 @@ export function IncidentCard({ incident, now, variant = 'card', className }: { i
   const st = STATE[incident.state];
   const sev = SEVERITY[incident.severity];
   const live = incident.state !== 'resolved';
-  const lasted = incident.resolved ? new Date(incident.resolved).getTime() - new Date(incident.started).getTime() : null;
+  const lasted = incident.resolved ? elapsed(incident.started, incident.resolved) : null;
 
   if (variant === 'row') {
     return (
