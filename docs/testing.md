@@ -114,7 +114,7 @@ Every check Meridian runs has one row, named by a key: a gate step, a group of t
 | `gate/tokens are fresh` | static | non-functional | quick | no | `node scripts/tokens.ts --check` | 0.1 s at 0bee6d7 | The generated token CSS matches `tokens/`. |
 | `gate/the registry is fresh` | static | non-functional | quick | no | `node scripts/registry.ts --check` | 0.1 s at 0bee6d7 | The Atlas registry matches the card folders. |
 | `gate/specifications are consistent` | static | non-functional | quick | no | `node scripts/check.ts` | 0.3 s at 0bee6d7 | Cards, READMEs, tokens and page specifications follow the contract. |
-| `gate/the product's own rules hold` | static | non-functional | quick | no | `node scripts/check.local.ts` | 0 s at 0bee6d7 (not present in this repository: it runs only where a product wrote scripts/check.local.ts) | A product's own rules, beside Meridian's. |
+| `gate/the product's own rules hold` | static | non-functional | quick | no | `node scripts/check.local.ts` | 0.1 s at 686087f | A product's own rules, beside Meridian's. |
 | `gate/contrast holds in every theme and accent` | static | non-functional | quick | no | `node scripts/contrast.ts` | 0.1 s at 0bee6d7 | Every specified foreground on its background, in every theme and accent. |
 | `gate/route types are generated` | static | non-functional | quick | no | `next typegen` | 0.2 s at 0bee6d7 | Route types are generated before the type check. |
 | `gate/types check` | static | functional | quick | no | `tsc --noEmit` | 3.7 s at 40d29c7 | The TypeScript compiles. |
