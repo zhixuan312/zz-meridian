@@ -1,7 +1,7 @@
 import { Suspense, cache } from 'react';
 import { app, workspaces } from '@/app.config';
 import { gate, gatedMetadata } from '@/data/access';
-import { renderRefusal } from '@/views/refusal';
+import { RefusalScreen } from '@/views/refusal';
 import { DEMO_NOW, DEMO_UPDATED_AT } from '@/data/sample';
 import { PageFrame } from '@/components/base/shell';
 import { ExportButton } from '@/components/patterns/export-button';
@@ -37,7 +37,7 @@ const readPeriod = cache((period: ReturnType<typeof parsePeriod>, day?: string) 
  */
 export default async function UsagePage({ searchParams }: { searchParams: SearchParams } = { searchParams: Promise.resolve({}) }) {
   const denied = await gate('usage');
-  if (denied) return renderRefusal(denied);
+  if (denied) return RefusalScreen(denied);
   return (
     <PageFrame
       kicker={<>{app.name} · {app.workspace}</>}

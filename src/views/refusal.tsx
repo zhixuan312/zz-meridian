@@ -10,7 +10,7 @@ import { NoAccess } from '@/views/no-access';
  * The navigation is read here, not carried on the descriptor: `navOf` is a view module's, and a data layer that
  * computed it would be drawing again. Neither kind throws `notFound()`, for the reason `MissingPage` gives.
  */
-export async function renderRefusal(refusal: Refusal): Promise<JSX.Element> {
+export async function RefusalScreen(refusal: Refusal): Promise<JSX.Element> {
   if (refusal.kind === 'absent') return <MissingPage withheld={refusal.withheld} />;
   return await NoAccess({ feature: refusal.feature, access: refusal.access });
 }

@@ -4,7 +4,7 @@ import { PageFrame } from '@/components/base/shell';
 import { Busy } from '@/components/patterns/page-loading';
 import { RecordsSkeleton } from '@/components/templates/records';
 import { gate, gatedMetadata } from '@/data/access';
-import { renderRefusal } from '@/views/refusal';
+import { RefusalScreen } from '@/views/refusal';
 import { readRuns } from '@/data/engineering';
 import { TestsView } from '@/views/tests';
 
@@ -20,7 +20,7 @@ export function generateMetadata() {
  */
 export default async function TestsPage() {
   const denied = await gate('tests');
-  if (denied) return renderRefusal(denied);
+  if (denied) return RefusalScreen(denied);
   return (
     <PageFrame
       kicker={<>{app.name} · {app.workspace}</>}

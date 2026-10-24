@@ -29,7 +29,7 @@ import { FEATURES } from '@/data/features';
 import { gate, gatedMetadata } from '@/data/access';
 import { MissingPage } from '@/views/missing-page';
 import { NOT_FOUND } from '@/views/not-found';
-import { renderRefusal } from '@/views/refusal';
+import { RefusalScreen } from '@/views/refusal';
 import * as dashboardNotFound from '../app/(dashboard)/not-found';
 import * as keysPage from '../app/(dashboard)/keys/page';
 import * as membersPage from '../app/(dashboard)/members/page';
@@ -52,7 +52,7 @@ describe('what an address a person may not open answers', () => {
     at.path = '/members';
     const denied = await gate('members');
     expect(denied).not.toBeNull();
-    const markup = html(await renderRefusal(denied!));
+    const markup = html(await RefusalScreen(denied!));
     expect(markup).toContain('data-no-access');
     expect(textOf(markup)).toContain(FEATURES.members.title);
   });
@@ -64,7 +64,7 @@ describe('what an address a person may not open answers', () => {
     at.path = '/members';
     const denied = await gate('members');
     expect(denied).not.toBeNull();
-    const refused = html(await renderRefusal(denied!));
+    const refused = html(await RefusalScreen(denied!));
     at.path = '/nothing-lives-here';
     const missing = html(<MissingPage />);
     // The address is written whole in a link's label and, below the root, in two pieces: a link and the part that leads nowhere.

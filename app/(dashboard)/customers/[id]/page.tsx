@@ -1,6 +1,6 @@
 import { cache } from 'react';
 import { gate, gatedMetadata, may, Unauthenticated } from '@/data/access';
-import { renderRefusal } from '@/views/refusal';
+import { RefusalScreen } from '@/views/refusal';
 import { FEATURES } from '@/data/features';
 import { CustomerView } from '@/views/customer';
 import { MissingPage } from '@/views/missing-page';
@@ -36,7 +36,7 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
 export default async function CustomerPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const denied = await gate('customer');
-  if (denied) return renderRefusal(denied);
+  if (denied) return RefusalScreen(denied);
   const found = await readOne(id);
   // Rendered here rather than thrown, so the screen is in the first HTML (see MissingPage).
   if (!found) return <MissingPage />;

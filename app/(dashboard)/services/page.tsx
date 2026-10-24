@@ -1,7 +1,7 @@
 import { Suspense, cache } from 'react';
 import { app } from '@/app.config';
 import { gate, gatedMetadata } from '@/data/access';
-import { renderRefusal } from '@/views/refusal';
+import { RefusalScreen } from '@/views/refusal';
 import { DEMO_NOW, DEMO_UPDATED_AT } from '@/data/sample';
 import { PageFrame } from '@/components/base/shell';
 import { Freshness } from '@/components/patterns/freshness';
@@ -27,7 +27,7 @@ const readServicesView = cache(() => servicesTool.read({}));
  */
 export default async function ServicesPage() {
   const denied = await gate('services');
-  if (denied) return renderRefusal(denied);
+  if (denied) return RefusalScreen(denied);
   return (
     <PageFrame
       kicker={<>{app.name} · {app.workspace}</>}

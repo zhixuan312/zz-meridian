@@ -6,7 +6,7 @@ import { PeriodSelect } from '@/components/patterns/period-select';
 import { HomeBody } from '@/views/home';
 import { PeriodActionsRoom, PeriodRoom } from '@/views/period-actions';
 import { gate, gatedMetadata } from '@/data/access';
-import { renderRefusal } from '@/views/refusal';
+import { RefusalScreen } from '@/views/refusal';
 import { DEMO_NOW, DEMO_UPDATED_AT } from '@/data/sample';
 import { dayRows } from '@/logic/home-context';
 import { homeTool } from '@/logic/tools';
@@ -43,7 +43,7 @@ const readHome = async (searchParams: SearchParams) => {
  */
 export default async function HomePage({ searchParams }: { searchParams: SearchParams } = { searchParams: Promise.resolve({}) }) {
   const denied = await gate('home');
-  if (denied) return renderRefusal(denied);
+  if (denied) return RefusalScreen(denied);
   return (
     <PageFrame
       kicker={<>{app.name} · {app.workspace}</>}

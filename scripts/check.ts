@@ -38,7 +38,29 @@ const ROOT = path.resolve(import.meta.dirname, '..');
 /** The project's import aliases, from its tsconfig: `@/` is `src/` in the template and the team's root in an adopted project. */
 const ALIASES = projectAliases(ROOT);
 const read = (p: string) => fs.readFileSync(path.join(ROOT, p), 'utf8');
+/** Comments blanked, not removed, so a scan reads code and a line number is still the file's. */
+const blankedText = (text: string) => text.replace(/\/\*[\s\S]*?\*\//g, (c) => c.replace(/[^\n]/g, ' ')).replace(/(^|[^:])\/\/[^\n]*/g, '$1');
+const blanked = (p: string) => blankedText(read(p));
+const lineOf = (src: string, at: number) => src.slice(0, at).split('\n').length;
 const problems: string[] = [];
+/** A deviation a line states with `allow-<rule>: <reason>`, printed beside the problems rather than passed in silence. */
+const escapes: string[] = [];
+
+// ── The four-layer switch: the project's own file turns the rules on ─────────────────────────────────
+// `scripts/check.ts` reads one declaration from `scripts/check.local.ts` and nothing else. It is read as TEXT, never
+// imported: a static import throws in every project that has no such file, a dynamic one runs the team's own checks
+// inside this one (the gate runs them as its own step), and this is the one path under `scripts/` an update never
+// overwrites. The text is comment-blanked first, so a comment cannot turn a rule on. Only an exported declaration
+// assigning a boolean turns the rules on; a file that merely names `fourLayers` prints one note and leaves them off.
+const LOCAL_CHECK = 'scripts/check.local.ts';
+let fourLayers = false;
+let fourLayersNote: string | null = null;
+if (fs.existsSync(path.join(ROOT, LOCAL_CHECK))) {
+  const declaration = blankedText(fs.readFileSync(path.join(ROOT, LOCAL_CHECK), 'utf8'));
+  const assigned = declaration.match(/\bexport\s+const\s+fourLayers\s*=\s*(true|false)\b/);
+  if (assigned) fourLayers = assigned[1] === 'true';
+  else if (/\bfourlayers\b/i.test(declaration)) fourLayersNote = `note  ${LOCAL_CHECK}: fourLayers is declared but not as true or false — the four-layer rules are off`;
+}
 
 const sha256 = (p: string): Hash | null => (fs.existsSync(path.join(ROOT, p)) ? `sha256-${createHash('sha256').update(fs.readFileSync(path.join(ROOT, p))).digest('hex')}` : null);
 
@@ -380,9 +402,6 @@ const retirements: Retirement[] = [];
 // pages all prerender has none. In a product those pages are the team's, so the rule is the template's alone.
 if (!fs.existsSync(manifestFile)) {
   const BOUNDARIES = [`${APP_DIR}/(dashboard)/layout.tsx`, `${APP_DIR}/not-found.tsx`, `${APP_DIR}/sign-in/gated-panel.tsx`];
-  /** Comments blanked, not removed, so a line number is the file's. */
-  const blanked = (f: string) => read(f).replace(/\/\*[\s\S]*?\*\//g, (c) => c.replace(/[^\n]/g, ' ')).replace(/(^|[^:])\/\/[^\n]*/g, '$1');
-  const lineOf = (src: string, at: number) => src.slice(0, at).split('\n').length;
   const sources = [APP_DIR, 'src'].flatMap((d) => walk(d, /\.tsx?$/)).map((f) => f.split(path.sep).join('/'));
   for (const f of sources) {
     if (BOUNDARIES.includes(f)) continue;
@@ -390,10 +409,11 @@ if (!fs.existsSync(manifestFile)) {
       if (/\bconnection\s*\(/.test(line)) problems.push(`${f}:${i + 1}: connection() outside the template's three request boundaries`);
     });
   }
-  // A page and a view read the sample through src/data, so the day it becomes an API is one file's change. Every
-  // import specifier counts, a type-only one too; the Atlas, a preview and src/data itself are the sample's own.
+  // A page, a view and a logic module read the sample through src/data, so the day it becomes an API is one file's
+  // change. Every import specifier counts, a type-only one too; the Atlas, a preview and src/data itself are the
+  // sample's own.
   const FIXTURES = 'src/system/fixtures';
-  for (const f of sources.filter((x) => (x.startsWith(`${APP_DIR}/`) || x.startsWith('src/views/')) && !x.startsWith(`${APP_DIR}/system/`) && !/(^|\/)preview\.tsx$/.test(x))) {
+  for (const f of sources.filter((x) => (x.startsWith(`${APP_DIR}/`) || x.startsWith('src/views/') || x.startsWith('src/logic/')) && !x.startsWith(`${APP_DIR}/system/`) && !/(^|\/)preview\.tsx$/.test(x))) {
     const src = blanked(f);
     for (const m of src.matchAll(/(?:\bfrom|\bimport\s*\(?)\s*['"]([^'"]+)['"]/g)) {
       const spec = m[1];
@@ -409,6 +429,58 @@ if (!fs.existsSync(manifestFile)) {
     for (const m of src.matchAll(/\b(?:revalidateTag|cacheLife)\s*\(((?:[^()]|\([^()]*\))*)\)/g)) {
       if (/['"]max['"]/.test(m[1])) problems.push(`${f}:${lineOf(src, m.index)}: revalidates with 'max' on a writer path; use updateTag or { expire: 0 }`);
     }
+  }
+}
+
+// ── The four layers: imports run one way, and a view renders ─────────────────────────────────────────
+// src/data reads records and imports neither the logic that derives from them nor the views that draw them; src/logic
+// derives from those records and imports no view; src/views draws what it is handed. The direction is decided from
+// import specifiers and a view from what it exports. A project turns the rules on in its own scripts/check.local.ts
+// (`export const fourLayers = true`). No rule reads a comment to decide anything — the scan is over comment-blanked
+// source — except a line's `allow-<rule>: <reason>` escape, which is a declaration and is printed, never silent.
+const IMPORTS = /(?:\bfrom|\bimport\s*\(?)\s*['"]([^'"]+)['"]/g;
+/** Whether a line states an escape for a rule; when it does, the deviation joins `escapes` and the rule stays quiet. */
+const escaped = (rule: string, f: string, line: number, raw: string) => {
+  const reason = raw.split('\n')[line - 1]?.match(new RegExp(`allow-${rule}:\\s*(\\S.*?)\\s*$`))?.[1];
+  if (!reason) return false;
+  escapes.push(`escape  ${f}:${line}: ${rule} — ${reason}`);
+  return true;
+};
+if (fourLayers) {
+  for (const [rule, dir, forbidden, why] of [
+    ['data-imports-neither', 'src/data', /^src\/(?:logic|views)\//, 'the data layer imports neither src/logic nor src/views'],
+    ['logic-does-not-import-views', 'src/logic', /^src\/views\//, 'the logic layer imports no view'],
+  ] as const) {
+    for (const f of walk(dir, /\.tsx?$/)) {
+      const src = blanked(f);
+      const raw = read(f);
+      for (const m of src.matchAll(IMPORTS)) {
+        const spec = m[1];
+        const target = importTarget(f, spec, ALIASES) ?? '';
+        if (!forbidden.test(target)) continue;
+        const line = lineOf(src, m.index + m[0].lastIndexOf(spec));
+        if (escaped(rule, f, line, raw)) continue;
+        problems.push(`${f}:${line}: imports ${spec} from ${target}; ${why}`);
+      }
+    }
+  }
+  // A view renders. A `.tsx` that exports no component, and any non-`.tsx` file but workspaces.ts, is a module in the
+  // wrong layer: it produces a value or a sentence where the tree expects a screen. The violation is the file, so its
+  // escape sits on the file's first line and the printed escape names that line.
+  const CAPITALISED = /^export\s+(?:declare\s+)?(?:async\s+)?(?:const|let|var|function\*?|class)\s+[A-Z][\w$]*/m;
+  const renderer = (f: string, src: string) => {
+    if (!f.endsWith('.tsx')) return false;
+    if (/^export\s+default\b/m.test(src) || CAPITALISED.test(src)) return true;
+    return [...src.matchAll(/^export\s+(type\s+)?\{([^}]*)\}/gm)].some((m) => !m[1] && m[2].split(',').some((part) => {
+      const name = part.trim().replace(/^type\s+/, '').split(/\s+as\s+/).pop() ?? '';
+      return /^[A-Z]/.test(name);
+    }));
+  };
+  for (const f of walk('src/views', /\.tsx?$/)) {
+    if (f === 'src/views/workspaces.ts') continue;
+    const src = blanked(f);
+    if (renderer(f, src) || escaped('views-produce-nothing', f, 1, read(f))) continue;
+    problems.push(`${f}: is not a renderer; a view is a .tsx that exports a component (a default export or a capitalised named export), or workspaces.ts`);
   }
 }
 
@@ -505,5 +577,7 @@ for (const f of walk('src', /\.tsx?$/).filter((x) => SWEPT.test(x) && !TOOLKIT.t
 }
 
 console.log(problems.join('\n') || 'check: ok');
+if (escapes.length) console.log(escapes.join('\n'));
+if (fourLayersNote) console.log(fourLayersNote);
 console.log(`${problems.length} problems · ${cards().length} cards · ${PAGE_SPECS.length} page specs · ${LAYERS.length} source files`);
 process.exit(problems.length ? 1 : 0);
