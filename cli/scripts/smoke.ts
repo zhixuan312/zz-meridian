@@ -81,8 +81,8 @@ const write = (dir: string, rel: string, text: string) => { fs.mkdirSync(path.di
 const coverageOf = (out: string) => /^coverage: .*$/m.exec(out)?.[0] ?? '';
 const sections = ['--adopt', '--create', '--update', '--update-all'];
 
-/** Files a fresh 0.5.0 manifest may hold: the managed folders, plus Meridian's own two loose files. */
-const MANAGED = /^(tokens\/|src\/styles\/|src\/components\/|scripts\/|src\/lib\/|\.agents\/|\.claude\/)|^(src\/views\/console-chrome\.tsx|tests\/setup\.ts)$/;
+/** Files a fresh manifest may hold: the managed folders, plus Meridian's own loose files and the three shipped logic helpers, by name. */
+const MANAGED = /^(tokens\/|src\/styles\/|src\/components\/|scripts\/|src\/lib\/|\.agents\/|\.claude\/)|^(src\/views\/console-chrome\.tsx|tests\/setup\.ts|src\/logic\/after-start\.ts|src\/logic\/derivations\.ts|src\/logic\/summarise\.ts)$/;
 const NEVER = (p: string) => p === 'src/app.config.ts' || p === 'scripts/verify.config.ts' || p.startsWith('app/') || p.startsWith('docs/') || (p.startsWith('src/views/') && p !== 'src/views/console-chrome.tsx');
 const unmanaged = (manifest: { files: Record<string, string> }) => Object.keys(manifest.files).filter((p) => !MANAGED.test(p) || NEVER(p));
 
