@@ -40,8 +40,13 @@ export function noAccessCopy(need: Need, title: string): { title: string; descri
  * The one way out of a refused page: the first destination of the page's own workspace that this person may open, or
  * Main's home when there is none (or when who they are cannot be told). The page's workspace is the one whose entry
  * carries the feature's own need; a feature no entry names belongs to Main.
+ *
+ * `only` empty is the one case with no way out: this person may open nothing at all, so every destination — Main's home
+ * included — refuses them in turn, and a link to one is a loop rather than a way out. Who to ask is what the sentence
+ * already says, and that is the whole answer.
  */
-function wayOut(feature: FeatureId, only: readonly string[] | null): { href: string; label: string } {
+function wayOut(feature: FeatureId, only: readonly string[] | null): { href: string; label: string } | null {
+  if (only && only.length === 0) return null;
   const owner = nav.flatMap((g) => g.items).find((i) => i.needs === FEATURES[feature].needs)?.workspace ?? 'main';
   const first = only ? navOf(owner).flatMap((g) => g.items).find((i) => only.includes(i.href)) : undefined;
   return first ? { href: first.href, label: first.label } : { href: workspaces.main.homeHref, label: workspaces.main.label };
@@ -65,7 +70,7 @@ export async function NoAccess({ feature, access }: { feature: FeatureId; access
       <EmptyState
         kind="no-access"
         title={title}
-        action={<Button asChild variant="secondary"><Link href={out.href}>Go to {out.label}</Link></Button>}
+        action={out ? <Button asChild variant="secondary"><Link href={out.href}>Go to {out.label}</Link></Button> : undefined}
       >
         {description}
       </EmptyState>

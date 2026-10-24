@@ -71,4 +71,13 @@ describe('the no-access state', () => {
     jar.value = 'nobody';
     expect(linksOf(renderToStaticMarkup(await NoAccess({ feature: 'keys', access: await chrome() })))).toEqual([{ href: '/', text: 'Go to Main' }]);
   });
+
+  it('offers no link at all to somebody who may open nothing, because every one of them refuses them in turn', async () => {
+    // A person whose grants open no destination: the way out would be Main's home, and Main refuses them too, so the
+    // sentence naming who to ask is the whole answer rather than a loop.
+    const html = renderToStaticMarkup(await NoAccess({ feature: 'keys', access: { only: [], user: { name: 'Nobody', role: 'Viewer' } } }));
+    expect(linksOf(html)).toEqual([]);
+    expect(html).toContain('data-no-access');
+    expect(html).toContain('for access');
+  });
 });
