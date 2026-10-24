@@ -1,11 +1,11 @@
 # The data layers
 
-A dashboard's figures come from somewhere. This is the standard for the path between that somewhere and the screen: four layers a Meridian product keeps between its database and what a person sees, the contract it asks of any backend, and the ordered path a project with its own tables and API follows to reach it.
+A dashboard's figures come from somewhere. This is the standard for the path between that somewhere and the screen: four layers — one kind of module each, with one job and one direction it may import — that a Meridian product keeps between its database and what a person sees, the contract it asks of any backend, and the ordered path a project with its own tables and API follows to reach it.
 
 It is advice, not a gate. Nothing here runs by itself. One part is held by a machine — the six rules in
-`node scripts/check.ts` — and only once a project turns them on with its own switch. Every other rule is a recommended
-default with a cost attached, and a team may disagree with any line in writing, on the line, rather than obey it
-silently.
+`node scripts/check.ts` — and only once a project turns them on with its own switch — one exported declaration in a file
+the project owns, which no update overwrites. Every other rule is a recommended default with a cost attached, and a team
+may disagree with any line in writing, on the line, rather than obey it silently.
 
 The standard ships twice. An adopter's agent reads it with the skill; this repository serves the same text. Both carry
 the same words, so a rule you read here is the rule your project's copy carries.
@@ -15,16 +15,19 @@ the same words, so a rule you read here is the rule your project's copy carries.
 A **layer** is one kind of module with one job and one direction it may import. A Meridian product keeps four, from the
 database up.
 
+A **record** is one row as it was written. A **read** is a request for records, answered by the data layer under the
+caller's access. A **scope** is who is asking and what they may see — the **tenant**, the customer whose rows the scope
+isolates, the person, and an authorization key that changes when what they may see changes — and it is resolved on the
+server, never chosen by a page. The **read surface** is the functions that make a read — `read()`, `readAll()`,
+`aggregate()` and the forms that take a scope beside them. A **projection** is the public object a record becomes on its
+way to a client, built field by field rather than by erasing fields from a type.
+
 | Layer | What it is | What it owns | May import |
 |---|---|---|---|
 | L1 The database | The adopter's own store, reached through its API, an ORM or a driver | Tables, schema, migrations, indexes, transactions | nothing in this tree |
 | L2 `optional:src/data/` | The backend data layer: the one place a backend is touched | Reading records, the access policy, the write boundary, the projections a record passes through, the read surface (`read()`, `readAll()`, `aggregate()` and the scope-taking forms beside them) | L1 and shared helpers (`src/lib/`); neither `optional:src/logic/` nor `src/views/` |
 | L3 `optional:src/logic/` | The business logic: what the records mean | Every figure with a product definition — a total, a rate, a trend, a status, a threshold, a sentence built from records — and the prepared queries and tools built on them | L2, `src/lib/` and other logic modules; no view |
 | L4 Presentation | `src/views/`, `src/components/`, `app/` | Drawing: the frame, the cards, the routes, the shell | everything below it; it renders what it is handed |
-
-A **record** is one row as it was written. A **read** is a request for records, answered by the data layer under the
-caller's access. A **scope** is who is asking and what they may see — the tenant, the person and an authorization key
-that changes when what they may see changes — and it is resolved on the server, never chosen by a page.
 
 The direction is the point. L1 answers L2, L2 feeds L3, L3 feeds L4, and nothing above reaches past the layer beneath
 it. A page that queries a collection, or a card that sums what it was handed into a figure, is the presentation layer
@@ -50,6 +53,15 @@ A type import is erased before anything runs, so it is not a value import. Comme
 a document quotes in prose is not a violation. A `'use server'` module is a reference in the browser and not its body, so
 a client module may import one that reads.
 
+## Which situation are you in?
+
+Find the one that describes you, and follow the arrow.
+
+- **No backend yet** → The contract a backend answers
+- **An API to call** → The path an existing product follows
+- **A database and no API** → The path an existing product follows
+- **An answer too slow to compute on every request** → Whether to precompute: a decision, not a rule
+
 ## The contract a backend answers
 
 Whatever the store — a Postgres database, an HTTP API, a set of files — the data layer asks it the same things. This is
@@ -60,9 +72,10 @@ a seam, not a storage design: it describes the shape of an answer, and never a t
 the caller read, and when the read ran. `readAll()` answers every row with the same marker and the same moment, and
 `aggregate()` answers a figure over every row the same way.
 
-**Authorization happens before any cache.** A read asks whether the scope holds the grant before any cached code runs; a
-scope without it is refused, and nothing is read or served from a cache on its way out. The cache is keyed by tenant and
-collection, so it can never answer a person who could not have asked.
+**Authorization happens before any cache** — a copy kept to save work, correct only while nothing it was made from has
+changed. A read asks whether the scope holds the grant before any cached code runs; a scope without it is refused, and
+nothing is read or served from a cache on its way out. The cache is keyed by tenant and collection, so it can never
+answer a person who could not have asked.
 
 **A write is validated and names the reads it invalidates.** A write parses its input against the collection's fields —
 a derived field is not writable — authorizes the operation, commits, and then drops the answers its change makes wrong:
@@ -72,8 +85,9 @@ Rows, totals and aggregates are all retired by the same name.
 **Absent evidence is `null`, never zero.** A quantity nothing measured is `null`, and the formatters render it as a dash.
 Zero means zero was measured; the two are never the same answer.
 
-**An answer declares whether it is a record or a derived answer.** A record is returned as it was written. A derived
-answer carries, in its own payload, the moment it was built and the source state it was built from.
+**An answer declares whether it is a record or a derived answer — an answer computed from records, not stored as one.**
+A record is returned as it was written. A derived answer carries, in its own payload, the moment it was built and the
+source state it was built from.
 
 ### Four times and versions, kept apart
 
@@ -122,9 +136,9 @@ All three save work, and they are easy to confuse. What separates them is what h
 
 | Thing | What it is | Where it lives | May it be thrown away? |
 |---|---|---|---|
-| **A derived field** | A value computed once, at write, and stored on the record — a score, a band, a name joined in from another table. It is part of the record, and no write can set it. | On the record: the collection lists it in `derived`, and `patchOf` builds a write's shape from `fields` alone | No. It is part of the record |
-| **A derived answer** | An answer rebuilt from records, carrying the moment it was built and the source revision it was built from. | `optional:src/data/derived.ts`, and the module that names one answer, such as `optional:src/data/uptime.ts` | It is rebuilt when its source moves. Until then the previous answer stands, with its own moment |
-| **A cache** | A copy kept to save work, correct only while nothing it was made from has changed. | The cached path inside `optional:src/data/read.ts`, tagged by tenant and collection, retired by a write | Yes, at any moment: a miss costs time, never correctness |
+| Field | A derived field: a value computed once, at write, and stored on the record — a score, a band, a name joined in from another table. It is part of the record, and no write can set it. | On the record: the collection lists it in `derived`, and `patchOf` builds a write's shape from `fields` alone | No. It is part of the record |
+| Answer | A derived answer: an answer rebuilt from records, carrying the moment it was built and the source revision it was built from. | `optional:src/data/derived.ts`, and the module that names one answer, such as `optional:src/data/uptime.ts` | It is rebuilt when its source moves. Until then the previous answer stands, with its own moment |
+| Cache | A cache: a copy kept to save work, correct only while nothing it was made from has changed. | The cached path inside `optional:src/data/read.ts`, tagged by tenant and collection, retired by a write | Yes, at any moment: a miss costs time, never correctness |
 
 ### Whether to precompute: a decision, not a rule
 
@@ -163,14 +177,15 @@ every rule.
 ### The two places you may deviate
 
 1. **On the line.** Write `allow-<rule>: <reason>` on the offending line, with the rule's own name. For
-   `views-produce-nothing`, which refuses a file rather than a line, it goes on the file's first line. The check prints
-   `escape  <file>:<line>: <rule> — <reason>` after its problem list, leaves the exit status and the `n problems`
-   summary unchanged, and the run passes. The reason is a sentence the next reader can check, and the deviation is
-   visible on every run — which is the difference between an escape and silence.
+   `views-produce-nothing`, which refuses a file rather than a line, it goes on the file's first line. An **escape** is
+   that named exception, written with its reason. The check prints it as `escape  <file>:<line>: <rule> — <reason>`
+   after its problem list, leaves the exit status and the `n problems` summary unchanged, and the run passes. The reason
+   is a sentence the next reader can check, and the deviation is visible on every run — which is the difference between
+   an escape and silence.
 2. **In your own check file.** `optional:scripts/check.local.ts` is yours: it is team-local and an update never
-   overwrites it. It carries the switch — `export const fourLayers = true` — and any checks of your own, which the gate
-   runs as a step of its own. It can turn a rule on or off as a whole. It cannot override a rule's predicate, so a
-   deviation from a rule that is on is written on the line, with a reason.
+   overwrites it. It does two things: it carries the switch (`export const fourLayers = true`) and it may add checks of
+   your own, which the gate runs as a step of its own. It can turn a rule on or off as a whole. It cannot override a
+   shipped rule's predicate, so a deviation from a rule that is on is written on the line, with a reason.
 
 The switch is read as text, once, at start-up, and only an exported declaration assigning `true` or `false` counts. A
 file that merely names `fourLayers` prints one note and leaves the rules off; a comment cannot turn them on.

@@ -16,8 +16,12 @@ describe('the data-layers standard', () => {
   });
 
   it('is one document, not two that drift', () => {
-    // The one difference allowed is a line naming where the reader is; everything else is the same text.
-    const strip = (text: string) => text.split('\n').filter((line) => !/^<!--\s*(where|serves|repo):/i.test(line.trim())).join('\n').trim();
+    // Two differences are allowed: a line naming where the reader is, and the `optional:`/`example:` mark a path carries
+    // when a project may not have it yet — which the skill's copy keeps and this repository's own copy drops, so the page reads.
+    const strip = (text: string) => text
+      .split('\n').filter((line) => !/^<!--\s*(where|serves|repo):/i.test(line.trim())).join('\n')
+      .replace(/\b(?:optional|example):(?=\S)/g, '')
+      .trim();
     expect(strip(read(COPY))).toBe(strip(read(STANDARD)));
   });
 
@@ -64,6 +68,29 @@ describe('the data-layers standard', () => {
     const text = read(STANDARD);
     expect(text).toMatch(/four layers/i);
     expect(text).toMatch(/scripts\/check\.local\.ts/);
+  });
+
+  it('tells a reader who does not know the words where they are', () => {
+    const text = read(STANDARD);
+    const at = text.indexOf('## Which situation are you in?');
+    expect(at, 'the situation list exists').toBeGreaterThan(-1);
+    const after = text.slice(at);
+    const end = after.indexOf('\n## ', 1);
+    const entries = (end > 0 ? after.slice(0, end) : after).split('\n').filter((line) => line.startsWith('- '));
+    expect(entries, 'four situations, and no more').toHaveLength(4);
+    // The sections of this document an entry may point at, by the words the document itself uses.
+    const titles = [...text.matchAll(/^#{2,3}\s+(.+)$/gm)].map((m) => m[1].replace(/[`*]/g, '').trim());
+    const situations = ['no backend', 'an api', 'a database', 'too slow'];
+    for (const [i, line] of entries.entries()) {
+      expect(line.toLowerCase(), `entry ${i + 1} names its situation`).toContain(situations[i]);
+      expect(line, `entry ${i + 1} is a next action`).toContain('→');
+      expect(line.length, `entry ${i + 1} is one line`).toBeLessThanOrEqual(200);
+      const pointer = line.split('→')[1] ?? '';
+      expect(
+        titles.some((title) => pointer.includes(title.split(':')[0].trim())),
+        `entry ${i + 1} points at a section of this document`,
+      ).toBe(true);
+    }
   });
 
   it('is linked from every place the requirements name, and says so where a project starts', () => {
