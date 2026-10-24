@@ -51,9 +51,11 @@ describe('the release that moved the logic layer', () => {
     // AC-4.3's own command reads the changelog's first 4000 characters, so the section has to carry the link itself.
     expect(changelog.slice(0, 4000), 'named within AC-4.3\'s window').toContain('data-layers.md');
     // docs/testing.md: a red left at a release is the owner's decision, named here as a known issue with where it is fixed.
-    // A release that leaves no red carries no such section; one that does must name what it is and where it is fixed.
-    const known = section.indexOf('### Known issues');
-    if (known > -1) expect(section.slice(known), 'naming the red it carries').toContain('first-load');
+    // 0.28.0 leaves none — the first-load red this section used to carry is fixed — so the section states that instead, and
+    // a known-issues section coming back would be a red coming back, which this refuses by name.
+    expect(section, 'a section on what was fixed').toMatch(/^### Fixed$/m);
+    expect(section.slice(section.indexOf('### Fixed')), 'naming the red it fixed').toMatch(/first.load/i);
+    expect(section, 'a known issue it does not carry').not.toMatch(/^### Known issues$/m);
     // The two sentences the AC asks the section to carry: what a team does, and what happens if it does nothing.
     expect(section, 'what a team does').toMatch(/rewrite|move|change/i);
     expect(section, 'what happens if it does nothing').toMatch(/doing nothing|do nothing/i);
