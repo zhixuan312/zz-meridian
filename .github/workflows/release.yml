@@ -1,9 +1,10 @@
 # Release the zz-meridian package (decisions 0009 and 0010, docs/distribution.md): gates, pack, the consumer path end
 # to end, then publish with provenance, then tag LAST.
 #
-# WHAT GATES A RELEASE. The checks that decide whether this tarball works, each run once: the template's default verify
-# from a clean build, within 180 s on the shared 4-CPU runner (the gate with its unit tests runs inside it), and the
-# consumer smoke from the tarball,
+# WHAT GATES A RELEASE. The checks that decide whether this tarball works, each run once: the package's own tests, then
+# the deep browser-fixture tests, then the template's default verify from a clean build, within 180 s on the shared
+# 4-CPU runner (that verify runs the gate without the cli- and deep- tests, which the two steps above have already run),
+# and the consumer smoke from the tarball,
 # which adopts, creates, and updates a project of the release before (adopted and created) to finalize. The update from
 # the last three releases runs weekly; the window moves with each release and never grows. The full walkthroughs, the 20-sample perf report
 # and the recovery and failure matrices run weekly (weekly.yml) and never here: weekly is weekly, release is release.

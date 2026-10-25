@@ -88,7 +88,10 @@ this is the reason they agree.
   through the 390 px phone drawer. It never refuses for a missing safe backend or Chrome; it reports the browser as
   `not run`.
 - `pnpm verify --full` adds every mapped rail route and every exhaustive suite: the audit, every control and link, the
-  keyboard walk, the assistant, live data and Web Vitals. It requires Chrome, a safe backend and a mapping for every route.
+  keyboard walk and the assistant. It requires Chrome, a safe backend and a mapping for every route.
+  (Amended 2026-10-25: live data and Web Vitals moved to `--timed`, and `--full --timed` is the whole standard. A suite
+  that judges a time cannot run beside the suites that load the machine — `docs/testing.md`, "Tiers", and
+  `scripts/verify.ts`.)
 - `pnpm verify --perf` takes 20 samples per route, device and condition (warm, cold, after a live refresh) and reports the
   median, p95 and max. A p95 over its budget is `warn`; a sample that is never ready, or a control that does nothing, still fails.
 - Every run ends with one coverage line, and writes the gate and build counts to `out/verify.txt`. Nothing that did not
