@@ -12,6 +12,8 @@ import type { Need } from './lib/collection.ts';
 export const app = {
   /** The product name: the rail, the document title, the sign-in screen. */
   name: 'ZZ Meridian',
+  /** The line a search engine and a link preview show under the name. */
+  description: 'Traffic, latency, revenue and health for every endpoint.',
   /** The environment this product runs as: every page's kicker, and the line under the name in a rail that has one navigation. */
   workspace: 'Production',
   /** The accent preset the product ships with; a person can still change it in Settings. */
