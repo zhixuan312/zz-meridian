@@ -29,7 +29,7 @@ const payload = [
   'src/components/ui/button/README.md', 'src/components/ui/button/preview.tsx', 'scripts/check.ts',
   'scripts/verify.config.ts', 'src/lib/cn.ts', 'src/lib/collection.ts', 'src/lib/assistant/prompt.ts',
   'src/views/console-chrome.tsx', 'src/views/members.tsx', 'tests/setup.ts', 'app/(dashboard)/page.tsx',
-  'src/app.config.ts', 'skills/zz-meridian/SKILL.md', 'docs/brief.md',
+  'src/app.config.ts', 'skills/zz-meridian/SKILL.md', 'docs/brief.md', 'tests/format.test.ts', 'tests/key-value.test.tsx',
 ];
 
 describe('adoptSetOf', () => {
@@ -39,6 +39,18 @@ describe('adoptSetOf', () => {
 });
 
 describe('managedPaths', () => {
+  // A created project's tests are the release's, because each pins the behaviour of the module it covers. 0.29.0's
+  // consumer smoke found the alternative: an unedited `tests/format.test.ts` kept asserting the `splitFigure` of 0.28.0
+  // while `src/lib/format.ts` moved, and the project's own gate failed after an update that was otherwise correct.
+  // Adopt copies none of them: that project brings a test suite of its own.
+  it('takes the tests it ships in a created project, and none of them in an adopted one', () => {
+    expect(managedPaths(payload, 'create').has('tests/format.test.ts')).toBe(true);
+    expect(managedPaths(payload, 'create').has('tests/key-value.test.tsx')).toBe(true);
+    // A test the project wrote itself is not in the payload, so it is never managed on either route.
+    expect(managedPaths(payload, 'create').has('tests/our-own.test.ts')).toBe(false);
+    expect(managedPaths(payload, 'adopt').has('tests/format.test.ts')).toBe(false);
+  });
+
   for (const route of ['adopt', 'create'] as const) {
     it(`gives the canonical managed set for ${route}`, () => {
       const s = managedPaths(payload, route);

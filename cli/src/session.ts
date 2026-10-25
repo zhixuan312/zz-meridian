@@ -166,7 +166,15 @@ function plan(ctx: Context, manifest: Manifest, startedAt: Date): Plan {
     const inBase = baseManaged.has(p);
     const inTarget = targetManaged.has(p);
     const managed = inBase || inTarget;
-    const recorded = manifest.files[p] ?? (inBase && !sourcePayload.has(p) ? source.hashes.get(p) : undefined) ?? null;
+    // What the recorded release wrote at this path: the manifest's hash, or — for a project `create` made, which received
+    // every payload file — the recorded release's own bytes. The second term is what made 0.29.0's tests unclassifiable:
+    // a test that release shipped but did not record (it managed none but `tests/setup.ts` then) had no hash to compare
+    // with, so an unedited copy of it collided instead of being replaced, and the update stopped for a decision on a file
+    // nobody had touched.
+    const recorded = manifest.files[p]
+      ?? (manifest.route === 'create' && sourcePayload.has(p) ? source.hashes.get(p) : undefined)
+      ?? (inBase && !sourcePayload.has(p) ? source.hashes.get(p) : undefined)
+      ?? null;
     const targetHash = inTarget ? target.hashes.get(p) ?? null : null;
     if (targetHash) targetFiles[p] = targetHash;
     const disk = probe(root, p);

@@ -32,7 +32,7 @@ export const OWNERSHIP: readonly string[] = [
   'Managed: the distributed scripts under `scripts/`, except `scripts/verify.config.ts`, the size baseline `optional:scripts/verify.baseline.json` (first-load JS and the HTML of each page) and a team-local `optional:scripts/check.local.ts`.',
   'Managed: the library helpers `src/lib/cn.ts`, `src/lib/format.ts`, `src/lib/format-date.ts`, `src/lib/period.ts`, `src/lib/color.ts`, `src/lib/host.ts`, `src/lib/preferences.ts`, `src/lib/csv.ts`, `src/lib/safe-markdown.ts`, `src/lib/logo.ts`, `src/lib/collection.ts`, `src/lib/explore.ts`, `src/lib/live.ts`, `src/lib/shared-context.ts`, `src/lib/agent-guidance.ts`, `src/lib/insight.ts` and `src/lib/facts.ts`, and the assistant prompt `src/lib/assistant/prompt.ts`.',
   'Managed: the three `src/logic/` helpers a shipped component imports — `src/logic/after-start.ts`, `src/logic/derivations.ts` and `src/logic/summarise.ts` — so a payload\'s cards build in an adopted project; every other module under `src/logic/` is the team\'s.',
-  'Managed: `src/views/console-chrome.tsx` and `tests/setup.ts`.',
+  'Managed: `src/views/console-chrome.tsx`, `tests/setup.ts`, and — in a project `create` made — every test the release ships. A shipped test pins the behaviour of the module it covers, so a release that changes one changes the other; a test the team edits is staged for its decision like any other edited file.',
   'Managed: `optional:scripts/package.json`, only when the adopt or create that set the project up generated it for this project shape.',
   'Managed: both installed skill trees, `optional:.agents/skills/zz-meridian/` and `optional:.claude/skills/zz-meridian/`, taken from the release\'s skill payload.',
   'Managed: the brand token and stylesheet paths under `tokens/` and `src/styles/` that the release generated from the recorded brand.',
@@ -80,8 +80,13 @@ export function adoptSetOf(payloadFiles: readonly string[]): string[] {
  * routes. `generated` is every path a replay or a real run produced; only the ones under `tokens/` or `src/styles/`
  * and `scripts/package.json` become managed, so a generated page or config stays the team's.
  */
-export function managedPaths(payloadFiles: readonly string[], _route: 'adopt' | 'create', generated: readonly string[] = []): Set<string> {
+export function managedPaths(payloadFiles: readonly string[], route: 'adopt' | 'create', generated: readonly string[] = []): Set<string> {
   const out = new Set(adoptSetOf(payloadFiles));
+  // A created project's tests are Meridian's: it wrote every one of them, and each pins the behaviour of the module it
+  // covers. Left the team's, a release that changed `splitFigure` could not change the test that reads it, and the
+  // project's own gate failed after an update that was otherwise correct (0.29.0's consumer smoke). Adopt still copies
+  // none of them: that project has a test suite of its own.
+  if (route === 'create') for (const f of payloadFiles) if (/^tests\/[^/]+\.test\.tsx?$/.test(f)) out.add(f);
   for (const g of generated) if (g.startsWith('tokens/') || g.startsWith('src/styles/') || g === 'scripts/package.json') out.add(g);
   const prefix = 'skills/zz-meridian/';
   for (const f of payloadFiles) {
