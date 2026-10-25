@@ -148,10 +148,16 @@ export default function AtlasHome() {
               </Link>
             ) : null}
           </div>
+          {/* A digest, not the section: four headlines, and the rest one link away. Every headline used to be in this
+              page's HTML, so the page grew with the length of a release — 0.29.0's ten took it 5.8% over its HTML
+              baseline, which is a page whose size the changelog decides. The cap keeps the page's size its own. */}
           <ul className="grid content-start gap-x-6 gap-y-2.5 sm:grid-cols-2">
-            {release.headlines.map((h) => (
+            {release.headlines.slice(0, 4).map((h) => (
               <li key={h} className="flex items-center gap-2.5 text-sm text-ink"><span aria-hidden className="size-1.5 shrink-0 rounded-full bg-ink-3" />{h}</li>
             ))}
+            {release.headlines.length > 4 ? (
+              <li className="flex items-center gap-2.5 text-sm text-ink-3"><span aria-hidden className="size-1.5 shrink-0 rounded-full bg-ink-3" />and {release.headlines.length - 4} more in the changelog</li>
+            ) : null}
           </ul>
         </div>
       </section>
