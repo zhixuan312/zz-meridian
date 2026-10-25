@@ -2,6 +2,34 @@
 
 Every release of ZZ Meridian, newest first. Versions follow semver: a removed or renamed token, prop or card is major; a new card, token or variant is minor; a corrected value is a patch. Each entry says what breaks and what to do instead.
 
+## [0.30.0] · 2026-10-25
+
+### New
+
+- **The accent picker is a radio group.** `AccentSwatches` in `@/components/ui/radio-group` is one row of swatches built on the radio primitive: the row is one Tab stop, the arrow keys move the choice, and the chosen swatch is announced as chosen. Settings and the Atlas's card stage both draw it, where three hand-built rows of `role="radio"` buttons each drew their own — every swatch a stop, and an arrow key that did nothing. The appearance menu keeps pressed buttons (`role="group"` with `aria-pressed`), because inside a menu the arrow keys belong to the menu.
+- **`app.description` names the product in a sentence.** It is the line a search engine and a link preview show under the name, and it sits in `src/app.config.ts` beside `name`, `workspace` and `accent` instead of being written into `app/layout.tsx`. Both files are yours, so a project that has already set its own sentence keeps it.
+
+### Fixed
+
+- **An approval a guard refused is still yours to send.** A tool call's id was marked used before the change ran, so a change that threw — the grant withdrawn between the approval and the run, a record that no longer fits — wrote nothing and still answered "This change was already applied." to the second try. The id is released when the change throws.
+- **A screen never says a thing was copied before it was.** Four Copy controls on a request's page raised "copied" without waiting for the clipboard, on the page whose whole purpose is handing somebody an exact command or id. One helper awaits the write and says what to do when the browser refuses it.
+- **A page is told the assistant is on only where the route serves it.** `scripts/lib/settle.ts` read every answer but 404 from `/api/assistant` as "on", so a page behind a refused session waited its whole bound for a slot that was never coming.
+- **`brand` refuses a contrast run that measured nothing.** A `scripts/contrast.ts` that crashed printed no summary, and its empty output read as "no failures": the accent shipped unchecked. A hue still failing after the eighth step stops the command too.
+- **The check states the direct read's escape on the call's own line.** `noDirectQuery` allowed five sites by absolute line number, and each was wrong the moment a comment above it changed length. The five state `// allow-no-direct-query: read() cannot serve this — …` where the call is, the escape the check already prints, so the rule no longer has a list to fall behind.
+- **A walk goes on after a route that stops answering.** `scripts/interactions.ts` and `scripts/keyboard.ts` ended the suite at the first page that stopped answering, losing the evidence for every route after it. Each route is walked in a guard of its own, as `scripts/audit.ts` measures each route.
+- **The Atlas reads its entries once per request, not twice.** The walk reads 73 specifications and a request-rendered Atlas page asked for them from the sidebar and again from the article. React's `cache` is the request's scope, so one read serves both and an edited README is still read again on the next request.
+- **An Atlas page whose view tool threw is drawn without the tool's output.** A `Suspense` covers a read that is pending, not one that rejected, so one failing tool took the whole entry page.
+- **`verify` names `--shard` among the options it takes**, and a shard is passed with `--perf` alone: it cannot be combined with `--full` or `--timed`, which `docs/testing.md` now says where it said "beside the other tiers".
+- **The request page asks its reads at once.** The record, the grant behind Replay and the endpoints were three waits in a row; only the customer's address depends on the record.
+- **The tab icon reads the accent the product picks.** `app/icon.ts` took the resolver's default, which is the shipped preset only until a product changes one of the two by hand.
+- **Three routes lose a `Suspense` that wraps nothing**, and the product's one-line description moves into its config (above).
+- **Seven components, each corrected where a reader named the defect.** A copy field's label sat on an element that takes no accessible name; a progress bar with a drawn label was unnamed; a toast raised before `Toaster` mounted was never shown; two incident updates stamped in one millisecond collided; the pager drew for a list that fits its page; two chart memos omitted the geometry they draw with; and a checkbox's and a switch's `className` are documented for the element they style.
+- **Two timers outlived what set them.** The front door's sweep cleared its start timeout and left the interval running, and a host request held its timer for the whole bound after its answer arrived.
+- **The skill's copy of the agent guide is the template's guide again.** It had drifted by four passages — the `data-assistant="omit"` rule, the 409 a thread answers when the session changed hands, the questions a view may offer, and how `pnpm verify --full` walks the assistant — and nothing compared the two. `tests/cli-skill-agents-sync.test.ts` does now, and `update` replaces an unedited copy with this one.
+- **The skill and the docs name the paths the code has.** A prepared query beside a view is `src/logic/<view>-explore.ts` and a view's context file `src/logic/*-context.ts`, both moved in 0.28.0 while the skill still said `src/views/`; `assistantTools` takes `(collections, writer, guard, views?, explore?)`; `brand` is run through the package, not as `node scripts/brand.ts`.
+- **`.env.example` names `DEMO_PASSWORD` and `DEMO_SECRET`**, and `AGENTS.md`'s generated block starts at the level Next writes it, so `next dev` stops re-creating the file as a change.
+- **Three things nothing read are gone**: `scripts/lib/atlas.ts`'s `hasAtlas`, `verify`'s unused `reportSuite` return, and jade's empty `light: {}` token override.
+
 ## [0.29.0] · 2026-10-25
 
 ### New
