@@ -86,3 +86,16 @@ describe('the front door\'s figures', () => {
     expect(s.templates).toBe(templateFolders.length);
   });
 });
+
+describe('the list the Atlas draws from', () => {
+  it('is a copy per reader, so one that sorts it cannot reorder the page for the other', () => {
+    // The sidebar and the article ask for the list in the same render. They share one read of the files, but not the array
+    // they are handed: a section that sorted it in place would move the other's entries.
+    const first = entries();
+    const before = first.map((e) => e.href);
+    first.reverse();
+    first[0].title = 'moved';
+    expect(entries().map((e) => e.href)).toEqual(before);
+    expect(entries()[0].title).not.toBe('moved');
+  });
+});
