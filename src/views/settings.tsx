@@ -12,6 +12,7 @@ import { useAssistantAvailable } from '@/components/base/shell';
 import { FormSection, SettingRow } from '@/components/patterns/form-section';
 import { Field } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
+import { AccentSwatches } from '@/components/ui/radio-group';
 import { Segmented } from '@/components/ui/segmented';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Switch } from '@/components/ui/switch';
@@ -167,22 +168,7 @@ function Appearance() {
         />
       </SettingRow>
       <SettingRow label="Accent" description="The colour that marks the main action, the figure the page is about, and the finding.">
-        <div role="radiogroup" aria-label="Accent" className="flex items-center gap-1.5">
-          {ACCENTS.map((a) => (
-            <button
-              key={a}
-              type="button"
-              role="radio"
-              aria-checked={prefs.accent === a}
-              aria-label={a[0].toUpperCase() + a.slice(1)}
-              title={a[0].toUpperCase() + a.slice(1)}
-              onClick={() => set({ accent: a })}
-              className="press hit grid size-8 place-items-center rounded-full ring-offset-2 ring-offset-surface aria-checked:ring-2 aria-checked:ring-ink-2"
-            >
-              <span data-accent={a} className="size-5.5 rounded-full bg-accent ring-1 ring-line" />
-            </button>
-          ))}
-        </div>
+        <AccentSwatches value={prefs.accent} onChange={(accent) => set({ accent: accent as typeof prefs.accent })} accents={ACCENTS} />
       </SettingRow>
       <SettingRow label="Density" description="Compact fits more rows on a screen.">
         <Segmented label="Density" value={prefs.density} onChange={(density) => set({ density })} options={[{ value: 'comfortable', label: 'Comfortable' }, { value: 'compact', label: 'Compact' }]} />

@@ -67,3 +67,34 @@ export const RadioGroup = forwardRef<HTMLDivElement, Omit<ComponentPropsWithoutR
     );
   },
 );
+
+/**
+ * The accent picker: one colour out of a row of swatches. A radio group like any other — the arrow keys move the choice,
+ * the row is one Tab stop, and the chosen one is announced as chosen — drawn as circles because the colour is the label.
+ * The swatch inside each item is painted by the product's own `data-accent` rule, so this names no colour itself.
+ */
+export function AccentSwatches({ value, onChange, accents, size = 'md', label = 'Accent', className }: {
+  value: string;
+  onChange: (accent: string) => void;
+  accents: readonly string[];
+  /** `sm` for a toolbar, `md` for a form. */
+  size?: 'sm' | 'md';
+  label?: string;
+  className?: string;
+}) {
+  return (
+    <R.Root value={value} onValueChange={onChange} aria-label={label} orientation="horizontal" className={cn('flex items-center gap-1.5', className)}>
+      {accents.map((a) => (
+        <R.Item
+          key={a}
+          value={a}
+          aria-label={a}
+          title={a[0].toUpperCase() + a.slice(1)}
+          className={cn('press hit grid shrink-0 place-items-center rounded-full ring-offset-2 ring-offset-surface data-[state=checked]:ring-2 data-[state=checked]:ring-ink-2', size === 'sm' ? 'size-7' : 'size-8')}
+        >
+          <span data-accent={a} className={cn('rounded-full bg-accent ring-1 ring-line', size === 'sm' ? 'size-4' : 'size-5.5')} />
+        </R.Item>
+      ))}
+    </R.Root>
+  );
+}

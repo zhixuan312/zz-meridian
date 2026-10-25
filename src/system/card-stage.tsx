@@ -5,6 +5,7 @@ import { ExternalLink } from 'lucide-react';
 import { cn } from '@/lib/cn';
 import { ACCENTS, type Preferences } from '@/lib/preferences';
 import { CARDS } from '@/system/registry';
+import { AccentSwatches } from '@/components/ui/radio-group';
 import { Segmented } from '@/components/ui/segmented';
 import { app } from '@/app.config';
 
@@ -65,13 +66,7 @@ export function StageBar({ theme, setTheme, accent, setAccent, density, setDensi
   return (
     <div className="flex flex-wrap items-center gap-x-4 gap-y-2.5 border-b border-line bg-surface/70 px-4 py-3 backdrop-blur-md">
       <Segmented size="sm" label="Theme" value={theme} onChange={setTheme} options={[{ value: 'dark', label: 'Dark' }, { value: 'light', label: 'Light' }, { value: 'both', label: 'Both' }]} />
-      <div role="radiogroup" aria-label="Accent" className="flex items-center gap-1">
-        {ACCENTS.map((a) => (
-          <button key={a} role="radio" aria-checked={accent === a} aria-label={a} title={a[0].toUpperCase() + a.slice(1)} onClick={() => setAccent(a)} className="press hit grid size-7 place-items-center rounded-full ring-offset-2 ring-offset-surface aria-checked:ring-2 aria-checked:ring-ink-2">
-            <span data-accent={a} className="size-4 rounded-full bg-accent ring-1 ring-line" />
-          </button>
-        ))}
-      </div>
+      <AccentSwatches size="sm" value={accent} onChange={(a) => setAccent(a as Accent)} accents={ACCENTS} />
       {density && setDensity ? (
         <Segmented size="sm" label="Density" value={density} onChange={setDensity} options={[{ value: 'comfortable', label: 'Comfortable' }, { value: 'compact', label: 'Compact' }]} />
       ) : null}
