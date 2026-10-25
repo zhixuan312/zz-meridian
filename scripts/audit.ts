@@ -329,7 +329,7 @@ const ALLOWED_SCROLLERS = /data-scroll-region|^nav|^aside|^pre|^textarea|overflo
 const page = await launch();
 let failures = 0;
 const metrics: string[] = [];
-const run = async (route: string, width: number, theme: string, embed: boolean) => {
+const measure = async (route: string, width: number, theme: string, embed: boolean) => {
   await page.open(base + route, { width, height: width < 600 ? 844 : 900, theme: theme as 'dark' | 'light', wait: 1500, cookie });
   // An embed is a guest with a transparent ground: paint the host's ground behind it, as a host does.
   if (embed) await page.eval(`(() => { const d = document.documentElement; d.setAttribute('data-theme','${theme}'); window.__hostGround = '${theme}' === 'dark' ? '#1C1C20' : '#FFFFFF'; return true; })()`);
@@ -414,9 +414,29 @@ const run = async (route: string, width: number, theme: string, embed: boolean) 
   if (issues.length) { failures += issues.length; console.log(`FAIL ${tag}\n  ${issues.join('\n  ')}`); }
   if (width === 1440 && theme === THEMES[0]) metrics.push(`${route.padEnd(34)} sizes ${String(r.sizes.length).padStart(2)} [${r.sizes.join(' ')}] · weights ${r.weights.join('/')} · radii ${r.radii.length} [${r.radii.join(' ')}] · hierarchy ${r.ratio}×`);
 };
+
+/** One route that could not be measured. A page that hangs is an issue of its own, never the end of the run. */
+const unmeasuredRoutes: string[] = [];
+const run = async (route: string, width: number, theme: string, embed: boolean) => {
+  try {
+    await measure(route, width, theme, embed);
+  } catch (e) {
+    // A protocol command that times out (30 s: `scripts/lib/chrome.ts`) used to end the whole audit, so one slow page in a
+    // machine under load destroyed the evidence for the other 183 routes and the run reported nothing about any of them.
+    // The route is a failure — it is named, it counts, the exit code is red — and the walk goes on to the next one.
+    const message = (e as Error).message.replace(/\s+/g, ' ').trim();
+    failures += 1;
+    unmeasuredRoutes.push(`${route} @${width} ${theme}: ${message}`);
+    console.log(`FAIL ${route} @${width} ${theme}\n  could not be measured: ${message}`);
+    await page.open('about:blank', { width, height: 900, theme: theme as 'dark' | 'light', wait: 0 }).catch(() => {});
+  }
+};
 for (const route of ROUTES) for (const w of WIDTHS) for (const t of THEMES) await run(route, w, t, false);
 for (const route of EMBEDS) for (const w of [720, 420]) for (const t of THEMES) await run(route, w, t, true);
 page.close();
 console.log('\nDesign metrics at 1440:\n' + metrics.join('\n'));
 console.log(`\naudit: ${failures} issues across ${ROUTES.length + EMBEDS.length} routes, at ${WIDTHS.join(', ')}px in ${THEMES.join(' and ')}`);
+// Said in the last line as well as in its own FAIL: a count of issues over a run that could not reach every route is
+// not the same evidence as one over a run that did, and the number alone reads as if it were.
+if (unmeasuredRoutes.length) console.log(`audit: ${unmeasuredRoutes.length} of those routes could not be measured at all, and are counted one each:\n  ${unmeasuredRoutes.join('\n  ')}`);
 process.exit(failures ? 1 : 0);

@@ -195,6 +195,15 @@ document.getElementById('first').addEventListener('keydown', (e) => { if (e.key 
   // ---- a page whose load event waits for an image the server answers late (see server.ts) ----
   '/slow-load': deep('Slow load', { body: '<img src="/slow-asset" alt="" width="1" height="1">' }),
 
+  // A page that stops answering. The script blocks the main thread longer than `scripts/lib/chrome.ts` gives a protocol
+  // command, so every measurement of this page times out — and the audit has to say so for this page and go on to the
+  // next, rather than ending the run and leaving the other 183 routes unmeasured. Only under 500 px, so the pair of
+  // phone runs pays the thirty seconds and the three desk widths prove the page is otherwise clean.
+  '/deep-hangs': deep('A page that stops answering', {
+    body: '<p>Quarterly revenue held steady across every region and segment.</p>',
+    script: `if (matchMedia('(max-width: 500px)').matches) { const until = Date.now() + 40000; while (Date.now() < until) {} }`,
+  }),
+
   // ---- an SVG's text: painted by `fill`, on whatever the SVG painted behind it ----
   '/svg-contrast': deep('Faint chart label', { body: chart('<text x="8" y="29" fill="#9a9a9a" font-size="14">Requests per day</text>') }),
   // Dark text on a dark bar. Measured against the page instead of the bar it would pass, and the white label of the

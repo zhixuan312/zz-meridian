@@ -85,6 +85,7 @@ Every page has an `h1`, `lang="en"`, a `main`, an opaque ground and controls of 
 | `/drops-query` | Asked for as `/drops-query?view=all`, answered with a 302 to the bare path: the address came back without its view |
 | `/page-error` | The page throws while it renders, and nothing catches it |
 | `/console-error` | The page reports a failure itself, through `console.error` |
+| `/deep-hangs` | Under 500 px the page blocks its own main thread for 40 s, past the 30 s a protocol command is given: the audit must name this page as one it could not measure and go on to the next, instead of ending the run |
 | `/slow-load` | Not a suite case: its image answers after 6 s, so `open()` must wait for the load event (`tests/deep-dom.test.ts`) |
 | `/helper` | Not a case: nested roots, a slot and a closed root, for `tests/deep-dom.test.ts` |
 

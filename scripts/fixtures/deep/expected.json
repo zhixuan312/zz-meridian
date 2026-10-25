@@ -459,5 +459,6 @@
   { "page": "/spill", "suite": "audit", "outcome": "fail", "line": "spills: p.figure" },
   { "page": "/spill-fixed", "suite": "audit", "outcome": "pass" },
   { "page": "/disclosure", "suite": "keyboard", "outcome": "pass" },
-  { "page": "/disclosure", "suite": "presses", "outcome": "pass", "line": "interactions: 2 controls pressed" }
+  { "page": "/disclosure", "suite": "presses", "outcome": "pass", "line": "interactions: 2 controls pressed" },
+  { "page": "/deep-hangs", "suite": "audit", "outcome": "fail", "line": "could not be measured:" }
 ]
