@@ -63,16 +63,25 @@ const WORKSPACE_DEFAULTS: WorkspaceValues = { name: `${app.name} ${app.workspace
 /**
  * Settings, split by need: Appearance, Assistant and Agents and MCP are for everyone; the Workspace follows `may`. A
  * person who may not change the workspace sees its fields read-only, marked so and naming nobody who could change them,
- * and never a control that would refuse: no save bar.
+ * and never a control that would refuse: no save bar. `unreadable` is the page's word that the workspace's own read
+ * threw: the section then says so and offers no form at all.
  */
-export function SettingsBody({ may, workspace, save }: { may: SettingsMay; workspace?: WorkspaceValues | null; save?: SaveWorkspace }) {
+export function SettingsBody({ may, workspace, save, unreadable }: { may: SettingsMay; workspace?: WorkspaceValues | null; save?: SaveWorkspace; unreadable?: boolean }) {
   const [lines, setLines] = useState<Record<string, string>>({});
   const report = useCallback((section: string, line: string) => setLines((l) => (l[section] === line ? l : { ...l, [section]: line })), []);
   useShareView(settingsContext(lines));
   return (
     <Report value={report}>
     <div className="flex flex-col gap-14">
-      {may.workspaceRead ? <Workspace may={may} record={workspace ?? WORKSPACE_DEFAULTS} save={save} /> : null}
+      {may.workspaceRead ? (unreadable ? (
+        // A read that failed is not an empty workspace: drawing the template's name in an editable field let an Owner
+        // press Save and write it over the one the read could not reach. The section says so and offers no form.
+        <FormSection title="Workspace" tone="critical" description="The workspace could not be read, so nothing here can be changed." readOnly as="div">
+          <p className="text-sm text-ink-2">Reload the page to try again.</p>
+        </FormSection>
+      ) : (
+        <Workspace may={may} record={workspace ?? WORKSPACE_DEFAULTS} save={save} />
+      )) : null}
       <Appearance />
       <Assistant />
       <Agents />

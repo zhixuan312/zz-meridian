@@ -29,15 +29,17 @@ async function workspaceMay(): Promise<SettingsMay> {
 /**
  * The workspace record, through `read()` like every other collection, so the `workspace:*` grants the role table freezes
  * are asked on the one path. It is read only for someone who may read it, and a policy that does not bind the collection
- * leaves the form on its own defaults rather than failing the page: Settings renders for everyone.
+ * leaves the form on its own defaults rather than failing the page: Settings renders for everyone. A read that *threw*
+ * is a different answer from a collection that holds no row, and says so, so the form is never handed the template's
+ * name where the workspace's could not be read.
  */
-async function workspaceRecord(): Promise<WorkspaceValues | null> {
+async function workspaceRecord(): Promise<{ values: WorkspaceValues | null; unreadable: boolean }> {
   try {
     const { rows } = await read('workspace');
     const row = rows[0];
-    return row ? { name: String(row.name), slug: String(row.slug) } : null;
+    return { values: row ? { name: String(row.name), slug: String(row.slug) } : null, unreadable: false };
   } catch {
-    return null;
+    return { values: null, unreadable: true };
   }
 }
 
@@ -49,7 +51,7 @@ export default async function SettingsPage() {
   // The flags are computed here, on the server, because the view is a client module and never asks the policy itself;
   // the workspace record and the action that saves it are handed over together, so the section edits what the page read.
   const permissions = await workspaceMay();
-  const workspace = permissions.workspaceRead ? await workspaceRecord() : null;
+  const workspace = permissions.workspaceRead ? await workspaceRecord() : { values: null, unreadable: false };
   return (
     <PageFrame
       width="form"
@@ -57,7 +59,7 @@ export default async function SettingsPage() {
       title="Settings"
       description={`The workspace, how ${app.name} looks, and what assistants may do.`}
     >
-      <SettingsBody may={permissions} workspace={workspace} save={saveWorkspace} />
+      <SettingsBody may={permissions} workspace={workspace.values} unreadable={workspace.unreadable} save={saveWorkspace} />
     </PageFrame>
   );
 }

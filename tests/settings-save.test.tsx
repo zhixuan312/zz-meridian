@@ -63,6 +63,15 @@ describe('saving the workspace in Settings', () => {
   });
 });
 
+describe('a workspace that could not be read', () => {
+  it('says so and offers no form, so the template’s name is never saved over the real one', () => {
+    render(<SettingsBody may={may} workspace={null} unreadable save={async () => ({ ok: true })} />);
+    expect(screen.getByText('The workspace could not be read, so nothing here can be changed.')).toBeTruthy();
+    expect(screen.queryByLabelText(/^Name/)).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Save changes' })).toBeNull();
+  });
+});
+
 describe('what the workspace record holds', () => {
   it('is a name and an address, and no time zone: nothing in the product reads one from it', async () => {
     const { rows } = await collections.find((c) => c.name === 'workspace')!.query({});
