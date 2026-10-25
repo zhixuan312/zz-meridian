@@ -18,7 +18,7 @@ export function Specimen({ label, note, children, className, stack, wide }: {
     <section className={cn('grid gap-x-8 gap-y-3 border-t border-line py-6 first:border-0 first:pt-1 last:pb-1', !wide && 'md:grid-cols-[9.5rem_minmax(0,1fr)]')}>
       <div className="min-w-0">
         <h3 className="t-eyebrow">{label}</h3>
-        {note ? <p className="t-caption mt-1.5 text-pretty">{note}</p> : null}
+        {note ? <p className="t-caption mt-1.5 text-pretty break-words">{note}</p> : null}
       </div>
       <div className={cn('min-w-0', stack ? 'flex flex-col gap-4' : 'flex flex-wrap items-center gap-3', className)}>{children}</div>
     </section>

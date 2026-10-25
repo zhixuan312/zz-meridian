@@ -128,8 +128,8 @@ export default function MetricTilePreview() {
       </Specimen>
       <Specimen label="A word, not a number" note="A categorical state is a word set smaller than a figure; a named format (compact, cost-compact) lets a server page render the tile.">
         <div className="grid w-full gap-4 sm:grid-cols-2">
-          <State label="Categorical value"><MetricTile label="Forecast" hint="Whether the trend points to a new customer segment." value="Likely new" note="Based on the last 14 days" /></State>
-          <State label="Named format"><MetricTile label="Pipeline" hint="Open opportunities, in the workspace currency." value={1_240_000} format="cost-compact" delta={0.08} /></State>
+          <State label="Categorical value" className="w-full"><MetricTile className="w-full" label="Forecast" hint="Whether the trend points to a new customer segment." value="Likely new" note="Based on the last 14 days" /></State>
+          <State label="Named format" className="w-full"><MetricTile className="w-full" label="Pipeline" hint="Open opportunities, in the workspace currency." value={1_240_000} format="cost-compact" delta={0.08} /></State>
           <State label="A note in a narrow tile takes a second line" className="w-56"><MetricTile className="w-full" label="Customers" value={320} note="296 active · 14 trials · 10 past due" /></State>
         </div>
       </Specimen>

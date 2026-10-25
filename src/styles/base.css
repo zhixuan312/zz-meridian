@@ -116,6 +116,9 @@
   .t-code {
     border: 1px solid var(--line); border-radius: var(--radius-xs); background: var(--surface-sunk); color: var(--ink);
     padding: var(--space-0-5) var(--space-1-5); font-family: var(--font-mono); font-size: 0.84em;
+    /* A query, a path or a key is one word as far as the line breaker is concerned, and a long one drew 270px past its
+       chip on the Requests page spec at 390px (the Atlas audit). It breaks where it must and nowhere it need not. */
+    overflow-wrap: anywhere;
   }
 
   /* A figure's fraction and unit step down, so the integer carries the reading. */

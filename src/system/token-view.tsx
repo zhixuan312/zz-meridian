@@ -349,7 +349,7 @@ function Elevation({ groups }: { groups: TokenGroup[] }) {
                   <span className="min-w-0 flex-1"><span className="block h-2 rounded-xs bg-accent" style={{ width: `${Number(t.value)}%`, minWidth: '2px' }} /></span>
                   <span className="t-caption w-8 shrink-0 text-right tabular-nums">{t.value}</span>
                 </div>
-                <p className="t-caption mt-1 text-ink-2">{t.description}</p>
+                <p className="t-caption mt-1 text-ink-2 [overflow-wrap:anywhere]">{t.description}</p>
               </div>
             </div>
           ))}
@@ -369,7 +369,7 @@ function Elevation({ groups }: { groups: TokenGroup[] }) {
                 <span className="absolute inset-x-3 top-3 h-14 rounded-md border border-line-strong bg-surface/70" style={{ backdropFilter: `blur(var(--${t.name}))` }} />
               </div>
               <p className="mt-3 font-mono text-xs">{t.name} <span className="text-ink-3">{t.value}</span></p>
-              <p className="t-caption mt-1 text-ink-2">{t.description}</p>
+              <p className="t-caption mt-1 text-ink-2 [overflow-wrap:anywhere]">{t.description}</p>
             </div>
           ))}
         </div>

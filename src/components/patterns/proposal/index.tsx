@@ -77,7 +77,9 @@ export function Proposal({
           {changes.map((c) => (
             <div key={c.label} className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 border-b border-line px-3 py-2.5 last:border-0 sm:grid-cols-[10rem_minmax(0,1fr)]">
               <dt className="text-xs text-ink-3">{c.label}</dt>
-              <dd className="t-num flex min-w-0 items-center gap-2 text-sm max-sm:col-span-2">
+              {/* A change wraps rather than running past its row: "Active → Suspended" is two words and an arrow, and a
+                  narrow card puts the second line under the first. */}
+              <dd className="t-num flex min-w-0 flex-wrap items-center gap-2 text-sm max-sm:col-span-2">
                 <span className="text-ink-3 line-through decoration-ink-3/50">{c.from}</span>
                 <ArrowRight className="size-3.5 shrink-0 text-ink-3" />
                 <span className="font-medium">{c.to}</span>

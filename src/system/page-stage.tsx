@@ -205,18 +205,23 @@ function HostSimulator({ route, theme, toolResult }: { route: string; theme: 'da
       </div>
       <aside aria-label="Model context" className="flex max-h-[46rem] flex-col gap-3 self-start overflow-y-auto overscroll-contain rounded-lg border border-line bg-surface p-4">
         <p className="t-kicker">Model context</p>
-        <p data-model-context className="t-small whitespace-pre-wrap text-ink-2 [overflow-wrap:anywhere]">{context.text}</p>
+        {/* `pre-line`, not `pre-wrap`: with spaces preserved, a line that wrapped at a space kept that space's advance and
+            its ink stood 3px outside the box at every width (the Atlas audit) — nothing visible, and nothing to keep
+            either, since a space at a wrap is hung. Newlines still stand. */}
+        <p data-model-context className="t-small whitespace-pre-line text-ink-2 [overflow-wrap:anywhere]">{context.text}</p>
         {context.structured ? (
           <details className="border-t border-line pt-3">
             <summary className="t-caption cursor-pointer">Structured</summary>
-            <pre data-model-structured className="mt-2 font-mono text-xs whitespace-pre-wrap text-ink-3 [overflow-wrap:anywhere]">{JSON.stringify(context.structured, null, 2)}</pre>
+            {/* Indentation is the JSON's meaning, so it is set `pre` and scrolls like every other code block in the Atlas
+                (`Doc`'s `pre`), fade and all, instead of wrapping at a space and leaving that space's ink outside the box. */}
+            <pre data-model-structured className="scroll-fade-x mt-2 overflow-x-auto font-mono text-xs whitespace-pre text-ink-3">{JSON.stringify(context.structured, null, 2)}</pre>
           </details>
         ) : null}
         {toolResult ? (
           <details className="border-t border-line pt-3">
             <summary className="t-caption cursor-pointer">Tool result</summary>
             <p className="t-caption mt-2">What an MCP server returns for <code className="font-mono">{toolResult.name}</code>: the text below as <code className="font-mono">content</code>, the view&rsquo;s data as <code className="font-mono">structuredContent</code> ({toolResult.structured.join(', ')}){toolResult.resourceUri ? <>, and <code className="font-mono">{toolResult.resourceUri}</code> to render</> : null}.</p>
-            <pre data-tool-result className="mt-2 font-mono text-xs whitespace-pre-wrap text-ink-3 [overflow-wrap:anywhere]">{toolResult.text}</pre>
+            <pre data-tool-result className="scroll-fade-x mt-2 overflow-x-auto font-mono text-xs whitespace-pre-wrap [overflow-wrap:anywhere] text-ink-3">{toolResult.text}</pre>
           </details>
         ) : null}
         <p className="t-caption border-t border-line pt-3">What the view tells the model with <code className="font-mono">ui/update-model-context</code>: the whole state every time, because a host keeps only the latest. Point at a day in the chart and watch it change; press Ask on a card to post a question.</p>

@@ -55,7 +55,8 @@ export function AlertsPanel({ alerts, now, read = new Set(), onOpen, onMarkAll }
   const unread = alerts.filter((a) => a.unread && !read.has(a.id)).length;
   return (
     <>
-      <div className="flex items-center gap-3 border-b border-line px-4 py-3">
+      {/* The head wraps: in a narrow card the count and "Mark all read" drop under the title instead of running past it. */}
+      <div className="flex flex-wrap items-center gap-3 border-b border-line px-4 py-3">
         <p className="text-sm font-semibold">Alerts</p>
         {unread ? <span className="t-caption">{unread} new</span> : null}
         {unread && onMarkAll ? (
