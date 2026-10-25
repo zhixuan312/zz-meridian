@@ -4,7 +4,7 @@ import { ExportButton } from '@/components/patterns/export-button';
 import { Freshness } from '@/components/patterns/freshness';
 import { PeriodSelect } from '@/components/patterns/period-select';
 import { HomeBody } from '@/views/home';
-import { PeriodActionsRoom, PeriodRoom } from '@/views/period-actions';
+import { PeriodActionsRoom } from '@/views/period-actions';
 import { gate, gatedMetadata } from '@/data/access';
 import { RefusalScreen } from '@/views/refusal';
 import { DEMO_NOW, DEMO_UPDATED_AT } from '@/data/sample';
@@ -83,7 +83,7 @@ async function Actions({ searchParams }: { searchParams: SearchParams }) {
   const { data } = await readHome(searchParams);
   return (
     <>
-      <Suspense fallback={<PeriodRoom />}><PeriodSelect value={data.period} /></Suspense>
+      <PeriodSelect value={data.period} />
       <ExportButton rows={dayRows(data.series)} filename={`home-${data.period}.csv`} noun="days" />
     </>
   );

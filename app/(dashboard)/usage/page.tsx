@@ -9,7 +9,7 @@ import { Freshness } from '@/components/patterns/freshness';
 import { Busy, LeadRoom } from '@/components/patterns/page-loading';
 import { PeriodSelect } from '@/components/patterns/period-select';
 import { parsePeriod } from '@/lib/period';
-import { PeriodActionsRoom, PeriodRoom } from '@/views/period-actions';
+import { PeriodActionsRoom } from '@/views/period-actions';
 import { dayRows } from '@/logic/home-context';
 import { UsageBody } from '@/views/usage';
 import { usageTool } from '@/logic/tools';
@@ -82,7 +82,7 @@ async function Actions({ searchParams }: { searchParams: SearchParams }) {
   const { data } = await readPeriod(period, day);
   return (
     <>
-      <Suspense fallback={<PeriodRoom />}><PeriodSelect value={period} /></Suspense>
+      <PeriodSelect value={period} />
       <ExportButton rows={dayRows(data.days?.series ?? [])} filename={`usage-${period}.csv`} noun="days" />
     </>
   );
