@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any -- token JSON files have no types; this file runs in Node, never in a page. */
 /**
  * Brand a copy of Meridian for a product, in place.
  *
@@ -131,15 +130,22 @@ if (hue !== undefined) {
   write('tokens/zz-meridian.resolver.json', JSON.stringify(r, null, 2) + '\n');
   defaultAccent(id);
 
-  // Hold contrast: lower a theme's fill lightness where white text on it fails, a step at a time.
+  // Hold contrast: lower a theme's fill lightness where white text on it fails, a step at a time. A hue that still fails
+  // after the last step stops the command: a brand that ships a failing pair in tokens.css is not a brand that worked.
   const base = { light: 0.52, dark: 0.56 };
+  let remaining: string[] = [];
   for (let step = 0; step < 8; step++) {
     execFileSync('node', ['scripts/tokens.ts'], { cwd: ROOT, stdio: 'ignore' });
     let out = '';
+    let why = '';
     try { out = execFileSync('node', ['scripts/contrast.ts'], { cwd: ROOT, encoding: 'utf8' }); break; }
-    catch (e: any) { out = String(e.stdout ?? ''); }
+    catch (e) { out = String((e as { stdout?: unknown }).stdout ?? ''); why = String((e as { stderr?: unknown }).stderr ?? '').trim(); }
+    // A run with no summary did not measure anything: its exit code is a crash, and reading its empty output as "no
+    // failures" passed a brand nobody had checked.
+    if (!/^contrast: .*failures$/m.test(out)) throw new Error(`scripts/contrast.ts did not run to its summary: ${why || out.trim() || 'no output'}`);
     const fails = out.split('\n').filter((l) => l.startsWith('FAIL') && l.includes(` ${id} `));
     if (!fails.length) break;
+    remaining = fails;
     const t = JSON.parse(read(tokenFile));
     for (const theme of ['light', 'dark'] as const) {
       if (!fails.some((l) => l.includes(`FAIL ${theme}`) && /on-accent on accent/.test(l))) continue;
@@ -148,8 +154,8 @@ if (hue !== undefined) {
       o['accent-l-hover'] = Math.round((o['accent-l'] - 0.05) * 100) / 100;
     }
     write(tokenFile, JSON.stringify(t, null, 2) + '\n');
-    if (step === 7) console.log('Contrast still fails for this hue; lower --chroma and run again:\n' + fails.join('\n'));
   }
+  if (remaining.length) throw new Error(`the accent still fails contrast after 8 steps; lower --chroma and run again:\n${remaining.join('\n')}`);
   done.push(`accent ${id}: hue ${h}, chroma ${c}`);
 
   // A brand hue close to a status hue makes every accent fill read as a state: a jade brand looks like "healthy".

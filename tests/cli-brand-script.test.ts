@@ -29,6 +29,22 @@ describe('scripts/brand.ts', () => {
     expect(read('src/app.config.ts').match(/\n {2}theme: '/g)).toHaveLength(1);
     expect(read('src/app.config.ts')).toMatch(/\n {2}theme: 'dark'/);
   }, 120_000);
+  it('refuses a brand it could not check, instead of reading a crashed contrast run as no failures', () => {
+    // A contrast run that printed no summary did not measure anything. Its empty output used to look like "nothing
+    // failed", and the command finished with the accent unchecked.
+    const real = read('scripts/contrast.ts');
+    fs.writeFileSync(path.join(dir, 'scripts/contrast.ts'), 'console.log("the palette did not load");\nprocess.exit(2);\n');
+    let failed = false;
+    let stderr = '';
+    try { brand('--existing', '--hue', '200', '--chroma', '0.15', '--accent-name', 'unchecked'); } catch (e) {
+      failed = true;
+      stderr = String((e as { stderr?: unknown }).stderr ?? '');
+    } finally {
+      fs.writeFileSync(path.join(dir, 'scripts/contrast.ts'), real);
+    }
+    expect(failed).toBe(true);
+    expect(stderr).toMatch(/did not run to its summary/);
+  }, 120_000);
   it('refuses any other theme', () => {
     const before = read('src/app.config.ts');
     const tokens = fs.readdirSync(path.join(dir, 'tokens')).sort();
