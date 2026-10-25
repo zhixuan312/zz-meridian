@@ -118,6 +118,41 @@ call a live API, say so in the sentence: `verify --full` presses every control, 
 fake API first. The package (`cli/`, decision 0009) copies files and nothing depends on it afterwards; its commands are
 in `cli/README.md`.
 
+## Model your data before a page is built
+
+A Meridian page is only as good as the model under it: a figure needs a definition, a unit and a window; a table needs a
+key and a grant; an agent needs to know what it may count and what it may only propose. One prompt settles that before
+anything is drawn, and its answer outlives the build — it is the file the next person reads.
+
+Paste this into the same agent, before the build sentence:
+
+> Model my data for Meridian, before any page is built. Read this folder first — a schema, a migration, an OpenAPI file
+> or an existing data layer answers most of this — and ask me only what the folder does not say, in one batch of at most
+> twelve questions. Then write the model into `docs/brief.md` (the file `adopt` and `create` leave for it), answering:
+>
+> 1. **Collections.** Each one's name, its key, the tenant it belongs to, every field with its type, and which of them a
+>    reader may not see, which only a page may write, and which are derived rather than stored. The contract is the one
+>    `src/lib/collection.ts` declares.
+> 2. **The day.** Which field says when a record happened, and what a day means for it — the time zone the product
+>    counts in, so "today" and "the last 7 complete days" mean one thing on every figure.
+> 3. **Money.** Which fields are amounts, in which currency, and whether one row can be in a different currency from the
+>    next.
+> 4. **Figures.** For every figure the dashboard will show: its name, its unit, what it changes against (the window
+>    before, a target, a baseline), and its definition in one sentence a stranger could apply to a row.
+> 5. **Grants.** What each role may read and write, in the `resource:operation` form `src/data/access.ts` asks, and which
+>    collection each grant names. Say what a person with the smallest role still has to see for the product to make
+>    sense — that is what decides which views they get.
+> 6. **Questions.** For each page: the three questions someone on that page would ask that the page's own text does not
+>    answer — what must be countable, groupable or comparable, and over which collections.
+> 7. **Writes.** What an agent may propose on each page, and what stays the page's own — the fields a change must never
+>    set.
+>
+> Where the answer is a choice, give me the two or three options with the figure each produces, and recommend one. End
+> with one table: figure · definition · source · unit · window. The build reads that table, not the prose above it.
+
+Then give the build sentence above. The agent reads the brief first, and every figure on the page it builds is one the
+brief defines — which is also how you tell a wrong rendering from a wrong model.
+
 ## Privacy and feedback
 
 Meridian takes nothing from you. The package, the template and the skill have no telemetry, no analytics and no
