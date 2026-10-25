@@ -138,7 +138,23 @@ export function MembersView({ rows, now, revisions, actions, access, roles, work
   // (its effects clean up), and when the tab is hidden or closed, which unmounts nothing.
   useEffect(() => {
     const live = holds.current;
-    const flush = () => { for (const id of [...live.keys()]) { clearTimeout(live.get(id)); live.delete(id); void actions.remove(id); } };
+    // Sent the moment the page goes away, never dropped — and answered like any other change: a refusal puts the person
+    // back and says why (the toast lands on the page the person moved to, and the refresh re-reads the rows), and a
+    // connection that dropped is not a removal either.
+    const flush = () => {
+      for (const id of [...live.keys()]) {
+        clearTimeout(live.get(id));
+        live.delete(id);
+        void actions.remove(id)
+          .catch((): Result => ({ ok: false, error: 'The change did not reach the server. Try again.' }))
+          .then((r) => {
+            if (r.ok) return;
+            release(id);
+            toast({ tone: 'critical', title: 'Change not made', description: r.error });
+            router.refresh();
+          });
+      }
+    };
     const hidden = () => { if (document.visibilityState === 'hidden') flush(); };
     document.addEventListener('visibilitychange', hidden);
     window.addEventListener('pagehide', flush);

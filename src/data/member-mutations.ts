@@ -48,7 +48,11 @@ export type MemberRowAccess = {
 };
 
 /** A boundary refusal: its message is the frozen one, and it is thrown so a page turns it into a reason. */
-class MemberRefusal extends Error {}
+/**
+ * A refusal the person may read: the Owner, self and last-owner rules, a taken address, a grant that is missing. Anything
+ * else that went wrong in a write is not theirs to read, and `app/(dashboard)/members/actions.ts` says so instead.
+ */
+export class MemberRefusal extends Error {}
 
 const policy = () => (load.policy ??= import('@/data/access'));
 const tagOf = () => (load.tag ??= import('@/data/read'));

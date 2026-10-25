@@ -31,6 +31,8 @@ export async function replayRequest(id: string): Promise<ReplayResult> {
     updateTag(collectionTag(scope.tenantId, 'requests'));
     return { ok: true, id: String(replay.id), status };
   } catch (e) {
-    return { ok: false, error: e instanceof Unauthenticated ? 'Sign in again to replay this request.' : e instanceof Error ? e.message : 'The request was not replayed.' };
+    // Only the answer written for the person: a collection that rejected the record says why in its own words, which are
+    // not theirs to read, so anything but the missing session is a sentence this action chose.
+    return { ok: false, error: e instanceof Unauthenticated ? 'Sign in again to replay this request.' : 'The request was not replayed.' };
   }
 }

@@ -9,11 +9,13 @@ import type { Result } from '@/views/members';
 /** The name a Settings save carries; the address is not editable here. */
 export type WorkspaceInput = { name: string };
 
+// The refusals this action chose are shown as they are; a write that threw anything else — a collection rejecting a
+// shape, a connection dropping — is not the person's to read, and says only that it did not go through.
 const fail = (e: unknown): Result => ({
   ok: false,
   error: e instanceof Unauthenticated ? 'Sign in again to make this change.'
     : e instanceof AccessDenied ? 'You do not have permission to make this change.'
-    : e instanceof Error ? e.message : 'The change did not go through.',
+    : 'The change did not go through.',
 });
 
 /**

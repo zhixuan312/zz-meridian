@@ -10,9 +10,10 @@ vi.mock('@/data/access', async (importOriginal) => {
 });
 
 import { can, collectionFor, AccessDenied } from '@/data/access';
-import { members, requests } from '@/data/collections';
+import { collections, members, requests } from '@/data/collections';
 import { assistantTools } from '@/lib/assistant/tools';
 import { inviteMember, removeMember, setMemberStatus } from '../app/(dashboard)/members/actions';
+import { saveWorkspace } from '../app/(dashboard)/settings/actions';
 
 const FOREIGN = { tenantId: 'other-tenant', subjectId: 'intruder', authorizationKey: 'other:1' };
 const writer = { write() {}, merge() {}, onError: undefined } as never;
@@ -53,13 +54,26 @@ describe('a page write from another tenant', () => {
 
 describe('a write that throws', () => {
   it('does not invalidate the tenant collection and reports a reason', async () => {
-    const spy = vi.spyOn(members, 'update').mockRejectedValueOnce(new Error('The database is unavailable.'));
+    const spy = vi.spyOn(members, 'update').mockRejectedValueOnce(new Error('duplicate key value violates unique constraint "members_email_key"'));
     // The caller is the Owner, so the write that throws targets a plain Member: neither itself nor an Owner.
     const id = String((await members.query({})).rows.find((m) => m.role === 'Member' && m.status === 'Active')!.id);
     const r = await setMemberStatus(id, 'Suspended');
     spy.mockRestore();
-    expect(r).toEqual({ ok: false, error: 'The database is unavailable.' });
+    // A product's own collection throws in its own words — a driver's message, a constraint's name — and those are not the
+    // person's to read. Only a refusal the boundary wrote (`MemberRefusal`) is shown as it is; anything else says that the
+    // change did not go through.
+    expect(r).toEqual({ ok: false, error: 'The change did not go through.' });
     expect(cache.updated).toEqual([]);
+  });
+
+  it('says the same thing when the workspace save is the write that threw', async () => {
+    // One product, one answer: the same collection failure read as a driver's sentence in Settings and as an unnamed
+    // failure in Members would be two products.
+    const workspace = collections.find((c) => c.name === 'workspace')!;
+    const spy = vi.spyOn(workspace, 'update').mockRejectedValueOnce(new Error('relation "workspace" does not exist'));
+    const r = await saveWorkspace({ name: 'Acme Staging' });
+    spy.mockRestore();
+    expect(r).toEqual({ ok: false, error: 'The change did not go through.' });
   });
 });
 

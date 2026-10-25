@@ -2,16 +2,18 @@
 
 import { clock } from '@/data/collections';
 import { can, collectionFor, resolveAccess, Unauthenticated } from '@/data/access';
-import { assignMemberRole, REFUSALS } from '@/data/member-mutations';
+import { assignMemberRole, MemberRefusal, REFUSALS } from '@/data/member-mutations';
 import type { AnyCollection } from '@/lib/collection';
 import { dayOf } from '@/lib/format-date';
 import type { Result } from '@/views/members';
 import { STATUSES, TEAMS, type Member } from '@/data/sample';
 import { MAIN_ROLES, type AddOn, type MainRole } from '@/data/roles';
 
+// A refusal the boundary wrote for the person is shown as it is; anything else that threw — a collection that rejected a
+// shape, a connection that dropped — is not theirs to read, and says only that it did not go through.
 const fail = (e: unknown): Result => ({
   ok: false,
-  error: e instanceof Unauthenticated ? REFUSALS.signIn : e instanceof Error ? e.message : 'The change did not go through.',
+  error: e instanceof Unauthenticated ? REFUSALS.signIn : e instanceof MemberRefusal && e.message ? e.message : 'The change did not go through.',
 });
 
 /**
