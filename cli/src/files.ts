@@ -147,16 +147,23 @@ export function writeManifest(root: string, m: Manifest) {
   writeIn(root, '.meridian/manifest.json', JSON.stringify({ ...m, files: sorted }, null, 2) + '\n');
 }
 
-/** The agent skill, into the folders each agent reads in a repository: Codex (.agents) and Claude Code (.claude). */
-export function installSkill(root: string, record?: Record<string, string>) {
+/**
+ * Where the skill goes: the folders each agent reads in a repository, Codex (`.agents`) and Claude Code (`.claude`), and
+ * the file in the payload each is written from. The same list is what `adopt` checks before it writes anything, so a
+ * team's own copy is never overwritten behind their back.
+ */
+export function skillPaths(): { rel: string; payload: string }[] {
   const files = payloadFiles('skills/zz-meridian');
-  for (const base of ['.agents/skills/zz-meridian', '.claude/skills/zz-meridian']) {
-    for (const f of files) {
-      const rel = `${base}/${f.slice('skills/zz-meridian/'.length)}`;
-      const content = payloadBytes(f);
-      writeIn(root, rel, content);
-      if (record) record[rel] = sha256(content);
-    }
+  return ['.agents/skills/zz-meridian', '.claude/skills/zz-meridian'].flatMap((base) =>
+    files.map((f) => ({ rel: `${base}/${f.slice('skills/zz-meridian/'.length)}`, payload: f })));
+}
+
+/** The agent skill, into the folders each agent reads in a repository. */
+export function installSkill(root: string, record?: Record<string, string>) {
+  for (const { rel, payload } of skillPaths()) {
+    const content = payloadBytes(payload);
+    writeIn(root, rel, content);
+    if (record) record[rel] = sha256(content);
   }
 }
 

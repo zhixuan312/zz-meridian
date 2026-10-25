@@ -102,3 +102,20 @@ describe('the verify configuration adopt writes', () => {
     expect(text).toMatch(/refusal,/);
   });
 });
+
+/**
+ * `adopt` writes the skill in last, after every other write and after the gate that stops on any other file in the way.
+ * So a team's own edited copy of it was replaced without a word — and the command exited 0. The skill is Meridian's, but
+ * the file in their project is theirs to edit, and the rule for every other copy applies to it too.
+ */
+describe('the skill adopt brings', () => {
+  it('is checked against the project\'s own copy before anything is written', async () => {
+    const { skillPaths } = await import('../cli/src/files.ts');
+    const paths = skillPaths();
+    expect(paths.length).toBeGreaterThan(13);
+    expect(paths.map((p) => p.rel)).toContain('.claude/skills/zz-meridian/SKILL.md');
+    expect(paths.map((p) => p.rel)).toContain('.agents/skills/zz-meridian/references/update.md');
+    // Every destination is one of the two folders an agent reads, and every payload file is named by it.
+    for (const p of paths) expect(p.rel).toMatch(/^\.(agents|claude)\/skills\/zz-meridian\//);
+  });
+});
