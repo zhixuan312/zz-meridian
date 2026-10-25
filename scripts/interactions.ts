@@ -132,71 +132,86 @@ const failures: string[] = [];
 const checkedLinks = new Map<string, number>();
 let pressed = 0;
 
-for (const width of WIDTHS) {
+/**
+ * One route at one width: every control pressed and every link followed. A page that stops answering — a protocol
+ * command times out after 30 s (`scripts/lib/chrome.ts`) — is that route's own failure, named and counted, and the walk
+ * goes on to the next one, as `scripts/audit.ts` measures each route in a guard of its own. Without it one hanging page
+ * took the evidence for every route after it, and the count read as if it had walked them all.
+ */
+const walk = async (route: string, width: number) => {
   const touch = width < 600;
-  for (const route of ROUTES) {
-    // The page's late chrome first (scripts/lib/settle.ts): a control that arrives after the list is taken is never pressed, and the count reads as if it had been.
-    const fresh = async () => { await page.open(base + route, { width, theme: 'dark', cookie }); await inject(route); await settle(page); return page.eval<{ controls: string[]; keys: string[]; links: string[] }>(LIST); };
-    const { controls, keys, links } = await fresh();
-    // A link is followed as a browser follows it: its href as the page writes it, resolved against the page. Skipping every
-    // href that did not start with "/" let a relative link that answered 404 pass (/system/system/contributing).
-    for (const href of new Set(links)) {
-      let path: string | null;
-      try { path = linkPath(href, base + route); } catch { failures.push(`${route}: link ${href} is not a URL`); continue; }
-      if (path === null || checkedLinks.has(path)) continue;
-      const status = (await fetch(base + path, { redirect: 'manual' })).status;
-      checkedLinks.set(path, status);
-      if (status >= 400) failures.push(`${route}: link ${href}${path === href ? '' : ` (${path})`} answers ${status}`);
+  // The page's late chrome first (scripts/lib/settle.ts): a control that arrives after the list is taken is never pressed, and the count reads as if it had been.
+  const fresh = async () => { await page.open(base + route, { width, theme: 'dark', cookie }); await inject(route); await settle(page); return page.eval<{ controls: string[]; keys: string[]; links: string[] }>(LIST); };
+  const { controls, keys, links } = await fresh();
+  // A link is followed as a browser follows it: its href as the page writes it, resolved against the page. Skipping every
+  // href that did not start with "/" let a relative link that answered 404 pass (/system/system/contributing).
+  for (const href of new Set(links)) {
+    let path: string | null;
+    try { path = linkPath(href, base + route); } catch { failures.push(`${route}: link ${href} is not a URL`); continue; }
+    if (path === null || checkedLinks.has(path)) continue;
+    const status = (await fetch(base + path, { redirect: 'manual' })).status;
+    checkedLinks.set(path, status);
+    if (status >= 400) failures.push(`${route}: link ${href}${path === href ? '' : ` (${path})`} answers ${status}`);
+  }
+  for (let i = 0; i < controls.length; i++) {
+    // Which of the controls named alike this is, in the order the first load listed them; and, for a name that has
+    // changed since (a count that arrived), which of the controls that are the same thing.
+    const nth = controls.slice(0, i).filter((c) => c === controls[i]).length;
+    const keyNth = keys.slice(0, i).filter((k) => k === keys[i]).length;
+    type Armed = { x: number; y: number; covered?: string } | null;
+    // A document replaced since the last read has no helper: that is a page to open again, never a crash (#64).
+    const arm = () => page.eval<Armed>(ARM(controls[i], nth, keys[i], keyNth)).catch((): Armed => null);
+    let armed = await arm();
+    // Something left open or a toast in the way: start the page again and try once more. A control not drawn yet on the
+    // new load (a list still loading) is waited for up to the hang bound before it is called gone.
+    if (!armed || armed.covered) {
+      await fresh();
+      armed = await arm();
+      for (let waited = 0; !armed && waited < HANG_BOUND_MS; waited += 200) { await sleep(200); armed = await arm(); }
     }
-    for (let i = 0; i < controls.length; i++) {
-      // Which of the controls named alike this is, in the order the first load listed them; and, for a name that has
-      // changed since (a count that arrived), which of the controls that are the same thing.
-      const nth = controls.slice(0, i).filter((c) => c === controls[i]).length;
-      const keyNth = keys.slice(0, i).filter((k) => k === keys[i]).length;
-      type Armed = { x: number; y: number; covered?: string } | null;
-      // A document replaced since the last read has no helper: that is a page to open again, never a crash (#64).
-      const arm = () => page.eval<Armed>(ARM(controls[i], nth, keys[i], keyNth)).catch((): Armed => null);
-      let armed = await arm();
-      // Something left open or a toast in the way: start the page again and try once more. A control not drawn yet on the
-      // new load (a list still loading) is waited for up to the hang bound before it is called gone.
-      if (!armed || armed.covered) {
-        await fresh();
-        armed = await arm();
-        for (let waited = 0; !armed && waited < HANG_BOUND_MS; waited += 200) { await sleep(200); armed = await arm(); }
-      }
-      // Tagged by this suite a moment ago and gone after a fresh load: say so, never skip it.
-      if (!armed) { failures.push(`${route} @${width}: "${controls[i]}" was listed but could not be found again`); continue; }
-      if (armed.covered) { failures.push(`${route} @${width}: "${controls[i]}" is covered by ${armed.covered}`); continue; }
+    // Tagged by this suite a moment ago and gone after a fresh load: say so, never skip it.
+    if (!armed) { failures.push(`${route} @${width}: "${controls[i]}" was listed but could not be found again`); continue; }
+    if (armed.covered) { failures.push(`${route} @${width}: "${controls[i]}" is covered by ${armed.covered}`); continue; }
+    await sleep(100);
+    const choosers = page.fileChoosers();
+    await press(page, armed.x, armed.y, touch);
+    await sleep(600);
+    pressed++;
+    const tip = touch || /^About /.test(controls[i]);
+    // A press that loads a new document leaves the helper and the counters behind: that page has moved, which is its answer.
+    const look = () => page.eval<{ changes: number; moved: boolean }>(`({ changes: window.__changes + (${tip} && typeof deepAll === 'function' ? deepAll(document.body).filter((n) => n.matches('[role=tooltip]')).length : 0), moved: location.href !== window.__href })`);
+    // A file picker answers by opening the system's file chooser, which changes nothing on the page (issue #16).
+    let chosen = page.fileChoosers() > choosers;
+    let r = chosen ? { changes: 1, moved: false } : await look();
+    // Nothing yet: look again, never press again, until something answers or the hang bound passes. A look that lands
+    // while a new document replaces the page cannot evaluate: that page has moved too.
+    for (let waited = 600; !chosen && !r.changes && !r.moved && waited < HANG_BOUND_MS; waited += 100) {
       await sleep(100);
-      const choosers = page.fileChoosers();
-      await press(page, armed.x, armed.y, touch);
-      await sleep(600);
-      pressed++;
-      const tip = touch || /^About /.test(controls[i]);
-      // A press that loads a new document leaves the helper and the counters behind: that page has moved, which is its answer.
-      const look = () => page.eval<{ changes: number; moved: boolean }>(`({ changes: window.__changes + (${tip} && typeof deepAll === 'function' ? deepAll(document.body).filter((n) => n.matches('[role=tooltip]')).length : 0), moved: location.href !== window.__href })`);
-      // A file picker answers by opening the system's file chooser, which changes nothing on the page (issue #16).
-      let chosen = page.fileChoosers() > choosers;
-      let r = chosen ? { changes: 1, moved: false } : await look();
-      // Nothing yet: look again, never press again, until something answers or the hang bound passes. A look that lands
-      // while a new document replaces the page cannot evaluate: that page has moved too.
-      for (let waited = 600; !chosen && !r.changes && !r.moved && waited < HANG_BOUND_MS; waited += 100) {
-        await sleep(100);
-        chosen = page.fileChoosers() > choosers;
-        if (!chosen) r = await look().catch(() => ({ changes: 0, moved: true }));
-      }
-      if (chosen) continue;
-      if (r.moved) { await fresh(); continue; }
-      await page.send('Input.dispatchKeyEvent', { type: 'keyDown', key: 'Escape', code: 'Escape', windowsVirtualKeyCode: 27 });
-      await page.send('Input.dispatchKeyEvent', { type: 'keyUp', key: 'Escape', code: 'Escape', windowsVirtualKeyCode: 27 });
-      await sleep(200);
-      // A document replaced after the look closed (a team switch that reloads once its request is accepted) has lost the
-      // helper and the counters: the press moved the page, late, and the route is opened again (#64).
-      const after = await page.eval<{ replaced: boolean; open: boolean }>(`typeof deepQuery !== 'function' ? { replaced: true, open: false } : { replaced: location.href !== window.__href, open: !!deepQuery('[role="dialog"],[role="alertdialog"],[role="menu"],[role="listbox"]', document.body) }`).catch(() => ({ replaced: true, open: false }));
-      if (!r.changes && !after.replaced) failures.push(`${route} @${width}: "${controls[i]}" does nothing when ${touch ? 'tapped' : 'pressed'}`);
-      if (after.replaced || after.open) await fresh();
+      chosen = page.fileChoosers() > choosers;
+      if (!chosen) r = await look().catch(() => ({ changes: 0, moved: true }));
     }
-    if (page.errors.length) failures.push(`${route} @${width}: ${page.errors[0]}`);
+    if (chosen) continue;
+    if (r.moved) { await fresh(); continue; }
+    await page.send('Input.dispatchKeyEvent', { type: 'keyDown', key: 'Escape', code: 'Escape', windowsVirtualKeyCode: 27 });
+    await page.send('Input.dispatchKeyEvent', { type: 'keyUp', key: 'Escape', code: 'Escape', windowsVirtualKeyCode: 27 });
+    await sleep(200);
+    // A document replaced after the look closed (a team switch that reloads once its request is accepted) has lost the
+    // helper and the counters: the press moved the page, late, and the route is opened again (#64).
+    const after = await page.eval<{ replaced: boolean; open: boolean }>(`typeof deepQuery !== 'function' ? { replaced: true, open: false } : { replaced: location.href !== window.__href, open: !!deepQuery('[role="dialog"],[role="alertdialog"],[role="menu"],[role="listbox"]', document.body) }`).catch(() => ({ replaced: true, open: false }));
+    if (!r.changes && !after.replaced) failures.push(`${route} @${width}: "${controls[i]}" does nothing when ${touch ? 'tapped' : 'pressed'}`);
+    if (after.replaced || after.open) await fresh();
+  }
+  if (page.errors.length) failures.push(`${route} @${width}: ${page.errors[0]}`);
+};
+
+for (const width of WIDTHS) {
+  for (const route of ROUTES) {
+    try {
+      await walk(route, width);
+    } catch (e) {
+      failures.push(`${route} @${width}: could not be walked: ${(e as Error).message.replace(/\s+/g, ' ').trim()}`);
+      await page.open('about:blank', { width, height: 900, theme: 'dark', cookie }).catch(() => {});
+    }
   }
 }
 page.close();
