@@ -31,7 +31,9 @@ the skill (`optional:.agents/skills/zz-meridian/` or `optional:.claude/skills/zz
 keep at the project's Meridian version), follow that copy in it.
 
 A path written `optional:<path>` may not exist in every project (a page the product deleted, a file only some projects
-have); `example:<path>` names a file you write. Every other path the skill names exists.
+have); `example:<path>` is in the template or in some projects only — the guide a `--product` brand deletes, a file only
+some projects keep — and where it is the shape of something you write, the sentence says so. Every other path the skill
+names exists.
 
 ## The rules that always hold
 
@@ -177,7 +179,7 @@ Every product name, sample address and MCP tool name follows `--name`, so nothin
 behind. A brand colour goes in as `--hex`: the OKLCH hue and chroma are derived (chroma capped at 0.18; the theme sets
 lightness so contrast holds), registered everywhere, and checked by the contrast gate in every theme. Its output names
 the hue; when it warns that the hue is near a status hue, step 4 says what to run next. To
-change the brand later, run `npx zz-meridian@<the manifest's version> brand` with the new flags; never `node scripts/brand.ts`, which the manifest does not record.
+change the brand later, run `npx zz-meridian@<the manifest's version> brand` with the new flags; never `node scripts/brand.ts` by hand: the script is Meridian's and an update re-syncs it, but the edit it makes is in the team's own files, which nothing records.
 
 Requirements: Node 22.18 or newer. A new project uses pnpm when it is installed or corepack can run it, npm otherwise;
 an existing one keeps the package manager its lockfile names, and one with no lockfile gets npm, as `adopt` chooses. The
@@ -278,13 +280,16 @@ pnpm verify            # the gate once, one build, the size checks and a smoke o
 pnpm verify --full     # every view at five widths in both themes, every control pressed, the keyboard walk, the assistant; judges no time
 pnpm verify --timed    # the navigation budgets, live data, vitals; alone and last, on a quiet machine
 pnpm verify --full --timed   # the whole standard: the only run that can end "the project meets the Meridian standard"
-node_modules/.bin/next dev --port 3100 & # then, for the renders (stop it with kill $!; with a fake API, set its address first: API_URL=<fake> node_modules/.bin/next dev …):
+pnpm build                     # the renders read a built app: under `next dev` they are pictures of the loading state
+node_modules/.bin/next start --port 3100 & # then, for the renders (stop it with kill $!; with a fake API, set its address first: API_URL=<fake> node_modules/.bin/next start …):
 node scripts/shot.ts / <every other view> --width 1440,390 --theme dark,light --full
 ```
 
-Stop the dev server before verify, which builds and serves the app from the same folder: stop the process you started,
-by its id, never by a name or a pattern, since other servers on the machine may be someone else's. Start Next itself,
-not through `pnpm dev`, whose id is the package manager's and leaves the server running when it is stopped. The default
+A render is evidence only from a built app (`references/standard.md`, "The craft"): under `next dev` a page's
+browser-side reads can fail to fire, and the picture is of a skeleton that passes every check because it has nothing to
+clip and nothing to contrast. Stop the server before verify, which builds in the same folder: stop the process you
+started, by its id, never by a name or a pattern, since other servers on the machine may be someone else's. Start Next
+itself, not through `pnpm dev`, whose id is the package manager's and leaves the server running when it is stopped. The default
 takes about two minutes; `--full` takes about a quarter of an hour for a dozen routes, and `--timed` several minutes
 more. `--timed` judges time, so run it alone on a quiet machine: nothing else building, testing or rendering beside it.
 Every run ends with a coverage line, which says the depth that ran, whether the browser ran (and why not), how many

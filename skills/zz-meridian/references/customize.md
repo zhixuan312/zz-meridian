@@ -61,8 +61,9 @@ sample, ZZ Meridian's own dashboard, lives in `optional:src/system/fixtures/`; y
 
 ## Navigation: `src/app.config.ts`
 
-`app` holds the name, workspace, accent, timezone, currency and the signed-in user the rail shows (all set by
-`scripts/brand.ts`); `slug`, `domain` and `toolPrefix` derive from the name. `nav` is the rail and the command
+`app` holds the name, the description a search engine and a link preview show under it, the workspace, accent,
+timezone, currency and the signed-in user the rail shows (all but the description set by `scripts/brand.ts`); `slug`,
+`domain` and `toolPrefix` derive from the name. `nav` is the rail and the command
 palette: groups of `{ href, label, icon, needs }`, plus a `workspace` while the workspaces stay (icons from `lucide-react`, 1.75 stroke is applied by the rail). A badge
 is a short string, used only for something that needs attention ("1").
 
@@ -398,10 +399,10 @@ orders is the sample's, not the product's.
 - **The choice `explain`**: the sample answers an address a person may not open with the no-access page, which names the
   page and who to ask. Choose `absent` when a product must not tell a person that a page they may not open exists.
 - **The counts each context's lists are capped at**: six services, two open incidents and three resolved on Services,
-  one open incident on Now, eight keys, 24 members and the rest in `optional:src/views/*-context.ts`. They hold the
+  one open incident on Now, eight keys, 24 members and the rest in `optional:src/logic/*-context.ts`. They hold the
   sample's lists within the budget; a product sets its own, at least what its pages state with its own records.
 - **The six title functions and their words**: `homeTitle`, `usageTitle`, `revenueTitle`, `customerTitle`, `nowTitle`
-  and `servicesTitle`, each in its view's context file under `optional:src/views/`, with the functions that call the
+  and `servicesTitle`, each in its view's context file under `optional:src/logic/`, with the functions that call the
   rules for them (`revenueHead`, `titleOf`, `nowHead`, `servicesHead`, Usage's `usageHead` in
   `optional:src/logic/usage-parts.ts` and Home's `homeHead` in `optional:src/logic/home-parts.ts`) and Home's line under its title (`homeLine`). Write your pages' own, in your
   product's nouns: a release "in testing" is the sample's word for its own releases. A run's "without a mark" is

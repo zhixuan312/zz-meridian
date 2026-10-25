@@ -571,7 +571,7 @@ assistant only the caller's own collections that the caller may read. Each appro
 guard, with the records it touches, at the moment it runs, and a permission revoked since the approval refuses it with
 "You no longer have permission to make this change." and changes, emits and invalidates nothing. A committed change
 drops its tenant's cached reads with `revalidateTag(collectionTag(scope.tenantId, name), { expire: 0 })`.
-`assistantTools(collections, writer, guard)` and `respond({ ..., guard })` take that guard.
+`assistantTools(collections, writer, guard, views?, explore?)` and `respond({ ..., guard })` take that guard; `views` adds one read-only `view_<name>` tool per view and `explore` the page's own prepared query, and both are read-only.
 
 ```ts
 const scope = await resolveAccess().catch((e: unknown) => { if (e instanceof Unauthenticated) return null; throw e; });
