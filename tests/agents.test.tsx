@@ -49,6 +49,24 @@ describe('the host bridge', () => {
     vi.restoreAllMocks();
   });
 
+  it('clears a request’s timer when the host answers it', async () => {
+    // The timer was set and never cleared: every answered call held its closure and a live timer for the rest of the
+    // bound, 30 seconds for a tool call. A settled promise leaves nothing behind.
+    vi.useFakeTimers();
+    const sent: { id?: number }[] = [];
+    const spy = vi.spyOn(window, 'postMessage').mockImplementation(((m: { id?: number }) => { sent.push(m); }) as never);
+    try {
+      const b = new HostBridge(window);
+      const p = b.request('ui/open-link', { url: '/x' }, 30_000);
+      window.dispatchEvent(new MessageEvent('message', { data: { jsonrpc: '2.0', id: sent[0].id, result: {} }, source: window }));
+      await p;
+      expect(vi.getTimerCount()).toBe(0);
+    } finally {
+      spy.mockRestore();
+      vi.useRealTimers();
+    }
+  });
+
   it('stops delivering to its listeners once disposed', () => {
     const b = new HostBridge(window);
     const seen: string[] = [];

@@ -49,19 +49,21 @@ function Sweep({ n }: { n: number }) {
   const { setIndex } = useMeridian(Array.from({ length: n }, (_, i) => String(i)));
   useEffect(() => {
     if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-    let i = n - 1, dir = -1, turns = 0, stopped = false;
-    const stop = () => { stopped = true; };
+    let i = n - 1, dir = -1, turns = 0;
+    let id: ReturnType<typeof setInterval> | undefined;
+    // A person pointing, or the demonstration leaving the page, ends it where it stands: the effect's cleanup clears
+    // both timers, so a sweep never outlives the component that started it.
+    const stop = () => { clearTimeout(start); clearInterval(id); };
     window.addEventListener('pointermove', stop, { once: true });
     const start = setTimeout(() => {
-      const id = setInterval(() => {
-        if (stopped) return clearInterval(id);
+      id = setInterval(() => {
         i += dir;
         if (i <= Math.floor(n * 0.15)) { dir = 1; turns++; }
         if (turns > 0 && i >= n - 1) { clearInterval(id); setIndex(null); return; }
         setIndex(i);
       }, 90);
     }, 900);
-    return () => { clearTimeout(start); window.removeEventListener('pointermove', stop); };
+    return () => { stop(); window.removeEventListener('pointermove', stop); };
   }, [n, setIndex]);
   return null;
 }

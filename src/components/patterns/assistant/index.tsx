@@ -295,8 +295,14 @@ export function AssistantColumn({ open, onClose, ask, onAsked }: { open: boolean
     setLoaded(scope);
   }, [setMessages, scope]);
   useEffect(() => {
-    if (loaded === scope) saveThread(localStorage, scope, messages);
-  }, [loaded, scope, messages]);
+    if (loaded !== scope) return;
+    // `messages` changes on every streamed token, and a thread is up to a hundred of them: writing on each one serialised
+    // the whole thread per character. While a reply is arriving the write waits for it to pause; once nothing is
+    // streaming it is written at once, so a person who closes the tab on the answer still has it.
+    if (status !== 'submitted' && status !== 'streaming') { saveThread(localStorage, scope, messages); return; }
+    const timer = setTimeout(() => saveThread(localStorage, scope, messages), 500);
+    return () => clearTimeout(timer);
+  }, [loaded, scope, messages, status]);
   useEffect(() => {
     for (const m of messages) for (const p of m.parts) {
       const part = p as unknown as ToolPart;
