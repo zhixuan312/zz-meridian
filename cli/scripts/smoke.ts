@@ -39,6 +39,7 @@ import os from 'node:os';
 import path from 'node:path';
 
 import { BEGIN, BRIEF_TEMPLATE, END, managedBlock } from '../src/context.ts';
+import { MANAGED_PATH, NEVER_MANAGED } from '../src/ownership.ts';
 
 const ROOT = path.resolve(import.meta.dirname, '../..');
 const VERSION: string = JSON.parse(fs.readFileSync(path.join(ROOT, 'cli/package.json'), 'utf8')).version;
@@ -82,9 +83,9 @@ const coverageOf = (out: string) => /^coverage: .*$/m.exec(out)?.[0] ?? '';
 const sections = ['--adopt', '--create', '--update', '--update-all'];
 
 /** Files a fresh manifest may hold: the managed folders, plus Meridian's own loose files and the three shipped logic helpers, by name. */
-const MANAGED = /^(tokens\/|src\/styles\/|src\/components\/|scripts\/|src\/lib\/|\.agents\/|\.claude\/)|^(src\/views\/console-chrome\.tsx|tests\/setup\.ts|src\/logic\/after-start\.ts|src\/logic\/derivations\.ts|src\/logic\/summarise\.ts)$/;
-const NEVER = (p: string) => p === 'src/app.config.ts' || p === 'scripts/verify.config.ts' || p.startsWith('app/') || p.startsWith('docs/') || (p.startsWith('src/views/') && p !== 'src/views/console-chrome.tsx');
-const unmanaged = (manifest: { files: Record<string, string> }) => Object.keys(manifest.files).filter((p) => !MANAGED.test(p) || NEVER(p));
+// The ownership rule itself, not a copy of it: a copy drifted the first time the rule changed (0.29.0's tests became
+// managed, and this check called them unmanaged).
+const unmanaged = (manifest: { files: Record<string, string> }) => Object.keys(manifest.files).filter((p) => !MANAGED_PATH.test(p) || NEVER_MANAGED(p));
 
 // ── adopt ──────────────────────────────────────────────────────────────────────────────────────────────
 if (args.includes('--adopt') || !sections.some((s) => args.includes(s))) {

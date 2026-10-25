@@ -1,6 +1,6 @@
 // @vitest-environment node
 import { describe, expect, it } from 'vitest';
-import { adoptSetOf, classify, managedPaths, parseManifest } from '../cli/src/ownership.ts';
+import { adoptSetOf, classify, MANAGED_PATH, managedPaths, NEVER_MANAGED, parseManifest } from '../cli/src/ownership.ts';
 
 const h = (c: string) => `sha256-${c.repeat(64)}` as const;
 const A = h('a'), B = h('b'), C = h('c');
@@ -43,6 +43,15 @@ describe('managedPaths', () => {
   // consumer smoke found the alternative: an unedited `tests/format.test.ts` kept asserting the `splitFigure` of 0.28.0
   // while `src/lib/format.ts` moved, and the project's own gate failed after an update that was otherwise correct.
   // Adopt copies none of them: that project brings a test suite of its own.
+  // The consumer smoke checks a manifest read from a tarball, which it cannot enumerate, so it asks the rule as a path
+  // pattern. That copy drifted the first time the rule changed — 0.29.0's tests became managed and the smoke called every
+  // one of them unmanaged, failing the release twice. This holds the two together in the direction that matters: a path
+  // the rule manages is never one the smoke would report.
+  it('says the same thing as the pattern the consumer smoke checks a manifest with', () => {
+    for (const p of managedPaths(payload, 'create')) expect(MANAGED_PATH.test(p) && !NEVER_MANAGED(p), p).toBe(true);
+    for (const p of ['src/app.config.ts', 'app/(dashboard)/page.tsx', 'docs/brief.md', 'src/views/members.tsx', 'scripts/verify.config.ts']) expect(MANAGED_PATH.test(p) && !NEVER_MANAGED(p), p).toBe(false);
+  });
+
   it('takes the tests it ships in a created project, and none of them in an adopted one', () => {
     expect(managedPaths(payload, 'create').has('tests/format.test.ts')).toBe(true);
     expect(managedPaths(payload, 'create').has('tests/key-value.test.tsx')).toBe(true);

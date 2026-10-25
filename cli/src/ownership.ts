@@ -44,6 +44,17 @@ export const OWNERSHIP: readonly string[] = [
 /** The rule as a markdown bullet list, for `references/ownership.md`. */
 export const renderOwnership = (): string => OWNERSHIP.map((l) => `- ${l}`).join('\n');
 
+/**
+ * The managed set as one path pattern, for a caller that holds a manifest but no payload list — the consumer smoke checks
+ * a manifest read from a tarball it never enumerates. `managedPaths` is the rule; this is that rule said once more in a
+ * regex, and `tests/cli-ownership.test.ts` holds the two together over the payload paths it knows. The tests clause is the
+ * `create` route's, so it is permissive for an adopted project — whose manifest never names a test but `tests/setup.ts`.
+ */
+export const MANAGED_PATH = /^(tokens\/|src\/styles\/|src\/components\/|scripts\/|src\/lib\/|\.agents\/|\.claude\/)|^(src\/views\/console-chrome\.tsx|tests\/(?:[^/]+\.test\.tsx?|setup\.ts)|src\/logic\/(?:after-start|derivations|summarise)\.ts)$/;
+
+/** A path inside the managed folders that is the team's all the same: their own views, their app, their docs, their config. */
+export const NEVER_MANAGED = (p: string) => p === 'src/app.config.ts' || p === 'scripts/verify.config.ts' || p.startsWith('app/') || p.startsWith('docs/') || (p.startsWith('src/views/') && p !== 'src/views/console-chrome.tsx');
+
 /** The raw `.meridian/manifest.json`, checked field by field; anything off throws an Error that names it. */
 export function parseManifest(text: string): Manifest {
   let raw: unknown;
