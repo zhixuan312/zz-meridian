@@ -397,4 +397,19 @@ describe('the 0.30.0 migration', () => {
     expect(byId('direct-query-escape').applies(project({ 'src/data/collections.ts': `${call}\n` }))).toBeNull();
     expect(byId('direct-query-escape').applies(path.resolve(import.meta.dirname, '..'))).toBeNull();
   });
+
+  it('finds a configuration whose app object has no description, and leaves one that has', () => {
+    const config = (body: string) => project({ 'src/app.config.ts': body });
+    const app = (keys: string) => `import type { Need } from './lib/collection.ts';\n\nexport const app = {\n${keys}} as const;\n\nexport const nav: readonly NavItem[] = [];\n`;
+    expect(byId('app-description').since).toBe('0.30.0');
+    expect(byId('app-description').applies(config(app("  name: 'Smoke Ops',\n  workspace: 'Production',\n")))).toEqual(['src/app.config.ts']);
+    expect(byId('app-description').applies(config(app("  name: 'Smoke Ops',\n  description: 'Traffic and health for every endpoint.',\n")))).toBeNull();
+    // A config without an `app` object at all is something else's problem, and not a file to edit.
+    expect(byId('app-description').applies(config("export const other = 1;\n"))).toBeNull();
+    // A description outside the app object — a nav item's, a page's — does not stand in for the key.
+    expect(byId('app-description').applies(config(app("  name: 'Smoke Ops',\n") + "\nconst item = { description: 'a rail entry' };\n"))).toEqual(['src/app.config.ts']);
+    // A project with no configuration is not this migration's, and the release's own has the key.
+    expect(byId('app-description').applies(project({}))).toBeNull();
+    expect(byId('app-description').applies(path.resolve(import.meta.dirname, '..'))).toBeNull();
+  });
 });

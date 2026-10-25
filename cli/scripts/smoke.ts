@@ -192,7 +192,7 @@ function zz(pkg: string, cwd: string, a: string[], label: string, env: Record<st
  * The migrations `cli/src/migrations.ts` declares since 0.5.0: changes in the team's own files, resolved by editing them.
  * `verify-modes` is not here: its edit is a flag in a script, and no origin passes one.
  */
-const RELEASE_IDS = ['shell-assistant-promise', 'assistant-available-promise', 'clock-now-required', 'cache-components-config', 'connection-boundaries', 'authorized-read', 'scoped-invalidation', 'live-provider', 'authorized-endpoints', 'share-view-context', 'agent-reads-section', 'assistant-view-tools', 'nav-needs', 'agent-reads-own-group', 'refusal-declared', 'managed-exports-removed', 'view-tool-page-explore', 'agent-does-here-section', 'sample-pages-renamed', 'marker-measured-on-observe', 'view-page-matched-as-next', 'journey-moved', 'today-in-timezone', 'verify-tiers', 'no-data-mark', 'table-grid', 'four-layers', 'direct-query-escape'];
+const RELEASE_IDS = ['shell-assistant-promise', 'assistant-available-promise', 'clock-now-required', 'cache-components-config', 'connection-boundaries', 'authorized-read', 'scoped-invalidation', 'live-provider', 'authorized-endpoints', 'share-view-context', 'agent-reads-section', 'assistant-view-tools', 'nav-needs', 'agent-reads-own-group', 'refusal-declared', 'managed-exports-removed', 'view-tool-page-explore', 'agent-does-here-section', 'sample-pages-renamed', 'marker-measured-on-observe', 'view-page-matched-as-next', 'journey-moved', 'today-in-timezone', 'verify-tiers', 'no-data-mark', 'table-grid', 'four-layers', 'direct-query-escape', 'app-description'];
 
 const filesUnder = (dir: string, rel = ''): string[] => {
   if (!fs.existsSync(path.join(dir, rel))) return [];
@@ -238,6 +238,12 @@ function bringReleaseOver(proj: string, route: string, reported: string[] = []) 
         ? t.replace(/\/\/ read\(\) cannot serve this: /g, '// allow-no-direct-query: read() cannot serve this — ')
         : t));
     }
+  }
+  // `app-description` is 0.30.0's: the release's `app/layout.tsx` shows `app.description` where it wrote a sentence of
+  // the template's own, and the project's own configuration has no such key. The smallest edit its instruction names is
+  // the key itself, beside `name`.
+  if (reported.includes('app-description')) {
+    edit(proj, 'src/app.config.ts', (t) => (/\bdescription\s*:/.test(t) ? t : t.replace(/^(\s*name\s*:[^\n]*,\s*)$/m, '$1\n  description: \'Traffic, latency, revenue and health for every endpoint.\',')));
   }
   if (route === 'adopt') {
     edit(proj, 'next.config.ts', (t) => t.replace(/\/\* config options here \*\//, 'cacheComponents: true,\n  partialPrefetching: true,'));

@@ -533,7 +533,27 @@ export const RELEASE_MIGRATIONS: ReleaseMigration[] = [
     instructions: 'Since 0.30.0 `node scripts/check.ts` reports every `.query(` call in `app/`, `src/logic/`, `src/views/` and `src/lib/`, and keeps the run passing only where the call\'s own line carries the escape the check prints — `// allow-no-direct-query: read() cannot serve this — <why>`. Before this release the rule allowed five sites of the template\'s by line number, so a file of your own that read a collection directly passed as long as the call sat on one of those lines; that list is gone, because a comment added above a call moved it off the line and turned a passing project red for no reason. Read every file named above. Where the read has to be direct — a server action reading the record it is about to change, a streamed export, the sign-in resolving a person before an `AccessScope` exists — state the reason on that line in the form the check prints. Everywhere else, read through `read()`, `readAll()` or `aggregate()` from `@/data/read`, which ask the caller\'s grant.',
     checks: ['gate'],
   },
+  {
+    id: 'app-description',
+    since: '0.30.0',
+    applies: appDescriptionMissing,
+    summary: 'The product describes itself in one sentence: `description` in the `app` object of `src/app.config.ts`.',
+    instructions: 'The release\'s `app/layout.tsx` shows `app.description` as the document\'s description — the line a search engine and a link preview put under the name — where it used to write a sentence of the template\'s own. `src/app.config.ts` is yours and an update does not touch it, so the key is missing there until you add it. Add `description: \'<one sentence about your product>\',` to the `app` object beside `name`. A project that keeps its own `app/layout.tsx` needs the key all the same, because the layout a project brings over from the release reads it.',
+    checks: ['gate'],
+  },
 ];
+
+/** The `app` object of a project's configuration, as `src/app.config.ts` writes it. */
+const APP_OBJECT = /^export const app = \{[\s\S]*?^\} as const;$/m;
+
+/** 0.30.0: the release's layout reads `app.description`, and a project's own configuration has no such key. */
+function appDescriptionMissing(root: string): string[] | null {
+  const rel = 'src/app.config.ts';
+  const body = text(root, rel);
+  if (body === null) return null;
+  const object = APP_OBJECT.exec(body)?.[0];
+  return object && !/\bdescription\s*:/.test(object) ? [rel] : null;
+}
 
 /**
  * A test of the rail that stands over a fake `ResizeObserver` answering `observe` with nothing (0.16.2). The lookbehind
