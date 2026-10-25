@@ -20,7 +20,7 @@ export async function replayRequest(id: string): Promise<ReplayResult> {
     const scope = await resolveAccess();
     if (!(await can(scope, 'requests', 'create'))) return { ok: false, error: 'You do not have permission to replay requests.' };
     const requests = collectionFor(scope, 'requests');
-    const original = (await requests.query({ where: [{ field: 'id', op: 'eq', value: id }] })).rows[0] as RequestRow | undefined; // read() cannot serve this: a server action reads the record it is about to change, uncached
+    const original = (await requests.query({ where: [{ field: 'id', op: 'eq', value: id }] })).rows[0] as RequestRow | undefined; // allow-no-direct-query: read() cannot serve this — a server action reads the record it is about to change, uncached
     if (!original) return { ok: false, error: `No request with id ${id}.` };
     const status = original.method === 'POST' ? 201 : 200;
     const replay = await requests.create!({

@@ -355,23 +355,17 @@ describe('the four-layer rules', () => {
   }, 60_000);
 
   it('carry the reason read() cannot serve it on each of the seven direct reads FR-9 keeps', () => {
-    // FR-9's seven sites, at the lines this tree measures after the reasons are in place: the five the check allows by
-    // site (its own allowlist is checked by the cases above) and the two in src/data/access.ts, which the rule does not
-    // govern and the standard still names. A reason on the line above would move the call off the allowed line.
-    const seven: [string, number][] = [
-      ['src/data/access.ts', 103],
-      ['src/data/access.ts', 299],
-      ['app/sign-in/actions.ts', 16],
-      ['app/sign-in/gated-panel.tsx', 10],
-      ['app/(dashboard)/requests/[id]/actions.ts', 23],
-      ['app/api/export/requests/route.ts', 38],
-      ['src/lib/assistant/tools.ts', 132],
-    ];
-    for (const [file, line] of seven) {
-      const text = fs.readFileSync(path.join(ROOT, file), 'utf8').split('\n')[line - 1] ?? '';
-      expect(text, `${file}:${line} holds the call`).toMatch(/\.query\(/);
-      expect(text, `${file}:${line} carries its reason`).toMatch(/\/\/ read\(\) cannot serve this: \S/);
+    // FR-9's seven sites: the five the check governs, each stating its escape on the call's own line, and the two in
+    // src/data/access.ts, which the rule does not govern and which state the same reason as a comment. A list of line
+    // numbers here broke on the first comment added above one of them; the escape is the call's own statement.
+    const governed = ['app/sign-in/actions.ts', 'app/sign-in/gated-panel.tsx', 'app/(dashboard)/requests/[id]/actions.ts', 'app/api/export/requests/route.ts', 'src/lib/assistant/tools.ts'];
+    for (const file of governed) {
+      const calls = fs.readFileSync(path.join(ROOT, file), 'utf8').split('\n').filter((l) => /\.query\(/.test(l));
+      expect(calls.length, `${file} holds one direct read`).toBe(1);
+      expect(calls[0], `${file} states its escape`).toMatch(/\/\/ allow-no-direct-query: read\(\) cannot serve this — \S/);
     }
+    const access = fs.readFileSync(path.join(ROOT, 'src/data/access.ts'), 'utf8').split('\n').filter((l) => /\.query\(/.test(l) && /\/\/ read\(\) cannot serve this: \S/.test(l));
+    expect(access.length, 'src/data/access.ts holds its two, with their reason').toBe(2);
   });
 
   it('decide what reads by the code, not by a comment that names read()', () => {

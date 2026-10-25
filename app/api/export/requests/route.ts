@@ -35,7 +35,7 @@ export async function GET(request: Request): Promise<Response> {
         return;
       }
       try {
-        const batch = await collection.query({ where: query.where, sort: query.sort, limit: BATCH, offset }); // read() cannot serve this: a streamed export must not be cached
+        const batch = await collection.query({ where: query.where, sort: query.sort, limit: BATCH, offset }); // allow-no-direct-query: read() cannot serve this — a streamed export must not be cached
         total = batch.total;
         const lines = batch.rows.map((r) => csvRow(COLUMNS, line(r)));
         const head = offset === 0 ? csvHeader(COLUMNS) + '\r\n' : '';
