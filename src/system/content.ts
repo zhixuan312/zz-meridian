@@ -121,7 +121,15 @@ function docEntry(d: (typeof DOCS)[number]): Entry | null {
   return { href: d.id === 'overview' ? '/system/start/overview' : `/system/${d.section}/${d.id}`, section: d.section, id: d.id, title: d.title ?? s.title, summary: d.summary ?? s.lead, source: d.file, kind: 'doc' };
 }
 
+/**
+ * Every entry the Atlas lists, read once per process: the walk reads 73 specifications, and the sidebar and the article
+ * both ask for the list on a request-rendered page, so it was read twice for one page. A build reads the files once and
+ * `next start` serves the same text; a preview under `next dev` that edits a README sees it on the next request.
+ */
+let ALL: Entry[] | null = null;
+
 export function entries(): Entry[] {
+  if (ALL) return ALL;
   const out: Entry[] = [];
   for (const d of DOCS.filter((x) => x.section === 'start')) { const e = docEntry(d); if (e) out.push(e); }
   for (const t of TOKEN_VIEWS) out.push({ href: `/system/tokens/${t.id}`, section: 'tokens', id: t.id, title: t.title, summary: t.summary, source: 'tokens/', kind: 'tokens' });
@@ -141,7 +149,9 @@ export function entries(): Entry[] {
     out.push({ href: `/system/pages/${p.id}`, section: 'pages', id: p.id, title: p.title, summary: s?.lead ?? '', status: s?.status, source: p.spec, kind: 'page', template: p.template });
   }
   for (const d of DOCS.filter((x) => x.section === 'products' || x.section === 'system')) { const e = docEntry(d); if (e) out.push(e); }
-  return out.map((e) => ({ ...e })).sort((a, b) => (a.section === b.section && a.kind === 'card' && b.kind === 'card' ? a.title.localeCompare(b.title) : 0));
+  // A copy per call, so a caller that sorts or edits what it is handed cannot change the list the next caller reads.
+  ALL = out.map((e) => ({ ...e })).sort((a, b) => (a.section === b.section && a.kind === 'card' && b.kind === 'card' ? a.title.localeCompare(b.title) : 0));
+  return ALL.map((e) => ({ ...e }));
 }
 
 export function entry(section: string, id: string) {
