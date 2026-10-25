@@ -32,15 +32,19 @@ describe('the request detail shows Replay by failure and by grant', () => {
     <RequestView request={failed as never} trace={[]} payloads={{ request: null, response: '{}' }} routeP95={null} now="2026-10-04T00:00:00.000Z" mayReplay={mayReplay} replay={async (id: string) => ({ ok: true as const, id, status: 200 })} />,
   );
 
+  // The control, not the word: "Replay of <id>" is a fact on the same page, so a test that looked for the string passed
+  // on a page with no button at all.
+  const REPLAY_BUTTON = /<button[^>]*>(?:(?!<\/button>)[\s\S])*?Replay(?:(?!<\/button>)[\s\S])*?<\/button>/;
+
   it('shows Replay for a failed request the person may replay', () => {
     const html = view(true);
-    expect(html).toContain('Replay');
+    expect(html).toMatch(REPLAY_BUTTON);
     expect(html).not.toMatch(WHO_CAN);
   });
 
   it('hides it, and says nothing about who can, when the grant is missing', () => {
     const html = view(false);
-    expect(html).not.toContain('>Replay<');
+    expect(html).not.toMatch(REPLAY_BUTTON);
     expect(html).not.toMatch(WHO_CAN);
   });
 });
