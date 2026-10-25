@@ -48,7 +48,9 @@ Migrate in place, page by page, keeping their data layer.
    gates and scripts in; merges the dependencies and scripts it needs into their `package.json`; adds `@meridian/*`
    (`src/*`) to `tsconfig.json`, keeping theirs as `tsconfig.before.json` when it carries comments or trailing commas,
    which JSON cannot hold; replaces their global stylesheet, keeping theirs beside it as `*.before.css` to port
-   from as tokens; writes a first `nav` from their routes into `src/app.config.ts`; brands it; writes a managed block
+   from as tokens; writes an `eslint.config.ts` when they have no ESLint configuration at all, since the gate runs
+   the lint and a project would otherwise be handed a gate it cannot pass, and keeps a legacy `.eslintrc` with a line
+   saying ESLint 9 no longer reads it; writes a first `nav` from their routes into `src/app.config.ts`; brands it; writes a managed block
    into their `AGENTS.md`, between two marker comments, and keeps every byte outside it (a later run replaces only that
    block; a duplicate or unterminated marker is refused, with the files already copied); writes the five-section brief
    `optional:docs/brief.md` when they have none (SKILL.md, step 3: fill it from their answers); installs this skill into

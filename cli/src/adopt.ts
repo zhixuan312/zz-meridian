@@ -94,8 +94,15 @@ export function projectConfig(template: string, pages: string[]): string {
     .replace(/export const nav: NavGroup\[\] = \[[\s\S]*?\n\];/, `/** Written by zz-meridian adopt from the project's pages: give each its own icon and group them. */\nexport const nav: NavGroup[] = [\n  {\n    items: [\n${items}\n    ],\n  },\n];`);
 }
 
-function verifyConfig(): string {
-  return readPayload('scripts/verify.config.ts').replace(/const config: VerifyConfig = \{[\s\S]*?\n\};/, `const config: VerifyConfig = {
+/**
+ * `scripts/verify.config.ts` as a project gets it. The sample's persona rows are what used `EVERY_ROUTE`, so replacing the
+ * config object leaves the constant declared and never read — which the gate's own lint fails, in the project adopt just
+ * wrote, 0.7 s after the other steps passed. Exported so a test can hold the rewrite to that.
+ */
+export function verifyConfig(): string {
+  return readPayload('scripts/verify.config.ts')
+    .replace(/^const EVERY_ROUTE = \[[^\n]*\n/m, '')
+    .replace(/const config: VerifyConfig = \{[\s\S]*?\n\};/, `const config: VerifyConfig = {
   // One detail page per state worth seeing (a normal record, a failed one, a missing one), with ids from your data.
   detailRoutes: [],
   // What a route a persona may not open draws: the product's choice in src/app.config.ts.
@@ -126,6 +133,19 @@ export default defineConfig({
   test: { environment: 'jsdom', setupFiles: ['./tests/setup.ts'], include: ['tests/**/*.test.{ts,tsx}'], passWithNoTests: true },
 });
 `;
+}
+
+/**
+ * The ESLint configuration a project already has, or `null`. A flat `eslint.config.*` is what ESLint 9 reads; an
+ * `.eslintrc.*` is the legacy form it no longer loads. A function rather than a block inside `adopt` because the
+ * question is the project's alone — does it have one, and is it the form the installed ESLint reads — and a test can put
+ * a file in a folder and ask it, where running the whole `adopt` would need the payload a checkout has only after a build.
+ */
+export function eslintConfigOf(root: string): { file: string; legacy: boolean } | null {
+  const found = ['eslint.config.ts', 'eslint.config.mts', 'eslint.config.js', 'eslint.config.mjs', 'eslint.config.cjs',
+    '.eslintrc.js', '.eslintrc.cjs', '.eslintrc.json', '.eslintrc', '.eslintrc.yml', '.eslintrc.yaml']
+    .find((f) => fs.existsSync(path.join(root, f)));
+  return found ? { file: found, legacy: /^\.eslintrc/.test(found) } : null;
 }
 
 /**
@@ -287,6 +307,17 @@ Rename or move them, then run adopt again.`);
 
   if (!['ts', 'mts', 'js', 'mjs'].some((x) => fs.existsSync(path.join(root, `vitest.config.${x}`)))) writes.set('vitest.config.ts', vitestConfig(atAlias));
   else notes.push('kept your vitest config: add tests/setup.ts to its setupFiles and passWithNoTests for the gate');
+
+  // The gate's lint step runs `eslint .`, and a project with no configuration fails it 0.7 s in with ESLint's own message
+  // about a missing file — which says nothing about Meridian. Measured on a project created by create-next-app with
+  // --no-eslint and then adopted: every other gate step passed and the lint was the only red.
+  const eslint = eslintConfigOf(root);
+  if (!eslint) {
+    writes.set('eslint.config.ts', readPayload('eslint.config.ts'));
+    notes.push('added eslint.config.ts: the gate runs the lint, and this project had no ESLint configuration');
+  } else if (eslint.legacy) {
+    notes.push(`kept ${eslint.file}, which ESLint 9 no longer reads: the gate's lint fails until it becomes an eslint.config.mjs`);
+  }
 
   if (!fs.readdirSync(path.join(root, dir)).some((f) => /^(icon|favicon)\./.test(f))) writes.set(`${dir}/icon.ts`, exactImports(`${dir}/icon.ts`, readPayload('app/icon.ts'), known));
 
