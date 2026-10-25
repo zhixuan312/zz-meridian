@@ -39,11 +39,11 @@ async function message(evs: any[]): Promise<UIMessage> {
   return last!;
 }
 /** Asks for `toolName(input)`, approves it, and returns the approved history and the second response's events. */
-async function approved(c: ReturnType<typeof items>, id: string, toolName: string, input: unknown) {
-  const first = await message(await events(await respond({ model: model(call(id, toolName, input)), secret: SECRET, now: NOW, messages: ask, page, collections: [c], guard })));
+async function approved(c: ReturnType<typeof items>, id: string, toolName: string, input: unknown, g = guard) {
+  const first = await message(await events(await respond({ model: model(call(id, toolName, input)), secret: SECRET, now: NOW, messages: ask, page, collections: [c], guard: g })));
   for (const p of first.parts as any[]) if (p.toolCallId === id) { p.state = 'approval-responded'; p.approval = { ...p.approval, approved: true }; }
   const history = [...ask, first];
-  const run = async () => events(await respond({ model: model(say), secret: SECRET, now: NOW, messages: structuredClone(history), page, collections: [c], guard }));
+  const run = async () => events(await respond({ model: model(say), secret: SECRET, now: NOW, messages: structuredClone(history), page, collections: [c], guard: g }));
   return { run };
 }
 
@@ -54,6 +54,20 @@ describe('an approved change', () => {
     await run();
     const again = await run();
     expect(again.some((e) => e.type === 'tool-output-error' && /already applied/.test(e.errorText))).toBe(true);
+    expect((await c.query({})).total).toBe(3);
+  });
+
+  test('a change the guard refused has not been applied, so the same approval may be sent again', async () => {
+    // A grant withdrawn between the approval and the run: the change throws, writes nothing, and the call is still the
+    // person's to send. Burning its id on the way out answered the second try "already applied" and lost the change.
+    let asked = 0;
+    const withdrawnOnce = { authorize: async () => ++asked > 1, invalidate: () => {} };
+    const c = items();
+    const { run } = await approved(c, 'g1', `create_${c.name}`, { name: 'Three' }, withdrawnOnce);
+    const refused = await run();
+    expect(refused.some((e) => e.type === 'tool-output-error' && /no longer have permission/.test(e.errorText))).toBe(true);
+    const again = await run();
+    expect(again.some((e) => e.type === 'tool-output-error')).toBe(false);
     expect((await c.query({})).total).toBe(3);
   });
 

@@ -22,6 +22,9 @@ async function once<R>(toolCallId: string, run: () => Promise<R>): Promise<R> {
   try {
     return await run();
   } catch (e) {
+    // A change that threw wrote nothing, so the call has not been applied and its id is the person's again: sending the
+    // same approval after fixing the record hears the real reason a second time, never "already applied".
+    applied().delete(toolCallId);
     throw new ChangeRefused(e instanceof z.ZodError ? `The change does not fit: ${e.issues.map((i) => `${i.path.join('.') || 'record'} ${i.message.toLowerCase()}`).join('; ')}.` : e instanceof Error ? e.message : 'The change did not go through.');
   }
 }
