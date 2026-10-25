@@ -90,11 +90,23 @@ const pidAlive = (pid: number) => {
   try { process.kill(pid, 0); return true; } catch (e) { return (e as NodeJS.ErrnoException).code === 'EPERM'; }
 };
 
+/**
+ * The session folders under `.meridian/update/`, oldest name first. Only folders: the same folder holds whatever else a
+ * person's tools leave there — Finder's `.DS_Store`, an editor's swap file — and one of those read as a session is a
+ * version that does not exist. `loadSession` filtered for that and this did not, so a stray file made `status` report a
+ * session of version `.DS_Store` and made `update` prescribe `npx zz-meridian@.DS_Store update --resume`, which then
+ * refused, leaving no way forward. One list, read the same way by both.
+ */
+export function sessionDirs(root: string): string[] {
+  const base = path.join(root, '.meridian', 'update');
+  if (!fs.existsSync(base)) return [];
+  return fs.readdirSync(base).filter((n) => { try { return fs.lstatSync(path.join(base, n)).isDirectory(); } catch { return false; } }).sort();
+}
+
 /** The phase of the one session folder under `.meridian/update/`, or a note when it cannot be read. */
 function sessionState(root: string): { dir: string; phase: string; version: string } | null {
   const base = path.join(root, '.meridian', 'update');
-  if (!fs.existsSync(base)) return null;
-  const [first] = fs.readdirSync(base).sort();
+  const [first] = sessionDirs(root);
   if (!first) return null;
   let phase = 'unreadable';
   try { phase = parseJournal(fs.readFileSync(path.join(base, first, 'state.json'), 'utf8')).phase; } catch { /* named as unreadable */ }
@@ -493,7 +505,7 @@ function serializeManifest(m: Manifest): string {
  */
 function loadSession(ctx: Context): Loaded | string {
   const base = path.join(ctx.root, '.meridian', 'update');
-  const names = fs.existsSync(base) ? fs.readdirSync(base).filter((n) => fs.lstatSync(path.join(base, n)).isDirectory()).sort() : [];
+  const names = sessionDirs(ctx.root);
   if (names.length === 0) return 'there is no update session in .meridian/update/; start one with npx zz-meridian@latest update';
   if (names.length > 1) return `.meridian/update/ holds ${names.length} sessions (${names.join(', ')}); finish or abort all but one by hand`;
   const rel = `.meridian/update/${names[0]}`;
