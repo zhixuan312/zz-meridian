@@ -137,15 +137,21 @@ const press = async (modifiers: number) => {
 const page = await launch();
 
 let failures = 0;
-for (const route of ROUTES) {
+
+/**
+ * One route's walk. A page that stops answering — a protocol command times out after 30 s (`scripts/lib/chrome.ts`) — is
+ * that route's own failure, named and counted, and the walk goes on to the next one, as `scripts/audit.ts` measures each
+ * route in a guard of its own. Without it one hanging page ended the suite and its evidence for every route after it.
+ */
+const walk = async (route: string) => {
   await page.open(base + route, { width: 1440, height: 900, theme: 'dark', wait: 2500, cookie });
   // One implementation of the walk: the helper is injected, never copied. A page it cannot be injected into fails the suite.
   try {
     if (!(await page.eval<boolean>(`${DEEP_SOURCE}\n;typeof deepAll === 'function' && typeof deepActive === 'function' && typeof deepParent === 'function' && typeof deepText === 'function'`))) throw new Error('the helper is not defined after injection');
   } catch (e) {
+    // The route is named and counted by the guard around this walk; the suite goes on to the next one.
     console.error(`keyboard: cannot inject the deep-DOM helper into ${route}: ${(e as Error).message}`);
-    page.close();
-    process.exit(1);
+    throw new Error('the deep-DOM helper could not be injected');
   }
   // The shell's late chrome first: a walk that starts before it has arrived counts a different page on the way back.
   await settle(page);
@@ -206,6 +212,16 @@ for (const route of ROUTES) {
   const unique = [...new Set(problems)];
   if (unique.length) { failures += unique.length; console.log(`FAIL ${route} (${reached.size} of ${total} stops)\n  ${unique.slice(0, 12).join('\n  ')}`); }
   else console.log(`ok   ${route} (${reached.size} stops, every one ringed and on top, ${wrapped && order.length ? 'and the same in reverse' : 'the reverse walk not run: Tab did not come back round'})`);
+};
+
+for (const route of ROUTES) {
+  try {
+    await walk(route);
+  } catch (e) {
+    failures += 1;
+    console.log(`FAIL ${route}\n  could not be walked: ${(e as Error).message.replace(/\s+/g, ' ').trim()}`);
+    await page.open('about:blank', { width: 1440, height: 900, theme: 'dark', wait: 0, cookie }).catch(() => {});
+  }
 }
 page.close();
 console.log(`\nkeyboard: ${failures} issues across ${ROUTES.length} routes`);
