@@ -32,9 +32,11 @@ export function CopyField({
   // always shows eight dots, so the mask says nothing about the length.
   const display = shown ? value : value.slice(0, value.lastIndexOf('_') + 1) + '•'.repeat(8) + value.slice(-4);
   return (
-    <div className={cn('flex h-(--control-md) min-w-0 items-center rounded-md border border-line-strong bg-surface-sunk pl-3 shadow-control', className)}>
+    // The name is the group's, not the value's: `<code>` does not take an accessible name, so the label on it was read
+    // by nothing. The group is what a screen reader announces on the way in, and the value is read as its content.
+    <div role="group" aria-label={label} className={cn('flex h-(--control-md) min-w-0 items-center rounded-md border border-line-strong bg-surface-sunk pl-3 shadow-control', className)}>
       {/* The title is what is shown, whole: for a masked secret that is the mask, never the secret. */}
-      <code aria-label={label} title={display} className="min-w-0 flex-1 truncate font-mono text-xs text-ink">{display}</code>
+      <code title={display} className="min-w-0 flex-1 truncate font-mono text-xs text-ink">{display}</code>
       {secret ? (
         <button
           type="button"

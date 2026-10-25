@@ -76,7 +76,9 @@ export function ToastView({
  * live region: each toast's own role announces it, once.
  */
 export function Toaster() {
-  const [list, setList] = useState<ToastItem[]>([]);
+  // What is already raised: a toast sent before the Toaster mounted (the first thing a page does after hydration) used to
+  // wait for the next emit and was never shown.
+  const [list, setList] = useState<ToastItem[]>(() => items);
   useEffect(() => {
     listeners.push(setList);
     return () => void (listeners = listeners.filter((l) => l !== setList));

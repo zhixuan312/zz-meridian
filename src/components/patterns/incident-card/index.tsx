@@ -78,8 +78,9 @@ export function IncidentCard({ incident, now, variant = 'card', className }: { i
         ) : null}
       </div>
       <ol aria-label="Updates" className="relative mx-(--card-pad) mt-5 mb-(--card-pad) flex flex-col gap-5 border-t border-line pt-5">
+        {/* Two updates stamped in the same millisecond are two updates: the index keeps both in the list. */}
         {updates.map((u, i) => (
-          <li key={u.at} className="relative grid grid-cols-[14px_minmax(0,1fr)] gap-x-3">
+          <li key={`${i}-${u.at}`} className="relative grid grid-cols-[14px_minmax(0,1fr)] gap-x-3">
             {i < updates.length - 1 ? <span aria-hidden className="absolute top-4 bottom-[-20px] left-[6.5px] w-px bg-line" /> : null}
             <span aria-hidden className="mt-1.5 grid size-3.5 place-items-center">
               {i === 0 && live ? <StatusDot tone={st.tone} live /> : <span className="size-1.5 rounded-full bg-ink-3" />}

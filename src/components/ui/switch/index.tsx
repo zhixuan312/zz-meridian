@@ -8,6 +8,11 @@ type Props = Omit<ComponentPropsWithoutRef<typeof S.Root>, 'children'> & {
   label?: ReactNode;
   description?: ReactNode;
   size?: 'sm' | 'md';
+  /**
+   * Styles the control's outer element: the labelled row (switch and label together) when a label is passed, the
+   * control itself when none is.
+   */
+  className?: string;
 };
 
 /**

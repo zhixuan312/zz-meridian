@@ -116,7 +116,9 @@ export function usePaged<T>(rows: readonly T[], { pageSize = 10, resetKey = '' }
   const page = at.key === resetKey ? Math.min(at.page, count) : 1;
   return {
     rows: rows.slice((page - 1) * size, page * size),
-    paged: rows.length > pageSize,
+    // The size on screen, not the one it opened with: a list of 26 with 100 a page is one page, and the pager was drawn
+    // anyway because 26 is more than the ten it started at.
+    paged: rows.length > size,
     pagination: {
       page,
       pageSize: size,

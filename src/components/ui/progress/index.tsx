@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import { useId, type ReactNode } from 'react';
 import { cn } from '@/lib/cn';
 import type { Tone } from '@/components/ui/badge';
 
@@ -28,11 +28,14 @@ export function Progress({
   className?: string;
 }) {
   const pct = Math.max(0, Math.min(100, (value / (max || 1)) * 100));
+  // A label that is a string names the bar itself; one that is drawn (an icon and words) names it through the element
+  // it is, so `role="progressbar"` is never left unnamed.
+  const name = useId();
   return (
     <div className={cn('min-w-0', className)}>
       {label !== undefined || valueLabel !== undefined ? (
         <div className="mb-2 flex items-baseline gap-3 text-sm">
-          <span className="min-w-0 flex-1 truncate text-ink-2">{label}</span>
+          <span id={name} className="min-w-0 flex-1 truncate text-ink-2">{label}</span>
           <span className="t-num font-medium">{valueLabel ?? `${Math.round(pct)}%`}</span>
         </div>
       ) : null}
@@ -42,6 +45,7 @@ export function Progress({
         aria-valuemax={max}
         aria-valuenow={value}
         aria-label={typeof label === 'string' ? label : undefined}
+        aria-labelledby={typeof label === 'string' || label === undefined ? undefined : name}
         className={cn('overflow-hidden rounded-full bg-fill-track', size === 'sm' ? 'h-1' : 'h-1.5')}
       >
         <div className={cn('grow-x h-full rounded-full', FILL[tone])} style={{ width: `${pct}%` }} />

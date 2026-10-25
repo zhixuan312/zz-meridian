@@ -219,8 +219,11 @@ export function TrendChart({
         const tail = cut && k === series.length - 1 && series.some((p) => typeof p.values[n - 1] === 'number') ? monotonePath(top, n - 2) : '';
         return { s: series[k], k, line, tail, area: `${line}${monotonePath(bottom, cut).replace(/^M/, 'L')}Z` };
       }) ?? [],
+    // The geometry the paths are drawn on is scalar, so it is listed rather than left out: a page whose dates grew with the
+    // same values array would otherwise keep paths drawn to the old spacing. `x` and `y` are the only pieces left, and
+    // they are these numbers put together.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [bases, width, h, top, running],
+    [bases, width, h, top, running, n, pad.l, pad.t, W, H, low],
   );
 
   const paths = useMemo(
@@ -243,7 +246,7 @@ export function TrendChart({
         return { s, line, area, tail: open ? monotonePath(last, last.length - 2) : '' };
       }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [series, width, h, low, top, running],
+    [series, width, h, low, top, running, n, pad.l, pad.t, W, H],
   );
 
   // What the plot draws, as the label placer needs it: every line, and the top of every band of a stack.

@@ -10,6 +10,12 @@ type Props = Omit<ComponentPropsWithoutRef<typeof C.Root>, 'children'> & {
   label?: ReactNode;
   /** A line under the label. */
   description?: ReactNode;
+  /**
+   * Styles the control's outer element: the labelled row (box and label together) when a label is passed, the control
+   * itself when none is. `className` is one prop for one element either way, which is the row a caller lays out.
+   */
+  className?: string;
+
 };
 
 /**
