@@ -152,6 +152,11 @@ jobs:
           cache: pnpm
 
       - run: pnpm install --frozen-lockfile
+      # The template snapshot the package carries: `cli/payload/` is a build output, so a fresh checkout has none, and
+      # the package's own tests read it — `adopt`'s configuration and skill tests read files from it. Built from HEAD,
+      # which is the release commit here. `weekly.yml` builds it for the same tests.
+      - name: The template snapshot the package carries
+        run: node cli/scripts/build-payload.ts
       # The tests only this repository has: tests/cli-* (the package's own) and tests/deep-* (the browser-fixture tests of
       # the checks, about 230 s). No adopted or created project has them, so the default verify below leaves them
       # out, and they run here, once. The deep files each launch headless Chrome (deep-checks runs five suites at a time),

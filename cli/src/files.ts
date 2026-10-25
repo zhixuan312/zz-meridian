@@ -21,11 +21,24 @@ export const VERSION: string = JSON.parse(fs.readFileSync(path.resolve(path.dirn
 export const shippedPath = (rel: string) => (rel === '.gitignore' ? 'gitignore' : rel);
 export const projectPath = (rel: string) => (rel === 'gitignore' ? '.gitignore' : rel);
 
+/**
+ * The message a checkout gets when it asks for the payload and nobody has built it. `cli/payload/` is a build output, so
+ * a fresh clone has none, and without this the failure was a bare `ENOENT` on whichever file the reader wanted first, or
+ * — worse — an empty list, which a test read as "the template has no skill files".
+ */
+const NOT_BUILT = 'cli/payload/ has not been built: run `node cli/scripts/build-payload.ts` (or `--worktree` to build what the working tree holds) and run this again.';
+
 /** A payload file's bytes, by its project path. */
-export const payloadBytes = (rel: string) => fs.readFileSync(path.join(PAYLOAD, shippedPath(rel)));
+export function payloadBytes(rel: string): Buffer {
+  if (!fs.existsSync(PAYLOAD)) throw new Error(NOT_BUILT);
+  const abs = path.join(PAYLOAD, shippedPath(rel));
+  if (!fs.existsSync(abs)) throw new Error(`${rel} is not in cli/payload/, which was built before that file was added or left it out: run \`node cli/scripts/build-payload.ts\` again.`);
+  return fs.readFileSync(abs);
+}
 
 /** Every file under a payload folder, as project paths. Symbolic links are never followed. */
 export function payloadFiles(dir = ''): string[] {
+  if (!fs.existsSync(PAYLOAD)) throw new Error(NOT_BUILT);
   const out: string[] = [];
   const walk = (rel: string) => {
     for (const e of fs.readdirSync(path.join(PAYLOAD, rel), { withFileTypes: true })) {
