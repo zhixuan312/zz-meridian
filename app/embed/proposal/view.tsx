@@ -17,7 +17,13 @@ const IMPACT = "Applies to all 9 of Northwind Labs' API keys within a minute. Lo
 
 /** The whole state of the proposal, every time: a host keeps only the latest context, so an outcome never travels alone. */
 function proposalContext(state: ProposalState): SharedContext {
-  const outcome = state === 'applied' ? 'this proposal, which they approved: the change is applied.' : state === 'dismissed' ? 'this proposal, which they dismissed: nothing changed.' : 'this proposal, which waits for them to approve or dismiss it.';
+  const outcome =
+    state === 'applied' ? 'this proposal, which they approved: the change is applied.'
+    : state === 'dismissed' ? 'this proposal, which they dismissed: nothing changed.'
+    : state === 'failed' ? 'this proposal, which could not be applied: nothing changed.'
+    : state === 'applying' ? 'this proposal, which they approved and which is being applied.'
+    : state === 'expired' ? 'this proposal, which expired: nothing changed.'
+    : 'this proposal, which waits for them to approve or dismiss it.';
   return {
     view: 'proposal',
     title: 'Proposal',
@@ -45,10 +51,19 @@ export function EmbedProposal() {
         impact={IMPACT}
         state={state === 'applied' || state === 'dismissed' ? state : undefined}
         onApprove={async () => {
-          // Connected: the product's own tool applies the change, through the host. Standalone: a simulated delay.
-          if (callTool) await callTool(`${toolPrefix}_set_rate_limit`, { customer: 'northwind-labs', rpm: 2400, burst: 3600 });
-          else await wait(900);
-          setState('applied');
+          setState('applying');
+          try {
+            // Connected: the product's own tool applies the change, through the host. Standalone: a simulated delay.
+            // An MCP tool answers a refusal in its result rather than by throwing, so `isError` is read as one: the
+            // card said "applied" for a tool that refused, and the model was told the same.
+            if (callTool) {
+              const result = await callTool(`${toolPrefix}_set_rate_limit`, { customer: 'northwind-labs', rpm: 2400, burst: 3600 });
+              if ((result as { isError?: boolean } | null)?.isError) throw new Error('refused');
+            } else await wait(900);
+            setState('applied');
+          } catch {
+            setState('failed');
+          }
         }}
         onDismiss={() => setState('dismissed')}
       />

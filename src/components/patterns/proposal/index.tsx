@@ -53,7 +53,9 @@ export function Proposal({
     try { await onApprove?.(); setOwn('applied'); } catch { setOwn('failed'); }
   };
   const settled = state === 'applied' || state === 'dismissed' || state === 'expired';
-  const buttons = controlled ? state === 'pending' : !settled;
+  // A proposal that failed offers the same choice it did before it ran: the card says nothing changed, and the person
+  // may try again. Controlled or not, that is the state's meaning rather than the caller's to restate.
+  const buttons = controlled ? state === 'pending' || state === 'failed' : !settled;
   return (
     <article
       aria-label={`Proposal from ${agent}: ${title}`}

@@ -27,6 +27,17 @@ describe('agent affordances', () => {
     await waitFor(() => expect(screen.getByRole('alert').textContent).toMatch(/nothing changed/i));
     expect(screen.getByRole('button', { name: /try again/i })).toBeInTheDocument();
   });
+
+  it('offers to try again when the caller owns the state and it says the change failed', () => {
+    // An embed's proposal is controlled, and a tool that refused left it in `failed` with no button at all: the card
+    // said "Not applied" and the person could do nothing about it.
+    const apply = vi.fn(() => Promise.reject(new Error('no')));
+    render(<Proposal title="Raise the limit" reason="r" changes={[]} state="failed" onApprove={apply} />);
+    expect(screen.getByText('Not applied')).toBeInTheDocument();
+    expect(screen.getByRole('alert').textContent).toMatch(/nothing changed/i);
+    fireEvent.click(screen.getByRole('button', { name: /try again/i }));
+    expect(apply).toHaveBeenCalledTimes(1);
+  });
 });
 
 describe('the host bridge', () => {
