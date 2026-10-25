@@ -360,8 +360,11 @@ function Elevation({ groups }: { groups: TokenGroup[] }) {
         <p className="t-small mt-2 max-w-[62ch] text-ink-2">{glass.about}</p>
         <div className="mt-6 grid gap-4 lg:grid-cols-2">
           {glass.tokens.map((t) => (
-            <div key={t.name} className="rounded-lg border border-line bg-surface p-5">
-              {/* What is beneath is drawn here and hidden from the reader: glass is only legible over something moving. */}
+            <div key={t.name} className="min-w-0 rounded-lg border border-line bg-surface p-5">
+              {/* `min-w-0` above: the line drawn behind the glass is `whitespace-nowrap` and sets this card's min-content
+                  width, so without it the card refuses to shrink into a phone's grid track and draws 9px past it — the
+                  demo box below clips what is behind the glass, so nothing needs the card to grow. What is beneath is
+                  drawn here and hidden from the reader: glass is only legible over something moving. */}
               <div aria-hidden className="relative h-24 overflow-hidden rounded-md border border-line bg-ground p-3">
                 <div className="flex flex-col gap-1.5">
                   {Array.from({ length: 5 }, (_, i) => <span key={i} className="t-caption whitespace-nowrap text-ink-3">Requests · 12 Sept · 128,402 · 294 ms · eu-central-1</span>)}
