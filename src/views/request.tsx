@@ -55,6 +55,21 @@ function Waterfall({ spans, total }: { spans: Span[]; total: number }) {
   );
 }
 
+/**
+ * Copy `text`, and say so only once the write resolved. `navigator.clipboard` is absent outside a secure context and
+ * `writeText` rejects when the frame is not focused: the toast used to claim a copy either way, on a page whose whole
+ * purpose is handing somebody the exact command or id to paste elsewhere.
+ */
+async function copy(text: string, title: string) {
+  try {
+    if (!navigator.clipboard) throw new Error('no clipboard');
+    await navigator.clipboard.writeText(text);
+    toast({ tone: 'positive', title });
+  } catch {
+    toast({ tone: 'critical', title: 'Not copied', description: 'Your browser did not let the page copy it. Select the text and copy it yourself.' });
+  }
+}
+
 function Code({ body, label }: { body: string; label: string }) {
   return (
     <div className="relative flex flex-1 flex-col">
@@ -64,7 +79,7 @@ function Code({ body, label }: { body: string; label: string }) {
         variant="ghost"
         icon={<Copy />}
         className="absolute top-2 right-2 bg-surface/80 backdrop-blur-md"
-        onClick={() => { void navigator.clipboard?.writeText(body); toast({ tone: 'positive', title: `${label} copied` }); }}
+        onClick={() => { void copy(body, `${label} copied`); }}
       >
         Copy
       </Button>
@@ -104,13 +119,13 @@ export function RequestView({ request: r, trace, payloads, routeP95, now, replay
         ],
         primary: (
           <>
-            <Button icon={<Terminal />} onClick={() => { void navigator.clipboard?.writeText(curlOf(r, payloads.request)); toast({ tone: 'positive', title: 'cURL command copied' }); }}>Copy as cURL</Button>
+            <Button icon={<Terminal />} onClick={() => { void copy(curlOf(r, payloads.request), 'cURL command copied'); }}>Copy as cURL</Button>
             {failed && mayReplay ? <Button variant="primary" icon={<RotateCw />} busy={replaying} onClick={sendAgain}>Replay</Button> : null}
           </>
         ),
         more: [
-          { label: 'Copy request ID', icon: <Copy />, onSelect: () => { void navigator.clipboard?.writeText(r.id); toast({ tone: 'positive', title: 'Request ID copied' }); } },
-          { label: 'Copy link', icon: <Link2 />, onSelect: () => { void navigator.clipboard?.writeText(location.href); toast({ tone: 'positive', title: 'Link copied' }); } },
+          { label: 'Copy request ID', icon: <Copy />, onSelect: () => { void copy(r.id, 'Request ID copied'); } },
+          { label: 'Copy link', icon: <Link2 />, onSelect: () => { void copy(location.href, 'Link copied'); } },
           { label: 'Open API keys', icon: <KeyRound />, onSelect: () => router.push('/keys') },
         ],
       })}
