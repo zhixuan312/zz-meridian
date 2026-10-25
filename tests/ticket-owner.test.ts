@@ -13,8 +13,14 @@ import { createTicket } from '../app/(dashboard)/operations-tickets/actions';
 import { readAlerts } from '@/logic/alerts';
 import { readTickets } from '@/data/tickets';
 import { ticketsContext } from '@/logic/tickets-context';
+import { collections } from '@/data/collections';
 
 beforeEach(() => { jar.value = 'members_1'; });
+/** Put a record the test removed back, so the sample's store is as this file found it for whatever runs after it. */
+const putBack = async (name: string, row: Record<string, unknown>) => {
+  const c = collections.find((x) => x.name === name)!;
+  if (!(await c.query({ where: [{ field: String(c.key), op: 'eq', value: String(row[String(c.key)]) }] })).total) await c.create!(row as never);
+};
 
 describe('a ticket whose owner has left the workspace', () => {
   it('has no owner everywhere: on the page, in what the assistant is told, and in the bell', async () => {
@@ -24,6 +30,7 @@ describe('a ticket whose owner has left the workspace', () => {
     expect((await readTickets()).rows.find((t) => t.title === title)!.assignee).toBeTruthy();
     expect((await readAlerts()).alerts.some((a) => a.title.includes(title))).toBe(false);
 
+    const owner = (await collections.find((c) => c.name === 'members')!.query({ where: [{ field: 'id', op: 'eq', value: 'members_4' }] })).rows[0] as unknown as Record<string, unknown>;
     expect(await removeMember('members_4')).toEqual({ ok: true });
     const { rows, observedAt } = await readTickets();
     expect(rows.find((t) => t.title === title)!.assignee).toBeNull();
@@ -31,5 +38,7 @@ describe('a ticket whose owner has left the workspace', () => {
     expect(told.insights.some((i) => /no owner/.test(i.text) && i.text.includes(title))).toBe(true);
     // The bell judges it as the page does, by whether anybody is there to own it.
     expect((await readAlerts()).alerts.some((a) => a.title.includes(title))).toBe(true);
+    // The removal stands for this test only: a second test in this file would otherwise start a member short.
+    await putBack('members', owner);
   });
 });
