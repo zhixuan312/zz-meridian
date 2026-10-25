@@ -422,7 +422,7 @@ function summaryOf<T>(out: string, tag: string): T | null {
 }
 
 /** A suite's line. One that left a case unrun is `not run`, stays in the coverage line's not-run list, and fails nothing. */
-function reportSuite(name: string, label: string, r: { status: number | null; out: string; took: number }) {
+function reportSuite(name: string, label: string, r: { status: number | null; out: string; took: number }): void {
   const outcome = suiteOutcome(r.status);
   if (outcome === 'ok') ranSuites.add(name);
   if (outcome === 'FAIL') failedSuites.add(name);
@@ -432,7 +432,6 @@ function reportSuite(name: string, label: string, r: { status: number | null; ou
   if (outcome === 'FAIL') beneath([...phone, ...out.filter((l) => !phone.includes(l)).slice(-60)]);
   else if (outcome === 'not run') beneath([...phone, ...out.filter((l) => l.startsWith('not run')), out.at(-1) ?? '']);
   else beneath([...phone, ...out.filter((l) => l.startsWith('n/a')), out.at(-1) ?? '']);
-  return outcome !== 'FAIL';
 }
 
 // ---- the sequence ----
