@@ -97,6 +97,16 @@ export default function MetricTilePreview() {
           </div>
         </Meridian>
       </Specimen>
+      {/* The pointed day is the one figure a person came to check, so a day nothing was measured for says so rather than
+          standing the period's total in its place. */}
+      <Specimen label="Reading a day with no number" note="A day the tile has no measurement for reads as not measured, and names the day. It never falls back to the period's total, which would be a different day's answer.">
+        <Meridian dates={dates}>
+          <PointAt i={18} />
+          <div className="grid w-full gap-4 sm:grid-cols-2">
+            <MetricTile label="Requests" icon={<Zap />} value={2_943_120} delta={0.057} points={s.map((d, i) => (i === 18 ? null : d.requests))} format={formatCompact} />
+          </div>
+        </Meridian>
+      </Specimen>
       <Specimen label="Points that are not the page's" note="A tile reads the pointed point only when it has one point for each of the Meridian's dates. Here the page holds 30 days and points at one of them: the tile of 30 points reads it, and the tile of a customer's 14 keeps its period, its change and a Sparkline with no cursor.">
         <Meridian dates={dates}>
           <PointAt i={18} />

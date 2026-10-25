@@ -26,6 +26,7 @@ Card, Delta, Status dot, Tooltip, Sparkline. Tiles sit in a `Row split="tiles"`,
 - `format` turns the number into its text: a name (`count`, `compact`, `cost`, `cost-compact`, `duration`, `percent`), which a server page can pass, or a function from a client component; the default split recognises "$298.43" (any currency symbol from `app.currency`), "2.9M", "0.90%" and "294ms".
 - `finding` is `{ text, day?, tone }`. The tone is `neutral` or `warning` and has no default: the code that counts a finding knows whether it is a fact or something to look at, and says so.
 - A tile reads the page's cursor only when its `points` has one value for each of the Meridian's dates, which is the rule a chart joins the Meridian by. With any other number of points, or with none, it keeps the period's figure and its change while the rest of the page reads the pointed day: a customer's 14 days on a page of 30 are not the page's days, and the day at the same position would be the wrong one.
+- A pointed day the tile has no number for (`null` at that point) reads as not measured — `—` and the day named with "No reading for this day" — never as the period's total, which is a different day's answer.
 - Under two points there is no shape: the tile draws no Sparkline and is laid out as a tile given none.
 
 - A figure is never cut. Past nine characters of number (`FIGURE_MAX`), `fitFigure` sets it at a glance with its unit kept: "9,876,543,210" reads "9.9B", "$1,234,567.89" reads "$1.2M". The exact amount is in the table behind the figure. The Extreme values specimen holds the largest figures the formatters print.
@@ -80,6 +81,7 @@ The step is the tile's, not its content's. A container query measures a content 
 |---|---|
 | Rest | as above |
 | Meridian reading | The figure reads the pointed point; the change line names it ("22 Sept 2026"); a hairline marks it on the sparkline. Only when the tile's points are the page's |
+| Meridian reading, no number | `—` and "No reading for this day" under the day it names, where a pointed point is `null` |
 | Points that are not the page's | The figure and the change stay as at rest, and the Sparkline draws no cursor |
 | No earlier period | "No earlier period to compare" in place of the change |
 | Loading | The tile has none of its own: the page's loading state draws its shape with Page loading's `TilesSkeleton` (figure bar, two lines) |

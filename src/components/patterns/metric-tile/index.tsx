@@ -115,7 +115,13 @@ export function MetricTile({
   const reading = !compact && index !== null && points && points.length === dates.length ? points[index] : null;
   const fmt = typeof format === 'function' ? format : (n: number) => formatBy(format ?? 'count', n);
   const word = typeof value === 'string';
-  const text = word && reading === null ? value : fitFigure(fmt(reading ?? (word ? 0 : value)), reading ?? (word ? 0 : (value as number)));
+  // A day the tile has no number for is not the same as no day pointed at. Reading `null` for both made a pointed day
+  // with no measurement draw the period's total and its change as though that were the day's: the one figure a person
+  // came to check, silently wrong. Pointed and empty reads the product's own not-measured word instead.
+  const unmeasured = !compact && index !== null && points !== undefined && points.length === dates.length && points[index] === null;
+  // The caller's `format` may be a function of a number, so the not-measured word is the product's own.
+  const text = unmeasured ? formatBy(undefined, null)
+    : word && reading === null ? value : fitFigure(fmt(reading ?? (word ? 0 : value)), reading ?? (word ? 0 : (value as number)));
   const parts = word && reading === null ? { int: value } : (split ?? splitFigure)(text);
   // Under two values there is no shape to draw, so the tile is laid out as one that was given none.
   const shape = points && points.length > 1 ? points : null;
@@ -180,7 +186,12 @@ export function MetricTile({
               "vs previou…". A screen reader still hears it, and the page's head says the period. A note is words read
               whole, so it takes a second line first. */}
           <div className={cn('mt-2 flex flex-wrap content-start items-center gap-x-2 overflow-hidden text-xs', reading === null && delta === undefined && note ? 'min-h-5' : 'h-5', row && 'max-sm:col-start-1 max-sm:row-start-2 max-sm:mt-0.5 max-sm:min-w-0')}>
-            {reading !== null ? (
+            {unmeasured ? (
+              <>
+                <span className="t-num font-medium text-ink-2">{formatDate(dates[index!])}</span>
+                <span className="leading-5 text-ink-3">No reading for this day</span>
+              </>
+            ) : reading !== null ? (
               <>
                 <span className="t-num font-medium text-ink-2">{formatDate(dates[index!])}</span>
                 {baseline ? <span className="t-num leading-5 whitespace-nowrap text-ink-3">{comparison(reading, baseline)}× usual</span> : null}
