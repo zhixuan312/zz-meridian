@@ -37,10 +37,17 @@ export async function GET(request: Request): Promise<Response> {
       try {
         const batch = await collection.query({ where: query.where, sort: query.sort, limit: BATCH, offset }); // allow-no-direct-query: read() cannot serve this — a streamed export must not be cached
         total = batch.total;
-        const lines = batch.rows.map((r) => csvRow(COLUMNS, line(r)));
         const head = offset === 0 ? csvHeader(COLUMNS) + '\r\n' : '';
-        offset += BATCH;
-        controller.enqueue(encoder.encode(head + lines.map((l) => l + '\r\n').join('')));
+        const lines = batch.rows.map((r) => csvRow(COLUMNS, line(r)));
+        // How far the stream has come is what the collection answered, not what it was asked for: a collection that
+        // answers fewer rows than the batch asked for would otherwise leave a gap between the last row written and the
+        // next one read, and the export would silently miss them.
+        offset += batch.rows.length;
+        if (head) controller.enqueue(encoder.encode(head));
+        if (lines.length) controller.enqueue(encoder.encode(lines.map((l) => l + '\r\n').join('')));
+        // Nothing back means the export is over, whatever the total says, so a collection that counts rows it will not
+        // return cannot ask the stream for the same batch forever.
+        if (!lines.length && !cancelled) controller.close();
       } catch (e) {
         controller.error(e);
       }

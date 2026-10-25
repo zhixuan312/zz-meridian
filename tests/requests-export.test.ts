@@ -57,6 +57,28 @@ describe('GET /api/export/requests', () => {
     expect(first.done).toBe(true);
     expect(spy).not.toHaveBeenCalled();
   });
+  it('writes every row even when the collection answers fewer than the batch it was asked for', async () => {
+    // A product's own collection may have a page size of its own. The stream moves by what came back, so a short batch
+    // leaves no gap: advancing by the size it asked for skipped the rows in between and the export said nothing.
+    const real = requests.query.bind(requests);
+    const spy = vi.spyOn(requests, 'query').mockImplementation((async (q: Parameters<typeof real>[0] = {}) => real({ ...q, limit: Math.min(q.limit ?? 40, 40) })) as typeof requests.query);
+    const { total } = await real({ where: [{ field: 'statusClass', op: 'eq', value: '2xx' }] });
+    const res = await get('?status=2xx');
+    const lines = (await res.text()).trimEnd().split('\r\n');
+    spy.mockRestore();
+    expect(lines).toHaveLength(total + 1);
+    // Every row once: no id appears twice, and none is missing.
+    expect(new Set(lines.slice(1).map((l) => l.split(',')[0])).size).toBe(total);
+  });
+  it('ends the stream when a collection counts rows it will not return', async () => {
+    // A total of 500 and nothing back: the stream must close rather than ask again forever, and the file is its header.
+    const spy = vi.spyOn(requests, 'query').mockResolvedValue({ rows: [], total: 500 });
+    const res = await get('');
+    const text = await res.text();
+    spy.mockRestore();
+    expect(text.split('\r\n').filter(Boolean)).toHaveLength(1);
+    expect(text.split(',')[0]).toBe('id');
+  });
   it('answers 401 without a session', async () => {
     session.signedIn = false;
     try { expect((await get('')).status).toBe(401); } finally { session.signedIn = true; }
