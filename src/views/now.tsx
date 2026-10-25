@@ -384,7 +384,7 @@ function Changes({ events, end }: { events: NonNullable<NowData['activity']>; en
  * The embed's fullscreen view draws it too.
  */
 export function NowBody(data: NowData & { revisions?: Revisions }) {
-  useLive(['activity'], data.revisions);
+  useLive(['services', 'incidents', 'releases', 'tests', 'days', 'usage', 'models', 'compute', 'endpoints', 'tickets', 'activity'], data.revisions);
   const end = new Date(data.now);
   if (nothingArrived(data)) {
     return (
