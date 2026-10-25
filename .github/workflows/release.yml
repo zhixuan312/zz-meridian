@@ -133,8 +133,11 @@ jobs:
   gates:
     needs: build
     runs-on: ubuntu-24.04
-    # About 2.5 minutes for the verify and 11 for a smoke of every origin on the 4-CPU runner (0.6.1); one origin is less.
-    timeout-minutes: 30
+    # Measured on this 4-CPU runner: the package's own tests 2m, the browser-fixture tests 18 to 19m (the audit pays about
+    # 57 s a route), the default verify 2.5m, the consumer smoke 7 to 11m. 30 minutes was the mean of that, not its
+    # worst case — 0.29.0's run finished 2 seconds inside it and 0.30.0's was cancelled mid-smoke with its every check
+    # green. The cap sits above the sum, so a run is stopped by a failing step and never by the clock.
+    timeout-minutes: 45
     env:
       VERSION: ${{ inputs.version }}
       SHA256: ${{ needs.build.outputs.sha256 }}
