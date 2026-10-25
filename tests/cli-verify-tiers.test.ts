@@ -59,9 +59,11 @@ describe('the options', () => {
     expect(out).not.toMatch(/\bgate \(/);
   });
 
-  it('refuses an unknown option, naming --timed among the options', () => {
+  it('refuses an unknown option, naming every option it takes', () => {
     const r = verify('--bogus');
     expect(r.status).toBe(1);
-    expect(`${r.stdout}${r.stderr}`).toContain('pnpm verify takes --full, --timed, --perf, --as, --browsers.');
+    // Every one, `--shard` included: it was missing from the list, so a person reading the refusal was not told the
+    // option that would have run their command.
+    expect(`${r.stdout}${r.stderr}`).toContain('pnpm verify takes --full, --timed, --perf, --as, --browsers, --shard.');
   });
 });

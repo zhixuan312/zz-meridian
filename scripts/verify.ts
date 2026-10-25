@@ -91,7 +91,7 @@ for (let i = 0; i < argv.length; i++) {
   if (!OPTIONS.includes(a)) unknown.push(a);
 }
 if (unknown.length) {
-  console.error(`verify: ${unknown.join(', ')} ${unknown.length === 1 ? 'is not an option' : 'are not options'}. pnpm verify takes ${OPTIONS.join(', ')}.`);
+  console.error(`verify: ${unknown.join(', ')} ${unknown.length === 1 ? 'is not an option' : 'are not options'}. pnpm verify takes ${[...OPTIONS, '--shard'].join(', ')}.`);
   process.exit(1);
 }
 if (browsersText !== undefined && !/^[1-9]\d*$/.test(browsersText)) {
