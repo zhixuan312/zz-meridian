@@ -82,6 +82,37 @@ describe('a page headed by a sentence', () => {
   });
 });
 
+describe('a sentence that opens with the page\'s own name', () => {
+  // "USDC : USDC: no rule met" — the name, the colon and then the sentence saying the name again, in the heading and
+  // in a screen reader's list of headings. The name stays in the markup, hidden from assistive technology (#88).
+  it('is announced once, and the name is still in the markup', () => {
+    render(<PageFrame name="USDC" title="USDC: no rule met, price from par inside its band">body</PageFrame>);
+    const [name, colon, sentence] = [...h1().children];
+    expect(name.textContent).toBe('USDC');
+    expect(colon.getAttribute('aria-hidden')).toBe('true');
+    expect(name.getAttribute('aria-hidden')).toBe('true');
+    expect(sentence.getAttribute('aria-hidden')).toBeNull();
+    expect(h1().textContent).toBe('USDC: USDC: no rule met, price from par inside its band');
+  });
+
+  it('reads the name beside a sentence that only begins with the same letters', () => {
+    render(<PageFrame name="Members" title="Membership revenue: $12,480 this period">body</PageFrame>);
+    expect([...h1().children][0].getAttribute('aria-hidden')).toBeNull();
+  });
+
+  it('takes the page\'s word for a sentence it cannot read, and holds the name while the sentence is still to come', () => {
+    // A sentence that is a node — a part that reads data — cannot be compared with the name before it arrives, so the
+    // page says so. Without the prop the name is read, which is the safe default.
+    const spoken = render(<PageFrame name="USDC" title={<span>USDC: no rule met</span>} speaksName>body</PageFrame>);
+    const [name] = [...h1().children];
+    expect(name.getAttribute('aria-hidden')).toBe('true');
+    spoken.unmount();
+    // A sentence that has not arrived cannot be compared with the name, so the name is what the heading says.
+    render(<PageFrame name="USDC">body</PageFrame>);
+    expect([...h1().children][0].getAttribute('aria-hidden')).toBeNull();
+  });
+});
+
 describe('the masthead of a page headed by a sentence', () => {
   const kicker = <span data-testid="kicker">ZZ Meridian · Production</span>;
   const meta = <span data-testid="meta">Updated 4 min ago</span>;

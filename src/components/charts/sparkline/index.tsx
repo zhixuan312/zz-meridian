@@ -36,8 +36,11 @@ export function Sparkline({ values, color = 'accent', height = 36, className }: 
   // Meridian by. Fourteen days of a customer on a page of thirty would otherwise mark the wrong day. A day with no value
   // is still that day: the hairline marks it, and there is no dot to stand on the line.
   const at = index !== null && values.length === dates.length ? { x: x(index), y: pts[index]?.[1] ?? null } : null;
+  // A shape with no readout says nothing about what it covers, and it is the one chart a page puts beside a figure
+  // without a table under it (issue #94). The range it draws is the words it has, on the pointer.
+  const range = `${Math.min(...numbers).toLocaleString('en-US')} to ${Math.max(...numbers).toLocaleString('en-US')}`;
   return (
-    <div ref={ref} aria-hidden className={className} style={{ height }}>
+    <div ref={ref} aria-hidden title={range} className={className} style={{ height }}>
       {W ? (
         <svg width={W} height={H} className="block overflow-visible">
           <defs>

@@ -451,7 +451,10 @@ export function TrendChart({
       ) : null}
       {active !== null && width > 0 ? (
         <Readout at={cx} after={cx <= width / 2} top={pad.t - 4} visible={local || previewIndex !== undefined}>
-          <p className="t-eyebrow mb-1.5 break-words">{tick ? tick(dates[active]) : formatDate(dates[active])}{active === soFar ? ' · so far' : null}</p>
+          {/* A marked day says what it is marked for where every other reading of the day is (#94): the dot and its stem
+              are a shape, the group they stand in takes no pointer, and the table's caption is read by a screen reader and
+              not by the person pointing at the chart. */}
+          <p className="t-eyebrow mb-1.5 break-words">{tick ? tick(dates[active]) : formatDate(dates[active])}{active === soFar ? ' · so far' : null}{marks?.dates.includes(dates[active]) ? ` · ${marks.label}` : null}</p>
           {/* Stacked, the readout lists the bands top to bottom, as they sit on the chart, then the total. */}
           {(stacked ? series.map((s, k) => ({ s, k })).reverse() : series.map((s, k) => ({ s, k }))).map(({ s, k }) => (
             <p key={s.key} className="flex flex-wrap items-start gap-x-2 text-xs leading-6">
@@ -479,5 +482,7 @@ export function TrendChart({
 
 /** The stretch into a point still running: the line's own colour, thinner and dashed, and it fades in as a reference does. */
 function Running({ d, stroke }: { d: string; stroke: string }) {
-  return <path data-running d={d} fill="none" stroke={stroke} strokeWidth={1.5} strokeDasharray="3 4" strokeLinecap="round" className="fade-in" />;
+  // The stretch is the chart's own mark and its meaning is not in its shape: the words are `SO_FAR`'s, which the caption
+  // says too. A page that passes `running` says them above the chart; the pointer says them here (issue #94).
+  return <path data-running d={d} fill="none" stroke={stroke} strokeWidth={1.5} strokeDasharray="3 4" strokeLinecap="round" className="fade-in"><title>{SO_FAR}</title></path>;
 }

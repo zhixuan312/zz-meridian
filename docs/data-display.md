@@ -47,6 +47,7 @@ Text never wears a series colour; values and labels stay in ink.
 - A label inside a plot stands where no series is drawn. A Trend chart sets its baseline's label beside the dashed line at whichever end is clear, and draws no label when neither is.
 - Gridlines recessive (`chart-grid`), one baseline (`chart-axis`), axis labels at `text-2xs` in `ink-3`. Axis labels are a scale: `$12`, `1.2M`; the exact value is in the tooltip and the table.
 - A legend is always present for two or more series or parts; a single series is named by its title.
+- A mark that encodes something says what, and the component says it: on the pointer, and to a screen reader where the mark is the only carrier. A Bar list row names its row and its share, an accented column says why it is the accent (`highlightLabel`), a marked day says what it is marked for, a Sparkline says the range it draws, a Delta says whether its colour reads better or worse, and a Status dot or an activity's tone carries its word as its label. When the meaning is structural — a dashed stretch into a period still running, a delta's direction — the component draws the key or the sentence itself. A new chart is held to this by a reviewer: a colour, a fill or a size a reader is meant to decode, with nothing to decode it with, is not finished.
 - A column's value stands above it at rest, in `ink-3`, while a column is at least 36px wide; narrower, it shows for the column pointed at. Stacked, the value is the column's total.
 
 ## A period still in progress

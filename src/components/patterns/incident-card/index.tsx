@@ -55,7 +55,9 @@ export function IncidentCard({ incident, now, variant = 'card', className }: { i
   const updates = [...incident.updates].sort((a, b) => b.at.localeCompare(a.at));
   return (
     <Card className={cn('overflow-hidden', live && st.border, className)}>
-      {live ? <span aria-hidden className={cn('absolute inset-x-0 top-0 h-0.5', st.edge)} /> : null}
+      {/* The edge's colour is the state's, and the state's word is the badge below; the line says it too, on the pointer,
+          because it is the first thing read and a colour is not a word (issue #94). */}
+      {live ? <span aria-hidden title={st.word} className={cn('absolute inset-x-0 top-0 h-0.5', st.edge)} /> : null}
       <div className="px-(--card-pad) pt-(--card-pad)">
         <div className="flex flex-wrap items-center gap-2">
           <Badge tone={st.tone} dot>{st.word}</Badge>

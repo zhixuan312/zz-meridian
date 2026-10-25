@@ -28,7 +28,14 @@ export function KeyValue({ items, columns = 1, className }: { items: KeyValueIte
             <dt className="w-32 shrink-0 text-sm text-ink-3">{it.label}</dt>
             <dd
               title={it.wrap ? undefined : (it.title ?? (typeof it.value === 'string' || typeof it.value === 'number' ? String(it.value) : undefined))}
-              className={cn('t-num min-w-0 flex-1 text-sm text-ink', it.wrap ? '[overflow-wrap:anywhere]' : 'truncate', it.mono && 'font-mono text-xs')}
+              className={cn(
+                't-num min-w-0 flex-1 text-sm text-ink',
+                // A value the row cuts keeps its whole text in its title, which a pointer reads and a phone cannot (issue
+                // #89). Below the width where a sentence value cannot fit beside its label the row wraps instead, the way
+                // `wrap` asks for, so nothing is left unreadable behind a hover that does not exist there.
+                it.wrap ? '[overflow-wrap:anywhere]' : 'truncate @max-[26rem]:whitespace-normal @max-[26rem]:[overflow-wrap:anywhere]',
+                it.mono && 'font-mono text-xs',
+              )}
             >
               {it.value}
             </dd>

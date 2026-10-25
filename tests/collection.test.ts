@@ -1,7 +1,7 @@
 // @vitest-environment node
 import { describe, expect, test } from 'vitest';
 import { z } from 'zod';
-import { arrayCollection } from '@/lib/collection';
+import { arrayCollection, visibleFields, writableFields } from '@/lib/collection';
 
 type Person = { id: string; name: string; team: 'Support' | 'Sales'; seats: number; lastActive: string | null };
 const ROWS: Person[] = [
@@ -118,6 +118,43 @@ describe('derived fields', () => {
     // storing it. Either way the value on the row is the data layer's, never the caller's.
     await expect(c.update!(['p_1'], { band: 'large' })).rejects.toThrow();
     expect(await c.create!({ name: 'A', team: 'Sales', seats: 1, lastActive: null, band: 'large' })).not.toHaveProperty('band');
+  });
+});
+
+describe('a field the collection names but does not declare', () => {
+  // A collection hides or page-owns a field its query computes rather than its `fields` declares — a joined label, a
+  // derived total — which the doc comments allow ("named but not sent"). The mask was built from the name alone, so
+  // `omit` threw on a key the shape never had, on every render (issue #91).
+  type Joined = Person & { displayName: string };
+  const joined = () =>
+    arrayCollection<Joined, 'id'>({
+      name: `joined${++n}`, label: 'People', description: 'd',
+      fields: z.object({ name: z.string(), team: z.enum(['Support', 'Sales']), seats: z.number(), lastActive: z.string().nullable() }),
+      hidden: ['displayName'],
+      pageOnlyFields: ['seats'],
+      key: 'id',
+      title: (r) => r.name,
+      rows: structuredClone(ROWS).map((r) => ({ ...r, displayName: r.name.toUpperCase() })),
+      allow: ['create', 'update'],
+    });
+
+  test('still masks what it can, and keeps the rest of the shape', () => {
+    const c = joined();
+    // A name the shape does not have is skipped; the ones it has are still masked.
+    const visible = visibleFields(c);
+    expect(Object.keys(visible.shape)).toEqual(['name', 'team', 'seats', 'lastActive']);
+    expect(Object.keys(writableFields(c).shape)).toEqual(['name', 'team', 'lastActive']);
+  });
+
+  test('reads, and still refuses a write the mask leaves out', async () => {
+    const c = joined();
+    expect((await c.query({ where: [] })).rows.map((r) => r.displayName)).toEqual(['ALICE MORENO', 'RAVI PATEL', 'AMARA OKAFOR']);
+    // The write schema has no key for a field the collection hid, nor for one a page owns, and being strict it refuses
+    // one that is sent rather than dropping it.
+    const write = writableFields(c);
+    expect(write.safeParse({ name: 'A', team: 'Sales', lastActive: null }).success).toBe(true);
+    expect(write.safeParse({ name: 'A', team: 'Sales', lastActive: null, displayName: 'A' }).success).toBe(false);
+    expect(write.safeParse({ name: 'A', team: 'Sales', lastActive: null, seats: 1 }).success).toBe(false);
   });
 });
 

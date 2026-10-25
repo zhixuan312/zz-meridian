@@ -24,7 +24,14 @@ describe('safeMarkdownUrl', () => {
   });
   it('fetches an image only from this origin', () => {
     expect(safeMarkdownUrl('/images/chart.png', 'src')).toBe('/images/chart.png');
+    expect(safeMarkdownUrl('images/chart.png', 'src')).toBe('images/chart.png');
     for (const u of ['https://elsewhere.example/p.png', '//elsewhere.example/p.png', 'data:image/png;base64,AAAA']) expect(safeMarkdownUrl(u, 'src')).toBe('');
+  });
+  it('reads an image address the way the URL parser does, backslashes and all', () => {
+    // A backslash is a slash to the parser, so each of these IS `//evil.example/p.png` to the fetch while a check that
+    // reads the text as written sees a relative path — the exact case the rule exists to stop (issue #92).
+    for (const u of ['\\\\evil.example/p.png', '/\\evil.example/p.png', '\\/evil.example/p.png', '/\\\\evil.example/p.png'])
+      expect(safeMarkdownUrl(u, 'src'), u).toBe('');
   });
   it('reads a colon after a slash as part of a path', () => {
     expect(safeMarkdownUrl('a/path:with-colon', 'href')).toBe('a/path:with-colon');

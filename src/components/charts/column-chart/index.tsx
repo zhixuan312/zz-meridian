@@ -21,6 +21,9 @@ export type ColumnPart = { key: string; label: string; color?: number; tone?: 'n
 type Shared = {
   /** The key of the one column the card is about. */
   highlight?: string;
+  /** What makes that column the one the card is about, in a word: "the day of the incident", "the period on trial". The
+   *  chart says it wherever the column is read, so the accent is not a colour a reader has to guess (issue #94). */
+  highlightLabel?: string;
   /** One ISO date per column, to share the page's Meridian. */
   dates?: string[];
   /** The last column is a period still in progress: it is drawn unfinished and reads "so far". */
@@ -123,6 +126,7 @@ function stack(columns: StackedColumn[], parts: ColumnPart[]) {
  */
 export function ColumnChart({
   highlight,
+  highlightLabel,
   dates,
   running = false,
   format = count,
@@ -249,7 +253,8 @@ export function ColumnChart({
                   data-running={unfinished ? '' : undefined}
                   data-no-data={b.none ? '' : undefined}
                   // A figure wider than its column is cut at rest, and keeps the whole of itself where the pointer finds it.
-                  title={rest && text.length * 7 > column ? text : undefined}
+                  // The accented column says what makes it the one the card is about, beside its figure.
+                  title={[rest && text.length * 7 > column ? text : null, b.key === highlight ? highlightLabel : null].filter(Boolean).join(' · ') || undefined}
                   className="group/col relative h-full min-w-0 flex-1"
                   onPointerEnter={() => set(i)}
                   onPointerDown={() => set(i)}
@@ -361,7 +366,7 @@ export function ColumnChart({
       </div>
       <p className="sr-only" aria-live="polite">{reading}</p>
       <table className="sr-only">
-        <caption>{label}</caption>
+        <caption>{label}{highlight && highlightLabel ? `. Accented: ${highlightLabel}` : ''}</caption>
         {drawn ? <thead><tr><th scope="col">Period</th>{drawn.map((p) => <th key={p.key} scope="col">{p.label}</th>)}<th scope="col">Total</th></tr></thead> : null}
         <tbody>
           {bars.map((b, i) => (

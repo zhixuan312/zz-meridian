@@ -180,6 +180,7 @@ function YearCard({ data, keys }: { data: HomeData; keys: string[] }) {
           label="Requests a window"
           columns={year.windows.map((w) => ({ key: w.to, label: formatShortDate(w.to), value: w.requests }))}
           highlight={keys.at(-1)}
+          highlightLabel="The latest window"
           dates={keys}
           format={formatCompact}
           axisFormat={AXIS_FORMATTERS.compact}
@@ -239,6 +240,7 @@ function RevenueWindows({ data, keys }: { data: HomeData; keys: string[] }) {
           label="Revenue a window"
           columns={data.year.windows.map((w: HomeWindow) => ({ key: w.to, label: formatShortDate(w.to), value: w.revenue }))}
           highlight={keys.at(-1)}
+          highlightLabel="The latest window"
           dates={keys}
           format={costCompact}
           axisFormat={AXIS_FORMATTERS['cost-compact']}

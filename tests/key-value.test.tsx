@@ -30,6 +30,19 @@ describe('a key value list', () => {
     expect(path.getAttribute('title')).toBeNull();
   });
 
+  // On a phone there is no hover, so a title is no answer there: below the width where a sentence value cannot fit
+  // beside its label, the value wraps the way `wrap` asks for (issue #89). Above it, the single line and its title stay.
+  it('wraps a value in a row too narrow to hold it, rather than cutting it behind a hover no phone has', () => {
+    const [region] = dd([{ label: 'Region', value: 'ap-southeast-1' }]);
+    expect(region.className).toMatch(/@max-\[26rem\]:whitespace-normal/);
+    expect(region.className).toMatch(/@max-\[26rem\]:\[overflow-wrap:anywhere\]/);
+    expect(region.className).toMatch(/\btruncate\b/);
+    // A value that already wraps asks for nothing more, and keeps its own rule.
+    const [path] = dd([{ label: 'Path', value: '/v1/a/long/path', wrap: true }]);
+    expect(path.className).toMatch(/\[overflow-wrap:anywhere\]/);
+    expect(path.className).not.toMatch(/\btruncate\b|@max-\[26rem\]/);
+  });
+
   // Two columns are for a wide card, and a card's width is not the window's: at a 1024px window the request card is
   // 458px wide, and two columns by the window's breakpoint left each value about 50px.
   it('counts its two columns from its own width, not the window\'s', () => {

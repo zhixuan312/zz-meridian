@@ -34,8 +34,13 @@ export function Delta({
   const read = typeof format === 'function' ? format : DELTA_FORMATS[format ?? 'percent'];
   const up = value > 0;
   const good = intent === 'neutral' || flat ? null : (up && intent === 'up') || (!up && intent === 'down');
+  // The arrow says which way, and the colour says whether that is good or bad — a judgement a reader who does not know
+  // the intent cannot decode (issue #94). The sentence is the whole reading, on the pointer. It is not in the reading
+  // itself: a tile heard in a screen reader gets the direction and the figure, which are the facts.
+  const sentence = [`${up ? 'Up' : 'Down'} ${read(value)}`, good === null ? null : good ? 'better' : 'worse'].filter(Boolean).join(', ');
   return (
     <span
+      title={flat ? 'Unchanged' : sentence}
       className={cn(
         't-num inline-flex items-center gap-0.5 text-xs font-medium whitespace-nowrap',
         good === null ? 'text-ink-2' : good ? 'text-positive-ink' : 'text-critical-ink',

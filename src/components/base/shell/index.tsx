@@ -368,6 +368,14 @@ function SentencePending() {
   );
 }
 
+/** Whether a sentence opens with the page's own name, which is the case it would then say twice: "Members: 12 joined".
+ *  A name that is only the first part of a word does not count — "Membership" is not "Members" — so the character after
+ *  it must end the word. */
+function opensWith(sentence: string, name: string): boolean {
+  const s = sentence.trim(), n = name.trim();
+  return n !== '' && s.length > n.length && s.slice(0, n.length).toLowerCase() === n.toLowerCase() && !/[a-z0-9]/i.test(s[n.length] ?? '');
+}
+
 /**
  * A page's heading, the one `h1`. With no `name` it is the title at the page-title size, a name such as "Members".
  *
@@ -379,13 +387,18 @@ function SentencePending() {
  * page, drawn as a page that passes no name draws its title. A loading state passes the name alone and draws the
  * placeholder.
  */
-export function PageTitle({ name, title, ref }: { name?: string; title?: ReactNode; ref?: Ref<HTMLHeadingElement> }) {
+export function PageTitle({ name, title, speaksName, ref }: { name?: string; title?: ReactNode; speaksName?: boolean; ref?: Ref<HTMLHeadingElement> }) {
   if (name === undefined) return <h1 ref={ref} className="t-page">{title}</h1>;
+  // A sentence that opens with the name announces it twice (issue #88): "USDC : USDC: no rule met", in a heading and
+  // in a screen reader's list of headings. The name stays in the markup either way — the heading is in the prerendered
+  // shell — but it is hidden from assistive technology, which reads the sentence. A sentence that is a plain string
+  // says so by itself; one that reads data cannot be asked before it arrives, so a page passes `speaksName`.
+  const repeats = title !== undefined && (speaksName ?? (typeof title === 'string' && opensWith(title, name)));
   return (
     <h1 ref={ref} className="@container text-xl">
       {/* The name stays out of sight while a sentence or its placeholder follows it, and heads the page when the sentence came to nothing. */}
-      <span className="t-page sr-only has-[~[data-title]:empty]:not-sr-only">{name}</span>
-      <span className="sr-only">: </span>
+      <span aria-hidden={repeats || undefined} className="t-page sr-only has-[~[data-title]:empty]:not-sr-only">{name}</span>
+      <span aria-hidden={repeats || undefined} className="sr-only">: </span>
       {title === undefined ? <SentencePending /> : (
         <Suspense fallback={<SentencePending />}>
           <span data-title className={cn(SENTENCE, 'empty:hidden')}>{title}</span>
@@ -406,6 +419,7 @@ export function PageTitle({ name, title, ref }: { name?: string; title?: ReactNo
 export function PageFrame({
   name,
   title,
+  speaksName,
   description,
   kicker,
   meta,
@@ -418,6 +432,9 @@ export function PageFrame({
   name?: string;
   /** The page's title: its name, or with `name` the sentence that heads it. Left out with `name`, the sentence is still to come. */
   title?: ReactNode;
+  /** The sentence speaks for the name — it opens with it — so the name is not announced beside it (`PageTitle`). Only
+   *  needed when the sentence reads data and cannot be compared with the name until it has arrived. */
+  speaksName?: boolean;
   /** One sentence under the title: what this page answers. */
   description?: ReactNode;
   /** Mono caps above the title: where this page sits ("ZZ Meridian · Production", or the parent record). */
@@ -487,7 +504,7 @@ export function PageFrame({
                 everything under it dropped. Now its width follows the viewport, the rail and the assistant alone. */}
             <div>
               {kicker ? <p className="t-kicker mb-4">{kicker}</p> : null}
-              <PageTitle ref={head} name={name} title={title} />
+              <PageTitle ref={head} name={name} title={title} speaksName={speaksName} />
             </div>
             {/* The description grows, so the meta and the actions end the row on its last line; with no description
                 nothing is left to grow in its place, and they stand at the row's start. */}

@@ -6,7 +6,8 @@
  * The phone is Lighthouse's mobile profile: the device of benchmark index 800, the CPU slowed by the host's own index
  * over 800 (scripts/lib/phone.ts), Slow 4G (150 ms round trip, 1.6 Mbps down, 750 kbps up), a 390px touch screen,
  * motion not reduced. LCP and CLS come from PerformanceObservers installed before the page loads (CLS as web-vitals
- * defines it: the largest session window of shifts no input caused). INP is the slowest of real taps on controls that
+ * defines it: the largest session window of shifts no input caused, each within 1 s of the last and the window within
+ * 5 s — scripts/lib/cls.ts). INP is the slowest of real taps on controls that
  * change the screen (a period, the alerts, the workspace menu, the drawer), from Event Timing, counting only the tap's
  * own pointer, touch and click events: the Escape that closes what a tap opened is not a person's interaction, and a
  * headless browser can hold a no-op key event open until something else paints. A dropped frame is a gap over 50 ms
@@ -31,6 +32,7 @@
  */
 import { atlasCoverage, atlasEntries } from './lib/atlas.ts';
 import { launch } from './lib/chrome.ts';
+import { CLS_SESSION } from './lib/cls.ts';
 import { DEEP_SOURCE } from './lib/deep.ts';
 import { frameCause, loafOf, type LoafEntry } from './lib/frame-cause.ts';
 import { measurePhone } from './lib/phone.ts';
@@ -55,13 +57,12 @@ const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 /** Installed before any page script: every vital the page produces lands on window.__v. */
 const OBSERVE = `(() => {
-  const v = window.__v = { lcp: 0, cls: 0, session: 0, last: 0, taps: [], frames: [], loafs: [], recording: false, since: 0, moved: {} };
+  const v = window.__v = { lcp: 0, cls: 0, session: 0, last: 0, started: 0, taps: [], frames: [], loafs: [], recording: false, since: 0, moved: {} };
   const named = (n) => !n || n.nodeType !== 1 ? 'an element since removed' : n.tagName.toLowerCase() + (n.id ? '#' + n.id : '') + (typeof n.className === 'string' && n.className.trim() ? '.' + n.className.trim().split(/\\s+/).slice(0, 2).join('.') : '');
   new PerformanceObserver((l) => { for (const e of l.getEntries()) v.lcp = e.startTime; }).observe({ type: 'largest-contentful-paint', buffered: true });
   new PerformanceObserver((l) => { for (const e of l.getEntries()) {
     if (e.hadRecentInput) continue;
-    v.session = e.startTime - v.last < 1000 && v.session ? v.session + e.value : e.value;
-    v.last = e.startTime; v.cls = Math.max(v.cls, v.session);
+    ${CLS_SESSION}
     for (const s of e.sources || []) { const k = named(s.node); v.moved[k] = (v.moved[k] || 0) + e.value; }
   } }).observe({ type: 'layout-shift', buffered: true });
   const TAP = /^(pointer|touch|mouse|click|gesture)/;

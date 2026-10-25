@@ -125,7 +125,7 @@ function WhenTheyCome({ figures }: { figures: UsageFigures }) {
       <CardBody className="flex flex-col gap-4">
         <Segmented label="Count when they come" size="sm" value={when} onChange={setWhen} options={WHEN} />
         {when === 'hour' ? (
-          <ColumnChart columns={figures.hours} highlight={busiest.key} format={formatCompact} axisFormat={AXIS_FORMATTERS.count} label="Requests by hour of day" labelEvery={6} height={220} />
+          <ColumnChart columns={figures.hours} highlight={busiest.key} highlightLabel="The busiest hour" format={formatCompact} axisFormat={AXIS_FORMATTERS.count} label="Requests by hour of day" labelEvery={6} height={220} />
         ) : (
           <Heatmap values={figures.heat} timezone={app.timezone} scale="quantile" label="Requests by weekday and hour" format={formatCompact} />
         )}

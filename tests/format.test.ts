@@ -38,8 +38,13 @@ describe('formatters', () => {
     expect(splitFigure('0.90%')).toEqual({ pre: undefined, int: '0.90', frac: undefined, unit: '%' });
     // Total: a string it cannot split comes back whole, so no formatter a product passes can crash the figure.
     expect(splitFigure('—')).toEqual({ int: '—' });
-    expect(splitFigure('-1,234')).toEqual({ int: '-1,234' });
+    // A credit's minus belongs to the mark, with any symbol beside it (issue #96): `-$298.43` as one string was no split
+    // at all, so a tile set a sign-and-symbol figure whole in its number face, or lost both when it shortened.
+    expect(splitFigure('-1,234')).toEqual({ pre: '-', int: '1,234', frac: undefined, unit: undefined });
+    expect(splitFigure('-$298.43')).toEqual({ pre: '-$', int: '298', frac: '.43', unit: undefined });
     expect(splitFigure('CHF1,234.50')).toEqual({ pre: 'CHF', int: '1,234', frac: '.50', unit: undefined });
+    // A multi-letter mark before the symbol splits the same way.
+    expect(splitFigure('HK$12,345,678')).toEqual({ pre: 'HK$', int: '12,345,678', frac: undefined, unit: undefined });
     // A formatter that writes something else — a word, a space in the symbol — is never split, and never crashes.
     expect(splitFigure('CHF 1,234.50')).toEqual({ int: 'CHF 1,234.50' });
   });
@@ -53,10 +58,14 @@ describe('formatters', () => {
     expect(formatCost(1269.4)).toBe(`${symbol}1,269.40`);
     expect(formatCost(997)).toBe(`${symbol}997.00`);
     // A credit or a refund is negative, and the minus stands where a reader looks for it: before the mark, at every
-    // size, as `formatCostCompact` already writes it. `$-0.0050` reads as a typo, and hides the sign a column is sorted by.
+    // size. `$-0.0050` reads as a typo, and hides the sign a column is sorted by.
     expect(formatCost(-1269.4)).toBe(`-${symbol}1,269.40`);
     expect(formatCost(-0.005)).toBe(`-${symbol}0.0050`);
     expect(formatCost(-0.0000018)).toBe(`-${symbol}0.0000018`);
+    // An amount too small even for 20 places keeps two digits in exponent form: `toFixed` there prints only zeroes, and
+    // a figure that is not nothing must not read as nothing (issue #96).
+    expect(formatCost(1e-21)).toBe(`${symbol}1.0e-21`);
+    expect(formatCost(-2.5e-30)).toBe(`-${symbol}2.5e-30`);
     expect(formatDuration(294)).toBe('294ms');
     expect(formatDuration(1420)).toBe('1.4s');
     expect(formatPercent(0.0090, 2)).toBe('0.90%');
@@ -100,6 +109,15 @@ describe('fitFigure', () => {
     expect(fitFigure('0.90%', 0.009)).toBe('0.90%');
     expect(fitFigure('12,480,000 tokens', 12_480_000)).toBe('12.5M tokens');
     expect(fitFigure('Likely new', NaN)).toBe('Likely new');
+  });
+
+  // The figure shortens with the mark and the sign it was given, not with a generic cost formatter's (issue #96): a
+  // tile read "$12.3M" for an amount in Hong Kong dollars, and dropped a credit's minus altogether.
+  it('shortens with the mark and the sign the caller\'s own text carries', () => {
+    expect(fitFigure('HK$12,345,678', 12_345_678)).toBe('HK$12.3M');
+    expect(fitFigure('-$1,234,567.89', -1_234_567.89)).toBe('-$1.2M');
+    expect(fitFigure("-1,234,567.89", -1_234_567.89)).toBe('-1.2M');
+    expect(fitFigure('CHF12,943,120', 12_943_120)).toBe('CHF12.9M');
   });
 });
 

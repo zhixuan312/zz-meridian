@@ -215,6 +215,7 @@ function Compute({ compute }: { compute: NonNullable<NowData['compute']> }) {
           total={1}
           format={(n) => formatPercent(n, 1)}
           highlight={compute.fullest ?? undefined}
+          highlightLabel="The fullest region"
           items={compute.regions.map((r) => ({ key: r.region, label: <span className="font-mono text-xs">{r.region}</span>, value: r.share, meta: `${r.gpus} GPUs provisioned` }))}
         />
       </CardBody>

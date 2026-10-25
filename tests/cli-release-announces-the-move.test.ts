@@ -9,7 +9,18 @@ import { RELEASE_MIGRATIONS } from '../cli/src/migrations.ts';
 
 const ROOT = path.resolve(import.meta.dirname, '..');
 const changelog = fs.readFileSync(path.join(ROOT, 'CHANGELOG.md'), 'utf8');
-const newest = changelog.match(/^## \[(\d+\.\d+\.\d+)\]/m)![1];
+/**
+ * The release that made the move — not whatever is newest. The guard used to read the newest section, which meant every
+ * later release inherited a test about a move it did not make and had to edit it (0.29.0 is the first that did). A
+ * release's own promises stay true of that release's section, permanently.
+ */
+const MOVE = '0.28.0';
+/** One release's section: from its heading to the next release's. */
+const sectionOf = (version: string) => {
+  const start = changelog.indexOf(`## [${version}]`);
+  const next = changelog.indexOf('\n## [', start + 1);
+  return changelog.slice(start, next === -1 ? undefined : next);
+};
 /** Every module the move relocated, as the path it left and the path it went to. */
 const MOVED: [from: string, to: string][] = [
   ['src/data/alerts.ts', 'src/logic/alerts.ts'],
@@ -23,7 +34,7 @@ const MOVED: [from: string, to: string][] = [
     'usage-explore', 'usage-parts',
   ].map((name): [string, string] => [`src/views/${name}.ts`, `src/logic/${name}.ts`]),
 ];
-const entry = RELEASE_MIGRATIONS.find((m) => m.since === newest);
+const entry = RELEASE_MIGRATIONS.find((m) => m.since === MOVE);
 
 const tmp: string[] = [];
 afterAll(() => { for (const d of tmp) fs.rmSync(d, { recursive: true, force: true }); });
@@ -41,15 +52,14 @@ function project(source: string | null): string {
 
 describe('the release that moved the logic layer', () => {
   it('has a migration for it, and the changelog section it belongs to', () => {
-    expect(entry, `a migration with since ${newest}`).toBeDefined();
-    // The newest release's own section: from its heading to the next release heading, which is the only `\n## [` after it.
-    const start = changelog.indexOf('## [');
-    const next = changelog.indexOf('\n## [', start + 1);
-    const section = changelog.slice(start, next === -1 ? undefined : next);
-    expect(section, 'the newest section says what moved').toContain('src/logic/');
+    expect(entry, `a migration with since ${MOVE}`).toBeDefined();
+    const section = sectionOf(MOVE);
+    expect(section, 'its own section, not another release\'s').not.toBe('');
+    expect(section, 'the section says what moved').toContain('src/logic/');
     expect(section, 'announces it as a break').toMatch(/^### Breaking$/m);
-    // AC-4.3's own command reads the changelog's first 4000 characters, so the section has to carry the link itself.
-    expect(changelog.slice(0, 4000), 'named within AC-4.3\'s window').toContain('data-layers.md');
+    // The section has to carry the link itself, which is what AC-4.3's own command reads for: the release an adopter
+    // reading the changelog is on must name the standard, whatever release is newest today.
+    expect(section, 'and names the standard').toContain('data-layers.md');
     // docs/testing.md: a red left at a release is the owner's decision, named here as a known issue with where it is fixed.
     // 0.28.0 leaves none — the first-load red this section used to carry is fixed — so the section states that instead, and
     // a known-issues section coming back would be a red coming back, which this refuses by name.

@@ -35,13 +35,20 @@ export function formatCost(amount: number | null): string {
   if (amount === 0) return `${CURRENCY}0`;
   const sign = amount < 0 ? '-' : '';
   const a = Math.abs(amount);
-  if (a < 0.00005) return `${sign}${CURRENCY}${a.toFixed(Math.min(20, 1 - Math.floor(Math.log10(a))))}`;
+  if (a < 0.00005) {
+    // The places grow with how small the amount is, one more than its leading zeroes, so a figure never reads as zero.
+    // Past 20 places `toFixed` prints only zeroes, which is an amount of nothing and not a small one: there the figure
+    // keeps its two leading digits in exponent form instead (`$1.2e-21`).
+    const places = 1 - Math.floor(Math.log10(a));
+    return `${sign}${CURRENCY}${places <= 20 ? a.toFixed(places) : a.toExponential(1)}`;
+  }
   if (a < 0.01) return `${sign}${CURRENCY}${a.toFixed(4)}`;
   // Two decimals at every size, so a column of amounts keeps one precision and its decimals line up.
   return `${sign}${CURRENCY}${CENTS.format(a)}`;
 }
 
-/** Money at a glance, for dense tables and tiles: $1.2M, $340K, $912. The exact amount belongs in the tooltip. */
+/** Money at a glance, for dense tables and tiles: $1.2M, $340K, $912. The exact amount belongs in the tooltip. A figure
+ *  that has to KEEP the mark its caller wrote is `fitFigure`'s, which shortens with that mark and not this one. */
 function formatCostCompact(amount: number | null): string {
   if (amount === null) return '—';
   const sign = amount < 0 ? '-' : '';
@@ -54,10 +61,12 @@ function formatCostCompact(amount: number | null): string {
  * ONE parser for the two figures that do this (the Featured metric and the Metric tile). It is total: a string it
  * cannot split comes back whole as `int`, so a caller never tests for a match — and never dereferences one that is
  * not there. The symbol is whatever abuts the number, not a list of currencies: `$`, `S$`, `CHF` — this
- *  repository's own `formatCost` concatenates the narrow symbol with no space, so it always abuts.
+ *  repository's own `formatCost` concatenates the narrow symbol with no space, so it always abuts. A credit's minus is
+ *  part of it too (issue #96): `-$298.43` splits as mark `-$` and number `298.43`, so the sign the column is sorted by
+ *  is still there when the figure is set in two faces.
  */
 export function splitFigure(s: string): { pre?: string; int: string; frac?: string; unit?: string } {
-  const m = s.match(/^([^\d\s.,-]*)([\d,]+)(\.\d+)?\s*([%a-zA-Z]*)$/);
+  const m = s.match(/^([-+]?[^\d\s.,-]*)([\d,]+)(\.\d+)?\s*([%a-zA-Z]*)$/);
   if (!m) return { int: s };
   // Cents step down; the decimal of a compact amount ("$1.2M") is part of the number, not cents.
   const cents = Boolean(m[1]) && !m[4];
@@ -76,8 +85,12 @@ export const FIGURE_MAX = 9;
 export function fitFigure(text: string, value: number): string {
   const { pre, int, frac, unit } = splitFigure(text);
   if ((int + (frac ?? '')).length <= FIGURE_MAX || !Number.isFinite(value)) return text;
+  // The mark and the sign are the ones the caller's text carries, not a generic cost formatter's (issue #96): a tile
+  // reads "HK$12.3M" and "-$1.2M", and a cost shortens the way the same amount shortens anywhere else. Where `pre`
+  // already carries the minus, the number does not repeat it.
+  const number = pre?.includes('-') ? formatCompact(Math.abs(value)) : formatCompact(value);
   // The unit keeps the space it had: "12.5M tokens", "12.5Mms" never arises (durations step up to hours first).
-  return pre ? formatCostCompact(value) : `${formatCompact(value)}${unit ? (/\s[%a-zA-Z]+$/.test(text) ? ' ' : '') + unit : ''}`;
+  return `${pre ?? ''}${number}${unit ? (/\s[%a-zA-Z]+$/.test(text) ? ' ' : '') + unit : ''}`;
 }
 
 /** The steps of a count at a glance from a million up, smallest first. */

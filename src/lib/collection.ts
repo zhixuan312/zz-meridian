@@ -480,9 +480,19 @@ function withoutDefault(field: z.ZodType): z.ZodType {
     : field;
 }
 
+/**
+ * `fields` without the named ones, or `fields` itself when it names none of them (issue #91). A collection hides or
+ * page-owns a field it computes rather than declares — a joined label, a derived total — which the doc comments below
+ * allow: a name the shape does not have is named but not sent, and `omit` cannot mask a key that was never there.
+ */
+function without(fields: z.ZodObject, names: string[]): z.ZodObject {
+  const known = names.filter((f) => Object.hasOwn(fields.shape, f));
+  return known.length ? fields.omit(Object.fromEntries(known.map((f) => [f, true])) as Record<string, true>).strict() : fields.strict();
+}
+
 /** The collection's fields without its hidden ones. */
 export function visibleFields(c: AnyCollection): z.ZodObject {
-  return c.fields.omit(Object.fromEntries(((c.hidden ?? []) as string[]).map((f) => [f, true])) as Record<string, true>).strict();
+  return without(c.fields, (c.hidden ?? []) as string[]);
 }
 
 /**
@@ -494,7 +504,5 @@ export function visibleFields(c: AnyCollection): z.ZodObject {
  * same as on any other visible field. Reading a field and changing it are different rules, and this is the second.
  */
 export function writableFields(c: AnyCollection): z.ZodObject {
-  const base = visibleFields(c);
-  const pageOnly = (c.pageOnlyFields ?? []) as string[];
-  return pageOnly.length ? base.omit(Object.fromEntries(pageOnly.map((f) => [f, true])) as Record<string, true>).strict() : base;
+  return without(visibleFields(c), (c.pageOnlyFields ?? []) as string[]);
 }

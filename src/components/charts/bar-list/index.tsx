@@ -15,6 +15,7 @@ export function BarList({
   items,
   format = (n) => n.toLocaleString('en-US'),
   highlight,
+  highlightLabel,
   limit = 6,
   total,
   label,
@@ -24,6 +25,9 @@ export function BarList({
   format?: (n: number) => string;
   /** The key of the one row worth pointing at. Omit it and every bar is neutral. */
   highlight?: string;
+  /** What makes that row the one worth pointing at, in a word: "The busiest hour". Said on its row, so the accent is
+   *  not a colour a reader has to guess (issue #94). */
+  highlightLabel?: string;
   limit?: number;
   /** The whole the rows are a share of: each bar's length is its value over this, and its share shows on hover. Left
    * out, bars are drawn against the largest row. */
@@ -42,8 +46,12 @@ export function BarList({
     <ul aria-label={label} className={cn('flex flex-col gap-3.5', className)}>
       {shown.map((it, n) => {
         const hot = it.key === highlight;
+        // The row says what it is as well as its share (issue #94): "42.1% of 1,204" on its own never named the row, and
+        // a list with no total had no title at all. The label is the row's own word, so it is used when it is text.
+        const named = typeof it.label === 'string' || typeof it.label === 'number' ? String(it.label) : null;
+        const share = total ? `${((it.value / Math.max(1, total)) * 100).toFixed(1)}% of ${format(total)}` : null;
         return (
-          <li key={it.key} className="group/bar" title={total ? `${((it.value / Math.max(1, total)) * 100).toFixed(1)}% of ${format(total)}` : undefined}>
+          <li key={it.key} className="group/bar" title={[named, format(it.value), share, hot ? highlightLabel : null].filter(Boolean).join(' · ')}>
             <div className="mb-1.5 flex items-baseline gap-3 text-sm">
               {it.href ? (
                 // The row's look at rest, the accent under the pointer and the focus ring on the keyboard. The hit area is
