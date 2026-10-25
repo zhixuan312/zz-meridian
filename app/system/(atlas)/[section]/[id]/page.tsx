@@ -14,13 +14,16 @@ const TOOLS = { '/embed/home': homeTool, '/embed/requests': requestsTool, '/embe
 
 /**
  * What an MCP server returns for the view's tool (`docs/agents.md`), slimmed for the page: `content` is the context's
- * text, `structuredContent` the view's data (its keys shown here), `_meta.ui.resourceUri` the view to render.
+ * text, `structuredContent` the view's data (its keys shown here), `_meta.ui.resourceUri` the view to render. A read
+ * that threw is this page's own failure and is drawn as the stage without it, as every embed view catches its own read:
+ * the `Suspense` above covers a read that is pending, not one that rejected.
  */
 async function toolResultOf(embed?: string) {
   const tool = embed ? TOOLS[embed as keyof typeof TOOLS] : undefined;
   if (!tool) return undefined;
-  const { context, data } = await tool.read({});
-  return { name: tool.name, text: contextText(context), resourceUri: tool.resourceUri, structured: Object.keys(data) };
+  const read = await tool.read({}).catch(() => null);
+  if (!read) return undefined;
+  return { name: tool.name, text: contextText(read.context), resourceUri: tool.resourceUri, structured: Object.keys(read.data) };
 }
 
 /** Cards, templates, pages and the token views: the entries that put something on the stage. The guides read from their own routes. */
