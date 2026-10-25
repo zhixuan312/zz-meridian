@@ -52,13 +52,15 @@ export default async function RequestPage({ params }: { params: Promise<{ id: st
   const { id } = await params;
   const denied = await gate('request');
   if (denied) return RefusalScreen(denied);
-  const { request: r, observedAt } = await byId(id);
-  // Rendered here rather than thrown, so the screen is in the first HTML (see MissingPage).
-  if (!r) return <MissingPage />;
+  // Everything the page needs that does not depend on the record is asked beside it, in one wait: the record, the
+  // grant behind Replay and the endpoints that give the route its p95 were three waits in a row before.
+  //
   // After the gate: what this person may do with the record, so Replay is drawn only where it may be used. A Viewer
   // holds `requests:read` without `requests:create`, so it is withheld for them and nothing is drawn in its place.
-  const mayReplay = await may(ACTIONS['replay-request'].needs);
-  const [endpoints, customerHref] = await Promise.all([readEndpoints(), customerPage(r.customer)]);
+  const [{ request: r, observedAt }, mayReplay, endpoints] = await Promise.all([byId(id), may(ACTIONS['replay-request'].needs), readEndpoints()]);
+  // Rendered here rather than thrown, so the screen is in the first HTML (see MissingPage).
+  if (!r) return <MissingPage />;
+  const customerHref = await customerPage(r.customer);
   const route = endpoints.find((e) => e.method === r.method && e.route === r.route);
   return <RequestView request={r} trace={traceOf(r)} payloads={payloadsOf(r)} routeP95={route?.p95 ?? null} now={observedAt} mayReplay={mayReplay} replay={replayRequest} customerHref={customerHref} />;
 }
