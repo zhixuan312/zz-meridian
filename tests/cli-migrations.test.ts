@@ -382,3 +382,19 @@ describe("the consumer smoke's record of the release migrations", () => {
     expect(RELEASE_MIGRATIONS.filter((m) => m.id !== 'verify-modes' && !ids.has(m.id)).map((m) => m.id)).toEqual([]);
   });
 });
+
+describe('the 0.30.0 migration', () => {
+  it('finds a team file that reads a collection directly without stating why, and leaves the release’s own', () => {
+    const call = "await members.query({ where: [{ field: 'id', op: 'eq', value: id }] });";
+    expect(byId('direct-query-escape').since).toBe('0.30.0');
+    expect(byId('direct-query-escape').applies(project({ 'app/(dashboard)/members/actions.ts': `'use server';\nconst m = ${call}\n` }))).toEqual(['app/(dashboard)/members/actions.ts']);
+    // The escape the check prints, on the call's own line, is what the rule asks for — and the 0.30.0 release's own
+    // five files carry it, so the repository is not this migration's.
+    expect(byId('direct-query-escape').applies(project({ 'app/(dashboard)/members/actions.ts': `'use server';\nconst m = ${call} // allow-no-direct-query: read() cannot serve this — a server action reads the record it changes\n` }))).toBeNull();
+    // A comment that quotes the call is not a call: the check blanks comments before it looks, and so does this.
+    expect(byId('direct-query-escape').applies(project({ 'app/(dashboard)/members/page.tsx': `// the old page did ${call}\nexport default function P() { return null; }\n` }))).toBeNull();
+    // The rule governs four folders, and a direct read outside them is not this migration's.
+    expect(byId('direct-query-escape').applies(project({ 'src/data/collections.ts': `${call}\n` }))).toBeNull();
+    expect(byId('direct-query-escape').applies(path.resolve(import.meta.dirname, '..'))).toBeNull();
+  });
+});

@@ -192,7 +192,7 @@ function zz(pkg: string, cwd: string, a: string[], label: string, env: Record<st
  * The migrations `cli/src/migrations.ts` declares since 0.5.0: changes in the team's own files, resolved by editing them.
  * `verify-modes` is not here: its edit is a flag in a script, and no origin passes one.
  */
-const RELEASE_IDS = ['shell-assistant-promise', 'assistant-available-promise', 'clock-now-required', 'cache-components-config', 'connection-boundaries', 'authorized-read', 'scoped-invalidation', 'live-provider', 'authorized-endpoints', 'share-view-context', 'agent-reads-section', 'assistant-view-tools', 'nav-needs', 'agent-reads-own-group', 'refusal-declared', 'managed-exports-removed', 'view-tool-page-explore', 'agent-does-here-section', 'sample-pages-renamed', 'marker-measured-on-observe', 'view-page-matched-as-next', 'journey-moved', 'today-in-timezone', 'verify-tiers', 'no-data-mark', 'table-grid', 'four-layers'];
+const RELEASE_IDS = ['shell-assistant-promise', 'assistant-available-promise', 'clock-now-required', 'cache-components-config', 'connection-boundaries', 'authorized-read', 'scoped-invalidation', 'live-provider', 'authorized-endpoints', 'share-view-context', 'agent-reads-section', 'assistant-view-tools', 'nav-needs', 'agent-reads-own-group', 'refusal-declared', 'managed-exports-removed', 'view-tool-page-explore', 'agent-does-here-section', 'sample-pages-renamed', 'marker-measured-on-observe', 'view-page-matched-as-next', 'journey-moved', 'today-in-timezone', 'verify-tiers', 'no-data-mark', 'table-grid', 'four-layers', 'direct-query-escape'];
 
 const filesUnder = (dir: string, rel = ''): string[] => {
   if (!fs.existsSync(path.join(dir, rel))) return [];
@@ -228,6 +228,17 @@ function bringReleaseOver(proj: string, route: string, reported: string[] = []) 
   // `refusal-declared` is 0.16.0's: the configuration says what a refused address draws, `explain` keeping the no-access
   // page a refused page drew before. A created project's configuration then comes over from the release, which declares it.
   if (reported.includes('refusal-declared')) edit(proj, 'src/app.config.ts', (t) => (/^export const refusal\b/m.test(t) ? t : `${t.trimEnd()}\n\nexport const refusal: 'explain' | 'absent' = 'explain';\n`));
+  // `direct-query-escape` is 0.30.0's: the rule reports every `.query(` call and keeps the run passing only where the
+  // call's own line states the escape it prints. Every direct read of the template's carried the older comment and no
+  // escape, so the smallest edit is that comment rewritten, in each file the migration names — on both routes, because
+  // the files are the team's either way.
+  if (reported.includes('direct-query-escape')) {
+    for (const f of filesUnder(proj).filter((x) => /^(?:app|src\/(?:logic|views|lib))\//.test(x) && /\.tsx?$/.test(x))) {
+      edit(proj, f, (t) => (t.includes('.query(') && !t.includes('allow-no-direct-query:')
+        ? t.replace(/\/\/ read\(\) cannot serve this: /g, '// allow-no-direct-query: read() cannot serve this — ')
+        : t));
+    }
+  }
   if (route === 'adopt') {
     edit(proj, 'next.config.ts', (t) => t.replace(/\/\* config options here \*\//, 'cacheComponents: true,\n  partialPrefetching: true,'));
     return;

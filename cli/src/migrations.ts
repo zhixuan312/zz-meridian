@@ -525,6 +525,14 @@ export const RELEASE_MIGRATIONS: ReleaseMigration[] = [
     instructions: `Read "The four layers" and "The path an existing product follows" in references/data-layers.md. Thirty-eight modules moved into the logic layer, and each import of one in your own \`src/views/\` producers and pages names the path it left: ${MOVED_LIST}. Rewrite each import to the path the module has now, or move your own module beside the work it does. Two symbols left a card of Meridian's, and both must be rewritten because the update replaces the card: \`afterStart\`, which the incident card exported, is \`@/logic/after-start\`, and \`summarise\`, which the status list re-exported, is \`@/logic/summarise\`. Every other path your own files name is still there, so a project that imported neither symbol keeps building as it was. The six layer rules stay off until your own \`scripts/check.local.ts\` exports \`fourLayers = true\`; turn them on once your figures have moved, and the gate and the build are what show the work is done.`,
     checks: GATE_AND_BUILD,
   },
+  {
+    id: 'direct-query-escape',
+    since: '0.30.0',
+    applies: (root) => matching(root, (rel, src) => /^(?:app|src\/(?:logic|views|lib))\//.test(rel) && SOURCE.test(rel) && /\.query\s*\(/.test(src.replace(/\/\/[^\n]*/g, '')) && !/allow-no-direct-query:/.test(src)),
+    summary: 'A direct `.query(` call is allowed only where the call states its own escape: `// allow-no-direct-query: <why>`, on that line.',
+    instructions: 'Since 0.30.0 `node scripts/check.ts` reports every `.query(` call in `app/`, `src/logic/`, `src/views/` and `src/lib/`, and keeps the run passing only where the call\'s own line carries the escape the check prints — `// allow-no-direct-query: read() cannot serve this — <why>`. Before this release the rule allowed five sites of the template\'s by line number, so a file of your own that read a collection directly passed as long as the call sat on one of those lines; that list is gone, because a comment added above a call moved it off the line and turned a passing project red for no reason. Read every file named above. Where the read has to be direct — a server action reading the record it is about to change, a streamed export, the sign-in resolving a person before an `AccessScope` exists — state the reason on that line in the form the check prints. Everywhere else, read through `read()`, `readAll()` or `aggregate()` from `@/data/read`, which ask the caller\'s grant.',
+    checks: ['gate'],
+  },
 ];
 
 /**

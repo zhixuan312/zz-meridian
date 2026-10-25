@@ -4,6 +4,12 @@ Every release of ZZ Meridian, newest first. Versions follow semver: a removed or
 
 ## [0.30.0] · 2026-10-25
 
+### Breaking
+
+- **A direct `.query(` call states its own escape, on the line it is on.** `noDirectQuery` allowed five sites of the template's by absolute line number, and each was wrong the moment a comment above it changed length — this release moved `src/lib/assistant/tools.ts`'s call from 132 to 135 with an unrelated fix. The list is gone: the rule reports every `.query(` call in `app/`, `src/logic/`, `src/views/` and `src/lib/`, and keeps the run passing only where the call's own line carries `// allow-no-direct-query: read() cannot serve this — <why>`, the escape the check prints.
+  - **What a team does.** Run `update`; it reports `migration:direct-query-escape` for each of your files that queries directly. Where the read must be direct — a server action reading the record it is about to change, a streamed export, the sign-in resolving a person before an `AccessScope` exists — put the escape on that line with the reason. Everywhere else read through `read()`, `readAll()` or `aggregate()` from `@/data/read`, which ask the caller's grant.
+  - **Doing nothing.** Your own file that queries directly fails `node scripts/check.ts` on the next `pnpm gate`, in the check's own words, naming the line. Nothing else changes: the rule governs the same four folders it did, and a project with no direct read at all is unaffected.
+
 ### New
 
 - **The accent picker is a radio group.** `AccentSwatches` in `@/components/ui/radio-group` is one row of swatches built on the radio primitive: the row is one Tab stop, the arrow keys move the choice, and the chosen swatch is announced as chosen. Settings and the Atlas's card stage both draw it, where three hand-built rows of `role="radio"` buttons each drew their own — every swatch a stop, and an arrow key that did nothing. The appearance menu keeps pressed buttons (`role="group"` with `aria-pressed`), because inside a menu the arrow keys belong to the menu.
