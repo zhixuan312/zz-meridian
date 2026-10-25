@@ -6,6 +6,8 @@ import { Tooltip } from 'radix-ui';
 
 const jar = vi.hoisted(() => ({ value: undefined as string | undefined }));
 const spy = vi.hoisted(() => ({ reads: [] as string[] }));
+/** Shortens every customer's trend to this many days, for the record a product's own data may hold. */
+const store = vi.hoisted(() => ({ trendDays: 0 }));
 vi.mock('next/headers', () => ({
   cookies: async () => ({ get: (n: string) => (n === 'zz_meridian_view_as' && jar.value !== undefined ? { name: n, value: jar.value } : undefined), set: () => {} }),
   headers: async () => new Headers(),
@@ -27,13 +29,22 @@ vi.mock('@/data/roles', async (orig) => {
 });
 vi.mock('@/data/read', async (orig) => {
   const real = await orig<typeof import('@/data/read')>();
-  return { ...real, read: async (name: string, q?: unknown) => { spy.reads.push(name); return real.read(name, q as never); } };
+  return {
+    ...real,
+    read: async (name: string, q?: unknown) => {
+      spy.reads.push(name);
+      const r = await real.read(name, q as never);
+      // A product's own customers collection may hold fewer than the sample's 14 days for a customer.
+      if (name !== 'customers' || !store.trendDays) return r;
+      return { ...r, rows: r.rows.map((c) => ({ ...c, trend: (c as unknown as { trend: number[] }).trend.slice(0, store.trendDays) })) };
+    },
+  };
 });
 
 import CustomerPage, { generateMetadata } from '../app/(dashboard)/customers/[id]/page';
 import RevenuePage from '../app/(dashboard)/business/page';
 
-beforeEach(() => { jar.value = undefined; spy.reads.length = 0; });
+beforeEach(() => { jar.value = undefined; spy.reads.length = 0; store.trendDays = 0; });
 
 // The root layout's providers hold the tooltips' one provider, which a page drawn alone has to be given.
 const markup = async (node: Promise<unknown>) => renderToStaticMarkup(<Tooltip.Provider>{(await node) as never}</Tooltip.Provider>);
@@ -61,6 +72,16 @@ describe("a customer's page", () => {
     // Fourteen days of nothing still draw: a flat line, and no figure that is not a number.
     expect(html).not.toMatch(/NaN|Infinity/);
     expect(await generateMetadata(params('ambervale-motors'))).toEqual({ title: 'Ambervale Motors' });
+  });
+
+  it('draws no week for a record whose trend does not hold two of them', async () => {
+    jar.value = 'members_1';
+    store.trendDays = 10;
+    const html = await markup(CustomerPage(params('northwind-labs')));
+    const text = html.replace(/<[^>]*>/g, ' ');
+    // Its requests are not zero: they were never measured over a week the record does not hold.
+    expect(text).toMatch(/Requests\s+—\s/);
+    expect(text).not.toMatch(/Requests\s+0\s/);
   });
 
   it('draws the missing-record page in the first HTML for an id that names no customer', async () => {

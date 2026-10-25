@@ -110,14 +110,17 @@ function tiles(data: CustomerData) {
   const share = shareOf(data);
   const busiest = busiestOf(c, data.now);
   const product = data.product;
+  // A record that does not hold two weeks has no week to read, and a tile that fell back to 0 would state "no requests"
+  // as a measurement it never made. It draws the product's not-measured word instead.
+  const week = thisWeekOf(c);
   return [
     <MetricTile
       key="requests"
       label="Requests"
       hint="Its requests over the last 7 complete days, against the 7 before, with its last 14 days as the shape."
-      value={thisWeekOf(c) ?? 0}
+      value={week ?? '—'}
       format="compact"
-      delta={weekOf(c)}
+      delta={week === null ? null : weekOf(c)}
       compare="vs the week before"
       points={c.trend}
       finding={busiest ? { text: `Busiest of its 14 days: ${formatDay(busiest.date)}, ${formatCompact(busiest.requests)}`, tone: 'neutral' } : undefined}
