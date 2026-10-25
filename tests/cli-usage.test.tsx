@@ -22,11 +22,15 @@ vi.mock('next/navigation', () => ({
 // Every read of Usage goes through these two: a collection in `fail` cannot be read, one in `empty` holds nothing yet.
 vi.mock('@/data/read', async (orig) => {
   const real = await orig<typeof import('@/data/read')>();
+  // The real read stamps `observedAt` from `clock()`, the sample's frozen now, never the wall clock: a freshness label
+  // built from `new Date()` here read differently on every run.
+  const { clock } = await import('@/data/collections');
+  const at = () => clock().toISOString();
   const refuse = (name: string) => { if (store.fail.has(name)) throw new Error(`${name} is unavailable`); };
   return {
     ...real,
-    read: async (name: string, q?: unknown) => { refuse(name); return store.empty.has(name) ? { rows: [], total: 0, observedAt: new Date().toISOString() } : real.read(name, q as never); },
-    readAll: async (name: string, q?: unknown) => { refuse(name); return store.empty.has(name) ? { rows: [], observedAt: new Date().toISOString() } : real.readAll(name, q as never); },
+    read: async (name: string, q?: unknown) => { refuse(name); return store.empty.has(name) ? { rows: [], total: 0, observedAt: at() } : real.read(name, q as never); },
+    readAll: async (name: string, q?: unknown) => { refuse(name); return store.empty.has(name) ? { rows: [], observedAt: at() } : real.readAll(name, q as never); },
   };
 });
 // Each card the page draws marks where it stands; a Heatmap marks its form, its scale and whether it joins the Meridian.
