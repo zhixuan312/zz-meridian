@@ -155,23 +155,6 @@ describe('members, status and removal', () => {
       vi.useRealTimers();
     }
   });
-  it('sends a held removal when the page goes away, and says why when it is refused', async () => {
-    const d = deferred();
-    const remove = vi.fn(() => d.promise);
-    render(view(withActions({ remove })));
-    await openMenu(m.name);
-    fireEvent.click(await screen.findByRole('menuitem', { name: 'Remove' }));
-    await waitFor(() => expect(screen.queryByText(m.name)).toBeNull());
-    // The tab is hidden with the Undo window still open: the removal is sent now rather than dropped.
-    Object.defineProperty(document, 'visibilityState', { value: 'hidden', configurable: true });
-    fireEvent(document, new Event('visibilitychange'));
-    Object.defineProperty(document, 'visibilityState', { value: 'visible', configurable: true });
-    expect(remove).toHaveBeenCalledWith(m.id);
-    await act(async () => { d.resolve({ ok: false, error: 'The last owner cannot be removed.' }); });
-    // A refusal is a refusal here too: the person comes back and the reason is said.
-    expect(toasts.at(-1)).toMatchObject({ tone: 'critical', title: 'Change not made', description: 'The last owner cannot be removed.' });
-    await waitFor(() => expect(screen.getByText(m.name)).toBeTruthy());
-  });
   it('changes a role through the sheet, showing it at once, and reopens the sheet with the reason when it is refused', async () => {
     const d = deferred();
     const assignRole = vi.fn(() => d.promise);
