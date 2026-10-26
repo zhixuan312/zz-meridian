@@ -158,6 +158,25 @@ describe('the live client', () => {
     expect(FakeSource.all.length).toBe(opened + 1);
     c.dispose();
   });
+  it('tries the stream at once when a poll answers after one that did not, as a restarted server does', async () => {
+    let down = false;
+    const refresh = vi.fn(async () => { if (down) throw new Error('network'); });
+    const { c, states } = client(refresh, 1000);
+    c.setNames(['members']);
+    for (let i = 0; i < 3; i++) { live().at(-1)!.fail(); await flush(1100); }
+    expect(states.at(-1)).toBe('polling');
+    down = true;
+    await flush(1000);
+    const opened = FakeSource.all.length;
+    down = false;
+    await flush(1000);
+    // The poll that answered opened a stream; without the rule the next try would wait for the fifth poll.
+    expect(FakeSource.all.length).toBe(opened + 1);
+    live().at(-1)!.open();
+    await flush(600);
+    expect(states.at(-1)).toBe('live');
+    c.dispose();
+  });
   it('pauses on an authorization failure and goes stale on any other', async () => {
     const denied = client(async () => { throw Object.assign(new Error('no'), { status: 403 }); });
     denied.c.setNames(['members']);

@@ -413,3 +413,15 @@ describe('the 0.30.0 migration', () => {
     expect(byId('app-description').applies(path.resolve(import.meta.dirname, '..'))).toBeNull();
   });
 });
+
+describe('the 0.31.1 migration', () => {
+  it('finds a live stream starter that keeps its streams on a stop signal, and leaves the release\'s', () => {
+    const starter = (body: string) => project({ 'src/data/live-stream.ts': body });
+    expect(byId('live-stream-shutdown').since).toBe('0.31.1');
+    expect(byId('live-stream-shutdown').applies(starter('export function liveStream(o) {\n  return new Response(null);\n}\n'))).toEqual(['src/data/live-stream.ts']);
+    expect(byId('live-stream-shutdown').applies(starter('process.once(sig, function endLiveStreamsOnSignal() {});\nexport function liveStream(o) {}\n'))).toBeNull();
+    // A project without the starter has no stream to end: the live reference adds it, and this has nothing to say.
+    expect(byId('live-stream-shutdown').applies(project({}))).toBeNull();
+    expect(byId('live-stream-shutdown').applies(path.resolve(import.meta.dirname, '..'))).toBeNull();
+  });
+});

@@ -115,6 +115,33 @@ const MAX_QUEUED = 100;
 
 let noted = false;
 
+/**
+ * Every stream still open. A server told to stop (`next start` on SIGTERM or SIGINT) closes its port and then waits for
+ * its open connections, and a stream never ends of itself: the old process kept every tab's stream while the new one
+ * served the port, so no tab heard a hint again until its next poll. Ending them lets the old process go and each tab
+ * connect to the new one.
+ */
+const open = new Set<() => void>();
+let watching = false;
+
+/** Ends every open stream; each tab reconnects (the stream's `retry`), to whichever server then holds the port. */
+function endLiveStreams() {
+  for (const close of [...open]) close();
+}
+
+function endOnShutdown(close: () => void) {
+  open.add(close);
+  if (watching || typeof process === 'undefined' || typeof process.once !== 'function') return;
+  watching = true;
+  for (const sig of ['SIGTERM', 'SIGINT'] as const) {
+    process.once(sig, function endLiveStreamsOnSignal() {
+      endLiveStreams();
+      // A listener takes the place of the signal's default: where nothing else listens, the process stops as it would have.
+      if (process.listenerCount(sig) === 0) process.kill(process.pid, sig);
+    });
+  }
+}
+
 type LiveStreamOptions = {
   /** The requested names, already authorized once; the first frame greets with what moved. */
   names: string[];
@@ -141,6 +168,7 @@ export function liveStream({ names, collections, signal, heartbeatMs = 15000, au
   function close() {
     if (closed) return;
     closed = true;
+    open.delete(close);
     clearInterval(timer);
     for (const off of unsubscribe) off();
     unsubscribe.length = 0;
@@ -195,6 +223,7 @@ export function liveStream({ names, collections, signal, heartbeatMs = 15000, au
       controller = c;
       if (signal.aborted) return close();
       signal.addEventListener('abort', close);
+      endOnShutdown(close);
       // Subscribe first, then compare: a write after the page's read either moves a revision the greeting names or
       // arrives as a hint.
       collections.forEach((collection, i) => {

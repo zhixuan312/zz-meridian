@@ -541,7 +541,22 @@ export const RELEASE_MIGRATIONS: ReleaseMigration[] = [
     instructions: 'The release\'s `app/layout.tsx` shows `app.description` as the document\'s description — the line a search engine and a link preview put under the name — where it used to write a sentence of the template\'s own. `src/app.config.ts` is yours and an update does not touch it, so the key is missing there until you add it. Add `description: \'<one sentence about your product>\',` to the `app` object beside `name`. A project that keeps its own `app/layout.tsx` needs the key all the same, because the layout a project brings over from the release reads it.',
     checks: ['gate'],
   },
+  {
+    id: 'live-stream-shutdown',
+    since: '0.31.1',
+    applies: liveStreamKeptOnStop,
+    summary: 'The live stream ends every open stream when the server is told to stop, so tabs reconnect to the server that replaces it.',
+    instructions: '`src/data/live-stream.ts` is yours, so an update does not touch it, and the copy you have never ends a stream. A server told to stop (`next start` on SIGTERM or SIGINT, as a deploy or a restart does) closes its port and waits for its open connections: the old process stays up holding every tab\'s stream while the new one serves the port, so no tab hears a change hint again and every change waits for its next safety poll. Bring the block that begins `Every stream still open` over from `references/live.md` (the `open` set, `endLiveStreams` and `endOnShutdown`), call `open.delete(close)` first in the stream\'s `close`, and `endOnShutdown(close)` after the stream listens for its abort. A project that serves its stream some other way ends its streams on the signal the same way.',
+    checks: ['gate'],
+  },
 ];
+
+/** 0.31.1: a live stream starter that does not end its streams when the server is told to stop. */
+function liveStreamKeptOnStop(root: string): string[] | null {
+  const rel = 'src/data/live-stream.ts';
+  const body = text(root, rel);
+  return body !== null && /export function liveStream\b/.test(body) && !/endLiveStreamsOnSignal/.test(body) ? [rel] : null;
+}
 
 /** The `app` object of a project's configuration, as `src/app.config.ts` writes it. */
 const APP_OBJECT = /^export const app = \{[\s\S]*?^\} as const;$/m;

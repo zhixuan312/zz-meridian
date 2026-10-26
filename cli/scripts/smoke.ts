@@ -192,7 +192,7 @@ function zz(pkg: string, cwd: string, a: string[], label: string, env: Record<st
  * The migrations `cli/src/migrations.ts` declares since 0.5.0: changes in the team's own files, resolved by editing them.
  * `verify-modes` is not here: its edit is a flag in a script, and no origin passes one.
  */
-const RELEASE_IDS = ['shell-assistant-promise', 'assistant-available-promise', 'clock-now-required', 'cache-components-config', 'connection-boundaries', 'authorized-read', 'scoped-invalidation', 'live-provider', 'authorized-endpoints', 'share-view-context', 'agent-reads-section', 'assistant-view-tools', 'nav-needs', 'agent-reads-own-group', 'refusal-declared', 'managed-exports-removed', 'view-tool-page-explore', 'agent-does-here-section', 'sample-pages-renamed', 'marker-measured-on-observe', 'view-page-matched-as-next', 'journey-moved', 'today-in-timezone', 'verify-tiers', 'no-data-mark', 'table-grid', 'four-layers', 'direct-query-escape', 'app-description'];
+const RELEASE_IDS = ['shell-assistant-promise', 'assistant-available-promise', 'clock-now-required', 'cache-components-config', 'connection-boundaries', 'authorized-read', 'scoped-invalidation', 'live-provider', 'authorized-endpoints', 'share-view-context', 'agent-reads-section', 'assistant-view-tools', 'nav-needs', 'agent-reads-own-group', 'refusal-declared', 'managed-exports-removed', 'view-tool-page-explore', 'agent-does-here-section', 'sample-pages-renamed', 'marker-measured-on-observe', 'view-page-matched-as-next', 'journey-moved', 'today-in-timezone', 'verify-tiers', 'no-data-mark', 'table-grid', 'four-layers', 'direct-query-escape', 'app-description', 'live-stream-shutdown'];
 
 const filesUnder = (dir: string, rel = ''): string[] => {
   if (!fs.existsSync(path.join(dir, rel))) return [];
@@ -245,6 +245,9 @@ function bringReleaseOver(proj: string, route: string, reported: string[] = []) 
   if (reported.includes('app-description')) {
     edit(proj, 'src/app.config.ts', (t) => (/\bdescription\s*:/.test(t) ? t : t.replace(/^(\s*name\s*:[^\n]*,\s*)$/m, '$1\n  description: \'Traffic, latency, revenue and health for every endpoint.\',')));
   }
+  // `live-stream-shutdown` is 0.31.1's: the starter the team keeps never ended its streams on a stop signal. Its
+  // instruction brings the release's block over; the smallest edit that does it is the release's file, on both routes.
+  if (reported.includes('live-stream-shutdown')) write(proj, 'src/data/live-stream.ts', read(createdRelease(), 'src/data/live-stream.ts'));
   if (route === 'adopt') {
     edit(proj, 'next.config.ts', (t) => t.replace(/\/\* config options here \*\//, 'cacheComponents: true,\n  partialPrefetching: true,'));
     return;
