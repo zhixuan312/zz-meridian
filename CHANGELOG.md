@@ -2,6 +2,14 @@
 
 Every release of ZZ Meridian, newest first. Versions follow semver: a removed or renamed token, prop or card is major; a new card, token or variant is minor; a corrected value is a patch. Each entry says what breaks and what to do instead.
 
+## [0.31.2] · 2026-10-27
+
+### Fixed
+
+- **Home and Revenue no longer drop a frame when the period changes to 7D on a slow phone** (the known issue of 0.31.0). At 7D the year is 52 windows, drawn in two column charts and a trend, and the tap committed about a thousand elements in one frame: on the weekly runner's phone its longest gap was 83 ms against the 50 ms floor. Measured at the emulated phone's rate times 1.6, which reproduces the runner, the gap is now 50 ms in six of six runs (style and layout 31 to 36 ms, from 63 to 72).
+  - **A dense column chart draws a finished column as one element.** Past 30 columns, a plain chart's finished column is the `[data-column]` element alone, its bar the element's `::before` with the same share of the scale, rounded top and 2px floor, and the row of columns grows as one instead of a column at a time. A running column, a column with no data, a stacked or a signed chart is drawn as before. A finished plain column of any chart is its own fill, one element fewer.
+  - **A chart's data table and axis labels follow its marks a frame later when the period changes.** ColumnChart's and TrendChart's `sr-only` table, and ColumnChart's `aria-hidden` axis labels, render one frame after the set of columns or dates changes; the first render has them at once, and the label row keeps its height for that frame.
+
 ## [0.31.1] · 2026-10-27
 
 ### Fixed
