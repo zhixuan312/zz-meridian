@@ -183,7 +183,7 @@ export function TrendChart({
       upper: trendTotals(bands.slice(0, k + 1)),
     }));
   }, [stacked, series, dates]);
-  const totals = bases ? bases[bases.length - 1]?.upper ?? [] : null;
+  const totals = useMemo(() => (bases ? bases[bases.length - 1]?.upper ?? [] : null), [bases]);
   // The days the stack was measured on, in runs: a day no part has a value for breaks every band there, as a missing day
   // breaks a line, rather than dipping the whole stack to zero. Within a run a part with no value stands on the parts below.
   const stackRuns = useMemo(() => {
