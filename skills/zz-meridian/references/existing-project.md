@@ -210,8 +210,20 @@ Meridian's sample serves fixtures; a product's collections read a database. What
   migrator's bookkeeping in a schema the role may write (`public`); never stop the server on a failure, and report the
   outcome at a health route so a deploy can read it. A build has no database to migrate and must not need one.
 - **A role that may read and write but not create.** Deployed roles often lack `CREATE`, and a migrator that starts with
-  `CREATE SCHEMA` is refused even where tables may be created. Ship the schema as a one-off SQL file a person with the
-  owner's role runs once, and let the application role only migrate within what it may do.
+  `CREATE SCHEMA` is refused even where tables may be created. The first schema can ship as a one-off SQL file a person
+  with the owner's role runs once, but that settles only a schema that never changes: every later migration that adds a
+  table or a column is refused to the application role on each start, rolls back, and the server keeps serving the old
+  schema (issue #98). A release with a schema change takes one of two roads, and the project says which in its README:
+  - **A migration role the start-up migrator prefers.** Give the deployment a second connection string,
+    `MIGRATION_DATABASE_URL`, for a role that owns the schema, on the direct endpoint (not the transaction pooler). The
+    migrator in `instrumentation.ts` connects with it when it is set and with the application's otherwise; the pages
+    never read it. This suits a host that may hold the owner's credential.
+  - **A release step before the new version serves.** Where the running app must not hold the owner's credential, the
+    release runs the product's own migrate command with the owner's role, then switches traffic to the
+    new version. The start-up migrator then finds nothing pending.
+  Either way, read the health route after the deploy, and have it name the cause: a migration refused for permission
+  (Postgres `SQLSTATE 42501`, `insufficient_privilege`) reports which migration and says "the application role may not
+  change the schema: run the pending migrations with the owner's role", not a bare failure.
 
 ## Route A2: a static HTML page (data fetched as JSON)
 

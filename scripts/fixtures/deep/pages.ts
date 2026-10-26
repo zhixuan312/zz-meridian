@@ -398,7 +398,7 @@ export const CLEAN = `<!doctype html>
 // ---- navigation pages for scripts/navigate.ts, on the readiness fixtures' skeleton ----
 
 /** The rail routes of the Main workspace, in rail order. */
-export const NAV: [string, string][] = [['/nav-home', 'Home'], ['/nav-root-target', 'Root target'], ['/nav-missing-target', 'Missing target'], ['/nav-multi', 'Several matches'], ['/nav-root-hydrated', 'Hydrated root'], ['/nav-dead-control', 'Dead control'], ['/nav-link-late', 'Late data']];
+export const NAV: [string, string][] = [['/nav-home', 'Home'], ['/nav-root-target', 'Root target'], ['/nav-missing-target', 'Missing target'], ['/nav-multi', 'Several matches'], ['/nav-root-hydrated', 'Hydrated root'], ['/nav-dead-control', 'Dead control'], ['/nav-link-late', 'Late data'], ['/nav-redirect', 'Redirects'], ['/nav-empty', 'Empty list'], ['/nav-empty-error', 'Failed list']];
 const linksOf = (rail: [string, string][]) => rail.map(([href, label]) => `<li><a href="${href}">${label}</a></li>`).join('');
 const TABLE = '<table><thead><tr><th>Name</th></tr></thead><tbody><tr><td>Rows</td></tr></tbody></table>';
 
@@ -472,6 +472,13 @@ export const NAV_PAGES: Record<string, string> = {
   // address in the page, as a router does, so the journey's clock and its record of the press survive it.
   '/nav-link-late': nav('Late data', '<a href="/nav-home">Go home</a>', `document.querySelector('main a').addEventListener('click', (e) => { e.preventDefault(); history.pushState({}, '', '/nav-home'); });
   setTimeout(() => { const p = document.createElement('p'); p.textContent = 'Loaded'; document.querySelector('main').append(p); }, 800);`),
+  // A rail route that redirects to a page under it for the person signed in (#97): the server answers /nav-redirect with a
+  // redirect to /nav-redirect/thing-a, whose heading is the thing's.
+  '/nav-redirect/thing-a': nav('Thing A', `${TOGGLE}${TABLE}`, WIRE),
+  // A list whose data arrived empty (#97): its first-run state where the rows would be, so no row link to press.
+  '/nav-empty': nav('Empty list', '<div data-empty="first-run"><p>No things yet</p></div>'),
+  // The same list, failed: its error state, which stays a failure.
+  '/nav-empty-error': nav('Empty list', '<div data-empty="error" role="alert"><p>The things could not be read</p></div>'),
   '/nav-multi': nav('Several matches', `<button class="pick" aria-pressed="false" hidden>Hidden</button><button class="pick" aria-pressed="false">Toggle</button>${TABLE}`, PICK),
   // The only destination of its workspace: no other page's rail links to it, and the workspace menu's Solo item opens it.
   '/nav-solo': nav('Solo', `${TOGGLE}${TABLE}`, WIRE, { workspace: 'Solo', rail: [['/nav-solo', 'Solo']] }),

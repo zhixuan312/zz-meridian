@@ -56,7 +56,9 @@ export function selectSmokeRoutes({ smokeRoutes, nav, landing }: { smokeRoutes?:
 
 function mappingErrors(check: NavigationCheck, routes: string[]): string[] {
   const errors: string[] = [];
-  if (!routes.includes(check.path)) errors.push(`${check.path}: navigation check names a path that is not a route`);
+  // A journey presses the rail's link to the route, so a path the rail does not draw has no press to time (#97). A rail route
+  // that redirects is followed under it; a page reached from a list is a detail route, pressed and walked by the others.
+  if (!routes.includes(check.path)) errors.push(`${check.path}: a navigation check names a rail route, and this is not one: a journey times a press on the rail's link to it. For a rail route that redirects to a page under it (/things to /things/a), name the rail route: the journey follows it there. A page reached from a list belongs in detailRoutes`);
   for (const key of ['title', 'readySelector', 'controlSelector', 'resultSelector'] as const) {
     if (typeof check[key] !== 'string' || !check[key].trim()) errors.push(`${check.path}: navigation check has an empty ${key}`);
   }

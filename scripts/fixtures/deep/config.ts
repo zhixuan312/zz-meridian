@@ -20,6 +20,11 @@ const config = {
     { path: '/nav-solo-unoffered', title: 'Unoffered', readySelector: 'main table tbody tr', probe: 'toggle', controlSelector: 'main button#toggle', resultSelector: 'main button#toggle' },
     // The control is there and pressable, and pressing it changes nothing.
     { path: '/nav-dead-control', title: 'Dead control', readySelector: 'main table tbody tr', probe: 'toggle', controlSelector: 'main button#toggle', resultSelector: 'main button#toggle' },
+    // A rail route that redirects to a page under it: the journey follows it there (#97).
+    { path: '/nav-redirect', title: 'Thing A', readySelector: 'main table tbody tr', probe: 'toggle', controlSelector: 'main button#toggle', resultSelector: 'main button#toggle' },
+    // A list with no rows yet, and the same list failed: a row-link probe has nothing to press on either (#97).
+    { path: '/nav-empty', title: 'Empty list', readySelector: 'main table tbody tr', probe: 'link', controlSelector: 'main a[href^="/things/"]', resultSelector: 'h1' },
+    { path: '/nav-empty-error', title: 'Empty list', readySelector: 'main table tbody tr', probe: 'link', controlSelector: 'main a[href^="/things/"]', resultSelector: 'h1' },
     // The link is pressable at once and the ready text comes 800 ms later: the link is pressed once the data is measured.
     { path: '/nav-link-late', title: 'Late data', readySelector: 'main', readyText: 'Loaded', probe: 'link', controlSelector: 'main a[href="/nav-home"]', resultSelector: 'h1' },
   ],

@@ -82,6 +82,10 @@ type Line = {
   workspace?: string;
   /** Through the menu: how many prefetches of the destination the starting page had made before the press. */
   prefetched?: number;
+  /** Where the press arrived, when it was under the route rather than at it. */
+  landed?: string;
+  /** The data was the page's first-run state, not `readySelector`. */
+  empty?: boolean;
 };
 
 const value = (m: Measured | null): number | null => (m && 'ms' in m ? m.ms : null);
@@ -96,13 +100,16 @@ async function measure(page: Page, device: Device, start: From, route: string, c
     if ('fail' in m) {
       line[name] = { ms: null, limit: limits[name], verdict: 'fail', reason: `${m.fail.kind}: ${m.fail.message}` };
       line.problems.push(`${name} ${m.fail.kind}: ${m.fail.message}`);
-    } else line[name] = { ms: m.ms, limit: limits[name], verdict: 'pass' };
+    } else if ('absent' in m) line[name] = { ms: null, verdict: 'not-configured', reason: m.absent };
+    else line[name] = { ms: m.ms, limit: limits[name], verdict: 'pass' };
   };
   const run = { origin: base, condition: 'warm' as const, menu: start.menu };
   const first = await journey(page, device, start.from, route, check, run);
   line.drawerMs = first.drawerMs;
   line.prefetchCapped = first.prefetchCapped;
   line.prefetched = first.prefetched;
+  line.landed = first.landed;
+  line.empty = first.empty;
   for (const name of METRICS) fill(name, first[name]);
   // A wrong result, a never-ready page or a dead control is the answer: no retake can replace it.
   if (line.problems.length || timing === 'off') return finish(line);
@@ -138,6 +145,9 @@ const cell = (r: Reported): string => (r.verdict === 'not-configured' ? 'not-con
 const text = (l: Line): string =>
   `${l.status.padEnd(7)} ${l.route} ${l.device} shell ${cell(l.shell)} · data ${cell(l.data)} · interactive ${cell(l.interactive)}`
   + (l.noisy ? ' · noisy' : '')
+  + (l.landed ? ` · landed on ${l.landed}` : '')
+  + (l.empty ? ' · data is the first-run state' : '')
+  + METRICS.flatMap((name) => (l[name].verdict === 'not-configured' && l[name].reason ? [` · ${name} ${l[name].reason}`] : [])).join('')
   + (l.prefetchCapped ? ` · prefetch not idle after ${PREFETCH_WAIT / 1000} s` : '')
   + (l.drawerMs !== undefined ? ` · drawer ${l.drawerMs} ms` : '')
   + (l.via === 'menu' ? ` · through the workspace menu (${l.workspace})` : '')
@@ -309,7 +319,7 @@ async function main(): Promise<number> {
     status,
     routes,
     warnings: coverage.warnings,
-    lines: lines.map(({ route, device, status: s, shell, data, interactive, drawerMs, prefetchCapped, noisy, problems: p, via, workspace, prefetched }) => ({ route, device, status: s, via, workspace, prefetched, shell, data, interactive, drawerMs, prefetchCapped, noisy, problems: p })),
+    lines: lines.map(({ route, device, status: s, shell, data, interactive, drawerMs, prefetchCapped, noisy, problems: p, via, workspace, prefetched, landed, empty }) => ({ route, device, status: s, via, workspace, prefetched, landed, empty, shell, data, interactive, drawerMs, prefetchCapped, noisy, problems: p })),
     prefetch: prefetch && { ...prefetch, problems },
   });
   return failed ? 1 : 0;

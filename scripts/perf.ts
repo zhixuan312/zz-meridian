@@ -219,7 +219,7 @@ async function main(): Promise<number> {
               for (const name of METRICS) {
                 const m = sample[name];
                 if (m && 'fail' in m) problems.push(`sample ${i + 1} ${name} ${m.fail.kind}: ${m.fail.message}`);
-                else if (m) series[name].push(m.ms);
+                else if (m && 'ms' in m) series[name].push(m.ms);
               }
             } catch (e) {
               // The tab may be in any state after an error that is not a verdict: start the shared one again.

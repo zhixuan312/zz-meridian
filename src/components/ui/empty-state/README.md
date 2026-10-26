@@ -54,6 +54,7 @@ When an agent's query finds nothing, the view shows the filtered state with the 
 
 - The error kind is `role="alert"`.
 - No access is not an alert: nothing failed. Its root carries `data-no-access`, and the title and sentence carry the meaning.
+- Every kind's root carries `data-empty` with its kind. `pnpm verify`'s navigation journey reads `data-empty="first-run"` as data that arrived empty, and `data-empty="error"` as data that failed, so an empty list is not reported as a page that never got ready. A product's own empty state carries the same attribute.
 - The disc is decorative; the title carries the meaning.
 - Title `ink` on `surface` 18.5:1; sentence `ink-2` 7.1:1 (light, cobalt).
 

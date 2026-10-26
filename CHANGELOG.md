@@ -2,6 +2,20 @@
 
 Every release of ZZ Meridian, newest first. Versions follow semver: a removed or renamed token, prop or card is major; a new card, token or variant is minor; a corrected value is a patch. Each entry says what breaks and what to do instead.
 
+## [Unreleased]
+
+### New
+
+- **`EmptyState` names its kind on its root: `data-empty="first-run"`, `"filtered"`, `"error"` or `"no-access"`.** Navigation readiness reads it (below), and a product's own empty state carries the same attribute to be read the same way.
+
+### Fixed
+
+- **A rail route that redirects to a page under it is followed there** ([#97](https://github.com/zhixuan312/zz-meridian/issues/97)). A rail item at `/things` whose page sends the person to `/things/<slug>` failed its journey with `still on /things/a … after pressing /things`, so the page the person actually opens was never measured. The press has now arrived once the address is the route or a page under it, the entry's `title`, data and control are that page's, and the line says `landed on /things/a`. A press that lands anywhere else says where: `pressing /things led to /elsewhere, which is neither /things nor a page under it`.
+  - An entry of `navigationChecks` for a path the rail does not draw now says why it is refused: a journey times a press on the rail's link, so it names the rail route a redirect starts from, and a page reached from a list belongs in `detailRoutes`. Checking such paths against the build's route list instead was declined: they would pass the check and then have no link to press.
+- **A list whose data arrived empty is not a page that never got ready** (#97). A list page with a row-link probe and no rows failed `interactive never-ready: the control … was not pressable in 10000 ms`. When the page draws its first-run `EmptyState` where the rows would be and nothing in `main` is still loading, that is its data, ready (the line says `data is the first-run state`), and the control it does not have is reported `interactive not measured: the page shows its first-run state (…)`, a warning and never a pass, as soon as the empty state shows rather than after the wait. The error state stays a failure, and its line now says `the page shows its error state`.
+- **A schema change behind a role that may not change the schema has a recipe** ([#98](https://github.com/zhixuan312/zz-meridian/issues/98)). `references/existing-project.md` told an adopter both to migrate on start and to ship the schema as a one-off file, which agrees only for a schema that never changes. It now names the two roads for every later migration: a `MIGRATION_DATABASE_URL` for the owner's role that the start-up migrator prefers, or a release step that migrates with the owner's role before the new version serves. The health route names a refused migration (`SQLSTATE 42501`) and the role that can run it.
+- **HTML that grew with the data has a reading** (#98). `references/validation.md` says how to tell a page's HTML growing with its database (`noLiveApi`) from growing with its code, and when re-recording the baseline is the answer.
+
 ## [0.30.0] · 2026-10-25
 
 ### Breaking

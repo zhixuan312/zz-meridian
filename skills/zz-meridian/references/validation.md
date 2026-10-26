@@ -39,7 +39,15 @@ line naming the command that runs them. Steps in order:
    a page is followed. A workspace's home that no other route's rail links to (the only destination of its workspace) is
    reached through the workspace menu: from the nearest rail route before it, by the menu's item for its workspace, from
    that press, and its line says `through the workspace menu (<workspace>)`. Any other destination no rail links to is
-   reported as a problem, never as a pass.
+   reported as a problem, never as a pass. A `navigationChecks` entry names a rail route, since the journey presses the
+   rail's link to it. A rail route that redirects to a page under it (`/things` to `/things/<slug>` for the person
+   signed in) is followed there: the press has arrived once the address is the route or under it, the entry's `title`
+   is the page it lands on, and the line says `landed on <path>`. A page reached from a list is not a rail route: name
+   it in `detailRoutes`, where the audit, the presses, the keyboard walk and the vitals open it. A page whose data arrived empty
+   draws its first-run `EmptyState` (`data-empty="first-run"`) where the rows would be: once nothing in `main` is still
+   loading, that is its data, ready, the line says `data is the first-run state`, and a
+   control the empty page does not have is reported `interactive not measured: the page shows its first-run state`, a
+   warning and never a pass. The error state (`data-empty="error"`) stays a failure.
 1. **The gate** (`node scripts/gate.ts`): tokens regenerate to the same CSS; the card registry is fresh; every card and
    page specification follows the anatomy; the product's own rules in `optional:scripts/check.local.ts`, when the file exists;
    contrast holds for every pair in every theme and accent, and the chart palette passes the colour-vision checks;
@@ -156,7 +164,7 @@ and supply-chain check before a script runs; that is pnpm, not an install, and n
 
 ## Lines that are not about the page
 
-Two lines say something about what the suites could see, not about a defect in a page's own styles.
+Three lines are not about a defect in a page's own styles: two say what the suites could see, and one what the data did.
 
 - **`unmeasured: <element> (no open shadow root|not defined)`** is the audit saying it did not measure that element, and
   it fails like any other finding so that a custom element is never passed unseen. The fix is in the element, as in the
@@ -167,6 +175,14 @@ Two lines say something about what the suites could see, not about a defect in a
   selector and is information, never a failure: the first visible match was pressed, as before. If that is not the
   control you meant, write a more specific selector. A descendant combinator does not cross a shadow boundary, so name an
   element inside a root with a selector written for that root.
+
+- **`<route>: HTML grew <n>% over its baseline (cap 5%)`** with no change to the code means the page renders data that
+  changed. Under a `fakeApi` the data is fixed and the figure measures code; a project whose pages read its own
+  database (`noLiveApi`) measures whatever rows the database held at the build. Tell the two apart by building the
+  commit the baseline was recorded on against the same data: when it grows by the same amount, the growth is the
+  data's. Then re-record with `node scripts/sizes.ts --write-baseline --base <url>` and say in the commit that the data
+  moved; the lasting fix is a fixed data set for verify (a seeded database), so the figure measures code again. Growth
+  the old commit does not show is the code's, and is fixed in the page.
 
 ## Asking the agent's questions: `scripts/ask.ts`
 

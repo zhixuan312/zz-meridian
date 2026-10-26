@@ -7,7 +7,10 @@ type DeviceBudget = { desktop: number; phone: number };
 type ReadinessBudget = { shellMs: DeviceBudget; dataMs: DeviceBudget; interactiveMs: DeviceBudget };
 /** What "this route is ready" means, and one harmless control to press on it. */
 type NavigationCheck = {
-  /** The rail route this describes. */
+  /**
+   * The rail route this describes. A rail route that redirects to a page under it (`/things` to `/things/<slug>`) is
+   * followed there, and `title`, `readySelector` and the control are the page it lands on's.
+   */
   path: string;
   /** Text the page's heading shows as soon as the shell has arrived. */
   title: string;
