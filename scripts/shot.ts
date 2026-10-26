@@ -115,8 +115,8 @@ try {
             const tip = el?.parentElement?.querySelector('div[aria-hidden]');
             const r = tip?.getBoundingClientRect();
             const chart = el?.getBoundingClientRect();
-            const fits = !!r && !!chart && getComputedStyle(tip).opacity > 0.05 && r.left >= Math.max(0, chart.left) - 1 && r.right <= Math.min(innerWidth, chart.right) + 1;
-            return { fits, detail: JSON.stringify({ viewport: innerWidth, chart: chart && { left: chart.left, right: chart.right }, readout: r && { left: r.left, right: r.right } }) };
+            const fits = !!r && !!chart && getComputedStyle(tip).opacity > 0.05 && r.left >= Math.max(0, chart.left) - 1 && r.right <= Math.min(document.documentElement.clientWidth, chart.right) + 1;
+            return { fits, detail: JSON.stringify({ viewport: document.documentElement.clientWidth, chart: chart && { left: chart.left, right: chart.right }, readout: r && { left: r.left, right: r.right } }) };
           })()`);
           if (!readout.fits) { console.log(`FAIL ${r} at ${w}px ${t}: readout missing or outside its chart: ${readout.detail}`); failed = true; }
         }

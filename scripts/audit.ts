@@ -90,7 +90,9 @@ type Report = {
 
 /** Runs inside the page. Plain JavaScript: it is serialised into the browser. */
 const MEASURE = `(() => {
-  const W = innerWidth, out = { path: location.pathname, href: location.href, text: 0, sideways: [], clipped: [], spills: [], truncated: [], overlap: [], unnamed: [], unmeasured: [], scrollers: [], contrast: [], targets: [], headings: [], sizes: [], weights: [], radii: [], ratio: 0 };
+  // The layout viewport, never innerWidth: a phone's visual viewport widens to content that overflows it, so a page
+  // 600px wide at 390 measured 616 there and its sideways scroll, the strip rule and every clip were judged at 616.
+  const W = document.documentElement.clientWidth, out = { path: location.pathname, href: location.href, text: 0, sideways: [], clipped: [], spills: [], truncated: [], overlap: [], unnamed: [], unmeasured: [], scrollers: [], contrast: [], targets: [], headings: [], sizes: [], weights: [], radii: [], ratio: 0 };
   const label = (el) => (el.tagName.toLowerCase() + (el.id ? '#' + el.id : '') + (el.className && typeof el.className === 'string' ? '.' + el.className.trim().split(/\\s+/).slice(0, 3).join('.') : '')).slice(0, 90);
   /* closest() across open roots and slots: deepParent (injected from scripts/lib/deep.ts) steps through both */
   const deepClosest = (el, sel) => { for (let n = el; n; n = deepParent(n)) if (n.matches(sel)) return n; return null; };

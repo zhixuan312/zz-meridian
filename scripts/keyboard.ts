@@ -91,7 +91,7 @@ const STOP = `(() => {
   const ring = chain.some(ringed);
   // The first line box, not the whole rectangle: a link that wraps has its centre over the text beside it.
   const r = el.getClientRects()[0] ?? el.getBoundingClientRect();
-  const x = Math.min(innerWidth - 1, Math.max(0, r.left + r.width / 2)), y = Math.min(innerHeight - 1, Math.max(0, r.top + r.height / 2));
+  const x = Math.min(document.documentElement.clientWidth - 1, Math.max(0, r.left + r.width / 2)), y = Math.min(innerHeight - 1, Math.max(0, r.top + r.height / 2));
   const hit = document.elementFromPoint(x, y);
   // A control inside an open root is hit as its outermost host: on top is the control, or any shadow host that contains it.
   let onTop = !!hit && (hit === el || el.contains(hit) || hit.contains(el) || !!hit.closest('[data-radix-popper-content-wrapper]'));

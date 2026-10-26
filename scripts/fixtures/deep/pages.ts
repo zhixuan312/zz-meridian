@@ -291,11 +291,11 @@ ${chart(`${RULE(50)}${CAPTION}`)}
     body: '<div class="rail" data-scroll-region><div class="wide">Quarterly revenue by region and segment, with last year beside it</div></div>',
   }),
   '/sideways-data-page': deep('Data page that does not fill its canvas', {
-    css: '.canvas { width: 400px; overflow: hidden; } .page { width: 200px; }',
+    css: '.canvas { width: 300px; overflow: hidden; } .page { width: 150px; }',
     body: '<div class="canvas" data-scroll-region><div class="page" data-page-width="data">Rows per page, and the requests behind them</div></div>',
   }),
   '/sideways-data-page-fixed': deep('Data page that fills its canvas', {
-    css: '.canvas { width: 400px; overflow: hidden; } .page { width: 400px; }',
+    css: '.canvas { width: 300px; overflow: hidden; } .page { width: 300px; }',
     body: '<div class="canvas" data-scroll-region><div class="page" data-page-width="data">Rows per page, and the requests behind them</div></div>',
   }),
   // The frame clips rather than scrolls, so the table is wider than what holds it and no scrollbar offers the rest.
@@ -357,6 +357,9 @@ ${chart(`${RULE(50)}${CAPTION}`)}
   // with no content, so this is the case that has to say so rather than end the run with the standard's line over it.
   '/empty-region': deep('A region that rendered nothing', { body: '<div data-scroll-region></div>' }),
   '/empty-region-fixed': deep('A region that rendered its content', { body: '<div data-scroll-region><p>Every request of the day, by route.</p></div>' }),
+  // A content row 600px wide in a page with no scroll region: the document itself scrolls sideways at a phone's width.
+  '/sideways-document': deep('A row wider than the page', { css: '.row { width: 600px; height: 40px; background: #e8e8e8; }', body: '<div class="row"><p>Requests by route</p></div>' }),
+  '/sideways-document-fixed': deep('A row wider than the page, corrected', { css: '.row { width: 600px; max-width: 100%; height: 40px; background: #e8e8e8; }', body: '<div class="row"><p>Requests by route</p></div>' }),
 
   // The two address rules. The audit asks for a route and measures what came back, and both halves of that are worth a
   // case: a route that redirected somewhere else, and one whose address came back without the parameters it was asked

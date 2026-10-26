@@ -235,7 +235,7 @@ async function invite(page: Page, name: string, confirm = true): Promise<number>
   for (let attempt = 1; ; attempt++) {
     await click(page, find('button', 'Invite member'));
     try {
-      await waitFor(page, 'the sheet settling', `(() => { const d = ${DIALOG}; const r = d?.getBoundingClientRect(); return r && r.width > 0 && r.right <= innerWidth + 1; })()`, 1500);
+      await waitFor(page, 'the sheet settling', `(() => { const d = ${DIALOG}; const r = d?.getBoundingClientRect(); return r && r.width > 0 && r.right <= document.documentElement.clientWidth + 1; })()`, 1500);
       break;
     } catch (e) {
       if (attempt === 3) throw e;

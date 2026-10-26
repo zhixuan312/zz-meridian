@@ -73,7 +73,7 @@ Every page has an `h1`, `lang="en"`, a `main`, an opaque ground and controls of 
 | `/presses-late-replace` | A press that answers, then a document replaced after the presses' look has closed (Escape replaces it, so it lands between the look and the next read every run): the suite opens the route again and presses the next control, never crashes (passes) |
 | `/late-answer` | A control whose answer, a status line, comes 1.5 s after its press, past the presses' first look at 600 ms: slow, not dead (passes) |
 | `/sideways-region` | A content region 600px wide in a 300px canvas: the first of the sideways rule's three arms. `-fixed` fits |
-| `/sideways-data-page` | A `[data-page-width="data"]` page 200px wide in a 400px canvas: the page is what should stretch. `-fixed` fills it |
+| `/sideways-data-page` | A `[data-page-width="data"]` page 150px wide in a 300px canvas: the page is what should stretch. `-fixed` fills it |
 | `/sideways-table` | A 600px table in a 240px frame that clips rather than scrolls, so no scrollbar offers the rest. `-fixed` fits |
 | `/strip` | A chip strip with `overflow-x: auto`, wider than 390px: its last items are off the edge with no fade saying so. `-fixed` wraps |
 | `/spill` | A 20-digit figure in one of four `1fr` grid tracks 120px wide, drawn past the track and its container, in a box that does not clip. `-fixed` breaks the figure anywhere |
@@ -81,6 +81,7 @@ Every page has an `h1`, `lang="en"`, a `main`, an opaque ground and controls of 
 | `/double-scroller` | Two 200px scrollers over 400px of content: a page may have one, and the content region is it. `-fixed` has one |
 | `/heading-skip` | An `h2` then an `h4`: the outline a screen reader reads has a hole in it. `-fixed` descends one at a time |
 | `/empty-region` | A content region that rendered nothing — every other rule passes a page with no content. `-fixed` holds the day's rows |
+| `/sideways-document` | A row 600px wide in a page with no scroll region: the document itself scrolls sideways at a phone's width. `-fixed` holds the row to the page |
 | `/moved-page` | The server answers it with a 302 to `/moved-page-now`, so the audit measured a page it did not ask for |
 | `/drops-query` | Asked for as `/drops-query?view=all`, answered with a 302 to the bare path: the address came back without its view |
 | `/page-error` | The page throws while it renders, and nothing catches it |

@@ -465,5 +465,7 @@
   { "page": "/nav-redirect", "suite": "navigate", "outcome": "pass", "line": "landed on /nav-redirect/thing-a" },
   { "page": "/nav-empty", "suite": "navigate", "outcome": "pass", "line": "interactive not measured: the page shows its first-run state" },
   { "page": "/nav-empty", "suite": "navigate", "outcome": "pass", "line": "data is the first-run state" },
-  { "page": "/nav-empty-error", "suite": "navigate", "outcome": "fail", "line": "the page shows its error state" }
+  { "page": "/nav-empty-error", "suite": "navigate", "outcome": "fail", "line": "the page shows its error state" },
+  { "page": "/sideways-document", "suite": "audit", "outcome": "fail", "line": "sideways: document 616px wide at 390" },
+  { "page": "/sideways-document-fixed", "suite": "audit", "outcome": "pass" }
 ]

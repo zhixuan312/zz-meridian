@@ -476,7 +476,7 @@ try {
 
     // Layout: a column beside the page at 1440px, over it at 390px; Escape closes it.
     if (!(await panelOpen())) await openPanel();
-    const geometry = () => page.eval<{ position: string; main: number; panel: number; width: number }>(`(() => { const a = ${PANEL}; return { position: getComputedStyle(a).position, main: Math.round(document.querySelector('main').getBoundingClientRect().right), panel: Math.round(a.getBoundingClientRect().left), width: innerWidth }; })()`);
+    const geometry = () => page.eval<{ position: string; main: number; panel: number; width: number }>(`(() => { const a = ${PANEL}; return { position: getComputedStyle(a).position, main: Math.round(document.querySelector('main').getBoundingClientRect().right), panel: Math.round(a.getBoundingClientRect().left), width: document.documentElement.clientWidth }; })()`);
     const wide = await geometry();
     if (wide.position === 'fixed' || Math.abs(wide.main - wide.panel) > 1) fail(`at 1440px the panel is ${wide.position} with the page ending at ${wide.main}px and the panel starting at ${wide.panel}px`);
     await page.open(`${base}${landing}`, { width: 390 });
