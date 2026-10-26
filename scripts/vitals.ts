@@ -144,9 +144,11 @@ for (const route of ROUTES) {
   // drops one is measured a second time before it is failed, and a page that drops one twice is a page that stutters.
   const again = m.dropped > 0;
   if (again) m = await measure(route);
-  const bad = !!m.answer || m.lcp >= 2500 || m.inp >= 200 || m.cls >= 0.1 || m.dropped > 0;
+  // Each floor a page missed, by name: the figures alone left a reader to work out which one failed the line.
+  const missed = [m.lcp >= 2500 && 'over the LCP floor (2.5 s)', m.inp >= 200 && 'over the INP floor (200 ms)', m.cls >= 0.1 && 'over the CLS floor (0.1)', m.dropped > 0 && 'dropped a frame (over 50 ms)'].filter(Boolean);
+  const bad = !!m.answer || missed.length > 0;
   if (bad) failures++;
-  console.log(`${bad ? 'FAIL' : 'ok  '} ${route.padEnd(36)} LCP ${(m.lcp / 1000).toFixed(2)} s · INP ${Math.round(m.inp)} ms · CLS ${m.cls.toFixed(3)} · frames over 50 ms: ${m.dropped} of ${m.frames}${again ? ' (second measure)' : ''} · taps: ${m.tapped}${m.dropped ? ` · dropped by: ${m.droppedBy} · ${m.cause}` : ''}${m.inp >= 100 ? ` · slowest tap: ${m.slowest}` : ''}${m.moved ? ` · moved most: ${m.moved}` : ''}${m.answer ? `\n  ${m.answer}` : ''}`);
+  console.log(`${bad ? 'FAIL' : 'ok  '} ${route.padEnd(36)} LCP ${(m.lcp / 1000).toFixed(2)} s · INP ${Math.round(m.inp)} ms · CLS ${m.cls.toFixed(3)} · frames over 50 ms: ${m.dropped} of ${m.frames}${again ? ' (second measure)' : ''} · taps: ${m.tapped}${m.dropped ? ` · dropped by: ${m.droppedBy} · ${m.cause}` : ''}${m.inp >= 100 ? ` · slowest tap: ${m.slowest}` : ''}${m.moved ? ` · moved most: ${m.moved}` : ''}${missed.length ? `\n  ${missed.join(', ')}` : ''}${m.answer ? `\n  ${m.answer}` : ''}`);
 }
 await page.send('Emulation.setCPUThrottlingRate', { rate: 1 });
 page.close();

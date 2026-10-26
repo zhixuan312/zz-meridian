@@ -26,6 +26,7 @@
  *   disclosure                                                          a control in a closed disclosure, which both browser suites open
  *   slow-load                                                            a page whose load event comes late (chrome.ts)
  *   drawn-missing                                                        the not-found screen drawn on a page that answered 200
+ *   sideways-document, presses-*, keyboard-*, vitals-*, hangs            every rule no page had made fire (tests/cli-check-rule-pairs.test.ts)
  *   nav-*                                                                pages for scripts/navigate.ts
  */
 
@@ -361,9 +362,48 @@ ${chart(`${RULE(50)}${CAPTION}`)}
   // The not-found screen drawn on a page that answered 200, as a record page inside a streamed shell draws it: a route
   // not declared missing that draws it was measured as something it is not, and one declared missing that does is right.
   '/drawn-missing': deep('This page isn’t here', { body: '<section data-missing-page><p>Nothing is at this address. Go back to the requests.</p></section>' }),
+
+  // ---- every rule a suite judged that no page had made fire (tests/cli-check-rule-pairs.test.ts lists each with its pair) ----
   // A content row 600px wide in a page with no scroll region: the document itself scrolls sideways at a phone's width.
   '/sideways-document': deep('A row wider than the page', { css: '.row { width: 600px; height: 40px; background: #e8e8e8; }', body: '<div class="row"><p>Requests by route</p></div>' }),
   '/sideways-document-fixed': deep('A row wider than the page, corrected', { css: '.row { width: 600px; max-width: 100%; height: 40px; background: #e8e8e8; }', body: '<div class="row"><p>Requests by route</p></div>' }),
+  // A link whose address is no URL at all (an unclosed IPv6 host): following it, a browser goes nowhere.
+  '/presses-bad-url': deep('A link to no address', { body: '<p><a href="http://[docs">The guide</a></p>' }),
+  '/presses-bad-url-fixed': deep('A link to no address, corrected', { body: '<p><a href="/docs">The guide</a></p>' }),
+  // A control the first load draws and no later load does: after the Reload press opens the page again, Archive is
+  // gone for good, unlike /presses-controls-move, whose controls come back late.
+  '/presses-control-gone': deep('A control that leaves', { body: '<div class="list"></div><p class="status" aria-live="polite"></p>', script: `const first = !sessionStorage.getItem('gone'); sessionStorage.setItem('gone', '1'); const list = document.querySelector('.list'); const add = (label, act) => { const b = document.createElement('button'); b.type = 'button'; b.textContent = label; b.addEventListener('click', act); list.append(b); }; add('Reload', () => location.reload()); if (first) add('Archive', () => { document.querySelector('.status').textContent = 'Archived'; });` }),
+  // A control under a layer that takes the pointer: a press lands on the layer, never on the control.
+  '/presses-covered': deep('A control under a layer', { css: '.wrap { position: relative; } .layer { position: absolute; inset: 0; background: rgb(255 255 255 / 0.6); }', body: '<div class="wrap"><button type="button" id="go">Refresh</button><div class="layer"></div></div><p class="status" aria-live="polite"></p>', script: `document.getElementById('go').addEventListener('click', () => { document.querySelector('.status').textContent = 'Refreshed'; });` }),
+  '/presses-covered-fixed': deep('A control under a layer, corrected', { css: '.wrap { position: relative; } .layer { position: absolute; inset: 0; background: rgb(255 255 255 / 0.6); pointer-events: none; }', body: '<div class="wrap"><button type="button" id="go">Refresh</button><div class="layer"></div></div><p class="status" aria-live="polite"></p>', script: `document.getElementById('go').addEventListener('click', () => { document.querySelector('.status').textContent = 'Refreshed'; });` }),
+  // A page that stops answering at every width, past the 30 s a protocol command is given: the walk names it and goes on.
+  '/hangs': deep('A page that stops answering everywhere', { body: '<p>Quarterly revenue held steady across every region.</p><button type="button">Export</button>', script: `const until = Date.now() + 40000; while (Date.now() < until) {}` }),
+  // A link under a bar fixed over the top of the page: focus lands on it where the bar is drawn.
+  '/keyboard-hidden': deep('A link under the bar', { css: '.bar { position: fixed; top: 0; left: 0; right: 0; height: 160px; background: #f0f0f0; z-index: 1; } main { padding-top: 40px; }', body: '<div class="bar"></div><p><a href="/requests">Every request</a></p>' }),
+  '/keyboard-hidden-fixed': deep('A link under the bar, corrected', { css: '.bar { position: fixed; top: 0; left: 0; right: 0; height: 160px; background: #f0f0f0; z-index: 1; } main { padding-top: 180px; }', body: '<div class="bar"></div><p><a href="/requests">Every request</a></p>' }),
+  // Shift+Tab from the last control jumps to the first, past the middle one: the way back is not the way forward.
+  '/keyboard-reverse': deep('A way back that skips', { body: '<button type="button" id="a">First</button><button type="button" id="b">Middle</button><button type="button" id="c">Last</button>', script: `document.getElementById('c').addEventListener('keydown', (e) => { if (e.key === 'Tab' && e.shiftKey) { e.preventDefault(); document.getElementById('a').focus(); } });` }),
+  '/keyboard-reverse-fixed': deep('A way back that skips, corrected', { body: '<button type="button" id="a">First</button><button type="button" id="b">Middle</button><button type="button" id="c">Last</button>' }),
+  // A page with a skip link that is not its first stop: a control before it, so the blocks it bypasses come first.
+  '/keyboard-skip-link': deep('A skip link that comes second', { body: '<button type="button">Menu</button><p><a href="#content">Skip to content</a></p><section id="content"><p>The page itself.</p></section>' }),
+  '/keyboard-skip-link-fixed': deep('A skip link that comes second, corrected', { body: '<p><a href="#content">Skip to content</a></p><button type="button">Menu</button><section id="content"><p>The page itself.</p></section>' }),
+  // A control that leaves the page when it takes focus: tagged at the start of the walk, gone by its end.
+  '/keyboard-control-gone': deep('A control that leaves on focus', { body: '<button type="button" id="first">Open</button><button type="button" id="gone">Dismiss</button><button type="button">Close</button>', script: `document.getElementById('gone').addEventListener('focus', (e) => e.target.remove());` }),
+  '/keyboard-control-gone-fixed': deep('A control that leaves on focus, corrected', { body: '<button type="button" id="first">Open</button><button type="button" id="gone">Dismiss</button><button type="button">Close</button>', script: `document.getElementById('gone').addEventListener('focus', (e) => { e.target.textContent = 'Dismiss now'; });` }),
+  // The vitals' floors, each on its own: the largest text painted 3.4 s after load, a tap that blocks the thread for
+  // 400 ms, a tap that blocks it for 90 ms (a long frame, inside the INP floor), and the banner of /deep-shifts with its
+  // space held from the start. The Alerts button is the tap vitals presses.
+  '/vitals-late-paint': deep('The largest text arrives late', { css: '.hero { min-height: 160px; font-size: 40px; line-height: 1.2; }', body: '<div class="hero"></div><button type="button" aria-label="Alerts">!</button>', script: `setTimeout(() => { document.querySelector('.hero').textContent = 'Revenue held steady in every region this quarter'; }, 3400);` }),
+  '/vitals-late-paint-fixed': deep('The largest text arrives late, corrected', { css: '.hero { min-height: 160px; font-size: 40px; line-height: 1.2; }', body: '<div class="hero">Revenue held steady in every region this quarter</div><button type="button" aria-label="Alerts">!</button>' }),
+  '/vitals-slow-tap': deep('A slow tap', { body: '<button type="button" aria-label="Alerts" id="t">!</button><p class="status"></p>', script: `document.getElementById('t').addEventListener('click', () => { const until = performance.now() + 400; while (performance.now() < until) {} document.querySelector('.status').textContent = 'No new alerts'; });` }),
+  '/vitals-slow-tap-fixed': deep('A slow tap, corrected', { body: '<button type="button" aria-label="Alerts" id="t">!</button><p class="status"></p>', script: `document.getElementById('t').addEventListener('click', () => { document.querySelector('.status').textContent = 'No new alerts'; });` }),
+  '/vitals-dropped-frame': deep('A tap that holds a frame', { body: '<button type="button" aria-label="Alerts" id="t">!</button><p class="status"></p>', script: `document.getElementById('t').addEventListener('click', () => { const until = performance.now() + 90; while (performance.now() < until) {} document.querySelector('.status').textContent = 'No new alerts'; });` }),
+  '/vitals-dropped-frame-fixed': deep('A tap that holds a frame, corrected', { body: '<button type="button" aria-label="Alerts" id="t">!</button><p class="status"></p>', script: `document.getElementById('t').addEventListener('click', () => { document.querySelector('.status').textContent = 'No new alerts'; });` }),
+  '/vitals-shifts-fixed': deep('Content that moves after load, corrected', {
+    css: '.card { height: 360px; background: #e8e8e8; padding: 8px; box-sizing: border-box; } .slot { height: 300px; } .banner { height: 300px; background: #cfd8ff; }',
+    body: '<div class="slot"></div><div class="card"><p>Requests per day</p><button type="button" aria-label="Alerts">!</button></div>',
+    script: `setTimeout(() => { const b = document.createElement('div'); b.className = 'banner'; document.querySelector('.slot').append(b); }, 1200);`,
+  }),
 
   // The two address rules. The audit asks for a route and measures what came back, and both halves of that are worth a
   // case: a route that redirected somewhere else, and one whose address came back without the parameters it was asked

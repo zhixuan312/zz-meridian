@@ -83,6 +83,18 @@ Every page has an `h1`, `lang="en"`, a `main`, an opaque ground and controls of 
 | `/empty-region` | A content region that rendered nothing — every other rule passes a page with no content. `-fixed` holds the day's rows |
 | `/drawn-missing` | A page that answers 200 and draws the not-found screen (`[data-missing-page]`), as a record page inside a streamed shell does: it fails every suite unless the run declares it missing (`--missing /drawn-missing`), when it passes |
 | `/sideways-document` | A row 600px wide in a page with no scroll region: the document itself scrolls sideways at a phone's width. `-fixed` holds the row to the page |
+| `/presses-bad-url` | A link whose address is no URL (an unclosed IPv6 host). `-fixed` links to a page |
+| `/presses-control-gone` | A control the first load draws and no later one does: after the Reload press opens the page again, Archive is gone for good (`/presses-controls-move` is its twin, whose controls come back late) |
+| `/presses-covered` | A control under a layer that takes the pointer. `-fixed` lets the pointer through the layer |
+| `/hangs` | Blocks its main thread for 40 s at every width, past the 30 s a protocol command is given: the presses and the keyboard walk name it and go on |
+| `/keyboard-hidden` | A link under a bar fixed over the top of the page. `-fixed` starts the content below the bar |
+| `/keyboard-reverse` | Shift+Tab from the last control jumps to the first, past the middle one. `-fixed` leaves the order alone |
+| `/keyboard-skip-link` | A skip link (`a[href="#content"]`) that is the second stop, after a Menu button. `-fixed` puts it first |
+| `/keyboard-control-gone` | A control that removes itself when it takes focus. `-fixed` changes its label and stays |
+| `/vitals-late-paint` | The largest text painted 3.4 s after load. `-fixed` paints it with the page |
+| `/vitals-slow-tap` | The Alerts tap blocks the thread for 400 ms. `-fixed` answers at once |
+| `/vitals-dropped-frame` | The Alerts tap blocks the thread for 90 ms: one long frame, inside the INP floor. `-fixed` answers at once |
+| `/vitals-shifts-fixed` | `/deep-shifts` with the banner's space held from the start |
 | `/moved-page` | The server answers it with a 302 to `/moved-page-now`, so the audit measured a page it did not ask for |
 | `/drops-query` | Asked for as `/drops-query?view=all`, answered with a 302 to the bare path: the address came back without its view |
 | `/page-error` | The page throws while it renders, and nothing catches it |
