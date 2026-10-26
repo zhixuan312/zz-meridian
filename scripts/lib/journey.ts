@@ -282,13 +282,20 @@ async function awaitPrefetch(page: Page, route: string): Promise<boolean> {
 const REFRESH_WAIT = 15_000;
 /** How long the router's read may take to start once the action has answered. */
 const REFRESH_START_WAIT = 3000;
+/** How often the `online` event is sent again while no resync has started: the provider may not be listening yet. */
+const ONLINE_EVERY = 250;
 
 /**
  * Resyncs the tab's live provider without writing anything: the provider listens for `online`, reads the collections again
  * through `refreshCollections` and then refreshes the router. Resolves only when an action started after the event answered
  * `{ ok: true }` and the router read that followed it has its whole body, and throws never-ready otherwise.
+ *
+ * The provider listens only once the page has hydrated and registered its collections, and an event sent before that is
+ * lost: on a loaded runner one sent at once made a live page read as not live, a different route each week. So the event is
+ * sent again every `ONLINE_EVERY` ms until a resync starts, for at most `startWait`; a page that starts none in that time
+ * is not live. A resync that started then has `REFRESH_WAIT` to answer.
  */
-export async function liveRefresh(page: Page, wait = REFRESH_WAIT): Promise<void> {
+export async function liveRefresh(page: Page, startWait = REFRESH_WAIT): Promise<void> {
   const state = `(() => { const n = window.__nav; return { started: n.act.started, results: n.act.results, arrivedAt: n.act.arrivedAt, inFlight: n.act.inFlight, reads: n.rsc.reads }; })()`;
   type State = { started: number; results: (boolean | null)[]; arrivedAt: number[]; inFlight: number; reads: { start: number; done: boolean }[] };
   // The provider's own opening resync may still be running; the refresh that counts starts after it.
@@ -296,15 +303,24 @@ export async function liveRefresh(page: Page, wait = REFRESH_WAIT): Promise<void
   if (quiet === null) throw new Fail('never-ready', `a live refresh was still running ${REFRESH_WAIT} ms after the page loaded`);
   await page.eval(`window.__nav.track = true`);
   const from = (await page.eval<State>(state)).started;
-  await page.eval(`window.dispatchEvent(new Event('online'))`);
+  let sent = 0;
+  const begun = await poll(async () => {
+    if ((await page.eval<State>(state)).started > from) return true;
+    if (Date.now() - sent >= ONLINE_EVERY) { sent = Date.now(); await page.eval(`window.dispatchEvent(new Event('online'))`); }
+    return false;
+  }, Date.now() + startWait);
+  if (!begun) {
+    await page.eval(`window.__nav.track = false`);
+    throw new Fail('never-ready', `no refresh action started within ${startWait} ms of sending the page online events (is the starting page live?)`);
+  }
   const verified = await poll(async () => {
     const v = await page.eval<State>(state);
     const at = v.results.findIndex((r, i) => i >= from && r === true);
     return at >= 0 && v.inFlight === 0 ? { arrivedAt: v.arrivedAt[at] } : false;
-  }, Date.now() + wait);
+  }, Date.now() + REFRESH_WAIT);
   if (!verified) {
     await page.eval(`window.__nav.track = false`);
-    throw new Fail('never-ready', `no refresh action answered { ok: true } within ${wait} ms of the page's online event (is the starting page live?)`);
+    throw new Fail('never-ready', `no refresh action answered { ok: true } within ${REFRESH_WAIT} ms of starting (is the starting page live?)`);
   }
   // The router's read is the first one to begin after the answer; it is finished when its whole body is in.
   const refreshed = await poll(async () => {

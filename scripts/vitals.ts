@@ -114,10 +114,11 @@ async function measure(route: string): Promise<Measured> {
     const here = gaps.filter((f) => f > 50).length;
     frames += gaps.length;
     dropped += here;
+    // The control a line names is the one whose gap it explains: naming the last tap that dropped beside the worst gap's
+    // cause sent a reader to the drawer for a frame the period select had dropped.
     if (here) {
-      droppedBy = name;
       const gap = Math.max(...gaps);
-      if (gap > worst) { worst = gap; cause = frameCause(Math.round(gap), loafs.map(loafOf)); }
+      if (gap > worst) { worst = gap; droppedBy = name; cause = frameCause(Math.round(gap), loafs.map(loafOf)); }
     }
     // Close whatever the tap opened; its own events and its own frames are not counted.
     await page.send('Input.dispatchKeyEvent', { type: 'keyDown', key: 'Escape', code: 'Escape', windowsVirtualKeyCode: 27 });

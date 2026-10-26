@@ -461,6 +461,7 @@
   { "page": "/disclosure", "suite": "keyboard", "outcome": "pass" },
   { "page": "/disclosure", "suite": "presses", "outcome": "pass", "line": "interactions: 2 controls pressed" },
   { "page": "/deep-hangs", "suite": "audit", "outcome": "fail", "line": "could not be measured:" },
+  { "page": "/live-late-b", "suite": "perf-live", "outcome": "pass", "line": "/live-late-b desktop afterLive" },
   { "page": "/nav-redirect", "suite": "navigate", "outcome": "pass", "line": "landed on /nav-redirect/thing-a" },
   { "page": "/nav-empty", "suite": "navigate", "outcome": "pass", "line": "interactive not measured: the page shows its first-run state" },
   { "page": "/nav-empty", "suite": "navigate", "outcome": "pass", "line": "data is the first-run state" },

@@ -83,6 +83,12 @@ const NAV_RAIL = '/nav-home,/nav-solo,/nav-solo-unoffered,/nav-root-target,/nav-
 const NAV_HOMES = '/nav-home=Main,/nav-solo=Solo,/nav-solo-unoffered=Unoffered';
 const navigate = (config: string, timing: string[]) => (page: string, base: string) => ['scripts/navigate.ts', '--base', base, '--config', config, '--rail', NAV_RAIL, '--homes', NAV_HOMES, ...timing, '--routes', page];
 
+describe('perf-live', () => {
+  // perf's three conditions, two samples each, between two live pages that listen for online events only once hydrated: the
+  // after-live journey has a live page to start from.
+  casesFor('perf-live', (page, base) => ['scripts/perf.ts', '--base', base, '--config', 'scripts/fixtures/deep/config-live.ts', '--rail', '/live-late-a,/live-late-b', '--routes', page, '--samples', '2'], 240_000);
+});
+
 describe('navigate', () => {
   // The readiness journey on desktop and phone, with the fixture's own mappings, rail and workspace homes, and the default
   // timing. A note passes and prints its line.

@@ -455,7 +455,19 @@ const ROOT_TOGGLE = define('x-toggle', '<button type="button" class="root-toggle
   `const b = root.querySelector('button'); b.addEventListener('click', () => b.setAttribute('aria-pressed', String(b.getAttribute('aria-pressed') !== 'true')));`);
 const PICK = `Array.from(document.querySelectorAll('button.pick')).forEach((b) => b.addEventListener('click', () => b.setAttribute('aria-pressed', String(b.getAttribute('aria-pressed') !== 'true'))));`;
 
+/**
+ * Two live pages for perf's after-live journey (scripts/perf.ts). Each listens for `online` only 1.5 s after it loads, as a
+ * console page does once it has hydrated, and then resyncs as the provider does: a Server Action that answers
+ * `{ ok: true }`, then the router's read of the page. An event sent at once is lost, and the page reads as not live.
+ */
+export const LIVE_RAIL: [string, string][] = [['/live-late-a', 'Live A'], ['/live-late-b', 'Live B']];
+const LIVE_LATE = `setTimeout(() => addEventListener('online', () => {
+    fetch('/live-act', { method: 'POST', headers: { 'next-action': 'fixture' } }).then((r) => r.text()).then(() => fetch(location.pathname, { headers: { rsc: '1' } }));
+  }), 1500);`;
+
 export const NAV_PAGES: Record<string, string> = {
+  '/live-late-a': nav('Live A', `${TOGGLE}${TABLE}`, `${WIRE}\n  ${LIVE_LATE}`, { rail: LIVE_RAIL }),
+  '/live-late-b': nav('Live B', `${TOGGLE}${TABLE}`, `${WIRE}\n  ${LIVE_LATE}`, { rail: LIVE_RAIL }),
   '/nav-home': nav('Home', `${TOGGLE}${TABLE}`, WIRE),
   // The control is inside an open root: a document-level query cannot find it.
   '/nav-root-target': nav('Root target', `<x-toggle></x-toggle>${TABLE}`, ROOT_TOGGLE),

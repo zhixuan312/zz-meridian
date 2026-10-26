@@ -22,6 +22,14 @@ describe('scripts/brand.ts', () => {
     expect(read('src/app.config.ts')).toMatch(/accent: 'brand'/);
     expect(fs.existsSync(path.join(dir, 'tokens/accent.brand.tokens.json'))).toBe(true);
   }, 120_000);
+  it('keeps the step that fixed a failing accent, and does not refuse it with the failure before it', () => {
+    // #0E8A5F fails white on its dark fill at the start and passes one step darker; the command refused it with the
+    // first step's failure, which no longer held.
+    brand('--existing', '--hex', '#0E8A5F', '--accent-name', 'stepped');
+    const t = JSON.parse(read('tokens/accent.stepped.tokens.json'));
+    expect(t.$extensions['dev.zz.meridian'].overrides.dark['accent-l']).toBeLessThan(0.56);
+    expect(execFileSync(process.execPath, ['scripts/contrast.ts'], { cwd: dir, encoding: 'utf8' })).not.toMatch(/FAIL.* stepped /);
+  }, 120_000);
   it('records the default theme once in the app config', () => {
     brand('--existing', '--theme', 'light');
     expect(read('src/app.config.ts')).toMatch(/\n {2}theme: 'light'/);

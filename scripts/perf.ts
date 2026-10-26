@@ -50,8 +50,8 @@ const args = process.argv.slice(2);
 const opt = (k: string) => { const i = args.indexOf(k); return i >= 0 ? args[i + 1] : undefined; };
 const base = (opt('--base') ?? process.env.BASE ?? 'http://localhost:3000').replace(/\/$/, '');
 const PROTOCOL_SAMPLES = 20;
-/** How long a rail route has to answer a live resync before it is called not live. */
-const PROBE_WAIT = 4000;
+/** How long a rail route has to start a live resync, while it is sent online events, before it is called not live. */
+const PROBE_WAIT = 8000;
 const CONDITIONS: Condition[] = ['warm', 'cold', 'afterLive'];
 const started = Date.now();
 

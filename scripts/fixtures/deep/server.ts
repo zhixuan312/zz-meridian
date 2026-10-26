@@ -22,6 +22,8 @@ const server = http.createServer((req, res) => {
   // Two redirects, for the audit's address rules: one page that answers at another address, and one that keeps its
   // address and loses the view it was asked for. Both are answered before the page is, so the browser is on the second
   // address by the time anything is measured — the state the rules are about, and not one a page can arrange itself.
+  // The live pages' resync action: the answer the provider's refreshCollections gives.
+  if (pathname === '/live-act' && req.method === 'POST') { res.writeHead(200, { 'content-type': 'text/x-component' }).end('0:{"ok":true}\n'); return; }
   // A rail route that redirects to a page under it, for navigate's journey (#97).
   if (pathname === '/nav-redirect') { res.writeHead(302, { location: '/nav-redirect/thing-a' }).end(); return; }
   if (pathname === '/moved-page') { res.writeHead(302, { location: '/moved-page-now' }).end(); return; }

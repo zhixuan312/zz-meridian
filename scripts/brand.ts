@@ -132,20 +132,22 @@ if (hue !== undefined) {
 
   // Hold contrast: lower a theme's fill lightness where white text on it fails, a step at a time. A hue that still fails
   // after the last step stops the command: a brand that ships a failing pair in tokens.css is not a brand that worked.
+  // What remains is the last run's: a step that fixed the pair clears it (#0E8A5F passed after one step and was refused
+  // with the first step's failure), and the eighth step's tokens are measured too.
   const base = { light: 0.52, dark: 0.56 };
   let remaining: string[] = [];
-  for (let step = 0; step < 8; step++) {
+  for (let step = 0; step <= 8; step++) {
     execFileSync('node', ['scripts/tokens.ts'], { cwd: ROOT, stdio: 'ignore' });
     let out = '';
     let why = '';
-    try { out = execFileSync('node', ['scripts/contrast.ts'], { cwd: ROOT, encoding: 'utf8' }); break; }
+    try { out = execFileSync('node', ['scripts/contrast.ts'], { cwd: ROOT, encoding: 'utf8' }); remaining = []; break; }
     catch (e) { out = String((e as { stdout?: unknown }).stdout ?? ''); why = String((e as { stderr?: unknown }).stderr ?? '').trim(); }
     // A run with no summary did not measure anything: its exit code is a crash, and reading its empty output as "no
     // failures" passed a brand nobody had checked.
     if (!/^contrast: .*failures$/m.test(out)) throw new Error(`scripts/contrast.ts did not run to its summary: ${why || out.trim() || 'no output'}`);
-    const fails = out.split('\n').filter((l) => l.startsWith('FAIL') && l.includes(` ${id} `));
-    if (!fails.length) break;
-    remaining = fails;
+    remaining = out.split('\n').filter((l) => l.startsWith('FAIL') && l.includes(` ${id} `));
+    if (!remaining.length || step === 8) break;
+    const fails = remaining;
     const t = JSON.parse(read(tokenFile));
     for (const theme of ['light', 'dark'] as const) {
       if (!fails.some((l) => l.includes(`FAIL ${theme}`) && /on-accent on accent/.test(l))) continue;
