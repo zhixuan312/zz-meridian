@@ -549,7 +549,22 @@ export const RELEASE_MIGRATIONS: ReleaseMigration[] = [
     instructions: '`src/data/live-stream.ts` is yours, so an update does not touch it, and the copy you have never ends a stream. A server told to stop (`next start` on SIGTERM or SIGINT, as a deploy or a restart does) closes its port and waits for its open connections: the old process stays up holding every tab\'s stream while the new one serves the port, so no tab hears a change hint again and every change waits for its next safety poll. Bring the block that begins `Every stream still open` over from `references/live.md` (the `open` set, `endLiveStreams` and `endOnShutdown`), call `open.delete(close)` first in the stream\'s `close`, and `endOnShutdown(close)` after the stream listens for its abort. A project that serves its stream some other way ends its streams on the signal the same way.',
     checks: ['gate'],
   },
+  {
+    id: 'missing-routes',
+    since: '0.32.0',
+    applies: detailRoutesWithoutMissing,
+    summary: 'A route that answers an error or draws the not-found screen fails every browser suite unless it is declared in missingRoutes.',
+    instructions: 'The audit, the presses, the keyboard walk, the vitals and `scripts/shot.ts` now read what a route answered: one that answered an error status or draws the not-found screen (`[data-missing-page]`) was measured as that screen and not as the route, so it fails. In `scripts/verify.config.ts`, which is yours, move every entry of `detailRoutes` that names a record that does not exist (the sample\'s `/requests/req_missing` and `/customers/missing`) into a new `missingRoutes` list; each must be the not-found screen, and one that renders a page fails. A not-found screen of your own carries `data-missing-page` on its root, as `MissingPage` does: inside a streamed shell a missing record has already answered 200.',
+    checks: ['verify'],
+  },
 ];
+
+/** 0.32.0: a verify configuration that lists detail routes and declares no routes meant to be missing. */
+function detailRoutesWithoutMissing(root: string): string[] | null {
+  const rel = 'scripts/verify.config.ts';
+  const body = text(root, rel);
+  return body !== null && /\bdetailRoutes\s*:\s*\[\s*'/.test(body) && !/\bmissingRoutes\s*:/.test(body) ? [rel] : null;
+}
 
 /** 0.31.1: a live stream starter that does not end its streams when the server is told to stop. */
 function liveStreamKeptOnStop(root: string): string[] | null {

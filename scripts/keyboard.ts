@@ -25,6 +25,7 @@
  * — a CDP keyDown WITHOUT `text` does not activate a button at all, which reads as a dead control — and press by role,
  * not one key for everything.
  */
+import { answerProblem, DRAWS_NOT_FOUND, missingRoutes, NOT_FOUND_PROBE } from './lib/answered.ts';
 import { launch } from './lib/chrome.ts';
 import { DEEP_SOURCE } from './lib/deep.ts';
 import { discover } from './lib/routes.ts';
@@ -36,7 +37,8 @@ const opt = (k: string, d: string) => { const i = args.indexOf(k); return i >= 0
 const base = opt('--base', process.env.BASE ?? 'http://localhost:3100');
 // verify.config.ts is the team's, so read the one field this needs through its own type.
 const detailRoutes = (config as { detailRoutes?: string[] }).detailRoutes ?? [];
-const ROUTES = opt('--routes', '') ? opt('--routes', '').split(',') : [...discover().filter((r) => r !== '/this-page-does-not-exist'), ...detailRoutes];
+const MISSING = missingRoutes(args);
+const ROUTES = opt('--routes', '') ? opt('--routes', '').split(',') : [...new Set([...discover(), ...detailRoutes, ...MISSING])].filter((r) => r !== NOT_FOUND_PROBE);
 // `--as` signs every open in as one persona (scripts/verify.config.ts), through the cookie scripts/lib/chrome.ts sets
 // before the first request. Without it nothing changes: no cookie is passed and the walk runs exactly as before.
 const personas = (config as { personas?: Record<string, { cookie: { name: string; value: string } }> }).personas ?? {};
@@ -160,6 +162,8 @@ const walk = async (route: string) => {
   const order: string[] = [];
   const names = new Map<string, string>();
   const problems: string[] = [];
+  const answer = answerProblem(route, page.status(), await page.eval<boolean>(DRAWS_NOT_FOUND), MISSING);
+  if (answer) problems.push(answer);
   let first = '';
   let wrapped = false;
   for (let i = 0; i < 400; i++) {

@@ -13,6 +13,7 @@ export function Standalone({
   lead,
   aside,
   footer,
+  missing,
   children,
 }: {
   kicker?: ReactNode;
@@ -21,10 +22,12 @@ export function Standalone({
   aside?: ReactNode;
   /** The band along the bottom: the copyright, a status link, legal links. Left out, there is none. */
   footer?: ReactNode;
+  /** The screen is the not-found one: marked `data-missing-page`, as MissingPage is in the shell, so a check knows it. */
+  missing?: boolean;
   children?: ReactNode;
 }) {
   return (
-    <main className="relative isolate flex min-h-dvh flex-col overflow-hidden">
+    <main data-missing-page={missing ? '' : undefined} className="relative isolate flex min-h-dvh flex-col overflow-hidden">
       <header className="flex h-20 items-center px-(--gutter)">
         <Link href="/" className="hit flex items-center gap-2.5 text-md font-semibold tracking-[-0.015em]">
           <AppMark size={28} />

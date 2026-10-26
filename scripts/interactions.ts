@@ -17,6 +17,7 @@
  * Skipped: controls already in their chosen state (a selected tab, the current segment) and the Atlas's component
  * pages, whose buttons are specimens of states, not actions.
  */
+import { answerProblem, DRAWS_NOT_FOUND, missingRoutes } from './lib/answered.ts';
 import { launch, type Page } from './lib/chrome.ts';
 import { DEEP_SOURCE } from './lib/deep.ts';
 import { linkPath } from './lib/links.ts';
@@ -29,7 +30,8 @@ const opt = (k: string, d: string) => { const i = args.indexOf(k); return i >= 0
 const base = opt('--base', process.env.BASE ?? 'http://localhost:3100');
 // verify.config.ts is the team's, so read the one field this needs through its own type.
 const detailRoutes = (config as { detailRoutes?: string[] }).detailRoutes ?? [];
-const ROUTES = opt('--routes', '') ? opt('--routes', '').split(',') : [...discover().filter((r) => !r.startsWith('/system/components')), ...detailRoutes];
+const MISSING = missingRoutes(args);
+const ROUTES = opt('--routes', '') ? opt('--routes', '').split(',') : [...new Set([...discover().filter((r) => !r.startsWith('/system/components')), ...detailRoutes, ...MISSING])];
 // `--as` signs every open in as one persona (scripts/verify.config.ts), through the cookie scripts/lib/chrome.ts sets
 // before the first request; without it nothing changes. `--width` narrows the walk to the widths given (default: both).
 const personas = (config as { personas?: Record<string, { cookie: { name: string; value: string } }> }).personas ?? {};
@@ -143,6 +145,9 @@ const walk = async (route: string, width: number) => {
   // The page's late chrome first (scripts/lib/settle.ts): a control that arrives after the list is taken is never pressed, and the count reads as if it had been.
   const fresh = async () => { await page.open(base + route, { width, theme: 'dark', cookie }); await inject(route); await settle(page); return page.eval<{ controls: string[]; keys: string[]; links: string[] }>(LIST); };
   const { controls, keys, links } = await fresh();
+  // An error page's controls are not the route's: a route that answered other than declared is that, and nothing pressed.
+  const answer = answerProblem(route, page.status(), await page.eval<boolean>(DRAWS_NOT_FOUND), MISSING);
+  if (answer) { failures.push(`${route} @${width}: ${answer}`); return; }
   // A link is followed as a browser follows it: its href as the page writes it, resolved against the page. Skipping every
   // href that did not start with "/" let a relative link that answered 404 pass (/system/system/contributing).
   for (const href of new Set(links)) {

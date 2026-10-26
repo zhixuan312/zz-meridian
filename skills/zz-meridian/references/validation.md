@@ -67,8 +67,8 @@ line naming the command that runs them. Steps in order:
    exist and print `n/a` with the reason once the product has replaced them. It follows only rail links that are on screen
    and opens an address when the rail on screen does not link to it. It finds the launcher, the panel's controls,
    rows and menus inside open shadow roots too, so a design system built from web components is walked the same way.
-4. **The built app, served**, and the **browser audit** of every static route under `app/` and the `detailRoutes` in
-   `scripts/verify.config.ts` (embeds under `/embed` on a simulated host ground) at 2560, 1440, 1024, 768 and 390px in
+4. **The built app, served**, and the **browser audit** of every static route under `app/` and the `detailRoutes` and
+   `missingRoutes` in `scripts/verify.config.ts` (embeds under `/embed` on a simulated host ground) at 2560, 1440, 1024, 768 and 390px in
    both themes. It measures inside open shadow roots as well as the light DOM, so a web component's text, names, targets,
    contrast and focus rings count; a custom element it cannot look inside is `unmeasured:` (see "Lines that are not
    about the page" below). It reads an SVG's text too, by its `fill` against whatever the SVG paints behind it, and it
@@ -149,6 +149,8 @@ and supply-chain check before a script runs; that is pnpm, not an install, and n
 | `unmeasured: x-card (not defined)` | A custom element was still not registered after the settle wait | Register it (`customElements.define`) before the page settles, or remove the tag from the page |
 | `"Export" does nothing when pressed` | A control with no action, or one that only works on hover | Wire it, or remove it; an info button uses `Tooltip toggle` so a tap opens it |
 | `table … > its frame` | A table wider than its card, its last columns clipped | `hideBelow` one more column, or `truncate` a long column. Every column is as wide as its content, the spare sits in the gaps between columns, an equal share in each, and a cut column shrinks only when the table lacks room; a fixed `width` keeps its width, and the `grow` floor is 160px |
+| `<route> answered 404, so what was measured is its error page and not the route`, or `<route> draws the not-found screen ([data-missing-page])` | The route answered an error status or drew the not-found screen, so the audit, the presses, the keyboard walk, the vitals and a shot read that screen in its place: a mistyped id in `detailRoutes`, a record the fake API does not hold, an address given by hand | Fix the id, or give the fake API the record. A record meant not to exist goes in `missingRoutes` |
+| `<route> is in missingRoutes, and it answered 200 and draws no not-found screen` | A route declared missing renders a page, or the product's own not-found screen is not marked | The record came to exist: move it to `detailRoutes`, or name an id nothing holds. A not-found screen of your own carries `data-missing-page` on its root |
 | `exception:` / `console.error:` | A runtime error or a hydration mismatch | Hydration: no `Date.now()`, `Math.random()` or locale-dependent formatting in render; use the demo clock and `src/lib/format*` |
 
 ## Keyboard walk failures

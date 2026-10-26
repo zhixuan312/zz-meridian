@@ -13,7 +13,8 @@ import { NOT_FOUND } from '@/views/not-found';
  *
  * `gate` renders it too, for an address the person may not open when the product's `refusal` is `absent`, with the
  * entries they may not open as `withheld`: the walk-back steps past them, so the answer is the one an address that
- * names nothing gets. `data-missing-page` is what `pnpm verify --as` looks for on such an address.
+ * names nothing gets. `data-missing-page` is what `pnpm verify --as` looks for on such an address, and what every
+ * browser suite reads to tell a missing record from the route it asked for (`scripts/lib/answered.ts`).
  */
 export function MissingPage({ withheld }: { withheld?: readonly string[] }) {
   return (

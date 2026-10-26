@@ -11,7 +11,7 @@ import type { Page } from '../scripts/lib/chrome.ts';
  */
 const page: Page = {
   errors: [],
-  fileChoosers: () => 0,
+  fileChoosers: () => 0, status: () => 200,
   send: async () => undefined,
   shot: async () => 0,
   close: () => {},

@@ -135,18 +135,24 @@ describe('the records that name each other', () => {
 });
 
 describe('the detail pages verify checks by default', () => {
-  const byId = (route: string) => REQUESTS.find((r) => `/requests/${r.id}` === route);
-  const [get, post, missing404, absent, active, pastDue, nobody] = verify.detailRoutes;
-  const customer = (route: string) => CUSTOMERS.find((c) => `/customers/${c.id}` === route);
+  // Read by what each route names, never by its place in the list: the config is the team's, and a record moved from
+  // detailRoutes to missingRoutes is the same record (a check that matched by position is the class #65 was).
+  const config = verify as { detailRoutes: string[]; missingRoutes?: string[] };
+  const routes = [...config.detailRoutes, ...(config.missingRoutes ?? [])];
+  const requests = routes.filter((r) => r.startsWith('/requests/')).map((r) => REQUESTS.find((q) => `/requests/${q.id}` === r));
+  const customers = routes.filter((r) => r.startsWith('/customers/')).map((r) => CUSTOMERS.find((c) => `/customers/${c.id}` === r));
   it('still show the states their comments name', () => {
-    expect(byId(get)).toMatchObject({ method: 'GET', status: 200, model: null });
-    expect(byId(post)).toMatchObject({ method: 'POST', route: '/v1/messages', status: 201 });
-    expect(byId(missing404)?.status).toBe(404);
-    expect(byId(absent)).toBeUndefined();
+    expect(requests).toContainEqual(expect.objectContaining({ method: 'GET', status: 200, model: null }));
+    expect(requests).toContainEqual(expect.objectContaining({ method: 'POST', route: '/v1/messages', status: 201 }));
+    expect(requests).toContainEqual(expect.objectContaining({ status: 404 }));
+    expect(requests).toContain(undefined);
   });
   it('still show the customers their comments name', () => {
-    expect(customer(active)).toMatchObject({ status: 'active' });
-    expect(customer(pastDue)).toMatchObject({ status: 'past due', name: 'Lumen Studio' });
-    expect(customer(nobody)).toBeUndefined();
+    expect(customers).toContainEqual(expect.objectContaining({ status: 'active' }));
+    expect(customers).toContainEqual(expect.objectContaining({ status: 'past due', name: 'Lumen Studio' }));
+    expect(customers).toContain(undefined);
+  });
+  it('names in missingRoutes only records that do not exist', () => {
+    for (const r of config.missingRoutes ?? []) expect([...REQUESTS.map((q) => `/requests/${q.id}`), ...CUSTOMERS.map((c) => `/customers/${c.id}`)], r).not.toContain(r);
   });
 });

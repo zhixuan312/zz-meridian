@@ -3,7 +3,10 @@
  *
  *   node scripts/shot.ts <path ...> [--width 1440,390] [--theme light,dark] [--full] [--base http://localhost:3100] [--out out/shots]
  *                                   [--as <persona>] [--press "<name>" ...]
- *                                   [--point "<chart label>" --at 0.6]
+ *                                   [--point "<chart label>" --at 0.6] [--missing <route,...>]
+ *
+ * A route that answers an error status fails instead of being shot, unless it is meant to be missing: `missingRoutes` in
+ * scripts/verify.config.ts, the address no page claims, or a route `--missing` names.
  *
  * Motion is reduced, so every page shows its final state. Files land in out/shots/<route>-<width>-<theme>.png.
  *
@@ -19,6 +22,7 @@
  * fraction of the chart's width (0 to 1). A missing readout or one outside the chart fails the capture.
  */
 import path from 'node:path';
+import { answerProblem, DRAWS_NOT_FOUND, missingRoutes } from './lib/answered.ts';
 import { launch, type Page } from './lib/chrome.ts';
 import config from './verify.config.ts';
 
@@ -34,6 +38,8 @@ const opt = (k: string, d: string) => {
   return v;
 };
 const flag = (k: string) => { const i = args.indexOf(k); return i >= 0 ? (args.splice(i, 1), true) : false; };
+// The routes meant to answer not-found (scripts/lib/answered.ts): any other route that answers an error is refused.
+const MISSING = missingRoutes(['--missing', opt('--missing', '')]);
 const presses: string[] = [];
 for (let i = args.indexOf('--press'); i >= 0; i = args.indexOf('--press')) presses.push(args.splice(i, 2)[1]);
 const base = opt('--base', process.env.BASE ?? 'http://localhost:3100');
@@ -95,6 +101,9 @@ try {
         await page.send('Page.navigate', { url: 'about:blank' });
         await sleep(300);
         await page.open(base + r, { width: w, height: w < 600 ? 844 : 900, theme: t, cookie });
+        // A picture of an error page under the route's name reads as the route: refused, as a press that matched nothing is.
+        const answer = answerProblem(r, page.status(), await page.eval<boolean>(DRAWS_NOT_FOUND), MISSING);
+        if (answer) { console.log(`FAIL ${r} at ${w}px ${t}: ${answer}`); failed = true; continue; }
         const missing = [];
         for (const p of presses) if (!(await press(page, p))) { missing.push(p); break; }
         if (missing.length) { console.log(`FAIL ${r} at ${w}px ${t}: nothing to press named "${missing[0]}"`); failed = true; continue; }

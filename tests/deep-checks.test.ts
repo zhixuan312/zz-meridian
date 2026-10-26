@@ -9,7 +9,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 const ROOT = path.resolve(import.meta.dirname, '..');
 
-type Entry = { page: string; suite: string; outcome: 'fail' | 'pass' | 'note' | 'measured'; line?: string };
+type Entry = { page: string; suite: string; outcome: 'fail' | 'pass' | 'note' | 'measured' | 'clear'; line?: string; args?: string[] };
 const MANIFEST: Entry[] = JSON.parse(fs.readFileSync(path.join(ROOT, 'scripts/fixtures/deep/expected.json'), 'utf8'));
 
 let server: ChildProcess;
@@ -47,9 +47,12 @@ function casesFor(suite: string, command: (page: string, base: string) => string
   const entries = MANIFEST.filter((e) => e.suite === suite);
   it(`the manifest has cases for ${suite}`, () => { expect(entries.length).toBeGreaterThan(0); });
   for (const e of entries) {
-    it.concurrent(`${e.page}: ${e.outcome}${e.line ? ` (${e.line})` : ''}`, async () => {
-      const r = await runSuite(command(e.page, url), timeout);
+    it.concurrent(`${e.page}${e.args ? ` ${e.args.join(' ')}` : ''}: ${e.outcome}${e.line ? ` (${e.line})` : ''}`, async () => {
+      const r = await runSuite([...command(e.page, url), ...(e.args ?? [])], timeout);
       expect(r.timedOut, `timed out after ${timeout} ms\n${r.out}`).toBe(false);
+      // `clear`: the suite ran and its line is not printed, whatever else the page did. A twin of a timed rule holds only
+      // its own rule, since the cases run side by side and a floor they do not plant measures the machine.
+      if (e.outcome === 'clear') { expect([0, 1], r.out).toContain(r.code); expect(r.out).not.toContain(e.line); return; }
       if (e.outcome === 'measured') expect([0, 1], r.out).toContain(r.code);
       else expect(r.code, r.out).toBe(e.outcome === 'fail' ? 1 : 0);
       if (e.line) expect(r.out).toContain(e.line);

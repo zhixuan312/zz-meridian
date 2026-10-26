@@ -36,7 +36,7 @@ if (!('innerText' in HTMLElement.prototype)) Object.defineProperty(HTMLElement.p
 function served(html: string): Page {
   return {
     errors: [],
-    fileChoosers: () => 0,
+    fileChoosers: () => 0, status: () => 200,
     send: async () => undefined,
     shot: async () => 0,
     close: () => {},

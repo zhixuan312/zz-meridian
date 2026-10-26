@@ -43,10 +43,18 @@ type Persona = {
 
 type VerifyConfig = {
   /**
-   * Detail pages checked beside every static route, one per state worth seeing (a normal record, a failed one, a missing
-   * one). `pnpm verify --full` checks them with every static route.
+   * Detail pages checked beside every static route, one per state worth seeing (a normal record, a failed one).
+   * `pnpm verify --full` checks them with every static route. One that answers an error or draws the not-found screen
+   * fails, since what was measured is that screen and not the record.
    */
   detailRoutes: string[];
+  /**
+   * Addresses meant to be missing: a record that does not exist, under each detail route. Each is checked like a detail
+   * route and must be the not-found screen: it answers 404 or draws `[data-missing-page]` (a record page in a streamed
+   * shell has answered 200 by the time it knows). The address no page claims (`/this-page-does-not-exist`) is one already.
+   * A route listed here that renders a page fails, so a record that came to exist is noticed.
+   */
+  missingRoutes?: string[];
   /**
    * For a product whose pages read and write a live API. verify presses every control it finds, Approve, Revoke and
    * Delete included, so those presses must reach a fake, never production. `script` starts a server on `--port 0` that
@@ -153,10 +161,12 @@ const config: VerifyConfig = {
   detailRoutes: [
     '/requests/req_qmi1vbyi3uqt', // GET, 200: no request body, no model
     '/requests/req_jqwm3le188pi', // POST /v1/messages, 201: model, tokens and a streamed response
-    '/requests/req_p2r91aiimd17', // 404: the refused state
-    '/requests/req_missing', // no such request: the not-found screen in the shell
+    '/requests/req_p2r91aiimd17', // a request that answered 404: the refused state
     '/customers/northwind-labs', // an active customer: the largest, with a plan, requests and a 14-day trend
     '/customers/lumen-studio', // the past-due customer: the one whose payment has failed
+  ],
+  missingRoutes: [
+    '/requests/req_missing', // no such request: the not-found screen in the shell
     '/customers/missing', // no customer has this id: the not-found screen in the shell
   ],
   smokeRoutes: ['/', '/requests', '/settings'],

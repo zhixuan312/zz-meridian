@@ -122,8 +122,11 @@ Migrate in place, page by page, keeping their data layer.
    refuses, when a data URL resolves to a host that is not this machine; point it at a local copy for the run, and set
    `allowRemoteData: true` only when you know what the presses reach. Restore the data afterwards — the walk-through
    flags rows and a press can delete, even on a run where every check passes.
-6. List their detail pages worth seeing (a normal record, a failed one, a missing one) in `detailRoutes` in
-   `scripts/verify.config.ts`, with ids from the fake API's fixtures. Map their main routes in `navigationChecks` (a
+6. List their detail pages worth seeing (a normal record, a failed one) in `detailRoutes` in
+   `scripts/verify.config.ts`, with ids from the fake API's fixtures, and a record that does not exist in
+   `missingRoutes`: a detail route must render its page and a missing one the not-found screen, so a mistyped id fails
+   instead of being measured as the not-found screen. A not-found screen of your own carries `data-missing-page` on its
+   root, as `MissingPage` does, since inside a streamed shell a missing record has already answered 200. Map their main routes in `navigationChecks` (a
    ready selector and one harmless probe each) so the default smoke covers data and interaction, not only the shell. Run
    `pnpm verify` until it passes, and `pnpm verify --full --timed` before a release (the timed suites want a quiet
    machine); the line before the last of each says what it covered (`coverage: …`).

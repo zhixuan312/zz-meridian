@@ -17,7 +17,8 @@
  * own content is measured like any other. A defined custom element that shows a box but exposes no open root and no
  * light-DOM content, and one that is still undefined after the settle wait, are reported as `unmeasured:` instead of passed.
  *
- * Fails (exit 1) on: a route that served another page or dropped a parameter it was asked for, a page whose content
+ * Fails (exit 1) on: a route that answered an error status it is not declared to (`missingRoutes`, scripts/lib/answered.ts)
+ * or a declared missing route that did not answer 404, a route that served another page or dropped a parameter it was asked for, a page whose content
  * region rendered nothing or that threw or logged a failure while it rendered, sideways scroll (a strip that scrolls at a
  * phone width included), text clipped without an ellipsis, text drawn past a box that does not clip it, text cut with an
  * ellipsis that keeps the whole of it nowhere, two pieces of text in the same place or a line
@@ -29,6 +30,7 @@
  */
 import fs from 'node:fs';
 import path from 'node:path';
+import { answerProblem, DRAWS_NOT_FOUND, missingRoutes } from './lib/answered.ts';
 import { atlasCoverage, atlasEntries } from './lib/atlas.ts';
 import { launch } from './lib/chrome.ts';
 import { DEEP_SOURCE } from './lib/deep.ts';
@@ -71,7 +73,8 @@ async function atlasRoutes(): Promise<string[]> {
 const found = discover();
 // verify.config.ts is the team's, so read the one field this needs through its own type.
 const detailRoutes = (config as { detailRoutes?: string[] }).detailRoutes ?? [];
-const ROUTES = EMBEDS_ONLY ? [] : ATLAS ? await atlasRoutes() : (opt('--routes', '') ? opt('--routes', '').split(',') : [...found.filter((r) => !r.startsWith('/embed')), ...detailRoutes]);
+const MISSING = missingRoutes(args);
+const ROUTES = EMBEDS_ONLY ? [] : ATLAS ? await atlasRoutes() : (opt('--routes', '') ? opt('--routes', '').split(',') : [...new Set([...found.filter((r) => !r.startsWith('/embed')), ...detailRoutes, ...MISSING])]);
 const EMBEDS = ATLAS ? [] : found.filter((r) => r.startsWith('/embed/'));
 const WIDTHS = ATLAS ? [1440, 390] : [2560, 1440, 1024, 768, 390];
 const THEMES = ['dark', 'light'];
@@ -382,7 +385,10 @@ const measure = async (route: string, width: number, theme: string, embed: boole
   }
   r.focusless = [...new Set(r.focusless)].slice(0, 6);
   const scrollers = r.scrollers.filter((s) => !ALLOWED_SCROLLERS.test(s));
+  const answer = answerProblem(route, page.status(), await page.eval<boolean>(DRAWS_NOT_FOUND), MISSING);
   const issues = [
+    // A route that answered an error is measured as its error page: a not-found screen passes every rule below.
+    ...(answer ? [answer] : []),
     // First, because it is the one that fails in the direction of looking clean: a route that never rendered passes
     // everything below, and the run would end with the standard's line over a page nobody measured.
     //

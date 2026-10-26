@@ -25,6 +25,7 @@
  *   sideways-*, strip, spill, double-scroller, heading-skip, empty-region, moved-page, drops-query, page-error   the rules of the standard that no page made fire
  *   disclosure                                                          a control in a closed disclosure, which both browser suites open
  *   slow-load                                                            a page whose load event comes late (chrome.ts)
+ *   drawn-missing                                                        the not-found screen drawn on a page that answered 200
  *   nav-*                                                                pages for scripts/navigate.ts
  */
 
@@ -357,6 +358,9 @@ ${chart(`${RULE(50)}${CAPTION}`)}
   // with no content, so this is the case that has to say so rather than end the run with the standard's line over it.
   '/empty-region': deep('A region that rendered nothing', { body: '<div data-scroll-region></div>' }),
   '/empty-region-fixed': deep('A region that rendered its content', { body: '<div data-scroll-region><p>Every request of the day, by route.</p></div>' }),
+  // The not-found screen drawn on a page that answered 200, as a record page inside a streamed shell draws it: a route
+  // not declared missing that draws it was measured as something it is not, and one declared missing that does is right.
+  '/drawn-missing': deep('This page isn’t here', { body: '<section data-missing-page><p>Nothing is at this address. Go back to the requests.</p></section>' }),
   // A content row 600px wide in a page with no scroll region: the document itself scrolls sideways at a phone's width.
   '/sideways-document': deep('A row wider than the page', { css: '.row { width: 600px; height: 40px; background: #e8e8e8; }', body: '<div class="row"><p>Requests by route</p></div>' }),
   '/sideways-document-fixed': deep('A row wider than the page, corrected', { css: '.row { width: 600px; max-width: 100%; height: 40px; background: #e8e8e8; }', body: '<div class="row"><p>Requests by route</p></div>' }),

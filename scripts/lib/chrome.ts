@@ -21,6 +21,11 @@ export type Page = {
   errors: string[];
   /** How many native file choosers the page has opened: intercepted, so none is shown, and counted, since opening one changes nothing in the DOM. */
   fileChoosers: () => number;
+  /**
+   * The HTTP status the last open()'s document answered with, after any redirect; 0 when none arrived. A not-found or an
+   * error page is a page like any other to every measurement, so a suite that does not read this measures it as the route.
+   */
+  status: () => number;
   send: (method: string, params?: Record<string, unknown>) => Promise<any>;
   eval: <T = unknown>(expression: string) => Promise<T>;
   open: (url: string, opts: { width: number; height?: number; theme?: 'light' | 'dark'; reduced?: boolean; wait?: number; cookie?: { name: string; value: string } }) => Promise<void>;
@@ -118,9 +123,12 @@ async function attach(proc: ChildProcess, dir: string, handle: Launched): Promis
   const pending = new Map<number, (m: any) => void>();
   const errors: string[] = [];
   let choosers = 0;
+  let status = 0;
+  let top = '';
   ws.addEventListener('message', (e) => {
     const m = JSON.parse(String(e.data));
     if (m.method === 'Page.fileChooserOpened') choosers++;
+    if (m.method === 'Network.responseReceived' && m.params.type === 'Document' && m.params.frameId === top) status = m.params.response.status;
     // A page that holds unsaved changes asks the browser to warn before it unloads, and the warning waits for an answer: with
     // nobody to give one, the next open() timed out (30 s, measured on a form with a typed-in value). A check that opens
     // another address has chosen to leave, so it says so. Only this question is answered: an alert or a confirm the page
@@ -140,10 +148,13 @@ async function attach(proc: ChildProcess, dir: string, handle: Launched): Promis
     });
   await send('Page.enable');
   await send('Runtime.enable');
+  await send('Network.enable');
+  top = (await send('Page.getFrameTree')).result.frameTree.frame.id;
   await send('Page.setInterceptFileChooserDialog', { enabled: true });
   const page: Page = {
     errors,
     fileChoosers: () => choosers,
+    status: () => status,
     send,
     async eval(expression) {
       const r = await send('Runtime.evaluate', { expression, returnByValue: true, awaitPromise: true });
@@ -160,10 +171,8 @@ async function attach(proc: ChildProcess, dir: string, handle: Launched): Promis
       await send('Emulation.setTouchEmulationEnabled', width < 600 ? { enabled: true, maxTouchPoints: 5 } : { enabled: false });
       // A cookie is set through the network domain, BEFORE the navigation, so the very first request already carries it
       // (a persona suite signed in this way sees that person's pages, never the signed-out or default one).
-      if (cookie) {
-        await send('Network.enable');
-        await send('Network.setCookie', { name: cookie.name, value: cookie.value, url });
-      }
+      if (cookie) await send('Network.setCookie', { name: cookie.name, value: cookie.value, url });
+      status = 0;
       await send('Page.navigate', { url });
       await sleep(wait);
       // Then its load event: on a busy machine a page can still be loading after any fixed wait, and a suite reading it then

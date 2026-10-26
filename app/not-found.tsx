@@ -46,7 +46,7 @@ function AddressPlace() {
 /** Any address that leads nowhere outside the console: say so plainly, show the address, offer the nearest way back. */
 export default function NotFound() {
   return (
-    <Standalone kicker={NOT_FOUND.kicker} sentence={NOT_FOUND.sentence} lead={NOT_FOUND.lead} footer={<SampleFooter services={() => readServices().catch(() => null)} />}>
+    <Standalone missing kicker={NOT_FOUND.kicker} sentence={NOT_FOUND.sentence} lead={NOT_FOUND.lead} footer={<SampleFooter services={() => readServices().catch(() => null)} />}>
       <Suspense fallback={<AddressPlace />}>
         <Address />
       </Suspense>

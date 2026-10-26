@@ -30,6 +30,7 @@
  * tapping the phone drawer is the app's most repeated gesture, and one 50 ms frame in it is the whole cost of the
  * drawer arriving late. It was reported and not failed until the rail stopped measuring itself inside that tap.
  */
+import { answerProblem, DRAWS_NOT_FOUND, missingRoutes } from './lib/answered.ts';
 import { atlasCoverage, atlasEntries } from './lib/atlas.ts';
 import { launch } from './lib/chrome.ts';
 import { CLS_SESSION } from './lib/cls.ts';
@@ -46,7 +47,8 @@ const base = opt('--base', process.env.BASE ?? 'http://localhost:3100');
 const detailRoutes = (config as { detailRoutes?: string[] }).detailRoutes ?? [];
 const ATLAS = args.includes('--atlas');
 const entries = ATLAS ? await atlasEntries().catch((e: Error) => { console.error(`vitals --atlas: ${e.message}`); process.exit(1); }) : [];
-const ROUTES = ATLAS ? entries.map((e) => e.href) : opt('--routes', '') ? opt('--routes', '').split(',') : [...discover(), ...detailRoutes];
+const MISSING = missingRoutes(args);
+const ROUTES = ATLAS ? entries.map((e) => e.href) : opt('--routes', '') ? opt('--routes', '').split(',') : [...new Set([...discover(), ...detailRoutes, ...MISSING])];
 if (args.includes('--list')) {
   console.log(ROUTES.join('\n'));
   if (ATLAS) console.log(`atlas: ${atlasCoverage(entries)}`);
@@ -89,13 +91,15 @@ await page.send('Page.addScriptToEvaluateOnNewDocument', { source: DEEP_SOURCE }
 await page.send('Network.enable');
 
 /** One page measured once: what LCP, CLS and INP were, how many controls answered, and the frames that dropped on them. */
-type Measured = { lcp: number; cls: number; moved: string; inp: number; slowest: string; tapped: number; frames: number; dropped: number; droppedBy: string; cause: string };
+type Measured = { answer: string | null; lcp: number; cls: number; moved: string; inp: number; slowest: string; tapped: number; frames: number; dropped: number; droppedBy: string; cause: string };
 
 async function measure(route: string): Promise<Measured> {
   await page.send('Network.emulateNetworkConditions', { offline: false, latency: 150, downloadThroughput: (1.6 * 1024 * 1024) / 8, uploadThroughput: (750 * 1024) / 8 });
   await page.send('Network.setCacheDisabled', { cacheDisabled: true });
   await page.send('Emulation.setCPUThrottlingRate', { rate: (await measurePhone(page)).rate });
   await page.open(base + route, { width: 390, height: 844, theme: 'dark', reduced: false, wait: 7000 });
+  // An error page has vitals of its own, which are not the route's.
+  const answer = answerProblem(route, page.status(), await page.eval<boolean>(DRAWS_NOT_FOUND), MISSING);
   await page.eval('window.__v.recording = true');
   let inp = 0, slowest = '', tapped = 0, frames = 0, dropped = 0, droppedBy = '', cause = '', worst = 0;
   for (const sel of TAPS) {
@@ -128,7 +132,7 @@ async function measure(route: string): Promise<Measured> {
   const v = await page.eval<{ lcp: number; cls: number; moved: Record<string, number> }>('window.__v');
   // A page over the CLS floor says what moved: the three elements whose shifts sum highest (a shift counts for each element it moved).
   const moved = v.cls >= 0.1 ? Object.entries(v.moved).sort((a, b) => b[1] - a[1]).slice(0, 3).map(([k, n]) => `${k} ${n.toFixed(3)}`).join(', ') : '';
-  return { lcp: v.lcp, cls: v.cls, moved, inp, slowest, tapped, frames, dropped, droppedBy, cause };
+  return { answer, lcp: v.lcp, cls: v.cls, moved, inp, slowest, tapped, frames, dropped, droppedBy, cause };
 }
 
 let failures = 0;
@@ -140,9 +144,9 @@ for (const route of ROUTES) {
   // drops one is measured a second time before it is failed, and a page that drops one twice is a page that stutters.
   const again = m.dropped > 0;
   if (again) m = await measure(route);
-  const bad = m.lcp >= 2500 || m.inp >= 200 || m.cls >= 0.1 || m.dropped > 0;
+  const bad = !!m.answer || m.lcp >= 2500 || m.inp >= 200 || m.cls >= 0.1 || m.dropped > 0;
   if (bad) failures++;
-  console.log(`${bad ? 'FAIL' : 'ok  '} ${route.padEnd(36)} LCP ${(m.lcp / 1000).toFixed(2)} s · INP ${Math.round(m.inp)} ms · CLS ${m.cls.toFixed(3)} · frames over 50 ms: ${m.dropped} of ${m.frames}${again ? ' (second measure)' : ''} · taps: ${m.tapped}${m.dropped ? ` · dropped by: ${m.droppedBy} · ${m.cause}` : ''}${m.inp >= 100 ? ` · slowest tap: ${m.slowest}` : ''}${m.moved ? ` · moved most: ${m.moved}` : ''}`);
+  console.log(`${bad ? 'FAIL' : 'ok  '} ${route.padEnd(36)} LCP ${(m.lcp / 1000).toFixed(2)} s · INP ${Math.round(m.inp)} ms · CLS ${m.cls.toFixed(3)} · frames over 50 ms: ${m.dropped} of ${m.frames}${again ? ' (second measure)' : ''} · taps: ${m.tapped}${m.dropped ? ` · dropped by: ${m.droppedBy} · ${m.cause}` : ''}${m.inp >= 100 ? ` · slowest tap: ${m.slowest}` : ''}${m.moved ? ` · moved most: ${m.moved}` : ''}${m.answer ? `\n  ${m.answer}` : ''}`);
 }
 await page.send('Emulation.setCPUThrottlingRate', { rate: 1 });
 page.close();

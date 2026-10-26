@@ -425,3 +425,15 @@ describe('the 0.31.1 migration', () => {
     expect(byId('live-stream-shutdown').applies(path.resolve(import.meta.dirname, '..'))).toBeNull();
   });
 });
+
+describe('the 0.32.0 migration', () => {
+  it('finds a verify configuration with detail routes and no missing ones, and leaves the release\'s and an empty one', () => {
+    const config = (body: string) => project({ 'scripts/verify.config.ts': body });
+    expect(byId('missing-routes').since).toBe('0.32.0');
+    expect(byId('missing-routes').applies(config("export default {\n  detailRoutes: [\n    '/requests/req_missing',\n  ],\n};\n"))).toEqual(['scripts/verify.config.ts']);
+    expect(byId('missing-routes').applies(config("export default {\n  detailRoutes: ['/a'],\n  missingRoutes: ['/b'],\n};\n"))).toBeNull();
+    // An adopted project lists none yet: nothing it lists can be a missing record.
+    expect(byId('missing-routes').applies(config('export default {\n  detailRoutes: [],\n};\n'))).toBeNull();
+    expect(byId('missing-routes').applies(path.resolve(import.meta.dirname, '..'))).toBeNull();
+  });
+});
