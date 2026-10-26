@@ -1,6 +1,6 @@
 # The weekly suites (decision 0010, docs/distribution.md): what is too slow or too statistical to gate a release, run on
 # master's current commit. Weekly is weekly and release is release: nothing here runs in release.yml, and nothing runs
-# twice. A failure fails this run and GitHub notifies; nothing waits on it.
+# twice, with one exception: `deep`. A failure fails this run and GitHub notifies; nothing waits on it.
 #
 # Each tier is a job of its own, on its own runner, and the jobs run in parallel. A red is rerun by its job alone
 # ("Re-run failed jobs"), and a dispatch names the jobs it runs: `gh workflow run weekly.yml -f jobs=timed`.
@@ -13,6 +13,11 @@
 #   the update from each of the last three releases (adopted and created), and every recovery and failure case of the
 #   update. The created project's `--verify` case (`--full --timed`) is not run here or in release.yml; it runs on request.
 #
+# - `deep`: the browser-fixture tests of the checks (tests/deep-*), the adversarial sample every browser suite is held
+#   to. A release runs them too, on the commit it releases; they run here as well because Chrome is an input no commit
+#   pins: a browser that changes what a suite measures (a phone's viewport widened to its overflow, 2026-10-27) turns a
+#   check blind between releases, and only a run on the week's browser sees it.
+#
 # Each job keeps its log as an artifact. This workflow holds no publishing permission and no credential.
 
 name: weekly
@@ -23,9 +28,9 @@ on:
   workflow_dispatch:
     inputs:
       jobs:
-        description: 'The jobs to run, comma-separated without spaces: full,timed,perf,consumer'
+        description: 'The jobs to run, comma-separated without spaces: full,timed,perf,consumer,deep'
         type: string
-        default: full,timed,perf,consumer
+        default: full,timed,perf,consumer,deep
 
 permissions:
   contents: read
@@ -43,21 +48,21 @@ jobs:
     steps:
       - name: Every name is a job
         env:
-          JOBS: ${{ inputs.jobs || 'full,timed,perf,consumer' }}
+          JOBS: ${{ inputs.jobs || 'full,timed,perf,consumer,deep' }}
         run: |
           set -euo pipefail
           IFS=',' read -ra names <<< "$JOBS"
-          [ "${#names[@]}" -gt 0 ] || { echo "jobs names no job: give some of full,timed,perf,consumer"; exit 1; }
+          [ "${#names[@]}" -gt 0 ] || { echo "jobs names no job: give some of full,timed,perf,consumer,deep"; exit 1; }
           for n in "${names[@]}"; do
             case "$n" in
-              full|timed|perf|consumer) ;;
-              *) echo "jobs: '$n' is not a job; name some of full,timed,perf,consumer, comma-separated without spaces"; exit 1 ;;
+              full|timed|perf|consumer|deep) ;;
+              *) echo "jobs: '$n' is not a job; name some of full,timed,perf,consumer,deep, comma-separated without spaces"; exit 1 ;;
             esac
           done
 
   full:
     needs: named
-    if: contains(format(',{0},', inputs.jobs || 'full,timed,perf,consumer'), ',full,')
+    if: contains(format(',{0},', inputs.jobs || 'full,timed,perf,consumer,deep'), ',full,')
     runs-on: ubuntu-24.04
     timeout-minutes: 45
     env:
@@ -89,7 +94,7 @@ jobs:
 
   timed:
     needs: named
-    if: contains(format(',{0},', inputs.jobs || 'full,timed,perf,consumer'), ',timed,')
+    if: contains(format(',{0},', inputs.jobs || 'full,timed,perf,consumer,deep'), ',timed,')
     runs-on: ubuntu-24.04
     timeout-minutes: 45
     env:
@@ -121,7 +126,7 @@ jobs:
 
   perf:
     needs: named
-    if: contains(format(',{0},', inputs.jobs || 'full,timed,perf,consumer'), ',perf,')
+    if: contains(format(',{0},', inputs.jobs || 'full,timed,perf,consumer,deep'), ',perf,')
     runs-on: ubuntu-24.04
     timeout-minutes: 45
     strategy:
@@ -157,7 +162,7 @@ jobs:
 
   consumer:
     needs: named
-    if: contains(format(',{0},', inputs.jobs || 'full,timed,perf,consumer'), ',consumer,')
+    if: contains(format(',{0},', inputs.jobs || 'full,timed,perf,consumer,deep'), ',consumer,')
     runs-on: ubuntu-24.04
     timeout-minutes: 120
     env:
@@ -195,6 +200,39 @@ jobs:
         if: always()
         with:
           name: consumer
+          path: out/
+          if-no-files-found: ignore
+          retention-days: 30
+
+  deep:
+    needs: named
+    if: contains(format(',{0},', inputs.jobs || 'full,timed,perf,consumer,deep'), ',deep,')
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    env:
+      CHROME: /usr/bin/google-chrome
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+        with:
+          version: 11.9.0
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: the browser-fixture tests of the checks
+        run: |
+          set -euo pipefail
+          mkdir -p out
+          google-chrome --version | tee out/weekly-deep.txt
+          pnpm exec vitest run tests/deep- --no-file-parallelism 2>&1 | tee -a out/weekly-deep.txt
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        if: always()
+        with:
+          name: deep
           path: out/
           if-no-files-found: ignore
           retention-days: 30

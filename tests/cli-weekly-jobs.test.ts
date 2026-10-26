@@ -23,17 +23,19 @@ describe('weekly', () => {
     expect(job('perf')).toMatch(/pnpm verify --perf --shard \$\{\{ matrix\.shard \}\}\/5/);
     expect(job('perf')).toMatch(/shard: \[1, 2, 3, 4, 5\]/);
     expect(job('consumer')).toMatch(/cli\/scripts\/smoke\.ts/);
+    // The adversarial sample every browser suite is held to, on the week's browser: Chrome is an input no commit pins.
+    expect(job('deep')).toMatch(/vitest run tests\/deep- --no-file-parallelism/);
     expect(job('template')).toBe('');
     expect(weekly).not.toMatch(/pnpm verify --full --timed --perf/);
   });
   it('lets a dispatch name the jobs it runs, every job by default', () => {
-    expect(weekly).toMatch(/default: ['"]?full,timed,perf,consumer['"]?/);
-    for (const name of ['full', 'timed', 'perf', 'consumer']) expect(job(name)).toContain(`',${name},'`);
+    expect(weekly).toMatch(/default: ['"]?full,timed,perf,consumer,deep['"]?/);
+    for (const name of ['full', 'timed', 'perf', 'consumer', 'deep']) expect(job(name)).toContain(`',${name},'`);
   });
   it('refuses a dispatch that names no job, or a name that is not one, before any job runs', () => {
-    expect(job('named')).toMatch(/full\|timed\|perf\|consumer\)/);
-    expect(job('named')).toMatch(/JOBS: \$\{\{ inputs\.jobs \|\| 'full,timed,perf,consumer' \}\}/);
-    for (const name of ['full', 'timed', 'perf', 'consumer']) expect(job(name)).toMatch(/needs: named/);
+    expect(job('named')).toMatch(/full\|timed\|perf\|consumer\|deep\)/);
+    expect(job('named')).toMatch(/JOBS: \$\{\{ inputs\.jobs \|\| 'full,timed,perf,consumer,deep' \}\}/);
+    for (const name of ['full', 'timed', 'perf', 'consumer', 'deep']) expect(job(name)).toMatch(/needs: named/);
   });
   it('gives each tier a runner of its own, its log and room for a slow day', () => {
     for (const name of ['full', 'timed', 'perf']) {

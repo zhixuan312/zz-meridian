@@ -63,6 +63,7 @@ A moment is when a person or an agent runs a command. A project's own CI may run
 - **Meridian's weekly run** (`.github/workflows/weekly.yml`, Mondays at 03:17 UTC and on demand, on master's current commit; Meridian's repository only):
   - the jobs `full` (`pnpm verify --full`), `timed` (`pnpm verify --timed`) and `perf` (`pnpm verify --perf --shard <i>/5`, five shards), in parallel on separate runners, as on a schedule above; a red is rerun by its job, and a dispatch names its jobs with `-f jobs=timed`;
   - `node cli/scripts/smoke.ts --tarball <tarball> --adopt --update --origins 3 --update-all --verify`, on a tarball packed from that commit: the adopted project's default verify cases, the update from each of the last three releases, and every recovery and failure case of the update.
+  - `pnpm exec vitest run tests/deep- --no-file-parallelism`, the browser-fixture tests of the checks, as the job `deep`: a release runs them on the commit it releases, and the week runs them again because Chrome is an input no commit pins, and a browser that changes what a suite measures turns a check blind between releases.
   - Nothing waits on it: a failure notifies.
 
 ## Rules
