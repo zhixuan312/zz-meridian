@@ -2,6 +2,15 @@
 
 Every release of ZZ Meridian, newest first. Versions follow semver: a removed or renamed token, prop or card is major; a new card, token or variant is minor; a corrected value is a patch. Each entry says what breaks and what to do instead.
 
+## [0.31.1] · 2026-10-27
+
+### Fixed
+
+- **A server that is stopped lets go of its live streams.** `next start` told to stop (SIGTERM or SIGINT, as a deploy or a restart does) closes its port and then waits for its open connections, and a live stream never ended of itself. So the old process stayed up holding every tab's stream while the new one served the port: no tab heard a change hint again, and every change waited for the tab's next safety poll (the weekly live check: `a server restart: B did not show a write made after the restart within 5000 ms`). `liveStream` now ends every open stream when the process is told to stop; each tab reconnects to the new server within about a second and hears hints again (a write after a restart reached the other tab in 540 ms, where it took 2.9 s). Where nothing else listens for the signal, the process still stops as it did.
+  - **What a team does.** `src/data/live-stream.ts` is yours, so an update does not replace it: run `update`, which reports `migration:live-stream-shutdown` for a copy that never ends its streams, and bring the block that begins `Every stream still open` over from `references/live.md`.
+  - **Doing nothing.** Nothing fails; a deploy or restart keeps the old server up while a tab is open, and changes reach other tabs only at their next poll until they reload.
+- **A live tab tries its stream again as soon as the server answers after it did not.** A tab that had given its stream up for polling tried it again only on every fifth poll. A poll that answers after one that failed (the server is back) now opens the stream at once, so hints resume; a stream a proxy blocks, whose polls never fail, is still tried on every fifth poll.
+
 ## [0.31.0] · 2026-10-26
 
 ### New
