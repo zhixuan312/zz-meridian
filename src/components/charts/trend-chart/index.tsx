@@ -7,6 +7,7 @@ import { formatDate } from '@/lib/format-date';
 import { useMeridian } from '@/components/charts/meridian';
 import { Readout } from '@/components/charts/readout';
 import { monotonePath, ticksBetween, SERIES_VAR, stackPart } from '@/components/charts/scale';
+import { useSettled } from '@/components/charts/use-settled';
 import { useSize } from '@/components/charts/use-size';
 import { trendTotals } from '@/logic/derivations';
 
@@ -205,6 +206,8 @@ export function TrendChart({
   const n = dates.length;
   // The point still running, if there is one: everything solid stops at the point before it.
   const soFar = running ? n - 1 : -1;
+  // The table follows the line a frame later when the dates change (`useSettled`).
+  const settled = useSettled(dates.join('\n'));
   const x = (i: number) => pad.l + (n <= 1 ? W / 2 : (i / (n - 1)) * W);
   const y = (v: number) => pad.t + H - ((v - low) / (top - low)) * H;
 
@@ -474,11 +477,11 @@ export function TrendChart({
           ) : null}
         </Readout>
       ) : null}
-      <table className="sr-only">
+      {settled ? <table className="sr-only">
         <caption>{label}{band ? `. ${band.label}` : ''}{marks ? `. Marked: ${marks.label}` : ''}{baseline ? `. ${baseline.label}` : ''}{running ? `. ${SO_FAR}` : ''}</caption>
         <thead><tr><th>Date</th>{series.map((s) => <th key={s.key}>{s.label}</th>)}{totals ? <th>Total</th> : null}</tr></thead>
         <tbody>{dates.map((d, i) => <tr key={d}><td>{d}{i === soFar ? ', so far' : null}</td>{series.map((s) => <td key={s.key}>{fmt(s.values[i])}</td>)}{totals ? <td>{fmt(totals[i])}</td> : null}</tr>)}</tbody>
-      </table>
+      </table> : null}
     </div>
   );
 }

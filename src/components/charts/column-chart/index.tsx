@@ -5,6 +5,7 @@ import { cn } from '@/lib/cn';
 import { useMeridian } from '@/components/charts/meridian';
 import { Readout } from '@/components/charts/readout';
 import { niceTicks, SERIES_VAR, stackPart, ticksBetween } from '@/components/charts/scale';
+import { useSettled } from '@/components/charts/use-settled';
 import { useSize } from '@/components/charts/use-size';
 import { columnFold } from '@/logic/derivations';
 
@@ -58,6 +59,12 @@ export type ColumnChartProps = Shared & (
  * narrowest column that keeps its value at rest.
  */
 const GAP = 2, THIN = 1, REST = 36;
+/**
+ * Past this many columns a plain chart draws each finished column as one element, its bar the element's own `::before`,
+ * and grows them as one row: a year of 52 windows at 7D, three such charts on Home, committed about a thousand
+ * elements in the frame of the period tap and dropped it on a mid-range phone.
+ */
+const DENSE = 30;
 /** About the width of one character of a value at rest (`text-2xs`), in px: enough to tell whether a label fits its column. */
 const CH = 6.5;
 /**
@@ -153,6 +160,8 @@ export function ColumnChart({
   const set = (i: number | null) => { (timed ? meridian.setIndex : setOwn)(i); setLocal(i !== null); };
   const fill = height === 'fill';
   const soFar = running ? n - 1 : -1;
+  // The axis labels and the table follow the columns a frame later when the set of them changes (`useSettled`).
+  const settled = useSettled(bars.map((b) => b.key).join('\n'));
 
   // A period with no data has no height, so the scale is the periods that have one. Plain, a value under zero is a
   // fall: the scale goes under zero for it and the column hangs from the zero line (#78). Stacked, parts make a whole.
@@ -175,6 +184,7 @@ export function ColumnChart({
   // A column wide enough for a figure keeps its value above it at rest; a narrower one shows it when pointed at.
   const column = n ? (width - left - gap * (n - 1)) / n : 0;
   const rest = column >= REST;
+  const dense = n > DENSE && !signed;
   // Whatever is centred on a column and may be wider than it starts with the first column and ends with the last, so
   // nothing runs past the plot; inside those, a narrower one is still centred.
   /** A value as it reads; a period with no data reads the product's word, and "so far" with it while it is running. */
@@ -231,7 +241,7 @@ export function ColumnChart({
               <span className={cn('h-px flex-1', t === 0 ? 'bg-chart-axis' : 'bg-chart-grid')} />
             </div>
           ))}
-          <div className="absolute inset-y-0 right-0 flex" style={{ left, columnGap: gapOf(n) }}>
+          <div className={cn('absolute inset-y-0 right-0 flex', dense && 'grow-y')} style={{ left, columnGap: gapOf(n) }}>
             {bars.map((b, i) => {
               const pointed = active === i;
               const hot = pointed || (active === null && b.key === highlight);
@@ -245,6 +255,49 @@ export function ColumnChart({
               // never "No data…" cut mid-word; the tooltip, the readout, the announcement and the table say it whole (#71).
               const full = totalOf(b, i);
               const text = !tip && b.none && unfinished && full.length * CH > column ? 'So far' : full;
+              const plainFill = !b.none && !drawn && !unfinished;
+              const valueLabel = rest || pointed ? (
+                      // One element at rest and pointed at, so its entrance never replays. At rest the value is held to its
+                      // column; the tooltip, and a total shown only on pointing, may be wider than theirs.
+                      <span aria-hidden className={cn('pointer-events-none absolute', fall ? 'top-full mt-1' : 'bottom-full mb-1', rest && 'fade-in', tip || !rest ? cn('z-10', placed(i)) : 'inset-x-0')}>
+                        <span
+                          className={cn(
+                            't-num block text-2xs leading-4',
+                            tip
+                              ? 'rounded-sm bg-surface-inverse px-1.5 py-1 font-medium whitespace-nowrap text-ink-inverse shadow-overlay'
+                              : rest
+                                ? cn('truncate text-center', pointed ? 'font-medium text-ink' : 'text-ink-3')
+                                : 'font-medium whitespace-nowrap text-ink',
+                          )}
+                        >
+                          <span data-value>{text}</span>
+                          {tip && unfinished && !b.none ? ' · so far' : null}
+                        </span>
+                      </span>
+              ) : null;
+              const share = `${(Math.abs(b.total) / (top - low)) * 100}%`;
+              if (dense && plainFill) {
+                // One element: the bar is its ::before, its share of the scale and never under 2px; the value, when it shows,
+                // stands on a box of the bar's height.
+                return (
+                  <div
+                    key={b.key}
+                    data-column={b.key}
+                    data-active={pointed ? '' : undefined}
+                    title={[rest && text.length * 7 > column ? text : null, b.key === highlight ? highlightLabel : null].filter(Boolean).join(' · ') || undefined}
+                    className={cn(
+                      'group/col relative h-full min-w-0 flex-1 before:absolute before:inset-x-0 before:bottom-(--bar-at) before:h-(--bar-h) before:rounded-t-[4px] before:transition-colors before:duration-(--dur-hover)',
+                      b.total !== 0 && 'before:min-h-[2px]',
+                      hot ? 'before:bg-accent' : 'before:bg-chart-neutral hover:before:bg-chart-neutral-strong',
+                    )}
+                    style={{ ['--bar-h' as string]: share, ['--bar-at' as string]: `${at100(0)}%` }}
+                    onPointerEnter={() => set(i)}
+                    onPointerDown={() => set(i)}
+                  >
+                    {valueLabel ? <div className={cn('absolute inset-x-0', b.total !== 0 && 'min-h-[2px]')} style={{ bottom: `${at100(0)}%`, height: share }}>{valueLabel}</div> : null}
+                  </div>
+                );
+              }
               return (
                 <div
                   key={b.key}
@@ -269,14 +322,17 @@ export function ColumnChart({
                     className="absolute inset-x-0"
                     style={{
                       ...(fall ? { top: `${100 - at100(0)}%` } : { bottom: `${at100(0)}%` }),
-                      height: b.none ? '0%' : `${(Math.abs(b.total) / (top - low)) * 100}%`,
+                      height: b.none ? '0%' : share,
                       minHeight: (drawn ? Math.max(0, shown.length * 4 - 1) : b.total !== 0 ? 2 : 0) + (unfinished ? 2 : 0),
                     }}
                   >
                     <div
                       className={cn(
-                        'grow-y relative h-full',
+                        // A dense chart grows its row as one; a column of its own grows only in a chart that is not.
+                        !dense && 'grow-y', 'relative h-full',
                         fall ? 'rounded-b-[4px]' : 'rounded-t-[4px]',
+                        // A finished plain column is its own fill: one element fewer a column, in a chart of 52 of them.
+                        plainFill && cn('w-full transition-colors duration-(--dur-hover)', hot ? 'bg-accent' : 'bg-chart-neutral group-hover/col:bg-chart-neutral-strong'),
                         drawn && 'transition-[box-shadow] duration-(--dur-hover)',
                         drawn && hot && 'z-1 ring-2 ring-ink',
                         // A period still running: a dashed outline, open at the baseline, around a fill at half strength. The
@@ -304,29 +360,11 @@ export function ColumnChart({
                             />
                           ))}
                         </div>
-                      ) : (
-                        <div className={cn('h-full w-full transition-colors duration-(--dur-hover)', fall ? 'rounded-b-[4px]' : 'rounded-t-[4px]', hot ? 'bg-accent' : 'bg-chart-neutral group-hover/col:bg-chart-neutral-strong', unfinished && 'opacity-50')} />
+                      ) : plainFill ? null : (
+                        <div className={cn('h-full w-full transition-colors duration-(--dur-hover)', fall ? 'rounded-b-[4px]' : 'rounded-t-[4px]', hot ? 'bg-accent' : 'bg-chart-neutral group-hover/col:bg-chart-neutral-strong', 'opacity-50')} />
                       )}
                     </div>
-                    {rest || pointed ? (
-                      // One element at rest and pointed at, so its entrance never replays. At rest the value is held to its
-                      // column; the tooltip, and a total shown only on pointing, may be wider than theirs.
-                      <span aria-hidden className={cn('pointer-events-none absolute', fall ? 'top-full mt-1' : 'bottom-full mb-1', rest && 'fade-in', tip || !rest ? cn('z-10', placed(i)) : 'inset-x-0')}>
-                        <span
-                          className={cn(
-                            't-num block text-2xs leading-4',
-                            tip
-                              ? 'rounded-sm bg-surface-inverse px-1.5 py-1 font-medium whitespace-nowrap text-ink-inverse shadow-overlay'
-                              : rest
-                                ? cn('truncate text-center', pointed ? 'font-medium text-ink' : 'text-ink-3')
-                                : 'font-medium whitespace-nowrap text-ink',
-                          )}
-                        >
-                          <span data-value>{text}</span>
-                          {tip && unfinished && !b.none ? ' · so far' : null}
-                        </span>
-                      </span>
-                    ) : null}
+                    {valueLabel}
                   </div>
                 </div>
               );
@@ -351,8 +389,9 @@ export function ColumnChart({
           </Readout>
         ) : null}
       </div>
-      <div aria-hidden className="mt-2 flex text-2xs text-ink-3" style={{ paddingLeft: left, columnGap: gapOf(n) }}>
-        {bars.map((b, i) => (
+      {/* The row keeps its height for the frame its labels wait, so nothing under it moves. */}
+      <div aria-hidden className="mt-2 flex min-h-4 text-2xs text-ink-3" style={{ paddingLeft: left, columnGap: gapOf(n) }}>
+        {settled && bars.map((b, i) => (
           <span key={b.key} className="relative h-4 min-w-0 flex-1">
             {active === i ? (
               <span className={cn('absolute z-10', placed(i))}><span className="rounded-xs bg-surface px-1 whitespace-nowrap text-ink">{b.label}</span></span>
@@ -365,7 +404,7 @@ export function ColumnChart({
         ))}
       </div>
       <p className="sr-only" aria-live="polite">{reading}</p>
-      <table className="sr-only">
+      {settled ? <table className="sr-only">
         <caption>{label}{highlight && highlightLabel ? `. Accented: ${highlightLabel}` : ''}</caption>
         {drawn ? <thead><tr><th scope="col">Period</th>{drawn.map((p) => <th key={p.key} scope="col">{p.label}</th>)}<th scope="col">Total</th></tr></thead> : null}
         <tbody>
@@ -377,7 +416,7 @@ export function ColumnChart({
             </tr>
           ))}
         </tbody>
-      </table>
+      </table> : null}
     </figure>
   );
 }
