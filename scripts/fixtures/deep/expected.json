@@ -488,5 +488,9 @@
   { "page": "/drawn-missing", "suite": "keyboard", "outcome": "pass", "args": ["--missing", "/drawn-missing"] },
   { "page": "/drawn-missing", "suite": "vitals", "outcome": "fail", "line": "/drawn-missing draws the not-found screen ([data-missing-page]), so what was measured is not the route" },
   { "page": "/drawn-missing", "suite": "vitals", "outcome": "clear", "args": ["--missing", "/drawn-missing"], "line": "draws the not-found screen" },
-  { "page": "/gone/record", "suite": "vitals", "outcome": "clear", "args": ["--missing", "/gone/record"], "line": "is in missingRoutes" }
+  { "page": "/gone/record", "suite": "vitals", "outcome": "clear", "args": ["--missing", "/gone/record"], "line": "is in missingRoutes" },
+  { "page": "/clean", "suite": "presses", "outcome": "pass", "line": "judged nothing: presses" },
+  { "page": "/deep-dead-control-fixed", "suite": "presses", "outcome": "clear", "line": "judged nothing" },
+  { "page": "/clean", "suite": "keyboard", "outcome": "pass", "line": "judged nothing: keyboard" },
+  { "page": "/deep-ringless-fixed", "suite": "keyboard", "outcome": "clear", "line": "judged nothing" }
 ]

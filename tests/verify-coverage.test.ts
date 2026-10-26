@@ -1,6 +1,6 @@
 // @vitest-environment node
 import { describe, expect, it } from 'vitest';
-import { resolveCoverage, selectSmokeRoutes } from '../scripts/lib/coverage.ts';
+import { resolveCoverage, selectSmokeRoutes, judgedNothingIn } from '../scripts/lib/coverage.ts';
 
 const nav = ['/', '/usage', '/requests', '/services', '/settings'];
 const check = (path: string) => ({ path, title: 'T', readySelector: 'main table', probe: 'sort' as const, controlSelector: 'th button', resultSelector: 'tbody tr' });
@@ -37,5 +37,12 @@ describe('coverage', () => {
     for (const mode of ['default', 'full', 'perf'] as const) expect(resolveCoverage(mode, ['/requests'], [broken]).errors.length).toBeGreaterThan(0);
     const unknown = { ...check('/requests'), probe: 'delete' as never };
     expect(resolveCoverage('default', ['/requests'], [unknown]).errors.length).toBeGreaterThan(0);
+  });
+});
+
+describe('a rule that judged nothing is named, never read as a pass', () => {
+  it('reads every judged-nothing line a check or a suite printed, rule by rule', () => {
+    expect(judgedNothingIn('ok   tokens\njudged nothing: what the agent does here, the card contract\nkeyboard: 0 issues\njudged nothing: keyboard (no stop to tab to on any route)\n')).toEqual(['what the agent does here', 'the card contract', 'keyboard (no stop to tab to on any route)']);
+    expect(judgedNothingIn('check: ok\n0 problems · 73 cards')).toEqual([]);
   });
 });

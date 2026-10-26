@@ -58,4 +58,18 @@ describe('a page with a view tool says what the agent does there', () => {
     put(SETTINGS, `${original(SETTINGS)}\n`);
     expect(check()).not.toMatch(/settings\/README\.md: .*What the agent does here/);
   }, 60_000);
+
+  it('says it judged nothing when no page is a view tool\'s, rather than passing as if every section were right', () => {
+    // The template judges every one, so it names nothing; a registry with no view tool the reader can find judges none
+    // (#43, where the tools lived in modules the reader did not follow), and the line says so.
+    expect(check()).not.toMatch(/^judged nothing:/m);
+    const registry = 'src/logic/tools.ts';
+    put(registry, 'export const viewTools = [];\n');
+    put(USAGE, original(USAGE).replace(/### What the agent does here\n[\s\S]*?(?=\n### |\n## |$)/, ''));
+    const out = check();
+    expect(out).toMatch(/^judged nothing: .*what the agent does here/m);
+    expect(out).not.toMatch(/usage\/README\.md: .*What the agent does here/);
+    put(registry, original(registry));
+    put(USAGE, original(USAGE));
+  }, 60_000);
 });

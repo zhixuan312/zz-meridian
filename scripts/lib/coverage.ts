@@ -10,6 +10,9 @@ export const SUITE_NAMES = [...COMPLETE_SUITES, ...TIMED_SUITES, 'perf'] as cons
 
 const PROBES = ['dialog', 'filter', 'sort', 'toggle', 'link'];
 
+/** The rules a check's output says it passed having judged nothing for (`judged nothing: <a>, <b>`, scripts/check.ts). */
+export const judgedNothingIn = (out: string): string[] => [...out.matchAll(/^judged nothing: (.+)$/gm)].flatMap((m) => m[1].split(', '));
+
 /** The exit code of a suite that failed nothing but left a case unrun: neither a pass nor a failure. */
 export const NOT_RUN_EXIT = 2;
 

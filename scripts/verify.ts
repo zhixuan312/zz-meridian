@@ -49,7 +49,7 @@ import { bin } from './lib/bin.ts';
 import { launch } from './lib/chrome.ts';
 import type { BudgetsConfig, NavigationCheck } from './lib/budgets.ts';
 import { fakeModelArgs, fakeModelProblems, type FakeModelStep } from './lib/config-hooks.ts';
-import { finalOutcome, resolveCoverage, SUITE_NAMES, selectSmokeRoutes, suiteCoverage, suiteOutcome } from './lib/coverage.ts';
+import { finalOutcome, judgedNothingIn, resolveCoverage, SUITE_NAMES, selectSmokeRoutes, suiteCoverage, suiteOutcome } from './lib/coverage.ts';
 import { unsafeDataUrls } from './lib/data-url.ts';
 import { APP_DIR, railRoutes } from './lib/routes.ts';
 import { sampleSurfaces } from './lib/sample.ts';
@@ -190,6 +190,7 @@ const children: ChildProcess[] = [];
 /** The suites running now: each ends its own Chrome on SIGTERM (scripts/lib/chrome.ts), so it is asked, not killed. */
 const suites = new Set<ChildProcess>();
 let gates = 0;
+const judgedNothing: string[] = []; // the rules a check passed having judged nothing for, named in the coverage line
 let builds = 0;
 let current = 'the start';
 let browser: { ran: boolean; reason: string | null } = { ran: false, reason: null };
@@ -232,7 +233,7 @@ function coverageLine(): string {
   const n = selected.length;
   const where = browser.ran ? 'ran' : `not run (${browser.reason ?? `stopped at ${current}`})`;
   const personae = asPersonas.length ? `; personas ${asPersonas.join(', ')}` : '';
-  return `coverage: ${depth}; browser ${where}; ${n} routes; data configured ${covered.data}/${n}; interaction configured ${covered.interaction}/${n}${personae}; not run: ${notRun.length ? notRun.join(', ') : 'none'}${failed.length ? `; failed: ${failed.join(', ')}` : ''}`;
+  return `coverage: ${depth}; browser ${where}; ${n} routes; data configured ${covered.data}/${n}; interaction configured ${covered.interaction}/${n}${personae}; not run: ${notRun.length ? notRun.join(', ') : 'none'}${judgedNothing.length ? `; judged nothing: ${[...new Set(judgedNothing)].join(', ')}` : ''}${failed.length ? `; failed: ${failed.join(', ')}` : ''}`;
 }
 
 function finish(code: number, outcome: string): never {
@@ -411,7 +412,7 @@ const run = (script: string, extra: string[], env: NodeJS.ProcessEnv = process.e
   let out = '';
   child.stdout.on('data', (d) => (out += d));
   child.stderr.on('data', (d) => { out += d; if (echo) process.stderr.write(d); });
-  child.on('close', (status) => { suites.delete(child); resolve({ status, out: out.trim(), took: secs(t) }); });
+  child.on('close', (status) => { suites.delete(child); judgedNothing.push(...judgedNothingIn(out)); resolve({ status, out: out.trim(), took: secs(t) }); });
 });
 
 /** The JSON a script prints on its last line after `<tag>: `, or null when it printed none. */
@@ -441,7 +442,7 @@ let ok = true;
 // 1. The gate, once.
 gates++;
 // The tests only this repository has (tests/cli-*, the package's own, and tests/deep-*, the browser-fixture tests of the checks) are not the project's: no adopted or created project has them.
-step('gate', 'node', ['scripts/gate.ts', '--without-cli-tests']);
+judgedNothing.push(...judgedNothingIn(step('gate', 'node', ['scripts/gate.ts', '--without-cli-tests']))); // named in the coverage line
 
 // A product whose pages call a live API is checked against its fake (scripts/verify.config.ts): the presses approve,
 // revoke and delete whatever a page offers. The fake starts first, because its address goes into the build.

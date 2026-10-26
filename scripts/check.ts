@@ -47,6 +47,14 @@ const lineOf = (src: string, at: number) => src.slice(0, at).split('\n').length;
 const problems: string[] = [];
 /** A deviation a line states with `allow-<rule>: <reason>`, printed beside the problems rather than passed in silence. */
 const escapes: string[] = [];
+/**
+ * How many things each rule over a set the project's files make judged. A rule whose set came out empty passes having
+ * judged nothing, which reads exactly like a rule that judged everything and found it right: the agent sections passed a
+ * project whose view tools were in modules the reader did not follow (#43), and the agent-reads rule passed a route
+ * group not named `(dashboard)` (#23). So a rule that judged nothing says so, in the line `judged nothing: <rules>`,
+ * which the gate and the coverage line of `pnpm verify` carry. It is not a failure: a product without cards has none.
+ */
+const judged: [rule: string, count: number][] = [];
 
 // ── The four-layer switch: the project's own file turns the rules on ─────────────────────────────────
 // `scripts/check.ts` reads one declaration from `scripts/check.local.ts` and nothing else. It is read as TEXT, never
@@ -93,8 +101,11 @@ for (const c of cards()) {
   for (const s of CARD_SECTIONS) if (!md.includes(s)) problems.push(`${c.dir}/README.md: missing ${s}`);
 }
 
+judged.push(['the card contract', cards().length]);
+
 // ── Pages ────────────────────────────────────────────────────────────────────────────────────────────
 const PAGE_SPECS = walk(APP_DIR, /^README\.md$/);
+judged.push(['the page specifications', PAGE_SPECS.length], ['what the agent reads', PAGE_SPECS.filter((p) => agentPageSpec(p)).length]);
 for (const p of PAGE_SPECS) {
   const md = read(p);
   if (!/^# .+\n\n[^#\n].+/.test(md)) problems.push(`${p}: must open with "# Name" and a one-sentence summary`);
@@ -111,7 +122,9 @@ for (const p of PAGE_SPECS) {
 // no view tool's page, so they are asked nothing; a project without `src/logic/tools.ts` has no view tools to read.
 {
   const pages = new Set((viewToolPages() ?? []).map((v) => v.page));
-  for (const p of PAGE_SPECS.filter((f) => agentPageSpec(f) && pages.has(specRoute(f)))) {
+  const viewed = PAGE_SPECS.filter((f) => agentPageSpec(f) && pages.has(specRoute(f)));
+  judged.push(['what the agent does here', viewed.length]);
+  for (const p of viewed) {
     const md = read(p);
     const section = agentSection(md);
     if (!section || !/^## Agents$(?:\n(?!## ).*)*\n### What the agent does here$/m.test(md)) {
@@ -248,6 +261,7 @@ for (const f of LAYERS) {
 // collection is covered without editing this rule). Other fixture exports it imports, such as DEMO_NOW or ROLES, are not records.
 // A project without the collections seam (an existing app that brought Meridian in) has nothing for this rule to read.
 const COLLECTIONS = 'src/data/collections.ts';
+let collectionRows = 0;
 if (fs.existsSync(path.join(ROOT, COLLECTIONS))) {
   const FIXTURE_IMPORT = /(?:import|export)\s+(type\s+)?\{([^}]*)\}\s*from\s*['"]([^'"]*fixtures\/[^'"]*)['"]/g;
   /** A whole fixture module taken at once: `import * as`, `export * from`, or a dynamic `import()`. */
@@ -259,6 +273,7 @@ if (fs.existsSync(path.join(ROOT, COLLECTIONS))) {
   /** Each covered name, and the fixture module it comes from. */
   const covered = new Map([...collectionsSrc.matchAll(FIXTURE_IMPORT)].filter((m) => !m[1]).flatMap((m) => valueNames(m[2]).filter((n) => served.has(n)).map((n) => [n, fixtureModule(m[3])] as const)));
   const coveredModules = new Set(covered.values());
+  collectionRows = covered.size;
   for (const f of LAYERS) {
     if (f === COLLECTIONS || /^src\/system\/fixtures\//.test(f) || /(^|\/)preview\.tsx$/.test(f)) continue;
     const src = read(f);
@@ -646,7 +661,11 @@ for (const f of walk('src', /\.tsx?$/).filter((x) => SWEPT.test(x) && !TOOLKIT.t
   problems.push(...scanReferences(docs, has, scripts));
 }
 
+judged.push(['a collection\'s rows read through it', collectionRows]);
+
 console.log(problems.join('\n') || 'check: ok');
+const none = judged.filter(([, n]) => n === 0).map(([rule]) => rule);
+if (none.length) console.log(`judged nothing: ${none.join(', ')}`);
 if (escapes.length) console.log(escapes.join('\n'));
 if (fourLayersNote) console.log(fourLayersNote);
 console.log(`${problems.length} problems · ${cards().length} cards · ${PAGE_SPECS.length} page specs · ${LAYERS.length} source files`);

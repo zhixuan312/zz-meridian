@@ -145,6 +145,8 @@ let failures = 0;
  * that route's own failure, named and counted, and the walk goes on to the next one, as `scripts/audit.ts` measures each
  * route in a guard of its own. Without it one hanging page ended the suite and its evidence for every route after it.
  */
+/** Every stop the walks tagged, across the routes: none at all is a walk that judged nothing. */
+let stops = 0;
 const walk = async (route: string) => {
   await page.open(base + route, { width: 1440, height: 900, theme: 'dark', wait: 2500, cookie });
   // One implementation of the walk: the helper is injected, never copied. A page it cannot be injected into fails the suite.
@@ -158,6 +160,7 @@ const walk = async (route: string) => {
   // The shell's late chrome first: a walk that starts before it has arrived counts a different page on the way back.
   await settle(page);
   const total = await page.eval<number>(TAG);
+  stops += total;
   const reached = new Set<string>();
   const order: string[] = [];
   const names = new Map<string, string>();
@@ -229,4 +232,5 @@ for (const route of ROUTES) {
 }
 page.close();
 console.log(`\nkeyboard: ${failures} issues across ${ROUTES.length} routes`);
+if (!stops) console.log('judged nothing: keyboard (no stop to tab to on any route)');
 process.exit(failures ? 1 : 0);

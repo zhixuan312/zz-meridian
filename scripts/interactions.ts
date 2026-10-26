@@ -222,4 +222,6 @@ for (const width of WIDTHS) {
 page.close();
 for (const f of failures) console.log('FAIL ' + f);
 console.log(`\ninteractions: ${pressed} controls pressed and ${checkedLinks.size} links followed across ${ROUTES.length} routes at ${WIDTHS.join(' and ')}px; ${failures.length} issues`);
+// No control pressed and no link followed passes on nothing, which reads like a pass on everything.
+if (!pressed && !checkedLinks.size) console.log('judged nothing: presses (no control and no link on any route)');
 process.exit(failures.length ? 1 : 0);
