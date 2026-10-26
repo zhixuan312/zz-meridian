@@ -21,6 +21,8 @@ describe('the derivations', () => {
     expect(logic.comparison(270, 0)).toBeNull();
     // A trend is bands by days — the chart's series as a matrix of values — so each day's total sums down the rows.
     expect(logic.trendTotals([[1, 2], [3, 4]])).toEqual([4, 6]);
+    // A day no band measured has no total, never a total of zero; a day one band measured is that band's figure.
+    expect(logic.trendTotals([[1, null, null], [3, null, 2]])).toEqual([4, null, 2]);
     // The composition's own denominator is the sum of its parts, and never zero.
     expect(logic.compositionTotal([{ value: 2 }, { value: 3 }])).toBe(5);
     expect(logic.compositionTotal([])).toBe(1);

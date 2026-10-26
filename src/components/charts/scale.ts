@@ -28,8 +28,12 @@ export function ticksBetween(floor: number, max: number, count = 4, whole = fals
   // How many steps a level is from zero, rounded before it is floored or ceilinged: in binary, 0.7 / 0.1 is 6.999…,
   // and a floor of 70% on a 10% step would otherwise come out as 60% — a whole step of the plot spent on nothing.
   const steps = (n: number) => Math.round(n / step * 1e6) / 1e6;
-  const top = Math.ceil(steps(max)) * step;
-  const low = Math.floor(steps(floor)) * step;
+  // The rounding is for a level a hair off its step; an end it rounds past the data is a step short: a count scale over
+  // values smaller than a millionth of its step drew every level at the floor (top - low = 0), or a fall under the plot.
+  const under = Math.floor(steps(floor)) * step;
+  const low = under - floor > step * 1e-9 ? under - step : under;
+  const ceil = Math.ceil(steps(max)) * step;
+  const top = Math.max(max - ceil > step * 1e-9 ? ceil + step : ceil, low + step);
   // Each level is rounded to a digit under its step, never to a fixed number of places: a ratio near 1.001061 steps
   // in millionths, and six places would round two of its levels to one (#78).
   const places = Math.max(0, 1 - Math.floor(Math.log10(step)));

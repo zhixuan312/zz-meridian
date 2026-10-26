@@ -19,12 +19,13 @@ export function comparison(reading: number, baseline: number): string | null {
 
 /**
  * A stacked trend's per-day totals: `bands` is one row a series and one number a day, oldest first, so a day's total is
- * the sum down its column. A missing value is no contribution that day.
+ * the sum down its column. A missing value is no contribution that day, and a day on which no band has a value has no
+ * total (`null`): nothing was measured, which is not a total of zero.
  */
-export function trendTotals(bands: readonly (readonly (number | null)[])[]): number[] {
+export function trendTotals(bands: readonly (readonly (number | null)[])[]): (number | null)[] {
   const days = Math.max(0, ...bands.map((band) => band.length));
-  const totals = Array.from({ length: days }, () => 0);
-  for (const band of bands) band.forEach((value, i) => (totals[i] += value ?? 0));
+  const totals: (number | null)[] = Array.from({ length: days }, () => null);
+  for (const band of bands) band.forEach((value, i) => { if (value !== null && value !== undefined) totals[i] = (totals[i] ?? 0) + value; });
   return totals;
 }
 

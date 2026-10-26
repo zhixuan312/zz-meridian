@@ -184,9 +184,16 @@ export function TrendChart({
     }));
   }, [stacked, series, dates]);
   const totals = bases ? bases[bases.length - 1]?.upper ?? [] : null;
+  // The days the stack was measured on, in runs: a day no part has a value for breaks every band there, as a missing day
+  // breaks a line, rather than dipping the whole stack to zero. Within a run a part with no value stands on the parts below.
+  const stackRuns = useMemo(() => {
+    const runs: number[][] = [[]];
+    totals?.forEach((t, i) => (t === null ? runs[runs.length - 1].length && runs.push([]) : runs[runs.length - 1].push(i)));
+    return runs.filter((r) => r.length > 0);
+  }, [totals]);
   // Stacked parts are one whole, so they share one hue, each by its place in the stack. A series given its own colour keeps it.
   const colorOf = (s: TrendSeries, k: number) => (stacked && !s.color ? stackPart(k, series.length) : SERIES_VAR(s.color ?? (s.kind === 'dashed' ? 'neutral' : 'accent')));
-  const values = totals ?? series.flatMap((s) => s.values.filter((v): v is number => v !== null));
+  const values = (totals ?? series.flatMap((s) => s.values)).filter((v): v is number => v !== null);
   // A floor is a hint and never a crop: it is held at or under the lowest value drawn, or a day that fell further than
   // the floor would be drawn below the plot's own axis. So the scale widens to the data and never hides it. Without a
   // floor the axis holds zero, and a value under zero, a net change or a net flow, takes the axis down with it (#80).
@@ -214,19 +221,24 @@ export function TrendChart({
   const bands = useMemo(
     () =>
       bases?.map(({ lower, upper }, k) => {
-        const top = upper.map((v, i) => [x(i), y(v)] as [number, number]);
-        const bottom = lower.map((v, i) => [x(i), y(v)] as [number, number]).reverse();
-        // Running, the bands end at the last complete point. Only the total goes on, and only when some part was measured there.
-        const cut = running && n > 1 ? 1 : 0;
-        const line = monotonePath(top, 0, n - 1 - cut);
-        const tail = cut && k === series.length - 1 && series.some((p) => typeof p.values[n - 1] === 'number') ? monotonePath(top, n - 2) : '';
-        return { s: series[k], k, line, tail, area: `${line}${monotonePath(bottom, cut).replace(/^M/, 'L')}Z` };
+        let line = '', area = '', tail = '';
+        for (const run of stackRuns) {
+          const top = run.map((i) => [x(i), y(upper[i] ?? lower[i] ?? 0)] as [number, number]);
+          const bottom = run.map((i) => [x(i), y(lower[i] ?? 0)] as [number, number]).reverse();
+          // Running, the bands end at the last complete point. Only the total goes on, and only when some part was measured there.
+          const cut = running && run.length > 1 && run[run.length - 1] === n - 1 ? 1 : 0;
+          const edge = monotonePath(top, 0, top.length - 1 - cut);
+          line += edge;
+          area += `${edge}${monotonePath(bottom, cut).replace(/^M/, 'L')}Z`;
+          if (cut && k === series.length - 1) tail = monotonePath(top, top.length - 2);
+        }
+        return { s: series[k], k, line, tail, area };
       }) ?? [],
     // The geometry the paths are drawn on is scalar, so it is listed rather than left out: a page whose dates grew with the
     // same values array would otherwise keep paths drawn to the old spacing. `x` and `y` are the only pieces left, and
     // they are these numbers put together.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [bases, width, h, top, running, n, pad.l, pad.t, W, H, low],
+    [bases, stackRuns, width, h, top, running, n, pad.l, pad.t, W, H, low],
   );
 
   const paths = useMemo(
@@ -253,7 +265,7 @@ export function TrendChart({
   );
 
   // What the plot draws, as the label placer needs it: every line, and the top of every band of a stack.
-  const drawn = bases ? bases.map(({ upper }) => ({ ys: upper.map(y), filled: true })) : series.map((s) => ({ ys: s.values.map((v) => (v === null ? null : y(v))), filled: s.kind === 'area' }));
+  const drawn = bases ? bases.map(({ upper }) => ({ ys: upper.map((v) => (v === null ? null : y(v))), filled: true })) : series.map((s) => ({ ys: s.values.map((v) => (v === null ? null : y(v))), filled: s.kind === 'area' }));
   // The reference levels, in the order their labels are placed: the band's top edge first, then what is usual. Both are
   // placed against everything the plot draws. They may stand in the 14px the chart keeps clear over its top gridline,
   // and never under the axis.

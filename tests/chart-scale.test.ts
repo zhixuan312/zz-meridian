@@ -66,4 +66,9 @@ describe('niceTicks for counts (#72)', () => {
   it('leaves a scale of counts that steps by whole numbers already as it was', () => {
     for (const max of [12, 40, 75, 640, 3_300_438]) expect(niceTicks(max, 3, true)).toEqual(niceTicks(max, 3));
   });
+  it('keeps a top above its floor when the data is far smaller than a whole step', () => {
+    // A count scale over values under a millionth of its step once rounded its top onto zero: one level, every line at NaN.
+    expect(niceTicks(4e-7, 4, true)).toEqual([0, 1]);
+    expect(ticksBetween(-4e-7, 0, 3, true)).toEqual([-1, 0]);
+  });
 });

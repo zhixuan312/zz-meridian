@@ -67,7 +67,7 @@ Colour: `accent` for the series the page is about; categorical slots 1 to 6 in o
 | Baseline | The label stands beside the dashed line where no series is drawn: the right end over the line first, then the nearest clear place at either end. With no clear place it is not drawn. |
 | Band | The region under the ceiling, its edge and its label: drawn with the data, revealed left to right with the area's wipe. A chart whose data is far under its band still reaches the ceiling, so the region never collapses to nothing. |
 | Marks | One dot and one stem for each named day drawn. A day the chart does not draw, and a day with no value, are skipped: a chart never marks a point it does not have. |
-| Gap | A `null` value breaks the line: each run of measured days is its own segment. A gap is never drawn as zero. |
+| Gap | A `null` value breaks the line: each run of measured days is its own segment. A gap is never drawn as zero. Stacked, a day on which no part has a value breaks every band and the total, and its total reads `—`; a part missing on a day the others were measured stands on the parts below it. |
 | Running | The last point is still in progress: a dashed stretch into it, nothing filled under it, "so far" in its readout and its row. With one point, with no value at the running point, or with a gap just before it, there is no stretch to dash and none is drawn; the row still says "so far". |
 | Empty | No series: render the card's Empty state instead of an empty plot. |
 | Loading | A Skeleton the chart's height. |

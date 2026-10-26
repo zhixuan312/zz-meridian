@@ -2,6 +2,18 @@
 
 Every release of ZZ Meridian, newest first. Versions follow semver: a removed or renamed token, prop or card is major; a new card, token or variant is minor; a corrected value is a patch. Each entry says what breaks and what to do instead.
 
+## [Unreleased]
+
+### Fixed
+
+- **Every chart and figure is drawn with the shapes a product's data takes, and none prints a number that is not one.** `tests/chart-semantics.test.tsx` draws each chart and figure (Sparkline, the Trend chart's area, whole, stacked and running forms, the Column chart's plain, whole, highlighted and stacked forms, BarList, CompositionBar, the Heatmap's three forms, MetricTile, FeaturedMetric, Delta, UptimeBars) with fifteen shapes: empty, one value, all missing, all zero, a gap, missing at either end, all negative, signed, values under a millionth, values over a trillion, counts topping at one, one outlier, a flat run and a year. None may put `NaN`, `Infinity` or `undefined` on the page or size a mark below zero; a point with no data reads as no data in a chart's table, never as zero; a chart of counts names whole levels only. It found two defects:
+  - **A count scale over values far under one draws every level at its floor.** `ticksBetween` rounded a top smaller than a millionth of its step onto zero, so the plot's top and floor were the same level and every gridline was drawn at `NaN`; a floor that small was rounded up past the data the same way. Each end now stays a whole step past the data.
+  - **A stacked Trend chart drew a day nothing was measured on as a total of zero.** The stack dipped to the axis there and the table read `0`. Such a day now breaks every band and the total, as a missing day breaks a line, and its total reads `—`; a part missing on a day the others were measured stands on the parts below it, as before. The Trend chart's preview draws it under Gaps.
+
+### Breaking
+
+- **`trendTotals` returns `(number | null)[]`.** A day no band has a value for is `null`, not `0`. A caller that adds or formats the totals handles `null` as a day with no total.
+
 ## [0.31.2] · 2026-10-27
 
 ### Fixed

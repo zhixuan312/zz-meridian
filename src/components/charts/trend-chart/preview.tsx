@@ -149,10 +149,23 @@ export default function TrendChartPreview() {
           <TrendChart label="Revenue per day" dates={dates} height={150} format="cost" series={[{ key: 's', label: 'Revenue', values: current.map((d) => d.revenue), kind: 'line', color: 'accent' }]} />
         </Plane>
       </Specimen>
-      <Specimen label="Gaps" note="A day with no measurement is a gap, never a zero.">
-        <Plane on="surface">
-          <TrendChart label="Requests with two days missing" dates={dates} height={170} series={[{ key: 'r', label: 'Requests', values: current.map((d, i) => (i === 12 || i === 13 ? null : d.requests)), kind: 'line' }]} />
-        </Plane>
+      <Specimen label="Gaps" note="A day with no measurement is a gap, never a zero. Stacked, a day no part was measured on breaks every band and the total there; a day some parts were measured on keeps its stack, the missing part standing on the ones below it." stack>
+        <State label="A line" className="w-full">
+          <Plane on="surface">
+            <TrendChart label="Requests with two days missing" dates={dates} height={170} series={[{ key: 'r', label: 'Requests', values: current.map((d, i) => (i === 12 || i === 13 ? null : d.requests)), kind: 'line' }]} />
+          </Plane>
+        </State>
+        <State label="Stacked" className="w-full">
+          <Plane on="surface">
+            <TrendChart
+              label="Requests per day by region, two days missing"
+              stacked
+              height={170}
+              dates={dates}
+              series={REGIONS.map((r) => ({ key: r.label, label: r.label, values: current.map((d, i) => (i === 12 || i === 13 ? null : Math.round((d.requests * r.value) / REGION_TOTAL))) }))}
+            />
+          </Plane>
+        </State>
       </Specimen>
       <Specimen label="Readout · long labels and extreme values" note="The readout stays inside a narrow chart. Labels wrap and exact values remain readable; a phone pins the readout to the plot's leading edge.">
         <Plane on="surface" className="max-w-md">
