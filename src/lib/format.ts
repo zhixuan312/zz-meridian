@@ -25,6 +25,12 @@ export function ordinal(n: number): string {
   return `${n}${teens ? 'th' : (['th', 'st', 'nd', 'rd'][n % 10] ?? 'th')}`;
 }
 
+/**
+ * A figure that prints as zero carries no sign. `-0` is a number a product's data holds (`Math.round(-0.4)`, a net change
+ * that rounded away), and `-0`, `-$0` or `-0.0%` reads as a fall that did not happen. Every format below passes through it.
+ */
+const zeroHasNoSign = (s: string): string => (/[1-9]/.test(s) ? s : s.replace(/^[-−]/, ''));
+
 /** Built once: an Intl formatter costs far more to construct than to use, and a table formats a figure per cell. */
 const INT = new Intl.NumberFormat('en-US');
 const CENTS = new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -53,7 +59,7 @@ function formatCostCompact(amount: number | null): string {
   if (amount === null) return '—';
   const sign = amount < 0 ? '-' : '';
   const a = Math.abs(amount);
-  return a < 1000 ? `${sign}${CURRENCY}${INT.format(Math.round(a))}` : `${sign}${CURRENCY}${formatCompact(a)}`;
+  return zeroHasNoSign(a < 1000 ? `${sign}${CURRENCY}${INT.format(Math.round(a))}` : `${sign}${CURRENCY}${formatCompact(a)}`);
 }
 
 /** "$298.43" steps the cents down; "2.9M", "0.90%" and "294ms" keep the number whole and step the unit down.
@@ -104,7 +110,7 @@ export function formatCompact(n: number | null): string {
   // "-1,500,000", which is not a count at a glance.
   const abs = Math.abs(n);
   const sign = n < 0 ? '-' : '';
-  if (abs < 1_000) return INT.format(n);
+  if (abs < 1_000) return zeroHasNoSign(INT.format(n));
   const thousands = Math.round(abs / 1_000);
   if (thousands < 1_000) return `${sign}${thousands}K`;
   // The smallest step whose one decimal reads under a thousand, written as that one decimal: 999,999 rounds to 1000K
@@ -127,12 +133,12 @@ export function formatDuration(ms: number | null): string {
 
 function formatCount(n: number | null): string {
   if (n === null) return '—';
-  return INT.format(n);
+  return zeroHasNoSign(INT.format(n));
 }
 
 export function formatPercent(fraction: number | null, digits = 1): string {
   if (fraction === null || !Number.isFinite(fraction)) return '—';
-  return `${(fraction * 100).toFixed(digits)}%`;
+  return zeroHasNoSign(`${(fraction * 100).toFixed(digits)}%`);
 }
 
 /**
@@ -179,11 +185,11 @@ export function formatBy(kind: NumberFormat | undefined, value: number | null): 
  */
 export const AXIS_FORMATTERS: Record<NumberFormat, (n: number | null) => string> = {
   // Not formatCompact: it rounds to whole thousands, so a 0–2,000 scale in steps of 500 read "1K · 2K · 2K".
-  count: (n) => (n === null ? '—' : formatAxisCount(n)),
-  compact: (n) => (n === null ? '—' : formatAxisCount(n)),
+  count: (n) => (n === null ? '—' : zeroHasNoSign(formatAxisCount(n))),
+  compact: (n) => (n === null ? '—' : zeroHasNoSign(formatAxisCount(n))),
   // Both money entries read a tick the same way, so whichever a chart names, a tick at 2,500 reads $2.5K and never $3K.
-  'cost-compact': formatAxisCost,
-  cost: formatAxisCost,
+  'cost-compact': (n) => zeroHasNoSign(formatAxisCost(n)),
+  cost: (n) => zeroHasNoSign(formatAxisCost(n)),
   duration: formatDuration,
   percent: (n) => formatPercent(n, 0),
 };
