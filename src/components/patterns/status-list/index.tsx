@@ -103,7 +103,7 @@ export function StatusList({
               <div className="min-w-0">
                 <p className="flex items-center gap-2.5">
                   <StatusDot tone={st.tone} live={svc.status !== 'operational'} />
-                  <span className="truncate text-sm font-medium">{svc.name}</span>
+                  <span title={svc.name} className="truncate text-sm font-medium">{svc.name}</span>
                 </p>
                 {descriptions ? <p className="t-caption mt-1 pl-[18px] text-pretty">{svc.description}</p> : null}
               </div>

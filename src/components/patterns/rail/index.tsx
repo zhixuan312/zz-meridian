@@ -159,7 +159,7 @@ export function Rail({
                 {scopes.map((s) => (
                   <MenuItem key={s.id} onSelect={s.onSelect} aria-checked={s.active} role="menuitemradio">
                     <Check className={cn('size-4 text-accent', !s.active && 'invisible')} strokeWidth={2.25} />
-                    <span className="min-w-0 flex-1 truncate text-ink">{s.label}</span>
+                    <span title={s.label} className="min-w-0 flex-1 truncate text-ink">{s.label}</span>
                   </MenuItem>
                 ))}
               </>
@@ -213,7 +213,7 @@ export function Rail({
                       aria-current={on ? 'page' : undefined}
                     >
                       <LinkIcon icon={<Icon strokeWidth={1.75} />} label={it.label} />
-                      <span className="flex-1 truncate">{it.label}</span>
+                      <span title={it.label} className="flex-1 truncate">{it.label}</span>
                       {it.badge ? <span className="t-num grid h-5 min-w-5 place-items-center rounded-full bg-warning-tint px-1.5 text-2xs font-semibold text-warning-ink">{it.badge}</span> : null}
                     </Link>
                   </li>
@@ -228,8 +228,8 @@ export function Rail({
           <>
             <Avatar name={user.name} size="md" />
             <div className="min-w-0 flex-1">
-              <p className="truncate text-sm leading-tight font-medium">{user.name}</p>
-              <p className="truncate text-xs leading-tight text-ink-3">{user.role}</p>
+              <p title={user.name} className="truncate text-sm leading-tight font-medium">{user.name}</p>
+              <p title={user.role} className="truncate text-xs leading-tight text-ink-3">{user.role}</p>
             </div>
           </>
         ) : (

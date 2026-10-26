@@ -35,7 +35,8 @@ export function Progress({
     <div className={cn('min-w-0', className)}>
       {label !== undefined || valueLabel !== undefined ? (
         <div className="mb-2 flex items-baseline gap-3 text-sm">
-          <span id={name} className="min-w-0 flex-1 truncate text-ink-2">{label}</span>
+          {/* A label the row cuts keeps the whole of itself in its title, when it is words. */}
+          <span id={name} title={typeof label === 'string' ? label : undefined} className="min-w-0 flex-1 truncate text-ink-2">{label}</span>
           <span className="t-num font-medium">{valueLabel ?? `${Math.round(pct)}%`}</span>
         </div>
       ) : null}

@@ -52,11 +52,12 @@ export function Pagination({
   const to = Math.min(total, page * pageSize);
   return (
     <nav aria-label="Pagination" className={cn('@container/pager flex min-w-0 items-center gap-3 text-sm', className)}>
-      <p className="t-num min-w-0 truncate text-ink-2">
-        <span className="@max-[32rem]/pager:hidden">
+      {/* Each form of the line is cut on its own and keeps the whole of itself in its title: the one the pager's width shows. */}
+      <p className="t-num min-w-0 text-ink-2">
+        <span title={`${from.toLocaleString('en-US')}–${to.toLocaleString('en-US')} of ${total.toLocaleString('en-US')} ${noun}`} className="block truncate @max-[32rem]/pager:hidden">
           <span className="font-medium text-ink">{from.toLocaleString('en-US')}–{to.toLocaleString('en-US')}</span> of {total.toLocaleString('en-US')} {noun}
         </span>
-        <span className="@min-[32rem]/pager:hidden">Page <span className="font-medium text-ink">{page}</span> of {count}</span>
+        <span title={`Page ${page} of ${count}`} className="block truncate @min-[32rem]/pager:hidden">Page <span className="font-medium text-ink">{page}</span> of {count}</span>
       </p>
       {pageSizes && onPageSizeChange ? (
         <Menu>

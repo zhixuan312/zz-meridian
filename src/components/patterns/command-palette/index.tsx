@@ -174,7 +174,7 @@ export function CommandPanel({
                   )}
                 >
                   {c.icon}
-                  <span className="flex-1 truncate">{c.label}</span>
+                  <span title={c.label} className="flex-1 truncate">{c.label}</span>
                   {c.hint ? <span className="text-xs text-ink-3">{c.hint}</span> : null}
                   {i === at ? <CornerDownLeft className="!size-3.5" /> : <ArrowRight className="!size-3.5 opacity-0" />}
                 </div>
