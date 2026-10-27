@@ -258,9 +258,10 @@ function bringReleaseOver(proj: string, route: string, reported: string[] = []) 
   // Each file as a project created with this release holds it: the template after `create`'s product pass, which has no
   // Atlas, no page specifications and no Atlas entries in its nav or its verify config.
   const created = createdRelease();
-  // The template's console, its data seam and the assistant's route-side code (which takes the guard). A test is replaced
-  // only where the project already has it.
-  const owned = (f: string) => (f.startsWith('app/') && !f.startsWith('app/system/')) || f.startsWith('src/views/') || f.startsWith('src/data/') || f.startsWith('src/system/fixtures/') || f === 'src/system/sample-cells.tsx' || (f.startsWith('src/lib/assistant/') && f !== 'src/lib/assistant/prompt.ts');
+  // The template's console, its data seam, the logic its views read (since 0.28.0 a view imports `@/logic/…`, so a view
+  // that came over without the logic beside it named an export its project's logic did not have yet) and the assistant's
+  // route-side code (which takes the guard). A test is replaced only where the project already has it.
+  const owned = (f: string) => (f.startsWith('app/') && !f.startsWith('app/system/')) || f.startsWith('src/views/') || f.startsWith('src/data/') || f.startsWith('src/logic/') || f.startsWith('src/system/fixtures/') || f === 'src/system/sample-cells.tsx' || (f.startsWith('src/lib/assistant/') && f !== 'src/lib/assistant/prompt.ts');
   const release = new Set(filesUnder(created).filter(owned));
   for (const f of filesUnder(proj).filter(owned)) if (!release.has(f)) fs.rmSync(path.join(proj, f));
   for (const f of release) write(proj, f, read(created, f));
