@@ -64,6 +64,15 @@ describe('the options', () => {
     expect(r.status).toBe(1);
     // Every one, `--shard` included: it was missing from the list, so a person reading the refusal was not told the
     // option that would have run their command.
-    expect(`${r.stdout}${r.stderr}`).toContain('pnpm verify takes --full, --timed, --perf, --as, --browsers, --shard.');
+    expect(`${r.stdout}${r.stderr}`).toContain('pnpm verify takes --full, --timed, --perf, --as, --browsers, --rate, --shard.');
+  });
+
+  it('refuses a --rate that would make the phone faster than the standard, before the gate', () => {
+    for (const bad of ['0.5', 'fast', '']) {
+      const r = verify('--timed', '--rate', bad);
+      expect(r.status).toBe(1);
+      expect(`${r.stdout}${r.stderr}`).toContain(`verify: --rate takes how many times more to slow the phone, a number of at least 1, not "${bad}".`);
+      expect(`${r.stdout}${r.stderr}`).not.toMatch(/\bgate \(/);
+    }
   });
 });

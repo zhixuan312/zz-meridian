@@ -4,6 +4,10 @@ Every release of ZZ Meridian, newest first. Versions follow semver: a removed or
 
 ## [Unreleased]
 
+### Added
+
+- **`--rate <n>` slows the phone n times beyond the host's own rate.** The timed suites calibrate the phone by a JavaScript benchmark, and a machine of the same benchmark can be slower at style and layout: the weekly runner measured about 1.6 times this laptop's times at the same rate, so a frame or a budget only the week saw red passed here. `pnpm verify --rate 1.6`, or `--rate 1.6` on `scripts/navigate.ts`, `scripts/vitals.ts` or `scripts/perf.ts`, reproduces it; the `phone:` line says the rate was scaled, and a rate under 1 is refused before the gate.
+
 ### Fixed
 
 - **Every chart and figure is drawn with the shapes a product's data takes, and none prints a number that is not one.** `tests/chart-semantics.test.tsx` draws each chart and figure (Sparkline, the Trend chart's area, whole, stacked and running forms, the Column chart's plain, whole, highlighted and stacked forms, BarList, CompositionBar, the Heatmap's three forms, MetricTile, FeaturedMetric, Delta, UptimeBars) with fifteen shapes: empty, one value, all missing, all zero, a gap, missing at either end, all negative, signed, values under a millionth, values over a trillion, counts topping at one, one outlier, a flat run and a year. None may put `NaN`, `Infinity` or `undefined` on the page or size a mark below zero; a point with no data reads as no data in a chart's table, never as zero; a chart of counts names whole levels only. It found two defects:

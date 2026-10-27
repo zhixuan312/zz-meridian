@@ -19,6 +19,7 @@
  *   --browsers <n>        the most browsers the run holds at once (default: one per two CPUs and per 4 GiB of memory,
  *                         whichever is fewer); --full's browser suites start under it, and a product check is told in
  *                         VERIFY_BROWSERS how many it holds
+ *   --rate <n>            every phone slowed n times beyond the host's own rate (scripts/lib/phone.ts): the weekly runner is about 1.6
  *
  * It prints one line per phase (`ok`, `warn`, `FAIL` or `not run`, and the seconds), then one coverage line saying what
  * ran and what did not, then the outcome. Nothing that did not run is reported as passed. The trace, with the commit, the
@@ -44,6 +45,7 @@ import net from 'node:net';
 import os from 'node:os';
 import path from 'node:path';
 
+import { rateFrom } from './lib/phone.ts';
 import { browserCeiling, slots } from './lib/slots.ts';
 import { bin } from './lib/bin.ts';
 import { launch } from './lib/chrome.ts';
@@ -74,19 +76,19 @@ type VerifyConfig = BudgetsConfig & {
 const config = verifyConfig as VerifyConfig;
 
 const ROOT = path.resolve(import.meta.dirname, '..');
-const OPTIONS = ['--full', '--timed', '--perf', '--as', '--browsers'];
+const OPTIONS = ['--full', '--timed', '--perf', '--as', '--browsers', '--rate'];
 
-// `--as` and `--browsers` consume the argument after them: a comma-separated persona list, a number of browsers. Every
-// other argument must be a known option. An unknown option is refused here, before anything runs.
+// `--as`, `--browsers` and `--rate` consume the argument after them. Any other must be a known option, or it is refused here.
 const argv = process.argv.slice(2);
 const unknown: string[] = [];
 let asList = '';
 let shardText: string | undefined;
-let browsersText: string | undefined;
+let browsersText: string | undefined, rateText: string | undefined;
 for (let i = 0; i < argv.length; i++) {
   const a = argv[i];
   if (a === '--as') { asList = argv[++i] ?? ''; continue; }
   if (a === '--browsers') { browsersText = argv[++i] ?? ''; continue; }
+  if (a === '--rate') { rateText = argv[++i] ?? ''; continue; }
   if (a === '--shard') { shardText = argv[++i] ?? ''; continue; }
   if (!OPTIONS.includes(a)) unknown.push(a);
 }
@@ -98,6 +100,8 @@ if (browsersText !== undefined && !/^[1-9]\d*$/.test(browsersText)) {
   console.error(`verify: --browsers takes a whole number of browsers, at least 1, not "${browsersText}".`);
   process.exit(1);
 }
+// `--rate <n>` slows every suite's phone n times beyond the host's own rate (scripts/lib/phone.ts), through the environment.
+try { if (rateText !== undefined) process.env.MERIDIAN_RATE = String(rateFrom(rateText)); } catch (e) { console.error(`verify: ${(e as Error).message}.`); process.exit(1); }
 /** The most browsers this run holds at once: `--browsers`, or what the machine can hold. */
 const ceiling = browsersText ? Number(browsersText) : browserCeiling();
 const ceilingFrom = browsersText ? '--browsers' : `${os.availableParallelism()} CPUs and ${Math.round(os.totalmem() / 2 ** 30)} GiB`;
@@ -136,18 +140,12 @@ if (shardText !== undefined) {
   }
   try { parseShard(shardText); } catch (e) { console.error(`verify: ${(e as Error).message}`); process.exit(1); }
 }
-if (perf && process.env.CI !== 'true') {
-  console.error(`verify: --perf: ${WHOLE_PROTOCOL_REFUSAL}`);
-  process.exit(1);
-}
+if (perf && process.env.CI !== 'true') { console.error(`verify: --perf: ${WHOLE_PROTOCOL_REFUSAL}`); process.exit(1); }
 
 // The fake model's steps are the project's own patterns: one that does not compile stops the run before the gate.
 const fakeSteps = config.fakeModel ?? [];
 const stepProblems = fakeModelProblems(fakeSteps);
-if (stepProblems.length) {
-  console.error(`verify: ${stepProblems.join('; ')}`);
-  process.exit(1);
-}
+if (stepProblems.length) { console.error(`verify: ${stepProblems.join('; ')}`); process.exit(1); }
 
 // A project that has not adopted the assistant has no walk-through to run, only the pages. Through APP_DIR, like the
 // route discovery and check.ts: a project that keeps its routes under `src/app` has the assistant there, and asking for

@@ -6,7 +6,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { TARGET_INDEX, phoneRate } from '../scripts/lib/phone.ts';
+import { TARGET_INDEX, phoneRate, rateFrom } from '../scripts/lib/phone.ts';
 
 describe('phoneRate', () => {
   it('targets the top of the Mid-Tier Mobile bracket', () => expect(TARGET_INDEX).toBe(800));
@@ -19,6 +19,18 @@ describe('phoneRate', () => {
   it('never speeds a host up', () => expect(phoneRate(400)).toBe(1));
   it('refuses a reading that is no benchmark', () => {
     for (const bad of [0, -1, Number.NaN, Number.POSITIVE_INFINITY]) expect(() => phoneRate(bad)).toThrow(/benchmark index/);
+  });
+});
+
+// The weekly runner is slower than this laptop at the same rate, so a red only the week shows is reproduced here with --rate.
+describe('rateFrom', () => {
+  it('is 1 when nothing asks for a slower machine', () => expect(rateFrom(undefined)).toBe(1));
+  it('takes a whole or a decimal number of times', () => {
+    expect(rateFrom('1.6')).toBe(1.6);
+    expect(rateFrom('2')).toBe(2);
+  });
+  it('refuses a phone faster than the standard, and anything that is no number', () => {
+    for (const bad of ['0.5', '0', '-2', 'fast', '', '1.6x', 'Infinity']) expect(() => rateFrom(bad)).toThrow(/--rate takes/);
   });
 });
 
