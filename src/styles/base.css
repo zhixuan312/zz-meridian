@@ -91,6 +91,14 @@
     font-size: var(--text-2xl); font-weight: var(--weight-semibold);
     line-height: 1; letter-spacing: -0.03em; font-variant-numeric: lining-nums;
   }
+  /* A tile's figure fits its tile. Sized for the viewport, "$1,234,567.89" ran past the edge of a tile in a row of four:
+     it keeps the figure size until its characters (--figure-chars, set by the tile; a Geist digit is about 0.6em) would
+     not fit the tile's width, then steps down with it. */
+  .t-figure[data-fit] { font-size: min(var(--text-2xl), 100cqi * 1.6 / var(--figure-chars)); }
+  /* The column it measures. Size containment makes its width the tile's and not the figure's, and would leave a tile
+     sized by its content with no width at all (a tile in a flex row drew as an empty box), so where nothing sets a width
+     the column claims the one the figure needs at full size. */
+  [data-figure-box] { container-type: inline-size; contain-intrinsic-inline-size: calc(var(--figure-chars) * var(--text-2xl) * 0.62); }
   .t-lead { font-size: var(--text-md); line-height: 1.6; color: var(--ink-2); }
   .t-body { font-size: var(--text-base); line-height: var(--leading-normal); }
   .t-small { font-size: var(--text-sm); line-height: 1.5; }

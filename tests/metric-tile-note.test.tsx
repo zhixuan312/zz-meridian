@@ -23,6 +23,6 @@ describe("a tile's note", () => {
 
   it('a change keeps its one line', () => {
     const { container } = render(<MetricTile label="Requests" value={42} delta={0.1} compare="vs the 30 days before" />);
-    expect(container.querySelector('[data-value]')!.nextElementSibling!.className).toMatch(/(^|\s)h-5(\s|$)/);
+    expect(container.querySelector('[data-tile-line]')!.className).toMatch(/(^|\s)h-5(\s|$)/);
   });
 });

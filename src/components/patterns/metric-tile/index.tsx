@@ -1,6 +1,6 @@
 'use client';
 
-import type { ReactNode } from 'react';
+import type { CSSProperties, ReactNode } from 'react';
 import { cn } from '@/lib/cn';
 import { formatDate } from '@/lib/format-date';
 import { fitFigure, formatBy, splitFigure, type NumberFormat } from '@/lib/format';
@@ -176,16 +176,21 @@ export function MetricTile({
       {/* Phones: the sparkline sits beside the figure, so a stack of tiles stays short. */}
       <div className={cn('grid grid-cols-1', shape && 'max-sm:grid-cols-[minmax(0,1fr)_7rem] max-sm:items-end max-sm:gap-4 max-sm:pb-(--card-pad)', row && 'max-sm:contents')}>
         <div className={cn('min-w-0', row && 'max-sm:contents')}>
-          <p data-value className={cn(word && reading === null ? 'mt-3 text-2xl leading-[1.15] font-semibold tracking-[-0.02em] text-balance [overflow-wrap:anywhere]' : 't-figure t-num mt-3', emphasis ? 'text-accent-ink' : 'text-ink', row && 'max-sm:col-start-2 max-sm:row-span-2 max-sm:row-start-1 max-sm:mt-0 max-sm:text-right max-sm:text-xl')} aria-live="off">
+          {/* The figure fits its own column, not the viewport (on a phone the sparkline takes the side of the tile): base.css
+              `[data-figure-box]`, which data-fit on the figure reads. The box holds the figure alone, so the note beside it
+              still counts toward the width of a tile sized by its content. */}
+          <div data-figure-box={word && reading === null ? undefined : ''} style={{ '--figure-chars': text.length } as CSSProperties} className={cn(row && 'max-sm:contents')}>
+          <p data-value data-fit={word && reading === null ? undefined : ''} className={cn(word && reading === null ? 'mt-3 text-2xl leading-[1.15] font-semibold tracking-[-0.02em] text-balance [overflow-wrap:anywhere]' : 't-figure t-num mt-3', emphasis ? 'text-accent-ink' : 'text-ink', row && 'max-sm:col-start-2 max-sm:row-span-2 max-sm:row-start-1 max-sm:mt-0 max-sm:text-right max-sm:text-xl')} aria-live="off">
             {parts.pre ? <span className="unit pre">{parts.pre}</span> : null}
             {parts.int}
             {parts.frac ? <span className="frac">{parts.frac}</span> : null}
             {parts.unit ? <span className="unit">{parts.unit}</span> : null}
           </p>
+          </div>
           {/* One line, high enough for one line: a part that does not fit wraps out of sight whole, rather than ending
               "vs previou…". A screen reader still hears it, and the page's head says the period. A note is words read
               whole, so it takes a second line first. */}
-          <div className={cn('mt-2 flex flex-wrap content-start items-center gap-x-2 overflow-hidden text-xs', reading === null && delta === undefined && note ? 'min-h-5' : 'h-5', row && 'max-sm:col-start-1 max-sm:row-start-2 max-sm:mt-0.5 max-sm:min-w-0')}>
+          <div data-tile-line className={cn('mt-2 flex flex-wrap content-start items-center gap-x-2 overflow-hidden text-xs', reading === null && delta === undefined && note ? 'min-h-5' : 'h-5', row && 'max-sm:col-start-1 max-sm:row-start-2 max-sm:mt-0.5 max-sm:min-w-0')}>
             {unmeasured ? (
               <>
                 <span className="t-num font-medium text-ink-2">{formatDate(dates[index!])}</span>

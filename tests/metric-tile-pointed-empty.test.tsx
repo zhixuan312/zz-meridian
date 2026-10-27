@@ -10,7 +10,8 @@ function Point({ at }: { at: number }) {
   return <button onClick={() => setIndex(at)}>point</button>;
 }
 const figure = (c: HTMLElement) => c.querySelector('[data-value]')!.textContent;
-const line = (c: HTMLElement) => c.querySelector('[data-value]')!.parentElement!.textContent;
+/** The line under the figure (`data-tile-line`): its change, or the day it reads. Read by name, not by where it sits. */
+const line = (c: HTMLElement) => c.querySelector('[data-tile-line]')!.textContent;
 
 describe('a tile pointed at a day it has no number for', () => {
   it('reads as not measured, never as the period total it was given', () => {
