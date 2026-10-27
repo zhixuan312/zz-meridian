@@ -116,6 +116,11 @@ line naming the command that runs them. Steps in order:
    one twice is a page that stutters. It runs alone, after the others, since throttling measures the machine too: on a
    busy machine, run it again before believing a near miss.
 
+A timed check that passes leaving less than a fifth of its limit (a navigation time under `--timed`, LCP, INP, CLS, the
+longest frame) prints a `warn` line, and its phase reads `warn`: it passed, near its line. A slower machine fails such a
+pass, so before trusting it run the suite again with `--rate 1.6` (`pnpm verify --timed --rate 1.6`, or the suite alone
+with `--rate`), which slows the phone 1.6 times beyond this host's own rate; a red there is a red to fix.
+
 The report is in `out/verify.txt`. Fix the cause; never weaken a check to make it pass. pnpm may first print a lockfile
 and supply-chain check before a script runs; that is pnpm, not an install, and not a failure.
 

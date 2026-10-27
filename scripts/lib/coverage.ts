@@ -16,9 +16,13 @@ export const judgedNothingIn = (out: string): string[] => [...out.matchAll(/^jud
 /** The exit code of a suite that failed nothing but left a case unrun: neither a pass nor a failure. */
 export const NOT_RUN_EXIT = 2;
 
-/** What a suite's exit code means to verify: only 0 is a pass, and a suite that left a case unrun did not run. */
-export function suiteOutcome(status: number | null): 'ok' | 'not run' | 'FAIL' {
-  return status === 0 ? 'ok' : status === NOT_RUN_EXIT ? 'not run' : 'FAIL';
+/**
+ * What a suite's exit code means to verify: only 0 is a pass, and a suite that left a case unrun did not run. A pass whose
+ * output has a line starting `warn` is a warning (a time that passed leaving less than a fifth of its limit, a product's own
+ * check saying so): it passed, and the phase says it was near its line.
+ */
+export function suiteOutcome(status: number | null, out = ''): 'ok' | 'warn' | 'not run' | 'FAIL' {
+  return status === 0 ? (/^warn\b/m.test(out) ? 'warn' : 'ok') : status === NOT_RUN_EXIT ? 'not run' : 'FAIL';
 }
 
 /**

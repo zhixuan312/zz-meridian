@@ -18,6 +18,12 @@ describe('a suite that ran nothing', () => {
     expect(suiteOutcome(1)).toBe('FAIL');
     expect(suiteOutcome(null)).toBe('FAIL');
   });
+  it('is a warning when a suite passed and printed a warn line, and a failure whatever it printed when it failed', () => {
+    expect(suiteOutcome(0, 'ok   /\nwarn /requests LCP 2.21 s\n  within 20% of the LCP floor\nvitals: 2 of 2')).toBe('warn');
+    expect(suiteOutcome(0, 'ok   /\n  a warning in a sentence, not a line\nvitals: 1 of 1')).toBe('ok');
+    expect(suiteOutcome(1, 'warn /\nFAIL /requests')).toBe('FAIL');
+    expect(suiteOutcome(NOT_RUN_EXIT, 'warn /')).toBe('not run');
+  });
   it('keeps --full --timed from saying the project meets the standard while a suite did not run', () => {
     expect(finalOutcome({ full: true, timed: true }, [])).toBe('the project meets the Meridian standard');
     expect(finalOutcome({ full: true, timed: true }, ['live'])).toBe('every check that ran passed; not run: live');

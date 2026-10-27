@@ -7,6 +7,7 @@ Every release of ZZ Meridian, newest first. Versions follow semver: a removed or
 ### Added
 
 - **`--rate <n>` slows the phone n times beyond the host's own rate.** The timed suites calibrate the phone by a JavaScript benchmark, and a machine of the same benchmark can be slower at style and layout: the weekly runner measured about 1.6 times this laptop's times at the same rate, so a frame or a budget only the week saw red passed here. `pnpm verify --rate 1.6`, or `--rate 1.6` on `scripts/navigate.ts`, `scripts/vitals.ts` or `scripts/perf.ts`, reproduces it; the `phone:` line says the rate was scaled, and a rate under 1 is refused before the gate.
+- **A time that passes by a hair says so.** A navigation time judged under `--timed`, LCP, INP, CLS or the longest frame that passes leaving less than a fifth of its limit prints `warn`, and its phase in `pnpm verify` reads `warn`: a pass at 95% of a budget here was a red on the runner, and nothing said how near the line a green run had been. `scripts/navigate.ts` ends with the run's least headroom, each vitals line gives its longest frame, and a product's own check that prints a line starting `warn` makes its phase `warn` too. A warn holds nothing; `docs/testing.md` `Headroom` says it is the cue to run the suite again with `--rate 1.6`.
 
 ### Fixed
 

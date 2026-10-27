@@ -422,15 +422,15 @@ function summaryOf<T>(out: string, tag: string): T | null {
 
 /** A suite's line. One that left a case unrun is `not run`, stays in the coverage line's not-run list, and fails nothing. */
 function reportSuite(name: string, label: string, r: { status: number | null; out: string; took: number }): void {
-  const outcome = suiteOutcome(r.status);
-  if (outcome === 'ok') ranSuites.add(name);
+  const outcome = suiteOutcome(r.status, r.out);
+  if (outcome === 'ok' || outcome === 'warn') ranSuites.add(name);
   if (outcome === 'FAIL') failedSuites.add(name);
   phase(outcome, label, r.took);
   const out = r.out.trim().split('\n');
   const phone = phoneLines(out);
   if (outcome === 'FAIL') beneath([...phone, ...out.filter((l) => !phone.includes(l)).slice(-60)]);
   else if (outcome === 'not run') beneath([...phone, ...out.filter((l) => l.startsWith('not run')), out.at(-1) ?? '']);
-  else beneath([...phone, ...out.filter((l) => l.startsWith('n/a')), out.at(-1) ?? '']);
+  else beneath([...phone, ...out.filter((l, i) => /^(n\/a|warn)\b/.test(l) || (/^warn\b/.test(out[i - 1] ?? '') && l.startsWith('  '))), out.at(-1) ?? '']);
 }
 
 // ---- the sequence ----

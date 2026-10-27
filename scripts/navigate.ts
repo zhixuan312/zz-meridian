@@ -32,8 +32,12 @@
  * One line per route and device, one per device for the prefetch bytes, and a JSON summary on the last line, whose lines say
  * `via: 'rail'` or `via: 'menu'`:
  *
- *   ok|FAIL|warn|not run <route> <device> shell <ms> · data <ms|not-configured> · interactive <ms|not-configured>[ · noisy][ · through the workspace menu (<workspace>) · not prefetched|prefetched <n> time(s) before the press][ · <reasons>]
+ *   ok|FAIL|warn|not run <route> <device> shell <ms> · data <ms|not-configured> · interactive <ms|not-configured>[ · noisy][ · through the workspace menu (<workspace>) · not prefetched|prefetched <n> time(s) before the press][ · <metric> <ms> leaves <n>% of its <limit> ms budget][ · <reasons>]
+ *   headroom: the least was <n>%, <route> <device> <metric> <ms> of <limit> ms; under 20% warns
  *   navigate: {...}
+ *
+ * With `--timing on`, a time that passes leaving less than a fifth of its budget makes its line `warn` (scripts/lib/timing.ts
+ * `HEADROOM`): a pass by a hair here is a red on a slower machine, and the weekly runner is one.
  *
  * scripts/perf.ts drives the same journey 20 times per route, device and condition (warm, cold and after a live refresh).
  *
@@ -51,7 +55,7 @@ import { resolveCoverage, selectSmokeRoutes } from './lib/coverage.ts';
 import { railRoutes } from './lib/routes.ts';
 import { DEVICES, Fail, METRICS, PREFETCH_WAIT, drawerRoutes, journey, journeyStart, openStart, prepare, sleep, type Device, type Measured, type Metric, type NavConfig } from './lib/journey.ts';
 import { isPrefetch, prefetchProblems } from './lib/sizes.ts';
-import { judge } from './lib/timing.ts';
+import { headroom, judge, thin } from './lib/timing.ts';
 
 const ROOT = path.resolve(import.meta.dirname, '..');
 const args = process.argv.slice(2);
@@ -86,6 +90,8 @@ type Line = {
   landed?: string;
   /** The data was the page's first-run state, not `readySelector`. */
   empty?: boolean;
+  /** The judged times that passed leaving less than a fifth of their budget (scripts/lib/timing.ts `thin`). */
+  thin?: string[];
 };
 
 const value = (m: Measured | null): number | null => (m && 'ms' in m ? m.ms : null);
@@ -136,8 +142,13 @@ async function measure(page: Page, device: Device, start: From, route: string, c
 
 const viaOf = (start: From | undefined): Pick<Line, 'via' | 'workspace'> => (start?.menu === undefined ? { via: 'rail' } : { via: 'menu', workspace: start.menu });
 
+/** A time judged against its budget and passed: what its headroom is read from. `--timing off` judges none. */
+const judged = (r: Reported): r is Reported & { ms: number; limit: number } => timing === 'on' && r.verdict === 'pass' && r.ms !== null && r.limit !== undefined;
+const percent = (r: { ms: number; limit: number }) => `${Math.floor(headroom(r.ms, r.limit) * 100)}%`;
+
 function finish(line: Line): Line {
-  line.status = line.problems.length ? 'FAIL' : line.noisy || line.data.verdict === 'not-configured' || line.interactive.verdict === 'not-configured' ? 'warn' : 'ok';
+  line.thin = METRICS.flatMap((name) => { const r = line[name]; return judged(r) && thin(r.ms, r.limit) ? [`${name} ${Math.round(r.ms)} ms leaves ${percent(r)} of its ${r.limit} ms budget`] : []; });
+  line.status = line.problems.length ? 'FAIL' : line.noisy || line.thin.length || line.data.verdict === 'not-configured' || line.interactive.verdict === 'not-configured' ? 'warn' : 'ok';
   return line;
 }
 
@@ -152,6 +163,7 @@ const text = (l: Line): string =>
   + (l.drawerMs !== undefined ? ` · drawer ${l.drawerMs} ms` : '')
   + (l.via === 'menu' ? ` · through the workspace menu (${l.workspace})` : '')
   + (l.prefetched === undefined ? '' : l.prefetched === 0 ? ' · not prefetched' : ` · prefetched ${l.prefetched} time(s) before the press`)
+  + (l.thin?.length ? ` · ${l.thin.join('; ')}` : '')
   + (l.problems.length ? ` · ${l.problems.join('; ')}` : '');
 
 // ---- prefetch ----
@@ -312,6 +324,9 @@ async function main(): Promise<number> {
     page.close();
   }
 
+  // The least headroom of the run, so a reader sees how near the budgets a green run was, not only that it was green.
+  const least = lines.flatMap((l) => METRICS.flatMap((name) => { const r = l[name]; return judged(r) ? [{ l, name, r }] : []; })).sort((a, b) => headroom(a.r.ms, a.r.limit) - headroom(b.r.ms, b.r.limit))[0];
+  if (least) console.log(`headroom: the least was ${percent(least.r)}, ${least.l.route} ${least.l.device} ${least.name} ${Math.round(least.r.ms)} of ${least.r.limit} ms; under 20% warns`);
   const failed = lines.some((l) => l.status === 'FAIL') || problems.length > 0;
   const status = failed ? 'FAIL' : lines.some((l) => l.status === 'warn') ? 'warn' : 'ok';
   summary({
@@ -319,7 +334,7 @@ async function main(): Promise<number> {
     status,
     routes,
     warnings: coverage.warnings,
-    lines: lines.map(({ route, device, status: s, shell, data, interactive, drawerMs, prefetchCapped, noisy, problems: p, via, workspace, prefetched, landed, empty }) => ({ route, device, status: s, via, workspace, prefetched, landed, empty, shell, data, interactive, drawerMs, prefetchCapped, noisy, problems: p })),
+    lines: lines.map(({ route, device, status: s, shell, data, interactive, drawerMs, prefetchCapped, noisy, thin: t, problems: p, via, workspace, prefetched, landed, empty }) => ({ route, device, status: s, via, workspace, prefetched, landed, empty, shell, data, interactive, drawerMs, prefetchCapped, noisy, thin: t, problems: p })),
     prefetch: prefetch && { ...prefetch, problems },
   });
   return failed ? 1 : 0;
