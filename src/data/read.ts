@@ -81,12 +81,12 @@ const PAGE = 500;
  */
 export async function readAllInScope(scope: AccessScope, name: string, q: Query = {}): Promise<{ rows: Record<string, unknown>[]; revision?: string; observedAt: string }> {
   const first = await readInScope(scope, name, { ...q, limit: PAGE });
-  const rows = [...first.rows];
-  while (rows.length < first.total) {
-    const next = await readInScope(scope, name, { ...q, limit: PAGE, offset: rows.length });
-    if (next.rows.length === 0) throw new Error(`${name} could not be read in full.`);
-    rows.push(...next.rows);
-  }
+  // The first page says how many there are, so the rest are asked together: one after another, a read of N pages waited
+  // N round trips (a year of usage for twenty models is fifteen).
+  const offsets = Array.from({ length: Math.max(0, Math.ceil(first.total / PAGE) - 1) }, (_, i) => (i + 1) * PAGE);
+  const rest = await Promise.all(offsets.map((offset) => readInScope(scope, name, { ...q, limit: PAGE, offset })));
+  const rows = [...first.rows, ...rest.flatMap((page) => page.rows)];
+  if (rows.length < first.total) throw new Error(`${name} could not be read in full.`);
   return { rows, revision: first.revision, observedAt: first.observedAt };
 }
 
@@ -103,9 +103,8 @@ export async function readAll(name: string, q: Query = {}): Promise<{ rows: Reco
 export async function memberNamesFor(scope: AccessScope, ids: readonly string[]): Promise<Map<string, string>> {
   const names = new Map<string, string>();
   const roster = collectionFor(scope, 'members');
-  for (let at = 0; at < ids.length; at += PAGE) {
-    const found = await roster.query({ where: [{ field: 'id', op: 'in', value: ids.slice(at, at + PAGE) }], limit: PAGE });
-    for (const row of found.rows) names.set(row.id as string, row.name as string);
-  }
+  const chunks = Array.from({ length: Math.ceil(ids.length / PAGE) }, (_, i) => ids.slice(i * PAGE, (i + 1) * PAGE));
+  const found = await Promise.all(chunks.map((chunk) => roster.query({ where: [{ field: 'id', op: 'in', value: chunk }], limit: PAGE })));
+  for (const row of found.flatMap((f) => f.rows)) names.set(row.id as string, row.name as string);
   return names;
 }

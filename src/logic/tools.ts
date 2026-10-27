@@ -131,11 +131,11 @@ export const requestTool = defineViewTool({
   input: z.object({ id: z.string().min(1).max(40) }),
   async read({ id }) {
     await requireNeed(FEATURES.request.needs);
-    const { rows, observedAt } = await read('requests', { where: [{ field: 'id', op: 'eq', value: id }], limit: 1 });
+    // The route's latency does not wait for the request: both are asked together.
+    const [{ rows, observedAt }, endpoints] = await Promise.all([read('requests', { where: [{ field: 'id', op: 'eq', value: id }], limit: 1 }), readEndpoints()]);
     const r = rows[0] as RequestRow | undefined;
     if (!r) throw new Error(`No request with the id ${id}.`);
     const payloads = payloadsOf(r);
-    const endpoints = await readEndpoints();
     const context = requestContext({ request: r, trace: traceOf(r), routeP95: endpoints.find((e) => e.method === r.method && e.route === r.route)?.p95 ?? null, statusText: STATUS_TEXT[r.status] ?? '', payloadBytes: { request: payloads.request?.length ?? null, response: payloads.response.length }, now: observedAt });
     return { context, data: {} };
   },
