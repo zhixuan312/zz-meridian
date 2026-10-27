@@ -33,24 +33,28 @@ const zeroHasNoSign = (s: string): string => (/[1-9]/.test(s) ? s : s.replace(/^
 
 /** Built once: an Intl formatter costs far more to construct than to use, and a table formats a figure per cell. */
 const INT = new Intl.NumberFormat('en-US');
-const CENTS = new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+/** The places of `app.currency`'s minor unit: 2 for the dollar, 0 for the yen and the won, 3 for the dinar. */
+const DIGITS = new Intl.NumberFormat('en-US', { style: 'currency', currency: app.currency }).resolvedOptions().maximumFractionDigits ?? 2;
+/** One minor unit: a cent, a yen, a fils. */
+const MINOR = 10 ** -DIGITS;
+const AMOUNT = new Intl.NumberFormat('en-US', { minimumFractionDigits: DIGITS, maximumFractionDigits: DIGITS });
 
-/** Money in `app.currency`, symbol first: $298.43, €1,204. An amount under a cent keeps four decimals, and one too small for those keeps its first two digits ($0.0000018), so a cost that is not zero never reads as zero. A credit is negative, and its minus stands before the mark at every size — `$-0.0050` reads as a typo and hides the sign a column is sorted by. */
+/** Money in `app.currency`, symbol first, to its minor unit: $298.43, ¥1,204, KWD12.500. An amount under one minor unit keeps two places more ($0.0040, ¥0.40), and one too small for those keeps its first two digits ($0.0000018), so a cost that is not zero never reads as zero. A credit is negative, and its minus stands before the mark at every size — `$-0.0050` reads as a typo and hides the sign a column is sorted by. */
 export function formatCost(amount: number | null): string {
   if (amount === null) return '—';
   if (amount === 0) return `${CURRENCY}0`;
   const sign = amount < 0 ? '-' : '';
   const a = Math.abs(amount);
-  if (a < 0.00005) {
+  if (a < MINOR / 200) {
     // The places grow with how small the amount is, one more than its leading zeroes, so a figure never reads as zero.
     // Past 20 places `toFixed` prints only zeroes, which is an amount of nothing and not a small one: there the figure
     // keeps its two leading digits in exponent form instead (`$1.2e-21`).
     const places = 1 - Math.floor(Math.log10(a));
     return `${sign}${CURRENCY}${places <= 20 ? a.toFixed(places) : a.toExponential(1)}`;
   }
-  if (a < 0.01) return `${sign}${CURRENCY}${a.toFixed(4)}`;
-  // Two decimals at every size, so a column of amounts keeps one precision and its decimals line up.
-  return `${sign}${CURRENCY}${CENTS.format(a)}`;
+  if (a < MINOR) return `${sign}${CURRENCY}${a.toFixed(DIGITS + 2)}`;
+  // The minor unit's places at every size, so a column of amounts keeps one precision and its decimals line up.
+  return `${sign}${CURRENCY}${AMOUNT.format(a)}`;
 }
 
 /** Money at a glance, for dense tables and tiles: $1.2M, $340K, $912. The exact amount belongs in the tooltip. A figure
@@ -218,8 +222,8 @@ function formatAxisCount(n: number): string {
   return step ? `${tick(n / step.size)}${step.unit}` : INT.format(n);
 }
 
-/** Built once, as `CENTS` is: a money tick under a thousand that is not whole keeps its cents, and a smaller step its digits ($0.025). */
-const TICK_CENTS = new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 4 });
+/** Built once, as `AMOUNT` is: a money tick under a thousand that is not whole keeps its minor unit, and a smaller step its digits ($0.025). */
+const TICK_CENTS = new Intl.NumberFormat('en-US', { minimumFractionDigits: DIGITS, maximumFractionDigits: DIGITS + 2 });
 
 /**
  * Money on an axis tick: $0, $0.50, $250, $2.5K, $1.25M; the count axis's steps with the currency's symbol, so every
