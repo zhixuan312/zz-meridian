@@ -25,17 +25,25 @@ describe('weekly', () => {
     expect(job('consumer')).toMatch(/cli\/scripts\/smoke\.ts/);
     // The adversarial sample every browser suite is held to, on the week's browser: Chrome is an input no commit pins.
     expect(job('deep')).toMatch(/vitest run tests\/deep- --no-file-parallelism/);
+    // The references' Postgres code against a real Postgres and a pooler; a skip judges nothing, so it fails the job.
+    expect(job('postgres')).toMatch(/vitest run tests\/deep-postgres/);
+    expect(job('postgres')).toMatch(/MERIDIAN_POSTGRES_URL: .*:5432\//);
+    expect(job('postgres')).toMatch(/MERIDIAN_POOLER_URL: .*:6432\//);
+    expect(job('postgres')).toMatch(/POOL_MODE: transaction/);
+    expect(job('postgres')).toMatch(/grep -q skipped/);
+    expect(job('postgres')).toMatch(/image: postgres:[\w.-]+@sha256:[0-9a-f]{64}/);
+    expect(job('postgres')).toMatch(/image: edoburu\/pgbouncer:[\w.-]+@sha256:[0-9a-f]{64}/);
     expect(job('template')).toBe('');
     expect(weekly).not.toMatch(/pnpm verify --full --timed --perf/);
   });
   it('lets a dispatch name the jobs it runs, every job by default', () => {
-    expect(weekly).toMatch(/default: ['"]?full,timed,perf,consumer,deep['"]?/);
-    for (const name of ['full', 'timed', 'perf', 'consumer', 'deep']) expect(job(name)).toContain(`',${name},'`);
+    expect(weekly).toMatch(/default: ['"]?full,timed,perf,consumer,deep,postgres['"]?/);
+    for (const name of ['full', 'timed', 'perf', 'consumer', 'deep', 'postgres']) expect(job(name)).toContain(`',${name},'`);
   });
   it('refuses a dispatch that names no job, or a name that is not one, before any job runs', () => {
-    expect(job('named')).toMatch(/full\|timed\|perf\|consumer\|deep\)/);
-    expect(job('named')).toMatch(/JOBS: \$\{\{ inputs\.jobs \|\| 'full,timed,perf,consumer,deep' \}\}/);
-    for (const name of ['full', 'timed', 'perf', 'consumer', 'deep']) expect(job(name)).toMatch(/needs: named/);
+    expect(job('named')).toMatch(/full\|timed\|perf\|consumer\|deep\|postgres\)/);
+    expect(job('named')).toMatch(/JOBS: \$\{\{ inputs\.jobs \|\| 'full,timed,perf,consumer,deep,postgres' \}\}/);
+    for (const name of ['full', 'timed', 'perf', 'consumer', 'deep', 'postgres']) expect(job(name)).toMatch(/needs: named/);
   });
   it('gives each tier a runner of its own, its log and room for a slow day', () => {
     for (const name of ['full', 'timed', 'perf']) {

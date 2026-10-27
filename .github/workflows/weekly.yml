@@ -17,8 +17,13 @@
 #   to. A release runs them too, on the commit it releases; they run here as well because Chrome is an input no commit
 #   pins: a browser that changes what a suite measures (a phone's viewport widened to its overflow, 2026-10-27) turns a
 #   check blind between releases, and only a run on the week's browser sees it.
+# - `postgres`: the Postgres code the skill's references hand a team (references/live.md's LISTEN and NOTIFY adapter, the
+#   pool and pooler guidance of references/existing-project.md), run by tests/deep-postgres.test.ts against a Postgres
+#   and a PgBouncer in transaction mode, both service containers. A release skips that file: it needs the two services
+#   and `pg`, which the template does not install. A skipped case fails this job.
 #
-# Each job keeps its log as an artifact. This workflow holds no publishing permission and no credential.
+# Each job keeps its log as an artifact. This workflow holds no publishing permission and no credential: the Postgres
+# password below is the service container's own, which exists only for the job.
 
 name: weekly
 
@@ -28,9 +33,9 @@ on:
   workflow_dispatch:
     inputs:
       jobs:
-        description: 'The jobs to run, comma-separated without spaces: full,timed,perf,consumer,deep'
+        description: 'The jobs to run, comma-separated without spaces: full,timed,perf,consumer,deep,postgres'
         type: string
-        default: full,timed,perf,consumer,deep
+        default: full,timed,perf,consumer,deep,postgres
 
 permissions:
   contents: read
@@ -48,21 +53,21 @@ jobs:
     steps:
       - name: Every name is a job
         env:
-          JOBS: ${{ inputs.jobs || 'full,timed,perf,consumer,deep' }}
+          JOBS: ${{ inputs.jobs || 'full,timed,perf,consumer,deep,postgres' }}
         run: |
           set -euo pipefail
           IFS=',' read -ra names <<< "$JOBS"
-          [ "${#names[@]}" -gt 0 ] || { echo "jobs names no job: give some of full,timed,perf,consumer,deep"; exit 1; }
+          [ "${#names[@]}" -gt 0 ] || { echo "jobs names no job: give some of full,timed,perf,consumer,deep,postgres"; exit 1; }
           for n in "${names[@]}"; do
             case "$n" in
-              full|timed|perf|consumer|deep) ;;
-              *) echo "jobs: '$n' is not a job; name some of full,timed,perf,consumer,deep, comma-separated without spaces"; exit 1 ;;
+              full|timed|perf|consumer|deep|postgres) ;;
+              *) echo "jobs: '$n' is not a job; name some of full,timed,perf,consumer,deep,postgres, comma-separated without spaces"; exit 1 ;;
             esac
           done
 
   full:
     needs: named
-    if: contains(format(',{0},', inputs.jobs || 'full,timed,perf,consumer,deep'), ',full,')
+    if: contains(format(',{0},', inputs.jobs || 'full,timed,perf,consumer,deep,postgres'), ',full,')
     runs-on: ubuntu-24.04
     timeout-minutes: 45
     env:
@@ -94,7 +99,7 @@ jobs:
 
   timed:
     needs: named
-    if: contains(format(',{0},', inputs.jobs || 'full,timed,perf,consumer,deep'), ',timed,')
+    if: contains(format(',{0},', inputs.jobs || 'full,timed,perf,consumer,deep,postgres'), ',timed,')
     runs-on: ubuntu-24.04
     timeout-minutes: 45
     env:
@@ -126,7 +131,7 @@ jobs:
 
   perf:
     needs: named
-    if: contains(format(',{0},', inputs.jobs || 'full,timed,perf,consumer,deep'), ',perf,')
+    if: contains(format(',{0},', inputs.jobs || 'full,timed,perf,consumer,deep,postgres'), ',perf,')
     runs-on: ubuntu-24.04
     timeout-minutes: 45
     strategy:
@@ -162,7 +167,7 @@ jobs:
 
   consumer:
     needs: named
-    if: contains(format(',{0},', inputs.jobs || 'full,timed,perf,consumer,deep'), ',consumer,')
+    if: contains(format(',{0},', inputs.jobs || 'full,timed,perf,consumer,deep,postgres'), ',consumer,')
     runs-on: ubuntu-24.04
     timeout-minutes: 120
     env:
@@ -206,7 +211,7 @@ jobs:
 
   deep:
     needs: named
-    if: contains(format(',{0},', inputs.jobs || 'full,timed,perf,consumer,deep'), ',deep,')
+    if: contains(format(',{0},', inputs.jobs || 'full,timed,perf,consumer,deep,postgres'), ',deep,')
     runs-on: ubuntu-24.04
     timeout-minutes: 45
     env:
@@ -233,6 +238,66 @@ jobs:
         if: always()
         with:
           name: deep
+          path: out/
+          if-no-files-found: ignore
+          retention-days: 30
+
+  postgres:
+    needs: named
+    if: contains(format(',{0},', inputs.jobs || 'full,timed,perf,consumer,deep,postgres'), ',postgres,')
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:17-alpine@sha256:b0f9560a2de083e2cc7382e75f808c7381a32852a7ec49117deedb300e552b24
+        env:
+          POSTGRES_USER: meridian
+          POSTGRES_PASSWORD: meridian
+          POSTGRES_DB: meridian_test
+        ports: ['5432:5432']
+        options: --health-cmd "pg_isready -U meridian" --health-interval 2s --health-timeout 5s --health-retries 30
+      # One server connection, so the advisory-lock case is the same on every run.
+      pgbouncer:
+        image: edoburu/pgbouncer:v1.26.0-p0@sha256:b17551c776ef7e5769ef80b956d20f85e2fd25dd8912d31d58f782aad495b711
+        env:
+          DB_HOST: postgres
+          DB_USER: meridian
+          DB_PASSWORD: meridian
+          DB_NAME: meridian_test
+          POOL_MODE: transaction
+          AUTH_TYPE: scram-sha-256
+          DEFAULT_POOL_SIZE: '1'
+          LISTEN_PORT: '6432'
+        ports: ['6432:6432']
+    env:
+      MERIDIAN_POSTGRES_URL: postgres://meridian:meridian@127.0.0.1:5432/meridian_test
+      MERIDIAN_POOLER_URL: postgres://meridian:meridian@127.0.0.1:6432/meridian_test
+      MERIDIAN_PG: /tmp/pg
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+        with:
+          version: 11.9.0
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: pg, which the template does not install
+        run: npm install --prefix /tmp/pg --no-save --no-package-lock --ignore-scripts pg@8.23.1
+      - name: the references' Postgres code against a Postgres and a transaction pooler
+        run: |
+          set -euo pipefail
+          mkdir -p out
+          for i in $(seq 1 30); do pg_isready -h 127.0.0.1 -p 6432 -U meridian && break; sleep 1; done
+          pnpm exec vitest run tests/deep-postgres --no-file-parallelism 2>&1 | tee out/weekly-postgres.txt
+          if grep -q skipped out/weekly-postgres.txt; then echo "postgres: a case was skipped, so it judged nothing"; exit 1; fi
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        if: always()
+        with:
+          name: postgres
           path: out/
           if-no-files-found: ignore
           retention-days: 30
