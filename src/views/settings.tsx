@@ -116,7 +116,8 @@ function Workspace({ may, record, save }: { may: SettingsMay; record: WorkspaceV
         // The values, not the promise, decide: a refusal is a sentence beside the fields, and the form keeps the edits.
         // What is saved is the name without the space around it, so that is what the field and the context then hold.
         const saved = { ...v, name: v.name.trim() };
-        const result = save ? await save({ name: saved.name }) : { ok: true } as Result;
+        // A save that never answered (a dropped connection) throws: told beside the fields like a refusal, the edits kept.
+        const result = save ? await save({ name: saved.name }).catch((): Result => ({ ok: false, error: 'The change did not reach the server. Try again.' })) : { ok: true } as Result;
         setSaving(false);
         if (!result.ok) { setError(result.error); return; }
         setV(saved);

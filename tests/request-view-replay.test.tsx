@@ -29,6 +29,13 @@ describe('Replay on a failed request', () => {
     await act(async () => { fireEvent.click(screen.getByRole('button', { name: 'Replay' })); });
     expect(toasts.at(-1)).toMatchObject({ tone: 'critical', title: 'Not replayed', description: 'You do not have permission to replay requests.' });
   });
+  it('says so when the replay never answers, and the page stays', async () => {
+    // A dropped connection throws rather than answering: thrown inside the transition, it took the page to its error screen.
+    view(async () => { throw new Error('Failed to fetch'); });
+    await act(async () => { fireEvent.click(screen.getByRole('button', { name: 'Replay' })); });
+    expect(toasts.at(-1)).toMatchObject({ tone: 'critical', title: 'Not replayed', description: 'The replay did not reach the server. Try again.' });
+    expect(screen.getByRole('button', { name: 'Replay' })).toBeTruthy();
+  });
   it('states no API key it does not know', () => {
     view(async () => ({ ok: false, error: 'unused' }));
     expect(screen.queryByText('Production backend')).toBeNull();

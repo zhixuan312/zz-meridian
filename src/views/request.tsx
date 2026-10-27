@@ -100,7 +100,8 @@ export function RequestView({ request: r, trace, payloads, routeP95, now, replay
   const [replaying, startReplay] = useTransition();
   const customer = customerHref ? <Link href={customerHref} className="row-link">{r.customer}</Link> : r.customer;
   const sendAgain = () => startReplay(async () => {
-    const result = await replay(r.id);
+    // A refusal answers with its reason; a replay that never answered (a dropped connection) throws, and is told the same way.
+    const result = await replay(r.id).catch(() => ({ ok: false as const, error: 'The replay did not reach the server. Try again.' }));
     if (!result.ok) return toast({ tone: 'critical', title: 'Not replayed', description: result.error });
     router.refresh();
     toast({ tone: 'positive', title: `Replayed: ${result.status} ${STATUS_TEXT[result.status] ?? ''}`.trim(), description: `${r.method} ${r.route} ran again as ${result.id}.`, action: { label: 'Open', onClick: () => router.push(requestAddress(result.id)) } });

@@ -53,6 +53,17 @@ describe('saving the workspace in Settings', () => {
     expect(screen.queryByText('You do not have permission to make this change.')).toBeNull();
   });
 
+  it('says so when a save never answers, keeps what was typed and can save again', async () => {
+    // A dropped connection throws: the form was left saying it was saving, for good.
+    render(<SettingsBody may={may} workspace={record} save={async () => { throw new Error('Failed to fetch'); }} />);
+    type('Acme Staging');
+    await press();
+    expect(screen.getByText('The change did not reach the server. Try again.')).toBeTruthy();
+    expect(name().value).toBe('Acme Staging');
+    expect(saveButton()).not.toBeNull();
+    expect((saveButton() as HTMLButtonElement).disabled).toBe(false);
+  });
+
   it('does not send a name that is empty', async () => {
     const sent: unknown[] = [];
     render(<SettingsBody may={may} workspace={record} save={async (input) => { sent.push(input); return { ok: true }; }} />);
