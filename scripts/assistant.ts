@@ -56,7 +56,10 @@ if (!base || (expect !== 'off' && expect !== 'on') || (expect === 'on' && (!llm 
 }
 
 const ok = (what: string) => console.log(`ok   assistant ${expect}: ${what}`);
-const na = (what: string, why: string) => console.log(`n/a  assistant ${expect}: ${what} (${why})`);
+/** The steps the product has no sample surface for: printed `n/a` as they pass, and once at the end as `judged nothing:`, which
+ *  verify carries to the coverage line, so a walk-through that ran none of its sample steps does not read as one that ran all. */
+const skipped: string[] = [];
+const na = (what: string, why: string) => { skipped.push(what.replace(/, /g, '; ')); console.log(`n/a  assistant ${expect}: ${what} (${why})`); };
 const { routes: rail, landing } = await railRoutes();
 const fail = (why: string): never => { throw new Error(why); };
 const until = async <T>(what: string, read: () => Promise<T>, done: (v: T) => boolean, ms = 15000) => {
@@ -527,4 +530,5 @@ try {
   process.exitCode = 1;
 } finally {
   page.close();
+  if (skipped.length) console.log(`judged nothing: ${skipped.map((s) => `assistant: ${s}`).join(', ')}`);
 }

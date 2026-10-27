@@ -44,5 +44,7 @@ describe('a rule that judged nothing is named, never read as a pass', () => {
   it('reads every judged-nothing line a check or a suite printed, rule by rule', () => {
     expect(judgedNothingIn('ok   tokens\njudged nothing: what the agent does here, the card contract\nkeyboard: 0 issues\njudged nothing: keyboard (no stop to tab to on any route)\n')).toEqual(['what the agent does here', 'the card contract', 'keyboard (no stop to tab to on any route)']);
     expect(judgedNothingIn('check: ok\n0 problems · 73 cards')).toEqual([]);
+    // The assistant walk-through's sample steps a product removed: one each, a comma inside a step's name kept as its own.
+    expect(judgedNothingIn("n/a  assistant on: explore_usage on /usage (gone)\njudged nothing: assistant: Home's view context; the Ask on its revenue card and view_home, assistant: explore_usage on /usage\n")).toEqual(["assistant: Home's view context; the Ask on its revenue card and view_home", 'assistant: explore_usage on /usage']);
   });
 });
