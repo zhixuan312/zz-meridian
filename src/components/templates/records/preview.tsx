@@ -40,8 +40,8 @@ export default function RecordsPreview() {
       <Specimen label="Without a summary" note="No tiles row is drawn; the table is the page." stack>
         <Records>{table()}</Records>
       </Specimen>
-      <Specimen label="Empty" note="First run: the table offers the action that fills it." stack>
-        <Records>{table({ caption: 'API keys', noun: 'keys', rows: [], empty: { title: 'No keys yet', body: 'Create a key for each service that calls the API.', action: <Button size="sm" variant="primary">Create key</Button> } })}</Records>
+      <Specimen label="Empty" note="First run: the table offers the action that fills it, and the summary a page passes is not drawn." stack>
+        <Records empty summary={<MetricTile label="Active keys" value={0} format={(n) => String(n)} />}>{table({ caption: 'API keys', noun: 'keys', rows: [], empty: { title: 'No keys yet', body: 'Create a key for each service that calls the API.', action: <Button size="sm" variant="primary">Create key</Button> } })}</Records>
       </Specimen>
       <Specimen label="Filtered-empty" note="The filters left nothing: the table offers Clear filters, not Create." stack>
         <Records>{table({ rows: [], filtered: true, onClearFilters: () => {} })}</Records>

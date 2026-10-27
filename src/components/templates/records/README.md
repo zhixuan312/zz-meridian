@@ -7,7 +7,7 @@ Status: beta
 ## Anatomy
 
 1. **Root**: one `Stack`, marked `data-template="records"`.
-2. **Summary row** (optional, `summary`): a `Row split="tiles"` whose direct children are the items of `summary` (an array, one node, or the children of a fragment); two to four tiles, columns chosen by their count.
+2. **Summary row** (optional, `summary`): a `Row split="tiles"` whose direct children are the items of `summary` (an array, one node, or the children of a fragment); two to four tiles, columns chosen by their count. With `empty` (there are no records at all, not none that match a filter) it is not drawn: the table's empty state says so once, and a row of zeros above it would draw figures as if there were records.
 3. **Records** (`children`): a Data table with its Filter bar as `toolbar`.
 4. **Skeleton** (`RecordsSkeleton({ tiles?, rows?, filters? })`): the arrangement while its data is on its way, `tiles` summary tiles (none when not given) over a table skeleton of `rows` rows with or without its filter row. It adds no element of its own: it returns a fragment, so it sits inside a page's loading frame where `Records` will sit.
 
@@ -23,7 +23,7 @@ Each of the seven states has one disposition: covered by a named specimen in the
 |---|---|
 | Normal | Covered: the "With a summary" and "Without a summary" specimens. |
 | Loading | Covered: the "Loading" specimen, which is `RecordsSkeleton`: the tiles and the table's shape with no table. |
-| Empty | Covered: the "Empty" specimen. |
+| Empty | Covered: the "Empty" specimen, given a summary and `empty`: no tiles, only the table's first-run state. |
 | Filtered-empty | Covered: the "Filtered-empty" specimen. |
 | Error | Covered: the "Error" specimen, the table's own error state with Retry inside the arrangement. |
 | Partial | Covered: the "Partial" specimen, a summary in which a figure that could not be worked out is the word Unavailable with a line saying why, over records that did arrive. |

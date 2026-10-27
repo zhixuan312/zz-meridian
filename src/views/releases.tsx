@@ -74,6 +74,7 @@ export function ReleasesView({ rows, now, revisions }: { rows: ReleaseRow[]; now
   const M = RELEASE_METRICS;
   return (
     <Records
+      empty={!rows.length}
       summary={
         <>
           <MetricTile label={M.live.label} value={live.length} format={(n) => String(n)} hint={M.live.hint} emphasis />

@@ -73,6 +73,7 @@ export function TestsView({ rows, now, revisions }: { rows: RunRow[]; now: strin
   const M = TEST_METRICS;
   return (
     <Records
+      empty={!rows.length}
       summary={
         <>
           <MetricTile label={M.latest.label} value={latest.length} format={(n) => String(n)} hint={M.latest.hint} emphasis />

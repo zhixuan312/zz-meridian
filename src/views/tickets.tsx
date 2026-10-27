@@ -185,6 +185,7 @@ export function TicketsView({ rows, now, revisions, may = { create: true, update
       actions={newTicket}
     >
       <Records
+        empty={!rows.length}
         summary={
           <>
             <MetricTile label={M.open.label} value={counts.open} format={(n) => String(n)} hint={M.open.hint} emphasis />

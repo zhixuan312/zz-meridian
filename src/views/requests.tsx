@@ -41,6 +41,7 @@ export function RequestsView({ rows, total, summary, state, pageSize, updatedAt,
 
   return (
     <Records
+      empty={!total && !isFiltered}
       summary={
         <>
           {/* The count takes the same intent the same measure takes on Home and Usage: this product bills for what goes through it, so more of it is the business. A volume read as neither good nor bad on one page and as good on two others is one measure with two meanings. */}

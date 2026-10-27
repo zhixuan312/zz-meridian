@@ -63,6 +63,7 @@ export function CustomersView({ rows }: { rows: CustomerRow[] }) {
 
   return (
     <Records
+      empty={!rows.length}
       summary={[
         <MetricTile key="customers" label={CUSTOMER_METRICS.customers.label} value={customers} format={(n) => String(n)} hint={CUSTOMER_METRICS.customers.hint} />,
         <MetricTile key="revenue" label={CUSTOMER_METRICS.revenue.label} value={revenue} format={formatCost} hint={CUSTOMER_METRICS.revenue.hint} emphasis />,
