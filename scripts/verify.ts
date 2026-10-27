@@ -649,7 +649,7 @@ if (full && browser.ran && baseUrl) {
     hold(1, () => run('scripts/keyboard.ts', ['--base', here])),
     ...own.map((c) => hold(c.browsers, () => run(c.script, ['--base', here], { ...process.env, VERIFY_BROWSERS: String(Math.min(c.browsers, ceiling)) }))),
   ]);
-  reportSuite('audit', 'audit: every page at 5 widths in both themes', audit);
+  reportSuite('audit', 'audit: every page at 6 widths in both themes', audit);
   reportSuite('presses', 'every control pressed and every link followed', presses);
   reportSuite('keyboard', 'the whole keyboard path', keys);
   extras.forEach((r, i) => reportSuite('browserChecks', own[i].script, r));

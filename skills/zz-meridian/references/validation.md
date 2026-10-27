@@ -68,7 +68,7 @@ line naming the command that runs them. Steps in order:
    and opens an address when the rail on screen does not link to it. It finds the launcher, the panel's controls,
    rows and menus inside open shadow roots too, so a design system built from web components is walked the same way.
 4. **The built app, served**, and the **browser audit** of every static route under `app/` and the `detailRoutes` and
-   `missingRoutes` in `scripts/verify.config.ts` (embeds under `/embed` on a simulated host ground) at 2560, 1440, 1024, 768 and 390px in
+   `missingRoutes` in `scripts/verify.config.ts` (embeds under `/embed` on a simulated host ground) at 2560, 1440, 1024, 768, 390 and 320px in
    both themes. It measures inside open shadow roots as well as the light DOM, so a web component's text, names, targets,
    contrast and focus rings count; a custom element it cannot look inside is `unmeasured:` (see "Lines that are not
    about the page" below). It reads an SVG's text too, by its `fill` against whatever the SVG paints behind it, and it

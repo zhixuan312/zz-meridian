@@ -277,7 +277,7 @@ the floors, render and score the craft, fix every Weak and every failure, commit
 
 ```sh
 pnpm verify            # the gate once, one build, the size checks and a smoke of up to three routes: the inner loop
-pnpm verify --full     # every view at five widths in both themes, every control pressed, the keyboard walk, the assistant; judges no time
+pnpm verify --full     # every view at six widths in both themes, every control pressed, the keyboard walk, the assistant; judges no time
 pnpm verify --timed    # the navigation budgets, live data, vitals; alone and last, on a quiet machine
 pnpm verify --full --timed   # the whole standard: the only run that can end "the project meets the Meridian standard"
 pnpm build                     # the renders read a built app: under `next dev` they are pictures of the loading state

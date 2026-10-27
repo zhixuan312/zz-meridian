@@ -80,7 +80,9 @@ const isEmbed = (r: string) => r.startsWith('/embed/');
 // An embed named in --routes was measured as a page, on no host's ground, and every other embed ran beside it.
 const ROUTES = EMBEDS_ONLY ? [] : ATLAS ? await atlasRoutes() : asked ? asked.filter((r) => !isEmbed(r)) : [...new Set([...found.filter((r) => !r.startsWith('/embed')), ...detailRoutes, ...MISSING])];
 const EMBEDS = ATLAS ? [] : asked ? asked.filter(isEmbed) : found.filter(isEmbed);
-const WIDTHS = ATLAS ? [1440, 390] : [2560, 1440, 1024, 768, 390];
+// 320 is the narrowest width WCAG's reflow (1.4.10) asks content to hold: a small phone, or 1280px at 400% zoom. Below
+// the sample's 390 only it cut a line under a title that did not hold it (2026-10-27).
+const WIDTHS = ATLAS ? [1440, 390] : [2560, 1440, 1024, 768, 390, 320];
 const THEMES = ['dark', 'light'];
 if (args.includes('--list')) {
   console.log([...ROUTES, ...EMBEDS.map((r) => `${r} (embed)`)].join('\n'));

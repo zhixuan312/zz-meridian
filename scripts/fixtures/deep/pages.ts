@@ -231,7 +231,8 @@ document.getElementById('first').addEventListener('keydown', (e) => { if (e.key 
   // of a clipped list, which by its geometry lies on the text under the list (an icon scrolled out of a palette
   // "crossed" the heading beneath it); and the text of a closed disclosure, which has boxes and is not drawn.
   '/overlap-none': deep('Nothing in the same place', {
-    css: '.clamp { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; width: 220px; margin: 0; } .more { margin: 4px 0 16px; } .list { height: 40px; overflow: hidden; } .list svg { display: block; } p.under { margin: 0 0 16px; } summary { min-height: 44px; } pre { margin: 0; } p.after { margin: 0; }',
+    // The block of structured text wraps: at 320px, the narrowest width the audit measures, a line of it ran 40px past its box.
+    css: 'pre { white-space: pre-wrap; } .clamp { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; width: 220px; margin: 0; } .more { margin: 4px 0 16px; } .list { height: 40px; overflow: hidden; } .list svg { display: block; } p.under { margin: 0 0 16px; } summary { min-height: 44px; } pre { margin: 0; } p.after { margin: 0; }',
     body: `<p>Requests per day</p><p>1,204 in the last hour</p>
 ${chart(`${RULE(50)}${CAPTION}`)}
 <p class="clamp">A dashboard built on Meridian starts from one page and one table, and grows a card at a time until every question has its place.</p><p class="more">Read</p>
