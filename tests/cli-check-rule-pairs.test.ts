@@ -1,7 +1,10 @@
 // Named cli-* so the payload leaves it out: it reads scripts/fixtures/deep/, which only Meridian's repository has.
+import { spawnSync } from 'node:child_process';
 import fs from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
+import { prefetchProblems } from '../scripts/lib/sizes.ts';
 
 /**
  * Every rule a browser suite judges, and the two fixture pages that hold it: one the rule must fail, with the line it
@@ -10,14 +13,19 @@ import { describe, expect, it } from 'vitest';
  * a green on broken code (#23, #43, #52, #65, #66, #82, #86). The cases themselves run in tests/deep-checks.test.ts;
  * this holds that each rule has both, and that a message a suite can print belongs to a rule listed here.
  */
+type Suite = 'audit' | 'presses' | 'keyboard' | 'vitals' | 'navigate' | 'navigate-timing-off' | 'navigate-timing-on';
 type Rule = {
   /** The suite in scripts/fixtures/deep/expected.json. */
-  suite: 'audit' | 'presses' | 'keyboard' | 'vitals' | 'navigate';
+  suite: Suite;
   /** Text every line the rule prints carries, as the manifest's `line` holds it. */
   line: string;
   /** The page the rule fails, and the one it passes (a corrected twin, or the clean page where nothing else fits). */
   fails: string;
   passes: string;
+  /** The suite the passing page is run in, when it is not the failing page's (a mapping that fails under one config and passes under another). */
+  passesSuite?: Suite;
+  /** The file `source` is in, when it is not the suite's script (navigate's journey is in scripts/lib/journey.ts). */
+  file?: string;
   /** Text at the place in the suite's source the rule fails from: the place still exists, and no place goes unclaimed. */
   source: string;
 };
@@ -81,6 +89,36 @@ const RULES: Rule[] = [
   { suite: 'vitals', line: 'over the INP floor', fails: '/vitals-slow-tap', passes: '/vitals-slow-tap-fixed' , source: '\'over the INP floor' },
   { suite: 'vitals', line: 'over the CLS floor', fails: '/deep-shifts', passes: '/vitals-shifts-fixed' , source: '\'over the CLS floor' },
   { suite: 'vitals', line: 'dropped a frame', fails: '/vitals-dropped-frame', passes: '/vitals-dropped-frame-fixed' , source: '\'dropped a frame' },
+  // Navigate, in the order scripts/navigate.ts reports: what is wrong before Chrome starts (the rules paired by running it are in
+  // PRECHECKS below), then each journey's start, its press, its shell, its data and its control, then its clock.
+  { suite: 'navigate', line: '--timing must be on or off', fails: '/nav-home', passes: '/nav-home', source: '--timing must be on or off' },
+  { suite: 'navigate', line: '--mode must be default or full', fails: '/nav-home', passes: '/nav-home', source: '--mode must be default or full' },
+  { suite: 'navigate', line: '--samples: one sample and two retakes', fails: '/nav-home', passes: '/nav-home', source: '--samples: one sample' },
+  { suite: 'navigate', line: 'not one of the rail routes (', fails: '/nav-not-in-rail', passes: '/nav-home', source: 'errors.forEach((e) => console.log(' },
+  { suite: 'navigate', line: 'the rail has no other route to start from', fails: '/nav-d-nostart', passes: '/nav-home', source: 'the rail has no other route to start from' },
+  { suite: 'navigate', line: 'never-ready: the starting page', fails: '/nav-d-unloaded', passes: '/nav-home', source: 'const reason = e instanceof Fail' },
+  { suite: 'navigate', line: 'never-ready: the starting page', fails: '/nav-d-unloaded', passes: '/nav-home', source: 'verdict: \'fail\', reason }' },
+  { suite: 'navigate', line: 'the starting page /nav-s-unloaded did not load in', fails: '/nav-d-unloaded', passes: '/nav-home', file: 'scripts/lib/journey.ts', source: 'did not load in ${PATIENCE' },
+  { suite: 'navigate', line: 'the Open navigation button is not pressable on the phone', fails: '/nav-d-nobutton', passes: '/nav-home', file: 'scripts/lib/journey.ts', source: 'is not pressable on the phone' },
+  { suite: 'navigate', line: 'the drawer did not show a link to', fails: '/nav-d-nolink', passes: '/nav-home', file: 'scripts/lib/journey.ts', source: 'the drawer did not show a' },
+  { suite: 'navigate', line: 'the rail has no pressable link to', fails: '/nav-d-nolink', passes: '/nav-home', file: 'scripts/lib/journey.ts', source: 'the rail has no pressable' },
+  { suite: 'navigate', line: 'the link to /nav-d-gone is covered or gone', fails: '/nav-d-gone', passes: '/nav-home', file: 'scripts/lib/journey.ts', source: 'the link to ${route} is covered or gone' },
+  { suite: 'navigate', line: 'the workspace menu offers no item for Unoffered', fails: '/nav-solo-unoffered', passes: '/nav-solo', file: 'scripts/lib/journey.ts', source: 'the workspace menu offers no item for' },
+  { suite: 'navigate', line: 'the workspace menu\'s item for Gamma is covered or gone', fails: '/nav-d-menu-gone', passes: '/nav-solo', file: 'scripts/lib/journey.ts', source: 'item for ${menu} is covered or gone' },
+  { suite: 'navigate', line: 'still on /nav-s-stuck', fails: '/nav-d-stuck', passes: '/nav-home', file: 'scripts/lib/journey.ts', source: 'still on ${now.p}' },
+  { suite: 'navigate', line: 'led to /elsewhere, which is neither', fails: '/nav-d-led', passes: '/nav-home', file: 'scripts/lib/journey.ts', source: 'led to ${now.p}' },
+  { suite: 'navigate-timing-off', line: 'shows the heading "Hydrated root", not "Wrong heading"', fails: '/nav-root-hydrated', passes: '/nav-root-hydrated', passesSuite: 'navigate', file: 'scripts/lib/journey.ts', source: 'shows the heading' },
+  { suite: 'navigate-timing-off', line: 'wrong-result: /nav-root-hydrated shows', fails: '/nav-root-hydrated', passes: '/nav-root-hydrated', passesSuite: 'navigate', file: 'scripts/lib/journey.ts', source: "new Fail(now.there ? 'wrong-result' : 'never-ready', why)" },
+  { suite: 'navigate-timing-off', line: 'data never-ready: the shell was never reached', fails: '/nav-root-hydrated', passes: '/nav-root-hydrated', passesSuite: 'navigate', file: 'scripts/lib/journey.ts', source: 'the shell was never reached' },
+  { suite: 'navigate-timing-off', line: 'interactive never-ready: the shell was never reached', fails: '/nav-root-hydrated', passes: '/nav-root-hydrated', passesSuite: 'navigate', file: 'scripts/lib/journey.ts', source: 'the shell was never reached' },
+  { suite: 'navigate-timing-off', line: 'is there but never shows "Never shown"', fails: '/nav-root-target', passes: '/nav-root-target', passesSuite: 'navigate', file: 'scripts/lib/journey.ts', source: 'is there but never shows' },
+  { suite: 'navigate-timing-off', line: 'tr.absent did not appear in 10000 ms', fails: '/nav-multi', passes: '/nav-multi', passesSuite: 'navigate', file: 'scripts/lib/journey.ts', source: 'did not appear in' },
+  { suite: 'navigate', line: 'the page shows its error state', fails: '/nav-empty-error', passes: '/nav-empty', file: 'scripts/lib/journey.ts', source: 'the page shows its error state' },
+  { suite: 'navigate', line: 'the control button.not-there was not pressable in', fails: '/nav-missing-target', passes: '/nav-home', file: 'scripts/lib/journey.ts', source: 'was not pressable in' },
+  { suite: 'navigate', line: 'changed nothing on main button#toggle', fails: '/nav-dead-control', passes: '/nav-home', file: 'scripts/lib/journey.ts', source: 'changed nothing on' },
+  { suite: 'navigate', line: 'interactive control-dead: pressing', fails: '/nav-dead-control', passes: '/nav-home', source: 'm.fail.kind}: ${m.fail.message}' },
+  { suite: 'navigate-timing-on', line: 'data never-ready on a retake', fails: '/nav-retake', passes: '/nav-retake', passesSuite: 'navigate', source: 'on a retake: ' },
+  { suite: 'navigate-timing-on', line: 'over its 1 ms budget', fails: '/nav-home', passes: '/nav-home', passesSuite: 'navigate', source: 'ms over its ${limits[name]} ms budget' },
 ];
 
 type Entry = { page: string; suite: string; outcome: 'fail' | 'pass' | 'note' | 'measured' | 'clear'; line?: string; args?: string[] };
@@ -91,37 +129,144 @@ describe('every rule a browser suite judges has a page it fails and a page it pa
   for (const r of RULES) {
     it(`${r.suite}: "${r.line}"`, () => {
       const fails = MANIFEST.filter((e) => e.suite === r.suite && e.page === r.fails && e.outcome === 'fail' && e.line && e.line.includes(r.line));
-      const passes = MANIFEST.filter((e) => e.suite === r.suite && e.page === r.passes && (e.outcome === 'pass' || (e.outcome === 'clear' && !!e.line && r.line.includes(e.line))));
+      const passes = MANIFEST.filter((e) => e.suite === (r.passesSuite ?? r.suite) && e.page === r.passes && (e.outcome === 'pass' || e.outcome === 'note' || (e.outcome === 'clear' && !!e.line && r.line.includes(e.line))));
       expect(fails.length, `no ${r.suite} case fails ${r.fails} printing "${r.line}"`).toBeGreaterThan(0);
-      expect(passes.length, `no ${r.suite} case passes ${r.passes}`).toBeGreaterThan(0);
+      expect(passes.length, `no ${r.passesSuite ?? r.suite} case passes ${r.passes}`).toBeGreaterThan(0);
     });
   }
 });
 
 /**
- * Where each suite composes a failure. Every such place holds the `source` of a rule listed above, and every rule's
- * `source` is still in its suite: a new place a suite can fail from is a new rule, listed here with its pages, or this
- * fails naming the line.
+ * Navigate's rules that no fixture page can hold, because the failure is printed before Chrome starts from a config, a
+ * flag or the project's own files, or comes out of a function the page has no part in. Each runs scripts/navigate.ts (or the
+ * function) twice: once where the rule fails, once corrected. Chrome is pointed at nothing, so a run that gets past its
+ * checks ends at `not run` with exit 0 (`full` mode: 1), and the corrected run is told by never printing the line.
  */
-const SITES: Record<Rule['suite'], { file: string; site: RegExp }> = {
-  audit: { file: 'scripts/audit.ts', site: /(?:out\.(?:sideways|clipped|truncated|spills|overlap|unnamed|unmeasured|scrollers|contrast|targets|headings)|r\.focusless)\.push\(|`the [a-z]+ [a-z]+ \$\{|could not be measured:|answerProblem\(|new Set\(page\.errors\)/ },
-  presses: { file: 'scripts/interactions.ts', site: /failures\.push\(/ },
-  keyboard: { file: 'scripts/keyboard.ts', site: /problems\.push\(/ },
-  vitals: { file: 'scripts/vitals.ts', site: /m\.(?:lcp|inp|cls|dropped) [>=]+ [\d.]+ && '|!!m\.answer/ },
-  navigate: { file: 'scripts/navigate.ts', site: /(?!)/ },
-};
+type Expect = { code: number; has: string; not?: string };
+type Probe = { args: string[]; config: string; tree?: string; expect: Expect };
+type Precheck = { line: string; source: string | string[]; fails: Probe; passes: Probe };
 
-describe('every place a suite can fail from belongs to a listed rule', () => {
-  for (const [suite, { file, site }] of Object.entries(SITES)) {
-    it(suite, () => {
-      const src = fs.readFileSync(path.join(ROOT, file), 'utf8');
-      const sources = RULES.filter((r) => r.suite === suite).map((r) => r.source);
-      for (const s of sources) expect(src, `${file} no longer holds "${s}"`).toContain(s);
-      src.split('\n').forEach((line, i) => {
-        // A place in the suite where a failure is composed, and not a comment about one.
-        if (!site.test(line) || /^\s*(\/\/|\*)/.test(line)) return;
-        expect(sources.some((s) => line.includes(s)), `${file}:${i + 1} can fail from here, and no rule here claims it: ${line.trim().slice(0, 140)}`).toBe(true);
-      });
+const EMPTY = 'export default {};';
+const MAPPED = (path: string, title = 'A') => `export default { navigationChecks: [{ path: '${path}', title: '${title}', readySelector: 'main', probe: 'toggle', controlSelector: 'button', resultSelector: 'button' }] };`;
+const RAIL = ['--rail', '/a,/b'];
+const NOT_RUN = 'not run';
+
+const PRECHECKS: Precheck[] = [
+  { line: '--homes: bad is not <home>=<workspace>', source: ['throw new Error(`--homes:', 'FAIL    navigate: ${(e as Error).message}'],
+    fails: { args: [...RAIL, '--homes', 'bad', '--routes', '/a'], config: EMPTY, expect: { code: 1, has: '--homes: bad is not <home>=<workspace>' } },
+    passes: { args: [...RAIL, '--homes', '/a=Main', '--routes', '/a'], config: EMPTY, expect: { code: 0, has: NOT_RUN } } },
+  { line: 'smokeRoutes: /zzz is not one of the rail routes', source: 'FAIL    navigate: ${(e as Error).message}',
+    fails: { args: RAIL, config: 'export default { smokeRoutes: ["/zzz"] };', expect: { code: 1, has: 'smokeRoutes: /zzz is not one of the rail routes' } },
+    passes: { args: RAIL, config: 'export default { smokeRoutes: ["/a"] };', expect: { code: 0, has: NOT_RUN } } },
+  { line: 'src/app.config.ts has no `nav` array of groups', source: ["console.log(`${mode === 'full' ? 'FAIL   ' : 'not run'} navigate: ${reason}`)"],
+    fails: { args: ['--mode', 'full', '--routes', '/a'], config: MAPPED('/a'), tree: 'export const nav = 5;', expect: { code: 1, has: 'FAIL    navigate: src/app.config.ts has no `nav` array of groups' } },
+    passes: { args: ['--routes', '/a'], config: MAPPED('/a'), tree: "export const nav = [{ items: [{ href: '/a' }, { href: '/b' }] }];", expect: { code: 0, has: NOT_RUN } } },
+  { line: '/a: no navigation check is configured', source: 'for (const e of coverage.errors) console.log(',
+    fails: { args: [...RAIL, '--mode', 'full', '--routes', '/a'], config: EMPTY, expect: { code: 1, has: 'FAIL    /a: no navigation check is configured' } },
+    passes: { args: [...RAIL, '--routes', '/a'], config: EMPTY, expect: { code: 0, has: 'warn    /a: no navigation check is configured', not: 'FAIL' } } },
+  { line: 'navigation check has an empty title', source: 'for (const e of coverage.errors) console.log(',
+    fails: { args: [...RAIL, '--routes', '/a'], config: MAPPED('/a', ''), expect: { code: 1, has: 'FAIL    /a: navigation check has an empty title' } },
+    passes: { args: [...RAIL, '--routes', '/a'], config: MAPPED('/a'), expect: { code: 0, has: NOT_RUN, not: 'FAIL' } } },
+  { line: 'Chrome could not start', source: ['not run ${route} ${device} shell not run', 'not run prefetch ${device}'],
+    fails: { args: [...RAIL, '--mode', 'full', '--routes', '/a'], config: MAPPED('/a'), expect: { code: 1, has: 'Chrome could not start' } },
+    passes: { args: [...RAIL, '--routes', '/a'], config: MAPPED('/a'), expect: { code: 0, has: NOT_RUN, not: 'FAIL' } } },
+];
+
+/** Runs scripts/navigate.ts in a scratch directory: the project's own scripts, with `tree` as src/app.config.ts when it names one. */
+function navigateRun(probe: Probe): { code: number | null; out: string } {
+  const dir = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'meridian-navigate-')));
+  try {
+    fs.writeFileSync(path.join(dir, 'config.ts'), probe.config);
+    let script = path.join(ROOT, 'scripts/navigate.ts');
+    let cwd = ROOT;
+    if (probe.tree !== undefined) {
+      // railRoutes reads src/app.config.ts beside the scripts: a copy of them beside a src of its own.
+      fs.cpSync(path.join(ROOT, 'scripts'), path.join(dir, 'scripts'), { recursive: true, filter: (from) => !from.includes('fixtures') });
+      fs.mkdirSync(path.join(dir, 'src'));
+      fs.writeFileSync(path.join(dir, 'src/app.config.ts'), probe.tree);
+      fs.writeFileSync(path.join(dir, 'package.json'), '{ "type": "module" }');
+      fs.symlinkSync(path.join(ROOT, 'node_modules'), path.join(dir, 'node_modules'));
+      script = path.join(dir, 'scripts/navigate.ts');
+      cwd = dir;
+    }
+    const r = spawnSync(process.execPath, [script, '--config', path.join(dir, 'config.ts'), ...probe.args], { cwd, encoding: 'utf8', timeout: 60_000, env: { ...process.env, CHROME: path.join(dir, 'no-chrome') } });
+    return { code: r.status, out: `${r.stdout}${r.stderr}` };
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+}
+
+describe('navigate: every rule printed before Chrome starts fails where it should and passes corrected', () => {
+  for (const c of PRECHECKS) {
+    it(`"${c.line}"`, () => {
+      for (const [which, probe] of [['fails', c.fails], ['passes', c.passes]] as const) {
+        const r = navigateRun(probe);
+        expect(r.code, `${which}: ${r.out}`).toBe(probe.expect.code);
+        expect(r.out, `${which}`).toContain(probe.expect.has);
+        if (probe.expect.not) expect(r.out, `${which}`).not.toContain(probe.expect.not);
+      }
     });
   }
+
+  // The caps are judged by prefetchProblems and printed by navigate; the fixtures' landing page is the same for every case, so no page can hold one.
+  const CAPS = { desktop: 80, phoneClosed: 0 };
+  it('prefetch over its cap', () => {
+    expect(prefetchProblems({ desktopBytes: 81 * 1024, phoneClosedBytes: 1 }, CAPS)).toEqual(['desktop: prefetch 81 KiB over its 80 KiB cap', 'phone with the drawer closed: prefetch 0 KiB over its 0 KiB cap']);
+    expect(prefetchProblems({ desktopBytes: 80 * 1024, phoneClosedBytes: 0 }, CAPS)).toEqual([]);
+  });
+});
+
+/**
+ * Journey failures only scripts/perf.ts can reach: navigate runs the warm condition, where nothing happens between the
+ * first look for the menu's trigger and the second, and never refreshes live or refuses a prefetch. perf-live's cases and
+ * scripts/perf.ts's own tests hold them.
+ */
+const PERF_ONLY = [
+  'a live refresh was still running', 'no refresh action started within', 'no refresh action answered', 'the router refresh after the verified live refresh did not finish',
+  'had already been made before the press', 'the ${missing}, is covered or gone',
+];
+
+/**
+ * Where each suite composes a failure. Every such place holds the `source` of a rule listed above, and every rule's
+ * `source` is still in its file: a new place a suite can fail from is a new rule, listed here with its pages, or this
+ * fails naming the line.
+ */
+const AUDIT = /(?:out\.(?:sideways|clipped|truncated|spills|overlap|unnamed|unmeasured|scrollers|contrast|targets|headings)|r\.focusless)\.push\(|`the [a-z]+ [a-z]+ \$\{|could not be measured:|answerProblem\(|new Set\(page\.errors\)/;
+const NAVIGATE = /problems\.push\(|console\.error\(|throw new Error\(|console\.log\(`(?:FAIL|\$\{mode === 'full')|errors\.forEach\(|new Fail\(|e instanceof Fail|status: 'FAIL', shell|kib > cap \? 'FAIL|not run \$\{route\}|not run prefetch/;
+const JOURNEY = /new Fail\(|now\.p /;
+const SITES: { name: string; file: string; site: RegExp; sources: string[] }[] = [
+  { name: 'audit', file: 'scripts/audit.ts', site: AUDIT, sources: sourcesOf((r) => r.suite === 'audit') },
+  { name: 'presses', file: 'scripts/interactions.ts', site: /failures\.push\(/, sources: sourcesOf((r) => r.suite === 'presses') },
+  { name: 'keyboard', file: 'scripts/keyboard.ts', site: /problems\.push\(/, sources: sourcesOf((r) => r.suite === 'keyboard') },
+  { name: 'vitals', file: 'scripts/vitals.ts', site: /m\.(?:lcp|inp|cls|dropped) [>=]+ [\d.]+ && '|!!m\.answer/, sources: sourcesOf((r) => r.suite === 'vitals') },
+  { name: 'navigate', file: 'scripts/navigate.ts', site: NAVIGATE, sources: [...sourcesOf((r) => r.suite.startsWith('navigate') && !r.file), ...PRECHECKS.flatMap((c) => c.source), 'cap ${cap} KiB', 'console.log(`FAIL    ${p}`)'] },
+  { name: 'journey', file: 'scripts/lib/journey.ts', site: JOURNEY, sources: [...sourcesOf((r) => r.file === 'scripts/lib/journey.ts'), ...PERF_ONLY] },
+];
+
+function sourcesOf(pick: (r: Rule) => boolean): string[] {
+  return RULES.filter(pick).map((r) => r.source);
+}
+
+/** The places in `src` that can fail and that none of `sources` claims, as `file:line: text`. A comment is no place. */
+function unclaimed(file: string, src: string, site: RegExp, sources: string[]): string[] {
+  return src.split('\n').flatMap((line, i) => (site.test(line) && !/^\s*(\/\/|\*)/.test(line) && !sources.some((s) => line.includes(s)) ? [`${file}:${i + 1} can fail from here, and no rule here claims it: ${line.trim().slice(0, 140)}`] : []));
+}
+
+describe('every place a suite can fail from belongs to a listed rule', () => {
+  for (const { name, file, site, sources } of SITES) {
+    it(name, () => {
+      const src = fs.readFileSync(path.join(ROOT, file), 'utf8');
+      for (const s of sources) expect(src, `${file} no longer holds "${s}"`).toContain(s);
+      expect(unclaimed(file, src, site, sources)).toEqual([]);
+    });
+  }
+
+  it('names a failure site planted in a copy of navigate.ts and one in journey.ts', () => {
+    const nav = SITES.find((s) => s.name === 'navigate')!;
+    const jny = SITES.find((s) => s.name === 'journey')!;
+    const navSrc = fs.readFileSync(path.join(ROOT, nav.file), 'utf8').replace('const failed = ', 'if (lines.length > 99) line.problems.push(`planted`);\n  const failed = ');
+    expect(unclaimed(nav.file, navSrc, nav.site, nav.sources)).toEqual([expect.stringContaining('line.problems.push(`planted`)')]);
+    const jnySrc = fs.readFileSync(path.join(ROOT, jny.file), 'utf8').replace('const spec = {', "if (!route) throw new Fail('never-ready', 'planted');\n  const spec = {");
+    expect(unclaimed(jny.file, jnySrc, jny.site, jny.sources)).toEqual([expect.stringContaining("planted")]);
+  });
 });

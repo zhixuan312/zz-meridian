@@ -20,8 +20,8 @@ Any route that is not a page below answers a clean page (light DOM, no control),
 | `presses` | `node scripts/interactions.ts --base <url> --routes <page>` |
 | `keyboard` | `node scripts/keyboard.ts --base <url> --routes <page>` |
 | `vitals` | `node scripts/vitals.ts --base <url> --routes <page>` |
-| `navigate` | `node scripts/navigate.ts --base <url> --config scripts/fixtures/deep/config.ts --rail /nav-home,/nav-solo,/nav-solo-unoffered,/nav-root-target,/nav-missing-target,/nav-multi,/nav-root-hydrated,/nav-dead-control,/nav-link-late --homes /nav-home=Main,/nav-solo=Solo,/nav-solo-unoffered=Unoffered --routes <page>` |
-| `navigate-timing-off` | The `navigate` command with `--config scripts/fixtures/deep/config-tight.ts --timing off`. `config-tight.ts` is `config.ts`'s mappings with every navigation budget at 1 ms, so only function can fail a line |
+| `navigate` | `node scripts/navigate.ts --base <url> --config scripts/fixtures/deep/config.ts --rail <NAV_RAIL> --homes <NAV_HOMES> --routes <page>`, with `NAV_RAIL` and `NAV_HOMES` as `pages.ts` exports them (tests/deep-checks.test.ts reads them there). Manifest `args` follow `--routes`, and the first occurrence of a flag wins, so `args` can add `--timing`, `--mode` and `--samples` to this suite and cannot replace `--config`, `--rail` or `--homes` |
+| `navigate-timing-off` | The `navigate` command with `--config scripts/fixtures/deep/config-tight.ts --timing off`. `config-tight.ts` is `config.ts`'s mappings with every navigation budget at 1 ms, so only function can fail a line, and with three pages mapped wrongly on purpose (`/nav-root-hydrated`'s title, `/nav-root-target`'s ready text, `/nav-multi`'s ready selector), which `config.ts` maps rightly and passes |
 | `navigate-timing-on` | The same with `--timing on`: a page that works is over its 1 ms budget |
 
 ## Pages
@@ -53,6 +53,15 @@ Every page has an `h1`, `lang="en"`, a `main`, an opaque ground and controls of 
 | `/nav-link-late` | Navigation: a `link` probe whose link is pressable at once and whose ready text comes 800 ms later. The link is pressed once the data is measured, so the line passes; pressed beside the data it would leave first and report `is there but never shows`. Last in the rail |
 | `/nav-solo` | Navigation: the only destination of its workspace (Solo). No other page's rail links to it, so the journey starts on `/nav-home` and presses the workspace menu's Solo item, which opens it with no link (passes, `through the workspace menu (Solo) · not prefetched`) |
 | `/nav-solo-unoffered` | Navigation: the same, in a workspace the menu does not offer: the journey is `never-ready`, naming the workspace (fails) |
+| `/nav-retake` | Navigation: its table is there on the first desktop visit and gone on every later one. Under `--timing on` and 1 ms budgets the first journey is over budget, is retaken, and the retake finds no data (`data never-ready on a retake`); under loose budgets it is never retaken and passes |
+| `/nav-d-nostart` | Navigation: drawn by no rail and no workspace's home, so the journey has nowhere to start from (`the rail has no other route to start from`) |
+| `/nav-s-unloaded`, `/nav-d-unloaded` | Navigation, a start that is the defect: every `nav-s-*` page is a start with a rail of its own that draws only the link to its `nav-d-*` destination, sits directly before it in the rail, and is never a destination itself. This one loses its heading after the first visit (`the starting page ... did not load`) |
+| `/nav-s-nobutton`, `/nav-d-nobutton` | The start hides its Open navigation button after the first visit: the phone cannot open the drawer |
+| `/nav-s-nolink`, `/nav-d-nolink` | The start hides its links after the first visit: the drawer on a phone and the rail on a desktop show none to press |
+| `/nav-s-gone`, `/nav-d-gone` | The start takes its links back 1.5 s after they are first on screen, while a slow prefetch keeps the journey waiting: `the link ... is covered or gone` |
+| `/nav-s-stuck`, `/nav-d-stuck` | The start's link is pressable and its press goes nowhere (`still on`) |
+| `/nav-s-led`, `/nav-d-led` | The start's link leads to `/elsewhere`, neither the destination nor under it |
+| `/nav-s-menu-gone`, `/nav-d-menu-gone` | The destination is the home of the Gamma workspace, reached through the menu, and the start takes the menu's items back 1 s after it opens: `the workspace menu's item for Gamma is covered or gone` |
 | `/deep-tap` | Vitals: the Alerts button a phone taps is inside an open root (`taps: 1`) |
 | `/deep-shifts` | Vitals: a banner arrives 1.2 s after load and pushes a card down 300px, so CLS is over 0.1 (`moved most:` beside a nonzero `taps:`; the run exits 1 on the floor, and the case does not mind) |
 | `/svg-contrast` | An SVG's `<text>` filled `#9a9a9a` on white. Light DOM, like every page from here down: these are about what the audit measures, not how deep it reaches |

@@ -6,6 +6,8 @@ import { spawn, type ChildProcess } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+// One rail for the server, the README and this runner: a route the rail leaves out is "not one of the rail routes".
+import { NAV_HOMES, NAV_RAIL } from '../scripts/fixtures/deep/pages.ts';
 
 const ROOT = path.resolve(import.meta.dirname, '..');
 
@@ -82,8 +84,6 @@ describe('keyboard', () => {
 
 // The rail and the homes the three navigate blocks share. The page added last sits at the end of the rail, so every other page
 // starts where it did. The two homes of a workspace of one destination sit after /nav-home for the same reason.
-const NAV_RAIL = '/nav-home,/nav-solo,/nav-solo-unoffered,/nav-root-target,/nav-missing-target,/nav-multi,/nav-root-hydrated,/nav-dead-control,/nav-link-late,/nav-redirect,/nav-empty,/nav-empty-error';
-const NAV_HOMES = '/nav-home=Main,/nav-solo=Solo,/nav-solo-unoffered=Unoffered';
 const navigate = (config: string, timing: string[]) => (page: string, base: string) => ['scripts/navigate.ts', '--base', base, '--config', config, '--rail', NAV_RAIL, '--homes', NAV_HOMES, ...timing, '--routes', page];
 
 describe('perf-live', () => {

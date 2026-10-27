@@ -446,7 +446,7 @@ export const CLEAN = `<!doctype html>
 // ---- navigation pages for scripts/navigate.ts, on the readiness fixtures' skeleton ----
 
 /** The rail routes of the Main workspace, in rail order. */
-export const NAV: [string, string][] = [['/nav-home', 'Home'], ['/nav-root-target', 'Root target'], ['/nav-missing-target', 'Missing target'], ['/nav-multi', 'Several matches'], ['/nav-root-hydrated', 'Hydrated root'], ['/nav-dead-control', 'Dead control'], ['/nav-link-late', 'Late data'], ['/nav-redirect', 'Redirects'], ['/nav-empty', 'Empty list'], ['/nav-empty-error', 'Failed list']];
+export const NAV: [string, string][] = [['/nav-home', 'Home'], ['/nav-root-target', 'Root target'], ['/nav-missing-target', 'Missing target'], ['/nav-multi', 'Several matches'], ['/nav-root-hydrated', 'Hydrated root'], ['/nav-dead-control', 'Dead control'], ['/nav-link-late', 'Late data'], ['/nav-redirect', 'Redirects'], ['/nav-empty', 'Empty list'], ['/nav-empty-error', 'Failed list'], ['/nav-retake', 'Retaken']];
 const linksOf = (rail: [string, string][]) => rail.map(([href, label]) => `<li><a href="${href}">${label}</a></li>`).join('');
 const TABLE = '<table><thead><tr><th>Name</th></tr></thead><tbody><tr><td>Rows</td></tr></tbody></table>';
 
@@ -454,9 +454,10 @@ const TABLE = '<table><thead><tr><th>Name</th></tr></thead><tbody><tr><td>Rows</
  * The workspace menu every navigation page carries, as the console's Rail draws it while there is more than one workspace:
  * a trigger named "<product>, <workspace>: workspace menu" and one `menuitemradio` a workspace, which opens its home with
  * no link, so nothing prefetches it. It offers Main, whose home is /nav-home, and Solo, a workspace of one destination
- * (/nav-solo) that no other page's rail links to. /nav-solo-unoffered is a home the menu never offers.
+ * (/nav-solo) that no other page's rail links to, and Gamma, whose home is /nav-d-menu-gone. /nav-solo-unoffered is a
+ * home the menu never offers.
  */
-const WORKSPACES: [string, string][] = [['Main', '/nav-home'], ['Solo', '/nav-solo']];
+const WORKSPACES: [string, string][] = [['Main', '/nav-home'], ['Solo', '/nav-solo'], ['Gamma', '/nav-d-menu-gone']];
 const menu = (current: string) => `<button type="button" data-menu aria-haspopup="menu" aria-expanded="false" aria-label="Fixture, ${current}: workspace menu">${current}</button>
 <div role="menu" hidden>${WORKSPACES.map(([name, home]) => `<div role="menuitemradio" tabindex="-1" aria-checked="${name === current}" data-home="${home}">${name}</div>`).join('')}</div>`;
 const MENU_WIRE = `
@@ -513,6 +514,27 @@ const LIVE_LATE = `setTimeout(() => addEventListener('online', () => {
     fetch('/live-act', { method: 'POST', headers: { 'next-action': 'fixture' } }).then((r) => r.text()).then(() => fetch(location.pathname, { headers: { rsc: '1' } }));
   }), 1500);`;
 
+/**
+ * The routes a navigate case needs after the shared rail, in rail order, and the workspace homes beside them. Each journey
+ * starts from the nearest rail route before its destination whose rail draws a link to it, so a page whose start is the
+ * defect is a pair: `/nav-s-<case>`, a start with a rail of its own that draws only the link to `/nav-d-<case>` and
+ * misbehaves there, directly before the destination, which no other rail draws. The starts are never destinations, so they
+ * carry no mapping and no manifest row. tests/deep-checks.test.ts runs every navigate case with these.
+ */
+export const NAV_RAIL = [
+  '/nav-home', '/nav-solo', '/nav-solo-unoffered', '/nav-root-target', '/nav-missing-target', '/nav-multi', '/nav-root-hydrated', '/nav-dead-control', '/nav-link-late', '/nav-redirect', '/nav-empty', '/nav-empty-error', '/nav-retake',
+  '/nav-d-nostart',
+  '/nav-s-unloaded', '/nav-d-unloaded', '/nav-s-nobutton', '/nav-d-nobutton', '/nav-s-nolink', '/nav-d-nolink', '/nav-s-gone', '/nav-d-gone',
+  '/nav-s-stuck', '/nav-d-stuck', '/nav-s-led', '/nav-d-led', '/nav-s-menu-gone', '/nav-d-menu-gone',
+].join(',');
+export const NAV_HOMES = '/nav-home=Main,/nav-solo=Solo,/nav-solo-unoffered=Unoffered,/nav-d-menu-gone=Gamma';
+
+/** A page alone in its rail: it draws one link, to `to`, and is drawn by no Main page. */
+const apart = (title: string, to: string, script = '', workspace = 'Main'): string => nav(title, `${TOGGLE}${TABLE}`, script, { workspace, rail: [[to, 'Destination']] });
+/** The visit count of the page in this browser profile, which the journeys reload many times: 1 on the first load of a run. */
+const VISITS = (key: string) => `const visits = (() => { const k = ${JSON.stringify(`fixture-visits-${key}`)}; const n = Number(localStorage.getItem(k) ?? 0) + 1; localStorage.setItem(k, String(n)); return n; })();`;
+const LINKS = "document.querySelectorAll('nav a')";
+
 export const NAV_PAGES: Record<string, string> = {
   '/live-late-a': nav('Live A', `${TOGGLE}${TABLE}`, `${WIRE}\n  ${LIVE_LATE}`, { rail: LIVE_RAIL }),
   '/live-late-b': nav('Live B', `${TOGGLE}${TABLE}`, `${WIRE}\n  ${LIVE_LATE}`, { rail: LIVE_RAIL }),
@@ -544,4 +566,33 @@ export const NAV_PAGES: Record<string, string> = {
   '/nav-solo': nav('Solo', `${TOGGLE}${TABLE}`, WIRE, { workspace: 'Solo', rail: [['/nav-solo', 'Solo']] }),
   // The same, in a workspace the menu does not offer: no item opens it.
   '/nav-solo-unoffered': nav('Unoffered', `${TOGGLE}${TABLE}`, WIRE, { workspace: 'Unoffered', rail: [['/nav-solo-unoffered', 'Unoffered']] }),
+  // The data arrives on the first desktop visit and not on a second: a timing over its budget is retaken, and the retake finds
+  // the table gone. The phone is never counted (the drawer pass and the phone journeys), so a page that is not retaken passes.
+  '/nav-retake': nav('Retaken', `${TOGGLE}${TABLE}`, `${WIRE}\n  if (innerWidth >= 1024) { ${VISITS('retake')} if (visits >= 2) document.querySelector('table').remove(); }`),
+  // No rail draws a link to it, and it is no workspace's home: a journey has nowhere to start from.
+  '/nav-d-nostart': nav('Unlinked', `${TOGGLE}${TABLE}`, WIRE, { rail: [['/nav-d-nostart', 'Unlinked']] }),
+  // The start has its heading on the first visit, which reads its rail, and none on the visits that follow.
+  '/nav-s-unloaded': apart('Start unloaded', '/nav-d-unloaded', `${VISITS('unloaded')} if (visits > 1) document.querySelector('h1').remove();`),
+  '/nav-d-unloaded': apart('Destination unloaded', '/nav-d-unloaded', WIRE),
+  // The Open navigation button is there on the first visit, which counts the page as a start, and hidden after it.
+  '/nav-s-nobutton': apart('Start without a button', '/nav-d-nobutton', `${VISITS('nobutton')} if (visits > 1) document.getElementById('open').style.display = 'none';`),
+  '/nav-d-nobutton': apart('Destination without a button', '/nav-d-nobutton', WIRE),
+  // The rail draws the link on the first visit and hides it after it: the drawer and the rail show none to press.
+  '/nav-s-nolink': apart('Start without a link', '/nav-d-nolink', `${VISITS('nolink')} if (visits > 1) ${LINKS}.forEach((a) => { a.style.display = 'none'; });`),
+  '/nav-d-nolink': apart('Destination without a link', '/nav-d-nolink', WIRE),
+  // The link is shown, pressable, and removed 1.5 s after it is first on screen, while a prefetch the page started (an asset
+  // that answers after 6 s) keeps the journey waiting: when it looks for the link again, it is gone.
+  '/nav-s-gone': apart('Start losing its link', '/nav-d-gone', `fetch('/slow-asset', { headers: { 'next-router-prefetch': '1' } }).catch(() => {});
+  const seen = new IntersectionObserver((entries) => { if (entries.some((e) => e.isIntersecting)) { seen.disconnect(); setTimeout(() => ${LINKS}.forEach((a) => a.remove()), 1500); } });
+  ${LINKS}.forEach((a) => seen.observe(a));`),
+  '/nav-d-gone': apart('Destination losing its link', '/nav-d-gone', WIRE),
+  // The link is pressable and its press goes nowhere.
+  '/nav-s-stuck': apart('Start with a dead link', '/nav-d-stuck', `${LINKS}.forEach((a) => a.addEventListener('click', (e) => e.preventDefault()));`),
+  '/nav-d-stuck': apart('Destination of a dead link', '/nav-d-stuck', WIRE),
+  // The link is pressable and its press leaves for a page that is neither the destination nor under it.
+  '/nav-s-led': apart('Start with a stray link', '/nav-d-led', `${LINKS}.forEach((a) => a.addEventListener('click', (e) => { e.preventDefault(); location.assign('/elsewhere'); }));`),
+  '/nav-d-led': apart('Destination of a stray link', '/nav-d-led', WIRE),
+  // The workspace menu offers Gamma when it opens and takes the item back 1 s later, before the journey presses it.
+  '/nav-s-menu-gone': apart('Start with a vanishing item', '/nav-s-menu-gone', `for (const b of document.querySelectorAll('button[data-menu]')) b.addEventListener('click', () => setTimeout(() => document.querySelectorAll('[role="menuitemradio"]').forEach((i) => i.remove()), 1000));`),
+  '/nav-d-menu-gone': apart('Gamma', '/nav-d-menu-gone', WIRE, 'Gamma'),
 };

@@ -27,6 +27,8 @@ const config = {
     { path: '/nav-empty-error', title: 'Empty list', readySelector: 'main table tbody tr', probe: 'link', controlSelector: 'main a[href^="/things/"]', resultSelector: 'h1' },
     // The link is pressable at once and the ready text comes 800 ms later: the link is pressed once the data is measured.
     { path: '/nav-link-late', title: 'Late data', readySelector: 'main', readyText: 'Loaded', probe: 'link', controlSelector: 'main a[href="/nav-home"]', resultSelector: 'h1' },
+    // Its table is there on the first desktop visit and gone on the second: a time over its budget is retaken, and the retake finds no data.
+    { path: '/nav-retake', title: 'Retaken', readySelector: 'main table tbody tr', probe: 'toggle', controlSelector: 'main button#toggle', resultSelector: 'main button#toggle' },
   ],
 };
 
