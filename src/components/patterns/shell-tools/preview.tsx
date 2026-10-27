@@ -22,8 +22,8 @@ export default function ShellToolsPreview() {
         <State label="Scrolled" className="w-full"><Bar stuck /></State>
       </Specimen>
       <Specimen label="Alerts panel" note="The bell opens it. The live incident leads; each row links to where it is handled, and opening one marks it read.">
-        <State label="One new"><div className={cn(POPOVER_CONTENT, 'w-88 p-0')}><AlertsPanel alerts={ALERTS} now={DEMO_NOW} onMarkAll={() => {}} /></div></State>
-        <State label="Nothing new"><div className={cn(POPOVER_CONTENT, 'w-88 p-0')}><AlertsPanel alerts={[]} now={DEMO_NOW} /></div></State>
+        <State label="One new"><div className={cn(POPOVER_CONTENT, 'w-88 max-w-full p-0')}><AlertsPanel alerts={ALERTS} now={DEMO_NOW} onMarkAll={() => {}} /></div></State>
+        <State label="Nothing new"><div className={cn(POPOVER_CONTENT, 'w-88 max-w-full p-0')}><AlertsPanel alerts={[]} now={DEMO_NOW} /></div></State>
       </Specimen>
       <Specimen label="Narrow" note="In a bar under 40rem, a phone's or a canvas the assistant has narrowed, the search pill folds to its icon and the keyboard hint goes.">
         <div className="w-90 max-w-full rounded-lg border border-line"><Bar stuck title="Requests" /></div>

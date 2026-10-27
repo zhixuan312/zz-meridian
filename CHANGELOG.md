@@ -14,6 +14,7 @@ Every release of ZZ Meridian, newest first. Versions follow semver: a removed or
 - **Labels are words, not code.** The kicker (`t-kicker`), the eyebrow (`t-eyebrow`) and a Featured metric's foot labels were monospace capitals, every award site's label; they are the text's own face and case at 12px, medium, in `ink-3`. Monospace is left to identifiers: ids, keys, routes, hashes. The Atlas's numbered `01`–`05` labels are gone, and an API key's environment badge reads `Live` or `Test`.
 - **A row of tiles is one instrument.** `Row split="tiles"` drew its tiles as equal cards side by side; it draws one band with the card's edge and fill, the tiles divided by its hairline at every width. A tile has no fill of its own inside it: the surface is translucent, and two layers lifted the ground under the captions. The Atlas's five rules read as a list rather than five equal tiles.
 - **A tile's figure fits its tile.** Its size was set for the viewport, so a long figure ran past the tile's edge: `100.00%` in a row of four at 1440, `$91,367.01` beside its sparkline on a phone. The figure keeps its size until its characters would not fit the column it sits in, then steps down with it; a tile sized by its content keeps the width its figure and note need. The line under the figure is `data-tile-line`, which the tile's tests read by name.
+- **The alerts panel's preview fits a phone.** It fixed the panel at 352px inside a narrower column, so "Mark all read" ran past the panel's edge on the Atlas page at 390px; the bell's own popover was right.
 
 ### Fixed
 
