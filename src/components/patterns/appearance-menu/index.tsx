@@ -38,7 +38,7 @@ export function AppearanceMenu({ className }: { className?: string }) {
               onClick={() => set({ accent: a })}
               className="press hit grid size-7 place-items-center rounded-full ring-offset-2 ring-offset-surface-raised transition-[box-shadow,transform] aria-pressed:ring-2 aria-pressed:ring-ink"
             >
-              <span data-accent={a} className="size-5 rounded-full bg-accent" />
+              <span data-accent={a} data-swatch className="size-5 rounded-full bg-accent" />
             </button>
           ))}
         </div>

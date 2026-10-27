@@ -92,7 +92,7 @@ export function AccentSwatches({ value, onChange, accents, size = 'md', label = 
           title={a[0].toUpperCase() + a.slice(1)}
           className={cn('press hit grid shrink-0 place-items-center rounded-full ring-offset-2 ring-offset-surface data-[state=checked]:ring-2 data-[state=checked]:ring-ink-2', size === 'sm' ? 'size-7' : 'size-8')}
         >
-          <span data-accent={a} className={cn('rounded-full bg-accent ring-1 ring-line', size === 'sm' ? 'size-4' : 'size-5.5')} />
+          <span data-accent={a} data-swatch className={cn('rounded-full bg-accent ring-1 ring-line', size === 'sm' ? 'size-4' : 'size-5.5')} />
         </R.Item>
       ))}
     </R.Root>

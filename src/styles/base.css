@@ -227,6 +227,24 @@
    on the same element, and a rule inside `@layer components` loses to `@layer utilities` however specific it is. */
 @media (pointer: coarse) { .keyboard-only { display: none; } }
 
+/* A forced palette (Windows' contrast themes) replaces every colour with a few of the system's and drops box-shadow, so a
+   choice told by a fill, a tint or a ring is told by nothing: the rail's current page, a Segmented's segment, a chosen
+   radio, the page a pager is on. Each is told in the system's Highlight instead, its text and icons in HighlightText, and
+   a swatch keeps the colour it shows. Outside every layer for the reason above: once the colours are the author's again,
+   a utility's fill would otherwise win. */
+@media (forced-colors: active) {
+  :is(a, button, [role]:not([role='tabpanel'])):is([aria-current='page'], [aria-pressed='true'], [aria-selected='true'], [aria-checked='true'], [data-state='on'], [data-state='active'], [data-state='checked']) {
+    forced-color-adjust: none;
+    background-color: Highlight;
+    color: HighlightText;
+  }
+  :is(a, button, [role]:not([role='tabpanel'])):is([aria-current='page'], [aria-pressed='true'], [aria-selected='true'], [aria-checked='true'], [data-state='on'], [data-state='active'], [data-state='checked']) * { color: HighlightText; }
+  [data-swatch] { forced-color-adjust: none; }
+  /* A switch's thumb is a fill too, and an off switch without one reads as an empty frame. */
+  [role='switch'] > * { forced-color-adjust: none; background-color: CanvasText; }
+  [role='switch'][data-state='checked'] > * { background-color: HighlightText; }
+}
+
 @property --fade-a { syntax: "<length>"; inherits: false; initial-value: 0px; }
 @property --fade-b { syntax: "<length>"; inherits: false; initial-value: 0px; }
 @keyframes m-scroll-edges {
