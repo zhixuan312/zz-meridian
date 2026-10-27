@@ -440,7 +440,9 @@ let ok = true;
 // 1. The gate, once.
 gates++;
 // The tests only this repository has (tests/cli-*, the package's own, and tests/deep-*, the browser-fixture tests of the checks) are not the project's: no adopted or created project has them.
-judgedNothing.push(...judgedNothingIn(step('gate', 'node', ['scripts/gate.ts', '--without-cli-tests']))); // named in the coverage line
+const gateOut = step('gate', 'node', ['scripts/gate.ts', '--without-cli-tests']);
+judgedNothing.push(...judgedNothingIn(gateOut)); // named in the coverage line
+beneath(gateOut.split('\n').filter((l) => l.startsWith('drift: '))); // managed files changed and kept nowhere
 
 // A product whose pages call a live API is checked against its fake (scripts/verify.config.ts): the presses approve,
 // revoke and delete whatever a page offers. The fake starts first, because its address goes into the build.

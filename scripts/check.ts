@@ -19,7 +19,8 @@
  * - The agent context holds: docs/brief.md has its five sections, and every path and package script the managed block in
  *   AGENTS.md, the skill and the brief name exists.
  * - An update session is resolved, `.meridian/keep.json` names files that are managed and present, and `app.logo` is an
- *   SVG under public/.
+ *   SVG under public/. A managed file whose bytes are not the release's and that keep.json does not keep is named on a
+ *   `drift:` line, a warning the gate carries: nothing else says so between releases.
  * - Every nav item's `needs` has the shape the rail can read: 'public', a grant `object:read|create|update|remove`, or an
  *   `{ allOf: [...] }` of them.
  */
@@ -365,6 +366,8 @@ for (const item of nav.flatMap((g) => g.items)) {
 const manifestFile = path.join(ROOT, '.meridian/manifest.json');
 let effective: { route?: string; files: Record<string, string> } | null = fs.existsSync(manifestFile) ? JSON.parse(fs.readFileSync(manifestFile, 'utf8')) : null;
 const retirements: Retirement[] = [];
+/** The managed files that are not the release's bytes and that no keep entry explains (`drift:`, printed last). */
+let drift: string[] = [];
 {
   const dirsOf = (d: string) => (fs.existsSync(path.join(ROOT, d)) ? fs.readdirSync(path.join(ROOT, d), { withFileTypes: true }).filter((e) => e.isDirectory()).map((e) => e.name) : []);
   for (const v of dirsOf('.meridian/history')) {
@@ -403,6 +406,13 @@ const retirements: Retirement[] = [];
     } catch (e) {
       problems.push(`.meridian/keep.json: ${(e as Error).message}`);
     }
+  }
+  // Between releases nothing else compares the managed files with their recorded hashes, so an edit nobody recorded a
+  // reason for met the team at the next update. An open session accounts for its own differences.
+  if (effective && sessions.length === 0) {
+    let kept = new Set<string>();
+    try { kept = new Set(parseKeep(read('.meridian/keep.json')).map((k) => k.path)); } catch { /* no register, or one reported above */ }
+    drift = Object.entries(effective.files).filter(([p, h]) => !kept.has(p) && sha256(p) !== h).map(([p]) => (sha256(p) === null ? `${p} (missing)` : p)).sort();
   }
   const logo = (app as { logo?: unknown }).logo;
   if (logo !== undefined) {
@@ -668,5 +678,6 @@ const none = judged.filter(([, n]) => n === 0).map(([rule]) => rule);
 if (none.length) console.log(`judged nothing: ${none.join(', ')}`);
 if (escapes.length) console.log(escapes.join('\n'));
 if (fourLayersNote) console.log(fourLayersNote);
+if (drift.length) console.log(`drift: ${drift.length} managed ${drift.length === 1 ? 'file differs from the release and is' : 'files differ from the release and are'} not in .meridian/keep.json: ${drift.slice(0, 8).join(', ')}${drift.length > 8 ? `, and ${drift.length - 8} more` : ''}. The next update asks about each, and tells a file whose imports are only spelled differently from one you changed; restore a file to the release, or name it in .meridian/keep.json with the reason it differs.`);
 console.log(`${problems.length} problems · ${cards().length} cards · ${PAGE_SPECS.length} page specs · ${LAYERS.length} source files`);
 process.exit(problems.length ? 1 : 0);

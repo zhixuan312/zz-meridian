@@ -271,6 +271,11 @@ JSON array of exactly `{ "path", "reason" }` entries. Paths are unique, project-
   fails the gate.
 - A kept file that is missing fails the gate. An update never recreates it: restore the file or remove the entry.
 - Do not add an entry to make a conflict disappear without reading it. The reason is the record of the decision.
+- A managed file whose bytes are not the release's and that no entry keeps is named by the gate, on a `drift:` line
+  after its last line (and under the gate in `pnpm verify`). It is a warning, not a failure: the next update asks about
+  each, and it can tell a file whose imports are only spelled differently from one the team changed, which the gate
+  cannot. Restore the file to the release, or keep it here with its reason, so the question is answered before the
+  update asks it.
 
 ## An unresolved session fails the gate
 
