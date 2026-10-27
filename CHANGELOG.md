@@ -15,6 +15,7 @@ Every release of ZZ Meridian, newest first. Versions follow semver: a removed or
 - **A row of tiles is one instrument.** `Row split="tiles"` drew its tiles as equal cards side by side; it draws one band with the card's edge and fill, the tiles divided by its hairline at every width. A tile has no fill of its own inside it: the surface is translucent, and two layers lifted the ground under the captions. The Atlas's five rules read as a list rather than five equal tiles.
 - **A tile's figure fits its tile.** Its size was set for the viewport, so a long figure ran past the tile's edge: `100.00%` in a row of four at 1440, `$91,367.01` beside its sparkline on a phone. The figure keeps its size until its characters would not fit the column it sits in, then steps down with it; a tile sized by its content keeps the width its figure and note need. The line under the figure is `data-tile-line`, which the tile's tests read by name.
 - **The alerts panel's preview fits a phone.** It fixed the panel at 352px inside a narrower column, so "Mark all read" ran past the panel's edge on the Atlas page at 390px; the bell's own popover was right.
+- **The week audits the Design Atlas.** No verify depth audits the Atlas, where each card's specimens draw its extreme shapes, so the two defects above were found only when someone looked. The weekly job `atlas` builds, serves and runs `node scripts/audit.ts --atlas` at the pixel ratio verify measures.
 
 ### Fixed
 

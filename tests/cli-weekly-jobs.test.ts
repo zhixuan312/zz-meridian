@@ -33,17 +33,19 @@ describe('weekly', () => {
     expect(job('postgres')).toMatch(/grep -q skipped/);
     expect(job('postgres')).toMatch(/image: postgres:[\w.-]+@sha256:[0-9a-f]{64}/);
     expect(job('postgres')).toMatch(/image: edoburu\/pgbouncer:[\w.-]+@sha256:[0-9a-f]{64}/);
+    // The Atlas's specimens, which no verify depth audits, at the pixel ratio verify measures.
+    expect(job('atlas')).toMatch(/DPR=1 node scripts\/audit\.ts --atlas/);
     expect(job('template')).toBe('');
     expect(weekly).not.toMatch(/pnpm verify --full --timed --perf/);
   });
   it('lets a dispatch name the jobs it runs, every job by default', () => {
-    expect(weekly).toMatch(/default: ['"]?full,timed,perf,consumer,deep,postgres['"]?/);
-    for (const name of ['full', 'timed', 'perf', 'consumer', 'deep', 'postgres']) expect(job(name)).toContain(`',${name},'`);
+    expect(weekly).toMatch(/default: ['"]?full,timed,perf,consumer,deep,postgres,atlas['"]?/);
+    for (const name of ['full', 'timed', 'perf', 'consumer', 'deep', 'postgres', 'atlas']) expect(job(name)).toContain(`',${name},'`);
   });
   it('refuses a dispatch that names no job, or a name that is not one, before any job runs', () => {
-    expect(job('named')).toMatch(/full\|timed\|perf\|consumer\|deep\|postgres\)/);
-    expect(job('named')).toMatch(/JOBS: \$\{\{ inputs\.jobs \|\| 'full,timed,perf,consumer,deep,postgres' \}\}/);
-    for (const name of ['full', 'timed', 'perf', 'consumer', 'deep', 'postgres']) expect(job(name)).toMatch(/needs: named/);
+    expect(job('named')).toMatch(/full\|timed\|perf\|consumer\|deep\|postgres\|atlas\)/);
+    expect(job('named')).toMatch(/JOBS: \$\{\{ inputs\.jobs \|\| 'full,timed,perf,consumer,deep,postgres,atlas' \}\}/);
+    for (const name of ['full', 'timed', 'perf', 'consumer', 'deep', 'postgres', 'atlas']) expect(job(name)).toMatch(/needs: named/);
   });
   it('gives each tier a runner of its own, its log and room for a slow day', () => {
     for (const name of ['full', 'timed', 'perf']) {

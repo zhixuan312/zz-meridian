@@ -21,6 +21,10 @@
 #   pool and pooler guidance of references/existing-project.md), run by tests/deep-postgres.test.ts against a Postgres
 #   and a PgBouncer in transaction mode, both service containers. A release skips that file: it needs the two services
 #   and `pg`, which the template does not install. A skipped case fails this job.
+# - `atlas`: the browser audit of the Design Atlas (`node scripts/audit.ts --atlas`): every card's page and its bare
+#   preview, the token views, the page specifications and the guides, at 1440 and 390px in both themes. No verify depth
+#   runs it, and a card's specimens are where its extreme shapes live: a figure running past its tile and a preview wider
+#   than a phone's column were found there first (2026-10-27), and nothing would have found them again.
 #
 # Each job keeps its log as an artifact. This workflow holds no publishing permission and no credential: the Postgres
 # password below is the service container's own, which exists only for the job.
@@ -33,9 +37,9 @@ on:
   workflow_dispatch:
     inputs:
       jobs:
-        description: 'The jobs to run, comma-separated without spaces: full,timed,perf,consumer,deep,postgres'
+        description: 'The jobs to run, comma-separated without spaces: full,timed,perf,consumer,deep,postgres,atlas'
         type: string
-        default: full,timed,perf,consumer,deep,postgres
+        default: full,timed,perf,consumer,deep,postgres,atlas
 
 permissions:
   contents: read
@@ -53,21 +57,21 @@ jobs:
     steps:
       - name: Every name is a job
         env:
-          JOBS: ${{ inputs.jobs || 'full,timed,perf,consumer,deep,postgres' }}
+          JOBS: ${{ inputs.jobs || 'full,timed,perf,consumer,deep,postgres,atlas' }}
         run: |
           set -euo pipefail
           IFS=',' read -ra names <<< "$JOBS"
-          [ "${#names[@]}" -gt 0 ] || { echo "jobs names no job: give some of full,timed,perf,consumer,deep,postgres"; exit 1; }
+          [ "${#names[@]}" -gt 0 ] || { echo "jobs names no job: give some of full,timed,perf,consumer,deep,postgres,atlas"; exit 1; }
           for n in "${names[@]}"; do
             case "$n" in
-              full|timed|perf|consumer|deep|postgres) ;;
-              *) echo "jobs: '$n' is not a job; name some of full,timed,perf,consumer,deep,postgres, comma-separated without spaces"; exit 1 ;;
+              full|timed|perf|consumer|deep|postgres|atlas) ;;
+              *) echo "jobs: '$n' is not a job; name some of full,timed,perf,consumer,deep,postgres,atlas, comma-separated without spaces"; exit 1 ;;
             esac
           done
 
   full:
     needs: named
-    if: contains(format(',{0},', inputs.jobs || 'full,timed,perf,consumer,deep,postgres'), ',full,')
+    if: contains(format(',{0},', inputs.jobs || 'full,timed,perf,consumer,deep,postgres,atlas'), ',full,')
     runs-on: ubuntu-24.04
     timeout-minutes: 45
     env:
@@ -99,7 +103,7 @@ jobs:
 
   timed:
     needs: named
-    if: contains(format(',{0},', inputs.jobs || 'full,timed,perf,consumer,deep,postgres'), ',timed,')
+    if: contains(format(',{0},', inputs.jobs || 'full,timed,perf,consumer,deep,postgres,atlas'), ',timed,')
     runs-on: ubuntu-24.04
     timeout-minutes: 45
     env:
@@ -131,7 +135,7 @@ jobs:
 
   perf:
     needs: named
-    if: contains(format(',{0},', inputs.jobs || 'full,timed,perf,consumer,deep,postgres'), ',perf,')
+    if: contains(format(',{0},', inputs.jobs || 'full,timed,perf,consumer,deep,postgres,atlas'), ',perf,')
     runs-on: ubuntu-24.04
     timeout-minutes: 45
     strategy:
@@ -167,7 +171,7 @@ jobs:
 
   consumer:
     needs: named
-    if: contains(format(',{0},', inputs.jobs || 'full,timed,perf,consumer,deep,postgres'), ',consumer,')
+    if: contains(format(',{0},', inputs.jobs || 'full,timed,perf,consumer,deep,postgres,atlas'), ',consumer,')
     runs-on: ubuntu-24.04
     timeout-minutes: 120
     env:
@@ -211,7 +215,7 @@ jobs:
 
   deep:
     needs: named
-    if: contains(format(',{0},', inputs.jobs || 'full,timed,perf,consumer,deep,postgres'), ',deep,')
+    if: contains(format(',{0},', inputs.jobs || 'full,timed,perf,consumer,deep,postgres,atlas'), ',deep,')
     runs-on: ubuntu-24.04
     timeout-minutes: 45
     env:
@@ -244,7 +248,7 @@ jobs:
 
   postgres:
     needs: named
-    if: contains(format(',{0},', inputs.jobs || 'full,timed,perf,consumer,deep,postgres'), ',postgres,')
+    if: contains(format(',{0},', inputs.jobs || 'full,timed,perf,consumer,deep,postgres,atlas'), ',postgres,')
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     services:
@@ -298,6 +302,41 @@ jobs:
         if: always()
         with:
           name: postgres
+          path: out/
+          if-no-files-found: ignore
+          retention-days: 30
+
+  atlas:
+    needs: named
+    if: contains(format(',{0},', inputs.jobs || 'full,timed,perf,consumer,deep,postgres,atlas'), ',atlas,')
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    env:
+      CHROME: /usr/bin/google-chrome
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+        with:
+          version: 11.9.0
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: the Design Atlas audited, at the pixel ratio verify measures
+        run: |
+          set -euo pipefail
+          mkdir -p out
+          pnpm exec next build > out/weekly-atlas-build.txt 2>&1
+          pnpm exec next start -H 127.0.0.1 -p 3100 > out/weekly-atlas-server.txt 2>&1 &
+          for i in $(seq 1 60); do curl -sf http://127.0.0.1:3100/ -o /dev/null && break; sleep 1; done
+          DPR=1 node scripts/audit.ts --atlas --base http://127.0.0.1:3100 2>&1 | tee out/weekly-atlas.txt
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        if: always()
+        with:
+          name: atlas
           path: out/
           if-no-files-found: ignore
           retention-days: 30

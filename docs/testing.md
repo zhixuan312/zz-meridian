@@ -65,6 +65,7 @@ A moment is when a person or an agent runs a command. A project's own CI may run
   - `node cli/scripts/smoke.ts --tarball <tarball> --adopt --update --origins 3 --update-all --verify`, on a tarball packed from that commit: the adopted project's default verify cases, the update from each of the last three releases, and every recovery and failure case of the update.
   - `pnpm exec vitest run tests/deep- --no-file-parallelism`, the browser-fixture tests of the checks, as the job `deep`: a release runs them on the commit it releases, and the week runs them again because Chrome is an input no commit pins, and a browser that changes what a suite measures turns a check blind between releases.
   - `pnpm exec vitest run tests/deep-postgres --no-file-parallelism`, as the job `postgres`: the Postgres code the skill's references hand a team, against a Postgres and a PgBouncer in transaction mode, both service containers. It needs `MERIDIAN_POSTGRES_URL`, `MERIDIAN_POOLER_URL` and `MERIDIAN_PG` (a directory holding `pg`, which the template does not install); a run without them skips it, and the job fails on a skip.
+  - `DPR=1 node scripts/audit.ts --atlas` against a build it serves, as the job `atlas`: every card's page and bare preview, the token views, the page specifications and the guides. No verify depth audits the Atlas, and a card's specimens hold its extreme shapes.
   - Nothing waits on it: a failure notifies.
 
 ## Rules
