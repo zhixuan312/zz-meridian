@@ -72,7 +72,7 @@ export function yearLine(history: readonly DailyPoint[], length: number): string
   const grew = counted.at(-1)!.requests / counted[0].requests - 1;
   const moved = formatPercent(Math.abs(grew), 1);
   const span = from === 0 ? 'in a year' : `from the ${inDays(length)} to ${formatDate(counted[0].to)}`;
-  const requests = moved === formatPercent(0, 1) ? `Requests held level ${span}` : `Requests ${grew < 0 ? 'fell' : 'grew'} ${moved} ${span}`;
+  const requests = Math.abs(grew) < 0.0005 ? `Requests held level ${span}` : `Requests ${grew < 0 ? 'fell' : 'grew'} ${moved} ${span}`;
   return `${requests}, and p95 stayed between ${Math.round(Math.min(...p95))} and ${Math.round(Math.max(...p95))} ms`;
 }
 

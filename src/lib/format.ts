@@ -121,14 +121,18 @@ export function formatCompact(n: number | null): string {
   return `${sign}${(tenths(step.size) / 10).toFixed(1)}${step.unit}`;
 }
 
+/** 294ms, 1.4s, 12m, 2.5h. The unit is the one the ROUNDED figure belongs to, as `formatCompact`'s step is: a p95 of
+ *  999.6 ms reads 1.0s, never 1000ms, and a run of 59.96 s reads 1m, never 60.0s. */
 export function formatDuration(ms: number | null): string {
   if (ms === null) return '—';
-  if (ms < 1000) return `${Math.round(ms)}ms`;
-  const totalSeconds = ms / 1000;
-  if (totalSeconds < 60) return `${totalSeconds.toFixed(1)}s`;
-  const totalMinutes = totalSeconds / 60;
-  if (totalMinutes < 60) return `${Math.round(totalMinutes)}m`;
-  return `${(totalMinutes / 60).toFixed(1)}h`;
+  const sign = ms < 0 ? '-' : '';
+  const a = Math.abs(ms);
+  if (Math.round(a) < 1000) return zeroHasNoSign(`${sign}${Math.round(a)}ms`);
+  const tenths = Math.round(a / 100);
+  if (tenths < 600) return `${sign}${(tenths / 10).toFixed(1)}s`;
+  const minutes = Math.round(a / 60_000);
+  if (minutes < 60) return `${sign}${minutes}m`;
+  return `${sign}${(Math.round(a / 360_000) / 10).toFixed(1)}h`;
 }
 
 function formatCount(n: number | null): string {
@@ -136,9 +140,14 @@ function formatCount(n: number | null): string {
   return zeroHasNoSign(INT.format(n));
 }
 
+/** 0.90%, 12.5%. A share that is not zero never reads as zero, `formatCost`'s rule: an error rate of 0.003% is one a
+ *  healthy API holds, and "0.0%" says it had none, so a share too small for its places reads as the bound it is under,
+ *  "<0.1%", with its own sign. */
 export function formatPercent(fraction: number | null, digits = 1): string {
   if (fraction === null || !Number.isFinite(fraction)) return '—';
-  return zeroHasNoSign(`${(fraction * 100).toFixed(digits)}%`);
+  const said = zeroHasNoSign(`${(fraction * 100).toFixed(digits)}%`);
+  if (fraction === 0 || /[1-9]/.test(said)) return said;
+  return `${fraction < 0 ? '-' : ''}<${(10 ** -digits).toFixed(digits)}%`;
 }
 
 /**
@@ -197,16 +206,16 @@ export const AXIS_FORMATTERS: Record<NumberFormat, (n: number | null) => string>
 /** A tick's number within its step: whole where it is, else to two decimals at most, so 1,250,000 reads 1.25M, never 1.3M. */
 const tick = (v: number): string => String(Math.round(v * 100) / 100);
 
+/** The steps of an axis tick, largest first. */
+const AXIS_STEPS = [{ size: 1_000_000_000_000, unit: 'T' }, { size: 1_000_000_000, unit: 'B' }, { size: 1_000_000, unit: 'M' }, { size: 1_000, unit: 'K' }] as const;
+
 /** A count on an axis tick: 0, 250, 1.5K, 2M; as short as the scale allows, never two ticks reading the same. */
 function formatAxisCount(n: number): string {
   if (n === 0) return '0';
-  const abs = Math.abs(n);
-  // The steps the figure at rest takes (formatCompact), so a 1.5B tick never reads 1500M beside a column that reads 1.1B.
-  if (abs >= 1_000_000_000_000) return `${tick(n / 1_000_000_000_000)}T`;
-  if (abs >= 1_000_000_000) return `${tick(n / 1_000_000_000)}B`;
-  if (abs >= 1_000_000) return `${tick(n / 1_000_000)}M`;
-  if (abs >= 1_000) return `${tick(n / 1_000)}K`;
-  return INT.format(n);
+  // The steps the figure at rest takes (formatCompact), so a 1.5B tick never reads 1500M beside a column that reads 1.1B;
+  // and the step the tick reaches once ROUNDED, so 999,999 is a 1M tick, never 1000K.
+  const step = AXIS_STEPS.find((s) => Math.round((Math.abs(n) / s.size) * 100) >= 100);
+  return step ? `${tick(n / step.size)}${step.unit}` : INT.format(n);
 }
 
 /** Built once, as `CENTS` is: a money tick under a thousand that is not whole keeps its cents, and a smaller step its digits ($0.025). */

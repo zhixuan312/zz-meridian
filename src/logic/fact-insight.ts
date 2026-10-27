@@ -52,5 +52,6 @@ export function against(now: number, before: number | null): { by: string; way: 
   if (!before) return null;
   const change = now / before - 1;
   const by = formatPercent(Math.abs(change), 1);
-  return { by, way: by === formatPercent(0, 1) ? 'level' : change > 0 ? 'up' : 'down' };
+  // On the magnitude, as Delta judges flat: a change too small for its decimal prints "<0.1%", which is still level.
+  return { by, way: Math.abs(change) < 0.0005 ? 'level' : change > 0 ? 'up' : 'down' };
 }

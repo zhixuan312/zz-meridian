@@ -42,7 +42,7 @@ describe('every formatter, given every value a product holds', () => {
     });
   }
   it('a figure split for its number face keeps its sign and its symbols whatever they are', () => {
-    for (const text of ['-$1,234.50', '$-0', 'HK$12,345,678', '-€1.2M', '+34%', '1.2M tokens', '0', '-0.000123']) {
+    for (const text of ['-$1,234.50', '$-0', 'HK$12,345,678', '-€1.2M', '+34%', '1.2M tokens', '0', '-0.000123', '<0.1%', '-<0.01%']) {
       const p = splitFigure(text);
       expect(`${p.pre ?? ''}${p.int}${p.frac ?? ''}${p.unit ? ` ${p.unit}` : ''}`.replace(/\s+/g, ''), text).toBe(text.replace(/\s+/g, ''));
     }
@@ -59,3 +59,39 @@ describe('every formatter, given every value a product holds', () => {
 
 const NAMES = Object.keys(FORMATTERS) as NumberFormat[];
 it('every named format has an axis form', () => { for (const n of NAMES) expect(typeof AXIS_FORMATTERS[n]).toBe('function'); });
+
+/**
+ * A figure is written in the unit its ROUNDED value belongs to. A p95 of 999.6 ms is an ordinary value, and choosing the
+ * unit from the raw value and the digits from the rounded one printed it "1000ms"; a minute's run read "60.0s".
+ * formatCompact already decides its step from the rounded figure (999,999 reads 1.0M); every formatter holds that.
+ */
+describe('a figure that rounds up to the next unit is written in that unit', () => {
+  const NEXT_UNIT = /^[-−]?\$?(1000(\.0+)?(ms|K|M|B)|60(\.0+)?(s|m))$/;
+  const EDGES = [999.5, 999.95, 59_950, 59_999, 3_570_000, 3_599_999, 999_500, 999_999, 999_999.5, 999_950_000, 999_999_999, 999_950_000_000];
+  for (const [name, f] of Object.entries(ALL)) {
+    it(name, () => {
+      for (const v of EDGES) for (const x of [v, -v]) expect(f(x), `${name}(${x})`).not.toMatch(NEXT_UNIT);
+    });
+  }
+  it('at the edges, the figures', () => {
+    expect([999.4, 999.6, 59_940, 59_960, 3_569_000, 3_590_000].map(formatDuration)).toEqual(['999ms', '1.0s', '59.9s', '1m', '59m', '1.0h']);
+    expect([999_999, 1_250_000, 1_000_000].map(AXIS_FORMATTERS.compact)).toEqual(['1M', '1.25M', '1M']);
+  });
+});
+
+/**
+ * A figure that is not zero never reads as zero (#96, `formatCost`): an error rate of 0.003% is one a healthy API
+ * holds, and "0.0%" says it had none. A percent too small for its places reads "<0.1%", the bound it is under, with
+ * its own sign. A count, a duration and an amount at a glance round to the nearest whole by design (a tile shows "$0"
+ * for forty cents and its tooltip the cents); a percent is a share and has no such tooltip.
+ */
+describe('a share that is not zero never reads as zero', () => {
+  it('formatPercent, at every number of places', () => {
+    for (const digits of [0, 1, 2]) for (const v of [1e-9, 0.00004, -0.00004]) {
+      const out = formatPercent(v, digits);
+      expect(out, `formatPercent(${v}, ${digits})`).toMatch(/[1-9]/);
+      expect(out, `formatPercent(${v}, ${digits})`).toMatch(v < 0 ? /^[-−]/ : /^</);
+    }
+    expect([formatPercent(0.00003), formatPercent(0.00003, 2), formatPercent(-0.0003), formatPercent(0.0005), formatPercent(0.004, 0), formatPercent(0)]).toEqual(['<0.1%', '<0.01%', '-<0.1%', '0.1%', '<1%', '0.0%']);
+  });
+});
