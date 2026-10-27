@@ -137,6 +137,12 @@
     background: var(--highlight-top); pointer-events: none;
   }
   .card:has(> [data-flush]:first-child) { overflow: hidden; }
+  /* A row of tiles is one instrument, not a row of equal cards: the band has the card's edge and fill, and each tile
+     draws the hairline on its left and top, which the band's clip removes at its edge, so the dividers follow the
+     columns at every width. A tile has no fill of its own: the surface is translucent, and a second layer under the
+     tiles lifted the ground their captions are read on (ink-3 fell to 4.23:1 on an embed's dark host). */
+  [data-split='tiles'] > .card { border: 0; border-radius: 0; background: none; box-shadow: -1px 0 0 var(--line), 0 -1px 0 var(--line); }
+  [data-split='tiles'] > .card::before { display: none; }
 
   /* A lit edge: a hairline drawn by a masked gradient, brightest where the ground's light comes from. On the featured
      card it is always on; on an interactive card it fades in under the pointer. It never loops. */

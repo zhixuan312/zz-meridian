@@ -84,21 +84,21 @@ export default function AtlasHome() {
       {/* Surfaces and operators */}
       <section className="mt-28">
         <SectionHead title={<>Three surfaces.<br />Two operators.</>} line="People point, tap and type; agents call tools. Both use the same views, on the console, on a phone and in an MCP host, under five rules." />
-        <div className="grid gap-px overflow-hidden rounded-xl border border-line bg-line sm:grid-cols-2 lg:grid-cols-5">
+        {/* The five rules read as a list a person can hold against a view, not a row of equal tiles. */}
+        <dl className="divide-y divide-line border-y border-line">
           {[
             ['Addressable', 'Every view’s state is in its address: an agent opens exactly the view it means.'],
             ['Legible', 'Every view tells the model what is on screen, and again when it changes.'],
             ['Consent', 'An agent reads anything and changes nothing without a person’s Approve.'],
             ['Provenance', 'What an agent did keeps its name and the person it acted for.'],
             ['Handoff', 'Ask hands any card to the agent as a question, where one is listening.'],
-          ].map(([t, d], i) => (
-            <div key={t} className="bg-surface p-6">
-              <p className="t-eyebrow">0{i + 1}</p>
-              <p className="t-card mt-6">{t}</p>
-              <p className="t-small mt-2 text-ink-2">{d}</p>
+          ].map(([t, d]) => (
+            <div key={t} className="grid gap-1 py-5 md:grid-cols-3 md:items-baseline md:gap-8">
+              <dt className="text-xl font-semibold tracking-[-0.02em] text-ink">{t}</dt>
+              <dd className="t-body text-ink-2 md:col-span-2">{d}</dd>
             </div>
           ))}
-        </div>
+        </dl>
         <div className="mt-4 flex flex-wrap gap-3">
           <Link href="/system/start/surfaces" className="link inline-flex items-center gap-1.5 text-sm font-medium">Surfaces and inventory <ArrowRight className="size-3.5" /></Link>
           <Link href="/system/pages/proposal" className="link inline-flex items-center gap-1.5 text-sm font-medium">See an agent’s proposal in a host <ArrowRight className="size-3.5" /></Link>

@@ -548,7 +548,8 @@ export function Row({ split = 'full', className, ...rest }: HTMLAttributes<HTMLD
     const n = Math.min(Math.max(Children.toArray(rest.children).length, 2), 4) as 2 | 3 | 4;
     return (
       <div className="@container min-w-0">
-        <div data-split="tiles" className={cn('grid min-w-0 grid-cols-1 gap-(--stack-gap) *:min-w-0', TILES[n], className)} {...rest} />
+        {/* One instrument, not a row of equal cards: the tiles share one card's edge and fill (base.css `[data-split='tiles']`). */}
+        <div data-split="tiles" className={cn('grid min-w-0 grid-cols-1 overflow-hidden rounded-lg border border-line bg-surface shadow-card *:min-w-0', TILES[n], className)} {...rest} />
       </div>
     );
   }
