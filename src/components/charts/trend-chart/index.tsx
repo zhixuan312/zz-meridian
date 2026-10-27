@@ -6,7 +6,7 @@ import { AXIS_FORMATTERS, FORMATTERS, type NumberFormat } from '@/lib/format';
 import { formatDate } from '@/lib/format-date';
 import { useMeridian } from '@/components/charts/meridian';
 import { Readout } from '@/components/charts/readout';
-import { monotonePath, ticksBetween, SERIES_VAR, stackPart, type SeriesSlot } from '@/components/charts/scale';
+import { monotonePath, linearPath, stepPath, ticksBetween, type Curve, SERIES_VAR, stackPart, type SeriesSlot } from '@/components/charts/scale';
 import { useSettled } from '@/components/charts/use-settled';
 import { useSize } from '@/components/charts/use-size';
 import { trendTotals } from '@/logic/derivations';
@@ -78,6 +78,9 @@ function placeLabel(text: string, line: number, plot: { left: number; right: num
  */
 export const SO_FAR = 'Today so far, dashed.';
 
+/** The path function each curve names. */
+const PATHS: Record<Curve, typeof monotonePath> = { monotone: monotonePath, linear: linearPath, step: stepPath };
+
 /**
  * A time series: one shared axis, at most one area, any number of lines. Never two y-scales: two measures of a
  * different size are two charts on one Meridian. Point, or move with the arrow keys, to read a day; every chart on
@@ -106,6 +109,7 @@ export function TrendChart({
   floor,
   marks,
   running = false,
+  curve = 'monotone',
   'data-preview-index': previewIndex,
   className,
 }: {
@@ -156,6 +160,12 @@ export function TrendChart({
   marks?: { dates: readonly string[]; tone: 'warning' | 'neutral'; label: string };
   /** The last point is a period still in progress: the line into it is dashed and its readout says "so far". */
   running?: boolean;
+  /**
+   * How a line, an area and the running stretch are drawn between points: `monotone` (the default) a smooth curve that never
+   * overshoots, `linear` straight segments, `step` a level held until the next reading. Straight is right for a few readings,
+   * where a smooth curve would invent the shape between them. The parts of a `stacked` chart stay monotone.
+   */
+  curve?: Curve;
   /** A static readout in the Atlas; real charts take their day from the Meridian. */
   'data-preview-index'?: number;
   className?: string;
@@ -244,6 +254,7 @@ export function TrendChart({
   const paths = useMemo(
     () =>
       series.map((s) => {
+        const path = PATHS[curve];
         // A missing day breaks the line: each run of measured days is its own segment, never bridged.
         const runs: [number, number][][] = [[]];
         s.values.forEach((v, i) => (v === null ? runs[runs.length - 1].length && runs.push([]) : runs[runs.length - 1].push([x(i), y(v)])));
@@ -253,15 +264,15 @@ export function TrendChart({
         const last = segs[segs.length - 1];
         const open = running && s.kind !== 'dashed' && typeof s.values[n - 1] === 'number' && last.length > 1;
         const end = (r: [number, number][]) => r.length - (open && r === last ? 2 : 1);
-        const line = segs.map((r) => monotonePath(r, 0, end(r))).join('');
+        const line = segs.map((r) => path(r, 0, end(r))).join('');
         // An area is filled down to zero, which is the floor of the plot unless the axis goes under it: a signed area
         // is filled to its zero line from either side, never down to the lowest level.
         const base = y(Math.min(Math.max(0, low), top));
-        const area = segs.map((r) => `${monotonePath(r, 0, end(r))}L${r[end(r)][0]},${base}L${r[0][0]},${base}Z`).join('');
-        return { s, line, area, tail: open ? monotonePath(last, last.length - 2) : '' };
+        const area = segs.map((r) => `${path(r, 0, end(r))}L${r[end(r)][0]},${base}L${r[0][0]},${base}Z`).join('');
+        return { s, line, area, tail: open ? path(last, last.length - 2) : '' };
       }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [series, width, h, low, top, running, n, pad.l, pad.t, W, H],
+    [series, curve, width, h, low, top, running, n, pad.l, pad.t, W, H],
   );
 
   // What the plot draws, as the label placer needs it: every line, and the top of every band of a stack.

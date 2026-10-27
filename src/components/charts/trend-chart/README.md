@@ -9,7 +9,7 @@ Status: beta
 1. **Plot**: horizontal gridlines in `chart-grid`, the baseline in `chart-axis`, 1px, crisp.
 2. **Y axis**: 3 or 4 "nice" ticks from zero, or from a step under zero when a value falls under it, up to a step at or over the highest value (whole numbers only with `whole`, for a chart of counts or a stack of them, so a top of 10 draws no level at 2.5 or 7.5), labels `text-2xs` `ink-3`, tabular, right-aligned in a gutter sized to the longest label. Axis labels drop cents and exact digits (`$12`, `1.2M`), and money from $10,000 reads at a glance (`$25K`, `$5.0B`) so a large scale does not widen the gutter; the tooltip and table carry the exact amounts.
 3. **X axis**: dates, `text-2xs` `ink-3`, one label per 92px, counted back from today so the last day is always labelled.
-4. **Series**: monotone curves that never overshoot their data.
+4. **Series**: monotone curves that never overshoot their data by default; straight segments with `curve="linear"`, for a few readings.
 5. **Band** (with `band`): the region from the floor up to the band's ceiling, in `fill-track`, under the gridlines, its top edge drawn as the axis is, and its label at an end of that edge — in `ink-2`, since it stands over the fill as often as over the card and `ink-3` on `fill-track` is 4.43:1 in light.
 6. **Marks** (with `marks`): a dot on a named day's point and a stem from it to the axis, in the tone given.
 7. **Running stretch** (with `running`): the last stretch of the same curve, into a point that is not over yet, 1.5px and dashed.

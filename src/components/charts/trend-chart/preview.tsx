@@ -144,6 +144,16 @@ export default function TrendChartPreview() {
           </Plane>
         </State>
       </Specimen>
+      <Specimen label="Straight lines" note="curve, set to linear: straight segments between readings, for a few of them, here three over a month. A smooth curve would invent the shape between them; a straight line claims only that the readings are joined. The default stays smooth, which suits a reading every day.">
+        <Plane on="surface">
+          <TrendChart
+            label="Requests, three readings over a month"
+            dates={[0, 14, current.length - 1].map((i) => dates[i])}
+            curve="linear"
+            series={[{ key: 'r', label: 'Requests', values: [0, 14, current.length - 1].map((i) => current[i].requests), kind: 'line' }]}
+          />
+        </Plane>
+      </Specimen>
       <Specimen label="Short" note="Under 200px the chart draws three gridlines instead of four, and three or four date labels; drawn here at 150px. A chart told to `fill` takes the height its card gives it, never under 220px.">
         <Plane on="surface" className="max-w-md">
           <TrendChart label="Revenue per day" dates={dates} height={150} format="cost" series={[{ key: 's', label: 'Revenue', values: current.map((d) => d.revenue), kind: 'line', color: 'accent' }]} />
