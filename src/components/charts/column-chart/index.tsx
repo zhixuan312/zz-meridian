@@ -4,7 +4,7 @@ import { useState, type KeyboardEvent } from 'react';
 import { cn } from '@/lib/cn';
 import { useMeridian } from '@/components/charts/meridian';
 import { Readout } from '@/components/charts/readout';
-import { niceTicks, SERIES_VAR, stackPart, ticksBetween } from '@/components/charts/scale';
+import { niceTicks, SERIES_VAR, stackPart, ticksBetween, type SeriesSlot } from '@/components/charts/scale';
 import { useSettled } from '@/components/charts/use-settled';
 import { useSize } from '@/components/charts/use-size';
 import { columnFold } from '@/logic/derivations';
@@ -17,7 +17,7 @@ export type StackedColumn = { key: string; label: string; values: (number | null
  * usual outcomes, which one hue cannot tell apart; `tone` is a state, for an outcome that needs somebody. A chart takes
  * one or the other: coral and saffron read as a warning beside a real one.
  */
-export type ColumnPart = { key: string; label: string; color?: number; tone?: 'neutral' | 'warning' | 'critical' };
+export type ColumnPart = { key: string; label: string; color?: SeriesSlot; tone?: 'neutral' | 'warning' | 'critical' };
 
 type Shared = {
   /** The key of the one column the card is about. */

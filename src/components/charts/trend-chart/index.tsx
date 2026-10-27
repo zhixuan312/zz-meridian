@@ -6,7 +6,7 @@ import { AXIS_FORMATTERS, FORMATTERS, type NumberFormat } from '@/lib/format';
 import { formatDate } from '@/lib/format-date';
 import { useMeridian } from '@/components/charts/meridian';
 import { Readout } from '@/components/charts/readout';
-import { monotonePath, ticksBetween, SERIES_VAR, stackPart } from '@/components/charts/scale';
+import { monotonePath, ticksBetween, SERIES_VAR, stackPart, type SeriesSlot } from '@/components/charts/scale';
 import { useSettled } from '@/components/charts/use-settled';
 import { useSize } from '@/components/charts/use-size';
 import { trendTotals } from '@/logic/derivations';
@@ -16,7 +16,7 @@ export type TrendSeries = {
   label: string;
   values: (number | null)[];
   /** A categorical slot (1 to 6), the accent, or the neutral comparison colour. */
-  color?: number | 'accent' | 'neutral';
+  color?: SeriesSlot | 'accent' | 'neutral';
   /** `area` is the series the chart is about (at most one); `line` a peer; `dashed` a target or the previous period. */
   kind?: 'area' | 'line' | 'dashed';
 };

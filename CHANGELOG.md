@@ -18,6 +18,7 @@ Every release of ZZ Meridian, newest first. Versions follow semver: a removed or
 - **The alerts panel's preview fits a phone.** It fixed the panel at 352px inside a narrower column, so "Mark all read" ran past the panel's edge on the Atlas page at 390px; the bell's own popover was right.
 - **The week audits the Design Atlas.** No verify depth audits the Atlas, where each card's specimens draw its extreme shapes, so the two defects above were found only when someone looked. The weekly job `atlas` builds, serves and runs `node scripts/audit.ts --atlas` at the pixel ratio verify measures.
 - **A list with nothing in it says so once.** Customers, Tickets, Tests, Releases and Requests drew their row of summary tiles as zeros above the table's "No customers yet": `Revenue, last 30 days $0`, `Open tickets 0`, figures drawn as if there were records. A page with no records at all passes `empty` to `Records`, and the summary is not drawn; a filter that matches nothing keeps its summary of the matching set. `tests/cli-views-without-data.test.tsx` draws every view with an empty product and Home, Usage, Revenue and Now with nothing readable.
+- **A part past the palette has a colour.** The categorical palette has six slots, and a Composition bar of more parts named `--series-7` and on, which no theme defines: the part drew transparent, its share gone from the bar and its swatch blank in the key, while the percentages still added up. Past six parts it draws the first five and "Other", their sum, in the neutral; the Atlas draws it with twelve.
 
 ### Fixed
 
@@ -35,6 +36,7 @@ Every release of ZZ Meridian, newest first. Versions follow semver: a removed or
 
 ### Breaking
 
+- **A chart's `color` is a palette slot, `SeriesSlot` (1 to 6).** `ColumnPart`, a Composition bar's `Part`, `Sparkline` and a Trend chart's series took any number, and a slot past six drew nothing. A caller that computes a slot types it `SeriesSlot` or folds the parts past the palette.
 - **The `tracking-caps` token is removed.** Nothing in Meridian sets text in spaced capitals any more. A product's own `tracking-(--tracking-caps)` renders nothing: write the letter-spacing it wants, or drop the capitals.
 - **A detail route that answers an error fails.** `detailRoutes` held the missing record beside the real ones; it now goes in `missingRoutes`. The `Page` type of `scripts/lib/chrome.ts` has a `status()` member, so a stub of it in a project's own test adds one.
 - **`trendTotals` returns `(number | null)[]`.** A day no band has a value for is `null`, not `0`. A caller that adds or formats the totals handles `null` as a day with no total.

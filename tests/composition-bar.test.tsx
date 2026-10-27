@@ -12,9 +12,21 @@ const fills = (container: HTMLElement) => [...container.querySelectorAll('figure
  * the legend stood four across by the window's width, which left "Enterprise · 24 customers" three lines.
  */
 describe('a composition bar', () => {
+  // The palette has six slots: a seventh part named --series-7, which no theme defines, and drew transparent, its share
+  // gone from the bar and its swatch blank in the key, while the percentages still added up.
+  it('past six parts, draws the first five and Other, the sum of the rest, each in a colour the palette has', () => {
+    const many = Array.from({ length: 12 }, (_, i) => ({ label: `Plan ${i + 1}`, value: 12 - i }));
+    const { container } = render(<CompositionBar label="Plan mix" parts={many} />);
+    expect(fills(container)).toEqual([...([1, 2, 3, 4, 5] as const).map((n) => SERIES_VAR(n)), SERIES_VAR('neutral')]);
+    expect(container.textContent).toContain('Other');
+    expect(container.textContent).not.toContain('Plan 6');
+    // Other is the rest, so every share is still of the whole: 12+11+10+9+8 of 78 drawn apart, 28 of 78 (36%) as Other.
+    expect(container.textContent).toMatch(/Other\s*36%/);
+  });
+
   it('draws its parts in the categorical slots by default', () => {
     const { container } = render(<CompositionBar label="Plan mix" parts={PLANS} />);
-    expect(fills(container)).toEqual([1, 2, 3].map((n) => SERIES_VAR(n)));
+    expect(fills(container)).toEqual(([1, 2, 3] as const).map((n) => SERIES_VAR(n)));
   });
 
   it('stacked, draws a part with no colour as the stacked charts draw the same part: the one-hue stack by its place', () => {

@@ -37,6 +37,11 @@ export default function CompositionBarPreview() {
           <CompositionBar label="Plan mix" parts={[{ label: 'Enterprise', value: 912 }, { label: 'Scale', value: 80 }, { label: 'Starter', value: 4 }]} />
         </Plane>
       </Specimen>
+      <Specimen label="More parts than colours" note="Twelve models: the palette has six slots, so the first five keep theirs and the rest are Other, their sum, in the neutral. Every share is still of the whole.">
+        <Plane on="surface" className="max-w-xl">
+          <CompositionBar label="Requests by model" format={formatCompact} parts={Array.from({ length: 12 }, (_, i) => ({ label: `Model ${String.fromCharCode(65 + i)}`, value: Math.round(4_800_000 / (i + 1)) }))} />
+        </Plane>
+      </Specimen>
     </>
   );
 }

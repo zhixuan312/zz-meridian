@@ -2,7 +2,7 @@
 
 import { useId } from 'react';
 import { useMeridianIndex } from '@/components/charts/meridian';
-import { monotonePath, SERIES_VAR } from '@/components/charts/scale';
+import { monotonePath, SERIES_VAR, type SeriesSlot } from '@/components/charts/scale';
 import { useSize } from '@/components/charts/use-size';
 
 /**
@@ -11,7 +11,7 @@ import { useSize } from '@/components/charts/use-size';
  * the Meridian's dates. A `null` is a day with no value: it keeps its place and breaks the line there, as the Trend
  * chart's does, so a day that was not observed is never drawn as zero.
  */
-export function Sparkline({ values, color = 'accent', height = 36, className }: { values: (number | null)[]; color?: number | 'accent' | 'neutral'; height?: number; className?: string }) {
+export function Sparkline({ values, color = 'accent', height = 36, className }: { values: (number | null)[]; color?: SeriesSlot | 'accent' | 'neutral'; height?: number; className?: string }) {
   const id = useId().replace(/[^a-zA-Z0-9_-]/g, '');
   const [ref, { width: W }] = useSize<HTMLDivElement>();
   const { index, dates } = useMeridianIndex();

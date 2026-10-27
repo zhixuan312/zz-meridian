@@ -12,6 +12,7 @@ import { KeyValue } from '@/components/ui/key-value';
 import { StatusDot } from '@/components/ui/status-dot';
 import { ColumnChart } from '@/components/charts/column-chart';
 import { CompositionBar } from '@/components/charts/composition-bar';
+import type { SeriesSlot } from '@/components/charts/scale';
 import { Meridian, useMeridianIndex } from '@/components/charts/meridian';
 import { SO_FAR, TrendChart } from '@/components/charts/trend-chart';
 import { FeaturedMetric } from '@/components/patterns/featured-metric';
@@ -259,7 +260,7 @@ function Sold({ data }: { data: HomeData }) {
     <Card>
       <CardHeader title={label} description={`${hint.replace(/\.$/, '')}, ${PERIOD_LABEL[data.period].toLowerCase()}`} />
       <CardBody>
-        <CompositionBar label="Revenue by model" format={costCompact} parts={data.sold.map((m, i) => ({ label: m.label, value: m.value, color: i < SOLD_SLOTS ? i + 1 : 'neutral' }))} />
+        <CompositionBar label="Revenue by model" format={costCompact} parts={data.sold.map((m, i) => ({ label: m.label, value: m.value, color: i < SOLD_SLOTS ? ((i + 1) as SeriesSlot) : 'neutral' }))} />
       </CardBody>
     </Card>
   );

@@ -59,7 +59,10 @@ export function monotonePath(pts: [number, number][], from = 0, to = pts.length 
   return d;
 }
 
-export const SERIES_VAR = (slot: number | 'accent' | 'neutral') =>
+/** The categorical palette's slots: `--series-1` to `--series-6`. A seventh named nothing, and its part drew transparent. */
+export type SeriesSlot = 1 | 2 | 3 | 4 | 5 | 6;
+export const SERIES_SLOTS = 6;
+export const SERIES_VAR = (slot: SeriesSlot | 'accent' | 'neutral') =>
   slot === 'accent' ? 'var(--accent)' : slot === 'neutral' ? 'var(--chart-neutral-strong)' : `var(--series-${slot})`;
 
 /**

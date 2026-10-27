@@ -1,15 +1,26 @@
 import { cn } from '@/lib/cn';
-import { SERIES_VAR, stackPart } from '@/components/charts/scale';
+import { SERIES_SLOTS, SERIES_VAR, stackPart, type SeriesSlot } from '@/components/charts/scale';
 import { compositionTotal } from '@/logic/derivations';
 
-export type Part = { label: string; value: number; color?: number | 'accent' | 'neutral' | 'neutral-ink' | 'positive' | 'warning' | 'critical' };
+export type Part = { label: string; value: number; color?: SeriesSlot | 'accent' | 'neutral' | 'neutral-ink' | 'positive' | 'warning' | 'critical' };
 
 const fill = (c: Part['color'], i: number, stack: number | null) =>
-  c === 'positive' || c === 'warning' || c === 'critical' ? `var(--${c})` : c === 'neutral-ink' ? 'var(--ink-2)' : c === undefined && stack !== null ? stackPart(i, stack) : SERIES_VAR(c ?? i + 1);
+  c === 'positive' || c === 'warning' || c === 'critical' ? `var(--${c})` : c === 'neutral-ink' ? 'var(--ink-2)' : c === undefined && stack !== null ? stackPart(i, stack) : SERIES_VAR(c ?? ((i + 1) as SeriesSlot));
+
+/**
+ * The parts drawn: as given up to the palette's six, and past it the first five and "Other", the sum of the rest, in the
+ * neutral. A seventh slot names no colour (`--series-7`), and its part drew transparent: its share gone from the bar and
+ * its swatch blank in the key.
+ */
+function drawn(parts: Part[]): Part[] {
+  if (parts.length <= SERIES_SLOTS) return parts;
+  const rest = parts.slice(SERIES_SLOTS - 1);
+  return [...parts.slice(0, SERIES_SLOTS - 1), { label: 'Other', value: rest.reduce((n, p) => n + p.value, 0), color: 'neutral' }];
+}
 
 /** One whole split into its parts: a single bar with a 2px gap between segments, and a legend that carries the numbers. */
 export function CompositionBar({
-  parts,
+  parts: given,
   format = (n) => n.toLocaleString('en-US'),
   label,
   legend = true,
@@ -26,6 +37,7 @@ export function CompositionBar({
   stacked?: boolean;
   className?: string;
 }) {
+  const parts = drawn(given);
   const total = compositionTotal(parts);
   const stack = stacked ? parts.length : null;
   return (
