@@ -125,8 +125,9 @@ export function formatCompact(n: number | null): string {
   return `${sign}${(tenths(step.size) / 10).toFixed(1)}${step.unit}`;
 }
 
-/** 294ms, 1.4s, 12m, 2.5h. The unit is the one the ROUNDED figure belongs to, as `formatCompact`'s step is: a p95 of
- *  999.6 ms reads 1.0s, never 1000ms, and a run of 59.96 s reads 1m, never 60.0s. */
+/** 294ms, 1.4s, 12m, 2.5h, 3.0d. The unit is the one the ROUNDED figure belongs to, as `formatCompact`'s step is: a p95
+ *  of 999.6 ms reads 1.0s, never 1000ms, and a run of 59.96 s reads 1m, never 60.0s. Past two days, days: an incident
+ *  open for three weeks reads 21.0d, not 504.0h. */
 export function formatDuration(ms: number | null): string {
   if (ms === null) return '—';
   const sign = ms < 0 ? '-' : '';
@@ -136,7 +137,9 @@ export function formatDuration(ms: number | null): string {
   if (tenths < 600) return `${sign}${(tenths / 10).toFixed(1)}s`;
   const minutes = Math.round(a / 60_000);
   if (minutes < 60) return `${sign}${minutes}m`;
-  return `${sign}${(Math.round(a / 360_000) / 10).toFixed(1)}h`;
+  const hours = Math.round(a / 360_000);
+  if (hours < 480) return `${sign}${(hours / 10).toFixed(1)}h`;
+  return `${sign}${(Math.round(a / 8_640_000) / 10).toFixed(1)}d`;
 }
 
 function formatCount(n: number | null): string {

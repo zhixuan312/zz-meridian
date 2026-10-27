@@ -76,6 +76,8 @@ describe('a figure that rounds up to the next unit is written in that unit', () 
   it('at the edges, the figures', () => {
     expect([999.4, 999.6, 59_940, 59_960, 3_569_000, 3_590_000].map(formatDuration)).toEqual(['999ms', '1.0s', '59.9s', '1m', '59m', '1.0h']);
     expect([999_999, 1_250_000, 1_000_000].map(AXIS_FORMATTERS.compact)).toEqual(['1M', '1.25M', '1M']);
+    // An incident open for three weeks read "504.0h": past two days a duration is told in days.
+    expect([47.9, 47.96, 72, 504].map((h) => formatDuration(h * 3_600_000))).toEqual(['47.9h', '2.0d', '3.0d', '21.0d']);
   });
 });
 
