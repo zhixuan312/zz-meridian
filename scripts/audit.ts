@@ -4,7 +4,8 @@
  *   node scripts/audit.ts [--base http://localhost:3100] [--routes /,/requests] [--embeds-only] [--atlas] [--list]
  *
  * Routes are discovered from app/ (every static page; embeds under /embed), with the detail pages in
- * scripts/verify.config.ts beside them; --routes replaces the pages for one run.
+ * scripts/verify.config.ts beside them. --routes replaces both for one run: a route under /embed in it is measured as an
+ * embed, on its host's ground, and only the embeds it names run. `--list` marks an embed `(embed)`.
  *
  * --atlas audits the Design Atlas instead: every card's page and its bare preview, and every other entry the Atlas
  * serves — the token views, the page specs and the guides — at 1440 and 390px in both themes.
@@ -74,12 +75,15 @@ const found = discover();
 // verify.config.ts is the team's, so read the one field this needs through its own type.
 const detailRoutes = (config as { detailRoutes?: string[] }).detailRoutes ?? [];
 const MISSING = missingRoutes(args);
-const ROUTES = EMBEDS_ONLY ? [] : ATLAS ? await atlasRoutes() : (opt('--routes', '') ? opt('--routes', '').split(',') : [...new Set([...found.filter((r) => !r.startsWith('/embed')), ...detailRoutes, ...MISSING])]);
-const EMBEDS = ATLAS ? [] : found.filter((r) => r.startsWith('/embed/'));
+const asked = opt('--routes', '') ? [...new Set(opt('--routes', '').split(','))] : null;
+const isEmbed = (r: string) => r.startsWith('/embed/');
+// An embed named in --routes was measured as a page, on no host's ground, and every other embed ran beside it.
+const ROUTES = EMBEDS_ONLY ? [] : ATLAS ? await atlasRoutes() : asked ? asked.filter((r) => !isEmbed(r)) : [...new Set([...found.filter((r) => !r.startsWith('/embed')), ...detailRoutes, ...MISSING])];
+const EMBEDS = ATLAS ? [] : asked ? asked.filter(isEmbed) : found.filter(isEmbed);
 const WIDTHS = ATLAS ? [1440, 390] : [2560, 1440, 1024, 768, 390];
 const THEMES = ['dark', 'light'];
 if (args.includes('--list')) {
-  console.log([...ROUTES, ...EMBEDS].join('\n'));
+  console.log([...ROUTES, ...EMBEDS.map((r) => `${r} (embed)`)].join('\n'));
   if (atlasLine) console.log(atlasLine);
   process.exit(0);
 }
