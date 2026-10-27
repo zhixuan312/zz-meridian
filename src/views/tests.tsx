@@ -41,7 +41,7 @@ export function TestsView({ rows, now, revisions }: { rows: RunRow[]; now: strin
 
   const columns: Column<RunRow>[] = [
     {
-      key: 'suite', header: 'Verification', grow: true, truncate: true, mobile: 'title', sortValue: (r) => r.suite, title: (r) => `${r.suite} on ${r.endpointId}`,
+      key: 'suite', header: 'Verification', grow: true, truncate: true, mobile: 'title', sortValue: (r) => r.suite, title: (r) => `${LABEL(r.suite)} on ${r.endpointId}`,
       cell: (r) => (
         <span className="flex min-w-0 flex-col">
           <span className="truncate font-medium">{LABEL(r.suite)}</span>

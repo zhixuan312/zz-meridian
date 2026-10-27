@@ -41,7 +41,7 @@ export function ReleasesView({ rows, now, revisions }: { rows: ReleaseRow[]; now
 
   const columns: Column<ReleaseRow>[] = [
     {
-      key: 'version', header: 'Release', grow: true, truncate: true, mobile: 'title', sortValue: (r) => r.version, title: (r) => `${r.version} · ${r.service} · ${r.environment}`,
+      key: 'version', header: 'Release', grow: true, truncate: true, mobile: 'title', sortValue: (r) => r.version, title: (r) => `${r.version} · ${r.service} · ${LABEL(r.environment)}`,
       cell: (r) => (
         <span className="flex min-w-0 flex-col">
           <span className="flex items-center gap-2">
