@@ -29,8 +29,6 @@ type Rule = {
   twin?: Match;
   /** A test file that already holds a failing and a passing case, and a text of the rule's line it asserts. */
   pairedIn?: { file: string; needle: string };
-  /** Why no reasonable edit makes it fail. */
-  unpaired?: string;
 };
 
 const RULE_TESTS = 'tests/cli-check-rules.test.ts';
@@ -132,8 +130,8 @@ describe('every rule the static gate judges is listed, and every place it can fa
   it('has each rule once, with exactly one way it is shown', () => {
     expect(new Set(RULES.map((r) => r.id)).size).toBe(RULES.length);
     for (const r of RULES) {
-      const ways = [r.pairedIn, r.unpaired, r.batch && r.fails?.length ? r : undefined].filter(Boolean);
-      expect(ways.length, `${r.id} needs exactly one of pairedIn, unpaired, or a batch with fails`).toBe(1);
+      const ways = [r.pairedIn, r.batch && r.fails?.length ? r : undefined].filter(Boolean);
+      expect(ways.length, `${r.id} needs exactly one of pairedIn or a batch with fails`).toBe(1);
     }
   });
 
@@ -165,11 +163,6 @@ describe('every rule the static gate judges is listed, and every place it can fa
     }
   });
 
-  it('lists the rules it cannot make fail, each with its reason', () => {
-    const unpaired = RULES.filter((r) => r.unpaired);
-    for (const r of unpaired) expect(r.unpaired!.length, `${r.id} says why`).toBeGreaterThan(20);
-    if (unpaired.length) console.info(`unpaired static rules:\n${unpaired.map((r) => `  ${r.id}: ${r.unpaired}`).join('\n')}`);
-  });
 });
 
 // ── The copy of the template the edits are made in ───────────────────────────────────────────────────

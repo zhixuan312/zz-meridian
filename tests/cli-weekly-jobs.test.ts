@@ -25,12 +25,11 @@ describe('weekly', () => {
     expect(job('consumer')).toMatch(/cli\/scripts\/smoke\.ts/);
     // The adversarial sample every browser suite is held to, on the week's browser: Chrome is an input no commit pins.
     expect(job('deep')).toMatch(/vitest run tests\/deep- --no-file-parallelism/);
-    // The references' Postgres code against a real Postgres and a pooler; a skip judges nothing, so it fails the job.
-    expect(job('postgres')).toMatch(/vitest run tests\/deep-postgres/);
+    // The references' Postgres code against a real Postgres and a pooler, by its own config: nothing else collects it.
+    expect(job('postgres')).toMatch(/vitest run --config scripts\/fixtures\/postgres\/vitest\.config\.ts/);
     expect(job('postgres')).toMatch(/MERIDIAN_POSTGRES_URL: .*:5432\//);
     expect(job('postgres')).toMatch(/MERIDIAN_POOLER_URL: .*:6432\//);
     expect(job('postgres')).toMatch(/POOL_MODE: transaction/);
-    expect(job('postgres')).toMatch(/grep -q skipped/);
     expect(job('postgres')).toMatch(/image: postgres:[\w.-]+@sha256:[0-9a-f]{64}/);
     expect(job('postgres')).toMatch(/image: edoburu\/pgbouncer:[\w.-]+@sha256:[0-9a-f]{64}/);
     // The Atlas's specimens, which no verify depth audits, at the pixel ratio verify measures.

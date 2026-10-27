@@ -14,14 +14,17 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
  * guidance of references/existing-project.md is held to what it says happens with its listener and without it.
  *
  * It needs MERIDIAN_POSTGRES_URL, a database whose tables it may write and whose connections it may end (never a
- * product's), and MERIDIAN_PG, a directory whose node_modules holds `pg`, which the template does not install. Without
- * both it is skipped, and its name says so. MERIDIAN_POOLER_URL, the same database through PgBouncer in transaction
- * mode with one server connection, adds the pooler's cases. The weekly job `postgres` gives it all three.
+ * product's), MERIDIAN_POOLER_URL, the same database through PgBouncer in transaction mode with one server connection,
+ * and MERIDIAN_PG, a directory whose node_modules holds `pg`, which the template does not install; it refuses to run
+ * without them rather than skip. It lives beside the fixtures, outside tests/, so the gate and the deep suite never
+ * collect it: the weekly job `postgres` runs it with its own config (vitest.config.ts beside it), against service
+ * containers.
  */
 const DATABASE = process.env.MERIDIAN_POSTGRES_URL;
 const POOLER = process.env.MERIDIAN_POOLER_URL;
 const PG = process.env.MERIDIAN_PG;
-const ROOT = path.resolve(import.meta.dirname, '..');
+if (!DATABASE || !POOLER || !PG) throw new Error('postgres: set MERIDIAN_POSTGRES_URL, MERIDIAN_POOLER_URL and MERIDIAN_PG (see the comment above)');
+const ROOT = path.resolve(import.meta.dirname, '../../..');
 const CHANNEL = 'meridian_changes';
 
 /** The fenced `ts` block of a reference whose first line is `first`, as the reference has it. */
@@ -41,7 +44,7 @@ type Tx = { query: (sql: string, values?: unknown[]) => Promise<{ rows: Record<s
 type Db = { query: Tx['query']; connect: () => Promise<Tx | void>; end: () => Promise<void>; on: (e: string, f: (e: Error) => void) => void };
 type Live = (url: string) => (tenantId: string, name: string) => (deliver: () => void) => () => void;
 
-describe.skipIf(!DATABASE || !PG)(`the Postgres the references hand a team${DATABASE && PG ? '' : ' (skipped: needs MERIDIAN_POSTGRES_URL and MERIDIAN_PG)'}`, () => {
+describe('the Postgres the references hand a team', () => {
   const work = fs.mkdtempSync(path.join(os.tmpdir(), 'zz-postgres-'));
   let pg: { Client: new (o: object) => Db; Pool: new (o: object) => Db };
   let admin: Db;
@@ -58,7 +61,7 @@ describe.skipIf(!DATABASE || !PG)(`the Postgres the references hand a team${DATA
   };
 
   beforeAll(async () => {
-    fs.symlinkSync(path.join(PG!, 'node_modules'), path.join(work, 'node_modules'));
+    fs.symlinkSync(path.join(PG, 'node_modules'), path.join(work, 'node_modules'));
     fs.writeFileSync(path.join(work, 'postgres-live.ts'), recipe('live.md', '// example: src/data/postgres-live.ts'));
     fs.writeFileSync(path.join(work, 'pg.mjs'), "export { Client, Pool } from 'pg';\n");
     pg = await import(pathToFileURL(path.join(work, 'pg.mjs')).href);
@@ -79,7 +82,7 @@ describe.skipIf(!DATABASE || !PG)(`the Postgres the references hand a team${DATA
     let offs: (() => void)[] = [];
 
     it('reads every subscriber once on connecting, and a committed change reaches its tenant and collection only', async () => {
-      const subscribe = live.postgresLive(DATABASE!);
+      const subscribe = live.postgresLive(DATABASE);
       offs = [subscribe('a', 'members')(() => got.am++), subscribe('b', 'members')(() => got.bm++), subscribe('a', 'requests')(() => got.ar++)];
       await until('the resync on connecting', () => got.am === 1 && got.bm === 1 && got.ar === 1);
       expect(await listening(), 'one listening connection for every subscriber').toBe(1);
@@ -144,7 +147,7 @@ await pool.end();
     });
   });
 
-  describe.skipIf(!POOLER)(`references/existing-project.md: behind a transaction pooler${POOLER ? '' : ' (skipped: needs MERIDIAN_POOLER_URL)'}`, () => {
+  describe('references/existing-project.md: behind a transaction pooler', () => {
     it('refuses a pool given a session setting, at connect', async () => {
       const p = new pg.Pool({ connectionString: POOLER, options: '-c statement_timeout=5000' });
       p.on('error', () => {});
@@ -181,8 +184,8 @@ await pool.end();
       }
     };
     it('does not keep a session advisory lock from another client, which a direct connection does', async () => {
-      expect(await lockedTwice(DATABASE!), 'direct').toEqual([true, false]);
-      expect(await lockedTwice(POOLER!), 'through the pooler').toEqual([true, true]);
+      expect(await lockedTwice(DATABASE), 'direct').toEqual([true, false]);
+      expect(await lockedTwice(POOLER), 'through the pooler').toEqual([true, true]);
     });
   });
 });

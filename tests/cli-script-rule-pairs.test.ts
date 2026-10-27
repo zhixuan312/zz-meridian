@@ -25,10 +25,8 @@ type Rule = {
   /** Text at the place in the script the rule fails from (a literal substring of its line): the place still exists, and no place goes unclaimed. */
   source: string;
   /** The input that makes it report, and the input where the report is absent; each asserts itself. */
-  fail?: () => void | Promise<void>;
-  pass?: () => void | Promise<void>;
-  /** Why no reasonable input makes it fire. */
-  unpaired?: string;
+  fail: () => void | Promise<void>;
+  pass: () => void | Promise<void>;
 };
 type Script = { file: string; site: RegExp; rules: Rule[] };
 
@@ -446,16 +444,8 @@ describe('every rule is listed once, with a failing and a passing way to show it
   for (const s of SCRIPTS) {
     it(s.file, () => {
       expect(new Set(s.rules.map((r) => r.id)).size).toBe(s.rules.length);
-      for (const r of s.rules) {
-        if (r.unpaired) expect(r.unpaired.length, `${r.id} says why`).toBeGreaterThan(20);
-        else expect(!!r.fail && !!r.pass, `${r.id} needs a fail and a pass`).toBe(true);
-      }
     });
   }
-  it('lists the rules it cannot make fail, each with its reason', () => {
-    const unpaired = SCRIPTS.flatMap((s) => s.rules.filter((r) => r.unpaired).map((r) => `  ${s.file}: ${r.id}: ${r.unpaired}`));
-    console.info(unpaired.length ? `unpaired script rules:\n${unpaired.join('\n')}` : 'unpaired script rules: none');
-  });
 });
 
 describe('every place a script can fail from belongs to a listed rule', () => {
@@ -485,9 +475,9 @@ describe('every place a script can fail from belongs to a listed rule', () => {
 
 for (const s of SCRIPTS) {
   describe(`${s.file}: each rule fails on its input and is silent on the corrected one`, () => {
-    for (const r of s.rules.filter((x) => !x.unpaired)) {
-      it(`${r.id}: fails`, r.fail!, 60_000);
-      it(`${r.id}: passes`, r.pass!, 60_000);
+    for (const r of s.rules) {
+      it(`${r.id}: fails`, r.fail, 60_000);
+      it(`${r.id}: passes`, r.pass, 60_000);
     }
   });
 }

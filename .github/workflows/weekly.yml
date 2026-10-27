@@ -18,9 +18,9 @@
 #   pins: a browser that changes what a suite measures (a phone's viewport widened to its overflow, 2026-10-27) turns a
 #   check blind between releases, and only a run on the week's browser sees it.
 # - `postgres`: the Postgres code the skill's references hand a team (references/live.md's LISTEN and NOTIFY adapter, the
-#   pool and pooler guidance of references/existing-project.md), run by tests/deep-postgres.test.ts against a Postgres
-#   and a PgBouncer in transaction mode, both service containers. A release skips that file: it needs the two services
-#   and `pg`, which the template does not install. A skipped case fails this job.
+#   pool and pooler guidance of references/existing-project.md), run by scripts/fixtures/postgres/postgres.test.ts
+#   against a Postgres and a PgBouncer in transaction mode, both service containers. It needs the two services and `pg`,
+#   which the template does not install, so it lives outside tests/ and only this job runs it.
 # - `atlas`: the browser audit of the Design Atlas (`node scripts/audit.ts --atlas`): every card's page and its bare
 #   preview, the token views, the page specifications and the guides, at 1440 and 390px in both themes. No verify depth
 #   runs it, and a card's specimens are where its extreme shapes live: a figure running past its tile and a preview wider
@@ -296,8 +296,7 @@ jobs:
           set -euo pipefail
           mkdir -p out
           for i in $(seq 1 30); do pg_isready -h 127.0.0.1 -p 6432 -U meridian && break; sleep 1; done
-          pnpm exec vitest run tests/deep-postgres --no-file-parallelism 2>&1 | tee out/weekly-postgres.txt
-          if grep -q skipped out/weekly-postgres.txt; then echo "postgres: a case was skipped, so it judged nothing"; exit 1; fi
+          pnpm exec vitest run --config scripts/fixtures/postgres/vitest.config.ts 2>&1 | tee out/weekly-postgres.txt
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         if: always()
         with:
