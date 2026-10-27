@@ -33,18 +33,21 @@ import { TicketsView } from '@/views/tickets';
  * under a title that read "staging", and nothing had drawn a name long enough to show the rest.
  */
 const LONG = 'Northwind Global Payments Reconciliation Platform for Enterprise Customers';
+/** A person's name and a company's domain as long as real ones run. */
+const PERSON = 'Maximiliane Alexandrina Featherstonehaugh-Montgomery';
+const DOMAIN = 'northwind-global-payments-reconciliation';
 const none = async () => { throw new Error('not in this test'); };
 const now = new Date().toISOString();
 
 const VIEWS: Record<string, () => Promise<ReactElement>> = {
   customers: async () => <CustomersView rows={((await readAll('customers')).rows as CustomerRecord[]).slice(0, 4).map(customerRow).map((c) => ({ ...c, name: `${LONG} ${c.name}` }))} />,
-  keys: async () => <KeysView rows={((await read('keys')).rows as ApiKey[]).slice(0, 4).map((k) => ({ ...k, name: `${LONG} ${k.name}` }))} now={now} createKey={none} revokeKey={none} />,
+  keys: async () => <KeysView rows={((await read('keys')).rows as ApiKey[]).slice(0, 4).map((k) => ({ ...k, name: `${LONG} ${k.name}`, owner: `${PERSON} ${k.owner}` }))} now={now} createKey={none} revokeKey={none} />,
   members: async () => {
     const members = ((await read('members', {})).rows as Member[]).slice(0, 4);
     const access = Object.fromEntries(await Promise.all(members.map(async (m) => [m.id, await memberAccess(m.id)] as const)));
-    return <MembersView rows={members.map((m) => ({ ...m, name: `${LONG} ${m.name}` }))} now={now} actions={{ invite: none, setStatus: none, remove: none, assignRole: none } as never} access={access} roles={await invitableRoles()} />;
+    return <MembersView rows={members.map((m) => ({ ...m, name: `${LONG} ${m.name}`, email: m.email.replace('@', `@${DOMAIN}.`) }))} now={now} actions={{ invite: none, setStatus: none, remove: none, assignRole: none } as never} access={access} roles={await invitableRoles()} />;
   },
-  tickets: async () => <TicketsView rows={(await readTickets()).rows.slice(0, 4).map((t) => ({ ...t, title: `${LONG} ${t.title}`, service: `${LONG} ${t.service}` }))} now={now} services={[]} assignees={[]} createTicket={none as never} updateTicket={none as never} />,
+  tickets: async () => <TicketsView rows={(await readTickets()).rows.slice(0, 4).map((t) => ({ ...t, title: `${LONG} ${t.title}`, service: `${LONG} ${t.service}`, assignee: `${PERSON} ${t.assignee ?? ''}` }))} now={now} services={[]} assignees={[]} createTicket={none as never} updateTicket={none as never} />,
   releases: async () => <ReleasesView rows={(await readReleases()).rows.slice(0, 4).map((r) => ({ ...r, service: `${LONG} ${r.service}`, version: `${r.version}-${LONG.replace(/\s/g, '-')}` }))} now={now} />,
   tests: async () => <TestsView rows={(await readRuns()).rows.slice(0, 4).map((r) => ({ ...r, release: r.release ? { ...r.release, service: `${LONG} ${r.release.service}` } : r.release }))} now={now} />,
 };
@@ -68,6 +71,11 @@ describe('every list view keeps the whole of a text it cuts', () => {
       expect(cut.length, `${name} cuts nothing: the long names did not reach a cut element`).toBeGreaterThan(0);
       const lost = cut.filter((n) => !keeps(n)).map((n) => `<${n.localName}> "${whole(n.textContent).slice(0, 60)}"`);
       expect([...new Set(lost)].join("\n"), `${name} cuts text and keeps it nowhere`).toBe("");
+      // A product's text is never held on one line with no end: a name or an address as long as real ones run widens
+      // its column past the table's frame (Members' email, 2px at 1440 with a long domain). It is cut and kept, or it
+      // may break: at its spaces, or an address before its @.
+      const held = [...container.querySelectorAll('[class~="whitespace-nowrap"]')].filter((n) => /Featherstonehaugh|northwind-global-payments/.test(n.textContent ?? '') && !n.closest('[class~="truncate"]'));
+      expect(held.map((n) => `<${n.localName}> "${whole(n.textContent).slice(0, 60)}"`).join('\n'), `${name} holds a long name on one line`).toBe('');
     });
   }
 });

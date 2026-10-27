@@ -155,7 +155,7 @@ export function TicketsView({ rows, now, revisions, may = { create: true, update
     { key: 'state', header: 'State', mobile: may.update ? 'hidden' : 'status', sortValue: (t) => t.state, cell: (t) => <Badge tone={STATE_TONE[t.state]} dot>{LABEL(t.state)}</Badge> },
     {
       key: 'assignee', header: 'Assigned to', muted: true, hideBelow: 'lg', mobile: 'fact', sortValue: (t) => t.assignee ?? '',
-      cell: (t) => (t.assignee ? <span className="whitespace-nowrap">{t.assignee}</span> : <span className="text-ink-3">Nobody</span>),
+      cell: (t) => (t.assignee ? t.assignee : <span className="text-ink-3">Nobody</span>),
       mobileCell: (t) => (t.assignee ? `Assigned to ${t.assignee}` : 'Assigned to nobody'),
     },
     { key: 'opened', header: 'Opened', numeric: true, muted: true, hideBelow: 'lg', mobile: 'hidden', sortValue: (t) => t.openedAt, cell: (t) => formatRelative(t.openedAt, asOf) },

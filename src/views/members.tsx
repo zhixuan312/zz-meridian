@@ -59,6 +59,12 @@ type Draft = { id: string; name: string; role: MainRole; addOns: AddOn[]; roles:
 
 /** `now` is the data's clock, so "last active" reads the same on the server and in the browser. */
 
+/** An address that may break before its @ when its column has no room, and is whole on one line when it has. */
+function EmailText({ email }: { email: string }) {
+  const at = email.indexOf('@');
+  return at > 0 ? <span>{email.slice(0, at)}<wbr />{email.slice(at)}</span> : <span>{email}</span>;
+}
+
 export function MembersView({ rows, now, revisions, actions, access, roles, workspace }: { rows: Member[]; now: string; /** The revisions the page's server read the members at: the live stream's first open asks what moved since. */ revisions?: Revisions; actions: MemberActions; /** What the boundary says of every row, read once by the page: the actions it offers this caller and why not. */ access: Record<string, MemberRowAccess>; /** The roles the page may put on an invitation, from the boundary's `invitableRoles`. */ roles: readonly MainRole[]; /** The workspace's name as its record holds it, where the page could read it: the invitation names it. */ workspace?: string }) {
   useShareView(membersContext(rows, now));
   const asOf = new Date(now);
@@ -213,11 +219,11 @@ export function MembersView({ rows, now, revisions, actions, access, roles, work
       ),
     },
     // The name is the row's identifier and the table's floor; the email is not a second one, and it is a fixed-width
-    // thing (a domain and a local part), so it is drawn whole on one line at the width its longest one needs. Every
-    // column is as wide as its content and the table puts its spare in the gaps between columns, an equal share in each,
-    // so neither column claims the room. Held on one line, the email column is as wide as the longest address and
-    // nothing is cut.
-    { key: 'email', header: 'Email', muted: true, hideBelow: 'lg', sortValue: (m) => m.email, cell: (m) => <span className="whitespace-nowrap">{m.email}</span> },
+    // thing (a domain and a local part), so it is drawn whole at the width its longest one needs. Every column is as
+    // wide as its content and the table puts its spare in the gaps between columns, an equal share in each, so neither
+    // column claims the room. Where there is no room, a company's long domain breaks the address before its @ (and at
+    // the domain's own hyphens), so nothing is cut and the table never runs past its frame.
+    { key: 'email', header: 'Email', muted: true, hideBelow: 'lg', sortValue: (m) => m.email, cell: (m) => <EmailText email={m.email} /> },
     // The role as a person reads it, add-ons and all, as a column and as a fact on the phone card (AC-3.2).
     { key: 'role', header: 'Role', hideBelow: 'sm', mobile: 'fact', sortValue: (m) => m.role, cell: (m) => roleLabel(m), mobileCell: (m) => roleLabel(m) },
     { key: 'team', header: 'Team', muted: true, hideBelow: 'xl', sortValue: (m) => m.team, cell: (m) => m.team },

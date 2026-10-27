@@ -112,7 +112,7 @@ export function KeysView({ rows, now, revisions, createKey, revokeKey, may = { c
         </span>
       ),
     },
-    { key: 'owner', header: 'Created by', muted: true, hideBelow: 'lg', cell: (k) => <span className="whitespace-nowrap">{k.owner}</span> },
+    { key: 'owner', header: 'Created by', muted: true, hideBelow: 'lg', cell: (k) => k.owner },
     { key: 'created', header: 'Created', numeric: true, muted: true, hideBelow: 'lg', mobile: 'fact', sortValue: (k) => k.created, cell: (k) => formatDate(k.created), mobileCell: (k) => `Created ${formatDate(k.created)}` },
     {
       key: 'used', header: 'Last used', numeric: true, mobile: 'fact', sortValue: (k) => k.lastUsed ?? '',
