@@ -59,6 +59,51 @@ export function monotonePath(pts: [number, number][], from = 0, to = pts.length 
   return d;
 }
 
+/**
+ * Levels that end exactly at `min` and `max`, for a scale whose domain the caller holds so charts compare row by row.
+ * The step is a nice one (1, 2, 2.5 or 5 times a power of ten) that divides the span into 2 to 8 intervals with `min` on
+ * a multiple of it; of those, the interval count nearest `count` wins, the smaller step on a tie. With no such step the
+ * levels are the bounds, and zero between them when the span crosses it. A span that is not a range is `ticksBetween`'s.
+ */
+export function heldTicks(min: number, max: number, count = 4): number[] {
+  if (!Number.isFinite(min) || !Number.isFinite(max) || !(max > min)) return ticksBetween(min, max, count);
+  const span = max - min;
+  const top = Math.floor(Math.log10(span));
+  let best = 0, bestN = 0;
+  for (let k = top - 2; k <= top; k++) {
+    for (const m of [1, 2, 2.5, 5]) {
+      const step = m * 10 ** k;
+      const n = Math.round(span / step), onSpan = Math.abs(span / step - n) < 1e-6;
+      const lead = min / step, onStep = Math.abs(lead - Math.round(lead)) < 1e-6;
+      if (!onSpan || !onStep || n < 2 || n > 8) continue;
+      const gap = Math.abs(n - count), bestGap = Math.abs(bestN - count);
+      if (!best || gap < bestGap || (gap === bestGap && step < best)) { best = step; bestN = n; }
+    }
+  }
+  const round = (v: number) => Number(v.toFixed(12)) || 0;
+  if (!best) return min < 0 && max > 0 ? [min, 0, max] : [min, max];
+  return Array.from({ length: bestN + 1 }, (_, i) => round(min + i * best));
+}
+
+/** A straight-segment path through points: the same signature as `monotonePath`, for a line that is not smoothed. */
+export function linearPath(pts: [number, number][], from = 0, to = pts.length - 1): string {
+  if (pts.length < 2) return pts.length ? `M${pts[0][0]},${pts[0][1]}` : '';
+  let d = `M${pts[from][0]},${pts[from][1]}`;
+  for (let i = from + 1; i <= to; i++) d += `L${pts[i][0]},${pts[i][1]}`;
+  return d;
+}
+
+/** A step path (step after): each value is held level to the next point's x, then moves straight to that point's y. */
+export function stepPath(pts: [number, number][], from = 0, to = pts.length - 1): string {
+  if (pts.length < 2) return pts.length ? `M${pts[0][0]},${pts[0][1]}` : '';
+  let d = `M${pts[from][0]},${pts[from][1]}`;
+  for (let i = from + 1; i <= to; i++) d += `H${pts[i][0]}V${pts[i][1]}`;
+  return d;
+}
+
+/** How a line is drawn through its points: smoothed, straight, or held level between them. */
+export type Curve = 'monotone' | 'linear' | 'step';
+
 /** The categorical palette's slots: `--series-1` to `--series-6`. A seventh named nothing, and its part drew transparent. */
 export type SeriesSlot = 1 | 2 | 3 | 4 | 5 | 6;
 export const SERIES_SLOTS = 6;
