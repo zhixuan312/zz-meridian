@@ -68,7 +68,7 @@ function casesFor(suite: string, command: (page: string, base: string) => string
 }
 
 describe('audit', () => {
-  // Five widths in two themes per page, with Chrome started once per run.
+  // Six widths in two themes per page, with Chrome started once per run.
   casesFor('audit', (page, base) => ['scripts/audit.ts', '--base', base, '--routes', page], 180_000);
 });
 

@@ -199,11 +199,12 @@ document.getElementById('first').addEventListener('keydown', (e) => { if (e.key 
 
   // A page that stops answering. The script blocks the main thread longer than `scripts/lib/chrome.ts` gives a protocol
   // command, so every measurement of this page times out — and the audit has to say so for this page and go on to the
-  // next, rather than ending the run and leaving the other 183 routes unmeasured. Only under 500 px, so the pair of
-  // phone runs pays the thirty seconds and the three desk widths prove the page is otherwise clean.
+  // next, rather than ending the run and leaving the other 183 routes unmeasured. Only under 350 px, so the pair of
+  // 320 px runs pays the thirty seconds and the other widths, 390 among them, prove the page is otherwise clean: at
+  // 500 px both phone widths hung, four runs of forty seconds, and the case ran past its 180 s on the release runner.
   '/deep-hangs': deep('A page that stops answering', {
     body: '<p>Quarterly revenue held steady across every region and segment.</p>',
-    script: `if (matchMedia('(max-width: 500px)').matches) { const until = Date.now() + 40000; while (Date.now() < until) {} }`,
+    script: `if (matchMedia('(max-width: 350px)').matches) { const until = Date.now() + 40000; while (Date.now() < until) {} }`,
   }),
 
   // ---- an SVG's text: painted by `fill`, on whatever the SVG painted behind it ----
