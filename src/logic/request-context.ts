@@ -17,6 +17,9 @@ export type RequestData = {
   now: string;
 };
 
+/** The address of one request, its id encoded as a customer's is (`customerAddress`). */
+export const requestAddress = (id: string) => `/requests/${encodeURIComponent(id)}`;
+
 export function requestContext({ request: r, trace, routeP95, statusText, payloadBytes, now }: RequestData): SharedContext {
   const failed = r.status >= 500 || r.status === 429;
   const { tokens, cost } = usageOf(r);
@@ -26,11 +29,11 @@ export function requestContext({ request: r, trace, routeP95, statusText, payloa
   if (heaviest) insights.push({ text: `Most of its time went to ${heaviest.name} (${heaviest.detail}): ${formatDuration(heaviest.duration)}, ${formatPercent(heaviest.duration / total, 0)} of ${formatDuration(total)}.` });
   if (routeP95) insights.push({ text: `Its latency is ${(r.latency / routeP95).toFixed(1)}× the p95 of ${r.method} ${r.route} over the last 30 complete days (${formatDuration(routeP95)}): ${r.latency > routeP95 ? 'slower than 95 of 100 requests to this route' : 'within what this route usually takes'}.`, evidence: `/requests?q=${encodeURIComponent(r.route)}` });
   if (failed) insights.push({ text: `It failed (${r.status} ${statusText}), so it counts in the error rate; a person can replay it from this page.`, evidence: `/requests?q=${encodeURIComponent(r.customer)}&status=${r.status === 429 ? '4xx' : '5xx'}` });
-  if (r.replayOf) insights.push({ text: `It replays ${r.replayOf}.`, evidence: `/requests/${r.replayOf}` });
+  if (r.replayOf) insights.push({ text: `It replays ${r.replayOf}.`, evidence: requestAddress(r.replayOf) });
   return {
     view: 'request',
     title: `Request ${r.id}`,
-    address: `/requests/${r.id}`,
+    address: requestAddress(r.id),
     scope: `one request, received ${formatDateTime(r.at)} UTC`,
     facts: [
       { label: 'Request', value: `${r.method} ${r.route}${r.model ? `, served by ${r.model}` : ''}` },

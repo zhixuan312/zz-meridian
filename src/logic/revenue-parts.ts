@@ -16,6 +16,7 @@ import { PERIOD_DAYS, type Period } from '@/lib/period';
 import { customerFigures, kept, sentMore, week } from './customers-context';
 import { windowsOf } from './home-parts';
 import { STAGES, revenueHead, revenueLine, type LadderRow, type RevenueData, type Stage, type WallOrder, type WallTile, type WorthLine } from './revenue-context';
+import { customerAddress } from './customer-context';
 
 /** How many tiles the wall holds, customers a stage names, best days a tile counts and lines worth a look. */
 const WALL = 8;
@@ -128,7 +129,7 @@ function ladderOf(rows: readonly CustomerRecord[], counted: readonly CustomerRec
  */
 function worthOf(counted: readonly CustomerRecord[], today: string): WorthLine[] {
   const lines: WorthLine[] = [];
-  const named = (c: Pick<CustomerRecord, 'id' | 'name'>) => ({ name: c.name, href: `/customers/${c.id}` });
+  const named = (c: Pick<CustomerRecord, 'id' | 'name'>) => ({ name: c.name, href: customerAddress(c.id) });
   const owing = counted.filter((c) => c.status === 'past due').sort((a, b) => b.revenue - a.revenue);
   if (owing.length) {
     const c = owing[0];

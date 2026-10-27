@@ -17,6 +17,7 @@ import { REGION_NAMES } from '@/data/sample';
 import { describeFilters, requestsContext, type RequestsData } from '@/logic/requests-context';
 import { activeFilters, options, REQUEST_FILTERS, REQUEST_METHODS } from '@/views/requests';
 import { MethodChip, requestColumns, StatusBadge } from '@/system/sample-cells';
+import { requestAddress } from '@/logic/request-context';
 
 /** A person's change replaces the tool's `by`: the default must be a value a write can differ from, because a key at its default is dropped from the address. */
 const PERSON = 'you';
@@ -96,7 +97,7 @@ export function EmbedRequests(data: RequestsData) {
               <li key={r.id}>
                 <button
                   type="button"
-                  onClick={() => s.openLink(`/requests/${r.id}`)}
+                  onClick={() => s.openLink(requestAddress(r.id))}
                   className="group flex w-full min-w-0 items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-fill-hover"
                 >
                   <MethodChip method={r.method} />

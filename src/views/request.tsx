@@ -19,6 +19,7 @@ import { formatDateTime, formatRelative } from '@/lib/format-date';
 import { type RequestRow, STATUS_TEXT, statusTone, usageOf, type Span } from '@/data/sample';
 import { formatBytes } from '@/system/sample-cells';
 import { domain } from '@/app.config';
+import { requestAddress } from '@/logic/request-context';
 
 const curlOf = (r: RequestRow, body: string | null) =>
   `curl -X ${r.method} https://api.${domain}${r.route} -H "Authorization: Bearer $API_KEY"` + (body ? ` -d '${body.replace(/\s+/g, ' ')}'` : '');
@@ -102,7 +103,7 @@ export function RequestView({ request: r, trace, payloads, routeP95, now, replay
     const result = await replay(r.id);
     if (!result.ok) return toast({ tone: 'critical', title: 'Not replayed', description: result.error });
     router.refresh();
-    toast({ tone: 'positive', title: `Replayed: ${result.status} ${STATUS_TEXT[result.status] ?? ''}`.trim(), description: `${r.method} ${r.route} ran again as ${result.id}.`, action: { label: 'Open', onClick: () => router.push(`/requests/${result.id}`) } });
+    toast({ tone: 'positive', title: `Replayed: ${result.status} ${STATUS_TEXT[result.status] ?? ''}`.trim(), description: `${r.method} ${r.route} ran again as ${result.id}.`, action: { label: 'Open', onClick: () => router.push(requestAddress(result.id)) } });
   });
   return (
     <PageFrame
@@ -152,7 +153,7 @@ export function RequestView({ request: r, trace, payloads, routeP95, now, replay
                     { label: 'Response size', value: formatBytes(r.bytes) },
                     { label: 'Customer', value: customerHref ? <Link href={customerHref} className="link">{r.customer}</Link> : r.customer, title: r.customer },
                     { label: 'Region', value: r.region, mono: true },
-                    ...(r.replayOf ? [{ label: 'Replay of', value: <Link href={`/requests/${r.replayOf}`} className="link font-mono text-xs">{r.replayOf}</Link>, title: r.replayOf }] : []),
+                    ...(r.replayOf ? [{ label: 'Replay of', value: <Link href={requestAddress(r.replayOf)} className="link font-mono text-xs">{r.replayOf}</Link>, title: r.replayOf }] : []),
                     ...(r.model
                       ? [
                           { label: 'Model', value: r.model, mono: true },

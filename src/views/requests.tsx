@@ -12,6 +12,7 @@ import { Records } from '@/components/templates/records';
 import { AskAbout } from '@/components/patterns/ask-about';
 import { REQUEST_METRICS, describeFilters, requestsContext } from '@/logic/requests-context';
 import { requestColumns } from '@/system/sample-cells';
+import { requestAddress } from '@/logic/request-context';
 
 type Page = Awaited<ReturnType<typeof readRequests>>;
 
@@ -59,7 +60,7 @@ export function RequestsView({ rows, total, summary, state, pageSize, updatedAt,
           rows={rows}
           columns={requestColumns}
           rowKey={(r) => r.id}
-          rowHref={(r) => `/requests/${r.id}`}
+          rowHref={(r) => requestAddress(r.id)}
           manual
           total={total}
           pageSizes={[pageSize]}

@@ -24,6 +24,7 @@ import { PERIOD_DAYS, PERIOD_LABEL } from '@/lib/period';
 import { REVENUE_METRICS, WALL_ORDERS, nextPlanWords, revenueContext, signed, yearAgoNote, type RevenueData, type WallOrder, type WorthLine } from '@/logic/revenue-context';
 import { AskPeriod } from './ask-period';
 import { Unread, unreadTile } from './unread';
+import { customerAddress } from '@/logic/customer-context';
 
 const M = REVENUE_METRICS;
 const linkClass = 'row-link inline-flex items-center gap-1 font-medium text-ink hover:text-accent-ink';
@@ -195,7 +196,7 @@ function Wall({ customers, order, onOrder }: { customers: Customers; order: Wall
             <ul className="grid grid-cols-2 gap-3 @min-[48rem]:grid-cols-4">
               {shown.map((t) => (
                 <li key={t.id} className="min-w-0">
-                  <Link href={`/customers/${t.id}`} className="block rounded-lg [&:hover_h2]:text-accent-ink">
+                  <Link href={customerAddress(t.id)} className="block rounded-lg [&:hover_h2]:text-accent-ink">
                     <MetricTile size="compact" label={t.name} value={t.revenue} format={costCompact} note={t.plan} delta={t.week} compare="vs last week" points={t.trend} />
                   </Link>
                 </li>
@@ -233,7 +234,7 @@ function Ladder({ customers }: { customers: Customers }) {
                 limit={2}
                 format={costCompact}
                 items={[
-                  ...s.shown.map((c) => ({ key: c.id, label: c.name, value: c.revenue, href: `/customers/${c.id}`, meta: c.next ? nextPlanWords(c.next) : undefined })),
+                  ...s.shown.map((c) => ({ key: c.id, label: c.name, value: c.revenue, href: customerAddress(c.id), meta: c.next ? nextPlanWords(c.next) : undefined })),
                   ...s.others.map((value, i) => ({ key: `${s.label}:${i}`, label: '', value })),
                 ]}
               />

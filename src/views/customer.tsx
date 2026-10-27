@@ -19,6 +19,7 @@ import {
   LATEST, busiestOf, customerContext, endpointsOf, requestsOf, shareOf, standingOf, thisWeekOf, titleOf, weekOf, type CustomerData,
 } from '@/logic/customer-context';
 import { Unread } from './unread';
+import { requestAddress } from '@/logic/request-context';
 
 const STATUS_TONE = { active: 'neutral', trial: 'accent', 'past due': 'critical', left: 'neutral' } as const;
 const linkClass = 'row-link inline-flex items-center gap-1 font-medium text-ink hover:text-accent-ink';
@@ -184,7 +185,7 @@ function Latest({ data, rows }: { data: CustomerData; rows: NonNullable<Customer
       rows={rows}
       columns={LATEST_COLUMNS}
       rowKey={(r) => r.id}
-      rowHref={(r) => `/requests/${r.id}`}
+      rowHref={(r) => requestAddress(r.id)}
       pageSize={LATEST}
       pageSizes={[LATEST]}
     />

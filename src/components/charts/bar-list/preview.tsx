@@ -17,7 +17,7 @@ const endpoints = ENDPOINTS.map((e) => ({
 }));
 
 /** The largest customers by what they paid, each opening its own page. */
-const customers = [...CUSTOMERS].sort((a, b) => b.revenue - a.revenue).slice(0, 8).map((c) => ({ key: c.id, label: c.name, value: c.revenue, href: `/customers/${c.id}` }));
+const customers = [...CUSTOMERS].sort((a, b) => b.revenue - a.revenue).slice(0, 8).map((c) => ({ key: c.id, label: c.name, value: c.revenue, href: `/customers/${encodeURIComponent(c.id)}` }));
 const regions = REGIONS.map((r) => ({ key: r.label, label: r.label, value: r.value }));
 
 export default function BarListPreview() {

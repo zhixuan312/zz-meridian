@@ -7,6 +7,7 @@
 import type { Condition } from '@/lib/collection';
 import type { PreparedQuery, Source } from '@/lib/explore';
 import { requestsAddress } from './requests-context';
+import { requestAddress } from './request-context';
 
 /** The statuses an error rate counts: every 5xx and the 429 of a limit, as the page's "Errors and limits" does. */
 const ERRORS = [429, ...Array.from({ length: 12 }, (_, i) => 500 + i)];
@@ -31,7 +32,7 @@ export const requestsSource: Source = {
     errorRate: { label: 'Error rate', unit: '%', definition: 'Errors and limits as a share of the requests.', derive: 'ratio', of: ['errors', 'requests'], scale: 0.01 },
     latency: { label: 'Latency p95', unit: 'ms', definition: '95 of every 100 sampled requests finished faster than this.', agg: 'p95', field: 'latency' },
   },
-  drill: { columns: ['id', 'at', 'method', 'route', 'status', 'latency', 'customer'], address: (r) => `/requests/${String(r.id)}` },
+  drill: { columns: ['id', 'at', 'method', 'route', 'status', 'latency', 'customer'], address: (r) => requestAddress(String(r.id)) },
   cannot: 'These are the requests in the sampled log, a sample of the latest requests the workspace received, not every request: how many came in a day is on Usage (/usage).',
 };
 

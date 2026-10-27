@@ -7,6 +7,7 @@
 import { read } from '@/data/read';
 import type { PreparedQuery } from '@/lib/explore';
 import { customerAddress } from './customer-context';
+import { requestAddress } from './request-context';
 
 export const customerExplore: PreparedQuery<{ id: string }> = {
   sources: {
@@ -22,7 +23,7 @@ export const customerExplore: PreparedQuery<{ id: string }> = {
         requests: { label: 'Requests', unit: 'requests', definition: 'Its requests in the sampled log.', agg: 'count' },
         latency: { label: 'p95 latency', unit: 'ms', definition: 'The latency of its sampled requests at the 95th percentile.', agg: 'p95', field: 'latency' },
       },
-      drill: { columns: ['id', 'at', 'method', 'route', 'status', 'latency'], address: (r) => `/requests/${String(r.id)}` },
+      drill: { columns: ['id', 'at', 'method', 'route', 'status', 'latency'], address: (r) => requestAddress(String(r.id)) },
       cannot: 'These are its requests in the sampled log, a sample of the latest requests the workspace received, not every request it sent: what it sent over 30 days is in its own figures.',
     },
     customers: {

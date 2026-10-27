@@ -30,7 +30,7 @@ export default function DataTablePreview() {
           rows={rows.filter((r) => !q || r.route.includes(q) || r.customer.toLowerCase().includes(q.toLowerCase()))}
           columns={requestColumns}
           rowKey={(r) => r.id}
-          rowHref={(r) => `/requests/${r.id}`}
+          rowHref={(r) => `/requests/${encodeURIComponent(r.id)}`}
           state={state}
           onStateChange={(p) => setState((s) => ({ ...s, ...p }))}
           filtered={q !== ''}

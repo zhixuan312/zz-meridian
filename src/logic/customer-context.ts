@@ -24,7 +24,11 @@ export type CustomerData = {
   now: string;
 };
 
-export const customerAddress = (id: string) => `/customers/${id}`;
+/**
+ * The address of one customer. The id is the product's and is encoded: one holding a slash, a hash, a question mark or a
+ * space named another address (`/customers/acme/eu` is no page), and the page reads its segment decoded.
+ */
+export const customerAddress = (id: string) => `/customers/${encodeURIComponent(id)}`;
 
 /** All of a customer's requests in the sampled log: the log filtered to its name. */
 export const requestsOf = (name: string) => `/requests?q=${encodeURIComponent(name)}`;

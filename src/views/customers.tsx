@@ -14,6 +14,7 @@ import { formatCompact, formatCost, formatPercent } from '@/lib/format';
 import { formatDate } from '@/lib/format-date';
 import { useShareView } from '@/components/base/use-share-view';
 import { CUSTOMER_METRICS, customerFigures, customersContext, pastDueNote, under, type CustomerRow } from '@/logic/customers-context';
+import { customerAddress } from '@/logic/customer-context';
 
 const PLAN_TONE = { Enterprise: 'accent', Scale: 'neutral', Starter: 'neutral' } as const;
 /** Colour only where a row needs a look: past due and trial. Active is the normal case, so it stays quiet, and a customer that has left is history. */
@@ -79,7 +80,7 @@ export function CustomersView({ rows }: { rows: CustomerRow[] }) {
           columns={columns}
           rowKey={(c) => c.id}
           empty={{ title: 'No customers yet', body: 'A customer appears here with their plan and usage once they have an account.' }}
-          rowHref={(c) => `/customers/${c.id}`}
+          rowHref={(c) => customerAddress(c.id)}
           state={{ sort: f.sort, dir: f.dir, page: f.page }}
           onStateChange={set}
           filtered={isFiltered}

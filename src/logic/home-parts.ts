@@ -22,6 +22,7 @@ import { HISTORY_UNREAD, handed, inDays, type PageHead, type ServiceNow } from '
 import { INCIDENTS_OPEN, SERVICES_OPERATIONAL, SOLD_SLOTS, homeLine, homeTitle, unwellNames, type HomeData, type HomeFigure, type HomeWindow, type WorthKnowing } from './home-context';
 import { releaseMoment, releasesAddress, releaseFigures, stageOf } from './releases-context';
 import { ticketCounts } from './tickets-context';
+import { customerAddress } from './customer-context';
 
 /** The most facts "A year, counted" states, and the most lines worth knowing. */
 const YEAR_FACTS = 5;
@@ -203,7 +204,7 @@ function worthKnowing({ incidents, customers, releases, now }: { incidents: Inci
   const over = revenue ? [...counted].sort((a, b) => b.revenue - a.revenue).filter((c) => c.revenue / revenue >= at) : [];
   if (over.length) {
     const others = over.length - 1;
-    lines.push({ text: `${over[0].name} pays ${formatPercent(over[0].revenue / revenue, 1)} of the revenue of the last 30 days${others ? `, and ${others} other ${plural(others, 'customer pays', 'customers pay')} ${share(at)} or more` : ''}`, href: `/customers/${over[0].id}` });
+    lines.push({ text: `${over[0].name} pays ${formatPercent(over[0].revenue / revenue, 1)} of the revenue of the last 30 days${others ? `, and ${others} other ${plural(others, 'customer pays', 'customers pay')} ${share(at)} or more` : ''}`, href: customerAddress(over[0].id) });
   }
   const ready = (releases ?? []).filter((r) => stageOf(r) === 'ready').sort((a, b) => (releaseMoment(a) < releaseMoment(b) ? 1 : -1));
   if (ready.length) {

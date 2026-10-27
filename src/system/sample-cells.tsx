@@ -14,6 +14,7 @@ import { formatDateTime, formatRelative } from '@/lib/format-date';
 import type { LoggedRequest } from '@/data/requests';
 import { DEMO_NOW } from '@/system/fixtures/sample';
 import { STATUS_TEXT, statusTone } from '@/system/fixtures/sample-records';
+import { customerAddress } from '@/logic/customer-context';
 
 export const formatBytes = (b: number) => (b >= 1_000_000 ? `${(b / 1_000_000).toFixed(1)} MB` : b >= 1000 ? `${Math.round(b / 1000)} KB` : `${b} B`);
 
@@ -69,7 +70,7 @@ export const requestColumns: Column<LoggedRequest>[] = [
     key: 'customer', header: 'Customer', muted: true, mobile: 'fact', hideBelow: 'lg', sortValue: (r) => r.customer,
     // A customer the customers hold opens its own page; the link is followed as itself and does not also open the row.
     cell: (r) => (r.customerId
-      ? <Link href={`/customers/${r.customerId}`} className="row-link block max-w-48 truncate" title={r.customer}>{r.customer}</Link>
+      ? <Link href={customerAddress(r.customerId)} className="row-link block max-w-48 truncate" title={r.customer}>{r.customer}</Link>
       : <span className="block max-w-48 truncate" title={r.customer}>{r.customer}</span>),
   },
   { key: 'region', header: 'Region', muted: true, hideBelow: 'lg', cell: (r) => <span className="font-mono text-xs whitespace-nowrap">{r.region}</span> },
