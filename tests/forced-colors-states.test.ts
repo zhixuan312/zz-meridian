@@ -32,6 +32,10 @@ const STATES: [RegExp, string][] = [
   [/data-\[state=on\]/, "[data-state='on']"],
   [/data-\[state=active\]/, "[data-state='active']"],
   [/data-\[state=checked\]/, "[data-state='checked']"],
+  // Focus too: a field that removes its outline tells focus by its border and a ring, and a menu its highlighted item by
+  // a fill, both gone in a forced palette, so a keyboard reader loses where they are.
+  [/outline-none|outline-hidden/, ':focus-visible'],
+  [/data-highlighted:/, '[data-highlighted]'],
 ];
 
 describe('a chosen item is told apart under forced colours', () => {

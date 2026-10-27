@@ -240,6 +240,11 @@
   }
   :is(a, button, [role]:not([role='tabpanel'])):is([aria-current='page'], [aria-pressed='true'], [aria-selected='true'], [aria-checked='true'], [data-state='on'], [data-state='active'], [data-state='checked']) * { color: HighlightText; }
   [data-swatch] { forced-color-adjust: none; }
+  /* Where the reader is, too: a field tells focus by its border and a ring and a menu its highlighted item by a fill, and
+     both are gone here, so the outline a field removed comes back in Highlight, and a highlighted item is filled with it. */
+  :focus-visible { outline: 2px solid Highlight; outline-offset: 2px; }
+  [data-highlighted] { forced-color-adjust: none; background-color: Highlight; color: HighlightText; }
+  [data-highlighted] * { color: HighlightText; }
   /* A switch's thumb is a fill too, and an off switch without one reads as an empty frame. */
   [role='switch'] > * { forced-color-adjust: none; background-color: CanvasText; }
   [role='switch'][data-state='checked'] > * { background-color: HighlightText; }
