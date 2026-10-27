@@ -77,7 +77,10 @@ export function FilterBar({
 
   return (
     <div className={cn('@container flex min-w-0 flex-col gap-3', className)}>
-      <div className="flex min-w-0 items-center gap-2">
+      {/* Under 24rem the search takes a line of its own and the Filters button and Ask share the line under it: the row
+          needs 336px for the search's floor, Filters with its count and Ask, which a 320px phone's card (246px) and a
+          1024px window with the assistant open (273px) do not give it. */}
+      <div className="flex min-w-0 items-center gap-2 @max-[24rem]:flex-wrap">
         {search ? (
           <SearchInput
             size="sm"
@@ -88,7 +91,7 @@ export function FilterBar({
             // A floor, so the hint is never cut to a different word on a 2x display than on a 1x one (issue #93): the bar
             // gave the field whatever five facets left, 129px at a 1440px window on 2x, where the placeholder needs 134.
             // The facets truncate their own labels to make the room.
-            className="min-w-40 flex-1 @min-[52rem]:max-w-72"
+            className="min-w-40 flex-1 @max-[24rem]:basis-full @min-[52rem]:max-w-72"
           />
         ) : null}
         <div className="flex min-w-0 items-center gap-2 @max-[52rem]:hidden">{selects('sm')}</div>

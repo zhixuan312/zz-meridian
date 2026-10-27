@@ -1,6 +1,8 @@
 'use client';
 
 import { useState } from 'react';
+import { SurfaceOverride } from '@/components/base/surface';
+import { AskAbout } from '@/components/patterns/ask-about';
 import { Specimen } from '@/system/specimen';
 import { Segmented } from '@/components/ui/segmented';
 import { FilterBar } from '.';
@@ -40,18 +42,23 @@ export default function FilterBarPreview() {
           onClear={() => setAgent({ status: 'all', region: 'all', by: '' })}
         />
       </Specimen>
-      <Specimen label="Narrow" note="Under 52rem of its own width the search takes the row and the filters move behind one Filters button with a count, opening a sheet. Here, at a phone's 360px." stack>
-        <div className="w-full max-w-[360px]">
-          <FilterBar
-            search={{ value: narrow.q, onChange: (q2) => setNarrow((n) => ({ ...n, q: q2 })), placeholder: 'Search requests' }}
-            filters={[
-              { key: 'status', label: 'Status', value: narrow.status, onChange: (v) => setNarrow((n) => ({ ...n, status: v })), options: opts(['2xx', '4xx', '5xx']) },
-              { key: 'method', label: 'Method', value: narrow.method, onChange: (v) => setNarrow((n) => ({ ...n, method: v })), options: opts(['GET', 'POST', 'PUT', 'DELETE']) },
-            ]}
-            result="12 requests"
-            onClear={() => setNarrow({ q: '', status: 'all', method: 'all' })}
-          />
-        </div>
+      <Specimen label="Narrow" note="Under 52rem of its own width the filters move behind one Filters button with a count, opening a sheet; under 24rem the search takes a line of its own and Filters and Ask the line under it. Here at 360px, and at 246px: a 320px phone's card, or a 1024px window with the assistant open." stack>
+        <SurfaceOverride surface={{ kind: 'embed', connected: true, ask: () => {} }}>
+          {['max-w-[360px]', 'max-w-[246px]'].map((w) => (
+            <div key={w} className={`w-full ${w}`}>
+              <FilterBar
+                search={{ value: narrow.q, onChange: (q2) => setNarrow((n) => ({ ...n, q: q2 })), placeholder: 'Search requests' }}
+                filters={[
+                  { key: 'status', label: 'Status', value: narrow.status, onChange: (v) => setNarrow((n) => ({ ...n, status: v })), options: opts(['2xx', '4xx', '5xx']) },
+                  { key: 'method', label: 'Method', value: narrow.method, onChange: (v) => setNarrow((n) => ({ ...n, method: v })), options: opts(['GET', 'POST', 'PUT', 'DELETE']) },
+                ]}
+                result="12 requests"
+                ask={<AskAbout question="What do the 5xx requests have in common?" />}
+                onClear={() => setNarrow({ q: '', status: 'all', method: 'all' })}
+              />
+            </div>
+          ))}
+        </SurfaceOverride>
       </Specimen>
     </>
   );
