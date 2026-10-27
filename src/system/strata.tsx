@@ -23,7 +23,7 @@ export function Strata({ sections }: { sections: Layer[] }) {
           </span>
           <span aria-hidden className="hidden min-w-0 justify-end sm:flex"><Mini id={l.id} /></span>
           <span className="flex items-center gap-2 text-xs text-ink-3">
-            <span className="t-num font-mono">{l.count}</span>
+            <span className="t-num">{l.count}</span>
             <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5 group-hover:text-ink" />
           </span>
         </Link>

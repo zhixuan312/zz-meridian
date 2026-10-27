@@ -163,7 +163,7 @@ export default function AtlasHome() {
       </section>
 
       <footer className="mt-24 flex flex-wrap items-center gap-4 border-t border-line pt-8 text-xs text-ink-3">
-        <span className="font-mono tracking-[0.08em] uppercase">Generated from this repository</span>
+        <span className="font-medium">Generated from this repository</span>
         <span className="ml-auto">ZZ Meridian · MIT</span>
       </footer>
     </div>

@@ -37,13 +37,13 @@ Never two featured cards side by side, and never more than two figures in one: a
 | Part | Spec |
 |---|---|
 | Card | `surface`, `radius-xl` 24px, a 1px `line` hairline, `card-pad` (20 to 28px) inside |
-| Kicker | `text-2xs` 11px mono caps in `accent-ink` |
+| Kicker | `t-kicker`: `text-xs` 12px, 500, as written, in `accent-ink` |
 | Hero figure | `text-hero` (52 to 80px). In a half, `text-page` (36 to 56px) while the card is 42rem to under 64rem wide (588 to 895px), and `text-hero` from 64rem, so nine characters of number fit half a card as they fit a whole one |
 | Pill | At least 28px tall, fully rounded, `text-xs` 12px, 12px of padding at each end. It grows a line rather than cutting its words |
 | Caption | `text-sm` 13px in `ink-2`, 12px under the figure |
 | Finding | `text-sm` 13px in `ink-2`, 8px under what is above it; the dot is 8px in `ink-3`, 8px before the text, on the first line's baseline |
 | Chart | 16px under what is above it and 8px into the card's padding at each side; never under 220px tall |
-| Foot | A 1px `line` hairline above; `card-pad` at the sides and 16px above and below. A label is `text-2xs` 11px mono caps in `ink-2`; its figure is `text-md` 16px medium in `ink`, tabular; 32px between figures |
+| Foot | A 1px `line` hairline above; `card-pad` at the sides and 16px above and below. A label is `text-xs` 12px, 500, in `ink-2`; its figure is `text-md` 16px medium in `ink`, tabular; 32px between figures |
 | Between two halves | A 1px `line` hairline, edge to edge of the card |
 
 ## Composition

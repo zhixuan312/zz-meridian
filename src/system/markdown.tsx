@@ -41,7 +41,7 @@ export function Doc({ md, className }: { md: string; className?: string }) {
             </div>
           ),
           thead: ({ children }) => <thead className="border-b border-line bg-surface-sunk/70">{children}</thead>,
-          th: ({ children }) => <th className="px-4 py-2.5 font-mono text-2xs font-regular tracking-[0.1em] text-ink-3 uppercase">{children}</th>,
+          th: ({ children }) => <th className="px-4 py-2.5 text-xs font-medium text-ink-3">{children}</th>,
           tr: ({ children }) => <tr className="border-b border-line last:border-0">{children}</tr>,
           td: ({ children }) => <td className="px-4 py-3 align-top text-ink-2 [&_code]:whitespace-nowrap">{children}</td>,
           blockquote: ({ children }) => <blockquote className="my-5 border-l-2 border-accent pl-4 text-ink">{children}</blockquote>,

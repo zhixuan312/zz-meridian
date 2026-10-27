@@ -127,7 +127,7 @@ function Shelf({ nav }: { nav: AtlasNav }) {
                 onClick={() => setOpenIds((s) => { const n = new Set(s); if (n.has(sec.id)) n.delete(sec.id); else n.add(sec.id); return n; })}
                 className={cn('group flex h-9 w-full items-center gap-2.5 rounded-md px-2 text-left hover:bg-fill-hover', current === sec.id ? 'text-ink' : 'text-ink-2')}
               >
-                <span className={cn('grid size-5 place-items-center rounded-xs font-mono text-2xs', sec.num ? (current === sec.id ? 'bg-accent text-on-accent' : 'bg-fill-track text-ink-2') : 'text-ink-3')}>
+                <span className={cn('t-num grid size-5 place-items-center rounded-xs text-2xs font-medium', sec.num ? (current === sec.id ? 'bg-accent text-on-accent' : 'bg-fill-track text-ink-2') : 'text-ink-3')}>
                   {sec.num ?? <span className="size-1 rounded-full bg-current" />}
                 </span>
                 <span className="flex-1 truncate text-sm font-semibold">{sec.title}</span>
@@ -143,8 +143,8 @@ function Shelf({ nav }: { nav: AtlasNav }) {
                         <Link href={it.href} aria-current={on ? 'page' : undefined} className={cn('relative flex h-8 items-center gap-2 rounded-sm px-2.5 text-sm', on ? 'bg-accent-tint font-medium text-ink' : 'text-ink-2 hover:bg-fill-hover hover:text-ink')}>
                           {on ? <span aria-hidden className="absolute top-1.5 bottom-1.5 -left-[9px] w-0.5 rounded-full bg-accent" /> : null}
                           <span className="flex-1 truncate">{it.title}</span>
-                          {/* A template is told from the pages built from it: the layout names the mark, the shelf only draws it. */}{it.mark ? <span className="font-mono text-2xs tracking-[0.08em] text-ink-2 uppercase">{it.mark}</span> : null}
-                          {/* Only the exception is marked: most cards are beta, so a mark on every row says nothing. */}{it.status === 'draft' ? <span className="font-mono text-2xs tracking-[0.08em] text-ink-2 uppercase">{it.status}</span> : null}
+                          {/* A template is told from the pages built from it: the layout names the mark, the shelf only draws it. */}{it.mark ? <span className="text-2xs font-medium text-ink-2">{it.mark}</span> : null}
+                          {/* Only the exception is marked: most cards are beta, so a mark on every row says nothing. */}{it.status === 'draft' ? <span className="text-2xs font-medium text-ink-2">{it.status}</span> : null}
                         </Link>
                       </li>
                     );

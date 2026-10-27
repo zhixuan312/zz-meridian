@@ -11,6 +11,7 @@ Every release of ZZ Meridian, newest first. Versions follow semver: a removed or
 - **The gate names a managed file a team changed and kept nowhere.** Nothing compared a project's managed files with the hashes `.meridian/manifest.json` records between releases, so an edit nobody recorded a reason for was first met as a question in the next update. `node scripts/check.ts` prints `drift: <n> managed files differ from the release and are not in .meridian/keep.json: <paths>`, the gate repeats it after its last line and `pnpm verify` under the gate. It fails nothing; restore the file, or keep it with its reason.
 - **The Postgres code the references hand a team runs against a real Postgres, weekly.** `references/live.md`'s LISTEN and NOTIFY adapter and the pool and pooler guidance of `references/existing-project.md` were compiled and run by nothing, and each database finding reached Meridian from an adopter's production (#16, #17). `tests/deep-postgres.test.ts` runs the adapter as the reference has it (a committed change reaches its tenant and collection only, a rollback sends nothing, a connection the database ends comes back and resyncs, the last subscriber leaving closes it), holds the pool to what the reference says happens with its error listener and without it, and holds a PgBouncer in transaction mode to refusing a session setting, honouring `SET LOCAL` and not keeping a session advisory lock. The weekly job `postgres` runs it against service containers; all nine held as written.
 - **A narrowed audit measures an embed as an embed.** `node scripts/audit.ts --routes /,/embed/home` measured the embed as a page, on no host's ground, so its ink failed contrast against a transparent page (1.13:1), and it ran every other embed beside it. An embed in `--routes` is measured on its host's ground, only the embeds it names run, and `--list` marks each `(embed)`.
+- **Labels are words, not code.** The kicker (`t-kicker`), the eyebrow (`t-eyebrow`) and a Featured metric's foot labels were monospace capitals, every award site's label; they are the text's own face and case at 12px, medium, in `ink-3`. Monospace is left to identifiers: ids, keys, routes, hashes. The Atlas's numbered `01`–`05` labels are gone, and an API key's environment badge reads `Live` or `Test`.
 
 ### Fixed
 
@@ -28,6 +29,7 @@ Every release of ZZ Meridian, newest first. Versions follow semver: a removed or
 
 ### Breaking
 
+- **The `tracking-caps` token is removed.** Nothing in Meridian sets text in spaced capitals any more. A product's own `tracking-(--tracking-caps)` renders nothing: write the letter-spacing it wants, or drop the capitals.
 - **A detail route that answers an error fails.** `detailRoutes` held the missing record beside the real ones; it now goes in `missingRoutes`. The `Page` type of `scripts/lib/chrome.ts` has a `status()` member, so a stub of it in a project's own test adds one.
 - **`trendTotals` returns `(number | null)[]`.** A day no band has a value for is `null`, not `0`. A caller that adds or formats the totals handles `null` as a day with no total.
 

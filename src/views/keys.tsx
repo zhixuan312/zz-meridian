@@ -92,7 +92,7 @@ export function KeysView({ rows, now, revisions, createKey, revokeKey, may = { c
       cell: (k) => (
         <span className="flex min-w-0 items-center gap-2.5">
           <span className="truncate font-medium">{k.name}</span>
-          <Badge tone={k.env === 'live' ? 'positive' : 'neutral'} className="font-mono uppercase">{k.env}</Badge>
+          <Badge tone={k.env === 'live' ? 'positive' : 'neutral'} className="capitalize">{k.env}</Badge>
         </span>
       ),
     },
