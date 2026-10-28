@@ -94,7 +94,9 @@ export function BarList({
         const share = total ? `${((it.value / Math.max(1, total)) * 100).toFixed(1)}% of ${format(total)}` : null;
         return (
           <li key={it.key} data-row={it.key} className="group/bar" title={[named(it), format(it.value), share, it.estimate ? 'estimate' : null, hot ? highlightLabel : null].filter(Boolean).join(' · ')}>
-            <div className="mb-1.5 flex items-baseline gap-3 text-sm">
+            {/* Positioned, the words and the bar paint over the axis's gridlines, which are positioned before them; the bar
+                without the transform its animation gives it, under reduced motion, too. */}
+            <div className="relative mb-1.5 flex items-baseline gap-3 text-sm">
               {it.href ? (
                 // The row's look at rest, the accent under the pointer and the focus ring on the keyboard. The hit area is
                 // drawn outside the link, so the link does not clip: the label inside it truncates.
@@ -114,11 +116,11 @@ export function BarList({
               <div
                 data-bar
                 data-estimate={it.estimate || undefined}
-                className={cn('grow-x h-full rounded-full transition-colors duration-(--dur-hover)', hot ? 'bg-accent' : 'bg-chart-neutral group-hover/bar:bg-chart-neutral-strong')}
-                style={{ width: `${(it.value / top) * 100}%`, ['--i' as string]: n }}
+                className={cn('grow-x relative h-full rounded-full transition-colors duration-(--dur-hover)', hot ? 'bg-accent' : 'bg-chart-neutral group-hover/bar:bg-chart-neutral-strong')}
+                style={{ width: `${(Math.max(0, it.value) / top) * 100}%`, ['--i' as string]: n }}
               />
             </div>
-            {pair && it.compare != null ? <div data-compare className="mt-0.5 h-1.5 rounded-full border border-chart-neutral-strong" style={{ width: `${(it.compare / top) * 100}%` }} /> : null}
+            {pair && it.compare != null ? <div data-compare className="mt-0.5 h-1.5 rounded-full border border-chart-neutral-strong" style={{ width: `${(Math.max(0, it.compare) / top) * 100}%` }} /> : null}
           </li>
         );
       })}

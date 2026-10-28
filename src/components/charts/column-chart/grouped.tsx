@@ -100,7 +100,7 @@ export function GroupedColumns({
                   data-active={pointed ? '' : undefined}
                   data-running={unfinished ? '' : undefined}
                   data-no-data={b.none ? '' : undefined}
-                  title={b.key === highlight ? highlightLabel : undefined}
+                  title={[b.none && column >= REST && full.length * 7 > column ? full : null, b.key === highlight ? highlightLabel : null].filter(Boolean).join(' · ') || undefined}
                   className="relative h-full min-w-0 flex-1"
                   onPointerEnter={() => set(i)}
                   onPointerDown={() => set(i)}

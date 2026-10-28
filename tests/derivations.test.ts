@@ -26,6 +26,8 @@ describe('the derivations', () => {
     // The composition's own denominator is the sum of its parts, and never zero.
     expect(logic.compositionTotal([{ value: 2 }, { value: 3 }])).toBe(5);
     expect(logic.compositionTotal([])).toBe(1);
+    // A part below zero is no share of a whole: it adds nothing, so signed parts never turn the shares of the rest negative.
+    expect(logic.compositionTotal([{ value: 12 }, { value: -8 }, { value: 20 }])).toBe(32);
   });
 
   it('leaves no card computing a figure it can be handed', () => {

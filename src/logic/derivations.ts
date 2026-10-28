@@ -65,9 +65,10 @@ export function columnFold(
 }
 
 /**
- * A composition bar's own denominator: every part's `value`, and never zero, so an empty bar still divides by one and
- * draws nothing rather than a part of no whole.
+ * A composition bar's own denominator: every part's `value` above zero, and never zero, so an empty bar still divides by
+ * one and draws nothing rather than a part of no whole. A part below zero is no share of a whole and adds nothing, so
+ * signed parts never turn the shares of the rest negative.
  */
 export function compositionTotal(parts: readonly { value: number }[]): number {
-  return parts.reduce((total, part) => total + part.value, 0) || 1;
+  return parts.reduce((total, part) => total + Math.max(0, part.value), 0) || 1;
 }

@@ -2,6 +2,14 @@
 
 Every release of ZZ Meridian, newest first. Versions follow semver: a removed or renamed token, prop or card is major; a new card, token or variant is minor; a corrected value is a patch. Each entry says what breaks and what to do instead.
 
+## [Unreleased]
+
+### Fixed
+
+- **A Bar list's axis draws behind its rows.** Its gridlines, positioned before the rows, painted over every label that is not a link, the meta and each figure, and, under reduced motion, over the bars: the words and the bars now stand over them.
+- **A row or a part below zero draws nothing, never the whole track.** A Bar list row below zero set a negative width, which a browser drops, so its bar filled the track; it draws an empty bar, its figure the value it holds. A Composition bar summed its signed parts into its whole, so a negative part turned every other share negative; the whole is the sum of the parts above zero (`compositionTotal`), and a part below zero draws as a part of zero, its share `0%`. `tests/chart-semantics.test.tsx` now catches a size below zero where React sets it, which jsdom, like a browser, dropped before any check could read it.
+- **A grouped Column chart's group with no data keeps its cut word in its title.** "No data" cut to a 36 to 45px column was held whole nowhere; the group's title holds it, as a plain column's does. The Column chart's README names the grouped form's ring and readout where it named the stacked form's alone.
+
 ## [0.33.0] · 2026-10-28
 
 The charts and parts a monitoring page needs (issue #99): bars in the order given, on a held and labelled scale, two values a row, signed rows about zero, straight and step lines with a dot per reading, grouped columns, a hatch for an estimate, a section that opens in place and a dialog wide enough for a table.

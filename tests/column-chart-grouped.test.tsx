@@ -118,6 +118,8 @@ describe('estimates', () => {
     const c = await draw(<ColumnChart label="Counts" columns={plain} data-preview-index={0} />, 2);
     expect(column(c, 'a').querySelector('[data-estimate]')).not.toBeNull();
     expect(column(c, 'b').querySelector('[data-estimate]')).toBeNull();
+    // The readout: the pointed value says it is an estimate where it stands.
+    expect(column(c, 'a').textContent).toMatch(/ · estimate/);
     expect(c.querySelector('[aria-live="polite"]')?.textContent).toMatch(/\bestimate\b/);
     expect(body(c)[0][0]).toMatch(/\bestimate\b/);
     expect(c.textContent?.match(/Hatched: estimate/g)).toHaveLength(1);

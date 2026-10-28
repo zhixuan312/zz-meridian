@@ -28,6 +28,7 @@ The bar takes its container's width; the legend wraps.
 | Arriving | The bar reveals left to right over `dur-grow`. |
 | Hover | A part's native title gives its name and count. |
 | Empty | A whole of zero renders the card's Empty state. |
+| Below zero | A part below zero is no share of the whole: the whole is the sum of the parts above zero, and the part draws as a part of zero does, at the 3px sliver, its share `0%` and its count the value it holds. |
 
 ## Behaviour
 

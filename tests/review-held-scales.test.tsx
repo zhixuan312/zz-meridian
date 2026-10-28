@@ -28,6 +28,30 @@ describe('the forms of issue #99 on their edge paths', () => {
     expect(container.querySelector('[data-widened]')).toBeNull();
   });
 
+  it("a Bar list's words and bars are positioned, so its axis's gridlines, positioned before them, paint under them", () => {
+    const { container } = render(<BarList label="Regions" axis items={[{ key: 'a', label: 'A long region label', value: 40 }, { key: 'b', label: 'B', value: 10 }]} />);
+    expect(container.querySelector('[data-gridline]')).not.toBeNull();
+    for (const row of container.querySelectorAll('li[data-row]')) {
+      expect(row.firstElementChild?.classList.contains('relative')).toBe(true);
+      expect(row.querySelector('[data-bar]')?.classList.contains('relative')).toBe(true);
+    }
+  });
+
+  it('a Bar list row below zero draws an empty bar and outline, never a width a browser drops for the whole track', () => {
+    const below: string[] = [];
+    const styles = Object.getPrototypeOf(document.createElement('div').style);
+    const d = Object.getOwnPropertyDescriptor(styles, 'width')!;
+    Object.defineProperty(styles, 'width', { ...d, set(v: unknown) { below.push(String(v)); d.set!.call(this, v); } });
+    try {
+      const { container } = render(<BarList label="Change" pair={{ label: 'Now', compareLabel: 'Before' }} items={[{ key: 'a', label: 'A', value: 4, compare: -2 }, { key: 'b', label: 'B', value: -3, compare: 1 }]} />);
+      expect(below.filter((w) => w.startsWith('-'))).toEqual([]);
+      expect((container.querySelector('li[data-row="b"] [data-bar]') as HTMLElement).style.width).toBe('0%');
+      expect(container.querySelector('li[data-row="b"] [data-figure]')?.textContent).toMatch(/^-3/);
+    } finally {
+      Object.defineProperty(styles, 'width', d);
+    }
+  });
+
   it('a Bar list held at a max not above zero draws against one', () => {
     const { container } = render(<BarList label="Rates" max={0} items={[{ key: 'a', label: 'A', value: 0.25 }]} />);
     expect((container.querySelector('[data-bar]') as HTMLElement).style.width).toBe('25%');
@@ -48,6 +72,15 @@ describe('the forms of issue #99 on their edge paths', () => {
     const { container } = render(<GroupedColumns grouped running label="G" parts={parts} columns={columns} />);
     const d3 = container.querySelector('[data-column="d3"]')!;
     expect([...d3.querySelectorAll('[data-value]')].map((v) => v.textContent)).toEqual(['60', 'So far']);
+  });
+
+  it('a grouped group with no data whose words are cut at rest keeps them whole in its title, as a plain column does', () => {
+    const parts = [{ key: 'in', label: 'In' }, { key: 'out', label: 'Out' }];
+    const columns = Array.from({ length: 11 }, (_, i) => ({ key: `d${i}`, label: `D${i}`, values: i === 4 ? [null, null] : [10 + i, 5 + i] }));
+    const { container } = render(<GroupedColumns grouped label="G" parts={parts} columns={columns} />);
+    const none = container.querySelector('[data-column="d4"]')!;
+    expect(none.querySelector('[data-value]')?.textContent).toBe('No data');
+    expect(none.getAttribute('title')).toBe('No data');
   });
 
   it('a Trend chart draws no dot on its running point: nothing solid reaches a period still in progress', () => {

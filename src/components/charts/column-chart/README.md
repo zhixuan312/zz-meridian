@@ -75,7 +75,7 @@ The readout is at least 144px wide and never wider than the chart, with `space-3
 | Arriving | Columns grow from the baseline over `dur-grow`, 12ms apart; values at rest fade in over `dur-enter`. |
 | Rest | Columns, and their values where a column is 36px or wider. No readout. |
 | Hover | Plain, neutral columns step up to `chart-neutral-strong` over `dur-hover`. |
-| Pointed | By the pointer or the keys. Plain: the column takes the accent, and its value stands above it in `ink-inverse` on `surface-inverse`. Stacked: the column takes a 2px `ink` ring over `dur-hover`, its total steps up to `ink`, and the readout shows. |
+| Pointed | By the pointer or the keys. Plain: the column takes the accent, and its value stands above it in `ink-inverse` on `surface-inverse`. Stacked or grouped: the column takes a 2px `ink` ring over `dur-hover` and the readout shows; stacked, its total steps up to `ink`. |
 | Highlighted | With no column pointed at, the highlighted column is the accent one (plain) or wears the ring (stacked and grouped). Its title adds `highlightLabel`, and the table's caption names it the way the mark draws it: `Accented: {highlightLabel}` plain, `Ringed: {highlightLabel}` stacked and grouped. |
 | Focus | The plot wears a 2px `accent` outline, 4px off its box, on `radius-sm`. The ring encloses the plot's box and so all the plot draws: the gridlines, every tick's label whole, the columns, their values at rest and the pointed value. It stands 4px under the line of the zero tick's label and 2px over the line of the x labels, and encloses neither the legend nor the x labels. |
 | Running | The last column's fill at half strength, inside a 1px dashed `ink` outline, open at the baseline, 1px off the fill; "so far" where it is read. Grouped, the group's bars at half strength inside one outline. |
@@ -90,7 +90,7 @@ The readout is at least 144px wide and never wider than the chart, with `space-3
 - **Pointer**: entering or tapping a column points at it; leaving the chart lets go.
 - **Keyboard**: the plot is one Tab stop, and its ring is the plot's own outline. Left and Right move the cursor a column, Home and End go to the first and the last. With no column pointed at, the cursor starts from the last column: a first Left lands on the last but one, a first Right on the last. Escape and blur let go.
 - **One cursor**: the keys move the cursor the pointer moves. With `dates`, one a column, that cursor is the page's Meridian index, so every chart and tile on the page reads the same day.
-- **Readout**: stacked only, and only on the chart being pointed at: a chart that follows another chart's cursor on the page's Meridian rings the day and keeps its panel hidden, as the Trend chart does. It stands after a column in the first half of the plot and before one in the second, measures its own width and stays inside the chart; long labels wrap. Under 640px it pins to the plot's leading edge.
+- **Readout**: stacked and grouped, and only on the chart being pointed at: a chart that follows another chart's cursor on the page's Meridian rings the day and keeps its panel hidden, as the Trend chart does. It stands after a column in the first half of the plot and before one in the second, measures its own width and stays inside the chart; long labels wrap. Under 640px it pins to the plot's leading edge.
 - **Width**: the chart reads its own width, and every rule about width follows it, not the window, except the readout's pin to the leading edge, which follows a window under 640px.
 
 ## Surfaces

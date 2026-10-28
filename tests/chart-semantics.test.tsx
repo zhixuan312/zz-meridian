@@ -106,6 +106,17 @@ async function draw(el: ReactElement) {
 /** Everything a reader or a screen reader is given: the text, every attribute that names something, every style. */
 const said = (c: HTMLElement) => [c.textContent ?? '', ...[...c.querySelectorAll('*')].flatMap((n) => ['title', 'aria-label', 'aria-valuetext', 'style', 'd', 'x', 'y', 'width', 'height', 'cx', 'cy', 'points', 'transform'].map((a) => n.getAttribute(a) ?? ''))].join('\n');
 
+/**
+ * Every size below zero React sets on a mark. jsdom drops a negative width or height set through `style`, as a browser
+ * does (which then draws the mark at its auto size), so no attribute keeps it: it is caught where React sets it.
+ */
+const below: string[] = [];
+const styles = Object.getPrototypeOf(document.createElement('div').style);
+for (const prop of ['width', 'height', 'minWidth', 'minHeight']) {
+  const d = Object.getOwnPropertyDescriptor(styles, prop)!;
+  Object.defineProperty(styles, prop, { ...d, set(v: unknown) { if (/^\s*-\d/.test(String(v))) below.push(`${prop}: ${v}`); d.set!.call(this, v); } });
+}
+
 /** A cell that says nothing but zero, in any unit: `0`, `$0`, `0.0%`, `0 pts`. */
 const ZERO = /^[^\d]*0(?:\.0+)?(?:\s*[a-z%]+)?$/i;
 /** The levels a chart names on its axis: the Column chart's tick spans, the Trend chart's axis text. */
@@ -143,11 +154,13 @@ describe('every chart and figure, drawn with every shape a product’s data take
     describe(name, () => {
       for (const [shape, values] of Object.entries(SHAPES)) {
         it(`${shape}: no number that is not one, and no mark sized by one`, async () => {
+          below.length = 0;
           const c = await draw(drawn(values));
           const out = said(c);
           expect(out, 'a NaN, Infinity or undefined reached the page').not.toMatch(/\bNaN\b|Infinity|\bundefined\b/);
-          // A size below zero draws nothing where a mark should be, or flips it.
+          // A size below zero draws nothing where a mark should be, flips it, or is dropped and draws it at its auto size.
           expect(out, 'a mark is sized below zero').not.toMatch(/(?:^|[;\s"])(?:height|width):\s*-\d/);
+          expect(below, 'a mark is sized below zero').toEqual([]);
         });
       }
     });
