@@ -31,8 +31,11 @@ describe('the three workspaces', () => {
 });
 
 describe('the navigation as it is declared', () => {
-  it('is four groups in order: Main, Business as Accounts and Traffic, Engineering, the others unlabelled', () => {
-    expect(nav.map((g) => [g.label, [...new Set(g.items.map((i) => i.workspace))]])).toEqual([[undefined, ['main']], ['Accounts', ['business']], ['Traffic', ['business']], [undefined, ['engineering']]]);
+  it('holds each group to one workspace, and runs the groups Main, Business, Engineering in order', () => {
+    // Not the groups' labels or count: a project made before the sample split Business keeps its three groups, and this holds there too.
+    const owners = nav.map((g) => [...new Set(g.items.map((i) => i.workspace))]);
+    for (const [n, o] of owners.entries()) expect(o.length, `group ${n}`).toBe(1);
+    expect(owners.flat().filter((w, n, all) => w !== all[n - 1])).toEqual(['main', 'business', 'engineering']);
   });
 
   it('opens Business and Engineering at homes that say who each is for', () => {
