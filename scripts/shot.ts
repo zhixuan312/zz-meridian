@@ -10,6 +10,10 @@
  *
  * Motion is reduced, so every page shows its final state. Files land in out/shots/<route>-<width>-<theme>.png.
  *
+ * A capture Chrome does not finish in time fails that shot, not the run: the line names the page's height in CSS and device
+ * pixels, and a `--full` page that tall says what to shoot instead. Chrome keeps working on the capture it abandoned, so a
+ * timeout on the shot after it is reported and passed over too. Any other error stops the run.
+ *
  * `--as` signs every page in as one persona declared in scripts/verify.config.ts, through the cookie scripts/lib/chrome.ts
  * sets before the first request, and puts the persona in the name: <route>-<persona>-<width>-<theme>.png. Without it no
  * cookie is sent and every request is signed in as whoever the API answers a request with no cookie as.
@@ -89,50 +93,73 @@ async function press(page: Page, name: string): Promise<boolean> {
 
 const page = await launch();
 let failed = false;
+// Whether the shot before ended in a timeout Chrome may still be working through.
+let busy = false;
 try {
   for (const r of routes) {
     for (const w of widths) {
       for (const t of themes) {
-        // Each capture starts from a blank page. Without it, the first full-page capture after a navigation that follows a
-        // change of theme returned a frame painted before the page had settled: charts unmeasured, a chart missing, text
-        // at another breakpoint's size, while the DOM already read as settled and waiting longer changed nothing.
-        // Measured on the Heatmap's preview at 1440px: dark then light in one run drew light wrong every time, light
-        // alone and light after a blank page drew it right, pixel for pixel.
-        await page.send('Page.navigate', { url: 'about:blank' });
-        await sleep(300);
-        await page.open(base + r, { width: w, height: w < 600 ? 844 : 900, theme: t, cookie });
-        // A picture of an error page under the route's name reads as the route: refused, as a press that matched nothing is.
-        const answer = answerProblem(r, page.status(), await page.eval<boolean>(DRAWS_NOT_FOUND), MISSING);
-        if (answer) { console.log(`FAIL ${r} at ${w}px ${t}: ${answer}`); failed = true; continue; }
-        const missing = [];
-        for (const p of presses) if (!(await press(page, p))) { missing.push(p); break; }
-        if (missing.length) { console.log(`FAIL ${r} at ${w}px ${t}: nothing to press named "${missing[0]}"`); failed = true; continue; }
-        if (point) {
-          const location = await page.eval<{ x: number; y: number } | null>(`(() => {
-            const el = [...document.querySelectorAll('svg[role="img"][tabindex="0"]')].find((el) => el.getAttribute('aria-label')?.startsWith(${JSON.stringify(point)}));
-            if (!el) return null;
-            el.scrollIntoView({ block: 'center' });
-            const r = el.getBoundingClientRect();
-            return { x: r.left + r.width * ${at}, y: r.top + r.height / 2 };
-          })()`);
-          if (!location) { console.log(`FAIL ${r}: no chart named "${point}"`); failed = true; continue; }
-          if (w < 600) await page.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [location] });
-          else await page.send('Input.dispatchMouseEvent', { type: 'mouseMoved', ...location });
-          await sleep(500);
-          const readout = await page.eval<{ fits: boolean; detail: string }>(`(() => {
-            const el = [...document.querySelectorAll('svg[role="img"][tabindex="0"]')].find((el) => el.getAttribute('aria-label')?.startsWith(${JSON.stringify(point)}));
-            const tip = el?.parentElement?.querySelector('div[aria-hidden]');
-            const r = tip?.getBoundingClientRect();
-            const chart = el?.getBoundingClientRect();
-            const fits = !!r && !!chart && getComputedStyle(tip).opacity > 0.05 && r.left >= Math.max(0, chart.left) - 1 && r.right <= Math.min(document.documentElement.clientWidth, chart.right) + 1;
-            return { fits, detail: JSON.stringify({ viewport: document.documentElement.clientWidth, chart: chart && { left: chart.left, right: chart.right }, readout: r && { left: r.left, right: r.right } }) };
-          })()`);
-          if (!readout.fits) { console.log(`FAIL ${r} at ${w}px ${t}: readout missing or outside its chart: ${readout.detail}`); failed = true; }
+        // The height the capture asks Chrome for, read before it: once a capture times out, Chrome answers nothing.
+        let tall: { h: number; page: number } | undefined;
+        try {
+          // Each capture starts from a blank page. Without it, the first full-page capture after a navigation that follows a
+          // change of theme returned a frame painted before the page had settled: charts unmeasured, a chart missing, text
+          // at another breakpoint's size, while the DOM already read as settled and waiting longer changed nothing.
+          // Measured on the Heatmap's preview at 1440px: dark then light in one run drew light wrong every time, light
+          // alone and light after a blank page drew it right, pixel for pixel.
+          await page.send('Page.navigate', { url: 'about:blank' });
+          await sleep(300);
+          await page.open(base + r, { width: w, height: w < 600 ? 844 : 900, theme: t, cookie });
+          busy = false;
+          // A picture of an error page under the route's name reads as the route: refused, as a press that matched nothing is.
+          const answer = answerProblem(r, page.status(), await page.eval<boolean>(DRAWS_NOT_FOUND), MISSING);
+          if (answer) { console.log(`FAIL ${r} at ${w}px ${t}: ${answer}`); failed = true; continue; }
+          const missing = [];
+          for (const p of presses) if (!(await press(page, p))) { missing.push(p); break; }
+          if (missing.length) { console.log(`FAIL ${r} at ${w}px ${t}: nothing to press named "${missing[0]}"`); failed = true; continue; }
+          if (point) {
+            const location = await page.eval<{ x: number; y: number } | null>(`(() => {
+              const el = [...document.querySelectorAll('svg[role="img"][tabindex="0"]')].find((el) => el.getAttribute('aria-label')?.startsWith(${JSON.stringify(point)}));
+              if (!el) return null;
+              el.scrollIntoView({ block: 'center' });
+              const r = el.getBoundingClientRect();
+              return { x: r.left + r.width * ${at}, y: r.top + r.height / 2 };
+            })()`);
+            if (!location) { console.log(`FAIL ${r}: no chart named "${point}"`); failed = true; continue; }
+            if (w < 600) await page.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [location] });
+            else await page.send('Input.dispatchMouseEvent', { type: 'mouseMoved', ...location });
+            await sleep(500);
+            const readout = await page.eval<{ fits: boolean; detail: string }>(`(() => {
+              const el = [...document.querySelectorAll('svg[role="img"][tabindex="0"]')].find((el) => el.getAttribute('aria-label')?.startsWith(${JSON.stringify(point)}));
+              const tip = el?.parentElement?.querySelector('div[aria-hidden]');
+              const r = tip?.getBoundingClientRect();
+              const chart = el?.getBoundingClientRect();
+              const fits = !!r && !!chart && getComputedStyle(tip).opacity > 0.05 && r.left >= Math.max(0, chart.left) - 1 && r.right <= Math.min(document.documentElement.clientWidth, chart.right) + 1;
+              return { fits, detail: JSON.stringify({ viewport: document.documentElement.clientWidth, chart: chart && { left: chart.left, right: chart.right }, readout: r && { left: r.left, right: r.right } }) };
+            })()`);
+            if (!readout.fits) { console.log(`FAIL ${r} at ${w}px ${t}: readout missing or outside its chart: ${readout.detail}`); failed = true; }
+          }
+          const name = (r.replace(/^\//, '').replace(/[/?=&#]+/g, '-') || 'home') + (as ? `-${slug(as)}` : '') + (presses.length ? `-${slug(presses.at(-1)!)}` : '') + (point ? `-${slug(point)}-point-${at}` : '') + `-${w}-${t}.png`;
+          // Read the way scripts/lib/chrome.ts reads it: a shell page scrolls in its scroll region, not the document.
+          tall = await page.eval<{ h: number; page: number }>(
+            `(() => { const s = document.querySelector('[data-scroll-region]'); return { h: innerHeight, page: innerHeight + (s ? s.scrollHeight - s.clientHeight : Math.max(0, document.documentElement.scrollHeight - innerHeight)) }; })()`,
+          );
+          const h = await page.shot(path.join(out, name), { full });
+          console.log(`${path.join(out, name)} ${w}x${h}`);
+          if (point && w < 600) await page.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+        } catch (e) {
+          const message = (e as Error).message;
+          if (message === 'Page.captureScreenshot timed out' && tall) {
+            const css = full ? tall.page : tall.h;
+            const size = `${css}px tall (${css * Number(process.env.DPR)} device px at ${process.env.DPR}x)`;
+            console.log(full && tall.page > tall.h
+              ? `FAIL ${r} at ${w}px ${t}: the page is ${size}, and a full-page capture that tall passes what Chrome takes at once (${message}); shoot it without --full, or one part with --press "<name>" or a narrower route`
+              : `FAIL ${r} at ${w}px ${t}: ${message} on a capture ${size}`);
+          } else if (busy && message.endsWith(' timed out')) {
+            console.log(`FAIL ${r} at ${w}px ${t}: Chrome was still busy with the capture that timed out before it (${message})`);
+          } else throw e;
+          failed = busy = true;
         }
-        const name = (r.replace(/^\//, '').replace(/[/?=&#]+/g, '-') || 'home') + (as ? `-${slug(as)}` : '') + (presses.length ? `-${slug(presses.at(-1)!)}` : '') + (point ? `-${slug(point)}-point-${at}` : '') + `-${w}-${t}.png`;
-        const h = await page.shot(path.join(out, name), { full });
-        console.log(`${path.join(out, name)} ${w}x${h}`);
-        if (point && w < 600) await page.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
       }
     }
   }

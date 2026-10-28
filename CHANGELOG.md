@@ -2,6 +2,38 @@
 
 Every release of ZZ Meridian, newest first. Versions follow semver: a removed or renamed token, prop or card is major; a new card, token or variant is minor; a corrected value is a patch. Each entry says what breaks and what to do instead.
 
+## [Unreleased]
+
+The charts and parts a monitoring page needs (issue #99): bars in the order given, on a held and labelled scale, two values a row, signed rows about zero, straight and step lines with a dot per reading, grouped columns, a hatch for an estimate, a section that opens in place and a dialog wide enough for a table.
+
+### Breaking
+
+- **A stacked Column chart's caption names its highlight as ringed.** Its table read `Accented:` for a highlighted column that wears the `ink` ring; it reads `Ringed:`, as the grouped form does. A plain column still reads `Accented:`. A test or a reader that looked for `Accented:` on a stacked chart looks for `Ringed:`.
+- **A stacked column's parts are filled with `background-color`.** They were filled with the `background` shorthand, which would clear the estimate's hatch. The colours are unchanged; a test that read a part's `style.background` reads `style.backgroundColor`.
+- **`useSize` returns a callback ref.** It returned a ref object and observed only the element present at mount, so a Trend chart's widening line that appeared later, when live data first crossed its `domain`, was never measured. `useSize()[0]` is now a callback that measures whatever element it is attached to, whenever it is attached, and stops when that element leaves: pass it only to a `ref` prop, and read the element some other way if code read its `.current`.
+
+### Added
+
+- **A Bar list keeps the order given, holds its scale and reads two values a row.** `order="given"` keeps the rows in the order passed, for readings in time or cumulative shares. `max` holds the scale at a stated top, and a row past it widens the scale and is named: `Scale widened to 112% to show Beta`. `axis` draws the levels and their gridlines under the bars, in `text-2xs` and `ink-3`; a level word that would touch the word beside it is not drawn, and its gridline stays. `pair` reads each row against its `compare` value, drawn as an outline on the same scale under a legend. `estimate: true` on a row hatches its bar and writes `Hatched: estimate` once.
+- **Diverging bars: signed rows about one zero line.** A new chart card for a change by category where some rose and some fell, on a scale symmetric about zero: `domain` holds it and a value past it widens it in words, the figure stands beyond each bar on the side away from zero, one `highlight` row with its `highlightLabel`, linked labels, hatched estimates and a table behind it.
+- **A Trend chart draws straight and step lines, a dot per reading, on a held scale.** `curve="linear"` or `"step"` draws a series (its stacked parts and its running stretch too) straight or held level between readings; `points` draws a dot on each reading; `domain={[min, max]}` holds the plot to a stated range so charts side by side share it, and a value outside it widens the levels and says so above the plot and in the table's caption: `Scale widened from 90%–100% to 80%–100%`. A line wrapped to two on a phone card moves the plot down. `domain` and `floor` are not passed together.
+- **A Sparkline takes `curve` and `domain`.** `curve="linear"` or `"step"` draws it straight or in steps, as the Trend chart does. `domain` holds its scale so sparklines side by side compare; a value outside it widens the range and the title names the range drawn: `0 to 150, scale widened from 0–100`.
+- **A Column chart groups its parts.** `grouped` with two or three `parts` stands each column's parts side by side, each an identity in its categorical slot: a legend, a value above each bar of 36px or more, a part under zero hanging from the zero line, a part with no data drawn as nothing, and no Total in the readout or the table. A highlighted or pointed group wears the `ink` ring. The grouped form is loaded only by a chart that passes `grouped`, so no other route's first load grows.
+- **A Column chart marks an estimate.** `estimate: true` on a plain, stacked or grouped column hatches its fill, says "estimate" in the readout, the announcement and the table, and writes `Hatched: estimate` once under the labels.
+- **The hatch: an estimate without a hue.** `[data-estimate]` is a base role: diagonal stripes in the surface's colour over the mark's own fill, so an estimated mark spends no colour or tone. Under forced colours (Windows' contrast themes) it keeps its stripes in `CanvasText` over `Canvas`, so an estimate never reads as a measured figure.
+- **A section opens in place: the Disclosure.** `Disclosure` (`summary`, `defaultOpen`, `className`) is the native `<details>` with a summary row and a chevron that turns, so the browser owns the press, the keyboard and the open state and no client code ships. Use it for what a reader opens on purpose, such as the readings behind a figure; never for the figure itself.
+- **A dialog wide enough for a table.** `DialogContent size="xl"` is 960px on a desk and the same bottom sheet on a phone. A table of up to six columns goes in an `xl` dialog; past that, or when the reader needs the page beside it, it goes on its own page.
+- **The scale helpers behind them.** `heldTicks(min, max)` in `src/components/charts/scale.ts` gives levels that end exactly at both ends of a held range, and `linearPath` and `stepPath` draw the straight and step lines beside `monotonePath`.
+- **`docs/data-display.md` names each new form** in "Choose the form first": bars in the order given, two values a row, signed rows, grouped columns, straight and step lines, a held scale and an estimate, each with its rule.
+
+### Changed
+
+- **The first-load cap is 830 KiB.** It was 820 KiB; `/engineering`, which draws the Trend chart, Column chart, Bar list and Sparkline together, is 823 KiB with this release's forms. `FIRST_LOAD_CAP_KB` in `scripts/lib/budgets.ts` and the `## Budgets` row of `docs/testing.md` say 830; a project that set its own cap keeps it.
+
+### Fixed
+
+- **A page too tall to capture whole says so.** `node scripts/shot.ts --full` died on a bare `Page.captureScreenshot timed out` when a page was taller than Chrome captures at once (the Column chart's preview, 12,047px at 1440 and 2x), and took the rest of the run with it. The shot prints the route, width, theme and the page's height in CSS and device pixels, and says to shoot it without `--full` or one part with `--press` or a narrower route; the run goes on, a timeout on the shot after it while Chrome is still busy is reported the same way, and the run exits 1.
+
 ## [0.32.0] · 2026-10-27
 
 ### Added
