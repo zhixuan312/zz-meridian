@@ -1,20 +1,42 @@
 'use client';
 
-import { useState } from 'react';
-import { nav } from '@/app.config';
+import { useEffect, useRef, useState } from 'react';
+import { Activity, BarChart3, CircleDollarSign } from 'lucide-react';
+import { nav, type NavItem } from '@/app.config';
 import { Specimen } from '@/system/specimen';
 import { Rail } from '.';
 
 type RailProps = Parameters<typeof Rail>[0];
 
-const Column = ({ current, label, user, scopes, workspace, viewAs, groups = nav }: { current: string; label: string; user?: null; groups?: RailProps['nav']; scopes?: RailProps['scopes']; workspace?: string; viewAs?: RailProps['viewAs'] }) => (
-  <figure className="flex flex-col gap-2">
-    <div className="relative h-150 w-(--rail-width) overflow-hidden rounded-lg border border-line bg-frame backdrop-blur-xl">
-      <Rail nav={groups} current={current} user={user} scopes={scopes} workspace={workspace} viewAs={viewAs} />
-    </div>
-    <figcaption className="text-2xs text-ink-3">{label}</figcaption>
-  </figure>
-);
+const Column = ({ current, label, user, scopes, workspace, viewAs, groups = nav, closeBranch }: { current: string; label: string; user?: null; groups?: RailProps['nav']; scopes?: RailProps['scopes']; workspace?: string; viewAs?: RailProps['viewAs']; closeBranch?: string }) => {
+  const box = useRef<HTMLDivElement>(null);
+  // Only a person's close leaves a branch closed while the page inside it is current, so this column closes it after mount, as a person would. It presses the button only while it reads open, which keeps it idempotent when strict mode runs the effect twice.
+  useEffect(() => {
+    if (!closeBranch) return;
+    const button = box.current?.querySelector<HTMLButtonElement>(`button[aria-label="${closeBranch} pages"]`);
+    if (button?.getAttribute('aria-expanded') === 'true') button.click();
+  }, [closeBranch]);
+  return (
+    <figure className="flex flex-col gap-2">
+      <div ref={box} className="relative h-150 w-(--rail-width) overflow-hidden rounded-lg border border-line bg-frame backdrop-blur-xl">
+        <Rail nav={groups} current={current} user={user} scopes={scopes} workspace={workspace} viewAs={viewAs} />
+      </div>
+      <figcaption className="text-2xs text-ink-3">{label}</figcaption>
+    </figure>
+  );
+};
+
+/**
+ * A navigation of the preview's own, never read from the configured one: a group with a parent (Usage), one sub page
+ * under it (Requests) and one more item (Revenue). A product that drops any of these pages still draws every column.
+ */
+const REVENUE: NavItem = { href: '/business', label: 'Revenue', icon: CircleDollarSign, needs: 'public' };
+const USAGE: NavItem = { href: '/usage', label: 'Usage', icon: BarChart3, needs: 'public' };
+const REQUESTS: NavItem = { href: '/requests', label: 'Requests', icon: Activity, needs: 'public', under: '/usage' };
+const BRANCH: RailProps['nav'] = [{ label: 'Traffic', items: [REVENUE, USAGE, REQUESTS] }];
+/** What the person may open leaves out the sub pages (the parent is a plain item), or the parent (the sub page is a plain item with its icon). */
+const WITHOUT_SUBS: RailProps['nav'] = [{ label: 'Traffic', items: [REVENUE, USAGE] }];
+const WITHOUT_PARENT: RailProps['nav'] = [{ label: 'Traffic', items: [REVENUE, REQUESTS] }];
 
 /** The configured navigation with a count on Services: the configuration carries none, so this specimen draws one of its own. */
 const WITH_COUNT = nav.map((group) => ({ ...group, items: group.items.map((item) => (item.href === '/services' ? { ...item, badge: '1' } : item)) }));
@@ -45,6 +67,16 @@ export default function RailPreview() {
           <Column current="/" label="Home is current" />
           <Column current="/services" groups={WITH_COUNT} label="Services is current, with a count badge a product sets on an entry (the sample sets none)" />
           <Column current="/" user={null} label="The session is still being found out: a skeleton, not a name" />
+        </div>
+      </Specimen>
+      <Specimen label="Sub pages" note="An item that another names with under is drawn as a branch under it, on a guide line, without an icon. The parent is a link to its own page and a button beside it, named Usage pages, opens and closes the branch; a closed branch draws none of its links. Open a column's button to see it move. Every column is the real Rail on a navigation of its own: Revenue, Usage, and Requests under Usage.">
+        <div className="flex flex-wrap gap-6">
+          <Column groups={BRANCH} current="/business" label="The branch closed, the current page outside it" />
+          <Column groups={BRANCH} current="/requests" label="The branch open, a sub page current: the guide line is lit beside it and the parent's icon takes the accent" />
+          <Column groups={BRANCH} current="/requests" closeBranch="Usage" label="The branch closed while a sub page is current: the parent carries the pill, so the rail still shows where the person is" />
+          <Column groups={WITHOUT_SUBS} current="/usage" label="The person may not open the sub pages: the navigation passed without them, so Usage is a plain item with no button" />
+          <Column groups={WITHOUT_PARENT} current="/requests" label="The person may not open the parent: the navigation passed without Usage, so Requests is a plain item with its icon" />
+          <Column groups={BRANCH} current="/usage" label="The branch open. On a touch screen its rows are 44px tall and its button 44 by 44; this is the fine-pointer size, and a phone opening the Atlas draws the larger one" />
         </div>
       </Specimen>
       <Specimen label="View as" note="The foot of the workspace menu, the real one: open the row to see it. The five sample personas, in order, the one in view checked and the last listed but out of reach; choosing one moves the check. It mounts only on open, so no persona's name reaches a page's first HTML.">

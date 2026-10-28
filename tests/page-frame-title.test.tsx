@@ -127,7 +127,7 @@ describe('the masthead of a page headed by a sentence', () => {
     expect(within(row, 'meta')).toBeNull();
     expect(within(row, 'actions')).toBeNull();
     expect(row.textContent).not.toContain('What the page answers.');
-    expect([...row.children].map((el) => el.tagName)).toEqual(['P', 'H1']);
+    expect([...row.children].map((el) => el.tagName)).toEqual(['DIV', 'H1']);
     // It is a block of the masthead's whole width, not an item of a row that shares it.
     expect(row.parentElement!.tagName).toBe('HEADER');
     expect(row.className).not.toMatch(/\bflex\b|\bbasis-/);
@@ -169,7 +169,7 @@ describe('the masthead of a page headed by a sentence', () => {
     render(<PageFrame name="Home" kicker={kicker} description="A skeleton line">body</PageFrame>);
     const row = h1().parentElement!;
     expect(h1().querySelector('[data-title-pending]')).not.toBeNull();
-    expect([...row.children].map((el) => el.tagName)).toEqual(['P', 'H1']);
+    expect([...row.children].map((el) => el.tagName)).toEqual(['DIV', 'H1']);
     expect(row.nextElementSibling!.textContent).toBe('A skeleton line');
   });
 
@@ -177,7 +177,7 @@ describe('the masthead of a page headed by a sentence', () => {
     render(<PageFrame title="Members" kicker={kicker} description="Everyone in the workspace." meta={meta} actions={actions}>body</PageFrame>);
     const column = h1().parentElement!;
     expect(column.className).toBe('min-w-0 flex-1 basis-[28rem]');
-    expect([...column.children].map((el) => el.tagName)).toEqual(['P', 'H1', 'P']);
+    expect([...column.children].map((el) => el.tagName)).toEqual(['DIV', 'H1', 'P']);
     expect(column.lastElementChild!.className).toBe('t-lead mt-3 max-w-[60ch]');
     const row = column.parentElement!;
     expect(row.className).toBe('flex flex-wrap items-end gap-x-8 gap-y-5');

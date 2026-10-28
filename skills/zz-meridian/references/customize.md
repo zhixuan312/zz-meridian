@@ -67,6 +67,23 @@ timezone, currency and the signed-in user the rail shows (all but the descriptio
 palette: groups of `{ href, label, icon, needs }`, plus a `workspace` while the workspaces stay (icons from `lucide-react`, 1.75 stroke is applied by the rail). A badge
 is a short string, used only for something that needs attention ("1").
 
+**Sub pages.** An item may be a sub page of another item of the same group: give it `under`, the `href` of its parent.
+The rail draws the parent as its link plus a button named `<label> pages`, and the sub pages in a list under it; the
+branch is open on arrival when the current page is the parent or one of its sub pages. Nothing else reads a hierarchy:
+every module that reads `nav` still sees a flat list of items, each with its own `needs` and `workspace`, and a
+navigation with no `under` draws as before. `node scripts/check.ts` refuses, naming the item's `href`:
+
+- an `under` that names no item of the same group;
+- an `under` that names the item itself;
+- an `under` that names an item which itself has an `under` (three levels, never four);
+- a sub page whose `workspace` differs from its parent's, where a declared workspace and an undeclared one count as differing;
+- more than 7 sub pages under one parent (past that, the item is a group of its own).
+
+Use `under` for destinations: pages with their own address, access and place in the palette. Use in-page tabs (`Tabs`)
+instead for the views of one record, under one header. For a sub page's masthead to show its path, pass
+`<Breadcrumb items={navTrail(href, nav)} />` (from `@/components/patterns/rail/trail`) as the kicker; the crumbs are
+derived from `nav`, never written out.
+
 `needs` is required, and in a created project it is a feature's own need **by reference** — `needs: FEATURES.home.needs`,
 from `optional:src/data/features.ts` — never a grant written a second time: the rail and the palette draw only the
 destinations the signed-in person satisfies, and a test fails an item that restates a need. That filtering is

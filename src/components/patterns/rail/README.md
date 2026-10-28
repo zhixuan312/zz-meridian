@@ -9,8 +9,9 @@ Status: beta
 1. **Brand**: the App mark at 28px, the product name (`text-md`, 600) and the workspace as an eyebrow; the whole row opens the account menu: Workspace settings, Sign out, and — where the product may be read as someone else — the View as group. A product with several workspaces or scopes (one team, the whole platform) passes them as `scopes` (`{ id, label, active, onSelect, href }`, `href` where choosing it goes); the menu then lists them as radio items under "Show", the row's glyph is the switcher's `ChevronsUpDown`, and `workspace` sets the eyebrow to the one in view. With one scope or none there is nothing to switch between, so there is no `Show` group and no checked row of its own: the row is the account menu, its glyph is a plain `ChevronDown`, and its label says so.
 2. **Groups**: an optional mono eyebrow (`t-eyebrow`, `ink-3`) over a list of items; groups sit `space-6` 24px apart.
 3. **Item**: a 16px icon at a 1.75 stroke, the label, and an optional count badge.
-4. **Marker**: one pill behind the current item, `accent-tint` with an inset `accent-line` ring and a 2px `accent` edge on the left that carries a soft glow.
-5. **Account**: the person's avatar, name and role, and the Appearance menu, in a hairline card at the foot.
+4. **Branch**: an item that other items name with `under` is a parent. Its row holds two controls: the item's link, to the parent's own page, and a button at the row's right end named `<label> pages` (`ChevronRight` closed, `ChevronDown` open). Its sub pages are a nested list under the row, on a 1px `line` guide line hung under the parent's icon; a sub page has no icon and its label lines up with the parent's label. A navigation has three levels at most: group, item, sub page.
+5. **Marker**: one pill behind the current item, `accent-tint` with an inset `accent-line` ring and a 2px `accent` edge on the left that carries a soft glow.
+6. **Account**: the person's avatar, name and role, and the Appearance menu, in a hairline card at the foot.
 
 ## Composition
 
@@ -37,6 +38,11 @@ App mark, Avatar and Appearance menu, on `frame` (a translucent wash with `backd
 | Hover | `fill-hover` behind, label `ink` | `ink-2` |
 | Current | the marker behind, label `ink` 500 | `accent-ink` |
 | Focus (keyboard) | 2px `accent` outline | as rest |
+| Branch open, a sub page current | the sub page takes the marker, and the guide line beside it lights in `accent`; the parent's label is `ink` and its icon `accent-ink`, with no pill | |
+| Branch closed, a sub page current | the parent's link takes the marker, with `aria-current="true"` | `accent-ink` |
+| Parent's own page current | the parent's link takes the marker, whether the branch is open or closed | `accent-ink` |
+| Sub pages the person may not open | the parent is a plain item, with no button | |
+| Parent the person may not open | the sub page is a plain item in the group, with its own icon | |
 
 The preview's specimens are the real Rail, so rest and current are drawn in them, and hover and focus are seen by using them: point at an item, or tab to it.
 
@@ -48,13 +54,17 @@ Colours change over `dur-hover` 160ms. The marker moves (`transform`, `height`) 
 - While a destination's page is on the way (a page that renders on request and is not prefetched), its icon turns into a 14px Spinner in the same 16px slot (`useLinkStatus`), named "Opening Members", so the click is answered at once and nothing shifts. A prefetched page is never pending, so it never shows.
 - An item is current when the path equals its route or sits beneath it (`/requests/req_…` keeps Requests current); Home (`/`) only matches itself. The current page is the longest such route among every destination the product declares (`declared`, which `ConsoleRail` passes from the whole navigation), and it is lit only when this person's rail holds it: an address under a destination they may not open (`/admin/audit` for someone who holds `/admin` only) lights nothing, never the shorter one above it.
 - Navigation from the account menu (Workspace settings and Sign out) asks first while a form on the page has unsaved changes, through the shell's `useLeave`; a link is held by the shell itself. Outside a shell it goes at once. Opening the menu prefetches each other scope's `href`: a row is a press, so nothing fetches its page before, and a phone's closed drawer prefetches nothing. A workspace chosen from the switcher runs the `onSelect` the product passed, so the product's own handler asks (the sample's does, in `src/views/workspace-chrome.tsx`); choosing a person under View as is not a navigation and is not held.
+- A parent's button opens and closes its branch: Enter or Space, or a click. A closed branch mounts none of its links, so nothing in it is prefetched, tabbed to or read by a suite. The marker is measured again whenever a branch opens or closes.
+- A branch is open on arrival when the current page is its parent's page or one of its sub pages, and closed otherwise. Every navigation that lands on a parent or one of its sub pages opens that branch again, even one the person closed. Otherwise a person's open or close stands for as long as the rail stays mounted, which spans every navigation inside the console: a branch they opened stays open elsewhere, and one they closed from inside stays closed until a navigation lands inside it. The state is not stored, so a reload starts from the arrival rule. The phone drawer mounts its rail each time it opens, so it applies the arrival rule afresh.
+- Only one element in the rail carries `aria-current` at a time: `page` on the current link, or `true` on the parent of a closed branch that holds the current page.
+- `nav` is what this person may open. A sub page whose parent is not in `nav` is drawn as a plain item in its group, with its icon; a parent with none of its sub pages in `nav` is a plain item. `declared` still lists every href, so an address under a destination the person may not open lights nothing.
 - `current` overrides the pathname (previews and tests); products leave it unset.
 - View as: the personas are radio items, so the arrows move through them and Enter switches. The one in view carries the check; a persona who is not Active is listed but disabled. A `choose` that rejects shows its message in a critical toast and changes nothing — the check stays on the person who is still signed in.
 
 ## Surfaces
 
 - **Console**: fixed at the left edge, its own scroll when the list outgrows the window.
-- **Mobile**: under 1024px the same node opens as a drawer from the top bar's menu button: 260px (at most 86% of the screen), over a blurred scrim; it closes on Escape, on the scrim and on navigation, and returns focus to the trigger.
+- **Mobile**: under 1024px the same node opens as a drawer from the top bar's menu button: 260px (at most 86% of the screen), over a blurred scrim; it closes on Escape, on the scrim and on navigation, and returns focus to the trigger. On a touch screen (`pointer: coarse`) every parent, sub page and button row is 44px tall and the button's target is 44 by 44; on a fine pointer a sub page row is 32px and the button 28px.
 - **Embed**: absent. A view in a host has one job and no navigation; it links out with Open in ZZ Meridian.
 
 ## Agents
@@ -64,6 +74,7 @@ Not applicable: navigation is how a person moves. An agent opens a view by its a
 ## Accessibility
 
 - `nav` with the name "Main"; the current item carries `aria-current="page"`.
+- A parent's button has the accessible name `<label> pages` ("Usage pages"), `aria-expanded` set to `true` or `false`, and `aria-controls` naming the branch's list. It is a separate control from the parent's link, so the parent's page stays reachable from the rail. The parent of a closed branch that holds the current page carries `aria-current="true"`.
 - Contrast (dark, indigo): inactive label `ink-2` on the rail 8.7:1, group label `ink-3` 7.0:1, current label on the marker 9.2:1; light 6.6, 4.9 and 5.7:1.
 - The count badge repeats a number the page states in words; it is never the only signal.
 
@@ -75,7 +86,8 @@ Not applicable: navigation is how a person moves. An agent opens a view by its a
 
 ## Do and do not
 
-- Do keep the rail to about ten items; a product with more needs a second level on its pages (Tabs), not a longer rail.
+- Do keep the rail to about ten items; a product with more needs sub pages under an item (`under`), or a second level on its pages (Tabs), not a longer rail.
+- Do use `under` for sub pages that are destinations of their own, each with its own page and access. Use Tabs in the page for the views of one record, under one header.
 - Do not put actions in the rail; it holds places only.
 - Do not use the count badge for anything but something that needs attention now.
 
@@ -94,4 +106,15 @@ import { Rail } from '@/components/patterns/rail';
 <AppShell rail={<Rail />} tools={<ShellTools />} assistant={assistant}>{children}</AppShell>
 ```
 
-Edit `nav` in `src/app.config.ts` to change the destinations: `{ label?, items: [{ href, label, icon, badge?, prefetch? }] }`; set `prefetch: true` on an item whose page is its URL data (a document under a dynamic segment), for one or two items at most.
+Edit `nav` in `src/app.config.ts` to change the destinations: `{ label?, items: [{ href, label, icon, badge?, prefetch?, under? }] }`; set `prefetch: true` on an item whose page is its URL data (a document under a dynamic segment), for one or two items at most.
+
+`under` makes an item a sub page: it is the `href` of an item of the same group, and the rail draws the item in that item's branch.
+
+```ts
+{ label: 'Traffic', items: [
+  { href: '/usage', label: 'Usage', icon: BarChart3, needs: FEATURES.usage.needs },
+  { href: '/requests', label: 'Requests', icon: Activity, needs: FEATURES.requests.needs, under: '/usage' },
+] }
+```
+
+`node scripts/check.ts` refuses a navigation it cannot draw, naming the item's `href`: an `under` that names no item of the same group, an `under` that names the item itself, an `under` that names an item that is itself under another (three levels, never four), a sub page whose `workspace` differs from its parent's (a declared workspace and an undeclared one differ), and more than 7 sub pages under one parent.

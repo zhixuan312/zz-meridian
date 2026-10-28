@@ -12,6 +12,14 @@ import { Kbd } from '@/components/ui/kbd';
 
 export type Command = { id: string; group: string; label: string; hint?: string; icon: ReactNode; run: () => void };
 
+// A sub page names its parent with `under`: the rail's rule, word for word. The parent is an item of the same group that is
+// not itself a sub page; an `under` that names nothing of the kind leaves the item with its group.
+const parentOf = (g: NavGroup, it: NavGroup['items'][number]) => {
+  const under = 'under' in it && typeof it.under === 'string' ? it.under : undefined;
+  const parent = under === undefined ? undefined : g.items.find((p) => p.href === under && p !== it);
+  return parent && !('under' in parent && typeof parent.under === 'string' && g.items.some((x) => x.href === parent.under && x !== parent)) ? parent : undefined;
+};
+
 let opener: (() => void) | null = null;
 /** Open the palette from anywhere: the rail's search button, a shortcut in a page. */
 export function openCommand() {
@@ -55,7 +63,7 @@ export function CommandPalette({ nav }: { /** Every destination the rail offers,
       ...nav.flatMap((g) =>
         g.items.map((it) => {
           const Icon = it.icon;
-          return { id: it.href, group: 'Go to', label: it.label, hint: g.label, icon: <Icon />, run: () => leave(() => router.push(it.href)) };
+          return { id: it.href, group: 'Go to', label: it.label, hint: parentOf(g, it)?.label ?? g.label, icon: <Icon />, run: () => leave(() => router.push(it.href)) };
         }),
       ),
       { id: 'theme-light', group: 'Appearance', label: 'Use the light theme', icon: <Sun />, run: () => set({ theme: 'light' }) },

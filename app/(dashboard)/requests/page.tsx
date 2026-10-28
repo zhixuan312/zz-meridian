@@ -1,6 +1,8 @@
 import { Suspense, cache } from 'react';
-import { app } from '@/app.config';
+import { nav } from '@/app.config';
 import { PageFrame } from '@/components/base/shell';
+import { navTrail } from '@/components/patterns/rail/trail';
+import { Breadcrumb } from '@/components/ui/breadcrumb';
 import { ExportButton } from '@/components/patterns/export-button';
 import { Freshness } from '@/components/patterns/freshness';
 import { gate, gatedMetadata } from '@/data/access';
@@ -26,7 +28,7 @@ export default async function RequestsPage({ searchParams }: { searchParams: Sea
   if (denied) return RefusalScreen(denied);
   return (
     <PageFrame
-      kicker={<>{app.name} · {app.workspace}</>}
+      kicker={<Breadcrumb items={navTrail('/requests', nav)} />}
       title="Requests"
       description="The most recent calls that reached the gateway, newest first. Open one to see where its time went."
       meta={<Suspense fallback={<span className="inline-block h-4 w-28" />}><RequestsFreshness searchParams={searchParams} /></Suspense>}

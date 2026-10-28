@@ -490,7 +490,7 @@ export function PageFrame({
         {name === undefined ? (
           <div className="flex flex-wrap items-end gap-x-8 gap-y-5">
             <div className="min-w-0 flex-1 basis-[28rem]">
-              {kicker ? <p className="t-kicker mb-4">{kicker}</p> : null}
+              {kicker ? <div className="t-kicker mb-4">{kicker}</div> : null}
               <PageTitle ref={head} title={title} />
               {description ? <p className="t-lead mt-3 max-w-[60ch]">{description}</p> : null}
             </div>
@@ -503,7 +503,7 @@ export function PageFrame({
                 state has none, so the block kept two lines while the page loaded and three once it had, and
                 everything under it dropped. Now its width follows the viewport, the rail and the assistant alone. */}
             <div>
-              {kicker ? <p className="t-kicker mb-4">{kicker}</p> : null}
+              {kicker ? <div className="t-kicker mb-4">{kicker}</div> : null}
               <PageTitle ref={head} name={name} title={title} speaksName={speaksName} />
             </div>
             {/* The description grows, so the meta and the actions end the row on its last line; with no description

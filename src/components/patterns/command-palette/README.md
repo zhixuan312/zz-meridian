@@ -7,7 +7,7 @@ Status: beta
 ## Anatomy
 
 1. **Query**: a 56px input with a search icon, `text-md`, and an Esc hint.
-2. **Results**: commands grouped under mono eyebrows ("Go to", "Appearance"), each a 40px row with an icon, a label, an optional hint (its group) and, on the highlighted row, an Enter glyph.
+2. **Results**: commands grouped under mono eyebrows ("Go to", "Appearance"), each a 40px row with an icon, a label, an optional hint (its group, or its parent's label for a sub page) and, on the highlighted row, an Enter glyph.
 3. **Key hints**: a `surface-sunk` band at the foot: ↑ ↓ move, ↵ open, ⌘K toggle.
 
 ## Composition
@@ -16,7 +16,7 @@ A Dialog (`surface-raised`, `radius-xl` 24px, `shadow-overlay`, 600px wide, 14% 
 
 ## Data
 
-Commands are built from the `nav` prop, the same groups the Rail gets (one "Go to" per destination, its group as the hint) and the appearance actions. A match ranks by where the query starts in the label, then by the original order; the group hint also matches where a navigation names its groups ("billing" finds every entry under Billing; the sample's groups carry no name). Like the Rail's, `nav` carries each entry's icon as a component, so it cannot be built in a server component — see the Rail's README.
+Commands are built from the `nav` prop, the same groups the Rail gets (one "Go to" per destination, its group as the hint, or for a sub page its parent's label) and the appearance actions. A match ranks by where the query starts in the label, then by the original order; the hint also matches, so typing a parent's label finds its sub pages, and where a navigation names its groups ("billing" finds every entry under Billing; the sample's groups carry no name). Like the Rail's, `nav` carries each entry's icon as a component, so it cannot be built in a server component — see the Rail's README.
 
 ## States
 
