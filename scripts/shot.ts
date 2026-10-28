@@ -11,8 +11,9 @@
  * Motion is reduced, so every page shows its final state. Files land in out/shots/<route>-<width>-<theme>.png.
  *
  * A capture Chrome does not finish in time fails that shot, not the run: the line names the page's height in CSS and device
- * pixels, and a `--full` page that tall says what to shoot instead. Chrome keeps working on the capture it abandoned, so a
- * timeout on the shot after it is reported and passed over too. Any other error stops the run.
+ * pixels, and a `--full` page that tall says what to shoot instead. Chrome keeps working on the capture it abandoned, and
+ * the next shot timed out behind it, so that browser is closed and the run goes on in a fresh one. Any other error stops
+ * the run.
  *
  * `--as` signs every page in as one persona declared in scripts/verify.config.ts, through the cookie scripts/lib/chrome.ts
  * sets before the first request, and puts the persona in the name: <route>-<persona>-<width>-<theme>.png. Without it no
@@ -91,10 +92,8 @@ async function press(page: Page, name: string): Promise<boolean> {
   return true;
 }
 
-const page = await launch();
+let page = await launch();
 let failed = false;
-// Whether the shot before ended in a timeout Chrome may still be working through.
-let busy = false;
 try {
   for (const r of routes) {
     for (const w of widths) {
@@ -110,7 +109,6 @@ try {
           await page.send('Page.navigate', { url: 'about:blank' });
           await sleep(300);
           await page.open(base + r, { width: w, height: w < 600 ? 844 : 900, theme: t, cookie });
-          busy = false;
           // A picture of an error page under the route's name reads as the route: refused, as a press that matched nothing is.
           const answer = answerProblem(r, page.status(), await page.eval<boolean>(DRAWS_NOT_FOUND), MISSING);
           if (answer) { console.log(`FAIL ${r} at ${w}px ${t}: ${answer}`); failed = true; continue; }
@@ -149,16 +147,16 @@ try {
           if (point && w < 600) await page.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
         } catch (e) {
           const message = (e as Error).message;
-          if (message === 'Page.captureScreenshot timed out' && tall) {
-            const css = full ? tall.page : tall.h;
-            const size = `${css}px tall (${css * Number(process.env.DPR)} device px at ${process.env.DPR}x)`;
-            console.log(full && tall.page > tall.h
-              ? `FAIL ${r} at ${w}px ${t}: the page is ${size}, and a full-page capture that tall passes what Chrome takes at once (${message}); shoot it without --full, or one part with --press "<name>" or a narrower route`
-              : `FAIL ${r} at ${w}px ${t}: ${message} on a capture ${size}`);
-          } else if (busy && message.endsWith(' timed out')) {
-            console.log(`FAIL ${r} at ${w}px ${t}: Chrome was still busy with the capture that timed out before it (${message})`);
-          } else throw e;
-          failed = busy = true;
+          if (message !== 'Page.captureScreenshot timed out' || !tall) throw e;
+          const css = full ? tall.page : tall.h;
+          const size = `${css}px tall (${css * Number(process.env.DPR)} device px at ${process.env.DPR}x)`;
+          console.log(full && tall.page > tall.h
+            ? `FAIL ${r} at ${w}px ${t}: the page is ${size}, and a full-page capture that tall passes what Chrome takes at once (${message}); shoot it without --full, or one part with --press "<name>" or a narrower route`
+            : `FAIL ${r} at ${w}px ${t}: ${message} on a capture ${size}`);
+          failed = true;
+          // Chrome is still working on the capture it abandoned: the next shot runs in a fresh browser.
+          page.close();
+          page = await launch();
         }
       }
     }

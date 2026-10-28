@@ -32,7 +32,7 @@ The charts and parts a monitoring page needs (issue #99): bars in the order give
 
 ### Fixed
 
-- **A page too tall to capture whole says so.** `node scripts/shot.ts --full` died on a bare `Page.captureScreenshot timed out` when a page was taller than Chrome captures at once (the Column chart's preview, 12,047px at 1440 and 2x), and took the rest of the run with it. The shot prints the route, width, theme and the page's height in CSS and device pixels, and says to shoot it without `--full` or one part with `--press` or a narrower route; the run goes on, a timeout on the shot after it while Chrome is still busy is reported the same way, and the run exits 1.
+- **A page too tall to capture whole says so.** `node scripts/shot.ts --full` died on a bare `Page.captureScreenshot timed out` when a page was taller than Chrome captures at once (the Column chart's preview, 12,047px at 1440 and 2x), and took the rest of the run with it. The shot prints the route, width, theme and the page's height in CSS and device pixels, and says to shoot it without `--full` or one part with `--press` or a narrower route; the browser stuck on that capture is closed, the run goes on in a fresh one, and it exits 1.
 
 ## [0.32.0] · 2026-10-27
 
