@@ -11,7 +11,7 @@ How Meridian shows numbers: which form to use, how colour is assigned, how figur
 | A number with its change and shape | A tile | Metric tile |
 | The same number for many things at once (eight customers, six regions), each with its change and shape | A wall of compact tiles: the name, the change, one line and the shape | Metric tile |
 | Change over time | A line or an area on one axis | Trend chart |
-| A few readings over a long time (weekly figures, a handful of samples) | Straight segments with a point on each reading (`curve="linear"`, `points`) | Trend chart |
+| A few readings over a long time (weekly figures, a handful of samples), one a period | Straight segments with a point on each reading (`curve="linear"`, `points`); a period with no reading is `null`, since a reading stands at its index, not its time | Trend chart |
 | A level that changes at events (a balance, a limit, seats on a plan) | Steps: each value held until the next reading (`curve="step"`) | Trend chart |
 | The shape of a trend beside a figure | A line without axes | Sparkline |
 | A ranking | Horizontal bars, the longest first | Bar list |

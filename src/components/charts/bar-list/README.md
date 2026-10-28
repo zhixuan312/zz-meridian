@@ -53,7 +53,7 @@ Rows are sorted by value, largest first. Pass `order="given"` when the order is 
 
 Bars are drawn against the largest row. Pass `total` when the rows are a share of a stated whole (the top 8 tools out of every call, or rows hidden by `limit`): each bar is then its value over `total`, and hovering a row shows its share ("12.4% of 3.1M").
 
-Pass `max` instead when the scale is held: a capacity, a ceiling, 100%, or the same top across several cards so they compare row by row. Every bar is drawn against it and no share is printed; `max` and `total` are one or the other, in the type. A value (or a drawn compare) past `max` widens the scale to it, and the list writes "Scale widened to {top} to show {row}", naming the first row that stands at the top. A `max` not above zero draws against 1.
+Pass `max` instead when the scale is held: a capacity, a ceiling, 100%, or the same top across several cards so they compare row by row. Every bar is drawn against it and no share is printed; `max` and `total` are one or the other, in the type. A value (or a drawn compare) past `max` widens the scale to it, and the list writes "Scale widened to {top} to show {row}", naming the first row that stands at the top. A `max` not above zero draws against 1; a `max` under 1, a share held at 50% as 0.5, is held like any other.
 
 Pass `axis` when a reader reads lengths against levels: under `max`, the held levels and the widened top; without it, the nice levels of the largest row, and the bars are drawn against the last of them. The levels row measures its width, at 7px a character, and hides a word that would touch one that shows (a widened 112% beside the held 100%), keeping its gridline; until it is measured every word shows.
 

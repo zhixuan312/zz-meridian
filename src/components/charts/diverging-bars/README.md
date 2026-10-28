@@ -84,7 +84,8 @@ Labels are the rows' own names. The chart's `label` names the measure and what i
 ```tsx
 import { DivergingBars, type DivergingItem } from '@/components/charts/diverging-bars';
 
-// items: { key, label, value: number | null, href?, estimate? }
+// items: { key, label: ReactNode, value: number | null, href?, estimate? }
+// A label that is not text is named by its key in the widening line, and left out of the row's title.
 <DivergingBars label="Net change by category" items={items} />
 
 // Two charts held on one scale, the largest fall pointed at.

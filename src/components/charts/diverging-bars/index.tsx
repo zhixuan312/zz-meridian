@@ -5,7 +5,7 @@ import { cn } from '@/lib/cn';
 import { heldTicks, niceTicks } from '@/components/charts/scale';
 import { useSize } from '@/components/charts/use-size';
 
-export type DivergingItem = { key: string; label: string; value: number | null; href?: string; estimate?: boolean };
+export type DivergingItem = { key: string; label: React.ReactNode; value: number | null; href?: string; estimate?: boolean };
 
 /** About the width of one character of a figure or a level (`text-2xs`), in px, and the space between it and its neighbour. */
 const CH = 6.5, GAP = 4;
@@ -56,6 +56,8 @@ export function DivergingBars({
   const widened = held !== undefined && largest > held ? rows.find((r) => r.value !== null && Math.abs(r.value) === top) : undefined;
   const levels = held === undefined ? heldTicks(-top, top) : widened ? [-top, ...heldTicks(-held, held), top] : heldTicks(-held, held);
   const figure = (v: number | null) => (v === null ? '—' : format(v));
+  // A row's label is its name in words when it is text; the widening line names a row with a node label by its key.
+  const named = (r: DivergingItem) => (typeof r.label === 'string' || typeof r.label === 'number' ? String(r.label) : null);
   // Each end keeps room for the widest figure, which stands just beyond its bar.
   const gutter = Math.max(...rows.map((r) => figure(r.value).length), 1) * CH + GAP;
   const at = (t: number) => ((t + top) / (2 * top)) * 100;
@@ -74,7 +76,7 @@ export function DivergingBars({
 
   return (
     <div className={cn('flex flex-col gap-3', className)}>
-      {widened ? <p data-widened className="text-2xs text-ink-3">{`Scale widened to ${format(top)} to show ${widened.label}`}</p> : null}
+      {widened ? <p data-widened className="text-2xs text-ink-3">{`Scale widened to ${format(top)} to show ${named(widened) ?? widened.key}`}</p> : null}
       <div className="grid grid-cols-[minmax(0,1fr)_minmax(0,2fr)] gap-x-4 gap-y-2">
         <div aria-hidden className="pointer-events-none col-start-2 row-start-1" style={plot}>
           <div className="relative h-full">
@@ -90,7 +92,7 @@ export function DivergingBars({
             const rise = v === null || v >= 0;
             const share = v === null ? 0 : (Math.abs(v) / top) * 100;
             return (
-              <li key={r.key} data-row={r.key} className="group/row col-span-2 grid grid-cols-subgrid items-center" title={[r.label, figure(v), hot ? highlightLabel : null, r.estimate ? 'estimate' : null].filter(Boolean).join(' · ')}>
+              <li key={r.key} data-row={r.key} className="group/row col-span-2 grid grid-cols-subgrid items-center" title={[named(r), figure(v), hot ? highlightLabel : null, r.estimate ? 'estimate' : null].filter(Boolean).join(' · ')}>
                 {r.href ? (
                   // The row's look at rest, the accent under the pointer and the focus ring on the keyboard.
                   <Link href={r.href} className={cn('hit row-link flex min-w-0 text-sm', hot ? 'font-medium text-ink' : 'text-ink-2')}>

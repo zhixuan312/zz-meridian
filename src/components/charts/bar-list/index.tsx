@@ -65,6 +65,8 @@ export function BarList({
   | { max: number; total?: undefined }
 )) {
   const held = max !== undefined;
+  // A held top not above zero is no scale to draw against, so the bars are drawn against one.
+  const cap = held ? (max > 0 ? max : 1) : 0;
   const sorted = order === 'given' ? items : [...items].sort((a, b) => b.value - a.value);
   // One row past the limit is shown as itself: "1 other" hides a name to save no space. A held scale, a pair and an
   // order that is the meaning show every row: a fold would sum what they are read one by one for.
@@ -73,12 +75,12 @@ export function BarList({
   const rest = sorted.slice(cut);
   if (rest.length) shown.push({ key: '__others', label: `${rest.length} ${plural(rest.length, 'other')}`, value: rest.reduce((a, b) => a + b.value, 0), estimate: rest.some((r) => r.estimate) });
   const data = shown.flatMap((i) => (pair && i.compare != null ? [i.value, i.compare] : [i.value]));
-  const ticks = !axis ? null : held ? heldTicks(0, max) : niceTicks(Math.max(total ?? 0, ...data));
-  const top = held ? Math.max(1, max, ...data) : ticks ? ticks.at(-1)! : Math.max(1, total ?? 0, ...data);
+  const ticks = !axis ? null : held ? heldTicks(0, cap) : niceTicks(Math.max(total ?? 0, ...data));
+  const top = held ? Math.max(cap, ...data) : ticks ? ticks.at(-1)! : Math.max(1, total ?? 0, ...data);
   // A held scale keeps its levels and adds the widened top as one more, so the levels still read as the held ones.
   const levels = ticks && top > ticks.at(-1)! ? [...ticks, top] : ticks;
   // The first row in drawing order that stands at the widened top is named, so the reader knows which row moved it.
-  const past = held && top > max ? shown.find((i) => i.value === top || (pair && i.compare === top)) : undefined;
+  const past = held && top > cap ? shown.find((i) => i.value === top || (pair && i.compare === top)) : undefined;
   const named = (it: BarItem) => (typeof it.label === 'string' || typeof it.label === 'number' ? String(it.label) : null);
   const estimated = shown.some((i) => i.estimate);
   // Once the list draws anything beside its rows, its root is a frame around them that takes `className`.

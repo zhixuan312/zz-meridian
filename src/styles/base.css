@@ -244,8 +244,9 @@
   :is(a, button, [role]:not([role='tabpanel'])):is([aria-current='page'], [aria-pressed='true'], [aria-selected='true'], [aria-checked='true'], [data-state='on'], [data-state='active'], [data-state='checked']) * { color: HighlightText; }
   [data-swatch] { forced-color-adjust: none; }
   /* An estimate's hatch is a gradient, which a forced palette removes, and the estimate would read as a measured figure:
-     its stripes are drawn in CanvasText over Canvas instead. */
-  [data-estimate] { forced-color-adjust: none; background-color: Canvas; background-image: repeating-linear-gradient(135deg, transparent 0 3px, CanvasText 3px 4.5px); }
+     its stripes are drawn in CanvasText over Canvas instead. A stacked or grouped part's colour is an inline style, which
+     would otherwise stay under the stripes. */
+  [data-estimate] { forced-color-adjust: none; background-color: Canvas !important; background-image: repeating-linear-gradient(135deg, transparent 0 3px, CanvasText 3px 4.5px); }
   /* Where the reader is, too: a field tells focus by its border and a ring and a menu its highlighted item by a fill, and
      both are gone here, so the outline a field removed comes back in Highlight, and a highlighted item is filled with it. */
   :focus-visible { outline: 2px solid Highlight; outline-offset: 2px; }

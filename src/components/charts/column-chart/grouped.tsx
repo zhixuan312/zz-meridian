@@ -2,7 +2,7 @@
 
 import { cn } from '@/lib/cn';
 import { Readout } from '@/components/charts/readout';
-import { SERIES_VAR, type SeriesSlot } from '@/components/charts/scale';
+import { SERIES_SLOTS, SERIES_VAR, type SeriesSlot } from '@/components/charts/scale';
 import { useSettled } from '@/components/charts/use-settled';
 import { useSize } from '@/components/charts/use-size';
 import { CH, count, gapOf, Labels, opens, REST, scaleOf, Swatch, Ticks, useCursor, type GroupedPart, type Shared, type StackedColumn } from './shared';
@@ -38,7 +38,8 @@ export function GroupedColumns({
   const fill = height === 'fill';
   const soFar = running ? n - 1 : -1;
   const settled = useSettled(columns.map((c) => c.key).join('\n'));
-  const colors = parts.map((p, k) => SERIES_VAR(p.color ?? ((k + 1) as SeriesSlot)));
+  // Each part takes its slot in order; one past the sixth has none, and is neutral, as a stack's Other is.
+  const colors = parts.map((p, k) => SERIES_VAR(p.color ?? (k < SERIES_SLOTS ? ((k + 1) as SeriesSlot) : 'neutral')));
   const bars = columns.map((c) => {
     const values = parts.map((_, k) => c.values[k] ?? null);
     const none = values.every((v) => v === null);

@@ -108,7 +108,7 @@ export default function DialogPreview() {
           </Dialog>
         </State>
       </Specimen>
-      <Specimen label="Live"note="Opens centred; on phones it rises from the bottom as a sheet.">
+      <Specimen label="Live" note="Opens centred; on phones it rises from the bottom as a sheet.">
         <Dialog>
           <DialogTrigger asChild><Button>Open dialog</Button></DialogTrigger>
           <DialogContent title="Revoke this key?" description="Requests signed with it will fail with 401 at once." footer={<Button variant="danger">Revoke key</Button>}>

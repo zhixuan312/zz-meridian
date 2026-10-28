@@ -243,7 +243,7 @@ export function TrendChart({
     : held ? ticksBetween(lo, hi, count, whole) : ticksBetween(from, max, count, whole);
   const low = ticks[0];
   const top = ticks[ticks.length - 1];
-  const widened = held && !inside ? `Scale widened from ${fmt(held[0])}\u2013${fmt(held[1])} to ${fmt(low)}\u2013${fmt(top)}` : '';
+  const widened = held && !inside ? `Scale widened from ${fmt(end)}\u2013${fmt(held[1])} to ${fmt(low)}\u2013${fmt(top)}` : '';
   // The words take a line of their own over the legend and the plot, or two on a phone card; unmeasured, one line.
   const lift = widened ? (widenedSize.height ? widenedSize.height + 1 : 18) : 0;
   const left = Math.max(...ticks.map((t) => axis(t).length)) * 6.4 + 12;
@@ -456,9 +456,10 @@ export function TrendChart({
                 className={s.kind === 'dashed' ? 'fade-in' : 'draw'}
               />
               {tail ? <Running d={tail} stroke={SERIES_VAR(s.color ?? 'accent')} /> : null}
-              {/* A dot on each reading while the dots stand apart; a reference and a stack are read by their line. */}
+              {/* A dot on each reading while the dots stand apart; a reference and a stack are read by their line, and a running
+                  point is still in progress, so nothing solid reaches it. */}
               {points && s.kind !== 'dashed' && (n < 2 || W / (n - 1) >= 6)
-                ? s.values.map((v, i) => (v === null ? null : <circle key={i} data-point cx={x(i)} cy={y(v)} r={3} fill={SERIES_VAR(s.color ?? 'accent')} stroke="var(--surface)" strokeWidth={2} className="fade-in" />))
+                ? s.values.map((v, i) => (v === null || (running && i === n - 1) ? null : <circle key={i} data-point cx={x(i)} cy={y(v)} r={3} fill={SERIES_VAR(s.color ?? 'accent')} stroke="var(--surface)" strokeWidth={2} className="fade-in" />))
                 : null}
             </g>
           ))}
