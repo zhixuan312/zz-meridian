@@ -128,8 +128,11 @@ async function press(page: Page, spec: Spec) {
   await page.send('Input.dispatchMouseEvent', { type: 'mouseReleased', x: at.x, y: at.y, button: 'left', clickCount: 1 });
 }
 
-const key = (page: Page, k: string, code: string, vk: number, text?: string) => page.send('Input.dispatchKeyEvent', { type: 'keyDown', key: k, code, windowsVirtualKeyCode: vk, ...(text ? { text, unmodifiedText: text } : {}) })
-  .then(() => page.send('Input.dispatchKeyEvent', { type: 'keyUp', key: k, code, windowsVirtualKeyCode: vk }));
+const key = (page: Page, k: string, code: string, vk: number, text?: string, modifiers?: number) => {
+  const mods = modifiers ? { modifiers } : {};
+  return page.send('Input.dispatchKeyEvent', { type: 'keyDown', key: k, code, windowsVirtualKeyCode: vk, ...mods, ...(text ? { text, unmodifiedText: text } : {}) })
+    .then(() => page.send('Input.dispatchKeyEvent', { type: 'keyUp', key: k, code, windowsVirtualKeyCode: vk, ...mods }));
+};
 
 /** Type into the focused field, one key at a time. */
 async function type(page: Page, s: string) {
@@ -407,6 +410,32 @@ if (import.meta.main) {
       await settle(a, 'member', '/business', 'business');
       await pressRail(a, 'member', REQUESTS);
       await settle(a, 'member', REQUESTS, 'business');
+      // The masthead's trail names the parent as a link, then the page as the current one; the palette hints the parent.
+      const parentHref = parentOfHref(REQUESTS, routesOf('member'));
+      const parentLabel = parentHref === null ? null : labelOf(parentHref);
+      const groupLabel = nav.find((g) => g.items.some((i) => i.href === REQUESTS))?.label ?? '';
+      const label = labelOf(REQUESTS);
+      const crumbs = await ask<{ links: { href: string; label: string }[]; current: string | null }>(a, `
+        const bc = document.querySelector('nav[aria-label="Breadcrumb"]');
+        if (!bc) return { links: [], current: null };
+        const cur = bc.querySelector('[aria-current="page"]');
+        return { links: [...bc.querySelectorAll('a[href]')].map((l) => ({ href: l.getAttribute('href'), label: text(l) })), current: cur ? text(cur) : null };`);
+      const wantLinks = parentHref === null ? [] : [{ href: parentHref, label: parentLabel }];
+      if (JSON.stringify(crumbs.links) !== JSON.stringify(wantLinks) || crumbs.current !== label) {
+        throw new Error(`expected the Breadcrumb to hold ${JSON.stringify(wantLinks)} and then "${label}" as the current page; found links ${JSON.stringify(crumbs.links)} and current ${JSON.stringify(crumbs.current)}`);
+      }
+      // The palette listens on window for Ctrl or Command with K; a button would be ambiguous, the not-found view has a second one.
+      await key(a, 'k', 'KeyK', 75, undefined, 2);
+      await until('the palette search field', () => centre(a, { role: 'combobox', name: 'Search pages and commands' }));
+      await type(a, label);
+      const hint = await until(`the palette option "${label}"`, () => ask<{ hint: string | null } | null>(a, `
+        const row = [...document.querySelectorAll('[role="option"]')].find((o) => [...o.querySelectorAll('span[title]')].some((t) => t.getAttribute('title') === ${JSON.stringify(label)}));
+        if (!row) return null;
+        const h = row.querySelector('span.text-xs');
+        return { hint: h ? text(h) : null };`));
+      const wantHint = parentLabel ?? groupLabel;
+      if (hint.hint !== wantHint) throw new Error(`expected the palette option "${label}" to carry the hint "${wantHint}"; found ${JSON.stringify(hint.hint)}`);
+      await key(a, 'Escape', 'Escape', 27);
       await press(a, { role: 'link', hrefRe: '^/requests/[^/]+$', within: 'main table tbody' });
       const at = await settle(a, 'member', /^\/requests\/[^/]+$/, 'business');
       return `(${at})`;
