@@ -36,6 +36,14 @@ describe('a composition bar', () => {
     expect(signed.container.textContent).toMatch(/B\s*0%-8/);
   });
 
+  it('reads a part above zero as a share above none, and a share that rounds to 10% as 10%', () => {
+    const tiny = render(<CompositionBar label="Tiny" parts={[{ label: 'A', value: 99999 }, { label: 'B', value: 4 }, { label: 'C', value: 0 }]} />);
+    expect(tiny.container.textContent).toMatch(/B\s*<0\.1%4/);
+    expect(tiny.container.textContent).toMatch(/C\s*0%0/);
+    const edge = render(<CompositionBar label="Edge" parts={[{ label: 'A', value: 9003 }, { label: 'B', value: 997 }]} />);
+    expect(edge.container.textContent).toMatch(/B\s*10%997/);
+  });
+
   it('draws its parts in the categorical slots by default', () => {
     const { container } = render(<CompositionBar label="Plan mix" parts={PLANS} />);
     expect(fills(container)).toEqual(([1, 2, 3] as const).map((n) => SERIES_VAR(n)));

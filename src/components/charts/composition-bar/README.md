@@ -45,7 +45,7 @@ The parts and shares are shared as structured context by the view; the legend te
 
 ## Accessibility
 
-A labelled `figure`; the legend is the accessible content. Shares under 10% carry one decimal so small parts are not rounded to zero.
+A labelled `figure`; the legend is the accessible content. Shares under 10% carry one decimal so small parts are not rounded to zero; a part above none too small for that decimal reads `<0.1%`, and a part of none `0%`.
 
 ## Content
 

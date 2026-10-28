@@ -68,12 +68,13 @@ export function BarList({
   // A held top not above zero is no scale to draw against, so the bars are drawn against one.
   const cap = held ? (max > 0 ? max : 1) : 0;
   const sorted = order === 'given' ? items : [...items].sort((a, b) => b.value - a.value);
-  // One row past the limit is shown as itself: "1 other" hides a name to save no space. A held scale, a pair and an
+  // One row past the limit is shown as itself: "1 other" hides a name to save no space. The fold sums the rows above
+  // zero: a row below zero measures nothing, and summed signed it would cancel another's length. A held scale, a pair and an
   // order that is the meaning show every row: a fold would sum what they are read one by one for.
   const cut = order === 'given' || held || pair ? sorted.length : sorted.length === limit + 1 ? limit + 1 : limit;
   const shown = sorted.slice(0, cut);
   const rest = sorted.slice(cut);
-  if (rest.length) shown.push({ key: '__others', label: `${rest.length} ${plural(rest.length, 'other')}`, value: rest.reduce((a, b) => a + b.value, 0), estimate: rest.some((r) => r.estimate) });
+  if (rest.length) shown.push({ key: '__others', label: `${rest.length} ${plural(rest.length, 'other')}`, value: rest.reduce((a, b) => a + Math.max(0, b.value), 0), estimate: rest.some((r) => r.estimate) });
   const data = shown.flatMap((i) => (pair && i.compare != null ? [i.value, i.compare] : [i.value]));
   const ticks = !axis ? null : held ? heldTicks(0, cap) : niceTicks(Math.max(total ?? 0, ...data));
   const top = held ? Math.max(cap, ...data) : ticks ? ticks.at(-1)! : Math.max(1, total ?? 0, ...data);

@@ -62,6 +62,13 @@ describe('the forms of issue #99 on their edge paths', () => {
     }
   });
 
+  it("a Bar list's folded rows sum only the rows above zero, as a Composition bar's Other does", () => {
+    const items = [10, 9, 8, 7, 6, 5, 4, -3].map((value, i) => ({ key: `r${i}`, label: `R${i}`, value }));
+    const { container } = render(<BarList label="Change" total={60} items={items} />);
+    const others = container.querySelector('li[data-row="__others"]')!;
+    expect(others.getAttribute('title')).toBe(`2 others · 4 · ${((4 / 60) * 100).toFixed(1)}% of 60`);
+  });
+
   it('a Bar list held at a max not above zero draws against one', () => {
     const { container } = render(<BarList label="Rates" max={0} items={[{ key: 'a', label: 'A', value: 0.25 }]} />);
     expect((container.querySelector('[data-bar]') as HTMLElement).style.width).toBe('25%');

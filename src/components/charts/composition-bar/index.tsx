@@ -9,8 +9,8 @@ const fill = (c: Part['color'], i: number, stack: number | null) =>
 
 /**
  * The parts drawn: as given up to the palette's six, and past it the first five and "Other", the sum of the rest above
- * zero, in the neutral: a part below zero is no share of the whole, folded or not. A seventh slot names no colour (`--series-7`), and its part drew transparent: its share gone from the bar and
- * its swatch blank in the key.
+ * zero, in the neutral: a part below zero is no share of the whole, folded or not. A seventh slot names no colour
+ * (`--series-7`), and its part drew transparent: its share gone from the bar and its swatch blank in the key.
  */
 function drawn(parts: Part[]): Part[] {
   if (parts.length <= SERIES_SLOTS) return parts;
@@ -18,10 +18,12 @@ function drawn(parts: Part[]): Part[] {
   return [...parts.slice(0, SERIES_SLOTS - 1), { label: 'Other', value: rest.reduce((n, p) => n + Math.max(0, p.value), 0), color: 'neutral' }];
 }
 
-/** A part's share of the whole, to a tenth where it is under a tenth of a percent and above none. */
+/** A part's share of the whole: to one decimal under 10%, so a small part is not rounded to zero, and a part above none
+ *  too small for that decimal reads `<0.1%`; a part of none reads `0%`. */
 const share = (value: number, total: number) => {
-  const s = Math.max(0, value) / total;
-  return `${(s * 100).toFixed(s > 0 && s < 0.1 ? 1 : 0)}%`;
+  const pct = (Math.max(0, value) / total) * 100;
+  if (pct > 0 && pct < 0.05) return '<0.1%';
+  return `${pct.toFixed(pct > 0 && Number(pct.toFixed(1)) < 10 ? 1 : 0)}%`;
 };
 
 /** One whole split into its parts: a single bar with a 2px gap between segments, and a legend that carries the numbers. */

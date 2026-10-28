@@ -9,7 +9,7 @@ Status: beta
 1. **Row**: label on the left (`text-sm`, `ink-2`; the highlighted row `ink` at `weight-medium`), an optional meta line, the value on the right (`ink`, tabular, `weight-medium`).
 2. **Track**: 6px tall, `fill-track`, `radius-full`.
 3. **Bar**: the value against the scale's top (the largest row, `total`, `max` or the axis's last level), `chart-neutral`; the one highlighted row in `accent`, and its row's title adds `highlightLabel`, what makes it the one ("The busiest endpoint"), so the accent is never a colour left to guess.
-4. **Others**: past `limit`, the remaining rows fold into "N others", summed, in `ink-3`; a single extra row shows as itself, since "1 others" would hide a name to save no space. It is never a link, whatever the rows it holds.
+4. **Others**: past `limit`, the remaining rows fold into "N others", the sum of those above zero, in `ink-3`; a single extra row shows as itself, since "1 others" would hide a name to save no space. It is never a link, whatever the rows it holds.
 5. **Linked row**: a row with an `href` names a record that has a page, and its label is the one link to it, named by the label. The bar, the meta line and the figure stay text: they say what the label already opens, so they are never a second way there. At rest the row looks as an unlinked one does.
 6. **Compare** (under `pair`): 2px under the value bar, the row's `compare` on the same scale, a 1px `chart-neutral-strong` outline with no fill; none for a missing compare. The figure reads `{value} · {compare}`, the compare in `ink-3`, `—` for one with no data.
 7. **Legend** (under `pair`): above the rows, a filled and an outlined swatch named `pair.label` and `pair.compareLabel`, at `text-xs` in `ink-2`.
