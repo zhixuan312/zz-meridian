@@ -2,7 +2,7 @@
 
 Every release of ZZ Meridian, newest first. Versions follow semver: a removed or renamed token, prop or card is major; a new card, token or variant is minor; a corrected value is a patch. Each entry says what breaks and what to do instead.
 
-## [Unreleased]
+## [0.33.0] · 2026-10-28
 
 The charts and parts a monitoring page needs (issue #99): bars in the order given, on a held and labelled scale, two values a row, signed rows about zero, straight and step lines with a dot per reading, grouped columns, a hatch for an estimate, a section that opens in place and a dialog wide enough for a table.
 
