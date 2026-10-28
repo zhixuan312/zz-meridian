@@ -17,8 +17,8 @@ const Column = ({ current, label, user, scopes, workspace, viewAs, groups = nav,
     if (button?.getAttribute('aria-expanded') === 'true') button.click();
   }, [closeBranch]);
   return (
-    <figure className="flex flex-col gap-2">
-      <div ref={box} className="relative h-150 w-(--rail-width) overflow-hidden rounded-lg border border-line bg-frame backdrop-blur-xl">
+    <figure className="flex w-(--rail-width) flex-col gap-2">
+      <div ref={box} className="relative h-150 w-full overflow-hidden rounded-lg border border-line bg-frame backdrop-blur-xl">
         <Rail nav={groups} current={current} user={user} scopes={scopes} workspace={workspace} viewAs={viewAs} />
       </div>
       <figcaption className="text-2xs text-ink-3">{label}</figcaption>

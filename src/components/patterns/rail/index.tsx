@@ -91,7 +91,7 @@ export function Rail({
   const hasSettings = nav.some((g) => g.items.some((it) => it.href === '/settings'));
   const path = current ?? pathname;
   const list = useRef<HTMLDivElement>(null);
-  const [marker, setMarker] = useState<{ y: number; h: number; x: number; w: number } | null>(null);
+  const [marker, setMarker] = useState<{ y: number; h: number; x: number; w: number; sub: boolean } | null>(null);
   const content = useRef<HTMLDivElement>(null);
   const id = useId();
   // The longest matching href is the current page, so /enhancements and /enhancements/objectives never both light up. It
@@ -168,8 +168,9 @@ export function Rail({
     const measure = () => {
       const el = nav.querySelector<HTMLElement>('[aria-current]');
       setMarker((was) => {
-        const now = el ? { y: el.offsetTop, h: el.offsetHeight, x: el.offsetLeft, w: el.offsetWidth } : null;
-        return was?.y === now?.y && was?.h === now?.h && was?.x === now?.x && was?.w === now?.w ? was : now;
+        // A sub page's list sits inside another list: beside it the guide carries the lit line, so the marker draws none.
+        const now = el ? { y: el.offsetTop, h: el.offsetHeight, x: el.offsetLeft, w: el.offsetWidth, sub: el.closest('ul ul') !== null } : null;
+        return was?.y === now?.y && was?.h === now?.h && was?.x === now?.x && was?.w === now?.w && was?.sub === now?.sub ? was : now;
       });
     };
     const ro = new ResizeObserver(measure);
@@ -239,7 +240,7 @@ export function Rail({
             className="absolute overflow-hidden rounded-md bg-accent-tint ring-1 ring-accent-line ring-inset transition-[transform,height,left,width] duration-(--dur-enter) ease-spring"
             style={{ transform: `translateY(${marker.y}px)`, height: marker.h, top: 0, left: marker.x, width: marker.w }}
           >
-            <span className="absolute top-2 bottom-2 left-0 w-0.5 rounded-r-full bg-accent shadow-[0_0_12px_var(--accent)]" />
+            {marker.sub ? null : <span className="absolute top-2 bottom-2 left-0 w-0.5 rounded-r-full bg-accent shadow-[0_0_12px_var(--accent)]" />}
           </span>
         ) : null}
         <div ref={content}>
@@ -266,7 +267,8 @@ export function Rail({
                           onClick={() => toggle(it.href)}
                           className="relative col-start-1 row-start-1 mr-1 grid size-7 place-items-center self-center justify-self-end rounded-md text-ink-3 transition-colors duration-(--dur-hover) hover:bg-fill-hover hover:text-ink pointer-coarse:size-11"
                         >
-                          {isOpen ? <ChevronDown className="size-4" strokeWidth={1.75} /> : <ChevronRight className="size-4" strokeWidth={1.75} />}
+                          {/* One chevron that turns, never swapped: the same element keeps the button's focus ring and the turn animates. */}
+                          <ChevronRight className={cn('size-4 transition-transform duration-(--dur-hover)', isOpen && 'rotate-90')} strokeWidth={1.75} />
                         </button>
                       </div>
                       {isOpen ? (
