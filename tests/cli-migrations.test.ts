@@ -437,3 +437,17 @@ describe('the 0.32.0 migration', () => {
     expect(byId('missing-routes').applies(path.resolve(import.meta.dirname, '..'))).toBeNull();
   });
 });
+
+describe('the 0.34.0 migration', () => {
+  it("finds a layout that hands Meridian's faces over from Google Fonts, and leaves a project's own fonts and the release's", () => {
+    const layout = (body: string) => project({ 'app/layout.tsx': body });
+    const google = "import { Geist, Geist_Mono } from 'next/font/google';\nconst sans = Geist({ subsets: ['latin'], variable: '--font-face-sans', display: 'swap' });\nconst mono = Geist_Mono({ subsets: ['latin'], weight: ['400', '500'], variable: '--font-face-mono', display: 'swap' });\n";
+    expect(byId('self-hosted-fonts').since).toBe('0.34.0');
+    expect(byId('self-hosted-fonts').applies(layout(google))).toEqual(['app/layout.tsx']);
+    // A create-next-app layout loads Geist for its own variables, which Meridian's tokens never read: the team's choice.
+    expect(byId('self-hosted-fonts').applies(layout("import { Geist } from \"next/font/google\";\nconst geistSans = Geist({ variable: \"--font-geist-sans\", subsets: [\"latin\"] });\n"))).toBeNull();
+    expect(byId('self-hosted-fonts').applies(layout("import localFont from 'next/font/local';\nconst sans = localFont({ src: '../src/styles/fonts/Geist-Variable.woff2', variable: '--font-face-sans' });\n"))).toBeNull();
+    expect(byId('self-hosted-fonts').applies(project({}))).toBeNull();
+    expect(byId('self-hosted-fonts').applies(path.resolve(import.meta.dirname, '..'))).toBeNull();
+  });
+});

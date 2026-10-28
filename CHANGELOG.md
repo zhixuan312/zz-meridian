@@ -4,6 +4,11 @@ Every release of ZZ Meridian, newest first. Versions follow semver: a removed or
 
 ## [Unreleased]
 
+### Changed
+
+- **A build fetches nothing: the typefaces ship with the template.** Geist and Geist Mono came from Google Fonts through `next/font/google`, which `next build` fetches at build time, so with fonts.googleapis.com unreachable and no build cache the build failed (`Build error occurred`, exit 1), as the first 0.33.0 release run's update of a created project did (issue #100). The two variable faces are under `src/styles/fonts/` (from `geist@1.8.2`, with their SIL Open Font License), managed, and `app/layout.tsx` loads them with `next/font/local`. Each face is now one whole file, where Google served its Latin glyphs in a subset of their own.
+  - **What a team does.** `app/layout.tsx` is yours, so an update does not change it: run `update`, which delivers the faces and reports `migration:self-hosted-fonts` for a layout that still hands `--font-face-sans` and `--font-face-mono` their faces from Google Fonts, and load each with `next/font/local` as the release's layout does.
+
 ### Fixed
 
 - **A Bar list's axis draws behind its rows.** Its gridlines, positioned before the rows, painted over every label that is not a link, the meta and each figure, and, under reduced motion, over the bars: the words and the bars now stand over them, and the words over the bars, so a linked label's target under a finger still takes a tap on its bar.

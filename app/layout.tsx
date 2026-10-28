@@ -1,13 +1,14 @@
 import type { Metadata, Viewport } from 'next';
-import { Geist, Geist_Mono } from 'next/font/google';
+import localFont from 'next/font/local';
 import { app } from '@/app.config';
 import { PREPAINT } from '@/lib/preferences';
 import { Providers } from '@/components/base/providers';
 import './globals.css';
 
-/* The faces are self-hosted by next/font and handed to the tokens as --font-face-sans and --font-face-mono. */
-const sans = Geist({ subsets: ['latin'], variable: '--font-face-sans', display: 'swap' });
-const mono = Geist_Mono({ subsets: ['latin'], weight: ['400', '500'], variable: '--font-face-mono', display: 'swap' });
+/* The faces ship with the template (src/styles/fonts, Geist and Geist Mono from geist@1.8.2, under their licence there),
+   so a build fetches nothing; next/font hands them to the tokens as --font-face-sans and --font-face-mono. */
+const sans = localFont({ src: '../src/styles/fonts/Geist-Variable.woff2', weight: '100 900', variable: '--font-face-sans', display: 'swap' });
+const mono = localFont({ src: '../src/styles/fonts/GeistMono-Variable.woff2', weight: '100 900', variable: '--font-face-mono', display: 'swap' });
 
 export const metadata: Metadata = {
   title: { default: app.name, template: `%s · ${app.name}` },

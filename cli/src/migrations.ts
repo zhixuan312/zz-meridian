@@ -557,6 +557,14 @@ export const RELEASE_MIGRATIONS: ReleaseMigration[] = [
     instructions: 'The audit, the presses, the keyboard walk, the vitals and `scripts/shot.ts` now read what a route answered: one that answered an error status or draws the not-found screen (`[data-missing-page]`) was measured as that screen and not as the route, so it fails. In `scripts/verify.config.ts`, which is yours, move every entry of `detailRoutes` that names a record that does not exist (the sample\'s `/requests/req_missing` and `/customers/missing`) into a new `missingRoutes` list; each must be the not-found screen, and one that renders a page fails. A not-found screen of your own carries `data-missing-page` on its root, as `MissingPage` does: inside a streamed shell a missing record has already answered 200.',
     checks: ['verify'],
   },
+  {
+    id: 'self-hosted-fonts',
+    since: '0.34.0',
+    applies: (root) => matching(root, (rel, src) => /^app\//.test(rel) && SOURCE.test(rel) && /from\s+['"]next\/font\/google['"]/.test(src) && /--font-face-(?:sans|mono)/.test(src)),
+    summary: "Meridian's faces ship with the release under `src/styles/fonts/`: a build loads them from there and fetches nothing from Google Fonts.",
+    instructions: "Your `app/layout.tsx` is yours, so an update does not touch it, and yours hands `--font-face-sans` and `--font-face-mono` their faces through `next/font/google`, which `next build` fetches from fonts.googleapis.com: with that host unreachable and no build cache, the build fails (`Build error occurred`). The update has delivered the two faces, `src/styles/fonts/Geist-Variable.woff2` and `src/styles/fonts/GeistMono-Variable.woff2`, with their licence. In the layout, replace the `next/font/google` import with `import localFont from 'next/font/local';` and each face's call with `localFont({ src: '../src/styles/fonts/Geist-Variable.woff2', weight: '100 900', variable: '--font-face-sans', display: 'swap' })` and `localFont({ src: '../src/styles/fonts/GeistMono-Variable.woff2', weight: '100 900', variable: '--font-face-mono', display: 'swap' })`, keeping the class names on `<html>` as they are. A layout that gives the tokens faces of its own from Google Fonts is the same case: ship the files and load them with `next/font/local`.",
+    checks: GATE_AND_BUILD,
+  },
 ];
 
 /** 0.32.0: a verify configuration that lists detail routes and declares no routes meant to be missing. */

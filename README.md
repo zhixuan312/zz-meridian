@@ -158,8 +158,8 @@ brief defines — which is also how you tell a wrong rendering from a wrong mode
 Meridian takes nothing from you. The package, the template and the skill have no telemetry, no analytics and no
 account, and the template turns off Next.js's own anonymous telemetry (`next.config.ts`; Meridian's scripts turn it off
 for every `next` they run). What reaches the network is what you would expect: npm, when you run `npx` and when `update`
-reads releases from it; Google Fonts, which `next/font` downloads the typefaces from at build time; and whatever you
-configure yourself, such as the assistant's model provider.
+reads releases from it, and whatever you configure yourself, such as the assistant's model provider. The typefaces ship
+with the template (`src/styles/fonts/`), so a build fetches nothing.
 
 The one way to tell us anything is a [GitHub issue](https://github.com/zhixuan312/zz-meridian/issues/new/choose): a
 **Bug** (something in Meridian did the wrong thing) or a **Feature request** (something it should do, or do more
