@@ -42,6 +42,14 @@ describe('the forms of issue #99 on their edge paths', () => {
     expect(fills.some((f) => /series-(?:[7-9]|\d\d)/.test(f))).toBe(false);
   });
 
+  it('a running grouped part with no data reads "So far" at rest rather than its words cut short', () => {
+    const parts = [{ key: 'in', label: 'In' }, { key: 'out', label: 'Out' }];
+    const columns = [{ key: 'd1', label: 'Mon', values: [120, 80] }, { key: 'd2', label: 'Tue', values: [100, 90] }, { key: 'd3', label: 'Wed', values: [60, null] }];
+    const { container } = render(<GroupedColumns grouped running label="G" parts={parts} columns={columns} />);
+    const d3 = container.querySelector('[data-column="d3"]')!;
+    expect([...d3.querySelectorAll('[data-value]')].map((v) => v.textContent)).toEqual(['60', 'So far']);
+  });
+
   it('a Trend chart draws no dot on its running point: nothing solid reaches a period still in progress', () => {
     const { container } = render(<TrendChart label="R" points running dates={dates} series={[{ key: 'r', label: 'R', values: [10, 20, 15, 5], kind: 'line' }]} />);
     expect(container.querySelectorAll('[data-point]')).toHaveLength(3);

@@ -134,9 +134,10 @@ export function GroupedColumns({
                                 <>
                                   <div data-no-data-mark aria-hidden className="absolute inset-x-0 mb-0.5 border-t border-dashed border-line-strong" style={{ bottom: `${zero}%` }} />
                                   {rest ? (
-                                    // Never told by its hairline alone: the words stand over it at rest, as a column with no data's do.
+                                    // Never told by its hairline alone: the words stand over it at rest, as a column with no
+                                    // data's do, and "So far" when a running part's would be cut.
                                     <span aria-hidden className="fade-in t-num pointer-events-none absolute inset-x-0 mb-1 block truncate text-center text-2xs leading-4 text-ink-3" style={{ bottom: `${zero}%` }}>
-                                      <span data-value>{value(null, unfinished)}</span>
+                                      <span data-value>{unfinished && value(null, true).length * CH > bar ? 'So far' : value(null, unfinished)}</span>
                                     </span>
                                   ) : null}
                                 </>
