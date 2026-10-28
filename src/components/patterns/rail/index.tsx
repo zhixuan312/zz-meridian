@@ -100,6 +100,34 @@ export function Rail({
   const here = longest !== undefined && held.includes(longest) ? longest : undefined;
   const isActive = (href: string) => href === here;
 
+  // A sub page names its parent with `under`. The parent is a held item of the same group that is not itself a sub page;
+  // an `under` that names nothing of the kind leaves the item at the top level, with its icon.
+  const parentOf = (g: NavGroup, it: NavGroup['items'][number]) => {
+    const under = 'under' in it && typeof it.under === 'string' ? it.under : undefined;
+    const parent = under === undefined ? undefined : g.items.find((p) => p.href === under && p !== it);
+    return parent && !('under' in parent && typeof parent.under === 'string' && g.items.some((x) => x.href === parent.under && x !== parent)) ? parent.href : undefined;
+  };
+  const row = (it: NavGroup['items'][number], sub: boolean) => {
+    const on = isActive(it.href);
+    const Icon = it.icon;
+    return (
+      <Link
+        href={it.href}
+        // Under partialPrefetching a link prefetches its route's App Shell only. An item that asks (the Docs
+        // item, whose article is its page's URL data) is prefetched in full: from /settings, the start guide's
+        // desktop warm shell went from 77-146 ms to 26-27 ms with no request after the press, at the cost of
+        // one prefetch of about 15 KiB on each main-workspace page on the desktop; the phone's closed drawer
+        // shows no link and prefetches nothing. The `in` test keeps this compiling in a project whose NavItem has no field.
+        prefetch={'prefetch' in it && it.prefetch === true ? true : undefined}
+        aria-current={on ? 'page' : undefined}
+      >
+        {sub ? null : <LinkIcon icon={<Icon strokeWidth={1.75} />} label={it.label} />}
+        <span title={it.label} className="flex-1 truncate">{it.label}</span>
+        {it.badge ? <span className="t-num grid h-5 min-w-5 place-items-center rounded-full bg-warning-tint px-1.5 text-2xs font-semibold text-warning-ink">{it.badge}</span> : null}
+      </Link>
+    );
+  };
+
   // View as signs the console in as someone else and re-reads the route. A choice that fails says why in a toast and
   // changes nothing: the check stays on the person in view, which is still who is signed in.
   const choosePersona = (id: string) => {
@@ -197,28 +225,18 @@ export function Rail({
           <div key={gi} className={cn(gi > 0 && 'mt-6')}>
             {g.label ? <p className="t-eyebrow mb-2 px-3">{g.label}</p> : null}
             <ul className="flex flex-col gap-0.5">
-              {g.items.map((it) => {
-                const on = isActive(it.href);
-                const Icon = it.icon;
-                return (
-                  <li key={it.href}>
-                    <Link
-                      href={it.href}
-                      // Under partialPrefetching a link prefetches its route's App Shell only. An item that asks (the Docs
-                      // item, whose article is its page's URL data) is prefetched in full: from /settings, the start guide's
-                      // desktop warm shell went from 77-146 ms to 26-27 ms with no request after the press, at the cost of
-                      // one prefetch of about 15 KiB on each main-workspace page on the desktop; the phone's closed drawer
-                      // shows no link and prefetches nothing. The `in` test keeps this compiling in a project whose NavItem has no field.
-                      prefetch={'prefetch' in it && it.prefetch === true ? true : undefined}
-                      aria-current={on ? 'page' : undefined}
-                    >
-                      <LinkIcon icon={<Icon strokeWidth={1.75} />} label={it.label} />
-                      <span title={it.label} className="flex-1 truncate">{it.label}</span>
-                      {it.badge ? <span className="t-num grid h-5 min-w-5 place-items-center rounded-full bg-warning-tint px-1.5 text-2xs font-semibold text-warning-ink">{it.badge}</span> : null}
-                    </Link>
-                  </li>
-                );
-              })}
+              {g.items.filter((it) => !parentOf(g, it)).map((it) => (
+                <li key={it.href}>
+                  {row(it, false)}
+                  {g.items.some((sub) => parentOf(g, sub) === it.href) ? (
+                    // The sub pages hang on a guide line under the parent's icon (12px padding + half the 16px icon); the
+                    // padding after it puts their labels where the parent's label starts, 40px from the row's edge.
+                    <ul className="ml-5 flex flex-col gap-0.5 border-l border-line pl-1.75">
+                      {g.items.filter((sub) => parentOf(g, sub) === it.href).map((sub) => <li key={sub.href}>{row(sub, true)}</li>)}
+                    </ul>
+                  ) : null}
+                </li>
+              ))}
             </ul>
           </div>
         ))}
