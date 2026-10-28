@@ -9,16 +9,9 @@ import type { NavGroup } from '@/app.config';
 import { cn } from '@/lib/cn';
 import { usePreferences } from '@/components/base/providers';
 import { Kbd } from '@/components/ui/kbd';
+import { parentOf } from '@/components/patterns/rail/trail';
 
 export type Command = { id: string; group: string; label: string; hint?: string; icon: ReactNode; run: () => void };
-
-// A sub page names its parent with `under`: the rail's rule, word for word. The parent is an item of the same group that is
-// not itself a sub page; an `under` that names nothing of the kind leaves the item with its group.
-const parentOf = (g: NavGroup, it: NavGroup['items'][number]) => {
-  const under = 'under' in it && typeof it.under === 'string' ? it.under : undefined;
-  const parent = under === undefined ? undefined : g.items.find((p) => p.href === under && p !== it);
-  return parent && !('under' in parent && typeof parent.under === 'string' && g.items.some((x) => x.href === parent.under && x !== parent)) ? parent : undefined;
-};
 
 let opener: (() => void) | null = null;
 /** Open the palette from anywhere: the rail's search button, a shortcut in a page. */

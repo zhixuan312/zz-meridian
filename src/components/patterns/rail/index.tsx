@@ -15,6 +15,7 @@ import { Menu, MenuContent, MenuItem, MenuLabel, MenuRadioGroup, MenuRadioItem, 
 import { toast } from '@/components/ui/toast';
 import { AppearanceMenu } from '@/components/patterns/appearance-menu';
 import { clearThread } from '@/components/patterns/assistant/thread';
+import { parentOf } from './trail';
 
 /** One scope the workspace menu offers: the console reads the whole platform or one team. */
 /**
@@ -102,14 +103,9 @@ export function Rail({
   const here = longest !== undefined && held.includes(longest) ? longest : undefined;
   const isActive = (href: string) => href === here;
 
-  // A sub page names its parent with `under`. The parent is a held item of the same group that is not itself a sub page;
-  // an `under` that names nothing of the kind leaves the item at the top level, with its icon.
-  const parentOf = (g: NavGroup, it: NavGroup['items'][number]) => {
-    const under = 'under' in it && typeof it.under === 'string' ? it.under : undefined;
-    const parent = under === undefined ? undefined : g.items.find((p) => p.href === under && p !== it);
-    return parent && !('under' in parent && typeof parent.under === 'string' && g.items.some((x) => x.href === parent.under && x !== parent)) ? parent.href : undefined;
-  };
-  const subsOf = (g: NavGroup, href: string) => g.items.filter((s) => parentOf(g, s) === href);
+  // A sub page names its parent with `under` (`parentOf`, shared with the palette and the trail). `nav` holds only what the
+  // person may open, so a parent they may not open leaves its sub pages at the top level, with their icons.
+  const subsOf = (g: NavGroup, href: string) => g.items.filter((s) => parentOf(g, s)?.href === href);
   // The branch that holds the current page: the parent whose own page it is, or whose sub page it is.
   const branchHere = nav.flatMap((g) => g.items.filter((p) => !parentOf(g, p) && subsOf(g, p.href).length > 0)).find((p) => p.href === here || subsOf(nav.find((g) => g.items.includes(p))!, p.href).some((s) => s.href === here))?.href;
   // Open branches, by parent href. The branch holding the page opens on arrival and on each change of page; the person's
@@ -168,8 +164,10 @@ export function Rail({
     const measure = () => {
       const el = nav.querySelector<HTMLElement>('[aria-current]');
       setMarker((was) => {
-        // A sub page's list sits inside another list: beside it the guide carries the lit line, so the marker draws none.
-        const now = el ? { y: el.offsetTop, h: el.offsetHeight, x: el.offsetLeft, w: el.offsetWidth, sub: el.closest('ul ul') !== null } : null;
+        // A sub page's list sits inside its group's list: beside it the guide carries the lit line, so the marker draws none.
+        // Only lists inside this nav count, so a rail drawn inside a host's own list is not taken for a branch.
+        const outer = el?.closest('ul')?.parentElement?.closest('ul');
+        const now = el ? { y: el.offsetTop, h: el.offsetHeight, x: el.offsetLeft, w: el.offsetWidth, sub: !!outer && nav.contains(outer) } : null;
         return was?.y === now?.y && was?.h === now?.h && was?.x === now?.x && was?.w === now?.w && was?.sub === now?.sub ? was : now;
       });
     };

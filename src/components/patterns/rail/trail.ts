@@ -1,6 +1,19 @@
 import type { NavGroup } from '@/app.config';
 import type { Crumb } from '@/components/ui/breadcrumb';
 
+type Item = NavGroup['items'][number];
+
+/**
+ * The item `it` is drawn under: another item of the same group that `under` names, and which is not itself a sub page.
+ * An `under` that names nothing of the kind leaves the item at the top level. The rail, the palette's hint and the trail
+ * all read the hierarchy through this one rule. `under` is read through `in` so an older `NavItem` without it compiles.
+ */
+export function parentOf(g: NavGroup, it: Item): Item | undefined {
+  const under = 'under' in it && typeof it.under === 'string' ? it.under : undefined;
+  const parent = under === undefined ? undefined : g.items.find((p) => p.href === under && p !== it);
+  return parent && !('under' in parent && typeof parent.under === 'string' && g.items.some((x) => x.href === parent.under && x !== parent)) ? parent : undefined;
+}
+
 /**
  * The crumbs from the top of the declared navigation to `href`: `[parent, item]` for a sub page, `[item]` for an item
  * with no parent, `[]` for an href no item declares. The last crumb has no `href`, so Breadcrumb draws it as the page.
@@ -9,9 +22,6 @@ export function navTrail(href: string, groups: NavGroup[]): Crumb[] {
   const group = groups.find((g) => g.items.some((it) => it.href === href));
   const item = group?.items.find((it) => it.href === href);
   if (!group || !item) return [];
-  // The rail's rule for a parent (`parentOf` in the rail): another item of the same group, which is not itself a sub page.
-  const under = 'under' in item && typeof item.under === 'string' ? item.under : undefined;
-  const parent = under === undefined ? undefined : group.items.find((p) => p.href === under && p !== item);
-  const nested = parent !== undefined && 'under' in parent && typeof parent.under === 'string' && group.items.some((x) => x.href === parent.under && x !== parent);
-  return parent && !nested ? [{ label: parent.label, href: parent.href }, { label: item.label }] : [{ label: item.label }];
+  const parent = parentOf(group, item);
+  return parent ? [{ label: parent.label, href: parent.href }, { label: item.label }] : [{ label: item.label }];
 }
