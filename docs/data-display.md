@@ -11,17 +11,25 @@ How Meridian shows numbers: which form to use, how colour is assigned, how figur
 | A number with its change and shape | A tile | Metric tile |
 | The same number for many things at once (eight customers, six regions), each with its change and shape | A wall of compact tiles: the name, the change, one line and the shape | Metric tile |
 | Change over time | A line or an area on one axis | Trend chart |
+| A few readings over a long time (weekly figures, a handful of samples) | Straight segments with a point on each reading (`curve="linear"`, `points`) | Trend chart |
+| A level that changes at events (a balance, a limit, seats on a plan) | Steps: each value held until the next reading (`curve="step"`) | Trend chart |
 | The shape of a trend beside a figure | A line without axes | Sparkline |
 | A ranking | Horizontal bars, the longest first | Bar list |
+| A ranking whose order is its meaning (the hours of a day, the steps of a funnel) | Horizontal bars in the order given (`order="given"`) | Bar list |
+| A ranking beside an earlier reading (this week against last) | Horizontal bars, each with its earlier value as an outline under it (`pair`) | Bar list |
+| A signed change by category (a net change, a customer ahead of or behind the company) | Rows either side of one zero line | Diverging bars |
 | Parts of a whole, at one moment | One stacked bar | Composition bar |
 | Counts per category or per period | Columns | Column chart |
 | Parts of a whole over periods, each period a total to read (weeks, months, a handful of days) | Stacked columns, each column a whole | Column chart |
+| Two or three identities a period that are never summed (money in and money out, this year and last) | Columns side by side in each period, with no total (`grouped`) | Column chart |
 | Parts of a whole over a long run of days, where the shape is the story | Stacked bands | Trend chart |
 | Two dimensions of time (weekday by hour, or a year of days as week by weekday) | A grid of cells | Heatmap |
 | A service's history | Day bars | Uptime bars |
 | How long a service has been operational | One line under its day bars: its run | Status list |
 | An incident, step by step | A timeline, newest first, each update timed from the incident's start | Incident card |
 | Many records | A table | Data table |
+| The same measure for several things, compared row by row (one chart a service, a plan or a region) | Charts on one held scale (`domain`, `max`) | Trend chart, Sparkline, Bar list, Diverging bars |
+| A value derived rather than measured (a forecast, a day not yet reconciled) | Its mark hatched, with "Hatched: estimate" under the chart | Bar list, Column chart, Diverging bars |
 
 Sometimes the answer is not a chart: one number and a sentence beat a chart with one interesting point.
 
@@ -29,10 +37,12 @@ Sometimes the answer is not a chart: one number and a sentence beat a chart with
 
 Two measures of different size are two charts on one Meridian, not one chart with a second scale. A dashed comparison series is allowed only when it is the same unit, such as the previous period. Never scale one series to fit another ("Errors × 20"): the tooltip would print a number that is not true.
 
+The same measure for several things, one chart each, is drawn on one held scale so the charts compare row by row: `domain` on a Trend chart, a Sparkline and Diverging bars, `max` on a Bar list. A held scale widens rather than clips. A value outside it takes the scale to the levels that hold it, and the chart says so in words: a Trend chart in a line above its plot and at the end of its table's caption ("Scale widened from 90.0%–100.0% to 80.0%–100.0%"), a Bar list in a line under its rows ("Scale widened to 140 to show Gamma"), Diverging bars in a line above theirs ("Scale widened to +35 to show Delta") and a Sparkline, which has no room for a line, in its title. A range is never chosen tighter than the data to make a change look larger: the chart widens and says so.
+
 ## Colour by job
 
-- **Identity** (which series): the six categorical slots in their fixed order, `series-1` to `series-6`. Assign in order; never skip; a seventh series folds into Other. The order is validated for colour-vision deficiency in both themes (`node scripts/contrast.ts`).
-- **The one that matters**: the accent, with every other mark in the neutral population (`chart-neutral`). One highlighted bar, one highlighted line.
+- **Identity** (which series): the six categorical slots in their fixed order, `series-1` to `series-6`. Assign in order; never skip; a seventh series folds into Other. The order is validated for colour-vision deficiency in both themes (`node scripts/contrast.ts`). A grouped Column chart's parts are identities side by side, never the parts of a whole: they take the slots in order and never the accent, a pointed or highlighted group wears the `ink` ring instead, and nothing is summed. Past three identities, or over a long run of periods, the form is a Trend chart with a line a series.
+- **The one that matters**: the accent, with every other mark in the neutral population (`chart-neutral`). One highlighted bar, one highlighted line. Diverging bars are the neutral population with one accent row, never coloured by their sign: which side of the zero line a bar stands on, and the figure's sign, already say it. Values all of one sign are a Bar list.
 - **Magnitude**: one hue, light to dark, built from the accent and the surface (the heatmap).
 - **Magnitude by rank**: a Heatmap's step is a cell's share of the largest cell (`max`) unless one outlier would leave every other cell at the lowest step. Then it is ranked (`scale="quantile"`): the cells above zero take five steps of equal count. A step no longer says how much, so the legend's upper end reads the value the top step starts at ("900 or more") in place of "More", and the readout and the hidden table give each cell's exact value.
 - **State**: positive, warning, critical, always with a word or an icon.
@@ -48,6 +58,8 @@ Text never wears a series colour; values and labels stay in ink.
 - Gridlines recessive (`chart-grid`), one baseline (`chart-axis`), axis labels at `text-2xs` in `ink-3`. Axis labels are a scale: `$12`, `1.2M`; the exact value is in the tooltip and the table.
 - A legend is always present for two or more series or parts; a single series is named by its title.
 - A mark that encodes something says what, and the component says it: on the pointer, and to a screen reader where the mark is the only carrier. A Bar list row names its row and its share, an accented column says why it is the accent (`highlightLabel`), a marked day says what it is marked for, a Sparkline says the range it draws, a Delta says whether its colour reads better or worse, and a Status dot or an activity's tone carries its word as its label. When the meaning is structural — a dashed stretch into a period still running, a delta's direction — the component draws the key or the sentence itself. A new chart is held to this by a reviewer: a colour, a fill or a size a reader is meant to decode, with nothing to decode it with, is not finished.
+- A compare is the earlier reading (last week, a target) drawn as an unfilled outline on the same scale as the value, never a second fill: a Bar list's `pair` draws it as a 1px `chart-neutral-strong` outline under each bar, the figure reads the value and then the compare in `ink-3`, and a legend names both.
+- An estimate, a value derived rather than measured, is told by a hatch and words, never by a colour: its mark keeps its own fill with stripes of the surface over it, it says "estimate" wherever it is read (a row's title, the readout, the announcement, the table), and the chart writes "Hatched: estimate" once. A Bar list, a Column chart and Diverging bars take `estimate`. A period with no data is not an estimate: there is no figure to hatch.
 - A column's value stands above it at rest, in `ink-3`, while a column is at least 36px wide; narrower, it shows for the column pointed at. Stacked, the value is the column's total.
 
 ## A period still in progress
