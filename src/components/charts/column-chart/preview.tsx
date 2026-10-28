@@ -289,10 +289,15 @@ export default function ColumnChartPreview() {
           </Plane>
         </State>
       </Specimen>
-      <Specimen label="A column pointed at" stack note="By the pointer, or by the arrow keys on the focused plot. Stacked, the column takes a 2px ring in ink and the readout names the period, every part from the top down and the total. Plain, the column takes the accent and its value the tooltip's plane. Each is drawn statically here, through the Atlas-only index.">
+      <Specimen label="A column pointed at" stack note="By the pointer, or by the arrow keys on the focused plot. Stacked, the column takes a 2px ring in ink and the readout names the period, every part from the top down and the total. Grouped, the group takes the same ring and the readout names each part from the left, with no Total; an estimated day says so beside its name. Plain, the column takes the accent and its value the tooltip's plane. Each is drawn statically here, through the Atlas-only index.">
         <State label="Stacked" still className="w-full">
           <Plane on="surface">
             <ColumnChart label="Requests per day by region, with one day read" format={formatCompact} axisFormat={axis} data-preview-index={4} dates={dates(week)} parts={regions} columns={split(week, byRegion)} />
+          </Plane>
+        </State>
+        <State label="Grouped: an estimated day read" still className="w-full">
+          <Plane on="surface">
+            <ColumnChart label="Errors per day, this week and last, with an estimated day read" format={formatCompact} axisFormat={axis} data-preview-index={week.length - 1} dates={dates(week)} grouped parts={weeks} columns={estimated(byWeek)} />
           </Plane>
         </State>
         <State label="Plain, in columns too narrow for values at rest" still className="w-full">

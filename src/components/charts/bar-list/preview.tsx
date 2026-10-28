@@ -34,9 +34,9 @@ const percent = (n: number) => formatPercent(n, 0);
 export default function BarListPreview() {
   return (
     <>
-      <Specimen label="One highlighted" note="The row the card is about takes the accent; the rest are the neutral population. Past the limit, the rest fold into one row.">
+      <Specimen label="One highlighted" note="The row the card is about takes the accent, and its title says why; the rest are the neutral population. Past the limit, the rest fold into one row.">
         <Plane on="surface" className="max-w-xl">
-          <BarList label="Requests by endpoint" items={endpoints} highlight="/v1/messages" limit={5} format={formatCompact} />
+          <BarList label="Requests by endpoint" items={endpoints} highlight="/v1/messages" highlightLabel="The endpoint this card follows" limit={5} format={formatCompact} />
         </Plane>
       </Specimen>
       <Specimen label="All neutral" note="Without a finding to point at, no row is coloured.">
@@ -51,6 +51,7 @@ export default function BarListPreview() {
             limit={4}
             format={formatCost}
             highlight="Northwind Labs"
+            highlightLabel="The customer this card follows"
             items={CUSTOMERS.slice(0, 12).map((c) => ({ key: c.name, label: c.name, value: c.revenue, meta: c.plan }))}
           />
         </Plane>

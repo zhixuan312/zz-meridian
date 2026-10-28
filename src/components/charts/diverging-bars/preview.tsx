@@ -31,6 +31,14 @@ const regions = REGION_NAMES.map((r) => ({ key: r, label: r, value: against(CUST
 const left = CUSTOMERS.filter((c) => c.status === 'left').slice(0, 2);
 const largestFall = [...named].sort((a, b) => (against([a]) ?? 0) - (against([b]) ?? 0))[0];
 
+/** Every row reads no data or zero: two customers that left, and two whose change matches the company's. */
+const flat = [...named.slice(0, 2).map((c) => row(c, { value: 0 })), ...left.map((c) => row(c))];
+// A specimen cannot hold the pointer or the keyboard's focus, so the first row is given, as a class, the values the
+// pointer and the focus ring give it: the bar's step up, the label's accent-ink, the link's 2px accent outline.
+const HOVER = '[&_li:first-child_[data-bar]]:bg-chart-neutral-strong';
+const LINK_HOVER = `${HOVER} [&_li:first-child_a]:text-accent-ink`;
+const FOCUS = '[&_li:first-child_a]:rounded-xs [&_li:first-child_a]:outline-2 [&_li:first-child_a]:outline-offset-2 [&_li:first-child_a]:outline-accent';
+
 const LABEL = 'Change in requests against the company, by customer';
 const VS = `In points against the company's ${company.toFixed(1)}%, the last 7 days against the 7 before.`;
 
@@ -82,10 +90,36 @@ export default function DivergingBarsPreview() {
           </State>
         </div>
       </Specimen>
+      <Specimen label="Hover and focus" note="Under the pointer a row's neutral bar steps up to chart-neutral-strong; on a linked row the label takes accent-ink too, and on the keyboard the link shows the 2px accent ring. Each is drawn here on the first row.">
+        <div className="grid w-full gap-4 lg:grid-cols-3">
+          <State label="Hover: the row's bar steps up" still className="items-stretch">
+            <Plane on="surface">
+              <DivergingBars label={`${LABEL}, the first row hovered`} items={named.slice(0, 4).map((c) => row(c))} format={points} className={HOVER} />
+            </Plane>
+          </State>
+          <State label="Hover on a linked label: the label takes accent-ink" still className="items-stretch">
+            <Plane on="surface">
+              <DivergingBars label={`${LABEL}, the first label hovered`} items={linked.slice(0, 4)} format={points} className={LINK_HOVER} />
+            </Plane>
+          </State>
+          <State label="Focus on a linked row: the link's ring" still className="items-stretch">
+            <Plane on="surface">
+              <DivergingBars label={`${LABEL}, the first link focused`} items={linked.slice(0, 4)} format={points} className={FOCUS} />
+            </Plane>
+          </State>
+        </div>
+      </Specimen>
       <Specimen label="No data" note="A customer that left has no week before to compare: its row reads a dash, draws no bar and stands after every value.">
         <Plane on="surface" className="max-w-xl">
           <DivergingBars label={LABEL} items={[...named.filter((c) => c.plan === 'Starter'), ...left].map((c) => row(c))} format={points} />
         </Plane>
+      </Specimen>
+      <Specimen label="All no data or zero" note="No row has a change to draw: no bars, the figures read 0.0 and a dash, and the axis stands on the levels of ±1.">
+        <State label="All no data or zero" className="w-full max-w-xl items-stretch">
+          <Plane on="surface">
+            <DivergingBars label={`${LABEL}, none with a change`} items={flat} format={points} />
+          </Plane>
+        </State>
       </Specimen>
       <Specimen label="An estimate" note="A figure derived rather than measured is hatched over its own fill, its row's title says estimate, and the key is written once under the chart.">
         <Plane on="surface" className="max-w-xl">

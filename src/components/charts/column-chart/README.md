@@ -76,7 +76,7 @@ The readout is at least 144px wide and never wider than the chart, with `space-3
 | Rest | Columns, and their values where a column is 36px or wider. No readout. |
 | Hover | Plain, neutral columns step up to `chart-neutral-strong` over `dur-hover`. |
 | Pointed | By the pointer or the keys. Plain: the column takes the accent, and its value stands above it in `ink-inverse` on `surface-inverse`. Stacked: the column takes a 2px `ink` ring over `dur-hover`, its total steps up to `ink`, and the readout shows. |
-| Highlighted | With no column pointed at, the highlighted column is the accent one (plain) or wears the ring (stacked). |
+| Highlighted | With no column pointed at, the highlighted column is the accent one (plain) or wears the ring (stacked and grouped). Its title adds `highlightLabel`, and the table's caption names it the way the mark draws it: `Accented: {highlightLabel}` plain, `Ringed: {highlightLabel}` stacked and grouped. |
 | Focus | The plot wears a 2px `accent` outline, 4px off its box, on `radius-sm`. The ring encloses the plot's box and so all the plot draws: the gridlines, every tick's label whole, the columns, their values at rest and the pointed value. It stands 4px under the line of the zero tick's label and 2px over the line of the x labels, and encloses neither the legend nor the x labels. |
 | Running | The last column's fill at half strength, inside a 1px dashed `ink` outline, open at the baseline, 1px off the fill; "so far" where it is read. Grouped, the group's bars at half strength inside one outline. |
 | Estimate | The column's fill, or each of its parts, hatched; "estimate" where it is read, and `Hatched: estimate` under the labels. |

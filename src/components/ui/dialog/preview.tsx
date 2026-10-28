@@ -1,11 +1,11 @@
 'use client';
 
-import { X } from 'lucide-react';
+import { X, XCircle } from 'lucide-react';
 import { cn } from '@/lib/cn';
-import { Specimen } from '@/system/specimen';
+import { Specimen, State } from '@/system/specimen';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { DIALOG_BODY, DIALOG_FOOT, DIALOG_HEAD, DIALOG_PANEL, Dialog, DialogContent, DialogTrigger } from '.';
+import { DIALOG_BODY, DIALOG_FOOT, DIALOG_HEAD, DIALOG_PANEL, Dialog, DialogClose, DialogContent, DialogTrigger } from '.';
 
 const EVIDENCE = [
   { region: 'us-east-1', model: 'meridian-large', requests: '412,800', p50: '182 ms', p95: '1.42 s', errors: '0.31%', alert: true },
@@ -29,6 +29,39 @@ function Panel({ title, description, children, footer, className }: { title: str
       <div className={DIALOG_BODY}>{children}</div>
       {footer ? <div className={DIALOG_FOOT}>{footer}</div> : null}
     </div>
+  );
+}
+
+/** The six regions behind the alert: the table the static panel and the live dialog both hold. */
+function Evidence() {
+  return (
+    <Table caption="Latency by region">
+      <TableHead>
+        <tr>
+          <TableHeader grow>Region</TableHeader>
+          <TableHeader hideBelow="sm">Model</TableHeader>
+          <TableHeader align="right" hideBelow="md">Requests</TableHeader>
+          <TableHeader align="right" hideBelow="sm">p50</TableHeader>
+          <TableHeader align="right">p95</TableHeader>
+          <TableHeader align="right" hideBelow="md">Errors</TableHeader>
+        </tr>
+      </TableHead>
+      <TableBody>
+        {EVIDENCE.map((r) => (
+          <TableRow key={r.region}>
+            <TableCell className="whitespace-nowrap">{r.region}</TableCell>
+            <TableCell hideBelow="sm" muted className="whitespace-nowrap">{r.model}</TableCell>
+            <TableCell hideBelow="md" numeric>{r.requests}</TableCell>
+            <TableCell hideBelow="sm" numeric>{r.p50}</TableCell>
+            <TableCell numeric className={r.alert ? 'font-medium text-critical-ink' : undefined}>
+              {/* The alert is said with an icon, and a word for a screen reader, never by the colour alone. */}
+              {r.alert ? <span className="inline-flex items-center gap-1"><XCircle aria-hidden className="size-3.5" /><span className="sr-only">Alert:</span>{r.p95}</span> : r.p95}
+            </TableCell>
+            <TableCell hideBelow="md" numeric>{r.errors}</TableCell>
+          </TableRow>
+        ))}
+      </TableBody>
+    </Table>
   );
 }
 
@@ -59,35 +92,21 @@ export default function DialogPreview() {
           </Panel>
         </div>
       </Specimen>
-      <Specimen label="xl · six columns" note="960px: the widest a table goes in a dialog. Past six columns, or when the reader needs the page beside it, the table gets its own page.">
-        <div className="grid w-full place-items-center rounded-lg bg-scrim p-8 max-sm:p-3">
+      <Specimen label="xl · six columns" note="960px: the widest a table goes in a dialog. Past six columns, or when the reader needs the page beside it, the table gets its own page. The trigger under the panel opens the same table in a live xl dialog.">
+        {/* On a phone the xl dialog is a full-width sheet, so its picture takes the frame's whole width: the table needs it. */}
+        <div className="grid w-full place-items-center rounded-lg bg-scrim p-8 max-sm:p-0">
           <Panel title="Latency evidence" description="The six regions behind this morning's p95 alert." className="max-w-240" footer={<Button variant="ghost">Close</Button>}>
-            <Table caption="Latency by region">
-              <TableHead>
-                <tr>
-                  <TableHeader grow>Region</TableHeader>
-                  <TableHeader hideBelow="sm">Model</TableHeader>
-                  <TableHeader align="right" hideBelow="md">Requests</TableHeader>
-                  <TableHeader align="right" hideBelow="sm">p50</TableHeader>
-                  <TableHeader align="right">p95</TableHeader>
-                  <TableHeader align="right" hideBelow="md">Errors</TableHeader>
-                </tr>
-              </TableHead>
-              <TableBody>
-                {EVIDENCE.map((r) => (
-                  <TableRow key={r.region}>
-                    <TableCell className="whitespace-nowrap">{r.region}</TableCell>
-                    <TableCell hideBelow="sm" muted className="whitespace-nowrap">{r.model}</TableCell>
-                    <TableCell hideBelow="md" numeric>{r.requests}</TableCell>
-                    <TableCell hideBelow="sm" numeric>{r.p50}</TableCell>
-                    <TableCell numeric className={r.alert ? 'font-medium text-critical-ink' : undefined}>{r.p95}</TableCell>
-                    <TableCell hideBelow="md" numeric>{r.errors}</TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+            <Evidence />
           </Panel>
         </div>
+        <State label="Live: opens at xl, a sheet on phones">
+          <Dialog>
+            <DialogTrigger asChild><Button>Open the xl dialog</Button></DialogTrigger>
+            <DialogContent size="xl" title="Latency evidence" description="The six regions behind this morning's p95 alert." footer={<DialogClose asChild><Button variant="ghost">Close</Button></DialogClose>}>
+              <Evidence />
+            </DialogContent>
+          </Dialog>
+        </State>
       </Specimen>
       <Specimen label="Live"note="Opens centred; on phones it rises from the bottom as a sheet.">
         <Dialog>

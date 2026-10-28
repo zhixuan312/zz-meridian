@@ -11,8 +11,8 @@ import { useSize } from '@/components/charts/use-size';
 export function Levels({ levels }: { levels: [word: string, at: number][] }) {
   const [ref, { width }] = useSize<HTMLDivElement>();
   const last = levels.length - 1;
-  // A word is 7px a character (Diverging bars' 6.5px for its 11px words, at these 12px ones), anchored at its left edge
-  // when first, its right edge when the top and its centre otherwise.
+  // A word is 7px a character: wider than the 6.5px Diverging bars counts for the same 11px words, so a pair it keeps
+  // has room to spare. Anchored at its left edge when first, its right edge when the top and its centre otherwise.
   const box = (i: number) => {
     const w = levels[i][0].length * 7, x = levels[i][1] * width - (i === 0 ? 0 : i === last ? w : w / 2);
     return [x, x + w];
@@ -24,7 +24,7 @@ export function Levels({ levels }: { levels: [word: string, at: number][] }) {
     else edge = l;
   }
   return (
-    <div ref={ref} aria-hidden className="t-caption relative mt-1.5 h-4">
+    <div ref={ref} aria-hidden className="relative mt-1.5 h-4 text-2xs leading-4 text-ink-3">
       {levels.map(([word, at], i) => (
         <span key={at} data-level className={cn('absolute tabular-nums', i === 0 ? '' : i === last ? '-translate-x-full' : '-translate-x-1/2', hidden.has(i) && 'invisible')} style={{ left: `${at * 100}%` }}>{word}</span>
       ))}

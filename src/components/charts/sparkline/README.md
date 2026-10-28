@@ -28,7 +28,7 @@ Status: beta
 
 Height 24px in a table cell, 28px in a compact Metric tile, 32 to 44px in a tile; the width is the container's. The scale fits the data's own range (minimum to maximum of the numbers, a day with no value left out), because a sparkline shows shape, not magnitude.
 
-`domain={[min, max]}` holds the scale instead, so sparklines side by side are drawn against one range and their heights compare. The range drawn is the domain itself: a sparkline has no axis to round to a step. A value outside it widens the range to the nice levels that take it, and the title says so: `0 to 150, scale widened from 0–100`. A `domain` whose second number is not above its first is drawn as no domain.
+`domain={[min, max]}` holds the scale instead, so sparklines side by side are drawn against one range and their heights compare. The range drawn is the domain itself: a sparkline has no axis to round to a step. While every value is inside it, the title names the data's own range. A value outside it widens the range to the nice levels that take it, and the title names the range drawn and says so: values from 42 to 128 on `domain={[0, 100]}` read `0 to 150, scale widened from 0–100`. A `domain` whose second number is not above its first is drawn as no domain.
 
 ## States
 
@@ -38,7 +38,7 @@ Height 24px in a table cell, 28px in a compact Metric tile, 32 to 44px in a tile
 | Day pointed at | The hairline and dot at that day, when the line has one value for each of the Meridian's dates. On a day with no value, the hairline alone: there is no point for the dot to stand on. |
 | Gap | A `null` is a day with no value: it keeps its place on the x axis and the line and its area break there, as the Trend chart's line does. Each run of days with a value is its own stretch; a day with a value between two gaps has no neighbour to join and draws no line. A gap is never drawn as zero. |
 | Values that are not the page's | With any other number of values, no hairline and no dot: the line alone, whatever the page points at. |
-| Scale widened | A value outside the `domain`: the range widens to nice levels around the domain and the data, and the title adds `, scale widened from {min}–{max}`. |
+| Scale widened | A value outside the `domain`: the range widens to nice levels around the domain and the data, and the title reads the range drawn, the first and last of those levels, then `, scale widened from {min}–{max}`. |
 | Too few points | Under two numbers, render nothing and let the figure stand alone. A `null` is not a number. |
 
 ## Behaviour

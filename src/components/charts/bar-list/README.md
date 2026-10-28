@@ -8,12 +8,12 @@ Status: beta
 
 1. **Row**: label on the left (`text-sm`, `ink-2`; the highlighted row `ink` at `weight-medium`), an optional meta line, the value on the right (`ink`, tabular, `weight-medium`).
 2. **Track**: 6px tall, `fill-track`, `radius-full`.
-3. **Bar**: the value against the scale's top (the largest row, `total`, `max` or the axis's last level), `chart-neutral`; the one highlighted row in `accent`.
+3. **Bar**: the value against the scale's top (the largest row, `total`, `max` or the axis's last level), `chart-neutral`; the one highlighted row in `accent`, and its row's title adds `highlightLabel`, what makes it the one ("The busiest endpoint"), so the accent is never a colour left to guess.
 4. **Others**: past `limit`, the remaining rows fold into "N others", summed, in `ink-3`; a single extra row shows as itself, since "1 others" would hide a name to save no space. It is never a link, whatever the rows it holds.
 5. **Linked row**: a row with an `href` names a record that has a page, and its label is the one link to it, named by the label. The bar, the meta line and the figure stay text: they say what the label already opens, so they are never a second way there. At rest the row looks as an unlinked one does.
 6. **Compare** (under `pair`): 2px under the value bar, the row's `compare` on the same scale, a 1px `chart-neutral-strong` outline with no fill; none for a missing compare. The figure reads `{value} · {compare}`, the compare in `ink-3`, `—` for one with no data.
 7. **Legend** (under `pair`): above the rows, a filled and an outlined swatch named `pair.label` and `pair.compareLabel`.
-8. **Axis** (under `axis`): the levels in `caption` under the rows, and a 1px `chart-grid` gridline through every row at each. No two level words that show stand closer than 4px: from the top inward, a word that would touch the nearest one shown above it, or the first, is hidden (`invisible`, still in the row), and its gridline stays. The first level and the top always show.
+8. **Axis** (under `axis`): the levels at `text-2xs` in `ink-3` under the rows, and a 1px `chart-grid` gridline through every row at each. No two level words that show stand closer than 4px: from the top inward, a word that would touch the nearest one shown above it, or the first, is hidden (`invisible`, still in the row), and its gridline stays. The first level and the top always show.
 9. **Estimate**: an estimated row's bar is hatched (`data-estimate`, the base hatch over its own fill), its title adds "estimate", and the list writes "Hatched: estimate" once. A folded row holding one is one; a compare outline never is.
 10. **Lines under the list**, in this order: the axis levels, the widening line ("Scale widened to 140 to show Gamma"), the estimate key.
 
@@ -89,6 +89,7 @@ Labels are the items' own names (routes in mono); values use one formatter for t
 
 - Do rank the rows by value, the largest first; when the order is the meaning (hours, stages), pass `order="given"` and keep it.
 - Do hold the scale with `max` when cards of one measure stand side by side; do not pass it and `total` together.
+- Do pass `highlightLabel` beside the highlighted row's key: an accent with nothing to decode it with is not finished.
 - Do not colour more than one row; do not colour rows by their value.
 
 ## Implementation
@@ -96,7 +97,7 @@ Labels are the items' own names (routes in mono); values use one formatter for t
 ```tsx
 import { BarList } from '@/components/charts/bar-list';
 
-<BarList label="Requests by endpoint" items={items} highlight="/v1/messages" limit={5} format={formatCompact} />
+<BarList label="Requests by endpoint" items={items} highlight="/v1/messages" highlightLabel="The busiest endpoint" limit={5} format={formatCompact} />
 
 // The hours of a day, in their order, against a held scale with its levels.
 <BarList label="Requests by hour" order="given" max={5000} axis items={hours} format={formatCompact} />

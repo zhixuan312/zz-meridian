@@ -320,7 +320,7 @@ function Columns({
       <Labels bars={bars} active={active} width={width} left={left} timed={timed} every={every} settled={settled} estimate={bars.some((b) => b.est)} />
       <p className="sr-only" aria-live="polite">{reading}</p>
       {settled ? <table className="sr-only">
-        <caption>{label}{highlight && highlightLabel ? `. Accented: ${highlightLabel}` : ''}</caption>
+        <caption>{label}{highlight && highlightLabel ? `. ${drawn ? 'Ringed' : 'Accented'}: ${highlightLabel}` : ''}</caption>
         {drawn ? <thead><tr><th scope="col">Period</th>{drawn.map((p) => <th key={p.key} scope="col">{p.label}</th>)}<th scope="col">Total</th></tr></thead> : null}
         <tbody>
           {bars.map((b, i) => (

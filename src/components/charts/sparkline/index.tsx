@@ -46,8 +46,9 @@ export function Sparkline({ values, color = 'accent', height = 36, curve = 'mono
   // is still that day: the hairline marks it, and there is no dot to stand on the line.
   const at = index !== null && values.length === dates.length ? { x: x(index), y: pts[index]?.[1] ?? null } : null;
   // A shape with no readout says nothing about what it covers, and it is the one chart a page puts beside a figure
-  // without a table under it (issue #94). The range it draws is the words it has, on the pointer.
-  const range = `${lowest.toLocaleString('en-US')} to ${highest.toLocaleString('en-US')}${widened ? `, scale widened from ${held[0].toLocaleString('en-US')}–${held[1].toLocaleString('en-US')}` : ''}`;
+  // without a table under it (issue #94). The range it draws is the words it has, on the pointer: the data's own, or,
+  // widened, the levels it is drawn to.
+  const range = `${(widened ? min : lowest).toLocaleString('en-US')} to ${(widened ? max : highest).toLocaleString('en-US')}${widened ? `, scale widened from ${held[0].toLocaleString('en-US')}–${held[1].toLocaleString('en-US')}` : ''}`;
   return (
     <div ref={ref} aria-hidden title={range} className={className} style={{ height }}>
       {W ? (
