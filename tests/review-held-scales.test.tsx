@@ -14,8 +14,8 @@ import { DivergingBars } from '@/components/charts/diverging-bars';
 import { TrendChart } from '@/components/charts/trend-chart';
 
 // Defects the review of issue #99's forms found on edge paths: a held scale under one, a seventh grouped part, a dot on a
-// running point, a node label on a diverging row, the widening words of an area held above zero, and the forced-colours
-// fill of an estimate whose colour is an inline style.
+// running point, a node label on a diverging row, the widening words of an area held above zero, an estimate with no
+// figure, and the forced-colours fill of an estimate whose colour is an inline style.
 
 const dates = ['2026-10-01', '2026-10-02', '2026-10-03', '2026-10-04'];
 
@@ -56,6 +56,13 @@ describe('the forms of issue #99 on their edge paths', () => {
     const { container } = render(<DivergingBars label="Change" domain={10} items={[{ key: 'api', label: <code>/v1/api</code>, value: 20 }, { key: 'web', label: 'Web', value: -4 }]} />);
     expect(container.querySelector('li[data-row="api"] code')?.textContent).toBe('/v1/api');
     expect(container.querySelector('[data-widened]')?.textContent).toBe('Scale widened to +20 to show api');
+  });
+
+  it('a Diverging bars row with no figure is not an estimate: no key, no word in its title', () => {
+    const { container } = render(<DivergingBars label="Change" items={[{ key: 'a', label: 'A', value: null, estimate: true }, { key: 'b', label: 'B', value: 0, estimate: true }, { key: 'c', label: 'C', value: 5 }]} />);
+    expect(container.querySelector('[data-estimate-key]')).toBeNull();
+    expect(container.querySelector('li[data-row="a"]')?.getAttribute('title')).toBe('A · —');
+    expect(container.querySelector('li[data-row="b"]')?.getAttribute('title')).toBe('B · 0');
   });
 
   it("an estimate's forced-colours fill wins over a mark's inline colour", () => {

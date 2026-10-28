@@ -72,7 +72,9 @@ export function DivergingBars({
     }
   }
   const plot = { paddingInline: gutter };
-  const estimated = rows.some((r) => r.estimate);
+  // A row with no figure, null or zero, has nothing to hatch, so it is not an estimate.
+  const estimate = (r: DivergingItem) => Boolean(r.estimate && r.value);
+  const estimated = rows.some(estimate);
 
   return (
     <div className={cn('flex flex-col gap-3', className)}>
@@ -92,7 +94,7 @@ export function DivergingBars({
             const rise = v === null || v >= 0;
             const share = v === null ? 0 : (Math.abs(v) / top) * 100;
             return (
-              <li key={r.key} data-row={r.key} className="group/row col-span-2 grid grid-cols-subgrid items-center" title={[named(r), figure(v), hot ? highlightLabel : null, r.estimate ? 'estimate' : null].filter(Boolean).join(' · ')}>
+              <li key={r.key} data-row={r.key} className="group/row col-span-2 grid grid-cols-subgrid items-center" title={[named(r), figure(v), hot ? highlightLabel : null, estimate(r) ? 'estimate' : null].filter(Boolean).join(' · ')}>
                 {r.href ? (
                   // The row's look at rest, the accent under the pointer and the focus ring on the keyboard.
                   <Link href={r.href} className={cn('hit row-link flex min-w-0 text-sm', hot ? 'font-medium text-ink' : 'text-ink-2')}>
@@ -108,7 +110,7 @@ export function DivergingBars({
                         <div
                           data-bar
                           data-side={rise ? 'rise' : 'fall'}
-                          data-estimate={r.estimate ? '' : undefined}
+                          data-estimate={estimate(r) ? '' : undefined}
                           className={cn(
                             'grow-x absolute inset-y-1 transition-colors duration-(--dur-hover)',
                             rise ? 'left-0 rounded-r-[4px]' : 'right-0 origin-right rounded-l-[4px]',

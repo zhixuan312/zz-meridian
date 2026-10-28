@@ -146,9 +146,9 @@ export default function ColumnChartPreview() {
           <ColumnChart label="Errors per day, this week and last" format={formatCompact} axisFormat={axis} dates={dates(week)} grouped parts={weeks} columns={byWeek} />
         </Plane>
       </Specimen>
-      <Specimen label="Grouped, a part under zero" note="A part under zero hangs from the zero line, as a plain fall does, its value under it; the scale goes under zero for it. A part with no data draws nothing in its place and reads No data.">
+      <Specimen label="Grouped, a part under zero" note="A part under zero hangs from the zero line, as a plain fall does, its value under it; the scale goes under zero for it. A part with no data draws nothing in its place and reads No data; a day with no data in either part keeps its slot with the no-data mark.">
         <Plane on="surface">
-          <ColumnChart label="Change in errors, day on day, this week and last" format={signed(formatCompact)} axisFormat={signed((n) => axis(n))} dates={dates(month.slice(-7))} grouped parts={weeks} columns={byChange.map((c, i) => (i === 3 ? { ...c, values: [c.values[0], null] } : c))} />
+          <ColumnChart label="Change in errors, day on day, this week and last" format={signed(formatCompact)} axisFormat={signed((n) => axis(n))} dates={dates(month.slice(-7))} grouped parts={weeks} columns={byChange.map((c, i) => (i === 3 ? { ...c, values: [c.values[0], null] } : i === 5 ? { ...c, values: [null, null] } : c))} />
         </Plane>
       </Specimen>
       <Specimen label="Grouped, highlighted and running" stack note="Highlighted, the group wears the 2px ring in ink around its bars: the slots are categorical, so the accent never stands beside them. Running, the last group's bars are at half strength inside one dashed outline, open at the baseline, and the day reads so far.">

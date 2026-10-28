@@ -30,6 +30,10 @@ const weeks = regions.map((r, i) => ({ ...r, value: Math.round(r.value / 4), com
 /** Today's requests by hour: the hour still running is projected from its first minutes. */
 const today = hours.map((h, i) => ({ ...h, value: Math.round(h.value / 4), estimate: i === hours.length - 1 }));
 const percent = (n: number) => formatPercent(n, 0);
+/** The real hover and focus values, put on the first row so the states are read without a pointer. */
+const HOVER = '[&_li:first-child_[data-bar]]:bg-chart-neutral-strong';
+const LINK_HOVER = `${HOVER} [&_li:first-child_a]:text-accent-ink`;
+const FOCUS = '[&_li:first-child_a]:rounded-xs [&_li:first-child_a]:outline-2 [&_li:first-child_a]:outline-offset-2 [&_li:first-child_a]:outline-accent';
 
 export default function BarListPreview() {
   return (
@@ -66,6 +70,25 @@ export default function BarListPreview() {
           <State label="Not linked: a region has no page" className="items-stretch">
             <Plane on="surface">
               <BarList label="Where requests come from" items={regions} format={formatCompact} />
+            </Plane>
+          </State>
+        </div>
+      </Specimen>
+      <Specimen label="Hover and focus" note="Under the pointer a row's neutral bar steps up to chart-neutral-strong; on a linked row the label takes accent-ink too, and on the keyboard the link shows the 2px accent ring. Each is drawn here on the first row.">
+        <div className="grid w-full gap-4 lg:grid-cols-3">
+          <State label="Hover: the row's bar steps up" still className="items-stretch">
+            <Plane on="surface">
+              <BarList label="Where requests come from, the first row hovered" items={regions} format={formatCompact} className={HOVER} />
+            </Plane>
+          </State>
+          <State label="Hover on a linked label: the label takes accent-ink" still className="items-stretch">
+            <Plane on="surface">
+              <BarList label="The largest customers by revenue, the first label hovered" items={customers.slice(0, 4)} format={formatCost} className={LINK_HOVER} />
+            </Plane>
+          </State>
+          <State label="Focus on a linked row: the link's ring" still className="items-stretch">
+            <Plane on="surface">
+              <BarList label="The largest customers by revenue, the first link focused" items={customers.slice(0, 4)} format={formatCost} className={FOCUS} />
             </Plane>
           </State>
         </div>

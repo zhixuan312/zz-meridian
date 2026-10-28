@@ -141,8 +141,8 @@ export function BarList({
         </div>
       ) : list}
       {levels ? <Levels levels={levels.map((l) => [format(l), l / top])} /> : null}
-      {past ? <p data-widened className="t-caption mt-1.5">Scale widened to {format(top)} to show {named(past) ?? past.key}</p> : null}
-      {estimated ? <p data-estimate-key className="t-caption mt-1.5">Hatched: estimate</p> : null}
+      {past ? <p data-widened className="mt-1.5 text-2xs text-ink-3">Scale widened to {format(top)} to show {named(past) ?? past.key}</p> : null}
+      {estimated ? <p data-estimate-key className="mt-1.5 text-2xs text-ink-3">Hatched: estimate</p> : null}
     </div>
   );
 }

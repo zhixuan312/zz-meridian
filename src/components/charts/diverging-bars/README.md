@@ -42,7 +42,7 @@ Rows are 20px tall and 12px apart; the bar is 12px inside its row; the axis row 
 | Focus (a linked row) | The label's link shows the 2px `accent` ring. |
 | No data | The row reads `—`, draws no bar and, sorted, stands after every value. |
 | All no data or zero | No bars, and the axis on the levels of ±1. |
-| Estimate | The bar is hatched over its own fill, its row's title says `estimate`, and the key is written once. |
+| Estimate | The bar is hatched over its own fill, its row's title says `estimate`, and the key is written once. A row with no data or a zero has no figure to hatch, so it is not an estimate, whatever it is passed. |
 | Widened | The scale reaches the largest magnitude, the levels add it at each end, and the line above the rows names its row. |
 | Empty | Render the card's Empty state. |
 

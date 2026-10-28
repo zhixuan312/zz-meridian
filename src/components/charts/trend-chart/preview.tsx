@@ -178,6 +178,11 @@ export default function TrendChartPreview() {
           <TrendChart label="Share of the services operational, a day" height={168} format="percent" domain={[0.9, 1]} dates={dates} series={[{ key: 'operational', label: 'Operational', values: uptime, kind: 'line' }]} />
         </Plane>
       </Specimen>
+      <Specimen label="A held scale under an area" note="An area is read by its height, so on a domain it is drawn from zero, never from the domain's lower end, and its widening line names the range it was drawn on: here seats held at 10 to 16 are drawn from 0 to 16, widened for the days at 20.">
+        <Plane on="surface">
+          <TrendChart label="Seats on the plan a day" height={168} whole curve="step" domain={[10, 16]} dates={dates} series={[{ key: 's', label: 'Seats', values: seats, kind: 'area' }]} />
+        </Plane>
+      </Specimen>
       <Specimen label="Short" note="Under 200px the chart draws three gridlines instead of four, and three or four date labels; drawn here at 150px. A chart told to `fill` takes the height its card gives it, never under 220px.">
         <Plane on="surface" className="max-w-md">
           <TrendChart label="Revenue per day" dates={dates} height={150} format="cost" series={[{ key: 's', label: 'Revenue', values: current.map((d) => d.revenue), kind: 'line', color: 'accent' }]} />
