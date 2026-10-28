@@ -71,8 +71,10 @@ describe('grouped columns', () => {
     expect(body(c)[2]).toEqual(['Wed', '90', 'No data']);
   });
 
-  it('stand a part\'s value above it at rest while its bar is at least 36px wide', async () => {
-    expect((await grouped()).querySelectorAll('[data-value]')).toHaveLength(5);
+  it('stand a part\'s value above it at rest while its bar is at least 36px wide, and "No data" over a part with none', async () => {
+    const c = await grouped();
+    expect(c.querySelectorAll('[data-value]')).toHaveLength(6);
+    expect([...column(c, 'd3').querySelectorAll('[data-value]')].map((v) => v.textContent)).toEqual(['90', 'No data']);
     size.width = 220;
     expect((await grouped()).querySelectorAll('[data-value]')).toHaveLength(0);
   });
