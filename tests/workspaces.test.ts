@@ -31,8 +31,8 @@ describe('the three workspaces', () => {
 });
 
 describe('the navigation as it is declared', () => {
-  it('is three groups, one for each workspace in order, none of them labelled', () => {
-    expect(nav.map((g) => [g.label, [...new Set(g.items.map((i) => i.workspace))]])).toEqual([[undefined, ['main']], [undefined, ['business']], [undefined, ['engineering']]]);
+  it('is four groups in order: Main, Business as Accounts and Traffic, Engineering, the others unlabelled', () => {
+    expect(nav.map((g) => [g.label, [...new Set(g.items.map((i) => i.workspace))]])).toEqual([[undefined, ['main']], ['Accounts', ['business']], ['Traffic', ['business']], [undefined, ['engineering']]]);
   });
 
   it('opens Business and Engineering at homes that say who each is for', () => {

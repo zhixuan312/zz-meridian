@@ -52,8 +52,10 @@ export type WorkspaceId = keyof typeof workspaces;
  * `prefetch` asks for the item's page to be prefetched in full, its URL data with it, where Next's default prefetches the
  * route's App Shell only. It is for a destination whose content is its URL data (a document page under a dynamic
  * segment), and every visible such link makes a request of its own, so it is for one or two items.
+ *
+ * `under` is the href of an item in the same group that this item is a sub page of.
  */
-export type NavItem = { href: string; label: string; icon: LucideIcon; badge?: string; workspace?: WorkspaceId; needs: Need; feature?: string; prefetch?: true };
+export type NavItem = { href: string; label: string; icon: LucideIcon; badge?: string; workspace?: WorkspaceId; needs: Need; feature?: string; prefetch?: true; under?: string };
 export type NavGroup = { label?: string; items: NavItem[] };
 
 export const nav: NavGroup[] = [
@@ -67,11 +69,17 @@ export const nav: NavGroup[] = [
     ],
   },
   {
+    label: 'Accounts',
     items: [
       { href: '/business', label: 'Revenue', icon: CircleDollarSign, workspace: 'business', needs: FEATURES.revenue.needs },
       { href: '/customers', label: 'Customers', icon: Users, workspace: 'business', needs: FEATURES.customers.needs },
+    ],
+  },
+  {
+    label: 'Traffic',
+    items: [
       { href: '/usage', label: 'Usage', icon: BarChart3, workspace: 'business', needs: FEATURES.usage.needs },
-      { href: '/requests', label: 'Requests', icon: Activity, workspace: 'business', needs: FEATURES.requests.needs },
+      { href: '/requests', label: 'Requests', icon: Activity, workspace: 'business', needs: FEATURES.requests.needs, under: '/usage' },
     ],
   },
   {
