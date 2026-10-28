@@ -7,7 +7,7 @@ import { AXIS_FORMATTERS, formatCompact } from '@/lib/format';
 import { formatShortDate } from '@/lib/format-date';
 import { Meridian } from '@/components/charts/meridian';
 import { TrendChart } from '@/components/charts/trend-chart';
-import { ColumnChart, type ColumnPart, type StackedColumn } from '.';
+import { ColumnChart, type ColumnPart, type GroupedPart, type StackedColumn } from '.';
 
 const week = demoSeries('7d').current;
 const fortnight = demoSeries('30d').current.slice(-14);
@@ -68,6 +68,19 @@ const noRequests = split(week, byRegion).map((c, i) => (i === 2 ? { ...c, values
 const unread = errors(week).map((c, i) => (i === 2 ? { ...c, value: null } : c));
 const unreadParts = split(week, byRegion).map((c, i) => (i === 2 ? { ...c, values: c.values.map(() => null) } : i === 4 ? { ...c, values: c.values.map((v, k) => (k === 1 ? null : v)) } : c));
 const nothingYet = errors(week).map((c, i) => (i === week.length - 1 ? { ...c, value: null } : c));
+/** Two identities side by side: this week's errors and the week before's, day by day. Neither is part of the other. */
+const weeks: GroupedPart[] = [{ key: 'this', label: 'This week' }, { key: 'last', label: 'Last week' }];
+const lastWeek = demoSeries('7d').previous;
+const byWeek: StackedColumn[] = week.map((d, i) => ({ key: d.date, label: formatShortDate(d.date), values: [d.errors, lastWeek[i].errors] }));
+/** Each week's change in errors, day on day: signed, so a part falls under zero beside one that rises. */
+const changeOf = (days: DailyPoint[]) => days.slice(1).map((d, i) => d.errors - days[i].errors);
+const thisChange = changeOf(month.slice(-8)), lastChange = changeOf(month.slice(-15, -7));
+const byChange: StackedColumn[] = month.slice(-7).map((d, i) => ({ key: d.date, label: formatShortDate(d.date), values: [thisChange[i], lastChange[i]] }));
+/** Two regions, each an identity in its own slot, and today running in both. */
+const twoRegions: GroupedPart[] = regions.slice(0, 2);
+const byTwoRegions = (requests?: (d: DailyPoint) => number) => split(week, byRegion, requests).map((c) => ({ ...c, values: c.values.slice(0, 2) }));
+// The estimate specimens: the sample measures every day, so the last two are made estimates, as a day not yet reconciled is.
+const estimated = <C extends { key: string }>(cs: C[], last = 2) => cs.map((c, i) => ({ ...c, estimate: i >= cs.length - last }));
 /** The ring the focused plot takes, as a class: a specimen cannot hold the keyboard's focus. */
 const FOCUS = '[&_[data-plot]]:outline-2 [&_[data-plot]]:outline-offset-4 [&_[data-plot]]:outline-accent';
 
@@ -127,6 +140,28 @@ export default function ColumnChartPreview() {
         <Plane on="surface">
           <ColumnChart label="Requests per day, by endpoint" format={formatCompact} axisFormat={axis} dates={dates(week)} parts={endpoints} columns={split(week, byEndpoint)} />
         </Plane>
+      </Specimen>
+      <Specimen label="Grouped" note="grouped: each column's parts are identities, here this week's errors and the week before's, standing side by side with a hairline of the card between them, each in its categorical slot (color 1, 2, in order unless a part names one). They are not a whole, so nothing is summed: the axis is every part's value and there is no Total, in the readout or the table. A part's value stands above it while its bar is at least 36px wide. Two or three parts; more are a Trend chart. The grouped form loads on demand, only on a page that draws one.">
+        <Plane on="surface">
+          <ColumnChart label="Errors per day, this week and last" format={formatCompact} axisFormat={axis} dates={dates(week)} grouped parts={weeks} columns={byWeek} />
+        </Plane>
+      </Specimen>
+      <Specimen label="Grouped, a part under zero" note="A part under zero hangs from the zero line, as a plain fall does, its value under it; the scale goes under zero for it. A part with no data draws nothing in its place and reads No data.">
+        <Plane on="surface">
+          <ColumnChart label="Change in errors, day on day, this week and last" format={signed(formatCompact)} axisFormat={signed((n) => axis(n))} dates={dates(month.slice(-7))} grouped parts={weeks} columns={byChange.map((c, i) => (i === 3 ? { ...c, values: [c.values[0], null] } : c))} />
+        </Plane>
+      </Specimen>
+      <Specimen label="Grouped, highlighted and running" stack note="Highlighted, the group wears the 2px ring in ink around its bars: the slots are categorical, so the accent never stands beside them. Running, the last group's bars are at half strength inside one dashed outline, open at the baseline, and the day reads so far.">
+        <State label="Grouped, highlighted" className="w-full">
+          <Plane on="surface">
+            <ColumnChart label="Requests per day in two regions, the busiest day highlighted" height={160} format={formatCompact} axisFormat={axis} highlight={week[4].date} highlightLabel="The busiest day" dates={dates(week)} grouped parts={twoRegions} columns={byTwoRegions()} />
+          </Plane>
+        </State>
+        <State label="Grouped, running" className="w-full">
+          <Plane on="surface">
+            <ColumnChart label="Requests per day in two regions, today so far" height={160} format={formatCompact} axisFormat={axis} running dates={dates(week)} grouped parts={twoRegions} columns={byTwoRegions(soFar)} />
+          </Plane>
+        </State>
       </Specimen>
       <Specimen label="Highlighted" stack note="The one column the card is about. Plain, it is the accent column, as in Categories and Days. Stacked, every column is the accent already, so it wears the 2px ring in ink while no column is pointed at.">
         <State label="Highlighted, stacked" className="w-full">
@@ -217,6 +252,28 @@ export default function ColumnChartPreview() {
         <State label="Running: today with nothing yet" className="w-full">
           <Plane on="surface">
             <ColumnChart label="Errors per day, today with nothing yet" height={160} axisFormat={axis} running dates={dates(week)} columns={nothingYet} />
+          </Plane>
+        </State>
+      </Specimen>
+      <Specimen label="Estimates" stack note="estimate: a figure not yet measured, here the last two days, not yet reconciled. Its column, or every part of it, is hatched in the surface's colour over its own fill; it reads estimate in the readout, the announcement and its row of the table, and the chart writes Hatched: estimate once, under its labels. A dense chart draws an estimated column as an element of its own, so the hatch has a fill to stand on.">
+        <State label="Plain" className="w-full">
+          <Plane on="surface">
+            <ColumnChart label="Errors per day, the last two estimated" height={160} axisFormat={axis} dates={dates(week)} columns={estimated(errors(week))} />
+          </Plane>
+        </State>
+        <State label="Dense: ninety days" className="w-full">
+          <Plane on="surface">
+            <ColumnChart label="Errors per day over ninety days, the last two estimated" height={160} axisFormat={axis} dates={dates(quarter)} columns={estimated(errors(quarter))} />
+          </Plane>
+        </State>
+        <State label="Stacked" className="w-full">
+          <Plane on="surface">
+            <ColumnChart label="Requests per day by region, the last two estimated" height={160} format={formatCompact} axisFormat={axis} dates={dates(week)} parts={regions} columns={estimated(split(week, byRegion))} />
+          </Plane>
+        </State>
+        <State label="Grouped" className="w-full">
+          <Plane on="surface">
+            <ColumnChart label="Errors per day, this week and last, the last two estimated" height={160} format={formatCompact} axisFormat={axis} dates={dates(week)} grouped parts={weeks} columns={estimated(byWeek)} />
           </Plane>
         </State>
       </Specimen>

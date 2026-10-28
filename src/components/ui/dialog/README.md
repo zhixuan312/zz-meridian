@@ -27,6 +27,9 @@ Status: beta
 | sm | 400px |
 | md (default) | 520px |
 | lg | 720px |
+| xl | 960px |
+
+A table of up to six columns goes in an `xl` dialog. Past six columns, or when the reader needs the page beside it, the table goes on its own page.
 
 Head padding 20px 24px 4px; body 12px 24px 24px; footer 14px 24px. Maximum height 720px or the viewport less 32px.
 
@@ -84,4 +87,4 @@ import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog';
 </Dialog>
 ```
 
-Props of `DialogContent`: `title`, `description`, `footer`, `size` (`sm` | `md` | `lg`). The panel classes are exported (`DIALOG_PANEL`, `DIALOG_HEAD`, `DIALOG_BODY`, `DIALOG_FOOT`) for static mocks.
+Props of `DialogContent`: `title`, `description`, `footer`, `size` (`sm` | `md` | `lg` | `xl`). The panel classes are exported (`DIALOG_PANEL`, `DIALOG_HEAD`, `DIALOG_BODY`, `DIALOG_FOOT`) for static mocks.

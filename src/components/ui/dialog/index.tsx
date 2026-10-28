@@ -18,7 +18,7 @@ export const DIALOG_PANEL = 'flex max-h-[min(720px,calc(100dvh-32px))] flex-col 
 export const DIALOG_HEAD = 'flex items-start gap-4 px-6 pt-5 pb-1';
 export const DIALOG_BODY = 'min-h-0 flex-1 overflow-y-auto px-6 pt-3 pb-6';
 export const DIALOG_FOOT = 'flex flex-col-reverse gap-2 border-t border-line bg-surface-sunk/60 px-6 py-3.5 sm:flex-row sm:justify-end sm:rounded-b-xl';
-export const DIALOG_WIDTH = { sm: 'sm:max-w-100', md: 'sm:max-w-130', lg: 'sm:max-w-180' } as const;
+export const DIALOG_WIDTH = { sm: 'sm:max-w-100', md: 'sm:max-w-130', lg: 'sm:max-w-180', xl: 'sm:max-w-240' } as const;
 
 export function DialogContent({
   title,
@@ -28,7 +28,7 @@ export function DialogContent({
   className,
   children,
   ...rest
-}: Omit<ComponentProps<typeof D.Content>, 'title'> & { title: ReactNode; description?: ReactNode; footer?: ReactNode; size?: 'sm' | 'md' | 'lg' }) {
+}: Omit<ComponentProps<typeof D.Content>, 'title'> & { title: ReactNode; description?: ReactNode; footer?: ReactNode; size?: keyof typeof DIALOG_WIDTH }) {
   return (
     <D.Portal>
       <D.Overlay className="scrim-in fixed inset-0 z-(--layer-overlay) bg-scrim" />

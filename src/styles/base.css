@@ -39,6 +39,9 @@
   [data-drawer-frame][data-drawer-open] { pointer-events: auto; }
   /* A guest in a host: no light; the host's ground shows through. */
   [data-surface='embed'] { background-image: none; }
+  /* An estimate: a figure not yet measured is hatched, in the surface's colour over the mark's own fill, so it reads as a
+     stand-in in either theme and every accent. It has no fill of its own: the mark keeps the one it states. */
+  [data-estimate] { background-image: repeating-linear-gradient(135deg, transparent 0 3px, color-mix(in oklab, var(--surface) 60%, transparent) 3px 4.5px); }
 
   h1, h2, h3, h4, h5, h6 { margin: 0; font-weight: var(--weight-semibold); text-wrap: balance; }
   p { margin: 0; text-wrap: pretty; }
@@ -240,6 +243,9 @@
   }
   :is(a, button, [role]:not([role='tabpanel'])):is([aria-current='page'], [aria-pressed='true'], [aria-selected='true'], [aria-checked='true'], [data-state='on'], [data-state='active'], [data-state='checked']) * { color: HighlightText; }
   [data-swatch] { forced-color-adjust: none; }
+  /* An estimate's hatch is a gradient, which a forced palette removes, and the estimate would read as a measured figure:
+     its stripes are drawn in CanvasText over Canvas instead. */
+  [data-estimate] { forced-color-adjust: none; background-color: Canvas; background-image: repeating-linear-gradient(135deg, transparent 0 3px, CanvasText 3px 4.5px); }
   /* Where the reader is, too: a field tells focus by its border and a ring and a menu its highlighted item by a fill, and
      both are gone here, so the outline a field removed comes back in Highlight, and a highlighted item is filled with it. */
   :focus-visible { outline: 2px solid Highlight; outline-offset: 2px; }

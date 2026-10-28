@@ -27,7 +27,7 @@ describe('first-load JS', () => {
     const got = firstLoadProblems(routes, { capKiB: 820, growthPct: 5, baseline: { '/x': 850 * KiB, '/z': 600 * KiB }, capUnheldOnly: true });
     expect(got.problems).toEqual(['/y: first-load JS 900 KiB over the 820 KiB cap', '/z: first-load JS grew 16.7% over its baseline (cap 5%)']);
     expect(budgetsOf({ budgets: { firstLoadKb: null } }).firstLoadKb).toBeNull();
-    expect(budgetsOf({}).firstLoadKb).toBe(820);
+    expect(budgetsOf({}).firstLoadKb).toBe(830);
   });
 });
 
@@ -57,7 +57,7 @@ describe('the budgets', () => {
     expect(DEFAULT_BUDGETS.navigation.warm.shellMs).toEqual({ desktop: 150, phone: 250 });
     expect(DEFAULT_BUDGETS.navigation.cold.interactiveMs).toEqual({ desktop: 2000, phone: 4000 });
     expect(DEFAULT_BUDGETS.navigation.afterLive).toEqual(DEFAULT_BUDGETS.navigation.cold);
-    expect(DEFAULT_BUDGETS).toMatchObject({ firstLoadKb: 820, firstLoadGrowthPct: 5, htmlGrowthPct: 5, prefetchKb: { desktop: 80, phoneClosed: 0 } });
+    expect(DEFAULT_BUDGETS).toMatchObject({ firstLoadKb: 830, firstLoadGrowthPct: 5, htmlGrowthPct: 5, prefetchKb: { desktop: 80, phoneClosed: 0 } });
     const b = budgetsOf({ budgets: { firstLoadKb: 900, navigation: { cold: { ...DEFAULT_BUDGETS.navigation.cold, shellMs: { desktop: 700, phone: 1600 } } } } });
     expect(b.firstLoadKb).toBe(900);
     expect(b.navigation.afterLive.shellMs).toEqual({ desktop: 700, phone: 1600 });

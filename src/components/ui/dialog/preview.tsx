@@ -4,7 +4,17 @@ import { X } from 'lucide-react';
 import { cn } from '@/lib/cn';
 import { Specimen } from '@/system/specimen';
 import { Button } from '@/components/ui/button';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { DIALOG_BODY, DIALOG_FOOT, DIALOG_HEAD, DIALOG_PANEL, Dialog, DialogContent, DialogTrigger } from '.';
+
+const EVIDENCE = [
+  { region: 'us-east-1', model: 'meridian-large', requests: '412,800', p50: '182 ms', p95: '1.42 s', errors: '0.31%', alert: true },
+  { region: 'us-west-2', model: 'meridian-large', requests: '268,150', p50: '164 ms', p95: '610 ms', errors: '0.08%' },
+  { region: 'eu-west-1', model: 'meridian-small', requests: '198,420', p50: '96 ms', p95: '388 ms', errors: '0.05%' },
+  { region: 'eu-central-1', model: 'meridian-large', requests: '121,060', p50: '171 ms', p95: '702 ms', errors: '0.11%' },
+  { region: 'ap-northeast-1', model: 'meridian-small', requests: '88,930', p50: '104 ms', p95: '455 ms', errors: '0.06%' },
+  { region: 'ap-southeast-2', model: 'meridian-small', requests: '41,270', p50: '118 ms', p95: '497 ms', errors: '0.09%' },
+];
 
 function Panel({ title, description, children, footer, className }: { title: string; description?: string; children: React.ReactNode; footer?: React.ReactNode; className?: string }) {
   return (
@@ -49,7 +59,37 @@ export default function DialogPreview() {
           </Panel>
         </div>
       </Specimen>
-      <Specimen label="Live" note="Opens centred; on phones it rises from the bottom as a sheet.">
+      <Specimen label="xl · six columns" note="960px: the widest a table goes in a dialog. Past six columns, or when the reader needs the page beside it, the table gets its own page.">
+        <div className="grid w-full place-items-center rounded-lg bg-scrim p-8 max-sm:p-3">
+          <Panel title="Latency evidence" description="The six regions behind this morning's p95 alert." className="max-w-240" footer={<Button variant="ghost">Close</Button>}>
+            <Table caption="Latency by region">
+              <TableHead>
+                <tr>
+                  <TableHeader grow>Region</TableHeader>
+                  <TableHeader hideBelow="sm">Model</TableHeader>
+                  <TableHeader align="right" hideBelow="md">Requests</TableHeader>
+                  <TableHeader align="right" hideBelow="sm">p50</TableHeader>
+                  <TableHeader align="right">p95</TableHeader>
+                  <TableHeader align="right" hideBelow="md">Errors</TableHeader>
+                </tr>
+              </TableHead>
+              <TableBody>
+                {EVIDENCE.map((r) => (
+                  <TableRow key={r.region}>
+                    <TableCell className="whitespace-nowrap">{r.region}</TableCell>
+                    <TableCell hideBelow="sm" muted className="whitespace-nowrap">{r.model}</TableCell>
+                    <TableCell hideBelow="md" numeric>{r.requests}</TableCell>
+                    <TableCell hideBelow="sm" numeric>{r.p50}</TableCell>
+                    <TableCell numeric className={r.alert ? 'font-medium text-critical-ink' : undefined}>{r.p95}</TableCell>
+                    <TableCell hideBelow="md" numeric>{r.errors}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </Panel>
+        </div>
+      </Specimen>
+      <Specimen label="Live"note="Opens centred; on phones it rises from the bottom as a sheet.">
         <Dialog>
           <DialogTrigger asChild><Button>Open dialog</Button></DialogTrigger>
           <DialogContent title="Revoke this key?" description="Requests signed with it will fail with 401 at once." footer={<Button variant="danger">Revoke key</Button>}>

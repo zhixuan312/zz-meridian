@@ -111,7 +111,7 @@ type VerifyConfig = {
    */
   requestDependentRoutes?: { path: string; reason: string }[];
   /**
-   * Limits verify enforces. Leave a key out for Meridian's default: first-load JS 820 KiB per route and 5% growth over
+   * Limits verify enforces. Leave a key out for Meridian's default: first-load JS 830 KiB per route and 5% growth over
    * `scripts/verify.baseline.json`, the warm, cold and after-live navigation times, and no prefetch on a closed phone drawer.
    * Every page's HTML, gzipped through the end of the streamed response, is held to `htmlGrowthPct` (5%) over its own
    * figure in the baseline's `html`; `htmlKb` adds an absolute cap in KiB, the same gzipped figure, for a page a project

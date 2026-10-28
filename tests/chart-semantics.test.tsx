@@ -10,7 +10,9 @@ vi.mock('@/components/charts/use-size', async () => {
 
 import { BarList } from '@/components/charts/bar-list';
 import { ColumnChart } from '@/components/charts/column-chart';
+import { GroupedColumns } from '@/components/charts/column-chart/grouped';
 import { CompositionBar } from '@/components/charts/composition-bar';
+import { DivergingBars } from '@/components/charts/diverging-bars';
 import { Heatmap } from '@/components/charts/heatmap';
 import { Sparkline } from '@/components/charts/sparkline';
 import { TrendChart } from '@/components/charts/trend-chart';
@@ -49,10 +51,15 @@ const numbers = (v: (number | null)[]) => v.filter((n): n is number => n !== nul
 /** Every way a chart or figure takes a series. Each is drawn with every shape. */
 const DRAWN: Record<string, (v: (number | null)[]) => ReactElement> = {
   Sparkline: (v) => <Sparkline values={v} />,
+  'Sparkline step, held': (v) => <Sparkline values={v} curve="step" domain={[0, 10]} />,
+  'Sparkline linear': (v) => <Sparkline values={v} curve="linear" />,
   'TrendChart area': (v) => <TrendChart label={LONG} dates={v.map((_, i) => day(i))} series={[{ key: 'a', label: LONG, values: v, kind: 'area' }]} />,
   'TrendChart whole': (v) => <TrendChart label="Count" whole dates={v.map((_, i) => day(i))} series={[{ key: 'a', label: 'Count', values: v, kind: 'area' }]} />,
   'TrendChart stacked': (v) => <TrendChart label="Parts" stacked dates={v.map((_, i) => day(i))} series={[{ key: 'a', label: 'One', values: v }, { key: 'b', label: 'Two', values: v.map((n) => (n === null ? null : n / 2)) }]} />,
   'TrendChart running': (v) => <TrendChart label="Weeks" running tick={(d) => `Week of ${d}`} dates={v.map((_, i) => day(i * 7))} series={[{ key: 'a', label: 'Weeks', values: v, kind: 'area' }]} />,
+  'TrendChart step, held, points': (v) => <TrendChart label="Held" curve="step" points domain={[0, 10]} dates={v.map((_, i) => day(i))} series={[{ key: 'a', label: 'Held', values: v, kind: 'area' }]} />,
+  'TrendChart linear': (v) => <TrendChart label="Straight" curve="linear" running dates={v.map((_, i) => day(i))} series={[{ key: 'a', label: 'Straight', values: v, kind: 'line' }]} />,
+  'TrendChart stacked step': (v) => <TrendChart label="Parts" stacked curve="step" running dates={v.map((_, i) => day(i))} series={[{ key: 'a', label: 'One', values: v }, { key: 'b', label: 'Two', values: v.map((n) => (n === null ? null : n / 2)) }]} />,
   ColumnChart: (v) => <ColumnChart label={LONG} columns={v.map((value, i) => ({ key: `c${i}`, label: `W${i + 1}`, value }))} />,
   'ColumnChart whole running': (v) => <ColumnChart label="Count" whole running columns={v.map((value, i) => ({ key: `c${i}`, label: `W${i + 1}`, value }))} />,
   'ColumnChart highlighted': (v) => <ColumnChart label="Days" highlight="c0" highlightLabel="The first day" columns={v.map((value, i) => ({ key: `c${i}`, label: `D${i + 1}`, value }))} />,
@@ -63,8 +70,20 @@ const DRAWN: Record<string, (v: (number | null)[]) => ReactElement> = {
       columns={v.map((n, i) => ({ key: `c${i}`, label: `W${i + 1}`, values: [n, n === null ? null : n * 2] }))}
     />
   ),
+  'ColumnChart grouped': (v) => (
+    <GroupedColumns
+      label="Flows"
+      grouped
+      parts={[{ key: 'a', label: 'In' }, { key: 'b', label: 'Out' }]}
+      columns={v.map((n, i) => ({ key: `c${i}`, label: `W${i + 1}`, values: [n, n === null ? null : n / 2] }))}
+    />
+  ),
+  'ColumnChart estimated': (v) => <ColumnChart label="Count" columns={v.map((value, i) => ({ key: `c${i}`, label: `W${i + 1}`, value, estimate: i % 2 === 1 }))} />,
   BarList: (v) => <BarList label="By row" items={numbers(v).map((value, i) => ({ key: `r${i}`, label: i === 0 ? LONG : `Row ${i}`, value }))} />,
   'BarList of a total': (v) => <BarList label="Share" total={numbers(v).reduce((a, b) => a + b, 0)} items={numbers(v).map((value, i) => ({ key: `r${i}`, label: `Row ${i}`, value }))} />,
+  'BarList given, held, paired': (v) => <BarList label="By row" order="given" max={100} axis pair={{ label: 'This week', compareLabel: 'Last week' }} items={numbers(v).map((value, i) => ({ key: `r${i}`, label: i === 0 ? LONG : `Row ${i}`, value, compare: value / 2 }))} />,
+  'BarList estimated': (v) => <BarList label="By row" items={numbers(v).map((value, i) => ({ key: `r${i}`, label: `Row ${i}`, value, estimate: i % 2 === 1 }))} />,
+  DivergingBars: (v) => <DivergingBars label={LONG} items={v.map((value, i) => ({ key: `r${i}`, label: i === 0 ? LONG : `Row ${i}`, value }))} />,
   CompositionBar: (v) => <CompositionBar label="Parts" parts={numbers(v).slice(0, 6).map((value, i) => ({ label: i === 0 ? LONG : `Part ${i}`, value }))} />,
   'Heatmap hours': (v) => <Heatmap label="Load" values={Array.from({ length: 7 }, (_, d) => Array.from({ length: 24 }, (_, h) => numbers(v)[(d * 24 + h) % Math.max(1, numbers(v).length)] ?? 0))} />,
   'Heatmap calendar': (v) => <Heatmap label="Days" days={numbers(v).map((value, i) => ({ date: day(i), value }))} />,

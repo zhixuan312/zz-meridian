@@ -108,6 +108,7 @@ A limit that moved, with what it was set from (`## Rules`, Limits).
 | Limit | Old | New | Run | Machine | Commit | Samples | p95 | Margin |
 |---|---|---|---|---|---|---|---|---|
 | `/system/start/start-a-dashboard` phone warm shell, its own `budget` in `scripts/verify.config.ts` | 300 ms | 250 ms, the shared phone warm shell: the route's own figure is withdrawn | weekly `perf` shard 5/5, run 39145209850 | GitHub's `ubuntu-24.04` runner, the phone at 3.2x | `dfdad67` (withdrawn in `55b7ece`) | 20 | 58 ms (median 43, max 59) | none: a withdrawal returns to the shared figure, which holds the p95 with room |
+| First-load JS cap, every route (`FIRST_LOAD_CAP_KB` in `scripts/lib/budgets.ts`) | 820 KiB | 830 KiB, the owner's decision for 0.33.0: the cap is not a limit `## Rules` lets move, so it went to them with the count | `node scripts/sizes.ts` after `pnpm build` of Phase 1 wave 1 of issue #99 | local, macOS | `bf0fda4` plus wave 1 | 1 (a byte count does not vary between builds of one tree) | n/a | `/engineering` 823 KiB, 7 KiB under: its headroom went to growth since `09d9e0b` (5 to 23 KiB on every large route) and 5 KiB to the #99 forms |
 
 ## The classification
 

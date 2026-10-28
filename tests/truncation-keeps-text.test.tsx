@@ -11,6 +11,7 @@ vi.mock('@/components/charts/use-size', async () => {
 import { Home } from 'lucide-react';
 import { BarList } from '@/components/charts/bar-list';
 import { ColumnChart } from '@/components/charts/column-chart';
+import { DivergingBars } from '@/components/charts/diverging-bars';
 import { DetailHead } from '@/components/patterns/detail-head';
 import { Freshness } from '@/components/patterns/freshness';
 import { MetricTile } from '@/components/patterns/metric-tile';
@@ -39,6 +40,7 @@ const DRAWN: Record<string, ReactElement> = {
   Freshness: <Freshness updatedAt={new Date(NOW.getTime() - 3 * 60_000)} now={NOW} />,
   'Freshness run': <Freshness run updatedAt={new Date(NOW.getTime() - 3 * 86_400_000)} now={NOW} />,
   BarList: <BarList label="By team" items={[{ key: 'a', label: LONG, value: 40 }, { key: 'b', label: `${LONG} again`, value: 12, href: '/teams/b' }]} />,
+  DivergingBars: <DivergingBars label="By team" items={[{ key: 'a', label: LONG, value: 40 }, { key: 'b', label: `${LONG} again`, value: -12, href: '/teams/b' }, { key: 'c', label: `${LONG} unknown`, value: null }]} />,
   ColumnChart: <ColumnChart label="Weeks" columns={Array.from({ length: 6 }, (_, i) => ({ key: `w${i}`, label: `${LONG} ${i}`, value: i + 1 }))} />,
   MetricTile: <MetricTile label={LONG} value={1234} format="count" />,
   'MetricTile compact': <MetricTile label={LONG} value={1234} format="count" size="compact" />,

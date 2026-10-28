@@ -18,6 +18,10 @@ const banded = current.map((d, i) => (i === 26 ? Math.round(d.p95 * 0.7) : SPIKE
 /** Six services' share operational a day: 1 on almost every day, with a service down on five of them. */
 const DOWN = new Set([3, 11, 12, 19, 27]);
 const uptime = current.map((_, i) => (DOWN.has(i) ? 5 / 6 : 1));
+/** Seats on a plan: a count that changes only when someone is added or removed, and holds between. */
+const seats = current.map((_, i) => (i < 6 ? 12 : i < 14 ? 15 : i < 22 ? 14 : 20));
+/** Five weekly readings over the month. */
+const weekly = [0, 7, 14, 21, current.length - 1];
 
 /** A day's requests less the day before's: rises and falls about zero. */
 const change = current.slice(1).map((d, i) => d.requests - current[i].requests);
@@ -152,6 +156,26 @@ export default function TrendChartPreview() {
             curve="linear"
             series={[{ key: 'r', label: 'Requests', values: [0, 14, current.length - 1].map((i) => current[i].requests), kind: 'line' }]}
           />
+        </Plane>
+      </Specimen>
+      <Specimen label="Steps" note="curve, set to step: each value is held level until the next one, then the line moves straight to it. For a balance that changes at events — seats on a plan, a credit balance, a limit — where a slope between two days would claim a change nobody made. A stack's parts and its running stretch step too.">
+        <Plane on="surface">
+          <TrendChart label="Seats on the plan a day" height={168} whole curve="step" dates={dates} series={[{ key: 's', label: 'Seats', values: seats, kind: 'line' }]} />
+        </Plane>
+      </Specimen>
+      <Specimen label="Points" note="points: a dot on each measured value of every line and area, ringed in the card's colour, for a few readings where each one is a fact worth finding. None on a dashed reference or a stack, and none once the readings would stand under 6px apart, where the dots become a thicker line.">
+        <Plane on="surface">
+          <TrendChart label="Requests, five weekly readings" height={168} points curve="linear" dates={weekly.map((i) => dates[i])} series={[{ key: 'r', label: 'Requests', values: weekly.map((i) => current[i].requests), kind: 'line' }]} />
+        </Plane>
+      </Specimen>
+      <Specimen label="A held scale" note="domain: the plot ends at a stated range, here 80% to 100% of the services operational, on levels that end exactly at both ends, so charts read side by side share their scale. A line is held to the domain's lower end; an area and a stack are drawn from zero.">
+        <Plane on="surface">
+          <TrendChart label="Share of the services operational, a day" height={168} format="percent" domain={[0.8, 1]} dates={dates} series={[{ key: 'operational', label: 'Operational', values: uptime, kind: 'line' }]} />
+        </Plane>
+      </Specimen>
+      <Specimen label="A held scale, widened" note="A value outside the domain is never cropped: the scale widens to the nice levels that take every value, and the chart says so in a line above the plot and in its table, here a day at 83% under a domain from 90%.">
+        <Plane on="surface">
+          <TrendChart label="Share of the services operational, a day" height={168} format="percent" domain={[0.9, 1]} dates={dates} series={[{ key: 'operational', label: 'Operational', values: uptime, kind: 'line' }]} />
         </Plane>
       </Specimen>
       <Specimen label="Short" note="Under 200px the chart draws three gridlines instead of four, and three or four date labels; drawn here at 150px. A chart told to `fill` takes the height its card gives it, never under 220px.">

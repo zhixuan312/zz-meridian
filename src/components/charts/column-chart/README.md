@@ -1,23 +1,25 @@
 # Column chart
 
-A column chart compares counts side by side, one column per category or per period, with one column highlighted; given parts, each column is a whole split into them.
+A column chart compares counts side by side, one column per category or per period, with one column highlighted; given parts, each column is a whole split into them, or, grouped, two or three identities standing side by side.
 
 Status: beta
 
 ## Anatomy
 
-1. **Legend** (stacked, two or more parts drawn): above the plot, in stack order from the bottom. A 10px square swatch (3px radius, as the Heatmap's) at the part's own strength, ringed by a 1px `ink-3` hairline, and the part's label in `ink-2` at `text-xs`.
+1. **Legend** (stacked, two or more parts drawn; grouped, always): above the plot, in stack order from the bottom, or grouped, in order from the left. A 10px square swatch (3px radius, as the Heatmap's) at the part's own strength, ringed by a 1px `ink-3` hairline, and the part's label in `ink-2` at `text-xs`.
 2. **Gridlines and y labels**: three or four "nice" ticks from zero, or, for a signed series, from a step under its lowest value, `chart-grid` lines (the one at zero `chart-axis`), `text-2xs` `ink-3` labels in a gutter sized to the longest. Each label is the value its tick stands at, written by an axis formatter. Stacked, the axis is the total's.
 3. **Columns**: equal width, 2px apart while the plot has room for it (see More columns than room), rounded 4px at the top, growing from the zero line; a fall (a value under zero) hangs from it, rounded 4px at the bottom and growing down. Plain, the population is `chart-neutral` and the highlighted column `accent`.
 4. **Parts** (stacked): the first at the bottom, a 1px hairline of the card where two touch. Only the topmost part drawn is rounded. A part that is not zero is at least 3px tall; a part at zero is absent, with no line and no gap.
-5. **Value at rest**: the column's value, or its total, above it (under a fall) in `text-2xs` `ink-3`, while a column is at least 36px wide.
-6. **Dashed outline** (with a period still running): a 1px dashed `ink` line around the last column, open at the baseline, with 1px of the card between it and the fill, which is drawn at half strength. The outline has space of its own: it covers no part.
-7. **No-data mark** (a period with no data): no column, and a dashed `line-strong` hairline across the slot, 2px above the baseline. Nothing stands up from the baseline, so the tallest mark on the chart is always a value; the slot keeps its place, and its value reads "No data" just above the hairline.
-8. **Pointed column**: plain, it takes the accent and its value stands above it on `surface-inverse`. Stacked, it takes a 2px `ink` ring and the readout.
-9. **Readout** (stacked): a panel on `surface-raised` beside the pointed column: the period, every part from the top down with its value, then the total.
-10. **X labels**: `text-2xs` `ink-3`. Dates show as many as fit without colliding, counted back from the last column, and are never cut. Categories each keep their label, cut with an ellipsis to their column, while a column is at least 36px wide (an unlabelled category cannot be told apart); narrower, they thin like dates. The pointed column's label always shows whole. A label is centred under its column, but the first starts no earlier than its column and the last ends no later than its own, so neither runs past the plot; the plain pointed value is placed the same way.
-11. **Announcement**: a visually hidden line that reads the pointed column to screen readers.
-12. **Screen-reader table**: every column's label and value; stacked, every part and the total.
+5. **Parts** (grouped): the column's parts side by side in its slot, the first on the left, 1px of the card between them, each in its categorical slot, rounded 4px at its free end. A part rises from the zero line or hangs from it; a part with no data draws nothing in its place.
+6. **Value at rest**: the column's value, or its total, above it (under a fall) in `text-2xs` `ink-3`, while a column is at least 36px wide. Grouped, each part's value above its bar (under a fall), while the bar is at least 36px wide.
+7. **Hatch** (an estimate): stripes of the surface's colour at 135° over the column's own fill, or over every part of it; once any column is an estimate, `Hatched: estimate` in `text-2xs` `ink-3` under the x labels.
+8. **Dashed outline** (with a period still running): a 1px dashed `ink` line around the last column, open at the baseline, with 1px of the card between it and the fill, which is drawn at half strength. The outline has space of its own: it covers no part.
+9. **No-data mark** (a period with no data): no column, and a dashed `line-strong` hairline across the slot, 2px above the baseline. Nothing stands up from the baseline, so the tallest mark on the chart is always a value; the slot keeps its place, and its value reads "No data" just above the hairline.
+10. **Pointed column**: plain, it takes the accent and its value stands above it on `surface-inverse`. Stacked or grouped, it takes a 2px `ink` ring around its box and the readout.
+11. **Readout** (stacked and grouped): a panel on `surface-raised` beside the pointed column: the period, every part from the top down with its value, then the total; grouped, every part from the left, and no total.
+12. **X labels**: `text-2xs` `ink-3`. Dates show as many as fit without colliding, counted back from the last column, and are never cut. Categories each keep their label, cut with an ellipsis to their column, while a column is at least 36px wide (an unlabelled category cannot be told apart); narrower, they thin like dates. The pointed column's label always shows whole. A label is centred under its column, but the first starts no earlier than its column and the last ends no later than its own, so neither runs past the plot; the plain pointed value is placed the same way.
+13. **Announcement**: a visually hidden line that reads the pointed column to screen readers.
+14. **Screen-reader table**: every column's label and value; stacked, every part and the total; grouped, every part and no total.
 
 ## Variants
 
@@ -29,12 +31,18 @@ Status: beta
 | Stacked, one hue | `parts` with no tone: parts of one kind, such as requests by region or revenue by plan. Each column is a whole and the top of a column is its total |
 | Stacked, outcomes | `parts` with a tone each: how something ended, such as passed, skipped and failed |
 | Stacked, identities | `parts` with a categorical `color` each: teams, or several usual outcomes (accepted, delivered and abandoned) that one grey would make one. No tone beside them |
-| Running | The last column is a period still in progress, in either form |
+| Grouped | `grouped` with two or three `parts`, each an identity in a categorical slot: In and Out, this year and last. Nothing is summed and there is no Total |
+| Estimates | `estimate` on a column whose figure is not yet measured, in every form: it is hatched and reads "estimate" |
+| Running | The last column is a period still in progress, in every form |
 | Rises and falls | A signed series in the plain form, such as a net change a day: values under zero are falls |
 
 **The colour of a part.** Parts with no tone are one whole, so they share the accent, mixed into the surface: deepest at the bottom and paler with each part above, between the theme's `chart-stack-hi` and `chart-stack-lo` (dark 92% to 20%, light 78% to 36%). It is the mix a stacked Trend chart takes, from the same function, so the two read as one family. Once any part names a tone the parts are outcomes: the usual outcome is `neutral` and takes `chart-neutral-strong`, and one that needs somebody takes `warning` or `critical`. A part with no tone among parts that have one is neutral too, so the accent never stands beside a status colour, and the positive colour is never used for the usual case. When a part already is the neutral (`tone: 'neutral'`), a second usual part, Other among them, takes no tone and is drawn in the quieter `chart-neutral`, so the two usual parts are told apart and Other stays the quietest; like the paler parts of one hue, it is not held to 3:1, and the swatch's hairline, the legend and the table carry it. When the parts are identities (teams), or more than one outcome is usual, give each a categorical slot, `color` 1 to 6 in order, as a Trend series takes one: each draws in `series-<n>`, and a part with no slot (Other among them) is neutral. Keep status colours out of such a chart, as the accent is kept out of a toned one: coral (2) and saffron (5) read as a warning beside a real one. A chart with an outcome that needs somebody is a toned chart.
 
 **Rises and falls.** A plain chart draws a signed series whole. When a value is under zero the scale goes down to a step under the lowest one, zero is one of its levels and is drawn as the axis (`chart-axis`), and the columns stand on it: a rise stands up from it and a fall hangs down from it, rounded at its lower end, its value at rest under it, its running outline open at the zero line. A fall is the same neutral as a rise, and the highlighted column the accent: which side of zero a column is on says the sign, and a second colour would say it twice. The plot keeps 28px under its lowest tick, as over its top one, for a fall's value. Format a change with its sign (`+12`, `−8`, with the true minus) so a figure read alone says which way it went. Stacked, the parts make up a whole, so a part under zero is no contribution and draws nothing; a signed series is plain. While no value is under zero, the scale is from zero as before.
+
+**Grouped.** `grouped` stands a column's parts side by side, for two or three identities compared period by period: money in and money out, this year and last, two regions. They are identities, never the parts of a whole, so nothing is summed: the axis is every part's own value, from zero, or from a step under the lowest when a part is under zero (it hangs from the zero line, as a plain fall does), and no Total is drawn, read or tabled. Each part takes its categorical slot, `color` 1 to 6, the first part slot 1 and so on unless it names one; a grouped part has no `tone`, which its type refuses, and the accent is never drawn: a highlighted or pointed group wears the 2px `ink` ring around its box. A part with no data (`null`) draws nothing in its place and reads `noData`; a group whose every part is `null` draws the no-data mark. Running, the last group's bars are at half strength inside one dashed outline. For more than three identities, or a long run of periods, the form is a Trend chart with a line a series. The grouped form is a chunk of its own, loaded on demand: a route whose charts never pass `grouped` downloads none of it.
+
+**Estimates.** `estimate: true` on a column says its figure is not yet measured: a day not yet reconciled, a forecast month. Its fill, or every part of it in a stacked or grouped column, is hatched (`data-estimate`, the base role in `src/styles/base.css`, which draws surface stripes over the mark's own background colour and keeps them under forced colours); a dense chart draws an estimated column as an element of its own so the hatch has a fill to stand on. Wherever the column is read it says so: ", estimate" in the announcement and its row of the table, " · estimate" in the readout. The chart writes `Hatched: estimate` once, under its labels, whenever any column is one, and nothing about estimates when none is. A period with no data is not an estimate: there is no figure to hatch.
 
 **At most four parts.** Past four, nobody tells the steps of one hue apart. Given more, the fourth drawn is "Other": the sum of the fourth and every later part, in the columns, the legend, the readout and the table alike. Among outcomes it has no tone of its own and is neutral.
 
@@ -70,7 +78,8 @@ The readout is at least 144px wide and never wider than the chart, with `space-3
 | Pointed | By the pointer or the keys. Plain: the column takes the accent, and its value stands above it in `ink-inverse` on `surface-inverse`. Stacked: the column takes a 2px `ink` ring over `dur-hover`, its total steps up to `ink`, and the readout shows. |
 | Highlighted | With no column pointed at, the highlighted column is the accent one (plain) or wears the ring (stacked). |
 | Focus | The plot wears a 2px `accent` outline, 4px off its box, on `radius-sm`. The ring encloses the plot's box and so all the plot draws: the gridlines, every tick's label whole, the columns, their values at rest and the pointed value. It stands 4px under the line of the zero tick's label and 2px over the line of the x labels, and encloses neither the legend nor the x labels. |
-| Running | The last column's fill at half strength, inside a 1px dashed `ink` outline, open at the baseline, 1px off the fill; "so far" where it is read. |
+| Running | The last column's fill at half strength, inside a 1px dashed `ink` outline, open at the baseline, 1px off the fill; "so far" where it is read. Grouped, the group's bars at half strength inside one outline. |
+| Estimate | The column's fill, or each of its parts, hatched; "estimate" where it is read, and `Hatched: estimate` under the labels. |
 | More columns than room | The gap closes from 2px to 1px to none as the plot runs out of room for it, in the columns and in the labels under them alike, and the chart keeps its box. A running column narrower than the 4px its outline needs keeps the outline: it ends with the column and stands over the columns before it, never past the plot. |
 | Zero | A column at zero draws nothing and reads zero; stacked, a column whose parts are all zero draws no part and reads a total of zero. Stacked, a part that is missing or below zero counts as zero; a plain column below zero draws no column and reads its value. |
 | No data | A `null` period keeps its slot, draws no column but a dashed hairline on the baseline, and reads "No data" (or `noData`) at rest, pointed at, in the announcement and in the table. The scale leaves it out. Stacked, a column of `null` parts is the same; a `null` part among parts read draws nothing, reads "No data" and adds nothing to the total. Running, it reads "No data so far". |
@@ -92,16 +101,17 @@ The readout is at least 144px wide and never wider than the chart, with `space-3
 
 ## Agents
 
-The view shares the highlighted column and the day pointed at through `useShareView`; an agent reads values from the table, never from the drawing. A period still running is marked in the table's row ("03 Oct, so far"), so an agent does not report a part-day as a fall. A period with no data reads "No data" in its row, never 0, so an agent does not report a gap as a perfect period.
+The view shares the highlighted column and the day pointed at through `useShareView`; an agent reads values from the table, never from the drawing. A period still running is marked in the table's row ("03 Oct, so far"), so an agent does not report a part-day as a fall. A period with no data reads "No data" in its row, never 0, so an agent does not report a gap as a perfect period. An estimated column is marked in its row ("14 Sept, estimate"), so an agent does not report a figure not yet measured as a fact.
 
 ## Accessibility
 
-- A labelled `figure` whose `sr-only` table holds every value: a row a column, its label in the row's header cell. Stacked, the head is the period, each part drawn and "Total". The running column's header cell says "so far".
+- A labelled `figure` whose `sr-only` table holds every value: a row a column, its label in the row's header cell. Stacked, the head is the period, each part drawn and "Total"; grouped, the period and each part, with no Total. The running column's header cell says "so far", and an estimated one's says "estimate".
 - The plot is a `role="group"` named with the chart's label and how to use the keys: "Errors per day. Use the arrow keys to read one column." The column pointed at is read in an `aria-live="polite"` line: "Tue: 20", or "21 Sept: Large $40, Swift $0, Embed $20, Total $60", with ", so far" for the running column. A period with no data reads "21 Sept: No data". It is empty when no column is pointed at.
 - Contrast on `surface`, dark then light, with the indigo accent (`node scripts/contrast.ts --all`): the accent column 3.71:1 and 5.71:1; `chart-neutral-strong` 3.96:1 and 3.52:1; `warning` 9.06:1 and 3.36:1; `critical` 5.90:1 and 4.58:1; the ring and the dashed outline, `ink`, 16.89:1 and 17.93:1; values at rest, labels and the swatch's hairline, `ink-3`, 6.39:1 and 5.13:1. The plain value, `ink-inverse` on `surface-inverse`: 16.31:1 and 17.00:1. The readout's text, `ink` on `surface-raised`: 15.45:1 and 18.54:1.
 - The deepest part of a stack, the one it stands on, holds 3:1 on `surface`: 3.30:1 dark, 3.61:1 light with the indigo accent, and never under 3.23:1 (jade, dark) in any theme and accent. The paler parts are not held to 3:1, as the neutral columns are not: the hairline, the legend, the total at rest, the readout and the table carry what their colour alone does not (WCAG 1.4.11).
 - A running column's fill is at half strength on purpose. Measured on `surface` with the repository's colour helpers, dark then light: a neutral column 1.50:1 and 1.39:1 complete, 1.20:1 and 1.17:1 at half strength; the accent column, with the indigo accent, 3.71:1 and 5.71:1 complete, 1.81:1 and 2.18:1 at half strength. No fill at half strength holds 3:1, so the column is not told by its fill: the dashed outline is `ink` (16.89:1 and 17.93:1) and stands on the card, with 1px of the card inside it, so it holds that contrast whatever it surrounds; and the words "so far" are in every place the column is read.
 - A period with no data is never told by its hairline alone: the dashed hairline is not held to 3:1, and the words "No data" stand at rest, pointed at, in the announcement and in the table.
+- An estimate is never the hatch alone: the key under the labels names it, and "estimate" stands in the readout, the announcement and the table.
 - An outcome is never colour alone: the legend names each part in words, and the readout repeats the name beside each value.
 - Neutral columns are the population and are not meant to be told apart by colour.
 
@@ -130,6 +140,8 @@ The view shares the highlighted column and the day pointed at through `useShareV
 - Do not give a tone to parts of one kind, and do not put the accent beside a tone.
 - Do not draw two usual outcomes in one neutral, or teams as shades of the accent: give each a `color` slot, in order. Do not put a `warning` or `critical` part beside categorical slots.
 - Do not pass more than four outcomes: a fifth folds into a neutral Other, and a failure inside it is drawn as the usual case.
+- Do group two or three identities that are compared, not summed. Do not group the parts of a whole: a stack shows its total, a group never does.
+- Do mark a figure not yet measured as an estimate. Do not draw a forecast or an unreconciled day solid: it reads as a fact.
 
 ## Implementation
 
@@ -151,12 +163,17 @@ import { AXIS_FORMATTERS, formatCompact, formatCost } from '@/lib/format';
 <ColumnChart label="Verification runs per day, by how they ended" dates={dates}
   parts={[{ key: 'passed', label: 'Passed', tone: 'neutral' }, { key: 'skipped', label: 'Skipped', tone: 'warning' }, { key: 'failed', label: 'Failed', tone: 'critical' }]}
   columns={days.map((d) => ({ key: d.date, label: formatDate(d.date), values: [d.passed, d.skipped, d.failed] }))} />
+
+<ColumnChart label="Credits per day, bought and refunded" grouped dates={dates} format={formatCost} axisFormat={AXIS_FORMATTERS.cost}
+  parts={[{ key: 'bought', label: 'Bought' }, { key: 'refunded', label: 'Refunded' }]}
+  columns={days.map((d) => ({ key: d.date, label: formatDate(d.date), values: [d.bought, -d.refunded], estimate: !d.reconciled }))} />
 ```
 
 ```ts
-export type Column = { key: string; label: string; value: number | null };   // null: a period with no data
-export type StackedColumn = { key: string; label: string; values: (number | null)[] };
+export type Column = { key: string; label: string; value: number | null; estimate?: boolean };   // null: a period with no data
+export type StackedColumn = { key: string; label: string; values: (number | null)[]; estimate?: boolean };
 export type ColumnPart = { key: string; label: string; color?: number; tone?: 'neutral' | 'warning' | 'critical' };   // color: a categorical slot, 1 to 6
+export type GroupedPart = { key: string; label: string; color?: number };   // an identity: a categorical slot, never a tone
 
 export type ColumnChartProps = {
   highlight?: string;              // the key of the one column the card is about
@@ -169,15 +186,17 @@ export type ColumnChartProps = {
   label: string;
   labelEvery?: number;             // label every nth column from the first: 6 puts hours at 00, 06, 12, 18
   className?: string;
-} & ({ columns: Column[] } | { columns: StackedColumn[]; parts: ColumnPart[] });
+} & ({ columns: Column[] } | { columns: StackedColumn[]; parts: ColumnPart[] } | { columns: StackedColumn[]; parts: GroupedPart[]; grouped: true });
 ```
 
-With `parts`, a column's `values` holds one value a part, in the parts' order, the first at the bottom. On `fill` the chart's parent is a flex column, as a card's body is when its row is taller than the chart.
+With `parts`, a column's `values` holds one value a part, in the parts' order, the first at the bottom (grouped, the first on the left). On `fill` the chart's parent is a flex column, as a card's body is when its row is taller than the chart.
 
 The colour of a part with no tone is `stackPart(place, parts)` from `@/components/charts/scale`, the one mix every one-hue stack takes: the accent into the surface, by the part's place from the bottom of the parts drawn.
 
 The gap is each row's own `column-gap`, set in its style from the number of columns: a sum of steps, each from nothing to 1px as the row's width passes the next threshold.
 
-Every column carries `data-column` with its key, `data-active` while it is pointed at, `data-running` when it is the running one and `data-no-data` when it has no data; its hairline carries `data-no-data-mark`. The plot carries `data-plot`, a tick's label `data-tick`, a value `data-value`, the legend `data-legend` and the readout `data-readout`. A part carries `data-part` with its key (`other` for the fold), `data-tone` (`accent`, `series`, `neutral`, `warning` or `critical`) and, when it is the topmost drawn, `data-top`.
+Every column carries `data-column` with its key, `data-active` while it is pointed at, `data-running` when it is the running one and `data-no-data` when it has no data; its hairline carries `data-no-data-mark`. The plot carries `data-plot`, a tick's label `data-tick`, a value `data-value`, the legend `data-legend` and the readout `data-readout`. A part carries `data-part` with its key (`other` for the fold), `data-tone` (`accent`, `series`, `neutral`, `warning` or `critical`) and, when it is the topmost drawn, `data-top`; a grouped part under zero carries `data-fall`. A grouped chart's figure carries `data-grouped`. An estimated column's fill, and every part of an estimated column, carries `data-estimate`, filled by a background colour (never the `background` shorthand, which would clear the hatch); the key under the labels carries `data-estimate-key`.
+
+The grouped form is `GroupedColumns` in `./grouped`, which `ColumnChart` loads through `next/dynamic` only when it is passed `grouped`; what both forms use (the measures, the gap rule, the cursor, the axis, the labels and the swatch) is in `./shared`.
 
 The Atlas uses `data-preview-index` to show a pointed column and its readout statically, as the Trend chart does, and draws the focused plot with a class that gives the plot its outline. Product charts use the pointer, the keys and the Meridian instead.

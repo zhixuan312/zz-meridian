@@ -6,7 +6,7 @@ import { AXIS_FORMATTERS, FORMATTERS, type NumberFormat } from '@/lib/format';
 import { formatDate } from '@/lib/format-date';
 import { useMeridian } from '@/components/charts/meridian';
 import { Readout } from '@/components/charts/readout';
-import { monotonePath, linearPath, stepPath, ticksBetween, type Curve, SERIES_VAR, stackPart, type SeriesSlot } from '@/components/charts/scale';
+import { monotonePath, linearPath, stepPath, heldTicks, ticksBetween, type Curve, SERIES_VAR, stackPart, type SeriesSlot } from '@/components/charts/scale';
 import { useSettled } from '@/components/charts/use-settled';
 import { useSize } from '@/components/charts/use-size';
 import { trendTotals } from '@/logic/derivations';
@@ -20,6 +20,18 @@ export type TrendSeries = {
   /** `area` is the series the chart is about (at most one); `line` a peer; `dashed` a target or the previous period. */
   kind?: 'area' | 'line' | 'dashed';
 };
+
+/**
+ * Where the scale ends: from a `floor`, or held to a `domain`, never both. `floor` is the lowest level the axis shows,
+ * snapped down to a "nice" step: for a quantity that lives in a narrow band, such as uptime, where an axis from zero
+ * makes the one thing the chart is about the smallest mark on it. A hint, not a crop: the floor is held at or under the
+ * lowest value drawn, so the scale widens to the data and never hides it, and every value is placed inside the plot. For
+ * `line` and `dashed` series only — an `area` and every stack are read by their height, which a floor would change the
+ * meaning of. Defaults to 0, an axis from zero. `domain` holds the plot to a stated range, so charts read side by side
+ * share their levels: while every value drawn is inside it the plot ends at it, from zero for an area or a stack; a value
+ * outside it widens the scale to nice levels, and the chart says so above the plot and in its table.
+ */
+type TrendScale = { floor?: number; domain?: undefined } | { domain: [number, number]; floor?: undefined };
 
 /**
  * The baseline's label, in pixels: the width a character is given (the text is `text-2xs` in tabular figures and its
@@ -81,6 +93,13 @@ export const SO_FAR = 'Today so far, dashed.';
 /** The path function each curve names. */
 const PATHS: Record<Curve, typeof monotonePath> = { monotone: monotonePath, linear: linearPath, step: stepPath };
 
+/** `stepPath` traced backward, as a stacked part's lower edge is: upright first, then level, so it is the same line. */
+const rise: typeof stepPath = (pts, from = 0, to = pts.length - 1) => {
+  let d = `M${pts[from][0]},${pts[from][1]}`;
+  for (let i = from + 1; i <= to; i++) d += `V${pts[i][1]}H${pts[i][0]}`;
+  return d;
+};
+
 /**
  * A time series: one shared axis, at most one area, any number of lines. Never two y-scales: two measures of a
  * different size are two charts on one Meridian. Point, or move with the arrow keys, to read a day; every chart on
@@ -107,9 +126,11 @@ export function TrendChart({
   baseline,
   band,
   floor,
+  domain,
   marks,
   running = false,
   curve = 'monotone',
+  points = false,
   'data-preview-index': previewIndex,
   className,
 }: {
@@ -146,14 +167,6 @@ export function TrendChart({
    */
   band?: { value: number; label: string };
   /**
-   * The lowest level the axis shows, snapped down to a "nice" step: for a quantity that lives in a narrow band, such
-   * as uptime, where an axis from zero makes the one thing the chart is about the smallest mark on it. A hint, not a
-   * crop: the floor is held at or under the lowest value drawn, so the scale widens to the data and never hides it, and
-   * every value is placed inside the plot. For `line` and `dashed` series only — an `area` and every stack are read by
-   * their height, which a floor would change the meaning of. Defaults to 0, an axis from zero.
-   */
-  floor?: number;
-  /**
    * Days the page names, marked on the first series with a dot, so a reader finds them rather than hunting for them
    * among 360 points: the days a band's membership left out. Dates it does not draw are skipped.
    */
@@ -163,13 +176,16 @@ export function TrendChart({
   /**
    * How a line, an area and the running stretch are drawn between points: `monotone` (the default) a smooth curve that never
    * overshoots, `linear` straight segments, `step` a level held until the next reading. Straight is right for a few readings,
-   * where a smooth curve would invent the shape between them. The parts of a `stacked` chart stay monotone.
+   * where a smooth curve would invent the shape between them; a step for a balance that changes at events. The parts of a
+   * `stacked` chart and the total's running stretch take it too.
    */
   curve?: Curve;
+  /** A dot on each measured value of every line and area, for a few readings; none while they would stand under 6px apart. */
+  points?: boolean;
   /** A static readout in the Atlas; real charts take their day from the Meridian. */
   'data-preview-index'?: number;
   className?: string;
-}) {
+} & TrendScale) {
   const [box, size] = useSize<HTMLDivElement>();
   // The legend wraps on a narrow card; the plot starts under however many lines it took.
   const [legendBox, legendSize] = useSize<HTMLUListElement>();
@@ -213,12 +229,25 @@ export function TrendChart({
   const max = Math.max(floor === undefined ? 0 : -Infinity, baseline?.value ?? -Infinity, band?.value ?? -Infinity, ...values);
   // The levels, and the floor the plot is drawn to: `ticks[0]` is 0 unless the chart was given a floor, and the two ends
   // of the scale are what every point, area, band and level line is measured against.
-  const ticks = ticksBetween(from, max, h < 200 ? 3 : 4, whole);
+  const count = h < 200 ? 3 : 4;
+  // A held scale ends at its domain, from zero for an area or a stack, while every value drawn is inside it; one outside
+  // it widens the scale to the nice levels that take it, and the chart says so, since the levels are no longer the held ones.
+  const held = domain && domain[1] > domain[0] ? domain : null;
+  const end = held ? (stacked || series.some((s) => s.kind === 'area') ? Math.min(held[0], 0) : held[0]) : 0;
+  const all = held ? [...values, baseline?.value ?? end, band?.value ?? end] : [];
+  const lo = Math.min(end, ...all), hi = Math.max(held?.[1] ?? 0, ...all);
+  const inside = held && lo >= end && hi <= held[1];
+  const ticks = inside
+    ? heldTicks(end, held[1], count).filter((t, i, a) => !whole || Number.isInteger(t) || !i || i === a.length - 1)
+    : held ? ticksBetween(lo, hi, count, whole) : ticksBetween(from, max, count, whole);
   const low = ticks[0];
   const top = ticks[ticks.length - 1];
+  const widened = held && !inside ? `Scale widened from ${fmt(held[0])}\u2013${fmt(held[1])} to ${fmt(low)}\u2013${fmt(top)}` : '';
+  // The words take a line of their own over the legend and the plot.
+  const lift = widened ? 18 : 0;
   const left = Math.max(...ticks.map((t) => axis(t).length)) * 6.4 + 12;
   const showLegend = legend ?? series.length > 1;
-  const pad = { t: showLegend ? Math.max(34, legendSize.height + 16) : 14, r: 4, b: 26, l: left };
+  const pad = { t: (showLegend ? Math.max(34, legendSize.height + 16) : 14) + lift, r: 4, b: 26, l: left };
   const W = Math.max(0, width - pad.l - pad.r), H = h - pad.t - pad.b;
   const n = dates.length;
   // The point still running, if there is one: everything solid stops at the point before it.
@@ -231,16 +260,18 @@ export function TrendChart({
   const bands = useMemo(
     () =>
       bases?.map(({ lower, upper }, k) => {
+        // Each edge takes the curve's path; a lower edge is traced backward, so a step rises before it holds level.
+        const path = PATHS[curve], back = curve === 'step' ? rise : path;
         let line = '', area = '', tail = '';
         for (const run of stackRuns) {
           const top = run.map((i) => [x(i), y(upper[i] ?? lower[i] ?? 0)] as [number, number]);
           const bottom = run.map((i) => [x(i), y(lower[i] ?? 0)] as [number, number]).reverse();
           // Running, the bands end at the last complete point. Only the total goes on, and only when some part was measured there.
           const cut = running && run.length > 1 && run[run.length - 1] === n - 1 ? 1 : 0;
-          const edge = monotonePath(top, 0, top.length - 1 - cut);
+          const edge = path(top, 0, top.length - 1 - cut);
           line += edge;
-          area += `${edge}${monotonePath(bottom, cut).replace(/^M/, 'L')}Z`;
-          if (cut && k === series.length - 1) tail = monotonePath(top, top.length - 2);
+          area += `${edge}${back(bottom, cut).replace(/^M/, 'L')}Z`;
+          if (cut && k === series.length - 1) tail = path(top, top.length - 2);
         }
         return { s: series[k], k, line, tail, area };
       }) ?? [],
@@ -248,7 +279,7 @@ export function TrendChart({
     // same values array would otherwise keep paths drawn to the old spacing. `x` and `y` are the only pieces left, and
     // they are these numbers put together.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [bases, stackRuns, width, h, top, running, n, pad.l, pad.t, W, H, low],
+    [bases, stackRuns, curve, width, h, top, running, n, pad.l, pad.t, W, H, low],
   );
 
   const paths = useMemo(
@@ -424,6 +455,10 @@ export function TrendChart({
                 className={s.kind === 'dashed' ? 'fade-in' : 'draw'}
               />
               {tail ? <Running d={tail} stroke={SERIES_VAR(s.color ?? 'accent')} /> : null}
+              {/* A dot on each reading while the dots stand apart; a reference and a stack are read by their line. */}
+              {points && s.kind !== 'dashed' && (n < 2 || W / (n - 1) >= 6)
+                ? s.values.map((v, i) => (v === null ? null : <circle key={i} data-point cx={x(i)} cy={y(v)} r={3} fill={SERIES_VAR(s.color ?? 'accent')} stroke="var(--surface)" strokeWidth={2} className="fade-in" />))
+                : null}
             </g>
           ))}
           {marks && series[0] ? (
@@ -461,8 +496,9 @@ export function TrendChart({
           ) : null}
         </svg>
       ) : null}
+      {widened ? <p data-widened className="absolute top-0 right-0 text-2xs text-ink-3" style={{ left: pad.l }}>{widened}</p> : null}
       {showLegend ? (
-        <ul ref={legendBox} aria-hidden className="absolute top-0 right-0 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-ink-2" style={{ left: pad.l }}>
+        <ul ref={legendBox} aria-hidden className="absolute right-0 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-ink-2" style={{ left: pad.l, top: lift }}>
           {series.map((s, k) => (
             <li key={s.key} className="flex items-center gap-1.5">
               <svg width="14" height="4" className="shrink-0 overflow-visible">
@@ -501,7 +537,7 @@ export function TrendChart({
         </Readout>
       ) : null}
       {settled ? <table className="sr-only">
-        <caption>{label}{band ? `. ${band.label}` : ''}{marks ? `. Marked: ${marks.label}` : ''}{baseline ? `. ${baseline.label}` : ''}{running ? `. ${SO_FAR}` : ''}</caption>
+        <caption>{label}{band ? `. ${band.label}` : ''}{marks ? `. Marked: ${marks.label}` : ''}{baseline ? `. ${baseline.label}` : ''}{running ? `. ${SO_FAR}` : ''}{widened ? `. ${widened}` : ''}</caption>
         <thead><tr><th>Date</th>{series.map((s) => <th key={s.key}>{s.label}</th>)}{totals ? <th>Total</th> : null}</tr></thead>
         <tbody>{dates.map((d, i) => <tr key={d}><td>{d}{i === soFar ? ', so far' : null}</td>{series.map((s) => <td key={s.key}>{fmt(s.values[i])}</td>)}{totals ? <td>{fmt(totals[i])}</td> : null}</tr>)}</tbody>
       </table> : null}

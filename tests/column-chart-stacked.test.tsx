@@ -157,7 +157,7 @@ describe('a stacked column chart whose parts are identities (#61)', () => {
     { key: 'abandoned', label: 'Abandoned', color: 3 },
   ];
   const closed: StackedColumn[] = [{ key: 'w1', label: '14 Sept', values: [4, 3, 1] }];
-  const fill = (c: HTMLElement, key: string) => (column(c, 'w1').querySelector(`[data-part="${key}"]`) as HTMLElement).style.background;
+  const fill = (c: HTMLElement, key: string) => (column(c, 'w1').querySelector(`[data-part="${key}"]`) as HTMLElement).style.backgroundColor;
 
   it('draws a part with a categorical slot in that slot, so two usual outcomes are told apart', () => {
     const { container } = render(<ColumnChart label="Closed initiatives per week" parts={outcomes} columns={closed} />);
