@@ -189,6 +189,7 @@ export function TrendChart({
   const [box, size] = useSize<HTMLDivElement>();
   // The legend wraps on a narrow card; the plot starts under however many lines it took.
   const [legendBox, legendSize] = useSize<HTMLUListElement>();
+  const [widenedBox, widenedSize] = useSize<HTMLParagraphElement>();
   const width = size.width;
   const fill = height === 'fill';
   const [local, setLocal] = useState(false);
@@ -243,8 +244,8 @@ export function TrendChart({
   const low = ticks[0];
   const top = ticks[ticks.length - 1];
   const widened = held && !inside ? `Scale widened from ${fmt(held[0])}\u2013${fmt(held[1])} to ${fmt(low)}\u2013${fmt(top)}` : '';
-  // The words take a line of their own over the legend and the plot.
-  const lift = widened ? 18 : 0;
+  // The words take a line of their own over the legend and the plot, or two on a phone card; unmeasured, one line.
+  const lift = widened ? (widenedSize.height ? widenedSize.height + 1 : 18) : 0;
   const left = Math.max(...ticks.map((t) => axis(t).length)) * 6.4 + 12;
   const showLegend = legend ?? series.length > 1;
   const pad = { t: (showLegend ? Math.max(34, legendSize.height + 16) : 14) + lift, r: 4, b: 26, l: left };
@@ -496,7 +497,7 @@ export function TrendChart({
           ) : null}
         </svg>
       ) : null}
-      {widened ? <p data-widened className="absolute top-0 right-0 text-2xs text-ink-3" style={{ left: pad.l }}>{widened}</p> : null}
+      {widened ? <p ref={widenedBox} data-widened className="absolute top-0 right-0 text-2xs text-ink-3" style={{ left: pad.l }}>{widened}</p> : null}
       {showLegend ? (
         <ul ref={legendBox} aria-hidden className="absolute right-0 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-ink-2" style={{ left: pad.l, top: lift }}>
           {series.map((s, k) => (

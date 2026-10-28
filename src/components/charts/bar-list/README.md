@@ -13,7 +13,7 @@ Status: beta
 5. **Linked row**: a row with an `href` names a record that has a page, and its label is the one link to it, named by the label. The bar, the meta line and the figure stay text: they say what the label already opens, so they are never a second way there. At rest the row looks as an unlinked one does.
 6. **Compare** (under `pair`): 2px under the value bar, the row's `compare` on the same scale, a 1px `chart-neutral-strong` outline with no fill; none for a missing compare. The figure reads `{value} · {compare}`, the compare in `ink-3`, `—` for one with no data.
 7. **Legend** (under `pair`): above the rows, a filled and an outlined swatch named `pair.label` and `pair.compareLabel`.
-8. **Axis** (under `axis`): the levels in `caption` under the rows, and a 1px `chart-grid` gridline through every row at each.
+8. **Axis** (under `axis`): the levels in `caption` under the rows, and a 1px `chart-grid` gridline through every row at each. No two level words that show stand closer than 4px: from the top inward, a word that would touch the nearest one shown above it, or the first, is hidden (`invisible`, still in the row), and its gridline stays. The first level and the top always show.
 9. **Estimate**: an estimated row's bar is hatched (`data-estimate`, the base hatch over its own fill), its title adds "estimate", and the list writes "Hatched: estimate" once. A folded row holding one is one; a compare outline never is.
 10. **Lines under the list**, in this order: the axis levels, the widening line ("Scale widened to 140 to show Gamma"), the estimate key.
 
@@ -55,7 +55,7 @@ Bars are drawn against the largest row. Pass `total` when the rows are a share o
 
 Pass `max` instead when the scale is held: a capacity, a ceiling, 100%, or the same top across several cards so they compare row by row. Every bar is drawn against it and no share is printed; `max` and `total` are one or the other, in the type. A value (or a drawn compare) past `max` widens the scale to it, and the list writes "Scale widened to {top} to show {row}", naming the first row that stands at the top. A `max` not above zero draws against 1.
 
-Pass `axis` when a reader reads lengths against levels: under `max`, the held levels and the widened top; without it, the nice levels of the largest row, and the bars are drawn against the last of them.
+Pass `axis` when a reader reads lengths against levels: under `max`, the held levels and the widened top; without it, the nice levels of the largest row, and the bars are drawn against the last of them. The levels row measures its width, at 7px a character, and hides a word that would touch one that shows (a widened 112% beside the held 100%), keeping its gridline; until it is measured every word shows.
 
 Pass `pair` (`{ label, compareLabel }`) and a `compare` on each row to read each row against its own earlier figure or target. Both share one scale.
 

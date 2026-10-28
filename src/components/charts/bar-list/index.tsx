@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { cn } from '@/lib/cn';
 import { plural } from '@/lib/format';
 import { heldTicks, niceTicks } from '@/components/charts/scale';
+import { Levels } from './levels';
 
 export type BarItem = {
   key: string;
@@ -137,13 +138,7 @@ export function BarList({
           {list}
         </div>
       ) : list}
-      {levels ? (
-        <div aria-hidden className="t-caption relative mt-1.5 h-4">
-          {levels.map((l, i) => (
-            <span key={l} data-level className={cn('absolute tabular-nums', i === 0 ? '' : i === levels.length - 1 ? '-translate-x-full' : '-translate-x-1/2')} style={{ left: `${(l / top) * 100}%` }}>{format(l)}</span>
-          ))}
-        </div>
-      ) : null}
+      {levels ? <Levels levels={levels.map((l) => [format(l), l / top])} /> : null}
       {past ? <p data-widened className="t-caption mt-1.5">Scale widened to {format(top)} to show {named(past) ?? past.key}</p> : null}
       {estimated ? <p data-estimate-key className="t-caption mt-1.5">Hatched: estimate</p> : null}
     </div>

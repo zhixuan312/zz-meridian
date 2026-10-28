@@ -13,7 +13,7 @@ Status: beta
 5. **Band** (with `band`): the region from the floor up to the band's ceiling, in `fill-track`, under the gridlines, its top edge drawn as the axis is, and its label at an end of that edge — in `ink-2`, since it stands over the fill as often as over the card and `ink-3` on `fill-track` is 4.43:1 in light.
 6. **Marks** (with `marks`): a dot on a named day's point and a stem from it to the axis, in the tone given.
 7. **Points** (with `points`): a 3px dot on each measured value of every `line` and `area`, in the series' colour, ringed in `surface`.
-8. **Widened line** (with a `domain` a value falls outside): `Scale widened from {min}–{max} to {low}–{top}`, `text-2xs` `ink-3`, on a line of its own above the legend and the plot.
+8. **Widened line** (with a `domain` a value falls outside): `Scale widened from {min}–{max} to {low}–{top}`, `text-2xs` `ink-3`, on a line of its own above the legend and the plot; wrapped to two on a phone card, it pushes them down by its measured height.
 9. **Running stretch** (with `running`): the last stretch of the same curve, into a point that is not over yet, 1.5px and dashed.
 10. **Legend**: above the plot when there are two or more series: a 12px line swatch (dashed for `dashed`) and the label in `ink-2`.
 11. **Cursor, dots and tooltip**: from the Meridian. The readout measures its own width and stays inside the chart; long labels wrap and values remain readable.
