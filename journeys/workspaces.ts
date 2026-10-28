@@ -169,7 +169,54 @@ const ownerOf = (path: string): string | null => {
 
 /** A person's routes: the ones the verification configuration says they may open, written there by hand. */
 const routesOf = (name: string) => [...persona(name).expectedRoutes];
-const railHrefs = (ws: string, routes: string[]) => items.filter((i) => i.workspace === ws && routes.includes(i.href)).map((i) => i.href);
+
+/** The held items of one navigation group in a workspace, for a person who may open `routes`. */
+const heldIn = (g: (typeof nav)[number], ws: string, routes: string[]) => g.items.filter((i) => i.workspace === ws && routes.includes(i.href));
+/**
+ * The parent a held item hangs under, as the rail reads it: the held item of the same group that `under` names, when that
+ * is not itself a sub page; otherwise null and the item stands at the top level.
+ */
+const parentIn = (held: (typeof items)[number][], it: (typeof items)[number]): string | null => {
+  const under = 'under' in it && typeof it.under === 'string' ? it.under : undefined;
+  const parent = under === undefined ? undefined : held.find((p) => p.href === under && p !== it);
+  if (!parent) return null;
+  const grand = 'under' in parent && typeof parent.under === 'string' ? parent.under : undefined;
+  return grand !== undefined && held.some((x) => x.href === grand && x !== parent) ? null : parent.href;
+};
+/** The parent a destination hangs under for a person who may open `routes`; null when it stands at the top level. */
+const parentOfHref = (href: string, routes: string[]) => {
+  const g = nav.find((x) => x.items.some((i) => i.href === href));
+  const it = g?.items.find((i) => i.href === href);
+  if (!g || !it?.workspace) return null;
+  return parentIn(heldIn(g, it.workspace, routes), it);
+};
+
+/**
+ * The parents whose branch each page has open, as the rail keeps its own: every full load empties it, arriving at a page
+ * opens the branch that holds its current entry, pressing a branch's button toggles it, and a client navigation leaves it.
+ */
+const branches = new WeakMap<Page, Set<string>>();
+const openIn = (page: Page) => { let s = branches.get(page); if (!s) branches.set(page, (s = new Set())); return s; };
+const loaded = (page: Page) => openIn(page).clear();
+
+/**
+ * What the rail draws for a workspace, in the order of the page: each group's top-level destinations, and after a parent
+ * its sub pages when its branch is open. A sub page whose parent is not held stands at the top level.
+ */
+const railHrefs = (ws: string, routes: string[], open: Set<string>) =>
+  nav.flatMap((g) => {
+    const held = heldIn(g, ws, routes);
+    return held.filter((i) => !parentIn(held, i)).flatMap((i) => [i.href, ...(open.has(i.href) ? held.filter((s) => parentIn(held, s) === i.href).map((s) => s.href) : [])]);
+  });
+/** The branch that holds the address's current entry: the parent whose own page it is, or whose sub page it is. */
+const branchOf = (ws: string, routes: string[], path: string) => {
+  const all = nav.flatMap((g) => heldIn(g, ws, routes));
+  const cur = currentIn(path, all.map((i) => i.href));
+  if (cur === null) return null;
+  const parent = parentOfHref(cur, routes);
+  if (parent) return parent;
+  return nav.some((g) => { const held = heldIn(g, ws, routes); return held.some((s) => parentIn(held, s) === cur); }) ? cur : null;
+};
 const currentIn = (path: string, hrefs: string[]) => hrefs.filter((h) => (h === '/' ? path === '/' : path === h || path.startsWith(`${h}/`))).sort((a, b) => b.length - a.length)[0] ?? null;
 
 /**
@@ -179,25 +226,46 @@ const currentIn = (path: string, hrefs: string[]) => hrefs.filter((h) => (h === 
  */
 async function settle(page: Page, who: string, path: string | RegExp, ws?: string) {
   const routes = routesOf(who);
+  const open = openIn(page);
   let found = 'nothing read';
   let expected = '';
   try {
     await until('', async () => {
       const r = await railOf(page);
       const owner = ws ?? ownerOf(r.path) ?? 'main';
-      const hrefs = railHrefs(owner, routes);
-      const cur = currentIn(r.path, hrefs);
+      const at = path instanceof RegExp ? path.test(r.path) : r.path === path;
+      // Arriving at a page opens the branch that holds its entry.
+      const arrival = at ? branchOf(owner, routes, r.path) : null;
+      if (arrival) open.add(arrival);
+      const hrefs = railHrefs(owner, routes, open);
+      // The current entry is the longest held one; when its branch is closed it is not drawn, and the rail marks nothing as the page.
+      const entry = currentIn(r.path, nav.flatMap((g) => heldIn(g, owner, routes).map((i) => i.href)));
+      const cur = entry !== null && hrefs.includes(entry) ? entry : null;
       expected = `${path} with the rail on "${W[owner].label}" showing ${hrefs.join(' ')} (current ${cur})`;
       const seen = r.links?.map((l) => l.href) ?? null;
       const now = r.links?.find((l) => l.current)?.href ?? null;
       found = `${r.path}${r.search} with the rail on "${railWorkspace(r)}" showing ${seen?.join(' ') ?? 'no links'} (current ${now})`;
-      const at = path instanceof RegExp ? path.test(r.path) : r.path === path;
       return at && railWorkspace(r) === W[owner].label && seen?.join(' ') === hrefs.join(' ') && now === cur;
     });
   } catch {
     throw new Error(`expected ${expected || String(path)}; found ${found}`);
   }
   return (await railOf(page)).path;
+}
+
+/**
+ * Press a destination's link in the rail. A sub page's link is not drawn while its parent's branch is closed, so a person
+ * first presses the parent's `<label> pages` button, and the branch is then open.
+ */
+async function pressRail(page: Page, who: string, href: string) {
+  const link: Spec = { role: 'link', name: labelOf(href), within: 'nav[aria-label="Main"]' };
+  const parent = parentOfHref(href, routesOf(who));
+  if (parent && !(await ask<boolean>(page, `return find(${JSON.stringify(link)}).length > 0;`))) {
+    await press(page, { role: 'button', name: `${labelOf(parent)} pages`, within: 'nav[aria-label="Main"]' });
+    const open = openIn(page);
+    if (!open.delete(parent)) open.add(parent);
+  }
+  await press(page, link);
 }
 
 /** Choose a workspace in the rail's menu, as a person does: open the menu, press the row. */
@@ -216,6 +284,7 @@ const opened: Page[] = [];
 const browser = async () => { const p = await launch(); opened.push(p); return p; };
 const go = async (page: Page, who: string, path: string) => {
   quiet(page, 'the page before');
+  loaded(page);
   await page.open(base + path, { width: 1440, height: 900, theme: 'dark', wait: 300, cookie: persona(who).cookie });
 };
 
@@ -336,7 +405,7 @@ if (import.meta.main) {
       // Home's Business card opens the Business home; the rail then names Business and offers Requests.
       await press(a, { role: 'link', hrefRe: '^/business$', within: '[role="region"][aria-label="Business"]' });
       await settle(a, 'member', '/business', 'business');
-      await press(a, { role: 'link', name: labelOf(REQUESTS), within: 'nav[aria-label="Main"]' });
+      await pressRail(a, 'member', REQUESTS);
       await settle(a, 'member', REQUESTS, 'business');
       await press(a, { role: 'link', hrefRe: '^/requests/[^/]+$', within: 'main table tbody' });
       const at = await settle(a, 'member', /^\/requests\/[^/]+$/, 'business');
@@ -400,13 +469,14 @@ if (import.meta.main) {
       await settle(a, 'member', HOME, 'main');
       await choose(a, 'business');
       await settle(a, 'member', W.business.homeHref, 'business');
-      await press(a, { role: 'link', name: labelOf(REQUESTS), within: 'nav[aria-label="Main"]' });
+      await pressRail(a, 'member', REQUESTS);
       await settle(a, 'member', REQUESTS, 'business');
       await press(a, { role: 'link', hrefRe: '^/requests/[^/]+$', within: 'main table tbody' });
       const request = await settle(a, 'member', /^\/requests\/[^/]+$/, 'business');
       // A refresh: the page is marked first, so that only the new document can satisfy the wait.
       await a.eval('window.__before = true');
       await a.send('Page.reload');
+      loaded(a);
       await until('the page to reload', () => a.eval<boolean>('window.__before === undefined && document.readyState !== "loading"'));
       await settle(a, 'member', request, 'business');
       for (const path of trail) {
