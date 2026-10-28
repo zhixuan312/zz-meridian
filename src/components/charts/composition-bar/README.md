@@ -14,7 +14,7 @@ Status: beta
 | Variant | Colours |
 |---|---|
 | Status | Parts that carry a judgement take status colours (`warning`, `critical`); neutral classes take `neutral` and, beside it, `neutral-ink` (both at least 3:1 on the surface, unlike the `chart-neutral` track), never the accent; the legend names each in words |
-| Categories | Parts with no judgement take slots 1, 2, 3 in order. The palette has six slots: past six parts, the first five keep theirs and the rest are drawn as one, "Other", their sum, in `neutral` |
+| Categories | Parts with no judgement take slots 1, 2, 3 in order. The palette has six slots: past six parts, the first five keep theirs and the rest are drawn as one, "Other", their sum above zero, in `neutral` |
 | Stacked | `stacked`: the parts are the ones a stacked Trend or Column chart on the same page draws, so a part with no colour takes `stackPart(place, parts)`, the one-hue stack by its place, and its swatch sits on an `ink-3` hairline as the stacked charts' do. A part is one colour wherever the page draws it |
 
 ## Sizes
@@ -28,7 +28,7 @@ The bar takes its container's width; the legend wraps.
 | Arriving | The bar reveals left to right over `dur-grow`. |
 | Hover | A part's native title gives its name and count. |
 | Empty | A whole of zero renders the card's Empty state. |
-| Below zero | A part below zero is no share of the whole: the whole is the sum of the parts above zero, and the part draws as a part of zero does, at the 3px sliver, its share `0%` and its count the value it holds. |
+| Below zero | A part below zero is no share of the whole: the whole is the sum of the parts above zero, and the part draws as a part of zero does, at the 3px sliver, its share `0%` and its count the value it holds; folded into Other, it adds nothing to Other. |
 
 ## Behaviour
 

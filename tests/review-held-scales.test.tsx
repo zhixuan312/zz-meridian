@@ -37,6 +37,13 @@ describe('the forms of issue #99 on their edge paths', () => {
     }
   });
 
+  it("a linked Bar list row's words stand over its bar, so a finger's target reaching the track still opens the row", () => {
+    const { container } = render(<BarList label="Pipeline" axis items={[{ key: 'a', label: 'A', value: 40, href: '/customers/a' }, { key: 'b', label: 'B', value: 10 }]} />);
+    // The bar is positioned to paint over the gridlines; the words, positioned and lifted, paint over the bar, and the
+    // link's 44px target under a finger with them.
+    for (const row of container.querySelectorAll('li[data-row]')) expect(row.firstElementChild?.classList.contains('z-1')).toBe(true);
+  });
+
   it('a Bar list row below zero draws an empty bar and outline, never a width a browser drops for the whole track', () => {
     const below: string[] = [];
     const styles = Object.getPrototypeOf(document.createElement('div').style);
@@ -47,6 +54,9 @@ describe('the forms of issue #99 on their edge paths', () => {
       expect(below.filter((w) => w.startsWith('-'))).toEqual([]);
       expect((container.querySelector('li[data-row="b"] [data-bar]') as HTMLElement).style.width).toBe('0%');
       expect(container.querySelector('li[data-row="b"] [data-figure]')?.textContent).toMatch(/^-3/);
+      // Its length is zero, and so is the share its title reads.
+      const total = render(<BarList label="Change" total={10} items={[{ key: 'a', label: 'A', value: 4 }, { key: 'b', label: 'B', value: -1 }]} />);
+      expect(total.container.querySelector('li[data-row="b"]')?.getAttribute('title')).toBe('B · -1 · 0.0% of 10');
     } finally {
       Object.defineProperty(styles, 'width', d);
     }

@@ -91,12 +91,13 @@ export function BarList({
         const hot = it.key === highlight;
         // The row says what it is as well as its share (issue #94): "42.1% of 1,204" on its own never named the row, and
         // a list with no total had no title at all. The label is the row's own word, so it is used when it is text.
-        const share = total ? `${((it.value / Math.max(1, total)) * 100).toFixed(1)}% of ${format(total)}` : null;
+        const share = total ? `${((Math.max(0, it.value) / Math.max(1, total)) * 100).toFixed(1)}% of ${format(total)}` : null;
         return (
           <li key={it.key} data-row={it.key} className="group/bar" title={[named(it), format(it.value), share, it.estimate ? 'estimate' : null, hot ? highlightLabel : null].filter(Boolean).join(' · ')}>
             {/* Positioned, the words and the bar paint over the axis's gridlines, which are positioned before them; the bar
-                without the transform its animation gives it, under reduced motion, too. */}
-            <div className="relative mb-1.5 flex items-baseline gap-3 text-sm">
+                without the transform its animation gives it, under reduced motion, too. The words are lifted over the bar,
+                so a link's 44px target under a finger, which reaches across the track, still takes the tap. */}
+            <div className="relative z-1 mb-1.5 flex items-baseline gap-3 text-sm">
               {it.href ? (
                 // The row's look at rest, the accent under the pointer and the focus ring on the keyboard. The hit area is
                 // drawn outside the link, so the link does not clip: the label inside it truncates.

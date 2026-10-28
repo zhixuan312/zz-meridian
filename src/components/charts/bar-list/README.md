@@ -44,7 +44,7 @@ Rows are 14px apart; label to bar 6px. The list takes its container's width.
 | Hover (a linked row's label) | The label takes `accent-ink` over `dur-hover`, and the bar steps up as on any row. |
 | Focus (a linked row) | The label's link shows the 2px `accent` ring. |
 | Empty | Render the card's Empty state. |
-| Below zero | A row below zero draws an empty bar (and an empty outline under `pair`), its figure the value it holds: a Bar list measures from zero, and signed rows are Diverging bars. |
+| Below zero | A row below zero draws an empty bar (and an empty outline under `pair`), its figure the value it holds and its share of `total` `0.0%`: a Bar list measures from zero, and signed rows are Diverging bars. |
 
 ## Behaviour
 

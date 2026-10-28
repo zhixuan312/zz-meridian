@@ -24,6 +24,18 @@ describe('a composition bar', () => {
     expect(container.textContent).toMatch(/Other\s*36%/);
   });
 
+  // The review of fed2f39: the whole is the sum of the parts above zero, but Other still summed the folded parts signed,
+  // so a folded part below zero cancelled the sixth part's share out of the bar and the key.
+  it('folds only the parts above zero into Other, and reads a part below zero as a share of 0%', () => {
+    const parts = [10, 10, 10, 10, 10, 10, -10].map((value, i) => ({ label: `P${i}`, value }));
+    const { container } = render(<CompositionBar label="Mix" parts={parts} />);
+    const widths = [...container.querySelectorAll('figure > div:first-child > div')].map((d) => (d as HTMLElement).style.width);
+    expect(widths.at(-1)).toBe(`${(10 / 60) * 100}%`);
+    expect(container.textContent).toMatch(/Other\s*17%/);
+    const signed = render(<CompositionBar label="Signed" parts={[{ label: 'A', value: 12 }, { label: 'B', value: -8 }]} />);
+    expect(signed.container.textContent).toMatch(/B\s*0%-8/);
+  });
+
   it('draws its parts in the categorical slots by default', () => {
     const { container } = render(<CompositionBar label="Plan mix" parts={PLANS} />);
     expect(fills(container)).toEqual(([1, 2, 3] as const).map((n) => SERIES_VAR(n)));
