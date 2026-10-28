@@ -176,7 +176,7 @@ const semverLess = (a: string, b: string) => { const [x, y] = [a, b].map((v) => 
 const sha = (f: string) => (fs.existsSync(f) ? `sha256-${hash(f)}` : null);
 const secs = (ms: number) => (ms / 1000).toFixed(1);
 
-type Ran = { status: number | null; out: string; err: string; wall: number };
+type Ran = { status: number | null; out: string; err: string; wall: number; log: string };
 
 /** Runs one command of a package and prints its measured time, so a slow stage is visible whatever the verdict. */
 function zz(pkg: string, cwd: string, a: string[], label: string, env: Record<string, string> = {}): Ran {
@@ -185,8 +185,13 @@ function zz(pkg: string, cwd: string, a: string[], label: string, env: Record<st
   const wall = performance.now() - t0;
   const reported = /^time: (.*)$/m.exec(r.stdout)?.[1];
   console.log(`     time ${label}: wall ${secs(wall)}s${reported ? ` (${reported})` : ''}`);
-  return { status: r.status, out: r.stdout, err: r.stderr, wall };
+  // A failed step names its log (`see .meridian/update/<v>/evidence/2-build.log`), and the fixture holding it is removed
+  // when the case ends: read it now, so a red run says why the step failed and not only that it did.
+  const named = r.status === 0 ? undefined : /see (\S+\.log)/.exec(r.stdout + r.stderr)?.[1];
+  return { status: r.status, out: r.stdout, err: r.stderr, wall, log: named ? `${named}:\n${read(cwd, named)}` : '' };
 }
+/** What a run printed, then the log a failed step named: the detail of a check that expected it to pass. */
+const said = (r: Ran) => [r.out, r.err, r.log].join('\n');
 
 /**
  * The migrations `cli/src/migrations.ts` declares since 0.5.0: changes in the team's own files, resolved by editing them.
@@ -457,7 +462,7 @@ function mainUpgrade(): Upgraded {
   const resolutions = resolveAll(proj, VERSION, 'Kept our version; the project works as it is.');
   check(resolutions.some((r) => r.id === `file:${CARD}`), `the resolutions name file:${CARD}`);
   const fin = zz(tarball, proj, ['update', '--finalize'], 'finalize');
-  check(fin.status === 0 && /^outcome: complete/m.test(fin.out), 'update --finalize exits 0 and completes', fin.out + fin.err);
+  check(fin.status === 0 && /^outcome: complete/m.test(fin.out), 'update --finalize exits 0 and completes', said(fin));
   check(fin.wall / 1000 <= 90, `finalize took ${secs(fin.wall)}s (limit 90s)`);
 
   // The manifest.
@@ -577,9 +582,9 @@ function originUpgrade(version: string, route: 'adopt' | 'create') {
     check(/^outcome: migration-required/m.test(up.out) && /^Next: .*update --finalize/m.test(up.out), `${label}: the update applies and stops on what it lists, with the pinned next command`, up.out + up.err);
     resolveAll(proj, VERSION, 'Kept ours; the project works as it is.');
     const fin = zz(tarball, proj, ['update', '--finalize'], `${label} finalize`);
-    check(fin.status === 0 && /^outcome: complete/m.test(fin.out), `${label}: finalize passes the gate and the build and completes in ${secs(fin.wall)}s`, fin.out + fin.err);
+    check(fin.status === 0 && /^outcome: complete/m.test(fin.out), `${label}: finalize passes the gate and the build and completes in ${secs(fin.wall)}s`, said(fin));
   } else {
-    check(up.status === 0 && /^outcome: complete/m.test(up.out), `${label}: with nothing to resolve, the update completes in one command`, up.out + up.err);
+    check(up.status === 0 && /^outcome: complete/m.test(up.out), `${label}: with nothing to resolve, the update completes in one command`, said(up));
     if (up.status !== 0) { done(proj); return; }
   }
   const manifest = finalManifest(proj);
@@ -610,7 +615,7 @@ if (args.includes('--update-all') && adoptedBase()) {
   const finish = (proj: string, label: string, pkg = tarball, env: Record<string, string> = {}, version = VERSION) => {
     resolveAll(proj, version, 'Kept ours; the project works as it is.');
     const fin = zz(pkg, proj, ['update', '--finalize'], `${label} finalize`, env);
-    check(fin.status === 0 && /^outcome: complete/m.test(fin.out), `${label}: finalize completes`, fin.out + fin.err);
+    check(fin.status === 0 && /^outcome: complete/m.test(fin.out), `${label}: finalize completes`, said(fin));
     return fin;
   };
 
@@ -623,7 +628,7 @@ if (args.includes('--update-all') && adoptedBase()) {
       check(up.status === 2, `${name}: the update stops with work pending`, up.out + up.err);
       resolveAll(proj, VERSION, 'Kept ours; the project works as it is.');
       const fin = zz(tarball, proj, ['update', '--finalize', ...flag], `${name} finalize`);
-      check(fin.status === 0 && /^outcome: complete/m.test(fin.out), `${name}: finalize completes`, fin.out + fin.err);
+      check(fin.status === 0 && /^outcome: complete/m.test(fin.out), `${name}: finalize completes`, said(fin));
       done(proj);
       return fin;
     };
@@ -681,7 +686,7 @@ if (args.includes('--update-all') && adoptedBase()) {
     check(fs.existsSync(path.join(proj, session, 'state.json')), 'the session is kept');
     write(proj, 'lib/broken.ts', 'export const total: number = 1;\n');
     const fin = zz(tarball, proj, ['update', '--finalize'], 'finalize (fixed)');
-    check(fin.status === 0 && /^outcome: complete/m.test(fin.out), 'with it fixed, finalize succeeds', fin.out + fin.err);
+    check(fin.status === 0 && /^outcome: complete/m.test(fin.out), 'with it fixed, finalize succeeds', said(fin));
     done(proj);
   }
 
