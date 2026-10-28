@@ -2,7 +2,13 @@
 
 Every release of ZZ Meridian, newest first. Versions follow semver: a removed or renamed token, prop or card is major; a new card, token or variant is minor; a corrected value is a patch. Each entry says what breaks and what to do instead.
 
-## [Unreleased]
+## [0.35.0] · 2026-10-29
+
+A third level in the rail: a navigation item can have sub pages, drawn in a branch under it, and the sample shows one (Traffic, Usage, Requests).
+
+### Breaking
+
+- **`PageFrame` draws its kicker in a `div`, not a `p`.** A kicker can now hold block content such as a `Breadcrumb`, which inside a `p` was invalid HTML and a hydration mismatch. The `t-kicker` class and the look are unchanged. A test of your own that asserts the kicker's tag name expects `DIV`, and a selector written as `p.t-kicker` is written `.t-kicker`.
 
 ### Added
 
@@ -10,10 +16,6 @@ Every release of ZZ Meridian, newest first. Versions follow semver: a removed or
 - **The gate refuses a sub page the rail cannot draw.** `node scripts/check.ts` refuses an `under` that names no item of the same group, the item itself, or an item that is itself under another (three levels, never four). It also refuses a sub page in another workspace than its parent, and more than 7 sub pages under one parent. Each refusal names the item's `href`.
 - **The palette and the masthead say where a sub page sits.** The command palette's hint for a sub page is its parent's label, so typing a parent's label finds its sub pages. `navTrail(href, nav)` in `src/components/patterns/rail/trail.ts` derives a page's crumbs from the navigation: for a sub page, its parent as a link, then the page. The sample's Requests page draws it as its kicker, Usage then Requests.
 - **The sample shows all three levels.** Business is now two labelled groups: Accounts (Revenue, Customers) and Traffic (Usage, with Requests under it). The Rail preview draws every branch state.
-
-### Changed
-
-- **`PageFrame` draws its kicker in a `div`, not a `p`.** A kicker can now hold block content such as a `Breadcrumb`, which inside a `p` was invalid HTML and a hydration mismatch. The `t-kicker` class and the look are unchanged. A test of your own that asserts the kicker's tag name expects `DIV`.
 
 ## [0.34.0] · 2026-10-29
 
