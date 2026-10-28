@@ -68,6 +68,7 @@ const RULES: Rule[] = [
   { id: 'an element with a control role handles the keyboard', source: 'has no onKeyDown', batch: 'T', fails: ['src/views/planted-lint.tsx: <span role="tab"> has no onKeyDown'], twin: '<span role="switch">' },
   { id: 'one protagonist a page', source: 'a second FeaturedMetric', pairedIn: { file: RULE_TESTS, needle: 'a second FeaturedMetric' } },
   { id: 'a nav item needs a shape the rail can read', source: 'nav item ${item.href}', pairedIn: { file: RULE_TESTS, needle: 'nav item \\/' } },
+  { id: 'a sub page is under an item the rail can draw it under', source: 'navUnderProblems(nav)', batch: 'T', fails: ['src/app.config.ts: nav item /requests is under /nowhere, which is no item of its group'] },
   // The update session, the keep register and the logo (an adopted project).
   { id: 'a completed history journal reads back', source: '${file}: ${(e as Error)', batch: 'M1', fails: [/\.meridian\/history\/0\.1\.0\/a\/state\.json: state\.json: not valid JSON/] },
   { id: 'one update session at most', source: 'update sessions (', batch: 'M1', fails: ['.meridian/update: 2 update sessions (0.2.0, 0.3.0); finish or abort all but one'] },
@@ -230,6 +231,7 @@ const EDITS: Record<Batch | 'M0', () => void> = {
     edit('CONTRIBUTING.md', (t) => `${t}\n\nPlanted: \`ground-nope\`, \`radius-lg\` 99px, \`/embed/nowhere\` and the real \`/embed/requests\`.\n`);
     edit('docs/surfaces.md', (t) => t.replace(/(\| Customers \| List with sparklines \|[^\n]*?\| )Not offered( \|)/, '$1`ghostview`$2'));
     edit('src/styles/motion.css', (t) => `${t}\n.planted { transition: opacity 300ms; }\n`);
+    edit('src/app.config.ts', (t) => t.replace("under: '/usage'", "under: '/nowhere'"));
     put('src/lib/planted-lib.ts', 'export const orphanPlanted = 1;\nexport const usedPlanted = 2;\n');
     put('src/views/planted-lint.tsx', [
       "import { MEMBERS } from '@/system/fixtures/sample-members';",

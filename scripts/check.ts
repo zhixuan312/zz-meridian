@@ -23,12 +23,15 @@
  *   `drift:` line, a warning the gate carries: nothing else says so between releases.
  * - Every nav item's `needs` has the shape the rail can read: 'public', a grant `object:read|create|update|remove`, or an
  *   `{ allOf: [...] }` of them.
+ * - Every nav item's `under` names an item of its own group that is not itself under another, in the same workspace, and
+ *   no item has more than seven sub pages: the rail draws three levels and nothing it cannot draw.
  */
 import { createHash } from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
 import { importTarget, projectAliases } from './lib/aliases.ts';
 import { checkBrief, scanReferences } from './lib/context-check.ts';
+import { navUnderProblems } from './lib/nav-under.ts';
 import { blankedText, noDirectQuery, presentationDoesNotRead, resolveSpec as resolveProjectSpec, valueImports } from './lib/layer-rules.ts';
 import { APP_DIR, agentPageSpec, agentSection, specRoute, viewToolPages } from './lib/routes.ts';
 import { keepProblems, unresolved, parseJournal, parseKeep, parseResolutions, verifiedRetirements, type Hash, type Retirement } from './lib/update-session.ts';
@@ -359,6 +362,13 @@ for (const item of nav.flatMap((g) => g.items)) {
   const why = needProblem(item.needs);
   if (why) problems.push(`src/app.config.ts: nav item ${item.href} ${why}`);
 }
+
+// ── A sub page names a parent the rail can draw ───────────────────────────────────────────────────────
+// A nav item may name its parent with `under`, and the rail draws it as one list nested under that parent. An `under`
+// that names nothing of its group, the item itself, an item that is already a sub page (a fourth level), or an item of
+// another workspace has no place in that list, so the page would vanish from the rail or hang in the wrong one. A parent
+// with more than seven sub pages is a group of its own. The rule is pure and lives in scripts/lib/nav-under.ts.
+problems.push(...navUnderProblems(nav));
 
 // ── The update session, the keep register and the logo ────────────────────────────────────────────────
 // A session under .meridian/update/ must be resolved before the gate passes. With one ready, its candidate manifest
