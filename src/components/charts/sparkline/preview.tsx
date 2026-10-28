@@ -33,7 +33,7 @@ export default function SparklinePreview() {
         <State label="Linear" className="w-56"><div className="w-full"><Sparkline values={current.map((d) => d.requests)} curve="linear" color="neutral" /></div></State>
       </Specimen>
       <Specimen label="A held scale" note="domain: lines side by side drawn against one range, so their heights compare. The range drawn is the domain itself; a value outside it widens the range to take it, and the title says so.">
-        <State label="Inside 0 to 100" className="w-56"><div className="w-full"><Sparkline values={[42, 55, 48, 61, 58, 66, 63]} domain={[0, 100]} color="neutral" /></div></State>
+        <State label="Inside 0 to 100: titled 0 to 100" className="w-56"><div className="w-full"><Sparkline values={[42, 55, 48, 61, 58, 66, 63]} domain={[0, 100]} color="neutral" /></div></State>
         <State label="Widened: 128 is outside 0 to 100" className="w-56"><div className="w-full"><Sparkline values={[42, 55, 48, 61, 128, 66, 63]} domain={[0, 100]} color="neutral" /></div></State>
       </Specimen>
       <Specimen label="In a table cell" note="24px tall, beside the number it qualifies, never instead of it." stack>

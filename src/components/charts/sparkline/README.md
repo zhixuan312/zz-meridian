@@ -28,7 +28,7 @@ Status: beta
 
 Height 24px in a table cell, 28px in a compact Metric tile, 32 to 44px in a tile; the width is the container's. The scale fits the data's own range (minimum to maximum of the numbers, a day with no value left out), because a sparkline shows shape, not magnitude.
 
-`domain={[min, max]}` holds the scale instead, so sparklines side by side are drawn against one range and their heights compare. The range drawn is the domain itself: a sparkline has no axis to round to a step. While every value is inside it, the title names the data's own range. A value outside it widens the range to the nice levels that take it, and the title names the range drawn and says so: values from 42 to 128 on `domain={[0, 100]}` read `0 to 150, scale widened from 0–100`. A `domain` whose second number is not above its first is drawn as no domain.
+`domain={[min, max]}` holds the scale instead, so sparklines side by side are drawn against one range and their heights compare. The range drawn is the domain itself: a sparkline has no axis to round to a step. The title names the range drawn: while every value is inside the domain, the domain itself, so values from 42 to 66 on `domain={[0, 100]}` read `0 to 100`. A value outside it widens the range to the nice levels that take it, and the title names the range drawn and says so: values from 42 to 128 on `domain={[0, 100]}` read `0 to 150, scale widened from 0–100`. A `domain` whose second number is not above its first is drawn as no domain.
 
 ## States
 

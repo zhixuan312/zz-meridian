@@ -13,7 +13,7 @@ export type GroupedColumnsProps = Shared & { columns: StackedColumn[]; parts: Gr
  * The Column chart's grouped form: each column is a group of parts that are identities, In and Out or this year and
  * last, standing side by side with 1px of the card between them, each in its categorical slot. They are not a whole,
  * so nothing is summed: the axis is every part's value, under zero too, and no Total is drawn or read. A part with no
- * data draws nothing in its place and reads `noData`. Loaded on demand by `ColumnChart` when it is passed `grouped`.
+ * data keeps its slot with the dashed no-data hairline on the zero line and reads `noData`, so it never reads as a zero. Loaded on demand by `ColumnChart` when it is passed `grouped`.
  */
 export function GroupedColumns({
   highlight,
@@ -129,7 +129,9 @@ export function GroupedColumns({
                           return (
                             // A figure wider than its bar is cut at rest, and keeps the whole of itself where the pointer finds it.
                             <div key={parts[k].key} title={rest && v !== null && format(v).length * 7 > bar ? format(v) : undefined} className="relative h-full min-w-0 flex-1">
-                              {v === null ? null : (
+                              {v === null ? (
+                                <div data-no-data-mark aria-hidden className="absolute inset-x-0 mb-0.5 border-t border-dashed border-line-strong" style={{ bottom: `${zero}%` }} />
+                              ) : (
                                 <>
                                   <div
                                     data-part={parts[k].key}

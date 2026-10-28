@@ -44,8 +44,9 @@ describe('a Sparkline\'s domain', () => {
     expect(own[2]).toBeCloseTo(ends[2], 6);
   });
 
-  it('keeps its title when every value is inside the domain', () => {
-    expect(draw([25, 50, 75], { domain: [0, 100] }).firstElementChild?.getAttribute('title')).toBe('25 to 75');
+  it('titles the range it holds when every value is inside the domain, the range it draws', () => {
+    expect(draw([25, 50, 75], { domain: [0, 100] }).firstElementChild?.getAttribute('title')).toBe('0 to 100');
+    expect(draw([25, 50, 75]).firstElementChild?.getAttribute('title')).toBe('25 to 75');
   });
 
   it('widens to take a value outside it, and says so in its title', () => {

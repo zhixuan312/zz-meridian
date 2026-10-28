@@ -61,11 +61,13 @@ describe('grouped columns', () => {
     expect(c.textContent).not.toMatch(/Total/);
   });
 
-  it('hang a part under zero from the zero line, and draw no bar for a part with no data', async () => {
+  it('hang a part under zero from the zero line, and draw the no-data hairline in the slot of a part with no data', async () => {
     const c = await grouped();
     expect(part(c, 'd2', 'out')?.hasAttribute('data-fall')).toBe(true);
     expect(part(c, 'd2', 'in')?.hasAttribute('data-fall')).toBe(false);
     expect(part(c, 'd3', 'out')).toBeNull();
+    expect(column(c, 'd3').querySelectorAll('[data-no-data-mark]')).toHaveLength(1);
+    expect(column(c, 'd1').querySelectorAll('[data-no-data-mark]')).toHaveLength(0);
     expect(body(c)[2]).toEqual(['Wed', '90', 'No data']);
   });
 
@@ -85,7 +87,7 @@ describe('grouped columns', () => {
   it('draw a running group at half strength inside one dashed outline, and say "so far"', async () => {
     const c = await grouped({ running: true });
     expect(column(c, 'd3').hasAttribute('data-running')).toBe(true);
-    expect(column(c, 'd3').querySelectorAll('.border-dashed')).toHaveLength(1);
+    expect(column(c, 'd3').querySelectorAll('.border-dashed:not([data-no-data-mark])')).toHaveLength(1);
     expect(column(c, 'd3').querySelector('.opacity-50')).not.toBeNull();
     expect(body(c)[2][0]).toBe('Wed, so far');
   });
