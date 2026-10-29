@@ -487,6 +487,8 @@ describe('the 0.36.0 navigation migration', () => {
     }
     expect(m.applies(project({ 'src/app.config.ts': 'export type NavItem = {\n  href: string;\n  // prefetch?: true;\n  // under?: string;\n};\n' }))).toEqual(['src/app.config.ts']);
     expect(m.applies(project({ 'src/app.config.ts': 'export type NavItem = { href: string } // under?: prefetch?:\n' }))).toEqual(['src/app.config.ts']);
+    // What follows the type is not read as its fields, exported or not.
+    expect(byId('nav-needs').applies(project({ 'src/app.config.ts': "export type NavItem = { href: string }\nconst home = { href: '/', needs: 'public' };\nexport const nav: NavGroup[] = [\n  { items: [{ href: '/', needs: 'public' }] },\n];\n" }))).toEqual(['src/app.config.ts']);
     // A configuration with no NavItem type is not this migration's, and the release's own has both.
     expect(m.applies(project({ 'src/app.config.ts': 'export const app = {} as const;\n' }))).toBeNull();
     expect(m.applies(path.resolve(import.meta.dirname, '..'))).toBeNull();

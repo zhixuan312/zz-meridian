@@ -487,7 +487,7 @@ export const RELEASE_MIGRATIONS: ReleaseMigration[] = [
     since: '0.13.0',
     applies: navItemsWithoutNeeds,
     summary: 'Every item in the project\'s `nav` carries a `needs`, so the rail shows only the destinations a person may reach.',
-    instructions: 'Read "5. Decide who may do what" in the Start guide (docs/start-a-dashboard.md). For each item in `src/app.config.ts`\'s `nav`, add `needs: \'public\'` when everyone may open that page, or point it at its feature (`needs: FEATURES.<id>.needs`); the fourth of its four steps covers it, and `scripts/check.ts` fails the project\'s gate, naming the href, on an item without one. `adopt` writes `needs: \'public\'` for a project it sets up from now on.',
+    instructions: 'Read "5. Decide who may do what" in the Start guide (docs/start-a-dashboard.md). For each item in `src/app.config.ts`\'s `nav`, add `needs: \'public\'` when everyone may open that page, or point it at its feature (`needs: FEATURES.<id>.needs`); the fourth of its four steps covers it, and `scripts/check.ts` fails the project\'s gate, naming the href, on an item without one. `adopt` writes `needs: \'public\'` for a project it sets up from now on. A `NavItem` type of your own declares `needs` too; if every item and the type already carry it, there is nothing to change.',
     checks: ['gate'],
   },
   {
@@ -655,7 +655,7 @@ export const RELEASE_MIGRATIONS: ReleaseMigration[] = [
     since: '0.36.0',
     applies: navItemWithoutFields,
     summary: "The rail reads a navigation item's `under` and `prefetch` directly: the `NavItem` type in `src/app.config.ts` declares both.",
-    instructions: "`src/app.config.ts` is yours, so an update does not touch it, and the `NavItem` type in your copy lacks a field the release's rail and trail now read as a property of every item (until 0.36.0 they tested for it first). Add `prefetch?: true; under?: string` to the `NavItem` type, as the release's `src/app.config.ts` declares it: `under` names the `href` of the item a sub page is drawn under, and `prefetch: true` asks the rail to prefetch that item's page in full. Neither changes an item that does not set it.",
+    instructions: "`src/app.config.ts` is yours, so an update does not touch it, and the `NavItem` type in your copy lacks a field the release's rail and trail now read as a property of every item (until 0.36.0 they tested for it first). Add `prefetch?: true; under?: string` to the `NavItem` type, as the release's `src/app.config.ts` declares it: `under` names the `href` of the item a sub page is drawn under, and `prefetch: true` asks the rail to prefetch that item's page in full. Neither changes an item that does not set it. If your type already declares both, in a shape this check does not read whole, there is nothing to change.",
     checks: ['gate'],
   },
   {
@@ -735,30 +735,16 @@ function navItemWithoutFields(root: string): string[] | null {
 }
 
 /**
- * A configuration's own `NavItem` as written, its comments blanked and its brackets matched: an interface to the brace
- * that closes its body, a type to a semicolon outside every bracket or to a line that starts the file's next statement,
- * so a type spread over lines (an intersection, a conditional, a generic) is read whole. Undefined when there is none.
+ * A configuration's own `NavItem` as written, from its declaration to the next line that starts a statement, comments
+ * blanked; undefined when there is none. No type is parsed: a shape this cuts short is reported rather than passed, since
+ * a migration line with nothing to do costs a look, and a missed one is the type error with no line it exists to prevent.
  */
 function navItemType(body: string): string | undefined {
-  const m = /^export\s+(interface|type)\s+NavItem\b/m.exec(body);
+  const m = /^export\s+(?:interface|type)\s+NavItem\b/m.exec(body);
   if (!m) return undefined;
-  const t = uncommented(body.slice(m.index));
-  let i = m[0].length, angle = 0;
-  while (i < t.length) {
-    const past = skipLiteral(t, i);
-    if (past !== i) { i = past; continue; }
-    const c = t[i]!;
-    if (c === '<') angle++;
-    else if (c === '>' && t[i - 1] !== '=') angle--;
-    else if ('{(['.includes(c)) {
-      const end = closeOf(t, i) + 1;
-      if (m[1] === 'interface' && c === '{' && angle === 0) return t.slice(0, end);
-      i = end;
-      continue;
-    } else if (m[1] === 'type' && angle === 0 && (c === ';' || (c === '\n' && /^\s*(?:export|import|type|interface|const|let|var|function|class|declare|enum)\b/.test(t.slice(i))))) break;
-    i++;
-  }
-  return t.slice(0, i);
+  const rest = uncommented(body.slice(m.index + m[0].length));
+  const end = rest.search(/^(?:export|import|type|interface|const|let|var|function|class|declare|enum)\s/m);
+  return m[0] + (end < 0 ? rest : rest.slice(0, end));
 }
 
 /** `src` with every comment blanked to spaces and its strings kept, so a commented-out field is not read as one. */
