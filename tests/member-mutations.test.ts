@@ -1,17 +1,23 @@
 // @vitest-environment node
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const jar = vi.hoisted(() => ({ value: undefined as string | undefined }));
-vi.mock('next/headers', () => ({
-  cookies: async () => ({ get: (n: string) => (n === 'zz_meridian_view_as' && jar.value !== undefined ? { name: n, value: jar.value } : undefined), set: () => {} }),
-  headers: async () => new Headers(),
-}));
+// The persona cookie: the file's `as`, or, inside `asAt`, that call's own, so two concurrent writes can be two people.
+const jar = vi.hoisted(() => ({ value: undefined as string | undefined, own: undefined as unknown as import('node:async_hooks').AsyncLocalStorage<string> }));
+vi.mock('next/headers', async () => {
+  jar.own = new (await import('node:async_hooks')).AsyncLocalStorage<string>();
+  return {
+    cookies: async () => ({ get: (n: string) => { const v = jar.own.getStore() ?? jar.value; return n === 'zz_meridian_view_as' && v !== undefined ? { name: n, value: v } : undefined; }, set: () => {} }),
+    headers: async () => new Headers(),
+  };
+});
 
 import { assignMemberRole, invitableRoles, memberAccess, membersFor } from '@/data/member-mutations';
 import { activity, members } from '@/data/collections';
 import { resolveAccess } from '@/data/access';
 
 const as = (id: string | undefined) => { jar.value = id; };
+/** `fn` run as `id`, every cookie read it causes included, whatever the file's `as` says meanwhile. */
+const asAt = <T>(id: string, fn: () => Promise<T>) => jar.own.run(id, fn);
 const rowOf = async (id: string) => (await members.query({ where: [{ field: 'id', op: 'eq', value: id }] })).rows[0];
 const lines = async () => (await activity.query({})).rows.map((r) => JSON.stringify(r));
 
@@ -102,6 +108,7 @@ describe('the member boundary', () => {
     // active, so the change is allowed — the rule that guards the last active Owner is evaluated over the membership
     // after the change, and no single assignment from an Owner can empty it. What must hold is that the workspace still
     // has an active Owner afterwards, whatever the outcome.
+    const first = await rowOf('members_1');
     const made = await members.create!({ name: 'Second Owner', email: 'second.owner@example.com', team: 'Support', status: 'Active', joined: '2026-10-01', lastActive: null, role: 'Owner', addOns: [] });
     try {
       as(made.id);
@@ -113,30 +120,31 @@ describe('the member boundary', () => {
       expect(owners.map((m) => m.id)).toEqual([made.id]);
       expect((await rowOf('members_1')).role).toBe('Member');
     } finally {
-      as('members_1');
-      await assignMemberRole({ id: 'members_1', role: 'Owner', addOns: [] }).catch(() => {});
+      // Put back through the collection itself: as a Member now, members_1 may not give itself the role back.
+      await members.update!(['members_1'], { role: first.role, addOns: first.addOns });
       await members.remove!([made.id]);
     }
   });
 
-  it('cannot remove two Owners at once', async () => {
-    as('members_1');
+  it('lets only one of two Owners demoting each other at once go through, so an Owner remains', async () => {
+    // Two active Owners and no other: each may demote the other, and each alone keeps itself as the workspace's Owner.
+    // Both at once, on one count read before either write, would leave none; the members' write queue runs them one
+    // after the other, so the second finds its caller a Member already.
     const a = await members.create!({ name: 'Owner A', email: 'owner.a@example.com', team: 'Support', status: 'Active', joined: '2026-10-01', lastActive: null, role: 'Owner', addOns: [] });
     const b = await members.create!({ name: 'Owner B', email: 'owner.b@example.com', team: 'Support', status: 'Active', joined: '2026-10-01', lastActive: null, role: 'Owner', addOns: [] });
+    const others = (await members.query({})).rows.filter((m) => m.role === 'Owner' && m.id !== a.id && m.id !== b.id).map((m) => m.id);
+    await members.update!(others, { role: 'Member' });
     try {
       const results = await Promise.allSettled([
-        assignMemberRole({ id: 'members_1', role: 'Member', addOns: [] }),
-        assignMemberRole({ id: a.id, role: 'Member', addOns: [] }),
-        assignMemberRole({ id: b.id, role: 'Member', addOns: [] }),
+        asAt(a.id, () => assignMemberRole({ id: b.id, role: 'Member', addOns: [] })),
+        asAt(b.id, () => assignMemberRole({ id: a.id, role: 'Member', addOns: [] })),
       ]);
-      expect(results.filter((r) => r.status === 'rejected').length).toBeGreaterThan(0);
+      expect(results.map((r) => r.status)).toEqual(['fulfilled', 'rejected']);
       const owners = (await members.query({})).rows.filter((m) => m.role === 'Owner' && m.status === 'Active');
-      expect(owners.length).toBeGreaterThan(0);
+      expect(owners.map((m) => m.id)).toEqual([a.id]);
     } finally {
-      as('members_1');
-      for (const id of [a.id, b.id]) { const row = await rowOf(id); if (row.role !== 'Member') await assignMemberRole({ id, role: 'Member', addOns: [] }).catch(() => {}); }
-      await assignMemberRole({ id: 'members_1', role: 'Owner', addOns: [] }).catch(() => {});
-      await members.remove!([a.id, b.id]).catch(() => {});
+      await members.update!(others, { role: 'Owner' });
+      await members.remove!([a.id, b.id]);
     }
   });
 });
