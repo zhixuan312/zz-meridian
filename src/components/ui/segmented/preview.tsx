@@ -26,9 +26,15 @@ export default function SegmentedPreview() {
         />
       </Specimen>
       <Specimen label="Sizes">
-        <State label="Small"><Segmented size="sm" label="Small" value="day" onChange={() => {}} options={[{ value: 'hour', label: 'Hour' }, { value: 'day', label: 'Day' }, { value: 'week', label: 'Week' }]} /></State>
-        <State label="Medium"><Segmented label="Medium" value="day" onChange={() => {}} options={[{ value: 'hour', label: 'Hour' }, { value: 'day', label: 'Day' }, { value: 'week', label: 'Week' }]} /></State>
+        <State label="Small"><Sized size="sm" /></State>
+        <State label="Medium"><Sized size="md" /></State>
       </Specimen>
     </>
   );
+}
+
+/** One size, live: a press moves the choice, as it does on a page. */
+function Sized({ size }: { size: 'sm' | 'md' }) {
+  const [value, setValue] = useState('day');
+  return <Segmented size={size} label={size === 'sm' ? 'Small' : 'Medium'} value={value} onChange={setValue} options={[{ value: 'hour', label: 'Hour' }, { value: 'day', label: 'Day' }, { value: 'week', label: 'Week' }]} />;
 }

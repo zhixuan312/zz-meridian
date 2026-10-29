@@ -111,7 +111,7 @@ export default function DialogPreview() {
       <Specimen label="Live" note="Opens centred; on phones it rises from the bottom as a sheet.">
         <Dialog>
           <DialogTrigger asChild><Button>Open dialog</Button></DialogTrigger>
-          <DialogContent title="Revoke this key?" description="Requests signed with it will fail with 401 at once." footer={<Button variant="danger">Revoke key</Button>}>
+          <DialogContent title="Revoke this key?" description="Requests signed with it will fail with 401 at once." footer={<><DialogClose asChild><Button variant="ghost">Cancel</Button></DialogClose><DialogClose asChild><Button variant="danger">Revoke key</Button></DialogClose></>}>
             <p className="t-small text-ink-2">Any service still using it will need a new key.</p>
           </DialogContent>
         </Dialog>

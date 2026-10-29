@@ -48,7 +48,7 @@ export default function MotionPreview() {
         </div>
       </Specimen>
       <Specimen label="Answer" note="A control acknowledges you: it gives half a pixel under the pointer, an underline draws in.">
-        <State label="Press (hold)"><Button variant="primary">Rotate key</Button></State>
+        <State label="Press it and hold"><Button variant="primary">Rotate key</Button></State>
         {/* `.link` is a link inside a sentence — that is the whole of it, and the reason it is exempt from the 44px
             touch rule. Shown bare in this flex row it blockifies, loses both the exemption and the box-link hit area,
             and stands for a control it is not. A box link is `.link inline-flex`, as the Atlas's own links are. */}

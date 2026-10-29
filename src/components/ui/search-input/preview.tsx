@@ -17,10 +17,16 @@ export default function SearchInputPreview() {
       </Specimen>
       <Specimen label="Sizes" stack>
         <div className="grid w-full max-w-160 items-end gap-3 sm:grid-cols-2">
-          <State label="Small"><SearchInput size="sm" aria-label="Small" value="" onValueChange={() => {}} placeholder="Filter" /></State>
-          <State label="Medium"><SearchInput aria-label="Medium" value="" onValueChange={() => {}} placeholder="Filter" /></State>
+          <State label="Small"><Sized size="sm" /></State>
+          <State label="Medium"><Sized size="md" /></State>
         </div>
       </Specimen>
     </>
   );
+}
+
+/** One size, live: it takes what is typed, as it does on a page. */
+function Sized({ size }: { size: 'sm' | 'md' }) {
+  const [value, setValue] = useState('');
+  return <SearchInput size={size} aria-label={size === 'sm' ? 'Small' : 'Medium'} value={value} onValueChange={setValue} placeholder="Filter" />;
 }

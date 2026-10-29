@@ -1,9 +1,8 @@
 'use client';
 
-import { Globe } from 'lucide-react';
+import { Check, Globe } from 'lucide-react';
 import { Specimen, State } from '@/system/specimen';
 import { Select } from '.';
-import { Check } from 'lucide-react';
 
 const REGIONS = [
   { value: 'us-east-1', label: 'us-east-1', description: 'N. Virginia' },

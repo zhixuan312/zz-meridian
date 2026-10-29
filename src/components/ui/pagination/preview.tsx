@@ -32,14 +32,20 @@ export default function PaginationPreview() {
         <Pagination page={page} pageSize={size} total={240} noun="requests" onPageChange={setPage} pageSizes={[10, 20, 50]} onPageSizeChange={(s) => { setSize(s); setPage(1); }} />
       </Specimen>
       <Specimen label="Positions" stack>
-        <State label="First page" className="w-full"><Pagination page={1} pageSize={20} total={240} noun="requests" onPageChange={() => {}} className="w-full" /></State>
-        <State label="Middle" className="w-full"><Pagination page={6} pageSize={20} total={240} noun="requests" onPageChange={() => {}} className="w-full" /></State>
-        <State label="Last page" className="w-full"><Pagination page={12} pageSize={20} total={240} noun="requests" onPageChange={() => {}} className="w-full" /></State>
-        <State label="One page" className="w-full"><Pagination page={1} pageSize={20} total={7} noun="customers" onPageChange={() => {}} className="w-full" /></State>
+        <State label="First page" className="w-full"><Pager start={1} total={240} noun="requests" /></State>
+        <State label="Middle" className="w-full"><Pager start={6} total={240} noun="requests" /></State>
+        <State label="Last page" className="w-full"><Pager start={12} total={240} noun="requests" /></State>
+        <State label="One page" className="w-full"><Pager start={1} total={7} noun="customers" /></State>
       </Specimen>
       <Specimen label="A list that is not a table" note="usePaged pages any rows; searching lands on page 1, and the pager hides when one page holds them all." stack>
         <Roster />
       </Specimen>
     </>
   );
+}
+
+/** A pager that starts at one position and moves when pressed, so a position specimen is not a dead control. */
+function Pager({ start, total, noun }: { start: number; total: number; noun: string }) {
+  const [page, setPage] = useState(start);
+  return <Pagination page={page} pageSize={20} total={total} noun={noun} onPageChange={setPage} className="w-full" />;
 }
