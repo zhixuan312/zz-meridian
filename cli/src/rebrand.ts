@@ -6,7 +6,7 @@
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { BRAND_FLAGS, VERSION, brandArgs, effectiveBrand, inside, run, sha256, type Manifest } from './files.js';
+import { BRAND_FLAGS, VERSION, brandArgs, effectiveBrand, inside, manifestText, run, sha256, type Manifest } from './files.js';
 import { managedPaths, parseManifest } from './ownership.js';
 import { replayRelease, runningRelease } from './replay.js';
 import { writeAtomic } from './session.js';
@@ -65,10 +65,10 @@ function attempt(ctx: RebrandContext, change: Record<string, string>, allowDirty
   const { root, log } = ctx;
   const listed = (paths: string[]) => paths.map((p) => `\n  ${p}`).join('');
 
-  const manifestText = read(root, MANIFEST);
-  if (!manifestText) throw new Refusal(`${MANIFEST} is missing; this project was not set up by zz-meridian`);
+  const manifestBytes = read(root, MANIFEST);
+  if (!manifestBytes) throw new Refusal(`${MANIFEST} is missing; this project was not set up by zz-meridian`);
   let manifest: Manifest;
-  try { manifest = parseManifest(manifestText.toString('utf8')); } catch (e) { throw new Refusal(`${MANIFEST} is unusable: ${(e as Error).message}`); }
+  try { manifest = parseManifest(manifestBytes.toString('utf8')); } catch (e) { throw new Refusal(`${MANIFEST} is unusable: ${(e as Error).message}`); }
 
   if (fs.existsSync(path.join(root, SESSION)) || fs.existsSync(path.join(root, LOCK))) {
     throw new Refusal(`an update is in progress (${fs.existsSync(path.join(root, SESSION)) ? SESSION : LOCK}). Finish it with its --finalize or --abort first. Nothing was changed.`);
@@ -117,7 +117,7 @@ function attempt(ctx: RebrandContext, change: Record<string, string>, allowDirty
 
   const files = { ...manifest.files };
   for (const p of affected) { const h = next.hashes.get(p); if (h === undefined) delete files[p]; else files[p] = h; }
-  const manifestAfter = JSON.stringify({ ...manifest, brand: merged, files: Object.fromEntries(Object.entries(files).sort(([a], [b]) => a.localeCompare(b))) }, null, 2) + '\n';
+  const manifestAfter = manifestText({ ...manifest, brand: merged, files });
 
   // Write everything, the manifest last; any failure puts every preimage back.
   const touched: { rel: string; was: Buffer | null; mode?: number }[] = [];

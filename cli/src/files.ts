@@ -155,9 +155,17 @@ export type Manifest = {
   files: Record<string, string>;
 };
 
+/**
+ * The manifest file as every writer writes it: paths sorted by code unit (never the machine's collation), two-space
+ * indent, a final newline. Finalize tells an interrupted rename by comparing the file with this, byte for byte.
+ */
+export function manifestText(m: Manifest): string {
+  const files = Object.fromEntries(Object.entries(m.files).sort(([a], [b]) => (a < b ? -1 : 1)));
+  return `${JSON.stringify({ ...m, files }, null, 2)}\n`;
+}
+
 export function writeManifest(root: string, m: Manifest) {
-  const sorted = Object.fromEntries(Object.entries(m.files).sort(([a], [b]) => a.localeCompare(b)));
-  writeIn(root, '.meridian/manifest.json', JSON.stringify({ ...m, files: sorted }, null, 2) + '\n');
+  writeIn(root, '.meridian/manifest.json', manifestText(m));
 }
 
 /**

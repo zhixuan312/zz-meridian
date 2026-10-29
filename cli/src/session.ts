@@ -7,7 +7,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { managedBlock } from './context.js';
-import { inside, installArgs, packageManager, run as spawn, sha256 } from './files.js';
+import { inside, installArgs, manifestText, packageManager, run as spawn, sha256 } from './files.js';
 import { aliasesOf, canonicalImports } from './imports.js';
 import { changedPaths, takeInventory } from './inventory.js';
 import { renderMergeReport } from './merge-report.js';
@@ -493,11 +493,6 @@ type Loaded = { dir: string; rel: string; journal: UpdateJournal };
 const FRAMEWORK = ['next', 'react', 'react-dom'];
 const persistJournal = (l: Loaded) => writeAtomic(path.join(l.dir, 'state.json'), `${JSON.stringify(l.journal, null, 2)}\n`);
 
-/** The manifest file as it is written: sorted files, two-space indent, a final newline. */
-function serializeManifest(m: Manifest): string {
-  const files = Object.fromEntries(Object.entries(m.files).sort(([a], [b]) => a.localeCompare(b)));
-  return `${JSON.stringify({ ...m, files }, null, 2)}\n`;
-}
 
 /**
  * The one session of this project, when it belongs to the running version and package. This is the only check resume,
@@ -635,7 +630,7 @@ function finalizeLoaded(ctx: Context, l: Loaded, o: FinalizeOptions = { verify: 
   const stop = (why: string) => { log(`zz-meridian update: ${why}`); return 1; };
 
   const manifestFile = path.join(root, '.meridian', 'manifest.json');
-  const targetText = serializeManifest(j.targetManifest);
+  const targetText = manifestText(j.targetManifest);
   if (fs.existsSync(manifestFile) && sha(fs.readFileSync(manifestFile)) === sha(targetText)) {
     // An interrupted rename: the baseline is already the target's, so only the archival remains.
     j.phase = 'complete';
@@ -837,7 +832,7 @@ export function abort(ctx: Context): number {
     const j = l.journal;
     if (j.phase === 'complete' || j.phase === 'aborted') return (log(`zz-meridian update: the session is ${j.phase}; there is nothing to abort`), 1);
     const manifestFile = path.join(root, '.meridian', 'manifest.json');
-    if (fs.existsSync(manifestFile) && sha(fs.readFileSync(manifestFile)) === sha(serializeManifest(j.targetManifest))) {
+    if (fs.existsSync(manifestFile) && sha(fs.readFileSync(manifestFile)) === sha(manifestText(j.targetManifest))) {
       log(`zz-meridian update: the target manifest is already in place, so the update is complete; run ${pin(j.targetVersion, '--finalize')} to archive it`);
       return 1;
     }
