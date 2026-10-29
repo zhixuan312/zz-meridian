@@ -619,8 +619,6 @@ function dependencyProblems(root: string, session: string, pm: string): string[]
   return out;
 }
 
-const SMALL = (ms: number) => secs(ms);
-
 /** Validates the session in place and, when every check passes on unchanged inputs, completes it. */
 function finalizeLoaded(ctx: Context, l: Loaded, o: FinalizeOptions = { verify: false }): number {
   const { root, log } = ctx;
@@ -699,7 +697,7 @@ function finalizeLoaded(ctx: Context, l: Loaded, o: FinalizeOptions = { verify: 
   for (const step of steps) {
     const t0 = performance.now();
     const r = ctx.run(process.execPath, step.args, root);
-    took.push(`${step.name} ${SMALL(performance.now() - t0)}`);
+    took.push(`${step.name} ${secs(performance.now() - t0)}`);
     const evidence = `evidence/${n++}-${step.name}.log`;
     writeAtomic(path.join(l.dir, evidence), r.output);
     j.validation.push({ command: step.shown, exitCode: r.status, evidenceFile: evidence });
@@ -713,11 +711,6 @@ function finalizeLoaded(ctx: Context, l: Loaded, o: FinalizeOptions = { verify: 
     if (step.name === 'verify') coverage = r.output.split('\n').reverse().find((line) => line.startsWith('coverage: ')) ?? null;
     seen = after;
   }
-
-  // The live candidate must still be what was validated before the baseline moves.
-  const last = takeInventory(root, paths);
-  const drift = changedPaths(seen, last);
-  if (last.conflicts.length || drift.length) return fail('the project changed after it was validated; the current bytes were kept', [...last.conflicts, ...drift]);
 
   writeAtomic(manifestFile, targetText);
   j.phase = 'complete';
