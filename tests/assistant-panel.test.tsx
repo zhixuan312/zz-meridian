@@ -1,8 +1,7 @@
 import { act, fireEvent, waitFor, render, screen, within } from '@testing-library/react';
-import { describe, expect, test, vi } from 'vitest';
+import { describe, expect, test } from 'vitest';
 import { Tooltip } from 'radix-ui';
 
-vi.mock('next/navigation', () => ({ usePathname: () => '/', useRouter: () => ({ refresh() {}, push() {}, replace() {} }) }));
 import { AppShell, PageFrame } from '@/components/base/shell';
 
 // The shell resolves its assistant promise behind Suspense, so the render is awaited inside act.

@@ -7,11 +7,6 @@ vi.mock('next/headers', () => ({
   cookies: async () => ({ get: (n: string) => (n === 'zz_meridian_view_as' ? { name: n, value: 'members_1' } : undefined), set: () => {} }),
   headers: async () => new Headers(),
 }));
-vi.mock('next/navigation', () => ({
-  usePathname: () => '/',
-  useSearchParams: () => new URLSearchParams(),
-  useRouter: () => ({ push() {}, replace() {}, refresh() {}, back() {}, forward() {}, prefetch() {} }),
-}));
 // A product that renamed two workspaces in its configuration, as `workspaces`' own comment says it may.
 vi.mock('@/app.config', async (orig) => {
   const real = await orig<typeof import('@/app.config')>();

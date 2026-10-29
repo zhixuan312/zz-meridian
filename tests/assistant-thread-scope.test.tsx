@@ -3,7 +3,6 @@ import { afterEach, describe, expect, test, vi } from 'vitest';
 import { Tooltip } from 'radix-ui';
 import type { UIMessage } from 'ai';
 
-vi.mock('next/navigation', () => ({ usePathname: () => '/', useRouter: () => ({ refresh() {}, push() {}, replace() {} }) }));
 import { AppShell, PageFrame } from '@/components/base/shell';
 import { AssistantScope } from '@/components/patterns/assistant/scope';
 import { THREAD_KEY, dropThread, loadThread, saveThread } from '@/components/patterns/assistant/thread';

@@ -1,7 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
-vi.mock('next/navigation', () => ({ useRouter: () => ({ push() {}, refresh() {}, replace() {} }), usePathname: () => '/' }));
 import { DataTable, sortRows, type Column } from '@/components/patterns/data-table';
 
 type Row = { id: string; name: string; status: string; calls: number };

@@ -3,7 +3,6 @@ import { describe, expect, test, vi } from 'vitest';
 import { Tooltip } from 'radix-ui';
 import type { UIMessage } from 'ai';
 
-vi.mock('next/navigation', () => ({ usePathname: () => '/', useRouter: () => ({ refresh() {}, push() {}, replace() {} }) }));
 import { AppShell, PageFrame } from '@/components/base/shell';
 import { AssistantPanel } from '@/components/patterns/assistant';
 import { useShareView } from '@/components/base/use-share-view';

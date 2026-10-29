@@ -1,10 +1,5 @@
 import { act, fireEvent, render, screen } from '@testing-library/react';
-import { describe, expect, it, vi } from 'vitest';
-
-vi.mock('next/navigation', () => ({
-  usePathname: () => '/',
-  useRouter: () => ({ push() {}, replace() {}, refresh() {}, back() {}, forward() {}, prefetch() {} }),
-}));
+import { describe, expect, it } from 'vitest';
 
 import { Activity, BarChart3, Home } from 'lucide-react';
 import type { NavGroup } from '@/app.config';

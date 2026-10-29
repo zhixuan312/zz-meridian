@@ -2,13 +2,7 @@
 import { render } from '@testing-library/react';
 import type { ReactElement } from 'react';
 import { Tooltip } from 'radix-ui';
-import { describe, expect, it, vi } from 'vitest';
-
-vi.mock('next/navigation', () => ({
-  usePathname: () => '/',
-  useSearchParams: () => new URLSearchParams(),
-  useRouter: () => ({ push() {}, replace() {}, refresh() {}, back() {}, forward() {}, prefetch() {} }),
-}));
+import { describe, expect, it } from 'vitest';
 
 import { ConsoleSurface } from '@/components/base/surface';
 import { readReleases, readRuns } from '@/data/engineering';

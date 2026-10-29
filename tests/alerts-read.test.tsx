@@ -1,7 +1,6 @@
 import { act, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-vi.mock('next/navigation', () => ({ usePathname: () => '/', useRouter: () => ({ push() {}, replace() {}, refresh() {}, prefetch() {} }) }));
 import { ShellTools, type Alert } from '@/components/patterns/shell-tools';
 
 const ALERTS: Alert[] = [

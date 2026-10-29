@@ -10,11 +10,6 @@ vi.mock('next/headers', () => ({
   cookies: async () => ({ get: (n: string) => (n === 'zz_meridian_view_as' && jar.value !== undefined ? { name: n, value: jar.value } : undefined), set: () => {} }),
   headers: async () => new Headers(),
 }));
-vi.mock('next/navigation', () => ({
-  usePathname: () => '/',
-  useSearchParams: () => new URLSearchParams(),
-  useRouter: () => ({ replace() {}, push() {}, refresh() {} }),
-}));
 
 import CustomersPage from '../app/(dashboard)/customers/page';
 import ServicesPage from '../app/(dashboard)/services/page';

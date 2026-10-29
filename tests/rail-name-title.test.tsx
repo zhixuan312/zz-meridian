@@ -1,10 +1,6 @@
 import { render } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
-vi.mock('next/navigation', () => ({
-  usePathname: () => '/',
-  useRouter: () => ({ push() {}, replace() {}, refresh() {}, back() {}, forward() {}, prefetch() {} }),
-}));
 // A product name of 23 characters, three words: the rail's head cuts it at every width (#79).
 vi.mock('@/app.config', async (real) => ({ ...(await real<typeof import('@/app.config')>()), app: { ...(await real<typeof import('@/app.config')>()).app, name: 'Northwind Treasury Console' } }));
 

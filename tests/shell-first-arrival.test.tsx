@@ -3,12 +3,6 @@ import { act, render } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { AppShell } from '@/components/base/shell';
 
-vi.mock('next/navigation', () => ({
-  usePathname: () => '/',
-  useSearchParams: () => new URLSearchParams(),
-  useRouter: () => ({ push() {}, replace() {}, refresh() {}, back() {}, forward() {}, prefetch() {} }),
-}));
-
 /**
  * The first page of a visit rises into place, as feedback that it arrived. A reader who has already watched a skeleton
  * for longer than the arrival lasts gets no feedback from it, only a later page: on a slow phone the rise held the

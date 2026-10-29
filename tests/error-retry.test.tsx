@@ -2,7 +2,6 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, test, vi } from 'vitest';
 import { Tooltip } from 'radix-ui';
 
-vi.mock('next/navigation', () => ({ usePathname: () => '/', useRouter: () => ({ refresh() {}, push() {}, replace() {} }) }));
 import DashboardError from '../app/(dashboard)/error';
 import EmbedError from '../app/embed/error';
 

@@ -1,8 +1,7 @@
 import { act, render, screen } from '@testing-library/react';
-import { describe, expect, test, vi } from 'vitest';
+import { describe, expect, test } from 'vitest';
 import { Tooltip } from 'radix-ui';
 
-vi.mock('next/navigation', () => ({ usePathname: () => '/', useRouter: () => ({ refresh() {}, push() {}, replace() {} }) }));
 import { AppShell, PageFrame, useAssistantAvailable } from '@/components/base/shell';
 
 const page = (assistant: Promise<boolean>) =>
