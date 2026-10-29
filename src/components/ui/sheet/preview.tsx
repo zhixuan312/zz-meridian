@@ -4,7 +4,7 @@ import { X } from 'lucide-react';
 import { cn } from '@/lib/cn';
 import { Specimen } from '@/system/specimen';
 import { Button } from '@/components/ui/button';
-import { SHEET_BODY, SHEET_FOOT, SHEET_HEAD, SHEET_PANEL, Sheet, SheetContent, SheetTrigger } from '.';
+import { SHEET_BODY, SHEET_FOOT, SHEET_HEAD, SHEET_PANEL, Sheet, SheetClose, SheetContent, SheetTrigger } from '.';
 
 const FACTS: [string, string][] = [
   ['Status', '201 Created'],
@@ -49,7 +49,7 @@ export default function SheetPreview() {
       <Specimen label="Live" note="Under 640px it rises from the bottom, full width.">
         <Sheet>
           <SheetTrigger asChild><Button>Open request</Button></SheetTrigger>
-          <SheetContent title="POST /v1/messages" description="req_8f3k2m1x · 4 minutes ago" footer={<Button>Replay request</Button>}>
+          <SheetContent title="POST /v1/messages" description="req_8f3k2m1x · 4 minutes ago" footer={<SheetClose asChild><Button>Replay request</Button></SheetClose>}>
             <Body />
           </SheetContent>
         </Sheet>
