@@ -561,3 +561,26 @@ describe('the use-size-callback-ref migration', () => {
   });
 });
 
+describe('what the migrations read of a team file', () => {
+  const use = "import { useSize } from '@meridian/components/charts/use-size';\n";
+  it('finds the ref useSize returns past an earlier array, under another name, and kept whole', () => {
+    const effectFirst = `${use}export function Tip({ a }) {\n  useEffect(() => {}, [a]);\n  const [box, { width }] = useSize<HTMLDivElement>();\n  return <div ref={box}>{box.current?.offsetLeft}{width}</div>;\n}\n`;
+    expect(byId('use-size-callback-ref').applies(project({ 'app/tip.tsx': effectFirst }))).toEqual(['app/tip.tsx']);
+    const renamed = "import { useSize as useBox } from '@meridian/components/charts/use-size';\nexport function Tip() {\n  const [box] = useBox<HTMLDivElement>();\n  return <div ref={box}>{box.current?.offsetLeft}</div>;\n}\n";
+    expect(byId('use-size-callback-ref').applies(project({ 'app/tip.tsx': renamed }))).toEqual(['app/tip.tsx']);
+    const kept = `${use}export function Tip() {\n  const sized = useSize<HTMLDivElement>();\n  return <div ref={sized[0]}>{sized[0].current?.offsetLeft}</div>;\n}\n`;
+    expect(byId('use-size-callback-ref').applies(project({ 'app/tip.tsx': kept }))).toEqual(['app/tip.tsx']);
+  });
+  it('reads a team file under a managed folder the manifest does not record, and none it records', () => {
+    const reads = `${use}export function Tip() {\n  const [box] = useSize<HTMLDivElement>();\n  return <div ref={box}>{box.current?.offsetLeft}</div>;\n}\n`;
+    const manifest = JSON.stringify({ version: '0.32.0', route: 'adopt', brand: {}, files: { 'src/components/charts/bar-list/index.tsx': 'sha256-x' } });
+    expect(byId('use-size-callback-ref').applies(project({ '.meridian/manifest.json': manifest, 'src/components/charts/our-chart/index.tsx': reads, 'src/components/charts/bar-list/index.tsx': reads }))).toEqual(['src/components/charts/our-chart/index.tsx']);
+  });
+  it("resolves @/ as the project's tsconfig maps it: an adopted project's own @/components are not Meridian's", () => {
+    const imp = "import { Table, TableCell } from '@/components/ui/table';\nexport const Empty = () => <TableCell colSpan={4}>No runs</TableCell>;\n";
+    const rootAlias = JSON.stringify({ compilerOptions: { paths: { '@/*': ['./*'], '@meridian/*': ['./src/*'] } } });
+    expect(byId('table-grid').applies(project({ 'tsconfig.json': rootAlias, 'app/runs.tsx': imp }))).toBeNull();
+    expect(byId('table-grid').applies(project({ 'tsconfig.json': rootAlias, 'app/runs.tsx': imp.replace("'@/components/", "'@meridian/components/") }))).toEqual(['app/runs.tsx']);
+  });
+});
+

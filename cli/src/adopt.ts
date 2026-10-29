@@ -3,8 +3,9 @@
  * its data layer. Everything here is the settled part of the skill's Route A; rebuilding each page on Meridian's
  * components is the agent's work, and the printed next step hands it over.
  *
- * Nothing is written until every check has passed: a dirty tree, a project that is not Next.js with the App Router,
- * or a file of the same name with other content stops it before the first write.
+ * Nothing is written until every check has passed: a project already on Meridian (its manifest: update is the command),
+ * a dirty tree, a project that is not Next.js with the App Router, or a file of the same name with other content stops
+ * it before the first write.
  */
 import fs from 'node:fs';
 import path from 'node:path';

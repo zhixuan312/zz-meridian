@@ -6,6 +6,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { payloadBytes, payloadFiles } from './files.js';
+import { aliasesOf } from './imports.js';
 import { FIXED } from './ownership.js';
 import { isNewer } from './update.js';
 import type { Migration } from './update-session.js';
@@ -58,15 +59,41 @@ const walk = (root: string, rel: string, out: string[], want: RegExp = SOURCE, o
   }
 };
 
+/**
+ * Whether a path is the team's in this project: one its manifest does not record, so a team's own component under
+ * `src/components/` is read too; without a manifest, the folder rule.
+ */
+function ownedIn(root: string): (rel: string) => boolean {
+  try {
+    const recorded = new Set(Object.keys(JSON.parse(text(root, '.meridian/manifest.json') ?? '').files ?? {}));
+    return (p) => !recorded.has(p);
+  } catch {
+    return isTeamOwned;
+  }
+}
+
+/**
+ * The aliases the project's own tsconfig gives its imports (`aliasesOf`): an adopted project reaches Meridian's files as
+ * `@meridian/*` and may point `@/*` at its root, a created one points `@/*` at `src/`, the default without a tsconfig.
+ */
+let aliases = new Map([['@/', 'src/'], ['@meridian/', 'src/']]);
+function projectAliases(root: string): Map<string, string> {
+  const found = aliasesOf(text(root, 'tsconfig.json'));
+  if (!found.has('@/')) found.set('@/', 'src/');
+  return found;
+}
+
 /** The team's sources while `releaseMigrations` runs: read once for every entry that asks, not once per entry. */
 let sources: Map<string, { rel: string; src: string }[]> | null = null;
 
 /** The team's source files under the folders a Next project keeps them in, with their text. */
 function teamSources(root: string): { rel: string; src: string }[] {
+  aliases = projectAliases(root);
   const kept = sources?.get(root);
   if (kept) return kept;
   const files: string[] = [];
-  for (const d of ['app', 'pages', 'src', 'tests']) walk(root, d, files);
+  const owned = ownedIn(root);
+  for (const d of ['app', 'pages', 'src', 'tests']) walk(root, d, files, SOURCE, owned);
   const read = files.flatMap((rel) => {
     const src = text(root, rel);
     return src === null ? [] : [{ rel, src }];
@@ -88,9 +115,7 @@ const matching = (root: string, test: (rel: string, src: string) => boolean): st
 function removedVerifyFlags(root: string): string[] | null {
   const files: string[] = ['package.json'];
   walk(root, '.github/workflows', files, /\.ya?ml$/);
-  let recorded: Set<string> | null = null;
-  try { recorded = new Set(Object.keys(JSON.parse(text(root, '.meridian/manifest.json') ?? '').files ?? {})); } catch { /* no manifest: the folder rule */ }
-  walk(root, '', files, /\.sh$/, recorded ? (p) => !recorded.has(p) : isTeamOwned);
+  walk(root, '', files, /\.sh$/, ownedIn(root));
   const removed = /\bverify\b[^\n]*?--(?:quick|no-vitals|extra)\b/;
   const hits = [...new Set(files)].filter((rel) => removed.test(text(root, rel) ?? ''));
   return hits.length > 0 ? hits : null;
@@ -133,27 +158,35 @@ function callArity(src: string, fn: string): number[] {
 /** Where an import of the team's file `rel` points, as a project path with no extension; null for a package. */
 const resolvedImport = (rel: string, spec: string): string | null => {
   const bare = spec.replace(/\.[mc]?[jt]sx?$/, '');
-  // An adopted project reaches Meridian's files as `@meridian/*` (adopt's tsconfig paths), a created one as `@/*`.
-  if (bare.startsWith('@/')) return `src/${bare.slice(2)}`;
-  if (bare.startsWith('@meridian/')) return `src/${bare.slice('@meridian/'.length)}`;
-  return bare.startsWith('.') ? path.posix.join(path.posix.dirname(rel), bare) : null;
+  if (bare.startsWith('.')) return path.posix.join(path.posix.dirname(rel), bare);
+  for (const [alias, dir] of aliases) if (bare.startsWith(alias)) return path.posix.normalize(dir + bare.slice(alias.length));
+  return null;
 };
 
-/** Whether a file reads `.current` off the ref `useSize()` returns: by the name it destructures, or off the call itself. */
-function readsSizeRefCurrent(src: string): boolean {
-  if (/useSize\s*(?:<[^>]*>)?\s*\(\s*\)\s*\[\s*0\s*\]\s*\.\s*current\b/.test(src)) return true;
-  for (const m of src.matchAll(/\[\s*([\w$]+)\s*[,\]][^=]*=\s*useSize\b/g)) if (new RegExp(`\\b${m[1]!.replace(/\$/g, '\\$')}\\s*\\.\\s*current\\b`).test(src)) return true;
+const esc = (name: string) => name.replace(/\$/g, '\\$');
+/**
+ * Whether a file reads `.current` off the ref the hook `hook` (`useSize`, or the name it was imported as) returns: off
+ * the call itself, by the name a declaration destructures it to, or off the tuple kept whole. A name is not followed
+ * into its own component, so a file that also calls another ref by that name is listed: a line to look at, not an edit.
+ */
+function readsSizeRefCurrent(src: string, hook: string): boolean {
+  const h = esc(hook);
+  const current = (lead: string) => new RegExp(`(?<![\\w$.])${lead}\\s*\\.\\s*current\\b`).test(src);
+  if (current(`${h}\\s*(?:<[^>]*>)?\\s*\\(\\s*\\)\\s*\\[\\s*0\\s*\\]`)) return true;
+  for (const m of src.matchAll(new RegExp(`\\b(?:const|let|var)\\s*\\[\\s*([\\w$]+)[^\\]=]*\\]\\s*=\\s*${h}\\b`, 'g'))) if (current(esc(m[1]!))) return true;
+  for (const m of src.matchAll(new RegExp(`\\b(?:const|let|var)\\s+([\\w$]+)\\s*=\\s*${h}\\b`, 'g'))) if (current(`${esc(m[1]!)}\\s*\\[\\s*0\\s*\\]`)) return true;
   return false;
 }
 
 /** Each import of a file of the team's: the module it resolves to, the names it takes and its namespace, if it has one. */
-function importsOf(rel: string, src: string): { from: string; names: string[]; namespace: string | null }[] {
-  const out: { from: string; names: string[]; namespace: string | null }[] = [];
+function importsOf(rel: string, src: string): { from: string; names: string[]; locals: string[]; namespace: string | null }[] {
+  const out: { from: string; names: string[]; locals: string[]; namespace: string | null }[] = [];
   for (const m of src.matchAll(/^\s*import\s+(?:type\s+)?([^'"]*?)\s+from\s+(['"])([^'"]+)\2/gm)) {
     const from = resolvedImport(rel, m[3]!);
     if (from === null) continue;
-    const names = (/\{([^}]*)\}/.exec(m[1]!)?.[1] ?? '').split(',').map((s) => s.trim().replace(/^type\s+/, '').split(/\s+as\s+/)[0]!).filter(Boolean);
-    out.push({ from, names, namespace: /\*\s*as\s+([\w$]+)/.exec(m[1]!)?.[1] ?? null });
+    // Each name as the module exports it, and in `locals` as the file calls it (`useSize as useBox`).
+    const bound = (/\{([^}]*)\}/.exec(m[1]!)?.[1] ?? '').split(',').map((s) => s.trim().replace(/^type\s+/, '').split(/\s+as\s+/)).filter((b) => b[0]);
+    out.push({ from, names: bound.map((b) => b[0]!), locals: bound.map((b) => b[1] ?? b[0]!), namespace: /\*\s*as\s+([\w$]+)/.exec(m[1]!)?.[1] ?? null });
   }
   return out;
 }
@@ -500,7 +533,7 @@ export const RELEASE_MIGRATIONS: ReleaseMigration[] = [
     since: '0.16.3',
     applies: (root) => (/\bfunction onPage\s*\(/.test(text(root, 'app/api/assistant/route.ts') ?? '') ? ['app/api/assistant/route.ts'] : null),
     summary: 'The assistant route finds the view of the page a person is on with `viewAt` from `src/lib/shared-context.ts`, which matches a catch-all `page` as Next.js does.',
-    instructions: 'In `app/api/assistant/route.ts`, delete the local `onPage` and find the view with `viewAt` from `@/lib/shared-context`: `const at = viewAt(viewTools, path); const view = at && views.includes(at) ? at : undefined;`, where `views` are the view tools the person may use. `onPage` matched a `[...name]` segment as one segment and a `[[...name]]` never, so a view whose `page` is a catch-all (`/docs/[...path]`) was handed its prepared query at one depth only. `viewAt` matches as Next.js does — `[...name]` one or more segments, `[[...name]]` zero or more — and where two views match one address it takes the one Next.js renders, before asking whether the person may use it, so a less specific view never stands in for the page.',
+    instructions: 'In `app/api/assistant/route.ts`, delete the local `onPage` and find the view with `viewAt` from `@/lib/shared-context` (`@meridian/lib/shared-context` in an adopted project): `const at = viewAt(viewTools, path); const view = at && views.includes(at) ? at : undefined;`, where `views` are the view tools the person may use. `onPage` matched a `[...name]` segment as one segment and a `[[...name]]` never, so a view whose `page` is a catch-all (`/docs/[...path]`) was handed its prepared query at one depth only. `viewAt` matches as Next.js does — `[...name]` one or more segments, `[[...name]]` zero or more — and where two views match one address it takes the one Next.js renders, before asking whether the person may use it, so a less specific view never stands in for the page.',
     checks: ['gate'],
   },
   {
@@ -548,7 +581,7 @@ export const RELEASE_MIGRATIONS: ReleaseMigration[] = [
     since: '0.28.0',
     applies: importsAMovedModule,
     summary: "The template's figures and sentences moved into `src/logic/`: thirty-eight modules left `src/views/` and `src/data/`.",
-    instructions: `Read "The four layers" and "The path an existing product follows" in references/data-layers.md. Thirty-eight modules moved into the logic layer, and each import of one in your own \`src/views/\` producers and pages names the path it left: ${MOVED_LIST}. Rewrite each import to the path the module has now, or move your own module beside the work it does. Two symbols left a card of Meridian's, and both must be rewritten because the update replaces the card: \`afterStart\`, which the incident card exported, is \`@/logic/after-start\`, and \`summarise\`, which the status list re-exported, is \`@/logic/summarise\`. Every other path your own files name is still there, so a project that imported neither symbol keeps building as it was. The six layer rules stay off until your own \`scripts/check.local.ts\` exports \`fourLayers = true\`; turn them on once your figures have moved, and the gate and the build are what show the work is done.`,
+    instructions: `Read "The four layers" and "The path an existing product follows" in references/data-layers.md. Thirty-eight modules moved into the logic layer, and each import of one in your own \`src/views/\` producers and pages names the path it left: ${MOVED_LIST}. Rewrite each import to the path the module has now, or move your own module beside the work it does. Two symbols left a card of Meridian's, and both must be rewritten because the update replaces the card: \`afterStart\`, which the incident card exported, is \`@/logic/after-start\`, and \`summarise\`, which the status list re-exported, is \`@/logic/summarise\` (\`@meridian/logic/…\` in an adopted project, where \`@/\` is your own). Every other path your own files name is still there, so a project that imported neither symbol keeps building as it was. The six layer rules stay off until your own \`scripts/check.local.ts\` exports \`fourLayers = true\`; turn them on once your figures have moved, and the gate and the build are what show the work is done.`,
     checks: GATE_AND_BUILD,
   },
   {
@@ -586,7 +619,7 @@ export const RELEASE_MIGRATIONS: ReleaseMigration[] = [
   {
     id: 'use-size-callback-ref',
     since: '0.33.0',
-    applies: (root) => matching(root, (rel, src) => SOURCE.test(rel) && importsOf(rel, src).some(({ from, names }) => from === 'src/components/charts/use-size' && names.includes('useSize')) && readsSizeRefCurrent(src)),
+    applies: (root) => matching(root, (rel, src) => SOURCE.test(rel) && importsOf(rel, src).some(({ from, names, locals }) => from === 'src/components/charts/use-size' && names.includes('useSize') && readsSizeRefCurrent(src, locals[names.indexOf('useSize')]!))),
     summary: '`useSize()` returns a callback ref, so its first value has no `.current`.',
     instructions: "`useSize` (`src/components/charts/use-size.ts`) returns a callback that measures the element it is attached to, whenever it is attached, so a team file that read the element through `.current` of the ref fails the type check. In each file listed, keep the element in a ref of your own and hand the `ref` prop one callback that does both: `const own = useRef<HTMLDivElement | null>(null); const [measure, size] = useSize<HTMLDivElement>(); const ref = useCallback((el: HTMLDivElement | null) => { own.current = el; return measure(el); }, [measure]);`, then read `own.current` where the file read the ref's.",
     checks: GATE_AND_BUILD,
