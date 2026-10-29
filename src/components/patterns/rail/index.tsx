@@ -48,7 +48,7 @@ const UNMEASURED = '[&_a[aria-current]]:bg-accent-tint [&_a[aria-current]]:ring-
 
 /**
  * The navigation rail: a translucent wash on the lit ground. The current page is an accent-tinted pill with a lit
- * edge that springs to the item you choose; groups are named in mono caps; a count is a quiet badge.
+ * edge that springs to the item you choose; groups are named in caps; a count is a quiet badge.
  */
 export function Rail({
   nav,

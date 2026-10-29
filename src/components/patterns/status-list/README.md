@@ -42,7 +42,7 @@ Status: beta
 | Outage | Dot `critical`, pulsing; text `critical-ink` | Dot `critical`, pulsing; word "Down" in `critical-ink`, the word the summary and the run use for a service that is not up now ("Outage" is the Uptime bars' word for a day's mark) |
 | Hover on a bar | | The Uptime bars tooltip names the day and its state |
 
-The worst state wins the summary. A pulsing dot is the system's one allowed loop besides a skeleton; it stops under reduced motion.
+The worst state wins the summary. Each service that is not operational pulses its dot; the pulse stops under reduced motion.
 
 With `run`, a row reads one of these under its bars:
 

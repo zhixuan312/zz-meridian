@@ -114,7 +114,7 @@ export function ToastView({
 }
 
 /**
- * Mounted once, in the providers: the stack in the bottom-right corner (bottom, full width, on phones). The stack is no
+ * Mounted once, in the providers: the stack in the bottom-right corner (top, full width, on phones). The stack is no
  * live region: each toast's own role announces it, once.
  */
 export function Toaster() {

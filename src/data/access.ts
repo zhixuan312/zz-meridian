@@ -290,7 +290,7 @@ export async function gatedMetadata(feature: FeatureId, metadata: Metadata): Pro
  * With no session this rejects `Unauthenticated`, and the chrome keeps its placeholder rather than naming anyone.
  *
  * `only` is the nav's own destinations whose `needs` this person satisfies. It is what the rail and the palette draw,
- * and it is presentation only: hiding a destination is not the gate, which a later task puts on every page itself.
+ * and it is presentation only: hiding a destination is not the gate, which is `gate()` at the top of every page.
  */
 export async function chromeAccess(): Promise<ChromeAccess> {
   const scope = await resolveAccess();

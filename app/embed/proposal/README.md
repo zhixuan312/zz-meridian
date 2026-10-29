@@ -32,7 +32,7 @@ The proposal's fields come from the tool's result: `{ customer, from, to, reason
 
 ## Surfaces
 
-Embed only. On the console the same Proposal card appears in Activity as an inbox.
+Embed only. On the console the assistant draws the same Proposal card in its thread.
 
 ## Agents
 

@@ -35,7 +35,7 @@ Appearance reads and writes `usePreferences()` (stored on the device). The works
 
 - **Console**: two columns per section.
 - **Mobile**: one column; the save bar spans the screen.
-- **Embed**: not offered. An agent that wants a setting changed sends a Proposal.
+- **Embed**: not offered. An agent changes no setting: the person changes it on this page.
 
 ## Agents
 

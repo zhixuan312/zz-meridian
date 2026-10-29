@@ -41,13 +41,13 @@ Column widths follow content, and the spare goes between the columns. The table 
 
 ## Behaviour
 
-- Sorting toggles descending, then ascending; `aria-sort` says the current order. One sorted column at a time.
+- Sorting starts text ascending and numbers descending, then toggles; `aria-sort` says the current order. One sorted column at a time.
 - The head can stick to the top of the page's scroll region (`sticky`); the table's own container clips without becoming a scroller, so sticking still works.
 
 ## Surfaces
 
 - **Console**: columns.
-- **Mobile**: drop columns with `hideBelow`; a DataTable's rows become cards under 768px (the same `<table>`, restyled — see its README).
+- **Mobile**: drop columns with `hideBelow`; a DataTable's rows become cards under 640px of the table's own width (the same `<table>`, restyled — see its README).
 - `hideBelow` reads the table's own width (a container query), not the window's, because the rail and split rows narrow a table without narrowing the window: `sm` drops a column under 512px, `md` under 672px, `lg` under 896px, `xl` under 1152px. A table never clips: if the columns still do not fit, hide one more; the audit fails a table wider than its frame.
 - **Embed**: five rows, then Expand.
 

@@ -34,7 +34,7 @@ npx zz-meridian@<version> brand [brand flags]     # rebrand this project, with t
 npx zz-meridian@latest skill [--global]           # install only the agent skill
 ```
 
-Brand flags: `--name "Acme Ops"`, `--hex '#2E6BE4'` (or `--accent indigo|cobalt|jade|graphite`), `--theme dark|light`,
+Brand flags: `--name "Acme Ops"`, `--hex '#2E6BE4'` (or `--hue 250 --chroma 0.14`, or `--accent indigo|cobalt|jade|graphite`), `--theme dark|light`,
 `--workspace`, `--timezone`, `--currency`, `--user`, `--role`. `--workspace` sets `app.workspace`, the environment named
 in a page's kicker ("Production"); it does not touch the navigation workspaces.
 
@@ -81,7 +81,7 @@ refuses when one of those outputs was edited, while an update is open, or on a d
 it with the version the manifest records. The project's own `pnpm brand` still works, but its changes count as your edits.
 
 The standard a project on Meridian is built to is
-[data-layers.md](https://github.com/zhixuan312/zz-meridian/blob/main/docs/data-layers.md): the four layers between a
+[data-layers.md](https://github.com/zhixuan312/zz-meridian/blob/master/docs/data-layers.md): the four layers between a
 database and the screen, the contract a backend answers, and the six rules a project switches on in its own
 `scripts/check.local.ts`.
 

@@ -11,7 +11,7 @@ import { REGION_NAMES, failed, type CustomerRecord, type RequestRow } from '@/da
 
 /** Rows a page sends, and the size the table pages by. */
 export const REQUEST_PAGE = 20;
-/** The most rows a summary reads. A set larger than this is summarized from its first 500 in the table's order. */
+/** The most rows a summary reads. A set larger than this is summarized from its newest 500. */
 const SUMMARY_ROWS = 500;
 const MAX_PAGE = 5000;
 const MAX_Q = 100;

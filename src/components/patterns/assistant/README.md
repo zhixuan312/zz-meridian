@@ -8,7 +8,7 @@ Status: beta
 
 1. **Launcher**: a round 36px button in the top-bar tools with the Agent mark, named "Assistant".
 2. **Panel**: an `aside` named "Assistant", on the `frame` wash with a `line` edge, same as the rail.
-3. **Head**: 56px; the Agent mark, "Assistant" (`t-section`), "Clear" and "Close" (small ghost buttons, an icon and the word; named "Clear conversation" and "Close assistant", which begin with the words shown).
+3. **Head**: 56px; the Agent mark, "Assistant" (`t-card`), "Clear" and "Close" (small ghost buttons, an icon and the word; named "Clear conversation" and "Close assistant", which begin with the words shown).
 4. **Thread**: the messages in order, scrolling inside the panel, kept at the newest. Each question carries a quiet "On <page>" caption above its bubble. A change the assistant wants to make is a Proposal card in the message. A failed turn shows a critical Banner with Retry under the thread.
 5. **Composer**: a Textarea (grows to six rows) and Send (primary, icon only), on a `line` top edge.
 

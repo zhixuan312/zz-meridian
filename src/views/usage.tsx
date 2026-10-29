@@ -38,8 +38,6 @@ function ShareUsage({ data }: { data: UsageData }) {
   return null;
 }
 
-/** A change against the period before, as a fraction; undefined when nothing comes before or it was zero, and the figure then draws no change. */
-
 /**
  * The page's protagonist, its one Featured metric: the period's requests, their change, the period's record as its
  * finding, and requests a day with the day in progress drawn running. The caption states the exact count, about the

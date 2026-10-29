@@ -21,7 +21,7 @@ Status: beta
 | Indeterminate | fill `accent`, a dash |
 | Focus (keyboard) | 2px `accent` outline, 2px offset |
 | Invalid | outline `critical` |
-| Disabled | fill `surface-sunk`, outline `line`; on: fill `ink-disabled`; the label turns `ink-disabled` |
+| Disabled | fill `surface-sunk`, outline `line-strong`; on: fill `ink-disabled`; the label turns `ink-disabled` |
 
 Fill and outline change over `dur-hover`.
 

@@ -21,7 +21,7 @@ The body (rows 1 and 2) is the records template, `Records` from `src/components/
 | Default | The newest 20 of 240, sorted by Received, descending |
 | Filtered | The tiles describe the matching set ("Matching requests"); the active filters take the accent wash; Clear appears |
 | Set by an agent | `?by=Claude` adds the provenance line under the filters until a person changes them |
-| Nothing matches | The table's filtered-out empty state with Clear filters; the tiles read zero |
+| Nothing matches | The table's filtered-out empty state with Clear filters; the count reads 0, and the error share and p95 a dash |
 | Loading | `loading.tsx`: the masthead skeleton and the template's skeleton, three tiles over a few skeleton table rows. On a navigation the real masthead (title, sentence) shows at once, with empty room for the freshness stamp and the export, and a skeleton for the body |
 | Error | The dashboard error screen with Retry: a read that fails is the page's failure, not the table's |
 

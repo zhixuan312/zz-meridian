@@ -15,7 +15,7 @@ Status: beta
 | Answer | A control gives 0.5px and 98.5% | `press` | `dur-press` 110ms · `ease-out` |
 | Answer | Colour and outline change | transitions | `dur-hover` 160ms |
 | Answer | An indicator slides (the rail marker, a segmented thumb) | transitions | `dur-enter` · `ease-spring` |
-| Float | Menus and popovers rise 4px from 97% | `float-in` | `dur-enter` in, `dur-exit` out |
+| Float | Menus and popovers drop 4px into place from 97% | `float-in` | `dur-enter` in, `dur-exit` out |
 | Float | Dialogs rise 10px from 98% | `dialog-in` | `dur-enter` in, `dur-exit` out |
 | Float | The drawer slides in from the left | `sheet-in` | `dur-enter` in, `dur-exit-sheet` out |
 

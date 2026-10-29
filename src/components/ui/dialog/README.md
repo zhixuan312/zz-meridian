@@ -8,7 +8,7 @@ Status: beta
 
 1. **Scrim**: `scrim` over the page, dimming it; no blur, which cost a phone more than 100 ms on every open.
 2. **Panel**: `surface-raised`, `radius-xl` 24px, `shadow-overlay`.
-3. **Head**: title (`t-section`, 20px), optional description (`t-small`, `ink-2`), close (32px ghost icon button).
+3. **Head**: title (`t-section`, 24–32px), optional description (`t-small`, `ink-2`), close (32px ghost icon button).
 4. **Body**: the task; scrolls inside the panel when it is taller than the viewport.
 5. **Footer** (optional): actions on a `surface-sunk` band, Cancel first, the primary last.
 

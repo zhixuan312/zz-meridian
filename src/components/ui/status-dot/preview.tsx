@@ -13,7 +13,7 @@ export default function StatusDotPreview() {
           <span key={t} className="flex items-center gap-2 text-sm"><StatusDot tone={t} />{w}</span>
         ))}
       </Specimen>
-      <Specimen label="Live" note="A slow pulse for a state that is current and updating. The one loop allowed outside a skeleton; still under reduced motion.">
+      <Specimen label="Live" note="A slow pulse for a state that is current: a feed that refreshes on its own, or a service that needs a look now. Still under reduced motion.">
         <State label="Live"><span className="flex items-center gap-2 text-sm"><StatusDot tone="positive" live />Updated 4 min ago</span></State>
         <State label="Static"><span className="flex items-center gap-2 text-sm"><StatusDot tone="warning" />Stale · 22 min ago</span></State>
       </Specimen>

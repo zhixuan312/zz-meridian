@@ -46,7 +46,6 @@ Brand, layout and behaviour choices already made, one line each with its reason,
 The team's own words for things, one per line: term and what it means here.
 `;
 
-/** One `pnpm <script> [flags]` command, spelled for the package manager; npm needs `--` before flags. */
 /** A package script with flags, as the package manager runs it: npm passes flags on only after `--`. */
 export function command(pm: PackageManager, script: string, flags: string): string {
   if (pm === 'pnpm') return `pnpm ${script}${flags}`;

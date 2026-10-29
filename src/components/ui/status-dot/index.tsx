@@ -4,7 +4,8 @@ import type { Tone } from '@/components/ui/badge';
 const TONE: Record<Tone, string> = { neutral: 'bg-ink-3 text-ink-3', accent: 'bg-accent text-accent', positive: 'bg-positive text-positive', warning: 'bg-warning text-warning', critical: 'bg-critical text-critical' };
 
 /**
- * A state at a glance, always beside its word. `live` pulses: the one loop allowed outside a skeleton.
+ * A state at a glance, always beside its word. `live` pulses, for a state that is current and wants a look now (a
+ * service that is not operational) or a feed that refreshes on its own.
  *
  * Where there is no word beside it — a list row, a finding — the dot is the only thing carrying the state, so it takes
  * one (issue #94): with `label` it is an image to assistive technology rather than a decoration, and the pointer reads

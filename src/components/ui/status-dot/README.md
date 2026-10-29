@@ -53,8 +53,8 @@ The word beside it is one or two words: "Operational", "Updated 4 min ago", "Sta
 
 ## Do and do not
 
-- Do use `live` only for something that refreshes on its own (the freshness stamp, a live run).
-- Do not put two live dots in one view.
+- Do use `live` only for something current: a feed that refreshes on its own (the freshness stamp, a live run), or a state that needs a look now (each service in a Status list that is not operational).
+- Do not pulse a steady state: an operational service, a state that is past.
 - Do not use a dot without a word, beside it or as its `label`.
 
 ## Implementation

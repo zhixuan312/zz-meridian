@@ -54,7 +54,7 @@ export default function MotionPreview() {
             and stands for a control it is not. A box link is `.link inline-flex`, as the Atlas's own links are. */}
         <State label="Underline"><p className="text-sm">Read about <a href="#motion" className="link">every endpoint</a> in full.</p></State>
       </Specimen>
-      <Specimen label="Float" note="Menus, dialogs and toasts rise 4–10px and fade in over dur-enter; they leave faster than they came.">
+      <Specimen label="Float" note="Menus drop 4px into place; dialogs rise 10px and toasts 12px; each fades in over dur-enter and leaves faster than it came.">
         <div key={run} className="float-in rounded-lg bg-surface-raised px-4 py-3 text-sm shadow-overlay">Key rotated</div>
       </Specimen>
       <Specimen label="Durations">
