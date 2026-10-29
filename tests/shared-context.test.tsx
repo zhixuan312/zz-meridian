@@ -600,6 +600,14 @@ describe("a list a context states names its first, in the page's order, and coun
     expect(contextText(c).length).toBeLessThanOrEqual(BUDGET);
   });
 
+  it('Members: an active member who has never signed in is quiet, and said to be never seen', async () => {
+    const { membersContext } = await import('@/logic/members-context');
+    const { MEMBERS } = await import('@/system/fixtures/sample-members');
+    const active = MEMBERS.find((m) => m.status === 'Active')!;
+    const c = membersContext([{ ...active, lastActive: null }], DEMO_NOW.toISOString());
+    expect(c.insights.find((i) => /not been seen/.test(i.text))?.text).toContain(`${active.name} (${active.role}, ${active.team}, never seen)`);
+  });
+
   it('Members: everyone up to twenty-four in the order given, and the first three of those quiet and of the invitations', async () => {
     const { membersContext } = await import('@/logic/members-context');
     const { MEMBERS } = await import('@/system/fixtures/sample-members');

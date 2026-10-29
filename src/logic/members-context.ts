@@ -39,13 +39,15 @@ export function membersContext(rows: Member[], now: string): SharedContext {
   const at = Date.parse(now);
   const idle = (m: Member) => (m.lastActive ? Math.floor((at - Date.parse(m.lastActive)) / DAY) : null);
   const active = rows.filter((m) => m.status === 'Active');
-  const quiet = active.filter((m) => (idle(m) ?? 0) >= QUIET_DAYS).sort((a, b) => (idle(b) ?? 0) - (idle(a) ?? 0));
+  // One who has never signed in is the quietest of all, not left out.
+  const quietFor = (m: Member) => idle(m) ?? Infinity;
+  const quiet = active.filter((m) => quietFor(m) >= QUIET_DAYS).sort((a, b) => quietFor(b) - quietFor(a) || 0);
   const invited = rows.filter((m) => m.status === 'Invited');
   // The grant that decides who changes the workspace, so the count and the roles named follow the table.
   const mayChange = whoCan('workspace:update');
   const changers = active.filter((m) => mayChange.includes(m.role));
   const insights: Insight[] = [];
-  if (quiet.length) insights.push({ text: `${quiet.length} active ${plural(quiet.length, 'member has', 'members have')} not been seen for ${QUIET_DAYS} days or more: ${listed(quiet, (m) => `${m.name} (${m.role}, ${m.team}, ${idle(m)} days)`, MORE, NAMED.quiet)}.` });
+  if (quiet.length) insights.push({ text: `${quiet.length} active ${plural(quiet.length, 'member has', 'members have')} not been seen for ${QUIET_DAYS} days or more: ${listed(quiet, (m) => `${m.name} (${m.role}, ${m.team}, ${idle(m) === null ? 'never seen' : `${idle(m)} days`})`, MORE, NAMED.quiet)}.` });
   if (invited.length) insights.push({ text: `${invited.length} ${plural(invited.length, 'invitation is', 'invitations are')} unanswered: ${listed(invited, (m) => `${m.name}, invited ${formatDate(m.joined)}`, MORE, NAMED.invited)}.` });
   insights.push({ text: `${changers.length} of ${active.length} active members can change the workspace (${mayChange.join(' or ')}): ${listed(changers, (m) => m.name, MORE, NAMED.changers)}.` });
   return {
