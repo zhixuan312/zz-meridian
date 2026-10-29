@@ -129,21 +129,32 @@ Each question can cost up to 8 model calls, and every call carries the system pr
 
 ## Adding an MCP server later
 
-The assistant's tools are plain AI SDK tools made from your collections and your views, so an MCP server can offer the same ones and the data layer stays single. `assistantTools(collections, writer, guard, views, explore)` returns `{ tools, toolApproval }`: a `create_`, `update_` or `remove_` tool for each change a collection it is given allows, a read-only `view_<name>` tool per view in `src/logic/tools.ts`, which opens that view at an address and returns its shared context (decision 0011; `docs/agents.md` registers the views directly), and, when `explore` is given (`{ view, rights, io, page }`: the view, the caller's rights, the authorized reads and the page's address), that view's read-only `explore_<view>`. The `writer` is where the console's previews are written; an MCP host has no thread to draw them in, so pass a writer that discards what it is given. The `guard` is asked before each change runs (`authorize(name, op, ids)`), told after it commits (`invalidate(name)`), and, when it has one, handed what changed (`record(change)`: the collection, the operation, the records by title and what was set): build it from the MCP caller's own scope, as `app/api/assistant/route.ts` does.
+The assistant's tools are plain AI SDK tools made from your collections and your views, so an MCP server can offer the same ones and the data layer stays single. `assistantTools(collections, writer, guard, views, explore)` returns `{ tools, toolApproval }`: a `create_`, `update_` or `remove_` tool for each change a collection it is given allows, a read-only `view_<name>` tool per view in `src/logic/tools.ts`, which opens that view at an address and returns its shared context (decision 0011; `docs/agents.md` registers the views directly), and, when `explore` is given (`{ view, rights, io, page }`: the view, the caller's rights, the authorized reads and the page's address), that view's read-only `explore_<view>`. The `writer` is where the console's previews are written; an MCP host has no thread to draw them in, so pass a writer that discards what it is given. The `guard` is asked before each change runs (`authorize(name, op, ids)`), told after it commits (`invalidate(name)`), and, when it has one, handed what changed (`record(change)`: the collection, the operation, the records by title and what was set): build it from the MCP caller's own scope, as `app/api/assistant/route.ts` does. `revalidateTag` runs in this app's own process, so the example is an MCP server this app serves (a route handler); a server in another process asks the app to retire the tags, through a route handler that does it.
 
 Convert each tool's input schema with `asSchema(tool.inputSchema).jsonSchema`, register it, and run `execute`:
 
 ```ts
 import { asSchema, type UIMessageStreamWriter } from 'ai';
+import { revalidateTag } from 'next/cache';
 import { can, collectionFor, type AccessScope } from '@/data/access';
 import { collections } from '@/data/collections';
+import { collectionTag } from '@/data/read';
+import { handedTo } from '@/lib/assistant/scoped';
 import { assistantTools } from '@/lib/assistant/tools';
+import type { AnyCollection } from '@/lib/collection';
 import { viewTools } from '@/logic/tools';
 
 declare const scope: AccessScope; // the MCP caller's, resolved from their session
 const writer = { write() {}, merge() {}, onError: undefined } as unknown as UIMessageStreamWriter;
-const guard = { authorize: (name: string, op: 'create' | 'update' | 'remove', ids?: string[]) => can(scope, name, op, ids), invalidate: () => {} };
-const { tools } = assistantTools(collections.map((c) => collectionFor(scope, c.name)), writer, guard, viewTools);
+const guard = {
+  authorize: (name: string, op: 'create' | 'update' | 'remove', ids?: string[]) => can(scope, name, op, ids),
+  // A committed change retires the tenant's cached reads of that collection, so the console shows it at once.
+  invalidate: (name: string) => revalidateTag(collectionTag(scope.tenantId, name), { expire: 0 }),
+};
+// Only the collections the caller may read, each with only the operations they may perform, as the route hands them.
+const handed = (await Promise.all(collections.map(async (c) => ((await can(scope, c.name, 'read')) ? handedTo(scope, collectionFor(scope, c.name), c.name) : null))))
+  .filter((c): c is AnyCollection => c !== null);
+const { tools } = assistantTools(handed, writer, guard, viewTools);
 
 for (const [name, t] of Object.entries(tools)) {
   server.registerTool(name, { description: t.description, inputSchema: asSchema(t.inputSchema).jsonSchema }, async (input) => ({

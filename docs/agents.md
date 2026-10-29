@@ -130,6 +130,7 @@ import { may } from '@/data/access';
 import { clock } from '@/data/collections';
 import { aggregate, read } from '@/data/read';
 import { exploreSchema, runExplore, type ExploreRights } from '@/lib/explore';
+import { dayOf } from '@/lib/format-date';
 
 declare const rights: ExploreRights; // { readable: the collections the caller may read, hidden: (name) => that collection's hidden fields }
 for (const v of viewTools) {
@@ -143,7 +144,8 @@ for (const v of viewTools) {
     inputSchema: z.toJSONSchema(exploreSchema(v.explore, rights, own)),
     annotations: { readOnlyHint: true },
   }, async (input) => {
-    const today = clock().toISOString().slice(0, 10);
+    // Today in the product's reporting timezone, as the console's assistant reads it, so the two end a window on one day.
+    const today = dayOf(clock());
     const { address, answer } = await runExplore(v.explore, input, rights, { aggregate, read, today }, v.page, own);
     return { content: [{ type: 'text', text: `${answer}\nAddress: ${address}` }] };
   });
