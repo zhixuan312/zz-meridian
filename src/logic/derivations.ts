@@ -38,7 +38,8 @@ export function elapsed(started: string, at: string): number {
 }
 
 /** The most parts a stacked column draws: past this a reader cannot tell the parts apart. */
-const MOST_PARTS = 4;
+/** The most parts a stack draws apart: past it, the last drawn is "Other", the rest summed. */
+export const MOST_PARTS = 4;
 
 /**
  * A stacked column's parts past the ones a reader can tell apart. `parts` is one row a part and one value a column, the

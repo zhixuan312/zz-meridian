@@ -1,5 +1,5 @@
 import { render } from '@testing-library/react';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { CompositionBar } from '@/components/charts/composition-bar';
 import { SERIES_VAR, stackPart } from '@/components/charts/scale';
 
@@ -61,5 +61,26 @@ describe('a composition bar', () => {
     const legend = figure.querySelector('figcaption')!;
     expect(legend.className).toMatch(/@min-\[\d+rem\]:grid-cols-4/);
     expect(legend.className).not.toMatch(/(^|\s)sm:grid-cols-4/);
+  });
+});
+
+describe('a stacked composition bar', () => {
+  // The stacked Column chart folds past four parts, each part by its place in the stack of the four it draws; the bar
+  // folded past six over the six it drew, so with five parts one part was two colours on one page.
+  it('folds past four parts as the stacked Column chart does, each by its place in the four drawn', () => {
+    const five = Array.from({ length: 5 }, (_, i) => ({ label: `Region ${i + 1}`, value: 5 - i }));
+    const { container } = render(<CompositionBar label="Requests by region" stacked parts={five} />);
+    expect(fills(container)).toEqual([0, 1, 2, 3].map((k) => stackPart(k, 4)));
+    expect(container.textContent).not.toContain('Region 4');
+    // Other is the fourth and fifth, 2 + 1 of 15.
+    expect(container.textContent).toMatch(/Other\s*20%/);
+  });
+
+  it('draws two parts of one label as two parts', () => {
+    const error = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const { container } = render(<CompositionBar label="Plan mix" parts={[{ label: 'Other', value: 2 }, { label: 'Other', value: 1 }]} />);
+    expect(fills(container)).toHaveLength(2);
+    expect(error.mock.calls.flat().join(' ')).not.toMatch(/same key/);
+    error.mockRestore();
   });
 });

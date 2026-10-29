@@ -15,7 +15,7 @@ Status: beta
 |---|---|
 | Status | Parts that carry a judgement take status colours (`warning`, `critical`); neutral classes take `neutral` and, beside it, `neutral-ink` (both at least 3:1 on the surface, unlike the `chart-neutral` track), never the accent; the legend names each in words |
 | Categories | Parts with no judgement take slots 1, 2, 3 in order. The palette has six slots: past six parts, the first five keep theirs and the rest are drawn as one, "Other", their sum above zero, in `neutral` |
-| Stacked | `stacked`: the parts are the ones a stacked Trend or Column chart on the same page draws, so a part with no colour takes `stackPart(place, parts)`, the one-hue stack by its place, and its swatch sits on an `ink-3` hairline as the stacked charts' do. A part is one colour wherever the page draws it |
+| Stacked | `stacked`: the parts are the ones a stacked Trend or Column chart on the same page draws, so a part with no colour takes `stackPart(place, parts)`, the one-hue stack by its place, and its swatch sits on an `ink-3` hairline as the stacked charts' do. Past four parts it folds as the stacked Column chart does: the first three and "Other", the rest's sum above zero, in the stack's colour for the fourth place. A part is one colour wherever the page draws it up to four parts; a stacked Trend chart draws every part, so a page that stacks more than four keeps the bar off them |
 
 ## Sizes
 

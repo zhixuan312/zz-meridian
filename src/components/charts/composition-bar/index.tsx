@@ -1,7 +1,7 @@
 import { cn } from '@/lib/cn';
 import { FORMATTERS } from '@/lib/format';
 import { SERIES_SLOTS, SERIES_VAR, stackPart, type SeriesSlot } from '@/components/charts/scale';
-import { compositionTotal } from '@/logic/derivations';
+import { compositionTotal, MOST_PARTS } from '@/logic/derivations';
 
 export type Part = { label: string; value: number; color?: SeriesSlot | 'accent' | 'neutral' | 'neutral-ink' | 'positive' | 'warning' | 'critical' };
 
@@ -11,12 +11,14 @@ const fill = (c: Part['color'], i: number, stack: number | null) =>
 /**
  * The parts drawn: as given up to the palette's six, and past it the first five and "Other", the sum of the rest above
  * zero, in the neutral: a part below zero is no share of the whole, folded or not. A seventh slot names no colour
- * (`--series-7`), and its part drew transparent: its share gone from the bar and its swatch blank in the key.
+ * (`--series-7`), and its part drew transparent: its share gone from the bar and its swatch blank in the key. A stacked
+ * bar folds as the stacked Column chart does, past four, and its Other takes the stack's colour for its place.
  */
-function drawn(parts: Part[]): Part[] {
-  if (parts.length <= SERIES_SLOTS) return parts;
-  const rest = parts.slice(SERIES_SLOTS - 1);
-  return [...parts.slice(0, SERIES_SLOTS - 1), { label: 'Other', value: rest.reduce((n, p) => n + Math.max(0, p.value), 0), color: 'neutral' }];
+function drawn(parts: Part[], stacked: boolean): Part[] {
+  const most = stacked ? MOST_PARTS : SERIES_SLOTS;
+  if (parts.length <= most) return parts;
+  const rest = parts.slice(most - 1);
+  return [...parts.slice(0, most - 1), { label: 'Other', value: rest.reduce((n, p) => n + Math.max(0, p.value), 0), color: stacked ? undefined : 'neutral' }];
 }
 
 /** A part's share of the whole: to one decimal under 10%, so a small part is not rounded to zero, and a part above none
@@ -46,19 +48,19 @@ export function CompositionBar({
   stacked?: boolean;
   className?: string;
 }) {
-  const parts = drawn(given);
+  const parts = drawn(given, stacked);
   const total = compositionTotal(parts);
   const stack = stacked ? parts.length : null;
   return (
     <figure aria-label={label} className={cn('@container min-w-0', className)}>
       <div className="reveal-x flex h-2.5 gap-0.5 overflow-hidden rounded-full">
         {parts.map((p, i) => (
-          <div key={p.label} className="h-full first:rounded-l-full last:rounded-r-full" style={{ width: `${(Math.max(0, p.value) / total) * 100}%`, minWidth: 3, background: fill(p.color, i, stack) }} title={`${p.label}: ${format(p.value)}`} />
+          <div key={i} className="h-full first:rounded-l-full last:rounded-r-full" style={{ width: `${(Math.max(0, p.value) / total) * 100}%`, minWidth: 3, background: fill(p.color, i, stack) }} title={`${p.label}: ${format(p.value)}`} />
         ))}
       </div>
       <figcaption className={legend ? 'mt-4 grid grid-cols-2 gap-x-6 gap-y-3 @min-[36rem]:grid-cols-4' : 'sr-only'}>
         {parts.map((p, i) => (
-          <div key={p.label} className="min-w-0">
+          <div key={i} className="min-w-0">
             <div className="flex items-center gap-1.5 text-xs text-ink-2">
               {/* A stacked part fades toward the surface, so its swatch is drawn on a hairline, as the stacked charts' are. */}
               <span aria-hidden className={cn('size-2 rounded-xs', stacked && 'ring-1 ring-ink-3')} style={{ background: fill(p.color, i, stack) }} />
