@@ -11,7 +11,7 @@ Status: beta
 3. **Clear**: a ghost button, shown only while something is filtered.
 4. **Result**: a quiet count of what passes ("5 of 240"), `text-xs` `ink-3`, once the bar is 60rem (840px).
 5. **View controls** (optional): a Segmented control or a menu on the right.
-6. **Filters button** (phones): with a count of active filters on an `accent` disc; it opens a Sheet holding each filter as a Field, the view controls, Clear filters and Show results.
+6. **Filters button** (phones): with a count of the filters set on an `accent` disc (the search is not one of them); it opens a Sheet holding each filter as a Field, the view controls, Clear filters and Show results.
 7. **Ask** (optional, `ask`): an `AskAbout` that hands the filtered list to an agent. It stays in the bar at every width, last, beside the Filters button on a phone: handing the list over is not a filter, so it never moves into the sheet.
 8. **Provenance line** (when `setBy`): the Agent mark (small), "Set by Claude · these filters came from the assistant", and Clear.
 

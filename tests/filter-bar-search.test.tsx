@@ -27,3 +27,16 @@ describe('a filter bar beside five facets', () => {
     expect(container.querySelectorAll('[aria-label]')).toHaveLength(5);
   });
 });
+
+describe("the phone's Filters count", () => {
+  it('counts the filters set, not the search text, which is not in the sheet; Clear still shows for the search', () => {
+    const { getByRole } = render(<FilterBar filters={facets} search={{ value: 'timeout', onChange: () => {} }} onClear={() => {}} />);
+    expect(getByRole('button', { name: 'Filters' })).toBeTruthy();
+    expect(getByRole('button', { name: 'Clear' })).toBeTruthy();
+  });
+  it('counts a filter that is set', () => {
+    const set = facets.map((f, i) => (i === 1 ? { ...f, value: 'some' } : f));
+    const { getByRole } = render(<FilterBar filters={set} search={{ value: 'timeout', onChange: () => {} }} />);
+    expect(getByRole('button', { name: 'Filters 1' })).toBeTruthy();
+  });
+});

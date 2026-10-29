@@ -53,7 +53,9 @@ export function FilterBar({
   onClear?: () => void;
   className?: string;
 }) {
-  const active = filters.filter((f) => f.value !== f.options[0]?.value).length + (search?.value ? 1 : 0);
+  // The phone's Filters count is the filters set in its sheet; the search is not one of them, though Clear empties it too.
+  const set = filters.filter((f) => f.value !== f.options[0]?.value).length;
+  const active = set + (search?.value ? 1 : 0);
   const [open, setOpen] = useState(false);
   const selects = (size: 'sm' | 'md', block?: boolean) =>
     filters.map((f) => {
@@ -99,7 +101,7 @@ export function FilterBar({
           <Sheet open={open} onOpenChange={setOpen}>
             <SheetTrigger asChild>
               <Button size="sm" icon={<SlidersHorizontal />} className="@min-[52rem]:hidden">
-                Filters{active ? <span className="t-num -mr-0.5 grid h-4.5 min-w-4.5 place-items-center rounded-full bg-accent px-1 text-2xs font-semibold text-on-accent">{active}</span> : null}
+                Filters{set ? <>{' '}<span className="t-num -mr-0.5 grid h-4.5 min-w-4.5 place-items-center rounded-full bg-accent px-1 text-2xs font-semibold text-on-accent">{set}</span></> : null}
               </Button>
             </SheetTrigger>
             <SheetContent
