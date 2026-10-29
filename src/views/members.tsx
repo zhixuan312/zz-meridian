@@ -137,7 +137,12 @@ export function MembersView({ rows, now, revisions, actions, access, roles, work
       tone: 'neutral',
       title: `${m.name} removed`,
       description: 'They lose access when this closes.',
-      action: { label: 'Undo', onClick: () => { clearTimeout(holds.current.get(m.id)); holds.current.delete(m.id); release(m.id); } },
+      // A removal the page already sent (the tab was hidden while Undo was open) is no longer held, and Undo says so
+      // rather than showing a member the server no longer has.
+      action: { label: 'Undo', onClick: () => {
+        if (!holds.current.has(m.id)) return toast({ tone: 'neutral', title: `${m.name}'s removal was already sent`, description: 'The page sent it when it was left, before Undo.' });
+        clearTimeout(holds.current.get(m.id)); holds.current.delete(m.id); release(m.id);
+      } },
     });
   };
   // A removal waiting for its Undo is sent the moment the page goes away, never dropped: when the router hides the page

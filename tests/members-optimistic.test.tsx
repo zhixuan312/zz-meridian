@@ -155,6 +155,24 @@ describe('members, status and removal', () => {
       vi.useRealTimers();
     }
   });
+  it('does not bring back a member whose removal was sent when the tab was hidden, and says it was sent', async () => {
+    const remove = vi.fn(noop);
+    render(view(withActions({ remove })));
+    await openMenu(m.name);
+    fireEvent.click(await screen.findByRole('menuitem', { name: 'Remove' }));
+    await waitFor(() => expect(screen.queryByText(m.name)).toBeNull());
+    const undo = (toasts.at(-1) as unknown as { action: { onClick: () => void } }).action;
+    const visibility = vi.spyOn(document, 'visibilityState', 'get').mockReturnValue('hidden');
+    try {
+      await act(async () => { document.dispatchEvent(new Event('visibilitychange')); });
+    } finally {
+      visibility.mockRestore();
+    }
+    expect(remove).toHaveBeenCalledWith(m.id);
+    await act(async () => { undo.onClick(); });
+    expect(screen.queryByText(m.name)).toBeNull();
+    expect(toasts.at(-1)).toMatchObject({ tone: 'neutral', title: `${m.name}'s removal was already sent` });
+  });
   it('changes a role through the sheet, showing it at once, and reopens the sheet with the reason when it is refused', async () => {
     const d = deferred();
     const assignRole = vi.fn(() => d.promise);
