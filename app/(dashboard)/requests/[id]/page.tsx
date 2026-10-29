@@ -56,11 +56,12 @@ export default async function RequestPage({ params }: { params: Promise<{ id: st
   // grant behind Replay and the endpoints that give the route its p95 were three waits in a row before.
   //
   // After the gate: what this person may do with the record, so Replay is drawn only where it may be used. A Viewer
-  // holds `requests:read` without `requests:create`, so it is withheld for them and nothing is drawn in its place.
-  const [{ request: r, observedAt }, mayReplay, endpoints] = await Promise.all([byId(id), may(ACTIONS['replay-request'].needs), readEndpoints()]);
+  // holds `requests:read` without `requests:create`, so it is withheld for them and nothing is drawn in its place; and
+  // without `keys:read` the More menu does not lead to API keys.
+  const [{ request: r, observedAt }, mayReplay, mayOpenKeys, endpoints] = await Promise.all([byId(id), may(ACTIONS['replay-request'].needs), may(FEATURES.keys.needs), readEndpoints()]);
   // Rendered here rather than thrown, so the screen is in the first HTML (see MissingPage).
   if (!r) return <MissingPage />;
   const customerHref = await customerPage(r.customer);
   const route = endpoints.find((e) => e.method === r.method && e.route === r.route);
-  return <RequestView request={r} trace={traceOf(r)} payloads={payloadsOf(r)} routeP95={route?.p95 ?? null} now={observedAt} mayReplay={mayReplay} replay={replayRequest} customerHref={customerHref} />;
+  return <RequestView request={r} trace={traceOf(r)} payloads={payloadsOf(r)} routeP95={route?.p95 ?? null} now={observedAt} mayReplay={mayReplay} mayOpenKeys={mayOpenKeys} replay={replayRequest} customerHref={customerHref} />;
 }
