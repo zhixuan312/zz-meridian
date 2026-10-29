@@ -7,9 +7,7 @@
  * The sample's own endpoints, services and incidents are few, so this test grows the store to more than a page. That is
  * how an adopter's data arrives: same collection, same read, more rows.
  */
-import { describe, expect, it, vi } from 'vitest';
-
-vi.mock('next/cache', () => ({ cacheTag: () => {}, cacheLife: () => {}, updateTag: () => {}, revalidateTag: () => {} }));
+import { describe, expect, it } from 'vitest';
 
 import { readEndpoints, readIncidents, readServices } from '@/data/metrics';
 import { readAll } from '@/data/read';

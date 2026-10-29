@@ -9,7 +9,6 @@ vi.mock('next/headers', () => ({
   }),
   headers: async () => new Headers(),
 }));
-vi.mock('next/cache', () => ({ cacheTag: () => {}, cacheLife: () => {}, updateTag: () => {}, revalidateTag: () => {}, revalidatePath: () => {}, refresh: () => {} }));
 
 import { Unauthenticated, can, resolveAccess } from '@/data/access';
 import { chooseViewAs } from '@/data/view-as';

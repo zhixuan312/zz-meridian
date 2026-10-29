@@ -1,8 +1,6 @@
 // @vitest-environment node
 import { describe, expect, it, vi } from 'vitest';
 
-vi.mock('next/cache', () => ({ cacheTag: () => {}, cacheLife: () => {}, updateTag: () => {}, revalidateTag: () => {} }));
-
 import { members } from '@/data/collections';
 import { assistantTools } from '@/lib/assistant/tools';
 

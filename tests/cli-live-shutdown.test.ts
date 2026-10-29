@@ -5,8 +5,6 @@ import { describe, expect, it, vi } from 'vitest';
 import { liveStream } from '@/data/live-stream';
 import { members } from '@/data/collections';
 
-vi.mock('next/cache', () => ({ cacheTag: () => {}, cacheLife: () => {}, updateTag: () => {}, revalidateTag: () => {} }));
-
 /** Reads a stream in the background: what arrived, and whether it ended. */
 function tap(res: Response) {
   const reader = res.body!.getReader();

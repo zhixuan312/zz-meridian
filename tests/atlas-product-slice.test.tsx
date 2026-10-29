@@ -2,9 +2,6 @@ import { render } from '@testing-library/react';
 import { Tooltip } from 'radix-ui';
 import { describe, expect, it, vi } from 'vitest';
 
-vi.mock('next/headers', () => ({ cookies: async () => ({ get: () => undefined, set: () => {} }), headers: async () => new Headers() }));
-vi.mock('next/cache', () => ({ cacheTag: () => {}, cacheLife: () => {}, updateTag: () => {}, revalidateTag: () => {}, revalidatePath: () => {}, refresh: () => {} }));
-
 // One implementation, watched: every render of the template passes through this count, whoever asked for it.
 const seen = vi.hoisted(() => ({ renders: 0 }));
 vi.mock('@/components/templates/records', async (original) => {

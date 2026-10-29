@@ -5,9 +5,6 @@ import { Tooltip } from 'radix-ui';
 vi.mock('next/navigation', () => ({ usePathname: () => '/', useRouter: () => ({ refresh() {}, push() {}, replace() {} }) }));
 import { AppShell, PageFrame } from '@/components/base/shell';
 
-// jsdom has no IntersectionObserver; PageFrame observes its masthead.
-vi.stubGlobal('IntersectionObserver', class { observe() {} unobserve() {} disconnect() {} });
-
 // The shell resolves its assistant promise behind Suspense, so the render is awaited inside act.
 const page = (assistant: boolean) =>
   act(async () => {

@@ -49,7 +49,6 @@ const DRAWN: Record<string, ReactElement> = {
 // Not here, because they cut nothing a screen reader is given: the Column chart cuts its labels on an axis hidden from
 // assistive technology, and pointing at a column draws its label whole; the Detail head wraps its name and its parent.
 
-
 const whole = (s: string | null | undefined) => (s ?? '').replace(/\s+/g, ' ').trim();
 /** The audit's rule (scripts/audit.ts `titled`): a title on the element or up to eight above it, or on the one inside it, that holds its whole text. */
 const keeps = (el: Element) => {

@@ -11,7 +11,6 @@ vi.mock('next/headers', () => ({
   cookies: async () => ({ get: (n: string) => (n === 'zz_meridian_view_as' && jar.value !== undefined ? { name: n, value: jar.value } : undefined), set: () => {} }),
   headers: async () => new Headers(),
 }));
-vi.mock('next/cache', () => ({ cacheTag: () => {}, cacheLife: () => {}, updateTag: () => {}, revalidateTag: () => {}, revalidatePath: () => {}, refresh: () => {} }));
 // The product's choice, read where it is used: the sample declares `explain`, and a case here declares `absent`.
 vi.mock('@/app.config', async (orig) => {
   const real = await orig<typeof import('@/app.config')>();

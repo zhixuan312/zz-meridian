@@ -1,9 +1,6 @@
 // @vitest-environment node
 // Named cli-* so the payload leaves it out: it holds the sample company's own records and figures.
-import { describe, expect, it, vi } from 'vitest';
-
-vi.mock('next/headers', () => ({ cookies: async () => ({ get: () => undefined, set: () => {} }), headers: async () => new Headers() }));
-vi.mock('next/cache', () => ({ cacheTag: () => {}, cacheLife: () => {}, updateTag: () => {}, revalidateTag: () => {}, revalidatePath: () => {}, refresh: () => {} }));
+import { describe, expect, it } from 'vitest';
 
 import { clock, collections } from '@/data/collections';
 import { customerFigures } from '@/logic/customers-context';

@@ -1,9 +1,6 @@
 // @vitest-environment node
 // Named cli-* so the payload leaves it out: it reads the sample's own requests and tickets.
-import { describe, expect, it, vi } from 'vitest';
-
-vi.mock('next/headers', () => ({ cookies: async () => ({ get: () => undefined, set: () => {} }), headers: async () => new Headers() }));
-vi.mock('next/cache', () => ({ cacheTag: () => {}, cacheLife: () => {}, updateTag: () => {}, revalidateTag: () => {}, revalidatePath: () => {}, refresh: () => {} }));
+import { describe, expect, it } from 'vitest';
 
 import { clock, collections } from '@/data/collections';
 import { runExplore, type ExploreIO, type PreparedQuery } from '@/lib/explore';

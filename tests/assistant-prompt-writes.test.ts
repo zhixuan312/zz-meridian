@@ -1,10 +1,7 @@
 // @vitest-environment node
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { MockLanguageModelV4 } from 'ai/test';
 import type { UIMessage } from 'ai';
-
-vi.mock('next/headers', () => ({ cookies: async () => ({ get: () => undefined, set: () => {} }), headers: async () => new Headers() }));
-vi.mock('next/cache', () => ({ cacheTag: () => {}, cacheLife: () => {}, updateTag: () => {}, revalidateTag: () => {}, revalidatePath: () => {}, refresh: () => {} }));
 
 import { members } from '@/data/collections';
 import { systemPrompt } from '@/lib/assistant/prompt';

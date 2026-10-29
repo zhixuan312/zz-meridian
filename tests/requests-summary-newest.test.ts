@@ -1,7 +1,6 @@
 // @vitest-environment node
 import { describe, expect, it, vi } from 'vitest';
 
-vi.mock('next/cache', () => ({ cacheTag: () => {}, cacheLife: () => {}, updateTag: () => {}, revalidateTag: () => {} }));
 // Every query the log is read with, so the summary's own can be told from the page's.
 const asked = vi.hoisted(() => [] as { sort?: unknown; limit?: number; offset?: number }[]);
 vi.mock('@/data/read', async (orig) => {

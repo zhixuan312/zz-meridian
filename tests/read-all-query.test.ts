@@ -6,9 +6,7 @@
  *
  * The requests log is the sample's one collection larger than a page.
  */
-import { describe, expect, it, vi } from 'vitest';
-
-vi.mock('next/cache', () => ({ cacheTag: () => {}, cacheLife: () => {}, updateTag: () => {}, revalidateTag: () => {} }));
+import { describe, expect, it } from 'vitest';
 
 import { readAll } from '@/data/read';
 import { REQUESTS } from '@/system/fixtures/sample';

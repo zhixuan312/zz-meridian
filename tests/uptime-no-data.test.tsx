@@ -1,8 +1,6 @@
 import { render } from '@testing-library/react';
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { UptimeBars, type DayState } from '@/components/charts/uptime-bars';
-
-vi.stubGlobal('ResizeObserver', class { observe() {} unobserve() {} disconnect() {} });
 
 const end = new Date('2026-10-05T12:00:00Z');
 const days: DayState[] = Array.from({ length: 30 }, (_, i) => (i === 10 || i === 11 ? 'none' : i === 20 ? 'outage' : 'operational'));

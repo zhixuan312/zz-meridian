@@ -8,9 +8,6 @@ import { AppShell, PageFrame } from '@/components/base/shell';
 import { AssistantScope } from '@/components/patterns/assistant/scope';
 import { THREAD_KEY, dropThread, loadThread, saveThread } from '@/components/patterns/assistant/thread';
 
-// jsdom has no IntersectionObserver; PageFrame observes its masthead.
-vi.stubGlobal('IntersectionObserver', class { observe() {} unobserve() {} disconnect() {} });
-
 /**
  * The thread belongs to the person and the tenant it was started for (issue #39): a change of either starts an empty
  * thread and the earlier one is never shown or sent; each request names the thread's scope, and a reply from the server
@@ -18,7 +15,7 @@ vi.stubGlobal('IntersectionObserver', class { observe() {} unobserve() {} discon
  */
 const ask = (id: string, text: string): UIMessage => ({ id, role: 'user', parts: [{ type: 'text', text }] });
 const say = (id: string, text: string): UIMessage => ({ id, role: 'assistant', parts: [{ type: 'text', text }] });
-afterEach(() => { localStorage.clear(); vi.unstubAllGlobals(); vi.stubGlobal('IntersectionObserver', class { observe() {} unobserve() {} disconnect() {} }); });
+afterEach(() => { localStorage.clear(); vi.unstubAllGlobals(); });
 
 describe('the stored thread', () => {
   test("is the latest loaded person's: a tab left open for another writes nothing over it, whenever its reply lands", () => {

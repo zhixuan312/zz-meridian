@@ -1,8 +1,6 @@
 import { render } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
-vi.mock('next/headers', () => ({ cookies: async () => ({ get: () => undefined, set: () => {} }), headers: async () => new Headers() }));
-vi.mock('next/cache', () => ({ cacheTag: () => {}, cacheLife: () => {}, updateTag: () => {}, revalidateTag: () => {}, revalidatePath: () => {}, refresh: () => {} }));
 /** The page's client view, replaced by one that keeps what it was handed: the props are what the browser is sent. */
 const handed = vi.hoisted(() => ({ rows: [] as Record<string, unknown>[] }));
 vi.mock('@/views/customers', () => ({ CustomersView: ({ rows }: { rows: Record<string, unknown>[] }) => { handed.rows = rows; return null; } }));

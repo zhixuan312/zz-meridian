@@ -5,8 +5,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import { z } from 'zod';
 
-vi.mock('next/cache', () => ({ cacheTag: () => {}, cacheLife: () => {}, updateTag: () => {}, revalidateTag: () => {} }));
-
 import { GET } from '../app/api/live/route';
 import { liveStream } from '@/data/live-stream';
 import { arrayCollection } from '@/lib/collection';

@@ -4,14 +4,11 @@ import type { ReactElement } from 'react';
 import { Tooltip } from 'radix-ui';
 import { describe, expect, it, vi } from 'vitest';
 
-vi.mock('next/headers', () => ({ cookies: async () => ({ get: () => undefined, set: () => {} }), headers: async () => new Headers() }));
-vi.mock('next/cache', () => ({ cacheTag: () => {}, cacheLife: () => {}, updateTag: () => {}, revalidateTag: () => {}, revalidatePath: () => {}, refresh: () => {} }));
 vi.mock('next/navigation', () => ({
   usePathname: () => '/',
   useSearchParams: () => new URLSearchParams(),
   useRouter: () => ({ push() {}, replace() {}, refresh() {}, back() {}, forward() {}, prefetch() {} }),
 }));
-vi.stubGlobal('IntersectionObserver', class { observe() {} unobserve() {} disconnect() {} });
 
 import { readRequests, REQUEST_PAGE } from '@/data/requests';
 import { DEMO_NOW, DEMO_UPDATED_AT } from '@/data/sample';

@@ -2,7 +2,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import { z } from 'zod';
 
-vi.mock('next/cache', () => ({ cacheTag: () => {}, cacheLife: () => {}, updateTag: () => {}, revalidateTag: () => {} }));
 const session = vi.hoisted(() => ({ signedIn: true }));
 vi.mock('@/data/access', async (importOriginal) => {
   const real = await importOriginal<typeof import('@/data/access')>();

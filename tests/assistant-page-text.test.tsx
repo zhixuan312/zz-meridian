@@ -6,9 +6,6 @@ vi.mock('next/navigation', () => ({ usePathname: () => '/keys', useRouter: () =>
 import { AppShell, PageFrame } from '@/components/base/shell';
 import { pageText } from '@/components/patterns/assistant/page-text';
 
-// jsdom has no IntersectionObserver; PageFrame observes its masthead.
-vi.stubGlobal('IntersectionObserver', class { observe() {} unobserve() {} disconnect() {} });
-
 /**
  * jsdom lays nothing out, so it has no `innerText`. This one is the part of a browser's the panel relies on: the text
  * of every node that is displayed, and none of a node whose display is none.

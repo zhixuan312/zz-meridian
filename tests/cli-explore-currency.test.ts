@@ -6,8 +6,6 @@ vi.mock('@/app.config', async (original) => {
   const actual = await original<typeof import('@/app.config')>();
   return { ...actual, app: { ...actual.app, currency: 'GBP' } };
 });
-vi.mock('next/headers', () => ({ cookies: async () => ({ get: () => undefined, set: () => {} }), headers: async () => new Headers() }));
-vi.mock('next/cache', () => ({ cacheTag: () => {}, cacheLife: () => {}, updateTag: () => {}, revalidateTag: () => {}, revalidatePath: () => {}, refresh: () => {} }));
 
 import { runExplore, type ExploreIO, type PreparedQuery } from '@/lib/explore';
 import { homeExplore } from '@/logic/home-explore';

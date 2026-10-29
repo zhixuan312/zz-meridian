@@ -6,7 +6,6 @@ vi.mock('next/headers', () => ({
   cookies: async () => ({ get: (n: string) => (n === 'zz_meridian_view_as' ? { name: n, value: 'members_1' } : undefined), set: () => {} }),
   headers: async () => new Headers(),
 }));
-vi.mock('next/cache', () => ({ cacheTag: () => {}, cacheLife: () => {}, updateTag: () => {}, revalidateTag: () => {}, revalidatePath: () => {}, refresh: () => {} }));
 // A product west of UTC: the sample's clock, 09:00 UTC on 3 October, is 23:00 on 2 October in Honolulu.
 vi.mock('@/app.config', async (orig) => {
   const real = await orig<typeof import('@/app.config')>();

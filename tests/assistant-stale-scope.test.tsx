@@ -11,9 +11,6 @@ import { AppShell, PageFrame } from '@/components/base/shell';
 import { AssistantScope } from '@/components/patterns/assistant/scope';
 import { THREAD_KEY, dropThread, saveThread } from '@/components/patterns/assistant/thread';
 
-// jsdom has no IntersectionObserver; PageFrame observes its masthead.
-vi.stubGlobal('IntersectionObserver', class { observe() {} unobserve() {} disconnect() {} });
-
 /**
  * A tab left open while someone else signs in from another tab (issue #39). The server refuses its thread with 409; the
  * tab then refreshes, so the layout resolves the scope of whoever is signed in now, and the next question is asked as
@@ -26,7 +23,6 @@ afterEach(() => {
   localStorage.clear();
   router.refreshed = 0;
   vi.unstubAllGlobals();
-  vi.stubGlobal('IntersectionObserver', class { observe() {} unobserve() {} disconnect() {} });
 });
 
 const consoleOf = (scope: string) => (

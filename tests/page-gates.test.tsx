@@ -8,7 +8,6 @@ vi.mock('next/headers', () => ({
   cookies: async () => ({ get: (n: string) => (n === 'zz_meridian_view_as' && jar.value !== undefined ? { name: n, value: jar.value } : undefined), set: () => {} }),
   headers: async () => new Headers(),
 }));
-vi.mock('next/cache', () => ({ cacheTag: () => {}, cacheLife: () => {}, updateTag: () => {}, revalidateTag: () => {}, revalidatePath: () => {}, refresh: () => {} }));
 // The App Router's hooks are replaced wholesale, never spread: spreading the real module would restore Next's own
 // useRouter and every client view rendered here would fail before its assertions.
 vi.mock('next/navigation', () => ({

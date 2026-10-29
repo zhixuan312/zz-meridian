@@ -1,8 +1,5 @@
 // @vitest-environment node
-import { describe, expect, it, vi } from 'vitest';
-
-vi.mock('next/headers', () => ({ cookies: async () => ({ get: () => undefined, set: () => {} }), headers: async () => new Headers() }));
-vi.mock('next/cache', () => ({ cacheTag: () => {}, cacheLife: () => {}, updateTag: () => {}, revalidateTag: () => {}, revalidatePath: () => {}, refresh: () => {} }));
+import { describe, expect, it } from 'vitest';
 
 import { aggregateRows, type AggregateQuery } from '@/lib/collection';
 import { collections } from '@/data/collections';

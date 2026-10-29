@@ -4,7 +4,6 @@ import { describe, expect, it, vi } from 'vitest';
 vi.mock('next/navigation', () => ({ usePathname: () => '/keys', useRouter: () => ({ refresh() {}, push() {}, replace() {} }) }));
 const toasts = vi.hoisted(() => [] as { tone: string; title: string }[]);
 vi.mock('@/components/ui/toast', () => ({ toast: (t: { tone: string; title: string }) => { toasts.push(t); } }));
-vi.stubGlobal('IntersectionObserver', class { observe() {} unobserve() {} disconnect() {} });
 
 import { KeysView } from '@/views/keys';
 import { API_KEYS } from '@/system/fixtures/sample-records';

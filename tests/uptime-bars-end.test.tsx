@@ -1,8 +1,6 @@
 import { render } from '@testing-library/react';
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { UptimeBars, type DayState } from '@/components/charts/uptime-bars';
-
-vi.stubGlobal('ResizeObserver', class { observe() {} unobserve() {} disconnect() {} });
 
 const days: DayState[] = Array.from({ length: 360 }, (_, i) => (i === 300 ? 'degraded' : 'operational'));
 const caption = (c: HTMLElement) => c.querySelector('figcaption')?.textContent ?? '';

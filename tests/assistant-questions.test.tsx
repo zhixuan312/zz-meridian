@@ -9,8 +9,6 @@ import { AssistantPanel } from '@/components/patterns/assistant';
 import { useShareView } from '@/components/base/use-share-view';
 import { contextText, type SharedContext } from '@/lib/shared-context';
 
-vi.stubGlobal('IntersectionObserver', class { observe() {} unobserve() {} disconnect() {} });
-
 const QUESTIONS = ['Why did requests change over the last 30 days?', 'Is anything on this page out of the ordinary?'];
 const context: SharedContext = { view: 'home', title: 'Home', address: '/', scope: 'last 30 days', facts: [], insights: [], unknowns: [], questions: QUESTIONS };
 const noop = () => {};

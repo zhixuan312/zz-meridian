@@ -5,7 +5,6 @@ vi.mock('next/headers', () => ({
   cookies: async () => ({ get: (n: string) => (n === 'zz_meridian_view_as' ? { name: n, value: 'members_1' } : undefined), set: () => {} }),
   headers: async () => new Headers(),
 }));
-vi.mock('next/cache', () => ({ cacheTag: () => {}, cacheLife: () => {}, updateTag: () => {}, revalidateTag: () => {}, revalidatePath: () => {}, refresh: () => {} }));
 // A product that reports in its own zone: every time and day it states is in that zone, so none may say UTC.
 vi.mock('@/app.config', async (orig) => {
   const real = await orig<typeof import('@/app.config')>();

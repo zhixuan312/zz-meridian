@@ -1,9 +1,7 @@
 import { render } from '@testing-library/react';
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { BarList } from '@/components/charts/bar-list';
 import { CompositionBar } from '@/components/charts/composition-bar';
-
-vi.stubGlobal('ResizeObserver', class { observe() {} unobserve() {} disconnect() {} });
 
 // A quantity reads the same in a tile, a cell and a chart (src/lib/format.ts): a chart that formats on its own default
 // printed a rounded-away negative as "-0" where the cell beside it said "0".

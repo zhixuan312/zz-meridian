@@ -5,8 +5,6 @@ import { Tooltip } from 'radix-ui';
 vi.mock('next/navigation', () => ({ usePathname: () => '/', useRouter: () => ({ refresh() {}, push() {}, replace() {} }) }));
 import { AppShell, PageFrame, useAssistantAvailable } from '@/components/base/shell';
 
-vi.stubGlobal('IntersectionObserver', class { observe() {} unobserve() {} disconnect() {} });
-
 const page = (assistant: Promise<boolean>) =>
   render(
     <Tooltip.Provider>

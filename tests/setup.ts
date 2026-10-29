@@ -49,6 +49,10 @@ vi.mock('next/headers', () => ({
   headers: async () => new Headers(),
 }));
 
+// The cache's tags, lifetimes and invalidations, which the reads and actions call: outside a Next request they have
+// nothing to register with. A test that records what an action invalidates mocks the module itself, which wins.
+vi.mock('next/cache', () => ({ cacheTag: () => {}, cacheLife: () => {}, updateTag: () => {}, revalidateTag: () => {}, revalidatePath: () => {}, refresh: () => {} }));
+
 // The App Router's hooks, for layers rendered outside a Next request: PageFrame, DataTable and FilterBar read the path,
 // the search params and the router. A test that cares about navigation mocks the module itself, which wins.
 vi.mock('next/navigation', () => ({

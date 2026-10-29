@@ -1,7 +1,5 @@
 // @vitest-environment node
-import { describe, expect, it, vi } from 'vitest';
-
-vi.mock('next/cache', () => ({ cacheTag: () => {}, cacheLife: () => {}, updateTag: () => {}, revalidateTag: () => {} }));
+import { describe, expect, it } from 'vitest';
 
 import { REQUEST_PAGE, readRequests, requestsQuery } from '@/data/requests';
 

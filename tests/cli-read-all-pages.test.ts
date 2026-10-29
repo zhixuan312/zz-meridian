@@ -2,9 +2,6 @@
 // Named cli-* so the payload leaves it out: it holds src/data/read.ts, which a team owns and may rewrite.
 import { describe, expect, it, vi } from 'vitest';
 
-vi.mock('next/headers', () => ({ cookies: async () => ({ get: () => undefined, set: () => {} }), headers: async () => new Headers() }));
-vi.mock('next/cache', () => ({ cacheTag: () => {}, cacheLife: () => {}, updateTag: () => {}, revalidateTag: () => {}, revalidatePath: () => {}, refresh: () => {} }));
-
 import { usage } from '@/data/collections';
 import { readAll } from '@/data/read';
 

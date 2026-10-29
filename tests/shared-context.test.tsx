@@ -5,9 +5,6 @@ import type { ReactElement } from 'react';
 import { renderToPipeableStream } from 'react-dom/server';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-// The view tools read through `read()`, which tags and times its cache: outside a Next request those calls have nothing to register with.
-vi.mock('next/cache', () => ({ cacheTag: () => {}, cacheLife: () => {}, updateTag: () => {}, revalidateTag: () => {}, revalidatePath: () => {}, refresh: () => {} }));
-
 import { app } from '@/app.config';
 import { SurfaceOverride, sharedContextOn } from '@/components/base/surface';
 import { useShareView } from '@/components/base/use-share-view';

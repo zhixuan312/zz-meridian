@@ -9,7 +9,6 @@ vi.mock('@/components/charts/use-size', async () => {
   const { useRef } = await import('react');
   return { useSize: () => [useRef(null), size] as const };
 });
-vi.mock('next/cache', () => ({ cacheTag: () => {}, cacheLife: () => {}, updateTag: () => {}, revalidateTag: () => {}, revalidatePath: () => {}, refresh: () => {} }));
 
 import ColumnChartPreview from '@/components/charts/column-chart/preview';
 import { UsageBody } from '@/views/usage';
