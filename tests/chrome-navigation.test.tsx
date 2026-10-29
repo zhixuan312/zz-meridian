@@ -98,6 +98,8 @@ describe("the console's rail and palette, given a navigation", () => {
     expect(links()).toEqual([]);
     act(() => openCommand());
     const options = within(await screen.findByRole('dialog')).getAllByRole('option').map((o) => o.textContent ?? '');
-    expect(options.some((o) => /^(Home|Requests|Settings)/.test(o))).toBe(false);
+    // Nothing of the configured navigation, whatever its pages are called.
+    const configured = nav.flatMap((g) => g.items.map((i) => i.label));
+    expect(options.filter((o) => configured.some((l) => o.startsWith(l)))).toEqual([]);
   });
 });
