@@ -94,10 +94,12 @@ function Code({ body, label }: { body: string; label: string }) {
   );
 }
 
-/** `replay` is the page's Server Action: it sends the request again and answers with the new request, or why not. */
-/** `mayReplay` is what the page asked of the action table, so the control is drawn only for a failed request the person */
-/** may replay; anyone else sees no control and nothing that says why. It defaults to the control being available. */
-/** `customerHref` is the page of the customer it names, worked out by the page; without one the name is text. */
+/**
+ * `replay` is the page's Server Action: it sends the request again and answers with the new request, or why not.
+ * `mayReplay` is what the page asked of the action table, so the control is drawn only for a failed request the person
+ * may replay; anyone else sees no control and nothing that says why. It defaults to the control being available.
+ * `customerHref` is the page of the customer it names, worked out by the page; without one the name is text.
+ */
 export function RequestView({ request: r, trace, payloads, routeP95, now, replay, mayReplay = true, customerHref }: { request: RequestRow; trace: Span[]; payloads: { request: string | null; response: string }; /** The route's p95 over the period, for "is this slow?". */ routeP95: number | null; now: string; replay: (id: string) => Promise<{ ok: true; id: string; status: number } | { ok: false; error: string }>; mayReplay?: boolean; customerHref?: string | null }) {
   useShareView(requestContext({ request: r, trace, routeP95, statusText: STATUS_TEXT[r.status] ?? '', payloadChars: { request: payloads.request?.length ?? null, response: payloads.response.length }, now }));
   const router = useRouter();

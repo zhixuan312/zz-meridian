@@ -4,7 +4,7 @@
  *   node scripts/ask.ts --base <url> [--view <name>] [--path <address>] [--as <persona>] [--out <folder>]
  *
  * Each page specification lists, under `### What the agent does here`, the questions a person on that page asks that
- * its context does not answer alone (FR-42). This asks each of them, one thread a question, of `POST /api/assistant` on
+ * its context does not answer alone. This asks each of them, one thread a question, of `POST /api/assistant` on
  * the page's own address, signed in as a persona of `scripts/verify.config.ts`: the one `--as` names, else the one keyed
  * `owner`, else the first declared. A detail page's questions are asked on its first record: the first link of its
  * form on its listing page, unless `--path` names the record (`--path /customers/c_42`), which asks the page that
@@ -22,7 +22,7 @@
  * and two views that would share a name are told apart by their routes. It holds each question, every tool
  * the assistant called with its input and what the tool returned, every Proposal it raised with its approval or denial,
  * and the answer's text, for a reader to judge whether the answer is the tools' and no change is claimed without a
- * Proposal (AC-14.8). A question the assistant answered with a Proposal alone is answered.
+ * Proposal. A question the assistant answered with a Proposal alone is answered.
  *
  * It reads no environment. Whether the assistant is on is the served product's to say: `POST /api/assistant` answers
  * 404 while it is off, and the script then prints one line saying it did not run, and exits 0, as it does when the

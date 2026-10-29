@@ -57,8 +57,6 @@ const offersWork = (a: MemberRowAccess) => a.changeRole || a.suspend || a.reacti
 /** The row whose role is being changed, with the choices the boundary allowed it: the sheet's own draft. */
 type Draft = { id: string; name: string; role: MainRole; addOns: AddOn[]; roles: readonly MainRole[]; allowedAddOns: readonly AddOn[] };
 
-/** `now` is the data's clock, so "last active" reads the same on the server and in the browser. */
-
 /** An address that may break before its @ when its column has no room, and is whole on one line when it has. */
 function EmailText({ email }: { email: string }) {
   const at = email.indexOf('@');
@@ -228,7 +226,7 @@ export function MembersView({ rows, now, revisions, actions, access, roles, work
     // column claims the room. Where there is no room, a company's long domain breaks the address before its @ (and at
     // the domain's own hyphens), so nothing is cut and the table never runs past its frame.
     { key: 'email', header: 'Email', muted: true, hideBelow: 'lg', sortValue: (m) => m.email, cell: (m) => <EmailText email={m.email} /> },
-    // The role as a person reads it, add-ons and all, as a column and as a fact on the phone card (AC-3.2).
+    // The role as a person reads it, add-ons and all, as a column and as a fact on the phone card.
     { key: 'role', header: 'Role', hideBelow: 'sm', mobile: 'fact', sortValue: (m) => m.role, cell: (m) => roleLabel(m), mobileCell: (m) => roleLabel(m) },
     { key: 'team', header: 'Team', muted: true, hideBelow: 'xl', sortValue: (m) => m.team, cell: (m) => m.team },
     { key: 'status', header: 'Status', mobile: 'fact', sortValue: (m) => m.status, cell: (m) => <Badge tone={STATUS_TONE[m.status]} dot>{m.status}</Badge> },

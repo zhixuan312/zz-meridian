@@ -111,7 +111,7 @@ for (const p of PAGE_SPECS) {
 
 // ── What the agent does on a page with a view tool ────────────────────────────────────────────────────
 // A page an agent can view has a prepared query, and its specification names the card worth asking about and the
-// questions a person asks there that the context does not answer alone (FR-42): the line `Protagonist: <name>.` and at
+// questions a person asks there that the context does not answer alone: the line `Protagonist: <name>.` and at
 // least three items `- "<question>" — <what the prepared query is asked>`. The page marks that card with
 // `data-protagonist="<name>"`, and `scripts/ask.ts` asks the questions. Settings, the Atlas, Docs and the embed views are
 // no view tool's page, so they are asked nothing; a project without `src/logic/tools.ts` has no view tools to read.
@@ -570,8 +570,8 @@ if (fourLayers) {
 
 // ── What is drawn imports no read, and a read is written in one place ────────────────────────────────
 // `presentation does not read` refuses a value import from `@/data` in `src/views/**` or `src/components/**` naming any
-// module but FR-4's five vocabulary modules; `no direct query` refuses a `.query(` call in `app/**`, `src/logic/**`,
-// `src/views/**` or `src/lib/**` on a line that states no `allow-no-direct-query:` escape, as FR-9's five sites do. Both scans live in
+// module but the five vocabulary modules; `no direct query` refuses a `.query(` call in `app/**`, `src/logic/**`,
+// `src/views/**` or `src/lib/**` on a line that states no `allow-no-direct-query:` escape, as the five sites that must query directly do. Both scans live in
 // `scripts/lib/layer-rules.ts`, beside the helpers they share with this file, so this managed file stays under the line
 // ceiling a project may enforce. Like the rules above, a line may state its escape and the check prints it.
 if (fourLayers) {

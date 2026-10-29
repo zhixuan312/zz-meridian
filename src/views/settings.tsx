@@ -19,8 +19,7 @@ import { Switch } from '@/components/ui/switch';
 import { toast } from '@/components/ui/toast';
 import type { Result } from './members';
 
-/** Settings, in sections that save on their own. */
-/** Each section reports where it stands now, in a line, so the page's shared context holds what inputs and switches show (decision 0011). */
+/** Settings, in sections that save on their own. Each section reports where it stands now, in a line, so the page's shared context holds what inputs and switches show (decision 0011). */
 const Report = createContext<(section: string, line: string) => void>(() => {});
 function useReport(section: string, line: string) {
   const report = useContext(Report);

@@ -34,7 +34,6 @@ export function ShareHome({ data }: { data: HomeData }) {
 const linkClass = 'row-link inline-flex items-center gap-1 font-medium text-ink hover:text-accent-ink';
 /** A change against the period before, as a fraction; null when nothing comes before or it was zero, which a tile says in words. */
 const change = (now: number, before: number | null) => (before ? now / before - 1 : null);
-/** "02 Oct": a window's label under its column, the date it ends on. */
 const share = (n: number) => formatPercent(n, 1);
 const costCompact = FORMATTERS['cost-compact'];
 

@@ -39,7 +39,7 @@ The parts stack, the Featured metric first, then "Each service, 90 days". Each S
 
 | State | What shows |
 |---|---|
-| Loading | `loading.tsx`: the masthead as the page will have it (`LoadingPage` with the kicker, the heading that holds "Services", read out and not drawn, with the sentence's block, the page's one sentence and the freshness), then the three parts' shapes, the Featured metric's room first. The page's own fallback for its body is the same shapes, so the body does not move when the page arrives Under `refusal: 'absent'` the masthead names nothing (`gatedLoading`), since it is drawn before the gate answers. |
+| Loading | `loading.tsx`: the masthead as the page will have it (`LoadingPage` with the kicker, the heading that holds "Services", read out and not drawn, with the sentence's block, the page's one sentence and the freshness), then the three parts' shapes, the Featured metric's room first. The page's own fallback for its body is the same shapes, so the body does not move when the page arrives. Under `refusal: 'absent'` the masthead names nothing (`gatedLoading`), since it is drawn before the gate answers. |
 | All operational | The summary says "All services operational"; no warning colour anywhere |
 | Degraded | The summary names how many are degraded; the service's dot pulses and its row says "Degraded today" |
 | Outage | As degraded, in critical, "Down today"; a product that wants a count on the rail's Services entry sets `badge` in `src/app.config.ts` (the sample sets none) |

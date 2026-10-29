@@ -47,7 +47,7 @@ export function pageSpecs(): { file: string; route: string }[] {
 export type AgentQuestion = { question: string; asked: string };
 
 /**
- * What a page specification says under `## Agents` → `### What the agent does here` (FR-42): the line
+ * What a page specification says under `## Agents` → `### What the agent does here`: the line
  * `Protagonist: <name>.`, and the list items `- "<question>" — <what the prepared query is asked>`. A list item in
  * another form is kept in `stray`, so a rule can name it. Null when the specification has no such section.
  */

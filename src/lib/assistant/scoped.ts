@@ -14,7 +14,7 @@ import type { AnyCollection } from '@/lib/collection';
 
 /**
  * `collection` with the operations this person may not perform left off, so the tool builder never builds a write tool
- * for one (FR-17). It changes the copy it is given, so the collection a page and the assistant share is untouched.
+ * for one. It changes the copy it is given, so the collection a page and the assistant share is untouched.
  */
 async function scopedOps(handed: AnyCollection, scope: AccessScope, name: string): Promise<AnyCollection> {
   for (const op of ['create', 'update', 'remove'] as const) {
@@ -25,7 +25,7 @@ async function scopedOps(handed: AnyCollection, scope: AccessScope, name: string
 
 /**
  * The collection the assistant is handed for one of the caller's collections, in the one order that is correct: a copy,
- * an agent's member create forced to role Member with no add-ons (FR-12), and then the operations this person may not
+ * an agent's member create forced to role Member with no add-ons, and then the operations this person may not
  * perform left off (`scopedOps`). The order matters and was wrong once: narrowing before the members create override
  * put `create` back for a caller who may not create at all, so a Member was offered `create_members` — hence this
  * naming, which a check can drive.

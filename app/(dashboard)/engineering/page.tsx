@@ -22,7 +22,7 @@ const readNow = cache(() => nowTool.read({}));
  * The page asks its feature before it renders — the rail's hiding is presentation, not this gate — then the masthead
  * renders and the title, the line under it and the body read inside their own boundaries, as Home's and Usage's do.
  * Each fallback takes the room of what it waits for, and so does `loading.tsx`, so the body starts at one height from
- * the first frame to the last. The twelve parts are one boundary: a part with a boundary of its own would be written
+ * the first frame to the last. The thirteen parts are one boundary: a part with a boundary of its own would be written
  * after the others.
  */
 export default async function NowPage() {

@@ -34,7 +34,6 @@ import {
 import { Unread, unreadTile } from './unread';
 
 const linkClass = 'row-link inline-flex items-center gap-1 font-medium text-ink hover:text-accent-ink';
-/** "02 Oct": a day's label under its column. */
 const RUN_PARTS = [
   { key: 'passed', label: 'Passed', tone: 'neutral' },
   { key: 'skipped', label: 'Skipped', tone: 'warning' },

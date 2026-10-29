@@ -37,7 +37,7 @@ A customer is named by its name across the product, and wherever it is, the name
 
 | State | What shows |
 |---|---|
-| Loading | `loading.tsx`: the masthead as the page will have it, the trail, a heading that holds "Customer", read out and not drawn, since the customer's name is not known yet, the sentence's block (`LoadingPage` with `sentence`) and the room of the line under it (`FactsRoom`, passed as `description`); then the five parts' shapes Under `refusal: 'absent'` the masthead names nothing (`gatedLoading`), since it is drawn before the gate answers. |
+| Loading | `loading.tsx`: the masthead as the page will have it, the trail, a heading that holds "Customer", read out and not drawn, since the customer's name is not known yet, the sentence's block (`LoadingPage` with `sentence`) and the room of the line under it (`FactsRoom`, passed as `description`); then the five parts' shapes. Under `refusal: 'absent'` the masthead names nothing (`gatedLoading`), since it is drawn before the gate answers. |
 | Default | The status dot is `neutral` when active or left, `accent` on a trial, `critical` past due |
 | Left | A customer that has left still has its page: headed by the day it left, and zeros for its 30 days and its 14, since the days they cover hold nothing of it; "What it asks for" says no request came in the 30 days |
 | Quiet in the log | "Its latest requests" says in one line that no sampled request is from it: the log is a sample of the last hour and a half |

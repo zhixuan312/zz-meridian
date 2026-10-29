@@ -65,12 +65,12 @@ export function walk(root: string, dir: string, ext: RegExp, out: string[] = [])
 const sourceOf = (tree: LayerTree, file: string) => blankedText(fs.readFileSync(path.join(tree.root, file), 'utf8'));
 
 // ── presentation does not read ───────────────────────────────────────────────────────────────────────
-/** The five vocabulary modules FR-4 lets what is drawn take a value from, by name. */
+/** The five vocabulary modules what is drawn may take a value from, by name. */
 export const VOCABULARY = ['roles.ts', 'features.ts', 'sample.ts', 'request-methods.ts', 'live-actions.ts'];
 
 /**
  * A value import resolving under `src/data/` from `src/views/**` or `src/components/**`, naming any module other than
- * the five vocabulary modules of FR-4. A type import is erased before anything runs, so it is not a read; `app/` is the
+ * the five vocabulary modules. A type import is erased before anything runs, so it is not a read; `app/` is the
  * entry that assembles an answer rather than presentation, so it is not scanned. Comments are blanked first, so a
  * documented import in prose is not a violation.
  */
@@ -92,10 +92,10 @@ export function presentationDoesNotRead(tree: LayerTree): RuleProblem[] {
 /**
  * A `.query(` call on a code line of `app/**`, `src/logic/**`, `src/views/**` or `src/lib/**`: a page, a view, a logic
  * module or a lib module reads through `read()`, `readAll()` or `aggregate()`, so the caller's access applies. Comments
- * are blanked first, so a `.query(` a document quotes in prose is not a violation. The FR-9 sites that must query
+ * are blanked first, so a `.query(` a document quotes in prose is not a violation. The sites that must query
  * directly state it on the call's own line as `allow-no-direct-query: <reason>`, which `scripts/check.ts` prints as an
  * escape: a list of sites by line number here would point at whatever a comment added above them moved the call under,
- * and its own count was wrong the moment a line moved. FR-9's other two sites live in `src/data/access.ts`, which this
+ * and its own count was wrong the moment a line moved. The other two sites live in `src/data/access.ts`, which this
  * rule does not govern.
  */
 export function noDirectQuery(tree: LayerTree): RuleProblem[] {

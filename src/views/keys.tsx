@@ -31,10 +31,12 @@ import { keysContext } from '@/logic/keys-context';
 
 type Draft = { name: string; env: 'live' | 'test'; scopes: Scope[] };
 
-/** The server actions arrive as props: the page owns them, the view only calls them and refreshes the route. */
-/** `now` is the read's observation time, so "last used" is never fresher than the data. */
-/** `may` is what the page asked of the action table, so a control the person may not use is not drawn at all, and */
-/** nothing says why. Defaults allow both, for a view mounted on its own. */
+/**
+ * The server actions arrive as props: the page owns them, the view only calls them and refreshes the route. `now` is the
+ * read's observation time, so "last used" is never fresher than the data. `may` is what the page asked of the action
+ * table, so a control the person may not use is not drawn at all, and nothing says why. Defaults allow both, for a view
+ * mounted on its own.
+ */
 export function KeysView({ rows, now, revisions, createKey, revokeKey, may = { create: true, revoke: true } }: { rows: PublicKey[]; now: string; revisions?: Revisions; createKey: (draft: Draft) => Promise<{ ok: true; key: PublicKey & { secret: string } } | { ok: false; error: string }>; revokeKey: (id: string) => Promise<{ ok: true } | { ok: false; error: string }>; may?: { create: boolean; revoke: boolean } }) {
   useShareView(keysContext(rows, now, SCOPES));
   const router = useRouter();

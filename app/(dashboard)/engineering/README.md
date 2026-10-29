@@ -59,7 +59,7 @@ Every row stacks in reading order, the Featured metric first, then "Services, no
 
 | State | What shows |
 |---|---|
-| Loading | `loading.tsx`: the parts' shapes, the Featured metric's room first, under a masthead that takes the room the page's takes, so the body does not move when the page arrives. `LoadingPage` draws the kicker, the heading that holds "Now", read out and not drawn, with the sentence's block (`sentence`), the room of the line under the title (`lead`) and the freshness. The page's own fallbacks take the same room Under `refusal: 'absent'` the masthead names nothing (`gatedLoading`), since it is drawn before the gate answers. |
+| Loading | `loading.tsx`: the parts' shapes, the Featured metric's room first, under a masthead that takes the room the page's takes, so the body does not move when the page arrives. `LoadingPage` draws the kicker, the heading that holds "Now", read out and not drawn, with the sentence's block (`sentence`), the room of the line under the title (`lead`) and the freshness. The page's own fallbacks take the same room. Under `refusal: 'absent'` the masthead names nothing (`gatedLoading`), since it is drawn before the gate answers. |
 | Empty (nothing has arrived yet) | Every read answered and none holds a record of any part (`nothingArrived` in `src/logic/now-context.ts`): the body is one card, "No services yet", no part is drawn, and the page is headed by its name |
 | No service yet, other records | The parts that have records stand, and "Services, now" says no service is monitored yet |
 | No complete day of compute yet | The compute was read and holds no day before today: "Compute in use" says no complete day of compute is recorded yet, and the context states no compute and no unknown about it |

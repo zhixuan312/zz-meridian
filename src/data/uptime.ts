@@ -1,5 +1,5 @@
 /**
- * The sample's one derived answer (AC-3.8): each service's uptime, worked out from the days its own record keeps,
+ * The sample's one derived answer: each service's uptime, worked out from the days its own record keeps,
  * rather than read from the uptime stored beside them. The days are a field of the service's row; the `days` collection
  * is the company's daily request totals and has nothing to do with a service's uptime.
  *
