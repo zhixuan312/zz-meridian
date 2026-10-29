@@ -26,7 +26,7 @@ export function create(o: CreateOptions): number {
   const name = brand.name ?? path.basename(root).replace(/[-_]+/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
   brand = effectiveBrand({ ...brand, name });
   if (run(process.execPath, ['scripts/brand.ts', ...brandArgs(brand), '--product'], root).status !== 0) {
-    return fail('scripts/brand.ts failed (above); the template is copied, so fix the cause and run it again with the same flags');
+    return fail(`scripts/brand.ts failed (above). ${root} holds the unbranded template and nothing else: fix the cause, delete the folder and run zz-meridian create again with the same flags`);
   }
 
   // pnpm installs from the template's lockfile, with install scripts off (pnpm-workspace.yaml). Without pnpm, corepack

@@ -346,7 +346,11 @@ Rename or move them, then run adopt again.`);
   const brandDirs = () => ['tokens', 'src/styles'].flatMap((d) => listFiles(root, d));
   const existed = new Set(brandDirs());
   const b = run(process.execPath, ['scripts/brand.ts', ...brandArgs(brand), '--existing'], root);
-  if (b.status !== 0) return fail('scripts/brand.ts failed (above); the files are copied, so fix the cause and run it again with the same flags');
+  if (b.status !== 0) {
+    // From a clean tree, git takes back exactly what adopt wrote; with --allow-dirty it would take the team's changes too.
+    const back = o.allowDirty ? 'remove what adopt wrote (git status shows it beside your own changes)' : 'put the tree back (git restore . && git clean -fd removes only what adopt wrote, since it started clean)';
+    return fail(`scripts/brand.ts failed (above) after the files were copied, and the manifest and agent files are not written. Fix the cause, ${back}, and run zz-meridian adopt again with the same flags`);
+  }
 
   // The project's own AGENTS.md keeps every byte and gains the managed block; the brief is the team's, written only when absent.
   // Neither is a Meridian file, so neither is recorded in the manifest.
