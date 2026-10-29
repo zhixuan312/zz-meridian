@@ -33,6 +33,7 @@ describe('every collection answers aggregate', () => {
   });
 
   it('groups each collection by a field of its own, and every group equals the rows of that value', async () => {
+    let grouped = 0;
     for (const c of collections) {
       const all = await every(c.name);
       if (!all.length) continue;
@@ -47,7 +48,10 @@ describe('every collection answers aggregate', () => {
         expect(g.values.n, `${c.name} ${facet}=${g.key}`).toBe(mine.length);
         near(g.values.s, sum(mine.map((x) => Number(x[field]))));
       }
+      grouped++;
     }
+    // A project whose collections hold no text facet beside a number has nothing here to group: say so, never pass empty.
+    expect(grouped, 'no collection has a text field and a number field to group by').toBeGreaterThan(0);
   });
 
 });
@@ -100,8 +104,6 @@ describe('aggregateRows', () => {
 
   it('returns at most 50 groups however many are asked for', () => {
     const many = Array.from({ length: 80 }, (_, i) => ({ id: `r${i}`, k: `k${i}`, v: i }));
-    let groups = -1;
-    try { groups = aggregateRows(many, { group: { field: 'k' }, top: 80, measures: [{ name: 's', agg: 'sum', field: 'v' }] }).groups.length; } catch { groups = 0; }
-    expect(groups).toBeLessThanOrEqual(50);
+    expect(aggregateRows(many, { group: { field: 'k' }, top: 80, measures: [{ name: 's', agg: 'sum', field: 'v' }] }).groups).toHaveLength(50);
   });
 });
