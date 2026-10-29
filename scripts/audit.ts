@@ -81,6 +81,8 @@ const EMBEDS = ATLAS ? [] : asked ? asked.filter(isEmbed) : found.filter(isEmbed
 // 320 is the narrowest width WCAG's reflow (1.4.10) asks content to hold: a small phone, or 1280px at 400% zoom. Below
 // the sample's 390 only it cut a line under a title that did not hold it (2026-10-27).
 const WIDTHS = ATLAS ? [1440, 390] : [2560, 1440, 1024, 768, 390, 320];
+/** An embed is drawn in a host's frame, at a desktop and a narrow host's column. */
+const EMBED_WIDTHS = [720, 420];
 const THEMES = ['dark', 'light'];
 if (args.includes('--list')) {
   console.log([...ROUTES, ...EMBEDS.map((r) => `${r} (embed)`)].join('\n'));
@@ -427,10 +429,14 @@ const run = async (route: string, width: number, theme: string, embed: boolean) 
   }
 };
 for (const route of ROUTES) for (const w of WIDTHS) for (const t of THEMES) await run(route, w, t, false);
-for (const route of EMBEDS) for (const w of [720, 420]) for (const t of THEMES) await run(route, w, t, true);
+for (const route of EMBEDS) for (const w of EMBED_WIDTHS) for (const t of THEMES) await run(route, w, t, true);
 page.close();
 console.log('\nDesign metrics at 1440:\n' + metrics.join('\n'));
-console.log(`\naudit: ${failures} issues across ${ROUTES.length + EMBEDS.length} routes, at ${WIDTHS.join(', ')}px in ${THEMES.join(' and ')}`);
+const across = [
+  ...(ROUTES.length || !EMBEDS.length ? [`${ROUTES.length} page${ROUTES.length === 1 ? '' : 's'} at ${WIDTHS.join(', ')}px`] : []),
+  ...(EMBEDS.length ? [`${EMBEDS.length} embed${EMBEDS.length === 1 ? '' : 's'} at ${EMBED_WIDTHS.join(', ')}px`] : []),
+];
+console.log(`\naudit: ${failures} issues across ${across.join(' and ')}, in ${THEMES.join(' and ')}`);
 // Said in the last line as well as in its own FAIL: a count of issues over a run that could not reach every route is
 // not the same evidence as one over a run that did, and the number alone reads as if it were.
 if (unmeasuredRoutes.length) console.log(`audit: ${unmeasuredRoutes.length} of those routes could not be measured at all, and are counted one each:\n  ${unmeasuredRoutes.join('\n  ')}`);
