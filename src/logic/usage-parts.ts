@@ -13,15 +13,13 @@ import type { DailyPoint, Endpoint, Totals } from '@/data/sample';
 import type { UsageFigures } from '@/data/usage';
 import { first, periods, record, type Fact } from '@/lib/facts';
 import { formatCompact } from '@/lib/format';
+import { shiftDay } from '@/lib/format-date';
 import { PERIOD_DAYS, type Period } from '@/lib/period';
 import { HISTORY_UNREAD, handed, inDays, type PageHead } from './fact-insight';
 import { weekdayAverages } from './home-parts';
 import { usageLine, usageTitle, type UsageData } from './usage-context';
 
-const DAY = 86_400_000;
 const count = (n: number) => n.toLocaleString('en-US');
-/** The day `n` days after `date` (before it when negative), YYYY-MM-DD. */
-const shift = (date: string, n: number) => new Date(Date.parse(`${date}T00:00:00Z`) + n * DAY).toISOString().slice(0, 10);
 
 /**
  * The facts of the period, each from a rule of `src/lib/facts.ts` over every complete day kept, in this order, at
@@ -41,7 +39,7 @@ function periodFacts(history: readonly DailyPoint[], days: number): Fact[] {
     requests[busiest].date >= from ? record(requests.slice(0, busiest + 1).map((d) => d.value), { needs: rules.recordNeedsPeriods, what: 'day of requests', format: count, day: requests[busiest].date }) : null,
     // Where a person can see the first day: Home's year, opened at it.
     passed ? handed(passed, `/?period=all&day=${passed.day}`) : null,
-    week && shift(week.friday, -4) >= from ? record(weeks.map((w) => w.value), { needs: rules.recordNeedsPeriods, what: 'weekday average', format: (n) => `${count(Math.round(n))} requests a day`, day: week.friday, week: true }) : null,
+    week && shiftDay(week.friday, -4) >= from ? record(weeks.map((w) => w.value), { needs: rules.recordNeedsPeriods, what: 'weekday average', format: (n) => `${count(Math.round(n))} requests a day`, day: week.friday, week: true }) : null,
   ].filter((f): f is Fact => f !== null).map((f) => (f.kind === 'first' ? f : handed(f)));
 }
 

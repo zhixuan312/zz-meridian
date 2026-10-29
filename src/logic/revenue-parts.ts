@@ -11,7 +11,7 @@ import { facts as rules } from '@/app.config';
 import { PLANS, type CustomerRecord, type DailyPoint, type Model, type Plan, type Totals, type UsageRow } from '@/data/sample';
 import { record } from '@/lib/facts';
 import { formatCost, formatPercent } from '@/lib/format';
-import { dayOf, formatDate } from '@/lib/format-date';
+import { dayOf, formatDate, shiftDay } from '@/lib/format-date';
 import { PERIOD_DAYS, type Period } from '@/lib/period';
 import { customerFigures, kept, sentMore, week } from './customers-context';
 import { windowsOf } from './home-parts';
@@ -27,11 +27,8 @@ const WORTH_LINES = 4;
 const TRIAL_DAYS = 14;
 const MOVE_DAYS = 30;
 
-const DAY = 86_400_000;
 const sum = (xs: readonly number[]) => xs.reduce((a, b) => a + b, 0);
 const cents = (n: number) => Math.round(n * 100) / 100;
-/** The day `n` days after `date` (before it when negative), YYYY-MM-DD. */
-const shift = (date: string, n: number) => new Date(Date.parse(`${date}T00:00:00Z`) + n * DAY).toISOString().slice(0, 10);
 const RANK: Record<Plan, number> = { Starter: 0, Scale: 1, Enterprise: 2 };
 /** The stage a customer stands on, and the stage above each. */
 const stageOf = (c: Pick<CustomerRecord, 'status' | 'plan'>): Stage => (c.status === 'trial' ? 'On a trial' : c.plan);
@@ -60,7 +57,7 @@ function yearAgoOf(history: readonly DailyPoint[], series: readonly DailyPoint[]
   const n = PERIOD_DAYS[period];
   if (!n || series.length < n) return null;
   const byDate = new Map(history.map((d) => [d.date, d]));
-  const before = series.map((d) => byDate.get(shift(d.date, -364)));
+  const before = series.map((d) => byDate.get(shiftDay(d.date, -364)));
   const year = before.every((d) => d !== undefined) ? (before as DailyPoint[]) : null;
   const window = year ?? (history.length >= 2 * n ? history.slice(0, n) : null);
   const then = window ? sum(window.map((d) => d.revenue)) : 0;
@@ -114,7 +111,7 @@ function ladderOf(rows: readonly CustomerRecord[], counted: readonly CustomerRec
     });
     return { label, shown, others: all.slice(named.length).map((c) => c.revenue) };
   });
-  const to = shift(today, -1), from = shift(to, -(MOVE_DAYS - 1));
+  const to = shiftDay(today, -1), from = shiftDay(to, -(MOVE_DAYS - 1));
   const inside = (d: string | null) => d !== null && d >= from && d <= to;
   const joined = counted.filter((c) => inside(c.joined)).length;
   const movedUp = counted.filter((c) => inside(c.planSince) && c.previousPlan !== null && RANK[c.plan] > RANK[c.previousPlan]).length;
@@ -135,7 +132,7 @@ function worthOf(counted: readonly CustomerRecord[], today: string): WorthLine[]
     const c = owing[0];
     lines.push({ text: owing.length === 1 ? `${c.name} is past due, billed ${formatCost(c.revenue)} in 30 days` : `${owing.length} customers are past due, the largest ${c.name}, billed ${formatCost(c.revenue)} in 30 days`, customer: named(c) });
   }
-  const until = shift(today, TRIAL_DAYS);
+  const until = shiftDay(today, TRIAL_DAYS);
   const ending = counted.filter((c) => c.status === 'trial' && c.trialEnds !== null && c.trialEnds >= today && c.trialEnds <= until).sort((a, b) => a.trialEnds!.localeCompare(b.trialEnds!) || b.revenue - a.revenue);
   if (ending.length) {
     const c = ending[0];

@@ -14,6 +14,7 @@ import { z } from 'zod';
 import { app } from '@/app.config';
 import type { AggregateQuery, AggregateResult, AggregateValues, Condition, Query } from '@/lib/collection';
 import { formatCost, plural } from '@/lib/format';
+import { shiftDay } from '@/lib/format-date';
 
 export type ExploreOp = 'eq' | 'ne' | 'in' | 'lt' | 'gt';
 type ExploreBucket = 'day' | 'week' | 'month' | 'weekday';
@@ -226,8 +227,6 @@ export function exploreSchema<I>(query: PreparedQuery<I>, rights: ExploreRights 
   });
 }
 
-const DAY = 86_400_000;
-const shift = (day: string, days: number) => new Date(Date.parse(`${day}T00:00:00Z`) + days * DAY).toISOString().slice(0, 10);
 const number = new Intl.NumberFormat('en-US', { maximumFractionDigits: 2 });
 const MONEY = 'money';
 /** The unit as the model is told it: money is in the product's currency. */
@@ -312,9 +311,9 @@ export async function runExplore<I>(query: PreparedQuery<I>, input: unknown, rig
   const windowOf = (src: string, before: boolean): AggregateQuery['window'] => {
     const field = q.sources[src].date;
     if (field === undefined || period === undefined) return undefined;
-    if (period === 'all') return { field, from: '0001-01-01', to: shift(today, -1) };
+    if (period === 'all') return { field, from: '0001-01-01', to: shiftDay(today, -1) };
     const n = DAYS[period];
-    return before ? { field, from: shift(today, -2 * n), to: shift(today, -n - 1) } : { field, from: shift(today, -n), to: shift(today, -1) };
+    return before ? { field, from: shiftDay(today, -2 * n), to: shiftDay(today, -n - 1) } : { field, from: shiftDay(today, -n), to: shiftDay(today, -1) };
   };
   const ask = (src: string, before: boolean): AggregateQuery => {
     const t = q.sources[src];
@@ -428,8 +427,8 @@ export async function runExplore<I>(query: PreparedQuery<I>, input: unknown, rig
   // The drill: one read of at most twenty rows, the latest first, each with its address. Rows that do not fit 3,000
   // characters are dropped from the end, and a line says how many.
   const window: Condition[] = w && period !== 'all'
-    ? [{ field: w.field, op: 'gt', value: `${shift(w.from, -1)}T23:59:59.999Z` }, { field: w.field, op: 'lt', value: shift(w.to, 1) }]
-    : w ? [{ field: w.field, op: 'lt', value: shift(w.to, 1) }] : [];
+    ? [{ field: w.field, op: 'gt', value: `${shiftDay(w.from, -1)}T23:59:59.999Z` }, { field: w.field, op: 'lt', value: shiftDay(w.to, 1) }]
+    : w ? [{ field: w.field, op: 'lt', value: shiftDay(w.to, 1) }] : [];
   const read = rows === 0 ? { rows: [], total: 0 } : await io.read(s.collection, { where: [...conds, ...window], limit: rows, ...(s.date ? { sort: { field: s.date, dir: 'desc' as const } } : {}) });
   const columns = s.drill.columns.filter((c) => !hidden.has(c));
 

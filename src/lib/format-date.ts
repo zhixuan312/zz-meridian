@@ -101,6 +101,11 @@ function calendarParts(date: string): Record<string, string> | null {
   return Object.fromEntries(DAY_FMT.formatToParts(Date.UTC(Number(m[1]), Number(m[2]) - 1, Number(m[3]))).map((p) => [p.type, p.value]));
 }
 
+/** The calendar day `n` days after `date` (before it when negative), both YYYY-MM-DD: whole days, whatever the timezone. */
+export function shiftDay(date: string, n: number): string {
+  return new Date(Date.parse(`${date}T00:00:00Z`) + n * 86_400_000).toISOString().slice(0, 10);
+}
+
 /** `Thu 1 Oct 2026`: a calendar date as the day it names, with its weekday. */
 export function formatCalendarDate(date: string): string {
   const p = calendarParts(date);
