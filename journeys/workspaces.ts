@@ -395,12 +395,12 @@ if (import.meta.main) {
   }
 
   try {
-    await step("Main to a request's own page, with the rail on Business", missing(REQUESTS) ?? (has('/business') ? null : '/business is not in the navigation'), async () => {
+    await step("Main to a request's own page, with the rail on Business", missing(REQUESTS, W.business.homeHref), async () => {
       await go(a, 'member', HOME);
       await settle(a, 'member', HOME, 'main');
       // Home's Business card opens the Business home; the rail then names Business and offers Requests.
-      await press(a, { role: 'link', hrefRe: '^/business$', within: '[role="region"][aria-label="Business"]' });
-      await settle(a, 'member', '/business', 'business');
+      await press(a, { role: 'link', hrefRe: `^${W.business.homeHref}$`, within: `[role="region"][aria-label="${W.business.label}"]` });
+      await settle(a, 'member', W.business.homeHref, 'business');
       await pressRail(a, 'member', REQUESTS);
       await settle(a, 'member', REQUESTS, 'business');
       // The masthead's trail names the parent as a link, then the page as the current one; the palette hints the parent.
