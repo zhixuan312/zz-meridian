@@ -155,38 +155,40 @@ async function removeStep(scope: AccessScope, ids: string[]): Promise<number> {
 }
 
 /**
- * What one member row offers the caller reading it, from the same rules the boundary enforces: the three action
- * capabilities, the role and add-on choices for this member, and — when the row is the caller's own — the first firing
- * self rule's message, in the frozen order. A row withheld because its member is an Owner gives no reason: the page
- * draws no control there and says nothing about who holds it, and a change forced past the page is still refused with
+ * What each member row offers the caller reading it, by id, from the same rules the boundary enforces: the three action
+ * capabilities, the role and add-on choices for that member, and — when the row is the caller's own — the first firing
+ * self rule's message, in the frozen order. The caller is resolved and re-read once for every row; each target is
+ * re-read from the roster. A row withheld because its member is an Owner gives no reason: the page draws no control
+ * there and says nothing about who holds it, and a change forced past the page is still refused with
  * `REFUSALS.changeOwner`.
  */
-export async function memberAccess(id: string): Promise<MemberRowAccess> {
+export async function memberAccess(ids: readonly string[]): Promise<Record<string, MemberRowAccess>> {
   const scope = await currentScope();
-  const caller = scope ? await memberById(scope.subjectId) : null;
+  const [caller, targets] = await Promise.all([scope ? memberById(scope.subjectId) : null, Promise.all(ids.map((id) => memberById(id)))]);
   const active = caller !== null && caller.status === 'Active';
   const grants: ReadonlySet<Grant> = active ? effective(caller.role, caller.addOns) : new Set<Grant>();
   const mayUpdate = grants.has('members:update');
   const mayRemove = grants.has('members:remove');
   const owns = grants.has('workspace:update');
-  const self = active && caller.id === id;
-  const target = await memberById(id);
-  const ownerTarget = target?.role === 'Owner';
-  const blocked = ownerTarget && !owns;
-  const changeRole = mayUpdate && target !== null && !self && !blocked;
-  return {
-    changeRole,
-    suspend: changeRole && target.status === 'Active',
-    reactivate: changeRole && target.status === 'Suspended',
-    remove: mayRemove && target !== null && !self && !blocked,
-    roles: changeRole ? assignableRoles(grants) : [],
-    addOns: changeRole ? ADD_ONS : [],
-    reason: !active
-      ? undefined
-      : mayUpdate && self ? REFUSALS.ownRole
-        : (mayUpdate || mayRemove) && self ? REFUSALS.ownStatus
-          : undefined,
+  const rowAccess = (id: string, target: Member | null): MemberRowAccess => {
+    const self = active && caller.id === id;
+    const blocked = target?.role === 'Owner' && !owns;
+    const changeRole = mayUpdate && target !== null && !self && !blocked;
+    return {
+      changeRole,
+      suspend: changeRole && target.status === 'Active',
+      reactivate: changeRole && target.status === 'Suspended',
+      remove: mayRemove && target !== null && !self && !blocked,
+      roles: changeRole ? assignableRoles(grants) : [],
+      addOns: changeRole ? ADD_ONS : [],
+      reason: !active
+        ? undefined
+        : mayUpdate && self ? REFUSALS.ownRole
+          : (mayUpdate || mayRemove) && self ? REFUSALS.ownStatus
+            : undefined,
+    };
   };
+  return Object.fromEntries(ids.map((id, i) => [id, rowAccess(id, targets[i])]));
 }
 
 /** The main roles the caller may put on an invitation: an Owner every one, an Admin everything but Owner. */

@@ -111,7 +111,7 @@ describe('a page that withholds a control says nothing about who holds it', () =
   it("an Owner's row, for an Admin, who may change every member but an Owner: no reason that names who can", async () => {
     jar.value = PERSONA.admin;
     const owner = (await readAll('members')).rows.find((m) => (m as { role: string }).role === 'Owner') as { id: string };
-    const may = await memberAccess(owner.id);
+    const may = (await memberAccess([owner.id]))[owner.id];
     expect(may.changeRole).toBe(false);
     expect(whoCan(may.reason ?? '')).toEqual([]);
     expect(whoCan(await served(MembersPage()))).toEqual([]);

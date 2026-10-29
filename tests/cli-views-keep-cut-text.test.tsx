@@ -44,7 +44,7 @@ const VIEWS: Record<string, () => Promise<ReactElement>> = {
   keys: async () => <KeysView rows={((await read('keys')).rows as ApiKey[]).slice(0, 4).map((k) => ({ ...k, name: `${LONG} ${k.name}`, owner: `${PERSON} ${k.owner}` }))} now={now} createKey={none} revokeKey={none} />,
   members: async () => {
     const members = ((await read('members', {})).rows as Member[]).slice(0, 4);
-    const access = Object.fromEntries(await Promise.all(members.map(async (m) => [m.id, await memberAccess(m.id)] as const)));
+    const access = await memberAccess(members.map((m) => m.id));
     return <MembersView rows={members.map((m) => ({ ...m, name: `${LONG} ${m.name}`, email: m.email.replace('@', `@${DOMAIN}.`) }))} now={now} actions={{ invite: none, setStatus: none, remove: none, assignRole: none } as never} access={access} roles={await invitableRoles()} />;
   },
   tickets: async () => <TicketsView rows={(await readTickets()).rows.slice(0, 4).map((t) => ({ ...t, title: `${LONG} ${t.title}`, service: `${LONG} ${t.service}`, assignee: `${PERSON} ${t.assignee ?? ''}` }))} now={now} services={[]} assignees={[]} createTicket={none as never} updateTicket={none as never} />,

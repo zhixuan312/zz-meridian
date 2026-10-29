@@ -67,7 +67,7 @@ const BODIES: Record<string, () => Promise<ReactElement>> = {
   members: async () => {
     const { rows, observedAt } = await read('members', { sort: { field: 'joined', dir: 'desc' } });
     const members = rows as Member[];
-    const access = Object.fromEntries(await Promise.all(members.map(async (m) => [m.id, await memberAccess(m.id)] as const)));
+    const access = await memberAccess(members.map((m) => m.id));
     return <MembersView rows={members} now={observedAt} actions={{ invite: none, setStatus: none, remove: none, assignRole: none } as never} access={access} roles={await invitableRoles()} />;
   },
   keys: async () => {

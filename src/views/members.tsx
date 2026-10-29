@@ -325,7 +325,7 @@ export function MembersView({ rows, now, revisions, actions, access, roles, work
           description="Their role and add-ons decide what they can change in the workspace."
           footer={<><SheetClose asChild><Button variant="ghost">Cancel</Button></SheetClose><Button variant="primary" busy={pending} onClick={assign}>Save role</Button></>}
         >
-          {/* Exactly the choices `memberAccess(id)` allowed this row, read when the sheet opened; a refusal reopens it here. */}
+          {/* Exactly the choices `memberAccess` allowed this row, read when the sheet opened; a refusal reopens it here. */}
           {changing ? (
             <div className="flex flex-col gap-6">
               {roleError ? <Banner tone="critical" title="Role not changed">{roleError}</Banner> : null}

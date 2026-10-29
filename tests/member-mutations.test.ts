@@ -21,13 +21,11 @@ beforeEach(() => { jar.value = undefined; });
 describe('the member boundary', () => {
   it('lets an Admin act on a Member and not on an Owner or themselves', async () => {
     as('members_2');
-    const member = await memberAccess('members_4');
+    const { members_4: member, members_1: owner, members_2: self } = await memberAccess(['members_4', 'members_1', 'members_2']);
     expect([member.changeRole, member.suspend, member.remove]).toEqual([true, true, true]);
-    const owner = await memberAccess('members_1');
     expect([owner.changeRole, owner.suspend, owner.remove]).toEqual([false, false, false]);
     // An Owner's row gives an Admin no reason: the page draws nothing there, and a forced change is refused below.
     expect(owner.reason).toBeUndefined();
-    const self = await memberAccess('members_2');
     expect([self.changeRole, self.suspend, self.remove]).toEqual([false, false, false]);
     // The row reason is the first firing rule in the frozen order, and the assignment rule precedes the suspension one.
     expect(self.reason).toBe('You cannot change your own role.');
@@ -36,7 +34,7 @@ describe('the member boundary', () => {
   it('gives an Owner every role and an Admin everything but Owner', async () => {
     as('members_1');
     expect([...(await invitableRoles())]).toEqual(['Owner', 'Admin', 'Member', 'Viewer']);
-    expect([...((await memberAccess('members_4')).roles)]).toEqual(['Owner', 'Admin', 'Member', 'Viewer']);
+    expect([...(await memberAccess(['members_4'])).members_4.roles]).toEqual(['Owner', 'Admin', 'Member', 'Viewer']);
     as('members_2');
     expect([...(await invitableRoles())]).toEqual(['Admin', 'Member', 'Viewer']);
   });
