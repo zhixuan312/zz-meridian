@@ -163,9 +163,12 @@ describe('finalize', () => {
     expect(parseJournal(read(path.join(root, '.meridian/history/0.5.0', archived), 'state.json')).retired.map((r) => r.path)).toEqual([ui('k')]);
     const next = ctx(root, { version: '0.5.1', base: release('0.5.0', withoutK), target: release('0.5.1', withoutK) });
     expect(start(next.c, { ...opts, allowDirty: true })).not.toBe(1);
-    // What this case is about is that the retired kept file does not become the next update's problem: the file is
-    // still the team's after it. (The session does come back needing resolution, as any update over a project with
-    // local edits does, so that return code says nothing about the retirement either way.)
+    // What this case is about is that the retired kept file does not become the next update's problem: the next
+    // session leaves it as the team's own, neither a collision nor a removal, and the file is still theirs. (The session
+    // does come back needing resolution, as any update over a project with local edits does, so its return code says
+    // nothing about the retirement.)
+    const k = parseJournal(read(path.join(root, '.meridian/update/0.5.1'), 'state.json')).operations.filter((o) => o.path === ui('k'));
+    expect(k.map((o) => [o.disposition, o.action])).toEqual([['team-preserved', 'leave']]);
     expect(read(root, ui('k'))).toBe('k-ours');
   });
 
