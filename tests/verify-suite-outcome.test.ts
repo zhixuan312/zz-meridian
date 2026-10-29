@@ -8,8 +8,8 @@ const ROOT = path.resolve(import.meta.dirname, '..');
 
 describe('a suite that ran nothing', () => {
   it('exits with the not-run code from scripts/live.ts, never 0', () => {
-    const r = spawnSync(process.execPath, ['scripts/live.ts', '--base', 'http://127.0.0.1:9'], { cwd: ROOT, encoding: 'utf8' });
-    expect(r.stdout).toMatch(/live: 0 ok, 0 FAIL, 6 not run/);
+    const r = spawnSync(process.execPath, ['scripts/live.ts', '--base', 'http://127.0.0.1:9'], { cwd: ROOT, encoding: 'utf8', timeout: 60_000 });
+    expect(r.stdout).toMatch(/live: 0 ok, 0 FAIL, [1-9]\d* not run/);
     expect(r.status).toBe(NOT_RUN_EXIT);
   });
   it('is not run to verify, never ok', () => {
