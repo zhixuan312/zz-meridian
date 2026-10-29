@@ -17,6 +17,7 @@ Every release of ZZ Meridian, newest first. Versions follow semver: a removed or
 
 - **`AssistantPanel` takes `draft` and `onDraft`**, so the column keeps an unsent message across a close; without them the panel keeps its own.
 - **Badge exports `TONE_FILL`**, the one tone-to-fill map, which Progress now reads.
+- **A persona in `scripts/verify.config.ts` takes `pressRoutes`**, the routes `verify --as` presses as that person. The leg pressed four of the sample's routes written into `verify.ts`, so a product whose role-dependent pages are others had none of them pressed; a persona without the field now has every route it expects pressed. The template's personas name the sample's four.
 
 ### Fixed
 
@@ -41,6 +42,7 @@ Every release of ZZ Meridian, newest first. Versions follow semver: a removed or
 - **Specs and previews.** Card READMEs, preview notes and examples say what the components draw (container steps in rem with their 14px-rem widths, the Appearance menu's order, the required `nav` in the Rail and palette examples, the Proposal's lit edge, the chart roles), and preview controls do what they say.
 - **The utility rules of the check read no comment line**, as the colour rule already did.
 - **Data.** A failed request is one definition, every 5xx and the 429, so a 520 from a proxy is an error to the agent's "Errors and limits" measure as it is on the page. The live stream no longer opens with an EventSource `retry` that `src/lib/live.ts` cancels by reconnecting on its own clock. The Atlas front door draws the sample's own busiest routes, states no change in its first week, and draws the easing curves from the motion tokens.
+- **Checks.** The link check fetches as the persona the page was opened as, so a route only that person may see is no longer reported as broken. A Chrome that closes its connection fails every waiting command at once with the reason, instead of each timing out after 30 s, and a socket that never opens fails after 30 s instead of hanging. A server that answers 5xx while it starts is asked again after a pause, not at once. The assistant walk and the live checks treat Members, API keys and Settings as the sample's only while their files still hold the people, copy and title the walk reads, so a product that kept a page and put in its own words gets `n/a`, not a failure that reads as a product bug.
 
 ## [0.35.0] · 2026-10-29
 
