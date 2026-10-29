@@ -46,6 +46,7 @@ Every release of ZZ Meridian, newest first. Versions follow semver: a removed or
 - **`update` and `status` order sessions by version number**, so a project holding 0.9.0 and 0.10.0 names 0.9.0 first; as text, 0.10.0 sorted first.
 - **`/requests?sort=constructor`** (or any name every object inherits) falls back to the default sort instead of throwing.
 - **Every view's context names `app.timezone`**, where Request, Requests, Services, Home and Revenue printed their times in it and labelled them UTC.
+- **A date written without a time prints as the day it names** in `formatDate`, `formatShortDate` and `formatDay`, as the calendar formatters already did: a product whose `app.timezone` is west of UTC printed `2026-10-01` as 30 Sept.
 - **The bell's customers-past-due alert is timed by the latest to fall past due**, not "just now" on every open.
 - **The Customers figure is defined as what it counts**, customers that have not left, not workspaces "with a live key".
 - **A customer is not compared with an error rate the product never measured**, over days that hold no request; an active member who has never signed in is named among the quiet ones, as never seen.
