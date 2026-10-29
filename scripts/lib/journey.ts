@@ -70,7 +70,7 @@ export const SNAP = `(selector) => location.href + '|' + deepMatches(selector).s
  * sessionStorage, so a page that loads anew (not a client navigation) is timed from the same press.
  */
 const INSTRUMENT = `${DEEP_SOURCE}\n${DEEP_MATCHES}\n(() => {
-  const nav = window.__nav = { prefetches: [], spec: null, t0: undefined, res: {}, expect: null, snap: ${SNAP} };
+  const nav = window.__nav = { prefetches: [], spec: null, t0: undefined, res: {}, expect: null, snap: ${SNAP}, frames: 0 };
   const KEY = '__nav_journey';
   try { const kept = JSON.parse(sessionStorage.getItem(KEY) ?? 'null'); if (kept) { nav.spec = kept.spec; nav.t0 = kept.t0; } } catch { /* a fresh journey */ }
   // The press arrived: at the route, or under it for a route that redirects to a child (/things to /things/a, #97), once
@@ -83,6 +83,7 @@ const INSTRUMENT = `${DEEP_SOURCE}\n${DEEP_MATCHES}\n(() => {
     try { sessionStorage.setItem(KEY, JSON.stringify({ spec: nav.spec, t0: nav.t0 })); } catch { /* kept in memory */ }
   }, true);
   const frame = (ts) => {
+    nav.frames++;
     const s = nav.spec;
     if (s && nav.t0 != null) {
       const at = Math.max(0, Math.round(performance.timeOrigin + ts - nav.t0));
@@ -446,13 +447,22 @@ export async function journey(page: Page, device: Device, start: string, route: 
   // The shell: the path and the target heading.
   const shellMs = await result(page, 'shell', t0 + cap);
   if (shellMs === null) {
-    const now = await page.eval<{ p: string; h: string; there: boolean }>(`({ p: location.pathname, h: document.querySelector('h1')?.textContent.trim() ?? '', there: window.__nav.arrived() })`);
+    const read = `(() => { const n = window.__nav, h = document.querySelector('h1')?.textContent.trim() ?? '';
+      return { p: location.pathname, h, there: n.arrived(), shown: h !== '' && (n.spec?.title ? h.includes(n.spec.title) : h !== n.before), timed: n.t0 != null, frames: n.frames }; })()`;
+    const now = await page.eval<{ p: string; h: string; there: boolean; shown: boolean; timed: boolean; frames: number }>(read);
+    // The target's heading on screen and still no time is the clock's failure, not the page's: say which part of it.
+    let stalled = false;
+    if (now.there && now.shown && now.timed) { await sleep(100); stalled = (await page.eval<number>('window.__nav.frames')) === now.frames; }
+    const wrong = now.there && !now.shown;
     // A press that left for an address neither the route nor under it says where it went: a redirect the journey cannot follow.
-    const why = now.there ? `${now.p} shows the heading "${now.h}", not "${check?.title}"`
+    const why = wrong ? `${now.p} shows the heading "${now.h}", not "${check?.title}"`
+      : now.there && !now.timed ? `${now.p} shows the heading "${now.h}", but the page there was never told when ${route} was pressed, so nothing timed it`
+      : stalled ? `${now.p} shows the heading "${now.h}", but the page stopped drawing frames, so nothing timed it`
+      : now.there ? `${now.p} showed the heading "${now.h}" only after the ${cap} ms the journey waits`
       : now.p === start ? `still on ${now.p} ${cap} ms after pressing ${route}`
       : `pressing ${route} led to ${now.p}, which is neither ${route} nor a page under it`;
     return {
-      shell: { fail: new Fail(now.there ? 'wrong-result' : 'never-ready', why) },
+      shell: { fail: new Fail(wrong ? 'wrong-result' : 'never-ready', why) },
       data: check ? { fail: new Fail('never-ready', 'the shell was never reached') } : null,
       interactive: check ? { fail: new Fail('never-ready', 'the shell was never reached') } : null,
       drawerMs,
