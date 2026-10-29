@@ -37,3 +37,9 @@ describe("every view's context names the product's reporting timezone, never UTC
     });
   }
 });
+
+// The assistant reads a collection's description as its tool's; a day or an hour there is in the same zone.
+describe("every collection's description names the product's reporting timezone, never UTC", async () => {
+  const { collections } = await import('@/data/collections');
+  for (const c of collections) it(c.name, () => expect(c.description).not.toMatch(/\(UTC\b/));
+});
