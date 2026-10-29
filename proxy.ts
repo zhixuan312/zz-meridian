@@ -8,8 +8,8 @@ import { COOKIE, MAX_AGE, expiresOf, gated, token } from '@/lib/demo-gate';
  * life renews it.
  */
 export function proxy(req: NextRequest) {
-  if (!gated()) return NextResponse.next();
   const { pathname } = req.nextUrl;
+  if (!gated() || ICONS.has(pathname)) return NextResponse.next();
   const value = req.cookies.get(COOKIE)?.value;
   if (pathname === '/sign-in') {
     const res = NextResponse.next();
@@ -32,6 +32,10 @@ export function proxy(req: NextRequest) {
   return res;
 }
 
+/** The tab's icon and the icon files a browser asks for on its own, by their exact paths: a prefix would also leave open
+ *  any route whose name begins like one (`/icons`, `/iconography`). */
+const ICONS = new Set(['/icon', '/favicon.ico', '/apple-icon']);
+
 export const config = {
-  matcher: ['/((?!_next/static|_next/image|favicon|icon|apple-icon).*)'],
+  matcher: ['/((?!_next/static|_next/image).*)'],
 };

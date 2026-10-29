@@ -62,3 +62,12 @@ describe('the demo gate, with DEMO_PASSWORD', () => {
     expect(proxy(request('/sign-in', { cookie: token(), method: 'POST' })).cookies.get(COOKIE)).toBeUndefined();
   });
 });
+
+describe('the paths the gate leaves open', () => {
+  beforeEach(() => { process.env.DEMO_PASSWORD = 'pw'; });
+  const open = (path: string) => !proxy(request(path)).headers.get('location');
+  it("are the app's icon and the browser's own icon files, never a route whose name begins like one", () => {
+    for (const path of ['/icon', '/favicon.ico', '/apple-icon']) expect(open(path), path).toBe(true);
+    for (const path of ['/icons', '/iconography/marks', '/favicons', '/apple-icons/x', '/']) expect(open(path), path).toBe(false);
+  });
+});
