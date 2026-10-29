@@ -1,10 +1,10 @@
 // @vitest-environment node
 // Named cli-* so the payload leaves it out: it copies the template's own tracked files.
-import { execFileSync, spawnSync } from 'node:child_process';
+import { spawnSync } from 'node:child_process';
 import fs from 'node:fs';
-import os from 'node:os';
 import path from 'node:path';
-import { afterAll, describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vitest';
+import { templateCopy } from './cli-template-copy';
 
 /**
  * The specification of every page with a view tool says what the agent does there (FR-42, AC-14.5): under `## Agents`, a
@@ -13,15 +13,7 @@ import { afterAll, describe, expect, it } from 'vitest';
  * without its form, and asks nothing of Settings, the Atlas or an embed view, which have no view tool of their own.
  */
 const ROOT = path.resolve(import.meta.dirname, '..');
-const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'zz-agent-section-'));
-afterAll(() => fs.rmSync(dir, { recursive: true, force: true }));
-for (const f of execFileSync('git', ['ls-files', '-z', '--cached', '--others', '--exclude-standard'], { cwd: ROOT, encoding: 'utf8' }).split('\0').filter((x) => x && !x.startsWith('cli/'))) {
-  const src = path.join(ROOT, f);
-  if (!fs.lstatSync(src, { throwIfNoEntry: false })?.isFile()) continue;
-  fs.mkdirSync(path.dirname(path.join(dir, f)), { recursive: true });
-  fs.copyFileSync(src, path.join(dir, f));
-}
-fs.symlinkSync(path.join(ROOT, 'node_modules'), path.join(dir, 'node_modules'));
+const dir = templateCopy('zz-agent-section-');
 const check = () => spawnSync(process.execPath, ['scripts/check.ts'], { cwd: dir, encoding: 'utf8' }).stdout;
 const USAGE = 'app/(dashboard)/usage/README.md';
 const SETTINGS = 'app/(dashboard)/settings/README.md';

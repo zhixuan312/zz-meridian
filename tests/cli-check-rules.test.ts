@@ -1,21 +1,13 @@
 // @vitest-environment node
 // Named cli-* so the payload leaves it out: it copies the template's own tracked files.
-import { execFileSync, spawnSync } from 'node:child_process';
+import { spawnSync } from 'node:child_process';
 import fs from 'node:fs';
-import os from 'node:os';
 import path from 'node:path';
-import { afterAll, afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it } from 'vitest';
+import { templateCopy } from './cli-template-copy';
 
 const ROOT = path.resolve(import.meta.dirname, '..');
-const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'zz-rules-'));
-afterAll(() => fs.rmSync(dir, { recursive: true, force: true }));
-for (const f of execFileSync('git', ['ls-files', '-z', '--cached', '--others', '--exclude-standard'], { cwd: ROOT, encoding: 'utf8' }).split('\0').filter((x) => x && !x.startsWith('cli/'))) {
-  const src = path.join(ROOT, f);
-  if (!fs.lstatSync(src, { throwIfNoEntry: false })?.isFile()) continue;
-  fs.mkdirSync(path.dirname(path.join(dir, f)), { recursive: true });
-  fs.copyFileSync(src, path.join(dir, f));
-}
-fs.symlinkSync(path.join(ROOT, 'node_modules'), path.join(dir, 'node_modules'));
+const dir = templateCopy('zz-rules-');
 /** Every path a case planted or removed, put back after each case, so one red leaves the next case the template's copy. */
 const touched = new Set<string>();
 const put = (f: string, text: string) => { touched.add(f); fs.mkdirSync(path.dirname(path.join(dir, f)), { recursive: true }); fs.writeFileSync(path.join(dir, f), text); };

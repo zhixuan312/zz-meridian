@@ -1,11 +1,11 @@
 // @vitest-environment node
 // Named cli-* so the payload leaves it out: it copies the template's own tracked files.
 import { createHash } from 'node:crypto';
-import { execFileSync, spawnSync } from 'node:child_process';
+import { spawnSync } from 'node:child_process';
 import fs from 'node:fs';
-import os from 'node:os';
 import path from 'node:path';
-import { afterAll, describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vitest';
+import { templateCopy } from './cli-template-copy';
 
 /**
  * A managed file the team changed and named nowhere is said by the gate, not first by the next update. Between releases
@@ -15,15 +15,7 @@ import { afterAll, describe, expect, it } from 'vitest';
  * gate carries it; it is a warning, never a problem.
  */
 const ROOT = path.resolve(import.meta.dirname, '..');
-const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'zz-drift-'));
-afterAll(() => fs.rmSync(dir, { recursive: true, force: true }));
-for (const f of execFileSync('git', ['ls-files', '-z', '--cached', '--others', '--exclude-standard'], { cwd: ROOT, encoding: 'utf8' }).split('\0').filter((x) => x && !x.startsWith('cli/'))) {
-  const src = path.join(ROOT, f);
-  if (!fs.lstatSync(src, { throwIfNoEntry: false })?.isFile()) continue;
-  fs.mkdirSync(path.dirname(path.join(dir, f)), { recursive: true });
-  fs.copyFileSync(src, path.join(dir, f));
-}
-fs.symlinkSync(path.join(ROOT, 'node_modules'), path.join(dir, 'node_modules'));
+const dir = templateCopy('zz-drift-');
 const check = () => spawnSync(process.execPath, ['scripts/check.ts'], { cwd: dir, encoding: 'utf8' });
 const hash = (f: string) => `sha256-${createHash('sha256').update(fs.readFileSync(path.join(dir, f))).digest('hex')}`;
 const put = (f: string, text: string) => { fs.mkdirSync(path.dirname(path.join(dir, f)), { recursive: true }); fs.writeFileSync(path.join(dir, f), text); };

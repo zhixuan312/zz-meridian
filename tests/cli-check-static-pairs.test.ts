@@ -1,11 +1,11 @@
 // @vitest-environment node
 // Named cli-* so the payload leaves it out: it copies the template's own tracked files and reads scripts/check.ts.
 import { createHash } from 'node:crypto';
-import { execFileSync, spawnSync } from 'node:child_process';
+import { spawnSync } from 'node:child_process';
 import fs from 'node:fs';
-import os from 'node:os';
 import path from 'node:path';
-import { afterAll, describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vitest';
+import { templateCopy } from './cli-template-copy';
 
 /**
  * Every rule `scripts/check.ts` judges, and the two states that hold it: a copy of the template changed by the smallest
@@ -180,15 +180,7 @@ describe('every rule the static gate judges is listed, and every place it can fa
 });
 
 // ── The copy of the template the edits are made in ───────────────────────────────────────────────────
-const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'zz-static-pairs-'));
-afterAll(() => fs.rmSync(dir, { recursive: true, force: true }));
-for (const f of execFileSync('git', ['ls-files', '-z', '--cached', '--others', '--exclude-standard'], { cwd: ROOT, encoding: 'utf8' }).split('\0').filter((x) => x && !x.startsWith('cli/'))) {
-  const src = path.join(ROOT, f);
-  if (!fs.lstatSync(src, { throwIfNoEntry: false })?.isFile()) continue;
-  fs.mkdirSync(path.dirname(path.join(dir, f)), { recursive: true });
-  fs.copyFileSync(src, path.join(dir, f));
-}
-fs.symlinkSync(path.join(ROOT, 'node_modules'), path.join(dir, 'node_modules'));
+const dir = templateCopy('zz-static-pairs-');
 const touched = new Set<string>();
 const put = (f: string, text: string) => {
   touched.add(f);
