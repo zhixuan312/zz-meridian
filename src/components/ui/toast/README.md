@@ -30,14 +30,15 @@ Width 380px (the viewport less 32px on phones); stack of at most three, 8px apar
 | State | Spec |
 |---|---|
 | Entering | Rises 12px and scales from 98% over `dur-enter` 320ms `ease-out` |
-| Shown | 5 seconds; 8 seconds with an action |
+| Shown | 5 seconds; 8 seconds with an action (`UNDO_MS`); neither counts while the pointer is over the stack or focus is in it |
 | Leaving | Removed; the stack closes up |
 
 ## Behaviour
 
-- `toast({ tone, title, description, action })` from anywhere; the Toaster is mounted once in the providers.
+- `toast({ tone, title, description, action, onClose })` from anywhere; the Toaster is mounted once in the providers.
 - A fourth toast pushes the oldest out.
 - Running the action dismisses the toast.
+- `onClose` runs once when the toast leaves, whichever way: its time ran out, the action or Dismiss was pressed, or a fourth toast pushed it out. A change held for an Undo commits there, so its window is the toast's own and waits with it.
 
 ## Surfaces
 

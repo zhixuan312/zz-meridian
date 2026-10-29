@@ -118,42 +118,33 @@ describe('members, status and removal', () => {
     expect(within(rowOf(m.name)).getByText('Active')).toBeTruthy();
     expect(toasts.at(-1)).toMatchObject({ tone: 'critical', title: 'Change not made', description: 'Owners cannot be suspended.' });
   });
-  it('takes a removed member away at once, sends the removal when its Undo closes, and brings them back with the reason when it is refused', async () => {
-    vi.useFakeTimers({ shouldAdvanceTime: true });
-    try {
-      const d = deferred();
-      const remove = vi.fn(() => d.promise);
-      render(view(withActions({ remove })));
-      await openMenu(m.name);
-      fireEvent.click(await screen.findByRole('menuitem', { name: 'Remove' }));
-      await waitFor(() => expect(screen.queryByText(m.name)).toBeNull());
-      expect(toasts.at(-1)).toMatchObject({ tone: 'neutral', title: `${m.name} removed`, action: { label: 'Undo' } });
-      expect(remove).not.toHaveBeenCalled();
-      await act(async () => { vi.advanceTimersByTime(8000); });
-      expect(remove).toHaveBeenCalledWith(m.id);
-      expect(screen.queryByText(m.name)).toBeNull();
-      await act(async () => { d.resolve({ ok: false, error: 'The last owner cannot be removed.' }); });
-      expect(await screen.findByText(m.name)).toBeTruthy();
-      expect(toasts.at(-1)).toMatchObject({ tone: 'critical', title: 'Change not made', description: 'The last owner cannot be removed.' });
-    } finally {
-      vi.useRealTimers();
-    }
+  it('takes a removed member away at once, sends the removal when its toast closes, and brings them back with the reason when it is refused', async () => {
+    const d = deferred();
+    const remove = vi.fn(() => d.promise);
+    render(view(withActions({ remove })));
+    await openMenu(m.name);
+    fireEvent.click(await screen.findByRole('menuitem', { name: 'Remove' }));
+    await waitFor(() => expect(screen.queryByText(m.name)).toBeNull());
+    expect(toasts.at(-1)).toMatchObject({ tone: 'neutral', title: `${m.name} removed`, action: { label: 'Undo' } });
+    expect(remove).not.toHaveBeenCalled();
+    // The Toaster closes it when its time runs out, the time it waits while someone is on it included.
+    await act(async () => { (toasts.at(-1) as unknown as { onClose: () => void }).onClose(); });
+    expect(remove).toHaveBeenCalledWith(m.id);
+    expect(screen.queryByText(m.name)).toBeNull();
+    await act(async () => { d.resolve({ ok: false, error: 'The last owner cannot be removed.' }); });
+    expect(await screen.findByText(m.name)).toBeTruthy();
+    expect(toasts.at(-1)).toMatchObject({ tone: 'critical', title: 'Change not made', description: 'The last owner cannot be removed.' });
   });
-  it('brings a removed member back on Undo and sends nothing', async () => {
-    vi.useFakeTimers({ shouldAdvanceTime: true });
-    try {
-      const remove = vi.fn(noop);
-      render(view(withActions({ remove })));
-      await openMenu(m.name);
-      fireEvent.click(await screen.findByRole('menuitem', { name: 'Remove' }));
-      await waitFor(() => expect(screen.queryByText(m.name)).toBeNull());
-      await act(async () => { (toasts.at(-1) as unknown as { action: { onClick: () => void } }).action.onClick(); });
-      expect(await screen.findByText(m.name)).toBeTruthy();
-      await act(async () => { vi.advanceTimersByTime(8000); });
-      expect(remove).not.toHaveBeenCalled();
-    } finally {
-      vi.useRealTimers();
-    }
+  it('brings a removed member back on Undo and sends nothing, when the toast then closes too', async () => {
+    const remove = vi.fn(noop);
+    render(view(withActions({ remove })));
+    await openMenu(m.name);
+    fireEvent.click(await screen.findByRole('menuitem', { name: 'Remove' }));
+    await waitFor(() => expect(screen.queryByText(m.name)).toBeNull());
+    const t = toasts.at(-1) as unknown as { action: { onClick: () => void }; onClose: () => void };
+    await act(async () => { t.action.onClick(); t.onClose(); });
+    expect(await screen.findByText(m.name)).toBeTruthy();
+    expect(remove).not.toHaveBeenCalled();
   });
   it('does not bring back a member whose removal was sent when the tab was hidden, and says it was sent', async () => {
     const remove = vi.fn(noop);
@@ -172,6 +163,8 @@ describe('members, status and removal', () => {
     await act(async () => { undo.onClick(); });
     expect(screen.queryByText(m.name)).toBeNull();
     expect(toasts.at(-1)).toMatchObject({ tone: 'neutral', title: `${m.name}'s removal was already sent` });
+    (toasts.find((t) => t.title === `${m.name} removed`) as unknown as { onClose: () => void }).onClose();
+    expect(remove).toHaveBeenCalledOnce();
   });
   it('changes a role through the sheet, showing it at once, and reopens the sheet with the reason when it is refused', async () => {
     const d = deferred();

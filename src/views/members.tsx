@@ -19,7 +19,7 @@ import { Input } from '@/components/ui/input';
 import { Menu, MenuContent, MenuItem, MenuSeparator, MenuTrigger } from '@/components/ui/menu';
 import { Select } from '@/components/ui/select';
 import { Sheet, SheetClose, SheetContent } from '@/components/ui/sheet';
-import { toast, UNDO_MS } from '@/components/ui/toast';
+import { toast } from '@/components/ui/toast';
 import { AskAbout } from '@/components/patterns/ask-about';
 import { DataTable, type Column } from '@/components/patterns/data-table';
 import { dayOf, formatDate, formatRelative } from '@/lib/format-date';
@@ -75,9 +75,9 @@ export function MembersView({ rows, now, revisions, actions, access, roles, work
   const inFlight = useRef(new Set<string>());
   const tempId = useRef(0);
   const [inviting, setInviting] = useState(false);
-  /** Removals waiting out their Undo: hidden at once, sent when the Undo window closes. */
+  /** Removals waiting out their Undo: hidden at once, sent when their toast closes. */
   const [held, setHeld] = useState<ReadonlySet<string>>(new Set());
-  const holds = useRef(new Map<string, ReturnType<typeof setTimeout>>());
+  const holds = useRef(new Set<string>());
   const [invite, setInvite] = useState(BLANK);
   const [errors, setErrors] = useState<{ name?: string; email?: string }>({});
   /** Why the server did not send the last invitation: said inside the sheet it was sent from, never in a toast over it. */
@@ -117,22 +117,21 @@ export function MembersView({ rows, now, revisions, actions, access, roles, work
   };
 
   const release = (id: string) => setHeld((h) => { const next = new Set(h); next.delete(id); return next; });
-  /** Send a held removal now: when its Undo window closes, or when the page goes away first. */
+  /** Send a held removal when its toast closes, unless Undo took it back or the page already sent it. */
   const commit = (m: Shown) => {
-    clearTimeout(holds.current.get(m.id));
-    holds.current.delete(m.id);
+    if (!holds.current.delete(m.id)) return;
     act(m.id, { type: 'remove', id: m.id }, () => actions.remove(m.id), null);
     release(m.id);
   };
   /**
    * Remove takes the person away at once and offers Undo, as a deleted row in a list does, instead of asking first: a
-   * removal is the kind of change a person makes on purpose and regrets by accident. It is sent when the Undo window
-   * closes; a refusal brings them back with the reason, like any other change here.
+   * removal is the kind of change a person makes on purpose and regrets by accident. It is sent when its toast closes,
+   * so the Undo window is the toast's and waits with it; a refusal brings them back with the reason, like any other change here.
    */
   const remove = (m: Shown) => {
     if (holds.current.has(m.id) || inFlight.current.has(m.id)) return;
     setHeld((h) => new Set(h).add(m.id));
-    holds.current.set(m.id, setTimeout(() => commit(m), UNDO_MS));
+    holds.current.add(m.id);
     toast({
       tone: 'neutral',
       title: `${m.name} removed`,
@@ -141,8 +140,9 @@ export function MembersView({ rows, now, revisions, actions, access, roles, work
       // rather than showing a member the server no longer has.
       action: { label: 'Undo', onClick: () => {
         if (!holds.current.has(m.id)) return toast({ tone: 'neutral', title: `${m.name}'s removal was already sent`, description: 'The page sent it when it was left, before Undo.' });
-        clearTimeout(holds.current.get(m.id)); holds.current.delete(m.id); release(m.id);
+        holds.current.delete(m.id); release(m.id);
       } },
+      onClose: () => commit(m),
     });
   };
   // A removal waiting for its Undo is sent the moment the page goes away, never dropped: when the router hides the page
@@ -153,8 +153,7 @@ export function MembersView({ rows, now, revisions, actions, access, roles, work
     // back and says why (the toast lands on the page the person moved to, and the refresh re-reads the rows), and a
     // connection that dropped is not a removal either.
     const flush = () => {
-      for (const id of [...live.keys()]) {
-        clearTimeout(live.get(id));
+      for (const id of [...live]) {
         live.delete(id);
         void actions.remove(id)
           .catch((): Result => ({ ok: false, error: 'The change did not reach the server. Try again.' }))
