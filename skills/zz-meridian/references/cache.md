@@ -416,8 +416,8 @@ export async function chromeAccess(): Promise<ChromeAccess> {
 /**
  * The pages' read: authorized, scoped and cached. A page calls `read()`, or `aggregate()` for a figure over every row;
  * it cannot choose a tenant, and the cached helpers below see only the whole scope, the collection's name and the
- * normalized query. A write calls `updateTag(collectionTag(tenantId, name))` after it commits, which drops every user's
- * cached variants of that collection, rows and aggregates alike, and nobody else's.
+ * normalized query. A write calls `invalidate(collectionTag(tenantId, name))` (write-boundary.ts) after it commits,
+ * which drops every user's cached variants of that collection, rows and aggregates alike, and nobody else's.
  *
  * Each read has two forms. `read`, `readAll` and `aggregate` resolve the request's own scope; `readInScope`,
  * `readAllInScope` and `aggregateInScope` take a scope a module already holds. The resolving form delegates, so there is

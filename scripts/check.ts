@@ -571,7 +571,7 @@ if (fourLayers) {
 // ── What is drawn imports no read, and a read is written in one place ────────────────────────────────
 // `presentation does not read` refuses a value import from `@/data` in `src/views/**` or `src/components/**` naming any
 // module but FR-4's five vocabulary modules; `no direct query` refuses a `.query(` call in `app/**`, `src/logic/**`,
-// `src/views/**` or `src/lib/**` outside the five FR-9 sites this scope governs. Both scans live in
+// `src/views/**` or `src/lib/**` on a line that states no `allow-no-direct-query:` escape, as FR-9's five sites do. Both scans live in
 // `scripts/lib/layer-rules.ts`, beside the helpers they share with this file, so this managed file stays under the line
 // ceiling a project may enforce. Like the rules above, a line may state its escape and the check prints it.
 if (fourLayers) {
