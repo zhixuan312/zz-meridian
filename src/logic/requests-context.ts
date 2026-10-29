@@ -3,6 +3,7 @@
  * same account of the matching requests, and of what they have in common. The tiles' definitions live here too.
  */
 import type { LoggedRequest, readRequests } from '@/data/requests';
+import { app } from '@/app.config';
 import { formatDuration, formatPercent } from '@/lib/format';
 import { formatDateTime } from '@/lib/format-date';
 import { SMALL_SAMPLE } from '@/lib/insight';
@@ -42,7 +43,7 @@ export function requestsContext(data: RequestsData, shown = data.rows.length): S
   const filters = describeFilters(state);
   const address = requestsAddress(state);
   const M = REQUEST_METRICS;
-  const span = s.span ? `received ${formatDateTime(s.span.from)} to ${formatDateTime(s.span.to)} UTC` : 'none received';
+  const span = s.span ? `received ${formatDateTime(s.span.from)} to ${formatDateTime(s.span.to)} ${app.timezone}` : 'none received';
   const scope = `${filters ? `requests with ${filters}` : 'every request'}, ${span}`;
   const thin = s.halves.before < SMALL_SAMPLE || s.halves.after < SMALL_SAMPLE;
   const facts: Fact[] = [

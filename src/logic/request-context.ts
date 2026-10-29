@@ -3,6 +3,7 @@
  * usual for its route, as both agents read it.
  */
 import { usageOf, type RequestRow, type Span } from '@/data/sample';
+import { app } from '@/app.config';
 import { formatCost, formatDuration, formatPercent } from '@/lib/format';
 import { formatDateTime } from '@/lib/format-date';
 import type { Insight, SharedContext } from '@/lib/shared-context';
@@ -41,7 +42,7 @@ export function requestContext({ request: r, trace, routeP95, statusText, payloa
     view: 'request',
     title: `Request ${r.id}`,
     address: requestAddress(r.id),
-    scope: `one request, received ${formatDateTime(r.at)} UTC`,
+    scope: `one request, received ${formatDateTime(r.at)} ${app.timezone}`,
     facts: [
       { label: 'Request', value: `${r.method} ${r.route}${r.model ? `, served by ${r.model}` : ''}` },
       { label: 'Status', value: `${r.status} ${statusText}` },
@@ -54,6 +55,6 @@ export function requestContext({ request: r, trace, routeP95, statusText, payloa
     ],
     insights,
     unknowns: [`One request is one sample: explore_request counts the sampled requests to its route by status class, customer and region, and every route's last 30 days is on Now's Slowest endpoints (/engineering). Replaying a request is the person's to do on this page; an agent cannot.`],
-    freshness: `Read ${formatDateTime(now)} UTC.`,
+    freshness: `Read ${formatDateTime(now)} ${app.timezone}.`,
   };
 }

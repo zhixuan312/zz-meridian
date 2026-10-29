@@ -3,7 +3,7 @@
  * account of every service, its last 90 days and how long it has run, and of every incident, open and resolved, led by
  * the title the page is headed by and the days inside the band.
  */
-import { facts as rules } from '@/app.config';
+import { app, facts as rules } from '@/app.config';
 import type { Incident } from '@/components/patterns/incident-card';
 import { afterStart } from '@/logic/after-start';
 import type { Service } from '@/components/patterns/status-list';
@@ -173,7 +173,7 @@ export function servicesContext(data: ServicesData): SharedContext {
     for (const i of open.slice(0, OPEN_STATED)) {
       const latest = i.updates.reduce<Incident['updates'][number] | undefined>((m, u) => (!m || u.at > m.at ? u : m), undefined);
       const who = [i.owner && `with ${i.owner}`, i.ticket && `tracked in "${i.ticket.title}"`].filter(Boolean).join(', ');
-      insights.push({ text: `Open incident "${i.title}" on ${i.service}, ${i.severity}, ${i.state}${who ? `, ${who}` : ''}: open for ${lastedOf(i, now)} so far, since ${formatDateTime(i.started)} UTC${latest ? `; latest update ${afterStart(i.started, latest.at)}: "${firstSentence(latest.text)}"` : ''}.`, evidence: '/services' });
+      insights.push({ text: `Open incident "${i.title}" on ${i.service}, ${i.severity}, ${i.state}${who ? `, ${who}` : ''}: open for ${lastedOf(i, now)} so far, since ${formatDateTime(i.started)} ${app.timezone}${latest ? `; latest update ${afterStart(i.started, latest.at)}: "${firstSentence(latest.text)}"` : ''}.`, evidence: '/services' });
     }
     if (open.length > OPEN_STATED) insights.push({ text: moreOpen(open.length, OPEN_STATED) });
     if (!open.length) insights.push({ text: 'No incident is open.' });

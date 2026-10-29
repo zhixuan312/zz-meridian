@@ -5,6 +5,7 @@
  * says them, so the page's client builds the same text from the same data.
  */
 import type { DailyPoint, Totals } from '@/data/sample';
+import { app } from '@/app.config';
 import { formatCompact, formatCost, formatDuration, formatPercent, ordinal } from '@/lib/format';
 import { formatDate, formatDay } from '@/lib/format-date';
 import { sameWeekdayBaseline, weekday, median } from '@/lib/insight';
@@ -211,7 +212,7 @@ export function homeContext(data: HomeData, index: number | null = null): Shared
   const { period, series } = data;
   const address = `/?period=${period}${index !== null && series[index] ? `&day=${series[index].date}` : ''}`;
   const label = PERIOD_LABEL[period].toLowerCase();
-  const scope = series.length ? `${label}, ${formatDate(series[0].date)} to ${formatDate(series.at(-1)!.date)} (UTC days)` : label;
+  const scope = series.length ? `${label}, ${formatDate(series[0].date)} to ${formatDate(series.at(-1)!.date)} (${app.timezone} days)` : label;
   const M = { ...HOME_METRICS, ...COMPANY_METRICS };
   const pct = (n: number) => formatPercent(n, 1);
   const count = (n: number) => n.toLocaleString('en-US');

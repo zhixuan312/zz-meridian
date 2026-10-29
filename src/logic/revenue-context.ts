@@ -4,7 +4,7 @@
  * words. The figures are worked out on the server (`revenueData` in `src/logic/revenue-parts.ts`); this file only says
  * them, so the page's client builds the same text from the same data.
  */
-import { facts as rules } from '@/app.config';
+import { app, facts as rules } from '@/app.config';
 import type { CustomerRecord, DailyPoint, Plan } from '@/data/sample';
 import { periods, record } from '@/lib/facts';
 import { FORMATTERS, formatCompact, formatCost, formatPercent, plural } from '@/lib/format';
@@ -205,7 +205,7 @@ export function revenueContext(data: RevenueData, order: WallOrder = 'largest'):
   const M = REVENUE_METRICS;
   const label = PERIOD_LABEL[period].toLowerCase();
   const series = days?.series ?? [];
-  const scope = `${series.length ? `${label}, ${between(series[0].date, series.at(-1)!.date)} (UTC days)` : label}; a customer's figures cover 30 complete days, its trend 14, this week the last 7 vs the 7 before`;
+  const scope = `${series.length ? `${label}, ${between(series[0].date, series.at(-1)!.date)} (${app.timezone} days)` : label}; a customer's figures cover 30 complete days, its trend 14, this week the last 7 vs the 7 before`;
 
   const facts: Fact[] = [];
   if (days) {
