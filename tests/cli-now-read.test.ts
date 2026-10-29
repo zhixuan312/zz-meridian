@@ -27,7 +27,6 @@ import { nowTool } from '@/logic/tools';
 
 const PERSONAS = { owner: 'members_1', admin: 'members_2', member: 'members_4', viewer: 'members_12' };
 /** What a view's context may take (tests/shared-context.test.tsx holds every view to it). */
-const BUDGET = 2600;
 
 beforeEach(() => { jar.value = undefined; fail.names.clear(); });
 
@@ -52,11 +51,11 @@ describe('what Now is handed from the product', () => {
 });
 
 describe("Now's context states engineering as it is", () => {
-  it('names its address and keeps within its budget for every person', async () => {
+  // Its budget, for every person, is held in tests/cli-context-budget.test.ts.
+  it('names its address for every person', async () => {
     for (const [who, id] of Object.entries(PERSONAS)) {
       const { context } = await as(id);
       expect(context.address, who).toBe('/engineering');
-      expect(contextText(context).length, who).toBeLessThanOrEqual(BUDGET);
     }
   });
 

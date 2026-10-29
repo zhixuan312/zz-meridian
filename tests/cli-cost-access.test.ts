@@ -19,7 +19,7 @@ vi.mock('next/navigation', () => ({
 
 import HomePage from '../app/(dashboard)/(home)/page';
 import EmbedHomePage from '../app/embed/home/page';
-import { can, collectionFor, resolveAccess, may } from '@/data/access';
+import { AccessDenied, can, collectionFor, resolveAccess, may } from '@/data/access';
 import { clock, collections } from '@/data/collections';
 import { aggregate, read } from '@/data/read';
 import { handedTo } from '@/lib/assistant/scoped';
@@ -107,7 +107,7 @@ describe('compute cost and gross margin, for a Member and a Viewer', () => {
       expect(viewed.context, id).not.toMatch(NAMED);
       // The read itself refuses, whatever asks it.
       jar.value = id;
-      await expect(read('costs'), id).rejects.toThrow();
+      await expect(read('costs'), id).rejects.toBeInstanceOf(AccessDenied);
     }
   });
 

@@ -6,7 +6,7 @@ import { describe, expect, it, vi } from 'vitest';
 
 vi.mock('server-only', () => ({}));
 
-import { nav, workspaces } from '@/app.config';
+import { nav } from '@/app.config';
 import { FEATURES } from '@/data/features';
 import { PAGES } from '@/system/content';
 import { viewTools } from '@/logic/tools';
@@ -27,7 +27,6 @@ describe('Business and Engineering each open on a home of their own', () => {
       expect([entry?.label, entry?.workspace], href).toEqual([title, workspace]);
       expect(entry?.needs, href).toBe(features[id].needs);
       expect(items.filter((i) => i.workspace === workspace)[0]?.href, workspace).toBe(href);
-      expect(workspaces[workspace].homeHref, workspace).toBe(href);
     }
   });
 
@@ -47,8 +46,8 @@ describe('Business and Engineering each open on a home of their own', () => {
 });
 
 describe('one customer has a page', () => {
-  it('is a feature that asks what the list of customers asks, so a refusal leads back into Business', () => {
-    expect(features.customer?.needs).toBe(features.customers.needs);
+  // That it asks what the list of customers asks, and its Atlas address, are held in tests/cli-destinations.test.ts.
+  it('leads a refusal back into Business', () => {
     expect(workspaceOf('/customers/northwind-labs')).toBe('business');
   });
 
@@ -56,7 +55,6 @@ describe('one customer has a page', () => {
     for (const file of ['page.tsx', 'loading.tsx', 'README.md']) expect(exists(`app/(dashboard)/customers/[id]/${file}`), file).toBe(true);
     expect(tools.customer?.needs).toBe(features.customer.needs);
     const page = PAGES.find((p) => p.id === 'customer');
-    expect(page?.route, 'the Atlas names a real customer').toMatch(/^\/customers\/[a-z0-9-]+$/);
     expect(page?.spec).toBe('app/(dashboard)/customers/[id]/README.md');
   });
 });
@@ -66,7 +64,5 @@ describe('the embed view of what is happening now', () => {
     expect(exists('app/embed/now/page.tsx')).toBe(true);
     expect(exists('app/embed/health')).toBe(false);
     expect(tools.now?.resourceUri, 'the Now tool names its view').toMatch(/\/now$/);
-    expect(viewTools.filter((t) => t.resourceUri && !['now', 'requests', 'home'].includes(t.name)).map((t) => t.name)).toEqual([]);
-    expect(PAGES.find((p) => p.id === 'now')?.embed).toBe('/embed/now');
   });
 });

@@ -10,7 +10,7 @@ vi.mock('next/headers', () => ({
 
 import fs from 'node:fs';
 import path from 'node:path';
-import { AccessDenied } from '@/data/access';
+import { AccessDenied, Unauthenticated } from '@/data/access';
 import { collections } from '@/data/collections';
 import { read } from '@/data/read';
 import { usageFigures } from '@/data/usage';
@@ -54,7 +54,7 @@ describe('the workspace is a collection', () => {
 describe('the usage figures ask for their own grants', () => {
   it('refuses the usage tool to somebody with no session', async () => {
     jar.value = 'members_999';
-    await expect(byName.usage.read({ period: '30d' })).rejects.toBeTruthy();
+    await expect(byName.usage.read({ period: '30d' })).rejects.toBeInstanceOf(Unauthenticated);
   });
 
   it('answers the figures to the people who read the dashboards', async () => {

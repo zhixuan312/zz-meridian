@@ -134,9 +134,4 @@ describe("Services' states", () => {
     while (card && !/could not be read/i.test(card.textContent ?? '')) card = card.parentElement;
     expect(card, 'the card that says so').toBeTruthy();
   });
-
-  it('keeps its context within the budget', async () => {
-    const { context } = await servicesTool.read({});
-    expect(contextText(context).length).toBeLessThanOrEqual(2600);
-  });
 });

@@ -3,7 +3,7 @@
 import { spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it } from 'vitest';
 import { templateCopy } from './cli-template-copy';
 
 /**
@@ -18,7 +18,13 @@ const check = () => spawnSync(process.execPath, ['scripts/check.ts'], { cwd: dir
 const USAGE = 'app/(dashboard)/usage/README.md';
 const SETTINGS = 'app/(dashboard)/settings/README.md';
 const original = (f: string) => fs.readFileSync(path.join(ROOT, f), 'utf8');
-const put = (f: string, text: string) => fs.writeFileSync(path.join(dir, f), text);
+/** Every path a case planted, put back after each case, so one red leaves the next case the template's copy. */
+const touched = new Set<string>();
+const put = (f: string, text: string) => { touched.add(f); fs.writeFileSync(path.join(dir, f), text); };
+afterEach(() => {
+  for (const f of touched) fs.writeFileSync(path.join(dir, f), original(f));
+  touched.clear();
+});
 /** Usage's specification with its section's body replaced by `body`, the heading kept. */
 const withSection = (body: string) => original(USAGE).replace(/(### What the agent does here\n)[\s\S]*?(?=\n### |\n## |$)/, `$1\n${body}\n`);
 
@@ -26,13 +32,14 @@ describe('a page with a view tool says what the agent does there', () => {
   it('passes the template, where all fourteen do and Settings does not', () => {
     const out = check();
     expect(out).toMatch(/^0 problems/m);
+    // Settings has an agents section and no view tool, and is asked nothing.
+    expect(original(SETTINGS)).toContain('## Agents');
     expect(original(SETTINGS)).not.toContain('### What the agent does here');
   }, 60_000);
 
   it('fails a specification without the section, naming it', () => {
     put(USAGE, original(USAGE).replace(/### What the agent does here\n[\s\S]*?(?=\n### |\n## |$)/, ''));
     expect(check()).toMatch(/app\/\(dashboard\)\/usage\/README\.md: .*What the agent does here/);
-    put(USAGE, original(USAGE));
   }, 60_000);
 
   it('fails a section with no Protagonist line, or fewer than three questions in the form', () => {
@@ -42,13 +49,6 @@ describe('a page with a view tool says what the agent does there', () => {
     expect(check()).toMatch(/app\/\(dashboard\)\/usage\/README\.md: .*three/);
     put(USAGE, withSection('Protagonist: Requests.\n\n- How many requests came at 22:00? — the hours\n- Which hours are busiest? — the hours\n- Which model? — the usage'));
     expect(check()).toMatch(/app\/\(dashboard\)\/usage\/README\.md: .*three/);
-    put(USAGE, original(USAGE));
-  }, 60_000);
-
-  it('asks nothing of a page with no view tool, though it has an agents section', () => {
-    expect(fs.readFileSync(path.join(dir, SETTINGS), 'utf8')).toContain('## Agents');
-    put(SETTINGS, `${original(SETTINGS)}\n`);
-    expect(check()).not.toMatch(/settings\/README\.md: .*What the agent does here/);
   }, 60_000);
 
   it('says it judged nothing when no page is a view tool\'s, rather than passing as if every section were right', () => {
@@ -61,7 +61,5 @@ describe('a page with a view tool says what the agent does there', () => {
     const out = check();
     expect(out).toMatch(/^judged nothing: .*what the agent does here/m);
     expect(out).not.toMatch(/usage\/README\.md: .*What the agent does here/);
-    put(registry, original(registry));
-    put(USAGE, original(USAGE));
   }, 60_000);
 });

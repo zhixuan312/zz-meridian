@@ -73,13 +73,10 @@ vi.mock('@/components/patterns/featured-metric', async (orig) => mark(await orig
 
 import NowPage from '../app/(dashboard)/engineering/page';
 import NowLoading from '../app/(dashboard)/engineering/loading';
-import { contextText } from '@/lib/shared-context';
 import { SERVICES } from '@/system/fixtures/sample';
-import { nowTool } from '@/logic/tools';
 import { servedDocument } from './cli-served';
 
 const OWNER = 'members_1';
-const VIEWER = 'members_12';
 
 beforeEach(() => { jar.value = OWNER; store.fail.clear(); store.empty.clear(); store.extra.clear(); store.only.clear(); store.live.length = 0; });
 
@@ -223,14 +220,6 @@ describe("Now's states", () => {
       while (card && !/could not be read/i.test(card.textContent ?? '')) card = card.parentElement;
       expect(card, `${title}: the card that says so`).toBeTruthy();
       expect(card!.contains(doc.querySelector('[data-card="status-list"]'))).toBe(false);
-    }
-  });
-
-  it('keeps its context within the budget for an Owner and a Viewer', async () => {
-    for (const id of [OWNER, VIEWER]) {
-      jar.value = id;
-      const { context } = await nowTool.read({});
-      expect(contextText(context).length, id).toBeLessThanOrEqual(2600);
     }
   });
 });

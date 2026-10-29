@@ -106,6 +106,12 @@ describe("each page's protagonist carries an Ask", () => {
       const { container } = render(<Tooltip.Provider><ConsoleSurface ask={() => {}}>{await BODIES[view.name]()}</ConsoleSurface></Tooltip.Provider>);
       const marked = [...container.querySelectorAll<HTMLElement>('[data-protagonist]')];
       expect(marked.map((m) => m.getAttribute('data-protagonist')), 'one protagonist, named as the specification names it').toEqual([name]);
+      // A row that places its cards (`2/3` gives its first card two columns, `1/3` its last) places what it holds
+      // directly: a child whose display is `contents` draws no box, so the span lands on nothing and the card beside it
+      // takes the room the row meant for it. A page that marks a card in such a row marks a real grid item.
+      for (const row of container.querySelectorAll<HTMLElement>('[data-split="2/3"], [data-split="1/3"]')) {
+        for (const child of row.children) expect(child.classList.contains('contents'), `a split row's child: ${child.outerHTML.slice(0, 80)}`).toBe(false);
+      }
       await waitFor(() => expect(marked[0].querySelector('button[aria-label^="Ask: "]'), 'an Ask on the protagonist').toBeTruthy());
     });
   }

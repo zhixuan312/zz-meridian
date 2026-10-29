@@ -9,7 +9,7 @@ vi.mock('next/headers', () => ({
   headers: async () => new Headers(),
 }));
 
-import { can, may, resolveAccess } from '@/data/access';
+import { Unauthenticated, can, may, resolveAccess } from '@/data/access';
 import { clock, collections, members } from '@/data/collections';
 import { aggregate, read } from '@/data/read';
 import { exploreSchema, runExplore, type ExploreIO, type ExploreRights, type PreparedQuery } from '@/lib/explore';
@@ -72,6 +72,11 @@ describe('a prepared query offers a person only what they may read', () => {
     const call = { source: 'days', measures: ['revenue'] };
     expect((await runExplore(homeExplore as PreparedQuery, call, r, io(), '/')).answer).toMatch(/USD/);
     await members.update!(['members_4'], { status: 'Suspended' });
-    await expect(runExplore(homeExplore as PreparedQuery, call, r, io(), '/')).rejects.toThrow();
+    // The refusal is the authorized aggregate's own, raised before it reads: a suspended person has no scope, so it is the
+    // sign-in one. A bare rejection was also satisfied by a run that read the rows and then threw; no row read is made.
+    const spy = { aggregate: vi.fn(aggregate), read: vi.fn(read), today: io().today };
+    await expect(runExplore(homeExplore as PreparedQuery, call, r, spy, '/')).rejects.toBeInstanceOf(Unauthenticated);
+    expect(spy.aggregate).toHaveBeenCalledTimes(1);
+    expect(spy.read).not.toHaveBeenCalled();
   });
 });

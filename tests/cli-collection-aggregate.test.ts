@@ -9,6 +9,7 @@ vi.mock('next/headers', () => ({
 }));
 
 import { collections } from '@/data/collections';
+import { AccessDenied } from '@/data/access';
 import { aggregate } from '@/data/read';
 
 /** The sample's collections answer `aggregate` as its pages read them, and the authorized read asks the person's grant (FR-41, AC-14.4). */
@@ -56,8 +57,8 @@ describe('the authorized aggregate', () => {
     expect(owner.total.values.c).toBeGreaterThan(0);
     expect(Number.isNaN(Date.parse(owner.observedAt))).toBe(false);
     jar.value = 'members_12';
-    await expect(aggregate('costs', { measures: [{ name: 'c', agg: 'sum', field: 'compute' }] })).rejects.toThrow();
-    await expect(aggregate('members', { measures: [{ name: 'n', agg: 'count' }] })).rejects.toThrow();
+    await expect(aggregate('costs', { measures: [{ name: 'c', agg: 'sum', field: 'compute' }] })).rejects.toBeInstanceOf(AccessDenied);
+    await expect(aggregate('members', { measures: [{ name: 'n', agg: 'count' }] })).rejects.toBeInstanceOf(AccessDenied);
     expect((await aggregate('days', { measures: [{ name: 'n', agg: 'count' }] })).total.values.n).toBeGreaterThan(300);
   });
 });

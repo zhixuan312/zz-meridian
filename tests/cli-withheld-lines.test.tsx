@@ -1,7 +1,6 @@
 // Named cli-* so the payload leaves it out: it renders the sample's own pages, which a product replaces.
-import { PassThrough } from 'node:stream';
 import type { ReactElement } from 'react';
-import { renderToPipeableStream, renderToStaticMarkup } from 'react-dom/server';
+import { renderToStaticMarkup } from 'react-dom/server';
 import { Tooltip } from 'radix-ui';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -29,6 +28,7 @@ import MembersPage from '../app/(dashboard)/members/page';
 import SettingsPage from '../app/(dashboard)/settings/page';
 import RecordsPreview from '@/components/templates/records/preview';
 import FormSectionPreview from '@/components/patterns/form-section/preview';
+import { servedDocument, textOf } from './cli-served';
 
 const PERSONA = { admin: 'members_2', member: 'members_4', viewer: 'members_12' } as const;
 
@@ -44,27 +44,8 @@ const WHO_CAN = [
 ];
 const whoCan = (text: string) => WHO_CAN.flatMap((re) => text.match(re)?.[0] ?? []);
 
-/** A document's text, one text node from the next by a space, so a heading and the sentence after it stay two words. */
-function textOf(html: string): string {
-  const doc = new DOMParser().parseFromString(html, 'text/html');
-  const walk = doc.createTreeWalker(doc.body, NodeFilter.SHOW_TEXT);
-  const parts: string[] = [];
-  for (let n = walk.nextNode(); n; n = walk.nextNode()) parts.push(n.textContent ?? '');
-  return parts.join(' ');
-}
-
 /** A page as it is served, every boundary resolved, as its text. */
-async function served(page: Promise<unknown> | unknown): Promise<string> {
-  const element = (await page) as ReactElement;
-  const html = await new Promise<string>((resolve, reject) => {
-    const out = new PassThrough();
-    let text = '';
-    out.on('data', (chunk) => { text += chunk; });
-    out.on('end', () => resolve(text));
-    const stream = renderToPipeableStream(<Tooltip.Provider>{element}</Tooltip.Provider>, { onAllReady: () => stream.pipe(out), onShellError: reject, onError: reject, progressiveChunkSize: Infinity });
-  });
-  return textOf(html);
-}
+const served = async (page: Promise<unknown> | unknown) => textOf(await servedDocument((await page) as ReactElement));
 
 beforeEach(() => { jar.value = undefined; });
 
@@ -128,7 +109,7 @@ describe('the patterns a product copies show a read-only state without the line'
   it('the Records template and the Form section previews', () => {
     for (const [name, Preview] of [['records', RecordsPreview], ['form-section', FormSectionPreview]] as const) {
       const html = renderToStaticMarkup(<Tooltip.Provider><Preview /></Tooltip.Provider>);
-      const text = textOf(html);
+      const text = textOf(new DOMParser().parseFromString(html, 'text/html'));
       expect(text, name).toMatch(/Read-only/);
       expect(whoCan(text), name).toEqual([]);
     }

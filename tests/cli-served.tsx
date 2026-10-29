@@ -20,3 +20,11 @@ export async function servedDocument(page: ReactNode): Promise<Document> {
   });
   return new DOMParser().parseFromString(html, 'text/html');
 }
+
+/** A document's text, one text node from the next by a space, so a heading and the sentence after it stay two words. */
+export function textOf(doc: Document): string {
+  const walk = doc.createTreeWalker(doc.body, NodeFilter.SHOW_TEXT);
+  const parts: string[] = [];
+  for (let n = walk.nextNode(); n; n = walk.nextNode()) parts.push(n.textContent ?? '');
+  return parts.join(' ');
+}

@@ -53,8 +53,6 @@ vi.mock('@/components/charts/bar-list', async (orig) => mark(await orig(), 'BarL
 import RevenuePage from '../app/(dashboard)/business/page';
 import RevenueLoading from '../app/(dashboard)/business/loading';
 import { facts } from '@/app.config';
-import { contextText } from '@/lib/shared-context';
-import { revenueTool } from '@/logic/tools';
 import { servedDocument } from './cli-served';
 
 const OWNER = 'members_1';
@@ -168,16 +166,6 @@ describe("Revenue's period control", () => {
     expect(tile(week)).not.toBe(tile(month));
     for (const title of ['Every customer, the last 14 days']) expect(part(week, title, '[data-card]').textContent).toBe(part(month, title, '[data-card]').textContent);
     expect(ladder(week).textContent).toBe(ladder(month).textContent);
-  });
-});
-
-describe("Revenue's context", () => {
-  it('fits its budget at every period', async () => {
-    for (const period of ['7d', '30d', '90d', 'all'] as const) {
-      jar.value = OWNER;
-      const { context } = await revenueTool.read({ period });
-      expect(contextText(context).length, period).toBeLessThanOrEqual(2600);
-    }
   });
 });
 

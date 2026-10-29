@@ -1,8 +1,5 @@
 // Named cli-* so the payload leaves it out: it renders the sample's own loading states and missing page, which a product replaces.
-import { PassThrough } from 'node:stream';
 import type { ReactElement } from 'react';
-import { renderToPipeableStream } from 'react-dom/server';
-import { Tooltip } from 'radix-ui';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const jar = vi.hoisted(() => ({ value: undefined as string | undefined }));
@@ -43,35 +40,21 @@ import SettingsLoading from '../app/(dashboard)/settings/loading';
 import TestsLoading from '../app/(dashboard)/tests/loading';
 import UsageLoading from '../app/(dashboard)/usage/loading';
 import RootNotFound from '../app/not-found';
+import { servedDocument, textOf } from './cli-served';
 
 const OWNER = 'members_1';
 const VIEWER = 'members_12';
 
-/** A tree as it is served, every boundary resolved. */
-async function served(node: ReactElement): Promise<string> {
-  return new Promise<string>((resolve, reject) => {
-    const out = new PassThrough();
-    let text = '';
-    out.on('data', (chunk) => { text += chunk; });
-    out.on('end', () => resolve(text));
-    const stream = renderToPipeableStream(<Tooltip.Provider>{node}</Tooltip.Provider>, { onAllReady: () => stream.pipe(out), onShellError: reject, onError: reject, progressiveChunkSize: Infinity });
-  });
-}
-
 /** What a reader meets: the text, one node from the next by a space and every run of spaces as one, and every label a screen reader or a tooltip reads out. */
-function said(html: string): { text: string; labels: string } {
-  const doc = new DOMParser().parseFromString(html, 'text/html');
-  const walk = doc.createTreeWalker(doc.body, NodeFilter.SHOW_TEXT);
-  const parts: string[] = [];
-  for (let n = walk.nextNode(); n; n = walk.nextNode()) parts.push(n.textContent ?? '');
+function said(doc: Document): { text: string; labels: string } {
   const labels = [...doc.querySelectorAll('[aria-label], [title]')].map((el) => `${el.getAttribute('aria-label') ?? ''} ${el.getAttribute('title') ?? ''}`);
-  return { text: parts.join(' ').replace(/\s+/g, ' '), labels: labels.join(' ') };
+  return { text: textOf(doc).replace(/\s+/g, ' '), labels: labels.join(' ') };
 }
 
 const escape = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 /** Whether a page's name is said: as a word of the text, or in any case inside a label ("Loading members"). */
-const names = (html: string, word: string) => {
-  const { text, labels } = said(html);
+const names = (doc: Document, word: string) => {
+  const { text, labels } = said(doc);
   return new RegExp(`\\b${escape(word)}\\b`).test(text) || new RegExp(`\\b${escape(word)}\\b`, 'i').test(labels);
 };
 
@@ -98,14 +81,14 @@ beforeEach(() => { jar.value = VIEWER; at.path = '/'; policy.refusal = 'explain'
 
 describe('a loading state, which is drawn before the gate has answered and so for anyone', () => {
   it('under explain, names its page as today', async () => {
-    for (const [route, Loading, feature] of LOADING) expect(names(await served(<Loading />), FEATURES[feature].title), route).toBe(true);
+    for (const [route, Loading, feature] of LOADING) expect(names(await servedDocument(<Loading />), FEATURES[feature].title), route).toBe(true);
   });
 
   it('under absent, names no page: neither its title nor its name, nor a line of its own', async () => {
     policy.refusal = 'absent';
     for (const [route, Loading, feature, own] of LOADING) {
-      const html = await served(<Loading />);
-      for (const word of [FEATURES[feature].title, ...own]) expect(names(html, word), `${route}: ${word}`).toBe(false);
+      const doc = await servedDocument(<Loading />);
+      for (const word of [FEATURES[feature].title, ...own]) expect(names(doc, word), `${route}: ${word}`).toBe(false);
     }
   });
 });
@@ -113,17 +96,17 @@ describe('a loading state, which is drawn before the gate has answered and so fo
 describe('an address below a page the person may not open, which no route matches', () => {
   it('under explain, walks back to the page as today', async () => {
     at.path = '/keys/anything';
-    expect(said(await served(RootNotFound())).text).toContain(`${FEATURES.keys.title} is still here`);
+    expect(said(await servedDocument(RootNotFound())).text).toContain(`${FEATURES.keys.title} is still here`);
   });
 
   it('under absent, walks back past it for a Viewer, and names it to an Owner, who may open it', async () => {
     policy.refusal = 'absent';
     at.path = '/keys/anything';
-    const viewer = said(await served(RootNotFound()));
+    const viewer = said(await servedDocument(RootNotFound()));
     expect(viewer.text).not.toContain(FEATURES.keys.title);
     expect(viewer.labels).not.toContain(FEATURES.keys.title);
     expect(viewer.text).toContain('No page in');
     jar.value = OWNER;
-    expect(said(await served(RootNotFound())).text).toContain(`${FEATURES.keys.title} is still here`);
+    expect(said(await servedDocument(RootNotFound())).text).toContain(`${FEATURES.keys.title} is still here`);
   });
 });

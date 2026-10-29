@@ -7,7 +7,7 @@ import { describe, expect, it } from 'vitest';
 import { read, readAll } from '@/data/read';
 import { readReleases, readRuns } from '@/data/engineering';
 import { readTickets } from '@/data/tickets';
-import type { ApiKey, CustomerRecord, Member } from '@/data/sample';
+import { DEMO_NOW, type ApiKey, type CustomerRecord, type Member } from '@/data/sample';
 import { invitableRoles, memberAccess } from '@/data/member-mutations';
 import { customerRow } from '@/logic/customers-context';
 import { CustomersView } from '@/views/customers';
@@ -28,7 +28,7 @@ const LONG = 'Northwind Global Payments Reconciliation Platform for Enterprise C
 const PERSON = 'Maximiliane Alexandrina Featherstonehaugh-Montgomery';
 const DOMAIN = 'northwind-global-payments-reconciliation';
 const none = async () => { throw new Error('not in this test'); };
-const now = new Date().toISOString();
+const now = DEMO_NOW.toISOString();
 
 const VIEWS: Record<string, () => Promise<ReactElement>> = {
   customers: async () => <CustomersView rows={((await readAll('customers')).rows as CustomerRecord[]).slice(0, 4).map(customerRow).map((c) => ({ ...c, name: `${LONG} ${c.name}` }))} />,

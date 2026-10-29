@@ -52,7 +52,6 @@ describe("the template's own rules", () => {
     expect(out).toMatch(/src\/views\/rogue\.tsx:2: .*src\/system\/fixtures/);
     expect(out).toMatch(/app\/\(dashboard\)\/rogue\/page\.tsx:\d+: connection\(\)/);
     expect(out).toMatch(/app\/\(dashboard\)\/rogue\/actions\.ts:\d+: revalidates with 'max' on a writer path/);
-    remove('src/views/rogue.tsx', 'app/(dashboard)/rogue/page.tsx', 'app/(dashboard)/rogue/actions.ts');
   }, 60_000);
   it('catch a literal colour in every form a browser takes, and leave a tint composed from tokens alone', () => {
     put('src/views/paint.tsx', [
@@ -72,7 +71,6 @@ describe("the template's own rules", () => {
       expect(out, `${what} on line ${line}`).toMatch(new RegExp(`src/views/paint\\.tsx:${line}: literal colour ${what.replace(/[()#]/g, (m) => `\\${m}`)}`));
     }
     expect(out).not.toMatch(/src\/views\/paint\.tsx:8:/);
-    remove('src/views/paint.tsx');
   }, 60_000);
   it('allow one protagonist a page, in the template and in a product', () => {
     const featured = "<FeaturedMetric kicker=\"A\" value={1} />";
@@ -80,7 +78,6 @@ describe("the template's own rules", () => {
     expect(check()).toMatch(/src\/views\/two\.tsx:5: a second FeaturedMetric \(the first is at line 4\)/);
     put('.meridian/manifest.json', JSON.stringify({ version: '0.5.0', route: 'create', brand: { name: 'Acme' }, files: {} }));
     expect(check()).toMatch(/src\/views\/two\.tsx:5: a second FeaturedMetric \(the first is at line 4\)/);
-    remove('.meridian/manifest.json', 'src/views/two.tsx');
   }, 60_000);
   it('send a nav item with no need, a bad grant or an allOf the shape it cannot read to the gate, naming its href', () => {
     plantNav(null);
@@ -105,7 +102,6 @@ describe("the template's own rules", () => {
     const out = check();
     expect(out).toMatch(/problems ·/);
     expect(out).not.toMatch(/reads src\/system\/fixtures directly|connection\(\) outside the template|revalidates with 'max'/);
-    remove('.meridian/manifest.json', 'src/views/rogue.tsx', 'app/(dashboard)/rogue/page.tsx', 'app/(dashboard)/rogue/actions.ts');
   }, 60_000);
 });
 
@@ -115,11 +111,6 @@ describe('the four-layer rules', () => {
   const plantDataRule = () => append('src/data/usage.ts', "import { ALERTS } from '@/logic/alerts';\nvoid ALERTS;");
   const plantLogicRule = () => append('src/logic/alerts.ts', "import { WorkspaceRail } from '@/views/workspace-chrome';\nvoid WorkspaceRail;");
   const plantViewRule = () => put('src/views/standalone.tsx', 'export const helper = () => 1;\n');
-  const restorePlants = () => {
-    restore('src/data/usage.ts');
-    restore('src/logic/alerts.ts');
-    restore('src/views/standalone.tsx');
-  };
 
   it('refuse a data module that imports the logic layer or a view, by alias and by relative path', () => {
     put('src/data/planted.ts', [
@@ -133,7 +124,6 @@ describe('the four-layer rules', () => {
     expect(r.stdout).toMatch(/src\/data\/planted\.ts:2: imports \.\.\/logic\/summarise from src\/logic\/summarise/);
     expect(r.stdout).toMatch(/src\/data\/planted\.ts:3: imports @\/views\/workspaces from src\/views\/workspaces/);
     expect(r.status).toBe(1);
-    remove('src/data/planted.ts');
   }, 60_000);
 
   it('refuse a logic module that imports a view, by alias and by relative path', () => {
@@ -146,7 +136,6 @@ describe('the four-layer rules', () => {
     expect(r.stdout).toMatch(/src\/logic\/planted\.ts:1: imports @\/views\/workspace-chrome from src\/views\/workspace-chrome; the logic layer imports no view/);
     expect(r.stdout).toMatch(/src\/logic\/planted\.ts:2: imports \.\.\/views\/standalone from src\/views\/standalone/);
     expect(r.status).toBe(1);
-    remove('src/logic/planted.ts');
   }, 60_000);
 
   it('refuse a file under src/views that is not a renderer, and allow workspaces.ts and a capitalised component', () => {
@@ -162,7 +151,6 @@ describe('the four-layer rules', () => {
     expect(r.stdout).not.toMatch(/src\/views\/Good\.tsx: is not a renderer/);
     expect(r.stdout).not.toMatch(/src\/views\/workspaces\.ts: is not a renderer/);
     expect(r.status).toBe(1);
-    remove('src/views/helperFn.ts', 'src/views/plain.tsx', 'src/views/Good.tsx');
   }, 60_000);
 
   it('print a stated escape with its reason, and still pass', () => {
@@ -180,7 +168,6 @@ describe('the four-layer rules', () => {
     const lines = r.stdout.trimEnd().split('\n');
     expect(lines.indexOf(escape)).toBeGreaterThan(lines.indexOf('check: ok'));
     expect(lines.indexOf(escape)).toBeLessThan(lines.findIndex((l) => /^\d+ problems · /.test(l)));
-    restore(f);
   }, 60_000);
 
   it('say nothing at all when the project has no switches file, though src/logic is there', () => {
@@ -194,8 +181,6 @@ describe('the four-layer rules', () => {
     expect(r.status).toBe(0);
     // The folder exists, so its existence cannot be what turns the rules on.
     expect(fs.existsSync(path.join(dir, 'src/logic'))).toBe(true);
-    restorePlants();
-    restore(switchFile);
   }, 60_000);
 
   it('leave the rules off and print one note when the switch is not a boolean', () => {
@@ -214,8 +199,6 @@ describe('the four-layer rules', () => {
     expect(lines.indexOf(notes[0])).toBeLessThan(lines.findIndex((l) => /^\d+ problems · /.test(l)));
     expect(lines.find((l) => /^\d+ problems · /.test(l))).toBe(summary);
     expect(after.status).toBe(before.status);
-    restorePlants();
-    restore(switchFile);
   }, 60_000);
 
   it('stay silent when a comment says fourLayers = true but the declaration says false', () => {
@@ -227,8 +210,6 @@ describe('the four-layer rules', () => {
     expect(r.stdout).not.toMatch(/the data layer imports neither|the logic layer imports no view|is not a renderer/);
     expect(r.stdout).not.toMatch(/fourLayers is declared/);
     expect(r.status).toBe(0);
-    restorePlants();
-    restore(switchFile);
   }, 60_000);
 
   it('refuse a client module that imports a logic module whose imports reach a reading module, by alias and by relative path', () => {
@@ -238,121 +219,93 @@ describe('the four-layer rules', () => {
     const relative = "import { ALERTS as AGAIN } from '../logic/alerts';";
     const tail = ['void ALERTS; void AGAIN;', 'export function Planted() { return null; }'];
     const chain = 'whose imports reach src/data/access, a module that reads (src/logic/alerts -> src/data/access); a client module imports no logic module that reads';
-    try {
-      put('src/views/planted-client.tsx', ["'use client';", alias, relative, ...tail].join('\n') + '\n');
-      const r = runCheck();
-      expect(r.stdout).toContain(`src/views/planted-client.tsx:2: imports @/logic/alerts from src/logic/alerts, ${chain}`);
-      expect(r.stdout).toContain(`src/views/planted-client.tsx:3: imports ../logic/alerts from src/logic/alerts, ${chain}`);
-      expect(r.status).toBe(1);
-      // The stated escape prints as the other rules' escapes do, and the line it sits on is no longer refused.
-      put('src/views/planted-client.tsx', ["'use client';", `${alias} // allow-client-does-not-import-a-reading-module: the sample reads alerts beside usage on purpose`, relative, ...tail].join('\n') + '\n');
-      const e = runCheck();
-      expect(e.stdout).toContain('escape  src/views/planted-client.tsx:2: client-does-not-import-a-reading-module — the sample reads alerts beside usage on purpose');
-      expect(e.stdout).not.toMatch(/src\/views\/planted-client\.tsx:2: imports/);
-      expect(e.stdout).toMatch(/src\/views\/planted-client\.tsx:3: imports \.\.\/logic\/alerts/);
-      expect(e.status).toBe(1);
-    } finally {
-      remove('src/views/planted-client.tsx');
-    }
+    put('src/views/planted-client.tsx', ["'use client';", alias, relative, ...tail].join('\n') + '\n');
+    const r = runCheck();
+    expect(r.stdout).toContain(`src/views/planted-client.tsx:2: imports @/logic/alerts from src/logic/alerts, ${chain}`);
+    expect(r.stdout).toContain(`src/views/planted-client.tsx:3: imports ../logic/alerts from src/logic/alerts, ${chain}`);
+    expect(r.status).toBe(1);
+    // The stated escape prints as the other rules' escapes do, and the line it sits on is no longer refused.
+    put('src/views/planted-client.tsx', ["'use client';", `${alias} // allow-client-does-not-import-a-reading-module: the sample reads alerts beside usage on purpose`, relative, ...tail].join('\n') + '\n');
+    const e = runCheck();
+    expect(e.stdout).toContain('escape  src/views/planted-client.tsx:2: client-does-not-import-a-reading-module — the sample reads alerts beside usage on purpose');
+    expect(e.stdout).not.toMatch(/src\/views\/planted-client\.tsx:2: imports/);
+    expect(e.stdout).toMatch(/src\/views\/planted-client\.tsx:3: imports \.\.\/logic\/alerts/);
+    expect(e.status).toBe(1);
   }, 60_000);
 
   it('say nothing when the logic module a client imports is a pure helper over values a page was given', () => {
     // `src/logic/tests-context.ts` imports `src/data/verification.ts`, three pure rules over runs and releases, which
     // calls none of the six reads: a pure helper is not a reading module, and the rule says nothing about it.
-    try {
-      put('src/views/planted-pure.tsx', ["'use client';", "import { requiredOf } from '@/logic/tests-context';", 'void requiredOf;', 'export function PlantedPure() { return null; }'].join('\n') + '\n');
-      const r = runCheck();
-      expect(r.stdout).not.toMatch(/src\/views\/planted-pure\.tsx/);
-      expect(r.stdout).toMatch(/^0 problems/m);
-      expect(r.status).toBe(0);
-    } finally {
-      remove('src/views/planted-pure.tsx');
-    }
+    put('src/views/planted-pure.tsx', ["'use client';", "import { requiredOf } from '@/logic/tests-context';", 'void requiredOf;', 'export function PlantedPure() { return null; }'].join('\n') + '\n');
+    const r = runCheck();
+    expect(r.stdout).not.toMatch(/src\/views\/planted-pure\.tsx/);
+    expect(r.stdout).toMatch(/^0 problems/m);
+    expect(r.status).toBe(0);
   }, 60_000);
 
   it("say nothing when the chain crosses a 'use server' module", () => {
     // `src/data/live-actions.ts` is a Server Action that reads, but the browser gets a reference to it, not its body:
     // the walk stops there, so a client may import a logic module that names it.
-    try {
-      put('src/logic/planted-through-server.ts', "import { refreshCollections } from '@/data/live-actions';\nexport const through = refreshCollections;\n");
-      put('src/views/planted-server.tsx', ["'use client';", "import { through } from '@/logic/planted-through-server';", 'void through;', 'export function PlantedServer() { return null; }'].join('\n') + '\n');
-      const r = runCheck();
-      expect(r.stdout).not.toMatch(/src\/views\/planted-server\.tsx/);
-      expect(r.stdout).toMatch(/^0 problems/m);
-      expect(r.status).toBe(0);
-    } finally {
-      remove('src/logic/planted-through-server.ts', 'src/views/planted-server.tsx');
-    }
+    put('src/logic/planted-through-server.ts', "import { refreshCollections } from '@/data/live-actions';\nexport const through = refreshCollections;\n");
+    put('src/views/planted-server.tsx', ["'use client';", "import { through } from '@/logic/planted-through-server';", 'void through;', 'export function PlantedServer() { return null; }'].join('\n') + '\n');
+    const r = runCheck();
+    expect(r.stdout).not.toMatch(/src\/views\/planted-server\.tsx/);
+    expect(r.stdout).toMatch(/^0 problems/m);
+    expect(r.status).toBe(0);
   }, 60_000);
 
   it('refuse a view or a client component that takes a value from a data module, and stay silent on the five vocabulary modules', () => {
     // A sixth module is any of src/data's that is not roles, features, sample, request-methods or live-actions: a read
     // wearing a helper's name. The relative form is refused because the scan resolves the specifier, not its spelling.
-    try {
-      put('src/views/planted-read.tsx', ["import { readServices } from '@/data/metrics';", 'void readServices;', 'export function PlantedRead() { return null; }'].join('\n') + '\n');
-      put('src/components/planted-read.tsx', ["'use client';", "import { signInDays } from '@/data/sign-in';", 'void signInDays;', 'export function PlantedClientRead() { return null; }'].join('\n') + '\n');
-      put('src/views/planted-vocabulary.tsx', ["import { roleLabel } from '@/data/roles';", 'void roleLabel;', 'export function PlantedVocabulary() { return null; }'].join('\n') + '\n');
-      const r = runCheck();
-      expect(r.stdout).toContain('src/views/planted-read.tsx:1: imports @/data/metrics from src/data/metrics; presentation does not read');
-      expect(r.stdout).toContain('src/components/planted-read.tsx:2: imports @/data/sign-in from src/data/sign-in; presentation does not read');
-      expect(r.stdout).not.toMatch(/planted-vocabulary/);
-      expect(r.status).toBe(1);
-    } finally {
-      remove('src/views/planted-read.tsx', 'src/components/planted-read.tsx', 'src/views/planted-vocabulary.tsx');
-    }
+    put('src/views/planted-read.tsx', ["import { readServices } from '@/data/metrics';", 'void readServices;', 'export function PlantedRead() { return null; }'].join('\n') + '\n');
+    put('src/components/planted-read.tsx', ["'use client';", "import { signInDays } from '@/data/sign-in';", 'void signInDays;', 'export function PlantedClientRead() { return null; }'].join('\n') + '\n');
+    put('src/views/planted-vocabulary.tsx', ["import { roleLabel } from '@/data/roles';", 'void roleLabel;', 'export function PlantedVocabulary() { return null; }'].join('\n') + '\n');
+    const r = runCheck();
+    expect(r.stdout).toContain('src/views/planted-read.tsx:1: imports @/data/metrics from src/data/metrics; presentation does not read');
+    expect(r.stdout).toContain('src/components/planted-read.tsx:2: imports @/data/sign-in from src/data/sign-in; presentation does not read');
+    expect(r.stdout).not.toMatch(/planted-vocabulary/);
+    expect(r.status).toBe(1);
   }, 60_000);
 
   it('print a stated presentation escape with its reason, and pass without the refusal', () => {
     const f = 'src/views/planted-read.tsx';
-    try {
-      put(f, [
-        "import { readServices } from '@/data/metrics'; // allow-presentation-does-not-read: the footer reads services beside the screen on purpose",
-        'void readServices;',
-        'export function PlantedRead() { return null; }',
-      ].join('\n') + '\n');
-      const r = runCheck();
-      const escape = 'escape  src/views/planted-read.tsx:1: presentation-does-not-read — the footer reads services beside the screen on purpose';
-      expect(r.stdout).toContain(escape);
-      expect(r.stdout).not.toMatch(/src\/views\/planted-read\.tsx:1: imports/);
-      expect(r.stdout).toMatch(/^0 problems/m);
-      expect(r.status).toBe(0);
-      // Printed as its own line after the problem list and before the summary, which it does not change.
-      const lines = r.stdout.trimEnd().split('\n');
-      expect(lines.indexOf(escape)).toBeGreaterThan(lines.indexOf('check: ok'));
-      expect(lines.indexOf(escape)).toBeLessThan(lines.findIndex((l) => /^\d+ problems · /.test(l)));
-    } finally {
-      remove(f);
-    }
+    put(f, [
+      "import { readServices } from '@/data/metrics'; // allow-presentation-does-not-read: the footer reads services beside the screen on purpose",
+      'void readServices;',
+      'export function PlantedRead() { return null; }',
+    ].join('\n') + '\n');
+    const r = runCheck();
+    const escape = 'escape  src/views/planted-read.tsx:1: presentation-does-not-read — the footer reads services beside the screen on purpose';
+    expect(r.stdout).toContain(escape);
+    expect(r.stdout).not.toMatch(/src\/views\/planted-read\.tsx:1: imports/);
+    expect(r.stdout).toMatch(/^0 problems/m);
+    expect(r.status).toBe(0);
+    // Printed as its own line after the problem list and before the summary, which it does not change.
+    const lines = r.stdout.trimEnd().split('\n');
+    expect(lines.indexOf(escape)).toBeGreaterThan(lines.indexOf('check: ok'));
+    expect(lines.indexOf(escape)).toBeLessThan(lines.findIndex((l) => /^\d+ problems · /.test(l)));
   }, 60_000);
 
   it('refuse a .query( in a lib module or a view, and say nothing about one a comment names', () => {
     // The prose file proves the scan reads comment-blanked source: a documented call is not a call.
-    try {
-      put('src/lib/planted-query.ts', ['const collection = { query: (_: object) => [] };', 'void collection.query({});'].join('\n') + '\n');
-      put('src/views/planted-query.tsx', ['const collection = { query: (_: object) => [] };', 'export function PlantedQuery() { return collection.query({}); }'].join('\n') + '\n');
-      put('src/lib/planted-query-comment.ts', ['// members.query({}) is what this rule refuses; the line is prose, not a call.', 'const marker = 1;', 'void marker;'].join('\n') + '\n');
-      const r = runCheck();
-      expect(r.stdout).toContain('src/lib/planted-query.ts:2: calls collection.query( directly; no direct query');
-      expect(r.stdout).toContain('src/views/planted-query.tsx:2: calls collection.query( directly; no direct query');
-      expect(r.stdout).not.toMatch(/planted-query-comment/);
-      expect(r.status).toBe(1);
-    } finally {
-      remove('src/lib/planted-query.ts', 'src/views/planted-query.tsx', 'src/lib/planted-query-comment.ts');
-    }
+    put('src/lib/planted-query.ts', ['const collection = { query: (_: object) => [] };', 'void collection.query({});'].join('\n') + '\n');
+    put('src/views/planted-query.tsx', ['const collection = { query: (_: object) => [] };', 'export function PlantedQuery() { return collection.query({}); }'].join('\n') + '\n');
+    put('src/lib/planted-query-comment.ts', ['// members.query({}) is what this rule refuses; the line is prose, not a call.', 'const marker = 1;', 'void marker;'].join('\n') + '\n');
+    const r = runCheck();
+    expect(r.stdout).toContain('src/lib/planted-query.ts:2: calls collection.query( directly; no direct query');
+    expect(r.stdout).toContain('src/views/planted-query.tsx:2: calls collection.query( directly; no direct query');
+    expect(r.stdout).not.toMatch(/planted-query-comment/);
+    expect(r.status).toBe(1);
   }, 60_000);
 
   it('print a stated no-direct-query escape with its reason, and pass without the refusal', () => {
     const f = 'src/lib/planted-query.ts';
-    try {
-      put(f, ['const collection = { query: (_: object) => [] };', 'void collection.query({}); // allow-no-direct-query: the export streams its own batches and must not be cached'].join('\n') + '\n');
-      const r = runCheck();
-      expect(r.stdout).toContain('escape  src/lib/planted-query.ts:2: no-direct-query — the export streams its own batches and must not be cached');
-      expect(r.stdout).not.toMatch(/src\/lib\/planted-query\.ts:2: calls/);
-      expect(r.stdout).toMatch(/^0 problems/m);
-      expect(r.status).toBe(0);
-    } finally {
-      remove(f);
-    }
+    put(f, ['const collection = { query: (_: object) => [] };', 'void collection.query({}); // allow-no-direct-query: the export streams its own batches and must not be cached'].join('\n') + '\n');
+    const r = runCheck();
+    expect(r.stdout).toContain('escape  src/lib/planted-query.ts:2: no-direct-query — the export streams its own batches and must not be cached');
+    expect(r.stdout).not.toMatch(/src\/lib\/planted-query\.ts:2: calls/);
+    expect(r.stdout).toMatch(/^0 problems/m);
+    expect(r.status).toBe(0);
   }, 60_000);
 
   it('carry the reason read() cannot serve it on each of the seven direct reads FR-9 keeps', () => {
@@ -372,16 +325,12 @@ describe('the four-layer rules', () => {
   it('decide what reads by the code, not by a comment that names read()', () => {
     // `src/data/collections.ts` names `read()` in its prose and calls none of the six. A raw text match would call it a
     // reading module and refuse this client, which reaches nothing but the collections' own data.
-    try {
-      put('src/logic/planted-collections.ts', "import { clock } from '@/data/collections';\nexport const at = clock;\n");
-      put('src/views/planted-comment.tsx', ["'use client';", "import { at } from '@/logic/planted-collections';", 'void at;', 'export function PlantedComment() { return null; }'].join('\n') + '\n');
-      const r = runCheck();
-      expect(r.stdout).not.toMatch(/src\/views\/planted-comment\.tsx/);
-      expect(r.stdout).toMatch(/^0 problems/m);
-      expect(r.status).toBe(0);
-    } finally {
-      remove('src/logic/planted-collections.ts', 'src/views/planted-comment.tsx');
-    }
+    put('src/logic/planted-collections.ts', "import { clock } from '@/data/collections';\nexport const at = clock;\n");
+    put('src/views/planted-comment.tsx', ["'use client';", "import { at } from '@/logic/planted-collections';", 'void at;', 'export function PlantedComment() { return null; }'].join('\n') + '\n');
+    const r = runCheck();
+    expect(r.stdout).not.toMatch(/src\/views\/planted-comment\.tsx/);
+    expect(r.stdout).toMatch(/^0 problems/m);
+    expect(r.status).toBe(0);
   }, 60_000);
 });
 
@@ -390,21 +339,17 @@ describe('the client-import walk in a tree that has no sample', () => {
     const generator = 'src/system/fixtures/company.ts';
     const report = path.join(dir, 'client-imports.json');
     remove(generator);
-    try {
-      const r = spawnSync(path.join(ROOT, 'node_modules/.bin/vitest'), ['run', 'tests/client-imports.test.ts', '--reporter=json', `--outputFile=${report}`], { cwd: dir, encoding: 'utf8' });
-      // The report is written whether or not the run passed, so its own cases say what happened.
-      const results = (JSON.parse(fs.readFileSync(report, 'utf8')).testResults as { assertionResults: { fullName: string; status: string }[] }[]).flatMap((f) => f.assertionResults);
-      // Only the reading-module boundary can speak without a generator, and it does: the two unguarded cases run.
-      const ran = results.filter((a) => a.status === 'passed' || a.status === 'failed');
-      expect(ran.map((a) => `${a.status} ${a.fullName}`), `${r.stdout}\n${r.stderr}`).toEqual([
-        "passed the client modules of the product's pages are found",
-        "passed the client modules of the product's pages never reach a module that reads",
-      ]);
-      // The generator cases are collected and skipped, not absent: the file is one file, and it did not skip whole.
-      expect(results.length).toBeGreaterThan(ran.length);
-      expect(r.status).toBe(0);
-    } finally {
-      restore(generator);
-    }
+    const r = spawnSync(path.join(ROOT, 'node_modules/.bin/vitest'), ['run', 'tests/client-imports.test.ts', '--reporter=json', `--outputFile=${report}`], { cwd: dir, encoding: 'utf8' });
+    // The report is written whether or not the run passed, so its own cases say what happened.
+    const results = (JSON.parse(fs.readFileSync(report, 'utf8')).testResults as { assertionResults: { fullName: string; status: string }[] }[]).flatMap((f) => f.assertionResults);
+    // Only the reading-module boundary can speak without a generator, and it does: the two unguarded cases run.
+    const ran = results.filter((a) => a.status === 'passed' || a.status === 'failed');
+    expect(ran.map((a) => `${a.status} ${a.fullName}`), `${r.stdout}\n${r.stderr}`).toEqual([
+      "passed the client modules of the product's pages are found",
+      "passed the client modules of the product's pages never reach a module that reads",
+    ]);
+    // The generator cases are collected and skipped, not absent: the file is one file, and it did not skip whole.
+    expect(results.length).toBeGreaterThan(ran.length);
+    expect(r.status).toBe(0);
   }, 120_000);
 });

@@ -26,7 +26,6 @@ import { homeTool } from '@/logic/tools';
 
 const PERSONAS = { owner: 'members_1', admin: 'members_2', member: 'members_4', viewer: 'members_12' };
 /** What a view's context may take (tests/shared-context.test.tsx holds every view to it). */
-const BUDGET = 2600;
 const PERIODS = ['7d', '30d', '90d', 'all'] as const;
 
 beforeEach(() => { jar.value = undefined; fail.names.clear(); });
@@ -61,13 +60,9 @@ describe("Home's context states the company", () => {
     expect(text).toMatch(concentrated);
   });
 
-  it('within its budget at every period, and with a day pointed at', async () => {
-    for (const period of PERIODS) {
-      const text = contextText((await as(PERSONAS.owner, { period })).context);
-      expect(text.length, period).toBeLessThanOrEqual(BUDGET);
-    }
+  // Its budget, at every period and with a day pointed at, is held in tests/cli-context-budget.test.ts.
+  it('names the day pointed at', async () => {
     const pointed = contextText((await as(PERSONAS.owner, { period: '30d', day: '2026-09-21' })).context);
-    expect(pointed.length).toBeLessThanOrEqual(BUDGET);
     expect(pointed).toContain('21 Sept');
   });
 

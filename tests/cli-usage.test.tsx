@@ -51,7 +51,6 @@ vi.mock('@/components/patterns/featured-metric', async (orig) => mark(await orig
 
 import UsagePage from '../app/(dashboard)/usage/page';
 import UsageLoading from '../app/(dashboard)/usage/loading';
-import { contextText } from '@/lib/shared-context';
 import { UsageBody } from '@/views/usage';
 import { usageTool } from '@/logic/tools';
 import { servedDocument } from './cli-served';
@@ -118,14 +117,6 @@ describe("Usage's parts, in order, from the sample", () => {
     expect(cards(when)).toEqual(['column-chart']);
     fireEvent.click(within(when as HTMLElement).getByRole('radio', { name: 'By weekday and hour' }));
     expect(cards(when)).toEqual(['heatmap:hours:quantile']);
-  });
-
-  it('keeps its context within the budget at every period', async () => {
-    for (const period of ['7d', '30d', '90d', 'all'] as const) {
-      jar.value = OWNER;
-      const { context } = await usageTool.read({ period });
-      expect(contextText(context).length, period).toBeLessThanOrEqual(2600);
-    }
   });
 });
 
