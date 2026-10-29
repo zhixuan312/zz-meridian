@@ -398,8 +398,10 @@ orders is the sample's, not the product's.
     `optional:tests/demo-policy.test.ts`, `optional:tests/view-as.test.ts`, `optional:tests/sign-in-persona.test.ts`,
     `optional:tests/sign-in-honest.test.tsx`, `optional:tests/verify-personas.test.ts`,
     `optional:tests/member-mutations.test.ts`, `optional:tests/data-access.test.ts`, `optional:tests/data-write.test.ts`,
-    `optional:tests/assistant-tools.test.ts` (the members collection's write schema) and
-    `optional:tests/assistant-prompt-truth.test.ts`. While the demo signs in as your own people
+    `optional:tests/assistant-tools.test.ts` (the members collection's write schema),
+    `optional:tests/assistant-prompt-truth.test.ts`, `optional:tests/assistant-access.test.ts` (who of them may use which
+    view tool), `optional:tests/assistant-prompt-writes.test.ts`, `optional:tests/assistant-settings.test.tsx` (the
+    settings page's sections) and `optional:tests/view-tool-needs.test.ts`. While the demo signs in as your own people
     (`PERSONAS`), write their ids into these cases; once your sign-in replaces the demo, delete the first four with
     `optional:src/data/view-as.ts` and the sign-in page, and rewrite the rest for your sign-in's people.
   - The records and routes of the company: `optional:tests/shell-alerts.test.ts` (more than one past-due customer, one
@@ -408,8 +410,10 @@ orders is the sample's, not the product's.
     seventeen features by id and each action's need), `optional:tests/data-read.test.ts`,
     `optional:tests/live-route.test.ts` and `optional:tests/live-actions.test.ts` (the members and keys collections),
     `optional:tests/assistant-guard.test.ts` (the members collection), `optional:tests/engineering-records.test.ts`
-    (tickets, verification runs and releases, and who of the demo's people writes them) and `optional:tests/requests-summary-newest.test.ts` (the requests
-    collection).
+    (tickets, verification runs and releases, and who of the demo's people writes them), `optional:tests/engineering-workflows.test.ts`
+    (the tickets feature's actions and Engineering's destinations), `optional:tests/requests-summary-newest.test.ts` (the requests
+    collection), `optional:tests/action-needs.test.tsx` (the API keys and request views) and
+    `optional:tests/atlas-product-slice.test.tsx` (the Customers page drawn through the records template).
 
   The sample's own figures, pages and answers are in `cli-*` tests, which a created project does not receive. A shipped
   test that still fails after this names something of the sample's too: change it the same way.

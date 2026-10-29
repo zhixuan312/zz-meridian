@@ -30,7 +30,8 @@ Every release of ZZ Meridian, newest first. Versions follow semver: a removed or
 
 ### Changed
 
-- **Shipped tests that held only the sample's own records are Meridian's own now**, as the sample's figures already were: `tests/logic-layer.test.ts`, `tests/logic-alerts.test.ts` and `tests/moved-paths-documented.test.ts`, the record of a finished move whose rules a project keeps through `scripts/check.ts`'s four layers. An update removes a copy nobody changed.
+- **Shipped tests that held only the sample's own records are Meridian's own now**, as the sample's figures already were: `tests/logic-layer.test.ts`, `tests/logic-alerts.test.ts` and `tests/moved-paths-documented.test.ts`, the record of a finished move whose rules a project keeps through `scripts/check.ts`'s four layers; `tests/sample.test.ts` and `tests/sample-company.test.ts`, the sample company's records; and `tests/bypasses.test.ts`, its collections. An update removes a copy nobody changed.
+- **Shipped tests read the project's own navigation, pages, tools and personas** where they counted or named the sample's: the gated pages, the view tools, the personas `verify --as` names, the rail's first destinations and the not-found page's nearest entry. The facts' configured band and thresholds are no longer pinned, and the customize guide lists the seven further shipped tests that hold the sample's people and records.
 
 ### Fixed
 
