@@ -7,7 +7,8 @@ import { SERIES_VAR, stackPart } from '@/components/charts/scale';
 import { useSettled } from '@/components/charts/use-settled';
 import { useSize } from '@/components/charts/use-size';
 import { columnFold } from '@/logic/derivations';
-import { CH, count, gapOf, Labels, opens, placed, REST, scaleOf, Swatch, Ticks, useCursor, type Column, type ColumnPart, type GroupedPart, type Shared, type StackedColumn } from './shared';
+import { FORMATTERS } from '@/lib/format';
+import { CH, gapOf, Labels, opens, placed, REST, scaleOf, Swatch, Ticks, useCursor, type Column, type ColumnPart, type GroupedPart, type Shared, type StackedColumn } from './shared';
 
 export type { Column, ColumnPart, GroupedPart, StackedColumn };
 
@@ -96,7 +97,7 @@ function Columns({
   highlightLabel,
   dates,
   running = false,
-  format = count,
+  format = FORMATTERS.count,
   noData = 'No data',
   whole = false,
   axisFormat,

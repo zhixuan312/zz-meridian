@@ -70,7 +70,6 @@ export const opens = (n: number) => Array.from({ length: n > 1 ? GAP : 0 }, (_, 
  * width is measured. Each term steps from nothing to a pixel as the row passes one of the widths above.
  */
 export const gapOf = (n: number) => (n > 1 ? `calc(${opens(n).map((w) => `clamp(0px, (100% - ${w}px) * 1000, 1px)`).join(' + ')})` : '0px');
-export const count = (n: number) => n.toLocaleString('en-US');
 // Whatever is centred on a column and may be wider than it starts with the first column and ends with the last, so
 // nothing runs past the plot; inside those, a narrower one is still centred.
 export const placed = (i: number, n: number) => (i === n - 1 ? 'right-0 flex min-w-full justify-center' : i === 0 ? 'left-0 flex min-w-full justify-center' : 'left-1/2 -translate-x-1/2');

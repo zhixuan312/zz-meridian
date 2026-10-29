@@ -1,4 +1,5 @@
 import { cn } from '@/lib/cn';
+import { FORMATTERS } from '@/lib/format';
 import { SERIES_SLOTS, SERIES_VAR, stackPart, type SeriesSlot } from '@/components/charts/scale';
 import { compositionTotal } from '@/logic/derivations';
 
@@ -29,7 +30,7 @@ const share = (value: number, total: number) => {
 /** One whole split into its parts: a single bar with a 2px gap between segments, and a legend that carries the numbers. */
 export function CompositionBar({
   parts: given,
-  format = (n) => n.toLocaleString('en-US'),
+  format = FORMATTERS.count,
   label,
   legend = true,
   stacked = false,

@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { cn } from '@/lib/cn';
-import { plural } from '@/lib/format';
+import { FORMATTERS, plural } from '@/lib/format';
 import { heldTicks, niceTicks } from '@/components/charts/scale';
 import { Levels } from './levels';
 
@@ -25,7 +25,7 @@ export type BarItem = {
  */
 export function BarList({
   items,
-  format = (n) => n.toLocaleString('en-US'),
+  format = FORMATTERS.count,
   highlight,
   highlightLabel,
   limit = 6,

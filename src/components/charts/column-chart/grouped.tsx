@@ -5,7 +5,8 @@ import { Readout } from '@/components/charts/readout';
 import { SERIES_SLOTS, SERIES_VAR, type SeriesSlot } from '@/components/charts/scale';
 import { useSettled } from '@/components/charts/use-settled';
 import { useSize } from '@/components/charts/use-size';
-import { CH, count, gapOf, Labels, opens, REST, scaleOf, Swatch, Ticks, useCursor, type GroupedPart, type Shared, type StackedColumn } from './shared';
+import { FORMATTERS } from '@/lib/format';
+import { CH, gapOf, Labels, opens, REST, scaleOf, Swatch, Ticks, useCursor, type GroupedPart, type Shared, type StackedColumn } from './shared';
 
 export type GroupedColumnsProps = Shared & { columns: StackedColumn[]; parts: GroupedPart[]; grouped: true };
 
@@ -21,7 +22,7 @@ export function GroupedColumns({
   highlightLabel,
   dates,
   running = false,
-  format = count,
+  format = FORMATTERS.count,
   noData = 'No data',
   whole = false,
   axisFormat,

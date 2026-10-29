@@ -1,6 +1,7 @@
 'use client';
 
 import { useId } from 'react';
+import { FORMATTERS } from '@/lib/format';
 import { useMeridianIndex } from '@/components/charts/meridian';
 import { linearPath, monotonePath, stepPath, ticksBetween, type Curve, SERIES_VAR, type SeriesSlot } from '@/components/charts/scale';
 import { useSize } from '@/components/charts/use-size';
@@ -48,7 +49,7 @@ export function Sparkline({ values, color = 'accent', height = 36, curve = 'mono
   // A shape with no readout says nothing about what it covers, and it is the one chart a page puts beside a figure
   // without a table under it (issue #94). The range it draws is the words it has, on the pointer: the data's own, the
   // held domain, or, widened, the levels it is drawn to.
-  const range = `${min.toLocaleString('en-US')} to ${max.toLocaleString('en-US')}${widened ? `, scale widened from ${held[0].toLocaleString('en-US')}–${held[1].toLocaleString('en-US')}` : ''}`;
+  const range = `${FORMATTERS.count(min)} to ${FORMATTERS.count(max)}${widened ? `, scale widened from ${FORMATTERS.count(held[0])}–${FORMATTERS.count(held[1])}` : ''}`;
   return (
     <div ref={ref} aria-hidden title={range} className={className} style={{ height }}>
       {W ? (

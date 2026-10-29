@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { cn } from '@/lib/cn';
+import { FORMATTERS } from '@/lib/format';
 import { heldTicks, niceTicks } from '@/components/charts/scale';
 import { useSize } from '@/components/charts/use-size';
 
@@ -11,7 +12,7 @@ export type DivergingItem = { key: string; label: React.ReactNode; value: number
 const CH = 6.5, GAP = 4;
 
 /** A rise with its plus, a fall with the true minus, zero as it is. */
-const signed = (n: number) => (n > 0 ? `+${n.toLocaleString('en-US')}` : n < 0 ? `−${(-n).toLocaleString('en-US')}` : '0');
+const signed = (n: number) => (n > 0 ? `+${FORMATTERS.count(n)}` : n < 0 ? `−${FORMATTERS.count(-n)}` : '0');
 
 /**
  * Signed rows either side of one zero line, on a scale symmetric about it: a net change by category, a gain or a loss

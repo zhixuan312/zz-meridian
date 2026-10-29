@@ -2,6 +2,7 @@
 
 import { useMemo, useState, type KeyboardEvent, type ReactNode } from 'react';
 import { cn } from '@/lib/cn';
+import { FORMATTERS } from '@/lib/format';
 import { formatCalendarDate, formatCalendarMonth } from '@/lib/format-date';
 import { useClearMeridian, useMeridianIndex, usePointMeridian } from '@/components/charts/meridian';
 import { useSize } from '@/components/charts/use-size';
@@ -12,7 +13,6 @@ const STEPS = ['var(--fill-track)', 18, 34, 52, 74, 100].map((s) => (typeof s ==
 const DAY = 86_400_000;
 /** The calendar's measures in pixels: the weekday column, its gap, the space between cells, the smallest cell and the tallest. */
 const NAMES = 40, GAP = 8, SPACE = 2, CELL = 12, ROW = 28;
-const count = (n: number) => n.toLocaleString('en-US');
 
 type Scale = 'max' | 'quantile';
 type Shared = {
@@ -65,7 +65,7 @@ type CalendarProps = Shared & {
  * Either grid is one Tab stop: the arrow keys move a cursor cell by cell (Home and End to the ends of a row, Escape to
  * leave), with the same readout as the pointer, announced to screen readers.
  */
-export function Heatmap({ scale = 'max', format = count, unit = 'requests', ...props }: HoursProps | CalendarProps) {
+export function Heatmap({ scale = 'max', format = FORMATTERS.count, unit = 'requests', ...props }: HoursProps | CalendarProps) {
   return 'days' in props ? <Calendar scale={scale} format={format} unit={unit} {...props} /> : <Hours scale={scale} format={format} unit={unit} {...props} />;
 }
 
