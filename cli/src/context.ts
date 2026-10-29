@@ -47,7 +47,8 @@ The team's own words for things, one per line: term and what it means here.
 `;
 
 /** One `pnpm <script> [flags]` command, spelled for the package manager; npm needs `--` before flags. */
-function command(pm: PackageManager, script: string, flags: string): string {
+/** A package script with flags, as the package manager runs it: npm passes flags on only after `--`. */
+export function command(pm: PackageManager, script: string, flags: string): string {
   if (pm === 'pnpm') return `pnpm ${script}${flags}`;
   if (pm === 'npm') return `npm run ${script}${flags ? ` --${flags}` : ''}`;
   return `${pm === 'bun' ? 'bun run' : 'yarn'} ${script}${flags}`;

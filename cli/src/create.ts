@@ -6,7 +6,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { managedPaths } from './ownership.js';
-import { BRIEF_TEMPLATE, managedBlock, upsertManagedBlock } from './context.js';
+import { BRIEF_TEMPLATE, command, managedBlock, upsertManagedBlock } from './context.js';
 import { VERSION, brandArgs, effectiveBrand, hasCommand, inside, installSkill, payloadBytes, payloadFiles, run, sha256, writeIn, writeManifest } from './files.js';
 
 export type CreateOptions = { dir: string; brand: Record<string, string>; install: boolean };
@@ -69,10 +69,15 @@ export function create(o: CreateOptions): number {
 ${name} is a new Meridian ${VERSION} dashboard in ${root}.
   skill: .agents/skills/zz-meridian (Codex) and .claude/skills/zz-meridian (Claude Code)
 
-Next: follow .agents/skills/zz-meridian/SKILL.md from step 3's brief (the template is fetched and branded): the brief,
-step 4's colour check, then data and the pages, then the loop in references/standard.md until ${pm} run verify --full --timed ends with "the project meets the
-Meridian standard" and no view on the scoreboard is Weak.`);
+${nextStep(pm)}`);
   return 0;
+}
+
+/** What the person does next, with the full verify written so their package manager passes its flags on. */
+export function nextStep(pm: 'pnpm' | 'npm'): string {
+  return `Next: follow .agents/skills/zz-meridian/SKILL.md from step 3's brief (the template is fetched and branded): the brief,
+step 4's colour check, then data and the pages, then the loop in references/standard.md until ${command(pm, 'verify', ' --full --timed')} ends with "the project meets the
+Meridian standard" and no view on the scoreboard is Weak.`;
 }
 
 function fail(msg: string): number {
