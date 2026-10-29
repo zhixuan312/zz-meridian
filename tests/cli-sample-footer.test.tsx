@@ -21,6 +21,6 @@ describe("the sample's footer", () => {
   it('draws no link to a Design system the project does not have', async () => {
     const c = await footer(false);
     expect(c.querySelector('a[href="/system"]')).toBeNull();
-    expect(c.textContent).toContain('© 2026');
+    expect(c.textContent).toMatch(/^© /);
   });
 });
