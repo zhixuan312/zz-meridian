@@ -19,16 +19,18 @@ const PAYLOAD = [
   ...FIXED,
 ];
 
-/** Every `@/…` specifier a file value-imports, relative, without its extension. */
+/** Every `@/…` specifier a file value-imports, as a path under src/ without its extension. */
 const imported = (file: string): string[] => [
-  ...fs.readFileSync(path.join(ROOT, file), 'utf8').matchAll(/(?:from\s*|import\s*\(\s*)'@\/((?:logic|data|views)\/[^']+)'/g),
+  ...fs.readFileSync(path.join(ROOT, file), 'utf8').matchAll(/(?:from\s*|import\s*\(\s*)'@\/([^']+)'/g),
 ].map((m) => `src/${m[1]}`);
 
-const bare = (p: string) => p.replace(/\.(?:ts|tsx)$/, '');
+/** A module path as a file or a folder's index, without its extension. */
+const bare = (p: string) => p.replace(/\.(?:ts|tsx)$/, '').replace(/\/index$/, '');
 
 describe('the adopt payload', () => {
   it('carries every module a component it ships imports', () => {
-    const delivered = new Set(adoptSetOf(PAYLOAD).map(bare));
+    // adopt writes the project's src/app.config.ts from the release's own, so a component may import it.
+    const delivered = new Set([...adoptSetOf(PAYLOAD), 'src/app.config.ts'].map(bare));
     const missing = [...new Set(PAYLOAD.flatMap(imported))].filter((p) => !delivered.has(bare(p)));
     expect(missing, 'a component imports a module an adopted project would not have').toEqual([]);
   });

@@ -26,7 +26,7 @@ Every release of ZZ Meridian, newest first. Versions follow semver: a removed or
 - **The command palette exports `usePaletteKey()`**, its keystroke as the reader's keyboard names it (`⌘K` or `Ctrl K`), for a page that shows the shortcut.
 - **Badge exports `TONE_FILL`**, the one tone-to-fill map, which Progress now reads.
 - **`page-loading` exports `LinesSkeleton`**, a card of lines under a title, four unless told; Home, Revenue and Now each drew their own.
-- **`@/lib/sort` exports `compareValues`**, the order a `DataTable` sorts a column by (text by a collator, case and accents aside, numbers inside text by value); the Customers context lists its rows in it, so a name in lower case sits where the table shows it.
+- **`@/lib/sort` exports `compareValues`**, a managed helper like the rest of `src/lib/`, the order a `DataTable` sorts a column by (text by a collator, case and accents aside, numbers inside text by value); the Customers context lists its rows in it, so a name in lower case sits where the table shows it.
 - **`src/lib/collection.ts` exports `p95(values)`**, the nearest-rank 95th percentile a prepared query's `p95` answers; the Requests tiles read it too.
 - **`src/lib/collection.ts` exports `storedRows(tenantId, name)`**, the rows a tenant's array collection keeps in this process, for a test that grows one past a page; `read-every-row` and two other tests used a copy of the store's private key and shape.
 - **`@/lib/format` exports `changeOf` and `capitalise`**: a change against the figure before as a fraction (null against none or zero), and a word as a label starts. Home, Revenue and Usage each wrote the first, Releases, Tests and Tickets the second.
