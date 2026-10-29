@@ -24,8 +24,8 @@ Avatar, Agent mark, and the date formatters, inside a Card with a divided header
 | State | What shows |
 |---|---|
 | Events | One line each, 16px apart |
-| Empty | An Empty state: "No activity yet. Changes to keys, limits and deployments appear here." |
-| Loading | Three Skeleton lines with discs |
+| Empty | The feed draws only events: with none, its card says so in its own words in place of the list ("No activity yet. Changes to keys, limits and deployments appear here.") |
+| Loading | The page's loading draws the card as lines (`LinesSkeleton` from Page loading); the events arrive with the page, so the feed has no loading state of its own |
 
 ## Surfaces
 

@@ -21,6 +21,11 @@ export default function FormSectionPreview() {
           <Field label="Name">{(p) => <Input {...p} value={name} onChange={(e) => setName(e.target.value)} />}</Field>
         </FormSection>
       </Specimen>
+      <Specimen label="Saving" note="Fields and Discard disabled; Save shows its spinner until the save answers." stack>
+        <FormSection title="Workspace" description={`How this workspace is named across ${app.name}.`} dirty saving onDiscard={() => {}} onSave={() => {}}>
+          <Field label="Name">{(p) => <Input {...p} defaultValue={`${app.name} ${app.workspace} (EU)`} />}</Field>
+        </FormSection>
+      </Specimen>
       <Specimen label="With actions" note="actions: beside the title, on its row on a phone too, as on a card's head. A settings page hands itself to the assistant here: Ask about, in the first section's actions." stack>
         <SurfaceOverride surface={{ ask: () => {} }}>
           <FormSection title="Workspace" description={`How this workspace is named across ${app.name}.`} actions={<AskAbout question="What do these settings change for this workspace?" />}>

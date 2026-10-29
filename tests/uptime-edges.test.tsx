@@ -29,3 +29,12 @@ describe('an uptime strip with no days', () => {
     expect(container.textContent).not.toMatch(/0 days/);
   });
 });
+
+describe('a day drawn still in the Atlas', () => {
+  it('marks the day and shows its tooltip with no pointer or key', () => {
+    const marked: DayState[] = days.map((d, i) => (i === 42 ? 'outage' : d));
+    const { container } = render(<UptimeBars days={marked} uptime={0.99} end={end} label="Gateway" data-preview-index={42} />);
+    expect(container.querySelector('rect[data-focus]')?.getAttribute('x')).toBe('42');
+    expect(tip(container).textContent).toContain('Outage');
+  });
+});

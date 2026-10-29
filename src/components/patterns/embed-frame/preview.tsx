@@ -8,7 +8,7 @@ import { SurfaceOverride } from '@/components/base/surface';
 import { Freshness } from '@/components/patterns/freshness';
 import { MetricTile } from '@/components/patterns/metric-tile';
 import { Specimen, State } from '@/system/specimen';
-import { EmbedFrame } from '.';
+import { EmbedBusy, EmbedFailed, EmbedFrame } from '.';
 import { app } from '@/app.config';
 
 const s = demoSeries('7d').current;
@@ -37,12 +37,18 @@ const Host = ({ width, children }: { width: number; children: React.ReactNode })
 export default function EmbedFramePreview() {
   return (
     <>
-      <Specimen label="Inline" note={`The default in a chat: the view's title, freshness, Expand and Open in ${app.name}, then one job. No frame, rail or masthead; the host's ground shows through.`}>
+      <Specimen label="Inline" note={`The default in a chat: the view's title, freshness, Expand and Open in ${app.name}, then one job. No frame, rail or masthead; the host's ground shows through. Opened outside a host (not connected) it looks the same, and Expand and Open open new tabs.`}>
         <State label="420px"><Host width={420}><View mode="inline" /></Host></State>
         <State label="720px"><Host width={720}><View mode="inline" /></Host></State>
       </Specimen>
       <Specimen label="Fullscreen" note="After Expand, when the host allows it: a page title and the console's rows, without the shell.">
         <Host width={720}><View mode="fullscreen" /></Host>
+      </Specimen>
+      <Specimen label="Loading and failed" note="Loading draws the frame at once over blocks shaped like the body; a read that threw keeps the frame and says nothing was changed.">
+        <SurfaceOverride surface={{ kind: 'embed', mode: 'inline', connected: true }}>
+          <State label="Loading"><Host width={420}><EmbedBusy title="Home" consolePath="/" name="Home" blocks={['chart', 'tiles']} /></Host></State>
+          <State label="Failed"><Host width={420}><EmbedFailed title="Home" consolePath="/" name="Home" /></Host></State>
+        </SurfaceOverride>
       </Specimen>
     </>
   );

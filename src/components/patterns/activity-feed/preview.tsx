@@ -2,7 +2,8 @@
 
 import { ACTIVITY, DEMO_NOW } from '@/system/fixtures/sample';
 import { Card, CardBody, CardHeader } from '@/components/ui/card';
-import { Specimen } from '@/system/specimen';
+import { Specimen, State } from '@/system/specimen';
+import { LinesSkeleton } from '@/components/patterns/page-loading';
 import { ActivityFeed } from '.';
 import { app } from '@/app.config';
 
@@ -26,6 +27,15 @@ export default function ActivityFeedPreview() {
             { id: 'u', at: new Date(DEMO_NOW.getTime() - 26 * 3600_000).toISOString(), actor: 'Someone not recorded', unknown: true, verb: 'issued a token for', object: 'the staging gateway' },
           ]}
         />
+      </Specimen>
+      <Specimen label="Empty and loading" note="The feed draws only events: with none, its card says so in its own words in place of the list; while the page reads, the page's loading draws the card as lines.">
+        <State label="Empty" className="w-full max-w-md">
+          <Card className="w-full">
+            <CardHeader title="Activity" description="Changes to this workspace, newest first" divided />
+            <CardBody><p className="py-2 text-sm text-ink-2">No activity yet. Changes to keys, limits and deployments appear here.</p></CardBody>
+          </Card>
+        </State>
+        <State label="Loading" className="w-full max-w-md"><LinesSkeleton lines={3} /></State>
       </Specimen>
     </>
   );

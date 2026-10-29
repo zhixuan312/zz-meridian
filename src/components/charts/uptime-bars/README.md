@@ -38,6 +38,8 @@ The viewBox is one unit per day, so the strip fills the container's width and ev
 
 The strip is a focusable group: Arrow Left and Right, Home and End move the focused day, Escape clears it, and a polite live region announces its date and state.
 
+The Atlas uses `data-preview-index` to draw a pointed day and its tooltip still; product strips take theirs from the pointer and the keys.
+
 ## Surfaces
 
 - **Console**: 90 days.

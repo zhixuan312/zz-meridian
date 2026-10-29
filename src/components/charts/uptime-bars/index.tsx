@@ -29,6 +29,7 @@ export function UptimeBars({
   measure = 'uptime',
   size = 'md',
   className,
+  'data-preview-index': previewIndex,
 }: {
   /** One state per day, oldest first, ending on `end`. */
   days: DayState[];
@@ -44,9 +45,12 @@ export function UptimeBars({
   /** `lg` (56px) when the strip is a card's protagonist, as Now's days inside the band. */
   size?: 'md' | 'lg';
   className?: string;
+  /** A day drawn as pointed at in the Atlas, with its tooltip; real strips take theirs from the pointer and the keys. */
+  'data-preview-index'?: number;
 }) {
   const summaryId = useId();
-  const [hover, setHover] = useState<number | null>(null);
+  const [pointed, setHover] = useState<number | null>(null);
+  const hover = previewIndex ?? pointed;
   // Every day, always: the figure and the label describe all of them. A narrow strip scales the drawing instead.
   const shown = days;
   const dateOf = (i: number) => new Date(end.getTime() - (shown.length - 1 - i) * 86_400_000);
