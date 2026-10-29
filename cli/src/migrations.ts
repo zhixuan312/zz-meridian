@@ -173,10 +173,24 @@ function readsSizeRefCurrent(src: string, hook: string): boolean {
   const h = esc(hook);
   const current = (lead: string) => new RegExp(`(?<![\\w$.])${lead}\\s*\\??\\.\\s*current\\b`).test(src);
   if (current(`${h}\\s*(?:<[^>]*>)?\\s*\\(\\s*\\)\\s*\\[\\s*0\\s*\\]`)) return true;
-  // The declaration up to the hook's call, defaults and a type annotation included, within one statement.
-  for (const m of src.matchAll(new RegExp(`\\b(?:const|let|var)\\s*\\[\\s*([\\w$]+)\\b[^;]*?=\\s*${h}\\b`, 'g'))) if (current(esc(m[1]!))) return true;
+  // A destructuring's first name, its pattern's brackets matched, so defaults and a file without semicolons are read too.
+  for (const m of src.matchAll(/\b(?:const|let|var)\s*\[\s*([\w$]+)/g)) if (assignsFrom(src, closeOf(src, m.index! + m[0].indexOf('[')) + 1, h) && current(esc(m[1]!))) return true;
   for (const m of src.matchAll(new RegExp(`\\b(?:const|let|var)\\s+([\\w$]+)\\s*=\\s*${h}\\b`, 'g'))) if (current(`${esc(m[1]!)}\\s*\\[\\s*0\\s*\\]`)) return true;
   return false;
+}
+
+/**
+ * Whether the declaration whose pattern ends at `i` takes its value from a call of `h`: past a type annotation, whose
+ * brackets are matched since a type literal separates its fields with semicolons, to the `=` that assigns it.
+ */
+function assignsFrom(src: string, i: number, h: string): boolean {
+  if (/^\s*:/.test(src.slice(i))) {
+    for (i = src.indexOf(':', i) + 1; i < src.length && !(src[i] === '=' && !'>='.includes(src[i + 1]!));) {
+      if (src[i] === ';' || src[i] === ')' || src[i] === ']' || src[i] === '}') return false;
+      i = '{(['.includes(src[i]!) ? closeOf(src, i) + 1 : i + 1;
+    }
+  }
+  return new RegExp(`^\\s*=\\s*${h}\\b`).test(src.slice(i));
 }
 
 /** Each import of a file of the team's: the module it resolves to, the names it takes and its namespace, if it has one. */
@@ -712,9 +726,13 @@ function appDescriptionMissing(root: string): string[] | null {
 /** 0.36.0: a configuration whose `NavItem` type lacks the `under` or `prefetch` field the rail reads. */
 function navItemWithoutFields(root: string): string[] | null {
   const rel = 'src/app.config.ts';
-  const type = text(root, rel)?.match(/^export type NavItem = \{[\s\S]*?\};$/m)?.[0];
+  const body = text(root, rel);
+  const type = body === null ? undefined : navItemType(body);
   return type && !(/\bunder\?:/.test(type) && /\bprefetch\?:/.test(type)) ? [rel] : null;
 }
+
+/** A configuration's own `NavItem` type, on one line or over several, its fields ending in semicolons or not. */
+const navItemType = (body: string) => body.match(/^export type NavItem = \{[\s\S]*?\};$/m)?.[0];
 
 /**
  * A test of the rail that stands over a fake `ResizeObserver` answering `observe` with nothing (0.16.2). The lookbehind
@@ -847,9 +865,8 @@ function navItemsWithoutNeeds(root: string): string[] | null {
   const items = navItemObjects(nav);
   // A project of 0.12.3's vintage also declares `NavItem` itself, without the property: an item that names a `needs` its
   // own type does not have is the type error the gate prints next, so the change is not done until the type carries it.
-  const declaredType = /export type NavItem[^;]*\};/.test(body);
-  const typeHasNeeds = /export type NavItem[^;]*\bneeds\s*:/.test(body);
-  return items.some((item) => !/\bneeds\s*:/.test(item)) || (declaredType && !typeHasNeeds) ? [rel] : null;
+  const type = navItemType(body);
+  return items.some((item) => !/\bneeds\s*:/.test(item)) || (type !== undefined && !/\bneeds\s*:/.test(type)) ? [rel] : null;
 }
 
 /**

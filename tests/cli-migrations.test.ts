@@ -117,6 +117,10 @@ describe('the 0.13.0 migration', () => {
     // No nav at all, and no app.config.ts at all: nothing of the team's to change.
     expect(byId('nav-needs').applies(project({ 'src/app.config.ts': "export const brand = {};\n" }))).toBeNull();
     expect(byId('nav-needs').applies(project({ 'package.json': '{}' }))).toBeNull();
+    // Every item has a need and the type 0.12.3 wrote, its fields ending in semicolons, does not: still the change.
+    const items = "\nexport const nav: NavGroup[] = [\n  { items: [{ href: '/', label: 'Overview', icon: LayoutGrid, needs: 'public' }] },\n];\n";
+    expect(byId('nav-needs').applies(project({ 'src/app.config.ts': `export type NavItem = { href: string; label: string; icon: LucideIcon; badge?: string };${items}` }))).toEqual(['src/app.config.ts']);
+    expect(byId('nav-needs').applies(project({ 'src/app.config.ts': `export type NavItem = { href: string; label: string; icon: LucideIcon; needs: Need };${items}` }))).toBeNull();
   });
 
   it('reads an item however many lines it is written over', () => {
@@ -573,6 +577,11 @@ describe('what the migrations read of a team file', () => {
     // A default in the destructuring, a type on it, and an optional read.
     const shaped = `${use}export function Tip() {\n  const [box, { width = 0 }]: readonly [unknown, { width: number }] = useSize<HTMLDivElement>();\n  return <div>{box?.current?.offsetLeft}{width}</div>;\n}\n`;
     expect(byId('use-size-callback-ref').applies(project({ 'app/tip.tsx': shaped }))).toEqual(['app/tip.tsx']);
+    // A type literal whose fields end in semicolons, and a file written without semicolons whose useState comes first.
+    const typed = `${use}export function Tip() {\n  const [box]: [unknown, { width: number; height: number }] = useSize<HTMLDivElement>();\n  return <div>{box.current?.offsetLeft}</div>;\n}\n`;
+    expect(byId('use-size-callback-ref').applies(project({ 'app/tip.tsx': typed }))).toEqual(['app/tip.tsx']);
+    const bare = `${use}export function Tip() {\n  const [open, setOpen] = useState(false)\n  const [box] = useSize<HTMLDivElement>()\n  return <div onClick={() => setOpen(!open)}>{box.current?.offsetLeft}</div>\n}\n`;
+    expect(byId('use-size-callback-ref').applies(project({ 'app/tip.tsx': bare }))).toEqual(['app/tip.tsx']);
   });
   it('reads a team file under a managed folder the manifest does not record, and none it records', () => {
     const reads = `${use}export function Tip() {\n  const [box] = useSize<HTMLDivElement>();\n  return <div ref={box}>{box.current?.offsetLeft}</div>;\n}\n`;
