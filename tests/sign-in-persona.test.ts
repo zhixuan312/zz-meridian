@@ -21,18 +21,18 @@ afterEach(() => { vi.unstubAllEnvs(); });
 
 describe('the gated demo sign-in chooses who to be', () => {
   it('opens the console as the chosen persona after the right password', async () => {
-    await expect(demoSignIn({ error: false }, form({ password: 'open-sesame', persona: 'members_12' }))).rejects.toThrow('redirect /');
+    await expect(demoSignIn({ error: null }, form({ password: 'open-sesame', persona: 'members_12' }))).rejects.toThrow('redirect /');
     expect(jar.set.map(([n]) => n).sort()).toEqual(['zz_meridian_demo', 'zz_meridian_view_as']);
     expect(jar.set.find(([n]) => n === 'zz_meridian_view_as')?.[1]).toBe('members_12');
   });
 
   it('sets nothing for a wrong password', async () => {
-    expect(await demoSignIn({ error: false }, form({ password: 'nope', persona: 'members_12' }))).toEqual({ error: true });
+    expect(await demoSignIn({ error: null }, form({ password: 'nope', persona: 'members_12' }))).toEqual({ error: 'password', persona: 'members_12' });
     expect(jar.set).toEqual([]);
   });
 
   it('sets nothing for a persona outside the list', async () => {
-    expect(await demoSignIn({ error: false }, form({ password: 'open-sesame', persona: 'members_3' }))).toEqual({ error: true });
+    expect(await demoSignIn({ error: null }, form({ password: 'open-sesame', persona: 'members_3' }))).toEqual({ error: 'persona' });
     expect(jar.set).toEqual([]);
   });
 });

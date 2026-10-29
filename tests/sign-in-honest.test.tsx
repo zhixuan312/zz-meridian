@@ -2,7 +2,7 @@ import { render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
 // The panels submit to server actions; a test of what the panels say has nothing to send.
-vi.mock('../app/sign-in/actions', () => ({ demoSignIn: async () => ({ error: false }), signInAs: async () => ({}) }));
+vi.mock('../app/sign-in/actions', () => ({ demoSignIn: async () => ({ error: null }), signInAs: async () => ({}) }));
 
 import * as panel from '../app/sign-in/panel';
 
