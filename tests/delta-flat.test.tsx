@@ -16,3 +16,11 @@ describe('a change reads as no change only when its format reads it as none', ()
     expect(reading(<Delta value={0.0006} />).title).toBe('Up 0.1%, better');
   });
 });
+
+describe('a format function is handed the magnitude, as its prop says', () => {
+  it("a fall under the README's own format reads its figure once, with the arrow saying which way", () => {
+    const d = reading(<Delta value={-23.73} format={(n) => `$${n}`} intent="up" />);
+    expect(d.title).toBe('Down $23.73, worse');
+    expect(d.textContent).toBe('down $23.73');
+  });
+});

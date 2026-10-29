@@ -30,7 +30,9 @@ export function Delta({
   className?: string;
 }) {
   if (value === null || !Number.isFinite(value)) return <span className={cn('text-xs text-ink-3', className)}>—</span>;
-  const read = typeof format === 'function' ? format : DELTA_FORMATS[format ?? 'percent'];
+  const named = typeof format === 'function' ? format : DELTA_FORMATS[format ?? 'percent'];
+  // A format reads the size of the change; the arrow and the word say which way.
+  const read = (n: number) => named(Math.abs(n));
   // No change is a change its format reads as none: under 0.05% for a share, while an absolute format shows its own unit.
   const flat = read(value) === read(0);
   const up = value > 0;

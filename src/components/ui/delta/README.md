@@ -22,7 +22,7 @@ A change its format reads as no change is flat (under 0.05% for `percent` and `p
 
 ## Sizes
 
-One size, `text-xs`, so it sits on the caption line under a figure. The format defaults to `percent`, the change as a share of the earlier value with one decimal; `points` reads a change in a value that is itself a share in percentage points ("13.4 pts", where `percent` would print a share that went from 33.0% to 46.4% as up 40.6%); pass a function for absolute changes ("43ms").
+One size, `text-xs`, so it sits on the caption line under a figure. The format defaults to `percent`, the change as a share of the earlier value with one decimal; `points` reads a change in a value that is itself a share in percentage points ("13.4 pts", where `percent` would print a share that went from 33.0% to 46.4% as up 40.6%); pass a function for absolute changes ("43ms"), which is handed the size of the change, never its sign.
 
 ## States
 
