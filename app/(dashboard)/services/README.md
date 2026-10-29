@@ -59,7 +59,7 @@ Every figure is read on the server by the Services tool's read (`servicesTool` i
 - **The incidents**: the `incidents` collection, `readIncidents()` in `src/data/metrics.ts`, read apart from the services: a read that fails leaves `incidents` null and the part saying so. Newest first; those nobody has resolved are `open`, the others `resolved`. A record names who has the incident and, by its id, the ticket its work is tracked in; the read hands the card the owner's name and the ticket's title with the address the Tickets page finds it at. How long an incident lasted, or has lasted so far, is `lastedOf` in `src/logic/services-context.ts`, in the product's durations. The sample's rows are `INCIDENTS` in `src/system/fixtures/sample.ts` and `PAST_INCIDENTS` in `src/system/fixtures/sample-ops.ts`.
 - **The title and the days inside the band** are worked out in the read, on the server: the title from the services' uptimes and strips, and the days inside the band from every complete day kept (`readDays('all')`), held to `facts.band` in `src/app.config.ts` by `steady`. The page is handed the sentences (`head` on its data) and never the days.
 
-The strips cross to the browser one character a day (`packServices`). Nothing writes.
+The strips cross to the browser one character a day (`packServices`). Nothing writes. The page registers no collection with `useLive` (`src/lib/live.ts`): it is read fresh on each visit, and a change made elsewhere meanwhile shows on the next.
 
 ## Surfaces
 

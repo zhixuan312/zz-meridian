@@ -32,7 +32,7 @@ The `customers` collection, read through `readAll()` under `customers:read`, lik
 
 The page reads every customer and hands its client the fields a row draws (`customerRow` in `src/logic/customers-context.ts`): the id, name, plan, status, requests, 14-day trend, error rate, revenue and the day it joined. What only a customer's own page shows, its requests by route among it, stays on the server. `kept()` and `customerFigures()` there decide what is counted: every customer that has not left.
 
-The page renders the masthead (title, sentence) itself, outside the boundary that reads the address, so a cold load has them in the first HTML. The tiles and the table wait inside their own boundary.
+The page renders the masthead (title, sentence) itself, outside the boundary that reads the address, so a cold load has them in the first HTML. The tiles and the table wait inside their own boundary. The page registers no collection with `useLive` (`src/lib/live.ts`): it is read fresh on each visit, and a change made elsewhere meanwhile shows on the next.
 
 ## Embed view
 

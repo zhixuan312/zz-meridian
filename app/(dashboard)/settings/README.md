@@ -29,7 +29,7 @@ On a form page's own measure (`form-width`), which fills the canvas until it is 
 
 ## Data
 
-Appearance reads and writes `usePreferences()` (stored on the device). The workspace's name and address are the one row of the `workspace` collection, read under `workspace:read` and saved through the `save-workspace` action, which asks `workspace:update`; the row is seeded from `app.config.ts`. The record holds no time zone: every date is cut on `app.timezone` in the configuration, set once.
+Appearance reads and writes `usePreferences()` (stored on the device). The workspace's name and address are the one row of the `workspace` collection, read under `workspace:read` and saved through the `save-workspace` action, which asks `workspace:update`; the row is seeded from `app.config.ts`. The record holds no time zone: every date is cut on `app.timezone` in the configuration, set once. The page registers no collection with `useLive` (`src/lib/live.ts`): it is read fresh on each visit, and a change made elsewhere meanwhile shows on the next.
 
 ## Surfaces
 

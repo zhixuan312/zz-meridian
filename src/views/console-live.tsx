@@ -25,7 +25,7 @@ function ResolveScope({ scope, onReady }: { scope: Promise<string>; onReady: (re
   return null;
 }
 
-/** Every console page's live data: one stream per tab, opened once the scope has resolved. A refresh reauthorizes the names, then reads the route again; a refusal throws a 401 the provider pauses on. */
+/** The console's live stream: one per tab, opened once the scope has resolved, for the collections the page's views register with `useLive` (a page that registers none is read fresh on each visit). A refresh reauthorizes the names, then reads the route again; a refusal throws a 401 the provider pauses on. */
 export function ConsoleLive({ scope, children }: { scope: Promise<string>; children: React.ReactNode }) {
   const router = useRouter();
   const [ready, setReady] = useState<Ready>({ scopeKey: '' });

@@ -51,7 +51,7 @@ A customer is named by its name across the product, and wherever it is, the name
 
 One row of the `customers` collection through `read()` under `customers:read`, whose key is the id; the product's revenue and error rate over the last 30 complete days (`readDays('30d')`); and the newest five requests of the `requests` collection whose customer is this one's name (`readLatestFrom` in `src/data/requests.ts`). `readCustomer` in `src/logic/tools.ts` reads all three, each apart, and is shared by the page and the Customer tool; the page's metadata and its body share one read. Three ids are built ahead of time, the three largest customers; any other renders on its first request. Nothing writes.
 
-Its share of revenue is what it paid over the revenue of the same 30 complete days. The busiest of its 14 days is the largest of its trend, dated from the day before the read.
+Its share of revenue is what it paid over the revenue of the same 30 complete days. The busiest of its 14 days is the largest of its trend, dated from the day before the read. The page registers no collection with `useLive` (`src/lib/live.ts`): it is read fresh on each visit, and a change made elsewhere meanwhile shows on the next.
 
 ## Surfaces
 

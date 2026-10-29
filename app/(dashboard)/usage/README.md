@@ -79,7 +79,7 @@ Every figure is read on the server by the Usage tool's read (`usageTool` in `src
 - **When they come and where from**: `usageFigures()` in `src/data/usage.ts`, the `hours` and `regions` collections under `hours:read` and `regions:read`. A weekday's row sums to the requests of that weekday's days, and the hours of the day are the grid's columns summed.
 - **What is asked for**: `readEndpoints()`, the `endpoints` collection. **How it was answered**: `readResponses()`, the `responses` collection. Both in `src/data/metrics.ts`, through `read()`.
 
-The hours, the regions, the endpoints and the responses each add up to the requests of the last 30 complete days. Nothing writes.
+The hours, the regions, the endpoints and the responses each add up to the requests of the last 30 complete days. Nothing writes. The page registers no collection with `useLive` (`src/lib/live.ts`): it is read fresh on each visit, and a change made elsewhere meanwhile shows on the next.
 
 ## Surfaces
 
