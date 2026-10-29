@@ -134,11 +134,11 @@ to all of this.
   destination of `nav` the person may open, or `/`, and rewrite the two cases of `optional:tests/no-access.test.tsx` that
   expect a workspace's first destination and Main's home.
 - Take `${workspaces.<id>.audience}` out of the descriptions of the Home, Revenue, Usage and Now pages, or delete
-  the pages.
+  the pages, and out of `LINE_ROOM` in `optional:src/logic/now-parts.ts`, which keeps room for Engineering's beside Now's line.
 - Delete `optional:tests/workspaces.test.ts`, `optional:tests/workspace-access.test.ts`,
   `optional:tests/workspace-chrome.test.tsx` and `optional:tests/workspace-menu-access.test.tsx`. In `optional:tests/shell-alerts.test.ts` drop the `workspaceOf` check, and in
   `optional:tests/workspace-home.test.tsx` the test that reads `workspaces.main.audience`, with the two imports only
-  it uses.
+  it uses, and in `optional:tests/logic-layer.test.ts` the line that expects `optional:src/views/workspaces.ts`.
 - A clone that keeps the Atlas also changes `optional:src/system/atlas-shell.tsx` and `optional:src/system/strata.tsx`, which
   list the workspaces, and `optional:tests/atlas-layers.test.ts`, which expects three; a created project has no Atlas.
 
