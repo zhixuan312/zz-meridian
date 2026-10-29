@@ -9,7 +9,7 @@ import { formatDateTime, formatRelative } from '@/lib/format-date';
 import { Kbd } from '@/components/ui/kbd';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { StatusDot } from '@/components/ui/status-dot';
-import { openCommand } from '@/components/patterns/command-palette';
+import { openCommand, usePaletteKey } from '@/components/patterns/command-palette';
 
 /** One thing that needs a person: what happened, where to act on it, and whether they have seen it. */
 export type Alert = { id: string; title: string; detail?: string; at: string; href: string; tone: 'critical' | 'warning' | 'positive' | 'neutral'; unread?: boolean };
@@ -37,6 +37,7 @@ export function ShellTools({ alerts = [], now }: { alerts?: Alert[]; /** The dat
   const unread = alerts.filter((a) => a.unread && !read.has(a.id)).length;
   const name = unread ? `Alerts, ${unread} new` : 'Alerts';
   const markAll = () => keep(new Set([...read, ...alerts.map((a) => a.id)]));
+  const paletteKey = usePaletteKey();
   return (
     <>
       <button
@@ -47,7 +48,7 @@ export function ShellTools({ alerts = [], now }: { alerts?: Alert[]; /** The dat
         <Search className="size-4" strokeWidth={1.75} />
         {/* Below 40rem the word is only its own name: `sr-only`, never `hidden`, so the icon-only button is still announced (#83). */}
         <span className="w-36 text-left @max-[48rem]:w-20 @max-[40rem]:sr-only">Search</span>
-        <Kbd className="keyboard-only @max-[40rem]:hidden">⌘K</Kbd>
+        <Kbd className="keyboard-only @max-[40rem]:hidden">{paletteKey}</Kbd>
       </button>
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>

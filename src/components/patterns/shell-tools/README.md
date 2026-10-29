@@ -6,7 +6,7 @@ Status: beta
 
 ## Anatomy
 
-1. **Search pill**: a 36px pill with a search icon, the word Search and a ⌘K key; it opens the Command palette.
+1. **Search pill**: a 36px pill with a search icon, the word Search and the palette's key, ⌘K on an Apple keyboard and Ctrl K on any other (`usePaletteKey()`); it opens the Command palette.
 2. **Alerts**: a 36px round button with a bell and, when something is new, an 8px `accent` dot ringed in `ground`. It opens the alerts panel.
 3. **Alerts panel**: a 352px popover, aligned to the bell's end: a head ("Alerts", the new count, Mark all read), then one row per alert (a status dot, the title, one line of detail, the time), each a link to where the alert is handled. Empty: "Nothing needs you right now."
 

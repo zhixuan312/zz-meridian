@@ -8,7 +8,7 @@ Status: beta
 
 1. **Query**: a 56px input with a search icon, `text-md`, and an Esc hint.
 2. **Results**: commands grouped under mono eyebrows ("Go to", "Appearance"), each a 40px row with an icon, a label, an optional hint (its group, or its parent's label for a sub page) and, on the highlighted row, an Enter glyph.
-3. **Key hints**: a `surface-sunk` band at the foot: ↑ ↓ move, ↵ open, ⌘K toggle.
+3. **Key hints**: a `surface-sunk` band at the foot: ↑ ↓ move, ↵ open, ⌘K toggle (Ctrl K off an Apple keyboard: `usePaletteKey()` names the reader's key once the page has hydrated; the server draws ⌘K).
 
 ## Composition
 

@@ -3,7 +3,7 @@
 import { Dialog as D } from 'radix-ui';
 import { useRouter } from 'next/navigation';
 import { useLeave } from '@/components/base/shell';
-import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { useEffect, useMemo, useRef, useState, useSyncExternalStore, type ReactNode } from 'react';
 import { ArrowRight, CornerDownLeft, Monitor, Moon, Search, Sun } from 'lucide-react';
 import type { NavGroup } from '@/app.config';
 import { cn } from '@/lib/cn';
@@ -17,6 +17,16 @@ let opener: (() => void) | null = null;
 /** Open the palette from anywhere: the rail's search button, a shortcut in a page. */
 export function openCommand() {
   opener?.();
+}
+
+const noChange = () => () => {};
+const appleKeyboard = () => /mac|iphone|ipad/i.test((navigator as { userAgentData?: { platform: string } }).userAgentData?.platform ?? navigator.platform);
+/**
+ * The palette's keystroke as the reader's keyboard names it: ⌘K on Apple's, Ctrl K on every other. The server cannot
+ * know, so it draws ⌘K and the client names the reader's key once it has hydrated.
+ */
+export function usePaletteKey() {
+  return useSyncExternalStore(noChange, () => (appleKeyboard() ? '⌘K' : 'Ctrl K'), () => '⌘K');
 }
 
 /**
@@ -136,6 +146,7 @@ export function CommandPanel({
   listRef?: React.Ref<HTMLDivElement>;
   autoFocus?: boolean;
 }) {
+  const paletteKey = usePaletteKey();
   let lastGroup = '';
   return (
     <>
@@ -192,7 +203,7 @@ export function CommandPanel({
       <div className="keyboard-only flex items-center gap-4 border-t border-line bg-surface-sunk/60 px-4 py-2.5 text-xs text-ink-3">
         <span className="flex items-center gap-1.5"><Kbd>↑</Kbd><Kbd>↓</Kbd> move</span>
         <span className="flex items-center gap-1.5"><Kbd>↵</Kbd> open</span>
-        <span className="keyboard-only ml-auto flex items-center gap-1.5 max-sm:hidden"><Kbd>⌘K</Kbd> toggle</span>
+        <span className="keyboard-only ml-auto flex items-center gap-1.5 max-sm:hidden"><Kbd>{paletteKey}</Kbd> toggle</span>
       </div>
     </>
   );
