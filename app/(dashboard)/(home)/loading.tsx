@@ -1,8 +1,6 @@
-import { Card } from '@/components/ui/card';
 import { Row } from '@/components/base/shell';
-import { Skeleton } from '@/components/ui/skeleton';
 import { Freshness } from '@/components/patterns/freshness';
-import { ChartSkeleton, LinesSkeleton, LoadingPage, TilesSkeleton } from '@/components/patterns/page-loading';
+import { ChartSkeleton, FeaturedSkeleton, LinesSkeleton, LoadingPage, TilesSkeleton } from '@/components/patterns/page-loading';
 import { gatedLoading } from '@/data/refusal';
 import { app } from '@/app.config';
 import { DEMO_NOW, DEMO_UPDATED_AT } from '@/data/sample';
@@ -12,23 +10,7 @@ import { PeriodActionsRoom } from '@/views/period-actions';
 export function HomeSkeleton() {
   return (
     <>
-      <Row split="2/3">
-        <Card className="min-h-[29rem] gap-4 p-(--card-pad)">
-          <Skeleton className="h-2.5 w-40" />
-          <Skeleton className="h-16 w-56 rounded-md" />
-          <Skeleton className="h-3 w-80 max-w-full" />
-          <Skeleton className="mt-auto h-56 w-full rounded-md" />
-        </Card>
-        <div className="grid min-w-0 gap-(--stack-gap) md:grid-cols-3 lg:flex lg:flex-col">
-          {[0, 1, 2].map((i) => (
-            <Card key={i} className="flex-1 gap-3 p-(--card-pad)">
-              <Skeleton className="h-3 w-24" />
-              <Skeleton className="h-9 w-32 rounded-md" />
-              <Skeleton className="mt-auto h-8 w-full" />
-            </Card>
-          ))}
-        </div>
-      </Row>
+      <FeaturedSkeleton beside />
       <TilesSkeleton count={4} />
       <ChartSkeleton height="h-96" />
       <LinesSkeleton lines={5} />
