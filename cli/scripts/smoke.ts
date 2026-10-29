@@ -46,8 +46,9 @@ const VERSION: string = JSON.parse(fs.readFileSync(path.join(ROOT, 'cli/package.
 const HEADINGS = ['## Product', '## Users', '## Data', '## Decisions', '## Glossary'];
 const args = process.argv.slice(2);
 const opt = (k: string) => { const i = args.indexOf(k); return i >= 0 ? args[i + 1] : undefined; };
-const tarball = path.resolve(opt('--tarball') ?? fs.readdirSync(path.join(ROOT, 'cli')).filter((f) => f.endsWith('.tgz')).map((f) => path.join(ROOT, 'cli', f)).at(-1) ?? '');
-if (!fs.existsSync(tarball)) throw new Error('no tarball: run npm pack in cli/ first, or pass --tarball');
+// Without --tarball, this version's pack: a tarball left from an earlier pack would be smoked as this one.
+const tarball = path.resolve(opt('--tarball') ?? path.join(ROOT, 'cli', `zz-meridian-${VERSION}.tgz`));
+if (!fs.existsSync(tarball)) throw new Error(`no tarball at ${tarball}: run npm pack in cli/ first, or pass --tarball`);
 
 const work = fs.mkdtempSync(path.join(os.tmpdir(), 'zz-meridian-smoke-'));
 const keep = args.includes('--keep');
