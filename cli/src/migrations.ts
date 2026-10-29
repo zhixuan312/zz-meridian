@@ -5,6 +5,7 @@
  */
 import fs from 'node:fs';
 import path from 'node:path';
+import { payloadBytes, payloadFiles } from './files.js';
 import { FIXED } from './ownership.js';
 import { isNewer } from './update.js';
 import type { Migration } from './update-session.js';
@@ -577,7 +578,36 @@ export const RELEASE_MIGRATIONS: ReleaseMigration[] = [
     instructions: "Your `app/layout.tsx` is yours, so an update does not touch it, and yours hands `--font-face-sans` and `--font-face-mono` their faces through `next/font/google`, which `next build` fetches from fonts.googleapis.com: with that host unreachable and no build cache, the build fails (`Build error occurred`). The update has delivered the two faces, `src/styles/fonts/Geist-Variable.woff2` and `src/styles/fonts/GeistMono-Variable.woff2`, with their licence. In the layout, replace the `next/font/google` import with `import localFont from 'next/font/local';` and each face's call with `localFont({ src: '../src/styles/fonts/Geist-Variable.woff2', weight: '100 900', variable: '--font-face-sans', display: 'swap' })` and `localFont({ src: '../src/styles/fonts/GeistMono-Variable.woff2', weight: '100 900', variable: '--font-face-mono', display: 'swap' })`, keeping the class names on `<html>` as they are. A layout that gives the tokens faces of its own from Google Fonts is the same case: ship the files and load them with `next/font/local`.",
     checks: GATE_AND_BUILD,
   },
+  {
+    id: 'sample-with-its-tests',
+    since: '0.36.0',
+    applies: sampleBehindItsTests,
+    summary: "The sample's files changed with the shipped tests that pin them: the update brings the tests, and each file named here is still the copy they no longer pass.",
+    instructions: "A project `create` made holds the template's sample (its pages, views, data, figures and their helpers) as its own files, which an update never touches, while the shipped tests that pin how they behave are Meridian's and arrive with it. This release changed both together: the API keys actions answer a result, the error screens take `retry`, the request page names its cURL and its payload sizes in characters, a member never seen is said to be, the past-due alert is timed by the latest customer to fall past due, and the period totals moved to the new `src/lib/totals.ts`. Each file named above differs from the release's copy, or is a sample module the release added, and the gate fails on it as it is. Write the release's copies into a scratch folder with `npx zz-meridian@<the version you are updating to> create <scratch folder> --no-install`. Then, for each file named: when your team never changed it (no commit of yours touches it), copy the release's file over it, and copy each module the release added. When your team made it its own, keep yours and make each shipped test that pins it yours too: change the test to your behaviour, which the next update stages for your decision as an edited file, or delete it and name it in `.meridian/keep.json`. A sample file your team deleted is not named.",
+    checks: GATE_AND_BUILD,
+  },
 ];
+
+/** The template's sample as `create` writes it: the team's own sources among the pages, views, data, logic and library. */
+const isSample = (rel: string) => SOURCE.test(rel) && isTeamOwned(rel) && ((rel.startsWith('app/') && !rel.startsWith('app/system/')) || /^src\/(?:views|data|logic|lib)\//.test(rel) || rel.startsWith('src/system/fixtures/') || rel === 'src/system/sample-cells.tsx');
+/** The sample modules 0.36.0 added: a project created before has none, and the release's pages and tests import them. */
+const SAMPLE_ADDED = ['src/lib/totals.ts'];
+
+/**
+ * 0.36.0: in a project `create` made, each sample file that differs from the release's, and each sample module the
+ * release added that the project lacks. A sample file the team deleted is its decision and is not named.
+ */
+function sampleBehindItsTests(root: string): string[] | null {
+  if (!/"route"\s*:\s*"create"/.test(text(root, '.meridian/manifest.json') ?? '')) return null;
+  const hits = payloadFiles().filter(isSample).filter((rel) => {
+    try {
+      return !fs.readFileSync(path.join(root, rel)).equals(payloadBytes(rel));
+    } catch {
+      return SAMPLE_ADDED.includes(rel);
+    }
+  });
+  return hits.length > 0 ? hits : null;
+}
 
 /** 0.32.0: a verify configuration that lists detail routes and declares no routes meant to be missing. */
 function detailRoutesWithoutMissing(root: string): string[] | null {

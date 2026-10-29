@@ -198,7 +198,7 @@ const said = (r: Ran) => [r.out, r.err, r.log].join('\n');
  * The migrations `cli/src/migrations.ts` declares since 0.5.0: changes in the team's own files, resolved by editing them.
  * `verify-modes` is not here: its edit is a flag in a script, and no origin passes one.
  */
-const RELEASE_IDS = ['shell-assistant-promise', 'assistant-available-promise', 'clock-now-required', 'cache-components-config', 'connection-boundaries', 'authorized-read', 'scoped-invalidation', 'live-provider', 'authorized-endpoints', 'share-view-context', 'agent-reads-section', 'assistant-view-tools', 'nav-needs', 'agent-reads-own-group', 'refusal-declared', 'managed-exports-removed', 'view-tool-page-explore', 'agent-does-here-section', 'sample-pages-renamed', 'marker-measured-on-observe', 'view-page-matched-as-next', 'journey-moved', 'today-in-timezone', 'verify-tiers', 'no-data-mark', 'table-grid', 'four-layers', 'direct-query-escape', 'app-description', 'live-stream-shutdown', 'missing-routes', 'self-hosted-fonts'];
+const RELEASE_IDS = ['shell-assistant-promise', 'assistant-available-promise', 'clock-now-required', 'cache-components-config', 'connection-boundaries', 'authorized-read', 'scoped-invalidation', 'live-provider', 'authorized-endpoints', 'share-view-context', 'agent-reads-section', 'assistant-view-tools', 'nav-needs', 'agent-reads-own-group', 'refusal-declared', 'managed-exports-removed', 'view-tool-page-explore', 'agent-does-here-section', 'sample-pages-renamed', 'marker-measured-on-observe', 'view-page-matched-as-next', 'journey-moved', 'today-in-timezone', 'verify-tiers', 'no-data-mark', 'table-grid', 'four-layers', 'direct-query-escape', 'app-description', 'live-stream-shutdown', 'missing-routes', 'self-hosted-fonts', 'sample-with-its-tests'];
 
 const filesUnder = (dir: string, rel = ''): string[] => {
   if (!fs.existsSync(path.join(dir, rel))) return [];
@@ -270,8 +270,10 @@ function bringReleaseOver(proj: string, route: string, reported: string[] = []) 
   const created = createdRelease();
   // The template's console, its data seam, the logic its views read (since 0.28.0 a view imports `@/logic/…`, so a view
   // that came over without the logic beside it named an export its project's logic did not have yet) and the assistant's
-  // route-side code (which takes the guard). A test is replaced only where the project already has it.
-  const owned = (f: string) => (f.startsWith('app/') && !f.startsWith('app/system/')) || f.startsWith('src/views/') || f.startsWith('src/data/') || f.startsWith('src/logic/') || f.startsWith('src/system/fixtures/') || f === 'src/system/sample-cells.tsx' || (f.startsWith('src/lib/assistant/') && f !== 'src/lib/assistant/prompt.ts');
+  // route-side code (which takes the guard), and the library modules the sample's pages import (`src/lib/totals.ts`, which
+  // `sample-with-its-tests` names; the managed ones come over as the update wrote them). A test is replaced only where the
+  // project already has it.
+  const owned = (f: string) => (f.startsWith('app/') && !f.startsWith('app/system/')) || f.startsWith('src/views/') || f.startsWith('src/data/') || f.startsWith('src/logic/') || f.startsWith('src/system/fixtures/') || f === 'src/system/sample-cells.tsx' || (f.startsWith('src/lib/') && f !== 'src/lib/assistant/prompt.ts');
   const release = new Set(filesUnder(created).filter(owned));
   for (const f of filesUnder(proj).filter(owned)) if (!release.has(f)) fs.rmSync(path.join(proj, f));
   for (const f of release) write(proj, f, read(created, f));

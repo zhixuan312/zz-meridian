@@ -3,6 +3,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { afterAll, describe, expect, it } from 'vitest';
+import { readPayload } from '../cli/src/files.ts';
 import { RELEASE_MIGRATIONS } from '../cli/src/migrations.ts';
 
 const tmp: string[] = [];
@@ -449,5 +450,20 @@ describe('the 0.34.0 migration', () => {
     expect(byId('self-hosted-fonts').applies(layout("import localFont from 'next/font/local';\nconst sans = localFont({ src: '../src/styles/fonts/Geist-Variable.woff2', variable: '--font-face-sans' });\n"))).toBeNull();
     expect(byId('self-hosted-fonts').applies(project({}))).toBeNull();
     expect(byId('self-hosted-fonts').applies(path.resolve(import.meta.dirname, '..'))).toBeNull();
+  });
+});
+
+describe('the 0.36.0 migration', () => {
+  it("names a created project's sample files that differ from the release's and the sample modules it lacks, and nothing else", () => {
+    const m = byId('sample-with-its-tests');
+    expect(m.since).toBe('0.36.0');
+    const created = (route: string, files: Record<string, string>) => project({ '.meridian/manifest.json': JSON.stringify({ route }), ...files });
+    // One page as an older release wrote it, one as this release writes it, and the members page deleted with its folder.
+    const files = { 'src/views/request.tsx': 'export const old = 1;\n', 'src/views/requests.tsx': readPayload('src/views/requests.tsx') };
+    expect(m.applies(created('create', files))).toEqual(['src/lib/totals.ts', 'src/views/request.tsx']);
+    expect(m.applies(created('create', { 'src/views/requests.tsx': readPayload('src/views/requests.tsx'), 'src/lib/totals.ts': readPayload('src/lib/totals.ts') }))).toBeNull();
+    // An adopted project holds no sample, and the template holds no manifest.
+    expect(m.applies(created('adopt', files))).toBeNull();
+    expect(m.applies(path.resolve(import.meta.dirname, '..'))).toBeNull();
   });
 });
