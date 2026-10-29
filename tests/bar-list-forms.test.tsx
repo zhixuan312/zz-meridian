@@ -38,10 +38,11 @@ describe('max, a held scale', () => {
     expect(c.textContent).not.toMatch(/Scale widened/);
   });
 
+  // A type test: the gate's types check, which reads tests/, fails it if the two props are ever allowed together;
+  // at run time a JSX element is always made, so there is nothing to assert here.
   it('refuses max beside total, in its type', () => {
     // @ts-expect-error a held scale is not a share of a total
-    const both = <BarList label="By hour" items={hours} max={100} total={400} />;
-    expect(both).toBeTruthy();
+    void <BarList label="By hour" items={hours} max={100} total={400} />;
   });
 
   it('widens to the largest value past max, that row filling its track, and names it, the first on a tie', () => {
