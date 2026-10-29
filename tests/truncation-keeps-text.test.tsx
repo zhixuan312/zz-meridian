@@ -10,9 +10,7 @@ vi.mock('@/components/charts/use-size', async () => {
 
 import { Home } from 'lucide-react';
 import { BarList } from '@/components/charts/bar-list';
-import { ColumnChart } from '@/components/charts/column-chart';
 import { DivergingBars } from '@/components/charts/diverging-bars';
-import { DetailHead } from '@/components/patterns/detail-head';
 import { Freshness } from '@/components/patterns/freshness';
 import { MetricTile } from '@/components/patterns/metric-tile';
 import { Rail } from '@/components/patterns/rail';
@@ -41,15 +39,16 @@ const DRAWN: Record<string, ReactElement> = {
   'Freshness run': <Freshness run updatedAt={new Date(NOW.getTime() - 3 * 86_400_000)} now={NOW} />,
   BarList: <BarList label="By team" items={[{ key: 'a', label: LONG, value: 40 }, { key: 'b', label: `${LONG} again`, value: 12, href: '/teams/b' }]} />,
   DivergingBars: <DivergingBars label="By team" items={[{ key: 'a', label: LONG, value: 40 }, { key: 'b', label: `${LONG} again`, value: -12, href: '/teams/b' }, { key: 'c', label: `${LONG} unknown`, value: null }]} />,
-  ColumnChart: <ColumnChart label="Weeks" columns={Array.from({ length: 6 }, (_, i) => ({ key: `w${i}`, label: `${LONG} ${i}`, value: i + 1 }))} />,
   MetricTile: <MetricTile label={LONG} value={1234} format="count" />,
   'MetricTile compact': <MetricTile label={LONG} value={1234} format="count" size="compact" />,
   CardHeader: <Card><CardHeader title={LONG} actions={<button type="button">Export</button>} /></Card>,
   KeyValue: <KeyValue items={[{ label: LONG, value: LONG }, { label: 'Route', value: <a href="/x">{LONG}</a>, title: LONG }]} />,
   Breadcrumb: <Breadcrumb items={[{ label: LONG, href: '/a' }, { label: `${LONG} too` }]} />,
   Rail: <Rail nav={[{ label: LONG, items: [{ href: '/', label: LONG, icon: Home, needs: 'public' as const }] }]} user={{ name: LONG, role: LONG }} workspace={LONG} />,
-  DetailHead: <DetailHead parent={{ label: LONG, href: '/requests' }} name={LONG} status={{ tone: 'neutral', label: 'Open' }} />,
 };
+// Not here, because they cut nothing a screen reader is given: the Column chart cuts its labels on an axis hidden from
+// assistive technology, and pointing at a column draws its label whole; the Detail head wraps its name and its parent.
+
 
 const whole = (s: string | null | undefined) => (s ?? '').replace(/\s+/g, ' ').trim();
 /** The audit's rule (scripts/audit.ts `titled`): a title on the element or up to eight above it, or on the one inside it, that holds its whole text. */
@@ -67,6 +66,7 @@ describe('every card that cuts text keeps the whole of it where a pointer reache
       await act(() => new Promise((done) => setTimeout(done, 40)));
       // A cut element a screen reader is not given (aria-hidden, sr-only) is a copy of text drawn elsewhere.
       const cut = [...container.querySelectorAll('[class~="truncate"]')].filter((n) => whole(n.textContent) && !n.closest('[aria-hidden="true"],.sr-only'));
+      expect(cut.length, `${name} draws no cut element, so nothing here is checked`).toBeGreaterThan(0);
       const lost = cut.filter((n) => !keeps(n)).map((n) => `<${n.localName} class="${n.getAttribute('class')}"> "${whole(n.textContent).slice(0, 40)}"`);
       expect(lost, `${name} cuts text and keeps it nowhere`).toEqual([]);
     });

@@ -73,8 +73,10 @@ describe('the alerts in the shell', () => {
     }
     const failing = (latestRuns((await all('tests')) as never) as unknown as Row[]).filter((r) => r.state === 'failed').length;
     const told = alerts.filter((a) => pathOf(a.href) === '/tests');
-    expect(told.length).toBe(failing > 0 ? 1 : 0);
-    if (failing > 0) expect(told[0].title).toContain(String(failing));
+    // The sample holds failing runs, so the alert is there to be read: a count of none would check nothing below.
+    expect(failing).toBeGreaterThan(0);
+    expect(told.length).toBe(1);
+    expect(told[0].title).toContain(String(failing));
   });
 
   it('are the same alerts, in the same order, when nothing has changed', async () => {
