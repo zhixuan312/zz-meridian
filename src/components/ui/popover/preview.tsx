@@ -1,6 +1,7 @@
 'use client';
 
 import { ChevronDown, ListFilter } from 'lucide-react';
+import type { ReactNode } from 'react';
 import { cn } from '@/lib/cn';
 import { Specimen } from '@/system/specimen';
 import { Button } from '@/components/ui/button';
@@ -12,7 +13,8 @@ const STATUSES = [
   { label: '5xx', n: '13K', on: false },
 ];
 
-function Filters() {
+/** The filter set; live, its Apply closes the popover. */
+function Filters({ close = (b: ReactNode) => b }: { close?: (button: ReactNode) => ReactNode }) {
   return (
     <>
       <p className="t-eyebrow mb-2.5">Status</p>
@@ -29,7 +31,7 @@ function Filters() {
       </ul>
       <div className="mt-4 flex justify-end gap-2 border-t border-line pt-3">
         <Button size="sm" variant="ghost">Clear</Button>
-        <Button size="sm" variant="primary">Apply</Button>
+        {close(<Button size="sm" variant="primary">Apply</Button>)}
       </div>
     </>
   );
@@ -54,9 +56,8 @@ export default function PopoverPreview() {
       <Specimen label="Live">
         <Popover>
           <PopoverTrigger asChild><Button icon={<ListFilter />} trailing={<ChevronDown />}>Status</Button></PopoverTrigger>
-          <PopoverContent className="w-64">
-            <Filters />
-            <PopoverClose className="sr-only">Close</PopoverClose>
+          <PopoverContent className="w-64" aria-label="Status filter">
+            <Filters close={(b) => <PopoverClose asChild>{b}</PopoverClose>} />
           </PopoverContent>
         </Popover>
       </Specimen>

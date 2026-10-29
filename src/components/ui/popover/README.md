@@ -45,7 +45,7 @@ Not applicable. An agent sets filters through the view's address.
 
 ## Accessibility
 
-- Radix Popover: `role="dialog"`, labelled by its trigger; the trigger carries `aria-expanded`.
+- Radix Popover: `role="dialog"`; the trigger carries `aria-expanded`. Radix names the dialog by nothing, so `PopoverContent` takes `aria-label` ("Status filter") or `aria-labelledby`, and is not written without one.
 - Text `ink` on `surface-raised` 18.5:1 (light, cobalt).
 
 ## Content
@@ -64,8 +64,8 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 
 <Popover>
   <PopoverTrigger asChild><Button icon={<ListFilter />}>Status</Button></PopoverTrigger>
-  <PopoverContent>…</PopoverContent>
+  <PopoverContent aria-label="Status filter">…</PopoverContent>
 </Popover>
 ```
 
-`PopoverClose` is also exported, for a panel that carries its own close control (the preview draws one, visually hidden). `POPOVER_CONTENT` is the surface's class list, for static mocks.
+`PopoverClose` is also exported, for a control that closes the panel as it acts: the preview's Apply is one (`<PopoverClose asChild>`). `POPOVER_CONTENT` is the surface's class list, for static mocks.
