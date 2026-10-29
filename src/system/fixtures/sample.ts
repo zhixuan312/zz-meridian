@@ -42,7 +42,6 @@ export type Plan = (typeof PLANS)[number];
 
 /** One day (UTC): a complete one, or the day in progress with what has arrived so far. `revenue` is what customers paid for that day's tokens and calls, in US dollars. */
 export type DailyPoint = { date: string; requests: number; errors: number; p95: number; tokens: number; revenue: number; revenueByPlan: Record<Plan, number> };
-export type Totals = { requests: number; errorRate: number; p95: number; revenue: number };
 export type Endpoint = { method: 'GET' | 'POST' | 'PUT' | 'DELETE'; route: string; requests: number; errorRate: number; p95: number };
 
 /** What the product sells. A price is in US dollars: a million tokens for a model, one call for `none`; null where there is none. */

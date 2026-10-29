@@ -13,7 +13,6 @@ import { afterStart } from '@/logic/after-start';
 import type { Service } from '@/components/patterns/status-list';
 import { summarise } from '@/logic/summarise';
 import type { ReleaseRow, RunRow } from '@/data/engineering';
-import { ticketAddress } from '@/data/metrics';
 import type { ComputeRow, DailyPoint, Endpoint, Model, UsageRow } from '@/data/sample';
 import type { TicketRow } from '@/data/tickets';
 import { steady } from '@/lib/facts';
@@ -23,6 +22,7 @@ import { PERIOD_DAYS } from '@/lib/period';
 import { yearFacts, yearLine } from './home-parts';
 import { inWords, NOW_TILES, nowHead, type BandFact, type NowData, type NowModel, type NowRunDay, type NowTicket } from './now-context';
 import { releaseFigures, releaseMoment, stageOf, unresolvedText } from './releases-context';
+import { ticketsAddress } from './tickets-context';
 
 /** The days a strip of the band shows, the window the month's figures count, the tickets Work lists and the longest line a tile draws. */
 const STRIP_DAYS = 360;
@@ -38,7 +38,7 @@ const LINE_ROOM = 220 - 2 - workspaces.engineering.audience.length;
 
 const DAY = 86_400_000;
 const sum = (xs: readonly number[]) => xs.reduce((a, b) => a + b, 0);
-/** The lower of the two middle values, as a period's median day is chosen (`totalsOf`): always a value that was recorded. */
+/** The lower of the two middle values, as a period's median day is chosen (`totalsOf` in `src/lib/totals.ts`): always a value that was recorded. */
 const lowerMedian = (xs: readonly number[]) => [...xs].sort((a, b) => a - b)[Math.floor((xs.length - 1) / 2)];
 /** A tile's line, or its shorter form when the line would not fit the tile. */
 const fit = (line: string, shorter: string) => (line.length <= TILE_LINE ? line : shorter);
@@ -179,7 +179,7 @@ export function nowData(r: NowReads): NowData {
   if (tickets) {
     const inPlay = tickets.filter((t) => t.state !== 'closed').sort((a, b) => workRank(a) - workRank(b) || (a.openedAt < b.openedAt ? 1 : -1));
     work = {
-      tickets: inPlay.slice(0, WORK_SHOWN).map((t): NowTicket => ({ id: t.id, title: t.title, priority: t.priority, state: t.state as NowTicket['state'], owner: t.assignee, mine: t.assigneeId === r.reader, href: ticketAddress(t.title) })),
+      tickets: inPlay.slice(0, WORK_SHOWN).map((t): NowTicket => ({ id: t.id, title: t.title, priority: t.priority, state: t.state as NowTicket['state'], owner: t.assignee, mine: t.assigneeId === r.reader, href: ticketsAddress({ q: t.title, state: 'all', priority: 'all' }) })),
       more: Math.max(0, inPlay.length - WORK_SHOWN),
       href: '/operations-tickets',
     };

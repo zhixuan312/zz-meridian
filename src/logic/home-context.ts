@@ -4,13 +4,14 @@
  * the same words. The figures are worked out on the server (`homeData` in `src/logic/home-parts.ts`); this file only
  * says them, so the page's client builds the same text from the same data.
  */
-import type { DailyPoint, Totals } from '@/data/sample';
+import type { DailyPoint } from '@/data/sample';
 import { app } from '@/app.config';
 import { formatCompact, formatCost, formatDuration, formatPercent, ordinal } from '@/lib/format';
 import { formatDate, formatDay } from '@/lib/format-date';
 import { sameWeekdayBaseline, weekday, median } from '@/lib/insight';
 import { PERIOD_DAYS, PERIOD_LABEL, type Period } from '@/lib/period';
 import { freshnessOf, type Fact, type Insight, type SharedContext } from '@/lib/shared-context';
+import type { Totals } from '@/lib/totals';
 import { STATE, against, factInsight, inDays, unreadNote, worst, type PageHead, type ServiceNow } from './fact-insight';
 
 /** The traffic's four figures, each label and what it counts: Home's tiles draw them, and Usage's context states the first three. The tile's info button shows `hint`; the agents read it too. */

@@ -10,13 +10,13 @@
 import { facts as rules } from '@/app.config';
 import type { Incident } from '@/components/patterns/incident-card';
 import type { ReleaseRow } from '@/data/engineering';
-import { totalsOf } from '@/data/metrics';
-import type { ComputeRow, CostRow, CustomerRecord, DailyPoint, Model, Ticket, Totals, UsageRow } from '@/data/sample';
+import type { ComputeRow, CostRow, CustomerRecord, DailyPoint, Model, Ticket, UsageRow } from '@/data/sample';
 import { first, periods, record, steady, total, type Fact } from '@/lib/facts';
 import { formatCompact, formatCost, formatDuration, formatPercent, plural } from '@/lib/format';
 import { formatDate } from '@/lib/format-date';
 import { median } from '@/lib/insight';
 import { PERIOD_DAYS, type Period } from '@/lib/period';
+import { totalsOf, type Totals } from '@/lib/totals';
 import { allSentMore, customerFigures, customersAddress, kept, sentMore } from './customers-context';
 import { HISTORY_UNREAD, handed, inDays, type PageHead, type ServiceNow } from './fact-insight';
 import { INCIDENTS_OPEN, SERVICES_OPERATIONAL, SOLD_SLOTS, homeLine, homeTitle, unwellNames, type HomeData, type HomeFigure, type HomeWindow, type WorthKnowing } from './home-context';

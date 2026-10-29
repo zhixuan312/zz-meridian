@@ -17,7 +17,8 @@
  * is never shown (tests/client-imports.test.ts).
  */
 import { PERIOD_DAYS, type Period } from '@/lib/period';
-import { DEMO_NOW, MODELS, NAMED_CUSTOMERS, PLANS, REGION_NAMES, REQUESTS, ROUTES, seeded, type ComputeRow, type CostRow, type CustomerRecord, type DailyPoint, type Endpoint, type Plan, type Totals, type UsageRow } from '@/system/fixtures/sample';
+import { totalsOf } from '@/lib/totals';
+import { DEMO_NOW, MODELS, NAMED_CUSTOMERS, PLANS, REGION_NAMES, REQUESTS, ROUTES, seeded, type ComputeRow, type CostRow, type CustomerRecord, type DailyPoint, type Endpoint, type Plan, type UsageRow } from '@/system/fixtures/sample';
 import { MEMBERS } from '@/system/fixtures/sample-members';
 
 const DAY = 86_400_000;
@@ -392,20 +393,10 @@ export function demoSeries(period: Period) {
   return { current: n ? DAYS.slice(-n) : DAYS, previous: n ? DAYS.slice(-2 * n, -n) : [], running: IN_PROGRESS.day };
 }
 
-function totals(points: DailyPoint[]): Totals {
-  const requests = sum(points.map((p) => p.requests));
-  return {
-    requests,
-    errorRate: sum(points.map((p) => p.errors)) / requests,
-    p95: [...points.map((p) => p.p95)].sort((a, b) => a - b)[Math.floor((points.length - 1) * 0.5)],
-    revenue: sum(points.map((p) => cents(p.revenue))) / 100,
-  };
-}
-
 /** Both periods' totals; the period before has none when no day comes before, as with `all`. */
 export function demoTotals(period: Period) {
   const { current, previous } = demoSeries(period);
-  return { current: totals(current), previous: previous.length ? totals(previous) : null };
+  return { current: totalsOf(current), previous: previous.length ? totalsOf(previous) : null };
 }
 
 /** Requests by weekday (Mon first) and hour (UTC), as a grid. */

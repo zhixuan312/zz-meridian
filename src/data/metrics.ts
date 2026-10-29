@@ -10,9 +10,10 @@ import type { Service } from '@/components/patterns/status-list';
 import { clock } from '@/data/collections';
 import { attempt } from '@/data/main';
 import { read as readRows, readAll as readAllRows } from '@/data/read';
-import type { DailyPoint, Endpoint, IncidentRecord, Ticket, Totals } from '@/data/sample';
+import type { DailyPoint, Endpoint, IncidentRecord, Ticket } from '@/data/sample';
 import { dayOf } from '@/lib/format-date';
 import { PERIOD_DAYS, type Period } from '@/lib/period';
+import { totalsOf, type Totals } from '@/lib/totals';
 
 /** The revisions of the collections a page's reads touched, by name, one entry per read: what `revisionsOf` reduces. */
 const noted = new AsyncLocalStorage<Map<string, (string | undefined)[]>>();
@@ -52,20 +53,6 @@ export async function revisionsOf<T>(work: () => Promise<T>): Promise<{ value: T
 
 /** The newest changes a page shows. */
 const ACTIVITY_SHOWN = 6;
-
-const sum = (xs: number[]) => xs.reduce((a, b) => a + b, 0);
-
-/** A period's totals from its days: requests, the error rate over them, the median day's p95, and revenue. Home's year reads each of its windows the same way. */
-export function totalsOf(points: DailyPoint[]): Totals {
-  const requests = sum(points.map((p) => p.requests));
-  const p95 = [...points.map((p) => p.p95)].sort((a, b) => a - b);
-  return {
-    requests,
-    errorRate: requests ? sum(points.map((p) => p.errors)) / requests : 0,
-    p95: p95.length ? p95[Math.floor((p95.length - 1) * 0.5)] : 0,
-    revenue: Math.round(sum(points.map((p) => p.revenue)) * 100) / 100,
-  };
-}
 
 /** What `readDays` answers: a period's complete days, the days before them, both totals, and the day in progress on its own. */
 type PeriodDays = { series: DailyPoint[]; previous: DailyPoint[]; totals: { current: Totals; previous: Totals | null }; running: DailyPoint | null; observedAt: string };
@@ -109,7 +96,7 @@ export async function readActivity(): Promise<ActivityEvent[]> {
 }
 
 /** Where the Tickets page finds a ticket: its own search, on the ticket's title. */
-export const ticketAddress = (title: string) => `/operations-tickets?q=${encodeURIComponent(title)}`;
+const ticketAddress = (title: string) => `/operations-tickets?q=${encodeURIComponent(title)}`;
 
 /**
  * An incident as a page draws it, in the Incident card's shape: with its owner when it has one, and its ticket as the

@@ -9,12 +9,13 @@
  * how it was answered cover the last 30 complete days, whatever the period.
  */
 import { facts as rules } from '@/app.config';
-import type { DailyPoint, Endpoint, Totals } from '@/data/sample';
+import type { DailyPoint, Endpoint } from '@/data/sample';
 import type { UsageFigures } from '@/data/usage';
 import { first, periods, record, type Fact } from '@/lib/facts';
 import { formatCompact } from '@/lib/format';
 import { shiftDay } from '@/lib/format-date';
 import { PERIOD_DAYS, type Period } from '@/lib/period';
+import type { Totals } from '@/lib/totals';
 import { HISTORY_UNREAD, handed, inDays, type PageHead } from './fact-insight';
 import { weekdayAverages } from './home-parts';
 import { usageLine, usageTitle, type UsageData } from './usage-context';

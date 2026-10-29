@@ -7,7 +7,8 @@ vi.mock('next/cache', () => ({ cacheTag: () => {}, cacheLife: () => {}, updateTa
 // A product whose first day has not closed yet: the period holds no day, so it measured no error rate.
 vi.mock('@/data/metrics', async (orig) => {
   const real = await orig<typeof import('@/data/metrics')>();
-  return { ...real, readDays: async () => ({ series: [], previous: [], totals: { current: real.totalsOf([]), previous: null }, running: null, observedAt: '2026-10-03T09:00:00Z' }) };
+  const { totalsOf } = await import('@/lib/totals');
+  return { ...real, readDays: async () => ({ series: [], previous: [], totals: { current: totalsOf([]), previous: null }, running: null, observedAt: '2026-10-03T09:00:00Z' }) };
 });
 
 import { contextText } from '@/lib/shared-context';

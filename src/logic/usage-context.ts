@@ -5,12 +5,13 @@
  * text from the same data.
  */
 import { app } from '@/app.config';
-import type { DailyPoint, Endpoint, Totals } from '@/data/sample';
+import type { DailyPoint, Endpoint } from '@/data/sample';
 import type { UsageFigures } from '@/data/usage';
 import { formatCompact, formatDuration, formatPercent, plural } from '@/lib/format';
 import { formatDate, formatDay } from '@/lib/format-date';
 import { PERIOD_LABEL, type Period } from '@/lib/period';
 import { freshnessOf, type Fact, type Insight, type SharedContext } from '@/lib/shared-context';
+import type { Totals } from '@/lib/totals';
 import { against, factInsight, inDays, unreadNote, type PageHead } from './fact-insight';
 import { HOME_METRICS, NO_PREVIOUS, change } from './home-context';
 

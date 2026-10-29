@@ -8,11 +8,12 @@
  * complete days for what it paid, 14 for its trend, the last 7 against the 7 before for this week), whatever the period.
  */
 import { facts as rules } from '@/app.config';
-import { PLANS, type CustomerRecord, type DailyPoint, type Model, type Plan, type Totals, type UsageRow } from '@/data/sample';
+import { PLANS, type CustomerRecord, type DailyPoint, type Model, type Plan, type UsageRow } from '@/data/sample';
 import { record } from '@/lib/facts';
 import { formatCost, formatPercent } from '@/lib/format';
 import { dayOf, formatDate, shiftDay } from '@/lib/format-date';
 import { PERIOD_DAYS, type Period } from '@/lib/period';
+import type { Totals } from '@/lib/totals';
 import { customerFigures, kept, sentMore, week } from './customers-context';
 import { windowsOf } from './home-parts';
 import { STAGES, revenueHead, revenueLine, type LadderRow, type RevenueData, type Stage, type WallOrder, type WallTile, type WorthLine } from './revenue-context';
