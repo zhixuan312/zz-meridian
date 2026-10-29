@@ -52,7 +52,7 @@ Every release of ZZ Meridian, newest first. Versions follow semver: a removed or
 - **A date written without a time prints as the day it names** in `formatDate`, `formatShortDate` and `formatDay`, as the calendar formatters already did: a product whose `app.timezone` is west of UTC printed `2026-10-01` as 30 Sept.
 - **The bell's customers-past-due alert is timed by the latest to fall past due**, not "just now" on every open.
 - **The Customers figure is defined as what it counts**, customers that have not left, not workspaces "with a live key".
-- **A customer is not compared with an error rate the product never measured**, over days that hold no request; an active member who has never signed in is named among the quiet ones, as never seen.
+- **A customer is not compared with an error rate the product never measured**, over days that hold no request; an active member who has never signed in is named among the quiet ones, as never seen. Where most customers have no errors, the customers' context names those that have some, not every customer as "at least twice the median" of 0.00%.
 - **A prepared query's group line names each figure when it carries several**, and a count of one reads singular ("1 day").
 - **An Atlas page whose first paragraph is wrapped keeps its status and body** (Base / Motion lost "Status: beta").
 - **The shared request cells read the sample through `src/data`**, and the check now holds `src/system/sample-cells.tsx` to that rule, so replacing `src/data/sample.ts` replaces the clock they draw against.

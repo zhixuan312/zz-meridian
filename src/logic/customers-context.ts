@@ -119,9 +119,11 @@ export function customersContext(rows: CustomerRow[], filtered: CustomerRow[], f
       evidence: apart.length ? `/requests?q=${encodeURIComponent(apart[0].c.name)}` : undefined,
     });
   }
+  // Against a median of none, twice it is nothing, so the customers named are those with any error at all.
   const errMedian = median(counted.map((c) => c.errorRate));
-  const failing = counted.filter((c) => c.errorRate >= 2 * errMedian).sort((a, b) => b.errorRate - a.errorRate);
-  if (failing.length) insights.push({ text: `${failing.length} of ${counted.length} ${failing.length === 1 ? 'has' : 'have'} an error rate at least twice the median customer's ${formatPercent(errMedian, 2)}: ${listed(failing, (c) => `${c.name} (${formatPercent(c.errorRate, 2)})`, 'sort the list by error rate to see them', NAMED)}.`, evidence: `/requests?q=${encodeURIComponent(failing[0].name)}&status=5xx` });
+  const failing = counted.filter((c) => c.errorRate > 0 && c.errorRate >= 2 * errMedian).sort((a, b) => b.errorRate - a.errorRate);
+  const against = errMedian ? `an error rate at least twice the median customer's ${formatPercent(errMedian, 2)}` : 'errors, where the median customer has none';
+  if (failing.length) insights.push({ text: `${failing.length} of ${counted.length} ${failing.length === 1 ? 'has' : 'have'} ${against}: ${listed(failing, (c) => `${c.name} (${formatPercent(c.errorRate, 2)})`, 'sort the list by error rate to see them', NAMED)}.`, evidence: `/requests?q=${encodeURIComponent(failing[0].name)}&status=5xx` });
   const unknowns = ['A customer\'s error rate counts their 5xx and 429 responses; nothing here says whether the errors were theirs or ours.'];
   const left = rows.length - counted.length;
   if (left) unknowns.push(`${left} ${left === 1 ? 'customer has' : 'customers have'} left and ${left === 1 ? 'is' : 'are'} counted in no figure here; the list shows ${left === 1 ? 'it' : 'them'} under the status left (${customersAddress({ ...f, q: '', plan: 'all', status: 'left', page: '1' })}).`);

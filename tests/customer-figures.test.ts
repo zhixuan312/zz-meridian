@@ -39,6 +39,16 @@ describe("the customers' figures", () => {
     expect(gone.facts.find((f) => f.label === CUSTOMER_METRICS.customers.label)?.value).toBe(String(CUSTOMERS.length - left.length));
   });
 
+  it('name the customers far above the median error rate, and against a median of none only those with errors', () => {
+    const insight = (rates: number[]) => {
+      const rows = CUSTOMERS.filter((c) => c.status !== 'left').slice(0, rates.length).map((c, i) => ({ ...c, errorRate: rates[i] }));
+      return customersContext(rows, rows, STATE).insights.find((i) => /error rate|errors/.test(i.text))?.text;
+    };
+    expect(insight([0, 0, 0, 0])).toBeUndefined();
+    expect(insight([0, 0, 0, 0.02])).toMatch(/^1 of 4 has errors, where the median customer has none: .+ \(2\.00%\)\.$/);
+    expect(insight([0.01, 0.01, 0.01, 0.05])).toMatch(/^1 of 4 has an error rate at least twice the median customer's 1\.00%: .+ \(5\.00%\)\.$/);
+  });
+
   it('are what the assistant is told, under the labels the tiles carry', () => {
     const figures = customerFigures(CUSTOMERS);
     expect(fact(CUSTOMER_METRICS.customers.label)).toBe(String(figures.customers));
