@@ -5,7 +5,7 @@
  */
 import type { RunRow } from '@/data/engineering';
 import { latestRuns } from '@/data/verification';
-import { formatDuration } from '@/lib/format';
+import { formatDuration, plural } from '@/lib/format';
 import { formatRelative } from '@/lib/format-date';
 import { listed, type Fact, type Insight, type SharedContext } from '@/lib/shared-context';
 
@@ -65,7 +65,7 @@ export function testsContext(rows: RunRow[], now: string, f: TestsState): Shared
   ];
 
   const insights: Insight[] = [];
-  if (failing.length) insights.push({ text: `${failing.length} latest ${failing.length === 1 ? 'run is' : 'runs are'} failing: ${listed(failing, (r) => say(r, at), more, 5)}.` });
+  if (failing.length) insights.push({ text: `${failing.length} latest ${plural(failing.length, 'run is', 'runs are')} failing: ${listed(failing, (r) => say(r, at), more, 5)}.` });
 
   return {
     view: 'tests',

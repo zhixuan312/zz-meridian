@@ -197,7 +197,7 @@ export function nowData(r: NowReads): NowData {
   const settled = incidentsRead ? resolved.filter((i) => inMonth(i.resolved)) : null;
   const month: NowData['month'] = {
     releases: out && { label: NOW_TILES.releases, value: out.length, line: out.length ? fit(`the latest ${out[0].version} on ${formatDay(out[0].releasedAt!)}`, `the latest on ${formatDay(out[0].releasedAt!)}`) : 'none went out' },
-    tickets: closed && { label: NOW_TILES.tickets, value: closed.length, line: closed.length ? fit(`took ${inWords(closed.map(String))} ${closed.at(-1) === 1 ? 'day' : 'days'}`, `took ${closed[0]} to ${closed.at(-1)} days`) : 'none closed' },
+    tickets: closed && { label: NOW_TILES.tickets, value: closed.length, line: closed.length ? fit(`took ${inWords(closed.map(String))} ${plural(closed.at(-1)!, 'day')}`, `took ${closed[0]} to ${closed.at(-1)} days`) : 'none closed' },
     runs: ran && {
       label: NOW_TILES.runs, value: ran.filter((x) => x.state === 'passed').length, of: ran.length,
       line: `${ran.filter((x) => x.state === 'failed').length} failed, ${ran.filter((x) => x.state === 'skipped').length} skipped`,

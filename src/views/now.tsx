@@ -75,7 +75,7 @@ function DaysInside({ band, steady }: { band: NonNullable<NowData['band']>; stea
           dates={dates}
           series={[{ key: 'p95', label: 'p95', values: band.p95, kind: 'line' }]}
           band={{ value: rules.band.p95Under, label: `Band: p95 under ${rules.band.p95Under} ms` }}
-          marks={{ dates: outside, tone: 'warning', label: `${outside.length} ${outside.length === 1 ? 'day' : 'days'} outside the band` }}
+          marks={{ dates: outside, tone: 'warning', label: `${outside.length} ${plural(outside.length, 'day')} outside the band` }}
         />
       </FeaturedMetric>
     </div>

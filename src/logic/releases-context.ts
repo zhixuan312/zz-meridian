@@ -6,6 +6,7 @@
 import type { ReleaseRow } from '@/data/engineering';
 import type { Release } from '@/data/sample';
 import { currentVersions, type Unresolved } from '@/data/verification';
+import { plural } from '@/lib/format';
 import { formatRelative } from '@/lib/format-date';
 import { listed, type Fact, type Insight, type SharedContext } from '@/lib/shared-context';
 
@@ -86,7 +87,7 @@ export function releasesContext(rows: ReleaseRow[], now: string, f: ReleasesStat
 
   const insights: Insight[] = [];
   const waiting = rows.filter((r) => stageOf(r) === 'testing');
-  if (waiting.length) insights.push({ text: `${waiting.length} ${waiting.length === 1 ? 'release is' : 'releases are'} still in testing: ${listed(waiting, (r) => `${r.version} of ${r.service} has not passed ${r.verification.unresolved.map(unresolvedText).join(', ')}`, more, 5)}.` });
+  if (waiting.length) insights.push({ text: `${waiting.length} ${plural(waiting.length, 'release is', 'releases are')} still in testing: ${listed(waiting, (r) => `${r.version} of ${r.service} has not passed ${r.verification.unresolved.map(unresolvedText).join(', ')}`, more, 5)}.` });
 
   return {
     view: 'releases',

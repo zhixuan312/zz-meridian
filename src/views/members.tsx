@@ -22,6 +22,7 @@ import { Sheet, SheetClose, SheetContent } from '@/components/ui/sheet';
 import { toast } from '@/components/ui/toast';
 import { AskAbout } from '@/components/patterns/ask-about';
 import { DataTable, type Column } from '@/components/patterns/data-table';
+import { plural } from '@/lib/format';
 import { dayOf, formatDate, formatRelative } from '@/lib/format-date';
 import { useLive, type Revisions } from '@/lib/live';
 import { RolesMatrix } from './roles-matrix';
@@ -279,7 +280,7 @@ export function MembersView({ rows, now, revisions, actions, access, roles, work
           <DataTable
             caption="Members"
             noun="members"
-            title={`${listed.length} ${listed.length === 1 ? 'member' : 'members'}`}
+            title={`${listed.length} ${plural(listed.length, 'member')}`}
             actions={<AskAbout question="What stands out in the members, and why?" />}
             rows={listed}
             columns={columns}

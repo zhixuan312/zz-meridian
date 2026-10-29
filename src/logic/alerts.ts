@@ -23,6 +23,7 @@ import { customerFigures, customersAddress } from '@/logic/customers-context';
 import { operationOf } from '@/logic/main-summary';
 import { testFigures, testsAddress } from '@/logic/tests-context';
 import { ticketsAddress, unownedTickets } from '@/logic/tickets-context';
+import { plural } from '@/lib/format';
 
 /** An alert as the shell's tools take it, and the time of the read that told it. */
 export type AlertsRead = { alerts: Alert[]; now: string };
@@ -75,7 +76,7 @@ async function verificationAlerts(): Promise<{ alerts: Alert[]; observedAt: stri
   return {
     alerts: [{
       id: 'verifications:failing',
-      title: `${failing.length} ${failing.length === 1 ? 'verification is' : 'verifications are'} failing`,
+      title: `${failing.length} ${plural(failing.length, 'verification is', 'verifications are')} failing`,
       detail: 'The latest run of each has failed',
       at: failing.reduce((t, r) => later(t, r.startedAt), failing[0].startedAt),
       href: testsAddress({ q: '', state: 'failed', release: '', runs: 'latest' }),

@@ -68,7 +68,7 @@ function standingLine(data: CustomerData) {
   if (c.status === 'left') return `It was on ${c.plan}, and nothing it sends is counted.`;
   if (c.status === 'trial') {
     const left = c.trialEnds ? Math.round((Date.parse(c.trialEnds) - Date.parse(dayOf(data.now))) / 86_400_000) : null;
-    return left !== null && left >= 0 ? `It joined on ${formatDate(c.joined)}, and its trial has ${left} ${left === 1 ? 'day' : 'days'} left.` : `It joined on ${formatDate(c.joined)}.`;
+    return left !== null && left >= 0 ? `It joined on ${formatDate(c.joined)}, and its trial has ${left} ${plural(left, 'day')} left.` : `It joined on ${formatDate(c.joined)}.`;
   }
   return c.planSince && c.previousPlan ? `On ${c.plan} since ${formatDate(c.planSince)}, after ${c.previousPlan}.` : `On ${c.plan} since it joined.`;
 }

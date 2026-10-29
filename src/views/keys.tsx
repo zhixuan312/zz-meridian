@@ -21,6 +21,7 @@ import { Sheet, SheetClose, SheetContent } from '@/components/ui/sheet';
 import { toast } from '@/components/ui/toast';
 import { AskAbout } from '@/components/patterns/ask-about';
 import { DataTable, type Column } from '@/components/patterns/data-table';
+import { plural } from '@/lib/format';
 import { formatDate, formatRelative } from '@/lib/format-date';
 import { useLive, type Revisions } from '@/lib/live';
 import type { PublicKey } from '@/data/projections';
@@ -151,7 +152,7 @@ export function KeysView({ rows, now, revisions, createKey, revokeKey, may = { c
             <DataTable
               caption="API keys"
               noun="keys"
-              title={`${shown.length} ${shown.length === 1 ? 'key' : 'keys'}`}
+              title={`${shown.length} ${plural(shown.length, 'key')}`}
               actions={<AskAbout question="What stands out in the API keys, and why?" />}
               rows={shown}
               columns={columns}

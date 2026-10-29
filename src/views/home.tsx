@@ -17,7 +17,7 @@ import { Meridian, useMeridianIndex } from '@/components/charts/meridian';
 import { SO_FAR, TrendChart } from '@/components/charts/trend-chart';
 import { FeaturedMetric } from '@/components/patterns/featured-metric';
 import { MetricTile } from '@/components/patterns/metric-tile';
-import { AXIS_FORMATTERS, FORMATTERS, changeOf, formatCompact, formatCost, formatDuration, formatPercent } from '@/lib/format';
+import { AXIS_FORMATTERS, FORMATTERS, changeOf, formatCompact, formatCost, formatDuration, formatPercent, plural } from '@/lib/format';
 import { formatDate, formatDay, formatShortDate } from '@/lib/format-date';
 import { PERIOD_DAYS, PERIOD_LABEL } from '@/lib/period';
 import { AskPeriod } from './ask-period';
@@ -96,7 +96,7 @@ export function companyTiles(data: HomeData): ReactNode[] {
         icon={<Users />}
         value={customers.count}
         // One line in a tile a third of a 720px reply wide: the three counts in the fewest words.
-        note={`${customers.active} active · ${customers.trial} ${customers.trial === 1 ? 'trial' : 'trials'} · ${customers.pastDue} past due`}
+        note={`${customers.active} active · ${customers.trial} ${plural(customers.trial, 'trial')} · ${customers.pastDue} past due`}
         finding={customers.finding ? { text: customers.finding, tone: 'neutral' } : undefined}
       />
     ) : unreadTile(C.customers.label, C.customers.hint),

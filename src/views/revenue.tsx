@@ -18,7 +18,7 @@ import { SO_FAR, TrendChart } from '@/components/charts/trend-chart';
 import { FeaturedMetric } from '@/components/patterns/featured-metric';
 import { MetricTile } from '@/components/patterns/metric-tile';
 import { PLANS } from '@/data/sample';
-import { AXIS_FORMATTERS, FORMATTERS, changeOf, formatCompact, formatCost, formatPercent } from '@/lib/format';
+import { AXIS_FORMATTERS, FORMATTERS, changeOf, formatCompact, formatCost, formatPercent, plural } from '@/lib/format';
 import { formatDate, formatDay, formatShortDate } from '@/lib/format-date';
 import { PERIOD_DAYS, PERIOD_LABEL } from '@/lib/period';
 import { REVENUE_METRICS, WALL_ORDERS, nextPlanWords, revenueContext, signed, yearAgoNote, type RevenueData, type WallOrder, type WorthLine } from '@/logic/revenue-context';
@@ -64,7 +64,7 @@ function RevenueFigure({ days, dates, period }: { days: Days; dates: string[]; p
         points={points}
         format={formatCost}
         delta={changeOf(revenue.value, revenue.previous) ?? undefined}
-        caption={series.length ? `${formatCost(revenue.value)} over the ${series.length} complete ${series.length === 1 ? 'day' : 'days'} to ${formatDate(series.at(-1)!.date)}.${running ? ` ${SO_FAR}` : ''}` : undefined}
+        caption={series.length ? `${formatCost(revenue.value)} over the ${series.length} complete ${plural(series.length, 'day')} to ${formatDate(series.at(-1)!.date)}.${running ? ` ${SO_FAR}` : ''}` : undefined}
         finding={revenue.finding ? { text: revenue.finding } : undefined}
         pointLabel={(date) => (running && date === running.date ? `${formatDate(date)} · so far` : formatDate(date))}
       >

@@ -21,7 +21,7 @@ export const HISTORY_UNREAD = 'The history could not be read, so this page is he
 /** What a context says when parts of its data could not be read: each named, and what they state is missing, not zero. */
 export function unreadNote(unread: readonly string[]): string {
   const names = unread.length === 1 ? unread[0] : `${unread.slice(0, -1).join(', ')} and ${unread.at(-1)}`;
-  const note = `${names} could not be read, so what ${unread.length === 1 ? 'it states' : 'they state'} is missing, not zero.`;
+  const note = `${names} could not be read, so what ${plural(unread.length, 'it states', 'they state')} is missing, not zero.`;
   return `${note[0].toUpperCase()}${note.slice(1)}`;
 }
 

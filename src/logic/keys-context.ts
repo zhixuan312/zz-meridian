@@ -22,7 +22,7 @@ export function keysContext(rows: PublicKey[], now: string, scopes: readonly str
   const idle = live.filter((k) => (unused(k) ?? Infinity) >= UNUSED_DAYS);
   if (idle.length) insights.push({ text: `${idle.length} live ${plural(idle.length, 'key has', 'keys have')} not been used for ${UNUSED_DAYS} days or more: ${listed(idle, (k) => `${k.name} (${k.lastUsed ? `${unused(k)} days` : 'never used'}, owner ${k.owner})`, MORE, NAMED.idle)}.` });
   const broad = live.filter((k) => scopes.every((s) => k.scopes.includes(s)));
-  if (broad.length) insights.push({ text: `${listed(broad, (k) => k.name, MORE, NAMED.broad)} ${broad.length === 1 ? 'is a live key' : 'are live keys'} with every scope; a narrower key limits what a leak can reach.` });
+  if (broad.length) insights.push({ text: `${listed(broad, (k) => k.name, MORE, NAMED.broad)} ${plural(broad.length, 'is a live key', 'are live keys')} with every scope; a narrower key limits what a leak can reach.` });
   const owners = new Map<string, number>();
   for (const k of live) owners.set(k.owner, (owners.get(k.owner) ?? 0) + 1);
   const [owner, n] = [...owners].reduce((m, e) => (e[1] > m[1] ? e : m), ['', 0]);

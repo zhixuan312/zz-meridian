@@ -6,7 +6,7 @@
  */
 import type { DailyPoint } from '@/data/sample';
 import { app } from '@/app.config';
-import { formatCompact, formatCost, formatDuration, formatPercent, ordinal } from '@/lib/format';
+import { formatCompact, formatCost, formatDuration, formatPercent, ordinal, plural } from '@/lib/format';
 import { formatDate, formatDay } from '@/lib/format-date';
 import { sameWeekdayBaseline, weekday, median } from '@/lib/insight';
 import { PERIOD_DAYS, PERIOD_LABEL, type Period } from '@/lib/period';
@@ -149,7 +149,7 @@ export function unwellNames(services: readonly ServiceNow[]): string | null {
 export function homeLine({ days: n, customers, requests, previous, margin, services }: { days: number; customers: number | null; requests: number | null; previous: number | null; margin?: number | null; services: readonly ServiceNow[] | null }): string | null {
   const moved = requests !== null ? against(requests, previous) : null;
   const figures = [
-    customers !== null && `${formatCompact(customers)} ${customers === 1 ? 'customer' : 'customers'}`,
+    customers !== null && `${formatCompact(customers)} ${plural(customers, 'customer')}`,
     requests !== null && n > 0 && `${formatCompact(requests)} requests in ${inDays(n)}${moved ? ` (${moved.way === 'level' ? 'level' : `${moved.way} ${moved.by}`})` : ''}`,
     typeof margin === 'number' && `a gross margin of ${formatPercent(margin, 1)}`,
   ].filter((c): c is string => Boolean(c));
