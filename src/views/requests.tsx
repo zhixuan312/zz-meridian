@@ -63,7 +63,7 @@ export function RequestsView({ rows, total, summary, state, pageSize, updatedAt,
           rowHref={(r) => requestAddress(r.id)}
           manual
           total={total}
-          pageSizes={[pageSize]}
+          pageSize={pageSize}
           state={{ sort: f.sort, dir: f.dir, page: f.page }}
           onStateChange={setF}
           busy={pending}

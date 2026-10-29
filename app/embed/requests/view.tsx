@@ -52,7 +52,6 @@ export function EmbedRequests(data: RequestsData) {
           manual
           total={total}
           pageSize={pageSize}
-          pageSizes={[pageSize]}
           state={{ sort: state.sort, dir: state.dir, page: String(state.page) }}
           onStateChange={set}
           filtered={isFiltered}

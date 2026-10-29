@@ -214,9 +214,11 @@ export function DataTable<R>({
    * given, and the head claims no order — which is right only for a list that has no order of its own.
    */
   defaultState?: Partial<TableState>;
+  /** Rows per page; with `manual`, the server's page size. */
   pageSize?: number;
+  /** The rows-per-page menu's choices; a server-paged table offers none, since the server would never hear of it. */
   pageSizes?: number[];
-  /** Rows arrive already sorted and paged by the server; pass `total`. */
+  /** Rows arrive already sorted and paged by the server; pass `total` and `pageSize`. */
   manual?: boolean;
   total?: number;
   loading?: boolean;
@@ -385,7 +387,7 @@ export function DataTable<R>({
       {title ? <CardHeader title={title} description={description} actions={actions} divided={!toolbar} /> : null}
       {toolbar ? <div className="px-(--card-pad) py-3.5 md:border-b md:border-line">{toolbar}</div> : null}
       {body}
-      {!error && total > Math.min(size, ...pageSizes) ? (
+      {!error && total > (manual ? size : Math.min(size, ...pageSizes)) ? (
         <div className="border-t border-line px-(--card-pad) py-2.5">
           <Pagination
             page={page}
@@ -393,8 +395,8 @@ export function DataTable<R>({
             total={total}
             noun={noun}
             onPageChange={(p) => set({ page: String(p) })}
-            pageSizes={pageSizes}
-            onPageSizeChange={(s) => { setSize(s); set({ page: '1' }); }}
+            pageSizes={manual ? undefined : pageSizes}
+            onPageSizeChange={manual ? undefined : (s) => { setSize(s); set({ page: '1' }); }}
           />
         </div>
       ) : null}
