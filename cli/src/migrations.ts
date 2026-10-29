@@ -738,12 +738,14 @@ function navItemWithoutFields(root: string): string[] | null {
  * A configuration's own `NavItem` as written, comments blanked: its declaration's line, and when that line does not end
  * the statement with a `;`, every line after it that is blank, indented, or opens with a closing bracket or an operator
  * that continues it (`}`, `]`, `)`, `>`, `|`, `&`, `?`, `:`), up to the first that starts at the margin with anything
- * else. A declaration inside a comment is not the type. Undefined when there is none. No type is parsed: a shape this
- * cuts short is reported rather than passed, since a migration line with nothing to do costs a look, and a missed one is
- * the type error with no line it exists to prevent.
+ * else. A declaration inside a comment is not the type unless it is the only one. Undefined when there is none. No
+ * type is parsed: a shape this cuts short is reported rather than passed, since a migration line with nothing to do costs
+ * a look, and a missed one is the type error with no line it exists to prevent.
  */
 function navItemType(body: string): string | undefined {
-  const m = /^export\s+(?:interface|type)\s+NavItem\b/m.exec(uncommented(body));
+  const declaration = /^export\s+(?:interface|type)\s+NavItem\b/m;
+  // A regular expression is not told from a comment here, so one that opens `/*` can blank the type: then the raw text.
+  const m = declaration.exec(uncommented(body)) ?? declaration.exec(body);
   if (!m) return undefined;
   const lines = body.slice(m.index).split('\n');
   let n = 1;
