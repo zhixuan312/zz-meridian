@@ -29,18 +29,18 @@ export const supportsSource = (version: string) => !isNewer('0.3.0', version);
 /** The staged rows (every row with `verbose`), then the summary line. */
 export function formatReport(rows: Row[], { verbose }: { verbose: boolean }): string {
   const lines: string[] = [];
-  const count = { untouched: 0, added: 0, removed: 0, 'team-preserved': 0, kept: 0 };
+  const count = { untouched: 0, edited: 0, added: 0, removed: 0, 'team-preserved': 0, kept: 0 };
   let conflicts = 0;
   for (const r of rows) {
     const staged = r.action === 'stage';
     if (staged) conflicts++;
-    else if (r.disposition === 'untouched' || r.disposition === 'edited') count.untouched++;
     else if (r.disposition === 'kept' || r.disposition === 'retired-kept') count.kept++;
-    else if (r.disposition === 'added' || r.disposition === 'removed' || r.disposition === 'team-preserved') count[r.disposition]++;
+    // An edited file counted here already holds the release's bytes; one that needs merging is a conflict above.
+    else if (r.disposition in count) count[r.disposition as keyof typeof count]++;
     if (verbose) lines.push(`${r.disposition.padEnd(15)}  ${r.path}  ${r.action}`);
     else if (staged) lines.push(`${r.disposition.padEnd(15)}  ${r.path}  ${r.disposition === 'local-deletion' ? 'decide: delete or restore' : 'merge required'}`);
   }
-  lines.push(`summary: ${conflicts} ${conflicts === 1 ? 'conflict' : 'conflicts'} · aggregated: untouched ${count.untouched}, added ${count.added}, removed ${count.removed}, team-preserved ${count['team-preserved']}, kept ${count.kept}`);
+  lines.push(`summary: ${conflicts} ${conflicts === 1 ? 'conflict' : 'conflicts'} · aggregated: untouched ${count.untouched}, edited ${count.edited}, added ${count.added}, removed ${count.removed}, team-preserved ${count['team-preserved']}, kept ${count.kept}`);
   return lines.join('\n');
 }
 

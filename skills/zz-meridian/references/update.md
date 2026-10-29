@@ -59,7 +59,7 @@ Only the paths that need a decision are listed, one per line: the kind of change
 collision        src/components/ui/card/index.tsx  merge required
 local-deletion   scripts/audit.ts  decide: delete or restore
 migration  dependency:zod  pending
-summary: 2 conflicts · aggregated: untouched 310, added 4, removed 1, team-preserved 12, kept 1
+summary: 2 conflicts · aggregated: untouched 310, edited 3, added 4, removed 1, team-preserved 12, kept 1
 time: plan 3.1s · apply 0.2s · install 8.4s
 outcome: migration-required
 Next: resolve the items in .meridian/update/0.5.0/MERGE.md, then npx zz-meridian@0.5.0 update --finalize (or npx zz-meridian@0.5.0 update --abort)

@@ -18,10 +18,11 @@ describe('formatReport', () => {
     expect(out).toMatch(/edited\s+src\/components\/ui\/button\/index\.tsx\s+merge required/);
     expect(out).toMatch(/local-deletion\s+src\/lib\/period\.ts\s+decide: delete or restore/);
     for (const quiet of ['src/lib/cn.ts', 'src/components/ui/card/index.tsx', 'src/app.config.ts', 'src/lib/live.ts', 'src/lib/old.ts']) expect(out).not.toContain(quiet);
-    expect(out).toContain('summary: 2 conflicts · aggregated: untouched 2, added 1, removed 1, team-preserved 1');
+    // The team's edited card already holds the release's bytes: edited, not untouched.
+    expect(out).toContain('summary: 2 conflicts · aggregated: untouched 1, edited 1, added 1, removed 1, team-preserved 1');
   });
   it('says "1 conflict" in the singular', () => {
-    expect(formatReport([rows[1]], { verbose: false })).toContain('summary: 1 conflict · aggregated: untouched 0, added 0, removed 0, team-preserved 0');
+    expect(formatReport([rows[1]], { verbose: false })).toContain('summary: 1 conflict · aggregated: untouched 0, edited 0, added 0, removed 0, team-preserved 0');
   });
   it('lists every path with verbose', () => {
     const out = formatReport([...rows], { verbose: true });
