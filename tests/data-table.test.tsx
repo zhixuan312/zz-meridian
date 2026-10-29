@@ -56,6 +56,14 @@ describe('DataTable', () => {
     expect(sortRows(rs, cols, 'last', 'asc').map((r) => r.id)).toEqual(['a', 'c', 'b']);
   });
 
+  it('sorts text in the order a reader expects, whatever its case and accents, and numbers by value', () => {
+    type R = { id: string; name: string; n: number };
+    const rs: R[] = [{ id: 'z', name: 'Zoë', n: 10 }, { id: 'a', name: 'acme', n: 9 }, { id: 'e', name: 'Émile', n: 100 }];
+    const cols: Column<R>[] = [{ key: 'name', header: 'Name', sortValue: (r) => r.name, cell: (r) => r.name }, { key: 'n', header: 'N', sortValue: (r) => r.n, cell: (r) => r.n }];
+    expect(sortRows(rs, cols, 'name', 'asc').map((r) => r.id)).toEqual(['a', 'e', 'z']);
+    expect(sortRows(rs, cols, 'n', 'asc').map((r) => r.id)).toEqual(['a', 'z', 'e']);
+  });
+
   it('states the order it keeps its own state in, so the head carries the caret for the order the rows are in', () => {
     render(<DataTable caption="Members" noun="members" rows={rows} columns={columns} rowKey={(r) => r.id} defaultState={{ sort: 'calls', dir: 'desc' }} />);
     // The calls column, pressed down by default: 643,000 over 375,000, and its head says so.

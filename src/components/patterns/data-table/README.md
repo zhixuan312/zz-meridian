@@ -47,7 +47,7 @@ Arrival: rows rise with the page (`arrive`); under reduced motion they are simpl
 
 ## Behaviour
 
-- Pressing a sortable head sorts by it: text ascending first, numbers descending first; pressing again reverses. Sorting returns to page 1.
+- Pressing a sortable head sorts by it: text ascending first, numbers descending first; pressing again reverses. Text sorts as a reader expects, case and accents aside ("acme" before "Zeta", "Émile" before "Zoë"), with the numbers inside it by value. Sorting returns to page 1.
 - A click anywhere on a linked row opens it, except on a link, a button, a checkbox or a menu, and except when text is being selected. It asks "Leave without saving?" first while a form on the page has unsaved changes (the shell's `useLeave`).
 - A card's facts are the first three columns marked `mobile: 'fact'`, whatever the table's own width dropped: `hideBelow` is a rule about the table, and a card has room for three short facts. The title stays the row's link at both widths.
 - Rows per page: 20, 50 or 100; changing it returns to page 1. A server-paged table (`manual`) offers no choice: it shows the server's `pageSize`.
