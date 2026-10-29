@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { render } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import { KeyValue } from '@/components/ui/key-value';
 
 /**
@@ -62,5 +62,18 @@ describe('a key value list', () => {
     for (const row of rows.slice(0, -1)) expect(row.className).toMatch(/\bborder-b\b/);
     expect(rows.at(-1)!.className).toMatch(/last:border-0/);
     for (const row of rows) expect(row.className).not.toMatch(/nth-last-child\(2\)/);
+  });
+});
+
+// The README: an unknown value shows an em dash in ink-3, never "0" or a blank. A null drew a blank row.
+describe('a Key value row whose value is unknown', () => {
+  it('draws an em dash in ink-3 for null, undefined and empty text, and keeps 0 as 0', () => {
+    render(<KeyValue items={[{ label: 'Owner', value: null }, { label: 'Region', value: undefined }, { label: 'Note', value: '' }, { label: 'Retries', value: 0 }]} />);
+    const values = screen.getAllByRole('definition');
+    expect(values.map((d) => d.textContent)).toEqual(['—', '—', '—', '0']);
+    for (const d of values.slice(0, 3)) {
+      expect(d.querySelector('.text-ink-3')).toBeTruthy();
+      expect(d.getAttribute('title')).toBeNull();
+    }
   });
 });

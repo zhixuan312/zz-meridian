@@ -24,7 +24,7 @@ One size. In compact density only the card's padding changes; the rows stay 44px
 
 ## States
 
-Not interactive itself; an action inside follows its own card. An unknown value shows an em dash in `ink-3`, never "0" or a blank.
+Not interactive itself; an action inside follows its own card. An unknown value (`null`, `undefined` or empty text) shows an em dash in `ink-3`, never "0" or a blank; a value of 0 is 0.
 
 ## Behaviour
 
@@ -33,7 +33,7 @@ Static.
 ## Surfaces
 
 - **Console**: one or two columns.
-- **Mobile**: one column; the label narrows to fit and the value truncates.
+- **Mobile**: one column; the label keeps its 128px, and under 26rem (364px) of the list's width a value wraps instead of truncating.
 - **Embed**: one column, at most six rows inline; the rest behind Expand.
 
 ## Agents
