@@ -21,8 +21,13 @@ import { formatBytes } from '@/system/sample-cells';
 import { domain } from '@/app.config';
 import { requestAddress } from '@/logic/request-context';
 
-const curlOf = (r: RequestRow, body: string | null) =>
-  `curl -X ${r.method} https://api.${domain}${r.route} -H "Authorization: Bearer $API_KEY"` + (body ? ` -d '${body.replace(/\s+/g, ' ')}'` : '');
+/** One shell word, whatever it holds: a body's own `'`, `$(…)` or newline reaches curl as text and runs nothing. */
+const shellWord = (s: string) => `'${s.replaceAll("'", "'\\''")}'`;
+/** A JSON body on one line without touching its values; any other body as it is. */
+const oneLine = (body: string) => { try { return JSON.stringify(JSON.parse(body)); } catch { return body; } };
+
+export const curlOf = (r: RequestRow, body: string | null) =>
+  `curl -X ${r.method} ${shellWord(`https://api.${domain}${r.route}`)} -H "Authorization: Bearer $API_KEY"` + (body ? ` -d ${shellWord(oneLine(body))}` : '');
 
 const BAR = { accent: 'bg-accent', neutral: 'bg-chart-neutral-strong', critical: 'bg-critical' } as const;
 
