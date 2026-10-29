@@ -112,7 +112,7 @@ import { Rail } from '@/components/patterns/rail';
 
 Edit `nav` in `src/app.config.ts` to change the destinations: `{ label?, items: [{ href, label, icon, needs, badge?, workspace?, feature?, prefetch?, under? }] }`; set `prefetch: true` on an item whose page is its URL data (a document under a dynamic segment), for one or two items at most.
 
-`under` makes an item a sub page: it is the `href` of an item of the same group, and the rail draws the item in that item's branch. A sub page's masthead shows its place with `<NavTrail nav={nav} />` (`./nav-trail`) as its kicker, which reads the entry the address falls under by the rail's own rule, so the page names no href of its own.
+`under` makes an item a sub page: it is the `href` of an item of the same group, and the rail draws the item in that item's branch. A sub page's masthead shows its place with `<NavTrail />` (`./nav-trail`) as its kicker, which reads the entry the address falls under by the rail's own rule, so the page names no href of its own.
 
 ```ts
 { label: 'Traffic', items: [

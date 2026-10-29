@@ -1,19 +1,19 @@
 import { render } from '@testing-library/react';
-import { Home } from 'lucide-react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import type { NavGroup } from '@/app.config';
 
 const at = vi.hoisted(() => ({ path: '/' }));
 vi.mock('next/navigation', () => ({ usePathname: () => at.path }));
+// A navigation of this test's own, never the sample's: a created project that edits its navigation keeps this green.
+vi.mock('@/app.config', () => {
+  const item = (href: string, label: string, extra: Record<string, unknown> = {}) => ({ href, label, icon: () => null, needs: 'public', ...extra });
+  return { nav: [{ label: 'Traffic', items: [item('/load', 'Load'), item('/calls', 'Calls', { under: '/load' })] }] };
+});
 
 import { NavTrail } from '@/components/patterns/rail/nav-trail';
 
-// A navigation of this test's own, never the sample's: a created project that edits its navigation keeps this green.
-const item = (href: string, label: string, extra: Record<string, unknown> = {}) => ({ href, label, icon: Home, needs: 'public', ...extra }) as unknown as NavGroup['items'][number];
-const NAV: NavGroup[] = [{ label: 'Traffic', items: [item('/load', 'Load'), item('/calls', 'Calls', { under: '/load' })] }];
 const crumbs = (path: string) => {
   at.path = path;
-  const { container, unmount } = render(<NavTrail nav={NAV} />);
+  const { container, unmount } = render(<NavTrail />);
   const out = [...container.querySelectorAll('li:not([aria-hidden])')].map((li) => ({ text: li.textContent?.trim(), href: li.querySelector('a')?.getAttribute('href') ?? null }));
   unmount();
   return out;
