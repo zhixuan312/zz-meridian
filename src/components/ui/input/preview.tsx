@@ -32,7 +32,7 @@ export default function InputPreview() {
           <State label="Focus" still><Input aria-label="Focus" defaultValue="staging-readonly" frameClassName="border-accent ring-3 ring-accent/22" /></State>
           <State label="Invalid"><Input aria-label="Invalid" invalid defaultValue="prod key!" /></State>
           <State label="Disabled"><Input aria-label="Disabled" disabled defaultValue="zzm_live_••••••••4f2a" /></State>
-          <State label="Read only"><Input aria-label="Read only" readOnly defaultValue="us-east-1" frameClassName="bg-surface-sunk" /></State>
+          <State label="Read only"><Input aria-label="Read only" readOnly defaultValue="us-east-1" /></State>
         </div>
       </Specimen>
     </>
