@@ -44,8 +44,8 @@ const RULES: Rule[] = [
   { id: 'page spec has its sections', source: '${p}: missing ${s}', batch: 'T', fails: ['app/(dashboard)/members/README.md: missing ## Structure'] },
   { id: 'page spec says what the agent reads', source: 'no "### What the agent reads" under ## Agents', batch: 'T', fails: ['app/(dashboard)/services/README.md: no "### What the agent reads" under ## Agents'] },
   { id: 'page with a view tool has the does-here section', source: 'no "### What the agent does here" under ## Agents', pairedIn: { file: AGENT_TESTS, needle: 'What the agent does here' } },
-  { id: 'does-here section has a protagonist', source: 'has no "Protagonist:', pairedIn: { file: AGENT_TESTS, needle: 'Protagonist' } },
-  { id: 'does-here section has three questions', source: 'of the three questions it needs', pairedIn: { file: AGENT_TESTS, needle: 'three' } },
+  { id: 'does-here section has a protagonist', source: 'has no "Protagonist:', pairedIn: { file: AGENT_TESTS, needle: 'README\\.md: .*Protagonist' } },
+  { id: 'does-here section has three questions', source: 'of the three questions it needs', pairedIn: { file: AGENT_TESTS, needle: 'README\\.md: .*three' } },
   // Documents.
   { id: 'a spec names only tokens that exist', source: 'which is not a token', batch: 'T', fails: ['CONTRIBUTING.md: names `ground-nope`, which is not a token'] },
   { id: 'a spec writes a token value right', source: 'is written as ${m[2]}px', batch: 'T', fails: ['CONTRIBUTING.md: `radius-lg` is written as 99px'] },
@@ -155,12 +155,25 @@ describe('every rule the static gate judges is listed, and every place it can fa
     expect(unclaimed(middle).length).toBe(1);
   });
 
+  /**
+   * Whether a test file asserts the needle: on an assertion's own line, or in a constant an assertion interpolates. A
+   * title or a comment that names it asserts nothing.
+   */
+  const asserts = (text: string, needle: string) => {
+    const lines = text.split('\n');
+    const expects = lines.filter((l) => l.includes('expect('));
+    return expects.some((l) => l.includes(needle)) || lines.some((l) => {
+      const name = l.includes(needle) ? /\bconst (\w+) =/.exec(l)?.[1] : undefined;
+      return name !== undefined && expects.some((e) => e.includes(`\${${name}}`));
+    });
+  };
   it('keeps every rule paired in another file in that file', () => {
     for (const r of RULES.filter((x) => x.pairedIn)) {
-      const text = fs.readFileSync(path.join(ROOT, r.pairedIn!.file), 'utf8');
-      expect(text, `${r.id}: ${r.pairedIn!.file} no longer asserts "${r.pairedIn!.needle}"`).toContain(r.pairedIn!.needle);
-      // A failing case asserts the line is there and a passing one that it is not or that the run has no problems.
-      expect(text, `${r.id}: ${r.pairedIn!.file} holds no passing case`).toMatch(/\.not\.to|\^0 problems/);
+      expect(asserts(fs.readFileSync(path.join(ROOT, r.pairedIn!.file), 'utf8'), r.pairedIn!.needle), `${r.id}: ${r.pairedIn!.file} no longer asserts "${r.pairedIn!.needle}"`).toBe(true);
+    }
+    // The passing case of every paired rule is the template's own run, which reports no problem at all.
+    for (const file of new Set(RULES.flatMap((x) => (x.pairedIn ? [x.pairedIn.file] : [])))) {
+      expect(fs.readFileSync(path.join(ROOT, file), 'utf8'), `${file} holds no case of the template passing`).toMatch(/expect\(.*\)\.toMatch\(\/\^0 problems\/m\)/);
     }
   });
 
