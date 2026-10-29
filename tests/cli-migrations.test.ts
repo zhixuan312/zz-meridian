@@ -533,5 +533,8 @@ describe('the workspace-homes-moved migration', () => {
     expect(ids('0.17.0')).toContain('workspace-homes-moved');
     expect(ids('0.36.0')).not.toContain('workspace-homes-moved');
     expect(ids('0.17.0')).not.toContain('journey-moved');
+    // Before 0.16.3 a file taking both from the command is told of both moves.
+    const both = releaseMigrations(project({ 'tests/start.test.ts': "import { startFor, workspaceHomes } from '../scripts/navigate.ts';\n" }), '0.16.2', '0.36.0').map((m) => m.id);
+    expect(both).toEqual(expect.arrayContaining(['journey-moved', 'workspace-homes-moved']));
   });
 });

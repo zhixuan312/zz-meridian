@@ -19,7 +19,7 @@ const PAYLOAD = [
   ...FIXED,
 ];
 
-/** Every `@/…` specifier a file value-imports, as a path under src/ without its extension. */
+/** Every `@/…` specifier a file imports, types included (a missing type module fails the type check too), as a path under src/ without its extension. */
 const imported = (file: string): string[] => [
   ...fs.readFileSync(path.join(ROOT, file), 'utf8').matchAll(/(?:from\s*|import\s*\(\s*)'@\/([^']+)'/g),
 ].map((m) => `src/${m[1]}`);

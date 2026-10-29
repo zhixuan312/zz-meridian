@@ -23,13 +23,14 @@ function meridianProject(version: string | null, route: 'adopt' | 'create' = 'ad
 }
 
 describe('adopt in a project that is already on Meridian', () => {
-  it('refuses in one line that names the release and points at update, and writes nothing', () => {
+  it('refuses in one line that names the release and points at update, before it judges the tree, and writes nothing', () => {
     for (const route of ['adopt', 'create'] as const) {
       const root = meridianProject('0.34.0', route);
       const errors: string[] = [];
       const spy = vi.spyOn(console, 'error').mockImplementation((m) => { errors.push(String(m)); });
       const before = fs.readFileSync(path.join(root, 'src/components/base/shell/index.tsx'), 'utf8');
-      expect(adopt({ root, brand: {}, allowDirty: true, install: false }), route).toBe(1);
+      // The fixture is no git repository, so a tree judged first would be refused for that instead.
+      expect(adopt({ root, brand: {}, allowDirty: false, install: false }), route).toBe(1);
       spy.mockRestore();
       expect(errors.join('\n'), route).toMatch(/already on Meridian 0\.34\.0.*update/);
       expect(errors.join('\n'), route).not.toMatch(/already exist with other content/);

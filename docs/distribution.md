@@ -55,6 +55,8 @@ clone-then-delete.
 
 Brings Meridian into the project in the current folder. It refuses, and copies nothing, when:
 
+- the project is already on Meridian (it has `.meridian/manifest.json`): it names the release the manifest holds and
+  `update`, the command that moves it;
 - the git tree is dirty (`--allow-dirty` overrides): every change it makes must be reviewable as one diff, and revertable;
 - the project is not Next.js with the App Router: it exits with the Route B or C guidance from
   `references/existing-project.md` instead.

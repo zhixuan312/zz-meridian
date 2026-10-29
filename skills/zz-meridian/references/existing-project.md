@@ -55,8 +55,9 @@ Migrate in place, page by page, keeping their data layer.
    block; a duplicate or unterminated marker is refused, with the files already copied); writes the five-section brief
    `optional:docs/brief.md` when they have none (SKILL.md, step 3: fill it from their answers); installs this skill into
    `optional:.agents/skills/` and `optional:.claude/skills/`; records every Meridian file it copied in `optional:.meridian/manifest.json`; installs and type
-   checks. It refuses, writing nothing, when the git tree has uncommitted
-   changes (commit first, so its change is one diff to review), when the project is not Next.js with the App Router,
+   checks. It refuses, writing nothing, when the project is already on
+   Meridian (it names `update`, the command that moves it), when the git tree has uncommitted changes (commit first, so
+   its change is one diff to review), when the project is not Next.js with the App Router,
    or when a file it would copy already exists with other content (it lists them: move theirs, then run it again).
    Meridian's own files import each other by relative path, so their `components/ui/button` is never confused with
    Meridian's.
