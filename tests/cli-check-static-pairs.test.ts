@@ -42,7 +42,7 @@ const RULES: Rule[] = [
   // Pages.
   { id: 'page spec opens with a name and a sentence', source: '${p}: must open with', batch: 'T', fails: ['app/(dashboard)/keys/README.md: must open with "# Name"'] },
   { id: 'page spec has its sections', source: '${p}: missing ${s}', batch: 'T', fails: ['app/(dashboard)/members/README.md: missing ## Structure'] },
-  { id: 'page spec says what the agent reads', source: 'no "### What the agent reads" under ## Agents', batch: 'T', fails: ['app/(dashboard)/services/README.md: no "### What the agent reads" under ## Agents'] },
+  { id: 'page spec says what the agent reads', source: 'no "### What the agent reads" under ## Agents', batch: 'T', fails: ['app/(dashboard)/services/README.md: no "### What the agent reads" under ## Agents', 'app/(dashboard)/requests/README.md: no "### What the agent reads" under ## Agents'] },
   { id: 'page with a view tool has the does-here section', source: 'no "### What the agent does here" under ## Agents', pairedIn: { file: AGENT_TESTS, needle: 'What the agent does here' } },
   { id: 'does-here section has a protagonist', source: 'has no "Protagonist:', pairedIn: { file: AGENT_TESTS, needle: 'README\\.md: .*Protagonist' } },
   { id: 'does-here section has three questions', source: 'of the three questions it needs', pairedIn: { file: AGENT_TESTS, needle: 'README\\.md: .*three' } },
@@ -233,6 +233,8 @@ const EDITS: Record<Batch | 'M0', () => void> = {
     edit('app/(dashboard)/keys/README.md', (t) => `x\n${t}`);
     edit('app/(dashboard)/members/README.md', (t) => t.replace(/^## Structure$/m, '## Structre'));
     edit('app/(dashboard)/services/README.md', (t) => t.replace(/^### What the agent reads$/m, '### What the agent readz'));
+    // The heading under a later section, not under ## Agents.
+    edit('app/(dashboard)/requests/README.md', (t) => `${t.replace(/^### What the agent reads$/m, '### Reads')}\n### What the agent reads\n\nPlanted under ## Content.\n`);
     edit('CONTRIBUTING.md', (t) => `${t}\n\nPlanted: \`ground-nope\`, \`radius-lg\` 99px, \`/embed/nowhere\` and the real \`/embed/requests\`.\n`);
     edit('docs/surfaces.md', (t) => t.replace(/(\| Customers \| List with sparklines \|[^\n]*?\| )Not offered( \|)/, '$1`ghostview`$2'));
     edit('src/styles/motion.css', (t) => `${t}\n.planted { transition: opacity 300ms; }\n`);

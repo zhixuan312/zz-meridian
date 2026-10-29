@@ -795,7 +795,7 @@ function pagesWithoutAgentReads(root: string): string[] | null {
 function specsWithoutAgentReads(root: string, dirs: string[]): string[] | null {
   const files: string[] = [];
   for (const d of dirs) walk(root, d, files, /^README\.md$/);
-  const hits = files.filter((rel) => !/^## Agents\n[\s\S]*?^### What the agent reads$/m.test(text(root, rel) ?? ''));
+  const hits = files.filter((rel) => !/^## Agents$(?:\n(?!## ).*)*\n### What the agent reads$/m.test(text(root, rel) ?? ''));
   return hits.length > 0 ? hits : null;
 }
 
