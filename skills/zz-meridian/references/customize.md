@@ -83,9 +83,9 @@ Use `under` for destinations: pages with their own address, access and place in 
 instead for the views of one record, under one header. A parent is a page too: for several equal pages under a header
 with no page of its own, give them a group of their own, whose `label` is that header. For a sub page's masthead to show
 its path, pass `<Breadcrumb items={navTrail(href, nav)} />` (from `@/components/patterns/rail/trail`) as the kicker,
-`href` being the page's own route, or for a detail page the item it falls under; the crumbs are derived from `nav`, and
-`node scripts/check.ts` fails a page or loading file whose literal `navTrail` href is a route it does not live under, as
-one left behind when its route moved.
+`href` being the page's own route, or for a detail page the nearest nav item above it; the crumbs are derived from
+`nav`, and `node scripts/check.ts` fails a page or loading file whose literal `navTrail` href is any other, as one left
+behind when its route moved.
 
 `needs` is required, and in a created project it is a feature's own need **by reference** — `needs: FEATURES.home.needs`,
 from `optional:src/data/features.ts` — never a grant written a second time: the rail and the palette draw only the

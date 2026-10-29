@@ -361,8 +361,9 @@ for (const item of nav.flatMap((g) => g.items)) {
 // another workspace has no place in that list, so the page would vanish from the rail or hang in the wrong one. A parent
 // with more than seven sub pages is a group of its own. The rule is pure and lives in scripts/lib/nav-under.ts.
 problems.push(...navUnderProblems(nav));
-// A sub page's masthead trail names its own href, which nothing else keeps true when the route moves (#102).
-problems.push(...navTrailProblems(walk(APP_DIR, /^(page|loading)\.tsx$/).map((f) => ({ file: f, route: specRoute(f), src: blanked(f) }))));
+// A masthead trail names the page's own href, or a detail page's nearest item, which nothing else keeps true when the
+// route moves (#102).
+problems.push(...navTrailProblems(walk(APP_DIR, /^(page|loading)\.tsx$/).map((f) => ({ file: f, route: specRoute(f), src: blanked(f) })), nav.flatMap((g) => g.items.map((it) => it.href))));
 
 // ── The update session, the keep register and the logo ────────────────────────────────────────────────
 // A session under .meridian/update/ must be resolved before the gate passes. With one ready, its candidate manifest

@@ -1,8 +1,10 @@
 /**
  * The gate's rule for a sub page: a nav item that names its parent with `under`. The rail draws one list nested under
- * the parent, so a navigation it cannot draw is refused here. Pure, and imports nothing from the project, so a test can
- * feed it navigations of its own.
+ * the parent, so a navigation it cannot draw is refused here. Pure, and reads no project state, so a test can feed it
+ * navigations of its own.
  */
+import { entryFor } from '../../src/components/patterns/rail/trail.ts';
+
 type Item = { href: string; workspace?: string; under?: string };
 type Group = { label?: string; items: Item[] };
 
@@ -32,15 +34,18 @@ export function navUnderProblems(groups: Group[]): string[] {
 }
 
 /**
- * A page or loading file whose masthead trail names an href it does not live under: `navTrail('<href>', nav)` is
- * written by hand, and one left behind when the route moved draws another page's trail. A detail page (`/requests/[id]`)
- * names the item it falls under. A literal href is checked; one held in a variable is not. Pure, as above.
+ * A page or loading file whose masthead trail names another page's href: `navTrail('<href>', nav)` is written by hand,
+ * and one left behind when the route moved draws another page's trail. It names its own route, or for a detail page
+ * (`/requests/[id]`) the nearest nav item above it, as the rail reads it (`entryFor`). A literal href is checked; one
+ * held in a variable is not. `hrefs` is every nav item's.
  */
-export function navTrailProblems(files: { file: string; route: string; src: string }[]): string[] {
+export function navTrailProblems(files: { file: string; route: string; src: string }[], hrefs: string[]): string[] {
   const out: string[] = [];
+  const items = hrefs.map((href) => ({ href }));
   for (const { file, route, src } of files) {
+    const nearest = entryFor(route, items)?.href;
     for (const m of src.matchAll(/\bnavTrail\(\s*(['"`])([^'"`]+)\1/g)) {
-      if (m[2] !== route && !route.startsWith(`${m[2]}/`)) out.push(`${file}: navTrail('${m[2]}') is another page's trail; this file's route is ${route}`);
+      if (m[2] !== route && m[2] !== nearest) out.push(`${file}: navTrail('${m[2]}') is another page's trail; this file's route is ${route}`);
     }
   }
   return out;

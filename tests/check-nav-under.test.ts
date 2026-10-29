@@ -60,22 +60,27 @@ describe("the gate's rules for a sub page's under", () => {
 
 describe("the gate's rule for a page's trail", () => {
   const page = (route: string, src: string) => ({ file: `app/(dashboard)${route}/page.tsx`, route, src });
+  const hrefs = ['/', '/calls', '/load', '/requests', '/usage', '/usage/breakdown', '/usage/requests'];
   it("passes a trail that names the file's own route, and a file that draws none", () => {
-    expect(navTrailProblems([page('/calls', "kicker={<Breadcrumb items={navTrail('/calls', nav)} />}"), page('/load', 'title="Load"')])).toEqual([]);
+    expect(navTrailProblems([page('/calls', "kicker={<Breadcrumb items={navTrail('/calls', nav)} />}"), page('/load', 'title="Load"')], hrefs)).toEqual([]);
   });
   it('names a file whose trail is another page\'s, as one left behind when its route moved', () => {
-    expect(navTrailProblems([page('/traffic/calls', "kicker={<Breadcrumb items={navTrail('/calls', nav)} />}")])).toEqual([
+    expect(navTrailProblems([page('/traffic/calls', "kicker={<Breadcrumb items={navTrail('/calls', nav)} />}")], hrefs)).toEqual([
       "app/(dashboard)/traffic/calls/page.tsx: navTrail('/calls') is another page's trail; this file's route is /traffic/calls",
     ]);
   });
 });
 
 describe("the trail rule on a detail page", () => {
-  it("passes a detail page's trail to the item it falls under, and fails one under no item it lives in", () => {
-    const detail = (href: string) => ({ file: 'app/(dashboard)/requests/[id]/page.tsx', route: '/requests/[id]', src: `navTrail('${href}', nav)` });
-    expect(navTrailProblems([detail('/requests')])).toEqual([]);
-    expect(navTrailProblems([detail('/usage')])).toHaveLength(1);
-    expect(navTrailProblems([{ file: 'app/(dashboard)/requests-archive/page.tsx', route: '/requests-archive', src: "navTrail('/requests', nav)" }])).toHaveLength(1);
+  const detail = (route: string, href: string) => ({ file: `app/(dashboard)${route}/page.tsx`, route, src: `navTrail('${href}', nav)` });
+  const hrefs = ['/', '/requests', '/usage', '/usage/breakdown', '/usage/requests'];
+  it("passes a detail page's trail to the nearest item above it, and fails any other", () => {
+    expect(navTrailProblems([detail('/requests/[id]', '/requests')], hrefs)).toEqual([]);
+    expect(navTrailProblems([detail('/requests/[id]', '/usage')], hrefs)).toHaveLength(1);
+    expect(navTrailProblems([detail('/requests-archive', '/requests')], hrefs)).toHaveLength(1);
+    // An item of its own names itself, not its parent; a deeper page names the nearest item, not an ancestor past it.
+    expect(navTrailProblems([detail('/usage/breakdown', '/usage')], hrefs)).toHaveLength(1);
+    expect(navTrailProblems([detail('/usage/requests/[id]', '/usage/requests')], hrefs)).toEqual([]);
+    expect(navTrailProblems([detail('/usage/requests/[id]', '/usage')], hrefs)).toHaveLength(1);
   });
 });
-
