@@ -138,7 +138,7 @@ to all of this.
 - Delete `optional:tests/workspaces.test.ts`, `optional:tests/workspace-access.test.ts`,
   `optional:tests/workspace-chrome.test.tsx` and `optional:tests/workspace-menu-access.test.tsx`. In `optional:tests/shell-alerts.test.ts` drop the `workspaceOf` check, and in
   `optional:tests/workspace-home.test.tsx` the test that reads `workspaces.main.audience`, with the two imports only
-  it uses, and in `optional:tests/logic-layer.test.ts` the line that expects `optional:src/views/workspaces.ts`.
+  it uses.
 - A clone that keeps the Atlas also changes `optional:src/system/atlas-shell.tsx` and `optional:src/system/strata.tsx`, which
   list the workspaces, and `optional:tests/atlas-layers.test.ts`, which expects three; a created project has no Atlas.
 

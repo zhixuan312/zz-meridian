@@ -1,4 +1,6 @@
 // @vitest-environment node
+// Named cli-* so the payload leaves it out: the moves it holds are Meridian's own, and a project's `src/views/<name>.ts`
+// is not one of them.
 // A path that moved is named in one place: where the module now lives. The record of what was built keeps the old
 // one on purpose, so this file also fails if a sweep goes through the history.
 import fs from 'node:fs';
@@ -13,7 +15,7 @@ const HISTORY = [
   'tests/cli-migrations.test.ts',
   'tests/cli-old-names.test.ts',
 ];
-const SELF = 'tests/moved-paths-documented.test.ts';
+const SELF = 'tests/cli-moved-paths-documented.test.ts';
 const TEXT = /\.(md|ts|tsx)$/;
 const STALE = /src\/views\/([a-z0-9-]+)\.ts\b/g;
 

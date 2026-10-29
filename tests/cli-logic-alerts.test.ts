@@ -1,5 +1,6 @@
 // @vitest-environment node
-// The data layer may not import the layer above it: the alerts module was the last one that did.
+// Named cli-* so the payload leaves it out: it is the record of the alerts module's move from src/data to src/logic.
+// The rule a project keeps, that the data layer imports neither layer above it, is `scripts/check.ts`'s.
 import fs from 'node:fs';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
@@ -27,8 +28,6 @@ describe('the alerts module', () => {
     expect(fs.existsSync(path.join(ROOT, 'src/data/alerts.ts'))).toBe(false);
   });
 
-  // Only the logic half: `src/data/access.ts` imports `@/views` too, and it is Task I-3's, in this same wave. The
-  // whole rule is Task I-4's `data imports neither`, which lands after both moves.
   it('leaves no data module importing the logic layer above it', () => {
     const reaching = walk('src/data')
       .filter((f) => f.endsWith('.ts'))

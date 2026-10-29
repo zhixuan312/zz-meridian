@@ -150,7 +150,7 @@ describe('the four-layer rules', () => {
 
   it('refuse a file under src/views that is not a renderer, and allow workspaces.ts and a capitalised component', () => {
     // The fixture is camelCase on purpose: a kebab-case `src/views/<name>.ts` token is the shape
-    // tests/moved-paths-documented.test.ts reads as a module that has moved to src/logic, and this
+    // tests/cli-moved-paths-documented.test.ts reads as a module that has moved to src/logic, and this
     // file exists only inside the copy, for the length of this test.
     put('src/views/helperFn.ts', 'export const helper = () => 1;\n');
     put('src/views/plain.tsx', 'export const helper = () => 1;\n');

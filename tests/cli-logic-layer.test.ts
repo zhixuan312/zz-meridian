@@ -1,6 +1,7 @@
 // @vitest-environment node
-// The Skeleton's proof that the move is complete: every producer has a home in the logic layer,
-// nothing under src/views still produces, and the logic layer never reaches up into the views.
+// Named cli-* so the payload leaves it out: it is the record that the sample's producers moved into src/logic, and it
+// names the sample's modules. What a project keeps of it, the four-layer rules, `scripts/check.ts` holds wherever
+// `scripts/check.local.ts` turns them on.
 import fs from 'node:fs';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
