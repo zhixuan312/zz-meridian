@@ -80,7 +80,7 @@ describe('the feature table', () => {
 
 describe('the rail asks the table', () => {
   it('gives a Viewer the thirteen routes and everyone else all fifteen', async (ctx) => {
-    if (!TEMPLATE) ctx.skip('this project replaced the template’s pages: its rail is its own, and these thirteen routes are the template’s');
+    if (!TEMPLATE) ctx.skip('the Atlas is not here, so this is a project made from the template, not the template: its rail is its own, and these thirteen routes are the template’s');
     const all = items.map((i) => i.href).sort();
     jar.value = 'members_12';
     expect(hrefsOf((await chromeAccess()).only)).toEqual(['/', '/business', '/customers', '/engineering', '/operations-tickets', '/releases', '/requests', '/services', '/settings', '/system', '/system/start/start-a-dashboard', '/tests', '/usage']);

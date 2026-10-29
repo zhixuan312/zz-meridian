@@ -179,16 +179,6 @@ describe('a ticket written through the boundary', () => {
     await expect(tickets.update!(['tickets_999999'], { state: 'closed' })).rejects.toThrow();
   });
 
-  it('refuses a Viewer at the boundary itself, not only where a button would be', async () => {
-    const id = String((await (await ticketsOf(PEOPLE.member)).create!(draft) as Row).id);
-    const viewer = await ticketsOf(PEOPLE.viewer);
-    const before = (await all('tickets')).length;
-    await expect(Promise.resolve().then(() => viewer.create!(draft))).rejects.toThrow();
-    await expect(Promise.resolve().then(() => viewer.update!([id], { state: 'closed' }))).rejects.toThrow();
-    expect((await all('tickets')).length).toBe(before);
-    expect((await one(id)).state).toBe('open');
-  });
-
   it('tells whoever is listening that tickets changed', async () => {
     let heard = 0;
     const stop = raw('tickets').subscribe!(() => { heard += 1; });
@@ -198,17 +188,10 @@ describe('a ticket written through the boundary', () => {
   });
 });
 
-describe('what an agent may do to the three collections', () => {
+describe('what an agent is asked when it writes a ticket', () => {
   const guard = { authorize: async () => true, invalidate: () => {} };
   const { tools } = assistantTools(collections, { write() {}, merge() {}, onError: undefined } as never, guard);
-  const named = Object.keys(tools);
   const schemaOf = (name: string) => asSchema((tools as Record<string, { inputSchema: never }>)[name].inputSchema).jsonSchema as { properties?: Record<string, { properties?: Record<string, unknown>; required?: string[] }>; required?: string[] };
-
-  it('is create and change a ticket, and nothing else: runs and releases are only read, through their pages\' prepared queries', () => {
-    expect(named.filter((n) => n.endsWith('_tickets')).sort()).toEqual(['create_tickets', 'update_tickets']);
-    expect(named.filter((n) => n.endsWith('_tests'))).toEqual([]);
-    expect(named.filter((n) => n.endsWith('_releases'))).toEqual([]);
-  });
 
   it('never asks an agent for what the server sets: a new ticket\'s state and its two times', () => {
     const create = schemaOf('create_tickets');

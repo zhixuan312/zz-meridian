@@ -18,7 +18,7 @@ const TEMPLATE = fs.existsSync(path.join(ROOT, 'app/system'));
 
 describe('the personas', () => {
   it('declares the five the spec freezes, with literal expected routes', (ctx) => {
-    if (!TEMPLATE) ctx.skip('this project replaced the template’s pages: its rail is its own, and its personas name its own routes');
+    if (!TEMPLATE) ctx.skip('the Atlas is not here, so this is a project made from the template, not the template: its rail is its own, and its personas name its own routes');
     const personas = config.personas ?? {};
     expect(Object.keys(personas).sort()).toEqual(['admin', 'key-manager', 'member', 'owner', 'viewer']);
     const viewer = personas.viewer;

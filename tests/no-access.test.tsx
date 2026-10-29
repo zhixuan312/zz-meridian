@@ -72,7 +72,7 @@ describe('the no-access state', () => {
   });
 
   it('offers one link, named for where it leads, to the first destination of its own workspace the person may open', async (ctx) => {
-    if (!TEMPLATE) ctx.skip('this project replaced the template\u2019s pages: its rail is its own, and these destinations are the template\u2019s');
+    if (!TEMPLATE) ctx.skip('the Atlas is not here, so this is a project made from the template, not the template: its rail is its own, and these destinations are the template\u2019s');
     expect(linksOf(renderToStaticMarkup(NoAccess({ feature: 'keys', access: await chrome() })))).toEqual([{ href: '/engineering', text: 'Go to Now' }]);
     expect(linksOf(renderToStaticMarkup(NoAccess({ feature: 'members', access: await chrome() })))).toEqual([{ href: '/', text: 'Go to Home' }]);
   });

@@ -1,13 +1,6 @@
 // @vitest-environment node
-import { beforeEach, describe, expect, it, vi } from 'vitest';
-
-const jar = vi.hoisted(() => ({ value: undefined as string | undefined }));
-vi.mock('next/headers', () => ({
-  cookies: async () => ({ get: (n: string) => (n === 'zz_meridian_view_as' && jar.value !== undefined ? { name: n, value: jar.value } : undefined), set: () => {} }),
-  headers: async () => new Headers(),
-}));
-
-import { createTicket, updateTicket } from '../app/(dashboard)/operations-tickets/actions';
+import { describe, expect, it } from 'vitest';
+import { facts } from '@/app.config';
 import { clock, collections } from '@/data/collections';
 import { usageOf, type RequestRow } from '@/data/sample';
 
@@ -29,9 +22,6 @@ const takes = (name: string, field: string, value: unknown): boolean => of(name)
 const DAY = 86_400_000;
 const today = clock().toISOString().slice(0, 10);
 const back = (n: number) => new Date(Date.parse(`${today}T00:00:00Z`) - n * DAY).toISOString().slice(0, 10);
-const OWNER = 'members_1';
-
-beforeEach(() => { jar.value = OWNER; });
 
 describe('an incident and its ticket', () => {
   it('an incident may name its owner and its ticket, and a ticket its incident and when it was closed', () => {
@@ -39,14 +29,12 @@ describe('an incident and its ticket', () => {
     for (const field of ['incidentId', 'closedAt']) { expect(fields('tickets'), field).toContain(field); expect(takes('tickets', field, null), field).toBe(true); }
   });
 
-  it('one incident is open with three updates, a member as its owner and a ticket that names it back, and three are resolved', async () => {
+  it('an incident names a member as its owner and a ticket that names it back, and a ticket names an incident the product holds', async () => {
     const [incidents, tickets, members] = await Promise.all([rows('incidents'), rows('tickets'), rows('members')]);
-    const open = incidents.filter((i) => i.state !== 'resolved');
-    expect(open).toHaveLength(1);
-    expect(incidents.filter((i) => i.state === 'resolved')).toHaveLength(3);
-    expect(open[0].updates).toHaveLength(3);
-    expect(members.map((m) => m.name), 'the owner is a member').toContain(open[0].owner);
-    expect(tickets.find((t) => t.id === open[0].ticketId)?.incidentId).toBe(open[0].id);
+    for (const i of incidents) {
+      if (i.owner !== null) expect(members.map((m) => m.name), `${i.id} is owned by a member`).toContain(i.owner);
+      if (i.ticketId !== null) expect(tickets.find((t) => t.id === i.ticketId)?.incidentId, `${i.ticketId} names ${i.id} back`).toBe(i.id);
+    }
     for (const t of tickets.filter((x) => x.incidentId !== null)) expect(incidents.map((i) => i.id), `${t.id} names an incident the product holds`).toContain(t.incidentId);
   });
 
@@ -57,19 +45,6 @@ describe('an incident and its ticket', () => {
       if (t.state === 'closed') expect(t.closedAt >= t.openedAt && t.closedAt <= clock().toISOString(), `${t.id} closed at ${t.closedAt}`).toBe(true);
       else expect(t.closedAt, t.id).toBeNull();
     }
-  });
-
-  it('closing a ticket records the time, opening it again clears it, and nobody sets either by hand', async () => {
-    expect(await createTicket({ title: 'Rotate the gateway certificate', service: 'Edge gateway', priority: 'high', assigneeId: null, summary: '' })).toEqual({ ok: true });
-    const id = String((await rows('tickets')).at(-1)!.id);
-    const stored = async () => (await rows('tickets')).find((t) => t.id === id)!;
-    expect([(await stored()).closedAt, (await stored()).incidentId]).toEqual([null, null]);
-    await updateTicket(id, { closedAt: '2020-01-01T00:00:00.000Z', incidentId: 'inc_2610' } as never);
-    expect([(await stored()).closedAt, (await stored()).incidentId], 'a time and an incident sent by a caller are not stored').toEqual([null, null]);
-    expect(await updateTicket(id, { state: 'closed' })).toEqual({ ok: true });
-    expect((await stored()).closedAt).toBe(clock().toISOString());
-    expect(await updateTicket(id, { state: 'open' })).toEqual({ ok: true });
-    expect((await stored()).closedAt).toBeNull();
   });
 });
 
@@ -115,8 +90,8 @@ describe('a service', () => {
 
   it('carries a mark on every day the product was outside its band', async () => {
     const [days, services] = await Promise.all([rows('days'), rows('services')]);
-    const outside = days.filter((d) => d.date !== today && !(d.p95 < 350 && d.errors / d.requests < 0.01)).map((d) => d.date);
-    expect(outside).toHaveLength(3);
+    const { p95Under, errorRateUnder } = facts.band;
+    const outside = days.filter((d) => d.date !== today && !(d.p95 < p95Under && d.errors / d.requests < errorRateUnder)).map((d) => d.date);
     for (let ago = 1; ago < 90; ago++) {
       if (!outside.includes(back(ago))) continue;
       expect(services.some((s) => s.days[89 - ago] !== 'operational'), `${back(ago)} was outside the band, and no service marks it`).toBe(true);

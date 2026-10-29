@@ -9,12 +9,6 @@ const ROOT = path.resolve(import.meta.dirname, '..');
 const source = (rel: string) => fs.readFileSync(path.join(ROOT, rel), 'utf8');
 
 describe('the derivations', () => {
-  it('are exported by the logic layer', () => {
-    for (const name of ['comparison', 'trendTotals', 'columnFold', 'compositionTotal'] as const) {
-      expect(typeof (logic as Record<string, unknown>)[name], name).toBe('function');
-    }
-  });
-
   it('compute the figure from the values they are given', () => {
     // The comparison a tile prints as "2.7× usual": a ratio, and nothing when there is no baseline to compare with.
     expect(logic.comparison(270, 100)).toBe('2.7');
@@ -30,13 +24,27 @@ describe('the derivations', () => {
     expect(logic.compositionTotal([{ value: 12 }, { value: -8 }, { value: 20 }])).toBe(32);
   });
 
+  it('fold the columns past the most a chart draws into one part of the rest, by column', () => {
+    // Under the limit every part is kept, padded to the longest with no value rather than zero.
+    expect(logic.columnFold([[1, 2], [3]], 3)).toEqual({ values: [[1, 2], [3, null]], kept: 2, folded: false });
+    // Past it, the first most - 1 are kept and the rest summed by column; a column none of the rest measured stays empty.
+    expect(logic.columnFold([[1, 1], [2, 2], [3, null], [4, null]], 3)).toEqual({ values: [[1, 1], [2, 2], [7, null]], kept: 2, folded: true });
+  });
+
   it('leaves no card computing a figure it can be handed', () => {
-    // Each expression the card worked out for itself, by the line it sat on.
-    expect(source('src/components/patterns/metric-tile/index.tsx')).not.toMatch(/reading\s*\/\s*baseline/);
-    expect(source('src/components/charts/composition-bar/index.tsx')).not.toMatch(/parts\.reduce\(/);
-    expect(source('src/components/charts/column-chart/index.tsx')).not.toMatch(/parts\.slice\(0,\s*MOST\s*-\s*1\)/);
-    // The per-day total itself: the accumulator over each day's values, not the coordinate map after it, which is geometry.
-    expect(source('src/components/charts/trend-chart/index.tsx')).not.toMatch(/acc\[i\]\s*\+=\s*v\s*\?\?/);
+    // Each card takes its figure from the logic layer. The second check is the expression the card once worked out for
+    // itself, in the spelling it had: it catches that line coming back, not the same sum written another way.
+    const cards = [
+      ['src/components/patterns/metric-tile/index.tsx', 'comparison', /reading\s*\/\s*baseline/],
+      ['src/components/charts/composition-bar/index.tsx', 'compositionTotal', /parts\.reduce\(/],
+      ['src/components/charts/column-chart/index.tsx', 'columnFold', /parts\.slice\(0,\s*MOST\s*-\s*1\)/],
+      // The per-day total, not the coordinate map after it, which is geometry.
+      ['src/components/charts/trend-chart/index.tsx', 'trendTotals', /acc\[i\]\s*\+=\s*v\s*\?\?/],
+    ] as const;
+    for (const [file, helper, old] of cards) {
+      expect(source(file), file).toMatch(new RegExp(`import \\{[^}]*\\b${helper}\\b[^}]*\\} from '@/logic/derivations'`));
+      expect(source(file), file).not.toMatch(old);
+    }
   });
 
   it('has the two cards that already call a pure helper calling it from the logic layer', () => {
