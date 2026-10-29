@@ -49,8 +49,8 @@ export function resolveSpec(from: string, spec: string, aliases: [string, string
 
 const lineOf = (src: string, at: number) => src.slice(0, at).split('\n').length;
 
-/** Every source file under a directory, as project paths, the way `scripts/check.ts` walks. */
-function walk(root: string, dir: string, ext: RegExp, out: string[] = []): string[] {
+/** Every file under `dir` whose name matches `ext`, as paths relative to `root`; a missing directory holds none. */
+export function walk(root: string, dir: string, ext: RegExp, out: string[] = []): string[] {
   const abs = path.join(root, dir);
   if (!fs.existsSync(abs)) return out;
   for (const n of fs.readdirSync(abs)) {

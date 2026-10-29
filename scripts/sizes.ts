@@ -31,15 +31,13 @@ import { gzipSync } from 'node:zlib';
 
 import { FIRST_LOAD_CAP_KB, budgetsOf, type BudgetsConfig } from './lib/budgets.ts';
 import { distDirOf } from './lib/next-config.ts';
-import { firstLoad, firstLoadProblems, htmlGrowthProblems, htmlProblems, htmlRoutes } from './lib/sizes.ts';
+import { firstLoad, firstLoadProblems, htmlGrowthProblems, htmlProblems, htmlRoutes, KIB, kib } from './lib/sizes.ts';
 import verifyConfig from './verify.config.ts';
 
 const ROOT = path.resolve(import.meta.dirname, '..');
 const BASELINE = path.join(ROOT, 'scripts/verify.baseline.json');
 const METHOD = 'route-bundle-stats firstLoadChunkPaths, deduplicated, uncompressed bytes';
 const HTML_METHOD = 'the complete streamed response, gzipped (zlib level 6), bytes';
-const KIB = 1024;
-const kib = (bytes: number): number => Math.round(bytes / KIB);
 
 const args = process.argv.slice(2);
 const opt = (k: string) => { const i = args.indexOf(k); return i >= 0 ? args[i + 1] : undefined; };

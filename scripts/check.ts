@@ -32,7 +32,7 @@ import path from 'node:path';
 import { importTarget, projectAliases } from './lib/aliases.ts';
 import { checkBrief, scanReferences } from './lib/context-check.ts';
 import { navUnderProblems } from './lib/nav-under.ts';
-import { blankedText, noDirectQuery, presentationDoesNotRead, resolveSpec as resolveProjectSpec, valueImports } from './lib/layer-rules.ts';
+import { blankedText, noDirectQuery, presentationDoesNotRead, resolveSpec as resolveProjectSpec, valueImports, walk as walkIn } from './lib/layer-rules.ts';
 import { APP_DIR, agentPageSpec, agentSection, specRoute, viewToolPages } from './lib/routes.ts';
 import { keepProblems, unresolved, parseJournal, parseKeep, parseResolutions, verifiedRetirements, type Hash, type Retirement } from './lib/update-session.ts';
 import { cards } from './registry.ts';
@@ -78,16 +78,7 @@ if (fs.existsSync(path.join(ROOT, LOCAL_CHECK))) {
 
 const sha256 = (p: string): Hash | null => (fs.existsSync(path.join(ROOT, p)) ? `sha256-${createHash('sha256').update(fs.readFileSync(path.join(ROOT, p))).digest('hex')}` : null);
 
-function walk(dir: string, ext: RegExp, out: string[] = []) {
-  const abs = path.join(ROOT, dir);
-  if (!fs.existsSync(abs)) return out;
-  for (const n of fs.readdirSync(abs)) {
-    const p = path.join(dir, n);
-    if (fs.statSync(path.join(ROOT, p)).isDirectory()) walk(p, ext, out);
-    else if (ext.test(n)) out.push(p);
-  }
-  return out;
-}
+const walk = (dir: string, ext: RegExp) => walkIn(ROOT, dir, ext);
 
 // ── Tokens that exist ────────────────────────────────────────────────────────────────────────────────
 const css = read('src/styles/tokens.css') + read('src/styles/base.css') + read('src/styles/motion.css');
@@ -303,8 +294,7 @@ if (fs.existsSync(path.join(ROOT, COLLECTIONS))) {
     if (/^(rehype-raw|rehype-dangerous-html|remark-html)$/.test(d)) problems.push(`package.json depends on ${d}: raw HTML in rendered markdown would stop being inert`);
   }
   // Code only: a comment that names the plugin to explain why it is absent is not a use.
-  const code = (src: string) => src.replace(/\/\*[\s\S]*?\*\//g, ' ').replace(/(^|[^:])\/\/[^\n]*/g, '$1 ');
-  for (const f of LAYERS) if (/\brehype-?raw\b/i.test(code(read(f)))) problems.push(`${f}: reaches for rehype-raw; render markdown with Prose, where raw HTML stays text`);
+  for (const f of LAYERS) if (/\brehype-?raw\b/i.test(blankedText(read(f)))) problems.push(`${f}: reaches for rehype-raw; render markdown with Prose, where raw HTML stays text`);
 }
 
 // ── A control a keyboard can use ─────────────────────────────────────────────────────────────────────
@@ -626,7 +616,7 @@ const recordNames = (f: string | null, clause: string) => {
   for (const part of clause.split(',').map((s) => s.trim()).filter(Boolean)) record(f, part.replace(/^type\s+/, '').split(/\s+as\s+/)[0]);
 };
 for (const f of kept) {
-  const src = read(f).replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
+  const src = blankedText(read(f));
   for (const m of src.matchAll(/\b(?:import|export)\s+(?:type\s+)?([^'";]*?)\s*from\s*['"]([^'"]+)['"]/g)) {
     const to = resolveSpec(f, m[2]);
     if (to === f) continue;
