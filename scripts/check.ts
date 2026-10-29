@@ -31,7 +31,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { importTarget, projectAliases } from './lib/aliases.ts';
 import { checkBrief, scanReferences } from './lib/context-check.ts';
-import { navUnderProblems } from './lib/nav-under.ts';
+import { navTrailProblems, navUnderProblems } from './lib/nav-under.ts';
 import { blankedText, noDirectQuery, presentationDoesNotRead, resolveSpec as resolveProjectSpec, valueImports, walk as walkIn } from './lib/layer-rules.ts';
 import { APP_DIR, agentPageSpec, agentSection, specRoute, viewToolPages } from './lib/routes.ts';
 import { keepProblems, unresolved, parseJournal, parseKeep, parseResolutions, verifiedRetirements, type Hash, type Retirement } from './lib/update-session.ts';
@@ -361,6 +361,8 @@ for (const item of nav.flatMap((g) => g.items)) {
 // another workspace has no place in that list, so the page would vanish from the rail or hang in the wrong one. A parent
 // with more than seven sub pages is a group of its own. The rule is pure and lives in scripts/lib/nav-under.ts.
 problems.push(...navUnderProblems(nav));
+// A sub page's masthead trail names its own href, which nothing else keeps true when the route moves (#102).
+problems.push(...navTrailProblems(walk(APP_DIR, /^(page|loading)\.tsx$/).map((f) => ({ file: f, route: specRoute(f), src: blanked(f) }))));
 
 // ── The update session, the keep register and the logo ────────────────────────────────────────────────
 // A session under .meridian/update/ must be resolved before the gate passes. With one ready, its candidate manifest

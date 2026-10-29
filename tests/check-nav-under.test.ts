@@ -2,7 +2,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { navUnderProblems } from '../scripts/lib/nav-under.ts';
+import { navTrailProblems, navUnderProblems } from '../scripts/lib/nav-under.ts';
 
 type Item = { href: string; workspace?: string; under?: string };
 const at = (href: string, extra: Omit<Item, 'href'> = {}): Item => ({ href, ...extra });
@@ -55,5 +55,17 @@ describe("the gate's rules for a sub page's under", () => {
     const gate = fs.readFileSync(path.resolve(import.meta.dirname, '../scripts/check.ts'), 'utf8');
     expect(gate).toMatch(/import \{[^}]*\bnavUnderProblems\b[^}]*\} from '\.\/lib\/nav-under\.ts'/);
     expect(gate).toMatch(/navUnderProblems\(nav\)/);
+  });
+});
+
+describe("the gate's rule for a page's trail", () => {
+  const page = (route: string, src: string) => ({ file: `app/(dashboard)${route}/page.tsx`, route, src });
+  it("passes a trail that names the file's own route, and a file that draws none", () => {
+    expect(navTrailProblems([page('/calls', "kicker={<Breadcrumb items={navTrail('/calls', nav)} />}"), page('/load', 'title="Load"')])).toEqual([]);
+  });
+  it('names a file whose trail is another page\'s, as one left behind when its route moved', () => {
+    expect(navTrailProblems([page('/traffic/calls', "kicker={<Breadcrumb items={navTrail('/calls', nav)} />}")])).toEqual([
+      "app/(dashboard)/traffic/calls/page.tsx: navTrail('/calls') is another page's trail; this file's route is /traffic/calls",
+    ]);
   });
 });
