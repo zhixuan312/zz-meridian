@@ -5,7 +5,7 @@ import { aggregateRows, queryRows, type AggregateQuery, type Query } from '@/lib
 import { exploreSchema, runExplore, type ExploreIO, type ExploreRights, type PreparedQuery } from '@/lib/explore';
 
 /**
- * A prepared query (FR-38 to FR-40): what a page's author lets an agent ask of the page's own collections, answered as
+ * A prepared query: what a page's author lets an agent ask of the page's own collections, answered as
  * text with its window, its measures and their units, at most eight groups and twenty rows, each with its address, read
  * through one `aggregate` for each source and window and never page by page. Driven here over collections of its own, so
  * the runner is held apart from any page.

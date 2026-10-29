@@ -10,7 +10,7 @@ vi.mock('@/components/charts/use-size', async () => {
 
 import { TrendChart } from '@/components/charts/trend-chart';
 
-// FR-6, begun in Phase 0: the chart draws its lines straight when asked, and exactly as it always has when not.
+// The chart draws its lines straight when asked, and on the monotone curve when not.
 
 const dates = ['2026-10-01', '2026-10-02', '2026-10-03', '2026-10-04', '2026-10-05'];
 type Extra = Partial<ComponentProps<typeof TrendChart>>;
@@ -23,12 +23,12 @@ const strokes = (c: HTMLElement) =>
   [...c.querySelectorAll('svg[role="img"] path')].map((p) => p.getAttribute('d') ?? '').filter((d) => /[LCHV]/.test(d));
 
 describe('a trend chart\'s curve', () => {
-  it('draws exactly today\'s smooth curve when no curve is given', () => {
+  it('draws the monotone curve when no curve is given', () => {
     for (const kind of ['line', 'area'] as const) {
-      const today = strokes(draw(kind));
-      expect(today.length, kind).toBeGreaterThan(0);
-      expect(today.some((d) => d.includes('C')), kind).toBe(true);
-      expect(strokes(draw(kind, { curve: 'monotone' })), kind).toEqual(today);
+      const drawn = strokes(draw(kind));
+      expect(drawn.length, kind).toBeGreaterThan(0);
+      expect(drawn.some((d) => d.includes('C')), kind).toBe(true);
+      expect(strokes(draw(kind, { curve: 'monotone' })), kind).toEqual(drawn);
     }
   });
 

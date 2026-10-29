@@ -5,12 +5,12 @@ import { systemPrompt, type Audience } from '@/lib/assistant/prompt';
 /**
  * What a person may not read is shown to the roles that can, on the pages that hold it. Told only who can read the
  * compute cost, the assistant said a Viewer's Home "doesn't surface it" for those roles either; told nothing of where
- * keys are made, it sent a Viewer to Settings (scoreboard round 5, W8). Told no page for compute cost, it said no page
+ * keys are made, it sent a Viewer to Settings. Told no page for compute cost, it said no page
  * holds it and Home has no gross margin; told that /keys tells the person who can open it, it offered /keys as where a
- * Viewer makes a key (AC-14.8 at review, C1 and C2). The prompt names each page that shows it to those roles, says
+ * Viewer makes a key. The prompt names each page that shows it to those roles, says
  * whether the person may open that page, names what is worked out from it, and never offers a page the person may not
  * open as where they make a change. Told only who reads keys, it told a Viewer to ask a Member to create one, which a
- * Member cannot (the second reading, D3): it names who may make each change apart from who may read it.
+ * Member cannot: it names who may make each change apart from who may read it.
  */
 const page = { path: '/', title: 'Home', text: '' };
 const NOW = new Date('2026-10-03T12:00:00Z');

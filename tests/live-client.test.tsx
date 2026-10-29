@@ -273,7 +273,7 @@ describe('a first open with the revisions the page was served', () => {
     expect(refresh).toHaveBeenCalledTimes(2);
     c.dispose();
   });
-  it('refreshes as today when it carries none', async () => {
+  it('refreshes on a resync when the page was served no revisions', async () => {
     const refresh = vi.fn(async () => {});
     const { c, states } = opened(refresh, () => undefined);
     c.setNames(['members']);

@@ -16,7 +16,7 @@ async function formats(currency: string) {
 }
 
 describe('an amount in the product currency', () => {
-  it('in dollars, two decimals, as before', async () => {
+  it('in dollars, two decimals', async () => {
     const f = await formats('USD');
     expect([1234.567, 0.004, 0, -42.5].map(f.formatCost)).toEqual(['$1,234.57', '$0.0040', '$0', '-$42.50']);
     expect(f.AXIS_FORMATTERS.cost(12.5)).toBe('$12.50');

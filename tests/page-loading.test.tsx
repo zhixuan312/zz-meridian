@@ -77,7 +77,7 @@ describe('a page on its way', () => {
     expect(room.querySelectorAll('span[aria-hidden="true"]').length).toBeGreaterThan(0);
     expect(masthead.textContent).toContain('Updated 4 min ago');
     expect(masthead.querySelector('[data-actions-room]')).toBeTruthy();
-    // Without them the frame keeps its skeleton kicker, one bar of description and no actions, as before.
+    // Without them the frame keeps its skeleton kicker, one bar of description and no actions.
     cleanup();
     const bare = render(<LoadingPage name="customers" title="Customers"><p>The body</p></LoadingPage>).container.querySelector('header')!;
     expect(bare.querySelector('[data-lead-room]')).toBeNull();

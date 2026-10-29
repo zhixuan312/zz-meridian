@@ -45,7 +45,7 @@ describe('an incident card: who has it, and where it is tracked', () => {
     expect(screen.queryByRole('link')).toBeNull();
   });
 
-  it('keeps the row for a list as it was', () => {
+  it('draws the row for a list without the owner or the ticket', () => {
     const { container } = render(<IncidentCard incident={{ ...open, owner: 'Priya Nair', ticket: { title: 'Move eu-west-1 inference to the new pool', href: '/operations-tickets?open=tkt_118' } }} now={now} variant="row" />);
     expect(container.querySelector('[data-owner]')).toBeNull();
     expect(screen.queryByRole('link')).toBeNull();

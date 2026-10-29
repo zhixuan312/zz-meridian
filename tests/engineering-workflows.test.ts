@@ -98,6 +98,3 @@ describe('each destination is a view an assistant can open', () => {
     for (const d of DESTINATIONS) await expect(viewTools.find((t) => t.name === d.feature)!.read({}), d.feature).rejects.toBeTruthy();
   });
 });
-
-// The same three assertions stand in `engineering-records.test.ts`, over the same tools and the same fixture, where
-// they are a strict superset: the copy here added nothing and was the one that would drift.

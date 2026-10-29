@@ -11,7 +11,7 @@ vi.mock('@/components/charts/use-size', async () => {
 
 import { ColumnChart, type Column, type ColumnPart, type GroupedPart, type StackedColumn } from '@/components/charts/column-chart';
 
-// FR-10 and FR-11 (AC-1.10, and AC-2.1 for the Column chart): the grouped form, and estimates in every form.
+// The grouped form, and estimates in every form.
 
 const flows: GroupedPart[] = [{ key: 'in', label: 'In' }, { key: 'out', label: 'Out' }];
 const days: StackedColumn[] = [

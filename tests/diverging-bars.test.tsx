@@ -10,7 +10,7 @@ vi.mock('@/components/charts/use-size', async () => {
 
 import { DivergingBars, type DivergingItem } from '@/components/charts/diverging-bars';
 
-// FR-12 (AC-1.11, and AC-2.1 for Diverging bars): signed rows about a zero line on a symmetric scale.
+// Signed rows about a zero line on a symmetric scale.
 
 const items: DivergingItem[] = [
   { key: 'a', label: 'Alpha', value: 12 },

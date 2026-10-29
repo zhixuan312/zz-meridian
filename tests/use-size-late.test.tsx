@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import { useSize } from '@/components/charts/use-size';
 
-// Queued from Phase 2: useSize attached its observer once, at mount, so an element that first rendered later (a Trend
+// useSize attached its observer once, at mount, so an element that first rendered later (a Trend
 // chart's widening line once live data crossed its domain) was never measured. Each observer here records what it watches
 // and can be fired with a size.
 

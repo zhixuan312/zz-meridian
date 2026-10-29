@@ -36,7 +36,7 @@ import { whoCan } from '@/data/roles';
 import { POST } from '../app/api/assistant/route';
 
 /**
- * The assistant is told nothing untrue (FR-44, AC-14.6): the addresses it may give are those this person may open; a
+ * The assistant is told nothing untrue: the addresses it may give are those this person may open; a
  * change exists only as the Proposal a tool returned; and a thing this person may not read is never "not in the
  * product". Under `explain` it is told what they may not read and who can, as the page tells them; under `absent`,
  * nothing, as the page names nothing. Built for each of the sample's five people, through the route that builds it.

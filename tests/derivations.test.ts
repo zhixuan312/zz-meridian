@@ -35,13 +35,13 @@ describe('the derivations', () => {
     expect(source('src/components/patterns/metric-tile/index.tsx')).not.toMatch(/reading\s*\/\s*baseline/);
     expect(source('src/components/charts/composition-bar/index.tsx')).not.toMatch(/parts\.reduce\(/);
     expect(source('src/components/charts/column-chart/index.tsx')).not.toMatch(/parts\.slice\(0,\s*MOST\s*-\s*1\)/);
-    // The per-day total itself: the accumulator at `:175-183`, not the coordinate map below it, which is geometry.
+    // The per-day total itself: the accumulator over each day's values, not the coordinate map after it, which is geometry.
     expect(source('src/components/charts/trend-chart/index.tsx')).not.toMatch(/acc\[i\]\s*\+=\s*v\s*\?\?/);
   });
 
   it('has the two cards that already call a pure helper calling it from the logic layer', () => {
-    // FR-11's own sentence: a helper a card may call is pure over the values it was given, and the summary and the two
-    // durations are those — they moved in Phase 1 and the cards must import them from above, never re-implement them.
+    // A helper a card may call is pure over the values it was given, and the summary and the two durations are those:
+    // they live in the logic layer, and the cards import them from there, never re-implement them.
     expect(source('src/components/patterns/status-list/index.tsx')).toMatch(/from '@\/logic\/summarise'/);
     expect(source('src/components/patterns/incident-card/index.tsx')).toMatch(/from '@\/logic\/after-start'/);
     expect(source('src/components/patterns/status-list/index.tsx')).not.toMatch(/function summarise\b/);

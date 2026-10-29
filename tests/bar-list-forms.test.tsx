@@ -2,8 +2,7 @@ import { render } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import { BarList, type BarItem } from '@/components/charts/bar-list';
 
-// FR-1 to FR-5 (AC-1.2 to AC-1.5, and AC-2.1 for the list): the order given, a held scale and its words, an axis,
-// paired values, and estimates.
+// The order given, a held scale and its words, an axis, paired values, and estimates.
 
 const hours: BarItem[] = ['09', '10', '11', '12', '13', '14', '15', '16'].map((h, i) => ({ key: `h${h}`, label: `${h}:00`, value: [40, 90, 20, 60, 10, 70, 30, 50][i] }));
 const paired = hours.slice(0, 3).map((h, i) => ({ ...h, compare: [50, 120, null][i] }));
@@ -20,7 +19,7 @@ const levels = (c: HTMLElement) => [...c.querySelectorAll('[data-level]')].map((
 const SHORTHAND = /(^|;)\s*background\s*:/;
 
 describe('order', () => {
-  it('sorts by value and folds past the limit by default, as today', () => {
+  it('sorts by value and folds past the limit by default', () => {
     expect(keys(render(<BarList label="By hour" items={hours} />).container)).toEqual(['h10', 'h14', 'h12', 'h16', 'h09', 'h15', '__others']);
   });
 

@@ -9,7 +9,7 @@ vi.mock('@/components/charts/use-size', async () => {
 
 import { ColumnChart } from '@/components/charts/column-chart';
 
-// I-14 finding 8: the table's caption names the highlight the way the mark draws it. Stacked, the column wears the ink
+// The table's caption names the highlight the way the mark draws it. Stacked, the column wears the ink
 // ring, as grouped does, so it is "Ringed"; plain, it takes the accent, so it is "Accented".
 
 const caption = async () => (await waitFor(() => screen.getByRole('table'))).querySelector('caption')!.textContent;

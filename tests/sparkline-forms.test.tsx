@@ -7,7 +7,7 @@ vi.mock('@/components/charts/use-size', () => ({ useSize: () => [{ current: null
 
 import { Sparkline } from '@/components/charts/sparkline';
 
-// FR-9 (AC-1.9): the Sparkline's curve and held scale, and the words of a widened one.
+// The Sparkline's curve and held scale, and the words of a widened one.
 
 type Props = Partial<ComponentProps<typeof Sparkline>>;
 const draw = (values: (number | null)[], props: Props = {}) => render(<Sparkline values={values} {...props} />).container;
@@ -17,10 +17,10 @@ const paths = (c: HTMLElement) => [...c.querySelectorAll('svg path')].map((p) =>
 const ys = (c: HTMLElement) => [...paths(c)[1].matchAll(/[ML]([-\d.]+),([-\d.]+)/g)].map((m) => Number(m[2]));
 
 describe('a Sparkline\'s curve', () => {
-  it('draws today\'s smooth curve without one', () => {
-    const today = paths(draw([4, 9, 6, 7]));
-    expect(today.some((d) => d.includes('C'))).toBe(true);
-    expect(paths(draw([4, 9, 6, 7], { curve: 'monotone' }))).toEqual(today);
+  it('draws the monotone curve without one', () => {
+    const drawn = paths(draw([4, 9, 6, 7]));
+    expect(drawn.some((d) => d.includes('C'))).toBe(true);
+    expect(paths(draw([4, 9, 6, 7], { curve: 'monotone' }))).toEqual(drawn);
   });
 
   it('draws straight segments with curve="linear" and steps with curve="step"', () => {

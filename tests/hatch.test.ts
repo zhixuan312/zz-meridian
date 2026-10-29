@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 
-// FR-13 and FR-14 (AC-2.2): an estimate's hatch is one base role, and it stays under forced colours.
+// An estimate's hatch is one base role, and it stays under forced colours.
 
 const css = fs.readFileSync(path.join(import.meta.dirname, '../src/styles/base.css'), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
 

@@ -7,7 +7,7 @@ const PLANS = [{ label: 'Enterprise', value: 62 }, { label: 'Scale', value: 27 }
 const fills = (container: HTMLElement) => [...container.querySelectorAll('figure > div:first-child > div')].map((d) => (d as HTMLElement).style.background);
 
 /**
- * Found at the end of Phase 6: Revenue drew its plans in the stacked charts' one-hue stack and, in the Who pays bar
+ * Revenue drew its plans in the stacked charts' one-hue stack and, in the Who pays bar
  * beside them, in the categorical slots, so one plan was two colours on one page. And in the narrow card beside a chart
  * the legend stood four across by the window's width, which left "Enterprise · 24 customers" three lines.
  */

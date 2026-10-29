@@ -4,7 +4,7 @@ import { MetricTile } from '@/components/patterns/metric-tile';
 
 /**
  * A tile's note is words a person reads whole ("296 active · 14 trials · 10 past due"). In a narrow column, as a third of
- * the page with the assistant's panel open, one line cut it to "10 past …" (scoreboard round 5, W14). It takes a second
+ * the page with the assistant's panel open, one line cut it to "10 past …". It takes a second
  * line before it is cut, and keeps the whole of itself in its title. A tile's change and its comparison keep their one
  * line, which hides a part that does not fit whole.
  */

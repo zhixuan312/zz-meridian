@@ -73,7 +73,7 @@ describe('what the assistant may reach, by the person it acts for', () => {
   });
 
   it('hands the assistant only the operations the person may perform', async () => {
-    // A Member reads members and writes none: no write tool is built for one, which is FR-17's registration filter.
+    // A Member reads members and writes none: no write tool is built for one: the tools are filtered when they are registered.
     jar.value = 'members_4';
     const member = await handedTo(await resolveAccess(), { ...members }, 'members');
     expect([member.create, member.update, member.remove]).toEqual([undefined, undefined, undefined]);
@@ -113,7 +113,7 @@ describe('what the assistant may reach, by the person it acts for', () => {
     expect(((await run(tools as Record<string, unknown>, `explore_${view.name}`, call)) as { answer: string }).answer).toMatch(/members/);
     // The suspension lands between handing and execution: the tool that was handed must read nothing when it runs.
     // A rejection is not that: an implementation that read every row and then threw satisfies it the same way, so the
-    // reads themselves are spied on — the shape `cli-explore-access.test.ts` already uses for the same rule.
+    // reads themselves are spied on.
     await members.update!(['members_4'], { status: 'Suspended' });
     try {
       const spy = { aggregate: vi.fn(aggregate), read: vi.fn((name: string, q: Parameters<typeof read>[1]) => read(name, q)), today: explore.io.today };

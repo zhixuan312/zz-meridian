@@ -20,7 +20,7 @@ describe('a bar list whose rows name what has a page', () => {
     for (const li of container.querySelectorAll('li')) expect(li.querySelectorAll('a').length).toBe(1);
   });
 
-  it('draws a row with no address as text, as before', () => {
+  it('draws a row with no address as text', () => {
     const regions: BarItem[] = [{ key: 'us-east-1', label: 'us-east-1', value: 40 }, { key: 'eu-west-1', label: 'eu-west-1', value: 30 }];
     const { container } = render(<BarList items={regions} label="By region" />);
     expect(container.querySelectorAll('a')).toHaveLength(0);

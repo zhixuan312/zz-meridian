@@ -13,7 +13,7 @@ describe('State still', () => {
     expect(caption.closest('[inert]')).toBeNull();
   });
 
-  it('renders a live state as before, with no inert container', () => {
+  it('renders a live state with no inert container', () => {
     const { container } = render(<State label="Rest"><button type="button">Save</button></State>);
     expect(container.querySelector('[inert]')).toBeNull();
     expect(screen.getByRole('button').closest('figure')).toBe(container.querySelector('figure'));

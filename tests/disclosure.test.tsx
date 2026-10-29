@@ -2,8 +2,8 @@ import { fireEvent, render } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import { Disclosure } from '@/components/ui/disclosure';
 
-// FR-17 (AC-2.3): a section opened in place, on the native element. The keyboard is the browser's own here, and the
-// browser suites press it (the deep fixture /disclosure, and the Atlas walk in Phase 2).
+// A section opened in place, on the native element. The keyboard is the browser's own here, and the browser suites
+// press it (the deep fixture /disclosure, and the Atlas walk).
 
 describe('Disclosure', () => {
   it('is a details whose first child is its summary, with a chevron, and its content after', () => {

@@ -6,7 +6,7 @@ vi.mock('@/components/charts/use-size', () => ({ useSize: () => [{ current: null
 
 import { Sparkline } from '@/components/charts/sparkline';
 
-// I-14 finding 3: a Sparkline says the range it draws. Widened, that is the nice levels that take the data, not the data.
+// A Sparkline says the range it draws. Widened, that is the nice levels that take the data, not the data.
 
 const title = (values: number[], domain?: [number, number]) => render(<Sparkline values={values} domain={domain} />).container.firstElementChild?.getAttribute('title');
 

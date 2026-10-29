@@ -12,7 +12,7 @@ import { TrendChart } from '@/components/charts/trend-chart';
 import { heldTicks, ticksBetween } from '@/components/charts/scale';
 import { AXIS_FORMATTERS, FORMATTERS } from '@/lib/format';
 
-// FR-6 to FR-8 (AC-1.6 to AC-1.8): steps on every path, the points, and the held scale with its words.
+// Steps on every path, the points, and the held scale with its words.
 
 const day = (i: number) => new Date(Date.UTC(2026, 9, 1 + i)).toISOString().slice(0, 10);
 const dates = [0, 1, 2, 3, 4].map(day);
@@ -73,10 +73,10 @@ describe('curve="step"', () => {
     expect(upright(tail!.getAttribute('d') ?? '')).toBe(true);
   });
 
-  it('leaves a stack exactly as today without a curve', () => {
-    const today = parts(stack());
-    expect(today.flat().some((d) => d.includes('C'))).toBe(true);
-    expect(parts(stack({ curve: 'monotone' }))).toEqual(today);
+  it('draws a stack on the monotone curve without a curve', () => {
+    const drawn = parts(stack());
+    expect(drawn.flat().some((d) => d.includes('C'))).toBe(true);
+    expect(parts(stack({ curve: 'monotone' }))).toEqual(drawn);
   });
 });
 

@@ -10,7 +10,7 @@ import { exploreSchema, type PreparedQuery } from '@/lib/explore';
 import { viewTools } from '@/logic/tools';
 
 /**
- * Every view tool has its prepared query (FR-38, FR-42, AC-14.1): a test fails a view tool without one. Each query names,
+ * Every view tool has its prepared query: a test fails a view tool without one. Each query names,
  * for each source, a collection the product declares, the filters, facets and buckets an agent may use, measures with a
  * label, a unit and a definition, a drill whose columns include the collection's key, and what its answers cannot say;
  * it reads at most five sources, and the whole of what it offers fits 6,000 characters of JSON Schema.

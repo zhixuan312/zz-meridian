@@ -10,7 +10,7 @@ vi.mock('@/components/charts/use-size', async () => {
 
 import { BarList } from '@/components/charts/bar-list';
 
-// Queued from Phase 1 (AC-1.4): a widened top drawn beside the last held level read "100%112%". A word that would touch
+// A widened top drawn beside the last held level read "100%112%". A word that would touch
 // a word that shows is kept in the row but drawn invisible, from the top inward; the two ends always show.
 
 const pct = (n: number) => `${n}%`;

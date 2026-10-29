@@ -21,7 +21,7 @@ function expectWrapped(td: Element, text: string) {
   return wrap!;
 }
 
-describe('a cut cell keeps its content width (spec AC-1.4)', () => {
+describe('a cut cell keeps its content width', () => {
   it('TableCell wraps a truncating value and keeps its title', () => {
     const { container } = render(
       <Table>
@@ -41,7 +41,7 @@ describe('a cut cell keeps its content width (spec AC-1.4)', () => {
 type Row = { id: string; name: string; plan: string; region: string };
 const rows: Row[] = [{ id: 'cus_8f2a', name: 'Northwind Labs International Holdings', plan: 'Enterprise', region: 'eu-west-1' }];
 
-describe('DataTable shares the spare (spec AC-1.4, AC-1.6)', () => {
+describe('DataTable shares the spare', () => {
   it('wraps every cut column, claims no spare on any head, and keeps fixed widths and the floor', () => {
     const columns: Column<Row>[] = [
       { key: 'name', header: 'Customer', grow: true, truncate: true, mobile: 'title', title: (r) => r.name, cell: (r) => <span className="flex min-w-0 items-center gap-3"><span className="truncate font-medium">{r.name}</span></span> },

@@ -4,7 +4,7 @@ import { render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import { DIALOG_WIDTH, Dialog, DialogContent } from '@/components/ui/dialog';
 
-// FR-18 (AC-2.4): a dialog wide enough for a table of six columns, and where a wider table goes.
+// A dialog wide enough for a table of six columns, and where a wider table goes.
 
 describe('Dialog size="xl"', () => {
   it('is 960px wide on a desk (sm:max-w-240 on the 4px unit) and a bottom sheet on a phone', () => {

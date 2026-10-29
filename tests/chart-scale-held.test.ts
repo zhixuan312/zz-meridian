@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { heldTicks, linearPath, monotonePath, stepPath, ticksBetween } from '@/components/charts/scale';
 
 // A held scale ends where the caller says, so charts drawn on one domain compare row by row; a straight or a step line
-// passes through every value and draws none the data does not hold (spec FR-16, AC-1.1).
+// passes through every value and draws none the data does not hold.
 
 describe('heldTicks: levels that end at both bounds', () => {
   it('ends at the domain it is given', () => {

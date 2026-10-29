@@ -4,7 +4,7 @@
  * read's page — API keys and members are both created through the product itself — and every one of them says "every".
  *
  * The view is replaced by a counter, so the page is the thing under test and not a copy of it: a test that re-implements
- * the page's read (`cli-page-asks.test.tsx` does, for other reasons) would still pass with the page broken.
+ * the page's read would still pass with the page broken.
  */
 import { PassThrough } from 'node:stream';
 import type { ReactElement } from 'react';

@@ -9,7 +9,7 @@ vi.mock('@/components/charts/use-size', async () => {
 
 import { BarList } from '@/components/charts/bar-list';
 
-// I-14 finding 1: the standard sets axis labels at `text-2xs` in `ink-3`, as Diverging bars and the Column chart draw theirs.
+// The standard sets axis labels at `text-2xs` in `ink-3`, as Diverging bars and the Column chart draw theirs.
 
 describe('a Bar list\'s axis levels', () => {
   it('are written at text-2xs in ink-3, not as a caption', () => {

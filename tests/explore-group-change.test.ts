@@ -5,7 +5,7 @@ import { runExplore, type ExploreIO, type ExploreRights, type PreparedQuery } fr
 
 /**
  * A call grouped by a facet and compared with the window before states each group's change, not only the total's, so
- * "which model brought the most revenue, and how did that move?" is answered for each model (FR-39). A group with
+ * "which model brought the most revenue, and how did that move?" is answered for each model. A group with
  * nothing in the window before says so, and a bucket, whose keys are dates the window before does not share, states
  * the total's change alone.
  */

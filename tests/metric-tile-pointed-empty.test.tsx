@@ -21,7 +21,7 @@ describe('a tile pointed at a day it has no number for', () => {
         <MetricTile label="Requests" value={1200} delta={0.4} points={[1100, null, 1300]} />
       </Meridian>,
     );
-    // Not pointed: the period's own figure and change, as before.
+    // Not pointed: the period's own figure and change.
     expect(figure(container)).toBe('1,200');
     act(() => { container.querySelector('button')!.click(); });
     // Pointed at 2 Oct, which has no measurement: the day's number would be a lie, and so is the period's total.

@@ -83,16 +83,16 @@ describe('a page headed by a sentence', () => {
 });
 
 describe('a sentence that opens with the page\'s own name', () => {
-  // "USDC : USDC: no rule met" — the name, the colon and then the sentence saying the name again, in the heading and
+  // "Lumen Studio : Lumen Studio: past due" — the name, the colon and then the sentence saying the name again, in the heading and
   // in a screen reader's list of headings. The name stays in the markup, hidden from assistive technology (#88).
   it('is announced once, and the name is still in the markup', () => {
-    render(<PageFrame name="USDC" title="USDC: no rule met, price from par inside its band">body</PageFrame>);
+    render(<PageFrame name="Lumen Studio" title="Lumen Studio: past due since 03 Oct 2026">body</PageFrame>);
     const [name, colon, sentence] = [...h1().children];
-    expect(name.textContent).toBe('USDC');
+    expect(name.textContent).toBe('Lumen Studio');
     expect(colon.getAttribute('aria-hidden')).toBe('true');
     expect(name.getAttribute('aria-hidden')).toBe('true');
     expect(sentence.getAttribute('aria-hidden')).toBeNull();
-    expect(h1().textContent).toBe('USDC: USDC: no rule met, price from par inside its band');
+    expect(h1().textContent).toBe('Lumen Studio: Lumen Studio: past due since 03 Oct 2026');
   });
 
   it('reads the name beside a sentence that only begins with the same letters', () => {
@@ -103,12 +103,12 @@ describe('a sentence that opens with the page\'s own name', () => {
   it('takes the page\'s word for a sentence it cannot read, and holds the name while the sentence is still to come', () => {
     // A sentence that is a node — a part that reads data — cannot be compared with the name before it arrives, so the
     // page says so. Without the prop the name is read, which is the safe default.
-    const spoken = render(<PageFrame name="USDC" title={<span>USDC: no rule met</span>} speaksName>body</PageFrame>);
+    const spoken = render(<PageFrame name="Lumen Studio" title={<span>Lumen Studio: past due</span>} speaksName>body</PageFrame>);
     const [name] = [...h1().children];
     expect(name.getAttribute('aria-hidden')).toBe('true');
     spoken.unmount();
     // A sentence that has not arrived cannot be compared with the name, so the name is what the heading says.
-    render(<PageFrame name="USDC">body</PageFrame>);
+    render(<PageFrame name="Lumen Studio">body</PageFrame>);
     expect([...h1().children][0].getAttribute('aria-hidden')).toBeNull();
   });
 });
@@ -173,7 +173,7 @@ describe('the masthead of a page headed by a sentence', () => {
     expect(row.nextElementSibling!.textContent).toBe('A skeleton line');
   });
 
-  it('is as it always was for a page headed by its name: the title, the description, the meta and the actions share one row', () => {
+  it('is laid out for a page headed by its name: the title, the description, the meta and the actions share one row', () => {
     render(<PageFrame title="Members" kicker={kicker} description="Everyone in the workspace." meta={meta} actions={actions}>body</PageFrame>);
     const column = h1().parentElement!;
     expect(column.className).toBe('min-w-0 flex-1 basis-[28rem]');
@@ -189,7 +189,7 @@ describe('the masthead of a page headed by a sentence', () => {
 });
 
 describe('a page headed by its name', () => {
-  it('is drawn as it always was: the title at the page-title size, and the same title in the top bar', () => {
+  it('draws the title at the page-title size, and the same title in the top bar', () => {
     const { container } = render(<PageFrame title="Members">body</PageFrame>);
     expect(h1().textContent).toBe('Members');
     expect(h1().className).toBe('t-page');

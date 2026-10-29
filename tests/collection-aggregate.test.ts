@@ -8,10 +8,10 @@ import { aggregateRows, type AggregateQuery } from '@/lib/collection';
 import { collections } from '@/data/collections';
 
 /**
- * Every collection answers an aggregate query itself (FR-41, AC-14.4): an array collection over its rows, through
+ * Every collection answers an aggregate query itself: an array collection over its rows, through
  * `aggregateRows`, a database as one grouped query, so a prepared query never reads a collection page by page to group
  * it. Each answer is checked here against the same figure worked out by hand from every row, whatever the product's
- * collections are; the sample's own figures and people are `tests/cli-collection-aggregate.test.ts`'s.
+ * collections are; the sample's own figures and people are held in a test of this repository's that does not ship.
  */
 type Row = Record<string, unknown>;
 const sum = (xs: number[]) => xs.reduce((a, b) => a + b, 0);
