@@ -386,13 +386,12 @@ function Motion({ groups }: { groups: TokenGroup[] }) {
   const [go, setGo] = useState(0);
   const curves = motion.tokens.filter((t) => t.type === 'cubicBezier');
   const durations = motion.tokens.filter((t) => t.type === 'duration');
-  const bez: Record<string, number[]> = { 'ease-out': [0.16, 1, 0.3, 1], 'ease-in-out': [0.65, 0, 0.35, 1], 'ease-spring': [0.34, 1.36, 0.5, 1] };
   return (
     <div className="flex flex-col gap-12">
       <p className="t-small max-w-[62ch] text-ink-2">{motion.about}</p>
       <section className="grid gap-4 md:grid-cols-3">
         {curves.map((t) => {
-          const [a, b, c, d] = bez[t.name] ?? [0, 0, 1, 1];
+          const [a, b, c, d] = JSON.parse(t.value) as number[];
           return (
             <button key={t.name} type="button" onClick={() => setGo((g) => g + 1)} className="rounded-lg border border-line bg-surface p-5 text-left hover:border-line-strong">
               <svg viewBox="-0.1 -0.5 1.2 2" className="h-32 w-full overflow-visible">
