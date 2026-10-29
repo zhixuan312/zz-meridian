@@ -2,6 +2,28 @@
 
 Every release of ZZ Meridian, newest first. Versions follow semver: a removed or renamed token, prop or card is major; a new card, token or variant is minor; a corrected value is a patch. Each entry says what breaks and what to do instead.
 
+## [Unreleased]
+
+### Breaking
+
+- **The API keys actions answer a result instead of throwing.** `createKey` returns `{ ok: true, key } | { ok: false, error }` and `revokeKey` `{ ok: true } | { ok: false, error }`, as every other action of the template does, because a production build replaces a thrown action's message with a generic one, and the reason ("Give the key at least one scope.", a lost permission) never reached the person. A page that passes its own actions to `KeysView` returns those shapes instead of throwing.
+- **The error screens take Next's `retry`, not `reset`.** `app/(dashboard)/error.tsx` and `app/embed/error.tsx` call `retry`, which fetches the page again; `reset` re-rendered the payload that held the failed read, so Retry drew the same error. A caller that renders `DashboardError` itself passes `retry`.
+
+### Fixed
+
+- **Security.** `verify` refuses a remote IPv6 backend (`[2001:db8::1]`) and a schemeless DSN whose query holds an `@`, which it had taken for local. The demo gate leaves open only `/icon`, `/apple-icon` and `/favicon.ico`, not every address that begins like one (`/icons`). Copy as cURL quotes each word for the shell, so a body's own quote or `$(…)` runs nothing. A masked secret in a Copy field keeps only a word prefix (`sk_live_`), hides a value under 16 characters whole, and is never revealed in an embed. The replay action refuses, on the server, a request that did not fail, as the page does.
+- **The proposal embed says Not applied when its tool refuses.** It said Applied, while it told the model nothing changed.
+- **A failed request reads "None, it failed" for its tokens and cost**, not "None, refused", which is kept for a 4xx; a request that took 0 ms keeps its trace bars at the start instead of losing them to `NaN%`.
+- **Undo on a removal the page already sent says so** ("{name}'s removal was already sent"), instead of bringing back a member the server no longer has.
+- **`/requests?sort=constructor`** (or any name every object inherits) falls back to the default sort instead of throwing.
+- **Every view's context names `app.timezone`**, where Request, Requests, Services, Home and Revenue printed their times in it and labelled them UTC.
+- **The bell's customers-past-due alert is timed by the latest to fall past due**, not "just now" on every open.
+- **The Customers figure is defined as what it counts**, customers that have not left, not workspaces "with a live key".
+- **A customer is not compared with an error rate the product never measured**, over days that hold no request; an active member who has never signed in is named among the quiet ones, as never seen.
+- **A prepared query's group line names each figure when it carries several**, and a count of one reads singular ("1 day").
+- **An Atlas page whose first paragraph is wrapped keeps its status and body** (Base / Motion lost "Status: beta").
+- **The shared request cells read the sample through `src/data`**, and the check now holds `src/system/sample-cells.tsx` to that rule, so replacing `src/data/sample.ts` replaces the clock they draw against.
+
 ## [0.35.0] · 2026-10-29
 
 A third level in the rail: a navigation item can have sub pages, drawn in a branch under it, and the sample shows one (Traffic, Usage, Requests).
