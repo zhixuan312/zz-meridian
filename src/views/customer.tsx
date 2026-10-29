@@ -13,12 +13,12 @@ import { DataTable } from '@/components/patterns/data-table';
 import { MetricTile } from '@/components/patterns/metric-tile';
 import { AskAbout } from '@/components/patterns/ask-about';
 import { formatCompact, formatCost, formatPercent, plural } from '@/lib/format';
-import { STATUS_TONE } from './customers';
 import { dayOf, formatDate, formatDay } from '@/lib/format-date';
 import { requestColumns } from '@/system/sample-cells';
 import {
   LATEST, busiestOf, customerContext, endpointsOf, requestsOf, shareOf, standingOf, thisWeekOf, titleOf, weekOf, type CustomerData,
 } from '@/logic/customer-context';
+import { STATUS_TONE } from '@/logic/customers-context';
 import { Unread } from './unread';
 import { requestAddress } from '@/logic/request-context';
 import { nav, workspaces } from '@/app.config';

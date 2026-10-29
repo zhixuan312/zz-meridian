@@ -17,6 +17,12 @@ export const CUSTOMER_METRICS = {
   pastDue: { label: 'Past due', hint: 'Customers whose latest invoice is overdue.' },
 } as const;
 
+/**
+ * A customer's status as a tone, on the list and on the customer's own page: colour only where a row needs a look, past
+ * due and trial. Active is the normal case, so it stays quiet, and a customer that has left is history.
+ */
+export const STATUS_TONE = { active: 'neutral', trial: 'accent', 'past due': 'critical', left: 'neutral' } as const satisfies Record<CustomerRecord['status'], string>;
+
 const sum = (xs: number[]) => xs.reduce((a, b) => a + b, 0);
 /** The last seven days of a 14-day trend against the seven before: the change a sparkline shows and a list does not say. */
 export const week = (t: number[]) => (t.length >= 14 && sum(t.slice(0, 7)) ? sum(t.slice(7)) / sum(t.slice(0, 7)) - 1 : null);

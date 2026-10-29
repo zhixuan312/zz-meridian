@@ -13,13 +13,10 @@ import { Records } from '@/components/templates/records';
 import { formatCompact, formatCost, formatPercent } from '@/lib/format';
 import { formatDate } from '@/lib/format-date';
 import { useShareView } from '@/components/base/use-share-view';
-import { CUSTOMER_METRICS, customerFigures, customersContext, pastDueNote, under, type CustomerRow } from '@/logic/customers-context';
+import { CUSTOMER_METRICS, STATUS_TONE, customerFigures, customersContext, pastDueNote, under, type CustomerRow } from '@/logic/customers-context';
 import { customerAddress } from '@/logic/customer-context';
 
 const PLAN_TONE = { Enterprise: 'accent', Scale: 'neutral', Starter: 'neutral' } as const;
-/** Colour only where a row needs a look: past due and trial. Active is the normal case, so it stays quiet, and a customer that has left is history. */
-/** A customer's status as a tone, on the list and on the customer's own page. */
-export const STATUS_TONE = { active: 'neutral', trial: 'accent', 'past due': 'critical', left: 'neutral' } as const;
 const STATUS_LABEL = { active: 'Active', trial: 'Trial', 'past due': 'Past due', left: 'Left' } as const;
 
 const columns: Column<CustomerRow>[] = [
