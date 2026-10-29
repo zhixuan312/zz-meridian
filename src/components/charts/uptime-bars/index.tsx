@@ -1,6 +1,6 @@
 'use client';
 
-import { useId, useState } from 'react';
+import { useId, useState, type PointerEvent } from 'react';
 import { cn } from '@/lib/cn';
 import { formatDate } from '@/lib/format-date';
 import { plural } from '@/lib/format';
@@ -54,6 +54,11 @@ export function UptimeBars({
   // Every day, always: the figure and the label describe all of them. A narrow strip scales the drawing instead.
   const shown = days;
   const dateOf = (i: number) => new Date(end.getTime() - (shown.length - 1 - i) * 86_400_000);
+  /** The day under the pointer, from where it is across the strip. */
+  const point = (e: PointerEvent<SVGSVGElement>) => {
+    const r = e.currentTarget.getBoundingClientRect();
+    if (r.width > 0) setHover(Math.min(shown.length - 1, Math.max(0, Math.floor(((e.clientX - r.left) / r.width) * shown.length))));
+  };
   const marked = shown.flatMap((d, i) => (d === 'operational' ? [] : [{ d, i }]));
   // The baseline's runs: every day between two days with no data, so a period with data on every day is one rect.
   const runs = shown.reduce<{ x: number; width: number }[]>((all, d, i) => {
@@ -88,10 +93,9 @@ export function UptimeBars({
           viewBox={`0 0 ${shown.length} ${H}`}
           preserveAspectRatio="none"
           className="block size-full overflow-visible"
-          onPointerMove={(e) => {
-            const r = e.currentTarget.getBoundingClientRect();
-            if (r.width > 0) setHover(Math.min(shown.length - 1, Math.max(0, Math.floor(((e.clientX - r.left) / r.width) * shown.length))));
-          }}
+          onPointerMove={point}
+          // A tap sends a press and no move, so on a phone the day is read from the press.
+          onPointerDown={point}
         >
           {runs.map((r) => <rect key={`run-${r.x}`} x={r.x} y={0} width={r.width} height={H} className="fill-positive/22" />)}
           {marked.map(({ d, i }) => (
