@@ -1,7 +1,8 @@
 /**
  * Press every control on every page and fail on the ones that do nothing, and on links that lead nowhere.
  *
- *   node scripts/interactions.ts [--base http://localhost:3100] [--routes /,/requests]
+ *   node scripts/interactions.ts [--base http://localhost:3100] [--routes /,/requests] [--width 1440,390] [--as <persona>]
+ *                                [--missing /a,/b]
  *
  * A control works when pressing it changes something: the address, the page (a dialog, a menu, a sort, a toast, a
  * file download), or opens a tab. Desktop presses with a mouse at 1440px; phones tap at 390px, where there is no hover,

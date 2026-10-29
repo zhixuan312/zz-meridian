@@ -3,7 +3,7 @@
  * showing it, and every way the stream can go quiet (hints suppressed, a server restart, a hidden tab, a tab offline) or
  * loud (a burst). Explicit verification work that `pnpm verify` runs; it is not part of any default smoke.
  *
- *   node scripts/live.ts --base http://127.0.0.1:3000 [--drop-base <url>] [--poll-ms 3000]
+ *   node scripts/live.ts --base http://127.0.0.1:3000 [--drop-base <url>] [--poll-ms 3000] [--only <case>,<case>]
  *
  * `--drop-base` is the same build started with LIVE_DROP_HINTS=1, which keeps the stream open and silent: verify starts
  * it. The restart case starts, stops and restarts a `next start` of this folder on its own port. The short safety poll

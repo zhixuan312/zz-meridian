@@ -3,7 +3,7 @@
  * and right after a live refresh, with the nearest-rank p95 of each metric held to the budget.
  *
  *   node scripts/perf.ts --base http://127.0.0.1:3000 [--config scripts/verify.config.ts] [--rail /,/a,/b] [--homes /b=Name]
- *                        [--shard <i>/<n>]
+ *                        [--routes /a,/b] [--samples <n>] [--shard <i>/<n>] [--rate <n>]
  *
  * It is the journey of scripts/navigate.ts (the press time and the frame clock are the page's own) taken `--samples` times,
  * 20 by default, with no retake: every sample counts, and what is reported is the p95 of the lot, never the best of them.

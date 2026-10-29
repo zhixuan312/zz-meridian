@@ -1,7 +1,8 @@
 /**
  * Core Web Vitals on a mid-range phone, per page: LCP, CLS and INP, and the frames dropped while a person used it.
  *
- *   node scripts/vitals.ts [--base http://localhost:3100] [--routes /,/requests] [--atlas] [--list]
+ *   node scripts/vitals.ts [--base http://localhost:3100] [--routes /,/requests] [--atlas] [--list] [--missing /a,/b]
+ *                          [--rate <n>]
  *
  * The phone is Lighthouse's mobile profile: the device of benchmark index 800, the CPU slowed by the host's own index
  * over 800 (scripts/lib/phone.ts), Slow 4G (150 ms round trip, 1.6 Mbps down, 750 kbps up), a 390px touch screen,

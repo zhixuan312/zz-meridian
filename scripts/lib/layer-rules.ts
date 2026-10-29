@@ -61,7 +61,7 @@ export function walk(root: string, dir: string, ext: RegExp, out: string[] = [])
   return out;
 }
 
-/** A source file as a scan reads it: comment-blanked, and the raw text beside it for the escape the check prints. */
+/** A source file as a scan reads it: comment-blanked. The escape's raw line is read by scripts/check.ts itself. */
 const sourceOf = (tree: LayerTree, file: string) => blankedText(fs.readFileSync(path.join(tree.root, file), 'utf8'));
 
 // ── presentation does not read ───────────────────────────────────────────────────────────────────────

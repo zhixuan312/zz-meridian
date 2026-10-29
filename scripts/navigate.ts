@@ -3,6 +3,7 @@
  * until a control works, on a desktop and through the real phone drawer.
  *
  *   node scripts/navigate.ts --base http://127.0.0.1:3000 [--routes /,/requests,/settings] [--mode default|full] [--samples 1] [--timing on|off]
+ *                            [--config scripts/verify.config.ts] [--rail /,/a,/b] [--homes /b=Name] [--rate <n>]
  *
  * Each journey starts from the rail route before the destination (the one after it for the first) whose rail draws a link to
  * it, because a rail may show only the part of the navigation its page belongs to. A workspace's home that no other route's

@@ -1,7 +1,7 @@
 /**
  * The whole keyboard path of every page: Tab from the top until focus comes back round, and check each stop.
  *
- *   node scripts/keyboard.ts [--base http://localhost:3100] [--routes /,/teams]
+ *   node scripts/keyboard.ts [--base http://localhost:3100] [--routes /,/teams] [--as <persona>] [--missing /a,/b]
  *
  * Fails (exit 1) when the first stop inside the shell is not "Skip to content", when a stop shows no focus ring (an outline, a
  * ring drawn as a box shadow, or a border, that focus CHANGED, on the control or the frame around it; inside a shadow root, on

@@ -2,6 +2,7 @@
  * The browser audit: every page and embed view, at every width, in both themes, measured.
  *
  *   node scripts/audit.ts [--base http://localhost:3100] [--routes /,/requests] [--embeds-only] [--atlas] [--list]
+ *                         [--as <persona>] [--missing /a,/b]
  *
  * Routes are discovered from app/ (every static page; embeds under /embed), with the detail pages in
  * scripts/verify.config.ts beside them. --routes replaces both for one run: a route under /embed in it is measured as an
