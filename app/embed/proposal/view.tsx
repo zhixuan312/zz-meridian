@@ -49,7 +49,9 @@ export function EmbedProposal() {
         reason={REASON}
         changes={CHANGES}
         impact={IMPACT}
-        state={state === 'applied' || state === 'dismissed' ? state : undefined}
+        // The view owns every state: the card left uncontrolled would mark itself applied once `onApprove` returned,
+        // and it returns after catching a refusal.
+        state={state}
         onApprove={async () => {
           setState('applying');
           try {
