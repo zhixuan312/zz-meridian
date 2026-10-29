@@ -497,9 +497,9 @@ export const RELEASE_MIGRATIONS: ReleaseMigration[] = [
   {
     id: 'journey-moved',
     since: '0.16.3',
-    applies: (root) => matching(root, (rel, src) => importsOf(rel, src).some(({ from }) => from === 'scripts/navigate')),
+    applies: (root) => matching(root, (rel, src) => importsOf(rel, src).some(({ from, names, namespace }) => from === 'scripts/navigate' && (namespace !== null || names.some((n) => n !== 'workspaceHomes')))),
     summary: 'The navigation journey moved from `scripts/navigate.ts` to `scripts/lib/journey.ts`, which keeps every source file Meridian ships under 700 lines.',
-    instructions: 'Bring `tests/navigate-start.test.ts` and `tests/navigate-menu-start.test.ts` over from the release as it has them. A file of your own that imports the journey — `startFor`, `journeyStart`, `journey`, `drawerRoutes`, `prepare`, `liveRefresh`, `Fail`, `workspaceHomes` (which now takes the arguments of the command: `workspaceHomes(process.argv.slice(2))`) and the types `Device`, `Metric`, `Condition`, `Measured`, `Sample` and `NavConfig` — imports it from `scripts/lib/journey.ts` instead; `scripts/navigate.ts` keeps the command only.',
+    instructions: 'Bring `tests/navigate-start.test.ts` and `tests/navigate-menu-start.test.ts` over from the release as it has them. A file of your own that imports the journey — `startFor`, `journeyStart`, `journey`, `drawerRoutes`, `prepare`, `liveRefresh`, `Fail` and the types `Device`, `Metric`, `Condition`, `Measured`, `Sample` and `NavConfig` — imports it from `scripts/lib/journey.ts` instead; `scripts/navigate.ts` keeps the command and `workspaceHomes` only.',
     checks: ['gate'],
   },
   {
@@ -588,6 +588,14 @@ export const RELEASE_MIGRATIONS: ReleaseMigration[] = [
     applies: navItemWithoutFields,
     summary: "The rail reads a navigation item's `under` and `prefetch` directly: the `NavItem` type in `src/app.config.ts` declares both.",
     instructions: "`src/app.config.ts` is yours, so an update does not touch it, and the `NavItem` type in your copy lacks a field the release's rail and trail now read as a property of every item (until 0.36.0 they tested for it first). Add `prefetch?: true; under?: string` to the `NavItem` type, as the release's `src/app.config.ts` declares it: `under` names the `href` of the item a sub page is drawn under, and `prefetch: true` asks the rail to prefetch that item's page in full. Neither changes an item that does not set it.",
+    checks: ['gate'],
+  },
+  {
+    id: 'workspace-homes-moved',
+    since: '0.36.0',
+    applies: (root) => matching(root, (rel, src) => importsOf(rel, src).some(({ from, names, namespace }) => from === 'scripts/navigate' && (namespace !== null || names.includes('workspaceHomes')))),
+    summary: '`workspaceHomes` moved from `scripts/navigate.ts` to `scripts/lib/journey.ts` and takes the arguments of the command it serves.',
+    instructions: 'In each file listed, import `workspaceHomes` from `scripts/lib/journey.ts` and call it with the arguments of the command that reads `--homes`: `workspaceHomes(process.argv.slice(2))`. `scripts/navigate.ts` keeps the command only, so a namespace import of it no longer carries `workspaceHomes` either.',
     checks: ['gate'],
   },
   {

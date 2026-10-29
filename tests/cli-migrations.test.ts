@@ -4,7 +4,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { afterAll, describe, expect, it } from 'vitest';
 import { readPayload } from '../cli/src/files.ts';
-import { RELEASE_MIGRATIONS } from '../cli/src/migrations.ts';
+import { RELEASE_MIGRATIONS, releaseMigrations } from '../cli/src/migrations.ts';
 
 const tmp: string[] = [];
 afterAll(() => { for (const d of tmp) fs.rmSync(d, { recursive: true, force: true }); });
@@ -292,8 +292,8 @@ describe('the 0.16.3 migrations', () => {
     expect(byId('journey-moved').since).toBe('0.16.3');
     expect(byId('journey-moved').applies(project({ 'tests/navigate-start.test.ts': "import { startFor } from '../scripts/navigate.ts';\n" }))).toEqual(['tests/navigate-start.test.ts']);
     expect(byId('journey-moved').applies(project({ 'tests/navigate-start.test.ts': "import { startFor } from '../scripts/lib/journey.ts';\n" }))).toBeNull();
-    // `workspaceHomes` moved with the journey, so a file that imports it from the command is listed too.
-    expect(byId('journey-moved').applies(project({ 'tests/homes.test.ts': "import { workspaceHomes } from '../scripts/navigate.ts';\n" }))).toEqual(['tests/homes.test.ts']);
+    // `workspaceHomes` stayed with the command until 0.36.0, which `workspace-homes-moved` reports.
+    expect(byId('journey-moved').applies(project({ 'tests/homes.test.ts': "import { workspaceHomes } from '../scripts/navigate.ts';\n" }))).toBeNull();
     expect(byId('journey-moved').applies(path.resolve(import.meta.dirname, '..'))).toBeNull();
   });
 
@@ -513,5 +513,25 @@ describe('the verify-modes migration', () => {
       '.github/workflows/ci.yml': 'jobs:\n  check:\n    steps:\n      - run: pnpm verify --full --perf\n',
     });
     expect(byId('verify-modes').applies(root)).toBeNull();
+  });
+});
+
+describe('the workspace-homes-moved migration', () => {
+  // A team's own file: under scripts/, the folder rule counts a file without a manifest as Meridian's.
+  const homes = { 'tests/homes.test.ts': "import { workspaceHomes } from '../scripts/navigate.ts';\nworkspaceHomes();\n" };
+  it('lists a file that imports workspaceHomes from the command, and none that takes it from the journey', () => {
+    expect(byId('workspace-homes-moved').since).toBe('0.36.0');
+    expect(byId('workspace-homes-moved').applies(project(homes))).toEqual(['tests/homes.test.ts']);
+    expect(byId('workspace-homes-moved').applies(project({ 'tests/homes.test.ts': "import { workspaceHomes } from '../scripts/lib/journey.ts';\n" }))).toBeNull();
+    expect(byId('workspace-homes-moved').applies(project({ 'tests/start.test.ts': "import { startFor } from '../scripts/navigate.ts';\n" }))).toBeNull();
+    expect(byId('workspace-homes-moved').applies(path.resolve(import.meta.dirname, '..'))).toBeNull();
+  });
+  it('is reported to a project on any release before 0.36.0, and journey-moved only to one before 0.16.3', () => {
+    const root = project(homes);
+    const ids = (from: string) => releaseMigrations(root, from, '0.36.0').map((m) => m.id);
+    expect(ids('0.35.0')).toContain('workspace-homes-moved');
+    expect(ids('0.17.0')).toContain('workspace-homes-moved');
+    expect(ids('0.36.0')).not.toContain('workspace-homes-moved');
+    expect(ids('0.17.0')).not.toContain('journey-moved');
   });
 });
