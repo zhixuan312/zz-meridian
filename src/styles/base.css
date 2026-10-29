@@ -69,7 +69,7 @@
 @layer components {
   /* ── Text roles ─────────────────────────────────────────────────────────────────────────────────────
      One role per job. Titles and figures are set semi-condensed (stretch-figure), so a large number is
-     dense and exact; running text stays at full width. Eight sizes, three weights, and that is all. */
+     dense and exact; running text stays at full width. Every size and weight is a token, and that is all. */
   .t-display {
     font-size: var(--text-display); font-weight: var(--weight-semibold);
     line-height: 0.96; letter-spacing: var(--tracking-display);

@@ -62,7 +62,6 @@ export type UsageData = {
 };
 
 const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
-/** "02 Oct": a day in a badge or a short line, the year left to the date beside it. */
 const count = (n: number) => n.toLocaleString('en-US');
 
 /**
