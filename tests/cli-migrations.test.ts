@@ -459,8 +459,8 @@ describe('the 0.36.0 migration', () => {
     expect(m.since).toBe('0.36.0');
     const created = (route: string, files: Record<string, string>) => project({ '.meridian/manifest.json': JSON.stringify({ route }), ...files });
     // One page as an older release wrote it, one as this release writes it, and the members page deleted with its folder.
-    const files = { 'src/views/request.tsx': 'export const old = 1;\n', 'src/views/requests.tsx': readPayload('src/views/requests.tsx') };
-    expect(m.applies(created('create', files))).toEqual(['src/lib/totals.ts', 'src/views/request.tsx']);
+    const files = { 'proxy.ts': 'export const config = {};\n', 'src/views/request.tsx': 'export const old = 1;\n', 'src/views/requests.tsx': readPayload('src/views/requests.tsx') };
+    expect(m.applies(created('create', files))).toEqual(['proxy.ts', 'src/lib/totals.ts', 'src/views/request.tsx']);
     expect(m.applies(created('create', { 'src/views/requests.tsx': readPayload('src/views/requests.tsx'), 'src/lib/totals.ts': readPayload('src/lib/totals.ts') }))).toBeNull();
     // An adopted project holds no sample, and the template holds no manifest.
     expect(m.applies(created('adopt', files))).toBeNull();
