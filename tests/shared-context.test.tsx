@@ -267,6 +267,16 @@ describe('every page shares a context within its budget, and nothing hidden', ()
     for (const k of API_KEYS) expect(keys).not.toContain(k.secretHash);
     expect(keys).toContain('never shared');
   });
+  it('Usage names no busiest hour when no request was counted, a fresh product\'s first state', () => {
+    const heat = Array.from({ length: 7 }, () => Array.from({ length: 24 }, () => 0));
+    const hours = Array.from({ length: 24 }, (_, h) => ({ key: String(h), label: `${String(h).padStart(2, '0')}:00`, value: 0 }));
+    const text = contextText(usageContext(usageData({
+      period: '30d', day: null, days: { series: demoSeries('30d').current, totals: demoTotals('30d'), running: demoSeries('30d').running }, history: HISTORY,
+      figures: { heat, hours, regions: REGIONS }, endpoints: ENDPOINTS, responses: STATUS_MIX, updatedAt: DEMO_UPDATED_AT.toISOString(), now: DEMO_NOW.toISOString(),
+    })));
+    expect(text).not.toMatch(/busiest hour|busiest of the week/);
+    expect(text).toMatch(/no request counted by hour in the last 30 days/);
+  });
   it('Customers compares each customer with everyone, not with nothing', () => {
     const text = contextText(customersContext(CUSTOMERS, CUSTOMERS, { q: '', plan: 'all', status: 'all', sort: 'revenue', dir: 'desc', page: '1' }));
     expect(text).toMatch(/Combined requests are up \d+% over the last 7 days against the 7 before\./);
