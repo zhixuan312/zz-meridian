@@ -259,7 +259,7 @@ export async function readCustomer(id: string): Promise<CustomerData | null> {
   ]);
   return {
     customer,
-    ...(days === undefined ? {} : { product: days && { revenue: days.totals.current.revenue, errorRate: days.totals.current.errorRate } }),
+    ...(days === undefined ? {} : { product: days && { revenue: days.totals.current.revenue, errorRate: days.totals.current.requests ? days.totals.current.errorRate : null } }),
     ...(latest === undefined ? {} : { latest }),
     updatedAt: updatedAt(),
     now: clock().toISOString(),

@@ -15,9 +15,10 @@ export type CustomerData = {
   customer: CustomerRecord;
   /**
    * The product's revenue and error rate over the same 30 complete days, what the customer's share and its error rate
-   * are read against. Null when the days could not be read; left out for a person who may not read them.
+   * are read against. Null when the days could not be read; left out for a person who may not read them. Its error rate
+   * is null over days that hold no request, which measured none.
    */
-  product?: { revenue: number; errorRate: number } | null;
+  product?: { revenue: number; errorRate: number | null } | null;
   /** Its newest requests in the sampled log, newest first. Null when the log could not be read; left out for a person who may not read it. */
   latest?: LoggedRequest[] | null;
   updatedAt: string;
@@ -111,7 +112,7 @@ export function customerContext(data: CustomerData): SharedContext {
     ...(busiest ? [{ label: 'Busiest of its last 14 days', value: `${formatDate(busiest.date)}, ${formatCompact(busiest.requests)} requests` }] : []),
     {
       label: 'Error rate, last 30 days',
-      value: product ? `${formatPercent(c.errorRate, 2)}, against the product's ${formatPercent(product.errorRate, 2)}` : formatPercent(c.errorRate, 2),
+      value: product && product.errorRate !== null ? `${formatPercent(c.errorRate, 2)}, against the product's ${formatPercent(product.errorRate, 2)}` : formatPercent(c.errorRate, 2),
       definition: 'Share of its requests answered with a 5xx or a 429.',
     },
     ...(endpoints.length ? [{

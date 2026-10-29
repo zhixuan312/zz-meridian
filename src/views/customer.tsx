@@ -140,7 +140,7 @@ function tiles(data: CustomerData) {
       hint="Share of its requests answered with a 5xx or a 429 over the last 30 complete days."
       value={c.errorRate}
       format={(n) => formatPercent(n, 2)}
-      note={product ? `The product's ${formatPercent(product.errorRate, 2)}, 30 days` : product === null ? "The product's could not be read" : 'Over the last 30 complete days'}
+      note={product && product.errorRate !== null ? `The product's ${formatPercent(product.errorRate, 2)}, 30 days` : product === null ? "The product's could not be read" : 'Over the last 30 complete days'}
     />,
   ];
 }
