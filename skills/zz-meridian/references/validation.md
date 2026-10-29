@@ -18,6 +18,10 @@ coverage: <default|full|timed|perf, or their combination such as full+timed+perf
 - **`pnpm verify --timed`** navigates every rail route with its budgets judged, then runs steps 7 to 9, the live data,
   the product's own timed checks and the Web Vitals, alone and last. It judges time, so it needs a quiet machine. It needs the same mappings, Chrome
   and safe backend as `--full`, and does not imply that the `--full` checks ran.
+- **`pnpm verify --as <persona,...>`** signs the browser in as each persona it names, from `personas` in
+  `scripts/verify.config.ts`: the rail shows the routes that person may open, every control on its `pressRoutes` (else
+  every route it expects) is pressed at 1440px as that person, and a denied route draws its refusal. It runs alone or
+  beside `--full`, is refused beside `--timed` or `--perf` before anything runs, and the coverage line names the personas.
 - **`pnpm verify --perf`** runs the 20-sample navigation protocol, and the whole of it runs only in CI, split by route
   with `--shard <i>/<n>` across runners; it refuses elsewhere. It does not imply that the `--full` or `--timed` checks
   ran. `--full --timed` is the whole standard. Locally, run perf narrowed, `node scripts/perf.ts --routes <route>`, to
@@ -146,6 +150,11 @@ and supply-chain check before a script runs; that is pnpm, not an install, and n
 | `truncated: … "text" is cut with an ellipsis and no title holds the whole of it` | Text is cut on purpose and the whole value is kept nowhere a pointer can reach | A `title` with the whole text on the element or what holds it (a `DataTable` column's `title`, a `TableCell` whose cell is a value sets its own, a `CardHeader` without `wrap` whose title is plain text sets its own); or let it wrap |
 | `overlap: … and … are drawn in the same place` | Two pieces of text share a third of a line or more: a negative margin, an absolute label, a row that did not wrap | Give each its own place: a gap, a wrap, or a narrower label at that width |
 | `overlap: a line (…) is drawn through … "text"` | A stroked shape (a sparkline, a rule, an axis) crosses the middle of a line of text | Move the caption out of the plot, or end the line before it; a filled shape under text is a ground and is read by the contrast check instead |
+| `… "text" spills its box by 6px` | Text drawn past the edge of the box that holds it while nothing clips it: a fixed width, a label that may not wrap, a figure wider than its cell | Let it wrap, `truncate` it with a `title`, or give the box room (`min-w-0` on a flex child) |
+| `heading skips a level: h2 then h4` | A heading level skips one, so a screen reader's outline of the page has a hole | Use the next level down, and make a heading look smaller with its type, never by choosing a deeper level; a card's specimen in the Atlas is exempt |
+| `touch target under 44px: Close 24×24` | On a phone (a coarse pointer) a control answers less than 44px: its own box, its field's frame and its label together | Tag a small control `hit`, which answers a 44px square around it under a finger without growing, or put it in a field's `control-frame`; a link inside running text is exempt |
+| `the page holds 0 characters of text — it rendered nothing, or only its loading state` | The page drew under 24 characters: it threw before it drew, or never left its `loading.tsx` | Open the route and read the console or the server log; a read that never answers holds the loading state |
+| `the audit measured /sign-in while asking for /keys`, or `the address dropped period — …` | The route redirected, or rewrote its query, so what was measured is another page or view | Audit the address the page keeps (a redirect's target, the query it accepts), or fix the redirect that should not happen |
 | `unnamed: button…` | An icon-only control (a web component's button counts the text slotted into its host as its name) | `aria-label` on it (Icon button requires one) |
 | `scrollers: …` | A card scrolls on its own | Page the list (`DataTable` pages at 20) or cap it ("top 5"); only the page scrolls |
 | `contrast: 3.1:1 … "text"` | Text below 4.5:1 (3:1 for large text). An SVG's `<text>` counts: its colour is its `fill`, its ground is what the SVG painted under it | Use `ink`, `ink-2` or `ink-3` on surfaces; status text uses `*-ink`, never the fill colour; in a chart, `fill-ink-2` or `fill-ink-3` for labels |
