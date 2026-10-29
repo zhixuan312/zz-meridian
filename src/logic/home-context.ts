@@ -11,7 +11,7 @@ import { formatDate, formatDay } from '@/lib/format-date';
 import { sameWeekdayBaseline, weekday, median } from '@/lib/insight';
 import { PERIOD_DAYS, PERIOD_LABEL, type Period } from '@/lib/period';
 import { freshnessOf, type Fact, type Insight, type SharedContext } from '@/lib/shared-context';
-import { STATE, against, factInsight, inDays, worst, type PageHead, type ServiceNow } from './fact-insight';
+import { STATE, against, factInsight, inDays, unreadNote, worst, type PageHead, type ServiceNow } from './fact-insight';
 
 /** The traffic's four figures, each label and what it counts: Home's tiles draw them, and Usage's context states the first three. The tile's info button shows `hint`; the agents read it too. */
 export const HOME_METRICS = {
@@ -252,7 +252,7 @@ export function homeContext(data: HomeData, index: number | null = null): Shared
   insights.push(...data.worth.map((w) => ({ text: w.text.endsWith('.') ? w.text : `${w.text}.`, evidence: w.href })));
 
   const unknowns: string[] = [];
-  if (data.unread.length) unknowns.push(`${data.unread.length === 1 ? data.unread[0] : `${data.unread.slice(0, -1).join(', ')} and ${data.unread.at(-1)}`} could not be read, so what ${data.unread.length === 1 ? 'it states' : 'they state'} is missing, not zero.`.replace(/^./, (s) => s.toUpperCase()));
+  if (data.unread.length) unknowns.push(unreadNote(data.unread));
   if (data.head.unknown) unknowns.push(data.head.unknown);
   if (!series.length && !data.unread.includes('the days')) unknowns.push('No requests have arrived in this period, so there is nothing to compare.');
   if (series.length && !data.totals.previous) unknowns.push(NO_PREVIOUS);

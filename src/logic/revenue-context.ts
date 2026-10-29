@@ -12,7 +12,7 @@ import { formatDate, formatDay } from '@/lib/format-date';
 import { PERIOD_DAYS, PERIOD_LABEL, type Period } from '@/lib/period';
 import { freshnessOf, type Fact, type Insight, type SharedContext } from '@/lib/shared-context';
 import { CUSTOMER_METRICS, allSentMore, kept } from './customers-context';
-import { HISTORY_UNREAD, against, inDays, type PageHead } from './fact-insight';
+import { HISTORY_UNREAD, against, inDays, unreadNote, type PageHead } from './fact-insight';
 import { HOME_METRICS, NO_PREVIOUS, change } from './home-context';
 
 /** The four tiles and the parts' titles, each with what it counts: the info buttons show `hint` and the agents read it. */
@@ -233,7 +233,7 @@ export function revenueContext(data: RevenueData, order: WallOrder = 'largest'):
   if (c) insights.push(...c.worth.map((w) => ({ text: `${w.text}.`, evidence: w.customer?.href })));
 
   const unknowns: string[] = [];
-  if (data.unread.length) unknowns.push(`${data.unread.length === 1 ? data.unread[0] : `${data.unread.slice(0, -1).join(', ')} and ${data.unread.at(-1)}`} could not be read, so what ${data.unread.length === 1 ? 'it states' : 'they state'} is missing, not zero.`.replace(/^./, (s) => s.toUpperCase()));
+  if (data.unread.length) unknowns.push(unreadNote(data.unread));
   if (data.head.unknown) unknowns.push(data.head.unknown);
   if (days && !series.length && c && !c.count) unknowns.push('Nothing has arrived yet: no customer and no complete day is kept.');
   if (series.length && days?.revenue.previous === null) unknowns.push(NO_PREVIOUS);
