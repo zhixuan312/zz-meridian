@@ -104,7 +104,7 @@ What exists, by layer, and how it changes per surface. "Same" means the card nee
 | Icons | Lucide at 1.75 stroke: 14, 16 and 18px | Same | Same |
 | Motion | Arrive, answer, float; reduced motion collapses all | Same | Arrive only on first render, so a re-render in the thread never replays |
 | App mark | The product mark at 20, 24, 28 and 32px | Same | 20px in the embed head |
-| Surface | Where a view is being read, the console or an MCP host, and what it may ask of that host: the bridge, the host's theme and style variables, and the one shared context both agents are told | The console, with no host: `expand` opens the console page | Started by EmbedFrame on every route under `app/embed/` |
+| Surface | Where a view is being read, the console or an MCP host, and what it may ask of that host: the bridge, the host's theme and style variables, and the one shared context both agents are told | The console, with no host: `expand` opens the console page | Started by `EmbedSurface` in `app/embed/layout.tsx`, on every route under `app/embed/` |
 
 ### Layer 2 · Components
 
@@ -112,7 +112,7 @@ What exists, by layer, and how it changes per surface. "Same" means the card nee
 |---|---|
 | Actions | Button, Icon button, Menu |
 | Input | Field, Input, Textarea, Select, Checkbox, Radio group, Switch, Segmented, Search input |
-| Display | Card, Badge, Status dot, Delta, Avatar, Agent mark, Tooltip, Progress, Key value, Copy field, Kbd, Popover |
+| Display | Card, Badge, Status dot, Delta, Avatar, Agent mark, Tooltip, Progress, Key value, Copy field, Kbd, Popover, Disclosure |
 | Navigation | Tabs, Breadcrumb, Pagination |
 | Feedback | Banner, Toast, Dialog, Sheet, Empty state, Skeleton, Spinner |
 | Data | Table |
@@ -137,6 +137,7 @@ All components are surface-agnostic by construction: they size from control toke
 | Column chart | Counts side by side, one column a category or a period; or each column a whole split into its parts | 200px tall, or its card's height; a value above each column while a column is 36px or wider | Date labels thin and category labels cut shorter; under 36px a column, a value shows for the column pointed at, and a stacked chart's readout pins to the leading edge | Same as mobile inline; the console's in fullscreen |
 | Sparkline | Shape beside a figure; it marks the pointed day only when its values are the page's | Same | Same | Same |
 | Bar list | A ranked list with bars | Same | Same | Top five, then Expand |
+| Diverging bars | Signed rows either side of one zero line: a net change by category, one customer against the company | Same | Long labels are cut sooner, and a level that would touch its neighbour hides its words | Same; no embed view draws it yet |
 | Composition bar | One whole split into parts | Legend four across from 36rem of the bar's own width, two under it | Legend two across | Same as mobile |
 | Heatmap | Weekday by hour, or a year of days | 24 columns of hours; a calendar's column is a week | Hours grouped in threes (8 columns); a calendar shows the latest weeks that fit at 12px a cell | Fullscreen only |
 | Uptime bars | A service's state, a bar a day | Every day it is given | Every day it is given, the gaps tighter | Same as mobile |
