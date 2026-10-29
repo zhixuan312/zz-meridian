@@ -4,7 +4,7 @@
  * from the history only the server reads, and handed on as sentences: the page draws them and the context leads with
  * them, so a person and an agent are told the same thing in the same words.
  */
-import { changeOf, formatPercent, plural } from '@/lib/format';
+import { changeOf, formatPercent, inWords, plural } from '@/lib/format';
 import type { Service } from '@/components/patterns/status-list';
 import type { Fact } from '@/lib/facts';
 import type { Insight } from '@/lib/shared-context';
@@ -20,8 +20,7 @@ export const HISTORY_UNREAD = 'The history could not be read, so this page is he
 
 /** What a context says when parts of its data could not be read: each named, and what they state is missing, not zero. */
 export function unreadNote(unread: readonly string[]): string {
-  const names = unread.length === 1 ? unread[0] : `${unread.slice(0, -1).join(', ')} and ${unread.at(-1)}`;
-  const note = `${names} could not be read, so what ${plural(unread.length, 'it states', 'they state')} is missing, not zero.`;
+  const note = `${inWords(unread)} could not be read, so what ${plural(unread.length, 'it states', 'they state')} is missing, not zero.`;
   return `${note[0].toUpperCase()}${note.slice(1)}`;
 }
 

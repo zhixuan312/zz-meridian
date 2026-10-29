@@ -16,11 +16,11 @@ import type { ReleaseRow, RunRow } from '@/data/engineering';
 import type { ComputeRow, DailyPoint, Endpoint, Model, UsageRow } from '@/data/sample';
 import type { TicketRow } from '@/data/tickets';
 import { steady } from '@/lib/facts';
-import { formatDuration, plural } from '@/lib/format';
-import { dayOf, formatDate, formatDay } from '@/lib/format-date';
+import { formatDuration, inWords, plural } from '@/lib/format';
+import { dayOf, formatDate, formatDay, shiftDay } from '@/lib/format-date';
 import { PERIOD_DAYS } from '@/lib/period';
 import { yearFacts, yearLine } from './home-parts';
-import { inWords, NOW_TILES, nowHead, type BandFact, type NowData, type NowModel, type NowRunDay, type NowTicket } from './now-context';
+import { NOW_TILES, nowHead, type BandFact, type NowData, type NowModel, type NowRunDay, type NowTicket } from './now-context';
 import { releaseFigures, releaseMoment, stageOf, unresolvedText } from './releases-context';
 import { ticketsAddress } from './tickets-context';
 
@@ -90,7 +90,7 @@ export function nowData(r: NowReads): NowData {
   };
   const today = dayOf(r.now);
   // The month: the 30 complete days that end yesterday, by their dates.
-  const from = new Date(Date.parse(`${today}T00:00:00Z`) - WINDOW_DAYS * DAY).toISOString().slice(0, 10);
+  const from = shiftDay(today, -WINDOW_DAYS);
   const inMonth = (at: string | null | undefined) => !!at && dayOf(at) >= from && dayOf(at) < today;
 
   const services = read(r.services, 'the services') ? r.services : [];
@@ -211,7 +211,7 @@ export function nowData(r: NowReads): NowData {
 
   let runsADay: NowData['runs'] = null;
   if (runs) {
-    const days: NowRunDay[] = Array.from({ length: WINDOW_DAYS + 1 }, (_, i) => ({ date: new Date(Date.parse(`${from}T00:00:00Z`) + i * DAY).toISOString().slice(0, 10), passed: 0, skipped: 0, failed: 0 }));
+    const days: NowRunDay[] = Array.from({ length: WINDOW_DAYS + 1 }, (_, i) => ({ date: shiftDay(from, i), passed: 0, skipped: 0, failed: 0 }));
     const byDate = new Map(days.map((d) => [d.date, d]));
     for (const x of runs) {
       const d = byDate.get(dayOf(x.startedAt));

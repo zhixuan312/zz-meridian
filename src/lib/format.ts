@@ -19,6 +19,11 @@ export function plural(n: number, one: string, other?: string): string {
   return n === 1 ? one : (other ?? `${one}s`);
 }
 
+/** Items in a sentence: "a", "a and b", "a, b and c"; nothing is the empty string. */
+export function inWords(items: readonly string[]): string {
+  return items.length > 1 ? `${items.slice(0, -1).join(', ')} and ${items.at(-1)}` : (items[0] ?? '');
+}
+
 /** A place in a row, with its ending: 1st, 2nd, 3rd, 4th, 11th, 12th, 13th, 21st. One function, so a rule's line and a page's title spell the same run the same way. */
 export function ordinal(n: number): string {
   const teens = n % 100 >= 11 && n % 100 <= 13;

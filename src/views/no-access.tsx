@@ -6,12 +6,12 @@ import { Button } from '@/components/ui/button';
 import { FEATURES, type FeatureId } from '@/data/features';
 import { whoCan } from '@/data/roles';
 import type { ChromeAccess, Need } from '@/lib/collection';
+import { inWords } from '@/lib/format';
 import { navOf } from '@/views/workspaces';
 
 /** Names as a reader meets them, in table order: "Owners", "Owners, Admins", "Owners, Admins and Members". */
 function list(roles: readonly string[]): string {
-  const names = roles.map((role) => `${role}s`);
-  return names.length < 2 ? names.join('') : `${names.slice(0, -1).join(', ')} and ${names.at(-1)}`;
+  return inWords(roles.map((role) => `${role}s`));
 }
 
 /** The same names offered as a choice, with the article the first one takes: "an Owner or Admin". */

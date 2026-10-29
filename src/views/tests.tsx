@@ -32,11 +32,11 @@ export function TestsView({ rows, now, revisions }: { rows: RunRow[]; now: strin
   const [draft, setDraft] = useSearchDraft(f.q, (q) => set({ q, page: '1' }));
   const matching = useMemo(() => matchingRuns(rows, { q: f.q, state: f.state, release: f.release, runs: f.runs }), [rows, f.q, f.state, f.release, f.runs]);
   const isFiltered = f.q !== '' || f.state !== 'all' || f.release !== '' || f.runs !== 'all';
-  const filters = [f.state !== 'all' && f.state, f.runs === 'latest' && 'the latest of each', f.release && `of ${f.release}`, f.q && `matching "${f.q}"`].filter(Boolean).join(', ');
+  const of = f.release ? rows.find((r) => r.releaseId === f.release)?.release : undefined;
+  const filters = [f.state !== 'all' && f.state, f.runs === 'latest' && 'the latest of each', f.release && `of ${of?.version ?? f.release}`, f.q && `matching "${f.q}"`].filter(Boolean).join(', ');
   useShareView(testsContext(rows, now, f));
   const clear = () => set({ q: '', state: 'all', release: '', runs: 'all', page: '1' });
   const { latest, failing, skipped } = testFigures(rows);
-  const of = f.release ? rows.find((r) => r.releaseId === f.release)?.release : undefined;
 
   const columns: Column<RunRow>[] = [
     {

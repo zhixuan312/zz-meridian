@@ -9,7 +9,7 @@
  * of it. What a rule needs of the product (the history a record asks for, the thresholds of a first, the band of a steady day) is an argument:
  * the readers pass `facts` from `src/app.config.ts`.
  */
-import { formatPercent, ordinal, plural } from '@/lib/format';
+import { formatPercent, inWords, ordinal, plural } from '@/lib/format';
 import { formatDate } from '@/lib/format-date';
 
 type FactKind = 'record' | 'first' | 'run' | 'steady' | 'all' | 'total';
@@ -150,7 +150,7 @@ export function steady(days: readonly DayService[], band: { p95Under: number; er
   const inside = days.length - outside.length;
   const named = outside.slice(0, 3).map(formatDate);
   const more = outside.length - named.length;
-  const list = more ? `${named.join(', ')} and ${more} more` : named.length > 1 ? `${named.slice(0, -1).join(', ')} and ${named.at(-1)}` : named[0];
+  const list = more ? `${named.join(', ')} and ${more} more` : inWords(named);
   // The band as it was given, to the hundredth of a percent: a band of 0.5% is not written 1%.
   const rate = `${Number((band.errorRateUnder * 100).toFixed(2))}%`;
   return {

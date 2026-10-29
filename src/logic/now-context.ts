@@ -11,7 +11,7 @@ import { packServices, unpackServices, type PackedService } from '@/logic/summar
 import type { DayState } from '@/components/charts/uptime-bars';
 import type { DailyPoint, Endpoint } from '@/data/sample';
 import { runOf, steady } from '@/lib/facts';
-import { formatCompact, formatDuration, formatPercent, plural } from '@/lib/format';
+import { formatCompact, formatDuration, formatPercent, inWords, plural } from '@/lib/format';
 import { formatDate, formatDay, formatRelative } from '@/lib/format-date';
 import { freshnessOf, type Fact, type Insight, type SharedContext } from '@/lib/shared-context';
 import { STATE, handed, headInsights, worst, type PageHead, type ServiceNow } from './fact-insight';
@@ -189,8 +189,6 @@ export function unpackNow({ services, band, ...rest }: PackedNowData): NowData {
  */
 const STATED = { open: 1, models: 4, releases: 3, asked: 4 } as const;
 
-/** Items in a sentence: "a", "a and b", "a, b and c". */
-export const inWords = (items: readonly string[]) => (items.length > 1 ? `${items.slice(0, -1).join(', ')} and ${items.at(-1)}` : (items[0] ?? ''));
 
 /** What a part says when its read failed, by the words `unread` names it with. */
 const UNREAD: Record<string, string> = {

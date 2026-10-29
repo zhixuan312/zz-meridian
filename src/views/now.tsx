@@ -23,12 +23,12 @@ import { StatusList } from '@/components/patterns/status-list';
 import { AskAbout } from '@/components/patterns/ask-about';
 import { app, facts as rules } from '@/app.config';
 import type { Endpoint } from '@/data/sample';
-import { formatCompact, formatDuration, formatPercent, plural } from '@/lib/format';
-import { formatDate, formatShortDate } from '@/lib/format-date';
+import { formatCompact, formatDuration, formatPercent, inWords, plural } from '@/lib/format';
+import { formatDate, formatShortDate, shiftDay } from '@/lib/format-date';
 import { cn } from '@/lib/cn';
 import { useLive, type Revisions } from '@/lib/live';
 import {
-  MONTH, NOW_METRICS, NOW_PARTS as P, NOW_TILES, inWords, nothingArrived, nowContext, servicesShown, unpackNow,
+  MONTH, NOW_METRICS, NOW_PARTS as P, NOW_TILES, nothingArrived, nowContext, servicesShown, unpackNow,
   type NowData, type NowModel, type NowTile, type PackedNowData,
 } from '@/logic/now-context';
 import { Unread, unreadTile } from './unread';
@@ -40,7 +40,6 @@ const RUN_PARTS = [
   { key: 'failed', label: 'Failed', tone: 'critical' },
 ] as const;
 const PRIORITY = { high: 'High', normal: 'Normal', low: 'Low' } as const;
-const DAY = 86_400_000;
 
 /**
  * The page's protagonist, its one Featured metric: the days inside the band over every complete day kept, the steady
@@ -55,7 +54,7 @@ const DAY = 86_400_000;
 function DaysInside({ band, steady }: { band: NonNullable<NowData['band']>; steady: string | null }) {
   const n = band.p95.length;
   // The strip ends on the latest complete day: the dates count back from it.
-  const dates = band.p95.map((_, i) => new Date(Date.parse(`${band.end}T00:00:00Z`) - (n - 1 - i) * DAY).toISOString().slice(0, 10));
+  const dates = band.p95.map((_, i) => shiftDay(band.end, i - (n - 1)));
   const outside = band.days.flatMap((d, i) => (d === 'operational' ? [] : [dates[i]]));
   return (
     <div data-protagonist="Days inside the band" className="contents">

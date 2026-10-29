@@ -12,6 +12,7 @@ import { handedTo } from '@/lib/assistant/scoped';
 import type { AgentChange, HandedExplore } from '@/lib/assistant/tools';
 import type { AnyCollection, Grant, Need } from '@/lib/collection';
 import type { PreparedQuery } from '@/lib/explore';
+import { inWords } from '@/lib/format';
 import { dayOf } from '@/lib/format-date';
 import { viewAt, type ViewTool } from '@/lib/shared-context';
 import { viewTools } from '@/logic/tools';
@@ -135,7 +136,7 @@ export async function POST(request: Request): Promise<Response> {
     // for. Only where the product keeps activity and the person may add to it; the change stands either way.
     record: async (change: AgentChange) => {
       if (!(await can(scope, 'activity', 'create'))) return;
-      await collectionFor(scope, 'activity').create!({ at: clock().toISOString(), actor: (await nameOf(scope)) ?? 'You', via: 'Assistant', ...activityLine(change) });
+      await collectionFor(scope, 'activity').create!({ at: clock().toISOString(), actor: (await nameOf(scope)) ?? scope.subjectId, via: 'Assistant', ...activityLine(change) });
       revalidateTag(collectionTag(scope.tenantId, 'activity'), { expire: 0 });
     },
   };
@@ -202,7 +203,7 @@ function workedFrom(query: PreparedQuery<never>, collection: string): string[] {
 
 /** An agent's change as an Activity line: "changed status to Suspended for Alice Moreno and Ravi Patel". */
 function activityLine({ label, op, titles, set }: AgentChange): { verb: string; object: string } {
-  const names = titles.length <= 3 ? titles.join(titles.length === 2 ? ' and ' : ', ') : `${titles.length} ${label.toLowerCase()}`;
+  const names = titles.length <= 3 ? inWords(titles) : `${titles.length} ${label.toLowerCase()}`;
   if (op === 'create') return { verb: 'added', object: `${names} to ${label.toLowerCase()}` };
   if (op === 'remove') return { verb: 'removed', object: `${names} from ${label.toLowerCase()}` };
   const fields = Object.entries(set ?? {}).map(([k, v]) => `${k} to ${Array.isArray(v) ? v.join(', ') : String(v)}`).join(', ');

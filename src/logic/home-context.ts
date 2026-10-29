@@ -6,7 +6,7 @@
  */
 import type { DailyPoint } from '@/data/sample';
 import { app } from '@/app.config';
-import { formatCompact, formatCost, formatDuration, formatPercent, ordinal, plural } from '@/lib/format';
+import { formatCompact, formatCost, formatDuration, formatPercent, inWords, ordinal, plural } from '@/lib/format';
 import { formatDate, formatDay } from '@/lib/format-date';
 import { sameWeekdayBaseline, weekday, median } from '@/lib/insight';
 import { PERIOD_DAYS, PERIOD_LABEL, type Period } from '@/lib/period';
@@ -137,7 +137,7 @@ export const INCIDENTS_OPEN = 'Incidents open';
 /** Each service that is not operational with its state, those down first: "Files is down and Inference API is degraded". Null when every one is. */
 export function unwellNames(services: readonly ServiceNow[]): string | null {
   const said = (['outage', 'degraded'] as const).flatMap((state) => services.filter((s) => s.status === state).map((s) => `${s.name} is ${STATE[state]}`));
-  return said.length ? (said.length === 1 ? said[0] : `${said.slice(0, -1).join(', ')} and ${said.at(-1)}`) : null;
+  return said.length ? inWords(said) : null;
 }
 
 /**
@@ -165,8 +165,8 @@ export function homeLine({ days: n, customers, requests, previous, margin, servi
   return said ? `${asSentence(said)}.` : null;
 }
 
-/** The clauses as one list: "A", "A and B", "A, B, and C". */
-const asList = (xs: string[]) => (xs.length < 2 ? (xs[0] ?? '') : xs.length === 2 ? `${xs[0]} and ${xs[1]}` : `${xs.slice(0, -1).join(', ')}, and ${xs.at(-1)}`);
+/** The clauses as one list, with a comma before the last, since a clause carries commas and figures of its own: "A", "A and B", "A, B, and C". */
+const asList = (xs: string[]) => (xs.length < 3 ? inWords(xs) : `${xs.slice(0, -1).join(', ')}, and ${xs.at(-1)}`);
 /** A clause as a sentence: its first letter up. */
 const asSentence = (s: string) => `${s[0]!.toUpperCase()}${s.slice(1)}`;
 
