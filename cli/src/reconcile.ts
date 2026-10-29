@@ -14,14 +14,32 @@ type Obj = Record<string, unknown>;
 const isObj = (v: unknown): v is Obj => typeof v === 'object' && v !== null && !Array.isArray(v);
 
 /**
- * The minimum version of `x.y.z`, `^x.y.z`, `~x.y.z` or `>=x.y.z`, where a missing minor or patch is 0 (`^24` is
- * 24.0.0, `~5.9` is 5.9.0); null for anything else.
+ * `x.y.z`, `^x.y.z`, `~x.y.z` or `>=x.y.z` as its operator and minimum, where a missing minor or patch is 0 (`^24` is
+ * 24.0.0, `~5.9` is 5.9.0). A bare partial version is the range npm reads it as: `16` is `^16.0.0`, `16.4` is
+ * `~16.4.0`. Null for anything else.
  */
-function minimum(spec: unknown): [number, number, number] | null {
-  const m = typeof spec === 'string' ? /^(?:\^|~|>=)?(\d+)(?:\.(\d+)(?:\.(\d+))?)?$/.exec(spec.trim()) : null;
-  return m ? [Number(m[1]), Number(m[2] ?? 0), Number(m[3] ?? 0)] : null;
+function range(spec: unknown): { op: '' | '^' | '~' | '>='; v: [number, number, number] } | null {
+  const m = typeof spec === 'string' ? /^(\^|~|>=)?(\d+)(?:\.(\d+)(?:\.(\d+))?)?(?:-[\w.]+)?$/.exec(spec.trim()) : null;
+  if (!m) return null;
+  const op = (m[1] ?? (m[3] === undefined ? '^' : m[4] === undefined ? '~' : '')) as '' | '^' | '~' | '>=';
+  return { op, v: [Number(m[2]), Number(m[3] ?? 0), Number(m[4] ?? 0)] };
 }
+const minimum = (spec: unknown) => range(spec)?.v ?? null;
 const compare = (a: number[], b: number[]) => a[0]! - b[0]! || a[1]! - b[1]! || a[2]! - b[2]!;
+
+/** Whether `version` satisfies a specification `range` reads. A specification it cannot read is not judged. */
+export function satisfies(spec: string, version: string): boolean {
+  const want = range(spec);
+  const have = /^(\d+)\.(\d+)\.(\d+)/.exec(version);
+  if (!want || !have) return true;
+  const v = [Number(have[1]), Number(have[2]), Number(have[3])];
+  const [M, m, p] = want.v;
+  if (want.op === '') return compare(v, want.v) === 0;
+  if (compare(v, want.v) < 0) return false;
+  if (want.op === '>=') return true;
+  if (want.op === '~') return compare(v, [M, m + 1, 0]) < 0;
+  return compare(v, M > 0 ? [M + 1, 0, 0] : m > 0 ? [0, m + 1, 0] : [0, 0, p + 1]) < 0;
+}
 
 const file = (id: string, summary: string, instructions: string, path: string): Migration => ({ id, summary, paths: [path], instructions, checks: [] });
 
@@ -137,7 +155,7 @@ export function reconcilePackage(teamText: string, template: Template, need: Nee
 }
 
 /** The framework the template is tested on: needed whether or not a distributed module imports it. */
-const FRAMEWORK = ['next', 'react', 'react-dom'];
+export const FRAMEWORK = ['next', 'react', 'react-dom'];
 
 /**
  * What a target release needs in a team's package.json: the packages its distributed modules import plus the framework,

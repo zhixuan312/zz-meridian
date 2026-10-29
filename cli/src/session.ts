@@ -13,7 +13,7 @@ import { changedPaths, takeInventory } from './inventory.js';
 import { renderMergeReport } from './merge-report.js';
 import { releaseMigrations } from './migrations.js';
 import { classify, managedPaths, parseManifest } from './ownership.js';
-import { legacySection, needOf, planAgents, reconcilePackage } from './reconcile.js';
+import { FRAMEWORK, legacySection, needOf, planAgents, reconcilePackage, satisfies } from './reconcile.js';
 import { dirtyNote, formatReport, isNewer, supportsSource } from './update.js';
 import {
   isSafePath, keepProblems, parseJournal, parseKeep, parseResolutions, planHash, unresolved, verifiedRetirements,
@@ -491,7 +491,6 @@ export function start(ctx: Context, o: StartOptions): number {
 
 type Loaded = { dir: string; rel: string; journal: UpdateJournal };
 
-const FRAMEWORK = ['next', 'react', 'react-dom'];
 const persistJournal = (l: Loaded) => writeAtomic(path.join(l.dir, 'state.json'), `${JSON.stringify(l.journal, null, 2)}\n`);
 
 
@@ -575,29 +574,11 @@ function archive(root: string, l: Loaded): string {
   return path.relative(root, dest).split(path.sep).join('/');
 }
 
-/** The minimum of `x.y.z`, `^x.y.z`, `~x.y.z` or `>=x.y.z`, with the prefix it had. */
-const parseSpec = (spec: string) => {
-  const m = /^(\^|~|>=)?(\d+)\.(\d+)\.(\d+)(?:-[\w.]+)?$/.exec(spec.trim());
-  return m ? { op: m[1] ?? '', v: [Number(m[2]), Number(m[3]), Number(m[4])] as [number, number, number] } : null;
-};
-const cmp = (a: number[], b: number[]) => a[0]! - b[0]! || a[1]! - b[1]! || a[2]! - b[2]!;
-
-/** Whether `version` satisfies a standard specification. A specification this cannot read is not judged. */
-function satisfies(spec: string, version: string): boolean {
-  const want = parseSpec(spec);
-  const have = /^(\d+)\.(\d+)\.(\d+)/.exec(version);
-  if (!want || !have) return true;
-  const v: [number, number, number] = [Number(have[1]), Number(have[2]), Number(have[3])];
-  const [M, m, p] = want.v;
-  if (want.op === '') return cmp(v, want.v) === 0;
-  if (cmp(v, want.v) < 0) return false;
-  if (want.op === '>=') return true;
-  if (want.op === '~') return cmp(v, [M, m + 1, 0]) < 0;
-  return cmp(v, M > 0 ? [M + 1, 0, 0] : m > 0 ? [0, m + 1, 0] : [0, 0, p + 1]) < 0;
-}
-
-/** The entries the plan added or raised, and the framework, checked against what the install put in `node_modules`. */
-function dependencyProblems(root: string, session: string, pm: string): string[] {
+/**
+ * The entries the plan added or raised, and the framework, checked against what the install put in `node_modules`: each
+ * install satisfies its entry, the framework's as much as any other, since a range the team declares is theirs.
+ */
+export function dependencyProblems(root: string, session: string, pm: string): string[] {
   const read = (file: string): Record<string, any> | null => { try { return JSON.parse(fs.readFileSync(file, 'utf8')); } catch { return null; } };
   const staged = path.join(session, 'new', 'package.json');
   const saved = path.join(session, 'backup', 'package.json');
@@ -613,9 +594,7 @@ function dependencyProblems(root: string, session: string, pm: string): string[]
     const spec = want[name]!;
     const installed = read(path.join(root, 'node_modules', ...name.split('/'), 'package.json'))?.version;
     if (typeof installed !== 'string') { out.push(`${name}: planned ${spec} but it is not installed; run ${pm} install`); continue; }
-    const exact = FRAMEWORK.includes(name) && parseSpec(spec) !== null;
-    const ok = exact ? installed === spec.replace(/^[\^~]|^>=/, '') : satisfies(spec, installed);
-    if (!ok) out.push(`${name}: the install resolved ${installed}, which is not the planned ${spec}`);
+    if (!satisfies(spec, installed)) out.push(`${name}: the install resolved ${installed}, which is not the planned ${spec}`);
   }
   return out;
 }
