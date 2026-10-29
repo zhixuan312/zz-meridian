@@ -25,7 +25,7 @@ The tool `zz_meridian_requests { status?, method?, region?, q? }`; the arguments
 
 ## Agents
 
-The Requests page's context (`app/(dashboard)/requests/README.md` lists it), read through the same `readRequests`, with the rows the view draws: the five latest inline, the page in fullscreen. Ask posts "Why are these status 5xx requests failing, and what do they have in common?", and the context answers the second half with figures. Pressing a row opens that request in the console through the host (`ui/open-link`).
+The Requests page's context (`app/(dashboard)/requests/README.md` lists it), read through the same `readRequests`, with the rows the view draws: the five latest inline, the page in fullscreen. Ask posts what the console's Ask posts of the same rows: "What stands out in the latest requests, and why?", or with a filter "What do these requests with status 5xx have in common, and why?", and the context answers with figures. Pressing a row opens that request in the console through the host (`ui/open-link`).
 
 ### What the agent reads
 

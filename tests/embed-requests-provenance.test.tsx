@@ -1,4 +1,5 @@
 import { fireEvent, render, screen } from '@testing-library/react';
+import { Tooltip } from 'radix-ui';
 import { describe, expect, it, vi } from 'vitest';
 
 const url = vi.hoisted(() => ({ search: '?status=5xx' }));
@@ -37,5 +38,25 @@ describe('the embed requests view, provenance', () => {
       </SurfaceOverride>,
     );
     expect(container.textContent).toMatch(/1\D+10\D+of\D+25/);
+  });
+});
+
+// The inline Ask asked why the requests were failing whatever the tool asked for: over the latest requests, most of
+// them 2xx, and over status 2xx too. It asks what the console's Ask asks of the same rows.
+describe("the embed requests view's inline Ask", () => {
+  const asked = (filter: Parameters<typeof requestsQuery>[0]) => {
+    render(
+      <Tooltip.Provider>
+        <SurfaceOverride surface={{ mode: 'inline', ask: () => {} }}>
+          <EmbedRequests rows={REQUESTS.slice(0, 10)} total={REQUESTS.length} state={requestsQuery(filter).state} summary={summary} pageSize={10} updatedAt="2026-10-05T08:56:00.000Z" now="2026-10-05T09:00:00.000Z" />
+        </SurfaceOverride>
+      </Tooltip.Provider>,
+    );
+    return screen.getByRole('button', { name: /^Ask: / }).getAttribute('aria-label');
+  };
+  it('asks what stands out when nothing is filtered', () => expect(asked({})).toBe('Ask: What stands out in the latest requests, and why?'));
+  it('asks what the filtered requests have in common, not why they fail', () => {
+    const q = asked({ status: '2xx' });
+    expect(q).toMatch(/^Ask: What do these requests with .*2xx.* have in common, and why\?$/);
   });
 });

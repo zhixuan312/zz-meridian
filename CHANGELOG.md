@@ -63,6 +63,7 @@ Every release of ZZ Meridian, newest first. Versions follow semver: a removed or
 - **`create` on a path that is a file refuses in one line** ("… is a file: name a new folder") instead of a Node stack trace.
 - **The Tests page's Ask names a release by its version**, not its internal id ("of releases_2").
 - **An agent's Activity line joins three names as "A, B and C"**, and records the member's id when the policy names no one, not "You" for every reader.
+- **The Requests embed's inline Ask asks what the console's Ask asks**: what stands out in the latest requests, or what the filtered ones have in common, not why requests are failing over rows that are mostly 2xx.
 - **The bell's customers-past-due alert is timed by the latest to fall past due**, not "just now" on every open.
 - **The Customers figure is defined as what it counts**, customers that have not left, not workspaces "with a live key".
 - **A customer is not compared with an error rate the product never measured**, over days that hold no request; an active member who has never signed in is named among the quiet ones, as never seen. Where most customers have no errors, the customers' context names those that have some, not every customer as "at least twice the median" of 0.00%.

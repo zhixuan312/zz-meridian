@@ -87,7 +87,7 @@ export function EmbedRequests(data: RequestsData) {
           <p className="t-num min-w-0 flex-1 text-xs text-ink-3">
             <span className="font-medium text-ink">{total}</span> matching · showing the latest {latest.length}
           </p>
-          {latest.length ? <AskAbout question={`Why are these ${scope ? scope + ' ' : ''}requests failing, and what do they have in common?`} /> : null}
+          {latest.length ? <AskAbout question={scope ? `What do these requests with ${scope} have in common, and why?` : 'What stands out in the latest requests, and why?'} /> : null}
         </div>
         {latest.length === 0 ? (
           <EmptyState kind="filtered" layout="inline" title="No requests match" className="px-4 py-4">The tool asked for {scope || 'everything'}; nothing matched.</EmptyState>
