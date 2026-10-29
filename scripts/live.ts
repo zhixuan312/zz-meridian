@@ -33,7 +33,7 @@ const opt = (k: string) => { const i = args.indexOf(k); return i >= 0 ? args[i +
 const base = (opt('--base') ?? process.env.BASE ?? 'http://localhost:3000').replace(/\/$/, '');
 const dropBase = opt('--drop-base')?.replace(/\/$/, '');
 const pollMs = Number(opt('--poll-ms') ?? 3000);
-/** Runs only the cases whose name contains this text; for working on one case. */
+/** Runs only the cases named, comma-separated, for working on one case; every other case is reported not run. */
 const only = opt('--only');
 /** How long a tab may take to show a change a hint carries, refresh round trip included. */
 const HINT_BOUND_MS = 2000;
@@ -492,6 +492,12 @@ async function absent(): Promise<string | null> {
 
 const CASES = ['two tabs', 'visibility', 'a disconnected write', 'a sustained burst', 'suppressed hints', 'a server restart'];
 const skipAll = (why: string) => { for (const c of CASES) report('not run', c, why); };
+const asked = (label: string) => !only || only.split(',').includes(label);
+const unknown = only?.split(',').filter((c) => !CASES.includes(c)) ?? [];
+if (unknown.length) {
+  console.error(`live: --only names ${unknown.map((c) => `"${c}"`).join(', ')}, which no case is called; the cases are ${CASES.map((c) => `"${c}"`).join(', ')}.`);
+  process.exit(1);
+}
 
 const why = await absent();
 if (why) {
@@ -509,7 +515,7 @@ if (why) {
   if (a && b) {
     const t: Tabs = { a, b };
     const step = async (label: string, fn: () => Promise<void>) => {
-      if (only && !only.split(',').includes(label)) return;
+      if (!asked(label)) return report('not run', label, 'not asked for (--only)');
       try { await fn(); } catch (e) { report('FAIL', label, (e as Error).message); }
     };
     // Case order matters only in that each leaves the tabs usable; every case invites its own uniquely named members.
@@ -524,7 +530,7 @@ if (why) {
       await step('suppressed hints', async () => { await suppressed(t, dropBase); });
       try { await cleanup(t); } catch (e) { report('FAIL', 'cleanup', `a member this check invited on ${dropBase} was not removed: ${(e as Error).message}`); }
     } else {
-      report('not run', 'suppressed hints', 'no --drop-base: the server started with LIVE_DROP_HINTS=1 was not given');
+      report('not run', 'suppressed hints', asked('suppressed hints') ? 'no --drop-base: the server started with LIVE_DROP_HINTS=1 was not given' : 'not asked for (--only)');
     }
     await step('a server restart', () => restart(t));
   }
