@@ -19,7 +19,7 @@ import { Meridian, useMeridianIndex } from '@/components/charts/meridian';
 import { SO_FAR, TrendChart } from '@/components/charts/trend-chart';
 import { FeaturedMetric } from '@/components/patterns/featured-metric';
 import type { UsageFigures } from '@/data/usage';
-import { AXIS_FORMATTERS, formatCompact, formatDuration } from '@/lib/format';
+import { AXIS_FORMATTERS, changeOf, formatCompact, formatDuration } from '@/lib/format';
 import { formatDate, formatShortDate } from '@/lib/format-date';
 import { PERIOD_LABEL } from '@/lib/period';
 import { ASKED, STATUS_COLOR, USAGE_PARTS as P, WHEN, usageContext, type UsageData, type When } from '@/logic/usage-context';
@@ -39,7 +39,6 @@ function ShareUsage({ data }: { data: UsageData }) {
 }
 
 /** A change against the period before, as a fraction; undefined when nothing comes before or it was zero, and the figure then draws no change. */
-const change = (now: number, before: number | null) => (before ? now / before - 1 : undefined);
 
 /**
  * The page's protagonist, its one Featured metric: the period's requests, their change, the period's record as its
@@ -59,7 +58,7 @@ function Requests({ data, days, dates }: { data: UsageData; days: Days; dates: s
         value={totals.current.requests}
         points={points}
         format={formatCompact}
-        delta={change(totals.current.requests, totals.previous?.requests ?? null)}
+        delta={changeOf(totals.current.requests, totals.previous?.requests) ?? undefined}
         caption={series.length ? `${totals.current.requests.toLocaleString('en-US')} requests over the ${series.length} complete ${series.length === 1 ? 'day' : 'days'} to ${formatDate(series.at(-1)!.date)}, ${app.timezone}.${running ? ` ${SO_FAR}` : ''}` : undefined}
         finding={data.record ? { text: data.record } : undefined}
         pointLabel={(date) => (running && date === running.date ? `${formatDate(date)} · so far` : formatDate(date))}

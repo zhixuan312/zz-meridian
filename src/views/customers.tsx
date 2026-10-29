@@ -18,7 +18,8 @@ import { customerAddress } from '@/logic/customer-context';
 
 const PLAN_TONE = { Enterprise: 'accent', Scale: 'neutral', Starter: 'neutral' } as const;
 /** Colour only where a row needs a look: past due and trial. Active is the normal case, so it stays quiet, and a customer that has left is history. */
-const STATUS_TONE = { active: 'neutral', trial: 'accent', 'past due': 'critical', left: 'neutral' } as const;
+/** A customer's status as a tone, on the list and on the customer's own page. */
+export const STATUS_TONE = { active: 'neutral', trial: 'accent', 'past due': 'critical', left: 'neutral' } as const;
 const STATUS_LABEL = { active: 'Active', trial: 'Trial', 'past due': 'Past due', left: 'Left' } as const;
 
 const columns: Column<CustomerRow>[] = [

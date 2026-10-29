@@ -2,7 +2,7 @@ import { app } from '@/app.config';
 import { formatDay } from '@/lib/format-date';
 import { describe, expect, it } from 'vitest';
 import { niceTicks } from '@/components/charts/scale';
-import { AXIS_FORMATTERS, fitFigure, formatCompact, formatCost, formatDuration, formatPercent, splitFigure } from '@/lib/format';
+import { AXIS_FORMATTERS, capitalise, changeOf, fitFigure, formatCompact, formatCost, formatDuration, formatPercent, splitFigure } from '@/lib/format';
 
 // The symbol follows app.currency, so a rebranded product (--currency SGD) keeps these tests green.
 const symbol = new Intl.NumberFormat('en', { style: 'currency', currency: app.currency, currencyDisplay: 'narrowSymbol' }).formatToParts(0).find((p) => p.type === 'currency')!.value;
@@ -134,5 +134,19 @@ describe('a money axis', () => {
     expect(AXIS_FORMATTERS.cost(5_000)).toBe(`${symbol}5K`);
     expect(AXIS_FORMATTERS.cost(25_000)).toBe(`${symbol}25K`);
     expect(AXIS_FORMATTERS.cost(5_000_000_000)).toBe(`${symbol}5B`);
+  });
+});
+
+describe('changeOf and capitalise', () => {
+  it('give a change as a fraction, and nothing against no figure or a zero one', () => {
+    expect(changeOf(150, 100)).toBeCloseTo(0.5);
+    expect(changeOf(50, 100)).toBeCloseTo(-0.5);
+    expect(changeOf(50, 0)).toBeNull();
+    expect(changeOf(50, null)).toBeNull();
+    expect(changeOf(50, undefined)).toBeNull();
+  });
+  it('start a label with a capital and leave the rest, an empty word included', () => {
+    expect(capitalise('past due')).toBe('Past due');
+    expect(capitalise('')).toBe('');
   });
 });

@@ -13,6 +13,7 @@ import { DataTable } from '@/components/patterns/data-table';
 import { MetricTile } from '@/components/patterns/metric-tile';
 import { AskAbout } from '@/components/patterns/ask-about';
 import { formatCompact, formatCost, formatPercent, plural } from '@/lib/format';
+import { STATUS_TONE } from './customers';
 import { dayOf, formatDate, formatDay } from '@/lib/format-date';
 import { requestColumns } from '@/system/sample-cells';
 import {
@@ -21,7 +22,6 @@ import {
 import { Unread } from './unread';
 import { requestAddress } from '@/logic/request-context';
 
-const STATUS_TONE = { active: 'neutral', trial: 'accent', 'past due': 'critical', left: 'neutral' } as const;
 const linkClass = 'row-link inline-flex items-center gap-1 font-medium text-ink hover:text-accent-ink';
 /** The log's columns a customer's own requests need: the customer is the page's, so its column is left out. */
 const LATEST_COLUMNS = requestColumns.filter((c) => ['request', 'status', 'latency', 'at'].includes(c.key));

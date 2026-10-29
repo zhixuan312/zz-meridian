@@ -147,6 +147,18 @@ function formatCount(n: number | null): string {
   return zeroHasNoSign(INT.format(n));
 }
 
+/** A change against the figure before, as the fraction `formatPercent` prints: null when nothing comes before or it was
+ *  zero, which a tile says in words rather than as an infinite change. A featured figure draws a null `delta` as a dash
+ *  against the period before, so a period with none before (all time) passes `?? undefined` and draws no change. */
+export function changeOf(now: number, before: number | null | undefined): number | null {
+  return before ? now / before - 1 : null;
+}
+
+/** "Past due" from "past due": a word as a label starts, the rest as it is. */
+export function capitalise(word: string): string {
+  return word.replace(/^./, (c) => c.toUpperCase());
+}
+
 /** 0.90%, 12.5%. A share that is not zero never reads as zero, `formatCost`'s rule: an error rate of 0.003% is one a
  *  healthy API holds, and "0.0%" says it had none, so a share too small for its places reads as the bound it is under,
  *  "<0.1%", with its own sign. */

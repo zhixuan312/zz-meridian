@@ -29,6 +29,7 @@ import type { Ticket } from '@/data/sample';
 import type { TicketRow } from '@/data/tickets';
 import { matchingTickets, TICKET_METRICS, ticketCounts, ticketsContext } from '@/logic/tickets-context';
 import type { ActionResult } from '@/lib/collection';
+import { capitalise } from '@/lib/format';
 
 type Draft = { title: string; service: string; priority: Ticket['priority']; assigneeId: string | null; summary: string };
 type Change = Partial<Pick<Ticket, 'state'>>;
@@ -38,11 +39,10 @@ const STEPS: Record<Ticket['state'], Ticket['state'][]> = { open: ['waiting', 'c
 /** Colour only where a row needs a look: a high priority and a waiting ticket. Normal work stays quiet. */
 const PRIORITY_TONE: Record<Ticket['priority'], Tone> = { high: 'critical', normal: 'neutral', low: 'neutral' };
 const STATE_TONE: Record<Ticket['state'], Tone> = { open: 'accent', waiting: 'warning', closed: 'neutral' };
-const LABEL = (word: string) => word[0].toUpperCase() + word.slice(1);
 const PRIORITY_RANK: Record<Ticket['priority'], number> = { low: 0, normal: 1, high: 2 };
 const NOBODY = 'nobody';
 
-const choices = (words: readonly string[]) => words.map((w) => ({ value: w, label: LABEL(w) }));
+const choices = (words: readonly string[]) => words.map((w) => ({ value: w, label: capitalise(w) }));
 const blank = (services: string[]): Draft => ({ title: '', service: services[0] ?? '', priority: 'normal', assigneeId: null, summary: '' });
 
 /**
@@ -140,20 +140,20 @@ export function TicketsView({ rows, now, revisions, may = { create: true, update
       ),
     },
     {
-      key: 'priority', header: 'Priority', mobile: 'fact', sortValue: (t) => PRIORITY_RANK[t.priority], cell: (t) => <Badge tone={PRIORITY_TONE[t.priority]}>{LABEL(t.priority)}</Badge>,
+      key: 'priority', header: 'Priority', mobile: 'fact', sortValue: (t) => PRIORITY_RANK[t.priority], cell: (t) => <Badge tone={PRIORITY_TONE[t.priority]}>{capitalise(t.priority)}</Badge>,
       // One fact, not three: the state is told with the priority, so a row's line is not a list of words. The two
       // words the tone rule above calls for a look keep their colour here — a phone was the one surface that dropped
       // it, so a waiting ticket read like any other until the word was found. One element, since a cell's content is
       // one flex item and a fragment's parts would space and wrap apart.
       mobileCell: (t) => (
         <span>
-          <span className={PRIORITY_TONE[t.priority] === 'critical' ? 'text-critical-ink' : undefined}>{LABEL(t.priority)} priority</span>
-          {may.update ? <> · <span className={STATE_TONE[t.state] === 'warning' ? 'text-warning-ink' : undefined}>{LABEL(t.state)}</span></> : null}
+          <span className={PRIORITY_TONE[t.priority] === 'critical' ? 'text-critical-ink' : undefined}>{capitalise(t.priority)} priority</span>
+          {may.update ? <> · <span className={STATE_TONE[t.state] === 'warning' ? 'text-warning-ink' : undefined}>{capitalise(t.state)}</span></> : null}
         </span>
       ),
     },
     // On a phone the state is told with the priority: a card keeps one status, and that is the row's step.
-    { key: 'state', header: 'State', mobile: may.update ? 'hidden' : 'status', sortValue: (t) => t.state, cell: (t) => <Badge tone={STATE_TONE[t.state]} dot>{LABEL(t.state)}</Badge> },
+    { key: 'state', header: 'State', mobile: may.update ? 'hidden' : 'status', sortValue: (t) => t.state, cell: (t) => <Badge tone={STATE_TONE[t.state]} dot>{capitalise(t.state)}</Badge> },
     {
       key: 'assignee', header: 'Assigned to', muted: true, hideBelow: 'lg', mobile: 'fact', sortValue: (t) => t.assignee ?? '',
       cell: (t) => (t.assignee ? t.assignee : <span className="text-ink-3">Nobody</span>),

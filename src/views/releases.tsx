@@ -14,9 +14,9 @@ import type { ReleaseRow } from '@/data/engineering';
 import { formatRelative } from '@/lib/format-date';
 import { useLive, type Revisions } from '@/lib/live';
 import { matchingReleases, RELEASE_METRICS, releaseFigures, releaseMoment, releasesContext, stageOf, STAGE_LABEL, unresolvedCounts, unresolvedText, type Stage } from '@/logic/releases-context';
+import { capitalise } from '@/lib/format';
 
 const STAGE_TONE: Record<Stage, Tone> = { testing: 'warning', ready: 'accent', released: 'positive' };
-const LABEL = (word: string) => word[0].toUpperCase() + word.slice(1);
 
 /** How many required verifications passed, in the words a row uses: `2 of 3 passed`, or that none are required. */
 const passedText = (r: ReleaseRow) => (r.verification.required === 0 ? 'No required verifications' : `${r.verification.passed} of ${r.verification.required} passed`);
@@ -41,14 +41,14 @@ export function ReleasesView({ rows, now, revisions }: { rows: ReleaseRow[]; now
 
   const columns: Column<ReleaseRow>[] = [
     {
-      key: 'version', header: 'Release', grow: true, truncate: true, mobile: 'title', sortValue: (r) => r.version, title: (r) => `${r.version} · ${r.service} · ${LABEL(r.environment)}`,
+      key: 'version', header: 'Release', grow: true, truncate: true, mobile: 'title', sortValue: (r) => r.version, title: (r) => `${r.version} · ${r.service} · ${capitalise(r.environment)}`,
       cell: (r) => (
         <span className="flex min-w-0 flex-col">
           <span className="flex items-center gap-2">
             <span className="truncate font-medium">{r.version}</span>
             {liveIds.has(r.id) ? <Badge tone="positive">Live</Badge> : null}
           </span>
-          <span className="t-caption truncate">{r.service} · {LABEL(r.environment)}</span>
+          <span className="t-caption truncate">{r.service} · {capitalise(r.environment)}</span>
         </span>
       ),
     },

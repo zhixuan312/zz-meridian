@@ -4,7 +4,7 @@
  * from the history only the server reads, and handed on as sentences: the page draws them and the context leads with
  * them, so a person and an agent are told the same thing in the same words.
  */
-import { formatPercent, plural } from '@/lib/format';
+import { changeOf, formatPercent, plural } from '@/lib/format';
 import type { Service } from '@/components/patterns/status-list';
 import type { Fact } from '@/lib/facts';
 import type { Insight } from '@/lib/shared-context';
@@ -56,8 +56,8 @@ export const inDays = (days: number) => `${days} ${plural(days, 'day')}`;
  * 0.0%, so a title never says "0.0% more".
  */
 export function against(now: number, before: number | null): { by: string; way: 'up' | 'down' | 'level' } | null {
-  if (!before) return null;
-  const change = now / before - 1;
+  const change = changeOf(now, before);
+  if (change === null) return null;
   const by = formatPercent(Math.abs(change), 1);
   // On the magnitude, as Delta judges flat: a change too small for its decimal prints "<0.1%", which is still level.
   return { by, way: Math.abs(change) < 0.0005 ? 'level' : change > 0 ? 'up' : 'down' };

@@ -11,13 +11,12 @@ import { MetricTile } from '@/components/patterns/metric-tile';
 import { DataTable, useQueryState, useSearchDraft, type Column } from '@/components/patterns/data-table';
 import { FilterBar } from '@/components/patterns/filter-bar';
 import type { RunRow } from '@/data/engineering';
-import { formatDuration } from '@/lib/format';
+import { capitalise, formatDuration } from '@/lib/format';
 import { formatRelative } from '@/lib/format-date';
 import { useLive, type Revisions } from '@/lib/live';
 import { matchingRuns, routeOf, TEST_METRICS, testFigures, testsContext } from '@/logic/tests-context';
 
 const VERDICT_TONE: Record<RunRow['state'], Tone> = { passed: 'positive', failed: 'critical', skipped: 'warning' };
-const LABEL = (word: string) => word[0].toUpperCase() + word.slice(1);
 const link = 'underline-offset-2 hover:underline';
 
 /**
@@ -41,15 +40,15 @@ export function TestsView({ rows, now, revisions }: { rows: RunRow[]; now: strin
 
   const columns: Column<RunRow>[] = [
     {
-      key: 'suite', header: 'Verification', grow: true, truncate: true, mobile: 'title', sortValue: (r) => r.suite, title: (r) => `${LABEL(r.suite)} on ${r.endpointId}`,
+      key: 'suite', header: 'Verification', grow: true, truncate: true, mobile: 'title', sortValue: (r) => r.suite, title: (r) => `${capitalise(r.suite)} on ${r.endpointId}`,
       cell: (r) => (
         <span className="flex min-w-0 flex-col">
-          <span className="truncate font-medium">{LABEL(r.suite)}</span>
+          <span className="truncate font-medium">{capitalise(r.suite)}</span>
           <Link href={`/requests?q=${encodeURIComponent(routeOf(r.endpointId))}`} className={`t-caption truncate ${link}`}>{r.endpointId}</Link>
         </span>
       ),
       // A card on a phone is text: a link one line of caption high is no target for a thumb.
-      mobileCell: (r) => `${LABEL(r.suite)} on ${r.endpointId}`,
+      mobileCell: (r) => `${capitalise(r.suite)} on ${r.endpointId}`,
     },
     {
       key: 'release', header: 'Release', truncate: true, hideBelow: 'md', mobile: 'fact', sortValue: (r) => r.release?.version ?? '', title: (r) => (r.release ? `${r.release.version} · ${r.release.service} · ${r.release.environment} · ${r.release.commit}` : 'Release unavailable'),
@@ -61,7 +60,7 @@ export function TestsView({ rows, now, revisions }: { rows: RunRow[]; now: strin
       ) : <span className="text-ink-3">Unavailable</span>),
       mobileCell: (r) => (r.release ? `${r.release.version} on ${r.release.service}` : 'Release unavailable'),
     },
-    { key: 'state', header: 'Verdict', mobile: 'status', sortValue: (r) => r.state, cell: (r) => <Badge tone={VERDICT_TONE[r.state]} dot>{LABEL(r.state)}</Badge> },
+    { key: 'state', header: 'Verdict', mobile: 'status', sortValue: (r) => r.state, cell: (r) => <Badge tone={VERDICT_TONE[r.state]} dot>{capitalise(r.state)}</Badge> },
     { key: 'duration', header: 'Duration', numeric: true, muted: true, hideBelow: 'lg', mobile: 'fact', sortValue: (r) => r.durationMs, cell: (r) => (r.state === 'skipped' ? 'Not run' : formatDuration(r.durationMs)), mobileCell: (r) => (r.state === 'skipped' ? 'Not run' : formatDuration(r.durationMs)) },
     { key: 'started', header: 'Started', numeric: true, mobile: 'fact', sortValue: (r) => r.startedAt, cell: (r) => formatRelative(r.startedAt, asOf), mobileCell: (r) => `Started ${formatRelative(r.startedAt, asOf)}` },
     {
@@ -106,7 +105,7 @@ export function TestsView({ rows, now, revisions }: { rows: RunRow[]; now: strin
                 ask={<AskAbout question={isFiltered ? `What do the verification runs ${filters} have in common, and why?` : 'What stands out in the verification runs, and why?'} />}
                 search={{ value: draft, onChange: setDraft, placeholder: 'Search runs' }}
                 filters={[
-                  { key: 'state', label: 'Verdict', value: f.state, onChange: (state) => set({ state, page: '1' }), options: [{ value: 'all', label: 'All' }, ...['passed', 'failed', 'skipped'].map((w) => ({ value: w, label: LABEL(w) }))] },
+                  { key: 'state', label: 'Verdict', value: f.state, onChange: (state) => set({ state, page: '1' }), options: [{ value: 'all', label: 'All' }, ...['passed', 'failed', 'skipped'].map((w) => ({ value: w, label: capitalise(w) }))] },
                   // What the tiles count: the latest run of each verification, without the runs it replaced.
                   { key: 'runs', label: 'Runs', value: f.runs, onChange: (runs) => set({ runs, page: '1' }), options: [{ value: 'all', label: 'All' }, { value: 'latest', label: 'Latest of each' }] },
                 ]}

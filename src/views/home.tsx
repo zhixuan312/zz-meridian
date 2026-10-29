@@ -17,7 +17,7 @@ import { Meridian, useMeridianIndex } from '@/components/charts/meridian';
 import { SO_FAR, TrendChart } from '@/components/charts/trend-chart';
 import { FeaturedMetric } from '@/components/patterns/featured-metric';
 import { MetricTile } from '@/components/patterns/metric-tile';
-import { AXIS_FORMATTERS, FORMATTERS, formatCompact, formatCost, formatDuration, formatPercent } from '@/lib/format';
+import { AXIS_FORMATTERS, FORMATTERS, changeOf, formatCompact, formatCost, formatDuration, formatPercent } from '@/lib/format';
 import { formatDate, formatDay, formatShortDate } from '@/lib/format-date';
 import { PERIOD_DAYS, PERIOD_LABEL } from '@/lib/period';
 import { AskPeriod } from './ask-period';
@@ -32,8 +32,6 @@ export function ShareHome({ data }: { data: HomeData }) {
 }
 
 const linkClass = 'row-link inline-flex items-center gap-1 font-medium text-ink hover:text-accent-ink';
-/** A change against the period before, as a fraction; null when nothing comes before or it was zero, which a tile says in words. */
-const change = (now: number, before: number | null) => (before ? now / before - 1 : null);
 const share = (n: number) => formatPercent(n, 1);
 const costCompact = FORMATTERS['cost-compact'];
 
@@ -62,7 +60,7 @@ export function RevenueCard({ data, dates, finding }: { data: HomeData; dates: s
         value={r.value}
         points={points}
         format={formatCost}
-        delta={change(r.value, r.previous) ?? undefined}
+        delta={changeOf(r.value, r.previous) ?? undefined}
         intent="up"
         caption={r.best || running ? <>{(r.best ? `About ${formatCost(r.average)} a day. The best day was ${formatDay(r.best.date)}, with ${formatCost(r.best.value)}.` : '') + (running ? ` ${SO_FAR}` : '')}</> : undefined}
         finding={finding ? { text: finding } : undefined}
@@ -105,7 +103,7 @@ export function companyTiles(data: HomeData): ReactNode[] {
       <MetricTile key="tokens" label={C.tokens.label} hint={C.tokens.hint} icon={<Boxes />} value={tokens.value} format={formatCompact} note={`In ${formatCompact(tokens.requests)} requests`} />
     ) : unreadTile(C.tokens.label, C.tokens.hint),
     requests ? (
-      <MetricTile key="requests" label={HOME_METRICS.requests.label} hint={HOME_METRICS.requests.hint} value={requests.value} delta={change(requests.value, requests.previous)} points={requests.points} format={formatCompact} />
+      <MetricTile key="requests" label={HOME_METRICS.requests.label} hint={HOME_METRICS.requests.hint} value={requests.value} delta={changeOf(requests.value, requests.previous)} points={requests.points} format={formatCompact} />
     ) : unreadTile(HOME_METRICS.requests.label, HOME_METRICS.requests.hint),
   ];
 }
@@ -135,7 +133,7 @@ function OperatingTiles({ data }: { data: HomeData }) {
       ) : unreadTile(C.compute.label, C.compute.hint)}
       {mayCost ? (
         data.computeCost ? (
-          <MetricTile label={C.computeCost.label} hint={C.computeCost.hint} value={data.computeCost.value} delta={change(data.computeCost.value, data.computeCost.previous)} intent="neutral" points={data.computeCost.points} format={formatCost} />
+          <MetricTile label={C.computeCost.label} hint={C.computeCost.hint} value={data.computeCost.value} delta={changeOf(data.computeCost.value, data.computeCost.previous)} intent="neutral" points={data.computeCost.points} format={formatCost} />
         ) : unreadTile(C.computeCost.label, C.computeCost.hint)
       ) : null}
       {mayCost ? (

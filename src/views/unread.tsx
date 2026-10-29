@@ -3,6 +3,7 @@
 import { Card, CardBody, CardHeader } from '@/components/ui/card';
 import { EmptyState } from '@/components/ui/empty-state';
 import { MetricTile } from '@/components/patterns/metric-tile';
+import { capitalise } from '@/lib/format';
 
 /**
  * A part whose read failed: its card, with its title, says what could not be read in its own place, and the rest of
@@ -13,7 +14,7 @@ export function Unread({ title, what }: { title: string; what: string }) {
     <Card>
       <CardHeader title={title} />
       <CardBody>
-        <EmptyState kind="error" layout="inline" title={`${what.replace(/^./, (s) => s.toUpperCase())} could not be read`}>
+        <EmptyState kind="error" layout="inline" title={`${capitalise(what)} could not be read`}>
           What it states is missing, not zero. The rest of the page is unaffected.
         </EmptyState>
       </CardBody>
