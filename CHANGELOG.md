@@ -62,6 +62,7 @@ Every release of ZZ Meridian, newest first. Versions follow semver: a removed or
 - **A request's More actions leads to API keys only for someone who may open them.** A Viewer was offered Open API keys and landed on the refusal page; `RequestView` takes `mayOpenKeys`.
 - **Usage's context names no busiest hour when no request was counted.** A fresh product's every hour ties at zero, and the first was named the busiest ("Monday 00:00, 0 requests"); it says no request was counted by hour.
 - **A collection's description names the reporting timezone.** `days`, `usage`, `compute`, `costs` and `hours` told the assistant their days and hours were UTC whatever `app.timezone` said; they name `app.timezone`.
+- **`adopt` in a project already on Meridian refuses in one line** ("already on Meridian 0.35.0 … run npx zz-meridian@latest update") instead of listing every file the team has edited since as a conflict.
 - **`create` on a path that is a file refuses in one line** ("… is a file: name a new folder") instead of a Node stack trace.
 - **The Tests page's Ask names a release by its version**, not its internal id ("of releases_2").
 - **An agent's Activity line joins three names as "A, B and C"**, and records the member's id when the policy names no one, not "You" for every reader.

@@ -13,7 +13,7 @@ import {
   run, runTool, sha256, writeIn, writeManifest,
 } from './files.js';
 import { BRIEF_TEMPLATE, managedBlock, upsertManagedBlock } from './context.js';
-import { FIXED, adoptSetOf, managedPaths } from './ownership.js';
+import { FIXED, adoptSetOf, managedPaths, parseManifest } from './ownership.js';
 import { MERIDIAN_SCRIPTS, TOOLCHAIN, needOf } from './reconcile.js';
 
 export type AdoptOptions = { root: string; brand: Record<string, string>; allowDirty: boolean; install: boolean };
@@ -186,6 +186,14 @@ export function adopt(o: AdoptOptions): number {
 
   // ── Checks: nothing is written until all of them pass ─────────────────────────────────────────────────
   if (!fs.existsSync(pkgPath)) return fail(`no package.json in ${root}: run adopt in the project's folder`);
+  // A project adopt or create already set up holds Meridian's files as its manifest records them, and whatever the team
+  // changed since; adopted again, every edited one would be listed as a conflict. Moving it to this release is update's.
+  const manifestPath = path.join(root, '.meridian/manifest.json');
+  if (fs.existsSync(manifestPath)) {
+    let at = '';
+    try { at = ` ${parseManifest(fs.readFileSync(manifestPath, 'utf8')).version}`; } catch { /* the version is only named */ }
+    return fail(`this project is already on Meridian${at} (.meridian/manifest.json): run npx zz-meridian@latest update to move it to this release`);
+  }
   const pkg = JSON.parse(fs.readFileSync(pkgPath, 'utf8'));
   const deps = { ...pkg.dependencies, ...pkg.devDependencies };
   const dir = appDir(root);
