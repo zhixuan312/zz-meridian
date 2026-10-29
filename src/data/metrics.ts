@@ -59,7 +59,7 @@ type PeriodDays = { series: DailyPoint[]; previous: DailyPoint[]; totals: { curr
 
 /**
  * A period of days. `series` is the period's complete days, oldest first and ending yesterday: the latest 7, 30 or 90,
- * and for `all` every complete day kept. `previous` is the same number of complete days before them, fewer where fewer
+ * and for `all` every complete day kept. `previous` is the same number of complete days before them, none where fewer
  * are kept and none for `all`; `totals.previous` is null when there are none, so nothing is compared with nothing.
  * `running` is the day in progress, the row of the clock's own date in `app.timezone`, or null when the latest row is a complete day. It
  * is in no series and no total: it is handed over on its own, for a chart of days to draw as running.
@@ -75,7 +75,9 @@ export async function readDays(period: Period): Promise<PeriodDays> {
   const days = rows as DailyPoint[];
   const complete = days.filter((d) => d.date < today);
   const n = PERIOD_DAYS[period] ?? complete.length;
-  const series = n ? complete.slice(-n) : [], previous = complete.slice(-2 * n, -n);
+  const series = n ? complete.slice(-n) : [];
+  // A sum over 30 days set against one over 90 is no change, so a previous period is whole or none.
+  const before = complete.slice(-2 * n, -n), previous = before.length === n ? before : [];
   return { series, previous, totals: { current: totalsOf(series), previous: previous.length ? totalsOf(previous) : null }, running: days.find((d) => d.date === today) ?? null, observedAt };
 }
 
