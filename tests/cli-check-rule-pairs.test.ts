@@ -152,7 +152,8 @@ const RAIL = ['--rail', '/a,/b'];
 const NOT_RUN = 'not run';
 
 const PRECHECKS: Precheck[] = [
-  { line: '--homes: bad is not <home>=<workspace>', source: ['throw new Error(`--homes:', 'FAIL    navigate: ${(e as Error).message}'],
+  // The refusal itself is thrown by `workspaceHomes` in scripts/lib/journey.ts (HOMES_SOURCE); navigate prints it.
+  { line: '--homes: bad is not <home>=<workspace>', source: ['FAIL    navigate: ${(e as Error).message}'],
     fails: { args: [...RAIL, '--homes', 'bad', '--routes', '/a'], config: EMPTY, expect: { code: 1, has: '--homes: bad is not <home>=<workspace>' } },
     passes: { args: [...RAIL, '--homes', '/a=Main', '--routes', '/a'], config: EMPTY, expect: { code: 0, has: NOT_RUN } } },
   { line: 'smokeRoutes: /zzz is not one of the rail routes', source: 'FAIL    navigate: ${(e as Error).message}',
@@ -221,6 +222,7 @@ describe('navigate: every rule printed before Chrome starts fails where it shoul
  * first look for the menu's trigger and the second, and never refreshes live or refuses a prefetch. perf-live's cases and
  * scripts/perf.ts's own tests hold them.
  */
+const HOMES_SOURCE = 'throw new Error(`--homes:';
 const PERF_ONLY = [
   'a live refresh was still running', 'no refresh action started within', 'no refresh action answered', 'the router refresh after the verified live refresh did not finish',
   'had already been made before the press', 'the ${missing}, is covered or gone',
@@ -240,7 +242,7 @@ const SITES: { name: string; file: string; site: RegExp; sources: string[] }[] =
   { name: 'keyboard', file: 'scripts/keyboard.ts', site: /problems\.push\(/, sources: sourcesOf((r) => r.suite === 'keyboard') },
   { name: 'vitals', file: 'scripts/vitals.ts', site: /m\.(?:lcp|inp|cls|dropped) [>=]+ [\d.]+ && '|!!m\.answer/, sources: sourcesOf((r) => r.suite === 'vitals') },
   { name: 'navigate', file: 'scripts/navigate.ts', site: NAVIGATE, sources: [...sourcesOf((r) => r.suite.startsWith('navigate') && !r.file), ...PRECHECKS.flatMap((c) => c.source), 'cap ${cap} KiB', 'console.log(`FAIL    ${p}`)'] },
-  { name: 'journey', file: 'scripts/lib/journey.ts', site: JOURNEY, sources: [...sourcesOf((r) => r.file === 'scripts/lib/journey.ts'), ...PERF_ONLY] },
+  { name: 'journey', file: 'scripts/lib/journey.ts', site: JOURNEY, sources: [...sourcesOf((r) => r.file === 'scripts/lib/journey.ts'), ...PERF_ONLY, HOMES_SOURCE] },
 ];
 
 function sourcesOf(pick: (r: Rule) => boolean): string[] {

@@ -42,13 +42,12 @@ import { resolveCoverage } from './lib/coverage.ts';
 import { railRoutes } from './lib/routes.ts';
 import { parseShard, shardOf, WHOLE_PROTOCOL_REFUSAL } from './lib/shard.ts';
 import { summary } from './lib/timing.ts';
-import { DEVICES, Fail, drawerRoutes, journey, journeyStart, liveRefresh, METRICS, prepare, type Condition, type Device, type Metric, type NavConfig } from './lib/journey.ts';
-import { workspaceHomes } from './navigate.ts';
+import { DEVICES, Fail, drawerRoutes, journey, journeyStart, liveRefresh, METRICS, prepare, type Condition, type Device, type Metric, type NavConfig, workspaceHomes } from './lib/journey.ts';
 import { holdArgs } from './lib/args.ts';
 
 const ROOT = path.resolve(import.meta.dirname, '..');
 const args = process.argv.slice(2);
-holdArgs('perf', args, ['--base', '--config', '--rail', '--routes', '--samples', '--shard']);
+holdArgs('perf', args, ['--base', '--config', '--homes', '--rail', '--rate', '--routes', '--samples', '--shard']);
 const opt = (k: string) => { const i = args.indexOf(k); return i >= 0 ? args[i + 1] : undefined; };
 const base = (opt('--base') ?? process.env.BASE ?? 'http://localhost:3000').replace(/\/$/, '');
 const PROTOCOL_SAMPLES = 20;
@@ -150,7 +149,7 @@ async function main(): Promise<number> {
   // A workspace's home that no rail links to is reached through the workspace menu, as navigate reaches it.
   let homes: Map<string, string>;
   try {
-    homes = await workspaceHomes();
+    homes = await workspaceHomes(args);
   } catch (e) {
     console.log(`FAIL    perf: ${(e as Error).message}`);
     out({ status: 'FAIL', errors: [(e as Error).message] });

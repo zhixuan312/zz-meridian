@@ -292,8 +292,8 @@ describe('the 0.16.3 migrations', () => {
     expect(byId('journey-moved').since).toBe('0.16.3');
     expect(byId('journey-moved').applies(project({ 'tests/navigate-start.test.ts': "import { startFor } from '../scripts/navigate.ts';\n" }))).toEqual(['tests/navigate-start.test.ts']);
     expect(byId('journey-moved').applies(project({ 'tests/navigate-start.test.ts': "import { startFor } from '../scripts/lib/journey.ts';\n" }))).toBeNull();
-    // `workspaceHomes` stayed with the command.
-    expect(byId('journey-moved').applies(project({ 'tests/homes.test.ts': "import { workspaceHomes } from '../scripts/navigate.ts';\n" }))).toBeNull();
+    // `workspaceHomes` moved with the journey, so a file that imports it from the command is listed too.
+    expect(byId('journey-moved').applies(project({ 'tests/homes.test.ts': "import { workspaceHomes } from '../scripts/navigate.ts';\n" }))).toEqual(['tests/homes.test.ts']);
     expect(byId('journey-moved').applies(path.resolve(import.meta.dirname, '..'))).toBeNull();
   });
 

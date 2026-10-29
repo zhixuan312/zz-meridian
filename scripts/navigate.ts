@@ -53,7 +53,7 @@ import { budgetsOf, limitsFor, type NavigationCheck } from './lib/budgets.ts';
 import { launch, type Page } from './lib/chrome.ts';
 import { resolveCoverage, selectSmokeRoutes } from './lib/coverage.ts';
 import { railRoutes } from './lib/routes.ts';
-import { DEVICES, Fail, METRICS, PREFETCH_WAIT, drawerRoutes, journey, journeyStart, openStart, prepare, sleep, type Device, type Measured, type Metric, type NavConfig } from './lib/journey.ts';
+import { DEVICES, Fail, METRICS, PREFETCH_WAIT, drawerRoutes, journey, journeyStart, openStart, prepare, sleep, workspaceHomes, type Device, type Measured, type Metric, type NavConfig } from './lib/journey.ts';
 import { isPrefetch, prefetchProblems } from './lib/sizes.ts';
 import { headroom, judge, thin } from './lib/timing.ts';
 import { holdArgs } from './lib/args.ts';
@@ -188,26 +188,6 @@ async function prefetchKiB(page: Page, device: Device, landing: string): Promise
 
 const summary = (o: Record<string, unknown>) => console.log(`navigate: ${JSON.stringify({ ...o, timing })}`);
 
-/**
- * Each workspace's home, with the name of the workspace menu's item that opens it: `--homes <home>=<workspace>,...` beside
- * `--rail`; none for `--rail` alone; otherwise `homeHref` and `label` of each of `workspaces` in src/app.config.ts, of
- * which a project without workspaces has none. Throws on an entry of `--homes` that does not name both.
- */
-export async function workspaceHomes(): Promise<Map<string, string>> {
-  const listed = opt('--homes');
-  if (listed !== undefined) {
-    return new Map(listed.split(',').filter(Boolean).map((entry) => {
-      const at = entry.indexOf('=');
-      if (at <= 0 || at === entry.length - 1) throw new Error(`--homes: ${entry} is not <home>=<workspace>`);
-      return [entry.slice(0, at), entry.slice(at + 1)];
-    }));
-  }
-  if (opt('--rail') !== undefined) return new Map();
-  type Workspaces = Record<string, { homeHref?: unknown; label?: unknown }>;
-  const { workspaces } = (await import(pathToFileURL(path.join(ROOT, 'src/app.config.ts')).href)) as { workspaces?: Workspaces };
-  return new Map(Object.values(workspaces ?? {}).flatMap((w) => (typeof w?.homeHref === 'string' && typeof w.label === 'string' ? [[w.homeHref, w.label] as const] : [])));
-}
-
 async function main(): Promise<number> {
   holdArgs('navigate', args, ['--base', '--config', '--homes', '--mode', '--rail', '--rate', '--routes', '--samples', '--timing']);
   if (timing !== 'on' && timing !== 'off') { console.error(`--timing must be on or off, got ${timing}`); return 1; }
@@ -232,7 +212,7 @@ async function main(): Promise<number> {
 
   let homes: Map<string, string>;
   try {
-    homes = await workspaceHomes();
+    homes = await workspaceHomes(args);
   } catch (e) {
     console.log(`FAIL    navigate: ${(e as Error).message}`);
     summary({ mode, status: 'FAIL', errors: [(e as Error).message] });

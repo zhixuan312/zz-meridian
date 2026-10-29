@@ -15,6 +15,7 @@ Every release of ZZ Meridian, newest first. Versions follow semver: a removed or
 - **`requestContext` takes `payloadChars`**, not `payloadBytes`: the sizes were always string lengths, and the context prints them as characters.
 - **`memberAccess` takes every row's id and answers by id.** The Members page asked it once a row, and each ask re-resolved the caller and read the roster twice; `memberAccess(ids)` resolves the caller once. Call `memberAccess(members.map((m) => m.id))` and read `access[id]`.
 - **The template's server actions answer one `ActionResult`, from `@/lib/collection`.** The members, settings, tickets, keys and replay actions each declared the same `{ ok: true } | { ok: false, error }` under four names, one of them exported by a client view; `Result` (from `@/views/members`), `TicketResult`, `KeyResult` and `ReplayResult` are gone. Import `ActionResult`, and pass what the action hands back as its parameter (`ActionResult<{ id: string; status: number }>`). `@/views/requests` no longer re-exports `REQUEST_METHODS`; import it from `@/data/request-methods`.
+- **`workspaceHomes` lives in `scripts/lib/journey.ts` and takes the command's arguments.** `scripts/perf.ts` read it from `scripts/navigate.ts`, and so took `--homes` through another command's argument list; import it from `scripts/lib/journey.ts` and call `workspaceHomes(process.argv.slice(2))`. The `journey-moved` migration now lists a file that imports it from `scripts/navigate.ts`.
 
 ### Added
 

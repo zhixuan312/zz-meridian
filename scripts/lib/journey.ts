@@ -2,12 +2,17 @@
  * The journey scripts/navigate.ts and scripts/perf.ts both take: a tab instrumented to time a press by the page's own
  * clock, a start on the rail route (or the workspace menu) that reaches the destination, the waits a visitor would make
  * (the destination's prefetch, the phone drawer), and the three times from the press: the shell, the data and the
- * interaction. scripts/navigate.ts says what each time means and how a run is judged; this module only takes them.
+ * interaction, and each workspace's home the start may go through. scripts/navigate.ts says what each time means and how
+ * a run is judged; this module only takes them.
  */
+import path from 'node:path';
+import { pathToFileURL } from 'node:url';
 import { DEEP_SOURCE } from './deep.ts';
 import { measurePhone } from './phone.ts';
 import type { BudgetsConfig, NavigationCheck } from './budgets.ts';
 import type { Page } from './chrome.ts';
+
+const ROOT = path.resolve(import.meta.dirname, '../..');
 
 export const sleep = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
 
@@ -534,4 +539,25 @@ async function measureInteraction(page: Page, route: string, check: NavigationCh
   const ms = await result(page, 'interactive', Date.now() + wait);
   if (ms === null) return { fail: new Fail('control-dead', `pressing ${check.controlSelector} (${check.probe}) changed nothing on ${check.resultSelector} in ${wait} ms`) };
   return { ms };
+}
+
+/**
+ * Each workspace's home, with the name of the workspace menu's item that opens it: `--homes <home>=<workspace>,...` beside
+ * `--rail` in the command's `args`; none for `--rail` alone; otherwise `homeHref` and `label` of each of `workspaces` in src/app.config.ts, of
+ * which a project without workspaces has none. Throws on an entry of `--homes` that does not name both.
+ */
+export async function workspaceHomes(args: readonly string[]): Promise<Map<string, string>> {
+  const opt = (k: string) => { const i = args.indexOf(k); return i >= 0 ? args[i + 1] : undefined; };
+  const listed = opt('--homes');
+  if (listed !== undefined) {
+    return new Map(listed.split(',').filter(Boolean).map((entry) => {
+      const at = entry.indexOf('=');
+      if (at <= 0 || at === entry.length - 1) throw new Error(`--homes: ${entry} is not <home>=<workspace>`);
+      return [entry.slice(0, at), entry.slice(at + 1)];
+    }));
+  }
+  if (opt('--rail') !== undefined) return new Map();
+  type Workspaces = Record<string, { homeHref?: unknown; label?: unknown }>;
+  const { workspaces } = (await import(pathToFileURL(path.join(ROOT, 'src/app.config.ts')).href)) as { workspaces?: Workspaces };
+  return new Map(Object.values(workspaces ?? {}).flatMap((w) => (typeof w?.homeHref === 'string' && typeof w.label === 'string' ? [[w.homeHref, w.label] as const] : [])));
 }
