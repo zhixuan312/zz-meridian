@@ -5,7 +5,7 @@
  */
 import type { LoggedRequest } from '@/data/requests';
 import type { CustomerRecord } from '@/data/sample';
-import { formatCompact, formatCost, formatPercent } from '@/lib/format';
+import { formatCompact, formatCost, formatPercent, plural } from '@/lib/format';
 import { dayOf, formatDate } from '@/lib/format-date';
 import { freshnessOf, type Fact, type Insight, type SharedContext } from '@/lib/shared-context';
 import { week } from './customers-context';
@@ -119,7 +119,7 @@ export function customerContext(data: CustomerData): SharedContext {
       label: 'What it asks for, last 30 days',
       value: endpoints.slice(0, NAMED_ENDPOINTS).map(([route, n]) => `${route} ${formatPercent(n / c.requests, 0)}`).join(', ') + (endpoints.length > NAMED_ENDPOINTS ? `, and ${endpoints.length - NAMED_ENDPOINTS} more` : ''),
     }] : []),
-    { label: 'Region and seats', value: `${c.region}, ${c.seats} seats` },
+    { label: 'Region and seats', value: `${c.region}, ${c.seats} ${plural(c.seats, 'seat')}` },
     { label: 'Customer since', value: formatDate(c.joined) },
     ...(latest ? [{ label: 'Its latest requests in the sampled log', value: latest.length ? `${latest.map((r) => r.id).join(', ')}, newest first: the latest ${latest.length} only, where the log holds more; explore_customer counts them all by status class` : 'none' }] : []),
   ];

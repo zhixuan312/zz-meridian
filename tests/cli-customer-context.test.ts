@@ -23,6 +23,10 @@ const { revenue, errorRate } = demoTotals('30d').current;
 const full = { product: { revenue, errorRate }, latest: REQUESTS.slice(0, 5), ...at };
 
 describe("One customer's context", () => {
+  it('counts one seat in the singular', () => {
+    const c = customerContext({ customer: { ...CUSTOMERS[0], seats: 1 }, ...full });
+    expect(c.facts.find((f) => f.label === 'Region and seats')?.value).toBe(`${CUSTOMERS[0].region}, 1 seat`);
+  });
   it("names the customer's own address and what the page shows of it, within its budget for every customer", () => {
     for (const customer of CUSTOMERS) {
       const c = customerContext({ customer, ...full });

@@ -12,7 +12,7 @@ import { BarList } from '@/components/charts/bar-list';
 import { DataTable } from '@/components/patterns/data-table';
 import { MetricTile } from '@/components/patterns/metric-tile';
 import { AskAbout } from '@/components/patterns/ask-about';
-import { formatCompact, formatCost, formatPercent } from '@/lib/format';
+import { formatCompact, formatCost, formatPercent, plural } from '@/lib/format';
 import { dayOf, formatDate, formatDay } from '@/lib/format-date';
 import { requestColumns } from '@/system/sample-cells';
 import {
@@ -92,7 +92,7 @@ function Standing({ data }: { data: CustomerData }) {
               { label: 'Owner, on our side', value: c.owner },
               { label: 'Customer since', value: formatDate(c.joined) },
               { label: 'Region', value: c.region, mono: true },
-              { label: 'Seats', value: `${c.seats} seats` },
+              { label: 'Seats', value: `${c.seats} ${plural(c.seats, 'seat')}` },
             ]}
           />
         </CardBody>
