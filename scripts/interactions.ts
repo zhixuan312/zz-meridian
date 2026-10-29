@@ -153,7 +153,8 @@ const walk = async (route: string, width: number) => {
     let path: string | null;
     try { path = linkPath(href, base + route); } catch { failures.push(`${route}: link ${href} is not a URL`); continue; }
     if (path === null || checkedLinks.has(path)) continue;
-    const status = (await fetch(base + path, { redirect: 'manual' })).status;
+    // As the persona the page was opened as: a link that person may follow answers them, not a request with no one signed in.
+    const status = (await fetch(base + path, { redirect: 'manual', headers: cookie ? { cookie: `${cookie.name}=${cookie.value}` } : {} })).status;
     checkedLinks.set(path, status);
     if (status >= 400) failures.push(`${route}: link ${href}${path === href ? '' : ` (${path})`} answers ${status}`);
   }
