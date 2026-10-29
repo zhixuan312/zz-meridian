@@ -37,17 +37,14 @@ import { launch } from './lib/chrome.ts';
 import { DEEP_SOURCE } from './lib/deep.ts';
 import { discover } from './lib/routes.ts';
 import { settle } from './lib/settle.ts';
-import config from './verify.config.ts';
+import { detailRoutes, personaCookie } from './lib/team-config.ts';
 
 const args = process.argv.slice(2);
 const opt = (k: string, d: string) => { const i = args.indexOf(k); return i >= 0 ? args[i + 1] : d; };
 const base = opt('--base', process.env.BASE ?? 'http://localhost:3100');
 // `--as` signs every open in as one persona (scripts/verify.config.ts), through the cookie scripts/lib/chrome.ts sets
 // before the first request. Without it nothing changes: no cookie is passed and the suite runs exactly as before.
-const personas = (config as { personas?: Record<string, { cookie: { name: string; value: string } }> }).personas ?? {};
-const as = opt('--as', '');
-const cookie = as ? personas[as]?.cookie : undefined;
-if (as && !cookie) { console.error(`audit: --as ${as} is not a declared persona. Declared personas: ${Object.keys(personas).join(', ')}.`); process.exit(1); }
+const cookie = personaCookie('audit', opt('--as', ''));
 const EMBEDS_ONLY = args.includes('--embeds-only');
 const ATLAS = args.includes('--atlas');
 
@@ -72,8 +69,6 @@ async function atlasRoutes(): Promise<string[]> {
 }
 
 const found = discover();
-// verify.config.ts is the team's, so read the one field this needs through its own type.
-const detailRoutes = (config as { detailRoutes?: string[] }).detailRoutes ?? [];
 const MISSING = missingRoutes(args);
 const asked = opt('--routes', '') ? [...new Set(opt('--routes', '').split(','))] : null;
 const isEmbed = (r: string) => r.startsWith('/embed/');

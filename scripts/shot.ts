@@ -29,7 +29,7 @@
 import path from 'node:path';
 import { answerProblem, DRAWS_NOT_FOUND, missingRoutes } from './lib/answered.ts';
 import { launch, type Page } from './lib/chrome.ts';
-import config from './verify.config.ts';
+import { personaCookie } from './lib/team-config.ts';
 
 // A picture is for the eye, on a screen that is usually 2x: the checks measure at 1x (scripts/lib/chrome.ts), this draws at 2x.
 process.env.DPR ??= '2';
@@ -56,12 +56,7 @@ const point = opt('--point', '');
 const at = Number(opt('--at', '0.6'));
 if (!Number.isFinite(at) || at < 0 || at > 1) throw new Error('--at must be a number from 0 to 1');
 const as = opt('--as', '');
-const personas = (config as { personas?: Record<string, { cookie: { name: string; value: string } }> }).personas ?? {};
-const cookie = as ? personas[as]?.cookie : undefined;
-if (as && !cookie) {
-  console.error(`shot: --as names ${as}, which is not a declared persona. Declared personas: ${Object.keys(personas).join(', ')}.`);
-  process.exit(1);
-}
+const cookie = personaCookie('shot', as);
 const routes = args.length ? args : ['/'];
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 const slug = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');

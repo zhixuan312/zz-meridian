@@ -10,7 +10,7 @@ const ROOT = path.resolve(import.meta.dirname, '..');
 it('refuses a persona the config does not declare, before Chrome starts', () => {
   const r = spawnSync(process.execPath, ['scripts/shot.ts', '/', '--as', 'nobody', '--base', 'http://127.0.0.1:9'], { cwd: ROOT, encoding: 'utf8', timeout: 30_000 });
   expect(r.status).toBe(1);
-  expect(`${r.stdout}${r.stderr}`).toMatch(/shot: --as names nobody, which is not a declared persona\. Declared personas: /);
+  expect(`${r.stdout}${r.stderr}`).toMatch(/shot: --as nobody is not a declared persona\. Declared personas: /);
 });
 
 it('refuses an option given no value, rather than shooting without it', () => {

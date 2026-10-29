@@ -23,21 +23,16 @@ import { DEEP_SOURCE } from './lib/deep.ts';
 import { linkPath } from './lib/links.ts';
 import { discover } from './lib/routes.ts';
 import { settle } from './lib/settle.ts';
-import config from './verify.config.ts';
+import { detailRoutes, personaCookie } from './lib/team-config.ts';
 
 const args = process.argv.slice(2);
 const opt = (k: string, d: string) => { const i = args.indexOf(k); return i >= 0 ? args[i + 1] : d; };
 const base = opt('--base', process.env.BASE ?? 'http://localhost:3100');
-// verify.config.ts is the team's, so read the one field this needs through its own type.
-const detailRoutes = (config as { detailRoutes?: string[] }).detailRoutes ?? [];
 const MISSING = missingRoutes(args);
 const ROUTES = opt('--routes', '') ? opt('--routes', '').split(',') : [...new Set([...discover().filter((r) => !r.startsWith('/system/components')), ...detailRoutes, ...MISSING])];
 // `--as` signs every open in as one persona (scripts/verify.config.ts), through the cookie scripts/lib/chrome.ts sets
 // before the first request; without it nothing changes. `--width` narrows the walk to the widths given (default: both).
-const personas = (config as { personas?: Record<string, { cookie: { name: string; value: string } }> }).personas ?? {};
-const as = opt('--as', '');
-const cookie = as ? personas[as]?.cookie : undefined;
-if (as && !cookie) { console.error(`interactions: --as ${as} is not a declared persona. Declared personas: ${Object.keys(personas).join(', ')}.`); process.exit(1); }
+const cookie = personaCookie('interactions', opt('--as', ''));
 const WIDTHS = opt('--width', '1440,390').split(',').map(Number);
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 // A hang bound, not a budget: how long a press may go unanswered before the walk calls the control dead. How fast a control
