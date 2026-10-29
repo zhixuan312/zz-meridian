@@ -3,7 +3,7 @@ import { revalidateTag } from 'next/cache';
 import { nav, refusal, type NavItem } from '@/app.config';
 import { assistantConfig } from '@/lib/assistant/config';
 import { clock, collections } from '@/data/collections';
-import { Unauthenticated, can, collectionFor, may, nameOf, resolveAccess } from '@/data/access';
+import { Unauthenticated, can, collectionFor, mayEach, nameOf, resolveAccess } from '@/data/access';
 import { ACTIONS, FEATURES, type FeatureId } from '@/data/features';
 import { aggregate, collectionTag, read } from '@/data/read';
 import { whoCan } from '@/data/roles';
@@ -14,7 +14,7 @@ import type { AnyCollection, Grant, Need } from '@/lib/collection';
 import type { PreparedQuery } from '@/lib/explore';
 import { inWords } from '@/lib/format';
 import { dayOf } from '@/lib/format-date';
-import { viewAt, type ViewTool } from '@/lib/shared-context';
+import { viewAt } from '@/lib/shared-context';
 import { viewTools } from '@/logic/tools';
 
 /** The panel sends at most the last 100 messages; a body larger than 2 MB is refused before the rest of it is read. */
@@ -76,7 +76,9 @@ export async function POST(request: Request): Promise<Response> {
 
   // A view tool is registered only where the person satisfies its feature's need. A view's `read` asks the need again,
   // so filtering the list is presentation, not the gate; both stay.
-  const views = (await Promise.all(viewTools.map(async (v) => ((await may(v.needs)) ? v : null)))).filter((v): v is ViewTool => v !== null);
+  const items = nav.flatMap((g) => g.items);
+  const allowed = await mayEach([...viewTools.map((v) => v.needs), ...items.map((i) => i.needs)]);
+  const views = viewTools.filter((_, n) => allowed[n]);
 
   // The prepared query of the page the person is on, and no other page's: the view whose page the address is, where
   // they may use it. It reads through `aggregate()` and `read()`, which ask the person's grant again when a call runs;
@@ -101,7 +103,7 @@ export async function POST(request: Request): Promise<Response> {
   // who can open it, every page whose prepared query reads it or whose declared grants read it (`declared`), with
   // whether this person may open that page, and the figures worked out from it: compute cost is on Home, which a Viewer
   // opens without it, and gross margin is worked out from it. Under `absent` it names none, as the page names nothing.
-  const open = (await Promise.all(nav.flatMap((g) => g.items).map(async (i) => ((await may(i.needs)) ? [i] : [])))).flat();
+  const open = items.filter((_, n) => allowed[viewTools.length + n]);
   const audience = {
     addresses: [
       ...open.filter((i, n) => open.findIndex((o) => o.href === i.href) === n).map((i) => ({ label: i.label, address: i.href })),
@@ -112,7 +114,7 @@ export async function POST(request: Request): Promise<Response> {
         const holding = viewTools.filter((v) => Object.values(v.explore.sources).some((s) => s.collection === c.name));
         // A rail page that declares that read holds it too, though no view's prepared query reads it: Settings reads the
         // workspace for Save workspace.
-        const own = nav.flatMap((g) => g.items).filter((i) => declared(i).includes(`${c.name}:read`) && !holding.some((v) => v.page === i.href));
+        const own = items.filter((i) => declared(i).includes(`${c.name}:read`) && !holding.some((v) => v.page === i.href));
         const pages = [
           ...holding.map((v) => ({ label: v.title, address: v.page.replace(/\[([^\]/]+)\]/g, '<$1>'), open: views.includes(v) })),
           ...own.map((i) => ({ label: i.label, address: i.href, open: open.includes(i) })),

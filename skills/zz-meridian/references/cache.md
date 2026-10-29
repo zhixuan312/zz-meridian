@@ -290,6 +290,14 @@ export async function may(need: Need): Promise<boolean> {
   return satisfies(member, need);
 }
 
+/** `may` for several needs at once, in their order: the caller is resolved once, not once a need (the assistant asks one per view tool and rail item). */
+export async function mayEach(needs: readonly Need[]): Promise<boolean[]> {
+  const scope = await resolveAccess();
+  const member = await memberById(scope.subjectId);
+  if (!member) throw new Unauthenticated();
+  return needs.map((need) => satisfies(member, need));
+}
+
 /** What a page or a view tool calls before it reads: `may` asked one way, refused as the one `AccessDenied` message. */
 export async function requireNeed(need: Need): Promise<void> {
   if (!(await may(need))) throw new AccessDenied();
