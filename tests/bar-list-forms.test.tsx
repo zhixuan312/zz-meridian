@@ -164,3 +164,12 @@ describe('scale', () => {
     expect(width(bar(container, 'a'))).toBe(0);
   });
 });
+
+describe('a total under 1', () => {
+  it('prints each row as its share of that total, as its bar draws it', () => {
+    const items: BarItem[] = [{ key: 'a', label: 'A', value: 0.25 }, { key: 'b', label: 'B', value: 0.1 }];
+    const c = render(<BarList label="Shares" items={items} total={0.5} format={(n) => n.toFixed(2)} />).container;
+    expect(row(c, 'a').getAttribute('title')).toContain('50.0% of 0.50');
+    expect(width(bar(c, 'a'))).toBe(50);
+  });
+});
