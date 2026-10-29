@@ -25,7 +25,7 @@ Status: beta
 
 ## Sizes
 
-One size; it fills its container. The action sits to the right of the text on wide containers and under it on narrow ones.
+One size; it fills its container. The action sits to the right of the text once the banner is 32rem (448px) wide and under it below that, by the banner's own width (a container query), so a banner in the assistant's column or a half-width card wraps on a desk too.
 
 ## States
 
@@ -41,7 +41,7 @@ One size; it fills its container. The action sits to the right of the text on wi
 ## Surfaces
 
 - **Console**: at the top of the page body or of a card.
-- **Mobile**: the same; the action wraps under the text.
+- **Mobile**: the same; the banner is under 32rem, so the action sits under the text.
 - **Embed**: at the top of the view when the data it shows is affected (an incident on the service it reports).
 
 ## Agents
