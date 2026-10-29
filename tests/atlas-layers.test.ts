@@ -99,3 +99,16 @@ describe('the list the Atlas draws from', () => {
     expect(entries()[0].title).not.toBe('moved');
   });
 });
+
+describe("an Atlas page's lead", () => {
+  it('is cut from its README whole, so the status and the body after it survive a paragraph wrapped over lines', () => {
+    for (const e of entries()) {
+      if (e.kind === 'tokens' || e.id === 'decisions') continue;
+      const s = specOf(e);
+      expect(s.body, `${e.section}/${e.id}`).not.toMatch(/^[.,;:]/);
+      expect(s.body, `${e.section}/${e.id}`).not.toMatch(/^Status:/);
+      expect(s.lead, `${e.section}/${e.id}`).not.toMatch(/\n/);
+    }
+    expect(specOf(entry('base', 'motion')!).status).toBe('beta');
+  });
+});

@@ -48,8 +48,10 @@ function parseSpec(md: string) {
   const title = md.match(/^#\s+(.+)$/m)?.[1].trim() ?? '';
   let body = md.replace(/^#\s+.+\n+/, '');
   const banner = (p: string) => /^\s*(\[!\[|!\[|<img)/.test(p);
-  const lead = (body.split(/\n{2,}/).find((p) => !banner(p)) ?? '').replace(/\n/g, ' ').trim();
-  body = body.slice(body.indexOf(lead) + lead.length).trimStart();
+  // Cut by the paragraph as written, then unwrap it: a lead wrapped over lines is not found in the body once unwrapped.
+  const para = body.split(/\n{2,}/).find((p) => !banner(p)) ?? '';
+  const lead = para.replace(/\n/g, ' ').trim();
+  body = body.slice(body.indexOf(para) + para.length).trimStart();
   const status = body.match(/^Status:\s*(\w+)\s*\n/)?.[1];
   if (status) body = body.replace(/^Status:\s*\w+\s*\n+/, '');
   return { title, lead: lead.replace(/[*`]/g, ''), status, body };
