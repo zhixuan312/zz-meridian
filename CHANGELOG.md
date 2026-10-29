@@ -10,6 +10,8 @@ Every release of ZZ Meridian, newest first. Versions follow semver: a removed or
 - **The error screens take Next's `retry`, not `reset`.** `app/(dashboard)/error.tsx` and `app/embed/error.tsx` call `retry`, which fetches the page again; `reset` re-rendered the payload that held the failed read, so Retry drew the same error. A caller that renders `DashboardError` itself passes `retry`.
 - **`PopoverContent` requires a name.** Pass `aria-label` or `aria-labelledby`: a Popover's content is a dialog, and Radix gives it no name of its own, so a screen reader announced an unnamed dialog. A Popover without either is a type error.
 - **A server-paged `DataTable` (`manual`) draws no rows-per-page menu.** Its page size is the server's, so the menu changed nothing the server sent; pass `pageSize`, and drop a one-item `pageSizes` kept only to hide the menu.
+- **`totalsOf` and `Totals` live in `@/lib/totals`.** A period's totals were computed in `src/data/metrics.ts` and again by the sample's fixtures; the one pure function moved, so a logic file can total a period without importing a reading module. Import both from `@/lib/totals`; `@/data/metrics` and `@/data/sample` no longer carry them.
+- **`requestContext` takes `payloadChars`**, not `payloadBytes`: the sizes were always string lengths, and the context prints them as characters.
 
 ### Added
 
@@ -38,6 +40,7 @@ Every release of ZZ Meridian, newest first. Versions follow semver: a removed or
 - **Charts.** Every chart's default count format is the product's (`FORMATTERS.count`), so a rounded-away negative reads `0`, not `-0`. A Bar list draws rows under 1 against its largest row. An Uptime strip's tooltip stays inside its figure at either end, and a strip with no days says "No history yet". A Status list names each strip by the days it holds. Charts build their screen-reader table once per data, not on every cursor move.
 - **Specs and previews.** Card READMEs, preview notes and examples say what the components draw (container steps in rem with their 14px-rem widths, the Appearance menu's order, the required `nav` in the Rail and palette examples, the Proposal's lit edge, the chart roles), and preview controls do what they say.
 - **The utility rules of the check read no comment line**, as the colour rule already did.
+- **Data.** A failed request is one definition, every 5xx and the 429, so a 520 from a proxy is an error to the agent's "Errors and limits" measure as it is on the page. A reconnecting live stream that missed nothing is told it is in sync instead of resent every collection. The Atlas front door draws the sample's own busiest routes, states no change in its first week, and draws the easing curves from the motion tokens.
 
 ## [0.35.0] · 2026-10-29
 
