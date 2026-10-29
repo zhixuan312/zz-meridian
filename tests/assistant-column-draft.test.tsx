@@ -6,7 +6,8 @@ import { Tooltip } from 'radix-ui';
 vi.mock('next/navigation', () => ({ usePathname: () => '/members', useRouter: () => ({ refresh() {}, push() {}, replace() {} }) }));
 const stop = vi.fn();
 const setMessages = vi.fn();
-const chat = { messages: [] as unknown[], setMessages, sendMessage: vi.fn(), regenerate: vi.fn(), addToolApprovalResponse: vi.fn(), stop, status: 'ready', error: undefined };
+const clearError = vi.fn();
+const chat = { messages: [] as unknown[], setMessages, sendMessage: vi.fn(), regenerate: vi.fn(), addToolApprovalResponse: vi.fn(), stop, clearError, status: 'ready', error: undefined as Error | undefined };
 vi.mock('@ai-sdk/react', () => ({ useChat: () => chat }));
 import { AssistantColumn } from '@/components/patterns/assistant';
 
@@ -34,6 +35,16 @@ describe('the assistant column', () => {
     await draw(true);
     fireEvent.click(screen.getByRole('button', { name: 'Clear conversation' }));
     expect(stop).toHaveBeenCalledOnce();
+    expect(setMessages).toHaveBeenLastCalledWith([]);
+  });
+
+  it('takes the last error and its Retry away with the conversation it was about', async () => {
+    chat.messages = [{ id: 'u1', role: 'user', parts: [{ type: 'text', text: 'Hi' }] }];
+    chat.status = 'error';
+    chat.error = new Error('The assistant could not be reached.');
+    await draw(true);
+    fireEvent.click(screen.getByRole('button', { name: 'Clear conversation' }));
+    expect(clearError).toHaveBeenCalledOnce();
     expect(setMessages).toHaveBeenLastCalledWith([]);
   });
 });

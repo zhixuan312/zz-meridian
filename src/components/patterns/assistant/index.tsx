@@ -285,7 +285,7 @@ export function AssistantColumn({ open, onClose, ask, onAsked }: { open: boolean
   const [changedHands, setChangedHands] = useState<Error | null>(null);
   // The column stays mounted while the panel is closed: a message typed and not sent is still there when it opens.
   const [draft, setDraft] = useState('');
-  const { messages, setMessages, sendMessage, regenerate, addToolApprovalResponse, stop, status, error } = useChat({
+  const { messages, setMessages, sendMessage, regenerate, addToolApprovalResponse, stop, clearError, status, error } = useChat({
     transport,
     sendAutomaticallyWhen: lastAssistantMessageIsCompleteWithApprovalResponses,
     onError: (e) => {
@@ -354,6 +354,8 @@ export function AssistantColumn({ open, onClose, ask, onAsked }: { open: boolean
       onClear={() => {
         // A reply still arriving would write the rest of itself into the emptied thread, and the save would keep it.
         if (status === 'submitted' || status === 'streaming') void stop();
+        // The last error was about the thread cleared, and its Retry would send an empty one.
+        clearError();
         setMessages([]);
         forgetThread(localStorage, scope);
       }}
