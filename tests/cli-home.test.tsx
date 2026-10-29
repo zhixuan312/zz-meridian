@@ -56,6 +56,7 @@ import HomeLoading from '../app/(dashboard)/(home)/loading';
 import DashboardError from '../app/(dashboard)/error';
 import { contextText } from '@/lib/shared-context';
 import { homeTool } from '@/logic/tools';
+import { PERIODS } from '@/lib/period';
 import { servedDocument } from './served';
 
 const PERSONAS = { owner: 'members_1', member: 'members_4' };
@@ -171,7 +172,7 @@ describe('Home holds with more in it, by its stated rules', () => {
   });
 
   it('keeps a year, counted to five facts at every period', async () => {
-    for (const period of ['7d', '30d', '90d', 'all']) {
+    for (const period of PERIODS) {
       expect(lines(part(await served(PERSONAS.owner, period), 'A year, counted')).length, period).toBeLessThanOrEqual(5);
     }
   });

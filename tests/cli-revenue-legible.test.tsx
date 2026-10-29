@@ -10,7 +10,7 @@ vi.mock('next/navigation', () => ({
 }));
 
 import { stackPart } from '@/components/charts/scale';
-import type { Period } from '@/lib/period';
+import { PERIODS, type Period } from '@/lib/period';
 import { CUSTOMERS, DAYS, REGIONS, USAGE, demoSeries, demoTotals } from '@/system/fixtures/company';
 import { MODELS } from '@/system/fixtures/sample';
 import { RevenueBody } from '@/views/revenue';
@@ -36,7 +36,7 @@ const card = (root: HTMLElement, title: string) => {
  */
 describe("Revenue's page reads whole", () => {
   it("keeps every tile's note within one line of a four-up tile, at every period", () => {
-    for (const period of ['7d', '30d', '90d', 'all'] as const) {
+    for (const period of PERIODS) {
       const root = body(period);
       for (const label of ['Against a year ago', 'Best day yet', 'Past due']) {
         let tile: HTMLElement | null = within(root).getAllByText(label)[0];

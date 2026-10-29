@@ -485,3 +485,33 @@ describe('the 0.36.0 migration', () => {
     expect(m.applies(path.resolve(import.meta.dirname, '..'))).toBeNull();
   });
 });
+
+describe('the verify-modes migration', () => {
+  it('is declared for 0.5.0', () => expect(byId('verify-modes').since).toBe('0.5.0'));
+  it('names each team file that still passes a removed verify flag', () => {
+    const root = project({
+      'package.json': JSON.stringify({ scripts: { ci: 'pnpm verify -- --quick', verify: 'node scripts/verify.ts' } }),
+      '.github/workflows/ci.yml': 'jobs:\n  check:\n    steps:\n      - run: pnpm verify --no-vitals\n',
+      'bin/release.sh': '#!/bin/sh\nnode scripts/verify.ts --extra /reports\n',
+      'docs/notes.md': 'We used to run pnpm verify --quick.\n',
+    });
+    expect(byId('verify-modes').applies(root)?.sort()).toEqual(['.github/workflows/ci.yml', 'bin/release.sh', 'package.json']);
+  });
+  it("reads a team's own script under scripts/, and none the manifest records as Meridian's", () => {
+    // scripts/ is Meridian's folder, and the usual place a team keeps its CI script: the manifest says which are whose.
+    const root = project({
+      'package.json': JSON.stringify({ scripts: { verify: 'node scripts/verify.ts' } }),
+      'scripts/ci.sh': '#!/bin/sh\npnpm verify --quick\n',
+      'scripts/meridian.sh': '#!/bin/sh\npnpm verify --quick\n',
+      '.meridian/manifest.json': JSON.stringify({ version: '0.4.0', route: 'create', brand: {}, files: { 'scripts/meridian.sh': 'sha256-x' } }),
+    });
+    expect(byId('verify-modes').applies(root)).toEqual(['scripts/ci.sh']);
+  });
+  it('does not apply once only the modes are used', () => {
+    const root = project({
+      'package.json': JSON.stringify({ scripts: { ci: 'pnpm verify --full', verify: 'node scripts/verify.ts' } }),
+      '.github/workflows/ci.yml': 'jobs:\n  check:\n    steps:\n      - run: pnpm verify --full --perf\n',
+    });
+    expect(byId('verify-modes').applies(root)).toBeNull();
+  });
+});

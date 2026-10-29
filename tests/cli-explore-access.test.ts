@@ -9,12 +9,13 @@ vi.mock('next/headers', () => ({
   headers: async () => new Headers(),
 }));
 
-import { Unauthenticated, can, may, resolveAccess } from '@/data/access';
-import { clock, collections, members } from '@/data/collections';
+import { Unauthenticated, may } from '@/data/access';
+import { collections, members } from '@/data/collections';
 import { aggregate, read } from '@/data/read';
-import { exploreSchema, runExplore, type ExploreIO, type ExploreRights, type PreparedQuery } from '@/lib/explore';
+import { exploreSchema, runExplore, type PreparedQuery } from '@/lib/explore';
 import { homeExplore } from '@/logic/home-explore';
 import { viewTools } from '@/logic/tools';
+import { io, rights } from './cli-explore-kit';
 
 /**
  * A prepared query reads with exactly the page's rights (FR-40, AC-14.3): as each of the sample's five people, it offers no
@@ -23,13 +24,6 @@ import { viewTools } from '@/logic/tools';
  * access to that."; and a person suspended after the tool was listed reads nothing.
  */
 const PEOPLE = { Owner: 'members_1', Admin: 'members_2', Member: 'members_4', 'Key manager': 'members_5', Viewer: 'members_12' };
-const io = (): ExploreIO => ({ aggregate, read: (name, q) => read(name, q), today: clock().toISOString().slice(0, 10) });
-async function rights(): Promise<ExploreRights> {
-  const scope = await resolveAccess();
-  const readable = new Set<string>();
-  for (const c of collections) if (await can(scope, c.name, 'read')) readable.add(c.name);
-  return { readable, hidden: (name) => ((collections.find((c) => c.name === name)?.hidden ?? []) as string[]) };
-}
 const HIDDEN = collections.flatMap((c) => ((c.hidden ?? []) as string[]).map((f) => `"${f}"`));
 
 afterEach(async () => { jar.value = undefined; await members.update!(['members_4'], { status: 'Active' }); });

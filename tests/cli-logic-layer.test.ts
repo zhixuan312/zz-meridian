@@ -5,18 +5,10 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
+import { walk as walkTree } from '../scripts/lib/layer-rules.ts';
 
 const ROOT = path.resolve(import.meta.dirname, '..');
-const walk = (dir: string, out: string[] = []): string[] => {
-  const abs = path.join(ROOT, dir);
-  if (!fs.existsSync(abs)) return out;
-  for (const entry of fs.readdirSync(abs, { withFileTypes: true })) {
-    const rel = path.posix.join(dir, entry.name);
-    if (entry.isDirectory()) walk(rel, out);
-    else out.push(rel);
-  }
-  return out;
-};
+const walk = (dir: string) => walkTree(ROOT, dir, /./);
 const source = (rel: string) => fs.readFileSync(path.join(ROOT, rel), 'utf8');
 // The 35 producers are 4 *-parts.ts, 14 *-context.ts, 14 *-explore.ts, plus tools.ts, fact-insight.ts and main-summary.ts.
 const isProducer = (f: string) => /-(parts|context|explore)\.ts$/.test(f) || /\/(tools|fact-insight|main-summary)\.ts$/.test(f);

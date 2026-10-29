@@ -8,12 +8,10 @@ vi.mock('next/headers', () => ({
   headers: async () => new Headers(),
 }));
 
-import { can, resolveAccess } from '@/data/access';
-import { clock, collections } from '@/data/collections';
-import { aggregate, read } from '@/data/read';
-import { runExplore, type ExploreIO, type ExploreRights, type PreparedQuery } from '@/lib/explore';
+import { runExplore, type PreparedQuery } from '@/lib/explore';
 import { homeExplore } from '@/logic/home-explore';
 import { homeTool } from '@/logic/tools';
+import { io, rights } from './cli-explore-kit';
 
 /**
  * Home's prepared query states the gross margin as Home does (FR-39): a percentage of the same complete days, and its
@@ -21,13 +19,6 @@ import { homeTool } from '@/logic/tools';
  * it says what the page says.
  */
 const fmt = (n: number) => n.toLocaleString('en-US', { maximumFractionDigits: 2 });
-async function rights(): Promise<ExploreRights> {
-  const scope = await resolveAccess();
-  const readable = new Set<string>();
-  for (const c of collections) if (await can(scope, c.name, 'read')) readable.add(c.name);
-  return { readable, hidden: (name) => ((collections.find((c) => c.name === name)?.hidden ?? []) as string[]) };
-}
-const io = (): ExploreIO => ({ aggregate, read: (name, q) => read(name, q), today: clock().toISOString().slice(0, 10) });
 
 describe("Home's prepared query and Home agree on the gross margin", () => {
   it('in percent over the last 30 complete days, and its change in points', async () => {

@@ -23,10 +23,10 @@ import { facts } from '@/app.config';
 import { formatCompact } from '@/lib/format';
 import { contextText } from '@/lib/shared-context';
 import { homeTool } from '@/logic/tools';
+import { PERIODS } from '@/lib/period';
 
 const PERSONAS = { owner: 'members_1', admin: 'members_2', member: 'members_4', viewer: 'members_12' };
 /** What a view's context may take (tests/shared-context.test.tsx holds every view to it). */
-const PERIODS = ['7d', '30d', '90d', 'all'] as const;
 
 beforeEach(() => { jar.value = undefined; fail.names.clear(); });
 

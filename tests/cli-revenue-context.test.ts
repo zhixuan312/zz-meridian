@@ -2,7 +2,7 @@
 // Named cli-* so the payload leaves it out: it is about the sample's own page, which a product replaces.
 import { describe, expect, it } from 'vitest';
 import { formatCost } from '@/lib/format';
-import type { Period } from '@/lib/period';
+import { PERIODS, type Period } from '@/lib/period';
 import { contextText } from '@/lib/shared-context';
 import { CUSTOMERS, DAYS, REGIONS, USAGE, demoSeries, demoTotals } from '@/system/fixtures/company';
 import { MODELS } from '@/system/fixtures/sample';
@@ -57,7 +57,7 @@ describe("Revenue's context", () => {
   });
 
   it('fits the budget every context is held to, at every period', () => {
-    for (const period of ['7d', '30d', '90d', 'all'] as const) expect(contextText(context(period)).length, period).toBeLessThanOrEqual(BUDGET);
+    for (const period of PERIODS) expect(contextText(context(period)).length, period).toBeLessThanOrEqual(BUDGET);
   });
 
   it('says a read that failed could not be read, and the rest stands', () => {

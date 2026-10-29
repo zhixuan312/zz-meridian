@@ -4,18 +4,10 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
+import { walk as walkTree } from '../scripts/lib/layer-rules.ts';
 
 const ROOT = path.resolve(import.meta.dirname, '..');
-const walk = (dir: string, out: string[] = []): string[] => {
-  const abs = path.join(ROOT, dir);
-  if (!fs.existsSync(abs)) return out;
-  for (const entry of fs.readdirSync(abs, { withFileTypes: true })) {
-    const rel = path.posix.join(dir, entry.name);
-    if (entry.isDirectory()) walk(rel, out);
-    else out.push(rel);
-  }
-  return out;
-};
+const walk = (dir: string) => walkTree(ROOT, dir, /./);
 const source = (rel: string) => fs.readFileSync(path.join(ROOT, rel), 'utf8');
 
 describe('the alerts module', () => {

@@ -8,25 +8,19 @@ vi.mock('next/headers', () => ({
 }));
 
 import { z } from 'zod';
-import { can, resolveAccess } from '@/data/access';
 import { clock, collections } from '@/data/collections';
 import { read, aggregate } from '@/data/read';
-import { runExplore, type ExploreRights, type PreparedQuery } from '@/lib/explore';
+import { runExplore, type PreparedQuery } from '@/lib/explore';
 import { nowExplore } from '@/logic/now-explore';
 import { releasesExplore } from '@/logic/releases-explore';
 import { releaseRefers, testsExplore } from '@/logic/tests-explore';
+import { rights } from './cli-explore-kit';
 
 /**
  * The runs Releases, Tests and Now count name each release by the version, service and environment the pages write
  * (AC-14.8's reading at review, D1): told only "releases_1: 1 failed", a model paired the keys with the page's versions
  * by position and sent the reader to the wrong release.
  */
-async function rights(): Promise<ExploreRights> {
-  const scope = await resolveAccess();
-  const readable = new Set<string>();
-  for (const c of collections) if (await can(scope, c.name, 'read')) readable.add(c.name);
-  return { readable, hidden: (name) => ((collections.find((c) => c.name === name)?.hidden ?? []) as string[]) };
-}
 const ask = async (q: PreparedQuery, input: Record<string, unknown>) =>
   (await runExplore(q, input, await rights(), { aggregate, read, today: clock().toISOString().slice(0, 10) }, '/', z.object({}))).answer;
 
