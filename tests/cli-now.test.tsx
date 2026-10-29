@@ -74,7 +74,7 @@ vi.mock('@/components/patterns/featured-metric', async (orig) => mark(await orig
 import NowPage from '../app/(dashboard)/engineering/page';
 import NowLoading from '../app/(dashboard)/engineering/loading';
 import { SERVICES } from '@/system/fixtures/sample';
-import { servedDocument } from './cli-served';
+import { servedDocument } from './served';
 
 const OWNER = 'members_1';
 

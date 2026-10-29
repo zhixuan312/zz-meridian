@@ -6,12 +6,10 @@
  */
 import { describe, expect, it } from 'vitest';
 
-import { aggregateRows, queryRows, type AggregateQuery, type Query } from '@/lib/collection';
-import { runExplore, type ExploreIO, type ExploreRights, type PreparedQuery } from '@/lib/explore';
+import { runExplore, type PreparedQuery } from '@/lib/explore';
+import { back, memoryIO, reader } from './explore-io';
 
 const MAX_ANSWER = 3000;
-const TODAY = '2026-10-13';
-const back = (n: number) => new Date(Date.parse(`${TODAY}T00:00:00Z`) - n * 86_400_000).toISOString().slice(0, 10);
 const ROWS: Record<string, unknown>[] = Array.from({ length: 40 }, (_, d) => [
   { id: `a${d}`, day: back(d + 1), plan: 'a', revenue: 100.25 },
   { id: `b${d}`, day: back(d + 1), plan: 'b', revenue: 40 },
@@ -41,12 +39,8 @@ const QUERY: PreparedQuery = {
     },
   },
 };
-const OWNER: ExploreRights = { readable: new Set(['days']), hidden: () => [] };
-const io: ExploreIO = {
-  aggregate: async (_: string, q: AggregateQuery) => aggregateRows(ROWS, q),
-  read: async (_: string, q: Query) => queryRows(ROWS, 'id', q),
-  today: TODAY,
-};
+const OWNER = reader('days');
+const io = memoryIO(ROWS);
 const asked = Object.keys(many);
 
 describe("a prepared query's answer", () => {

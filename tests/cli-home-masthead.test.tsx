@@ -13,7 +13,7 @@ vi.mock('next/navigation', () => ({
 
 import HomePage from '../app/(dashboard)/(home)/page';
 import HomeLoading from '../app/(dashboard)/(home)/loading';
-import { servedDocument } from './cli-served';
+import { servedDocument } from './served';
 
 /** Home as it is served, every boundary resolved. */
 async function served(): Promise<Document> {

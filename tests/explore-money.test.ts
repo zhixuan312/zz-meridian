@@ -8,17 +8,15 @@ vi.mock('@/app.config', async (original) => {
   return { ...actual, app: { ...actual.app, currency: 'GBP' } };
 });
 
-import { aggregateRows, queryRows, type AggregateQuery, type Query } from '@/lib/collection';
-import { exploreSchema, runExplore, type ExploreIO, type ExploreRights, type PreparedQuery } from '@/lib/explore';
+import { exploreSchema, runExplore, type PreparedQuery } from '@/lib/explore';
 import { formatCost } from '@/lib/format';
+import { back, memoryIO, reader } from './explore-io';
 
 /**
  * A money measure is written as the pages write money, through `formatCost` in `app.currency`, and its line names the
  * currency once, so an agent handed a page's context and the page's prepared query reads one unit for one figure.
  */
 type Row = Record<string, unknown>;
-const TODAY = '2026-10-13';
-const back = (n: number) => new Date(Date.parse(`${TODAY}T00:00:00Z`) - n * 86_400_000).toISOString().slice(0, 10);
 /** Sixty complete days of two plans: a earns 100.25 a day, b 40 a day in the last 30 and 50 before. */
 const ROWS: Row[] = Array.from({ length: 60 }, (_, d) => [
   { id: `a${d}`, day: back(d + 1), plan: 'a', revenue: 100.25 },
@@ -41,12 +39,8 @@ const QUERY: PreparedQuery = {
     },
   },
 };
-const OWNER: ExploreRights = { readable: new Set(['days']), hidden: () => [] };
-const io: ExploreIO = {
-  aggregate: async (_: string, q: AggregateQuery) => aggregateRows(ROWS, q),
-  read: async (_: string, q: Query) => queryRows(ROWS, 'id', q),
-  today: TODAY,
-};
+const OWNER = reader('days');
+const io = memoryIO(ROWS);
 const ask = async (input: unknown) => (await runExplore(QUERY, input, OWNER, io, '/days')).answer;
 
 describe('a money measure', () => {

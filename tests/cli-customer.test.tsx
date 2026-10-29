@@ -46,7 +46,7 @@ import HomePage from '../app/(dashboard)/(home)/page';
 import { readAll } from '@/data/read';
 import { NOT_FOUND } from '@/views/not-found';
 import type { CustomerRecord } from '@/data/sample';
-import { servedDocument } from './cli-served';
+import { servedDocument } from './served';
 
 const OWNER = 'members_1';
 

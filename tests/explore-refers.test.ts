@@ -1,7 +1,8 @@
 // @vitest-environment node
 import { describe, expect, it } from 'vitest';
 import { aggregateRows, queryRows, type AggregateQuery, type Query } from '@/lib/collection';
-import { runExplore, type ExploreIO, type ExploreRights, type PreparedQuery } from '@/lib/explore';
+import { runExplore, type ExploreIO, type PreparedQuery } from '@/lib/explore';
+import { reader, TODAY } from './explore-io';
 
 /**
  * A field that holds another collection's key reads with that record's name, in its groups and its drilled rows, so a
@@ -42,9 +43,9 @@ const io: ExploreIO = {
     reads.push({ name, q });
     return queryRows(name === 'releases' ? RELEASES : RUNS, 'id', q);
   },
-  today: '2026-10-13',
+  today: TODAY,
 };
-const OWNER: ExploreRights = { readable: new Set(['tests', 'releases']), hidden: () => [] };
+const OWNER = reader('tests', 'releases');
 const ask = async (input: unknown, rights = OWNER) => (await runExplore(QUERY, input, rights, io, '/releases')).answer;
 
 describe('a field that holds another collection key', () => {

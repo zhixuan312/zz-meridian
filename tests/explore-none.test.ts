@@ -1,8 +1,8 @@
 // @vitest-environment node
 import { describe, expect, it } from 'vitest';
 import { z } from 'zod';
-import { aggregateRows, queryRows, type AggregateQuery, type Query } from '@/lib/collection';
-import { exploreSchema, runExplore, type ExploreIO, type ExploreRights, type PreparedQuery } from '@/lib/explore';
+import { exploreSchema, runExplore, type PreparedQuery } from '@/lib/explore';
+import { memoryIO, reader } from './explore-io';
 
 /**
  * A group of the rows with no value reads as the source's own word for it ("no model"), never "null", and a call can
@@ -26,12 +26,8 @@ const QUERY: PreparedQuery = {
     },
   },
 };
-const OWNER: ExploreRights = { readable: new Set(['requests']), hidden: () => [] };
-const io: ExploreIO = {
-  aggregate: async (_: string, q: AggregateQuery) => aggregateRows(ROWS, q),
-  read: async (_: string, q: Query) => queryRows(ROWS, 'id', q),
-  today: '2026-10-13',
-};
+const OWNER = reader('requests');
+const io = memoryIO(ROWS);
 const ask = async (input: unknown) => (await runExplore(QUERY, input, OWNER, io, '/requests')).answer;
 
 describe('the rows with no value', () => {

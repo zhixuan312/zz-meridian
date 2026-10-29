@@ -28,7 +28,7 @@ import MembersPage from '../app/(dashboard)/members/page';
 import SettingsPage from '../app/(dashboard)/settings/page';
 import RecordsPreview from '@/components/templates/records/preview';
 import FormSectionPreview from '@/components/patterns/form-section/preview';
-import { servedDocument, textOf } from './cli-served';
+import { servedDocument, textOf } from './served';
 
 const PERSONA = { admin: 'members_2', member: 'members_4', viewer: 'members_12' } as const;
 

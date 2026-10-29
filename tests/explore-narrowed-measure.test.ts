@@ -1,14 +1,13 @@
 // @vitest-environment node
 import { describe, expect, it } from 'vitest';
-import { aggregateRows, queryRows, type AggregateQuery, type Query } from '@/lib/collection';
-import { runExplore, type ExploreIO, type ExploreRights, type PreparedQuery } from '@/lib/explore';
+import { runExplore, type PreparedQuery } from '@/lib/explore';
+import { memoryIO, reader } from './explore-io';
 
 /**
  * A measure's line says when the call narrowed it: "Runs: 1 run" under `state eq failed` is one failed run, not every
  * run of the window, and the line says so after the measure's own definition.
  */
 type Row = Record<string, unknown>;
-const TODAY = '2026-10-13';
 const ROWS: Row[] = [
   ...Array.from({ length: 8 }, (_, i) => ({ id: `p${i}`, startedAt: '2026-10-10T09:00:00Z', state: 'passed', suite: 'smoke' })),
   { id: 'f0', startedAt: '2026-10-11T09:00:00Z', state: 'failed', suite: 'smoke' },
@@ -26,12 +25,8 @@ const QUERY: PreparedQuery<{ id: string }> = {
     },
   },
 };
-const OWNER: ExploreRights = { readable: new Set(['tests']), hidden: () => [] };
-const io: ExploreIO = {
-  aggregate: async (_: string, q: AggregateQuery) => aggregateRows(ROWS, q),
-  read: async (_: string, q: Query) => queryRows(ROWS, 'id', q),
-  today: TODAY,
-};
+const OWNER = reader('tests');
+const io = memoryIO(ROWS);
 const runsLine = (answer: string) => answer.split('\n').find((l) => l.startsWith('Runs: ')) ?? '';
 
 describe("a measure's line", () => {

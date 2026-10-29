@@ -56,7 +56,7 @@ import HomeLoading from '../app/(dashboard)/(home)/loading';
 import DashboardError from '../app/(dashboard)/error';
 import { contextText } from '@/lib/shared-context';
 import { homeTool } from '@/logic/tools';
-import { servedDocument } from './cli-served';
+import { servedDocument } from './served';
 
 const PERSONAS = { owner: 'members_1', member: 'members_4' };
 

@@ -40,7 +40,7 @@ import SettingsLoading from '../app/(dashboard)/settings/loading';
 import TestsLoading from '../app/(dashboard)/tests/loading';
 import UsageLoading from '../app/(dashboard)/usage/loading';
 import RootNotFound from '../app/not-found';
-import { servedDocument, textOf } from './cli-served';
+import { servedDocument, textOf } from './served';
 
 const OWNER = 'members_1';
 const VIEWER = 'members_12';

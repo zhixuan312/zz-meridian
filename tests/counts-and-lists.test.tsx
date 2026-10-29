@@ -1,8 +1,5 @@
-import { PassThrough } from 'node:stream';
 import { act, fireEvent, render, screen } from '@testing-library/react';
 import { Tooltip } from 'radix-ui';
-import type { ReactElement } from 'react';
-import { renderToPipeableStream } from 'react-dom/server';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const jar = vi.hoisted(() => ({ value: undefined as string | undefined }));
@@ -34,6 +31,7 @@ import type { HomeData } from '@/logic/home-context';
 import { SettingsBody } from '@/views/settings';
 import { matchingRuns, testFigures } from '@/logic/tests-context';
 import { matchingTickets } from '@/logic/tickets-context';
+import { served } from './served';
 import { viewTools } from '@/logic/tools';
 
 type Row = Record<string, unknown>;
@@ -47,14 +45,6 @@ const stub = (name: string, rows: Row[]) => {
 };
 /** What an address asks of a page: its query, as the page's own state reads it. */
 const asked = (href: string) => Object.fromEntries(new URL(href, 'http://x').searchParams);
-/** The server's HTML once every part of it has arrived. */
-const served = (el: ReactElement) => new Promise<string>((resolve, reject) => {
-  let html = '';
-  const out = new PassThrough();
-  out.on('data', (c) => { html += c; });
-  out.on('end', () => resolve(html));
-  const stream = renderToPipeableStream(el, { onAllReady: () => stream.pipe(out), onShellError: reject, onError: reject });
-});
 
 beforeEach(() => { jar.value = 'members_1'; toasts.length = 0; });
 afterEach(() => { for (const [name, query] of kept) collection(name).query = query as never; kept.clear(); });
@@ -133,7 +123,7 @@ describe('the Customers page', () => {
     const one = (await collection('customers').query({})).rows[0] as Row;
     const many = Array.from({ length: 150 }, (_, i) => ({ ...one, id: `customers_x${i}`, name: `Customer ${i}`, status: 'active' }));
     stub('customers', many);
-    const html = await served(<Tooltip.Provider>{await CustomersPage()}</Tooltip.Provider>);
+    const html = await served(await CustomersPage());
     const tiles = html.slice(html.indexOf('data-split="tiles"'), html.indexOf('<table'));
     expect(customerFigures(many as never).customers).toBe(150);
     expect(tiles.replace(/<[^>]*>/g, ' ')).toMatch(/Customers\s[\s\S]*\b150\b/);

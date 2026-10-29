@@ -1,7 +1,7 @@
 // @vitest-environment node
 import { describe, expect, it } from 'vitest';
-import { aggregateRows, queryRows, type AggregateQuery, type Query } from '@/lib/collection';
-import { runExplore, type ExploreIO, type ExploreRights, type PreparedQuery } from '@/lib/explore';
+import { runExplore, type PreparedQuery } from '@/lib/explore';
+import { back, memoryIO, reader } from './explore-io';
 
 /**
  * A margin is stated as the pages state it: it honours its `scale` as a ratio does, so a margin of 0.625
@@ -11,9 +11,6 @@ import { runExplore, type ExploreIO, type ExploreRights, type PreparedQuery } fr
  * window before.
  */
 type Row = Record<string, unknown>;
-const TODAY = '2026-10-13';
-const DAY = 86_400_000;
-const back = (n: number) => new Date(Date.parse(`${TODAY}T00:00:00Z`) - n * DAY).toISOString().slice(0, 10);
 /** Sixty complete days: a day's revenue is 100, and its cost 37.5 in the last 30 (a margin of 62.5%) and 40 in the 30 before (60%). */
 const DAYS: Row[] = Array.from({ length: 60 }, (_, d) => ({ day: back(d + 1), revenue: 100, cost: d < 30 ? 37.5 : 40 }));
 
@@ -36,12 +33,8 @@ const QUERY: PreparedQuery = {
     },
   },
 };
-const OWNER: ExploreRights = { readable: new Set(['days']), hidden: () => [] };
-const io: ExploreIO = {
-  aggregate: async (_: string, q: AggregateQuery) => aggregateRows(DAYS, q),
-  read: async (_: string, q: Query) => queryRows(DAYS, 'day', q),
-  today: TODAY,
-};
+const OWNER = reader('days');
+const io = memoryIO(DAYS, 'day');
 const ask = async (input: unknown) => (await runExplore(QUERY, input, OWNER, io, '/days')).answer;
 const before = (answer: string) => answer.split('\n').find((l) => l.startsWith('The window before')) ?? '';
 

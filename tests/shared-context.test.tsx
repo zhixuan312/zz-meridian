@@ -1,8 +1,5 @@
 import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
-import { PassThrough } from 'node:stream';
 import { Tooltip } from 'radix-ui';
-import type { ReactElement } from 'react';
-import { renderToPipeableStream } from 'react-dom/server';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { app } from '@/app.config';
@@ -45,6 +42,7 @@ import NowPage from '../app/(dashboard)/engineering/page';
 import ServicesPage from '../app/(dashboard)/services/page';
 import UsagePage from '../app/(dashboard)/usage/page';
 import { EmbedHome } from '../app/embed/home/view';
+import { servedDocument } from './served';
 
 /** The product's currency mark, as `formatCost` writes it before the digits: a project made with `--currency GBP` writes £. */
 const MARK = formatCost(0).replace(/\d.*$/, '');
@@ -331,19 +329,6 @@ describe('a tile that needs a look', () => {
   });
 });
 
-/** A page as its request is answered once every part of it has arrived: the whole HTML, read as a document. */
-async function served(page: Promise<unknown>): Promise<Document> {
-  const element = (await page) as ReactElement;
-  const html = await new Promise<string>((resolve, reject) => {
-    const out = new PassThrough();
-    let text = '';
-    out.on('data', (chunk) => { text += chunk; });
-    out.on('end', () => resolve(text));
-    // The root layout's providers hold the tooltips' one provider, which a page drawn alone has to be given.
-    const stream = renderToPipeableStream(<Tooltip.Provider>{element}</Tooltip.Provider>, { onAllReady: () => stream.pipe(out), onShellError: reject, onError: reject });
-  });
-  return new DOMParser().parseFromString(html, 'text/html');
-}
 /** What a page is headed by: the whole heading as assistive technology reads it, and the sentence a person sees in it. */
 function heading(doc: Document) {
   const all = doc.querySelectorAll('h1');
@@ -355,7 +340,7 @@ describe('a page is headed by the sentence its context leads with', () => {
   // The heading is read from the page as it is served, and the line from the context the page's view tool returns.
   it('Home, for the period chosen', async () => {
     for (const period of ['30d', '90d'] as const) {
-      const { read, drawn } = heading(await served(HomePage({ searchParams: Promise.resolve({ period }) })));
+      const { read, drawn } = heading(await servedDocument(await HomePage({ searchParams: Promise.resolve({ period }) })));
       const { context } = await homeTool.read({ period });
       expect(drawn.length, period).toBeGreaterThan(20);
       expect(read, period).toBe(`Home: ${drawn}`);
@@ -370,7 +355,7 @@ describe('a page is headed by the sentence its context leads with', () => {
 
   it('Usage, for the period chosen', async () => {
     for (const period of ['30d', 'all'] as const) {
-      const { read, drawn } = heading(await served(UsagePage({ searchParams: Promise.resolve({ period }) })));
+      const { read, drawn } = heading(await servedDocument(await UsagePage({ searchParams: Promise.resolve({ period }) })));
       const { context } = await usageTool.read({ period });
       expect(drawn.length, period).toBeGreaterThan(20);
       expect(read, period).toBe(`Usage: ${drawn}`);
@@ -380,7 +365,7 @@ describe('a page is headed by the sentence its context leads with', () => {
   });
 
   it('Revenue, over the last 30 complete days', async () => {
-    const { read, drawn } = heading(await served(RevenuePage()));
+    const { read, drawn } = heading(await servedDocument(await RevenuePage()));
     const { context } = await revenueTool.read({});
     expect(drawn.length).toBeGreaterThan(20);
     expect(read).toBe(`Revenue: ${drawn}`);
@@ -395,7 +380,7 @@ describe('a page is headed by the sentence its context leads with', () => {
       ['brightline', 'Brightline', /^Brightline is on a trial that ends on \d\d \w+ \d{4}$/],
       ['ambervale-motors', 'Ambervale Motors', /^Ambervale Motors left on \d\d \w+ \d{4}$/],
     ] as const) {
-      const { read, drawn } = heading(await served(CustomerPage({ params: Promise.resolve({ id }) })));
+      const { read, drawn } = heading(await servedDocument(await CustomerPage({ params: Promise.resolve({ id }) })));
       const { context } = await customerTool.read({ id });
       expect(drawn, id).toMatch(says);
       expect(read, id).toBe(`${name}: ${drawn}`);
@@ -406,7 +391,7 @@ describe('a page is headed by the sentence its context leads with', () => {
   });
 
   it('Now, from the services and the releases in testing', async () => {
-    const { read, drawn } = heading(await served(NowPage()));
+    const { read, drawn } = heading(await servedDocument(await NowPage()));
     const { context } = await nowTool.read({});
     // What is wrong first: the sample's Inference API is degraded, and three releases have a verification not yet passed.
     expect(drawn).toBe('Inference API is degraded, and 3 releases are in testing');
@@ -417,7 +402,7 @@ describe('a page is headed by the sentence its context leads with', () => {
   });
 
   it('Services, from the uptime of its 90 days and the longest clean run', async () => {
-    const { read, drawn } = heading(await served(ServicesPage()));
+    const { read, drawn } = heading(await servedDocument(await ServicesPage()));
     const { context } = await servicesTool.read({});
     // Dashboard's run is the longest of any service now, and its own longest in the 90 days, which it does not reach back to the start of.
     expect(drawn).toMatch(/^[\d.]+% uptime in 90 days, and Dashboard has run 69 days without a mark$/);

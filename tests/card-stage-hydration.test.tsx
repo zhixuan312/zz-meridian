@@ -1,8 +1,7 @@
-import { PassThrough } from 'node:stream';
-import { lazy, type ComponentType, type ReactElement } from 'react';
+import { lazy, type ComponentType } from 'react';
 import { hydrateRoot, type Root } from 'react-dom/client';
-import { renderToPipeableStream } from 'react-dom/server';
 import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
+import { served } from './served';
 
 /**
  * A card page arrives with its specimen drawn, and the specimen's code arrives after it (`dynamic()`). The stage learns
@@ -39,15 +38,6 @@ afterEach(async () => {
   await new Promise((r) => setTimeout(r, 30));
   host?.remove();
   for (const a of ['data-theme', 'data-accent']) document.documentElement.removeAttribute(a);
-});
-
-/** The server's HTML once every part of it has arrived, as a prerendered page holds it. */
-const served = (el: ReactElement) => new Promise<string>((resolve, reject) => {
-  let html = '';
-  const out = new PassThrough();
-  out.on('data', (c) => { html += c; });
-  out.on('end', () => resolve(html));
-  const stream = renderToPipeableStream(el, { onAllReady: () => stream.pipe(out), onShellError: reject, onError: reject });
 });
 
 async function hydrateFor(look: { theme?: string; accent?: string }) {

@@ -22,7 +22,7 @@ vi.mock('@/components/charts/meridian', async (orig) => {
 
 import UsagePage from '../app/(dashboard)/usage/page';
 import { usageTool } from '@/logic/tools';
-import { servedDocument } from './cli-served';
+import { servedDocument } from './served';
 
 /** Usage as it is served at an address, every boundary resolved. */
 async function served(searchParams: { period?: string; day?: string }): Promise<Document> {

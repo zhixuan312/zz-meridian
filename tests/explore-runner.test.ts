@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { z } from 'zod';
 import { aggregateRows, queryRows, type AggregateQuery, type Query } from '@/lib/collection';
 import { exploreSchema, runExplore, type ExploreIO, type ExploreRights, type PreparedQuery } from '@/lib/explore';
+import { back, reader, TODAY } from './explore-io';
 
 /**
  * A prepared query: what a page's author lets an agent ask of the page's own collections, answered as
@@ -11,9 +12,6 @@ import { exploreSchema, runExplore, type ExploreIO, type ExploreRights, type Pre
  * the runner is held apart from any page.
  */
 type Row = Record<string, unknown>;
-const TODAY = '2026-10-13';
-const DAY = 86_400_000;
-const back = (n: number) => new Date(Date.parse(`${TODAY}T00:00:00Z`) - n * DAY).toISOString().slice(0, 10);
 const TEAMS = ['ash', 'birch', 'cedar', 'elm', 'fir', 'hazel', 'larch', 'maple', 'oak', 'pine', 'rowan', 'yew'];
 
 /** 120 days of orders, one a team a day; the day in progress has one more that no answer may count. */
@@ -61,7 +59,7 @@ const QUERY: PreparedQuery = {
   },
 };
 
-const OWNER: ExploreRights = { readable: new Set(['orders', 'costs', 'plain']), hidden: () => [] };
+const OWNER = reader('orders', 'costs', 'plain');
 /** A person who may not read costs, and for whom the orders' cost is a field only a page shows. */
 const VIEWER: ExploreRights = { readable: new Set(['orders', 'plain']), hidden: (c) => (c === 'orders' ? ['cost'] : []) };
 

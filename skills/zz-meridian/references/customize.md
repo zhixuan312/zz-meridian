@@ -387,7 +387,9 @@ orders is the sample's, not the product's.
   `optional:src/data/read.ts`, `optional:src/data/access.ts`, the assistant and live routes) and names the sample's
   clock, collections, records, people or routes. The gate fails on each once you replace what it names. Keep what each
   holds for your own data: rewrite its cases for your collections, people and records, and delete a case about a
-  collection, page or person you dropped. Among them, by what they hold:
+  collection, page or person you dropped. Every one that names a demo member, a sample fixture, a sample page or view is
+  listed by `grep -lE "members_[0-9]+|system/fixtures|app/\(dashboard\)|@/views/" tests/*.test.ts tests/*.test.tsx`;
+  the lists below are not every file, but the ones whose cases need more than the find. Among them, by what they hold:
   - The clock and the collections of the company: `optional:tests/day-in-progress.test.ts` (today is 03 Oct 2026; four
     usage rows, four compute rows and one cost row a day; 361 days kept) and `optional:tests/data-model.test.ts` (the
     collections models, usage, compute and costs with their keys and fields, the four model ids and the routes they
@@ -401,9 +403,10 @@ orders is the sample's, not the product's.
     `optional:tests/assistant-tools.test.ts` (the members collection's write schema),
     `optional:tests/assistant-prompt-truth.test.ts`, `optional:tests/assistant-access.test.ts` (who of them may use which
     view tool), `optional:tests/assistant-prompt-writes.test.ts`, `optional:tests/assistant-settings.test.tsx` (the
-    settings page's sections) and `optional:tests/view-tool-needs.test.ts`. While the demo signs in as your own people
-    (`PERSONAS`), write their ids into these cases; once your sign-in replaces the demo, delete the first four with
-    `optional:src/data/view-as.ts` and the sign-in page, and rewrite the rest for your sign-in's people.
+    settings page's sections) and `optional:tests/view-tool-needs.test.ts`; `grep -l "members_[0-9]"` finds the rest.
+    While the demo signs in as your own people (`PERSONAS`), write their ids into every case that names one; once your
+    sign-in replaces the demo, delete the first four with `optional:src/data/view-as.ts` and the sign-in page, and
+    rewrite the rest for your sign-in's people.
   - The records and routes of the company: `optional:tests/shell-alerts.test.ts` (more than one past-due customer, one
     of them Lumen Studio at `/customers/lumen-studio`, a high-priority ticket nobody has, the failing verifications:
     rewrite it for the exceptions your `readAlerts` raises), `optional:tests/feature-access.test.ts` (the sample's
@@ -412,11 +415,19 @@ orders is the sample's, not the product's.
     `optional:tests/assistant-guard.test.ts` (the members collection), `optional:tests/engineering-records.test.ts`
     (tickets, verification runs and releases, and who of the demo's people writes them), `optional:tests/engineering-workflows.test.ts`
     (the tickets feature's actions and Engineering's destinations), `optional:tests/requests-summary-newest.test.ts` (the requests
-    collection), `optional:tests/action-needs.test.tsx` (the API keys and request views) and
-    `optional:tests/atlas-product-slice.test.tsx` (the Customers page drawn through the records template).
+    collection), `optional:tests/action-needs.test.tsx` (the API keys and request views),
+    `optional:tests/atlas-product-slice.test.tsx` (the Customers page drawn through the records template),
+    `optional:tests/counts-and-lists.test.tsx` (the Customers page and the Tickets action: a ticket Jonas Weber owns on
+    the Edge gateway, more customers than one read answers, the plans Enterprise, Scale and Starter, the status options
+    and the `verifications:failing` alert), `optional:tests/customers-payload.test.tsx` (a sample customer's row and
+    record fields, `byEndpoint` and `pastDueSince` among them), `optional:tests/customer-empty-period.test.ts` (the
+    customers collection and `readCustomer`), `optional:tests/linked-records.test.ts` (incidents, tickets, requests,
+    models, services and days, and how they name each other), `optional:tests/usage-summary.test.tsx` (the Usage view on
+    the sample's dates, stating four figures over the last 30 complete days) and `optional:tests/workspace-figures.test.ts` (the verification
+    runs' fields).
 
-  The sample's own figures, pages and answers are in `cli-*` tests, which a created project does not receive. A shipped
-  test that still fails after this names something of the sample's too: change it the same way.
+  Most of the sample's own figures, pages and answers are in `cli-*` tests, which a created project does not receive.
+  A shipped test that still fails after this names something of the sample's too: change it the same way.
 - **The choice `explain`**: the sample answers an address a person may not open with the no-access page, which names the
   page and who to ask. Choose `absent` when a product must not tell a person that a page they may not open exists.
 - **The counts each context's lists are capped at**: six services, two open incidents and three resolved on Services,

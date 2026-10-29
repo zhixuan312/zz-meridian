@@ -53,7 +53,7 @@ import UsagePage from '../app/(dashboard)/usage/page';
 import UsageLoading from '../app/(dashboard)/usage/loading';
 import { UsageBody } from '@/views/usage';
 import { usageTool } from '@/logic/tools';
-import { servedDocument } from './cli-served';
+import { servedDocument } from './served';
 
 const OWNER = 'members_1';
 

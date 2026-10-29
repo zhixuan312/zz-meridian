@@ -53,7 +53,7 @@ vi.mock('@/components/charts/bar-list', async (orig) => mark(await orig(), 'BarL
 import RevenuePage from '../app/(dashboard)/business/page';
 import RevenueLoading from '../app/(dashboard)/business/loading';
 import { facts } from '@/app.config';
-import { servedDocument } from './cli-served';
+import { servedDocument } from './served';
 
 const OWNER = 'members_1';
 

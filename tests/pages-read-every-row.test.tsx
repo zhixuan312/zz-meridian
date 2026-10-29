@@ -6,10 +6,6 @@
  * The view is replaced by a counter, so the page is the thing under test and not a copy of it: a test that re-implements
  * the page's read would still pass with the page broken.
  */
-import { PassThrough } from 'node:stream';
-import type { ReactElement } from 'react';
-import { renderToPipeableStream } from 'react-dom/server';
-import { Tooltip } from 'radix-ui';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const jar = vi.hoisted(() => ({ value: undefined as string | undefined }));
@@ -32,6 +28,7 @@ import KeysPage from '../app/(dashboard)/keys/page';
 import MembersPage from '../app/(dashboard)/members/page';
 import TicketsPage from '../app/(dashboard)/operations-tickets/page';
 import { storedRows } from '@/lib/collection';
+import { served } from './served';
 
 type Row = Record<string, unknown>;
 /** Adds `n` rows built from the collection's own first row, and answers how many it holds now. */
@@ -44,22 +41,11 @@ function grow(name: string, n: number, make: (i: number, base: Row) => Row): num
 
 beforeEach(() => { jar.value = 'members_1'; });
 
-/** A page as it is served, every boundary resolved. */
-async function served(page: Promise<unknown>): Promise<void> {
-  const element = (await page) as ReactElement;
-  await new Promise<void>((resolve, reject) => {
-    const out = new PassThrough();
-    out.on('data', () => {});
-    out.on('end', () => resolve());
-    const stream = renderToPipeableStream(<Tooltip.Provider>{element}</Tooltip.Provider>, { onAllReady: () => stream.pipe(out), onShellError: reject, onError: reject, progressiveChunkSize: Infinity });
-  });
-}
-
 describe('a page that says every row', () => {
   it('hands the keys page every key the workspace holds, not the first hundred', async () => {
     const total = grow('keys', 120, (i, base) => ({ ...base, id: `keys_more_${i}`, name: `Key ${i}` }));
     expect(total).toBeGreaterThan(100);
-    await served(KeysPage());
+    await served(await KeysPage());
     expect(seen.keys).toBe(total);
   });
 
@@ -68,7 +54,7 @@ describe('a page that says every row', () => {
       ...base, id: `members_more_${i}`, name: `Person ${i}`, email: `person.${i}@${'example.com'}`, role: 'Member', addOns: [], status: 'Active', lastActive: base.joined,
     }));
     expect(total).toBeGreaterThan(100);
-    await served(MembersPage());
+    await served(await MembersPage());
     expect(seen.members).toBe(total);
   });
 
@@ -77,7 +63,7 @@ describe('a page that says every row', () => {
     const members = grow('members', 120, (i, base) => ({
       ...base, id: `members_more_${i}`, name: `Person ${i}`, email: `person.${i}@example.com`, role: 'Member', addOns: [], status: 'Active', lastActive: base.joined,
     }));
-    await served(TicketsPage());
+    await served(await TicketsPage());
     expect(seen.services).toBe(services);
     expect(seen.assignees).toBe(members);
   });
@@ -85,7 +71,7 @@ describe('a page that says every row', () => {
   it('reads no service for someone who may not create a ticket, since only the New ticket form offers them', async () => {
     jar.value = String(storedRows('demo', 'members')!.find((m) => m.role === 'Viewer' && m.status === 'Active')!.id);
     seen.services = -1;
-    await served(TicketsPage());
+    await served(await TicketsPage());
     expect(seen.services).toBe(0);
   });
 });

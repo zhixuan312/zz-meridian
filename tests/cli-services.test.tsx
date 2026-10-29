@@ -50,7 +50,7 @@ import ServicesPage from '../app/(dashboard)/services/page';
 import ServicesLoading from '../app/(dashboard)/services/loading';
 import { contextText } from '@/lib/shared-context';
 import { servicesTool } from '@/logic/tools';
-import { servedDocument } from './cli-served';
+import { servedDocument } from './served';
 
 beforeEach(() => { jar.value = 'members_1'; store.fail.clear(); store.empty.clear(); store.map.clear(); });
 
