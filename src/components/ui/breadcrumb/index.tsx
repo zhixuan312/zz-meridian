@@ -31,10 +31,13 @@ export function Breadcrumb({ items, className }: { items: Crumb[]; className?: s
                       <MoreHorizontal className="size-3.5" />
                     </MenuTrigger>
                     <MenuContent>
-                      {hidden.map((h) => (
+                      {/* A level with no address of its own is named, not linked: it used to go to "#". */}
+                      {hidden.map((h) => h.href ? (
                         <MenuItem key={h.label} asChild>
-                          <Link href={h.href ?? '#'}>{h.label}</Link>
+                          <Link href={h.href}>{h.label}</Link>
                         </MenuItem>
+                      ) : (
+                        <MenuItem key={h.label} disabled>{h.label}</MenuItem>
                       ))}
                     </MenuContent>
                   </Menu>

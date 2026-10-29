@@ -9,7 +9,7 @@ Status: beta
 1. **Ancestor**: a link, `ink-2`; it turns `ink` on hover, with no underline.
 2. **Separator**: a 12px chevron in `ink-3`, decorative.
 3. **Current page**: `ink`, medium, `aria-current="page"`.
-4. **Fold** (more than four levels): a 24px ellipsis button that opens a Menu of the hidden levels.
+4. **Fold** (more than four levels): a 24px ellipsis button that opens a Menu of the hidden levels; a level without an address is listed by name, not as a link.
 
 ## Variants
 
@@ -38,7 +38,7 @@ Status: beta
 ## Surfaces
 
 - **Console**: as specified.
-- **Mobile**: the same; long trails fold sooner because the last item truncates.
+- **Mobile**: the same fold, at five levels; the narrower line truncates the current page sooner.
 - **Embed**: not shown; an embed has one view and its own head.
 
 ## Agents
