@@ -33,6 +33,8 @@ rail's Sign out. `DEMO_SECRET`, when set, keys the session instead of the passwo
 gated and the column shows the persona list. The panel is the only part of the page that
 reads the request; the rest prerenders (`gated-panel.tsx`, behind a Suspense boundary). Choosing a persona never
 bypasses the password: the gated form checks the password before the person, and sets nothing when either is wrong.
+The gate keeps a demo from casual visitors and is not a sign-in for real data: a wrong password waits 600 ms, but nothing
+counts attempts, so many sent at once are each answered. A product that holds real data puts its own sign-in in front.
 
 ## Data
 
