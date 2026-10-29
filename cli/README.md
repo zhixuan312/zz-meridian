@@ -104,4 +104,4 @@ Meridian's own template or sample data.
 
 ## License
 
-MIT
+MIT: the text is `payload/LICENSE` in the package and `LICENSE` in a project `create` makes.
