@@ -468,10 +468,10 @@ export async function runExplore<I>(query: PreparedQuery<I>, input: unknown, rig
   if (rows === 0) return reply(held(fixedLines));
   const drilled = read.rows.map((r) => `- ${s.drill.address(r)}: ${columns.map((c) => `${c} ${names.has(c) && typeof r[c] === 'string' ? named(c, r[c]) : text(r[c])}`).join(', ')}`);
   const lead = read.rows.length ? `Rows, ${s.date ? 'the latest first' : 'in order'}, ${read.rows.length} of ${read.total}:` : 'No row matches.';
-  const answer = (k: number) => [...fixedLines, lead, ...drilled.slice(0, k), ...(k < drilled.length ? [notShown(drilled.length - k, 'row')] : [])].join('\n');
+  const linesOf = (k: number) => [...fixedLines, lead, ...drilled.slice(0, k), ...(k < drilled.length ? [notShown(drilled.length - k, 'row')] : [])];
   let k = drilled.length;
-  while (k > 0 && answer(k).length > MAX_ANSWER) k--;
+  while (k > 0 && linesOf(k).join('\n').length > MAX_ANSWER) k--;
   // The rows go first, because they are what the summary leaves out; `held` is what catches a summary over budget by
   // itself, which the row loop cannot shorten at all.
-  return reply(held([...fixedLines, lead, ...drilled.slice(0, k), ...(k < drilled.length ? [notShown(drilled.length - k, 'row')] : [])]));
+  return reply(held(linesOf(k)));
 }
