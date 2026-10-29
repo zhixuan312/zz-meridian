@@ -14,13 +14,12 @@ import {
 } from './files.js';
 import { BRIEF_TEMPLATE, managedBlock, upsertManagedBlock } from './context.js';
 import { FIXED, adoptSetOf, managedPaths } from './ownership.js';
+import { MERIDIAN_SCRIPTS, TOOLCHAIN } from './reconcile.js';
 
 export type AdoptOptions = { root: string; brand: Record<string, string>; allowDirty: boolean; install: boolean };
 
 /** The template's dependencies a dashboard built from these files needs. */
 const DEPS = ['next', 'react', 'react-dom', 'radix-ui', 'lucide-react', 'clsx', 'tailwind-merge', 'react-markdown', 'remark-gfm', 'ai', '@ai-sdk/react', 'zod'];
-const DEV_DEPS = ['typescript', '@types/node', '@types/react', '@types/react-dom', 'tailwindcss', '@tailwindcss/postcss', 'eslint', 'eslint-config-next', 'vitest', '@vitejs/plugin-react', 'jsdom', '@testing-library/react', '@testing-library/dom', '@testing-library/jest-dom'];
-const SCRIPTS = ['typecheck', 'test', 'tokens', 'check', 'contrast', 'gate', 'audit', 'verify', 'brand', 'shot', 'interactions', 'keyboard', 'vitals'];
 
 const major = (spec: string) => Number(/(\d+)/.exec(spec)?.[1] ?? NaN);
 const TS = /\.(ts|tsx)$/;
@@ -267,9 +266,9 @@ Rename or move them, then run adopt again.`);
     }
   };
   merge('dependencies', DEPS);
-  merge('devDependencies', DEV_DEPS);
+  merge('devDependencies', TOOLCHAIN);
   pkg.scripts ??= {};
-  for (const s of SCRIPTS) {
+  for (const s of MERIDIAN_SCRIPTS) {
     const want = tpl.scripts[s];
     if (!pkg.scripts[s]) pkg.scripts[s] = want;
     else if (pkg.scripts[s] !== want) notes.push(`kept your "${s}" script; Meridian's is "${want}"`);
