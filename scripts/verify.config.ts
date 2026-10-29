@@ -39,6 +39,11 @@ type Persona = {
   expectedRoutes: readonly string[];
   /** For each route this person may NOT open: one protected string that must not appear on the page that refuses them. */
   deniedProbe?: Record<string, string>;
+  /**
+   * The routes whose controls change with who is signed in, each pressed at 1440px as this person: the ones of
+   * `expectedRoutes` it names. Left out, every expected route is pressed.
+   */
+  pressRoutes?: readonly string[];
 };
 
 type VerifyConfig = {
@@ -156,6 +161,9 @@ type VerifyConfig = {
 /** Every rail route, in the rail's own order: what a persona who may open all of them is expected to see. */
 const EVERY_ROUTE = ['/', '/members', '/settings', '/system', '/system/start/start-a-dashboard', '/business', '/customers', '/usage', '/requests', '/engineering', '/services', '/operations-tickets', '/tests', '/releases', '/keys'] as const;
 
+/** The sample's routes whose controls change with the person: a key, a ticket, a member and the workspace are each written by some roles only. */
+const ROLE_ROUTES = ['/keys', '/operations-tickets', '/members', '/settings'];
+
 const config: VerifyConfig = {
   // Ids from the sample (the requests of src/system/fixtures/sample.ts, the customers of company.ts); tests/sample.test.ts fails if one stops being what it says.
   detailRoutes: [
@@ -198,14 +206,15 @@ const config: VerifyConfig = {
   // role differ in what they may DO, not in what they may see; the Viewer is the one denied a route, so it is the one
   // that carries deniedProbe: a key name on Keys and a member's address on Members must not reach a Viewer's page.
   personas: {
-    owner: { cookie: { name: 'zz_meridian_view_as', value: 'members_1' }, expectedRoutes: EVERY_ROUTE },
-    admin: { cookie: { name: 'zz_meridian_view_as', value: 'members_2' }, expectedRoutes: EVERY_ROUTE },
-    member: { cookie: { name: 'zz_meridian_view_as', value: 'members_4' }, expectedRoutes: EVERY_ROUTE },
-    'key-manager': { cookie: { name: 'zz_meridian_view_as', value: 'members_5' }, expectedRoutes: EVERY_ROUTE },
+    owner: { cookie: { name: 'zz_meridian_view_as', value: 'members_1' }, expectedRoutes: EVERY_ROUTE, pressRoutes: ROLE_ROUTES },
+    admin: { cookie: { name: 'zz_meridian_view_as', value: 'members_2' }, expectedRoutes: EVERY_ROUTE, pressRoutes: ROLE_ROUTES },
+    member: { cookie: { name: 'zz_meridian_view_as', value: 'members_4' }, expectedRoutes: EVERY_ROUTE, pressRoutes: ROLE_ROUTES },
+    'key-manager': { cookie: { name: 'zz_meridian_view_as', value: 'members_5' }, expectedRoutes: EVERY_ROUTE, pressRoutes: ROLE_ROUTES },
     viewer: {
       cookie: { name: 'zz_meridian_view_as', value: 'members_12' },
       expectedRoutes: ['/', '/settings', '/system', '/system/start/start-a-dashboard', '/business', '/customers', '/usage', '/requests', '/engineering', '/services', '/operations-tickets', '/tests', '/releases'],
       deniedProbe: { '/keys': 'Load test, October', '/members': 'maya.chen@' },
+      pressRoutes: ROLE_ROUTES,
     },
   },
   refusal,
