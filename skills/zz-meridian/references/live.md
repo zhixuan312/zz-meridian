@@ -40,8 +40,8 @@ Before each data-bearing `change` or `resync` is sent, the stream asks `authoriz
 and authorization, not the admission check made when the stream opened. When the scope may no longer read the
 collection, or access cannot be established, delivery stops and the stream closes; the browser authenticates again to
 reconnect. Heartbeats may check session expiry; they never stand in for authorizing a payload. Subscriptions and timers
-are cleaned up on abort, error or cancellation, and the queue is bounded: past 100 waiting hints they collapse into one
-`resync` of every name instead of growing.
+are cleaned up on abort, error or cancellation, and the queue holds a name at most once, so it never grows past the
+names the stream follows.
 
 `optional:app/api/live/route.ts` is the Route Handler. It exports only `GET`:
 
@@ -108,9 +108,6 @@ export async function GET(request: Request): Promise<Response> {
  */
 import type { AnyCollection } from '@/lib/collection';
 
-/** The most hints waiting to be sent; beyond that they collapse into one resync. */
-const MAX_QUEUED = 100;
-
 let noted = false;
 
 /**
@@ -161,7 +158,6 @@ export function liveStream({ names, collections, signal, heartbeatMs = 15000, au
   let controller!: ReadableStreamDefaultController<Uint8Array>;
 
   const send = (frame: string) => controller.enqueue(encoder.encode(frame));
-  const resync = (moved: string[] = names) => `event: resync\ndata: ${JSON.stringify({ collections: moved })}\n\n`;
 
   function close() {
     if (closed) return;
@@ -174,23 +170,20 @@ export function liveStream({ names, collections, signal, heartbeatMs = 15000, au
     try { controller.close(); } catch { /* already cancelled */ }
   }
 
-  // Hints wait here while the scope is checked; past the bound they collapse into one resync of every name.
-  let queue: string[] = [];
-  let overflowed = false;
+  // Hints wait here while the scope is checked, one per name, so the queue is never longer than the names followed.
+  const queue: string[] = [];
   let draining = false;
 
   async function drain() {
     if (draining) return;
     draining = true;
     try {
-      while (!closed && (overflowed || queue.length > 0)) {
-        const checked = overflowed ? names : [queue.shift()!];
-        const frame = overflowed ? resync() : `event: change\ndata: ${JSON.stringify({ collection: checked[0] })}\n\n`;
-        overflowed = false;
-        const allowed = (await Promise.all(checked.map(authorize))).every(Boolean);
+      while (!closed && queue.length > 0) {
+        const name = queue.shift()!;
+        const allowed = await authorize(name);
         if (closed) return;
         if (!allowed) return close();
-        send(frame);
+        send(`event: change\ndata: ${JSON.stringify({ collection: name })}\n\n`);
       }
     } catch {
       close();
@@ -208,11 +201,7 @@ export function liveStream({ names, collections, signal, heartbeatMs = 15000, au
       }
       return;
     }
-    if (overflowed) return;
-    if (queue.length >= MAX_QUEUED) {
-      queue = [];
-      overflowed = true;
-    } else if (!queue.includes(name)) queue.push(name);
+    if (!queue.includes(name)) queue.push(name);
     void drain();
   }
 
@@ -232,7 +221,7 @@ export function liveStream({ names, collections, signal, heartbeatMs = 15000, au
         const was = since?.[n];
         return was === undefined || was !== collections[i]!.revision?.();
       });
-      send(moved.length ? resync(moved) : 'event: synced\ndata: {}\n\n');
+      send(moved.length ? `event: resync\ndata: ${JSON.stringify({ collections: moved })}\n\n` : 'event: synced\ndata: {}\n\n');
       timer = setInterval(() => { if (!closed) send(`: beat ${Date.now()}\n\n`); }, heartbeatMs);
     },
     cancel: close,
