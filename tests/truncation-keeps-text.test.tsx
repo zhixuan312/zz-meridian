@@ -63,7 +63,7 @@ describe('every card that cuts text keeps the whole of it where a pointer reache
   for (const [name, el] of Object.entries(DRAWN)) {
     it(name, async () => {
       const { container } = render(<Tooltip.Provider>{el}</Tooltip.Provider>);
-      await act(() => new Promise((done) => setTimeout(done, 40)));
+      await act(async () => {});
       // A cut element a screen reader is not given (aria-hidden, sr-only) is a copy of text drawn elsewhere.
       const cut = [...container.querySelectorAll('[class~="truncate"]')].filter((n) => whole(n.textContent) && !n.closest('[aria-hidden="true"],.sr-only'));
       expect(cut.length, `${name} draws no cut element, so nothing here is checked`).toBeGreaterThan(0);

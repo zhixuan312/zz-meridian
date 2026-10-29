@@ -96,10 +96,10 @@ const DRAWN: Record<string, (v: (number | null)[]) => ReactElement> = {
   UptimeBars: (v) => <UptimeBars label="Uptime" end={new Date(Date.UTC(2026, 9, 2))} uptime={numbers(v)[0] ?? 0} days={v.map((n) => (n === null ? 'none' : n < 0 ? 'outage' : n === 0 ? 'degraded' : 'operational'))} />,
 };
 
-/** Draws, then lets the frame the charts defer their tables and labels to (`useSettled`) pass. */
+/** Draws, then flushes its effects. `useSettled` starts settled, so a fresh mount defers nothing to wait for. */
 async function draw(el: ReactElement) {
   const r = render(el);
-  await act(() => new Promise((done) => setTimeout(done, 40)));
+  await act(async () => {});
   return r.container;
 }
 

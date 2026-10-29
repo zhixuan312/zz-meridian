@@ -1,4 +1,4 @@
-import { render, waitFor, within } from '@testing-library/react';
+import { act, render, waitFor, within } from '@testing-library/react';
 import { PassThrough } from 'node:stream';
 import { Tooltip } from 'radix-ui';
 import type { ReactElement } from 'react';
@@ -178,9 +178,15 @@ describe('one context, two consumers', () => {
   });
   it('an unconnected embed shares nothing', async () => {
     const share = vi.fn();
-    render(<SurfaceOverride surface={{ kind: 'embed', connected: false, share }}><Shares context={CTX} /></SurfaceOverride>);
-    await new Promise((r) => setTimeout(r, 300));
-    expect(share).not.toHaveBeenCalled();
+    vi.useFakeTimers();
+    try {
+      render(<SurfaceOverride surface={{ kind: 'embed', connected: false, share }}><Shares context={CTX} /></SurfaceOverride>);
+      // Well past the embed's debounce, whatever it is: a connected embed would have shared by now.
+      act(() => vi.advanceTimersByTime(10_000));
+      expect(share).not.toHaveBeenCalled();
+    } finally {
+      vi.useRealTimers();
+    }
   });
   it('the console publishes it for the assistant on this path only, and a preview publishes nothing', async () => {
     window.history.replaceState(null, '', '/members');
