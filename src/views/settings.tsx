@@ -17,7 +17,7 @@ import { Segmented } from '@/components/ui/segmented';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Switch } from '@/components/ui/switch';
 import { toast } from '@/components/ui/toast';
-import type { Result } from './members';
+import type { ActionResult } from '@/lib/collection';
 
 /** Settings, in sections that save on their own. Each section reports where it stands now, in a line, so the page's shared context holds what inputs and switches show (decision 0011). */
 const Report = createContext<(section: string, line: string) => void>(() => {});
@@ -51,7 +51,7 @@ export type SettingsMay = {
 export type WorkspaceValues = { name: string; slug: string };
 
 /** The server action the section saves through: the shared `Result`, and never a thrown error at the person. */
-export type SaveWorkspace = (input: { name: string }) => Promise<Result>;
+export type SaveWorkspace = (input: { name: string }) => Promise<ActionResult>;
 
 /**
  * What the form shows when the page hands it no record: the identity the sample has always shown. The page reads the
@@ -125,7 +125,7 @@ function Workspace({ may, record, save }: { may: SettingsMay; record: WorkspaceV
         // What is saved is the name without the space around it, so that is what the field and the context then hold.
         const saved = { ...v, name: v.name.trim() };
         // A save that never answered (a dropped connection) throws: told beside the fields like a refusal, the edits kept.
-        const result = await save({ name: saved.name }).catch((): Result => ({ ok: false, error: 'The change did not reach the server. Try again.' }));
+        const result = await save({ name: saved.name }).catch((): ActionResult => ({ ok: false, error: 'The change did not reach the server. Try again.' }));
         setSaving(false);
         if (!result.ok) { setError(result.error); return; }
         setV(saved);

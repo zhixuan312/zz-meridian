@@ -28,18 +28,17 @@ import { RolesMatrix } from './roles-matrix';
 import type { MemberRowAccess } from '@/data/member-mutations';
 import { roleLabel, type AddOn, type MainRole } from '@/data/roles';
 import { TEAMS, type Member } from '@/data/sample';
+import type { ActionResult } from '@/lib/collection';
 /** Colour only where a row needs a look: an open invitation and a suspension. Active is the normal case, so it stays quiet. */
 const STATUS_TONE = { Active: 'neutral', Invited: 'accent', Suspended: 'warning' } as const;
 const options = (xs: readonly string[]) => xs.map((x) => ({ value: x, label: x }));
-/** What a change reports back: the page toasts the reason and leaves the table as it was. */
-export type Result = { ok: true } | { ok: false; error: string };
 /** The page's server actions, passed in so the view stays free of server imports. */
 export type MemberActions = {
-  invite: (input: { name: string; email: string; role: Member['role']; team: Member['team'] }) => Promise<Result>;
-  setStatus: (id: string, status: Member['status']) => Promise<Result>;
-  remove: (id: string) => Promise<Result>;
+  invite: (input: { name: string; email: string; role: Member['role']; team: Member['team'] }) => Promise<ActionResult>;
+  setStatus: (id: string, status: Member['status']) => Promise<ActionResult>;
+  remove: (id: string) => Promise<ActionResult>;
   /** Change a member's role and add-ons: the boundary decides, and a row the caller may not change is refused. */
-  assignRole: (input: { id: string; role: MainRole; addOns: AddOn[] }) => Promise<Result>;
+  assignRole: (input: { id: string; role: MainRole; addOns: AddOn[] }) => Promise<ActionResult>;
 };
 /** A row the table shows before the server has agreed: `pending` marks it until the authoritative rows replace it. */
 type Shown = Member & { pending?: boolean };
@@ -93,14 +92,14 @@ export function MembersView({ rows, now, revisions, actions, access, roles, work
    * toasted, or handed to `failed` when the change came from a form that shows its own errors. A row with an action in
    * flight takes no second one.
    */
-  const act = (id: string, optimistic: Change, action: () => Promise<Result>, done: { title: string; description?: string } | null, failed?: (reason: string) => void) => {
+  const act = (id: string, optimistic: Change, action: () => Promise<ActionResult>, done: { title: string; description?: string } | null, failed?: (reason: string) => void) => {
     if (inFlight.current.has(id)) return;
     inFlight.current.add(id);
     start(async () => {
       change(optimistic);
       try {
         // A refusal comes back as a reason; an action that never answered (a dropped connection) throws, and is told the same way.
-        const r = await action().catch((): Result => ({ ok: false, error: 'The change did not reach the server. Try again.' }));
+        const r = await action().catch((): ActionResult => ({ ok: false, error: 'The change did not reach the server. Try again.' }));
         if (!r.ok) {
           if (failed) return failed(r.error);
           toast({ tone: 'critical', title: 'Change not made', description: r.error });
@@ -154,7 +153,7 @@ export function MembersView({ rows, now, revisions, actions, access, roles, work
       for (const id of [...live]) {
         live.delete(id);
         void actions.remove(id)
-          .catch((): Result => ({ ok: false, error: 'The change did not reach the server. Try again.' }))
+          .catch((): ActionResult => ({ ok: false, error: 'The change did not reach the server. Try again.' }))
           .then((r) => {
             if (r.ok) return;
             release(id);

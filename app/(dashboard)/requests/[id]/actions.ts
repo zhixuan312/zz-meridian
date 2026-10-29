@@ -6,8 +6,7 @@ import { can, collectionFor, resolveAccess, Unauthenticated } from '@/data/acces
 import { collectionTag } from '@/data/read';
 import { writesTokens, type RequestRow } from '@/data/sample';
 import { retryable } from '@/logic/request-context';
-
-export type ReplayResult = { ok: true; id: string; status: number } | { ok: false; error: string };
+import type { ActionResult } from '@/lib/collection';
 
 /**
  * Sends a logged request again: the same method, route, customer, region and model, as a new request that names the one
@@ -16,7 +15,7 @@ export type ReplayResult = { ok: true; id: string; status: number } | { ok: fals
  * calls a model that writes tokens the replay has a first token, which the sample puts two fifths of the way through. Authorized like any
  * write, then the tenant's request reads are refreshed.
  */
-export async function replayRequest(id: string): Promise<ReplayResult> {
+export async function replayRequest(id: string): Promise<ActionResult<{ id: string; status: number }>> {
   try {
     const scope = await resolveAccess();
     if (!(await can(scope, 'requests', 'create'))) return { ok: false, error: 'You do not have permission to replay requests.' };

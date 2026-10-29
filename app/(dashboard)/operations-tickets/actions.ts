@@ -3,7 +3,7 @@
 import { collectionFor, resolveAccess } from '@/data/access';
 import type { Ticket } from '@/data/sample';
 import { TicketRefusal } from '@/data/ticket-mutations';
-import type { TicketResult } from '@/views/tickets';
+import type { ActionResult } from '@/lib/collection';
 
 /** What a person types into the form; the boundary checks every field again, so nothing here is trusted. */
 type Draft = Pick<Ticket, 'title' | 'service' | 'priority' | 'assigneeId' | 'summary'>;
@@ -16,7 +16,7 @@ type Change = Partial<Pick<Ticket, 'title' | 'service' | 'priority' | 'assigneeI
  * Its refusal is a sentence, so it comes back as a value the form can show; a thrown error would lose its message in a
  * production build.
  */
-async function run(write: (tickets: ReturnType<typeof collectionFor>) => Promise<unknown>): Promise<TicketResult> {
+async function run(write: (tickets: ReturnType<typeof collectionFor>) => Promise<unknown>): Promise<ActionResult> {
   try {
     await write(collectionFor(await resolveAccess(), 'tickets'));
     return { ok: true };
@@ -26,10 +26,10 @@ async function run(write: (tickets: ReturnType<typeof collectionFor>) => Promise
   }
 }
 
-export async function createTicket(input: Draft): Promise<TicketResult> {
+export async function createTicket(input: Draft): Promise<ActionResult> {
   return run((tickets) => tickets.create!({ title: input?.title, service: input?.service, priority: input?.priority, assigneeId: input?.assigneeId ?? null, summary: input?.summary ?? '' }));
 }
 
-export async function updateTicket(id: string, change: Change): Promise<TicketResult> {
+export async function updateTicket(id: string, change: Change): Promise<ActionResult> {
   return run((tickets) => tickets.update!([id], { ...change }));
 }

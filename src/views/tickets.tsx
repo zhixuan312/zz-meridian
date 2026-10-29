@@ -28,9 +28,8 @@ import { useLive, type Revisions } from '@/lib/live';
 import type { Ticket } from '@/data/sample';
 import type { TicketRow } from '@/data/tickets';
 import { matchingTickets, TICKET_METRICS, ticketCounts, ticketsContext } from '@/logic/tickets-context';
+import type { ActionResult } from '@/lib/collection';
 
-/** What a write answers: done, or the sentence that says why not. */
-export type TicketResult = { ok: true } | { ok: false; error: string };
 type Draft = { title: string; service: string; priority: Ticket['priority']; assigneeId: string | null; summary: string };
 type Change = Partial<Pick<Ticket, 'state'>>;
 
@@ -59,8 +58,8 @@ export function TicketsView({ rows, now, revisions, may = { create: true, update
   may?: { create: boolean; update: boolean };
   services: string[];
   assignees: { id: string; name: string }[];
-  createTicket: (draft: Draft) => Promise<TicketResult>;
-  updateTicket: (id: string, change: Change) => Promise<TicketResult>;
+  createTicket: (draft: Draft) => Promise<ActionResult>;
+  updateTicket: (id: string, change: Change) => Promise<ActionResult>;
 }) {
   const router = useRouter();
   useLive(['tickets'], revisions);

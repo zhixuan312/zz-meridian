@@ -12,7 +12,8 @@ vi.mock('@/components/ui/toast', () => ({ UNDO_MS: 8000, toast: (t: { tone: stri
 vi.stubGlobal('IntersectionObserver', class { observe() {} unobserve() {} disconnect() {} });
 
 import { SettingsBody } from '@/views/settings';
-import { MembersView, type MemberActions, type Result } from '@/views/members';
+import { MembersView, type MemberActions } from '@/views/members';
+import type { ActionResult } from '@/lib/collection';
 import type { MemberRowAccess } from '@/data/member-mutations';
 import { ADD_ONS, MAIN_ROLES } from '@/data/roles';
 import { MEMBERS } from '@/system/fixtures/sample-members';
@@ -29,15 +30,15 @@ describe('a workspace that could not be read', () => {
 });
 
 describe('a removal held for Undo', () => {
-  const noop = async (): Promise<Result> => ({ ok: true });
+  const noop = async (): Promise<ActionResult> => ({ ok: true });
   const ACCESS: Record<string, MemberRowAccess> = Object.fromEntries(MEMBERS.map((m) => [m.id, { changeRole: true, suspend: m.status === 'Active', reactivate: m.status === 'Suspended', remove: true, roles: MAIN_ROLES, addOns: ADD_ONS }]));
   const view = (actions: MemberActions) => <MembersView rows={MEMBERS} now="2026-10-05T09:00:00.000Z" actions={actions} access={ACCESS} roles={MAIN_ROLES} />;
   const m = [...MEMBERS].filter((x) => x.status === 'Active').sort((a, b) => (a.joined === b.joined ? 0 : a.joined > b.joined ? -1 : 1))[0];
 
   it('is sent when the page goes away, and a refusal comes back with its reason', async () => {
     // The flush used to call the action and throw its answer away: a refused removal left the row gone and said nothing.
-    let resolve!: (r: Result) => void;
-    const remove = vi.fn(() => new Promise<Result>((r) => { resolve = r; }));
+    let resolve!: (r: ActionResult) => void;
+    const remove = vi.fn(() => new Promise<ActionResult>((r) => { resolve = r; }));
     render(view({ invite: noop, setStatus: noop, remove, assignRole: noop }));
     fireEvent.keyDown(screen.getByRole('button', { name: `Actions for ${m.name}` }), { key: 'ArrowDown' });
     fireEvent.click(await screen.findByRole('menuitem', { name: 'Remove' }));

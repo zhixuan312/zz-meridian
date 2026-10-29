@@ -21,7 +21,8 @@ import { REQUESTS } from '@/system/fixtures/sample';
 import { MEMBERS } from '@/system/fixtures/sample-members';
 import { API_KEYS } from '@/system/fixtures/sample-records';
 import { KeysView } from '@/views/keys';
-import { MembersView, type Result } from '@/views/members';
+import { MembersView } from '@/views/members';
+import type { ActionResult } from '@/lib/collection';
 import { RequestsView } from '@/views/requests';
 import type { RequestsData } from '@/logic/requests-context';
 
@@ -76,7 +77,7 @@ describe('the pages that list records are built from the template', () => {
   });
 
   it('Members: no summary, the table, then who may do what', () => {
-    const ok = async (): Promise<Result> => ({ ok: true });
+    const ok = async (): Promise<ActionResult> => ({ ok: true });
     const access: Record<string, MemberRowAccess> = Object.fromEntries(MEMBERS.map((m) => [m.id, { changeRole: true, suspend: m.status === 'Active', reactivate: m.status === 'Suspended', remove: true, roles: MAIN_ROLES, addOns: ADD_ONS }]));
     const { template, renders } = drawn(<MembersView rows={MEMBERS} now={NOW} actions={{ invite: ok, assignRole: ok, setStatus: ok, remove: ok } as never} access={access} roles={MAIN_ROLES} />);
     expect(renders).toBe(1);

@@ -5,13 +5,13 @@ import { can, collectionFor, resolveAccess, Unauthenticated } from '@/data/acces
 import { assignMemberRole, MemberRefusal, REFUSALS } from '@/data/member-mutations';
 import type { AnyCollection } from '@/lib/collection';
 import { dayOf } from '@/lib/format-date';
-import type { Result } from '@/views/members';
 import { STATUSES, TEAMS, type Member } from '@/data/sample';
 import { MAIN_ROLES, type AddOn, type MainRole } from '@/data/roles';
+import type { ActionResult } from '@/lib/collection';
 
 // A refusal the boundary wrote for the person is shown as it is; anything else that threw — a collection that rejected a
 // shape, a connection that dropped — is not theirs to read, and says only that it did not go through.
-const fail = (e: unknown): Result => ({
+const fail = (e: unknown): ActionResult => ({
   ok: false,
   error: e instanceof Unauthenticated ? REFUSALS.signIn : e instanceof MemberRefusal && e.message ? e.message : 'The change did not go through.',
 });
@@ -22,7 +22,7 @@ const fail = (e: unknown): Result => ({
  * tenant's cached reads drop only after the step commits. A rejection becomes a reason, never a thrown error, and a
  * refused change writes nothing, emits nothing and invalidates nothing.
  */
-async function run(op: 'create' | 'update' | 'remove', ids: string[] | undefined, change: (c: AnyCollection) => Promise<unknown>): Promise<Result> {
+async function run(op: 'create' | 'update' | 'remove', ids: string[] | undefined, change: (c: AnyCollection) => Promise<unknown>): Promise<ActionResult> {
   try {
     const scope = await resolveAccess();
     if (!(await can(scope, 'members', op, ids))) return { ok: false, error: REFUSALS.noGrant };
@@ -33,7 +33,7 @@ async function run(op: 'create' | 'update' | 'remove', ids: string[] | undefined
   }
 }
 
-export async function inviteMember(input: { name: string; email: string; role: Member['role']; team: Member['team'] }): Promise<Result> {
+export async function inviteMember(input: { name: string; email: string; role: Member['role']; team: Member['team'] }): Promise<ActionResult> {
   const name = String(input.name ?? '').trim();
   const email = String(input.email ?? '').trim();
   if (!name) return { ok: false, error: 'Name the person you are inviting.' };
@@ -44,17 +44,17 @@ export async function inviteMember(input: { name: string; email: string; role: M
   return run('create', undefined, (c) => c.create!({ name, email, role: input.role, team: input.team, status: 'Invited', joined: dayOf(clock()), lastActive: null }));
 }
 
-export async function setMemberStatus(id: string, status: Member['status']): Promise<Result> {
+export async function setMemberStatus(id: string, status: Member['status']): Promise<ActionResult> {
   if (!STATUSES.includes(status)) return { ok: false, error: 'Unknown status.' };
   return run('update', [id], (c) => c.update!([id], { status }));
 }
 
-export async function removeMember(id: string): Promise<Result> {
+export async function removeMember(id: string): Promise<ActionResult> {
   return run('remove', [id], (c) => c.remove!([id]));
 }
 
 /** A member's role and add-ons change only here: the boundary decides, and a row the caller may not change is refused. */
-export async function assignRole(input: { id: string; role: MainRole; addOns: AddOn[] }): Promise<Result> {
+export async function assignRole(input: { id: string; role: MainRole; addOns: AddOn[] }): Promise<ActionResult> {
   try {
     // The boundary re-reads the caller and the target and refuses with the frozen message, so this path does not
     // decide it a second time.

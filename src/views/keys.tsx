@@ -27,6 +27,7 @@ import type { PublicKey } from '@/data/projections';
 import { SCOPES, type Scope } from '@/logic/key-scopes';
 import { useShareView } from '@/components/base/use-share-view';
 import { keysContext } from '@/logic/keys-context';
+import type { ActionResult } from '@/lib/collection';
 
 
 type Draft = { name: string; env: 'live' | 'test'; scopes: Scope[] };
@@ -37,7 +38,7 @@ type Draft = { name: string; env: 'live' | 'test'; scopes: Scope[] };
  * table, so a control the person may not use is not drawn at all, and nothing says why. Defaults allow both, for a view
  * mounted on its own.
  */
-export function KeysView({ rows, now, revisions, createKey, revokeKey, may = { create: true, revoke: true } }: { rows: PublicKey[]; now: string; revisions?: Revisions; createKey: (draft: Draft) => Promise<{ ok: true; key: PublicKey & { secret: string } } | { ok: false; error: string }>; revokeKey: (id: string) => Promise<{ ok: true } | { ok: false; error: string }>; may?: { create: boolean; revoke: boolean } }) {
+export function KeysView({ rows, now, revisions, createKey, revokeKey, may = { create: true, revoke: true } }: { rows: PublicKey[]; now: string; revisions?: Revisions; createKey: (draft: Draft) => Promise<ActionResult<{ key: PublicKey & { secret: string } }>>; revokeKey: (id: string) => Promise<ActionResult>; may?: { create: boolean; revoke: boolean } }) {
   useShareView(keysContext(rows, now, SCOPES));
   const router = useRouter();
   useLive(['keys'], revisions);

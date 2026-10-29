@@ -7,15 +7,16 @@ vi.mock('@/components/ui/toast', () => ({ UNDO_MS: 8000, toast: (t: { tone: stri
 vi.stubGlobal('IntersectionObserver', class { observe() {} unobserve() {} disconnect() {} });
 
 import { KeysView } from '@/views/keys';
-import { MembersView, type MemberActions, type Result } from '@/views/members';
+import { MembersView, type MemberActions } from '@/views/members';
+import type { ActionResult } from '@/lib/collection';
 import type { MemberRowAccess } from '@/data/member-mutations';
 import { ADD_ONS, MAIN_ROLES } from '@/data/roles';
 import { API_KEYS } from '@/system/fixtures/sample-records';
 import { MEMBERS } from '@/system/fixtures/sample-members';
 
-const deferred = () => { let resolve!: (r: Result) => void; const promise = new Promise<Result>((r) => { resolve = r; }); return { promise, resolve }; };
+const deferred = () => { let resolve!: (r: ActionResult) => void; const promise = new Promise<ActionResult>((r) => { resolve = r; }); return { promise, resolve }; };
 
-const noop = async (): Promise<Result> => ({ ok: true });
+const noop = async (): Promise<ActionResult> => ({ ok: true });
 /** The boundary's answer for every row, as the page would pass it: the view is mounted on its own here. */
 const ACCESS: Record<string, MemberRowAccess> = Object.fromEntries(MEMBERS.map((m) => [m.id, { changeRole: true, suspend: m.status === 'Active', reactivate: m.status === 'Suspended', remove: true, roles: MAIN_ROLES, addOns: ADD_ONS }]));
 const view = (actions: MemberActions, rows = MEMBERS, now = '2026-10-05T09:00:00.000Z') => <MembersView rows={rows} now={now} actions={actions} access={ACCESS} roles={MAIN_ROLES} />;
@@ -46,7 +47,7 @@ describe('members, optimistically', () => {
   });
   it('rolls back and says so when the action itself fails, as a dropped connection does', async () => {
     let fail!: (e: Error) => void;
-    const rejecting = () => new Promise<Result>((_, reject) => { fail = reject; });
+    const rejecting = () => new Promise<ActionResult>((_, reject) => { fail = reject; });
     render(view(withActions({ invite: rejecting })));
     await invite('Rae Okafor');
     expect(await screen.findByText('Rae Okafor')).toBeTruthy();

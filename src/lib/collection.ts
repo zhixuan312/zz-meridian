@@ -108,6 +108,12 @@ export type Collection<T extends Record<string, unknown>, K extends keyof T & st
 export type AnyCollection = Collection<any, any>;
 
 /**
+ * What a server action answers: done, with whatever it hands back, or the sentence that says why not. A thrown error's
+ * message does not reach the browser in a production build; a result does.
+ */
+export type ActionResult<T = object> = ({ ok: true } & T) | { ok: false; error: string };
+
+/**
  * One store per tenant and name per process, on globalThis, so a route handler, a server action and a page share it.
  * `next` is the next id's number: it only grows, so a removed record's id is never given to a new one. `rev` counts
  * the writes the collection has emitted.
