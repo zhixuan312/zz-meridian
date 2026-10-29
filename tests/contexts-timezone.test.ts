@@ -11,16 +11,26 @@ vi.mock('@/app.config', async (orig) => {
   return { ...real, app: { ...real.app, timezone: 'Asia/Singapore' } };
 });
 
-import { contextText } from '@/lib/shared-context';
+import { contextText, viewAt } from '@/lib/shared-context';
 import { viewTools } from '@/logic/tools';
-import { collections } from '@/data/collections';
+import { detailRoutes } from '../scripts/lib/team-config.ts';
+
+/**
+ * A detail page's view reads one record, named by the address: its input comes from a route the team lists in
+ * `detailRoutes` (scripts/verify.config.ts) that renders it, each `[segment]` of its page read from that address.
+ */
+function inputOf(page: string): Record<string, string> | null {
+  if (!page.includes('[')) return {};
+  const route = detailRoutes.find((r) => viewAt(viewTools, r)?.page === page);
+  if (!route) return null;
+  const parts = route.split('/');
+  return Object.fromEntries(page.split('/').flatMap((seg, i) => (/^\[(\w+)\]$/.test(seg) ? [[seg.slice(1, -1), parts[i]!]] : [])));
+}
 
 describe("every view's context names the product's reporting timezone, never UTC", () => {
   for (const tool of viewTools) {
-    it(tool.name, async () => {
-      const input = tool.name === 'request' ? { id: (await collections.find((c) => c.name === 'requests')!.query({ limit: 1 })).rows[0].id }
-        : tool.name === 'customer' ? { id: (await collections.find((c) => c.name === 'customers')!.query({ limit: 1 })).rows[0].id }
-        : {};
+    const input = inputOf(tool.page);
+    it.skipIf(!input)(input ? tool.name : `${tool.name} (no route in detailRoutes renders ${tool.page})`, async () => {
       const { context } = await tool.read(tool.input.parse(input) as never);
       // A zone as a label, after a time or over a span of days; a ticket's own title may still mention UTC.
       expect(contextText(context)).not.toMatch(/\d\d:\d\d UTC\b|\(UTC\b/);
