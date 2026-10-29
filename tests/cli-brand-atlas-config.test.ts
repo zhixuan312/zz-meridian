@@ -24,5 +24,8 @@ describe('brand.ts --no-atlas', () => {
     expect(config).not.toMatch(/The reading pages are the Atlas/);
     expect(config).toMatch(/navigationChecks: \[/);
     expect(config).toMatch(/path: '\/requests'/);
+    // The footer's link follows the nav entry, so the footer stays as the template ships it: an update tells a created
+    // project's untouched sample file from one the team changed by comparing it with the release's.
+    expect(fs.readFileSync(path.join(dir, 'src/views/sample-footer.tsx'), 'utf8')).toBe(fs.readFileSync(path.join(ROOT, 'src/views/sample-footer.tsx'), 'utf8'));
   }, 120_000);
 });

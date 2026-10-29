@@ -12,7 +12,7 @@
  * --hue/--chroma add a new accent preset (OKLCH hue in degrees, chroma 0 to 0.24, 0.12 to 0.18 is typical) and make it the default. The contrast
  * gate then runs; where white on the accent fill fails in a theme, the preset gets a lower fill lightness for that
  * theme, a step at a time, until every pair in every theme passes. --no-atlas removes the Design Atlas: its routes, its
- * modules, its nav and footer links and its build tracing (the card previews stay: the gate checks them; the markdown packages stay for Prose).
+ * modules, its nav entries (the footer's link follows them) and its build tracing (the card previews stay: the gate checks them; the markdown packages stay for Prose).
  * --product goes further, for a dashboard that is not the design system: --no-atlas, and the card specs and previews,
  * page specs, docs, decisions, changelog and skill go too (the assistant, its collections and its fake model stay); the components, tokens, scripts and gates stay.
  * --existing is for an existing project that brought Meridian in (route A in the skill): it sets the name, accent and the
@@ -200,8 +200,6 @@ if (has('--no-atlas') || has('--product')) {
     return `import {\n  ${kept.join(', ')},\n} from 'lucide-react';`;
   });
   write('src/app.config.ts', cfg);
-  // The standalone screens' footer link to the Atlas (the sample's footer, src/views/sample-footer.tsx).
-  write('src/views/sample-footer.tsx', read('src/views/sample-footer.tsx').replace(/\n\s*<Link href="\/system"[^\n]*<\/Link>/, ''));
   // The verification config's mappings and smoke routes for the Atlas, with the comments over them, which verify --full
   // would report as no route.
   write('scripts/verify.config.ts', read('scripts/verify.config.ts').replace(/(?:\n\s*\/\/[^\n]*)*\n\s*\{ path: '\/system(?:\/[^']*)?'[^\n]*\},/g, '').replace(/,\s*'\/system(?:\/[^']*)?'/g, ''));
@@ -209,7 +207,7 @@ if (has('--no-atlas') || has('--product')) {
   write('next.config.ts', read('next.config.ts').replace(/\/\/ Card specifications[^\n]*/, '// The tab icon reads the tokens, and the assistant reads the brief, at build time.').replace(/'\/system\/\*\*':\s*\[[^\]]*\],\s*/, ''));
   // Route types generated for the removed pages would fail the type check until regenerated.
   for (const d of ['.next/types', '.next/dev/types']) fs.rmSync(file(d), { recursive: true, force: true });
-  done.push('the Design Atlas removed: app/system, its modules in src/system, its rail and footer links, its verification mappings and its build tracing');
+  done.push('the Design Atlas removed: app/system, its modules in src/system, its rail links and with them the footer link, its verification mappings and its build tracing');
 }
 
 if (has('--product')) {
