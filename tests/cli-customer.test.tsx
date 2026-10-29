@@ -115,7 +115,8 @@ describe("one customer's page", () => {
     const quiet = [...(await customers()).values()].find((c) => c.status === 'active' && !['Northwind Labs', 'Halcyon Health', 'Atlas Freight', 'Mosaic Learning', 'Quill & Co', 'Parallax AI', 'Fernway Bank', 'Orbit Retail', 'Tessellate', 'Lumen Studio', 'Kestrel Systems', 'Brightline'].includes(c.name))!;
     jar.value = OWNER;
     const doc = await customerPage(quiet.id);
-    expect(doc.querySelector('[data-page-width]')!.textContent).toMatch(/no sampled request is from/i);
+    // The reason too, so a quiet customer is not read as one the log missed: the log is a sample, and the line ends.
+    expect(doc.querySelector('[data-page-width]')!.textContent).toContain(`No sampled request is from ${quiet.name}. The log keeps a sample of the requests, not every one.`);
   });
 
   it('draws the missing-record page for an id that names nobody', async () => {

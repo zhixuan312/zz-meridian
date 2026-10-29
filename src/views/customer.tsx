@@ -174,7 +174,7 @@ function Latest({ data, rows }: { data: CustomerData; rows: NonNullable<Customer
       <Card>
         <CardHeader title="Its latest requests" />
         <CardBody>
-          <p className="py-2 text-sm text-ink-2">No sampled request is from {c.name}</p>
+          <p className="py-2 text-sm text-ink-2">No sampled request is from {c.name}. The log keeps a sample of the requests, not every one.</p>
         </CardBody>
       </Card>
     );
