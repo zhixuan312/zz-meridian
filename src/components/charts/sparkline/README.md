@@ -84,4 +84,4 @@ import { Sparkline } from '@/components/charts/sparkline';
 <Sparkline values={c.seats} curve="step" domain={[0, 50]} color="neutral" height={24} />
 ```
 
-`values` is `(number | null)[]`; `curve` is `'monotone' | 'linear' | 'step'`; `domain` is `[number, number]`.
+`values` is `(number | null)[]`; `curve` is `'monotone' | 'linear' | 'step'`; `domain` is `[number, number]`; `format` is `(n: number) => string`, how the title reads the range, a count unless given (a Metric tile passes its own, so a margin reads `62.0% to 71.0%`, not `0.62 to 0.71`).

@@ -13,7 +13,16 @@ import { useSize } from '@/components/charts/use-size';
  * chart's does, so a day that was not observed is never drawn as zero. `curve` names the path the line and its area take;
  * `domain` holds the scale, so sparklines side by side are drawn against one range.
  */
-export function Sparkline({ values, color = 'accent', height = 36, curve = 'monotone', domain, className }: { values: (number | null)[]; color?: SeriesSlot | 'accent' | 'neutral'; height?: number; curve?: Curve; domain?: [number, number]; className?: string }) {
+export function Sparkline({ values, color = 'accent', height = 36, curve = 'monotone', domain, format = FORMATTERS.count, className }: {
+  values: (number | null)[];
+  color?: SeriesSlot | 'accent' | 'neutral';
+  height?: number;
+  curve?: Curve;
+  domain?: [number, number];
+  /** How the title reads the range: the figure's own format beside it, a count by default. */
+  format?: (n: number) => string;
+  className?: string;
+}) {
   const id = useId().replace(/[^a-zA-Z0-9_-]/g, '');
   const [ref, { width: W }] = useSize<HTMLDivElement>();
   const { index, dates } = useMeridianIndex();
@@ -49,7 +58,7 @@ export function Sparkline({ values, color = 'accent', height = 36, curve = 'mono
   // A shape with no readout says nothing about what it covers, and it is the one chart a page puts beside a figure
   // without a table under it (issue #94). The range it draws is the words it has, on the pointer: the data's own, the
   // held domain, or, widened, the levels it is drawn to.
-  const range = `${FORMATTERS.count(min)} to ${FORMATTERS.count(max)}${widened ? `, scale widened from ${FORMATTERS.count(held[0])}–${FORMATTERS.count(held[1])}` : ''}`;
+  const range = `${format(min)} to ${format(max)}${widened ? `, scale widened from ${format(held[0])}–${format(held[1])}` : ''}`;
   return (
     <div ref={ref} aria-hidden title={range} className={className} style={{ height }}>
       {W ? (

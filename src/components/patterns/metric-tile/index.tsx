@@ -149,7 +149,7 @@ export function MetricTile({
           {/* Outside the padded grid, so the shape runs from edge to edge with no margin to undo. */}
           {shape ? (
             <div className="mt-2">
-              <Sparkline values={shape} color={emphasis ? 'accent' : 'neutral'} height={28} />
+              <Sparkline values={shape} color={emphasis ? 'accent' : 'neutral'} height={28} format={fmt} />
             </div>
           ) : null}
         </div>
@@ -237,7 +237,7 @@ export function MetricTile({
         </div>
         {shape ? (
           <div className="-mx-(--card-pad) mt-3 max-sm:mx-0 max-sm:mt-0">
-            <Sparkline values={shape} color={emphasis ? 'accent' : 'neutral'} height={40} />
+            <Sparkline values={shape} color={emphasis ? 'accent' : 'neutral'} height={40} format={fmt} />
           </div>
         ) : (
           <div className="h-(--card-pad) max-sm:hidden" />
