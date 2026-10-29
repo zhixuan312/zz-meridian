@@ -16,7 +16,7 @@ Status: beta
 | Variant | Use |
 |---|---|
 | Value | Public identifiers: a request ID, an endpoint URL |
-| Secret | API keys, signing secrets: the prefix up to the last underscore (`zzm_live_`) and the last 4 characters show, with eight dots between whatever the length |
+| Secret | API keys, signing secrets: a word prefix of at most two parts (`zzm_live_`, `sk_test_`), never a part of the random value, then eight dots whatever the length, then the last 4 characters once the value has 16 or more; in an embed it stays masked and Reveal is not offered |
 
 ## Sizes
 

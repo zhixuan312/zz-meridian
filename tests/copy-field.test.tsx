@@ -1,6 +1,7 @@
 import { describe, expect, it, vi, afterEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { CopyField } from '@/components/ui/copy-field';
+import { SurfaceOverride } from '@/components/base/surface';
 
 /**
  * The Copy button says "Copied" only when the copy happened. It used to say so either way, on the one value the product
@@ -43,6 +44,23 @@ describe('CopyField', () => {
     // this guards, and a `waitFor` around a predicate that already holds returns without waiting for one.
     await new Promise((r) => setTimeout(r, 25));
     expect(screen.queryByRole('button', { name: 'Copied' })).toBeNull();
+    expect(screen.getByRole('button', { name: 'Copy API key' })).toBeTruthy();
+  });
+});
+
+describe('a masked secret', () => {
+  const shown = () => screen.getByRole('group', { name: 'API key' }).querySelector('code')!.textContent;
+  it('keeps only a word prefix such as zzm_live_, never a part of the random value after an underscore in it', () => {
+    render(<CopyField secret label="API key" value="zzm_live_7Hq2v9_Xk3pLm0aQ4rT" />);
+    expect(shown()).toBe('zzm_live_••••••••Q4rT');
+  });
+  it('shows nothing of a short secret but the dots', () => {
+    render(<CopyField secret label="API key" value="ab12" />);
+    expect(shown()).toBe('••••••••');
+  });
+  it('is never offered for Reveal in an embed', () => {
+    render(<SurfaceOverride surface={{ kind: 'embed' }}><CopyField secret label="API key" value="zzm_live_abcdef0123456789" /></SurfaceOverride>);
+    expect(screen.queryByRole('button', { name: 'Reveal API key' })).toBeNull();
     expect(screen.getByRole('button', { name: 'Copy API key' })).toBeTruthy();
   });
 });

@@ -2,6 +2,7 @@
 
 import { Check, Copy, Eye, EyeOff } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { useSurface } from '@/components/base/surface';
 import { cn } from '@/lib/cn';
 
 /**
@@ -22,22 +23,26 @@ export function CopyField({
   className?: string;
 }) {
   const [copied, setCopied] = useState(false);
-  const [shown, setShown] = useState(!secret);
+  const [revealed, setShown] = useState(!secret);
+  // An embed never reveals a secret: the conversation is not a safe place for it, so it stays masked and Copy remains.
+  const embed = useSurface().kind === 'embed';
+  const shown = revealed && !(secret && embed);
   useEffect(() => {
     if (!copied) return;
     const t = setTimeout(() => setCopied(false), 1600);
     return () => clearTimeout(t);
   }, [copied]);
-  // A masked secret keeps its prefix up to the last underscore (zzm_live_), so live and test still read apart, and
-  // always shows eight dots, so the mask says nothing about the length.
-  const display = shown ? value : value.slice(0, value.lastIndexOf('_') + 1) + '•'.repeat(8) + value.slice(-4);
+  // A masked secret keeps a word prefix of at most two parts (zzm_live_, sk_test_), so live and test still read apart,
+  // but never a part of the random value that happens to follow an underscore in it; it always shows eight dots, so the
+  // mask says nothing about the length, and the last four only of a value long enough that four say nothing about it.
+  const display = shown ? value : (/^(?:[a-z]{1,8}_){1,2}/.exec(value)?.[0] ?? '') + '•'.repeat(8) + (value.length >= 16 ? value.slice(-4) : '');
   return (
     // The name is the group's, not the value's: `<code>` does not take an accessible name, so the label on it was read
     // by nothing. The group is what a screen reader announces on the way in, and the value is read as its content.
     <div role="group" aria-label={label} className={cn('flex h-(--control-md) min-w-0 items-center rounded-md border border-line-strong bg-surface-sunk pl-3 shadow-control', className)}>
       {/* The title is what is shown, whole: for a masked secret that is the mask, never the secret. */}
       <code title={display} className="min-w-0 flex-1 truncate font-mono text-xs text-ink">{display}</code>
-      {secret ? (
+      {secret && !embed ? (
         <button
           type="button"
           onClick={() => setShown((s) => !s)}
