@@ -75,6 +75,9 @@ export function writeIn(root: string, rel: string, content: string | Buffer) {
 
 export const sha256 = (content: string | Buffer) => `sha256-${createHash('sha256').update(content).digest('hex')}`;
 
+/** What a quiet command may print and still be read whole: past Node's 1 MiB default the child is killed, and a long gate reads as exit 1. */
+const OUTPUT = 256 * 1024 * 1024;
+
 /**
  * A command with its arguments, without a shell, so nothing in a name or a path is ever interpreted. The one exception
  * is a Windows .cmd shim (npm, pnpm, tsc), which Node runs only through a shell: those calls pass fixed arguments
@@ -82,7 +85,7 @@ export const sha256 = (content: string | Buffer) => `sha256-${createHash('sha256
  */
 export function run(cmd: string, args: string[], cwd: string, quiet = false): SpawnSyncReturns<string> {
   const shim = process.platform === 'win32' && cmd !== process.execPath;
-  return spawnSync(shim && cmd.includes(' ') ? `"${cmd}"` : cmd, args, { cwd, encoding: 'utf8', stdio: quiet ? 'pipe' : 'inherit', shell: shim });
+  return spawnSync(shim && cmd.includes(' ') ? `"${cmd}"` : cmd, args, { cwd, encoding: 'utf8', stdio: quiet ? 'pipe' : 'inherit', shell: shim, maxBuffer: OUTPUT });
 }
 
 /** The package manager a project already uses, from its lockfile; npm when it has none. */
@@ -101,7 +104,7 @@ export const installArgs = (pm: ReturnType<typeof packageManager>): string[] => 
 
 /** A tool in the project's node_modules, run as `node <its script>`: no shell and no .cmd shim on any platform. */
 export function runTool(root: string, entry: string, args: string[], quiet = true): SpawnSyncReturns<string> {
-  return spawnSync(process.execPath, [path.join(root, 'node_modules', entry), ...args], { cwd: root, encoding: 'utf8', stdio: quiet ? 'pipe' : 'inherit' });
+  return spawnSync(process.execPath, [path.join(root, 'node_modules', entry), ...args], { cwd: root, encoding: 'utf8', stdio: quiet ? 'pipe' : 'inherit', maxBuffer: OUTPUT });
 }
 
 export const hasCommand = (cmd: string) => spawnSync(cmd, ['--version'], { stdio: 'ignore', shell: process.platform === 'win32' }).status === 0;
