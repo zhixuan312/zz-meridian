@@ -80,9 +80,10 @@ navigation with no `under` draws as before. `node scripts/check.ts` refuses, nam
 - more than 7 sub pages under one parent (past that, the item is a group of its own).
 
 Use `under` for destinations: pages with their own address, access and place in the palette. Use in-page tabs (`Tabs`)
-instead for the views of one record, under one header. For a sub page's masthead to show its path, pass
-`<Breadcrumb items={navTrail(href, nav)} />` (from `@/components/patterns/rail/trail`) as the kicker; the crumbs are
-derived from `nav`, never written out.
+instead for the views of one record, under one header. A parent is a page too: for several equal pages under a header
+with no page of its own, give them a group of their own, whose `label` is that header. For a sub page's masthead to show
+its path, pass `<NavTrail nav={nav} />` (from `@/components/patterns/rail/nav-trail`) as the kicker: it reads the
+address, so the page names no href of its own and a route that moves keeps a true trail.
 
 `needs` is required, and in a created project it is a feature's own need **by reference** — `needs: FEATURES.home.needs`,
 from `optional:src/data/features.ts` — never a grant written a second time: the rail and the palette draw only the

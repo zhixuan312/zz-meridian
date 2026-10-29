@@ -26,6 +26,7 @@ Every release of ZZ Meridian, newest first. Versions follow semver: a removed or
 - **The command palette exports `usePaletteKey()`**, its keystroke as the reader's keyboard names it (`⌘K` or `Ctrl K`), for a page that shows the shortcut.
 - **Badge exports `TONE_FILL`**, the one tone-to-fill map, which Progress now reads.
 - **`page-loading` exports `LinesSkeleton`**, a card of lines under a title, four unless told; Home, Revenue and Now each drew their own.
+- **`NavTrail`** (`@/components/patterns/rail/nav-trail`) draws a sub page's trail for its masthead from the address, by the rail's own rule, so a sub page no longer writes its own href into `navTrail('<href>', nav)`, where a route that moved kept a wrong trail (#102). Requests uses it.
 - **`page-loading` exports `FeaturedSkeleton`**, the Featured metric's loading shape, `beside` when three tiles stand beside it; five loading pages drew their own copy.
 - **`@/lib/format` exports `inWords`**, a list in a sentence ("a, b and c"), which the Now, Home and fact contexts and the no-access page each wrote; the Customers past-due tile reads it too, so two customers are "Brightline and Acme", not "Brightline, Acme".
 - **`@/logic/derivations` exports `MOST_PARTS`**, the most parts a stacked chart draws before it folds the rest into one, which the Composition bar now folds at as the Column chart does.
