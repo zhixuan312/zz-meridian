@@ -138,7 +138,11 @@ let pressed = 0;
 const walk = async (route: string, width: number) => {
   const touch = width < 600;
   // The page's late chrome first (scripts/lib/settle.ts): a control that arrives after the list is taken is never pressed, and the count reads as if it had been.
-  const fresh = async () => { await page.open(base + route, { width, theme: 'dark', cookie }); await inject(route); await settle(page); return page.eval<{ controls: string[]; keys: string[]; links: string[] }>(LIST); };
+  // Each load starts the page's errors again, so what a load threw is kept before the next: an error a press threw is the
+  // route's, though the walk opened the route again after it.
+  const thrown: string[] = [];
+  let loads = 0;
+  const fresh = async () => { if (loads++) thrown.push(...page.errors); await page.open(base + route, { width, theme: 'dark', cookie }); await inject(route); await settle(page); return page.eval<{ controls: string[]; keys: string[]; links: string[] }>(LIST); };
   const { controls, keys, links } = await fresh();
   // An error page's controls are not the route's: a route that answered other than declared is that, and nothing pressed.
   const answer = answerProblem(route, page.status(), await page.eval<boolean>(DRAWS_NOT_FOUND), MISSING);
@@ -202,7 +206,8 @@ const walk = async (route: string, width: number) => {
     if (!r.changes && !after.replaced) failures.push(`${route} @${width}: "${controls[i]}" does nothing when ${touch ? 'tapped' : 'pressed'}`);
     if (after.replaced || after.open) await fresh();
   }
-  if (page.errors.length) failures.push(`${route} @${width}: ${page.errors[0]}`);
+  thrown.push(...page.errors);
+  if (thrown.length) failures.push(`${route} @${width}: ${thrown[0]}`);
 };
 
 for (const width of WIDTHS) {

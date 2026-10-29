@@ -68,7 +68,7 @@ const RULES: Rule[] = [
   { suite: 'presses', line: 'was listed but could not be found again', fails: '/presses-control-gone', passes: '/presses-controls-move' , source: 'was listed but could not be found again' },
   { suite: 'presses', line: 'is covered by', fails: '/presses-covered', passes: '/presses-covered-fixed' , source: 'is covered by ${armed.covered}' },
   { suite: 'presses', line: 'does nothing when', fails: '/deep-dead-control', passes: '/deep-dead-control-fixed' , source: 'does nothing when' },
-  { suite: 'presses', line: 'exception:', fails: '/page-error', passes: '/clean' , source: '${page.errors[0]}' },
+  { suite: 'presses', line: 'exception:', fails: '/page-error', passes: '/clean' , source: '${thrown[0]}' },
   { suite: 'presses', line: 'could not be walked:', fails: '/hangs', passes: '/clean' , source: 'could not be walked:' },
   // The keyboard walk, in the order scripts/keyboard.ts reports.
   { suite: 'keyboard', line: 'answered 404, so what was measured is its error page', fails: '/gone/record', passes: '/gone/record' , source: 'problems.push(answer)' },

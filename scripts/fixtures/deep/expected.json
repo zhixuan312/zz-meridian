@@ -491,6 +491,7 @@
   { "page": "/presses-bad-url", "suite": "presses", "outcome": "fail", "line": "link http://[docs is not a URL" },
   { "page": "/presses-bad-url-fixed", "suite": "presses", "outcome": "pass" },
   { "page": "/presses-control-gone", "suite": "presses", "outcome": "fail", "line": "\"Archive\" was listed but could not be found again" },
+  { "page": "/presses-error-then-dialog", "suite": "presses", "outcome": "fail", "line": "Break threw on its press" },
   { "page": "/presses-covered", "suite": "presses", "outcome": "fail", "line": "\"Refresh\" is covered by div.layer" },
   { "page": "/presses-covered-fixed", "suite": "presses", "outcome": "pass" },
   { "page": "/page-error", "suite": "presses", "outcome": "fail", "line": "exception: Error: the fixture throws on purpose" },
