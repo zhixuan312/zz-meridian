@@ -9,7 +9,7 @@ Status: beta
 1. **Track**: a pill, 38 by 22px (32 by 18px small), `line-control` at 70% when off, `accent` when on.
 2. **Thumb**: an 18px (14px) `on-accent` circle (white; near-black only on the graphite accent in dark, where the track is near-white) with `shadow-control` and a `line` ring.
 3. **Label** (optional): `text-sm` `ink`, left; the switch sits at the right end of the row.
-4. **Description** (optional): `text-xs` `ink-3` under the label.
+4. **Description** (optional): `text-xs` `ink-3` under the label. It describes the control (`aria-describedby`); the label alone names it.
 
 ## Sizes
 

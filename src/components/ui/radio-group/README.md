@@ -9,7 +9,7 @@ Status: beta
 1. **Dot**: 16px circle, 1px `line-control` on `surface`; the hit area extends 8px.
 2. **Indicator**: a 6px `on-accent` dot on an `accent` fill when chosen.
 3. **Label**: `text-sm` `ink`.
-4. **Description** (optional): `text-xs` `ink-3` (`ink-2` in cards).
+4. **Description** (optional): `text-xs` `ink-3` (`ink-2` in cards). It describes the control (`aria-describedby`); the label alone names it.
 5. **Card** (cards variant): the whole option is a bordered card, `radius-lg`, 14px padding (3.5 steps of the 4px scale).
 
 ## Variants

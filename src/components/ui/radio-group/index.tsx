@@ -22,6 +22,8 @@ export const RadioGroup = forwardRef<HTMLDivElement, Omit<ComponentPropsWithoutR
               id={id}
               value={o.value}
               disabled={o.disabled}
+              // The description sits inside the label, so a press on it chooses too; it describes the option rather than naming it.
+              {...(o.description ? { 'aria-labelledby': `${id}-label`, 'aria-describedby': `${id}-description` } : null)}
               className={cn(
                 'peer relative grid size-4 shrink-0 place-items-center rounded-full border border-line-control bg-surface',
                 'transition-[border-color,background-color] duration-(--dur-hover) hover:border-ink-3',
@@ -47,8 +49,8 @@ export const RadioGroup = forwardRef<HTMLDivElement, Omit<ComponentPropsWithoutR
               >
                 <span className="flex h-5 items-center">{dot}</span>
                 <span className="min-w-0 text-sm leading-5 font-medium text-ink">
-                  {o.label}
-                  {o.description ? <span className="mt-0.5 block text-xs leading-snug font-regular text-ink-2">{o.description}</span> : null}
+                  <span id={`${id}-label`}>{o.label}</span>
+                  {o.description ? <span id={`${id}-description`} className="mt-0.5 block text-xs leading-snug font-regular text-ink-2">{o.description}</span> : null}
                 </span>
               </label>
             );
@@ -57,8 +59,8 @@ export const RadioGroup = forwardRef<HTMLDivElement, Omit<ComponentPropsWithoutR
             <div key={o.value} className="flex items-start gap-2.5">
               <span className="flex h-5 items-center">{dot}</span>
               <label htmlFor={id} data-disabled={o.disabled ? '' : undefined} className={cn('min-w-0 text-sm leading-5 pointer-coarse:-my-3 pointer-coarse:py-3', o.disabled ? 'cursor-not-allowed text-ink-disabled' : 'cursor-pointer text-ink')}>
-                {o.label}
-                {o.description ? <span className="block text-xs leading-snug text-ink-3">{o.description}</span> : null}
+                <span id={`${id}-label`}>{o.label}</span>
+                {o.description ? <span id={`${id}-description`} className="block text-xs leading-snug text-ink-3">{o.description}</span> : null}
               </label>
             </div>
           );

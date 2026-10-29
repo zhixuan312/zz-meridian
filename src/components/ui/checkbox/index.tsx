@@ -40,6 +40,8 @@ export const Checkbox = forwardRef<HTMLButtonElement, Props>(function Checkbox({
         !label && className,
       )}
       {...rest}
+      // The description sits inside the label, so a press on it toggles too; it describes the box rather than naming it.
+      {...(label && description ? { 'aria-labelledby': `${cid}-label`, 'aria-describedby': [rest['aria-describedby'], `${cid}-description`].filter(Boolean).join(' ') } : null)}
     >
       <C.Indicator className="grid place-items-center">
         <Check className="size-3 group-data-[state=indeterminate]/cb:hidden" strokeWidth={3} />
@@ -52,8 +54,8 @@ export const Checkbox = forwardRef<HTMLButtonElement, Props>(function Checkbox({
     <div className={cn('flex items-start gap-2.5', className)}>
       <span className="flex h-5 items-center">{box}</span>
       <label htmlFor={cid} data-disabled={rest.disabled ? '' : undefined} className={cn('min-w-0 text-sm leading-5 pointer-coarse:-my-3 pointer-coarse:py-3', rest.disabled ? 'cursor-not-allowed text-ink-disabled' : 'cursor-pointer text-ink')}>
-        {label}
-        {description ? <span className="block text-xs leading-snug text-ink-3">{description}</span> : null}
+        <span id={`${cid}-label`}>{label}</span>
+        {description ? <span id={`${cid}-description`} className="block text-xs leading-snug text-ink-3">{description}</span> : null}
       </label>
     </div>
   );

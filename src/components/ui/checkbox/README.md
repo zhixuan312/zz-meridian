@@ -9,7 +9,7 @@ Status: beta
 1. **Box**: 16px, `radius-xs`, 1px `line-control` on `surface`; its hit area extends 8px on every side (32px).
 2. **Mark**: a 12px check, or a dash when indeterminate, in `on-accent`.
 3. **Label** (optional): `text-sm` `ink`, beside the box, clickable.
-4. **Description** (optional): one line under the label in `text-xs` `ink-3`.
+4. **Description** (optional): one line under the label in `text-xs` `ink-3`. It describes the control (`aria-describedby`); the label alone names it.
 
 ## States
 
