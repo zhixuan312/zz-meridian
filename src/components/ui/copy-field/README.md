@@ -31,6 +31,7 @@ One size, `control-md`; it takes its container's width.
 | Focus (buttons) | the 2px `accent` focus ring |
 | Copied | the Copy icon becomes a check in `positive-ink` for 1.6s; a polite live region says "API key copied" |
 | Revealed | the full value; the eye becomes an eye with a slash |
+| Not copied | the browser refused the write: the button stays Copy, the value is selected for the person to copy (a masked secret is shown first), and the live region says "Not copied: your browser did not let the page copy it. It is selected: copy it yourself." In an embed a secret stays masked and unselected, and the line says it is not shown here. Drawn by the browser's own selection, so the Atlas does not hold it still |
 
 ## Behaviour
 

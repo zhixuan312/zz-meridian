@@ -1,13 +1,14 @@
 'use client';
 
 import { Check, Copy, Eye, EyeOff } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useSurface } from '@/components/base/surface';
 import { cn } from '@/lib/cn';
 
 /**
  * A value to take elsewhere: an ID, an endpoint, a secret. Read-only, in mono, with a Copy button that turns into a
  * check for 1.6s. A secret is masked until Reveal; Copy still copies the real value, so revealing is never required.
+ * A copy the browser refuses is said, and the value is selected (a masked secret shown first) to copy by hand.
  */
 export function CopyField({
   value,
@@ -26,6 +27,8 @@ export function CopyField({
   'data-preview-state'?: 'copied' | 'revealed';
 }) {
   const [copied, setCopied] = useState(previewState === 'copied');
+  const [refused, setRefused] = useState(false);
+  const code = useRef<HTMLElement>(null);
   const [revealed, setShown] = useState(!secret || previewState === 'revealed');
   // An embed never reveals a secret: the conversation is not a safe place for it, so it stays masked and Copy remains.
   const embed = useSurface().kind === 'embed';
@@ -35,6 +38,11 @@ export function CopyField({
     const t = setTimeout(() => setCopied(false), 1600);
     return () => clearTimeout(t);
   }, [copied, previewState]);
+  // Selected once it is drawn as itself: a selected mask would be copied as the mask.
+  const selectable = !secret || (shown && !embed);
+  useEffect(() => {
+    if (refused && selectable && code.current) window.getSelection()?.selectAllChildren(code.current);
+  }, [refused, selectable]);
   // A masked secret keeps a word prefix of at most two parts (zzm_live_, sk_test_), so live and test still read apart,
   // but never a part of the random value that happens to follow an underscore in it; it always shows eight dots, so the
   // mask says nothing about the length, and the last four only of a value long enough that four say nothing about it.
@@ -44,7 +52,7 @@ export function CopyField({
     // by nothing. The group is what a screen reader announces on the way in, and the value is read as its content.
     <div role="group" aria-label={label} className={cn('flex h-(--control-md) min-w-0 items-center rounded-md border border-line-strong bg-surface-sunk pl-3 shadow-control', className)}>
       {/* The title is what is shown, whole: for a masked secret that is the mask, never the secret. */}
-      <code title={display} className="min-w-0 flex-1 truncate font-mono text-xs text-ink">{display}</code>
+      <code ref={code} title={display} className="min-w-0 flex-1 truncate font-mono text-xs text-ink">{display}</code>
       {secret && !embed ? (
         <button
           type="button"
@@ -65,9 +73,12 @@ export function CopyField({
           try {
             if (!navigator.clipboard) throw new Error('no clipboard');
             await navigator.clipboard.writeText(value);
+            setRefused(false);
             setCopied(true);
           } catch {
-            // The button keeps saying "Copy": nothing was copied, so nothing says it was.
+            // The button keeps saying "Copy": nothing was copied, so nothing says it was, and the line below says why.
+            if (secret && !embed) setShown(true);
+            setRefused(true);
           }
         }}
         aria-label={copied ? 'Copied' : `Copy ${label}`}
@@ -78,7 +89,7 @@ export function CopyField({
       >
         {copied ? <Check className="size-4" strokeWidth={2.25} /> : <Copy className="size-4" />}
       </button>
-      <span aria-live="polite" className="sr-only">{copied ? `${label} copied` : ''}</span>
+      <span aria-live="polite" className="sr-only">{copied ? `${label} copied` : refused ? `Not copied: your browser did not let the page copy it. ${secret && embed ? 'A secret is not shown here.' : 'It is selected: copy it yourself.'}` : ''}</span>
     </div>
   );
 }

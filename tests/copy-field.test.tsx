@@ -48,6 +48,33 @@ describe('CopyField', () => {
   });
 });
 
+describe('a copy the browser refuses', () => {
+  const refuse = () => vi.stubGlobal('navigator', { clipboard: { writeText: vi.fn().mockRejectedValue(new DOMException('denied', 'NotAllowedError')) } });
+  const code = () => screen.getByRole('group', { name: 'API key' }).querySelector('code')!;
+  it('says so, and selects the value for the person to copy themselves', async () => {
+    refuse();
+    render(<CopyField label="Request ID" value="req_123" />);
+    press('Request ID');
+    await waitFor(() => expect(screen.getByText(/^Not copied/)).toBeTruthy());
+    expect(String(window.getSelection())).toBe('req_123');
+  });
+  it('shows a masked secret before selecting it, so what is selected is the value', async () => {
+    refuse();
+    render(<CopyField secret label="API key" value="zzm_live_abcdef0123456789" />);
+    press('API key');
+    await waitFor(() => expect(String(window.getSelection())).toBe('zzm_live_abcdef0123456789'));
+    expect(code().textContent).toBe('zzm_live_abcdef0123456789');
+  });
+  it('keeps a secret masked in an embed, and says where it can be copied', async () => {
+    refuse();
+    render(<SurfaceOverride surface={{ kind: 'embed' }}><CopyField secret label="API key" value="zzm_live_abcdef0123456789" /></SurfaceOverride>);
+    press('API key');
+    await waitFor(() => expect(screen.getByText(/^Not copied/)).toBeTruthy());
+    expect(code().textContent).toBe('zzm_live_••••••••6789');
+    expect(String(window.getSelection())).toBe('');
+  });
+});
+
 describe('a masked secret', () => {
   const shown = () => screen.getByRole('group', { name: 'API key' }).querySelector('code')!.textContent;
   it('keeps only a word prefix such as zzm_live_, never a part of the random value after an underscore in it', () => {
