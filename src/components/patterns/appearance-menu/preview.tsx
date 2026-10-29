@@ -2,10 +2,10 @@
 
 import { Check, Monitor, Moon, Sun } from 'lucide-react';
 import { Specimen, State } from '@/system/specimen';
+import { ACCENTS } from '@/lib/preferences';
 import { AppearanceMenu } from '.';
 
 const row = 'relative flex h-8 items-center gap-2.5 rounded-sm px-2 text-sm text-ink [&_svg]:size-4 [&_svg]:text-ink-3';
-const SWATCH = ['indigo', 'cobalt', 'jade', 'graphite'] as const;
 
 export default function AppearanceMenuPreview() {
   return (
@@ -19,7 +19,7 @@ export default function AppearanceMenuPreview() {
           <div className="-mx-1 my-1 h-px bg-line" />
           <p className="t-eyebrow px-2 pt-2 pb-1.5">Accent</p>
           <div className="flex gap-1.5 px-2 pt-0.5 pb-2">
-            {SWATCH.map((a, i) => (
+            {ACCENTS.map((a, i) => (
               <span key={a} title={a} className={`grid size-7 place-items-center rounded-full ring-offset-2 ring-offset-surface-raised ${i === 0 ? 'ring-2 ring-ink' : ''}`}>
                 <span data-accent={a} className="size-5 rounded-full bg-accent" />
               </span>

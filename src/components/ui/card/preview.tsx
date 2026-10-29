@@ -2,7 +2,7 @@
 
 import { ArrowUpRight, MoreHorizontal } from 'lucide-react';
 import { Specimen, Plane } from '@/system/specimen';
-import { Button } from '@/components/ui/button';
+import { IconButton } from '@/components/ui/icon-button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardBody, CardFooter, CardHeader } from '.';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -19,7 +19,7 @@ export default function CardPreview() {
       <Specimen label="Default" note="Header, body and an optional footer. The canvas shows around it." stack>
         <Plane>
           <Card className="max-w-md">
-            <CardHeader title="Monthly quota" description="Requests used this billing month" actions={<Button variant="ghost" size="sm" aria-label="More"><MoreHorizontal /></Button>} />
+            <CardHeader title="Monthly quota" description="Requests used this billing month" actions={<IconButton size="sm" label="More actions" icon={<MoreHorizontal />} />} />
             <CardBody>
               <p className="t-figure t-num">8.2M<span className="unit">of 10M</span></p>
               <p className="t-caption mt-2">Resets on 1 November</p>
@@ -50,11 +50,11 @@ export default function CardPreview() {
       <Specimen label="Title cut, and wrapped" note="Beside its actions a long title has no room. Without wrap it is one line cut with an ellipsis, its whole text the heading's title for a pointer; with wrap it takes the lines it needs." stack>
         <Plane className="grid gap-4 sm:grid-cols-2">
           <Card>
-            <CardHeader title="Requests by region and by model, the last 30 complete days" description="Without wrap" actions={<Button variant="ghost" size="sm" aria-label="More"><MoreHorizontal /></Button>} />
+            <CardHeader title="Requests by region and by model, the last 30 complete days" description="Without wrap" actions={<IconButton size="sm" label="More actions" icon={<MoreHorizontal />} />} />
             <CardBody><p className="t-figure t-num">4.8M</p></CardBody>
           </Card>
           <Card>
-            <CardHeader title="Requests by region and by model, the last 30 complete days" description="With wrap" wrap actions={<Button variant="ghost" size="sm" aria-label="More"><MoreHorizontal /></Button>} />
+            <CardHeader title="Requests by region and by model, the last 30 complete days" description="With wrap" wrap actions={<IconButton size="sm" label="More actions" icon={<MoreHorizontal />} />} />
             <CardBody><p className="t-figure t-num">4.8M</p></CardBody>
           </Card>
         </Plane>

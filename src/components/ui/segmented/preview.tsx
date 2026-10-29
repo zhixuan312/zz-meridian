@@ -25,6 +25,11 @@ export default function SegmentedPreview() {
           ]}
         />
       </Specimen>
+      <Specimen label="States" note="Drawn still: Day is the choice and holds the thumb; Week shows the hover and the focus ring.">
+        <State label="Rest"><Still /></State>
+        <State label="Hover" className="[&_button:last-of-type]:text-ink"><Still /></State>
+        <State label="Focus" still className="[&_button:last-of-type]:outline-2 [&_button:last-of-type]:outline-offset-0 [&_button:last-of-type]:outline-accent"><Still /></State>
+      </Specimen>
       <Specimen label="Sizes">
         <State label="Small"><Sized size="sm" /></State>
         <State label="Medium"><Sized size="md" /></State>
@@ -37,4 +42,9 @@ export default function SegmentedPreview() {
 function Sized({ size }: { size: 'sm' | 'md' }) {
   const [value, setValue] = useState('day');
   return <Segmented size={size} label={size === 'sm' ? 'Small' : 'Medium'} value={value} onChange={setValue} options={[{ value: 'hour', label: 'Hour' }, { value: 'day', label: 'Day' }, { value: 'week', label: 'Week' }]} />;
+}
+
+/** One state, held: nothing a press does moves it. */
+function Still() {
+  return <Segmented label="Granularity" value="day" onChange={() => {}} options={[{ value: 'hour', label: 'Hour' }, { value: 'day', label: 'Day' }, { value: 'week', label: 'Week' }]} />;
 }

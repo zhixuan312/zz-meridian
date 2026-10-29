@@ -27,12 +27,15 @@ export default function ProposalPreview() {
       <Specimen label="Critical" note="A removal, with no reason line: the approve button is danger and says what it does.">
         <Proposal {...removal} tone="critical" className="w-full max-w-140" onApprove={() => new Promise((r) => setTimeout(r, 900))} />
       </Specimen>
-      <Specimen label="States" stack note="Controlled by the caller: Waiting shows buttons, and Failed does only when the caller can run it again. Failed and Expired are the two that explain themselves.">
+      <Specimen label="States" stack note="Controlled by the caller: Waiting shows buttons, and Failed does only when the caller can run it again, with the line that says nothing changed. Expired explains itself in its note.">
         {states.map((s) => (
           <State key={s} label={s[0].toUpperCase() + s.slice(1)} className="w-full max-w-140">
             <Proposal {...base} state={s} className="w-full" />
           </State>
         ))}
+        <State label="Failed, can run again" className="w-full max-w-140">
+          <Proposal {...base} state="failed" onApprove={() => new Promise((r) => setTimeout(r, 900))} className="w-full" />
+        </State>
         <State label="Expired" className="w-full max-w-140">
           <Proposal {...removal} tone="critical" state="expired" note="The page was reloaded before anyone approved it." className="w-full" />
         </State>

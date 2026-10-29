@@ -8,7 +8,7 @@ Status: beta
 
 1. **Trigger**: a 32px icon button (sliders icon) in the rail's account card.
 2. **Theme**: a radio group: System, Light, Dark, each with its icon, the choice checked in `accent`.
-3. **Accent**: four 20px swatches in 28px targets: indigo, cobalt, jade, graphite; the choice ringed in `ink`.
+3. **Accent**: a 20px swatch in a 28px target for each of the presets (indigo, cobalt, jade, graphite) and the product's own accent when it is not one of them (`ACCENTS`); the choice ringed in `ink`.
 4. **Density**: a radio group: Comfortable, Compact.
 
 ## Composition
@@ -27,7 +27,7 @@ The menu floats in over `dur-enter`; the page re-themes at once (no transition o
 
 ## Behaviour
 
-- A choice applies immediately: `data-theme`, `data-accent` and `data-density` on `<html>`, stored in `localStorage` as `zz-meridian.preferences`.
+- A choice applies immediately: `data-theme`, `data-accent` and `data-density` on `<html>`, stored in `localStorage` as `<slug>.preferences` (`STORAGE_KEY`).
 - A script in `<head>` applies the stored choice before the first paint, so a reload never flashes the other theme.
 - System removes `data-theme`, so the operating system decides; dark is the default when it states nothing.
 

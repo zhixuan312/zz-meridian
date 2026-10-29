@@ -1,10 +1,11 @@
 'use client';
 
 import { ChevronDown, ListFilter } from 'lucide-react';
-import type { ReactNode } from 'react';
+import { useState, type ReactNode } from 'react';
 import { cn } from '@/lib/cn';
 import { Specimen } from '@/system/specimen';
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import { POPOVER_CONTENT, Popover, PopoverClose, PopoverContent, PopoverTrigger } from '.';
 
 const STATUSES = [
@@ -13,24 +14,28 @@ const STATUSES = [
   { label: '5xx', n: '13K', on: false },
 ];
 
-/** The filter set; live, its Apply closes the popover. */
+/** The filter set: the boxes check and Clear empties them; live, its Apply closes the popover. */
 function Filters({ close = (b: ReactNode) => b }: { close?: (button: ReactNode) => ReactNode }) {
+  const [on, setOn] = useState(() => new Set(STATUSES.filter((s) => s.on).map((s) => s.label)));
+  const toggle = (label: string, checked: boolean) => setOn((prev) => {
+    const next = new Set(prev);
+    if (checked) next.add(label);
+    else next.delete(label);
+    return next;
+  });
   return (
     <>
       <p className="t-eyebrow mb-2.5">Status</p>
       <ul className="flex flex-col gap-1">
         {STATUSES.map((s) => (
-          <li key={s.label} className="flex items-center gap-2.5 rounded-sm py-1 text-sm">
-            <span className={cn('grid size-4 place-items-center rounded-xs border', s.on ? 'border-accent bg-accent text-on-accent' : 'border-line-control')}>
-              {s.on ? <svg viewBox="0 0 12 12" className="size-2.5" aria-hidden><path d="M2.5 6.2 5 8.5l4.5-5" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" /></svg> : null}
-            </span>
-            <span className="flex-1">{s.label}</span>
+          <li key={s.label} className="flex items-center gap-2.5 py-1 text-sm">
+            <Checkbox label={s.label} checked={on.has(s.label)} onCheckedChange={(c) => toggle(s.label, c === true)} className="flex-1" />
             <span className="t-num text-xs text-ink-3">{s.n}</span>
           </li>
         ))}
       </ul>
       <div className="mt-4 flex justify-end gap-2 border-t border-line pt-3">
-        <Button size="sm" variant="ghost">Clear</Button>
+        <Button size="sm" variant="ghost" onClick={() => setOn(new Set())}>Clear</Button>
         {close(<Button size="sm" variant="primary">Apply</Button>)}
       </div>
     </>

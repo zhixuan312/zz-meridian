@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useState } from 'react';
 import { ArrowRight, Plus } from 'lucide-react';
+import { plural } from '@/lib/format';
 import { Specimen } from '@/system/specimen';
 import { Button } from '@/components/ui/button';
 import { FilterBar } from '@/components/patterns/filter-bar';
@@ -21,13 +22,15 @@ export default function DataTablePreview() {
   const [state, setState] = useState<TableState>({ sort: 'latency', dir: 'desc', page: '1' });
   const [selected, setSelected] = useState<Set<string>>(new Set([rows[1].id]));
   const [q, setQ] = useState('');
+  const needle = q.toLowerCase();
+  const matching = rows.filter((r) => !q || r.route.toLowerCase().includes(needle) || r.customer.toLowerCase().includes(needle));
   return (
     <>
       <Specimen label="Default" note="Sorted by latency, paged at 20. The title column links to the record; the whole row takes the pointer." stack>
         <DataTable
           caption="Requests"
           noun="requests"
-          rows={rows.filter((r) => !q || r.route.includes(q) || r.customer.toLowerCase().includes(q.toLowerCase()))}
+          rows={matching}
           columns={requestColumns}
           rowKey={(r) => r.id}
           rowHref={(r) => `/requests/${encodeURIComponent(r.id)}`}
@@ -35,7 +38,7 @@ export default function DataTablePreview() {
           onStateChange={(p) => setState((s) => ({ ...s, ...p }))}
           filtered={q !== ''}
           onClearFilters={() => setQ('')}
-          toolbar={<FilterBar search={{ value: q, onChange: setQ, placeholder: 'Search requests' }} result={<>{rows.length} requests</>} />}
+          toolbar={<FilterBar search={{ value: q, onChange: setQ, placeholder: 'Search requests' }} result={<>{matching.length} {plural(matching.length, 'request')}</>} />}
         />
       </Specimen>
       <Specimen label="With a title" note="One card among others on a page: the title, a line on what the rows are, and an action beside them." stack>
