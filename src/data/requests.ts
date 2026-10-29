@@ -35,7 +35,7 @@ export function requestsQuery(params: Params) {
   const status = oneOf(params.status, STATUSES);
   const method = oneOf(params.method, REQUEST_METHODS);
   const region = oneOf(params.region, REGION_NAMES);
-  const sort = one(params.sort) in SORT_FIELD ? one(params.sort) : 'at';
+  const sort = Object.hasOwn(SORT_FIELD, one(params.sort)) ? one(params.sort) : 'at';
   const dir = one(params.dir) === 'asc' ? 'asc' : 'desc';
   const n = Number(one(params.page));
   const page = Number.isInteger(n) && n >= 1 ? Math.min(n, MAX_PAGE) : 1;

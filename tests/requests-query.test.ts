@@ -20,6 +20,11 @@ describe('the requests address', () => {
     expect(query.offset).toBe(0);
     expect(JSON.stringify(query)).not.toMatch(/teapot|password|sideways|Mars/);
   });
+  it('falls back to the default sort for a name every object inherits', () => {
+    for (const sort of ['constructor', 'toString', '__proto__', 'hasOwnProperty']) {
+      expect(requestsQuery({ sort }).query.sort, sort).toEqual({ field: 'at', dir: 'desc' });
+    }
+  });
 });
 
 describe('readRequests', () => {

@@ -157,7 +157,7 @@ const grantsOf = (need: Need): readonly Grant[] => (need === 'public' ? [] : typ
  */
 function declared(item: NavItem): Grant[] {
   const ids = (Object.keys(FEATURES) as FeatureId[]).filter((f) => FEATURES[f].needs === item.needs);
-  const named = item.feature !== undefined && item.feature in FEATURES ? [item.feature as FeatureId] : [];
+  const named = item.feature !== undefined && Object.hasOwn(FEATURES, item.feature) ? [item.feature as FeatureId] : [];
   const own = named.length ? named : ids.length === 1 ? ids : [];
   return [...grantsOf(item.needs), ...Object.values(ACTIONS).filter((a) => own.includes(a.feature)).flatMap((a) => grantsOf(a.needs))];
 }
