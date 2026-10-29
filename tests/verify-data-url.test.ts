@@ -60,6 +60,18 @@ describe('where a data URL points', () => {
     expect(unsafeDataUrls({ DATABASE_URL: 'db.prod.example.com/app' })).toEqual(['DATABASE_URL → db.prod.example.com']);
   });
 
+  it('calls a remote IPv6 address remote, and only the loopback local', () => {
+    for (const value of ['postgres://u:p@[2001:db8::1]:5432/app', '[2001:db8::1]:5432/app', 'postgres://[fd00::10]/app']) {
+      expect(unsafeDataUrls({ DATABASE_URL: value }), value).toHaveLength(1);
+    }
+    for (const value of ['postgres://u:p@[::1]:5432/app', '[::1]:5432/app']) expect(unsafeDataUrls({ DATABASE_URL: value }), value).toEqual([]);
+  });
+
+  it('reads a schemeless value whose query holds an @ by its own host, not by the word after the @', () => {
+    expect(unsafeDataUrls({ DATABASE_URL: 'db.prod.example.com:5432/app?application_name=svc@web' })).toEqual(['DATABASE_URL → db.prod.example.com']);
+    expect(unsafeDataUrls({ DATABASE_URL: 'localhost:5432/app?application_name=svc@web' })).toEqual([]);
+  });
+
   it('reads the host of a schemeless value whose password holds a / or a #', () => {
     // Cutting at the path before the credentials go cuts inside the password: the host read as `user:pa`, a name with no
     // dot, which `isLocalHost` calls local — a remote backend the gate let through.
