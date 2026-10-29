@@ -40,6 +40,9 @@ describe('scanReferences', () => {
     expect(out.join('\n')).toMatch(/src\/missing\.ts/);
     expect(out.join('\n')).toMatch(/nope/);
   });
+  it("reads a package manager's own command as the command, not as a script", () => {
+    expect(scan('Run `pnpm install`, `pnpm i`, `yarn install`, `pnpm add zod`, `pnpm update` and `pnpm audit`, then `pnpm run install` is a script.')).toEqual(['.agents/skills/zz-meridian/SKILL.md:1: package script "install" is not in package.json']);
+  });
   it('accepts absent optional references and examples', () => {
     expect(scan('`optional:docs/brief.md`, `optional:.meridian/keep.json`, `example:app/(dashboard)/page.tsx`, `example:pnpm deploy`')).toEqual([]);
   });
