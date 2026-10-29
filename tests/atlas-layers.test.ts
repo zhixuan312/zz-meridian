@@ -85,6 +85,11 @@ describe('the front door\'s figures', () => {
     expect(s.pages).toBe(PAGES.length);
     expect(s.templates).toBe(templateFolders.length);
   });
+
+  it('count the themes and accents the token resolver offers, so a new accent is counted', () => {
+    const resolver = JSON.parse(fs.readFileSync(path.join(ROOT, 'tokens/zz-meridian.resolver.json'), 'utf8'));
+    expect(stats()).toMatchObject({ themes: Object.keys(resolver.modifiers.theme.contexts).length, accents: Object.keys(resolver.modifiers.accent.contexts).length });
+  });
 });
 
 describe('the list the Atlas draws from', () => {

@@ -190,8 +190,12 @@ export function stats() {
   const tokens = ['core', 'theme.light', 'accent.cobalt']
     .map((f) => JSON.parse(read(`tokens/${f}.tokens.json`)))
     .reduce((n, j) => n + Object.entries(j).filter(([k]) => !k.startsWith('$')).reduce((m, [, g]) => m + Object.keys(g as object).filter((k) => !k.startsWith('$')).length, 0), 0);
+  // The themes and accents the resolver offers: a brand's own accent is a context the brand step adds there.
+  const modifiers: Record<string, { contexts: object }> = JSON.parse(read('tokens/zz-meridian.resolver.json')).modifiers;
   return {
     tokens,
+    themes: Object.keys(modifiers.theme.contexts).length,
+    accents: Object.keys(modifiers.accent.contexts).length,
     base: all.filter((e) => e.section === 'base').length,
     components: all.filter((e) => e.section === 'components').length,
     patterns: all.filter((e) => e.section === 'patterns').length,

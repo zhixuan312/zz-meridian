@@ -27,7 +27,7 @@ export default function AtlasHome() {
   const changelog = all.find((e) => e.id === 'changelog')?.href;
   const series = demoSeries('30d').current;
   const counts = [
-    [s.tokens, 'Tokens'], [s.components, 'Components'], [s.patterns, 'Patterns'], [s.templates, 'Templates'], [s.pages, 'Pages'], [2, 'Themes'], [4, 'Accents'], [3, 'Surfaces'],
+    [s.tokens, 'Tokens'], [s.components, 'Components'], [s.patterns, 'Patterns'], [s.templates, 'Templates'], [s.pages, 'Pages'], [s.themes, 'Themes'], [s.accents, 'Accents'], [3, 'Surfaces'],
   ] as const;
   return (
     <div className="mx-auto w-full max-w-[1320px] px-(--gutter) pb-24">
@@ -170,14 +170,14 @@ export default function AtlasHome() {
   );
 }
 
-function SectionHead({ title, line, compact }: { title: React.ReactNode; line: string; compact?: boolean }) {
+function SectionHead({ title, line }: { title: React.ReactNode; line: string }) {
   return (
-    <div className={compact ? 'mb-6' : 'mb-10 grid items-end gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]'}>
+    <div className="mb-10 grid items-end gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
       <div>
         {/* No number above it: the headline names the section, and a counter would only be decoration. */}
         <h2 className="text-[clamp(32px,3.6vw,48px)] leading-[1.02] font-semibold tracking-[-0.03em]">{title}</h2>
       </div>
-      <p className={'t-small max-w-[52ch] text-ink-2 ' + (compact ? 'mt-3' : 'lg:pb-1.5')}>{line}</p>
+      <p className="t-small max-w-[52ch] text-ink-2 lg:pb-1.5">{line}</p>
     </div>
   );
 }
