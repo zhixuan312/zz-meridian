@@ -102,15 +102,18 @@ A product checks what the assistant cites with a journey of its own (a script in
 
 ## Building an MCP server for the template
 
-The template ships the views and their tool contracts; the server is yours. Every view's contract is in `example:src/logic/tools.ts`: its `name`, the question it answers (`description`), the console route of its page (`page`), its address as a zod `input`, its `resourceUri` when it has an embed route, one `read` that returns what the view renders (`data`) and what both agents are told (`context`), and its prepared query (`explore`), which every view declares. The console's assistant offers each one as `view_<name>`, but registers it only where the caller satisfies that view's need (`may(v.needs)` in `optional:app/api/assistant/route.ts`); register the same list, filtered the same way:
+The template ships the views and their tool contracts; the server is yours. Every view's contract is in `example:src/logic/tools.ts`: its `name`, the question it answers (`description`), the console route of its page (`page`), its address as a zod `input`, its `resourceUri` when it has an embed route, one `read` that returns what the view renders (`data`) and what both agents are told (`context`), and its prepared query (`explore`), which every view declares. The console's assistant offers each one as `view_<name>`, but registers it only where the caller satisfies that view's need (`mayEach` in `optional:app/api/assistant/route.ts`, which resolves the caller once for every need it is asked); register the same list, filtered the same way:
 
 ```ts
 import { z } from 'zod';
 import { toolPrefix } from '@/app.config';
+import { mayEach } from '@/data/access';
 import { contextText } from '@/lib/shared-context';
 import { viewTools } from '@/logic/tools';
 
-for (const v of viewTools) {
+const allowed = await mayEach(viewTools.map((v) => v.needs));
+for (const [n, v] of viewTools.entries()) {
+  if (!allowed[n]) continue;
   server.registerTool(`${toolPrefix}_${v.name}`, {
     description: v.description,
     inputSchema: z.toJSONSchema(v.input),
@@ -128,15 +131,16 @@ for (const v of viewTools) {
 A host has no page the person is on, so an MCP server may register every view's prepared query, each with the caller's own schema. `rights` are the caller's: the collections they may read, and each one's `hidden` fields.
 
 ```ts
-import { may } from '@/data/access';
+import { mayEach } from '@/data/access';
 import { clock } from '@/data/collections';
 import { aggregate, read } from '@/data/read';
 import { exploreSchema, runExplore, type ExploreRights } from '@/lib/explore';
 import { dayOf } from '@/lib/format-date';
 
 declare const rights: ExploreRights; // { readable: the collections the caller may read, hidden: (name) => that collection's hidden fields }
-for (const v of viewTools) {
-  if (!(await may(v.needs))) continue;
+const allowed = await mayEach(viewTools.map((v) => v.needs));
+for (const [n, v] of viewTools.entries()) {
+  if (!allowed[n]) continue;
   // A query none of whose sources the caller may read offers them nothing.
   if (!Object.values(v.explore.sources).some((s) => rights.readable.has(s.collection))) continue;
   // A detail page's own input (its `id`) is offered beside the query and handed to its `fixed`.

@@ -284,10 +284,7 @@ function satisfies(member: Member, need: Need): boolean {
  * before the page's own read.
  */
 export async function may(need: Need): Promise<boolean> {
-  const scope = await resolveAccess();
-  const member = await memberById(scope.subjectId);
-  if (!member) throw new Unauthenticated();
-  return satisfies(member, need);
+  return (await mayEach([need]))[0]!;
 }
 
 /** `may` for several needs at once, in their order: the caller is resolved once, not once a need (the assistant asks one per view tool and rail item). */
