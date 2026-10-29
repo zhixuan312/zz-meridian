@@ -62,7 +62,8 @@ Brings Meridian into the project in the current folder. It refuses, and copies n
 Then, in this order:
 
 1. Copies the Route A set: `tokens/`, `src/styles/`, `src/components/` (without `README.md` and `preview.tsx`),
-   `src/app.config.ts` (written with the project's own pages as its navigation), `src/views/console-chrome.tsx`, the `src/lib` modules the components import, `src/lib/assistant/prompt.ts`,
+   `src/app.config.ts` (written with the project's own pages as its navigation), `src/views/console-chrome.tsx`, the `src/lib` modules the components import, the three `src/logic/` helpers they import
+   (`after-start.ts`, `derivations.ts`, `summarise.ts`), `src/lib/assistant/prompt.ts`,
    `app/icon.ts`, `scripts/`, `tests/setup.ts` and the config files. The list is in `cli/src/ownership.ts` (`adoptSetOf`); the
    fixture test (below) is what keeps it complete. A file of the same name that differs is never overwritten: `adopt`
    lists the conflicts and stops before writing anything.
