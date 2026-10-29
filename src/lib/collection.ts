@@ -135,6 +135,8 @@ const listeners = () => ((globalThis as Record<symbol, unknown>)[LIVE] ??= new M
 
 /** How many listeners a tenant's collection has: for tests and diagnostics. */
 export const liveListeners = (tenantId: string, name: string): number => listeners().get(storeKey(tenantId, name))?.size ?? 0;
+/** The rows a tenant's array collection keeps in this process, which a test grows past a page: for tests and diagnostics. */
+export const storedRows = (tenantId: string, name: string): Record<string, unknown>[] | undefined => stores().get(storeKey(tenantId, name))?.rows;
 
 
 const OPS = ['eq', 'ne', 'gt', 'lt', 'contains', 'in'];

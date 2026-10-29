@@ -11,23 +11,15 @@ import { describe, expect, it } from 'vitest';
 
 import { readEndpoints, readIncidents, readServices } from '@/data/metrics';
 import { readAll } from '@/data/read';
+import { storedRows } from '@/lib/collection';
 
 type Row = Record<string, unknown>;
-/** The store one tenant's collection keeps in this process (`src/lib/collection.ts`): the rows the product reads. */
-function store(name: string): { rows: Row[]; next: number } {
-  const key = Symbol.for('zz-meridian.collections');
-  const stores = ((globalThis as Record<symbol, unknown>)[key] ??= new Map()) as Map<string, { rows: Row[]; next: number }>;
-  const found = stores.get(JSON.stringify(['demo', name]));
-  if (!found) throw new Error(`${name} has no store: import the collection before growing it`);
-  return found;
-}
 /** Adds `n` rows built from the collection's own first row, and answers how many it holds now. */
 function grow(name: string, n: number, make: (i: number, base: Row) => Row): number {
-  const s = store(name);
-  const base = s.rows[0];
-  if (!base) throw new Error(`${name} holds no row to build on`);
-  for (let i = 0; i < n; i++) s.rows.push(make(i, base));
-  return s.rows.length;
+  const rows = storedRows('demo', name);
+  if (!rows?.[0]) throw new Error(`${name} holds no row to build on: import the collection before growing it`);
+  for (let i = 0; i < n; i++) rows.push(make(i, rows[0]));
+  return rows.length;
 }
 
 describe('a read that claims every row', () => {

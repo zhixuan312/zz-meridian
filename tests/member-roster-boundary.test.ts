@@ -14,6 +14,7 @@ vi.mock('next/headers', () => ({
 }));
 
 import { members } from '@/data/collections';
+import { storedRows } from '@/lib/collection';
 import { REFUSALS, assignMemberRole, membersFor } from '@/data/member-mutations';
 import { resolveAccess } from '@/data/access';
 import type { Member } from '@/data/sample';
@@ -21,21 +22,15 @@ import type { Member } from '@/data/sample';
 const OWNER = 'members_1';
 const ADMIN = 'members_2';
 
-type Row = Record<string, unknown>;
-function store(): { rows: Row[]; next: number } {
-  const key = Symbol.for('zz-meridian.collections');
-  const stores = ((globalThis as Record<symbol, unknown>)[key] ??= new Map()) as Map<string, { rows: Row[]; next: number }>;
-  return stores.get(JSON.stringify(['demo', 'members']))!;
-}
 /** The roster's ids in the order a read sorts them: the key ascending, as strings. */
-const sortedIds = (): string[] => store().rows.map((r) => String(r.id)).sort();
+const sortedIds = (): string[] => storedRows('demo', 'members')!.map((r) => String(r.id)).sort();
 
 /**
  * A workspace with more members than one page holds, and an Active Owner past that page. The owner is made from a row
  * the read would never reach, which is the whole point: `sorted[200]` is the 201st member a query with no limit omits.
  */
 async function grownWorkspace(): Promise<{ ownerPastPage: string; total: number }> {
-  for (let i = store().rows.length; i < 400; i++) {
+  for (let i = storedRows('demo', 'members')!.length; i < 400; i++) {
     await members.create!({
       name: `Person ${i}`, email: `person.${i}@example.com`, role: 'Member', addOns: [],
       team: 'Engineering', status: 'Active', joined: '2025-01-01', lastActive: '2025-01-02',

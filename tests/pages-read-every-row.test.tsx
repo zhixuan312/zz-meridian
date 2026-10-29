@@ -31,21 +31,15 @@ vi.mock('@/views/tickets', () => ({ TicketsView: (p: { services: unknown[]; assi
 import KeysPage from '../app/(dashboard)/keys/page';
 import MembersPage from '../app/(dashboard)/members/page';
 import TicketsPage from '../app/(dashboard)/operations-tickets/page';
+import { storedRows } from '@/lib/collection';
 
 type Row = Record<string, unknown>;
-function store(name: string): { rows: Row[]; next: number } {
-  const key = Symbol.for('zz-meridian.collections');
-  const stores = ((globalThis as Record<symbol, unknown>)[key] ??= new Map()) as Map<string, { rows: Row[]; next: number }>;
-  const found = stores.get(JSON.stringify(['demo', name]));
-  if (!found) throw new Error(`${name} has no store`);
-  return found;
-}
 /** Adds `n` rows built from the collection's own first row, and answers how many it holds now. */
 function grow(name: string, n: number, make: (i: number, base: Row) => Row): number {
-  const s = store(name);
-  const base = s.rows[0];
-  for (let i = 0; i < n; i++) s.rows.push(make(i, base));
-  return s.rows.length;
+  const rows = storedRows('demo', name);
+  if (!rows?.[0]) throw new Error(`${name} holds no row to build on`);
+  for (let i = 0; i < n; i++) rows.push(make(i, rows[0]));
+  return rows.length;
 }
 
 beforeEach(() => { jar.value = 'members_1'; });
@@ -91,7 +85,7 @@ describe('a page that says every row', () => {
   });
 
   it('reads no service for someone who may not create a ticket, since only the New ticket form offers them', async () => {
-    jar.value = String(store('members').rows.find((m) => m.role === 'Viewer' && m.status === 'Active')!.id);
+    jar.value = String(storedRows('demo', 'members')!.find((m) => m.role === 'Viewer' && m.status === 'Active')!.id);
     seen.services = -1;
     await served(TicketsPage());
     expect(seen.services).toBe(0);
