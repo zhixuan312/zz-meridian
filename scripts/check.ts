@@ -448,9 +448,9 @@ if (!fs.existsSync(manifestFile)) {
   }
   // A page, a view and a logic module read the sample through src/data, so the day it becomes an API is one file's
   // change. Every import specifier counts, a type-only one too; the Atlas, a preview and src/data itself are the
-  // sample's own.
+  // sample's own. The shared request cells live under src/system but draw the product's Requests, Home and embed.
   const FIXTURES = 'src/system/fixtures';
-  for (const f of sources.filter((x) => (x.startsWith(`${APP_DIR}/`) || x.startsWith('src/views/') || x.startsWith('src/logic/')) && !x.startsWith(`${APP_DIR}/system/`) && !/(^|\/)preview\.tsx$/.test(x))) {
+  for (const f of sources.filter((x) => (x.startsWith(`${APP_DIR}/`) || x.startsWith('src/views/') || x.startsWith('src/logic/') || x === 'src/system/sample-cells.tsx') && !x.startsWith(`${APP_DIR}/system/`) && !/(^|\/)preview\.tsx$/.test(x))) {
     const src = blanked(f);
     for (const m of src.matchAll(/(?:\bfrom|\bimport\s*\(?)\s*['"]([^'"]+)['"]/g)) {
       const spec = m[1];
