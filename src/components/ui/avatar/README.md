@@ -8,7 +8,7 @@ Status: beta
 
 1. **Disc**: a circle (`radius-full`) with a 2px `surface` ring, so overlapping discs stay separate.
 2. **Picture** (optional): the person's image, cropped to cover.
-3. **Initials**: up to two letters, `weight-semibold`, when there is no picture.
+3. **Initials**: the first character of the first two words, `weight-semibold`, when there is no picture or the picture does not load.
 4. **Overflow chip** (group only): "+N" on `fill-active`, `ink-2`.
 
 ## Variants

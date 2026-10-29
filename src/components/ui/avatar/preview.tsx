@@ -13,6 +13,9 @@ export default function AvatarPreview() {
         <State label="md"><Avatar name="Maya Chen" /></State>
         <State label="lg"><Avatar name="Maya Chen" size="lg" /></State>
       </Specimen>
+      <Specimen label="Picture" note="A picture that does not load gives way to the initials.">
+        <State label="Did not load"><Avatar name="Maya Chen" src="data:image/png;base64,AAAA" size="lg" /></State>
+      </Specimen>
       <Specimen label="Derived colour" note="One chart hue per name, the same every time; initials stay readable in both themes.">
         {PEOPLE.map((n) => <Avatar key={n} name={n} size="lg" />)}
       </Specimen>
