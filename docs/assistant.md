@@ -138,7 +138,7 @@ import { asSchema, type UIMessageStreamWriter } from 'ai';
 import { can, collectionFor, type AccessScope } from '@/data/access';
 import { collections } from '@/data/collections';
 import { assistantTools } from '@/lib/assistant/tools';
-import { viewTools } from '@/views/tools';
+import { viewTools } from '@/logic/tools';
 
 declare const scope: AccessScope; // the MCP caller's, resolved from their session
 const writer = { write() {}, merge() {}, onError: undefined } as unknown as UIMessageStreamWriter;

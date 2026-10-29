@@ -22,7 +22,7 @@ person ──asks──▶ agent ──calls tool──▶ MCP server ──retu
 
 Every view's state lives in its address: the period, the filters, the sort, the page, the selected record. Console routes read it from query parameters; embed routes take the same names as tool arguments. An agent never navigates by clicking: it opens exactly the view it means. A person can paste the link of any view into the chat and the agent can open the same thing.
 
-**In the system:** `PeriodSelect` writes `?period=`; `DataTable`'s query-state hook writes `?q=&sort=&page=`; embed pages read `searchParams`.
+**In the system:** `PeriodSelect` writes `?period=`; `DataTable`'s query-state hook writes `?sort=&dir=&page=`, and a view's filters `?q=` through the same hook; embed pages read `searchParams`.
 
 ### 2. Legible
 
@@ -108,7 +108,7 @@ The template ships the views and their tool contracts; the server is yours. Ever
 import { z } from 'zod';
 import { toolPrefix } from '@/app.config';
 import { contextText } from '@/lib/shared-context';
-import { viewTools } from '@/views/tools';
+import { viewTools } from '@/logic/tools';
 
 for (const v of viewTools) {
   server.registerTool(`${toolPrefix}_${v.name}`, {
