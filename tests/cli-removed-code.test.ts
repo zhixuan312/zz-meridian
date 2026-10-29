@@ -14,11 +14,13 @@ const ROOT = path.resolve(import.meta.dirname, '..');
 const GONE = ['MainRegions', 'overviewFindings', 'errorSpikes', 'ALL_DAYS', 'actionLine', 'MANAGE_LINE'];
 
 /**
- * Every tracked source file and guide, outside the tests (which name these symbols to assert they are gone) and the
- * dated records (the changelog, the decisions and the evidence, which keep the names they were written with).
+ * Every source file and guide in the working tree, new ones included and deleted ones left out, outside the tests (which
+ * name these symbols to assert they are gone) and the dated records (the changelog, the decisions and the evidence,
+ * which keep the names they were written with).
  */
-const sources = execFileSync('git', ['ls-files', '-z'], { cwd: ROOT, encoding: 'utf8' })
+const sources = execFileSync('git', ['ls-files', '-z', '--cached', '--others', '--exclude-standard'], { cwd: ROOT, encoding: 'utf8' })
   .split('\0')
+  .filter((f) => f && fs.existsSync(path.join(ROOT, f)))
   .filter((f) => /\.(?:ts|tsx|mts|js|mjs|md)$/.test(f))
   .filter((f) => !/^(?:tests\/|cli\/test\/|decisions\/|docs\/evidence\/)/.test(f) && f !== 'CHANGELOG.md');
 
