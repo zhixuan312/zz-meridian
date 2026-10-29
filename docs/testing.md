@@ -110,6 +110,17 @@ A limit that moved, with what it was set from (`## Rules`, Limits).
 | `/system/start/start-a-dashboard` phone warm shell, its own `budget` in `scripts/verify.config.ts` | 300 ms | 250 ms, the shared phone warm shell: the route's own figure is withdrawn | weekly `perf` shard 5/5, run 39145209850 | GitHub's `ubuntu-24.04` runner, the phone at 3.2x | `dfdad67` (withdrawn in `55b7ece`) | 20 | 58 ms (median 43, max 59) | none: a withdrawal returns to the shared figure, which holds the p95 with room |
 | First-load JS cap, every route (`FIRST_LOAD_CAP_KB` in `scripts/lib/budgets.ts`) | 820 KiB | 830 KiB, the owner's decision for 0.33.0: the cap is not a limit `## Rules` lets move, so it went to them with the count | `node scripts/sizes.ts` after `pnpm build` of Phase 1 wave 1 of issue #99 | local, macOS | `bf0fda4` plus wave 1 | 1 (a byte count does not vary between builds of one tree) | n/a | `/engineering` 823 KiB, 7 KiB under: its headroom went to growth since `09d9e0b` (5 to 23 KiB on every large route) and 5 KiB to the #99 forms |
 
+### Turbopack's chunk size
+
+Not a limit, but set against two: `experimental.turbopackChunking` in `next.config.ts`. Turbopack's chunker keeps every
+chunk it merges under 50 KB apart and duplicates what it cannot merge: on 2026-10-24 every route's first load carried a
+second copy of the shell and the shared UI set (40.3 and 29.9 KiB of it on /engineering), which took three routes over
+their first-load budget (/engineering 832 KiB against the 820 KiB cap, /business at it, /customers/[id] 5.6% over its
+baseline). Asking for smaller chunks removed the copies: /engineering 811 KiB, 27 chunks where it asked for 23. A chunk
+is also a script tag in the page's HTML and a name in its flight payload, so the setting is as coarse as the HTML budget
+allows: `minChunkSize: 35000` is the middle of the window measured that day (at 25000 /keys' HTML grew 5.3% over its 5%
+ratchet; at 45000 the chunker stopped splitting and /engineering was back at 832 KiB).
+
 ## The classification
 
 Every check Meridian runs has one row, named by a key: a gate step, a group of test files, a phase or suite of `pnpm verify`, or a standalone suite. In Meridian's repository the table is guarded by `tests/cli-test-tiers.test.ts`, which fails naming the key when a step, suite or group has no row or a row names something that does not exist. A run needs a quiet machine exactly when it runs a check whose type is performance.
