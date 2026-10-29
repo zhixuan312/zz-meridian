@@ -24,23 +24,29 @@ import { REASONS, closeOpenApprovals, forgetThread, loadThread, recent, saveThre
 const TITLE_SUFFIX = ` · ${app.name}`;
 
 /**
- * Reads the page from the scroll region: the page's own title, its address with the query that sets its filters, the
- * shared context its view published (decision 0011), and its visible text, without any node the page marked
- * `data-assistant="omit"` (`pageText`).
- *
- * The title comes from `document.title`, never the masthead `h1`. On a detail page that `h1` is the Detail head — the
- * record's name with its status badge run into it — so a question asked there was labelled "REC-1042high risk · 0.64".
- * The route's declared title is the clean one ("Record REC-1042"). The masthead is the fallback for a route that
- * declares none, where `document.title` is only the product name.
+ * Reads the page from the scroll region: the page's own title (`readTitle`), its address with the query that sets its
+ * filters, the shared context its view published (decision 0011), and its visible text, without any node the page
+ * marked `data-assistant="omit"` (`pageText`).
  */
 function readPage(path: string): PageContext {
-  const context = sharedContextOn(path) ?? '';
   const region = document.querySelector<HTMLElement>('[data-scroll-region]');
-  const h1 = region?.querySelector('h1')?.textContent?.trim() ?? '';
+  return { path: `${path}${location.search}`, title: readTitle(), context: sharedContextOn(path) ?? '', text: region ? pageText(region) : '' };
+}
+
+/**
+ * The page's title, read without laying the page out, so a question can be labelled with it alone.
+ *
+ * It comes from `document.title`, never the masthead `h1`. On a detail page that `h1` is the Detail head — the record's
+ * name with its status badge run into it — so a question asked there was labelled "REC-1042high risk · 0.64". The
+ * route's declared title is the clean one ("Record REC-1042"). The masthead is the fallback for a route that declares
+ * none, where `document.title` is only the product name.
+ */
+function readTitle(): string {
   const declared = document.title.endsWith(TITLE_SUFFIX)
     ? document.title.slice(0, -TITLE_SUFFIX.length).trim()
     : document.title.trim();
-  return { path: `${path}${location.search}`, title: declared && declared !== app.name ? declared : h1, context, text: region ? pageText(region) : '' };
+  if (declared && declared !== app.name) return declared;
+  return document.querySelector('[data-scroll-region] h1')?.textContent?.trim() ?? '';
 }
 
 type Preview = { title: string; tone: 'neutral' | 'critical'; changes: ProposalChange[] };
@@ -330,7 +336,7 @@ export function AssistantColumn({ open, onClose, ask, onAsked }: { open: boolean
     if (!ask || loaded !== scope || sentAsk.current === ask.id || status === 'submitted' || status === 'streaming') return;
     sentAsk.current = ask.id;
     setMessages(closeOpenApprovals(messages, REASONS.movedOn));
-    void sendMessage({ text: ask.text, metadata: { page: { path, title: readPage(path).title } } });
+    void sendMessage({ text: ask.text, metadata: { page: { path, title: readTitle() } } });
     onAsked?.();
     // eslint-disable-next-line react-hooks/exhaustive-deps -- runs when a question arrives or the panel becomes able to send it.
   }, [ask, loaded, scope, status]);
@@ -341,7 +347,7 @@ export function AssistantColumn({ open, onClose, ask, onAsked }: { open: boolean
       busy={status === 'submitted' || status === 'streaming'}
       onSend={(text) => {
         setMessages(closeOpenApprovals(messages, REASONS.movedOn));
-        sendMessage({ text, metadata: { page: { path, title: readPage(path).title } } });
+        sendMessage({ text, metadata: { page: { path, title: readTitle() } } });
       }}
       onDecide={(id, approved) => addToolApprovalResponse({ id, approved })}
       onClose={onClose}

@@ -14,10 +14,12 @@ vi.stubGlobal('IntersectionObserver', class { observe() {} unobserve() {} discon
  * of every node that is displayed, and none of a node whose display is none.
  */
 const had = Object.getOwnPropertyDescriptor(HTMLElement.prototype, 'innerText');
+let reads = 0;
 beforeAll(() => {
   Object.defineProperty(HTMLElement.prototype, 'innerText', {
     configurable: true,
     get(this: HTMLElement) {
+      reads++;
       const walk = (n: Node): string => (n.nodeType === Node.TEXT_NODE ? n.textContent ?? '' : n instanceof Element && getComputedStyle(n).display === 'none' ? '' : [...n.childNodes].map(walk).join(''));
       return walk(this);
     },
@@ -46,7 +48,7 @@ describe('the page text the assistant reads', () => {
     region.remove();
   });
 
-  test('is what the panel sends with a question', async () => {
+  test('is what the panel sends with a question, read once for it', async () => {
     const bodies: { page: { text: string } }[] = [];
     vi.stubGlobal('fetch', vi.fn(async (_: unknown, init?: RequestInit) => {
       bodies.push(JSON.parse(String(init?.body)));
@@ -65,8 +67,11 @@ describe('the page text the assistant reads', () => {
     await waitFor(() => expect(document.querySelector('aside[data-assistant]')).not.toBeNull(), { timeout: 20_000 });
     const panel = document.querySelector('aside[data-assistant]') as HTMLElement;
     fireEvent.change(within(panel).getByRole('textbox'), { target: { value: 'What is on this page?' } });
+    reads = 0;
     fireEvent.click(within(panel).getByRole('button', { name: /send/i }));
     await waitFor(() => expect(bodies).toHaveLength(1));
+    // The message's label wants only the title: laying out the whole scroll region for it read the page twice.
+    expect(reads).toBe(1);
     expect(bodies[0].page.text).toContain('Copy it now.');
     expect(bodies[0].page.text).not.toContain('sk-live-123');
   });
