@@ -82,6 +82,16 @@ describe('DataTable', () => {
   });
 });
 
+describe('selection', () => {
+  it('names the select-all box with the noun as given, so a plural with no plain singular reads whole', () => {
+    for (const noun of ['entries', 'statuses', 'people']) {
+      const { unmount } = render(<DataTable caption="Things" noun={noun} rows={rows} columns={columns} rowKey={(r) => r.id} selectable selected={new Set()} onSelectedChange={() => {}} />);
+      expect(screen.getByRole('checkbox', { name: `Select all ${noun} on this page` })).toBeTruthy();
+      unmount();
+    }
+  });
+});
+
 describe('the error state', () => {
   it('draws Retry busy while the person\'s retry is on its way (#59)', () => {
     const onRetry = vi.fn();

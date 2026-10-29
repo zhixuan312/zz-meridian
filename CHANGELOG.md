@@ -62,7 +62,7 @@ Every release of ZZ Meridian, newest first. Versions follow semver: a removed or
 - **A prepared query's group line names each figure when it carries several**, and a count of one reads singular ("1 day").
 - **An Atlas page whose first paragraph is wrapped keeps its status and body** (Base / Motion lost "Status: beta").
 - **The shared request cells read the sample through `src/data`**, and the check now holds `src/system/sample-cells.tsx` to that rule, so replacing `src/data/sample.ts` replaces the clock they draw against.
-- **A Data table sorts text as a reader expects**, case and accents aside, with the numbers inside it by value: by code unit, "acme" came after "Zeta" and "Émile" after "Zoë".
+- **A Data table sorts text as a reader expects**, case and accents aside, with the numbers inside it by value: by code unit, "acme" came after "Zeta" and "Émile" after "Zoë". Its select-all box reads "Select all entries on this page", from the noun as given; it cut a trailing "s", and named "every entrie" and "every people".
 - **Dialogs and sheets.** A Dialog opens at its first field, not its close button; a Dialog or Sheet without a `description` is described by nothing, not by its own title read twice.
 - **Form controls.** A Select's options are 44px tall under a coarse pointer. A read-only Input or Textarea looks read-only and stays invalid inside a Field. A Checkbox, Switch or Radio with a description is named by its label and described by its description, instead of the two joined into one name. A read-only or saving Form section disables what it holds without a `<form>` too.
 - **A Copy field says when the browser refused the copy**, and selects the value to copy by hand, showing a masked secret first (never in an embed); it said nothing at all.

@@ -311,7 +311,7 @@ export function DataTable<R>({
           <tr role="row">
             {selectable ? (
               <th scope="col" role="columnheader" data-check className="w-10 !pr-0">
-                <Checkbox aria-label={`Select every ${noun.replace(/s$/, '')} on this page`} checked={allOn ? true : someOn ? 'indeterminate' : false} onCheckedChange={toggleAll} />
+                <Checkbox aria-label={`Select all ${noun} on this page`} checked={allOn ? true : someOn ? 'indeterminate' : false} onCheckedChange={toggleAll} />
               </th>
             ) : null}
             {columns.map((c) => (
