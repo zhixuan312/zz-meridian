@@ -191,6 +191,12 @@ export const ENDPOINTS: Endpoint[] = (() => {
   });
 })();
 
+/** The `n` busiest endpoints and each one's share of the 30 days' requests, as the Usage page's endpoint list divides them. */
+export function busiestRoutes(n: number): { route: string; share: number }[] {
+  const served = sum(ENDPOINTS.map((e) => e.requests));
+  return [...ENDPOINTS].sort((a, b) => b.requests - a.requests).slice(0, n).map((e) => ({ route: e.route, share: e.requests / served }));
+}
+
 /** Requests and median latency (ms) for each region over the last 30 complete days, in the order Usage draws them. */
 export const REGIONS = split(MONTH_REQUESTS, REGION_SHAPE.map((r) => r.requests)).map((value, k) => ({ label: REGION_NAMES[k], value, p50: REGION_SHAPE[k].p50 }));
 

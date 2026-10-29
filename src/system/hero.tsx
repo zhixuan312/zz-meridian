@@ -18,7 +18,10 @@ import { app } from '@/app.config';
  * a console, a phone and a chat. Point anywhere and every surface reads the same day. On arrival the cursor sweeps the
  * month once and rests; under reduced motion it stays still until pointed.
  */
-export function Hero({ series }: { series: DailyPoint[] }) {
+/** A route's share of the requests, as the Usage page's endpoint list divides them over the same 30 days. */
+export type RouteShare = { route: string; share: number };
+
+export function Hero({ series, routes }: { series: DailyPoint[]; routes: RouteShare[] }) {
   const dates = series.map((d) => d.date);
   return (
     <Meridian dates={dates}>
@@ -33,7 +36,7 @@ export function Hero({ series }: { series: DailyPoint[] }) {
             <TrendChart label="Requests per day" height={230} dates={dates} series={[{ key: 'r', label: 'Requests', values: series.map((d) => d.requests), kind: 'area' }]} />
           </div>
         </div>
-        <SurfaceCard label="Console" className="lg:col-span-5"><ConsoleMini series={series} /></SurfaceCard>
+        <SurfaceCard label="Console" className="lg:col-span-5"><ConsoleMini series={series} routes={routes} /></SurfaceCard>
         <SurfaceCard label="Phone" className="lg:col-span-3"><PhoneMini series={series} /></SurfaceCard>
         <SurfaceCard label="MCP host" className="lg:col-span-4"><ChatMini series={series} /></SurfaceCard>
       </div>
@@ -92,9 +95,8 @@ function SurfaceCard({ label, className, children }: { label: string; className?
   );
 }
 
-function ConsoleMini({ series }: { series: DailyPoint[] }) {
+function ConsoleMini({ series, routes }: { series: DailyPoint[]; routes: RouteShare[] }) {
   const day = useDay(series);
-  const routes = [['/v1/messages', 0.44], ['/v1/search', 0.29], ['/v1/embeddings', 0.18]] as const;
   const tiles = [
     { label: 'Requests', v: formatCompact(day.requests), s: series.map((d) => d.requests), hot: true },
     { label: 'Errors', v: formatPercent(day.errors / day.requests, 2), s: series.map((d) => d.errors / d.requests) },
@@ -110,7 +112,7 @@ function ConsoleMini({ series }: { series: DailyPoint[] }) {
         </div>
       ))}
       <div className="col-span-3 mt-1 flex flex-col gap-2 rounded-md border border-line bg-surface p-2.5">
-        {routes.map(([r, share], i) => (
+        {routes.map(({ route: r, share }, i) => (
           <div key={r}>
             <div className="flex justify-between gap-2 text-2xs"><span className="min-w-0 truncate font-mono text-ink-2">{r}</span><span className="t-num shrink-0 text-ink">{formatCompact(Math.round(day.requests * share))}</span></div>
             <div className="mt-1 h-1 rounded-full bg-fill-track"><div className={cn('h-full rounded-full', i === 0 ? 'bg-accent' : 'bg-chart-neutral')} style={{ width: `${share * 200}%` }} /></div>
@@ -123,7 +125,8 @@ function ConsoleMini({ series }: { series: DailyPoint[] }) {
 
 function PhoneMini({ series }: { series: DailyPoint[] }) {
   const day = useDay(series);
-  const prev = series[Math.max(0, series.indexOf(day) - 7)];
+  // A day in the first week has no day a week before it in the series, so its change is not stated, never 0%.
+  const prev = series[series.indexOf(day) - 7];
   return (
     <div className="mx-auto w-full max-w-44 rounded-[22px] border border-line-strong bg-ground p-1.5">
       <div className="rounded-[16px] bg-surface px-3 pt-3 pb-2">

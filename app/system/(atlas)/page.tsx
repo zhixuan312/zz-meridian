@@ -3,7 +3,7 @@ import { ArrowRight } from 'lucide-react';
 import { SECTIONS, entries, readRepo, stats } from '@/system/content';
 import { Hero } from '@/system/hero';
 import { Strata } from '@/system/strata';
-import { demoSeries } from '@/system/fixtures/company';
+import { busiestRoutes, demoSeries } from '@/system/fixtures/company';
 
 export const metadata = { title: { absolute: 'ZZ Meridian Design Atlas' } };
 
@@ -58,7 +58,7 @@ export default function AtlasHome() {
 
       {/* The signature, working */}
       <section aria-label="The Meridian, working" className="mt-14">
-        <Hero series={series} />
+        <Hero series={series} routes={busiestRoutes(3)} />
         <p className="t-caption mt-4 text-center">The Meridian: point anywhere on the chart. The console, the phone and the chat all read the day you point at.</p>
       </section>
 

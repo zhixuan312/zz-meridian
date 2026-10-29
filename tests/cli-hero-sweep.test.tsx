@@ -19,7 +19,7 @@ describe('the front door’s sweep', () => {
 
   it('is over when the page it belongs to is gone', () => {
     vi.useFakeTimers();
-    const { unmount } = render(<Hero series={series} />);
+    const { unmount } = render(<Hero series={series} routes={[]} />);
     act(() => { vi.advanceTimersByTime(1200); });
     expect(vi.getTimerCount()).toBe(1);
     unmount();
