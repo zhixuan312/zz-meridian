@@ -136,7 +136,7 @@ export const requestTool = defineViewTool({
     const r = rows[0] as RequestRow | undefined;
     if (!r) throw new Error(`No request with the id ${id}.`);
     const payloads = payloadsOf(r);
-    const context = requestContext({ request: r, trace: traceOf(r), routeP95: endpoints.find((e) => e.method === r.method && e.route === r.route)?.p95 ?? null, statusText: STATUS_TEXT[r.status] ?? '', payloadBytes: { request: payloads.request?.length ?? null, response: payloads.response.length }, now: observedAt });
+    const context = requestContext({ request: r, trace: traceOf(r), routeP95: endpoints.find((e) => e.method === r.method && e.route === r.route)?.p95 ?? null, statusText: STATUS_TEXT[r.status] ?? '', payloadChars: { request: payloads.request?.length ?? null, response: payloads.response.length }, now: observedAt });
     return { context, data: {} };
   },
   explore: requestExplore,

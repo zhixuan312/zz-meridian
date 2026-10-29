@@ -9,7 +9,7 @@ import { payloadsOf, traceOf, type RequestRow } from '@/data/sample';
 
 const show = (r: RequestRow, trace = traceOf(r)) =>
   render(<RequestView routeP95={612} request={r} trace={trace} payloads={payloadsOf(r)} now="2026-10-05T09:00:00.000Z" replay={async () => ({ ok: false, error: '' })} />);
-const fact = (r: RequestRow, label: string) => requestContext({ request: r, trace: traceOf(r), routeP95: 612, statusText: '', payloadBytes: { request: null, response: 0 }, now: '2026-10-05T09:00:00.000Z' }).facts.find((f) => f.label === label)?.value;
+const fact = (r: RequestRow, label: string) => requestContext({ request: r, trace: traceOf(r), routeP95: 612, statusText: '', payloadChars: { request: null, response: 0 }, now: '2026-10-05T09:00:00.000Z' }).facts.find((f) => f.label === label)?.value;
 
 describe("a request's tokens and cost say why there are none", () => {
   test('a request that failed (5xx) is not called refused', () => {

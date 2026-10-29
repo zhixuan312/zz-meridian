@@ -206,7 +206,7 @@ describe('a request\'s context', () => {
     const band = (s: number) => (s >= 500 ? 'failed' : s >= 400 ? 'refused' : 'answered');
     const one = (model: string | null, outcome = 'answered') => REQUESTS.find((r) => r.model === model && band(r.status) === outcome)!;
     const said = (r: (typeof REQUESTS)[number]) => {
-      const { facts } = requestContext({ request: r, trace: traceOf(r), routeP95: null, statusText: '', payloadBytes: { request: null, response: 0 }, now: DEMO_NOW.toISOString() });
+      const { facts } = requestContext({ request: r, trace: traceOf(r), routeP95: null, statusText: '', payloadChars: { request: null, response: 0 }, now: DEMO_NOW.toISOString() });
       return [facts.find((f) => f.label === 'Tokens')?.value, facts.find((f) => f.label === 'Cost')?.value];
     };
     const answered = one('meridian-large'), { tokens, cost } = usageOf(answered);
@@ -243,7 +243,7 @@ describe('every page shares a context within its budget, and nothing hidden', ()
       customersContext(CUSTOMERS, CUSTOMERS, { q: '', plan: 'all', status: 'all', sort: 'revenue', dir: 'desc', page: '1' }),
       membersContext(MEMBERS, now),
       keysContext(API_KEYS, now, SCOPES),
-      requestContext({ request: REQUESTS[0], trace: traceOf(REQUESTS[0]), routeP95: 612, statusText: 'OK', payloadBytes: { request: 120, response: 300 }, now }),
+      requestContext({ request: REQUESTS[0], trace: traceOf(REQUESTS[0]), routeP95: 612, statusText: 'OK', payloadChars: { request: 120, response: 300 }, now }),
     ];
     for (const c of contexts) {
       expect(contextText(c).length, c.view).toBeLessThanOrEqual(BUDGET);

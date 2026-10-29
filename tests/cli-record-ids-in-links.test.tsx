@@ -74,7 +74,7 @@ describe('a link to a record names that record, whatever its id holds', () => {
 
   it('the addresses a page hands an agent', async () => {
     const r = { ...((await read('requests', { limit: 1 })).rows[0] as RequestRow), id: 'r#2', replayOf: 'acme/eu' };
-    const told = JSON.stringify(requestContext({ request: r, trace: traceOf(r), routeP95: null, statusText: 'OK', payloadBytes: { request: null, response: 0 }, now: DEMO_UPDATED_AT.toISOString() }));
+    const told = JSON.stringify(requestContext({ request: r, trace: traceOf(r), routeP95: null, statusText: 'OK', payloadChars: { request: null, response: 0 }, now: DEMO_UPDATED_AT.toISOString() }));
     expect(told).toContain('/requests/r%232');
     expect(told).toContain('/requests/acme%2Feu');
     const data = (await customerTool.read({ id: 'northwind-labs' })).data;

@@ -14,7 +14,7 @@ export type RequestData = {
   /** The route's p95 over the last 30 complete days, for "is this slow?": from the endpoints the Home and Usage read. */
   routeP95: number | null;
   statusText: string;
-  payloadBytes: { request: number | null; response: number };
+  payloadChars: { request: number | null; response: number };
   now: string;
 };
 
@@ -27,7 +27,7 @@ export const retryable = (r: Pick<RequestRow, 'status'>) => failed(r.status);
 /** Why a request used no tokens and cost nothing, as its tokens and cost read: it failed (a 5xx) or was refused (a 4xx). */
 export const nothingUsed = (r: Pick<RequestRow, 'status'>) => (r.status >= 500 ? 'None, it failed' : r.status >= 400 ? 'None, refused' : null);
 
-export function requestContext({ request: r, trace, routeP95, statusText, payloadBytes, now }: RequestData): SharedContext {
+export function requestContext({ request: r, trace, routeP95, statusText, payloadChars, now }: RequestData): SharedContext {
   const failed = retryable(r);
   const { tokens, cost } = usageOf(r);
   const none = nothingUsed(r);
@@ -51,7 +51,7 @@ export function requestContext({ request: r, trace, routeP95, statusText, payloa
       ...(r.model ? [{ label: 'Tokens', value: tokens ? `${tokens.input.toLocaleString('en-US')} in, ${tokens.output.toLocaleString('en-US')} out` : none ?? 'None' }] : []),
       { label: 'Cost', value: none ?? formatCost(cost), definition: 'Its tokens at its model\'s prices a million in the models collection, or the price of a call when it reached no model; a refused or failed request costs nothing.' },
       { label: 'Phases', value: trace.map((s) => `${s.name} ${formatDuration(s.duration)} from ${formatDuration(s.start)}`).join('; ') },
-      { label: 'Payloads', value: `request ${payloadBytes.request === null ? 'none' : `${payloadBytes.request} characters`}, response ${payloadBytes.response} characters; their text is on the page` },
+      { label: 'Payloads', value: `request ${payloadChars.request === null ? 'none' : `${payloadChars.request} characters`}, response ${payloadChars.response} characters; their text is on the page` },
     ],
     insights,
     unknowns: [`One request is one sample: explore_request counts the sampled requests to its route by status class, customer and region, and every route's last 30 days is on Now's Slowest endpoints (/engineering). Replaying a request is the person's to do on this page; an agent cannot.`],

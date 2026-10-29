@@ -99,7 +99,7 @@ function Code({ body, label }: { body: string; label: string }) {
 /** may replay; anyone else sees no control and nothing that says why. It defaults to the control being available. */
 /** `customerHref` is the page of the customer it names, worked out by the page; without one the name is text. */
 export function RequestView({ request: r, trace, payloads, routeP95, now, replay, mayReplay = true, customerHref }: { request: RequestRow; trace: Span[]; payloads: { request: string | null; response: string }; /** The route's p95 over the period, for "is this slow?". */ routeP95: number | null; now: string; replay: (id: string) => Promise<{ ok: true; id: string; status: number } | { ok: false; error: string }>; mayReplay?: boolean; customerHref?: string | null }) {
-  useShareView(requestContext({ request: r, trace, routeP95, statusText: STATUS_TEXT[r.status] ?? '', payloadBytes: { request: payloads.request?.length ?? null, response: payloads.response.length }, now }));
+  useShareView(requestContext({ request: r, trace, routeP95, statusText: STATUS_TEXT[r.status] ?? '', payloadChars: { request: payloads.request?.length ?? null, response: payloads.response.length }, now }));
   const router = useRouter();
   const usage = usageOf(r);
   const none = nothingUsed(r);
