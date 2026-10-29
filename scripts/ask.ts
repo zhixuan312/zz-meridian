@@ -428,9 +428,18 @@ async function main(): Promise<number> {
       failed = true;
       continue;
     }
-    // The page as this persona is served it, read once: every question on it is asked with the same page.
-    const served = await fetch(`${base}${address}`, { headers: { cookie: who.cookie }, signal: AbortSignal.timeout(60_000) }).then((r) => r.text(), () => '');
-    const page = pageOf(served, product);
+    // The page as this persona is served it, read once: every question on it is asked with the same page. An error page,
+    // a redirect (to sign-in, say) or no answer is not the page, so its questions are not asked with it.
+    const served: { html: string; why?: never } | { html?: never; why: string } = await fetch(`${base}${address}`, { headers: { cookie: who.cookie }, signal: AbortSignal.timeout(60_000) }).then(
+      async (r) => (r.ok && !r.redirected ? { html: await r.text() } : { why: r.redirected ? `redirected to ${new URL(r.url).pathname}` : `answered ${r.status}` }),
+      (e: Error) => ({ why: `could not be fetched (${e.message})` }),
+    );
+    if (served.html === undefined) {
+      console.error(`ask: ${view.name}: ${address} ${served.why} as ${who.persona}, so its questions were not asked`);
+      failed = true;
+      continue;
+    }
+    const page = pageOf(served.html, product);
     if (!page.title) page.title = view.title;
     const asked: Asked[] = [];
     // One at a time, in the specification's order: each in a thread of its own, so no answer leans on another's.

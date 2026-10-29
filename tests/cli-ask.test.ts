@@ -48,8 +48,11 @@ const USAGE_PAGE = `<!DOCTYPE html><html><head><title>Usage · ZZ Meridian</titl
 <div hidden id="S:1"><p>Busiest hour: 14:00 UTC</p><p>Shown once: <code data-assistant="omit" class="font-mono">sk-ask-omitted-41d2</code></p></div>
 <script>$RS("S:1","P:1")</script>
 <a href="/customers/northwind-labs">Northwind Labs</a><a href="/requests/req_1">req_1</a></body></html>`;
-/** A stand-in for a served product: `on` answers the assistant with `parts` for each question, and every request is kept. */
-function serve(on: boolean, parts: (said: string, n: number) => Part[] = answered) {
+/**
+ * A stand-in for a served product: `on` answers the assistant with `parts` for each question, and every request is kept.
+ * `page` is how a page is answered: the Usage page, an error status, or a redirect to sign-in.
+ */
+function serve(on: boolean, parts: (said: string, n: number) => Part[] = answered, page: 200 | 500 | 'sign-in' = 200) {
   const seen: Seen[] = [];
   const server = http.createServer((req, res) => {
     let raw = '';
@@ -65,7 +68,9 @@ function serve(on: boolean, parts: (said: string, n: number) => Part[] = answere
         res.end('data: [DONE]\n\n');
         return;
       }
-      res.writeHead(200, { 'content-type': 'text/html' }).end(USAGE_PAGE);
+      if (page === 500 && req.url !== '/sign-in') { res.writeHead(500, { 'content-type': 'text/html' }).end('<title>Error</title><h1>Internal Server Error</h1>'); return; }
+      if (page === 'sign-in' && req.url !== '/sign-in') { res.writeHead(307, { location: '/sign-in' }).end(); return; }
+      res.writeHead(200, { 'content-type': 'text/html' }).end(page === 200 ? USAGE_PAGE : '<title>Sign in</title><h1>Sign in</h1>');
     });
   });
   return new Promise<{ base: string; seen: Seen[]; close: () => void }>((resolve) => server.listen(0, '127.0.0.1', () => resolve({ base: `http://127.0.0.1:${(server.address() as AddressInfo).port}`, seen, close: () => server.close() })));
@@ -173,6 +178,19 @@ describe('asked of a served product', () => {
     expect(md).toContain('"source":"hours"');
     expect(md).toContain('Sunday: 43,868,876 requests');
     expect(md).not.toContain(SENTINEL);
+  }, 60_000);
+
+  it('asks nothing of a page that answered an error or a redirect, says why, and exits 1', async () => {
+    for (const [page, why] of [[500, 'answered 500'], ['sign-in', 'redirected to /sign-in']] as const) {
+      const dir = outDir();
+      const s = await serve(true, answered, page);
+      const { code, out } = await run(['--base', s.base, '--view', 'usage', '--out', dir]);
+      s.close();
+      expect(code, out).toBe(1);
+      expect(out).toContain(`ask: usage: /usage ${why} as `);
+      expect(s.seen.filter((x) => x.body?.messages?.length)).toEqual([]);
+      expect(fs.existsSync(path.join(dir, 'usage.md'))).toBe(false);
+    }
   }, 60_000);
 
   it("sends each question with the page's visible text as the persona is served it: the streamed figures in place, not the fallback, the rail, a script or a node marked omit", async () => {
