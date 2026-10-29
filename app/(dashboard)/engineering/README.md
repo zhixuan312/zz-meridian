@@ -81,7 +81,7 @@ Every figure is read on the server by the Now tool's read (`nowTool` in `src/log
 - **Work and Tickets closed**: `readTickets()`; the reader's own is the ticket assigned to `resolveAccess().subjectId`, read on the server.
 - **Slowest endpoints**: `readEndpoints()`. **The runs a day and Runs passed**: `readRuns()`. **Changes**: `readActivity()`, newest first.
 
-The strips cross to the browser one character a day (`packNow` in `src/logic/now-context.ts`). The page, the embed view and the context share that read. Nothing writes. The body registers `activity` with `useLive` (`src/lib/live.ts`), so a change the product records, an approved Proposal among them, is drawn without a reload.
+The strips cross to the browser one character a day (`packNow` in `src/logic/now-context.ts`). The page, the embed view and the context share that read. Nothing writes. The body registers the eleven collections its feature needs (`services`, `incidents`, `releases`, `tests`, `days`, `usage`, `models`, `compute`, `endpoints`, `tickets` and `activity`) with `useLive` (`src/lib/live.ts`), and no others, because `GET /api/live` answers 403 for any name the caller may not read; so a change the product records, an approved Proposal among them, is drawn without a reload.
 
 ## Surfaces
 
