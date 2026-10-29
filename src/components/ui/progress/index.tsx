@@ -27,7 +27,10 @@ export function Progress({
   size?: 'sm' | 'md';
   className?: string;
 }) {
-  const pct = Math.max(0, Math.min(100, (value / (max || 1)) * 100));
+  // A value that is missing, or a whole of zero, says nothing about the share: a dash and no fill, never 0% or NaN%.
+  const known = Number.isFinite(value) && max > 0;
+  const now = known ? Math.max(0, Math.min(max, value)) : undefined;
+  const pct = now === undefined ? 0 : (now / max) * 100;
   // A label that is a string names the bar itself; one that is drawn (an icon and words) names it through the element
   // it is, so `role="progressbar"` is never left unnamed.
   const name = useId();
@@ -37,19 +40,19 @@ export function Progress({
         <div className="mb-2 flex items-baseline gap-3 text-sm">
           {/* A label the row cuts keeps the whole of itself in its title, when it is words. */}
           <span id={name} title={typeof label === 'string' ? label : undefined} className="min-w-0 flex-1 truncate text-ink-2">{label}</span>
-          <span className="t-num font-medium">{valueLabel ?? `${Math.round(pct)}%`}</span>
+          <span className="t-num font-medium">{valueLabel ?? (known ? `${Math.round(pct)}%` : '—')}</span>
         </div>
       ) : null}
       <div
         role="progressbar"
         aria-valuemin={0}
-        aria-valuemax={max}
-        aria-valuenow={value}
+        aria-valuemax={known ? max : undefined}
+        aria-valuenow={now}
         aria-label={typeof label === 'string' ? label : undefined}
         aria-labelledby={typeof label === 'string' || label === undefined ? undefined : name}
         className={cn('overflow-hidden rounded-full bg-fill-track', size === 'sm' ? 'h-1' : 'h-1.5')}
       >
-        <div className={cn('grow-x h-full rounded-full', FILL[tone])} style={{ width: `${pct}%` }} />
+        <div className={cn('grow-x h-full rounded-full transition-[width] duration-(--dur-enter) ease-(--ease-out)', FILL[tone])} style={{ width: `${pct}%` }} />
       </div>
     </div>
   );
@@ -79,7 +82,7 @@ export function Meter({
   const lit = Math.round(Math.max(0, Math.min(1, value)) * segments);
   const tone = value >= criticalAt ? 'bg-critical' : value >= warnAt ? 'bg-warning' : 'bg-positive';
   return (
-    <div role="meter" aria-label={label} aria-valuemin={0} aria-valuemax={1} aria-valuenow={value} className={cn('flex gap-0.5', className)}>
+    <div role="meter" aria-label={label} aria-valuemin={0} aria-valuemax={1} aria-valuenow={Number.isFinite(value) ? Math.max(0, Math.min(1, value)) : undefined} className={cn('flex gap-0.5', className)}>
       {Array.from({ length: segments }, (_, i) => (
         <span key={i} className={cn('h-2 min-w-1 flex-1 rounded-[2px]', i < lit ? tone : 'bg-fill-track')} />
       ))}

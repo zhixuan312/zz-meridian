@@ -11,6 +11,10 @@ export default function ProgressPreview() {
         <Progress label="Rollout to eu-west-1" value={64} className="max-w-md" />
         <Progress label="Seats" value={18} max={20} valueLabel="18 of 20" tone="warning" className="max-w-md" />
       </Specimen>
+      <Specimen label="Unknown value" note="A value that did not arrive, or a whole of zero: a dash and no fill. A value past its whole is held to it.">
+        <State label="Missing" className="w-60"><Progress label="Monthly quota" value={Number.NaN} className="w-full" /></State>
+        <State label="Past its whole" className="w-60"><Progress label="Seats" value={23} max={20} tone="critical" className="w-full" /></State>
+      </Specimen>
       <Specimen label="Small" note="4px, inside a table cell or a list row.">
         <State label="sm" className="w-48"><Progress value={42} size="sm" className="w-full" /></State>
         <State label="Neutral" className="w-48"><Progress value={70} size="sm" tone="neutral" className="w-full" /></State>
