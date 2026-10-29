@@ -4,7 +4,6 @@ import { invitableRoles, memberAccess } from '@/data/member-mutations';
 import { read, readAll } from '@/data/read';
 import { assignRole, inviteMember, removeMember, setMemberStatus } from './actions';
 import { MembersView } from '@/views/members';
-import { RolesMatrix } from '@/views/roles-matrix';
 import { projectMember } from '@/data/projections';
 
 export function generateMetadata() {
@@ -43,5 +42,5 @@ export default async function MembersPage() {
     invitableRoles(),
     workspaceName(),
   ]);
-  return <MembersView rows={members} now={observedAt} revisions={revision ? { members: revision } : undefined} actions={{ invite: inviteMember, setStatus: setMemberStatus, remove: removeMember, assignRole }} access={access} roles={roles} workspace={workspace} matrix={<RolesMatrix />} />;
+  return <MembersView rows={members} now={observedAt} revisions={revision ? { members: revision } : undefined} actions={{ invite: inviteMember, setStatus: setMemberStatus, remove: removeMember, assignRole }} access={access} roles={roles} workspace={workspace} />;
 }

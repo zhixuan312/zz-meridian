@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { Check } from 'lucide-react';
 import { CardHeader } from '@/components/ui/card';
 import { ACTIONS, FEATURES } from '@/data/features';
@@ -47,9 +48,10 @@ function Tick({ on }: { on: boolean }) {
 /**
  * The section as the Members page shows it. It sits inside that page's own `<Stack>` and takes the page's gate with it,
  * so it asks nothing a second time; at a phone's width the table scrolls inside its own frame rather than widening the
- * page, and the fade at the cut edge says there is more this way.
+ * page, and the fade at the cut edge says there is more this way. It takes no props and reads only constant tables, so
+ * it is drawn once: the page around it redraws on each keystroke of its sheets.
  */
-export function RolesMatrix() {
+export const RolesMatrix = memo(function RolesMatrix() {
   const rows = matrixRows();
   return (
     <section aria-label={TITLE} className="card min-w-0 overflow-hidden">
@@ -95,4 +97,4 @@ export function RolesMatrix() {
       </div>
     </section>
   );
-}
+});
