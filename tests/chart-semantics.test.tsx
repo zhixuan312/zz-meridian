@@ -133,7 +133,7 @@ describe('every chart and figure, drawn with every shape a product’s data take
         expect(rows).toHaveLength(values.length);
         values.forEach((v, i) => {
           if (v !== null) return;
-          const cells = [...rows[i].querySelectorAll('td')].slice(name.startsWith('Trend') ? 1 : 0).map((td) => (td.textContent ?? '').trim());
+          const cells = [...rows[i].querySelectorAll('td')].map((td) => (td.textContent ?? '').trim());
           for (const cell of cells) expect(cell, `row ${i + 1} reads "${cell}"`).not.toMatch(ZERO);
         });
       });

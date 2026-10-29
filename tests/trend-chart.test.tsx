@@ -29,6 +29,18 @@ describe('a stacked trend chart', () => {
   });
 });
 
+describe("a trend chart's table", () => {
+  it('heads each row with the date in the words the chart reads it in, as a row header', () => {
+    const series = [{ key: 'r', label: 'Requests', values: [10, 20] }];
+    const { unmount } = render(<TrendChart label="Requests per day" dates={['2026-10-01', '2026-10-02']} series={series} />);
+    const heads = [...screen.getByRole('table').querySelectorAll('tbody th[scope="row"]')].map((th) => th.textContent);
+    expect(heads).toEqual(['01 Oct 2026', '02 Oct 2026']);
+    unmount();
+    render(<TrendChart label="Requests per hour" dates={['2026-10-01T09:00:00Z', '2026-10-01T10:00:00Z']} series={series} tick={(d) => `${d.slice(11, 13)}:00`} />);
+    expect([...screen.getByRole('table').querySelectorAll('tbody th')].map((th) => th.textContent)).toEqual(['09:00', '10:00']);
+  });
+});
+
 describe('a trend chart readout', () => {
   afterEach(() => vi.unstubAllGlobals());
 

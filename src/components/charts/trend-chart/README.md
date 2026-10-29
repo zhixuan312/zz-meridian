@@ -17,7 +17,7 @@ Status: beta
 9. **Running stretch** (with `running`): the last stretch of the same curve, into a point that is not over yet, 1.5px and dashed.
 10. **Legend**: above the plot when there are two or more series: a 12px line swatch (dashed for `dashed`) and the label in `ink-2`.
 11. **Cursor, dots and tooltip**: from the Meridian. The readout measures its own width and stays inside the chart; long labels wrap and values remain readable.
-12. **Screen-reader table**: every day and series, formatted; the row of a running point says "so far", and the caption ends with the widened line when there is one.
+12. **Screen-reader table**: every day and series, formatted, each row headed by its date as the axis reads it (`tick` when given); the row of a running point says "so far", and the caption ends with the widened line when there is one.
 
 ## Variants
 

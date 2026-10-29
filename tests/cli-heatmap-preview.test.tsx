@@ -11,6 +11,7 @@ vi.mock('@/components/charts/use-size', async () => {
 });
 
 import HeatmapPreview from '@/components/charts/heatmap/preview';
+import { formatDate } from '@/lib/format-date';
 
 const figure = (c: HTMLElement, label: string) => c.querySelector<HTMLElement>(`figure[aria-label="${label}"]`)!;
 const columns = (f: HTMLElement) => new Set([...f.querySelectorAll('[data-cell]')].map((e) => e.getAttribute('data-col'))).size;
@@ -141,6 +142,6 @@ describe('the Heatmap\'s specimens: every state is drawn', () => {
     // The Trend chart draws a dot on its series only at the day the Meridian points at.
     const chart = screen.getByRole('img', { name: /^Requests per day over the last 30 days/ });
     expect(chart.querySelectorAll('circle')).toHaveLength(1);
-    expect(screen.getByRole('table', { name: 'Requests per day over the last 30 days' }).querySelectorAll('tbody tr')[21]).toHaveTextContent('2026-09-24');
+    expect(screen.getByRole('table', { name: 'Requests per day over the last 30 days' }).querySelectorAll('tbody tr')[21]).toHaveTextContent(formatDate('2026-09-24'));
   });
 });

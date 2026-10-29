@@ -260,10 +260,10 @@ export function TrendChart({
   const table = useMemo(
     () => (settled ? <table className="sr-only">
       <caption>{caption}</caption>
-      <thead><tr><th>Date</th>{series.map((s) => <th key={s.key}>{s.label}</th>)}{totals ? <th>Total</th> : null}</tr></thead>
-      <tbody>{dates.map((d, i) => <tr key={d}><td>{d}{i === soFar ? ', so far' : null}</td>{series.map((s) => <td key={s.key}>{fmt(s.values[i])}</td>)}{totals ? <td>{fmt(totals[i])}</td> : null}</tr>)}</tbody>
+      <thead><tr><th scope="col">Date</th>{series.map((s) => <th key={s.key} scope="col">{s.label}</th>)}{totals ? <th scope="col">Total</th> : null}</tr></thead>
+      <tbody>{dates.map((d, i) => <tr key={d}><th scope="row">{tick ? tick(d) : formatDate(d)}{i === soFar ? ', so far' : null}</th>{series.map((s) => <td key={s.key}>{fmt(s.values[i])}</td>)}{totals ? <td>{fmt(totals[i])}</td> : null}</tr>)}</tbody>
     </table> : null),
-    [settled, caption, series, totals, dates, soFar, fmt],
+    [settled, caption, series, totals, dates, soFar, fmt, tick],
   );
   const x = (i: number) => pad.l + (n <= 1 ? W / 2 : (i / (n - 1)) * W);
   const y = (v: number) => pad.t + H - ((v - low) / (top - low)) * H;
