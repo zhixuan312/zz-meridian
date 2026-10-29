@@ -367,9 +367,9 @@ function variant(name: string, version: string, change: (payload: string) => voi
   fs.writeFileSync(pkgFile, `${JSON.stringify({ ...JSON.parse(fs.readFileSync(pkgFile, 'utf8')), version }, null, 2)}\n`);
   change(path.join(dir, 'package/payload'));
   const packed = sh('npm', ['pack', '--ignore-scripts', '--pack-destination', dir], path.join(dir, 'package'));
+  if (packed.status !== 0) throw new Error(`npm pack of the ${name} variant failed: ${packed.stderr}`);
   const out = path.join(work, `variant-${name}.tgz`);
   fs.renameSync(path.join(dir, `zz-meridian-${version}.tgz`), out);
-  if (packed.status !== 0) throw new Error(`npm pack of the ${name} variant failed: ${packed.stderr}`);
   return out;
 }
 
@@ -838,7 +838,8 @@ if (args.includes('--create')) {
   // shipped, which is the part of `brand.ts` that adjusts a fill until every pair passes.
   const create = sh('npx', ['--yes', '--package', tarball, 'zz-meridian', 'create', dir, '--name', 'Smoke Ops', '--timezone', 'Europe/London', '--currency', 'GBP', '--hex', '#B4508A', '--user', 'Ada Park', '--role', 'Admin'], work);
   check(create.status === 0, 'create exits 0', create.stdout + create.stderr);
-  check(fs.readFileSync(path.join(dir, 'src/app.config.ts'), 'utf8').includes("timezone: 'Europe/London'") && fs.readFileSync(path.join(dir, 'src/app.config.ts'), 'utf8').includes("user: { name: 'Ada Park', role: 'Admin' }"), 'create wrote the timezone, currency, accent and user it was asked for');
+  const config = fs.readFileSync(path.join(dir, 'src/app.config.ts'), 'utf8');
+  check(config.includes("timezone: 'Europe/London'") && config.includes("currency: 'GBP'") && config.includes("accent: 'brand' as const") && config.includes("user: { name: 'Ada Park', role: 'Admin' }"), 'create wrote the timezone, currency, accent and user it was asked for');
   check(!fs.existsSync(path.join(dir, 'app/system')) && !fs.existsSync(path.join(dir, 'skills')), 'create leaves out the Atlas and the skill source');
   const pm = fs.existsSync(path.join(dir, 'pnpm-lock.yaml')) ? 'pnpm' : 'npm';
   const text = (f: string) => read(dir, f);
