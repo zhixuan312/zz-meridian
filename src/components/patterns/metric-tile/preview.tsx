@@ -1,11 +1,11 @@
 'use client';
 
-import { useEffect, type ReactNode } from 'react';
+import type { ReactNode } from 'react';
 import { AlertTriangle, CircleDollarSign, Gauge, Zap } from 'lucide-react';
 import { CUSTOMERS, demoSeries } from '@/system/fixtures/company';
 import { formatCompact, formatCost, formatDuration, formatPercent } from '@/lib/format';
 import { formatDay } from '@/lib/format-date';
-import { Meridian, useMeridian } from '@/components/charts/meridian';
+import { Meridian } from '@/components/charts/meridian';
 import { Card, CardBody, CardHeader } from '@/components/ui/card';
 import { Specimen, State } from '@/system/specimen';
 import { MetricTile } from '.';
@@ -30,13 +30,6 @@ const figures = CUSTOMERS.slice(0, 8).map((c) => ({
 /** The same eight for a compact tile, each with its plan as the note on its line. */
 const customers = figures.map((f, i) => ({ ...f, note: CUSTOMERS[i].plan }));
 const [first] = customers;
-
-/** Points the shared cursor at one day, to show the reading state still. */
-function PointAt({ i }: { i: number }) {
-  const { setIndex } = useMeridian(dates);
-  useEffect(() => setIndex(i), [setIndex, i]);
-  return null;
-}
 
 /**
  * A wall as a page lays one out: two across, and four from 59rem of the wall's own width (826px), the first width at
@@ -89,8 +82,7 @@ export default function MetricTilePreview() {
         <State label="Nothing to compare" className="w-64"><MetricTile label="Webhooks delivered" value={21_070} delta={null} format={formatCompact} /></State>
       </Specimen>
       <Specimen label="Reading a day" note="When the page's Meridian points at a day, every tile whose points are the page's reads that day and names it in place of the change.">
-        <Meridian dates={dates}>
-          <PointAt i={18} />
+        <Meridian dates={dates} day={dates[18]}>
           <div className="grid w-full gap-4 sm:grid-cols-2">
             <MetricTile label="Requests" icon={<Zap />} value={2_943_120} delta={0.057} points={s.map((d) => d.requests)} format={formatCompact} emphasis />
             <MetricTile label="Latency p95" icon={<Gauge />} value={294} delta={-0.014} intent="down" points={s.map((d) => d.p95)} format={formatDuration} />
@@ -100,16 +92,14 @@ export default function MetricTilePreview() {
       {/* The pointed day is the one figure a person came to check, so a day nothing was measured for says so rather than
           standing the period's total in its place. */}
       <Specimen label="Reading a day with no number" note="A day the tile has no measurement for reads as not measured, and names the day. It never falls back to the period's total, which would be a different day's answer.">
-        <Meridian dates={dates}>
-          <PointAt i={18} />
+        <Meridian dates={dates} day={dates[18]}>
           <div className="grid w-full gap-4 sm:grid-cols-2">
             <MetricTile label="Requests" icon={<Zap />} value={2_943_120} delta={0.057} points={s.map((d, i) => (i === 18 ? null : d.requests))} format={formatCompact} />
           </div>
         </Meridian>
       </Specimen>
       <Specimen label="Points that are not the page's" note="A tile reads the pointed point only when it has one point for each of the Meridian's dates. Here the page holds 30 days and points at one of them: the tile of 30 points reads it, and the tile of a customer's 14 keeps its period, its change and a Sparkline with no cursor.">
-        <Meridian dates={dates}>
-          <PointAt i={18} />
+        <Meridian dates={dates} day={dates[18]}>
           <div className="grid w-full gap-4 sm:grid-cols-2">
             <State label="30 points on a page of 30 days: reads the day" className="w-full"><MetricTile className="w-full" label="Revenue" icon={<CircleDollarSign />} value={298.43} delta={0.062} intent="neutral" points={s.map((d) => d.revenue)} format={formatCost} /></State>
             <State label="14 points on a page of 30 days: keeps its period" className="w-full"><MetricTile className="w-full" {...figures[0]} /></State>
@@ -131,8 +121,7 @@ export default function MetricTilePreview() {
             <State label="No day: a plain line" className="w-full"><MetricTile className="w-full" label="Error rate" icon={<AlertTriangle />} value={0.009} delta={0.124} intent="down" points={s.map((d) => d.errors / d.requests)} baseline={0.0081} finding={{ text: '2.7× usual on 21 and 22 Sept', tone: 'warning' }} format={(n) => formatPercent(n, 2)} /></State>
           </div>
         </Meridian>
-        <Meridian dates={dates}>
-          <PointAt i={18} />
+        <Meridian dates={dates} day={dates[18]}>
           <State label="Reading a day against usual" className="w-full sm:w-80"><MetricTile label="Latency p95" icon={<Gauge />} value={294} delta={0.014} intent="down" points={s.map((d) => d.p95)} baseline={296} format={formatDuration} /></State>
         </Meridian>
       </Specimen>
@@ -178,8 +167,7 @@ export default function MetricTilePreview() {
         <State label="A word for the figure" className="w-72"><MetricTile className="w-full" size="compact" label={customers[6].label} value="On a trial" note={customers[6].note} points={customers[6].points} /></State>
       </Specimen>
       <Specimen label="Compact on the Meridian" note="The page points at a day. A compact tile keeps its own figure; its Sparkline follows the Sparkline's rule and marks the day only when its points are the page's." className="items-start">
-        <Meridian dates={dates}>
-          <PointAt i={18} />
+        <Meridian dates={dates} day={dates[18]}>
           <State label="30 points on a page of 30 days: the shape marks the day, the line keeps the period" className="w-72"><MetricTile className="w-full" size="compact" label="Requests" value={2_943_120} delta={0.057} note="30 days" points={s.map((d) => d.requests)} format={formatCompact} /></State>
           <State label="14 points on a page of 30 days: no cursor" className="w-72"><MetricTile className="w-full" size="compact" {...first} /></State>
         </Meridian>
