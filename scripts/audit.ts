@@ -18,8 +18,8 @@
  * own content is measured like any other. A defined custom element that shows a box but exposes no open root and no
  * light-DOM content, and one that is still undefined after the settle wait, are reported as `unmeasured:` instead of passed.
  *
- * Fails (exit 1) on: a route that answered an error status it is not declared to (`missingRoutes`, scripts/lib/answered.ts)
- * or a declared missing route that did not answer 404, a route that served another page or dropped a parameter it was asked for, a page whose content
+ * Fails (exit 1) on: a route not declared missing (`missingRoutes`, scripts/lib/answered.ts) that answered an error status
+ * or drew the not-found screen, a declared missing route that neither answered 404 nor drew it, a route that served another page or dropped a parameter it was asked for, a page whose content
  * region rendered nothing or that threw or logged a failure while it rendered, sideways scroll (a strip that scrolls at a
  * phone width included), text clipped without an ellipsis, text drawn past a box that does not clip it, text cut with an
  * ellipsis that keeps the whole of it nowhere, two pieces of text in the same place or a line
