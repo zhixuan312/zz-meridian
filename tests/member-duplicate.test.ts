@@ -9,6 +9,8 @@ vi.mock('next/headers', () => ({
 
 import { inviteMember } from '../app/(dashboard)/members/actions';
 import { members } from '@/data/collections';
+import { resolveAccess } from '@/data/access';
+import { membersFor } from '@/data/member-mutations';
 
 const withAddress = async (email: string) => (await members.query({})).rows.filter((m) => m.email.toLowerCase() === email.toLowerCase());
 
@@ -27,5 +29,15 @@ describe('inviting an address the workspace already has', () => {
   it('is refused for somebody who is already a member, whoever invites them', async () => {
     const existing = (await members.query({})).rows[0];
     expect(await inviteMember({ name: 'Somebody Else', email: existing.email, role: 'Viewer', team: 'Engineering' })).toEqual({ ok: false, error: expect.stringMatching(/already/i) });
+  });
+});
+
+describe('changing a member to an address the workspace already has', () => {
+  it('is refused, and the member keeps their own address', async () => {
+    const [, a, b] = (await members.query({})).rows;
+    const scoped = membersFor(await resolveAccess());
+    await expect(scoped.update!([a.id], { email: b.email.toUpperCase() })).rejects.toThrow(/already/i);
+    await expect(scoped.update!([a.id, b.id], { email: 'one.for.two@northwind.example' })).rejects.toThrow(/already/i);
+    expect((await members.query({})).rows.find((m) => m.id === a.id)?.email).toBe(a.email);
   });
 });

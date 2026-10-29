@@ -42,6 +42,7 @@ Every release of ZZ Meridian, newest first. Versions follow semver: a removed or
 - **The Atlas's error state names its page** ("Error state"), as the loading state does; it was a client page, which cannot export a title.
 - **The proposal embed says Not applied when its tool refuses.** It said Applied, while it told the model nothing changed.
 - **A failed request reads "None, it failed" for its tokens and cost**, not "None, refused", which is kept for a 4xx; a request that took 0 ms keeps its trace bars at the start instead of losing them to `NaN%`.
+- **A member cannot be changed to an address another member has**, compared without its case, as an invite already checked; one address for several members at once is refused too.
 - **Undo on a removal the page already sent says so** ("{name}'s removal was already sent"), instead of bringing back a member the server no longer has.
 - **`update` and `status` order sessions by version number**, so a project holding 0.9.0 and 0.10.0 names 0.9.0 first; as text, 0.10.0 sorted first.
 - **`/requests?sort=constructor`** (or any name every object inherits) falls back to the default sort instead of throwing.

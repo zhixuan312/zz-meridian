@@ -121,10 +121,10 @@ async function createStep(scope: AccessScope, input: Record<string, unknown>): P
 }
 
 /**
- * A generic update: the grant, the self rule, the Owner rule and the membership after the change. A change that names
- * `role` or `addOns` is refused — those go through the Members page's assignment path — and every target is checked
- * before any of them is written, so a batch is all or nothing: a status change that would take the caller's own access,
- * and any change after which no member is both Owner and Active, are refused whole.
+ * A generic update: the grant, the self rule, the Owner rule, an address nobody else has and the membership after the
+ * change. A change that names `role` or `addOns` is refused — those go through the Members page's assignment path — and
+ * every target is checked before any of them is written, so a batch is all or nothing: a status change that would take
+ * the caller's own access, and any change after which no member is both Owner and Active, are refused whole.
  */
 async function updateStep(scope: AccessScope, ids: string[], patch: Record<string, unknown>): Promise<Member[]> {
   const { member, grants } = await callerOrThrow();
@@ -133,6 +133,11 @@ async function updateStep(scope: AccessScope, ids: string[], patch: Record<strin
   if (patch.status !== undefined && patch.status !== 'Active' && ids.includes(member.id)) throw new MemberRefusal(REFUSALS.ownStatus);
   const rows = (await members.query({})).rows;
   if (!grants.has('workspace:update') && ids.some((id) => rows.find((m) => m.id === id)?.role === 'Owner')) throw new MemberRefusal(REFUSALS.changeOwner);
+  // One person, one member, as on a create: an address another member holds is refused, and so is one address for many.
+  if (typeof patch.email === 'string') {
+    const address = patch.email.trim().toLowerCase();
+    if (ids.length > 1 || rows.some((m) => !ids.includes(m.id) && m.email.toLowerCase() === address)) throw new MemberRefusal(REFUSALS.taken);
+  }
   const after = patch.status === undefined ? rows : rows.map((m) => (ids.includes(m.id) ? { ...m, status: patch.status as Member['status'] } : m));
   if (!after.some((m) => m.role === 'Owner' && m.status === 'Active')) throw new MemberRefusal(REFUSALS.lastOwner);
   const out = await members.update!(ids, patch);
