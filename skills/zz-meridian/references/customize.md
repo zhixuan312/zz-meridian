@@ -505,7 +505,7 @@ orders is the sample's, not the product's.
   highest yet), and the days inside the band on Now and on Services. State the facts your own records hold, from the
   same rules.
 
-`grep -rn "Title(\|Head(\|facts as rules" src/views src/data app` finds every title, head and reader of the configuration.
+`grep -rn "Title(\|Head(\|facts as rules" src/logic src/views src/data app` finds every title, head and reader of the configuration.
 
 ## The assistant
 
@@ -602,7 +602,7 @@ This finds what is left:
 
 ```sh
 grep -rn "/services\|/requests\|/customers\|/keys\|/settings\|/members\|/usage\|/operations-tickets\|/tests\|/releases\|fixtures/sample\|sample-cells" \
-  app src/views src/components --include=*.tsx --include=*.ts | grep -v preview.tsx
+  app src/views src/components src/logic src/data --include=*.tsx --include=*.ts | grep -v preview.tsx
 ```
 
 Then `pnpm verify --full --timed`, after `node scripts/registry.ts` in a clone that keeps the Atlas (a created project

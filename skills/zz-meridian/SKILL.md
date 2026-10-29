@@ -243,7 +243,7 @@ Read `references/customize.md` and follow it. In short:
   says plainly why the sample is a single process and holds the Postgres and Redis adapters).
 - **Data first.** Write `src/data/<product>.ts` for the person's domain: real types from their schema or materials, and
   deterministic sample data until they wire their API. Pages import data from `optional:src/data/` and nowhere else. Delete the
-  sample pages you replace. `optional:src/data/collections.ts` and `optional:src/data/sample.ts` import `optional:src/system/fixtures/` (and the bell's alerts, `readAlerts` in `optional:src/logic/alerts.ts`, are worked out
+  sample pages you replace. `optional:src/data/collections.ts`, `optional:src/data/sample.ts` and `optional:src/data/sign-in.ts` import `optional:src/system/fixtures/` (and the bell's alerts, `readAlerts` in `optional:src/logic/alerts.ts`, are worked out
   from the same collections), so the fixtures and `optional:src/system/sample-cells.tsx` stay until nothing imports them:
   replace each collection's `rows` with the person's data first, then delete them. Prove the
   numbers before building pages: a `example:tests/data.test.ts` asserting the counts your pages need (vitest resolves `@/`;

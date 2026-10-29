@@ -107,7 +107,8 @@ line naming the command that runs them. Steps in order:
 8. **The product's own timed checks** (`--timed` only; `timedChecks` in `scripts/verify.config.ts`), each script given
    `--base` and the served app's address, one at a time and alone, after the live data. A check that judges a time
    belongs here and not in `browserChecks`, which runs under the load of `--full`; the half of it that judges no time
-   stays in `browserChecks`. A project that declares none lists `timedChecks` as `not run` in the coverage line.
+   stays in `browserChecks`. A project that declares none has no `timedChecks` suite: the coverage line leaves it out, as it does
+   `browserChecks` without any.
 9. **Web Vitals on a mid-range phone** (`--timed` only; `scripts/vitals.ts`): Lighthouse's mobile profile (the device of
    Lighthouse benchmark index 800, the CPU slowed by the host's own index over 800, Slow 4G, 390px touch). Every page
    must hold LCP under 2.5 s, INP under 200 ms and CLS under 0.1, and drop no frame, the template's Design Atlas

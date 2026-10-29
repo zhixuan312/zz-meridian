@@ -11,7 +11,7 @@ from it. Rebuilding a whole dashboard to judge a change in wording is not needed
 
 | Level | What it shows | Cost | When |
 |---|---|---|---|
-| L0 static | Every path, command and flag the skill names exists (`node scripts/check.ts`); the text has no dated or contradictory instruction (a prompt audit, `/claude-api prompt-audit`) | seconds | every change to the skill |
+| L0 static | Every path and package script the skill names exists (`node scripts/check.ts`); the text has no dated or contradictory instruction (a prompt audit, `/claude-api prompt-audit`) | seconds | every change to the skill |
 | L1 decisions | An agent reads the skill in a scenario's folder and stops before the first command that writes: its route, its announcement, its decisions, its brief, the views it will score, its definition of done and how it will evaluate | 2 to 5 minutes each, run side by side | a change to the route, the decisions, the brief or the standard |
 | L2 planted defects | An agent runs the loop on a built Meridian project with known defects planted (a clipped name, a missing empty state, a literal colour, a wrong total, a page with no protagonist, a stale `verify.config.ts` route): which it finds, which it fixes, and whether it stops only when `--full --timed` prints "the project meets the Meridian standard" | about 15 minutes | a change to the standard or the loop |
 | L3 end to end | The sentence, a fresh agent and a real request, from nothing (greenfield) or an existing app (brownfield) to the hand-over | 1 to 2 hours each | weekly, never per change |

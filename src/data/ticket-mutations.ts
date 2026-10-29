@@ -18,7 +18,7 @@
 import { clock, members, services, tickets } from '@/data/collections';
 import { effective } from '@/data/roles';
 import type { AnyCollection, Grant } from '@/lib/collection';
-import type { Ticket } from '@/system/fixtures/sample-engineering';
+import type { Ticket } from '@/data/sample';
 import type { AccessScope } from '@/data/access';
 import { invalidate, writeQueue } from '@/data/write-boundary';
 

@@ -10,7 +10,7 @@
 import type { Service } from '@/components/patterns/status-list';
 import { resolveAccess } from '@/data/access';
 import { readAllInScope } from '@/data/read';
-import { uptimeOf } from '@/system/fixtures/sample';
+import { uptimeOf } from '@/data/sample';
 import { derivedAnswer, type DerivedAnswer } from './derived';
 
 /** Each service's uptime over its own days, by the service's name. */

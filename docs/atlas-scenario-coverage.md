@@ -176,7 +176,7 @@ This lists every path that differs from the plan's base, by file, or by folder f
 | `src/data/features.ts` | changed | `app/(dashboard)/keys`, `app/(dashboard)/operations-tickets`, `app/(dashboard)/requests`, `app/(dashboard)/settings`, `src/app.config.ts` and 8 more; and its tests |
 | `src/data/main.ts` | added | `app/(dashboard)/requests`, `src/data/metrics.ts`, `src/data/requests.ts`, `src/logic/tools.ts`, which read through its `attempt` |
 | `src/data/member-mutations.ts` | changed | `app/(dashboard)/members`, `src/data/access.ts`, `src/views/members.tsx`; and its tests |
-| `src/data/metrics.ts` | changed | `app/(dashboard)/requests`, `src/logic/home-parts.ts`, `src/logic/now-parts.ts`, `src/views/sample-footer.tsx`, `src/logic/tools.ts` |
+| `src/data/metrics.ts` | changed | `app/(dashboard)/requests`, `app/not-found.tsx`, `app/sign-in`, `src/data/engineering.ts`, `src/data/tickets.ts`, `src/logic/tools.ts` |
 | `src/data/read.ts` | changed | `app/(dashboard)/customers`, `app/(dashboard)/keys`, `app/(dashboard)/members`, `app/(dashboard)/operations-tickets`, `app/(dashboard)/requests` and 12 more; and its tests |
 | `src/data/roles.ts` | changed | the main roles' grants, now without workspace removal |
 | `src/data/sample.ts` | changed | `app/(dashboard)/(home)`, `app/(dashboard)/usage`, `app/(dashboard)/customers`, `app/(dashboard)/keys`, `app/(dashboard)/members` and 32 more; and its tests |
@@ -309,7 +309,7 @@ This lists every path that differs from the plan's base, by file, or by folder f
 | `tests/cli-workspace-shell.test.ts` | added | the gate in this repository; the package leaves it out of a project |
 | `tests/counts-and-lists.test.tsx` | added | the gate, here and in a project that keeps the file |
 | `tests/customer-figures.test.ts` | added | the gate, here and in a project that keeps the file |
-| `tests/deep-unload.test.ts` | added | the gate in this repository; the package leaves it out of a project |
+| `tests/deep-unload.test.ts` | added | the browser-fixture tests (`vitest run tests/deep-`), the release and the weekly `deep` job; the package leaves it out of a project |
 | `tests/empty-views.test.tsx` | changed | the gate, here and in a project that keeps the file |
 | `tests/engineering-records.test.ts` | added | the gate, here and in a project that keeps the file |
 | `tests/engineering-workflows.test.ts` | added | the gate, here and in a project that keeps the file |

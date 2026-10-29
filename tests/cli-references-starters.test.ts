@@ -5,7 +5,7 @@ import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 
 const ROOT = path.resolve(import.meta.dirname, '..');
-const STARTERS = ['src/data/access.ts', 'src/data/read.ts', 'src/data/live-stream.ts', 'src/data/live-actions.ts', 'app/api/live/route.ts'];
+const STARTERS = ['src/data/access.ts', 'src/data/read.ts', 'src/data/live-stream.ts', 'src/data/live-actions.ts', 'app/api/live/route.ts', 'src/views/console-live.tsx'];
 const refs = ['cache.md', 'live.md'].map((f) => fs.readFileSync(path.join(ROOT, 'skills/zz-meridian/references', f), 'utf8')).join('\n');
 const blocks = [...refs.matchAll(/```tsx?\n([\s\S]*?)```/g)].map((m) => m[1]);
 
