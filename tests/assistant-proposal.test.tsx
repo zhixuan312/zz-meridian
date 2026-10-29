@@ -47,7 +47,7 @@ describe('a proposed change in the panel', () => {
       const { unmount } = render(<Tooltip.Provider><AssistantPanel inline messages={turn(tool)} onSend={() => {}} onClose={() => {}} onDecide={() => {}} /></Tooltip.Provider>);
       const card = screen.getByRole('article', { name: /Change 2 members/ });
       expect(within(card).getByText(label)).toBeInTheDocument();
-      expect(within(card).queryByRole('button', { name: 'Approve' })).toBeNull();
+      expect(within(card).queryByRole('button')).toBeNull();
       unmount();
     }
   });

@@ -31,14 +31,14 @@ Agent mark, Button, on a card (`radius-lg`); while it waits for a person it carr
 | Applied | ✓ "Applied", `positive-ink` | `line`; title `ink-2` | none |
 | Dismissed | ✕ "Dismissed", `ink-3` | `line` | none |
 | Expired | ✕ "Expired", `ink-3` | `line` | none; the note says why |
-| Failed | ✕ "Not applied", `critical-ink` | `critical` at 45% | uncontrolled: the error on its own line, then Dismiss and Try again; controlled: none |
+| Failed | ✕ "Not applied", `critical-ink` | `critical` at 45% | uncontrolled: the error on its own line, then Dismiss and Try again; controlled: the same when the caller passes `onApprove` to run it again, none otherwise |
 
 ## Behaviour
 
 - Approve runs the change once; while it runs, nothing can be pressed again.
 - A failure changes nothing and says so; Try again runs it again.
 - A removal is proposed with the critical tone: the button is danger and reads "Approve and remove".
-- Controlled, only a pending proposal shows buttons; the caller answers the rest.
+- Controlled, a pending proposal shows buttons, and a failed one does when the caller can run it again; the caller answers the rest.
 
 ## Surfaces
 

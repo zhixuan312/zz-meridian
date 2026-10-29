@@ -70,7 +70,9 @@ function ProposalOf({ message, part, onDecide }: { message: UIMessage; part: Too
   const preview = message.parts.find((p) => p.type === 'data-proposal' && (p as { id?: string }).id === part.toolCallId) as { data: Preview } | undefined;
   const shown = stateOf(part);
   if (!preview || !shown) return null;
-  const id = part.approval?.id;
+  // Only a waiting change can be answered: the SDK matches a response to a part still asking, so Dismiss or Try again
+  // on one that ran or failed would do nothing.
+  const id = shown.state === 'pending' ? part.approval?.id : undefined;
   return (
     <Proposal
       agent="Assistant"

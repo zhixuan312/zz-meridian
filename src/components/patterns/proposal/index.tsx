@@ -13,8 +13,9 @@ export type ProposalState = 'pending' | 'applying' | 'applied' | 'dismissed' | '
  * A change an agent wants to make, waiting for a person. The agent can read anything and do nothing without consent:
  * every write it proposes arrives as this card, with what changes (before → after), why, and what it affects.
  * Approve runs it once; Dismiss closes it. A removal is proposed with the critical tone: its button reads "Approve and remove".
- * Uncontrolled, the card keeps its own pending, applying, applied and failed flow; controlled (`state`), only pending
- * shows buttons and the caller owns every other state.
+ * Uncontrolled, the card keeps its own pending, applying, applied and failed flow; controlled (`state`), pending shows
+ * buttons, failed shows them when the caller can run the change again (it passes `onApprove`), and the caller owns
+ * every other state.
  */
 export function Proposal({
   agent = 'Claude',
@@ -54,8 +55,8 @@ export function Proposal({
   };
   const settled = state === 'applied' || state === 'dismissed' || state === 'expired';
   // A proposal that failed offers the same choice it did before it ran: the card says nothing changed, and the person
-  // may try again. Controlled or not, that is the state's meaning rather than the caller's to restate.
-  const buttons = controlled ? state === 'pending' || state === 'failed' : !settled;
+  // may try again. Controlled, only where the caller can run it again: a Try again with nothing behind it does nothing.
+  const buttons = controlled ? state === 'pending' || (state === 'failed' && !!onApprove) : !settled;
   return (
     <article
       aria-label={`Proposal from ${agent}: ${title}`}
