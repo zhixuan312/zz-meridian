@@ -106,6 +106,15 @@ The charts and parts a monitoring page needs (issue #99): bars in the order give
 
 ## [0.32.0] · 2026-10-27
 
+### Breaking
+
+- **A chart's `color` is a palette slot, `SeriesSlot` (1 to 6).** `ColumnPart`, a Composition bar's `Part`, `Sparkline` and a Trend chart's series took any number, and a slot past six drew nothing. A caller that computes a slot types it `SeriesSlot` or folds the parts past the palette.
+- **The `tracking-caps` token is removed.** Nothing in Meridian sets text in spaced capitals any more. A product's own `tracking-(--tracking-caps)` renders nothing: write the letter-spacing it wants, or drop the capitals.
+- **A detail route that answers an error fails.** `detailRoutes` held the missing record beside the real ones; it now goes in `missingRoutes`. The `Page` type of `scripts/lib/chrome.ts` has a `status()` member, so a stub of it in a project's own test adds one.
+- **`trendTotals` returns `(number | null)[]`.** A day no band has a value for is `null`, not `0`. A caller that adds or formats the totals handles `null` as a day with no total.
+- **Figures read differently at their edges.** A share that is not zero but rounds to zero reads `<0.1%` (`<0.01%`, `<1%` at two and no places), not `0.0%`; a duration reads in the unit its rounded figure belongs to (`1.0s`, not `1000ms`; `1m`, not `60.0s`) and past two days in days (`21.0d`); an axis tick of 999,999 reads `1M`; money takes `app.currency`'s own decimals (`¥1,235`, `KWD1,234.568`). A product's own test that holds the old text of a figure at one of these edges holds the new one.
+- **The filter bar wraps under 24rem.** Below 336px of its own width the search takes a line of its own and Filters and Ask the line under it, on a 390px phone too. A product's own screenshot or layout test of a list on a phone expects the two lines.
+
 ### Added
 
 - **`Records` takes `empty`.** There are no records at all, not none that match a filter: the summary tiles are not drawn, and the table's empty state is the page's one word.
@@ -148,15 +157,6 @@ The charts and parts a monitoring page needs (issue #99): bars in the order give
 - **A figure that rounds to zero prints no sign.** `-0` is a value a product's data holds (`Math.round(-0.4)`, a net change that rounded away), and `count`, `compact`, `cost-compact`, `percent` and every axis format printed it as `-0`, `-$0` or `-0.0%`, which reads as a fall. Every format passes its figure through one rule: a figure with no digit but zero carries no sign. `tests/format-semantics.test.ts` draws every formatter with sixteen values a product holds (negative zero, a millionth of a cent, a quadrillion, signed halves) and missing, and holds a split or shortened figure to its sign and symbol.
 - **A figure at a rounding edge is written in the unit it rounds to, and a share that is not zero never reads as zero.** `formatDuration` chose its unit from the raw value and its digits from the rounded one, so a p95 of 999.6 ms read `1000ms` and a 59.96 s run `60.0s`; an axis tick of 999,999 read `1000K`. Each now reads `1.0s`, `1m` and `1M`, the step `formatCompact` already took. Past two days a duration reads in days: an incident open for three weeks read `504.0h` and reads `21.0d`. `formatPercent` printed an error rate of 0.003% as `0.0%`, which says there were none: a share too small for its places reads as the bound it is under, `<0.1%` (`<0.01%` at two places, `<1%` at none), with its own sign, the rule `formatCost` keeps for a cost. A title or a line that says a change held level judges it by its size, as Delta does, so a change under 0.05% still reads level. `tests/format-semantics.test.ts` holds every formatter at the edges.
 
-### Breaking
-
-- **A chart's `color` is a palette slot, `SeriesSlot` (1 to 6).** `ColumnPart`, a Composition bar's `Part`, `Sparkline` and a Trend chart's series took any number, and a slot past six drew nothing. A caller that computes a slot types it `SeriesSlot` or folds the parts past the palette.
-- **The `tracking-caps` token is removed.** Nothing in Meridian sets text in spaced capitals any more. A product's own `tracking-(--tracking-caps)` renders nothing: write the letter-spacing it wants, or drop the capitals.
-- **A detail route that answers an error fails.** `detailRoutes` held the missing record beside the real ones; it now goes in `missingRoutes`. The `Page` type of `scripts/lib/chrome.ts` has a `status()` member, so a stub of it in a project's own test adds one.
-- **`trendTotals` returns `(number | null)[]`.** A day no band has a value for is `null`, not `0`. A caller that adds or formats the totals handles `null` as a day with no total.
-- **Figures read differently at their edges.** A share that is not zero but rounds to zero reads `<0.1%` (`<0.01%`, `<1%` at two and no places), not `0.0%`; a duration reads in the unit its rounded figure belongs to (`1.0s`, not `1000ms`; `1m`, not `60.0s`) and past two days in days (`21.0d`); an axis tick of 999,999 reads `1M`; money takes `app.currency`'s own decimals (`¥1,235`, `KWD1,234.568`). A product's own test that holds the old text of a figure at one of these edges holds the new one.
-- **The filter bar wraps under 24rem.** Below 336px of its own width the search takes a line of its own and Filters and Ask the line under it, on a 390px phone too. A product's own screenshot or layout test of a list on a phone expects the two lines.
-
 ## [0.31.2] · 2026-10-27
 
 ### Fixed
@@ -176,7 +176,7 @@ The charts and parts a monitoring page needs (issue #99): bars in the order give
 
 ## [0.31.0] · 2026-10-26
 
-### New
+### Added
 
 - **`EmptyState` names its kind on its root: `data-empty="first-run"`, `"filtered"`, `"error"` or `"no-access"`.** Navigation readiness reads it (below), and a product's own empty state carries the same attribute to be read the same way.
 
@@ -206,7 +206,7 @@ The charts and parts a monitoring page needs (issue #99): bars in the order give
   - **What a team does.** Run `update`; it reports `migration:app-description` for your configuration. Add `description: '<one sentence about your product>',` to the `app` object beside `name`.
   - **Doing nothing.** A project that keeps its own `app/layout.tsx` sees no failure, and the key costs it nothing. A project that brings the release's layout over fails `pnpm gate` on the type check — `Property 'description' does not exist` — until the key is there.
 
-### New
+### Added
 
 - **The accent picker is a radio group.** `AccentSwatches` in `@/components/ui/radio-group` is one row of swatches built on the radio primitive: the row is one Tab stop, the arrow keys move the choice, and the chosen swatch is announced as chosen. Settings and the Atlas's card stage both draw it, where three hand-built rows of `role="radio"` buttons each drew their own — every swatch a stop, and an arrow key that did nothing. The appearance menu keeps pressed buttons (`role="group"` with `aria-pressed`), because inside a menu the arrow keys belong to the menu.
 - **`app.description` names the product in a sentence.** It is the line a search engine and a link preview show under the name, and it sits in `src/app.config.ts` beside `name`, `workspace` and `accent` instead of being written into `app/layout.tsx`. Both files are yours, so a project that has already set its own sentence keeps it; `update` reports `migration:app-description` where the configuration has no such key (see **Breaking**).
@@ -235,7 +235,7 @@ The charts and parts a monitoring page needs (issue #99): bars in the order give
 
 ## [0.29.0] · 2026-10-25
 
-### New
+### Added
 
 - **A mark says what it encodes** ([#94](https://github.com/zhixuan312/zz-meridian/issues/94)). A colour, a fill or a size a reader is meant to decode now carries its words, built from the data the component already holds, so it is right at the call site rather than added page by page. A Bar list row names its row, its figure and its share (`Checkout · 420 · 42.0% of 1,000`, and without a total too); a Trend chart's marked day names the day and what it is marked for; its dashed stretch into a period still running says "Today so far, dashed"; a Sparkline says the range it draws, which was the one chart carrying no readout; a Delta says whether its colour reads better or worse, which the colour alone could not; a Status dot takes a `label` and becomes an image to assistive technology where it stands with no word beside it, and an activity's tone says what it means ("Went well", "Needs attention", "Failed"). `ColumnChart` and `BarList` take `highlightLabel` — what makes the accented row or column the one the card is about — and say it on that mark and in the hidden table's caption. `docs/data-display.md`'s `## Marks` now states the rule, so a new chart is held to it.
 
@@ -290,7 +290,7 @@ The charts and parts a monitoring page needs (issue #99): bars in the order give
   - Levels are rounded to a digit under their step, not to six places, so a ratio a millionth apart keeps one level per tick.
 - **`ColumnChart` draws a value under zero as a fall** ([#78](https://github.com/zhixuan312/zz-meridian/issues/78)). In the plain form, a value under zero used to draw nothing. Now the scale goes under zero, zero is drawn as the axis, and the column hangs from the zero line, rounded at its lower end, with its value under it. While no value is under zero the chart is drawn as before. Stacked, a part under zero is still no contribution: parts make a whole.
 
-### New
+### Added
 
 - **`TrendChart`'s `format` may be a function, with an `axisFormat`** ([#78](https://github.com/zhixuan312/zz-meridian/issues/78)). From a client component, pass `(n: number) => string` for a figure no named format says exactly: a price to four decimals, a ratio to six, or an amount in a currency of its own. It reads the readout and the table, and the axis unless `axisFormat` says otherwise. A server component still passes a name, because a function cannot cross into a client component.
 - The Trend chart's Atlas page draws "Below zero" and "A format of its own". The Column chart's page draws "Rises and falls".
@@ -314,7 +314,7 @@ The charts and parts a monitoring page needs (issue #99): bars in the order give
   - **`update` lists `migration:table-grid`** for a project whose own files expect the old floor (`@min-[672px]:min-w-64`, as `tests/table-cut-cell.test.tsx` did in a project created before 0.26.0) or give a `TableCell` a `colSpan`, which a grid row draws in one track. Bring the release's `tests/table-cut-cell.test.tsx` over, and draw a row that spans the table, such as an empty state, outside it or as a `DataTable` `empty`.
   - Rows, cells and row groups carry their ARIA roles (`row`, `cell`, `columnheader`, `rowgroup`, `table`), since a table laid out as a grid can lose its native semantics in some browsers.
 
-### New
+### Added
 
 - **`pnpm verify --browsers <n>`: one run holds at most `n` browsers at once** ([#77](https://github.com/zhixuan312/zz-meridian/issues/77)).
   - Without the flag, the ceiling is one browser per two CPUs and per 4 GiB of memory, whichever is fewer. `--full`'s audit, presses, keyboard walk and product checks start under the ceiling, not all at once.
@@ -335,25 +335,25 @@ The charts and parts a monitoring page needs (issue #99): bars in the order give
 
 - **Every table column shares the spare width, and `TableHeader`'s `flexible` prop is removed.** A cut cell used to zero its own width (`max-w-0`) and the lead head claimed all the rest (`w-full`), so the record's name sat in empty room while the columns beside it were held at their minimum, cramped at both ends and wrapping. Now every column asks for its content width and a table with room to spare shares it across all of its columns in proportion to those widths. A column whose cells `truncate` asks for its whole content width too and shrinks only when the table lacks room for every column; a column given `width` keeps that width and takes no spare; the `grow` column keeps its floor, 160px, 256px once the table is 672px wide. Drop `flexible` from any `TableHeader`: a `truncate` column now asks for its own width. Before 1.0, Meridian marks a breaking change with the minor version, as semver allows for 0.x.
 
-### New
+### Added
 
 - **`Cut`**, exported from `@/components/ui/table`: the wrapper a cut cell renders, one grid track of `minmax(0, max-content)` around a `truncate` span. `TableCell truncate` and `DataTable`'s `truncate` columns use it; use it in a hand-built cell that should be cut the same way. The audit's title check reaches through it.
 
 ## [0.24.0] · 2026-10-20
 
-### New
+### Added
 
 - **First-load JS can be held to each route's baseline alone** ([#76](https://github.com/zhixuan312/zz-meridian/issues/76)), as every page's HTML is since 0.19.0. Set `budgets.firstLoadKb: null` in `scripts/verify.config.ts`: a route `scripts/verify.baseline.json` holds is then held to `firstLoadGrowthPct` over its own figure and nothing else, and the 820 KiB cap binds only a route the baseline does not hold yet. A product whose largest page sits near the cap no longer fails `pnpm verify` for a change its own baseline allows, and no longer derives a cap from the baseline to say the same rule twice. Leaving the key out keeps the cap on every route, as before; the size line says which applies (`cap 820 KiB for a route the baseline does not hold`).
 
 ## [0.23.0] · 2026-10-20
 
-### New
+### Added
 
 - **`Prose` names each body cell's column, and stacks a narrow table into labelled cards** ([#75](https://github.com/zhixuan312/zz-meridian/issues/75)). Every body `td` carries its column's heading as `data-label`, written while the markdown is rendered, so it is in the server's HTML and a page can style a narrow table from `td[data-label]` on the first paint, with no second markdown parser. `stack` does it for you: a table under 480px of its own width reads as one card per row, the header row hidden, the first cell the title and each later cell under its column's heading. Wider, it is the same table; without `stack`, nothing changes.
 
 ## [0.22.0] · 2026-10-20
 
-### New
+### Added
 
 - **A tile whose figure is a share reads its change in points** ([#74](https://github.com/zhixuan312/zz-meridian/issues/74)). `MetricTile` takes `deltaFormat` and hands it to `Delta`, whose `format` now takes a name as well as a function: `percent` (the default, a share of the earlier value) or `points`, so a share that went from 33.0% to 46.4% reads "▲13.4 pts" (`delta={0.134}`) with the same arrow, colour and screen-reader word, where it could only read "▲40.6%". `DeltaFormat` and `DELTA_FORMATS` are exported from `@/components/ui/delta`.
 
@@ -363,13 +363,13 @@ The charts and parts a monitoring page needs (issue #99): bars in the order give
 
 ## [0.21.0] · 2026-10-20
 
-### New
+### Added
 
 - **`TrendChart` takes `whole`** ([#73](https://github.com/zhixuan312/zz-meridian/issues/73)), as `ColumnChart` does since 0.20.0: the values are counts, a stack of counts too, and every level is a whole number, so a running total whose top is 10 draws no level at 2.5 or 7.5. Pass it on a chart of counts; a chart of a quantity that is not one keeps its halves.
 
 ## [0.20.0] · 2026-10-20
 
-### New
+### Added
 
 - **The assistant panel offers the page's questions** ([#69](https://github.com/zhixuan312/zz-meridian/issues/69)). `SharedContext.questions` holds the few questions a person would ask first about what a view shows, in their words. While the thread is empty, the console's assistant offers them under its line, as buttons under "Questions to start with", and pressing one sends it as the person's own. A page that shares none keeps the line alone, and the model is never told them. The sample's Home offers questions only about figures the reader may read.
 - **`ColumnChart` takes `whole`** ([#72](https://github.com/zhixuan312/zz-meridian/issues/72)) for a chart of counts: every level is a whole number, so a top of 1 is ticked 0 and 1, with no unlabelled gridline at 0.5. `niceTicks` and `ticksBetween` in `@/components/charts/scale` take the same as a last argument.
@@ -406,7 +406,7 @@ The charts and parts a monitoring page needs (issue #99): bars in the order give
 
 - **Every page's HTML is held to its own baseline, and measured gzipped** ([#57](https://github.com/zhixuan312/zz-meridian/issues/57), [#56](https://github.com/zhixuan312/zz-meridian/issues/56)). `scripts/sizes.ts` measures a page's HTML as a person downloads it, the complete streamed response gzipped, where it measured the uncompressed bytes of the routes in `budgets.htmlKb` only. `node scripts/sizes.ts --write-baseline --base <url>`, against the running build, records the HTML of every page (no API, no dynamic segment, not the not-found screen) beside the first-load figures in `scripts/verify.baseline.json`, and `pnpm verify` holds each to `budgets.htmlGrowthPct` (5%) over its own figure, as first-load JS is held. A growth you accept is recorded once, with the same command, rather than by editing numbers. `budgets.htmlKb` stays as an optional absolute cap, now in gzipped KiB: a cap set on uncompressed bytes is several times too loose, so lower it to the gzipped figure `pnpm verify` prints, or remove it and rely on the baseline. Until the baseline holds `html`, the HTML line is a warning, and `pnpm verify --full` refuses, naming the command. Under `partialPrefetching` Next.js writes each shell's static trees into a page's HTML twice; gzipped, the second copy costs a few KiB rather than tens, so the figure follows the page.
 
-### New
+### Added
 
 - **A stacked Column chart's part can take a categorical slot** ([#61](https://github.com/zhixuan312/zz-meridian/issues/61)). `ColumnPart.color` (1 to 6) draws the part in `series-<n>`, as `TrendSeries.color` does, for parts that are identities, such as teams, or for two or more usual outcomes, which one neutral would make one. A part with no slot, Other among them, is neutral, and status colours stay out of such a chart: coral and saffron read as a warning beside a real one. `docs/data-display.md`'s Parts of one whole says when to use it.
 - **`DataTable` takes `retrying`** ([#59](https://github.com/zhixuan312/zz-meridian/issues/59)): its error state's Retry is busy while the person's retry is on its way. Pass it for their own press only.
@@ -442,7 +442,7 @@ The charts and parts a monitoring page needs (issue #99): bars in the order give
 - **The desktop prefetch cap counts every router prefetch.** It counted only requests carrying `next-router-prefetch: 1`, while Next 16 sends `3` for the runtime shell every link prefetches and `2` for a full prefetch's URL data, so it read a fraction of what the router fetched: Meridian's Home reads 45.3 KiB where it read 8.8 KiB. A project whose landing page now reads over its `budgets.prefetchKb.desktop` either prefetches less from that page or sets the cap from its own measurement.
 - **The whole 20-sample protocol runs only in CI, split by route across runners.** `pnpm verify --perf` and `node scripts/perf.ts` without `--routes` now refuse where `CI` is not `true`, before the gate or Chrome starts: the protocol is 1,800 journeys, an hour and a half of a machine, and a person's machine is never quiet for that long. In CI, split it with `--shard <i>/<n>` (`pnpm verify --perf --shard 2/5`, with `--perf` alone; the shards together run every rail route once), one shard a runner. On your own machine, narrow it to the route in question: `node scripts/perf.ts --base <url> --routes <route>`. A script or agent prompt that ran `pnpm verify --perf` locally runs it in CI instead.
 
-### New
+### Added
 
 - **A project's own check that judges a time has a tier of its own** ([#48](https://github.com/zhixuan312/zz-meridian/issues/48)). `timedChecks` in `scripts/verify.config.ts` lists browser checks that judge a time: `pnpm verify --timed` runs each with `--base`, alone, after the live data and before Web Vitals, and reports them as the `timedChecks` suite. A check that measured a budget inside `browserChecks`, under the other suites' load, moves to `timedChecks`.
 - **The fake model can call a project's own tools** ([#49](https://github.com/zhixuan312/zz-meridian/issues/49)). `fakeModel` in `scripts/verify.config.ts` lists `{ when, tool, input }` steps: for a question matching `when` (a case-insensitive pattern) the fake model calls `tool` with `input` when the request hands it, so a journey can check that the assistant cites what the page shows. A pattern that does not compile fails `pnpm verify` before the gate.
@@ -485,7 +485,7 @@ The charts and parts a monitoring page needs (issue #99): bars in the order give
 - **The coverage line has new words.** Its depth can be `timed`, `full+timed` or `full+timed+perf`, and its `not run:` list can name `timing`. A script that matched `coverage: full;` for a complete run matches `coverage: full+timed;` and `not run: none`.
 - **`finalOutcome` (`scripts/lib/coverage.ts`) takes `{ full, timed }` in place of a boolean.** A project's own copy of `tests/verify-suite-outcome.test.ts` from before the tiers calls `finalOutcome(true, …)` and failed its update's gate at the type check; the update now reports it as the `verify-tiers` migration. Bring `tests/verify-suite-outcome.test.ts` over from the release, and call `finalOutcome({ full, timed }, notRun)` in a file of your own.
 
-### New
+### Added
 
 - **A Featured metric can say its period has no number** ([#45](https://github.com/zhixuan312/zz-meridian/issues/45)). `FeaturedFigure.value` is `number | null`, and `points` takes `null` entries. With no number, the figure's line holds `missing`, the caller's words ("No words recorded", "Unavailable"; "Not recorded" by default), a size down and at the figure's own height, so a period without a number draws the same card as one with. A pointed point that is `null` reads the same way. Before this, the only ways through were a false `0`, or `NaN` with a `format` that turned it into a word; a card that did the second can pass `null` and `missing` now.
 
@@ -534,7 +534,7 @@ The charts and parts a monitoring page needs (issue #99): bars in the order give
 - **A created project's shipped test of the rail fails until it is brought over.** `tests/rail-marker.test.tsx` — the template's test of the rail's marker — stands over a `ResizeObserver` whose `observe` answers with nothing, which only worked because the rail read its own offsets as well. That read is what 0.16.2 removed (see **Changed**), so the file now asserts a marker position that nothing has measured yet. The file is the project's own from the moment it is created, so the update does not write it: it reports it as the migration `marker-measured-on-observe`, with the fix — bring the release's `tests/rail-marker.test.tsx` over as the release has it. Its fake answers `observe` with the callback and reads the marker after that delivery; a test of your own that mounts the rail answers `observe` the same way.
 - **The Web Vitals check fails on a dropped frame.** `scripts/vitals.ts` counted frames over 50 ms while its taps played out and printed the number on every line without ever failing on it, so a `verify --full` that passed was not being held to the floor its own header states. It fails now: `frames over 50 ms` must read `0 of N`. Two things about how it counts changed with it. Frames are read **in the tap's own window and no other** — the recording used to run from the moment the page opened, straight through the Escape that closes what a tap opened and the settle after it, which the INP measurement in the same loop already excludes because it is the check's own work and not the person's. And a page that drops one frame is **measured a second time in full** before it is failed, because a single frame in two hundred is inside the noise of the host a four-times throttle is measuring: a page that drops one twice is a page that stutters. A run that was passing still passes; a run that was failing now says so, and names the control the frame was dropped on.
 
-### New
+### Added
 
 - **`useNavDrawer(asked)`** (`src/components/base/use-nav-drawer.ts`) — whether a navigation drawer is open, for the frame that owns one. It carries the bookkeeping both shells had written for themselves: the drawer opens for every press of the top bar's button that it has not answered yet, remembers the page it opened on so a navigation closes it, and forgets that page when the address moves. The Atlas's copy was missing the last of those, so opening the contents on a phone, following a link and pressing Back re-opened the drawer with nobody pressing anything. A product that wrote the same bookkeeping for a drawer of its own should read it from here.
 
@@ -558,7 +558,7 @@ The charts and parts a monitoring page needs (issue #99): bars in the order give
 - **The audit's two truncated-value rules mean what the card contract says.** `scripts/audit.ts` accepted any `title` anywhere near a cut value without comparing it with the text, and read `aria-labelledby` as the attribute's own value instead of resolving the ids it names. Both compare now, so a `verify --full` that passed can fail: put the whole of a cut value in a `title` that *holds* it (a title of something else keeps none of it), and name a real element with `aria-labelledby` — an id that is nowhere is a control with no name. `CONTRIBUTING.md` promised both all along.
 - **The backend gate refuses a data URL it cannot read the host of.** `unsafeBackend` (`scripts/verify.ts`) skipped a value it could not read the host of, which is how a DSN written without a scheme (`user:pass@db.prod.example.com:5432/app`), a password holding a `/` or a `#`, or a libpq line (`host=… user=…`) reached the presses. The authority is read with its credentials dropped, a value whose host still cannot be read is refused rather than skipped, and a host named in the query string is read the way libpq reads it — `postgres:///app?host=db.prod.example.com` reaches that host, since libpq takes the host from the query and lets it override the authority, dials `hostaddr` when both are named, keeps the last value of a keyword it is given twice, and treats `/…` as a Unix socket, which stays local. A file scheme that names a host is another machine's file (`file://db.prod.example.com/share/app.db`) or a database over the network (`libsql://…`) rather than a file of this machine's. A refusal names the way out: point the value at a local copy for the run, or set `allowRemoteData: true` in `scripts/verify.config.ts`.
 
-### New
+### Added
 
 - **`readAll(name, q)`** (`src/data/read.ts`) answers with every row a collection holds, asking the same question of every page: a list that counts, totals or claims "every" starts there, and a `limit` passed to it is ignored, because its answer means every row. `readEndpoints`, `readServices` and the incident read that joins each ticket go through it, and so do the Members and the Keys view tools and the three pages that list them: the endpoint list, the incidents the bell and Services count, every member, every key and every service are now all of them, where each was the first hundred. A page of yours that read one page of a collection and called it every row reads through `readAll` too.
 
@@ -842,6 +842,14 @@ The charts and parts a monitoring page needs (issue #99): bars in the order give
 
 ## [0.15.0] · 2026-10-13
 
+### Breaking
+
+Three changes need a line from anyone updating a project. Each says what to do instead.
+
+- **`resetCollections` is no longer exported from `src/lib/collection.ts`.** Nothing called it. A test of yours that did builds its collection with a tenant of its own, as the template's tests do.
+- **The gate asks every page under the app folder's route group what the agent reads.** `scripts/check.ts` asked only under a folder named `(dashboard)`. In an adopted project that kept its own group, such as `app/(dash)/`, each page specification there is now asked for `### What the agent reads` under `## Agents`, as `references/customize.md`, "A page spec", describes. An update reports it as the `agent-reads-own-group` migration, naming the specifications that lack the part, so the project is told before its gate fails. A project that repeated the rule in `scripts/check.local.ts` for its own group can delete that copy.
+- **The sample's helpers that did nothing are gone from the template.** `InviteCustomer`, `SubscribeButton`, `TIMEZONES` and `SignInPanel` are no longer in the sample's views, data and sign-in page, and `useSearchDraft` is exported from `src/components/patterns/data-table` and no longer from `src/views/requests.tsx`. These files are a project's own once it is created, and an update never touches them, so a created project keeps its copies; a clone of the template that imported any of them drops the import, or imports `useSearchDraft` from the data table.
+
 ### Added
 
 - **Records, the first page template.** A page template arranges patterns for a kind of page, at layer 4: `Records` puts an optional row of summary tiles over a table with its toolbar, and marks its root `data-template="records"`. Templates live in `src/components/templates/`, are listed in the Atlas under Pages as `template-<folder>` with a real preview, and import no data, view, system or config module, so an adopted project receives them like any component. Pass the tiles as `summary` and the table as its children. It is `draft`: its loading, error, partial and read-only states are not specified yet.
@@ -926,14 +934,6 @@ The charts and parts a monitoring page needs (issue #99): bars in the order give
 - **The Prose card says where to render it, and what the other choice costs.** Prose has no client code of its own: rendered from a Server Component it costs a page no JavaScript, and imported into a client component it brings its renderer, a 143 KiB chunk a reading page then waits for before its text can paint. An adopter's document pages were reported at LCP 2.88 to 2.95 s that way. Nothing in the template does this (the one browser-side use is the assistant's panel, fetched when it is opened, and no prerendered page references the chunk), so this is a guide, in the card's spec: render Prose in the server page and pass it to a client view as `children`.
 - **The default gate's tests cost a third of what they did.** Every test file started a process and a jsdom of its own, and that start was most of the tests' cost: 79 s of CPU for the 141 files `pnpm verify` runs, at the four workers the release runner has. `vitest.config.ts` now sets `pool: 'vmThreads'`, so a file is still a world of its own, as a context in a shared worker: 27 s of CPU, and 8 s on the clock where it was 20, with the same 698 cases passing. `tests/setup.ts` gives a jsdom context the web streams the assistant's client needs. The one test that waited 30 s for a browser that never answers is a test of the checks themselves and is now `tests/deep-chrome-cleanup.test.ts`, with the others no project is given. A project made earlier keeps its own `vitest.config.ts`; adding `pool: 'vmThreads'` to it is the whole change.
 
-### Breaking
-
-Three changes need a line from anyone updating a project. Each says what to do instead.
-
-- **`resetCollections` is no longer exported from `src/lib/collection.ts`.** Nothing called it. A test of yours that did builds its collection with a tenant of its own, as the template's tests do.
-- **The gate asks every page under the app folder's route group what the agent reads.** `scripts/check.ts` asked only under a folder named `(dashboard)`. In an adopted project that kept its own group, such as `app/(dash)/`, each page specification there is now asked for `### What the agent reads` under `## Agents`, as `references/customize.md`, "A page spec", describes. An update reports it as the `agent-reads-own-group` migration, naming the specifications that lack the part, so the project is told before its gate fails. A project that repeated the rule in `scripts/check.local.ts` for its own group can delete that copy.
-- **The sample's helpers that did nothing are gone from the template.** `InviteCustomer`, `SubscribeButton`, `TIMEZONES` and `SignInPanel` are no longer in the sample's views, data and sign-in page, and `useSearchDraft` is exported from `src/components/patterns/data-table` and no longer from `src/views/requests.tsx`. These files are a project's own once it is created, and an update never touches them, so a created project keeps its copies; a clone of the template that imported any of them drops the import, or imports `useSearchDraft` from the data table.
-
 ## [0.14.1] · 2026-10-12
 
 ### Fixed
@@ -973,6 +973,23 @@ Three changes need a line from anyone updating a project. Each says what to do i
 - **With one workspace or none, the rail's row is the account menu, not a switcher.** A product that passes no `scopes` still opened a menu headed `Workspace` holding a single disabled, checked row — a chevron that promises a choice, opening a list with no choice in it (#20). The row now says `account menu` to a screen reader and carries a plain `ChevronDown` unless more than one scope is passed, and the menu renders no `Show` group and no checked row of its own unless there is something to switch between. A product passing several scopes is unchanged: the `Show` group, the radio items and the switcher glyph are as they were. The card's preview draws both states, and `README.md` states the rule.
 
 ## [0.13.0] · 2026-10-11
+
+### Breaking
+
+Ten changes need a line from anyone updating a project. Each says what to do instead.
+
+- **A nav item carries a required `needs`.** Every item in `src/app.config.ts`'s `nav` writes one: import `FEATURES` and point the item at its feature (`needs: FEATURES.<id>.needs`), or write the `Need` yourself (`'keys:read'`, `{ allOf: [...] }`, `'public'`). `node scripts/check.ts` now fails a malformed one, naming the href.
+- **A view tool carries a required `needs`.** An adopter's own view tools declare `needs: FEATURES.<id>.needs` and call `await requireNeed(FEATURES.<id>.needs)` as the first statement of their `read`.
+- **A dashboard page that awaits its gate is an async page.** `/`, `/analytics`, `/customers` and `/requests` stream their masthead with the gate rather than in the static shell, and `OverviewPage`/`AnalyticsPage` accept a defaulted props object. A test that asserted the static shell on one of those routes, or code calling a page component synchronously, updates the assertion or the call.
+- **`NoAccess` takes a feature, not a title, and is awaited.** `NoAccess({ feature }: { feature: FeatureId })` replaces `NoAccess({ title })`: a caller that passed a title passes a `FeatureId` and awaits it.
+- **`SettingsBody` takes a required `may`.** `{ workspaceRead, workspaceUpdate, workspaceRemove }`, computed on the server page from the grant table. A direct caller that passed nothing computes and passes it. A Member or Viewer no longer sees the Workspace section at all.
+- **`ConsoleRail` and `ConsolePalette` take the request as a promise.** Both drop `user` and `only` for `access?: Promise<ChromeAccess | null>` — `chromeAccess()` from `src/data/access.ts` — which the layout passes without awaiting and each piece of chrome waits for in its own `<Suspense>` boundary. Pass `access={chromeAccess()}`, or your own promise of the same shape; a console with no sign-in passes none.
+- **The demo policy's scope values change.** `subjectId` is a member id, not `'owner'`, and `authorizationKey` is `demo:<id>:<role>:<add-ons deduped and sorted>`, not `demo:1`. Code that hard-coded either reads the scope instead.
+- **`ROLES` left `src/data/sample.ts`.** The role table is `src/data/roles.ts` (`MAIN_ROLES`, `ADD_ONS`, `GRANTS`, `whoCan`): an importer takes `MAIN_ROLES` from `@/data/roles`, and a member record now carries `role` and `addOns`.
+- **`CUSTOMERS` is no longer re-exported by `src/data/sample.ts`.** Take the twelve rows from `@/system/fixtures/sample-records`, or read the `customers` collection through `read()`.
+- **A person may no longer suspend or remove themselves, and the workspace always keeps one active Owner.** The member boundary refuses both — including a status change through `update`, which is new — with its frozen messages. A UI that offered either gets the refusal, and `memberAccess(id).reason` answers the row's own reason.
+
+**An update to 0.13.0 reports one migration.** `nav-needs`: every item in a project's `nav` needs a `needs`, which the rail asks before it draws a destination. `update` names the change and the file it is in, and `--finalize` runs the project's gate, which fails, naming the href, until the change is made — `needs: 'public'` for a page everyone may open, or the page's own feature (`needs: FEATURES.<id>.needs`), as step 4 of the Start guide has it. A project whose `NavItem` type predates this release has to carry the property too. `adopt` writes `needs: 'public'` into the projects it sets up from now on, so only a project that predates this release makes the change by hand.
 
 ### Added
 
@@ -1016,23 +1033,6 @@ Three changes need a line from anyone updating a project. Each says what to do i
 - **A trend chart's readout stays inside its chart**: it measures its own width, wraps a long label and keeps an extreme value whole; on a phone it pins to the plot's leading edge. Money axis ticks from $10,000 read at a glance (`$25K`, `$5.0B`). `scripts/shot.ts --point "<chart>" --at 0.6` captures a readout.
 - **A sort or a page press is answered before the server is.** `useQueryState` returns a third value, `pending`, and shows the asked-for state at once (`useOptimistic` inside the navigation's transition); the DataTable takes `busy` (rows at 60% opacity, `aria-busy`) until the new rows land. A caller that destructures two values is unaffected.
 - **Dates and figures reuse their Intl formatters**: `formatDate` and the money and count formatters build their `Intl` formatter once instead of on every call (200 dates: 209 ms to 2.5 ms), which shortens the first tap on Alerts or the drawer on a phone.
-
-### Breaking
-
-Ten changes need a line from anyone updating a project. Each says what to do instead.
-
-- **A nav item carries a required `needs`.** Every item in `src/app.config.ts`'s `nav` writes one: import `FEATURES` and point the item at its feature (`needs: FEATURES.<id>.needs`), or write the `Need` yourself (`'keys:read'`, `{ allOf: [...] }`, `'public'`). `node scripts/check.ts` now fails a malformed one, naming the href.
-- **A view tool carries a required `needs`.** An adopter's own view tools declare `needs: FEATURES.<id>.needs` and call `await requireNeed(FEATURES.<id>.needs)` as the first statement of their `read`.
-- **A dashboard page that awaits its gate is an async page.** `/`, `/analytics`, `/customers` and `/requests` stream their masthead with the gate rather than in the static shell, and `OverviewPage`/`AnalyticsPage` accept a defaulted props object. A test that asserted the static shell on one of those routes, or code calling a page component synchronously, updates the assertion or the call.
-- **`NoAccess` takes a feature, not a title, and is awaited.** `NoAccess({ feature }: { feature: FeatureId })` replaces `NoAccess({ title })`: a caller that passed a title passes a `FeatureId` and awaits it.
-- **`SettingsBody` takes a required `may`.** `{ workspaceRead, workspaceUpdate, workspaceRemove }`, computed on the server page from the grant table. A direct caller that passed nothing computes and passes it. A Member or Viewer no longer sees the Workspace section at all.
-- **`ConsoleRail` and `ConsolePalette` take the request as a promise.** Both drop `user` and `only` for `access?: Promise<ChromeAccess | null>` — `chromeAccess()` from `src/data/access.ts` — which the layout passes without awaiting and each piece of chrome waits for in its own `<Suspense>` boundary. Pass `access={chromeAccess()}`, or your own promise of the same shape; a console with no sign-in passes none.
-- **The demo policy's scope values change.** `subjectId` is a member id, not `'owner'`, and `authorizationKey` is `demo:<id>:<role>:<add-ons deduped and sorted>`, not `demo:1`. Code that hard-coded either reads the scope instead.
-- **`ROLES` left `src/data/sample.ts`.** The role table is `src/data/roles.ts` (`MAIN_ROLES`, `ADD_ONS`, `GRANTS`, `whoCan`): an importer takes `MAIN_ROLES` from `@/data/roles`, and a member record now carries `role` and `addOns`.
-- **`CUSTOMERS` is no longer re-exported by `src/data/sample.ts`.** Take the twelve rows from `@/system/fixtures/sample-records`, or read the `customers` collection through `read()`.
-- **A person may no longer suspend or remove themselves, and the workspace always keeps one active Owner.** The member boundary refuses both — including a status change through `update`, which is new — with its frozen messages. A UI that offered either gets the refusal, and `memberAccess(id).reason` answers the row's own reason.
-
-**An update to 0.13.0 reports one migration.** `nav-needs`: every item in a project's `nav` needs a `needs`, which the rail asks before it draws a destination. `update` names the change and the file it is in, and `--finalize` runs the project's gate, which fails, naming the href, until the change is made — `needs: 'public'` for a page everyone may open, or the page's own feature (`needs: FEATURES.<id>.needs`), as step 4 of the Start guide has it. A project whose `NavItem` type predates this release has to carry the property too. `adopt` writes `needs: 'public'` into the projects it sets up from now on, so only a project that predates this release makes the change by hand.
 
 ## [0.12.3] · 2026-10-10
 
@@ -1090,6 +1090,10 @@ Ten changes need a line from anyone updating a project. Each says what to do ins
 
 ## [0.11.0] · 2026-10-08
 
+### Breaking
+
+- **`formatCost` prints cents at every size.** An amount of 1,000 or more reads "$1,269.40" where it read "$1,269". A product that pinned the old string in a test, or laid a column out for the shorter figure, updates it; `formatCostCompact` is the short form.
+
 ### Added
 
 - **The standard the sentence never states.** The skill's `references/standard.md` holds what one sentence leaves out: the register a product UI answers to, the defaults that read as generated, and a scoreboard kept in `out/standard/` for every view. The scoreboard has floors measured by `pnpm verify --full`, and craft judged on renders at 1440 and 390px in both themes (fit, hierarchy, typography, whitespace, colour, motion, responsive, navigation, copy, states, agents, originality). The agent runs the loop until `--full` ends with `the project meets the Meridian standard` and no view is Weak. Mechanical questions it settles itself; judgment calls it records with a recommendation, proceeding when cheap to reverse. Push, release, deploy, production data and the feedback issue wait for a yes.
@@ -1119,11 +1123,11 @@ Ten changes need a line from anyone updating a project. Each says what to do ins
 - **The skill names what its route needs, from what the probes met.** `create .` works in an empty folder; timezone, currency and the meaning of the request's own terms are recorded decisions; a view's verdict is its lowest criterion; the error state without a fake API is shown by making the read throw for one render. An update already on the running version stops there. The `optional:` and `example:` path prefixes are explained, a project's own copy of the skill is the one to follow, and Route A2 no longer names a `--product` flag `create` does not have. An existing product is learned first, its production addresses found before anything runs, its pages shot "before", and what must survive listed as a floor; Route B renders its "before" from a copy, and a read moved from the browser to the server carries neither cookies nor CORS. `create` and `adopt` end by pointing at the standard, not at `verify` passing. From the second round: the last round needs no round after it; originality comes from how asked-for content is shown, never from adding content; a view's states are scored under it and the shell is one row; the dev server is stopped by its own process id; the rail's signed-in person is never the sample's; an API address overrides `.env` through the environment and is not a `dataUrls` entry; a rebrand that lands near a status hue runs `brand` again with the nearest safe hue. From a built brownfield run and a planted-defect run: an adopted project turns on Cache Components and wraps its shell in `<Suspense>` when detail ids come at request time; a product formatter lives in a file of its own, and a Meridian file it must change goes in the keep register; the theme default is set through `brand --theme`; a navigation probe works at 390px; a request to evaluate only has a route of its own; a criterion not yet judged is not a pass. From the built greenfield run: `create` points at step 3's brief, not step 5; a page specification has a shape to start from; the shared context's 2,400-character budget is stated; the dev server is started as Next itself, so stopping its id stops it. From a third round of decision probes: the existing-project route starts with "Before you change anything", not with `adopt`; Cache Components means `partialPrefetching` too; a render server in a project with a fake API is started with its address; an npm project passes flags after `--`; a currency is evidence of the zone; a browser-fetching app's "before" needs a time budget and a fake API that allows its origin; Route B's new project takes Route A's verify steps.
 - **The skill's screenshots reach the dev server.** Step 6 started `pnpm dev`, on port 3000, then ran `scripts/shot.ts`, which reads port 3100. It now starts `pnpm dev --port 3100`.
 
+## [0.10.0] · 2026-10-07
+
 ### Breaking
 
-- **`formatCost` prints cents at every size.** An amount of 1,000 or more reads "$1,269.40" where it read "$1,269". A product that pinned the old string in a test, or laid a column out for the shorter figure, updates it; `formatCostCompact` is the short form.
-
-## [0.10.0] · 2026-10-07
+- **`Timeline` is removed.** No page used it, and a card exists because a page needs it (`CONTRIBUTING.md`). Import nothing from `src/components/charts/timeline`.
 
 ### Added
 
@@ -1147,11 +1151,16 @@ Ten changes need a line from anyone updating a project. Each says what to do ins
 - **The presses count a file chooser.** A file picker's button opens the system's chooser, which changes nothing in the DOM; the presses now intercept it and count it as an answer (issue #16).
 - **verify's assistant-off run ignores `.env.local`.** It blanks every name the assistant reads, set in the shell or not (issue #16).
 
+## [0.9.0] · 2026-10-07
+
 ### Breaking
 
-- **`Timeline` is removed.** No page used it, and a card exists because a page needs it (`CONTRIBUTING.md`). Import nothing from `src/components/charts/timeline`.
+`update` reports the two that touch the team's own files as migrations, `share-view-context` and `agent-reads-section`, with what to change (`references/update.md`, "Resolving 0.9.0's migrations"); `src/lib/shared-context.ts`, `src/lib/agent-guidance.ts` and `src/lib/insight.ts` are Meridian's now and arrive with the update.
 
-## [0.9.0] · 2026-10-07
+- `useShareView(text, structured)` is `useShareView(context)`. Build a context with the fields in `SharedContext`; `contextText` writes the text both agents read.
+- `scripts/check.ts` requires `### What the agent reads` under `## Agents` in the README of every page under `app/(dashboard)/` and `app/embed/`. Add it to a product's own pages, saying what the page's context tells each agent.
+- `src/data/sample.ts` no longer exports `ENDPOINTS`, `STATUS_MIX`, `ACTIVITY`, `INCIDENTS`, `PAST_INCIDENTS`, `SERVICES` or `demoTotals`: read them through `src/data/metrics.ts`. `RequestView` takes `routeP95`.
+- `OverviewBody`, `HealthBody` and `AnalyticsBody` take the period key, `updatedAt` and, for the first and last, the incidents and activity beside the figures; `RequestsView` takes `updatedAt` and `now`.
 
 ### Added
 
@@ -1164,15 +1173,6 @@ Ten changes need a line from anyone updating a project. Each says what to do ins
 - **An agent's change leaves an Activity line.** The assistant's guard takes an optional `record`; the template writes to a new `activity` collection, and the Overview's Activity is live.
 - **The Overview, Analytics and Health read through `read()`.** Daily totals, endpoints, responses, services, incidents and activity are read-only collections (`src/data/metrics.ts`).
 - **An address can name a day.** `?day=2026-09-22` opens the Overview pointed at it (`Meridian day`).
-
-### Breaking
-
-`update` reports the two that touch the team's own files as migrations, `share-view-context` and `agent-reads-section`, with what to change (`references/update.md`, "Resolving 0.9.0's migrations"); `src/lib/shared-context.ts`, `src/lib/agent-guidance.ts` and `src/lib/insight.ts` are Meridian's now and arrive with the update.
-
-- `useShareView(text, structured)` is `useShareView(context)`. Build a context with the fields in `SharedContext`; `contextText` writes the text both agents read.
-- `scripts/check.ts` requires `### What the agent reads` under `## Agents` in the README of every page under `app/(dashboard)/` and `app/embed/`. Add it to a product's own pages, saying what the page's context tells each agent.
-- `src/data/sample.ts` no longer exports `ENDPOINTS`, `STATUS_MIX`, `ACTIVITY`, `INCIDENTS`, `PAST_INCIDENTS`, `SERVICES` or `demoTotals`: read them through `src/data/metrics.ts`. `RequestView` takes `routeP95`.
-- `OverviewBody`, `HealthBody` and `AnalyticsBody` take the period key, `updatedAt` and, for the first and last, the incidents and activity beside the figures; `RequestsView` takes `updatedAt` and `now`.
 
 ## [0.8.0] · 2026-10-06
 
@@ -1368,6 +1368,24 @@ A quality pass over the whole repository, and a manual pass through the running 
 view, CLI command and API route, at both widths and both themes. Twenty-two defects fixed, six of them found only by
 auditing the Atlas, which nothing had done before. Both field reports on #6 and #7 are in.
 
+### Breaking
+
+- **The `rail-collapsed` token is gone** (`tokens/core.tokens.json`, and `src/styles/tokens.css` with it). Nothing a
+  product keeps referenced it — no component, specification, bridge or script — so a stylesheet of your own that reads
+  `var(--rail-collapsed)` was already falling back to nothing. The rail's width is `rail-width`; below 1024px it is a
+  drawer, which is not a collapsed rail.
+- **Dormant exports removed from Meridian's own scripts**: `ROOT`, `Token`, `BRIDGE`, `buildCss` and `buildTheme` in
+  `scripts/tokens.ts`; `PAIRS`, `context`, `resolve` and `colorOf` in `scripts/contrast.ts`; `LAYERS` and `CardEntry` in
+  `scripts/registry.ts`; `VerifyConfig` in `scripts/verify.config.ts`; `adoptSet` in `cli/src/adopt.ts`; and the Atlas's
+  internal types. A product that imported one of these was reaching into a generator; nothing that ships depends on
+  them.
+- **`PopoverAnchor` is gone**, and `.sheet-right-in`/`.sheet-up-in` with the `m-sheet-right` keyframe. The first was
+  exported and named nowhere; the others were referenced by nothing, and the Sheet animates inline.
+- **`DEMO_STALE_AFTER_MS`** and the unused `Customer`/`StatusClass` type exports are gone from the sample fixtures.
+
+Nothing a product renders changes shape because of any of this: `pnpm gate` proves that every export of `src/lib` and
+`src/data` is imported by a file a product keeps, and it passes.
+
 ### Security
 
 - **The markdown URL policy could be bypassed with a control character** (`src/lib/safe-markdown.ts`). The scheme was read from the raw string, but a browser removes tab, newline and the other controls from a URL before it reads one: `java\tscript:alert(1)` IS `javascript:` to the browser, so a link an agent, a document or a note wrote could reach a script — the one thing this module exists to stop. The scheme is now read from a copy with the controls and spaces taken out, and only the probe is stripped: a URL that passes is returned exactly as written. `tests/prose.test.tsx` covers the obfuscated forms.
@@ -1414,27 +1432,14 @@ auditing the Atlas, which nothing had done before. Both field reports on #6 and 
 - **The `rail-collapsed` token**: declared since the first commit, referenced by no component, spec, bridge or script.
 - **`DEMO_STALE_AFTER_MS`** (and the unused `Customer`/`StatusClass` type exports): nothing imported them.
 
-### Breaking
-
-- **The `rail-collapsed` token is gone** (`tokens/core.tokens.json`, and `src/styles/tokens.css` with it). Nothing a
-  product keeps referenced it — no component, specification, bridge or script — so a stylesheet of your own that reads
-  `var(--rail-collapsed)` was already falling back to nothing. The rail's width is `rail-width`; below 1024px it is a
-  drawer, which is not a collapsed rail.
-- **Dormant exports removed from Meridian's own scripts**: `ROOT`, `Token`, `BRIDGE`, `buildCss` and `buildTheme` in
-  `scripts/tokens.ts`; `PAIRS`, `context`, `resolve` and `colorOf` in `scripts/contrast.ts`; `LAYERS` and `CardEntry` in
-  `scripts/registry.ts`; `VerifyConfig` in `scripts/verify.config.ts`; `adoptSet` in `cli/src/adopt.ts`; and the Atlas's
-  internal types. A product that imported one of these was reaching into a generator; nothing that ships depends on
-  them.
-- **`PopoverAnchor` is gone**, and `.sheet-right-in`/`.sheet-up-in` with the `m-sheet-right` keyframe. The first was
-  exported and named nowhere; the others were referenced by nothing, and the Sheet animates inline.
-- **`DEMO_STALE_AFTER_MS`** and the unused `Customer`/`StatusClass` type exports are gone from the sample fixtures.
-
-Nothing a product renders changes shape because of any of this: `pnpm gate` proves that every export of `src/lib` and
-`src/data` is imported by a file a product keeps, and it passes.
-
 ## [0.3.0] · 2026-10-04
 
 Three field reports from products built on Meridian (issues #3, #4 and #5), taken as proposed where the proposal held and differently where it did not. Everything here is a fix to what the template ships, or a hole an adopting product could not fill itself.
+
+### Breaking
+
+- `Collection.create` and `Collection.update` (`src/lib/collection.ts`) take `Record<string, unknown>` instead of `Omit<T, K>` and `Partial<Omit<T, K>>`. A caller that passed a fully typed record still compiles; a data layer that had to cast now does not. `derived` is new and optional.
+- `FormSection` gained `as` and `flush`; both default to today's behaviour, so nothing that does not pass them changes.
 
 ### Added
 
@@ -1460,16 +1465,21 @@ Three field reports from products built on Meridian (issues #3, #4 and #5), take
 - A keyboard focus that scrolled into view could land under the 56px sticky top bar. The scroll region now carries `scroll-pt-16`, so a focused control comes to rest clear of it (WCAG 2.4.11).
 - `docs/assistant.md` and `.env.example` say that a gateway names models `<provider>.<model>` and to copy the id from its `GET /models` — the prefix is part of the name.
 
-### Breaking
-
-- `Collection.create` and `Collection.update` (`src/lib/collection.ts`) take `Record<string, unknown>` instead of `Omit<T, K>` and `Partial<Omit<T, K>>`. A caller that passed a fully typed record still compiles; a data layer that had to cast now does not. `derived` is new and optional.
-- `FormSection` gained `as` and `flush`; both default to today's behaviour, so nothing that does not pass them changes.
-
 ## [0.2.0] · 2026-10-04
 
 The first release on npm. A team brings Meridian into its own dashboard with one sentence to its coding agent:
 `npx zz-meridian@latest adopt`, then the skill it installs. Also: two field reports of bringing Meridian into existing
 projects (issues #1 and #2), and the console's own assistant.
+
+### Breaking
+
+- The root package is `zz-meridian-template` (private); `zz-meridian` is the published package.
+- Agents may now propose a removal: `docs/agents.md`, `docs/surfaces.md` and the Proposal, Settings and Keys specifications no longer say a destructive change is never proposed. Keep an operation away from every agent with `pageOnly`.
+- `formatTime`, `formatIsoDate` and `periodCutoff` are removed (use `formatDateTime`, `Intl.DateTimeFormat` or `PERIOD_DAYS`); `readPage`, `AssistantConfig`, `PAGE_TEXT_LIMIT`, `luminance`, `DISPLAY_TIMEZONE`, `formatCostCompact`, `formatCount`, `PROTOCOL`, `DEFAULT_PERIOD`, `THEMES`, `DENSITIES` and `ThemePref` are no longer exported, and `Density` is `Preferences['density']`.
+- The Keys view no longer keeps its own rows: it takes them and its actions from the page.
+- `NumberFormat` gains `compact` and `cost-compact`; `CompositionBar`'s `neutral-soft` is now `neutral-ink`.
+- `Table` `hideBelow` reads the table's own width (from 0.1.0's later commits).
+- Product pages that relied on Field's native `required` validation should validate in the page, which already shows `error`.
 
 ### Added
 
@@ -1511,16 +1521,6 @@ projects (issues #1 and #2), and the console's own assistant.
 - An avatar group tucks each disc under the next by 2, 4 or 6px, so the ring never cuts an initial.
 - A scrolling strip (the rail's navigation, a narrow tab strip) fades at the edge with more behind it.
 - The pager and Health's service grid read their own width, not the screen's.
-
-### Breaking
-
-- The root package is `zz-meridian-template` (private); `zz-meridian` is the published package.
-- Agents may now propose a removal: `docs/agents.md`, `docs/surfaces.md` and the Proposal, Settings and Keys specifications no longer say a destructive change is never proposed. Keep an operation away from every agent with `pageOnly`.
-- `formatTime`, `formatIsoDate` and `periodCutoff` are removed (use `formatDateTime`, `Intl.DateTimeFormat` or `PERIOD_DAYS`); `readPage`, `AssistantConfig`, `PAGE_TEXT_LIMIT`, `luminance`, `DISPLAY_TIMEZONE`, `formatCostCompact`, `formatCount`, `PROTOCOL`, `DEFAULT_PERIOD`, `THEMES`, `DENSITIES` and `ThemePref` are no longer exported, and `Density` is `Preferences['density']`.
-- The Keys view no longer keeps its own rows: it takes them and its actions from the page.
-- `NumberFormat` gains `compact` and `cost-compact`; `CompositionBar`'s `neutral-soft` is now `neutral-ink`.
-- `Table` `hideBelow` reads the table's own width (from 0.1.0's later commits).
-- Product pages that relied on Field's native `required` validation should validate in the page, which already shows `error`.
 
 ## [0.1.0] · 2026-10-03
 
