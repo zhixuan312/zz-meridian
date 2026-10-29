@@ -3,7 +3,39 @@
  * else it is refused by name rather than accepted and ignored, so `adopt --dry-run` never modifies a project while the
  * person waits for a preview.
  */
+import { parseArgs } from 'node:util';
 import { BRAND_FLAGS } from './files.js';
+
+/**
+ * The command line, read: its flags and positionals, or the reason it cannot be read (an unknown flag, a value-less one),
+ * as one line for the person rather than a stack trace.
+ */
+export function readFlags(args: string[]): { values: Record<string, string | boolean | undefined>; positionals: string[] } | { error: string } {
+  try {
+    const { values, positionals } = parseArgs({
+      args,
+      allowPositionals: true,
+      options: {
+        ...Object.fromEntries(BRAND_FLAGS.map((f) => [f, { type: 'string' as const }])),
+        'allow-dirty': { type: 'boolean' },
+        'no-install': { type: 'boolean' },
+        'dry-run': { type: 'boolean' },
+        resume: { type: 'boolean' },
+        finalize: { type: 'boolean' },
+        abort: { type: 'boolean' },
+        verify: { type: 'boolean' },
+        verbose: { type: 'boolean' },
+        global: { type: 'boolean' },
+        help: { type: 'boolean', short: 'h' },
+        version: { type: 'boolean', short: 'v' },
+      },
+    });
+    return { values: { ...values }, positionals };
+  } catch (e) {
+    // Node's first sentence names the flag; the rest is about positionals that start with a dash.
+    return { error: (e as Error).message.split('. ')[0] };
+  }
+}
 
 /** Every command reads these. */
 const EVERYWHERE = ['help', 'version'] as const;
