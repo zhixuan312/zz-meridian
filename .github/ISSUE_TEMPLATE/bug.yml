@@ -15,7 +15,7 @@ body:
     attributes:
       label: Versions
       description: Meridian (in `.meridian/manifest.json`), Next.js and Node.
-      placeholder: Meridian 0.6.1 · Next 16.3.8 · Node 22.18
+      placeholder: Meridian x.y.z · Next x.y.z · Node x.y
     validations:
       required: true
   - type: dropdown

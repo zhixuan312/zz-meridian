@@ -14,7 +14,7 @@ body:
     attributes:
       label: Versions
       description: Meridian (in `.meridian/manifest.json`) and Next.js.
-      placeholder: Meridian 0.6.1 · Next 16.3.8
+      placeholder: Meridian x.y.z · Next x.y.z
   - type: textarea
     id: need
     attributes:

@@ -154,7 +154,7 @@ export function brandCommand({ root, flags, allowDirty }: { root: string; flags:
   const log = (line: string) => (line.startsWith('zz-meridian brand:') ? console.error(line) : console.log(line));
   // The flags are read before anything is copied, and a value the branding script refuses is refused here with the
   // command's own sentence: `adopt` and `create` read the same flags through `effectiveBrand` and answer its Error
-  // (`adopt.ts:153`, `create.ts:19`), where `brand` let it out as a stack trace.
+  // (in `adopt` and `create`), where `brand` let it out as a stack trace.
   let brand: Record<string, string>;
   try { brand = effectiveBrand(flags); } catch (e) { log(`zz-meridian brand: ${(e as Error).message}`); return 1; }
   const scratch = fs.mkdtempSync(path.join(os.tmpdir(), 'zz-meridian-brand-'));

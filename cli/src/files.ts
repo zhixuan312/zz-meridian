@@ -8,7 +8,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-/** The template snapshot this package carries, built from `git ls-files` at the release commit. */
+/** The template snapshot this package carries, extracted from the release commit by `git archive` (cli/scripts/build-payload.ts). */
 export const PAYLOAD = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', 'payload');
 
 export const VERSION: string = JSON.parse(fs.readFileSync(path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', 'package.json'), 'utf8')).version;
