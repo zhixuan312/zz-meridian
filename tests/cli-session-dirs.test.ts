@@ -45,4 +45,8 @@ describe('the sessions a project holds', () => {
   it('names every session, oldest first, so a project with two is refused by name rather than silently picked', () => {
     expect(sessionDirs(project({ name: '0.29.0', dir: true }, { name: '0.28.0', dir: true }))).toEqual(['0.28.0', '0.29.0']);
   });
+
+  it('orders versions by their numbers, so 0.9.0 is older than 0.10.0', () => {
+    expect(sessionDirs(project({ name: '0.10.0', dir: true }, { name: '0.9.0', dir: true }))).toEqual(['0.9.0', '0.10.0']);
+  });
 });

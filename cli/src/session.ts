@@ -95,12 +95,13 @@ const pidAlive = (pid: number) => {
  * person's tools leave there — Finder's `.DS_Store`, an editor's swap file — and one of those read as a session is a
  * version that does not exist. `loadSession` filtered for that and this did not, so a stray file made `status` report a
  * session of version `.DS_Store` and made `update` prescribe `npx zz-meridian@.DS_Store update --resume`, which then
- * refused, leaving no way forward. One list, read the same way by both.
+ * refused, leaving no way forward. One list, read the same way by both. The names are versions, ordered by their
+ * numbers: as text, 0.10.0 sorts before 0.9.0.
  */
 export function sessionDirs(root: string): string[] {
   const base = path.join(root, '.meridian', 'update');
   if (!fs.existsSync(base)) return [];
-  return fs.readdirSync(base).filter((n) => { try { return fs.lstatSync(path.join(base, n)).isDirectory(); } catch { return false; } }).sort();
+  return fs.readdirSync(base).filter((n) => { try { return fs.lstatSync(path.join(base, n)).isDirectory(); } catch { return false; } }).sort((a, b) => a.localeCompare(b, 'en', { numeric: true }));
 }
 
 /** The phase of the one session folder under `.meridian/update/`, or a note when it cannot be read. */

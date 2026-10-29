@@ -34,6 +34,7 @@ Every release of ZZ Meridian, newest first. Versions follow semver: a removed or
 - **The proposal embed says Not applied when its tool refuses.** It said Applied, while it told the model nothing changed.
 - **A failed request reads "None, it failed" for its tokens and cost**, not "None, refused", which is kept for a 4xx; a request that took 0 ms keeps its trace bars at the start instead of losing them to `NaN%`.
 - **Undo on a removal the page already sent says so** ("{name}'s removal was already sent"), instead of bringing back a member the server no longer has.
+- **`update` and `status` order sessions by version number**, so a project holding 0.9.0 and 0.10.0 names 0.9.0 first; as text, 0.10.0 sorted first.
 - **`/requests?sort=constructor`** (or any name every object inherits) falls back to the default sort instead of throwing.
 - **Every view's context names `app.timezone`**, where Request, Requests, Services, Home and Revenue printed their times in it and labelled them UTC.
 - **The bell's customers-past-due alert is timed by the latest to fall past due**, not "just now" on every open.
