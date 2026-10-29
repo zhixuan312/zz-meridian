@@ -1,8 +1,9 @@
 'use client';
 
 import Link from 'next/link';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Bell, Search } from 'lucide-react';
+import { slug } from '@/app.config';
 import { cn } from '@/lib/cn';
 import { formatDateTime, formatRelative } from '@/lib/format-date';
 import { Kbd } from '@/components/ui/kbd';
@@ -13,6 +14,12 @@ import { openCommand } from '@/components/patterns/command-palette';
 /** One thing that needs a person: what happened, where to act on it, and whether they have seen it. */
 export type Alert = { id: string; title: string; detail?: string; at: string; href: string; tone: 'critical' | 'warning' | 'positive' | 'neutral'; unread?: boolean };
 
+/** The alerts this tab has opened, kept for the session so a reload does not bring them back as new. */
+const READ_KEY = `${slug}.alerts-read`;
+const readIds = (): string[] => {
+  try { const ids: unknown = JSON.parse(sessionStorage.getItem(READ_KEY) ?? '[]'); return Array.isArray(ids) ? ids.filter((id) => typeof id === 'string') : []; } catch { return []; }
+};
+
 /**
  * The global tools in the top bar of every console page: search and commands (⌘K), and alerts. They stay put while
  * the page scrolls, so they are always one press away. Alerts open a panel; each alert links to where it is handled.
@@ -20,9 +27,16 @@ export type Alert = { id: string; title: string; detail?: string; at: string; hr
 export function ShellTools({ alerts = [], now }: { alerts?: Alert[]; /** The data's clock, for "36 min ago". */ now: Date }) {
   const [read, setRead] = useState<Set<string>>(new Set());
   const [open, setOpen] = useState(false);
+  // Read after hydration: the server render has no session storage.
+  // eslint-disable-next-line react-hooks/set-state-in-effect -- session storage is an external store read once on mount.
+  useEffect(() => setRead(new Set(readIds())), []);
+  const keep = (next: Set<string>) => {
+    setRead(next);
+    try { sessionStorage.setItem(READ_KEY, JSON.stringify([...next])); } catch {}
+  };
   const unread = alerts.filter((a) => a.unread && !read.has(a.id)).length;
   const name = unread ? `Alerts, ${unread} new` : 'Alerts';
-  const markAll = () => setRead(new Set(alerts.map((a) => a.id)));
+  const markAll = () => keep(new Set([...read, ...alerts.map((a) => a.id)]));
   return (
     <>
       <button
@@ -43,7 +57,7 @@ export function ShellTools({ alerts = [], now }: { alerts?: Alert[]; /** The dat
           </button>
         </PopoverTrigger>
         <PopoverContent align="end" className="w-88 p-0" aria-label="Alerts">
-          <AlertsPanel alerts={alerts} now={now} read={read} onOpen={(id) => { setRead((r) => new Set(r).add(id)); setOpen(false); }} onMarkAll={markAll} />
+          <AlertsPanel alerts={alerts} now={now} read={read} onOpen={(id) => { keep(new Set(read).add(id)); setOpen(false); }} onMarkAll={markAll} />
         </PopoverContent>
       </Popover>
     </>
