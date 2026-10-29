@@ -4,7 +4,7 @@ import { afterEach, describe, expect, test, vi } from 'vitest';
 vi.mock('next/navigation', () => ({ usePathname: () => '/settings', useRouter: () => ({ refresh() {}, push() {}, replace() {} }) }));
 import { Providers } from '@/components/base/providers';
 import { AppShell, PageFrame } from '@/components/base/shell';
-import { slug } from '@/app.config';
+import { THREAD_KEY } from '@/components/patterns/assistant/thread';
 import { STORAGE_KEY } from '@/lib/preferences';
 import { SettingsBody } from '@/views/settings';
 
@@ -25,8 +25,6 @@ const settings = (assistant: boolean) =>
       </Providers>,
     );
   });
-/** The thread's storage key (spec FR-13): the product slug and `.assistant`; a shell rendered without a scope keeps it under the empty one. */
-const THREAD_KEY = `${slug}.assistant`;
 const launcher = () => screen.queryByRole('button', { name: 'Assistant' });
 afterEach(() => localStorage.clear());
 
