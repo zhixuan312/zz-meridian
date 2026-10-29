@@ -18,6 +18,16 @@ describe('POST /api/assistant refuses what is not a thread', () => {
     expect((await post({ messages: [ask('u1')], page: { ...page, text: 'x'.repeat(2_000_001) } })).status).toBe(413);
   });
 
+  test('a body past the limit is refused before the rest of it is read', async () => {
+    Object.assign(process.env, { ASSISTANT_PROVIDER: 'openai-compatible', ASSISTANT_API_KEY: 'k', ASSISTANT_MODEL: 'm', ASSISTANT_BASE_URL: 'http://127.0.0.1:9/v1' });
+    let pulled = 0;
+    const chunk = new Uint8Array(1_000_000).fill(120);
+    const body = new ReadableStream<Uint8Array>({ pull(c) { if (++pulled > 10) c.close(); else c.enqueue(chunk); } });
+    const res = await POST(new Request('http://localhost/api/assistant', { method: 'POST', body, duplex: 'half' } as RequestInit));
+    expect(res.status).toBe(413);
+    expect(pulled, 'chunks of 1 MB read').toBeLessThanOrEqual(4);
+  });
+
   test('a thread with a proposal and a tool part waiting for approval is a valid thread', async () => {
     Object.assign(process.env, { ASSISTANT_PROVIDER: 'openai-compatible', ASSISTANT_API_KEY: 'k', ASSISTANT_MODEL: 'm', ASSISTANT_BASE_URL: 'http://127.0.0.1:9/v1' });
     const thread = [ask('u1'), { id: 'a1', role: 'assistant', parts: [

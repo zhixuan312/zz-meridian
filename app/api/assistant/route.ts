@@ -16,9 +16,27 @@ import { dayOf } from '@/lib/format-date';
 import { viewAt, type ViewTool } from '@/lib/shared-context';
 import { viewTools } from '@/logic/tools';
 
-/** The panel sends at most the last 100 messages; a larger body than 2 MB is refused before it is parsed. */
+/** The panel sends at most the last 100 messages; a body larger than 2 MB is refused before the rest of it is read. */
 const MAX_MESSAGES = 100;
 const MAX_BODY = 2_000_000;
+
+/**
+ * The request's body as text, or null once it passes `max` bytes: read a chunk at a time and dropped there, so a caller
+ * cannot make the server hold a body of any size before it is refused.
+ */
+async function bodyWithin(request: Request, max: number): Promise<string | null> {
+  if (Number(request.headers.get('content-length') ?? 0) > max) return null;
+  const reader = request.body?.getReader();
+  if (!reader) return '';
+  const chunks: Uint8Array[] = [];
+  let size = 0;
+  for (let next = await reader.read(); !next.done; next = await reader.read()) {
+    size += next.value.byteLength;
+    if (size > max) { await reader.cancel(); return null; }
+    chunks.push(next.value);
+  }
+  return new TextDecoder().decode(Buffer.concat(chunks));
+}
 
 /**
  * `POST /api/assistant`: answers about the page the person is on. 401 without a session, 404 until the `ASSISTANT_*`
@@ -30,8 +48,8 @@ export async function POST(request: Request): Promise<Response> {
   const config = assistantConfig(process.env);
   if (!config) return new Response(null, { status: 404 });
 
-  const raw = await request.text();
-  if (raw.length > MAX_BODY) return new Response(null, { status: 413 });
+  const raw = await bodyWithin(request, MAX_BODY);
+  if (raw === null) return new Response(null, { status: 413 });
   const body: unknown = (() => { try { return JSON.parse(raw); } catch { return null; } })();
   const { messages, page, scope: started } = (body ?? {}) as { messages?: unknown; page?: { path?: unknown; title?: unknown; context?: unknown; text?: unknown }; scope?: unknown };
   if (!Array.isArray(messages) || messages.length === 0 || messages.length > MAX_MESSAGES) return new Response(null, { status: 400 });
