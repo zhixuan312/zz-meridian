@@ -2,7 +2,7 @@
 // open's commit forced a whole-page layout, which dropped a frame on the runner's phone (run 39132502117).
 import { Suspense } from 'react';
 import { act, fireEvent, render, screen } from '@testing-library/react';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { AppShell, NavTrigger } from '@/components/base/shell';
 
 vi.mock('next/navigation', () => ({
@@ -21,6 +21,8 @@ const shell = () => (
 );
 
 describe('the phone drawer', () => {
+  // Undone after the test, so a failed assertion does not leave the focus spy on for the next one.
+  afterEach(() => vi.restoreAllMocks());
   it('focuses nothing inside the tap, and focus is in the sheet a frame later', async () => {
     await act(async () => { render(shell()); });
     const focus = vi.spyOn(HTMLElement.prototype, 'focus');
@@ -31,7 +33,6 @@ describe('the phone drawer', () => {
     expect(focus).not.toHaveBeenCalled();
     await act(async () => { await new Promise((r) => requestAnimationFrame(() => r(null))); });
     expect(dialog.contains(document.activeElement)).toBe(true);
-    focus.mockRestore();
   });
   it('stays modal: the page behind is hidden from assistive technology and Escape returns focus to the trigger', async () => {
     await act(async () => { render(shell()); });
