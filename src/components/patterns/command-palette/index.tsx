@@ -94,7 +94,10 @@ export function CommandPalette({ nav }: { /** Every destination the rail offers,
         <D.Content
           aria-describedby={undefined}
           className="dialog-in fixed top-[14vh] left-1/2 z-(--layer-overlay) w-[min(600px,calc(100vw-24px))] -translate-x-1/2 overflow-hidden rounded-xl bg-surface-raised shadow-overlay"
+          // An input method composing (Chinese, Japanese, Korean) owns Enter, Escape and the arrows until it is done.
+          onEscapeKeyDown={(e) => { if (e.isComposing) e.preventDefault(); }}
           onKeyDown={(e) => {
+            if (e.nativeEvent.isComposing) return;
             if (e.key === 'ArrowDown') { e.preventDefault(); setAt((a) => Math.min(shown.length - 1, a + 1)); }
             if (e.key === 'ArrowUp') { e.preventDefault(); setAt((a) => Math.max(0, a - 1)); }
             if (e.key === 'Enter') { e.preventDefault(); run(shown[at]); }

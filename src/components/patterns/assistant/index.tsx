@@ -150,7 +150,7 @@ export function AssistantPanel({
     <aside
       data-assistant
       aria-label="Assistant"
-      onKeyDown={(e) => e.key === 'Escape' && onClose()}
+      onKeyDown={(e) => e.key === 'Escape' && !e.nativeEvent.isComposing && onClose()}
       className={cn(
         'flex h-full min-h-0 flex-col border-l border-line bg-frame backdrop-blur-xl backdrop-saturate-150',
         inline
