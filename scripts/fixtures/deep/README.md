@@ -4,7 +4,7 @@ Pages whose one defect a browser suite has to catch — most of them inside an o
 
 ## Supported boundary
 
-The helper in `scripts/lib/deep.ts` (`deepAll`, `deepActive`, `deepQuery`, `deepQueryAll`, `deepParent`, `deepText`, and `DEEP_SOURCE` for injection into a page) enters open shadow roots, nested ones included, and follows slots. It does not enter closed roots, iframes or `<template>` content, and an undefined custom element has no root to enter. A suite that meets a defined custom element with no open root, or one that is never defined, reports it as unmeasured instead of passing over it. `deepAll` is a deterministic traversal (a host, then its root, then its light children), not tab order.
+The helper in `scripts/lib/deep.ts` (`deepAll`, `deepActive`, `deepQuery`, `deepQueryAll`, `deepParent`, `deepText`, `deepClosest`, the focus-ring readers `ringSignature`, `ringed` and `ringChain`, and `DEEP_SOURCE` for injection into a page) enters open shadow roots, nested ones included, and follows slots. It does not enter closed roots, iframes or `<template>` content, and an undefined custom element has no root to enter. A suite that meets a defined custom element with no open root, or one that is never defined, reports it as unmeasured instead of passing over it. `deepAll` is a deterministic traversal (a host, then its root, then its light children), not tab order.
 
 ## Running
 
@@ -23,6 +23,7 @@ Any route that is not a page below answers a clean page (light DOM, no control),
 | `navigate` | `node scripts/navigate.ts --base <url> --config scripts/fixtures/deep/config.ts --rail <NAV_RAIL> --homes <NAV_HOMES> --routes <page>`, with `NAV_RAIL` and `NAV_HOMES` as `pages.ts` exports them (tests/deep-checks.test.ts reads them there). Manifest `args` follow `--routes`, and the first occurrence of a flag wins, so `args` can add `--timing`, `--mode` and `--samples` to this suite and cannot replace `--config`, `--rail` or `--homes` |
 | `navigate-timing-off` | The `navigate` command with `--config scripts/fixtures/deep/config-tight.ts --timing off`. `config-tight.ts` is `config.ts`'s mappings with every navigation budget at 1 ms, so only function can fail a line, and with three pages mapped wrongly on purpose (`/nav-root-hydrated`'s title, `/nav-root-target`'s ready text, `/nav-multi`'s ready selector), which `config.ts` maps rightly and passes |
 | `navigate-timing-on` | The same with `--timing on`: a page that works is over its 1 ms budget |
+| `perf-live` | `node scripts/perf.ts --base <url> --config scripts/fixtures/deep/config-live.ts --rail /live-late-a,/live-late-b --routes <page> --samples 2`: perf's three conditions between the two live pages, so the after-live journey has a live page to start from |
 
 ## Pages
 
@@ -32,6 +33,7 @@ Every page has an `h1`, `lang="en"`, a `main`, an opaque ground and controls of 
 |---|---|
 | `/deep-clipped` | A label clipped without an ellipsis, two open roots deep |
 | `/deep-unnamed` | An icon-only button with no accessible name, two roots deep |
+| `/deep-unnamed-labelledby` | The same button named by `aria-labelledby` an id that is not there: an id that names nothing names no control, and the attribute's own text is not a name. `-fixed` points it at a hidden `Close` |
 | `/deep-slotted-name` | A button in an open root named by the text slotted into its host (passes) |
 | `/deep-slotted-name-empty` | The same button with nothing slotted and only an icon (fails) |
 | `/deep-target` | A 24px button, two roots deep (measured on a coarse pointer) |
@@ -51,10 +53,14 @@ Every page has an `h1`, `lang="en"`, a `main`, an opaque ground and controls of 
 | `/nav-multi` | Navigation: the control selector matches two elements, the first hidden |
 | `/nav-dead-control` | Navigation: the mapping's control is there and pressable, and pressing it changes nothing: `control-dead` (fails). Last in the rail, so every other page starts where it did |
 | `/nav-link-late` | Navigation: a `link` probe whose link is pressable at once and whose ready text comes 800 ms later. The link is pressed once the data is measured, so the line passes; pressed beside the data it would leave first and report `is there but never shows`. Last in the rail |
+| `/nav-redirect` | Navigation: a rail route the server answers with a 302 to `/nav-redirect/thing-a`, a page under it, as a rail route that opens the signed-in person's own thing does: the journey lands there (passes) |
+| `/nav-empty` | Navigation: a list whose data arrived empty, its first-run state where the rows would be: data is the first-run state and interactivity is not measured (passes) |
+| `/nav-empty-error` | The same list, failed: its error state stays a failure (`never-ready`, naming the error state) |
 | `/nav-solo` | Navigation: the only destination of its workspace (Solo). No other page's rail links to it, so the journey starts on `/nav-home` and presses the workspace menu's Solo item, which opens it with no link (passes, `through the workspace menu (Solo) · not prefetched`) |
 | `/nav-solo-unoffered` | Navigation: the same, in a workspace the menu does not offer: the journey is `never-ready`, naming the workspace (fails) |
 | `/nav-retake` | Navigation: its table is there on the first desktop visit and gone on every later one. Under `--timing on` and 1 ms budgets the first journey is over budget, is retaken, and the retake finds no data (`data never-ready on a retake`); under loose budgets it is never retaken and passes |
 | `/nav-d-nostart` | Navigation: drawn by no rail and no workspace's home, so the journey has nowhere to start from (`the rail has no other route to start from`) |
+| `/live-late-a`, `/live-late-b` | perf's after-live case, on a rail of their own: each listens for `online` only 1.5 s after it loads, as a console page does once hydrated, then resyncs as the provider does (a Server Action at `/live-act`, then the router's read). The journey from A to B starts on a live page (passes) |
 | `/nav-s-unloaded`, `/nav-d-unloaded` | Navigation, a start that is the defect: every `nav-s-*` page is a start with a rail of its own that draws only the link to its `nav-d-*` destination, sits directly before it in the rail, and is never a destination itself. This one loses its heading after the first visit (`the starting page ... did not load`) |
 | `/nav-s-nobutton`, `/nav-d-nobutton` | The start hides its Open navigation button after the first visit: the phone cannot open the drawer |
 | `/nav-s-nolink`, `/nav-d-nolink` | The start hides its links after the first visit: the drawer on a phone and the rail on a desktop show none to press |
@@ -68,6 +74,7 @@ Every page has an `h1`, `lang="en"`, a `main`, an opaque ground and controls of 
 | `/svg-label-on-bar-dark` | Dark text on a dark bar inside the SVG (fails). Read against the page instead of the bar it would pass, and the white label of `/svg-text-read` would fail, so the pair proves the bar is what is read. The bar has `pointer-events: none`, so only a geometric test finds it |
 | `/svg-text-read` | Both corrected on one page (passes): a label dark enough on the page, and a white label on the dark bar |
 | `/truncated` | Text cut with an ellipsis and no `title`. `-fixed` carries the whole text in its `title` |
+| `/truncated-titled-wrong` | The same cut text with a `title` that holds something else (`Orders`): the whole text is kept nowhere, the same as no title (fails) |
 | `/overlap-text` | Two paragraphs drawn on each other by a negative margin |
 | `/overlap-line` | A stroked line through an SVG caption |
 | `/overlap-none` | What is not a collision, on one page (passes): the two corrected twins, and the three shapes the first sweep of real pages misreported, a clamp's hidden lines, a line below the fold of a clipped list, and the text of a closed `<details>` |
