@@ -21,7 +21,7 @@ import { IncidentCard } from '@/components/patterns/incident-card';
 import { MetricTile } from '@/components/patterns/metric-tile';
 import { StatusList } from '@/components/patterns/status-list';
 import { AskAbout } from '@/components/patterns/ask-about';
-import { facts as rules } from '@/app.config';
+import { app, facts as rules } from '@/app.config';
 import type { Endpoint } from '@/data/sample';
 import { formatCompact, formatDuration, formatPercent, plural } from '@/lib/format';
 import { formatDate, formatShortDate } from '@/lib/format-date';
@@ -348,7 +348,7 @@ function Tile({ tile }: { tile: NowTile }) {
 function Runs({ runs }: { runs: NonNullable<NowData['runs']> }) {
   return (
     <Card>
-      <CardHeader title={P.runs} wrap description={`The ${MONTH}${runs.running ? ', and today so far' : ''}, UTC`} />
+      <CardHeader title={P.runs} wrap description={`The ${MONTH}${runs.running ? ', and today so far' : ''}, ${app.timezone}`} />
       <CardBody>
         <ColumnChart
           label="Verification runs a day, by how they ended"

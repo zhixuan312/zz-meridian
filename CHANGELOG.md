@@ -49,7 +49,7 @@ Every release of ZZ Meridian, newest first. Versions follow semver: a removed or
 - **Undo on a removal the page already sent says so** ("{name}'s removal was already sent"), instead of bringing back a member the server no longer has.
 - **`update` and `status` order sessions by version number**, so a project holding 0.9.0 and 0.10.0 names 0.9.0 first; as text, 0.10.0 sorted first.
 - **`/requests?sort=constructor`** (or any name every object inherits) falls back to the default sort instead of throwing.
-- **Every view's context names `app.timezone`**, where Request, Requests, Services, Home and Revenue printed their times in it and labelled them UTC.
+- **Every view's context names `app.timezone`**, where Request, Requests, Services, Home and Revenue printed their times in it and labelled them UTC. Now's verification runs a day names it too.
 - **A date written without a time prints as the day it names** in `formatDate`, `formatShortDate` and `formatDay`, as the calendar formatters already did: a product whose `app.timezone` is west of UTC printed `2026-10-01` as 30 Sept.
 - **The Requests tiles' Latency p95 is the figure the agent is told for the same requests.** The tiles took the value at rank floor(0.95 × (n − 1)) and a prepared query the nearest rank, which differ for most small sets, such as a five-minute bucket.
 - **A period is compared only with a whole period before it.** A product keeping 120 days compared its 90 days with the 30 before them and printed requests and revenue "up 200%"; `readDays` now answers no previous period where fewer days than the period's own are kept, so the tile draws no change.
