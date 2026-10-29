@@ -51,7 +51,7 @@ Every release of ZZ Meridian, newest first. Versions follow semver: a removed or
 - **A member cannot be changed to an address another member has**, compared without its case, as an invite already checked; one address for several members at once is refused too.
 - **A demo signed in as one persona reopens as that persona after a browser restart.** The persona cookie had no lifetime, so it ended with the browser while the 30-day session went on, and the console reopened as Maya Chen, an Owner; it now lasts as long as the session and is renewed with it.
 - **Undo on a removal the page already sent says so** ("{name}'s removal was already sent"), instead of bringing back a member the server no longer has.
-- **`update` and `status` order sessions by version number**, so a project holding 0.9.0 and 0.10.0 names 0.9.0 first; as text, 0.10.0 sorted first.
+- **`update`'s refusals and `--resume`, `--finalize` and `--abort` order sessions by version number**, so a project holding 0.9.0 and 0.10.0 names 0.9.0 first; as text, 0.10.0 sorted first.
 - **`/requests?sort=constructor`** (or any name every object inherits) falls back to the default sort instead of throwing.
 - **Every view's context names `app.timezone`**, where Request, Requests, Services, Home and Revenue printed their times in it and labelled them UTC. Now's verification runs a day names it too.
 - **A date written without a time prints as the day it names** in `formatDate`, `formatShortDate` and `formatDay`, as the calendar formatters already did: a product whose `app.timezone` is west of UTC printed `2026-10-01` as 30 Sept.

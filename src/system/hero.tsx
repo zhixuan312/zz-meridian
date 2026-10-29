@@ -13,14 +13,14 @@ import { Delta } from '@/components/ui/delta';
 import type { DailyPoint } from '@/system/fixtures/sample';
 import { app } from '@/app.config';
 
+/** A route's share of the requests, as the Usage page's endpoint list divides them over the same 30 days. */
+export type RouteShare = { route: string; share: number };
+
 /**
  * The front door's demonstration of the system's signature: one Meridian drives a wide chart and three surfaces,
  * a console, a phone and a chat. Point anywhere and every surface reads the same day. On arrival the cursor sweeps the
  * month once and rests; under reduced motion it stays still until pointed.
  */
-/** A route's share of the requests, as the Usage page's endpoint list divides them over the same 30 days. */
-export type RouteShare = { route: string; share: number };
-
 export function Hero({ series, routes }: { series: DailyPoint[]; routes: RouteShare[] }) {
   const dates = series.map((d) => d.date);
   return (

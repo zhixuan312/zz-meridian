@@ -133,17 +133,17 @@ export function run<S>(days: readonly S[], good: S, { name }: { name: string }):
 type DayService = { date: string; p95: number; errors: number; requests: number };
 
 /**
- * The rule of a steady state: how many of the days given were inside the band, and which were not, by date. `days`
- * are complete days, oldest first; the caller leaves the day in progress out, and `inBand` says which are inside. The
- * line names the band's own figures, then the first three days outside it and how many more.
- */
-/**
  * Whether a day is inside the band: its p95 under `band.p95Under` and its errors over its requests under
  * `band.errorRateUnder`. A day at either edge is outside, and so is a day with no requests, which has no rate to hold.
  */
 export const inBand = (d: { p95: number; errors: number; requests: number }, band: { p95Under: number; errorRateUnder: number }) =>
   d.p95 < band.p95Under && d.errors / d.requests < band.errorRateUnder;
 
+/**
+ * The rule of a steady state: how many of the days given were inside the band, and which were not, by date. `days`
+ * are complete days, oldest first; the caller leaves the day in progress out, and `inBand` says which are inside. The
+ * line names the band's own figures, then the first three days outside it and how many more.
+ */
 export function steady(days: readonly DayService[], band: { p95Under: number; errorRateUnder: number }): (Fact & { inside: number; of: number; outside: string[] }) | null {
   if (!days.length) return null;
   const outside = days.filter((d) => !inBand(d, band)).map((d) => d.date);
