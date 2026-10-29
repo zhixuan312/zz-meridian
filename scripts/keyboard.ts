@@ -48,7 +48,6 @@ if (as && !cookie) { console.error(`keyboard: --as ${as} is not a declared perso
 
 /** Tag every visible control the keyboard should reach; return how many. Also records how everything looks unfocused. */
 const TAG = `(() => {
-  const deepClosest = (el, sel) => { for (let n = el; n; n = deepParent(n)) if (n.matches(sel)) return n; return null; };
   const vis = (el) => { const r = el.getBoundingClientRect(); const s = getComputedStyle(el); return r.width > 0 && r.height > 0 && s.visibility !== 'hidden' && !deepClosest(el, '[aria-hidden="true"],[inert],.sr-only'); };
   // :disabled, not [disabled]: the attribute is only the control's own, and a fieldset with disabled disables every
   // control inside it without touching their attributes. A FormSection in its read-only or saving state is exactly
@@ -66,9 +65,8 @@ const TAG = `(() => {
   window.__kbN = 0; window.__kbId = (el) => el.getAttribute('data-kb') ?? (el.__kbU ??= 'u' + (++window.__kbN));
   window.__kbNames = all.map((el) => window.__kbName(el));
   all.forEach((el, i) => el.setAttribute('data-kb', i));
-  // What each element looks like unfocused, so a ring is told from a decoration that is always there (as in scripts/audit.ts).
-  const sig = (c) => [c.outlineStyle, c.outlineWidth, c.outlineColor, c.boxShadow, c.borderTopStyle, c.borderTopWidth, c.borderTopColor, c.borderBottomColor, c.borderLeftColor, c.borderRightColor].join('|');
-  window.__kbBefore = new WeakMap(); for (const n of every) window.__kbBefore.set(n, sig(getComputedStyle(n)));
+  // What each element looks like unfocused, so a ring is told from a decoration that is always there (scripts/lib/deep.ts).
+  window.__kbBefore = new WeakMap(); for (const n of every) window.__kbBefore.set(n, ringSignature(getComputedStyle(n)));
   return all.length;
 })()`;
 
@@ -76,21 +74,8 @@ const TAG = `(() => {
 const STOP = `(() => {
   const el = deepActive(); if (!el || el === document.body) return null;
   el.setAttribute('data-kb-hit', '');
-  const sig = (c) => [c.outlineStyle, c.outlineWidth, c.outlineColor, c.boxShadow, c.borderTopStyle, c.borderTopWidth, c.borderTopColor, c.borderBottomColor, c.borderLeftColor, c.borderRightColor].join('|');
-  // A ring is a change on focus: an outline, a coloured shadow or a border that was not there unfocused. The element itself,
-  // its frame and the frame's frame count; inside a shadow root every composed ancestor up to the outermost host does.
-  const ringed = (n) => {
-    const c = getComputedStyle(n), before = window.__kbBefore && window.__kbBefore.get(n);
-    const outline = c.outlineStyle !== 'none' && parseFloat(c.outlineWidth) > 0, shadow = /rgb|oklch|oklab|color/.test(c.boxShadow) && c.boxShadow !== 'none';
-    if (!before) return outline || shadow;
-    const b = before.split('|'), now = sig(c).split('|');
-    const outlineMoved = now.slice(0, 3).join('|') !== b.slice(0, 3).join('|'), shadowMoved = now[3] !== b[3], borderMoved = now.slice(4).join('|') !== b.slice(4).join('|') && c.borderTopStyle !== 'none';
-    return (outline && outlineMoved) || (shadow && shadowMoved) || borderMoved;
-  };
-  const chain = [el];
-  if (el.getRootNode() instanceof ShadowRoot) { for (let n = deepParent(el); n; n = deepParent(n)) { chain.push(n); if (!(n.getRootNode() instanceof ShadowRoot)) break; } }
-  else { const p = deepParent(el); if (p) chain.push(p); const g = p && deepParent(p); if (g) chain.push(g); }
-  const ring = chain.some(ringed);
+  // A ring is a change on focus, wherever on the element's frames it may be drawn (scripts/lib/deep.ts).
+  const ring = ringChain(el).some((n) => ringed(n, window.__kbBefore && window.__kbBefore.get(n)));
   // The first line box, not the whole rectangle: a link that wraps has its centre over the text beside it.
   const r = el.getClientRects()[0] ?? el.getBoundingClientRect();
   const x = Math.min(document.documentElement.clientWidth - 1, Math.max(0, r.left + r.width / 2)), y = Math.min(innerHeight - 1, Math.max(0, r.top + r.height / 2));

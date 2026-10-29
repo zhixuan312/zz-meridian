@@ -52,7 +52,6 @@ const HANG_BOUND_MS = 5000;
  * carries a live part after a comma ("Alerts, 3 new") is found again by the part before it once the exact name is gone (#66).
  */
 const CONTROLS = `
-  const deepClosest = (el, sel) => { for (let n = el; n; n = deepParent(n)) if (n.matches(sel)) return n; return null; };
   const vis = (el) => { const r = el.getBoundingClientRect(); const s = getComputedStyle(el); return r.width > 0 && r.height > 0 && s.visibility !== 'hidden' && !deepClosest(el, '[aria-hidden="true"],[inert],.sr-only'); };
   const hosts = (el) => { const out = []; for (let r = el.getRootNode(); r instanceof ShadowRoot; r = r.host.getRootNode()) out.unshift(r.host.localName); return out; };
   const label = (b) => (b.getAttribute('aria-label') || deepText(b) || b.title || '').trim().replace(/\\s+/g, ' ').slice(0, 60);

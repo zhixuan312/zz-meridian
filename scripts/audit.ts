@@ -103,8 +103,6 @@ const MEASURE = `(() => {
   // 600px wide at 390 measured 616 there and its sideways scroll, the strip rule and every clip were judged at 616.
   const W = document.documentElement.clientWidth, out = { path: location.pathname, href: location.href, text: 0, sideways: [], clipped: [], spills: [], truncated: [], overlap: [], unnamed: [], unmeasured: [], scrollers: [], contrast: [], targets: [], headings: [], sizes: [], weights: [], radii: [], ratio: 0 };
   const label = (el) => (el.tagName.toLowerCase() + (el.id ? '#' + el.id : '') + (el.className && typeof el.className === 'string' ? '.' + el.className.trim().split(/\\s+/).slice(0, 3).join('.') : '')).slice(0, 90);
-  /* closest() across open roots and slots: deepParent (injected from scripts/lib/deep.ts) steps through both */
-  const deepClosest = (el, sel) => { for (let n = el; n; n = deepParent(n)) if (n.matches(sel)) return n; return null; };
   const visible = (el) => { const r = el.getBoundingClientRect(); const c = getComputedStyle(el); /* visually hidden (sr-only, also under a variant) is for screen readers, not the eye */ return r.width > 0 && r.height > 0 && c.visibility !== 'hidden' && c.display !== 'none' && parseFloat(c.opacity) > 0.05 && !deepClosest(el, '.sr-only,[aria-hidden="true"]') && !(c.position === 'absolute' && r.width <= 1 && r.height <= 1); };
   const sr = document.scrollingElement;
   if (sr.scrollWidth > W + 1) out.sideways.push('document ' + sr.scrollWidth + 'px wide at ' + W);
@@ -168,7 +166,6 @@ const MEASURE = `(() => {
   // the cut span in the wrapper in the cell is seven levels, so the cell's title is still found, with one to spare.
   const titled = (el) => { for (let n = el, i = 0; n && i < 8; n = deepParent(n), i++) if (keeps(el, n.getAttribute('title'))) return true; return [...el.querySelectorAll('[title]')].some((n) => keeps(el, n.getAttribute('title'))); };
   const inked = [];
-  const ringSig = (c) => [c.outlineStyle, c.outlineWidth, c.outlineColor, c.boxShadow, c.borderTopStyle, c.borderTopWidth, c.borderTopColor, c.borderBottomColor, c.borderLeftColor, c.borderRightColor].join('|');
   const texts = [];
   for (const el of all) {
     const c = getComputedStyle(el);
@@ -320,7 +317,7 @@ const MEASURE = `(() => {
   levels.forEach((l, i) => { if (i && l > levels[i - 1] + 1) out.headings.push('h' + levels[i - 1] + ' then h' + l); });
   out.focusless = [];
   // What each element looks like unfocused, so the focus check can tell a ring from a decoration that is always there.
-  window.__ringBefore = new WeakMap(); for (const n of all) window.__ringBefore.set(n, ringSig(getComputedStyle(n)));
+  window.__ringBefore = new WeakMap(); for (const n of all) window.__ringBefore.set(n, ringSignature(getComputedStyle(n)));
   const sorted = texts.sort((a, b) => a - b);
   out.ratio = sorted.length ? +(sorted[sorted.length - 1] / sorted[Math.floor(sorted.length / 2)]).toFixed(1) : 0;
   out.sizes = [...new Set(out.sizes)].sort((a, b) => a - b); out.weights = [...new Set(out.weights)].sort(); out.radii = [...new Set(out.radii)].sort((a, b) => a - b);
@@ -369,22 +366,8 @@ const measure = async (route: string, width: number, theme: string, embed: boole
     await page.send('Input.dispatchKeyEvent', { type: 'keyUp', key: 'Tab', code: 'Tab', windowsVirtualKeyCode: 9 });
     const miss = await page.eval<string | null>(`(() => {
       const el = deepActive(); if (!el || el === document.body) return null;
-      // A ring is a change on focus: an outline, a coloured shadow or a border that was not there unfocused. The element
-      // itself, its frame and the frame's frame count; inside a shadow root every composed ancestor up to the outermost
-      // host does, since the host is where :host(:focus-within) draws.
-      const sig = (c) => [c.outlineStyle, c.outlineWidth, c.outlineColor, c.boxShadow, c.borderTopStyle, c.borderTopWidth, c.borderTopColor, c.borderBottomColor, c.borderLeftColor, c.borderRightColor].join('|');
-      const ringed = (n) => {
-        const c = getComputedStyle(n), before = window.__ringBefore && window.__ringBefore.get(n);
-        const outline = c.outlineStyle !== 'none' && parseFloat(c.outlineWidth) > 0, shadow = /rgb|oklch|oklab|color/.test(c.boxShadow) && c.boxShadow !== 'none';
-        if (!before) return outline || shadow;
-        const b = before.split('|'), now = sig(c).split('|');
-        const outlineMoved = now.slice(0, 3).join('|') !== b.slice(0, 3).join('|'), shadowMoved = now[3] !== b[3], borderMoved = now.slice(4).join('|') !== b.slice(4).join('|') && c.borderTopStyle !== 'none';
-        return (outline && outlineMoved) || (shadow && shadowMoved) || borderMoved;
-      };
-      const chain = [el];
-      if (el.getRootNode() instanceof ShadowRoot) { for (let n = deepParent(el); n; n = deepParent(n)) { chain.push(n); if (!(n.getRootNode() instanceof ShadowRoot)) break; } }
-      else { const p = deepParent(el); if (p) chain.push(p); const g = p && deepParent(p); if (g) chain.push(g); }
-      if (chain.some(ringed)) return null;
+      // A ring is a change on focus, wherever on the element's frames it may be drawn (scripts/lib/deep.ts).
+      if (ringChain(el).some((n) => ringed(n, window.__ringBefore && window.__ringBefore.get(n)))) return null;
       return el.tagName.toLowerCase() + '.' + String(el.className).split(' ').slice(0, 3).join('.');
     })()`);
     if (miss) r.focusless.push(miss);
