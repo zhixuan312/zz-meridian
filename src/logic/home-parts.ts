@@ -7,7 +7,7 @@
  * handed only for a person who may read it; for anyone else it is undefined, and the data has no key for a cost or a
  * margin at all.
  */
-import { facts as rules } from '@/app.config';
+import { facts as rules, workspaces } from '@/app.config';
 import type { Incident } from '@/components/patterns/incident-card';
 import type { ReleaseRow } from '@/data/engineering';
 import type { ComputeRow, CostRow, CustomerRecord, DailyPoint, Model, Ticket, UsageRow } from '@/data/sample';
@@ -324,7 +324,7 @@ export function homeData(r: HomeReads): HomeData {
         { label: 'Past due', value: dash(customers?.pastDue) },
       ],
       fact: counted?.length ? every?.text ?? `${counted.filter((x) => sentMore(x.trend)).length} of ${counted.length} customers sent more requests this week than last` : null,
-      href: '/business',
+      href: workspaces.business.homeHref,
     },
     engineering: {
       lines: [
@@ -334,7 +334,7 @@ export function homeData(r: HomeReads): HomeData {
         { label: 'Tickets open', value: dash(tickets && ticketCounts(tickets).open) },
       ],
       fact: r.history ? steady(r.history, rules.band)?.text ?? null : null,
-      href: '/engineering',
+      href: workspaces.engineering.homeHref,
     },
     worth: worthKnowing({ incidents, customers: r.customers, releases, now: r.now }),
     unread,

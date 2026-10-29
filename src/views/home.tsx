@@ -23,6 +23,7 @@ import { PERIOD_DAYS, PERIOD_LABEL } from '@/lib/period';
 import { AskPeriod } from './ask-period';
 import { COMPANY_METRICS, HOME_METRICS, SOLD_SLOTS, homeContext, type HomeData, type HomeWindow } from '@/logic/home-context';
 import { Unread, unreadTile } from './unread';
+import { workspaces } from '@/app.config';
 
 /** Tells both agents what the Home shows, and which day the Meridian points at (decision 0011). Inside `Meridian`. */
 export function ShareHome({ data }: { data: HomeData }) {
@@ -364,8 +365,8 @@ export function HomeBody(data: HomeData & { finding?: string | null; revisions?:
           </Row>
         </Meridian>
         <Row split="1/2">
-          <Team name="Business" team={data.business} />
-          <Team name="Engineering" team={data.engineering} />
+          <Team name={workspaces.business.label} team={data.business} />
+          <Team name={workspaces.engineering.label} team={data.engineering} />
         </Row>
         <WorthKnowing data={data} />
       </Stack>

@@ -21,18 +21,22 @@ import {
 } from '@/logic/customer-context';
 import { Unread } from './unread';
 import { requestAddress } from '@/logic/request-context';
+import { nav, workspaces } from '@/app.config';
 
 const linkClass = 'row-link inline-flex items-center gap-1 font-medium text-ink hover:text-accent-ink';
 /** The log's columns a customer's own requests need: the customer is the page's, so its column is left out. */
 const LATEST_COLUMNS = requestColumns.filter((c) => ['request', 'status', 'latency', 'at'].includes(c.key));
 
+/** The Customers entry's label, as the navigation names it. */
+const customersLabel = nav.flatMap((g) => g.items).find((i) => i.href === '/customers')?.label ?? 'Customers';
+
 /** The places above a customer, outermost first: its kicker, which `loading.tsx` draws too, so the masthead is the same while it loads. */
 export function CustomerTrail() {
   return (
     <span className="inline-flex flex-wrap items-center gap-x-2">
-      <Link href="/business" className="hit hover:text-ink">Business</Link>
+      <Link href={workspaces.business.homeHref} className="hit hover:text-ink">{workspaces.business.label}</Link>
       <span aria-hidden>/</span>
-      <Link href="/customers" className="hit hover:text-ink">Customers</Link>
+      <Link href="/customers" className="hit hover:text-ink">{customersLabel}</Link>
     </span>
   );
 }
