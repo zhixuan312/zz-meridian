@@ -19,6 +19,9 @@ const page = (assistant: boolean) =>
 describe('the assistant in the shell', () => {
   test('with the assistant off, nothing of it renders', async () => {
     await page(false);
+    // The launcher is a next/dynamic chunk, absent at first whatever the rule says: its module is loaded and the shell
+    // given a turn to draw it, so a launcher drawn without the assistant would be there.
+    await act(async () => { await import('@/components/patterns/assistant/launcher'); await new Promise((r) => setTimeout(r, 50)); });
     expect(screen.queryByRole('button', { name: 'Assistant' })).toBeNull();
     expect(document.querySelector('[data-assistant]')).toBeNull();
   });
