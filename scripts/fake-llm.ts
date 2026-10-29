@@ -21,12 +21,13 @@
  * request hands it: a request without it is answered in words, so the walk-through, which reads the tools each request
  * handed from GET <url>/requests, names what was missing rather than the client failing on a tool it does not know.
  *
- * A project's own steps (`fakeModel` in scripts/verify.config.ts, which verify hands over as `--steps`) are matched
- * against a user message before any branch above: the step's tool is called with its input where the request hands it,
- * and `I was not handed <tool> here.` answers where it does not.
- *
  * A request whose last message is the user's and contains the word "fail" is answered 401, with an error body that
- * repeats the bearer token it was sent: the way a provider that refuses a key can leak it.
+ * repeats the bearer token it was sent: the way a provider that refuses a key can leak it. This comes first, before a
+ * project's own step, so the walk-through's bad-key case holds whatever steps a project lists.
+ *
+ * A project's own steps (`fakeModel` in scripts/verify.config.ts, which verify hands over as `--steps`) are matched
+ * against any other user message before any branch above: the step's tool is called with its input where the request
+ * hands it, and `I was not handed <tool> here.` answers where it does not.
  */
 import http from 'node:http';
 import type { AddressInfo } from 'node:net';

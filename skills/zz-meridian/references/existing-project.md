@@ -162,7 +162,8 @@ Home hands the assistant is checked by a journey the product writes, a script na
 `scripts/verify.config.ts`, as `optional:journeys/workspaces.ts` is. To have the assistant call a view tool of the
 product's own for a question, name it in `fakeModel` in the same file (`{ when: 'which runs failed', tool: 'view_tests',
 input: { period: '7d' } }`): the fake model matches `when` (a case-insensitive pattern) before its own branches and
-answers with the tool's result, so the journey can compare what the assistant cites with what the page shows. A check
+answers with the tool's result, so the journey can compare what the assistant cites with what the page shows (a
+question with the word "fail" in it is still refused as a bad key, so `when` should not need that word). A check
 of the product's own that judges a time goes in `timedChecks`, which `pnpm verify --timed` runs alone. And a test setup of the product's own (a provider
 around every render, a polyfill) goes in a second file listed after `./tests/setup.ts` in `setupFiles` in
 `vitest.config.ts`: `tests/setup.ts` is Meridian's, and an update replaces it.
