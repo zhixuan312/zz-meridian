@@ -15,7 +15,8 @@ import { formatDuration } from '@/lib/format';
 import { formatRelative } from '@/lib/format-date';
 import { REGION_NAMES } from '@/data/sample';
 import { describeFilters, requestsContext, type RequestsData } from '@/logic/requests-context';
-import { activeFilters, options, REQUEST_FILTERS, REQUEST_METHODS } from '@/views/requests';
+import { activeFilters, options, REQUEST_FILTERS } from '@/views/requests';
+import { REQUEST_METHODS } from '@/data/request-methods';
 import { MethodChip, requestColumns, StatusBadge } from '@/system/sample-cells';
 import { requestAddress } from '@/logic/request-context';
 

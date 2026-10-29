@@ -20,9 +20,8 @@ type Page = Awaited<ReturnType<typeof readRequests>>;
 export const REQUEST_FILTERS = { q: '', status: 'all', method: 'all', region: 'all', by: '' };
 
 export const options = (all: string, values: string[]) => [{ value: 'all', label: all }, ...values.map((v) => ({ value: v, label: v }))];
-/** The methods the log holds, as the filter offers them. */
+/** The status classes the filter offers. */
 const STATUS_CLASSES = ['2xx', '3xx', '4xx', '5xx'];
-export { REQUEST_METHODS };
 
 /** The filters that are set, as address parameters: what the export and "Open in the console" carry. */
 export const activeFilters = (f: Pick<Page['state'], 'q' | 'status' | 'method' | 'region'>): Record<string, string> =>
