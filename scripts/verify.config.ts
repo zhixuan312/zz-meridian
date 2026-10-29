@@ -165,7 +165,7 @@ const EVERY_ROUTE = ['/', '/members', '/settings', '/system', '/system/start/sta
 const ROLE_ROUTES = ['/keys', '/operations-tickets', '/members', '/settings'];
 
 const config: VerifyConfig = {
-  // Ids from the sample (the requests of src/system/fixtures/sample.ts, the customers of company.ts); tests/sample.test.ts fails if one stops being what it says.
+  // Ids from the sample (the requests of src/system/fixtures/sample.ts, the customers of company.ts); tests/cli-sample.test.ts fails if one stops being what it says.
   detailRoutes: [
     '/requests/req_qmi1vbyi3uqt', // GET, 200: no request body, no model
     '/requests/req_jqwm3le188pi', // POST /v1/messages, 201: model, tokens and a streamed response

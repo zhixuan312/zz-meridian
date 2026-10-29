@@ -1,3 +1,5 @@
+// Named cli-* so the payload leaves it out: it holds the sample's own records, their figures and the ids
+// scripts/verify.config.ts opens; a product replaces all three.
 import { describe, expect, it } from 'vitest';
 import { DEMO_NOW, INCIDENTS, MODELS, REQUESTS, SERVICES, uptimeOf } from '@/system/fixtures/sample';
 import { CUSTOMERS, DAYS, ENDPOINTS, IN_PROGRESS, WEEKDAY_HOURS, demoSeries, demoTotals } from '@/system/fixtures/company';
@@ -9,6 +11,9 @@ import verify from '../scripts/verify.config';
 
 const sum = (xs: number[]) => xs.reduce((a, b) => a + b, 0);
 const cents = (usd: number) => Math.round(usd * 100);
+/** The day in progress and the last complete day, from the frozen clock, which tests/cli-sample-company.test.ts pins. */
+const TODAY = DEMO_NOW.toISOString().slice(0, 10);
+const YESTERDAY = new Date(DEMO_NOW.getTime() - 86_400_000).toISOString().slice(0, 10);
 
 describe('the sample agrees with itself', () => {
   it('customers that have not left add up to the Home’s 30-day requests and revenue, and one that has adds nothing', () => {
@@ -32,8 +37,8 @@ describe('the sample agrees with itself', () => {
   });
   it('the day in progress is made as every day is, from the nine hours it has had, and is none of the complete days', () => {
     const { day, usage, compute, cost } = IN_PROGRESS;
-    expect(day.date).toBe('2026-10-03');
-    expect([DAYS.length, DAYS.at(-1)!.date]).toEqual([360, '2026-10-02']);
+    expect(day.date).toBe(TODAY);
+    expect([DAYS.length, DAYS.at(-1)!.date]).toEqual([360, YESTERDAY]);
     expect(sum(usage.map((u) => u.requests))).toBe(day.requests);
     expect(sum(usage.map((u) => cents(u.revenue)))).toBe(cents(day.revenue));
     expect(sum(Object.values(day.revenueByPlan).map(cents))).toBe(cents(day.revenue));
@@ -47,19 +52,18 @@ describe('the sample agrees with itself', () => {
   });
   it('all time is every complete day, with none before it and no totals to compare with', () => {
     const { current, previous, running } = demoSeries('all');
-    expect([current.length, previous.length, running.date]).toEqual([360, 0, '2026-10-03']);
+    expect([current.length, previous.length, running.date]).toEqual([360, 0, TODAY]);
     expect(demoTotals('all').previous).toBeNull();
     expect(demoSeries('90d').previous).toHaveLength(90);
   });
   it('a customer’s dates are days, in the order they happened', () => {
-    const today = '2026-10-03';
     for (const c of CUSTOMERS) {
       for (const date of [c.joined, c.planSince, c.left, c.trialEnds, c.pastDueSince]) if (date !== null) expect(date, c.name).toMatch(/^\d{4}-\d{2}-\d{2}$/);
-      expect(c.joined < today, `${c.name} joined before today`).toBe(true);
-      if (c.planSince) expect(c.joined < c.planSince && c.planSince < today, `${c.name} changed plan after it joined`).toBe(true);
+      expect(c.joined < TODAY, `${c.name} joined before today`).toBe(true);
+      if (c.planSince) expect(c.joined < c.planSince && c.planSince < TODAY, `${c.name} changed plan after it joined`).toBe(true);
       if (c.left) expect(c.joined < c.left, `${c.name} left after it joined`).toBe(true);
-      if (c.trialEnds) expect(c.trialEnds > today, `${c.name}'s trial has not ended`).toBe(true);
-      if (c.pastDueSince) expect(c.joined < c.pastDueSince && c.pastDueSince < today, `${c.name} is past due since a day gone by`).toBe(true);
+      if (c.trialEnds) expect(c.trialEnds > TODAY, `${c.name}'s trial has not ended`).toBe(true);
+      if (c.pastDueSince) expect(c.joined < c.pastDueSince && c.pastDueSince < TODAY, `${c.name} is past due since a day gone by`).toBe(true);
     }
   });
   it('only the model routes name a model or count tokens', () => {

@@ -290,7 +290,7 @@ This lists every path that differs from the plan's base, by file, or by folder f
 | `tests/atlas-layers.test.ts` | added | the gate, here and in a project that keeps the file |
 | `tests/atlas-product-slice.test.tsx` | added | the gate, here and in a project that keeps the file |
 | `tests/atlas-template-contracts.test.tsx` | added | the gate, here and in a project that keeps the file |
-| `tests/bypasses.test.ts` | changed | the gate, here and in a project that keeps the file |
+| `tests/cli-bypasses.test.ts` | changed | the gate in this repository; the package leaves it out of a project |
 | `tests/chrome-navigation.test.tsx` | added | the gate, here and in a project that keeps the file |
 | `tests/cli-adopt-config.test.ts` | added | the gate in this repository; the package leaves it out of a project |
 | `tests/cli-atlas-inventory.test.ts` | added | the gate in this repository; the package leaves it out of a project |

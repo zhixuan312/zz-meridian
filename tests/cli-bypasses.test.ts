@@ -1,4 +1,5 @@
 // @vitest-environment node
+// Named cli-* so the payload leaves it out: it holds the sample's own collections, their rows and its people.
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const jar = vi.hoisted(() => ({ value: undefined as string | undefined }));
