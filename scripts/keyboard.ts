@@ -31,8 +31,10 @@ import { DEEP_SOURCE } from './lib/deep.ts';
 import { discover } from './lib/routes.ts';
 import { settle } from './lib/settle.ts';
 import { detailRoutes, personaCookie } from './lib/team-config.ts';
+import { holdArgs } from './lib/args.ts';
 
 const args = process.argv.slice(2);
+holdArgs('keyboard', args, ['--as', '--base', '--missing', '--routes']);
 const opt = (k: string, d: string) => { const i = args.indexOf(k); return i >= 0 ? args[i + 1] : d; };
 const base = opt('--base', process.env.BASE ?? 'http://localhost:3100');
 const MISSING = missingRoutes(args);

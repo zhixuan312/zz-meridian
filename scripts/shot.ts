@@ -30,11 +30,13 @@ import path from 'node:path';
 import { answerProblem, DRAWS_NOT_FOUND, missingRoutes } from './lib/answered.ts';
 import { launch, type Page } from './lib/chrome.ts';
 import { personaCookie } from './lib/team-config.ts';
+import { holdArgs } from './lib/args.ts';
 
 // A picture is for the eye, on a screen that is usually 2x: the checks measure at 1x (scripts/lib/chrome.ts), this draws at 2x.
 process.env.DPR ??= '2';
 
 const args = process.argv.slice(2);
+holdArgs('shot', args, ['--as', '--at', '--base', '--full', '--missing', '--out', '--point', '--press', '--theme', '--width']);
 const opt = (k: string, d: string) => {
   const i = args.indexOf(k);
   if (i < 0) return d;

@@ -24,9 +24,11 @@ import { answers, freePort, spawnNext, status } from './lib/bin.ts';
 import { NOT_RUN_EXIT } from './lib/coverage.ts';
 import { launch, type Page } from './lib/chrome.ts';
 import { DEEP_SOURCE } from './lib/deep.ts';
+import { holdArgs } from './lib/args.ts';
 
 const ROOT = path.resolve(import.meta.dirname, '..');
 const args = process.argv.slice(2);
+holdArgs('live', args, ['--base', '--drop-base', '--only', '--poll-ms']);
 const opt = (k: string) => { const i = args.indexOf(k); return i >= 0 ? args[i + 1] : undefined; };
 const base = (opt('--base') ?? process.env.BASE ?? 'http://localhost:3000').replace(/\/$/, '');
 const dropBase = opt('--drop-base')?.replace(/\/$/, '');

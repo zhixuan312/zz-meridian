@@ -44,9 +44,11 @@ import { parseShard, shardOf, WHOLE_PROTOCOL_REFUSAL } from './lib/shard.ts';
 import { summary } from './lib/timing.ts';
 import { DEVICES, Fail, drawerRoutes, journey, journeyStart, liveRefresh, METRICS, prepare, type Condition, type Device, type Metric, type NavConfig } from './lib/journey.ts';
 import { workspaceHomes } from './navigate.ts';
+import { holdArgs } from './lib/args.ts';
 
 const ROOT = path.resolve(import.meta.dirname, '..');
 const args = process.argv.slice(2);
+holdArgs('perf', args, ['--base', '--config', '--rail', '--routes', '--samples', '--shard']);
 const opt = (k: string) => { const i = args.indexOf(k); return i >= 0 ? args[i + 1] : undefined; };
 const base = (opt('--base') ?? process.env.BASE ?? 'http://localhost:3000').replace(/\/$/, '');
 const PROTOCOL_SAMPLES = 20;

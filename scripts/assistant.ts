@@ -38,11 +38,13 @@ import { launch } from './lib/chrome.ts';
 import { DEEP_SOURCE } from './lib/deep.ts';
 import { APP_DIR, discover, railRoutes } from './lib/routes.ts';
 import { exploreSurfaces, sampleSurfaces } from './lib/sample.ts';
+import { holdArgs } from './lib/args.ts';
 
 const SAMPLE = sampleSurfaces(path.resolve(import.meta.dirname, '..'), APP_DIR);
 const EXPLORE = exploreSurfaces(path.resolve(import.meta.dirname, '..'), APP_DIR);
 
 const args = process.argv.slice(2);
+holdArgs('assistant', args, ['--base', '--expect', '--key', '--llm']);
 const opt = (k: string) => { const i = args.indexOf(k); return i >= 0 ? args[i + 1] : undefined; };
 const base = (opt('--base') ?? '').replace(/\/$/, '');
 const expect = opt('--expect');

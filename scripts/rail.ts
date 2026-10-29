@@ -22,8 +22,10 @@
 import { launch } from './lib/chrome.ts';
 import { railRoutes } from './lib/routes.ts';
 import { personaCookie } from './lib/team-config.ts';
+import { holdArgs } from './lib/args.ts';
 
 const args = process.argv.slice(2);
+holdArgs('rail', args, ['--as', '--base']);
 const opt = (k: string, d: string) => { const i = args.indexOf(k); return i >= 0 ? args[i + 1] : d; };
 const base = opt('--base', process.env.BASE ?? 'http://localhost:3100');
 const cookie = personaCookie('rail', opt('--as', ''));

@@ -56,6 +56,7 @@ import { railRoutes } from './lib/routes.ts';
 import { DEVICES, Fail, METRICS, PREFETCH_WAIT, drawerRoutes, journey, journeyStart, openStart, prepare, sleep, type Device, type Measured, type Metric, type NavConfig } from './lib/journey.ts';
 import { isPrefetch, prefetchProblems } from './lib/sizes.ts';
 import { headroom, judge, thin } from './lib/timing.ts';
+import { holdArgs } from './lib/args.ts';
 
 const ROOT = path.resolve(import.meta.dirname, '..');
 const args = process.argv.slice(2);
@@ -208,6 +209,7 @@ export async function workspaceHomes(): Promise<Map<string, string>> {
 }
 
 async function main(): Promise<number> {
+  holdArgs('navigate', args, ['--base', '--config', '--homes', '--mode', '--rail', '--rate', '--routes', '--samples', '--timing']);
   if (timing !== 'on' && timing !== 'off') { console.error(`--timing must be on or off, got ${timing}`); return 1; }
   if (mode !== 'default' && mode !== 'full') { console.error(`--mode must be default or full, got ${mode}`); return 1; }
   if ((opt('--samples') ?? '1') !== '1') { console.error('--samples: one sample and two retakes is the only protocol here; scripts/perf.ts takes the 20-sample one'); return 1; }

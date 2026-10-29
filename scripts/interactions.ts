@@ -24,8 +24,10 @@ import { linkPath } from './lib/links.ts';
 import { discover } from './lib/routes.ts';
 import { settle } from './lib/settle.ts';
 import { detailRoutes, personaCookie } from './lib/team-config.ts';
+import { holdArgs } from './lib/args.ts';
 
 const args = process.argv.slice(2);
+holdArgs('interactions', args, ['--as', '--base', '--missing', '--routes', '--width']);
 const opt = (k: string, d: string) => { const i = args.indexOf(k); return i >= 0 ? args[i + 1] : d; };
 const base = opt('--base', process.env.BASE ?? 'http://localhost:3100');
 const MISSING = missingRoutes(args);

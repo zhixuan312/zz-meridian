@@ -32,6 +32,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { agentSection, pageSpecs, viewToolPages } from './lib/routes.ts';
+import { holdArgs } from './lib/args.ts';
 
 const ROOT = path.resolve(import.meta.dirname, '..');
 
@@ -378,6 +379,7 @@ async function addressOf(base: string, cookie: string, page: string): Promise<st
 
 async function main(): Promise<number> {
   const argv = process.argv.slice(2);
+  holdArgs('ask', argv, ['--as', '--base', '--out', '--path', '--view']);
   const arg = (flag: string) => { const i = argv.indexOf(flag); return i >= 0 ? argv[i + 1] : undefined; };
   const base = arg('--base')?.replace(/\/+$/, '');
   if (!base || !/^https?:\/\//.test(base)) { console.error('usage: node scripts/ask.ts --base <url> [--view <name>] [--path <address>] [--as <persona>] [--out <folder>]'); return 1; }

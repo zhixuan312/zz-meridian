@@ -33,6 +33,7 @@ import { FIRST_LOAD_CAP_KB, budgetsOf, type BudgetsConfig } from './lib/budgets.
 import { distDirOf } from './lib/next-config.ts';
 import { firstLoad, firstLoadProblems, htmlGrowthProblems, htmlProblems, htmlRoutes, KIB, kib } from './lib/sizes.ts';
 import verifyConfig from './verify.config.ts';
+import { holdArgs } from './lib/args.ts';
 
 const ROOT = path.resolve(import.meta.dirname, '..');
 const BASELINE = path.join(ROOT, 'scripts/verify.baseline.json');
@@ -40,6 +41,7 @@ const METHOD = 'route-bundle-stats firstLoadChunkPaths, deduplicated, uncompress
 const HTML_METHOD = 'the complete streamed response, gzipped (zlib level 6), bytes';
 
 const args = process.argv.slice(2);
+holdArgs('sizes', args, ['--base', '--write-baseline']);
 const opt = (k: string) => { const i = args.indexOf(k); return i >= 0 ? args[i + 1] : undefined; };
 const base = opt('--base')?.replace(/\/$/, '');
 

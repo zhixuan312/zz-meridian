@@ -41,8 +41,10 @@ import { measurePhone } from './lib/phone.ts';
 import { thin } from './lib/timing.ts';
 import { discover } from './lib/routes.ts';
 import config from './verify.config.ts';
+import { holdArgs } from './lib/args.ts';
 
 const args = process.argv.slice(2);
+holdArgs('vitals', args, ['--atlas', '--base', '--list', '--missing', '--rate', '--routes']);
 const opt = (k: string, d: string) => { const i = args.indexOf(k); return i >= 0 ? args[i + 1] : d; };
 const base = opt('--base', process.env.BASE ?? 'http://localhost:3100');
 // verify.config.ts is the team's, so read the one field this needs through its own type.
