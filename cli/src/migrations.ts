@@ -735,23 +735,42 @@ function navItemWithoutFields(root: string): string[] | null {
 }
 
 /**
- * A configuration's own `NavItem` as written, its brackets matched: an interface to its closing brace, a type to the end
- * of its statement, an intersection continued over lines included. Undefined when the file declares none.
+ * A configuration's own `NavItem` as written, its comments blanked and its brackets matched: an interface to the brace
+ * that closes its body, a type to a semicolon outside every bracket or to a line that starts the file's next statement,
+ * so a type spread over lines (an intersection, a conditional, a generic) is read whole. Undefined when there is none.
  */
 function navItemType(body: string): string | undefined {
-  const m = /^export\s+(?:interface\s+NavItem\b[^{]*|type\s+NavItem\s*=)/m.exec(body);
+  const m = /^export\s+(interface|type)\s+NavItem\b/m.exec(body);
   if (!m) return undefined;
-  const start = m.index + m[0].length;
-  if (m[0].includes('interface')) return body.slice(m.index, closeOf(body, start) + 1);
-  let i = start;
-  while (i < body.length && body[i] !== ';') {
-    const past = skipLiteral(body, i);
-    if (past !== i) i = past;
-    else if ('{(['.includes(body[i]!)) i = closeOf(body, i) + 1;
-    else if (body[i] === '\n' && /\S/.test(body.slice(start, i)) && !/[&|]\s*$/.test(body.slice(start, i)) && !/^\s*[&|]/.test(body.slice(i))) break;
-    else i++;
+  const t = uncommented(body.slice(m.index));
+  let i = m[0].length, angle = 0;
+  while (i < t.length) {
+    const past = skipLiteral(t, i);
+    if (past !== i) { i = past; continue; }
+    const c = t[i]!;
+    if (c === '<') angle++;
+    else if (c === '>' && t[i - 1] !== '=') angle--;
+    else if ('{(['.includes(c)) {
+      const end = closeOf(t, i) + 1;
+      if (m[1] === 'interface' && c === '{' && angle === 0) return t.slice(0, end);
+      i = end;
+      continue;
+    } else if (m[1] === 'type' && angle === 0 && (c === ';' || (c === '\n' && /^\s*(?:export|import|type|interface|const|let|var|function|class|declare|enum)\b/.test(t.slice(i))))) break;
+    i++;
   }
-  return body.slice(m.index, i);
+  return t.slice(0, i);
+}
+
+/** `src` with every comment blanked to spaces and its strings kept, so a commented-out field is not read as one. */
+function uncommented(src: string): string {
+  let out = '';
+  for (let i = 0; i < src.length;) {
+    const past = skipLiteral(src, i);
+    if (past === i) { out += src[i++]; continue; }
+    out += src[i] === '/' ? src.slice(i, past).replace(/[^\n]/g, ' ') : src.slice(i, past);
+    i = past;
+  }
+  return out;
 }
 
 /**

@@ -479,6 +479,14 @@ describe('the 0.36.0 navigation migration', () => {
     expect(m.applies(project({ 'src/app.config.ts': 'export type NavItem = Base &\n  { href: string; prefetch?: true; under?: string };\n' }))).toBeNull();
     expect(m.applies(project({ 'src/app.config.ts': 'export interface NavItem {\n  href: string;\n  needs: Need;\n}\n' }))).toEqual(['src/app.config.ts']);
     expect(m.applies(project({ 'src/app.config.ts': 'export interface NavItem extends Base { href: string; prefetch?: true; under?: string }\n' }))).toBeNull();
+    // A statement ends at a semicolon or at a line that starts the next one, so a type spread over lines is read whole;
+    // a commented-out field is not a field.
+    const F = '{ href: string; needs: Need; prefetch?: true; under?: string }';
+    for (const shape of [`export type NavItem = Readonly<\n  ${F}\n>;\n`, `export type NavItem = Base extends X\n  ? ${F}\n  : ${F};\n`, `export type NavItem = // the rail's item\n  ${F};\n`, `export interface NavItem extends Base<{ a: string }> ${F}\n`, `export type NavItem = ${F}\nexport type NavGroup = { items: NavItem[] }\n`]) {
+      expect(m.applies(project({ 'src/app.config.ts': shape })), shape).toBeNull();
+    }
+    expect(m.applies(project({ 'src/app.config.ts': 'export type NavItem = {\n  href: string;\n  // prefetch?: true;\n  // under?: string;\n};\n' }))).toEqual(['src/app.config.ts']);
+    expect(m.applies(project({ 'src/app.config.ts': 'export type NavItem = { href: string } // under?: prefetch?:\n' }))).toEqual(['src/app.config.ts']);
     // A configuration with no NavItem type is not this migration's, and the release's own has both.
     expect(m.applies(project({ 'src/app.config.ts': 'export const app = {} as const;\n' }))).toBeNull();
     expect(m.applies(path.resolve(import.meta.dirname, '..'))).toBeNull();
