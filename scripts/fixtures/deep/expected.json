@@ -504,6 +504,7 @@
   { "page": "/keyboard-skip-link-fixed", "suite": "keyboard", "outcome": "pass" },
   { "page": "/keyboard-control-gone", "suite": "keyboard", "outcome": "fail", "line": "could not be found again: Dismiss" },
   { "page": "/keyboard-control-gone-fixed", "suite": "keyboard", "outcome": "pass" },
+  { "page": "/keyboard-disabled-stop", "suite": "keyboard", "outcome": "pass" },
   { "page": "/hangs", "suite": "keyboard", "outcome": "fail", "line": "could not be walked:" },
   { "page": "/vitals-late-paint", "suite": "vitals", "outcome": "fail", "line": "over the LCP floor" },
   { "page": "/vitals-late-paint-fixed", "suite": "vitals", "outcome": "clear", "line": "over the LCP floor" },

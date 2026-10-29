@@ -392,6 +392,9 @@ ${chart(`${RULE(50)}${CAPTION}`)}
   // A page with a skip link that is not its first stop: a control before it, so the blocks it bypasses come first.
   '/keyboard-skip-link': deep('A skip link that comes second', { body: '<button type="button">Menu</button><p><a href="#content">Skip to content</a></p><section id="content"><p>The page itself.</p></section>' }),
   '/keyboard-skip-link-fixed': deep('A skip link that comes second, corrected', { body: '<p><a href="#content">Skip to content</a></p><button type="button">Menu</button><section id="content"><p>The page itself.</p></section>' }),
+  // A disabled button that keeps an explicit tabindex, as a save bar's Discard does while it saves: Tab skips it, and the
+  // walk tagged it through its tabindex and reported it never reached.
+  '/keyboard-disabled-stop': deep('A disabled button with a tabindex', { body: '<button type="button">Name</button><button type="button" disabled tabindex="0">Discard</button><button type="button">Save</button>' }),
   // A control that leaves the page when it takes focus: tagged at the start of the walk, gone by its end.
   '/keyboard-control-gone': deep('A control that leaves on focus', { body: '<button type="button" id="first">Open</button><button type="button" id="gone">Dismiss</button><button type="button">Close</button>', script: `document.getElementById('gone').addEventListener('focus', (e) => e.target.remove());` }),
   '/keyboard-control-gone-fixed': deep('A control that leaves on focus, corrected', { body: '<button type="button" id="first">Open</button><button type="button" id="gone">Dismiss</button><button type="button">Close</button>', script: `document.getElementById('gone').addEventListener('focus', (e) => { e.target.textContent = 'Dismiss now'; });` }),
