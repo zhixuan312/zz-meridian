@@ -12,7 +12,7 @@ type CustomersState = { q: string; plan: string; status: string; sort: string; d
 
 /** The tiles' definitions: the info buttons show them and the agents read them. */
 export const CUSTOMER_METRICS = {
-  customers: { label: 'Customers', hint: 'Workspaces with at least one live key.' },
+  customers: { label: 'Customers', hint: 'Customers that have not left.' },
   revenue: { label: 'Revenue, last 30 days', hint: 'What every customer was billed for metered usage, before credits.' },
   pastDue: { label: 'Past due', hint: 'Customers whose latest invoice is overdue.' },
 } as const;

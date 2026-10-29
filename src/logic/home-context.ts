@@ -22,7 +22,7 @@ export const HOME_METRICS = {
 
 /** The company's figures Home states beside them, each with its label and what it counts, for the tiles and the agents alike. */
 export const COMPANY_METRICS = {
-  customers: { label: 'Customers', hint: 'With a live key, less those that left.' },
+  customers: { label: 'Customers', hint: 'Customers that have not left.' },
   tokens: { label: 'Tokens served', hint: 'Input and output, every model.' },
   band: { label: 'Days inside the band', hint: 'Complete days whose p95 and error rate stayed under the band.' },
   compute: { label: 'Compute in use', hint: 'GPU-hours used of those provisioned.' },
