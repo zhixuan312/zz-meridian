@@ -53,14 +53,21 @@ const walk = (root: string, rel: string, out: string[], want: RegExp = SOURCE) =
   }
 };
 
+/** The team's sources while `releaseMigrations` runs: read once for every entry that asks, not once per entry. */
+let sources: Map<string, { rel: string; src: string }[]> | null = null;
+
 /** The team's source files under the folders a Next project keeps them in, with their text. */
 function teamSources(root: string): { rel: string; src: string }[] {
+  const kept = sources?.get(root);
+  if (kept) return kept;
   const files: string[] = [];
   for (const d of ['app', 'pages', 'src', 'tests']) walk(root, d, files);
-  return files.flatMap((rel) => {
+  const read = files.flatMap((rel) => {
     const src = text(root, rel);
     return src === null ? [] : [{ rel, src }];
   });
+  sources?.set(root, read);
+  return read;
 }
 
 /** The paths of the team's files where `test` holds, or null when none does. */
@@ -734,20 +741,22 @@ function navItemsWithoutNeeds(root: string): string[] | null {
  * gate asks for there from 0.15.0. The template's `(dashboard)` is left out: the rule has covered it since 0.9.0.
  */
 function ownGroupPagesWithoutAgentReads(root: string): string[] | null {
-  const files: string[] = [];
+  const dirs: string[] = [];
   for (const app of ['app', 'src/app']) {
-    let groups: string[] = [];
-    try { groups = fs.readdirSync(path.join(root, app), { withFileTypes: true }).filter((e) => e.isDirectory() && /^\(.+\)$/.test(e.name) && e.name !== '(dashboard)').map((e) => e.name); } catch { /* no such folder */ }
-    for (const g of groups) walk(root, `${app}/${g}`, files, /^README\.md$/);
+    try { dirs.push(...fs.readdirSync(path.join(root, app), { withFileTypes: true }).filter((e) => e.isDirectory() && /^\(.+\)$/.test(e.name) && e.name !== '(dashboard)').map((e) => `${app}/${e.name}`)); } catch { /* no such folder */ }
   }
-  const hits = files.filter((rel) => !/^## Agents\n[\s\S]*?^### What the agent reads$/m.test(text(root, rel) ?? ''));
-  return hits.length > 0 ? hits : null;
+  return specsWithoutAgentReads(root, dirs);
 }
 
 /** The page specifications under the console and embed folders that lack the part the 0.9.0 check requires. */
 function pagesWithoutAgentReads(root: string): string[] | null {
+  return specsWithoutAgentReads(root, ['app/(dashboard)', 'app/embed']);
+}
+
+/** The page specifications under `dirs` without `## Agents` and its `### What the agent reads`. */
+function specsWithoutAgentReads(root: string, dirs: string[]): string[] | null {
   const files: string[] = [];
-  for (const d of ['app/(dashboard)', 'app/embed']) walk(root, d, files, /^README\.md$/);
+  for (const d of dirs) walk(root, d, files, /^README\.md$/);
   const hits = files.filter((rel) => !/^## Agents\n[\s\S]*?^### What the agent reads$/m.test(text(root, rel) ?? ''));
   return hits.length > 0 ? hits : null;
 }
@@ -755,10 +764,15 @@ function pagesWithoutAgentReads(root: string): string[] | null {
 /** The registry entries that apply to a project moving from `source` to `target`, as journal migrations. */
 export function releaseMigrations(root: string, source: string, target: string): Migration[] {
   const out: Migration[] = [];
-  for (const m of RELEASE_MIGRATIONS) {
-    if (!isNewer(m.since, source) || isNewer(m.since, target)) continue;
-    const paths = m.applies(root);
-    if (paths) out.push({ id: m.id, summary: m.summary, paths, instructions: m.instructions, checks: m.checks });
+  sources = new Map();
+  try {
+    for (const m of RELEASE_MIGRATIONS) {
+      if (!isNewer(m.since, source) || isNewer(m.since, target)) continue;
+      const paths = m.applies(root);
+      if (paths) out.push({ id: m.id, summary: m.summary, paths, instructions: m.instructions, checks: m.checks });
+    }
+  } finally {
+    sources = null;
   }
   return out;
 }
