@@ -30,8 +30,9 @@ export function Delta({
   className?: string;
 }) {
   if (value === null || !Number.isFinite(value)) return <span className={cn('text-xs text-ink-3', className)}>—</span>;
-  const flat = Math.abs(value) < 0.0005;
   const read = typeof format === 'function' ? format : DELTA_FORMATS[format ?? 'percent'];
+  // No change is a change its format reads as none: under 0.05% for a share, while an absolute format shows its own unit.
+  const flat = read(value) === read(0);
   const up = value > 0;
   const good = intent === 'neutral' || flat ? null : (up && intent === 'up') || (!up && intent === 'down');
   // The arrow says which way, and the colour says whether that is good or bad — a judgement a reader who does not know

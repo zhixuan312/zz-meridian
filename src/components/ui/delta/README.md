@@ -18,7 +18,7 @@ Status: beta
 | Down | Latency, error rate, cost per request | `critical-ink` | `positive-ink` |
 | Neutral | Spend, volume where neither direction is good | `ink-2` | `ink-2` |
 
-A change under 0.05% is flat: no arrow, `ink-2`, and the format reading no change ("0.0 pts" under `points`; "0%" with no format given). A missing comparison (`null`) is an em dash in `ink-3`: "we measured no change" and "there is nothing to compare with" are different facts.
+A change its format reads as no change is flat (under 0.05% for `percent` and `points`; a function format decides by its own reading): no arrow, `ink-2`, and the format reading no change ("0.0 pts" under `points`; "0%" with no format given). A missing comparison (`null`) is an em dash in `ink-3`: "we measured no change" and "there is nothing to compare with" are different facts.
 
 ## Sizes
 
