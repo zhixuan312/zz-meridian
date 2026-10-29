@@ -98,8 +98,11 @@ function accessFrom(policy: Policy) {
   return { resolveAccess, collectionFor, can, nameOf };
 }
 
-/** The member a scope names, re-read from the roster every call; null when there is no such record. */
-async function memberById(id: string): Promise<Member | null> {
+/**
+ * The member a scope names, re-read from the roster every call; null when there is no such record. The write boundaries
+ * and the View as switch re-read their caller through it.
+ */
+export async function memberById(id: string): Promise<Member | null> {
   return (await members.query({ where: [{ field: 'id', op: 'eq', value: id }] })).rows[0] ?? null; // read() cannot serve this: the member a scope is made from is resolved before an AccessScope exists
 }
 

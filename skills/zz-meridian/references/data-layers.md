@@ -244,6 +244,12 @@ Two of the seven are in `optional:src/data/access.ts`, which `no-direct-query` d
 allowlist, matched by file and line rather than by file, because a file may hold both an allowed read and ordinary code.
 A product whose own page must read raw does the same: a comment saying why, and a line in the allowlist it keeps.
 
+The list counts the reads that skip `read()` outside the layer that owns the collections. Inside `optional:src/data/`, the
+write boundaries (`member-mutations.ts`, `ticket-mutations.ts`) and the View as switch (`view-as.ts`) also query a
+collection directly and uncached: each checks a change against the rows as they are now, the caller through `memberById`
+and the services, members and tickets the change names. `no-direct-query` does not govern `optional:src/data/`, so they carry no
+escape.
+
 ## The path an existing product follows
 
 A project that already has data — its own tables, an API, or pages that query a database directly — does not adopt the

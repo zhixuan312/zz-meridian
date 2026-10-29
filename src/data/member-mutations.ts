@@ -47,7 +47,6 @@ export type MemberRowAccess = {
   reason?: string;
 };
 
-/** A boundary refusal: its message is the frozen one, and it is thrown so a page turns it into a reason. */
 /**
  * A refusal the person may read: the Owner, self and last-owner rules, a taken address, a grant that is missing. Anything
  * else that went wrong in a write is not theirs to read, and `app/(dashboard)/members/actions.ts` says so instead.
@@ -77,9 +76,9 @@ function assignableRoles(grants: ReadonlySet<Grant>): readonly MainRole[] {
   return [];
 }
 
-/** A member re-read from the roster, or null when there is no such record. */
+/** A member re-read from the roster, or null when there is no such record: the policy's own lookup, loaded with it. */
 async function memberById(id: string): Promise<Member | null> {
-  return (await members.query({ where: [{ field: 'id', op: 'eq', value: id }] })).rows[0] ?? null;
+  return (await policy()).memberById(id);
 }
 
 /**

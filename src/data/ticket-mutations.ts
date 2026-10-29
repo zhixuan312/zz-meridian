@@ -51,9 +51,9 @@ const tagOf = () => (load.tag ??= import('@/data/read'));
 
 /** The caller's grants, re-read from the request's own scope and the roster, or a refusal when no Active person is signed in. */
 async function callerOrThrow(): Promise<ReadonlySet<Grant>> {
-  const { resolveAccess } = await policy();
+  const { resolveAccess, memberById } = await policy();
   const scope = await resolveAccess().catch(() => null);
-  const member = scope ? (await members.query({ where: [{ field: 'id', op: 'eq', value: scope.subjectId }] })).rows[0] : undefined;
+  const member = scope ? await memberById(scope.subjectId) : null;
   if (!member || member.status !== 'Active') throw new TicketRefusal(REFUSALS.signIn);
   return effective(member.role, member.addOns);
 }
