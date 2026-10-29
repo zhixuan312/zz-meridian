@@ -14,6 +14,7 @@ export function CopyField({
   label,
   secret,
   className,
+  'data-preview-state': previewState,
 }: {
   value: string;
   /** The accessible name: "API key", "Request ID". */
@@ -21,17 +22,19 @@ export function CopyField({
   /** Mask the value and offer Reveal. */
   secret?: boolean;
   className?: string;
+  /** A state drawn still in the Atlas, held rather than timed: `copied` keeps the check, `revealed` shows the secret. */
+  'data-preview-state'?: 'copied' | 'revealed';
 }) {
-  const [copied, setCopied] = useState(false);
-  const [revealed, setShown] = useState(!secret);
+  const [copied, setCopied] = useState(previewState === 'copied');
+  const [revealed, setShown] = useState(!secret || previewState === 'revealed');
   // An embed never reveals a secret: the conversation is not a safe place for it, so it stays masked and Copy remains.
   const embed = useSurface().kind === 'embed';
   const shown = revealed && !(secret && embed);
   useEffect(() => {
-    if (!copied) return;
+    if (!copied || previewState) return;
     const t = setTimeout(() => setCopied(false), 1600);
     return () => clearTimeout(t);
-  }, [copied]);
+  }, [copied, previewState]);
   // A masked secret keeps a word prefix of at most two parts (zzm_live_, sk_test_), so live and test still read apart,
   // but never a part of the random value that happens to follow an underscore in it; it always shows eight dots, so the
   // mask says nothing about the length, and the last four only of a value long enough that four say nothing about it.

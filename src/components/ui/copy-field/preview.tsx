@@ -12,6 +12,8 @@ export default function CopyFieldPreview() {
       </Specimen>
       <Specimen label="Secret" note="Masked until Reveal; Copy always copies the real value." stack>
         <State label="Masked" className="w-full max-w-md"><CopyField label="API key" value="zzm_live_7Hq2v9KxP4mN8sT1wZ6bC3dF" secret className="w-full" /></State>
+        <State label="Revealed" still className="w-full max-w-md"><CopyField label="API key" value="zzm_live_7Hq2v9KxP4mN8sT1wZ6bC3dF" secret data-preview-state="revealed" className="w-full" /></State>
+        <State label="Copied" still className="w-full max-w-md"><CopyField label="API key" value="zzm_live_7Hq2v9KxP4mN8sT1wZ6bC3dF" secret data-preview-state="copied" className="w-full" /></State>
       </Specimen>
     </>
   );

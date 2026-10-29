@@ -1,5 +1,5 @@
 import { describe, expect, it, vi, afterEach } from 'vitest';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { act, render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { CopyField } from '@/components/ui/copy-field';
 import { SurfaceOverride } from '@/components/base/surface';
 
@@ -62,5 +62,26 @@ describe('a masked secret', () => {
     render(<SurfaceOverride surface={{ kind: 'embed' }}><CopyField secret label="API key" value="zzm_live_abcdef0123456789" /></SurfaceOverride>);
     expect(screen.queryByRole('button', { name: 'Reveal API key' })).toBeNull();
     expect(screen.getByRole('button', { name: 'Copy API key' })).toBeTruthy();
+  });
+});
+
+describe('a state drawn still in the Atlas', () => {
+  const shown = () => screen.getByRole('group', { name: 'API key' }).querySelector('code')!.textContent;
+  it('holds Copied past the 1.6s a real copy shows it for', () => {
+    vi.useFakeTimers();
+    try {
+      render(<CopyField secret label="API key" value="zzm_live_abcdef0123456789" data-preview-state="copied" />);
+      act(() => vi.advanceTimersByTime(5000));
+      expect(screen.getByRole('button', { name: 'Copied' })).toBeTruthy();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+  it('shows a revealed secret whole, and still masks it in an embed', () => {
+    const { unmount } = render(<CopyField secret label="API key" value="zzm_live_abcdef0123456789" data-preview-state="revealed" />);
+    expect(shown()).toBe('zzm_live_abcdef0123456789');
+    unmount();
+    render(<SurfaceOverride surface={{ kind: 'embed' }}><CopyField secret label="API key" value="zzm_live_abcdef0123456789" data-preview-state="revealed" /></SurfaceOverride>);
+    expect(shown()).toBe('zzm_live_••••••••6789');
   });
 });

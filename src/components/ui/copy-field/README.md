@@ -69,4 +69,4 @@ import { CopyField } from '@/components/ui/copy-field';
 <CopyField label="API key" value={key} secret />
 ```
 
-Props: `value`, `label`, `secret`, `className`.
+Props: `value`, `label`, `secret`, `className`. The Atlas draws Copied and Revealed still with `data-preview-state` (`copied` or `revealed`), which holds the state rather than timing it; product fields take theirs from the buttons.

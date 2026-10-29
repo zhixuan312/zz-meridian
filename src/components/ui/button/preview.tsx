@@ -22,6 +22,7 @@ export default function ButtonPreview() {
         <State label="Rest"><Button variant="primary">Save changes</Button></State>
         <State label="Hover"><Button variant="primary" className="brightness-[0.94]">Save changes</Button></State>
         <State label="Focus" still><Button variant="primary" className="outline-2 outline-offset-2 outline-accent">Save changes</Button></State>
+        <State label="Pressed" still><Button variant="primary" className="translate-y-[0.5px] scale-[0.985]">Save changes</Button></State>
         <State label="Busy · an icon"><Button variant="primary" icon={<Plus />} busy>Saving</Button></State>
         <State label="Busy · no icon"><Button variant="primary" busy>Saving</Button></State>
         <State label="Disabled"><Button variant="primary" disabled>Save changes</Button></State>
@@ -30,6 +31,17 @@ export default function ButtonPreview() {
         <State label="Rest"><Button icon={<RotateCw />}>Retry</Button></State>
         <State label="Hover"><Button icon={<RotateCw />} className="border-line-control/40 bg-surface-sunk">Retry</Button></State>
         <State label="Disabled"><Button icon={<RotateCw />} disabled>Retry</Button></State>
+      </Specimen>
+      <Specimen label="Ghost states">
+        <State label="Rest"><Button variant="ghost">Cancel</Button></State>
+        <State label="Hover"><Button variant="ghost" className="bg-fill-hover text-ink">Cancel</Button></State>
+        <State label="Disabled"><Button variant="ghost" disabled>Cancel</Button></State>
+      </Specimen>
+      <Specimen label="Danger states">
+        <State label="Rest"><Button variant="danger" icon={<Trash2 />}>Revoke key</Button></State>
+        <State label="Hover"><Button variant="danger" icon={<Trash2 />} className="brightness-95">Revoke key</Button></State>
+        <State label="Busy"><Button variant="danger" icon={<Trash2 />} busy>Revoking</Button></State>
+        <State label="Disabled"><Button variant="danger" icon={<Trash2 />} disabled>Revoke key</Button></State>
       </Specimen>
       <Specimen label="Block" note="Fills its container: standalone screens and sheets on phones.">
         <div className="w-full max-w-80"><Button variant="primary" size="lg" block>Sign in</Button></div>

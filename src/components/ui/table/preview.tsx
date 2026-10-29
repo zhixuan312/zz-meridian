@@ -56,7 +56,7 @@ export default function TablePreview() {
           </Table>
         </Plane>
       </Specimen>
-      <Specimen label="Row states" note="Rest, hover, selected and archived. Requests drops under 512px of the table's own width, where the name column keeps its 160px." stack>
+      <Specimen label="Row states" note="Rest, hover, selected, focus on the row's own control, archived, and disabled: a row that cannot be chosen. Requests drops under 512px of the table's own width, where the name column keeps its 160px." stack>
         <Plane on="surface" className="overflow-hidden p-0">
           <Table caption="Row states">
             <TableHead>
@@ -66,7 +66,9 @@ export default function TablePreview() {
               <TableRow><TableCell truncate>Parallax AI</TableCell><TableCell muted>Rest</TableCell><TableCell numeric hideBelow="sm">642,860</TableCell></TableRow>
               <TableRow className="bg-fill-hover"><TableCell truncate>Northwind Labs</TableCell><TableCell muted>Hover</TableCell><TableCell numeric hideBelow="sm">375,000</TableCell></TableRow>
               <TableRow selected><TableCell truncate>Halcyon Health</TableCell><TableCell muted>Selected</TableCell><TableCell numeric hideBelow="sm">264,700</TableCell></TableRow>
+              <TableRow><TableCell truncate><span className="rounded-xs outline-2 outline-offset-2 outline-accent">Atlas Freight</span></TableCell><TableCell muted>Focus</TableCell><TableCell numeric hideBelow="sm">198,420</TableCell></TableRow>
               <TableRow><TableCell truncate className="text-ink-3">Brightline</TableCell><TableCell className="text-ink-3">Archived</TableCell><TableCell numeric hideBelow="sm" className="text-ink-3">—</TableCell></TableRow>
+              <TableRow aria-disabled="true"><TableCell truncate className="text-ink-disabled">Mosaic Learning</TableCell><TableCell className="text-ink-disabled">Disabled</TableCell><TableCell numeric hideBelow="sm" className="text-ink-disabled">88,150</TableCell></TableRow>
             </TableBody>
           </Table>
         </Plane>
