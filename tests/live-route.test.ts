@@ -37,7 +37,7 @@ const people = (tenantId: string) => arrayCollection({
 });
 
 describe('GET /api/live', () => {
-  it('opens with retry and a resync, sends one minimized hint per change, and lets go on abort', async () => {
+  it('opens with a resync, sends one minimized hint per change, and lets go on abort', async () => {
     const ac = new AbortController();
     const res = await open('?collections=members,keys', ac.signal);
     expect(res.status).toBe(200);
@@ -45,7 +45,8 @@ describe('GET /api/live', () => {
     expect(res.headers.get('cache-control')).toBe('no-cache, no-transform');
     const t = tap(res);
     await vi.waitFor(() => expect(t.state.text).toContain('event: resync'));
-    expect(t.state.text.startsWith('retry: 3000\n')).toBe(true);
+    // The tab reconnects on its own clock (src/lib/live.ts closes the source on an error), so no `retry` is sent for the browser's.
+    expect(t.state.text.startsWith('event: resync\n')).toBe(true);
     expect(t.state.text).toContain('data: {"collections":["members","keys"]}');
     expect(liveListeners('demo', 'members')).toBeGreaterThan(0);
     await members.create!(newcomer());

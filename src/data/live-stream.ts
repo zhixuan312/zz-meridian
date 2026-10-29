@@ -19,7 +19,7 @@ let noted = false;
 const open = new Set<() => void>();
 let watching = false;
 
-/** Ends every open stream; each tab reconnects (the stream's `retry`), to whichever server then holds the port. */
+/** Ends every open stream; each tab reconnects itself (`src/lib/live.ts`), to whichever server then holds the port. */
 function endLiveStreams() {
   for (const close of [...open]) close();
 }
@@ -129,7 +129,7 @@ export function liveStream({ names, collections, signal, heartbeatMs = 15000, au
         const was = since?.[n];
         return was === undefined || was !== collections[i]!.revision?.();
       });
-      send(`retry: 3000\n\n${moved.length ? resync(moved) : 'event: synced\ndata: {}\n\n'}`);
+      send(moved.length ? resync(moved) : 'event: synced\ndata: {}\n\n');
       timer = setInterval(() => { if (!closed) send(`: beat ${Date.now()}\n\n`); }, heartbeatMs);
     },
     cancel: close,
