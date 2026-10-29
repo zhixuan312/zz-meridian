@@ -341,6 +341,8 @@ describe('the 0.26.0 migration', () => {
     expect(byId('table-grid').since).toBe('0.26.0');
     expect(byId('table-grid').applies(project({ 'tests/table-cut-cell.test.tsx': `${imp}expect(classes(heads[0])).toEqual(expect.arrayContaining(['min-w-40', '@min-[672px]:min-w-64']));\n` }))).toEqual(['tests/table-cut-cell.test.tsx']);
     expect(byId('table-grid').applies(project({ 'src/views/runs.tsx': `${imp}export const Empty = () => <TableCell colSpan={4}>No runs</TableCell>;\n` }))).toEqual(['src/views/runs.tsx']);
+    // An adopted project imports Meridian's files through @meridian/*, which is read as the same module.
+    expect(byId('table-grid').applies(project({ 'app/runs.tsx': `${imp.replace("'@/components/", "'@meridian/components/")}export const Empty = () => <TableCell colSpan={4}>No runs</TableCell>;\n` }))).toEqual(['app/runs.tsx']);
     expect(byId('table-grid').applies(project({ 'tests/table-cut-cell.test.tsx': `${imp}expect(classes(heads[0])).toEqual(expect.arrayContaining(['min-w-40']));\n` }))).toBeNull();
     // A span in a file that does not draw Meridian's table is not this migration's.
     expect(byId('table-grid').applies(project({ 'src/views/plain.tsx': 'export const Row = () => <td colSpan={2}>x</td>;\n' }))).toBeNull();
@@ -538,3 +540,24 @@ describe('the workspace-homes-moved migration', () => {
     expect(both).toEqual(expect.arrayContaining(['journey-moved', 'workspace-homes-moved']));
   });
 });
+
+describe('the use-size-callback-ref migration', () => {
+  const tip = (spec: string, body: string) => ({ 'app/(dash)/tip.tsx': `import { useSize } from '${spec}';\nexport function Tip() {\n${body}\n}\n` });
+  const reads = "  const [box, { width }] = useSize<HTMLDivElement>();\n  const left = box.current?.getBoundingClientRect().left;\n  return <div ref={box}>{width}{left}</div>;";
+  it('lists a team file that reads .current off the ref useSize returns, through either alias', () => {
+    expect(byId('use-size-callback-ref').since).toBe('0.33.0');
+    // An adopted project reaches Meridian's files as @meridian/*, a created one as @/*.
+    expect(byId('use-size-callback-ref').applies(project(tip('@meridian/components/charts/use-size', reads)))).toEqual(['app/(dash)/tip.tsx']);
+    expect(byId('use-size-callback-ref').applies(project(tip('@/components/charts/use-size', reads)))).toEqual(['app/(dash)/tip.tsx']);
+    expect(byId('use-size-callback-ref').applies(project(tip('@/components/charts/use-size', '  return <div ref={useSize<HTMLDivElement>()[0].current ? null : null} />;')))).toEqual(['app/(dash)/tip.tsx']);
+  });
+  it('lists none that only hands the ref to a ref prop, and is reported from before 0.33.0', () => {
+    const passes = tip('@meridian/components/charts/use-size', '  const [box, { width }] = useSize<HTMLDivElement>();\n  return <div ref={box}>{width}</div>;');
+    expect(byId('use-size-callback-ref').applies(project(passes))).toBeNull();
+    expect(byId('use-size-callback-ref').applies(path.resolve(import.meta.dirname, '..'))).toBeNull();
+    const ids = (from: string) => releaseMigrations(project(tip('@meridian/components/charts/use-size', reads)), from, '0.36.0').map((m) => m.id);
+    expect(ids('0.32.0')).toContain('use-size-callback-ref');
+    expect(ids('0.33.0')).not.toContain('use-size-callback-ref');
+  });
+});
+

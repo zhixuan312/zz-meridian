@@ -133,9 +133,18 @@ function callArity(src: string, fn: string): number[] {
 /** Where an import of the team's file `rel` points, as a project path with no extension; null for a package. */
 const resolvedImport = (rel: string, spec: string): string | null => {
   const bare = spec.replace(/\.[mc]?[jt]sx?$/, '');
+  // An adopted project reaches Meridian's files as `@meridian/*` (adopt's tsconfig paths), a created one as `@/*`.
   if (bare.startsWith('@/')) return `src/${bare.slice(2)}`;
+  if (bare.startsWith('@meridian/')) return `src/${bare.slice('@meridian/'.length)}`;
   return bare.startsWith('.') ? path.posix.join(path.posix.dirname(rel), bare) : null;
 };
+
+/** Whether a file reads `.current` off the ref `useSize()` returns: by the name it destructures, or off the call itself. */
+function readsSizeRefCurrent(src: string): boolean {
+  if (/useSize\s*(?:<[^>]*>)?\s*\(\s*\)\s*\[\s*0\s*\]\s*\.\s*current\b/.test(src)) return true;
+  for (const m of src.matchAll(/\[\s*([\w$]+)\s*[,\]][^=]*=\s*useSize\b/g)) if (new RegExp(`\\b${m[1]!.replace(/\$/g, '\\$')}\\s*\\.\\s*current\\b`).test(src)) return true;
+  return false;
+}
 
 /** Each import of a file of the team's: the module it resolves to, the names it takes and its namespace, if it has one. */
 function importsOf(rel: string, src: string): { from: string; names: string[]; namespace: string | null }[] {
@@ -573,6 +582,14 @@ export const RELEASE_MIGRATIONS: ReleaseMigration[] = [
     summary: 'A route that answers an error or draws the not-found screen fails every browser suite unless it is declared in missingRoutes.',
     instructions: 'The audit, the presses, the keyboard walk, the vitals and `scripts/shot.ts` now read what a route answered: one that answered an error status or draws the not-found screen (`[data-missing-page]`) was measured as that screen and not as the route, so it fails. In `scripts/verify.config.ts`, which is yours, move every entry of `detailRoutes` that names a record that does not exist (the sample\'s `/requests/req_missing` and `/customers/missing`) into a new `missingRoutes` list; each must be the not-found screen, and one that renders a page fails. A not-found screen of your own carries `data-missing-page` on its root, as `MissingPage` does: inside a streamed shell a missing record has already answered 200.',
     checks: ['verify'],
+  },
+  {
+    id: 'use-size-callback-ref',
+    since: '0.33.0',
+    applies: (root) => matching(root, (rel, src) => SOURCE.test(rel) && importsOf(rel, src).some(({ from, names }) => from === 'src/components/charts/use-size' && names.includes('useSize')) && readsSizeRefCurrent(src)),
+    summary: '`useSize()` returns a callback ref, so its first value has no `.current`.',
+    instructions: "`useSize` (`src/components/charts/use-size.ts`) returns a callback that measures the element it is attached to, whenever it is attached, so a team file that read the element through `.current` of the ref fails the type check. In each file listed, keep the element in a ref of your own and hand the `ref` prop one callback that does both: `const own = useRef<HTMLDivElement | null>(null); const [measure, size] = useSize<HTMLDivElement>(); const ref = useCallback((el: HTMLDivElement | null) => { own.current = el; return measure(el); }, [measure]);`, then read `own.current` where the file read the ref's.",
+    checks: GATE_AND_BUILD,
   },
   {
     id: 'self-hosted-fonts',
