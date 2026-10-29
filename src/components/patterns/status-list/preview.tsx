@@ -22,7 +22,7 @@ export default function StatusListPreview() {
       <Specimen label="Wide" note="The bars sit beside each service from 42rem of card width." stack>
         <Card className="overflow-hidden"><StatusList services={SERVICES} end={DEMO_NOW} /></Card>
       </Specimen>
-      <Specimen label="Narrow" note="Under 42rem the bars drop under the name; under 420px their gaps tighten to 1px." stack>
+      <Specimen label="Narrow" note="Under 42rem the bars drop under the name; they scale down with the card, every day still drawn." stack>
         <div className="w-full max-w-sm"><Card className="overflow-hidden"><StatusList services={SERVICES.slice(0, 3)} end={DEMO_NOW} descriptions={false} /></Card></div>
       </Specimen>
       <Specimen label="Runs" note="Under each strip, the operational days that end today: its longest in the days kept when no run among them is longer, at least the days kept when no day has a mark, and the state alone when today has one." stack>

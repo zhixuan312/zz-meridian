@@ -2,12 +2,11 @@
 
 import { cn } from '@/lib/cn';
 import { runOf } from '@/lib/facts';
-import { formatDuration } from '@/lib/format';
+import { formatDuration, plural } from '@/lib/format';
 import { StatusDot } from '@/components/ui/status-dot';
 import type { Tone } from '@/components/ui/badge';
 import { UptimeBars } from '@/components/charts/uptime-bars';
 import { summarise, SERVICE_NOUN, type Noun } from '@/logic/summarise';
-import { plural } from '@/lib/format';
 
 const STATE: Record<ServiceStatus, { tone: Tone; word: string; ink: string }> = {
   operational: { tone: 'positive', word: 'Operational', ink: 'text-positive-ink' },
@@ -108,7 +107,7 @@ export function StatusList({
                 {descriptions ? <p className="t-caption mt-1 pl-[18px] text-pretty">{svc.description}</p> : null}
               </div>
               <div>
-                <UptimeBars days={svc.days} uptime={svc.uptime} end={end} label={`${svc.name}, last 90 days`} measure={measure} />
+                <UptimeBars days={svc.days} uptime={svc.uptime} end={end} label={`${svc.name}, last ${svc.days.length === 1 ? 'day' : `${svc.days.length} days`}`} measure={measure} />
                 {run ? <Run days={svc.days} /> : null}
               </div>
               <div>

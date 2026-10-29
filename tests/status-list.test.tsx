@@ -54,3 +54,11 @@ describe('a status list: how long each service has run', () => {
     for (const text of runs(container)) expect(text).not.toMatch(/Operational for/);
   });
 });
+
+describe("a status list: each strip's name", () => {
+  it('counts the days the service holds, not a window of 90', () => {
+    const { container } = render(<StatusList services={[service('Gateway', run('operational', 30)), service('Files', run('operational', 1))]} end={end} />);
+    const names = [...container.querySelectorAll('figure')].map((f) => f.getAttribute('aria-label'));
+    expect(names).toEqual(['Gateway, last 30 days', 'Files, last day']);
+  });
+});
