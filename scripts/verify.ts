@@ -41,14 +41,13 @@
 import { spawn, spawnSync, type ChildProcess } from 'node:child_process';
 import { randomBytes } from 'node:crypto';
 import fs from 'node:fs';
-import net from 'node:net';
 import os from 'node:os';
 import path from 'node:path';
 
 import { rateFrom } from './lib/phone.ts';
 import { browserCeiling, slots } from './lib/slots.ts';
-import { bin } from './lib/bin.ts';
-import { launch } from './lib/chrome.ts';
+import { answers, bin, freePort, spawnNext } from './lib/bin.ts';
+import { CHROME as chromePath, launch } from './lib/chrome.ts';
 import type { BudgetsConfig, NavigationCheck } from './lib/budgets.ts';
 import { fakeModelArgs, fakeModelProblems, type FakeModelStep } from './lib/config-hooks.ts';
 import { finalOutcome, judgedNothingIn, resolveCoverage, SUITE_NAMES, selectSmokeRoutes, suiteCoverage, suiteOutcome } from './lib/coverage.ts';
@@ -198,8 +197,6 @@ let selected: string[] = [];
 let smoke: string[] = [];
 let covered = { data: 0, interaction: 0 };
 let htmlMissing = false;
-
-const chromePath = process.env.CHROME ?? (process.platform === 'darwin' ? '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome' : process.platform === 'win32' ? 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe' : '/usr/bin/google-chrome');
 
 const git = (...a: string[]) => { const r = spawnSync('git', a, { cwd: ROOT, encoding: 'utf8' }); return r.status === 0 ? r.stdout.trim() : null; };
 const nextVersion = () => { try { return JSON.parse(fs.readFileSync(path.join(ROOT, 'node_modules/next/package.json'), 'utf8')).version as string; } catch { return 'unknown'; } };
@@ -359,8 +356,6 @@ const serve = unsafe === null;
 
 // ---- the processes ----
 
-const freePort = () => new Promise<number>((res) => { const s = net.createServer(); s.listen(0, () => { const p = (s.address() as net.AddressInfo).port; s.close(() => res(p)); }); });
-
 // The assistant is off unless configured: the build and the first start must not see the caller's own variables.
 // BLANKED, not deleted: `next start` loads `.env.local` itself, where a person keeps their own model, and Next does not
 // overwrite a variable that is already set — so a deleted `ASSISTANT_*` came straight back from that file and the
@@ -390,14 +385,12 @@ process.on('exit', stopAll);
 // An interrupted run does not emit 'exit' by itself, and the detached servers and running suites would outlive it.
 for (const sig of ['SIGINT', 'SIGTERM'] as const) process.on(sig, () => process.exit(sig === 'SIGINT' ? 130 : 143));
 
-/** Start the built app on a free port, loopback only, and wait until it answers: every client here reaches 127.0.0.1 (#81). */
+/** Start the built app on a free port and wait until it answers. */
 async function start(env: NodeJS.ProcessEnv) {
   const port = await freePort();
-  const server = spawn(bin('next'), ['start', '-H', '127.0.0.1', '-p', String(port)], { cwd: ROOT, env, stdio: 'ignore', detached: true });
+  const server = spawnNext(port, env);
   children.push(server);
-  for (let i = 0; i < 120; i++) {
-    try { if ((await fetch(`http://127.0.0.1:${port}/`)).status < 500) return { port, server }; } catch { await new Promise((r) => setTimeout(r, 500)); }
-  }
+  if (await answers(port)) return { port, server };
   phase('FAIL', 'the built app did not start', null);
   return finish(1, FIX);
 }

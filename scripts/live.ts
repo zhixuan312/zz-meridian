@@ -17,12 +17,10 @@
  * Controls are found and hit-tested through open shadow roots (scripts/lib/deep.ts), so a design system whose buttons,
  * menus and sheets are web components is driven the same way.
  */
-import { spawn, type ChildProcess } from 'node:child_process';
+import type { ChildProcess } from 'node:child_process';
 import fs from 'node:fs';
-import http from 'node:http';
-import net from 'node:net';
 import path from 'node:path';
-import { bin } from './lib/bin.ts';
+import { answers, freePort, spawnNext, status } from './lib/bin.ts';
 import { NOT_RUN_EXIT } from './lib/coverage.ts';
 import { launch, type Page } from './lib/chrome.ts';
 import { DEEP_SOURCE } from './lib/deep.ts';
@@ -56,24 +54,10 @@ const stopGroup = (c: ChildProcess) => { try { process.kill(-c.pid!, 'SIGTERM');
 process.on('exit', () => started.forEach(stopGroup));
 // An interrupted run does not emit 'exit' by itself, and the detached servers would outlive it.
 for (const sig of ['SIGINT', 'SIGTERM'] as const) process.on(sig, () => process.exit(sig === 'SIGINT' ? 130 : 143));
-const freePort = () => new Promise<number>((res) => { const s = net.createServer(); s.listen(0, () => { const p = (s.address() as net.AddressInfo).port; s.close(() => res(p)); }); });
-
-/** The status the server on `port` answers with, or null when nothing does; a fresh connection each time, so a server that was just stopped is never reached through a stale one. */
-const status = (port: number) => new Promise<number | null>((resolve) => {
-  const req = http.get({ host: '127.0.0.1', port, path: '/', agent: false, timeout: 3000 }, (res) => { res.resume(); resolve(res.statusCode ?? null); });
-  req.on('error', () => resolve(null));
-  req.on('timeout', () => { req.destroy(); resolve(null); });
-});
-
 async function serve(port: number): Promise<ChildProcess> {
-  // Loopback only, as scripts/verify.ts starts it: every client here is on this machine (#81).
-  const server = spawn(bin('next'), ['start', '-H', '127.0.0.1', '-p', String(port)], { cwd: ROOT, env: process.env, stdio: 'ignore', detached: true });
+  const server = spawnNext(port, process.env);
   started.push(server);
-  for (let i = 0; i < 120; i++) {
-    const code = await status(port);
-    if (code !== null && code < 500) return server;
-    await sleep(250);
-  }
+  if (await answers(port)) return server;
   throw new Error(`the server on port ${port} did not start`);
 }
 
