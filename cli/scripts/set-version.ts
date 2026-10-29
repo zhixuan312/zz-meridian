@@ -1,7 +1,8 @@
 /**
  * Set the release version everywhere it lives: the published package (cli/package.json) and the template
- * (package.json). Refuses a version that is not semver, and one whose CHANGELOG.md section is missing, since CI lifts
- * that section into the GitHub Release.
+ * (package.json). Refuses a version that is not major.minor.patch (update refuses to run a prerelease, and npm will not
+ * publish one without a dist-tag), and one whose CHANGELOG.md section is missing, since CI lifts that section into the
+ * GitHub Release.
  *
  *   node cli/scripts/set-version.ts 0.2.0
  */
@@ -10,7 +11,7 @@ import path from 'node:path';
 
 const ROOT = path.resolve(import.meta.dirname, '../..');
 const v = process.argv[2] ?? '';
-if (!/^\d+\.\d+\.\d+(-[0-9A-Za-z.-]+)?$/.test(v)) throw new Error(`"${v}" is not a semver version`);
+if (!/^\d+\.\d+\.\d+$/.test(v)) throw new Error(`"${v}" is not a major.minor.patch version`);
 if (!fs.readFileSync(path.join(ROOT, 'CHANGELOG.md'), 'utf8').includes(`## [${v}]`)) throw new Error(`CHANGELOG.md has no "## [${v}]" section: write it first`);
 
 for (const f of ['cli/package.json', 'package.json']) {
