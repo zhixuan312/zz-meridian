@@ -55,27 +55,38 @@ describe('the no-access state', () => {
     expect(both.description).not.toContain('Owner,');
   });
 
+  it('asks an administrator when no role may change members', async () => {
+    // A role table where nobody holds members:update, as a product that edits GRANTS can write.
+    vi.resetModules();
+    vi.doMock('@/data/roles', async (orig) => {
+      const real = await orig<typeof import('@/data/roles')>();
+      return { ...real, whoCan: (need: Parameters<typeof real.whoCan>[0]) => (need === 'members:update' ? [] : real.whoCan(need)) };
+    });
+    const { noAccessCopy: copy } = await import('@/views/no-access');
+    expect(copy('keys:read', 'API keys').description).toMatch(/ Ask an administrator for access\.$/);
+    vi.doUnmock('@/data/roles');
+  });
   it('renders the feature through the page frame', async () => {
-    const html = renderToStaticMarkup(await NoAccess({ feature: 'keys', access: await chrome() }));
+    const html = renderToStaticMarkup(NoAccess({ feature: 'keys', access: await chrome() }));
     expect(html).toContain('API keys');
     expect(html).toContain('data-no-access');
   });
 
   it('offers one link, named for where it leads, to the first destination of its own workspace the person may open', async (ctx) => {
     if (!TEMPLATE) ctx.skip('this project replaced the template\u2019s pages: its rail is its own, and these destinations are the template\u2019s');
-    expect(linksOf(renderToStaticMarkup(await NoAccess({ feature: 'keys', access: await chrome() })))).toEqual([{ href: '/engineering', text: 'Go to Now' }]);
-    expect(linksOf(renderToStaticMarkup(await NoAccess({ feature: 'members', access: await chrome() })))).toEqual([{ href: '/', text: 'Go to Home' }]);
+    expect(linksOf(renderToStaticMarkup(NoAccess({ feature: 'keys', access: await chrome() })))).toEqual([{ href: '/engineering', text: 'Go to Now' }]);
+    expect(linksOf(renderToStaticMarkup(NoAccess({ feature: 'members', access: await chrome() })))).toEqual([{ href: '/', text: 'Go to Home' }]);
   });
 
   it('offers Main\'s home when who the person is cannot be told', async () => {
     jar.value = 'nobody';
-    expect(linksOf(renderToStaticMarkup(await NoAccess({ feature: 'keys', access: await chrome() })))).toEqual([{ href: '/', text: 'Go to Main' }]);
+    expect(linksOf(renderToStaticMarkup(NoAccess({ feature: 'keys', access: await chrome() })))).toEqual([{ href: '/', text: 'Go to Main' }]);
   });
 
   it('offers no link at all to somebody who may open nothing, because every one of them refuses them in turn', async () => {
     // A person whose grants open no destination: the way out would be Main's home, and Main refuses them too, so the
     // sentence naming who to ask is the whole answer rather than a loop.
-    const html = renderToStaticMarkup(await NoAccess({ feature: 'keys', access: { only: [], user: { name: 'Nobody', role: 'Viewer' } } }));
+    const html = renderToStaticMarkup(NoAccess({ feature: 'keys', access: { only: [], user: { name: 'Nobody', role: 'Viewer' } } }));
     expect(linksOf(html)).toEqual([]);
     expect(html).toContain('data-no-access');
     expect(html).toContain('for access');

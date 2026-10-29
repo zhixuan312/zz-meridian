@@ -19,5 +19,5 @@ export async function RefusalScreen(refusal: Refusal): Promise<JSX.Element> {
     return <MissingPage withheld={refusal.withheld} />;
   }
   const { NoAccess } = await import('@/views/no-access');
-  return await NoAccess({ feature: refusal.feature, access: refusal.access });
+  return NoAccess({ feature: refusal.feature, access: refusal.access });
 }

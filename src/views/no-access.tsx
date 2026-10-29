@@ -29,7 +29,8 @@ function or(roles: readonly string[]): string {
  */
 export function noAccessCopy(need: Need, title: string): { title: string; description: string } {
   const roles = need === 'public' ? [] : whoCan(need);
-  const ask = `Ask ${or(whoCan('members:update'))} for access.`;
+  // A role table where nobody may change members still names someone to ask.
+  const ask = `Ask ${or(whoCan('members:update')) || 'an administrator'} for access.`;
   return {
     title: `You don't have access to ${title}`,
     description: roles.length === 0 ? `Access needs a main role together with an add-on. ${ask}` : `${list(roles)} can open it. ${ask}`,
@@ -61,7 +62,7 @@ function wayOut(feature: FeatureId, only: readonly string[] | null): { href: str
  * its own and is handed the answer. A descriptor whose session could not be read carries null, and the way out is Main's
  * home.
  */
-export async function NoAccess({ feature, access }: { feature: FeatureId; access: ChromeAccess | null }) {
+export function NoAccess({ feature, access }: { feature: FeatureId; access: ChromeAccess | null }) {
   const { title, description } = noAccessCopy(FEATURES[feature].needs, FEATURES[feature].title);
   const only = access?.only ?? null;
   const out = wayOut(feature, only);
