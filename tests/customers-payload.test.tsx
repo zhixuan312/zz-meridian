@@ -1,4 +1,6 @@
-import { render } from '@testing-library/react';
+import { PassThrough } from 'node:stream';
+import { Tooltip } from 'radix-ui';
+import { renderToPipeableStream } from 'react-dom/server';
 import { describe, expect, it, vi } from 'vitest';
 
 /** The page's client view, replaced by one that keeps what it was handed: the props are what the browser is sent. */
@@ -15,10 +17,11 @@ import { collections } from '@/data/collections';
  */
 describe('what the Customers page hands its client', () => {
   it('is every customer, each with the fields a row draws and nothing else of its record', async () => {
+    // Served as the server serves it, every boundary resolved: whatever the page wraps its body in, the view is reached.
     const page = await CustomersPage();
-    // The page's body is an async component behind a boundary: render it by calling it, as the server does.
-    const Customers = (page.props.children as { props: { children: { type: () => Promise<React.ReactElement> } } }).props.children.type;
-    render(await Customers());
+    await new Promise<void>((resolve, reject) => {
+      const stream = renderToPipeableStream(<Tooltip.Provider>{page}</Tooltip.Provider>, { onAllReady: () => stream.pipe(new PassThrough().on('finish', resolve).on('data', () => {})), onShellError: reject, onError: reject });
+    });
     const every = (await collections.find((c) => c.name === 'customers')!.query({})).rows;
     expect(handed.rows).toHaveLength(every.length);
     for (const row of handed.rows) expect(Object.keys(row).sort(), String(row.name)).toEqual(['errorRate', 'id', 'joined', 'name', 'plan', 'requests', 'revenue', 'status', 'trend']);
