@@ -5,6 +5,7 @@ import { clock } from '@/data/collections';
 import { can, collectionFor, resolveAccess, Unauthenticated } from '@/data/access';
 import { collectionTag } from '@/data/read';
 import { writesTokens, type RequestRow } from '@/data/sample';
+import { retryable } from '@/logic/request-context';
 
 export type ReplayResult = { ok: true; id: string; status: number } | { ok: false; error: string };
 
@@ -22,6 +23,8 @@ export async function replayRequest(id: string): Promise<ReplayResult> {
     const requests = collectionFor(scope, 'requests');
     const original = (await requests.query({ where: [{ field: 'id', op: 'eq', value: id }] })).rows[0] as RequestRow | undefined; // allow-no-direct-query: read() cannot serve this — a server action reads the record it is about to change, uncached
     if (!original) return { ok: false, error: `No request with id ${id}.` };
+    // An action is an endpoint anyone signed in can call with any id, so the page's rule is asked again here.
+    if (!retryable(original)) return { ok: false, error: 'Only a request that failed for a while (a 5xx or a 429) can be replayed.' };
     const status = original.method === 'POST' ? 201 : 200;
     const replay = await requests.create!({
       at: clock().toISOString(), method: original.method, route: original.route, status, latency: original.latency,

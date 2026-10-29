@@ -19,7 +19,7 @@ import { formatDateTime, formatRelative } from '@/lib/format-date';
 import { type RequestRow, STATUS_TEXT, statusTone, usageOf, type Span } from '@/data/sample';
 import { formatBytes } from '@/system/sample-cells';
 import { domain } from '@/app.config';
-import { requestAddress } from '@/logic/request-context';
+import { requestAddress, retryable } from '@/logic/request-context';
 
 /** One shell word, whatever it holds: a body's own `'`, `$(…)` or newline reaches curl as text and runs nothing. */
 const shellWord = (s: string) => `'${s.replaceAll("'", "'\\''")}'`;
@@ -101,7 +101,7 @@ export function RequestView({ request: r, trace, payloads, routeP95, now, replay
   useShareView(requestContext({ request: r, trace, routeP95, statusText: STATUS_TEXT[r.status] ?? '', payloadBytes: { request: payloads.request?.length ?? null, response: payloads.response.length }, now }));
   const router = useRouter();
   const usage = usageOf(r);
-  const failed = r.status >= 500 || r.status === 429;
+  const failed = retryable(r);
   const [replaying, startReplay] = useTransition();
   const customer = customerHref ? <Link href={customerHref} className="row-link">{r.customer}</Link> : r.customer;
   const sendAgain = () => startReplay(async () => {

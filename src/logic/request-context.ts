@@ -20,8 +20,11 @@ export type RequestData = {
 /** The address of one request, its id encoded as a customer's is (`customerAddress`). */
 export const requestAddress = (id: string) => `/requests/${encodeURIComponent(id)}`;
 
+/** A request that failed for a while (a 5xx or a 429): the only kind the page offers Replay for, and the action replays. */
+export const retryable = (r: Pick<RequestRow, 'status'>) => r.status >= 500 || r.status === 429;
+
 export function requestContext({ request: r, trace, routeP95, statusText, payloadBytes, now }: RequestData): SharedContext {
-  const failed = r.status >= 500 || r.status === 429;
+  const failed = retryable(r);
   const { tokens, cost } = usageOf(r);
   const total = trace.reduce((m, s) => Math.max(m, s.start + s.duration), 0) || r.latency;
   const insights: Insight[] = [];

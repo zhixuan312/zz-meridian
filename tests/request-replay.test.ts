@@ -32,4 +32,11 @@ describe('replaying a request', () => {
     expect(await replayRequest('req_nope')).toEqual({ ok: false, error: 'No request with id req_nope.' });
     expect((await c.query({})).total).toBe(before);
   });
+  it('refuses a request that did not fail, as the page does, and writes nothing', async () => {
+    const ok = REQUESTS.find((r) => r.status < 400)!;
+    const c = collectionFor(await resolveAccess(), 'requests');
+    const before = (await c.query({})).total;
+    expect(await replayRequest(ok.id)).toEqual({ ok: false, error: 'Only a request that failed for a while (a 5xx or a 429) can be replayed.' });
+    expect((await c.query({})).total).toBe(before);
+  });
 });
