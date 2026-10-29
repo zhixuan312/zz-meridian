@@ -579,6 +579,14 @@ export const RELEASE_MIGRATIONS: ReleaseMigration[] = [
     checks: GATE_AND_BUILD,
   },
   {
+    id: 'nav-item-fields',
+    since: '0.36.0',
+    applies: navItemWithoutFields,
+    summary: "The rail reads a navigation item's `under` and `prefetch` directly: the `NavItem` type in `src/app.config.ts` declares both.",
+    instructions: "`src/app.config.ts` is yours, so an update does not touch it, and the `NavItem` type in your copy lacks a field the release's rail and trail now read as a property of every item (until 0.36.0 they tested for it first). Add `prefetch?: true; under?: string` to the `NavItem` type, as the release's `src/app.config.ts` declares it: `under` names the `href` of the item a sub page is drawn under, and `prefetch: true` asks the rail to prefetch that item's page in full. Neither changes an item that does not set it.",
+    checks: ['gate'],
+  },
+  {
     id: 'sample-with-its-tests',
     since: '0.36.0',
     applies: sampleBehindItsTests,
@@ -636,6 +644,13 @@ function appDescriptionMissing(root: string): string[] | null {
   if (body === null) return null;
   const object = APP_OBJECT.exec(body)?.[0];
   return object && !/\bdescription\s*:/.test(object) ? [rel] : null;
+}
+
+/** 0.36.0: a configuration whose `NavItem` type lacks the `under` or `prefetch` field the rail reads. */
+function navItemWithoutFields(root: string): string[] | null {
+  const rel = 'src/app.config.ts';
+  const type = text(root, rel)?.match(/^export type NavItem = \{[\s\S]*?\};$/m)?.[0];
+  return type && !(/\bunder\?:/.test(type) && /\bprefetch\?:/.test(type)) ? [rel] : null;
 }
 
 /**

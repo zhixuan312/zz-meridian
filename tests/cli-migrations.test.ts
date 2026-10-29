@@ -454,6 +454,23 @@ describe('the 0.34.0 migration', () => {
   });
 });
 
+describe('the 0.36.0 navigation migration', () => {
+  it("finds a NavItem type without the rail's under and prefetch fields, and leaves one that has both", () => {
+    const m = byId('nav-item-fields');
+    expect(m.since).toBe('0.36.0');
+    const config = (fields: string) => project({ 'src/app.config.ts': `export type NavItem = { href: string; label: string; icon: LucideIcon; needs: Need${fields} };\nexport type NavGroup = { label?: string; items: NavItem[] };\n` });
+    expect(m.applies(config(''))).toEqual(['src/app.config.ts']);
+    expect(m.applies(config('; prefetch?: true'))).toEqual(['src/app.config.ts']);
+    expect(m.applies(config('; under?: string'))).toEqual(['src/app.config.ts']);
+    expect(m.applies(config('; prefetch?: true; under?: string'))).toBeNull();
+    // A field of the same name elsewhere in the file does not stand in for the type's.
+    expect(m.applies(project({ 'src/app.config.ts': 'export type NavItem = { href: string };\nconst item = { under: \'/\', prefetch: true };\n' }))).toEqual(['src/app.config.ts']);
+    // A configuration with no NavItem type is not this migration's, and the release's own has both.
+    expect(m.applies(project({ 'src/app.config.ts': 'export const app = {} as const;\n' }))).toBeNull();
+    expect(m.applies(path.resolve(import.meta.dirname, '..'))).toBeNull();
+  });
+});
+
 describe('the 0.36.0 migration', () => {
   it("names a created project's sample files that differ from the release's and the sample modules it lacks, and nothing else", () => {
     const m = byId('sample-with-its-tests');

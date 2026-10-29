@@ -20,9 +20,8 @@ describe('the rail', () => {
     expect(asks).toHaveLength(1);
     expect(asks[0]).toContain("label: 'Docs'");
   });
-  it('honours the field and keeps the default for every other item, in a project whose NavItem has no such field', () => {
-    expect(rail).toContain("prefetch={'prefetch' in it && it.prefetch === true ? true : undefined}");
-  });
+  // The field is `true` or absent, so an item that does not ask passes undefined, Next's default.
+  it('honours the field and keeps the default for every other item', () => expect(rail).toContain('prefetch={it.prefetch}'));
 });
 
 describe('the prefetch cap', () => {

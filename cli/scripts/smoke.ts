@@ -198,7 +198,7 @@ const said = (r: Ran) => [r.out, r.err, r.log].join('\n');
  * The migrations `cli/src/migrations.ts` declares since 0.5.0: changes in the team's own files, resolved by editing them.
  * `verify-modes` is not here: its edit is a flag in a script, and no origin passes one.
  */
-const RELEASE_IDS = ['shell-assistant-promise', 'assistant-available-promise', 'clock-now-required', 'cache-components-config', 'connection-boundaries', 'authorized-read', 'scoped-invalidation', 'live-provider', 'authorized-endpoints', 'share-view-context', 'agent-reads-section', 'assistant-view-tools', 'nav-needs', 'agent-reads-own-group', 'refusal-declared', 'managed-exports-removed', 'view-tool-page-explore', 'agent-does-here-section', 'sample-pages-renamed', 'marker-measured-on-observe', 'view-page-matched-as-next', 'journey-moved', 'today-in-timezone', 'verify-tiers', 'no-data-mark', 'table-grid', 'four-layers', 'direct-query-escape', 'app-description', 'live-stream-shutdown', 'missing-routes', 'self-hosted-fonts', 'sample-with-its-tests'];
+const RELEASE_IDS = ['shell-assistant-promise', 'assistant-available-promise', 'clock-now-required', 'cache-components-config', 'connection-boundaries', 'authorized-read', 'scoped-invalidation', 'live-provider', 'authorized-endpoints', 'share-view-context', 'agent-reads-section', 'assistant-view-tools', 'nav-needs', 'agent-reads-own-group', 'refusal-declared', 'managed-exports-removed', 'view-tool-page-explore', 'agent-does-here-section', 'sample-pages-renamed', 'marker-measured-on-observe', 'view-page-matched-as-next', 'journey-moved', 'today-in-timezone', 'verify-tiers', 'no-data-mark', 'table-grid', 'four-layers', 'direct-query-escape', 'app-description', 'live-stream-shutdown', 'missing-routes', 'self-hosted-fonts', 'nav-item-fields', 'sample-with-its-tests'];
 
 const filesUnder = (dir: string, rel = ''): string[] => {
   if (!fs.existsSync(path.join(dir, rel))) return [];
@@ -261,6 +261,11 @@ function bringReleaseOver(proj: string, route: string, reported: string[] = []) 
   // fetched them from Google Fonts. The layout is the team's; a created project's comes over from the release, whose
   // only difference is the two `localFont` calls. An adopted project's faces are its own, and the migration leaves them.
   if (reported.includes('self-hosted-fonts')) write(proj, 'app/layout.tsx', read(createdRelease(), 'app/layout.tsx'));
+  // `nav-item-fields` is 0.36.0's: the rail reads `under` and `prefetch` on every item, and the project's own `NavItem`
+  // type may lack them. The instruction's edit is the two fields, added to the type where it is missing either.
+  if (reported.includes('nav-item-fields')) {
+    edit(proj, 'src/app.config.ts', (t) => t.replace(/^(export type NavItem = \{[\s\S]*?)\s*\};$/m, (type, head: string) => (/\bunder\?:/.test(type) && /\bprefetch\?:/.test(type) ? type : `${head.replace(/;?\s*prefetch\?: true|;?\s*under\?: string/g, '')}; prefetch?: true; under?: string };`)));
+  }
   if (route === 'adopt') {
     edit(proj, 'next.config.ts', (t) => t.replace(/\/\* config options here \*\//, 'cacheComponents: true,\n  partialPrefetching: true,'));
     return;

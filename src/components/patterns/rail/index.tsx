@@ -125,8 +125,8 @@ export function Rail({
         // item, whose article is its page's URL data) is prefetched in full: from /settings, the start guide's
         // desktop warm shell went from 77-146 ms to 26-27 ms with no request after the press, at the cost of
         // one prefetch of about 15 KiB on each main-workspace page on the desktop; the phone's closed drawer
-        // shows no link and prefetches nothing. The `in` test keeps this compiling in a project whose NavItem has no field.
-        prefetch={'prefetch' in it && it.prefetch === true ? true : undefined}
+        // shows no link and prefetches nothing.
+        prefetch={it.prefetch}
         aria-current={on ? 'page' : state.current}
         data-holds={state.holds ? '' : undefined}
         // The current sub page lights its stretch of the guide line, a pseudo-element of the link so no positioned

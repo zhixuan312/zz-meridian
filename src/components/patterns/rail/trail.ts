@@ -6,12 +6,11 @@ type Item = NavGroup['items'][number];
 /**
  * The item `it` is drawn under: another item of the same group that `under` names, and which is not itself a sub page.
  * An `under` that names nothing of the kind leaves the item at the top level. The rail, the palette's hint and the trail
- * all read the hierarchy through this one rule. `under` is read through `in` so an older `NavItem` without it compiles.
+ * all read the hierarchy through this one rule.
  */
 export function parentOf(g: NavGroup, it: Item): Item | undefined {
-  const under = 'under' in it && typeof it.under === 'string' ? it.under : undefined;
-  const parent = under === undefined ? undefined : g.items.find((p) => p.href === under && p !== it);
-  return parent && !('under' in parent && typeof parent.under === 'string' && g.items.some((x) => x.href === parent.under && x !== parent)) ? parent : undefined;
+  const parent = it.under === undefined ? undefined : g.items.find((p) => p.href === it.under && p !== it);
+  return parent && !(parent.under !== undefined && g.items.some((x) => x.href === parent.under && x !== parent)) ? parent : undefined;
 }
 
 /**
