@@ -35,7 +35,7 @@ type Draft = { name: string; env: 'live' | 'test'; scopes: Scope[] };
 /** `now` is the read's observation time, so "last used" is never fresher than the data. */
 /** `may` is what the page asked of the action table, so a control the person may not use is not drawn at all, and */
 /** nothing says why. Defaults allow both, for a view mounted on its own. */
-export function KeysView({ rows, now, revisions, createKey, revokeKey, may = { create: true, revoke: true } }: { rows: PublicKey[]; now: string; revisions?: Revisions; createKey: (draft: Draft) => Promise<PublicKey & { secret: string }>; revokeKey: (id: string) => Promise<void>; may?: { create: boolean; revoke: boolean } }) {
+export function KeysView({ rows, now, revisions, createKey, revokeKey, may = { create: true, revoke: true } }: { rows: PublicKey[]; now: string; revisions?: Revisions; createKey: (draft: Draft) => Promise<{ ok: true; key: PublicKey & { secret: string } } | { ok: false; error: string }>; revokeKey: (id: string) => Promise<{ ok: true } | { ok: false; error: string }>; may?: { create: boolean; revoke: boolean } }) {
   useShareView(keysContext(rows, now, SCOPES));
   const router = useRouter();
   useLive(['keys'], revisions);
@@ -69,7 +69,9 @@ export function KeysView({ rows, now, revisions, createKey, revokeKey, may = { c
     setCreateError(null);
     startTransition(async () => {
       try {
-        const k = await createKey({ name, env, scopes });
+        const r = await createKey({ name, env, scopes });
+        if (!r.ok) return setCreateError(r.error);
+        const k = r.key;
         setFresh(k);
         setCreating(false);
         setName(''); setScopes(['messages']); setError(null);
@@ -200,11 +202,13 @@ export function KeysView({ rows, now, revisions, createKey, revokeKey, may = { c
                 setRevoking(null);
                 run(async () => {
                   removeShown(k.id);
+                  let r;
                   try {
-                    await revokeKey(k.id);
+                    r = await revokeKey(k.id);
                   } finally {
                     revokingIds.current.delete(k.id);
                   }
+                  if (!r.ok) throw new Error(r.error);
                   toast({ tone: 'neutral', title: 'Key revoked', description: `${k.name} no longer works.` });
                 }, 'Could not revoke the key');
               }}>Revoke key</Button>

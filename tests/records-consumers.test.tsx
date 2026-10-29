@@ -66,7 +66,7 @@ describe('the pages that list records are built from the template', () => {
   });
 
   it('API keys: no summary, and the line about rotating keys stays under the table', () => {
-    const { template, renders } = drawn(<KeysView rows={API_KEYS} now={NOW} createKey={async () => { throw new Error('unused'); }} revokeKey={async () => {}} />);
+    const { template, renders } = drawn(<KeysView rows={API_KEYS} now={NOW} createKey={async () => ({ ok: false, error: 'unused' })} revokeKey={async () => ({ ok: true })} />);
     expect(renders).toBe(1);
     expect(template).not.toBeNull();
     expect(template!.querySelector('[data-split="tiles"]')).toBeNull();

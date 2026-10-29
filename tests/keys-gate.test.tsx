@@ -63,7 +63,9 @@ describe('the keys page asks keys:read first', () => {
 describe('a new key records who created it', () => {
   it('names the caller, not the sample owner', async () => {
     jar.value = 'members_5';
-    const made = await createKey({ name: 'Gate check', env: 'test', scopes: ['messages'] });
+    const r = await createKey({ name: 'Gate check', env: 'test', scopes: ['messages'] });
+    if (!r.ok) throw new Error(r.error);
+    const made = r.key;
     try {
       expect(made.owner).toBe('Lucas Meyer');
     } finally {

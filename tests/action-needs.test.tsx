@@ -8,7 +8,7 @@ const key = { id: 'key_1', name: 'Load test, October', env: 'live', scopes: ['me
 /** A sentence that names roles beside what they may do: what a page that withholds a control must not draw. */
 const WHO_CAN = /\b(Owners|Admins|Members|Viewers|Key managers)\b|\bOnly an? \b|\bAsk an? (Owner|Admin)\b/;
 const keys = (may: { create: boolean; revoke: boolean }) =>
-  renderToStaticMarkup(<KeysView rows={[key] as never} now="2026-10-04T00:00:00.000Z" may={may} createKey={async () => key as never} revokeKey={async () => {}} />);
+  renderToStaticMarkup(<KeysView rows={[key] as never} now="2026-10-04T00:00:00.000Z" may={may} createKey={async () => ({ ok: true, key }) as never} revokeKey={async () => ({ ok: true })} />);
 
 describe('the keys page shows what the person may do', () => {
   it('hides Create key and Revoke, and says nothing about who can, when both are withheld', () => {

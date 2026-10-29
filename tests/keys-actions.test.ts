@@ -11,19 +11,22 @@ const draft = { name: 'Billing worker', env: 'live' as const, scopes: ['messages
 
 describe('createKey validates its scopes on the server', () => {
   it('creates a key with declared scopes', async () => {
-    expect((await createKey({ ...draft, scopes: ['messages', 'files'] })).scopes).toEqual(['messages', 'files']);
+    const r = await createKey({ ...draft, scopes: ['messages', 'files'] });
+    expect(r.ok && r.key.scopes).toEqual(['messages', 'files']);
   });
   it('refuses a key with no scope', async () => {
-    await expect(createKey({ ...draft, scopes: [] })).rejects.toThrow(/scope/i);
+    expect(await createKey({ ...draft, scopes: [] })).toEqual({ ok: false, error: 'Give the key at least one scope.' });
   });
   it('refuses a scope that is not declared', async () => {
-    await expect(createKey({ ...draft, scopes: ['messages', 'admin'] as never })).rejects.toThrow(/scope/i);
+    expect(await createKey({ ...draft, scopes: ['messages', 'admin'] as never })).toEqual({ ok: false, error: 'Choose only the scopes a key can carry.' });
   });
 });
 
 describe('createKey shows the full secret once', () => {
   it('returns it to the caller and stores only its hint and its hash', async () => {
-    const created = await createKey(draft);
+    const r = await createKey(draft);
+    if (!r.ok) throw new Error(r.error);
+    const created = r.key;
     expect(created.secret).toMatch(/^zzm_live_[0-9a-f]{32}$/);
     const { rows } = await collectionFor(await resolveAccess(), 'keys').query({ where: [{ field: 'id', op: 'eq', value: created.id }] });
     const stored = rows[0] as Record<string, unknown>;

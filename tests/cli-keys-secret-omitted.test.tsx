@@ -32,7 +32,7 @@ describe('a newly created key on the API keys page', () => {
     const key = { id: 'k9', name: 'Billing worker', env: 'live' as const, hint: 'zzm_live_…3456', scopes: ['messages'], owner: 'Maya', created: '2026-10-01T00:00:00Z', lastUsed: null };
     const { container } = render(
       <div data-scroll-region="">
-        <KeysView rows={[]} now="2026-10-04T00:00:00.000Z" createKey={async () => ({ ...key, secret }) as never} revokeKey={async () => {}} />
+        <KeysView rows={[]} now="2026-10-04T00:00:00.000Z" createKey={async () => ({ ok: true, key: { ...key, secret } }) as never} revokeKey={async () => ({ ok: true })} />
       </div>,
     );
     fireEvent.click(screen.getAllByRole('button', { name: 'Create key' })[0]);

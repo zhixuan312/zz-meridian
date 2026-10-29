@@ -193,14 +193,14 @@ describe('members, status and removal', () => {
 
 describe('keys, optimistically', () => {
   it('takes a revoked key away at once and brings it back with the reason when revoking fails', async () => {
-    let fail!: (e: Error) => void;
-    const revokeKey = () => new Promise<void>((_, reject) => { fail = reject; });
+    let fail!: (r: { ok: false; error: string }) => void;
+    const revokeKey = () => new Promise<{ ok: false; error: string }>((resolve) => { fail = resolve; });
     const key = API_KEYS[0];
-    render(<KeysView rows={API_KEYS} now="2026-10-05T09:00:00.000Z" createKey={async () => ({ ...key, secret: 'zzm_live_' + '0'.repeat(32) })} revokeKey={revokeKey} />);
+    render(<KeysView rows={API_KEYS} now="2026-10-05T09:00:00.000Z" createKey={async () => ({ ok: true, key: { ...key, secret: 'zzm_live_' + '0'.repeat(32) } })} revokeKey={revokeKey} />);
     fireEvent.click(screen.getByRole('button', { name: `Revoke ${key.name}` }));
     fireEvent.click(await screen.findByRole('button', { name: 'Revoke key' }));
     await waitFor(() => expect(screen.queryByRole('button', { name: `Revoke ${key.name}` })).toBeNull());
-    await act(async () => { fail(new Error('The key is in use by a running job.')); });
+    await act(async () => { fail({ ok: false, error: 'The key is in use by a running job.' }); });
     expect(await screen.findByRole('button', { name: `Revoke ${key.name}` })).toBeTruthy();
     expect(toasts.at(-1)).toMatchObject({ tone: 'critical', description: 'The key is in use by a running job.' });
   });
