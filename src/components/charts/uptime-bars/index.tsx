@@ -105,7 +105,7 @@ export function UptimeBars({
         </svg>
       </div>
       <figcaption className="mt-2 flex items-center gap-3 text-2xs text-ink-3">
-        <span>{shown.length} days ago</span>
+        <span>{shown.length} {plural(shown.length, 'day')} ago</span>
         <span aria-hidden className="h-px flex-1 bg-line" />
         <span className="t-num font-medium text-ink-2">{pct(uptime)} {measure}</span>
         <span aria-hidden className="h-px flex-1 bg-line" />

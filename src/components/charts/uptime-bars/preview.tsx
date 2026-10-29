@@ -1,11 +1,13 @@
 'use client';
 
 import { Specimen, Plane, State } from '@/system/specimen';
-import { DEMO_NOW, SERVICES } from '@/system/fixtures/sample';
+import { DEMO_NOW, SERVICES, uptimeOf } from '@/system/fixtures/sample';
 import { formatDate } from '@/lib/format-date';
 import { UptimeBars } from '.';
 
 const YESTERDAY = new Date(DEMO_NOW.getTime() - 86_400_000);
+/** The Batch worker's days with six of them unrecorded; its uptime is over the days that were. */
+const GAPPED = SERVICES[0].days.map((d, i) => (i >= 20 && i < 26 ? ('none' as const) : d));
 
 export default function UptimeBarsPreview() {
   return (
@@ -27,7 +29,7 @@ export default function UptimeBarsPreview() {
       </Specimen>
       <Specimen label="Short history" note="Fewer days than the window: the days widen to fill it, and the caption's count says how many there are.">
         <Plane on="surface" className="max-w-sm">
-          <UptimeBars label="Batch worker over its 12 days" days={SERVICES[0].days.slice(-12)} uptime={SERVICES[0].uptime} end={DEMO_NOW} />
+          <UptimeBars label="Batch worker over its 12 days" days={SERVICES[0].days.slice(-12)} uptime={uptimeOf(SERVICES[0].days.slice(-12))} end={DEMO_NOW} />
         </Plane>
       </Specimen>
       <Specimen label="No days" note="Nothing recorded yet: one line, and no plot, caption or period between two invented dates.">
@@ -42,7 +44,7 @@ export default function UptimeBarsPreview() {
       </Specimen>
       <Specimen label="No data" note="A day with no data is drawn in the line colour, never as an operational day, and the summary lists it as No data.">
         <Plane on="surface" className="max-w-sm">
-          <UptimeBars label="Batch worker over 90 days" days={SERVICES[0].days.map((d, i) => (i >= 20 && i < 26 ? 'none' : d))} uptime={SERVICES[0].uptime} end={DEMO_NOW} />
+          <UptimeBars label="Batch worker over 90 days" days={GAPPED} uptime={uptimeOf(SERVICES[0].days.filter((_, i) => i < 20 || i >= 26))} end={DEMO_NOW} />
         </Plane>
       </Specimen>
       <Specimen label="Complete days" note="A strip that ends on the latest complete day takes it as end and names it in endLabel; the caption never calls it Today.">

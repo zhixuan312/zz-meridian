@@ -36,3 +36,10 @@ describe('a day drawn still in the Atlas', () => {
     expect(tip(container).textContent).toContain('Outage');
   });
 });
+
+describe('an uptime strip of one day', () => {
+  it('counts it in the singular', () => {
+    const { container } = render(<UptimeBars days={['operational']} uptime={1} end={end} label="Gateway" />);
+    expect(container.querySelector('figcaption')!.textContent).toMatch(/^1 day ago/);
+  });
+});
