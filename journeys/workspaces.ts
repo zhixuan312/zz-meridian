@@ -5,9 +5,9 @@
  *
  * This is the sample's own script, not Meridian's: it knows the product's three workspaces, so it lives beside the
  * template and not in scripts/, which every adopted project is given. It imports only the browser helper, the
- * verification configuration (the personas' cookies and the sample's detail routes) and the product's configuration, so
- * every name it looks for is read from there: the product's name, the workspaces and their homes, the navigation's
- * labels. A step finds what it presses by role and accessible name, presses it with a real pointer event at its centre,
+ * verification configuration (the personas' cookies and the sample's detail routes), the product's configuration and the
+ * rail's `entryFor` (the entry an address falls under, the rule the product itself applies), so every name it looks for
+ * is read from there: the product's name, the workspaces and their homes, the navigation's labels. A step finds what it presses by role and accessible name, presses it with a real pointer event at its centre,
  * types with real key events, and waits on a condition with a deadline.
  *
  * It writes only what a person could write through the page: one ticket, in the running sample. The audit, the presses
@@ -21,6 +21,7 @@
 import { launch, type Page } from '../scripts/lib/chrome.ts';
 import config from '../scripts/verify.config.ts';
 import * as product from '../src/app.config.ts';
+import { entryFor } from '../src/components/patterns/rail/trail.ts';
 
 type Workspace = { label: string; audience: string; homeHref: string };
 const { app, nav } = product;
@@ -159,16 +160,7 @@ const railWorkspace = (r: Rail) => {
 };
 
 /** The workspace an address belongs to: the owner of the longest entry it falls under, on a whole path segment. */
-const ownerOf = (path: string): string | null => {
-  const clean = path.length > 1 ? path.replace(/\/+$/, '') : path;
-  let best: (typeof items)[number] | null = null;
-  for (const i of items) {
-    if (!i.workspace) continue;
-    const under = i.href === '/' ? clean === '/' : clean === i.href || clean.startsWith(`${i.href}/`);
-    if (under && (best === null || i.href.length > best.href.length)) best = i;
-  }
-  return best?.workspace ?? null;
-};
+const ownerOf = (path: string): string | null => entryFor(path, items.filter((i) => i.workspace))?.workspace ?? null;
 
 /** A person's routes: the ones the verification configuration says they may open, written there by hand. */
 const routesOf = (name: string) => [...persona(name).expectedRoutes];
@@ -220,7 +212,7 @@ const branchOf = (ws: string, routes: string[], path: string) => {
   if (parent) return parent;
   return nav.some((g) => { const held = heldIn(g, ws, routes); return held.some((s) => parentIn(held, s) === cur); }) ? cur : null;
 };
-const currentIn = (path: string, hrefs: string[]) => hrefs.filter((h) => (h === '/' ? path === '/' : path === h || path.startsWith(`${h}/`))).sort((a, b) => b.length - a.length)[0] ?? null;
+const currentIn = (path: string, hrefs: string[]) => entryFor(path, hrefs.map((href) => ({ href })))?.href ?? null;
 
 /**
  * Wait until the page is at `path` and the rail is exactly what that address's workspace shows for this person: the

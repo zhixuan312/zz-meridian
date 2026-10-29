@@ -1,4 +1,5 @@
 import { nav } from '@/app.config';
+import { entryFor } from '@/components/patterns/rail/trail';
 
 /** What an address that leads nowhere says, outside the shell and inside it alike. */
 export const NOT_FOUND = {
@@ -29,10 +30,7 @@ export const homeLabel = nav.flatMap((g) => g.items).find((it) => it.href === '/
  */
 export function nearestOf(path: string, withheld: readonly string[] = []): Nearest {
   const clean = path.length > 1 ? path.replace(/\/+$/, '') : path;
-  const items = nav.flatMap((g) => g.items).filter((it) => it.href !== '/' && !withheld.includes(it.href));
-  const hit = items
-    .filter((it) => clean === it.href || clean.startsWith(it.href + '/'))
-    .sort((a, b) => b.href.length - a.href.length)[0];
+  const hit = entryFor(clean, nav.flatMap((g) => g.items).filter((it) => it.href !== '/' && !withheld.includes(it.href)));
   if (hit) return { href: hit.href, label: hit.label, rest: clean.slice(hit.href.length) };
   return { href: '/', label: homeLabel, rest: clean === '/' ? '' : clean };
 }

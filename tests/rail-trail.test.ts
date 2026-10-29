@@ -2,7 +2,7 @@
 import { Home } from 'lucide-react';
 import { describe, expect, it } from 'vitest';
 import type { NavGroup } from '@/app.config';
-import { navTrail } from '@/components/patterns/rail/trail';
+import { entryFor, navTrail } from '@/components/patterns/rail/trail';
 
 // A navigation of this test's own, never the sample's: a created project that edits its navigation keeps this green.
 const item = (href: string, label: string, extra: Record<string, unknown> = {}) => ({ href, label, icon: Home, needs: 'public', ...extra }) as unknown as NavGroup['items'][number];
@@ -35,5 +35,20 @@ describe('the trail from the top of the navigation to a page', () => {
   it('is empty for an address no item declares', () => {
     expect(navTrail('/nowhere', NAV)).toEqual([]);
     expect(navTrail('/calls/42', NAV)).toEqual([]);
+  });
+});
+
+describe('the entry an address falls under', () => {
+  const items = ['/', '/requests', '/requests/archive', '/keys'].map((href) => ({ href }));
+  const at = (path: string) => entryFor(path, items)?.href;
+  it('is the longest entry it equals or continues on a whole segment', () => {
+    expect(at('/requests/req_1')).toBe('/requests');
+    expect(at('/requests/archive/2026')).toBe('/requests/archive');
+    expect(at('/requests-archive')).toBeUndefined();
+    expect(at('/keys/')).toBe('/keys');
+  });
+  it('lets the home claim only itself', () => {
+    expect(at('/')).toBe('/');
+    expect(at('/nothing')).toBeUndefined();
   });
 });

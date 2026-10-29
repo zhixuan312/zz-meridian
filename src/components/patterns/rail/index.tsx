@@ -15,7 +15,7 @@ import { Menu, MenuContent, MenuItem, MenuLabel, MenuRadioGroup, MenuRadioItem, 
 import { toast } from '@/components/ui/toast';
 import { AppearanceMenu } from '@/components/patterns/appearance-menu';
 import { clearThread } from '@/components/patterns/assistant/thread';
-import { parentOf } from './trail';
+import { entryFor, parentOf } from './trail';
 
 /**
  * A row of the workspace menu. `href` is where choosing it goes, when it goes to a page: the rail prefetches it as the
@@ -96,9 +96,8 @@ export function Rail({
   const id = useId();
   // The longest matching href is the current page, so /enhancements and /enhancements/objectives never both light up. It
   // is found among every destination declared, and lit only if this person's rail holds it.
-  const matches = (href: string) => (href === '/' ? path === '/' : path === href || path.startsWith(href + '/'));
   const held = nav.flatMap((g) => g.items.map((it) => it.href));
-  const longest = [...new Set([...(declared ?? []), ...held])].filter(matches).sort((a, b) => b.length - a.length)[0];
+  const longest = entryFor(path, [...new Set([...(declared ?? []), ...held])].map((href) => ({ href })))?.href;
   const here = longest !== undefined && held.includes(longest) ? longest : undefined;
   const isActive = (href: string) => href === here;
 
