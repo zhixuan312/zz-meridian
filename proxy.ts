@@ -1,11 +1,11 @@
 import { NextResponse, type NextRequest } from 'next/server';
-import { COOKIE, MAX_AGE, expiresOf, gated, token } from '@/lib/demo-gate';
+import { COOKIE, MAX_AGE, VIEW_AS_COOKIE, expiresOf, gated, token } from '@/lib/demo-gate';
 
 /**
  * The demo's password gate (`src/lib/demo-gate.ts`), open unless `DEMO_PASSWORD` is set. Every route needs a live
  * session except the sign-in page and the files a browser fetches for it; an API answers 401 instead of redirecting.
  * Opening the sign-in page signs the demo out, which is what the rail's Sign out does. A visit past half the session's
- * life renews it.
+ * life renews it, and the persona it is signed in as with it.
  */
 export function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl;
@@ -27,7 +27,10 @@ export function proxy(req: NextRequest) {
   }
   const res = NextResponse.next();
   if (expires - Date.now() / 1000 < MAX_AGE / 2) {
-    res.cookies.set(COOKIE, token(), { httpOnly: true, path: '/', sameSite: 'lax', maxAge: MAX_AGE, secure: req.headers.get('x-forwarded-proto') === 'https' });
+    const options = { httpOnly: true, path: '/', sameSite: 'lax', maxAge: MAX_AGE, secure: req.headers.get('x-forwarded-proto') === 'https' } as const;
+    res.cookies.set(COOKIE, token(), options);
+    const persona = req.cookies.get(VIEW_AS_COOKIE)?.value;
+    if (persona) res.cookies.set(VIEW_AS_COOKIE, persona, options);
   }
   return res;
 }

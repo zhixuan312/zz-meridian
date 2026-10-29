@@ -1,7 +1,7 @@
 // @vitest-environment node
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { NextRequest } from 'next/server';
-import { COOKIE, MAX_AGE, expiresOf, gated, samePassword, token } from '@/lib/demo-gate';
+import { COOKIE, MAX_AGE, VIEW_AS_COOKIE, expiresOf, gated, samePassword, token } from '@/lib/demo-gate';
 import { proxy } from '../proxy';
 
 const request = (path: string, { cookie, method = 'GET' }: { cookie?: string; method?: string } = {}) =>
@@ -52,6 +52,10 @@ describe('the demo gate, with DEMO_PASSWORD', () => {
       const renewed = proxy(request('/', { cookie: t })).cookies.get(COOKIE)?.value;
       expect(renewed).not.toBe(t);
       expect(expiresOf(renewed)).toBeGreaterThan(expiresOf(t));
+      // The persona is renewed with the session, so it cannot run out while the session goes on.
+      const both = new NextRequest('https://demo.example/', { headers: { cookie: `${COOKIE}=${t}; ${VIEW_AS_COOKIE}=members_12` } });
+      const persona = proxy(both).cookies.get(VIEW_AS_COOKIE);
+      expect([persona?.value, persona?.maxAge]).toEqual(['members_12', MAX_AGE]);
     } finally {
       vi.useRealTimers();
     }

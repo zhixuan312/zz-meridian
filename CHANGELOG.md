@@ -15,6 +15,7 @@ Every release of ZZ Meridian, newest first. Versions follow semver: a removed or
 - **`requestContext` takes `payloadChars`**, not `payloadBytes`: the sizes were always string lengths, and the context prints them as characters.
 - **`memberAccess` takes every row's id and answers by id.** The Members page asked it once a row, and each ask re-resolved the caller and read the roster twice; `memberAccess(ids)` resolves the caller once. Call `memberAccess(members.map((m) => m.id))` and read `access[id]`.
 - **The template's server actions answer one `ActionResult`, from `@/lib/collection`.** The members, settings, tickets, keys and replay actions each declared the same `{ ok: true } | { ok: false, error }` under four names, one of them exported by a client view; `Result` (from `@/views/members`), `TicketResult`, `KeyResult` and `ReplayResult` are gone. Import `ActionResult`, and pass what the action hands back as its parameter (`ActionResult<{ id: string; status: number }>`). `@/views/requests` no longer re-exports `REQUEST_METHODS`; import it from `@/data/request-methods`.
+- **`VIEW_AS_COOKIE` lives in `@/lib/demo-gate`**, beside the session cookie it is now renewed with, so `proxy.ts` can name it without loading the data layer. Import it from `@/lib/demo-gate`; `@/data/access` no longer exports it.
 - **`workspaceHomes` lives in `scripts/lib/journey.ts` and takes the command's arguments.** `scripts/perf.ts` read it from `scripts/navigate.ts`, and so took `--homes` through another command's argument list; import it from `scripts/lib/journey.ts` and call `workspaceHomes(process.argv.slice(2))`. The `journey-moved` migration now lists a file that imports it from `scripts/navigate.ts`.
 
 ### Added
@@ -43,6 +44,7 @@ Every release of ZZ Meridian, newest first. Versions follow semver: a removed or
 - **The proposal embed says Not applied when its tool refuses.** It said Applied, while it told the model nothing changed.
 - **A failed request reads "None, it failed" for its tokens and cost**, not "None, refused", which is kept for a 4xx; a request that took 0 ms keeps its trace bars at the start instead of losing them to `NaN%`.
 - **A member cannot be changed to an address another member has**, compared without its case, as an invite already checked; one address for several members at once is refused too.
+- **A demo signed in as one persona reopens as that persona after a browser restart.** The persona cookie had no lifetime, so it ended with the browser while the 30-day session went on, and the console reopened as Maya Chen, an Owner; it now lasts as long as the session and is renewed with it.
 - **Undo on a removal the page already sent says so** ("{name}'s removal was already sent"), instead of bringing back a member the server no longer has.
 - **`update` and `status` order sessions by version number**, so a project holding 0.9.0 and 0.10.0 names 0.9.0 first; as text, 0.10.0 sorted first.
 - **`/requests?sort=constructor`** (or any name every object inherits) falls back to the default sort instead of throwing.

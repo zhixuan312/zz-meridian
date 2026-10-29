@@ -8,6 +8,11 @@
 import crypto from 'node:crypto';
 
 export const COOKIE = 'zz_meridian_demo';
+/**
+ * The cookie that names who the demo is signed in as, written by the sign-in and the View as action. It lasts as long
+ * as the session and is renewed with it, so a browser restart reopens as the person chosen, not as the default.
+ */
+export const VIEW_AS_COOKIE = 'zz_meridian_view_as';
 export const MAX_AGE = 30 * 24 * 3600;
 
 const password = () => process.env.DEMO_PASSWORD ?? '';

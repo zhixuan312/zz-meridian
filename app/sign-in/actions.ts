@@ -2,8 +2,8 @@
 
 import { cookies, headers } from 'next/headers';
 import { redirect } from 'next/navigation';
-import { COOKIE, MAX_AGE, samePassword, token } from '@/lib/demo-gate';
-import { PERSONAS, VIEW_AS_COOKIE } from '@/data/access';
+import { COOKIE, MAX_AGE, VIEW_AS_COOKIE, samePassword, token } from '@/lib/demo-gate';
+import { PERSONAS } from '@/data/access';
 import { members } from '@/data/collections';
 import { chooseViewAs } from '@/data/view-as';
 
@@ -37,7 +37,7 @@ export async function demoSignIn(_: DemoSignInState, form: FormData): Promise<De
   const secure = (await headers()).get('x-forwarded-proto') === 'https';
   const jar = await cookies();
   jar.set(COOKIE, token(), { httpOnly: true, path: '/', sameSite: 'lax', maxAge: MAX_AGE, secure });
-  jar.set(VIEW_AS_COOKIE, id, { httpOnly: true, path: '/', sameSite: 'lax', secure });
+  jar.set(VIEW_AS_COOKIE, id, { httpOnly: true, path: '/', sameSite: 'lax', maxAge: MAX_AGE, secure });
   redirect('/');
 }
 

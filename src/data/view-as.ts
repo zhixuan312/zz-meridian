@@ -2,7 +2,8 @@
 
 import { cookies, headers } from 'next/headers';
 import { refresh } from 'next/cache';
-import { memberById, PERSONAS, VIEW_AS_COOKIE } from '@/data/access';
+import { memberById, PERSONAS } from '@/data/access';
+import { MAX_AGE, VIEW_AS_COOKIE } from '@/lib/demo-gate';
 
 /** What `chooseViewAs` tells the person when the id it was handed cannot be chosen. */
 const REFUSED = "That person can't be chosen right now.";
@@ -17,6 +18,6 @@ export async function chooseViewAs(id: string): Promise<void> {
   const member = await memberById(id);
   if (!member || member.status !== 'Active') throw new Error(REFUSED);
   const secure = (await headers()).get('x-forwarded-proto') === 'https';
-  (await cookies()).set(VIEW_AS_COOKIE, id, { httpOnly: true, path: '/', sameSite: 'lax', secure });
+  (await cookies()).set(VIEW_AS_COOKIE, id, { httpOnly: true, path: '/', sameSite: 'lax', maxAge: MAX_AGE, secure });
   refresh();
 }

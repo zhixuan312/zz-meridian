@@ -122,6 +122,7 @@ import { ticketsFor } from '@/data/ticket-mutations';
 import { chooseViewAs } from '@/data/view-as';
 import type { Member } from '@/data/sample';
 import type { AnyCollection, ChromeAccess, Grant, Need } from '@/lib/collection';
+import { VIEW_AS_COOKIE } from '@/lib/demo-gate';
 
 export type AccessScope = Readonly<{
   tenantId: string;
@@ -161,9 +162,6 @@ export class AccessDenied extends Error {
 const TENANT = 'demo';
 /** The member the demo is signed in as when no `zz_meridian_view_as` cookie is set. */
 const DEFAULT_MEMBER = 'members_1';
-
-/** The cookie that names who the demo is signed in as; written by the View as action. */
-export const VIEW_AS_COOKIE = 'zz_meridian_view_as';
 
 /** The five frozen personas in the spec's order: the sample people the demo signs in as. */
 export const PERSONAS = ['members_1', 'members_2', 'members_4', 'members_5', 'members_12'] as const;
