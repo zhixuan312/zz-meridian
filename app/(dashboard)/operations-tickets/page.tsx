@@ -24,15 +24,15 @@ export function generateMetadata() {
 export default async function TicketsPage() {
   const denied = await gate('tickets');
   if (denied) return RefusalScreen(denied);
-  const [{ rows, revisions, observedAt }, mayCreate, mayUpdate, mayReadMembers] = await Promise.all([
+  // Each offer's read waits on its own permission, not on the tickets.
+  const creates = may(ACTIONS['create-ticket'].needs);
+  const readsMembers = may('members:read');
+  const [{ rows, revisions, observedAt }, mayCreate, mayUpdate, services, people] = await Promise.all([
     readTickets(),
-    may(ACTIONS['create-ticket'].needs),
+    creates,
     may(ACTIONS['update-ticket'].needs),
-    may('members:read'),
-  ]);
-  const [services, people] = await Promise.all([
-    mayCreate ? readAll('services').then((r) => r.rows) : [],
-    mayReadMembers ? readAll('members').then((r) => r.rows) : [],
+    creates.then((ok) => (ok ? readAll('services').then((r) => r.rows) : [])),
+    readsMembers.then((ok) => (ok ? readAll('members').then((r) => r.rows) : [])),
   ]);
   return (
     <TicketsView

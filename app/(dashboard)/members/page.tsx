@@ -35,10 +35,12 @@ async function workspaceName(): Promise<string | undefined> {
 export default async function MembersPage() {
   const denied = await gate('members');
   if (denied) return RefusalScreen(denied);
-  const { rows, revision, observedAt } = await readAll('members', { sort: { field: 'joined', dir: 'desc' } });
-  const members = rows.map((row) => projectMember(row));
-  const [access, roles, workspace] = await Promise.all([
-    memberAccess(members.map((m) => m.id)),
+  // The roles and the workspace's name do not wait on the roster; the members' access does.
+  const [{ members, revision, observedAt, access }, roles, workspace] = await Promise.all([
+    readAll('members', { sort: { field: 'joined', dir: 'desc' } }).then(async ({ rows, revision, observedAt }) => {
+      const members = rows.map((row) => projectMember(row));
+      return { members, revision, observedAt, access: await memberAccess(members.map((m) => m.id)) };
+    }),
     invitableRoles(),
     workspaceName(),
   ]);
