@@ -23,6 +23,7 @@ Every release of ZZ Meridian, newest first. Versions follow semver: a removed or
 - **`AssistantPanel` takes `draft` and `onDraft`**, so the column keeps an unsent message across a close; without them the panel keeps its own.
 - **Badge exports `TONE_FILL`**, the one tone-to-fill map, which Progress now reads.
 - **`page-loading` exports `LinesSkeleton`**, a card of lines under a title, four unless told; Home, Revenue and Now each drew their own.
+- **`src/lib/collection.ts` exports `p95(values)`**, the nearest-rank 95th percentile a prepared query's `p95` answers; the Requests tiles read it too.
 - **`src/lib/collection.ts` exports `storedRows(tenantId, name)`**, the rows a tenant's array collection keeps in this process, for a test that grows one past a page; `read-every-row` and two other tests used a copy of the store's private key and shape.
 - **`@/lib/format` exports `changeOf` and `capitalise`**: a change against the figure before as a fraction (null against none or zero), and a word as a label starts. Home, Revenue and Usage each wrote the first, Releases, Tests and Tickets the second.
 - **The MIT licence text ships.** The package carries it as `payload/LICENSE`, and a project `create` makes gets it as `LICENSE`; before, both manifests said MIT and no text existed.
@@ -50,6 +51,7 @@ Every release of ZZ Meridian, newest first. Versions follow semver: a removed or
 - **`/requests?sort=constructor`** (or any name every object inherits) falls back to the default sort instead of throwing.
 - **Every view's context names `app.timezone`**, where Request, Requests, Services, Home and Revenue printed their times in it and labelled them UTC.
 - **A date written without a time prints as the day it names** in `formatDate`, `formatShortDate` and `formatDay`, as the calendar formatters already did: a product whose `app.timezone` is west of UTC printed `2026-10-01` as 30 Sept.
+- **The Requests tiles' Latency p95 is the figure the agent is told for the same requests.** The tiles took the value at rank floor(0.95 × (n − 1)) and a prepared query the nearest rank, which differ for most small sets, such as a five-minute bucket.
 - **The bell's customers-past-due alert is timed by the latest to fall past due**, not "just now" on every open.
 - **The Customers figure is defined as what it counts**, customers that have not left, not workspaces "with a live key".
 - **A customer is not compared with an error rate the product never measured**, over days that hold no request; an active member who has never signed in is named among the quiet ones, as never seen. Where most customers have no errors, the customers' context names those that have some, not every customer as "at least twice the median" of 0.00%.

@@ -3,7 +3,7 @@
  * the collection the same question. A page reads through `read()`; the export, which must not be cached and may be
  * larger than a page, queries its authorized collection itself.
  */
-import type { Query } from '@/lib/collection';
+import { p95, type Query } from '@/lib/collection';
 import { attempt } from '@/data/main';
 import { read, readAll } from '@/data/read';
 import { REQUEST_METHODS } from '@/data/request-methods';
@@ -82,10 +82,7 @@ const isError = (r: LoggedRequest) => failed(r.status);
  * matches nothing, and a five-minute window with no requests, have no latency at all — `null` is what the formatters
  * draw as a dash, and `0` is what they draw as `0ms`, which is a measurement this never made.
  */
-const p95Of = (rs: LoggedRequest[]): number | null => {
-  const l = rs.map((r) => r.latency).sort((a, b) => a - b);
-  return l.length ? l[Math.floor((l.length - 1) * 0.95)] : null;
-};
+const p95Of = (rs: LoggedRequest[]): number | null => p95(rs.map((r) => r.latency));
 /** The share of the set that errored, or null when the set is empty, for the reason above. */
 const errorShare = (rs: LoggedRequest[]): number | null => (rs.length ? rs.filter(isError).length / rs.length : null);
 const change = (now: number | null, before: number | null) => (now !== null && before ? now / before - 1 : null);
