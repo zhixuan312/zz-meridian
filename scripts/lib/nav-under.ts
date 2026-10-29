@@ -32,14 +32,15 @@ export function navUnderProblems(groups: Group[]): string[] {
 }
 
 /**
- * A page or loading file whose masthead trail names an href other than its own route: `navTrail('<href>', nav)` is
- * written by hand, and one left behind when the route moved draws another page's trail. Pure, as above.
+ * A page or loading file whose masthead trail names an href it does not live under: `navTrail('<href>', nav)` is
+ * written by hand, and one left behind when the route moved draws another page's trail. A detail page (`/requests/[id]`)
+ * names the item it falls under. A literal href is checked; one held in a variable is not. Pure, as above.
  */
 export function navTrailProblems(files: { file: string; route: string; src: string }[]): string[] {
   const out: string[] = [];
   for (const { file, route, src } of files) {
     for (const m of src.matchAll(/\bnavTrail\(\s*(['"`])([^'"`]+)\1/g)) {
-      if (m[2] !== route) out.push(`${file}: navTrail('${m[2]}') is another page's trail; this file's route is ${route}`);
+      if (m[2] !== route && !route.startsWith(`${m[2]}/`)) out.push(`${file}: navTrail('${m[2]}') is another page's trail; this file's route is ${route}`);
     }
   }
   return out;

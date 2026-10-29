@@ -69,3 +69,13 @@ describe("the gate's rule for a page's trail", () => {
     ]);
   });
 });
+
+describe("the trail rule on a detail page", () => {
+  it("passes a detail page's trail to the item it falls under, and fails one under no item it lives in", () => {
+    const detail = (href: string) => ({ file: 'app/(dashboard)/requests/[id]/page.tsx', route: '/requests/[id]', src: `navTrail('${href}', nav)` });
+    expect(navTrailProblems([detail('/requests')])).toEqual([]);
+    expect(navTrailProblems([detail('/usage')])).toHaveLength(1);
+    expect(navTrailProblems([{ file: 'app/(dashboard)/requests-archive/page.tsx', route: '/requests-archive', src: "navTrail('/requests', nav)" }])).toHaveLength(1);
+  });
+});
+
