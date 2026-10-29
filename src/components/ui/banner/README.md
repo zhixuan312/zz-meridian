@@ -32,7 +32,7 @@ One size; it fills its container. The action sits to the right of the text on wi
 | State | Spec |
 |---|---|
 | Shown | Arrives with its page |
-| Dismissed | Removed; the layout closes up. A dismissed banner stays dismissed for the session |
+| Dismissed | Removed; the layout closes up. The page owns how long it stays dismissed: `onDismiss` is where it records that |
 
 ## Behaviour
 
