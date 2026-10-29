@@ -1,8 +1,6 @@
 import { useId, type ReactNode } from 'react';
 import { cn } from '@/lib/cn';
-import type { Tone } from '@/components/ui/badge';
-
-const FILL: Record<Tone, string> = { neutral: 'bg-ink-3', accent: 'bg-accent', positive: 'bg-positive', warning: 'bg-warning', critical: 'bg-critical' };
+import { TONE_FILL, type Tone } from '@/components/ui/badge';
 
 /**
  * How much of a known whole is done or used: a quota, a rollout, an import. A 6px track in `fill-track` with a fill
@@ -52,7 +50,7 @@ export function Progress({
         aria-labelledby={typeof label === 'string' || label === undefined ? undefined : name}
         className={cn('overflow-hidden rounded-full bg-fill-track', size === 'sm' ? 'h-1' : 'h-1.5')}
       >
-        <div className={cn('grow-x h-full rounded-full transition-[width] duration-(--dur-enter) ease-(--ease-out)', FILL[tone])} style={{ width: `${pct}%` }} />
+        <div className={cn('grow-x h-full rounded-full transition-[width] duration-(--dur-enter) ease-(--ease-out)', TONE_FILL[tone])} style={{ width: `${pct}%` }} />
       </div>
     </div>
   );
