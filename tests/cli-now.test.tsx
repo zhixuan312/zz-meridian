@@ -1,7 +1,6 @@
 // Named cli-* so the payload leaves it out: it is about the sample's own Now page, which a product replaces.
-import { PassThrough } from 'node:stream';
 import type { ReactElement } from 'react';
-import { renderToPipeableStream, renderToStaticMarkup } from 'react-dom/server';
+import { renderToStaticMarkup } from 'react-dom/server';
 import { Tooltip } from 'radix-ui';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -77,6 +76,7 @@ import NowLoading from '../app/(dashboard)/engineering/loading';
 import { contextText } from '@/lib/shared-context';
 import { SERVICES } from '@/system/fixtures/sample';
 import { nowTool } from '@/logic/tools';
+import { servedDocument } from './cli-served';
 
 const OWNER = 'members_1';
 const VIEWER = 'members_12';
@@ -86,16 +86,7 @@ beforeEach(() => { jar.value = OWNER; store.fail.clear(); store.empty.clear(); s
 /** Now as it is served, every boundary resolved. */
 async function served(): Promise<Document> {
   const element = (await NowPage()) as ReactElement;
-  const html = await new Promise<string>((resolve, reject) => {
-    const out = new PassThrough();
-    let text = '';
-    out.on('data', (chunk) => { text += chunk; });
-    out.on('end', () => resolve(text));
-    // Every boundary written in place, as the page reads once a browser has run its scripts: a large boundary is otherwise
-    // written after the root, outside the frame, and its fallback stands where it will be.
-    const stream = renderToPipeableStream(<Tooltip.Provider>{element}</Tooltip.Provider>, { onAllReady: () => stream.pipe(out), onShellError: reject, onError: reject, progressiveChunkSize: Infinity });
-  });
-  return new DOMParser().parseFromString(html, 'text/html');
+  return servedDocument(element);
 }
 // The cards the page itself draws: a card a card draws inside itself (the strip of each service in the Status list) is that card's.
 const cards = (root: ParentNode) => [...root.querySelectorAll('[data-card]')].filter((e) => !e.parentElement?.closest('[data-card]')).map((e) => (e.getAttribute('data-label') ? `${e.getAttribute('data-card')}:${e.getAttribute('data-label')}` : e.getAttribute('data-card')));

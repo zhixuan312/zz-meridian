@@ -1,7 +1,6 @@
 // Named cli-* so the payload leaves it out: it is about the sample's own Home, which a product replaces.
-import { PassThrough } from 'node:stream';
 import type { ReactElement } from 'react';
-import { renderToPipeableStream, renderToStaticMarkup } from 'react-dom/server';
+import { renderToStaticMarkup } from 'react-dom/server';
 import { Tooltip } from 'radix-ui';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -57,6 +56,7 @@ import HomeLoading from '../app/(dashboard)/(home)/loading';
 import DashboardError from '../app/(dashboard)/error';
 import { contextText } from '@/lib/shared-context';
 import { homeTool } from '@/logic/tools';
+import { servedDocument } from './cli-served';
 
 const PERSONAS = { owner: 'members_1', member: 'members_4' };
 
@@ -66,14 +66,7 @@ beforeEach(() => { jar.value = undefined; store.fail.clear(); store.empty.clear(
 async function served(id: string, period = '30d'): Promise<Document> {
   jar.value = id;
   const element = (await HomePage({ searchParams: Promise.resolve({ period }) })) as ReactElement;
-  const html = await new Promise<string>((resolve, reject) => {
-    const out = new PassThrough();
-    let text = '';
-    out.on('data', (chunk) => { text += chunk; });
-    out.on('end', () => resolve(text));
-    const stream = renderToPipeableStream(<Tooltip.Provider>{element}</Tooltip.Provider>, { onAllReady: () => stream.pipe(out), onShellError: reject, onError: reject });
-  });
-  return new DOMParser().parseFromString(html, 'text/html');
+  return servedDocument(element);
 }
 /** The cards, in the order they stand, each with its label where it has one. */
 const cards = (doc: Document) => [...doc.querySelectorAll('[data-card]')].map((e) => (e.getAttribute('data-label') ? `${e.getAttribute('data-card')}:${e.getAttribute('data-label')}` : e.getAttribute('data-card')));

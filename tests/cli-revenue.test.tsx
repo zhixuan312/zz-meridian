@@ -1,7 +1,6 @@
 // Named cli-* so the payload leaves it out: it is about the sample's own Revenue page, which a product replaces.
-import { PassThrough } from 'node:stream';
 import type { ReactElement } from 'react';
-import { renderToPipeableStream, renderToStaticMarkup } from 'react-dom/server';
+import { renderToStaticMarkup } from 'react-dom/server';
 import { Tooltip } from 'radix-ui';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -56,6 +55,7 @@ import RevenueLoading from '../app/(dashboard)/business/loading';
 import { facts } from '@/app.config';
 import { contextText } from '@/lib/shared-context';
 import { revenueTool } from '@/logic/tools';
+import { servedDocument } from './cli-served';
 
 const OWNER = 'members_1';
 
@@ -65,16 +65,7 @@ beforeEach(() => { jar.value = undefined; store.fail.clear(); store.empty.clear(
 async function served(period = '30d', id = OWNER): Promise<Document> {
   jar.value = id;
   const element = (await RevenuePage({ searchParams: Promise.resolve({ period }) })) as ReactElement;
-  const html = await new Promise<string>((resolve, reject) => {
-    const out = new PassThrough();
-    let text = '';
-    out.on('data', (chunk) => { text += chunk; });
-    out.on('end', () => resolve(text));
-    // Every boundary written in place, as the page reads once a browser has run its scripts: a large boundary is otherwise
-    // written after the root, outside the frame, and its fallback stands where it will be.
-    const stream = renderToPipeableStream(<Tooltip.Provider>{element}</Tooltip.Provider>, { onAllReady: () => stream.pipe(out), onShellError: reject, onError: reject, progressiveChunkSize: Infinity });
-  });
-  return new DOMParser().parseFromString(html, 'text/html');
+  return servedDocument(element);
 }
 const cards = (doc: Document) => [...doc.querySelectorAll('[data-card]')].map((e) => (e.getAttribute('data-label') ? `${e.getAttribute('data-card')}:${e.getAttribute('data-label')}` : e.getAttribute('data-card')));
 /** The element whose whole text is `title`, and nothing inside it: a part's title. */

@@ -1,7 +1,6 @@
 // Named cli-* so the payload leaves it out: it is about the sample's own Services page, which a product replaces.
-import { PassThrough } from 'node:stream';
 import type { ReactElement } from 'react';
-import { renderToPipeableStream, renderToStaticMarkup } from 'react-dom/server';
+import { renderToStaticMarkup } from 'react-dom/server';
 import { Tooltip } from 'radix-ui';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -51,20 +50,14 @@ import ServicesPage from '../app/(dashboard)/services/page';
 import ServicesLoading from '../app/(dashboard)/services/loading';
 import { contextText } from '@/lib/shared-context';
 import { servicesTool } from '@/logic/tools';
+import { servedDocument } from './cli-served';
 
 beforeEach(() => { jar.value = 'members_1'; store.fail.clear(); store.empty.clear(); store.map.clear(); });
 
 /** Services as it is served, every boundary resolved. */
 async function served(): Promise<Document> {
   const element = (await ServicesPage()) as ReactElement;
-  const html = await new Promise<string>((resolve, reject) => {
-    const out = new PassThrough();
-    let text = '';
-    out.on('data', (chunk) => { text += chunk; });
-    out.on('end', () => resolve(text));
-    const stream = renderToPipeableStream(<Tooltip.Provider>{element}</Tooltip.Provider>, { onAllReady: () => stream.pipe(out), onShellError: reject, onError: reject, progressiveChunkSize: Infinity });
-  });
-  return new DOMParser().parseFromString(html, 'text/html');
+  return servedDocument(element);
 }
 const cards = (root: ParentNode) => [...root.querySelectorAll('[data-card]')].map((e) => (e.getAttribute('data-label') ? `${e.getAttribute('data-card')}:${e.getAttribute('data-label')}` : e.getAttribute('data-card')));
 function titled(root: ParentNode, title: string): Element {

@@ -1,7 +1,6 @@
 // Named cli-* so the payload leaves it out: it is about the sample's own customer pages, which a product replaces.
-import { PassThrough } from 'node:stream';
 import type { ReactElement } from 'react';
-import { renderToPipeableStream, renderToStaticMarkup } from 'react-dom/server';
+import { renderToStaticMarkup } from 'react-dom/server';
 import { Tooltip } from 'radix-ui';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -47,6 +46,7 @@ import HomePage from '../app/(dashboard)/(home)/page';
 import { readAll } from '@/data/read';
 import { NOT_FOUND } from '@/views/not-found';
 import type { CustomerRecord } from '@/data/sample';
+import { servedDocument } from './cli-served';
 
 const OWNER = 'members_1';
 
@@ -55,16 +55,7 @@ beforeEach(() => { jar.value = OWNER; store.fail.clear(); });
 /** A page as it is served, every boundary resolved. */
 async function served(page: unknown): Promise<Document> {
   const element = (await page) as ReactElement;
-  const html = await new Promise<string>((resolve, reject) => {
-    const out = new PassThrough();
-    let text = '';
-    out.on('data', (chunk) => { text += chunk; });
-    out.on('end', () => resolve(text));
-    // Every boundary written in place, as the page reads once a browser has run its scripts: a large boundary is otherwise
-    // written after the root, outside the frame, and its fallback stands where it will be.
-    const stream = renderToPipeableStream(<Tooltip.Provider>{element}</Tooltip.Provider>, { onAllReady: () => stream.pipe(out), onShellError: reject, onError: reject, progressiveChunkSize: Infinity });
-  });
-  return new DOMParser().parseFromString(html, 'text/html');
+  return servedDocument(element);
 }
 const customerPage = (id: string) => served(CustomerPage({ params: Promise.resolve({ id }) }));
 const cards = (doc: Document) => [...doc.querySelectorAll('[data-card]')].map((e) => (e.getAttribute('data-label') ? `${e.getAttribute('data-card')}:${e.getAttribute('data-label')}` : e.getAttribute('data-card')));

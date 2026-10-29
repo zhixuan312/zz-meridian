@@ -1,8 +1,7 @@
 // Named cli-* so the payload leaves it out: it is about the sample's own Usage page, which a product replaces.
 import { fireEvent, render, within } from '@testing-library/react';
-import { PassThrough } from 'node:stream';
 import type { ReactElement } from 'react';
-import { renderToPipeableStream, renderToStaticMarkup } from 'react-dom/server';
+import { renderToStaticMarkup } from 'react-dom/server';
 import { Tooltip } from 'radix-ui';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -55,6 +54,7 @@ import UsageLoading from '../app/(dashboard)/usage/loading';
 import { contextText } from '@/lib/shared-context';
 import { UsageBody } from '@/views/usage';
 import { usageTool } from '@/logic/tools';
+import { servedDocument } from './cli-served';
 
 const OWNER = 'members_1';
 
@@ -64,16 +64,7 @@ beforeEach(() => { jar.value = OWNER; store.fail.clear(); store.empty.clear(); }
 async function served(period = '30d'): Promise<Document> {
   jar.value = OWNER;
   const element = (await UsagePage({ searchParams: Promise.resolve({ period }) })) as ReactElement;
-  const html = await new Promise<string>((resolve, reject) => {
-    const out = new PassThrough();
-    let text = '';
-    out.on('data', (chunk) => { text += chunk; });
-    out.on('end', () => resolve(text));
-    // Every boundary written in place, as the page reads once a browser has run its scripts: a large boundary is otherwise
-    // written after the root, outside the frame, and its fallback stands where it will be.
-    const stream = renderToPipeableStream(<Tooltip.Provider>{element}</Tooltip.Provider>, { onAllReady: () => stream.pipe(out), onShellError: reject, onError: reject, progressiveChunkSize: Infinity });
-  });
-  return new DOMParser().parseFromString(html, 'text/html');
+  return servedDocument(element);
 }
 const cards = (root: ParentNode) => [...root.querySelectorAll('[data-card]')].map((e) => (e.getAttribute('data-label') ? `${e.getAttribute('data-card')}:${e.getAttribute('data-label')}` : e.getAttribute('data-card')));
 function titled(root: ParentNode, title: string): Element {

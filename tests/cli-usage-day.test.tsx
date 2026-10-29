@@ -1,8 +1,5 @@
 // Named cli-* so the payload leaves it out: it is about the sample's own Usage page, which a product replaces.
-import { PassThrough } from 'node:stream';
 import type { ReactElement } from 'react';
-import { renderToPipeableStream } from 'react-dom/server';
-import { Tooltip } from 'radix-ui';
 import { describe, expect, it, vi } from 'vitest';
 
 vi.mock('next/headers', () => ({
@@ -25,18 +22,12 @@ vi.mock('@/components/charts/meridian', async (orig) => {
 
 import UsagePage from '../app/(dashboard)/usage/page';
 import { usageTool } from '@/logic/tools';
+import { servedDocument } from './cli-served';
 
 /** Usage as it is served at an address, every boundary resolved. */
 async function served(searchParams: { period?: string; day?: string }): Promise<Document> {
   const element = (await UsagePage({ searchParams: Promise.resolve(searchParams) })) as ReactElement;
-  const html = await new Promise<string>((resolve, reject) => {
-    const out = new PassThrough();
-    let text = '';
-    out.on('data', (chunk) => { text += chunk; });
-    out.on('end', () => resolve(text));
-    const stream = renderToPipeableStream(<Tooltip.Provider>{element}</Tooltip.Provider>, { onAllReady: () => stream.pipe(out), onShellError: reject, onError: reject, progressiveChunkSize: Infinity });
-  });
-  return new DOMParser().parseFromString(html, 'text/html');
+  return servedDocument(element);
 }
 
 describe("Usage opens at the day its context's address names", () => {

@@ -1,7 +1,6 @@
 // Named cli-* so the payload leaves it out: it is about the sample's own Home, which a product replaces.
-import { PassThrough } from 'node:stream';
 import type { ReactElement } from 'react';
-import { renderToPipeableStream, renderToStaticMarkup } from 'react-dom/server';
+import { renderToStaticMarkup } from 'react-dom/server';
 import { Tooltip } from 'radix-ui';
 import { describe, expect, it, vi } from 'vitest';
 
@@ -14,18 +13,12 @@ vi.mock('next/navigation', () => ({
 
 import HomePage from '../app/(dashboard)/(home)/page';
 import HomeLoading from '../app/(dashboard)/(home)/loading';
+import { servedDocument } from './cli-served';
 
 /** Home as it is served, every boundary resolved. */
 async function served(): Promise<Document> {
   const element = (await HomePage({ searchParams: Promise.resolve({ period: '30d' }) })) as ReactElement;
-  const html = await new Promise<string>((resolve, reject) => {
-    const out = new PassThrough();
-    let text = '';
-    out.on('data', (chunk) => { text += chunk; });
-    out.on('end', () => resolve(text));
-    const stream = renderToPipeableStream(<Tooltip.Provider>{element}</Tooltip.Provider>, { onAllReady: () => stream.pipe(out), onShellError: reject, onError: reject });
-  });
-  return new DOMParser().parseFromString(html, 'text/html');
+  return servedDocument(element);
 }
 const loading = () => new DOMParser().parseFromString(renderToStaticMarkup(<Tooltip.Provider><HomeLoading /></Tooltip.Provider>), 'text/html');
 
