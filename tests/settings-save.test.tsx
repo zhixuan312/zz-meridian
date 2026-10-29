@@ -87,4 +87,22 @@ describe('what the workspace record holds', () => {
     const { container } = render(<SettingsBody may={may} workspace={record} />);
     expect(container.textContent).not.toMatch(/the rail|every date|daily total/i);
   });
+
+  it('takes a newer record when nothing is being edited, and keeps an edit in progress over it', () => {
+    const save = async () => ({ ok: true }) as const;
+    const { rerender } = render(<SettingsBody may={may} workspace={record} save={save} />);
+    // Another tab saved, and the page was refreshed.
+    rerender(<SettingsBody may={may} workspace={{ ...record, name: 'Acme Live' }} save={save} />);
+    expect(name().value).toBe('Acme Live');
+    type('Acme Edited');
+    rerender(<SettingsBody may={may} workspace={{ ...record, name: 'Acme Newer' }} save={save} />);
+    expect(name().value).toBe('Acme Edited');
+    fireEvent.click(screen.getByRole('button', { name: 'Discard' }));
+    expect(name().value).toBe('Acme Newer');
+  });
+
+  it('offers no change it could not save', () => {
+    render(<SettingsBody may={may} workspace={record} />);
+    expect(name().matches(':disabled')).toBe(true);
+  });
 });

@@ -6,7 +6,8 @@ import { SettingsBody } from '@/views/settings';
 const ALL = { workspaceRead: true, workspaceUpdate: true };
 const READ = { workspaceRead: true, workspaceUpdate: false };
 const NONE = { workspaceRead: false, workspaceUpdate: false };
-const settings = (may: typeof ALL) => renderToStaticMarkup(<SettingsBody may={may} />);
+// The page always hands the section its save; what decides the rest is what the person may do.
+const settings = (may: typeof ALL) => renderToStaticMarkup(<SettingsBody may={may} save={async () => ({ ok: true })} />);
 
 describe('the settings page by need', () => {
   it('shows everything to someone who may change the workspace', () => {

@@ -94,11 +94,20 @@ export function SettingsBody({ may, workspace, save, unreadable }: { may: Settin
 function Workspace({ may, record, save }: { may: SettingsMay; record: WorkspaceValues; save?: SaveWorkspace }) {
   const [v, setV] = useState(record);
   const [base, setBase] = useState(record);
+  const [from, setFrom] = useState(record);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | undefined>();
-  // Only a person who may change the workspace has anything to save or discard; everyone else reads the values as they are.
-  const editable = may.workspaceUpdate;
+  // Only a person who may change the workspace, with somewhere to save it, has anything to save or discard; everyone
+  // else reads the values as they are.
+  const editable = may.workspaceUpdate && save !== undefined;
   const dirty = editable && JSON.stringify(v) !== JSON.stringify(base);
+  // A newer record (another tab saved, the page was refreshed) is what is saved now: it shows at once, and an edit in
+  // progress stays over it, Discard then putting the newer values back.
+  if (JSON.stringify(record) !== JSON.stringify(from)) {
+    setFrom(record);
+    setBase(record);
+    if (!dirty) setV(record);
+  }
   const nameError = v.name.trim() === '' ? 'Give the workspace a name: an invitation names it.' : undefined;
   useReport('Workspace', `name "${base.name}", address app.${domain}/${base.slug}${dirty ? `; unsaved edit: name "${v.name}"` : ''}`);
   return (
@@ -109,7 +118,7 @@ function Workspace({ may, record, save }: { may: SettingsMay; record: WorkspaceV
       saving={saving}
       error={error}
       onDiscard={() => { setV(base); setError(undefined); }}
-      onSave={editable ? async () => {
+      onSave={editable && save ? async () => {
         if (nameError) return;
         setSaving(true);
         setError(undefined);
@@ -117,7 +126,7 @@ function Workspace({ may, record, save }: { may: SettingsMay; record: WorkspaceV
         // What is saved is the name without the space around it, so that is what the field and the context then hold.
         const saved = { ...v, name: v.name.trim() };
         // A save that never answered (a dropped connection) throws: told beside the fields like a refusal, the edits kept.
-        const result = save ? await save({ name: saved.name }).catch((): Result => ({ ok: false, error: 'The change did not reach the server. Try again.' })) : { ok: true } as Result;
+        const result = await save({ name: saved.name }).catch((): Result => ({ ok: false, error: 'The change did not reach the server. Try again.' }));
         setSaving(false);
         if (!result.ok) { setError(result.error); return; }
         setV(saved);
