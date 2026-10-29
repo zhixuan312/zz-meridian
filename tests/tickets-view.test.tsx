@@ -87,6 +87,17 @@ describe('the tickets page, for someone who may', () => {
     await act(async () => { made({ ok: true }); });
     await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
   });
+
+  it('keeps Create ticket ready while a row is moving, which is not a ticket being made', async () => {
+    const updateTicket = vi.fn(() => new Promise<Answer>(() => {}));
+    view({ updateTicket });
+    fireEvent.keyDown(screen.getByRole('button', { name: 'Change state of Gateway answers 502 under load' }), { key: 'Enter' });
+    await act(async () => { fireEvent.click(within(await screen.findByRole('menu')).getByRole('menuitem', { name: 'Move to closed' })); });
+    expect(updateTicket).toHaveBeenCalledTimes(1);
+    fireEvent.click(screen.getByRole('button', { name: 'New ticket' }));
+    const form = await screen.findByRole('dialog');
+    expect(within(form).getByRole('button', { name: 'Create ticket' }).getAttribute('aria-busy')).toBeNull();
+  });
 });
 
 describe('the navigation', () => {

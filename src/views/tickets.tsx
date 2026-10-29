@@ -74,7 +74,9 @@ export function TicketsView({ rows, now, revisions, may = { create: true, update
   const clear = () => set({ q: '', state: 'all', priority: 'all', page: '1' });
   const counts = ticketCounts(rows);
 
-  const [pending, startTransition] = useTransition();
+  // Create and each row's move are separate transitions, so the form reads busy only while a ticket is being made.
+  const [making, startMaking] = useTransition();
+  const [, startMoving] = useTransition();
   const sending = useRef(false);
   const moving = useRef(new Set<string>());
   const [creating, setCreating] = useState(false);
@@ -87,7 +89,7 @@ export function TicketsView({ rows, now, revisions, may = { create: true, update
     if (sending.current) return;
     sending.current = true;
     setRefusal(null);
-    startTransition(async () => {
+    startMaking(async () => {
       try {
         const answer = await createTicket(draft);
         if (answer.ok) {
@@ -110,7 +112,7 @@ export function TicketsView({ rows, now, revisions, may = { create: true, update
   const move = (t: TicketRow, state: Ticket['state']) => {
     if (moving.current.has(t.id)) return;
     moving.current.add(t.id);
-    startTransition(async () => {
+    startMoving(async () => {
       try {
         const answer = await updateTicket(t.id, { state });
         if (answer.ok) {
@@ -229,7 +231,7 @@ export function TicketsView({ rows, now, revisions, may = { create: true, update
         <DialogContent
           title="New ticket"
           description="It starts open. You can move it along once it exists."
-          footer={<><DialogClose asChild><Button variant="ghost">Cancel</Button></DialogClose><Button variant="primary" busy={pending} onClick={create}>Create ticket</Button></>}
+          footer={<><DialogClose asChild><Button variant="ghost">Cancel</Button></DialogClose><Button variant="primary" busy={making} onClick={create}>Create ticket</Button></>}
         >
           <div className="flex flex-col gap-5">
             {refusal ? <Banner tone="critical" title="Ticket not created">{refusal}</Banner> : null}
