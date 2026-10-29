@@ -66,3 +66,12 @@ describe("the customers' figures", () => {
     expect(view).not.toMatch(/status === 'past due'/);
   });
 });
+
+describe('the order the Customers context lists them in', () => {
+  it("is the table's: names by the collator, so a lower-case name sorts among the others", () => {
+    const named = (name: string) => ({ ...CUSTOMERS[0]!, id: name, name });
+    const rows = ['zeta labs', 'Acme', 'beta co', 'Delta'].map(named);
+    const shown = customersContext(rows, rows, { ...STATE, sort: 'name', dir: 'asc' }).facts.find((f) => f.label === 'Shown')!.value;
+    expect(shown.match(/(Acme|beta co|Delta|zeta labs) \(/g)).toEqual(['Acme (', 'beta co (', 'Delta (', 'zeta labs (']);
+  });
+});

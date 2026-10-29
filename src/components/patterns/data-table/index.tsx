@@ -6,6 +6,7 @@ import { useLeave } from '@/components/base/shell';
 import { useMemo, useState, type MouseEvent, type ReactNode } from 'react';
 import { RotateCw } from 'lucide-react';
 import { cn } from '@/lib/cn';
+import { compareValues } from '@/lib/sort';
 import { Button } from '@/components/ui/button';
 import { CardHeader } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -141,13 +142,6 @@ export function useTableQuery(defaults: Partial<TableState> = {}) {
   return useQueryState<TableState>({ sort: '', dir: 'desc', page: '1', ...defaults });
 }
 
-/**
- * Text in the order a reader expects: case and accents aside, and the numbers inside it by value ("v2" before "v10").
- * One locale on the server and in the browser, so a sorted table hydrates as it was drawn.
- */
-const TEXT = new Intl.Collator('en-US', { sensitivity: 'base', numeric: true });
-const order = (x: unknown, y: unknown) => (typeof x === 'string' && typeof y === 'string' ? TEXT.compare(x, y) : x === y ? 0 : (x as number) > (y as number) ? 1 : -1);
-
 /** Sort rows by a column's value. Stable; a row with no value for the column is last whichever way it is sorted. */
 export function sortRows<R>(rows: R[], columns: Column<R>[], sort: string, dir: string) {
   const col = columns.find((c) => c.key === sort);
@@ -160,7 +154,7 @@ export function sortRows<R>(rows: R[], columns: Column<R>[], sort: string, dir: 
     // A row with no value — a member who has never signed in, a release with no failure — has no place in the order,
     // and the two comparisons below are not the inverse of each other when one side is absent, so the sort's result
     // depended on the array's length and shape. It is said outright instead: those rows go last, and keep their order.
-    .sort((a, b) => (none(a.k) || none(b.k) ? (none(a.k) && none(b.k) ? a.i - b.i : none(a.k) ? 1 : -1) : sign * order(a.k, b.k) || a.i - b.i))
+    .sort((a, b) => (none(a.k) || none(b.k) ? (none(a.k) && none(b.k) ? a.i - b.i : none(a.k) ? 1 : -1) : sign * compareValues(a.k, b.k) || a.i - b.i))
     .map((x) => x.r);
 }
 

@@ -7,6 +7,7 @@ import { all } from '@/lib/facts';
 import { formatCompact, formatCost, formatPercent } from '@/lib/format';
 import { median } from '@/lib/insight';
 import { listed, type Fact, type Insight, type SharedContext } from '@/lib/shared-context';
+import { compareValues } from '@/lib/sort';
 
 type CustomersState = { q: string; plan: string; status: string; sort: string; dir: string; page: string };
 
@@ -89,7 +90,7 @@ export const under = <T extends Pick<CustomerRecord, 'status'>>(rows: T[], statu
 /** The Customers context; `filtered` is the list the filters leave, and the context orders it as the table does. */
 export function customersContext(rows: CustomerRow[], filtered: CustomerRow[], f: CustomersState): SharedContext {
   const field = ({ errors: 'errorRate', trend: 'requests' } as Record<string, keyof CustomerRow>)[f.sort] ?? (f.sort as keyof CustomerRow);
-  const matching = [...filtered].sort((a, b) => (f.dir === 'desc' ? -1 : 1) * (a[field] > b[field] ? 1 : a[field] < b[field] ? -1 : 0));
+  const matching = [...filtered].sort((a, b) => (f.dir === 'desc' ? -1 : 1) * compareValues(a[field], b[field]));
   const filters = [f.plan !== 'all' && `plan ${f.plan}`, f.status !== 'all' && `status ${f.status}`, f.q && `matching "${f.q}"`].filter(Boolean).join(', ');
   // Every figure and finding is of the customers that have not left; one that has is in the list under its status only.
   const counted = kept(rows);
