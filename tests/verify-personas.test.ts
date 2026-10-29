@@ -33,7 +33,9 @@ describe('the personas', () => {
     const r = run('--as', 'nobody');
     expect(r.status).not.toBe(0);
     const said = `${r.stdout}${r.stderr}`;
-    for (const name of ['owner', 'admin', 'member', 'key-manager', 'viewer']) expect(said, name).toContain(name);
+    const declared = Object.keys(config.personas ?? {});
+    expect(declared.length).toBeGreaterThan(0);
+    for (const name of declared) expect(said, name).toContain(name);
     expect(said).not.toMatch(/^ok\s+build/m);
   });
 

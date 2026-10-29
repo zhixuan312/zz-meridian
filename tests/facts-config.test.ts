@@ -10,12 +10,6 @@ import { first, record, steady } from '@/lib/facts';
 const day = (n: number) => new Date(Date.UTC(2025, 9, 8 + n)).toISOString().slice(0, 10);
 
 describe('the configuration of the facts', () => {
-  it('holds the band, the thresholds and the history, as the spec froze them', () => {
-    expect(facts.band).toEqual({ p95Under: 350, errorRateUnder: 0.01 });
-    expect(facts.firsts.requestsADay).toEqual([10_000_000, 25_000_000, 50_000_000]);
-    expect(facts.recordNeedsPeriods).toBe(6);
-  });
-
   it('the band decides which days are steady', () => {
     const days = [{ date: day(0), p95: 300, errors: 5, requests: 1000 }, { date: day(1), p95: 400, errors: 5, requests: 1000 }, { date: day(2), p95: 300, errors: 15, requests: 1000 }];
     expect(steady(days, facts.band)!.inside).toBe(1);

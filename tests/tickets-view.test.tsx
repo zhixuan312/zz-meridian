@@ -5,7 +5,6 @@ import { describe, expect, it, vi } from 'vitest';
 vi.mock('next/navigation', () => ({ usePathname: () => '/operations-tickets', useSearchParams: () => new URLSearchParams(), useRouter: () => ({ refresh() {}, push() {}, replace() {} }) }));
 vi.stubGlobal('IntersectionObserver', class { observe() {} unobserve() {} disconnect() {} });
 
-import { nav } from '@/app.config';
 import { TicketsView } from '@/views/tickets';
 
 type Answer = { ok: true } | { ok: false; error: string };
@@ -97,11 +96,5 @@ describe('the tickets page, for someone who may', () => {
     fireEvent.click(screen.getByRole('button', { name: 'New ticket' }));
     const form = await screen.findByRole('dialog');
     expect(within(form).getByRole('button', { name: 'Create ticket' }).getAttribute('aria-busy')).toBeNull();
-  });
-});
-
-describe('the navigation', () => {
-  it('carries no count that somebody typed', () => {
-    expect(nav.flatMap((g) => g.items).filter((i) => i.badge !== undefined).map((i) => i.href)).toEqual([]);
   });
 });

@@ -24,7 +24,8 @@ const links = () => screen.queryAllByRole('link').map((l) => l.textContent);
 describe('the navigation the chrome is given', () => {
   it('is the configured one when none is supplied', () => {
     expect(visible()).toBe(nav);
-    expect(hrefs(visible(['/', '/members']))).toEqual(['/', '/members']);
+    const two = hrefs(nav).slice(0, 2);
+    expect(hrefs(visible(two))).toEqual(two);
   });
 
   it('keeps a supplied navigation in its own groups and order, and shows only what the person may open', () => {
@@ -80,7 +81,9 @@ describe("the console's rail and palette, given a navigation", () => {
     act(() => openCommand());
     const options = within(await screen.findByRole('dialog')).getAllByRole('option').map((o) => o.textContent ?? '');
     expect(options.filter((o) => o.endsWith('Workshop'))).toEqual(['JobsWorkshop', 'PartsWorkshop']);
-    expect(options.some((o) => /^(Home|Home|Members)/.test(o))).toBe(false);
+    // Nothing of the configured navigation, whatever it holds, beyond the two this person may open of their own.
+    const configured = nav.flatMap((g) => g.items.map((i) => i.label)).filter((l) => !['Jobs', 'Parts'].includes(l));
+    expect(options.filter((o) => configured.some((l) => o.startsWith(l)))).toEqual([]);
   });
 
   it('offers an empty supplied navigation as empty, in both', async () => {

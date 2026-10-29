@@ -7,8 +7,9 @@ import { ConsoleRail, visible } from '@/views/console-chrome';
 describe("the console's rail, configured from the product's layout", () => {
   it('shows every destination by default, and only those a person may see when given', () => {
     expect(visible()).toBe(nav);
-    const only = visible(['/', '/members']);
-    expect(only.flatMap((g) => g.items.map((i) => i.href))).toEqual(['/', '/members']);
+    const two = nav.flatMap((g) => g.items.map((i) => i.href)).slice(0, 2);
+    const only = visible(two);
+    expect(only.flatMap((g) => g.items.map((i) => i.href))).toEqual(two);
     expect(only.every((g) => g.items.length)).toBe(true);
   });
   it('shows the frame with no destination and no name until access resolves, then the person and their role', async () => {

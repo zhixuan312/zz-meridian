@@ -5,22 +5,25 @@ import { nearestOf, readable } from '@/views/not-found';
 // The Atlas's nested entries exist only while the Atlas does; brand.ts --product removes them with it.
 const hasAtlas = nav.some((g) => g.items.some((i) => i.href === '/system'));
 
+// A top-level entry of this project's own navigation, so the cases hold whatever the rail names.
+const entry = nav.flatMap((g) => g.items).find((i) => /^\/[^/]+$/.test(i.href))!;
+
 describe('nearestOf', () => {
   it('walks a missing record back to its list', () => {
-    expect(nearestOf('/requests/req_missing')).toEqual({ href: '/requests', label: 'Requests', rest: '/req_missing' });
+    expect(nearestOf(`${entry.href}/missing`)).toEqual({ href: entry.href, label: entry.label, rest: '/missing' });
   });
   it('matches on a segment boundary only', () => {
-    expect(nearestOf('/requestsx')).toEqual({ href: '/', label: 'Home', rest: '/requestsx' });
+    expect(nearestOf(`${entry.href}x`)).toMatchObject({ href: '/', rest: `${entry.href}x` });
   });
   it.runIf(hasAtlas)('prefers the longest entry: Docs over Design system', () => {
     expect(nearestOf('/system/start/start-a-dashboard/gone').label).toBe('Docs');
     expect(nearestOf('/system/gone').label).toBe('Design system');
   });
   it('keeps every missing segment after the match', () => {
-    expect(nearestOf('/settings/billing/invoices/2026').rest).toBe('/billing/invoices/2026');
+    expect(nearestOf(`${entry.href}/billing/invoices/2026`).rest).toBe('/billing/invoices/2026');
   });
   it('ignores a trailing slash', () => {
-    expect(nearestOf('/requests/')).toEqual({ href: '/requests', label: 'Requests', rest: '' });
+    expect(nearestOf(`${entry.href}/`)).toEqual({ href: entry.href, label: entry.label, rest: '' });
   });
   it('falls back to the Home with the whole address left over', () => {
     expect(nearestOf('/this-page-does-not-exist').rest).toBe('/this-page-does-not-exist');

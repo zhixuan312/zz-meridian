@@ -93,3 +93,11 @@ describe('the Atlas', () => {
     for (const p of PAGES) expect(exists(p.spec), `${p.id}: ${p.spec}`).toBe(true);
   });
 });
+
+describe("the sample's navigation", () => {
+  // `badge` is a field a product passes, worked out from its data; the sample's had a typed '1' that said one incident
+  // was open whatever the incidents were.
+  it('carries no count that somebody typed', () => {
+    expect(nav.flatMap((g) => g.items).filter((i) => i.badge !== undefined).map((i) => i.href)).toEqual([]);
+  });
+});
