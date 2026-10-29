@@ -16,28 +16,31 @@ export function generateMetadata() {
  * assistant is told are the same figures.
  *
  * After the read it asks the action table what this person may do, so a control is drawn only where it can be used; the
- * actions re-check, because authority can change between this render and a press. The services offered come from an
- * authorized read, and the people offered as assignee only for someone who may read members: a Viewer sees the names
- * on the tickets (the read joins them) and is offered nobody.
+ * actions re-check, because authority can change between this render and a press. The services the New ticket form
+ * offers are read, through an authorized read, only for someone who may create a ticket, and the people offered as
+ * assignee only for someone who may read members: a Viewer sees the names on the tickets (the read joins them), is
+ * offered nobody, and reads no service.
  */
 export default async function TicketsPage() {
   const denied = await gate('tickets');
   if (denied) return RefusalScreen(denied);
-  const [{ rows, revisions, observedAt }, mayCreate, mayUpdate, mayReadMembers, services] = await Promise.all([
+  const [{ rows, revisions, observedAt }, mayCreate, mayUpdate, mayReadMembers] = await Promise.all([
     readTickets(),
     may(ACTIONS['create-ticket'].needs),
     may(ACTIONS['update-ticket'].needs),
     may('members:read'),
-    readAll('services'),
   ]);
-  const people = mayReadMembers ? (await readAll('members')).rows : [];
+  const [services, people] = await Promise.all([
+    mayCreate ? readAll('services').then((r) => r.rows) : [],
+    mayReadMembers ? readAll('members').then((r) => r.rows) : [],
+  ]);
   return (
     <TicketsView
       rows={rows}
       now={observedAt}
       revisions={revisions}
       may={{ create: mayCreate, update: mayUpdate }}
-      services={services.rows.map((s) => String(s.name))}
+      services={services.map((s) => String(s.name))}
       assignees={people.map((m) => ({ id: String(m.id), name: String(m.name) }))}
       createTicket={createTicket}
       updateTicket={updateTicket}

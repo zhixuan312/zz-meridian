@@ -88,4 +88,11 @@ describe('a page that says every row', () => {
     expect(seen.services).toBe(services);
     expect(seen.assignees).toBe(members);
   });
+
+  it('reads no service for someone who may not create a ticket, since only the New ticket form offers them', async () => {
+    jar.value = String(store('members').rows.find((m) => m.role === 'Viewer' && m.status === 'Active')!.id);
+    seen.services = -1;
+    await served(TicketsPage());
+    expect(seen.services).toBe(0);
+  });
 });
