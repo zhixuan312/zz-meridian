@@ -314,6 +314,7 @@ describe('the 0.17.0 migration', () => {
   it('finds a file that calls `finalOutcome` with a boolean, and leaves one that passes the tiers', () => {
     const imp = "import { finalOutcome } from '../scripts/lib/coverage.ts';\n";
     expect(byId('verify-tiers').since).toBe('0.17.0');
+    expect(byId('verify-tiers').checks).toEqual(['gate']);
     expect(byId('verify-tiers').applies(project({ 'tests/verify-suite-outcome.test.ts': `${imp}finalOutcome(true, []);\n` }))).toEqual(['tests/verify-suite-outcome.test.ts']);
     expect(byId('verify-tiers').applies(project({ 'tests/verify-suite-outcome.test.ts': `${imp}finalOutcome({ full: true, timed: false }, []);\n` }))).toBeNull();
     // A call of another function by that name, with no import of the coverage module, is not this migration's.

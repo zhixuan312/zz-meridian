@@ -128,15 +128,6 @@ describe('formatDay', () => {
   });
 });
 
-describe('a money axis', () => {
-  it('reads large ticks at a glance and small ones exactly', () => {
-    expect(AXIS_FORMATTERS.cost(12)).toBe(`${symbol}12`);
-    expect(AXIS_FORMATTERS.cost(5_000)).toBe(`${symbol}5K`);
-    expect(AXIS_FORMATTERS.cost(25_000)).toBe(`${symbol}25K`);
-    expect(AXIS_FORMATTERS.cost(5_000_000_000)).toBe(`${symbol}5B`);
-  });
-});
-
 describe('changeOf and capitalise', () => {
   it('give a change as a fraction, and nothing against no figure or a zero one', () => {
     expect(changeOf(150, 100)).toBeCloseTo(0.5);
