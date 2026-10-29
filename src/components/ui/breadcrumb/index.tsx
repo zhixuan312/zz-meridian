@@ -24,7 +24,10 @@ export function Breadcrumb({ items, className }: { items: Crumb[]; className?: s
           const last = i === shown.length - 1;
           return (
             <Fragment key={c === 'fold' ? 'fold' : `${c.label}-${i}`}>
-              <li className={cn('flex min-w-0 items-center', last ? 'shrink' : 'shrink-0')}>
+              {/* The current page gives up its width first, by far, down to a few letters and its ellipsis; an ancestor then
+                  shrinks as well rather than running past the column, and its label truncates with its whole name in its
+                  title. A floor wider than a short last label only leaves room after the trail. */}
+              <li className={cn('flex items-center', last ? 'min-w-12 shrink-[1000]' : 'min-w-0 shrink')}>
                 {c === 'fold' ? (
                   <Menu>
                     <MenuTrigger aria-label={`${hidden.length} more levels`} className="press hit grid h-5 w-6 place-items-center rounded-xs text-ink-3 hover:bg-fill-hover hover:text-ink">

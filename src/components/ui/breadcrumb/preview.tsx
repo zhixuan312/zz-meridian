@@ -20,6 +20,11 @@ export default function BreadcrumbPreview() {
           <Breadcrumb items={[{ label: 'Requests', href: '/requests' }, { label: 'POST /v1/documents/:id/attachments/upload' }]} />
         </div>
       </Specimen>
+      <Specimen label="Long ancestors" note="Ancestors wider than the line truncate too, after the current page, and never run past it.">
+        <div className="w-full max-w-70">
+          <Breadcrumb items={[{ label: 'Northwind Logistics International Holdings', href: '/customers' }, { label: 'API keys', href: '/keys' }, { label: 'Billing worker' }]} />
+        </div>
+      </Specimen>
     </>
   );
 }
