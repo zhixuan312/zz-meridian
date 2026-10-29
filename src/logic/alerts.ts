@@ -46,18 +46,20 @@ async function incidentAlerts(): Promise<{ alerts: Alert[]; observedAt: string }
   return { alerts, observedAt };
 }
 
-/** One alert for the customers past due: the customer's name and its page when there is one, and how many when there are more, linking to Customers filtered to them. */
+/** One alert for the customers past due: the customer's name and its page when there is one, and how many when there are more, linking to Customers filtered to them, timed by the latest to fall past due. */
 async function customerAlerts(): Promise<{ alerts: Alert[]; observedAt: string }> {
   const { rows, observedAt } = await readAll('customers');
   const { pastDue } = customerFigures(rows as CustomerRecord[]);
   if (!pastDue.length) return { alerts: [], observedAt };
   const one = pastDue.length === 1;
+  // Timed by the latest customer to fall past due, which is what made the alert new; the read's time only without one.
+  const since = pastDue.map((c) => c.pastDueSince).filter((d) => d !== null).sort().at(-1);
   return {
     alerts: [{
       id: 'customers:past-due',
       title: one ? `${pastDue[0].name} is past due` : `${pastDue.length} customers are past due`,
       detail: one ? 'Their latest invoice is overdue' : 'Their latest invoices are overdue',
-      at: observedAt,
+      at: since ? `${since}T00:00:00.000Z` : observedAt,
       href: one ? customerAddress(pastDue[0].id) : customersAddress({ q: '', plan: 'all', status: 'past due', sort: 'revenue', dir: 'desc', page: '1' }),
       tone: 'warning',
     }],

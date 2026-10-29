@@ -32,6 +32,13 @@ describe('the alerts in the shell', () => {
     expect(open.map((i) => i.title)).toContain(alerts[0].title);
   });
 
+  it('time the customers past due by the latest of them to fall past due, not by the read', async () => {
+    const since = (await all('customers')).filter((c) => c.status === 'past due').map((c) => c.pastDueSince as string | null).filter((d) => d !== null).sort();
+    expect(since.length).toBeGreaterThan(0);
+    const { alerts } = await readAlerts();
+    expect(alerts.find((a) => a.id === 'customers:past-due')?.at).toBe(`${since.at(-1)}T00:00:00.000Z`);
+  });
+
   it('are each a thing somebody can open: one id each, a title, a time no later than the read, and an address the product has', async () => {
     const { alerts, now } = await readAlerts();
     expect(new Set(alerts.map((a) => a.id)).size).toBe(alerts.length);
