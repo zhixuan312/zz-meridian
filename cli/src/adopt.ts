@@ -14,12 +14,9 @@ import {
 } from './files.js';
 import { BRIEF_TEMPLATE, managedBlock, upsertManagedBlock } from './context.js';
 import { FIXED, adoptSetOf, managedPaths } from './ownership.js';
-import { MERIDIAN_SCRIPTS, TOOLCHAIN } from './reconcile.js';
+import { MERIDIAN_SCRIPTS, TOOLCHAIN, needOf } from './reconcile.js';
 
 export type AdoptOptions = { root: string; brand: Record<string, string>; allowDirty: boolean; install: boolean };
-
-/** The template's dependencies a dashboard built from these files needs. */
-const DEPS = ['next', 'react', 'react-dom', 'radix-ui', 'lucide-react', 'clsx', 'tailwind-merge', 'react-markdown', 'remark-gfm', 'ai', '@ai-sdk/react', 'zod'];
 
 const major = (spec: string) => Number(/(\d+)/.exec(spec)?.[1] ?? NaN);
 const TS = /\.(ts|tsx)$/;
@@ -266,7 +263,10 @@ Rename or move them, then run adopt again.`);
       }
     }
   };
-  merge('dependencies', DEPS);
+  // The packages the adopted modules import, and the framework: the rule `update` applies to a created project.
+  const sources = new Map(set.filter((rel) => TS.test(rel)).map((rel) => [rel, payloadBytes(rel).toString('utf8')]));
+  sources.set('src/app.config.ts', config);
+  merge('dependencies', needOf(tpl, sources).runtime);
   merge('devDependencies', TOOLCHAIN);
   pkg.scripts ??= {};
   for (const s of MERIDIAN_SCRIPTS) {

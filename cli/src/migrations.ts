@@ -28,7 +28,11 @@ const SKIP = new Set(['node_modules', '.next', '.git', '.meridian', 'out', 'cove
 const MANAGED_DIRS = ['tokens/', 'src/styles/', 'src/components/', 'scripts/', '.agents/', '.claude/'];
 const MANAGED_FILES = new Set(FIXED);
 
-/** Meridian's own paths, by the same rule `update` applies; everything else is the team's. */
+/**
+ * The paths a migration reads as Meridian's own; everything else is the team's. Not `update`'s rule (`managedPaths` in
+ * ownership.ts), which needs the route and the payload: it also manages a created project's shipped tests and `src/lib/`,
+ * and leaves `scripts/verify.config.ts` to the team. A migration that reads one of those decides for itself.
+ */
 const isTeamOwned = (rel: string) => !MANAGED_DIRS.some((d) => rel.startsWith(d)) && !MANAGED_FILES.has(rel);
 
 const text = (root: string, rel: string): string | null => {
