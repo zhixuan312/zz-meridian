@@ -96,7 +96,7 @@ describe('the verify configuration adopt writes', () => {
   it('names the sample\'s routes nowhere, and keeps the two settings a project has to decide', async () => {
     const { verifyConfig } = await import('../cli/src/adopt.ts');
     const text = verifyConfig();
-    expect(text).not.toMatch(/EVERY_ROUTE/);
+    expect(text).not.toMatch(/EVERY_ROUTE|ROLE_ROUTES|Every rail route|The sample.s routes/);
     for (const sample of ['/operations-tickets', '/system/start']) expect(text, sample).not.toContain(`'${sample}'`);
     expect(text).toMatch(/detailRoutes: \[\]/);
     expect(text).toMatch(/refusal,/);

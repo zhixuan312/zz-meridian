@@ -94,13 +94,14 @@ export function projectConfig(template: string, pages: string[]): string {
 }
 
 /**
- * `scripts/verify.config.ts` as a project gets it. The sample's persona rows are what used `EVERY_ROUTE`, so replacing the
- * config object leaves the constant declared and never read — which the gate's own lint fails, in the project adopt just
- * wrote, 0.7 s after the other steps passed. Exported so a test can hold the rewrite to that.
+ * `scripts/verify.config.ts` as a project gets it. The sample's persona rows are what used `EVERY_ROUTE` and `ROLE_ROUTES`,
+ * so replacing the config object leaves them declared and never read — which the gate's own lint fails, in the project
+ * adopt just wrote, 0.7 s after the other steps passed — and names the sample's routes in the team's file. Each goes
+ * with its doc line. Exported so a test can hold the rewrite to that.
  */
 export function verifyConfig(): string {
   return readPayload('scripts/verify.config.ts')
-    .replace(/^const EVERY_ROUTE = \[[^\n]*\n/m, '')
+    .replace(/^\/\*\*[^\n]*\*\/\nconst (?:EVERY_ROUTE|ROLE_ROUTES) = \[[^\n]*\n\n?/gm, '')
     .replace(/const config: VerifyConfig = \{[\s\S]*?\n\};/, `const config: VerifyConfig = {
   // One detail page per state worth seeing (a normal record, a failed one, a missing one), with ids from your data.
   detailRoutes: [],
