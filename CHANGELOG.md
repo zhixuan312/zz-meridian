@@ -60,6 +60,7 @@ Every release of ZZ Meridian, newest first. Versions follow semver: a removed or
 - **A request's More actions leads to API keys only for someone who may open them.** A Viewer was offered Open API keys and landed on the refusal page; `RequestView` takes `mayOpenKeys`.
 - **Usage's context names no busiest hour when no request was counted.** A fresh product's every hour ties at zero, and the first was named the busiest ("Monday 00:00, 0 requests"); it says no request was counted by hour.
 - **A collection's description names the reporting timezone.** `days`, `usage`, `compute`, `costs` and `hours` told the assistant their days and hours were UTC whatever `app.timezone` said; they name `app.timezone`.
+- **`create` on a path that is a file refuses in one line** ("… is a file: name a new folder") instead of a Node stack trace.
 - **The bell's customers-past-due alert is timed by the latest to fall past due**, not "just now" on every open.
 - **The Customers figure is defined as what it counts**, customers that have not left, not workspaces "with a live key".
 - **A customer is not compared with an error rate the product never measured**, over days that hold no request; an active member who has never signed in is named among the quiet ones, as never seen. Where most customers have no errors, the customers' context names those that have some, not every customer as "at least twice the median" of 0.00%.

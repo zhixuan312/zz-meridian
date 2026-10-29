@@ -13,6 +13,7 @@ export type CreateOptions = { dir: string; brand: Record<string, string>; instal
 
 export function create(o: CreateOptions): number {
   const root = path.resolve(o.dir);
+  if (fs.existsSync(root) && !fs.statSync(root).isDirectory()) return fail(`${root} is a file: name a new folder`);
   if (fs.existsSync(root) && fs.readdirSync(root).length) return fail(`${root} exists and is not empty: name a new folder`);
 
   let brand: Record<string, string>;
