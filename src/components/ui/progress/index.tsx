@@ -14,17 +14,20 @@ export function Progress({
   tone = 'accent',
   size = 'md',
   className,
+  'aria-label': ariaLabel,
 }: {
   value: number;
   max?: number;
-  /** What is measured: "Monthly quota". */
-  label?: ReactNode;
   /** The figure on the right: "8.2M of 10M". Defaults to the percentage. */
   valueLabel?: ReactNode;
   tone?: Tone;
   size?: 'sm' | 'md';
   className?: string;
-}) {
+} & (
+  | { /** What is measured: "Monthly quota". */ label: ReactNode; 'aria-label'?: undefined }
+  // A bar with no label row, as in a table cell, still has a name.
+  | { label?: undefined; 'aria-label': string }
+)) {
   // A value that is missing, or a whole of zero, says nothing about the share: a dash and no fill, never 0% or NaN%.
   const known = Number.isFinite(value) && max > 0;
   const now = known ? Math.max(0, Math.min(max, value)) : undefined;
@@ -38,7 +41,8 @@ export function Progress({
         <div className="mb-2 flex items-baseline gap-3 text-sm">
           {/* A label the row cuts keeps the whole of itself in its title, when it is words. */}
           <span id={name} title={typeof label === 'string' ? label : undefined} className="min-w-0 flex-1 truncate text-ink-2">{label}</span>
-          <span className="t-num font-medium">{valueLabel ?? (known ? `${Math.round(pct)}%` : '—')}</span>
+          {/* The bar stops at its whole; the figure says the share it is, 23 of 20 seats reading 115%. */}
+          <span className="t-num font-medium">{valueLabel ?? (known ? `${Math.round((value / max) * 100)}%` : '—')}</span>
         </div>
       ) : null}
       <div
@@ -46,7 +50,7 @@ export function Progress({
         aria-valuemin={0}
         aria-valuemax={known ? max : undefined}
         aria-valuenow={now}
-        aria-label={typeof label === 'string' ? label : undefined}
+        aria-label={typeof label === 'string' ? label : ariaLabel}
         aria-labelledby={typeof label === 'string' || label === undefined ? undefined : name}
         className={cn('overflow-hidden rounded-full bg-fill-track', size === 'sm' ? 'h-1' : 'h-1.5')}
       >

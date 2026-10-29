@@ -39,7 +39,8 @@ Label row 8px above the track.
 |---|---|
 | Rest | as above |
 | Changing | the fill grows from the left on arrival (`grow-x`, `dur-grow`, `ease-out`); later changes move its width over `dur-enter` |
-| Unknown value | a value that is missing, or a whole of zero, reads "—" with no fill and no current value; a value past its whole is held to it |
+| Unknown value | a value that is missing, or a whole of zero, reads "—" with no fill and no current value |
+| Past its whole | the bar and its current value are held to the whole; the default figure says the share it is: 23 of 20 reads "115%" |
 | Unknown total | not this card: use a Spinner or a Skeleton |
 | Reduced motion | the final width at once |
 
@@ -57,7 +58,7 @@ An agent reading usage gets the numbers from the view's shared context, not from
 
 ## Accessibility
 
-- `role="progressbar"` (or `meter`) with `aria-valuenow`, `aria-valuemin`, `aria-valuemax` and a name.
+- `role="progressbar"` (or `meter`) with `aria-valuenow`, `aria-valuemin`, `aria-valuemax` and a name: a string `label` names the bar, a drawn one names it by reference, and a bar with no label row (`sm` in a table cell) takes `aria-label`, which the type requires when `label` is absent.
 - The fill is reinforced by the figure; graphics contrast (light): `accent` 5.6:1 on `surface`.
 
 ## Content
@@ -75,6 +76,7 @@ The figure says the real quantity where it matters: "8.2M of 10M", "18 of 20". A
 import { Meter, Progress } from '@/components/ui/progress';
 
 <Progress label="Monthly quota" value={8.2} max={10} valueLabel="8.2M of 10M" />
+<Progress value={42} size="sm" aria-label="Import" />
 <Meter value={0.78} label="Plan usage" />
 ```
 

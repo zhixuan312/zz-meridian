@@ -11,13 +11,13 @@ export default function ProgressPreview() {
         <Progress label="Rollout to eu-west-1" value={64} className="max-w-md" />
         <Progress label="Seats" value={18} max={20} valueLabel="18 of 20" tone="warning" className="max-w-md" />
       </Specimen>
-      <Specimen label="Unknown value" note="A value that did not arrive, or a whole of zero: a dash and no fill. A value past its whole is held to it.">
+      <Specimen label="Unknown value" note="A value that did not arrive, or a whole of zero: a dash and no fill. A value past its whole fills the bar and says its share.">
         <State label="Missing" className="w-60"><Progress label="Monthly quota" value={Number.NaN} className="w-full" /></State>
         <State label="Past its whole" className="w-60"><Progress label="Seats" value={23} max={20} tone="critical" className="w-full" /></State>
       </Specimen>
       <Specimen label="Small" note="4px, inside a table cell or a list row.">
-        <State label="sm" className="w-48"><Progress value={42} size="sm" className="w-full" /></State>
-        <State label="Neutral" className="w-48"><Progress value={70} size="sm" tone="neutral" className="w-full" /></State>
+        <State label="sm" className="w-48"><Progress value={42} size="sm" aria-label="Import" className="w-full" /></State>
+        <State label="Neutral" className="w-48"><Progress value={70} size="sm" tone="neutral" aria-label="Storage used" className="w-full" /></State>
       </Specimen>
       <Specimen label="Meter" note="A level against thresholds: under 70% positive, then warning, from 90% critical.">
         <State label="42% · OK" className="w-40"><Meter value={0.42} label="Plan usage" className="w-full" /></State>
