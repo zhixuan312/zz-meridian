@@ -164,7 +164,7 @@ if (args.includes('--adopt') || !sections.some((s) => args.includes(s))) {
   const bad = sh('npx', ['--yes', '--package', tarball, 'zz-meridian', 'adopt', '--allow-dirty', '--name', 'a\\b'], app);
   check(bad.status !== 0 && /backslash/.test(bad.stderr), 'a brand value with a backslash is refused before anything is copied', bad.stderr);
   const again = sh('npx', ['--yes', '--package', tarball, 'zz-meridian', 'adopt'], app);
-  check(again.status !== 0 && /uncommitted changes/.test(again.stderr), 'a second adopt on the dirty tree refuses', again.stderr);
+  check(again.status !== 0 && /already on Meridian 0\.\d+\.\d+ .*update/.test(again.stderr), 'a second adopt refuses and names update', again.stderr);
 }
 
 // ── shared by --update and --update-all ────────────────────────────────────────────────────────────────
