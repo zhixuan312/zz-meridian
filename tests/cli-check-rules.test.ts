@@ -4,7 +4,7 @@ import { execFileSync, spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { afterAll, describe, expect, it } from 'vitest';
+import { afterAll, afterEach, describe, expect, it } from 'vitest';
 
 const ROOT = path.resolve(import.meta.dirname, '..');
 const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'zz-rules-'));
@@ -16,8 +16,10 @@ for (const f of execFileSync('git', ['ls-files', '-z', '--cached', '--others', '
   fs.copyFileSync(src, path.join(dir, f));
 }
 fs.symlinkSync(path.join(ROOT, 'node_modules'), path.join(dir, 'node_modules'));
-const put = (f: string, text: string) => { fs.mkdirSync(path.dirname(path.join(dir, f)), { recursive: true }); fs.writeFileSync(path.join(dir, f), text); };
-const remove = (...files: string[]) => { for (const f of files) fs.rmSync(path.join(dir, f), { force: true }); };
+/** Every path a case planted or removed, put back after each case, so one red leaves the next case the template's copy. */
+const touched = new Set<string>();
+const put = (f: string, text: string) => { touched.add(f); fs.mkdirSync(path.dirname(path.join(dir, f)), { recursive: true }); fs.writeFileSync(path.join(dir, f), text); };
+const remove = (...files: string[]) => { for (const f of files) { touched.add(f); fs.rmSync(path.join(dir, f), { force: true }); } };
 /** Put the repository's own copy of a file back, or remove it when the repository has none. */
 const restore = (f: string) => {
   const src = path.join(ROOT, f);
@@ -43,6 +45,11 @@ const plantNav = (needs: string | null) => {
   put('src/app.config.ts', needs === null ? base.replace(`, ${at}`, '') : base.replace(at, `needs: ${needs}`));
 };
 const restoreAppConfig = () => put('src/app.config.ts', fs.readFileSync(path.join(ROOT, 'src/app.config.ts'), 'utf8'));
+afterEach(() => {
+  const paths = [...touched];
+  for (const f of paths) restore(f);
+  touched.clear();
+});
 
 describe("the template's own rules", () => {
   it('pass on the template as it is', () => expect(check()).toMatch(/^0 problems/m), 60_000);
@@ -79,7 +86,9 @@ describe("the template's own rules", () => {
     const featured = "<FeaturedMetric kicker=\"A\" value={1} />";
     put('src/views/two.tsx', `import { FeaturedMetric } from '@/components/patterns/featured-metric';\nexport const Two = () => (\n  <>\n    ${featured}\n    ${featured}\n  </>\n);\n`);
     expect(check()).toMatch(/src\/views\/two\.tsx:5: a second FeaturedMetric \(the first is at line 4\)/);
-    remove('src/views/two.tsx');
+    put('.meridian/manifest.json', JSON.stringify({ version: '0.5.0', route: 'create', brand: { name: 'Acme' }, files: {} }));
+    expect(check()).toMatch(/src\/views\/two\.tsx:5: a second FeaturedMetric \(the first is at line 4\)/);
+    remove('.meridian/manifest.json', 'src/views/two.tsx');
   }, 60_000);
   it('send a nav item with no need, a bad grant or an allOf the shape it cannot read to the gate, naming its href', () => {
     plantNav(null);
