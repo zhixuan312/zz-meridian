@@ -609,8 +609,10 @@ has no cards' previews, and there it writes a registry of none).
 Routes, API paths, tool names (`explore_enhancements` → `explore_initiatives`), seeds and tables are yours to rename. The
 assistant walk-through (`scripts/assistant.ts`) checks what every product shares on your own rail, and drives the
 template's sample Home, Now, Members (its lookups through `explore_members`), API keys (a revocation found through
-`explore_keys`) and Settings, and asks its Usage and Tests through their prepared queries, only while their files are there: replace one and its steps
-print `n/a` with the reason, never a failure, so you never edit Meridian's scripts to rename your pages. The live checks
+`explore_keys`) and Settings, and asks its Usage and Tests through their prepared queries, only while their files are there and still hold what the
+walk reads (the sample's people, the invitation's copy, the page title, the switch's label): replace one, or give it your
+own people and words, and its steps print `n/a` with the reason, never a failure, so you never edit Meridian's scripts to
+rename your pages. The live checks
 (`scripts/live.ts`) work the same way with the sample Members page. `scripts/verify.config.ts`'s `detailRoutes` name ids from the sample, and its `navigationChecks` and `smokeRoutes` name routes and titles, so they move too.
 
 ## Things that render nothing (and fail the gate)
