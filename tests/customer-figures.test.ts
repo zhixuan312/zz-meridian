@@ -4,7 +4,7 @@ import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { formatCost } from '@/lib/format';
 import { CUSTOMERS } from '@/system/fixtures/company';
-import { CUSTOMER_METRICS, customerFigures, customersContext, under } from '@/logic/customers-context';
+import { CUSTOMER_METRICS, customerFigures, customersContext, pastDueNote, under } from '@/logic/customers-context';
 
 const ROOT = path.resolve(import.meta.dirname, '..');
 const STATE = { q: '', plan: 'all', status: 'all', sort: 'revenue', dir: 'desc', page: '1' };
@@ -73,5 +73,15 @@ describe('the order the Customers context lists them in', () => {
     const rows = ['zeta labs', 'Acme', 'beta co', 'Delta'].map(named);
     const shown = customersContext(rows, rows, { ...STATE, sort: 'name', dir: 'asc' }).facts.find((f) => f.label === 'Shown')!.value;
     expect(shown.match(/(Acme|beta co|Delta|zeta labs) \(/g)).toEqual(['Acme (', 'beta co (', 'Delta (', 'zeta labs (']);
+  });
+});
+
+describe("the past-due tile's line", () => {
+  it('names the customers as a sentence does, the largest first, and counts the rest past two', () => {
+    const owing = (name: string, revenue: number) => ({ name, revenue });
+    expect(pastDueNote([])).toBe('Every invoice is paid');
+    expect(pastDueNote([owing('Acme', 10)])).toBe('Acme');
+    expect(pastDueNote([owing('Acme', 10), owing('Brightline', 20)])).toBe('Brightline and Acme');
+    expect(pastDueNote([owing('Acme', 10), owing('Brightline', 20), owing('Cobalt', 5), owing('Dune', 1)])).toBe('Brightline, Acme and 2 more');
   });
 });

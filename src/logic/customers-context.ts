@@ -4,7 +4,7 @@
  */
 import type { CustomerRecord } from '@/data/sample';
 import { all } from '@/lib/facts';
-import { formatCompact, formatCost, formatPercent, plural } from '@/lib/format';
+import { formatCompact, formatCost, formatPercent, inWords, plural } from '@/lib/format';
 import { median } from '@/lib/insight';
 import { listed, type Fact, type Insight, type SharedContext } from '@/lib/shared-context';
 import { compareValues } from '@/lib/sort';
@@ -71,7 +71,7 @@ export const pastDueFact = (pastDue: Owing[]): string =>
 /** Who is past due, as a tile's one line: the names while there are two or fewer, then the largest two and how many more. */
 export function pastDueNote(pastDue: Owing[]): string {
   const names = largestFirst(pastDue).map((c) => c.name);
-  return names.length > 2 ? `${names.slice(0, 2).join(', ')} and ${names.length - 2} more` : names.join(', ') || 'Every invoice is paid';
+  return inWords(names.length > 2 ? [...names.slice(0, 2), `${names.length - 2} more`] : names) || 'Every invoice is paid';
 }
 
 export function customersAddress(f: CustomersState): string {

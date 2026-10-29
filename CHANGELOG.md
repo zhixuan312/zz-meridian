@@ -26,6 +26,10 @@ Every release of ZZ Meridian, newest first. Versions follow semver: a removed or
 - **The command palette exports `usePaletteKey()`**, its keystroke as the reader's keyboard names it (`⌘K` or `Ctrl K`), for a page that shows the shortcut.
 - **Badge exports `TONE_FILL`**, the one tone-to-fill map, which Progress now reads.
 - **`page-loading` exports `LinesSkeleton`**, a card of lines under a title, four unless told; Home, Revenue and Now each drew their own.
+- **`page-loading` exports `FeaturedSkeleton`**, the Featured metric's loading shape, `beside` when three tiles stand beside it; five loading pages drew their own copy.
+- **`@/lib/format` exports `inWords`**, a list in a sentence ("a, b and c"), which the Now, Home and fact contexts and the no-access page each wrote; the Customers past-due tile reads it too, so two customers are "Brightline and Acme", not "Brightline, Acme".
+- **`@/logic/derivations` exports `MOST_PARTS`**, the most parts a stacked chart draws before it folds the rest into one, which the Composition bar now folds at as the Column chart does.
+- **`Sparkline` takes `format`**, the figure's own formatter, which its range title reads; without it the range is a count.
 - **`@/lib/sort` exports `compareValues`**, a managed helper like the rest of `src/lib/`, the order a `DataTable` sorts a column by (text by a collator, case and accents aside, numbers inside text by value); the Customers context lists its rows in it, so a name in lower case sits where the table shows it.
 - **`src/lib/collection.ts` exports `p95(values)`**, the nearest-rank 95th percentile a prepared query's `p95` answers; the Requests tiles read it too.
 - **`src/lib/collection.ts` exports `storedRows(tenantId, name)`**, the rows a tenant's array collection keeps in this process, for a test that grows one past a page; `read-every-row` and two other tests used a copy of the store's private key and shape.

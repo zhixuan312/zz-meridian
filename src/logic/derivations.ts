@@ -37,7 +37,6 @@ export function elapsed(started: string, at: string): number {
   return new Date(at).getTime() - new Date(started).getTime();
 }
 
-/** The most parts a stacked column draws: past this a reader cannot tell the parts apart. */
 /** The most parts a stack draws apart: past it, the last drawn is "Other", the rest summed. */
 export const MOST_PARTS = 4;
 
