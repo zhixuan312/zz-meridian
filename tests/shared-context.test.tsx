@@ -8,6 +8,7 @@ import { describe, expect, it, vi } from 'vitest';
 // The view tools read through `read()`, which tags and times its cache: outside a Next request those calls have nothing to register with.
 vi.mock('next/cache', () => ({ cacheTag: () => {}, cacheLife: () => {}, updateTag: () => {}, revalidateTag: () => {}, revalidatePath: () => {}, refresh: () => {} }));
 
+import { app } from '@/app.config';
 import { SurfaceOverride, sharedContextOn } from '@/components/base/surface';
 import { useShareView } from '@/components/base/use-share-view';
 import { DEMO_NOW, DEMO_UPDATED_AT, INCIDENTS as RECORDS, MODELS, SERVICES, type IncidentRecord } from '@/system/fixtures/sample';
@@ -69,7 +70,7 @@ describe("the Home's shared context", () => {
     expect(text).toContain('- Requests: 1,101,098,030, up 4.7% vs the previous 30 days. (Every call answered, at any status.)');
     expect(text).toContain('- Gross margin: 62.4%, up 0.3 points vs the previous 30 days. (Revenue less compute cost, over revenue.)');
     expect(text).toContain(inMark('- Compute cost: $1,242,000.00, up 4.5% vs the previous 30 days. (What the GPUs provisioned cost.)'));
-    expect(text).toMatch(/^Home · last 30 days, 03 Sept 2026 to 02 Oct 2026 \(UTC days\) · address \/\?period=30d$/m);
+    expect(text.split('\n')).toContain(`Home · last 30 days, 03 Sept 2026 to 02 Oct 2026 (${app.timezone} days) · address /?period=30d`);
     expect(text).toContain('fresh.');
   });
   it('states no error spike', () => {
@@ -144,7 +145,7 @@ describe("the Home's shared context", () => {
     expect(data.series).toHaveLength(360);
     expect(data.totals.previous).toBeNull();
     const c = homeContext(data);
-    expect(c.scope).toBe('all time, 08 Oct 2025 to 02 Oct 2026 (UTC days)');
+    expect(c.scope).toBe(`all time, 08 Oct 2025 to 02 Oct 2026 (${app.timezone} days)`);
     for (const label of ['Requests', 'Revenue', 'Gross margin', 'Compute cost']) expect(c.facts.find((f) => f.label === label)!.change, label).toBeUndefined();
     expect(c.unknowns).toContain('No previous period is kept, so no figure has a change.');
     expect(contextText(c)).not.toMatch(/NaN|Infinity|vs the previous/);
