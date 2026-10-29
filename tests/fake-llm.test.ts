@@ -66,7 +66,7 @@ test("answers a prepared query's result with its address and its first group lin
 test('runs the call through a client that hands the tool, and quotes what the tool returned', async () => {
   const model = createOpenAICompatible({ name: 'fake', baseURL: llm.url, apiKey: 'fake-key' })('fake-model');
   let input: unknown;
-  const answer = ['Source runs, 2026-09-26 to 2026-10-02, complete days, by state.', 'Runs: 9 runs. Every run that started in the window.', '- passed: 8 runs', '- failed: 1 runs'].join('\n');
+  const answer = ['Source runs, 2026-09-26 to 2026-10-02, complete days, by state.', 'Runs: 9 runs. Every run that started in the window.', '- passed: 8 runs', '- failed: 1 run'].join('\n');
   const explore_tests = tool({ inputSchema: jsonSchema<Record<string, unknown>>({ type: 'object' }), execute: async (i) => { input = i; return { address: '/tests', answer }; } });
   const r = streamText({ model, system: 'Page: Tests (/tests)', prompt: W11, tools: { explore_tests }, stopWhen: isStepCount(2) });
   expect(await r.text).toBe('From /tests: passed: 8 runs');

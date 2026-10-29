@@ -34,7 +34,7 @@ const ask = async (q: PreparedQuery, input: Record<string, unknown>) =>
 describe('a run names its release', () => {
   it('on Releases, grouped by release and in the drilled rows', async () => {
     const answer = await ask(releasesExplore, { source: 'runs', measures: ['failed', 'runs'], by: 'releaseId', period: '30d', rows: 20 });
-    expect(answer).toMatch(/^- releases_1 \(v4\.18\.2, Edge gateway, production\): 1 runs, 3 runs$/m);
+    expect(answer).toMatch(/^- releases_1 \(v4\.18\.2, Edge gateway, production\): Failed 1 run, Runs 3 runs$/m);
     expect(answer).toContain('id tests_1, releaseId releases_1 (v4.18.2, Edge gateway, production), suite smoke');
     expect(answer.length).toBeLessThanOrEqual(3000);
   });
@@ -44,7 +44,7 @@ describe('a run names its release', () => {
   });
 
   it('on Tests and on Now', async () => {
-    expect(await ask(testsExplore, { source: 'runs', measures: ['failed'], by: 'releaseId', period: '30d' })).toMatch(/^- releases_1 \(v4\.18\.2, Edge gateway, production\): 1 runs$/m);
+    expect(await ask(testsExplore, { source: 'runs', measures: ['failed'], by: 'releaseId', period: '30d' })).toMatch(/^- releases_1 \(v4\.18\.2, Edge gateway, production\): 1 run$/m);
     expect(await ask(nowExplore, { source: 'runs', measures: ['runs'], period: '30d', rows: 5 })).toMatch(/releaseId releases_\d+ \(v[\d.]+, [^,]+, (staging|production)\)/);
   });
 });

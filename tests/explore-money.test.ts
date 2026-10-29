@@ -56,8 +56,8 @@ describe('a money measure', () => {
     expect(answer).toContain('Revenue, in GBP: £4,207.50.');
     expect(answer).toContain('The window before, ');
     expect(answer).toContain('Revenue £4,507.50, down 6.66%');
-    expect(answer).toMatch(/^- a: £3,007\.50, 30 days/m);
-    expect(answer).toMatch(/^- b: £1,200\.00, 30 days \(the window before £1,500\.00, down 20%/m);
+    expect(answer).toMatch(/^- a: Revenue £3,007\.50, Days 30 days/m);
+    expect(answer).toMatch(/^- b: Revenue £1,200\.00, Days 30 days \(the window before £1,500\.00, down 20%/m);
     expect(answer).not.toMatch(/USD|\bmoney\b/);
     // One code, one mark: GBP is named once, and every amount carries the pound sign alone.
     expect(answer.match(/GBP/g)).toHaveLength(1);

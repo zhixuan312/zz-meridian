@@ -50,9 +50,9 @@ const ask = async (input: unknown, rights = OWNER) => (await runExplore(QUERY, i
 describe('a field that holds another collection key', () => {
   it("names each group with the record it refers to, and a key no record has as it is", async () => {
     const answer = await ask({ source: 'runs', measures: ['failed', 'runs'], by: 'releaseId' });
-    expect(answer).toMatch(/^- releases_1 \(v4\.18\.2, Edge gateway, production\): 1 runs, 2 runs$/m);
-    expect(answer).toMatch(/^- releases_2 \(v0\.8\.3, Embeddings, staging\): 0 runs, 1 runs$/m);
-    expect(answer).toMatch(/^- releases_9: 0 runs, 1 runs$/m);
+    expect(answer).toMatch(/^- releases_1 \(v4\.18\.2, Edge gateway, production\): Failed 1 run, Runs 2 runs$/m);
+    expect(answer).toMatch(/^- releases_2 \(v0\.8\.3, Embeddings, staging\): Failed 0 runs, Runs 1 run$/m);
+    expect(answer).toMatch(/^- releases_9: Failed 0 runs, Runs 1 run$/m);
   });
 
   it('names the key in each drilled row too, reading the other collection once', async () => {

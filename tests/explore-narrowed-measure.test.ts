@@ -4,7 +4,7 @@ import { aggregateRows, queryRows, type AggregateQuery, type Query } from '@/lib
 import { runExplore, type ExploreIO, type ExploreRights, type PreparedQuery } from '@/lib/explore';
 
 /**
- * A measure's line says when the call narrowed it: "Runs: 1 runs" under `state eq failed` is one failed run, not every
+ * A measure's line says when the call narrowed it: "Runs: 1 run" under `state eq failed` is one failed run, not every
  * run of the window, and the line says so after the measure's own definition.
  */
 type Row = Record<string, unknown>;
@@ -37,7 +37,7 @@ const runsLine = (answer: string) => answer.split('\n').find((l) => l.startsWith
 describe("a measure's line", () => {
   it('says the conditions that narrowed it', async () => {
     const { answer } = await runExplore(QUERY, { source: 'runs', measures: ['runs'], where: [{ field: 'state', op: 'eq', value: 'failed' }], period: '7d' }, OWNER, io, '/tests');
-    expect(runsLine(answer)).toBe('Runs: 1 runs. The runs that started in the window, however they ended. This figure is only of those where state eq failed.');
+    expect(runsLine(answer)).toBe('Runs: 1 run. The runs that started in the window, however they ended. This figure is only of those where state eq failed.');
   });
 
   it('says nothing more when nothing narrowed it', async () => {
