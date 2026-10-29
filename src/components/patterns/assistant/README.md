@@ -34,7 +34,7 @@ Head 56px, composer padding 12px, thread padding 16px, message gap 16px. Launche
 | Thread, several pages | Each question is captioned with the page it was asked on ("On Members") |
 | Error | A critical alert with what happened and Retry; the thread stays |
 | Signed in as someone else | The thread is cleared and the alert says so: "You are signed in as someone else now, so the earlier conversation was cleared. Ask again.", with no Retry |
-| Cleared | Back to the empty state; Clear conversation is disabled while there is no thread |
+| Cleared | Back to the empty state, and a reply still arriving is stopped; Clear conversation is disabled while there is no thread |
 | Waiting | Until the first words arrive, the thread ends with a Spinner and "Working on an answer" in `ink-3` (the Spinner is the status, so it is announced once); Send is disabled until the answer ends |
 | Change waiting | A Proposal with Approve and Dismiss ("Approve and remove" for a removal) |
 | Change applied, failed, dismissed or expired | The Proposal shows its state with no buttons; expired shows its reason |
@@ -44,7 +44,7 @@ The panel enters with no motion of its own yet; the launcher's states ease `colo
 
 ## Behaviour
 
-- The launcher opens and closes the panel; Close assistant and Escape close it. The conversation is kept.
+- The launcher opens and closes the panel; Close assistant and Escape close it (not the Escape that cancels an input method's composition). The conversation is kept, and so is a message typed and not sent.
 - Approve and Dismiss answer the waiting change; once the answer arrives the assistant continues on its own, and the page refreshes once after a change applies.
 - Queries never draw a card; a mutation with no preview draws nothing.
 - The thread lasts: it is kept in this browser's local storage under `<slug>.assistant`, the last 100 messages, until Clear conversation removes it. One thread serves the whole console and is sent nowhere but the assistant route.

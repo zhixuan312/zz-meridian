@@ -101,6 +101,8 @@ export function AssistantPanel({
   error,
   onRetry,
   questions,
+  draft: held,
+  onDraft,
   inline,
   className,
 }: {
@@ -117,11 +119,16 @@ export function AssistantPanel({
   onRetry?: () => void;
   /** Questions to start the thread with, offered while it is empty: the page in view's (`SharedContext.questions`). */
   questions?: string[];
+  /** The message being typed, held by a caller that outlives the panel, so closing it keeps what was not sent. */
+  draft?: string;
+  onDraft?: (draft: string) => void;
   /** Draw in the flow instead of fixed to the viewport edge: for previews. */
   inline?: boolean;
   className?: string;
 }) {
-  const [draft, setDraft] = useState('');
+  const [own, setOwn] = useState('');
+  const draft = held ?? own;
+  const setDraft = onDraft ?? setOwn;
   const thread = useRef<HTMLDivElement>(null);
   useEffect(() => {
     const el = thread.current;
@@ -268,7 +275,9 @@ export function AssistantColumn({ open, onClose, ask, onAsked }: { open: boolean
   const questions = useSyncExternalStore(onShared, () => questionsOn(path), () => undefined);
   // The error that said the session changed hands since the thread began: the thread is gone, so it offers no Retry.
   const [changedHands, setChangedHands] = useState<Error | null>(null);
-  const { messages, setMessages, sendMessage, regenerate, addToolApprovalResponse, status, error } = useChat({
+  // The column stays mounted while the panel is closed: a message typed and not sent is still there when it opens.
+  const [draft, setDraft] = useState('');
+  const { messages, setMessages, sendMessage, regenerate, addToolApprovalResponse, stop, status, error } = useChat({
     transport,
     sendAutomaticallyWhen: lastAssistantMessageIsCompleteWithApprovalResponses,
     onError: (e) => {
@@ -335,10 +344,14 @@ export function AssistantColumn({ open, onClose, ask, onAsked }: { open: boolean
       onDecide={(id, approved) => addToolApprovalResponse({ id, approved })}
       onClose={onClose}
       onClear={() => {
+        // A reply still arriving would write the rest of itself into the emptied thread, and the save would keep it.
+        if (status === 'submitted' || status === 'streaming') void stop();
         setMessages([]);
         forgetThread(localStorage, scope);
       }}
       questions={questions}
+      draft={draft}
+      onDraft={setDraft}
       error={error?.message}
       onRetry={error && error === changedHands ? undefined : () => regenerate()}
     />
