@@ -124,7 +124,8 @@ export function FilterBar({
         ) : null}
         <div className="ml-auto flex shrink-0 items-center gap-3">
           {result ? <span className="t-num text-xs whitespace-nowrap text-ink-3 @max-[60rem]:hidden">{result}</span> : null}
-          {view ? <div className="@max-[52rem]:hidden">{view}</div> : null}
+          {/* On a narrow bar the view moves into the Filters sheet; a bar with no filters has no sheet, so it stays. */}
+          {view ? <div className={cn(filters.length && '@max-[52rem]:hidden')}>{view}</div> : null}
           {ask}
         </div>
       </div>
