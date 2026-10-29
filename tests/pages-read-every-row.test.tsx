@@ -13,7 +13,7 @@ import { Tooltip } from 'radix-ui';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const jar = vi.hoisted(() => ({ value: undefined as string | undefined }));
-const seen = vi.hoisted(() => ({ keys: -1, members: -1, services: -1, assignees: -1 }));
+const seen = vi.hoisted(() => ({ keys: -1, members: -1, services: -1, assignees: -1, matrix: false }));
 vi.mock('next/headers', () => ({
   cookies: async () => ({ get: (n: string) => (n === 'zz_meridian_view_as' && jar.value !== undefined ? { name: n, value: jar.value } : undefined), set: () => {} }),
   headers: async () => new Headers(),
@@ -26,7 +26,7 @@ vi.mock('next/navigation', () => ({
   redirect: (url: string) => { throw new Error(`redirect ${url}`); },
 }));
 vi.mock('@/views/keys', () => ({ KeysView: (p: { rows: unknown[] }) => { seen.keys = p.rows.length; return null; } }));
-vi.mock('@/views/members', () => ({ MembersView: (p: { rows: unknown[] }) => { seen.members = p.rows.length; return null; } }));
+vi.mock('@/views/members', () => ({ MembersView: (p: { rows: unknown[]; matrix?: unknown }) => { seen.members = p.rows.length; seen.matrix = p.matrix !== undefined; return null; } }));
 vi.mock('@/views/tickets', () => ({ TicketsView: (p: { services: unknown[]; assignees: unknown[] }) => { seen.services = p.services.length; seen.assignees = p.assignees.length; return null; } }));
 
 import KeysPage from '../app/(dashboard)/keys/page';
@@ -77,6 +77,8 @@ describe('a page that says every row', () => {
     expect(total).toBeGreaterThan(100);
     await served(MembersPage());
     expect(seen.members).toBe(total);
+    // The Roles & access section is the page's, drawn on the server, not worked out again by the view on each keystroke.
+    expect(seen.matrix).toBe(true);
   });
 
   it('offers the tickets page every service and every member it may assign to', async () => {

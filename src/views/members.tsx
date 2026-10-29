@@ -24,7 +24,6 @@ import { AskAbout } from '@/components/patterns/ask-about';
 import { DataTable, type Column } from '@/components/patterns/data-table';
 import { dayOf, formatDate, formatRelative } from '@/lib/format-date';
 import { useLive, type Revisions } from '@/lib/live';
-import { RolesMatrix } from './roles-matrix';
 import type { MemberRowAccess } from '@/data/member-mutations';
 import { roleLabel, type AddOn, type MainRole } from '@/data/roles';
 import { TEAMS, type Member } from '@/data/sample';
@@ -62,7 +61,7 @@ function EmailText({ email }: { email: string }) {
   return at > 0 ? <span>{email.slice(0, at)}<wbr />{email.slice(at)}</span> : <span>{email}</span>;
 }
 
-export function MembersView({ rows, now, revisions, actions, access, roles, workspace }: { rows: Member[]; now: string; /** The revisions the page's server read the members at: the live stream's first open asks what moved since. */ revisions?: Revisions; actions: MemberActions; /** What the boundary says of every row, read once by the page: the actions it offers this caller and why not. */ access: Record<string, MemberRowAccess>; /** The roles the page may put on an invitation, from the boundary's `invitableRoles`. */ roles: readonly MainRole[]; /** The workspace's name as its record holds it, where the page could read it: the invitation names it. */ workspace?: string }) {
+export function MembersView({ rows, now, revisions, actions, access, roles, workspace, matrix }: { rows: Member[]; now: string; /** The revisions the page's server read the members at: the live stream's first open asks what moved since. */ revisions?: Revisions; actions: MemberActions; /** What the boundary says of every row, read once by the page: the actions it offers this caller and why not. */ access: Record<string, MemberRowAccess>; /** The roles the page may put on an invitation, from the boundary's `invitableRoles`. */ roles: readonly MainRole[]; /** The workspace's name as its record holds it, where the page could read it: the invitation names it. */ workspace?: string; /** The Roles & access section, which the page renders on the server: it reads only constant tables, so this view does not work it out again on each keystroke of a sheet. */ matrix?: React.ReactNode }) {
   useShareView(membersContext(rows, now));
   const asOf = new Date(now);
   const router = useRouter();
@@ -293,7 +292,7 @@ export function MembersView({ rows, now, revisions, actions, access, roles, work
         </div>
         {/* What the table's roles and the page's own actions mean, generated from the same tables: the page's gate is
             this section's gate, so a person reading it has already been allowed to. */}
-        <RolesMatrix />
+        {matrix}
       </Records>
 
       <Sheet open={inviting} onOpenChange={setInviting}>
