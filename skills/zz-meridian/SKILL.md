@@ -162,7 +162,7 @@ with the step-2 decisions as flags:
 ```sh
 npx zz-meridian@latest create <target> --name "<Product>" --workspace "<Workspace>" --timezone "<IANA zone>" \
   [--currency <ISO 4217>] [--user "<Name>" --role "<Role>"] \
-  [--accent indigo|cobalt|jade|graphite | --hex '#RRGGBB' | --hue <0-360> --chroma <0.10-0.18>]
+  [--accent indigo|cobalt|jade|graphite | --hex '#RRGGBB' | --hue <0-360> --chroma <0-0.24, typically 0.12-0.18>]
 cd <target>
 ```
 
