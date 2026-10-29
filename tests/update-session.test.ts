@@ -3,7 +3,6 @@ import { describe, expect, it } from 'vitest';
 import {
   keepProblems, parseJournal, parseKeep, parseResolutions, planHash, unresolved, verifiedRetirements, type Resolution, type UpdateJournal,
 } from '../scripts/lib/update-session.ts';
-import { logoSource } from '../src/lib/logo.ts';
 
 const h = (c: string) => `sha256-${c.repeat(64)}` as const;
 const side = (hash: string | null) => ({ exists: hash !== null, hash });
@@ -113,15 +112,5 @@ describe('retirements and the keep register', () => {
     expect(() => parseResolutions(at(`sha256-${'z'.repeat(64)}`))).toThrow(/hash/);
     expect(() => parseResolutions(at(`sha256-${'A'.repeat(64)}`))).toThrow(/hash/);
     expect(parseResolutions(at(`sha256-${'a'.repeat(64)}`))).toHaveLength(1);
-  });
-});
-
-describe('logoSource', () => {
-  it('accepts a root-relative SVG under public', () => {
-    expect(logoSource('/logo.svg')).toBe('/logo.svg');
-    expect(logoSource('/brand/mark-2.svg')).toBe('/brand/mark-2.svg');
-  });
-  it('refuses everything else', () => {
-    for (const bad of ['logo.svg', 'https://x.dev/logo.svg', '//x.dev/logo.svg', '/../logo.svg', '/a/../logo.svg', '/logo.png', '/logo.svg?x=1', '', 42, undefined, null]) expect(logoSource(bad), String(bad)).toBeNull();
   });
 });

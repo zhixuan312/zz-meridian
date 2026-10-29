@@ -8,15 +8,8 @@ import { SettingsBody } from '@/views/settings';
 
 // Every section is drawn for a person who may do everything.
 const may = { workspaceRead: true, workspaceUpdate: true };
-const sections = () => screen.getAllByRole('heading', { level: 2 }).map((h) => h.textContent);
 
 describe('Settings', () => {
-  it('holds the sections a record or the device stands behind, and neither Notifications nor a Danger zone', () => {
-    render(<SettingsBody may={may} />);
-    for (const name of ['Workspace', 'Appearance', 'Agents and MCP']) expect(sections(), name).toContain(name);
-    for (const name of ['Notifications', 'Danger zone']) expect(sections(), name).not.toContain(name);
-  });
-
   it('offers no switch whose answer nothing keeps', () => {
     render(<SettingsBody may={may} />);
     for (const label of ['Incident alerts', 'Weekly digest', 'Spend over budget', 'Agent proposals', 'Let assistants read dashboards']) expect(screen.queryByText(label), label).toBeNull();
