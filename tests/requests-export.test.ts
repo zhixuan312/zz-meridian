@@ -30,6 +30,21 @@ describe('GET /api/export/requests', () => {
     expect(batches.length).toBeGreaterThan(1);
     expect(Math.max(...batches)).toBeLessThanOrEqual(100);
   });
+  it('writes each request once while new ones arrive at the top of the log during the download', async () => {
+    const { total } = await requests.query({});
+    // From the second batch on, one request has arrived ahead of every row: the log the export pages through moved by one.
+    const real = requests.query.bind(requests);
+    const spy = vi.spyOn(requests, 'query').mockImplementation(async (q) => {
+      const offset = q?.offset ?? 0;
+      if (offset === 0) return real(q);
+      const moved = await real({ ...q, offset: offset - 1 });
+      return { ...moved, total: moved.total + 1 };
+    });
+    const ids = (await (await get('')).text()).trimEnd().split('\r\n').slice(1).map((l) => l.split(',')[0]);
+    spy.mockRestore();
+    expect(new Set(ids).size).toBe(ids.length);
+    expect(ids).toHaveLength(total);
+  });
   it('stops querying once the download is cancelled', async () => {
     const { total } = await requests.query({});
     const spy = vi.spyOn(requests, 'query');

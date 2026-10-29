@@ -27,6 +27,9 @@ export async function GET(request: Request): Promise<Response> {
   let offset = 0;
   let total = Infinity;
   let cancelled = false;
+  // The log keeps growing while a download streams: a request that arrives ahead of the rows already written moves each
+  // of them down one, and the next batch starts with a row the last one wrote. Each request is written once.
+  const written = new Set<unknown>();
 
   const body = new ReadableStream<Uint8Array>({
     async pull(controller) {
@@ -38,7 +41,9 @@ export async function GET(request: Request): Promise<Response> {
         const batch = await collection.query({ where: query.where, sort: query.sort, limit: BATCH, offset }); // allow-no-direct-query: read() cannot serve this — a streamed export must not be cached
         total = batch.total;
         const head = offset === 0 ? csvHeader(COLUMNS) + '\r\n' : '';
-        const lines = batch.rows.map((r) => csvRow(COLUMNS, line(r)));
+        const fresh = batch.rows.filter((r) => !written.has(r.id));
+        for (const r of fresh) written.add(r.id);
+        const lines = fresh.map((r) => csvRow(COLUMNS, line(r)));
         // How far the stream has come is what the collection answered, not what it was asked for: a collection that
         // answers fewer rows than the batch asked for would otherwise leave a gap between the last row written and the
         // next one read, and the export would silently miss them.
@@ -47,7 +52,7 @@ export async function GET(request: Request): Promise<Response> {
         if (lines.length) controller.enqueue(encoder.encode(lines.map((l) => l + '\r\n').join('')));
         // Nothing back means the export is over, whatever the total says, so a collection that counts rows it will not
         // return cannot ask the stream for the same batch forever.
-        if (!lines.length && !cancelled) controller.close();
+        if (!batch.rows.length && !cancelled) controller.close();
       } catch (e) {
         controller.error(e);
       }
