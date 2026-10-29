@@ -735,18 +735,19 @@ function navItemWithoutFields(root: string): string[] | null {
 }
 
 /**
- * A configuration's own `NavItem` as written, comments blanked: its declaration's line and every line after it that
- * starts indented, blank, or with a closing bracket or an operator that continues it (`}`, `>`, `|`, `&`, `?`, `:`), up
- * to the first that starts at the margin with anything else, the next statement or its comment. Undefined when there is
- * none. No type is parsed: a shape this cuts short is reported rather than passed, since a migration line with nothing to
- * do costs a look, and a missed one is the type error with no line it exists to prevent.
+ * A configuration's own `NavItem` as written, comments blanked: its declaration's line, and when that line does not end
+ * the statement with a `;`, every line after it that is blank, indented, or opens with a closing bracket or an operator
+ * that continues it (`}`, `]`, `)`, `>`, `|`, `&`, `?`, `:`), up to the first that starts at the margin with anything
+ * else. A declaration inside a comment is not the type. Undefined when there is none. No type is parsed: a shape this
+ * cuts short is reported rather than passed, since a migration line with nothing to do costs a look, and a missed one is
+ * the type error with no line it exists to prevent.
  */
 function navItemType(body: string): string | undefined {
-  const m = /^export\s+(?:interface|type)\s+NavItem\b/m.exec(body);
+  const m = /^export\s+(?:interface|type)\s+NavItem\b/m.exec(uncommented(body));
   if (!m) return undefined;
   const lines = body.slice(m.index).split('\n');
   let n = 1;
-  while (n < lines.length && /^(?:$|[\s}\])>|&?:])/.test(lines[n]!)) n++;
+  if (!/;\s*$/.test(uncommented(lines[0]!))) while (n < lines.length && /^(?:$|[\s}\])>|&?:])/.test(lines[n]!)) n++;
   return uncommented(lines.slice(0, n).join('\n'));
 }
 

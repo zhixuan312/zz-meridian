@@ -493,6 +493,9 @@ describe('the 0.36.0 navigation migration', () => {
     expect(needsAfter("if (dev) {\n  register({ needs: 'public' });\n}")).toEqual(['src/app.config.ts']);
     expect(byId('nav-needs').applies(project({ 'src/app.config.ts': "export type NavItem = { href: string; label: string };\n/** The rail. */ export const nav: NavGroup[] = [\n  { items: [{ href: '/', needs: 'public' }] },\n];\n" }))).toEqual(['src/app.config.ts']);
     expect(m.applies(project({ 'src/app.config.ts': 'export interface NavItem {\n  href: string;\n}\nfunction draw(it: { prefetch?: true; under?: string }) {}\n' }))).toEqual(['src/app.config.ts']);
+    // A type finished on its own line ends there, and a copy kept in a comment does not stand in for it.
+    expect(m.applies(project({ 'src/app.config.ts': 'export type NavItem = { href: string };\n  const drawn = { prefetch?: true, under?: string };\n' }))).toEqual(['src/app.config.ts']);
+    expect(m.applies(project({ 'src/app.config.ts': '/*\nexport type NavItem = { href: string; prefetch?: true; under?: string };\n*/\nexport type NavItem = { href: string };\n' }))).toEqual(['src/app.config.ts']);
     expect(byId('nav-needs').applies(project({ 'src/app.config.ts': "export type NavItem = { href: string }\nconst home = { href: '/', needs: 'public' };\nexport const nav: NavGroup[] = [\n  { items: [{ href: '/', needs: 'public' }] },\n];\n" }))).toEqual(['src/app.config.ts']);
     // A configuration with no NavItem type is not this migration's, and the release's own has both.
     expect(m.applies(project({ 'src/app.config.ts': 'export const app = {} as const;\n' }))).toBeNull();
