@@ -49,8 +49,11 @@ import { EmbedHome } from '../app/embed/home/view';
 /** The product's currency mark, as `formatCost` writes it before the digits: a project made with `--currency GBP` writes £. */
 const MARK = formatCost(0).replace(/\d.*$/, '');
 const MONEY = MARK.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-/** A line of the sample's figures, written in dollars here and in the product's own mark when it is made in another currency. */
-const inMark = (line: string) => line.replaceAll('$', MARK);
+/**
+ * A line of the sample's figures, written in dollars here, as the product writes it: each amount through `formatCost`,
+ * so a project made in yen or dinars reads its own mark and its own minor unit.
+ */
+const inMark = (line: string) => line.replace(/\$([\d,]+(?:\.\d+)?)/g, (_, n: string) => formatCost(Number(n.replaceAll(',', ''))));
 
 /** The sample's incidents as a page is handed them: the record without who has it and the id of its ticket. */
 const handed = ({ owner: _, ticketId: __, ...incident }: IncidentRecord): Incident => incident;

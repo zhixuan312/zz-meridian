@@ -1,11 +1,14 @@
-import { app } from '@/app.config';
 import { formatDay } from '@/lib/format-date';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { niceTicks } from '@/components/charts/scale';
 import { AXIS_FORMATTERS, capitalise, changeOf, fitFigure, formatCompact, formatCost, formatDuration, formatPercent, splitFigure } from '@/lib/format';
 
-// The symbol follows app.currency, so a rebranded product (--currency SGD) keeps these tests green.
-const symbol = new Intl.NumberFormat('en', { style: 'currency', currency: app.currency, currencyDisplay: 'narrowSymbol' }).formatToParts(0).find((p) => p.type === 'currency')!.value;
+// In dollars, whatever the product's currency: a rebranded product (--currency JPY) writes its own minor unit, which
+// tests/format-currency.test.ts holds for each kind of currency.
+vi.mock('@/app.config', async (orig) => {
+  const m = await orig<typeof import('@/app.config')>();
+  return { ...m, app: { ...m.app, currency: 'USD' } };
+});
 
 describe('formatters', () => {
   it('render a missing value as a dash, never as zero', () => {
@@ -49,23 +52,23 @@ describe('formatters', () => {
     expect(splitFigure('CHF 1,234.50')).toEqual({ int: 'CHF 1,234.50' });
   });
   it('format money, durations and shares', () => {
-    expect(formatCost(298.43)).toBe(`${symbol}298.43`);
+    expect(formatCost(298.43)).toBe(`$298.43`);
     // Under a cent, four decimals; and an amount too small for four keeps its first two digits, never a row of zeros.
-    expect(formatCost(0.00522)).toBe(`${symbol}0.0052`);
-    expect(formatCost(0.0000018)).toBe(`${symbol}0.0000018`);
-    expect(formatCost(0)).toBe(`${symbol}0`);
+    expect(formatCost(0.00522)).toBe(`$0.0052`);
+    expect(formatCost(0.0000018)).toBe(`$0.0000018`);
+    expect(formatCost(0)).toBe(`$0`);
     // One precision in a column: $997.00 above $1,269.40, never above $1,269, so the decimals line up.
-    expect(formatCost(1269.4)).toBe(`${symbol}1,269.40`);
-    expect(formatCost(997)).toBe(`${symbol}997.00`);
+    expect(formatCost(1269.4)).toBe(`$1,269.40`);
+    expect(formatCost(997)).toBe(`$997.00`);
     // A credit or a refund is negative, and the minus stands where a reader looks for it: before the mark, at every
     // size. `$-0.0050` reads as a typo, and hides the sign a column is sorted by.
-    expect(formatCost(-1269.4)).toBe(`-${symbol}1,269.40`);
-    expect(formatCost(-0.005)).toBe(`-${symbol}0.0050`);
-    expect(formatCost(-0.0000018)).toBe(`-${symbol}0.0000018`);
+    expect(formatCost(-1269.4)).toBe(`-$1,269.40`);
+    expect(formatCost(-0.005)).toBe(`-$0.0050`);
+    expect(formatCost(-0.0000018)).toBe(`-$0.0000018`);
     // An amount too small even for 20 places keeps two digits in exponent form: `toFixed` there prints only zeroes, and
     // a figure that is not nothing must not read as nothing (issue #96).
-    expect(formatCost(1e-21)).toBe(`${symbol}1.0e-21`);
-    expect(formatCost(-2.5e-30)).toBe(`-${symbol}2.5e-30`);
+    expect(formatCost(1e-21)).toBe(`$1.0e-21`);
+    expect(formatCost(-2.5e-30)).toBe(`-$2.5e-30`);
     expect(formatDuration(294)).toBe('294ms');
     expect(formatDuration(1420)).toBe('1.4s');
     expect(formatPercent(0.0090, 2)).toBe('0.90%');
@@ -105,7 +108,7 @@ describe('fitFigure', () => {
     expect(fitFigure('$298.43', 298.43)).toBe('$298.43');
     expect(fitFigure('2,943,120', 2_943_120)).toBe('2,943,120');
     expect(fitFigure('9,876,543,210', 9_876_543_210)).toBe('9.9B');
-    expect(fitFigure(`${symbol}1,234,567.89`, 1_234_567.89)).toBe(`${symbol}1.2M`);
+    expect(fitFigure(`$1,234,567.89`, 1_234_567.89)).toBe(`$1.2M`);
     expect(fitFigure('0.90%', 0.009)).toBe('0.90%');
     expect(fitFigure('12,480,000 tokens', 12_480_000)).toBe('12.5M tokens');
     expect(fitFigure('Likely new', NaN)).toBe('Likely new');
