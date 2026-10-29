@@ -1,7 +1,8 @@
 # Who owns which file
 
 Meridian manages a fixed set of files in a project, and `zz-meridian update` touches only those. Everything else is the
-team's. This list is the rule the classifier itself uses; edit it in `cli/src/ownership.ts`, never here.
+team's. This list is the rule the classifier itself uses, rendered from the zz-meridian package's own source: it changes with
+the package, never by an edit here.
 
 <!-- BEGIN:ownership -->
 - Managed: the payload files under `tokens/`, `src/styles/` and `src/components/`, except each component's `README.md` and `preview.tsx`.
