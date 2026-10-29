@@ -5,7 +5,7 @@ import type { ChromeAccess } from '@/lib/collection';
 import { ConsoleRail } from '@/views/console-chrome';
 
 describe("the console's rail, configured from the product's layout", () => {
-  // The configured navigation, whatever the product calls its pages: its first destination and one other.
+  // The configured navigation, whatever the product calls its pages: its first destination and one other, when it has one.
   const [first, other] = nav.flatMap((g) => g.items);
 
   it('shows the frame with no destination and no name until access resolves, then the person and their role', async () => {
@@ -19,13 +19,15 @@ describe("the console's rail, configured from the product's layout", () => {
     expect(await screen.findByText('Shop team')).toBeTruthy();
     expect(screen.getByText('No sign-in')).toBeTruthy();
     expect(screen.getByRole('link', { name: first!.label })).toBeTruthy();
-    expect(screen.queryByRole('link', { name: other!.label })).toBeNull();
+    if (other) expect(screen.queryByRole('link', { name: other.label })).toBeNull();
   });
 
   it('keeps the placeholder and every destination away when the identity cannot be resolved', async () => {
     await act(async () => { render(<ConsoleRail signOut={null} access={Promise.resolve(null)} />); });
+    await act(async () => { await Promise.resolve(); });
     const labels = nav.flatMap((g) => g.items.map((i) => i.label));
-    expect(await screen.findAllByRole('link').then((ls) => ls.filter((l) => labels.some((x) => l.textContent?.includes(x))), () => [])).toEqual([]);
+    // An absence is read once the access has settled; waiting for a link that never comes took the five-second timeout.
+    expect(screen.queryAllByRole('link').filter((l) => labels.some((x) => l.textContent?.includes(x)))).toEqual([]);
     // The sample person is not whose dashboard this is, so nothing of theirs is drawn either.
     expect(screen.queryByText('Maya Chen')).toBeNull();
   });

@@ -30,11 +30,12 @@ describe('what the assistant may reach, by the person it acts for', () => {
     for (const need of ['members:create', 'members:update', 'members:remove', 'keys:create', 'keys:remove'] as const) expect(await may(need), need).toBe(false);
     expect(await may(FEATURES.keys.needs)).toBe(false);
     expect(await may(FEATURES.members.needs)).toBe(false);
-    // What the route hands the builder is a collection whose forbidden operations are gone, so no write tool is built
-    // for one: the builder only builds what it is given.
-    const readOnly = { ...members, create: undefined, update: undefined, remove: undefined };
-    const { tools } = assistantTools([readOnly as typeof members], writer, guard);
-    expect(Object.keys(tools)).toEqual([]);
+    // The route hands the builder the members collection through `handedTo` under the Viewer's own scope, with its
+    // forbidden operations gone, so no write tool is built for them.
+    const scope = await resolveAccess();
+    const handed = await handedTo(scope, membersFor(scope), 'members');
+    expect([handed.create, handed.update, handed.remove]).toEqual([undefined, undefined, undefined]);
+    expect(Object.keys(assistantTools([handed], writer, guard).tools)).toEqual([]);
   });
 
   it('registers every view tool and every action for the Owner', async () => {
