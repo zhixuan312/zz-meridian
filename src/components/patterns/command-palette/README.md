@@ -26,7 +26,7 @@ Commands are built from the `nav` prop, the same groups the Rail gets (one "Go t
 | Open, empty query | Every command, grouped, the first highlighted |
 | Field focused | The search band's hairline takes `accent` and the search icon `accent-ink`, over `dur-hover`: the same signal a field's outline gives |
 | Filtered | The matches, re-ranked; the highlight returns to the first |
-| No match | One line: "Nothing matches “…”. Try a page name, such as Requests." |
+| No match | One line: "Nothing matches “…”. Try a page’s name." |
 | Highlighted row | `fill-hover`; its icon steps up to `ink-2` |
 
 The dialog enters with `dialog-in` (rise and fade over `dur-enter`) and leaves faster.

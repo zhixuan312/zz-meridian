@@ -50,3 +50,12 @@ describe("the palette's hint for a destination", () => {
     expect(shown).toEqual(['Load', 'Calls']);
   });
 });
+
+describe("the palette's no-match line", () => {
+  it('names no page of its own, which a product may not have', () => {
+    render(<CommandPalette nav={NAV} />);
+    act(() => { fireEvent.keyDown(window, { key: 'k', metaKey: true }); });
+    fireEvent.change(screen.getByRole('combobox'), { target: { value: 'zzzz' } });
+    expect(screen.getByText(/^Nothing matches/).textContent).toBe('Nothing matches “zzzz”. Try a page’s name.');
+  });
+});

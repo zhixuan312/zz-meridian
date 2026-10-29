@@ -169,7 +169,7 @@ export function CommandPanel({
       </div>
       <div ref={listRef} id="cmd-list" role="listbox" className="max-h-[min(420px,52vh)] overflow-y-auto p-2">
         {commands.length === 0 ? (
-          <p className="px-3 py-10 text-center text-sm text-ink-3">Nothing matches “{query}”. Try a page name, such as Requests.</p>
+          <p className="px-3 py-10 text-center text-sm text-ink-3">Nothing matches “{query}”. Try a page’s name.</p>
         ) : (
           commands.map((c, i) => {
             const head = c.group !== lastGroup ? (lastGroup = c.group) : null;
