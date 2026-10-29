@@ -4,18 +4,8 @@ import { Row } from '@/components/base/shell';
 import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Freshness } from '@/components/patterns/freshness';
-import { ChartSkeleton, LoadingPage, TableSkeleton, TilesSkeleton } from '@/components/patterns/page-loading';
+import { ChartSkeleton, LinesSkeleton, LoadingPage, TableSkeleton, TilesSkeleton } from '@/components/patterns/page-loading';
 import { gatedLoading } from '@/data/refusal';
-
-/** A card of `n` lines under a title: the open incident, what ships, the work and the changes. */
-function LinesSkeleton({ n }: { n: number }) {
-  return (
-    <Card className="gap-4 p-(--card-pad)">
-      <Skeleton className="h-4 w-40" />
-      {Array.from({ length: n }, (_, j) => <Skeleton key={j} className="h-3" />)}
-    </Card>
-  );
-}
 
 /** The thirteen parts of Now, in their shapes, the Featured metric's room first: the page streams them in behind its masthead, and a cold load shows them under the masthead's. */
 export function NowSkeleton() {
@@ -29,7 +19,7 @@ export function NowSkeleton() {
       </Card>
       <Row split="2/3">
         <ChartSkeleton height="h-96" />
-        <LinesSkeleton n={8} />
+        <LinesSkeleton lines={8} />
       </Row>
       <ChartSkeleton height="h-28" />
       <Row split="2/3">
@@ -37,14 +27,14 @@ export function NowSkeleton() {
         <ChartSkeleton height="h-32" />
       </Row>
       <Row split="1/2">
-        <LinesSkeleton n={8} />
-        <LinesSkeleton n={8} />
+        <LinesSkeleton lines={8} />
+        <LinesSkeleton lines={8} />
       </Row>
       <TableSkeleton rows={7} filters={false} />
       <TilesSkeleton count={4} />
       <Row split="2/3">
         <ChartSkeleton height="h-48" />
-        <LinesSkeleton n={5} />
+        <LinesSkeleton lines={5} />
       </Row>
     </>
   );

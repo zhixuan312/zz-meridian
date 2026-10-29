@@ -1,7 +1,7 @@
 'use client';
 
 import { Specimen, State } from '@/system/specimen';
-import { Busy, ChartSkeleton, LeadRoom, TableSkeleton, TilesSkeleton } from '.';
+import { Busy, ChartSkeleton, LeadRoom, LinesSkeleton, TableSkeleton, TilesSkeleton } from '.';
 
 export default function PageLoadingPreview() {
   return (
@@ -25,11 +25,12 @@ export default function PageLoadingPreview() {
         <State label="Two" className="w-full *:first:w-full"><TilesSkeleton count={2} /></State>
         <State label="Four" className="w-full *:first:w-full"><TilesSkeleton count={4} /></State>
       </Specimen>
-      <Specimen label="Chart and table" stack>
+      <Specimen label="Chart, table and lines" stack>
         <State label="Chart" className="w-full *:first:w-full"><ChartSkeleton /></State>
         <State label="Chart, taller" className="w-full *:first:w-full"><ChartSkeleton height="h-64" /></State>
         <State label="Table with a filter bar" className="w-full *:first:w-full"><TableSkeleton rows={4} /></State>
         <State label="Table without filters" className="w-full *:first:w-full"><TableSkeleton rows={4} filters={false} /></State>
+        <State label="Lines (four, the default)" className="w-full *:first:w-full"><LinesSkeleton /></State>
       </Specimen>
     </>
   );

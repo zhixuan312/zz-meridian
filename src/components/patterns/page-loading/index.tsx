@@ -124,6 +124,16 @@ export function ChartSkeleton({ height = 'h-40' }: { height?: string }) {
   );
 }
 
+/** A card of `lines` lines under a title: a list part of a page, its facts or its lines worth knowing. */
+export function LinesSkeleton({ lines = 4 }: { lines?: number }) {
+  return (
+    <Card className="gap-4 p-(--card-pad)">
+      <Skeleton className="h-4 w-40" />
+      {Array.from({ length: lines }, (_, j) => <Skeleton key={j} className="h-3" />)}
+    </Card>
+  );
+}
+
 /** A card holding a data table: a filter bar over `rows` rows. */
 export function TableSkeleton({ rows = 8, filters = true }: { rows?: number; filters?: boolean }) {
   return (

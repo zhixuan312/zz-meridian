@@ -4,19 +4,9 @@ import { Row } from '@/components/base/shell';
 import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Freshness } from '@/components/patterns/freshness';
-import { ChartSkeleton, LoadingPage } from '@/components/patterns/page-loading';
+import { ChartSkeleton, LinesSkeleton, LoadingPage } from '@/components/patterns/page-loading';
 import { gatedLoading } from '@/data/refusal';
 import { PeriodActionsRoom } from '@/views/period-actions';
-
-/** A card of `n` lines under a title: the ladder's stages, or the lines worth a look. */
-function LinesSkeleton({ n }: { n: number }) {
-  return (
-    <Card className="gap-4 p-(--card-pad)">
-      <Skeleton className="h-4 w-48" />
-      {Array.from({ length: n }, (_, j) => <Skeleton key={j} className="h-3" />)}
-    </Card>
-  );
-}
 
 /** The eight parts of Revenue, in their shapes, the Featured metric's room first: the page streams them in behind its masthead, and a cold load shows them under the masthead's. */
 export function RevenueSkeleton() {
@@ -51,11 +41,11 @@ export function RevenueSkeleton() {
           {Array.from({ length: 8 }, (_, i) => <Skeleton key={i} className="h-24 rounded-lg" />)}
         </div>
       </Card>
-      <LinesSkeleton n={8} />
-      <LinesSkeleton n={4} />
+      <LinesSkeleton lines={8} />
+      <LinesSkeleton />
       <Row split="1/2">
-        <LinesSkeleton n={4} />
-        <LinesSkeleton n={4} />
+        <LinesSkeleton />
+        <LinesSkeleton />
       </Row>
     </>
   );

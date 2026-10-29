@@ -20,6 +20,7 @@ Every release of ZZ Meridian, newest first. Versions follow semver: a removed or
 
 - **`AssistantPanel` takes `draft` and `onDraft`**, so the column keeps an unsent message across a close; without them the panel keeps its own.
 - **Badge exports `TONE_FILL`**, the one tone-to-fill map, which Progress now reads.
+- **`page-loading` exports `LinesSkeleton`**, a card of lines under a title, four unless told; Home, Revenue and Now each drew their own.
 - **`@/lib/format` exports `changeOf` and `capitalise`**: a change against the figure before as a fraction (null against none or zero), and a word as a label starts. Home, Revenue and Usage each wrote the first, Releases, Tests and Tickets the second.
 - **The MIT licence text ships.** The package carries it as `payload/LICENSE`, and a project `create` makes gets it as `LICENSE`; before, both manifests said MIT and no text existed.
 - **A persona in `scripts/verify.config.ts` takes `pressRoutes`**, the routes `verify --as` presses as that person. The leg pressed four of the sample's routes written into `verify.ts`, so a product whose role-dependent pages are others had none of them pressed; a persona without the field now has every route it expects pressed. The template's personas name the sample's four.
