@@ -23,9 +23,12 @@ import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 import { parse, rgbToOklab } from '../src/lib/color.ts';
+import { holdArgs } from './lib/args.ts';
 
 const ROOT = path.resolve(import.meta.dirname, '..');
 const argv = process.argv.slice(2);
+// A mistyped flag (--hu for --hue) stops the run before anything is written, rather than branding the rest without it.
+holdArgs('brand', argv, ['--name', '--workspace', '--timezone', '--package', '--accent', '--theme', '--currency', '--user', '--role', '--hex', '--hue', '--chroma', '--accent-name', '--no-atlas', '--product', '--existing']);
 const opt = (k: string) => { const i = argv.indexOf(k); return i >= 0 ? argv[i + 1] : undefined; };
 const has = (k: string) => argv.includes(k);
 const file = (p: string) => path.join(ROOT, p);

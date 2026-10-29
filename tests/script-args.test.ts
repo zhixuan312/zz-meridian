@@ -1,6 +1,7 @@
 // @vitest-environment node
 import { spawnSync } from 'node:child_process';
 import fs from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 
@@ -43,4 +44,35 @@ describe('a script run by hand', () => {
       expect(all.stderr).toContain(`${script}: --basee is not an option.`);
     });
   }
+});
+
+/**
+ * brand.ts writes the project in place, so it is run from a copy that holds only what it loads: a refusal that did not
+ * happen would fail there on the first file it reads, never brand this checkout.
+ */
+describe('brand run by hand', () => {
+  const copy = () => {
+    const dir = fs.mkdtempSync(path.join(fs.realpathSync(os.tmpdir()), 'meridian-brand-args-'));
+    for (const rel of ['scripts/brand.ts', 'scripts/lib/args.ts', 'src/lib/color.ts']) {
+      fs.mkdirSync(path.join(dir, path.dirname(rel)), { recursive: true });
+      fs.copyFileSync(path.join(ROOT, rel), path.join(dir, rel));
+    }
+    return dir;
+  };
+  const brand = (dir: string, ...args: string[]) => spawnSync(process.execPath, ['scripts/brand.ts', ...args], { cwd: dir, encoding: 'utf8', timeout: 20_000 });
+
+  it('refuses a mistyped flag before it brands anything, and takes every flag it reads', () => {
+    const dir = copy();
+    try {
+      const typo = brand(dir, '--name', 'Acme', '--hu', '25');
+      expect(typo.status).toBe(1);
+      expect(typo.stderr).toContain('brand: --hu is not an option.');
+      const read = [...flagsRead(path.join(ROOT, 'scripts/brand.ts'))].filter((f) => f !== '--help');
+      expect(read).toContain('--hue');
+      expect(brand(dir, ...read, '--basee').stderr).toContain('brand: --basee is not an option.');
+      expect(brand(dir, '--help').stdout).toMatch(/^brand takes .*--name/);
+    } finally {
+      fs.rmSync(dir, { recursive: true, force: true });
+    }
+  });
 });
