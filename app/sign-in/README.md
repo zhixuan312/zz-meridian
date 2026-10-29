@@ -22,7 +22,7 @@ Two columns from 1024px; one below, the panel under the sentence.
 | State | What shows |
 |---|---|
 | Persona list | Without `DEMO_PASSWORD`: one row per persona, a non-Active persona disabled and marked "Not active". A click signs the request in as them and opens the console; a refusal reads its own message under the heading |
-| Behind a password | With `DEMO_PASSWORD` set at run time, the panel is "Sign in": the password (Field, Input `lg`), "Sign in as" (Field, a native select at `lg`), and "Sign in" (primary, block, `lg`), busy while it is sent; a wrong password reads "That is not the password." in the field after 600 ms, and a persona outside the list sets nothing. A match sets a 30-day session and the View as cookie, then opens the console |
+| Behind a password | With `DEMO_PASSWORD` set at run time, the panel is "Sign in": the password (Field, Input `lg`), "Sign in as" (Field, a native select at `lg`), and "Sign in" (primary, block, `lg`), busy while it is sent; a wrong password reads "That is not the password." in the field after 600 ms and keeps the person chosen, and a persona that cannot be signed in as (outside the list, or no longer Active) sets nothing and reads "That person can't be signed in as right now. Choose another." under Sign in as. A match sets a 30-day session and the View as cookie, then opens the console |
 | Loading | While the panel streams in, its surface holds its place, empty |
 
 ## The demo gate
