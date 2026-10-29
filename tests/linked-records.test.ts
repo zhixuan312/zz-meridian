@@ -88,10 +88,11 @@ describe('a service', () => {
     }
   });
 
-  it('carries a mark on every day the product was outside its band', async () => {
+  it('carries a mark on every day the product was outside its band', async (ctx) => {
     const [days, services] = await Promise.all([rows('days'), rows('services')]);
     const { p95Under, errorRateUnder } = facts.band;
     const outside = days.filter((d) => d.date !== today && !(d.p95 < p95Under && d.errors / d.requests < errorRateUnder)).map((d) => d.date);
+    if (outside.length === 0) ctx.skip('no complete day was outside the band, so no day is owed a mark');
     for (let ago = 1; ago < 90; ago++) {
       if (!outside.includes(back(ago))) continue;
       expect(services.some((s) => s.days[89 - ago] !== 'operational'), `${back(ago)} was outside the band, and no service marks it`).toBe(true);

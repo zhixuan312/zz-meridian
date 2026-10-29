@@ -7,22 +7,17 @@ vi.mock('next/headers', () => ({
   headers: async () => new Headers(),
 }));
 
-import { z } from 'zod';
-import { clock, collections } from '@/data/collections';
-import { read, aggregate } from '@/data/read';
-import { runExplore, type PreparedQuery } from '@/lib/explore';
+import { collections } from '@/data/collections';
 import { nowExplore } from '@/logic/now-explore';
 import { releasesExplore } from '@/logic/releases-explore';
 import { releaseRefers, testsExplore } from '@/logic/tests-explore';
-import { rights } from './cli-explore-kit';
+import { ask } from './cli-explore-kit';
 
 /**
  * The runs Releases, Tests and Now count name each release by the version, service and environment the pages write
  * (AC-14.8's reading at review, D1): told only "releases_1: 1 failed", a model paired the keys with the page's versions
  * by position and sent the reader to the wrong release.
  */
-const ask = async (q: PreparedQuery, input: Record<string, unknown>) =>
-  (await runExplore(q, input, await rights(), { aggregate, read, today: clock().toISOString().slice(0, 10) }, '/', z.object({}))).answer;
 
 describe('a run names its release', () => {
   it('on Releases, grouped by release and in the drilled rows', async () => {

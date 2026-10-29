@@ -73,7 +73,8 @@ describe('a page a person may not open', () => {
   it('reads the page for the person who may open it', async () => {
     jar.value = 'members_1';
     expect(await markup(KeysPage)).not.toContain('data-no-access');
-    expect(spy.reads).toContain('keys');
+    // The keys, and nothing the page does not show.
+    expect(spy.reads).toEqual(['keys']);
   });
 
   it('answers the feature title in the metadata of a denied request, without reading the record', async () => {
