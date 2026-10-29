@@ -471,6 +471,14 @@ describe('the 0.36.0 navigation migration', () => {
     expect(m.applies(config('; prefetch?: true; under?: string'))).toBeNull();
     // A field of the same name elsewhere in the file does not stand in for the type's.
     expect(m.applies(project({ 'src/app.config.ts': 'export type NavItem = { href: string };\nconst item = { under: \'/\', prefetch: true };\n' }))).toEqual(['src/app.config.ts']);
+    // The type read to its end: past a nested object's own `};` line, as an intersection, and as an interface.
+    const nested = 'export type NavItem = {\n  href: string;\n  badge?: {\n    text: string;\n  };\n  needs: Need;\n  prefetch?: true;\n  under?: string;\n};\n';
+    expect(m.applies(project({ 'src/app.config.ts': nested }))).toBeNull();
+    expect(byId('nav-needs').applies(project({ 'src/app.config.ts': `${nested}export const nav: NavGroup[] = [{ items: [{ href: '/', needs: 'public' }] }];\n` }))).toBeNull();
+    expect(m.applies(project({ 'src/app.config.ts': 'export type NavItem = Base & { href: string; needs: Need };\n' }))).toEqual(['src/app.config.ts']);
+    expect(m.applies(project({ 'src/app.config.ts': 'export type NavItem = Base &\n  { href: string; prefetch?: true; under?: string };\n' }))).toBeNull();
+    expect(m.applies(project({ 'src/app.config.ts': 'export interface NavItem {\n  href: string;\n  needs: Need;\n}\n' }))).toEqual(['src/app.config.ts']);
+    expect(m.applies(project({ 'src/app.config.ts': 'export interface NavItem extends Base { href: string; prefetch?: true; under?: string }\n' }))).toBeNull();
     // A configuration with no NavItem type is not this migration's, and the release's own has both.
     expect(m.applies(project({ 'src/app.config.ts': 'export const app = {} as const;\n' }))).toBeNull();
     expect(m.applies(path.resolve(import.meta.dirname, '..'))).toBeNull();
@@ -582,6 +590,8 @@ describe('what the migrations read of a team file', () => {
     expect(byId('use-size-callback-ref').applies(project({ 'app/tip.tsx': typed }))).toEqual(['app/tip.tsx']);
     const bare = `${use}export function Tip() {\n  const [open, setOpen] = useState(false)\n  const [box] = useSize<HTMLDivElement>()\n  return <div onClick={() => setOpen(!open)}>{box.current?.offsetLeft}</div>\n}\n`;
     expect(byId('use-size-callback-ref').applies(project({ 'app/tip.tsx': bare }))).toEqual(['app/tip.tsx']);
+    const quoted = `${use}export function Tip() {\n  const [box]: ['a=b;' | Element] = useSize<HTMLDivElement>();\n  const [el]: 'a=b' | Element = useSize<HTMLDivElement>();\n  return <div>{el.current?.offsetLeft}</div>;\n}\n`;
+    expect(byId('use-size-callback-ref').applies(project({ 'app/tip.tsx': quoted }))).toEqual(['app/tip.tsx']);
   });
   it('reads a team file under a managed folder the manifest does not record, and none it records', () => {
     const reads = `${use}export function Tip() {\n  const [box] = useSize<HTMLDivElement>();\n  return <div ref={box}>{box.current?.offsetLeft}</div>;\n}\n`;

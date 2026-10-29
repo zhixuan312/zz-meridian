@@ -181,11 +181,14 @@ function readsSizeRefCurrent(src: string, hook: string): boolean {
 
 /**
  * Whether the declaration whose pattern ends at `i` takes its value from a call of `h`: past a type annotation, whose
- * brackets are matched since a type literal separates its fields with semicolons, to the `=` that assigns it.
+ * brackets, strings and comments are passed over since a type literal separates its fields with semicolons, to the `=`
+ * that assigns it.
  */
 function assignsFrom(src: string, i: number, h: string): boolean {
   if (/^\s*:/.test(src.slice(i))) {
     for (i = src.indexOf(':', i) + 1; i < src.length && !(src[i] === '=' && !'>='.includes(src[i + 1]!));) {
+      const past = skipLiteral(src, i);
+      if (past !== i) { i = past; continue; }
       if (src[i] === ';' || src[i] === ')' || src[i] === ']' || src[i] === '}') return false;
       i = '{(['.includes(src[i]!) ? closeOf(src, i) + 1 : i + 1;
     }
@@ -731,8 +734,25 @@ function navItemWithoutFields(root: string): string[] | null {
   return type && !(/\bunder\?:/.test(type) && /\bprefetch\?:/.test(type)) ? [rel] : null;
 }
 
-/** A configuration's own `NavItem` type, on one line or over several, its fields ending in semicolons or not. */
-const navItemType = (body: string) => body.match(/^export type NavItem = \{[\s\S]*?\};$/m)?.[0];
+/**
+ * A configuration's own `NavItem` as written, its brackets matched: an interface to its closing brace, a type to the end
+ * of its statement, an intersection continued over lines included. Undefined when the file declares none.
+ */
+function navItemType(body: string): string | undefined {
+  const m = /^export\s+(?:interface\s+NavItem\b[^{]*|type\s+NavItem\s*=)/m.exec(body);
+  if (!m) return undefined;
+  const start = m.index + m[0].length;
+  if (m[0].includes('interface')) return body.slice(m.index, closeOf(body, start) + 1);
+  let i = start;
+  while (i < body.length && body[i] !== ';') {
+    const past = skipLiteral(body, i);
+    if (past !== i) i = past;
+    else if ('{(['.includes(body[i]!)) i = closeOf(body, i) + 1;
+    else if (body[i] === '\n' && /\S/.test(body.slice(start, i)) && !/[&|]\s*$/.test(body.slice(start, i)) && !/^\s*[&|]/.test(body.slice(i))) break;
+    else i++;
+  }
+  return body.slice(m.index, i);
+}
 
 /**
  * A test of the rail that stands over a fake `ResizeObserver` answering `observe` with nothing (0.16.2). The lookbehind
