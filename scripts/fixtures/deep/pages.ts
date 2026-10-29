@@ -444,7 +444,7 @@ export const CLEAN = `<!doctype html>
 <style>${BASE_CSS}</style></head>
 <body><main><h1>Clean page</h1><p>Nothing on this page is wrong.</p></main></body></html>`;
 
-// ---- navigation pages for scripts/navigate.ts, on the readiness fixtures' skeleton ----
+// ---- navigation pages for scripts/navigate.ts ----
 
 /** The rail routes of the Main workspace, in rail order. */
 export const NAV: [string, string][] = [['/nav-home', 'Home'], ['/nav-root-target', 'Root target'], ['/nav-missing-target', 'Missing target'], ['/nav-multi', 'Several matches'], ['/nav-root-hydrated', 'Hydrated root'], ['/nav-dead-control', 'Dead control'], ['/nav-link-late', 'Late data'], ['/nav-redirect', 'Redirects'], ['/nav-empty', 'Empty list'], ['/nav-empty-error', 'Failed list'], ['/nav-retake', 'Retaken']];
@@ -466,7 +466,7 @@ const MENU_WIRE = `
   for (const item of document.querySelectorAll('[role="menuitemradio"]')) item.addEventListener('click', () => { location.assign(item.dataset.home); });`;
 
 /**
- * The readiness skeleton: a rail from 1024px up and a drawer under it, each with the workspace menu above the rail's links,
+ * The navigation skeleton: a rail from 1024px up and a drawer under it, each with the workspace menu above the rail's links,
  * and controls sized for a phone. A page is in Main, with Main's rail, unless it names its own workspace and rail.
  */
 const nav = (title: string, main: string, script = '', { workspace = 'Main', rail = NAV }: { workspace?: string; rail?: [string, string][] } = {}): string => `<!doctype html>
