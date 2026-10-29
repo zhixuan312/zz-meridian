@@ -8,6 +8,13 @@ Every release of ZZ Meridian, newest first. Versions follow semver: a removed or
 
 - **The API keys actions answer a result instead of throwing.** `createKey` returns `{ ok: true, key } | { ok: false, error }` and `revokeKey` `{ ok: true } | { ok: false, error }`, as every other action of the template does, because a production build replaces a thrown action's message with a generic one, and the reason ("Give the key at least one scope.", a lost permission) never reached the person. A page that passes its own actions to `KeysView` returns those shapes instead of throwing.
 - **The error screens take Next's `retry`, not `reset`.** `app/(dashboard)/error.tsx` and `app/embed/error.tsx` call `retry`, which fetches the page again; `reset` re-rendered the payload that held the failed read, so Retry drew the same error. A caller that renders `DashboardError` itself passes `retry`.
+- **`PopoverContent` requires a name.** Pass `aria-label` or `aria-labelledby`: a Popover's content is a dialog, and Radix gives it no name of its own, so a screen reader announced an unnamed dialog. A Popover without either is a type error.
+- **A server-paged `DataTable` (`manual`) draws no rows-per-page menu.** Its page size is the server's, so the menu changed nothing the server sent; pass `pageSize`, and drop a one-item `pageSizes` kept only to hide the menu.
+
+### Added
+
+- **`AssistantPanel` takes `draft` and `onDraft`**, so the column keeps an unsent message across a close; without them the panel keeps its own.
+- **Badge exports `TONE_FILL`**, the one tone-to-fill map, which Progress now reads.
 
 ### Fixed
 
@@ -23,6 +30,14 @@ Every release of ZZ Meridian, newest first. Versions follow semver: a removed or
 - **A prepared query's group line names each figure when it carries several**, and a count of one reads singular ("1 day").
 - **An Atlas page whose first paragraph is wrapped keeps its status and body** (Base / Motion lost "Status: beta").
 - **The shared request cells read the sample through `src/data`**, and the check now holds `src/system/sample-cells.tsx` to that rule, so replacing `src/data/sample.ts` replaces the clock they draw against.
+- **Dialogs and sheets.** A Dialog opens at its first field, not its close button; a Dialog or Sheet without a `description` is described by nothing, not by its own title read twice.
+- **Form controls.** A Select's options are 44px tall under a coarse pointer. A read-only Input or Textarea looks read-only and stays invalid inside a Field. A Checkbox, Switch or Radio with a description is named by its label and described by its description, instead of the two joined into one name. A read-only or saving Form section disables what it holds without a `<form>` too.
+- **Feedback.** A toast waits while the pointer or focus is on it, and a held removal commits when its toast closes. An avatar takes whole initials and falls back to them when its picture does not load. Progress reads a missing value as a dash. A change reads as no change only when its format rounds it to none. Stored appearance choices are applied only when known.
+- **Navigation.** The tab indicator follows the active tab when only the tab grows. A folded breadcrumb level without an address is a named, disabled item, not a link to `#`. A filter bar with no filters keeps its view control on a narrow bar. An opened alert stays read after a reload, for the tab's session.
+- **The assistant.** The palette and the assistant leave an input method's Enter, Escape and arrows to it while it composes. The column keeps an unsent message across a close, and Clear stops a reply in flight. A failed proposal offers Try again only where it can run again. A question reads the page once, not twice.
+- **Charts.** Every chart's default count format is the product's (`FORMATTERS.count`), so a rounded-away negative reads `0`, not `-0`. A Bar list draws rows under 1 against its largest row. An Uptime strip's tooltip stays inside its figure at either end, and a strip with no days says "No history yet". A Status list names each strip by the days it holds. Charts build their screen-reader table once per data, not on every cursor move.
+- **Specs and previews.** Card READMEs, preview notes and examples say what the components draw (container steps in rem with their 14px-rem widths, the Appearance menu's order, the required `nav` in the Rail and palette examples, the Proposal's lit edge, the chart roles), and preview controls do what they say.
+- **The utility rules of the check read no comment line**, as the colour rule already did.
 
 ## [0.35.0] · 2026-10-29
 
