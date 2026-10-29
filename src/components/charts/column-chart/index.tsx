@@ -1,6 +1,7 @@
 'use client';
 
 import dynamic from 'next/dynamic';
+import { useCallback, useMemo } from 'react';
 import { cn } from '@/lib/cn';
 import { Readout } from '@/components/charts/readout';
 import { SERIES_VAR, stackPart } from '@/components/charts/scale';
@@ -109,7 +110,11 @@ function Columns({
   ...form
 }: Ungrouped) {
   const [box, { width }] = useSize<HTMLElement>();
-  const { drawn, bars } = form.parts ? stack(form.columns, form.parts) : { drawn: null, bars: form.columns.map((c): Bar => ({ key: c.key, label: c.label, values: [c.value], total: c.value ?? 0, none: c.value === null, est: Boolean(c.estimate) && c.value !== null })) };
+  const { columns, parts } = form;
+  const { drawn, bars } = useMemo(
+    () => (parts ? stack(columns, parts) : { drawn: null, bars: columns.map((c): Bar => ({ key: c.key, label: c.label, values: [c.value], total: c.value ?? 0, none: c.value === null, est: Boolean(c.estimate) && c.value !== null })) }),
+    [columns, parts],
+  );
   const n = bars.length;
   const { active, set, keys, local, timed } = useCursor(n, dates, previewIndex);
   const fill = height === 'fill';
@@ -128,8 +133,26 @@ function Columns({
   const rest = column >= REST;
   const dense = n > DENSE && !signed;
   /** A value as it reads; a period with no data reads the product's word, and "so far" with it while it is running. */
-  const value = (v: number | null, running = false) => (v === null ? (running ? `${noData} so far` : noData) : format(v));
-  const totalOf = (b: Bar, i: number) => value(b.none ? null : b.total, i === soFar);
+  const value = useCallback((v: number | null, running = false) => (v === null ? (running ? `${noData} so far` : noData) : format(v)), [format, noData]);
+  const totalOf = useCallback((b: Bar, i: number) => value(b.none ? null : b.total, i === soFar), [value, soFar]);
+  // Moving the cursor re-renders the chart, and no row of its table changes with it, so the rows are built once per data.
+  const caption = `${label}${highlight && highlightLabel ? `. ${drawn ? 'Ringed' : 'Accented'}: ${highlightLabel}` : ''}`;
+  const table = useMemo(
+    () => (settled ? <table className="sr-only">
+      <caption>{caption}</caption>
+      {drawn ? <thead><tr><th scope="col">Period</th>{drawn.map((p) => <th key={p.key} scope="col">{p.label}</th>)}<th scope="col">Total</th></tr></thead> : null}
+      <tbody>
+        {bars.map((b, i) => (
+          <tr key={b.key}>
+            <th scope="row">{b.label}{i === soFar ? ', so far' : null}{b.est ? ', estimate' : null}</th>
+            {drawn ? b.values.map((v, k) => <td key={drawn[k].key}>{value(v, b.none && i === soFar)}</td>) : null}
+            <td>{totalOf(b, i)}</td>
+          </tr>
+        ))}
+      </tbody>
+    </table> : null),
+    [settled, caption, drawn, bars, soFar, value, totalOf],
+  );
 
   const at = active !== null && active >= 0 && active < n ? active : null;
   const on = at === null ? null : bars[at];
@@ -320,19 +343,7 @@ function Columns({
       </div>
       <Labels bars={bars} active={active} width={width} left={left} timed={timed} every={every} settled={settled} estimate={bars.some((b) => b.est)} />
       <p className="sr-only" aria-live="polite">{reading}</p>
-      {settled ? <table className="sr-only">
-        <caption>{label}{highlight && highlightLabel ? `. ${drawn ? 'Ringed' : 'Accented'}: ${highlightLabel}` : ''}</caption>
-        {drawn ? <thead><tr><th scope="col">Period</th>{drawn.map((p) => <th key={p.key} scope="col">{p.label}</th>)}<th scope="col">Total</th></tr></thead> : null}
-        <tbody>
-          {bars.map((b, i) => (
-            <tr key={b.key}>
-              <th scope="row">{b.label}{i === soFar ? ', so far' : null}{b.est ? ', estimate' : null}</th>
-              {drawn ? b.values.map((v, k) => <td key={drawn[k].key}>{value(v, b.none && i === soFar)}</td>) : null}
-              <td>{totalOf(b, i)}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table> : null}
+      {table}
     </figure>
   );
 }

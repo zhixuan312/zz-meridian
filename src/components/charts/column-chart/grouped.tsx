@@ -1,5 +1,6 @@
 'use client';
 
+import { useCallback, useMemo } from 'react';
 import { cn } from '@/lib/cn';
 import { Readout } from '@/components/charts/readout';
 import { SERIES_SLOTS, SERIES_VAR, type SeriesSlot } from '@/components/charts/scale';
@@ -42,11 +43,11 @@ export function GroupedColumns({
   const settled = useSettled(columns.map((c) => c.key).join('\n'));
   // Each part takes its slot in order; one past the sixth has none, and is neutral, as a stack's Other is.
   const colors = parts.map((p, k) => SERIES_VAR(p.color ?? (k < SERIES_SLOTS ? ((k + 1) as SeriesSlot) : 'neutral')));
-  const bars = columns.map((c) => {
+  const bars = useMemo(() => columns.map((c) => {
     const values = parts.map((_, k) => c.values[k] ?? null);
     const none = values.every((v) => v === null);
     return { key: c.key, label: c.label, values, none, est: Boolean(c.estimate) && !none };
-  });
+  }), [columns, parts]);
 
   const af = axisFormat ?? format;
   const { ticks, low, top, at100, left } = scaleOf(bars.flatMap((b) => b.values.filter((v): v is number => v !== null)), true, whole, af);
@@ -55,7 +56,24 @@ export function GroupedColumns({
   // A part's bar wide enough for a figure keeps its value above it at rest; a narrower one is read when pointed at.
   const bar = (column - (parts.length - 1)) / Math.max(1, parts.length);
   const rest = bar >= REST;
-  const value = (v: number | null, running = false) => (v === null ? (running ? `${noData} so far` : noData) : format(v));
+  const value = useCallback((v: number | null, running = false) => (v === null ? (running ? `${noData} so far` : noData) : format(v)), [format, noData]);
+  // Moving the cursor re-renders the chart, and no row of its table changes with it, so the rows are built once per data.
+  const caption = `${label}${highlight && highlightLabel ? `. Ringed: ${highlightLabel}` : ''}`;
+  const table = useMemo(
+    () => (settled ? <table className="sr-only">
+      <caption>{caption}</caption>
+      <thead><tr><th scope="col">Period</th>{parts.map((p) => <th key={p.key} scope="col">{p.label}</th>)}</tr></thead>
+      <tbody>
+        {bars.map((b, i) => (
+          <tr key={b.key}>
+            <th scope="row">{b.label}{i === soFar ? ', so far' : null}{b.est ? ', estimate' : null}</th>
+            {b.values.map((v, k) => <td key={parts[k].key}>{value(v, b.none && i === soFar)}</td>)}
+          </tr>
+        ))}
+      </tbody>
+    </table> : null),
+    [settled, caption, parts, bars, soFar, value],
+  );
 
   const at = active !== null && active >= 0 && active < n ? active : null;
   const on = at === null ? null : bars[at];
@@ -189,18 +207,7 @@ export function GroupedColumns({
       </div>
       <Labels bars={bars} active={active} width={width} left={left} timed={timed} every={every} settled={settled} estimate={bars.some((b) => b.est)} />
       <p className="sr-only" aria-live="polite">{reading}</p>
-      {settled ? <table className="sr-only">
-        <caption>{label}{highlight && highlightLabel ? `. Ringed: ${highlightLabel}` : ''}</caption>
-        <thead><tr><th scope="col">Period</th>{parts.map((p) => <th key={p.key} scope="col">{p.label}</th>)}</tr></thead>
-        <tbody>
-          {bars.map((b, i) => (
-            <tr key={b.key}>
-              <th scope="row">{b.label}{i === soFar ? ', so far' : null}{b.est ? ', estimate' : null}</th>
-              {b.values.map((v, k) => <td key={parts[k].key}>{value(v, b.none && i === soFar)}</td>)}
-            </tr>
-          ))}
-        </tbody>
-      </table> : null}
+      {table}
     </figure>
   );
 }

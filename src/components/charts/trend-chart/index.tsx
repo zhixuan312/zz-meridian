@@ -198,7 +198,7 @@ export function TrendChart({
   const h = fill ? Math.max(220, size.height) : height;
 
   const named = typeof format === 'string';
-  const fmt = named ? FORMATTERS[format] : (n: number | null) => (n === null ? '—' : format(n));
+  const fmt = useMemo(() => (typeof format === 'string' ? FORMATTERS[format] : (n: number | null) => (n === null ? '—' : format(n))), [format]);
   const axis = axisFormat ?? (named ? AXIS_FORMATTERS[format] : format);
   // Stacked, each band sits on the sum of the ones below it: a band's top is every band up to it added up a day at a
   // time, and its bottom is the same sum without it. The per-day total is the logic layer's figure, not the plot's.
@@ -255,6 +255,16 @@ export function TrendChart({
   const soFar = running ? n - 1 : -1;
   // The table follows the line a frame later when the dates change (`useSettled`).
   const settled = useSettled(dates.join('\n'));
+  // Moving the cursor re-renders the chart, and no row of its table changes with it, so the rows are built once per data.
+  const caption = `${label}${band ? `. ${band.label}` : ''}${marks ? `. Marked: ${marks.label}` : ''}${baseline ? `. ${baseline.label}` : ''}${running ? `. ${SO_FAR}` : ''}${widened ? `. ${widened}` : ''}`;
+  const table = useMemo(
+    () => (settled ? <table className="sr-only">
+      <caption>{caption}</caption>
+      <thead><tr><th>Date</th>{series.map((s) => <th key={s.key}>{s.label}</th>)}{totals ? <th>Total</th> : null}</tr></thead>
+      <tbody>{dates.map((d, i) => <tr key={d}><td>{d}{i === soFar ? ', so far' : null}</td>{series.map((s) => <td key={s.key}>{fmt(s.values[i])}</td>)}{totals ? <td>{fmt(totals[i])}</td> : null}</tr>)}</tbody>
+    </table> : null),
+    [settled, caption, series, totals, dates, soFar, fmt],
+  );
   const x = (i: number) => pad.l + (n <= 1 ? W / 2 : (i / (n - 1)) * W);
   const y = (v: number) => pad.t + H - ((v - low) / (top - low)) * H;
 
@@ -538,11 +548,7 @@ export function TrendChart({
           ) : null}
         </Readout>
       ) : null}
-      {settled ? <table className="sr-only">
-        <caption>{label}{band ? `. ${band.label}` : ''}{marks ? `. Marked: ${marks.label}` : ''}{baseline ? `. ${baseline.label}` : ''}{running ? `. ${SO_FAR}` : ''}{widened ? `. ${widened}` : ''}</caption>
-        <thead><tr><th>Date</th>{series.map((s) => <th key={s.key}>{s.label}</th>)}{totals ? <th>Total</th> : null}</tr></thead>
-        <tbody>{dates.map((d, i) => <tr key={d}><td>{d}{i === soFar ? ', so far' : null}</td>{series.map((s) => <td key={s.key}>{fmt(s.values[i])}</td>)}{totals ? <td>{fmt(totals[i])}</td> : null}</tr>)}</tbody>
-      </table> : null}
+      {table}
     </div>
   );
 }

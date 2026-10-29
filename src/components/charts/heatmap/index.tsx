@@ -151,6 +151,17 @@ function Legend({ unit, more, children }: { unit: string; more: string; children
 function Hours({ values, timezone = 'UTC', scale, format, unit, label, className, 'data-preview-state': previewState, 'data-preview-cell': previewCell }: HoursProps & Required<Pick<Shared, 'scale' | 'format' | 'unit'>>) {
   const [box, { width }] = useSize<HTMLElement>();
   const [hover, setHover] = useState<{ d: number; h: number } | null>(null);
+  // Pointing at an hour re-renders the grid, and no cell of its table changes with it, so the table is built once per data.
+  const table = useMemo(
+    () => (
+      <table className="sr-only">
+        <caption>{label}</caption>
+        <thead><tr><th>Day ({timezone})</th>{Array.from({ length: 24 }, (_, h) => <th key={h}>{String(h).padStart(2, '0')}:00</th>)}</tr></thead>
+        <tbody>{values.map((row, d) => <tr key={d}><th>{DAYS[d]}</th>{row.map((v, h) => <td key={h}>{format(v)}</td>)}</tr>)}</tbody>
+      </table>
+    ),
+    [label, timezone, values, format],
+  );
   const group = width > 0 && width < 560 ? 3 : 1;
   const cols = 24 / group;
   const grid = values.map((row) => Array.from({ length: cols }, (_, c) => row.slice(c * group, c * group + group).reduce((a, b) => a + b, 0)));
@@ -227,11 +238,7 @@ function Hours({ values, timezone = 'UTC', scale, format, unit, label, className
       </div>
       <p className="sr-only" aria-live="polite">{on ? `${DAYS[on.d]} ${range(on.h)} ${timezone}: ${format(grid[on.d][on.h])} ${unit}` : ''}</p>
       <Legend unit={unit} more={top === undefined ? 'More' : `${format(top)} or more`} />
-      <table className="sr-only">
-        <caption>{label}</caption>
-        <thead><tr><th>Day ({timezone})</th>{Array.from({ length: 24 }, (_, h) => <th key={h}>{String(h).padStart(2, '0')}:00</th>)}</tr></thead>
-        <tbody>{values.map((row, d) => <tr key={d}><th>{DAYS[d]}</th>{row.map((v, h) => <td key={h}>{format(v)}</td>)}</tr>)}</tbody>
-      </table>
+      {table}
     </figure>
   );
 }
