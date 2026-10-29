@@ -13,14 +13,14 @@ import { app } from '@/app.config';
  * the frame and a card), and this is the document underneath it: the product's name, one sentence, and Try again.
  * `app.config` is the one import, and it is already in the entry chunk of every route that draws the product's mark.
  */
-export default function EmbedError({ reset }: { error: Error & { digest?: string }; reset: () => void }) {
+export default function EmbedError({ retry }: { error: Error & { digest?: string }; retry: () => void }) {
   return (
     <main className="mx-auto flex min-h-dvh max-w-prose flex-col items-start justify-center gap-3 p-8">
       <p className="t-kicker">{app.name}</p>
       <p className="text-sm text-ink">This view did not load, and nothing was changed.</p>
       <button
         type="button"
-        onClick={reset}
+        onClick={retry}
         className="press hit rounded-md border border-line-strong px-3 py-1.5 text-sm font-medium text-ink hover:bg-fill-hover"
       >
         Try again

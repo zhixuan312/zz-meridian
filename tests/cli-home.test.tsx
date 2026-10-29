@@ -196,7 +196,7 @@ describe("Home's states", () => {
   });
 
   it('error: what failed, and Retry', () => {
-    const html = renderToStaticMarkup(<Tooltip.Provider><DashboardError error={Object.assign(new Error('days'), { digest: 'd1' })} reset={() => {}} /></Tooltip.Provider>);
+    const html = renderToStaticMarkup(<Tooltip.Provider><DashboardError error={Object.assign(new Error('days'), { digest: 'd1' })} retry={() => {}} /></Tooltip.Provider>);
     expect(html).toMatch(/did not load/);
     expect(html).toMatch(/Retry/);
   });

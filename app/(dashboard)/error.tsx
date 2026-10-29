@@ -14,8 +14,10 @@ import { EmptyState } from '@/components/ui/empty-state';
  *
  * The second way out is read from `nav`, never written here: not every product has a Services page, and one that does not
  * would otherwise offer a button to an address that leads nowhere while the reader is already having a bad day.
+ *
+ * Retry is Next's `retry`, which fetches the page again; `reset` would re-render the payload that holds the error.
  */
-export default function DashboardError({ error, reset }: { error: Error & { digest?: string }; reset: () => void }) {
+export default function DashboardError({ error, retry }: { error: Error & { digest?: string }; retry: () => void }) {
   const items = nav.flatMap((g) => g.items);
   const services = items.find((i) => i.href === '/services');
   const home = items.find((i) => i.href === '/');
@@ -28,7 +30,7 @@ export default function DashboardError({ error, reset }: { error: Error & { dige
           title="Retrying usually works"
           action={
             <>
-              <Button variant="primary" icon={<RotateCw />} onClick={reset}>Retry</Button>
+              <Button variant="primary" icon={<RotateCw />} onClick={retry}>Retry</Button>
               {elsewhere ? <Button asChild><Link href={elsewhere.href}>{services ? `Check ${services.label}` : `Go to ${elsewhere.label}`}</Link></Button> : null}
             </>
           }
