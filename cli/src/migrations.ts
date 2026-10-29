@@ -735,16 +735,19 @@ function navItemWithoutFields(root: string): string[] | null {
 }
 
 /**
- * A configuration's own `NavItem` as written, from its declaration to the next line that starts a statement, comments
- * blanked; undefined when there is none. No type is parsed: a shape this cuts short is reported rather than passed, since
- * a migration line with nothing to do costs a look, and a missed one is the type error with no line it exists to prevent.
+ * A configuration's own `NavItem` as written, comments blanked: its declaration's line and every line after it that
+ * starts indented, blank, or with a closing bracket or an operator that continues it (`}`, `>`, `|`, `&`, `?`, `:`), up
+ * to the first that starts at the margin with anything else, the next statement or its comment. Undefined when there is
+ * none. No type is parsed: a shape this cuts short is reported rather than passed, since a migration line with nothing to
+ * do costs a look, and a missed one is the type error with no line it exists to prevent.
  */
 function navItemType(body: string): string | undefined {
   const m = /^export\s+(?:interface|type)\s+NavItem\b/m.exec(body);
   if (!m) return undefined;
-  const rest = uncommented(body.slice(m.index + m[0].length));
-  const end = rest.search(/^(?:export|import|type|interface|const|let|var|function|class|declare|enum)\s/m);
-  return m[0] + (end < 0 ? rest : rest.slice(0, end));
+  const lines = body.slice(m.index).split('\n');
+  let n = 1;
+  while (n < lines.length && /^(?:$|[\s}\])>|&?:])/.test(lines[n]!)) n++;
+  return uncommented(lines.slice(0, n).join('\n'));
 }
 
 /** `src` with every comment blanked to spaces and its strings kept, so a commented-out field is not read as one. */
