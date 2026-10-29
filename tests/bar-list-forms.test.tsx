@@ -150,3 +150,17 @@ it('stands its lines under the rows in one order: the axis levels, the widening,
   expect(level.compareDocumentPosition(widened) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   expect(widened.compareDocumentPosition(key) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
 });
+
+describe('scale', () => {
+  it('draws rows under 1 against the largest row, as rows over 1 are', () => {
+    const shares: BarItem[] = [{ key: 'a', label: 'Batch', value: 0.2 }, { key: 'b', label: 'Stream', value: 0.1 }];
+    const { container } = render(<BarList label="Share of requests" items={shares} />);
+    expect(width(bar(container, 'a'))).toBe(100);
+    expect(width(bar(container, 'b'))).toBe(50);
+  });
+
+  it('draws nothing for a list whose every row is zero', () => {
+    const { container } = render(<BarList label="Errors" items={[{ key: 'a', label: 'Batch', value: 0 }]} />);
+    expect(width(bar(container, 'a'))).toBe(0);
+  });
+});

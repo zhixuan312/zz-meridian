@@ -77,7 +77,9 @@ export function BarList({
   if (rest.length) shown.push({ key: '__others', label: `${rest.length} ${plural(rest.length, 'other')}`, value: rest.reduce((a, b) => a + Math.max(0, b.value), 0), estimate: rest.some((r) => r.estimate) });
   const data = shown.flatMap((i) => (pair && i.compare != null ? [i.value, i.compare] : [i.value]));
   const ticks = !axis ? null : held ? heldTicks(0, cap) : niceTicks(Math.max(total ?? 0, ...data));
-  const top = held ? Math.max(cap, ...data) : ticks ? ticks.at(-1)! : Math.max(1, total ?? 0, ...data);
+  // Against the largest row, whatever its size: a floor of 1 drew shares and rates as stubs. The smallest positive number
+  // only keeps an all-zero list from dividing by zero.
+  const top = held ? Math.max(cap, ...data) : ticks ? ticks.at(-1)! : Math.max(Number.MIN_VALUE, total ?? 0, ...data);
   // A held scale keeps its levels and adds the widened top as one more, so the levels still read as the held ones.
   const levels = ticks && top > ticks.at(-1)! ? [...ticks, top] : ticks;
   // The first row in drawing order that stands at the widened top is named, so the reader knows which row moved it.
