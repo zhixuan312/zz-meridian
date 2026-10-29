@@ -120,13 +120,13 @@ const page = await launch();
 
 let failures = 0;
 
+/** Every stop the walks tagged, across the routes: none at all is a walk that judged nothing. */
+let stops = 0;
 /**
  * One route's walk. A page that stops answering — a protocol command times out after 30 s (`scripts/lib/chrome.ts`) — is
  * that route's own failure, named and counted, and the walk goes on to the next one, as `scripts/audit.ts` measures each
  * route in a guard of its own. Without it one hanging page ended the suite and its evidence for every route after it.
  */
-/** Every stop the walks tagged, across the routes: none at all is a walk that judged nothing. */
-let stops = 0;
 const walk = async (route: string) => {
   await page.open(base + route, { width: 1440, height: 900, theme: 'dark', wait: 2500, cookie });
   // One implementation of the walk: the helper is injected, never copied. A page it cannot be injected into fails the suite.

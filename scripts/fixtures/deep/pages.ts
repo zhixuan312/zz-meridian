@@ -265,7 +265,6 @@ ${chart(`${RULE(50)}${CAPTION}`)}
   '/late-unnamed-fixed': deep('Late control, corrected', { css: UNNAMED, body: SLOT, script: arrive(2600, `<button type="button" class="icon" aria-label="Ask">${ICON}</button>`) }),
   '/late-dead-control': deep('Late dead control', { body: SLOT, script: arrive(3600, '<button type="button">Ask</button>') }),
   '/late-dead-control-fixed': deep('Late dead control, corrected', { body: SLOT, script: arrive(3600, '<button type="button">Ask</button>', `slot.querySelector('button').addEventListener('click', () => { document.querySelector('.status').textContent = 'Asked'; });`) }),
-  // A control whose answer comes about 1.5 s after the press, past the presses' first look at 600 ms: it is slow, not dead.
   // A press that answers at once, and a document that is replaced after the presses' look has closed: a team switch
   // that reloads once its request is accepted. Escape replaces it here, so the replacement lands, every run, between the
   // look and the suite's next read of the page. The second control is pressed on the new document.
@@ -277,6 +276,7 @@ ${chart(`${RULE(50)}${CAPTION}`)}
   // A control whose name carries a count that a read fills in: "Alerts" on the first load, "Alerts, 3 new" on every later
   // one, as ShellTools reads when its alerts answer after the settle on one load and before it on the next (#66).
   '/presses-live-name': deep('Control whose name carries a count', { body: '<div class="tools"></div><p class="status" aria-live="polite"></p>', script: `const first = !sessionStorage.getItem('counted'); sessionStorage.setItem('counted', '1'); const tools = document.querySelector('.tools'); const add = (label, act) => { const b = document.createElement('button'); b.type = 'button'; b.textContent = label; b.addEventListener('click', act); tools.append(b); }; add('Reload', () => location.reload()); add(first ? 'Alerts' : 'Alerts, 3 new', () => { document.querySelector('.status').textContent = 'Alerts open'; });` }),
+  // A control whose answer comes about 1.5 s after the press, past the presses' first look at 600 ms: it is slow, not dead.
   '/late-answer': deep('Late answer', { body: '<button type="button" id="ask">Ask</button><p class="status" aria-live="polite"></p>', script: `document.getElementById('ask').addEventListener('click', () => { setTimeout(() => { document.querySelector('.status').textContent = 'Answered'; }, 1500); });` }),
 
   // ---- the rules of the standard that no page had ever made fire ----
@@ -544,7 +544,6 @@ export const NAV_PAGES: Record<string, string> = {
   '/nav-root-target': nav('Root target', `<x-toggle></x-toggle>${TABLE}`, ROOT_TOGGLE),
   // The mapping names a control the page does not have.
   '/nav-missing-target': nav('Missing target', `${TOGGLE}${TABLE}`, WIRE),
-  // Two elements match the mapping's control: the first is hidden, the second works.
   // As a Next page: React marks the elements it rendered once it hydrates (light DOM only), and the control lives in an
   // open root React never renders into, so readiness is its host's.
   '/nav-root-hydrated': nav('Hydrated root', `<x-toggle></x-toggle>${TABLE}`, `${ROOT_TOGGLE}\n  self.__next_f = [];\n  for (const el of document.querySelectorAll('*')) el.__reactProps$fixture = {};`),
@@ -562,6 +561,7 @@ export const NAV_PAGES: Record<string, string> = {
   '/nav-empty': nav('Empty list', '<div data-empty="first-run"><p>No things yet</p></div>'),
   // The same list, failed: its error state, which stays a failure.
   '/nav-empty-error': nav('Empty list', '<div data-empty="error" role="alert"><p>The things could not be read</p></div>'),
+  // Two elements match the mapping's control: the first is hidden, the second works.
   '/nav-multi': nav('Several matches', `<button class="pick" aria-pressed="false" hidden>Hidden</button><button class="pick" aria-pressed="false">Toggle</button>${TABLE}`, PICK),
   // The only destination of its workspace: no other page's rail links to it, and the workspace menu's Solo item opens it.
   '/nav-solo': nav('Solo', `${TOGGLE}${TABLE}`, WIRE, { workspace: 'Solo', rail: [['/nav-solo', 'Solo']] }),

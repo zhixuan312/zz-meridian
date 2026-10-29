@@ -39,7 +39,6 @@ const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 // answers is the navigation's interactive time, judged in the timed tier; this only keeps a slow answer from reading as none.
 const HANG_BOUND_MS = 5000;
 
-/** Tag every visible, enabled, not-yet-chosen control with its index; return their names (with the hosts they sit in) and the page's links. */
 /**
  * The page's controls and how each is named: its accessible name and the roots it sits in. A control is found again by
  * that name (and which of the controls with it), never by its place in the walk: a later load can draw the controls in
