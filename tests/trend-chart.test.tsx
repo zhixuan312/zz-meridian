@@ -62,6 +62,22 @@ describe('a trend chart readout', () => {
     expect(container.querySelector('div[aria-hidden]')).toBeNull();
   });
 
+  it('says the day the keys move to, for a screen reader, which reads no readout', () => {
+    measure();
+    const { container } = render(
+      <TrendChart label="Requests per day" running dates={['2026-10-01', '2026-10-02']}
+        series={[{ key: 'requests', label: 'Requests', values: [100, 200] }, { key: 'errors', label: 'Errors', values: [3, 4] }]} />,
+    );
+    const chart = screen.getByRole('img', { name: /Use the arrow keys/ });
+    fireEvent.keyDown(chart, { key: 'Home' });
+    const live = container.querySelector('[aria-live="polite"]');
+    expect(live).toHaveTextContent(/^01 Oct 2026: Requests 100, Errors 3$/);
+    fireEvent.keyDown(chart, { key: 'ArrowRight' });
+    expect(live).toHaveTextContent(/^02 Oct 2026, so far: Requests 200, Errors 4$/);
+    fireEvent.keyDown(chart, { key: 'Escape' });
+    expect(live).toBeEmptyDOMElement();
+  });
+
   it('shows a selected day statically in a specimen', () => {
     measure();
     const { container } = render(

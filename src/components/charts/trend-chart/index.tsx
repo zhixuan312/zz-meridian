@@ -350,6 +350,9 @@ export function TrendChart({
   const active = selected !== null && Number.isInteger(selected) && selected >= 0 && selected < n ? selected : null;
   // On the pixel grid, so the 1px cursor line stays crisp while it glides.
   const cx = active !== null ? Math.round(x(active)) + 0.5 : 0;
+  const day = active === null ? '' : tick ? tick(dates[active]) : formatDate(dates[active]);
+  /** The day pointed at, in words, for a screen reader: the readout is drawn for the eye and hidden from it. */
+  const reading = active === null ? null : `${day}${active === soFar ? ', so far' : ''}${marks?.dates.includes(dates[active]) ? `, ${marks.label}` : ''}: ${series.map((s) => `${s.label} ${fmt(s.values[active])}`).join(', ')}${totals ? `, Total ${fmt(totals[active])}` : ''}`;
 
   return (
     <div ref={box} className={cn('relative w-full select-none', fill && 'min-h-55 flex-1', className)} style={fill ? undefined : { height }}>
@@ -531,7 +534,7 @@ export function TrendChart({
           {/* A marked day says what it is marked for where every other reading of the day is (#94): the dot and its stem
               are a shape, the group they stand in takes no pointer, and the table's caption is read by a screen reader and
               not by the person pointing at the chart. */}
-          <p className="t-eyebrow mb-1.5 break-words">{tick ? tick(dates[active]) : formatDate(dates[active])}{active === soFar ? ' · so far' : null}{marks?.dates.includes(dates[active]) ? ` · ${marks.label}` : null}</p>
+          <p className="t-eyebrow mb-1.5 break-words">{day}{active === soFar ? ' · so far' : null}{marks?.dates.includes(dates[active]) ? ` · ${marks.label}` : null}</p>
           {/* Stacked, the readout lists the bands top to bottom, as they sit on the chart, then the total. */}
           {(stacked ? series.map((s, k) => ({ s, k })).reverse() : series.map((s, k) => ({ s, k }))).map(({ s, k }) => (
             <p key={s.key} className="flex flex-wrap items-start gap-x-2 text-xs leading-6">
@@ -548,6 +551,7 @@ export function TrendChart({
           ) : null}
         </Readout>
       ) : null}
+      <p className="sr-only" aria-live="polite">{reading}</p>
       {table}
     </div>
   );

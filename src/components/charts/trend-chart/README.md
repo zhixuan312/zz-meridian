@@ -100,7 +100,7 @@ The view shares what the chart shows through `useShareView` (the period and the 
 
 ## Accessibility
 
-- Focusable `role="img"` labelled with what it shows and how to read a day; the `sr-only` table holds every value. A running point is never told by its dashes alone: its row reads "2026-10-03, so far" and its readout says the same.
+- Focusable `role="img"` labelled with what it shows and how to read a day; the `sr-only` table holds every value. The day the keys or the pointer move to is announced through a polite live line ("01 Oct 2026: Requests 100, Errors 3"), since the readout is hidden from a screen reader. A running point is never told by its dashes alone: its row reads "2026-10-03, so far", and its readout and announcement say the same.
 - Marks hold 3:1 on `surface`: slots 1 to 6 from 5.1:1 to 6.2:1 dark, 3.1:1 to 5.0:1 light (slot 5 is labelled everywhere because it falls under 3:1 on light). Axis labels `ink-3` 6.39:1 dark, 5.13:1 light.
 - The deepest part of a stack, the one it stands on, holds 3:1 on `surface`: 3.30:1 dark, 3.61:1 light with the indigo accent, and never under 3.23:1 (jade, dark) in any theme and accent (`node scripts/contrast.ts --all`, "the deepest part of a stack"). The parts above it are told from their neighbours by the 1px `surface` hairline, and each is named in the legend and the readout.
 - The categorical order passes colour-vision checks: worst adjacent CVD separation 8.7 dark, 10.2 light (`node scripts/contrast.ts`).
