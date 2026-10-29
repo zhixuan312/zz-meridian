@@ -12,7 +12,8 @@
  *
  * It writes only what a person could write through the page: one ticket, in the running sample. The audit, the presses
  * and the keyboard walk share that server, so a count is compared with the one read just before the write it follows and
- * must have grown by at least one, never to a fixed number.
+ * must have grown by at least one, never to a fixed number; when another writer moved one away meanwhile, it must agree
+ * with the page that lists what it counts.
  *
  * One line per step: `ok`, `FAIL` with what was expected and what was found, or `n/a` with the reason. The last line is
  * `journeys: ` and a JSON summary. Exit 0 when every step passed, 1 when one failed, 2 when no browser can be launched.
@@ -443,7 +444,7 @@ if (import.meta.main) {
     await step("a ticket created in Engineering raises Main's open count", missing(TICKETS, '/'), async () => {
       const title = `Journey ticket ${Date.now().toString(36)}`;
       const openCount = (page: Page) => ask<number | null>(page, `
-        const reg = document.querySelector('[role="region"][aria-label="Engineering"]'); if (!reg) return null;
+        const reg = document.querySelector(${JSON.stringify(`[role="region"][aria-label="${W.engineering.label}"]`)}); if (!reg) return null;
         const row = [...reg.querySelectorAll('dl > div')].find((r) => text(r.querySelector('dt')) === 'Tickets open');
         const n = row ? Number(text(row.querySelector('dd'))) : NaN;
         return Number.isFinite(n) ? n : null;`);
@@ -479,10 +480,28 @@ if (import.meta.main) {
         await sleep(250);
       }
       if (after === null || after < 1) throw new Error(`expected Main to count the new ticket among its open tickets; found ${after} (read ${before} just before it was created)`);
-      // The presses share this server and move tickets along while this runs, so a count that did not grow by one is not a
-      // defect when the ticket itself is counted: the line says which of the two was seen.
-      if (after < before + 1) return `(${before} -> ${after}, beside another writer)`;
-      return `(${before} -> ${after})`;
+      if (after >= before + 1) return `(${before} -> ${after})`;
+      // The presses share this server and move tickets along while this runs, so a count that did not grow by one may be
+      // another writer's. Then Main must count what the Tickets page counts, where the new ticket is one of the open rows:
+      // a Main that never counted it reads one fewer. Read in turn until the two agree, as a writer may move one between.
+      const ticketsOpen = (page: Page) => ask<number | null>(page, `
+        const h = [...document.querySelectorAll('main h2')].find((e) => text(e) === 'Open tickets'); if (!h) return null;
+        let el = h; while (el && !el.querySelector('[data-value]')) el = el.parentElement;
+        const n = el ? Number(text(el.querySelector('[data-value]'))) : NaN;
+        return Number.isFinite(n) ? n : null;`);
+      let seen = '';
+      const until2 = Date.now() + 15000;
+      while (Date.now() < until2) {
+        await go(a, 'member', TICKETS);
+        await settle(a, 'member', TICKETS, 'engineering');
+        const listed = await ticketsOpen(a);
+        await go(a, 'member', HOME);
+        await settle(a, 'member', HOME, 'main');
+        const main = await openCount(a);
+        if (listed !== null && main === listed) return `(${before} -> ${after}, beside another writer; Main and Tickets both count ${main})`;
+        seen = `Main ${main}, Tickets ${listed}`;
+      }
+      throw new Error(`expected Main to count the new ticket: its open count did not grow (${before} -> ${after}) and it disagrees with the Tickets page (${seen})`);
     }, () => [a]);
 
     await step('a refresh, then Back and Forward, each leave the rail on the address\'s workspace', missing(...trail), async () => {
