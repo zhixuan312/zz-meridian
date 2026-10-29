@@ -105,5 +105,5 @@ export function resolveCoverage(
     }
     return { path, data: state, interaction: state } as const;
   });
-  return { routes: out.map((r) => ({ ...r })), errors, warnings };
+  return { routes: out, errors, warnings };
 }
