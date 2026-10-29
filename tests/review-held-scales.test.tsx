@@ -1,5 +1,6 @@
 import { render } from '@testing-library/react';
 import { readFileSync } from 'node:fs';
+import path from 'node:path';
 import { describe, expect, it, vi } from 'vitest';
 
 // A rule about a chart's width is tested at a stated width: the size hook is replaced.
@@ -124,7 +125,7 @@ describe('the forms of issue #99 on their edge paths', () => {
   });
 
   it("an estimate's forced-colours fill wins over a mark's inline colour", () => {
-    const css = readFileSync('src/styles/base.css', 'utf8');
+    const css = readFileSync(path.resolve(import.meta.dirname, '../src/styles/base.css'), 'utf8');
     const forced = css.slice(css.indexOf('@media (forced-colors: active)'));
     expect(forced).toMatch(/\[data-estimate\] \{[^}]*background-color: Canvas !important;/);
   });
