@@ -8,7 +8,7 @@ Status: beta
 
 1. **SVG**: one `<svg role="img">` per strip, labelled by the summary. One baseline `<rect>` spans the whole period in the operational fill; one `<rect data-day data-state>` is drawn per non-operational day. A focus rect appears only while a day is focused.
 2. **Caption**: "90 days ago" (the span shown), a hairline, the uptime percentage in `ink-2`, a hairline, "Today", or the day the strip ends on when it is given `endLabel`.
-3. **Tooltip**: on hover or keyboard focus, the day's state and date, on `surface-inverse`.
+3. **Tooltip**: on hover or keyboard focus, the day's state and date, on `surface-inverse`. Centred over the day mid-strip and flush with the figure's edge at either end, so a card that clips its content never cuts it.
 4. **Screen-reader text**: one paragraph with the period and its uptime, then one sentence per degraded, outage or no-data day ("12 Sept 2026: Outage."), or "No incidents." There is no table of every day.
 
 ## Variants
@@ -32,6 +32,7 @@ The viewBox is one unit per day, so the strip fills the container's width and ev
 |---|---|
 | Hover or focus | A focus rect marks the day; the tooltip shows. |
 | Short history | Fewer days than the window: the days widen to fill it; the caption's count says how many days there are. |
+| No days | "No history yet" in `t-caption`; no plot, no caption and no period. |
 
 ## Behaviour
 

@@ -59,6 +59,8 @@ export function UptimeBars({
     else all.push({ x: i, width: 1 });
     return all;
   }, []);
+  // No days yet: a plot of nothing would name a period between two invented dates.
+  if (!shown.length) return <figure aria-label={label} className={cn('min-w-0', className)}><p className="t-caption">No history yet</p></figure>;
   return (
     <figure aria-label={label} className={cn('relative min-w-0', className)} onPointerLeave={() => setHover(null)}>
       <div
@@ -104,8 +106,10 @@ export function UptimeBars({
       {hover !== null ? (
         <div
           aria-hidden
-          className="pointer-events-none absolute bottom-full z-10 mb-2 -translate-x-1/2 rounded-sm bg-surface-inverse px-2 py-1.5 text-xs whitespace-nowrap text-ink-inverse shadow-overlay"
-          style={{ left: `${((hover + 0.5) / shown.length) * 100}%` }}
+          className="pointer-events-none absolute bottom-full z-10 mb-2 rounded-sm bg-surface-inverse px-2 py-1.5 text-xs whitespace-nowrap text-ink-inverse shadow-overlay"
+          // Moved back by the same share of its own width as the day's share of the strip: centred mid-strip, flush with
+          // the figure's edge at either end, so a card that clips its content never cuts the first or last day's off.
+          style={{ left: `${((hover + 0.5) / shown.length) * 100}%`, transform: `translateX(-${((hover + 0.5) / shown.length) * 100}%)` }}
         >
           <span className="font-medium">{WORD[shown[hover]]}</span>
           <span className="opacity-70"> · {formatDate(dateOf(hover))}</span>
