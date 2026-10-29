@@ -119,7 +119,12 @@ async function attach(proc: ChildProcess, dir: string, handle: Launched): Promis
   }
   if (!list) throw new Error(proc.exitCode !== null || proc.signalCode !== null ? `Chrome exited before it started (${proc.exitCode ?? proc.signalCode})` : 'Chrome did not start within 30 s');
   const ws = new WebSocket(list.find((t) => t.type === 'page').webSocketDebuggerUrl);
-  await new Promise((r) => ws.addEventListener('open', r));
+  // A socket that never opens or is refused says so, within the same 30 s, instead of leaving the caller waiting.
+  await new Promise<void>((resolve, reject) => {
+    const t = setTimeout(() => reject(new Error('Chrome did not open its page connection within 30 s')), 30_000);
+    ws.addEventListener('open', () => { clearTimeout(t); resolve(); });
+    ws.addEventListener('error', () => { clearTimeout(t); reject(new Error('Chrome refused the page connection')); });
+  });
   let id = 0;
   const pending = new Map<number, (m: any) => void>();
   const errors: string[] = [];
@@ -139,8 +144,12 @@ async function attach(proc: ChildProcess, dir: string, handle: Launched): Promis
     if (m.method === 'Runtime.exceptionThrown') errors.push('exception: ' + (m.params.exceptionDetails?.exception?.description ?? m.params.exceptionDetails?.text ?? '').split('\n')[0]);
     if (m.method === 'Runtime.consoleAPICalled' && m.params.type === 'error') errors.push('console.error: ' + m.params.args.map((a: any) => a.value ?? a.description ?? '').join(' ').slice(0, 200));
   });
+  // A Chrome that crashed fails every command waiting on it, and every later one, at once and by name, not each after its own 30 s.
+  const GONE = { error: { message: 'Chrome closed the connection' } };
+  ws.addEventListener('close', () => { for (const answer of [...pending.values()]) answer(GONE); pending.clear(); });
   const send = (method: string, params: Record<string, unknown> = {}) =>
     new Promise<any>((r, reject) => {
+      if (ws.readyState >= WebSocket.CLOSING) return reject(new Error(`${method}: ${GONE.error.message}`));
       const i = ++id;
       const t = setTimeout(() => { pending.delete(i); reject(new Error(`${method} timed out`)); }, 30000);
       // A protocol error rejects: a silently refused command (a bad parameter) would leave the page in the wrong state.
