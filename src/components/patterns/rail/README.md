@@ -103,12 +103,14 @@ Not applicable: navigation is how a person moves. An agent opens a view by its a
 ## Implementation
 
 ```tsx
+import { nav } from '@/app.config';
 import { Rail } from '@/components/patterns/rail';
 
-<AppShell rail={<Rail />} tools={<ShellTools />} assistant={assistant}>{children}</AppShell>
+<AppShell rail={<Rail nav={nav} />} tools={<ShellTools now={updatedAt} />} assistant={assistant}>{children}</AppShell>
+// The console mounts `ConsoleRail` (src/views/console-chrome.tsx), which filters `nav` by the signed-in person's access.
 ```
 
-Edit `nav` in `src/app.config.ts` to change the destinations: `{ label?, items: [{ href, label, icon, badge?, prefetch?, under? }] }`; set `prefetch: true` on an item whose page is its URL data (a document under a dynamic segment), for one or two items at most.
+Edit `nav` in `src/app.config.ts` to change the destinations: `{ label?, items: [{ href, label, icon, needs, badge?, workspace?, feature?, prefetch?, under? }] }`; set `prefetch: true` on an item whose page is its URL data (a document under a dynamic segment), for one or two items at most.
 
 `under` makes an item a sub page: it is the `href` of an item of the same group, and the rail draws the item in that item's branch.
 

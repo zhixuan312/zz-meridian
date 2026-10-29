@@ -6,7 +6,7 @@ Status: beta
 
 ## Anatomy
 
-1. **Lit edge**: a 2px `accent` line along the top while the proposal is open.
+1. **Lit edge**: while the proposal is open, the 1px `edge-lit` hairline, the accent at the top fading out down the sides, over the card's `line` border, with a faint `shadow-halo`.
 2. **Head**: the Agent mark at 32px, "<agent> proposes" (`t-caption`) and the title (`t-card`), what will happen as a sentence; the state tag on the right.
 3. **Reason** (optional): one or two sentences with the evidence the agent used (`t-small`, `ink-2`).
 4. **Changes**: a bordered list of rows: the setting (`ink-3`), the old value struck through, an arrow, the new value (500).
@@ -26,8 +26,8 @@ Agent mark, Button, on a card (`radius-lg`); while it waits for a person it carr
 
 | State | Tag | Border | Footer |
 |---|---|---|---|
-| Pending | "Needs you", `accent-ink` | `accent-line`; `critical` at 45% in the critical tone | Dismiss, Approve |
-| Applying | "Applying…" | `accent-line` | uncontrolled: both disabled, Approve busy; controlled: none |
+| Pending | "Needs you", `accent-ink` | the lit edge; `critical` at 45% in the critical tone | Dismiss, Approve |
+| Applying | "Applying…" | the lit edge | uncontrolled: both disabled, Approve busy; controlled: none |
 | Applied | ✓ "Applied", `positive-ink` | `line`; title `ink-2` | none |
 | Dismissed | ✕ "Dismissed", `ink-3` | `line` | none |
 | Expired | ✕ "Expired", `ink-3` | `line` | none; the note says why |

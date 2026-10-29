@@ -6,7 +6,7 @@ Status: beta
 
 ## Anatomy
 
-1. **SVG**: one `<svg role="img">` per strip, labelled by the summary. One baseline `<rect>` spans the whole period in the operational fill; one `<rect data-day data-state>` is drawn per non-operational day. A focus rect appears only while a day is focused.
+1. **SVG**: one `<svg role="img">` per strip, labelled by the summary. One baseline `<rect>` in the operational fill spans each stretch of days with data, so a period with data on every day has one; one `<rect data-day data-state>` is drawn per non-operational day. A focus rect appears only while a day is focused.
 2. **Caption**: "90 days ago" (the span shown), a hairline, the uptime percentage in `ink-2`, a hairline, "Today", or the day the strip ends on when it is given `endLabel`.
 3. **Tooltip**: on hover or keyboard focus, the day's state and date, on `surface-inverse`. Centred over the day mid-strip and flush with the figure's edge at either end, so a card that clips its content never cuts it.
 4. **Screen-reader text**: one paragraph with the period and its uptime, then one sentence per degraded, outage or no-data day ("12 Sept 2026: Outage."), or "No incidents." There is no table of every day.

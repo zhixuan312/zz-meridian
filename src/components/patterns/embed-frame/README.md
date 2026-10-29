@@ -24,7 +24,7 @@ App mark, Freshness and the view's own patterns (Metric tiles, a Trend chart, a 
 | Inline | up to 760px | 4px | `text-sm` 600 |
 | Fullscreen | the panel | `gutter` sides, 24px top | `t-page` |
 
-The head responds to its own container, not the viewport: under 34rem the meta and tools take a second line under the title; under 24rem Expand shows only its icon.
+The head responds to its own container, not the viewport: under 34rem (476px) the meta and tools take a second line under the title; under 320px Expand shows only its icon, and under 440px Open drops "in" and the product's name.
 
 ## States
 

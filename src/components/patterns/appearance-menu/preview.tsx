@@ -14,8 +14,8 @@ export default function AppearanceMenuPreview() {
         <div className="w-60 rounded-lg bg-surface-raised p-1 shadow-overlay">
           <p className="t-eyebrow px-2 pt-2 pb-1.5">Theme</p>
           <div className={`${row} pr-8`}><Monitor />System</div>
-          <div className={`${row} bg-fill-hover pr-8`}><Moon />Dark<Check className="absolute right-2 !size-4 !text-accent" strokeWidth={2.25} /></div>
           <div className={`${row} pr-8`}><Sun />Light</div>
+          <div className={`${row} bg-fill-hover pr-8`}><Moon />Dark<Check className="absolute right-2 !size-4 !text-accent" strokeWidth={2.25} /></div>
           <div className="-mx-1 my-1 h-px bg-line" />
           <p className="t-eyebrow px-2 pt-2 pb-1.5">Accent</p>
           <div className="flex gap-1.5 px-2 pt-0.5 pb-2">

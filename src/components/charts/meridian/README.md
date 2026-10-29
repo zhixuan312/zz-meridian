@@ -55,7 +55,7 @@ The Meridian has no size of its own. The line is 1px; the dots 8px across (4px r
 
 ## Accessibility
 
-- Each chart is a focusable `role="img"` with a label that says how to use the keys, and carries an `sr-only` table of every day and series: the tooltip is visual only, the table is the accessible source of the numbers.
+- Each chart's plot is focusable, a `role="img"` (Trend chart) or a `role="group"` of its marks (Column chart, Heatmap), with a label that says how to use the keys, and carries an `sr-only` table of every day and series: the tooltip is visual only, the table is the accessible source of the numbers.
 - The cursor line is decorative; the marks hold 3:1 (`accent` on `surface` 3.71:1 dark, 5.71:1 light).
 - Reduced motion: nothing animates; the line jumps with the pointer instead of gliding.
 

@@ -6,10 +6,10 @@ Status: beta
 
 ## Anatomy
 
-1. **Search**: a small Search input, up to 288px wide once the bar is 832px, full width below; `/` focuses it from anywhere.
+1. **Search**: a small Search input, up to 288px wide once the bar is 52rem (728px), full width below; `/` focuses it from anywhere.
 2. **Filters**: one small Select per dimension, its name inside the trigger in `ink-3` ("Status All"). A filter that is on takes `accent-tint` with an `accent-line` outline, so the reader sees at once what narrows the list.
 3. **Clear**: a ghost button, shown only while something is filtered.
-4. **Result**: a quiet count of what passes ("5 of 240"), `text-xs` `ink-3`, once the bar is 960px.
+4. **Result**: a quiet count of what passes ("5 of 240"), `text-xs` `ink-3`, once the bar is 60rem (840px).
 5. **View controls** (optional): a Segmented control or a menu on the right.
 6. **Filters button** (phones): with a count of active filters on an `accent` disc; it opens a Sheet holding each filter as a Field, the view controls, Clear filters and Show results.
 7. **Ask** (optional, `ask`): an `AskAbout` that hands the filtered list to an agent. It stays in the bar at every width, last, beside the Filters button on a phone: handing the list over is not a filter, so it never moves into the sheet.
@@ -47,7 +47,7 @@ Every control is `control-sm` (32px; 28px compact), 8px apart. The bar sits insi
 ## Surfaces
 
 - **Console**: one row.
-- **Mobile**: once the bar is narrower than 832px, search plus the Filters button; the Sheet rises from the bottom with Show results as its primary action. Under 336px (24rem) the search takes a line of its own and Filters and Ask share the line under it: the three need 336px on one line, and a 320px phone's card gives the bar 246px. The bar reads its OWN width (a container query), not the window's, because the rail, a split row, the assistant's column and an embed all narrow the bar without narrowing the window: 832px keeps the search and the filters on one row, 960px also shows the result count.
+- **Mobile**: once the bar is narrower than 52rem (728px), search plus the Filters button; the Sheet rises from the bottom with Show results as its primary action. Under 336px (24rem) the search takes a line of its own and Filters and Ask share the line under it: the three need 336px on one line, and a 320px phone's card gives the bar 246px. The bar reads its OWN width (a container query), not the window's, because the rail, a split row, the assistant's column and an embed all narrow the bar without narrowing the window: 52rem keeps the search and the filters on one row, 60rem also shows the result count. One rem is 14px here, so these are 728px and 840px.
 - **Embed**: inline views show no bar (the tool's arguments are the filters, named in the title); fullscreen shows the full bar with the provenance line.
 
 ## Agents

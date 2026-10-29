@@ -47,7 +47,7 @@ export function UptimeBars({
 }) {
   const summaryId = useId();
   const [hover, setHover] = useState<number | null>(null);
-  // Every day, always: the figure and the label describe all of them. A narrow strip tightens the gaps instead.
+  // Every day, always: the figure and the label describe all of them. A narrow strip scales the drawing instead.
   const shown = days;
   const dateOf = (i: number) => new Date(end.getTime() - (shown.length - 1 - i) * 86_400_000);
   const marked = shown.flatMap((d, i) => (d === 'operational' ? [] : [{ d, i }]));

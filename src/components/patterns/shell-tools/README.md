@@ -64,5 +64,5 @@ Not applicable.
 ```tsx
 import { ShellTools } from '@/components/patterns/shell-tools';
 
-<AppShell rail={<Rail />} tools={<ShellTools alerts={alerts} now={updatedAt} />}>{children}</AppShell>
+<AppShell rail={<Rail nav={nav} />} tools={<ShellTools alerts={alerts} now={updatedAt} />}>{children}</AppShell>
 ```

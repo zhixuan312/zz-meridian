@@ -17,7 +17,6 @@ import { AppearanceMenu } from '@/components/patterns/appearance-menu';
 import { clearThread } from '@/components/patterns/assistant/thread';
 import { parentOf } from './trail';
 
-/** One scope the workspace menu offers: the console reads the whole platform or one team. */
 /**
  * A row of the workspace menu. `href` is where choosing it goes, when it goes to a page: the rail prefetches it as the
  * menu opens, since a row is a press and nothing prefetches it before.

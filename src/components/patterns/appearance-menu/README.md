@@ -7,7 +7,7 @@ Status: beta
 ## Anatomy
 
 1. **Trigger**: a 32px icon button (sliders icon) in the rail's account card.
-2. **Theme**: a radio group: System, Dark, Light, each with its icon, the choice checked in `accent`.
+2. **Theme**: a radio group: System, Light, Dark, each with its icon, the choice checked in `accent`.
 3. **Accent**: four 20px swatches in 28px targets: indigo, cobalt, jade, graphite; the choice ringed in `ink`.
 4. **Density**: a radio group: Comfortable, Compact.
 
@@ -42,7 +42,7 @@ Not applicable: appearance is the person's own choice.
 
 ## Accessibility
 
-- The trigger is named "Appearance". Theme and density are menu radio groups; the swatches are a radiogroup named "Accent", each radio named by its preset.
+- The trigger is named "Appearance". Theme and density are menu radio groups; the swatches are a group named "Accent" of toggle buttons, each named by its preset and pressed (`aria-pressed`) when it is the choice. They are not a radio group: inside a menu the arrow keys move between the menu's items, so a radio group's arrow-key contract could not be kept, and each swatch is its own stop.
 - A swatch's ring, not its colour, marks the choice.
 
 ## Content

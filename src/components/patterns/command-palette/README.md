@@ -65,9 +65,10 @@ Not applicable. An agent runs tools directly; it never drives the palette.
 ## Implementation
 
 ```tsx
+import { nav } from '@/app.config';
 import { CommandPalette, openCommand } from '@/components/patterns/command-palette';
 
-<CommandPalette /> // once, in the console layout
+<CommandPalette nav={nav} /> // once, in the console layout; the console mounts `ConsolePalette`, which filters `nav` by access
 <button onClick={openCommand}>Search</button>
 ```
 
