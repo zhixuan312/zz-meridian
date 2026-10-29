@@ -437,7 +437,7 @@ export function PageFrame({
   speaksName?: boolean;
   /** One sentence under the title: what this page answers. */
   description?: ReactNode;
-  /** Mono caps above the title: where this page sits ("ZZ Meridian · Production", or the parent record). */
+  /** The kicker above the title (`t-kicker`): where this page sits ("ZZ Meridian · Production", or the parent record). */
   kicker?: ReactNode;
   /** Quiet status beside the actions: the freshness stamp. */
   meta?: ReactNode;

@@ -20,7 +20,7 @@ Status: beta
 
 1. **One scroller.** PageFrame is the only element on a page that scrolls, and only vertically. No card, table or list scrolls on its own.
 2. **Cards are their content's height.** A list that can pass ten rows pages; a "top N" list stays at N.
-3. **Four splits.** Full, `1/2`, `2/3`, `1/3`; and `tiles`, whose columns follow how many tiles it holds and its own width (four are four or two, three are three or one, never a hole). Cards in a row are the same height; every card is a direct child.
+3. **Four splits.** Full, `1/2`, `2/3`, `1/3`; and `tiles`, whose columns follow how many tiles it holds and its own width for two to four tiles (four are four or two, three are three or one, never a hole; one tile is a card, and five or more leave a hole). Cards in a row are the same height; every card is a direct child.
 4. **Three widths, one per kind of page.** `data` fills the canvas at every size (`data-width` is 100%), so a wider screen shows more, not a centred strip: every analytical page uses it, and their titles sit on the same left edge. `form` is a form page's own measure (`form-width`: a 15rem head column, the column gap, a `field-width` card and the page's gutter). It fills the canvas until the canvas is wider than a form needs, then centres — the remainder splits evenly instead of leaving a strip at one side. Settings is the page that uses it. `reading` (`reading-width` 832px, centred) is for a page that is one long document, such as an article rendered with Prose. The top bar always takes the canvas width, so the tools never move; past a page's own width the light fills the margins.
 
 ## The title
@@ -29,6 +29,8 @@ A page's heading is one of two things, and the page says which.
 
 - **A name.** `title="Members"` and no `name`: the heading is the name at the page-title size (`t-page`), and the top bar shows the same name once the heading has left. A list, a form and Settings are headed this way.
 - **A sentence.** `name="Home"` beside `title="The highest 30 days yet: $3,300,438.74, the 3rd record in a row"`: a page that leads with figures is headed by what they say. The heading is still the page's one `h1`. It holds the name first, read out and not drawn, then a colon, then the sentence, so a screen reader hears "Home: The highest 30 days yet…", its list of headings still finds the page by its name, and so does anything that reads the heading for the name (the journeys and the navigation check look for it there). The top bar shows the name, never the sentence, and the document's title stays the name.
+
+`speaksName` is for a sentence that opens with the page's name ("Home is quieter than last week"): the name is then not announced beside it. It is needed only when the sentence reads data, so it cannot be compared with the name until it has arrived.
 
 The sentence is set in the section role (`t-section`, `text-xl` 24–32px), balanced. It is not set at the page-title size: some eighty characters at 36 to 56px run to four lines or more on a phone and stand over the page's one featured figure, which is the page's protagonist. At the section size the sentence is a headline of two lines on a desk and three on a phone, and the figure keeps the page.
 

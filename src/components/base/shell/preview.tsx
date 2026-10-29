@@ -61,7 +61,7 @@ export default function ShellPreview() {
       </Specimen>
       <Specimen label="A page headed by a sentence" note="A page that leads with figures is headed by what they say. The page's name stays in the heading, read out and not drawn, and is what the top bar shows; the sentence is set in the section role, balanced, and its block keeps room for the lines it may wrap to, so nothing under it moves when it arrives.">
         <State label="The sentence · the heading reads &quot;Home: The highest 30 days yet…&quot;" className="w-full">
-          <Masthead name="Home" title="The highest 30 days yet: $3,300,438.74, the 3rd record in a row" lead="Inference API is degraded. For everyone who needs the whole product at a glance." />
+          <Masthead name="Home" title="The highest 30 days yet: $3,300,438.74, the 3rd record in a row" lead="Inference API is degraded; every other service is operational." />
         </State>
         <State label="A longer sentence · two lines on a desk, three on a phone" className="w-full">
           <Masthead name="Revenue" title="All 24 Enterprise customers sent more this week than last, in the highest 30 days yet" lead="The revenue of the last 30 days and who has not paid." />
@@ -84,7 +84,7 @@ export default function ShellPreview() {
           <div className="grid grid-cols-3 gap-3"><Cell label="1/3" /><div className="col-span-2"><Cell label="2/3" /></div></div>
         </div>
       </Specimen>
-      <Specimen label="Tiles" note="A row of tiles counts columns from its own width and never leaves a hole: four are four or two, three are three or one.">
+      <Specimen label="Tiles" note="A row of two to four tiles counts columns from its own width and never leaves a hole: four are four or two, three are three or one.">
         <div className="w-full">
           <Row split="tiles"><Cell label="Tile" /><Cell label="Tile" /><Cell label="Tile" /><Cell label="Tile" /></Row>
         </div>

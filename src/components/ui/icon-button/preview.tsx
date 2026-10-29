@@ -12,7 +12,7 @@ export default function IconButtonPreview() {
         <State label="Secondary"><IconButton variant="secondary" label="Refresh" icon={<RefreshCw />} /></State>
         <State label="With tooltip"><IconButton variant="secondary" tooltip label="Copy request ID" icon={<Copy />} /></State>
       </Specimen>
-      <Specimen label="Sizes" note="Square at the control height: 30, 36 and 44px.">
+      <Specimen label="Sizes" note="Square at the control height: 32, 38 and 46px.">
         <State label="sm"><IconButton variant="secondary" size="sm" label="Close" icon={<X />} /></State>
         <State label="md"><IconButton variant="secondary" size="md" label="Close" icon={<X />} /></State>
         <State label="lg"><IconButton variant="secondary" size="lg" label="Close" icon={<X />} /></State>

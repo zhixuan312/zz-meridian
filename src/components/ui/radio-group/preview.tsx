@@ -1,7 +1,9 @@
 'use client';
 
+import { useState } from 'react';
+import { ACCENTS } from '@/lib/preferences';
 import { Specimen } from '@/system/specimen';
-import { RadioGroup } from '.';
+import { AccentSwatches, RadioGroup } from '.';
 
 const RETENTION = [
   { value: '7', label: '7 days', description: 'Enough to debug last week.' },
@@ -39,6 +41,14 @@ export default function RadioGroupPreview() {
           ]}
         />
       </Specimen>
+      <Specimen label="Accent swatches" note="The accent picker: the same radio group, drawn as circles because the colour is the label.">
+        <Swatches />
+      </Specimen>
     </>
   );
+}
+
+function Swatches() {
+  const [accent, setAccent] = useState(ACCENTS[0]);
+  return <AccentSwatches value={accent} onChange={setAccent} accents={ACCENTS} />;
 }

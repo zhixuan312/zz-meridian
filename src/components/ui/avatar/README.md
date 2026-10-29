@@ -24,9 +24,9 @@ The tint is derived, never chosen: the name's character codes pick one of the si
 
 | Size | Disc | Initials | Overlap in a group |
 |---|---|---|---|
-| sm | 24px | `text-2xs` 11px | 8px |
-| md (default) | 32px | `text-xs` 12px | 10px |
-| lg | 40px | `text-sm` 13px | 12px |
+| sm | 24px | `text-2xs` 11px | 2px |
+| md (default) | 32px | `text-xs` 12px | 4px |
+| lg | 40px | `text-sm` 13px | 6px |
 
 ## States
 

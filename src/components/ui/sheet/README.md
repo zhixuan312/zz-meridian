@@ -21,7 +21,7 @@ Status: beta
 | State | Spec |
 |---|---|
 | Opening | Slides in from the right edge over `dur-enter` 320ms `ease-out`; from the bottom on phones |
-| Closing | Fades over 160ms |
+| Closing | Fades over `dur-exit` 140ms |
 | Loading | The body shows Skeletons in the shape of what is coming |
 
 ## Behaviour

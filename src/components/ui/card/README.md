@@ -26,7 +26,7 @@ Status: beta
 | Part | Spec |
 |---|---|
 | Padding | `card-pad` 24px (16px compact), on all sides of the body |
-| Header | top `card-pad` minus 4px; title `t-card` 14px/600; description `t-caption` 12px `ink-3`, 4px under the title |
+| Header | top `card-pad` minus 4px; title `t-card` 16px/600; description `t-caption` 12px `ink-3`, 4px under the title |
 | Body | 12px under the header |
 | Footer | 12px vertical, `card-pad` horizontal, `text-sm` 13px `ink-2` |
 | Radius | `radius-lg` 16px; anything nested inside steps down to `radius-md` 10px |
@@ -39,15 +39,15 @@ A card never sets its own outer margin: the row's gap places it. Cards in one ro
 |---|---|
 | Rest | as above |
 | Title cut | a header without `wrap` keeps its title to one line and cuts it with an ellipsis where it has no room; a title that is plain text carries its whole text as the heading's `title` |
-| Hover (interactive only) | border `line-strong`, shadow `shadow-raise`, over `dur-hover` |
-| Focus (interactive only) | the link's 2px `accent` focus ring around the card |
+| Hover (interactive only) | border `line-strong`, shadow `shadow-raise`, over `dur-enter` |
+| Focus (interactive only) | the 2px `accent` focus ring of the link that wraps the card |
 | Loading | the same card holding Skeletons in the shape of its content |
 | Empty | the card keeps its header; the body holds an Empty state |
 | Error | the card keeps its header; the body holds a Banner (critical) with Retry |
 
 ## Behaviour
 
-A card is not interactive unless it is one link; then the whole card is the target and nothing inside it is a second control.
+A card is not interactive unless it is one link; then the whole card is the target and nothing inside it is a second control. `interactive` only draws the hover: the caller wraps the card in its link (`<Link href="/customers/northwind" className="block rounded-lg"><Card interactive>…</Card></Link>`).
 
 A header's title is one line unless the header takes `wrap`. Where a narrow column or the actions beside it leave it no room, it is cut with an ellipsis, and a title that is plain text carries its whole text as the heading's `title`, so a pointer reads it and the audit finds the cut held. A title built of elements gets no `title`: keep it short enough not to be cut, or pass `wrap`. Pass `wrap` whenever the title must be read whole, on a phone as much as at 1440px: a title the reader has to hover for is a label, not the point of the card.
 

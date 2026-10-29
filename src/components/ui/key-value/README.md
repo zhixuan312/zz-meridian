@@ -16,7 +16,7 @@ Status: beta
 | Variant | Use |
 |---|---|
 | One column (default) | A record's facts in reading order, in a card or a side panel |
-| Two columns | Many short facts in a wide card, from 640px of the list's own width; one column below. The window's width does not decide it: a card beside another is narrow in a wide window |
+| Two columns | Many short facts in a wide card, from 40rem (560px) of the list's own width; one column below. The window's width does not decide it: a card beside another is narrow in a wide window |
 
 ## Sizes
 

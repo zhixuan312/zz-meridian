@@ -27,8 +27,8 @@ Label to control and control to hint: `space-1-5` 6px. Fields in a form stack `s
 
 ## Behaviour
 
-- Field generates the control's id and hands it, with `aria-describedby`, `aria-invalid` and `required`, to the control through a render prop. No page writes an id.
-- The error appears on blur or submit and goes as soon as the value is valid.
+- Field generates the control's id and hands it, with `aria-describedby`, `aria-invalid` and `aria-required`, to the control through a render prop. No page writes an id.
+- Field shows the `error` it is given; the form decides when to set it (on blur or submit) and clears it as soon as the value is valid.
 
 ## Surfaces
 

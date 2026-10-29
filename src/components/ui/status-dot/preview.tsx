@@ -17,6 +17,9 @@ export default function StatusDotPreview() {
         <State label="Live"><span className="flex items-center gap-2 text-sm"><StatusDot tone="positive" live />Updated 4 min ago</span></State>
         <State label="Static"><span className="flex items-center gap-2 text-sm"><StatusDot tone="warning" />Stale · 22 min ago</span></State>
       </Specimen>
+      <Specimen label="Labelled" note="No word beside it, in a list row or a finding: `label` names it, to a screen reader and in its title.">
+        <span className="flex items-center gap-3 text-sm"><StatusDot tone="critical" label="Outage" />api-gateway</span>
+      </Specimen>
     </>
   );
 }

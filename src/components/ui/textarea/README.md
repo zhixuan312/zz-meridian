@@ -26,7 +26,7 @@ Rest, hover, focus, invalid, disabled and read only exactly as Input, over `dur-
 ## Surfaces
 
 - **Console**: as specified.
-- **Mobile**: full width; three rows at most before it grows, so the keyboard does not cover the action.
+- **Mobile**: full width; it grows to `maxRows` (10) as on a desk.
 - **Embed**: not offered; long text is written in the console.
 
 ## Agents

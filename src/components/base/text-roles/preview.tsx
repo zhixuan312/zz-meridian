@@ -14,8 +14,8 @@ const ROLES: { cls: string; spec: string; sample: React.ReactNode }[] = [
   { cls: 't-body', spec: 'text-base 14px · 400 · 1.55', sample: 'Traffic shifted to eu-central-1 while eu-west-1 recovers. Latency is back under 650ms.' },
   { cls: 't-small', spec: 'text-sm 13px · 400 · 1.5', sample: 'About 98K a day. The busiest day was 1 Oct, with 128K.' },
   { cls: 't-caption', spec: 'text-xs 12px · ink-3 · 1.45', sample: 'Updated 4 min ago · UTC' },
-  { cls: 't-kicker', spec: 'Geist Mono 11px · caps · 0.12em · ink-3, led by the slash', sample: `${app.name} · ${app.workspace}` },
-  { cls: 't-eyebrow', spec: 'Geist Mono 11px · caps · 0.12em · ink-3', sample: 'Operate' },
+  { cls: 't-kicker', spec: 'text-xs 12px · 500 · ink-3, led by the slash', sample: `${app.name} · ${app.workspace}` },
+  { cls: 't-eyebrow', spec: 'text-xs 12px · 500 · ink-3', sample: 'Operate' },
   { cls: 't-mono', spec: 'Geist Mono 12px', sample: 'req_6a0x1fq3b2 · POST /v1/messages' },
   { cls: 't-num', spec: 'tabular, lining figures for columns', sample: '1,284,120 · 846,300 · 512,840' },
 ];

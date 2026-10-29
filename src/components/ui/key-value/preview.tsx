@@ -22,7 +22,7 @@ export default function KeyValuePreview() {
           ]}
         />
       </Specimen>
-      <Specimen label="Two columns" note="From 640px of its own width; one column in a narrow card and on phones." stack>
+      <Specimen label="Two columns" note="From 40rem (560px) of its own width; one column in a narrow card and on phones." stack>
         <KeyValue
           columns={2}
           items={[

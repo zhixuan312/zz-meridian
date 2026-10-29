@@ -8,7 +8,7 @@ Status: beta
 
 1. **Strip**: the row of tabs on a 1px `line` baseline.
 2. **Tab**: a text label, `text-sm` medium; `ink-2` at rest, `ink` when current.
-3. **Count** (optional): a pill after the label; `fill-track` and `ink-3`, or `accent-tint` and `accent-ink` on the current tab.
+3. **Count** (optional): a pill after the label; `fill-track` and `ink-2`, or `accent-tint` and `accent-ink` on the current tab.
 4. **Indicator**: a 2px `accent` line under the current tab, sitting on the baseline.
 5. **Panel**: the content of the current tab, 20px below the strip.
 
@@ -37,7 +37,7 @@ Tab height 40px, padding 10px, gap 4px; the first tab's text aligns with the con
 ## Behaviour
 
 - Radix Tabs: arrow keys move between tabs and select them, Home and End jump, Tab moves into the panel.
-- A tab that is a view of a URL (a sub-route) is a link styled as a tab; its current state comes from the route, and the indicator still slides.
+- A tab that is a view of a URL (a sub-route) is a link styled as a tab; its current state comes from the route. The page changes with it, so its indicator is drawn under the current tab rather than slid.
 - Changing tab never scrolls the page; on a narrow strip it scrolls the strip to keep the chosen tab in view.
 
 ## Surfaces
@@ -63,7 +63,7 @@ An agent selects a tab by opening the view's address (for example `?tab=failed`)
 
 ## Do and do not
 
-- Do keep five tabs or fewer on a page; beyond that the views belong in navigation.
+- Do keep six tabs or fewer on a page; beyond that the views belong in navigation.
 - Do not use tabs for steps of a flow; they are peers, not a sequence.
 - Do not put a primary action in the strip.
 

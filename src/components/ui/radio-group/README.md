@@ -67,3 +67,9 @@ import { RadioGroup } from '@/components/ui/radio-group';
 ```
 
 Props: `options` (`value`, `label`, `description`, `disabled`), `variant` (`list` | `cards`), and the Radix RadioGroup root props.
+
+**Accent swatches.** `AccentSwatches` is the same radio group drawn as a row of colour circles, for the accent picker: one Tab stop, arrow keys move the choice, each swatch is named by its accent. The product's `data-accent` rule paints each one, so it names no colour itself. Props: `value`, `onChange`, `accents`, `size` (`sm` for a toolbar, `md` for a form), `label` (default "Accent").
+
+```tsx
+<AccentSwatches value={accent} onChange={setAccent} accents={ACCENTS} />
+```

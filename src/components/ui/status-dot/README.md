@@ -32,7 +32,7 @@ Status: beta
 
 ## Behaviour
 
-Decorative (`aria-hidden`): the word beside it is the information.
+Decorative (`aria-hidden`) beside its word: the word is the information. Where no word stands beside it (a list row, a finding), `label` makes it an image (`role="img"`) named by that word, with the same word as its title for the pointer.
 
 ## Surfaces
 
@@ -55,7 +55,7 @@ The word beside it is one or two words: "Operational", "Updated 4 min ago", "Sta
 
 - Do use `live` only for something that refreshes on its own (the freshness stamp, a live run).
 - Do not put two live dots in one view.
-- Do not use a dot without a word.
+- Do not use a dot without a word, beside it or as its `label`.
 
 ## Implementation
 
@@ -65,4 +65,4 @@ import { StatusDot } from '@/components/ui/status-dot';
 <span className="flex items-center gap-2"><StatusDot tone="positive" live />Updated 4 min ago</span>
 ```
 
-Props: `tone`, `live`, `className`.
+Props: `tone`, `live`, `label`, `className`.

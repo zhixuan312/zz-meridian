@@ -83,7 +83,7 @@ export default function CardPreview() {
           </Card>
         </Plane>
       </Specimen>
-      <Specimen label="Interactive" note="The whole card is one link: the border strengthens and it lifts on hover." stack>
+      <Specimen label="Interactive" note="Wrapped in its one link by the caller: the border strengthens and it lifts on hover." stack>
         <Plane className="grid gap-4 sm:grid-cols-2">
           <Card interactive className="p-(--card-pad)">
             <p className="t-caption">Rest</p>
