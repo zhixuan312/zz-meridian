@@ -38,7 +38,7 @@ const text = (root: string, rel: string): string | null => {
   }
 };
 
-const walk = (root: string, rel: string, out: string[], want: RegExp = SOURCE) => {
+const walk = (root: string, rel: string, out: string[], want: RegExp = SOURCE, owned: (rel: string) => boolean = isTeamOwned) => {
   let entries: fs.Dirent[];
   try {
     entries = fs.readdirSync(path.join(root, rel), { withFileTypes: true });
@@ -48,8 +48,8 @@ const walk = (root: string, rel: string, out: string[], want: RegExp = SOURCE) =
   for (const e of entries.sort((a, b) => (a.name < b.name ? -1 : 1))) {
     if (SKIP.has(e.name)) continue;
     const p = rel ? `${rel}/${e.name}` : e.name;
-    if (e.isDirectory()) walk(root, p, out, want);
-    else if (e.isFile() && want.test(e.name) && isTeamOwned(p)) out.push(p);
+    if (e.isDirectory()) walk(root, p, out, want, owned);
+    else if (e.isFile() && want.test(e.name) && owned(p)) out.push(p);
   }
 };
 
@@ -76,11 +76,16 @@ const matching = (root: string, test: (rel: string, src: string) => boolean): st
   return hits.length > 0 ? hits : null;
 };
 
-/** The team's files outside the managed folders where `verify` is followed on one line by a flag the modes replaced. */
+/**
+ * The team's files where `verify` is followed on one line by a flag the modes replaced. A shell script is the team's
+ * unless the project's manifest records it: scripts/ is Meridian's folder and the usual home of a team's CI script.
+ */
 function removedVerifyFlags(root: string): string[] | null {
   const files: string[] = ['package.json'];
   walk(root, '.github/workflows', files, /\.ya?ml$/);
-  walk(root, '', files, /\.sh$/);
+  let recorded: Set<string> | null = null;
+  try { recorded = new Set(Object.keys(JSON.parse(text(root, '.meridian/manifest.json') ?? '').files ?? {})); } catch { /* no manifest: the folder rule */ }
+  walk(root, '', files, /\.sh$/, recorded ? (p) => !recorded.has(p) : isTeamOwned);
   const removed = /\bverify\b[^\n]*?--(?:quick|no-vitals|extra)\b/;
   const hits = [...new Set(files)].filter((rel) => removed.test(text(root, rel) ?? ''));
   return hits.length > 0 ? hits : null;
