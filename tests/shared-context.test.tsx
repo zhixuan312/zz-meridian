@@ -199,11 +199,12 @@ describe('one context, two consumers', () => {
 });
 
 describe('a request\'s context', () => {
-  it('says what the request used and cost, as its page does: tokens at its model\'s price, a call at the price of a call, and nothing when it was refused', async () => {
+  it('says what the request used and cost, as its page does: tokens at its model\'s price, a call at the price of a call, and nothing when it was refused or failed', async () => {
     const { requestContext } = await import('@/logic/request-context');
     const { traceOf, usageOf } = await import('@/data/sample');
     const { REQUESTS } = await import('@/system/fixtures/sample');
-    const one = (model: string | null, refused = false) => REQUESTS.find((r) => r.model === model && r.status >= 400 === refused)!;
+    const band = (s: number) => (s >= 500 ? 'failed' : s >= 400 ? 'refused' : 'answered');
+    const one = (model: string | null, outcome = 'answered') => REQUESTS.find((r) => r.model === model && band(r.status) === outcome)!;
     const said = (r: (typeof REQUESTS)[number]) => {
       const { facts } = requestContext({ request: r, trace: traceOf(r), routeP95: null, statusText: '', payloadBytes: { request: null, response: 0 }, now: DEMO_NOW.toISOString() });
       return [facts.find((f) => f.label === 'Tokens')?.value, facts.find((f) => f.label === 'Cost')?.value];
@@ -212,8 +213,9 @@ describe('a request\'s context', () => {
     expect(said(answered)).toEqual([`${tokens!.input.toLocaleString('en-US')} in, ${tokens!.output.toLocaleString('en-US')} out`, formatCost(cost)]);
     expect(said(one('meridian-embed'))).toEqual(['18 in, 0 out', formatCost(0.0000018)]);
     expect(said(one(null))).toEqual([undefined, formatCost(0.0001)]);
-    expect(said(one('meridian-large', true))).toEqual(['none, refused', 'none, refused']);
-    expect(said(one(null, true))).toEqual([undefined, 'none, refused']);
+    expect(said(one('meridian-large', 'refused'))).toEqual(['None, refused', 'None, refused']);
+    expect(said(one('meridian-large', 'failed'))).toEqual(['None, it failed', 'None, it failed']);
+    expect(said(one(null, 'refused'))).toEqual([undefined, 'None, refused']);
   });
 });
 

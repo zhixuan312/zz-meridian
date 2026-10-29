@@ -1,7 +1,7 @@
 'use client';
 
 import { useShareView } from '@/components/base/use-share-view';
-import { requestContext } from '@/logic/request-context';
+import { nothingUsed, requestAddress, requestContext, retryable } from '@/logic/request-context';
 import Link from 'next/link';
 import { useTransition } from 'react';
 import { useRouter } from 'next/navigation';
@@ -19,7 +19,6 @@ import { formatDateTime, formatRelative } from '@/lib/format-date';
 import { type RequestRow, STATUS_TEXT, statusTone, usageOf, type Span } from '@/data/sample';
 import { formatBytes } from '@/system/sample-cells';
 import { domain } from '@/app.config';
-import { requestAddress, retryable } from '@/logic/request-context';
 
 /** One shell word, whatever it holds: a body's own `'`, `$(…)` or newline reaches curl as text and runs nothing. */
 const shellWord = (s: string) => `'${s.replaceAll("'", "'\\''")}'`;
@@ -33,6 +32,8 @@ const BAR = { accent: 'bg-accent', neutral: 'bg-chart-neutral-strong', critical:
 
 /** Where the time went: one bar per phase on a shared scale from arrival to the last byte. */
 function Waterfall({ spans, total }: { spans: Span[]; total: number }) {
+  // A request that took no time draws its phases at the start rather than dividing by zero.
+  const scale = total || 1;
   return (
     <figure aria-label="Request phases" className="flex flex-col gap-4">
       {spans.map((s, i) => (
@@ -45,7 +46,7 @@ function Waterfall({ spans, total }: { spans: Span[]; total: number }) {
           <div className="relative h-1.5 rounded-full bg-fill-track">
             <span
               className={cn('grow-x absolute inset-y-0 rounded-full', BAR[s.tone ?? 'neutral'])}
-              style={{ left: `${(s.start / total) * 100}%`, width: `max(4px, ${(s.duration / total) * 100}%)`, ['--i' as string]: i }}
+              style={{ left: `${(s.start / scale) * 100}%`, width: `max(4px, ${(s.duration / scale) * 100}%)`, ['--i' as string]: i }}
             />
           </div>
         </div>
@@ -101,6 +102,7 @@ export function RequestView({ request: r, trace, payloads, routeP95, now, replay
   useShareView(requestContext({ request: r, trace, routeP95, statusText: STATUS_TEXT[r.status] ?? '', payloadBytes: { request: payloads.request?.length ?? null, response: payloads.response.length }, now }));
   const router = useRouter();
   const usage = usageOf(r);
+  const none = nothingUsed(r);
   const failed = retryable(r);
   const [replaying, startReplay] = useTransition();
   const customer = customerHref ? <Link href={customerHref} className="row-link">{r.customer}</Link> : r.customer;
@@ -163,10 +165,10 @@ export function RequestView({ request: r, trace, payloads, routeP95, now, replay
                     ...(r.model
                       ? [
                           { label: 'Model', value: r.model, mono: true },
-                          { label: 'Tokens', value: usage.tokens ? <span className="t-num">{usage.tokens.input.toLocaleString('en-US')} in · {usage.tokens.output.toLocaleString('en-US')} out</span> : <span className="text-ink-3">None, refused</span>, title: usage.tokens ? `${usage.tokens.input.toLocaleString('en-US')} in · ${usage.tokens.output.toLocaleString('en-US')} out` : undefined },
+                          { label: 'Tokens', value: usage.tokens ? <span className="t-num">{usage.tokens.input.toLocaleString('en-US')} in · {usage.tokens.output.toLocaleString('en-US')} out</span> : <span className="text-ink-3">{none ?? 'None'}</span>, title: usage.tokens ? `${usage.tokens.input.toLocaleString('en-US')} in · ${usage.tokens.output.toLocaleString('en-US')} out` : undefined },
                         ]
                       : []),
-                    { label: 'Cost', value: usage.cost ? <span className="t-num">{formatCost(usage.cost)}</span> : <span className="text-ink-3">None, refused</span> },
+                    { label: 'Cost', value: none ? <span className="text-ink-3">{none}</span> : <span className="t-num">{formatCost(usage.cost)}</span> },
                   ]}
                 />
               </CardBody>

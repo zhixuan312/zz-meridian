@@ -23,10 +23,14 @@ export const requestAddress = (id: string) => `/requests/${encodeURIComponent(id
 /** A request that failed for a while (a 5xx or a 429): the only kind the page offers Replay for, and the action replays. */
 export const retryable = (r: Pick<RequestRow, 'status'>) => r.status >= 500 || r.status === 429;
 
+/** Why a request used no tokens and cost nothing, as its tokens and cost read: it failed (a 5xx) or was refused (a 4xx). */
+export const nothingUsed = (r: Pick<RequestRow, 'status'>) => (r.status >= 500 ? 'None, it failed' : r.status >= 400 ? 'None, refused' : null);
+
 export function requestContext({ request: r, trace, routeP95, statusText, payloadBytes, now }: RequestData): SharedContext {
   const failed = retryable(r);
   const { tokens, cost } = usageOf(r);
-  const total = trace.reduce((m, s) => Math.max(m, s.start + s.duration), 0) || r.latency;
+  const none = nothingUsed(r);
+  const total = trace.reduce((m, s) => Math.max(m, s.start + s.duration), 0) || r.latency || 1;
   const insights: Insight[] = [];
   const heaviest = trace.reduce<Span | null>((m, s) => (!m || s.duration > m.duration ? s : m), null);
   if (heaviest) insights.push({ text: `Most of its time went to ${heaviest.name} (${heaviest.detail}): ${formatDuration(heaviest.duration)}, ${formatPercent(heaviest.duration / total, 0)} of ${formatDuration(total)}.` });
@@ -43,8 +47,8 @@ export function requestContext({ request: r, trace, routeP95, statusText, payloa
       { label: 'Status', value: `${r.status} ${statusText}` },
       { label: 'Latency', value: formatDuration(r.latency), definition: 'From arrival at the gateway to the last byte sent.' },
       { label: 'Customer and region', value: `${r.customer}, ${r.region}` },
-      ...(r.model ? [{ label: 'Tokens', value: tokens ? `${tokens.input.toLocaleString('en-US')} in, ${tokens.output.toLocaleString('en-US')} out` : 'none, refused' }] : []),
-      { label: 'Cost', value: cost ? formatCost(cost) : 'none, refused', definition: 'Its tokens at its model\'s prices a million in the models collection, or the price of a call when it reached no model; a refused request costs nothing.' },
+      ...(r.model ? [{ label: 'Tokens', value: tokens ? `${tokens.input.toLocaleString('en-US')} in, ${tokens.output.toLocaleString('en-US')} out` : none ?? 'None' }] : []),
+      { label: 'Cost', value: none ?? formatCost(cost), definition: 'Its tokens at its model\'s prices a million in the models collection, or the price of a call when it reached no model; a refused or failed request costs nothing.' },
       { label: 'Phases', value: trace.map((s) => `${s.name} ${formatDuration(s.duration)} from ${formatDuration(s.start)}`).join('; ') },
       { label: 'Payloads', value: `request ${payloadBytes.request === null ? 'none' : `${payloadBytes.request} characters`}, response ${payloadBytes.response} characters; their text is on the page` },
     ],
