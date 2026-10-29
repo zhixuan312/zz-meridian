@@ -18,6 +18,7 @@
 import { z } from 'zod';
 import { app, facts, workspaceSlug } from '@/app.config';
 import { arrayCollection, type AnyCollection, type Collection } from '@/lib/collection';
+import { inBand } from '@/lib/facts';
 import { API_KEYS, type ApiKey } from '@/system/fixtures/sample-records';
 import { MEMBERS, STATUSES, TEAMS, type Member } from '@/system/fixtures/sample-members';
 import { ADD_ONS, MAIN_ROLES } from '@/data/roles';
@@ -80,6 +81,9 @@ export const keys: Collection<ApiKey, 'id'> = arrayCollection({
   hidden: ['secretHash'],
 });
 
+/** A request's derived fields, for a seed row and for a replay alike. */
+const requestDerived = (r: Record<string, unknown>) => ({ statusClass: statusClass(Number(r.status)), search: `${r.id} ${r.route} ${r.customer}`.toLowerCase() });
+
 /** A request as the collection holds it: the record plus two values worked out for filtering, never written. `search` is the lower-cased id, route and customer; a page does not carry it (`publicRows`). */
 type RequestRecord = RequestRow & { statusClass: ReturnType<typeof statusClass>; search: string };
 
@@ -103,19 +107,15 @@ export const requests: Collection<RequestRecord, 'id'> = arrayCollection({
     replayOf: z.string().nullable().default(null),
   }),
   derived: ['statusClass', 'search'],
-  derive: (r) => ({ statusClass: statusClass(Number(r.status)), search: `${r.id} ${r.route} ${r.customer}`.toLowerCase() }),
-  rows: REQUESTS.map((r) => ({ ...r, statusClass: statusClass(r.status), search: `${r.id} ${r.route} ${r.customer}`.toLowerCase() })),
+  derive: requestDerived,
+  rows: REQUESTS.map((r) => ({ ...r, ...requestDerived(r) })),
   // A replay is the one write: a person sending a failed request again from its page, never the assistant.
   allow: ['create'],
   pageOnly: ['create'],
 });
 
-/**
- * Whether a day is inside the band, by the rule `steady` counts: its p95 under `facts.band`'s latency and its errors over
- * its requests under its error rate. A day at either edge is outside, and so is a day with no requests, whose rate is
- * not a number.
- */
-const inBand = (d: Record<string, unknown>) => Number(d.p95) < facts.band.p95Under && Number(d.errors) / Number(d.requests) < facts.band.errorRateUnder;
+/** A day's derived field: whether it is inside `facts.band`, by the rule `steady` counts. */
+const dayDerived = (d: Record<string, unknown>) => ({ inBand: inBand({ p95: Number(d.p95), errors: Number(d.errors), requests: Number(d.requests) }, facts.band) });
 
 /** A day as the collection holds it: the record plus `inBand`, worked out from the configuration and never written. */
 type DayRecord = DailyPoint & { inBand: boolean };
@@ -132,8 +132,8 @@ export const days: Collection<DayRecord, 'date'> = arrayCollection({
   title: (d) => d.date,
   fields: z.object({ requests: z.number(), errors: z.number(), p95: z.number(), tokens: z.number(), revenue: z.number(), revenueByPlan: z.object({ Enterprise: z.number(), Scale: z.number(), Starter: z.number() }) }),
   derived: ['inBand'],
-  derive: (d) => ({ inBand: inBand(d) }),
-  rows: [...DAYS, IN_PROGRESS.day].map((d) => ({ ...d, inBand: inBand(d) })),
+  derive: dayDerived,
+  rows: [...DAYS, IN_PROGRESS.day].map((d) => ({ ...d, ...dayDerived(d) })),
   allow: [],
 });
 
@@ -233,6 +233,9 @@ export const regions: Collection<(typeof REGIONS)[number], 'label'> = arrayColle
   allow: [],
 });
 
+/** A service's derived field: its uptime as a percentage. */
+const serviceDerived = (s: Record<string, unknown>) => ({ uptimePercent: Number(s.uptime) * 100 });
+
 /** The monitored services: state now, uptime, latency and 90 days of history, the last of them the day in progress. Read-only. */
 export const services: Collection<Service & { order: number; uptimePercent: number }, 'name'> = arrayCollection({
   name: 'services',
@@ -244,9 +247,9 @@ export const services: Collection<Service & { order: number; uptimePercent: numb
   // `uptimePercent` is the uptime as the pages write it, a percentage: an answer writes two decimals, so a fraction
   // such as 0.9994 would read 1.
   derived: ['uptimePercent'],
-  derive: (s) => ({ uptimePercent: Number(s.uptime) * 100 }),
+  derive: serviceDerived,
   // `order` is where a service sits in every list: the gateway first, the way the team reads its stack.
-  rows: SERVICES.map((s, order) => ({ ...s, order, uptimePercent: s.uptime * 100 })),
+  rows: SERVICES.map((s, order) => ({ ...s, order, ...serviceDerived(s) })),
   allow: [],
 });
 
