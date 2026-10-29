@@ -570,6 +570,9 @@ describe('what the migrations read of a team file', () => {
     expect(byId('use-size-callback-ref').applies(project({ 'app/tip.tsx': renamed }))).toEqual(['app/tip.tsx']);
     const kept = `${use}export function Tip() {\n  const sized = useSize<HTMLDivElement>();\n  return <div ref={sized[0]}>{sized[0].current?.offsetLeft}</div>;\n}\n`;
     expect(byId('use-size-callback-ref').applies(project({ 'app/tip.tsx': kept }))).toEqual(['app/tip.tsx']);
+    // A default in the destructuring, a type on it, and an optional read.
+    const shaped = `${use}export function Tip() {\n  const [box, { width = 0 }]: readonly [unknown, { width: number }] = useSize<HTMLDivElement>();\n  return <div>{box?.current?.offsetLeft}{width}</div>;\n}\n`;
+    expect(byId('use-size-callback-ref').applies(project({ 'app/tip.tsx': shaped }))).toEqual(['app/tip.tsx']);
   });
   it('reads a team file under a managed folder the manifest does not record, and none it records', () => {
     const reads = `${use}export function Tip() {\n  const [box] = useSize<HTMLDivElement>();\n  return <div ref={box}>{box.current?.offsetLeft}</div>;\n}\n`;

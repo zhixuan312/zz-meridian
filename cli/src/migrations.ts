@@ -171,9 +171,10 @@ const esc = (name: string) => name.replace(/\$/g, '\\$');
  */
 function readsSizeRefCurrent(src: string, hook: string): boolean {
   const h = esc(hook);
-  const current = (lead: string) => new RegExp(`(?<![\\w$.])${lead}\\s*\\.\\s*current\\b`).test(src);
+  const current = (lead: string) => new RegExp(`(?<![\\w$.])${lead}\\s*\\??\\.\\s*current\\b`).test(src);
   if (current(`${h}\\s*(?:<[^>]*>)?\\s*\\(\\s*\\)\\s*\\[\\s*0\\s*\\]`)) return true;
-  for (const m of src.matchAll(new RegExp(`\\b(?:const|let|var)\\s*\\[\\s*([\\w$]+)[^\\]=]*\\]\\s*=\\s*${h}\\b`, 'g'))) if (current(esc(m[1]!))) return true;
+  // The declaration up to the hook's call, defaults and a type annotation included, within one statement.
+  for (const m of src.matchAll(new RegExp(`\\b(?:const|let|var)\\s*\\[\\s*([\\w$]+)\\b[^;]*?=\\s*${h}\\b`, 'g'))) if (current(esc(m[1]!))) return true;
   for (const m of src.matchAll(new RegExp(`\\b(?:const|let|var)\\s+([\\w$]+)\\s*=\\s*${h}\\b`, 'g'))) if (current(`${esc(m[1]!)}\\s*\\[\\s*0\\s*\\]`)) return true;
   return false;
 }
