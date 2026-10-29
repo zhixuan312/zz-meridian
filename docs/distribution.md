@@ -252,7 +252,9 @@ Modelled on the release pipeline of the owner's earlier packages, one package in
 
 **Weekly** (`.github/workflows/weekly.yml`, Mondays and on demand, master's current commit): the template's
 one job per tier on its own runner (`verify --full`, `verify --timed` and `verify --perf --shard <i>/5`, the perf part a report: a p95 over budget is a warning, a
-broken sample a failure; a dispatch names its jobs with `-f jobs=timed`), and the consumer smoke's `--adopt --update --origins 3 --update-all --verify` from a tarball packed from that
+broken sample a failure; a dispatch names its jobs with `-f jobs=timed`), the browser-fixture tests of the checks
+(`deep`, the one job a release also runs, since Chrome is an input no commit pins), the Postgres references against a
+Postgres and a PgBouncer (`postgres`), the Design Atlas audit (`atlas`), and the consumer smoke's `--adopt --update --origins 3 --update-all --verify` from a tarball packed from that
 commit, labelled as the next patch so `update` treats it as unpublished: the adopted project's default verify cases,
 the update from each of the last three releases, the updater's stages on the 0.3.0 fixture, and every recovery and
 failure case of the update. Both run the

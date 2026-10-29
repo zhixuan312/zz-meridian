@@ -73,7 +73,7 @@ Write the status on the line under the title: `Status: beta`.
 
 - Every state is specified and previewed: rest, hover, pressed, focus, selected, disabled, loading, empty, error.
 - It holds in both themes, all four accents and both densities, with contrast computed in each by `pnpm contrast`: text 4.5:1, focus rings, control outlines and chart marks 3:1. A new pair goes into `scripts/lib/contrast-pairs.ts`, which the gate and the Atlas colour page both read.
-- It holds at 390, 768, 1024, 1280 and 1440px, and in an embed at 360 and 720px inline and in fullscreen.
+- It holds at the widths `node scripts/audit.ts` measures, 2560, 1440, 1024, 768, 390 and 320px, and in an embed at 720 and 420px, inline and in fullscreen.
 - Nothing scrolls sideways, nothing clips, and no label shrinks to fit (cut words instead).
 - Under reduced motion it shows its final state with nothing moving.
 - Keyboard: every control reachable, operable and visibly focused; focus order follows reading order.
@@ -117,7 +117,7 @@ A check is code, and it is wrong in the ways code is. Before a new check, or a c
 
 1. Add an entry to `CHANGELOG.md` under a new version. Semver: a removed or renamed token, prop or card is major; a new card, token or variant is minor; a corrected value is a patch. Say in one line what breaks and what to do instead.
 2. `node cli/scripts/set-version.ts <v>`, then `pnpm gate` until it passes. Nothing else runs locally: the release workflow's gates are the proof. A release that changes the checks themselves (a check script, a tier, a budget) first meets the `Releases` rule in `docs/testing.md`.
-3. Commit and push to `master`, then dispatch once: `gh workflow run release.yml -f version=<v>`. The workflow gates on the package's own tests (`tests/cli-*`) and the browser-fixture tests of the checks (`tests/deep-*`), one default `verify` within its time limit (whose gate leaves both groups out) and the consumer smoke from the tarball, publishes with provenance, checks the registry's tarball is the tested one, and tags last. `verify --full`, `verify --timed` and `verify --perf` run weekly, each as its own job (`.github/workflows/weekly.yml`), not here.
+3. Commit and push to `master`, then dispatch once: `gh workflow run release.yml -f version=<v>`. The workflow gates on the package's own tests (`tests/cli-*`) and the browser-fixture tests of the checks (`tests/deep-*`), one default `verify` within its time limit (whose gate leaves both groups out) and the consumer smoke from the tarball, publishes with provenance, checks the registry's tarball is the tested one, and tags last. `verify --full`, `verify --timed`, `verify --perf`, the Postgres references and the Atlas audit run weekly, each as its own job (`.github/workflows/weekly.yml`), not here; the weekly `deep` job repeats the browser-fixture tests on the week's Chrome.
 
 The `/release` command (`.claude/commands/release.md`) is this procedure as a runbook.
 
