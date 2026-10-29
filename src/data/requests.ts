@@ -7,7 +7,7 @@ import type { Query } from '@/lib/collection';
 import { attempt } from '@/data/main';
 import { read, readAll } from '@/data/read';
 import { REQUEST_METHODS } from '@/data/request-methods';
-import { REGION_NAMES, type CustomerRecord, type RequestRow } from '@/data/sample';
+import { REGION_NAMES, failed, type CustomerRecord, type RequestRow } from '@/data/sample';
 
 /** Rows a page sends, and the size the table pages by. */
 export const REQUEST_PAGE = 20;
@@ -76,7 +76,7 @@ export async function readLatestFrom(customer: string, limit: number): Promise<L
   return publicRows(rows);
 }
 
-const isError = (r: LoggedRequest) => r.status >= 500 || r.status === 429;
+const isError = (r: LoggedRequest) => failed(r.status);
 /**
  * The 95th percentile of a set, or null when the set is empty. A figure nobody took is not a zero: a filter that
  * matches nothing, and a five-minute window with no requests, have no latency at all — `null` is what the formatters

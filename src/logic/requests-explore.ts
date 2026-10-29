@@ -6,11 +6,10 @@
  */
 import type { Condition } from '@/lib/collection';
 import type { PreparedQuery, Source } from '@/lib/explore';
+import { FAILED_STATUSES } from '@/data/sample';
 import { requestsAddress } from './requests-context';
 import { requestAddress } from './request-context';
 
-/** The statuses an error rate counts: every 5xx and the 429 of a limit, as the page's "Errors and limits" does. */
-const ERRORS = [429, ...Array.from({ length: 12 }, (_, i) => 500 + i)];
 
 /** The sampled log as a source: the list declares it whole, and One request holds it to one route. */
 export const requestsSource: Source = {
@@ -28,7 +27,7 @@ export const requestsSource: Source = {
   none: { model: 'no model' },
   measures: {
     requests: { label: 'Requests', unit: 'requests', definition: 'Requests in the sampled log.', agg: 'count' },
-    errors: { label: 'Errors and limits', unit: 'requests', definition: 'Requests in the sampled log answered with a 5xx or a 429.', agg: 'count', where: [{ field: 'status', op: 'in', value: ERRORS }] },
+    errors: { label: 'Errors and limits', unit: 'requests', definition: 'Requests in the sampled log answered with a 5xx or a 429.', agg: 'count', where: [{ field: 'status', op: 'in', value: FAILED_STATUSES }] },
     errorRate: { label: 'Error rate', unit: '%', definition: 'Errors and limits as a share of the requests.', derive: 'ratio', of: ['errors', 'requests'], scale: 0.01 },
     latency: { label: 'Latency p95', unit: 'ms', definition: '95 of every 100 sampled requests finished faster than this.', agg: 'p95', field: 'latency' },
   },

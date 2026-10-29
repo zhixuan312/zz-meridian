@@ -2,7 +2,7 @@
  * One request's shared context (decision 0011): what it was, how it ended, and where its time went against what is
  * usual for its route, as both agents read it.
  */
-import { usageOf, type RequestRow, type Span } from '@/data/sample';
+import { failed, usageOf, type RequestRow, type Span } from '@/data/sample';
 import { app } from '@/app.config';
 import { formatCost, formatDuration, formatPercent } from '@/lib/format';
 import { formatDateTime } from '@/lib/format-date';
@@ -22,7 +22,7 @@ export type RequestData = {
 export const requestAddress = (id: string) => `/requests/${encodeURIComponent(id)}`;
 
 /** A request that failed for a while (a 5xx or a 429): the only kind the page offers Replay for, and the action replays. */
-export const retryable = (r: Pick<RequestRow, 'status'>) => r.status >= 500 || r.status === 429;
+export const retryable = (r: Pick<RequestRow, 'status'>) => failed(r.status);
 
 /** Why a request used no tokens and cost nothing, as its tokens and cost read: it failed (a 5xx) or was refused (a 4xx). */
 export const nothingUsed = (r: Pick<RequestRow, 'status'>) => (r.status >= 500 ? 'None, it failed' : r.status >= 400 ? 'None, refused' : null);

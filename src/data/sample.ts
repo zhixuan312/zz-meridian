@@ -11,6 +11,6 @@ export { DEMO_NOW, DEMO_UPDATED_AT, PLANS, REGION_NAMES, writesTokens } from '@/
 export type { ComputeRow, CostRow, CustomerRecord, DailyPoint, Endpoint, IncidentRecord, Model, Plan, RequestRow, Totals, UsageRow } from '@/system/fixtures/sample';
 export { STATUSES, TEAMS } from '@/system/fixtures/sample-members';
 export type { Member } from '@/system/fixtures/sample-members';
-export { FEATURED_REQUEST_IDS, STATUS_TEXT, payloadsOf, statusClass, statusTone, traceOf, usageOf } from '@/system/fixtures/sample-records';
+export { FAILED_STATUSES, FEATURED_REQUEST_IDS, STATUS_TEXT, failed, payloadsOf, statusClass, statusTone, traceOf, usageOf } from '@/system/fixtures/sample-records';
 export type { ApiKey, Span } from '@/system/fixtures/sample-records';
 export type { Release, Ticket, VerificationRun } from '@/system/fixtures/sample-engineering';

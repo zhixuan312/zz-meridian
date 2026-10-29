@@ -6,7 +6,11 @@ import { DEMO_NOW, MODELS, REQUESTS, type RequestRow } from '@/system/fixtures/s
 
 type StatusClass = '2xx' | '3xx' | '4xx' | '5xx';
 export const statusClass = (s: number): StatusClass => (s >= 500 ? '5xx' : s >= 400 ? '4xx' : s >= 300 ? '3xx' : '2xx');
-export const statusTone = (s: number) => (s >= 500 ? 'critical' : s === 429 ? 'warning' : s >= 400 ? 'warning' : 'neutral') as 'critical' | 'warning' | 'neutral';
+export const statusTone = (s: number) => (s >= 500 ? 'critical' : s >= 400 ? 'warning' : 'neutral') as 'critical' | 'warning' | 'neutral';
+/** A request that failed for a while, and counts in the error rate: every 5xx, and the 429 of a limit. */
+export const failed = (s: number) => s >= 500 || s === 429;
+/** The same statuses as a list, for a query's `in`. */
+export const FAILED_STATUSES = [429, ...Array.from({ length: 100 }, (_, i) => 500 + i)];
 export const STATUS_TEXT: Record<number, string> = { 200: 'OK', 201: 'Created', 400: 'Bad request', 404: 'Not found', 429: 'Rate limited', 500: 'Server error', 503: 'Unavailable' };
 
 /** The ids the detail route builds ahead of time; any other id still renders on demand. */
