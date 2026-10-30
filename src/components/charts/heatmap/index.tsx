@@ -229,7 +229,7 @@ function Hours({ values, timezone = 'UTC', scale, format, unit, label, className
             {on?.d === d ? (
               <Readout column={on.h} columns={cols}>
                 <span className="font-medium whitespace-nowrap">{format(row[on.h])} {unit}</span>{' '}
-                <span className="opacity-70">· {DAYS[d]} {range(on.h)} {timezone}</span>
+                <span className="inline-block opacity-70">· {DAYS[d]} {range(on.h)} {timezone}</span>
               </Readout>
             ) : null}
           </div>

@@ -22,7 +22,7 @@
 #   against a Postgres and a PgBouncer in transaction mode, both service containers. It needs the two services and `pg`,
 #   which the template does not install, so it lives outside tests/ and only this job runs it.
 # - `atlas`: the browser audit of the Design Atlas (`node scripts/audit.ts --atlas`): every card's page and its bare
-#   preview, the token views, the page specifications and the guides, at 1440 and 390px in both themes. No verify depth
+#   preview, the token views, the page specifications and the guides, at 1440, 390 and 320px in both themes. No verify depth
 #   runs it, and a card's specimens are where its extreme shapes live: a figure running past its tile and a preview wider
 #   than a phone's column were found there first (2026-10-27), and nothing would have found them again.
 #
@@ -309,7 +309,7 @@ jobs:
     needs: named
     if: contains(format(',{0},', inputs.jobs || 'full,timed,perf,consumer,deep,postgres,atlas'), ',atlas,')
     runs-on: ubuntu-24.04
-    timeout-minutes: 45
+    timeout-minutes: 60
     env:
       CHROME: /usr/bin/google-chrome
     steps:
