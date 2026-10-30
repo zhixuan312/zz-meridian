@@ -10,7 +10,7 @@ const endpoints = ENDPOINTS.map((e) => ({
   label: (
     <span className="flex min-w-0 items-center gap-2.5">
       <span className="t-eyebrow w-12 shrink-0">{e.method}</span>
-      <span className="truncate font-mono text-xs">{e.route}</span>
+      <span title={e.route} className="truncate font-mono text-xs">{e.route}</span>
     </span>
   ),
   value: e.requests,

@@ -41,7 +41,7 @@ export default function SparklinePreview() {
       <Specimen label="In a table cell" note="24px tall, beside the number it qualifies, never instead of it." stack>
         {CUSTOMERS.slice(0, 4).map((c) => (
           <div key={c.name} className="flex items-center gap-4 border-b border-line pb-3 text-sm last:border-0">
-            <span className="w-40 truncate">{c.name}</span>
+            <span title={c.name} className="w-40 truncate">{c.name}</span>
             <span className="w-28"><Sparkline values={c.trend} color="neutral" height={24} /></span>
             <span className="t-num ml-auto font-medium">{c.requests.toLocaleString('en-US')}</span>
           </div>

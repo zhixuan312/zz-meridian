@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { cn } from '@/lib/cn';
 import { over, parse, ratio } from '@/lib/color';
-import { Scope, StageBar, useStageLook, type Density } from '@/system/card-stage';
+import { PANE, Scope, STAGE, StageBar, useStageLook, type Density } from '@/system/card-stage';
 import type { TokenGroup } from '@/system/tokens-data';
 import { app } from '@/app.config';
 import { PAIRS } from '../../scripts/lib/contrast-pairs';
@@ -63,11 +63,11 @@ export function TokenView({ view, groups }: { view: string; groups: Groups }) {
     }
   };
   return (
-    <section className="overflow-hidden rounded-xl border border-line bg-surface shadow-card">
+    <section className={STAGE}>
       <StageBar theme={theme} setTheme={setTheme} accent={accent} setAccent={setAccent} density={view === 'space' ? density : undefined} setDensity={view === 'space' ? setDensity : undefined} />
       <div className={cn(theme === 'both' && 'divide-y divide-line')}>
         {panes.map((t) => (
-          <Scope key={t} theme={theme === 'both' ? t : scoped.theme} accent={scoped.accent} density={density} className="px-5 py-8 sm:px-10">
+          <Scope key={t} theme={theme === 'both' ? t : scoped.theme} accent={scoped.accent} density={density} className={PANE}>
             {theme === 'both' ? <p className="t-kicker mb-6">{t}</p> : null}
             {body(t)}
           </Scope>
@@ -114,7 +114,7 @@ function Colour({ groups, theme, accent }: { groups: TokenGroup[]; theme: string
                     {pair && r !== null ? <p className="t-caption mt-1">On {[pair[1]].flat().join(' + ')}, needs {pair[2]}:1</p> : null}
                   </div>
                   {pair && r !== null ? (
-                    <span className={cn('t-num self-start rounded-sm px-1.5 py-0.5 font-mono text-2xs', r >= pair[2] ? 'bg-positive-tint text-positive-ink' : 'bg-critical-tint text-critical-ink')}>
+                    <span className={cn('t-num shrink-0 self-start rounded-sm px-1.5 py-0.5 font-mono text-2xs', r >= pair[2] ? 'bg-positive-tint text-positive-ink' : 'bg-critical-tint text-critical-ink')}>
                       {r.toFixed(1)}
                     </span>
                   ) : null}
@@ -234,17 +234,18 @@ function Space({ groups, density }: { groups: Groups; density: Density }) {
         <h2 className="t-section">The 4px scale</h2>
         <div className="mt-5 flex flex-col gap-2.5">
           {space.tokens.map((t) => (
-            <div key={t.name} className="flex items-center gap-4">
+            <div key={t.name} className="flex flex-wrap items-center gap-x-4 gap-y-1">
               <span className="w-20 shrink-0 font-mono text-xs text-ink-2">{t.name}</span>
               <span className="w-24 shrink-0"><span className="block h-3 rounded-xs bg-accent" style={{ width: `var(--${t.name})` }} /></span>
-              <span className="t-caption min-w-0">{t.description}</span>
+              {/* Beside the bar where a line has room for it, under the name where it does not (a phone). */}
+              <span className="t-caption min-w-0 flex-1 basis-40">{t.description}</span>
             </div>
           ))}
         </div>
       </section>
       <section>
         <h2 className="t-section">Radius</h2>
-        <div className="mt-5 grid grid-cols-3 gap-3">
+        <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-3">
           {radius.tokens.map((t) => (
             <div key={t.name} className="flex flex-col items-start gap-2">
               <span className="size-16 border border-accent-line bg-accent-tint" style={{ borderRadius: `min(var(--${t.name}), 32px)` }} />

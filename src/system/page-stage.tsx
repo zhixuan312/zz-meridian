@@ -7,7 +7,7 @@ import { cn } from '@/lib/cn';
 import type { ACCENTS } from '@/lib/preferences';
 import { useSize } from '@/components/charts/use-size';
 import { Segmented } from '@/components/ui/segmented';
-import { StageBar, useStageLook } from '@/system/card-stage';
+import { STAGE, StageBar, useStageLook } from '@/system/card-stage';
 import { app, domain } from '@/app.config';
 
 type Accent = (typeof ACCENTS)[number];
@@ -35,7 +35,7 @@ export function PageStage({ route, embed, title, toolResult }: { route: string; 
     ...(embed ? [{ value: 'embed' as const, label: 'MCP host' }] : []),
   ];
   return (
-    <section aria-label={`${title} on every surface`} className="overflow-hidden rounded-xl border border-line bg-surface shadow-card">
+    <section aria-label={`${title} on every surface`} className={STAGE}>
       <StageBar
         theme={theme} setTheme={setTheme} accent={accent} setAccent={setAccent}
         extra={
