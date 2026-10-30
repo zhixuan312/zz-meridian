@@ -61,7 +61,7 @@ export function EmbedFrame({
       {inline ? (
         <header className="flex flex-wrap items-center gap-x-2.5 gap-y-1 pb-3">
           <AppMark size={20} />
-          <h1 className="min-w-0 flex-1 truncate text-sm font-semibold tracking-[-0.01em]">{title}</h1>
+          <h1 title={typeof title === 'string' ? title : undefined} className="min-w-0 flex-1 truncate text-sm font-semibold tracking-[-0.01em]">{title}</h1>
           {actions}
           <div className="flex w-full items-center gap-2 pl-7.5 @[34rem]/embed:w-auto @[34rem]/embed:pl-0">
             {meta ? <div className="mr-auto flex min-w-0 @[34rem]/embed:mr-1">{meta}</div> : null}

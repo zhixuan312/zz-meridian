@@ -25,7 +25,7 @@ Status: beta
 | Layout | Use | Spec |
 |---|---|---|
 | Centred | A whole card or page body | 56px vertical padding; the title 32px under the disc; text at most 384px wide |
-| Inline | In a list, where rows would be | A 36px disc beside one or two lines, the action at the end |
+| Inline | In a list, where rows would be | A 36px disc beside one or two lines, the action at the end, or on a line of its own where the row has no room for it |
 
 ## States
 

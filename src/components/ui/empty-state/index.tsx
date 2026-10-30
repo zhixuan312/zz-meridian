@@ -60,9 +60,9 @@ export function EmptyState({
   );
   if (layout === 'inline')
     return (
-      <div data-empty={kind} data-no-access={kind === 'no-access' ? '' : undefined} role={kind === 'error' ? 'alert' : undefined} className={cn('flex items-center gap-3.5 py-2', className)}>
+      <div data-empty={kind} data-no-access={kind === 'no-access' ? '' : undefined} role={kind === 'error' ? 'alert' : undefined} className={cn('flex flex-wrap items-center gap-x-3.5 gap-y-2 py-2', className)}>
         {disc}
-        <div className="min-w-0 flex-1">
+        <div className="min-w-0 flex-1 basis-40">
           <p className="text-sm font-medium text-ink">{title}</p>
           {children ? <p className="t-caption mt-0.5">{children}</p> : null}
         </div>

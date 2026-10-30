@@ -228,8 +228,8 @@ function Hours({ values, timezone = 'UTC', scale, format, unit, label, className
             })}
             {on?.d === d ? (
               <Readout column={on.h} columns={cols}>
-                <span className="font-medium whitespace-nowrap">{format(row[on.h])} {unit}</span>
-                <span className="whitespace-nowrap opacity-70"> · {DAYS[d]} {range(on.h)} {timezone}</span>
+                <span className="font-medium whitespace-nowrap">{format(row[on.h])} {unit}</span>{' '}
+                <span className="opacity-70">· {DAYS[d]} {range(on.h)} {timezone}</span>
               </Readout>
             ) : null}
           </div>
@@ -377,7 +377,7 @@ function Calendar({ days, running = false, meridian = false, scale, format, unit
                 // The readout stands over its day's row: a grid item across every week, with nothing in the flow.
                 <div aria-hidden className="pointer-events-none relative col-span-full" style={{ gridRow: on.row + 1 }}>
                   <Readout column={on.col} columns={weeks}>
-                    <span className="whitespace-nowrap opacity-70">{formatCalendarDate(on.date)} · </span>
+                    <span className="whitespace-nowrap opacity-70">{formatCalendarDate(on.date)} ·</span>{' '}
                     <span className="font-medium whitespace-nowrap">{reading(on)}</span>
                   </Readout>
                 </div>

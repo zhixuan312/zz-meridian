@@ -176,7 +176,7 @@ export function AssistantPanel({
     >
       <div className="flex h-14 shrink-0 items-center gap-3 border-b border-line px-4">
         <AgentMark size="md" />
-        <h2 className="t-card min-w-0 flex-1 truncate">Assistant</h2>
+        <h2 title="Assistant" className="t-card min-w-0 flex-1 truncate">Assistant</h2>
         {/* Named on screen, not only to a screen reader: the accessible names begin with the words shown. */}
         <Button size="sm" variant="ghost" icon={<Eraser />} aria-label="Clear conversation" disabled={messages.length === 0} onClick={onClear}>Clear</Button>
         <Button size="sm" variant="ghost" icon={<X />} aria-label="Close assistant" onClick={onClose} className="-mr-2">Close</Button>

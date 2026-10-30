@@ -40,7 +40,7 @@ The name is `text-page` (clamp 36 to 56px); a mono ID is 60% of it. Facts are `t
 ## Surfaces
 
 - **Console**: as specified.
-- **Mobile**: the name wraps; facts wrap; actions take their own row under the facts.
+- **Mobile**: the name wraps; facts wrap; actions take their own row under the facts, and wrap onto another where three do not fit (320px).
 - **Embed**: the `compact` block, without the menu; Open in the console replaces the actions.
 
 ## Agents
