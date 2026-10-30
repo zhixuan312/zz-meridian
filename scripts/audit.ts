@@ -9,10 +9,10 @@
  * embed, on its host's ground, and only the embeds it names run. `--list` marks an embed `(embed)`.
  *
  * --atlas audits the Design Atlas instead: every card's page and its bare preview, and every other entry the Atlas
- * serves — the token views, the page specs and the guides — at 1440 and 390px in both themes.
+ * serves — the token views, the page specs and the guides — at 1440, 390 and 320px in both themes.
  * A card's preview is the one place it is drawn alone, so a defect in its own box shows there and nowhere else. It is
  * not part of `pnpm verify` (the default stays fast); run it when the question is the component surface. It takes
- * about twenty minutes, and a project without the Atlas has nothing for it to read. `--list` prints the routes a run would
+ * about thirty-five minutes, and a project without the Atlas has nothing for it to read. `--list` prints the routes a run would
  * visit, and for `--atlas` what they are by kind, and exits without opening a browser: what a run covers, before it runs.
  *
  * The walk enters open shadow roots and follows slots (scripts/lib/deep.ts, injected into every page), so a custom element's
@@ -80,7 +80,9 @@ const ROUTES = EMBEDS_ONLY ? [] : ATLAS ? await atlasRoutes() : asked ? asked.fi
 const EMBEDS = ATLAS ? [] : asked ? asked.filter(isEmbed) : found.filter(isEmbed);
 // 320 is the narrowest width WCAG's reflow (1.4.10) asks content to hold: a small phone, or 1280px at 400% zoom. Below
 // the sample's 390 only it cut a line under a title that did not hold it (2026-10-27).
-const WIDTHS = ATLAS ? [1440, 390] : [2560, 1440, 1024, 768, 390, 320];
+// The Atlas adds 320 to the two widths it began with: a run at all six found 22 of a card's 24 defects there, and none at
+// 1440 or 390 (2026-10-30).
+const WIDTHS = ATLAS ? [1440, 390, 320] : [2560, 1440, 1024, 768, 390, 320];
 /** An embed is drawn in a host's frame, at a desktop and a narrow host's column. */
 const EMBED_WIDTHS = [720, 420];
 const THEMES = ['dark', 'light'];
