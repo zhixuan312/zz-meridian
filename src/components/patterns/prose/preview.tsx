@@ -60,13 +60,13 @@ export default function ProsePreview() {
       </Specimen>
       <Specimen label="Narrow" note="At 320px the long paths and the code break anywhere rather than push the card." stack>
         <Plane on="surface">
-          <div className="w-80 p-4"><Prose size="sm">{REVIEW.split('## What we are changing')[1]}</Prose></div>
+          <div className="w-80 max-w-full p-4"><Prose size="sm">{REVIEW.split('## What we are changing')[1]}</Prose></div>
         </Plane>
       </Specimen>
       <Specimen label="Stacked" note="With stack, a table under 480px of its own width reads as one card per row: the first cell its title, each later cell under its column's heading. Wider, it is the same table." stack>
         <Plane on="surface">
           <div className="flex flex-wrap gap-6 p-4">
-            <div className="w-80"><Prose size="sm" stack>{DECISIONS}</Prose></div>
+            <div className="w-80 max-w-full"><Prose size="sm" stack>{DECISIONS}</Prose></div>
             <div className="w-[560px] max-w-full"><Prose size="sm" stack>{DECISIONS}</Prose></div>
           </div>
         </Plane>

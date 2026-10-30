@@ -43,7 +43,7 @@ export default function TablePreview() {
                   <TableCell truncate>
                     <span className="flex min-w-0 items-baseline gap-2">
                       <span className="w-10 shrink-0 font-mono text-2xs text-ink-3">{r.method}</span>
-                      <span className="truncate font-mono text-xs">{r.route}</span>
+                      <span title={r.route} className="truncate font-mono text-xs">{r.route}</span>
                     </span>
                   </TableCell>
                   <TableCell hideBelow="sm"><Status code={r.status} /></TableCell>
