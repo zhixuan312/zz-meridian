@@ -21,6 +21,7 @@ Every release of ZZ Meridian, newest first. Versions follow semver: a removed or
 - **Sign-in retains a persona that became unavailable.** The refusal stays attached to the selected person instead of silently switching to the first option.
 - **Repeated branding preserves quoted names.** Apostrophes are serialized as data, and later changes can still find escaped configuration values without corrupting an unchanged person's name.
 - **Skill installation refuses an incomplete package.** A missing `SKILL.md` is reported before either skill destination is written, instead of reporting a successful empty installation.
+- **Sign-in explains an unavailable roster.** Empty or entirely inactive personas produce a named unavailable state instead of a password/persona form that cannot succeed.
 - **Empty captured bodies are not absent bodies.** Request detail names the zero-byte capture and keeps its exact Copy action; an absent capture makes no claim about what a method can carry.
 - **Branding rejects missing option values before writing.** A following known flag is not consumed as a product name, and incomplete valued flags cannot partially apply earlier options.
 

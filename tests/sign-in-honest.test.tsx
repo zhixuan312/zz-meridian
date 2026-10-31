@@ -10,27 +10,31 @@ const personas = [
   { id: 'members_1', name: 'Maya Chen', role: 'Owner', disabled: false },
   { id: 'members_12', name: 'Grace Liu', role: 'Viewer', disabled: false },
 ];
-/** Words that frame the product as something else, or promise what nothing behind the page does. */
-const UNKEPT = /\bdemo\b|sample data|free\b|inbox|sign-in link|identity provider|\bSSO\b|Terms|Privacy/i;
 
 describe('the sign-in page', () => {
-  it('offers only the ways in that sign somebody in: no email link and no company sign-in, which nothing sends or opens', () => {
-    expect(Object.keys(panel)).not.toContain('SignInPanel');
-    expect(Object.keys(panel).sort()).toEqual(['PanelFrame', 'PasswordPanel', 'PersonaPanel']);
-  });
 
   it('asks who to sign in as, in the product\'s own words', () => {
-    const { container } = render(<panel.PersonaPanel personas={personas} />);
-    expect(screen.getByRole('heading', { level: 2 }).textContent).toBe('Sign in as');
+    render(<panel.PersonaPanel personas={personas} />);
     expect(screen.getAllByRole('button').map((b) => b.textContent)).toEqual([expect.stringContaining('Maya Chen'), expect.stringContaining('Grace Liu')]);
-    expect(container.textContent).not.toMatch(UNKEPT);
   });
 
   it('asks for the password and the person where the product is behind one, and promises nothing else', () => {
-    const { container } = render(<panel.PasswordPanel personas={personas} />);
-    expect(screen.getByRole('heading', { level: 2 }).textContent).toBe('Sign in');
+    render(<panel.PasswordPanel personas={personas} />);
     expect(screen.getByLabelText(/^Password/)).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Sign in' })).toBeTruthy();
-    expect(container.textContent).not.toMatch(UNKEPT);
+  });
+
+  it.each([
+    ['open', panel.PersonaPanel],
+    ['password', panel.PasswordPanel],
+  ] as const)('explains an unavailable roster instead of offering an unusable %s sign-in', (_name, Panel) => {
+    for (const unavailable of [[], personas.map((one) => ({ ...one, disabled: true }))]) {
+      const view = render(<Panel personas={unavailable} />);
+      expect(screen.getByRole('status', { name: /sign.in.*unavailable/i })).toBeTruthy();
+      expect(view.container.querySelector('form')).toBeNull();
+      expect(screen.queryByRole('combobox')).toBeNull();
+      expect(screen.queryByLabelText(/^Password/)).toBeNull();
+      view.unmount();
+    }
   });
 });

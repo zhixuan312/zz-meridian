@@ -22,9 +22,21 @@ export function PanelFrame({ children, labelledBy = 'sign-in' }: { children?: Re
   );
 }
 
+/** No usable identity means no password or persona action can succeed. */
+function UnavailablePersonas({ id }: { id: string }) {
+  return (
+    <PanelFrame labelledBy={id}>
+      <span className="grid size-11 place-items-center rounded-full bg-accent-tint text-accent-ink"><Users className="size-5" /></span>
+      <h2 id={id} className="t-section mt-5">Sign-in is unavailable</h2>
+      <p role="status" aria-labelledby={id} className="t-small mt-2 text-ink-2">No active person is available to sign in as. Check the member records for this workspace before trying again.</p>
+    </PanelFrame>
+  );
+}
+
 /** The panel when `DEMO_PASSWORD` is set: the password, then who to sign in as, and one primary action. */
 export function PasswordPanel({ personas }: { personas: Persona[] }) {
   const [state, action, pending] = useActionState(demoSignIn, { error: null });
+  if (!personas.some((one) => !one.disabled)) return <UnavailablePersonas id="sign-in" />;
   return (
     <PanelFrame>
       <form action={action}>
@@ -59,6 +71,7 @@ export function PasswordPanel({ personas }: { personas: Persona[] }) {
 /** Without a password: the people the console can be opened as, each row signing in as that person. */
 export function PersonaPanel({ personas }: { personas: Persona[] }) {
   const [state, action, pending] = useActionState(signInAs, {} as SignInAsState);
+  if (!personas.some((one) => !one.disabled)) return <UnavailablePersonas id="choose-persona" />;
   return (
     <PanelFrame labelledBy="choose-persona">
       <span className="grid size-11 place-items-center rounded-full bg-accent-tint text-accent-ink"><Users className="size-5" /></span>
