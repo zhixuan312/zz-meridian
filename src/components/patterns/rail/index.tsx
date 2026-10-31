@@ -258,7 +258,7 @@ export function Rail({
                         <button
                           type="button"
                           aria-expanded={isOpen}
-                          aria-controls={branch}
+                          aria-controls={isOpen ? branch : undefined}
                           aria-label={`${it.label} pages`}
                           onClick={() => toggle(it.href)}
                           className="relative col-start-1 row-start-1 mr-1 grid size-7 place-items-center self-center justify-self-end rounded-md text-ink-3 transition-colors duration-(--dur-hover) hover:bg-fill-hover hover:text-ink pointer-coarse:size-11"

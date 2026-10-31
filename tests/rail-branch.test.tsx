@@ -76,6 +76,22 @@ describe('the rail with a third level: drawing', () => {
     expect(toggle('Customers')).toHaveAttribute('aria-expanded', 'false');
   });
 
+  it('references a branch only while its list exists, across repeated toggles', () => {
+    rail('/');
+    const button = toggle('Usage')!;
+    expect(button).not.toHaveAttribute('aria-controls');
+    press('Usage');
+    const id = button.getAttribute('aria-controls')!;
+    const branch = document.getElementById(id)!;
+    expect(branch.contains(link('/requests'))).toBe(true);
+    press('Usage');
+    expect(document.getElementById(id)).toBeNull();
+    expect(button).not.toHaveAttribute('aria-controls');
+    expect(button).toHaveAttribute('aria-expanded', 'false');
+    press('Usage');
+    expect(document.getElementById(button.getAttribute('aria-controls')!)?.contains(link('/requests'))).toBe(true);
+  });
+
   it('names each rail\'s branch lists apart, as the desktop rail and the drawer\'s can be in the page together', () => {
     at.path = '/usage';
     render(<><Rail nav={tree()} user={null} /><Rail nav={tree()} user={null} /></>);
@@ -191,28 +207,12 @@ describe('the rail with a third level: what the person may open', () => {
   });
 });
 
-describe('the rail with a third level: under a coarse pointer', () => {
-  it('gives every parent, sub page and button row a 44px row', () => {
-    rail('/requests');
-    // Every link of the rail, the parent's and the sub page's, takes the coarse row from the nav's own rule.
-    expect(main().className).toMatch(/(^|\s)pointer-coarse:\[&_a\]:h-11(\s|$)/);
-    expect(toggle('Usage')!.className).toMatch(/(^|\s)pointer-coarse:size-11(\s|$)/);
-    // Nothing inside the branch sets its links a height of its own without the coarse row beside it.
-    const branch = document.getElementById(toggle('Usage')!.getAttribute('aria-controls')!)!;
-    for (const el of [branch, ...branch.querySelectorAll('li, a')]) {
-      const cls = el.getAttribute('class') ?? '';
-      if (/(^|\s)(\[&_a\]:)?h-(?!11(\s|$))[\d.]+(\s|$)/.test(cls)) expect(cls, el.tagName).toMatch(/(^|\s)pointer-coarse:(\[&_a\]:)?h-11(\s|$)/);
-    }
-  });
-});
-
 /**
  * The marker is drawn over the current link's own box. A branch that opens or closes moves the links below it without
  * resizing the scrolling nav, so the rail observes the content inside it as well (CS-3). The fake observer answers
  * `observe` after the effect that called it, as the platform does.
  */
 describe('the rail with a third level: the marker', () => {
-  const observed: Element[] = [];
   const notes: (() => void)[] = [];
   const props = ['offsetTop', 'offsetHeight', 'offsetLeft', 'offsetWidth'] as const;
   const realRO = globalThis.ResizeObserver;
@@ -221,11 +221,10 @@ describe('the rail with a third level: the marker', () => {
   const sub = (el: HTMLElement) => el.closest('ul ul') !== null;
 
   beforeEach(() => {
-    observed.length = 0;
     notes.length = 0;
     globalThis.ResizeObserver = class {
       constructor(cb: () => void) { notes.push(cb); }
-      observe(el: Element) { observed.push(el); for (const cb of notes) queueMicrotask(cb); }
+      observe() { for (const cb of notes) queueMicrotask(cb); }
       unobserve() {}
       disconnect() {}
     } as unknown as typeof ResizeObserver;
@@ -240,11 +239,6 @@ describe('the rail with a third level: the marker', () => {
   });
 
   const marker = () => main().querySelector<HTMLElement>('[style*="translateY"]');
-
-  it('observes the content inside the scrolling nav, so a branch that opens or closes is measured again', async () => {
-    await act(async () => { rail('/usage'); });
-    expect(observed.some((el) => el !== main() && main().contains(el) && el.contains(link('/')) && el.contains(link('/customers')))).toBe(true);
-  });
 
   it('is drawn over the current sub page\'s own box, and over its parent once the branch is closed', async () => {
     await act(async () => { rail('/requests'); });

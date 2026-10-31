@@ -39,6 +39,7 @@ Every release of ZZ Meridian, newest first. Versions follow semver: a removed or
 - **Appearance accents work through menu navigation.** Every accent is a labeled menu radio item reached by arrows, Home/End and typeahead, not a plain button excluded from roving focus. The static specimen matches.
 - **Long menus fit short screens.** Their own available-height bound and scrolling keep first and last focused choices visible.
 - **The Atlas contents drawer covers sticky chrome.** Its modal content and scrim use the overlay layer instead of the rail layer, so the first keyboard target is no longer covered by the mobile header.
+- **A closed Rail does not reference absent content.** Its trigger only carries `aria-controls` while the controlled drawer is mounted.
 - **Empty captured bodies are not absent bodies.** Request detail names the zero-byte capture and keeps its exact Copy action; an absent capture makes no claim about what a method can carry.
 - **Branding rejects missing option values before writing.** A following known flag is not consumed as a product name, and incomplete valued flags cannot partially apply earlier options.
 - **An empty Atlas search says so.** A quiet status distinguishes no matching entries from a blank or still-loading shelf and disappears when the query is cleared.
