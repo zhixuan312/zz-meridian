@@ -16,7 +16,7 @@ type Props = Omit<InputProps, 'leading' | 'trailing' | 'type' | 'onChange' | 'va
  * Filters what is on screen as the reader types. A search glass in front, a clear button once there is text, and an
  * optional key that focuses it from anywhere. Escape clears it; a second Escape leaves it.
  */
-export const SearchInput = forwardRef<HTMLInputElement, Props>(function SearchInput({ value, onValueChange, shortcut, placeholder = 'Search', className, size = 'md', ...rest }, ref) {
+export const SearchInput = forwardRef<HTMLInputElement, Props>(function SearchInput({ value, onValueChange, shortcut, placeholder = 'Search', className, size = 'md', onKeyDown, ...rest }, ref) {
   const inner = useRef<HTMLInputElement>(null);
   useImperativeHandle(ref, () => inner.current!);
 
@@ -43,7 +43,8 @@ export const SearchInput = forwardRef<HTMLInputElement, Props>(function SearchIn
       placeholder={placeholder}
       onChange={(e: ChangeEvent<HTMLInputElement>) => onValueChange(e.target.value)}
       onKeyDown={(e) => {
-        if (e.key === 'Escape') {
+        onKeyDown?.(e);
+        if (!e.defaultPrevented && !e.nativeEvent.isComposing && e.key === 'Escape') {
           if (value) { e.preventDefault(); onValueChange(''); } else inner.current?.blur();
         }
       }}

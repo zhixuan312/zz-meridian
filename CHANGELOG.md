@@ -26,6 +26,8 @@ Every release of ZZ Meridian, newest first. Versions follow semver: a removed or
 - **Home omits undefined percentage growth.** A fully counted zero-request baseline uses the existing neutral year context instead of a percentage claim with no denominator.
 - **Repeated branding preserves quoted names.** Apostrophes are serialized as data, and later changes can still find escaped configuration values without corrupting an unchanged person's name.
 - **Skill installation refuses an incomplete package.** A missing `SKILL.md` is reported before either skill destination is written, instead of reporting a successful empty installation.
+- **Search keeps its Escape behavior with a caller's key handler.** Enter and other custom keyboard actions compose with clearing and second-Escape blur; a caller can deliberately consume a key with `preventDefault()`.
+- **Composition Escape does not erase search.** Search inputs and the Atlas shelf leave Escape to an active IME composition; ordinary clear and blur behavior remains.
 - **Unread Home totals stay unknown.** A failed period read no longer manufactures zero sales, compute, costs or a zero-valued record; independently readable year and customer facts remain.
 - **Revenue keeps independent reads independent.** Current figures survive unread history, and historical windows survive an unread current period. Missing comparison evidence is not described as an observed absence.
 - **Ambient shell identity cannot replace a page's refusal.** Optional live and assistant scope resolve to absence when identity cannot be read; the page still owns its authentication and permission response.

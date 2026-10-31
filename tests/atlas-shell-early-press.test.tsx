@@ -52,4 +52,17 @@ describe('a press on Open the contents before the drawer has arrived', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Open the contents' }));
     expect(await screen.findByRole('dialog', { name: 'Contents' })).toBeInTheDocument();
   });
+
+  it('does not erase an Atlas query when Escape cancels an IME composition', () => {
+    render(shell());
+    const input = screen.getByLabelText('Find a card') as HTMLInputElement;
+    fireEvent.change(input, { target: { value: 'no matching entry' } });
+    expect(screen.queryByRole('link', { name: 'Start here' })).toBeNull();
+    fireEvent.keyDown(input, { key: 'Escape', isComposing: true });
+    expect(input.value).toBe('no matching entry');
+    expect(screen.queryByRole('link', { name: 'Start here' })).toBeNull();
+    fireEvent.keyDown(input, { key: 'Escape' });
+    expect(input.value).toBe('');
+    expect(screen.getByRole('link', { name: 'Start here' })).toBeInTheDocument();
+  });
 });

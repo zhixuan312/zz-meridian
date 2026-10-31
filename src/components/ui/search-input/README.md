@@ -29,6 +29,8 @@ Input's states, plus:
 
 - Filters as the reader types. The input itself is controlled and never waits. Where each change is a navigation (a view whose state is its address), the caller keeps the text with `useSearchDraft` from the data table, which writes once the typing has stopped for 250ms and at once when the search is cleared.
 - Escape clears the query; a second Escape leaves the field. The clear button returns focus to the field.
+- A caller's `onKeyDown` runs first. It can consume a key with `preventDefault()`; observing keys does not disable the search's Escape behavior.
+- Escape during an in-progress IME composition belongs to the input method; it does not erase the query or blur the field.
 - The shortcut key focuses the field unless focus is already in a text control.
 - The query belongs in the URL (`?q=`), so a filtered view can be shared and an agent can open it.
 

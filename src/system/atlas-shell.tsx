@@ -112,7 +112,7 @@ function Shelf({ nav }: { nav: AtlasNav }) {
       <div className="px-3 pb-2">
         <label className="flex h-(--control-md) items-center gap-2 rounded-md border border-line-strong bg-surface/50 px-2.5 text-sm text-ink-3 shadow-control focus-within:border-accent focus-within:ring-3 focus-within:ring-accent/20">
           <Search className="size-4 shrink-0" strokeWidth={1.75} />
-          <input ref={input} value={q} onChange={(e) => setQ(e.target.value)} onKeyDown={(e) => e.key === 'Escape' && setQ('')} placeholder="Find a card" aria-label="Find a card" className="min-w-0 flex-1 bg-transparent text-ink outline-none placeholder:text-ink-3" />
+          <input ref={input} value={q} onChange={(e) => setQ(e.target.value)} onKeyDown={(e) => e.key === 'Escape' && !e.nativeEvent.isComposing && setQ('')} placeholder="Find a card" aria-label="Find a card" className="min-w-0 flex-1 bg-transparent text-ink outline-none placeholder:text-ink-3" />
           <Kbd>/</Kbd>
         </label>
       </div>
