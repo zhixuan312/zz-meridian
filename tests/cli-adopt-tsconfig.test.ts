@@ -62,6 +62,18 @@ describe('adopt and the team\'s tsconfig', () => {
     expect(r.atAlias).toBe('.');
   });
 
+  it('preserves comma-and-bracket text in the team\'s aliases and plugin options', () => {
+    const compilerOptions = {
+      target: 'ES2022',
+      paths: { '@comma,}/*': ['./features,]/*'] },
+      plugins: [{ name: 'custom', pattern: 'escaped quote: ",] and backslash: \\,}' }],
+    };
+    const r = at(JSON.stringify({ compilerOptions }));
+    const written = JSON.parse(r.writes.get('tsconfig.json')!);
+    expect(written.compilerOptions).toMatchObject(compilerOptions);
+    expect(r.writes.has('tsconfig.before.json')).toBe(false);
+  });
+
   it('writes no backup when there was nothing to lose', () => {
     const r = at('{\n  "compilerOptions": {\n    "target": "ES2017",\n    "paths": { "@/*": ["./src/*"] }\n  }\n}\n');
     expect(r.writes.has('tsconfig.before.json')).toBe(false);

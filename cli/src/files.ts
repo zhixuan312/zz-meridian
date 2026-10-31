@@ -121,7 +121,8 @@ function strippedJsonc(text: string): { json: string; dropped: boolean } {
     if (c === '/' && text[i + 1] === '*') { dropped = true; i += 2; while (i < text.length && !(text[i] === '*' && text[i + 1] === '/')) i++; i++; continue; }
     out += c;
   }
-  const json = out.replace(/,(\s*[}\]])/g, '$1');
+  // Consume strings whole before removing trailing commas: their keys and values may themselves contain ",]" or ",}".
+  const json = out.replace(/"(?:\\.|[^"\\])*"|,(\s*[}\]])/g, (match, end: string | undefined) => end ?? match);
   return { json, dropped: dropped || json.length !== out.length };
 }
 
