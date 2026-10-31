@@ -65,4 +65,15 @@ describe('a press on Open the contents before the drawer has arrived', () => {
     expect(input.value).toBe('');
     expect(screen.getByRole('link', { name: 'Start here' })).toBeInTheDocument();
   });
+
+  it('announces an empty filtered shelf and restores entries when the query is cleared', () => {
+    render(shell());
+    const input = screen.getByLabelText('Find a card');
+    fireEvent.change(input, { target: { value: 'no matching entry' } });
+    expect(screen.queryByRole('link', { name: 'Start here' })).toBeNull();
+    expect(screen.getByRole('status')).toBeInTheDocument();
+    fireEvent.keyDown(input, { key: 'Escape' });
+    expect(screen.queryByRole('status')).toBeNull();
+    expect(screen.getByRole('link', { name: 'Start here' })).toBeInTheDocument();
+  });
 });

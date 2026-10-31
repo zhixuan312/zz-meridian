@@ -117,6 +117,7 @@ function Shelf({ nav }: { nav: AtlasNav }) {
         </label>
       </div>
       <nav aria-label="Atlas" className="flex-1 overflow-y-auto overscroll-contain px-3 pt-2 pb-6">
+        {filtered.length === 0 ? <p role="status" className="px-2.5 py-6 text-sm text-ink-3">No entries to show.</p> : null}
         {filtered.map((sec) => {
           const isOpen = q !== '' || openIds.has(sec.id);
           return (
