@@ -48,6 +48,10 @@ Meridian's rules for the embed surface:
 7. **Say when the host refuses.** A refused context is tried once more, and Ask then carries the view's address; a refused question is told to the person with its words, so nothing pressed is silently lost.
 8. **Act through the host.** A button in an embed calls a tool or sends a message; it never navigates the frame. A destructive action is never a bare button: it is a Proposal marked critical, and it runs only when the person approves.
 
+The host owns an embed's theme from the first context message onward: device preferences and later storage events
+cannot overwrite it. When the host specifies no theme, Meridian leaves it unset so CSS follows the system scheme,
+including later system changes.
+
 The token bridge, applied by `EmbedSurface` on every embed route (`app/embed/layout.tsx`, `data-surface="embed"`), maps the host's variables onto Meridian's roles and falls back to Meridian's own value when the host sends nothing:
 
 | Meridian role | Host variable |

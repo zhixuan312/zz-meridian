@@ -28,8 +28,11 @@ function known(stored: Record<string, unknown>): Preferences {
 
 function apply(p: Preferences) {
   const d = document.documentElement;
-  if (p.theme === 'system') d.removeAttribute('data-theme');
-  else d.setAttribute('data-theme', p.theme);
+  // An embed owns its document theme through EmbedSurface; device choices belong to the console.
+  if (d.getAttribute('data-surface') !== 'embed') {
+    if (p.theme === 'system') d.removeAttribute('data-theme');
+    else d.setAttribute('data-theme', p.theme);
+  }
   d.setAttribute('data-accent', p.accent);
   d.setAttribute('data-density', p.density);
 }

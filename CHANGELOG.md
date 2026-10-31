@@ -30,6 +30,7 @@ Every release of ZZ Meridian, newest first. Versions follow semver: a removed or
 - **Revenue keeps independent reads independent.** Current figures survive unread history, and historical windows survive an unread current period. Missing comparison evidence is not described as an observed absence.
 - **Ambient shell identity cannot replace a page's refusal.** Optional live and assistant scope resolve to absence when identity cannot be read; the page still owns its authentication and permission response.
 - **Sign-in explains an unavailable roster.** Empty or entirely inactive personas produce a named unavailable state instead of a password/persona form that cannot succeed.
+- **Embed theme follows its host.** Device preferences and storage events no longer overwrite initial host context. An unspecified host theme stays unset and follows later system-scheme changes through CSS.
 - **Empty captured bodies are not absent bodies.** Request detail names the zero-byte capture and keeps its exact Copy action; an absent capture makes no claim about what a method can carry.
 - **Branding rejects missing option values before writing.** A following known flag is not consumed as a product name, and incomplete valued flags cannot partially apply earlier options.
 

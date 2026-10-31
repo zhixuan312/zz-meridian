@@ -86,8 +86,11 @@ export function EmbedSurface({ children }: { children: ReactNode }) {
   useEffect(() => {
     const d = document.documentElement;
     d.setAttribute('data-surface', 'embed');
-    const sys = matchMedia('(prefers-color-scheme: dark)');
-    const applyTheme = (t?: 'light' | 'dark') => d.setAttribute('data-theme', t ?? (sys.matches ? 'dark' : 'light'));
+    // An explicit host choice wins; otherwise CSS follows system changes without freezing a sampled choice.
+    const applyTheme = (t?: 'light' | 'dark') => {
+      if (t) d.setAttribute('data-theme', t);
+      else d.removeAttribute('data-theme');
+    };
     applyTheme();
     if (!HostBridge.framed()) return () => d.removeAttribute('data-surface');
     const b = new HostBridge();
