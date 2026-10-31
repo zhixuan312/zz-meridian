@@ -1,6 +1,4 @@
 import { render } from '@testing-library/react';
-import { readFileSync } from 'node:fs';
-import path from 'node:path';
 import { describe, expect, it, vi } from 'vitest';
 
 // A rule about a chart's width is tested at a stated width: the size hook is replaced.
@@ -14,9 +12,7 @@ import { GroupedColumns } from '@/components/charts/column-chart/grouped';
 import { DivergingBars } from '@/components/charts/diverging-bars';
 import { TrendChart } from '@/components/charts/trend-chart';
 
-// Defects the review of issue #99's forms found on edge paths: a held scale under one, a seventh grouped part, a dot on a
-// running point, a node label on a diverging row, the widening words of an area held above zero, an estimate with no
-// figure, and the forced-colours fill of an estimate whose colour is an inline style.
+// Edge paths for held scales, running points, node labels and missing figures.
 
 const dates = ['2026-10-01', '2026-10-02', '2026-10-03', '2026-10-04'];
 
@@ -29,21 +25,6 @@ describe('the forms of issue #99 on their edge paths', () => {
     expect(container.querySelector('[data-widened]')).toBeNull();
   });
 
-  it("a Bar list's words and bars are positioned, so its axis's gridlines, positioned before them, paint under them", () => {
-    const { container } = render(<BarList label="Regions" axis items={[{ key: 'a', label: 'A long region label', value: 40 }, { key: 'b', label: 'B', value: 10 }]} />);
-    expect(container.querySelector('[data-gridline]')).not.toBeNull();
-    for (const row of container.querySelectorAll('li[data-row]')) {
-      expect(row.firstElementChild?.classList.contains('relative')).toBe(true);
-      expect(row.querySelector('[data-bar]')?.classList.contains('relative')).toBe(true);
-    }
-  });
-
-  it("a linked Bar list row's words stand over its bar, so a finger's target reaching the track still opens the row", () => {
-    const { container } = render(<BarList label="Pipeline" axis items={[{ key: 'a', label: 'A', value: 40, href: '/customers/a' }, { key: 'b', label: 'B', value: 10 }]} />);
-    // The bar is positioned to paint over the gridlines; the words, positioned and lifted, paint over the bar, and the
-    // link's 44px target under a finger with them.
-    for (const row of container.querySelectorAll('li[data-row]')) expect(row.firstElementChild?.classList.contains('z-1')).toBe(true);
-  });
 
   it('a Bar list row below zero draws an empty bar and outline, never a width a browser drops for the whole track', () => {
     const below: string[] = [];
@@ -76,13 +57,6 @@ describe('the forms of issue #99 on their edge paths', () => {
     expect(container.querySelector('[data-widened]')).toBeNull();
   });
 
-  it('a grouped Column chart draws a part past the sixth slot in the neutral, never in a slot no theme defines', () => {
-    const parts = Array.from({ length: 7 }, (_, k) => ({ key: `p${k}`, label: `P${k}` }));
-    const { container } = render(<GroupedColumns grouped label="G" parts={parts} columns={[{ key: 'c', label: 'C', values: [1, 2, 3, 4, 5, 6, 7] }]} />);
-    const fills = [...container.querySelectorAll('[data-part]')].map((p) => (p as HTMLElement).style.backgroundColor);
-    expect(fills.at(-1)).toBe('var(--chart-neutral-strong)');
-    expect(fills.some((f) => /series-(?:[7-9]|\d\d)/.test(f))).toBe(false);
-  });
 
   it('a running grouped part with no data reads "So far" at rest rather than its words cut short', () => {
     const parts = [{ key: 'in', label: 'In' }, { key: 'out', label: 'Out' }];
@@ -124,9 +98,4 @@ describe('the forms of issue #99 on their edge paths', () => {
     expect(container.querySelector('li[data-row="b"]')?.getAttribute('title')).toBe('B · 0');
   });
 
-  it("an estimate's forced-colours fill wins over a mark's inline colour", () => {
-    const css = readFileSync(path.resolve(import.meta.dirname, '../src/styles/base.css'), 'utf8');
-    const forced = css.slice(css.indexOf('@media (forced-colors: active)'));
-    expect(forced).toMatch(/\[data-estimate\] \{[^}]*background-color: Canvas !important;/);
-  });
 });

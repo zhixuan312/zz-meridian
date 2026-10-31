@@ -25,10 +25,9 @@ const stepsOf = async (title: string) => {
 };
 
 describe('the tickets page, for someone who may not write', () => {
-  it('shows every ticket, offers neither a new ticket nor a step, and says nothing about who can', () => {
+  it('shows every ticket and offers neither a new ticket nor a step', () => {
     const { container } = view({ may: { create: false, update: false } });
     expect(container.querySelectorAll('tbody tr').length).toBe(3);
-    expect(container.textContent).not.toMatch(/\b(Owners|Admins|Members|Viewers)\b|\bOnly an? \b|\bAsk an? (Owner|Admin)\b/);
     expect(screen.queryByRole('button', { name: 'New ticket' })).toBeNull();
     expect(screen.queryByRole('button', { name: /^Change state of / })).toBeNull();
   });

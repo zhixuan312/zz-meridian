@@ -19,7 +19,6 @@ vi.mock('@/data/read', async (orig) => {
   };
 });
 
-import { FEATURES } from '@/data/features';
 import { contextText } from '@/lib/shared-context';
 import { INCIDENTS } from '@/system/fixtures/sample';
 import { TICKETS } from '@/system/fixtures/sample-engineering';
@@ -35,13 +34,6 @@ const as = async (id: string) => { jar.value = id; return nowTool.read({}); };
 const said = async (id = PERSONAS.owner) => contextText((await as(id)).context);
 
 describe('what Now is handed from the product', () => {
-  it('needs every collection its parts read, each of which every role that reads the dashboards holds', () => {
-    const needs = FEATURES.now.needs as unknown as { allOf: string[] };
-    for (const grant of ['services:read', 'incidents:read', 'releases:read', 'tests:read', 'days:read', 'usage:read', 'models:read', 'compute:read', 'endpoints:read', 'tickets:read', 'activity:read']) {
-      expect(needs.allOf, grant).toContain(grant);
-    }
-  });
-
   it("opens the open incident's ticket after the incident began", () => {
     const incident = INCIDENTS.find((i) => i.state !== 'resolved' && i.ticketId)!;
     const ticket = TICKETS.find((t) => t.id === incident.ticketId)!;

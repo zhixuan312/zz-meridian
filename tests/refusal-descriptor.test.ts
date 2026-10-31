@@ -24,17 +24,6 @@ describe('the refusal descriptor', () => {
     expect(access).not.toContain('JSX.Element');
   });
 
-  it('still exports the gate a page calls', async () => {
-    const mod = await import('@/data/access');
-    expect(typeof mod.gate).toBe('function');
-    expect(typeof mod.gatedMetadata).toBe('function');
-  });
-
-  it('draws a refusal in the views', () => {
-    const refusal = source('src/views/refusal.tsx');
-    expect(refusal).toMatch(/MissingPage|NoAccess/);
-  });
-
   it('passes every gated page through the renderer', () => {
     const gated = pages('app').filter((p) => /from '@\/data\/access'/.test(source(p)) && /\bgate\(/.test(source(p)));
     expect(gated.length).toBeGreaterThan(0);

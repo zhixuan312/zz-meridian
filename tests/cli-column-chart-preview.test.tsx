@@ -57,20 +57,13 @@ describe('the Column chart\'s specimens: what they say is true', () => {
     }
   });
 
-  it('never cut a period\'s label on a phone: only the chart of categories cuts its labels to their columns', () => {
-    size.width = 300;
-    const { container } = render(<ColumnChartPreview />);
-    const cut = charts(container).filter((chart) => chart.querySelector(':scope > div[aria-hidden]:not([data-plot]) .truncate'));
-    expect(cut.map(name)).toEqual(['Requests by endpoint']);
-  });
 });
 
 describe('the Column chart\'s specimens: every state is drawn', () => {
-  it('draws the Tab stop focused, statically, with the ring the plot takes', () => {
+  it('keeps the static focus specimen non-interactive', () => {
     render(<ColumnChartPreview />);
     const chart = drawn('Focus');
     expect(chart.closest('[inert]')).not.toBeNull();
-    for (const part of ['outline-2', 'outline-offset-4', 'outline-accent']) expect(chart.className).toContain(`[&_[data-plot]]:${part}`);
   });
 
   it('draws a highlighted column of a stacked chart, with nothing pointed at', () => {
@@ -79,7 +72,6 @@ describe('the Column chart\'s specimens: every state is drawn', () => {
     expect(chart.querySelector('[data-part]')).not.toBeNull();
     expect(chart.querySelector('[data-active]')).toBeNull();
     expect(chart.querySelector('[data-readout]')).toBeNull();
-    expect(columns(chart).filter((c) => c.querySelector('.ring-2'))).toHaveLength(1);
   });
 
   it('draws a column of zero, plain and stacked', () => {
@@ -95,16 +87,11 @@ describe('the Column chart\'s specimens: every state is drawn', () => {
     expect(stacked.filter((c) => c.querySelectorAll('[data-part]').length === 3)).toHaveLength(1);
   });
 
-  it('draws more columns than a narrow card has room for, a year of days among them, and fixes no gap between them', () => {
+  it('draws ninety days and a year of daily columns', () => {
     render(<ColumnChartPreview />);
     for (const [caption, count] of [['Ninety days in a narrow card: a pixel between columns', 90], ['A year of days in a narrow card: 360 columns, nothing between them', 360]] as const) {
       const chart = drawn(caption);
       expect(columns(chart), caption).toHaveLength(count);
-      expect(chart.closest('.max-w-sm'), caption).not.toBeNull();
-      // A fixed gap is what 360 columns cannot give up: 718px of a card 336px wide.
-      for (const row of [columns(chart)[0].parentElement!, chart.querySelector(':scope > div[aria-hidden]:not([data-plot])')!]) {
-        expect(row.className.split(' ').filter((name) => name.startsWith('gap-')), caption).toEqual([]);
-      }
     }
   });
 
@@ -114,7 +101,6 @@ describe('the Column chart\'s specimens: every state is drawn', () => {
     expect(plain.querySelector('[data-column][data-running][data-active]')).toHaveTextContent(/so far/);
     const stacked = drawn('Stacked: the running day read');
     expect(stacked.querySelector('[data-column][data-running][data-active]')).not.toBeNull();
-    expect(stacked.querySelector('[data-readout]')).toHaveClass('opacity-100');
     expect(stacked.querySelector('[data-readout]')).toHaveTextContent(/so far/);
   });
 });

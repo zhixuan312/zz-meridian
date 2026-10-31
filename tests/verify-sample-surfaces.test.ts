@@ -17,10 +17,6 @@ const SAMPLE_KEYS = "title: 'API keys',";
 const SAMPLE_SETTINGS = 'Show the assistant';
 
 describe('the sample surfaces the walk-throughs drive', () => {
-  // A project made from the template has replaced some of them: the template's own repository, which keeps the Atlas, has all.
-  it.skipIf(!fs.existsSync(path.resolve(import.meta.dirname, '../app/system')))('are all present in the template', () => {
-    expect(sampleSurfaces(path.resolve(import.meta.dirname, '..'), 'app')).toEqual({ home: true, now: true, members: true, keys: true, settings: true });
-  });
   it('are absent from a product that replaced the sample pages, so their steps are not applicable', () => {
     const root = scratch();
     write(root, 'app/(dashboard)/orders/page.tsx');

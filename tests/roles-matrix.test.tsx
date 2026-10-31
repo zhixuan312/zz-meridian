@@ -12,8 +12,6 @@ describe('the roles and access matrix', () => {
     for (const [id, action] of Object.entries(ACTIONS)) expect(html, id).toContain(action.label);
     const publicTitles = Object.values(FEATURES).filter((f) => f.needs === 'public');
     for (const f of publicTitles) expect(html.includes(`>${f.title}<`)).toBe(false);
-    expect(html).toContain('add-on');
-    expect(html).toContain('at least one active Owner');
   });
 
   it('ticks a column only when its own grants satisfy the whole need', () => {

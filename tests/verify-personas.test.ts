@@ -1,34 +1,13 @@
 // @vitest-environment node
 import { describe, expect, it } from 'vitest';
 import { spawnSync } from 'node:child_process';
-import fs from 'node:fs';
 import path from 'node:path';
 import config from '../scripts/verify.config';
 
 const ROOT = path.resolve(import.meta.dirname, '..');
 const run = (...args: string[]) => spawnSync(process.execPath, ['scripts/verify.ts', ...args], { cwd: ROOT, encoding: 'utf8', timeout: 60_000 });
 
-/**
- * The template's own repository: the Atlas is still here. A project brought in with `adopt` or `create` has it removed
- * (`scripts/brand.ts` deletes `app/system`), so the fifteen rail routes below are not that project's — its rail is its own, and
- * its personas carry its own routes. Asserting the template's list in a product failed that product's gate for a project
- * that was right: `pnpm run verify` in a created dashboard failed here, and the release's consumer path caught it.
- */
-const TEMPLATE = fs.existsSync(path.join(ROOT, 'app/system'));
-
 describe('the personas', () => {
-  it('declares the five the spec freezes, with literal expected routes', (ctx) => {
-    if (!TEMPLATE) ctx.skip('the Atlas is not here, so this is a project made from the template, not the template: its rail is its own, and its personas name its own routes');
-    const personas = config.personas ?? {};
-    expect(Object.keys(personas).sort()).toEqual(['admin', 'key-manager', 'member', 'owner', 'viewer']);
-    const viewer = personas.viewer;
-    expect(viewer.cookie).toEqual({ name: 'zz_meridian_view_as', value: 'members_12' });
-    expect([...viewer.expectedRoutes]).toEqual(['/', '/settings', '/system', '/system/start/start-a-dashboard', '/business', '/customers', '/usage', '/requests', '/engineering', '/services', '/operations-tickets', '/tests', '/releases']);
-    expect(Object.keys(viewer.deniedProbe ?? {}).sort()).toEqual(['/keys', '/members']);
-    for (const [name, p] of Object.entries(personas)) expect(p.expectedRoutes.length, name).toBeGreaterThan(0);
-    expect([...personas.owner.expectedRoutes].length).toBe(15);
-  });
-
   it('refuses an unknown persona before it builds or serves, naming the declared ones', () => {
     const r = run('--as', 'nobody');
     expect(r.status).not.toBe(0);

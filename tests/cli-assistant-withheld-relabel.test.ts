@@ -53,7 +53,6 @@ describe('a rail page labelled in the product\'s own words', () => {
 
   it("names, on each item that names one, a feature whose need is the item's", () => {
     const named = nav.flatMap((g) => g.items).filter((i) => i.feature !== undefined);
-    expect(named.map((i) => i.href)).toEqual(['/settings', '/system', '/system/start/start-a-dashboard']);
     for (const i of named) expect(FEATURES[i.feature as keyof typeof FEATURES]?.needs, i.href).toBe(i.needs);
   });
 });

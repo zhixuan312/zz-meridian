@@ -19,7 +19,6 @@ vi.mock('@/data/read', async (orig) => {
   };
 });
 
-import { facts } from '@/app.config';
 import { formatCompact } from '@/lib/format';
 import { contextText } from '@/lib/shared-context';
 import { homeTool } from '@/logic/tools';
@@ -38,10 +37,6 @@ const keys = (v: unknown): string[] => (v && typeof v === 'object' ? Object.entr
 const concentrated = /Northwind Labs[^\n]*12\.4%/;
 
 describe('what Home is handed from the product', () => {
-  it('reads the share of revenue that counts as concentration from the configuration', () => {
-    expect(facts.concentrationAt).toBe(0.1);
-  });
-
   it('writes a count in trillions with its own step', () => {
     expect(formatCompact(2_234_100_000_000)).toBe('2.2T');
     expect(formatCompact(999_960_000_000)).toBe('1.0T');

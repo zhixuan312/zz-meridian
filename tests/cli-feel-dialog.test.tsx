@@ -25,7 +25,6 @@ describe('the Dialog\'s xl specimen', () => {
     expect(xl.querySelector('table')).not.toBeNull();
     fireEvent.click(screen.getByRole('button', { name: 'Open the xl dialog' }));
     const panel = screen.getByRole('dialog');
-    expect(panel.className).toMatch(/(^|\s)sm:max-w-240(\s|$)/);
     expect(panel.querySelector('table')).not.toBeNull();
   });
 });

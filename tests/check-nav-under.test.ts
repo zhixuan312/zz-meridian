@@ -1,6 +1,4 @@
 // @vitest-environment node
-import fs from 'node:fs';
-import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { navTrailProblems, navUnderProblems } from '../scripts/lib/nav-under.ts';
 
@@ -51,11 +49,6 @@ describe("the gate's rules for a sub page's under", () => {
     expect(navUnderProblems([{ items: [at('/usage'), ...subs(8)] }])).toEqual([`${P} /usage has 8 sub pages; at most 7, past that the item is a group of its own`]);
   });
 
-  it('run in the gate, over the navigation the project declares', () => {
-    const gate = fs.readFileSync(path.resolve(import.meta.dirname, '../scripts/check.ts'), 'utf8');
-    expect(gate).toMatch(/import \{[^}]*\bnavUnderProblems\b[^}]*\} from '\.\/lib\/nav-under\.ts'/);
-    expect(gate).toMatch(/navUnderProblems\(nav\)/);
-  });
 });
 
 describe("the gate's rule for a page's trail", () => {

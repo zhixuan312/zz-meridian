@@ -1,7 +1,5 @@
 // @vitest-environment node
 // Named cli-* so the payload leaves it out: it is about the sample's own page, which a product replaces.
-import fs from 'node:fs';
-import path from 'node:path';
 import { describe, expect, it, vi } from 'vitest';
 
 vi.mock('server-only', () => ({}));
@@ -11,9 +9,7 @@ import { contextText } from '@/lib/shared-context';
 import { CUSTOMERS, demoTotals } from '@/system/fixtures/company';
 import { REQUESTS } from '@/system/fixtures/sample';
 import { customerContext, titleOf } from '@/logic/customer-context';
-import { PAGES } from '@/system/content';
 
-const ROOT = path.resolve(import.meta.dirname, '..');
 const BUDGET = 2600;
 const at = { updatedAt: '2026-10-03T08:56:00Z', now: '2026-10-03T09:00:00Z' };
 /** Every part the page reads, at its fullest: the product's 30 days and five requests from the sampled log. */
@@ -68,16 +64,5 @@ describe("One customer's context", () => {
     // A customer that has left has no week: its title says when it left, and nothing follows.
     const left = CUSTOMERS.find((c) => c.status === 'left')!;
     expect(customerContext({ customer: left, ...at }).insights).toHaveLength(1);
-  });
-});
-
-describe("the customer page's addresses", () => {
-  it('names real customers in the Atlas and in the pages built ahead of time', () => {
-    const ids = new Set(CUSTOMERS.map((c) => c.id));
-    expect(ids.has(PAGES.find((p) => p.id === 'customer')!.route.split('/').pop()!)).toBe(true);
-    const page = fs.readFileSync(path.join(ROOT, 'app/(dashboard)/customers/[id]/page.tsx'), 'utf8');
-    const prebuilt = [...page.slice(page.indexOf('generateStaticParams')).matchAll(/'([a-z0-9-]+)'/g)].map((m) => m[1]).slice(0, 3);
-    expect(prebuilt.length).toBe(3);
-    for (const id of prebuilt) expect(ids.has(id), id).toBe(true);
   });
 });

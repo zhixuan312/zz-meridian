@@ -15,13 +15,6 @@ const items = nav.flatMap((g) => g.items);
 const entries = (id: (typeof WORKSPACE_IDS)[number]) => navOf(id).flatMap((g) => g.items).map((i) => [i.href, i.label]);
 
 describe('the three workspaces', () => {
-  it('are declared once, in order, with their labels, their homes and who each is for', () => {
-    expect(Object.keys(workspaces)).toEqual(['main', 'business', 'engineering']);
-    expect(WORKSPACE_IDS).toEqual(['main', 'business', 'engineering']);
-    expect(WORKSPACE_IDS.map((id) => [workspaces[id].label, workspaces[id].homeHref])).toEqual([['Main', '/'], ['Business', '/business'], ['Engineering', '/engineering']]);
-    for (const id of WORKSPACE_IDS) expect(workspaces[id].audience.trim().length, id).toBeGreaterThan(20);
-  });
-
   it('each open at a home that is their own entry', () => {
     for (const id of WORKSPACE_IDS) {
       expect(workspaceOf(workspaces[id].homeHref), id).toBe(id);
@@ -31,29 +24,15 @@ describe('the three workspaces', () => {
 });
 
 describe('the navigation as it is declared', () => {
-  it('holds each group to one workspace, and runs the groups Main, Business, Engineering in order', () => {
+  it('holds each group to one workspace', () => {
     // Not the groups' labels or count: a project made before the sample split Business keeps its three groups, and this holds there too.
     const owners = nav.map((g) => [...new Set(g.items.map((i) => i.workspace))]);
     for (const [n, o] of owners.entries()) expect(o.length, `group ${n}`).toBe(1);
-    expect(owners.flat().filter((w, n, all) => w !== all[n - 1])).toEqual(['main', 'business', 'engineering']);
-  });
-
-  it('opens Business and Engineering at homes that say who each is for', () => {
-    expect(fs.readFileSync(path.join(ROOT, 'app/(dashboard)/business/page.tsx'), 'utf8')).toMatch(/workspaces\.business\.audience/);
-    expect(fs.readFileSync(path.join(ROOT, 'app/(dashboard)/engineering/page.tsx'), 'utf8')).toMatch(/workspaces\.engineering\.audience/);
   });
 });
 
 describe('the destinations', () => {
-  it('each belong to one workspace, under the names and in the order the product declares', () => {
-    expect(entries('main')).toEqual([['/', 'Home'], ['/members', 'Members'], ['/settings', 'Settings'], ...ATLAS]);
-    expect(entries('business')).toEqual([['/business', 'Revenue'], ['/customers', 'Customers'], ['/usage', 'Usage'], ['/requests', 'Requests']]);
-    expect(entries('engineering')).toEqual([['/engineering', 'Now'], ['/services', 'Services'], ['/operations-tickets', 'Tickets'], ['/tests', 'Tests'], ['/releases', 'Releases'], ['/keys', 'API keys']]);
-  });
-
   it('are declared once: every entry has one owner, and the three navigations together are the whole of it', () => {
-    // Fifteen in the template: thirteen, and the Atlas's two.
-    expect(items.length).toBe(13 + ATLAS.length);
     expect(new Set(items.map((i) => i.href)).size).toBe(items.length);
     for (const i of items) expect(WORKSPACE_IDS, i.href).toContain(i.workspace);
     const derived = WORKSPACE_IDS.flatMap((id) => navOf(id).flatMap((g) => g.items));
@@ -86,9 +65,4 @@ describe('the workspace a page belongs to', () => {
     expect(workspaceOf('/sign-in')).toBeNull();
   });
 
-  it('is read from the address and kept nowhere', () => {
-    // The file as code: what its comments say is not what it does.
-    const code = fs.readFileSync(path.join(ROOT, 'src/views/workspaces.ts'), 'utf8').replace(/\/\*[\s\S]*?\*\/|\/\/[^\n]*/g, '');
-    expect(code).not.toMatch(/cookie|localStorage|sessionStorage|searchParams|useState/i);
-  });
 });

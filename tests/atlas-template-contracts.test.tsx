@@ -1,83 +1,16 @@
-import fs from 'node:fs';
-import path from 'node:path';
 import { fireEvent, render, screen, within } from '@testing-library/react';
 import { Tooltip } from 'radix-ui';
-import type { ComponentType } from 'react';
-import { describe, expect, it, vi } from 'vitest';
-
-// The template's own code, watched: every render of it passes through these counts, whoever asked for it.
-const seen = vi.hoisted(() => ({ records: 0, skeleton: 0 }));
-vi.mock('@/components/templates/records', async (original) => {
-  const actual = await original<typeof import('@/components/templates/records')>();
-  return {
-    ...actual,
-    Records: (props: Parameters<typeof actual.Records>[0]) => { seen.records += 1; return actual.Records(props); },
-    RecordsSkeleton: (props: Parameters<typeof actual.RecordsSkeleton>[0]) => { seen.skeleton += 1; return actual.RecordsSkeleton(props); },
-  };
-});
+import { describe, expect, it } from 'vitest';
 
 import RailPreview from '@/components/patterns/rail/preview';
 import RecordsPreview from '@/components/templates/records/preview';
 
-const TEMPLATES = path.resolve(import.meta.dirname, '../src/components/templates');
-/** Every page template, by folder, with the preview the Atlas draws for it. A new template is added here. */
-const PREVIEWS: Record<string, ComponentType> = { records: RecordsPreview };
-const STATES = ['Normal', 'Loading', 'Empty', 'Filtered-empty', 'Error', 'Partial', 'Read-only'];
-
-/** The `## States` table of a template's spec: each state with the one cell that says what became of it. */
-function dispositions(name: string): Map<string, string> {
-  const md = fs.readFileSync(path.join(TEMPLATES, name, 'README.md'), 'utf8');
-  const section = (md.split(/^## States$/m)[1] ?? '').split(/^## /m)[0];
-  const out = new Map<string, string>();
-  for (const line of section.split('\n')) {
-    const cells = line.trim().replace(/^\|/, '').replace(/\|$/, '').split('|').map((c) => c.trim());
-    if (cells.length === 2 && STATES.includes(cells[0])) out.set(cells[0], cells[1]);
-  }
-  return out;
-}
-const draw = (Preview: ComponentType) => render(<Tooltip.Provider><Preview /></Tooltip.Provider>);
+const draw = (Preview: typeof RecordsPreview) => render(<Tooltip.Provider><Preview /></Tooltip.Provider>);
 /** The specimen a preview labels `label`: its whole section. */
 const specimen = (label: string) => screen.getAllByRole('heading', { level: 3 }).find((h) => h.textContent === label)?.closest('section') ?? null;
 
-describe('a page template is finished: its spec and its preview say the same', () => {
-  it('has a preview here for every template folder', () => {
-    const folders = fs.readdirSync(TEMPLATES, { withFileTypes: true }).filter((e) => e.isDirectory()).map((e) => e.name);
-    expect(folders.sort()).toEqual(Object.keys(PREVIEWS).sort());
-  });
-
-  for (const [name, Preview] of Object.entries(PREVIEWS)) {
-    it(`${name}: is beta, and every state is covered by a specimen the preview draws or is inapplicable with a reason`, () => {
-      expect(fs.readFileSync(path.join(TEMPLATES, name, 'README.md'), 'utf8')).toMatch(/^Status: beta$/m);
-      const rows = dispositions(name);
-      const { container } = draw(Preview);
-      const labels = [...container.querySelectorAll('h3, figcaption')].map((e) => e.textContent);
-      for (const state of STATES) {
-        const cell = rows.get(state) ?? '';
-        expect(cell, state).toMatch(/^(Covered|Inapplicable): \S/);
-        if (!cell.startsWith('Covered')) continue;
-        const named = [...cell.matchAll(/["“]([^"”]+)["”]/g)].map((m) => m[1]);
-        expect(named.length, `${state} names its specimen`).toBeGreaterThan(0);
-        for (const label of named) expect(labels, `${state}: "${label}"`).toContain(label);
-      }
-    });
-
-    it(`${name}: the preview draws the template itself`, () => {
-      const { container } = draw(Preview);
-      expect(container.querySelectorAll(`[data-template="${name}"]`).length).toBeGreaterThan(0);
-    });
-  }
-});
 
 describe('the records template, state by state', () => {
-  it('draws every arrangement with its own code, the loading one included', () => {
-    seen.records = 0;
-    seen.skeleton = 0;
-    draw(RecordsPreview);
-    const arranged = ['With a summary', 'Without a summary', 'Empty', 'Filtered-empty', 'Error', 'Partial', 'Read-only'];
-    for (const label of arranged) expect(specimen(label)?.querySelector('[data-template="records"]') ?? null, label).not.toBeNull();
-    expect(seen.records).toBeGreaterThanOrEqual(arranged.length);
-    expect(seen.skeleton).toBeGreaterThan(0);
-  });
 
   it('shows no table while loading, a failure with a way to retry, a missing figure as missing, and no way to create for a reader who may not', () => {
     draw(RecordsPreview);

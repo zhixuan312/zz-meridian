@@ -1,6 +1,4 @@
 // @vitest-environment node
-import fs from 'node:fs';
-import path from 'node:path';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const jar = vi.hoisted(() => ({ value: undefined as string | undefined }));
@@ -9,47 +7,19 @@ vi.mock('next/headers', () => ({
   headers: async () => new Headers(),
 }));
 
-import { nav } from '@/app.config';
 import { chromeAccess, may } from '@/data/access';
-import { ACTIONS, FEATURES } from '@/data/features';
 import { viewTools } from '@/logic/tools';
 
-const ROOT = path.resolve(import.meta.dirname, '..');
 const DESTINATIONS = [
-  { feature: 'tickets', href: '/operations-tickets', label: 'Tickets', folder: 'app/(dashboard)/operations-tickets' },
-  { feature: 'tests', href: '/tests', label: 'Tests', folder: 'app/(dashboard)/tests' },
-  { feature: 'releases', href: '/releases', label: 'Releases', folder: 'app/(dashboard)/releases' },
+  { feature: 'tickets', href: '/operations-tickets' },
+  { feature: 'tests', href: '/tests' },
+  { feature: 'releases', href: '/releases' },
 ] as const;
 const PERSONAS = ['members_1', 'members_2', 'members_4', 'members_5', 'members_12'];
-const items = nav.flatMap((g) => g.items);
-const has = (file: string) => fs.existsSync(path.join(ROOT, file));
-const source = (file: string) => fs.readFileSync(path.join(ROOT, file), 'utf8');
 
 beforeEach(() => { jar.value = undefined; });
 
 describe('the three engineering destinations are registered', () => {
-  it('as features that ask to read their own collection', () => {
-    const features = FEATURES as Record<string, { title: string; needs: unknown }>;
-    for (const d of DESTINATIONS) expect(features[d.feature], d.feature).toEqual({ title: d.label, needs: `${d.feature}:read` });
-  });
-
-  it('with two actions, both on tickets: nothing can be done to a verification run or a release', () => {
-    const actions = ACTIONS as Record<string, { feature: string; needs: unknown }>;
-    expect(actions['create-ticket']).toMatchObject({ feature: 'tickets', needs: 'tickets:create' });
-    expect(actions['update-ticket']).toMatchObject({ feature: 'tickets', needs: 'tickets:update' });
-    expect(Object.values(actions).filter((a) => a.feature === 'tests' || a.feature === 'releases')).toEqual([]);
-    expect(Object.entries(actions).filter(([, a]) => a.feature === 'tickets').map(([id]) => id).sort()).toEqual(['create-ticket', 'update-ticket']);
-  });
-
-  it('in the navigation, each asking what its feature asks, by reference', () => {
-    const features = FEATURES as Record<string, { needs: unknown }>;
-    for (const d of DESTINATIONS) {
-      const item = items.find((i) => i.href === d.href);
-      expect(item?.label, d.href).toBe(d.label);
-      expect(item!.needs, d.href).toBe(features[d.feature].needs);
-    }
-  });
-
   it('for every persona: all five read all three, and only a Viewer may not write a ticket', async () => {
     for (const id of PERSONAS) {
       jar.value = id;
@@ -61,31 +31,12 @@ describe('the three engineering destinations are registered', () => {
   });
 });
 
-describe('each destination is a page', () => {
-  it('with its route and its loading state, behind its gate', () => {
-    for (const d of DESTINATIONS) {
-      for (const file of ['page.tsx', 'loading.tsx']) expect(has(`${d.folder}/${file}`), `${d.folder}/${file}`).toBe(true);
-      expect(source(`${d.folder}/page.tsx`), d.folder).toContain(`gate('${d.feature}')`);
-    }
-  });
-
-  it('and only tickets has server actions: the other two change nothing', () => {
-    expect(has('app/(dashboard)/operations-tickets/actions.ts')).toBe(true);
-    for (const folder of ['app/(dashboard)/tests', 'app/(dashboard)/releases']) {
-      expect(fs.readdirSync(path.join(ROOT, folder)).filter((f) => /^actions?\./.test(f)), folder).toEqual([]);
-      expect(source(`${folder}/page.tsx`), folder).not.toMatch(/['"]use server['"]/);
-    }
-  });
-});
-
 describe('each destination is a view an assistant can open', () => {
-  it('under its feature\'s name and need, at its own address, for anyone who may read it', async () => {
-    const features = FEATURES as Record<string, { needs: unknown }>;
+  it('under its feature name, at its own address, for anyone who may read it', async () => {
     jar.value = 'members_12';
     for (const d of DESTINATIONS) {
       const tool = viewTools.find((t) => t.name === d.feature);
       expect(tool, d.feature).toBeTruthy();
-      expect(tool!.needs, d.feature).toBe(features[d.feature].needs);
       const { context } = await tool!.read({});
       expect(context, d.feature).toMatchObject({ view: d.feature, address: d.href });
       expect(context.facts.length, d.feature).toBeGreaterThan(0);

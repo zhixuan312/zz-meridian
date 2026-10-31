@@ -16,7 +16,6 @@ vi.mock('@/data/roles', async (original) => {
 import { usageFigures } from '@/data/usage';
 import { collections } from '@/data/collections';
 import { FEATURES } from '@/data/features';
-import * as sample from '@/data/sample';
 
 type Row = Record<string, unknown>;
 const collection = (name: string) => collections.find((c) => c.name === name)!;
@@ -33,10 +32,6 @@ beforeEach(() => { jar.value = 'members_12'; policy.viewer = null; });
 afterEach(() => { for (const [name, query] of kept) collection(name).query = query as never; kept.clear(); });
 
 describe('when traffic comes and where it comes from', () => {
-  it('are two collections, read like every other figure', () => {
-    for (const name of ['hours', 'regions']) expect(collections.map((c) => c.name), name).toContain(name);
-  });
-
   it('are drawn from what those reads answer: every weekday and hour, the hours of the day, and each region', async () => {
     const [hours, regions] = [await all('hours'), await all('regions')];
     expect(hours.length).toBe(7 * 24);
@@ -64,11 +59,5 @@ describe('who may see them', () => {
     await expect(usageFigures()).rejects.toBeTruthy();
     policy.viewer = needs.filter((g) => g !== 'regions:read');
     await expect(usageFigures()).rejects.toBeTruthy();
-  });
-});
-
-describe('what a page may import', () => {
-  it('no longer includes the figures themselves: they are rows now', () => {
-    for (const name of ['demoHeatmap', 'requestsByHour', 'REGION_LATENCY']) expect(Object.keys(sample), name).not.toContain(name);
   });
 });

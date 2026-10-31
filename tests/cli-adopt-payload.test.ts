@@ -34,13 +34,4 @@ describe('the adopt payload', () => {
     const missing = [...new Set(PAYLOAD.flatMap(imported))].filter((p) => !delivered.has(bare(p)));
     expect(missing, 'a component imports a module an adopted project would not have').toEqual([]);
   });
-
-  it('ships the three helpers the cards call, and no other logic module', () => {
-    const delivered = adoptSetOf(PAYLOAD).filter((p) => p.startsWith('src/logic/'));
-    expect(delivered).toEqual([
-      'src/logic/after-start.ts',
-      'src/logic/derivations.ts',
-      'src/logic/summarise.ts',
-    ]);
-  });
 });

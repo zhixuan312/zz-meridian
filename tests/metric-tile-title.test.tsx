@@ -9,6 +9,5 @@ it("keeps a long label's whole in its title on the standard tile", () => {
   const label = 'Median hours until abandoned work stopped';
   const html = renderToStaticMarkup(<MetricTile label={label} value={12} />);
   const h2 = /<h2\b[^>]*>/.exec(html)?.[0] ?? '';
-  expect(h2).toContain('truncate');
   expect(h2).toContain(`title="${label}"`);
 });

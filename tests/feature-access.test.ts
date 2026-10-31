@@ -70,16 +70,10 @@ describe('the feature table', () => {
     }
   });
 
-  it('has every nav item reference its feature entry, not restate it', () => {
-    expect(items.length).toBeGreaterThan(0);
-    for (const item of items) expect(item.needs, item.href).toBeDefined();
-    const known = new Set(Object.values(FEATURES).map((f) => f.needs));
-    for (const item of items) expect(known.has(item.needs), `${item.href} restates its need`).toBe(true);
-  });
 });
 
 describe('the rail asks the table', () => {
-  it('gives a Viewer the thirteen routes and everyone else all fifteen', async (ctx) => {
+  it('gives a Viewer the permitted routes and everyone else the whole navigation', async (ctx) => {
     if (!TEMPLATE) ctx.skip('the Atlas is not here, so this is a project made from the template, not the template: its rail is its own, and these thirteen routes are the template’s');
     const all = items.map((i) => i.href).sort();
     jar.value = 'members_12';

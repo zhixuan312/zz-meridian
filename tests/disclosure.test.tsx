@@ -27,9 +27,8 @@ describe('Disclosure', () => {
     expect(details.open).toBe(false);
   });
 
-  it('starts open with defaultOpen, and takes its className', () => {
-    const details = render(<Disclosure summary="Evidence" defaultOpen className="mt-4">Six readings</Disclosure>).container.querySelector('details')!;
+  it('starts open with defaultOpen', () => {
+    const details = render(<Disclosure summary="Evidence" defaultOpen>Six readings</Disclosure>).container.querySelector('details')!;
     expect(details.open).toBe(true);
-    expect(details.className).toMatch(/\bmt-4\b/);
   });
 });

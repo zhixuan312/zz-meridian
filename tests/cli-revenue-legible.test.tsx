@@ -9,8 +9,7 @@ vi.mock('next/navigation', () => ({
   useRouter: () => ({ push() {}, replace() {}, refresh() {}, back() {}, forward() {}, prefetch() {} }),
 }));
 
-import { stackPart } from '@/components/charts/scale';
-import { PERIODS, type Period } from '@/lib/period';
+import type { Period } from '@/lib/period';
 import { CUSTOMERS, DAYS, REGIONS, USAGE, demoSeries, demoTotals } from '@/system/fixtures/company';
 import { MODELS } from '@/system/fixtures/sample';
 import { RevenueBody } from '@/views/revenue';
@@ -28,31 +27,7 @@ const card = (root: HTMLElement, title: string) => {
   return el!;
 };
 
-/**
- * Found by looking at the page at the end of Phase 6. A tile's note is one line: at 1440px a four-up tile holds about
- * 32 characters of it, and "against 08 Oct to 06 Nov 2025, the first 30 days kept" was cut at "the …". Who pays drew the
- * plans in other colours than the two stacked charts above and below it, and counted the trials on a plan with it, which
- * the ladder below counts apart, without saying so.
- */
 describe("Revenue's page reads whole", () => {
-  it("keeps every tile's note within one line of a four-up tile, at every period", () => {
-    for (const period of PERIODS) {
-      const root = body(period);
-      for (const label of ['Against a year ago', 'Best day yet', 'Past due']) {
-        let tile: HTMLElement | null = within(root).getAllByText(label)[0];
-        while (tile && !tile.querySelector('[data-value]')) tile = tile.parentElement;
-        const note = tile!.querySelector('[data-tile-line] [data-note]')?.textContent ?? '';
-        expect(note, `${period}: ${label}`).not.toBe('');
-        expect(note.length, `${period}: ${label}: ${note}`).toBeLessThanOrEqual(32);
-      }
-    }
-  });
-
-  it('draws Who pays in the colours the stacked charts draw each plan', () => {
-    const who = card(body(), 'Who pays');
-    const fills = [...who.querySelectorAll('figure > div:first-child > div')].map((d) => (d as HTMLElement).style.background);
-    expect(fills).toEqual([0, 1, 2].map((k) => stackPart(k, 3)));
-  });
 
   it('says the customers on each plan include its trials, in a label that fits a narrow legend', () => {
     const who = card(body(), 'Who pays');

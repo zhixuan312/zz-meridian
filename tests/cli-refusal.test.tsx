@@ -23,7 +23,6 @@ vi.mock('@/app.config', async (orig) => {
   return { ...real, get refusal() { return policy.refusal; } };
 });
 
-import * as config from '@/app.config';
 import { FEATURES } from '@/data/features';
 import { gate, gatedMetadata } from '@/data/access';
 import { MissingPage } from '@/views/missing-page';
@@ -41,11 +40,6 @@ const textOf = (markup: string) => new DOMParser().parseFromString(markup, 'text
 beforeEach(() => { jar.value = VIEWER; at.path = '/'; policy.refusal = 'explain'; });
 
 describe('what an address a person may not open answers', () => {
-  it('the sample declares explain', async () => {
-    const real = await vi.importActual<typeof import('@/app.config')>('@/app.config');
-    expect(real.refusal).toBe('explain');
-    expect(config.refusal).toBe('explain');
-  });
 
   it("under explain, today's page: it says the page exists and how to reach it", async () => {
     at.path = '/members';

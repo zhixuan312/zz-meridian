@@ -43,8 +43,7 @@ describe('the view tools the registry reaches', () => {
     ]);
   });
 
-  it('are none when there is no registry, and the template still finds every tool it lists', () => {
+  it('finds no tools when there is no registry', () => {
     expect(viewToolPages(undefined, project({ 'package.json': '{}' }))).toBeNull();
-    expect(viewToolPages()?.length).toBeGreaterThan(0);
   });
 });

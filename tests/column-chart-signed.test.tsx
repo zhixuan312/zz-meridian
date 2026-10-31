@@ -31,13 +31,10 @@ describe('a column chart of a signed series (#78)', () => {
     expect(pct(box(container, 'd1').style.height)).toBeCloseTo(13.333, 2);
   });
 
-  it('writes a fall\'s value under it and rounds its lower end', () => {
+  it('writes a fall’s signed value', () => {
     const { container } = render(<ColumnChart label="Net change a day" columns={net} />);
     const fall = box(container, 'd3');
     expect(fall.querySelector('[data-value]')).toHaveTextContent('-35');
-    expect(fall.querySelector('[data-value]')!.closest('.top-full')).not.toBeNull();
-    expect(fall.querySelector('.rounded-b-\\[4px\\]')).not.toBeNull();
-    expect(box(container, 'd0').querySelector('[data-value]')!.closest('.bottom-full')).not.toBeNull();
   });
 
   it('reads a fall as its value in the table, signed', () => {

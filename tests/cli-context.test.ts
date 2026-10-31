@@ -1,16 +1,11 @@
 // @vitest-environment node
 import { describe, expect, it } from 'vitest';
-import { BEGIN, BRIEF_TEMPLATE, END, managedBlock, upsertManagedBlock } from '../cli/src/context.ts';
+import { BEGIN, END, managedBlock, upsertManagedBlock } from '../cli/src/context.ts';
 
 const block = managedBlock('0.5.0', 'pnpm');
 const LEGACY = '# Built on ZZ Meridian\n\nThe interface is built on ZZ Meridian. Keep it that way:\n\n- **Build up, never sideways.**\n';
 
 describe('managedBlock', () => {
-  it('is the frozen block for the version', () => {
-    expect(block.startsWith(`${BEGIN}\n# Built on ZZ Meridian 0.5.0\n`)).toBe(true);
-    expect(block.endsWith(END)).toBe(true);
-    for (const s of ['`.agents/skills/zz-meridian/SKILL.md`', '`optional:docs/brief.md`', '`optional:.meridian/keep.json`', '`.agents/skills/zz-meridian/references/customize.md`', '`.agents/skills/zz-meridian/references/update.md`', '`src/app.config.ts`', '`scripts/verify.config.ts`', '`pnpm verify`', '`pnpm gate`', '`pnpm verify --full`']) expect(block).toContain(s);
-  });
   it('fits in 4096 bytes for every package manager', () => {
     for (const pm of ['pnpm', 'npm', 'yarn', 'bun'] as const) expect(Buffer.byteLength(managedBlock('10.20.30', pm))).toBeLessThanOrEqual(4096);
   });
@@ -57,13 +52,5 @@ describe('upsertManagedBlock', () => {
   it('refuses an edited legacy section instead of truncating it', () => {
     const edited = LEGACY.replace('Keep it that way', 'We changed this');
     expect(() => upsertManagedBlock(`Team\n\n${edited}`, block, LEGACY)).toThrow(/edited legacy section/);
-  });
-});
-
-describe('BRIEF_TEMPLATE', () => {
-  it('has the five sections in order with their guidance lines', () => {
-    const headings = BRIEF_TEMPLATE.split('\n').filter((l) => l.startsWith('## '));
-    expect(headings).toEqual(['## Product', '## Users', '## Data', '## Decisions', '## Glossary']);
-    expect(BRIEF_TEMPLATE.startsWith('# Product name\n\n## Product\nWhat this dashboard is for')).toBe(true);
   });
 });

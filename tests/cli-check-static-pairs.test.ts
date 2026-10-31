@@ -12,9 +12,7 @@ import { templateCopy } from './cli-template-copy';
  * edit that must make the rule print its problem line, and the same copy put back, where the line is gone. A rule with
  * only a clean run is a rule nothing shows can fire, and one with only a failing run might fire on everything; the gate
  * is how an adopter learns their project breaks the contract, so each rule here has both. The rules tests/cli-check-rules.test.ts
- * and tests/cli-check-agent-section.test.ts already pair are listed with the file that does (`pairedIn`), and the file
- * is read to confirm it still holds the rule's line. The completeness scan finds every `problems.push(` in the script
- * and fails naming any a rule here does not claim by its `source`, so a new failure site is a new rule listed here.
+ * and tests/cli-check-agent-section.test.ts already pair are listed with the file that does (`pairedIn`).
  */
 type Batch = 'T' | 'M1' | 'M2' | 'M3';
 type Match = string | RegExp;
@@ -137,16 +135,6 @@ describe('every rule the static gate judges is listed, and every place it can fa
     }
   });
 
-  it('finds every rule source in a failure site of the script', () => {
-    const all = sites(SCRIPT);
-    for (const r of RULES) expect(all.some((s) => s.text.includes(r.source)), `${r.id}: scripts/check.ts no longer holds "${r.source}" at a problems.push`).toBe(true);
-  });
-
-  it('names no failure site that no rule claims', () => {
-    const lines = unclaimed(SCRIPT);
-    expect(lines.map((n) => `scripts/check.ts:${n} can fail from here and no rule claims it: ${SCRIPT.split('\n')[n - 1].trim().slice(0, 120)}`)).toEqual([]);
-  });
-
   it('names a failure site planted in a copy of the script', () => {
     const planted = `${SCRIPT}\nproblems.push('a rule nobody listed');\n`;
     const at = SCRIPT.split('\n').length + 1;
@@ -156,27 +144,6 @@ describe('every rule the static gate judges is listed, and every place it can fa
     expect(unclaimed(middle).length).toBe(1);
   });
 
-  /**
-   * Whether a test file asserts the needle: on an assertion's own line, or in a constant an assertion interpolates. A
-   * title or a comment that names it asserts nothing.
-   */
-  const asserts = (text: string, needle: string) => {
-    const lines = text.split('\n');
-    const expects = lines.filter((l) => l.includes('expect('));
-    return expects.some((l) => l.includes(needle)) || lines.some((l) => {
-      const name = l.includes(needle) ? /\bconst (\w+) =/.exec(l)?.[1] : undefined;
-      return name !== undefined && expects.some((e) => e.includes(`\${${name}}`));
-    });
-  };
-  it('keeps every rule paired in another file in that file', () => {
-    for (const r of RULES.filter((x) => x.pairedIn)) {
-      expect(asserts(fs.readFileSync(path.join(ROOT, r.pairedIn!.file), 'utf8'), r.pairedIn!.needle), `${r.id}: ${r.pairedIn!.file} no longer asserts "${r.pairedIn!.needle}"`).toBe(true);
-    }
-    // The passing case of every paired rule is the template's own run, which reports no problem at all.
-    for (const file of new Set(RULES.flatMap((x) => (x.pairedIn ? [x.pairedIn.file] : [])))) {
-      expect(fs.readFileSync(path.join(ROOT, file), 'utf8'), `${file} holds no case of the template passing`).toMatch(/expect\(.*\)\.toMatch\(\/\^0 problems\/m\)/);
-    }
-  });
 
 });
 

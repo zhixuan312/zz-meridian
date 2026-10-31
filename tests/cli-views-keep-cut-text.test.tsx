@@ -62,11 +62,6 @@ describe('every list view keeps the whole of a text it cuts', () => {
       expect(cut.length, `${name} cuts nothing: the long names did not reach a cut element`).toBeGreaterThan(0);
       const lost = cut.filter((n) => !keeps(n)).map((n) => `<${n.localName}> "${whole(n.textContent).slice(0, 60)}"`);
       expect([...new Set(lost)].join("\n"), `${name} cuts text and keeps it nowhere`).toBe("");
-      // A product's text is never held on one line with no end: a name or an address as long as real ones run widens
-      // its column past the table's frame (Members' email, 2px at 1440 with a long domain). It is cut and kept, or it
-      // may break: at its spaces, or an address before its @.
-      const held = [...container.querySelectorAll('[class~="whitespace-nowrap"]')].filter((n) => /Featherstonehaugh|northwind-global-payments/.test(n.textContent ?? '') && !n.closest('[class~="truncate"]'));
-      expect(held.map((n) => `<${n.localName}> "${whole(n.textContent).slice(0, 60)}"`).join('\n'), `${name} holds a long name on one line`).toBe('');
     });
   }
 });

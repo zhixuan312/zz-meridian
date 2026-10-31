@@ -11,9 +11,7 @@ vi.mock('next/headers', () => ({
 
 import CustomersPage from '../app/(dashboard)/customers/page';
 import ServicesPage from '../app/(dashboard)/services/page';
-import * as customers from '@/views/customers';
 import { CustomersView } from '@/views/customers';
-import * as services from '@/views/services';
 import { CUSTOMERS } from '@/system/fixtures/company';
 import { Sparkline } from '@/components/charts/sparkline';
 import { served } from './served';
@@ -32,14 +30,12 @@ describe('a control that says it did something did it', () => {
     expect(html).toContain('Each service, 90 days');
     expect(html).toContain('Incidents');
     expect(buttons(html).filter((b) => /subscribe/i.test(b))).toEqual([]);
-    expect(Object.keys(services)).not.toContain('SubscribeButton');
   });
 
   it('Customers offers no invitation: nothing would write one, and nobody would receive it', async () => {
     const html = renderToStaticMarkup(await CustomersPage());
     expect(html).toMatch(/<h1[^>]*>[^<]*Customers/);
     expect(buttons(html).filter((b) => /invite/i.test(b))).toEqual([]);
-    expect(Object.keys(customers)).not.toContain('InviteCustomer');
   });
 
   it('Customers, with no customer, promises no invitation either', () => {

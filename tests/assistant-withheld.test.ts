@@ -30,12 +30,9 @@ const viewer: Audience = {
 const lineOf = (prompt: string, label: string) => prompt.split('\n').find((l) => l.startsWith(`- ${label}: `)) ?? '';
 
 describe('the prompt on what the person may not read', () => {
-  it('says the pages that hold it show it to those roles, and sends the person to no page that does not', () => {
+  it('names who can read a withheld collection', () => {
     const prompt = systemPrompt(page, NOW, '', [], viewer);
     expect(prompt).toContain('- Compute cost: Owner or Admin can read it.');
-    expect(prompt).toMatch(/pages named with it show it to those roles/);
-    expect(prompt).toMatch(/never send the person to a page that does not hold it/i);
-    expect(prompt).toMatch(/never say a page has no place for it/);
   });
 
   it('names a page the person may open as one that shows it to those roles, and what is worked out from it', () => {
@@ -53,18 +50,12 @@ describe('the prompt on what the person may not read', () => {
     const prompt = systemPrompt(page, NOW, '', [], viewer);
     expect(lineOf(prompt, 'Workspace')).toBe('- Workspace: Owner or Admin can read it. Owner can change it.');
     expect(lineOf(prompt, 'Members')).toBe('- Members: Owner, Admin or Member can read it. Owner or Admin can create or remove it; Owner can change it.');
-    expect(prompt).toMatch(/say it is not a change they can make, and who can make it where that is named/);
   });
 
   it('names no page where none holds it', () => {
     expect(lineOf(systemPrompt(page, NOW, '', [], viewer), 'Audit')).toBe('- Audit: Owner can read it.');
   });
 
-  it('never offers a page the person may not open as where they make a change', () => {
-    const prompt = systemPrompt(page, NOW, '', [], viewer);
-    expect(prompt).toMatch(/give the address of the page that makes it when it is one this person may open/);
-    expect(prompt).toMatch(/A page they may not open is never where they can make a change/);
-  });
 
   it('says nothing of it when nothing is withheld, as under refusal "absent"', () => {
     const prompt = systemPrompt(page, NOW, '', [], { addresses: viewer.addresses });

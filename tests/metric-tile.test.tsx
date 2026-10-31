@@ -13,20 +13,11 @@ import { MetricTile } from '@/components/patterns/metric-tile';
 const days = ['2026-09-27', '2026-09-28', '2026-09-29', '2026-09-30', '2026-10-01', '2026-10-02', '2026-10-03'];
 const points = [3, 5, 4, 6, 8, 7, 9];
 const usd = (n: number) => `$${(n / 1000).toFixed(1)}K`;
-const dot = (c: HTMLElement) => c.querySelector('[data-finding] [aria-hidden]')!.className;
 
-describe('a metric tile: a finding takes the tone it is given', () => {
-  it('stands beside a neutral dot when it is a fact', () => {
+describe('a metric tile: its finding', () => {
+  it('shows the finding it is given', () => {
     const { container } = render(<MetricTile label="Days inside the band" value={357} finding={{ text: '357 of 360 days', tone: 'neutral' }} />);
     expect(container.querySelector('[data-finding]')).toHaveTextContent('357 of 360 days');
-    expect(dot(container)).toContain('bg-ink-3');
-    expect(dot(container)).not.toContain('bg-warning');
-  });
-
-  it('stands beside the warning dot when it needs a look', () => {
-    const { container } = render(<MetricTile label="Error rate" value={0.009} format="percent" finding={{ text: '2.7× usual on 21 and 22 Sept', tone: 'warning' }} />);
-    expect(dot(container)).toContain('bg-warning');
-    expect(dot(container)).not.toContain('bg-ink-3');
   });
 
   it('is a button that points the page at its day when it names one, in either tone', () => {
@@ -91,10 +82,4 @@ describe('a metric tile: compact, for a wall of many', () => {
     expect(container.querySelector('[data-line]')).toHaveTextContent('$41.2K');
   });
 
-  it('is not the default', () => {
-    const { container } = render(<MetricTile label="Requests" value={42} points={points} />);
-    expect(container.querySelector('[data-size="compact"]')).toBeNull();
-    expect(container.querySelector('[data-value]')).toHaveTextContent('42');
-    expect(container.querySelector('[data-line]')).toBeNull();
-  });
 });

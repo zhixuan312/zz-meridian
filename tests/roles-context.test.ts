@@ -16,7 +16,6 @@ it('labels a member by their role and add-ons', () => {
 it('describes every role from the table, not from a sentence', () => {
   const definition = fact('Roles').definition ?? '';
   for (const role of [...MAIN_ROLES, ...ADD_ONS]) expect(definition).toContain(role);
-  expect(definition).not.toContain('Owner and Admin manage members and keys');
   for (const role of MAIN_ROLES) {
     const line = definition.split('; ').find((l) => l.startsWith(`${role}: `));
     expect(line, `no line for ${role}`).toBeTruthy();

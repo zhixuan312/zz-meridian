@@ -20,7 +20,7 @@ describe("a request's tokens and cost say why there are none", () => {
     expect(fact(failed, 'Cost')).toBe('None, it failed');
   });
 
-  test('a request that was refused (4xx) is', () => {
+  test('a request that was refused (4xx) is called refused', () => {
     const refused = REQUESTS.find((r) => r.status >= 400 && r.status < 500 && r.model)!;
     show(refused);
     expect(screen.getAllByText('None, refused')).toHaveLength(2);

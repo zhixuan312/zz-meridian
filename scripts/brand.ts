@@ -191,7 +191,6 @@ if (has('--no-atlas') || has('--product')) {
   const atlasOnly = ['content.ts', 'hero.tsx', 'markdown.tsx', 'page-stage.tsx', 'atlas-shell.tsx', 'card-stage.tsx', 'preview-loaders.ts', 'strata.tsx', 'token-view.tsx', 'tokens-data.ts'];
   for (const f of atlasOnly) fs.rmSync(file(`src/system/${f}`), { force: true });
   // The shipped tests of those modules go with them: a test of a module the project no longer has would fail there.
-  // tests/cli-atlas-prune.test.ts holds this list and the modules above together.
   for (const t of ['tests/atlas-layers.test.ts', 'tests/atlas-shell-early-press.test.tsx', 'tests/card-stage-hydration.test.tsx']) fs.rmSync(file(t), { force: true });
   // Nav entries for /system and /system/... exactly (never /systemic), then any group they leave empty.
   let cfg = read('src/app.config.ts').replace(/\n\s*\{ href: '\/system(?:\/[^']*)?'[^}]*\},/g, '');
@@ -219,8 +218,8 @@ if (has('--product')) {
   const walkDirs = (dir: string): string[] => fs.existsSync(file(dir)) ? fs.readdirSync(file(dir), { withFileTypes: true }).flatMap((e) => e.isDirectory() ? walkDirs(path.join(dir, e.name)) : [path.join(dir, e.name)]) : [];
   for (const f of walkDirs('src/components')) if (/\/(README\.md|preview\.tsx)$/.test(f)) fs.rmSync(file(f));
   for (const f of walkDirs('app')) if (/\/README\.md$/.test(f)) fs.rmSync(file(f));
-  // A test of a module removed here goes with it (tests/cli-product-prune.test.ts holds the two lists together).
-  for (const f of ['src/system/specimen.tsx', 'tests/specimen-still.test.tsx', 'tests/atlas-product-slice.test.tsx', 'tests/atlas-template-contracts.test.tsx', 'tests/dialog-xl.test.tsx', 'tests/popover-preview.test.tsx', 'tests/banner-preview.test.tsx', 'tests/preview-live-controls.test.tsx', 'src/system/registry.ts', 'CONTRIBUTING.md', 'CHANGELOG.md']) fs.rmSync(file(f), { force: true });
+  // Tests of removed specimens go with them; production components, tokens, styles and gates stay.
+  for (const f of ['src/system/specimen.tsx', 'tests/specimen-still.test.tsx', 'tests/atlas-product-slice.test.tsx', 'tests/atlas-template-contracts.test.tsx', 'tests/popover-preview.test.tsx', 'tests/banner-preview.test.tsx', 'tests/preview-live-controls.test.tsx', 'src/system/registry.ts', 'CONTRIBUTING.md', 'CHANGELOG.md']) fs.rmSync(file(f), { force: true });
   for (const d of ['docs', 'decisions', 'skills']) fs.rmSync(file(d), { recursive: true, force: true });
   const p = json('package.json');
   delete p.scripts?.registry;

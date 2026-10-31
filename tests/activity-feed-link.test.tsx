@@ -9,11 +9,10 @@ const events: ActivityEvent[] = [
 ];
 
 describe('an activity feed event about a record (#63)', () => {
-  it('links its object to the record, with the arrow that says it stays in the product', () => {
+  it('links its object to the record', () => {
     render(<ActivityFeed events={events} now={now} />);
     const link = screen.getByRole('link', { name: 'Login loops on Safari' });
     expect(link).toHaveAttribute('href', '/bugs/b-12');
-    expect(link.querySelector('svg')).not.toBeNull();
   });
   it('keeps an object without a record as text', () => {
     render(<ActivityFeed events={events} now={now} />);

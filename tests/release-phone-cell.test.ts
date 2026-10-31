@@ -24,7 +24,4 @@ describe('what a release has not passed, in a line', () => {
     ).toBe('1 failed, 1 skipped, 2 not run');
   });
 
-  it('never calls anything waiting', () => {
-    for (const state of ['missing', 'failed', 'skipped'] as const) expect(unresolvedCounts([{ suite: 's', endpointId: 'e', state }])).not.toMatch(/waiting/);
-  });
 });

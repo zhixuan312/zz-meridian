@@ -39,21 +39,6 @@ describe('a compact metric tile: what is missing, and what is long', () => {
     expect(tile).toHaveTextContent(/Northwind Labs.*12\.0%.*vs last week.*\$41\.2K · Scale/);
   });
 
-  it('says what the change is against by default too, to a screen reader only', () => {
-    const { container } = render(<MetricTile size="compact" label="Northwind Labs" value={41200} format={usd} delta={0.12} />);
-    const heard = [...compact(container).querySelectorAll('.sr-only')].map((hidden) => hidden.textContent!.trim());
-    expect(heard).toContain('vs previous period');
-  });
-
-  it('keeps no room for the words: the line has the tile\'s whole width under the name and the change', () => {
-    const { container } = render(<MetricTile size="compact" label="Northwind Labs" value={41200} format={usd} delta={0.12} compare="vs last week" note="Scale" />);
-    const tile = compact(container);
-    // Side by side, the name and the change share the first row and the line spans both columns of the second.
-    expect(tile.querySelector('[data-line]')!.className).toContain('col-span-2');
-    expect(tile.querySelector('[class*="max-w-"]')).toBeNull();
-    expect(tile.querySelector('[class*="flex-wrap"]')).toBeNull();
-  });
-
   it('draws a dash where there is no earlier period, and says so to a screen reader', () => {
     const { container } = render(<MetricTile size="compact" label="Northwind Labs" value={41200} format={usd} delta={null} compare="vs last week" />);
     expect(compact(container)).toHaveTextContent('—');
@@ -72,29 +57,6 @@ describe('a compact metric tile: what is missing, and what is long', () => {
     const { container } = render(<MetricTile size="compact" label="Mosaic Learning of North America" value={41200} format={usd} note="Scale, billed yearly" />);
     expect(compact(container).querySelector('h2')).toHaveAttribute('title', 'Mosaic Learning of North America');
     expect(compact(container).querySelector('[data-line]')).toHaveAttribute('title', '$41.2K · Scale, billed yearly');
-  });
-});
-
-// A container query measures the container's content box. The tile's root has the Card's hairline, and it once had the
-// side padding too, so "14rem of the tile" was really 14rem plus 34px and a desk's wall drew the phone's layout. A
-// browser proves the widths; this holds the structure they depend on.
-describe('a compact metric tile: what its layout measures', () => {
-  const tile = () => compact(render(<MetricTile size="compact" label="Northwind Labs" value={41200} format={usd} delta={0.12} note="Scale" points={points} />).container);
-  const has = (el: Element, token: RegExp) => el.className.split(/\s+/).some((c) => token.test(c));
-
-  it('is measured by an element with no padding of its own, straight inside the root', () => {
-    const root = tile();
-    expect(has(root, /^@container$/)).toBe(false);
-    expect(has(root, /^p[xytblr]?-(?!0$)/)).toBe(false);
-    const measured = root.querySelector('[class~="@container"]')!;
-    expect(measured.parentElement).toBe(root);
-    expect(has(measured, /^p[xytblr]?-/)).toBe(false);
-    expect(measured.querySelector('[data-line]')).not.toBeNull();
-  });
-
-  it('steps at 14rem of the tile, less only the hairline on each side that the measure leaves out', () => {
-    const steps = new Set([...tile().querySelectorAll('*')].flatMap((el) => [...String(el.getAttribute('class') ?? '').matchAll(/@min-\[([^\]]+)\]:/g)].map((m) => m[1])));
-    expect([...steps]).toEqual(['calc(14rem-2px)']);
   });
 });
 

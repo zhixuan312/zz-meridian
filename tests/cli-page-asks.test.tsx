@@ -1,6 +1,4 @@
-// Named cli-* so the payload leaves it out: it reads the sample's own pages and their specifications, which a product replaces.
-import fs from 'node:fs';
-import path from 'node:path';
+// Named cli-* so the payload leaves it out: it renders the sample's own pages, which a product replaces.
 import { render, waitFor } from '@testing-library/react';
 import type { ReactElement } from 'react';
 import { Tooltip } from 'radix-ui';
@@ -30,13 +28,7 @@ import { TicketsView } from '@/views/tickets';
 import { customerTool, homeTool, nowTool, revenueTool, servicesTool, usageTool, viewTools } from '@/logic/tools';
 import { UsageBody } from '@/views/usage';
 
-/**
- * Each page with a view tool names its protagonist, the card worth asking about, in its specification
- * (`Protagonist: <name>.` under `### What the agent does here`), marks that card `data-protagonist="<name>"`, and the card
- * carries an Ask wherever an agent is listening (FR-42, FR-43, AC-14.5). The fourteen are rendered from the sample as a
- * person with the assistant on sees them: the console's surface hands every Ask to the panel.
- */
-const ROOT = path.resolve(import.meta.dirname, '..');
+/** Each page's protagonist carries an Ask wherever an agent is listening. */
 const none = async () => { throw new Error('not in this test'); };
 const BODIES: Record<string, () => Promise<ReactElement>> = {
   home: async () => <HomeBody {...(await homeTool.read({ period: '30d' })).data} />,
@@ -79,19 +71,6 @@ const BODIES: Record<string, () => Promise<ReactElement>> = {
   },
 };
 
-/** The specification of the page a view renders: `/customers/[id]` is `app/(dashboard)/customers/[id]/README.md`, `/` the home group's. */
-function specOf(page: string): string {
-  const groups = fs.readdirSync(path.join(ROOT, 'app')).filter((d) => /^\(.+\)$/.test(d));
-  for (const g of groups) {
-    const base = path.join(ROOT, 'app', g);
-    const direct = path.join(base, page, 'README.md');
-    if (page !== '/' && fs.existsSync(direct)) return direct;
-    if (page === '/') for (const sub of fs.readdirSync(base).filter((d) => /^\(.+\)$/.test(d))) if (fs.existsSync(path.join(base, sub, 'page.tsx'))) return path.join(base, sub, 'README.md');
-  }
-  throw new Error(`no specification for ${page}`);
-}
-const protagonistOf = (md: string) => /^### What the agent does here\n[\s\S]*?^Protagonist: (.+)\.$/m.exec(md)?.[1];
-
 afterEach(() => document.body.replaceChildren());
 
 describe("each page's protagonist carries an Ask", () => {
@@ -100,18 +79,9 @@ describe("each page's protagonist carries an Ask", () => {
   });
 
   for (const view of viewTools) {
-    it(`${view.name}: the card its specification names is marked and carries an Ask`, async () => {
-      const name = protagonistOf(fs.readFileSync(specOf(view.page), 'utf8'));
-      expect(name, `the Protagonist line of ${view.page}'s specification`).toBeTruthy();
+    it(`${view.name}: the marked card carries an Ask`, async () => {
       const { container } = render(<Tooltip.Provider><ConsoleSurface ask={() => {}}>{await BODIES[view.name]()}</ConsoleSurface></Tooltip.Provider>);
       const marked = [...container.querySelectorAll<HTMLElement>('[data-protagonist]')];
-      expect(marked.map((m) => m.getAttribute('data-protagonist')), 'one protagonist, named as the specification names it').toEqual([name]);
-      // A row that places its cards (`2/3` gives its first card two columns, `1/3` its last) places what it holds
-      // directly: a child whose display is `contents` draws no box, so the span lands on nothing and the card beside it
-      // takes the room the row meant for it. A page that marks a card in such a row marks a real grid item.
-      for (const row of container.querySelectorAll<HTMLElement>('[data-split="2/3"], [data-split="1/3"]')) {
-        for (const child of row.children) expect(child.classList.contains('contents'), `a split row's child: ${child.outerHTML.slice(0, 80)}`).toBe(false);
-      }
       await waitFor(() => expect(marked[0].querySelector('button[aria-label^="Ask: "]'), 'an Ask on the protagonist').toBeTruthy());
     });
   }

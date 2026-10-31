@@ -102,12 +102,9 @@ describe('the member boundary', () => {
     expect((await lines()).length).toBe(beforeLines);
   });
 
-  it('cannot leave a second caller free to remove the last active Owner', async () => {
+  it('lets an active Owner demote another Owner while the caller remains active', async () => {
     as('members_1');
-    // Invite a second active Owner, then have it act on the first: the target is another Owner and the caller stays
-    // active, so the change is allowed — the rule that guards the last active Owner is evaluated over the membership
-    // after the change, and no single assignment from an Owner can empty it. What must hold is that the workspace still
-    // has an active Owner afterwards, whatever the outcome.
+    // The second Owner may demote the first because the caller remains an active Owner afterwards.
     const first = await rowOf('members_1');
     const made = await members.create!({ name: 'Second Owner', email: 'second.owner@example.com', team: 'Support', status: 'Active', joined: '2026-10-01', lastActive: null, role: 'Owner', addOns: [] });
     try {

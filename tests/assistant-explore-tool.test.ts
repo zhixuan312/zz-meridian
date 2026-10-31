@@ -6,12 +6,11 @@ import { MockLanguageModelV4 } from 'ai/test';
 import { arrayCollection } from '@/lib/collection';
 import type { PreparedQuery } from '@/lib/explore';
 import { respond } from '@/lib/assistant/respond';
-import { assistantTools, type HandedExplore } from '@/lib/assistant/tools';
+import type { HandedExplore } from '@/lib/assistant/tools';
 
 /**
- * What the page's prepared query tells the model about itself: a call that does not fit is answered in the person's own
- * terms, never naming a source or measure withheld from them, while a withheld name still reaches the runner and is
- * answered "You do not have access to that."; and on a detail page the tool says every call is held to the page's record.
+ * A call that does not fit is answered in the person's own terms, never naming a source or measure withheld from them,
+ * while a withheld name still reaches the runner and is answered "You do not have access to that."
  */
 type Day = { id: string; date: string; revenue: number; compute: number };
 const rows: Day[] = [{ id: 'd1', date: '2026-10-01', revenue: 100, compute: 40 }, { id: 'd2', date: '2026-10-02', revenue: 120, compute: 50 }];
@@ -104,18 +103,3 @@ describe('a call that does not fit', () => {
   });
 });
 
-describe('on a detail page', () => {
-  const writer = { write() {}, merge() {}, onError: undefined } as never;
-  test('the prepared query says every call is held to the record the page shows', () => {
-    const detail = handed('/customers/[id]', z.object({ id: z.string() }), async () => ({ days: [] }));
-    const { tools } = assistantTools([], writer, guard, [], detail);
-    const description = (tools.explore_home as { description?: string }).description ?? '';
-    expect(description).toMatch(/every call is held to the record this page shows/i);
-    expect(description).toMatch(/no condition to add for it/i);
-  });
-
-  test('a rail page says nothing of a record', () => {
-    const { tools } = assistantTools([], writer, guard, [], handed());
-    expect((tools.explore_home as { description?: string }).description).not.toMatch(/record this page shows/i);
-  });
-});

@@ -2,27 +2,13 @@
 // verify's suites are named once, by tier; the outcome sentence says what ran and which command runs the rest; and the
 // options are refused before the gate, so a refusal costs nothing.
 import { spawnSync } from 'node:child_process';
-import fs from 'node:fs';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { COMPLETE_SUITES, finalOutcome, SUITE_NAMES, TIMED_SUITES } from '../scripts/lib/coverage.ts';
+import { COMPLETE_SUITES, finalOutcome, TIMED_SUITES } from '../scripts/lib/coverage.ts';
 
 const ROOT = path.resolve(import.meta.dirname, '..');
 const verify = (...args: string[]) => spawnSync(process.execPath, ['scripts/verify.ts', ...args], { cwd: ROOT, encoding: 'utf8', timeout: 60_000 });
 
-describe('the suites, by tier', () => {
-  it('names the complete tier, then the timed tier, then perf', () => {
-    expect([...COMPLETE_SUITES]).toEqual(['audit', 'presses', 'keyboard', 'assistant', 'browserChecks']);
-    expect([...TIMED_SUITES]).toEqual(['timing', 'live', 'timedChecks', 'vitals']);
-    expect([...SUITE_NAMES]).toEqual([...COMPLETE_SUITES, ...TIMED_SUITES, 'perf']);
-  });
-
-  it('is written once: verify builds its list from the export', () => {
-    const source = fs.readFileSync(path.join(ROOT, 'scripts/verify.ts'), 'utf8');
-    expect(source).toMatch(/\bSUITE_NAMES\b/);
-    expect(source).not.toMatch(/\[\s*'audit',\s*'presses'/);
-  });
-});
 
 describe('the outcome sentence', () => {
   const timed = [...TIMED_SUITES];

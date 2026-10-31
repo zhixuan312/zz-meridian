@@ -79,20 +79,14 @@ describe('a column chart: a period still running', () => {
 });
 
 describe('a column chart: its height', () => {
-  it('gives the plot the pixels it is told, 200 by default', () => {
-    const a = render(<ColumnChart label="Errors per day" columns={week} />);
-    expect((a.container.querySelector('[data-plot]') as HTMLElement).style.height).toBe('200px');
-    a.unmount();
+  it('gives the plot the pixels it is told', () => {
     const b = render(<ColumnChart label="Errors per day" columns={week} height={160} />);
     expect((b.container.querySelector('[data-plot]') as HTMLElement).style.height).toBe('160px');
   });
 
-  it('fixes no height on fill: the figure grows with its card, never under 220px, as the Trend chart does', () => {
+  it('fixes no height on fill', () => {
     const { container } = render(<ColumnChart label="Errors per day" columns={week} height="fill" />);
     expect((container.querySelector('[data-plot]') as HTMLElement).style.height).toBe('');
-    const figure = container.querySelector('figure')!;
-    expect(figure.className).toContain('flex-1');
-    expect(figure.className).toContain('min-h-55');
   });
 });
 

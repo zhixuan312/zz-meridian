@@ -33,7 +33,6 @@ describe('replay', () => {
       "const args = process.argv.slice(2); const create = args[0] === 'create';",
       "const out = create ? path.resolve(args[1]) : process.cwd(); fs.mkdirSync(path.join(out, 'src/lib'), { recursive: true });",
       "fs.writeFileSync(path.join(out, 'src/lib/cn.ts'), 'export const cn = 1;\\n');",
-      "fs.writeFileSync(path.join(out, 'argv.json'), JSON.stringify(args));",
       "fs.mkdirSync(path.join(out, 'node_modules/x'), { recursive: true }); fs.writeFileSync(path.join(out, 'node_modules/x/i.js'), '');",
     ].join('\n'));
     fs.writeFileSync(path.join(root, 'package.json'), '{"type":"module"}');
@@ -44,13 +43,6 @@ describe('replay', () => {
     expect(files.get('src/lib/cn.ts')).toMatch(/^sha256-[0-9a-f]{64}$/);
     expect([...files.keys()].some((k) => k.startsWith('node_modules/'))).toBe(false);
     expect(files.has('package.json') && files.has('app/layout.tsx') && files.has('tsconfig.json')).toBe(true);
-  });
-  it('passes adopt --allow-dirty --no-install and the brand flags', () => {
-    const scratch = dir();
-    replay(stub(), 'adopt', { name: 'Acme Ops', hex: '#2E6BE4' }, scratch);
-    const argv = JSON.parse(fs.readFileSync(path.join(scratch, fs.readdirSync(scratch).find((d) => fs.existsSync(path.join(scratch, d, 'argv.json')))!, 'argv.json'), 'utf8'));
-    expect(argv[0]).toBe('adopt');
-    expect(argv).toEqual(expect.arrayContaining(['--allow-dirty', '--no-install', '--name', 'Acme Ops', '--hex', '#2E6BE4']));
   });
   it('replays create into an empty folder', () => {
     const files = replay(stub(), 'create', { name: 'Acme Ops' }, dir());

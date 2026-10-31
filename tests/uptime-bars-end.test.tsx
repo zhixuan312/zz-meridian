@@ -8,7 +8,7 @@ const caption = (c: HTMLElement) => c.querySelector('figcaption')?.textContent ?
 const summary = (c: HTMLElement) => [...c.querySelectorAll('p')].map((p) => p.textContent ?? '').join(' ');
 
 describe("the end of an uptime strip's caption", () => {
-  it('reads Today when the strip ends today, and dates its days from that end', () => {
+  it('uses Today for the default caption and dates its days from the supplied end', () => {
     const { container } = render(<UptimeBars days={days} uptime={0.997} end={new Date('2026-10-03T12:00:00Z')} label="Days" />);
     expect(caption(container)).toMatch(/Today$/);
     // The caption alone said nothing about the date: `end` is what dates the days, and the summary runs to it. Without

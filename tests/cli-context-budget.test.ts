@@ -74,7 +74,6 @@ describe(`every view's context fits ${BUDGET} characters and names its address`,
 
   it('pointed at a day: each view that takes a day, at every day of every period, for an Owner and a Viewer', async () => {
     const pointed = viewTools.filter((t) => 'day' in (t.input.shape as Record<string, unknown>)).map((t) => t.name);
-    expect(pointed.sort()).toEqual(['home', 'usage']);
     for (const id of [PERSONAS.owner, PERSONAS.viewer]) {
       jar.value = id;
       for (const name of pointed) {
@@ -94,7 +93,7 @@ describe(`every view's context fits ${BUDGET} characters and names its address`,
     }
   }, 240_000);
 
-  it("Settings', whose values the page reports: with every section's line at its longest", () => {
+  it("Settings, whose values the page reports: with every section's line at its longest", () => {
     const long = 'x'.repeat(400);
     const context = settingsContext({ Workspace: long, Appearance: long, Assistant: long, 'Agents and MCP': long });
     expect(contextText(context).length).toBeLessThanOrEqual(BUDGET);

@@ -30,7 +30,6 @@ const bar = (c: HTMLElement, key: string) => row(c, key).querySelector('[data-ba
 const figure = (c: HTMLElement, key: string) => row(c, key).querySelector('[data-figure]')?.textContent;
 const width = (el: Element | null) => (el ? parseFloat((el as HTMLElement).style.width) : 0);
 const levels = (c: HTMLElement) => [...c.querySelectorAll('[data-level]')].map((e) => e.textContent);
-const SHORTHAND = /(^|;)\s*background\s*:/;
 
 describe('rows', () => {
   it('sort the largest rise first and the largest fall last, equal values in the order given and no data after every value', () => {
@@ -58,11 +57,8 @@ describe('rows', () => {
     expect(width(bar(c, 'b'))).toBeCloseTo(20, 6);
   });
 
-  it('draw the neutral population with one accent row, never coloured by sign', () => {
+  it('names the highlighted row’s finding', () => {
     const c = draw({ highlight: 'd', highlightLabel: 'The largest fall' });
-    expect(bar(c, 'd')!.className).toMatch(/\bbg-accent\b/);
-    for (const k of ['a', 'b', 'c', 'g']) expect(bar(c, k)!.className, k).toMatch(/\bbg-chart-neutral\b/);
-    expect(c.innerHTML).not.toMatch(/\b(?:bg|text)-(?:success|critical|warning)\b/);
     expect(row(c, 'd').getAttribute('title')).toContain('The largest fall');
   });
 
@@ -104,7 +100,6 @@ describe('estimates', () => {
     const c = draw({}, items.map((i) => ({ ...i, estimate: i.key === 'b' })));
     expect(bar(c, 'b')!.hasAttribute('data-estimate')).toBe(true);
     expect(bar(c, 'a')!.hasAttribute('data-estimate')).toBe(false);
-    expect(bar(c, 'b')!.getAttribute('style') ?? '').not.toMatch(SHORTHAND);
     expect(row(c, 'b').getAttribute('title')).toMatch(/\bestimate\b/);
     expect(c.querySelector('[data-estimate-key]')?.textContent).toBe('Hatched: estimate');
     expect(c.textContent?.match(/Hatched: estimate/g)).toHaveLength(1);

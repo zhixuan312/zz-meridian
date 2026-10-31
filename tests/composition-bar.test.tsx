@@ -54,14 +54,6 @@ describe('a composition bar', () => {
     expect(fills(container)).toEqual([stackPart(0, 3), stackPart(1, 3), SERIES_VAR('neutral')]);
   });
 
-  it("counts its legend's columns from its own width, not the window's", () => {
-    const { container } = render(<CompositionBar label="Plan mix" parts={PLANS} />);
-    const figure = container.querySelector('figure')!;
-    expect(figure.className).toContain('@container');
-    const legend = figure.querySelector('figcaption')!;
-    expect(legend.className).toMatch(/@min-\[\d+rem\]:grid-cols-4/);
-    expect(legend.className).not.toMatch(/(^|\s)sm:grid-cols-4/);
-  });
 });
 
 describe('a stacked composition bar', () => {

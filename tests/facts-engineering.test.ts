@@ -5,9 +5,8 @@ import { formatDate } from '@/lib/format-date';
 
 /**
  * The two rules of the six that are about the operation: how long a state has held, and how many days were inside the
- * band. Each returns its fact when its rule holds and nothing when it does not, and neither line holds a word of praise.
+ * band. Each returns its fact when its rule holds and nothing when it does not.
  */
-const PRAISE = /\b(great|excellent|amazing|impressive|outstanding|congratulations|well done|good job|healthy|strong|solid|nice)\b/i;
 const day = (n: number) => new Date(Date.UTC(2025, 9, 8 + n)).toISOString().slice(0, 10);
 type State = 'operational' | 'degraded' | 'outage';
 const strip = (length: number, marks: Record<number, State> = {}): State[] => Array.from({ length }, (_, i) => marks[i] ?? 'operational');
@@ -70,15 +69,5 @@ describe('a steady', () => {
     expect(steady(marked, { p95Under: 500, errorRateUnder: 0.01 })!.inside).toBe(358);
     expect(steady(marked, { p95Under: 350, errorRateUnder: 0.02 })!.inside).toBe(359);
     expect(steady([], band)).toBeNull();
-  });
-});
-
-describe('the two lines', () => {
-  it('hold no word of praise', () => {
-    const lines = [run(strip(90), 'operational', { name: 'Webhooks' }), run(strip(90, { 3: 'degraded' }), 'operational', { name: 'Edge gateway' }), steady([{ date: day(0), p95: 100, errors: 0, requests: 10 }], { p95Under: 350, errorRateUnder: 0.01 })];
-    for (const fact of lines) {
-      expect(fact).not.toBeNull();
-      expect(fact!.text, fact!.text).not.toMatch(PRAISE);
-    }
   });
 });

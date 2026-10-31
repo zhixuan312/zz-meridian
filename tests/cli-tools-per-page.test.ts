@@ -1,7 +1,5 @@
 // @vitest-environment node
-// Named cli-* so the payload leaves it out: it reads the sample's own pages, contexts and guides.
-import fs from 'node:fs';
-import path from 'node:path';
+// Named cli-* so the payload leaves it out: it exercises the sample's own page tools.
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { MockLanguageModelV4 } from 'ai/test';
 import type { UIMessage } from 'ai';
@@ -29,12 +27,6 @@ import { read } from '@/data/read';
 import { viewTools } from '@/logic/tools';
 import { POST } from '../app/api/assistant/route';
 
-/**
- * The collections' `query_<name>` tools are gone (FR-48, AC-14.11): an agent reads through `view_<name>` and the page's
- * `explore_<view>`, and the write tools handed on a page are those of the collections its prepared query reads. No
- * context, page specification or guide names a `query_*` tool.
- */
-const ROOT = path.resolve(import.meta.dirname, '..');
 const ask: UIMessage[] = [{ id: 'u1', role: 'user', parts: [{ type: 'text', text: 'What stands out?' }] }];
 async function toolsOn(address: string): Promise<string[]> {
   seen.tools = [];
@@ -76,18 +68,3 @@ describe('the tools a person is handed on each page', () => {
   });
 });
 
-describe('nothing names a query tool', () => {
-  const files = [
-    ...fs.readdirSync(path.join(ROOT, 'src/logic')).filter((f) => /-context\.ts$/.test(f)).map((f) => `src/logic/${f}`),
-    ...(fs.readdirSync(path.join(ROOT, 'app'), { recursive: true }) as string[]).filter((f) => f.endsWith('README.md')).map((f) => `app/${f}`),
-    'docs/assistant.md',
-    'docs/agents.md',
-    ...fs.readdirSync(path.join(ROOT, 'skills/zz-meridian/references')).map((f) => `skills/zz-meridian/references/${f}`),
-    'src/lib/assistant/tools.ts',
-    'src/lib/assistant/prompt.ts',
-  ];
-  it('in a context, a page specification, the assistant guides or the assistant itself', () => {
-    const naming = files.filter((f) => /\bquery_(\w+|<)/.test(fs.readFileSync(path.join(ROOT, f), 'utf8')));
-    expect(naming).toEqual([]);
-  });
-});

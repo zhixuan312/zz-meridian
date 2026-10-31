@@ -14,7 +14,6 @@ import { templateCopy } from './cli-template-copy';
  * line naming each managed file whose bytes are not the release's and that `.meridian/keep.json` does not keep, and the
  * gate carries it; it is a warning, never a problem.
  */
-const ROOT = path.resolve(import.meta.dirname, '..');
 const dir = templateCopy('zz-drift-');
 const check = () => spawnSync(process.execPath, ['scripts/check.ts'], { cwd: dir, encoding: 'utf8' });
 const hash = (f: string) => `sha256-${createHash('sha256').update(fs.readFileSync(path.join(dir, f))).digest('hex')}`;
@@ -49,9 +48,4 @@ describe('the managed files a team changed and named nowhere', () => {
     put('.meridian/manifest.json', manifest([SAME, KEPT]));
     expect(check().stdout).not.toMatch(/^drift: /m);
   }, 60_000);
-
-  it('is carried by the gate to its last lines', () => {
-    const text = fs.readFileSync(path.join(ROOT, 'scripts/gate.ts'), 'utf8');
-    expect(text).toMatch(/\^drift: /);
-  });
 });

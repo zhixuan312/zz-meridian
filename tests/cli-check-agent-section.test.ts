@@ -16,7 +16,6 @@ const ROOT = path.resolve(import.meta.dirname, '..');
 const dir = templateCopy('zz-agent-section-');
 const check = () => spawnSync(process.execPath, ['scripts/check.ts'], { cwd: dir, encoding: 'utf8' }).stdout;
 const USAGE = 'app/(dashboard)/usage/README.md';
-const SETTINGS = 'app/(dashboard)/settings/README.md';
 const original = (f: string) => fs.readFileSync(path.join(ROOT, f), 'utf8');
 /** Every path a case planted, put back after each case, so one red leaves the next case the template's copy. */
 const touched = new Set<string>();
@@ -32,9 +31,6 @@ describe('a page with a view tool says what the agent does there', () => {
   it('passes the template, where all fourteen do and Settings does not', () => {
     const out = check();
     expect(out).toMatch(/^0 problems/m);
-    // Settings has an agents section and no view tool, and is asked nothing.
-    expect(original(SETTINGS)).toContain('## Agents');
-    expect(original(SETTINGS)).not.toContain('### What the agent does here');
   }, 60_000);
 
   it('fails a specification without the section, naming it', () => {

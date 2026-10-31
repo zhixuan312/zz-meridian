@@ -26,7 +26,6 @@ beforeEach(() => { jar.value = OWNER; });
 
 describe('the product keeps the day in progress beside its complete days', () => {
   it('as the last row of the days, the usage, the compute and the costs, with what has arrived by its clock', async () => {
-    expect(today).toBe('2026-10-03');
     const [days, usage, compute, costs] = await Promise.all(['days', 'usage', 'compute', 'costs'].map(async (name) => (await readAll(name)).rows));
     const yesterday = days.find((d) => d.date === back(1))!, running = days.find((d) => d.date === today)!;
     expect(running, 'the days hold the day in progress').toBeTruthy();

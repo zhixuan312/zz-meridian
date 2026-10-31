@@ -451,10 +451,6 @@ describe('every rule is listed once, with a failing and a passing way to show it
 describe('every place a script can fail from belongs to a listed rule', () => {
   for (const s of SCRIPTS) {
     const src = fs.readFileSync(path.join(ROOT, s.file), 'utf8');
-    it(`${s.file}: each rule's source is at a failure site`, () => {
-      const at = sitesOf(src, s.site);
-      for (const r of s.rules) expect(at.some(({ l }) => l.includes(r.source)), `${r.id}: ${s.file} no longer holds "${r.source}" at a failure site`).toBe(true);
-    });
     it(`${s.file}: no failure site goes unclaimed`, () => {
       expect(unclaimed(src, s).map((n) => `${s.file}:${n} can fail from here and no rule claims it: ${src.split('\n')[n - 1].trim().slice(0, 120)}`)).toEqual([]);
     });

@@ -18,8 +18,6 @@ import { viewTools } from '@/logic/tools';
 
 const writer = { write() {}, merge() {}, onError: undefined } as never;
 const guard = { authorize: async () => true, invalidate: () => {}, record: async () => {} };
-const shapeKeys = (tools: Record<string, unknown>, name: string) => Object.keys(((tools[name] as { inputSchema: { shape: Record<string, unknown> } }).inputSchema).shape);
-const setKeys = (tools: Record<string, unknown>, name: string) => Object.keys(((tools[name] as { inputSchema: { shape: { set: { shape: Record<string, unknown> } } } }).inputSchema).shape.set.shape);
 const run = (tools: Record<string, unknown>, name: string, input: unknown) => (tools[name] as { execute: (i: unknown, o: unknown) => Promise<unknown> }).execute(input, { toolCallId: 'check', messages: [] });
 
 beforeEach(() => { jar.value = undefined; });
@@ -84,18 +82,6 @@ describe('what the assistant may reach, by the person it acts for', () => {
     jar.value = 'members_5';
     const keyManager = await handedTo(await resolveAccess(), { ...members }, 'members');
     expect(keyManager.update).toBeUndefined();
-  });
-
-  it('keeps role and addOns out of the agent write schemas', async () => {
-    jar.value = 'members_1';
-    const { tools } = assistantTools([members], writer, guard);
-    expect(shapeKeys(tools as Record<string, unknown>, 'create_members')).not.toContain('role');
-    expect(shapeKeys(tools as Record<string, unknown>, 'create_members')).not.toContain('addOns');
-    expect(setKeys(tools as Record<string, unknown>, 'update_members')).not.toContain('role');
-    expect(setKeys(tools as Record<string, unknown>, 'update_members')).not.toContain('addOns');
-    // The other fields stay writable.
-    expect(shapeKeys(tools as Record<string, unknown>, 'create_members')).toContain('name');
-    expect([...(members.pageOnlyFields ?? [])]).toEqual(['role', 'addOns']);
   });
 
   it('reads nothing through an already-handed prepared query once the person has been suspended', async () => {

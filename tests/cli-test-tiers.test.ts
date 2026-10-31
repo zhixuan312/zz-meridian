@@ -98,11 +98,6 @@ describe('docs/testing.md classifies every check', () => {
   const repo = repository();
   const doc = read('docs/testing.md');
 
-  it('reads a non-empty repository side', () => {
-    expect(repo.steps).toContain('tests pass');
-    expect(repo.suites).toContain('vitals');
-    expect(repo.testFiles.length).toBeGreaterThan(0);
-  });
 
   it('has one row per gate step, test group, verify phase and suite, and nothing else', () => {
     expect(problems(repo, doc)).toEqual([]);

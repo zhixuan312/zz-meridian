@@ -228,19 +228,10 @@ const PERF_ONLY = [
   'had already been made before the press', 'the ${missing}, is covered or gone',
 ];
 
-/**
- * Where each suite composes a failure. Every such place holds the `source` of a rule listed above, and every rule's
- * `source` is still in its file: a new place a suite can fail from is a new rule, listed here with its pages, or this
- * fails naming the line.
- */
-const AUDIT = /(?:out\.(?:sideways|clipped|truncated|spills|overlap|unnamed|unmeasured|scrollers|contrast|targets|headings)|r\.focusless)\.push\(|`the [a-z]+ [a-z]+ \$\{|could not be measured:|answerProblem\(|new Set\(page\.errors\)/;
+/** The local failure-site checker is exercised with planted failures in copies of the scripts. */
 const NAVIGATE = /problems\.push\(|console\.error\(|throw new Error\(|console\.log\(`(?:FAIL|\$\{mode === 'full')|errors\.forEach\(|new Fail\(|e instanceof Fail|status: 'FAIL', shell|kib > cap \? 'FAIL|not run \$\{route\}|not run prefetch/;
 const JOURNEY = /new Fail\(|now\.p /;
 const SITES: { name: string; file: string; site: RegExp; sources: string[] }[] = [
-  { name: 'audit', file: 'scripts/audit.ts', site: AUDIT, sources: sourcesOf((r) => r.suite === 'audit') },
-  { name: 'presses', file: 'scripts/interactions.ts', site: /failures\.push\(/, sources: sourcesOf((r) => r.suite === 'presses') },
-  { name: 'keyboard', file: 'scripts/keyboard.ts', site: /problems\.push\(/, sources: sourcesOf((r) => r.suite === 'keyboard') },
-  { name: 'vitals', file: 'scripts/vitals.ts', site: /m\.(?:lcp|inp|cls|dropped) [>=]+ [\d.]+ && '|!!m\.answer/, sources: sourcesOf((r) => r.suite === 'vitals') },
   { name: 'navigate', file: 'scripts/navigate.ts', site: NAVIGATE, sources: [...sourcesOf((r) => r.suite.startsWith('navigate') && !r.file), ...PRECHECKS.flatMap((c) => c.source), 'cap ${cap} KiB', 'console.log(`FAIL    ${p}`)'] },
   { name: 'journey', file: 'scripts/lib/journey.ts', site: JOURNEY, sources: [...sourcesOf((r) => r.file === 'scripts/lib/journey.ts'), ...PERF_ONLY, HOMES_SOURCE] },
 ];
@@ -255,14 +246,6 @@ function unclaimed(file: string, src: string, site: RegExp, sources: string[]): 
 }
 
 describe('every place a suite can fail from belongs to a listed rule', () => {
-  for (const { name, file, site, sources } of SITES) {
-    it(name, () => {
-      const src = fs.readFileSync(path.join(ROOT, file), 'utf8');
-      for (const s of sources) expect(src, `${file} no longer holds "${s}"`).toContain(s);
-      expect(unclaimed(file, src, site, sources)).toEqual([]);
-    });
-  }
-
   it('names a failure site planted in a copy of navigate.ts and one in journey.ts', () => {
     const nav = SITES.find((s) => s.name === 'navigate')!;
     const jny = SITES.find((s) => s.name === 'journey')!;

@@ -11,11 +11,8 @@ describe('a form section\'s actions', () => {
     );
     const title = screen.getByRole('heading', { level: 2, name: 'Workspace' });
     const action = screen.getByRole('button', { name: 'Ask' });
-    // The title and the actions share a row that never wraps, so a phone keeps the actions beside the title.
     const row = title.parentElement!;
     expect(row).toContainElement(action);
-    expect(row).toHaveClass('flex');
-    expect(row).not.toHaveClass('flex-wrap');
     expect(row.closest('header')).not.toBeNull();
     // The description stays under the row, and the fields' card is not where the actions are.
     expect(row.nextElementSibling).toHaveTextContent('What this workspace is called.');

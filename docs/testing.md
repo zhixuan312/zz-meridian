@@ -70,6 +70,7 @@ A moment is when a person or an agent runs a command. A project's own CI may run
 
 ## Rules
 
+- **Behavior, not pins**: assert user-visible meaning, transitions, boundaries and errors, not source snippets, prose, utility classes, incidental defaults, wiring or byte copies. Remove incidental pins rather than repinning them; retain meaningful behavior, accessibility, security, architecture and planted-validator cases. A removed pin never clears an observable failure: prove the running behavior and generated artifacts.
 - **Asynchronous state**: wait for the state under assertion. Clipboard feedback can commit before the selection effect; a neighboring live-region message is not proof that selection has finished.
 - **Quiet machine**: A run needs a quiet machine exactly when it runs a check whose type is performance. A quiet machine runs nothing else heavy: no other build, browser or test run. Repeated runs of one check (the three of `Fixed means`) are separate runs, each alone on the machine, so other work can run between them.
 - **Fixed means**: every red is fixed in the product or in the check, never by skipping, narrowing or deleting the check. A limit moved under `Limits` changes a value, never what is measured.

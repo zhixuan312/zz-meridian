@@ -20,6 +20,5 @@ describe('the customers page, on a cold load', () => {
   it('has its masthead outside the boundary that reads the address', async () => {
     const html = renderToStaticMarkup(await CustomersPage());
     expect(html).toMatch(/<h1[^>]*>[^<]*Customers/);
-    expect(html).toContain('Who is calling the API');
   });
 });

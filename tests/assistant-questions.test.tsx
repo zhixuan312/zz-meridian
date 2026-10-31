@@ -26,7 +26,6 @@ describe('the assistant panel\'s starter questions (#69)', () => {
 
   test('keeps the plain empty state where the page offers none, and offers none once there is a thread', () => {
     const empty = panel({});
-    expect(screen.getByText(/^Ask about this page: what a figure means, or why it moved\.$/)).toBeInTheDocument();
     expect(screen.queryByRole('list', { name: 'Questions to start with' })).toBeNull();
     empty.unmount();
     const said: UIMessage = { id: '1', role: 'user', parts: [{ type: 'text', text: 'Hello' }] };

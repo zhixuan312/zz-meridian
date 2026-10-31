@@ -1,35 +1,17 @@
 // @vitest-environment node
-// A project's own check that judges a time runs in the timed tier (#48), and the fake model can call a project's own
-// tool for the questions the project names (#49).
+// The fake model can call a project's own tool for the questions the project names (#49).
 import { spawn } from 'node:child_process';
-import fs from 'node:fs';
 import path from 'node:path';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { fakeModelArgs, fakeModelProblems } from '../scripts/lib/config-hooks.ts';
-import { SUITE_NAMES, TIMED_SUITES } from '../scripts/lib/coverage.ts';
 import { startFakeLlm } from '../scripts/fake-llm.ts';
 
 const ROOT = path.resolve(import.meta.dirname, '..');
-const read = (rel: string) => fs.readFileSync(path.join(ROOT, rel), 'utf8');
 const ask = async (url: string, content: string, tools: string[]) => {
   const res = await fetch(`${url}/chat/completions`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ model: 'fake', messages: [{ role: 'user', content }], tools: tools.map((name) => ({ type: 'function', function: { name, parameters: { type: 'object' } } })) }) });
   return { status: res.status, message: (await res.json()).choices?.[0]?.message };
 };
 
-describe('timedChecks', () => {
-  it('is a suite of the timed tier, after the live data and before Web Vitals', () => {
-    expect(TIMED_SUITES).toEqual(['timing', 'live', 'timedChecks', 'vitals']);
-    expect(SUITE_NAMES).toContain('timedChecks');
-    expect(read('scripts/verify.config.ts')).toMatch(/timedChecks\?: string\[\]/);
-    const verify = read('scripts/verify.ts');
-    const live = verify.indexOf("reportSuite('live'");
-    const own = verify.indexOf("reportSuite('timedChecks'");
-    const vitals = verify.indexOf("reportSuite('vitals'");
-    expect(live).toBeGreaterThan(0);
-    expect(own).toBeGreaterThan(live);
-    expect(vitals).toBeGreaterThan(own);
-  });
-});
 
 describe('fakeModel', () => {
   let llm: Awaited<ReturnType<typeof startFakeLlm>>;
@@ -55,10 +37,5 @@ describe('fakeModel', () => {
       const url = await new Promise<string>((resolve) => child.stdout!.on('data', (d) => { const m = /fake-llm listening on (\S+)/.exec(String(d)); if (m) resolve(m[1]); }));
       expect((await ask(url, 'Which release shipped last?', ['view_releases'])).message.tool_calls[0].function.name).toBe('view_releases');
     } finally { child.kill(); }
-  });
-  it('is handed the steps by verify, never reading the config itself', () => {
-    expect(read('scripts/verify.ts')).toMatch(/fakeModelArgs\(/);
-    expect(read('scripts/verify.ts')).toMatch(/fakeModelProblems\(/);
-    expect(read('scripts/fake-llm.ts')).not.toMatch(/import[^\n]*verify\.config/);
   });
 });

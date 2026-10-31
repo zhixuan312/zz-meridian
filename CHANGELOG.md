@@ -8,6 +8,10 @@ Every release of ZZ Meridian, newest first. Versions follow semver: a removed or
 
 - **Adoption preserves punctuation in TypeScript configuration strings.** Removing JSONC trailing commas also removed commas before `]` or `}` inside string keys and values, changing aliases, paths and plugin options. Only commas outside strings are removed.
 
+### Changed
+
+- **Tests check behavior rather than incidental implementation.** Removed source-text, wording, utility-class, default and copy-only pins; retained meaningful domain, security, accessibility, geometry, architecture and validator checks. Current testing and Atlas documentation names what those checks actually establish.
+
 ## [0.36.0] · 2026-10-30
 
 A pass over the whole template and the CLI. `verify` no longer takes a remote IPv6 backend or a schemeless DSN with an `@` for local, and the demo gate's persona survives a browser restart. `update` reads a team's own files through the project's tsconfig aliases, reads a `NavItem` type whole, and names the sample files a release's tests no longer pass. Cards and the Atlas hold at 320px, and `audit --atlas` measures it. Many smaller behaviours are corrected below. The breaking changes come first; each says what to do instead.

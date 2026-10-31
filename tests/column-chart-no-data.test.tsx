@@ -25,10 +25,6 @@ describe('a column chart: a period with no data', () => {
     expect(container.querySelectorAll('[data-column]')).toHaveLength(3);
     const none = column(container, 'w2');
     expect(none).toHaveAttribute('data-no-data');
-    expect(none.querySelector('.bg-chart-neutral, .bg-accent')).toBeNull();
-    // Nothing stands up from the baseline (#60): a track the height of the scale was the tallest mark on the chart. A
-    // dashed hairline on the baseline keeps the slot, and the word stands just above it.
-    expect(none.querySelector('.bg-fill-track')).toBeNull();
     expect(none.querySelector<HTMLElement>('[data-box]')!.style.height).toBe('0%');
     expect(none.querySelector('[data-no-data-mark]')).not.toBeNull();
     expect(none.querySelector('[data-value]')).toHaveTextContent(/^No data$/);

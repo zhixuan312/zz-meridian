@@ -34,13 +34,6 @@ describe('DataTable', () => {
     expect(container.querySelectorAll('ul, ol')).toHaveLength(0);
   });
 
-  it('says on each cell which part of a phone card it is, so the CSS can lay the row out', () => {
-    const { container } = table();
-    const roles = [...container.querySelectorAll('tbody tr:first-child td')].map((td) => td.getAttribute('data-mobile'));
-    // The title and its status on the card's first line, the fact under them; the ID names no role, so a phone drops it.
-    expect(roles).toEqual(['title', 'status', 'fact', 'hidden']);
-  });
-
   it('renders the phone wording beside the desktop one, never in a second copy of the row', () => {
     table();
     expect(screen.getByText('643,000')).toBeInTheDocument();
@@ -74,11 +67,10 @@ describe('DataTable', () => {
     ]);
   });
 
-  it('makes the title of a row that opens a record its link; the row is the hover target and the title has no hover style of its own', () => {
+  it('makes the title of a row that opens a record its link', () => {
     render(<DataTable caption="Customers" noun="customers" rows={rows} columns={columns} rowKey={(r) => r.id} rowHref={(r) => `/customers/${r.id}`} />);
     const link = screen.getAllByRole('link', { name: 'Northwind Labs' })[0];
     expect(link.getAttribute('href')).toBe('/customers/a');
-    expect(link.className).not.toMatch(/row-link|link|underline/);
   });
 });
 

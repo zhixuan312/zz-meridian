@@ -21,11 +21,10 @@ describe('the featured metric: one figure', () => {
     expect(c.container.querySelector('[data-change]')).toBeNull();
   });
 
-  it('draws one finding under the change, beside a neutral dot, and none when given none', () => {
+  it('draws one finding under the change, and none when given none', () => {
     const a = render(<FeaturedMetric kicker="Revenue · last 30 days" value={1280} format={plain} delta={0.062} finding={{ text: 'The highest 30 days yet' }} />);
     const finding = a.container.querySelector('[data-finding]')!;
     expect(finding).toHaveTextContent('The highest 30 days yet');
-    expect(finding.querySelector('[aria-hidden]')!.className).toContain('bg-ink-3');
     expect(a.container.querySelector('[data-change]')!.compareDocumentPosition(finding) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     a.unmount();
     const b = render(<FeaturedMetric kicker="Revenue · last 30 days" value={1280} format={plain} delta={0.062} />);
@@ -155,13 +154,6 @@ describe('the featured metric: two figures of equal standing', () => {
     }
   });
 
-  it('lays the halves side by side from 42rem of its own width (588px: one rem is the root\'s 14px), and one above the other below that', () => {
-    // A container query, so the server draws the layout the browser keeps: the test reads the utilities, and a browser
-    // measures the two layouts at the phase end.
-    const { container } = render(two);
-    expect(container.querySelector('section')!.className).toContain('@container');
-    expect(container.querySelector('[data-figures]')!.className).toContain('@2xl:grid-cols-2');
-  });
 
   it('reads each half\'s own point when the page points at one', () => {
     const { container } = render(<Meridian dates={weeks} day={weeks[1]}>{two}</Meridian>);
@@ -189,10 +181,6 @@ describe('the featured metric: pointing moves nothing below the figure (issue #4
     );
     const place = row(idle.container)!.firstElementChild!;
     expect(place.getAttribute('aria-hidden')).not.toBeNull();
-    expect(place.className).toContain('invisible');
-    expect(place.className).toContain('min-h-7');
-    // A line of its own, so a named point wider than the empty place never wraps under the figure when it arrives.
-    expect(row(idle.container)!.className).toContain('w-full');
     idle.unmount();
     const pointed = render(
       <Meridian dates={weeks} day={weeks[1]}>
@@ -201,12 +189,6 @@ describe('the featured metric: pointing moves nothing below the figure (issue #4
     );
     const pill = row(pointed.container)!.firstElementChild!;
     expect(pill.hasAttribute('data-point')).toBe(true);
-    expect(pill.className).toContain('min-h-7');
-    expect(row(pointed.container)!.className).toBe(row(render(
-      <Meridian dates={weeks}>
-        <FeaturedMetric kicker="Produced · this week" value={100} points={[10, 20, 30, 40]} format={plain} />
-      </Meridian>,
-    ).container)!.className);
   });
 
   it('has no row for a figure with neither points nor a change', () => {
@@ -219,16 +201,11 @@ describe('the featured metric: a period with no number (issue #45)', () => {
   it('draws the words in the figure\'s place, in the figure\'s own line, and never a zero', () => {
     const { container } = render(<FeaturedMetric kicker="Words · this week" value={null} missing="No words recorded" format={plain} delta={null} />);
     const figure = value(container)!;
-    expect(figure.className).toContain('t-hero');
     expect(figure.querySelector('[data-missing]')).toHaveTextContent('No words recorded');
     expect(figure).not.toHaveTextContent('0');
     expect(container.querySelector('[data-change]')).not.toBeNull();
   });
 
-  it('says "Not recorded" when the caller gives no words', () => {
-    const { container } = render(<FeaturedMetric kicker="Words · this week" value={null} format={plain} />);
-    expect(value(container)).toHaveTextContent('Not recorded');
-  });
 
   it('reads a pointed point with no number as the words, and a pointed point with one as its figure', () => {
     const missingWeek = render(

@@ -1,9 +1,7 @@
 // @vitest-environment node
-import fs from 'node:fs';
-import path from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { BRAND_FLAGS, effectiveBrand } from '../cli/src/files.ts';
-import { classify, managedPaths, renderOwnership } from '../cli/src/ownership.ts';
+import { effectiveBrand } from '../cli/src/files.ts';
+import { classify, managedPaths } from '../cli/src/ownership.ts';
 
 const A = `sha256-${'a'.repeat(64)}` as const;
 const B = `sha256-${'b'.repeat(64)}` as const;
@@ -47,16 +45,6 @@ describe('classify with the keep register', () => {
   });
 });
 
-describe('the ownership guidance', () => {
-  it("is the classifier's own rule, rendered", () => {
-    const doc = fs.readFileSync(path.resolve(import.meta.dirname, '../skills/zz-meridian/references/ownership.md'), 'utf8');
-    const begin = '<!-- BEGIN:ownership -->';
-    const end = '<!-- END:ownership -->';
-    expect(doc.indexOf(begin)).toBeGreaterThanOrEqual(0);
-    expect(doc.slice(doc.indexOf(begin) + begin.length, doc.indexOf(end)).trim()).toBe(renderOwnership().trim());
-  });
-});
-
 describe('the effective brand', () => {
   it('records one accent choice', () => {
     expect(effectiveBrand({ name: 'Acme', hex: '#2E6BE4', accent: 'jade', hue: '10', chroma: '0.1' })).toEqual({ name: 'Acme', hex: '#2E6BE4' });
@@ -67,7 +55,6 @@ describe('the effective brand', () => {
     expect(Object.keys(effectiveBrand({ theme: 'dark', name: 'Acme', role: '', user: 'Ada' }))).toEqual(['name', 'user', 'theme']);
   });
   it('accepts a dark or light theme only', () => {
-    expect(BRAND_FLAGS).toContain('theme');
     expect(effectiveBrand({ theme: 'light' })).toEqual({ theme: 'light' });
     expect(() => effectiveBrand({ theme: 'blue' })).toThrow(/theme/);
   });

@@ -4,11 +4,10 @@ import { MetricTile } from '@/components/patterns/metric-tile';
 import { Delta } from '@/components/ui/delta';
 
 describe('a tile whose figure is a share (#74)', () => {
-  it('reads its change in points under deltaFormat="points", with the same arrow, colour and word', () => {
+  it('reads its change in points under deltaFormat="points"', () => {
     const { container } = render(<MetricTile label="Share refused" value={0.464} format="percent" delta={0.134} deltaFormat="points" intent="down" />);
     const change = container.querySelector('.t-num.inline-flex')!;
     expect(change).toHaveTextContent(/^up 13\.4 pts$/);
-    expect(change).toHaveClass('text-critical-ink');
   });
   it('still reads a change as a percentage of the earlier value without it', () => {
     const { container } = render(<MetricTile label="Requests" value={1200} delta={0.406} />);

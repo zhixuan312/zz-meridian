@@ -93,7 +93,7 @@ describe('Services, when more than one incident is open', () => {
     const first = d.incidents!.open[0];
     const other = { ...first, id: 'incidents_second', title: 'Webhook deliveries delayed', service: 'Webhooks' };
     const two = { ...d, incidents: { ...d.incidents!, open: [first, other] } };
-    const { container } = render(<Tooltip.Provider><ServicesBody {...two} /></Tooltip.Provider>);
+    render(<Tooltip.Provider><ServicesBody {...two} /></Tooltip.Provider>);
     const list = screen.getByRole('region', { name: 'Incidents' });
     const text = list.textContent ?? '';
     // Both open ones, each in its card with how long it has lasted so far, before every resolved one.
@@ -101,7 +101,6 @@ describe('Services, when more than one incident is open', () => {
     expect(text.indexOf('Webhook deliveries delayed')).toBeGreaterThan(text.indexOf(first.title));
     expect(text.match(/Open for \S+ so far/g)).toHaveLength(2);
     for (const r of d.incidents!.resolved) expect(text.indexOf(r.title), r.title).toBeGreaterThan(text.indexOf('Webhook deliveries delayed'));
-    expect(container.textContent).not.toMatch(/Also open|Past incidents/);
     const said = servicesContext(two).insights.map((i) => i.text);
     expect(said.some((t) => t.startsWith(`Open incident "${first.title}"`))).toBe(true);
     expect(said.some((t) => t.startsWith('Open incident "Webhook deliveries delayed"'))).toBe(true);

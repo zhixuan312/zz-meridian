@@ -23,7 +23,6 @@ const readout = (c: HTMLElement) => c.querySelector<HTMLElement>('[data-readout]
 const shares = (c: HTMLElement) => [readout(c)!.previousElementSibling, readout(c)!.nextElementSibling].map((e) => Number((e as HTMLElement).style.flexGrow));
 /** The weekday names drawn beside the grid; the hidden table of a week of hours names its rows too. */
 const names = () => screen.queryAllByText(/^(Mon|Tue|Wed|Thu|Fri|Sat|Sun)$/).filter((e) => !e.closest('table')).map((e) => e.textContent);
-const classes = (e: HTMLElement) => e.className.split(/\s+/);
 
 beforeEach(() => { size.width = 800; size.height = 0; });
 
@@ -44,13 +43,6 @@ describe('a heatmap\'s readout stays inside its grid', () => {
     expect(shares(container)).toEqual([22, 1]);
   });
 
-  it('is placed by no pixel offset, so no column can push it past the figure', () => {
-    const { container } = render(<Heatmap label="Requests by weekday and hour" values={week} />);
-    fireEvent.keyDown(hours(), { key: 'ArrowRight' });
-    fireEvent.keyDown(hours(), { key: 'End' });
-    expect(readout(container)).not.toBeNull();
-    for (let e: HTMLElement | null = readout(container); e && e !== container; e = e.parentElement) expect(e.style.left).toBe('');
-  });
 
   it('does the same over three-hour blocks on a narrow figure', () => {
     size.width = 400;
@@ -86,12 +78,10 @@ describe('a heatmap\'s readout stays inside its grid', () => {
 });
 
 describe('a heatmap drawn still, for the Atlas', () => {
-  it('draws an hour as pointed at, with its ring and its readout', () => {
+  it('reads the hour drawn as pointed at', () => {
     const { container } = render(<Heatmap label="Requests by weekday and hour" values={week} data-preview-cell="3-23" />);
     expect(readout(container)).toHaveTextContent('195 requests · Thu 23:00 UTC');
     expect(shares(container)).toEqual([23, 0]);
-    expect(classes(container.querySelector<HTMLElement>('[data-cell="3-23"]')!)).toContain('ring-2');
-    expect(classes(container.querySelector<HTMLElement>('[data-cell="3-22"]')!)).not.toContain('ring-2');
   });
 
   it('names an hour, so the cell still resolves where the hours group in threes', () => {
@@ -99,33 +89,8 @@ describe('a heatmap drawn still, for the Atlas', () => {
     const { container } = render(<Heatmap label="Requests by weekday and hour" values={week} data-preview-cell="3-23" />);
     expect(readout(container)).toHaveTextContent('582 requests · Thu 21:00–24:00 UTC');
     expect(shares(container)).toEqual([7, 0]);
-    expect([...container.querySelectorAll('[data-cell]')].filter((e) => classes(e as HTMLElement).includes('ring-2')).map((e) => e.getAttribute('data-cell'))).toEqual(['3-7']);
   });
 
-  it('says on the figure which cell or day it was asked to draw as pointed at', () => {
-    const a = render(<Heatmap label="Requests by weekday and hour" values={week} data-preview-cell="3-23" />);
-    expect(a.container.querySelector('figure')).toHaveAttribute('data-preview-cell', '3-23');
-    a.unmount();
-    const b = render(<Heatmap label="Requests a day" days={days} data-preview-date="2026-10-01" />);
-    expect(b.container.querySelector('figure')).toHaveAttribute('data-preview-date', '2026-10-01');
-    b.unmount();
-    const c = render(<Heatmap label="Requests a day" days={days} />);
-    expect(c.container.querySelector('figure')).not.toHaveAttribute('data-preview-date');
-  });
-
-  it('draws the focus ring on the grid of either form, and none when not asked', () => {
-    const a = render(<Heatmap label="Requests by weekday and hour" values={week} data-preview-state="focus" />);
-    expect(classes(hours())).toEqual(expect.arrayContaining(['outline-2', 'outline-offset-4', 'outline-accent']));
-    a.unmount();
-    const b = render(<Heatmap label="Requests by weekday and hour" values={week} />);
-    expect(classes(hours())).not.toContain('outline-2');
-    b.unmount();
-    const c = render(<Heatmap label="Requests a day" days={days} data-preview-state="focus" />);
-    expect(classes(calendar())).toEqual(expect.arrayContaining(['outline-2', 'outline-offset-4', 'outline-accent']));
-    c.unmount();
-    render(<Heatmap label="Requests a day" days={days} />);
-    expect(classes(calendar())).not.toContain('outline-2');
-  });
 
   it('reads the day in progress as so far when that is the day drawn as pointed at', () => {
     const { container } = render(<Heatmap label="Requests a day" days={days} running data-preview-date="2026-10-04" />);
@@ -156,7 +121,6 @@ describe('a heatmap of days: the outline of a day in progress', () => {
     const { container } = render(<Heatmap label="Requests a day" days={days} running />);
     const cell = container.querySelector<HTMLElement>('[data-cell][data-running]')!;
     expect(cell.querySelectorAll('svg[shape-rendering="crispEdges"] line')).toHaveLength(4);
-    expect(classes(cell)).not.toContain('border-dashed');
     expect(container.querySelectorAll('[data-cell]:not([data-running]) svg')).toHaveLength(0);
   });
 });

@@ -13,6 +13,7 @@ import { chromeAccess } from '@/data/access';
 import { read } from '@/data/read';
 import { viewTools } from '@/logic/tools';
 import { navOf, WORKSPACE_IDS } from '@/views/workspaces';
+import { blankedText, resolveSpec, valueImports } from '../scripts/lib/layer-rules.ts';
 
 const ROOT = path.resolve(import.meta.dirname, '..');
 /**
@@ -63,9 +64,25 @@ describe('a Viewer', () => {
 });
 
 describe('a workspace is where a person looks, not what they may do', () => {
-  it('is named by nothing that decides access', () => {
-    for (const file of ['src/data/access.ts', 'src/data/roles.ts', 'src/data/read.ts', 'src/data/features.ts', 'src/data/ticket-mutations.ts', 'src/data/member-mutations.ts']) {
-      expect(fs.readFileSync(path.join(ROOT, file), 'utf8'), file).not.toMatch(/\bworkspaces\b|WorkspaceId|workspaceOf|navOf|@\/views\/workspaces/);
+  it('is not imported by any access-deciding module, even through another module', () => {
+    const deciding = ['src/data/access.ts', 'src/data/roles.ts', 'src/data/read.ts', 'src/data/features.ts', 'src/data/ticket-mutations.ts', 'src/data/member-mutations.ts'];
+    for (const start of deciding) {
+      const seen = new Set([start]);
+      const queue = [[start]];
+      while (queue.length) {
+        const trail = queue.shift()!;
+        const file = trail.at(-1)!;
+        const code = blankedText(fs.readFileSync(path.join(ROOT, file), 'utf8'));
+        for (const { spec } of valueImports(code)) {
+          const target = resolveSpec(file, spec, [['@/', 'src/']], ROOT);
+          if (!target) continue;
+          expect(target, [...trail, target].join(' -> ')).not.toBe('src/views/workspaces.ts');
+          if (!seen.has(target)) {
+            seen.add(target);
+            queue.push([...trail, target]);
+          }
+        }
+      }
     }
   });
 });

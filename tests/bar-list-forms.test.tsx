@@ -15,8 +15,6 @@ const bar = (c: HTMLElement, key: string) => row(c, key).querySelector('[data-ba
 const compare = (c: HTMLElement, key: string) => row(c, key).querySelector('[data-compare]');
 const width = (el: Element | null) => parseFloat((el as HTMLElement).style.width);
 const levels = (c: HTMLElement) => [...c.querySelectorAll('[data-level]')].map((e) => e.textContent);
-/** An inline style that sets the `background` shorthand, which would draw over the hatch. */
-const SHORTHAND = /(^|;)\s*background\s*:/;
 
 describe('order', () => {
   it('sorts by value and folds past the limit by default', () => {
@@ -82,15 +80,12 @@ describe('pair', () => {
     expect(row(c, 'h11').querySelector('[data-figure]')?.textContent).toBe('20 · —');
   });
 
-  it('draws each compare as an unfilled outline, on the scale of the values and the compares, and none for a missing one', () => {
+  it('draws each compare on the scale of the values and the compares, and none for a missing one', () => {
     const c = render(<BarList label="By hour" pair={pair} order="given" items={paired} />).container;
     expect(width(compare(c, 'h10'))).toBeCloseTo(100, 6);
     expect(width(bar(c, 'h10'))).toBeCloseTo(75, 6);
     expect(width(compare(c, 'h09'))).toBeCloseTo((50 / 120) * 100, 6);
     expect(compare(c, 'h11')).toBeNull();
-    const outline = compare(c, 'h09')!.className;
-    expect(outline).toMatch(/\bborder-chart-neutral-strong\b/);
-    expect(outline).not.toMatch(/\bbg-(?!transparent\b)/);
   });
 
   it('draws a legend of the two, above the rows', () => {
@@ -114,11 +109,10 @@ describe('pair', () => {
 });
 
 describe('estimate', () => {
-  it('hatches an estimated bar with its fill a background colour, says so on its row, and writes the key once', () => {
+  it('marks an estimated bar, says so on its row, and writes the key once', () => {
     const c = render(<BarList label="By hour" order="given" items={hours.slice(0, 3).map((h) => ({ ...h, estimate: h.key === 'h10' }))} />).container;
     expect(bar(c, 'h10')!.hasAttribute('data-estimate')).toBe(true);
     expect(bar(c, 'h09')!.hasAttribute('data-estimate')).toBe(false);
-    expect(bar(c, 'h10')!.getAttribute('style') ?? '').not.toMatch(SHORTHAND);
     expect(row(c, 'h10').getAttribute('title')).toMatch(/\bestimate\b/);
     expect(c.querySelector('[data-estimate-key]')?.textContent).toBe('Hatched: estimate');
     expect(c.textContent?.match(/Hatched: estimate/g)).toHaveLength(1);

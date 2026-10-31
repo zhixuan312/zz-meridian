@@ -21,7 +21,6 @@ describe('the Column chart\'s pointed specimens', () => {
       expect(c).not.toBeNull();
       return c!;
     });
-    expect(chart.querySelector('[data-active] .ring-ink')).not.toBeNull();
     const readout = chart.querySelector('[data-readout]')!;
     expect(readout.textContent).toMatch(/ · estimate/);
     expect(readout.textContent).toMatch(/This week.*Last week/);

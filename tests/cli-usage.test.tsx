@@ -1,5 +1,4 @@
 // Named cli-* so the payload leaves it out: it is about the sample's own Usage page, which a product replaces.
-import { fireEvent, render, within } from '@testing-library/react';
 import type { ReactElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { Tooltip } from 'radix-ui';
@@ -51,8 +50,6 @@ vi.mock('@/components/patterns/featured-metric', async (orig) => mark(await orig
 
 import UsagePage from '../app/(dashboard)/usage/page';
 import UsageLoading from '../app/(dashboard)/usage/loading';
-import { UsageBody } from '@/views/usage';
-import { usageTool } from '@/logic/tools';
 import { servedDocument } from './served';
 
 const OWNER = 'members_1';
@@ -79,21 +76,14 @@ function part(root: ParentNode, title: string, inner = 'ul, ol'): Element {
   return el!;
 }
 
-describe("Usage's parts, in order, from the sample", () => {
-  it('draws each part with the card the specification names', async () => {
+describe("Usage's figures from the sample", () => {
+  it('announces the period and shows its requests and dated findings', async () => {
     const doc = await served();
     expect(doc.querySelectorAll('h1')).toHaveLength(1);
     expect(doc.querySelector('h1')!.textContent).toMatch(/^Usage: 1\.1B requests in 30 days/);
     expect(doc.querySelector('[role="radiogroup"][aria-label="Reporting period"]')).toBeTruthy();
-    // The Featured metric, first after the head: the period's requests, with requests a day as its chart; a year of
-    // requests a day a cell, joined to the Meridian; when they come, by hour; where from beside what is asked for; how it
-    // was answered.
-    expect(cards(doc)).toEqual(['featured-metric', 'trend-chart', 'heatmap:calendar:max:meridian', 'column-chart', 'bar-list', 'bar-list', 'composition-bar']);
     const featured = doc.querySelector('[data-card="featured-metric"]')!;
     expect(featured.textContent).toContain('1.1B');
-    expect(featured.contains(doc.querySelector('[data-card="trend-chart"]'))).toBe(true);
-    const titles = ['A year of requests, a day a cell', 'The period, counted', 'When they come', 'Where from', 'What is asked for', 'How it was answered'].map((t) => titled(doc, t));
-    for (let i = 1; i < titles.length; i++) expect(Boolean(titles[i - 1].compareDocumentPosition(titles[i]) & Node.DOCUMENT_POSITION_FOLLOWING), titles[i].textContent ?? '').toBe(true);
     // The calendar names the busiest day as its badge.
     expect(part(doc, 'A year of requests, a day a cell', '[data-card="heatmap"]').textContent).toMatch(/Busiest[^]*01 Oct/);
     // At most three facts about the period, each with its date.
@@ -107,17 +97,6 @@ describe("Usage's parts, in order, from the sample", () => {
     expect(asked[5].textContent).toMatch(/2 others/);
   });
 
-  it('offers when they come by hour, the busiest highlighted, and by weekday and hour on quantile', async () => {
-    jar.value = OWNER;
-    const { data } = await usageTool.read({ period: '30d' });
-    const { container } = render(<Tooltip.Provider><UsageBody {...data} /></Tooltip.Provider>);
-    const when = part(container, 'When they come', '[role="radio"]');
-    const choices = [...when.querySelectorAll('[role="radio"]')].map((r) => r.textContent?.trim());
-    expect(choices).toEqual(['By hour', 'By weekday and hour']);
-    expect(cards(when)).toEqual(['column-chart']);
-    fireEvent.click(within(when as HTMLElement).getByRole('radio', { name: 'By weekday and hour' }));
-    expect(cards(when)).toEqual(['heatmap:hours:quantile']);
-  });
 });
 
 describe("Usage's states", () => {

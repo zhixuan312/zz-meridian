@@ -1,6 +1,5 @@
 // @vitest-environment node
 import { spawnSync } from 'node:child_process';
-import fs from 'node:fs';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 
@@ -13,9 +12,5 @@ describe('the release version', () => {
     const r = spawnSync(process.execPath, ['cli/scripts/set-version.ts', '0.36.0-rc.1'], { cwd: ROOT, encoding: 'utf8' });
     expect(r.status).not.toBe(0);
     expect(r.stderr).toContain('"0.36.0-rc.1" is not a major.minor.patch version');
-  });
-  it('is checked the same way by the release workflow', () => {
-    const workflow = fs.readFileSync(path.join(ROOT, '.github/workflows/release.yml'), 'utf8');
-    expect(workflow).toContain('[[ "$VERSION" =~ ^[0-9]+\\.[0-9]+\\.[0-9]+$ ]]');
   });
 });

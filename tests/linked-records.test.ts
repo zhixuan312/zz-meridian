@@ -49,10 +49,9 @@ describe('an incident and its ticket', () => {
 });
 
 describe('a request', () => {
-  it('holds the time to its first token where a model answered, and the log says it is a sample', async () => {
+  it('holds the time to its first token where a model answered', async () => {
     expect(fields('requests')).toContain('ttft');
     expect(takes('requests', 'ttft', null)).toBe(true);
-    expect(of('requests').description).toMatch(/\bsample\b/i);
     const requests = await rows('requests');
     expect(requests.some((r) => r.ttft !== null)).toBe(true);
     for (const r of requests) {

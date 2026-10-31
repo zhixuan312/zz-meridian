@@ -28,7 +28,6 @@ describe('the thread in local storage', () => {
   test('saves and loads under the product key, keeping only the last 100 messages', () => {
     const many = Array.from({ length: 130 }, (_, i) => (i % 2 ? say(`a${i}`, `answer ${i}`) : ask(`u${i}`, `question ${i}`)));
     saveThread(localStorage, SCOPE, many);
-    expect(THREAD_KEY).toMatch(/\.assistant$/);
     expect(JSON.parse(localStorage.getItem(THREAD_KEY)!)).toMatchObject({ v: 2, scope: SCOPE });
     const back = loadThread(localStorage, SCOPE);
     expect(back).toHaveLength(100);

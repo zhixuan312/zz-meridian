@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { DELTA_FORMATS } from '@/components/ui/delta';
-import { AXIS_FORMATTERS, FORMATTERS, fitFigure, formatCompact, formatCost, formatDuration, formatPercent, splitFigure, type NumberFormat } from '@/lib/format';
+import { AXIS_FORMATTERS, FORMATTERS, fitFigure, formatCompact, formatCost, formatDuration, formatPercent, splitFigure } from '@/lib/format';
 
 /**
  * Every formatter a figure, a tile, a chart's readout or its axis prints through, given the values a product's data
@@ -57,8 +57,6 @@ describe('every formatter, given every value a product holds', () => {
   });
 });
 
-const NAMES = Object.keys(FORMATTERS) as NumberFormat[];
-it('every named format has an axis form', () => { for (const n of NAMES) expect(typeof AXIS_FORMATTERS[n]).toBe('function'); });
 
 /**
  * A figure is written in the unit its ROUNDED value belongs to. A p95 of 999.6 ms is an ordinary value, and choosing the

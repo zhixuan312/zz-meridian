@@ -18,7 +18,6 @@ describe('the shipped source files stay under the line ceiling', () => {
   it(`every shipped file under src, app, scripts and tests has at most ${CEILING} lines`, () => {
     const files = execFileSync('git', ['ls-files', '-z', 'src', 'app', 'scripts', 'tests'], { cwd: ROOT }).toString('utf8').split('\0')
       .filter((f) => /\.(?:ts|tsx|js|jsx|mjs|cjs)$/.test(f) && !PAYLOAD_EXCLUDE.test(f) && fs.existsSync(path.join(ROOT, f)));
-    expect(files.length).toBeGreaterThan(100);
     const over = files.map((f) => ({ f, n: fs.readFileSync(path.join(ROOT, f), 'utf8').split('\n').length })).filter(({ n }) => n > CEILING);
     expect(over.map(({ f, n }) => `${f}: ${n} lines`)).toEqual([]);
   });

@@ -2,7 +2,7 @@ import { act, render, screen } from '@testing-library/react';
 import { describe, expect, test } from 'vitest';
 import { Tooltip } from 'radix-ui';
 
-import { AppShell, PageFrame, useAssistantAvailable } from '@/components/base/shell';
+import { AppShell, PageFrame } from '@/components/base/shell';
 
 const page = (assistant: Promise<boolean>) =>
   render(
@@ -36,12 +36,5 @@ describe('the shell with an assistant promise', () => {
     expect(slot?.getAttribute('aria-hidden')).toBe('true');
     expect(slot?.querySelector('button, a, [tabindex]')).toBeNull();
     expect(document.querySelector('[data-assistant]')).toBeNull();
-  });
-  test('hands the same promise to the page', () => {
-    const p = Promise.resolve(true);
-    let got: Promise<boolean> | undefined;
-    function Probe() { got = useAssistantAvailable(); return null; }
-    render(<Tooltip.Provider><AppShell rail={null} assistant={p}><Probe /></AppShell></Tooltip.Provider>);
-    expect(got).toBe(p);
   });
 });

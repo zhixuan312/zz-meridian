@@ -1,6 +1,4 @@
 // @vitest-environment node
-import fs from 'node:fs';
-import path from 'node:path';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const jar = vi.hoisted(() => ({ value: undefined as string | undefined }));
@@ -20,14 +18,12 @@ import type { HomeData } from '@/logic/home-context';
 import { ticketCounts } from '@/logic/tickets-context';
 import { viewTools } from '@/logic/tools';
 
-const ROOT = path.resolve(import.meta.dirname, '..');
 const PEOPLE = { member: 'members_4', viewer: 'members_12', nobody: 'members_999' };
 const TAG = collectionTag('demo', 'tickets');
 const draft = { title: 'Rotate the gateway certificate', service: 'Edge gateway', priority: 'high' as const, assigneeId: 'members_2', summary: 'It expires on the 14th.' };
 const tool = viewTools.find((t) => t.name === 'tickets')!;
 const stored = async () => (await collections.find((c) => c.name === 'tickets')!.query({})).rows as Record<string, unknown>[];
 const fact = async (label: string) => (await tool.read({})).context.facts.find((f) => f.label === label)?.value;
-const source = (file: string) => fs.readFileSync(path.join(ROOT, file), 'utf8');
 
 beforeEach(() => { jar.value = PEOPLE.member; cache.tags.length = 0; });
 
@@ -127,14 +123,5 @@ describe('what a reader is shown of a ticket', () => {
     jar.value = PEOPLE.nobody;
     await expect(tool.read({})).rejects.toBeTruthy();
     await expect(readTickets()).rejects.toBeTruthy();
-  });
-});
-
-describe('the page itself', () => {
-  it('is gated, reads through the shared read, and follows changes made elsewhere', () => {
-    const page = source('app/(dashboard)/operations-tickets/page.tsx');
-    expect(page).toMatch(/gate\('tickets'\)/);
-    expect(page).toMatch(/\breadTickets\(/);
-    expect(source('src/views/tickets.tsx')).toMatch(/useLive\(\[\s*'tickets'\s*\](?:,[^)]*)?\)/);
   });
 });

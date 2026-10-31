@@ -91,10 +91,7 @@ const outDir = () => { const d = fs.mkdtempSync(path.join(os.tmpdir(), 'zz-ask-'
 afterAll(() => { for (const d of folders) fs.rmSync(d, { recursive: true, force: true }); });
 
 describe('the questions a page specification lists', () => {
-  it("are read from its section, in order, Usage's first being the 22:00 question", () => {
-    const qs = questionsOf(USAGE);
-    expect(qs.length).toBeGreaterThanOrEqual(3);
-    expect(qs[0]).toBe('How many requests came at 22:00 UTC on each weekday?');
+  it('returns no questions when the specification has no questions section', () => {
     expect(questionsOf('# A page\n\n## Agents\n\n### What the agent reads\n\nIts context.\n')).toEqual([]);
   });
 });
@@ -255,8 +252,4 @@ describe('asked of a served product', () => {
     expect(second).toMatch(/denied: No such id: members_99/i);
     expect(second).toContain('There is no member members_99.');
   }, 60_000);
-
-  it('is run by neither the default nor the full verify', () => {
-    expect(fs.readFileSync(path.join(ROOT, 'scripts/verify.ts'), 'utf8')).not.toMatch(/ask\.ts/);
-  });
 });

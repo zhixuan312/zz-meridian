@@ -30,12 +30,10 @@ const TEMPLATE = fs.existsSync(path.resolve(import.meta.dirname, '../app/system'
 beforeEach(() => { jar.value = 'members_12'; });
 
 describe('the no-access state', () => {
-  it('is its own kind: a lock mark, a neutral disc, no alert, and data-no-access', () => {
+  it('marks a no-access state without announcing an alert', () => {
     const html = renderToStaticMarkup(<EmptyState kind="no-access" title="You don't have access to API keys">Owners, Admins, Members and Key managers can open it.</EmptyState>);
     expect(html).toContain('data-no-access');
     expect(html).not.toContain('role="alert"');
-    expect(html).toContain('bg-fill-track');
-    expect(html).not.toContain('bg-critical-tint');
   });
 
   it('tells the person who can open it, generated from the role table', () => {

@@ -10,7 +10,6 @@ describe('Popover', () => {
 
   it('cannot be written without a name', () => {
     // @ts-expect-error a popover is a dialog, and a dialog needs a name
-    const unnamed = <PopoverContent>Options</PopoverContent>;
-    expect(unnamed).toBeTruthy();
+    void <PopoverContent>Options</PopoverContent>;
   });
 });

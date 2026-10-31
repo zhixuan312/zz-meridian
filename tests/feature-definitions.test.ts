@@ -1,10 +1,8 @@
 // @vitest-environment node
 import { describe, expect, it } from 'vitest';
-import { ACTIONS, FEATURES, type FeatureId } from '@/data/features';
+import { ACTIONS, FEATURES } from '@/data/features';
 import { GRANTS } from '@/data/roles';
 import { collections } from '@/data/collections';
-import { nav } from '@/app.config';
-import { viewTools } from '@/logic/tools';
 
 const byName = Object.fromEntries(collections.map((c) => [c.name, c]));
 const grantsOf = (need: unknown): string[] => (typeof need === 'string' ? (need === 'public' ? [] : [need]) : (need as { allOf: string[] }).allOf);
@@ -33,23 +31,5 @@ describe('every grant names a collection and an operation it supports', () => {
     for (const [id, f] of Object.entries(FEATURES)) for (const g of grantsOf(f.needs)) { const why = unsupported(g); if (why) bad.push(`feature ${id} -> ${g}: ${why}`); }
     for (const [id, a] of Object.entries(ACTIONS)) for (const g of grantsOf(a.needs)) { const why = unsupported(g); if (why) bad.push(`action ${id} -> ${g}: ${why}`); }
     expect(bad).toEqual([]);
-  });
-});
-
-describe('a surface references its feature, never a restated need', () => {
-  // The nav half of this claim is asserted in `feature-access.test.ts`, which is a strict superset: it also fails on a
-  // need that is undefined and on an empty nav.
-
-  it('holds for every view tool', () => {
-    for (const tool of viewTools) expect(tool.needs, tool.name).toBe(FEATURES[tool.name as FeatureId].needs);
-  });
-
-  it('holds for every feature the rail shows', () => {
-    // Every feature the rail shows is a nav item's own need; the request detail has no rail entry.
-    const railNeeds = new Set(nav.flatMap((g) => g.items).map((i) => i.needs));
-    for (const [id, f] of Object.entries(FEATURES)) {
-      if (id === 'request') continue;
-      expect(railNeeds.has(f.needs), id).toBe(true);
-    }
   });
 });

@@ -22,12 +22,6 @@ const hrefs = (groups: NavGroup[]) => groups.flatMap((g) => g.items.map((i) => i
 const links = () => screen.queryAllByRole('link').map((l) => l.textContent);
 
 describe('the navigation the chrome is given', () => {
-  it('is the configured one when none is supplied', () => {
-    expect(visible()).toBe(nav);
-    const two = hrefs(nav).slice(0, 2);
-    expect(hrefs(visible(two))).toEqual(two);
-  });
-
   it('keeps a supplied navigation in its own groups and order, and shows only what the person may open', () => {
     expect(visible(undefined, own)).toEqual(own);
     const some = visible(['/parts', '/', '/members'], own);

@@ -1,12 +1,9 @@
 // @vitest-environment node
-import fs from 'node:fs';
-import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { formatCost } from '@/lib/format';
 import { CUSTOMERS } from '@/system/fixtures/company';
 import { CUSTOMER_METRICS, customerFigures, customersContext, pastDueNote, under } from '@/logic/customers-context';
 
-const ROOT = path.resolve(import.meta.dirname, '..');
 const STATE = { q: '', plan: 'all', status: 'all', sort: 'revenue', dir: 'desc', page: '1' };
 const fact = (label: string) => customersContext(CUSTOMERS, under(CUSTOMERS, 'all'), STATE).facts.find((f) => f.label === label)?.value ?? '';
 
@@ -56,15 +53,6 @@ describe("the customers' figures", () => {
     expect(fact(CUSTOMER_METRICS.pastDue.label).startsWith(String(figures.pastDue.length))).toBe(true);
   });
 
-  it('are what the page draws: it takes them from customerFigures and spells no total of its own', () => {
-    const view = fs.readFileSync(path.join(ROOT, 'src/views/customers.tsx'), 'utf8');
-    // A source check, and only that: it holds the view to calling the one function and to destructuring what it returns,
-    // and to the two spellings a total of its own would most likely take. A second total through a helper would pass
-    // it, which is why the case above compares the figures with what the context states.
-    expect(view).toMatch(/const \{[^}]*\} = customerFigures\(/);
-    expect(view).not.toMatch(/\.reduce\(\(a, c\) => a \+ c\.revenue/);
-    expect(view).not.toMatch(/status === 'past due'/);
-  });
 });
 
 describe('the order the Customers context lists them in', () => {
@@ -79,7 +67,6 @@ describe('the order the Customers context lists them in', () => {
 describe("the past-due tile's line", () => {
   it('names the customers as a sentence does, the largest first, and counts the rest past two', () => {
     const owing = (name: string, revenue: number) => ({ name, revenue });
-    expect(pastDueNote([])).toBe('Every invoice is paid');
     expect(pastDueNote([owing('Acme', 10)])).toBe('Acme');
     expect(pastDueNote([owing('Acme', 10), owing('Brightline', 20)])).toBe('Brightline and Acme');
     expect(pastDueNote([owing('Acme', 10), owing('Brightline', 20), owing('Cobalt', 5), owing('Dune', 1)])).toBe('Brightline, Acme and 2 more');

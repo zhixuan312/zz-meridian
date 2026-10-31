@@ -17,8 +17,6 @@ vi.mock('next/navigation', () => ({
   notFound: () => { throw new Error('not found'); },
 }));
 
-import * as features from '@/data/features';
-import * as noAccess from '@/views/no-access';
 import { readAll } from '@/data/read';
 import { memberAccess } from '@/data/member-mutations';
 import KeysPage from '../app/(dashboard)/keys/page';
@@ -48,13 +46,6 @@ const whoCan = (text: string) => WHO_CAN.flatMap((re) => text.match(re)?.[0] ?? 
 const served = async (page: Promise<unknown> | unknown) => textOf(await servedDocument((await page) as ReactElement));
 
 beforeEach(() => { jar.value = undefined; });
-
-describe('the line that said who can is gone from what the product declares', () => {
-  it('no action carries a line, and no helper writes one', () => {
-    for (const [id, action] of Object.entries(features.ACTIONS)) expect(Object.keys(action), id).not.toContain('line');
-    expect(Object.keys(noAccess)).not.toContain('actionLine');
-  });
-});
 
 describe('a page that withholds a control says nothing about who holds it', () => {
   it('API keys, for a Member, who may read the keys and neither create nor revoke one', async () => {

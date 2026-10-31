@@ -211,7 +211,6 @@ describe('the sample\'s tools, as an MCP server would list them', () => {
     expect(named.filter((x) => !/^(create|update|remove)_/.test(x))).toEqual([]);
     expect(named.filter((x) => x.endsWith('_requests'))).toEqual([]);
     for (const d of defs) {
-      expect(d.description?.length).toBeGreaterThan(10);
       expect(d.inputSchema.type).toBe('object');
     }
   });

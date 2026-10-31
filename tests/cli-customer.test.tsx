@@ -27,15 +27,6 @@ vi.mock('@/data/read', async (orig) => {
     readAll: async (name: string, q?: unknown) => { refuse(name); return real.readAll(name, q as never); },
   };
 });
-// Each card the page draws marks where it stands; a tile marks its label too.
-const mark = vi.hoisted(() => async (real: Record<string, unknown>, name: string, card: string) => {
-  const { createElement } = await import('react');
-  const Real = real[name] as (props: Record<string, unknown>) => ReactElement;
-  const Marked = (props: Record<string, unknown>) => createElement('div', { 'data-card': card, 'data-label': card === 'metric-tile' && typeof props.label === 'string' ? props.label : '' }, createElement(Real, props));
-  return { ...real, [name]: Marked };
-});
-vi.mock('@/components/patterns/metric-tile', async (orig) => mark(await orig(), 'MetricTile', 'metric-tile'));
-vi.mock('@/components/charts/bar-list', async (orig) => mark(await orig(), 'BarList', 'bar-list'));
 
 import CustomerPage from '../app/(dashboard)/customers/[id]/page';
 import CustomerLoading from '../app/(dashboard)/customers/[id]/loading';
@@ -58,7 +49,6 @@ async function served(page: unknown): Promise<Document> {
   return servedDocument(element);
 }
 const customerPage = (id: string) => served(CustomerPage({ params: Promise.resolve({ id }) }));
-const cards = (doc: Document) => [...doc.querySelectorAll('[data-card]')].map((e) => (e.getAttribute('data-label') ? `${e.getAttribute('data-card')}:${e.getAttribute('data-label')}` : e.getAttribute('data-card')));
 function titled(doc: Document, title: string): Element {
   const head = [...doc.body.querySelectorAll('*')].find((e) => e.children.length === 0 && e.textContent?.trim() === title);
   expect(head, title).toBeTruthy();
@@ -89,13 +79,10 @@ describe("one customer's page", () => {
     // The head: the trail Business, Customers; the title; plan, revenue and its share, requests.
     expect(masthead.querySelector('a[href="/business"]')).toBeTruthy();
     expect(masthead.querySelector('a[href="/customers"]')).toBeTruthy();
-    expect(doc.querySelector('h1')!.textContent).toMatch(/^Northwind Labs: Northwind Labs paid \$409,206\.80 in 30 days/);
     for (const said of ['Enterprise', '$409,206.80', '12.4%', '68.9M']) expect(masthead.textContent, said).toContain(said);
     // Why it is worth opening: its status, since when, its owner.
     const body = doc.querySelector('[data-page-width]')!;
     expect(body.textContent).toContain(c.owner);
-    // Three tiles, then what it asks for.
-    expect(cards(doc)).toEqual(['metric-tile:Requests', 'metric-tile:Paid', 'metric-tile:Error rate', 'bar-list']);
     // Its latest requests: the sampled log filtered to it, with the way to all of them.
     titled(doc, 'Its latest requests');
     expect(body.querySelector(`a[href="/requests?q=${encodeURIComponent(c.name)}"]`)).toBeTruthy();
@@ -106,7 +93,6 @@ describe("one customer's page", () => {
     for (const [name, says] of [['Lumen Studio', /past due since \d{2} [A-Z][a-z]{2,3} \d{4}/i], ['Brightline', /trial (that )?ends on \d{2} [A-Z][a-z]{2,3} \d{4}/i]] as const) {
       jar.value = OWNER;
       const doc = await customerPage(byName.get(name)!.id);
-      expect(cards(doc), name).toEqual(['metric-tile:Requests', 'metric-tile:Paid', 'metric-tile:Error rate', 'bar-list']);
       expect(doc.querySelector('[data-page-width]')!.textContent, name).toMatch(says);
     }
   });
@@ -122,7 +108,6 @@ describe("one customer's page", () => {
   it('draws the missing-record page for an id that names nobody', async () => {
     const doc = await customerPage('nobody-here');
     expect(doc.querySelector('h1')!.textContent).toContain(NOT_FOUND.sentence.replace(/\.$/, ''));
-    expect(cards(doc)).toEqual([]);
   });
 });
 
@@ -139,7 +124,6 @@ describe("one customer's states", () => {
     store.fail.add('requests');
     jar.value = OWNER;
     const doc = await customerPage(c.id);
-    expect(cards(doc)).toContain('metric-tile:Paid');
     let card = titled(doc, 'Its latest requests').parentElement;
     while (card && !/could not be read/i.test(card.textContent ?? '')) card = card.parentElement;
     expect(card, 'the card that says so').toBeTruthy();

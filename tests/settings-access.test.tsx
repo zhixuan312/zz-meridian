@@ -20,17 +20,14 @@ describe('the settings page by need', () => {
     // The Assistant section waits on its own promise behind a Suspense boundary, so what renders here is its
     // placeholder; tests/assistant-settings.test.tsx is what settles that section, and this check leaves it alone.
     for (const s of ['Workspace', 'Appearance', 'Agents and MCP']) expect(html, s).toContain(s);
-    // Two sections the page no longer has, because nothing stood behind them, stay gone.
-    for (const s of ['Notifications', 'Danger zone']) expect(html, s).not.toContain(s);
     expect(html).not.toContain('Read-only');
     expect(nameEditable(html)).toBe(true);
   });
 
-  it('shows the workspace read-only, saying so and naming nobody who could change it', () => {
+  it('shows the workspace read-only and disables editing', () => {
     const html = settings(READ);
     expect(html).toContain('Workspace');
     expect(html).toContain('Read-only');
-    expect(html).not.toMatch(/\bOnly an? \b|\bAsk an? (Owner|Admin)\b|\b(Owners|Admins)\b/);
     expect(nameEditable(html)).toBe(false);
   });
 

@@ -1,7 +1,5 @@
 // @vitest-environment node
 // Named cli-* so the payload leaves it out: it draws the Atlas's shell, which a product does not keep.
-import fs from 'node:fs';
-import path from 'node:path';
 import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -22,7 +20,6 @@ import { chromeAccess } from '@/data/access';
 import { AtlasShell } from '@/system/atlas-shell';
 import { NoAccess } from '@/views/no-access';
 
-const ROOT = path.resolve(import.meta.dirname, '..');
 /** The chrome `gate` hands the refusal: resolved for the reader, and null when who they are cannot be told. */
 const chrome = () => chromeAccess().catch(() => null);
 /** The links a piece of markup holds, each as its address and its words. */
@@ -60,8 +57,3 @@ describe('the Atlas', () => {
   });
 });
 
-describe('Business, as a workspace home', () => {
-  it('says who the workspace is for, in the words the declaration holds', () => {
-    expect(fs.readFileSync(path.join(ROOT, 'app/(dashboard)/business/page.tsx'), 'utf8')).toMatch(/workspaces\.business\.audience/);
-  });
-});

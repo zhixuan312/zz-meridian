@@ -8,24 +8,13 @@ vi.mock('next/headers', () => ({
 }));
 
 import { AccessDenied } from '@/data/access';
-import { FEATURES, type FeatureId } from '@/data/features';
 import { viewTools } from '@/logic/tools';
 
 const byName = Object.fromEntries(viewTools.map((t) => [t.name, t]));
-const known = new Set(Object.values(FEATURES).map((f) => f.needs));
 
 beforeEach(() => { jar.value = undefined; });
 
 describe('the view tools ask their feature', () => {
-  it('takes each tool need from the feature table, not from a literal', () => {
-    expect(viewTools.length).toBeGreaterThan(0);
-    expect(known.has('requests:read')).toBe(true);
-    for (const tool of viewTools) {
-      expect(known.has(tool.needs), `${tool.name} restates its need`).toBe(true);
-      expect(tool.needs, `${tool.name} asks another feature's need`).toBe(FEATURES[tool.name as FeatureId].needs);
-    }
-  });
-
   it('refuses the tools a Viewer may not use, and answers the ones they may', async () => {
     jar.value = 'members_12';
     await expect(byName.keys.read({})).rejects.toBeInstanceOf(AccessDenied);

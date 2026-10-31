@@ -1,6 +1,6 @@
 // @vitest-environment node
 import { describe, expect, it } from 'vitest';
-import { HEADROOM, headroom, judge, p95, summary, thin } from '../scripts/lib/timing.ts';
+import { headroom, judge, p95, summary, thin } from '../scripts/lib/timing.ts';
 
 describe('the timing rule', () => {
   it('passes one sample within its limit and asks for a retake over it', () => {
@@ -37,7 +37,6 @@ describe('headroom', () => {
     expect(headroom(900, 500)).toBe(0);
   });
   it('is thin under a fifth of the limit, for a pass only', () => {
-    expect(HEADROOM).toBe(0.2);
     expect(thin(401, 500)).toBe(true);
     expect(thin(500, 500)).toBe(true);
     expect(thin(400, 500)).toBe(false);

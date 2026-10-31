@@ -1,5 +1,3 @@
-import fs from 'node:fs';
-import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const jar = vi.hoisted(() => ({ value: undefined as string | undefined }));
@@ -96,13 +94,6 @@ describe('a part whose data did not arrive', () => {
     expect(line(data.engineering, 'Tickets open')).not.toBe('—');
   });
 });
-
-describe('Main, as a workspace home', () => {
-  it('says who the workspace is for, in the words the declaration holds', () => {
-    expect(fs.readFileSync(path.resolve(import.meta.dirname, '../app/(dashboard)/(home)/page.tsx'), 'utf8')).toMatch(/workspaces\.main\.audience/);
-  });
-});
-
 describe('what the assistant is told of Main', () => {
   it('is the company\'s figures, worked out by the functions the pages they come from use', async () => {
     const { context } = await tool.read({ period: '30d' });

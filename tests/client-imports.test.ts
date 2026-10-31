@@ -113,14 +113,6 @@ describe("the client modules of the product's pages", () => {
 });
 
 describe.skipIf(!SAMPLE)("the sample's walk to the generator", () => {
-  it('follows an import all the way down', () => {
-    // The walk is real: a server module that serves the records reaches the generator, through an alias and a value import.
-    expect(reaches('src/data/collections.ts')).toEqual(['src/data/collections.ts', GENERATOR]);
-    // And a type-only import is not followed: a module that takes only types from the sample does not import it.
-    expect(imports('src/data/metrics.ts')).not.toContain('src/data/sample.ts');
-    expect(imports('src/data/requests.ts')).toContain('src/data/sample.ts');
-  });
-
   it('is not reached from any client module', () => {
     const found = clients.map(reaches).filter((trail): trail is string[] => trail !== null).map((trail) => trail.join(' -> '));
     expect(found, `${found.length} client modules reach ${GENERATOR}:\n${found.join('\n')}`).toEqual([]);

@@ -4,7 +4,6 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 const toasts = vi.hoisted(() => [] as { tone: string; title: string }[]);
 vi.mock('@/components/ui/toast', () => ({ UNDO_MS: 8000, toast: (t: { tone: string; title: string }) => { toasts.push(t); } }));
 
-import { collections } from '@/data/collections';
 import { SettingsBody, type SaveWorkspace } from '@/views/settings';
 
 const may = { workspaceRead: true, workspaceUpdate: true };
@@ -75,19 +74,6 @@ describe('saving the workspace in Settings', () => {
 });
 
 describe('what the workspace record holds', () => {
-  it('is a name and an address, and no time zone: nothing in the product reads one from it', async () => {
-    const { rows } = await collections.find((c) => c.name === 'workspace')!.query({});
-    expect(Object.keys(rows[0]).sort()).toEqual(['id', 'name', 'slug']);
-    render(<SettingsBody may={may} workspace={record} />);
-    expect(screen.queryByLabelText(/Time zone/)).toBeNull();
-    expect(screen.queryByText(/time zone/i)).toBeNull();
-  });
-
-  it('promises the name nowhere it does not appear', () => {
-    const { container } = render(<SettingsBody may={may} workspace={record} />);
-    expect(container.textContent).not.toMatch(/the rail|every date|daily total/i);
-  });
-
   it('takes a newer record when nothing is being edited, and keeps an edit in progress over it', () => {
     const save = async () => ({ ok: true }) as const;
     const { rerender } = render(<SettingsBody may={may} workspace={record} save={save} />);

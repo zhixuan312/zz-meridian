@@ -1,6 +1,6 @@
 import { act, fireEvent, render, screen } from '@testing-library/react';
 import { Suspense } from 'react';
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { Tooltip } from 'radix-ui';
 
 vi.mock('next/navigation', () => ({ usePathname: () => '/members', useRouter: () => ({ refresh() {}, push() {}, replace() {} }) }));
@@ -18,6 +18,13 @@ async function draw(open: boolean, rerender?: (ui: React.ReactElement) => void) 
   await act(async () => { if (rerender) rerender(column(open)); else out = render(column(open)); });
   return out;
 }
+
+beforeEach(() => {
+  chat.messages = [];
+  chat.status = 'ready';
+  chat.error = undefined;
+  vi.clearAllMocks();
+});
 
 describe('the assistant column', () => {
   it('keeps a message typed and not sent while the panel is closed', async () => {

@@ -20,12 +20,4 @@ describe('Prose names each body cell\'s column (#75)', () => {
     expect(container.querySelectorAll('th[data-label]')).toHaveLength(0);
   });
 
-  test('stack makes each table\'s frame the container its rows stack in', () => {
-    const plain = render(<Prose>{DOC}</Prose>);
-    expect(plain.container.querySelector('.\\@container')).toBeNull();
-    plain.unmount();
-    const { container } = render(<Prose stack>{DOC}</Prose>);
-    expect(container.querySelectorAll('.\\@container > table')).toHaveLength(2);
-    expect(container.querySelector('tbody td')).toHaveAttribute('data-label', 'Choice');
-  });
 });

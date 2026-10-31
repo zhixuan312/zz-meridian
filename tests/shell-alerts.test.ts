@@ -1,6 +1,4 @@
 // @vitest-environment node
-import fs from 'node:fs';
-import path from 'node:path';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const jar = vi.hoisted(() => ({ value: undefined as string | undefined }));
@@ -16,7 +14,6 @@ import { latestRuns } from '@/data/verification';
 import { workspaceOf } from '@/views/workspaces';
 
 type Row = Record<string, unknown>;
-const ROOT = path.resolve(import.meta.dirname, '..');
 const all = async (name: string) => (await collections.find((c) => c.name === name)!.query({})).rows as Row[];
 const pathOf = (href: string) => href.split(/[?#]/)[0];
 
@@ -103,10 +100,3 @@ describe('the alerts follow the data', () => {
   });
 });
 
-describe('the console\'s layout', () => {
-  it('draws the alerts it read, and no list somebody typed', () => {
-    const layout = fs.readFileSync(path.join(ROOT, 'app/(dashboard)/layout.tsx'), 'utf8');
-    expect(layout).toMatch(/\breadAlerts\(/);
-    expect(layout).not.toMatch(/\bALERTS\b/);
-  });
-});

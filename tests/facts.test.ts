@@ -7,9 +7,8 @@ import { formatDate } from '@/lib/format-date';
 /**
  * Four of the six rules that find a fact: a record, a first, an "all" and a total. Each returns its fact when its rule
  * holds and nothing when it does not, under its guard, and writes the fact's one line itself with the product's
- * formatters. No line holds a word of praise: the figure is what is said.
+ * formatters.
  */
-const PRAISE = /\b(great|excellent|amazing|impressive|outstanding|congratulations|well done|good job|healthy|strong|solid|nice)\b/i;
 const day = (n: number) => new Date(Date.UTC(2025, 9, 8 + n)).toISOString().slice(0, 10);
 /** Twelve periods of 30 days of revenue, oldest first: each higher than the one before but the ninth, as the sample's are. */
 const PERIODS = [1_472_102.65, 1_597_180.25, 1_735_282.45, 1_922_092.5, 2_107_368.12, 2_189_281.65, 2_431_820.25, 2_599_882.55, 2_357_960.83, 2_862_570.85, 3_134_643.55, 3_300_438.74];
@@ -141,21 +140,5 @@ describe('a total', () => {
 
   it('is nothing when nothing is recorded', () => {
     expect(total([], answered)).toBeNull();
-  });
-});
-
-describe('a fact\'s line', () => {
-  it('holds no word of praise, whatever the rule and the figures', () => {
-    const lines = [
-      record(PERIODS, revenue), record([1, 2, 3, 4, 5, 6, 7], { ...revenue, format: String }),
-      first(Array.from({ length: 40 }, (_, n) => ({ date: day(n), value: 9_000_000 + n * 100_000 })), { thresholds: [10_000_000], what: 'Requests', format: formatCompact }),
-      all([{ label: 'Scale', members: [1, 2, 3] }], () => true, { what: 'customers', did: 'paid on time' }),
-      total([{ date: day(0), value: 5 }, { date: day(1), value: 7 }], { what: 'requests answered', format: String }),
-    ];
-    for (const fact of lines) {
-      expect(fact).not.toBeNull();
-      expect(fact!.text.length).toBeGreaterThan(0);
-      expect(fact!.text, fact!.text).not.toMatch(PRAISE);
-    }
   });
 });

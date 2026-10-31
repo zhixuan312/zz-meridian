@@ -42,7 +42,6 @@ describe('a column chart with more columns than room, as a server writes it', ()
     const c = served(<ColumnChart label="Errors per day" dates={dates} columns={year} />);
     expect(c.querySelectorAll('[data-column]')).toHaveLength(360);
     for (const row of rows(c)) {
-      expect(row.className.split(' ').filter((name) => name.startsWith('gap-'))).toEqual([]);
       expect(gap(row)).toContain('100%');
     }
     expect(gap(rows(c)[1])).toBe(gap(rows(c)[0]));
@@ -84,10 +83,4 @@ describe('a column chart with more columns than room, once it knows its width', 
     expect(cursor).toBeCloseTo(gutter + (720 - gutter) / 360, 3);
   });
 
-  it('keeps the outline of a running column inside the plot: narrower than the 4px the outline needs, it ends with its column', () => {
-    const { container } = render(<ColumnChart label="Errors per day" dates={dates} columns={year} running />);
-    const outline = container.querySelector('[data-running] .border-dashed')!;
-    expect(outline).toHaveClass('ml-[min(0px,calc(100%-4px))]');
-    expect(container.querySelectorAll('[class*="ml-["]')).toHaveLength(1);
-  });
 });

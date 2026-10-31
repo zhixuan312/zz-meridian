@@ -35,10 +35,8 @@ describe('a stacked column chart on the page\'s Meridian', () => {
     );
     fireEvent.click(screen.getByRole('button', { name: 'Point elsewhere' }));
     expect(active(container)).toEqual(['w2']);
-    expect(container.querySelector('[data-readout]')).toHaveClass('opacity-0');
     fireEvent.keyDown(screen.getByRole('group', { name: /^Revenue by model/ }), { key: 'ArrowRight' });
     expect(active(container)).toEqual(['w3']);
-    expect(container.querySelector('[data-readout]')).toHaveClass('opacity-100');
     fireEvent.blur(screen.getByRole('group', { name: /^Revenue by model/ }));
     expect(container.querySelector('[data-readout]')).toBeNull();
   });
@@ -46,7 +44,6 @@ describe('a stacked column chart on the page\'s Meridian', () => {
   it('draws a pointed column with its readout in a specimen, through the Atlas-only index', () => {
     const { container } = render(<ColumnChart label="Revenue by model" parts={parts} columns={weeks} data-preview-index={1} />);
     expect(active(container)).toEqual(['w2']);
-    expect(container.querySelector('[data-readout]')).toHaveClass('opacity-100');
     expect(container.querySelector('[data-readout]')).toHaveTextContent('21 Sept');
   });
 });

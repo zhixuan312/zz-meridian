@@ -23,7 +23,6 @@ const column = (c: HTMLElement, key: string) => c.querySelector(`[data-column="$
 const part = (c: HTMLElement, key: string, p: string) => column(c, key).querySelector(`[data-part="${p}"]`);
 const head = (c: HTMLElement) => [...c.querySelectorAll('table thead th')].map((e) => e.textContent);
 const body = (c: HTMLElement) => [...c.querySelectorAll('table tbody tr')].map((r) => [...r.querySelectorAll('th, td')].map((e) => e.textContent));
-const SHORTHAND = /(^|;)\s*background\s*:/;
 
 /** Draws, then waits for what the chart draws late: the grouped form loads on demand, and the table follows a frame on. */
 async function draw(el: React.ReactElement, columns: number) {
@@ -79,25 +78,15 @@ describe('grouped columns', () => {
     expect((await grouped()).querySelectorAll('[data-value]')).toHaveLength(0);
   });
 
-  it('ring a highlighted group in ink, and never draw the accent beside the slots', async () => {
-    const c = await grouped({ highlight: 'd2', highlightLabel: 'The day of the refund' });
-    expect(column(c, 'd2').querySelector('.ring-ink')).not.toBeNull();
-    expect(column(c, 'd1').querySelector('.ring-ink')).toBeNull();
-    expect(c.querySelector('.bg-accent')).toBeNull();
-  });
-
-  it('draw a running group at half strength inside one dashed outline, and say "so far"', async () => {
+  it('marks a running group and says "so far"', async () => {
     const c = await grouped({ running: true });
     expect(column(c, 'd3').hasAttribute('data-running')).toBe(true);
-    expect(column(c, 'd3').querySelectorAll('.border-dashed:not([data-no-data-mark])')).toHaveLength(1);
-    expect(column(c, 'd3').querySelector('.opacity-50')).not.toBeNull();
     expect(body(c)[2][0]).toBe('Wed, so far');
   });
 
   it('refuse a tone on a grouped part, in its type', () => {
     // @ts-expect-error a grouped part is an identity, never an outcome's tone
-    const toned = <ColumnChart label="Flows by day" grouped parts={[{ key: 'in', label: 'In', tone: 'warning' }]} columns={days} />;
-    expect(toned).toBeTruthy();
+    void <ColumnChart label="Flows by day" grouped parts={[{ key: 'in', label: 'In', tone: 'warning' }]} columns={days} />;
   });
 });
 
@@ -106,7 +95,6 @@ describe('estimates', () => {
     const c = await grouped({}, days.map((d) => ({ ...d, estimate: d.key === 'd1' })));
     for (const p of ['in', 'out']) {
       expect(part(c, 'd1', p)?.hasAttribute('data-estimate'), p).toBe(true);
-      expect(part(c, 'd1', p)?.getAttribute('style') ?? '', p).not.toMatch(SHORTHAND);
     }
     expect(part(c, 'd2', 'in')?.hasAttribute('data-estimate')).toBe(false);
     expect(body(c)[0][0]).toMatch(/\bestimate\b/);
@@ -128,19 +116,15 @@ describe('estimates', () => {
   it('hatch an estimated column of a dense chart too', async () => {
     const many: Column[] = Array.from({ length: 40 }, (_, i) => ({ key: `c${i}`, label: `W${i + 1}`, value: 3 + (i % 5), estimate: i === 7 }));
     const c = await draw(<ColumnChart label="Counts" columns={many} />, 40);
-    expect(column(c, 'c7').matches('[data-estimate]') || column(c, 'c7').querySelector('[data-estimate]') !== null).toBe(true);
+    expect(column(c, 'c7').querySelector('[data-estimate]')).not.toBeNull();
   });
 
-  it('hatch the parts of an estimated stacked column, and fill every stacked part with a background colour', async () => {
+  it('marks only the parts of an estimated stacked column as estimates', async () => {
     const models: ColumnPart[] = [{ key: 'large', label: 'Large' }, { key: 'swift', label: 'Swift' }];
     const weeks: StackedColumn[] = [{ key: 'w1', label: '14 Sept', values: [60, 30], estimate: true }, { key: 'w2', label: '21 Sept', values: [40, 20] }];
     const c = await draw(<ColumnChart label="Revenue by model" parts={models} columns={weeks} />, 2);
     expect(column(c, 'w1').querySelectorAll('[data-part][data-estimate]')).toHaveLength(2);
     expect(column(c, 'w2').querySelectorAll('[data-part][data-estimate]')).toHaveLength(0);
-    for (const p of c.querySelectorAll('[data-part]')) {
-      expect(p.getAttribute('style') ?? '').toMatch(/background-color:/);
-      expect(p.getAttribute('style') ?? '').not.toMatch(SHORTHAND);
-    }
   });
 
   it('write nothing about estimates when no column is one', async () => {

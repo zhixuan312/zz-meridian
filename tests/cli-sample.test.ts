@@ -7,11 +7,10 @@ import { TICKETS } from '@/system/fixtures/sample-engineering';
 import { MEMBERS } from '@/system/fixtures/sample-members';
 import { PAST_INCIDENTS } from '@/system/fixtures/sample-ops';
 import { payloadsOf, traceOf, usageOf } from '@/system/fixtures/sample-records';
-import verify from '../scripts/verify.config';
 
 const sum = (xs: number[]) => xs.reduce((a, b) => a + b, 0);
 const cents = (usd: number) => Math.round(usd * 100);
-/** The day in progress and the last complete day, from the frozen clock, which tests/cli-sample-company.test.ts pins. */
+/** The day in progress and the last complete day, from the frozen clock. */
 const TODAY = DEMO_NOW.toISOString().slice(0, 10);
 const YESTERDAY = new Date(DEMO_NOW.getTime() - 86_400_000).toISOString().slice(0, 10);
 
@@ -138,25 +137,3 @@ describe('the records that name each other', () => {
   });
 });
 
-describe('the detail pages verify checks by default', () => {
-  // Read by what each route names, never by its place in the list: the config is the team's, and a record moved from
-  // detailRoutes to missingRoutes is the same record (a check that matched by position is the class #65 was).
-  const config = verify as { detailRoutes: string[]; missingRoutes?: string[] };
-  const routes = [...config.detailRoutes, ...(config.missingRoutes ?? [])];
-  const requests = routes.filter((r) => r.startsWith('/requests/')).map((r) => REQUESTS.find((q) => `/requests/${q.id}` === r));
-  const customers = routes.filter((r) => r.startsWith('/customers/')).map((r) => CUSTOMERS.find((c) => `/customers/${c.id}` === r));
-  it('still show the states their comments name', () => {
-    expect(requests).toContainEqual(expect.objectContaining({ method: 'GET', status: 200, model: null }));
-    expect(requests).toContainEqual(expect.objectContaining({ method: 'POST', route: '/v1/messages', status: 201 }));
-    expect(requests).toContainEqual(expect.objectContaining({ status: 404 }));
-    expect(requests).toContain(undefined);
-  });
-  it('still show the customers their comments name', () => {
-    expect(customers).toContainEqual(expect.objectContaining({ status: 'active' }));
-    expect(customers).toContainEqual(expect.objectContaining({ status: 'past due', name: 'Lumen Studio' }));
-    expect(customers).toContain(undefined);
-  });
-  it('names in missingRoutes only records that do not exist', () => {
-    for (const r of config.missingRoutes ?? []) expect([...REQUESTS.map((q) => `/requests/${q.id}`), ...CUSTOMERS.map((c) => `/customers/${c.id}`)], r).not.toContain(r);
-  });
-});

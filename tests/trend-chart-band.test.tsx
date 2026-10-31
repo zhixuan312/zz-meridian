@@ -33,7 +33,7 @@ const chart = (more: Partial<Parameters<typeof TrendChart>[0]> = {}) =>
 beforeEach(() => { size.width = 640; });
 
 describe('a trend chart\'s band: the region the page is judged against', () => {
-  it('is the plot\'s whole width, from the ceiling down to the axis floor, in the track\'s own wash', () => {
+  it('is the plot\'s whole width, from the ceiling down to the axis floor', () => {
     const { container } = chart();
     const rect = drawn(container);
     // The plot's floor and its left edge are the axis line's: the band stands on the axis, not beside it.
@@ -44,7 +44,6 @@ describe('a trend chart\'s band: the region the page is judged against', () => {
     expect(num(rect, 'y') + num(rect, 'height')).toBe(axis);
     expect(num(rect, 'x')).toBe(left);
     expect(num(rect, 'width')).toBe(right - left);
-    expect(rect.getAttribute('fill')).toBe('var(--fill-track)');
   });
 
   it('raises the scale to hold its ceiling, so the whole band is on the chart whatever the data does', () => {
@@ -91,7 +90,6 @@ describe('a trend chart\'s marks: the days a fact names', () => {
     const floor = Math.max(...levels(container));
     const ceiling = num(drawn(container), 'y');
     for (const m of found) {
-      expect(dot(m).getAttribute('fill')).toBe('var(--warning)');
       expect(num(dot(m), 'cx')).toBe(num(stem(m), 'x1'));
       expect(num(dot(m), 'cy')).toBe(num(stem(m), 'y1'));
       expect(num(stem(m), 'y2')).toBe(floor);

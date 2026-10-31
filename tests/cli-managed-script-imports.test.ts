@@ -51,7 +51,6 @@ describe('the import scan', () => {
 describe("the scripts Meridian ships into an adopted project", () => {
   it('import only what that project has: Meridian\'s own files and the few team files every project keeps', () => {
     const scripts = [...managed].filter((f) => f.startsWith('scripts/') && /\.tsx?$/.test(f));
-    expect(scripts.length).toBeGreaterThan(10);
     const reaches: string[] = [];
     for (const f of scripts) {
       const src = fs.readFileSync(path.join(ROOT, f), 'utf8');

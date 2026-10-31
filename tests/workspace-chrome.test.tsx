@@ -120,15 +120,3 @@ describe('the palette', () => {
     for (const label of ['Home', 'Usage', 'Customers', 'API keys', 'Members']) expect(options.some((o) => o.startsWith(label)), label).toBe(false);
   });
 });
-
-describe('the product\'s shell', () => {
-  it('hands the rail and the palette one access, and keeps the workspace nowhere but the address', () => {
-    const layout = fs.readFileSync(path.join(ROOT, 'app/(dashboard)/layout.tsx'), 'utf8');
-    expect(layout).toMatch(/<WorkspaceRail access=\{access\}/);
-    expect(layout).toMatch(/<WorkspacePalette access=\{access\}/);
-    // The adapter as code: what its comments say is not what it does.
-    const adapter = fs.readFileSync(path.join(ROOT, 'src/views/workspace-chrome.tsx'), 'utf8').replace(/\/\*[\s\S]*?\*\/|\/\/[^\n]*/g, '');
-    expect(adapter).toMatch(/usePathname\(\)/);
-    expect(adapter).not.toMatch(/cookie|localStorage|sessionStorage|useSearchParams|useState/i);
-  });
-});

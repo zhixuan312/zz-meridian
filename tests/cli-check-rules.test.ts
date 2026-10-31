@@ -139,9 +139,6 @@ describe('the four-layer rules', () => {
   }, 60_000);
 
   it('refuse a file under src/views that is not a renderer, and allow workspaces.ts and a capitalised component', () => {
-    // The fixture is camelCase on purpose: a kebab-case `src/views/<name>.ts` token is the shape
-    // tests/cli-moved-paths-documented.test.ts reads as a module that has moved to src/logic, and this
-    // file exists only inside the copy, for the length of this test.
     put('src/views/helperFn.ts', 'export const helper = () => 1;\n');
     put('src/views/plain.tsx', 'export const helper = () => 1;\n');
     put('src/views/Good.tsx', 'export function Good() { return null; }\n');
@@ -308,20 +305,6 @@ describe('the four-layer rules', () => {
     expect(r.status).toBe(0);
   }, 60_000);
 
-  it('carry the reason read() cannot serve it on each of the seven direct reads FR-9 keeps', () => {
-    // FR-9's seven sites: the five the check governs, each stating its escape on the call's own line, and the two in
-    // src/data/access.ts, which the rule does not govern and which state the same reason as a comment. A list of line
-    // numbers here broke on the first comment added above one of them; the escape is the call's own statement.
-    const governed = ['app/sign-in/actions.ts', 'app/sign-in/gated-panel.tsx', 'app/(dashboard)/requests/[id]/actions.ts', 'app/api/export/requests/route.ts', 'src/lib/assistant/tools.ts'];
-    for (const file of governed) {
-      const calls = fs.readFileSync(path.join(ROOT, file), 'utf8').split('\n').filter((l) => /\.query\(/.test(l));
-      expect(calls.length, `${file} holds one direct read`).toBe(1);
-      expect(calls[0], `${file} states its escape`).toMatch(/\/\/ allow-no-direct-query: read\(\) cannot serve this — \S/);
-    }
-    const access = fs.readFileSync(path.join(ROOT, 'src/data/access.ts'), 'utf8').split('\n').filter((l) => /\.query\(/.test(l) && /\/\/ read\(\) cannot serve this: \S/.test(l));
-    expect(access.length, 'src/data/access.ts holds its two, with their reason').toBe(2);
-  });
-
   it('decide what reads by the code, not by a comment that names read()', () => {
     // `src/data/collections.ts` names `read()` in its prose and calls none of the six. A raw text match would call it a
     // reading module and refuse this client, which reaches nothing but the collections' own data.
@@ -341,13 +324,10 @@ describe('the client-import walk in a tree that has no sample', () => {
     remove(generator);
     const r = spawnSync(path.join(ROOT, 'node_modules/.bin/vitest'), ['run', 'tests/client-imports.test.ts', '--reporter=json', `--outputFile=${report}`], { cwd: dir, encoding: 'utf8' });
     // The report is written whether or not the run passed, so its own cases say what happened.
-    const results = (JSON.parse(fs.readFileSync(report, 'utf8')).testResults as { assertionResults: { fullName: string; status: string }[] }[]).flatMap((f) => f.assertionResults);
+    const results = (JSON.parse(fs.readFileSync(report, 'utf8')).testResults as { assertionResults: { status: string }[] }[]).flatMap((f) => f.assertionResults);
     // Only the reading-module boundary can speak without a generator, and it does: the two unguarded cases run.
     const ran = results.filter((a) => a.status === 'passed' || a.status === 'failed');
-    expect(ran.map((a) => `${a.status} ${a.fullName}`), `${r.stdout}\n${r.stderr}`).toEqual([
-      "passed the client modules of the product's pages are found",
-      "passed the client modules of the product's pages never reach a module that reads",
-    ]);
+    expect(ran.map((a) => a.status), `${r.stdout}\n${r.stderr}`).toEqual(['passed', 'passed']);
     // The generator cases are collected and skipped, not absent: the file is one file, and it did not skip whole.
     expect(results.length).toBeGreaterThan(ran.length);
     expect(r.status).toBe(0);

@@ -7,10 +7,9 @@ vi.mock('next/headers', () => ({
   headers: async () => new Headers(),
 }));
 
-import { collections } from '@/data/collections';
 import { nowExplore } from '@/logic/now-explore';
 import { releasesExplore } from '@/logic/releases-explore';
-import { releaseRefers, testsExplore } from '@/logic/tests-explore';
+import { testsExplore } from '@/logic/tests-explore';
 import { ask } from './cli-explore-kit';
 
 /**
@@ -27,9 +26,6 @@ describe('a run names its release', () => {
     expect(answer.length).toBeLessThanOrEqual(3000);
   });
 
-  it("reads the releases by the collection's own key", () => {
-    expect(releaseRefers.releaseId.key).toBe(collections.find((c) => c.name === 'releases')!.key);
-  });
 
   it('on Tests and on Now', async () => {
     expect(await ask(testsExplore, { source: 'runs', measures: ['failed'], by: 'releaseId', period: '30d' })).toMatch(/^- releases_1 \(v4\.18\.2, Edge gateway, production\): 1 run$/m);

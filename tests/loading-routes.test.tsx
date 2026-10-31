@@ -1,5 +1,3 @@
-import fs from 'node:fs';
-import path from 'node:path';
 import { render, screen, cleanup } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import Home from '../app/(dashboard)/(home)/loading';
@@ -28,7 +26,6 @@ describe('a page headed by a sentence', () => {
       const heading = screen.getByRole('heading', { level: 1 });
       expect(heading.textContent, name).toBe(`${name}: `);
       expect(heading.querySelector('[data-title-pending]'), name).not.toBeNull();
-      expect(heading.className, name).not.toMatch(/\bt-page\b/);
       cleanup();
     }
   });
@@ -41,11 +38,7 @@ describe('a page headed by a sentence', () => {
 });
 
 describe('every console route has its own loading state', () => {
-  it('drops the shared Home fallback', () => {
-    expect(fs.existsSync(path.resolve(import.meta.dirname, '../app/(dashboard)/loading.tsx'))).toBe(false);
-  });
   it('announces each as busy, under its own name', () => {
-    const shapes = new Set<string>();
     const labels = new Set<string>();
     for (const [name, Loading] of Object.entries(ROUTES)) {
       render(<Loading />);
@@ -57,10 +50,8 @@ describe('every console route has its own loading state', () => {
       labels.add(label);
       expect(screen.getAllByRole('status'), `${name}: one busy region`).toHaveLength(1);
       expect(screen.queryAllByRole('heading', { level: 1 }).length, `${name}: the masthead is not drawn twice`).toBeLessThanOrEqual(1);
-      shapes.add(status.innerHTML);
       cleanup();
     }
     expect(labels.size, 'each route names itself').toBe(Object.keys(ROUTES).length);
-    expect(shapes.size, 'route-shaped, not one skeleton for all').toBeGreaterThanOrEqual(5);
   });
 });

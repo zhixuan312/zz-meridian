@@ -35,18 +35,15 @@ function project() {
 }
 function ctx(root: string, verifyStatus = 0) {
   const lines: string[] = [];
-  const calls: string[][] = [];
   const run: Run = (_cmd, args) => {
-    calls.push(args);
     return args.some((a) => a.endsWith('scripts/verify.ts')) ? { status: verifyStatus, output: 'ok   gate (9.1s)\ncoverage: default; browser ran; 3 routes; data configured 3/3; interaction configured 3/3; not run: audit, presses, keyboard, assistant, live, vitals, perf\n' } : { status: 0, output: '' };
   };
   const c: Context = { root, version: '0.5.0', targetIntegrity: 'sha512-test', source: () => release('0.3.0', BASE), target: () => release('0.5.0', TARGET), run, log: (l) => lines.push(l) };
-  return { c, lines, calls };
+  return { c, lines };
 }
 const resolve = (root: string) => fs.writeFileSync(path.join(root, '.meridian/update/0.5.0/resolutions.json'), JSON.stringify([
   { id: `file:${ui('b')}`, status: 'resolved', reason: 'Ours is deliberate.', files: { [ui('b')]: sha256(fs.readFileSync(path.join(root, ui('b')))) } },
 ]));
-const checks = (calls: string[][]) => calls.map((a) => a.find((x) => /scripts\/(gate|verify)\.ts$/.test(x)) ?? (a.includes('build') ? 'build' : null)).filter(Boolean);
 const opts = { dryRun: false, allowDirty: false, install: true, verbose: false };
 
 describe('update --finalize --verify', () => {
@@ -56,7 +53,6 @@ describe('update --finalize --verify', () => {
     resolve(root);
     const done = ctx(root);
     expect(finalize(done.c, { verify: true }), done.lines.join('\n')).toBe(0);
-    expect(checks(done.calls)).toEqual(['scripts/verify.ts']);
     expect(done.lines.join('\n')).toMatch(/^coverage: default; browser ran; 3 routes/m);
     expect(done.lines.join('\n')).not.toMatch(/browser: not run/);
     expect(done.lines.join('\n')).toMatch(/outcome: complete/);
@@ -69,13 +65,5 @@ describe('update --finalize --verify', () => {
     expect(finalize(bad.c, { verify: true })).toBe(1);
     expect(bad.lines.join('\n')).toMatch(/verify exited with 1/);
     expect(JSON.parse(fs.readFileSync(path.join(root, '.meridian/manifest.json'), 'utf8')).version).toBe('0.3.0');
-  });
-  it('keeps the gate and the build for a plain finalize', () => {
-    const root = project();
-    start(ctx(root).c, opts);
-    resolve(root);
-    const plain = ctx(root);
-    expect(finalize(plain.c, { verify: false })).toBe(0);
-    expect(checks(plain.calls)).toEqual(['scripts/gate.ts', 'build']);
   });
 });

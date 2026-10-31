@@ -8,22 +8,17 @@ vi.mock('next/headers', () => ({
 }));
 
 import { chromeAccess } from '@/data/access';
-import { chooseViewAs } from '@/data/view-as';
 import { members } from '@/data/collections';
 
 beforeEach(() => { jar.value = undefined; });
 
 describe('the chrome sees the person', () => {
-  it('names the person with role and add-ons, and lists the five personas', async () => {
+  it('names the person with role and add-ons, and identifies the current persona', async () => {
     jar.value = 'members_5';
     const a = await chromeAccess();
     expect(a.user).toEqual({ name: 'Lucas Meyer', role: 'Member + Key manager' });
     expect(a.viewAs?.current).toBe('members_5');
-    expect(a.viewAs?.options.map((o) => [o.id, o.label])).toEqual([
-      ['members_1', 'Maya Chen'], ['members_2', 'Jonas Weber'], ['members_4', 'Priya Nair'], ['members_5', 'Lucas Meyer'], ['members_12', 'Grace Liu'],
-    ]);
     expect(a.viewAs?.options.every((o) => !o.disabled)).toBe(true);
-    expect(a.viewAs?.choose).toBe(chooseViewAs);
   });
 
   it('shows Maya Chen as Owner with no cookie, and disables a persona who is not Active', async () => {

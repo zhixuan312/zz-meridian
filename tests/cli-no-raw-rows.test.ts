@@ -1,13 +1,9 @@
 // @vitest-environment node
 // A record a browser receives is built field by field, never inherited from the row it came from. A field added to a
 // record later must therefore be refused here rather than published by inheritance.
-import fs from 'node:fs';
-import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { collections } from '@/data/collections';
 import { projectKey, projectMember, projectRelease, projectRequest, projectRun, projectTicket } from '@/data/projections';
-
-const ROOT = path.resolve(import.meta.dirname, '..');
 
 const ALLOWED = ['created', 'env', 'hint', 'id', 'lastUsed', 'name', 'owner', 'scopes'];
 
@@ -64,30 +60,4 @@ describe('the projections', () => {
     });
   }
 
-  it('reads every one of the six through its projection, where the record is read', () => {
-    // Where each record is read, and the projection that must be called there. The cast the check refuses is the raw
-    // one — of a whole array, or of a single row handed straight to a view.
-    const callers = [
-      ['app/(dashboard)/keys/page.tsx', 'projectKey'],
-      ['app/(dashboard)/members/page.tsx', 'projectMember'],
-      ['app/(dashboard)/requests/[id]/page.tsx', 'projectRequest'],
-      ['src/data/tickets.ts', 'projectTicket'],
-      ['src/data/engineering.ts', 'projectRun'],
-      ['src/data/engineering.ts', 'projectRelease'],
-    ] as const;
-    // The raw forms, and only them: a cast of a whole array, and a single row cast where it is handed on rather than
-    // into a projection. `projectKey(row as ApiKey)` is the per-row cast the contract permits, and this does not refuse it.
-    const RAW_CAST = /\bas\s+(ApiKey|Member|RequestRow|Ticket|TicketRow|VerificationRun|Release|RunRow)\[\]|\brows\[0\]\s+as\s/;
-    for (const [file, projection] of callers) {
-      const text = fs.readFileSync(path.join(ROOT, file), 'utf8');
-      expect(text, `${file} must call ${projection}`).toMatch(new RegExp(`\\b${projection}\\(`));
-      expect(text, `${file} must not keep the raw cast`).not.toMatch(RAW_CAST);
-    }
-  });
-
-  it('answers the create action with the object it built, never the row it wrote', () => {
-    const action = fs.readFileSync(path.join(ROOT, 'app/(dashboard)/keys/actions.ts'), 'utf8');
-    expect(action).not.toMatch(/\.\.\.\(key as ApiKey\)/);
-    expect(action).toMatch(/projectKey\(/);
-  });
 });

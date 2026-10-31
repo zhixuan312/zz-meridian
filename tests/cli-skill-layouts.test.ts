@@ -27,10 +27,8 @@ const atlasOnly = [...(/const atlasOnly = \[([^\]]*)\]/.exec(brand)?.[1] ?? '').
 // that needs the prefix.
 describe('the skill in a project made by create', () => {
   it('names no required path that create leaves out', () => {
-    expect(atlasOnly).toContain('src/system/content.ts');
     // The template's tracked files, less what `brand --product --no-atlas` removes, with the brief and the two skill trees.
     const productOnly = ['src/system/specimen.tsx', 'src/system/registry.ts'];
-    for (const f of productOnly) expect(brand, f).toContain(`'${f}'`);
     const created = new Set([
       ...tracked.filter((f) => !/^(app\/system|docs|decisions|skills|cli|\.github)\//.test(f) && !atlasOnly.includes(f) && !productOnly.includes(f) && !/^(CONTRIBUTING|CHANGELOG)\.md$/.test(f)
         && !/^src\/components\/.*\/(README\.md|preview\.tsx)$/.test(f) && !/^app\/.*README\.md$/.test(f)),
@@ -44,8 +42,6 @@ describe('the skill in a project made by adopt', () => {
   it('names no required path that adopt does not give', () => {
     // What adopt copies, what it writes for the project, the two skill trees, and the team's own `app/`.
     const adopted = new Set([...adoptSetOf(tracked), 'src/app.config.ts', 'scripts/verify.config.ts', 'docs/brief.md', 'AGENTS.md', '.meridian/manifest.json', 'app/layout.tsx', ...skillTrees]);
-    expect(adopted.has('src/lib/collection.ts')).toBe(true);
-    expect(adopted.has('src/data/access.ts')).toBe(false);
     expect(scanReferences(installed, holds(adopted), scripts)).toEqual([]);
   });
 });

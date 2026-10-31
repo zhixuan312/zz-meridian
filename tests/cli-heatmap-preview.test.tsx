@@ -19,7 +19,6 @@ const steps = (f: HTMLElement) => [...f.querySelectorAll('[data-cell]')].map((e)
 const names = (f: HTMLElement) => within(f).queryAllByText(/^(Mon|Tue|Wed|Thu|Fri|Sat|Sun)$/).map((e) => e.textContent);
 const readout = (f: HTMLElement) => f.querySelector<HTMLElement>('[data-readout]')!;
 const shares = (f: HTMLElement) => [readout(f).previousElementSibling, readout(f).nextElementSibling].map((e) => Number((e as HTMLElement).style.flexGrow));
-const classes = (e: Element) => e.className.split(/\s+/);
 
 beforeEach(() => { size.width = 688; size.height = 0; });
 
@@ -50,16 +49,13 @@ describe('the Heatmap\'s specimens: the calendar is drawn whole, and large', () 
 });
 
 describe('the Heatmap\'s specimens: what is said to be pointed at is drawn pointed at', () => {
-  const ringed = (f: HTMLElement) => [...f.querySelectorAll('[data-cell]')].filter((e) => classes(e).includes('ring-2'));
-
   // A specimen that names a cell its figure does not draw at some width draws nothing pointed at, and says nothing.
-  it.each([688, 310])('draws one ring and a readout in every figure asked for a cell or a day, at %ipx', (width) => {
+  it.each([688, 310])('draws a readout in every figure asked for a cell or a day, at %ipx', (width) => {
     size.width = width;
     const { container } = render(<HeatmapPreview />);
     const asked = [...container.querySelectorAll<HTMLElement>('figure[data-preview-cell], figure[data-preview-date]')];
     expect(asked).toHaveLength(6);
     for (const f of asked) {
-      expect(ringed(f), f.getAttribute('aria-label')!).toHaveLength(1);
       expect(f.querySelector('[data-readout]'), f.getAttribute('aria-label')!).not.toBeNull();
     }
   });
@@ -68,7 +64,6 @@ describe('the Heatmap\'s specimens: what is said to be pointed at is drawn point
     size.width = 310;
     const { container } = render(<HeatmapPreview />);
     const last = figure(container, 'Requests by weekday and hour, pointed at Thursday 23:00');
-    expect(ringed(last).map((e) => e.getAttribute('data-cell'))).toEqual(['3-7']);
     expect(readout(last)).toHaveTextContent(/requests · Thu 21:00–24:00 UTC$/);
     expect(shares(last)).toEqual([7, 0]);
   });
@@ -81,14 +76,6 @@ describe('the Heatmap\'s specimens: what is said to be pointed at is drawn point
 });
 
 describe('the Heatmap\'s specimens: every state is drawn', () => {
-  it('labels each specimen', () => {
-    render(<HeatmapPreview />);
-    expect(screen.getAllByRole('heading', { level: 3 }).map((h) => h.textContent)).toEqual([
-      'By hour', 'Grouped', 'A year of days', 'The latest weeks that fit', 'Half a year', 'A day of zero', 'A day in progress',
-      'A day pointed at', 'An hour pointed at', 'In another timezone', 'Focus', 'Empty', 'On the page\'s Meridian', 'One outlier hour',
-    ]);
-  });
-
   it('draws days of zero as the empty track among filled cells', () => {
     const { container } = render(<HeatmapPreview />);
     const quiet = figure(container, 'Requests a day, with two days of none');
@@ -116,14 +103,6 @@ describe('the Heatmap\'s specimens: every state is drawn', () => {
     expect(shares(first)).toEqual([0, 7]);
   });
 
-  it('draws the focus ring on a week of hours and on a calendar', () => {
-    const { container } = render(<HeatmapPreview />);
-    for (const label of ['Requests by weekday and three-hour block, focused', 'Requests a day over the last 26 weeks, focused']) {
-      expect(classes(within(figure(container, label)).getByRole('group')), label).toEqual(expect.arrayContaining(['outline-2', 'outline-offset-4', 'outline-accent']));
-    }
-    expect(classes(within(figure(container, 'Requests by weekday and hour')).getByRole('group'))).not.toContain('outline-2');
-  });
-
   it('draws nothing to rank as the empty track, the legend reading More, on max and on quantile', () => {
     const { container } = render(<HeatmapPreview />);
     for (const label of ['Requests by weekday and three-hour block, with none', 'Requests a day over the last 26 weeks, with none']) {
@@ -137,7 +116,6 @@ describe('the Heatmap\'s specimens: every state is drawn', () => {
   it('draws a day pointed at on the calendar and marked on the chart that shares the page\'s Meridian', () => {
     const { container } = render(<HeatmapPreview />);
     const calendar = figure(container, 'Requests a day over the last 26 weeks, on the page\'s Meridian');
-    expect([...calendar.querySelectorAll('[data-cell]')].filter((e) => classes(e).includes('ring-2')).map((e) => e.getAttribute('data-cell'))).toEqual(['2026-09-24']);
     expect(readout(calendar)).toHaveTextContent(/^Thu 24 Sept? 2026 · .+ requests$/);
     // The Trend chart draws a dot on its series only at the day the Meridian points at.
     const chart = screen.getByRole('img', { name: /^Requests per day over the last 30 days/ });

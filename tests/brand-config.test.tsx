@@ -8,7 +8,7 @@ vi.mock('@/app.config', async (importOriginal) => {
 
 import { AppMark } from '@/components/base/app-mark';
 import { Providers } from '@/components/base/providers';
-import { ACCENTS, PREPAINT } from '@/lib/preferences';
+import { PREPAINT } from '@/lib/preferences';
 
 afterEach(() => {
   localStorage.clear();
@@ -16,9 +16,6 @@ afterEach(() => {
 });
 
 describe('branding from the app configuration', () => {
-  it('recognizes the configured custom accent', () => {
-    for (const a of ['indigo', 'cobalt', 'jade', 'graphite', 'brand']) expect(ACCENTS).toContain(a);
-  });
   it('applies the configured theme before paint when nothing is stored', () => {
     new Function(PREPAINT)();
     expect(document.documentElement.getAttribute('data-theme')).toBe('dark');
