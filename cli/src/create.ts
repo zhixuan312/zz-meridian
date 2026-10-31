@@ -64,7 +64,7 @@ export function create(o: CreateOptions): number {
   writeManifest(root, { version: VERSION, route: 'create', brand, files });
 
   if (hasCommand('git')) run('git', ['init', '-q'], root);
-  if (o.install && run(install[0], install[1], root).status !== 0) return fail(`${install.join(' ')} failed (above); run it again in ${root}`);
+  if (o.install && run(install[0], install[1], root).status !== 0) return fail(`${install[0]} ${install[1].join(' ')} failed (above); run it again in ${root}`);
 
   console.log(`
 ${name} is a new Meridian ${VERSION} dashboard in ${root}.
