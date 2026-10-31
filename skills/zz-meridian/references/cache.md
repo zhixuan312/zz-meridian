@@ -495,10 +495,10 @@ const PAGE = 500;
  * Every row a question keeps, of a collection the scope may read. A read returns a page, so this keeps asking the *same*
  * question until the total is in hand: a count, a join or a summary over a collection starts here, never from a first
  * page. The order and the conditions are re-asked of every page, so a table claiming "each" is not the first page of
- * something else. Any `limit` the caller passes is ignored: asking here means every row.
+ * something else. Any `limit` or `offset` the caller passes is ignored: asking here means every matching row.
  */
 export async function readAllInScope(scope: AccessScope, name: string, q: Query = {}): Promise<{ rows: Record<string, unknown>[]; revision?: string; observedAt: string }> {
-  const first = await readInScope(scope, name, { ...q, limit: PAGE });
+  const first = await readInScope(scope, name, { ...q, limit: PAGE, offset: 0 });
   // The first page says how many there are, so the rest are asked together: one after another, a read of N pages waited
   // N round trips (a year of usage for twenty models is fifteen).
   const offsets = Array.from({ length: Math.max(0, Math.ceil(first.total / PAGE) - 1) }, (_, i) => (i + 1) * PAGE);
