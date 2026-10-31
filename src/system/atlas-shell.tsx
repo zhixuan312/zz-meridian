@@ -59,8 +59,8 @@ function Drawer({ shelf, asked, root }: { shelf: ReactNode; asked: number; root:
   return (
     <Dialog.Root open={nav.open} onOpenChange={nav.setOpen}>
       <Dialog.Portal>
-        <Dialog.Overlay className="scrim-in fixed inset-0 z-(--layer-rail) bg-scrim lg:hidden" />
-        <Dialog.Content aria-describedby={undefined} {...nav.content} className="sheet-in fixed inset-y-0 left-0 z-(--layer-rail) w-(--rail-width) max-w-[86vw] border-r border-line bg-ground shadow-overlay lg:hidden">
+        <Dialog.Overlay className="scrim-in fixed inset-0 z-(--layer-overlay) bg-scrim lg:hidden" />
+        <Dialog.Content aria-describedby={undefined} {...nav.content} className="sheet-in fixed inset-y-0 left-0 z-(--layer-overlay) w-(--rail-width) max-w-[86vw] border-r border-line bg-ground shadow-overlay lg:hidden">
           <Dialog.Title className="sr-only">Contents</Dialog.Title>
           {shelf}
           <Dialog.Close aria-label="Close the contents" className="absolute top-4 -right-12 grid size-9 place-items-center rounded-full bg-surface-raised text-ink-2 shadow-overlay">
