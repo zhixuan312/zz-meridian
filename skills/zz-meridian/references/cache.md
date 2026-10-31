@@ -359,8 +359,7 @@ export async function gate(feature: FeatureId): Promise<Refusal | null> {
 
 /**
  * The tab a withheld page carries. It is the standalone missing page's own title, written here because this layer may
- * not import a view to read it; `tests/refusal-descriptor.test.ts` and `tests/cli-refusal.test.tsx` hold the two to one
- * string, so they cannot drift apart.
+ * not import a view to read it. A withheld feature uses a generic missing title rather than disclosing its own name.
  */
 const WITHHELD_TITLE = 'Not found';
 

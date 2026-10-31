@@ -39,7 +39,7 @@ There is no disabled, loading, empty or error state: a disclosure that has nothi
 ## Behaviour
 
 - Pressing the summary, or Enter or Space while it has focus, opens and closes it. The browser handles all three: the component ships no client code.
-- `defaultOpen` starts it open. After the first render it is the reader's: the page does not hold or reset the state.
+- `defaultOpen` supplies the initial open attribute; keep it unchanged while the disclosure is mounted. The browser owns the reader's toggles, which ordinary rerenders with the same prop preserve. Changing the prop changes that attribute; this is not a controlled disclosure API.
 - It opens at once. Nothing animates the height, which reduced motion would ask to drop anyway; under reduced motion the chevron turns at once too.
 - Find in page opens a closed disclosure that holds the match, where the browser supports it.
 

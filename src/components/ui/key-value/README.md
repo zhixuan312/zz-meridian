@@ -62,4 +62,4 @@ import { KeyValue } from '@/components/ui/key-value';
 <KeyValue items={[{ label: 'Request ID', value: 'req_8f2k1x9a3m4c', mono: true }, { label: 'Latency', value: '1,842ms' }]} />
 ```
 
-Props: `items` (`label`, `value`, `action`, `mono`), `columns` (1 | 2), `className`.
+Props: `items` (`label`, `value`, `title`, `action`, `mono`, `wrap`), `columns` (1 | 2), `className`. `title` supplies the full text for a node value that truncates; `wrap` keeps the value readable in full instead of truncating, and omits the title.
