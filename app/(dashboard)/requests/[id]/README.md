@@ -19,7 +19,8 @@ Status: beta
 | Loading | `loading.tsx`: the facts beside the trace, then two body cards, as skeletons. The id is read inside that boundary |
 | Success | Status `neutral`; the route's own phase (Model, Search, Storage or Parse) in the accent; no primary action |
 | Rate limited, rejected, not found | Status `warning`; the trace ends at the limit, the validation or the lookup phase, in `critical`; tokens and cost read "None, refused"; the response is a short error body |
-| No request body (GET, DELETE) | The Request body card says "No body: a GET carries everything it needs in its address." in a dashed frame; Copy as cURL sends no `-d` |
+| No captured request body | The Request body card says no request body was recorded, without assuming what an HTTP method can carry; Copy as cURL adds no body option |
+| Captured empty body | The card explicitly names zero bytes and keeps Copy available for the exact empty value; Copy as cURL sends it with `--data-raw ''` |
 | Failed | Status `critical`; the route's own phase and the error phase in `critical`; tokens and cost read "None, it failed"; Replay is the primary for someone who may replay |
 | Failed, for a Viewer | The same, with no Replay and nothing in its place: the page does not say who can replay. More actions holds no Open API keys for anyone who may not open them |
 | Replayed | A toast "Replayed: 200 OK" (or 201) naming the new request, with Open; the new request leads the list and its page shows "Replay of" linking back |

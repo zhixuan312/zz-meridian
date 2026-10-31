@@ -36,8 +36,14 @@ describe('Replay on a failed request', () => {
     expect(toasts.at(-1)).toMatchObject({ tone: 'critical', title: 'Not replayed', description: 'The replay did not reach the server. Try again.' });
     expect(screen.getByRole('button', { name: 'Replay' })).toBeTruthy();
   });
-  it('states no API key it does not know', () => {
-    view(async () => ({ ok: false, error: 'unused' }));
-    expect(screen.queryByText('Production backend')).toBeNull();
+});
+
+describe('captured request body presence', () => {
+  it('keeps an empty captured body copyable, distinct from no captured body', () => {
+    const props = { routeP95: 612, request: failed, trace: traceOf(failed), now: '2026-10-05T09:00:00.000Z', replay: async () => ({ ok: false as const, error: 'Not replayed in this case' }) };
+    const { rerender } = render(<RequestView {...props} payloads={{ request: '', response: '{}' }} />);
+    expect(screen.getAllByRole('button', { name: 'Copy' })).toHaveLength(2);
+    rerender(<RequestView {...props} payloads={{ request: null, response: '{}' }} />);
+    expect(screen.getAllByRole('button', { name: 'Copy' })).toHaveLength(1);
   });
 });

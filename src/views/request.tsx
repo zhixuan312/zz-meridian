@@ -78,9 +78,11 @@ async function copy(text: string, title: string) {
 }
 
 function Code({ body, label }: { body: string; label: string }) {
+  const empty = body.length === 0;
+  const Panel = empty ? 'p' : 'pre';
   return (
     <div className="relative flex flex-1 flex-col">
-      <pre className="max-h-96 min-h-0 flex-1 overflow-auto rounded-md border border-line bg-surface-sunk p-4 pr-24 font-mono text-xs leading-relaxed break-words whitespace-pre-wrap text-ink">{body}</pre>
+      <Panel className="max-h-96 min-h-0 flex-1 overflow-auto rounded-md border border-line bg-surface-sunk p-4 pr-24 font-mono text-xs leading-relaxed break-words whitespace-pre-wrap text-ink">{empty ? 'Empty body (0 bytes)' : body}</Panel>
       <Button
         size="sm"
         variant="ghost"
@@ -194,11 +196,11 @@ export function RequestView({ request: r, trace, payloads, routeP95, now, replay
           <Card>
             <CardHeader title="Request body" description={`${r.method} ${r.route}`} divided />
             <CardBody className="flex flex-col pt-5">
-              {payloads.request ? (
+              {payloads.request !== null ? (
                 <Code body={payloads.request} label="Request body" />
               ) : (
                 <p className="t-small flex flex-1 items-center justify-center rounded-md border border-dashed border-line px-4 py-10 text-center text-pretty text-ink-3">
-                  No body: a {r.method} carries everything it needs in its address.
+                  No request body was recorded.
                 </p>
               )}
             </CardBody>
