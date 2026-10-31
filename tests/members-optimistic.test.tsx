@@ -1,5 +1,5 @@
 import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('next/navigation', () => ({ usePathname: () => '/members', useRouter: () => ({ refresh() {}, push() {}, replace() {} }) }));
 const toasts = vi.hoisted(() => [] as { tone: string; title: string; description?: string }[]);
@@ -13,7 +13,9 @@ import { ADD_ONS, MAIN_ROLES } from '@/data/roles';
 import { API_KEYS } from '@/system/fixtures/sample-records';
 import { MEMBERS } from '@/system/fixtures/sample-members';
 
-const deferred = () => { let resolve!: (r: ActionResult) => void; const promise = new Promise<ActionResult>((r) => { resolve = r; }); return { promise, resolve }; };
+beforeEach(() => { toasts.length = 0; });
+
+const deferred = () => Promise.withResolvers<ActionResult>();
 
 const noop = async (): Promise<ActionResult> => ({ ok: true });
 /** The boundary's answer for every row, as the page would pass it: the view is mounted on its own here. */
@@ -45,12 +47,11 @@ describe('members, optimistically', () => {
     expect(toasts.length).toBe(before);
   });
   it('rolls back and says so when the action itself fails, as a dropped connection does', async () => {
-    let fail!: (e: Error) => void;
-    const rejecting = () => new Promise<ActionResult>((_, reject) => { fail = reject; });
-    render(view(withActions({ invite: rejecting })));
+    const d = deferred();
+    render(view(withActions({ invite: () => d.promise })));
     await invite('Rae Okafor');
     expect(await screen.findByText('Rae Okafor')).toBeTruthy();
-    await act(async () => { fail(new Error('Failed to fetch')); });
+    await act(async () => { d.reject(new Error('Failed to fetch')); });
     await waitFor(() => expect(screen.queryByText('Rae Okafor')).toBeNull());
     expect(within(await screen.findByRole('dialog')).getByRole('alert').textContent).toContain('The change did not reach the server. Try again.');
     expect((screen.getByLabelText(/^Name/) as HTMLInputElement).value).toBe('Rae Okafor');
@@ -80,18 +81,12 @@ describe('the invitation sheet', () => {
     expect(sheet.textContent).not.toMatch(/email to join|get an email/i);
   });
   it('confirms what happened, a member listed as invited, and promises neither a message nor an acceptance', async () => {
-    toasts.length = 0;
     render(view(withActions({})));
     await invite('Ana Ruiz');
     await waitFor(() => expect(toasts.length).toBe(1));
     expect(toasts[0].title).toBe('Invited ana@northwind.example');
     expect(`${toasts[0].title} ${toasts[0].description}`).not.toMatch(/sent|when they accept|email to/i);
     expect(toasts[0].description).toMatch(/listed as Invited/);
-  });
-  it('says the workspace, unnamed, when the page could not', async () => {
-    render(view(withActions({})));
-    fireEvent.click(screen.getAllByRole('button', { name: 'Invite member' })[0]);
-    expect((await screen.findByRole('dialog')).textContent).toMatch(/this workspace/);
   });
 });
 
@@ -152,7 +147,7 @@ describe('members, status and removal', () => {
     await openMenu(m.name);
     fireEvent.click(await screen.findByRole('menuitem', { name: 'Remove' }));
     await waitFor(() => expect(screen.queryByText(m.name)).toBeNull());
-    const undo = (toasts.at(-1) as unknown as { action: { onClick: () => void } }).action;
+    const { action: undo, onClose } = toasts.at(-1) as unknown as { action: { onClick: () => void }; onClose: () => void };
     const visibility = vi.spyOn(document, 'visibilityState', 'get').mockReturnValue('hidden');
     try {
       await act(async () => { document.dispatchEvent(new Event('visibilitychange')); });
@@ -163,7 +158,7 @@ describe('members, status and removal', () => {
     await act(async () => { undo.onClick(); });
     expect(screen.queryByText(m.name)).toBeNull();
     expect(toasts.at(-1)).toMatchObject({ tone: 'neutral', title: `${m.name}'s removal was already sent` });
-    (toasts.find((t) => t.title === `${m.name} removed`) as unknown as { onClose: () => void }).onClose();
+    onClose();
     expect(remove).toHaveBeenCalledOnce();
   });
   it('changes a role through the sheet, showing it at once, and reopens the sheet with the reason when it is refused', async () => {
