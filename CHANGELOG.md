@@ -12,6 +12,7 @@ Every release of ZZ Meridian, newest first. Versions follow semver: a removed or
 - **Later upgrades recheck team-owned sample contracts.** The sample-with-its-tests migration runs on every forward upgrade where applicable, including projects created after its introduction. Adapt an intentional implementation; do not remove a meaningful failing regression to complete an update.
 - **Skill installation preserves existing team instructions.** Both destination trees are checked before either is written. Identical installs remain repeatable; differing files or unsafe paths are refused with recovery guidance.
 - **Branding rejects invalid time zones before changing configuration.** Create and brand accept the same IANA time zones that the running application can format.
+- **Avatar images recover when their source changes.** A failed image no longer permanently hides a later valid source.
 - **Repeated branding preserves quoted names.** Apostrophes are serialized as data, and later changes can still find escaped configuration values without corrupting an unchanged person's name.
 - **Skill installation refuses an incomplete package.** A missing `SKILL.md` is reported before either skill destination is written, instead of reporting a successful empty installation.
 - **Branding rejects missing option values before writing.** A following known flag is not consumed as a product name, and incomplete valued flags cannot partially apply earlier options.

@@ -36,6 +36,8 @@ Not interactive. A clickable person is a link around the avatar and the name tog
 
 Decorative (`aria-hidden`): the name beside it is the information. A group carries the full list of names as its accessible name.
 
+A picture that fails falls back to initials. Changing `src` starts a fresh image attempt; a previous failure does not stick, including when returning to an earlier URL.
+
 ## Surfaces
 
 Same on every surface. In an embed, the `surface` ring takes the host's background through the bridge.

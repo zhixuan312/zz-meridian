@@ -20,4 +20,15 @@ describe('an avatar', () => {
     expect(a.querySelector('img')).toBeNull();
     expect(a.textContent).toBe('MC');
   });
+  it('attempts a new source and retries a previous one after the source changes', () => {
+    const view = render(<Avatar name="Maya Chen" src="/first.png" />);
+    fireEvent.error(view.container.querySelector('img')!);
+    expect(view.container.textContent).toBe('MC');
+    view.rerender(<Avatar name="Maya Chen" src="/second.png" />);
+    expect(view.container.querySelector('img')).toHaveAttribute('src', '/second.png');
+    view.rerender(<Avatar name="Maya Chen" src="/first.png" />);
+    expect(view.container.querySelector('img')).toHaveAttribute('src', '/first.png');
+    fireEvent.error(view.container.querySelector('img')!);
+    expect(view.container.textContent).toBe('MC');
+  });
 });
