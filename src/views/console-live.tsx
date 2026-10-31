@@ -9,11 +9,12 @@ type Ready = { scopeKey: string; pollMs?: number };
 
 /**
  * `?livePollMs=` is a test hook: the live check shortens the safety poll with it. Any visitor can type it, and each poll
- * refreshes the tenant's collections, so it never goes under a second.
+ * refreshes the tenant's collections, so it never goes under a second. Delays outside the browser's signed 32-bit
+ * timer range are ignored rather than overflowing to an immediate poll.
  */
 export function pollFromAddress(search: string): number | undefined {
   const ms = Number(new URLSearchParams(search).get('livePollMs'));
-  return ms > 0 ? Math.max(1000, ms) : undefined;
+  return Number.isFinite(ms) && ms > 0 && ms <= 2_147_483_647 ? Math.max(1000, ms) : undefined;
 }
 
 /** Waits for the caller's scope in its own boundary and reports it, so the page never waits and its children never remount. */

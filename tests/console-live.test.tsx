@@ -27,7 +27,11 @@ describe('the console live refresh', () => {
   it('takes a shorter safety poll from the address, never under a second', () => {
     expect(pollFromAddress('?livePollMs=3000')).toBe(3000);
     expect(pollFromAddress('?livePollMs=10')).toBe(1000);
+    expect(pollFromAddress('?livePollMs=2147483647')).toBe(2147483647);
     expect(pollFromAddress('?livePollMs=nope')).toBeUndefined();
     expect(pollFromAddress('')).toBeUndefined();
+  });
+  it.each(['Infinity', '2147483648'])('ignores a poll delay outside the browser timer range: %s', (value) => {
+    expect(pollFromAddress(`?livePollMs=${value}`)).toBeUndefined();
   });
 });
