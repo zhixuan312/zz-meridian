@@ -12,7 +12,7 @@ import type { Incident } from '@/components/patterns/incident-card';
 import type { ReleaseRow } from '@/data/engineering';
 import type { ComputeRow, CostRow, CustomerRecord, DailyPoint, Model, Ticket, UsageRow } from '@/data/sample';
 import { first, periods, record, steady, total, type Fact } from '@/lib/facts';
-import { formatCompact, formatCost, formatDuration, formatPercent, plural } from '@/lib/format';
+import { changeOf, formatCompact, formatCost, formatDuration, formatPercent, plural } from '@/lib/format';
 import { formatDate } from '@/lib/format-date';
 import { median } from '@/lib/insight';
 import { PERIOD_DAYS, type Period } from '@/lib/period';
@@ -55,9 +55,9 @@ const homeWindow = (days: DailyPoint[]) => {
 };
 
 /**
- * The year's sentence, or null when fewer than two windows run from the first that starts on or after the first request:
- * how requests moved from that window to the latest, and the range of p95 over the windows from there. A window with a
- * day before the first request is a part of a window: its requests are short and its median day may have no p95, so
+ * The year's sentence, or null when fewer than two windows run from the first that starts on or after the first request,
+ * or that first window has no requests to compare against: how requests moved to the latest, and their p95 range.
+ * A window with a day before the first request is partial: its requests are short and its median day may have no p95, so
  * measured from it flat traffic reads as growth and p95 as 0. A quiet day after the first request is a day of the
  * product's and keeps its window. The sentence starts after the part and names the window it starts from; from the
  * first window kept it says "in a year". A change that rounds to 0.0% is "held level". `length` is a window's days.
@@ -68,8 +68,9 @@ export function yearLine(history: readonly DailyPoint[], length: number): string
   const from = windows.findIndex((w) => w.whole);
   const counted = from < 0 ? [] : windows.slice(from);
   if (counted.length < 2) return null;
+  const grew = changeOf(counted.at(-1)!.requests, counted[0].requests);
+  if (grew === null) return null;
   const p95 = counted.map((w) => w.p95);
-  const grew = counted.at(-1)!.requests / counted[0].requests - 1;
   const moved = formatPercent(Math.abs(grew), 1);
   const span = from === 0 ? 'in a year' : `from the ${inDays(length)} to ${formatDate(counted[0].to)}`;
   const requests = Math.abs(grew) < 0.0005 ? `Requests held level ${span}` : `Requests ${grew < 0 ? 'fell' : 'grew'} ${moved} ${span}`;

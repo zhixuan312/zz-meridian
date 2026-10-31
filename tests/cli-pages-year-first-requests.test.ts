@@ -2,7 +2,7 @@
 // Named cli-* so the payload leaves it out: it is about the sample's own Home and Now, which a product replaces.
 import { describe, expect, it } from 'vitest';
 import type { DailyPoint } from '@/data/sample';
-import { yearOf } from '@/logic/home-parts';
+import { yearLine, yearOf } from '@/logic/home-parts';
 import { nowData } from '@/logic/now-parts';
 
 const DAY = 86_400_000;
@@ -54,12 +54,20 @@ describe("the year's sentence, when the days kept begin before the first request
 
   it('is not stated with fewer than two windows with a request every day', () => {
     const late = history.map((d, i) => (i < 95 ? { ...d, requests: 0, p95: 0 } : d));
-    expect(yearOf(late, '30d').title).toBe('Requests and latency, a period at a time');
+    expect(yearLine(late, 30)).toBeNull();
     const now = '2026-10-15T09:00:00.000Z';
     const data = nowData({
       services: [], incidents: [], releases: [], runs: [], history: late, usage: [], models: [], compute: [], endpoints: [], tickets: [], activity: [],
       reader: 'members_1', updatedAt: now, now,
     });
     expect(data.band?.facts.map((f) => f.about)).not.toContain('year');
+  });
+
+  it('does not state a percentage change from a zero-request baseline', () => {
+    const quiet = history.map((day, i) => {
+      const requests = i === 20 || i >= 60 ? 1000 : 0;
+      return { ...day, requests, p95: requests ? 300 : 0, tokens: requests * 100, revenue: requests / 100 };
+    });
+    expect(yearLine(quiet, 30)).toBeNull();
   });
 });
