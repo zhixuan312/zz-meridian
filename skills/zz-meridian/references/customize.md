@@ -605,9 +605,11 @@ then stays off without them). Then fix what still points at the sample:
 - `optional:app/sign-in/page.tsx`: the headline and lead describe the sample product, and the root layout's
   `description` (`optional:app/layout.tsx`) does too.
 - `optional:src/data/README.md`: it describes the sample's collections; describe your own.
-- What only a deleted page read: `node scripts/check.ts` fails an export of `optional:src/data/` that nothing but a test
-  imports, so with Members gone the page side of `optional:src/data/member-mutations.ts` (`memberAccess`,
-  `invitableRoles`, `assignMemberRole`) and `GRANTS` in `optional:src/data/roles.ts` go, or stop being exported.
+- What only a deleted page read: trace every remaining production caller before removing page-only exports such as
+  `memberAccess`, `invitableRoles` or `assignMemberRole` in `optional:src/data/member-mutations.ts`; `node scripts/check.ts`
+  reports exports read only by tests. `GRANTS` in `optional:src/data/roles.ts` is not page-only: `effective` and `whoCan`
+  still use its table for authorization and refusal explanations. Keep that policy while those callers remain; remove
+  only its `export` when no other module imports the table.
 - `example:src/system/content.ts`: `PAGES` names a sample request id route.
 - Each page `README.md`: its States rows must describe what your view renders; `check.ts` only checks that the section
   exists.

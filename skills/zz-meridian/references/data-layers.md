@@ -121,10 +121,12 @@ derived answer is a materialized view, a rollup table, a cached query or a cron 
 never implies a preferred store.
 
 The in-process collection store in `src/lib/collection.ts` is the **reference implementation** of this contract: rows, a
-total, a change marker and a derived field, all in one process's memory, with the read surface above it adding the
-moment, the authorization, the cache and the invalidation. It is what you can delete once your own client answers the
-same questions. `optional:src/data/` is the only place your backend is touched: a page, a view, a logic module and the assistant
-never see a client, a connection or a query string.
+total, a change marker and a derived field, with the read surface above it adding the moment, authorization, cache and
+invalidation. Replace its in-memory adapter when your client answers the same questions, but do not delete the shared
+module while callers still import its `Collection`, `Query` or `Grant` types or its query normalizers. Retire the memory
+implementation only after tracing its remaining users, and the whole module only after every consumer has migrated.
+`optional:src/data/` is the only place your backend is touched: a page, a view, a logic module and the assistant never see a
+client, a connection or a query string.
 
 ## Records and derived answers
 
