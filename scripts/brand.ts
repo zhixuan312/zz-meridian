@@ -35,9 +35,12 @@ const file = (p: string) => path.join(ROOT, p);
 const read = (p: string) => fs.readFileSync(file(p), 'utf8');
 const write = (p: string, s: string) => fs.writeFileSync(file(p), s);
 const json = (p: string) => JSON.parse(read(p));
-// A brand value is written into TypeScript and JSON: a backslash or a line break could end the string it sits in.
+// Check value syntax before any write: another flag is not a value, and backslashes or line breaks cannot enter literals.
 for (const [i, a] of argv.entries()) {
-  if (a.startsWith('--') && argv[i + 1] !== undefined && /[\\\r\n\u2028\u2029]/.test(argv[i + 1])) throw new Error(`${a} may not contain a backslash or a line break`);
+  if (!a.startsWith('--') || a === '--no-atlas' || a === '--product' || a === '--existing') continue;
+  const value = argv[i + 1];
+  if (value === undefined || value.startsWith('--')) throw new Error(`${a} needs a value`);
+  if (/[\\\r\n\u2028\u2029]/.test(value)) throw new Error(`${a} may not contain a backslash or a line break`);
 }
 const done: string[] = [];
 const existing = has('--existing');
@@ -45,22 +48,27 @@ if (existing && (has('--no-atlas') || has('--product'))) {
   throw new Error('--existing brands a project that brought Meridian in: it has no Atlas to remove, and --product would delete that project\'s own docs, README and decisions');
 }
 
+const esc = (value: string) => value.replace(/'/g, "\\'");
+
 function setConfig(key: string, value: string) {
   const s = read('src/app.config.ts');
-  const re = new RegExp(`(\\n  ${key}: )'[^']*'`);
+  const re = new RegExp(`(\\n  ${key}: )'(?:\\\\.|[^'\\\\])*'`);
   if (!re.test(s)) throw new Error(`src/app.config.ts has no "${key}"`);
-  write('src/app.config.ts', s.replace(re, (_m, head: string) => `${head}'${value.replace(/'/g, "\\'")}'`));
+  write('src/app.config.ts', s.replace(re, (_m, head: string) => `${head}'${esc(value)}'`));
   done.push(`${key} = ${value}`);
 }
 
 const theme = opt('--theme');
 if (has('--theme') && theme !== 'dark' && theme !== 'light') throw new Error('--theme is dark or light');
+const timezone = opt('--timezone');
+if (timezone) {
+  try { new Intl.DateTimeFormat('en', { timeZone: timezone }); } catch { throw new Error('--timezone is an IANA timezone, such as UTC or Europe/London'); }
+}
 
 const name = opt('--name');
 if (name) setConfig('name', name);
 const workspace = opt('--workspace');
 if (workspace) setConfig('workspace', workspace);
-const timezone = opt('--timezone');
 if (timezone) setConfig('timezone', timezone);
 const currency = opt('--currency');
 if (currency) {
@@ -70,10 +78,9 @@ if (currency) {
 const user = opt('--user'), role = opt('--role');
 if (user || role) {
   const s = read('src/app.config.ts');
-  const m = s.match(/user: \{ name: '([^']*)', role: '([^']*)' \}/);
+  const m = s.match(/user: \{ name: '((?:\\.|[^'\\])*)', role: '((?:\\.|[^'\\])*)' \}/);
   if (!m) throw new Error('src/app.config.ts has no "user"');
-  const esc = (v: string) => v.replace(/'/g, "\\'");
-  write('src/app.config.ts', s.replace(m[0], () => `user: { name: '${esc(user ?? m[1])}', role: '${esc(role ?? m[2])}' }`));
+  write('src/app.config.ts', s.replace(m[0], () => `user: { name: '${user === undefined ? m[1] : esc(user)}', role: '${role === undefined ? m[2] : esc(role)}' }`));
   done.push(`user = ${user ?? m[1]}, ${role ?? m[2]}`);
 }
 
