@@ -58,8 +58,8 @@ export type HomeData = {
   period: Period;
   /** The period's complete days, oldest first and ending yesterday. */
   series: DailyPoint[];
-  /** The period's totals and those of the same number of days before it; `previous` is null when no day before is kept, as with `all`. */
-  totals: { current: Totals; previous: Totals | null };
+  /** The period's totals, or null when its days could not be read; `previous` is null when no day before is kept, as with `all`. */
+  totals: { current: Totals; previous: Totals | null } | null;
   /** The day in progress, counted in none of the above; null when the latest day kept is complete. */
   running: DailyPoint | null;
   /** The page's title and the facts of a year, worked out on the server from every complete day kept (`homeHead`). */
@@ -256,7 +256,7 @@ export function homeContext(data: HomeData, index: number | null = null): Shared
   if (data.unread.length) unknowns.push(unreadNote(data.unread));
   if (data.head.unknown) unknowns.push(data.head.unknown);
   if (!series.length && !data.unread.includes('the days')) unknowns.push('No requests have arrived in this period, so there is nothing to compare.');
-  if (series.length && !data.totals.previous) unknowns.push(NO_PREVIOUS);
+  if (series.length && data.totals && !data.totals.previous) unknowns.push(NO_PREVIOUS);
   // The day in progress is in no figure above: the period ends yesterday. One short line, for the context's budget.
   if (data.running) unknowns.push(`${formatDay(data.running.date)} is in progress and counted in no total.`);
 

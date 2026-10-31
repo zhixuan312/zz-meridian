@@ -143,12 +143,14 @@ export function yearFacts(history: readonly DailyPoint[]): Fact[] {
 export function homeHead({ period, totals, history, services }: { period: Period; totals: HomeData['totals']; history: readonly DailyPoint[] | null; services: readonly ServiceNow[] | null }): PageHead & { record: string | null } {
   if (!history) return { title: null, facts: [], unknown: HISTORY_UNREAD, record: null };
   if (!history.length) return { title: null, facts: [], record: null };
+  const facts = yearFacts(history);
+  if (!totals) return { title: null, facts, record: null };
   // The days the period covers: its length, or every day kept where fewer are, as with All.
   const days = Math.min(PERIOD_DAYS[period] ?? history.length, history.length);
   const latest = record(periods(history.map((d) => d.revenue), days), { needs: rules.recordNeedsPeriods, what: `${inDays(days)} of revenue`, format: formatCost });
   return {
     title: homeTitle({ days, revenue: totals.current.revenue, previous: totals.previous?.revenue ?? null, record: latest, services }),
-    facts: yearFacts(history),
+    facts,
     record: latest?.text ?? null,
   };
 }
@@ -221,9 +223,6 @@ function worthKnowing({ incidents, customers, releases, now }: { incidents: Inci
   return lines.slice(0, WORTH_LINES);
 }
 
-/** The totals of no days: what a period whose days could not be read is counted as, though no part draws them. */
-const NO_TOTALS: Totals = { requests: 0, errorRate: 0, p95: 0, revenue: 0 };
-
 /** Home's data from what its read could read. */
 export function homeData(r: HomeReads): HomeData {
   const unread: string[] = [];
@@ -232,8 +231,9 @@ export function homeData(r: HomeReads): HomeData {
     return value !== null;
   };
   const series = r.days?.series ?? [];
-  const totals = r.days?.totals ?? { current: NO_TOTALS, previous: null };
-  const { current: c, previous: p } = totals;
+  const totals = r.days?.totals ?? null;
+  const c = totals?.current;
+  const p = totals?.previous ?? null;
   const dates = series.map((d) => d.date);
   const before = (r.days?.previous ?? []).map((d) => d.date);
   const head = homeHead({ period: r.period, totals, history: r.history, services: r.services });
@@ -252,7 +252,7 @@ export function homeData(r: HomeReads): HomeData {
   let sold: HomeData['sold'] = null;
   // Its rows and its labels: either read failing leaves the part unread, and each that failed is named.
   const usage = read(r.usage, 'the usage by model') ? r.usage : null;
-  if (read(r.models, 'the models') && usage) {
+  if (read(r.models, 'the models') && usage && days) {
     const inPeriod = new Set(dates);
     const of = (model: string) => cents(sum(usage.filter((u) => u.model === model && inPeriod.has(u.date)).map((u) => u.revenue)));
     // The largest first, the order a Composition bar takes its slots in; past its slots, the rest are one part.
@@ -264,7 +264,7 @@ export function homeData(r: HomeReads): HomeData {
   }
 
   let compute: HomeData['compute'] = null;
-  if (read(r.compute, 'the compute')) {
+  if (read(r.compute, 'the compute') && days) {
     const held = overDays(r.compute, dates, before, inUse);
     const inPeriod = new Set(dates);
     const rows = r.compute.filter((x) => inPeriod.has(x.date));
@@ -279,12 +279,12 @@ export function homeData(r: HomeReads): HomeData {
   // What compute cost, and gross margin with it, only for a person who may read it: for anyone else neither key exists.
   const money: Pick<HomeData, 'computeCost' | 'grossMargin'> = {};
   if (r.costs !== undefined) {
-    if (read(r.costs, 'the compute cost')) {
+    if (read(r.costs, 'the compute cost') && days) {
       const cost = overDays(r.costs, dates, before, (rows) => cents(sum(rows.map((x) => x.compute))));
       const computeCost: HomeFigure = { value: cost.now, previous: cost.before, points: cost.points };
       const margin = (revenue: number, cost: number) => (revenue ? (revenue - cost) / revenue : 0);
       money.computeCost = computeCost;
-      money.grossMargin = days && c.revenue ? { value: margin(c.revenue, cost.now), previous: p && cost.before !== null ? margin(p.revenue, cost.before) : null, points: series.map((d, i) => margin(d.revenue, cost.points[i])) } : null;
+      money.grossMargin = c?.revenue ? { value: margin(c.revenue, cost.now), previous: p && cost.before !== null ? margin(p.revenue, cost.before) : null, points: series.map((d, i) => margin(d.revenue, cost.points[i])) } : null;
     } else {
       money.computeCost = null;
       money.grossMargin = null;
@@ -306,11 +306,11 @@ export function homeData(r: HomeReads): HomeData {
     totals,
     running: r.days?.running ?? null,
     head: { title: head.title, facts: head.facts, ...(head.unknown ? { unknown: head.unknown } : {}) },
-    line: homeLine({ days: series.length, customers: customers?.count ?? null, requests: days ? c.requests : null, previous: p?.requests ?? null, ...(r.costs !== undefined ? { margin: money.grossMargin?.value ?? null } : {}), services: r.services }),
-    revenue: days ? { value: c.revenue, previous: p?.revenue ?? null, points: series.map((d) => d.revenue), average: series.length ? cents(c.revenue / series.length) : 0, best: best && { date: best.date, value: best.revenue }, running: r.days?.running?.revenue ?? null } : null,
+    line: homeLine({ days: series.length, customers: customers?.count ?? null, requests: c?.requests ?? null, previous: p?.requests ?? null, ...(r.costs !== undefined ? { margin: money.grossMargin?.value ?? null } : {}), services: r.services }),
+    revenue: c ? { value: c.revenue, previous: p?.revenue ?? null, points: series.map((d) => d.revenue), average: series.length ? cents(c.revenue / series.length) : 0, best: best && { date: best.date, value: best.revenue }, running: r.days?.running?.revenue ?? null } : null,
     customers,
-    tokens: days ? { value: sum(series.map((d) => d.tokens)), requests: c.requests } : null,
-    requests: days ? { value: c.requests, previous: p?.requests ?? null, points: series.map((d) => d.requests) } : null,
+    tokens: c ? { value: sum(series.map((d) => d.tokens)), requests: c.requests } : null,
+    requests: c ? { value: c.requests, previous: p?.requests ?? null, points: series.map((d) => d.requests) } : null,
     band: band && { inside: band.inside, of: band.of, text: band.text },
     compute,
     ...money,
@@ -319,7 +319,7 @@ export function homeData(r: HomeReads): HomeData {
     services,
     business: {
       lines: [
-        { label: 'Revenue', value: days ? formatCost(c.revenue) : '—' },
+        { label: 'Revenue', value: c ? formatCost(c.revenue) : '—' },
         { label: 'Customers', value: dash(customers?.count) },
         { label: 'On a trial', value: dash(customers?.trial) },
         { label: 'Past due', value: dash(customers?.pastDue) },

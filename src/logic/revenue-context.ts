@@ -63,8 +63,8 @@ export type WorthLine = { text: string; customer?: { name: string; href: string 
 /**
  * What Revenue's read hands the page and its context: the figures, lines and points the parts draw, never a row of
  * the collections they come from. A part whose read failed is null, and `unread` names what could not be read.
- * `days` is what the period control moves; `customers` covers the windows a customer's figures cover, whatever the
- * period.
+ * `days` is what the period control moves; `history` is read independently for earlier windows. `customers` covers
+ * the windows a customer's figures cover, whatever the period.
  */
 export type RevenueData = {
   period: Period;
@@ -78,12 +78,16 @@ export type RevenueData = {
     running: DailyPoint | null;
     /** The period's revenue, the same number of days before it (null when none is kept), and the record as its finding. */
     revenue: { value: number; previous: number | null; finding: string | null };
-    /** The period against the window a year before, or the earliest whole window kept (`first`); null when no earlier whole window is kept. */
+    /** The period against an earlier whole window; null when history was unread or no such window is kept. */
     yearAgo: { change: number; from: string; to: string; first: boolean } | null;
     /** The best complete day kept, when `record` holds for it, and how many of the best days kept fall in the period. */
     best: { value: number; date: string; text: string; inPeriod: number; of: number } | null;
     /** The period's revenue by plan, in the order of `PLANS`. */
     byPlan: { plan: Plan; revenue: number }[];
+  } | null;
+  history: {
+    /** Complete days kept, distinguishing no history from too little for a whole window. */
+    count: number;
     /** Each whole window of the period's length kept, oldest first, with its revenue by plan in the order of `PLANS`. */
     windows: { from: string; to: string; byPlan: number[] }[];
   } | null;
@@ -211,7 +215,7 @@ export function revenueContext(data: RevenueData, order: WallOrder = 'largest'):
   if (days) {
     const r = days.revenue;
     facts.push({ label: M.revenue.label, value: formatCost(r.value), change: change(r.value, r.previous, period), definition: M.revenue.hint });
-    facts.push({ label: M.yearAgo.label, value: days.yearAgo ? `${signed(days.yearAgo.change)} ${yearAgoWords(days.yearAgo, period)}` : yearAgoWords(null, period) });
+    if (data.history) facts.push({ label: M.yearAgo.label, value: days.yearAgo ? `${signed(days.yearAgo.change)} ${yearAgoWords(days.yearAgo, period)}` : yearAgoWords(null, period) });
     if (days.best) facts.push({ label: M.best.label, value: `${formatCost(days.best.value)} on ${formatDate(days.best.date)}; ${days.best.inPeriod} of the ${days.best.of} best kept are in the period` });
     const whole = days.byPlan.reduce((s, p) => s + p.revenue, 0);
     facts.push({ label: M.whoPays.label, value: days.byPlan.map((p) => `${p.plan} ${costCompact(p.revenue)}, ${formatPercent(whole ? p.revenue / whole : 0, 1)}${c ? `, ${c.byPlan[p.plan]} ${plural(c.byPlan[p.plan], 'customer')}` : ''}`).join('; ') });
@@ -235,7 +239,7 @@ export function revenueContext(data: RevenueData, order: WallOrder = 'largest'):
   const unknowns: string[] = [];
   if (data.unread.length) unknowns.push(unreadNote(data.unread));
   if (data.head.unknown) unknowns.push(data.head.unknown);
-  if (days && !series.length && c && !c.count) unknowns.push('Nothing has arrived yet: no customer and no complete day is kept.');
+  if (days && !series.length && data.history?.count === 0 && c && !c.count) unknowns.push('Nothing has arrived yet: no customer and no complete day is kept.');
   if (series.length && days?.revenue.previous === null) unknowns.push(NO_PREVIOUS);
   if (days?.running) unknowns.push(`${formatDay(days.running.date)} is in progress and counted in no total.`);
 

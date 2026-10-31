@@ -162,7 +162,7 @@ describe("the Home's shared context", () => {
   it('compares all time with nothing: no figure has a change, and it says no previous period is kept', () => {
     const data = home('all');
     expect(data.series).toHaveLength(360);
-    expect(data.totals.previous).toBeNull();
+    expect(data.totals?.previous).toBeNull();
     const c = homeContext(data);
     expect(c.scope).toBe(`all time, 08 Oct 2025 to 02 Oct 2026 (${app.timezone} days)`);
     for (const label of ['Requests', 'Revenue', 'Gross margin', 'Compute cost']) expect(c.facts.find((f) => f.label === label)!.change, label).toBeUndefined();
@@ -464,6 +464,39 @@ describe('what a context states beside its title', () => {
     // A title leaves the services out when they could not be read, and says every one is operational when it is.
     expect(homeHead({ period: '90d', totals: demoTotals('90d'), history: HISTORY, services: null }).title).toMatch(/^Revenue is up [\d.]+% on the 90 days before$/);
     expect(homeHead({ period: '90d', totals: demoTotals('90d'), history: HISTORY, services: SERVICES.map((s) => ({ ...s, status: 'operational' as const })) }).title).toMatch(/, and every service is operational$/);
+  });
+
+  it.each([true, false])('keeps unread period days distinct from zero while preserving the readable year (cost access: %s)', (costs) => {
+    const source = reads('30d', { costs });
+    const known = homeData(source);
+    const missing = homeData({ ...source, days: null });
+    expect(missing).toMatchObject({
+      totals: null, revenue: null, tokens: null, requests: null, band: null, compute: null, sold: null, record: null,
+      head: { title: null },
+    });
+    expect(missing.head.facts).toEqual(known.head.facts);
+    expect(missing.year).toEqual(known.year);
+    expect(missing.customers).toEqual(known.customers);
+    expect(missing.unread).toEqual(['the days']);
+    if (costs) {
+      expect(missing.computeCost).toBeNull();
+      expect(missing.grossMargin).toBeNull();
+    } else {
+      expect('computeCost' in missing).toBe(false);
+      expect('grossMargin' in missing).toBe(false);
+    }
+    const context = homeContext(missing);
+    expect(context.facts.filter((fact) => ['Revenue', 'Compute in use', 'Compute cost', 'What we sell'].includes(fact.label))).toEqual([]);
+  });
+
+  it('still represents a successfully read empty period as zero, not an unread period', () => {
+    const current = { requests: 0, errorRate: 0, p95: 0, revenue: 0 };
+    const empty = homeData({ ...reads('30d'), history: [], days: { series: [], previous: [], totals: { current, previous: null }, running: null } });
+    expect(empty.totals).toEqual({ current, previous: null });
+    expect(empty.revenue?.value).toBe(0);
+    expect(empty.compute?.value).toBe(0);
+    expect(empty.computeCost?.value).toBe(0);
+    expect(empty.unread).toEqual([]);
   });
 
   it('a page whose history could not be read is headed by its name, and its context says so', () => {

@@ -4,6 +4,10 @@ Every release of ZZ Meridian, newest first. Versions follow semver: a removed or
 
 ## Unreleased
 
+### Breaking
+
+- **Partial sample data is explicit.** `HomeData.totals` can be null. `RevenueData.history` now owns historical `count` and `windows`; `days.windows` is removed. Guard the nullable parts independently rather than substituting zero or requiring unrelated reads.
+
 ### Fixed
 
 - **Adoption preserves punctuation in TypeScript configuration strings.** Removing JSONC trailing commas also removed commas before `]` or `}` inside string keys and values, changing aliases, paths and plugin options. Only commas outside strings are removed.
@@ -22,6 +26,8 @@ Every release of ZZ Meridian, newest first. Versions follow semver: a removed or
 - **Home omits undefined percentage growth.** A fully counted zero-request baseline uses the existing neutral year context instead of a percentage claim with no denominator.
 - **Repeated branding preserves quoted names.** Apostrophes are serialized as data, and later changes can still find escaped configuration values without corrupting an unchanged person's name.
 - **Skill installation refuses an incomplete package.** A missing `SKILL.md` is reported before either skill destination is written, instead of reporting a successful empty installation.
+- **Unread Home totals stay unknown.** A failed period read no longer manufactures zero sales, compute, costs or a zero-valued record; independently readable year and customer facts remain.
+- **Revenue keeps independent reads independent.** Current figures survive unread history, and historical windows survive an unread current period. Missing comparison evidence is not described as an observed absence.
 - **Sign-in explains an unavailable roster.** Empty or entirely inactive personas produce a named unavailable state instead of a password/persona form that cannot succeed.
 - **Empty captured bodies are not absent bodies.** Request detail names the zero-byte capture and keeps its exact Copy action; an absent capture makes no claim about what a method can carry.
 - **Branding rejects missing option values before writing.** A following known flag is not consumed as a product name, and incomplete valued flags cannot partially apply earlier options.

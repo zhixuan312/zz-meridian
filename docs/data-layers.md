@@ -86,6 +86,9 @@ Rows, totals and aggregates are all retired by the same name.
 
 **Absent evidence is `null`, never zero.** A quantity nothing measured is `null`, and the formatters render it as a dash.
 Zero means zero was measured; the two are never the same answer.
+An optional read that failed leaves its dependent part unavailable, not empty. Independent successful reads still
+stand: losing day history must not discard a known current-period total, and losing the period must not discard known
+historical windows. A whole-view empty state requires successful evidence that the relevant sources hold nothing.
 
 **An answer declares whether it is a record or a derived answer — an answer computed from records, not stored as one.**
 A record is returned as it was written. A derived answer carries, in its own payload, the moment it was built and the

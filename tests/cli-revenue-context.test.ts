@@ -67,6 +67,21 @@ describe("Revenue's context", () => {
     expect(c.facts.map((f) => f.label)).toContain('Revenue');
   });
 
+  it('keeps current revenue when history fails, without inventing a missing comparison', () => {
+    const c = context('30d', { history: null });
+    expect(c.facts.find((f) => f.label === 'Revenue')?.value).toBe(formatCost(demoTotals('30d').current.revenue));
+    expect(c.facts.some((f) => f.label === 'Who pays')).toBe(true);
+    expect(c.facts.some((f) => f.label === 'Against a year ago')).toBe(false);
+    expect(c.facts.some((f) => f.label === 'Best day yet')).toBe(false);
+  });
+
+  it('keeps known historical windows when the current-period read fails', () => {
+    const partial = revenueData(reads('all', { days: null }));
+    const historicalRevenue = partial.history?.windows[0]?.byPlan.reduce((total, value) => total + value, 0);
+    expect(historicalRevenue).toBeCloseTo(DAYS.reduce((total, day) => total + day.revenue, 0), 2);
+    expect(revenueContext(partial).facts.some((f) => f.label === 'Revenue')).toBe(false);
+  });
+
   it('says when nothing has arrived, and that All has nothing before it', () => {
     const none = context('30d', { days: { series: [], totals: { current: { requests: 0, errorRate: 0, p95: 0, revenue: 0 }, previous: null }, running: null }, history: [], customers: [] });
     expect(none.unknowns).toContain('Nothing has arrived yet: no customer and no complete day is kept.');

@@ -253,7 +253,7 @@ function RevenueWindows({ data, keys }: { data: HomeData; keys: string[] }) {
 /** What we sell: the period's revenue by model, in the categorical slots in their order, and past them "Other", neutral. */
 function Sold({ data }: { data: HomeData }) {
   const { label, hint } = COMPANY_METRICS.sold;
-  if (!data.sold) return <Unread title={label} what={['the usage by model', 'the models'].filter((n) => data.unread.includes(n)).join(' and ')} />;
+  if (!data.sold) return <Unread title={label} what={['the days', 'the usage by model', 'the models'].filter((n) => data.unread.includes(n)).join(' and ')} />;
   return (
     <Card>
       <CardHeader title={label} description={`${hint.replace(/\.$/, '')}, ${PERIOD_LABEL[data.period].toLowerCase()}`} />

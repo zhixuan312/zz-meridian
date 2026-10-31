@@ -157,20 +157,21 @@ export function revenueData(r: RevenueReads): RevenueData {
   const today = dayOf(r.now);
   const head = revenueHead({ period: r.period, rows: r.customers ?? [], history: r.history });
 
+  const plan = (rows: readonly DailyPoint[], p: Plan) => cents(sum(rows.map((d) => d.revenueByPlan[p])));
+  const history = read(r.history, 'the day history') ? {
+    count: r.history.length,
+    windows: windowsOf(r.history, PERIOD_DAYS[r.period] ?? r.history.length, (ds) => ({ byPlan: PLANS.map((p) => plan(ds, p)) })),
+  } : null;
   let days: RevenueData['days'] = null;
-  // The period's days and every day kept are one collection, read twice: the part needs both.
-  const both = r.days && r.history ? { ...r.days, history: r.history } : null;
-  if (read(both, 'the days')) {
-    const { series, totals, running, history } = both;
-    const plan = (rows: readonly DailyPoint[], p: Plan) => cents(sum(rows.map((d) => d.revenueByPlan[p])));
+  if (read(r.days, 'the days')) {
+    const { series, totals, running } = r.days;
     days = {
       series,
       running,
       revenue: { value: totals.current.revenue, previous: totals.previous?.revenue ?? null, finding: head.record },
-      yearAgo: yearAgoOf(history, series, r.period),
-      best: bestOf(history, series),
+      yearAgo: r.history ? yearAgoOf(r.history, series, r.period) : null,
+      best: r.history ? bestOf(r.history, series) : null,
       byPlan: PLANS.map((p) => ({ plan: p, revenue: plan(series, p) })),
-      windows: windowsOf(history, PERIOD_DAYS[r.period] ?? history.length, (ds) => ({ byPlan: PLANS.map((p) => plan(ds, p)) })),
     };
   }
 
@@ -208,6 +209,7 @@ export function revenueData(r: RevenueReads): RevenueData {
     head: { title: head.title, facts: head.facts, ...(head.unknown ? { unknown: head.unknown } : {}) },
     line: revenueLine({ customers: customers && { count: customers.count, trial: customers.trial, pastDue: customers.pastDue.count }, byPlan: days?.byPlan ?? null, period: r.period }),
     days,
+    history,
     customers,
     sold,
     regions,

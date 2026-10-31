@@ -83,14 +83,14 @@ function RevenueFigure({ days, dates, period }: { days: Days; dates: string[]; p
 function tiles(data: RevenueData) {
   const { days, customers, period } = data;
   return [
-    days ? (
+    days && data.history ? (
       days.yearAgo ? (
         <MetricTile key="year" label={M.yearAgo.label} hint={M.yearAgo.hint} value={days.yearAgo.change} format={signed} note={yearAgoNote(days.yearAgo, period)} />
       ) : (
         <MetricTile key="year" label={M.yearAgo.label} hint={M.yearAgo.hint} value="—" note={yearAgoNote(null, period)} />
       )
     ) : unreadTile(M.yearAgo.label, M.yearAgo.hint),
-    days ? (
+    days && data.history ? (
       days.best ? (
         <MetricTile key="best" label={M.best.label} hint={M.best.hint} value={days.best.value} format={formatCost} note={`${formatDay(days.best.date)} · ${days.best.inPeriod} of the ${days.best.of} best days`} />
       ) : (
@@ -145,9 +145,9 @@ function WhoPays({ days, customers }: { days: Days; customers: Customers | null 
 }
 
 /** Revenue a period, by plan: one column a whole window of the period's length kept, its total at rest above it. */
-function ByWindow({ data, days }: { data: RevenueData; days: Days }) {
-  const n = PERIOD_DAYS[data.period];
-  const keys = days.windows.map((w) => w.to);
+function ByWindow({ period, history }: { period: RevenueData['period']; history: NonNullable<RevenueData['history']> }) {
+  const n = PERIOD_DAYS[period];
+  const keys = history.windows.map((w) => w.to);
   return (
     <Card>
       <CardHeader title={M.byWindow.label} description={n ? `${n} days a column, counted back from yesterday` : 'Every complete day kept, as one column'} />
@@ -158,7 +158,7 @@ function ByWindow({ data, days }: { data: RevenueData; days: Days }) {
             <ColumnChart
               label="Revenue a window, by plan"
               parts={PLANS.map((p) => ({ key: p, label: p }))}
-              columns={days.windows.map((w) => ({ key: w.to, label: formatShortDate(w.to), values: w.byPlan }))}
+              columns={history.windows.map((w) => ({ key: w.to, label: formatShortDate(w.to), values: w.byPlan }))}
               dates={keys}
               format={costCompact}
               axisFormat={AXIS_FORMATTERS['cost-compact']}
@@ -301,7 +301,7 @@ function Regions({ data }: { data: RevenueData }) {
 }
 
 /** Nothing has arrived: the days and the customers were read and hold none. A read that failed is not this; its parts say so. */
-const isEmpty = (data: RevenueData) => data.days !== null && data.days.series.length === 0 && data.customers !== null && data.customers.count === 0;
+const isEmpty = (data: RevenueData) => data.days !== null && data.days.series.length === 0 && data.history?.count === 0 && data.customers !== null && data.customers.count === 0;
 
 /**
  * Revenue's eight parts, in order: the head is the page frame's, and the Featured metric leads the body. Each part draws what the read handed it and works
@@ -337,7 +337,7 @@ export function RevenueBody(data: RevenueData & { revisions?: Revisions }) {
           {days?.series.length ? <ByDay days={days} dates={dates} period={data.period} /> : days ? <NoDays title={M.byDay.label} /> : <Unread title={M.byDay.label} what="the days" />}
           {days?.series.length ? <WhoPays days={days} customers={customers} /> : days ? <NoDays title={M.whoPays.label} /> : <Unread title={M.whoPays.label} what="the days" />}
         </Row>
-        {days?.series.length ? <ByWindow data={data} days={days} /> : days ? <NoDays title={M.byWindow.label} /> : <Unread title={M.byWindow.label} what="the days" />}
+        {data.history?.count ? <ByWindow period={data.period} history={data.history} /> : data.history ? <NoDays title={M.byWindow.label} /> : <Unread title={M.byWindow.label} what="the day history" />}
         {customers ? <Wall customers={customers} order={order} onOrder={setOrder} /> : <Unread title={M.wall.label} what="the customers" />}
         {customers ? <Ladder customers={customers} /> : <Unread title={M.ladder.label} what="the customers" />}
         {customers ? <WorthALook customers={customers} /> : <Unread title={M.worth.label} what="the customers" />}
