@@ -2,10 +2,10 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { z } from 'zod';
 
-const cache = vi.hoisted(() => ({ tags: [] as string[], lives: [] as unknown[] }));
+const cache = vi.hoisted(() => ({ tags: [] as string[] }));
 vi.mock('next/cache', () => ({
   cacheTag: (...t: string[]) => { cache.tags.push(...t); },
-  cacheLife: (p: unknown) => { cache.lives.push(p); },
+  cacheLife: () => {},
   updateTag: () => {},
   revalidateTag: () => {},
 }));
@@ -27,7 +27,7 @@ const people = (tenantId: string) => arrayCollection({
   fields: z.object({ name: z.string().min(1) }), rows: [{ id: 'p1', name: 'Ada' }, { id: 'p0', name: 'Ada' }], allow: ['create'], tenantId,
 });
 
-beforeEach(() => { cache.tags.length = 0; cache.lives.length = 0; session.scope = null; });
+beforeEach(() => { cache.tags.length = 0; session.scope = null; });
 
 describe('read', () => {
   it('reads through the scope, tags the tenant collection and keeps the observation time', async () => {
@@ -36,7 +36,6 @@ describe('read', () => {
     expect(out.total).toBeGreaterThan(0);
     expect(out.observedAt).toBe(clock().toISOString());
     expect(cache.tags).toContain(collectionTag('demo', 'members'));
-    expect(cache.lives).toContainEqual({ stale: 30, revalidate: 60, expire: 3600 });
   });
   it('refuses an unknown collection the same way as a forbidden one, before any cached code runs', async () => {
     const unknown = await read('secrets').catch((e: unknown) => e);

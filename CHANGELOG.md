@@ -7,6 +7,7 @@ Every release of ZZ Meridian, newest first. Versions follow semver: a removed or
 ### Fixed
 
 - **Adoption preserves punctuation in TypeScript configuration strings.** Removing JSONC trailing commas also removed commas before `]` or `}` inside string keys and values, changing aliases, paths and plugin options. Only commas outside strings are removed.
+- **Derived answers stay within the caller's full access scope.** Cached and in-flight builds are partitioned by tenant, subject and authorization identity. Every reader checks its own source authorization before joining a build; a concurrent denial cannot inherit another reader's permission.
 
 ### Changed
 
