@@ -32,6 +32,7 @@ Every release of ZZ Meridian, newest first. Versions follow semver: a removed or
 - **Sign-in explains an unavailable roster.** Empty or entirely inactive personas produce a named unavailable state instead of a password/persona form that cannot succeed.
 - **Embed theme follows its host.** Device preferences and storage events no longer overwrite initial host context. An unspecified host theme stays unset and follows later system-scheme changes through CSS.
 - **Pending previews stay visible and named.** Card and standalone preview stages reuse one busy skeleton while code or route parameters arrive.
+- **Atlas entries stream URL-specific content behind a real boundary.** The shared shelf remains available during navigation; parameter reads no longer block the reusable app shell. Validation stays enabled.
 - **Empty captured bodies are not absent bodies.** Request detail names the zero-byte capture and keeps its exact Copy action; an absent capture makes no claim about what a method can carry.
 - **Branding rejects missing option values before writing.** A following known flag is not consumed as a product name, and incomplete valued flags cannot partially apply earlier options.
 

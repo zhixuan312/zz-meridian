@@ -1,12 +1,15 @@
-import { Fragment, type ReactNode } from 'react';
+import { Fragment, Suspense, type ReactNode } from 'react';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { ArrowLeft, ArrowRight } from 'lucide-react';
 import { entries, entry, layerOf, specOf } from '@/system/content';
 import { Doc, headings } from '@/system/markdown';
 import { Badge } from '@/components/ui/badge';
+import { Busy } from '@/components/patterns/page-loading';
+import { Skeleton } from '@/components/ui/skeleton';
 
 type Entry = NonNullable<ReturnType<typeof entry>>;
+const ARTICLE_FRAME = 'mx-auto w-full max-w-[1240px] px-(--gutter) pt-10 pb-24 lg:pt-14';
 
 /** The entries of one section, for a route that is static for that section alone. */
 export const entriesOf = (section: string) => entries().filter((e) => e.section === section).map((e) => ({ id: e.id }));
@@ -29,7 +32,7 @@ export function Article({ e, stage }: { e: Entry; stage?: ReactNode }) {
   const builtOn = e.kind === 'template' ? all.filter((x) => x.template === e.id) : [];
 
   return (
-    <article className="mx-auto w-full max-w-[1240px] px-(--gutter) pt-10 pb-24 lg:pt-14">
+    <article className={ARTICLE_FRAME}>
       <header className="max-w-[60rem]">
         <p className="t-kicker">{layerOf(e)}</p>
         <div className="mt-5 flex flex-wrap items-center gap-x-4 gap-y-2">
@@ -82,8 +85,30 @@ export function Article({ e, stage }: { e: Entry; stage?: ReactNode }) {
   );
 }
 
+/** The shelf stays in place while the entry's URL data resolves. */
+export function ArticleLoading() {
+  return (
+    <article className={ARTICLE_FRAME}>
+      <Busy name="design reference">
+        <div>
+          <Skeleton className="h-3 w-24" />
+          <Skeleton className="mt-5 h-10 w-48" />
+          <Skeleton className="mt-4 h-5 w-full max-w-[62ch]" />
+          <Skeleton className="mt-10 h-48 w-full" />
+        </div>
+      </Busy>
+    </article>
+  );
+}
+
+type ReadingProps = { section: string; params: Promise<{ id: string }> };
+
 /** A route for the entries of one section that is only reading: no stage, so none of the stages' code rides along with it. */
-export async function ReadingPage({ section, params }: { section: string; params: Promise<{ id: string }> }) {
+export function ReadingPage(props: ReadingProps) {
+  return <Suspense fallback={<ArticleLoading />}><ReadingEntry {...props} /></Suspense>;
+}
+
+async function ReadingEntry({ section, params }: ReadingProps) {
   const { id } = await params;
   const e = entry(section, id);
   if (!e) notFound();

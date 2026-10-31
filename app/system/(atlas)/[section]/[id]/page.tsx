@@ -5,7 +5,7 @@ import { CardStage } from '@/system/card-stage';
 import { PageStage } from '@/system/page-stage';
 import { TokenView } from '@/system/token-view';
 import { tokenGroups } from '@/system/tokens-data';
-import { Article } from '../../_article';
+import { Article, ArticleLoading } from '../../_article';
 import { contextText } from '@/lib/shared-context';
 import { nowTool, homeTool, requestsTool } from '@/logic/tools';
 
@@ -39,7 +39,13 @@ export async function generateMetadata({ params }: { params: Promise<{ section: 
   return { title: e?.title ?? 'Not found', description: e?.summary };
 }
 
-export default async function EntryPage({ params }: { params: Promise<{ section: string; id: string }> }) {
+type EntryProps = { params: Promise<{ section: string; id: string }> };
+
+export default function EntryPage(props: EntryProps) {
+  return <Suspense fallback={<ArticleLoading />}><Entry {...props} /></Suspense>;
+}
+
+async function Entry({ params }: EntryProps) {
   const { section, id } = await params;
   const e = entry(section, id);
   if (!e) notFound();
