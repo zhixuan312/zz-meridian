@@ -38,6 +38,7 @@ const HELP = `zz-meridian ${VERSION}
 
 Brand flags: --name "Acme Ops" --workspace Production --timezone Europe/London --currency EUR
              --user "Ada Park" --role Admin --accent indigo|cobalt|jade|graphite | --hex '#2E6BE4' | --hue 250 --chroma 0.14
+             --theme dark|light
 
 Then give your coding agent the skill: .agents/skills/zz-meridian/SKILL.md.`;
 
