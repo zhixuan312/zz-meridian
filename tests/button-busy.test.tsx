@@ -36,3 +36,48 @@ describe('a busy button', () => {
     expect(screen.getByRole('button', { name: 'Send' })).toBeDisabled();
   });
 });
+
+describe('a blocked button child', () => {
+  it('cancels a disabled link and removes it from keyboard navigation', () => {
+    render(<Button asChild disabled><a href="#unavailable" tabIndex={0}>Unavailable</a></Button>);
+    const link = screen.getByRole('link', { name: 'Unavailable' });
+    expect(fireEvent.click(link)).toBe(false);
+    expect(link).toHaveAttribute('aria-disabled', 'true');
+    expect(link.tabIndex).toBe(-1);
+  });
+
+  it.each(['disabled', 'busy'] as const)('blocks child and button click handlers while %s, then enables them again', (state) => {
+    const handlers = {
+      button: vi.fn((event: { preventDefault(): void }) => event.preventDefault()),
+      child: vi.fn(), buttonCapture: vi.fn(), childCapture: vi.fn(),
+    };
+    const content = (blocked: boolean) => (
+      <Button asChild disabled={state === 'disabled' && blocked} busy={state === 'busy' && blocked}
+        onClick={handlers.button} onClickCapture={handlers.buttonCapture}>
+        <a href="#action" tabIndex={0} aria-disabled={false} aria-busy={false}
+          onClick={handlers.child} onClickCapture={handlers.childCapture}>Action</a>
+      </Button>
+    );
+    const view = render(content(true));
+    const link = screen.getByRole('link', { name: 'Action' });
+    expect(fireEvent.click(link)).toBe(false);
+    for (const handler of Object.values(handlers)) expect(handler).not.toHaveBeenCalled();
+    expect(link).toHaveAttribute('aria-disabled', 'true');
+    if (state === 'busy') {
+      link.focus();
+      expect(document.activeElement).toBe(link);
+      expect(link.tabIndex).toBe(0);
+      expect(link).toHaveAttribute('aria-busy', 'true');
+    }
+    view.rerender(content(false));
+    fireEvent.click(screen.getByRole('link', { name: 'Action' }));
+    for (const handler of Object.values(handlers)) expect(handler).toHaveBeenCalledTimes(1);
+  });
+
+  it('blocks a busy native button before a nested child can start an action', () => {
+    const child = vi.fn();
+    render(<Button busy><span onClick={child}>Nested action</span></Button>);
+    fireEvent.click(screen.getByText('Nested action'));
+    expect(child).not.toHaveBeenCalled();
+  });
+});

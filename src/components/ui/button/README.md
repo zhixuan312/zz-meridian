@@ -47,6 +47,7 @@ Colour, border and shadow change over `dur-hover` 160ms; the trailing arrow move
 
 - Runs its action on click, Enter or Space. As a link (`asChild` around an `<a>`), it navigates and keeps the look.
 - A disabled button says why nearby in text; greying out is never the only explanation.
+- Disabled `asChild` links announce `aria-disabled`, leave the tab order, and block navigation and the child's handlers. Busy links remain focusable but block activation too; neither a child's handler nor native attributes can override those states.
 - Busy is for actions that take more than 300ms. It ignores presses (a submit's too) and keeps its place in the tab order, so a focused button that turns busy, a Retry whose read something else started, keeps the keyboard where it was; and a button that carries an icon keeps its width exactly, since the spinner is that button's own icon size. A button with no icon gains the slot, so it widens by one icon and the gap beside it: give an action that goes busy an `icon` if its width must not move.
 
 ## Surfaces
@@ -87,3 +88,5 @@ import { Button } from '@/components/ui/button';
 ```
 
 Props: `variant` (`primary` | `secondary` | `ghost` | `danger`), `size` (`sm` | `md` | `lg`), `icon`, `trailing`, `busy`, `block`, `asChild`, and every native button attribute.
+
+The frame, variant and size roles compile into shared CSS. Caller utilities remain in the later utilities layer and can override those roles without repeating the variant's full class list in each rendered button and client chunk.

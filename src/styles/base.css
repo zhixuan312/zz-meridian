@@ -188,10 +188,9 @@
     clip: rect(0 0 0 0); white-space: nowrap; border: 0;
   }
 
-  /* A Button's frame, the same on every button, so a page of row actions does not repeat it in every class list: the
-     list carried about 300 bytes of these on each instance. Its variant and size stay utilities beside it, and a
-     utility a caller passes still wins, since this layer comes before utilities. Greying a disabled button out stays a
-     utility on the button (a variant's shadow is one, and this layer would lose to it). */
+  /* A Button's frame and token-utility roles are shared CSS, not repeated in every instance and client chunk.
+     Compiling the roles here preserves the utilities' shadow/ring composition and nested icon and hover rules.
+     A caller's utilities still win because this layer precedes utilities; disabled styling stays on the button. */
   .btn {
     display: inline-flex; flex-shrink: 0; align-items: center; justify-content: center;
     font-weight: var(--font-weight-medium); white-space: nowrap; user-select: none;
@@ -201,6 +200,13 @@
   }
   .btn:disabled { pointer-events: none; }
   .btn[aria-busy="true"] { cursor: progress; }
+  .btn-primary { @apply bg-accent bg-(image:--accent-fill) text-on-accent shadow-accent hover:brightness-[0.94]; }
+  .btn-secondary { @apply bg-surface text-ink border border-line-strong shadow-control hover:bg-surface-sunk hover:border-line-control/40; }
+  .btn-ghost { @apply text-ink-2 hover:bg-fill-hover hover:text-ink; }
+  .btn-danger { @apply bg-critical-fill text-on-critical shadow-accent hover:brightness-95; }
+  .btn-sm { @apply h-(--control-sm) gap-1.5 rounded-md px-2.5 text-sm [&_svg]:size-3.5; }
+  .btn-md { @apply h-(--control-md) gap-2 rounded-md px-3.5 text-sm [&_svg]:size-4; }
+  .btn-lg { @apply h-(--control-lg) gap-2 rounded-lg px-5 text-base [&_svg]:size-[18px]; }
 
   /* Links are never underlined: hover is a colour change, and focus is the focus ring every control has.
      A link inside a sentence is accent ink, and turns ink on hover. */
