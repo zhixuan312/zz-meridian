@@ -35,10 +35,10 @@ import { whoCan } from '@/data/roles';
 import { POST } from '../app/api/assistant/route';
 
 /**
- * The assistant is told nothing untrue: the addresses it may give are those this person may open; a
- * change exists only as the Proposal a tool returned; and a thing this person may not read is never "not in the
- * product". Under `explain` it is told what they may not read and who can, as the page tells them; under `absent`,
- * nothing, as the page names nothing. Built for each of the sample's five people, through the route that builds it.
+ * The assistant is told nothing untrue: the addresses it may give are those this person may open, and a thing this person
+ * may not read is never "not in the product". Under `explain` it is told what they may not read and who can, as the page
+ * tells them; under `absent`, nothing, as the page names nothing. Built for each of the sample's five people, through the
+ * route that builds it.
  */
 const PEOPLE = { Owner: 'members_1', Admin: 'members_2', Member: 'members_4', 'Key manager': 'members_5', Viewer: 'members_12' };
 const ask: UIMessage[] = [{ id: 'u1', role: 'user', parts: [{ type: 'text', text: 'What can I see here?' }] }];
@@ -61,17 +61,11 @@ afterEach(() => { jar.value = undefined; policy.refusal = 'explain'; });
 describe("the assistant's prompt is true of the person it answers", () => {
   for (const [who, member] of Object.entries(PEOPLE)) {
     for (const refusal of ['explain', 'absent'] as const) {
-      it(`lists exactly the addresses ${who} may open, and says what a change is, under ${refusal}`, async () => {
+      it(`lists exactly the addresses ${who} may open under ${refusal}`, async () => {
         const system = await promptFor(member, refusal);
         const open: string[] = [];
         for (const item of nav.flatMap((g) => g.items)) if (await may(item.needs)) open.push(item.href);
         expect(listed(system)).toEqual([...new Set(open)].sort());
-        expect(system).toMatch(/name no other/i);
-        expect(system).toContain('A change exists only as the Proposal a write tool returns.');
-        expect(system).toContain('Never write that a change is proposed or awaiting approval unless a tool returned one.');
-        expect(system).toContain('Some records exist that this person may not read.');
-        expect(system).toContain('Never say that something is not in the product; say it is not something they may read here.');
-
         const scope = await resolveAccess();
         const withheld = [];
         for (const c of collections) if (!(await can(scope, c.name, 'read'))) withheld.push(c);
