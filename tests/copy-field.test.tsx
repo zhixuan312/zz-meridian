@@ -56,7 +56,7 @@ describe('a copy the browser refuses', () => {
     render(<CopyField label="Request ID" value="req_123" />);
     press('Request ID');
     await waitFor(() => expect(screen.getByText(/^Not copied/)).toBeTruthy());
-    expect(String(window.getSelection())).toBe('req_123');
+    await waitFor(() => expect(String(window.getSelection())).toBe('req_123'));
   });
   it('shows a masked secret before selecting it, so what is selected is the value', async () => {
     refuse();
