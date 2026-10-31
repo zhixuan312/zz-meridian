@@ -557,8 +557,8 @@ function patchReport(l: Loaded, outcome: string, coverage: string | null = null)
     .replace(/^- Outcome: .*$/m, `- Outcome: ${outcome}`)
     .replace(/^- Coverage: .*\n/m, '')
     .replace(/^## Failure\n\n[\s\S]*?\n\n(?=## )/m, '');
-  if (coverage) text = text.replace(/^(- Outcome: .*)$/m, `$1\n- Coverage: ${coverage.replace(/^coverage: /, '')}`);
-  if (j.failure) text = text.replace(/^## What needs you$/m, `## Failure\n\n${j.failure}\n\n## What needs you`);
+  if (coverage) text = text.replace(/^(- Outcome: .*)$/m, (line) => `${line}\n- Coverage: ${coverage.replace(/^coverage: /, '')}`);
+  if (j.failure) text = text.replace(/^## What needs you$/m, () => `## Failure\n\n${j.failure}\n\n## What needs you`);
   writeAtomic(file, text);
 }
 

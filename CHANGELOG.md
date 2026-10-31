@@ -31,6 +31,7 @@ Every release of ZZ Meridian, newest first. Versions follow semver: a removed or
 - **CLI help lists the supported theme option.** `--theme dark|light` is discoverable alongside other branding options.
 - **Repeated branding preserves quoted names.** Apostrophes are serialized as data, and later changes can still find escaped configuration values without corrupting an unchanged person's name.
 - **Skill installation refuses an incomplete package.** A missing `SKILL.md` is reported before either skill destination is written, instead of reporting a successful empty installation.
+- **Update reports preserve literal metadata.** Failure and coverage values containing replacement-string sequences such as `$&` are recorded unchanged during finalize and resume.
 - **Create prints a runnable installation retry.** Package-manager arguments are separated by spaces rather than commas when installation fails.
 - **Search keeps its Escape behavior with a caller's key handler.** Enter and other custom keyboard actions compose with clearing and second-Escape blur; a caller can deliberately consume a key with `preventDefault()`.
 - **Composition Escape does not erase search.** Search inputs and the Atlas shelf leave Escape to an active IME composition; ordinary clear and blur behavior remains.

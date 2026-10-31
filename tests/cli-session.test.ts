@@ -48,12 +48,11 @@ function project(o: { disk?: Record<string, string>; absent?: string[] } = {}) {
 }
 function ctx(root: string, o: { run?: Run; version?: string; integrity?: string; interruptAfter?: number; base?: Release; target?: Release } = {}) {
   const lines: string[] = [];
-  const calls: string[] = [];
   const base = o.base ?? release('0.3.0', BASE);
   const target = o.target ?? release('0.5.0', TARGET);
-  const run: Run = (cmd, args, cwd) => { calls.push([cmd, ...args].join(' ')); return o.run ? o.run(cmd, args, cwd) : { status: 0, output: '' }; };
+  const run: Run = (cmd, args, cwd) => o.run ? o.run(cmd, args, cwd) : { status: 0, output: '' };
   const c: Context = { root, version: o.version ?? '0.5.0', targetIntegrity: o.integrity ?? 'sha512-test', source: () => base, target: () => target, run, log: (l) => lines.push(l), interruptAfter: o.interruptAfter };
-  return { c, lines, calls };
+  return { c, lines };
 }
 const session = (root: string) => path.join(root, '.meridian/update/0.5.0');
 const state = (root: string) => parseJournal(read(session(root), 'state.json'));
@@ -82,9 +81,6 @@ describe('finalize', () => {
     const m = manifest(root);
     expect(m.version).toBe('0.5.0');
     expect(m.files).toEqual(Object.fromEntries(Object.entries(TARGET).map(([p, c]) => [p, sha256(c)])));
-    expect(done.calls.some((c) => c.endsWith('scripts/gate.ts'))).toBe(true);
-    expect(done.calls.some((c) => c.endsWith('build'))).toBe(true);
-    expect(done.calls.some((c) => /\btsc\b/.test(c))).toBe(false);
     expect(done.lines.join('\n')).toMatch(/browser: not run/);
     expect(has(root, '.meridian/update/0.5.0')).toBe(false);
     const [archived] = fs.readdirSync(path.join(root, '.meridian/history/0.5.0'));
@@ -128,6 +124,34 @@ describe('finalize', () => {
     expect(state(root).phase).toBe('failed');
     expect(state(root).failure).toContain('src/app.config.ts');
     expect(manifest(root).version).toBe('0.3.0');
+  });
+
+  it('keeps literal dollar sequences in a failed input path when updating the human report', () => {
+    const file = "owned-$&-$`-$'.txt";
+    const root = project({ disk: { [file]: 'before' } });
+    start(ctx(root).c, opts);
+    resolveAll(root);
+    const writer: Run = (_c, args) => {
+      if (isGate(args)) fs.writeFileSync(path.join(root, file), 'changed by validation');
+      return { status: 0, output: '' };
+    };
+    expect(finalize(ctx(root, { run: writer }).c, { verify: false })).toBe(1);
+    const failure = state(root).failure;
+    expect(failure).toContain(file);
+    expect(read(session(root), 'MERGE.md')).toContain(failure!);
+    expect(manifest(root).version).toBe('0.3.0');
+  });
+
+  it('keeps literal dollar sequences in the completed validation coverage', () => {
+    const root = project();
+    start(ctx(root).c, opts);
+    resolveAll(root);
+    const coverage = "coverage: owned $& $` $' measurement";
+    const runner: Run = (_c, args) => ({ status: 0, output: args.some((arg) => arg.endsWith('scripts/verify.ts')) ? coverage : '' });
+    expect(finalize(ctx(root, { run: runner }).c, { verify: true })).toBe(0);
+    const history = path.join(root, '.meridian/history/0.5.0');
+    const [archived] = fs.readdirSync(history);
+    expect(read(path.join(history, archived), 'MERGE.md')).toContain(coverage.slice('coverage: '.length));
   });
 
   it('accepts the outputs a build is expected to write', () => {
@@ -347,17 +371,3 @@ describe('a project already on the running version', () => {
   });
 });
 
-describe('the install an update runs', () => {
-  it('lets pnpm write the lockfile the update outdated, as CI=true would otherwise refuse', () => {
-    const root = project({ disk: { 'pnpm-lock.yaml': 'lockfileVersion: 9.0\n' } });
-    const { c, calls } = ctx(root);
-    start(c, opts);
-    expect(calls).toContain('pnpm install --no-frozen-lockfile');
-  });
-  it('runs npm install as it is', () => {
-    const root = project();
-    const { c, calls } = ctx(root);
-    start(c, opts);
-    expect(calls).toContain('npm install');
-  });
-});

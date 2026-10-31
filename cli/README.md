@@ -77,6 +77,7 @@ writes nothing; run it first.
   the pinned `npx zz-meridian@<version> update --finalize`; `--resume` continues an interrupted run and `--abort` restores
   what it changed. Only finalize records the new version. `--finalize --verify` validates with the project's default
   `verify` instead of the gate and the build, and reports its coverage line.
+- Failure and coverage metadata is recorded literally in the report, including `$` sequences; it is not interpreted as report-template syntax.
 - It refuses, writing nothing, on a dirty git tree (unless `--allow-dirty`) or while another update is open. `--verbose`
   lists every file.
 
