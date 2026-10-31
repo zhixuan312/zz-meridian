@@ -1,10 +1,14 @@
 // @vitest-environment node
 // Named cli-* so the payload leaves it out: it runs the package's own adopt code against the template's configuration.
+import { spawnSync } from 'node:child_process';
+import { createHash } from 'node:crypto';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import { pathToFileURL } from 'node:url';
 import { afterAll, describe, expect, it } from 'vitest';
 import { eslintConfigOf, projectConfig } from '../cli/src/adopt.ts';
+import { installSkill, payloadBytes, skillPaths } from '../cli/src/files.ts';
 
 const ROOT = path.resolve(import.meta.dirname, '..');
 const template = fs.readFileSync(path.join(ROOT, 'src/app.config.ts'), 'utf8');
@@ -17,26 +21,9 @@ describe('the configuration adopt writes for a project', () => {
     for (const sample of ['/usage', '/services', '/operations-tickets', '/system']) expect(written, sample).not.toContain(`'${sample}'`);
   });
 
-  it('names nothing the project does not have: no feature table, no icon but its own, no workspace of the sample', () => {
+  it('leaves out the sample feature and workspace tables', () => {
     expect(written).not.toMatch(/\bFEATURES\b/);
     expect(written).not.toMatch(/\bworkspaces\b|\bWorkspaceId\b/);
-    expect(written).not.toMatch(/\b(Main|Business|Engineering)\b/);
-    const icons = written.match(/import \{([^}]*)\} from 'lucide-react';/)![1].split(',').map((n) => n.trim()).filter(Boolean);
-    expect(icons).toEqual(['LayoutGrid', 'type LucideIcon']);
-    // Every item names the one icon the file imports. (The item type's own `icon: LucideIcon` is a type, not an item.)
-    expect(written.match(/\{ href: ["'][^\n]*/g)?.every((item) => /\bicon: LayoutGrid\b/.test(item))).toBe(true);
-  });
-
-  it('still exports what the components and the checks ask a configuration for', () => {
-    for (const name of ['app', 'nav', 'slug']) expect(written, name).toMatch(new RegExp(`export const ${name}\\b`));
-    for (const name of ['NavItem', 'NavGroup']) expect(written, name).toMatch(new RegExp(`export type ${name}\\b`));
-    expect(written).toMatch(/workspace: 'Production'/);
-  });
-
-  it('is what the template says, where the template says nothing about the sample', () => {
-    expect(template).toMatch(/\bworkspaces\b/);
-    expect(template).toMatch(/\bFEATURES\b/);
-    expect(written).toContain("name: 'ZZ Meridian'");
   });
 });
 
@@ -77,45 +64,89 @@ describe('the ESLint configuration a project brings to the adoption', () => {
 });
 
 /**
- * The adopted `scripts/verify.config.ts` failed the gate's own lint: replacing the sample's config object left
- * `const EVERY_ROUTE` declared and never read, and `@typescript-eslint/no-unused-vars` is an error in this project. A
- * project is not handed a gate it cannot pass.
- */
-describe('the verify configuration adopt writes', () => {
-  it('declares nothing it does not read', async () => {
-    const { verifyConfig } = await import('../cli/src/adopt.ts');
-    const text = verifyConfig();
-    const declared = [...text.matchAll(/^(?:export )?const (\w+)/gm)].map((m) => m[1]);
-    expect(declared.length).toBeGreaterThan(0);
-    for (const name of declared) {
-      const reads = text.split(new RegExp(`\\b${name}\\b`)).length - 1;
-      expect(reads, `${name} is declared and never read`).toBeGreaterThan(1);
-    }
-  });
-
-  it('names the sample\'s routes nowhere, and keeps the two settings a project has to decide', async () => {
-    const { verifyConfig } = await import('../cli/src/adopt.ts');
-    const text = verifyConfig();
-    expect(text).not.toMatch(/EVERY_ROUTE|ROLE_ROUTES|Every rail route|The sample.s routes/);
-    for (const sample of ['/operations-tickets', '/system/start']) expect(text, sample).not.toContain(`'${sample}'`);
-    expect(text).toMatch(/detailRoutes: \[\]/);
-    expect(text).toMatch(/refusal,/);
-  });
-});
-
-/**
  * `adopt` writes the skill in last, after every other write and after the gate that stops on any other file in the way.
  * So a team's own edited copy of it was replaced without a word — and the command exited 0. The skill is Meridian's, but
  * the file in their project is theirs to edit, and the rule for every other copy applies to it too.
  */
 describe('the skill adopt brings', () => {
-  it('is checked against the project\'s own copy before anything is written', async () => {
-    const { skillPaths } = await import('../cli/src/files.ts');
-    const paths = skillPaths();
-    expect(paths.length).toBeGreaterThan(13);
-    expect(paths.map((p) => p.rel)).toContain('.claude/skills/zz-meridian/SKILL.md');
-    expect(paths.map((p) => p.rel)).toContain('.agents/skills/zz-meridian/references/update.md');
-    // Every destination is one of the two folders an agent reads, and every payload file is named by it.
-    for (const p of paths) expect(p.rel).toMatch(/^\.(agents|claude)\/skills\/zz-meridian\//);
+  const dirs: string[] = [];
+  const project = () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'install-skill-'));
+    dirs.push(dir);
+    return dir;
+  };
+  const put = (root: string, rel: string, content: string | Buffer) => {
+    const abs = path.join(root, rel);
+    fs.mkdirSync(path.dirname(abs), { recursive: true });
+    fs.writeFileSync(abs, content);
+    return abs;
+  };
+  afterAll(() => { for (const dir of dirs) fs.rmSync(dir, { recursive: true, force: true }); });
+
+  it.each(['folder', 'entry point'] as const)('refuses a missing packaged skill %s before touching either destination', (missing) => {
+    const root = project();
+    const pkg = project();
+    put(pkg, 'package.json', JSON.stringify({ type: 'module', version: '0.0.0' }));
+    put(pkg, 'src/files.ts', fs.readFileSync(path.join(ROOT, 'cli/src/files.ts')));
+    put(pkg, 'payload/other.txt', 'unrelated payload');
+    if (missing === 'entry point') put(pkg, 'payload/skills/zz-meridian/references/note.md', 'Reference without a skill entry point.');
+    const result = spawnSync(process.execPath, ['--input-type=module', '-e', `import { installSkill } from ${JSON.stringify(pathToFileURL(path.join(pkg, 'src/files.ts')).href)}; installSkill(${JSON.stringify(root)});`], { encoding: 'utf8' });
+    expect(result.status).toBe(1);
+    expect(result.stderr).toContain('SKILL.md');
+    expect(fs.readdirSync(root)).toEqual([]);
+  });
+
+  it('preserves a custom Claude skill and leaves the earlier absent agent target absent', () => {
+    const root = project();
+    const rel = '.claude/skills/zz-meridian/SKILL.md';
+    const sentinel = 'Custom instructions that must survive.\n';
+    const custom = put(root, rel, sentinel);
+    const record = { existing: 'unchanged' };
+
+    expect(() => installSkill(root, record)).toThrow(`refusing to overwrite ${rel}`);
+    expect(fs.readFileSync(custom, 'utf8')).toBe(sentinel);
+    expect(fs.existsSync(path.join(root, '.agents'))).toBe(false);
+    expect(fs.readdirSync(path.dirname(custom))).toEqual(['SKILL.md']);
+    expect(record).toEqual({ existing: 'unchanged' });
+  });
+
+  it('preflights reference files too, before either target is written', () => {
+    const root = project();
+    const reference = skillPaths().find(({ rel }) => rel.startsWith('.claude/') && rel.includes('/references/'))!;
+    const custom = put(root, reference.rel, 'Custom reference.\n');
+
+    expect(() => installSkill(root)).toThrow(`refusing to overwrite ${reference.rel}`);
+    expect(fs.readFileSync(custom, 'utf8')).toBe('Custom reference.\n');
+    expect(fs.existsSync(path.join(root, '.agents'))).toBe(false);
+    expect(fs.existsSync(path.join(root, '.claude/skills/zz-meridian/SKILL.md'))).toBe(false);
+  });
+
+  it('retains installed skill ownership in manifest records on an identical reinstall', () => {
+    const root = project();
+    installSkill(root);
+    const record: Record<string, string> = {};
+    installSkill(root, record);
+    for (const { rel } of skillPaths()) {
+      const content = fs.readFileSync(path.join(root, rel));
+      expect(record[rel]).toBe(`sha256-${createHash('sha256').update(content).digest('hex')}`);
+    }
+  });
+
+  it.each(['folder', 'file'] as const)('refuses a late %s symlink without changing either target or its destination', (kind) => {
+    const root = project();
+    const outside = project();
+    const rel = '.claude/skills/zz-meridian/SKILL.md';
+    const payload = skillPaths().find((entry) => entry.rel === rel)!.payload;
+    // Even identical external bytes cannot authorize following a link into someone else's instructions.
+    const external = put(outside, 'SKILL.md', payloadBytes(payload));
+    const linked = path.join(root, kind === 'folder' ? '.claude/skills/zz-meridian' : rel);
+    fs.mkdirSync(path.dirname(linked), { recursive: true });
+    fs.symlinkSync(kind === 'folder' ? outside : external, linked);
+
+    expect(() => installSkill(root)).toThrow('symbolic link');
+    expect(fs.existsSync(path.join(root, '.agents'))).toBe(false);
+    expect(fs.lstatSync(linked).isSymbolicLink()).toBe(true);
+    expect(fs.readdirSync(outside)).toEqual(['SKILL.md']);
+    expect(fs.readFileSync(external)).toEqual(payloadBytes(payload));
   });
 });

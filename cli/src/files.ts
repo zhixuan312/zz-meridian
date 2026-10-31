@@ -179,15 +179,29 @@ export function writeManifest(root: string, m: Manifest) {
  */
 export function skillPaths(): { rel: string; payload: string }[] {
   const files = payloadFiles('skills/zz-meridian');
+  if (!files.includes('skills/zz-meridian/SKILL.md')) throw new Error('skills/zz-meridian/SKILL.md is not in cli/payload/: rebuild the payload or reinstall a complete package before installing the skill.');
   return ['.agents/skills/zz-meridian', '.claude/skills/zz-meridian'].flatMap((base) =>
     files.map((f) => ({ rel: `${base}/${f.slice('skills/zz-meridian/'.length)}`, payload: f })));
 }
 
-/** The agent skill, into the folders each agent reads in a repository. */
+/** Refuse a different existing skill before writing either agent's copy. Identical copies need no write. */
 export function installSkill(root: string, record?: Record<string, string>) {
-  for (const { rel, payload } of skillPaths()) {
-    const content = payloadBytes(payload);
-    writeIn(root, rel, content);
+  const contents = new Map<string, Buffer>();
+  const plan = skillPaths().map(({ rel, payload }) => {
+    const abs = inside(root, rel);
+    let content = contents.get(payload);
+    if (!content) {
+      content = payloadBytes(payload);
+      contents.set(payload, content);
+    }
+    const existing = fs.lstatSync(abs, { throwIfNoEntry: false });
+    if (existing && (!existing.isFile() || !fs.readFileSync(abs).equals(content))) {
+      throw new Error(`refusing to overwrite ${rel}: it differs from the packaged skill. Move your copy aside before installing again; no skill files were written.`);
+    }
+    return { rel, content, exists: Boolean(existing) };
+  });
+  for (const { rel, content, exists } of plan) {
+    if (!exists) writeIn(root, rel, content);
     if (record) record[rel] = sha256(content);
   }
 }

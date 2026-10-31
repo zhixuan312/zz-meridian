@@ -82,6 +82,9 @@ styles) and `src/app.config.ts` for the new flags and records them in the manife
 refuses when one of those outputs was edited, while an update is open, or on a dirty tree (unless `--allow-dirty`). Run
 it with the version the manifest records. The project's own `pnpm brand` still works, but its changes count as your edits.
 
+**skill** checks both `.agents/skills/zz-meridian` and `.claude/skills/zz-meridian` before writing either. Identical files are retained; different content or symlinks are refused. Move a customized copy aside, install the shipped skill, then reconcile the customization manually rather than losing it to an overwrite.
+An incomplete package without its `SKILL.md` is refused before either destination is written.
+
 The standard a project on Meridian is built to is
 [data-layers.md](https://github.com/zhixuan312/zz-meridian/blob/master/docs/data-layers.md): the four layers between a
 database and the screen, the contract a backend answers, and the six rules a project switches on in its own
