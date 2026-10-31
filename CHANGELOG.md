@@ -6,6 +6,7 @@ Every release of ZZ Meridian, newest first. Versions follow semver: a removed or
 
 ### Breaking
 
+- **Uncontrolled Proposal requires `onApprove`.** Controlled state still permits an external approval handler; untyped callers without the required handler enter Failed rather than claiming Applied.
 - **Partial sample data is explicit.** `HomeData.totals` can be null. `RevenueData.history` now owns historical `count` and `windows`; `days.windows` is removed. Guard the nullable parts independently rather than substituting zero or requiring unrelated reads.
 
 ### Fixed
