@@ -72,6 +72,7 @@ A moment is when a person or an agent runs a command. A project's own CI may run
 
 The copied-command regression needs a POSIX shell and `curl`. It runs the generated command against its own loopback HTTP receiver with a dummy key, no external endpoint, and no user's cURL configuration.
 
+Browser checks accept a Chrome executable through `CHROME`, including official `chrome-headless-shell` for unattended runners. Downloads are explicitly directed through the browser protocol into each temporary profile's own `Downloads`, never the user's default folder.
 
 ## Rules
 
