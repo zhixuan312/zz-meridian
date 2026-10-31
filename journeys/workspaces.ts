@@ -320,9 +320,9 @@ const detail = config.detailRoutes.find((r) => /^\/requests\/[^/]+$/.test(r) && 
 const CUSTOMERS = '/customers';
 /** A customer's id is its name in lower case with dashes between the words. */
 const slug = (name: string) => name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
-const customerRoutes = config.detailRoutes.filter((r) => /^\/customers\/[^/]+$/.test(r));
-const unknownCustomer = customerRoutes.find((r) => r.includes('missing'));
-const knownCustomers = customerRoutes.filter((r) => r !== unknownCustomer);
+const customerDetail = /^\/customers\/[^/]+$/;
+const unknownCustomer = config.missingRoutes?.find((r) => customerDetail.test(r));
+const knownCustomers = config.detailRoutes.filter((r) => customerDetail.test(r) && !config.missingRoutes?.includes(r));
 
 /** The title the navigation check names for a rail route: what its page's heading shows (navigate.ts holds it to the same, by inclusion). */
 const titleOf = (href: string) => config.navigationChecks?.find((c) => c.path === href)?.title;

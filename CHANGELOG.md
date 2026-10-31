@@ -25,6 +25,7 @@ Every release of ZZ Meridian, newest first. Versions follow semver: a removed or
 - **Inline Now reports unread incidents without discarding services.** Healthy service rows no longer imply that an unread incident source was checked.
 - **Sign-in retains a persona that became unavailable.** The refusal stays attached to the selected person instead of silently switching to the first option.
 - **Home omits undefined percentage growth.** A fully counted zero-request baseline uses the existing neutral year context instead of a percentage claim with no denominator.
+- **The customer journey exercises declared missing routes.** Unknown-customer coverage no longer disappears because it searched only known detail routes.
 - **Repeated branding preserves quoted names.** Apostrophes are serialized as data, and later changes can still find escaped configuration values without corrupting an unchanged person's name.
 - **Skill installation refuses an incomplete package.** A missing `SKILL.md` is reported before either skill destination is written, instead of reporting a successful empty installation.
 - **Search keeps its Escape behavior with a caller's key handler.** Enter and other custom keyboard actions compose with clearing and second-Escape blur; a caller can deliberately consume a key with `preventDefault()`.
