@@ -14,6 +14,7 @@ Every release of ZZ Meridian, newest first. Versions follow semver: a removed or
 - **Branding rejects invalid time zones before changing configuration.** Create and brand accept the same IANA time zones that the running application can format.
 - **Avatar images recover when their source changes.** A failed image no longer permanently hides a later valid source.
 - **Disabled and busy Buttons block child activation.** The shared capture guard also covers `asChild` links and nested handlers without taking a busy control out of the keyboard order. Variant and size roles compile into shared CSS rather than repeating their utilities in every instance and client chunk.
+- **Copied cURL requests preserve the captured request.** JSON bodies retain precision, duplicate keys and whitespace; leading `@` is literal data, and an empty body is distinct from no body. Methods, URLs and bodies are shell-quoted so captured values cannot execute shell expressions.
 - **Repeated branding preserves quoted names.** Apostrophes are serialized as data, and later changes can still find escaped configuration values without corrupting an unchanged person's name.
 - **Skill installation refuses an incomplete package.** A missing `SKILL.md` is reported before either skill destination is written, instead of reporting a successful empty installation.
 - **Branding rejects missing option values before writing.** A following known flag is not consumed as a product name, and incomplete valued flags cannot partially apply earlier options.

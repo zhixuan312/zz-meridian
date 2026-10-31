@@ -110,6 +110,7 @@ telemetry. It talks to npm only, when `npx` fetches it and when `update` reads r
 public, so leave out anything that identifies you, your organisation or your product, and describe the problem with
 Meridian's own template or sample data.
 
+The template's copied-command regression runs real cURL on loopback and needs a POSIX shell and `curl`, with no external endpoint or credentials.
 ## License
 
 MIT: the text is `payload/LICENSE` in the package and `LICENSE` in a project `create` makes.

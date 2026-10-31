@@ -21,13 +21,12 @@ import { formatBytes } from '@/system/sample-cells';
 import { domain } from '@/app.config';
 import type { ActionResult } from '@/lib/collection';
 
-/** One shell word, whatever it holds: a body's own `'`, `$(…)` or newline reaches curl as text and runs nothing. */
+/** One shell word: a captured method, address or body's quotes, `$(…)` and newlines stay literal and run nothing. */
 const shellWord = (s: string) => `'${s.replaceAll("'", "'\\''")}'`;
-/** A JSON body on one line without touching its values; any other body as it is. */
-const oneLine = (body: string) => { try { return JSON.stringify(JSON.parse(body)); } catch { return body; } };
 
+/** Captured text stays text, including an empty body or a leading @; only null means no captured body. */
 export const curlOf = (r: RequestRow, body: string | null) =>
-  `curl -X ${r.method} ${shellWord(`https://api.${domain}${r.route}`)} -H "Authorization: Bearer $API_KEY"` + (body ? ` -d ${shellWord(oneLine(body))}` : '');
+  `curl -X ${shellWord(r.method)} ${shellWord(`https://api.${domain}${r.route}`)} -H "Authorization: Bearer $API_KEY"` + (body !== null ? ` --data-raw ${shellWord(body)}` : '');
 
 const BAR = { accent: 'bg-accent', neutral: 'bg-chart-neutral-strong', critical: 'bg-critical' } as const;
 

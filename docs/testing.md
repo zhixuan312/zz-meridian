@@ -68,6 +68,11 @@ A moment is when a person or an agent runs a command. A project's own CI may run
   - `DPR=1 node scripts/audit.ts --atlas` against a build it serves, as the job `atlas`: every card's page and bare preview, the token views, the page specifications and the guides. No verify depth audits the Atlas, and a card's specimens hold its extreme shapes.
   - Nothing waits on it: a failure notifies.
 
+## Local runtimes
+
+The copied-command regression needs a POSIX shell and `curl`. It runs the generated command against its own loopback HTTP receiver with a dummy key, no external endpoint, and no user's cURL configuration.
+
+
 ## Rules
 
 - **Behavior, not pins**: assert user-visible meaning, transitions, boundaries and errors, not source snippets, prose, utility classes, incidental defaults, wiring or byte copies. Remove incidental pins rather than repinning them; retain meaningful behavior, accessibility, security, architecture and planted-validator cases. A removed pin never clears an observable failure: prove the running behavior and generated artifacts.
