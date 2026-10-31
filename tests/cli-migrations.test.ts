@@ -50,18 +50,18 @@ describe("this release's migrations", () => {
   it('apply to a project on the old shapes, naming the files', () => {
     const root = project(OLD);
     for (const id of IDS) {
-      const paths = byId(id).applies(root);
+      const paths = byId(id).applies(root, '0.35.0');
       expect(paths, id).not.toBeNull();
       expect(paths!.length, id).toBeGreaterThan(0);
     }
   });
   it('do not apply once the project is on the new shapes', () => {
     const root = project(NEW);
-    for (const id of IDS) expect(byId(id).applies(root), id).toBeNull();
+    for (const id of IDS) expect(byId(id).applies(root, '0.35.0'), id).toBeNull();
   });
   it('do not apply to a project without the files they concern', () => {
     const root = project({ 'package.json': '{}' });
-    for (const id of IDS.filter((i) => i !== 'cache-components-config')) expect(byId(id).applies(root), id).toBeNull();
+    for (const id of IDS.filter((i) => i !== 'cache-components-config')) expect(byId(id).applies(root, '0.35.0'), id).toBeNull();
   });
 });
 
@@ -71,24 +71,24 @@ describe('the 0.9.0 migrations', () => {
       'app/embed/overview/view.tsx': "useShareView(`Overview: ${n} requests`, { view: 'overview', period });\n",
       'app/(dashboard)/orders/README.md': '# Orders\n\nThe orders.\n\n## Agents\n\nNot applicable.\n',
     });
-    expect(byId('share-view-context').applies(old)).toEqual(['app/embed/overview/view.tsx']);
-    expect(byId('agent-reads-section').applies(old)).toEqual(['app/(dashboard)/orders/README.md']);
+    expect(byId('share-view-context').applies(old, '0.35.0')).toEqual(['app/embed/overview/view.tsx']);
+    expect(byId('agent-reads-section').applies(old, '0.35.0')).toEqual(['app/(dashboard)/orders/README.md']);
     const current = project({
       'app/embed/overview/view.tsx': 'useShareView(overviewContext(data, index));\n',
       'app/(dashboard)/orders/README.md': '# Orders\n\nThe orders.\n\n## Agents\n\nThe page shares its context.\n\n### What the agent reads\n\nEvery order.\n',
     });
-    expect(byId('share-view-context').applies(current)).toBeNull();
-    expect(byId('agent-reads-section').applies(current)).toBeNull();
+    expect(byId('share-view-context').applies(current, '0.35.0')).toBeNull();
+    expect(byId('agent-reads-section').applies(current, '0.35.0')).toBeNull();
   });
 });
 
 describe('the 0.10.0 migration', () => {
   it('finds an assistant whose route-side code predates view tools, and leaves a current one alone', () => {
     const old = project({ 'app/api/assistant/route.ts': 'respond({ collections });\n', 'src/lib/assistant/tools.ts': 'export function assistantTools(collections, writer, guard) {}\n', 'src/lib/assistant/respond.ts': 'export async function respond() {}\n' });
-    expect(byId('assistant-view-tools').applies(old)).toEqual(['src/lib/assistant/tools.ts', 'src/lib/assistant/respond.ts', 'app/api/assistant/route.ts']);
+    expect(byId('assistant-view-tools').applies(old, '0.35.0')).toEqual(['src/lib/assistant/tools.ts', 'src/lib/assistant/respond.ts', 'app/api/assistant/route.ts']);
     const current = project({ 'app/api/assistant/route.ts': 'respond({ collections, views: viewTools });\n', 'src/lib/assistant/tools.ts': "import type { ViewTool } from '@/lib/shared-context';\n", 'src/lib/assistant/respond.ts': 'function limitsOf() {}\n' });
-    expect(byId('assistant-view-tools').applies(current)).toBeNull();
-    expect(byId('assistant-view-tools').applies(project({ 'app/page.tsx': 'x' }))).toBeNull();
+    expect(byId('assistant-view-tools').applies(current, '0.35.0')).toBeNull();
+    expect(byId('assistant-view-tools').applies(project({ 'app/page.tsx': 'x' }), '0.35.0')).toBeNull();
   });
 });
 
@@ -97,30 +97,30 @@ describe('the 0.13.0 migration', () => {
     const old = project({
       'src/app.config.ts': "import { LayoutGrid } from 'lucide-react';\n\nexport const nav: NavItem[] = [\n  { href: '/', label: 'Overview', icon: LayoutGrid },\n  { href: '/requests', label: 'Requests', icon: LayoutGrid, needs: 'requests:read' },\n];\n",
     });
-    expect(byId('nav-needs').applies(old)).toEqual(['src/app.config.ts']);
+    expect(byId('nav-needs').applies(old, '0.35.0')).toEqual(['src/app.config.ts']);
     // One item without one is the whole change: the rail asks each destination's need, and a missing one is a type error.
     const current = project({
       'src/app.config.ts': "import { LayoutGrid } from 'lucide-react';\n\nexport const nav: NavItem[] = [\n  { href: '/', label: 'Overview', icon: LayoutGrid, needs: 'public' },\n  { href: '/requests', label: 'Requests', icon: LayoutGrid, needs: FEATURES.requests.needs },\n];\n",
     });
-    expect(byId('nav-needs').applies(current)).toBeNull();
+    expect(byId('nav-needs').applies(current, '0.35.0')).toBeNull();
     // The shape every project's `src/app.config.ts` actually has: groups, each opening on a line of its own. A group is
     // not a destination and has no `needs` to carry, so a nav whose every *item* has one is not this migration's.
     const grouped = project({
       'src/app.config.ts': "export const nav: NavGroup[] = [\n  {\n    items: [\n      { href: '/', label: 'Overview', icon: LayoutGrid, needs: 'public' },\n      { href: '/keys', label: 'API keys', icon: KeyRound, needs: 'keys:read' },\n    ],\n  },\n  {\n    label: 'Workspace',\n    items: [\n      { href: '/settings', label: 'Settings', icon: Settings, needs: 'public' },\n    ],\n  },\n];\n",
     });
-    expect(byId('nav-needs').applies(grouped)).toBeNull();
+    expect(byId('nav-needs').applies(grouped, '0.35.0')).toBeNull();
     // ...and one item without a need inside a group is still the change: the group's own line is not what is read.
     const groupedOld = project({
       'src/app.config.ts': "export const nav: NavGroup[] = [\n  {\n    items: [\n      { href: '/', label: 'Overview', icon: LayoutGrid },\n    ],\n  },\n];\n",
     });
-    expect(byId('nav-needs').applies(groupedOld)).toEqual(['src/app.config.ts']);
+    expect(byId('nav-needs').applies(groupedOld, '0.35.0')).toEqual(['src/app.config.ts']);
     // No nav at all, and no app.config.ts at all: nothing of the team's to change.
-    expect(byId('nav-needs').applies(project({ 'src/app.config.ts': "export const brand = {};\n" }))).toBeNull();
-    expect(byId('nav-needs').applies(project({ 'package.json': '{}' }))).toBeNull();
+    expect(byId('nav-needs').applies(project({ 'src/app.config.ts': "export const brand = {};\n" }), '0.35.0')).toBeNull();
+    expect(byId('nav-needs').applies(project({ 'package.json': '{}' }), '0.35.0')).toBeNull();
     // Every item has a need and the type 0.12.3 wrote, its fields ending in semicolons, does not: still the change.
     const items = "\nexport const nav: NavGroup[] = [\n  { items: [{ href: '/', label: 'Overview', icon: LayoutGrid, needs: 'public' }] },\n];\n";
-    expect(byId('nav-needs').applies(project({ 'src/app.config.ts': `export type NavItem = { href: string; label: string; icon: LucideIcon; badge?: string };${items}` }))).toEqual(['src/app.config.ts']);
-    expect(byId('nav-needs').applies(project({ 'src/app.config.ts': `export type NavItem = { href: string; label: string; icon: LucideIcon; needs: Need };${items}` }))).toBeNull();
+    expect(byId('nav-needs').applies(project({ 'src/app.config.ts': `export type NavItem = { href: string; label: string; icon: LucideIcon; badge?: string };${items}` }), '0.35.0')).toEqual(['src/app.config.ts']);
+    expect(byId('nav-needs').applies(project({ 'src/app.config.ts': `export type NavItem = { href: string; label: string; icon: LucideIcon; needs: Need };${items}` }), '0.35.0')).toBeNull();
   });
 
   it('reads an item however many lines it is written over', () => {
@@ -130,12 +130,12 @@ describe('the 0.13.0 migration', () => {
     const spread = project({
       'src/app.config.ts': "export const nav: NavGroup[] = [\n  {\n    items: [\n      {\n        href: '/',\n        label: 'Overview',\n        icon: LayoutGrid,\n        needs: 'public',\n      },\n      {\n        href: '/keys',\n        label: 'API keys',\n        icon: KeyRound,\n        needs: 'keys:read',\n      },\n    ],\n  },\n];\n",
     });
-    expect(byId('nav-needs').applies(spread)).toBeNull();
+    expect(byId('nav-needs').applies(spread, '0.35.0')).toBeNull();
     // And one spread item without a need is still the change.
     const spreadOld = project({
       'src/app.config.ts': "export const nav: NavGroup[] = [\n  {\n    items: [\n      {\n        href: '/',\n        label: 'Overview',\n        icon: LayoutGrid,\n      },\n    ],\n  },\n];\n",
     });
-    expect(byId('nav-needs').applies(spreadOld)).toEqual(['src/app.config.ts']);
+    expect(byId('nav-needs').applies(spreadOld, '0.35.0')).toEqual(['src/app.config.ts']);
   });
 });
 
@@ -149,23 +149,23 @@ describe('the 0.15.0 migration', () => {
       'app/sign-in/README.md': '# Sign in\n\nThe way in.\n',
     });
     expect(byId('agent-reads-own-group').since).toBe('0.15.0');
-    expect(byId('agent-reads-own-group').applies(old)).toEqual(['app/(dash)/teams/README.md']);
+    expect(byId('agent-reads-own-group').applies(old, '0.35.0')).toEqual(['app/(dash)/teams/README.md']);
   });
 
   it('leaves the template\'s own group to the rule that has covered it since 0.9.0, and finds nothing in a project on the new shape', () => {
-    expect(byId('agent-reads-own-group').applies(project({ 'app/(dashboard)/orders/README.md': '# Orders\n\nThe orders.\n\n## Agents\n\nNot applicable.\n' }))).toBeNull();
-    expect(byId('agent-reads-own-group').applies(project({ 'src/app/(console)/orders/README.md': '# Orders\n\nThe orders.\n\n## Agents\n\nShared.\n\n### What the agent reads\n\nEvery order.\n' }))).toBeNull();
-    expect(byId('agent-reads-own-group').applies(project({ 'src/app/(console)/orders/README.md': '# Orders\n\nThe orders.\n' }))).toEqual(['src/app/(console)/orders/README.md']);
-    expect(byId('agent-reads-own-group').applies(project({ 'package.json': '{}' }))).toBeNull();
+    expect(byId('agent-reads-own-group').applies(project({ 'app/(dashboard)/orders/README.md': '# Orders\n\nThe orders.\n\n## Agents\n\nNot applicable.\n' }), '0.35.0')).toBeNull();
+    expect(byId('agent-reads-own-group').applies(project({ 'src/app/(console)/orders/README.md': '# Orders\n\nThe orders.\n\n## Agents\n\nShared.\n\n### What the agent reads\n\nEvery order.\n' }), '0.35.0')).toBeNull();
+    expect(byId('agent-reads-own-group').applies(project({ 'src/app/(console)/orders/README.md': '# Orders\n\nThe orders.\n' }), '0.35.0')).toEqual(['src/app/(console)/orders/README.md']);
+    expect(byId('agent-reads-own-group').applies(project({ 'package.json': '{}' }), '0.35.0')).toBeNull();
   });
 });
 
 describe('the 0.16.0 migrations', () => {
   it('finds a configuration that does not say what a refused address draws, and leaves one that does alone', () => {
     expect(byId('refusal-declared').since).toBe('0.16.0');
-    expect(byId('refusal-declared').applies(project({ 'src/app.config.ts': "export const app = { name: 'Rota' } as const;\n" }))).toEqual(['src/app.config.ts']);
-    expect(byId('refusal-declared').applies(project({ 'src/app.config.ts': "export const refusal: 'explain' | 'absent' = 'explain';\n" }))).toBeNull();
-    expect(byId('refusal-declared').applies(project({ 'package.json': '{}' }))).toBeNull();
+    expect(byId('refusal-declared').applies(project({ 'src/app.config.ts': "export const app = { name: 'Rota' } as const;\n" }), '0.35.0')).toEqual(['src/app.config.ts']);
+    expect(byId('refusal-declared').applies(project({ 'src/app.config.ts': "export const refusal: 'explain' | 'absent' = 'explain';\n" }), '0.35.0')).toBeNull();
+    expect(byId('refusal-declared').applies(project({ 'package.json': '{}' }), '0.35.0')).toBeNull();
   });
 
   it('are all declared for 0.16.0', () => {
@@ -186,20 +186,20 @@ describe('the 0.16.0 migrations', () => {
       // A managed module is Meridian's and arrives with the update: it is never the team's to change.
       'src/lib/facts.ts': "import { largest } from '@/lib/insight';\n",
     });
-    expect(byId('managed-exports-removed').applies(old)).toEqual(['src/lib/assistant/tools.ts', `src/views/${O}-context.ts`, 'src/views/trend.ts', 'tests/shared-context.test.tsx']);
-    expect(byId('managed-exports-removed').applies(project({ 'src/views/home-context.ts': "import { median, sameWeekdayBaseline } from '@/lib/insight';\nimport { patchOf } from '@/lib/collection';\n" }))).toBeNull();
-    expect(byId('managed-exports-removed').applies(project({ 'package.json': '{}' }))).toBeNull();
+    expect(byId('managed-exports-removed').applies(old, '0.35.0')).toEqual(['src/lib/assistant/tools.ts', `src/views/${O}-context.ts`, 'src/views/trend.ts', 'tests/shared-context.test.tsx']);
+    expect(byId('managed-exports-removed').applies(project({ 'src/views/home-context.ts': "import { median, sameWeekdayBaseline } from '@/lib/insight';\nimport { patchOf } from '@/lib/collection';\n" }), '0.35.0')).toBeNull();
+    expect(byId('managed-exports-removed').applies(project({ 'package.json': '{}' }), '0.35.0')).toBeNull();
   });
 
   it('finds a view tool without the page it renders or its prepared query, and not a key inside its code', () => {
     // 0.15.0's shape: the keys of the object itself, where `page` also names a field of the input and of the data.
     const tool = (extra: string) => `export const requestsTool = defineViewTool({\n  name: 'requests',\n  description: 'The log, filtered {by status}.',\n  needs: FEATURES.requests.needs,\n${extra}  input: z.object({ page: z.number().optional() }),\n  async read(input) { const data = { page: 1, explore: null }; return { context: requestsContext(data), data }; },\n});\n`;
-    expect(byId('view-tool-page-explore').applies(project({ 'src/views/tools.ts': tool('') }))).toEqual(['src/views/tools.ts']);
-    expect(byId('view-tool-page-explore').applies(project({ 'src/views/tools.ts': tool("  page: '/requests',\n") }))).toEqual(['src/views/tools.ts']);
-    expect(byId('view-tool-page-explore').applies(project({ 'src/views/tools.ts': tool("  page: '/requests',\n  explore: requestsExplore,\n") }))).toBeNull();
+    expect(byId('view-tool-page-explore').applies(project({ 'src/views/tools.ts': tool('') }), '0.35.0')).toEqual(['src/views/tools.ts']);
+    expect(byId('view-tool-page-explore').applies(project({ 'src/views/tools.ts': tool("  page: '/requests',\n") }), '0.35.0')).toEqual(['src/views/tools.ts']);
+    expect(byId('view-tool-page-explore').applies(project({ 'src/views/tools.ts': tool("  page: '/requests',\n  explore: requestsExplore,\n") }), '0.35.0')).toBeNull();
     // A definition of its own is not a call, and a project with no view tools has nothing to change.
-    expect(byId('view-tool-page-explore').applies(project({ 'src/lib/views.ts': 'export function defineViewTool(t) { return t; }\n' }))).toBeNull();
-    expect(byId('view-tool-page-explore').applies(project({ 'package.json': '{}' }))).toBeNull();
+    expect(byId('view-tool-page-explore').applies(project({ 'src/lib/views.ts': 'export function defineViewTool(t) { return t; }\n' }), '0.35.0')).toBeNull();
+    expect(byId('view-tool-page-explore').applies(project({ 'package.json': '{}' }), '0.35.0')).toBeNull();
   });
 
   it("finds the specification of a view tool's page with no \"What the agent does here\"", () => {
@@ -213,15 +213,15 @@ describe('the 0.16.0 migrations', () => {
     };
     // With every tool naming its page, the gate's rule is exact: the pages named, never Settings or an embed view.
     const named = project({ ...specs, 'src/views/tools.ts': tool('requests', '/requests') + tool('customer', '/customers/[id]') });
-    expect(byId('agent-does-here-section').applies(named)).toEqual(['app/(dashboard)/requests/README.md']);
+    expect(byId('agent-does-here-section').applies(named, '0.35.0')).toEqual(['app/(dashboard)/requests/README.md']);
     // A tool of 0.15.0 names no page, and the rule fires once it does: every console page without the part is listed.
     const unnamed = project({ ...specs, 'src/views/tools.ts': tool('requests', null) + tool('customer', '/customers/[id]') });
-    expect(byId('agent-does-here-section').applies(unnamed)).toEqual(['app/(dashboard)/requests/README.md', 'app/(dashboard)/settings/README.md']);
-    expect(byId('agent-does-here-section').applies(project({ ...specs, 'src/views/tools.ts': tool('customer', '/customers/[id]') }))).toBeNull();
-    expect(byId('agent-does-here-section').applies(project(specs))).toBeNull();
+    expect(byId('agent-does-here-section').applies(unnamed, '0.35.0')).toEqual(['app/(dashboard)/requests/README.md', 'app/(dashboard)/settings/README.md']);
+    expect(byId('agent-does-here-section').applies(project({ ...specs, 'src/views/tools.ts': tool('customer', '/customers/[id]') }), '0.35.0')).toBeNull();
+    expect(byId('agent-does-here-section').applies(project(specs), '0.35.0')).toBeNull();
     // A tool kept in a module of its own, which the registry imports, is read as the gate reads it since 0.17.0 (#43).
     const split = project({ ...specs, 'src/views/tools.ts': "export { requestsTool } from './requests-tool';\n", 'src/views/requests-tool.ts': tool('requests', '/requests') });
-    expect(byId('agent-does-here-section').applies(split)).toEqual(['app/(dashboard)/requests/README.md']);
+    expect(byId('agent-does-here-section').applies(split, '0.35.0')).toEqual(['app/(dashboard)/requests/README.md']);
   });
 
   it("finds the sample's pages and views under their 0.15.0 names, and the files and tests that still read them", () => {
@@ -242,7 +242,7 @@ describe('the 0.16.0 migrations', () => {
       [`app/(dashboard)/${H}/page.tsx`]: "import { StatusView } from '@/views/status';\n",
       'tests/members.test.ts': "import { sampleSurfaces } from '../scripts/lib/sample.ts';\nexpect(sampleSurfaces(root, 'app').members).toBe(true);\n",
     });
-    expect(byId('sample-pages-renamed').applies(old)).toEqual([
+    expect(byId('sample-pages-renamed').applies(old, '0.35.0')).toEqual([
       `app/(dashboard)/(${O})/loading.tsx`, `app/(dashboard)/(${O})/page.tsx`, `app/(dashboard)/${A}/page.tsx`,
       'src/app.config.ts', `src/data/${A}.ts`, `src/views/${A}.tsx`, `src/views/${O}-context.ts`, 'src/views/tools.ts',
       'tests/fake.test.ts', 'tests/verify-sample-surfaces.test.ts', `tests/workspace-${O}.test.tsx`,
@@ -255,10 +255,10 @@ describe('the 0.16.0 migrations', () => {
       'tests/verify-sample-surfaces.test.ts': "expect(sampleSurfaces(root, 'app')).toEqual({ home: true, now: true, members: true, keys: true, settings: true });\n",
       'scripts/verify.config.ts': "const config = { navigationChecks: [{ path: '/services', title: 'Services' }] };\n",
     });
-    expect(byId('sample-pages-renamed').applies(current)).toBeNull();
+    expect(byId('sample-pages-renamed').applies(current, '0.35.0')).toBeNull();
     // The verify config alone names an address the product may own: without the sample's pages it is not this migration's.
-    expect(byId('sample-pages-renamed').applies(project({ 'scripts/verify.config.ts': `const config = { navigationChecks: [{ path: '/${H}', title: 'Operations' }] };\n` }))).toBeNull();
-    expect(byId('sample-pages-renamed').applies(project({ 'package.json': '{}' }))).toBeNull();
+    expect(byId('sample-pages-renamed').applies(project({ 'scripts/verify.config.ts': `const config = { navigationChecks: [{ path: '/${H}', title: 'Operations' }] };\n` }), '0.35.0')).toBeNull();
+    expect(byId('sample-pages-renamed').applies(project({ 'package.json': '{}' }), '0.35.0')).toBeNull();
   });
 });
 
@@ -271,13 +271,13 @@ describe('the 0.16.2 migration', () => {
 
   it('finds a test of the rail whose fake observer answers `observe` with nothing, and leaves one that answers it', () => {
     expect(byId('marker-measured-on-observe').since).toBe('0.16.2');
-    expect(byId('marker-measured-on-observe').applies(railTest('observe() {}'))).toEqual(['tests/rail-marker.test.tsx']);
+    expect(byId('marker-measured-on-observe').applies(railTest('observe() {}'), '0.35.0')).toEqual(['tests/rail-marker.test.tsx']);
     // The release's own copy, and a `observe` that answers over more than one line, are what the migration leaves alone.
-    expect(byId('marker-measured-on-observe').applies(railTest('observe() { for (const cb of observers) queueMicrotask(cb); }'))).toBeNull();
-    expect(byId('marker-measured-on-observe').applies(railTest('observe() {\n      for (const cb of observers) queueMicrotask(cb);\n    }'))).toBeNull();
+    expect(byId('marker-measured-on-observe').applies(railTest('observe() { for (const cb of observers) queueMicrotask(cb); }'), '0.35.0')).toBeNull();
+    expect(byId('marker-measured-on-observe').applies(railTest('observe() {\n      for (const cb of observers) queueMicrotask(cb);\n    }'), '0.35.0')).toBeNull();
     // A test that mounts something else, and a project with no test of the rail, have nothing to bring over.
-    expect(byId('marker-measured-on-observe').applies(project({ 'tests/shell.test.tsx': "import { Shell } from '@/components/base/shell';\nobserve() {}\n" }))).toBeNull();
-    expect(byId('marker-measured-on-observe').applies(project({ 'package.json': '{}' }))).toBeNull();
+    expect(byId('marker-measured-on-observe').applies(project({ 'tests/shell.test.tsx': "import { Shell } from '@/components/base/shell';\nobserve() {}\n" }), '0.35.0')).toBeNull();
+    expect(byId('marker-measured-on-observe').applies(project({ 'package.json': '{}' }), '0.35.0')).toBeNull();
   });
 });
 
@@ -287,18 +287,18 @@ describe('the 0.16.3 migrations', () => {
 
   it('finds a route that matches the page with its own `onPage`, and leaves one that asks `viewAt`', () => {
     expect(byId('view-page-matched-as-next').since).toBe('0.16.3');
-    expect(byId('view-page-matched-as-next').applies(project({ 'app/api/assistant/route.ts': old }))).toEqual(['app/api/assistant/route.ts']);
-    expect(byId('view-page-matched-as-next').applies(path.resolve(import.meta.dirname, '..'))).toBeNull();
-    expect(byId('view-page-matched-as-next').applies(project({ 'package.json': '{}' }))).toBeNull();
+    expect(byId('view-page-matched-as-next').applies(project({ 'app/api/assistant/route.ts': old }), '0.35.0')).toEqual(['app/api/assistant/route.ts']);
+    expect(byId('view-page-matched-as-next').applies(path.resolve(import.meta.dirname, '..'), '0.35.0')).toBeNull();
+    expect(byId('view-page-matched-as-next').applies(project({ 'package.json': '{}' }), '0.35.0')).toBeNull();
   });
 
   it('finds a test that imports the journey from `scripts/navigate.ts`, and leaves one that imports it from its module', () => {
     expect(byId('journey-moved').since).toBe('0.16.3');
-    expect(byId('journey-moved').applies(project({ 'tests/navigate-start.test.ts': "import { startFor } from '../scripts/navigate.ts';\n" }))).toEqual(['tests/navigate-start.test.ts']);
-    expect(byId('journey-moved').applies(project({ 'tests/navigate-start.test.ts': "import { startFor } from '../scripts/lib/journey.ts';\n" }))).toBeNull();
+    expect(byId('journey-moved').applies(project({ 'tests/navigate-start.test.ts': "import { startFor } from '../scripts/navigate.ts';\n" }), '0.35.0')).toEqual(['tests/navigate-start.test.ts']);
+    expect(byId('journey-moved').applies(project({ 'tests/navigate-start.test.ts': "import { startFor } from '../scripts/lib/journey.ts';\n" }), '0.35.0')).toBeNull();
     // `workspaceHomes` stayed with the command until 0.36.0, which `workspace-homes-moved` reports.
-    expect(byId('journey-moved').applies(project({ 'tests/homes.test.ts': "import { workspaceHomes } from '../scripts/navigate.ts';\n" }))).toBeNull();
-    expect(byId('journey-moved').applies(path.resolve(import.meta.dirname, '..'))).toBeNull();
+    expect(byId('journey-moved').applies(project({ 'tests/homes.test.ts': "import { workspaceHomes } from '../scripts/navigate.ts';\n" }), '0.35.0')).toBeNull();
+    expect(byId('journey-moved').applies(path.resolve(import.meta.dirname, '..'), '0.35.0')).toBeNull();
   });
 
   it("finds a route or a read that cuts today at the UTC date, and leaves one that asks `dayOf`", () => {
@@ -306,11 +306,11 @@ describe('the 0.16.3 migrations', () => {
     expect(byId('today-in-timezone').applies(project({
       'app/api/assistant/route.ts': "const io = { aggregate, read, today: clock().toISOString().slice(0, 10) };\n",
       'src/data/metrics.ts': "export async function readDays() {\n  const today = clock().toISOString().slice(0, 10);\n}\n",
-    }))).toEqual(['app/api/assistant/route.ts', 'src/data/metrics.ts']);
-    expect(byId('today-in-timezone').applies(project({ 'app/api/assistant/route.ts': 'const io = { aggregate, read, today: dayOf(clock()) };\n' }))).toBeNull();
+    }), '0.35.0')).toEqual(['app/api/assistant/route.ts', 'src/data/metrics.ts']);
+    expect(byId('today-in-timezone').applies(project({ 'app/api/assistant/route.ts': 'const io = { aggregate, read, today: dayOf(clock()) };\n' }), '0.35.0')).toBeNull();
     // A date stamped on a record elsewhere is not this migration's.
-    expect(byId('today-in-timezone').applies(project({ 'app/keys/actions.ts': "const today = clock().toISOString().slice(0, 10);\n" }))).toBeNull();
-    expect(byId('today-in-timezone').applies(path.resolve(import.meta.dirname, '..'))).toBeNull();
+    expect(byId('today-in-timezone').applies(project({ 'app/keys/actions.ts': "const today = clock().toISOString().slice(0, 10);\n" }), '0.35.0')).toBeNull();
+    expect(byId('today-in-timezone').applies(path.resolve(import.meta.dirname, '..'), '0.35.0')).toBeNull();
   });
 });
 
@@ -319,11 +319,11 @@ describe('the 0.17.0 migration', () => {
     const imp = "import { finalOutcome } from '../scripts/lib/coverage.ts';\n";
     expect(byId('verify-tiers').since).toBe('0.17.0');
     expect(byId('verify-tiers').checks).toEqual(['gate']);
-    expect(byId('verify-tiers').applies(project({ 'tests/verify-suite-outcome.test.ts': `${imp}finalOutcome(true, []);\n` }))).toEqual(['tests/verify-suite-outcome.test.ts']);
-    expect(byId('verify-tiers').applies(project({ 'tests/verify-suite-outcome.test.ts': `${imp}finalOutcome({ full: true, timed: false }, []);\n` }))).toBeNull();
+    expect(byId('verify-tiers').applies(project({ 'tests/verify-suite-outcome.test.ts': `${imp}finalOutcome(true, []);\n` }), '0.35.0')).toEqual(['tests/verify-suite-outcome.test.ts']);
+    expect(byId('verify-tiers').applies(project({ 'tests/verify-suite-outcome.test.ts': `${imp}finalOutcome({ full: true, timed: false }, []);\n` }), '0.35.0')).toBeNull();
     // A call of another function by that name, with no import of the coverage module, is not this migration's.
-    expect(byId('verify-tiers').applies(project({ 'tests/other.test.ts': 'finalOutcome(true, []);\n' }))).toBeNull();
-    expect(byId('verify-tiers').applies(path.resolve(import.meta.dirname, '..'))).toBeNull();
+    expect(byId('verify-tiers').applies(project({ 'tests/other.test.ts': 'finalOutcome(true, []);\n' }), '0.35.0')).toBeNull();
+    expect(byId('verify-tiers').applies(path.resolve(import.meta.dirname, '..'), '0.35.0')).toBeNull();
   });
 });
 
@@ -331,11 +331,11 @@ describe('the 0.19.0 migration', () => {
   it('finds a test that expects a period with no data to draw a track, and leaves the release\'s own', () => {
     const imp = "import { ColumnChart } from '@/components/charts/column-chart';\n";
     expect(byId('no-data-mark').since).toBe('0.19.0');
-    expect(byId('no-data-mark').applies(project({ 'tests/column-chart-no-data.test.tsx': `${imp}expect(none.querySelector('.bg-fill-track')).not.toBeNull();\n` }))).toEqual(['tests/column-chart-no-data.test.tsx']);
-    expect(byId('no-data-mark').applies(project({ 'tests/column-chart-no-data.test.tsx': `${imp}expect(none.querySelector('.bg-fill-track')).toBeNull();\n` }))).toBeNull();
+    expect(byId('no-data-mark').applies(project({ 'tests/column-chart-no-data.test.tsx': `${imp}expect(none.querySelector('.bg-fill-track')).not.toBeNull();\n` }), '0.35.0')).toEqual(['tests/column-chart-no-data.test.tsx']);
+    expect(byId('no-data-mark').applies(project({ 'tests/column-chart-no-data.test.tsx': `${imp}expect(none.querySelector('.bg-fill-track')).toBeNull();\n` }), '0.35.0')).toBeNull();
     // A test of another card that draws a track is not this migration's.
-    expect(byId('no-data-mark').applies(project({ 'tests/heatmap.test.tsx': "import { Heatmap } from '@/components/charts/heatmap';\nexpect(cell.querySelector('.bg-fill-track')).not.toBeNull();\n" }))).toBeNull();
-    expect(byId('no-data-mark').applies(path.resolve(import.meta.dirname, '..'))).toBeNull();
+    expect(byId('no-data-mark').applies(project({ 'tests/heatmap.test.tsx': "import { Heatmap } from '@/components/charts/heatmap';\nexpect(cell.querySelector('.bg-fill-track')).not.toBeNull();\n" }), '0.35.0')).toBeNull();
+    expect(byId('no-data-mark').applies(path.resolve(import.meta.dirname, '..'), '0.35.0')).toBeNull();
   });
 });
 
@@ -343,14 +343,14 @@ describe('the 0.26.0 migration', () => {
   it('finds a test that expects the 256px floor and a cell that spans columns, and leaves the release\'s own', () => {
     const imp = "import { Table, TableCell } from '@/components/ui/table';\n";
     expect(byId('table-grid').since).toBe('0.26.0');
-    expect(byId('table-grid').applies(project({ 'tests/table-cut-cell.test.tsx': `${imp}expect(classes(heads[0])).toEqual(expect.arrayContaining(['min-w-40', '@min-[672px]:min-w-64']));\n` }))).toEqual(['tests/table-cut-cell.test.tsx']);
-    expect(byId('table-grid').applies(project({ 'src/views/runs.tsx': `${imp}export const Empty = () => <TableCell colSpan={4}>No runs</TableCell>;\n` }))).toEqual(['src/views/runs.tsx']);
+    expect(byId('table-grid').applies(project({ 'tests/table-cut-cell.test.tsx': `${imp}expect(classes(heads[0])).toEqual(expect.arrayContaining(['min-w-40', '@min-[672px]:min-w-64']));\n` }), '0.35.0')).toEqual(['tests/table-cut-cell.test.tsx']);
+    expect(byId('table-grid').applies(project({ 'src/views/runs.tsx': `${imp}export const Empty = () => <TableCell colSpan={4}>No runs</TableCell>;\n` }), '0.35.0')).toEqual(['src/views/runs.tsx']);
     // An adopted project imports Meridian's files through @meridian/*, which is read as the same module.
-    expect(byId('table-grid').applies(project({ 'app/runs.tsx': `${imp.replace("'@/components/", "'@meridian/components/")}export const Empty = () => <TableCell colSpan={4}>No runs</TableCell>;\n` }))).toEqual(['app/runs.tsx']);
-    expect(byId('table-grid').applies(project({ 'tests/table-cut-cell.test.tsx': `${imp}expect(classes(heads[0])).toEqual(expect.arrayContaining(['min-w-40']));\n` }))).toBeNull();
+    expect(byId('table-grid').applies(project({ 'app/runs.tsx': `${imp.replace("'@/components/", "'@meridian/components/")}export const Empty = () => <TableCell colSpan={4}>No runs</TableCell>;\n` }), '0.35.0')).toEqual(['app/runs.tsx']);
+    expect(byId('table-grid').applies(project({ 'tests/table-cut-cell.test.tsx': `${imp}expect(classes(heads[0])).toEqual(expect.arrayContaining(['min-w-40']));\n` }), '0.35.0')).toBeNull();
     // A span in a file that does not draw Meridian's table is not this migration's.
-    expect(byId('table-grid').applies(project({ 'src/views/plain.tsx': 'export const Row = () => <td colSpan={2}>x</td>;\n' }))).toBeNull();
-    expect(byId('table-grid').applies(path.resolve(import.meta.dirname, '..'))).toBeNull();
+    expect(byId('table-grid').applies(project({ 'src/views/plain.tsx': 'export const Row = () => <td colSpan={2}>x</td>;\n' }), '0.35.0')).toBeNull();
+    expect(byId('table-grid').applies(path.resolve(import.meta.dirname, '..'), '0.35.0')).toBeNull();
   });
 });
 
@@ -359,23 +359,23 @@ describe('the 0.28.0 migration', () => {
     const moved = byId('four-layers');
     expect(moved.since).toBe('0.28.0');
     // A module that left `src/views/` is reported from the path it left, under either alias or a relative specifier.
-    expect(moved.applies(project({ 'src/views/own.tsx': "import { homeTool } from '@/views/tools';\nexport default homeTool;\n" }))).toEqual(['src/views/own.tsx']);
-    expect(moved.applies(project({ 'src/views/own.tsx': "import { homeTool } from './tools';\nexport default homeTool;\n" }))).toEqual(['src/views/own.tsx']);
+    expect(moved.applies(project({ 'src/views/own.tsx': "import { homeTool } from '@/views/tools';\nexport default homeTool;\n" }), '0.35.0')).toEqual(['src/views/own.tsx']);
+    expect(moved.applies(project({ 'src/views/own.tsx': "import { homeTool } from './tools';\nexport default homeTool;\n" }), '0.35.0')).toEqual(['src/views/own.tsx']);
     // Two symbols left a shipped card for the logic layer. The card is Meridian's, so the update replaces it and a team
     // file that imported the symbol from it stops compiling: the migration has to name that as well as the paths.
-    expect(moved.applies(project({ 'app/reports/page.tsx': "import { afterStart } from '@/components/patterns/incident-card';\nexport default afterStart;\n" }))).toEqual(['app/reports/page.tsx']);
-    expect(moved.applies(project({ 'app/reports/page.tsx': "import { summarise } from '@/components/patterns/status-list';\nexport default summarise;\n" }))).toEqual(['app/reports/page.tsx']);
+    expect(moved.applies(project({ 'app/reports/page.tsx': "import { afterStart } from '@/components/patterns/incident-card';\nexport default afterStart;\n" }), '0.35.0')).toEqual(['app/reports/page.tsx']);
+    expect(moved.applies(project({ 'app/reports/page.tsx': "import { summarise } from '@/components/patterns/status-list';\nexport default summarise;\n" }), '0.35.0')).toEqual(['app/reports/page.tsx']);
     // The card itself, and its type, are the card's own business: neither is a break.
-    expect(moved.applies(project({ 'app/reports/page.tsx': "import { IncidentCard, type Incident } from '@/components/patterns/incident-card';\nexport default IncidentCard;\n" }))).toBeNull();
-    expect(moved.applies(project({ 'app/reports/page.tsx': "import type { Service } from '@/components/patterns/status-list';\nexport default null;\n" }))).toBeNull();
+    expect(moved.applies(project({ 'app/reports/page.tsx': "import { IncidentCard, type Incident } from '@/components/patterns/incident-card';\nexport default IncidentCard;\n" }), '0.35.0')).toBeNull();
+    expect(moved.applies(project({ 'app/reports/page.tsx': "import type { Service } from '@/components/patterns/status-list';\nexport default null;\n" }), '0.35.0')).toBeNull();
     // A symbol is named through a namespace, or handed on by a re-export, as often as it is imported by name — and both
     // stop compiling once the card is replaced, so both are this migration's.
-    expect(moved.applies(project({ 'app/reports/page.tsx': "import * as card from '@/components/patterns/incident-card';\nexport const at = card.afterStart('2026-01-01', '2026-01-02');\n" }))).toEqual(['app/reports/page.tsx']);
-    expect(moved.applies(project({ 'src/views/own.tsx': "export { summarise } from '@/components/patterns/status-list';\n" }))).toEqual(['src/views/own.tsx']);
-    expect(moved.applies(project({ 'src/views/own.tsx': "export * from '@/components/patterns/status-list';\n" }))).toEqual(['src/views/own.tsx']);
+    expect(moved.applies(project({ 'app/reports/page.tsx': "import * as card from '@/components/patterns/incident-card';\nexport const at = card.afterStart('2026-01-01', '2026-01-02');\n" }), '0.35.0')).toEqual(['app/reports/page.tsx']);
+    expect(moved.applies(project({ 'src/views/own.tsx': "export { summarise } from '@/components/patterns/status-list';\n" }), '0.35.0')).toEqual(['src/views/own.tsx']);
+    expect(moved.applies(project({ 'src/views/own.tsx': "export * from '@/components/patterns/status-list';\n" }), '0.35.0')).toEqual(['src/views/own.tsx']);
     // A namespace that names something the card still exports is not this migration's.
-    expect(moved.applies(project({ 'app/reports/page.tsx': "import * as card from '@/components/patterns/incident-card';\nexport default card.IncidentCard;\n" }))).toBeNull();
-    expect(moved.applies(path.resolve(import.meta.dirname, '..'))).toBeNull();
+    expect(moved.applies(project({ 'app/reports/page.tsx': "import * as card from '@/components/patterns/incident-card';\nexport default card.IncidentCard;\n" }), '0.35.0')).toBeNull();
+    expect(moved.applies(path.resolve(import.meta.dirname, '..'), '0.35.0')).toBeNull();
   });
 });
 
@@ -395,30 +395,30 @@ describe('the 0.30.0 migration', () => {
   it('finds a team file that reads a collection directly without stating why, and leaves the release’s own', () => {
     const call = "await members.query({ where: [{ field: 'id', op: 'eq', value: id }] });";
     expect(byId('direct-query-escape').since).toBe('0.30.0');
-    expect(byId('direct-query-escape').applies(project({ 'app/(dashboard)/members/actions.ts': `'use server';\nconst m = ${call}\n` }))).toEqual(['app/(dashboard)/members/actions.ts']);
+    expect(byId('direct-query-escape').applies(project({ 'app/(dashboard)/members/actions.ts': `'use server';\nconst m = ${call}\n` }), '0.35.0')).toEqual(['app/(dashboard)/members/actions.ts']);
     // The escape the check prints, on the call's own line, is what the rule asks for — and the 0.30.0 release's own
     // five files carry it, so the repository is not this migration's.
-    expect(byId('direct-query-escape').applies(project({ 'app/(dashboard)/members/actions.ts': `'use server';\nconst m = ${call} // allow-no-direct-query: read() cannot serve this — a server action reads the record it changes\n` }))).toBeNull();
+    expect(byId('direct-query-escape').applies(project({ 'app/(dashboard)/members/actions.ts': `'use server';\nconst m = ${call} // allow-no-direct-query: read() cannot serve this — a server action reads the record it changes\n` }), '0.35.0')).toBeNull();
     // A comment that quotes the call is not a call: the check blanks comments before it looks, and so does this.
-    expect(byId('direct-query-escape').applies(project({ 'app/(dashboard)/members/page.tsx': `// the old page did ${call}\nexport default function P() { return null; }\n` }))).toBeNull();
+    expect(byId('direct-query-escape').applies(project({ 'app/(dashboard)/members/page.tsx': `// the old page did ${call}\nexport default function P() { return null; }\n` }), '0.35.0')).toBeNull();
     // The rule governs four folders, and a direct read outside them is not this migration's.
-    expect(byId('direct-query-escape').applies(project({ 'src/data/collections.ts': `${call}\n` }))).toBeNull();
-    expect(byId('direct-query-escape').applies(path.resolve(import.meta.dirname, '..'))).toBeNull();
+    expect(byId('direct-query-escape').applies(project({ 'src/data/collections.ts': `${call}\n` }), '0.35.0')).toBeNull();
+    expect(byId('direct-query-escape').applies(path.resolve(import.meta.dirname, '..'), '0.35.0')).toBeNull();
   });
 
   it('finds a configuration whose app object has no description, and leaves one that has', () => {
     const config = (body: string) => project({ 'src/app.config.ts': body });
     const app = (keys: string) => `import type { Need } from './lib/collection.ts';\n\nexport const app = {\n${keys}} as const;\n\nexport const nav: readonly NavItem[] = [];\n`;
     expect(byId('app-description').since).toBe('0.30.0');
-    expect(byId('app-description').applies(config(app("  name: 'Smoke Ops',\n  workspace: 'Production',\n")))).toEqual(['src/app.config.ts']);
-    expect(byId('app-description').applies(config(app("  name: 'Smoke Ops',\n  description: 'Traffic and health for every endpoint.',\n")))).toBeNull();
+    expect(byId('app-description').applies(config(app("  name: 'Smoke Ops',\n  workspace: 'Production',\n")), '0.35.0')).toEqual(['src/app.config.ts']);
+    expect(byId('app-description').applies(config(app("  name: 'Smoke Ops',\n  description: 'Traffic and health for every endpoint.',\n")), '0.35.0')).toBeNull();
     // A config without an `app` object at all is something else's problem, and not a file to edit.
-    expect(byId('app-description').applies(config("export const other = 1;\n"))).toBeNull();
+    expect(byId('app-description').applies(config("export const other = 1;\n"), '0.35.0')).toBeNull();
     // A description outside the app object — a nav item's, a page's — does not stand in for the key.
-    expect(byId('app-description').applies(config(app("  name: 'Smoke Ops',\n") + "\nconst item = { description: 'a rail entry' };\n"))).toEqual(['src/app.config.ts']);
+    expect(byId('app-description').applies(config(app("  name: 'Smoke Ops',\n") + "\nconst item = { description: 'a rail entry' };\n"), '0.35.0')).toEqual(['src/app.config.ts']);
     // A project with no configuration is not this migration's, and the release's own has the key.
-    expect(byId('app-description').applies(project({}))).toBeNull();
-    expect(byId('app-description').applies(path.resolve(import.meta.dirname, '..'))).toBeNull();
+    expect(byId('app-description').applies(project({}), '0.35.0')).toBeNull();
+    expect(byId('app-description').applies(path.resolve(import.meta.dirname, '..'), '0.35.0')).toBeNull();
   });
 });
 
@@ -426,11 +426,11 @@ describe('the 0.31.1 migration', () => {
   it('finds a live stream starter that keeps its streams on a stop signal, and leaves the release\'s', () => {
     const starter = (body: string) => project({ 'src/data/live-stream.ts': body });
     expect(byId('live-stream-shutdown').since).toBe('0.31.1');
-    expect(byId('live-stream-shutdown').applies(starter('export function liveStream(o) {\n  return new Response(null);\n}\n'))).toEqual(['src/data/live-stream.ts']);
-    expect(byId('live-stream-shutdown').applies(starter('process.once(sig, function endLiveStreamsOnSignal() {});\nexport function liveStream(o) {}\n'))).toBeNull();
+    expect(byId('live-stream-shutdown').applies(starter('export function liveStream(o) {\n  return new Response(null);\n}\n'), '0.35.0')).toEqual(['src/data/live-stream.ts']);
+    expect(byId('live-stream-shutdown').applies(starter('process.once(sig, function endLiveStreamsOnSignal() {});\nexport function liveStream(o) {}\n'), '0.35.0')).toBeNull();
     // A project without the starter has no stream to end: the live reference adds it, and this has nothing to say.
-    expect(byId('live-stream-shutdown').applies(project({}))).toBeNull();
-    expect(byId('live-stream-shutdown').applies(path.resolve(import.meta.dirname, '..'))).toBeNull();
+    expect(byId('live-stream-shutdown').applies(project({}), '0.35.0')).toBeNull();
+    expect(byId('live-stream-shutdown').applies(path.resolve(import.meta.dirname, '..'), '0.35.0')).toBeNull();
   });
 });
 
@@ -438,11 +438,11 @@ describe('the 0.32.0 migration', () => {
   it('finds a verify configuration with detail routes and no missing ones, and leaves the release\'s and an empty one', () => {
     const config = (body: string) => project({ 'scripts/verify.config.ts': body });
     expect(byId('missing-routes').since).toBe('0.32.0');
-    expect(byId('missing-routes').applies(config("export default {\n  detailRoutes: [\n    '/requests/req_missing',\n  ],\n};\n"))).toEqual(['scripts/verify.config.ts']);
-    expect(byId('missing-routes').applies(config("export default {\n  detailRoutes: ['/a'],\n  missingRoutes: ['/b'],\n};\n"))).toBeNull();
+    expect(byId('missing-routes').applies(config("export default {\n  detailRoutes: [\n    '/requests/req_missing',\n  ],\n};\n"), '0.35.0')).toEqual(['scripts/verify.config.ts']);
+    expect(byId('missing-routes').applies(config("export default {\n  detailRoutes: ['/a'],\n  missingRoutes: ['/b'],\n};\n"), '0.35.0')).toBeNull();
     // An adopted project lists none yet: nothing it lists can be a missing record.
-    expect(byId('missing-routes').applies(config('export default {\n  detailRoutes: [],\n};\n'))).toBeNull();
-    expect(byId('missing-routes').applies(path.resolve(import.meta.dirname, '..'))).toBeNull();
+    expect(byId('missing-routes').applies(config('export default {\n  detailRoutes: [],\n};\n'), '0.35.0')).toBeNull();
+    expect(byId('missing-routes').applies(path.resolve(import.meta.dirname, '..'), '0.35.0')).toBeNull();
   });
 });
 
@@ -451,12 +451,12 @@ describe('the 0.34.0 migration', () => {
     const layout = (body: string) => project({ 'app/layout.tsx': body });
     const google = "import { Geist, Geist_Mono } from 'next/font/google';\nconst sans = Geist({ subsets: ['latin'], variable: '--font-face-sans', display: 'swap' });\nconst mono = Geist_Mono({ subsets: ['latin'], weight: ['400', '500'], variable: '--font-face-mono', display: 'swap' });\n";
     expect(byId('self-hosted-fonts').since).toBe('0.34.0');
-    expect(byId('self-hosted-fonts').applies(layout(google))).toEqual(['app/layout.tsx']);
+    expect(byId('self-hosted-fonts').applies(layout(google), '0.35.0')).toEqual(['app/layout.tsx']);
     // A create-next-app layout loads Geist for its own variables, which Meridian's tokens never read: the team's choice.
-    expect(byId('self-hosted-fonts').applies(layout("import { Geist } from \"next/font/google\";\nconst geistSans = Geist({ variable: \"--font-geist-sans\", subsets: [\"latin\"] });\n"))).toBeNull();
-    expect(byId('self-hosted-fonts').applies(layout("import localFont from 'next/font/local';\nconst sans = localFont({ src: '../src/styles/fonts/Geist-Variable.woff2', variable: '--font-face-sans' });\n"))).toBeNull();
-    expect(byId('self-hosted-fonts').applies(project({}))).toBeNull();
-    expect(byId('self-hosted-fonts').applies(path.resolve(import.meta.dirname, '..'))).toBeNull();
+    expect(byId('self-hosted-fonts').applies(layout("import { Geist } from \"next/font/google\";\nconst geistSans = Geist({ variable: \"--font-geist-sans\", subsets: [\"latin\"] });\n"), '0.35.0')).toBeNull();
+    expect(byId('self-hosted-fonts').applies(layout("import localFont from 'next/font/local';\nconst sans = localFont({ src: '../src/styles/fonts/Geist-Variable.woff2', variable: '--font-face-sans' });\n"), '0.35.0')).toBeNull();
+    expect(byId('self-hosted-fonts').applies(project({}), '0.35.0')).toBeNull();
+    expect(byId('self-hosted-fonts').applies(path.resolve(import.meta.dirname, '..'), '0.35.0')).toBeNull();
   });
 });
 
@@ -465,43 +465,43 @@ describe('the 0.36.0 navigation migration', () => {
     const m = byId('nav-item-fields');
     expect(m.since).toBe('0.36.0');
     const config = (fields: string) => project({ 'src/app.config.ts': `export type NavItem = { href: string; label: string; icon: LucideIcon; needs: Need${fields} };\nexport type NavGroup = { label?: string; items: NavItem[] };\n` });
-    expect(m.applies(config(''))).toEqual(['src/app.config.ts']);
-    expect(m.applies(config('; prefetch?: true'))).toEqual(['src/app.config.ts']);
-    expect(m.applies(config('; under?: string'))).toEqual(['src/app.config.ts']);
-    expect(m.applies(config('; prefetch?: true; under?: string'))).toBeNull();
+    expect(m.applies(config(''), '0.35.0')).toEqual(['src/app.config.ts']);
+    expect(m.applies(config('; prefetch?: true'), '0.35.0')).toEqual(['src/app.config.ts']);
+    expect(m.applies(config('; under?: string'), '0.35.0')).toEqual(['src/app.config.ts']);
+    expect(m.applies(config('; prefetch?: true; under?: string'), '0.35.0')).toBeNull();
     // A field of the same name elsewhere in the file does not stand in for the type's.
-    expect(m.applies(project({ 'src/app.config.ts': 'export type NavItem = { href: string };\nconst item = { under: \'/\', prefetch: true };\n' }))).toEqual(['src/app.config.ts']);
+    expect(m.applies(project({ 'src/app.config.ts': 'export type NavItem = { href: string };\nconst item = { under: \'/\', prefetch: true };\n' }), '0.35.0')).toEqual(['src/app.config.ts']);
     // The type read to its end: past a nested object's own `};` line, as an intersection, and as an interface.
     const nested = 'export type NavItem = {\n  href: string;\n  badge?: {\n    text: string;\n  };\n  needs: Need;\n  prefetch?: true;\n  under?: string;\n};\n';
-    expect(m.applies(project({ 'src/app.config.ts': nested }))).toBeNull();
-    expect(byId('nav-needs').applies(project({ 'src/app.config.ts': `${nested}export const nav: NavGroup[] = [{ items: [{ href: '/', needs: 'public' }] }];\n` }))).toBeNull();
-    expect(m.applies(project({ 'src/app.config.ts': 'export type NavItem = Base & { href: string; needs: Need };\n' }))).toEqual(['src/app.config.ts']);
-    expect(m.applies(project({ 'src/app.config.ts': 'export type NavItem = Base &\n  { href: string; prefetch?: true; under?: string };\n' }))).toBeNull();
-    expect(m.applies(project({ 'src/app.config.ts': 'export interface NavItem {\n  href: string;\n  needs: Need;\n}\n' }))).toEqual(['src/app.config.ts']);
-    expect(m.applies(project({ 'src/app.config.ts': 'export interface NavItem extends Base { href: string; prefetch?: true; under?: string }\n' }))).toBeNull();
+    expect(m.applies(project({ 'src/app.config.ts': nested }), '0.35.0')).toBeNull();
+    expect(byId('nav-needs').applies(project({ 'src/app.config.ts': `${nested}export const nav: NavGroup[] = [{ items: [{ href: '/', needs: 'public' }] }];\n` }), '0.35.0')).toBeNull();
+    expect(m.applies(project({ 'src/app.config.ts': 'export type NavItem = Base & { href: string; needs: Need };\n' }), '0.35.0')).toEqual(['src/app.config.ts']);
+    expect(m.applies(project({ 'src/app.config.ts': 'export type NavItem = Base &\n  { href: string; prefetch?: true; under?: string };\n' }), '0.35.0')).toBeNull();
+    expect(m.applies(project({ 'src/app.config.ts': 'export interface NavItem {\n  href: string;\n  needs: Need;\n}\n' }), '0.35.0')).toEqual(['src/app.config.ts']);
+    expect(m.applies(project({ 'src/app.config.ts': 'export interface NavItem extends Base { href: string; prefetch?: true; under?: string }\n' }), '0.35.0')).toBeNull();
     // The type ends at the next line that starts at its margin with anything but a continuation, so a type spread over
     // lines is read whole; a commented-out field is not a field.
     const F = '{ href: string; needs: Need; prefetch?: true; under?: string }';
     for (const shape of [`export type NavItem = Readonly<\n  ${F}\n>;\n`, `export type NavItem = Base extends X\n  ? ${F}\n  : ${F};\n`, `export type NavItem = // the rail's item\n  ${F};\n`, `export interface NavItem extends Base<{ a: string }> ${F}\n`, `export type NavItem = ${F}\nexport type NavGroup = { items: NavItem[] }\n`]) {
-      expect(m.applies(project({ 'src/app.config.ts': shape })), shape).toBeNull();
+      expect(m.applies(project({ 'src/app.config.ts': shape }), '0.35.0'), shape).toBeNull();
     }
-    expect(m.applies(project({ 'src/app.config.ts': 'export type NavItem = {\n  href: string;\n  // prefetch?: true;\n  // under?: string;\n};\n' }))).toEqual(['src/app.config.ts']);
-    expect(m.applies(project({ 'src/app.config.ts': 'export type NavItem = { href: string } // under?: prefetch?:\n' }))).toEqual(['src/app.config.ts']);
+    expect(m.applies(project({ 'src/app.config.ts': 'export type NavItem = {\n  href: string;\n  // prefetch?: true;\n  // under?: string;\n};\n' }), '0.35.0')).toEqual(['src/app.config.ts']);
+    expect(m.applies(project({ 'src/app.config.ts': 'export type NavItem = { href: string } // under?: prefetch?:\n' }), '0.35.0')).toEqual(['src/app.config.ts']);
     // What follows the type is not read as its fields, exported or not.
-    const needsAfter = (next: string) => byId('nav-needs').applies(project({ 'src/app.config.ts': `export type NavItem = { href: string; label: string };\n${next}\nexport const nav: NavGroup[] = [\n  { items: [{ href: '/', needs: 'public' }] },\n];\n` }));
+    const needsAfter = (next: string) => byId('nav-needs').applies(project({ 'src/app.config.ts': `export type NavItem = { href: string; label: string };\n${next}\nexport const nav: NavGroup[] = [\n  { items: [{ href: '/', needs: 'public' }] },\n];\n` }), '0.35.0');
     expect(needsAfter("async function extra() { return [{ href: '/x', needs: 'public' }] }")).toEqual(['src/app.config.ts']);
     expect(needsAfter("if (dev) {\n  register({ needs: 'public' });\n}")).toEqual(['src/app.config.ts']);
-    expect(byId('nav-needs').applies(project({ 'src/app.config.ts': "export type NavItem = { href: string; label: string };\n/** The rail. */ export const nav: NavGroup[] = [\n  { items: [{ href: '/', needs: 'public' }] },\n];\n" }))).toEqual(['src/app.config.ts']);
-    expect(m.applies(project({ 'src/app.config.ts': 'export interface NavItem {\n  href: string;\n}\nfunction draw(it: { prefetch?: true; under?: string }) {}\n' }))).toEqual(['src/app.config.ts']);
+    expect(byId('nav-needs').applies(project({ 'src/app.config.ts': "export type NavItem = { href: string; label: string };\n/** The rail. */ export const nav: NavGroup[] = [\n  { items: [{ href: '/', needs: 'public' }] },\n];\n" }), '0.35.0')).toEqual(['src/app.config.ts']);
+    expect(m.applies(project({ 'src/app.config.ts': 'export interface NavItem {\n  href: string;\n}\nfunction draw(it: { prefetch?: true; under?: string }) {}\n' }), '0.35.0')).toEqual(['src/app.config.ts']);
     // A type finished on its own line ends there, and a copy kept in a comment does not stand in for it.
-    expect(m.applies(project({ 'src/app.config.ts': 'export type NavItem = { href: string };\n  const drawn = { prefetch?: true, under?: string };\n' }))).toEqual(['src/app.config.ts']);
-    expect(m.applies(project({ 'src/app.config.ts': '/*\nexport type NavItem = { href: string; prefetch?: true; under?: string };\n*/\nexport type NavItem = { href: string };\n' }))).toEqual(['src/app.config.ts']);
+    expect(m.applies(project({ 'src/app.config.ts': 'export type NavItem = { href: string };\n  const drawn = { prefetch?: true, under?: string };\n' }), '0.35.0')).toEqual(['src/app.config.ts']);
+    expect(m.applies(project({ 'src/app.config.ts': '/*\nexport type NavItem = { href: string; prefetch?: true; under?: string };\n*/\nexport type NavItem = { href: string };\n' }), '0.35.0')).toEqual(['src/app.config.ts']);
     // A regular expression the comment blanking takes for a comment's start does not hide the type.
-    expect(m.applies(project({ 'src/app.config.ts': "const strip = (s: string) => s.replace(/^\\/*/, '');\nexport type NavItem = { href: string };\n" }))).toEqual(['src/app.config.ts']);
-    expect(byId('nav-needs').applies(project({ 'src/app.config.ts': "export type NavItem = { href: string }\nconst home = { href: '/', needs: 'public' };\nexport const nav: NavGroup[] = [\n  { items: [{ href: '/', needs: 'public' }] },\n];\n" }))).toEqual(['src/app.config.ts']);
+    expect(m.applies(project({ 'src/app.config.ts': "const strip = (s: string) => s.replace(/^\\/*/, '');\nexport type NavItem = { href: string };\n" }), '0.35.0')).toEqual(['src/app.config.ts']);
+    expect(byId('nav-needs').applies(project({ 'src/app.config.ts': "export type NavItem = { href: string }\nconst home = { href: '/', needs: 'public' };\nexport const nav: NavGroup[] = [\n  { items: [{ href: '/', needs: 'public' }] },\n];\n" }), '0.35.0')).toEqual(['src/app.config.ts']);
     // A configuration with no NavItem type is not this migration's, and the release's own has both.
-    expect(m.applies(project({ 'src/app.config.ts': 'export const app = {} as const;\n' }))).toBeNull();
-    expect(m.applies(path.resolve(import.meta.dirname, '..'))).toBeNull();
+    expect(m.applies(project({ 'src/app.config.ts': 'export const app = {} as const;\n' }), '0.35.0')).toBeNull();
+    expect(m.applies(path.resolve(import.meta.dirname, '..'), '0.35.0')).toBeNull();
   });
 });
 
@@ -512,11 +512,49 @@ describe('the 0.36.0 migration', () => {
     const created = (route: string, files: Record<string, string>) => project({ '.meridian/manifest.json': JSON.stringify({ route }), ...files });
     // One page as an older release wrote it, one as this release writes it, and the members page deleted with its folder.
     const files = { 'proxy.ts': 'export const config = {};\n', 'src/views/request.tsx': 'export const old = 1;\n', 'src/views/requests.tsx': readPayload('src/views/requests.tsx') };
-    expect(m.applies(created('create', files))).toEqual(['proxy.ts', 'src/lib/totals.ts', 'src/views/request.tsx']);
-    expect(m.applies(created('create', { 'src/views/requests.tsx': readPayload('src/views/requests.tsx'), 'src/lib/totals.ts': readPayload('src/lib/totals.ts') }))).toBeNull();
+    expect(m.applies(created('create', files), '0.35.0')).toEqual(['proxy.ts', 'src/lib/totals.ts', 'src/views/request.tsx']);
+    expect(m.applies(created('create', { 'src/views/requests.tsx': readPayload('src/views/requests.tsx'), 'src/lib/totals.ts': readPayload('src/lib/totals.ts') }), '0.35.0')).toBeNull();
     // An adopted project holds no sample, and the template holds no manifest.
-    expect(m.applies(created('adopt', files))).toBeNull();
-    expect(m.applies(path.resolve(import.meta.dirname, '..'))).toBeNull();
+    expect(m.applies(created('adopt', files), '0.35.0')).toBeNull();
+    expect(m.applies(path.resolve(import.meta.dirname, '..'), '0.35.0')).toBeNull();
+  });
+
+  it('rechecks owned sample source on later upgrades, and stops reporting it once synchronized', () => {
+    const rel = 'src/data/derived.ts';
+    const root = project({
+      '.meridian/manifest.json': JSON.stringify({ route: 'create', version: '0.36.0' }),
+      [rel]: 'export const derived = [];\n',
+      // This one-off 0.36.0 migration must not recur alongside the sample check.
+      'src/app.config.ts': 'export type NavItem = { href: string; needs: Need };\n',
+    });
+    for (const [source, target] of [['0.36.0', '0.36.1'], ['0.36.1', '0.36.2']]) {
+      expect(releaseMigrations(root, source!, target!).map(({ id, paths }) => ({ id, paths }))).toEqual([
+        { id: 'sample-with-its-tests', paths: [rel] },
+      ]);
+    }
+    fs.writeFileSync(path.join(root, rel), readPayload(rel));
+    expect(releaseMigrations(root, '0.36.0', '0.36.1')).toEqual([]);
+  });
+
+  it('does not recheck sample drift for a same-version update, downgrade, or target before its introduction', () => {
+    const root = project({
+      '.meridian/manifest.json': JSON.stringify({ route: 'create' }),
+      'src/data/derived.ts': 'export const derived = [];\n',
+    });
+    expect(releaseMigrations(root, '0.36.0', '0.36.0')).toEqual([]);
+    expect(releaseMigrations(root, '0.36.1', '0.36.0')).toEqual([]);
+    expect(releaseMigrations(root, '0.34.0', '0.35.0').map(({ id }) => id)).not.toContain('sample-with-its-tests');
+  });
+
+  it('requires missing sample additions only when crossing their introduction, not after deliberate later deletion', () => {
+    const root = project({
+      '.meridian/manifest.json': JSON.stringify({ route: 'create' }),
+      'src/data/derived.ts': readPayload('src/data/derived.ts'),
+    });
+    expect(releaseMigrations(root, '0.35.0', '0.36.0').find(({ id }) => id === 'sample-with-its-tests')?.paths).toEqual(['src/lib/totals.ts']);
+    expect(releaseMigrations(root, '0.35.0', '0.36.1').find(({ id }) => id === 'sample-with-its-tests')?.paths).toEqual(['src/lib/totals.ts']);
+    expect(releaseMigrations(root, '0.36.0', '0.36.1')).toEqual([]);
+    expect(releaseMigrations(root, '0.36.1', '0.36.2')).toEqual([]);
   });
 });
 
@@ -529,7 +567,7 @@ describe('the verify-modes migration', () => {
       'bin/release.sh': '#!/bin/sh\nnode scripts/verify.ts --extra /reports\n',
       'docs/notes.md': 'We used to run pnpm verify --quick.\n',
     });
-    expect(byId('verify-modes').applies(root)?.sort()).toEqual(['.github/workflows/ci.yml', 'bin/release.sh', 'package.json']);
+    expect(byId('verify-modes').applies(root, '0.35.0')?.sort()).toEqual(['.github/workflows/ci.yml', 'bin/release.sh', 'package.json']);
   });
   it("reads a team's own script under scripts/, and none the manifest records as Meridian's", () => {
     // scripts/ is Meridian's folder, and the usual place a team keeps its CI script: the manifest says which are whose.
@@ -539,14 +577,14 @@ describe('the verify-modes migration', () => {
       'scripts/meridian.sh': '#!/bin/sh\npnpm verify --quick\n',
       '.meridian/manifest.json': JSON.stringify({ version: '0.4.0', route: 'create', brand: {}, files: { 'scripts/meridian.sh': 'sha256-x' } }),
     });
-    expect(byId('verify-modes').applies(root)).toEqual(['scripts/ci.sh']);
+    expect(byId('verify-modes').applies(root, '0.35.0')).toEqual(['scripts/ci.sh']);
   });
   it('does not apply once only the modes are used', () => {
     const root = project({
       'package.json': JSON.stringify({ scripts: { ci: 'pnpm verify --full', verify: 'node scripts/verify.ts' } }),
       '.github/workflows/ci.yml': 'jobs:\n  check:\n    steps:\n      - run: pnpm verify --full --perf\n',
     });
-    expect(byId('verify-modes').applies(root)).toBeNull();
+    expect(byId('verify-modes').applies(root, '0.35.0')).toBeNull();
   });
 });
 
@@ -555,10 +593,10 @@ describe('the workspace-homes-moved migration', () => {
   const homes = { 'tests/homes.test.ts': "import { workspaceHomes } from '../scripts/navigate.ts';\nworkspaceHomes();\n" };
   it('lists a file that imports workspaceHomes from the command, and none that takes it from the journey', () => {
     expect(byId('workspace-homes-moved').since).toBe('0.36.0');
-    expect(byId('workspace-homes-moved').applies(project(homes))).toEqual(['tests/homes.test.ts']);
-    expect(byId('workspace-homes-moved').applies(project({ 'tests/homes.test.ts': "import { workspaceHomes } from '../scripts/lib/journey.ts';\n" }))).toBeNull();
-    expect(byId('workspace-homes-moved').applies(project({ 'tests/start.test.ts': "import { startFor } from '../scripts/navigate.ts';\n" }))).toBeNull();
-    expect(byId('workspace-homes-moved').applies(path.resolve(import.meta.dirname, '..'))).toBeNull();
+    expect(byId('workspace-homes-moved').applies(project(homes), '0.35.0')).toEqual(['tests/homes.test.ts']);
+    expect(byId('workspace-homes-moved').applies(project({ 'tests/homes.test.ts': "import { workspaceHomes } from '../scripts/lib/journey.ts';\n" }), '0.35.0')).toBeNull();
+    expect(byId('workspace-homes-moved').applies(project({ 'tests/start.test.ts': "import { startFor } from '../scripts/navigate.ts';\n" }), '0.35.0')).toBeNull();
+    expect(byId('workspace-homes-moved').applies(path.resolve(import.meta.dirname, '..'), '0.35.0')).toBeNull();
   });
   it('is reported to a project on any release before 0.36.0, and journey-moved only to one before 0.16.3', () => {
     const root = project(homes);
@@ -579,14 +617,14 @@ describe('the use-size-callback-ref migration', () => {
   it('lists a team file that reads .current off the ref useSize returns, through either alias', () => {
     expect(byId('use-size-callback-ref').since).toBe('0.33.0');
     // An adopted project reaches Meridian's files as @meridian/*, a created one as @/*.
-    expect(byId('use-size-callback-ref').applies(project(tip('@meridian/components/charts/use-size', reads)))).toEqual(['app/(dash)/tip.tsx']);
-    expect(byId('use-size-callback-ref').applies(project(tip('@/components/charts/use-size', reads)))).toEqual(['app/(dash)/tip.tsx']);
-    expect(byId('use-size-callback-ref').applies(project(tip('@/components/charts/use-size', '  return <div ref={useSize<HTMLDivElement>()[0].current ? null : null} />;')))).toEqual(['app/(dash)/tip.tsx']);
+    expect(byId('use-size-callback-ref').applies(project(tip('@meridian/components/charts/use-size', reads)), '0.35.0')).toEqual(['app/(dash)/tip.tsx']);
+    expect(byId('use-size-callback-ref').applies(project(tip('@/components/charts/use-size', reads)), '0.35.0')).toEqual(['app/(dash)/tip.tsx']);
+    expect(byId('use-size-callback-ref').applies(project(tip('@/components/charts/use-size', '  return <div ref={useSize<HTMLDivElement>()[0].current ? null : null} />;')), '0.35.0')).toEqual(['app/(dash)/tip.tsx']);
   });
   it('lists none that only hands the ref to a ref prop, and is reported from before 0.33.0', () => {
     const passes = tip('@meridian/components/charts/use-size', '  const [box, { width }] = useSize<HTMLDivElement>();\n  return <div ref={box}>{width}</div>;');
-    expect(byId('use-size-callback-ref').applies(project(passes))).toBeNull();
-    expect(byId('use-size-callback-ref').applies(path.resolve(import.meta.dirname, '..'))).toBeNull();
+    expect(byId('use-size-callback-ref').applies(project(passes), '0.35.0')).toBeNull();
+    expect(byId('use-size-callback-ref').applies(path.resolve(import.meta.dirname, '..'), '0.35.0')).toBeNull();
     const ids = (from: string) => releaseMigrations(project(tip('@meridian/components/charts/use-size', reads)), from, '0.36.0').map((m) => m.id);
     expect(ids('0.32.0')).toContain('use-size-callback-ref');
     expect(ids('0.33.0')).not.toContain('use-size-callback-ref');
@@ -597,32 +635,32 @@ describe('what the migrations read of a team file', () => {
   const use = "import { useSize } from '@meridian/components/charts/use-size';\n";
   it('finds the ref useSize returns past an earlier array, under another name, and kept whole', () => {
     const effectFirst = `${use}export function Tip({ a }) {\n  useEffect(() => {}, [a]);\n  const [box, { width }] = useSize<HTMLDivElement>();\n  return <div ref={box}>{box.current?.offsetLeft}{width}</div>;\n}\n`;
-    expect(byId('use-size-callback-ref').applies(project({ 'app/tip.tsx': effectFirst }))).toEqual(['app/tip.tsx']);
+    expect(byId('use-size-callback-ref').applies(project({ 'app/tip.tsx': effectFirst }), '0.35.0')).toEqual(['app/tip.tsx']);
     const renamed = "import { useSize as useBox } from '@meridian/components/charts/use-size';\nexport function Tip() {\n  const [box] = useBox<HTMLDivElement>();\n  return <div ref={box}>{box.current?.offsetLeft}</div>;\n}\n";
-    expect(byId('use-size-callback-ref').applies(project({ 'app/tip.tsx': renamed }))).toEqual(['app/tip.tsx']);
+    expect(byId('use-size-callback-ref').applies(project({ 'app/tip.tsx': renamed }), '0.35.0')).toEqual(['app/tip.tsx']);
     const kept = `${use}export function Tip() {\n  const sized = useSize<HTMLDivElement>();\n  return <div ref={sized[0]}>{sized[0].current?.offsetLeft}</div>;\n}\n`;
-    expect(byId('use-size-callback-ref').applies(project({ 'app/tip.tsx': kept }))).toEqual(['app/tip.tsx']);
+    expect(byId('use-size-callback-ref').applies(project({ 'app/tip.tsx': kept }), '0.35.0')).toEqual(['app/tip.tsx']);
     // A default in the destructuring, a type on it, and an optional read.
     const shaped = `${use}export function Tip() {\n  const [box, { width = 0 }]: readonly [unknown, { width: number }] = useSize<HTMLDivElement>();\n  return <div>{box?.current?.offsetLeft}{width}</div>;\n}\n`;
-    expect(byId('use-size-callback-ref').applies(project({ 'app/tip.tsx': shaped }))).toEqual(['app/tip.tsx']);
+    expect(byId('use-size-callback-ref').applies(project({ 'app/tip.tsx': shaped }), '0.35.0')).toEqual(['app/tip.tsx']);
     // A type literal whose fields end in semicolons, and a file written without semicolons whose useState comes first.
     const typed = `${use}export function Tip() {\n  const [box]: [unknown, { width: number; height: number }] = useSize<HTMLDivElement>();\n  return <div>{box.current?.offsetLeft}</div>;\n}\n`;
-    expect(byId('use-size-callback-ref').applies(project({ 'app/tip.tsx': typed }))).toEqual(['app/tip.tsx']);
+    expect(byId('use-size-callback-ref').applies(project({ 'app/tip.tsx': typed }), '0.35.0')).toEqual(['app/tip.tsx']);
     const bare = `${use}export function Tip() {\n  const [open, setOpen] = useState(false)\n  const [box] = useSize<HTMLDivElement>()\n  return <div onClick={() => setOpen(!open)}>{box.current?.offsetLeft}</div>\n}\n`;
-    expect(byId('use-size-callback-ref').applies(project({ 'app/tip.tsx': bare }))).toEqual(['app/tip.tsx']);
+    expect(byId('use-size-callback-ref').applies(project({ 'app/tip.tsx': bare }), '0.35.0')).toEqual(['app/tip.tsx']);
     const quoted = `${use}export function Tip() {\n  const [box]: ['a=b;' | Element] = useSize<HTMLDivElement>();\n  const [el]: 'a=b' | Element = useSize<HTMLDivElement>();\n  return <div>{el.current?.offsetLeft}</div>;\n}\n`;
-    expect(byId('use-size-callback-ref').applies(project({ 'app/tip.tsx': quoted }))).toEqual(['app/tip.tsx']);
+    expect(byId('use-size-callback-ref').applies(project({ 'app/tip.tsx': quoted }), '0.35.0')).toEqual(['app/tip.tsx']);
   });
   it('reads a team file under a managed folder the manifest does not record, and none it records', () => {
     const reads = `${use}export function Tip() {\n  const [box] = useSize<HTMLDivElement>();\n  return <div ref={box}>{box.current?.offsetLeft}</div>;\n}\n`;
     const manifest = JSON.stringify({ version: '0.32.0', route: 'adopt', brand: {}, files: { 'src/components/charts/bar-list/index.tsx': 'sha256-x' } });
-    expect(byId('use-size-callback-ref').applies(project({ '.meridian/manifest.json': manifest, 'src/components/charts/our-chart/index.tsx': reads, 'src/components/charts/bar-list/index.tsx': reads }))).toEqual(['src/components/charts/our-chart/index.tsx']);
+    expect(byId('use-size-callback-ref').applies(project({ '.meridian/manifest.json': manifest, 'src/components/charts/our-chart/index.tsx': reads, 'src/components/charts/bar-list/index.tsx': reads }), '0.35.0')).toEqual(['src/components/charts/our-chart/index.tsx']);
   });
   it("resolves @/ as the project's tsconfig maps it: an adopted project's own @/components are not Meridian's", () => {
     const imp = "import { Table, TableCell } from '@/components/ui/table';\nexport const Empty = () => <TableCell colSpan={4}>No runs</TableCell>;\n";
     const rootAlias = JSON.stringify({ compilerOptions: { paths: { '@/*': ['./*'], '@meridian/*': ['./src/*'] } } });
-    expect(byId('table-grid').applies(project({ 'tsconfig.json': rootAlias, 'app/runs.tsx': imp }))).toBeNull();
-    expect(byId('table-grid').applies(project({ 'tsconfig.json': rootAlias, 'app/runs.tsx': imp.replace("'@/components/", "'@meridian/components/") }))).toEqual(['app/runs.tsx']);
+    expect(byId('table-grid').applies(project({ 'tsconfig.json': rootAlias, 'app/runs.tsx': imp }), '0.35.0')).toBeNull();
+    expect(byId('table-grid').applies(project({ 'tsconfig.json': rootAlias, 'app/runs.tsx': imp.replace("'@/components/", "'@meridian/components/") }), '0.35.0')).toEqual(['app/runs.tsx']);
   });
 });
 

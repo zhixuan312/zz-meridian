@@ -69,6 +69,7 @@ writes nothing; run it first.
 - It reports a migration for each interface the release changed where one of your own files still has the old shape,
   such as `cache-components-config` or `nav-needs`. `cli/src/migrations.ts` holds every one; resolve them as the skill's
   `references/update.md` says.
+- Team-owned sample files are checked again on every forward upgrade, even after their migration's introduction, so newer managed tests do not silently outrun the sample they exercise. They remain team-owned: the migration asks for review and never overwrites them.
 - Everything it did and everything left to do is in `.meridian/update/<version>/MERGE.md`. Resolve the items, then run
   the pinned `npx zz-meridian@<version> update --finalize`; `--resume` continues an interrupted run and `--abort` restores
   what it changed. Only finalize records the new version. `--finalize --verify` validates with the project's default

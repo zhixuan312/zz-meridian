@@ -13,10 +13,12 @@ import type { Migration } from './update-session.js';
 
 export type ReleaseMigration = {
   id: string;
-  /** The release that introduced the change. The entry applies when `source < since <= target`. */
+  /** The release that introduced the change. Normally applies when `source < since <= target`. */
   since: string;
+  /** Recheck sample/test drift on every actual upgrade at or after `since`, not just when crossing it. */
+  recurring?: true;
   /** The project paths the change touches, or null when this project does not need it. */
-  applies: (root: string) => string[] | null;
+  applies: (root: string, source: string) => string[] | null;
   summary: string;
   instructions: string;
   checks: string[];
@@ -591,7 +593,7 @@ export const RELEASE_MIGRATIONS: ReleaseMigration[] = [
     since: '0.26.0',
     applies: (root) => matching(root, (rel, src) => importsOf(rel, src).some(({ from }) => from === 'src/components/ui/table' || from === 'src/components/patterns/data-table') && (/@min-\[672px\]:min-w-64/.test(src) || /<TableCell\b[^>]*\bcolSpan\s*=/.test(src))),
     summary: 'A table is a grid since 0.26.0: its spare width sits in the gaps, a `grow` column\'s floor is 160px at every width, and a cell spans no columns.',
-    instructions: 'Bring `tests/table-cut-cell.test.tsx` over from the release as it has it. Since 0.26.0 `src/components/ui/table/index.tsx` lays a table out as a grid whose rows are subgrids: every column is as wide as its content, the spare is shared equally between the gaps, and a `grow` column\'s floor is `min-w-40` at every width, without the `@min-[672px]:min-w-64` it had from a 672px table. A test of your own that expects that class expects `min-w-40` alone. A `TableCell` of your own with a `colSpan` takes one track of the grid, so it draws in the first column only: a row that should run the width of the table, such as an empty state, is drawn outside the table, or as a `DataTable` `empty`.',
+    instructions: 'Bring `tests/table-cut-cell.test.tsx` over from the release as it has it. Since 0.26.0 `src/components/ui/table/index.tsx` lays a table out as a grid whose rows are subgrids: every column is as wide as its content, the spare is shared equally between the gaps, and a `grow` column has a 160px floor at every width. Remove tests that pin the old or new utility-class strings rather than repinning them; check truncation, full-value access and the rendered responsive grid. A `TableCell` of your own with a `colSpan` takes one track of the grid, so it draws in the first column only: a row that should run the width of the table, such as an empty state, is drawn outside the table, or as a `DataTable` `empty`.',
     checks: ['gate'],
   },
   {
@@ -669,9 +671,10 @@ export const RELEASE_MIGRATIONS: ReleaseMigration[] = [
   {
     id: 'sample-with-its-tests',
     since: '0.36.0',
+    recurring: true,
     applies: sampleBehindItsTests,
-    summary: "The sample's files changed with the shipped tests that pin them: the update brings the tests, and each file named here is still the copy they no longer pass.",
-    instructions: "A project `create` made holds the template's sample (its pages, views, data, figures, their helpers and the demo gate in `proxy.ts`) as its own files, which an update never touches, while the shipped tests that pin how they behave are Meridian's and arrive with it. This release changed both together: the API keys actions answer a result, the error screens take `retry`, the request page names its cURL and its payload sizes in characters, the demo gate leaves open only the icon files, a member never seen is said to be, the past-due alert is timed by the latest customer to fall past due, and the period totals moved to the new `src/lib/totals.ts`. Each file named above differs from the release's copy, or is a sample module the release added, and the gate fails on it as it is. Write the release's copies into a scratch folder with `npx zz-meridian@<the version you are updating to> create <scratch folder> --no-install`. Then, for each file named: when your team never changed it (no commit of yours touches it), copy the release's file over it, and copy each module the release added. When your team made it its own, keep yours and make each shipped test that pins it yours too: change the test to your behaviour, which the next update stages for your decision as an edited file, or delete it and name it in `.meridian/keep.json`. A sample file your team deleted is not named.",
+    summary: "The release's sample differs from team-owned files, while its shipped tests are managed. Review those differences before finalizing.",
+    instructions: "A project `create` made holds the template's sample (its pages, views, data, figures, their helpers and the demo gate in `proxy.ts`) as its own files, which an update never touches, while the shipped tests are Meridian's and arrive with it. The update reports differing sample files on every upgrade, even when a previous release already reported this migration. Each named file differs from the release's copy, or is a sample module introduced after your project's recorded version; the gate may depend on its changes. Write the release's copies into a scratch folder with `npx zz-meridian@<the version you are updating to> create <scratch folder> --no-install`. For a file your team never changed, copy the release's file over it, and copy each module the release added. For a file your team made its own, preserve the intended product behavior while updating its contracts and meaningful behavior and security tests. Keep coverage for functionality the product still exposes; do not delete failures merely to finalize. Retire tests with removed sample features, or when they only pin wording or implementation details, and record intentionally deleted managed tests in `.meridian/keep.json`. A sample file your team deleted after its introduction is not named.",
     checks: GATE_AND_BUILD,
   },
 ];
@@ -685,16 +688,16 @@ const isSample = (rel: string) => SOURCE.test(rel) && isTeamOwned(rel) && ((rel.
 const SAMPLE_ADDED = ['src/lib/totals.ts'];
 
 /**
- * 0.36.0: in a project `create` made, each sample file that differs from the release's, and each sample module the
- * release added that the project lacks. A sample file the team deleted is its decision and is not named.
+ * In a project `create` made, each sample file that differs from the release's, and each sample module introduced
+ * after the source release that the project lacks. A file the team deleted after its introduction is not named.
  */
-function sampleBehindItsTests(root: string): string[] | null {
+function sampleBehindItsTests(root: string, source: string): string[] | null {
   if (!/"route"\s*:\s*"create"/.test(text(root, '.meridian/manifest.json') ?? '')) return null;
   const hits = payloadFiles().filter(isSample).filter((rel) => {
     try {
       return !fs.readFileSync(path.join(root, rel)).equals(payloadBytes(rel));
     } catch {
-      return SAMPLE_ADDED.includes(rel);
+      return SAMPLE_ADDED.includes(rel) && isNewer('0.36.0', source);
     }
   });
   return hits.length > 0 ? hits : null;
@@ -927,12 +930,13 @@ function specsWithoutAgentReads(root: string, dirs: string[]): string[] | null {
 
 /** The registry entries that apply to a project moving from `source` to `target`, as journal migrations. */
 export function releaseMigrations(root: string, source: string, target: string): Migration[] {
+  if (!isNewer(target, source)) return [];
   const out: Migration[] = [];
   sources = new Map();
   try {
     for (const m of RELEASE_MIGRATIONS) {
-      if (!isNewer(m.since, source) || isNewer(m.since, target)) continue;
-      const paths = m.applies(root);
+      if (isNewer(m.since, target) || (!m.recurring && !isNewer(m.since, source))) continue;
+      const paths = m.applies(root, source);
       if (paths) out.push({ id: m.id, summary: m.summary, paths, instructions: m.instructions, checks: m.checks });
     }
   } finally {
