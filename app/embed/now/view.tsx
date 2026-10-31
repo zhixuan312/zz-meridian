@@ -9,8 +9,9 @@ import { AskAbout } from '@/components/patterns/ask-about';
 import { StatusList } from '@/components/patterns/status-list';
 import { ShareContext } from '@/components/base/use-share-view';
 import dynamic from 'next/dynamic';
-import { nothingArrived, nowContext, unpackNow, type PackedNowData } from '@/logic/now-context';
+import { NOW_PARTS, nothingArrived, nowContext, unpackNow, type PackedNowData } from '@/logic/now-context';
 import { formatRelative } from '@/lib/format-date';
+import { Unread } from '@/views/unread';
 
 // Now's whole body is the fullscreen view, and the inline one only when nothing has arrived: its charts, tables and
 // feed are a chunk of their own, so the inline view a chat shows first downloads the banner and the list alone. In one
@@ -34,7 +35,7 @@ export function EmbedNow(packed: PackedNowData) {
       ) : (
         <div className="flex flex-col gap-3">
           <ShareContext context={nowContext(p)} />
-          {lead ? (
+          {!p.incidents ? <Unread title={NOW_PARTS.incident} what="the incidents" /> : lead ? (
             <Banner
               tone="warning"
               title={lead.title}

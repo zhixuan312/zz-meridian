@@ -59,4 +59,9 @@ describe("the inline Now view says what it knows of the services", () => {
   it('draws the services with their summary when they were read', async () => {
     await inline(reads, /1 service degraded/);
   });
+
+  it('reports unread incidents without hiding the services that did arrive', async () => {
+    const text = await inline({ ...reads, incidents: null }, /The incidents could not be read/);
+    expect(text).toMatch(/1 service degraded/);
+  });
 });

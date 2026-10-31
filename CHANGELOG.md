@@ -17,6 +17,7 @@ Every release of ZZ Meridian, newest first. Versions follow semver: a removed or
 - **Copied cURL requests preserve the captured request.** JSON bodies retain precision, duplicate keys and whitespace; leading `@` is literal data, and an empty body is distinct from no body. Methods, URLs and bodies are shell-quoted so captured values cannot execute shell expressions.
 - **Live polling refuses overflowing or nonfinite intervals.** Invalid values cannot wrap into a near-continuous timer; valid intervals retain the one-second minimum.
 - **`readAll` consistently ignores pagination.** Both limit and offset are ignored while filters and ordering are preserved, preventing duplicated or omitted rows.
+- **Inline Now reports unread incidents without discarding services.** Healthy service rows no longer imply that an unread incident source was checked.
 - **Repeated branding preserves quoted names.** Apostrophes are serialized as data, and later changes can still find escaped configuration values without corrupting an unchanged person's name.
 - **Skill installation refuses an incomplete package.** A missing `SKILL.md` is reported before either skill destination is written, instead of reporting a successful empty installation.
 - **Empty captured bodies are not absent bodies.** Request detail names the zero-byte capture and keeps its exact Copy action; an absent capture makes no claim about what a method can carry.
