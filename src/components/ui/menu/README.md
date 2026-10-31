@@ -40,6 +40,7 @@ The surface enters with `float-in`: 4px down to place and 97% to full scale over
 - Opens on click, Enter, Space or Arrow Down on the trigger; focus moves to the first item.
 - Arrow keys move, Home and End jump, typing a letter jumps to the matching item, Enter runs, Escape closes and returns focus to the trigger.
 - It aligns to the trigger's start edge (end for a trailing More) and flips to stay 8px inside the viewport.
+- Its height is bounded by Radix's available viewport space. Longer menus scroll; keyboard focus scrolls its item into view, including Home and End on a short screen.
 
 ## Surfaces
 

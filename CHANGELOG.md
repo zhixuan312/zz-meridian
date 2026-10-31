@@ -34,6 +34,7 @@ Every release of ZZ Meridian, newest first. Versions follow semver: a removed or
 - **Pending previews stay visible and named.** Card and standalone preview stages reuse one busy skeleton while code or route parameters arrive.
 - **Atlas entries stream URL-specific content behind a real boundary.** The shared shelf remains available during navigation; parameter reads no longer block the reusable app shell. Validation stays enabled.
 - **Appearance accents work through menu navigation.** Every accent is a labeled menu radio item reached by arrows, Home/End and typeahead, not a plain button excluded from roving focus. The static specimen matches.
+- **Long menus fit short screens.** Their own available-height bound and scrolling keep first and last focused choices visible.
 - **Empty captured bodies are not absent bodies.** Request detail names the zero-byte capture and keeps its exact Copy action; an absent capture makes no claim about what a method can carry.
 - **Branding rejects missing option values before writing.** A following known flag is not consumed as a product name, and incomplete valued flags cannot partially apply earlier options.
 
