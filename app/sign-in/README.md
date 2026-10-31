@@ -25,6 +25,8 @@ Two columns from 1024px; one below, the panel under the sentence.
 | Behind a password | With `DEMO_PASSWORD` set at run time, the panel is "Sign in": the password (Field, Input `lg`), "Sign in as" (Field, a native select at `lg`), and "Sign in" (primary, block, `lg`), busy while it is sent; a wrong password reads "That is not the password." in the field after 600 ms and keeps the person chosen, and a persona that cannot be signed in as (outside the list, or no longer Active) sets nothing and reads "That person can't be signed in as right now. Choose another." under Sign in as. A match sets a 30-day session and the View as cookie, then opens the console |
 | Loading | While the panel streams in, its surface holds its place, empty |
 
+If a chosen person becomes inactive while the form is open, the refusal keeps that submitted persona selected and explains the refusal there. It sets neither a session nor a View as cookie.
+
 ## The demo gate
 
 `proxy.ts` and `src/lib/demo-gate.ts` put a password in front of the whole product when `DEMO_PASSWORD` is set: every

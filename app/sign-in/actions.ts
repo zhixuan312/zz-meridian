@@ -33,7 +33,7 @@ export async function demoSignIn(_: DemoSignInState, form: FormData): Promise<De
     await new Promise((r) => setTimeout(r, 600));
     return { error: 'password', persona: id };
   }
-  if (!(await personaOf(id))) return { error: 'persona' };
+  if (!(await personaOf(id))) return { error: 'persona', persona: id };
   const secure = (await headers()).get('x-forwarded-proto') === 'https';
   const jar = await cookies();
   jar.set(COOKIE, token(), { httpOnly: true, path: '/', sameSite: 'lax', maxAge: MAX_AGE, secure });

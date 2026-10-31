@@ -10,6 +10,7 @@ vi.mock('next/navigation', async (orig) => ({ ...(await orig<object>()), redirec
 
 import { demoSignIn, signInAs } from '../app/sign-in/actions';
 import { MAX_AGE } from '@/lib/demo-gate';
+import { members } from '@/data/collections';
 
 const form = (fields: Record<string, string>) => {
   const f = new FormData();
@@ -40,8 +41,20 @@ describe('the gated demo sign-in chooses who to be', () => {
     expect(jar.set).toEqual([]);
   });
 
+  it('retains the chosen persona when that person became unavailable before submission', async () => {
+    const id = 'members_12';
+    const previous = (await members.query({ where: [{ field: 'id', op: 'eq', value: id }] })).rows[0]!.status;
+    await members.update!([id], { status: 'Suspended' });
+    try {
+      expect(await demoSignIn({ error: null }, form({ password: 'open-sesame', persona: id }))).toEqual({ error: 'persona', persona: id });
+      expect(jar.set).toEqual([]);
+    } finally {
+      await members.update!([id], { status: previous });
+    }
+  });
+
   it('sets nothing for a persona outside the list', async () => {
-    expect(await demoSignIn({ error: null }, form({ password: 'open-sesame', persona: 'members_3' }))).toEqual({ error: 'persona' });
+    expect(await demoSignIn({ error: null }, form({ password: 'open-sesame', persona: 'members_3' }))).toMatchObject({ error: 'persona' });
     expect(jar.set).toEqual([]);
   });
 });
