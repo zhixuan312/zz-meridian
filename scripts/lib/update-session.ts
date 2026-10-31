@@ -1,9 +1,9 @@
 /**
  * The rules of an update session: the keep register, the journal, the plan hash and the readiness predicate.
  *
- * One module shipped twice: `scripts/check.ts` runs it under plain node in a project that has no CLI, and the CLI
- * compiles the byte-identical copy at `cli/src/update-session.ts` (a test pins them). Its only import is `node:crypto`
- * and it uses erasable TypeScript only, so both can load it as is.
+ * Author this standalone module here: `scripts/check.ts` runs it under plain node in projects with no CLI.
+ * `cli/scripts/build-payload.ts` generates `cli/src/update-session.ts` from the same source snapshot as the payload.
+ * Its only import is `node:crypto` and it uses erasable TypeScript only, so adopted projects can load it as is.
  */
 import { createHash } from 'node:crypto';
 

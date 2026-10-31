@@ -41,6 +41,7 @@ rebuilding each page on Meridian's components, the fake API, and reading what `p
   CLI's own source or hold the sample's own figures, which a product replaces. The package carries `dist/`, `payload/`, its README and nothing else: no dependencies, no install
   scripts.
 - **No runtime dependency**: nothing in a dashboard imports `zz-meridian`. It needs Node 22.18 or newer.
+- **Shared session source**: `scripts/lib/update-session.ts` is the one authored standalone, erasable-TypeScript implementation used by an adopted project's plain-Node gate. The payload producer also generates `cli/src/update-session.ts` from the same `HEAD` snapshot, or tracked working-tree source under `--worktree`. Run the producer before CLI compilation and packing; never edit the generated companion.
 
 ## Commands
 

@@ -49,6 +49,7 @@ Every release of ZZ Meridian, newest first. Versions follow semver: a removed or
 
 ### Changed
 
+- **Update-session rules have one authored source.** The payload producer generates the CLI companion from the same source revision as the payload; adopted plain-Node gates and the compiled CLI keep their existing runtime layout.
 - **Tests check behavior rather than incidental implementation.** Removed source-text, wording, utility-class, default and copy-only pins; retained meaningful domain, security, accessibility, geometry, architecture and validator checks. Current testing and Atlas documentation names what those checks actually establish.
 
 ## [0.36.0] · 2026-10-30
