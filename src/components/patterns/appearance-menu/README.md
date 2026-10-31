@@ -8,7 +8,7 @@ Status: beta
 
 1. **Trigger**: a 32px icon button (sliders icon) in the rail's account card.
 2. **Theme**: a radio group: System, Light, Dark, each with its icon, the choice checked in `accent`.
-3. **Accent**: a 20px swatch in a 28px target for each of the presets (indigo, cobalt, jade, graphite) and the product's own accent when it is not one of them (`ACCENTS`); the choice ringed in `ink`.
+3. **Accent**: one menu radio row per preset and the product's own accent when it is not a preset (`ACCENTS`), with a swatch, its name and the chosen check.
 4. **Density**: a radio group: Comfortable, Compact.
 
 ## Composition
@@ -21,7 +21,6 @@ Menu (`surface-raised`, `radius-lg`, `shadow-overlay`, 240px), its labels and se
 |---|---|---|---|---|
 | Trigger | `ink-3` | `fill-hover`, `ink` | open: `fill-active`, `ink` | 2px `accent` outline |
 | Radio row | `ink` | `fill-hover` | check in `accent` | highlighted |
-| Swatch | as is | — | 2px `ink` ring, 2px offset | 2px `accent` outline |
 
 The menu floats in over `dur-enter`; the page re-themes at once (no transition on colour tokens, so nothing flashes half-changed).
 
@@ -42,8 +41,9 @@ Not applicable: appearance is the person's own choice.
 
 ## Accessibility
 
-- The trigger is named "Appearance". Theme and density are menu radio groups; the swatches are a group named "Accent" of toggle buttons, each named by its preset and pressed (`aria-pressed`) when it is the choice. They are not a radio group: inside a menu the arrow keys move between the menu's items, so a radio group's arrow-key contract could not be kept, and each swatch is its own stop.
-- A swatch's ring, not its colour, marks the choice.
+- The trigger is named "Appearance". Theme, accent and density use menu radio groups with `aria-checked`.
+- Every choice participates in the menu's arrow-key, Home/End and typeahead navigation; Tab is not a way between menu items.
+- A check and a name, not colour alone, identify the chosen accent.
 
 ## Content
 

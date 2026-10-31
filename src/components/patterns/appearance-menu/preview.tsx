@@ -4,27 +4,28 @@ import { Check, Monitor, Moon, Sun } from 'lucide-react';
 import { Specimen, State } from '@/system/specimen';
 import { ACCENTS } from '@/lib/preferences';
 import { AppearanceMenu } from '.';
+import { MENU_CONTENT, MENU_ITEM } from '@/components/ui/menu';
 
-const row = 'relative flex h-8 items-center gap-2.5 rounded-sm px-2 text-sm text-ink [&_svg]:size-4 [&_svg]:text-ink-3';
+const row = MENU_ITEM;
 
 export default function AppearanceMenuPreview() {
   return (
     <>
       <Specimen label="Open" note="Rendered inline here; in the product it opens upward from the rail's foot.">
-        <div className="w-60 rounded-lg bg-surface-raised p-1 shadow-overlay">
+        <div className={`w-60 ${MENU_CONTENT}`}>
           <p className="t-eyebrow px-2 pt-2 pb-1.5">Theme</p>
           <div className={`${row} pr-8`}><Monitor />System</div>
           <div className={`${row} pr-8`}><Sun />Light</div>
           <div className={`${row} bg-fill-hover pr-8`}><Moon />Dark<Check className="absolute right-2 !size-4 !text-accent" strokeWidth={2.25} /></div>
           <div className="-mx-1 my-1 h-px bg-line" />
           <p className="t-eyebrow px-2 pt-2 pb-1.5">Accent</p>
-          <div className="flex gap-1.5 px-2 pt-0.5 pb-2">
-            {ACCENTS.map((a, i) => (
-              <span key={a} title={a} className={`grid size-7 place-items-center rounded-full ring-offset-2 ring-offset-surface-raised ${i === 0 ? 'ring-2 ring-ink' : ''}`}>
-                <span data-accent={a} className="size-5 rounded-full bg-accent" />
-              </span>
-            ))}
-          </div>
+          {ACCENTS.map((accent, i) => (
+            <div key={accent} className={`${row} pr-8`}>
+              <span data-accent={accent} data-swatch className="size-4 rounded-full bg-accent" />
+              {accent[0].toUpperCase() + accent.slice(1)}
+              {i === 0 ? <Check className="absolute right-2 !size-4 !text-accent" strokeWidth={2.25} /> : null}
+            </div>
+          ))}
           <div className="-mx-1 my-1 h-px bg-line" />
           <p className="t-eyebrow px-2 pt-2 pb-1.5">Density</p>
           <div className={`${row} pr-8`}>Comfortable<Check className="absolute right-2 !size-4 !text-accent" strokeWidth={2.25} /></div>
