@@ -131,7 +131,6 @@ describe('domain, a held scale', () => {
 
   it('refuses a domain beside a floor, in its type', () => {
     // @ts-expect-error a held scale and a floor are not passed together
-    const both = <TrendChart label="Readings" dates={dates} series={[]} domain={[0, 100]} floor={0} />;
-    expect(both).toBeTruthy();
+    void <TrendChart label="Readings" dates={dates} series={[]} domain={[0, 100]} floor={0} />;
   });
 });

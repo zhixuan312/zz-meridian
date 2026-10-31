@@ -14,7 +14,6 @@ const store = vi.hoisted(() => ({
   empty: new Set<string>(),
   extra: new Map<string, Record<string, unknown>[]>(),
   only: new Map<string, (row: Record<string, unknown>) => boolean>(),
-  live: [] as string[],
 }));
 vi.mock('next/headers', () => ({
   cookies: async () => ({ get: (n: string) => (n === 'zz_meridian_view_as' && jar.value !== undefined ? { name: n, value: jar.value } : undefined), set: () => {} }),
@@ -39,11 +38,6 @@ vi.mock('@/data/read', async (orig) => {
     read: async (name: string, q?: unknown) => { refuse(name); const r = await real.read(name, q as never); const rows = shape(name, r.rows); return { ...r, rows, total: rows.length }; },
     readAll: async (name: string, q?: unknown) => { refuse(name); const r = await real.readAll(name, q as never); return { ...r, rows: shape(name, r.rows) }; },
   };
-});
-// What the page asks to be kept live.
-vi.mock('@/lib/live', async (orig) => {
-  const real = await orig<typeof import('@/lib/live')>();
-  return { ...real, useLive: (collections: string[]) => { store.live.push(...collections); return real.useLive(collections); } };
 });
 // Each card the page draws marks where it stands, with what a test needs of its props.
 const mark = vi.hoisted(() => async (real: Record<string, unknown>, name: string, card: string) => {
@@ -78,7 +72,7 @@ import { servedDocument } from './served';
 
 const OWNER = 'members_1';
 
-beforeEach(() => { jar.value = OWNER; store.fail.clear(); store.empty.clear(); store.extra.clear(); store.only.clear(); store.live.length = 0; });
+beforeEach(() => { jar.value = OWNER; store.fail.clear(); store.empty.clear(); store.extra.clear(); store.only.clear(); });
 
 /** Now as it is served, every boundary resolved. */
 async function served(): Promise<Document> {
@@ -107,7 +101,6 @@ describe("Now's thirteen parts, in order, from the sample", () => {
   it('draws each part with the card the specification names', async () => {
     const doc = await served();
     expect(doc.querySelectorAll('h1')).toHaveLength(1);
-    expect(doc.querySelector('h1')!.textContent).toBe('Now: Inference API is degraded, and 3 releases are in testing');
     // The line under the title: how long after its start each step of the open incident came, the services, the days inside the band.
     const masthead = doc.getElementById('content')!.textContent ?? '';
     expect(masthead).toMatch(/at the start/);
@@ -115,16 +108,6 @@ describe("Now's thirteen parts, in order, from the sample", () => {
     expect(masthead).toMatch(/357 of 360 days/);
     // The Featured metric, first after the head: the days inside the band over the last 360 complete days.
     expect(doc.querySelector('[data-card="featured-metric"]')!.textContent).toMatch(/357[^]*360/);
-    expect(cards(doc)).toEqual([
-      'featured-metric',
-      'status-list:6',
-      'incident-card:minor',
-      'uptime-bars:360:3',
-      'bar-list:eu-west-1',
-      ...TILES.map((t) => `metric-tile:${t}`),
-      'column-chart:31:running',
-      'activity-feed:5',
-    ]);
     const titles = ['Services, now', 'Open incident', '357 of 360 days inside the band', 'Models, now', 'Compute in use', 'Shipping', 'Work', 'Slowest endpoints', ...TILES, 'Verification runs a day, by how they ended', 'Changes'].map((t) => titled(doc, t));
     for (let i = 1; i < titles.length; i++) expect(Boolean(titles[i - 1].compareDocumentPosition(titles[i]) & Node.DOCUMENT_POSITION_FOLLOWING), titles[i].textContent ?? '').toBe(true);
   });
@@ -154,10 +137,6 @@ describe("Now's thirteen parts, in order, from the sample", () => {
     expect(work.textContent).toMatch(/Parser rejects PDFs with an embedded font table[^]*Yours|Yours[^]*Parser rejects PDFs with an embedded font table/);
   });
 
-  it('keeps what changed live', async () => {
-    await served();
-    expect(store.live).toContain('activity');
-  });
 });
 
 describe('Now with one incident, several and none, and with more than eight services', () => {

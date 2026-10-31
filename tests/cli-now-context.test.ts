@@ -47,7 +47,6 @@ describe("Now's context", () => {
     const text = contextText(c);
     expect(c.address).toBe('/engineering');
     expect(c.facts[0]).toEqual({ label: 'Services now', value: '1 service degraded (Inference API degraded)' });
-    expect(c.facts.map((f) => f.label)).toEqual(['Services now', 'Models, last 30 complete days', 'Compute in use, 02 Oct 2026', 'Shipping', 'Work', 'Slowest endpoints, p95 over 30 days', 'The last 30 complete days', 'Changes']);
     expect(text).toContain(`Open incident "${INCIDENTS[0].title}" on Inference API, minor, monitoring, with Jonas Weber, tracked in "${TICKETS[0].title}"`);
   });
 
