@@ -8,6 +8,7 @@ import { CARDS } from '@/system/registry';
 import { AccentSwatches } from '@/components/ui/radio-group';
 import { Segmented } from '@/components/ui/segmented';
 import { app } from '@/app.config';
+import { PreviewLoading } from './preview-loading';
 
 type Accent = (typeof ACCENTS)[number];
 
@@ -94,7 +95,7 @@ export function CardStage({ id }: { id: string }) {
   // above it changes. The stage does change at once for a reader whose theme or accent is not the default: it learns the
   // page's look as it hydrates. A new element here, or a pane keyed by that theme, made React drop the specimen and draw
   // nothing until its code loaded, and the specification below jumped up the page and back.
-  const specimen = useMemo(() => (P ? <Suspense><P /></Suspense> : null), [P]);
+  const specimen = useMemo(() => (P ? <Suspense fallback={<PreviewLoading />}><P /></Suspense> : null), [P]);
   if (!specimen) return null;
   const pane = (t: 'dark' | 'light') => (
     <Scope key={theme === 'both' ? t : 'one'} theme={theme === 'both' ? t : scoped.theme} accent={scoped.accent} density={density} className={PANE}>

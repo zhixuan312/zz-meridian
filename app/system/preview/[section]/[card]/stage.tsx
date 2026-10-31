@@ -5,6 +5,7 @@ import { useSearchParams } from 'next/navigation';
 import { lazy, Suspense } from 'react';
 import { ArrowLeft } from 'lucide-react';
 import { PREVIEW_LOADERS } from '@/system/preview-loaders';
+import { PreviewLoading } from '@/system/preview-loading';
 
 /** One lazy component per card, made once: the route's first load carries none of them, and the page loads only its own. */
 const PREVIEWS = Object.fromEntries(Object.entries(PREVIEW_LOADERS).map(([id, load]) => [id, lazy(load)]));
@@ -30,11 +31,11 @@ function Inner({ id }: { id: string }) {
           <ArrowLeft className="size-3.5" /> {label}
         </Link>
       </nav>
-      <div data-specimen className="mx-auto max-w-5xl"><Suspense><P /></Suspense></div>
+      <div data-specimen className="mx-auto max-w-5xl"><Suspense fallback={<PreviewLoading />}><P /></Suspense></div>
     </div>
   );
 }
 
 export function PreviewStage({ id }: { id: string }) {
-  return <Suspense><Inner id={id} /></Suspense>;
+  return <Suspense fallback={<PreviewLoading />}><Inner id={id} /></Suspense>;
 }
