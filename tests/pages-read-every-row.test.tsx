@@ -35,7 +35,8 @@ type Row = Record<string, unknown>;
 function grow(name: string, n: number, make: (i: number, base: Row) => Row): number {
   const rows = storedRows('demo', name);
   if (!rows?.[0]) throw new Error(`${name} holds no row to build on`);
-  for (let i = 0; i < n; i++) rows.push(make(i, rows[0]));
+  const start = rows.length;
+  for (let i = 0; i < n; i++) rows.push(make(start + i, rows[0]));
   return rows.length;
 }
 

@@ -81,7 +81,8 @@ const PAGE = 500;
  */
 export async function readAllInScope(scope: AccessScope, name: string, q: Query = {}): Promise<{ rows: Record<string, unknown>[]; revision?: string; observedAt: string }> {
   if (!(await can(scope, name, 'read'))) throw new AccessDenied();
-  const query = normalizeQuery(collectionFor(scope, name), { ...q, limit: PAGE, offset: 0 });
+  const collection = collectionFor(scope, name);
+  const query = normalizeQuery(collection, { ...q, limit: PAGE, offset: 0 });
   const first = await cachedRead(scope, name, query);
   // Normalize the caller's question once. Only this traversal supplies later offsets: the public read's offset ceiling
   // still holds, but it must not cap a question asking for every row. All pages share the ordinary scoped read cache.
@@ -89,7 +90,10 @@ export async function readAllInScope(scope: AccessScope, name: string, q: Query 
   const offsets = Array.from({ length: Math.max(0, Math.ceil(first.total / PAGE) - 1) }, (_, i) => (i + 1) * PAGE);
   const rest = await Promise.all(offsets.map((offset) => cachedRead(scope, name, { ...query, offset })));
   const rows = [...first.rows, ...rest.flatMap((page) => page.rows)];
-  if (rows.length < first.total) throw new Error(`${name} could not be read in full.`);
+  // A matching row count alone proves little: offset pages can overlap after an insertion, or cached pages can carry
+  // different source revisions. Never turn evidence of an inconsistent traversal into a complete-looking answer.
+  if (rows.length !== first.total || rest.some((page) => page.total !== first.total || page.revision !== first.revision)
+    || new Set(rows.map((row) => row[collection.key])).size !== rows.length) throw new Error(`${name} could not be read in full.`);
   return { rows, revision: first.revision, observedAt: first.observedAt };
 }
 

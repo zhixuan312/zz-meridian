@@ -6,6 +6,7 @@ Every release of ZZ Meridian, newest first. Versions follow semver: a removed or
 
 ### Fixed
 
+- **All-row reads refuse inconsistent pages.** Changed totals or revisions, duplicate collection keys and extra rows can no longer masquerade as a complete result merely because enough rows were returned.
 - **Updates preserve edited text that resembles import syntax.** Import equivalence now considers only an unambiguous leading static declaration block; rendered strings, comments and other uncertain syntax remain edits to merge rather than being silently replaced. This conservative boundary is provisional.
 - **Array collection writes reject before changing stored rows.** Batch derivations and response copying are staged before commit, so a later derivation failure or an uncloneable result cannot leave partial writes, a false revision or a change hint behind.
 - **Disposed host bridges settle their pending calls.** Unmounting rejects outstanding requests, clears their timers and stops initialization retries; later requests are refused without sending, and synchronous transport errors become promise rejections.
