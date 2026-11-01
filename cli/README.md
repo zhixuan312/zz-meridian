@@ -40,6 +40,7 @@ in a page's kicker ("Production"); it does not touch the navigation workspaces.
 `--timezone` must be accepted by `Intl.DateTimeFormat`, for example `UTC` or `Europe/London`; an unsupported zone is refused rather than saved.
 Quoted brand strings remain literal values across repeated rebranding; changing a role does not rewrite the person's existing name.
 Every valued flag needs its own value, including with the standalone `pnpm brand`: missing values and a following flag used as a value are refused before any configuration changes.
+Commands reject extra positional arguments before changing files: only `create` takes a folder argument.
 
 **adopt** copies Meridian's tokens, styles, components, gates and scripts into `src/`, `tokens/` and `scripts/`;
 merges the dependencies and scripts it needs into your `package.json`; adds the `@meridian/*` alias to your

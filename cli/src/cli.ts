@@ -61,6 +61,8 @@ function main(): number {
   // A flag a command does not read is refused, never ignored: `adopt --dry-run` wrote the project rather than previewing it.
   const wrong = misapplied(command, flags);
   if (wrong) { console.error(`zz-meridian ${command}: --${wrong.flag} belongs to ${wrong.belongsTo}`); return 1; }
+  const extra = positionals[command === 'create' ? 2 : 1];
+  if (extra !== undefined) { console.error(`zz-meridian ${command}: unexpected argument ${JSON.stringify(extra)}`); return 1; }
   if (command === 'adopt') return adopt({ root: process.cwd(), brand, allowDirty: Boolean(flags['allow-dirty']), install });
   if (command === 'create') {
     if (!arg) { console.error('zz-meridian create: name the folder for the new dashboard'); return 1; }
