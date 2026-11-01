@@ -6,6 +6,7 @@ Every release of ZZ Meridian, newest first. Versions follow semver: a removed or
 
 ### Fixed
 
+- **Atomic CLI writes cannot follow a planted temporary-file link.** Update and brand now create a private sibling directory for each replacement, preserve the requested mode, and clean up temporary output on failure without altering the original destination.
 - **Calendar labels preserve the date they were given.** Impossible dates such as February 30 remain visible as invalid input instead of rolling into March, and valid years below 100 no longer acquire 1900 years.
 - **Rebranding reports an incomplete rollback honestly.** When restoring one file fails after a write error, branding continues restoring the others and names the paths requiring recovery instead of claiming nothing changed.
 - **Adoption checks both skill destinations before changing the project.** A skill file or folder linked elsewhere, including a dangling link, is refused before copying or branding files. Previously adoption could modify the project and then fail when the skill installer rejected the same link.

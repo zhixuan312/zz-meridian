@@ -56,10 +56,17 @@ const FORBIDDEN = /(^|\/)(\.git|node_modules)(\/|$)|(^|\/)\.env(?!\.example$)/;
 /** Writes through a sibling temporary file and a rename, so a reader never sees half a file. */
 export function writeAtomic(abs: string, data: string | Buffer, mode?: number) {
   fs.mkdirSync(path.dirname(abs), { recursive: true });
-  const tmp = `${abs}.${process.pid}.zz-tmp`;
-  fs.writeFileSync(tmp, data);
-  if (mode !== undefined) fs.chmodSync(tmp, mode);
-  fs.renameSync(tmp, abs);
+  // A private, exclusively created sibling directory prevents an existing temporary-path link from redirecting the
+  // write outside the project. Keeping it beside the destination also keeps rename on the same filesystem.
+  const dir = fs.mkdtempSync(`${abs}.`);
+  try {
+    const tmp = path.join(dir, 'value');
+    fs.writeFileSync(tmp, data, { flag: 'wx' });
+    if (mode !== undefined) fs.chmodSync(tmp, mode);
+    fs.renameSync(tmp, abs);
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
 }
 
 /** What the project holds at `rel`: its hash, or `unsafe` when a symbolic link or a non-file is in the way. */

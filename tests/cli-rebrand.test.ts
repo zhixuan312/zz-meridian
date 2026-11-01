@@ -91,9 +91,6 @@ describe('rebrand', () => {
     expect(said.join('\n')).toContain('stylesheet restore refused');
     expect(said.join('\n')).not.toContain('Nothing was changed');
     const after = snapshot(root);
-    const recovery = `src/styles/tokens.css.${process.pid}.zz-tmp`;
-    expect(after[recovery]).toBe(before['src/styles/tokens.css']);
-    delete after[recovery];
     expect(after['src/styles/tokens.css']).not.toBe(before['src/styles/tokens.css']);
     delete after['src/styles/tokens.css'];
     delete before['src/styles/tokens.css'];
