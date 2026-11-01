@@ -21,7 +21,7 @@ const worktree = process.argv.includes('--worktree');
 // which a product replaces: shipped, either would fail its type check or its tests. Every top-level tests/cli-* and
 // tests/deep-* file stays out, .ts and .tsx alike. The fixtures under scripts/fixtures/ serve those tests alone and import
 // the template's own team-owned starters. The deep-* tests drive those fixtures in headless Chrome.
-export const PAYLOAD_EXCLUDE = /^(cli\/|\.github\/|\.claude\/|\.agents\/|\.mma\/|out\/|node_modules\/|scripts\/fixtures\/|tests\/(cli|deep)-[^/]*\.tsx?$|\.env(?!\.example$)|.*\.tsbuildinfo$|(Dockerfile|captain-definition|\.dockerignore)$)/;
+export const PAYLOAD_EXCLUDE = /^(cli\/|\.github\/|\.claude\/|\.agents\/|\.mma\/|out\/|node_modules\/|scripts\/fixtures\/|tests\/(cli|deep)-[^/]*\.tsx?$|.*\.tsbuildinfo$|(Dockerfile|captain-definition|\.dockerignore)$)|(?:^|\/)\.env(?!\.example$)[^/]*(?:\/|$)/;
 
 if (import.meta.main) {
   fs.rmSync(OUT, { recursive: true, force: true });

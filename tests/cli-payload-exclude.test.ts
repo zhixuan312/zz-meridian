@@ -2,6 +2,7 @@
 // Named cli-* so the payload leaves it out: it reads the template's own git index and the CLI's build script.
 import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { PAYLOAD_EXCLUDE } from '../cli/scripts/build-payload.ts';
@@ -9,6 +10,30 @@ import { PAYLOAD_EXCLUDE } from '../cli/scripts/build-payload.ts';
 const ROOT = path.resolve(import.meta.dirname, '..');
 
 describe('the payload exclusion', () => {
+  it('produces no tracked environment secrets at any depth while retaining example templates', () => {
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'meridian-payload-env-'));
+    try {
+      const put = (rel: string, bytes: string | Buffer) => {
+        fs.mkdirSync(path.dirname(path.join(root, rel)), { recursive: true });
+        fs.writeFileSync(path.join(root, rel), bytes);
+      };
+      for (const rel of ['cli/scripts/build-payload.ts', 'cli/src/files.ts', 'cli/package.json', 'scripts/lib/update-session.ts']) {
+        put(rel, fs.readFileSync(path.join(ROOT, rel)));
+      }
+      put('package.json', '{"type":"module"}');
+      const secrets = ['.env', '.env.local', 'apps/team/.env', 'apps/team/.env.production', 'apps/team/deep/.env.local', 'apps/team/.env.example.local'];
+      const examples = ['.env.example', 'apps/team/.env.example'];
+      for (const rel of [...secrets, ...examples]) put(rel, `PUBLIC_DISPOSABLE_FIXTURE=${rel}\n`);
+      execFileSync('git', ['init', '-q'], { cwd: root });
+      execFileSync('git', ['add', '-f', '.'], { cwd: root });
+      execFileSync(process.execPath, ['cli/scripts/build-payload.ts', '--worktree'], { cwd: root });
+      for (const rel of secrets) expect(fs.existsSync(path.join(root, 'cli/payload', rel)), rel).toBe(false);
+      for (const rel of examples) expect(fs.readFileSync(path.join(root, 'cli/payload', rel), 'utf8')).toBe(`PUBLIC_DISPOSABLE_FIXTURE=${rel}\n`);
+    } finally {
+      fs.rmSync(root, { recursive: true, force: true });
+    }
+  });
+
   it('leaves out the deep-DOM tests and their fixtures', () => {
     for (const f of ['tests/deep-dom.test.ts', 'tests/deep-checks.test.ts', 'scripts/fixtures/deep/server.ts', 'scripts/fixtures/deep/expected.json', 'scripts/fixtures/deep/blind-d37f8a8.txt', 'scripts/fixtures/deep/README.md']) {
       expect(PAYLOAD_EXCLUDE.test(f), f).toBe(true);

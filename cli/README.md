@@ -115,6 +115,8 @@ Meridian's own template or sample data.
 ## Maintaining this package
 
 From the repository root, run `node cli/scripts/build-payload.ts` before `pnpm exec tsc -p cli/tsconfig.json` and packing. The producer reads committed `HEAD` by default; use `--worktree` to try uncommitted tracked changes. It also generates `cli/src/update-session.ts` from the canonical standalone `scripts/lib/update-session.ts`, using the same source provenance as the payload. Edit only the canonical module, never its generated CLI companion.
+The payload excludes `.env` and its variants at every directory depth, even when tracked; deliberate `.env.example`
+files remain available as public configuration templates. Never put credentials in an example file.
 
 The template's copied-command regression runs real cURL on loopback and needs a POSIX shell and `curl`, with no external endpoint or credentials.
 
