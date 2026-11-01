@@ -9,6 +9,9 @@ import type { PreparedQuery, Source } from '@/lib/explore';
 import { customerAddress } from './customer-context';
 import { customersAddress } from './customers-context';
 
+/** Workspace-wide figures count the same retained customers as customerFigures, whatever a departed row still holds. */
+const counted: Condition[] = [{ field: 'status', op: 'ne', value: 'left' }];
+
 /** The list filtered as a call was, where the list has the filter: one plan, one status. */
 export function customersCallAddress(where: Condition[]): string {
   const one = (field: string) => where.find((w) => w.field === field && w.op === 'eq')?.value;
@@ -27,10 +30,10 @@ export const customersSource: Source = {
   },
   facets: ['plan', 'status', 'region', 'owner'],
   measures: {
-    customers: { label: 'Customers', unit: 'customers', definition: 'Customers that have not left.', agg: 'count', where: [{ field: 'status', op: 'ne', value: 'left' }] },
-    revenue: { label: 'Revenue, last 30 days', unit: 'money', definition: 'What they were billed for metered usage over the last 30 complete days, before credits.', agg: 'sum', field: 'revenue' },
-    requests: { label: 'Requests, last 30 days', unit: 'requests', definition: 'What they asked of the API over the last 30 complete days.', agg: 'sum', field: 'requests' },
-    tokens: { label: 'Tokens, last 30 days', unit: 'tokens', definition: 'Tokens served to them over the last 30 complete days, input and output.', agg: 'sum', field: 'tokens' },
+    customers: { label: 'Customers', unit: 'customers', definition: 'Customers that have not left.', agg: 'count', where: counted },
+    revenue: { label: 'Revenue, last 30 days', unit: 'money', definition: 'What they were billed for metered usage over the last 30 complete days, before credits.', agg: 'sum', field: 'revenue', where: counted },
+    requests: { label: 'Requests, last 30 days', unit: 'requests', definition: 'What they asked of the API over the last 30 complete days.', agg: 'sum', field: 'requests', where: counted },
+    tokens: { label: 'Tokens, last 30 days', unit: 'tokens', definition: 'Tokens served to them over the last 30 complete days, input and output.', agg: 'sum', field: 'tokens', where: counted },
   },
   drill: { columns: ['id', 'name', 'plan', 'status', 'requests', 'revenue', 'owner'], address: (r) => customerAddress(String(r.id)) },
   cannot: 'A customer\'s figures cover the last 30 complete days as one figure each, so no other window and no single day can be said; and one that has left is counted in no figure of customers, revenue or requests. A customer\'s region is where it is based: where its requests arrived is on Usage (/usage).',

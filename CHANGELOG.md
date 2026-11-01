@@ -6,6 +6,7 @@ Every release of ZZ Meridian, newest first. Versions follow semver: a removed or
 
 ### Fixed
 
+- **Customer query figures agree with the page after a departure.** Revenue, requests and tokens exclude departed customer records just as the customer count does, even if those records retain nonzero values. The query runner now retains numeric measures' own conditions and withholds a measure whose conditions read hidden fields; the shared source corrects Customers, Home and Revenue answers together.
 - **Checks resolve live JSONC aliases against their base URL.** Commented-out mappings no longer redirect the import checks, and a configured `baseUrl` is included instead of reporting valid imports as missing.
 - **Unmounted embeds restore the document appearance.** Host theme, display mode, platform, CSS variables and safe-area insets no longer leak into the screen that replaces an embed; prior values and CSS priorities are restored.
 - **Aggregate date buckets reject impossible calendar days.** Day, week, month and weekday groups, and date windows, share the calendar validation used by display labels; malformed dates neither invent a group nor crash a week query.

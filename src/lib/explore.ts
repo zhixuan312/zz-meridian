@@ -20,10 +20,11 @@ export type ExploreOp = 'eq' | 'ne' | 'in' | 'lt' | 'gt';
 type ExploreBucket = 'day' | 'week' | 'month' | 'weekday';
 
 /**
- * A figure an answer states: a count (optionally of the rows that meet conditions the author declares), a field's sum,
+ * A figure an answer states: a count, a field's sum,
  * average, minimum, maximum or p95 (`field` may be a path into an object field), or one derived from two measures: a
  * ratio `a / (b * scale)` or a margin `(1 - b / a) / scale`, `scale` 1 when not given, so `scale: 0.01` states either
- * in %. `of` names measures of this source, or `<source>.<measure>` of another, which is then read over the same window
+ * in %. Every base measure may limit itself to rows that meet its own `where` conditions.
+ * `of` names measures of this source, or `<source>.<measure>` of another, which is then read over the same window
  * on that source's own date field. A margin's change on the window before is in percentage points, as Home states its
  * gross margin; every other measure's is a percent of the window before. `unit` is the word a figure is written with
  * (requests, ms, %), or `money`: an amount in `app.currency`, written as the pages write money (`formatCost`), never a
@@ -31,7 +32,7 @@ type ExploreBucket = 'day' | 'week' | 'month' | 'weekday';
  */
 export type Measure = { label: string; unit: string; definition: string } & (
   | { agg: 'count'; where?: Condition[] }
-  | { agg: 'sum' | 'avg' | 'min' | 'max' | 'p95'; field: string }
+  | { agg: 'sum' | 'avg' | 'min' | 'max' | 'p95'; field: string; where?: Condition[] }
   | { derive: 'ratio' | 'margin'; of: [string, string]; scale?: number }
 );
 
@@ -133,7 +134,7 @@ function offersOf(query: PreparedQuery<never>, rights: ExploreRights | null): Ma
     const at = `${name}.${measure}`;
     if (!m || !readable(name) || path.includes(at)) return false;
     if ('derive' in m) return m.of.every((ref) => usable(...refOf(query, name, ref), [...path, at]));
-    if ('field' in m) return visible(name, m.field);
+    if ('field' in m && !visible(name, m.field)) return false;
     return (m.where ?? []).every((w) => visible(name, w.field));
   };
   const out = new Map<string, Offer>();
@@ -322,7 +323,7 @@ export async function runExplore<I>(query: PreparedQuery<I>, input: unknown, rig
     const out: AggregateQuery = {
       measures: (bases.get(src) ?? []).map((m) => {
         const d = t.measures[m] as Extract<Measure, { agg: string }>;
-        return 'field' in d ? { name: m, agg: d.agg, field: d.field } : { name: m, agg: 'count', ...(d.where ? { where: d.where } : {}) };
+        return { name: m, agg: d.agg, ...('field' in d ? { field: d.field } : {}), ...(d.where ? { where: d.where } : {}) };
       }),
     };
     const conds = [...(fixed[src] ?? []), ...(self ? where : [])];
