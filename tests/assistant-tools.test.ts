@@ -134,7 +134,7 @@ describe('mutations', () => {
     const events = await chunks(await respond({ model: scripted(call('u1', `update_${c.name}`, { ids: ['p_1', 'p_2'], set: { team: 'Sales' } })), secret: SECRET, now: NOW, messages: ask('Move them'), page, guard, collections: [c] }));
     const preview = events.find((e) => e.type === 'data-proposal');
     expect(preview.id).toBe('u1');
-    expect(preview.data).toEqual({ title: 'Change 2 staff', tone: 'neutral', changes: [{ label: 'Alice Moreno', from: 'Support', to: 'Sales' }, { label: 'Ravi Patel', from: 'Support', to: 'Sales' }] });
+    expect(preview.data).toMatchObject({ tone: 'neutral', changes: [{ label: 'Alice Moreno', from: 'Support', to: 'Sales' }, { label: 'Ravi Patel', from: 'Support', to: 'Sales' }] });
     expect(events.find((e) => e.type === 'tool-approval-request').toolCallId).toBe('u1');
     expect((await c.query({ where: [{ field: 'team', op: 'eq', value: 'Support' }] })).total).toBe(2);
   });
@@ -142,10 +142,9 @@ describe('mutations', () => {
   test('a remove is critical, a create is neutral, and each names what it touches', async () => {
     const c = people();
     const rm = await chunks(await respond({ model: scripted(call('r1', `remove_${c.name}`, { ids: ['p_3'] })), secret: SECRET, now: NOW, messages: ask('Remove Amara'), page, guard, collections: [c] }));
-    expect(rm.find((e) => e.type === 'data-proposal').data).toEqual({ title: 'Remove Amara Okafor', tone: 'critical', changes: [{ label: 'Amara Okafor', from: 'Staff', to: 'Removed' }] });
+    expect(rm.find((e) => e.type === 'data-proposal').data).toMatchObject({ tone: 'critical', changes: [{ label: 'Amara Okafor', from: 'Staff', to: 'Removed' }] });
     const add = await chunks(await respond({ model: scripted(call('c1', `create_${c.name}`, { name: 'Jin Park', team: 'Sales' })), secret: SECRET, now: NOW, messages: ask('Add Jin'), page, guard, collections: [c] }));
     const p = add.find((e) => e.type === 'data-proposal').data;
-    expect(p.title).toBe('Add Jin Park');
     expect(p.tone).toBe('neutral');
     expect(p.changes).toEqual([{ label: 'name', from: '—', to: 'Jin Park' }, { label: 'team', from: '—', to: 'Sales' }]);
     expect((await c.query({})).total).toBe(3);

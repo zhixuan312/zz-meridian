@@ -11,20 +11,23 @@ type Change = { label: string; from: string; to: string };
 
 const text = (v: unknown) => (v === null || v === undefined ? '—' : Array.isArray(v) ? v.join(', ') : String(v));
 /**
- * The tool calls that have run in this process. An approval is signed, but the same approved call sent again would
- * run again; each call id runs once.
+ * The mutations that have run in this process. An approval is signed, but the same approved call sent again would
+ * run again; each call id runs once. Reserve it while running and retain it as soon as the mutation resolves.
  */
-const APPLIED = Symbol.for('zz-meridian.assistant.applied');
-const applied = () => ((globalThis as Record<symbol, unknown>)[APPLIED] ??= new Set<string>()) as Set<string>;
+const OUTCOMES = Symbol.for('zz-meridian.assistant.change-outcomes');
 async function once<R>(toolCallId: string, run: () => Promise<R>): Promise<R> {
-  if (applied().has(toolCallId)) throw new ChangeRefused('This change was already applied.');
-  applied().add(toolCallId);
+  const changes = ((globalThis as Record<symbol, unknown>)[OUTCOMES] ??= new Map<string, 'pending' | 'applied'>()) as Map<string, 'pending' | 'applied'>;
+  const previous = changes.get(toolCallId);
+  if (previous) throw new ChangeRefused(previous === 'pending' ? 'This change is still in progress.' : 'This change was already applied.');
+  changes.set(toolCallId, 'pending');
   try {
-    return await run();
+    const result = await run();
+    changes.set(toolCallId, 'applied');
+    return result;
   } catch (e) {
-    // A change that threw wrote nothing, so the call has not been applied and its id is the person's again: sending the
-    // same approval after fixing the record hears the real reason a second time, never "already applied".
-    applied().delete(toolCallId);
+    // Only authorization and the mutation run here. A precommit refusal releases the approval for another attempt;
+    // cache invalidation and provenance run after this commit point and cannot release it.
+    changes.delete(toolCallId);
     throw new ChangeRefused(e instanceof z.ZodError ? `The change does not fit: ${e.issues.map((i) => `${i.path.join('.') || 'record'} ${i.message.toLowerCase()}`).join('; ')}.` : e instanceof Error ? e.message : 'The change did not go through.');
   }
 }
@@ -35,6 +38,7 @@ async function once<R>(toolCallId: string, run: () => Promise<R>): Promise<R> {
  */
 export type Guard = {
   authorize: (name: string, op: 'create' | 'update' | 'remove', ids?: string[]) => Promise<boolean>;
+  /** A postcommit failure is logged and returned as an applied outcome with a warning, never as a failed mutation. */
   invalidate: (name: string) => void;
   /**
    * Told after a change commits, so the product can keep a record of what an agent did and for whom (an Activity line,
@@ -45,6 +49,9 @@ export type Guard = {
 
 /** A change an agent made, as a record of it needs: which collection, what kind, the records by title, and what was set. */
 export type AgentChange = { name: string; label: string; op: 'create' | 'update' | 'remove'; titles: string[]; set?: Record<string, unknown> };
+
+/** Every committed mutation returns an outcome envelope, so record fields cannot be mistaken for status or warnings. */
+type AppliedChange = { status: 'applied'; result: unknown; warning?: string };
 
 /** A change the collection or the run-once rule refused. Its reason is the person's to read, so it is shown as it is. */
 export class ChangeRefused extends Error {}
@@ -138,23 +145,32 @@ export function assistantTools(collections: AnyCollection[], writer: UIMessageSt
       return missing.length ? { missing } : { rows: ids.map((id) => byId.get(id)!) };
     };
     const propose = (id: string, title: string, tone: 'neutral' | 'critical', changes: Change[]) => {
-      writer.write({ type: 'data-proposal', id, data: { title, tone, changes } });
+      writer.write({ type: 'data-proposal', id, data: { title, tone, changes, outcomeVersion: 1 } });
       return 'user-approval' as const;
     };
     /**
      * Runs `change` only while the caller may still make it; a refusal writes nothing, emits nothing and invalidates
      * nothing. Once it commits, the guard is told what changed, by the records' titles, so the product can record it.
      */
-    const guarded = async <R>(op: 'create' | 'update' | 'remove', ids: string[] | undefined, change: () => Promise<R>, record: { titles: string[]; set?: Row }): Promise<R> => {
-      if (!(await guard.authorize(c.name, op, ids))) throw new ChangeRefused('You no longer have permission to make this change.');
-      const result = await change();
-      guard.invalidate(c.name);
+    const guarded = async (toolCallId: string, op: 'create' | 'update' | 'remove', ids: string[] | undefined, change: () => Promise<unknown>, record: { titles: string[]; set?: Row }): Promise<AppliedChange> => {
+      const result = await once(toolCallId, async () => {
+        if (!(await guard.authorize(c.name, op, ids))) throw new ChangeRefused('You no longer have permission to make this change.');
+        return change();
+      });
+      let warning: string | undefined;
+      try {
+        guard.invalidate(c.name);
+      } catch (e) {
+        console.error('assistant: the change applied but cached reads could not be refreshed', e);
+        warning = 'The change applied, but cached reads could not be refreshed. The page may still show earlier data. Do not apply this change again.';
+      }
       try {
         await guard.record?.({ name: c.name, label: c.label, op, ...record });
       } catch (e) {
         console.error('assistant: the change applied but could not be recorded', e);
       }
-      return result;
+      const visible = op === 'create' ? strip(result as Row) : op === 'update' ? (result as Row[]).map(strip) : result;
+      return warning ? { status: 'applied', result: visible, warning } : { status: 'applied', result: visible };
     };
     /** The titles of the records `ids` names, read before a change alters or removes them. */
     const titlesOf = async (ids: string[]) => { const found = await find(ids); return 'rows' in found ? found.rows.map((r) => c.title(r)) : ids; };
@@ -164,7 +180,7 @@ export function assistantTools(collections: AnyCollection[], writer: UIMessageSt
       tools[`create_${c.name}`] = tool({
         description: `Add a record to ${c.label.toLowerCase()}.`,
         inputSchema: fields,
-        execute: (input, { toolCallId }) => once(toolCallId, () => guarded('create', undefined, async () => strip(await c.create!(input)), { titles: [c.title(input)] })),
+        execute: (input, { toolCallId }) => guarded(toolCallId, 'create', undefined, () => c.create!(input), { titles: [c.title(input)] }),
       });
       toolApproval[`create_${c.name}`] = ((input: Row, { toolCallId }) =>
         propose(toolCallId, `Add ${c.title(input)}`, 'neutral', Object.entries(input).map(([label, v]) => ({ label, from: '—', to: text(v) })))) as Rule;
@@ -174,7 +190,7 @@ export function assistantTools(collections: AnyCollection[], writer: UIMessageSt
       tools[`update_${c.name}`] = tool({
         description: `Change fields on one or more ${c.label.toLowerCase()} by id.`,
         inputSchema: z.object({ ids: z.array(z.string()).min(1), set: patchOf(fields).refine((set) => Object.keys(set).length > 0, 'Name at least one field to change.') }),
-        execute: ({ ids, set }, { toolCallId }) => once(toolCallId, async () => guarded('update', [...new Set(ids)], async () => (await c.update!([...new Set(ids)], set)).map(strip), { titles: await titlesOf([...new Set(ids)]), set })),
+        execute: async ({ ids, set }, { toolCallId }) => guarded(toolCallId, 'update', [...new Set(ids)], () => c.update!([...new Set(ids)], set), { titles: await titlesOf([...new Set(ids)]), set }),
       });
       toolApproval[`update_${c.name}`] = (async ({ ids, set }: { ids: string[]; set: Row }, { toolCallId }) => {
         const found = await find(ids);
@@ -189,7 +205,7 @@ export function assistantTools(collections: AnyCollection[], writer: UIMessageSt
       tools[`remove_${c.name}`] = tool({
         description: `Remove one or more ${c.label.toLowerCase()} by id.`,
         inputSchema: z.object({ ids: z.array(z.string()).min(1) }),
-        execute: ({ ids }, { toolCallId }) => once(toolCallId, async () => guarded('remove', [...new Set(ids)], () => c.remove!([...new Set(ids)]), { titles: await titlesOf([...new Set(ids)]) })),
+        execute: async ({ ids }, { toolCallId }) => guarded(toolCallId, 'remove', [...new Set(ids)], () => c.remove!([...new Set(ids)]), { titles: await titlesOf([...new Set(ids)]) }),
       });
       toolApproval[`remove_${c.name}`] = (async ({ ids }: { ids: string[] }, { toolCallId }) => {
         const found = await find(ids);

@@ -17,8 +17,8 @@ const thread = [
 
 const noop = () => {};
 
-const change = { title: 'Change 2 members', tone: 'neutral', changes: [{ label: 'Alice Moreno', from: 'Active', to: 'Suspended' }, { label: 'Ravi Patel', from: 'Active', to: 'Suspended' }] };
-const removal = { title: 'Remove Alice Moreno', tone: 'critical', changes: [{ label: 'Alice Moreno', from: 'Members', to: 'Removed' }] };
+const change = { title: 'Change 2 members', tone: 'neutral', changes: [{ label: 'Alice Moreno', from: 'Active', to: 'Suspended' }, { label: 'Ravi Patel', from: 'Active', to: 'Suspended' }], outcomeVersion: 1 };
+const removal = { title: 'Remove Alice Moreno', tone: 'critical', changes: [{ label: 'Alice Moreno', from: 'Members', to: 'Removed' }], outcomeVersion: 1 };
 
 /** A turn proposing a change, with its tool part in the given state. */
 const proposing = (name: string, preview: object, tool: Record<string, unknown>): UIMessage[] => [
@@ -46,7 +46,8 @@ export default function AssistantPreview() {
         <State label="Waiting"><AssistantPanel inline messages={proposing('update_members', change, { state: 'approval-requested', approval: { id: 'x' } })} onSend={noop} onClose={noop} onDecide={noop} onClear={noop} className="h-120 rounded-lg border" /></State>
         <State label="Waiting, a removal"><AssistantPanel inline messages={proposing('remove_members', removal, { state: 'approval-requested', approval: { id: 'x' } })} onSend={noop} onClose={noop} onDecide={noop} onClear={noop} className="h-120 rounded-lg border" /></State>
         <State label="Applying"><AssistantPanel inline messages={proposing('update_members', change, { state: 'approval-responded', approval: { id: 'x', approved: true } })} onSend={noop} onClose={noop} onDecide={noop} onClear={noop} className="h-120 rounded-lg border" /></State>
-        <State label="Applied"><AssistantPanel inline messages={proposing('update_members', change, { state: 'output-available', output: [], approval: { id: 'x', approved: true } })} onSend={noop} onClose={noop} onDecide={noop} onClear={noop} className="h-120 rounded-lg border" /></State>
+        <State label="Applied"><AssistantPanel inline messages={proposing('update_members', change, { state: 'output-available', output: { status: 'applied', result: [] }, approval: { id: 'x', approved: true } })} onSend={noop} onClose={noop} onDecide={noop} onClear={noop} className="h-120 rounded-lg border" /></State>
+        <State label="Applied, cached reads stale"><AssistantPanel inline messages={proposing('update_members', change, { state: 'output-available', output: { status: 'applied', result: [], warning: 'The change applied, but cached reads could not be refreshed. The page may still show earlier data. Do not apply this change again.' }, approval: { id: 'x', approved: true } })} onSend={noop} onClose={noop} onDecide={noop} onClear={noop} className="h-120 rounded-lg border" /></State>
         <State label="Failed"><AssistantPanel inline messages={proposing('update_members', change, { state: 'output-error', errorText: 'Ravi Patel was removed before the change applied, so nothing was changed.', approval: { id: 'x', approved: true } })} onSend={noop} onClose={noop} onDecide={noop} onClear={noop} className="h-120 rounded-lg border" /></State>
         <State label="Dismissed"><AssistantPanel inline messages={proposing('remove_members', removal, { state: 'output-denied', approval: { id: 'x', approved: false } })} onSend={noop} onClose={noop} onDecide={noop} onClear={noop} className="h-120 rounded-lg border" /></State>
         <State label="Expired"><AssistantPanel inline messages={proposing('remove_members', removal, { state: 'output-denied', approval: { id: 'x', approved: false, reason: 'The page was reloaded before anyone approved it.' } })} onSend={noop} onClose={noop} onDecide={noop} onClear={noop} className="h-120 rounded-lg border" /></State>

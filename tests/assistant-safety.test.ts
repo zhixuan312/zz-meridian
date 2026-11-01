@@ -1,5 +1,5 @@
 // @vitest-environment node
-import { describe, expect, test } from 'vitest';
+import { describe, expect, test, vi } from 'vitest';
 import { z } from 'zod';
 import { readUIMessageStream, type UIMessage, type UIMessageChunk } from 'ai';
 import { MockLanguageModelV4 } from 'ai/test';
@@ -71,11 +71,30 @@ describe('an approved change', () => {
     expect((await c.query({})).total).toBe(3);
   });
 
+  test('a postcommit cache failure streams an applied outcome, and replay cannot create a duplicate', async () => {
+    const c = items();
+    const logged = vi.spyOn(console, 'error').mockImplementation(() => {});
+    try {
+      const { run } = await approved(c, 'committed-stream', `create_${c.name}`, { name: 'Three' }, {
+        authorize: async () => true, invalidate: () => { throw new Error('cache failure'); },
+      });
+      const evs = await run();
+      expect(evs.some((e) => e.type === 'tool-output-error')).toBe(false);
+      expect(evs.find((e) => e.type === 'tool-output-available' && e.toolCallId === 'committed-stream').output)
+        .toMatchObject({ status: 'applied', result: { name: 'Three' }, warning: expect.stringMatching(/change applied.*cached reads/i) });
+      const again = await run();
+      expect(again.some((e) => e.type === 'tool-output-error' && /already applied/.test(e.errorText))).toBe(true);
+      expect((await c.query({})).total).toBe(3);
+    } finally {
+      logged.mockRestore();
+    }
+  });
+
   test('returns its rows without hidden fields', async () => {
     const c = items();
     const { run } = await approved(c, 'up1', `update_${c.name}`, { ids: ['i_1'], set: { name: 'Uno' } });
     const out = (await run()).find((e) => e.type === 'tool-output-available' && e.toolCallId === 'up1');
-    expect(out.output).toEqual([{ id: 'i_1', name: 'Uno' }]);
+    expect(out.output).toEqual({ status: 'applied', result: [{ id: 'i_1', name: 'Uno' }] });
     expect((await c.query({ where: [{ field: 'id', op: 'eq', value: 'i_1' }] })).rows[0].secret).toBe('s1');
     expect(JSON.stringify(out)).not.toContain('s1');
   });

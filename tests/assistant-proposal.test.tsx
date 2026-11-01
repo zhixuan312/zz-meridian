@@ -5,12 +5,13 @@ import type { UIMessage } from 'ai';
 
 vi.mock('next/navigation', () => ({ usePathname: () => '/members', useRouter: () => ({ refresh() {}, push() {}, replace() {} }) }));
 import { AssistantPanel } from '@/components/patterns/assistant';
+import { loadThread, THREAD_KEY } from '@/components/patterns/assistant/thread';
 
-const PREVIEW = { title: 'Change 2 members', tone: 'neutral', changes: [{ label: 'Alice Moreno', from: 'Active', to: 'Suspended' }, { label: 'Ravi Patel', from: 'Active', to: 'Suspended' }] };
-const REMOVE = { title: 'Remove Alice Moreno', tone: 'critical', changes: [{ label: 'Alice Moreno', from: 'Members', to: 'Removed' }] };
+const PREVIEW = { title: 'Change 2 members', tone: 'neutral', changes: [{ label: 'Alice Moreno', from: 'Active', to: 'Suspended' }, { label: 'Ravi Patel', from: 'Active', to: 'Suspended' }], outcomeVersion: 1 };
+const REMOVE = { title: 'Remove Alice Moreno', tone: 'critical', changes: [{ label: 'Alice Moreno', from: 'Members', to: 'Removed' }], outcomeVersion: 1 };
 
 /** One assistant turn proposing a change, with the tool part in the given state. */
-const turn = (tool: Record<string, unknown>, preview = PREVIEW, name = 'update_members'): UIMessage[] => [
+const turn = (tool: Record<string, unknown>, preview: Omit<typeof PREVIEW, 'outcomeVersion'> & { outcomeVersion?: number } = PREVIEW, name = 'update_members'): UIMessage[] => [
   { id: 'u1', role: 'user', parts: [{ type: 'text', text: 'Suspend them' }] },
   { id: 'a1', role: 'assistant', parts: [{ type: 'text', text: 'Here is the change.' }, { type: 'data-proposal', id: 'c1', data: preview }, { type: `tool-${name}`, toolCallId: 'c1', input: { ids: ['members_3', 'members_4'], set: { status: 'Suspended' } }, ...tool }] } as UIMessage,
 ];
@@ -39,7 +40,7 @@ describe('a proposed change in the panel', () => {
   test('approved and running, applied, failed and dismissed each show their state and no buttons', () => {
     const cases: [Record<string, unknown>, RegExp][] = [
       [{ state: 'approval-responded', approval: { id: 'a', approved: true } }, /Applying/],
-      [{ state: 'output-available', output: [], approval: { id: 'a', approved: true } }, /Applied/],
+      [{ state: 'output-available', output: { status: 'applied', result: [] }, approval: { id: 'a', approved: true } }, /Applied/],
       [{ state: 'output-error', errorText: 'boom', approval: { id: 'a', approved: true } }, /Not applied/],
       [{ state: 'output-denied', approval: { id: 'a', approved: false } }, /Dismissed/],
     ];
@@ -50,6 +51,40 @@ describe('a proposed change in the panel', () => {
       expect(within(card).queryByRole('button')).toBeNull();
       unmount();
     }
+  });
+
+  test('a committed change with stale cached reads stays Applied and explains the warning', () => {
+    const warning = 'The change applied, but cached reads could not be refreshed. The page may still show earlier data. Do not apply this change again.';
+    show(turn({ state: 'output-available', output: { status: 'applied', result: [], warning }, approval: { id: 'a', approved: true } }));
+    const card = screen.getByRole('article', { name: /Change 2 members/ });
+    expect(within(card).getByText('Applied')).toBeInTheDocument();
+    expect(within(card).getByText(warning)).toBeInTheDocument();
+    expect(within(card).queryByText(/Not applied|Nothing changed/)).toBeNull();
+    expect(within(card).queryByRole('button')).toBeNull();
+  });
+
+  test('keeps a saved historical record opaque when its fields resemble outcome metadata', () => {
+    const warning = 'Historical record content, not protocol metadata';
+    const legacyPreview = { title: PREVIEW.title, tone: PREVIEW.tone, changes: PREVIEW.changes };
+    const messages = turn({ state: 'output-available', output: { status: 'applied', result: 'Historical record field', warning } }, legacyPreview);
+    sessionStorage.setItem(THREAD_KEY, JSON.stringify({ v: 2, scope: 'owned-history', messages }));
+    try {
+      show(loadThread(sessionStorage, 'owned-history'));
+      const card = screen.getByRole('article', { name: /Change 2 members/ });
+      expect(within(card).getByText('Applied')).toBeInTheDocument();
+      expect(within(card).queryByText(warning)).toBeNull();
+      expect(within(card).queryByRole('button')).toBeNull();
+    } finally {
+      sessionStorage.clear();
+    }
+  });
+
+  test('a record warning is not the committed outcome warning', () => {
+    const warning = 'Record text, not a cache warning';
+    show(turn({ state: 'output-available', output: { status: 'applied', result: { status: 'applied', applied: true, result: 'Record', warning } }, approval: { id: 'a', approved: true } }));
+    const card = screen.getByRole('article', { name: /Change 2 members/ });
+    expect(within(card).getByText('Applied')).toBeInTheDocument();
+    expect(within(card).queryByText(warning)).toBeNull();
   });
 
   test('closed without a decision: Expired, with its reason, and it can no longer be approved', () => {

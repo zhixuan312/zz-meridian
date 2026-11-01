@@ -8,6 +8,7 @@ Every release of ZZ Meridian, newest first. Versions follow semver: a removed or
 
 - **Uncontrolled Proposal requires `onApprove`.** Controlled state still permits an external approval handler; untyped callers without the required handler enter Failed rather than claiming Applied.
 - **Partial sample data is explicit.** `HomeData.totals` can be null. `RevenueData.history` now owns historical `count` and `windows`; `days.windows` is removed. Guard the nullable parts independently rather than substituting zero or requiring unrelated reads.
+- **Mutation tools return an applied outcome envelope.** Successful create, update and remove outputs are now `{ status: 'applied', result, warning? }`, not raw records or removal values. Read the visible data from `result`; domain fields cannot impersonate protocol metadata. A postcommit cache failure remains Applied with a warning, never an invitation to repeat the mutation.
 
 ### Fixed
 
@@ -33,6 +34,7 @@ Every release of ZZ Meridian, newest first. Versions follow semver: a removed or
 - **Every screenshot press option requires a control name.** Missing values are refused before browser launch instead of consuming another option.
 - **Workspace journeys distinguish declared missing request routes.** A legitimate record whose id contains `missing` remains a real detail destination.
 - **Assistant page identity stays in an escaped data boundary.** Browser-supplied titles and addresses cannot close their own wrapper or introduce trusted guidance.
+- **Committed assistant mutations stay consumed after invalidation failure.** Authorization and mutation define the once-only commit point; an in-flight duplicate is reported as still in progress, never already applied. Stale-cache warnings preserve Applied, provenance is still attempted, and replay cannot duplicate the write.
 - **Adoption preserves punctuation in TypeScript configuration strings.** Removing JSONC trailing commas also removed commas before `]` or `}` inside string keys and values, changing aliases, paths and plugin options. Only commas outside strings are removed.
 - **Derived answers stay within the caller's full access scope.** Cached and in-flight builds are partitioned by tenant, subject and authorization identity. Every reader checks its own source authorization before joining a build; a concurrent denial cannot inherit another reader's permission.
 - **Untrusted assistant context cannot reconstruct wrapper tags.** Page text, view context and product briefs escape markup linearly instead of splicing tag fragments back together. This preserves their data boundary; it does not replace the assistant's authorization and proposal rules.
