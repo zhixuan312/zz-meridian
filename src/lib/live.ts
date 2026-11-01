@@ -59,7 +59,7 @@ export function createLiveClient({ refresh, endpoint = '/api/live', pollMs = 300
   /** The last refresh failed for a reason other than access: the server did not answer. */
   let unreachable = false;
   let state: LiveState | null = null;
-  /** Bumped whenever results in flight must stop counting: the page hid, or the client ended. */
+  /** Bumped whenever results in flight must stop counting: the names changed, the page hid, or the client ended. */
   let epoch = 0;
   let source: EventSource | null = null;
   let opened = false;
@@ -278,6 +278,7 @@ export function createLiveClient({ refresh, endpoint = '/api/live', pollMs = 300
     setNames(next) {
       const union = [...new Set(next)].sort();
       if (disposed || union.join(',') === names.join(',')) return;
+      epoch += 1;
       names = union;
       newNames = true;
       closeSource();

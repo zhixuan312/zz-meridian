@@ -346,6 +346,9 @@ name the caller may not read. How it behaves:
   reporting lost hints, and is read.
 - Hints wait at most 500 ms and coalesce. One refresh runs at a time, and what arrives meanwhile runs next. A refresh
   slower than 10 s counts as failed.
+- Changing the normalized collection union invalidates the previous union's in-flight result: its success cannot mark
+  the new view live, and its failure cannot make that view stale or pause it. The current union's queued resync runs
+  after the previous read settles or times out. Reordering or repeating the same names keeps the stream and its read.
 - A safety refresh runs every `pollMs` (30 s) even on a healthy stream. A failed connection is retried after a second;
   after the third failure the tab polls, and tries the stream again on every fifth poll.
 - An authorization failure pauses the stream. A hidden tab closes it, and showing the tab again resyncs. On logout, a

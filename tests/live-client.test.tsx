@@ -117,6 +117,71 @@ describe('the live client', () => {
     expect(refresh.mock.calls.length).toBe(calls + 1);
     c.dispose();
   });
+  it.each(['success', 'network failure', 'authorization failure'])('ignores an old union\'s %s while the new union awaits its own resync', async (outcome) => {
+    const old = Promise.withResolvers<void>();
+    const currentRead = Promise.withResolvers<void>();
+    const refresh = vi.fn()
+      .mockReturnValueOnce(old.promise)
+      .mockReturnValueOnce(currentRead.promise);
+    const { c, states } = client(refresh);
+    c.setNames(['members']);
+    const first = live()[0];
+    first.open();
+    c.setNames(['keys']);
+    expect(first.closed).toBe(true);
+    const current = live()[0];
+    current.open();
+    expect(refresh).toHaveBeenCalledTimes(1);
+    if (outcome === 'success') old.resolve();
+    else old.reject(Object.assign(new Error(outcome), outcome === 'authorization failure' ? { status: 403 } : {}));
+    await flush(0);
+    expect(states).toEqual(['connecting']);
+    expect(current.closed).toBe(false);
+    expect(refresh.mock.calls).toEqual([[['members']], [['keys']]]);
+    currentRead.resolve();
+    await flush(0);
+    expect(states).toEqual(['connecting', 'live']);
+    c.dispose();
+  });
+  it('keeps the stream and accepts an in-flight resync when the normalized union is unchanged', async () => {
+    const read = Promise.withResolvers<void>();
+    const refresh = vi.fn(() => read.promise);
+    const { c, states } = client(refresh);
+    c.setNames(['members', 'keys']);
+    const first = live()[0];
+    first.open();
+    c.setNames(['keys', 'members', 'keys']);
+    expect(FakeSource.all).toEqual([first]);
+    expect(first.closed).toBe(false);
+    read.resolve();
+    await flush(0);
+    expect(refresh).toHaveBeenCalledTimes(1);
+    expect(states).toEqual(['connecting', 'live']);
+    c.dispose();
+  });
+  it('invalidates an in-flight resync when the last name is removed', async () => {
+    const old = Promise.withResolvers<void>();
+    const refresh = vi.fn()
+      .mockReturnValueOnce(old.promise)
+      .mockResolvedValue(undefined);
+    const { c, states } = client(refresh);
+    c.setNames(['members']);
+    const first = live()[0];
+    first.open();
+    c.setNames([]);
+    expect(first.closed).toBe(true);
+    old.reject(Object.assign(new Error('refused'), { status: 403 }));
+    await flush(0);
+    expect(states).toEqual(['connecting']);
+    expect(live()).toHaveLength(0);
+    c.setNames(['keys']);
+    expect(live()).toHaveLength(1);
+    live()[0].open();
+    await flush(0);
+    expect(refresh.mock.calls).toEqual([[['members']], [['keys']]]);
+    expect(states).toEqual(['connecting', 'live']);
+    c.dispose();
+  });
   it('abandons a refresh slower than 10 s, so the next one still runs', async () => {
     const refresh = vi.fn(() => new Promise<void>(() => {}));
     const { c, states } = client(refresh, 20_000);
