@@ -536,19 +536,15 @@ const SPLIT = {
 } as const;
 /*
  * A row of tiles counts its columns from its own width, and never leaves a hole: one tile spans the row, three tiles are
- * three or one. Five or more run in rows of two, then three, and the last tile spans whatever its row leaves empty.
+ * three or one. Five or more run in rows of two, then three, and base.css spans the last tile over what its row leaves.
  */
 const TILES = {
   1: '',
   2: '@min-[34rem]:grid-cols-2',
   3: '@min-[48rem]:grid-cols-3',
   4: '@min-[34rem]:grid-cols-2 @min-[62rem]:grid-cols-4',
+  5: '@min-[34rem]:grid-cols-2 @min-[48rem]:grid-cols-3',
 } as const;
-const MANY = '@min-[34rem]:grid-cols-2 @min-[48rem]:grid-cols-3';
-/** The last tile's span in rows of two, then of three, by the count's remainder, so the last row is always full. */
-const LAST_OF_TWO = ['', '@min-[34rem]:[&>:last-child]:col-span-2'] as const;
-const LAST_OF_THREE = ['@min-[48rem]:[&>:last-child]:col-span-1', '@min-[48rem]:[&>:last-child]:col-span-3', '@min-[48rem]:[&>:last-child]:col-span-2'] as const;
-const tilesFor = (n: number) => (n <= 4 ? TILES[n as keyof typeof TILES] : cn(MANY, LAST_OF_TWO[n % 2], LAST_OF_THREE[n % 3]));
 export type Split = keyof typeof SPLIT | 'tiles';
 
 /** One row of cards. Cards in a row are the same height; every card is a direct child. */
@@ -558,7 +554,7 @@ export function Row({ split = 'full', className, ...rest }: HTMLAttributes<HTMLD
     return (
       <div className="@container min-w-0">
         {/* One instrument, not a row of equal cards: the tiles share one card's edge and fill (base.css `[data-split='tiles']`). */}
-        <div data-split="tiles" className={cn('grid min-w-0 grid-cols-1 overflow-hidden rounded-lg border border-line bg-surface shadow-card *:min-w-0', tilesFor(n), className)} {...rest} />
+        <div data-split="tiles" className={cn('grid min-w-0 grid-cols-1 overflow-hidden rounded-lg border border-line bg-surface shadow-card *:min-w-0', TILES[Math.min(n, 5) as keyof typeof TILES], className)} {...rest} />
       </div>
     );
   }

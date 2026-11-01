@@ -84,9 +84,11 @@ export default function ShellPreview() {
           <div className="grid grid-cols-3 gap-3"><Cell label="1/3" /><div className="col-span-2"><Cell label="2/3" /></div></div>
         </div>
       </Specimen>
-      <Specimen label="Tiles" note="A row of two to four tiles counts columns from its own width and never leaves a hole: four are four or two, three are three or one.">
-        <div className="w-full">
+      <Specimen label="Tiles" note="A row of tiles counts columns from its own width and never leaves a hole: four are four or two, three are three or one. Five or more run in rows of two, then three, and the last tile spans what its row leaves.">
+        <div className="flex w-full flex-col gap-3">
           <Row split="tiles"><Cell label="Tile" /><Cell label="Tile" /><Cell label="Tile" /><Cell label="Tile" /></Row>
+          <Row split="tiles">{[1, 2, 3, 4, 5].map((i) => <Cell key={i} label={`Tile ${i} of 5`} />)}</Row>
+          <Row split="tiles">{[1, 2, 3, 4, 5, 6, 7].map((i) => <Cell key={i} label={`Tile ${i} of 7`} />)}</Row>
         </div>
       </Specimen>
       <Specimen label="Three widths" note="A page names one. `data` is the canvas; `form` and `reading` are narrower measures that fill it until the canvas is wider than the page needs, then centre. The bar is each width against the 1560px the layout is designed at.">
