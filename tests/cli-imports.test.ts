@@ -15,9 +15,30 @@ describe('import specifiers in a common form', () => {
     expect(canonicalImports(rel, "import { Badge } from '@/components/ui/badge';\nimport { cn } from '@/lib/cn';\n", a)).toBe(relative);
     expect(canonicalImports(rel, "import { Badge } from '@meridian/components/ui/badge';\nimport { cn } from '@meridian/lib/cn';\n", a)).toBe(relative);
   });
+  it('reads live JSONC path mappings with baseUrl, ignoring commented-out aliases', () => {
+    const a = aliasesOf(`{
+      "compilerOptions": {
+        "baseUrl": "./src",
+        "paths": { "@/*": ["./*"], },
+        // "@/*": ["./wrong/*"]
+      }
+    }`);
+    expect(a.get('@/')).toBe('src/');
+    expect(canonicalImports(rel, "import { Badge } from '@/components/ui/badge';", a))
+      .toBe(canonicalImports(rel, "import { Badge } from '../../ui/badge/index';", a));
+  });
   it('still tells apart a file that changed anything else', () => {
     const a = aliasesOf(null);
     expect(canonicalImports(rel, "import { Badge } from '../../ui/badge';\nconst x = 1;\n", a)).not.toBe(canonicalImports(rel, "import { Badge } from '../../ui/badge';\nconst x = 2;\n", a));
     expect(canonicalImports(rel, "import { a } from 'react';\n", a)).toBe("import { a } from 'react';\n");
+  });
+
+  it.each([
+    ["export const text = \"from '../../ui/badge/index'\";", "export const text = \"from '@/components/ui/badge'\";"],
+    ["// import '../../ui/badge/index'", "// import '@/components/ui/badge'"],
+    ["export const text = `import '../../ui/badge/index'`;", "export const text = `import '@/components/ui/badge'`;"],
+  ])('preserves non-import edits instead of equating %s with import syntax', (before, after) => {
+    const a = aliasesOf('{ "paths": { "@/*": ["./src/*"] } }');
+    expect(canonicalImports(rel, before, a)).not.toBe(canonicalImports(rel, after, a));
   });
 });

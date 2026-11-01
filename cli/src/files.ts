@@ -127,8 +127,13 @@ function strippedJsonc(text: string): { json: string; dropped: boolean } {
 }
 
 /** JSON with the comments and trailing commas a tsconfig may carry. */
+export function parseJsonc(text: string): any {
+  return JSON.parse(strippedJsonc(text).json);
+}
+
+/** A file containing JSON with comments and trailing commas. */
 export function readJsonc(file: string): any {
-  return JSON.parse(strippedJsonc(fs.readFileSync(file, 'utf8')).json);
+  return parseJsonc(fs.readFileSync(file, 'utf8'));
 }
 
 /**

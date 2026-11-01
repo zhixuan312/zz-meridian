@@ -73,6 +73,9 @@ writes nothing; run it first.
 - It replaces every Meridian file you have not touched, adds the new ones and removes the retired ones. A file you edited,
   deleted or kept (`.meridian/keep.json`) is never overwritten: an edited or deleted one is staged as base/ours/new copies
   for you to merge.
+- Import-only equivalence is checked conservatively on leading static imports and re-exports. Text, comments, dynamic
+  imports and declarations after other code remain exact; uncertain differences are staged for review rather than erased.
+  Alias mappings are read from live JSONC configuration with `baseUrl`, ignoring commented-out mappings.
 - It adds the dependencies and scripts this release needs to `package.json` and updates Meridian's managed block in
   `AGENTS.md`; an older version of the same major is raised, and a newer version, an older major or a script you
   chose yourself becomes a migration to resolve, never a silent change.
