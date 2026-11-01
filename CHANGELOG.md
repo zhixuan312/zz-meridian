@@ -12,6 +12,8 @@ Every release of ZZ Meridian, newest first. Versions follow semver: a removed or
 
 ### Fixed
 
+- **Customization guidance respects the data boundary.** Server pages or logic read the data seam and pass values into views; views import only types or the documented vocabulary.
+
 - **Fullscreen Requests opens customers through the host.** Activating a known customer no longer navigates the embed frame or also opens its request; console customer links keep their destination.
 
 - **Zero-latency request context stays factual.** A trace with no elapsed time no longer invents a 1ms total or attributes that time to Gateway.
