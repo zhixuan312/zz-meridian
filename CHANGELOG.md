@@ -12,7 +12,7 @@ Every release of ZZ Meridian, newest first. Versions follow semver: a removed or
 
 ### Fixed
 
-- **Customization guidance respects the data boundary.** Server pages or logic read the data seam and pass values into views; views import only types or the documented vocabulary.
+- **Customization guidance respects data and surface boundaries.** Server pages or logic read the data seam and pass values into views; views import only types or the documented vocabulary. Product summaries belong to logic, shared formatters to lib, and fullscreen customer controls open through the host.
 
 - **Fullscreen Requests opens customers through the host.** Activating a known customer no longer navigates the embed frame or also opens its request; console customer links keep their destination.
 

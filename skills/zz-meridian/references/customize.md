@@ -23,11 +23,12 @@ sample, ZZ Meridian's own dashboard, lives in `optional:src/system/fixtures/`; y
 - **Daily series** for anything a Metric tile or chart shows over time: the Meridian cursor reads one value per date it holds.
 - **Freshness** from when data arrived (`DEMO_UPDATED_AT`), never from now.
 - **null for "not measured"**: the formatters in `src/lib/format.ts` render it as a dash. A quantity Meridian has no
-  formatter for (weight, distance) gets one in a file of the product's own (`example:src/data/format.ts`), passed as a
+  formatter for (weight, distance) gets one in a file of the product's own (`example:src/lib/format-product.ts`), passed as a
   tile's or table's `format`, never written inline; `src/lib/format.ts` is Meridian's, and an edit there becomes a
   merge at the next update. Money follows `app.currency`.
-- **Helpers a server page calls** (summaries, derived sentences) go in `optional:src/data/` or `src/lib/`, never in a
-  `'use client'` view file: a server component cannot call a function exported from a client module.
+- **Helpers a server page calls** follow the same layers: product summaries, figures and derived sentences go in
+  `optional:src/logic/`, shared formatters in `src/lib/`, and record reads in `optional:src/data/`. Never put server-called
+  helpers in a `'use client'` view file: a server component cannot call a function exported from a client module.
 - **Read on the server when you can**: a server component that awaits its data sends a page with the numbers in it.
   If a page must fetch in the browser (a client hook against an existing API), its reads start only after the
   JavaScript has loaded and run, about 2.5 s on a mid-range phone, which puts LCP past the limit. Call
@@ -330,7 +331,9 @@ orders is the sample's, not the product's.
   The address is worked out on the server: a record that keeps another's name, as a request keeps its customer's, is
   joined to it by name when it is read (`customerIds` in `optional:src/data/requests.ts`), and a name nothing holds
   stays text. A link in a table's cell is followed as itself and does not also open the row. Where the whole row is one
-  control (the Requests embed's list) or a link would navigate a host's frame (an embed's table), the name stays text.
+  control (the Requests embed's inline list), the nested name stays text. In the fullscreen embed table, a known
+  customer's name is a separate button that asks `Surface.openLink` to open that customer through the host; it never
+  navigates the frame or also opens the request.
 - **An incident names its ticket.** An incident's record names the ticket its work is tracked in by id, and the
   Incident card takes a title and an address: `readIncidents()` in `optional:src/data/metrics.ts` reads the tickets the
   incidents name, by their ids, and joins each to its title and the address your tickets page finds it at. A ticket
