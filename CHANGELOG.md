@@ -12,6 +12,8 @@ Every release of ZZ Meridian, newest first. Versions follow semver: a removed or
 
 ### Fixed
 
+- **Fullscreen Requests opens customers through the host.** Activating a known customer no longer navigates the embed frame or also opens its request; console customer links keep their destination.
+
 - **Zero-latency request context stays factual.** A trace with no elapsed time no longer invents a 1ms total or attributes that time to Gateway.
 
 - **Password sign-in starts with an active identity.** An inactive first persona no longer makes the default submission fail when another persona remains active; a refused submission still preserves the person's choice.

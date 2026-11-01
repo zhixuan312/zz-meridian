@@ -5,6 +5,7 @@
  * the Data table preview. They live here, not in a page view, so removing a sample page never breaks a preview.
  */
 import Link from 'next/link';
+import { useSurface } from '@/components/base/surface';
 import { Fragment } from 'react';
 import { Badge } from '@/components/ui/badge';
 import type { Column } from '@/components/patterns/data-table';
@@ -51,6 +52,17 @@ export function RouteCell({ method, route, wrap }: { method: string; route: stri
   );
 }
 
+/** A known customer keeps its destination on the console and asks the host to open it in an embed. */
+function CustomerCell({ row }: { row: LoggedRequest }) {
+  const surface = useSurface();
+  const className = 'row-link block max-w-48 truncate';
+  if (!row.customerId) return <span className="block max-w-48 truncate" title={row.customer}>{row.customer}</span>;
+  const href = customerAddress(row.customerId);
+  return surface.kind === 'embed'
+    ? <button type="button" className={className} title={row.customer} onClick={() => surface.openLink(href)}>{row.customer}</button>
+    : <Link href={href} className={className} title={row.customer}>{row.customer}</Link>;
+}
+
 export const requestColumns: Column<LoggedRequest>[] = [
   {
     key: 'request', header: 'Request', grow: true, truncate: true, mobile: 'title',
@@ -68,9 +80,7 @@ export const requestColumns: Column<LoggedRequest>[] = [
   {
     key: 'customer', header: 'Customer', muted: true, mobile: 'fact', hideBelow: 'lg', sortValue: (r) => r.customer,
     // A customer the customers hold opens its own page; the link is followed as itself and does not also open the row.
-    cell: (r) => (r.customerId
-      ? <Link href={customerAddress(r.customerId)} className="row-link block max-w-48 truncate" title={r.customer}>{r.customer}</Link>
-      : <span className="block max-w-48 truncate" title={r.customer}>{r.customer}</span>),
+    cell: (r) => <CustomerCell row={r} />,
   },
   { key: 'region', header: 'Region', muted: true, hideBelow: 'lg', cell: (r) => <span className="font-mono text-xs whitespace-nowrap">{r.region}</span> },
   { key: 'size', header: 'Size', numeric: true, muted: true, hideBelow: 'xl', cell: (r) => formatBytes(r.bytes), sortValue: (r) => r.bytes },

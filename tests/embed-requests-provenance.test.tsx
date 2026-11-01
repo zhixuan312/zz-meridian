@@ -39,6 +39,19 @@ describe('the embed requests view, provenance', () => {
     );
     expect(container.textContent).toMatch(/1\D+10\D+of\D+25/);
   });
+  it('opens a known customer through the host without opening its request', () => {
+    const openLink = vi.fn();
+    const row = { ...REQUESTS[0], customerId: 'customer/known', customer: 'Known customer' };
+    const { container } = render(
+      <SurfaceOverride surface={{ kind: 'embed', mode: 'fullscreen', openLink }}>
+        <EmbedRequests rows={[row]} total={1} state={state} summary={summary} pageSize={10} updatedAt="2026-10-05T08:56:00.000Z" now="2026-10-05T09:00:00.000Z" />
+      </SurfaceOverride>,
+    );
+    fireEvent.click(within(container.querySelector('tbody')!).getByRole('button', { name: 'Known customer' }));
+    expect(openLink).toHaveBeenCalledExactlyOnceWith('/customers/customer%2Fknown');
+    expect(container.querySelector('tbody a')).toBeNull();
+  });
+
   it('offers a focusable fullscreen record title without an iframe navigation link', () => {
     const { container } = render(
       <SurfaceOverride surface={{ kind: 'embed', mode: 'fullscreen' }}>
