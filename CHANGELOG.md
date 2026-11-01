@@ -6,6 +6,7 @@ Every release of ZZ Meridian, newest first. Versions follow semver: a removed or
 
 ### Fixed
 
+- **Array collection writes reject before changing stored rows.** Batch derivations and response copying are staged before commit, so a later derivation failure or an uncloneable result cannot leave partial writes, a false revision or a change hint behind.
 - **Disposed host bridges settle their pending calls.** Unmounting rejects outstanding requests, clears their timers and stops initialization retries; later requests are refused without sending, and synchronous transport errors become promise rejections.
 - **Live data survives a synchronous stream refusal.** An EventSource construction failure follows the existing retry and polling fallback instead of throwing out of the provider; later retries can restore the stream, and disposal still stops the polling.
 - **Atomic CLI writes cannot follow a planted temporary-file link.** Update and brand now create a private sibling directory for each replacement, preserve the requested mode, and clean up temporary output on failure without altering the original destination.

@@ -446,20 +446,30 @@ export function arrayCollection<T extends Record<string, unknown>, K extends key
   };
   if (allow.includes('create')) {
     c.create = async (input) => {
-      const row = { ...def.fields.parse(input), [key]: `${name}_${store().next++}` } as unknown as T;
+      const row = copy({ ...def.fields.parse(input), [key]: `${name}_${store().next}` }) as unknown as T;
       Object.assign(row, def.derive?.(row));
+      const result = copy(row);
       rows().push(row);
+      store().next++;
       emit();
-      return copy(row);
+      return result;
     };
   }
   if (allow.includes('update')) {
     c.update = async (ids, patch) => {
       const set = patchOf(def.fields).parse(patch);
       const hit = pick(ids);
-      for (const r of hit) Object.assign(r, set, def.derive?.({ ...r, ...set }));
+      // Derivation and copying can throw too. Stage the whole batch, including nested values, before the first stored
+      // row changes: a rejected write must leave no partial change behind and emit no misleading revision.
+      const next = hit.map((row) => {
+        const changed = { ...copy(row), ...copy(set) };
+        Object.assign(changed, def.derive?.(changed));
+        return changed;
+      });
+      const result = copy(next);
+      for (let i = 0; i < hit.length; i++) Object.assign(hit[i], next[i]);
       emit();
-      return copy(hit);
+      return result;
     };
   }
   if (allow.includes('remove')) {

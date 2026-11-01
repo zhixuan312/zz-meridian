@@ -3,6 +3,7 @@
 Your product's data seam. A collection is read through `read()`: the pages, actions and the assistant that show records (members, keys, requests, customers, tickets, tests, releases) go through it. `collections.ts` lists your collections: one description of each set of records, with what may be created, changed and removed, read by the pages, changed by their server actions and offered to the assistant as tools (`docs/assistant.md`). Put other types and queries beside it (`src/data/<product>.ts`), and import them from your pages and views.
 
 - Until your API is wired, return deterministic sample data: a seeded generator and a fixed clock, never `Math.random()` or `new Date()` in render, or the server and the client disagree and React reports a hydration error.
+- The sample's `arrayCollection` stages derived values and return copies before committing a create or update. If any derivation or copy fails, it keeps the stored rows and revision unchanged and emits no hint; a successful batch emits once.
 - Give anything a tile or a chart shows over time one value per day: the Meridian cursor reads it.
 - Read freshness from when the data arrived, never from now.
 - Return `null` for "not measured"; the formatters in `src/lib/format.ts` render it as a dash.
