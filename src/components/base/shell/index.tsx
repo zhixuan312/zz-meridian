@@ -53,7 +53,7 @@ const ShellCtx = createContext<{ openNav: () => void; tools: ReactNode; assistan
  */
 const LeaveCtx = createContext<{ hold: () => () => void; leave: (go: () => void) => void }>({ hold: () => () => {}, leave: (go) => go() });
 
-/** A component calls this to say it holds unsaved changes while `dirty` is true. Saved, discarded or unmounted, it stops holding at once. */
+/** Holds navigation while a local draft differs from its last confirmed record; this is not proof that a request did not commit. */
 export function useUnsavedChanges(dirty: boolean) {
   const { hold } = useContext(LeaveCtx);
   // An effect, not a render-time write: a page the router keeps hidden has its effects cleaned up, so it holds nothing while hidden.

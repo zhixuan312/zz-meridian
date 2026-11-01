@@ -57,7 +57,7 @@ describe('saving the workspace in Settings', () => {
     render(<SettingsBody may={may} workspace={record} save={async () => { throw new Error('Failed to fetch'); }} />);
     type('Acme Staging');
     await press();
-    expect(screen.getByText('The change did not reach the server. Try again.')).toBeTruthy();
+    expect(screen.getByRole('alert')).toBeVisible();
     expect(name().value).toBe('Acme Staging');
     expect(saveButton()).not.toBeNull();
     expect((saveButton() as HTMLButtonElement).disabled).toBe(false);

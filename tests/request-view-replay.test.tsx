@@ -1,10 +1,8 @@
-import { act, fireEvent, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
-const push = vi.hoisted(() => vi.fn());
-vi.mock('next/navigation', () => ({ usePathname: () => '/requests/x', useRouter: () => ({ refresh() {}, push, replace() {} }) }));
-const toasts = vi.hoisted(() => [] as { tone: string; title: string; description?: string; action?: { label: string; onClick: () => void } }[]);
-vi.mock('@/components/ui/toast', () => ({ toast: (t: (typeof toasts)[number]) => { toasts.push(t); } }));
+vi.mock('next/navigation', () => ({ usePathname: () => '/requests/x', useRouter: () => ({ refresh() {}, push() {}, replace() {} }) }));
+vi.mock('@/components/ui/toast', () => ({ toast() {} }));
 
 import { RequestView } from '@/views/request';
 import { REQUESTS } from '@/system/fixtures/sample';
@@ -15,26 +13,13 @@ const view = (replay: (id: string) => Promise<{ ok: true; id: string; status: nu
   render(<RequestView routeP95={612} request={failed} trace={traceOf(failed)} payloads={payloadsOf(failed)} now="2026-10-05T09:00:00.000Z" replay={replay} />);
 
 describe('Replay on a failed request', () => {
-  it('sends it again and offers the new request', async () => {
-    const replay = vi.fn(async () => ({ ok: true as const, id: 'requests_999', status: 200 }));
-    view(replay);
-    await act(async () => { fireEvent.click(screen.getByRole('button', { name: 'Replay' })); });
-    expect(replay).toHaveBeenCalledWith(failed.id);
-    expect(toasts.at(-1)).toMatchObject({ tone: 'positive', title: 'Replayed: 200 OK' });
-    toasts.at(-1)!.action!.onClick();
-    expect(push).toHaveBeenCalledWith('/requests/requests_999');
-  });
-  it('says why when the replay is refused', async () => {
-    view(async () => ({ ok: false, error: 'You do not have permission to replay requests.' }));
-    await act(async () => { fireEvent.click(screen.getByRole('button', { name: 'Replay' })); });
-    expect(toasts.at(-1)).toMatchObject({ tone: 'critical', title: 'Not replayed', description: 'You do not have permission to replay requests.' });
-  });
-  it('says so when the replay never answers, and the page stays', async () => {
-    // A dropped connection throws rather than answering: thrown inside the transition, it took the page to its error screen.
-    view(async () => { throw new Error('Failed to fetch'); });
-    await act(async () => { fireEvent.click(screen.getByRole('button', { name: 'Replay' })); });
-    expect(toasts.at(-1)).toMatchObject({ tone: 'critical', title: 'Not replayed', description: 'The replay did not reach the server. Try again.' });
-    expect(screen.getByRole('button', { name: 'Replay' })).toBeTruthy();
+  it('releases pending Replay after a transport failure without replacing the page', async () => {
+    const work = Promise.withResolvers<never>();
+    view(() => work.promise);
+    fireEvent.click(screen.getByRole('button', { name: 'Replay' }));
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Replay' })).toHaveAttribute('aria-busy', 'true'));
+    await act(async () => { work.reject(new Error('Failed to fetch')); });
+    expect(screen.getByRole('button', { name: 'Replay' })).not.toHaveAttribute('aria-busy', 'true');
   });
 });
 

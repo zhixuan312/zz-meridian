@@ -108,7 +108,7 @@ function Workspace({ may, record, save }: { may: SettingsMay; record: WorkspaceV
     if (!dirty) setV(record);
   }
   const nameError = v.name.trim() === '' ? 'Give the workspace a name: an invitation names it.' : undefined;
-  useReport('Workspace', `name "${base.name}", address app.${domain}/${base.slug}${dirty ? `; unsaved edit: name "${v.name}"` : ''}`);
+  useReport('Workspace', `name "${base.name}", address app.${domain}/${base.slug}${dirty ? `; draft: name "${v.name}"` : ''}`);
   return (
     <FormSection
       title="Workspace"
@@ -124,8 +124,8 @@ function Workspace({ may, record, save }: { may: SettingsMay; record: WorkspaceV
         // The values, not the promise, decide: a refusal is a sentence beside the fields, and the form keeps the edits.
         // What is saved is the name without the space around it, so that is what the field and the context then hold.
         const saved = { ...v, name: v.name.trim() };
-        // A save that never answered (a dropped connection) throws: told beside the fields like a refusal, the edits kept.
-        const result = await save({ name: saved.name }).catch((): ActionResult => ({ ok: false, error: 'The change did not reach the server. Try again.' }));
+        // A missing response cannot tell whether the save committed; keep the draft without encouraging a blind retry.
+        const result = await save({ name: saved.name }).catch((): ActionResult => ({ ok: false, error: 'The save could not be confirmed. Check the latest workspace before trying again.' }));
         setSaving(false);
         if (!result.ok) { setError(result.error); return; }
         setV(saved);

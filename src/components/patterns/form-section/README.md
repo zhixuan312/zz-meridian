@@ -9,9 +9,9 @@ Status: beta
 1. **Head**: the title (`t-card`) and one or two sentences (`t-small`, `ink-2`) saying what these settings change, for whom.
 2. **Actions** (`actions`, optional): beside the title, at its end, on the title's row at every width, a phone's included; the description stands under the row. The same contract as a Card header's actions: on a settings page, Ask about, in the first section's.
 3. **Card**: the fields, 20px apart, in a `surface` card with a `line` border.
-4. **Error banner** (when a save failed): a critical Banner above the fields.
+4. **Error banner** (when a save needs attention): a critical Banner above the fields. It does not claim the save failed: a missing response can follow a committed change.
 5. **Read-only notice** (`readOnly`, when the reader cannot change it): a lock and the words "Read-only". It never says who can change the section: a read-only page offers no control it withholds and says nothing about who holds it.
-6. **Save bar** (with `onSave`, when dirty): "Unsaved changes", Discard (ghost) and Save changes (primary), pinned to the bottom of the view while the section is on screen.
+6. **Save bar** (with `onSave`, when dirty): "Draft changes", Discard (ghost) and Save changes (primary), pinned to the bottom of the view while the section is on screen.
 7. **Footnote** (optional): a caption under the card: "Changes apply at once".
 8. **Setting row** (`SettingRow`): for a control that is not a text field, its label and description on the left and the control on the right.
 
@@ -51,7 +51,7 @@ Status: beta
 
 - Enter in a field submits the section when it is dirty; nothing else on the page saves.
 - Discard restores the saved values. Leaving with unsaved changes asks first: while `dirty` is true the section tells the shell (`useUnsavedChanges`), and following a link, a menu or palette destination or a table row asks "Leave without saving?" (Stay or Leave); closing the tab gets the browser's own warning. Saving or discarding stops the asking at once, and outside a shell nothing is asked.
-- A field's own validation error (Field `error`) shows under the field without a banner; the page withholds `onSave`, or keeps `dirty` false, while a field is invalid, since the section saves whenever Save is pressed; the banner is for a server refusal.
+- A field's own validation error (Field `error`) shows under the field without a banner; the page withholds `onSave`, or keeps `dirty` false, while a field is invalid, since the section saves whenever Save is pressed. The banner is for a server refusal or an unconfirmed request. Preserve the draft on either; after a missing response, check the latest records before retrying rather than claiming nothing changed.
 
 ## Composition
 
@@ -61,7 +61,7 @@ A form element holding a fieldset, or — with `as="div"` — a plain element ho
 
 ## Data
 
-The section holds no values: the page owns them, compares them with what is saved to set `dirty`, and performs the save in `onSave`.
+The section holds no values: the page owns them, compares them with its last confirmed record to set `dirty`, and performs the save in `onSave`. A missing response can follow a commit, so the bar and leave warning describe the local draft rather than asserting it was not saved.
 
 ## Surfaces
 

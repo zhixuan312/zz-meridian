@@ -99,11 +99,15 @@ export function MembersView({ rows, now, revisions, actions, access, roles, work
     start(async () => {
       change(optimistic);
       try {
-        // A refusal comes back as a reason; an action that never answered (a dropped connection) throws, and is told the same way.
-        const r = await action().catch((): ActionResult => ({ ok: false, error: 'The change did not reach the server. Try again.' }));
+        // A refusal is confirmed; a rejected request may have committed before its response was lost.
+        let unconfirmed = false;
+        const r = await action().catch((): ActionResult => {
+          unconfirmed = true;
+          return { ok: false, error: 'The change could not be confirmed. Check the latest records before trying again.' };
+        });
         if (!r.ok) {
           if (failed) return failed(r.error);
-          toast({ tone: 'critical', title: 'Change not made', description: r.error });
+          toast({ tone: 'critical', title: unconfirmed ? 'Change unconfirmed' : 'Change not made', description: r.error });
           return;
         }
         router.refresh();
@@ -147,18 +151,20 @@ export function MembersView({ rows, now, revisions, actions, access, roles, work
   // (its effects clean up), and when the tab is hidden or closed, which unmounts nothing.
   useEffect(() => {
     const live = holds.current;
-    // Sent the moment the page goes away, never dropped — and answered like any other change: a refusal puts the person
-    // back and says why (the toast lands on the page the person moved to, and the refresh re-reads the rows), and a
-    // connection that dropped is not a removal either.
+    // A refusal restores the row. A missing response leaves its outcome unknown, so refresh the authoritative rows.
     const flush = () => {
       for (const id of [...live]) {
         live.delete(id);
+        let unconfirmed = false;
         void actions.remove(id)
-          .catch((): ActionResult => ({ ok: false, error: 'The change did not reach the server. Try again.' }))
+          .catch((): ActionResult => {
+            unconfirmed = true;
+            return { ok: false, error: 'The change could not be confirmed. Check the latest records before trying again.' };
+          })
           .then((r) => {
             if (r.ok) return;
             release(id);
-            toast({ tone: 'critical', title: 'Change not made', description: r.error });
+            toast({ tone: 'critical', title: unconfirmed ? 'Change unconfirmed' : 'Change not made', description: r.error });
             router.refresh();
           });
       }
@@ -304,7 +310,7 @@ export function MembersView({ rows, now, revisions, actions, access, roles, work
           footer={<><SheetClose asChild><Button variant="ghost">Cancel</Button></SheetClose><Button variant="primary" busy={pending} onClick={send}>Invite</Button></>}
         >
           <div className="flex flex-col gap-6">
-            {inviteError ? <Banner tone="critical" title="Not invited">{inviteError}</Banner> : null}
+            {inviteError ? <Banner tone="critical" title="Invitation needs attention">{inviteError}</Banner> : null}
             <Field label="Name" error={errors.name} required>
               {(p) => <Input {...p} value={invite.name} onChange={(e) => { setInvite({ ...invite, name: e.target.value }); setErrors({ ...errors, name: undefined }); }} placeholder="Ana Costa" />}
             </Field>
@@ -330,7 +336,7 @@ export function MembersView({ rows, now, revisions, actions, access, roles, work
           {/* Exactly the choices `memberAccess` allowed this row, read when the sheet opened; a refusal reopens it here. */}
           {changing ? (
             <div className="flex flex-col gap-6">
-              {roleError ? <Banner tone="critical" title="Role not changed">{roleError}</Banner> : null}
+              {roleError ? <Banner tone="critical" title="Role change needs attention">{roleError}</Banner> : null}
               <Field label="Role" hint="What they can change in the workspace.">
                 {(p) => <Select {...p} value={changing.role} onValueChange={(role) => setChanging({ ...changing, role: role as MainRole })} options={options(changing.roles)} />}
               </Field>
