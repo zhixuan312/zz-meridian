@@ -26,7 +26,7 @@ const fail = (e: unknown): ActionResult => ({
  * refused change writes nothing, emits nothing and invalidates nothing.
  */
 export async function saveWorkspace(input: WorkspaceInput): Promise<ActionResult> {
-  const name = String(input?.name ?? '').trim();
+  const name = typeof input?.name === 'string' ? input.name.trim() : '';
   if (!name) return { ok: false, error: 'Give the workspace a name: an invitation names it.' };
   try {
     await requireNeed(ACTIONS['save-workspace'].needs);

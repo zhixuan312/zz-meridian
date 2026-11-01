@@ -31,6 +31,8 @@ On a form page's own measure (`form-width`), which fills the canvas until it is 
 
 Appearance reads and writes `usePreferences()` (stored on the device). The workspace's name and address are the one row of the `workspace` collection, read under `workspace:read` and saved through the `save-workspace` action, which asks `workspace:update`; the row is seeded from `app.config.ts`. The record holds no time zone: every date is cut on `app.timezone` in the configuration, set once. The page registers no collection with `useLive` (`src/lib/live.ts`): it is read fresh on each visit, and a change made elsewhere meanwhile shows on the next.
 
+The action accepts only a string name and trims it before saving. A blank or non-string name returns the form's name refusal without writing the row or invalidating its reads; a Server Action caller cannot turn an object, array or number into a workspace name.
+
 ## Surfaces
 
 - **Console**: two columns per section.

@@ -24,6 +24,23 @@ const get = (q: string) => GET(new Request(`http://localhost/api/export/requests
 
 beforeEach(() => { cache.updated.length = 0; });
 
+describe('workspace input at the server boundary', () => {
+  it.each([{}, [], 42, true, null, undefined])('refuses a non-string name (%j) without writing or invalidating', async (name) => {
+    const workspace = collections.find((c) => c.name === 'workspace')!;
+    const before = await workspace.query({});
+    const write = vi.spyOn(workspace, 'update');
+    try {
+      const result = await saveWorkspace({ name } as unknown as Parameters<typeof saveWorkspace>[0]);
+      expect(result).toEqual({ ok: false, error: 'Give the workspace a name: an invitation names it.' });
+      expect(write).not.toHaveBeenCalled();
+      expect(await workspace.query({})).toEqual(before);
+      expect(cache.updated).toEqual([]);
+    } finally {
+      write.mockRestore();
+    }
+  });
+});
+
 describe('a write that throws', () => {
   it('answers the sentence this action chose, not the one the collection threw', async () => {
     // A driver's message is not the person's to read. Both actions that turn a thrown write into a sentence are held
