@@ -45,12 +45,12 @@ Meridian's rules for the embed surface:
 4. **Fullscreen is the console without the shell.** The same `Stack` and `Row`s as the page, under an `EmbedFrame` head (title, freshness, Open in ZZ Meridian), and no rail.
 5. **Report height, never scroll inline.** The view measures its body and sends `size-changed`; an inline embed has no scrollbar of its own.
 6. **Respect the safe area.** Padding adds `safeAreaInsets` on mobile hosts.
-7. **Say when the host refuses.** A refused context is tried once more, and Ask then carries the view's address; a refused question is told to the person with its words, so nothing pressed is silently lost.
+7. **Say when the host refuses.** A refused context is tried once more only while it is still the current shared view on the same live bridge; a newer share or an unmounted embed makes the old retry obsolete. Ask then carries the current view's address if both attempts fail; a refused question is told to the person with its words, so nothing pressed is silently lost.
 8. **Act through the host.** A button in an embed calls a tool or sends a message; it never navigates the frame. A destructive action is never a bare button: it is a Proposal marked critical, and it runs only when the person approves.
 
 The host owns an embed's theme from the first context message onward: device preferences and later storage events
 cannot overwrite it. When the host specifies no theme, Meridian leaves it unset so CSS follows the system scheme,
-including later system changes.
+including later system changes. The generated token bridge follows that scheme too: its fallback neutrals match the current theme, its planes stay transparent, and supplied host variables still win.
 
 The token bridge, applied by `EmbedSurface` on every embed route (`app/embed/layout.tsx`, `data-surface="embed"`), maps the host's variables onto Meridian's roles and falls back to Meridian's own value when the host sends nothing:
 

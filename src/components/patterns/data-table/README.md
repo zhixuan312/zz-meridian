@@ -21,6 +21,7 @@ Status: beta
 |---|---|
 | Plain | A short list with no record pages: API keys |
 | Linked (`rowHref`) | Each row opens a record: Requests, Customers |
+| Host-opened (`onRowOpen`) | Each row and its keyboard-accessible title button open a record through the embedding host, without frame navigation; overrides `rowHref` when both are supplied |
 | Selectable | Rows can be acted on together (export, revoke many) |
 | Addressable | Sort and page in the URL, through `useTableQuery` or the page's own `useQueryState` |
 | Manual | The server has already sorted and paged the rows; pass `total` |

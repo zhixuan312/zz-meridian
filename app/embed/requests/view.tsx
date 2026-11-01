@@ -50,6 +50,7 @@ export function EmbedRequests(data: RequestsData) {
           rows={rows}
           columns={requestColumns}
           rowKey={(r) => r.id}
+          onRowOpen={(r) => s.openLink(requestAddress(r.id))}
           manual
           total={total}
           pageSize={pageSize}

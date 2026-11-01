@@ -72,6 +72,13 @@ describe('DataTable', () => {
     const link = screen.getAllByRole('link', { name: 'Northwind Labs' })[0];
     expect(link.getAttribute('href')).toBe('/customers/a');
   });
+  it('makes a host-opened title a focusable button rather than a frame-navigation link', () => {
+    render(<DataTable caption="Customers" rows={rows} columns={columns} rowKey={(r) => r.id} rowHref={(r) => `/customers/${r.id}`} onRowOpen={() => {}} />);
+    const title = screen.getByRole('button', { name: rows[0].name });
+    title.focus();
+    expect(document.activeElement).toBe(title);
+    expect(screen.queryByRole('link', { name: rows[0].name })).toBeNull();
+  });
 });
 
 describe('selection', () => {

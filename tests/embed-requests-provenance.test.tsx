@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, within } from '@testing-library/react';
 import { Tooltip } from 'radix-ui';
 import { describe, expect, it, vi } from 'vitest';
 
@@ -38,6 +38,17 @@ describe('the embed requests view, provenance', () => {
       </SurfaceOverride>,
     );
     expect(container.textContent).toMatch(/1\D+10\D+of\D+25/);
+  });
+  it('offers a focusable fullscreen record title without an iframe navigation link', () => {
+    const { container } = render(
+      <SurfaceOverride surface={{ kind: 'embed', mode: 'fullscreen' }}>
+        <EmbedRequests rows={REQUESTS.slice(0, 1)} total={1} state={state} summary={summary} pageSize={10} updatedAt="2026-10-05T08:56:00.000Z" now="2026-10-05T09:00:00.000Z" />
+      </SurfaceOverride>,
+    );
+    const title = within(container.querySelector('tbody')!).getByRole('button');
+    title.focus();
+    expect(document.activeElement).toBe(title);
+    expect(container.querySelector('tbody a')).toBeNull();
   });
 });
 

@@ -163,6 +163,7 @@ export function DataTable<R>({
   columns,
   rowKey,
   rowHref,
+  onRowOpen,
   caption,
   noun = 'rows',
   title,
@@ -194,6 +195,8 @@ export function DataTable<R>({
   rowKey: (row: R) => string;
   /** Each row opens a record: the title column becomes a link and the whole row takes the pointer. */
   rowHref?: (row: R) => string;
+  /** Open a record through a host instead of navigating this frame; the title becomes a keyboard-accessible button. */
+  onRowOpen?: (row: R) => void;
   /** For screen readers: what the table lists. */
   caption: string;
   /** What a row is, for the range line and the empty states: "requests". */
@@ -275,11 +278,12 @@ export function DataTable<R>({
     onSelectedChange?.(n);
   };
 
-  const open = (e: MouseEvent, href?: string) => {
-    if (!href) return;
+  const open = (e: MouseEvent, row: R, href?: string) => {
+    if (!href && !onRowOpen) return;
     if ((e.target as HTMLElement).closest('a,button,input,[role="checkbox"],[role="menuitem"]')) return;
     if (window.getSelection()?.toString()) return;
-    leave(() => router.push(href));
+    if (onRowOpen) onRowOpen(row);
+    else leave(() => router.push(href!));
   };
 
   const titleColumn = columns.find((c) => c.mobile === 'title') ?? columns[0];
@@ -337,7 +341,7 @@ export function DataTable<R>({
                 const k = rowKey(r);
                 const href = rowHref?.(r);
                 return (
-                  <tr key={k} role="row" aria-selected={sel.has(k) || undefined} onClick={(e) => open(e, href)} className={cn('group/row', href && 'cursor-pointer hover:bg-fill-hover', sel.has(k) && 'bg-accent-tint hover:bg-accent-tint')}>
+                  <tr key={k} role="row" aria-selected={sel.has(k) || undefined} onClick={(e) => open(e, r, href)} className={cn('group/row', (href || onRowOpen) && 'cursor-pointer hover:bg-fill-hover', sel.has(k) && 'bg-accent-tint hover:bg-accent-tint')}>
                     {selectable ? (
                       <td role="cell" data-check data-mobile="check" className="!pr-0">
                         <Checkbox aria-label={`Select ${k}`} checked={sel.has(k)} onCheckedChange={() => toggle(k)} />
@@ -345,13 +349,13 @@ export function DataTable<R>({
                     ) : null}
                     {columns.map((c) => {
                       const role = roleOf(c);
-                      // The title is the row's link wherever it is shown, phone included: the whole card takes the
-                      // pointer too (the row's own click), but the link is what a keyboard and a screen reader follow.
+                      // The title opens the record wherever it is shown, phone included: the whole card takes the
+                      // pointer too, but the title's link or host-action button is what a keyboard follows.
                       // The value is called once: it is both what we draw and what the title carries when the column
                       // truncates. A cut value is cut everywhere on the page — a slug's tail is the part that identifies
                       // it — and this card's own spec has said so since before the component did it.
                       const value = c.cell(r);
-                      const content = c === titleColumn && href ? <Link href={href}>{value}</Link> : value;
+                      const content = c === titleColumn && onRowOpen ? <button type="button" onClick={() => onRowOpen(r)}>{value}</button> : c === titleColumn && href ? <Link href={href}>{value}</Link> : value;
                       return (
                         <td key={c.key} role="cell" data-mobile={role} data-num={c.numeric ? 'num' : c.align === 'right' ? 'true' : undefined} data-hide-below={c.hideBelow} title={c.title ? c.title(r) : c.truncate && (typeof value === 'string' || typeof value === 'number') ? String(value) : undefined} className={cellClass(c) || undefined}>
                           {/* The dot that separates two facts, on a phone only — the table has a column for each of
