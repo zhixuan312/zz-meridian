@@ -35,6 +35,8 @@ Every release of ZZ Meridian, newest first. Versions follow semver: a removed or
 - **Workspace journeys distinguish declared missing request routes.** A legitimate record whose id contains `missing` remains a real detail destination.
 - **Assistant page identity stays in an escaped data boundary.** Browser-supplied titles and addresses cannot close their own wrapper or introduce trusted guidance.
 - **Committed assistant mutations stay consumed after invalidation failure.** Authorization and mutation define the once-only commit point; an in-flight duplicate is reported as still in progress, never already applied. Stale-cache warnings preserve Applied, provenance is still attempted, and replay cannot duplicate the write.
+- **Adapter guidance specifies pagination before all-row traversal.** Queries apply filtering and stable ordering before offset and limit, with total counted before pagination.
+- **MCP examples filter views for their own caller.** Every declared grant is checked against the explicitly resolved MCP scope rather than an ambient console session.
 - **All-row reads cross the public offset ceiling safely.** Authorization and normalization happen once; trusted internal pages retain filters and order beyond 100,000 rows without widening public query limits.
 - **Cache guidance distinguishes identity from invalidation.** Cached results include the complete authorization scope and normalized query; tenant/collection tags are not the cache identity.
 - **Adoption preserves punctuation in TypeScript configuration strings.** Removing JSONC trailing commas also removed commas before `]` or `}` inside string keys and values, changing aliases, paths and plugin options. Only commas outside strings are removed.

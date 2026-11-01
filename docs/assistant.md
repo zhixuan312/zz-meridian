@@ -101,7 +101,9 @@ export const orders: Collection<Order, 'id'> = arrayCollection({
 });
 ```
 
-Add it to `collections`, and let the policy bind it and a role read it, or nobody is offered it (`skills/zz-meridian/references/customize.md`, "The assistant"). For a real store, write the same `Collection` yourself: `query` takes `{ where, sort, limit }` and returns `{ rows, total }`, and `aggregate` takes an `AggregateQuery` (conditions, a date window, a group by a field or a time bucket, the measures and `top`) and returns `{ total, groups, others }` over every row, as one grouped query to the database, never by reading every page; the rows with no value in a grouped field are the group keyed null, `eq null` and an `in` list holding null match those rows and `ne null` matches every other, as `queryRows` and `aggregateRows` do; implement `create`, `update` and `remove` only for what the store may do. A collection without an operation gets no tool for it, and the assistant is told nobody can do it here; an operation a page performs through its own call is named in `pageOnly`, implemented or not, and the assistant is told it is done on the page. A store that answers with a list filters, orders and pages it with `queryRows(rows, key, query)` from `src/lib/collection.ts`, and answers `aggregate` with `aggregateRows(rows, query)` over the rows it holds, which is what the sample's collections call. Pages and prepared queries ask it through `aggregate(name, query)` in `src/data/read.ts`, which asks the grant `read()` asks.
+Add it to `collections`, and let the policy bind it and a role read it, or nobody is offered it (`skills/zz-meridian/references/customize.md`, "The assistant"). For a real store, write the same `Collection` yourself: `query` takes `{ where, sort, offset, limit }` and returns `{ rows, total }`, and `aggregate` takes an `AggregateQuery` (conditions, a date window, a group by a field or a time bucket, the measures and `top`) and returns `{ total, groups, others }` over every row, as one grouped query to the database, never by reading every page; the rows with no value in a grouped field are the group keyed null, `eq null` and an `in` list holding null match those rows and `ne null` matches every other, as `queryRows` and `aggregateRows` do; implement `create`, `update` and `remove` only for what the store may do. A collection without an operation gets no tool for it, and the assistant is told nobody can do it here; an operation a page performs through its own call is named in `pageOnly`, implemented or not, and the assistant is told it is done on the page. A store that answers with a list filters, orders and pages it with `queryRows(rows, key, query)` from `src/lib/collection.ts`, and answers `aggregate` with `aggregateRows(rows, query)` over the rows it holds, which is what the sample's collections call. Pages and prepared queries ask it through `aggregate(name, query)` in `src/data/read.ts`, which asks the grant `read()` asks.
+
+Apply `where`, then `sort` (with a stable key tie-break), then `offset` and `limit`; `total` counts all matching rows before pagination. `offset` defaults to zero and must not be ignored: the all-row reader advances it for every page, so returning the first page repeatedly silently duplicates records and loses later ones.
 
 Two fields on a collection keep the assistant in bounds:
 
@@ -155,7 +157,17 @@ const guard = {
 // Only the collections the caller may read, each with only the operations they may perform, as the route hands them.
 const handed = (await Promise.all(collections.map(async (c) => ((await can(scope, c.name, 'read')) ? handedTo(scope, collectionFor(scope, c.name), c.name) : null))))
   .filter((c): c is AnyCollection => c !== null);
-const { tools } = assistantTools(handed, writer, guard, viewTools);
+// Filter each view's declared need for this MCP caller, not an ambient console session or the whole registry.
+const allowedViews = await Promise.all(viewTools.map(async ({ needs }) => {
+  if (needs === 'public') return true; // scope already names an authenticated caller
+  const grants = typeof needs === 'string' ? [needs] : needs.allOf;
+  return (await Promise.all(grants.map((grant) => {
+    const [name, op] = grant.split(':') as [string, Parameters<typeof can>[2]];
+    return can(scope, name, op);
+  }))).every(Boolean);
+}));
+const views = viewTools.filter((_, i) => allowedViews[i]);
+const { tools } = assistantTools(handed, writer, guard, views);
 
 for (const [name, t] of Object.entries(tools)) {
   server.registerTool(name, { description: t.description, inputSchema: asSchema(t.inputSchema).jsonSchema }, async (input) => ({
