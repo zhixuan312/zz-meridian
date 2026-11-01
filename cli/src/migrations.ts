@@ -123,8 +123,16 @@ function removedVerifyFlags(root: string): string[] | null {
   return hits.length > 0 ? hits : null;
 }
 
+const APP_DIRS = ['app', 'src/app'];
+/** The route's path within either supported App Router folder, or null outside one. */
+const appPath = (rel: string): string | null => rel.startsWith('app/') ? rel.slice(4) : rel.startsWith('src/app/') ? rel.slice(8) : null;
+const appFiles = (root: string, rel: string): { rel: string; src: string }[] => APP_DIRS.flatMap((dir) => {
+  const file = `${dir}/${rel}`;
+  const src = text(root, file);
+  return src === null ? [] : [{ rel: file, src }];
+});
 const base = (rel: string) => rel.slice(rel.lastIndexOf('/') + 1);
-const isPageOrLayout = (rel: string) => rel.startsWith('app/') && /^(?:page|layout)\.tsx?$/.test(base(rel));
+const isPageOrLayout = (rel: string) => appPath(rel) !== null && /^(?:page|layout)\.tsx?$/.test(base(rel));
 const isActionsFile = (rel: string) => /^actions\.tsx?$/.test(base(rel));
 const isServerFile = (src: string) => /^\s*(['"])use server\1/m.test(src);
 
@@ -415,7 +423,7 @@ export const RELEASE_MIGRATIONS: ReleaseMigration[] = [
   {
     id: 'authorized-read',
     since: '0.5.0',
-    applies: (root) => matching(root, (rel, src) => rel.startsWith('app/') && /^page\.tsx?$/.test(base(rel)) && /\.query\(/.test(src)),
+    applies: (root) => matching(root, (rel, src) => appPath(rel) !== null && /^page\.tsx?$/.test(base(rel)) && /\.query\(/.test(src)),
     summary: 'A page reads a collection through the authorized, cached read(), not by querying it directly.',
     instructions: 'Read "Authorized, scoped reads" in references/cache.md. Replace `collection.query(q)` in the page with `read(name, q)` from `src/data/read.ts`, format any freshness against the returned `observedAt`, and add `src/data/access.ts` and `src/data/read.ts` from the reference, bound to your own sign-in and database predicates.',
     checks: GATE_AND_BUILD,
@@ -433,11 +441,9 @@ export const RELEASE_MIGRATIONS: ReleaseMigration[] = [
     since: '0.5.0',
     applies: (root) => {
       const out: string[] = [];
-      const layout = 'app/(dashboard)/layout.tsx';
       const collections = 'src/data/collections.ts';
       if (text(root, collections) !== null && text(root, 'src/data/live-actions.ts') === null) out.push(collections);
-      const src = text(root, layout);
-      if (src !== null && !/\b(?:LiveProvider|ConsoleLive)\b/.test(src)) out.push(layout);
+      for (const { rel, src } of appFiles(root, '(dashboard)/layout.tsx')) if (!/\b(?:LiveProvider|ConsoleLive)\b/.test(src)) out.push(rel);
       return out.length > 0 ? out : null;
     },
     summary: 'The console has a live route, a refresh action and a provider.',
@@ -447,7 +453,7 @@ export const RELEASE_MIGRATIONS: ReleaseMigration[] = [
   {
     id: 'authorized-endpoints',
     since: '0.5.0',
-    applies: (root) => matching(root, (rel, src) => (rel === 'app/api/assistant/route.ts' || (isActionsFile(rel) && isServerFile(src))) && !/\bresolveAccess\(/.test(src)),
+    applies: (root) => matching(root, (rel, src) => (appPath(rel) === 'api/assistant/route.ts' || (isActionsFile(rel) && isServerFile(src))) && !/\bresolveAccess\(/.test(src)),
     summary: 'The assistant route and every actions file resolve the caller before they act.',
     instructions: 'Read "Writes authorize, then invalidate" and "The assistant route" in references/cache.md. Call `resolveAccess()` first in the route and in each Server Action, answer 401 or an error result when there is no session, and hand the assistant only the collections the caller may read. The route passes a guard that authorizes each approved change again when it runs, so `src/lib/assistant/tools.ts` and `src/lib/assistant/respond.ts` take that guard too: bring them over from the release with the route.',
     checks: GATE_AND_BUILD,
@@ -464,12 +470,12 @@ export const RELEASE_MIGRATIONS: ReleaseMigration[] = [
     id: 'assistant-view-tools',
     since: '0.10.0',
     applies: (root) => {
-      const route = text(root, 'app/api/assistant/route.ts');
+      const routes = appFiles(root, 'api/assistant/route.ts');
       const tools = text(root, 'src/lib/assistant/tools.ts');
       const respond = text(root, 'src/lib/assistant/respond.ts');
-      if (route === null || tools === null || respond === null) return null;
+      if (routes.length === 0 || tools === null || respond === null) return null;
       // The 0.9.0 assistant takes the views and tells the model its limits; one kept from before does neither.
-      const stale = [...(/\bViewTool\b/.test(tools) ? [] : ['src/lib/assistant/tools.ts']), ...(/\blimitsOf\b/.test(respond) ? [] : ['src/lib/assistant/respond.ts']), ...(/\bviews\s*:/.test(route) ? [] : ['app/api/assistant/route.ts'])];
+      const stale = [...(/\bViewTool\b/.test(tools) ? [] : ['src/lib/assistant/tools.ts']), ...(/\blimitsOf\b/.test(respond) ? [] : ['src/lib/assistant/respond.ts']), ...routes.filter(({ src }) => !/\bviews\s*:/.test(src)).map(({ rel }) => rel)];
       return stale.length > 0 ? stale : null;
     },
     summary: "The assistant's route-side code predates view tools and its limits.",
@@ -551,7 +557,10 @@ export const RELEASE_MIGRATIONS: ReleaseMigration[] = [
   {
     id: 'view-page-matched-as-next',
     since: '0.16.3',
-    applies: (root) => (/\bfunction onPage\s*\(/.test(text(root, 'app/api/assistant/route.ts') ?? '') ? ['app/api/assistant/route.ts'] : null),
+    applies: (root) => {
+      const paths = appFiles(root, 'api/assistant/route.ts').filter(({ src }) => /\bfunction onPage\s*\(/.test(src)).map(({ rel }) => rel);
+      return paths.length > 0 ? paths : null;
+    },
     summary: 'The assistant route finds the view of the page a person is on with `viewAt` from `src/lib/shared-context.ts`, which matches a catch-all `page` as Next.js does.',
     instructions: 'In `app/api/assistant/route.ts`, delete the local `onPage` and find the view with `viewAt` from `@/lib/shared-context` (`@meridian/lib/shared-context` in an adopted project): `const at = viewAt(viewTools, path); const view = at && views.includes(at) ? at : undefined;`, where `views` are the view tools the person may use. `onPage` matched a `[...name]` segment as one segment and a `[[...name]]` never, so a view whose `page` is a catch-all (`/docs/[...path]`) was handed its prepared query at one depth only. `viewAt` matches as Next.js does — `[...name]` one or more segments, `[[...name]]` zero or more — and where two views match one address it takes the one Next.js renders, before asking whether the person may use it, so a less specific view never stands in for the page.',
     checks: ['gate'],
@@ -567,7 +576,7 @@ export const RELEASE_MIGRATIONS: ReleaseMigration[] = [
   {
     id: 'today-in-timezone',
     since: '0.16.3',
-    applies: (root) => matching(root, (rel, src) => (rel === 'app/api/assistant/route.ts' || rel === 'src/data/metrics.ts') && /\bconst today = clock\(\)\.toISOString\(\)\.slice\(0, 10\)|\btoday: clock\(\)\.toISOString\(\)\.slice\(0, 10\)/.test(src)),
+    applies: (root) => matching(root, (rel, src) => (appPath(rel) === 'api/assistant/route.ts' || rel === 'src/data/metrics.ts') && /\bconst today = clock\(\)\.toISOString\(\)\.slice\(0, 10\)|\btoday: clock\(\)\.toISOString\(\)\.slice\(0, 10\)/.test(src)),
     summary: "Today is the day in `app.timezone` wherever a day is cut: `dayOf(clock())` from `src/lib/format-date.ts`, not the UTC date.",
     instructions: "Replace `clock().toISOString().slice(0, 10)` with `dayOf(clock())` (`dayOf` in `src/lib/format-date.ts`) in each file listed: the prepared query's `today` in `app/api/assistant/route.ts`, and `readDays`'s today in `src/data/metrics.ts`. The prompt has told the model today in `app.timezone` all along, while the prepared query and the page cut their periods at the UTC date, so east of UTC after local midnight (west of UTC in the evening) the model's today and its `7d` window's end were a day apart. A day row is kept under its day in `app.timezone`, so a file of your own that compares an instant's day with one — `now.slice(0, 10)`, `at.slice(0, 10)` — asks `dayOf` too. A product whose `app.timezone` is UTC sees no change. A project that kept the sample's views brings `src/views/now-parts.ts`, `src/views/revenue-parts.ts`, `src/views/customer-context.ts`, `src/views/customer.tsx` and `src/views/members.tsx` over from the release.",
     checks: ['gate'],
@@ -607,9 +616,9 @@ export const RELEASE_MIGRATIONS: ReleaseMigration[] = [
   {
     id: 'direct-query-escape',
     since: '0.30.0',
-    applies: (root) => matching(root, (rel, src) => /^(?:app|src\/(?:logic|views|lib))\//.test(rel) && SOURCE.test(rel) && /\.query\s*\(/.test(src.replace(/\/\/[^\n]*/g, '')) && !/allow-no-direct-query:/.test(src)),
+    applies: (root) => matching(root, (rel, src) => (appPath(rel) !== null || /^src\/(?:logic|views|lib)\//.test(rel)) && SOURCE.test(rel) && /\.query\s*\(/.test(src.replace(/\/\/[^\n]*/g, '')) && !/allow-no-direct-query:/.test(src)),
     summary: 'A direct `.query(` call is allowed only where the call states its own escape: `// allow-no-direct-query: <why>`, on that line.',
-    instructions: 'Since 0.30.0 `node scripts/check.ts` reports every `.query(` call in `app/`, `src/logic/`, `src/views/` and `src/lib/`, and keeps the run passing only where the call\'s own line carries the escape the check prints — `// allow-no-direct-query: read() cannot serve this — <why>`. Before this release the rule allowed five sites of the template\'s by line number, so a file of your own that read a collection directly passed as long as the call sat on one of those lines; that list is gone, because a comment added above a call moved it off the line and turned a passing project red for no reason. Read every file named above. Where the read has to be direct — a server action reading the record it is about to change, a streamed export, the sign-in resolving a person before an `AccessScope` exists — state the reason on that line in the form the check prints. Everywhere else, read through `read()`, `readAll()` or `aggregate()` from `@/data/read`, which ask the caller\'s grant.',
+    instructions: 'Since 0.30.0 `node scripts/check.ts` reports every `.query(` call in `app/`, `src/app/`, `src/logic/`, `src/views/` and `src/lib/`, and keeps the run passing only where the call\'s own line carries the escape the check prints — `// allow-no-direct-query: read() cannot serve this — <why>`. Before this release the rule allowed five sites of the template\'s by line number, so a file of your own that read a collection directly passed as long as the call sat on one of those lines; that list is gone, because a comment added above a call moved it off the line and turned a passing project red for no reason. Read every file named above. Where the read has to be direct — a server action reading the record it is about to change, a streamed export, the sign-in resolving a person before an `AccessScope` exists — state the reason on that line in the form the check prints. Everywhere else, read through `read()`, `readAll()` or `aggregate()` from `@/data/read`, which ask the caller\'s grant.',
     checks: ['gate'],
   },
   {
@@ -647,7 +656,7 @@ export const RELEASE_MIGRATIONS: ReleaseMigration[] = [
   {
     id: 'self-hosted-fonts',
     since: '0.34.0',
-    applies: (root) => matching(root, (rel, src) => /^app\//.test(rel) && SOURCE.test(rel) && /from\s+['"]next\/font\/google['"]/.test(src) && /--font-face-(?:sans|mono)/.test(src)),
+    applies: (root) => matching(root, (rel, src) => appPath(rel) !== null && SOURCE.test(rel) && /from\s+['"]next\/font\/google['"]/.test(src) && /--font-face-(?:sans|mono)/.test(src)),
     summary: "Meridian's faces ship with the release under `src/styles/fonts/`: a build loads them from there and fetches nothing from Google Fonts.",
     instructions: "Your `app/layout.tsx` is yours, so an update does not touch it, and yours hands `--font-face-sans` and `--font-face-mono` their faces through `next/font/google`, which `next build` fetches from fonts.googleapis.com: with that host unreachable and no build cache, the build fails (`Build error occurred`). The update has delivered the two faces, `src/styles/fonts/Geist-Variable.woff2` and `src/styles/fonts/GeistMono-Variable.woff2`, with their licence. In the layout, replace the `next/font/google` import with `import localFont from 'next/font/local';` and each face's call with `localFont({ src: '../src/styles/fonts/Geist-Variable.woff2', weight: '100 900', variable: '--font-face-sans', display: 'swap' })` and `localFont({ src: '../src/styles/fonts/GeistMono-Variable.woff2', weight: '100 900', variable: '--font-face-mono', display: 'swap' })`, keeping the class names on `<html>` as they are. A layout that gives the tokens faces of its own from Google Fonts is the same case: ship the files and load them with `next/font/local`.",
     checks: GATE_AND_BUILD,
@@ -822,7 +831,7 @@ function renamedSampleFiles(root: string): string[] | null {
   const modules = new Set([...old.flatMap((n) => [`src/views/${n}`, `src/views/${n}-context`]), `src/data/${old[1]}`]);
   const group = `(${old[0]})`;
   const named = new RegExp(`\\b(?:FEATURES\\.|view_)(?:${old.join('|')})\\b`);
-  const isOld = (rel: string) => modules.has(rel.replace(/\.[mc]?[jt]sx?$/, '')) || (/^(?:src\/)?app\//.test(rel) && rel.split('/').includes(group));
+  const isOld = (rel: string) => modules.has(rel.replace(/\.[mc]?[jt]sx?$/, '')) || (appPath(rel) !== null && rel.split('/').includes(group));
   const sources = teamSources(root);
   if (!sources.some((f) => isOld(f.rel))) return null;
   const seeds = sources.filter(({ rel, src }) => isOld(rel)
@@ -833,7 +842,7 @@ function renamedSampleFiles(root: string): string[] | null {
   // of the old, and are as much the sample's. A file that imports one of the old files, such as a test that renders the
   // page, names it too; a file that only names one, such as the configuration, is not itself the old.
   const oldFiles = new Set(sources.map((f) => f.rel).filter(isOld));
-  const pages = sources.filter(({ rel, src }) => /^(?:src\/)?app\//.test(rel) && /^(?:page|view)\.tsx?$/.test(base(rel)) && (isOld(rel) || importsOf(rel, src).some((i) => modules.has(i.from))));
+  const pages = sources.filter(({ rel, src }) => appPath(rel) !== null && /^(?:page|view)\.tsx?$/.test(base(rel)) && (isOld(rel) || importsOf(rel, src).some((i) => modules.has(i.from))));
   for (const { rel } of pages) {
     const dir = path.posix.dirname(rel);
     try {
@@ -909,7 +918,7 @@ function navItemsWithoutNeeds(root: string): string[] | null {
  */
 function ownGroupPagesWithoutAgentReads(root: string): string[] | null {
   const dirs: string[] = [];
-  for (const app of ['app', 'src/app']) {
+  for (const app of APP_DIRS) {
     try { dirs.push(...fs.readdirSync(path.join(root, app), { withFileTypes: true }).filter((e) => e.isDirectory() && /^\(.+\)$/.test(e.name) && e.name !== '(dashboard)').map((e) => `${app}/${e.name}`)); } catch { /* no such folder */ }
   }
   return specsWithoutAgentReads(root, dirs);
@@ -917,7 +926,7 @@ function ownGroupPagesWithoutAgentReads(root: string): string[] | null {
 
 /** The page specifications under the console and embed folders that lack the part the 0.9.0 check requires. */
 function pagesWithoutAgentReads(root: string): string[] | null {
-  return specsWithoutAgentReads(root, ['app/(dashboard)', 'app/embed']);
+  return specsWithoutAgentReads(root, APP_DIRS.flatMap((app) => [`${app}/(dashboard)`, `${app}/embed`]));
 }
 
 /** The page specifications under `dirs` without `## Agents` and its `### What the agent reads`. */

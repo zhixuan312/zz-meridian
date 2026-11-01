@@ -156,7 +156,9 @@ reports as `migration:<id>` because it cannot make them. Normally an entry appli
 is older than its `since` and the target is not. `sample-with-its-tests` is recurring: it is checked on every forward
 upgrade at or after its introduction, so updated managed tests do not silently outrun team-owned sample helpers.
 `applies(root, source)` receives the project's recorded source version and returns the paths needing review, or null.
-It only reads, and only team-owned files (the ownership rule's managed paths are skipped); a file it cannot read is absent.
+Route, page, layout and page-spec migrations recognize both `app/` and `src/app/`, and report the actual project paths.
+The direct-query migration and layer-rule guard cover both app roots too: use the authorized reader, or state a required direct-query escape on the call's own line.
+A migration only reads team-owned files (the ownership rule's managed paths are skipped); a file it cannot read is absent.
 A project already on the new shape gets no line. Every entry carries `gate` and `build` as its checks (`verify-modes`, `agent-reads-section`, `nav-needs`, `agent-reads-own-group`, `agent-does-here-section`, `marker-measured-on-observe`, `view-page-matched-as-next`, `journey-moved`, `today-in-timezone`, `verify-tiers`, `no-data-mark`, `table-grid`, `direct-query-escape`, `app-description`, `live-stream-shutdown`, `nav-item-fields` and `workspace-homes-moved`, `gate` alone; `missing-routes`, `verify`), and its
 instructions name the section of a reference (`cache.md`, `live.md`, `validation.md`, `agents.md`, `customize.md`), of the Start guide or of `docs/assistant.md` to follow.
 

@@ -295,6 +295,29 @@ describe('the four-layer rules', () => {
     expect(r.status).toBe(1);
   }, 60_000);
 
+  it('refuse a direct query in src/app while accepting an authorized read and comment-only mention', () => {
+    const file = 'src/app/planted-query/page.tsx';
+    put(file, 'const collection = { query: (_: object) => [] };\nexport default function Page() { return collection.query({}); }\n');
+    const refused = runCheck();
+    expect(refused.stdout).toContain(`${file}:2: calls collection.query( directly; no direct query`);
+    expect(refused.status).toBe(1);
+    put(file, "import { read } from '@/data/read';\n// collection.query({}) must not bypass the authorized reader.\nexport default async function Page() { await read('members', {}); return null; }\n");
+    const authorized = runCheck();
+    expect(authorized.stdout).not.toContain(`${file}:`);
+    expect(authorized.stdout).toMatch(/^0 problems/m);
+    expect(authorized.status).toBe(0);
+  }, 60_000);
+
+  it('honor a stated src/app direct-query escape on the call line', () => {
+    const file = 'src/app/planted-query/actions.ts';
+    put(file, 'const collection = { query: (_: object) => [] };\nvoid collection.query({}); // allow-no-direct-query: the export streams uncached batches\n');
+    const r = runCheck();
+    expect(r.stdout).toContain(`escape  ${file}:2: no-direct-query — the export streams uncached batches`);
+    expect(r.stdout).not.toContain(`${file}:2: calls`);
+    expect(r.stdout).toMatch(/^0 problems/m);
+    expect(r.status).toBe(0);
+  }, 60_000);
+
   it('print a stated no-direct-query escape with its reason, and pass without the refusal', () => {
     const f = 'src/lib/planted-query.ts';
     put(f, ['const collection = { query: (_: object) => [] };', 'void collection.query({}); // allow-no-direct-query: the export streams its own batches and must not be cached'].join('\n') + '\n');

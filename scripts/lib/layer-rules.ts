@@ -90,8 +90,8 @@ export function presentationDoesNotRead(tree: LayerTree): RuleProblem[] {
 
 // ── no direct query ──────────────────────────────────────────────────────────────────────────────────
 /**
- * A `.query(` call on a code line of `app/**`, `src/logic/**`, `src/views/**` or `src/lib/**`: a page, a view, a logic
- * module or a lib module reads through `read()`, `readAll()` or `aggregate()`, so the caller's access applies. Comments
+ * A `.query(` call on a code line of `app/**`, `src/app/**`, `src/logic/**`, `src/views/**` or `src/lib/**`: a page,
+ * view, logic module or lib module reads through `read()`, `readAll()` or `aggregate()`, so the caller's access applies. Comments
  * are blanked first, so a `.query(` a document quotes in prose is not a violation. The sites that must query
  * directly state it on the call's own line as `allow-no-direct-query: <reason>`, which `scripts/check.ts` prints as an
  * escape: a list of sites by line number here would point at whatever a comment added above them moved the call under,
@@ -100,7 +100,7 @@ export function presentationDoesNotRead(tree: LayerTree): RuleProblem[] {
  */
 export function noDirectQuery(tree: LayerTree): RuleProblem[] {
   const problems: RuleProblem[] = [];
-  for (const file of ['app', 'src/logic', 'src/views', 'src/lib'].flatMap((dir) => walk(tree.root, dir, /\.tsx?$/))) {
+  for (const file of ['app', 'src/app', 'src/logic', 'src/views', 'src/lib'].flatMap((dir) => walk(tree.root, dir, /\.tsx?$/))) {
     sourceOf(tree, file).split('\n').forEach((text, i) => {
       const call = text.match(/([A-Za-z_$][\w$]*(?:\.[A-Za-z_$][\w$]*)*)\.query\s*\(/);
       if (!call) return;

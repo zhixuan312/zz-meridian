@@ -65,6 +65,53 @@ describe("this release's migrations", () => {
   });
 });
 
+describe('App Router migration paths', () => {
+  it.each(['app', 'src/app'])('finds the old 0.5.0 shapes under %s and clears them after migration', (app) => {
+    const relocate = (files: Record<string, string>) => Object.fromEntries(Object.entries(files).map(([rel, src]) => [rel.startsWith('app/') ? `${app}/${rel.slice(4)}` : rel, src]));
+    const old = project(relocate(OLD));
+    const current = project(relocate(NEW));
+    for (const id of IDS) {
+      expect(byId(id).applies(old, '0.3.0'), id).not.toBeNull();
+      expect(byId(id).applies(current, '0.3.0'), id).toBeNull();
+    }
+    const reported = releaseMigrations(old, '0.3.0', '0.5.0');
+    expect(reported.find((m) => m.id === 'connection-boundaries')?.paths).toEqual([`${app}/(dashboard)/members/page.tsx`]);
+    expect(reported.find((m) => m.id === 'authorized-read')?.paths).toEqual([`${app}/(dashboard)/members/page.tsx`]);
+    expect(reported.find((m) => m.id === 'authorized-endpoints')?.paths).toEqual([`${app}/(dashboard)/members/actions.ts`, `${app}/api/assistant/route.ts`]);
+  });
+
+  it.each(['app', 'src/app'])('reports route, font and page-spec migrations under %s', (app) => {
+    const route = `${app}/api/assistant/route.ts`;
+    const layout = `${app}/layout.tsx`;
+    const dashboard = `${app}/(dashboard)/orders/README.md`;
+    const embed = `${app}/embed/orders/README.md`;
+    const root = project({
+      [route]: 'function onPage() {}\nrespond({ collections });\nconst today = clock().toISOString().slice(0, 10);\n',
+      [layout]: "import { Geist } from 'next/font/google';\nconst face = Geist({ variable: '--font-face-sans' });\n",
+      [dashboard]: '# Orders\n\n## Agents\n\nNot applicable.\n',
+      [embed]: '# Orders\n\n## Agents\n\nNot applicable.\n',
+      'src/lib/assistant/tools.ts': 'export function assistantTools() {}\n',
+      'src/lib/assistant/respond.ts': 'export function respond() {}\n',
+    });
+    const reported = releaseMigrations(root, '0.8.0', '0.35.0');
+    expect(reported.find((m) => m.id === 'assistant-view-tools')?.paths).toEqual(['src/lib/assistant/tools.ts', 'src/lib/assistant/respond.ts', route]);
+    expect(reported.find((m) => m.id === 'view-page-matched-as-next')?.paths).toEqual([route]);
+    expect(reported.find((m) => m.id === 'today-in-timezone')?.paths).toEqual([route]);
+    expect(reported.find((m) => m.id === 'self-hosted-fonts')?.paths).toEqual([layout]);
+    expect(reported.find((m) => m.id === 'agent-reads-section')?.paths).toEqual([dashboard, embed]);
+    for (const [rel, src] of Object.entries({
+      [route]: 'respond({ views: viewTools, today: dayOf(clock()) });\n',
+      [layout]: "import localFont from 'next/font/local';\n",
+      [dashboard]: '# Orders\n\n## Agents\n\n### What the agent reads\n\nOrder totals.\n',
+      [embed]: '# Orders\n\n## Agents\n\n### What the agent reads\n\nOrder totals.\n',
+      'src/lib/assistant/tools.ts': 'import type { ViewTool } from "@/lib/shared-context";\n',
+      'src/lib/assistant/respond.ts': 'function limitsOf() {}\n',
+    })) fs.writeFileSync(path.join(root, rel), src);
+    const after = releaseMigrations(root, '0.8.0', '0.35.0');
+    for (const id of ['assistant-view-tools', 'view-page-matched-as-next', 'today-in-timezone', 'self-hosted-fonts', 'agent-reads-section']) expect(after.some((m) => m.id === id), id).toBe(false);
+  });
+});
+
 describe('the 0.9.0 migrations', () => {
   it('find a view that shares a sentence and an object, and a page README with no "What the agent reads"', () => {
     const old = project({
@@ -404,6 +451,16 @@ describe('the 0.30.0 migration', () => {
     // The rule governs four folders, and a direct read outside them is not this migration's.
     expect(byId('direct-query-escape').applies(project({ 'src/data/collections.ts': `${call}\n` }), '0.35.0')).toBeNull();
     expect(byId('direct-query-escape').applies(path.resolve(import.meta.dirname, '..'), '0.35.0')).toBeNull();
+  });
+
+  it.each(['app', 'src/app'])('requires a direct-query migration under %s, but not authorized reads or stated escapes', (app) => {
+    const file = `${app}/orders/page.tsx`;
+    const migration = byId('direct-query-escape');
+    expect(migration.applies(project({ [file]: 'export default async function Page() { return orders.query({}); }\n' }), '0.29.0')).toEqual([file]);
+    expect(migration.applies(project({ [file]: "import { read } from '@/data/read';\nexport default async function Page() { return read('orders', {}); }\n" }), '0.29.0')).toBeNull();
+    expect(migration.applies(project({ [file]: '// orders.query({}) was replaced by an authorized read.\nexport default function Page() { return null; }\n' }), '0.29.0')).toBeNull();
+    expect(migration.applies(project({ [file]: 'export const rows = orders.query({}); // allow-no-direct-query: the export streams uncached batches\n' }), '0.29.0')).toBeNull();
+    expect(migration.applies(project({ 'src/application/orders.ts': 'export const rows = orders.query({});\n' }), '0.29.0')).toBeNull();
   });
 
   it('finds a configuration whose app object has no description, and leaves one that has', () => {
