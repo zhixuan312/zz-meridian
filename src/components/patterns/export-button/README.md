@@ -7,7 +7,7 @@ Status: beta
 ## Anatomy
 
 1. **Button**: a secondary Button with the download icon and "Export" (or "Export CSV" where the format matters).
-2. **Toast** (after a press): "Exported 30 days" with the file's name, or "No requests to export" when the view is empty. Not shown with `href`: the browser reports the download.
+2. **Toast** (after a press): "Exported 30 days" with the file's name, "No requests to export" when the read succeeded but is empty, or "Export unavailable" when the source could not be read. Not shown with `href`: the browser reports the download.
 
 ## Composition
 
@@ -15,7 +15,7 @@ Button and Toast, with `toCsv` and `downloadFile` from `src/lib/csv.ts`; with `h
 
 ## Data
 
-- `rows` is what the view shows: one plain object per row, the first row's keys as the header. Pass a function when building the rows is costly; it runs only on press.
+- `rows` is what the view shows: one plain object per row, the first row's keys as the header. Pass a function when building the rows is costly; it runs only on press. Pass `null` when the source could not be read, not an empty array. An empty array means a successful read with no rows; a missing source is unavailable.
 - `href` is a server export's address, with the view's filters in it: the button becomes a download link and `rows` is not needed. Use it when the set is larger than the page shows; the route must authorize, stream and encode with `csvHeader` and `csvRow`.
 - A text value that starts with `=`, `+`, `-`, `@`, a tab or a carriage return is written with a leading `'`, so a spreadsheet reads it as text. Numbers are never prefixed.
 - Values are written raw (ISO dates, milliseconds, cents as decimals), not formatted: a spreadsheet sorts and sums them.
@@ -35,7 +35,7 @@ As Button: `md` is 38px high (`control-md`), `sm` 32px (`control-sm`).
 
 ## States
 
-As Button for rest, hover, pressed and focus. After a press: the positive toast, or the neutral "No … to export" toast when `rows` is empty.
+As Button for rest, hover, pressed and focus. After a press: the positive toast, the neutral "No … to export" toast when `rows` is empty, or a critical "Export unavailable" toast with refresh advice when the source is missing. Neither empty nor unavailable saves a file.
 
 ## Behaviour
 
@@ -58,7 +58,7 @@ Not applicable: an export changes nothing. An agent that needs the rows reads th
 
 ## Content
 
-- "Export", "Export CSV". The toast: "Exported 240 requests" with `requests-5xx.csv` under it; "No requests to export" with "Clear a filter to include more."
+- "Export", "Export CSV". The toast: "Exported 240 requests" with `requests-5xx.csv` under it; "No requests to export" for a successful empty read. An unread source says "Export unavailable" and "The data could not be read. Refresh the page and try again." Do not suggest clearing filters where none exists.
 
 ## Do and do not
 

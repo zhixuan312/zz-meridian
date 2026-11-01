@@ -13,6 +13,7 @@ export default function ExportButtonPreview() {
       <State label="Masthead (secondary)"><ExportButton rows={days} filename="home-30d.csv" noun="days" /></State>
       <State label="Named format"><ExportButton rows={days} filename="home-30d.csv" noun="days" label="Export CSV" /></State>
       <State label="Nothing to export"><ExportButton rows={[]} filename="requests.csv" noun="requests" /></State>
+      <State label="Read unavailable"><ExportButton rows={null} filename="days.csv" noun="days" /></State>
       <State label="Server export (href)"><ExportButton href="/api/export/requests?status=5xx" filename="requests-5xx.csv" noun="requests" label="Export CSV" /></State>
       <State label="Small, in a card head"><ExportButton rows={days} filename="home-30d.csv" noun="days" size="sm" variant="ghost" /></State>
     </Specimen>

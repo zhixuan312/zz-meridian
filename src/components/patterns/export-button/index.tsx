@@ -18,8 +18,8 @@ export function ExportButton({
   label = 'Export',
   ...rest
 }: {
-  /** The rows behind the view, one plain object each; the first row's keys are the header. */
-  rows?: CsvRow[] | (() => CsvRow[]);
+  /** The rows behind the view, one plain object each; null when unread, [] only after a successful empty read. */
+  rows?: CsvRow[] | null | (() => CsvRow[] | null);
   /** A server export's address: the button is a download link to it, and `rows` is not needed. */
   href?: string;
   /** The file's name, with the period or filter in it: "requests-5xx.csv". */
@@ -39,8 +39,9 @@ export function ExportButton({
     );
   }
   const save = () => {
-    const data = typeof rows === 'function' ? rows() : (rows ?? []);
-    if (!data.length) return toast({ tone: 'neutral', title: `No ${noun} to export`, description: 'Clear a filter to include more.' });
+    const data = typeof rows === 'function' ? rows() : rows;
+    if (data == null) return toast({ tone: 'critical', title: 'Export unavailable', description: 'The data could not be read. Refresh the page and try again.' });
+    if (!data.length) return toast({ tone: 'neutral', title: `No ${noun} to export` });
     downloadFile(filename, toCsv(data));
     toast({ tone: 'positive', title: `Exported ${data.length.toLocaleString('en-US')} ${noun}`, description: filename });
   };

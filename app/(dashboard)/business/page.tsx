@@ -76,7 +76,7 @@ async function Actions({ searchParams }: { searchParams: SearchParams }) {
   return (
     <>
       <PeriodSelect value={period} />
-      <ExportButton rows={dayRows(data.days?.series ?? [])} filename={`revenue-${period}.csv`} noun="days" />
+      <ExportButton rows={data.days ? dayRows(data.days.series) : null} filename={`revenue-${period}.csv`} noun="days" />
     </>
   );
 }
