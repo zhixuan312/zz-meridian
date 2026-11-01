@@ -102,18 +102,21 @@ export async function launch(): Promise<Page> {
 }
 
 async function attach(proc: ChildProcess, dir: string, handle: Launched): Promise<Page> {
-  let list: any[] | undefined;
+  let target: { webSocketDebuggerUrl: string } | undefined;
   // A cold Chrome on a busy machine or runner can take well over ten seconds to open its debugging port; wait up to 30 s,
-  // and stop at once if it exited instead.
+  // and stop at once if it exited instead. The port can answer before the first page target exists, with an empty list,
+  // so the wait lasts until a page is listed.
   const deadline = Date.now() + 30_000;
-  while (!list && Date.now() < deadline && proc.exitCode === null && proc.signalCode === null) {
+  while (!target && Date.now() < deadline && proc.exitCode === null && proc.signalCode === null) {
     try {
       const port = fs.readFileSync(path.join(dir, 'DevToolsActivePort'), 'utf8').split('\n')[0];
-      list = await (await fetch(`http://127.0.0.1:${port}/json/list`)).json();
-    } catch { await sleep(150); }
+      const list: { type: string; webSocketDebuggerUrl: string }[] = await (await fetch(`http://127.0.0.1:${port}/json/list`)).json();
+      target = list.find((t) => t.type === 'page');
+    } catch { /* the port is not open yet */ }
+    if (!target) await sleep(150);
   }
-  if (!list) throw new Error(proc.exitCode !== null || proc.signalCode !== null ? `Chrome exited before it started (${proc.exitCode ?? proc.signalCode})` : 'Chrome did not start within 30 s');
-  const ws = new WebSocket(list.find((t) => t.type === 'page').webSocketDebuggerUrl);
+  if (!target) throw new Error(proc.exitCode !== null || proc.signalCode !== null ? `Chrome exited before it started (${proc.exitCode ?? proc.signalCode})` : 'Chrome did not start a page within 30 s');
+  const ws = new WebSocket(target.webSocketDebuggerUrl);
   // A socket that never opens or is refused says so, within the same 30 s, instead of leaving the caller waiting.
   await new Promise<void>((resolve, reject) => {
     const t = setTimeout(() => reject(new Error('Chrome did not open its page connection within 30 s')), 30_000);
