@@ -70,6 +70,7 @@ export function problems(repo: Repo, doc: string): string[] {
     const sizes = (r.Size ?? '').split(',').map((s) => s.trim());
     if (!sizes.length || sizes.some((s) => !SIZES.includes(s))) out.push(`${r.Key}: size ${JSON.stringify(r.Size)} is not one of ${SIZES.join(', ')}`);
     if (!TYPES.includes(r.Type)) out.push(`${r.Key}: type ${JSON.stringify(r.Type)} is not one of ${TYPES.join(', ')}`);
+    if (r.Key === 'suite/consumer smoke' && r.Type !== 'performance') out.push('suite/consumer smoke: finalize overhead is timed, so its type must be performance');
     if (!TIERS.includes(r.Tier)) out.push(`${r.Key}: tier ${JSON.stringify(r.Tier)} is not one of ${TIERS.join(', ')}`);
     const quiet = r.Type === 'performance' ? 'yes' : 'no';
     if (r['Quiet machine'] !== quiet) out.push(`${r.Key}: quiet machine is ${JSON.stringify(r['Quiet machine'])}, but a ${r.Type} check needs ${quiet}`);
@@ -110,6 +111,12 @@ describe('docs/testing.md classifies every check', () => {
   it('fails, naming the key, on a row removed', () => {
     const removed = doc.split('\n').filter((l) => !/^\|\s*`?verify\/vitals`?\s*\|/.test(l)).join('\n');
     expect(problems(repo, removed)).toContain('verify/vitals: no row in docs/testing.md');
+  });
+
+  it('refuses classifying the timed consumer protocol as functional without a quiet machine', () => {
+    const misclassified = doc.split('\n').map((line) => line.startsWith('| `suite/consumer smoke` |')
+      ? line.replace('| performance |', '| functional |').replace('| yes |', '| no |') : line).join('\n');
+    expect(problems(repo, misclassified)).toContain('suite/consumer smoke: finalize overhead is timed, so its type must be performance');
   });
 
   it('fails, naming the file, on a test outside tests/deep-* that starts a browser', () => {

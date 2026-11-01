@@ -6,6 +6,7 @@ Every release of ZZ Meridian, newest first. Versions follow semver: a removed or
 
 ### Fixed
 
+- **Consumer smoke is classified as a performance check.** Its update-all finalize comparison judges a 30-second overhead budget, so the documented protocol now requires a quiet machine instead of allowing competing builds to invalidate that measurement. The budget and test remain unchanged.
 - **Unavailable searches preserve their query.** Disabled and read-only inputs no longer offer an active clear button; Escape preserves a read-only query, and a disabled search leaves its global shortcut alone.
 - **Engineering's model figures use 30 complete calendar days.** Gaps in recorded usage no longer pull older measurements into the current month; a model with only older traffic keeps zero requests and unmeasured latency.
 - **Committed key writes survive cache-refresh failures.** Creating a key still returns its one-time secret, and revocation stays successful, with a visible refresh warning rather than a false failure that invites another write. Precommit refusals still fail normally.
