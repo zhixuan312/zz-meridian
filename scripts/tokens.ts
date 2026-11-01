@@ -190,6 +190,8 @@ function buildCss(): string {
     return `  --${k}:var(${v}, ${cssValue(t)});`;
   })];
   L.push(...block('[data-surface="embed"]', bridge(main)));
+  L.push(`@media (prefers-color-scheme:${second}){`, ...block(`[data-surface="embed"]:not([data-theme="${first}"])`, bridge(other)).map((l) => '  ' + l), '}');
+  L.push(...block(`[data-surface="embed"][data-theme="${first}"]`, bridge(main)));
   L.push(...block(`[data-surface="embed"][data-theme="${second}"]`, bridge(other)), '');
 
   L.push('/* Density. */');
