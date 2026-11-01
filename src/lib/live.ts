@@ -185,7 +185,14 @@ export function createLiveClient({ refresh, endpoint = '/api/live', pollMs = 300
     const pairs = Object.entries(served ?? {}).filter(([n, r]) => names.includes(n) && r);
     const sent = pairs.length > 0;
     const asked = sent ? `&since=${encodeURIComponent(pairs.map(([n, r]) => `${n}:${r}`).join(','))}` : '';
-    const mine = new Source(`${endpoint}?collections=${encodeURIComponent(names.join(','))}${asked}`);
+    let mine: EventSource;
+    try {
+      mine = new Source(`${endpoint}?collections=${encodeURIComponent(names.join(','))}${asked}`);
+    } catch {
+      // A synchronous refusal is a failed connection too: keep the retry and safety poll instead of escaping the
+      // provider's effect before its timers and cleanup have been installed.
+      return failed();
+    }
     source = mine;
     const current = () => source === mine && !disposed;
     mine.addEventListener('open', () => {

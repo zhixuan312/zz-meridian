@@ -6,6 +6,7 @@ Every release of ZZ Meridian, newest first. Versions follow semver: a removed or
 
 ### Fixed
 
+- **Live data survives a synchronous stream refusal.** An EventSource construction failure follows the existing retry and polling fallback instead of throwing out of the provider; later retries can restore the stream, and disposal still stops the polling.
 - **Atomic CLI writes cannot follow a planted temporary-file link.** Update and brand now create a private sibling directory for each replacement, preserve the requested mode, and clean up temporary output on failure without altering the original destination.
 - **Calendar labels preserve the date they were given.** Impossible dates such as February 30 remain visible as invalid input instead of rolling into March, and valid years below 100 no longer acquire 1900 years.
 - **Rebranding reports an incomplete rollback honestly.** When restoring one file fails after a write error, branding continues restoring the others and names the paths requiring recovery instead of claiming nothing changed.

@@ -32,6 +32,33 @@ function client(refresh: (names: string[]) => Promise<void>, pollMs = 60_000) {
 }
 
 describe('the live client', () => {
+  it('falls back to polling when constructing the stream throws, then reconnects when it becomes available', async () => {
+    let attempts = 0;
+    class RefusedSource extends FakeSource {
+      constructor(url: string) {
+        if (++attempts <= 3) throw new Error('Stream construction refused');
+        super(url);
+      }
+    }
+    const refresh = vi.fn(async () => {});
+    const states: LiveState[] = [];
+    const c = createLiveClient({ refresh, pollMs: 10_000, EventSource: RefusedSource as unknown as typeof EventSource, onState: (s) => states.push(s) });
+    try {
+      expect(() => c.setNames(['members'])).not.toThrow();
+      await flush(2_100);
+      expect(attempts).toBe(3);
+      expect(states.at(-1)).toBe('polling');
+      await flush(50_000);
+      expect(refresh).toHaveBeenCalledWith(['members']);
+      expect(attempts).toBe(4);
+      live()[0].open();
+      await flush(0);
+      expect(states.at(-1)).toBe('live');
+    } finally { c.dispose(); }
+    const calls = refresh.mock.calls.length;
+    await flush(50_000);
+    expect(refresh).toHaveBeenCalledTimes(calls);
+  });
   it('is live only after the first resync succeeds, and coalesces a short burst into one refresh', async () => {
     const refresh = vi.fn(async () => {});
     const { c, states } = client(refresh);

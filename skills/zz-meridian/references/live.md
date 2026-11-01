@@ -351,6 +351,8 @@ name the caller may not read. How it behaves:
   after the previous read settles or times out. Reordering or repeating the same names keeps the stream and its read.
 - A safety refresh runs every `pollMs` (30 s) even on a healthy stream. A failed connection is retried after a second;
   after the third failure the tab polls, and tries the stream again on every fifth poll.
+  A synchronous failure to construct `EventSource` follows that same retry path; it does not interrupt provider setup
+  or prevent the safety poll and disposal from being installed.
 - An authorization failure pauses the stream. A hidden tab closes it, and showing the tab again resyncs. On logout, a
   scope change or an authorization failure the provider disposes the stream and the old scope's client state, and no
   event from an earlier connection applies after that. `scopeKey` is a reset key for the browser, never proof of access.
