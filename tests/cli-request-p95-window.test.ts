@@ -9,6 +9,13 @@ import { requestContext } from '@/logic/request-context';
  * complete days the endpoints collection holds, so "118 ms against 96 ms" is not read as the spread of a sample.
  */
 describe("a request's context", () => {
+  it('does not invent a timing attribution for a zero-latency trace', () => {
+    const r = { ...REQUESTS[0], latency: 0 };
+    const context = requestContext({ request: r, trace: traceOf(r), routeP95: null, statusText: 'OK', payloadChars: { request: null, response: 0 }, now: DEMO_NOW.toISOString() });
+    expect(context.facts.find((fact) => fact.label === 'Latency')?.value).toBe('0ms');
+    expect(context.insights.filter((insight) => insight.text.includes('Most of its time'))).toEqual([]);
+  });
+
   it("states its route's p95 with its window", () => {
     const r = REQUESTS[0];
     const { insights } = requestContext({ request: r, trace: traceOf(r), routeP95: 96, statusText: 'OK', payloadChars: { request: null, response: 0 }, now: DEMO_NOW.toISOString() });

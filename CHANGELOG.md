@@ -12,6 +12,8 @@ Every release of ZZ Meridian, newest first. Versions follow semver: a removed or
 
 ### Fixed
 
+- **Zero-latency request context stays factual.** A trace with no elapsed time no longer invents a 1ms total or attributes that time to Gateway.
+
 - **Password sign-in starts with an active identity.** An inactive first persona no longer makes the default submission fail when another persona remains active; a refused submission still preserves the person's choice.
 - **Verification proves every data destination local before pressing controls.** PostgreSQL authority, query overrides, environment defaults, services and every failover host are considered; uninspected destinations fail closed. Other drivers do not inherit libpq query semantics, malformed loopback lookalikes are refused, and owned containers use explicit loopback forwards.
 - **Accent names cannot escape the preset directory.** Branding refuses paths and unsafe filename components before any configuration writes.

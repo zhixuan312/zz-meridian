@@ -31,10 +31,10 @@ export function requestContext({ request: r, trace, routeP95, statusText, payloa
   const failed = retryable(r);
   const { tokens, cost } = usageOf(r);
   const none = nothingUsed(r);
-  const total = trace.reduce((m, s) => Math.max(m, s.start + s.duration), 0) || r.latency || 1;
+  const total = trace.reduce((m, s) => Math.max(m, s.start + s.duration), 0) || r.latency;
   const insights: Insight[] = [];
   const heaviest = trace.reduce<Span | null>((m, s) => (!m || s.duration > m.duration ? s : m), null);
-  if (heaviest) insights.push({ text: `Most of its time went to ${heaviest.name} (${heaviest.detail}): ${formatDuration(heaviest.duration)}, ${formatPercent(heaviest.duration / total, 0)} of ${formatDuration(total)}.` });
+  if (heaviest && heaviest.duration > 0) insights.push({ text: `Most of its time went to ${heaviest.name} (${heaviest.detail}): ${formatDuration(heaviest.duration)}, ${formatPercent(heaviest.duration / total, 0)} of ${formatDuration(total)}.` });
   if (routeP95) insights.push({ text: `Its latency is ${(r.latency / routeP95).toFixed(1)}× the p95 of ${r.method} ${r.route} over the last 30 complete days (${formatDuration(routeP95)}): ${r.latency > routeP95 ? 'slower than 95 of 100 requests to this route' : 'within what this route usually takes'}.`, evidence: `/requests?q=${encodeURIComponent(r.route)}` });
   if (failed) insights.push({ text: `It failed (${r.status} ${statusText}), so it counts in the error rate; a person can replay it from this page.`, evidence: `/requests?q=${encodeURIComponent(r.customer)}&status=${r.status === 429 ? '4xx' : '5xx'}` });
   if (r.replayOf) insights.push({ text: `It replays ${r.replayOf}.`, evidence: requestAddress(r.replayOf) });

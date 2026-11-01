@@ -82,3 +82,5 @@ The protagonist, Request, is the Request facts card the structure places beside 
 
 - Facts are values ("2.1s", "Parallax AI"), not labels.
 - The Trace card says the count and the total: "5 phases, 2.1s end to end".
+
+A zero-latency trace keeps its zero durations and has no heaviest-phase timing insight: no phase consumed time.
