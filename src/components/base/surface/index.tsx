@@ -106,7 +106,7 @@ export function EmbedSurface({ children }: { children: ReactNode }) {
       if (s) for (const side of ['top', 'right', 'bottom', 'left'] as const) d.style.setProperty(`--safe-${side}`, `${s[side]}px`);
     };
     const off = b.onContext(apply);
-    b.initialize(app.name, '1.0.0').then(() => setConnected(true)).catch(() => setConnected(false));
+    b.initialize(app.name, '1.0.0').then(() => { if (bridge.current === b) setConnected(true); }).catch(() => { if (bridge.current === b) setConnected(false); });
     return () => { off(); b.dispose(); bridge.current = null; d.removeAttribute('data-surface'); };
   }, []);
 
@@ -145,8 +145,14 @@ export function EmbedSurface({ children }: { children: ReactNode }) {
         const entry = { head: text.split('\n')[0], refused: false };
         shared.current = entry;
         // A refused update is tried once more; if the host refuses again, Ask carries the view's first line instead.
-        const send = () => b.modelContext(text, structured);
-        void send().catch(() => new Promise((r) => setTimeout(r, 1000)).then(send)).catch(() => { entry.refused = true; });
+        const current = () => bridge.current === b && shared.current === entry;
+        void b.modelContext(text, structured).catch(() => {
+          if (!current()) return;
+          setTimeout(() => {
+            if (!current()) return;
+            void b.modelContext(text, structured).catch(() => { if (current()) entry.refused = true; });
+          }, 1000);
+        });
       },
       openLink: (u) => {
         const b = bridgeOf();
