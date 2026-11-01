@@ -27,6 +27,12 @@ function range(spec: unknown): { op: '' | '^' | '~' | '>='; v: [number, number, 
 const minimum = (spec: unknown) => range(spec)?.v ?? null;
 const compare = (a: number[], b: number[]) => a[0]! - b[0]! || a[1]! - b[1]! || a[2]! - b[2]!;
 
+/** Compare supported dependency floors; null means the specification needs a person's judgment. */
+export function compareMinimum(have: unknown, want: unknown): number | null {
+  const a = minimum(have), b = minimum(want);
+  return a && b ? compare(a, b) : null;
+}
+
 /** Whether `version` satisfies a specification `range` reads. A specification it cannot read is not judged. */
 export function satisfies(spec: string, version: string): boolean {
   const want = range(spec);

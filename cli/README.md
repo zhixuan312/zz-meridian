@@ -50,9 +50,13 @@ beside it as `*.before.css`); preserves string keys and values in your TypeScrip
 brands it; adds Meridian's managed block to your `AGENTS.md` between two markers, keeping your own text there byte
 for byte; writes an empty `docs/brief.md` (your product, users, data, decisions and glossary) if you have none; installs the skill into
 `.agents/skills/` (Codex) and `.claude/skills/` (Claude Code); records every Meridian file it copied in `.meridian/manifest.json`;
-installs and type checks. Your routes, your data layer and your own components are not touched. Meridian's files
-import each other by relative path, so a `components/ui/button` of your own is never confused with Meridian's; your
-code imports Meridian as `@meridian/…`.
+installs and reports route-generation and TypeScript diagnostics. An installation failure exits nonzero; diagnostic
+failures are reported as `types: fails` but adoption still exits zero, because your existing routes may need repairs.
+This is not a clean-typecheck guarantee: fix those diagnostics before running the gate. Your routes, your data layer
+and your own components are not touched. Meridian's files import each other by relative path, so a
+`components/ui/button` of your own is never confused with Meridian's; your code imports Meridian as `@meridian/…`.
+Supported dependency specifications below Meridian's required floor are raised, including within the same major;
+newer versions are kept. Custom specifications are kept with a note to confirm compatibility.
 
 It refuses, and writes nothing, when the git tree has uncommitted changes (so its change is one reviewable diff), when
 the project is not Next.js with the App Router, or when a file it would copy already exists with other content.

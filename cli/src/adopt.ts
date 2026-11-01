@@ -15,12 +15,41 @@ import {
 } from './files.js';
 import { BRIEF_TEMPLATE, managedBlock, upsertManagedBlock } from './context.js';
 import { FIXED, adoptSetOf, managedPaths, parseManifest } from './ownership.js';
-import { MERIDIAN_SCRIPTS, TOOLCHAIN, needOf } from './reconcile.js';
+import { MERIDIAN_SCRIPTS, TOOLCHAIN, compareMinimum, needOf, type Template } from './reconcile.js';
 
 export type AdoptOptions = { root: string; brand: Record<string, string>; allowDirty: boolean; install: boolean };
 
-const major = (spec: string) => Number(/(\d+)/.exec(spec)?.[1] ?? NaN);
 const TS = /\.(ts|tsx)$/;
+
+/** Raise known dependency floors in place; custom specifications stay the team's decision. */
+export function adoptDependencies(pkg: Template, tpl: Template, field: 'dependencies' | 'devDependencies', names: string[]): string[] {
+  const notes: string[] = [];
+  pkg[field] ??= {};
+  for (const n of names) {
+    const want = tpl.dependencies?.[n] ?? tpl.devDependencies?.[n];
+    if (!want) continue;
+    const have = pkg.dependencies?.[n] ?? pkg.devDependencies?.[n];
+    if (!have) { pkg[field]![n] = want; continue; }
+    const order = compareMinimum(have, want);
+    if (order === null) {
+      notes.push(`kept ${n} ${have}, which Meridian cannot compare: confirm it meets ${want} before running the gate`);
+    } else if (order < 0) {
+      const at = pkg.dependencies?.[n] ? 'dependencies' : 'devDependencies';
+      pkg[at]![n] = want;
+      notes.push(`raised ${n} from ${have} to ${want} (Meridian needs this floor; read its upgrade guide)`);
+    }
+  }
+  return notes;
+}
+
+/** Adoption is installed even when a team's existing routes need type repairs; report both diagnostic stages. */
+function adoptionTypes(root: string): string {
+  const route = runTool(root, 'next/dist/bin/next', ['typegen']);
+  const tsc = runTool(root, 'typescript/bin/tsc', ['--noEmit']);
+  const failures = [['next typegen', route], ['tsc', tsc]] as const;
+  const failed = failures.filter(([, result]) => result.status !== 0);
+  return failed.length ? `fails:\n${failed.map(([name, result]) => `${name}:\n${(result.stdout + result.stderr).trim().split('\n').slice(0, 30).join('\n')}`).join('\n')}` : 'passes';
+}
 
 /** A specifier inside a copied file, pinned to the exact module so a team file of a similar name can never win. */
 function exactImports(rel: string, source: string, known: Set<string>): string {
@@ -258,25 +287,11 @@ Rename or move them, then run adopt again.`);
 
   // ── Merged files: the project's own, changed only where Meridian needs it ────────────────────────────
   const tpl = JSON.parse(readPayload('package.json'));
-  const merge = (field: 'dependencies' | 'devDependencies', names: string[]) => {
-    pkg[field] ??= {};
-    for (const n of names) {
-      const want = tpl.dependencies?.[n] ?? tpl.devDependencies?.[n];
-      if (!want) continue;
-      const have = pkg.dependencies?.[n] ?? pkg.devDependencies?.[n];
-      if (!have) { pkg[field][n] = want; continue; }
-      if (major(have) < major(want)) {
-        const at = pkg.dependencies?.[n] ? 'dependencies' : 'devDependencies';
-        pkg[at][n] = want;
-        notes.push(`raised ${n} from ${have} to ${want} (Meridian needs the newer major; read its upgrade guide)`);
-      }
-    }
-  };
   // The packages the adopted modules import, and the framework: the rule `update` applies to a created project.
   const sources = new Map(set.filter((rel) => TS.test(rel)).map((rel) => [rel, payloadBytes(rel).toString('utf8')]));
   sources.set('src/app.config.ts', config);
-  merge('dependencies', needOf(tpl, sources).runtime);
-  merge('devDependencies', TOOLCHAIN);
+  notes.push(...adoptDependencies(pkg, tpl, 'dependencies', needOf(tpl, sources).runtime));
+  notes.push(...adoptDependencies(pkg, tpl, 'devDependencies', TOOLCHAIN));
   pkg.scripts ??= {};
   for (const s of MERIDIAN_SCRIPTS) {
     const want = tpl.scripts[s];
@@ -381,15 +396,13 @@ Rename or move them, then run adopt again.`);
   installSkill(root, files);
   writeManifest(root, { version: VERSION, route: 'adopt', brand, files });
 
-  // ── Install and prove it compiles ─────────────────────────────────────────────────────────────────────
+  // ── Install and report type diagnostics (existing team code may still need repairs) ──────────────────
   let typed = 'not run (--no-install)';
   if (o.install) {
     say(`\nInstalling with ${pm}…`);
     if (run(pm, installArgs(pm), root).status !== 0) return fail(`${pm} install failed (above). Fix it, then run ${pm} install and ${pm} run typecheck.`);
-    // Route types first (LayoutProps, PageProps), as the gate does.
-    runTool(root, 'next/dist/bin/next', ['typegen']);
-    const tsc = runTool(root, 'typescript/bin/tsc', ['--noEmit']);
-    typed = tsc.status === 0 ? 'passes' : `fails:\n${(tsc.stdout + tsc.stderr).trim().split('\n').slice(0, 30).join('\n')}`;
+    // Route types first (LayoutProps, PageProps), as the gate does; neither failure may be reported as passing.
+    typed = adoptionTypes(root);
   }
 
   say(`
