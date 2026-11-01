@@ -12,7 +12,7 @@ A standalone screen outside the shell, on the lit ground:
 |---|---|
 | Corner | The app mark and the product name, linking home |
 | Left | Kicker "ZZ Meridian · Console"; "Know your API before your customers do" at `text-display`, ending on an accent full stop; one sentence of lead; from 1024px, the requests of the last 30 complete days, their total and a Trend chart on its own Meridian |
-| Right | One panel. Without a password, "Sign in as": one row per persona (Avatar, name, role, a forward arrow), each row signing in as that person. With `DEMO_PASSWORD`, "Sign in": the password and "Sign in as" (Field, a native select at `lg`, default Maya Chen, a non-Active persona disabled). There is no email link and no company sign-in: the product sends no message and asks no identity provider, so the page offers neither |
+| Right | One panel. Without a password, "Sign in as": one row per persona (Avatar, name, role, a forward arrow), each row signing in as that person. With `DEMO_PASSWORD`, "Sign in": the password and "Sign in as" (Field, a native select at `lg`, defaulting to the first active persona, a non-Active persona disabled). There is no email link and no company sign-in: the product sends no message and asks no identity provider, so the page offers neither |
 | Foot | Copyright, a link to the design system, and the live service status (derived, linking to Services) |
 
 Two columns from 1024px; one below, the panel under the sentence.

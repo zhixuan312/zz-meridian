@@ -36,7 +36,8 @@ function UnavailablePersonas({ id }: { id: string }) {
 /** The panel when `DEMO_PASSWORD` is set: the password, then who to sign in as, and one primary action. */
 export function PasswordPanel({ personas }: { personas: Persona[] }) {
   const [state, action, pending] = useActionState(demoSignIn, { error: null });
-  if (!personas.some((one) => !one.disabled)) return <UnavailablePersonas id="sign-in" />;
+  const firstActive = personas.find((one) => !one.disabled);
+  if (!firstActive) return <UnavailablePersonas id="sign-in" />;
   return (
     <PanelFrame>
       <form action={action}>
@@ -54,7 +55,7 @@ export function PasswordPanel({ personas }: { personas: Persona[] }) {
                  React resets the form after a refused sign-in, and a select's default is set only when it mounts, so it
                  mounts again on the person the action hands back. */
               <div className={cn('relative flex w-full min-w-0 items-center', controlFrame, CONTROL_SIZE.lg)}>
-                <select {...p} key={state.persona} name="persona" defaultValue={state.persona ?? personas[0]?.id} className="h-full w-full min-w-0 appearance-none truncate bg-transparent pr-7 outline-none focus-visible:outline-none">
+                <select {...p} key={state.persona} name="persona" defaultValue={state.persona ?? firstActive.id} className="h-full w-full min-w-0 appearance-none truncate bg-transparent pr-7 outline-none focus-visible:outline-none">
                   {personas.map((one) => <option key={one.id} value={one.id} disabled={one.disabled}>{one.name} — {one.role}</option>)}
                 </select>
                 <ChevronDown aria-hidden className="pointer-events-none absolute right-3.5 shrink-0 text-ink-3" />

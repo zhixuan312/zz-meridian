@@ -12,6 +12,10 @@ const personas = [
 ];
 
 describe('the sign-in page', () => {
+  it('defaults the password form to the first active person', () => {
+    render(<panel.PasswordPanel personas={[{ ...personas[0], disabled: true }, personas[1]]} />);
+    expect((screen.getByRole('combobox') as HTMLSelectElement).value).toBe(personas[1].id);
+  });
 
   it('asks who to sign in as, in the product\'s own words', () => {
     render(<panel.PersonaPanel personas={personas} />);
