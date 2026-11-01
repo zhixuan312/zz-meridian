@@ -7,7 +7,7 @@ Status: beta
 ## Anatomy
 
 1. **Range**: "21–40 of 240 requests"; the range in `ink` medium, the rest `ink-2`, tabular figures.
-2. **Rows per page** (optional): a ghost trigger, "20 per page", opening a Menu of sizes.
+2. **Rows per page** (optional): a ghost trigger, "20 per page", opening a Menu of sizes. It is drawn only when there are two sizes or more to choose from.
 3. **Previous** and **Next**: small ghost icon buttons.
 4. **Pages**: numbers, with an ellipsis for gaps; the current page is a raised chip.
 

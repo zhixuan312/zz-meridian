@@ -59,7 +59,8 @@ export function Pagination({
         </span>
         <span title={`Page ${page} of ${count}`} className="block truncate @min-[32rem]/pager:hidden">Page <span className="font-medium text-ink">{page}</span> of {count}</span>
       </p>
-      {pageSizes && onPageSizeChange ? (
+      {/* A menu of one size offers nothing, so it is drawn only when there is a choice. */}
+      {pageSizes && pageSizes.length > 1 && onPageSizeChange ? (
         <Menu>
           <MenuTrigger className="press inline-flex h-(--control-sm) items-center gap-1.5 rounded-md px-2 text-sm text-ink-2 hover:bg-fill-hover hover:text-ink @max-[44rem]/pager:hidden">
             <span><span className="t-num">{pageSize}</span> per page</span><ChevronDown className="size-3.5" />
