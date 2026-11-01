@@ -8,7 +8,7 @@ Every release of ZZ Meridian, newest first. Versions follow semver: a removed or
 
 - **Uncontrolled Proposal requires `onApprove`.** Controlled state still permits an external approval handler; untyped callers without the required handler enter Failed rather than claiming Applied.
 - **Partial sample data is explicit.** `HomeData.totals` can be null. `RevenueData.history` now owns historical `count` and `windows`; `days.windows` is removed. Guard the nullable parts independently rather than substituting zero or requiring unrelated reads.
-- **`openCommand` and `usePaletteKey` moved to `@/components/patterns/command-palette/open`.** The Command palette is now a chunk of its own, loaded with `next/dynamic` once the page has hydrated, and its file no longer exports them. Import them from the new path; `update` names each file that still imports them from the palette (`open-command-moved`).
+- **The palette's opener has a module of its own.** `openCommand` and `usePaletteKey` moved to `@/components/patterns/command-palette/open`. The Command palette is now a chunk of its own, loaded with `next/dynamic` once the page has hydrated, and its file no longer exports them. Import them from the new path; `update` names each file that still imports them from the palette (`open-command-moved`).
 - **Mutation tools return an applied outcome envelope.** Successful create, update and remove outputs are now `{ status: 'applied', result, warning? }`, not raw records or removal values. Read the visible data from `result`; domain fields cannot impersonate protocol metadata. A postcommit cache failure remains Applied with a warning, never an invitation to repeat the mutation.
 
 ### Fixed
