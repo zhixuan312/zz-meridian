@@ -34,8 +34,34 @@ describe('fakeModel', () => {
     expect(fakeModelArgs([])).toEqual([]);
     const child = spawn(process.execPath, ['scripts/fake-llm.ts', '--port', '0', ...fakeModelArgs([{ when: 'which release shipped', tool: 'view_releases', input: {} }])], { cwd: ROOT, stdio: ['ignore', 'pipe', 'inherit'] });
     try {
-      const url = await new Promise<string>((resolve) => child.stdout!.on('data', (d) => { const m = /fake-llm listening on (\S+)/.exec(String(d)); if (m) resolve(m[1]); }));
+      const { promise: ready, resolve, reject } = Promise.withResolvers<string>();
+      let output = '';
+      const finish = (error?: Error, url?: string) => {
+        child.stdout!.off('data', data);
+        child.off('error', failed);
+        child.off('exit', exited);
+        if (error) reject(error);
+        else resolve(url!);
+      };
+      const data = (chunk: Buffer) => {
+        output += chunk;
+        const match = /fake-llm listening on (\S+)\r?\n/.exec(output);
+        if (match) finish(undefined, match[1]);
+      };
+      const failed = (error: Error) => finish(error);
+      const exited = (code: number | null, signal: string | null) => finish(new Error(`fake-llm exited before readiness (${code ?? signal}): ${output}`));
+      child.stdout!.on('data', data);
+      child.once('error', failed);
+      child.once('exit', exited);
+      const url = await ready;
       expect((await ask(url, 'Which release shipped last?', ['view_releases'])).message.tool_calls[0].function.name).toBe('view_releases');
-    } finally { child.kill(); }
+    } finally {
+      if (child.pid !== undefined && child.exitCode === null && child.signalCode === null) {
+        const { promise: stopped, resolve } = Promise.withResolvers<void>();
+        child.once('exit', () => resolve());
+        child.kill();
+        await stopped;
+      }
+    }
   });
 });

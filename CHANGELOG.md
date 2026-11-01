@@ -46,6 +46,7 @@ Every release of ZZ Meridian, newest first. Versions follow semver: a removed or
 - **Architecture guards resolve real module boundaries.** Explicit JavaScript specifiers follow TypeScript substitution order, and type-only imports remain distinct from product runtime dependencies.
 - **Server-component checks parse directive prologues.** Comments and byte-order marks no longer hide a real `use client` directive.
 - **Timed-documentation negation is clause-local.** Wrapped negative claims remain valid without hiding a neighboring false affirmative claim.
+- **Checker fixtures own their temporary resources.** Readiness waits buffer split output, reject failed children and await shutdown; temporary exploration roots are removed after each case.
 - **Adoption preserves punctuation in TypeScript configuration strings.** Removing JSONC trailing commas also removed commas before `]` or `}` inside string keys and values, changing aliases, paths and plugin options. Only commas outside strings are removed.
 - **Derived answers stay within the caller's full access scope.** Cached and in-flight builds are partitioned by tenant, subject and authorization identity. Every reader checks its own source authorization before joining a build; a concurrent denial cannot inherit another reader's permission.
 - **Untrusted assistant context cannot reconstruct wrapper tags.** Page text, view context and product briefs escape markup linearly instead of splicing tag fragments back together. This preserves their data boundary; it does not replace the assistant's authorization and proposal rules.
@@ -88,7 +89,7 @@ Every release of ZZ Meridian, newest first. Versions follow semver: a removed or
 ### Changed
 
 - **Update-session rules have one authored source.** The payload producer generates the CLI companion from the same source revision as the payload; adopted plain-Node gates and the compiled CLI keep their existing runtime layout.
-- **Tests check behavior rather than incidental implementation.** Removed source-text, wording, utility-class, default and copy-only pins; retained meaningful domain, security, accessibility, geometry, architecture and validator checks. Current testing and Atlas documentation names what those checks actually establish.
+- **Tests check behavior rather than incidental implementation.** Removed source-text, wording, utility-class, default and copy-only pins; retained meaningful domain, security, accessibility, geometry, architecture and validator checks. Removed mirrored rule-manifest rows, test-local source-site inventories and dispatcher-forwarding assertions; executable checker fixtures and state-transition regressions remain. Current testing and Atlas documentation names what those checks actually establish.
 
 ## [0.36.0] · 2026-10-30
 

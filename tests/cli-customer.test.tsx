@@ -98,7 +98,10 @@ describe("one customer's page", () => {
   });
 
   it('says in one line that no sampled request is from a customer the sample holds none of', async () => {
-    const quiet = [...(await customers()).values()].find((c) => c.status === 'active' && !['Northwind Labs', 'Halcyon Health', 'Atlas Freight', 'Mosaic Learning', 'Quill & Co', 'Parallax AI', 'Fernway Bank', 'Orbit Retail', 'Tessellate', 'Lumen Studio', 'Kestrel Systems', 'Brightline'].includes(c.name))!;
+    const { rows } = await readAll('requests');
+    const sampled = new Set(rows.map((r) => r.customer));
+    const quiet = [...(await customers()).values()].find((c) => c.status === 'active' && !sampled.has(c.name))!;
+    expect(quiet, 'an active customer outside the sampled log').toBeTruthy();
     jar.value = OWNER;
     const doc = await customerPage(quiet.id);
     // The reason too, so a quiet customer is not read as one the log missed: the log is a sample, and the line ends.

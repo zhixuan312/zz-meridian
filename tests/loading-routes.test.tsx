@@ -17,7 +17,7 @@ import Revenue from '../app/(dashboard)/business/loading';
 import Customer from '../app/(dashboard)/customers/[id]/loading';
 import Now from '../app/(dashboard)/engineering/loading';
 
-const ROUTES = { Home, Usage, Customers, Services, Keys, Members, Requests, RequestDetail, Settings, Tickets, Tests, Releases };
+const ROUTES = { Home, Usage, Revenue, Customer, Now, Customers, Services, Keys, Members, Requests, RequestDetail, Settings, Tickets, Tests, Releases };
 
 describe('a page headed by a sentence', () => {
   it('holds the sentence\'s block while it loads, under its name, so nothing moves when the page arrives', () => {
