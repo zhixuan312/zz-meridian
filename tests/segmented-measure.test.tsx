@@ -38,3 +38,26 @@ it('reads layout only in a ResizeObserver callback, and draws the thumb on the s
   expect(thumb?.style.width).toBe('60px');
   expect(thumb?.style.transform).toBe('translateX(38px)');
 });
+
+it('remeasures the selected option after same-length reordering without a size or selection change', async () => {
+  vi.stubGlobal('ResizeObserver', AfterLayout);
+  const outside: string[] = [];
+  vi.spyOn(HTMLElement.prototype, 'offsetLeft', 'get').mockImplementation(function (this: HTMLElement) {
+    if (!inObserver) outside.push('offsetLeft');
+    return 2 + Array.from(this.parentElement?.querySelectorAll('button') ?? []).indexOf(this as HTMLButtonElement) * 60;
+  });
+  vi.spyOn(HTMLElement.prototype, 'offsetWidth', 'get').mockImplementation(() => {
+    if (!inObserver) outside.push('offsetWidth');
+    return 60;
+  });
+  const view = render(<Segmented label="Reporting period" options={options} value="30d" onChange={() => {}} />);
+  await act(async () => { await frame(); await frame(); });
+  const thumb = () => view.container.querySelector<HTMLElement>('[role="radiogroup"] > span[aria-hidden]');
+  expect(thumb()?.style.transform).toBe('translateX(60px)');
+  view.rerender(<Segmented label="Reporting period" options={[options[1], options[0], options[2]]} value="30d" onChange={() => {}} />);
+  await act(async () => { await frame(); await frame(); });
+  expect(view.container.querySelector('[data-state="on"]')?.textContent).toBe('30 days');
+  expect(thumb()?.style.width).toBe('60px');
+  expect(thumb()?.style.transform).toBe('translateX(0px)');
+  expect(outside).toEqual([]);
+});

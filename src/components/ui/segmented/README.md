@@ -28,7 +28,7 @@ Status: beta
 
 The thumb slides and resizes over `dur-enter` with `ease-out`; labels change colour over `dur-hover`. Under reduced motion the thumb jumps.
 
-The thumb is read only inside a `ResizeObserver` callback, which the browser runs after layout, never in the change's commit, an effect or a frame callback, so a tap forces no layout. A change observes the options afresh, and that first observation carries the measurement. On first mount the thumb is not drawn until it, one frame later; after it the thumb slides as above.
+The thumb is read only inside a `ResizeObserver` callback, which the browser runs after layout, never in the change's commit, an effect or a frame callback, so a tap forces no layout. A selection change or new options observes the options afresh, including a same-length reordering whose boxes do not resize, and that first observation carries the measurement. On first mount the thumb is not drawn until it, one frame later; after it the thumb slides as above.
 
 ## Behaviour
 

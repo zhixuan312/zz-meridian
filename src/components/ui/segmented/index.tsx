@@ -39,7 +39,7 @@ export function Segmented<V extends string>({
     });
     track.current?.querySelectorAll('button').forEach((b) => ro.observe(b));
     return () => ro.disconnect();
-  }, [value, options.length]);
+  }, [value, options]);
   return (
     <ToggleGroup.Root
       ref={track}
