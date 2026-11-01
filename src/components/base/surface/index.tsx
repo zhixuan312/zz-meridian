@@ -85,6 +85,22 @@ export function EmbedSurface({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const d = document.documentElement;
+    const attributes = new Map(['data-surface', 'data-theme', 'data-display-mode', 'data-platform'].map((name) => [name, d.getAttribute(name)]));
+    const styles = new Map<string, [string, string]>();
+    const setStyle = (name: string, value: string) => {
+      if (!styles.has(name)) styles.set(name, [d.style.getPropertyValue(name), d.style.getPropertyPriority(name)]);
+      d.style.setProperty(name, value);
+    };
+    const restoreDocument = () => {
+      for (const [name, value] of attributes) {
+        if (value === null) d.removeAttribute(name);
+        else d.setAttribute(name, value);
+      }
+      for (const [name, [value, priority]] of styles) {
+        if (value) d.style.setProperty(name, value, priority);
+        else d.style.removeProperty(name);
+      }
+    };
     d.setAttribute('data-surface', 'embed');
     // An explicit host choice wins; otherwise CSS follows system changes without freezing a sampled choice.
     const applyTheme = (t?: 'light' | 'dark') => {
@@ -92,7 +108,7 @@ export function EmbedSurface({ children }: { children: ReactNode }) {
       else d.removeAttribute('data-theme');
     };
     applyTheme();
-    if (!HostBridge.framed()) return () => d.removeAttribute('data-surface');
+    if (!HostBridge.framed()) return restoreDocument;
     const b = new HostBridge();
     bridge.current = b;
     const apply = (ctx: HostContext) => {
@@ -101,13 +117,13 @@ export function EmbedSurface({ children }: { children: ReactNode }) {
       if (ctx.displayMode) setMode(ctx.displayMode);
       d.setAttribute('data-display-mode', ctx.displayMode ?? 'inline');
       if (ctx.platform) d.setAttribute('data-platform', ctx.platform);
-      for (const [k, v] of Object.entries(ctx.styles?.variables ?? {})) if (k.startsWith('--') && v) d.style.setProperty(k, v);
+      for (const [k, v] of Object.entries(ctx.styles?.variables ?? {})) if (k.startsWith('--') && v) setStyle(k, v);
       const s = ctx.safeAreaInsets;
-      if (s) for (const side of ['top', 'right', 'bottom', 'left'] as const) d.style.setProperty(`--safe-${side}`, `${s[side]}px`);
+      if (s) for (const side of ['top', 'right', 'bottom', 'left'] as const) setStyle(`--safe-${side}`, `${s[side]}px`);
     };
     const off = b.onContext(apply);
     b.initialize(app.name, '1.0.0').then(() => { if (bridge.current === b) setConnected(true); }).catch(() => { if (bridge.current === b) setConnected(false); });
-    return () => { off(); b.dispose(); bridge.current = null; d.removeAttribute('data-surface'); };
+    return () => { off(); b.dispose(); bridge.current = null; restoreDocument(); };
   }, []);
 
   /* Report the body's height whenever it changes: an inline view never scrolls inside the host. */

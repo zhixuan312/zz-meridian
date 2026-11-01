@@ -27,9 +27,34 @@ afterEach(() => {
   vi.unstubAllGlobals();
   localStorage.clear();
   for (const attribute of ['data-surface', 'data-theme', 'data-accent', 'data-density', 'data-display-mode']) document.documentElement.removeAttribute(attribute);
+  document.documentElement.removeAttribute('data-platform');
+  for (const name of ['--fixture-accent', '--fixture-extra', '--safe-top', '--safe-right', '--safe-bottom', '--safe-left']) document.documentElement.style.removeProperty(name);
 });
 
 describe('appearance ownership', () => {
+  it('restores the document it borrowed and removes host-only styles when the embed unmounts', async () => {
+    const d = document.documentElement;
+    d.setAttribute('data-theme', 'dark');
+    d.setAttribute('data-display-mode', 'fullscreen');
+    d.setAttribute('data-platform', 'web');
+    d.style.setProperty('--fixture-accent', 'red', 'important');
+    d.style.setProperty('--safe-top', '7px');
+    const view = render(<EmbedSurface><p>Owned embed</p></EmbedSurface>);
+    await act(async () => {});
+    act(() => host.context?.({ theme: 'light', displayMode: 'inline', platform: 'mobile', styles: { variables: { '--fixture-accent': 'blue', '--fixture-extra': 'green' } }, safeAreaInsets: { top: 20, right: 1, bottom: 2, left: 3 } }));
+    expect(d.style.getPropertyValue('--fixture-accent')).toBe('blue');
+    view.unmount();
+    expect(d.getAttribute('data-theme')).toBe('dark');
+    expect(d.getAttribute('data-display-mode')).toBe('fullscreen');
+    expect(d.getAttribute('data-platform')).toBe('web');
+    expect(d.hasAttribute('data-surface')).toBe(false);
+    expect(d.style.getPropertyValue('--fixture-accent')).toBe('red');
+    expect(d.style.getPropertyPriority('--fixture-accent')).toBe('important');
+    expect(d.style.getPropertyValue('--fixture-extra')).toBe('');
+    expect(d.style.getPropertyValue('--safe-top')).toBe('7px');
+    expect(d.style.getPropertyValue('--safe-bottom')).toBe('');
+  });
+
   it('keeps the initial host theme when device preferences finish loading', async () => {
     render(<Providers><EmbedSurface><p>Owned embed</p></EmbedSurface></Providers>);
     await waitFor(() => expect(document.documentElement.getAttribute('data-theme')).toBe('light'));

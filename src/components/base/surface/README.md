@@ -80,3 +80,5 @@ import { useShareView } from '@/components/base/use-share-view';
 const { kind, ask } = useSurface();
 useShareView({ view: 'home', title: 'Home', address: '/?period=7d', scope: 'last 7 days', facts: [{ label: 'Requests', value: '612K' }, { label: 'Error rate', value: '0.82%' }], insights: [], unknowns: [] });
 ```
+
+EmbedSurface borrows document appearance only for its mounted lifetime. Cleanup restores prior surface, theme, display-mode and platform attributes, host-written CSS variables (including their priorities), and safe-area insets. Unframed previews restore their prior theme too.

@@ -6,6 +6,7 @@ Every release of ZZ Meridian, newest first. Versions follow semver: a removed or
 
 ### Fixed
 
+- **Unmounted embeds restore the document appearance.** Host theme, display mode, platform, CSS variables and safe-area insets no longer leak into the screen that replaces an embed; prior values and CSS priorities are restored.
 - **Aggregate date buckets reject impossible calendar days.** Day, week, month and weekday groups, and date windows, share the calendar validation used by display labels; malformed dates neither invent a group nor crash a week query.
 - **Failed live-stream setup releases subscriptions.** An adapter failure while subscribing or reading revisions cleans up earlier listeners and the abort handler; a synchronous abort during subscription stops setup without writing to a closed stream.
 - **All-row reads refuse inconsistent pages.** Changed totals or revisions, duplicate collection keys and extra rows can no longer masquerade as a complete result merely because enough rows were returned.
