@@ -366,6 +366,10 @@
     "outcome": "fail",
     "line": "the address dropped view"
   },
+  { "page": "/changes-query?view=all", "suite": "audit", "outcome": "fail", "line": "the address changed view" },
+  { "page": "/changes-query?view=default", "suite": "audit", "outcome": "pass" },
+  { "page": "/drops-query-value?view=all&view=recent", "suite": "audit", "outcome": "fail", "line": "the address changed view" },
+  { "page": "/clean?view=all&view=recent", "suite": "audit", "outcome": "pass" },
   {
     "page": "/sideways-region-fixed",
     "suite": "audit",
@@ -500,6 +504,10 @@
   { "page": "/keyboard-hidden-fixed", "suite": "keyboard", "outcome": "pass" },
   { "page": "/keyboard-reverse", "suite": "keyboard", "outcome": "fail", "line": "reverse order differs" },
   { "page": "/keyboard-reverse-fixed", "suite": "keyboard", "outcome": "pass" },
+  { "page": "/keyboard-exhausted", "suite": "keyboard", "outcome": "fail", "line": "Tab did not come back to the first stop" },
+  { "page": "/keyboard-trapped", "suite": "keyboard", "outcome": "fail", "line": "Tab did not come back to the first stop" },
+  { "page": "/keyboard-exhausted-fixed", "suite": "keyboard", "outcome": "pass" },
+  { "page": "/keyboard-reverse-exhausted", "suite": "keyboard", "outcome": "fail", "line": "Shift+Tab did not come back to the first stop" },
   { "page": "/keyboard-skip-link", "suite": "keyboard", "outcome": "fail", "line": "first stop is \"Menu\", not Skip to content" },
   { "page": "/keyboard-skip-link-fixed", "suite": "keyboard", "outcome": "pass" },
   { "page": "/keyboard-control-gone", "suite": "keyboard", "outcome": "fail", "line": "could not be found again: Dismiss" },

@@ -383,16 +383,17 @@ const measure = async (route: string, width: number, theme: string, embed: boole
     // First, because it is the one that fails in the direction of looking clean: a route that never rendered passes
     // everything below, and the run would end with the standard's line over a page nobody measured.
     //
-    // `location.pathname` never carries a query, so comparing it to the route *as asked* fails every route that has one —
-    // parent-ba measured ten combinations of five widths and two themes failing that way, deterministically, on a page
-    // that renders correctly. Comparing the path alone would go too far the other way: a route that dropped its query and
-    // served the default view would pass, audited as something it is not. So the path is compared, and every parameter
-    // that was asked for has to still be in the address. (Both halves from parent-ba, 2026-10-12.)
+    // Compare the path and the complete value list for each requested key. A key that survives with a different
+    // value (or loses one of its repeated values) names a different view just as surely as a dropped key.
     ...((): string[] => {
       const asked = new URL(route, 'http://x'), here = new URL(r.href);
       if (here.pathname.replace(/\/$/, '') !== asked.pathname.replace(/\/$/, '')) return [`the audit measured ${here.pathname} while asking for ${route} — the route served another page`];
       const dropped = [...asked.searchParams.keys()].filter((k) => !here.searchParams.has(k));
-      return dropped.length ? [`the address dropped ${dropped.join(', ')} — the audit measured a different view than it asked for`] : [];
+      const changed = [...new Set(asked.searchParams.keys())].filter((k) => here.searchParams.has(k) && JSON.stringify(here.searchParams.getAll(k)) !== JSON.stringify(asked.searchParams.getAll(k)));
+      return [
+        ...(dropped.length ? [`the address dropped ${dropped.join(', ')} — the audit measured a different view than it asked for`] : []),
+        ...(changed.length ? [`the address changed ${changed.join(', ')} — the audit measured a different view than it asked for`] : []),
+      ];
     })(),
     ...(r.text < 24 ? [`the page holds ${r.text} characters of text — it rendered nothing, or only its loading state`] : []),
     ...r.sideways.map((x) => 'sideways: ' + x),

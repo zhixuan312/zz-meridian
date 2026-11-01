@@ -48,7 +48,7 @@ const flag = (k: string) => { const i = args.indexOf(k); return i >= 0 ? (args.s
 // The routes meant to answer not-found (scripts/lib/answered.ts): any other route that answers an error is refused.
 const MISSING = missingRoutes(['--missing', opt('--missing', '')]);
 const presses: string[] = [];
-for (let i = args.indexOf('--press'); i >= 0; i = args.indexOf('--press')) presses.push(args.splice(i, 2)[1]);
+for (let i = args.indexOf('--press'); i >= 0; i = args.indexOf('--press')) presses.push(opt('--press', ''));
 const base = opt('--base', process.env.BASE ?? 'http://localhost:3100');
 const widths = opt('--width', '1440').split(',').map(Number);
 const themes = opt('--theme', 'light').split(',') as ('light' | 'dark')[];

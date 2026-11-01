@@ -82,6 +82,8 @@ The copied-command regression needs a POSIX shell and `curl`. It runs the genera
 
 Browser checks accept a Chrome executable through `CHROME`, including official `chrome-headless-shell` for unattended runners. Downloads are explicitly directed through the browser protocol into each temporary profile's own `Downloads`, never the user's default folder.
 
+The audit preserves each requested query key's complete ordered value list, including repeated values; an address with the same key and a different value is a different view. Each rail route has exactly one navigation check: duplicate mappings fail even outside the selected smoke routes. The keyboard walk must return to its first stop in both directions; exhausting its walk or repeating a later stop is not a pass. Screenshot `--press` flags each require a control name before the next option. The sample's workspace journey selects existing request details by excluding `missingRoutes`, not by interpreting record names.
+
 ## Rules
 
 - **Behavior, not pins**: assert user-visible meaning, transitions, boundaries and errors, not source snippets, prose, utility classes, incidental defaults, wiring or byte copies. Remove incidental pins rather than repinning them; retain meaningful behavior, accessibility, security, architecture and planted-validator cases. A removed pin never clears an observable failure: prove the running behavior and generated artifacts.

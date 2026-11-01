@@ -316,7 +316,7 @@ const TICKETS = '/operations-tickets';
 const SETTINGS = '/settings';
 const MEMBERS = '/members';
 const ATLAS = nav.flatMap((g) => g.items).find((i) => i.href === '/system' || i.href.startsWith('/system/'))?.href ?? null;
-const detail = config.detailRoutes.find((r) => /^\/requests\/[^/]+$/.test(r) && !r.includes('missing'));
+export const requestDetail = config.detailRoutes.find((r) => /^\/requests\/[^/]+$/.test(r) && !config.missingRoutes?.includes(r));
 const CUSTOMERS = '/customers';
 /** A customer's id is its name in lower case with dashes between the words. */
 const slug = (name: string) => name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
@@ -544,9 +544,9 @@ if (import.meta.main) {
       quiet(b, 'the second browser');
     }, () => [a]);
 
-    await step("a request's address opened directly lands in Business", detail ? missing(REQUESTS) : 'verify.config.ts names no request detail route', async () => {
-      await go(a, 'member', detail!);
-      await settle(a, 'member', detail!, 'business');
+    await step("a request's address opened directly lands in Business", requestDetail ? missing(REQUESTS) : 'verify.config.ts names no request detail route', async () => {
+      await go(a, 'member', requestDetail!);
+      await settle(a, 'member', requestDetail!, 'business');
       const heading = await until('the page\'s heading', () => ask<string>(a, `const h = document.querySelector('main h1, h1'); return h ? text(h) : '';`));
       return `("${heading}")`;
     }, () => [a]);

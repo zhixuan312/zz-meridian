@@ -28,6 +28,8 @@ const server = http.createServer((req, res) => {
   // address by the time anything is measured — the state the rules are about, and not one a page can arrange itself.
   if (pathname === '/moved-page') { res.writeHead(302, { location: '/moved-page-now' }).end(); return; }
   if (pathname === '/drops-query' && search) { res.writeHead(302, { location: pathname }).end(); return; }
+  if (pathname === '/changes-query' && search !== 'view=default') { res.writeHead(302, { location: pathname + '?view=default' }).end(); return; }
+  if (pathname === '/drops-query-value' && search !== 'view=all') { res.writeHead(302, { location: pathname + '?view=all' }).end(); return; }
   // A link that leads nowhere, for the presses' relative-link case.
   if (pathname.startsWith('/gone/')) { res.writeHead(404, { 'content-type': 'text/html; charset=utf-8' }).end(CLEAN); return; }
   const html = ALL[pathname] ?? CLEAN;

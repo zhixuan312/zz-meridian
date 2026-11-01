@@ -106,6 +106,9 @@ Every page has an `h1`, `lang="en"`, a `main`, an opaque ground and controls of 
 | `/hangs` | Blocks its main thread for 40 s at every width, past the 30 s a protocol command is given: the presses and the keyboard walk name it and go on |
 | `/keyboard-hidden` | A link under a bar fixed over the top of the page. `-fixed` starts the content below the bar |
 | `/keyboard-reverse` | Shift+Tab from the last control jumps to the first, past the middle one. `-fixed` leaves the order alone |
+| `/keyboard-exhausted` | Reaches both controls, then blurs focus and prevents every later Tab. The forward walk must fail, not pass without a reverse walk. `-fixed` returns normally |
+| `/keyboard-trapped` | Reaches both controls, then Tab stays on the last one: repeating a later stop is not a completed walk |
+| `/keyboard-reverse-exhausted` | Shift+Tab visits the expected reverse stops, then blurs focus forever before returning to the first stop: a matching partial order is not a completed reverse walk |
 | `/keyboard-skip-link` | A skip link (`a[href="#content"]`) that is the second stop, after a Menu button. `-fixed` puts it first |
 | `/keyboard-control-gone` | A control that removes itself when it takes focus. `-fixed` changes its label and stays |
 | `/vitals-late-paint` | The largest text painted 3.4 s after load. `-fixed` paints it with the page |
@@ -114,6 +117,8 @@ Every page has an `h1`, `lang="en"`, a `main`, an opaque ground and controls of 
 | `/vitals-shifts-fixed` | `/deep-shifts` with the banner's space held from the start |
 | `/moved-page` | The server answers it with a 302 to `/moved-page-now`, so the audit measured a page it did not ask for |
 | `/drops-query` | Asked for as `/drops-query?view=all`, answered with a 302 to the bare path: the address came back without its view |
+| `/changes-query` | Redirects to `?view=default`: asked for `?view=all`, the same key now selects another view (fails); asked for `?view=default`, it passes |
+| `/drops-query-value` | Redirects to `?view=all`: asked for `?view=all&view=recent`, one repeated value is lost (fails). `/clean?view=all&view=recent` preserves both (passes) |
 | `/page-error` | The page throws while it renders, and nothing catches it |
 | `/console-error` | The page reports a failure itself, through `console.error` |
 | `/deep-hangs` | Under 500 px the page blocks its own main thread for 40 s, past the 30 s a protocol command is given: the audit must name this page as one it could not measure and go on to the next, instead of ending the run |

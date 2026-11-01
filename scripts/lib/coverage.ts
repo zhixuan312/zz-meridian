@@ -91,12 +91,19 @@ export function resolveCoverage(
   const errors: string[] = [];
   const warnings: string[] = [];
   const valid = new Set<string>();
+  const mapped = new Set<string>();
+  const duplicates = new Set<string>();
   for (const check of checks) {
     const problems = mappingErrors(check, known);
     errors.push(...problems);
+    if (mapped.has(check.path)) {
+      if (!duplicates.has(check.path)) errors.push(`${check.path}: more than one navigation check is configured; each rail route must have exactly one`);
+      duplicates.add(check.path);
+    }
+    mapped.add(check.path);
     if (!problems.length) valid.add(check.path);
   }
-  const mapped = new Set(checks.map((c) => c.path));
+  for (const path of duplicates) valid.delete(path);
   const out = routes.map((path) => {
     const state = valid.has(path) ? 'configured' : 'not-configured';
     if (!mapped.has(path)) {

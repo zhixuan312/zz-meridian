@@ -27,6 +27,11 @@ Every release of ZZ Meridian, newest first. Versions follow semver: a removed or
 - **Payloads exclude nested environment files.** Tracked `.env*` files are excluded at every depth while exact `.env.example` templates remain distributable.
 - **Adoption raises insufficient supported dependency floors.** Required minor and patch floors are compared as well as majors, preserving the existing dependency section, newer requirements and custom sources.
 - **Adoption reports both type stages truthfully.** A failed route-type generation cannot be described as passing merely because `tsc` succeeds; adoption retains its documented best-effort exit behavior.
+- **The browser audit preserves requested query values.** Repeated values and their order are checked, not merely the presence of each query key.
+- **Keyboard walks must close in both directions.** Exhausting a walk or repeating a later stop is a failure rather than evidence that Tab returned to its first control.
+- **Navigation mappings cannot silently duplicate a route.** Duplicate checks fail even when their route is outside the selected smoke subset.
+- **Every screenshot press option requires a control name.** Missing values are refused before browser launch instead of consuming another option.
+- **Workspace journeys distinguish declared missing request routes.** A legitimate record whose id contains `missing` remains a real detail destination.
 - **Adoption preserves punctuation in TypeScript configuration strings.** Removing JSONC trailing commas also removed commas before `]` or `}` inside string keys and values, changing aliases, paths and plugin options. Only commas outside strings are removed.
 - **Derived answers stay within the caller's full access scope.** Cached and in-flight builds are partitioned by tenant, subject and authorization identity. Every reader checks its own source authorization before joining a build; a concurrent denial cannot inherit another reader's permission.
 - **Untrusted assistant context cannot reconstruct wrapper tags.** Page text, view context and product briefs escape markup linearly instead of splicing tag fragments back together. This preserves their data boundary; it does not replace the assistant's authorization and proposal rules.

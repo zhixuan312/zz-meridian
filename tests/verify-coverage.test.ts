@@ -38,6 +38,16 @@ describe('coverage', () => {
     const unknown = { ...check('/requests'), probe: 'delete' as never };
     expect(resolveCoverage('default', ['/requests'], [unknown]).errors.length).toBeGreaterThan(0);
   });
+  it('refuses duplicate mappings in every mode, including mappings outside the smoke selection', () => {
+    for (const mode of ['default', 'full', 'perf'] as const) {
+      const c = resolveCoverage(mode, ['/requests'], [check('/requests'), check('/requests')]);
+      expect(c.errors).toEqual([expect.stringContaining('/requests: more than one navigation check')]);
+      expect(c.routes).toEqual([{ path: '/requests', data: 'not-configured', interaction: 'not-configured' }]);
+      const smoke = resolveCoverage(mode, ['/'], [check('/'), check('/requests'), { ...check('/requests'), controlSelector: '#another' }], nav);
+      expect(smoke.errors).toEqual([expect.stringContaining('/requests: more than one navigation check')]);
+      expect(smoke.routes).toEqual([{ path: '/', data: 'configured', interaction: 'configured' }]);
+    }
+  });
 });
 
 describe('a rule that judged nothing is named, never read as a pass', () => {
