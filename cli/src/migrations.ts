@@ -614,6 +614,14 @@ export const RELEASE_MIGRATIONS: ReleaseMigration[] = [
     checks: GATE_AND_BUILD,
   },
   {
+    id: 'env-reset-before-each',
+    since: '0.29.0',
+    applies: (root) => matching(root, (rel, src) => /\.test\.[cm]?[jt]sx?$/.test(rel) && setsEnvInBeforeAll(src)),
+    summary: '`tests/setup.ts` puts `process.env` back before every test, so a value a test file sets in `beforeAll` is gone when its first test runs.',
+    instructions: "Since 0.29.0 the shipped `tests/setup.ts` restores the environment before each test, so a stub in one file can no longer reach the file beside it. A test file of your own that sets `process.env` (or calls `vi.stubEnv`) inside `beforeAll` loses the value before its first test, and fails with no reason given. In each file listed, keep the costly start (a fake backend, a server) in `beforeAll` and keep what it returns in a variable, then set the environment from it in a `beforeEach`: `beforeEach(() => { process.env.API_URL = started.base; })`.",
+    checks: ['gate'],
+  },
+  {
     id: 'direct-query-escape',
     since: '0.30.0',
     applies: (root) => matching(root, (rel, src) => (appPath(rel) !== null || /^src\/(?:logic|views|lib)\//.test(rel)) && SOURCE.test(rel) && /\.query\s*\(/.test(src.replace(/\/\/[^\n]*/g, '')) && !/allow-no-direct-query:/.test(src)),
@@ -644,6 +652,14 @@ export const RELEASE_MIGRATIONS: ReleaseMigration[] = [
     summary: 'A route that answers an error or draws the not-found screen fails every browser suite unless it is declared in missingRoutes.',
     instructions: 'The audit, the presses, the keyboard walk, the vitals and `scripts/shot.ts` now read what a route answered: one that answered an error status or draws the not-found screen (`[data-missing-page]`) was measured as that screen and not as the route, so it fails. In `scripts/verify.config.ts`, which is yours, move every entry of `detailRoutes` that names a record that does not exist (the sample\'s `/requests/req_missing` and `/customers/missing`) into a new `missingRoutes` list; each must be the not-found screen, and one that renders a page fails. A not-found screen of your own carries `data-missing-page` on its root, as `MissingPage` does: inside a streamed shell a missing record has already answered 200.',
     checks: ['verify'],
+  },
+  {
+    id: 'computed-series-slot',
+    since: '0.32.0',
+    applies: (root) => matching(root, (rel, src) => SOURCE.test(rel) && importsOf(rel, src).some(({ from }) => SLOT_CHARTS.includes(from)) && computesSlot(src)),
+    summary: "A chart's `color` is a palette slot, `SeriesSlot` (1 to 6), where it took any number: a computed one fails the type check.",
+    instructions: "Since 0.32.0 `ColumnPart`, a Composition bar's `Part`, `Sparkline` and a Trend chart's series take `color` as a `SeriesSlot`, `1 | 2 | 3 | 4 | 5 | 6` from `src/components/charts/scale.ts`, because a slot past six named a colour no theme defines and drew nothing. A file of your own that computes the slot (`color: i + 1`) fails `tsc` at `--finalize`. In each file listed, type the value as a `SeriesSlot` where it is computed, or fold the parts past the palette into one \"Other\" part, as the Composition bar does past six. A file that already types it so has nothing to change.",
+    checks: ['gate'],
   },
   {
     id: 'use-size-callback-ref',
@@ -685,6 +701,14 @@ export const RELEASE_MIGRATIONS: ReleaseMigration[] = [
     summary: "The release's sample differs from team-owned files, while its shipped tests are managed. Review those differences before finalizing.",
     instructions: "A project `create` made holds the template's sample (its pages, views, data, figures, their helpers and the demo gate in `proxy.ts`) as its own files, which an update never touches, while the shipped tests are Meridian's and arrive with it. The update reports differing sample files on every upgrade, even when a previous release already reported this migration. Each named file differs from the release's copy, or is a sample module introduced after your project's recorded version; the gate may depend on its changes. Write the release's copies into a scratch folder with `npx zz-meridian@<the version you are updating to> create <scratch folder> --no-install`. For a file your team never changed, copy the release's file over it, and copy each module the release added. For a file your team made its own, preserve the intended product behavior while updating its contracts and meaningful behavior and security tests. Keep coverage for functionality the product still exposes; do not delete failures merely to finalize. Retire tests with removed sample features, or when they only pin wording or implementation details, and record intentionally deleted managed tests in `.meridian/keep.json`. A sample file your team deleted after its introduction is not named.",
     checks: GATE_AND_BUILD,
+  },
+  {
+    id: 'proposal-approve-required',
+    since: '0.37.0',
+    applies: (root) => matching(root, (rel, src) => SOURCE.test(rel) && importsOf(rel, src).some(({ from }) => from === 'src/components/patterns/proposal') && tags(src, 'Proposal').some((t) => !/\bstate\s*=/.test(t) && !/\bonApprove\s*=/.test(t) && !/\{\s*\.\.\./.test(t))),
+    summary: 'An uncontrolled `Proposal` requires `onApprove`: without it, Approve claimed Applied for a change nothing ran.',
+    instructions: 'Since 0.37.0 `src/components/patterns/proposal/index.tsx` types `onApprove` as required when no `state` is passed, so a `<Proposal>` of your own without either fails `tsc` at `--finalize`. In each file listed, pass the function that runs the change as `onApprove`, or pass `state` and own the card\'s states yourself. A card that only shows a change it cannot run is not a proposal: show it in a Card instead.',
+    checks: ['gate'],
   },
 ];
 
@@ -893,6 +917,32 @@ function navItemObjects(nav: string): string[] {
     }
   }
   return found;
+}
+
+/** The chart cards whose `color` is a `SeriesSlot` since 0.32.0. */
+const SLOT_CHARTS = ['src/components/charts/column-chart', 'src/components/charts/column-chart/grouped', 'src/components/charts/composition-bar', 'src/components/charts/sparkline', 'src/components/charts/trend-chart'];
+
+/**
+ * Whether a file computes a chart colour by arithmetic (`color: i + 1`) without typing it `SeriesSlot`: the shape the
+ * 0.32.0 narrowing fails. A slot held in a variable typed `number` is not read; a named colour or a literal slot passes.
+ */
+function computesSlot(src: string): boolean {
+  return [...src.matchAll(/\bcolor\s*(?::|=\s*\{)([^,}\n]*)/g)].some((m) => /[-+*%]\s*\d|\d\s*[-+*%]/.test(m[1]!) && !/\bas\s+SeriesSlot\b/.test(m[1]!));
+}
+
+/**
+ * Whether a test file sets the environment inside a `beforeAll`: the hook's own parentheses, read by their nesting, hold
+ * an assignment to `process.env` or a `vi.stubEnv` call. Strings are not told from code; a missed shape is a test
+ * that fails at `--finalize`, a false one a line to read.
+ */
+function setsEnvInBeforeAll(src: string): boolean {
+  for (const m of src.matchAll(/\bbeforeAll\s*\(/g)) {
+    let depth = 1;
+    let i = m.index! + m[0].length;
+    for (; i < src.length && depth > 0; i++) depth += src[i] === '(' ? 1 : src[i] === ')' ? -1 : 0;
+    if (/\bprocess\.env(?:\.\w+|\[[^\]]+\])\s*=(?!=)|\bvi\.stubEnv\s*\(/.test(src.slice(m.index!, i))) return true;
+  }
+  return false;
 }
 
 /** The project's own nav, with any item still missing the `needs` that 0.13.0 requires of it. */

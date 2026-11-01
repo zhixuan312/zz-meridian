@@ -731,3 +731,33 @@ describe('what the migrations read of a team file', () => {
   });
 });
 
+
+describe('the env, series-slot and proposal migrations', () => {
+  it('finds a test that sets the environment in beforeAll, and leaves one that sets it in beforeEach (#106)', () => {
+    const m = byId('env-reset-before-each');
+    const inAll = "beforeAll(async () => {\n  const started = await startFakeBackend();\n  process.env.API_URL = started.base;\n});\n";
+    expect(m.applies(project({ 'tests/orders.test.ts': inAll }), '0.28.0')).toEqual(['tests/orders.test.ts']);
+    expect(m.applies(project({ 'tests/orders.test.ts': "beforeAll(() => { vi.stubEnv('API_URL', 'x'); });\n" }), '0.28.0')).toEqual(['tests/orders.test.ts']);
+    expect(m.applies(project({ 'tests/orders.test.ts': "beforeAll(async () => { started = await start(); });\nbeforeEach(() => { process.env.API_URL = started.base; });\n" }), '0.28.0')).toBeNull();
+    expect(m.applies(project({ 'tests/orders.test.ts': "beforeAll(() => { expect(process.env.API_URL === 'x').toBe(true); });\n" }), '0.28.0')).toBeNull();
+  });
+
+  it('finds a computed chart colour, and leaves a literal slot (#104)', () => {
+    const m = byId('computed-series-slot');
+    const page = (body: string) => project({ 'app/(dash)/mix/page.tsx': `import type { ColumnPart } from '@/components/charts/column-chart';\n${body}\n` });
+    expect(m.applies(page("const parts: ColumnPart[] = labels.map((l, i) => ({ key: l, label: l, color: i + 1 }));"), '0.31.0')).toEqual(['app/(dash)/mix/page.tsx']);
+    expect(m.applies(page("const parts: ColumnPart[] = [{ key: 'a', label: 'A', color: 2 }, { key: 'b', label: 'B' }];"), '0.31.0')).toBeNull();
+    expect(m.applies(project({ 'app/(dash)/mix/page.tsx': 'const parts = labels.map((l, i) => ({ color: i + 1 }));\n' }), '0.31.0')).toBeNull();
+    expect(m.applies(page("const parts = sold.map((s, i) => ({ color: i < 5 ? ((i + 1) as SeriesSlot) : 'neutral' }));"), '0.31.0')).toBeNull();
+    expect(releaseMigrations(page('const p = { color: (i % 6) + 1 };'), '0.28.0', '0.36.0').map((x) => x.id)).toContain('computed-series-slot');
+  });
+
+  it('finds an uncontrolled Proposal without onApprove, and leaves controlled and wired ones (0.37.0)', () => {
+    const m = byId('proposal-approve-required');
+    const view = (tag: string) => project({ 'src/views/change.tsx': `import { Proposal } from '@/components/patterns/proposal';\nexport const V = () => ${tag};\n` });
+    expect(m.applies(view('<Proposal title="Rename" changes={changes} />'), '0.36.0')).toEqual(['src/views/change.tsx']);
+    expect(m.applies(view('<Proposal title="Rename" changes={changes} onApprove={() => run()} />'), '0.36.0')).toBeNull();
+    expect(m.applies(view('<Proposal title="Rename" changes={changes} state="applied" />'), '0.36.0')).toBeNull();
+    expect(m.applies(view('<Proposal {...card} />'), '0.36.0')).toBeNull();
+  });
+});
