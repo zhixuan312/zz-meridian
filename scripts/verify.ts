@@ -279,11 +279,15 @@ function unsafeBackend(): { reason: string; fix: string } | null {
   }
   const fromFiles = envFiles();
   const named = ['DATABASE_URL', ...(config.dataUrls ?? [])];
-  const offenders = unsafeDataUrls(Object.fromEntries(named.map((name) => [name, process.env[name] ?? fromFiles[name] ?? ''])));
+  const offenders = unsafeDataUrls(Object.fromEntries(named.map((name) => [name, process.env[name] ?? fromFiles[name] ?? ''])), {
+    PGHOST: process.env.PGHOST ?? fromFiles.PGHOST,
+    PGHOSTADDR: process.env.PGHOSTADDR ?? fromFiles.PGHOSTADDR,
+    PGSERVICE: process.env.PGSERVICE ?? fromFiles.PGSERVICE,
+  });
   if (offenders.length && !config.allowRemoteData) {
     return {
-      reason: `data URL not on this machine: ${offenders.join(', ')}`,
-      fix: `a data URL is not on this machine (${offenders.join(', ')}): point it at a local copy for the run, or set allowRemoteData: true in scripts/verify.config.ts when you know what the presses reach`,
+      reason: `data URL not proven local: ${offenders.join(', ')}`,
+      fix: `a data destination is not proven local (${offenders.join(', ')}): use an explicit loopback address or an owned local socket; forward an owned container to loopback rather than trusting its DNS name`,
     };
   }
   return null;

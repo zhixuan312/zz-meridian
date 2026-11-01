@@ -23,6 +23,14 @@ Size sets the cost, so it sets when a check can run: the smaller it is, the earl
 
 Type sets whether a run needs a quiet machine: a performance check measures the machine as well as the page, so only a performance check needs one. Regression is not a type: it is why a change is checked, by the complete and the timed tier together.
 
+### Safe data destinations
+
+Browser verification can change records. Its data-URL guard provisionally fails closed: only a local file or explicit Unix socket, `localhost`, or a validated loopback IP proves a local destination. A missing network host is not proof: PostgreSQL may inherit `PGHOST`, `PGHOSTADDR`, or a connection service. A single-label DNS name such as `db` or `postgres` is not proof of an owned container; DNS search domains can resolve it elsewhere. A `127`-prefixed domain is not a loopback IP, and `0.0.0.0` is not a loopback destination.
+
+For an owned disposable container, publish or forward its database port to `127.0.0.1` and use that loopback address in the verification environment. Check that the forward reaches the disposable store, not a production tunnel. Do not add a broad DNS/container allowlist or set `allowRemoteData` merely to bypass this refusal. That explicit override remains for a run whose owner has independently established what every press reaches.
+
+Only `postgres://` and `postgresql://` URLs use PostgreSQL `host`/`hostaddr` query options. Drivers differ: node-postgres ignores `hostaddr`, while libpq can dial it. Both effective destinations must therefore prove local; a loopback address cannot hide a remote host. Every failover destination is checked, including hosts after a Unix socket. Abstract-socket names beginning with `@` are not portable proof of local transport. Defaults use the same shell-over-env-file precedence as verification. An uninspected service needs an explicit local URI `hostaddr` and otherwise local host candidates, since service settings precede environment defaults. See [libpq connection parameters](https://www.postgresql.org/docs/current/libpq-connect.html). Other schemes' query options do not replace their authority. Hostless file URLs and genuine IPv4/IPv6 loopback forms remain supported.
+
 ## The tiers
 
 A tier is when a check runs, ordered by speed and scope. The first four are one command each. The change tier adds to the quick one and the complete tier to the change one; the timed tier stands beside the complete one, and the two together are the whole standard. In any combination of them, the gate and the build run once.

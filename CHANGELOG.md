@@ -11,6 +11,7 @@ Every release of ZZ Meridian, newest first. Versions follow semver: a removed or
 
 ### Fixed
 
+- **Verification proves every data destination local before pressing controls.** PostgreSQL authority, query overrides, environment defaults, services and every failover host are considered; uninspected destinations fail closed. Other drivers do not inherit libpq query semantics, malformed loopback lookalikes are refused, and owned containers use explicit loopback forwards.
 - **Adoption preserves punctuation in TypeScript configuration strings.** Removing JSONC trailing commas also removed commas before `]` or `}` inside string keys and values, changing aliases, paths and plugin options. Only commas outside strings are removed.
 - **Derived answers stay within the caller's full access scope.** Cached and in-flight builds are partitioned by tenant, subject and authorization identity. Every reader checks its own source authorization before joining a build; a concurrent denial cannot inherit another reader's permission.
 - **Untrusted assistant context cannot reconstruct wrapper tags.** Page text, view context and product briefs escape markup linearly instead of splicing tag fragments back together. This preserves their data boundary; it does not replace the assistant's authorization and proposal rules.

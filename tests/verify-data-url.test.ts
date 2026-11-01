@@ -4,9 +4,8 @@ import { dataHost, isLocalHost, unsafeDataUrls } from '../scripts/lib/data-url.t
 
 /**
  * `scripts/verify.ts` refuses a data URL that is not on this machine before it builds anything, because the presses and
- * the walk-throughs write. A value it cannot read the host of used to be read as *this* machine: `new URL()` gives an
- * empty hostname for a value written without a scheme, and an empty host is a name with no dot, which is local. A
- * remote DSN was therefore judged local and the presses would have run against it.
+ * the walk-throughs write. An unreadable host, an unproven DNS name or another driver's query options must not make a
+ * remote backend appear local.
  */
 describe('where a data URL points', () => {
   it('reads the authority of a value written without a scheme', () => {
@@ -33,7 +32,7 @@ describe('where a data URL points', () => {
   });
 
   it('still calls a backend on this machine local, however it is written', () => {
-    for (const value of ['localhost:5432/app', 'postgres://u:p@localhost:5432/app', 'postgres:5432', 'postgres://localhost/app', '127.0.0.1:5432']) {
+    for (const value of ['localhost:5432/app', 'postgres://u:p@localhost:5432/app', 'postgres://localhost/app', '127.0.0.1:5432']) {
       const host = dataHost(value);
       expect(host, value).not.toBeNull();
       expect(isLocalHost(host!), value).toBe(true);
@@ -55,7 +54,7 @@ describe('where a data URL points', () => {
     expect(unsafeDataUrls({ DATABASE_URL: 'user:pass@db.prod.example.com:5432/app' })).toEqual(['DATABASE_URL → db.prod.example.com']);
     // What a local run looks like, and what names no backend at all.
     expect(unsafeDataUrls({ DATABASE_URL: 'postgres://u:p@localhost:5432/app' })).toEqual([]);
-    expect(unsafeDataUrls({ DATABASE_URL: '', OTHER: 'postgres:5432' })).toEqual([]);
+    expect(unsafeDataUrls({ DATABASE_URL: '', OTHER: 'localhost:5432' })).toEqual([]);
     // And a run that knows what its presses reach says so in the config, never here.
     expect(unsafeDataUrls({ DATABASE_URL: 'db.prod.example.com/app' })).toEqual(['DATABASE_URL → db.prod.example.com']);
   });
@@ -73,8 +72,7 @@ describe('where a data URL points', () => {
   });
 
   it('reads the host of a schemeless value whose password holds a / or a #', () => {
-    // Cutting at the path before the credentials go cuts inside the password: the host read as `user:pa`, a name with no
-    // dot, which `isLocalHost` calls local — a remote backend the gate let through.
+    // Cutting at the path before the credentials go cuts inside the password rather than reading the actual host.
     expect(dataHost('user:pa/ss@db.prod.example.com:5432/app')).toBe('db.prod.example.com');
     expect(dataHost('user:pa#ss@db.prod.example.com:5432/app')).toBe('db.prod.example.com');
     expect(dataHost('user:p@ss@db.prod.example.com:5432/app')).toBe('db.prod.example.com');
@@ -86,7 +84,7 @@ describe('where a data URL points', () => {
   it('calls a value that names a file of this machine local, however its scheme is written', () => {
     // `file:./dev.db` is Prisma's SQLite default. Reading it by hand gave `file:.` — a name with a dot, so remote — and
     // an adopter's `verify --full` was refused with a reason that says nothing about their machine.
-    for (const value of ['file:./dev.db', 'file:/var/data/app.db', 'sqlite:///tmp/app.db', 'sqlite:./x', 'postgres:///app']) {
+    for (const value of ['file:./dev.db', 'file:/var/data/app.db', 'sqlite:///tmp/app.db', 'sqlite:./x']) {
       expect(dataHost(value), value).not.toBeNull();
       expect(isLocalHost(dataHost(value)!), value).toBe(true);
       expect(unsafeDataUrls({ DATABASE_URL: value }), value).toEqual([]);
@@ -107,8 +105,8 @@ describe('where a data URL points', () => {
     // first would call this remote `localhost` — and the other way round is this machine, which is what it dials.
     expect(unsafeDataUrls({ DATABASE_URL: 'postgres:///app?host=localhost&host=db.prod.example.com' })).toEqual(['DATABASE_URL → db.prod.example.com']);
     expect(unsafeDataUrls({ DATABASE_URL: 'postgres:///app?host=db.prod.example.com&host=localhost' })).toEqual([]);
-    // A path is a Unix socket, and a query naming no host at all names this machine.
-    for (const value of ['postgres:///app?host=/var/run/postgresql', 'postgres:///app?host=localhost', 'postgres:///app', 'postgres:///app?host=']) {
+    // An explicit Unix socket or loopback host is local; missing or empty network hosts need connection defaults.
+    for (const value of ['postgres:///app?host=/var/run/postgresql', 'postgres:///app?host=localhost']) {
       expect(unsafeDataUrls({ DATABASE_URL: value }), value).toEqual([]);
     }
   });
@@ -125,10 +123,73 @@ describe('where a data URL points', () => {
     }
   });
 
-  it('still calls a container name local and a public name remote', () => {
-    // The rule the two above lean on: a name with no dot cannot resolve outside this machine's own network.
-    expect(isLocalHost(dataHost('postgres://postgres@db:5432/app')!)).toBe(true);
-    expect(isLocalHost(dataHost('user:pa#ss@prod-db:5432/app')!)).toBe(true);
-    expect(isLocalHost(dataHost('postgres://u:p@db.prod.example.com/app')!)).toBe(false);
+  it('refuses unproven DNS names and strings that only resemble loopback literals', () => {
+    for (const host of ['db', 'prod-db', 'postgres', '127.prod.example', '127.0.0.1.example', '127.999.1.1', '0.0.0.0']) {
+      expect(isLocalHost(host), host).toBe(false);
+      expect(unsafeDataUrls({ DATABASE_URL: `postgres://${host}/app` }), host).toHaveLength(1);
+    }
+  });
+
+  it('accepts genuine IPv4 and IPv6 loopback literals, including mapped and expanded forms', () => {
+    for (const host of ['127.0.0.1', '127.25.1.2', '::1', '0:0:0:0:0:0:0:1', '::ffff:127.0.0.1', '::ffff:7f00:1']) {
+      expect(isLocalHost(host), host).toBe(true);
+    }
+    for (const host of ['::ffff:128.0.0.1', '::ffff:127.invalid', '2001:db8::1']) expect(isLocalHost(host), host).toBe(false);
+  });
+
+  it('does not give non-PostgreSQL query options libpq authority-override semantics', () => {
+    for (const scheme of ['mysql', 'redis', 'mongodb', 'libsql', 'file']) {
+      for (const query of ['host=localhost', 'hostaddr=127.0.0.1']) {
+        const value = `${scheme}://db.prod.example/app?${query}`;
+        expect(dataHost(value), value).toBe('db.prod.example');
+        expect(unsafeDataUrls({ DATABASE_URL: value }), value).toEqual(['DATABASE_URL → db.prod.example']);
+      }
+    }
+  });
+  it('checks remote failover hosts even when a Unix socket is listed first', () => {
+    expect(unsafeDataUrls({ DATABASE_URL: 'postgres://localhost/app?host=%2Ftmp%2Cprod.example' }))
+      .toEqual(['DATABASE_URL → prod.example']);
+    expect(unsafeDataUrls({ DATABASE_URL: 'postgres://prod.example/app?host=%2Ftmp%2C%2Fvar%2Frun%2Fpostgresql' }))
+      .toEqual([]);
+  });
+
+  it('does not treat an environment-default network host as proven local', () => {
+    for (const value of ['postgres:///app', 'postgres://localhost/app?host=', 'redis:///0']) {
+      expect(dataHost(value), value).toBeNull();
+    }
+  });
+
+  it.each(['[localhost]', '127.0.0.1]', '::1%lo0'])('refuses an unproven host literal %s without throwing', (host) => {
+    expect(isLocalHost(host)).toBe(false);
+  });
+  it('uses PostgreSQL connection defaults without letting them hide a remote address', () => {
+    const remote = { PGHOSTADDR: '203.0.113.7' };
+    expect(dataHost('postgres://localhost/app', remote)).toBe('203.0.113.7');
+    expect(unsafeDataUrls({ DATABASE_URL: 'postgres://localhost/app' }, remote))
+      .toEqual(['DATABASE_URL → 203.0.113.7']);
+    expect(dataHost('postgres://prod.example/app?hostaddr=127.0.0.1', remote)).toBe('prod.example');
+    expect(dataHost('postgres://localhost/app?hostaddr=127.0.0.1', remote)).toBe('127.0.0.1');
+    expect(dataHost('postgres:///app', { PGHOST: 'localhost' })).toBe('localhost');
+    expect(dataHost('postgres://localhost/app', { PGSERVICE: 'uninspected-service' })).toBeNull();
+  });
+  it('does not let environment fallback addresses hide an uninspected service', () => {
+    const defaults = { PGHOSTADDR: '127.0.0.1', PGSERVICE: 'uninspected-service' };
+    expect(dataHost('postgres://localhost/app', defaults)).toBeNull();
+    expect(dataHost('postgres://localhost/app?service=other', defaults)).toBeNull();
+    expect(dataHost('postgres://localhost/app?hostaddr=127.0.0.1', defaults)).toBe('127.0.0.1');
+  });
+  it.each([
+    ['postgres://203.0.113.7/app?hostaddr=127.0.0.1', {}, '203.0.113.7'],
+    ['postgres://localhost/app?host=prod.example&hostaddr=127.0.0.1', {}, 'prod.example'],
+    ['postgres:///app?hostaddr=127.0.0.1', { PGHOST: 'prod.example' }, 'prod.example'],
+  ])('does not let hostaddr hide the host used by drivers that ignore it: %s', (url, defaults, host) => {
+    expect(unsafeDataUrls({ DATABASE_URL: url }, defaults)).toEqual([`DATABASE_URL → ${host}`]);
+  });
+  it('refuses an empty host override even when a loopback hostaddr is supplied', () => {
+    expect(dataHost('postgres://prod.example/app?host=&hostaddr=127.0.0.1')).toBeNull();
+  });
+  it('does not classify an abstract-socket name as a portable local transport', () => {
+    expect(unsafeDataUrls({ DATABASE_URL: 'postgres:///app?host=%40owned-abstract' }))
+      .toEqual(['DATABASE_URL → @owned-abstract']);
   });
 });

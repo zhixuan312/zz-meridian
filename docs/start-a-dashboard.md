@@ -38,6 +38,8 @@ node scripts/contrast.ts   # every pair, every theme, your accent included
 
 If a pair fails, lower the chroma, or give the preset a lightness override for that theme (see `accent.jade.tokens.json`).
 
+The script names a new preset `brand` by default. `--accent-name Brand_2-blue` chooses another name using only ASCII letters, numbers, hyphens and underscores. The name becomes a filename, resolver key and configuration literal; empty names, paths and punctuation are refused before any files are changed. Product names and user names may still contain quoted text, and timezone values still use IANA names such as `Europe/London`.
+
 ## 4. Connect your data
 
 The standard for this step is `docs/data-layers.md`: the four layers between your database and the screen, the contract your backend answers, the seven direct reads, and the ordered path a project with its own API or tables follows to reach them.
