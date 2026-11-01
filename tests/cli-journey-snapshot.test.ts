@@ -3,11 +3,10 @@
 // 80 characters of each element, so an inline confirm at the end of a long row was a control that "changed nothing" (#52).
 import { expect, it } from 'vitest';
 import { DEEP_SOURCE } from '../scripts/lib/deep.ts';
-import { DEEP_MATCHES, SNAP } from '../scripts/lib/journey.ts';
+import { SNAP } from '../scripts/lib/journey.ts';
 
 it('counts a change past the 80th character of a matched element, and nothing else', () => {
   (0, eval)(DEEP_SOURCE);
-  (0, eval)(DEEP_MATCHES);
   const snap = (0, eval)(SNAP) as (selector: string) => string;
   document.body.innerHTML = `<table><tbody><tr><td>${'x'.repeat(116)}</td><td><button>Revoke</button></td></tr></tbody></table>`;
   const before = snap('tbody tr');

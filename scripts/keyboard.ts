@@ -25,10 +25,10 @@
  * — a CDP keyDown WITHOUT `text` does not activate a button at all, which reads as a dead control — and press by role,
  * not one key for everything.
  */
-import { answerProblem, DRAWS_NOT_FOUND, missingRoutes, NOT_FOUND_PROBE } from './lib/answered.ts';
+import { answerProblem, DRAWS_NOT_FOUND, missingRoutes } from './lib/answered.ts';
 import { launch } from './lib/chrome.ts';
 import { DEEP_SOURCE } from './lib/deep.ts';
-import { discover } from './lib/routes.ts';
+import { discover, NOT_FOUND_PROBE } from './lib/routes.ts';
 import { settle } from './lib/settle.ts';
 import { detailRoutes, personaCookie } from './lib/team-config.ts';
 import { holdArgs } from './lib/args.ts';
