@@ -104,6 +104,28 @@ describe('finalize', () => {
     expect(manifest(root).version).toBe('0.3.0');
   });
 
+  it.each([
+    ['replacement', ui('a'), 'a-edited-after-apply'],
+    ['addition', ui('e'), 'e-edited-after-apply'],
+    ['removal', ui('c'), 'c-recreated-after-apply'],
+  ])('does not finalize a changed automatic %s', (_kind, file, bytes) => {
+    const root = project();
+    start(ctx(root).c, opts);
+    resolveAll(root);
+    put(root, { [file]: bytes });
+    const commands: string[][] = [];
+    const done = ctx(root, { run: (_cmd, args) => { commands.push(args); return { status: 0, output: '' }; } });
+    expect(finalize(done.c, { verify: false })).toBe(2);
+    expect(done.lines.join('\n')).toContain(`${file}: changed after the update applied it`);
+    expect(commands).toEqual([]);
+    expect(read(root, file)).toBe(bytes);
+    expect(manifest(root).version).toBe('0.3.0');
+    expect(has(session(root), 'backup')).toBe(true);
+    if (Object.hasOwn(TARGET, file)) put(root, { [file]: TARGET[file] });
+    else fs.unlinkSync(path.join(root, file));
+    expect(finalize(ctx(root).c, { verify: false })).toBe(0);
+  });
+
   it('keeps the session when a check fails, and completes on the retry', () => {
     const root = project();
     start(ctx(root).c, opts);

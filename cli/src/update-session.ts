@@ -270,7 +270,12 @@ export function unresolved(j: UpdateJournal, resolutions: Resolution[], hashOf: 
   const out: string[] = [];
   if (planHash(j) !== j.planHash) out.push(`${j.id}: the plan was edited (its hash no longer matches state.json)`);
   for (const o of j.operations) {
-    if ((o.action === 'write' || o.action === 'delete') && !o.applied) out.push(`${o.path}: ${o.action} was never applied`);
+    // Shared package/agent/lockfile edits stay the team's; only automatic managed results are fixed by this plan.
+    if (o.action !== 'write' && o.action !== 'delete') continue;
+    if (!o.applied) out.push(`${o.path}: ${o.action} was never applied`);
+    else if (o.disposition !== 'team-preserved' && hashOf(o.path) !== o.appliedHash) {
+      out.push(`${o.path}: changed after the update applied it; restore the planned ${o.action === 'delete' ? 'absence' : 'new/ copy'} before finalizing (save deliberate edits separately before aborting and restarting to review them)`);
+    }
   }
 
   const byId = new Map<string, Resolution[]>();

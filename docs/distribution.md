@@ -129,9 +129,13 @@ three edits named below. It needs a project that adopted or created Meridian 0.3
    reason, and the SHA-256 each named file has now. While the session is open, `node scripts/check.ts` (and so the gate)
    fails and names it.
 5. **Finalize.** `npx zz-meridian@<version> update --finalize` (the version named in `MERGE.md`) checks that every
-   item has one current resolution and that the installed dependencies match the plan, then runs the project's gate and
-   one `next build` in place. It compares every protected input before and after each, so a check that rewrites source
-   fails it. Only when both pass and nothing changed does it write the target manifest, atomically, and archive the
+   item has one current resolution, automatically written or removed managed files still match what the update applied,
+   and the installed dependencies match the plan, then runs the project's gate and one `next build` in place. A later
+   edit to an automatic managed write must be restored from the session's `new/` copy; a removed file must remain absent.
+   To have a deliberate edit reviewed in a new plan, save it separately, restore the planned bytes, abort, then reapply
+   it and restart. Shared team-owned files and kept files remain the team's. It compares every protected input before
+   and after each check, so a check that rewrites source fails it. Only when both pass and nothing changed does it
+   write the target manifest, atomically, and archive the
    session under `.meridian/history/<version>/<id>/`. It prints the stage times and says the browser checks did not run. `update --finalize --verify` runs the project's default `verify` once in place of the gate and the build, and prints and records its coverage line instead; the consumer smoke holds it to at most 30 s more than the adopted origin's plain finalize.
 6. **Resume.** `update --resume` continues an update that was interrupted, failed to apply or install, or was started
    with `--no-install`. It applies only what is still the recorded original, never overwrites a later edit, and ends as

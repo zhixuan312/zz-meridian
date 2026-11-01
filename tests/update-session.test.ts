@@ -1,11 +1,11 @@
 // @vitest-environment node
 import { describe, expect, it } from 'vitest';
 import {
-  keepProblems, parseJournal, parseKeep, parseResolutions, planHash, unresolved, verifiedRetirements, type Resolution, type UpdateJournal,
+  keepProblems, parseJournal, parseKeep, parseResolutions, planHash, unresolved, verifiedRetirements, type Hash, type Resolution, type UpdateJournal,
 } from '../scripts/lib/update-session.ts';
 
 const h = (c: string) => `sha256-${c.repeat(64)}` as const;
-const side = (hash: string | null) => ({ exists: hash !== null, hash });
+const side = (hash: Hash | null) => ({ exists: hash !== null, hash });
 const manifest = (version: string, files: Record<string, string>) => ({ version, route: 'adopt' as const, brand: { name: 'Acme' }, files });
 
 function journal(over: Partial<UpdateJournal> = {}): UpdateJournal {
@@ -79,6 +79,23 @@ describe('unresolved', () => {
     const j = journal();
     j.operations[0] = { ...j.operations[0], applied: false, appliedHash: null };
     expect(unresolved(j, resolved, hashOf).join('\n')).toMatch(/src\/a\.ts/);
+  });
+  it.each([h('9'), null])('reports an automatic managed write whose current hash is %s', (now) => {
+    const current = (p: string) => p === 'src/a.ts' ? now : hashOf(p);
+    expect(unresolved(journal(), resolved, current).join('\n')).toContain('src/a.ts: changed after the update applied it');
+  });
+  it('reports a recreated automatic removal, but accepts its planned absence', () => {
+    const j = journal();
+    j.operations.push({ path: 'src/deleted.ts', disposition: 'removed', action: 'delete', base: side(h('d')), ours: side(h('d')), target: side(null), applied: true, appliedHash: null });
+    j.planHash = planHash(j);
+    expect(unresolved(j, resolved, hashOf)).toEqual([]);
+    expect(unresolved(j, resolved, (p) => p === 'src/deleted.ts' ? h('9') : hashOf(p)).join('\n')).toContain('src/deleted.ts: changed after the update applied it');
+  });
+  it('allows later edits to shared team-owned writes and kept files', () => {
+    const j = journal();
+    j.operations.push({ path: 'package.json', disposition: 'team-preserved', action: 'write', base: side(h('a')), ours: side(h('a')), target: side(h('b')), applied: true, appliedHash: h('b') });
+    j.planHash = planHash(j);
+    expect(unresolved(j, resolved, (p) => p === 'src/gone.ts' ? h('9') : hashOf(p))).toEqual([]);
   });
   it('reports an edited plan', () => expect(unresolved(journal({ planHash: h('0') }), resolved, hashOf).join('\n')).toMatch(/plan/));
   it('sends an interrupted apply to resume', () => expect(unresolved(journal({ phase: 'applying' }), resolved, hashOf).join('\n')).toMatch(/resume/));
