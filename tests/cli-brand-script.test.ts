@@ -22,6 +22,39 @@ describe('scripts/brand.ts', () => {
     brand('--existing', '--hue', '25', '--chroma', '0.16');
     expect(read('src/lib/preferences.ts')).toBe(before);
   }, 120_000);
+  it('accepts a filename-safe custom accent name', () => {
+    brand('--existing', '--hue', '25', '--accent-name', 'Brand_2-blue');
+    expect(JSON.parse(read('tokens/accent.Brand_2-blue.tokens.json')).accent['accent-h'].$value).toBe(25);
+    expect(config().accent).toBe('Brand_2-blue');
+  }, 120_000);
+  it.each(['/../../../../escaped', '../escape', 'a/b', "owner's", '.', ''])('rejects unsafe accent id %j before any write', (id) => {
+    // Even the unfixed command can only escape into this test's own deep scratch parent.
+    const owned = fs.mkdtempSync(path.join(dir, 'unsafe-accent-'));
+    const deep = path.join(owned, 'a/b/c/project');
+    fs.mkdirSync(deep, { recursive: true });
+    for (const p of ['scripts/brand.ts', 'scripts/lib/args.ts', 'src/lib/color.ts', 'src/app.config.ts', 'package.json']) {
+      fs.mkdirSync(path.dirname(path.join(deep, p)), { recursive: true });
+      fs.copyFileSync(path.join(dir, p), path.join(deep, p));
+    }
+    fs.mkdirSync(path.join(deep, 'tokens'));
+    const before = fs.readFileSync(path.join(deep, 'src/app.config.ts'), 'utf8');
+    const packageBefore = fs.readFileSync(path.join(deep, 'package.json'), 'utf8');
+    try {
+      let stderr = '';
+      try {
+        execFileSync(process.execPath, ['scripts/brand.ts', '--name', 'Uncommitted name', '--hue', '25', '--accent-name', id], { cwd: deep, encoding: 'utf8', stdio: 'pipe' });
+      } catch (e) {
+        if (e && typeof e === 'object' && 'stderr' in e) stderr = String(e.stderr);
+      }
+      expect(stderr).toMatch(/--accent-name uses only/);
+      expect(fs.readFileSync(path.join(deep, 'src/app.config.ts'), 'utf8')).toBe(before);
+      expect(fs.readFileSync(path.join(deep, 'package.json'), 'utf8')).toBe(packageBefore);
+      expect(fs.readdirSync(path.join(deep, 'tokens'))).toEqual([]);
+      expect(fs.existsSync(path.join(owned, 'a/b/escaped.tokens.json'))).toBe(false);
+    } finally {
+      fs.rmSync(owned, { recursive: true, force: true });
+    }
+  });
   it('keeps the step that fixed a failing accent, and does not refuse it with the failure before it', () => {
     // #0E8A5F fails white on its dark fill at the start and passes one step darker; the command refused it with the
     // first step's failure, which no longer held.

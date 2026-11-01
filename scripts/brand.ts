@@ -42,6 +42,9 @@ for (const [i, a] of argv.entries()) {
   if (value === undefined || value.startsWith('--')) throw new Error(`${a} needs a value`);
   if (/[\\\r\n\u2028\u2029]/.test(value)) throw new Error(`${a} may not contain a backslash or a line break`);
 }
+// The accent id becomes a filename, resolver key and TypeScript literal. Validate it before any configuration write.
+const accentName = opt('--accent-name') ?? 'brand';
+if (!/^[A-Za-z0-9_-]+$/.test(accentName)) throw new Error('--accent-name uses only letters, numbers, hyphens and underscores');
 const done: string[] = [];
 const existing = has('--existing');
 if (existing && (has('--no-atlas') || has('--product'))) {
@@ -120,7 +123,7 @@ if (hex) {
 }
 if (hue !== undefined) {
   const h = Number(hue), c = Number(chroma ?? '0.16');
-  const id = opt('--accent-name') ?? 'brand';
+  const id = accentName;
   if (!Number.isFinite(h) || h < 0 || h > 360) throw new Error('--hue is an OKLCH hue in degrees, 0 to 360');
   if (!Number.isFinite(c) || c < 0 || c > 0.24) throw new Error('--chroma is OKLCH chroma, 0 to 0.24 (0.12 to 0.18 is typical)');
   const tokens = {
