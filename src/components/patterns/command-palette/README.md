@@ -66,10 +66,16 @@ Not applicable. An agent runs tools directly; it never drives the palette.
 
 ```tsx
 import { nav } from '@/app.config';
-import { CommandPalette, openCommand } from '@/components/patterns/command-palette';
+import { CommandPalette } from '@/components/patterns/command-palette';
+import { openCommand } from '@/components/patterns/command-palette/open';
 
 <CommandPalette nav={nav} /> // once, in the console layout; the console mounts `ConsolePalette`, which filters `nav` by access
 <button onClick={openCommand}>Search</button>
 ```
+
+The palette is a chunk of its own: `ConsolePalette` loads it with `next/dynamic` once the page has hydrated, so no
+page's first load carries it. Anything that only opens it or names its key imports `openCommand` and `usePaletteKey`
+from `./open`, never from the palette's own file, or the palette comes back into that page's first load. A press that
+lands before the palette has mounted opens it as soon as it does.
 
 `CommandPanel` takes `query`, `onQuery`, `commands`, `at`, `onAt`, `onRun` for an inline rendering.

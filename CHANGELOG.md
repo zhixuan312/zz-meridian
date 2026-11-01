@@ -8,6 +8,7 @@ Every release of ZZ Meridian, newest first. Versions follow semver: a removed or
 
 - **Uncontrolled Proposal requires `onApprove`.** Controlled state still permits an external approval handler; untyped callers without the required handler enter Failed rather than claiming Applied.
 - **Partial sample data is explicit.** `HomeData.totals` can be null. `RevenueData.history` now owns historical `count` and `windows`; `days.windows` is removed. Guard the nullable parts independently rather than substituting zero or requiring unrelated reads.
+- **`openCommand` and `usePaletteKey` moved to `@/components/patterns/command-palette/open`.** The Command palette is now a chunk of its own, loaded with `next/dynamic` once the page has hydrated, and its file no longer exports them. Import them from the new path; `update` names each file that still imports them from the palette (`open-command-moved`).
 - **Mutation tools return an applied outcome envelope.** Successful create, update and remove outputs are now `{ status: 'applied', result, warning? }`, not raw records or removal values. Read the visible data from `result`; domain fields cannot impersonate protocol metadata. A postcommit cache failure remains Applied with a warning, never an invitation to repeat the mutation.
 
 ### Fixed
@@ -115,6 +116,8 @@ Every release of ZZ Meridian, newest first. Versions follow semver: a removed or
 
 ### Changed
 
+- **The Command palette is in no page's first load.** It was in every route's, and a project fresh from `create` measured `/engineering` 48 bytes over the 830 KiB first-load cap. `ConsolePalette` now loads it with `next/dynamic` after hydration, and a press that lands before it has mounted opens it as soon as it does: about 17 KB off every route's first load (`/engineering` about 813 KiB in a created project).
+- **The last of five or more tiles is spanned by CSS** (#111): `base.css` spans it by the count's remainder, where class tables did in the shell's JavaScript.
 - **The faces are cut to the Latin scripts** (#116). `Geist-Variable.woff2` and `GeistMono-Variable.woff2` hold Latin and Latin Extended plus the arrows, minus sign and command key the product draws, with the weight axis and every OpenType feature kept: about 43 KB each, where the whole faces were about 70 KB, which on the phone profile cost about 0.22 s of LCP on text pages. Another script falls back to the system face. The cut is `pyftsubset <face> --layout-features='*' --flavor=woff2 --unicodes=U+0000-00FF,U+0100-02FF,U+0304,U+0308,U+0329,U+1E00-1EFF,U+2000-206F,U+20A0-20C0,U+2113,U+2122,U+2190-2193,U+21B5,U+2212,U+2215,U+2318,U+2C60-2C7F,U+A720-A7FF,U+FEFF,U+FFFD`.
 
 - **Update-session rules have one authored source.** The payload producer generates the CLI companion from the same source revision as the payload; adopted plain-Node gates and the compiled CLI keep their existing runtime layout.

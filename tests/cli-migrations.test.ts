@@ -752,6 +752,14 @@ describe('the env, series-slot and proposal migrations', () => {
     expect(releaseMigrations(page('const p = { color: (i % 6) + 1 };'), '0.28.0', '0.36.0').map((x) => x.id)).toContain('computed-series-slot');
   });
 
+  it('finds openCommand or usePaletteKey imported from the palette, and leaves the open module (0.37.0)', () => {
+    const m = byId('open-command-moved');
+    const file = (from: string) => project({ 'src/views/missing.tsx': `import { openCommand } from '${from}';\nexport const S = () => <button onClick={openCommand}>Search</button>;\n` });
+    expect(m.applies(file('@/components/patterns/command-palette'), '0.36.0')).toEqual(['src/views/missing.tsx']);
+    expect(m.applies(file('@/components/patterns/command-palette/open'), '0.36.0')).toBeNull();
+    expect(m.applies(project({ 'src/views/chrome.tsx': `import { CommandPalette } from '@/components/patterns/command-palette';\n` }), '0.36.0')).toBeNull();
+  });
+
   it('finds an uncontrolled Proposal without onApprove, and leaves controlled and wired ones (0.37.0)', () => {
     const m = byId('proposal-approve-required');
     const view = (tag: string) => project({ 'src/views/change.tsx': `import { Proposal } from '@/components/patterns/proposal';\nexport const V = () => ${tag};\n` });

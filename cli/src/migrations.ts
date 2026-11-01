@@ -710,6 +710,14 @@ export const RELEASE_MIGRATIONS: ReleaseMigration[] = [
     instructions: 'Since 0.37.0 `src/components/patterns/proposal/index.tsx` types `onApprove` as required when no `state` is passed, so a `<Proposal>` of your own without either fails `tsc` at `--finalize`. In each file listed, pass the function that runs the change as `onApprove`, or pass `state` and own the card\'s states yourself. A card that only shows a change it cannot run is not a proposal: show it in a Card instead.',
     checks: ['gate'],
   },
+  {
+    id: 'open-command-moved',
+    since: '0.37.0',
+    applies: (root) => matching(root, (rel, src) => SOURCE.test(rel) && importsOf(rel, src).some(({ from, names }) => from === 'src/components/patterns/command-palette' && names.some((n) => n === 'openCommand' || n === 'usePaletteKey'))),
+    summary: '`openCommand` and `usePaletteKey` moved to `src/components/patterns/command-palette/open.ts`, so the palette can be a chunk of its own.',
+    instructions: 'Since 0.37.0 the Command palette loads with `next/dynamic` and is in no page\'s first load, so the two things a page needs before it opens, `openCommand` and `usePaletteKey`, live in `src/components/patterns/command-palette/open.ts` and the palette\'s own file no longer exports them. In each file listed, import them from `@/components/patterns/command-palette/open`. Mount the palette the way `src/views/console-chrome.tsx` does, through `dynamic()`, or importing it puts it back in every page\'s first load.',
+    checks: ['gate'],
+  },
 ];
 
 /**

@@ -3,31 +3,16 @@
 import { Dialog as D } from 'radix-ui';
 import { useRouter } from 'next/navigation';
 import { useLeave } from '@/components/base/shell';
-import { useEffect, useMemo, useRef, useState, useSyncExternalStore, type ReactNode } from 'react';
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { ArrowRight, CornerDownLeft, Monitor, Moon, Search, Sun } from 'lucide-react';
 import type { NavGroup } from '@/app.config';
 import { cn } from '@/lib/cn';
 import { usePreferences } from '@/components/base/providers';
 import { Kbd } from '@/components/ui/kbd';
 import { parentOf } from '@/components/patterns/rail/trail';
+import { registerOpener, usePaletteKey } from './open';
 
 export type Command = { id: string; group: string; label: string; hint?: string; icon: ReactNode; run: () => void };
-
-let opener: (() => void) | null = null;
-/** Open the palette from anywhere: the rail's search button, a shortcut in a page. */
-export function openCommand() {
-  opener?.();
-}
-
-const noChange = () => () => {};
-const appleKeyboard = () => /mac|iphone|ipad/i.test((navigator as { userAgentData?: { platform: string } }).userAgentData?.platform ?? navigator.platform);
-/**
- * The palette's keystroke as the reader's keyboard names it: ⌘K on Apple's, Ctrl K on every other. The server cannot
- * know, so it draws ⌘K and the client names the reader's key once it has hydrated.
- */
-export function usePaletteKey() {
-  return useSyncExternalStore(noChange, () => (appleKeyboard() ? '⌘K' : 'Ctrl K'), () => '⌘K');
-}
 
 /**
  * Every destination and every global action behind one keystroke (⌘K or Ctrl K). Type to filter; the arrow keys
@@ -47,7 +32,7 @@ export function CommandPalette({ nav }: { /** Every destination the rail offers,
   const { set } = usePreferences();
 
   useEffect(() => {
-    opener = () => setOpen(true);
+    registerOpener(() => setOpen(true));
     const onKey = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
         e.preventDefault();
@@ -56,7 +41,7 @@ export function CommandPalette({ nav }: { /** Every destination the rail offers,
     };
     window.addEventListener('keydown', onKey);
     return () => {
-      opener = null;
+      registerOpener(null);
       window.removeEventListener('keydown', onKey);
     };
   }, []);

@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation';
 import { ArrowLeft, Search } from 'lucide-react';
 import { app } from '@/app.config';
 import { Button } from '@/components/ui/button';
-import { openCommand } from '@/components/patterns/command-palette';
+import { openCommand } from '@/components/patterns/command-palette/open';
 import { cn } from '@/lib/cn';
 import { nearestOf, readable, homeLabel } from '@/views/not-found';
 

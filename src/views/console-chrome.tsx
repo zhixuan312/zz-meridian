@@ -1,8 +1,8 @@
 'use client';
 
+import dynamic from 'next/dynamic';
 import { Suspense, use, type ComponentProps } from 'react';
 import { nav, type NavGroup } from '@/app.config';
-import { CommandPalette } from '@/components/patterns/command-palette';
 import { Rail } from '@/components/patterns/rail';
 import { Skeleton } from '@/components/ui/skeleton';
 import type { ChromeAccess } from '@/lib/collection';
@@ -69,6 +69,11 @@ export function RailPending() {
     </div>
   );
 }
+
+// The palette is a dialog no page draws until a person asks for it, so it is a chunk of its own, fetched once the page
+// has hydrated: in every route's first load it was the last few hundred bytes /engineering had under its cap, in a
+// project `create` made. openCommand (./open) keeps a press that lands before it has mounted.
+const CommandPalette = dynamic(() => import('@/components/patterns/command-palette').then((m) => m.CommandPalette));
 
 export function ConsolePalette({ access, nav: given }: { access?: Access; nav?: NavGroup[] }) {
   if (access === undefined) return <CommandPalette nav={given ?? nav} />;

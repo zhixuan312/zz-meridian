@@ -9,7 +9,7 @@ import { formatDateTime, formatRelative } from '@/lib/format-date';
 import { Kbd } from '@/components/ui/kbd';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { StatusDot } from '@/components/ui/status-dot';
-import { openCommand, usePaletteKey } from '@/components/patterns/command-palette';
+import { openCommand, usePaletteKey } from '@/components/patterns/command-palette/open';
 
 /** One thing that needs a person: what happened, where to act on it, and whether they have seen it. */
 export type Alert = { id: string; title: string; detail?: string; at: string; href: string; tone: 'critical' | 'warning' | 'positive' | 'neutral'; unread?: boolean };

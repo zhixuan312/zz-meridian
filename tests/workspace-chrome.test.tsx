@@ -11,7 +11,7 @@ vi.mock('next/navigation', () => ({
 }));
 
 import { app, nav } from '@/app.config';
-import { openCommand } from '@/components/patterns/command-palette';
+import { openCommand } from '@/components/patterns/command-palette/open';
 import type { ChromeAccess } from '@/lib/collection';
 import { WorkspacePalette, WorkspaceRail } from '@/views/workspace-chrome';
 

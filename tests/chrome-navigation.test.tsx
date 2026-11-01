@@ -2,7 +2,7 @@ import { act, render, screen, within } from '@testing-library/react';
 import { Home, Package, Wrench } from 'lucide-react';
 import { describe, expect, it } from 'vitest';
 import { nav, type NavGroup } from '@/app.config';
-import { openCommand } from '@/components/patterns/command-palette';
+import { openCommand } from '@/components/patterns/command-palette/open';
 import type { ChromeAccess } from '@/lib/collection';
 import { ConsolePalette, ConsoleRail, visible } from '@/views/console-chrome';
 
