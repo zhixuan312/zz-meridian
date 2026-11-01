@@ -26,6 +26,10 @@ Status: beta
 
 Protocol: MCP Apps 2026-01-26. The bridge (`src/lib/host.ts`) has no dependency; a product that uses `@modelcontextprotocol/ext-apps` can swap it without touching a component.
 
+Disposing a bridge rejects its pending requests and clears their timers. Initialization stops retrying, and a disposed
+bridge sends no further requests or notifications. A transport posting failure rejects the request instead of throwing
+past the caller's promise handler.
+
 ## The token bridge
 
 On `data-surface="embed"`, the light is off, `ground` and `frame` are transparent, and the neutral roles take the host's variables, falling back to Meridian's own value for the theme:

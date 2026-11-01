@@ -122,6 +122,12 @@ export function EmbedSurface({ children }: { children: ReactNode }) {
   const value = useMemo<Surface>(() => {
     // The bridge is read when a call happens, never during render: `connected` only turns true once it exists.
     const bridgeOf = () => (connected ? bridge.current : null);
+    const openInHost = (b: HostBridge, url: string) => {
+      if (bridge.current !== b) return;
+      void b.openLink(url).catch(() => {
+        if (bridge.current === b) toast({ tone: 'neutral', title: 'The host did not open the page', description: url });
+      });
+    };
     return {
       kind: 'embed',
       connected,
@@ -130,15 +136,23 @@ export function EmbedSurface({ children }: { children: ReactNode }) {
       expand: (p) => {
         const b = bridgeOf();
         if (!b) return void window.open(p, '_blank', 'noopener');
-        b.requestDisplayMode('fullscreen').then((r) => r.mode === 'fullscreen' ? setMode('fullscreen') : b.openLink(new URL(p, location.origin).href)).catch(() => b.openLink(new URL(p, location.origin).href));
+        const fallback = () => openInHost(b, new URL(p, location.origin).href);
+        void b.requestDisplayMode('fullscreen').then((r) => {
+          if (bridge.current !== b) return;
+          if (r.mode === 'fullscreen') setMode('fullscreen');
+          else fallback();
+        }, fallback);
       },
       ask: connected
         ? (text) => {
             const q = shared.current.refused && shared.current.head ? `${text} (${shared.current.head})` : text;
-            void bridgeOf()?.message(q).catch(() => toast({ tone: 'neutral', title: 'The chat did not take the question', description: `Ask it there: "${text}"` }));
+            const b = bridgeOf();
+            void b?.message(q).catch(() => {
+              if (bridge.current === b) toast({ tone: 'neutral', title: 'The chat did not take the question', description: `Ask it there: "${text}"` });
+            });
           }
         : undefined,
-      callTool: connected ? (name, args) => bridgeOf()!.callTool(name, args) : undefined,
+      callTool: connected ? (name, args) => bridgeOf()?.callTool(name, args) ?? Promise.reject(new Error('The host is no longer connected.')) : undefined,
       share: (text, structured) => {
         const b = bridgeOf();
         if (!b) return;
@@ -156,7 +170,7 @@ export function EmbedSurface({ children }: { children: ReactNode }) {
       },
       openLink: (u) => {
         const b = bridgeOf();
-        return b ? void b.openLink(new URL(u, location.origin).href) : void window.open(u, '_blank', 'noopener');
+        return b ? openInHost(b, new URL(u, location.origin).href) : void window.open(u, '_blank', 'noopener');
       },
     };
   }, [connected, mode, host]);
