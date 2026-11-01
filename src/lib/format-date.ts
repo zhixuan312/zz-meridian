@@ -1,4 +1,5 @@
 import { app } from '@/app.config';
+import { parseCalendarDate } from '@/lib/calendar-date';
 /**
  * Every date this product displays goes through this module. Nothing calls
  * `toLocaleDateString` directly.
@@ -17,11 +18,10 @@ const DISPLAY_TIMEZONE = app.timezone;
 type DateInput = Date | string | number;
 
 function toDate(input: DateInput): Date | null {
+  // A literal calendar day must exist: Date alone silently rolls February 30 into March.
+  if (typeof input === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(input)) return parseCalendarDate(input);
   const d = input instanceof Date ? input : new Date(input);
   if (Number.isNaN(d.getTime())) return null;
-  // Date accepts overflow days such as February 30 and silently moves them into March. A calendar label must never
-  // turn an impossible input into a different date that looks valid.
-  if (typeof input === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(input) && d.toISOString().slice(0, 10) !== input) return null;
   return d;
 }
 

@@ -155,3 +155,5 @@ The same figure for many things, each with its own change and shape, is a wall o
 ## Motion
 
 Data arrives once: a line draws, an area reveals left to right, bars grow from the baseline in order. Nothing animates while someone is reading it. Under reduced motion, the final state is shown at once.
+
+Calendar dates are validated by `src/lib/calendar-date.ts`, shared by date labels and collection aggregates. An impossible day such as February 30 belongs to no time bucket or date window; it remains part of an unwindowed total rather than being silently moved into March.

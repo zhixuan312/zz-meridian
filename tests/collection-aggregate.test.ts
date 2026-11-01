@@ -103,4 +103,13 @@ describe('aggregateRows', () => {
     const many = Array.from({ length: 80 }, (_, i) => ({ id: `r${i}`, k: `k${i}`, v: i }));
     expect(aggregateRows(many, { group: { field: 'k' }, top: 80, measures: [{ name: 's', agg: 'sum', field: 'v' }] }).groups).toHaveLength(50);
   });
+
+  it.each(['day', 'week', 'month', 'weekday'] as const)('keeps impossible dates out of %s buckets and windows', (bucket) => {
+    const dated = ['2026-02-30', '2026-13-01', '2025-02-29', '2026-00-10', '2024-02-29', '2024-02-29T10:00:00Z'].map((day, i) => ({ id: String(i), day }));
+    const r = aggregateRows(dated, q({ group: { field: 'day', bucket } }));
+    expect(r.total.rows).toBe(6);
+    expect(r.groups.reduce((n, g) => n + g.rows, 0)).toBe(2);
+    expect(r.groups).toHaveLength(1);
+    expect(aggregateRows(dated, q({ window: { field: 'day', from: '2020-01-01', to: '2027-12-31' } })).total.rows).toBe(2);
+  });
 });

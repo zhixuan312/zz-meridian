@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { parseCalendarDate } from './calendar-date.ts';
 
 /** A named set of records the pages and the assistant read and change through one interface. */
 type Op = 'create' | 'update' | 'remove';
@@ -264,7 +265,7 @@ function valueAt(row: Record<string, unknown>, path: string): unknown {
 /** The date a value starts with, as YYYY-MM-DD: its first ten characters, or null when they are not a date. */
 function dayOf(v: unknown): string | null {
   const d = typeof v === 'string' ? v.slice(0, 10) : '';
-  return /^\d{4}-\d{2}-\d{2}$/.test(d) ? d : null;
+  return parseCalendarDate(d) ? d : null;
 }
 
 /** A date's bucket key: the day, the week's Monday, `YYYY-MM`, or the weekday's English name. Worked out in UTC, as the data's days are. */
